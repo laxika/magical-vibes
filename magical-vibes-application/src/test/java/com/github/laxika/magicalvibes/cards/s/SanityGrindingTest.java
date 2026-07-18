@@ -3,6 +3,7 @@ package com.github.laxika.magicalvibes.cards.s;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
+import com.github.laxika.magicalvibes.service.interaction.InteractionAnswer;
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
 import com.github.laxika.magicalvibes.cards.t.TomeScour;
 import com.github.laxika.magicalvibes.model.Card;
@@ -67,8 +68,7 @@ class SanityGrindingTest extends BaseCardTest {
         List<Card> reorder = gd.interaction.activeInteraction(PendingInteraction.LibraryReorder.class).cards();
         assertThat(reorder).hasSize(10);
 
-        harness.getGameService().handleLibraryCardsReordered(gd, player1,
-                IntStream.range(0, reorder.size()).boxed().toList());
+        harness.getGameService().handleInteractionAnswer(gd, player1, new InteractionAnswer.CardOrder(IntStream.range(0, reorder.size()).boxed().toList()));
 
         assertThat(gd.interaction.activeInteraction()).isNull();
         assertThat(gd.playerDecks.get(player1.getId())).hasSize(10);

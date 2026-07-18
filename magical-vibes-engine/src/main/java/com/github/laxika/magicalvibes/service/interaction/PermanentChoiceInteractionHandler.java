@@ -4,7 +4,7 @@ import com.github.laxika.magicalvibes.model.GameData;
 import com.github.laxika.magicalvibes.model.PendingInteraction;
 import com.github.laxika.magicalvibes.model.Player;
 import com.github.laxika.magicalvibes.networking.SessionManager;
-import com.github.laxika.magicalvibes.networking.message.ChoosePermanentMessage;
+import com.github.laxika.magicalvibes.networking.message.InteractionPromptMessage;
 import com.github.laxika.magicalvibes.service.input.PermanentChoiceHandlerService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Component;
@@ -40,7 +40,7 @@ public class PermanentChoiceInteractionHandler
 
     @Override
     public void prompt(GameData gameData, PendingInteraction.PermanentChoice interaction, UUID recipientId) {
-        sessionManager.sendToPlayer(recipientId, new ChoosePermanentMessage(
+        sessionManager.sendToPlayer(recipientId, InteractionPromptMessage.permanentPick(
                 interaction.validPermanentIds(), interaction.validPlayerIds(), interaction.prompt()));
     }
 

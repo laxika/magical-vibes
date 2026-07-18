@@ -1,5 +1,6 @@
 package com.github.laxika.magicalvibes.cards.w;
 
+import com.github.laxika.magicalvibes.service.interaction.InteractionAnswer;
 import com.github.laxika.magicalvibes.cards.f.Forest;
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
 import com.github.laxika.magicalvibes.cards.p.Plains;
@@ -71,7 +72,7 @@ class WeatheredWayfarerTest extends BaseCardTest {
 
         int handBefore = gd.playerHands.get(player1.getId()).size();
         int deckBefore = gd.playerDecks.get(player1.getId()).size();
-        gs.handleLibraryCardChosen(gd, player1, 0);
+        gs.handleInteractionAnswer(gd, player1, new InteractionAnswer.LibraryCardChosen(0));
 
         assertThat(gd.playerHands.get(player1.getId())).hasSize(handBefore + 1);
         assertThat(gd.playerHands.get(player1.getId())).anyMatch(c -> c.hasType(CardType.LAND));

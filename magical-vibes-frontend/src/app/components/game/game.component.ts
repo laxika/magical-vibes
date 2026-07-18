@@ -3,7 +3,7 @@ import { CommonModule } from '@angular/common';
 import { DomSanitizer, SafeHtml } from '@angular/platform-browser';
 import { FormsModule } from '@angular/forms';
 import { Router } from '@angular/router';
-import { WebsocketService, WebSocketMessage, Game, GameNotification, GameStateNotification, GameStatus, MessageType, TurnStep, PHASE_GROUPS, Card, Permanent, MulliganResolvedNotification, SelectCardsToBottomNotification, AttackTarget, AvailableAttackersNotification, AvailableBlockersNotification, GameOverNotification, ChooseCardFromHandNotification, ChooseFromListNotification, MayAbilityNotification, ChoosePermanentNotification, ChooseMultiplePermanentsNotification, ChooseMultipleCardsNotification, StackEntry, ScryNotification, ReorderLibraryCardsNotification, ChooseCardFromLibraryNotification, RevealHandNotification, RevealLibraryTopNotification, ChooseFromRevealedHandNotification, ChooseCardFromGraveyardNotification, ChooseHandTopBottomNotification, CombatDamageAssignmentNotification, ValidTargetsResponse, XValueChoiceNotification, GameLogEntry } from '../../services/websocket.service';
+import { WebsocketService, WebSocketMessage, Game, GameNotification, GameStateNotification, GameStatus, MessageType, TurnStep, PHASE_GROUPS, Card, Permanent, MulliganResolvedNotification, SelectCardsToBottomNotification, AttackTarget, AvailableAttackersNotification, AvailableBlockersNotification, GameOverNotification, StackEntry, RevealHandNotification, InteractionPromptNotification, RevealLibraryTopNotification, CombatDamageAssignmentNotification, ValidTargetsResponse, GameLogEntry } from '../../services/websocket.service';
 import { GameChoiceService } from '../../services/game-choice.service';
 import { CardDisplayComponent } from './card-display/card-display.component';
 import { MulliganModalComponent } from './mulligan-modal/mulligan-modal.component';
@@ -202,44 +202,12 @@ export class GameComponent implements OnInit, OnDestroy {
       this.handleGameOver(message as GameOverNotification);
     }
 
-    if (message.type === MessageType.CHOOSE_CARD_FROM_HAND) {
-      this.choice.handleChooseCardFromHand(message as ChooseCardFromHandNotification);
-    }
-
-    if (message.type === MessageType.CHOOSE_FROM_LIST) {
-      this.choice.handleChooseFromList(message as ChooseFromListNotification);
-    }
-
-    if (message.type === MessageType.MAY_ABILITY_CHOICE) {
-      this.choice.handleMayAbilityChoice(message as MayAbilityNotification);
-    }
-
-    if (message.type === MessageType.CHOOSE_PERMANENT) {
-      this.choice.handleChoosePermanent(message as ChoosePermanentNotification);
-    }
-
-    if (message.type === MessageType.CHOOSE_MULTIPLE_PERMANENTS) {
-      this.choice.handleChooseMultiplePermanents(message as ChooseMultiplePermanentsNotification);
-    }
-
-    if (message.type === MessageType.CHOOSE_MULTIPLE_CARDS) {
-      this.choice.handleChooseMultipleCards(message as ChooseMultipleCardsNotification);
-    }
-
-    if (message.type === MessageType.SCRY) {
-      this.choice.handleScry(message as ScryNotification);
-    }
-
-    if (message.type === MessageType.REORDER_LIBRARY_CARDS) {
-      this.choice.handleReorderLibraryCards(message as ReorderLibraryCardsNotification);
-    }
-
-    if (message.type === MessageType.CHOOSE_CARD_FROM_LIBRARY) {
-      this.choice.handleChooseCardFromLibrary(message as ChooseCardFromLibraryNotification);
-    }
-
-    if (message.type === MessageType.CHOOSE_HAND_TOP_BOTTOM) {
-      this.choice.handleChooseHandTopBottom(message as ChooseHandTopBottomNotification);
+    if (message.type === MessageType.INTERACTION_PROMPT) {
+      const prompt = message as InteractionPromptNotification;
+      if (prompt.shape === 'CARD_INDEX_PICK' && prompt.cards) {
+        this.revealHandPos.set(null);
+      }
+      this.choice.handleInteractionPrompt(prompt);
     }
 
     if (message.type === MessageType.REVEAL_HAND) {
@@ -251,15 +219,6 @@ export class GameComponent implements OnInit, OnDestroy {
       this.choice.handleRevealLibraryTop(message as RevealLibraryTopNotification);
     }
 
-    if (message.type === MessageType.CHOOSE_FROM_REVEALED_HAND) {
-      this.revealHandPos.set(null);
-      this.choice.handleChooseFromRevealedHand(message as ChooseFromRevealedHandNotification);
-    }
-
-    if (message.type === MessageType.CHOOSE_CARD_FROM_GRAVEYARD) {
-      this.choice.handleChooseCardFromGraveyard(message as ChooseCardFromGraveyardNotification);
-    }
-
     if (message.type === MessageType.COMBAT_DAMAGE_ASSIGNMENT) {
       this.choice.handleCombatDamageAssignment(message as CombatDamageAssignmentNotification);
     }
@@ -268,9 +227,6 @@ export class GameComponent implements OnInit, OnDestroy {
       this.choice.handleValidTargetsResponse(message as ValidTargetsResponse);
     }
 
-    if (message.type === MessageType.X_VALUE_CHOICE) {
-      this.choice.handleXValueChoice(message as XValueChoiceNotification);
-    }
   }
 
   // ========== Player info getters ==========

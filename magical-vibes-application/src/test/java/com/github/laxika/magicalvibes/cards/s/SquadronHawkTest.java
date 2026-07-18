@@ -1,5 +1,6 @@
 package com.github.laxika.magicalvibes.cards.s;
 
+import com.github.laxika.magicalvibes.service.interaction.InteractionAnswer;
 import com.github.laxika.magicalvibes.model.GameLogEntry;
 
 import com.github.laxika.magicalvibes.model.PendingInteraction;
@@ -73,7 +74,7 @@ class SquadronHawkTest extends BaseCardTest {
         harness.handleMayAbilityChosen(player1, true);
 
         int handSizeBefore = gd.playerHands.get(player1.getId()).size();
-        gs.handleLibraryCardChosen(gd, player1, 0);
+        gs.handleInteractionAnswer(gd, player1, new InteractionAnswer.LibraryCardChosen(0));
 
         assertThat(gd.playerHands.get(player1.getId())).hasSize(handSizeBefore + 1);
         assertThat(gd.playerHands.get(player1.getId()))
@@ -93,15 +94,15 @@ class SquadronHawkTest extends BaseCardTest {
         int handSizeBefore = gd.playerHands.get(player1.getId()).size();
 
         // Pick first hawk
-        gs.handleLibraryCardChosen(gd, player1, 0);
+        gs.handleInteractionAnswer(gd, player1, new InteractionAnswer.LibraryCardChosen(0));
         assertThat(gd.interaction.activeInteraction()).isInstanceOf(PendingInteraction.LibrarySearch.class);
 
         // Pick second hawk
-        gs.handleLibraryCardChosen(gd, player1, 0);
+        gs.handleInteractionAnswer(gd, player1, new InteractionAnswer.LibraryCardChosen(0));
         assertThat(gd.interaction.activeInteraction()).isInstanceOf(PendingInteraction.LibrarySearch.class);
 
         // Pick third hawk
-        gs.handleLibraryCardChosen(gd, player1, 0);
+        gs.handleInteractionAnswer(gd, player1, new InteractionAnswer.LibraryCardChosen(0));
 
         assertThat(gd.playerHands.get(player1.getId())).hasSize(handSizeBefore + 3);
         long hawksInHand = gd.playerHands.get(player1.getId()).stream()
@@ -123,10 +124,10 @@ class SquadronHawkTest extends BaseCardTest {
         int handSizeBefore = gd.playerHands.get(player1.getId()).size();
 
         // Pick first hawk
-        gs.handleLibraryCardChosen(gd, player1, 0);
+        gs.handleInteractionAnswer(gd, player1, new InteractionAnswer.LibraryCardChosen(0));
 
         // Fail to find (pass on second pick)
-        gs.handleLibraryCardChosen(gd, player1, -1);
+        gs.handleInteractionAnswer(gd, player1, new InteractionAnswer.LibraryCardChosen(-1));
 
         assertThat(gd.playerHands.get(player1.getId())).hasSize(handSizeBefore + 1);
         assertThat(gd.interaction.activeInteraction(PendingInteraction.LibrarySearch.class)).isNull();

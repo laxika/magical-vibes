@@ -943,7 +943,7 @@ class AiDecisionEngineTest {
         assertThat(gd.interaction.isAwaitingInput()).isTrue();
 
         // AI responds to the graveyard choice, putting the spell on the stack
-        ai.handleMessage("CHOOSE_MULTIPLE_CARDS", "");
+        ai.handleMessage("INTERACTION_PROMPT", "");
         assertThat(gd.stack).hasSize(1);
         assertThat(gd.stack.getFirst().getCard().getName()).isEqualTo("Midnight Ritual");
     }
@@ -965,7 +965,7 @@ class AiDecisionEngineTest {
         assertThat(gd.playerHands.get(aiPlayer.getId())).isEmpty();
 
         // AI responds to the graveyard choice
-        ai.handleMessage("CHOOSE_MULTIPLE_CARDS", "");
+        ai.handleMessage("INTERACTION_PROMPT", "");
 
         // AI should cast with X capped at 1 (graveyard creature count), not X=3 (max mana)
         assertThat(gd.stack).hasSize(1);

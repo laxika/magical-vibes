@@ -1,5 +1,6 @@
 package com.github.laxika.magicalvibes.cards.p;
 
+import com.github.laxika.magicalvibes.service.interaction.InteractionAnswer;
 import com.github.laxika.magicalvibes.model.GameLogEntry;
 
 import com.github.laxika.magicalvibes.model.PendingInteraction;
@@ -73,7 +74,7 @@ class PonderTest extends BaseCardTest {
         harness.passBothPriorities();
 
         // Complete reorder (keep same order)
-        gs.handleLibraryCardsReordered(gd, player1, List.of(0, 1, 2));
+        gs.handleInteractionAnswer(gd, player1, new InteractionAnswer.CardOrder(List.of(0, 1, 2)));
 
         assertThat(gd.interaction.activeInteraction()).isInstanceOf(PendingInteraction.MayAbilityChoice.class);
     }
@@ -91,7 +92,7 @@ class PonderTest extends BaseCardTest {
         harness.passBothPriorities();
 
         // Keep same order
-        gs.handleLibraryCardsReordered(gd, player1, List.of(0, 1, 2));
+        gs.handleInteractionAnswer(gd, player1, new InteractionAnswer.CardOrder(List.of(0, 1, 2)));
 
         // Decline shuffle
         harness.handleMayAbilityChosen(player1, false);
@@ -115,7 +116,7 @@ class PonderTest extends BaseCardTest {
         harness.passBothPriorities();
 
         // Put card at index 2 on top
-        gs.handleLibraryCardsReordered(gd, player1, List.of(2, 0, 1));
+        gs.handleInteractionAnswer(gd, player1, new InteractionAnswer.CardOrder(List.of(2, 0, 1)));
 
         // Decline shuffle
         harness.handleMayAbilityChosen(player1, false);
@@ -140,7 +141,7 @@ class PonderTest extends BaseCardTest {
         harness.passBothPriorities();
 
         // Complete reorder
-        gs.handleLibraryCardsReordered(gd, player1, List.of(0, 1, 2));
+        gs.handleInteractionAnswer(gd, player1, new InteractionAnswer.CardOrder(List.of(0, 1, 2)));
 
         // Accept shuffle
         harness.handleMayAbilityChosen(player1, true);
@@ -164,7 +165,7 @@ class PonderTest extends BaseCardTest {
         harness.passBothPriorities();
 
         // Complete reorder
-        gs.handleLibraryCardsReordered(gd, player1, List.of(0, 1, 2));
+        gs.handleInteractionAnswer(gd, player1, new InteractionAnswer.CardOrder(List.of(0, 1, 2)));
 
         // Decline shuffle
         harness.handleMayAbilityChosen(player1, false);
@@ -185,7 +186,7 @@ class PonderTest extends BaseCardTest {
         harness.castSorcery(player1, 0, 0);
         harness.passBothPriorities();
 
-        gs.handleLibraryCardsReordered(gd, player1, List.of(0, 1, 2));
+        gs.handleInteractionAnswer(gd, player1, new InteractionAnswer.CardOrder(List.of(0, 1, 2)));
         harness.handleMayAbilityChosen(player1, true);
 
         assertThat(gd.gameLog.stream().map(GameLogEntry::plainText)).anyMatch(log -> log.contains("shuffles their library"));
@@ -200,7 +201,7 @@ class PonderTest extends BaseCardTest {
         harness.castSorcery(player1, 0, 0);
         harness.passBothPriorities();
 
-        gs.handleLibraryCardsReordered(gd, player1, List.of(0, 1, 2));
+        gs.handleInteractionAnswer(gd, player1, new InteractionAnswer.CardOrder(List.of(0, 1, 2)));
         harness.handleMayAbilityChosen(player1, false);
 
         assertThat(gd.gameLog.stream().map(GameLogEntry::plainText)).anyMatch(log -> log.contains("declines"));

@@ -1,5 +1,6 @@
 package com.github.laxika.magicalvibes.cards.d;
 
+import com.github.laxika.magicalvibes.service.interaction.InteractionAnswer;
 import com.github.laxika.magicalvibes.model.GameLogEntry;
 
 import com.github.laxika.magicalvibes.model.PendingInteraction;
@@ -70,7 +71,7 @@ class DiabolicTutorTest extends BaseCardTest {
         int deckSizeBefore = gd.playerDecks.get(player1.getId()).size();
         String chosenName = gd.interaction.activeInteraction(PendingInteraction.LibrarySearch.class).params().cards().getFirst().getName();
 
-        harness.getGameService().handleLibraryCardChosen(gd, player1, 0);
+        harness.getGameService().handleInteractionAnswer(gd, player1, new InteractionAnswer.LibraryCardChosen(0));
 
         // Card is in hand
         assertThat(gd.playerHands.get(player1.getId()))
@@ -103,7 +104,7 @@ class DiabolicTutorTest extends BaseCardTest {
         }
         assertThat(bearsIndex).isGreaterThanOrEqualTo(0);
 
-        harness.getGameService().handleLibraryCardChosen(gd, player1, bearsIndex);
+        harness.getGameService().handleInteractionAnswer(gd, player1, new InteractionAnswer.LibraryCardChosen(bearsIndex));
 
         assertThat(gd.playerHands.get(player1.getId()))
                 .anyMatch(c -> c.getName().equals("Grizzly Bears"));
@@ -120,7 +121,7 @@ class DiabolicTutorTest extends BaseCardTest {
         GameData gd = harness.getGameData();
         assertThat(gd.interaction.activeInteraction(PendingInteraction.LibrarySearch.class).params().reveals()).isFalse();
 
-        harness.getGameService().handleLibraryCardChosen(gd, player1, 0);
+        harness.getGameService().handleInteractionAnswer(gd, player1, new InteractionAnswer.LibraryCardChosen(0));
 
         // Log should NOT mention "reveals"
         assertThat(gd.gameLog.stream().map(GameLogEntry::plainText)).noneMatch(entry -> entry.contains("reveals") && entry.contains("puts it into their hand"));
@@ -151,7 +152,7 @@ class DiabolicTutorTest extends BaseCardTest {
         harness.passBothPriorities();
 
         GameData gd = harness.getGameData();
-        assertThatThrownBy(() -> harness.getGameService().handleLibraryCardChosen(gd, player1, -1))
+        assertThatThrownBy(() -> harness.getGameService().handleInteractionAnswer(gd, player1, new InteractionAnswer.LibraryCardChosen(-1)))
                 .isInstanceOf(IllegalStateException.class)
                 .hasMessageContaining("Cannot fail to find");
     }
@@ -183,7 +184,7 @@ class DiabolicTutorTest extends BaseCardTest {
         harness.passBothPriorities(); // resolve sorcery → library search prompt
 
         GameData gd = harness.getGameData();
-        harness.getGameService().handleLibraryCardChosen(gd, player1, 0);
+        harness.getGameService().handleInteractionAnswer(gd, player1, new InteractionAnswer.LibraryCardChosen(0));
 
         assertThat(gd.playerGraveyards.get(player1.getId()))
                 .anyMatch(c -> c.getName().equals("Diabolic Tutor"));

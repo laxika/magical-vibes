@@ -1,5 +1,6 @@
 package com.github.laxika.magicalvibes.cards.s;
 
+import com.github.laxika.magicalvibes.service.interaction.InteractionAnswer;
 import com.github.laxika.magicalvibes.cards.f.Forest;
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
 import com.github.laxika.magicalvibes.cards.i.Island;
@@ -67,9 +68,9 @@ class ScapeshiftTest extends BaseCardTest {
         harness.handleMultiplePermanentsChosen(player1, List.of(lands.get(0).getId(), lands.get(1).getId()));
 
         // Pick two land cards from the library
-        gs.handleLibraryCardChosen(gd, player1, 0);
+        gs.handleInteractionAnswer(gd, player1, new InteractionAnswer.LibraryCardChosen(0));
         assertThat(gd.interaction.activeInteraction()).isInstanceOf(PendingInteraction.LibrarySearch.class);
-        gs.handleLibraryCardChosen(gd, player1, 0);
+        gs.handleInteractionAnswer(gd, player1, new InteractionAnswer.LibraryCardChosen(0));
 
         // One original land plus two fetched lands
         assertThat(landsOnBattlefield()).hasSize(3);
@@ -90,7 +91,7 @@ class ScapeshiftTest extends BaseCardTest {
         harness.handleMultiplePermanentsChosen(player1, List.of(lands.get(0).getId()));
 
         // Exactly one pick allowed — after one pick the search ends
-        gs.handleLibraryCardChosen(gd, player1, 0);
+        gs.handleInteractionAnswer(gd, player1, new InteractionAnswer.LibraryCardChosen(0));
         assertThat(gd.interaction.activeInteraction()).isNull();
         long tapped = landsOnBattlefield().stream().filter(Permanent::isTapped).count();
         assertThat(tapped).isGreaterThanOrEqualTo(1);
@@ -122,7 +123,7 @@ class ScapeshiftTest extends BaseCardTest {
         harness.handleMultiplePermanentsChosen(player1, List.of(lands.get(0).getId(), lands.get(1).getId()));
 
         // Decline the search
-        gs.handleLibraryCardChosen(gd, player1, -1);
+        gs.handleInteractionAnswer(gd, player1, new InteractionAnswer.LibraryCardChosen(-1));
 
         assertThat(gd.interaction.activeInteraction()).isNull();
         // Lands were sacrificed, none fetched

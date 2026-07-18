@@ -1,5 +1,6 @@
 package com.github.laxika.magicalvibes.cards.h;
 
+import com.github.laxika.magicalvibes.service.interaction.InteractionAnswer;
 import com.github.laxika.magicalvibes.model.GameLogEntry;
 
 import com.github.laxika.magicalvibes.model.PendingInteraction;
@@ -92,7 +93,7 @@ class HeadGamesTest extends BaseCardTest {
         int deckSizeBefore = gd.playerDecks.get(player2.getId()).size();
 
         // First pick
-        harness.getGameService().handleLibraryCardChosen(gd, player1, 0);
+        harness.getGameService().handleInteractionAnswer(gd, player1, new InteractionAnswer.LibraryCardChosen(0));
 
         // Should still be in library search mode (1 remaining)
         assertThat(gd.interaction.activeInteraction()).isInstanceOf(PendingInteraction.LibrarySearch.class);
@@ -118,10 +119,10 @@ class HeadGamesTest extends BaseCardTest {
         harness.passBothPriorities();
 
         // Pick card 1
-        harness.getGameService().handleLibraryCardChosen(gd, player1, 0);
+        harness.getGameService().handleInteractionAnswer(gd, player1, new InteractionAnswer.LibraryCardChosen(0));
 
         // Pick card 2 (last pick)
-        harness.getGameService().handleLibraryCardChosen(gd, player1, 0);
+        harness.getGameService().handleInteractionAnswer(gd, player1, new InteractionAnswer.LibraryCardChosen(0));
 
         // State should be fully cleared
         assertThat(gd.interaction.activeInteraction()).isNull();
@@ -164,7 +165,7 @@ class HeadGamesTest extends BaseCardTest {
         }
         assertThat(swampIndex).isGreaterThanOrEqualTo(0);
 
-        harness.getGameService().handleLibraryCardChosen(gd, player1, swampIndex);
+        harness.getGameService().handleInteractionAnswer(gd, player1, new InteractionAnswer.LibraryCardChosen(swampIndex));
 
         // Opponent's hand should have the Swamp
         assertThat(gd.playerHands.get(player2.getId())).hasSize(1);
@@ -210,7 +211,7 @@ class HeadGamesTest extends BaseCardTest {
         assertThat(gd.interaction.activeInteraction(PendingInteraction.LibrarySearch.class).params().remainingCount()).isEqualTo(1);
 
         // Pick a card — this is the only pick, so state should be cleared
-        harness.getGameService().handleLibraryCardChosen(gd, player1, 0);
+        harness.getGameService().handleInteractionAnswer(gd, player1, new InteractionAnswer.LibraryCardChosen(0));
 
         assertThat(gd.interaction.activeInteraction()).isNull();
         assertThat(gd.playerHands.get(player2.getId())).hasSize(1);
@@ -228,7 +229,7 @@ class HeadGamesTest extends BaseCardTest {
         castHeadGames();
         harness.passBothPriorities();
 
-        assertThatThrownBy(() -> harness.getGameService().handleLibraryCardChosen(gd, player2, 0))
+        assertThatThrownBy(() -> harness.getGameService().handleInteractionAnswer(gd, player2, new InteractionAnswer.LibraryCardChosen(0)))
                 .isInstanceOf(IllegalStateException.class)
                 .hasMessageContaining("Not your turn to choose");
     }
@@ -243,7 +244,7 @@ class HeadGamesTest extends BaseCardTest {
         castHeadGames();
         harness.passBothPriorities();
 
-        assertThatThrownBy(() -> harness.getGameService().handleLibraryCardChosen(gd, player1, 999))
+        assertThatThrownBy(() -> harness.getGameService().handleInteractionAnswer(gd, player1, new InteractionAnswer.LibraryCardChosen(999)))
                 .isInstanceOf(IllegalStateException.class)
                 .hasMessageContaining("Invalid card index");
     }
@@ -260,7 +261,7 @@ class HeadGamesTest extends BaseCardTest {
 
         assertThat(gd.interaction.activeInteraction(PendingInteraction.LibrarySearch.class).params().canFailToFind()).isFalse();
 
-        assertThatThrownBy(() -> harness.getGameService().handleLibraryCardChosen(gd, player1, -1))
+        assertThatThrownBy(() -> harness.getGameService().handleInteractionAnswer(gd, player1, new InteractionAnswer.LibraryCardChosen(-1)))
                 .isInstanceOf(IllegalStateException.class)
                 .hasMessageContaining("Cannot fail to find");
     }
@@ -277,7 +278,7 @@ class HeadGamesTest extends BaseCardTest {
         castHeadGames();
         harness.passBothPriorities();
 
-        harness.getGameService().handleLibraryCardChosen(gd, player1, 0);
+        harness.getGameService().handleInteractionAnswer(gd, player1, new InteractionAnswer.LibraryCardChosen(0));
 
         assertThat(gd.stack).isEmpty();
         assertThat(gd.playerGraveyards.get(player1.getId()))
@@ -301,7 +302,7 @@ class HeadGamesTest extends BaseCardTest {
         // Caster's hand should be empty (Head Games was cast from it)
         assertThat(gd.playerHands.get(player1.getId())).isEmpty();
 
-        harness.getGameService().handleLibraryCardChosen(gd, player1, 0);
+        harness.getGameService().handleInteractionAnswer(gd, player1, new InteractionAnswer.LibraryCardChosen(0));
 
         // Caster's hand should still be empty
         assertThat(gd.playerHands.get(player1.getId())).isEmpty();
@@ -348,7 +349,7 @@ class HeadGamesTest extends BaseCardTest {
         castHeadGames();
         harness.passBothPriorities();
 
-        harness.getGameService().handleLibraryCardChosen(gd, player1, 0);
+        harness.getGameService().handleInteractionAnswer(gd, player1, new InteractionAnswer.LibraryCardChosen(0));
 
         assertThat(gd.gameLog.stream().map(GameLogEntry::plainText)).anyMatch(log -> log.contains("library is shuffled"));
     }
@@ -369,7 +370,7 @@ class HeadGamesTest extends BaseCardTest {
         int initialSearchSize = gd.interaction.activeInteraction(PendingInteraction.LibrarySearch.class).params().cards().size();
 
         // First pick
-        harness.getGameService().handleLibraryCardChosen(gd, player1, 0);
+        harness.getGameService().handleInteractionAnswer(gd, player1, new InteractionAnswer.LibraryCardChosen(0));
 
         // Search cards should have one fewer card
         assertThat(gd.interaction.activeInteraction(PendingInteraction.LibrarySearch.class).params().cards()).hasSize(initialSearchSize - 1);

@@ -1,5 +1,6 @@
 package com.github.laxika.magicalvibes.cards.i;
 
+import com.github.laxika.magicalvibes.service.interaction.InteractionAnswer;
 import com.github.laxika.magicalvibes.model.PendingInteraction;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.ManaColor;
@@ -42,7 +43,7 @@ class IndexTest extends BaseCardTest {
         harness.castSorcery(player1, 0, 0);
         harness.passBothPriorities();
 
-        gs.handleLibraryCardsReordered(gd, player1, List.of(4, 3, 2, 1, 0));
+        gs.handleInteractionAnswer(gd, player1, new InteractionAnswer.CardOrder(List.of(4, 3, 2, 1, 0)));
 
         assertThat(deck.get(0)).isSameAs(top4);
         assertThat(deck.get(1)).isSameAs(top3);
@@ -60,7 +61,7 @@ class IndexTest extends BaseCardTest {
         harness.castSorcery(player1, 0, 0);
         harness.passBothPriorities();
 
-        gs.handleLibraryCardsReordered(gd, player1, List.of(0, 1, 2, 3, 4));
+        gs.handleInteractionAnswer(gd, player1, new InteractionAnswer.CardOrder(List.of(0, 1, 2, 3, 4)));
 
         assertThat(gd.interaction.activeInteraction()).isNull();
         assertThat(gd.stack).isEmpty();

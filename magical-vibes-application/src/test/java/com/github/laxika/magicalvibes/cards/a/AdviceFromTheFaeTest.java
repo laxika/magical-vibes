@@ -1,5 +1,6 @@
 package com.github.laxika.magicalvibes.cards.a;
 
+import com.github.laxika.magicalvibes.service.interaction.InteractionAnswer;
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.ManaColor;
@@ -35,7 +36,7 @@ class AdviceFromTheFaeTest extends BaseCardTest {
         harness.passBothPriorities();
         harness.handleMultipleCardsChosen(player1, List.of(top.get(0).getId(), top.get(1).getId()));
         // The remaining three are ordered onto the bottom of the library.
-        gs.handleLibraryCardsReordered(gd, player1, List.of(0, 1, 2));
+        gs.handleInteractionAnswer(gd, player1, new InteractionAnswer.CardOrder(List.of(0, 1, 2)));
 
         assertThat(gd.playerHands.get(player1.getId())).contains(top.get(0), top.get(1));
         assertThat(gd.playerDecks.get(player1.getId())).hasSize(3)
@@ -53,7 +54,7 @@ class AdviceFromTheFaeTest extends BaseCardTest {
         harness.passBothPriorities();
         harness.handleMultipleCardsChosen(player1, List.of(top.get(0).getId()));
         // The remaining four are ordered onto the bottom of the library.
-        gs.handleLibraryCardsReordered(gd, player1, List.of(0, 1, 2, 3));
+        gs.handleInteractionAnswer(gd, player1, new InteractionAnswer.CardOrder(List.of(0, 1, 2, 3)));
 
         assertThat(gd.playerHands.get(player1.getId())).contains(top.get(0));
         assertThat(gd.playerHands.get(player1.getId()))

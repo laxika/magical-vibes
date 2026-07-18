@@ -1,5 +1,6 @@
 package com.github.laxika.magicalvibes.ai;
 
+import com.github.laxika.magicalvibes.service.interaction.InteractionAnswer;
 import com.github.laxika.magicalvibes.ai.simulation.GameSimulator;
 import com.github.laxika.magicalvibes.ai.simulation.MCTSEngine;
 import com.github.laxika.magicalvibes.ai.simulation.SimulationAction;
@@ -40,14 +41,10 @@ import com.github.laxika.magicalvibes.model.effect.RemovalKind;
 import com.github.laxika.magicalvibes.model.effect.StaticCreatureBoostEffect;
 import com.github.laxika.magicalvibes.networking.message.ActivateAbilityRequest;
 import com.github.laxika.magicalvibes.networking.message.BlockerAssignment;
-import com.github.laxika.magicalvibes.networking.message.CardChosenRequest;
-import com.github.laxika.magicalvibes.networking.message.ChosenFromListRequest;
 import com.github.laxika.magicalvibes.networking.message.DeclareAttackersRequest;
 import com.github.laxika.magicalvibes.networking.message.DeclareBlockersRequest;
-import com.github.laxika.magicalvibes.networking.message.MayAbilityChosenRequest;
 import com.github.laxika.magicalvibes.networking.message.PassPriorityRequest;
 import com.github.laxika.magicalvibes.networking.message.PlayCardRequest;
-import com.github.laxika.magicalvibes.networking.message.ScryCompletedRequest;
 import com.github.laxika.magicalvibes.service.GameBroadcastService;
 import com.github.laxika.magicalvibes.service.cast.CastingCostService;
 import com.github.laxika.magicalvibes.service.cast.CastingPermissionService;
@@ -2352,7 +2349,7 @@ public class HardAiDecisionEngine extends AiDecisionEngine {
 
         log.info("AI (Hard): Discarding card at index {} ({}) in game {}",
                 bestIndex, hand.get(bestIndex).getName(), gameId);
-        send(() -> gameActions.handleCardChosen(selfConnection, new CardChosenRequest(bestIndex)));
+        send(() -> gameActions.answerInteraction(selfConnection, new InteractionAnswer.CardIndexChosen(bestIndex)));
     }
 
     // ===== Mulligan (scoring-based) =====
@@ -2902,8 +2899,8 @@ public class HardAiDecisionEngine extends AiDecisionEngine {
         if (gameData.pendingMayAbilities.isEmpty()) {
             // No pending ability data — fall back to accepting
             log.info("AI (Hard): Accepting may ability (no pending data) in game {}", gameId);
-            send(() -> gameActions.handleMayAbilityChosen(selfConnection,
-                    new MayAbilityChosenRequest(null, true)));
+            send(() -> gameActions.answerInteraction(selfConnection,
+                    new InteractionAnswer.MayAbilityChosen(true)));
             return;
         }
 
@@ -2918,8 +2915,8 @@ public class HardAiDecisionEngine extends AiDecisionEngine {
                 // Can't afford it — decline
                 log.info("AI (Hard): Declining may ability '{}' (can't afford mana cost {}) in game {}",
                         pending.description(), pending.manaCost(), gameId);
-                send(() -> gameActions.handleMayAbilityChosen(selfConnection,
-                        new MayAbilityChosenRequest(null, false)));
+                send(() -> gameActions.answerInteraction(selfConnection,
+                        new InteractionAnswer.MayAbilityChosen(false)));
                 return;
             }
             // Deduct mana value as opportunity cost
@@ -2930,8 +2927,8 @@ public class HardAiDecisionEngine extends AiDecisionEngine {
         log.info("AI (Hard): {} may ability '{}' (value={}) in game {}",
                 accept ? "Accepting" : "Declining", pending.description(),
                 String.format("%.1f", value), gameId);
-        send(() -> gameActions.handleMayAbilityChosen(selfConnection,
-                new MayAbilityChosenRequest(null, accept)));
+        send(() -> gameActions.answerInteraction(selfConnection,
+                new InteractionAnswer.MayAbilityChosen(accept)));
     }
 
     /**
@@ -2990,8 +2987,8 @@ public class HardAiDecisionEngine extends AiDecisionEngine {
 
         log.info("AI (Hard): Scry {} — keeping {} on top (needsLand={}), {} on bottom in game {}",
                 cards.size(), topOrder.size(), needsLand, bottomOrder.size(), gameId);
-        send(() -> gameActions.handleScryCompleted(selfConnection,
-                new ScryCompletedRequest(topOrder, bottomOrder)));
+        send(() -> gameActions.answerInteraction(selfConnection,
+                new InteractionAnswer.ScryOrder(topOrder, bottomOrder)));
     }
 
     /**
@@ -3011,8 +3008,8 @@ public class HardAiDecisionEngine extends AiDecisionEngine {
             String bestSubtype = findMostCommonCreatureType(gameData);
             log.info("AI (Hard): Choosing creature type {} in game {}", bestSubtype, gameId);
             final String subtype = bestSubtype;
-            send(() -> gameActions.handleListChoice(selfConnection,
-                    new ChosenFromListRequest(null, subtype)));
+            send(() -> gameActions.answerInteraction(selfConnection,
+                    new InteractionAnswer.ListChoiceMade(subtype)));
             return;
         }
 
@@ -3022,8 +3019,8 @@ public class HardAiDecisionEngine extends AiDecisionEngine {
             String bestLandType = findMostNeededBasicLandType(gameData);
             log.info("AI (Hard): Choosing basic land type {} in game {}", bestLandType, gameId);
             final String landType = bestLandType;
-            send(() -> gameActions.handleListChoice(selfConnection,
-                    new ChosenFromListRequest(null, landType)));
+            send(() -> gameActions.answerInteraction(selfConnection,
+                    new InteractionAnswer.ListChoiceMade(landType)));
             return;
         }
 

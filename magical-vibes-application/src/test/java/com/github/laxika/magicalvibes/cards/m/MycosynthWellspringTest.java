@@ -1,5 +1,6 @@
 package com.github.laxika.magicalvibes.cards.m;
 
+import com.github.laxika.magicalvibes.service.interaction.InteractionAnswer;
 import com.github.laxika.magicalvibes.model.GameLogEntry;
 
 import com.github.laxika.magicalvibes.model.PendingInteraction;
@@ -84,7 +85,7 @@ class MycosynthWellspringTest extends BaseCardTest {
         List<Card> offered = gd.interaction.activeInteraction(PendingInteraction.LibrarySearch.class).params().cards();
         String chosenName = offered.getFirst().getName();
 
-        harness.getGameService().handleLibraryCardChosen(gd, player1, 0);
+        harness.getGameService().handleInteractionAnswer(gd, player1, new InteractionAnswer.LibraryCardChosen(0));
 
         assertThat(gd.playerHands.get(player1.getId())).anyMatch(c -> c.getName().equals(chosenName));
         assertThat(gd.interaction.activeInteraction()).isNull();
@@ -136,7 +137,7 @@ class MycosynthWellspringTest extends BaseCardTest {
         List<Card> offered = gd.interaction.activeInteraction(PendingInteraction.LibrarySearch.class).params().cards();
         String chosenName = offered.getFirst().getName();
 
-        harness.getGameService().handleLibraryCardChosen(gd, player1, 0);
+        harness.getGameService().handleInteractionAnswer(gd, player1, new InteractionAnswer.LibraryCardChosen(0));
 
         harness.assertInGraveyard(player1, "Mycosynth Wellspring");
         assertThat(gd.playerHands.get(player1.getId())).anyMatch(c -> c.getName().equals(chosenName));

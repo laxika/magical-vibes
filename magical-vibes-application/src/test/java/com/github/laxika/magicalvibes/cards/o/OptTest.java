@@ -1,5 +1,6 @@
 package com.github.laxika.magicalvibes.cards.o;
 
+import com.github.laxika.magicalvibes.service.interaction.InteractionAnswer;
 import com.github.laxika.magicalvibes.model.PendingInteraction;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.ManaColor;
@@ -71,7 +72,7 @@ class OptTest extends BaseCardTest {
         harness.passBothPriorities();
 
         // Complete scry by keeping the card on top
-        gs.handleScryCompleted(gd, player1, List.of(0), List.of());
+        gs.handleInteractionAnswer(gd, player1, new InteractionAnswer.ScryOrder(List.of(0), List.of()));
 
         // Hand should have 1 card (spell left hand, then drew 1)
         assertThat(gd.playerHands.get(player1.getId())).hasSize(1);
@@ -93,7 +94,7 @@ class OptTest extends BaseCardTest {
         harness.passBothPriorities();
 
         // Put the top card on bottom, then draw 1 — should draw what was originally at position 1
-        gs.handleScryCompleted(gd, player1, List.of(), List.of(0));
+        gs.handleInteractionAnswer(gd, player1, new InteractionAnswer.ScryOrder(List.of(), List.of(0)));
 
         List<Card> hand = gd.playerHands.get(player1.getId());
         assertThat(hand).hasSize(1);
@@ -110,7 +111,7 @@ class OptTest extends BaseCardTest {
         harness.passBothPriorities();
 
         // Complete scry
-        gs.handleScryCompleted(gd, player1, List.of(0), List.of());
+        gs.handleInteractionAnswer(gd, player1, new InteractionAnswer.ScryOrder(List.of(0), List.of()));
 
         assertThat(gd.stack).isEmpty();
         assertThat(gd.playerGraveyards.get(player1.getId()))

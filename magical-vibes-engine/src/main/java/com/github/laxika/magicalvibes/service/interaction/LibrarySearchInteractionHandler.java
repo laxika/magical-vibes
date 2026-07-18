@@ -4,7 +4,7 @@ import com.github.laxika.magicalvibes.model.GameData;
 import com.github.laxika.magicalvibes.model.PendingInteraction;
 import com.github.laxika.magicalvibes.model.Player;
 import com.github.laxika.magicalvibes.networking.SessionManager;
-import com.github.laxika.magicalvibes.networking.message.ChooseCardFromLibraryMessage;
+import com.github.laxika.magicalvibes.networking.message.InteractionPromptMessage;
 import com.github.laxika.magicalvibes.networking.model.CardView;
 import com.github.laxika.magicalvibes.networking.service.CardViewFactory;
 import com.github.laxika.magicalvibes.service.input.LibraryChoiceHandlerService;
@@ -43,7 +43,7 @@ public class LibrarySearchInteractionHandler
     @Override
     public void prompt(GameData gameData, PendingInteraction.LibrarySearch interaction, UUID recipientId) {
         List<CardView> cardViews = interaction.params().cards().stream().map(cardViewFactory::create).toList();
-        sessionManager.sendToPlayer(recipientId, new ChooseCardFromLibraryMessage(
+        sessionManager.sendToPlayer(recipientId, InteractionPromptMessage.libraryIndexPick(
                 cardViews, interaction.messagePrompt(), interaction.messageCanFailToFind()));
     }
 

@@ -5,7 +5,7 @@ import com.github.laxika.magicalvibes.model.GameData;
 import com.github.laxika.magicalvibes.model.PendingInteraction;
 import com.github.laxika.magicalvibes.model.Player;
 import com.github.laxika.magicalvibes.networking.SessionManager;
-import com.github.laxika.magicalvibes.networking.message.ChooseFromRevealedHandMessage;
+import com.github.laxika.magicalvibes.networking.message.InteractionPromptMessage;
 import com.github.laxika.magicalvibes.networking.model.CardView;
 import com.github.laxika.magicalvibes.networking.service.CardViewFactory;
 import com.github.laxika.magicalvibes.service.input.CardChoiceHandlerService;
@@ -21,7 +21,7 @@ import java.util.UUID;
  * Handles the two-stage Blackmail flow ({@link PendingInteraction.RevealCardsDiscardChoice}). In
  * the reveal stage the target player is shown their full hand and picks which cards to reveal; in
  * the discard stage the controller is shown only the revealed cards and picks one for the target to
- * discard. Both stages reuse {@link ChooseFromRevealedHandMessage}; the answer is applied by
+ * discard. Both stages reuse the revealed-cards {@code InteractionPromptMessage}; the answer is applied by
  * {@link CardChoiceHandlerService#handleRevealCardsDiscardChosen}.
  */
 @Slf4j
@@ -59,7 +59,7 @@ public class RevealCardsDiscardChoiceInteractionHandler
                         .ifPresent(c -> cardViews.add(cardViewFactory.create(c)));
             }
         }
-        sessionManager.sendToPlayer(recipientId, new ChooseFromRevealedHandMessage(
+        sessionManager.sendToPlayer(recipientId, InteractionPromptMessage.cardIndexPick(
                 cardViews, interaction.validIndices(), interaction.prompt(), false));
 
         log.info("Game {} - Awaiting {} to choose a card (reveal-and-discard)",

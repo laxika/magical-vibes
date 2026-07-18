@@ -1,5 +1,6 @@
 package com.github.laxika.magicalvibes.cards.c;
 
+import com.github.laxika.magicalvibes.service.interaction.InteractionAnswer;
 import com.github.laxika.magicalvibes.model.GameLogEntry;
 
 import com.github.laxika.magicalvibes.model.PendingInteraction;
@@ -82,7 +83,7 @@ class CommuneWithNatureTest extends BaseCardTest {
 
         GameData gd = harness.getGameData();
         // Choose Llanowar Elves
-        harness.getGameService().handleLibraryCardChosen(gd, player1, 0);
+        harness.getGameService().handleInteractionAnswer(gd, player1, new InteractionAnswer.LibraryCardChosen(0));
 
         assertThat(gd.playerHands.get(player1.getId())).anyMatch(c -> c.getName().equals("Llanowar Elves"));
         assertThat(gd.interaction.activeInteraction()).isInstanceOf(PendingInteraction.LibraryReorder.class);
@@ -94,7 +95,7 @@ class CommuneWithNatureTest extends BaseCardTest {
         int iShock = indexOf(remaining, "Shock");
         int iSwamp = indexOf(remaining, "Swamp");
         int iBears = indexOf(remaining, "Grizzly Bears");
-        harness.getGameService().handleLibraryCardsReordered(gd, player1, List.of(iPlains, iShock, iSwamp, iBears));
+        harness.getGameService().handleInteractionAnswer(gd, player1, new InteractionAnswer.CardOrder(List.of(iPlains, iShock, iSwamp, iBears)));
 
         assertThat(gd.playerDecks.get(player1.getId()).stream().map(Card::getName))
                 .containsExactly("Plains", "Shock", "Swamp", "Grizzly Bears");
@@ -118,7 +119,7 @@ class CommuneWithNatureTest extends BaseCardTest {
 
         GameData gd = harness.getGameData();
         int handSizeBefore = gd.playerHands.get(player1.getId()).size();
-        harness.getGameService().handleLibraryCardChosen(gd, player1, -1);
+        harness.getGameService().handleInteractionAnswer(gd, player1, new InteractionAnswer.LibraryCardChosen(-1));
 
         assertThat(gd.playerHands.get(player1.getId())).hasSize(handSizeBefore);
         assertThat(gd.interaction.activeInteraction()).isInstanceOf(PendingInteraction.LibraryReorder.class);

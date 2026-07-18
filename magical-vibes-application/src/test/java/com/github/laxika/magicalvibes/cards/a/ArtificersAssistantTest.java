@@ -1,5 +1,6 @@
 package com.github.laxika.magicalvibes.cards.a;
 
+import com.github.laxika.magicalvibes.service.interaction.InteractionAnswer;
 import com.github.laxika.magicalvibes.model.PendingInteraction;
 import com.github.laxika.magicalvibes.model.GameData;
 import com.github.laxika.magicalvibes.model.ManaColor;
@@ -118,7 +119,7 @@ class ArtificersAssistantTest extends BaseCardTest {
         // Cast first artifact
         harness.castArtifact(player1, 0);
         harness.passBothPriorities(); // resolve triggered ability (scry)
-        harness.getGameService().handleScryCompleted(harness.getGameData(), player1, List.of(0), List.of());
+        harness.getGameService().handleInteractionAnswer(harness.getGameData(), player1, new InteractionAnswer.ScryOrder(List.of(0), List.of()));
         harness.passBothPriorities(); // resolve Spellbook
 
         // Cast second artifact

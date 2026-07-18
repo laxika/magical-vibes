@@ -1,5 +1,6 @@
 package com.github.laxika.magicalvibes.cards.b;
 
+import com.github.laxika.magicalvibes.service.interaction.InteractionAnswer;
 import com.github.laxika.magicalvibes.model.GameLogEntry;
 
 import com.github.laxika.magicalvibes.cards.a.AirElemental;
@@ -84,7 +85,7 @@ class BeseechTheQueenTest extends BaseCardTest {
         int deckSizeBefore = gd.playerDecks.get(player1.getId()).size();
         String chosenName = gd.interaction.activeInteraction(PendingInteraction.LibrarySearch.class).params().cards().getFirst().getName();
 
-        harness.getGameService().handleLibraryCardChosen(gd, player1, 0);
+        harness.getGameService().handleInteractionAnswer(gd, player1, new InteractionAnswer.LibraryCardChosen(0));
 
         assertThat(gd.playerHands.get(player1.getId())).anyMatch(c -> c.getName().equals(chosenName));
         assertThat(gd.playerDecks.get(player1.getId())).hasSize(deckSizeBefore - 1);
@@ -106,7 +107,7 @@ class BeseechTheQueenTest extends BaseCardTest {
         int handSizeBefore = gd.playerHands.get(player1.getId()).size();
         int deckSizeBefore = gd.playerDecks.get(player1.getId()).size();
 
-        harness.getGameService().handleLibraryCardChosen(gd, player1, -1);
+        harness.getGameService().handleInteractionAnswer(gd, player1, new InteractionAnswer.LibraryCardChosen(-1));
 
         assertThat(gd.playerHands.get(player1.getId())).hasSize(handSizeBefore);
         assertThat(gd.playerDecks.get(player1.getId())).hasSize(deckSizeBefore);

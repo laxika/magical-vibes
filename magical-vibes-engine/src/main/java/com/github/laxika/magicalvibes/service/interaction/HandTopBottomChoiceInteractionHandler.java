@@ -6,7 +6,7 @@ import com.github.laxika.magicalvibes.model.GameLog;
 import com.github.laxika.magicalvibes.model.PendingInteraction;
 import com.github.laxika.magicalvibes.model.Player;
 import com.github.laxika.magicalvibes.networking.SessionManager;
-import com.github.laxika.magicalvibes.networking.message.ChooseHandTopBottomMessage;
+import com.github.laxika.magicalvibes.networking.message.InteractionPromptMessage;
 import com.github.laxika.magicalvibes.networking.model.CardView;
 import com.github.laxika.magicalvibes.networking.service.CardViewFactory;
 import com.github.laxika.magicalvibes.service.GameBroadcastService;
@@ -47,7 +47,7 @@ public class HandTopBottomChoiceInteractionHandler
     @Override
     public void prompt(GameData gameData, PendingInteraction.HandTopBottomChoice interaction, UUID recipientId) {
         List<CardView> cardViews = interaction.cards().stream().map(cardViewFactory::create).toList();
-        sessionManager.sendToPlayer(recipientId, new ChooseHandTopBottomMessage(
+        sessionManager.sendToPlayer(recipientId, InteractionPromptMessage.handTopBottom(
                 cardViews,
                 "Look at the top " + interaction.cards().size()
                         + " cards of your library. Choose one to put into your hand."));

@@ -146,19 +146,7 @@ public abstract class AiDecisionEngine {
             case "SELECT_CARDS_TO_BOTTOM" -> choiceHandler.handleBottomCards(gameData);
             case "AVAILABLE_ATTACKERS" -> handleAttackers(gameData);
             case "AVAILABLE_BLOCKERS" -> handleBlockers(gameData);
-            case "CHOOSE_CARD_FROM_HAND" -> handleCardChoice(gameData);
-            case "CHOOSE_PERMANENT" -> choiceHandler.handlePermanentChoice(gameData);
-            case "CHOOSE_MULTIPLE_PERMANENTS" -> choiceHandler.handleMultiPermanentChoice(gameData);
-            case "CHOOSE_FROM_LIST" -> handleListChoice(gameData);
-            case "MAY_ABILITY_CHOICE" -> handleMayAbilityChoice(gameData);
-            case "X_VALUE_CHOICE" -> choiceHandler.handleActiveInteraction(gameData);
-            case "SCRY" -> handleScry(gameData);
-            case "REORDER_LIBRARY_CARDS" -> choiceHandler.handleActiveInteraction(gameData);
-            case "CHOOSE_CARD_FROM_LIBRARY" -> choiceHandler.handleLibrarySearch(gameData);
-            case "CHOOSE_CARD_FROM_GRAVEYARD" -> choiceHandler.handleGraveyardChoice(gameData);
-            case "CHOOSE_MULTIPLE_CARDS" -> choiceHandler.handleMultiCardChoice(gameData);
-            case "CHOOSE_HAND_TOP_BOTTOM" -> choiceHandler.handleActiveInteraction(gameData);
-            case "CHOOSE_FROM_REVEALED_HAND" -> choiceHandler.handleRevealedHandChoice(gameData);
+            case "INTERACTION_PROMPT" -> handleInteractionPrompt(gameData);
             case "COMBAT_DAMAGE_ASSIGNMENT" -> choiceHandler.handleCombatDamageAssignment(gameData);
             case "GAME_OVER" -> log.info("AI: Game {} is over", gameId);
             default -> {
@@ -191,6 +179,23 @@ public abstract class AiDecisionEngine {
 
     protected void handleListChoice(GameData gameData) {
         choiceHandler.handleColorChoice(gameData);
+    }
+
+    /**
+     * Routes the generic interaction prompt by the active interaction kind, preserving the
+     * per-difficulty overridable routes (hand picks, color/list picks, may abilities, scry);
+     * every other kind is answered by the strategy registry via
+     * {@code AiChoiceHandler.handleActiveInteraction}.
+     */
+    protected void handleInteractionPrompt(GameData gameData) {
+        switch (gameData.interaction.activeInteraction()) {
+            case PendingInteraction.HandChoice ignored -> handleCardChoice(gameData);
+            case PendingInteraction.ColorChoice ignored -> handleListChoice(gameData);
+            case PendingInteraction.MayAbilityChoice ignored -> handleMayAbilityChoice(gameData);
+            case PendingInteraction.Scry ignored -> handleScry(gameData);
+            case null -> { }
+            default -> choiceHandler.handleActiveInteraction(gameData);
+        }
     }
 
     // ===== Mulligan =====

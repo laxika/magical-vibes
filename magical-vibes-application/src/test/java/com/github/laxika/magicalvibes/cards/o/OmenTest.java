@@ -1,5 +1,6 @@
 package com.github.laxika.magicalvibes.cards.o;
 
+import com.github.laxika.magicalvibes.service.interaction.InteractionAnswer;
 import com.github.laxika.magicalvibes.model.PendingInteraction;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.ManaColor;
@@ -35,7 +36,7 @@ class OmenTest extends BaseCardTest {
         harness.castSorcery(player1, 0, 0);
         harness.passBothPriorities();
 
-        gs.handleLibraryCardsReordered(gd, player1, List.of(0, 1, 2));
+        gs.handleInteractionAnswer(gd, player1, new InteractionAnswer.CardOrder(List.of(0, 1, 2)));
 
         assertThat(gd.interaction.activeInteraction()).isInstanceOf(PendingInteraction.MayAbilityChoice.class);
     }
@@ -53,7 +54,7 @@ class OmenTest extends BaseCardTest {
         harness.passBothPriorities();
 
         // Put card at index 2 on top, then decline shuffle
-        gs.handleLibraryCardsReordered(gd, player1, List.of(2, 0, 1));
+        gs.handleInteractionAnswer(gd, player1, new InteractionAnswer.CardOrder(List.of(2, 0, 1)));
         harness.handleMayAbilityChosen(player1, false);
 
         List<Card> hand = gd.playerHands.get(player1.getId());
@@ -72,7 +73,7 @@ class OmenTest extends BaseCardTest {
         harness.castSorcery(player1, 0, 0);
         harness.passBothPriorities();
 
-        gs.handleLibraryCardsReordered(gd, player1, List.of(0, 1, 2));
+        gs.handleInteractionAnswer(gd, player1, new InteractionAnswer.CardOrder(List.of(0, 1, 2)));
         harness.handleMayAbilityChosen(player1, true);
 
         assertThat(gd.playerHands.get(player1.getId())).hasSize(1);
@@ -88,7 +89,7 @@ class OmenTest extends BaseCardTest {
         harness.castSorcery(player1, 0, 0);
         harness.passBothPriorities();
 
-        gs.handleLibraryCardsReordered(gd, player1, List.of(0, 1, 2));
+        gs.handleInteractionAnswer(gd, player1, new InteractionAnswer.CardOrder(List.of(0, 1, 2)));
         harness.handleMayAbilityChosen(player1, false);
 
         assertThat(gd.stack).isEmpty();

@@ -1,5 +1,6 @@
 package com.github.laxika.magicalvibes.cards.b;
 
+import com.github.laxika.magicalvibes.service.interaction.InteractionAnswer;
 import com.github.laxika.magicalvibes.model.GameLogEntry;
 
 import com.github.laxika.magicalvibes.model.PendingInteraction;
@@ -131,7 +132,7 @@ class BoardTheWeatherlightTest extends BaseCardTest {
         harness.passBothPriorities();
 
         GameData gd = harness.getGameData();
-        harness.getGameService().handleLibraryCardChosen(gd, player1, 0);
+        harness.getGameService().handleInteractionAnswer(gd, player1, new InteractionAnswer.LibraryCardChosen(0));
 
         assertThat(gd.playerHands.get(player1.getId())).anyMatch(c -> c.getName().equals("Arvad the Cursed"));
         assertThat(gd.interaction.activeInteraction()).isInstanceOf(PendingInteraction.LibraryReorder.class);
@@ -157,7 +158,7 @@ class BoardTheWeatherlightTest extends BaseCardTest {
 
         GameData gd = harness.getGameData();
         int handSizeBefore = gd.playerHands.get(player1.getId()).size();
-        harness.getGameService().handleLibraryCardChosen(gd, player1, -1);
+        harness.getGameService().handleInteractionAnswer(gd, player1, new InteractionAnswer.LibraryCardChosen(-1));
 
         assertThat(gd.playerHands.get(player1.getId())).hasSize(handSizeBefore);
         assertThat(gd.interaction.activeInteraction()).isInstanceOf(PendingInteraction.LibraryReorder.class);

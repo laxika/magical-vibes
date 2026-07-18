@@ -1,7 +1,7 @@
 package com.github.laxika.magicalvibes.ai.interaction;
 
+import com.github.laxika.magicalvibes.service.interaction.InteractionAnswer;
 import com.github.laxika.magicalvibes.model.PendingInteraction;
-import com.github.laxika.magicalvibes.networking.message.MayAbilityChosenRequest;
 import lombok.extern.slf4j.Slf4j;
 
 /**
@@ -24,6 +24,6 @@ class MayAbilityChoiceAiStrategy implements AiInteractionStrategy<PendingInterac
         }
 
         log.info("AI: Accepting may ability in game {}", ctx.gameId());
-        ctx.gameActions().handleMayAbilityChosen(ctx.selfConnection(), new MayAbilityChosenRequest(null, true));
+        ctx.gameActions().answerInteraction(ctx.selfConnection(), new InteractionAnswer.MayAbilityChosen(true));
     }
 }

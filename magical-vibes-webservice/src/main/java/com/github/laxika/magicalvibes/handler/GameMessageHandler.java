@@ -8,14 +8,12 @@ import com.github.laxika.magicalvibes.model.Player;
 import com.github.laxika.magicalvibes.networking.Connection;
 import com.github.laxika.magicalvibes.networking.MessageHandler;
 import com.github.laxika.magicalvibes.networking.message.BottomCardsRequest;
-import com.github.laxika.magicalvibes.networking.message.CardChosenRequest;
-import com.github.laxika.magicalvibes.networking.message.ChosenFromListRequest;
 import com.github.laxika.magicalvibes.networking.message.CombatDamageAssignedRequest;
+import com.github.laxika.magicalvibes.networking.message.InteractionAnswerRequest;
 import com.github.laxika.magicalvibes.networking.message.CreateGameRequest;
 import com.github.laxika.magicalvibes.networking.message.DeclareAttackersRequest;
 import com.github.laxika.magicalvibes.networking.message.DeclareBlockersRequest;
 import com.github.laxika.magicalvibes.networking.message.ErrorMessage;
-import com.github.laxika.magicalvibes.networking.message.GraveyardCardChosenRequest;
 import com.github.laxika.magicalvibes.networking.message.JoinGame;
 import com.github.laxika.magicalvibes.networking.message.JoinGameMessage;
 import com.github.laxika.magicalvibes.networking.message.JoinGameRequest;
@@ -34,17 +32,9 @@ import com.github.laxika.magicalvibes.networking.message.SaveDeckResponse;
 import com.github.laxika.magicalvibes.networking.message.ActivateAbilityRequest;
 import com.github.laxika.magicalvibes.networking.message.ActivateGraveyardAbilityRequest;
 import com.github.laxika.magicalvibes.networking.message.ActivateHandAbilityRequest;
-import com.github.laxika.magicalvibes.networking.message.MayAbilityChosenRequest;
-import com.github.laxika.magicalvibes.networking.message.MultipleCardsChosenRequest;
-import com.github.laxika.magicalvibes.networking.message.MultiplePermanentsChosenRequest;
-import com.github.laxika.magicalvibes.networking.message.PermanentChosenRequest;
-import com.github.laxika.magicalvibes.networking.message.LibraryCardChosenRequest;
-import com.github.laxika.magicalvibes.networking.message.ReorderLibraryCardsRequest;
-import com.github.laxika.magicalvibes.networking.message.ScryCompletedRequest;
 import com.github.laxika.magicalvibes.networking.message.SacrificePermanentRequest;
 import com.github.laxika.magicalvibes.networking.message.SetAutoStopsRequest;
 import com.github.laxika.magicalvibes.networking.message.TapPermanentRequest;
-import com.github.laxika.magicalvibes.networking.message.HandTopBottomChosenRequest;
 import com.github.laxika.magicalvibes.networking.message.CardListResponse;
 import com.github.laxika.magicalvibes.networking.message.CreateDraftRequest;
 import com.github.laxika.magicalvibes.networking.message.DraftPickRequest;
@@ -52,11 +42,11 @@ import com.github.laxika.magicalvibes.networking.message.RequestCardListRequest;
 import com.github.laxika.magicalvibes.networking.message.SubmitDeckRequest;
 import com.github.laxika.magicalvibes.networking.message.ValidTargetsRequest;
 import com.github.laxika.magicalvibes.networking.message.ValidTargetsResponse;
-import com.github.laxika.magicalvibes.networking.message.XValueChosenRequest;
 import com.github.laxika.magicalvibes.networking.model.MessageType;
 import com.github.laxika.magicalvibes.ai.AiPlayerService;
 import com.github.laxika.magicalvibes.model.DraftData;
 import com.github.laxika.magicalvibes.model.DraftStatus;
+import com.github.laxika.magicalvibes.service.interaction.InteractionAnswer;
 import com.github.laxika.magicalvibes.service.DraftRegistry;
 import com.github.laxika.magicalvibes.webservice.DraftService;
 import com.github.laxika.magicalvibes.service.GameBroadcastService;
@@ -617,7 +607,7 @@ public class GameMessageHandler implements MessageHandler {
     }
 
     @Override
-    public void handleCardChosen(Connection connection, CardChosenRequest request) throws Exception {
+    public void handleInteractionAnswer(Connection connection, InteractionAnswerRequest request) throws Exception {
         Player player = sessionManager.getPlayer(connection.getId());
         if (player == null) {
             handleError(connection, "Not authenticated");
@@ -630,221 +620,34 @@ public class GameMessageHandler implements MessageHandler {
             return;
         }
 
+        if (request.shape() == null) {
+            handleError(connection, "Missing interaction answer shape");
+            return;
+        }
+
         try {
-            gameService.handleCardChosen(gameData, player, request.cardIndex());
+            gameService.handleInteractionAnswer(gameData, player, toAnswer(request));
         } catch (IllegalArgumentException | IllegalStateException e) {
             handleError(connection, e.getMessage());
         }
     }
 
-    @Override
-    public void handleGraveyardCardChosen(Connection connection, GraveyardCardChosenRequest request) throws Exception {
-        Player player = sessionManager.getPlayer(connection.getId());
-        if (player == null) {
-            handleError(connection, "Not authenticated");
-            return;
-        }
-
-        GameData gameData = gameRegistry.getGameForPlayer(player.getId());
-        if (gameData == null) {
-            handleError(connection, "Not in a game");
-            return;
-        }
-
-        try {
-            gameService.handleGraveyardCardChosen(gameData, player, request.cardIndex());
-        } catch (IllegalArgumentException | IllegalStateException e) {
-            handleError(connection, e.getMessage());
-        }
-    }
-
-    @Override
-    public void handlePermanentChosen(Connection connection, PermanentChosenRequest request) throws Exception {
-        Player player = sessionManager.getPlayer(connection.getId());
-        if (player == null) {
-            handleError(connection, "Not authenticated");
-            return;
-        }
-
-        GameData gameData = gameRegistry.getGameForPlayer(player.getId());
-        if (gameData == null) {
-            handleError(connection, "Not in a game");
-            return;
-        }
-
-        try {
-            gameService.handlePermanentChosen(gameData, player, request.permanentId());
-        } catch (IllegalArgumentException | IllegalStateException e) {
-            handleError(connection, e.getMessage());
-        }
-    }
-
-    @Override
-    public void handleMultiplePermanentsChosen(Connection connection, MultiplePermanentsChosenRequest request) throws Exception {
-        Player player = sessionManager.getPlayer(connection.getId());
-        if (player == null) {
-            handleError(connection, "Not authenticated");
-            return;
-        }
-
-        GameData gameData = gameRegistry.getGameForPlayer(player.getId());
-        if (gameData == null) {
-            handleError(connection, "Not in a game");
-            return;
-        }
-
-        try {
-            gameService.handleMultiplePermanentsChosen(gameData, player, request.permanentIds());
-        } catch (IllegalArgumentException | IllegalStateException e) {
-            handleError(connection, e.getMessage());
-        }
-    }
-
-    @Override
-    public void handleMultipleCardsChosen(Connection connection, MultipleCardsChosenRequest request) throws Exception {
-        Player player = sessionManager.getPlayer(connection.getId());
-        if (player == null) {
-            handleError(connection, "Not authenticated");
-            return;
-        }
-
-        GameData gameData = gameRegistry.getGameForPlayer(player.getId());
-        if (gameData == null) {
-            handleError(connection, "Not in a game");
-            return;
-        }
-
-        try {
-            gameService.handleMultipleCardsChosen(gameData, player, request.cardIds());
-        } catch (IllegalArgumentException | IllegalStateException e) {
-            handleError(connection, e.getMessage());
-        }
-    }
-
-    @Override
-    public void handleListChoice(Connection connection, ChosenFromListRequest request) throws Exception {
-        Player player = sessionManager.getPlayer(connection.getId());
-        if (player == null) {
-            handleError(connection, "Not authenticated");
-            return;
-        }
-
-        GameData gameData = gameRegistry.getGameForPlayer(player.getId());
-        if (gameData == null) {
-            handleError(connection, "Not in a game");
-            return;
-        }
-
-        try {
-            gameService.handleListChoice(gameData, player, request.choice());
-        } catch (IllegalArgumentException | IllegalStateException e) {
-            handleError(connection, e.getMessage());
-        }
-    }
-
-    @Override
-    public void handleMayAbilityChosen(Connection connection, MayAbilityChosenRequest request) throws Exception {
-        Player player = sessionManager.getPlayer(connection.getId());
-        if (player == null) {
-            handleError(connection, "Not authenticated");
-            return;
-        }
-
-        GameData gameData = gameRegistry.getGameForPlayer(player.getId());
-        if (gameData == null) {
-            handleError(connection, "Not in a game");
-            return;
-        }
-
-        try {
-            gameService.handleMayAbilityChosen(gameData, player, request.accepted());
-        } catch (IllegalArgumentException | IllegalStateException e) {
-            handleError(connection, e.getMessage());
-        }
-    }
-
-    @Override
-    public void handleScryCompleted(Connection connection, ScryCompletedRequest request) throws Exception {
-        Player player = sessionManager.getPlayer(connection.getId());
-        if (player == null) {
-            handleError(connection, "Not authenticated");
-            return;
-        }
-
-        GameData gameData = gameRegistry.getGameForPlayer(player.getId());
-        if (gameData == null) {
-            handleError(connection, "Not in a game");
-            return;
-        }
-
-        try {
-            gameService.handleScryCompleted(gameData, player, request.topCardOrder(), request.bottomCardOrder());
-        } catch (IllegalArgumentException | IllegalStateException e) {
-            handleError(connection, e.getMessage());
-        }
-    }
-
-    @Override
-    public void handleLibraryCardsReordered(Connection connection, ReorderLibraryCardsRequest request) throws Exception {
-        Player player = sessionManager.getPlayer(connection.getId());
-        if (player == null) {
-            handleError(connection, "Not authenticated");
-            return;
-        }
-
-        GameData gameData = gameRegistry.getGameForPlayer(player.getId());
-        if (gameData == null) {
-            handleError(connection, "Not in a game");
-            return;
-        }
-
-        try {
-            gameService.handleLibraryCardsReordered(gameData, player, request.cardOrder());
-        } catch (IllegalArgumentException | IllegalStateException e) {
-            handleError(connection, e.getMessage());
-        }
-    }
-
-    @Override
-    public void handleLibraryCardChosen(Connection connection, LibraryCardChosenRequest request) throws Exception {
-        Player player = sessionManager.getPlayer(connection.getId());
-        if (player == null) {
-            handleError(connection, "Not authenticated");
-            return;
-        }
-
-        GameData gameData = gameRegistry.getGameForPlayer(player.getId());
-        if (gameData == null) {
-            handleError(connection, "Not in a game");
-            return;
-        }
-
-        try {
-            gameService.handleLibraryCardChosen(gameData, player, request.cardIndex());
-        } catch (IllegalArgumentException | IllegalStateException e) {
-            handleError(connection, e.getMessage());
-        }
-    }
-
-    @Override
-    public void handleHandTopBottomChosen(Connection connection, HandTopBottomChosenRequest request) throws Exception {
-        Player player = sessionManager.getPlayer(connection.getId());
-        if (player == null) {
-            handleError(connection, "Not authenticated");
-            return;
-        }
-
-        GameData gameData = gameRegistry.getGameForPlayer(player.getId());
-        if (gameData == null) {
-            handleError(connection, "Not in a game");
-            return;
-        }
-
-        try {
-            gameService.handleHandTopBottomChosen(gameData, player, request.handCardIndex(), request.topCardIndex());
-        } catch (IllegalArgumentException | IllegalStateException e) {
-            handleError(connection, e.getMessage());
-        }
+    /** Maps the wire answer payload to the engine's {@link InteractionAnswer} by shape. */
+    private static InteractionAnswer toAnswer(InteractionAnswerRequest request) {
+        return switch (request.shape()) {
+            case CARD_INDEX_PICK -> new InteractionAnswer.CardIndexChosen(request.index());
+            case GRAVEYARD_INDEX_PICK -> new InteractionAnswer.GraveyardCardChosen(request.index());
+            case LIBRARY_INDEX_PICK -> new InteractionAnswer.LibraryCardChosen(request.index());
+            case PERMANENT_PICK -> new InteractionAnswer.PermanentChosen(request.id());
+            case MULTI_CARD_PICK -> new InteractionAnswer.CardsChosen(request.ids());
+            case MULTI_PERMANENT_PICK -> new InteractionAnswer.PermanentsChosen(request.ids());
+            case LIST_PICK -> new InteractionAnswer.ListChoiceMade(request.choice());
+            case ACCEPT_DECLINE -> new InteractionAnswer.MayAbilityChosen(Boolean.TRUE.equals(request.accepted()));
+            case NUMBER_PICK -> new InteractionAnswer.NumberChosen(request.number());
+            case SCRY_ORDER -> new InteractionAnswer.ScryOrder(request.order(), request.secondOrder());
+            case CARD_ORDER -> new InteractionAnswer.CardOrder(request.order());
+            case HAND_TOP_BOTTOM -> new InteractionAnswer.HandTopBottom(request.index(), request.secondIndex());
+        };
     }
 
     @Override
@@ -1032,27 +835,6 @@ public class GameMessageHandler implements MessageHandler {
                 }
             }
             connection.sendMessage(objectMapper.writeValueAsString(response));
-        } catch (IllegalArgumentException | IllegalStateException e) {
-            handleError(connection, e.getMessage());
-        }
-    }
-
-    @Override
-    public void handleXValueChosen(Connection connection, XValueChosenRequest request) throws Exception {
-        Player player = sessionManager.getPlayer(connection.getId());
-        if (player == null) {
-            handleError(connection, "Not authenticated");
-            return;
-        }
-
-        GameData gameData = gameRegistry.getGameForPlayer(player.getId());
-        if (gameData == null) {
-            handleError(connection, "Not in a game");
-            return;
-        }
-
-        try {
-            gameService.handleXValueChosen(gameData, player, request.chosenValue());
         } catch (IllegalArgumentException | IllegalStateException e) {
             handleError(connection, e.getMessage());
         }

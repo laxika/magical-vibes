@@ -1,5 +1,6 @@
 package com.github.laxika.magicalvibes.cards.f;
 
+import com.github.laxika.magicalvibes.service.interaction.InteractionAnswer;
 import com.github.laxika.magicalvibes.model.GameLogEntry;
 
 import com.github.laxika.magicalvibes.model.PendingInteraction;
@@ -71,7 +72,7 @@ class FinalPartingTest extends BaseCardTest {
 
         // Pick first card for hand
         String chosenName = gd.interaction.activeInteraction(PendingInteraction.LibrarySearch.class).params().cards().getFirst().getName();
-        harness.getGameService().handleLibraryCardChosen(gd, player1, 0);
+        harness.getGameService().handleInteractionAnswer(gd, player1, new InteractionAnswer.LibraryCardChosen(0));
 
         // Card is in hand
         assertThat(gd.playerHands.get(player1.getId())).hasSize(handBefore + 1);
@@ -99,10 +100,10 @@ class FinalPartingTest extends BaseCardTest {
         GameData gd = harness.getGameData();
 
         // First pick: hand
-        harness.getGameService().handleLibraryCardChosen(gd, player1, 0);
+        harness.getGameService().handleInteractionAnswer(gd, player1, new InteractionAnswer.LibraryCardChosen(0));
         // Second pick: graveyard
         String graveyardCardName = gd.interaction.activeInteraction(PendingInteraction.LibrarySearch.class).params().cards().getFirst().getName();
-        harness.getGameService().handleLibraryCardChosen(gd, player1, 0);
+        harness.getGameService().handleInteractionAnswer(gd, player1, new InteractionAnswer.LibraryCardChosen(0));
 
         // Card is in graveyard (Final Parting itself + the chosen card)
         assertThat(gd.playerGraveyards.get(player1.getId()))
@@ -125,11 +126,11 @@ class FinalPartingTest extends BaseCardTest {
 
         // First search: pick Plains for hand
         int plainsIndex = findCardIndex(gd, "Plains");
-        harness.getGameService().handleLibraryCardChosen(gd, player1, plainsIndex);
+        harness.getGameService().handleInteractionAnswer(gd, player1, new InteractionAnswer.LibraryCardChosen(plainsIndex));
 
         // Second search: pick Grizzly Bears for graveyard
         int bearsIndex = findCardIndex(gd, "Grizzly Bears");
-        harness.getGameService().handleLibraryCardChosen(gd, player1, bearsIndex);
+        harness.getGameService().handleInteractionAnswer(gd, player1, new InteractionAnswer.LibraryCardChosen(bearsIndex));
 
         assertThat(gd.playerHands.get(player1.getId())).hasSize(handBefore + 1);
         assertThat(gd.playerHands.get(player1.getId()))
@@ -161,7 +162,7 @@ class FinalPartingTest extends BaseCardTest {
         harness.passBothPriorities();
 
         GameData gd = harness.getGameData();
-        harness.getGameService().handleLibraryCardChosen(gd, player1, 0);
+        harness.getGameService().handleInteractionAnswer(gd, player1, new InteractionAnswer.LibraryCardChosen(0));
 
         assertThat(gd.interaction.activeInteraction(PendingInteraction.LibrarySearch.class).params().canFailToFind()).isFalse();
     }
@@ -182,7 +183,7 @@ class FinalPartingTest extends BaseCardTest {
         assertThat(gd.interaction.activeInteraction(PendingInteraction.LibrarySearch.class).params().cards()).hasSize(1);
 
         // Pick the only card for hand
-        harness.getGameService().handleLibraryCardChosen(gd, player1, 0);
+        harness.getGameService().handleInteractionAnswer(gd, player1, new InteractionAnswer.LibraryCardChosen(0));
 
         // Library is now empty — no second pick, just finishes
         assertThat(gd.interaction.activeInteraction()).isNull();
@@ -215,9 +216,9 @@ class FinalPartingTest extends BaseCardTest {
 
         GameData gd = harness.getGameData();
         // First pick: hand
-        harness.getGameService().handleLibraryCardChosen(gd, player1, 0);
+        harness.getGameService().handleInteractionAnswer(gd, player1, new InteractionAnswer.LibraryCardChosen(0));
         // Second pick: graveyard
-        harness.getGameService().handleLibraryCardChosen(gd, player1, 0);
+        harness.getGameService().handleInteractionAnswer(gd, player1, new InteractionAnswer.LibraryCardChosen(0));
 
         assertThat(gd.playerGraveyards.get(player1.getId()))
                 .anyMatch(c -> c.getName().equals("Final Parting"));

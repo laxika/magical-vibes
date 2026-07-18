@@ -1,5 +1,6 @@
 package com.github.laxika.magicalvibes.cards.v;
 
+import com.github.laxika.magicalvibes.service.interaction.InteractionAnswer;
 import com.github.laxika.magicalvibes.cards.d.DiabolicTutor;
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
 import com.github.laxika.magicalvibes.cards.i.Island;
@@ -43,7 +44,7 @@ class VampiricTutorTest extends BaseCardTest {
         List<Card> offered = gd.interaction.activeInteraction(PendingInteraction.LibrarySearch.class).params().cards();
         String chosenName = offered.get(1).getName();
 
-        gs.handleLibraryCardChosen(gd, player1, 1);
+        gs.handleInteractionAnswer(gd, player1, new InteractionAnswer.LibraryCardChosen(1));
 
         List<Card> deck = gd.playerDecks.get(player1.getId());
         assertThat(deck.getFirst().getName()).isEqualTo(chosenName);
@@ -58,7 +59,7 @@ class VampiricTutorTest extends BaseCardTest {
         harness.passBothPriorities();
 
         GameData gd = harness.getGameData();
-        assertThatThrownBy(() -> gs.handleLibraryCardChosen(gd, player1, -1))
+        assertThatThrownBy(() -> gs.handleInteractionAnswer(gd, player1, new InteractionAnswer.LibraryCardChosen(-1)))
                 .isInstanceOf(IllegalStateException.class);
     }
 

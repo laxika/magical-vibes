@@ -1,7 +1,7 @@
 package com.github.laxika.magicalvibes.ai.interaction;
 
+import com.github.laxika.magicalvibes.service.interaction.InteractionAnswer;
 import com.github.laxika.magicalvibes.model.PendingInteraction;
-import com.github.laxika.magicalvibes.networking.message.XValueChosenRequest;
 import lombok.extern.slf4j.Slf4j;
 
 /**
@@ -23,6 +23,6 @@ class XValueChoiceAiStrategy implements AiInteractionStrategy<PendingInteraction
 
         int chosenValue = interaction.maxValue();
         log.info("AI: Choosing X={} for {} in game {}", chosenValue, interaction.cardName(), ctx.gameId());
-        ctx.gameActions().handleXValueChosen(ctx.selfConnection(), new XValueChosenRequest(null, chosenValue));
+        ctx.gameActions().answerInteraction(ctx.selfConnection(), new InteractionAnswer.NumberChosen(chosenValue));
     }
 }

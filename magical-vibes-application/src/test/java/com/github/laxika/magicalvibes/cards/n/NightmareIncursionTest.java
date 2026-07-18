@@ -1,5 +1,6 @@
 package com.github.laxika.magicalvibes.cards.n;
 
+import com.github.laxika.magicalvibes.service.interaction.InteractionAnswer;
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
 import com.github.laxika.magicalvibes.cards.s.Shock;
 import com.github.laxika.magicalvibes.cards.s.Swamp;
@@ -35,9 +36,9 @@ class NightmareIncursionTest extends BaseCardTest {
                 List.of(new GrizzlyBears(), new Shock(), new Swamp(), new GrizzlyBears()));
 
         // Search allows exiling up to 3 cards; pick three (each pick re-presents from index 0)
-        gs.handleLibraryCardChosen(gd, player1, 0);
-        gs.handleLibraryCardChosen(gd, player1, 0);
-        gs.handleLibraryCardChosen(gd, player1, 0);
+        gs.handleInteractionAnswer(gd, player1, new InteractionAnswer.LibraryCardChosen(0));
+        gs.handleInteractionAnswer(gd, player1, new InteractionAnswer.LibraryCardChosen(0));
+        gs.handleInteractionAnswer(gd, player1, new InteractionAnswer.LibraryCardChosen(0));
 
         assertThat(gd.getPlayerExiledCards(player2.getId())).hasSize(3);
         assertThat(gd.playerDecks.get(player2.getId())).hasSize(1);
@@ -49,8 +50,8 @@ class NightmareIncursionTest extends BaseCardTest {
     void exilesAllWhenLibrarySmallerThanX() {
         castIncursionTargeting(3, player2.getId(), List.of(new GrizzlyBears(), new Shock()));
 
-        gs.handleLibraryCardChosen(gd, player1, 0);
-        gs.handleLibraryCardChosen(gd, player1, 0);
+        gs.handleInteractionAnswer(gd, player1, new InteractionAnswer.LibraryCardChosen(0));
+        gs.handleInteractionAnswer(gd, player1, new InteractionAnswer.LibraryCardChosen(0));
 
         assertThat(gd.getPlayerExiledCards(player2.getId())).hasSize(2);
         assertThat(gd.playerDecks.get(player2.getId())).isEmpty();
@@ -74,8 +75,8 @@ class NightmareIncursionTest extends BaseCardTest {
     void canTargetSelf() {
         castIncursionTargeting(2, player1.getId(), List.of(new GrizzlyBears(), new Shock(), new GrizzlyBears()));
 
-        gs.handleLibraryCardChosen(gd, player1, 0);
-        gs.handleLibraryCardChosen(gd, player1, 0);
+        gs.handleInteractionAnswer(gd, player1, new InteractionAnswer.LibraryCardChosen(0));
+        gs.handleInteractionAnswer(gd, player1, new InteractionAnswer.LibraryCardChosen(0));
 
         assertThat(gd.getPlayerExiledCards(player1.getId())).hasSize(2);
         assertThat(gd.playerDecks.get(player1.getId())).hasSize(1);

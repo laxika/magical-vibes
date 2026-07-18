@@ -1,9 +1,9 @@
 package com.github.laxika.magicalvibes.ai.interaction;
 
+import com.github.laxika.magicalvibes.service.interaction.InteractionAnswer;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardType;
 import com.github.laxika.magicalvibes.model.PendingInteraction;
-import com.github.laxika.magicalvibes.networking.message.HandTopBottomChosenRequest;
 import lombok.extern.slf4j.Slf4j;
 
 import java.util.List;
@@ -54,7 +54,7 @@ class HandTopBottomChoiceAiStrategy implements AiInteractionStrategy<PendingInte
         }
 
         log.info("AI: Choosing hand={} top={} in game {}", handCardIndex, topCardIndex, ctx.gameId());
-        ctx.gameActions().handleHandTopBottomChosen(ctx.selfConnection(),
-                new HandTopBottomChosenRequest(handCardIndex, topCardIndex));
+        ctx.gameActions().answerInteraction(ctx.selfConnection(),
+                new InteractionAnswer.HandTopBottom(handCardIndex, topCardIndex));
     }
 }

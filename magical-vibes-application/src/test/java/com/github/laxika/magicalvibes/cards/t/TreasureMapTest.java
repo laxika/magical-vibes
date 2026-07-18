@@ -1,5 +1,6 @@
 package com.github.laxika.magicalvibes.cards.t;
 
+import com.github.laxika.magicalvibes.service.interaction.InteractionAnswer;
 import com.github.laxika.magicalvibes.model.PendingInteraction;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardSubtype;
@@ -86,7 +87,7 @@ class TreasureMapTest extends BaseCardTest {
         harness.passBothPriorities();
 
         // Complete the scry (keep card on top)
-        gs.handleScryCompleted(gd, player1, List.of(0), List.of());
+        gs.handleInteractionAnswer(gd, player1, new InteractionAnswer.ScryOrder(List.of(0), List.of()));
 
         assertThat(map.getCounterCount(CounterType.LANDMARK)).isEqualTo(1);
         assertThat(map.isTransformed()).isFalse();
@@ -103,7 +104,7 @@ class TreasureMapTest extends BaseCardTest {
         harness.passBothPriorities();
 
         // Complete scry
-        gs.handleScryCompleted(gd, player1, List.of(0), List.of());
+        gs.handleInteractionAnswer(gd, player1, new InteractionAnswer.ScryOrder(List.of(0), List.of()));
 
         assertThat(map.getCounterCount(CounterType.LANDMARK)).isEqualTo(2);
         assertThat(map.isTransformed()).isFalse();
@@ -122,7 +123,7 @@ class TreasureMapTest extends BaseCardTest {
         harness.passBothPriorities();
 
         // Complete scry
-        gs.handleScryCompleted(gd, player1, List.of(0), List.of());
+        gs.handleInteractionAnswer(gd, player1, new InteractionAnswer.ScryOrder(List.of(0), List.of()));
 
         // Should have transformed
         assertThat(map.isTransformed()).isTrue();
@@ -147,7 +148,7 @@ class TreasureMapTest extends BaseCardTest {
         harness.activateAbility(player1, 0, null, null);
         harness.passBothPriorities();
 
-        gs.handleScryCompleted(gd, player1, List.of(0), List.of());
+        gs.handleInteractionAnswer(gd, player1, new InteractionAnswer.ScryOrder(List.of(0), List.of()));
 
         assertThat(map.isTransformed()).isFalse();
         assertThat(map.getCounterCount(CounterType.LANDMARK)).isEqualTo(1);

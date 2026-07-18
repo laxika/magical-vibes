@@ -1,5 +1,6 @@
 package com.github.laxika.magicalvibes.cards.l;
 
+import com.github.laxika.magicalvibes.service.interaction.InteractionAnswer;
 import com.github.laxika.magicalvibes.model.PendingInteraction;
 
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
@@ -155,7 +156,7 @@ class LilianaVessTest extends BaseCardTest {
         }
         assertThat(bearsIndex).isGreaterThanOrEqualTo(0);
 
-        gs.handleLibraryCardChosen(gd, player1, bearsIndex);
+        gs.handleInteractionAnswer(gd, player1, new InteractionAnswer.LibraryCardChosen(bearsIndex));
 
         // The chosen card should be on top of the library
         List<Card> deck = gd.playerDecks.get(player1.getId());

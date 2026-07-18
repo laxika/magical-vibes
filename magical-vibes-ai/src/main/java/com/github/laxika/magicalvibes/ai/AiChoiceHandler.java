@@ -1,5 +1,6 @@
 package com.github.laxika.magicalvibes.ai;
 
+import com.github.laxika.magicalvibes.service.interaction.InteractionAnswer;
 import com.github.laxika.magicalvibes.ai.interaction.AiInteractionContext;
 import com.github.laxika.magicalvibes.ai.interaction.AiInteractionStrategies;
 import com.github.laxika.magicalvibes.ai.interaction.AiInteractionStrategy;
@@ -9,7 +10,6 @@ import com.github.laxika.magicalvibes.model.CardType;
 import com.github.laxika.magicalvibes.model.GameData;
 import com.github.laxika.magicalvibes.networking.Connection;
 import com.github.laxika.magicalvibes.networking.message.BottomCardsRequest;
-import com.github.laxika.magicalvibes.networking.message.CardChosenRequest;
 import com.github.laxika.magicalvibes.service.battlefield.GameQueryService;
 import lombok.Setter;
 import lombok.extern.slf4j.Slf4j;
@@ -65,7 +65,7 @@ class AiChoiceHandler {
                 .orElse(validIndices.iterator().next());
 
         log.info("AI: Choosing card at index {} in game {}", bestIndex, gameId);
-        send(() -> gameActions.handleCardChosen(selfConnection, new CardChosenRequest(bestIndex)));
+        send(() -> gameActions.answerInteraction(selfConnection, new InteractionAnswer.CardIndexChosen(bestIndex)));
     }
 
     // ===== Permanent Choice =====

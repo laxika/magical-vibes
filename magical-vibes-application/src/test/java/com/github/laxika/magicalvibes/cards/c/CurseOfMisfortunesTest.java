@@ -1,5 +1,6 @@
 package com.github.laxika.magicalvibes.cards.c;
 
+import com.github.laxika.magicalvibes.service.interaction.InteractionAnswer;
 import com.github.laxika.magicalvibes.model.GameLogEntry;
 
 import com.github.laxika.magicalvibes.model.PendingInteraction;
@@ -38,7 +39,7 @@ class CurseOfMisfortunesTest extends BaseCardTest {
         assertThat(gd.interaction.activeInteraction(PendingInteraction.LibrarySearch.class).params().cards().stream().map(Card::getName))
                 .containsExactly("Fake Curse");
 
-        gs.handleLibraryCardChosen(gd, player1, 0);
+        gs.handleInteractionAnswer(gd, player1, new InteractionAnswer.LibraryCardChosen(0));
 
         Permanent newCurse = gd.playerBattlefields.get(player1.getId()).stream()
                 .filter(p -> p.getCard().getName().equals("Fake Curse"))

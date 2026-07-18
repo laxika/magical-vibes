@@ -1,5 +1,6 @@
 package com.github.laxika.magicalvibes.cards.g;
 
+import com.github.laxika.magicalvibes.service.interaction.InteractionAnswer;
 import com.github.laxika.magicalvibes.model.GameLogEntry;
 
 import com.github.laxika.magicalvibes.model.PendingInteraction;
@@ -152,7 +153,7 @@ class GreenSunsZenithTest extends BaseCardTest {
         int deckSizeBefore = gd.playerDecks.get(player1.getId()).size();
         String chosenName = gd.interaction.activeInteraction(PendingInteraction.LibrarySearch.class).params().cards().getFirst().getName();
 
-        harness.getGameService().handleLibraryCardChosen(gd, player1, 0);
+        harness.getGameService().handleInteractionAnswer(gd, player1, new InteractionAnswer.LibraryCardChosen(0));
 
         // Card is on the battlefield
         assertThat(gd.playerBattlefields.get(player1.getId()))
@@ -180,7 +181,7 @@ class GreenSunsZenithTest extends BaseCardTest {
         harness.passBothPriorities();
 
         GameData gd = harness.getGameData();
-        harness.getGameService().handleLibraryCardChosen(gd, player1, 0);
+        harness.getGameService().handleInteractionAnswer(gd, player1, new InteractionAnswer.LibraryCardChosen(0));
 
         // Zenith should NOT be in graveyard
         assertThat(gd.playerGraveyards.get(player1.getId()))
@@ -216,7 +217,7 @@ class GreenSunsZenithTest extends BaseCardTest {
         GameData gd = harness.getGameData();
         int handSizeBefore = gd.playerHands.get(player1.getId()).size();
 
-        harness.getGameService().handleLibraryCardChosen(gd, player1, -1);
+        harness.getGameService().handleInteractionAnswer(gd, player1, new InteractionAnswer.LibraryCardChosen(-1));
 
         // No card added to hand or battlefield
         assertThat(gd.playerHands.get(player1.getId())).hasSize(handSizeBefore);

@@ -2,6 +2,7 @@ package com.github.laxika.magicalvibes.cards.s;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
+import com.github.laxika.magicalvibes.service.interaction.InteractionAnswer;
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.ManaColor;
@@ -65,8 +66,7 @@ class StompingSlabsTest extends BaseCardTest {
 
         // Finish bottoming the revealed cards so the lethal-damage state-based check runs.
         List<Card> reorder = gd.interaction.activeInteraction(PendingInteraction.LibraryReorder.class).cards();
-        harness.getGameService().handleLibraryCardsReordered(gd, player1,
-                IntStream.range(0, reorder.size()).boxed().toList());
+        harness.getGameService().handleInteractionAnswer(gd, player1, new InteractionAnswer.CardOrder(IntStream.range(0, reorder.size()).boxed().toList()));
 
         harness.assertNotOnBattlefield(player2, "Grizzly Bears");
         harness.assertInGraveyard(player2, "Grizzly Bears");
@@ -85,7 +85,7 @@ class StompingSlabsTest extends BaseCardTest {
         assertThat(reorder).hasSize(7);
 
         List<Integer> order = IntStream.range(0, reorder.size()).boxed().toList();
-        harness.getGameService().handleLibraryCardsReordered(gd, player1, order);
+        harness.getGameService().handleInteractionAnswer(gd, player1, new InteractionAnswer.CardOrder(order));
 
         assertThat(gd.interaction.activeInteraction()).isNull();
         assertThat(gd.playerDecks.get(player1.getId())).hasSize(7);

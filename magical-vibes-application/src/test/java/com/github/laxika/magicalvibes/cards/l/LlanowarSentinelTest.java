@@ -1,5 +1,6 @@
 package com.github.laxika.magicalvibes.cards.l;
 
+import com.github.laxika.magicalvibes.service.interaction.InteractionAnswer;
 import com.github.laxika.magicalvibes.model.GameLogEntry;
 
 import com.github.laxika.magicalvibes.model.PendingInteraction;
@@ -89,7 +90,7 @@ class LlanowarSentinelTest extends BaseCardTest {
         harness.handleMayAbilityChosen(player1, true); // inner effect resolves inline (pays mana, shows search)
 
         int handSizeBefore = gd.playerHands.get(player1.getId()).size();
-        harness.getGameService().handleLibraryCardChosen(gd, player1, 0);
+        harness.getGameService().handleInteractionAnswer(gd, player1, new InteractionAnswer.LibraryCardChosen(0));
 
         assertThat(countSentinelsOnBattlefield()).isEqualTo(2);
         assertThat(gd.playerHands.get(player1.getId())).hasSize(handSizeBefore);

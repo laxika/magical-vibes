@@ -5,7 +5,7 @@ import com.github.laxika.magicalvibes.model.GameData;
 import com.github.laxika.magicalvibes.model.PendingInteraction;
 import com.github.laxika.magicalvibes.model.Player;
 import com.github.laxika.magicalvibes.networking.SessionManager;
-import com.github.laxika.magicalvibes.networking.message.ChooseMultipleCardsMessage;
+import com.github.laxika.magicalvibes.networking.message.InteractionPromptMessage;
 import com.github.laxika.magicalvibes.networking.model.CardView;
 import com.github.laxika.magicalvibes.networking.service.CardViewFactory;
 import com.github.laxika.magicalvibes.service.effect.normalfx.ExileSupport;
@@ -52,7 +52,7 @@ public class MirrorOfFateChoiceInteractionHandler
                 .toList();
 
         sessionManager.sendToPlayer(recipientId,
-                new ChooseMultipleCardsMessage(new ArrayList<>(interaction.validCardIds()), cardViews,
+                InteractionPromptMessage.multiCardPick(new ArrayList<>(interaction.validCardIds()), cardViews,
                         interaction.maxCount(),
                         "Choose up to seven face-up exiled cards you own to put on top of your library."));
 

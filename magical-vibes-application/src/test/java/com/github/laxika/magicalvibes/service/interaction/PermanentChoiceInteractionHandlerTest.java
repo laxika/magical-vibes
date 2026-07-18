@@ -5,7 +5,7 @@ import com.github.laxika.magicalvibes.model.PendingInteraction;
 import com.github.laxika.magicalvibes.model.PermanentChoiceContext;
 import com.github.laxika.magicalvibes.model.Player;
 import com.github.laxika.magicalvibes.networking.SessionManager;
-import com.github.laxika.magicalvibes.networking.message.ChoosePermanentMessage;
+import com.github.laxika.magicalvibes.networking.message.InteractionPromptMessage;
 import com.github.laxika.magicalvibes.service.input.PermanentChoiceHandlerService;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
@@ -66,7 +66,7 @@ class PermanentChoiceInteractionHandlerTest {
 
         assertThat(gd.interaction.activeInteraction()).isInstanceOf(PendingInteraction.PermanentChoice.class);
         verify(sessionManager).sendToPlayer(eq(PLAYER1_ID), messageCaptor.capture());
-        ChoosePermanentMessage msg = (ChoosePermanentMessage) messageCaptor.getValue();
+        InteractionPromptMessage msg = (InteractionPromptMessage) messageCaptor.getValue();
         assertThat(msg.permanentIds()).containsExactly(perm1, perm2);
         assertThat(msg.playerIds()).isEmpty();
         assertThat(msg.prompt()).isEqualTo("Choose a creature to sacrifice.");
@@ -80,7 +80,7 @@ class PermanentChoiceInteractionHandlerTest {
         registry.begin(gd, choice(List.of(permId), List.of(PLAYER2_ID), null, "Choose any target."));
 
         verify(sessionManager).sendToPlayer(eq(PLAYER1_ID), messageCaptor.capture());
-        ChoosePermanentMessage msg = (ChoosePermanentMessage) messageCaptor.getValue();
+        InteractionPromptMessage msg = (InteractionPromptMessage) messageCaptor.getValue();
         assertThat(msg.permanentIds()).containsExactly(permId);
         assertThat(msg.playerIds()).containsExactly(PLAYER2_ID);
         assertThat(msg.prompt()).isEqualTo("Choose any target.");
@@ -119,6 +119,6 @@ class PermanentChoiceInteractionHandlerTest {
         verifyNoInteractions(sessionManager);
 
         assertThat(registry.replayPrompt(gd, PLAYER1_ID)).isTrue();
-        verify(sessionManager).sendToPlayer(eq(PLAYER1_ID), any(ChoosePermanentMessage.class));
+        verify(sessionManager).sendToPlayer(eq(PLAYER1_ID), any(InteractionPromptMessage.class));
     }
 }

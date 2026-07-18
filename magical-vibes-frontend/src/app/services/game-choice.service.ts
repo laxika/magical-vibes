@@ -1,13 +1,8 @@
 import { computed, inject, Injectable, Signal, signal } from '@angular/core';
 import {
   WebsocketService, Game, MessageType, Card, Permanent,
-  ChooseCardFromHandNotification, ChooseFromListNotification, MayAbilityNotification,
-  ChoosePermanentNotification, ChooseMultiplePermanentsNotification,
-  ChooseMultipleCardsNotification, ScryNotification, ReorderLibraryCardsNotification,
-  ChooseCardFromLibraryNotification, RevealHandNotification, RevealLibraryTopNotification,
-  ChooseFromRevealedHandNotification, ChooseCardFromGraveyardNotification,
-  ChooseHandTopBottomNotification, CombatDamageAssignmentNotification,
-  ValidTargetsResponse, XValueChoiceNotification
+  InteractionPromptNotification, RevealHandNotification, RevealLibraryTopNotification,
+  CombatDamageAssignmentNotification, ValidTargetsResponse
 } from './websocket.service';
 import { TargetingChoiceService } from './targeting-choice.service';
 import { LibraryChoiceService } from './library-choice.service';
@@ -184,50 +179,89 @@ export class GameChoiceService {
 
   // ========== Message handlers ==========
 
-  handleChooseCardFromHand(msg: ChooseCardFromHandNotification): void {
-    this.choosingFromHand = true;
-    this.choosableHandIndices.set(new Set(msg.cardIndices));
-    this.handChoicePrompt = msg.prompt;
-    this.handChoiceCanDecline = msg.canDecline;
-  }
-
-  handleChooseFromList(msg: ChooseFromListNotification): void {
-    this.choosingFromList = true;
-    this.listChoices.set(msg.options);
-    this.listChoicePrompt = msg.prompt;
-    this.listChoiceSearchable = msg.searchable ?? false;
-    this.listChoiceSearchQuery.set('');
-  }
-
-  handleMayAbilityChoice(msg: MayAbilityNotification): void {
-    this.awaitingMayAbility = true;
-    this.mayAbilityPrompt = msg.prompt;
-    this.mayAbilityCanPay = msg.canPay;
-    this.mayAbilityManaCost = msg.manaCost;
-  }
-
-  handleChoosePermanent(msg: ChoosePermanentNotification): void {
-    this.choosingPermanent = true;
-    this.choosablePermanentIds.set(new Set(msg.permanentIds));
-    this.choosablePlayerIds.set(new Set(msg.playerIds ?? []));
-    this.permanentChoicePrompt = msg.prompt;
-  }
-
-  handleChooseMultiplePermanents(msg: ChooseMultiplePermanentsNotification): void {
-    this.choosingMultiplePermanents = true;
-    this.multiPermanentChoiceIds.set(new Set(msg.permanentIds));
-    this.multiPermanentSelectedIds.set(new Set());
-    this.multiPermanentMaxCount = msg.maxCount;
-    this.multiPermanentChoicePrompt = msg.prompt;
-  }
-
-  handleChooseMultipleCards(msg: ChooseMultipleCardsNotification): void {
-    this.choosingGraveyardCards = true;
-    this.multiGraveyardCards = msg.cards;
-    this.graveyardChoiceCardIds = msg.cardIds;
-    this.graveyardChoiceSelectedIds.set(new Set());
-    this.graveyardChoiceMaxCount = msg.maxCount;
-    this.multiGraveyardPrompt = msg.prompt;
+  /**
+   * The single entry point for interaction prompts: routes by the message's shape to the
+   * same UI state each per-kind message used to set. CARD_INDEX_PICK distinguishes picking
+   * from the player's own hand (no cards payload) from picking out of presented cards
+   * (a revealed hand).
+   */
+  handleInteractionPrompt(msg: InteractionPromptNotification): void {
+    switch (msg.shape) {
+      case 'CARD_INDEX_PICK':
+        if (msg.cards) {
+          this.revealingHand = true;
+          this.choosingFromRevealedHand = true;
+          this.revealedHandCards = msg.cards;
+          this.revealedHandChoosableIndices = new Set(msg.cardIndices ?? []);
+          this.revealedHandChoicePrompt = msg.prompt;
+          this.revealedHandChoiceOptional = msg.declinable ?? false;
+          this.revealedHandPlayerName = '';
+        } else {
+          this.choosingFromHand = true;
+          this.choosableHandIndices.set(new Set(msg.cardIndices ?? []));
+          this.handChoicePrompt = msg.prompt;
+          this.handChoiceCanDecline = msg.declinable ?? false;
+        }
+        break;
+      case 'LIST_PICK':
+        this.choosingFromList = true;
+        this.listChoices.set(msg.options ?? []);
+        this.listChoicePrompt = msg.prompt;
+        this.listChoiceSearchable = msg.searchable ?? false;
+        this.listChoiceSearchQuery.set('');
+        break;
+      case 'ACCEPT_DECLINE':
+        this.awaitingMayAbility = true;
+        this.mayAbilityPrompt = msg.prompt;
+        this.mayAbilityCanPay = msg.canPay ?? true;
+        this.mayAbilityManaCost = msg.manaCost ?? null;
+        break;
+      case 'PERMANENT_PICK':
+        this.choosingPermanent = true;
+        this.choosablePermanentIds.set(new Set(msg.permanentIds ?? []));
+        this.choosablePlayerIds.set(new Set(msg.playerIds ?? []));
+        this.permanentChoicePrompt = msg.prompt;
+        break;
+      case 'MULTI_PERMANENT_PICK':
+        this.choosingMultiplePermanents = true;
+        this.multiPermanentChoiceIds.set(new Set(msg.permanentIds ?? []));
+        this.multiPermanentSelectedIds.set(new Set());
+        this.multiPermanentMaxCount = msg.maxCount ?? 0;
+        this.multiPermanentChoicePrompt = msg.prompt;
+        break;
+      case 'MULTI_CARD_PICK':
+        this.choosingGraveyardCards = true;
+        this.multiGraveyardCards = msg.cards ?? [];
+        this.graveyardChoiceCardIds = msg.cardIds ?? [];
+        this.graveyardChoiceSelectedIds.set(new Set());
+        this.graveyardChoiceMaxCount = msg.maxCount ?? 0;
+        this.multiGraveyardPrompt = msg.prompt;
+        break;
+      case 'GRAVEYARD_INDEX_PICK':
+        this.choosingFromGraveyard = true;
+        this.graveyardChoiceIndices = msg.cardIndices ?? [];
+        this.graveyardChoicePrompt = msg.prompt;
+        this.graveyardChoiceAllGraveyards = msg.allGraveyards ?? false;
+        break;
+      case 'NUMBER_PICK':
+        this.awaitingXValueChoice = true;
+        this.xValueChoicePrompt = msg.prompt;
+        this.xValueChoiceMaxValue = msg.maxCount ?? 0;
+        this.xValueChoiceInput = msg.maxCount ?? 0;
+        break;
+      case 'SCRY_ORDER':
+        this.library.handleScry(msg);
+        break;
+      case 'CARD_ORDER':
+        this.library.handleReorderLibraryCards(msg);
+        break;
+      case 'LIBRARY_INDEX_PICK':
+        this.library.handleChooseCardFromLibrary(msg);
+        break;
+      case 'HAND_TOP_BOTTOM':
+        this.library.handleChooseHandTopBottom(msg);
+        break;
+    }
   }
 
   handleRevealHand(msg: RevealHandNotification): void {
@@ -240,48 +274,6 @@ export class GameChoiceService {
     this.revealingLibraryTop = true;
     this.revealedLibraryTopCards = msg.cards;
     this.revealedLibraryTopPlayerName = msg.playerName;
-  }
-
-  handleChooseFromRevealedHand(msg: ChooseFromRevealedHandNotification): void {
-    this.revealingHand = true;
-    this.choosingFromRevealedHand = true;
-    this.revealedHandCards = msg.cards;
-    this.revealedHandChoosableIndices = new Set(msg.validIndices);
-    this.revealedHandChoicePrompt = msg.prompt;
-    this.revealedHandChoiceOptional = msg.optional;
-    this.revealedHandPlayerName = '';
-  }
-
-  handleChooseCardFromGraveyard(msg: ChooseCardFromGraveyardNotification): void {
-    this.choosingFromGraveyard = true;
-    this.graveyardChoiceIndices = msg.cardIndices;
-    this.graveyardChoicePrompt = msg.prompt;
-    this.graveyardChoiceAllGraveyards = msg.allGraveyards;
-  }
-
-  handleXValueChoice(msg: XValueChoiceNotification): void {
-    this.awaitingXValueChoice = true;
-    this.xValueChoicePrompt = msg.prompt;
-    this.xValueChoiceMaxValue = msg.maxValue;
-    this.xValueChoiceInput = msg.maxValue;
-  }
-
-  // --- Delegated handlers ---
-
-  handleScry(msg: ScryNotification): void {
-    this.library.handleScry(msg);
-  }
-
-  handleReorderLibraryCards(msg: ReorderLibraryCardsNotification): void {
-    this.library.handleReorderLibraryCards(msg);
-  }
-
-  handleChooseCardFromLibrary(msg: ChooseCardFromLibraryNotification): void {
-    this.library.handleChooseCardFromLibrary(msg);
-  }
-
-  handleChooseHandTopBottom(msg: ChooseHandTopBottomNotification): void {
-    this.library.handleChooseHandTopBottom(msg);
   }
 
   handleCombatDamageAssignment(msg: CombatDamageAssignmentNotification): void {
@@ -299,8 +291,9 @@ export class GameChoiceService {
     if (!g || !this.choosingFromHand) return;
     if (!this.choosableHandIndices().has(index)) return;
     this.websocketService.send({
-      type: MessageType.CARD_CHOSEN,
-      cardIndex: index
+      type: MessageType.INTERACTION_ANSWER,
+      shape: 'CARD_INDEX_PICK',
+      index: index
     });
     this.choosingFromHand = false;
     this.choosableHandIndices.set(new Set());
@@ -311,8 +304,9 @@ export class GameChoiceService {
     const g = this.gameSignal();
     if (!g || !this.choosingFromHand) return;
     this.websocketService.send({
-      type: MessageType.CARD_CHOSEN,
-      cardIndex: -1
+      type: MessageType.INTERACTION_ANSWER,
+      shape: 'CARD_INDEX_PICK',
+      index: -1
     });
     this.choosingFromHand = false;
     this.choosableHandIndices.set(new Set());
@@ -326,7 +320,8 @@ export class GameChoiceService {
   chooseFromList(choice: string): void {
     if (!this.choosingFromList) return;
     this.websocketService.send({
-      type: MessageType.CHOSEN_FROM_LIST,
+      type: MessageType.INTERACTION_ANSWER,
+      shape: 'LIST_PICK',
       choice: choice
     });
     this.choosingFromList = false;
@@ -339,7 +334,8 @@ export class GameChoiceService {
   acceptMayAbility(): void {
     if (!this.awaitingMayAbility) return;
     this.websocketService.send({
-      type: MessageType.MAY_ABILITY_CHOSEN,
+      type: MessageType.INTERACTION_ANSWER,
+      shape: 'ACCEPT_DECLINE',
       accepted: true
     });
     this.awaitingMayAbility = false;
@@ -351,7 +347,8 @@ export class GameChoiceService {
   declineMayAbility(): void {
     if (!this.awaitingMayAbility) return;
     this.websocketService.send({
-      type: MessageType.MAY_ABILITY_CHOSEN,
+      type: MessageType.INTERACTION_ANSWER,
+      shape: 'ACCEPT_DECLINE',
       accepted: false
     });
     this.awaitingMayAbility = false;
@@ -363,8 +360,9 @@ export class GameChoiceService {
   confirmXValueChoice(): void {
     if (!this.awaitingXValueChoice) return;
     this.websocketService.send({
-      type: MessageType.X_VALUE_CHOSEN,
-      chosenValue: this.xValueChoiceInput
+      type: MessageType.INTERACTION_ANSWER,
+      shape: 'NUMBER_PICK',
+      number: this.xValueChoiceInput
     });
     this.awaitingXValueChoice = false;
     this.xValueChoicePrompt = '';
@@ -375,8 +373,9 @@ export class GameChoiceService {
   cancelXValueChoice(): void {
     if (!this.awaitingXValueChoice) return;
     this.websocketService.send({
-      type: MessageType.X_VALUE_CHOSEN,
-      chosenValue: 0
+      type: MessageType.INTERACTION_ANSWER,
+      shape: 'NUMBER_PICK',
+      number: 0
     });
     this.awaitingXValueChoice = false;
     this.xValueChoicePrompt = '';
@@ -388,8 +387,9 @@ export class GameChoiceService {
     if (!this.choosingPermanent) return;
     if (!this.choosablePermanentIds().has(permanentId) && !this.choosablePlayerIds().has(permanentId)) return;
     this.websocketService.send({
-      type: MessageType.PERMANENT_CHOSEN,
-      permanentId: permanentId
+      type: MessageType.INTERACTION_ANSWER,
+      shape: 'PERMANENT_PICK',
+      id: permanentId
     });
     this.choosingPermanent = false;
     this.choosablePermanentIds.set(new Set());
@@ -412,8 +412,9 @@ export class GameChoiceService {
   confirmMultiPermanentChoice(): void {
     if (!this.choosingMultiplePermanents) return;
     this.websocketService.send({
-      type: MessageType.MULTIPLE_PERMANENTS_CHOSEN,
-      permanentIds: Array.from(this.multiPermanentSelectedIds())
+      type: MessageType.INTERACTION_ANSWER,
+      shape: 'MULTI_PERMANENT_PICK',
+      ids: Array.from(this.multiPermanentSelectedIds())
     });
     this.choosingMultiplePermanents = false;
     this.multiPermanentChoiceIds.set(new Set());
@@ -438,8 +439,9 @@ export class GameChoiceService {
   confirmGraveyardCardChoice(): void {
     if (!this.choosingGraveyardCards) return;
     this.websocketService.send({
-      type: MessageType.MULTIPLE_CARDS_CHOSEN,
-      cardIds: Array.from(this.graveyardChoiceSelectedIds())
+      type: MessageType.INTERACTION_ANSWER,
+      shape: 'MULTI_CARD_PICK',
+      ids: Array.from(this.graveyardChoiceSelectedIds())
     });
     this.choosingGraveyardCards = false;
     this.multiGraveyardCards = [];
@@ -494,8 +496,9 @@ export class GameChoiceService {
     if (!this.choosingFromRevealedHand) return;
     if (!this.revealedHandChoosableIndices.has(index)) return;
     this.websocketService.send({
-      type: MessageType.CARD_CHOSEN,
-      cardIndex: index
+      type: MessageType.INTERACTION_ANSWER,
+      shape: 'CARD_INDEX_PICK',
+      index: index
     });
     this.closeRevealedHandChoice();
   }
@@ -503,8 +506,9 @@ export class GameChoiceService {
   declineFromRevealedHand(): void {
     if (!this.choosingFromRevealedHand || !this.revealedHandChoiceOptional) return;
     this.websocketService.send({
-      type: MessageType.CARD_CHOSEN,
-      cardIndex: -1
+      type: MessageType.INTERACTION_ANSWER,
+      shape: 'CARD_INDEX_PICK',
+      index: -1
     });
     this.closeRevealedHandChoice();
   }
@@ -609,8 +613,9 @@ export class GameChoiceService {
   chooseGraveyardCard(index: number): void {
     if (!this.choosingFromGraveyard) return;
     this.websocketService.send({
-      type: MessageType.GRAVEYARD_CARD_CHOSEN,
-      cardIndex: index
+      type: MessageType.INTERACTION_ANSWER,
+      shape: 'GRAVEYARD_INDEX_PICK',
+      index: index
     });
     this.choosingFromGraveyard = false;
     this.graveyardChoiceIndices = [];

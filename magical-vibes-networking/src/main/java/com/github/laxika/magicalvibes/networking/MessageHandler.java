@@ -1,7 +1,6 @@
 package com.github.laxika.magicalvibes.networking;
 
 import com.github.laxika.magicalvibes.networking.message.BottomCardsRequest;
-import com.github.laxika.magicalvibes.networking.message.CardChosenRequest;
 import com.github.laxika.magicalvibes.networking.message.CreateGameRequest;
 import com.github.laxika.magicalvibes.networking.message.DeclareAttackersRequest;
 import com.github.laxika.magicalvibes.networking.message.DeclareBlockersRequest;
@@ -15,18 +14,10 @@ import com.github.laxika.magicalvibes.networking.message.SetAutoStopsRequest;
 import com.github.laxika.magicalvibes.networking.message.ActivateAbilityRequest;
 import com.github.laxika.magicalvibes.networking.message.ActivateGraveyardAbilityRequest;
 import com.github.laxika.magicalvibes.networking.message.ActivateHandAbilityRequest;
-import com.github.laxika.magicalvibes.networking.message.ChosenFromListRequest;
-import com.github.laxika.magicalvibes.networking.message.GraveyardCardChosenRequest;
-import com.github.laxika.magicalvibes.networking.message.MayAbilityChosenRequest;
-import com.github.laxika.magicalvibes.networking.message.MultipleCardsChosenRequest;
-import com.github.laxika.magicalvibes.networking.message.MultiplePermanentsChosenRequest;
-import com.github.laxika.magicalvibes.networking.message.PermanentChosenRequest;
-import com.github.laxika.magicalvibes.networking.message.LibraryCardChosenRequest;
-import com.github.laxika.magicalvibes.networking.message.ReorderLibraryCardsRequest;
 import com.github.laxika.magicalvibes.networking.message.SacrificePermanentRequest;
 import com.github.laxika.magicalvibes.networking.message.TapPermanentRequest;
-import com.github.laxika.magicalvibes.networking.message.HandTopBottomChosenRequest;
 import com.github.laxika.magicalvibes.networking.message.CombatDamageAssignedRequest;
+import com.github.laxika.magicalvibes.networking.message.InteractionAnswerRequest;
 import com.github.laxika.magicalvibes.networking.message.CreateDraftRequest;
 import com.github.laxika.magicalvibes.networking.message.DraftPickRequest;
 import com.github.laxika.magicalvibes.networking.message.RequestCardListRequest;
@@ -35,8 +26,6 @@ import com.github.laxika.magicalvibes.networking.message.PaySearchTaxRequest;
 import com.github.laxika.magicalvibes.networking.message.RevertManaActivationsRequest;
 import com.github.laxika.magicalvibes.networking.message.ValidTargetsRequest;
 import com.github.laxika.magicalvibes.networking.message.SaveDeckRequest;
-import com.github.laxika.magicalvibes.networking.message.ScryCompletedRequest;
-import com.github.laxika.magicalvibes.networking.message.XValueChosenRequest;
 
 import java.util.UUID;
 
@@ -74,25 +63,7 @@ public interface MessageHandler {
 
     void handleDeclareBlockers(Connection connection, DeclareBlockersRequest request) throws Exception;
 
-    void handleCardChosen(Connection connection, CardChosenRequest request) throws Exception;
-
-    void handleGraveyardCardChosen(Connection connection, GraveyardCardChosenRequest request) throws Exception;
-
-    void handlePermanentChosen(Connection connection, PermanentChosenRequest request) throws Exception;
-
-    void handleMultiplePermanentsChosen(Connection connection, MultiplePermanentsChosenRequest request) throws Exception;
-
-    void handleMultipleCardsChosen(Connection connection, MultipleCardsChosenRequest request) throws Exception;
-
-    void handleListChoice(Connection connection, ChosenFromListRequest request) throws Exception;
-
-    void handleMayAbilityChosen(Connection connection, MayAbilityChosenRequest request) throws Exception;
-
-    void handleLibraryCardsReordered(Connection connection, ReorderLibraryCardsRequest request) throws Exception;
-
-    void handleLibraryCardChosen(Connection connection, LibraryCardChosenRequest request) throws Exception;
-
-    void handleHandTopBottomChosen(Connection connection, HandTopBottomChosenRequest request) throws Exception;
+    void handleInteractionAnswer(Connection connection, InteractionAnswerRequest request) throws Exception;
 
     void handleCreateDraft(Connection connection, CreateDraftRequest request) throws Exception;
 
@@ -109,10 +80,6 @@ public interface MessageHandler {
     void handlePaySearchTax(Connection connection, PaySearchTaxRequest request) throws Exception;
 
     void handleRevertManaActivations(Connection connection, RevertManaActivationsRequest request) throws Exception;
-
-    void handleScryCompleted(Connection connection, ScryCompletedRequest request) throws Exception;
-
-    void handleXValueChosen(Connection connection, XValueChosenRequest request) throws Exception;
 
     void handleSaveDeck(Connection connection, SaveDeckRequest request) throws Exception;
 

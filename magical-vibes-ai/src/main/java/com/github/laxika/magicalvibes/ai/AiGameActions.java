@@ -10,28 +10,17 @@ import com.github.laxika.magicalvibes.model.Player;
 import com.github.laxika.magicalvibes.networking.Connection;
 import com.github.laxika.magicalvibes.networking.message.ActivateAbilityRequest;
 import com.github.laxika.magicalvibes.networking.message.BottomCardsRequest;
-import com.github.laxika.magicalvibes.networking.message.CardChosenRequest;
-import com.github.laxika.magicalvibes.networking.message.ChosenFromListRequest;
 import com.github.laxika.magicalvibes.networking.message.CombatDamageAssignedRequest;
 import com.github.laxika.magicalvibes.networking.message.DeclareAttackersRequest;
 import com.github.laxika.magicalvibes.networking.message.DeclareBlockersRequest;
-import com.github.laxika.magicalvibes.networking.message.GraveyardCardChosenRequest;
-import com.github.laxika.magicalvibes.networking.message.HandTopBottomChosenRequest;
 import com.github.laxika.magicalvibes.networking.message.KeepHandRequest;
-import com.github.laxika.magicalvibes.networking.message.LibraryCardChosenRequest;
-import com.github.laxika.magicalvibes.networking.message.MayAbilityChosenRequest;
 import com.github.laxika.magicalvibes.networking.message.MulliganRequest;
-import com.github.laxika.magicalvibes.networking.message.MultipleCardsChosenRequest;
-import com.github.laxika.magicalvibes.networking.message.MultiplePermanentsChosenRequest;
 import com.github.laxika.magicalvibes.networking.message.PassPriorityRequest;
-import com.github.laxika.magicalvibes.networking.message.PermanentChosenRequest;
 import com.github.laxika.magicalvibes.networking.message.PlayCardRequest;
-import com.github.laxika.magicalvibes.networking.message.ReorderLibraryCardsRequest;
-import com.github.laxika.magicalvibes.networking.message.ScryCompletedRequest;
 import com.github.laxika.magicalvibes.networking.message.TapPermanentRequest;
-import com.github.laxika.magicalvibes.networking.message.XValueChosenRequest;
 import com.github.laxika.magicalvibes.service.GameRegistry;
 import com.github.laxika.magicalvibes.service.GameService;
+import com.github.laxika.magicalvibes.service.interaction.InteractionAnswer;
 import lombok.extern.slf4j.Slf4j;
 
 import java.util.HashMap;
@@ -224,123 +213,19 @@ public class AiGameActions {
         }
     }
 
-    public void handleCardChosen(Connection connection, CardChosenRequest request) {
+    /**
+     * Applies the AI's answer to the active pending interaction — the AI-side twin of the
+     * backend's single interaction-answer route. The {@link InteractionAnswer} shape carries
+     * the payload; the engine's registry routes it to the active interaction's handler.
+     */
+    public void answerInteraction(Connection connection, InteractionAnswer answer) {
         GameData gameData = game();
         if (gameData == null) return;
         try {
-            gameService.handleCardChosen(gameData, aiPlayer, request.cardIndex());
+            gameService.handleInteractionAnswer(gameData, aiPlayer, answer);
         } catch (IllegalArgumentException | IllegalStateException e) {
-            log.info("AI: engine rejected cardChosen in game {}: {}", gameId, e.getMessage());
-        }
-    }
-
-    public void handleGraveyardCardChosen(Connection connection, GraveyardCardChosenRequest request) {
-        GameData gameData = game();
-        if (gameData == null) return;
-        try {
-            gameService.handleGraveyardCardChosen(gameData, aiPlayer, request.cardIndex());
-        } catch (IllegalArgumentException | IllegalStateException e) {
-            log.info("AI: engine rejected graveyardCardChosen in game {}: {}", gameId, e.getMessage());
-        }
-    }
-
-    public void handlePermanentChosen(Connection connection, PermanentChosenRequest request) {
-        GameData gameData = game();
-        if (gameData == null) return;
-        try {
-            gameService.handlePermanentChosen(gameData, aiPlayer, request.permanentId());
-        } catch (IllegalArgumentException | IllegalStateException e) {
-            log.info("AI: engine rejected permanentChosen in game {}: {}", gameId, e.getMessage());
-        }
-    }
-
-    public void handleMultiplePermanentsChosen(Connection connection, MultiplePermanentsChosenRequest request) {
-        GameData gameData = game();
-        if (gameData == null) return;
-        try {
-            gameService.handleMultiplePermanentsChosen(gameData, aiPlayer, request.permanentIds());
-        } catch (IllegalArgumentException | IllegalStateException e) {
-            log.info("AI: engine rejected multiplePermanentsChosen in game {}: {}", gameId, e.getMessage());
-        }
-    }
-
-    public void handleMultipleCardsChosen(Connection connection, MultipleCardsChosenRequest request) {
-        GameData gameData = game();
-        if (gameData == null) return;
-        try {
-            gameService.handleMultipleCardsChosen(gameData, aiPlayer, request.cardIds());
-        } catch (IllegalArgumentException | IllegalStateException e) {
-            log.info("AI: engine rejected multipleCardsChosen in game {}: {}", gameId, e.getMessage());
-        }
-    }
-
-    public void handleListChoice(Connection connection, ChosenFromListRequest request) {
-        GameData gameData = game();
-        if (gameData == null) return;
-        try {
-            gameService.handleListChoice(gameData, aiPlayer, request.choice());
-        } catch (IllegalArgumentException | IllegalStateException e) {
-            log.info("AI: engine rejected listChoice in game {}: {}", gameId, e.getMessage());
-        }
-    }
-
-    public void handleMayAbilityChosen(Connection connection, MayAbilityChosenRequest request) {
-        GameData gameData = game();
-        if (gameData == null) return;
-        try {
-            gameService.handleMayAbilityChosen(gameData, aiPlayer, request.accepted());
-        } catch (IllegalArgumentException | IllegalStateException e) {
-            log.info("AI: engine rejected mayAbilityChosen in game {}: {}", gameId, e.getMessage());
-        }
-    }
-
-    public void handleXValueChosen(Connection connection, XValueChosenRequest request) {
-        GameData gameData = game();
-        if (gameData == null) return;
-        try {
-            gameService.handleXValueChosen(gameData, aiPlayer, request.chosenValue());
-        } catch (IllegalArgumentException | IllegalStateException e) {
-            log.info("AI: engine rejected xValueChosen in game {}: {}", gameId, e.getMessage());
-        }
-    }
-
-    public void handleScryCompleted(Connection connection, ScryCompletedRequest request) {
-        GameData gameData = game();
-        if (gameData == null) return;
-        try {
-            gameService.handleScryCompleted(gameData, aiPlayer, request.topCardOrder(), request.bottomCardOrder());
-        } catch (IllegalArgumentException | IllegalStateException e) {
-            log.info("AI: engine rejected scryCompleted in game {}: {}", gameId, e.getMessage());
-        }
-    }
-
-    public void handleLibraryCardsReordered(Connection connection, ReorderLibraryCardsRequest request) {
-        GameData gameData = game();
-        if (gameData == null) return;
-        try {
-            gameService.handleLibraryCardsReordered(gameData, aiPlayer, request.cardOrder());
-        } catch (IllegalArgumentException | IllegalStateException e) {
-            log.info("AI: engine rejected libraryCardsReordered in game {}: {}", gameId, e.getMessage());
-        }
-    }
-
-    public void handleLibraryCardChosen(Connection connection, LibraryCardChosenRequest request) {
-        GameData gameData = game();
-        if (gameData == null) return;
-        try {
-            gameService.handleLibraryCardChosen(gameData, aiPlayer, request.cardIndex());
-        } catch (IllegalArgumentException | IllegalStateException e) {
-            log.info("AI: engine rejected libraryCardChosen in game {}: {}", gameId, e.getMessage());
-        }
-    }
-
-    public void handleHandTopBottomChosen(Connection connection, HandTopBottomChosenRequest request) {
-        GameData gameData = game();
-        if (gameData == null) return;
-        try {
-            gameService.handleHandTopBottomChosen(gameData, aiPlayer, request.handCardIndex(), request.topCardIndex());
-        } catch (IllegalArgumentException | IllegalStateException e) {
-            log.info("AI: engine rejected handTopBottomChosen in game {}: {}", gameId, e.getMessage());
+            log.info("AI: engine rejected {} in game {}: {}",
+                    answer.getClass().getSimpleName(), gameId, e.getMessage());
         }
     }
 

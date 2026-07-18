@@ -1,5 +1,6 @@
 package com.github.laxika.magicalvibes.cards.n;
 
+import com.github.laxika.magicalvibes.service.interaction.InteractionAnswer;
 import com.github.laxika.magicalvibes.cards.a.AirElemental;
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
 import com.github.laxika.magicalvibes.cards.l.LlanowarElves;
@@ -99,7 +100,7 @@ class NaturalOrderTest extends BaseCardTest {
         harness.passBothPriorities();
 
         String chosenName = gd.interaction.activeInteraction(PendingInteraction.LibrarySearch.class).params().cards().getFirst().getName();
-        harness.getGameService().handleLibraryCardChosen(gd, player1, 0);
+        harness.getGameService().handleInteractionAnswer(gd, player1, new InteractionAnswer.LibraryCardChosen(0));
 
         assertThat(gd.playerBattlefields.get(player1.getId()))
                 .anyMatch(p -> p.getCard().getName().equals(chosenName));

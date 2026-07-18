@@ -4,7 +4,7 @@ import com.github.laxika.magicalvibes.model.GameData;
 import com.github.laxika.magicalvibes.model.PendingInteraction;
 import com.github.laxika.magicalvibes.model.Player;
 import com.github.laxika.magicalvibes.networking.SessionManager;
-import com.github.laxika.magicalvibes.networking.message.XValueChoiceMessage;
+import com.github.laxika.magicalvibes.networking.message.InteractionPromptMessage;
 import com.github.laxika.magicalvibes.service.GameBroadcastService;
 import com.github.laxika.magicalvibes.service.effect.EffectResolutionService;
 import com.github.laxika.magicalvibes.service.input.PlayerInputService;
@@ -50,7 +50,7 @@ public class IllicitAuctionBidChoiceInteractionHandler
     @Override
     public void prompt(GameData gameData, PendingInteraction.IllicitAuctionBidChoice interaction, UUID recipientId) {
         sessionManager.sendToPlayer(recipientId,
-                new XValueChoiceMessage(interaction.prompt(), interaction.maxBid(), interaction.cardName()));
+                InteractionPromptMessage.numberPick(interaction.prompt(), interaction.maxBid(), interaction.cardName()));
 
         String playerName = gameData.playerIdToName.get(interaction.playerId());
         log.info("Game {} - Awaiting {} to bid for {} (high bid {})",

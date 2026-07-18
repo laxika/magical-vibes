@@ -1,5 +1,6 @@
 package com.github.laxika.magicalvibes.cards.m;
 
+import com.github.laxika.magicalvibes.service.interaction.InteractionAnswer;
 import com.github.laxika.magicalvibes.model.GameLogEntry;
 
 import com.github.laxika.magicalvibes.model.PendingInteraction;
@@ -75,7 +76,7 @@ class MitoticManipulationTest extends BaseCardTest {
 
         GameData gd = harness.getGameData();
         // Choose the Grizzly Bears
-        harness.getGameService().handleLibraryCardChosen(gd, player1, 0);
+        harness.getGameService().handleInteractionAnswer(gd, player1, new InteractionAnswer.LibraryCardChosen(0));
 
         // Grizzly Bears should be on the battlefield
         long bearsCount = gd.playerBattlefields.get(player1.getId()).stream()
@@ -110,7 +111,7 @@ class MitoticManipulationTest extends BaseCardTest {
 
         GameData gd = harness.getGameData();
         int battlefieldBefore = gd.playerBattlefields.get(player1.getId()).size();
-        harness.getGameService().handleLibraryCardChosen(gd, player1, -1);
+        harness.getGameService().handleInteractionAnswer(gd, player1, new InteractionAnswer.LibraryCardChosen(-1));
 
         // No new permanent should be on the battlefield
         assertThat(gd.playerBattlefields.get(player1.getId())).hasSize(battlefieldBefore);
@@ -262,7 +263,7 @@ class MitoticManipulationTest extends BaseCardTest {
 
         GameData gd = harness.getGameData();
         // Choose the Grizzly Bears
-        harness.getGameService().handleLibraryCardChosen(gd, player1, 0);
+        harness.getGameService().handleInteractionAnswer(gd, player1, new InteractionAnswer.LibraryCardChosen(0));
 
         // Now reorder the remaining 6 cards
         assertThat(gd.interaction.activeInteraction()).isInstanceOf(PendingInteraction.LibraryReorder.class);
@@ -270,7 +271,7 @@ class MitoticManipulationTest extends BaseCardTest {
         assertThat(remaining).hasSize(6);
 
         // Reorder in original order (0,1,2,3,4,5)
-        harness.getGameService().handleLibraryCardsReordered(gd, player1, List.of(0, 1, 2, 3, 4, 5));
+        harness.getGameService().handleInteractionAnswer(gd, player1, new InteractionAnswer.CardOrder(List.of(0, 1, 2, 3, 4, 5)));
 
         // Library should have 6 cards on bottom
         assertThat(gd.playerDecks.get(player1.getId())).hasSize(6);

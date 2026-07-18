@@ -1,5 +1,6 @@
 package com.github.laxika.magicalvibes.cards.p;
 
+import com.github.laxika.magicalvibes.service.interaction.InteractionAnswer;
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
 import com.github.laxika.magicalvibes.cards.s.Swamp;
 import com.github.laxika.magicalvibes.model.Card;
@@ -67,7 +68,7 @@ class PlanarPortalTest extends BaseCardTest {
         String chosenName = gd.interaction.activeInteraction(PendingInteraction.LibrarySearch.class)
                 .params().cards().getFirst().getName();
 
-        harness.getGameService().handleLibraryCardChosen(gd, player1, 0);
+        harness.getGameService().handleInteractionAnswer(gd, player1, new InteractionAnswer.LibraryCardChosen(0));
 
         assertThat(gd.playerHands.get(player1.getId())).anyMatch(c -> c.getName().equals(chosenName));
         assertThat(gd.playerDecks.get(player1.getId())).hasSize(deckSizeBefore - 1);

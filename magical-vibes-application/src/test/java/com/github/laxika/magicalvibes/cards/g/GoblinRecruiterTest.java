@@ -1,8 +1,8 @@
 package com.github.laxika.magicalvibes.cards.g;
 
+import com.github.laxika.magicalvibes.service.interaction.InteractionAnswer;
 import com.github.laxika.magicalvibes.model.GameLogEntry;
 
-import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
 import com.github.laxika.magicalvibes.cards.r.RagingGoblin;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.ManaColor;
@@ -61,7 +61,7 @@ class GoblinRecruiterTest extends BaseCardTest {
         assertThat(gd.interaction.activeInteraction()).isInstanceOf(PendingInteraction.LibraryReorder.class);
 
         // Put goblinB on top, goblinA second (order [1, 0])
-        gs.handleLibraryCardsReordered(gd, player1, List.of(1, 0));
+        gs.handleInteractionAnswer(gd, player1, new InteractionAnswer.CardOrder(List.of(1, 0)));
 
         List<Card> library = gd.playerDecks.get(player1.getId());
         assertThat(library).hasSize(3);

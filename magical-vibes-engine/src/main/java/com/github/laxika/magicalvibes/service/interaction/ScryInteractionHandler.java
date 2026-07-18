@@ -6,7 +6,7 @@ import com.github.laxika.magicalvibes.model.GameLog;
 import com.github.laxika.magicalvibes.model.PendingInteraction;
 import com.github.laxika.magicalvibes.model.Player;
 import com.github.laxika.magicalvibes.networking.SessionManager;
-import com.github.laxika.magicalvibes.networking.message.ScryMessage;
+import com.github.laxika.magicalvibes.networking.message.InteractionPromptMessage;
 import com.github.laxika.magicalvibes.networking.model.CardView;
 import com.github.laxika.magicalvibes.networking.service.CardViewFactory;
 import com.github.laxika.magicalvibes.service.GameBroadcastService;
@@ -54,7 +54,7 @@ public class ScryInteractionHandler implements InteractionHandler<PendingInterac
         String prompt = interaction.cards().size() == 1
                 ? "Scry 1: Keep on top or put on the bottom of your library."
                 : "Scry " + interaction.cards().size() + ": Put cards on the top or bottom of your library.";
-        sessionManager.sendToPlayer(recipientId, new ScryMessage(cardViews, prompt));
+        sessionManager.sendToPlayer(recipientId, InteractionPromptMessage.scryOrder(cardViews, prompt));
     }
 
     @Override

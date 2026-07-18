@@ -1,5 +1,6 @@
 package com.github.laxika.magicalvibes.cards.m;
 
+import com.github.laxika.magicalvibes.service.interaction.InteractionAnswer;
 import com.github.laxika.magicalvibes.model.PendingInteraction;
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
 import com.github.laxika.magicalvibes.cards.l.LlanowarElves;
@@ -150,7 +151,7 @@ class MirrorOfFateTest extends BaseCardTest {
                 .anyMatch(c -> c.getName().equals("Shock"));
 
         // Complete reorder: put Elves on top, Bears second (order: [1, 0])
-        gs.handleLibraryCardsReordered(gd, player1, List.of(1, 0));
+        gs.handleInteractionAnswer(gd, player1, new InteractionAnswer.CardOrder(List.of(1, 0)));
 
         // Library should now have Elves on top, Bears second
         List<Card> library = gd.playerDecks.get(player1.getId());
@@ -240,7 +241,7 @@ class MirrorOfFateTest extends BaseCardTest {
         assertThat(gd.interaction.activeInteraction()).isInstanceOf(PendingInteraction.LibraryReorder.class);
 
         // Complete reorder: keep original order [0, 1, 2, 3, 4, 5, 6]
-        gs.handleLibraryCardsReordered(gd, player1, List.of(0, 1, 2, 3, 4, 5, 6));
+        gs.handleInteractionAnswer(gd, player1, new InteractionAnswer.CardOrder(List.of(0, 1, 2, 3, 4, 5, 6)));
 
         // Library should have 7 cards
         assertThat(gd.playerDecks.get(player1.getId())).hasSize(7);

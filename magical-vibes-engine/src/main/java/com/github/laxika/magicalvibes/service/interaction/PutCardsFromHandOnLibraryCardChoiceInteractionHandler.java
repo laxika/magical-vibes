@@ -6,7 +6,7 @@ import com.github.laxika.magicalvibes.model.GameLog;
 import com.github.laxika.magicalvibes.model.PendingInteraction;
 import com.github.laxika.magicalvibes.model.Player;
 import com.github.laxika.magicalvibes.networking.SessionManager;
-import com.github.laxika.magicalvibes.networking.message.ChooseMultipleCardsMessage;
+import com.github.laxika.magicalvibes.networking.message.InteractionPromptMessage;
 import com.github.laxika.magicalvibes.networking.model.CardView;
 import com.github.laxika.magicalvibes.networking.service.CardViewFactory;
 import com.github.laxika.magicalvibes.service.GameBroadcastService;
@@ -50,7 +50,7 @@ public class PutCardsFromHandOnLibraryCardChoiceInteractionHandler
                        UUID recipientId) {
         List<CardView> cardViews = interaction.cards().stream().map(cardViewFactory::create).toList();
         String destination = interaction.topOnly() ? "top of" : "top or bottom of";
-        sessionManager.sendToPlayer(recipientId, new ChooseMultipleCardsMessage(
+        sessionManager.sendToPlayer(recipientId, InteractionPromptMessage.multiCardPick(
                 new ArrayList<>(interaction.validCardIds()), cardViews, interaction.maxCount(),
                 "Choose " + interaction.maxCount() + " card(s) to put on " + destination + " your library."));
     }

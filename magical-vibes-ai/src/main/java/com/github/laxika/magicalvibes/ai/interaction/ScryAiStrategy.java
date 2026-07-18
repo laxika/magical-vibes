@@ -1,9 +1,9 @@
 package com.github.laxika.magicalvibes.ai.interaction;
 
+import com.github.laxika.magicalvibes.service.interaction.InteractionAnswer;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardType;
 import com.github.laxika.magicalvibes.model.PendingInteraction;
-import com.github.laxika.magicalvibes.networking.message.ScryCompletedRequest;
 import lombok.extern.slf4j.Slf4j;
 
 import java.util.ArrayList;
@@ -47,6 +47,6 @@ class ScryAiStrategy implements AiInteractionStrategy<PendingInteraction.Scry> {
 
         log.info("AI: Scry {} - keeping {} on top, {} on bottom in game {}",
                 cards.size(), topOrder.size(), bottomOrder.size(), ctx.gameId());
-        ctx.gameActions().handleScryCompleted(ctx.selfConnection(), new ScryCompletedRequest(topOrder, bottomOrder));
+        ctx.gameActions().answerInteraction(ctx.selfConnection(), new InteractionAnswer.ScryOrder(topOrder, bottomOrder));
     }
 }

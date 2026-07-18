@@ -1,5 +1,6 @@
 package com.github.laxika.magicalvibes.cards.g;
 
+import com.github.laxika.magicalvibes.service.interaction.InteractionAnswer;
 import com.github.laxika.magicalvibes.cards.f.Forest;
 import com.github.laxika.magicalvibes.cards.h.HillGiant;
 import com.github.laxika.magicalvibes.cards.p.Plains;
@@ -40,7 +41,7 @@ class GiftOfTheGargantuanTest extends BaseCardTest {
 
         GameData gd = harness.getGameData();
         // Pick the creature (Grizzly Bears).
-        harness.getGameService().handleLibraryCardChosen(gd, player1, 0);
+        harness.getGameService().handleInteractionAnswer(gd, player1, new InteractionAnswer.LibraryCardChosen(0));
 
         // Second pick offers only the land.
         assertThat(gd.interaction.activeInteraction()).isInstanceOf(PendingInteraction.LibrarySearch.class);
@@ -48,7 +49,7 @@ class GiftOfTheGargantuanTest extends BaseCardTest {
                 .containsExactly("Forest");
 
         // Pick the land (Forest).
-        harness.getGameService().handleLibraryCardChosen(gd, player1, 0);
+        harness.getGameService().handleInteractionAnswer(gd, player1, new InteractionAnswer.LibraryCardChosen(0));
 
         assertThat(gd.playerHands.get(player1.getId()).stream().map(Card::getName))
                 .contains("Grizzly Bears", "Forest");
@@ -66,7 +67,7 @@ class GiftOfTheGargantuanTest extends BaseCardTest {
 
         GameData gd = harness.getGameData();
         // Pick the first creature.
-        harness.getGameService().handleLibraryCardChosen(gd, player1, 0);
+        harness.getGameService().handleInteractionAnswer(gd, player1, new InteractionAnswer.LibraryCardChosen(0));
 
         // The follow-up pick never offers the other creature.
         assertThat(gd.interaction.activeInteraction(PendingInteraction.LibrarySearch.class).params().cards().stream().map(Card::getName))
@@ -83,7 +84,7 @@ class GiftOfTheGargantuanTest extends BaseCardTest {
 
         GameData gd = harness.getGameData();
         // Decline the creature.
-        harness.getGameService().handleLibraryCardChosen(gd, player1, -1);
+        harness.getGameService().handleInteractionAnswer(gd, player1, new InteractionAnswer.LibraryCardChosen(-1));
 
         assertThat(gd.interaction.activeInteraction()).isInstanceOf(PendingInteraction.LibrarySearch.class);
         assertThat(gd.interaction.activeInteraction(PendingInteraction.LibrarySearch.class).params().cards().stream().map(Card::getName))

@@ -1,5 +1,6 @@
 package com.github.laxika.magicalvibes.cards.b;
 
+import com.github.laxika.magicalvibes.service.interaction.InteractionAnswer;
 import com.github.laxika.magicalvibes.model.GameLogEntry;
 
 import com.github.laxika.magicalvibes.model.PendingInteraction;
@@ -53,7 +54,7 @@ class BirthingPodTest extends BaseCardTest {
         assertThat(gd.interaction.activeInteraction()).isInstanceOf(PendingInteraction.LibrarySearch.class);
 
         // Choose Gold Myr (MV 2)
-        gs.handleLibraryCardChosen(gd, player1, 0);
+        gs.handleInteractionAnswer(gd, player1, new InteractionAnswer.LibraryCardChosen(0));
 
         // Gold Myr should be on the battlefield
         assertThat(gd.playerBattlefields.get(player1.getId()))
@@ -82,7 +83,7 @@ class BirthingPodTest extends BaseCardTest {
                 .hasSize(1)
                 .allMatch(c -> c.getName().equals("Hill Giant"));
 
-        gs.handleLibraryCardChosen(gd, player1, 0);
+        gs.handleInteractionAnswer(gd, player1, new InteractionAnswer.LibraryCardChosen(0));
 
         assertThat(gd.playerBattlefields.get(player1.getId()))
                 .anyMatch(p -> p.getCard().getName().equals("Hill Giant"));
@@ -236,7 +237,7 @@ class BirthingPodTest extends BaseCardTest {
                 .hasSize(1)
                 .allMatch(c -> c.getName().equals("Air Elemental"));
 
-        gs.handleLibraryCardChosen(gd, player1, 0);
+        gs.handleInteractionAnswer(gd, player1, new InteractionAnswer.LibraryCardChosen(0));
 
         assertThat(gd.playerBattlefields.get(player1.getId()))
                 .anyMatch(p -> p.getCard().getName().equals("Air Elemental"));

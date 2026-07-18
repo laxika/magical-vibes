@@ -1,5 +1,6 @@
 package com.github.laxika.magicalvibes.cards.d;
 
+import com.github.laxika.magicalvibes.service.interaction.InteractionAnswer;
 import com.github.laxika.magicalvibes.model.GameLogEntry;
 
 import com.github.laxika.magicalvibes.cards.i.Island;
@@ -43,7 +44,7 @@ class DewdropSpyTest extends BaseCardTest {
         harness.passBothPriorities(); // resolve ETB trigger
 
         // Close the private look without moving anything.
-        gs.handleLibraryCardChosen(gd, player1, -1);
+        gs.handleInteractionAnswer(gd, player1, new InteractionAnswer.LibraryCardChosen(-1));
 
         List<Card> deckAfter = gd.playerDecks.get(player2.getId());
         assertThat(deckAfter).hasSize(deckSizeBefore);

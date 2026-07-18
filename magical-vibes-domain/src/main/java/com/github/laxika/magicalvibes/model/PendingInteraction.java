@@ -1021,7 +1021,7 @@ public sealed interface PendingInteraction permits PermanentChoiceContext,
      * {@link LibrarySearchParams} the begin site built - the multi-pick countdown
      * ({@code remainingCount}/{@code accumulatedCards}) advances by beginning a fresh record.
      * {@code messagePrompt} and {@code messageCanFailToFind} are the exact begin-time
-     * {@code ChooseCardFromLibraryMessage} fields (some sites word the message differently
+     * {@code InteractionPromptMessage} library-pick fields (some sites word the message differently
      * from {@code params.prompt()}); both are re-sent verbatim on reconnect.
      */
     record LibrarySearch(LibrarySearchParams params, String messagePrompt,
@@ -1044,7 +1044,7 @@ public sealed interface PendingInteraction permits PermanentChoiceContext,
      * "Choose a permanent" / "choose any target" — the single-pick battlefield/player
      * targeting prompt serving the ~45 {@link PermanentChoiceContext} operations (trigger-slot
      * targets, sacrifices, clone copies, spell retargets, aura placement, ...). Carries the two
-     * begin-time ordered ID lists exactly as the {@code ChoosePermanentMessage} sent them
+     * begin-time ordered ID lists exactly as the {@code InteractionPromptMessage} permanent pick sent them
      * ({@code validPlayerIds} is empty for the plain permanent variant) plus the begin-time
      * {@code prompt}; validation uses the merged {@link #validIds()} set, as legacy did.
      * {@code context} is the begin-time snapshot of the pre-seeded

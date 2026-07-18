@@ -1,5 +1,6 @@
 package com.github.laxika.magicalvibes.cards.e;
 
+import com.github.laxika.magicalvibes.service.interaction.InteractionAnswer;
 import com.github.laxika.magicalvibes.cards.f.Forest;
 import com.github.laxika.magicalvibes.cards.g.GarrukWildspeaker;
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
@@ -67,7 +68,7 @@ class ErodeTest extends BaseCardTest {
         harness.castInstant(player1, 0, targetId);
         harness.passBothPriorities();
 
-        harness.getGameService().handleLibraryCardChosen(gd, player2, 0);
+        harness.getGameService().handleInteractionAnswer(gd, player2, new InteractionAnswer.LibraryCardChosen(0));
 
         assertThat(gd.playerBattlefields.get(player2.getId()))
                 .anyMatch(p -> p.getCard().hasType(CardType.LAND)

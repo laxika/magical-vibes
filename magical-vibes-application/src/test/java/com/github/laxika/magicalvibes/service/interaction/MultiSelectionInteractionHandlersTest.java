@@ -5,8 +5,7 @@ import com.github.laxika.magicalvibes.model.GameData;
 import com.github.laxika.magicalvibes.model.PendingInteraction;
 import com.github.laxika.magicalvibes.model.Player;
 import com.github.laxika.magicalvibes.networking.SessionManager;
-import com.github.laxika.magicalvibes.networking.message.ChooseMultipleCardsMessage;
-import com.github.laxika.magicalvibes.networking.message.ChooseMultiplePermanentsMessage;
+import com.github.laxika.magicalvibes.networking.message.InteractionPromptMessage;
 import com.github.laxika.magicalvibes.networking.model.CardView;
 import com.github.laxika.magicalvibes.networking.service.CardViewFactory;
 import com.github.laxika.magicalvibes.service.input.GraveyardChoiceHandlerService;
@@ -84,7 +83,7 @@ class MultiSelectionInteractionHandlersTest {
 
             assertThat(gd.interaction.activeInteraction()).isInstanceOf(PendingInteraction.MultiPermanentChoice.class);
             verify(sessionManager).sendToPlayer(eq(PLAYER1_ID), messageCaptor.capture());
-            ChooseMultiplePermanentsMessage msg = (ChooseMultiplePermanentsMessage) messageCaptor.getValue();
+            InteractionPromptMessage msg = (InteractionPromptMessage) messageCaptor.getValue();
             assertThat(msg.permanentIds()).containsExactly(perm1, perm2);
             assertThat(msg.maxCount()).isEqualTo(2);
             assertThat(msg.prompt()).isEqualTo("Choose up to 2 permanents.");
@@ -117,7 +116,7 @@ class MultiSelectionInteractionHandlersTest {
             verifyNoInteractions(sessionManager);
 
             assertThat(registry.replayPrompt(gd, PLAYER1_ID)).isTrue();
-            verify(sessionManager).sendToPlayer(eq(PLAYER1_ID), any(ChooseMultiplePermanentsMessage.class));
+            verify(sessionManager).sendToPlayer(eq(PLAYER1_ID), any(InteractionPromptMessage.class));
         }
     }
 
@@ -136,7 +135,7 @@ class MultiSelectionInteractionHandlersTest {
 
             assertThat(gd.interaction.activeInteraction()).isInstanceOf(PendingInteraction.MultiGraveyardChoice.class);
             verify(sessionManager).sendToPlayer(eq(PLAYER1_ID), messageCaptor.capture());
-            ChooseMultipleCardsMessage msg = (ChooseMultipleCardsMessage) messageCaptor.getValue();
+            InteractionPromptMessage msg = (InteractionPromptMessage) messageCaptor.getValue();
             assertThat(msg.cardIds()).containsExactly(card1.getId(), card2.getId());
             assertThat(msg.cards()).hasSize(2);
             assertThat(msg.maxCount()).isEqualTo(2);
@@ -170,7 +169,7 @@ class MultiSelectionInteractionHandlersTest {
             verifyNoInteractions(sessionManager);
 
             assertThat(registry.replayPrompt(gd, PLAYER1_ID)).isTrue();
-            verify(sessionManager).sendToPlayer(eq(PLAYER1_ID), any(ChooseMultipleCardsMessage.class));
+            verify(sessionManager).sendToPlayer(eq(PLAYER1_ID), any(InteractionPromptMessage.class));
         }
     }
 }

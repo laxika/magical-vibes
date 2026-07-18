@@ -28,34 +28,13 @@ export enum MessageType {
   AVAILABLE_ATTACKERS = 'AVAILABLE_ATTACKERS',
   AVAILABLE_BLOCKERS = 'AVAILABLE_BLOCKERS',
   GAME_OVER = 'GAME_OVER',
-  CHOOSE_CARD_FROM_HAND = 'CHOOSE_CARD_FROM_HAND',
-  CARD_CHOSEN = 'CARD_CHOSEN',
-  CHOOSE_FROM_LIST = 'CHOOSE_FROM_LIST',
-  CHOSEN_FROM_LIST = 'CHOSEN_FROM_LIST',
-  MAY_ABILITY_CHOICE = 'MAY_ABILITY_CHOICE',
-  MAY_ABILITY_CHOSEN = 'MAY_ABILITY_CHOSEN',
+  INTERACTION_PROMPT = 'INTERACTION_PROMPT',
+  INTERACTION_ANSWER = 'INTERACTION_ANSWER',
   ACTIVATE_ABILITY = 'ACTIVATE_ABILITY',
   ACTIVATE_GRAVEYARD_ABILITY = 'ACTIVATE_GRAVEYARD_ABILITY',
   ACTIVATE_HAND_ABILITY = 'ACTIVATE_HAND_ABILITY',
-  CHOOSE_PERMANENT = 'CHOOSE_PERMANENT',
-  PERMANENT_CHOSEN = 'PERMANENT_CHOSEN',
-  CHOOSE_MULTIPLE_PERMANENTS = 'CHOOSE_MULTIPLE_PERMANENTS',
-  MULTIPLE_PERMANENTS_CHOSEN = 'MULTIPLE_PERMANENTS_CHOSEN',
-  CHOOSE_MULTIPLE_CARDS = 'CHOOSE_MULTIPLE_CARDS',
-  MULTIPLE_CARDS_CHOSEN = 'MULTIPLE_CARDS_CHOSEN',
-  SCRY = 'SCRY',
-  SCRY_COMPLETED = 'SCRY_COMPLETED',
-  REORDER_LIBRARY_CARDS = 'REORDER_LIBRARY_CARDS',
-  LIBRARY_CARDS_REORDERED = 'LIBRARY_CARDS_REORDERED',
-  CHOOSE_CARD_FROM_LIBRARY = 'CHOOSE_CARD_FROM_LIBRARY',
-  LIBRARY_CARD_CHOSEN = 'LIBRARY_CARD_CHOSEN',
   REVEAL_HAND = 'REVEAL_HAND',
   REVEAL_LIBRARY_TOP = 'REVEAL_LIBRARY_TOP',
-  CHOOSE_FROM_REVEALED_HAND = 'CHOOSE_FROM_REVEALED_HAND',
-  CHOOSE_CARD_FROM_GRAVEYARD = 'CHOOSE_CARD_FROM_GRAVEYARD',
-  GRAVEYARD_CARD_CHOSEN = 'GRAVEYARD_CARD_CHOSEN',
-  CHOOSE_HAND_TOP_BOTTOM = 'CHOOSE_HAND_TOP_BOTTOM',
-  HAND_TOP_BOTTOM_CHOSEN = 'HAND_TOP_BOTTOM_CHOSEN',
   ERROR = 'ERROR',
   CREATE_DRAFT = 'CREATE_DRAFT',
   DRAFT_JOINED = 'DRAFT_JOINED',
@@ -74,8 +53,6 @@ export enum MessageType {
   VALID_TARGETS_RESPONSE = 'VALID_TARGETS_RESPONSE',
   PAY_SEARCH_TAX = 'PAY_SEARCH_TAX',
   REVERT_MANA_ACTIVATIONS = 'REVERT_MANA_ACTIVATIONS',
-  X_VALUE_CHOICE = 'X_VALUE_CHOICE',
-  X_VALUE_CHOSEN = 'X_VALUE_CHOSEN',
   SURRENDER = 'SURRENDER',
   LEAVE_GAME = 'LEAVE_GAME',
   LEAVE_DRAFT = 'LEAVE_DRAFT',
@@ -426,73 +403,30 @@ export interface GameOverNotification {
   winnerName: string;
 }
 
-export interface ChooseCardFromHandNotification {
-  type: MessageType;
-  cardIndices: number[];
-  prompt: string;
-  canDecline: boolean;
-}
+export type InteractionShape =
+  'CARD_INDEX_PICK' | 'GRAVEYARD_INDEX_PICK' | 'LIBRARY_INDEX_PICK' | 'PERMANENT_PICK' |
+  'MULTI_CARD_PICK' | 'MULTI_PERMANENT_PICK' | 'LIST_PICK' | 'ACCEPT_DECLINE' |
+  'NUMBER_PICK' | 'SCRY_ORDER' | 'CARD_ORDER' | 'HAND_TOP_BOTTOM';
 
-export interface ChooseFromListNotification {
+// The single prompt message for every pending interaction. The shape selects the input UI
+// and the answer payload; the optional fields carry the shape's data (unused fields are null).
+export interface InteractionPromptNotification {
   type: MessageType;
-  options: string[];
+  shape: InteractionShape;
   prompt: string;
-  searchable: boolean;
-}
-
-export interface MayAbilityNotification {
-  type: MessageType;
-  prompt: string;
-  canPay: boolean;
-  manaCost: string | null;
-}
-
-export interface XValueChoiceNotification {
-  type: MessageType;
-  prompt: string;
-  maxValue: number;
-  cardName: string;
-}
-
-export interface ChoosePermanentNotification {
-  type: MessageType;
-  permanentIds: string[];
+  cardIndices?: number[];
+  cards?: Card[];
+  cardIds?: string[];
+  permanentIds?: string[];
   playerIds?: string[];
-  prompt: string;
-}
-
-export interface ChooseMultiplePermanentsNotification {
-  type: MessageType;
-  permanentIds: string[];
-  maxCount: number;
-  prompt: string;
-}
-
-export interface ChooseMultipleCardsNotification {
-  type: MessageType;
-  cardIds: string[];
-  cards: Card[];
-  maxCount: number;
-  prompt: string;
-}
-
-export interface ScryNotification {
-  type: MessageType;
-  cards: Card[];
-  prompt: string;
-}
-
-export interface ReorderLibraryCardsNotification {
-  type: MessageType;
-  cards: Card[];
-  prompt: string;
-}
-
-export interface ChooseCardFromLibraryNotification {
-  type: MessageType;
-  cards: Card[];
-  prompt: string;
-  canFailToFind: boolean;
+  options?: string[];
+  maxCount?: number;
+  declinable?: boolean;
+  canPay?: boolean;
+  manaCost?: string | null;
+  cardName?: string;
+  allGraveyards?: boolean;
+  searchable?: boolean;
 }
 
 export interface RevealHandNotification {
@@ -505,27 +439,6 @@ export interface RevealLibraryTopNotification {
   type: MessageType;
   cards: Card[];
   playerName: string;
-}
-
-export interface ChooseFromRevealedHandNotification {
-  type: MessageType;
-  cards: Card[];
-  validIndices: number[];
-  prompt: string;
-  optional: boolean;
-}
-
-export interface ChooseCardFromGraveyardNotification {
-  type: MessageType;
-  cardIndices: number[];
-  prompt: string;
-  allGraveyards: boolean;
-}
-
-export interface ChooseHandTopBottomNotification {
-  type: MessageType;
-  cards: Card[];
-  prompt: string;
 }
 
 export enum DraftStatus {
@@ -652,7 +565,7 @@ export interface ValidTargetsResponse {
   prompt: string;
 }
 
-export type WebSocketMessage = LoginResponse | GameNotification | LobbyGameNotification | GameStateNotification | MulliganResolvedNotification | SelectCardsToBottomNotification | AvailableAttackersNotification | AvailableBlockersNotification | GameOverNotification | ChooseCardFromHandNotification | ChooseFromListNotification | MayAbilityNotification | ChoosePermanentNotification | ChooseMultiplePermanentsNotification | ChooseMultipleCardsNotification | ReorderLibraryCardsNotification | ChooseCardFromLibraryNotification | RevealHandNotification | ChooseFromRevealedHandNotification | ChooseCardFromGraveyardNotification | ChooseHandTopBottomNotification | DraftJoinedNotification | DraftPackUpdateNotification | DeckBuildingStateNotification | TournamentUpdateNotification | TournamentGameReadyNotification | DraftFinishedNotification | CombatDamageAssignmentNotification | CardListResponse | ValidTargetsResponse | SaveDeckResponse;
+export type WebSocketMessage = LoginResponse | GameNotification | LobbyGameNotification | GameStateNotification | MulliganResolvedNotification | SelectCardsToBottomNotification | AvailableAttackersNotification | AvailableBlockersNotification | GameOverNotification | InteractionPromptNotification | RevealHandNotification | RevealLibraryTopNotification | DraftJoinedNotification | DraftPackUpdateNotification | DeckBuildingStateNotification | TournamentUpdateNotification | TournamentGameReadyNotification | DraftFinishedNotification | CombatDamageAssignmentNotification | CardListResponse | ValidTargetsResponse | SaveDeckResponse;
 
 export interface User {
   userId: string;
@@ -743,20 +656,8 @@ export class WebsocketService {
           // Buffer game input messages so they're available when game component mounts on rejoin
           if (message.type === MessageType.AVAILABLE_ATTACKERS ||
               message.type === MessageType.AVAILABLE_BLOCKERS ||
-              message.type === MessageType.CHOOSE_CARD_FROM_HAND ||
-              message.type === MessageType.CHOOSE_FROM_LIST ||
-              message.type === MessageType.MAY_ABILITY_CHOICE ||
-              message.type === MessageType.CHOOSE_PERMANENT ||
-              message.type === MessageType.CHOOSE_MULTIPLE_PERMANENTS ||
-              message.type === MessageType.CHOOSE_MULTIPLE_CARDS ||
-              message.type === MessageType.SCRY ||
-              message.type === MessageType.REORDER_LIBRARY_CARDS ||
-              message.type === MessageType.CHOOSE_CARD_FROM_LIBRARY ||
-              message.type === MessageType.CHOOSE_HAND_TOP_BOTTOM ||
-              message.type === MessageType.CHOOSE_FROM_REVEALED_HAND ||
-              message.type === MessageType.CHOOSE_CARD_FROM_GRAVEYARD ||
-              message.type === MessageType.COMBAT_DAMAGE_ASSIGNMENT ||
-              message.type === MessageType.X_VALUE_CHOICE) {
+              message.type === MessageType.INTERACTION_PROMPT ||
+              message.type === MessageType.COMBAT_DAMAGE_ASSIGNMENT) {
             this.pendingGameInputMessage = message;
           }
 

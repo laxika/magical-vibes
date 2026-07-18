@@ -1,5 +1,6 @@
 package com.github.laxika.magicalvibes.cards.p;
 
+import com.github.laxika.magicalvibes.service.interaction.InteractionAnswer;
 import com.github.laxika.magicalvibes.model.GameLogEntry;
 
 import com.github.laxika.magicalvibes.model.PendingInteraction;
@@ -67,13 +68,13 @@ class PrimevalTitanTest extends BaseCardTest {
             int battlefieldBefore = gd.playerBattlefields.get(player1.getId()).size();
 
             // Pick first land
-            gs.handleLibraryCardChosen(gd, player1, 0);
+            gs.handleInteractionAnswer(gd, player1, new InteractionAnswer.LibraryCardChosen(0));
 
             // Second search should be presented
             assertThat(gd.interaction.activeInteraction()).isInstanceOf(PendingInteraction.LibrarySearch.class);
 
             // Pick second land
-            gs.handleLibraryCardChosen(gd, player1, 0);
+            gs.handleInteractionAnswer(gd, player1, new InteractionAnswer.LibraryCardChosen(0));
 
             // Both lands should be on the battlefield tapped
             assertThat(gd.playerBattlefields.get(player1.getId())).hasSize(battlefieldBefore + 2);
@@ -95,11 +96,11 @@ class PrimevalTitanTest extends BaseCardTest {
             int battlefieldBefore = gd.playerBattlefields.get(player1.getId()).size();
 
             // Pick first land — it should NOT be on the battlefield yet (accumulated)
-            gs.handleLibraryCardChosen(gd, player1, 0);
+            gs.handleInteractionAnswer(gd, player1, new InteractionAnswer.LibraryCardChosen(0));
             assertThat(gd.playerBattlefields.get(player1.getId())).hasSize(battlefieldBefore);
 
             // Pick second land — now BOTH should enter simultaneously
-            gs.handleLibraryCardChosen(gd, player1, 0);
+            gs.handleInteractionAnswer(gd, player1, new InteractionAnswer.LibraryCardChosen(0));
             assertThat(gd.playerBattlefields.get(player1.getId())).hasSize(battlefieldBefore + 2);
         }
 
@@ -127,10 +128,10 @@ class PrimevalTitanTest extends BaseCardTest {
             int battlefieldBefore = gd.playerBattlefields.get(player1.getId()).size();
 
             // Pick first land
-            gs.handleLibraryCardChosen(gd, player1, 0);
+            gs.handleInteractionAnswer(gd, player1, new InteractionAnswer.LibraryCardChosen(0));
 
             // Decline second pick
-            gs.handleLibraryCardChosen(gd, player1, -1);
+            gs.handleInteractionAnswer(gd, player1, new InteractionAnswer.LibraryCardChosen(-1));
 
             // Only one land should have entered
             assertThat(gd.playerBattlefields.get(player1.getId())).hasSize(battlefieldBefore + 1);
@@ -149,7 +150,7 @@ class PrimevalTitanTest extends BaseCardTest {
             int battlefieldBefore = gd.playerBattlefields.get(player1.getId()).size();
 
             // Decline first pick
-            gs.handleLibraryCardChosen(gd, player1, -1);
+            gs.handleInteractionAnswer(gd, player1, new InteractionAnswer.LibraryCardChosen(-1));
 
             // No lands entered
             assertThat(gd.playerBattlefields.get(player1.getId())).hasSize(battlefieldBefore);
@@ -206,10 +207,10 @@ class PrimevalTitanTest extends BaseCardTest {
             int battlefieldBefore = gd.playerBattlefields.get(player1.getId()).size();
 
             // Pick first land
-            gs.handleLibraryCardChosen(gd, player1, 0);
+            gs.handleInteractionAnswer(gd, player1, new InteractionAnswer.LibraryCardChosen(0));
 
             // Pick second land
-            gs.handleLibraryCardChosen(gd, player1, 0);
+            gs.handleInteractionAnswer(gd, player1, new InteractionAnswer.LibraryCardChosen(0));
 
             assertThat(gd.playerBattlefields.get(player1.getId())).hasSize(battlefieldBefore + 2);
             long tappedLandCount = gd.playerBattlefields.get(player1.getId()).stream()

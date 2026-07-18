@@ -1,5 +1,6 @@
 package com.github.laxika.magicalvibes.cards.a;
 
+import com.github.laxika.magicalvibes.service.interaction.InteractionAnswer;
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
 import com.github.laxika.magicalvibes.cards.h.HillGiant;
 import com.github.laxika.magicalvibes.cards.l.LlanowarElves;
@@ -51,7 +52,7 @@ class AladdinsLampTest extends BaseCardTest {
         assertThat(gd.interaction.activeInteraction()).isInstanceOf(PendingInteraction.LibrarySearch.class);
         assertThat(gd.interaction.activeInteraction(PendingInteraction.LibrarySearch.class).params().cards()).hasSize(3);
 
-        harness.getGameService().handleLibraryCardChosen(gd, player1, 1); // keep Shock, draw it
+        harness.getGameService().handleInteractionAnswer(gd, player1, new InteractionAnswer.LibraryCardChosen(1)); // keep Shock, draw it
 
         assertThat(handNames()).containsExactly("Shock");
         // The untouched card below the looked-at three is now on top.
@@ -74,7 +75,7 @@ class AladdinsLampTest extends BaseCardTest {
         activateLamp(2);
 
         harness.getDrawService().resolveDrawCard(gd, player1.getId());
-        harness.getGameService().handleLibraryCardChosen(gd, player1, 0); // keep Llanowar Elves
+        harness.getGameService().handleInteractionAnswer(gd, player1, new InteractionAnswer.LibraryCardChosen(0)); // keep Llanowar Elves
 
         // A second draw is ordinary — no look-at interaction is offered.
         harness.getDrawService().resolveDrawCard(gd, player1.getId());

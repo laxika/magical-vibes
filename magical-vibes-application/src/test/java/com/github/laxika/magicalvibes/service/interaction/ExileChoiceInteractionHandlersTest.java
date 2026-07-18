@@ -6,7 +6,7 @@ import com.github.laxika.magicalvibes.model.PendingInteraction;
 import com.github.laxika.magicalvibes.model.PendingKnowledgePoolCast;
 import com.github.laxika.magicalvibes.model.Player;
 import com.github.laxika.magicalvibes.networking.SessionManager;
-import com.github.laxika.magicalvibes.networking.message.ChooseMultipleCardsMessage;
+import com.github.laxika.magicalvibes.networking.message.InteractionPromptMessage;
 import com.github.laxika.magicalvibes.networking.model.CardView;
 import com.github.laxika.magicalvibes.networking.service.CardViewFactory;
 import com.github.laxika.magicalvibes.service.effect.normalfx.ExileSupport;
@@ -84,7 +84,7 @@ class ExileChoiceInteractionHandlersTest {
 
             assertThat(gd.interaction.activeInteraction()).isInstanceOf(PendingInteraction.KnowledgePoolCastChoice.class);
             verify(sessionManager).sendToPlayer(eq(PLAYER1_ID), messageCaptor.capture());
-            ChooseMultipleCardsMessage msg = (ChooseMultipleCardsMessage) messageCaptor.getValue();
+            InteractionPromptMessage msg = (InteractionPromptMessage) messageCaptor.getValue();
             assertThat(msg.cardIds()).containsExactly(poolCard.getId());
             assertThat(msg.maxCount()).isEqualTo(1);
             assertThat(msg.prompt()).contains("Knowledge Pool");
@@ -119,7 +119,7 @@ class ExileChoiceInteractionHandlersTest {
 
             assertThat(gd.interaction.activeInteraction()).isInstanceOf(PendingInteraction.MirrorOfFateChoice.class);
             verify(sessionManager).sendToPlayer(eq(PLAYER1_ID), messageCaptor.capture());
-            ChooseMultipleCardsMessage msg = (ChooseMultipleCardsMessage) messageCaptor.getValue();
+            InteractionPromptMessage msg = (InteractionPromptMessage) messageCaptor.getValue();
             assertThat(msg.cardIds()).containsExactly(exiled.getId());
             assertThat(msg.maxCount()).isEqualTo(7);
             assertThat(msg.prompt()).contains("seven");
@@ -150,7 +150,7 @@ class ExileChoiceInteractionHandlersTest {
             verifyNoInteractions(sessionManager);
 
             assertThat(registry.replayPrompt(gd, PLAYER1_ID)).isTrue();
-            verify(sessionManager).sendToPlayer(eq(PLAYER1_ID), any(ChooseMultipleCardsMessage.class));
+            verify(sessionManager).sendToPlayer(eq(PLAYER1_ID), any(InteractionPromptMessage.class));
         }
     }
 }

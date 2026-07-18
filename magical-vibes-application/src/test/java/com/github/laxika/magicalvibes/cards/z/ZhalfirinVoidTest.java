@@ -1,5 +1,6 @@
 package com.github.laxika.magicalvibes.cards.z;
 
+import com.github.laxika.magicalvibes.service.interaction.InteractionAnswer;
 import com.github.laxika.magicalvibes.model.PendingInteraction;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.Player;
@@ -50,7 +51,7 @@ class ZhalfirinVoidTest extends BaseCardTest {
 
         harness.passBothPriorities(); // resolve ETB
 
-        harness.getGameService().handleScryCompleted(gd, player1, List.of(0), List.of());
+        harness.getGameService().handleInteractionAnswer(gd, player1, new InteractionAnswer.ScryOrder(List.of(0), List.of()));
 
         assertThat(deck.get(0)).isSameAs(originalTop);
     }
@@ -65,7 +66,7 @@ class ZhalfirinVoidTest extends BaseCardTest {
 
         harness.passBothPriorities(); // resolve ETB
 
-        harness.getGameService().handleScryCompleted(gd, player1, List.of(), List.of(0));
+        harness.getGameService().handleInteractionAnswer(gd, player1, new InteractionAnswer.ScryOrder(List.of(), List.of(0)));
 
         assertThat(deck.get(0)).isNotSameAs(originalTop);
         assertThat(deck.get(deck.size() - 1)).isSameAs(originalTop);
@@ -77,7 +78,7 @@ class ZhalfirinVoidTest extends BaseCardTest {
         playZhalfirinVoid(player1);
         harness.passBothPriorities(); // resolve ETB
 
-        harness.getGameService().handleScryCompleted(gd, player1, List.of(0), List.of());
+        harness.getGameService().handleInteractionAnswer(gd, player1, new InteractionAnswer.ScryOrder(List.of(0), List.of()));
 
         assertThat(gd.interaction.activeInteraction()).isNull();
         assertThat(gd.interaction.activeInteraction(PendingInteraction.Scry.class)).isNull();
@@ -90,7 +91,7 @@ class ZhalfirinVoidTest extends BaseCardTest {
     void entersBattlefieldAsPermanent() {
         playZhalfirinVoid(player1);
         harness.passBothPriorities(); // resolve ETB
-        harness.getGameService().handleScryCompleted(gd, player1, List.of(0), List.of());
+        harness.getGameService().handleInteractionAnswer(gd, player1, new InteractionAnswer.ScryOrder(List.of(0), List.of()));
 
         harness.assertOnBattlefield(player1, "Zhalfirin Void");
     }
@@ -100,7 +101,7 @@ class ZhalfirinVoidTest extends BaseCardTest {
     void stackEmptyAfterResolution() {
         playZhalfirinVoid(player1);
         harness.passBothPriorities(); // resolve ETB
-        harness.getGameService().handleScryCompleted(gd, player1, List.of(0), List.of());
+        harness.getGameService().handleInteractionAnswer(gd, player1, new InteractionAnswer.ScryOrder(List.of(0), List.of()));
 
         assertThat(gd.stack).isEmpty();
     }

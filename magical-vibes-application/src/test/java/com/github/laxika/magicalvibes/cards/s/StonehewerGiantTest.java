@@ -1,7 +1,7 @@
 package com.github.laxika.magicalvibes.cards.s;
 
+import com.github.laxika.magicalvibes.service.interaction.InteractionAnswer;
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
-import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.Player;
@@ -27,7 +27,7 @@ class StonehewerGiantTest extends BaseCardTest {
         harness.passBothPriorities();
 
         // Choose the Equipment from the library search
-        gs.handleLibraryCardChosen(gd, player1, 0);
+        gs.handleInteractionAnswer(gd, player1, new InteractionAnswer.LibraryCardChosen(0));
         // Choose the creature to attach it to
         harness.handlePermanentChosen(player1, bears.getId());
 
@@ -47,7 +47,7 @@ class StonehewerGiantTest extends BaseCardTest {
         harness.activateAbility(player1, 0, null, null);
         harness.passBothPriorities();
 
-        gs.handleLibraryCardChosen(gd, player1, 0);
+        gs.handleInteractionAnswer(gd, player1, new InteractionAnswer.LibraryCardChosen(0));
         harness.handlePermanentChosen(player1, giant.getId());
 
         Permanent equipment = findByName(player1, "Strider Harness");

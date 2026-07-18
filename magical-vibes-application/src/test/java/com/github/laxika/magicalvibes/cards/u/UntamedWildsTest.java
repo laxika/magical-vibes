@@ -1,5 +1,6 @@
 package com.github.laxika.magicalvibes.cards.u;
 
+import com.github.laxika.magicalvibes.service.interaction.InteractionAnswer;
 import com.github.laxika.magicalvibes.cards.f.Forest;
 import com.github.laxika.magicalvibes.cards.i.Island;
 import com.github.laxika.magicalvibes.cards.m.Mountain;
@@ -47,7 +48,7 @@ class UntamedWildsTest extends BaseCardTest {
 
         GameData gd = harness.getGameData();
         int battlefieldBefore = gd.playerBattlefields.get(player1.getId()).size();
-        harness.getGameService().handleLibraryCardChosen(gd, player1, 0);
+        harness.getGameService().handleInteractionAnswer(gd, player1, new InteractionAnswer.LibraryCardChosen(0));
 
         assertThat(gd.playerBattlefields.get(player1.getId())).hasSize(battlefieldBefore + 1);
         assertThat(gd.playerBattlefields.get(player1.getId()))
@@ -64,7 +65,7 @@ class UntamedWildsTest extends BaseCardTest {
         harness.passBothPriorities();
         GameData gd = harness.getGameData();
 
-        harness.getGameService().handleLibraryCardChosen(gd, player1, -1);
+        harness.getGameService().handleInteractionAnswer(gd, player1, new InteractionAnswer.LibraryCardChosen(-1));
 
         assertThat(gd.interaction.activeInteraction()).isNull();
     }

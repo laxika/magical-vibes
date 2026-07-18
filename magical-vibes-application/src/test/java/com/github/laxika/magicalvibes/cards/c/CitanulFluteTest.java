@@ -1,5 +1,6 @@
 package com.github.laxika.magicalvibes.cards.c;
 
+import com.github.laxika.magicalvibes.service.interaction.InteractionAnswer;
 import com.github.laxika.magicalvibes.model.GameLogEntry;
 
 import com.github.laxika.magicalvibes.model.PendingInteraction;
@@ -229,7 +230,7 @@ class CitanulFluteTest extends BaseCardTest {
         int deckSizeBefore = gd.playerDecks.get(player1.getId()).size();
         String chosenName = gd.interaction.activeInteraction(PendingInteraction.LibrarySearch.class).params().cards().getFirst().getName();
 
-        harness.getGameService().handleLibraryCardChosen(gd, player1, 0);
+        harness.getGameService().handleInteractionAnswer(gd, player1, new InteractionAnswer.LibraryCardChosen(0));
 
         // Card is in hand
         assertThat(gd.playerHands.get(player1.getId()))
@@ -254,7 +255,7 @@ class CitanulFluteTest extends BaseCardTest {
         GameData gd = harness.getGameData();
         assertThat(gd.interaction.activeInteraction(PendingInteraction.LibrarySearch.class).params().reveals()).isTrue();
 
-        harness.getGameService().handleLibraryCardChosen(gd, player1, 0);
+        harness.getGameService().handleInteractionAnswer(gd, player1, new InteractionAnswer.LibraryCardChosen(0));
 
         // Log should mention "reveals" and "puts it into their hand"
         assertThat(gd.gameLog.stream().map(GameLogEntry::plainText)).anyMatch(entry -> entry.contains("reveals") && entry.contains("puts it into their hand"));
@@ -286,7 +287,7 @@ class CitanulFluteTest extends BaseCardTest {
         int handSizeBefore = gd.playerHands.get(player1.getId()).size();
         int deckSizeBefore = gd.playerDecks.get(player1.getId()).size();
 
-        harness.getGameService().handleLibraryCardChosen(gd, player1, -1);
+        harness.getGameService().handleInteractionAnswer(gd, player1, new InteractionAnswer.LibraryCardChosen(-1));
 
         // No card added to hand
         assertThat(gd.playerHands.get(player1.getId())).hasSize(handSizeBefore);

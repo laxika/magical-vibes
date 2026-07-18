@@ -1,5 +1,6 @@
 package com.github.laxika.magicalvibes.cards.c;
 
+import com.github.laxika.magicalvibes.service.interaction.InteractionAnswer;
 import com.github.laxika.magicalvibes.cards.f.Forest;
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
 import com.github.laxika.magicalvibes.cards.i.Island;
@@ -65,10 +66,10 @@ class ClarionUltimatumTest extends BaseCardTest {
         assertThat(gd.interaction.activeInteraction(PendingInteraction.LibrarySearch.class).params().cards())
                 .allMatch(c -> "Forest".equals(c.getName()));
 
-        gs.handleLibraryCardChosen(gd, player1, 0);
+        gs.handleInteractionAnswer(gd, player1, new InteractionAnswer.LibraryCardChosen(0));
         // Second permanent (also a Forest) offers its own search.
         assertThat(gd.interaction.activeInteraction()).isInstanceOf(PendingInteraction.LibrarySearch.class);
-        gs.handleLibraryCardChosen(gd, player1, 0);
+        gs.handleInteractionAnswer(gd, player1, new InteractionAnswer.LibraryCardChosen(0));
 
         assertThat(gd.interaction.activeInteraction()).isNull();
         // Two original Forests plus two fetched Forests.
@@ -88,7 +89,7 @@ class ClarionUltimatumTest extends BaseCardTest {
         harness.handleMultiplePermanentsChosen(player1, List.of(forests.get(0).getId()));
 
         // Decline the only same-name search.
-        gs.handleLibraryCardChosen(gd, player1, -1);
+        gs.handleInteractionAnswer(gd, player1, new InteractionAnswer.LibraryCardChosen(-1));
 
         assertThat(gd.interaction.activeInteraction()).isNull();
         // Nothing fetched — only the original Forest remains.

@@ -1,5 +1,6 @@
 package com.github.laxika.magicalvibes.cards.g;
 
+import com.github.laxika.magicalvibes.service.interaction.InteractionAnswer;
 import com.github.laxika.magicalvibes.model.GameLogEntry;
 
 import com.github.laxika.magicalvibes.model.PendingInteraction;
@@ -89,7 +90,7 @@ class GhostQuarterTest extends BaseCardTest {
 
         GameData gd = harness.getGameData();
         int battlefieldBefore = gd.playerBattlefields.get(player2.getId()).size();
-        harness.getGameService().handleLibraryCardChosen(gd, player2, 0);
+        harness.getGameService().handleInteractionAnswer(gd, player2, new InteractionAnswer.LibraryCardChosen(0));
 
         assertThat(gd.playerBattlefields.get(player2.getId())).hasSize(battlefieldBefore + 1);
         // The chosen land enters untapped
@@ -111,7 +112,7 @@ class GhostQuarterTest extends BaseCardTest {
         harness.passBothPriorities();
 
         GameData gd = harness.getGameData();
-        harness.getGameService().handleLibraryCardChosen(gd, player2, -1);
+        harness.getGameService().handleInteractionAnswer(gd, player2, new InteractionAnswer.LibraryCardChosen(-1));
 
         // No new land on battlefield
         assertThat(gd.playerBattlefields.get(player2.getId()))

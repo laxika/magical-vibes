@@ -1,5 +1,6 @@
 package com.github.laxika.magicalvibes.cards.k;
 
+import com.github.laxika.magicalvibes.service.interaction.InteractionAnswer;
 import com.github.laxika.magicalvibes.model.PendingInteraction;
 
 import com.github.laxika.magicalvibes.cards.f.FlightSpellbomb;
@@ -170,7 +171,7 @@ class KuldothaForgemasterTest extends BaseCardTest {
                 .allMatch(c -> c.getName().equals("Gold Myr"));
 
         // Choose Gold Myr
-        gs.handleLibraryCardChosen(gd, player1, 0);
+        gs.handleInteractionAnswer(gd, player1, new InteractionAnswer.LibraryCardChosen(0));
 
         // Gold Myr should be on the battlefield
         assertThat(gd.playerBattlefields.get(player1.getId()))
@@ -192,7 +193,7 @@ class KuldothaForgemasterTest extends BaseCardTest {
 
         harness.activateAbility(player1, 0, null, null);
         harness.passBothPriorities();
-        gs.handleLibraryCardChosen(gd, player1, 0);
+        gs.handleInteractionAnswer(gd, player1, new InteractionAnswer.LibraryCardChosen(0));
 
         Permanent goldMyr = findPermanent(player1, "Gold Myr");
         assertThat(goldMyr.isTapped()).isFalse();

@@ -1,5 +1,6 @@
 package com.github.laxika.magicalvibes.cards.t;
 
+import com.github.laxika.magicalvibes.service.interaction.InteractionAnswer;
 import com.github.laxika.magicalvibes.cards.f.Forest;
 import com.github.laxika.magicalvibes.cards.g.GildedLotus;
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
@@ -72,7 +73,7 @@ class TezzeretTheSeekerTest extends BaseCardTest {
                 gd.interaction.activeInteraction(PendingInteraction.LibrarySearch.class);
         assertThat(search.params().cards().stream().map(Card::getName)).containsExactly("Mind Stone");
 
-        harness.getGameService().handleLibraryCardChosen(gd, player1, 0);
+        harness.getGameService().handleInteractionAnswer(gd, player1, new InteractionAnswer.LibraryCardChosen(0));
 
         assertThat(gd.playerBattlefields.get(player1.getId()))
                 .anyMatch(p -> p.getCard().getName().equals("Mind Stone"));

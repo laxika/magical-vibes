@@ -1,5 +1,6 @@
 package com.github.laxika.magicalvibes.cards.s;
 
+import com.github.laxika.magicalvibes.service.interaction.InteractionAnswer;
 import com.github.laxika.magicalvibes.model.GameLogEntry;
 
 import com.github.laxika.magicalvibes.model.PendingInteraction;
@@ -89,11 +90,11 @@ class SettleTheWreckageTest extends BaseCardTest {
         int battlefieldBefore = gd.playerBattlefields.get(player2.getId()).size();
 
         // Pick first land
-        gs.handleLibraryCardChosen(gd, player2, 0);
+        gs.handleInteractionAnswer(gd, player2, new InteractionAnswer.LibraryCardChosen(0));
         assertThat(gd.interaction.activeInteraction()).isInstanceOf(PendingInteraction.LibrarySearch.class);
 
         // Pick second land
-        gs.handleLibraryCardChosen(gd, player2, 0);
+        gs.handleInteractionAnswer(gd, player2, new InteractionAnswer.LibraryCardChosen(0));
 
         // Both lands should be on the battlefield tapped
         assertThat(gd.playerBattlefields.get(player2.getId())).hasSize(battlefieldBefore + 2);
@@ -115,7 +116,7 @@ class SettleTheWreckageTest extends BaseCardTest {
         int battlefieldBefore = gd.playerBattlefields.get(player2.getId()).size();
 
         // Decline search
-        gs.handleLibraryCardChosen(gd, player2, -1);
+        gs.handleInteractionAnswer(gd, player2, new InteractionAnswer.LibraryCardChosen(-1));
 
         // No lands entered
         assertThat(gd.playerBattlefields.get(player2.getId())).hasSize(battlefieldBefore);
@@ -131,11 +132,11 @@ class SettleTheWreckageTest extends BaseCardTest {
         harness.passBothPriorities(); // resolve Settle
 
         // Should be able to pick 3 lands (one per exiled creature)
-        gs.handleLibraryCardChosen(gd, player2, 0); // pick 1
+        gs.handleInteractionAnswer(gd, player2, new InteractionAnswer.LibraryCardChosen(0)); // pick 1
         assertThat(gd.interaction.activeInteraction()).isInstanceOf(PendingInteraction.LibrarySearch.class);
-        gs.handleLibraryCardChosen(gd, player2, 0); // pick 2
+        gs.handleInteractionAnswer(gd, player2, new InteractionAnswer.LibraryCardChosen(0)); // pick 2
         assertThat(gd.interaction.activeInteraction()).isInstanceOf(PendingInteraction.LibrarySearch.class);
-        gs.handleLibraryCardChosen(gd, player2, 0); // pick 3
+        gs.handleInteractionAnswer(gd, player2, new InteractionAnswer.LibraryCardChosen(0)); // pick 3
 
         // All 3 exiled, 3 lands found
         assertThat(exiledCardsOwnedBy(player2)).hasSize(3);
@@ -213,8 +214,8 @@ class SettleTheWreckageTest extends BaseCardTest {
         int battlefieldBefore = gd.playerBattlefields.get(player2.getId()).size();
 
         // Pick 1 land, then decline
-        gs.handleLibraryCardChosen(gd, player2, 0);
-        gs.handleLibraryCardChosen(gd, player2, -1);
+        gs.handleInteractionAnswer(gd, player2, new InteractionAnswer.LibraryCardChosen(0));
+        gs.handleInteractionAnswer(gd, player2, new InteractionAnswer.LibraryCardChosen(-1));
 
         // Only 1 land should have entered
         assertThat(gd.playerBattlefields.get(player2.getId())).hasSize(battlefieldBefore + 1);

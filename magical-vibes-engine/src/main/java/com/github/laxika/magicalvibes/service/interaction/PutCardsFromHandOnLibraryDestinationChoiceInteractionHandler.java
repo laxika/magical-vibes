@@ -6,7 +6,7 @@ import com.github.laxika.magicalvibes.model.GameLog;
 import com.github.laxika.magicalvibes.model.PendingInteraction;
 import com.github.laxika.magicalvibes.model.Player;
 import com.github.laxika.magicalvibes.networking.SessionManager;
-import com.github.laxika.magicalvibes.networking.message.ChooseFromListMessage;
+import com.github.laxika.magicalvibes.networking.message.InteractionPromptMessage;
 import com.github.laxika.magicalvibes.service.GameBroadcastService;
 import com.github.laxika.magicalvibes.service.turn.TurnProgressionService;
 import java.util.ArrayList;
@@ -47,9 +47,9 @@ public class PutCardsFromHandOnLibraryDestinationChoiceInteractionHandler
     @Override
     public void prompt(GameData gameData, PendingInteraction.PutCardsFromHandOnLibraryDestinationChoice interaction,
                        UUID recipientId) {
-        sessionManager.sendToPlayer(recipientId, new ChooseFromListMessage(
+        sessionManager.sendToPlayer(recipientId, InteractionPromptMessage.listPick(
                 PendingInteraction.PutCardsFromHandOnLibraryDestinationChoice.OPTIONS,
-                "Put the chosen cards on the top or bottom of your library?"));
+                "Put the chosen cards on the top or bottom of your library?", false));
     }
 
     @Override

@@ -1,5 +1,6 @@
 package com.github.laxika.magicalvibes.cards.s;
 
+import com.github.laxika.magicalvibes.service.interaction.InteractionAnswer;
 import com.github.laxika.magicalvibes.model.GameLogEntry;
 
 import com.github.laxika.magicalvibes.model.PendingInteraction;
@@ -74,7 +75,7 @@ class ShelteringLightTest extends BaseCardTest {
         harness.castInstant(player1, 0, targetId);
         harness.passBothPriorities();
 
-        harness.getGameService().handleScryCompleted(gd, player1, List.of(0), List.of());
+        harness.getGameService().handleInteractionAnswer(gd, player1, new InteractionAnswer.ScryOrder(List.of(0), List.of()));
 
         assertThat(deck.get(0)).isSameAs(originalTop);
     }
@@ -93,7 +94,7 @@ class ShelteringLightTest extends BaseCardTest {
         harness.castInstant(player1, 0, targetId);
         harness.passBothPriorities();
 
-        harness.getGameService().handleScryCompleted(gd, player1, List.of(), List.of(0));
+        harness.getGameService().handleInteractionAnswer(gd, player1, new InteractionAnswer.ScryOrder(List.of(), List.of(0)));
 
         assertThat(deck.get(0)).isNotSameAs(originalTop);
         assertThat(deck.get(deck.size() - 1)).isSameAs(originalTop);
@@ -112,7 +113,7 @@ class ShelteringLightTest extends BaseCardTest {
         harness.castInstant(player1, 0, targetId);
         harness.passBothPriorities();
 
-        harness.getGameService().handleScryCompleted(gd, player1, List.of(0), List.of());
+        harness.getGameService().handleInteractionAnswer(gd, player1, new InteractionAnswer.ScryOrder(List.of(0), List.of()));
 
         harness.forceStep(TurnStep.END_STEP);
         harness.clearPriorityPassed();

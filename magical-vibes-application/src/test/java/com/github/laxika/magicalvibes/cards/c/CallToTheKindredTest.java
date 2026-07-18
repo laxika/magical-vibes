@@ -1,5 +1,6 @@
 package com.github.laxika.magicalvibes.cards.c;
 
+import com.github.laxika.magicalvibes.service.interaction.InteractionAnswer;
 import com.github.laxika.magicalvibes.model.GameLogEntry;
 
 import com.github.laxika.magicalvibes.model.PendingInteraction;
@@ -152,7 +153,7 @@ class CallToTheKindredTest extends BaseCardTest {
         harness.handleMayAbilityChosen(player1, true);
 
         // Choose the Bear
-        harness.getGameService().handleLibraryCardChosen(gd, player1, 0);
+        harness.getGameService().handleInteractionAnswer(gd, player1, new InteractionAnswer.LibraryCardChosen(0));
 
         // Bear should be on the battlefield
         long bearsOnBattlefield = gd.playerBattlefields.get(player1.getId()).stream()
@@ -183,7 +184,7 @@ class CallToTheKindredTest extends BaseCardTest {
         int battlefieldBefore = gd.playerBattlefields.get(player1.getId()).size();
 
         // Decline to choose (index -1)
-        harness.getGameService().handleLibraryCardChosen(gd, player1, -1);
+        harness.getGameService().handleInteractionAnswer(gd, player1, new InteractionAnswer.LibraryCardChosen(-1));
 
         // No new permanent on battlefield
         assertThat(gd.playerBattlefields.get(player1.getId())).hasSize(battlefieldBefore);

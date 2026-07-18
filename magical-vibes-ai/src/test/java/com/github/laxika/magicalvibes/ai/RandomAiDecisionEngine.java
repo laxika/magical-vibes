@@ -30,7 +30,7 @@ import com.github.laxika.magicalvibes.model.effect.SacrificePermanentCost;
 import com.github.laxika.magicalvibes.service.GameService;
 import com.github.laxika.magicalvibes.networking.message.BlockerAssignment;
 import com.github.laxika.magicalvibes.networking.message.ActivateAbilityRequest;
-import com.github.laxika.magicalvibes.networking.message.CardChosenRequest;
+import com.github.laxika.magicalvibes.service.interaction.InteractionAnswer;
 import com.github.laxika.magicalvibes.networking.message.DeclareAttackersRequest;
 import com.github.laxika.magicalvibes.networking.message.DeclareBlockersRequest;
 import com.github.laxika.magicalvibes.networking.message.PassPriorityRequest;
@@ -836,7 +836,7 @@ class RandomAiDecisionEngine extends AiDecisionEngine {
         int chosen = indices.get(rng.nextInt(indices.size()));
 
         log.info("Random AI: Choosing card at index {} in game {}", chosen, gameId);
-        send(() -> gameActions.handleCardChosen(selfConnection, new CardChosenRequest(chosen)));
+        send(() -> gameActions.answerInteraction(selfConnection, new InteractionAnswer.CardIndexChosen(chosen)));
     }
 
     // ===== Mulligan: mostly keep, occasionally mulligan =====

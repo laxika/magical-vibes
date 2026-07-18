@@ -1,5 +1,6 @@
 package com.github.laxika.magicalvibes.cards.g;
 
+import com.github.laxika.magicalvibes.service.interaction.InteractionAnswer;
 import com.github.laxika.magicalvibes.cards.s.Swamp;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.ManaColor;
@@ -40,7 +41,7 @@ class GrinningTotemTest extends BaseCardTest {
         gd.playerDecks.get(player2.getId()).add(swamp);
 
         activateGrinningTotem();
-        gs.handleLibraryCardChosen(gd, player1, 0);
+        gs.handleInteractionAnswer(gd, player1, new InteractionAnswer.LibraryCardChosen(0));
 
         // Card is exiled under the caster's zone with play permission.
         assertThat(gd.getPlayerExiledCards(player1.getId()))
@@ -72,7 +73,7 @@ class GrinningTotemTest extends BaseCardTest {
         gd.playerDecks.get(player2.getId()).add(swamp);
 
         activateGrinningTotem();
-        gs.handleLibraryCardChosen(gd, player1, 0);
+        gs.handleInteractionAnswer(gd, player1, new InteractionAnswer.LibraryCardChosen(0));
 
         // Caster's next upkeep.
         gd.activePlayerId = player1.getId();
@@ -95,7 +96,7 @@ class GrinningTotemTest extends BaseCardTest {
         gd.playerDecks.get(player2.getId()).add(swamp);
 
         activateGrinningTotem();
-        gs.handleLibraryCardChosen(gd, player1, 0);
+        gs.handleInteractionAnswer(gd, player1, new InteractionAnswer.LibraryCardChosen(0));
 
         // Opponent's upkeep — not "your next upkeep".
         gd.activePlayerId = player2.getId();
@@ -115,7 +116,7 @@ class GrinningTotemTest extends BaseCardTest {
         gd.playerDecks.get(player2.getId()).add(swamp);
 
         activateGrinningTotem();
-        gs.handleLibraryCardChosen(gd, player1, 0);
+        gs.handleInteractionAnswer(gd, player1, new InteractionAnswer.LibraryCardChosen(0));
 
         // Caster plays the exiled land.
         gs.playCardFromExile(gd, player1, swamp.getId(), null, null);

@@ -1205,3 +1205,63 @@ roadmap.
 **Note on Spotless:** a repo-wide `spotlessApply` reformats ~800 untouched files (the baseline
 isn't applied repo-wide) — it was reverted for everything outside this change's file set; don't
 run it blanket-style.
+
+## Stage 10 — DONE: generic interaction wire protocol + frontend dispatch
+
+The per-kind wire layer is gone. Two records now carry every interaction across the wire:
+
+- **`InteractionPromptMessage`** (networking, `MessageType.INTERACTION_PROMPT`): shape
+  discriminator (`InteractionShape`, mirroring `InteractionOptions`/`InteractionAnswer` 1:1 —
+  CARD_INDEX_PICK, GRAVEYARD_INDEX_PICK, LIBRARY_INDEX_PICK, PERMANENT_PICK, MULTI_CARD_PICK,
+  MULTI_PERMANENT_PICK, LIST_PICK, ACCEPT_DECLINE, NUMBER_PICK, SCRY_ORDER, CARD_ORDER,
+  HAND_TOP_BOTTOM) + prompt + nullable payload/presentation fields, built via per-shape static
+  factories. All 35+ `InteractionHandler.prompt()` implementations and the one straggler
+  (`AbilityActivationService` discard-cost prompt) construct it. CARD_INDEX_PICK doubles for
+  own-hand picks (no `cards` payload) and revealed-hand picks (`cards` present) — the client
+  branches on payload presence, exactly the old two-message split.
+- **`InteractionAnswerRequest`** (`MessageType.INTERACTION_ANSWER`): same shape discriminator +
+  nullable answer fields; `GameMessageHandler.handleInteractionAnswer` (ONE method) maps it to
+  the engine's `InteractionAnswer` and calls the ONE `GameService.handleInteractionAnswer`
+  entry point (`dispatchAnswer` via the registry; error text is now the generic
+  "Not awaiting <Shape> input" — one card test assertion loosened, VoiceOfAllTest).
+
+Deleted: 13 prompt message records + 12 answer request records (networking), 25 `MessageType`
+entries (both sides), 12 `MessageHandler` interface methods, 12 `GameMessageHandler` ~20-line
+boilerplate methods, 12 `WebSocketHandler` parse cases, 12 per-kind `GameService` entry points,
+12 `AiGameActions` unwrap methods (→ one `answerInteraction(InteractionAnswer)`), and the
+13-case per-kind wire dispatch in `AiDecisionEngine.handleMessage` (→ one INTERACTION_PROMPT
+case routing by `activeInteraction()` record type through `handleInteractionPrompt`, preserving
+the per-difficulty overridable routes: HandChoice→handleCardChoice, ColorChoice→handleListChoice,
+MayAbilityChoice→handleMayAbilityChoice, Scry→handleScry; everything else falls to
+`AiChoiceHandler.handleActiveInteraction`, which every other per-kind route already delegated to).
+AI strategies construct `InteractionAnswer` records directly (the wire-request round-trip is gone).
+
+Frontend: `websocket.service.ts` has one `InteractionPromptNotification` interface +
+`InteractionShape` union (13 per-kind interfaces deleted; `RevealHandNotification`/
+`RevealLibraryTopNotification` stay — informational, not interactions); the rejoin buffer keys
+on INTERACTION_PROMPT; `game.component.ts` has one dispatch case (13 deleted);
+`game-choice.service.ts` routes by shape in `handleInteractionPrompt` to the same per-shape UI
+state as before (dialogs/HTML untouched — feature-identical rendering), and all answer sends go
+through `{type: INTERACTION_ANSWER, shape, ...}` (game-choice + library-choice services).
+
+Kept bespoke (deliberate): combat wire messages (AvailableAttackers/Blockers,
+CombatDamageAssignment + their declaration requests) — unique UIs, not duplicates — and the
+mulligan flow (SELECT_CARDS_TO_BOTTOM/BOTTOM_CARDS, pre-game, not a PendingInteraction).
+
+Test surface: `GameTestHarness` kept its per-kind convenience wrappers (bodies now build
+`InteractionAnswer`); ~187 test files that called the deleted `GameService` per-kind methods via
+`gs`/`harness.getGameService()` were mechanically rewritten to
+`handleInteractionAnswer(gd, player, new InteractionAnswer.X(...))`; the 12 interaction-handler
+test classes assert the generic message (field names mostly unchanged; canDecline/canFailToFind/
+optional→`declinable`, maxValue→`maxCount`, revealed-hand validIndices→`cardIndices`).
+AI tests trigger with `handleMessage("INTERACTION_PROMPT", ...)`.
+
+Behavior notes (deltas, all no-op-or-better): kinds whose prompt previously had NO wire route to
+the AI dispatch keep working (the AI reads `activeInteraction()`, not the message payload);
+`DiscardCostChoice` prompts previously routed to `handleCardChoice` which no-opped (not a
+`HandChoice` implementor) — they now reach `handleActiveInteraction` (answers it if a strategy
+exists; still a no-op otherwise). Verified green: service.interaction.* + service.input.* suites,
+Easy/Medium/Hard/AiDecisionEngineTest, GameSimulatorTest, CombatSimulatorTest, 25 interaction-heavy
+card tests, Angular production build. Spotless: applied to touched modules only; 131 unrelated
+test files with PRE-EXISTING unused imports (baseline violations at HEAD) were reverted after a
+blanket apply — the application test baseline is NOT spotless-clean, don't "fix" it in passing.

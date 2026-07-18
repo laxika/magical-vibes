@@ -1,5 +1,6 @@
 package com.github.laxika.magicalvibes.cards.b;
 
+import com.github.laxika.magicalvibes.service.interaction.InteractionAnswer;
 import com.github.laxika.magicalvibes.model.GameLogEntry;
 
 import com.github.laxika.magicalvibes.model.PendingInteraction;
@@ -76,7 +77,7 @@ class BitterheartWitchTest extends BaseCardTest {
 
         // Choose the curse card (index 0)
         int battlefieldBefore = gd.playerBattlefields.get(player1.getId()).size();
-        gs.handleLibraryCardChosen(gd, player1, 0);
+        gs.handleInteractionAnswer(gd, player1, new InteractionAnswer.LibraryCardChosen(0));
 
         // Curse should be on the battlefield under controller's control
         assertThat(gd.playerBattlefields.get(player1.getId())).hasSize(battlefieldBefore + 1);
@@ -111,7 +112,7 @@ class BitterheartWitchTest extends BaseCardTest {
 
         assertThat(gd.interaction.activeInteraction()).isInstanceOf(PendingInteraction.LibrarySearch.class);
 
-        gs.handleLibraryCardChosen(gd, player1, 0);
+        gs.handleInteractionAnswer(gd, player1, new InteractionAnswer.LibraryCardChosen(0));
 
         // Curse should be attached to player1
         Permanent cursePerm = gd.playerBattlefields.get(player1.getId()).stream()
@@ -176,7 +177,7 @@ class BitterheartWitchTest extends BaseCardTest {
         int battlefieldBefore = gd.playerBattlefields.get(player1.getId()).size();
 
         // Fail to find (index -1)
-        gs.handleLibraryCardChosen(gd, player1, -1);
+        gs.handleInteractionAnswer(gd, player1, new InteractionAnswer.LibraryCardChosen(-1));
 
         // No new permanent on the battlefield
         assertThat(gd.playerBattlefields.get(player1.getId())).hasSize(battlefieldBefore);
@@ -232,7 +233,7 @@ class BitterheartWitchTest extends BaseCardTest {
         assertThat(gd.interaction.activeInteraction()).isInstanceOf(PendingInteraction.MayAbilityChoice.class);
         harness.handleMayAbilityChosen(player1, true);
 
-        gs.handleLibraryCardChosen(gd, player1, 0);
+        gs.handleInteractionAnswer(gd, player1, new InteractionAnswer.LibraryCardChosen(0));
 
         // Verify curse is on battlefield
         assertThat(gd.playerBattlefields.get(player1.getId()))
@@ -281,7 +282,7 @@ class BitterheartWitchTest extends BaseCardTest {
 
         assertThat(gd.interaction.activeInteraction()).isInstanceOf(PendingInteraction.LibrarySearch.class);
 
-        gs.handleLibraryCardChosen(gd, player1, 0);
+        gs.handleInteractionAnswer(gd, player1, new InteractionAnswer.LibraryCardChosen(0));
 
         // Curse should be on the battlefield attached to player2
         Permanent cursePerm = gd.playerBattlefields.get(player1.getId()).stream()

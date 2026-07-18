@@ -1,5 +1,6 @@
 package com.github.laxika.magicalvibes.cards.p;
 
+import com.github.laxika.magicalvibes.service.interaction.InteractionAnswer;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.PendingInteraction;
@@ -53,7 +54,7 @@ class PortentTest extends BaseCardTest {
         harness.passBothPriorities();
 
         // Controller decides: put the original third card on top.
-        gs.handleLibraryCardsReordered(gd, player1, List.of(2, 0, 1));
+        gs.handleInteractionAnswer(gd, player1, new InteractionAnswer.CardOrder(List.of(2, 0, 1)));
         // Decline the shuffle so the reorder stands.
         harness.handleMayAbilityChosen(player1, false);
 
@@ -71,7 +72,7 @@ class PortentTest extends BaseCardTest {
         harness.castSorcery(player1, 0, player2.getId());
         harness.passBothPriorities();
 
-        gs.handleLibraryCardsReordered(gd, player1, List.of(0, 1, 2));
+        gs.handleInteractionAnswer(gd, player1, new InteractionAnswer.CardOrder(List.of(0, 1, 2)));
 
         PendingInteraction.MayAbilityChoice may =
                 gd.interaction.activeInteraction(PendingInteraction.MayAbilityChoice.class);
@@ -90,7 +91,7 @@ class PortentTest extends BaseCardTest {
         harness.castSorcery(player1, 0, player2.getId());
         harness.passBothPriorities();
 
-        gs.handleLibraryCardsReordered(gd, player1, List.of(0, 1, 2));
+        gs.handleInteractionAnswer(gd, player1, new InteractionAnswer.CardOrder(List.of(0, 1, 2)));
         harness.handleMayAbilityChosen(player1, true);
 
         // The target's library is not drawn from; the shuffle just randomizes it.
@@ -109,7 +110,7 @@ class PortentTest extends BaseCardTest {
         harness.castSorcery(player1, 0, player2.getId());
         harness.passBothPriorities();
 
-        gs.handleLibraryCardsReordered(gd, player1, List.of(0, 1, 2));
+        gs.handleInteractionAnswer(gd, player1, new InteractionAnswer.CardOrder(List.of(0, 1, 2)));
         harness.handleMayAbilityChosen(player1, false);
 
         List<DrawCardsAtNextUpkeep> scheduled = gd.getDelayedActions(DrawCardsAtNextUpkeep.class);
@@ -127,7 +128,7 @@ class PortentTest extends BaseCardTest {
         harness.castSorcery(player1, 0, player2.getId());
         harness.passBothPriorities();
 
-        gs.handleLibraryCardsReordered(gd, player1, List.of(0, 1, 2));
+        gs.handleInteractionAnswer(gd, player1, new InteractionAnswer.CardOrder(List.of(0, 1, 2)));
         harness.handleMayAbilityChosen(player1, false);
 
         int handBefore = gd.playerHands.get(player1.getId()).size();

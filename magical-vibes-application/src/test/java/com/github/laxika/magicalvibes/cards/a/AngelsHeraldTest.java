@@ -1,5 +1,6 @@
 package com.github.laxika.magicalvibes.cards.a;
 
+import com.github.laxika.magicalvibes.service.interaction.InteractionAnswer;
 import com.github.laxika.magicalvibes.cards.f.FugitiveWizard;
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
 import com.github.laxika.magicalvibes.cards.s.SuntailHawk;
@@ -111,7 +112,7 @@ class AngelsHeraldTest extends BaseCardTest {
         assertThat(search).isNotNull();
         assertThat(search.params().cards()).allMatch(c -> c.getName().equals("Empyrial Archangel"));
 
-        gs.handleLibraryCardChosen(gd, player1, 0);
+        gs.handleInteractionAnswer(gd, player1, new InteractionAnswer.LibraryCardChosen(0));
 
         assertThat(gd.playerBattlefields.get(player1.getId()))
                 .anyMatch(p -> p.getCard().getName().equals("Empyrial Archangel"));

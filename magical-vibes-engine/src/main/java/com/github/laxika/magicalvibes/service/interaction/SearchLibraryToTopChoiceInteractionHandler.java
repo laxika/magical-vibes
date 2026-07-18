@@ -6,7 +6,7 @@ import com.github.laxika.magicalvibes.model.GameLog;
 import com.github.laxika.magicalvibes.model.PendingInteraction;
 import com.github.laxika.magicalvibes.model.Player;
 import com.github.laxika.magicalvibes.networking.SessionManager;
-import com.github.laxika.magicalvibes.networking.message.ChooseMultipleCardsMessage;
+import com.github.laxika.magicalvibes.networking.message.InteractionPromptMessage;
 import com.github.laxika.magicalvibes.networking.model.CardView;
 import com.github.laxika.magicalvibes.networking.service.CardViewFactory;
 import com.github.laxika.magicalvibes.service.GameBroadcastService;
@@ -55,7 +55,7 @@ public class SearchLibraryToTopChoiceInteractionHandler
     @Override
     public void prompt(GameData gameData, PendingInteraction.SearchLibraryToTopChoice interaction, UUID recipientId) {
         List<CardView> cardViews = interaction.pool().stream().map(cardViewFactory::create).toList();
-        sessionManager.sendToPlayer(recipientId, new ChooseMultipleCardsMessage(
+        sessionManager.sendToPlayer(recipientId, InteractionPromptMessage.multiCardPick(
                 new ArrayList<>(interaction.validCardIds()), cardViews, interaction.pool().size(),
                 "Choose any number of " + interaction.subtypeLabel()
                         + " cards to reveal and put on top of your library."));

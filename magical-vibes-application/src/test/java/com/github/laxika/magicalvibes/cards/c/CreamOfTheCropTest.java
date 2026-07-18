@@ -1,5 +1,6 @@
 package com.github.laxika.magicalvibes.cards.c;
 
+import com.github.laxika.magicalvibes.service.interaction.InteractionAnswer;
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
 import com.github.laxika.magicalvibes.cards.h.HillGiant;
 import com.github.laxika.magicalvibes.cards.l.LlanowarElves;
@@ -44,7 +45,7 @@ class CreamOfTheCropTest extends BaseCardTest {
 
         // Look at top 2 [Llanowar Elves, Shock]; keep Shock on top (index 1), Llanowar to bottom.
         assertThat(gd.interaction.activeInteraction()).isInstanceOf(PendingInteraction.LibrarySearch.class);
-        harness.getGameService().handleLibraryCardChosen(gd, player1, 1);
+        harness.getGameService().handleInteractionAnswer(gd, player1, new InteractionAnswer.LibraryCardChosen(1));
 
         List<Card> deck = gd.playerDecks.get(player1.getId());
         assertThat(deck.getFirst().getName()).isEqualTo("Shock");

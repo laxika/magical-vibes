@@ -4,7 +4,7 @@ import com.github.laxika.magicalvibes.model.GameData;
 import com.github.laxika.magicalvibes.model.PendingInteraction;
 import com.github.laxika.magicalvibes.model.Player;
 import com.github.laxika.magicalvibes.networking.SessionManager;
-import com.github.laxika.magicalvibes.networking.message.XValueChoiceMessage;
+import com.github.laxika.magicalvibes.networking.message.InteractionPromptMessage;
 import com.github.laxika.magicalvibes.service.GameBroadcastService;
 import com.github.laxika.magicalvibes.service.effect.EffectResolutionService;
 import com.github.laxika.magicalvibes.service.input.PlayerInputService;
@@ -47,7 +47,7 @@ public class XValueChoiceInteractionHandler implements InteractionHandler<Pendin
     @Override
     public void prompt(GameData gameData, PendingInteraction.XValueChoice interaction, UUID recipientId) {
         sessionManager.sendToPlayer(recipientId,
-                new XValueChoiceMessage(interaction.prompt(), interaction.maxValue(), interaction.cardName()));
+                InteractionPromptMessage.numberPick(interaction.prompt(), interaction.maxValue(), interaction.cardName()));
 
         String playerName = gameData.playerIdToName.get(interaction.playerId());
         log.info("Game {} - Awaiting {} to choose X value (max {})", gameData.id, playerName, interaction.maxValue());

@@ -1,5 +1,6 @@
 package com.github.laxika.magicalvibes.cards.w;
 
+import com.github.laxika.magicalvibes.service.interaction.InteractionAnswer;
 import com.github.laxika.magicalvibes.cards.f.Forest;
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
 import com.github.laxika.magicalvibes.cards.p.Plains;
@@ -73,16 +74,16 @@ class WeirdHarvestTest extends BaseCardTest {
         harness.passBothPriorities();
 
         // Active player (player1) takes two creatures
-        gs.handleLibraryCardChosen(gd, player1, 0);
-        gs.handleLibraryCardChosen(gd, player1, 0);
+        gs.handleInteractionAnswer(gd, player1, new InteractionAnswer.LibraryCardChosen(0));
+        gs.handleInteractionAnswer(gd, player1, new InteractionAnswer.LibraryCardChosen(0));
 
         // Now the opponent (player2) is prompted
         assertThat(activeSearch()).isNotNull();
         assertThat(activeSearch().params().playerId()).isEqualTo(player2.getId());
 
         // player2 takes one creature, then declines the second
-        gs.handleLibraryCardChosen(gd, player2, 0);
-        gs.handleLibraryCardChosen(gd, player2, -1);
+        gs.handleInteractionAnswer(gd, player2, new InteractionAnswer.LibraryCardChosen(0));
+        gs.handleInteractionAnswer(gd, player2, new InteractionAnswer.LibraryCardChosen(-1));
 
         assertThat(activeSearch()).isNull();
         assertThat(gd.playerHands.get(player1.getId())).hasSize(2);
@@ -103,7 +104,7 @@ class WeirdHarvestTest extends BaseCardTest {
         harness.passBothPriorities();
 
         // Active player declines immediately
-        gs.handleLibraryCardChosen(gd, player1, -1);
+        gs.handleInteractionAnswer(gd, player1, new InteractionAnswer.LibraryCardChosen(-1));
 
         assertThat(gd.playerHands.get(player1.getId())).isEmpty();
         assertThat(activeSearch()).isNotNull();

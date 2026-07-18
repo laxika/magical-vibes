@@ -4,7 +4,7 @@ import com.github.laxika.magicalvibes.model.GameData;
 import com.github.laxika.magicalvibes.model.PendingInteraction;
 import com.github.laxika.magicalvibes.model.Player;
 import com.github.laxika.magicalvibes.networking.SessionManager;
-import com.github.laxika.magicalvibes.networking.message.ChooseMultipleCardsMessage;
+import com.github.laxika.magicalvibes.networking.message.InteractionPromptMessage;
 import com.github.laxika.magicalvibes.networking.model.CardView;
 import com.github.laxika.magicalvibes.networking.service.CardViewFactory;
 import com.github.laxika.magicalvibes.service.input.GraveyardChoiceHandlerService;
@@ -46,7 +46,7 @@ public class MultiGraveyardChoiceInteractionHandler
         List<UUID> validCardIds = interaction.validCardIds();
         List<CardView> cardViews = interaction.cards().stream().map(cardViewFactory::create).toList();
 
-        sessionManager.sendToPlayer(recipientId, new ChooseMultipleCardsMessage(
+        sessionManager.sendToPlayer(recipientId, InteractionPromptMessage.multiCardPick(
                 validCardIds, cardViews, interaction.maxCount(), interaction.prompt()));
 
         String playerName = gameData.playerIdToName.get(interaction.playerId());

@@ -1,9 +1,9 @@
 package com.github.laxika.magicalvibes.ai.interaction;
 
+import com.github.laxika.magicalvibes.service.interaction.InteractionAnswer;
 import com.github.laxika.magicalvibes.model.GameData;
 import com.github.laxika.magicalvibes.model.PendingInteraction;
 import com.github.laxika.magicalvibes.model.Permanent;
-import com.github.laxika.magicalvibes.networking.message.PermanentChosenRequest;
 import lombok.extern.slf4j.Slf4j;
 
 import java.util.Comparator;
@@ -72,6 +72,6 @@ class PermanentChoiceAiStrategy implements AiInteractionStrategy<PendingInteract
         }
 
         log.info("AI: Choosing permanent {} in game {}", best, ctx.gameId());
-        ctx.gameActions().handlePermanentChosen(ctx.selfConnection(), new PermanentChosenRequest(best));
+        ctx.gameActions().answerInteraction(ctx.selfConnection(), new InteractionAnswer.PermanentChosen(best));
     }
 }

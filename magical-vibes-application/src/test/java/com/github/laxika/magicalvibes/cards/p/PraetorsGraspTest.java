@@ -1,5 +1,6 @@
 package com.github.laxika.magicalvibes.cards.p;
 
+import com.github.laxika.magicalvibes.service.interaction.InteractionAnswer;
 import com.github.laxika.magicalvibes.model.GameLogEntry;
 
 import com.github.laxika.magicalvibes.model.PendingInteraction;
@@ -58,7 +59,7 @@ class PraetorsGraspTest extends BaseCardTest {
         harness.passBothPriorities();
 
         // Choose the card
-        gs.handleLibraryCardChosen(gd, player1, 0);
+        gs.handleInteractionAnswer(gd, player1, new InteractionAnswer.LibraryCardChosen(0));
 
         // Card should be in caster's exile zone
         assertThat(gd.getPlayerExiledCards(player1.getId()))
@@ -86,7 +87,7 @@ class PraetorsGraspTest extends BaseCardTest {
         harness.castSorcery(player1, 0, player2.getId());
         harness.passBothPriorities();
 
-        gs.handleLibraryCardChosen(gd, player1, 0);
+        gs.handleInteractionAnswer(gd, player1, new InteractionAnswer.LibraryCardChosen(0));
 
         // Log should mention shuffle
         assertThat(gd.gameLog.stream().map(GameLogEntry::plainText)).anyMatch(log -> log.contains("shuffled") || log.contains("Library is shuffled"));
@@ -140,7 +141,7 @@ class PraetorsGraspTest extends BaseCardTest {
 
         harness.castSorcery(player1, 0, player2.getId());
         harness.passBothPriorities();
-        gs.handleLibraryCardChosen(gd, player1, 0);
+        gs.handleInteractionAnswer(gd, player1, new InteractionAnswer.LibraryCardChosen(0));
 
         // Now player1 should be able to cast the exiled Grizzly Bears
         harness.addMana(player1, ManaColor.GREEN, 2);
@@ -172,7 +173,7 @@ class PraetorsGraspTest extends BaseCardTest {
 
         harness.castSorcery(player1, 0, player2.getId());
         harness.passBothPriorities();
-        gs.handleLibraryCardChosen(gd, player1, 0);
+        gs.handleInteractionAnswer(gd, player1, new InteractionAnswer.LibraryCardChosen(0));
 
         // Play the exiled land
         gs.playCardFromExile(gd, player1, swamp.getId(), null, null);

@@ -1,8 +1,8 @@
 package com.github.laxika.magicalvibes.ai.interaction;
 
+import com.github.laxika.magicalvibes.service.interaction.InteractionAnswer;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.PendingInteraction;
-import com.github.laxika.magicalvibes.networking.message.GraveyardCardChosenRequest;
 import lombok.extern.slf4j.Slf4j;
 
 import java.util.Comparator;
@@ -43,6 +43,6 @@ class GraveyardChoiceAiStrategy implements AiInteractionStrategy<PendingInteract
                 .orElse(validIndices.iterator().next());
 
         log.info("AI: Choosing graveyard card at index {} in game {}", bestIndex, ctx.gameId());
-        ctx.gameActions().handleGraveyardCardChosen(ctx.selfConnection(), new GraveyardCardChosenRequest(bestIndex));
+        ctx.gameActions().answerInteraction(ctx.selfConnection(), new InteractionAnswer.GraveyardCardChosen(bestIndex));
     }
 }

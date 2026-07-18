@@ -6,7 +6,7 @@ import com.github.laxika.magicalvibes.model.GameLog;
 import com.github.laxika.magicalvibes.model.PendingInteraction;
 import com.github.laxika.magicalvibes.model.Player;
 import com.github.laxika.magicalvibes.networking.SessionManager;
-import com.github.laxika.magicalvibes.networking.message.ChooseMultipleCardsMessage;
+import com.github.laxika.magicalvibes.networking.message.InteractionPromptMessage;
 import com.github.laxika.magicalvibes.networking.model.CardView;
 import com.github.laxika.magicalvibes.networking.service.CardViewFactory;
 import com.github.laxika.magicalvibes.service.GameBroadcastService;
@@ -64,7 +64,7 @@ public class SylvanLibraryChoiceInteractionHandler
             }
         }
 
-        sessionManager.sendToPlayer(recipientId, new ChooseMultipleCardsMessage(ids, cardViews,
+        sessionManager.sendToPlayer(recipientId, InteractionPromptMessage.multiCardPick(ids, cardViews,
                 interaction.resolveCount(),
                 "Choose up to " + interaction.resolveCount() + " card(s) drawn this turn to put on top of your "
                         + "library. You pay 4 life for each of the " + interaction.resolveCount()

@@ -1,7 +1,7 @@
 package com.github.laxika.magicalvibes.ai.interaction;
 
+import com.github.laxika.magicalvibes.service.interaction.InteractionAnswer;
 import com.github.laxika.magicalvibes.model.PendingInteraction;
-import com.github.laxika.magicalvibes.networking.message.XValueChosenRequest;
 import lombok.extern.slf4j.Slf4j;
 
 /**
@@ -24,6 +24,6 @@ class IllicitAuctionBidChoiceAiStrategy implements AiInteractionStrategy<Pending
         }
 
         log.info("AI: Passing on Illicit Auction bid for {} in game {}", interaction.cardName(), ctx.gameId());
-        ctx.gameActions().handleXValueChosen(ctx.selfConnection(), new XValueChosenRequest(null, 0));
+        ctx.gameActions().answerInteraction(ctx.selfConnection(), new InteractionAnswer.NumberChosen(0));
     }
 }

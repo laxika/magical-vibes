@@ -4,7 +4,7 @@ import com.github.laxika.magicalvibes.model.GameData;
 import com.github.laxika.magicalvibes.model.PendingInteraction;
 import com.github.laxika.magicalvibes.model.Player;
 import com.github.laxika.magicalvibes.networking.SessionManager;
-import com.github.laxika.magicalvibes.networking.message.ChooseCardFromGraveyardMessage;
+import com.github.laxika.magicalvibes.networking.message.InteractionPromptMessage;
 import com.github.laxika.magicalvibes.service.input.GraveyardChoiceHandlerService;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -41,7 +41,7 @@ public class GraveyardChoiceInteractionHandler
     @Override
     public void prompt(GameData gameData, PendingInteraction.GraveyardChoice interaction, UUID recipientId) {
         boolean allGraveyards = interaction.cardPool() != null;
-        sessionManager.sendToPlayer(recipientId, new ChooseCardFromGraveyardMessage(
+        sessionManager.sendToPlayer(recipientId, InteractionPromptMessage.graveyardIndexPick(
                 interaction.validIndices(), interaction.prompt(), allGraveyards));
 
         String playerName = gameData.playerIdToName.get(interaction.playerId());

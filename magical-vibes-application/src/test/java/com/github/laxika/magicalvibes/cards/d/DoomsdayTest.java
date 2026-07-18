@@ -1,5 +1,6 @@
 package com.github.laxika.magicalvibes.cards.d;
 
+import com.github.laxika.magicalvibes.service.interaction.InteractionAnswer;
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
 import com.github.laxika.magicalvibes.cards.l.LlanowarElves;
 import com.github.laxika.magicalvibes.cards.s.Shock;
@@ -87,7 +88,7 @@ class DoomsdayTest extends BaseCardTest {
                 .anyMatch(c -> c.getId().equals(bears.getId()));
 
         // Chosen order = [shock, elves]; reorder [1, 0] puts Elves on top, Shock second.
-        gs.handleLibraryCardsReordered(gd, player1, List.of(1, 0));
+        gs.handleInteractionAnswer(gd, player1, new InteractionAnswer.CardOrder(List.of(1, 0)));
 
         List<Card> library = gd.playerDecks.get(player1.getId());
         assertThat(library).hasSize(2);

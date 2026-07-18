@@ -1,5 +1,6 @@
 package com.github.laxika.magicalvibes.cards.o;
 
+import com.github.laxika.magicalvibes.service.interaction.InteractionAnswer;
 import com.github.laxika.magicalvibes.model.PendingInteraction;
 
 import com.github.laxika.magicalvibes.cards.f.Forest;
@@ -77,7 +78,7 @@ class OldGrowthDryadsTest extends BaseCardTest {
         int battlefieldBefore = gd.playerBattlefields.get(player2.getId()).size();
 
         // Opponent picks a basic land
-        harness.getGameService().handleLibraryCardChosen(gd, player2, 0);
+        harness.getGameService().handleInteractionAnswer(gd, player2, new InteractionAnswer.LibraryCardChosen(0));
 
         // Land entered the battlefield tapped
         assertThat(gd.playerBattlefields.get(player2.getId())).hasSize(battlefieldBefore + 1);
@@ -102,7 +103,7 @@ class OldGrowthDryadsTest extends BaseCardTest {
         int battlefieldBefore = gd.playerBattlefields.get(player2.getId()).size();
 
         // Opponent declines (fail to find, index -1)
-        harness.getGameService().handleLibraryCardChosen(gd, player2, -1);
+        harness.getGameService().handleInteractionAnswer(gd, player2, new InteractionAnswer.LibraryCardChosen(-1));
 
         // No land entered the battlefield
         assertThat(gd.playerBattlefields.get(player2.getId())).hasSize(battlefieldBefore);

@@ -5,7 +5,7 @@ import com.github.laxika.magicalvibes.model.GameData;
 import com.github.laxika.magicalvibes.model.PendingInteraction;
 import com.github.laxika.magicalvibes.model.Player;
 import com.github.laxika.magicalvibes.networking.SessionManager;
-import com.github.laxika.magicalvibes.networking.message.ChooseMultipleCardsMessage;
+import com.github.laxika.magicalvibes.networking.message.InteractionPromptMessage;
 import com.github.laxika.magicalvibes.networking.model.CardView;
 import com.github.laxika.magicalvibes.networking.service.CardViewFactory;
 import com.github.laxika.magicalvibes.service.input.LibraryChoiceHandlerService;
@@ -78,7 +78,7 @@ class LibraryRevealChoiceInteractionHandlerTest {
 
         assertThat(gd.interaction.activeInteraction()).isInstanceOf(PendingInteraction.LibraryRevealChoice.class);
         verify(sessionManager).sendToPlayer(eq(PLAYER1_ID), messageCaptor.capture());
-        ChooseMultipleCardsMessage msg = (ChooseMultipleCardsMessage) messageCaptor.getValue();
+        InteractionPromptMessage msg = (InteractionPromptMessage) messageCaptor.getValue();
         assertThat(msg.cardIds()).containsExactly(eligible.getId());
         assertThat(msg.cards()).hasSize(1);
         assertThat(msg.maxCount()).isEqualTo(1);
@@ -131,6 +131,6 @@ class LibraryRevealChoiceInteractionHandlerTest {
         verifyNoInteractions(sessionManager);
 
         assertThat(registry.replayPrompt(gd, PLAYER1_ID)).isTrue();
-        verify(sessionManager).sendToPlayer(eq(PLAYER1_ID), any(ChooseMultipleCardsMessage.class));
+        verify(sessionManager).sendToPlayer(eq(PLAYER1_ID), any(InteractionPromptMessage.class));
     }
 }

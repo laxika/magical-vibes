@@ -5,7 +5,7 @@ import com.github.laxika.magicalvibes.model.GameData;
 import com.github.laxika.magicalvibes.model.PendingInteraction;
 import com.github.laxika.magicalvibes.model.Player;
 import com.github.laxika.magicalvibes.networking.SessionManager;
-import com.github.laxika.magicalvibes.networking.message.ChooseMultipleCardsMessage;
+import com.github.laxika.magicalvibes.networking.message.InteractionPromptMessage;
 import com.github.laxika.magicalvibes.networking.model.CardView;
 import com.github.laxika.magicalvibes.networking.service.CardViewFactory;
 import com.github.laxika.magicalvibes.service.input.ChoiceHandlerService;
@@ -63,7 +63,7 @@ public class MultiZoneExileChoiceInteractionHandler
             }
         }
 
-        sessionManager.sendToPlayer(recipientId, new ChooseMultipleCardsMessage(
+        sessionManager.sendToPlayer(recipientId, InteractionPromptMessage.multiCardPick(
                 new ArrayList<>(interaction.validCardIds()), cardViews, interaction.maxCount(),
                 "Choose any number of cards named \"" + interaction.cardName() + "\" to exile."));
 

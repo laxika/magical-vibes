@@ -1,5 +1,6 @@
 package com.github.laxika.magicalvibes.cards.a;
 
+import com.github.laxika.magicalvibes.service.interaction.InteractionAnswer;
 import com.github.laxika.magicalvibes.model.PendingInteraction;
 import com.github.laxika.magicalvibes.cards.c.CounselOfTheSoratami;
 import com.github.laxika.magicalvibes.cards.f.Forest;
@@ -93,7 +94,7 @@ class AbundanceTest extends BaseCardTest {
         harness.handleListChoice(player1, "LAND");
 
         assertThat(gd.interaction.activeInteraction()).isInstanceOf(PendingInteraction.LibraryReorder.class);
-        gs.handleLibraryCardsReordered(gd, player1, List.of(1, 0));
+        gs.handleInteractionAnswer(gd, player1, new InteractionAnswer.CardOrder(List.of(1, 0)));
 
         assertThat(gd.playerDecks.get(player1.getId()).getFirst().getName()).isEqualTo("Island");
         assertThat(gd.playerDecks.get(player1.getId()).get(1).getName()).isEqualTo("Peek");

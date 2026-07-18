@@ -4,7 +4,7 @@ import com.github.laxika.magicalvibes.model.GameData;
 import com.github.laxika.magicalvibes.model.PendingInteraction;
 import com.github.laxika.magicalvibes.model.Player;
 import com.github.laxika.magicalvibes.networking.SessionManager;
-import com.github.laxika.magicalvibes.networking.message.ChooseCardFromHandMessage;
+import com.github.laxika.magicalvibes.networking.message.InteractionPromptMessage;
 import com.github.laxika.magicalvibes.service.ability.AbilityActivationService;
 import com.github.laxika.magicalvibes.service.input.CardChoiceHandlerService;
 import lombok.extern.slf4j.Slf4j;
@@ -14,7 +14,7 @@ import java.util.UUID;
 
 /**
  * The six hand-card choice handlers (the legacy shared {@code InteractionContext.CardChoice}
- * family). Each kind sends the same {@code ChooseCardFromHandMessage} with the record's
+ * family). Each kind sends the same hand-pick {@code InteractionPromptMessage} with the record's
  * begin-time indices and prompt; only the decline flag and the
  * per-kind "Awaiting …" log line differ, so they share a base class. Answers all arrive as
  * {@link InteractionAnswer.CardIndexChosen} and delegate to the legacy per-kind answer
@@ -47,7 +47,7 @@ public final class HandCardChoiceInteractionHandlers {
 
         @Override
         public void prompt(GameData gameData, T interaction, UUID recipientId) {
-            sessionManager.sendToPlayer(recipientId, new ChooseCardFromHandMessage(
+            sessionManager.sendToPlayer(recipientId, InteractionPromptMessage.cardIndexPick(
                     interaction.validIndices(), interaction.prompt(), canDecline));
 
             if (awaitingLogSuffix != null) {

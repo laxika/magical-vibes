@@ -1,5 +1,6 @@
 package com.github.laxika.magicalvibes.cards.e;
 
+import com.github.laxika.magicalvibes.service.interaction.InteractionAnswer;
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
 import com.github.laxika.magicalvibes.cards.s.Shock;
 import com.github.laxika.magicalvibes.cards.s.Swamp;
@@ -31,9 +32,9 @@ class EarwigSquadTest extends BaseCardTest {
         harness.passBothPriorities(); // resolve creature spell -> ETB trigger on stack
         harness.passBothPriorities(); // resolve ETB trigger -> library search
 
-        gs.handleLibraryCardChosen(gd, player1, 0);
-        gs.handleLibraryCardChosen(gd, player1, 0);
-        gs.handleLibraryCardChosen(gd, player1, 0);
+        gs.handleInteractionAnswer(gd, player1, new InteractionAnswer.LibraryCardChosen(0));
+        gs.handleInteractionAnswer(gd, player1, new InteractionAnswer.LibraryCardChosen(0));
+        gs.handleInteractionAnswer(gd, player1, new InteractionAnswer.LibraryCardChosen(0));
 
         assertThat(gd.playerDecks.get(player2.getId())).hasSize(1);
         assertThat(gd.getPlayerExiledCards(player2.getId())).hasSize(3);

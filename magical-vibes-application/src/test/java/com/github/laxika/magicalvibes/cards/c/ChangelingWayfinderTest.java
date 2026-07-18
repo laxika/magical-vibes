@@ -1,5 +1,6 @@
 package com.github.laxika.magicalvibes.cards.c;
 
+import com.github.laxika.magicalvibes.service.interaction.InteractionAnswer;
 import com.github.laxika.magicalvibes.model.GameLogEntry;
 
 import com.github.laxika.magicalvibes.model.PendingInteraction;
@@ -113,7 +114,7 @@ class ChangelingWayfinderTest extends BaseCardTest {
         int deckSizeBefore = gd.playerDecks.get(player1.getId()).size();
 
         // Choose the first basic land (index 0)
-        harness.getGameService().handleLibraryCardChosen(gd, player1, 0);
+        harness.getGameService().handleInteractionAnswer(gd, player1, new InteractionAnswer.LibraryCardChosen(0));
 
         // Card is in hand
         assertThat(gd.playerHands.get(player1.getId()))
@@ -144,7 +145,7 @@ class ChangelingWayfinderTest extends BaseCardTest {
         List<Card> searchCards = gd.interaction.activeInteraction(PendingInteraction.LibrarySearch.class).params().cards();
         String chosenName = searchCards.get(2).getName(); // pick the third card
 
-        harness.getGameService().handleLibraryCardChosen(gd, player1, 2);
+        harness.getGameService().handleInteractionAnswer(gd, player1, new InteractionAnswer.LibraryCardChosen(2));
 
         assertThat(gd.playerHands.get(player1.getId()))
                 .anyMatch(c -> c.getName().equals(chosenName));
@@ -165,7 +166,7 @@ class ChangelingWayfinderTest extends BaseCardTest {
         GameData gd = harness.getGameData();
         int deckSizeBefore = gd.playerDecks.get(player1.getId()).size();
 
-        harness.getGameService().handleLibraryCardChosen(gd, player1, -1);
+        harness.getGameService().handleInteractionAnswer(gd, player1, new InteractionAnswer.LibraryCardChosen(-1));
 
         // No card added to hand
         assertThat(gd.playerHands.get(player1.getId())).isEmpty();

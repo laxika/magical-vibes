@@ -1,5 +1,6 @@
 package com.github.laxika.magicalvibes.cards.f;
 
+import com.github.laxika.magicalvibes.service.interaction.InteractionAnswer;
 import com.github.laxika.magicalvibes.model.PendingInteraction;
 
 import com.github.laxika.magicalvibes.cards.g.GhostQuarter;
@@ -129,7 +130,7 @@ class FieldOfRuinTest extends BaseCardTest {
 
         // Player 1 (active) picks a basic land
         GameData gd = harness.getGameData();
-        harness.getGameService().handleLibraryCardChosen(gd, player1, 0);
+        harness.getGameService().handleInteractionAnswer(gd, player1, new InteractionAnswer.LibraryCardChosen(0));
 
         // Now player 2 is prompted to search
         assertThat(gd.interaction.activeInteraction()).isInstanceOf(PendingInteraction.LibrarySearch.class);
@@ -156,11 +157,11 @@ class FieldOfRuinTest extends BaseCardTest {
         int p2BattlefieldBefore = gd.playerBattlefields.get(player2.getId()).size();
 
         // Player 1 searches
-        harness.getGameService().handleLibraryCardChosen(gd, player1, 0);
+        harness.getGameService().handleInteractionAnswer(gd, player1, new InteractionAnswer.LibraryCardChosen(0));
         assertThat(gd.playerBattlefields.get(player1.getId())).hasSize(p1BattlefieldBefore + 1);
 
         // Player 2 searches
-        harness.getGameService().handleLibraryCardChosen(gd, player2, 0);
+        harness.getGameService().handleInteractionAnswer(gd, player2, new InteractionAnswer.LibraryCardChosen(0));
         assertThat(gd.playerBattlefields.get(player2.getId())).hasSize(p2BattlefieldBefore + 1);
 
         // No more searches pending
@@ -182,7 +183,7 @@ class FieldOfRuinTest extends BaseCardTest {
 
         GameData gd = harness.getGameData();
         // Player 1 fails to find
-        harness.getGameService().handleLibraryCardChosen(gd, player1, -1);
+        harness.getGameService().handleInteractionAnswer(gd, player1, new InteractionAnswer.LibraryCardChosen(-1));
 
         // Player 2 still gets to search
         assertThat(gd.interaction.activeInteraction()).isInstanceOf(PendingInteraction.LibrarySearch.class);
@@ -252,7 +253,7 @@ class FieldOfRuinTest extends BaseCardTest {
         harness.passBothPriorities();
 
         GameData gd = harness.getGameData();
-        harness.getGameService().handleLibraryCardChosen(gd, player1, 0);
+        harness.getGameService().handleInteractionAnswer(gd, player1, new InteractionAnswer.LibraryCardChosen(0));
 
         // The land entered untapped
         assertThat(gd.playerBattlefields.get(player1.getId()))

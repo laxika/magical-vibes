@@ -4,7 +4,7 @@ import com.github.laxika.magicalvibes.model.GameData;
 import com.github.laxika.magicalvibes.model.PendingInteraction;
 import com.github.laxika.magicalvibes.model.Player;
 import com.github.laxika.magicalvibes.networking.SessionManager;
-import com.github.laxika.magicalvibes.networking.message.ChooseMultiplePermanentsMessage;
+import com.github.laxika.magicalvibes.networking.message.InteractionPromptMessage;
 import com.github.laxika.magicalvibes.service.input.MultiPermanentChoiceHandlerService;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -41,7 +41,7 @@ public class MultiPermanentChoiceInteractionHandler
 
     @Override
     public void prompt(GameData gameData, PendingInteraction.MultiPermanentChoice interaction, UUID recipientId) {
-        sessionManager.sendToPlayer(recipientId, new ChooseMultiplePermanentsMessage(
+        sessionManager.sendToPlayer(recipientId, InteractionPromptMessage.multiPermanentPick(
                 new ArrayList<>(interaction.validIds()), interaction.maxCount(), interaction.prompt()));
 
         String playerName = gameData.playerIdToName.get(interaction.playerId());

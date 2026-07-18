@@ -1,5 +1,6 @@
 package com.github.laxika.magicalvibes.cards.m;
 
+import com.github.laxika.magicalvibes.service.interaction.InteractionAnswer;
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
 import com.github.laxika.magicalvibes.cards.p.Plains;
 import com.github.laxika.magicalvibes.cards.s.Swamp;
@@ -58,7 +59,7 @@ class MaralenOfTheMornsongTest extends BaseCardTest {
         assertThat(search.params().cards()).hasSize(3);
 
         String chosen = search.params().cards().getFirst().getName();
-        harness.getGameService().handleLibraryCardChosen(gd, player1, 0);
+        harness.getGameService().handleInteractionAnswer(gd, player1, new InteractionAnswer.LibraryCardChosen(0));
 
         assertThat(gd.playerHands.get(player1.getId())).anyMatch(c -> c.getName().equals(chosen));
         assertThat(gd.interaction.activeInteraction()).isNull();
@@ -81,7 +82,7 @@ class MaralenOfTheMornsongTest extends BaseCardTest {
         assertThat(search).isNotNull();
         assertThat(search.params().playerId()).isEqualTo(player2.getId());
 
-        harness.getGameService().handleLibraryCardChosen(gd, player2, 0);
+        harness.getGameService().handleInteractionAnswer(gd, player2, new InteractionAnswer.LibraryCardChosen(0));
         assertThat(gd.playerHands.get(player2.getId())).hasSize(1);
     }
 

@@ -1,9 +1,9 @@
 package com.github.laxika.magicalvibes.ai.interaction;
 
+import com.github.laxika.magicalvibes.service.interaction.InteractionAnswer;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardType;
 import com.github.laxika.magicalvibes.model.PendingInteraction;
-import com.github.laxika.magicalvibes.networking.message.ReorderLibraryCardsRequest;
 import lombok.extern.slf4j.Slf4j;
 
 import java.util.ArrayList;
@@ -44,6 +44,6 @@ class LibraryReorderAiStrategy implements AiInteractionStrategy<PendingInteracti
         List<Integer> order = indexedCards.stream().map(a -> a[0]).toList();
 
         log.info("AI: Reordering {} library cards in game {}", order.size(), ctx.gameId());
-        ctx.gameActions().handleLibraryCardsReordered(ctx.selfConnection(), new ReorderLibraryCardsRequest(order));
+        ctx.gameActions().answerInteraction(ctx.selfConnection(), new InteractionAnswer.CardOrder(order));
     }
 }

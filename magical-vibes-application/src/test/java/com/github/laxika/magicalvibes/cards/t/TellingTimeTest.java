@@ -1,5 +1,6 @@
 package com.github.laxika.magicalvibes.cards.t;
 
+import com.github.laxika.magicalvibes.service.interaction.InteractionAnswer;
 import com.github.laxika.magicalvibes.model.GameLogEntry;
 
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
@@ -90,7 +91,7 @@ class TellingTimeTest extends BaseCardTest {
         harness.passBothPriorities();
 
         // Choose: card 1 to hand, card 0 to top, card 2 to bottom
-        harness.getGameService().handleHandTopBottomChosen(gd, player1, 1, 0);
+        harness.getGameService().handleInteractionAnswer(gd, player1, new InteractionAnswer.HandTopBottom(1, 0));
 
         // Hand should contain the chosen card
         assertThat(gd.playerHands.get(player1.getId())).contains(originalTop1);
@@ -121,7 +122,7 @@ class TellingTimeTest extends BaseCardTest {
         harness.passBothPriorities();
 
         // Choose: card 0 to hand, card 2 to top, card 1 to bottom
-        harness.getGameService().handleHandTopBottomChosen(gd, player1, 0, 2);
+        harness.getGameService().handleInteractionAnswer(gd, player1, new InteractionAnswer.HandTopBottom(0, 2));
 
         assertThat(gd.playerHands.get(player1.getId())).contains(originalTop0);
         assertThat(deck.get(0)).isSameAs(originalTop2);
@@ -138,7 +139,7 @@ class TellingTimeTest extends BaseCardTest {
         harness.passBothPriorities();
 
         GameData gd = harness.getGameData();
-        harness.getGameService().handleHandTopBottomChosen(gd, player1, 0, 1);
+        harness.getGameService().handleInteractionAnswer(gd, player1, new InteractionAnswer.HandTopBottom(0, 1));
 
         assertThat(gd.interaction.activeInteraction()).isNull();
         assertThat(gd.interaction.activeInteraction(PendingInteraction.HandTopBottomChoice.class)).isNull();
@@ -168,7 +169,7 @@ class TellingTimeTest extends BaseCardTest {
         assertThat(gd.interaction.activeInteraction(PendingInteraction.HandTopBottomChoice.class).cards()).hasSize(2);
 
         // Choose cardA for hand, cardB for top
-        harness.getGameService().handleHandTopBottomChosen(gd, player1, 0, 1);
+        harness.getGameService().handleInteractionAnswer(gd, player1, new InteractionAnswer.HandTopBottom(0, 1));
 
         assertThat(gd.playerHands.get(player1.getId())).contains(cardA);
         assertThat(deck.get(0)).isSameAs(cardB);
@@ -226,7 +227,7 @@ class TellingTimeTest extends BaseCardTest {
 
         GameData gd = harness.getGameData();
         assertThatThrownBy(() ->
-                harness.getGameService().handleHandTopBottomChosen(gd, player1, 1, 1)
+                harness.getGameService().handleInteractionAnswer(gd, player1, new InteractionAnswer.HandTopBottom(1, 1))
         ).isInstanceOf(IllegalStateException.class)
                 .hasMessageContaining("must be different");
     }
@@ -242,7 +243,7 @@ class TellingTimeTest extends BaseCardTest {
 
         GameData gd = harness.getGameData();
         assertThatThrownBy(() ->
-                harness.getGameService().handleHandTopBottomChosen(gd, player1, 5, 0)
+                harness.getGameService().handleInteractionAnswer(gd, player1, new InteractionAnswer.HandTopBottom(5, 0))
         ).isInstanceOf(IllegalStateException.class)
                 .hasMessageContaining("Invalid hand card index");
     }
@@ -258,7 +259,7 @@ class TellingTimeTest extends BaseCardTest {
 
         GameData gd = harness.getGameData();
         assertThatThrownBy(() ->
-                harness.getGameService().handleHandTopBottomChosen(gd, player1, 0, -1)
+                harness.getGameService().handleInteractionAnswer(gd, player1, new InteractionAnswer.HandTopBottom(0, -1))
         ).isInstanceOf(IllegalStateException.class)
                 .hasMessageContaining("Invalid top card index");
     }
@@ -274,7 +275,7 @@ class TellingTimeTest extends BaseCardTest {
 
         GameData gd = harness.getGameData();
         assertThatThrownBy(() ->
-                harness.getGameService().handleHandTopBottomChosen(gd, player2, 0, 1)
+                harness.getGameService().handleInteractionAnswer(gd, player2, new InteractionAnswer.HandTopBottom(0, 1))
         ).isInstanceOf(IllegalStateException.class)
                 .hasMessageContaining("Not your turn");
     }
@@ -284,7 +285,7 @@ class TellingTimeTest extends BaseCardTest {
     void rejectsWhenNotAwaiting() {
         GameData gd = harness.getGameData();
         assertThatThrownBy(() ->
-                harness.getGameService().handleHandTopBottomChosen(gd, player1, 0, 1)
+                harness.getGameService().handleInteractionAnswer(gd, player1, new InteractionAnswer.HandTopBottom(0, 1))
         ).isInstanceOf(IllegalStateException.class)
                 .hasMessageContaining("Not awaiting");
     }
@@ -303,7 +304,7 @@ class TellingTimeTest extends BaseCardTest {
         GameData gd = harness.getGameData();
         assertThat(gd.gameLog.stream().map(GameLogEntry::plainText)).anyMatch(log -> log.contains("looks at the top") && log.contains("3"));
 
-        harness.getGameService().handleHandTopBottomChosen(gd, player1, 0, 1);
+        harness.getGameService().handleInteractionAnswer(gd, player1, new InteractionAnswer.HandTopBottom(0, 1));
         assertThat(gd.gameLog.stream().map(GameLogEntry::plainText)).anyMatch(log ->
                 log.contains("puts one card into their hand") && log.contains("on the bottom"));
     }
@@ -322,7 +323,7 @@ class TellingTimeTest extends BaseCardTest {
         harness.castInstant(player1, 0);
         harness.passBothPriorities();
 
-        harness.getGameService().handleHandTopBottomChosen(gd, player1, 0, 1);
+        harness.getGameService().handleInteractionAnswer(gd, player1, new InteractionAnswer.HandTopBottom(0, 1));
         assertThat(gd.gameLog.stream().map(GameLogEntry::plainText)).anyMatch(log ->
                 log.contains("puts one card into their hand") && log.contains("on top of their library")
                         && !log.contains("bottom"));

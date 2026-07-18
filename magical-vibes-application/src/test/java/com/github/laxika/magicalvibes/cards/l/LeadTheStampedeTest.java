@@ -1,5 +1,6 @@
 package com.github.laxika.magicalvibes.cards.l;
 
+import com.github.laxika.magicalvibes.service.interaction.InteractionAnswer;
 import com.github.laxika.magicalvibes.model.GameLogEntry;
 
 import com.github.laxika.magicalvibes.model.PendingInteraction;
@@ -87,7 +88,7 @@ class LeadTheStampedeTest extends BaseCardTest {
         int iShock = indexOf(remaining, "Shock");
         int iPlains = indexOf(remaining, "Plains");
         int iSwamp = indexOf(remaining, "Swamp");
-        harness.getGameService().handleLibraryCardsReordered(gd, player1, List.of(iShock, iPlains, iSwamp));
+        harness.getGameService().handleInteractionAnswer(gd, player1, new InteractionAnswer.CardOrder(List.of(iShock, iPlains, iSwamp)));
 
         assertThat(gd.playerDecks.get(player1.getId()).stream().map(Card::getName))
                 .containsExactly("Shock", "Plains", "Swamp");

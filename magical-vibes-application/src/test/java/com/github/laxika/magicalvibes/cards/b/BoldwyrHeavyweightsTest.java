@@ -1,5 +1,6 @@
 package com.github.laxika.magicalvibes.cards.b;
 
+import com.github.laxika.magicalvibes.service.interaction.InteractionAnswer;
 import com.github.laxika.magicalvibes.cards.f.Forest;
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
 import com.github.laxika.magicalvibes.cards.p.Plains;
@@ -51,7 +52,7 @@ class BoldwyrHeavyweightsTest extends BaseCardTest {
                 gd.interaction.activeInteraction(PendingInteraction.LibrarySearch.class);
         int bearsIndex = indexOfCreature(search);
 
-        harness.getGameService().handleLibraryCardChosen(gd, player2, bearsIndex);
+        harness.getGameService().handleInteractionAnswer(gd, player2, new InteractionAnswer.LibraryCardChosen(bearsIndex));
 
         assertThat(gd.playerBattlefields.get(player2.getId())).hasSize(before + 1);
         assertThat(gd.playerBattlefields.get(player2.getId()))
@@ -69,7 +70,7 @@ class BoldwyrHeavyweightsTest extends BaseCardTest {
         GameData gd = harness.getGameData();
         int before = gd.playerBattlefields.get(player2.getId()).size();
 
-        harness.getGameService().handleLibraryCardChosen(gd, player2, -1);
+        harness.getGameService().handleInteractionAnswer(gd, player2, new InteractionAnswer.LibraryCardChosen(-1));
 
         assertThat(gd.playerBattlefields.get(player2.getId())).hasSize(before);
         assertThat(gd.interaction.activeInteraction(PendingInteraction.LibrarySearch.class)).isNull();

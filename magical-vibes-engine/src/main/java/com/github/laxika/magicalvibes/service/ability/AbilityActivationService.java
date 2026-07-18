@@ -92,7 +92,7 @@ import com.github.laxika.magicalvibes.model.effect.TapXPermanentsCost;
 import com.github.laxika.magicalvibes.model.effect.TapTwoCreaturesSharingTypeCost;
 import com.github.laxika.magicalvibes.model.effect.CrewCost;
 import com.github.laxika.magicalvibes.networking.SessionManager;
-import com.github.laxika.magicalvibes.networking.message.ChooseCardFromHandMessage;
+import com.github.laxika.magicalvibes.networking.message.InteractionPromptMessage;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
@@ -988,9 +988,9 @@ public class AbilityActivationService {
             PendingAbilityActivation pending = gameData.pendingAbilityActivation;
             String costLabel = pending.discardCostLabel();
             String labelText = costLabel != null ? costLabel + " " : "";
-            sessionManager.sendToPlayer(player.getId(), new ChooseCardFromHandMessage(
+            sessionManager.sendToPlayer(player.getId(), InteractionPromptMessage.cardIndexPick(
                     new ArrayList<>(cardChoice.validIndices()),
-                    "Choose a " + labelText + "card to discard as an activation cost."
+                    "Choose a " + labelText + "card to discard as an activation cost.", false
             ));
             return;
         }

@@ -1,8 +1,8 @@
 package com.github.laxika.magicalvibes.ai.interaction;
 
+import com.github.laxika.magicalvibes.service.interaction.InteractionAnswer;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.PendingInteraction;
-import com.github.laxika.magicalvibes.networking.message.CardChosenRequest;
 import lombok.extern.slf4j.Slf4j;
 
 import java.util.Comparator;
@@ -50,7 +50,7 @@ class RevealCardsDiscardChoiceAiStrategy
         }
 
         log.info("AI: Choosing card {} in reveal-and-discard in game {}", chosenIndex, ctx.gameId());
-        ctx.gameActions().handleCardChosen(ctx.selfConnection(), new CardChosenRequest(chosenIndex));
+        ctx.gameActions().answerInteraction(ctx.selfConnection(), new InteractionAnswer.CardIndexChosen(chosenIndex));
     }
 
     private static int manaValueOf(List<Card> hand, UUID cardId) {

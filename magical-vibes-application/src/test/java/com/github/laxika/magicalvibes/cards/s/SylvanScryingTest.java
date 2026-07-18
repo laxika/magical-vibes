@@ -1,5 +1,6 @@
 package com.github.laxika.magicalvibes.cards.s;
 
+import com.github.laxika.magicalvibes.service.interaction.InteractionAnswer;
 import com.github.laxika.magicalvibes.model.GameLogEntry;
 
 import com.github.laxika.magicalvibes.model.PendingInteraction;
@@ -69,7 +70,7 @@ class SylvanScryingTest extends BaseCardTest {
         int handBefore = gd.playerHands.get(player1.getId()).size();
         int deckBefore = gd.playerDecks.get(player1.getId()).size();
 
-        harness.getGameService().handleLibraryCardChosen(gd, player1, 0);
+        harness.getGameService().handleInteractionAnswer(gd, player1, new InteractionAnswer.LibraryCardChosen(0));
 
         assertThat(gd.playerHands.get(player1.getId())).hasSize(handBefore + 1);
         assertThat(gd.playerHands.get(player1.getId()))
@@ -86,7 +87,7 @@ class SylvanScryingTest extends BaseCardTest {
         harness.passBothPriorities();
 
         GameData gd = harness.getGameData();
-        harness.getGameService().handleLibraryCardChosen(gd, player1, -1);
+        harness.getGameService().handleInteractionAnswer(gd, player1, new InteractionAnswer.LibraryCardChosen(-1));
 
         assertThat(gd.interaction.activeInteraction()).isNull();
         assertThat(gd.playerHands.get(player1.getId()))
@@ -128,7 +129,7 @@ class SylvanScryingTest extends BaseCardTest {
         setupLibrary();
 
         harness.passBothPriorities();
-        harness.getGameService().handleLibraryCardChosen(harness.getGameData(), player1, 0);
+        harness.getGameService().handleInteractionAnswer(harness.getGameData(), player1, new InteractionAnswer.LibraryCardChosen(0));
 
         assertThat(harness.getGameData().playerGraveyards.get(player1.getId()))
                 .anyMatch(c -> c.getName().equals("Sylvan Scrying"));

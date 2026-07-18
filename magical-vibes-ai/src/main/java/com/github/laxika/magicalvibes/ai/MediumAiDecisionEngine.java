@@ -1,5 +1,6 @@
 package com.github.laxika.magicalvibes.ai;
 
+import com.github.laxika.magicalvibes.service.interaction.InteractionAnswer;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardType;
 import com.github.laxika.magicalvibes.model.PendingInteraction;
@@ -11,7 +12,6 @@ import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.Player;
 import com.github.laxika.magicalvibes.model.TurnStep;
 import com.github.laxika.magicalvibes.networking.message.BlockerAssignment;
-import com.github.laxika.magicalvibes.networking.message.CardChosenRequest;
 import com.github.laxika.magicalvibes.networking.message.DeclareAttackersRequest;
 import com.github.laxika.magicalvibes.networking.message.DeclareBlockersRequest;
 import com.github.laxika.magicalvibes.networking.message.PassPriorityRequest;
@@ -481,7 +481,7 @@ public class MediumAiDecisionEngine extends AiDecisionEngine {
                 .orElse(validIndices.iterator().next());
 
         log.info("AI (Medium): Discarding card at index {} in game {}", bestIndex, gameId);
-        send(() -> gameActions.handleCardChosen(selfConnection, new CardChosenRequest(bestIndex)));
+        send(() -> gameActions.answerInteraction(selfConnection, new InteractionAnswer.CardIndexChosen(bestIndex)));
     }
 
     @Override

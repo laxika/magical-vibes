@@ -1,5 +1,6 @@
 package com.github.laxika.magicalvibes.cards.c;
 
+import com.github.laxika.magicalvibes.service.interaction.InteractionAnswer;
 import com.github.laxika.magicalvibes.cards.f.Forest;
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
 import com.github.laxika.magicalvibes.cards.i.Island;
@@ -41,14 +42,14 @@ class CruelFateTest extends BaseCardTest {
         assertThat(gd.interaction.activeInteraction()).isInstanceOf(PendingInteraction.LibrarySearch.class);
 
         // Put the top card (Island) into the graveyard.
-        gs.handleLibraryCardChosen(gd, player1, 0);
+        gs.handleInteractionAnswer(gd, player1, new InteractionAnswer.LibraryCardChosen(0));
 
         assertThat(gd.playerGraveyards.get(player2.getId()))
                 .anyMatch(c -> c.getId().equals(c0.getId()));
 
         // The remaining four cards must be reordered onto the top of the library.
         assertThat(gd.interaction.activeInteraction()).isInstanceOf(PendingInteraction.LibraryReorder.class);
-        gs.handleLibraryCardsReordered(gd, player1, List.of(0, 1, 2, 3));
+        gs.handleInteractionAnswer(gd, player1, new InteractionAnswer.CardOrder(List.of(0, 1, 2, 3)));
 
         List<Card> deckAfter = gd.playerDecks.get(player2.getId());
         assertThat(deckAfter.get(0).getId()).isEqualTo(c1.getId());
@@ -75,7 +76,7 @@ class CruelFateTest extends BaseCardTest {
         assertThat(gd.interaction.activeInteraction()).isInstanceOf(PendingInteraction.LibrarySearch.class);
 
         // Put the second card into the graveyard, leaving one to go back on top.
-        gs.handleLibraryCardChosen(gd, player1, 1);
+        gs.handleInteractionAnswer(gd, player1, new InteractionAnswer.LibraryCardChosen(1));
 
         assertThat(gd.playerGraveyards.get(player2.getId()))
                 .anyMatch(c -> c.getId().equals(bottom.getId()));

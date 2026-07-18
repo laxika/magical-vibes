@@ -1,5 +1,6 @@
 package com.github.laxika.magicalvibes.cards.c;
 
+import com.github.laxika.magicalvibes.service.interaction.InteractionAnswer;
 import com.github.laxika.magicalvibes.model.PendingInteraction;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.GameData;
@@ -86,7 +87,7 @@ class CloudreaderSphinxTest extends BaseCardTest {
         harness.passBothPriorities(); // resolve creature
         harness.passBothPriorities(); // resolve ETB
 
-        harness.getGameService().handleScryCompleted(gd, player1, List.of(0, 1), List.of());
+        harness.getGameService().handleInteractionAnswer(gd, player1, new InteractionAnswer.ScryOrder(List.of(0, 1), List.of()));
 
         assertThat(deck.get(0)).isSameAs(originalTop0);
         assertThat(deck.get(1)).isSameAs(originalTop1);
@@ -107,7 +108,7 @@ class CloudreaderSphinxTest extends BaseCardTest {
         harness.passBothPriorities(); // resolve creature
         harness.passBothPriorities(); // resolve ETB
 
-        harness.getGameService().handleScryCompleted(gd, player1, List.of(), List.of(0, 1));
+        harness.getGameService().handleInteractionAnswer(gd, player1, new InteractionAnswer.ScryOrder(List.of(), List.of(0, 1)));
 
         assertThat(deck.get(0)).isNotSameAs(originalTop0);
         int deckSize = deck.size();
@@ -131,7 +132,7 @@ class CloudreaderSphinxTest extends BaseCardTest {
         harness.passBothPriorities(); // resolve ETB
 
         // Keep card 1 on top, put card 0 on bottom
-        harness.getGameService().handleScryCompleted(gd, player1, List.of(1), List.of(0));
+        harness.getGameService().handleInteractionAnswer(gd, player1, new InteractionAnswer.ScryOrder(List.of(1), List.of(0)));
 
         assertThat(deck.get(0)).isSameAs(originalTop1);
         int deckSize = deck.size();
@@ -149,7 +150,7 @@ class CloudreaderSphinxTest extends BaseCardTest {
         harness.passBothPriorities(); // resolve ETB
 
         GameData gd = harness.getGameData();
-        harness.getGameService().handleScryCompleted(gd, player1, List.of(0, 1), List.of());
+        harness.getGameService().handleInteractionAnswer(gd, player1, new InteractionAnswer.ScryOrder(List.of(0, 1), List.of()));
 
         assertThat(gd.interaction.activeInteraction()).isNull();
         assertThat(gd.interaction.activeInteraction(PendingInteraction.Scry.class)).isNull();

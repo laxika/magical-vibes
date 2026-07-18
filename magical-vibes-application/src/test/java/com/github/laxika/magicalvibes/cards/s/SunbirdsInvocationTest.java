@@ -1,5 +1,6 @@
 package com.github.laxika.magicalvibes.cards.s;
 
+import com.github.laxika.magicalvibes.service.interaction.InteractionAnswer;
 import com.github.laxika.magicalvibes.model.PendingInteraction;
 
 import com.github.laxika.magicalvibes.cards.f.Forest;
@@ -95,7 +96,7 @@ class SunbirdsInvocationTest extends BaseCardTest {
         harness.passBothPriorities();
 
         // Choose Llanowar Elves (index 0)
-        gs.handleLibraryCardChosen(gd, player1, 0);
+        gs.handleInteractionAnswer(gd, player1, new InteractionAnswer.LibraryCardChosen(0));
 
         // Llanowar Elves should be on the stack as a creature spell (cast without paying)
         assertThat(gd.stack).anyMatch(se ->
@@ -123,7 +124,7 @@ class SunbirdsInvocationTest extends BaseCardTest {
         harness.passBothPriorities();
 
         // Decline (index -1)
-        gs.handleLibraryCardChosen(gd, player1, -1);
+        gs.handleInteractionAnswer(gd, player1, new InteractionAnswer.LibraryCardChosen(-1));
 
         // All 2 revealed cards should be on the bottom of the library
         // (only Mountain was NOT revealed — it stayed in library)
@@ -206,7 +207,7 @@ class SunbirdsInvocationTest extends BaseCardTest {
         assertThat(gd.interaction.activeInteraction()).isInstanceOf(PendingInteraction.LibrarySearch.class);
 
         // Choose Llanowar Elves (index 0) — cast without paying
-        gs.handleLibraryCardChosen(gd, player1, 0);
+        gs.handleInteractionAnswer(gd, player1, new InteractionAnswer.LibraryCardChosen(0));
 
         // Llanowar Elves should be on the stack
         // The Sunbird's trigger should NOT fire again for this free cast (not from hand)
@@ -243,7 +244,7 @@ class SunbirdsInvocationTest extends BaseCardTest {
         harness.passBothPriorities();
 
         // Choose LlanowarElves (index 0) from revealed [LlanowarElves, GrizzlyBears]
-        gs.handleLibraryCardChosen(gd, player1, 0);
+        gs.handleInteractionAnswer(gd, player1, new InteractionAnswer.LibraryCardChosen(0));
 
         // Should NOT be awaiting LIBRARY_REORDER (random order, no player interaction)
         assertThat(gd.interaction.activeInteraction(PendingInteraction.LibraryReorder.class)).isNull();

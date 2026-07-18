@@ -1,5 +1,6 @@
 package com.github.laxika.magicalvibes.cards.j;
 
+import com.github.laxika.magicalvibes.service.interaction.InteractionAnswer;
 import com.github.laxika.magicalvibes.cards.f.Forest;
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
 import com.github.laxika.magicalvibes.cards.i.Island;
@@ -63,7 +64,7 @@ class JundPanoramaTest extends BaseCardTest {
         harness.passBothPriorities();
 
         int battlefieldBefore = gd.playerBattlefields.get(player1.getId()).size();
-        gs.handleLibraryCardChosen(gd, player1, 0);
+        gs.handleInteractionAnswer(gd, player1, new InteractionAnswer.LibraryCardChosen(0));
 
         assertThat(gd.playerBattlefields.get(player1.getId())).hasSize(battlefieldBefore + 1);
         assertThat(gd.playerBattlefields.get(player1.getId()))
@@ -77,7 +78,7 @@ class JundPanoramaTest extends BaseCardTest {
         activateSearch();
 
         harness.passBothPriorities();
-        gs.handleLibraryCardChosen(gd, player1, -1);
+        gs.handleInteractionAnswer(gd, player1, new InteractionAnswer.LibraryCardChosen(-1));
 
         assertThat(gd.playerBattlefields.get(player1.getId()))
                 .noneMatch(p -> p.getCard().hasType(com.github.laxika.magicalvibes.model.CardType.LAND));

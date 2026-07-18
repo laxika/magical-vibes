@@ -1,5 +1,6 @@
 package com.github.laxika.magicalvibes.cards.e;
 
+import com.github.laxika.magicalvibes.service.interaction.InteractionAnswer;
 import com.github.laxika.magicalvibes.cards.f.Forest;
 import com.github.laxika.magicalvibes.cards.p.Plains;
 import com.github.laxika.magicalvibes.model.Card;
@@ -47,8 +48,8 @@ class EndlessHorizonsTest extends BaseCardTest {
 
         UUID permId = harness.getPermanentId(player1, "Endless Horizons");
 
-        gs.handleLibraryCardChosen(gd, player1, 0); // exile first Plains, re-prompt
-        gs.handleLibraryCardChosen(gd, player1, 0); // exile second Plains, no matches remain → done
+        gs.handleInteractionAnswer(gd, player1, new InteractionAnswer.LibraryCardChosen(0)); // exile first Plains, re-prompt
+        gs.handleInteractionAnswer(gd, player1, new InteractionAnswer.LibraryCardChosen(0)); // exile second Plains, no matches remain → done
 
         assertThat(gd.interaction.activeInteraction(PendingInteraction.LibrarySearch.class)).isNull();
         assertThat(gd.getCardsExiledByPermanent(permId)).hasSize(2);
@@ -65,8 +66,8 @@ class EndlessHorizonsTest extends BaseCardTest {
 
         UUID permId = harness.getPermanentId(player1, "Endless Horizons");
 
-        gs.handleLibraryCardChosen(gd, player1, 0);  // exile one Plains
-        gs.handleLibraryCardChosen(gd, player1, -1); // decline the rest
+        gs.handleInteractionAnswer(gd, player1, new InteractionAnswer.LibraryCardChosen(0));  // exile one Plains
+        gs.handleInteractionAnswer(gd, player1, new InteractionAnswer.LibraryCardChosen(-1)); // decline the rest
 
         assertThat(gd.interaction.activeInteraction(PendingInteraction.LibrarySearch.class)).isNull();
         assertThat(gd.getCardsExiledByPermanent(permId)).hasSize(1);

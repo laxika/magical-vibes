@@ -5,7 +5,7 @@ import com.github.laxika.magicalvibes.model.GameData;
 import com.github.laxika.magicalvibes.model.PendingInteraction;
 import com.github.laxika.magicalvibes.model.Player;
 import com.github.laxika.magicalvibes.networking.SessionManager;
-import com.github.laxika.magicalvibes.networking.message.ChooseMultipleCardsMessage;
+import com.github.laxika.magicalvibes.networking.message.InteractionPromptMessage;
 import com.github.laxika.magicalvibes.networking.model.CardView;
 import com.github.laxika.magicalvibes.networking.service.CardViewFactory;
 import com.github.laxika.magicalvibes.service.PermanentAuctionService;
@@ -18,7 +18,7 @@ import java.util.UUID;
 
 /**
  * Prompts the current auction chooser to pick one card from the shared exiled pool
- * ({@link ChooseMultipleCardsMessage} with {@code maxCount == 1}). The pick is applied by
+ * (a multi-card {@code InteractionPromptMessage} with {@code maxCount == 1}). The pick is applied by
  * {@link PermanentAuctionService#applyPick}, which advances the auction to the next player.
  */
 @Slf4j
@@ -49,7 +49,7 @@ public class PermanentAuctionChoiceInteractionHandler
         List<UUID> validCardIds = interaction.pool().stream().map(Card::getId).toList();
 
         sessionManager.sendToPlayer(recipientId,
-                new ChooseMultipleCardsMessage(validCardIds, cardViews, 1, interaction.prompt()));
+                InteractionPromptMessage.multiCardPick(validCardIds, cardViews, 1, interaction.prompt()));
 
         String playerName = gameData.playerIdToName.get(interaction.choosingPlayerId());
         log.info("Game {} - Awaiting {} to choose an auctioned card ({} remaining)",

@@ -1,5 +1,6 @@
 package com.github.laxika.magicalvibes.cards.w;
 
+import com.github.laxika.magicalvibes.service.interaction.InteractionAnswer;
 import com.github.laxika.magicalvibes.cards.f.Forest;
 import com.github.laxika.magicalvibes.cards.i.Island;
 import com.github.laxika.magicalvibes.model.Card;
@@ -40,7 +41,7 @@ class WuSpyTest extends BaseCardTest {
         assertThat(gd.interaction.activeInteraction()).isInstanceOf(PendingInteraction.LibrarySearch.class);
 
         // Put the top card (Island) into the graveyard; Forest stays on top.
-        gs.handleLibraryCardChosen(gd, player1, 0);
+        gs.handleInteractionAnswer(gd, player1, new InteractionAnswer.LibraryCardChosen(0));
 
         assertThat(gd.playerGraveyards.get(player2.getId()))
                 .anyMatch(c -> c.getId().equals(top.getId()));
@@ -64,7 +65,7 @@ class WuSpyTest extends BaseCardTest {
         harness.passBothPriorities();
 
         assertThat(gd.interaction.activeInteraction()).isInstanceOf(PendingInteraction.LibrarySearch.class);
-        gs.handleLibraryCardChosen(gd, player1, 1);
+        gs.handleInteractionAnswer(gd, player1, new InteractionAnswer.LibraryCardChosen(1));
 
         assertThat(gd.playerGraveyards.get(player1.getId()))
                 .anyMatch(c -> c.getId().equals(second.getId()));
@@ -83,7 +84,7 @@ class WuSpyTest extends BaseCardTest {
         harness.passBothPriorities();
 
         assertThat(gd.interaction.activeInteraction()).isInstanceOf(PendingInteraction.LibrarySearch.class);
-        gs.handleLibraryCardChosen(gd, player1, 0);
+        gs.handleInteractionAnswer(gd, player1, new InteractionAnswer.LibraryCardChosen(0));
 
         assertThat(gd.playerGraveyards.get(player2.getId()))
                 .anyMatch(c -> c.getId().equals(only.getId()));

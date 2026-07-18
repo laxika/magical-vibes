@@ -5,7 +5,7 @@ import com.github.laxika.magicalvibes.model.GameData;
 import com.github.laxika.magicalvibes.model.PendingInteraction;
 import com.github.laxika.magicalvibes.model.Player;
 import com.github.laxika.magicalvibes.networking.SessionManager;
-import com.github.laxika.magicalvibes.networking.message.ChooseMultipleCardsMessage;
+import com.github.laxika.magicalvibes.networking.message.InteractionPromptMessage;
 import com.github.laxika.magicalvibes.networking.model.CardView;
 import com.github.laxika.magicalvibes.networking.service.CardViewFactory;
 import com.github.laxika.magicalvibes.service.effect.normalfx.BrilliantUltimatumSupport;
@@ -53,7 +53,7 @@ public class BrilliantUltimatumPlayChoiceInteractionHandler
         }
 
         sessionManager.sendToPlayer(recipientId,
-                new ChooseMultipleCardsMessage(new ArrayList<>(interaction.validCardIds()), cardViews,
+                InteractionPromptMessage.multiCardPick(new ArrayList<>(interaction.validCardIds()), cardViews,
                         interaction.maxCount(),
                         "You may play lands and cast spells from this pile without paying their mana costs."));
 

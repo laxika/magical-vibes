@@ -6,7 +6,7 @@ import com.github.laxika.magicalvibes.model.ManaPool;
 import com.github.laxika.magicalvibes.model.PendingInteraction;
 import com.github.laxika.magicalvibes.model.Player;
 import com.github.laxika.magicalvibes.networking.SessionManager;
-import com.github.laxika.magicalvibes.networking.message.MayAbilityMessage;
+import com.github.laxika.magicalvibes.networking.message.InteractionPromptMessage;
 import com.github.laxika.magicalvibes.service.input.MayAbilityHandlerService;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -47,7 +47,7 @@ public class MayAbilityChoiceInteractionHandler implements InteractionHandler<Pe
             canPay = cost.hasX() ? cost.calculateMaxX(pool) > 0 : cost.canPay(pool);
         }
 
-        sessionManager.sendToPlayer(recipientId, new MayAbilityMessage(interaction.description(), canPay, interaction.manaCost()));
+        sessionManager.sendToPlayer(recipientId, InteractionPromptMessage.acceptDecline(interaction.description(), canPay, interaction.manaCost()));
 
         String playerName = gameData.playerIdToName.get(interaction.playerId());
         log.info("Game {} - Awaiting {} to decide on may ability: {}", gameData.id, playerName, interaction.description());

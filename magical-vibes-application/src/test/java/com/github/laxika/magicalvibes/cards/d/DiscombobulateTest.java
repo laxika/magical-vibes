@@ -1,5 +1,6 @@
 package com.github.laxika.magicalvibes.cards.d;
 
+import com.github.laxika.magicalvibes.service.interaction.InteractionAnswer;
 import com.github.laxika.magicalvibes.model.GameLogEntry;
 
 import com.github.laxika.magicalvibes.model.PendingInteraction;
@@ -140,7 +141,7 @@ class DiscombobulateTest extends BaseCardTest {
         harness.passBothPriorities();
 
         // Reverse the top 4 cards
-        harness.getGameService().handleLibraryCardsReordered(gd, player2, List.of(3, 2, 1, 0));
+        harness.getGameService().handleInteractionAnswer(gd, player2, new InteractionAnswer.CardOrder(List.of(3, 2, 1, 0)));
 
         assertThat(deck.get(0)).isSameAs(originalTop3);
         assertThat(deck.get(1)).isSameAs(originalTop2);
@@ -164,7 +165,7 @@ class DiscombobulateTest extends BaseCardTest {
         harness.passBothPriorities();
 
         GameData gd = harness.getGameData();
-        harness.getGameService().handleLibraryCardsReordered(gd, player2, List.of(0, 1, 2, 3));
+        harness.getGameService().handleInteractionAnswer(gd, player2, new InteractionAnswer.CardOrder(List.of(0, 1, 2, 3)));
 
         assertThat(gd.interaction.activeInteraction()).isNull();
         assertThat(gd.interaction.activeInteraction(PendingInteraction.LibraryReorder.class)).isNull();
@@ -230,7 +231,7 @@ class DiscombobulateTest extends BaseCardTest {
         assertThat(gd.interaction.activeInteraction(PendingInteraction.LibraryReorder.class).cards()).hasSize(2);
 
         // Swap the 2 cards
-        harness.getGameService().handleLibraryCardsReordered(gd, player2, List.of(1, 0));
+        harness.getGameService().handleInteractionAnswer(gd, player2, new InteractionAnswer.CardOrder(List.of(1, 0)));
 
         assertThat(deck.get(0)).isSameAs(cardB);
         assertThat(deck.get(1)).isSameAs(cardA);
@@ -300,7 +301,7 @@ class DiscombobulateTest extends BaseCardTest {
 
         GameData gd = harness.getGameData();
         assertThatThrownBy(() ->
-                harness.getGameService().handleLibraryCardsReordered(gd, player2, List.of(0, 1))
+                harness.getGameService().handleInteractionAnswer(gd, player2, new InteractionAnswer.CardOrder(List.of(0, 1)))
         ).isInstanceOf(IllegalStateException.class)
                 .hasMessageContaining("Must specify order for all");
     }
@@ -322,7 +323,7 @@ class DiscombobulateTest extends BaseCardTest {
 
         GameData gd = harness.getGameData();
         assertThatThrownBy(() ->
-                harness.getGameService().handleLibraryCardsReordered(gd, player2, List.of(0, 0, 1, 2))
+                harness.getGameService().handleInteractionAnswer(gd, player2, new InteractionAnswer.CardOrder(List.of(0, 0, 1, 2)))
         ).isInstanceOf(IllegalStateException.class)
                 .hasMessageContaining("Duplicate card index");
     }
@@ -344,7 +345,7 @@ class DiscombobulateTest extends BaseCardTest {
 
         GameData gd = harness.getGameData();
         assertThatThrownBy(() ->
-                harness.getGameService().handleLibraryCardsReordered(gd, player1, List.of(0, 1, 2, 3))
+                harness.getGameService().handleInteractionAnswer(gd, player1, new InteractionAnswer.CardOrder(List.of(0, 1, 2, 3)))
         ).isInstanceOf(IllegalStateException.class)
                 .hasMessageContaining("Not your turn to reorder");
     }
@@ -371,7 +372,7 @@ class DiscombobulateTest extends BaseCardTest {
         assertThat(gd.gameLog.stream().map(GameLogEntry::plainText)).anyMatch(log -> log.contains("looks at the top") && log.contains("cards"));
 
         // Complete the reorder
-        harness.getGameService().handleLibraryCardsReordered(gd, player2, List.of(0, 1, 2, 3));
+        harness.getGameService().handleInteractionAnswer(gd, player2, new InteractionAnswer.CardOrder(List.of(0, 1, 2, 3)));
         assertThat(gd.gameLog.stream().map(GameLogEntry::plainText)).anyMatch(log -> log.contains("puts") && log.contains("cards back on top"));
     }
 }

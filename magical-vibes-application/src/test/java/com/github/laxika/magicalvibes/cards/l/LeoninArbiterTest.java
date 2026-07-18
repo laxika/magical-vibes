@@ -1,5 +1,6 @@
 package com.github.laxika.magicalvibes.cards.l;
 
+import com.github.laxika.magicalvibes.service.interaction.InteractionAnswer;
 import com.github.laxika.magicalvibes.model.GameLogEntry;
 
 import com.github.laxika.magicalvibes.model.PendingInteraction;
@@ -192,7 +193,7 @@ class LeoninArbiterTest extends BaseCardTest {
         harness.passBothPriorities(); // resolve Diabolic Tutor
 
         assertThat(gd.interaction.activeInteraction()).isInstanceOf(PendingInteraction.LibrarySearch.class);
-        gs.handleLibraryCardChosen(gd, player2, 0);
+        gs.handleInteractionAnswer(gd, player2, new InteractionAnswer.LibraryCardChosen(0));
 
         // Second search — should NOT require additional payment (Arbiter already paid this turn)
         harness.setHand(player2, List.of(new DiabolicTutor()));
@@ -230,7 +231,7 @@ class LeoninArbiterTest extends BaseCardTest {
         harness.passBothPriorities(); // resolve
 
         assertThat(gd.interaction.activeInteraction()).isInstanceOf(PendingInteraction.LibrarySearch.class);
-        gs.handleLibraryCardChosen(gd, player2, 0);
+        gs.handleInteractionAnswer(gd, player2, new InteractionAnswer.LibraryCardChosen(0));
 
         // Verify paid status is recorded
         assertThat(gd.paidSearchTaxPermanentIds.get(player2.getId())).isNotEmpty();

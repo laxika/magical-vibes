@@ -1,5 +1,6 @@
 package com.github.laxika.magicalvibes.cards.b;
 
+import com.github.laxika.magicalvibes.service.interaction.InteractionAnswer;
 import com.github.laxika.magicalvibes.cards.d.Divination;
 import com.github.laxika.magicalvibes.cards.f.Forest;
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
@@ -51,7 +52,7 @@ class BriberyTest extends BaseCardTest {
         castBribery();
         harness.passBothPriorities();
 
-        gs.handleLibraryCardChosen(gd, player1, 0);
+        gs.handleInteractionAnswer(gd, player1, new InteractionAnswer.LibraryCardChosen(0));
 
         // The stolen creature is on player1's battlefield.
         assertThat(gd.playerBattlefields.get(player1.getId()))
@@ -72,7 +73,7 @@ class BriberyTest extends BaseCardTest {
         castBribery();
         harness.passBothPriorities();
 
-        gs.handleLibraryCardChosen(gd, player1, -1);
+        gs.handleInteractionAnswer(gd, player1, new InteractionAnswer.LibraryCardChosen(-1));
 
         assertThat(gd.playerBattlefields.get(player1.getId()))
                 .noneMatch(p -> p.getCard().getName().equals("Grizzly Bears"));

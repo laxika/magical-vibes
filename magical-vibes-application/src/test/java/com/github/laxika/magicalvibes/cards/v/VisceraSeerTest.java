@@ -1,5 +1,6 @@
 package com.github.laxika.magicalvibes.cards.v;
 
+import com.github.laxika.magicalvibes.service.interaction.InteractionAnswer;
 import com.github.laxika.magicalvibes.model.PendingInteraction;
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
 import com.github.laxika.magicalvibes.model.Card;
@@ -58,7 +59,7 @@ class VisceraSeerTest extends BaseCardTest {
         harness.handlePermanentChosen(player1, bearsId);
         harness.passBothPriorities();
 
-        harness.getGameService().handleScryCompleted(gd, player1, List.of(0), List.of());
+        harness.getGameService().handleInteractionAnswer(gd, player1, new InteractionAnswer.ScryOrder(List.of(0), List.of()));
 
         assertThat(deck.get(0)).isSameAs(topCard);
     }
@@ -78,7 +79,7 @@ class VisceraSeerTest extends BaseCardTest {
         harness.handlePermanentChosen(player1, bearsId);
         harness.passBothPriorities();
 
-        harness.getGameService().handleScryCompleted(gd, player1, List.of(), List.of(0));
+        harness.getGameService().handleInteractionAnswer(gd, player1, new InteractionAnswer.ScryOrder(List.of(), List.of(0)));
 
         assertThat(deck.get(0)).isNotSameAs(topCard);
         assertThat(deck.get(deck.size() - 1)).isSameAs(topCard);
@@ -145,7 +146,7 @@ class VisceraSeerTest extends BaseCardTest {
 
         // Complete scry
         GameData gd = harness.getGameData();
-        harness.getGameService().handleScryCompleted(gd, player1, List.of(0), List.of());
+        harness.getGameService().handleInteractionAnswer(gd, player1, new InteractionAnswer.ScryOrder(List.of(0), List.of()));
 
         // Second activation with the other bears (2 creatures: Seer + 1 Bear)
         UUID bears2Id = bears2Perm.getId();

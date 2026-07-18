@@ -1,5 +1,6 @@
 package com.github.laxika.magicalvibes.cards.s;
 
+import com.github.laxika.magicalvibes.service.interaction.InteractionAnswer;
 import com.github.laxika.magicalvibes.model.GameLogEntry;
 
 import com.github.laxika.magicalvibes.model.PendingInteraction;
@@ -93,7 +94,7 @@ class SageOwlTest extends BaseCardTest {
         harness.passBothPriorities(); // resolve ETB
 
         // Reverse the top 4 cards
-        harness.getGameService().handleLibraryCardsReordered(gd, player1, List.of(3, 2, 1, 0));
+        harness.getGameService().handleInteractionAnswer(gd, player1, new InteractionAnswer.CardOrder(List.of(3, 2, 1, 0)));
 
         assertThat(deck.get(0)).isSameAs(originalTop3);
         assertThat(deck.get(1)).isSameAs(originalTop2);
@@ -112,7 +113,7 @@ class SageOwlTest extends BaseCardTest {
         harness.passBothPriorities(); // resolve ETB
 
         GameData gd = harness.getGameData();
-        harness.getGameService().handleLibraryCardsReordered(gd, player1, List.of(0, 1, 2, 3));
+        harness.getGameService().handleInteractionAnswer(gd, player1, new InteractionAnswer.CardOrder(List.of(0, 1, 2, 3)));
 
         assertThat(gd.interaction.activeInteraction()).isNull();
         assertThat(gd.interaction.activeInteraction(PendingInteraction.LibraryReorder.class)).isNull();
@@ -142,7 +143,7 @@ class SageOwlTest extends BaseCardTest {
         assertThat(gd.interaction.activeInteraction()).isInstanceOf(PendingInteraction.LibraryReorder.class);
         assertThat(gd.interaction.activeInteraction(PendingInteraction.LibraryReorder.class).cards()).hasSize(2);
 
-        harness.getGameService().handleLibraryCardsReordered(gd, player1, List.of(1, 0));
+        harness.getGameService().handleInteractionAnswer(gd, player1, new InteractionAnswer.CardOrder(List.of(1, 0)));
 
         assertThat(deck.get(0)).isSameAs(cardB);
         assertThat(deck.get(1)).isSameAs(cardA);

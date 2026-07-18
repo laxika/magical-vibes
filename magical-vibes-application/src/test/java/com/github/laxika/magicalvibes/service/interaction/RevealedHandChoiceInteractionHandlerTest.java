@@ -5,7 +5,7 @@ import com.github.laxika.magicalvibes.model.GameData;
 import com.github.laxika.magicalvibes.model.PendingInteraction;
 import com.github.laxika.magicalvibes.model.Player;
 import com.github.laxika.magicalvibes.networking.SessionManager;
-import com.github.laxika.magicalvibes.networking.message.ChooseFromRevealedHandMessage;
+import com.github.laxika.magicalvibes.networking.message.InteractionPromptMessage;
 import com.github.laxika.magicalvibes.networking.model.CardView;
 import com.github.laxika.magicalvibes.networking.service.CardViewFactory;
 import com.github.laxika.magicalvibes.service.input.CardChoiceHandlerService;
@@ -86,9 +86,9 @@ class RevealedHandChoiceInteractionHandlerTest {
 
         assertThat(gd.interaction.activeInteraction()).isInstanceOf(PendingInteraction.RevealedHandChoice.class);
         verify(sessionManager).sendToPlayer(eq(PLAYER1_ID), messageCaptor.capture());
-        ChooseFromRevealedHandMessage msg = (ChooseFromRevealedHandMessage) messageCaptor.getValue();
+        InteractionPromptMessage msg = (InteractionPromptMessage) messageCaptor.getValue();
         assertThat(msg.cards()).containsExactly(view1, view2);
-        assertThat(msg.validIndices()).containsExactly(0, 1);
+        assertThat(msg.cardIndices()).containsExactly(0, 1);
         assertThat(msg.prompt()).isEqualTo("Choose a card to put on top of Player2's library.");
     }
 
@@ -120,6 +120,6 @@ class RevealedHandChoiceInteractionHandlerTest {
         verifyNoInteractions(sessionManager);
 
         assertThat(registry.replayPrompt(gd, PLAYER1_ID)).isTrue();
-        verify(sessionManager).sendToPlayer(eq(PLAYER1_ID), any(ChooseFromRevealedHandMessage.class));
+        verify(sessionManager).sendToPlayer(eq(PLAYER1_ID), any(InteractionPromptMessage.class));
     }
 }

@@ -1,5 +1,6 @@
 package com.github.laxika.magicalvibes.cards.s;
 
+import com.github.laxika.magicalvibes.service.interaction.InteractionAnswer;
 import com.github.laxika.magicalvibes.cards.f.Forest;
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
 import com.github.laxika.magicalvibes.cards.i.Island;
@@ -54,9 +55,9 @@ class SeedguideAshTest extends BaseCardTest {
 
             int before = gd.playerBattlefields.get(player1.getId()).size();
 
-            gs.handleLibraryCardChosen(gd, player1, 0);
-            gs.handleLibraryCardChosen(gd, player1, 0);
-            gs.handleLibraryCardChosen(gd, player1, 0);
+            gs.handleInteractionAnswer(gd, player1, new InteractionAnswer.LibraryCardChosen(0));
+            gs.handleInteractionAnswer(gd, player1, new InteractionAnswer.LibraryCardChosen(0));
+            gs.handleInteractionAnswer(gd, player1, new InteractionAnswer.LibraryCardChosen(0));
 
             assertThat(gd.playerBattlefields.get(player1.getId())).hasSize(before + 3);
             long tappedForests = gd.playerBattlefields.get(player1.getId()).stream()

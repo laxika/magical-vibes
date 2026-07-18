@@ -1,5 +1,6 @@
 package com.github.laxika.magicalvibes.cards.p;
 
+import com.github.laxika.magicalvibes.service.interaction.InteractionAnswer;
 import com.github.laxika.magicalvibes.cards.f.Forest;
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
 import com.github.laxika.magicalvibes.cards.l.LightningBolt;
@@ -39,7 +40,7 @@ class PrimalCommandTest extends BaseCardTest {
         // Restricted search only offers the creature card
         var search = gd.interaction.activeInteraction(PendingInteraction.LibrarySearch.class);
         assertThat(search.params().cards()).extracting(Card::getName).containsExactly("Grizzly Bears");
-        harness.getGameService().handleLibraryCardChosen(gd, player1, 0);
+        harness.getGameService().handleInteractionAnswer(gd, player1, new InteractionAnswer.LibraryCardChosen(0));
 
         assertThat(gd.playerHands.get(player1.getId()))
                 .anyMatch(c -> c.getName().equals("Grizzly Bears"));

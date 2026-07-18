@@ -1,9 +1,9 @@
 package com.github.laxika.magicalvibes.ai.interaction;
 
+import com.github.laxika.magicalvibes.service.interaction.InteractionAnswer;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardType;
 import com.github.laxika.magicalvibes.model.PendingInteraction;
-import com.github.laxika.magicalvibes.networking.message.LibraryCardChosenRequest;
 import lombok.extern.slf4j.Slf4j;
 
 import java.util.List;
@@ -44,6 +44,6 @@ class LibrarySearchAiStrategy implements AiInteractionStrategy<PendingInteractio
         }
 
         log.info("AI: Choosing card {} from library in game {}", searchCards.get(bestIndex).getName(), ctx.gameId());
-        ctx.gameActions().handleLibraryCardChosen(ctx.selfConnection(), new LibraryCardChosenRequest(bestIndex));
+        ctx.gameActions().answerInteraction(ctx.selfConnection(), new InteractionAnswer.LibraryCardChosen(bestIndex));
     }
 }

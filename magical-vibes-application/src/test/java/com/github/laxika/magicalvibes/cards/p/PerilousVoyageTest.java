@@ -1,5 +1,6 @@
 package com.github.laxika.magicalvibes.cards.p;
 
+import com.github.laxika.magicalvibes.service.interaction.InteractionAnswer;
 import com.github.laxika.magicalvibes.model.GameLogEntry;
 
 import com.github.laxika.magicalvibes.model.PendingInteraction;
@@ -80,7 +81,7 @@ class PerilousVoyageTest extends BaseCardTest {
         harness.passBothPriorities();
 
         // Complete scry
-        gs.handleScryCompleted(gd, player1, List.of(0, 1), List.of());
+        gs.handleInteractionAnswer(gd, player1, new InteractionAnswer.ScryOrder(List.of(0, 1), List.of()));
 
         assertThat(gd.stack).isEmpty();
         assertThat(gd.playerGraveyards.get(player1.getId()))

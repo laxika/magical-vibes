@@ -1,5 +1,6 @@
 package com.github.laxika.magicalvibes.cards.h;
 
+import com.github.laxika.magicalvibes.service.interaction.InteractionAnswer;
 import com.github.laxika.magicalvibes.model.PendingInteraction;
 import com.github.laxika.magicalvibes.cards.d.DoomBlade;
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
@@ -76,7 +77,7 @@ class HoardingDragonTest extends BaseCardTest {
         harness.handleMayAbilityChosen(player1, true); // inner effect resolves inline
 
         // Choose the artifact (Spellbook)
-        gs.handleLibraryCardChosen(gd, player1, 0);
+        gs.handleInteractionAnswer(gd, player1, new InteractionAnswer.LibraryCardChosen(0));
 
         // Spellbook should be in exile
         assertThat(gd.getPlayerExiledCards(player1.getId()))

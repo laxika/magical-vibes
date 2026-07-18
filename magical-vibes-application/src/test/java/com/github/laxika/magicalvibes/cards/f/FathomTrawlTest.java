@@ -1,5 +1,6 @@
 package com.github.laxika.magicalvibes.cards.f;
 
+import com.github.laxika.magicalvibes.service.interaction.InteractionAnswer;
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
 import com.github.laxika.magicalvibes.cards.i.Island;
 import com.github.laxika.magicalvibes.cards.s.Shock;
@@ -77,8 +78,7 @@ class FathomTrawlTest extends BaseCardTest {
         assertThat(reorder).containsExactlyInAnyOrder(forest, island);
 
         // Choose Island closest to the top of the bottom section, then Forest
-        harness.getGameService().handleLibraryCardsReordered(gd, player1,
-                List.of(reorder.indexOf(island), reorder.indexOf(forest)));
+        harness.getGameService().handleInteractionAnswer(gd, player1, new InteractionAnswer.CardOrder(List.of(reorder.indexOf(island), reorder.indexOf(forest))));
 
         assertThat(gd.interaction.activeInteraction()).isNull();
         // Chosen order: first chosen closest to the top of the bottom section

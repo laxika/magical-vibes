@@ -1,5 +1,6 @@
 package com.github.laxika.magicalvibes.cards.s;
 
+import com.github.laxika.magicalvibes.service.interaction.InteractionAnswer;
 import com.github.laxika.magicalvibes.model.PendingInteraction;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.GameData;
@@ -69,7 +70,7 @@ class SageAvenTest extends BaseCardTest {
         harness.passBothPriorities(); // resolve creature
         harness.passBothPriorities(); // resolve ETB
 
-        harness.getGameService().handleLibraryCardsReordered(gd, player1, List.of(3, 2, 1, 0));
+        harness.getGameService().handleInteractionAnswer(gd, player1, new InteractionAnswer.CardOrder(List.of(3, 2, 1, 0)));
 
         assertThat(deck.get(0)).isSameAs(originalTop3);
         assertThat(deck.get(1)).isSameAs(originalTop2);
@@ -99,7 +100,7 @@ class SageAvenTest extends BaseCardTest {
         assertThat(gd.interaction.activeInteraction()).isInstanceOf(PendingInteraction.LibraryReorder.class);
         assertThat(gd.interaction.activeInteraction(PendingInteraction.LibraryReorder.class).cards()).hasSize(2);
 
-        harness.getGameService().handleLibraryCardsReordered(gd, player1, List.of(1, 0));
+        harness.getGameService().handleInteractionAnswer(gd, player1, new InteractionAnswer.CardOrder(List.of(1, 0)));
 
         assertThat(deck.get(0)).isSameAs(cardB);
         assertThat(deck.get(1)).isSameAs(cardA);

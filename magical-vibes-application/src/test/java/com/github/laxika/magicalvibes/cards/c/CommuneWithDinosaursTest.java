@@ -1,5 +1,6 @@
 package com.github.laxika.magicalvibes.cards.c;
 
+import com.github.laxika.magicalvibes.service.interaction.InteractionAnswer;
 import com.github.laxika.magicalvibes.model.PendingInteraction;
 import com.github.laxika.magicalvibes.cards.f.Forest;
 import com.github.laxika.magicalvibes.cards.p.Plains;
@@ -78,7 +79,7 @@ class CommuneWithDinosaursTest extends BaseCardTest {
 
         GameData gd = harness.getGameData();
         // Choose Charging Monstrosaur
-        harness.getGameService().handleLibraryCardChosen(gd, player1, 0);
+        harness.getGameService().handleInteractionAnswer(gd, player1, new InteractionAnswer.LibraryCardChosen(0));
 
         assertThat(gd.playerHands.get(player1.getId())).anyMatch(c -> c.getName().equals("Charging Monstrosaur"));
         assertThat(gd.interaction.activeInteraction()).isInstanceOf(PendingInteraction.LibraryReorder.class);
@@ -103,7 +104,7 @@ class CommuneWithDinosaursTest extends BaseCardTest {
         GameData gd = harness.getGameData();
         // The eligible cards are: Charging Monstrosaur (0), Plains (1), Forest (2)
         // Choose Plains (index 1)
-        harness.getGameService().handleLibraryCardChosen(gd, player1, 1);
+        harness.getGameService().handleInteractionAnswer(gd, player1, new InteractionAnswer.LibraryCardChosen(1));
 
         assertThat(gd.playerHands.get(player1.getId())).anyMatch(c -> c.getName().equals("Plains"));
         assertThat(gd.interaction.activeInteraction()).isInstanceOf(PendingInteraction.LibraryReorder.class);
@@ -128,7 +129,7 @@ class CommuneWithDinosaursTest extends BaseCardTest {
 
         GameData gd = harness.getGameData();
         int handSizeBefore = gd.playerHands.get(player1.getId()).size();
-        harness.getGameService().handleLibraryCardChosen(gd, player1, -1);
+        harness.getGameService().handleInteractionAnswer(gd, player1, new InteractionAnswer.LibraryCardChosen(-1));
 
         assertThat(gd.playerHands.get(player1.getId())).hasSize(handSizeBefore);
         assertThat(gd.interaction.activeInteraction()).isInstanceOf(PendingInteraction.LibraryReorder.class);

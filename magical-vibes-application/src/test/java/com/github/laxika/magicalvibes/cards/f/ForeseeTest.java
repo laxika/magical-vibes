@@ -1,5 +1,6 @@
 package com.github.laxika.magicalvibes.cards.f;
 
+import com.github.laxika.magicalvibes.service.interaction.InteractionAnswer;
 import com.github.laxika.magicalvibes.model.PendingInteraction;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.ManaColor;
@@ -72,7 +73,7 @@ class ForeseeTest extends BaseCardTest {
         harness.passBothPriorities();
 
         // Complete scry by keeping all on top
-        gs.handleScryCompleted(gd, player1, List.of(0, 1, 2, 3), List.of());
+        gs.handleInteractionAnswer(gd, player1, new InteractionAnswer.ScryOrder(List.of(0, 1, 2, 3), List.of()));
 
         // Hand should have 2 cards (spell left hand, then drew 2)
         assertThat(gd.playerHands.get(player1.getId())).hasSize(2);
@@ -96,7 +97,7 @@ class ForeseeTest extends BaseCardTest {
         harness.passBothPriorities();
 
         // Reverse the top 4, then draw 2 — should draw what was originally at positions 3 and 2
-        gs.handleScryCompleted(gd, player1, List.of(3, 2, 1, 0), List.of());
+        gs.handleInteractionAnswer(gd, player1, new InteractionAnswer.ScryOrder(List.of(3, 2, 1, 0), List.of()));
 
         List<Card> hand = gd.playerHands.get(player1.getId());
         assertThat(hand).hasSize(2);
@@ -122,7 +123,7 @@ class ForeseeTest extends BaseCardTest {
         harness.passBothPriorities();
 
         // Put all 4 on bottom, then draw 2 — should draw what was originally at positions 4 and 5
-        gs.handleScryCompleted(gd, player1, List.of(), List.of(0, 1, 2, 3));
+        gs.handleInteractionAnswer(gd, player1, new InteractionAnswer.ScryOrder(List.of(), List.of(0, 1, 2, 3)));
 
         List<Card> hand = gd.playerHands.get(player1.getId());
         assertThat(hand).hasSize(2);
@@ -140,7 +141,7 @@ class ForeseeTest extends BaseCardTest {
         harness.passBothPriorities();
 
         // Complete scry
-        gs.handleScryCompleted(gd, player1, List.of(0, 1, 2, 3), List.of());
+        gs.handleInteractionAnswer(gd, player1, new InteractionAnswer.ScryOrder(List.of(0, 1, 2, 3), List.of()));
 
         assertThat(gd.stack).isEmpty();
         assertThat(gd.playerGraveyards.get(player1.getId()))

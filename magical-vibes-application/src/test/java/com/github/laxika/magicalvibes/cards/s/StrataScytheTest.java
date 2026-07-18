@@ -1,5 +1,6 @@
 package com.github.laxika.magicalvibes.cards.s;
 
+import com.github.laxika.magicalvibes.service.interaction.InteractionAnswer;
 import com.github.laxika.magicalvibes.model.GameLogEntry;
 
 import com.github.laxika.magicalvibes.model.PendingInteraction;
@@ -87,7 +88,7 @@ class StrataScytheTest extends BaseCardTest {
         harness.passBothPriorities(); // resolve ETB trigger
 
         // Choose the first card (Plains)
-        gs.handleLibraryCardChosen(gd, player1, 0);
+        gs.handleInteractionAnswer(gd, player1, new InteractionAnswer.LibraryCardChosen(0));
 
         // Plains should be in exile
         assertThat(gd.getPlayerExiledCards(player1.getId()))
@@ -116,7 +117,7 @@ class StrataScytheTest extends BaseCardTest {
         harness.passBothPriorities(); // resolve ETB trigger
 
         // Decline to find (-1 means fail to find)
-        gs.handleLibraryCardChosen(gd, player1, -1);
+        gs.handleInteractionAnswer(gd, player1, new InteractionAnswer.LibraryCardChosen(-1));
 
         // No card exiled
         assertThat(gd.getPlayerExiledCards(player1.getId())).isEmpty();

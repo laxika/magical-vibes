@@ -1,5 +1,6 @@
 package com.github.laxika.magicalvibes.cards.b;
 
+import com.github.laxika.magicalvibes.service.interaction.InteractionAnswer;
 import com.github.laxika.magicalvibes.model.PendingInteraction;
 
 import com.github.laxika.magicalvibes.cards.f.Forest;
@@ -57,7 +58,7 @@ class BrutalizerExarchTest extends BaseCardTest {
             List<Card> offered = gd.interaction.activeInteraction(PendingInteraction.LibrarySearch.class).params().cards();
             String chosenName = offered.getFirst().getName();
 
-            gs.handleLibraryCardChosen(gd, player1, 0);
+            gs.handleInteractionAnswer(gd, player1, new InteractionAnswer.LibraryCardChosen(0));
 
             // The chosen card should be on top of the library
             List<Card> deck = gd.playerDecks.get(player1.getId());
@@ -77,7 +78,7 @@ class BrutalizerExarchTest extends BaseCardTest {
             int deckSizeBefore = gd.playerDecks.get(player1.getId()).size();
 
             // -1 means fail to find
-            gs.handleLibraryCardChosen(gd, player1, -1);
+            gs.handleInteractionAnswer(gd, player1, new InteractionAnswer.LibraryCardChosen(-1));
 
             // Deck should be shuffled but same size (no card moved)
             assertThat(gd.playerDecks.get(player1.getId())).hasSize(deckSizeBefore);

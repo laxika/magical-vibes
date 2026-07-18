@@ -1,5 +1,6 @@
 package com.github.laxika.magicalvibes.cards.t;
 
+import com.github.laxika.magicalvibes.service.interaction.InteractionAnswer;
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
 import com.github.laxika.magicalvibes.cards.i.Island;
 import com.github.laxika.magicalvibes.cards.l.LlanowarElves;
@@ -54,8 +55,7 @@ class ThievesFortuneTest extends BaseCardTest {
         List<Card> reorder = gd.interaction.activeInteraction(PendingInteraction.LibraryReorder.class).cards();
         assertThat(reorder).containsExactlyInAnyOrder(top[1], top[2], top[3]);
 
-        harness.getGameService().handleLibraryCardsReordered(gd, player1,
-                List.of(reorder.indexOf(top[1]), reorder.indexOf(top[2]), reorder.indexOf(top[3])));
+        harness.getGameService().handleInteractionAnswer(gd, player1, new InteractionAnswer.CardOrder(List.of(reorder.indexOf(top[1]), reorder.indexOf(top[2]), reorder.indexOf(top[3]))));
 
         assertThat(gd.interaction.activeInteraction()).isNull();
         // First chosen is closest to the top of the bottom section.

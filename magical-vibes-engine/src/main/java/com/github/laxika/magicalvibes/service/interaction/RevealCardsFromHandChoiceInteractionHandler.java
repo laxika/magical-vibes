@@ -5,7 +5,7 @@ import com.github.laxika.magicalvibes.model.GameData;
 import com.github.laxika.magicalvibes.model.PendingInteraction;
 import com.github.laxika.magicalvibes.model.Player;
 import com.github.laxika.magicalvibes.networking.SessionManager;
-import com.github.laxika.magicalvibes.networking.message.ChooseFromRevealedHandMessage;
+import com.github.laxika.magicalvibes.networking.message.InteractionPromptMessage;
 import com.github.laxika.magicalvibes.networking.model.CardView;
 import com.github.laxika.magicalvibes.networking.service.CardViewFactory;
 import com.github.laxika.magicalvibes.service.input.CardChoiceHandlerService;
@@ -46,7 +46,7 @@ public class RevealCardsFromHandChoiceInteractionHandler
     public void prompt(GameData gameData, PendingInteraction.RevealCardsFromHandChoice interaction, UUID recipientId) {
         List<Card> hand = gameData.playerHands.get(interaction.playerId());
         List<CardView> cardViews = hand.stream().map(cardViewFactory::create).toList();
-        sessionManager.sendToPlayer(recipientId, new ChooseFromRevealedHandMessage(
+        sessionManager.sendToPlayer(recipientId, InteractionPromptMessage.cardIndexPick(
                 cardViews, interaction.validIndices(), interaction.prompt(), false));
 
         String playerName = gameData.playerIdToName.get(interaction.playerId());

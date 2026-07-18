@@ -1,5 +1,6 @@
 package com.github.laxika.magicalvibes.cards.a;
 
+import com.github.laxika.magicalvibes.service.interaction.InteractionAnswer;
 import com.github.laxika.magicalvibes.model.GameLogEntry;
 
 import com.github.laxika.magicalvibes.model.PendingInteraction;
@@ -91,7 +92,7 @@ class AuguryOwlTest extends BaseCardTest {
         harness.passBothPriorities(); // resolve ETB
 
         // Keep all on top in original order
-        harness.getGameService().handleScryCompleted(gd, player1, List.of(0, 1, 2), List.of());
+        harness.getGameService().handleInteractionAnswer(gd, player1, new InteractionAnswer.ScryOrder(List.of(0, 1, 2), List.of()));
 
         assertThat(deck.get(0)).isSameAs(originalTop0);
         assertThat(deck.get(1)).isSameAs(originalTop1);
@@ -115,7 +116,7 @@ class AuguryOwlTest extends BaseCardTest {
         harness.passBothPriorities(); // resolve ETB
 
         // Reverse order on top
-        harness.getGameService().handleScryCompleted(gd, player1, List.of(2, 1, 0), List.of());
+        harness.getGameService().handleInteractionAnswer(gd, player1, new InteractionAnswer.ScryOrder(List.of(2, 1, 0), List.of()));
 
         assertThat(deck.get(0)).isSameAs(originalTop2);
         assertThat(deck.get(1)).isSameAs(originalTop1);
@@ -142,7 +143,7 @@ class AuguryOwlTest extends BaseCardTest {
         harness.passBothPriorities(); // resolve ETB
 
         // Put all on bottom
-        harness.getGameService().handleScryCompleted(gd, player1, List.of(), List.of(0, 1, 2));
+        harness.getGameService().handleInteractionAnswer(gd, player1, new InteractionAnswer.ScryOrder(List.of(), List.of(0, 1, 2)));
 
         // Top of library should no longer be the scried cards
         assertThat(deck.get(0)).isNotSameAs(originalTop0);
@@ -173,7 +174,7 @@ class AuguryOwlTest extends BaseCardTest {
         harness.passBothPriorities(); // resolve ETB
 
         // Keep card 1 on top, put cards 0 and 2 on bottom
-        harness.getGameService().handleScryCompleted(gd, player1, List.of(1), List.of(0, 2));
+        harness.getGameService().handleInteractionAnswer(gd, player1, new InteractionAnswer.ScryOrder(List.of(1), List.of(0, 2)));
 
         // Top of library should be card 1
         assertThat(deck.get(0)).isSameAs(originalTop1);
@@ -197,7 +198,7 @@ class AuguryOwlTest extends BaseCardTest {
         harness.passBothPriorities(); // resolve ETB
 
         GameData gd = harness.getGameData();
-        harness.getGameService().handleScryCompleted(gd, player1, List.of(0, 1, 2), List.of());
+        harness.getGameService().handleInteractionAnswer(gd, player1, new InteractionAnswer.ScryOrder(List.of(0, 1, 2), List.of()));
 
         assertThat(gd.interaction.activeInteraction()).isNull();
         assertThat(gd.interaction.activeInteraction(PendingInteraction.Scry.class)).isNull();
@@ -226,7 +227,7 @@ class AuguryOwlTest extends BaseCardTest {
         assertThat(gd.interaction.activeInteraction()).isInstanceOf(PendingInteraction.Scry.class);
         assertThat(gd.interaction.activeInteraction(PendingInteraction.Scry.class).cards()).hasSize(2);
 
-        harness.getGameService().handleScryCompleted(gd, player1, List.of(1, 0), List.of());
+        harness.getGameService().handleInteractionAnswer(gd, player1, new InteractionAnswer.ScryOrder(List.of(1, 0), List.of()));
 
         assertThat(deck.get(0)).isSameAs(cardB);
         assertThat(deck.get(1)).isSameAs(cardA);
@@ -251,7 +252,7 @@ class AuguryOwlTest extends BaseCardTest {
         assertThat(gd.interaction.activeInteraction(PendingInteraction.Scry.class).cards()).hasSize(1);
 
         // Player can keep on top or put on bottom
-        harness.getGameService().handleScryCompleted(gd, player1, List.of(), List.of(0));
+        harness.getGameService().handleInteractionAnswer(gd, player1, new InteractionAnswer.ScryOrder(List.of(), List.of(0)));
 
         int deckSize = gd.playerDecks.get(player1.getId()).size();
         assertThat(gd.playerDecks.get(player1.getId()).get(deckSize - 1)).isSameAs(singleCard);

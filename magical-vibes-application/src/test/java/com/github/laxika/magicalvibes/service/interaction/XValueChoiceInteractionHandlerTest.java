@@ -4,7 +4,7 @@ import com.github.laxika.magicalvibes.model.GameData;
 import com.github.laxika.magicalvibes.model.PendingInteraction;
 import com.github.laxika.magicalvibes.model.Player;
 import com.github.laxika.magicalvibes.networking.SessionManager;
-import com.github.laxika.magicalvibes.networking.message.XValueChoiceMessage;
+import com.github.laxika.magicalvibes.networking.message.InteractionPromptMessage;
 import com.github.laxika.magicalvibes.service.GameBroadcastService;
 import com.github.laxika.magicalvibes.service.effect.EffectResolutionService;
 import com.github.laxika.magicalvibes.service.input.PlayerInputService;
@@ -81,13 +81,13 @@ class XValueChoiceInteractionHandlerTest {
         }
 
         @Test
-        @DisplayName("Sends XValueChoiceMessage with correct parameters")
+        @DisplayName("Sends InteractionPromptMessage with correct parameters")
         void sendsMessage() {
             registry.begin(gd, new PendingInteraction.XValueChoice(PLAYER1_ID, 10, "Choose X value", "Blaze"));
 
             verify(sessionManager).sendToPlayer(eq(PLAYER1_ID), messageCaptor.capture());
-            XValueChoiceMessage msg = (XValueChoiceMessage) messageCaptor.getValue();
-            assertThat(msg.maxValue()).isEqualTo(10);
+            InteractionPromptMessage msg = (InteractionPromptMessage) messageCaptor.getValue();
+            assertThat(msg.maxCount()).isEqualTo(10);
             assertThat(msg.prompt()).isEqualTo("Choose X value");
             assertThat(msg.cardName()).isEqualTo("Blaze");
         }
@@ -170,7 +170,7 @@ class XValueChoiceInteractionHandlerTest {
 
             assertThat(handled).isTrue();
             verify(sessionManager).sendToPlayer(eq(PLAYER1_ID), messageCaptor.capture());
-            assertThat(messageCaptor.getValue()).isInstanceOf(XValueChoiceMessage.class);
+            assertThat(messageCaptor.getValue()).isInstanceOf(InteractionPromptMessage.class);
         }
 
         @Test

@@ -1,10 +1,7 @@
 import { Injectable } from '@angular/core';
 import {
   WebsocketService, MessageType, Card,
-  ScryNotification,
-  ReorderLibraryCardsNotification,
-  ChooseCardFromLibraryNotification,
-  ChooseHandTopBottomNotification
+  InteractionPromptNotification
 } from './websocket.service';
 
 @Injectable({ providedIn: 'root' })
@@ -61,32 +58,32 @@ export class LibraryChoiceService {
 
   // ========== Message handlers ==========
 
-  handleScry(msg: ScryNotification): void {
+  handleScry(msg: InteractionPromptNotification): void {
     this.scrying = true;
-    this.scryCards = msg.cards;
+    this.scryCards = msg.cards ?? [];
     this.scryPrompt = msg.prompt;
     this.scryTopIndices = [];
     this.scryBottomIndices = [];
   }
 
-  handleReorderLibraryCards(msg: ReorderLibraryCardsNotification): void {
+  handleReorderLibraryCards(msg: InteractionPromptNotification): void {
     this.reorderingLibrary = true;
-    this.reorderAllCards = msg.cards;
-    this.reorderAvailableIndices = msg.cards.map((_, i) => i);
+    this.reorderAllCards = msg.cards ?? [];
+    this.reorderAvailableIndices = this.reorderAllCards.map((_, i) => i);
     this.reorderOriginalIndices = [];
     this.reorderPrompt = msg.prompt;
   }
 
-  handleChooseCardFromLibrary(msg: ChooseCardFromLibraryNotification): void {
+  handleChooseCardFromLibrary(msg: InteractionPromptNotification): void {
     this.searchingLibrary = true;
-    this.librarySearchCards = msg.cards;
+    this.librarySearchCards = msg.cards ?? [];
     this.librarySearchPrompt = msg.prompt;
-    this.librarySearchCanFailToFind = msg.canFailToFind;
+    this.librarySearchCanFailToFind = msg.declinable ?? false;
   }
 
-  handleChooseHandTopBottom(msg: ChooseHandTopBottomNotification): void {
+  handleChooseHandTopBottom(msg: InteractionPromptNotification): void {
     this.choosingHandTopBottom = true;
-    this.handTopBottomCards = msg.cards;
+    this.handTopBottomCards = msg.cards ?? [];
     this.handTopBottomHandIndex = null;
     this.handTopBottomTopIndex = null;
   }
@@ -146,9 +143,10 @@ export class LibraryChoiceService {
 
   confirmScry(): void {
     this.websocketService.send({
-      type: MessageType.SCRY_COMPLETED,
-      topCardOrder: this.scryTopIndices,
-      bottomCardOrder: this.scryBottomIndices
+      type: MessageType.INTERACTION_ANSWER,
+      shape: 'SCRY_ORDER',
+      order: this.scryTopIndices,
+      secondOrder: this.scryBottomIndices
     });
     this.scrying = false;
     this.scryCards = [];
@@ -162,8 +160,9 @@ export class LibraryChoiceService {
   chooseLibraryCard(index: number): void {
     if (!this.searchingLibrary) return;
     this.websocketService.send({
-      type: MessageType.LIBRARY_CARD_CHOSEN,
-      cardIndex: index
+      type: MessageType.INTERACTION_ANSWER,
+      shape: 'LIBRARY_INDEX_PICK',
+      index: index
     });
     this.searchingLibrary = false;
     this.librarySearchCards = [];
@@ -174,8 +173,9 @@ export class LibraryChoiceService {
   declineLibrarySearch(): void {
     if (!this.searchingLibrary) return;
     this.websocketService.send({
-      type: MessageType.LIBRARY_CARD_CHOSEN,
-      cardIndex: -1
+      type: MessageType.INTERACTION_ANSWER,
+      shape: 'LIBRARY_INDEX_PICK',
+      index: -1
     });
     this.searchingLibrary = false;
     this.librarySearchCards = [];
@@ -211,8 +211,9 @@ export class LibraryChoiceService {
 
   confirmReorder(): void {
     this.websocketService.send({
-      type: MessageType.LIBRARY_CARDS_REORDERED,
-      cardOrder: this.reorderOriginalIndices
+      type: MessageType.INTERACTION_ANSWER,
+      shape: 'CARD_ORDER',
+      order: this.reorderOriginalIndices
     });
     this.reorderingLibrary = false;
     this.reorderAllCards = [];
@@ -267,9 +268,10 @@ export class LibraryChoiceService {
   confirmHandTopBottom(): void {
     if (this.handTopBottomHandIndex === null || this.handTopBottomTopIndex === null) return;
     this.websocketService.send({
-      type: MessageType.HAND_TOP_BOTTOM_CHOSEN,
-      handCardIndex: this.handTopBottomHandIndex,
-      topCardIndex: this.handTopBottomTopIndex
+      type: MessageType.INTERACTION_ANSWER,
+      shape: 'HAND_TOP_BOTTOM',
+      index: this.handTopBottomHandIndex,
+      secondIndex: this.handTopBottomTopIndex
     });
     this.choosingHandTopBottom = false;
     this.handTopBottomCards = [];

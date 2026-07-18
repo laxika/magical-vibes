@@ -1,5 +1,6 @@
 package com.github.laxika.magicalvibes.cards.m;
 
+import com.github.laxika.magicalvibes.service.interaction.InteractionAnswer;
 import com.github.laxika.magicalvibes.cards.c.Counterspell;
 import com.github.laxika.magicalvibes.cards.d.DiabolicTutor;
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
@@ -44,7 +45,7 @@ class MysticalTutorTest extends BaseCardTest {
         List<Card> offered = gd.interaction.activeInteraction(PendingInteraction.LibrarySearch.class).params().cards();
         String chosenName = offered.getFirst().getName();
 
-        gs.handleLibraryCardChosen(gd, player1, 0);
+        gs.handleInteractionAnswer(gd, player1, new InteractionAnswer.LibraryCardChosen(0));
 
         List<Card> deck = gd.playerDecks.get(player1.getId());
         assertThat(deck.getFirst().getName()).isEqualTo(chosenName);

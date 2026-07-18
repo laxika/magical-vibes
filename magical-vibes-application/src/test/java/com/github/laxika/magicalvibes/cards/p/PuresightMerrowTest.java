@@ -1,5 +1,6 @@
 package com.github.laxika.magicalvibes.cards.p;
 
+import com.github.laxika.magicalvibes.service.interaction.InteractionAnswer;
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
 import com.github.laxika.magicalvibes.cards.l.LlanowarElves;
 import com.github.laxika.magicalvibes.model.Card;
@@ -36,7 +37,7 @@ class PuresightMerrowTest extends BaseCardTest {
         assertThat(gd.interaction.activeInteraction()).isInstanceOf(PendingInteraction.LibrarySearch.class);
 
         // Choose to exile the top card.
-        gs.handleLibraryCardChosen(gd, player1, 0);
+        gs.handleInteractionAnswer(gd, player1, new InteractionAnswer.LibraryCardChosen(0));
 
         assertThat(gd.getPlayerExiledCards(player1.getId()))
                 .anyMatch(c -> c.getId().equals(top.getId()));
@@ -62,7 +63,7 @@ class PuresightMerrowTest extends BaseCardTest {
         assertThat(gd.interaction.activeInteraction()).isInstanceOf(PendingInteraction.LibrarySearch.class);
 
         // Decline: -1 means "fail to find" — nothing is exiled.
-        gs.handleLibraryCardChosen(gd, player1, -1);
+        gs.handleInteractionAnswer(gd, player1, new InteractionAnswer.LibraryCardChosen(-1));
 
         assertThat(gd.getPlayerExiledCards(player1.getId())).isEmpty();
         assertThat(gd.playerDecks.get(player1.getId()).get(0).getId()).isEqualTo(top.getId());

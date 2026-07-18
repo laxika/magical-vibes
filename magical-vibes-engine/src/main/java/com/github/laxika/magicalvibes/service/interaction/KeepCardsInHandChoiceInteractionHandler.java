@@ -5,7 +5,7 @@ import com.github.laxika.magicalvibes.model.GameData;
 import com.github.laxika.magicalvibes.model.PendingInteraction;
 import com.github.laxika.magicalvibes.model.Player;
 import com.github.laxika.magicalvibes.networking.SessionManager;
-import com.github.laxika.magicalvibes.networking.message.ChooseMultipleCardsMessage;
+import com.github.laxika.magicalvibes.networking.message.InteractionPromptMessage;
 import com.github.laxika.magicalvibes.networking.model.CardView;
 import com.github.laxika.magicalvibes.networking.service.CardViewFactory;
 import com.github.laxika.magicalvibes.service.GameBroadcastService;
@@ -56,7 +56,7 @@ public class KeepCardsInHandChoiceInteractionHandler
                         .toList();
 
         sessionManager.sendToPlayer(recipientId,
-                new ChooseMultipleCardsMessage(new ArrayList<>(interaction.validCardIds()), cardViews,
+                InteractionPromptMessage.multiCardPick(new ArrayList<>(interaction.validCardIds()), cardViews,
                         interaction.maxCount(),
                         "Choose up to seven cards in your hand to keep. Shuffle the rest into your library."));
     }

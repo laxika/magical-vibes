@@ -572,123 +572,17 @@ public class GameService {
     }
 
 
-    public void handleListChoice(GameData gameData, Player player, String choiceName) {
+    /**
+     * Applies a player's answer to the active pending interaction. The single entry point for
+     * every interaction kind: the {@link InteractionAnswer} shape identifies the payload and the
+     * registry routes it to the active interaction's handler.
+     */
+    public void handleInteractionAnswer(GameData gameData, Player player, InteractionAnswer answer) {
         synchronized (gameData) {
             player = resolveActingPlayer(gameData, player);
-            if (!interactionHandlerRegistry.dispatchAnswer(gameData, player,
-                    new InteractionAnswer.ListChoiceMade(choiceName))) {
-                throw new IllegalStateException("Not awaiting color choice");
-            }
-        }
-    }
-
-    public void handleCardChosen(GameData gameData, Player player, int cardIndex) {
-        synchronized (gameData) {
-            player = resolveActingPlayer(gameData, player);
-            if (!interactionHandlerRegistry.dispatchAnswer(gameData, player,
-                    new InteractionAnswer.CardIndexChosen(cardIndex))) {
-                throw new IllegalStateException("Not awaiting card choice");
-            }
-        }
-    }
-
-    public void handlePermanentChosen(GameData gameData, Player player, UUID permanentId) {
-        synchronized (gameData) {
-            player = resolveActingPlayer(gameData, player);
-            if (!interactionHandlerRegistry.dispatchAnswer(gameData, player,
-                    new InteractionAnswer.PermanentChosen(permanentId))) {
-                throw new IllegalStateException("Not awaiting permanent choice");
-            }
-        }
-    }
-
-    public void handleGraveyardCardChosen(GameData gameData, Player player, int cardIndex) {
-        synchronized (gameData) {
-            player = resolveActingPlayer(gameData, player);
-            if (!interactionHandlerRegistry.dispatchAnswer(gameData, player,
-                    new InteractionAnswer.GraveyardCardChosen(cardIndex))) {
-                throw new IllegalStateException("Not awaiting graveyard choice");
-            }
-        }
-    }
-
-    public void handleMultiplePermanentsChosen(GameData gameData, Player player, List<UUID> permanentIds) {
-        synchronized (gameData) {
-            player = resolveActingPlayer(gameData, player);
-            if (!interactionHandlerRegistry.dispatchAnswer(gameData, player,
-                    new InteractionAnswer.PermanentsChosen(permanentIds))) {
-                throw new IllegalStateException("Not awaiting multi-permanent choice");
-            }
-        }
-    }
-
-    public void handleMultipleCardsChosen(GameData gameData, Player player, List<UUID> cardIds) {
-        synchronized (gameData) {
-            player = resolveActingPlayer(gameData, player);
-            if (interactionHandlerRegistry.dispatchAnswer(gameData, player,
-                    new InteractionAnswer.CardsChosen(cardIds))) {
-                return;
-            }
-            throw new IllegalStateException("Not awaiting multi-graveyard choice");
-        }
-    }
-
-    public void handleMayAbilityChosen(GameData gameData, Player player, boolean accepted) {
-        synchronized (gameData) {
-            player = resolveActingPlayer(gameData, player);
-            if (!interactionHandlerRegistry.dispatchAnswer(gameData, player,
-                    new InteractionAnswer.MayAbilityChosen(accepted))) {
-                throw new IllegalStateException("Not awaiting may ability choice");
-            }
-        }
-    }
-
-    public void handleXValueChosen(GameData gameData, Player player, int chosenValue) {
-        synchronized (gameData) {
-            player = resolveActingPlayer(gameData, player);
-            if (!interactionHandlerRegistry.dispatchAnswer(gameData, player,
-                    new InteractionAnswer.NumberChosen(chosenValue))) {
-                throw new IllegalStateException("Not awaiting X value choice");
-            }
-        }
-    }
-
-    public void handleScryCompleted(GameData gameData, Player player, List<Integer> topCardOrder, List<Integer> bottomCardOrder) {
-        synchronized (gameData) {
-            player = resolveActingPlayer(gameData, player);
-            if (!interactionHandlerRegistry.dispatchAnswer(gameData, player,
-                    new InteractionAnswer.ScryOrder(topCardOrder, bottomCardOrder))) {
-                throw new IllegalStateException("Not awaiting scry");
-            }
-        }
-    }
-
-    public void handleLibraryCardsReordered(GameData gameData, Player player, List<Integer> cardOrder) {
-        synchronized (gameData) {
-            player = resolveActingPlayer(gameData, player);
-            if (!interactionHandlerRegistry.dispatchAnswer(gameData, player,
-                    new InteractionAnswer.CardOrder(cardOrder))) {
-                throw new IllegalStateException("Not awaiting library reorder");
-            }
-        }
-    }
-
-    public void handleHandTopBottomChosen(GameData gameData, Player player, int handCardIndex, int topCardIndex) {
-        synchronized (gameData) {
-            player = resolveActingPlayer(gameData, player);
-            if (!interactionHandlerRegistry.dispatchAnswer(gameData, player,
-                    new InteractionAnswer.HandTopBottom(handCardIndex, topCardIndex))) {
-                throw new IllegalStateException("Not awaiting hand/top/bottom choice");
-            }
-        }
-    }
-
-    public void handleLibraryCardChosen(GameData gameData, Player player, int cardIndex) {
-        synchronized (gameData) {
-            player = resolveActingPlayer(gameData, player);
-            if (!interactionHandlerRegistry.dispatchAnswer(gameData, player,
-                    new InteractionAnswer.LibraryCardChosen(cardIndex))) {
-                throw new IllegalStateException("Not awaiting library search");
+            if (!interactionHandlerRegistry.dispatchAnswer(gameData, player, answer)) {
+                throw new IllegalStateException(
+                        "Not awaiting " + answer.getClass().getSimpleName() + " input");
             }
         }
     }

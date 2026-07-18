@@ -5,7 +5,7 @@ import com.github.laxika.magicalvibes.model.ManaPool;
 import com.github.laxika.magicalvibes.model.PendingInteraction;
 import com.github.laxika.magicalvibes.model.Player;
 import com.github.laxika.magicalvibes.networking.SessionManager;
-import com.github.laxika.magicalvibes.networking.message.MayAbilityMessage;
+import com.github.laxika.magicalvibes.networking.message.InteractionPromptMessage;
 import com.github.laxika.magicalvibes.service.input.MayAbilityHandlerService;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
@@ -75,12 +75,12 @@ class MayAbilityChoiceInteractionHandlerTest {
         }
 
         @Test
-        @DisplayName("Sends MayAbilityMessage with the description and no mana cost")
+        @DisplayName("Sends InteractionPromptMessage with the description and no mana cost")
         void sendsMessage() {
             registry.begin(gd, choice());
 
             verify(sessionManager).sendToPlayer(eq(PLAYER1_ID), messageCaptor.capture());
-            MayAbilityMessage msg = (MayAbilityMessage) messageCaptor.getValue();
+            InteractionPromptMessage msg = (InteractionPromptMessage) messageCaptor.getValue();
             assertThat(msg.prompt()).isEqualTo("You may draw a card");
             assertThat(msg.canPay()).isTrue();
             assertThat(msg.manaCost()).isNull();
@@ -92,7 +92,7 @@ class MayAbilityChoiceInteractionHandlerTest {
             registry.begin(gd, new PendingInteraction.MayAbilityChoice(PLAYER1_ID, "You may pay {2}", "{2}"));
 
             verify(sessionManager).sendToPlayer(eq(PLAYER1_ID), messageCaptor.capture());
-            MayAbilityMessage msg = (MayAbilityMessage) messageCaptor.getValue();
+            InteractionPromptMessage msg = (InteractionPromptMessage) messageCaptor.getValue();
             assertThat(msg.canPay()).isFalse();
             assertThat(msg.manaCost()).isEqualTo("{2}");
         }
@@ -164,7 +164,7 @@ class MayAbilityChoiceInteractionHandlerTest {
 
             assertThat(handled).isTrue();
             verify(sessionManager).sendToPlayer(eq(PLAYER1_ID), messageCaptor.capture());
-            assertThat(messageCaptor.getValue()).isInstanceOf(MayAbilityMessage.class);
+            assertThat(messageCaptor.getValue()).isInstanceOf(InteractionPromptMessage.class);
         }
 
         @Test

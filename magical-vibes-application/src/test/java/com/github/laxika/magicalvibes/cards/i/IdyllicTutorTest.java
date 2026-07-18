@@ -1,5 +1,6 @@
 package com.github.laxika.magicalvibes.cards.i;
 
+import com.github.laxika.magicalvibes.service.interaction.InteractionAnswer;
 import com.github.laxika.magicalvibes.model.GameLogEntry;
 
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
@@ -49,7 +50,7 @@ class IdyllicTutorTest extends BaseCardTest {
 
         assertThat(gd.interaction.activeInteraction(PendingInteraction.LibrarySearch.class).params().reveals()).isTrue();
 
-        harness.getGameService().handleLibraryCardChosen(gd, player1, 0);
+        harness.getGameService().handleInteractionAnswer(gd, player1, new InteractionAnswer.LibraryCardChosen(0));
 
         assertThat(gd.playerHands.get(player1.getId())).hasSize(handBefore + 1);
         assertThat(gd.playerHands.get(player1.getId())).anyMatch(c -> c.hasType(CardType.ENCHANTMENT));

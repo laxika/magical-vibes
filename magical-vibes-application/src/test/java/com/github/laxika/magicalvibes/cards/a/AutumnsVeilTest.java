@@ -1,5 +1,6 @@
 package com.github.laxika.magicalvibes.cards.a;
 
+import com.github.laxika.magicalvibes.service.interaction.InteractionAnswer;
 import com.github.laxika.magicalvibes.model.PendingInteraction;
 import com.github.laxika.magicalvibes.cards.c.Cancel;
 import com.github.laxika.magicalvibes.cards.d.Discombobulate;
@@ -154,7 +155,7 @@ class AutumnsVeilTest extends BaseCardTest {
             assertThat(gd.interaction.activeInteraction(PendingInteraction.LibraryReorder.class).playerId()).isEqualTo(player2.getId());
 
             // Complete the library reorder so game can continue
-            gs.handleLibraryCardsReordered(gd, player2, List.of(0, 1, 2, 3));
+            gs.handleInteractionAnswer(gd, player2, new InteractionAnswer.CardOrder(List.of(0, 1, 2, 3)));
 
             // Bears is still on the stack — resolve it
             harness.passBothPriorities();

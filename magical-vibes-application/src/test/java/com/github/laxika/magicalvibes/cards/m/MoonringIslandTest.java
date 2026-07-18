@@ -1,5 +1,6 @@
 package com.github.laxika.magicalvibes.cards.m;
 
+import com.github.laxika.magicalvibes.service.interaction.InteractionAnswer;
 import com.github.laxika.magicalvibes.model.GameLogEntry;
 
 import com.github.laxika.magicalvibes.cards.i.Island;
@@ -39,7 +40,7 @@ class MoonringIslandTest extends BaseCardTest {
         assertThat(gd.gameLog.stream().map(GameLogEntry::plainText)).anyMatch(log -> log.contains("looks at the top card"));
 
         // Closing the look leaves the library untouched, in order.
-        gs.handleLibraryCardChosen(gd, player1, -1);
+        gs.handleInteractionAnswer(gd, player1, new InteractionAnswer.LibraryCardChosen(-1));
         List<Card> deckAfter = gd.playerDecks.get(player2.getId());
         assertThat(deckAfter).hasSize(deckSizeBefore);
         assertThat(deckAfter.getFirst().getId()).isEqualTo(topCard.getId());

@@ -1,5 +1,6 @@
 package com.github.laxika.magicalvibes.cards.m;
 
+import com.github.laxika.magicalvibes.service.interaction.InteractionAnswer;
 import com.github.laxika.magicalvibes.model.PendingInteraction;
 
 import com.github.laxika.magicalvibes.cards.g.GoldMyr;
@@ -222,7 +223,7 @@ class MyrTurbineTest extends BaseCardTest {
                 .allMatch(c -> c.getSubtypes().contains(CardSubtype.MYR));
 
         // Choose Myr Sire
-        gs.handleLibraryCardChosen(gd, player1, 0);
+        gs.handleInteractionAnswer(gd, player1, new InteractionAnswer.LibraryCardChosen(0));
 
         // Myr Sire should be on the battlefield
         assertThat(gd.playerBattlefields.get(player1.getId()))

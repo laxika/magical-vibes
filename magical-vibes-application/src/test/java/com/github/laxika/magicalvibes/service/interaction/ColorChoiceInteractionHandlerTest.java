@@ -5,7 +5,7 @@ import com.github.laxika.magicalvibes.model.GameData;
 import com.github.laxika.magicalvibes.model.PendingInteraction;
 import com.github.laxika.magicalvibes.model.Player;
 import com.github.laxika.magicalvibes.networking.SessionManager;
-import com.github.laxika.magicalvibes.networking.message.ChooseFromListMessage;
+import com.github.laxika.magicalvibes.networking.message.InteractionPromptMessage;
 import com.github.laxika.magicalvibes.service.input.ChoiceHandlerService;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
@@ -64,7 +64,7 @@ class ColorChoiceInteractionHandlerTest {
 
         assertThat(gd.interaction.activeInteraction()).isInstanceOf(PendingInteraction.ColorChoice.class);
         verify(sessionManager).sendToPlayer(eq(PLAYER1_ID), messageCaptor.capture());
-        ChooseFromListMessage msg = (ChooseFromListMessage) messageCaptor.getValue();
+        InteractionPromptMessage msg = (InteractionPromptMessage) messageCaptor.getValue();
         assertThat(msg.options()).containsExactly("WHITE", "BLUE", "BLACK", "RED", "GREEN");
         assertThat(msg.prompt()).isEqualTo("Choose a color of mana to add.");
         assertThat(msg.searchable()).isFalse();
@@ -80,7 +80,7 @@ class ColorChoiceInteractionHandlerTest {
         registry.begin(gd, choice);
 
         verify(sessionManager).sendToPlayer(eq(PLAYER1_ID), messageCaptor.capture());
-        ChooseFromListMessage msg = (ChooseFromListMessage) messageCaptor.getValue();
+        InteractionPromptMessage msg = (InteractionPromptMessage) messageCaptor.getValue();
         assertThat(msg.searchable()).isTrue();
     }
 
@@ -106,6 +106,6 @@ class ColorChoiceInteractionHandlerTest {
         verifyNoInteractions(sessionManager);
 
         assertThat(registry.replayPrompt(gd, PLAYER1_ID)).isTrue();
-        verify(sessionManager).sendToPlayer(eq(PLAYER1_ID), any(ChooseFromListMessage.class));
+        verify(sessionManager).sendToPlayer(eq(PLAYER1_ID), any(InteractionPromptMessage.class));
     }
 }

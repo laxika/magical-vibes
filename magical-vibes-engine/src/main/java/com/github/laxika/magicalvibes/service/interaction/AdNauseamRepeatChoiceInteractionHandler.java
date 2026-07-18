@@ -5,7 +5,7 @@ import com.github.laxika.magicalvibes.model.GameLog;
 import com.github.laxika.magicalvibes.model.PendingInteraction;
 import com.github.laxika.magicalvibes.model.Player;
 import com.github.laxika.magicalvibes.networking.SessionManager;
-import com.github.laxika.magicalvibes.networking.message.MayAbilityMessage;
+import com.github.laxika.magicalvibes.networking.message.InteractionPromptMessage;
 import com.github.laxika.magicalvibes.service.GameBroadcastService;
 import com.github.laxika.magicalvibes.service.effect.EffectResolutionService;
 import com.github.laxika.magicalvibes.service.effect.normalfx.AdNauseamSupport;
@@ -45,7 +45,7 @@ public class AdNauseamRepeatChoiceInteractionHandler
 
     @Override
     public void prompt(GameData gameData, PendingInteraction.AdNauseamRepeatChoice interaction, UUID recipientId) {
-        sessionManager.sendToPlayer(recipientId, new MayAbilityMessage(
+        sessionManager.sendToPlayer(recipientId, InteractionPromptMessage.acceptDecline(
                 "Reveal the next card and lose life equal to its mana value? (" + interaction.sourceName() + ")",
                 true, null));
 

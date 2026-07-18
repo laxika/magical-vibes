@@ -1,5 +1,6 @@
 package com.github.laxika.magicalvibes.cards.w;
 
+import com.github.laxika.magicalvibes.service.interaction.InteractionAnswer;
 import com.github.laxika.magicalvibes.model.PendingInteraction;
 import com.github.laxika.magicalvibes.cards.d.Dehydration;
 import com.github.laxika.magicalvibes.cards.g.GloriousAnthem;
@@ -306,7 +307,7 @@ class WarpWorldTest extends BaseCardTest {
         assertThat(gd.interaction.activeInteraction(PendingInteraction.LibraryReorder.class).cards()).hasSize(2);
 
         List<UUID> beforeOrderIds = gd.interaction.activeInteraction(PendingInteraction.LibraryReorder.class).cards().stream().map(Card::getId).toList();
-        harness.getGameService().handleLibraryCardsReordered(gd, player1, List.of(1, 0));
+        harness.getGameService().handleInteractionAnswer(gd, player1, new InteractionAnswer.CardOrder(List.of(1, 0)));
 
         assertThat(gd.interaction.activeInteraction()).isNull();
         assertThat(gd.playerDecks.get(player1.getId())).hasSize(2);
@@ -336,13 +337,13 @@ class WarpWorldTest extends BaseCardTest {
         assertThat(gd.interaction.activeInteraction(PendingInteraction.LibraryReorder.class).toBottom()).isTrue();
         assertThat(gd.interaction.activeInteraction(PendingInteraction.LibraryReorder.class).playerId()).isEqualTo(player2.getId());
 
-        harness.getGameService().handleLibraryCardsReordered(gd, player2, List.of(1, 0));
+        harness.getGameService().handleInteractionAnswer(gd, player2, new InteractionAnswer.CardOrder(List.of(1, 0)));
 
         assertThat(gd.interaction.activeInteraction()).isInstanceOf(PendingInteraction.LibraryReorder.class);
         assertThat(gd.interaction.activeInteraction(PendingInteraction.LibraryReorder.class).toBottom()).isTrue();
         assertThat(gd.interaction.activeInteraction(PendingInteraction.LibraryReorder.class).playerId()).isEqualTo(player1.getId());
 
-        harness.getGameService().handleLibraryCardsReordered(gd, player1, List.of(1, 0));
+        harness.getGameService().handleInteractionAnswer(gd, player1, new InteractionAnswer.CardOrder(List.of(1, 0)));
 
         assertThat(gd.interaction.activeInteraction()).isNull();
         assertThat(gd.playerDecks.get(player1.getId())).hasSize(2);

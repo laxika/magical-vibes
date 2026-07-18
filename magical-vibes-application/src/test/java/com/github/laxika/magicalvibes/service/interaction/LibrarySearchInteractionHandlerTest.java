@@ -7,7 +7,7 @@ import com.github.laxika.magicalvibes.model.LibrarySearchParams;
 import com.github.laxika.magicalvibes.model.PendingInteraction;
 import com.github.laxika.magicalvibes.model.Player;
 import com.github.laxika.magicalvibes.networking.SessionManager;
-import com.github.laxika.magicalvibes.networking.message.ChooseCardFromLibraryMessage;
+import com.github.laxika.magicalvibes.networking.message.InteractionPromptMessage;
 import com.github.laxika.magicalvibes.networking.model.CardView;
 import com.github.laxika.magicalvibes.networking.service.CardViewFactory;
 import com.github.laxika.magicalvibes.service.input.LibraryChoiceHandlerService;
@@ -85,10 +85,10 @@ class LibrarySearchInteractionHandlerTest {
 
         assertThat(gd.interaction.activeInteraction()).isInstanceOf(PendingInteraction.LibrarySearch.class);
         verify(sessionManager).sendToPlayer(eq(PLAYER1_ID), messageCaptor.capture());
-        ChooseCardFromLibraryMessage msg = (ChooseCardFromLibraryMessage) messageCaptor.getValue();
+        InteractionPromptMessage msg = (InteractionPromptMessage) messageCaptor.getValue();
         assertThat(msg.cards()).hasSize(2);
         assertThat(msg.prompt()).isEqualTo("Search your library for a basic land card to put into your hand.");
-        assertThat(msg.canFailToFind()).isTrue();
+        assertThat(msg.declinable()).isTrue();
     }
 
     @Test
@@ -113,6 +113,6 @@ class LibrarySearchInteractionHandlerTest {
         verifyNoInteractions(sessionManager);
 
         assertThat(registry.replayPrompt(gd, PLAYER1_ID)).isTrue();
-        verify(sessionManager).sendToPlayer(eq(PLAYER1_ID), any(ChooseCardFromLibraryMessage.class));
+        verify(sessionManager).sendToPlayer(eq(PLAYER1_ID), any(InteractionPromptMessage.class));
     }
 }

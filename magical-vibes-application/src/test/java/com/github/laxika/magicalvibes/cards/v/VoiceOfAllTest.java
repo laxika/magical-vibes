@@ -192,7 +192,7 @@ class VoiceOfAllTest extends BaseCardTest {
     void cannotChooseColorWhenNotAwaiting() {
         assertThatThrownBy(() -> harness.handleListChoice(player1, "RED"))
                 .isInstanceOf(IllegalStateException.class)
-                .hasMessageContaining("Not awaiting color choice");
+                .hasMessageContaining("Not awaiting");
     }
 
     // ===== Protection - combat damage =====

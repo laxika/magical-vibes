@@ -4246,7 +4246,7 @@ class HardAiDecisionEngineTest {
             gd.pendingMayAbilities.add(pending);
             gd.interaction.beginInteraction(new PendingInteraction.MayAbilityChoice(player1.getId(), pending.description(), pending.manaCost()));
 
-            ai.handleMessage("MAY_ABILITY_CHOICE", "");
+            ai.handleMessage("INTERACTION_PROMPT", "");
 
             // The may ability should have been accepted (pending list consumed)
             assertThat(gd.pendingMayAbilities).isEmpty();
@@ -4271,7 +4271,7 @@ class HardAiDecisionEngineTest {
             gd.pendingMayAbilities.add(pending);
             gd.interaction.beginInteraction(new PendingInteraction.MayAbilityChoice(player1.getId(), pending.description(), pending.manaCost()));
 
-            ai.handleMessage("MAY_ABILITY_CHOICE", "");
+            ai.handleMessage("INTERACTION_PROMPT", "");
 
             // The may ability should have been declined (pending list consumed but effect not applied)
             assertThat(gd.pendingMayAbilities).isEmpty();
@@ -4307,7 +4307,7 @@ class HardAiDecisionEngineTest {
             gd.interaction.beginInteraction(
                     new PendingInteraction.Scry(player1.getId(), List.of(landCard, spellCard)));
 
-            ai.handleMessage("SCRY", "");
+            ai.handleMessage("INTERACTION_PROMPT", "");
 
             // Both cards should go on top (land is needed, spell is useful)
             assertThat(gd.interaction.isAwaitingInput()).isFalse();
@@ -4337,7 +4337,7 @@ class HardAiDecisionEngineTest {
             gd.interaction.beginInteraction(
                     new PendingInteraction.Scry(player1.getId(), List.of(landCard, spellCard)));
 
-            ai.handleMessage("SCRY", "");
+            ai.handleMessage("INTERACTION_PROMPT", "");
 
             // Scry completed (land on bottom, spell on top)
             assertThat(gd.interaction.isAwaitingInput()).isFalse();
@@ -4371,7 +4371,7 @@ class HardAiDecisionEngineTest {
                             new com.github.laxika.magicalvibes.model.ChoiceContext.SubtypeChoice(null),
                             java.util.List.of(), "Choose a creature type."));
 
-            ai.handleMessage("CHOOSE_FROM_LIST", "");
+            ai.handleMessage("INTERACTION_PROMPT", "");
 
             // The choice should be processed
             assertThat(gd.interaction.isAwaitingInput()).isFalse();
@@ -4406,7 +4406,7 @@ class HardAiDecisionEngineTest {
                             new com.github.laxika.magicalvibes.model.ChoiceContext.BasicLandTypeChoice(null),
                             java.util.List.of(), "Choose a basic land type."));
 
-            ai.handleMessage("CHOOSE_FROM_LIST", "");
+            ai.handleMessage("INTERACTION_PROMPT", "");
 
             // The choice should be processed (AI should pick PLAINS for white mana demand)
             assertThat(gd.interaction.isAwaitingInput()).isFalse();

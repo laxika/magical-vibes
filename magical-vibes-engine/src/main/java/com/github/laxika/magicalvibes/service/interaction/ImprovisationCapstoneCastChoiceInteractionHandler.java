@@ -5,7 +5,7 @@ import com.github.laxika.magicalvibes.model.GameData;
 import com.github.laxika.magicalvibes.model.PendingInteraction;
 import com.github.laxika.magicalvibes.model.Player;
 import com.github.laxika.magicalvibes.networking.SessionManager;
-import com.github.laxika.magicalvibes.networking.message.ChooseMultipleCardsMessage;
+import com.github.laxika.magicalvibes.networking.message.InteractionPromptMessage;
 import com.github.laxika.magicalvibes.networking.model.CardView;
 import com.github.laxika.magicalvibes.networking.service.CardViewFactory;
 import com.github.laxika.magicalvibes.service.interaction.InteractionAnswer;
@@ -49,7 +49,7 @@ public class ImprovisationCapstoneCastChoiceInteractionHandler
         }
 
         sessionManager.sendToPlayer(recipientId,
-                new ChooseMultipleCardsMessage(new ArrayList<>(interaction.validCardIds()), cardViews,
+                InteractionPromptMessage.multiCardPick(new ArrayList<>(interaction.validCardIds()), cardViews,
                         interaction.maxCount(),
                         "You may cast any number of spells from among the exiled cards without paying their mana costs."));
 

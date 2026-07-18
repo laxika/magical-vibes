@@ -6,7 +6,7 @@ import com.github.laxika.magicalvibes.model.GraveyardChoiceDestination;
 import com.github.laxika.magicalvibes.model.PendingInteraction;
 import com.github.laxika.magicalvibes.model.Player;
 import com.github.laxika.magicalvibes.networking.SessionManager;
-import com.github.laxika.magicalvibes.networking.message.ChooseCardFromGraveyardMessage;
+import com.github.laxika.magicalvibes.networking.message.InteractionPromptMessage;
 import com.github.laxika.magicalvibes.service.ability.AbilityActivationService;
 import com.github.laxika.magicalvibes.service.input.GraveyardChoiceHandlerService;
 import org.junit.jupiter.api.BeforeEach;
@@ -76,7 +76,7 @@ class GraveyardChoiceInteractionHandlersTest {
 
             assertThat(gd.interaction.activeInteraction()).isInstanceOf(PendingInteraction.GraveyardChoice.class);
             verify(sessionManager).sendToPlayer(eq(PLAYER1_ID), messageCaptor.capture());
-            ChooseCardFromGraveyardMessage msg = (ChooseCardFromGraveyardMessage) messageCaptor.getValue();
+            InteractionPromptMessage msg = (InteractionPromptMessage) messageCaptor.getValue();
             assertThat(msg.cardIndices()).containsExactly(0, 2);
             assertThat(msg.prompt()).isEqualTo("Return a creature card from your graveyard to your hand.");
             assertThat(msg.allGraveyards()).isFalse();
@@ -91,7 +91,7 @@ class GraveyardChoiceInteractionHandlersTest {
                     .build());
 
             verify(sessionManager).sendToPlayer(eq(PLAYER1_ID), messageCaptor.capture());
-            ChooseCardFromGraveyardMessage msg = (ChooseCardFromGraveyardMessage) messageCaptor.getValue();
+            InteractionPromptMessage msg = (InteractionPromptMessage) messageCaptor.getValue();
             assertThat(msg.allGraveyards()).isTrue();
         }
 
@@ -121,7 +121,7 @@ class GraveyardChoiceInteractionHandlersTest {
             verifyNoInteractions(sessionManager);
 
             assertThat(registry.replayPrompt(gd, PLAYER1_ID)).isTrue();
-            verify(sessionManager).sendToPlayer(eq(PLAYER1_ID), any(ChooseCardFromGraveyardMessage.class));
+            verify(sessionManager).sendToPlayer(eq(PLAYER1_ID), any(InteractionPromptMessage.class));
         }
     }
 
@@ -139,7 +139,7 @@ class GraveyardChoiceInteractionHandlersTest {
             assertThat(gd.interaction.activeInteraction())
                     .isInstanceOf(PendingInteraction.GraveyardExileCostChoice.class);
             verify(sessionManager).sendToPlayer(eq(PLAYER1_ID), messageCaptor.capture());
-            ChooseCardFromGraveyardMessage msg = (ChooseCardFromGraveyardMessage) messageCaptor.getValue();
+            InteractionPromptMessage msg = (InteractionPromptMessage) messageCaptor.getValue();
             assertThat(msg.cardIndices()).containsExactly(0, 1);
             assertThat(msg.prompt())
                     .isEqualTo("Choose a creature card from your graveyard to exile as an activation cost.");
@@ -170,7 +170,7 @@ class GraveyardChoiceInteractionHandlersTest {
             verifyNoInteractions(sessionManager);
 
             assertThat(registry.replayPrompt(gd, PLAYER1_ID)).isTrue();
-            verify(sessionManager).sendToPlayer(eq(PLAYER1_ID), any(ChooseCardFromGraveyardMessage.class));
+            verify(sessionManager).sendToPlayer(eq(PLAYER1_ID), any(InteractionPromptMessage.class));
         }
     }
 }

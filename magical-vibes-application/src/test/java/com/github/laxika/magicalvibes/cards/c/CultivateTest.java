@@ -1,5 +1,6 @@
 package com.github.laxika.magicalvibes.cards.c;
 
+import com.github.laxika.magicalvibes.service.interaction.InteractionAnswer;
 import com.github.laxika.magicalvibes.model.GameLogEntry;
 
 import com.github.laxika.magicalvibes.model.PendingInteraction;
@@ -74,7 +75,7 @@ class CultivateTest extends BaseCardTest {
         int battlefieldBefore = gd.playerBattlefields.get(player1.getId()).size();
 
         // Pick first basic land for battlefield tapped
-        harness.getGameService().handleLibraryCardChosen(gd, player1, 0);
+        harness.getGameService().handleInteractionAnswer(gd, player1, new InteractionAnswer.LibraryCardChosen(0));
 
         // First card enters battlefield tapped
         assertThat(gd.playerBattlefields.get(player1.getId())).hasSize(battlefieldBefore + 1);
@@ -101,9 +102,9 @@ class CultivateTest extends BaseCardTest {
         int handBefore = gd.playerHands.get(player1.getId()).size();
 
         // First pick: battlefield tapped
-        harness.getGameService().handleLibraryCardChosen(gd, player1, 0);
+        harness.getGameService().handleInteractionAnswer(gd, player1, new InteractionAnswer.LibraryCardChosen(0));
         // Second pick: hand
-        harness.getGameService().handleLibraryCardChosen(gd, player1, 0);
+        harness.getGameService().handleInteractionAnswer(gd, player1, new InteractionAnswer.LibraryCardChosen(0));
 
         assertThat(gd.playerHands.get(player1.getId())).hasSize(handBefore + 1);
         assertThat(gd.playerHands.get(player1.getId()))
@@ -125,7 +126,7 @@ class CultivateTest extends BaseCardTest {
 
         // Decline first pick — per ruling, finding only one card = BF tapped,
         // so declining the BF pick means finding zero. No hand pick offered.
-        harness.getGameService().handleLibraryCardChosen(gd, player1, -1);
+        harness.getGameService().handleInteractionAnswer(gd, player1, new InteractionAnswer.LibraryCardChosen(-1));
 
         assertThat(gd.playerBattlefields.get(player1.getId())).hasSize(battlefieldBefore);
         assertThat(gd.playerHands.get(player1.getId())).hasSize(handBefore);
@@ -144,7 +145,7 @@ class CultivateTest extends BaseCardTest {
 
         GameData gd = harness.getGameData();
         // Pick the only basic land for battlefield
-        harness.getGameService().handleLibraryCardChosen(gd, player1, 0);
+        harness.getGameService().handleInteractionAnswer(gd, player1, new InteractionAnswer.LibraryCardChosen(0));
 
         // No more basic lands for hand search — should finish
         assertThat(gd.interaction.activeInteraction()).isNull();
@@ -168,7 +169,7 @@ class CultivateTest extends BaseCardTest {
 
         // Decline battlefield pick — per ruling, if you find only one it must go
         // to the battlefield tapped, so declining means finding zero.
-        harness.getGameService().handleLibraryCardChosen(gd, player1, -1);
+        harness.getGameService().handleInteractionAnswer(gd, player1, new InteractionAnswer.LibraryCardChosen(-1));
 
         // Spell finishes — no hand pick offered
         assertThat(gd.interaction.activeInteraction()).isNull();
@@ -189,9 +190,9 @@ class CultivateTest extends BaseCardTest {
         int battlefieldBefore = gd.playerBattlefields.get(player1.getId()).size();
 
         // Pick for battlefield
-        harness.getGameService().handleLibraryCardChosen(gd, player1, 0);
+        harness.getGameService().handleInteractionAnswer(gd, player1, new InteractionAnswer.LibraryCardChosen(0));
         // Decline hand pick
-        harness.getGameService().handleLibraryCardChosen(gd, player1, -1);
+        harness.getGameService().handleInteractionAnswer(gd, player1, new InteractionAnswer.LibraryCardChosen(-1));
 
         // One land on battlefield tapped, no new cards in hand
         assertThat(gd.playerBattlefields.get(player1.getId())).hasSize(battlefieldBefore + 1);

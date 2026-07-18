@@ -15,6 +15,7 @@ import com.github.laxika.magicalvibes.service.DrawService;
 import com.github.laxika.magicalvibes.service.GameBroadcastService;
 import com.github.laxika.magicalvibes.service.GameRegistry;
 import com.github.laxika.magicalvibes.service.GameService;
+import com.github.laxika.magicalvibes.service.interaction.InteractionAnswer;
 import com.github.laxika.magicalvibes.service.GameSetupService;
 import com.github.laxika.magicalvibes.service.StackResolutionService;
 import com.github.laxika.magicalvibes.service.battlefield.BattlefieldEntryService;
@@ -736,15 +737,15 @@ public class GameTestHarness {
     }
 
     public void handlePermanentChosen(Player player, UUID permanentId) {
-        gameService.handlePermanentChosen(gameData, player, permanentId);
+        gameService.handleInteractionAnswer(gameData, player, new InteractionAnswer.PermanentChosen(permanentId));
     }
 
     public void handleMultiplePermanentsChosen(Player player, List<UUID> permanentIds) {
-        gameService.handleMultiplePermanentsChosen(gameData, player, permanentIds);
+        gameService.handleInteractionAnswer(gameData, player, new InteractionAnswer.PermanentsChosen(permanentIds));
     }
 
     public void handleMultipleCardsChosen(Player player, List<UUID> cardIds) {
-        gameService.handleMultipleCardsChosen(gameData, player, cardIds);
+        gameService.handleInteractionAnswer(gameData, player, new InteractionAnswer.CardsChosen(cardIds));
     }
 
     public UUID getPermanentId(Player player, String cardName) {
@@ -797,23 +798,23 @@ public class GameTestHarness {
     }
 
     public void handleCardChosen(Player player, int cardIndex) {
-        gameService.handleCardChosen(gameData, player, cardIndex);
+        gameService.handleInteractionAnswer(gameData, player, new InteractionAnswer.CardIndexChosen(cardIndex));
     }
 
     public void handleGraveyardCardChosen(Player player, int cardIndex) {
-        gameService.handleGraveyardCardChosen(gameData, player, cardIndex);
+        gameService.handleInteractionAnswer(gameData, player, new InteractionAnswer.GraveyardCardChosen(cardIndex));
     }
 
     public void handleListChoice(Player player, String choiceName) {
-        gameService.handleListChoice(gameData, player, choiceName);
+        gameService.handleInteractionAnswer(gameData, player, new InteractionAnswer.ListChoiceMade(choiceName));
     }
 
     public void handleMayAbilityChosen(Player player, boolean accepted) {
-        gameService.handleMayAbilityChosen(gameData, player, accepted);
+        gameService.handleInteractionAnswer(gameData, player, new InteractionAnswer.MayAbilityChosen(accepted));
     }
 
     public void handleXValueChosen(Player player, int chosenValue) {
-        gameService.handleXValueChosen(gameData, player, chosenValue);
+        gameService.handleInteractionAnswer(gameData, player, new InteractionAnswer.NumberChosen(chosenValue));
     }
 
     public void paySearchTax(Player player) {

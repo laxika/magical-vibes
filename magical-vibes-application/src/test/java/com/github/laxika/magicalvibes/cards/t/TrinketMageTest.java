@@ -1,5 +1,6 @@
 package com.github.laxika.magicalvibes.cards.t;
 
+import com.github.laxika.magicalvibes.service.interaction.InteractionAnswer;
 import com.github.laxika.magicalvibes.model.GameLogEntry;
 
 import com.github.laxika.magicalvibes.model.PendingInteraction;
@@ -73,7 +74,7 @@ class TrinketMageTest extends BaseCardTest {
         int handBefore = gd.playerHands.get(player1.getId()).size();
         int deckBefore = gd.playerDecks.get(player1.getId()).size();
 
-        harness.getGameService().handleLibraryCardChosen(gd, player1, 0);
+        harness.getGameService().handleInteractionAnswer(gd, player1, new InteractionAnswer.LibraryCardChosen(0));
 
         assertThat(gd.playerHands.get(player1.getId())).hasSize(handBefore + 1);
         assertThat(gd.playerDecks.get(player1.getId())).hasSize(deckBefore - 1);
@@ -141,7 +142,7 @@ class TrinketMageTest extends BaseCardTest {
         harness.handleMayAbilityChosen(player1, true); // inner effect resolves inline
 
         GameData gd = harness.getGameData();
-        harness.getGameService().handleLibraryCardChosen(gd, player1, -1);
+        harness.getGameService().handleInteractionAnswer(gd, player1, new InteractionAnswer.LibraryCardChosen(-1));
 
         assertThat(gd.interaction.activeInteraction()).isNull();
     }

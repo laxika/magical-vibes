@@ -1,5 +1,6 @@
 package com.github.laxika.magicalvibes.cards.v;
 
+import com.github.laxika.magicalvibes.service.interaction.InteractionAnswer;
 import com.github.laxika.magicalvibes.model.PendingInteraction;
 import com.github.laxika.magicalvibes.cards.f.Forest;
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
@@ -64,7 +65,7 @@ class ViridianEmissaryTest extends BaseCardTest {
         assertThat(gd.interaction.activeInteraction()).isInstanceOf(PendingInteraction.LibrarySearch.class);
 
         int battlefieldBefore = gd.playerBattlefields.get(player1.getId()).size();
-        harness.getGameService().handleLibraryCardChosen(gd, player1, 0);
+        harness.getGameService().handleInteractionAnswer(gd, player1, new InteractionAnswer.LibraryCardChosen(0));
 
         // Chosen land should be on the battlefield tapped
         assertThat(gd.playerBattlefields.get(player1.getId())).hasSize(battlefieldBefore + 1);
@@ -141,7 +142,7 @@ class ViridianEmissaryTest extends BaseCardTest {
 
         assertThat(gd.interaction.activeInteraction()).isInstanceOf(PendingInteraction.LibrarySearch.class);
 
-        harness.getGameService().handleLibraryCardChosen(gd, player1, 0);
+        harness.getGameService().handleInteractionAnswer(gd, player1, new InteractionAnswer.LibraryCardChosen(0));
 
         assertThat(gd.playerBattlefields.get(player1.getId()))
                 .anyMatch(p -> p.getCard().hasType(CardType.LAND) && p.isTapped());

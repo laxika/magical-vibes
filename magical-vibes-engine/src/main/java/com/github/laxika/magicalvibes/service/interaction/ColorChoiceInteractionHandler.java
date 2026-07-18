@@ -5,7 +5,7 @@ import com.github.laxika.magicalvibes.model.GameData;
 import com.github.laxika.magicalvibes.model.PendingInteraction;
 import com.github.laxika.magicalvibes.model.Player;
 import com.github.laxika.magicalvibes.networking.SessionManager;
-import com.github.laxika.magicalvibes.networking.message.ChooseFromListMessage;
+import com.github.laxika.magicalvibes.networking.message.InteractionPromptMessage;
 import com.github.laxika.magicalvibes.service.input.ChoiceHandlerService;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -47,7 +47,7 @@ public class ColorChoiceInteractionHandler
     @Override
     public void prompt(GameData gameData, PendingInteraction.ColorChoice interaction, UUID recipientId) {
         sessionManager.sendToPlayer(recipientId,
-                new ChooseFromListMessage(interaction.options(), interaction.prompt(), isCardNameChoice(interaction.context())));
+                InteractionPromptMessage.listPick(interaction.options(), interaction.prompt(), isCardNameChoice(interaction.context())));
     }
 
     /**

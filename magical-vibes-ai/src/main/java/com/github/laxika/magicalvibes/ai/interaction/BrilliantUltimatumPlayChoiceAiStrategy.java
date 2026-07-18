@@ -1,7 +1,7 @@
 package com.github.laxika.magicalvibes.ai.interaction;
 
+import com.github.laxika.magicalvibes.service.interaction.InteractionAnswer;
 import com.github.laxika.magicalvibes.model.PendingInteraction;
-import com.github.laxika.magicalvibes.networking.message.MultipleCardsChosenRequest;
 import lombok.extern.slf4j.Slf4j;
 
 import java.util.ArrayList;
@@ -33,6 +33,6 @@ class BrilliantUltimatumPlayChoiceAiStrategy
             chosen = chosen.subList(0, interaction.maxCount());
         }
         log.info("AI: Playing {} cards for Brilliant Ultimatum in game {}", chosen.size(), ctx.gameId());
-        ctx.gameActions().handleMultipleCardsChosen(ctx.selfConnection(), new MultipleCardsChosenRequest(chosen));
+        ctx.gameActions().answerInteraction(ctx.selfConnection(), new InteractionAnswer.CardsChosen(chosen));
     }
 }

@@ -1,5 +1,6 @@
 package com.github.laxika.magicalvibes.cards.l;
 
+import com.github.laxika.magicalvibes.service.interaction.InteractionAnswer;
 import com.github.laxika.magicalvibes.model.GameLogEntry;
 
 import com.github.laxika.magicalvibes.model.PendingInteraction;
@@ -98,7 +99,7 @@ class LifesFinaleTest extends BaseCardTest {
         harness.passBothPriorities();
 
         // Choose the creature card
-        gs.handleLibraryCardChosen(gd, player1, 0);
+        gs.handleInteractionAnswer(gd, player1, new InteractionAnswer.LibraryCardChosen(0));
 
         // Card should be in opponent's graveyard
         assertThat(gd.playerGraveyards.get(player2.getId()))
@@ -125,15 +126,15 @@ class LifesFinaleTest extends BaseCardTest {
         harness.passBothPriorities();
 
         // Pick first creature
-        gs.handleLibraryCardChosen(gd, player1, 0);
+        gs.handleInteractionAnswer(gd, player1, new InteractionAnswer.LibraryCardChosen(0));
         assertThat(gd.interaction.activeInteraction()).isInstanceOf(PendingInteraction.LibrarySearch.class);
 
         // Pick second creature
-        gs.handleLibraryCardChosen(gd, player1, 0);
+        gs.handleInteractionAnswer(gd, player1, new InteractionAnswer.LibraryCardChosen(0));
         assertThat(gd.interaction.activeInteraction()).isInstanceOf(PendingInteraction.LibrarySearch.class);
 
         // Pick third creature
-        gs.handleLibraryCardChosen(gd, player1, 0);
+        gs.handleInteractionAnswer(gd, player1, new InteractionAnswer.LibraryCardChosen(0));
 
         // All three should be in opponent's graveyard
         long graveyardCreatures = gd.playerGraveyards.get(player2.getId()).stream()
@@ -161,10 +162,10 @@ class LifesFinaleTest extends BaseCardTest {
         harness.passBothPriorities();
 
         // Pick first creature
-        gs.handleLibraryCardChosen(gd, player1, 0);
+        gs.handleInteractionAnswer(gd, player1, new InteractionAnswer.LibraryCardChosen(0));
 
         // Decline to pick more (-1 = fail to find)
-        gs.handleLibraryCardChosen(gd, player1, -1);
+        gs.handleInteractionAnswer(gd, player1, new InteractionAnswer.LibraryCardChosen(-1));
 
         // Only one creature should be in graveyard
         long graveyardCreatures = gd.playerGraveyards.get(player2.getId()).stream()
@@ -190,7 +191,7 @@ class LifesFinaleTest extends BaseCardTest {
         harness.passBothPriorities();
 
         // Decline to pick any card
-        gs.handleLibraryCardChosen(gd, player1, -1);
+        gs.handleInteractionAnswer(gd, player1, new InteractionAnswer.LibraryCardChosen(-1));
 
         // Log should mention shuffle
         assertThat(gd.gameLog.stream().map(GameLogEntry::plainText)).anyMatch(log -> log.contains("shuffled") || log.contains("Library is shuffled"));
@@ -266,7 +267,7 @@ class LifesFinaleTest extends BaseCardTest {
         harness.passBothPriorities();
 
         // Pick the only creature
-        gs.handleLibraryCardChosen(gd, player1, 0);
+        gs.handleInteractionAnswer(gd, player1, new InteractionAnswer.LibraryCardChosen(0));
 
         // No more creature cards — search should end automatically
         assertThat(gd.interaction.activeInteraction(PendingInteraction.LibrarySearch.class)).isNull();

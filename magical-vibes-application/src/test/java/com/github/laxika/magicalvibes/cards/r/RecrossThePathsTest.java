@@ -1,5 +1,6 @@
 package com.github.laxika.magicalvibes.cards.r;
 
+import com.github.laxika.magicalvibes.service.interaction.InteractionAnswer;
 import com.github.laxika.magicalvibes.cards.f.Forest;
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
 import com.github.laxika.magicalvibes.cards.i.Island;
@@ -97,8 +98,7 @@ class RecrossThePathsTest extends BaseCardTest {
         assertThat(gd.interaction.activeInteraction()).isInstanceOf(PendingInteraction.LibraryReorder.class);
         List<Card> reorder = gd.interaction.activeInteraction(PendingInteraction.LibraryReorder.class).cards();
         assertThat(reorder).containsExactlyInAnyOrder(shock, bears);
-        harness.getGameService().handleLibraryCardsReordered(gd, player1,
-                List.of(reorder.indexOf(bears), reorder.indexOf(shock)));
+        harness.getGameService().handleInteractionAnswer(gd, player1, new InteractionAnswer.CardOrder(List.of(reorder.indexOf(bears), reorder.indexOf(shock))));
 
         // Nothing entered the battlefield, and both cards are back in the library.
         assertThat(gd.playerBattlefields.get(player1.getId())).isEmpty();

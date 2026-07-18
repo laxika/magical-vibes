@@ -1,5 +1,6 @@
 package com.github.laxika.magicalvibes.cards.g;
 
+import com.github.laxika.magicalvibes.service.interaction.InteractionAnswer;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.GameData;
 import com.github.laxika.magicalvibes.model.ManaColor;
@@ -64,7 +65,7 @@ class GiltLeafSeerTest extends BaseCardTest {
         harness.activateAbility(player1, 0, null, null);
         harness.passBothPriorities();
 
-        harness.getGameService().handleLibraryCardsReordered(gd, player1, List.of(1, 0));
+        harness.getGameService().handleInteractionAnswer(gd, player1, new InteractionAnswer.CardOrder(List.of(1, 0)));
 
         assertThat(deck.get(0)).isSameAs(originalTop1);
         assertThat(deck.get(1)).isSameAs(originalTop0);

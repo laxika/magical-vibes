@@ -1,5 +1,6 @@
 package com.github.laxika.magicalvibes.cards.p;
 
+import com.github.laxika.magicalvibes.service.interaction.InteractionAnswer;
 import com.github.laxika.magicalvibes.model.PendingInteraction;
 
 import com.github.laxika.magicalvibes.cards.f.FrenziedRaptor;
@@ -130,7 +131,7 @@ class PriestOfTheWakeningSunTest extends BaseCardTest {
         harness.passBothPriorities();
 
         // Choose the Dinosaur
-        harness.getGameService().handleLibraryCardChosen(gd, player1, 0);
+        harness.getGameService().handleInteractionAnswer(gd, player1, new InteractionAnswer.LibraryCardChosen(0));
 
         assertThat(gd.playerHands.get(player1.getId()))
                 .anyMatch(c -> c.getName().equals("Grazing Whiptail"));

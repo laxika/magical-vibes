@@ -1,5 +1,6 @@
 package com.github.laxika.magicalvibes.cards.p;
 
+import com.github.laxika.magicalvibes.service.interaction.InteractionAnswer;
 import com.github.laxika.magicalvibes.model.PendingInteraction;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.ManaColor;
@@ -71,7 +72,7 @@ class PreordainTest extends BaseCardTest {
         harness.passBothPriorities();
 
         // Complete scry by keeping both on top
-        gs.handleScryCompleted(gd, player1, List.of(0, 1), List.of());
+        gs.handleInteractionAnswer(gd, player1, new InteractionAnswer.ScryOrder(List.of(0, 1), List.of()));
 
         // Hand should have 1 card (spell left hand, then drew 1)
         assertThat(gd.playerHands.get(player1.getId())).hasSize(1);
@@ -93,7 +94,7 @@ class PreordainTest extends BaseCardTest {
         harness.passBothPriorities();
 
         // Reverse the top 2, then draw 1 — should draw what was originally at position 1
-        gs.handleScryCompleted(gd, player1, List.of(1, 0), List.of());
+        gs.handleInteractionAnswer(gd, player1, new InteractionAnswer.ScryOrder(List.of(1, 0), List.of()));
 
         List<Card> hand = gd.playerHands.get(player1.getId());
         assertThat(hand).hasSize(1);
@@ -115,7 +116,7 @@ class PreordainTest extends BaseCardTest {
         harness.passBothPriorities();
 
         // Put both on bottom, then draw 1 — should draw what was originally at position 2
-        gs.handleScryCompleted(gd, player1, List.of(), List.of(0, 1));
+        gs.handleInteractionAnswer(gd, player1, new InteractionAnswer.ScryOrder(List.of(), List.of(0, 1)));
 
         List<Card> hand = gd.playerHands.get(player1.getId());
         assertThat(hand).hasSize(1);
@@ -132,7 +133,7 @@ class PreordainTest extends BaseCardTest {
         harness.passBothPriorities();
 
         // Complete scry
-        gs.handleScryCompleted(gd, player1, List.of(0, 1), List.of());
+        gs.handleInteractionAnswer(gd, player1, new InteractionAnswer.ScryOrder(List.of(0, 1), List.of()));
 
         assertThat(gd.stack).isEmpty();
         assertThat(gd.playerGraveyards.get(player1.getId()))

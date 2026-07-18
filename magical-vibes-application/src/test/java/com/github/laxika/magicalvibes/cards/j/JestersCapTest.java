@@ -1,5 +1,6 @@
 package com.github.laxika.magicalvibes.cards.j;
 
+import com.github.laxika.magicalvibes.service.interaction.InteractionAnswer;
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
 import com.github.laxika.magicalvibes.cards.s.Shock;
 import com.github.laxika.magicalvibes.cards.s.Swamp;
@@ -41,9 +42,9 @@ class JestersCapTest extends BaseCardTest {
         harness.passBothPriorities();
 
         // Pick three cards (each pick re-presents the shrinking library from index 0)
-        gs.handleLibraryCardChosen(gd, player1, 0);
-        gs.handleLibraryCardChosen(gd, player1, 0);
-        gs.handleLibraryCardChosen(gd, player1, 0);
+        gs.handleInteractionAnswer(gd, player1, new InteractionAnswer.LibraryCardChosen(0));
+        gs.handleInteractionAnswer(gd, player1, new InteractionAnswer.LibraryCardChosen(0));
+        gs.handleInteractionAnswer(gd, player1, new InteractionAnswer.LibraryCardChosen(0));
 
         // Three cards left the library, one remains
         assertThat(gd.playerDecks.get(player2.getId())).hasSize(1);
@@ -70,8 +71,8 @@ class JestersCapTest extends BaseCardTest {
         harness.activateAbility(player1, 0, null, player2.getId());
         harness.passBothPriorities();
 
-        gs.handleLibraryCardChosen(gd, player1, 0);
-        gs.handleLibraryCardChosen(gd, player1, 0);
+        gs.handleInteractionAnswer(gd, player1, new InteractionAnswer.LibraryCardChosen(0));
+        gs.handleInteractionAnswer(gd, player1, new InteractionAnswer.LibraryCardChosen(0));
 
         assertThat(gd.playerDecks.get(player2.getId())).isEmpty();
         assertThat(gd.getPlayerExiledCards(player2.getId())).hasSize(2);

@@ -1,5 +1,6 @@
 package com.github.laxika.magicalvibes.cards.g;
 
+import com.github.laxika.magicalvibes.service.interaction.InteractionAnswer;
 import com.github.laxika.magicalvibes.model.PendingInteraction;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardColor;
@@ -62,7 +63,7 @@ class GrowingRitesOfItlimocTest extends BaseCardTest {
         harness.passBothPriorities(); // resolve ETB
 
         // Choose the first creature (Bear)
-        gs.handleLibraryCardChosen(gd, player1, 0);
+        gs.handleInteractionAnswer(gd, player1, new InteractionAnswer.LibraryCardChosen(0));
 
         assertThat(gd.playerHands.get(player1.getId())).anyMatch(c -> c.getName().equals("Bear"));
         // Remaining 3 cards should be offered for reorder
@@ -89,7 +90,7 @@ class GrowingRitesOfItlimocTest extends BaseCardTest {
         int handBefore = gd.playerHands.get(player1.getId()).size();
 
         // Decline to choose (-1 = fail to find)
-        gs.handleLibraryCardChosen(gd, player1, -1);
+        gs.handleInteractionAnswer(gd, player1, new InteractionAnswer.LibraryCardChosen(-1));
 
         assertThat(gd.playerHands.get(player1.getId())).hasSize(handBefore);
         // All 4 cards should be offered for reorder

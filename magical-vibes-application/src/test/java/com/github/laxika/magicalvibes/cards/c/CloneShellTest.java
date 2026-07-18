@@ -1,5 +1,6 @@
 package com.github.laxika.magicalvibes.cards.c;
 
+import com.github.laxika.magicalvibes.service.interaction.InteractionAnswer;
 import com.github.laxika.magicalvibes.model.GameLogEntry;
 
 import com.github.laxika.magicalvibes.model.PendingInteraction;
@@ -61,7 +62,7 @@ class CloneShellTest extends BaseCardTest {
 
         GameData gd = harness.getGameData();
         // Choose the first card (Grizzly Bears)
-        harness.getGameService().handleLibraryCardChosen(gd, player1, 0);
+        harness.getGameService().handleInteractionAnswer(gd, player1, new InteractionAnswer.LibraryCardChosen(0));
 
         // Card should be in exile
         assertThat(gd.getPlayerExiledCards(player1.getId()))
@@ -96,14 +97,14 @@ class CloneShellTest extends BaseCardTest {
         harness.passBothPriorities(); // resolve ETB trigger
 
         GameData gd = harness.getGameData();
-        harness.getGameService().handleLibraryCardChosen(gd, player1, 0); // exile Grizzly Bears
+        harness.getGameService().handleInteractionAnswer(gd, player1, new InteractionAnswer.LibraryCardChosen(0)); // exile Grizzly Bears
 
         // Reorder remaining: Shock(0), Plains(1), Llanowar Elves(2)
         List<Card> remaining = gd.interaction.activeInteraction(PendingInteraction.LibraryReorder.class).cards();
         int iShock = indexOf(remaining, "Shock");
         int iPlains = indexOf(remaining, "Plains");
         int iElves = indexOf(remaining, "Llanowar Elves");
-        harness.getGameService().handleLibraryCardsReordered(gd, player1, List.of(iPlains, iElves, iShock));
+        harness.getGameService().handleInteractionAnswer(gd, player1, new InteractionAnswer.CardOrder(List.of(iPlains, iElves, iShock)));
 
         // Cards should be on the bottom of the library in the chosen order
         List<Card> deck = gd.playerDecks.get(player1.getId());

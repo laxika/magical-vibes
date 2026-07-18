@@ -5,7 +5,7 @@ import com.github.laxika.magicalvibes.model.GameData;
 import com.github.laxika.magicalvibes.model.PendingInteraction;
 import com.github.laxika.magicalvibes.model.Player;
 import com.github.laxika.magicalvibes.networking.SessionManager;
-import com.github.laxika.magicalvibes.networking.message.ChooseCardFromHandMessage;
+import com.github.laxika.magicalvibes.networking.message.InteractionPromptMessage;
 import com.github.laxika.magicalvibes.service.ability.AbilityActivationService;
 import com.github.laxika.magicalvibes.service.input.CardChoiceHandlerService;
 import org.junit.jupiter.api.BeforeEach;
@@ -65,9 +65,9 @@ class HandCardChoiceInteractionHandlersTest {
         gd.playerIdToName.put(PLAYER2_ID, "Player2");
     }
 
-    private ChooseCardFromHandMessage sentMessage() {
+    private InteractionPromptMessage sentMessage() {
         verify(sessionManager).sendToPlayer(eq(PLAYER1_ID), messageCaptor.capture());
-        return (ChooseCardFromHandMessage) messageCaptor.getValue();
+        return (InteractionPromptMessage) messageCaptor.getValue();
     }
 
     @Nested
@@ -81,10 +81,10 @@ class HandCardChoiceInteractionHandlersTest {
                     PLAYER1_ID, List.of(0, 2), "Choose a creature card from your hand to put onto the battlefield."));
 
             assertThat(gd.interaction.activeInteraction()).isInstanceOf(PendingInteraction.HandCardChoice.class);
-            ChooseCardFromHandMessage msg = sentMessage();
+            InteractionPromptMessage msg = sentMessage();
             assertThat(msg.cardIndices()).containsExactly(0, 2);
             assertThat(msg.prompt()).isEqualTo("Choose a creature card from your hand to put onto the battlefield.");
-            assertThat(msg.canDecline()).isTrue();
+            assertThat(msg.declinable()).isTrue();
         }
 
         @Test
@@ -94,8 +94,8 @@ class HandCardChoiceInteractionHandlersTest {
                     PLAYER1_ID, List.of(1), UUID.randomUUID(), "Choose an Aura."));
 
             assertThat(gd.interaction.activeInteraction()).isInstanceOf(PendingInteraction.TargetedHandCardChoice.class);
-            ChooseCardFromHandMessage msg = sentMessage();
-            assertThat(msg.canDecline()).isTrue();
+            InteractionPromptMessage msg = sentMessage();
+            assertThat(msg.declinable()).isTrue();
         }
 
         @Test
@@ -122,9 +122,9 @@ class HandCardChoiceInteractionHandlersTest {
                     PLAYER1_ID, List.of(0, 1), 2, DiscardFollowUp.NONE, "Choose a card to discard."));
 
             assertThat(gd.interaction.activeInteraction()).isInstanceOf(PendingInteraction.DiscardChoice.class);
-            ChooseCardFromHandMessage msg = sentMessage();
+            InteractionPromptMessage msg = sentMessage();
             assertThat(msg.prompt()).isEqualTo("Choose a card to discard.");
-            assertThat(msg.canDecline()).isFalse();
+            assertThat(msg.declinable()).isFalse();
 
             Player player = new Player(PLAYER1_ID, "Player1");
             assertThat(registry.dispatchAnswer(gd, player, new InteractionAnswer.CardIndexChosen(1))).isTrue();
@@ -172,9 +172,9 @@ class HandCardChoiceInteractionHandlersTest {
 
             assertThat(gd.interaction.activeInteraction())
                     .isInstanceOf(PendingInteraction.DiscardCostChoice.class);
-            ChooseCardFromHandMessage msg = sentMessage();
+            InteractionPromptMessage msg = sentMessage();
             assertThat(msg.prompt()).isEqualTo("Choose a land card to discard as an activation cost.");
-            assertThat(msg.canDecline()).isFalse();
+            assertThat(msg.declinable()).isFalse();
         }
 
         @Test
@@ -199,6 +199,6 @@ class HandCardChoiceInteractionHandlersTest {
         verifyNoInteractions(sessionManager);
 
         assertThat(registry.replayPrompt(gd, PLAYER1_ID)).isTrue();
-        verify(sessionManager).sendToPlayer(eq(PLAYER1_ID), any(ChooseCardFromHandMessage.class));
+        verify(sessionManager).sendToPlayer(eq(PLAYER1_ID), any(InteractionPromptMessage.class));
     }
 }

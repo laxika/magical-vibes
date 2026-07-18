@@ -1,5 +1,6 @@
 package com.github.laxika.magicalvibes.cards.b;
 
+import com.github.laxika.magicalvibes.service.interaction.InteractionAnswer;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardSubtype;
 import com.github.laxika.magicalvibes.model.CardType;
@@ -39,8 +40,7 @@ class BrassHeraldTest extends BaseCardTest {
     private void finishAnyReorder() {
         var reorder = gd.interaction.activeInteraction(PendingInteraction.LibraryReorder.class);
         if (reorder != null) {
-            harness.getGameService().handleLibraryCardsReordered(gd, player1,
-                    IntStream.range(0, reorder.cards().size()).boxed().toList());
+            harness.getGameService().handleInteractionAnswer(gd, player1, new InteractionAnswer.CardOrder(IntStream.range(0, reorder.cards().size()).boxed().toList()));
         }
     }
 

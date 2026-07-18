@@ -1,5 +1,6 @@
 package com.github.laxika.magicalvibes.cards.c;
 
+import com.github.laxika.magicalvibes.service.interaction.InteractionAnswer;
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
 import com.github.laxika.magicalvibes.cards.l.LlanowarElves;
 import com.github.laxika.magicalvibes.model.Card;
@@ -30,7 +31,7 @@ class CorpseConnoisseurTest extends BaseCardTest {
         harness.passBothPriorities(); // Resolve MayEffect → may prompt
         harness.handleMayAbilityChosen(player1, true);
 
-        gs.handleLibraryCardChosen(gd, player1, 0);
+        gs.handleInteractionAnswer(gd, player1, new InteractionAnswer.LibraryCardChosen(0));
 
         assertThat(gd.playerGraveyards.get(player1.getId())).hasSize(1);
         assertThat(gd.playerGraveyards.get(player1.getId()).get(0).getName())

@@ -1,5 +1,6 @@
 package com.github.laxika.magicalvibes.cards.r;
 
+import com.github.laxika.magicalvibes.service.interaction.InteractionAnswer;
 import com.github.laxika.magicalvibes.model.PendingInteraction;
 import com.github.laxika.magicalvibes.cards.f.Forest;
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
@@ -52,7 +53,7 @@ class RangingRaptorsTest extends BaseCardTest {
         assertThat(gd.interaction.activeInteraction()).isInstanceOf(PendingInteraction.LibrarySearch.class);
 
         int battlefieldBefore = gd.playerBattlefields.get(player1.getId()).size();
-        harness.getGameService().handleLibraryCardChosen(gd, player1, 0);
+        harness.getGameService().handleInteractionAnswer(gd, player1, new InteractionAnswer.LibraryCardChosen(0));
 
         // Chosen land should be on the battlefield tapped
         assertThat(gd.playerBattlefields.get(player1.getId())).hasSize(battlefieldBefore + 1);
@@ -125,7 +126,7 @@ class RangingRaptorsTest extends BaseCardTest {
         harness.handleMayAbilityChosen(player2, true);
         assertThat(gd.interaction.activeInteraction()).isInstanceOf(PendingInteraction.LibrarySearch.class);
 
-        harness.getGameService().handleLibraryCardChosen(gd, player2, 0);
+        harness.getGameService().handleInteractionAnswer(gd, player2, new InteractionAnswer.LibraryCardChosen(0));
 
         // Land should be on the battlefield tapped
         assertThat(gd.playerBattlefields.get(player2.getId()))
@@ -169,7 +170,7 @@ class RangingRaptorsTest extends BaseCardTest {
         harness.handleMayAbilityChosen(player2, true);
         assertThat(gd.interaction.activeInteraction()).isInstanceOf(PendingInteraction.LibrarySearch.class);
 
-        harness.getGameService().handleLibraryCardChosen(gd, player2, 0);
+        harness.getGameService().handleInteractionAnswer(gd, player2, new InteractionAnswer.LibraryCardChosen(0));
 
         // Ranging Raptors should be in the graveyard (2/3 took 3 lethal from Hill Giant)
         harness.assertInGraveyard(player2, "Ranging Raptors");

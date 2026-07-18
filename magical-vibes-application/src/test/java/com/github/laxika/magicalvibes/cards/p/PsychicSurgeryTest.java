@@ -1,5 +1,6 @@
 package com.github.laxika.magicalvibes.cards.p;
 
+import com.github.laxika.magicalvibes.service.interaction.InteractionAnswer;
 import com.github.laxika.magicalvibes.cards.f.Forest;
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
 import com.github.laxika.magicalvibes.cards.i.Island;
@@ -93,7 +94,7 @@ class PsychicSurgeryTest extends BaseCardTest {
         assertThat(gd.interaction.activeInteraction()).isInstanceOf(PendingInteraction.LibrarySearch.class);
 
         // Choose to exile the first card (index 0 = Island)
-        gs.handleLibraryCardChosen(gd, player1, 0);
+        gs.handleInteractionAnswer(gd, player1, new InteractionAnswer.LibraryCardChosen(0));
 
         // Island should be exiled in player2's exile zone (card owner's zone)
         assertThat(gd.getPlayerExiledCards(player2.getId()))
@@ -138,7 +139,7 @@ class PsychicSurgeryTest extends BaseCardTest {
         assertThat(gd.interaction.activeInteraction()).isInstanceOf(PendingInteraction.LibrarySearch.class);
 
         // Choose not to exile (-1)
-        gs.handleLibraryCardChosen(gd, player1, -1);
+        gs.handleInteractionAnswer(gd, player1, new InteractionAnswer.LibraryCardChosen(-1));
 
         // Nothing should be exiled
         assertThat(gd.getPlayerExiledCards(player1.getId())).hasSize(exileSizeBefore);
@@ -147,7 +148,7 @@ class PsychicSurgeryTest extends BaseCardTest {
         assertThat(gd.interaction.activeInteraction()).isInstanceOf(PendingInteraction.LibraryReorder.class);
 
         // Reorder: put them back in order [0, 1] (Island on top, Forest second)
-        gs.handleLibraryCardsReordered(gd, player1, List.of(0, 1));
+        gs.handleInteractionAnswer(gd, player1, new InteractionAnswer.CardOrder(List.of(0, 1)));
 
         // Both cards should be on top of player2's library
         List<Card> deckAfter = gd.playerDecks.get(player2.getId());
@@ -212,7 +213,7 @@ class PsychicSurgeryTest extends BaseCardTest {
         assertThat(gd.interaction.activeInteraction()).isInstanceOf(PendingInteraction.LibrarySearch.class);
 
         // Exile the only card
-        gs.handleLibraryCardChosen(gd, player1, 0);
+        gs.handleInteractionAnswer(gd, player1, new InteractionAnswer.LibraryCardChosen(0));
 
         // Card should be exiled in player2's exile zone (card owner's zone)
         assertThat(gd.getPlayerExiledCards(player2.getId()))

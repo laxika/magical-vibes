@@ -1,8 +1,8 @@
 package com.github.laxika.magicalvibes.ai.interaction;
 
+import com.github.laxika.magicalvibes.service.interaction.InteractionAnswer;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.PendingInteraction;
-import com.github.laxika.magicalvibes.networking.message.MultipleCardsChosenRequest;
 import lombok.extern.slf4j.Slf4j;
 
 import java.util.Comparator;
@@ -34,7 +34,7 @@ class PermanentAuctionChoiceAiStrategy implements AiInteractionStrategy<PendingI
         }
 
         log.info("AI: Picking {} in permanent auction in game {}", pick.getName(), ctx.gameId());
-        ctx.gameActions().handleMultipleCardsChosen(ctx.selfConnection(),
-                new MultipleCardsChosenRequest(List.of(pick.getId())));
+        ctx.gameActions().answerInteraction(ctx.selfConnection(),
+                new InteractionAnswer.CardsChosen(List.of(pick.getId())));
     }
 }

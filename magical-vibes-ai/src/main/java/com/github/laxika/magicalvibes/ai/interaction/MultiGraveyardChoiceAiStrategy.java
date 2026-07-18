@@ -1,7 +1,7 @@
 package com.github.laxika.magicalvibes.ai.interaction;
 
+import com.github.laxika.magicalvibes.service.interaction.InteractionAnswer;
 import com.github.laxika.magicalvibes.model.PendingInteraction;
-import com.github.laxika.magicalvibes.networking.message.MultipleCardsChosenRequest;
 import lombok.extern.slf4j.Slf4j;
 
 import java.util.List;
@@ -32,6 +32,6 @@ class MultiGraveyardChoiceAiStrategy implements AiInteractionStrategy<PendingInt
         List<UUID> chosen = validIds.stream().limit(interaction.maxCount()).toList();
 
         log.info("AI: Choosing {} graveyard cards in game {}", chosen.size(), ctx.gameId());
-        ctx.gameActions().handleMultipleCardsChosen(ctx.selfConnection(), new MultipleCardsChosenRequest(chosen));
+        ctx.gameActions().answerInteraction(ctx.selfConnection(), new InteractionAnswer.CardsChosen(chosen));
     }
 }

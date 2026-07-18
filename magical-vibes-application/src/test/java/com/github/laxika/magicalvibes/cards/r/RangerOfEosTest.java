@@ -1,5 +1,6 @@
 package com.github.laxika.magicalvibes.cards.r;
 
+import com.github.laxika.magicalvibes.service.interaction.InteractionAnswer;
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
 import com.github.laxika.magicalvibes.cards.l.LlanowarElves;
 import com.github.laxika.magicalvibes.cards.s.SuntailHawk;
@@ -47,8 +48,8 @@ class RangerOfEosTest extends BaseCardTest {
         harness.handleMayAbilityChosen(player1, true);
 
         int handSizeBefore = gd.playerHands.get(player1.getId()).size();
-        gs.handleLibraryCardChosen(gd, player1, 0);
-        gs.handleLibraryCardChosen(gd, player1, 0);
+        gs.handleInteractionAnswer(gd, player1, new InteractionAnswer.LibraryCardChosen(0));
+        gs.handleInteractionAnswer(gd, player1, new InteractionAnswer.LibraryCardChosen(0));
 
         assertThat(gd.playerHands.get(player1.getId())).hasSize(handSizeBefore + 2);
         assertThat(gd.interaction.activeInteraction(PendingInteraction.LibrarySearch.class)).isNull();

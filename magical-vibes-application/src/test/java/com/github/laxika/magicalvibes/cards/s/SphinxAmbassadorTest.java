@@ -1,5 +1,6 @@
 package com.github.laxika.magicalvibes.cards.s;
 
+import com.github.laxika.magicalvibes.service.interaction.InteractionAnswer;
 import com.github.laxika.magicalvibes.model.GameLogEntry;
 
 import com.github.laxika.magicalvibes.model.PendingInteraction;
@@ -73,7 +74,7 @@ class SphinxAmbassadorTest extends BaseCardTest {
         resolveCombat();
 
         // Controller selects the card from library
-        gs.handleLibraryCardChosen(gd, player1, 0);
+        gs.handleInteractionAnswer(gd, player1, new InteractionAnswer.LibraryCardChosen(0));
 
         // Opponent should now be prompted to name a card
         assertThat(gd.interaction.activeInteraction()).isInstanceOf(PendingInteraction.ColorChoice.class);
@@ -113,7 +114,7 @@ class SphinxAmbassadorTest extends BaseCardTest {
 
         resolveCombat();
 
-        gs.handleLibraryCardChosen(gd, player1, 0);
+        gs.handleInteractionAnswer(gd, player1, new InteractionAnswer.LibraryCardChosen(0));
 
         // Opponent names the correct card
         harness.handleListChoice(player2, "Grizzly Bears");
@@ -147,7 +148,7 @@ class SphinxAmbassadorTest extends BaseCardTest {
 
         resolveCombat();
 
-        gs.handleLibraryCardChosen(gd, player1, 0);
+        gs.handleInteractionAnswer(gd, player1, new InteractionAnswer.LibraryCardChosen(0));
 
         // Opponent names a wrong card
         harness.handleListChoice(player2, "Grizzly Bears");
@@ -184,7 +185,7 @@ class SphinxAmbassadorTest extends BaseCardTest {
 
         resolveCombat();
 
-        gs.handleLibraryCardChosen(gd, player1, 0);
+        gs.handleInteractionAnswer(gd, player1, new InteractionAnswer.LibraryCardChosen(0));
         harness.handleListChoice(player2, "Grizzly Bears");
 
         // Card name should NOT appear in any "reveals" log entry
@@ -205,7 +206,7 @@ class SphinxAmbassadorTest extends BaseCardTest {
 
         resolveCombat();
 
-        gs.handleLibraryCardChosen(gd, player1, 0);
+        gs.handleInteractionAnswer(gd, player1, new InteractionAnswer.LibraryCardChosen(0));
         harness.handleListChoice(player2, "Shock"); // wrong guess
         harness.handleMayAbilityChosen(player1, false); // decline
 
@@ -238,7 +239,7 @@ class SphinxAmbassadorTest extends BaseCardTest {
 
         resolveCombat();
 
-        gs.handleLibraryCardChosen(gd, player1, 0);
+        gs.handleInteractionAnswer(gd, player1, new InteractionAnswer.LibraryCardChosen(0));
         harness.handleListChoice(player2, "Shock");
         harness.handleMayAbilityChosen(player1, true);
 

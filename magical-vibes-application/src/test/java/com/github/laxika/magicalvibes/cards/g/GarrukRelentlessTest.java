@@ -1,5 +1,6 @@
 package com.github.laxika.magicalvibes.cards.g;
 
+import com.github.laxika.magicalvibes.service.interaction.InteractionAnswer;
 import com.github.laxika.magicalvibes.model.PendingInteraction;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardColor;
@@ -203,7 +204,7 @@ class GarrukRelentlessTest extends BaseCardTest {
             assertThat(gd.interaction.activeInteraction(PendingInteraction.LibrarySearch.class) != null).isTrue();
 
             // Choose the creature from library
-            gs.handleLibraryCardChosen(gd, player1, 0);
+            gs.handleInteractionAnswer(gd, player1, new InteractionAnswer.LibraryCardChosen(0));
 
             // The creature card should now be in hand
             assertThat(gd.playerHands.get(player1.getId()))
@@ -240,7 +241,7 @@ class GarrukRelentlessTest extends BaseCardTest {
             assertThat(gd.interaction.activeInteraction(PendingInteraction.LibrarySearch.class) != null).isTrue();
 
             // Choose the creature from library
-            gs.handleLibraryCardChosen(gd, player1, 0);
+            gs.handleInteractionAnswer(gd, player1, new InteractionAnswer.LibraryCardChosen(0));
 
             assertThat(gd.playerHands.get(player1.getId()))
                     .anyMatch(c -> c.getName().equals("Runeclaw Bear"));

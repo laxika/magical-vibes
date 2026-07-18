@@ -1,8 +1,8 @@
 package com.github.laxika.magicalvibes.cards.f;
 
+import com.github.laxika.magicalvibes.service.interaction.InteractionAnswer;
 import com.github.laxika.magicalvibes.model.GameLogEntry;
 
-import com.github.laxika.magicalvibes.cards.f.Forest;
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
 import com.github.laxika.magicalvibes.cards.i.Island;
 import com.github.laxika.magicalvibes.cards.p.Plains;
@@ -52,7 +52,7 @@ class FertilidTest extends BaseCardTest {
                 .allMatch(c -> c.hasType(CardType.LAND));
 
         int battlefieldBefore = gd.playerBattlefields.get(player2.getId()).size();
-        gs.handleLibraryCardChosen(gd, player2, 0);
+        gs.handleInteractionAnswer(gd, player2, new InteractionAnswer.LibraryCardChosen(0));
 
         assertThat(gd.playerBattlefields.get(player2.getId())).hasSize(battlefieldBefore + 1);
         long tappedLands = gd.playerBattlefields.get(player2.getId()).stream()
@@ -72,7 +72,7 @@ class FertilidTest extends BaseCardTest {
         harness.passBothPriorities();
 
         int battlefieldBefore = gd.playerBattlefields.get(player1.getId()).size();
-        gs.handleLibraryCardChosen(gd, player1, 0);
+        gs.handleInteractionAnswer(gd, player1, new InteractionAnswer.LibraryCardChosen(0));
 
         assertThat(gd.playerBattlefields.get(player1.getId())).hasSize(battlefieldBefore + 1);
     }
@@ -88,7 +88,7 @@ class FertilidTest extends BaseCardTest {
         harness.passBothPriorities();
 
         int battlefieldBefore = gd.playerBattlefields.get(player2.getId()).size();
-        gs.handleLibraryCardChosen(gd, player2, -1);
+        gs.handleInteractionAnswer(gd, player2, new InteractionAnswer.LibraryCardChosen(-1));
 
         assertThat(gd.playerBattlefields.get(player2.getId())).hasSize(battlefieldBefore);
         assertThat(gd.interaction.activeInteraction(PendingInteraction.LibrarySearch.class)).isNull();
