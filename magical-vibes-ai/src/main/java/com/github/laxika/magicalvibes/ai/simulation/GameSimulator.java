@@ -2,6 +2,7 @@ package com.github.laxika.magicalvibes.ai.simulation;
 
 import com.github.laxika.magicalvibes.ai.AiManaManager;
 import com.github.laxika.magicalvibes.ai.BoardEvaluator;
+import com.github.laxika.magicalvibes.ai.CombatDamageAssignmentHeuristic;
 import com.github.laxika.magicalvibes.ai.CombatSimulator;
 import com.github.laxika.magicalvibes.ai.SpellEvaluator;
 import com.github.laxika.magicalvibes.model.Card;
@@ -657,7 +658,8 @@ public class GameSimulator {
                 }
             }
             case PendingInteraction.CombatDamageAssignment cda -> {
-                Map<UUID, Integer> assignments = autoAssignCombatDamage(cda);
+                Map<UUID, Integer> assignments = CombatDamageAssignmentHeuristic.assign(
+                        cda, gd, gameQueryService);
                 gameService.handleCombatDamageAssigned(gd, player, cda.attackerIndex(), assignments);
             }
             case PendingInteraction.Scry sc -> {
@@ -1186,48 +1188,6 @@ public class GameSimulator {
             if (battlefield.get(i).getId().equals(permanentId)) return i;
         }
         return -1;
-    }
-
-    private Map<UUID, Integer> autoAssignCombatDamage(PendingInteraction.CombatDamageAssignment cda) {
-        Map<UUID, Integer> assignments = new HashMap<>();
-        int totalDamage = cda.totalDamage();
-
-        // Single-recipient assignment (e.g. an unblocked Cunning Giant): all damage to one target,
-        // preferring a defending creature this attacker can kill, otherwise the player.
-        if (cda.singleRecipient()) {
-            var killable = cda.validTargets().stream()
-                    .filter(t -> !t.isPlayer())
-                    .filter(t -> t.effectiveToughness() - t.currentDamage() <= totalDamage)
-                    .findFirst();
-            var chosen = killable.orElseGet(() -> cda.validTargets().stream()
-                    .filter(com.github.laxika.magicalvibes.model.CombatDamageTarget::isPlayer)
-                    .findFirst()
-                    .orElse(cda.validTargets().get(0)));
-            assignments.put(chosen.id(), totalDamage);
-            return assignments;
-        }
-
-        int remaining = totalDamage;
-        for (var target : cda.validTargets()) {
-            if (target.isPlayer()) continue;
-            int lethal = cda.isDeathtouch()
-                    ? Math.max(0, 1 - target.currentDamage())
-                    : target.effectiveToughness() - target.currentDamage();
-            int dmg = Math.min(remaining, lethal);
-            if (dmg > 0) {
-                assignments.put(target.id(), dmg);
-                remaining -= dmg;
-            }
-        }
-        if (remaining > 0) {
-            for (var target : cda.validTargets()) {
-                if (target.isPlayer()) {
-                    assignments.put(target.id(), remaining);
-                    break;
-                }
-            }
-        }
-        return assignments;
     }
 
     private UUID getOpponentId(GameData gd, UUID playerId) {
