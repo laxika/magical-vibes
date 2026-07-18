@@ -77,7 +77,7 @@ All paths relative to `cards/`.
 | Destroy + controller life loss | `g/GlissasScorn.java` | DestroyTargetPermanentThenEffect(LoseLifeEffect(1), TARGET_CONTROLLER) + artifact filter |
 | Board wipe | `w/WrathOfGod.java` | DestroyAllPermanentsEffect |
 | Board wipe + opponent library search to graveyard | `l/LifesFinale.java` | DestroyAllPermanentsEffect + SearchTargetLibraryForCardsToGraveyardEffect(3, CREATURE) + PlayerPredicateTargetFilter(OPPONENT) |
-| Targeted board wipe (opponent's creatures) + controller life loss per destroyed | `r/RainOfDaggers.java` | DestroyCreaturesTargetPlayerControlsAndLoseLifePerDestroyedEffect(2) + PlayerPredicateTargetFilter(OPPONENT) — destroys creatures target opponent controls, controller loses 2 life per creature actually destroyed |
+| Targeted board wipe (opponent's creatures) + controller life loss per destroyed | `r/RainOfDaggers.java` | DestroyAllPermanentsEffect(PermanentIsCreaturePredicate(), EachPermanentScope.TARGET_PLAYER, LoseLifeEffect(Scaled(EventValue(), 2), CONTROLLER)) + PlayerPredicateTargetFilter(OPPONENT) — destroyed count lands on the rider's `eventValue`, counting only creatures actually destroyed |
 | Destroy land + mass creature/planeswalker damage | `s/StarOfExtinction.java` | DestroyTargetPermanentEffect + MassDamageEffect(20, false, false, true, null) — targets a land, deals 20 damage to each creature and each planeswalker (damagesPlaneswalkers=true) |
 | Opponent land edict | `y/YawningFissure.java` | SacrificePermanentsEffect(1, PermanentIsLandPredicate, EACH_OPPONENT) — each opponent sacrifices a land, controller unaffected |
 | Counter (any) | `c/Cancel.java` | CounterSpellEffect (spell targeting auto-derived) |

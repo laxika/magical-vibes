@@ -19,5 +19,13 @@ public enum ThenEffectRecipient {
      * effect), snapshotted before it leaves the battlefield (e.g. Path of Peace: "its owner gains
      * 4 life"). Differs from {@link #TARGET_CONTROLLER} only when the destroyed creature was stolen.
      */
-    TARGET_OWNER
+    TARGET_OWNER,
+    /**
+     * The then-effect stays under the spell/ability controller but its <em>target</em> becomes the
+     * destroyed permanent's controller (snapshotted before destruction): the derived entry's
+     * {@code targetId} is set to that player so a {@code TARGET_PLAYER}-recipient rider reads them
+     * as the victim while damage-source shields still see the caster ("Cryoclasm deals 3 damage to
+     * that land's controller").
+     */
+    TARGET_CONTROLLER_AS_TARGET
 }

@@ -1402,3 +1402,96 @@ missing primitive / targetSpec work — not attempted. **Tier 3** (fold `Destroy
 `DestroyTargetPermanentThenEffect` generic) is a separate batch. Key lesson recorded for future sessions:
 **verify a wrapper actually re-enters `resolveEffectsLoop` before assuming `SequenceEffect` works under it** —
 direct-dispatch wrappers (`ClashEffect`, `FlipCoinWinEffect`) need the local synchronous expansion added here.
+
+## Batch 5 Session 1 — Batch-2 Tier-1 destroy-count rider cluster folded (4 records deleted)
+
+Built the generalized **destroy-all → count-on-eventValue → rider** infra the Batch-2 closeout ranked
+highest-value, then folded all four Tier-1 count records onto it.
+
+### What was added
+- `DestroyAllPermanentsEffect` reshaped to `(PermanentPredicate filter, boolean cannotBeRegenerated,
+  EachPermanentScope scope, CardEffect thenEffect)` — old 1/2-arg ctors kept as ALL_PLAYERS/no-rider sugar
+  (40 existing card users untouched), plus `(filter, thenEffect)` and `(filter, scope, thenEffect)`.
+  **Reused the session-11 `EachPermanentScope{ALL_PLAYERS, TARGET_PLAYER}` enum** — no new scope enum.
+- `DestructionSupport.destroyBatch` now returns the count of permanents actually destroyed
+  (indestructible/regenerated excluded) — all other callers ignore the return.
+- `DestroyAllPermanentsEffectHandler` gained the TARGET_PLAYER collection branch (targeted player's
+  battlefield only; predicate evaluated with the same source-carrying FilterContext) and the rider dispatch:
+  derived entry (same controller/targetId), `eventValue = destroyedCount`, resolved directly via
+  `EffectHandlerRegistry` + `checkWinCondition` — byte-for-byte the `DestroyTargetPermanentThenEffectHandler`
+  pattern. Rider resolves UNCONDITIONALLY (0-destroyed ⇒ "gains 0 life" log; matches the existing Then-rider
+  precedent; life-gain/loss triggers guard `<= 0` so no phantom triggers; Phyrexian Rebirth's 0/0 token is
+  still created and dies to SBA — rules-correct).
+- `CreateTokenEffect.power`/`.toughness` widened `int → DynamicAmount` (every ctor is `Fixed` sugar; ONE new
+  ctor `(String, DynamicAmount, DynamicAmount, CardColor, List, Set, Set)` for "an X/X token where X is …";
+  new `(CardType, DynamicAmount amount, String, int, int, …)` bridge ctor for the 5 cards that used the
+  canonical shape with a dynamic count + printed P/T). `tokenPower()`/`tokenToughness()` Fixed-extract (dynamic
+  P/T reports 0 to the AI estimators — the AI's 3.0-per-token fallback then applies; the old bespoke record was
+  not AI-scored at all). `PermanentControlSupport.applyCreateToken` gained a pre-resolved-P/T overload
+  (evaluated by `CreateTokenEffectHandler` with the entry's AmountContext so `EventValue()` P/T works); the
+  legacy overload Fixed-extracts and throws on dynamic P/T. New `CreateTokenEffect.withAmount(int)` copier
+  replaced two 19-arg template-copy sites (PermanentChoiceBattlefieldHandlerService, DeathTriggerCollectorService).
+
+### Records deleted (+4 handlers, all inlining the same snapshot-indestructible/regenerate/count loop)
+- `DestroyAllPermanentsAndGainLifePerDestroyedEffect` → Fracturing Gust / Righteous Fury
+  `GainLifeEffect(Scaled(EventValue(), 2))`, Paraselene `GainLifeEffect(EventValue())`.
+- `DestroyCreaturesTargetPlayerControlsAndLoseLifePerDestroyedEffect` → Rain of Daggers
+  `(PermanentIsCreaturePredicate(), TARGET_PLAYER, LoseLifeEffect(Scaled(EventValue(), 2), CONTROLLER))`.
+- `DestroyCreaturesTargetPlayerControlsAndDrawPerDestroyedEffect` → Overwhelming Forces
+  `(…, TARGET_PLAYER, DrawCardEffect(EventValue()))`.
+- `DestroyAllCreaturesAndCreateTokenFromDestroyedCountEffect` → Phyrexian Rebirth
+  `(PermanentIsCreaturePredicate(), CreateTokenEffect("Phyrexian Horror", EventValue(), EventValue(), null,
+  [PHYREXIAN, HORROR], {}, {ARTIFACT}))`. Cosmetic log delta: the canonical token path logs "… creature token
+  enters" (not "artifact creature token"); PhyrexianRebirthTest asserts properties, not log text — all 5 pass.
+
+### Semantics verified byte-identical
+- Target-player collection: old handlers used `gameQueryService.isCreature`; `PredicateEvaluationService`
+  routes `PermanentIsCreaturePredicate` to exactly that method.
+- The 6 cards' AI classification changed from unscored → `BoardWipeEffect.sweepsBoard()` (they ARE wipes);
+  none of the six appears in any calibrated AI test.
+- Tests: FracturingGust(3)/RighteousFury(2)/Paraselene(5)/RainOfDaggers(3)/OverwhelmingForces(3)/
+  PhyrexianRebirth(5) all PASS; DestroyAllPermanentsEffectHandlerTest updated (2 new ctor deps) + 3 new tests
+  (TARGET_PLAYER scope, rider eventValue capture, no-rider dispatch); Armageddon/BackToNature (existing users)
+  + AdditiveEvolution (token path) PASS. Arch-test whitelist entry for the deleted token handler removed.
+
+### Tier-1 item 5 DEFERRED — `SacrificeCreatureAndControllerGainsLifeEqualToToughnessEffect`
+**Blocker (rules-timing conflict):** its answer path applies the life gain INLINE during the same resolution
+(single-creature auto-pick applies sacrifice+gain synchronously; multi-creature interaction's answer handler
+does the same) — rules-correct for "You gain life equal to its toughness" (one resolving object). The
+`SacrificePermanentThenEffect` rider precedent instead PUSHES the rider as a separate TRIGGERED_ABILITY stack
+entry (respondable) — folding onto it would ship a rules REGRESSION for Tribute to Hunger / Doomgape.
+**Unlock recorded:** first change `SacrificePermanentThen`'s rider dispatch to inline resolution (itself a
+rules FIX for its 4 "if you do" users — CR 608: same-resolution), then fold this record with an
+edict-recipient + TOUGHNESS eventValue snapshot. Needs its own session with per-user rules verification.
+
+## Batch 5 Session 2 — Batch-4 Tier-3: 2 of 4 Destroy*And* records folded into the Then generic
+
+### Folded (2 records + 2 handlers + 1 stale handler-unit-test deleted)
+- `DestroyTargetLandAndDamageControllerEffect` (Cryoclasm 3, Melt Terrain 2) →
+  `DestroyTargetPermanentThenEffect(DealDamageToPlayersEffect(N, TARGET_PLAYER), TARGET_CONTROLLER_AS_TARGET)`.
+  **New `ThenEffectRecipient.TARGET_CONTROLLER_AS_TARGET`**: the rider stays under the CASTER (damage-source
+  shields/multipliers key on the caster — session-19/22 trap honored) while the derived entry's `targetId`
+  becomes the snapshotted destroyed-permanent's-controller, which the `TARGET_PLAYER` damage recipient reads
+  as the victim. This is exactly the session-22 "PHASE 2" plan. Dropped the old handler's inline
+  `hasType(LAND)` fizzle guard — target legality is card-level (`target(...)` land filters) and rechecked by
+  the engine; the guard was redundant belt-and-braces. Old damage plumbing
+  (`DestructionSupport.dealNoncombatDamageToPlayer`) swapped for the session-22 standard
+  (`DamageSupport.dealDamageToPlayer` via the rider handler) — CryoclasmTest (7) / MeltTerrainTest (7) pin
+  shields/prevention and PASS.
+- `DestroyTargetPermanentAndControllerSearchesLibraryToBattlefieldEffect` (Ghost Quarter untapped, Erode
+  tapped) → `DestroyTargetPermanentThenEffect(SearchLibraryEffect(basicLand, BATTLEFIELD[_TAPPED]),
+  TARGET_CONTROLLER)`. The `may` flag was DROPPED as redundant: a restricted `SearchLibraryEffect` sets
+  `canFailToFind` — declining IS failing to find (hidden-zone search rules). Both paths feed the same
+  `PendingInteraction.LibrarySearch`; GhostQuarterTest (8, incl. fail-to-find + own-land + no-basics-no-prompt)
+  and ErodeTest (4) PASS. Prompt text is now the generic search prompt (cosmetic delta, not test-pinned).
+- Stale `DestroyTargetLandAndDamageControllerEffectHandlerTest` deleted (coverage lives behaviorally in the
+  two card tests). Existing Then users unaffected: CrumbleTest (2) / DeathsCaressTest (5) PASS.
+
+### Deferred (2 of 4, each needs a NEW standalone primitive — net-zero record delta today)
+- `DestroyTargetThenRevealUntilTypeToBattlefieldEffect` (Polymorph) — no standalone
+  "reveal-until-type-to-battlefield, rest shuffled" record exists (`RevealUntilLandToBattlefieldRestToBottom`
+  differs: rest to bottom). Fold = extract that primitive first; do it when a second user appears or in a
+  dedicated primitive-extraction session.
+- `DestroyTargetAndEachPlayerSearchesBasicLandToBattlefieldEffect` (Field of Ruin) — no standalone
+  "each player searches basic land to battlefield" record; its APNAP `LibrarySearchFollowUp.eachPlayerBasicLand`
+  queue would move wholesale into the new primitive. Same net-zero call.

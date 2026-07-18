@@ -73,14 +73,19 @@ public class DestroyTargetPermanentThenEffectHandler implements NormalEffectHand
         UUID thenControllerId = switch (e.recipient()) {
             case TARGET_CONTROLLER -> targetControllerId;
             case TARGET_OWNER -> targetOwnerId;
-            case CONTROLLER -> entry.getControllerId();
+            case CONTROLLER, TARGET_CONTROLLER_AS_TARGET -> entry.getControllerId();
         };
         if (thenControllerId == null) {
             return;
         }
 
+        // TARGET_CONTROLLER_AS_TARGET retargets the rider at the destroyed permanent's controller
+        // while the caster stays the resolving controller (damage shields key on the source).
+        UUID thenTargetId = e.recipient() == ThenEffectRecipient.TARGET_CONTROLLER_AS_TARGET
+                ? targetControllerId
+                : entry.getTargetId();
         StackEntry thenEntry = new StackEntry(entry.getEntryType(), entry.getCard(), thenControllerId,
-                entry.getDescription(), List.of(e.thenEffect()), entry.getTargetId(), entry.getSourcePermanentId());
+                entry.getDescription(), List.of(e.thenEffect()), thenTargetId, entry.getSourcePermanentId());
         thenEntry.setEventValue(statValue);
         thenEntry.setSourcePermanentSnapshot(entry.getSourcePermanentSnapshot());
 
