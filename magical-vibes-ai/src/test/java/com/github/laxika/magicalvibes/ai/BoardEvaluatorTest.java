@@ -20,11 +20,15 @@ import com.github.laxika.magicalvibes.cards.s.SeveredLegion;
 import com.github.laxika.magicalvibes.cards.v.ViashinoRunner;
 import com.github.laxika.magicalvibes.cards.s.Swamp;
 import com.github.laxika.magicalvibes.cards.w.WallOfWood;
+import com.github.laxika.magicalvibes.cards.w.WrathOfGod;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardType;
+import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.GameData;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.Player;
+import com.github.laxika.magicalvibes.model.StackEntry;
+import com.github.laxika.magicalvibes.model.StackEntryType;
 import com.github.laxika.magicalvibes.testutil.GameTestHarness;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
@@ -959,6 +963,40 @@ class BoardEvaluatorTest {
         void bestSacrificeCostEmptyList() {
             double cost = evaluator.bestSacrificeCost(gd, java.util.List.of(), player1.getId(), player2.getId());
             assertThat(cost).isEqualTo(0.0);
+        }
+
+        @Test
+        @DisplayName("creature doomed by Wrath on the stack is near-free to sacrifice")
+        void doomedByBoardWipeNearFreeToSacrifice() {
+            Permanent bears = createReadyCreature(new GrizzlyBears());
+            gd.playerBattlefields.get(player1.getId()).add(bears);
+
+            double healthyCost = evaluator.sacrificeCost(gd, bears, player1.getId(), player2.getId());
+
+            WrathOfGod wrath = new WrathOfGod();
+            gd.stack.add(new StackEntry(StackEntryType.SORCERY_SPELL, wrath, player2.getId(),
+                    wrath.getName(), wrath.getEffects(EffectSlot.SPELL), 0));
+
+            double doomedCost = evaluator.sacrificeCost(gd, bears, player1.getId(), player2.getId());
+
+            assertThat(doomedCost).isEqualTo(0.5);
+            assertThat(doomedCost).isLessThan(healthyCost);
+            assertThat(evaluator.isDoomedByStack(gd, bears, player1.getId())).isTrue();
+        }
+
+        @Test
+        @DisplayName("indestructible creature is not doomed by Wrath on the stack")
+        void indestructibleNotDoomedByWrath() {
+            Permanent myr = createReadyCreature(new DarksteelMyr());
+            gd.playerBattlefields.get(player1.getId()).add(myr);
+
+            WrathOfGod wrath = new WrathOfGod();
+            gd.stack.add(new StackEntry(StackEntryType.SORCERY_SPELL, wrath, player2.getId(),
+                    wrath.getName(), wrath.getEffects(EffectSlot.SPELL), 0));
+
+            assertThat(evaluator.isDoomedByStack(gd, myr, player1.getId())).isFalse();
+            assertThat(evaluator.sacrificeCost(gd, myr, player1.getId(), player2.getId()))
+                    .isGreaterThan(0.5);
         }
 
         private Permanent createReadyCreature(Card card) {

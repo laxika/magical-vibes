@@ -1218,6 +1218,31 @@ public class GameData {
     }
 
     /**
+     * Returns the other seated player's id in a two-player game, or {@code null} when none is
+     * present (single-player / not yet seated).
+     */
+    public UUID getOpponentId(UUID playerId) {
+        for (UUID id : orderedPlayerIds) {
+            if (!id.equals(playerId)) {
+                return id;
+            }
+        }
+        return null;
+    }
+
+    /**
+     * Battlefield of {@link #getOpponentId(UUID)}'s opponent. Empty when there is no opponent or
+     * that player has no battlefield list yet.
+     */
+    public List<Permanent> getOpponentBattlefield(UUID playerId) {
+        UUID opponentId = getOpponentId(playerId);
+        if (opponentId == null) {
+            return List.of();
+        }
+        return playerBattlefields.getOrDefault(opponentId, List.of());
+    }
+
+    /**
      * Returns how much life the given player has gained so far this turn (0 if none).
      */
     public int getLifeGainedThisTurn(UUID playerId) {

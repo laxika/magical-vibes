@@ -34,14 +34,7 @@ class MultiPermanentChoiceAiStrategy implements AiInteractionStrategy<PendingInt
         }
 
         GameData gameData = ctx.gameData();
-        UUID opponentId = null;
-        for (UUID id : gameData.orderedPlayerIds) {
-            if (!id.equals(ctx.aiPlayerId())) {
-                opponentId = id;
-                break;
-            }
-        }
-        List<Permanent> opponentField = gameData.playerBattlefields.getOrDefault(opponentId, List.of());
+        List<Permanent> opponentField = gameData.getOpponentBattlefield(ctx.aiPlayerId());
 
         List<UUID> chosen = opponentField.stream()
                 .filter(p -> validIds.contains(p.getId()))

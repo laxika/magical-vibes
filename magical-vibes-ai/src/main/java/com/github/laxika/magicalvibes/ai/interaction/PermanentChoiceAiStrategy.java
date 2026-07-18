@@ -1,9 +1,11 @@
 package com.github.laxika.magicalvibes.ai.interaction;
 
-import com.github.laxika.magicalvibes.service.interaction.InteractionAnswer;
 import com.github.laxika.magicalvibes.model.GameData;
 import com.github.laxika.magicalvibes.model.PendingInteraction;
 import com.github.laxika.magicalvibes.model.Permanent;
+import com.github.laxika.magicalvibes.model.PermanentChoiceContext;
+import com.github.laxika.magicalvibes.model.effect.CostEffect;
+import com.github.laxika.magicalvibes.service.interaction.InteractionAnswer;
 import lombok.extern.slf4j.Slf4j;
 
 import java.util.Comparator;
@@ -16,6 +18,9 @@ import java.util.UUID;
  * creature (by effective power), then the opponent's highest-mana-value permanent, then its
  * own cheapest permanent, then the first valid ID. Ported verbatim from the legacy
  * {@code AiChoiceHandler.handlePermanentChoice} heuristic.
+ *
+ * <p>Sacrifice costs on activated abilities additionally avoid sacrificing the ability's
+ * source while other legal fodder remains (keep Viscera Seer online to sac the rest).
  */
 @Slf4j
 class PermanentChoiceAiStrategy implements AiInteractionStrategy<PendingInteraction.PermanentChoice> {
@@ -37,15 +42,26 @@ class PermanentChoiceAiStrategy implements AiInteractionStrategy<PendingInteract
         }
 
         GameData gameData = ctx.gameData();
-        UUID opponentId = null;
-        for (UUID id : gameData.orderedPlayerIds) {
-            if (!id.equals(ctx.aiPlayerId())) {
-                opponentId = id;
-                break;
+        List<Permanent> opponentField = gameData.getOpponentBattlefield(ctx.aiPlayerId());
+        List<Permanent> ownField = gameData.playerBattlefields.getOrDefault(ctx.aiPlayerId(), List.of());
+
+        // Activated-ability sacrifice costs: keep the outlet, sac cheapest other fodder first
+        UUID abilitySourceId = sacrificeAbilitySourceToPreserve(interaction.context());
+        if (abilitySourceId != null) {
+            UUID fodder = ownField.stream()
+                    .filter(p -> validIds.contains(p.getId()))
+                    .filter(p -> !p.getId().equals(abilitySourceId))
+                    .min(Comparator.comparingInt(p -> p.getCard().getManaValue()))
+                    .map(Permanent::getId)
+                    .orElse(null);
+            if (fodder != null) {
+                log.info("AI: Choosing sacrifice fodder {} (preserving outlet {}) in game {}",
+                        fodder, abilitySourceId, ctx.gameId());
+                ctx.gameActions().answerInteraction(ctx.selfConnection(),
+                        new InteractionAnswer.PermanentChosen(fodder));
+                return;
             }
         }
-        List<Permanent> opponentField = gameData.playerBattlefields.getOrDefault(opponentId, List.of());
-        List<Permanent> ownField = gameData.playerBattlefields.getOrDefault(ctx.aiPlayerId(), List.of());
 
         // Try opponent's best creature first
         UUID best = opponentField.stream()
@@ -73,5 +89,22 @@ class PermanentChoiceAiStrategy implements AiInteractionStrategy<PendingInteract
 
         log.info("AI: Choosing permanent {} in game {}", best, ctx.gameId());
         ctx.gameActions().answerInteraction(ctx.selfConnection(), new InteractionAnswer.PermanentChosen(best));
+    }
+
+    /**
+     * When paying an activated ability's sacrifice cost, returns the ability source id so the
+     * AI can prefer other creatures as fodder and keep the outlet available.
+     */
+    private static UUID sacrificeAbilitySourceToPreserve(PermanentChoiceContext context) {
+        if (!(context instanceof PermanentChoiceContext.ActivatedAbilityCostChoice costChoice)) {
+            return null;
+        }
+        if (!(costChoice.costEffect() instanceof CostEffect cost)) {
+            return null;
+        }
+        if (!cost.sacrificesChosenCreature() && cost.consumedPermanentFilter() == null) {
+            return null;
+        }
+        return costChoice.sourcePermanentId();
     }
 }

@@ -1974,7 +1974,9 @@ public class HardAiDecisionEngine extends AiDecisionEngine {
             }
             if (costEffect.consumesSourcePermanent()) {
                 if (gameQueryService.isCreature(gameData, permanent)) {
-                    cost += boardEval.creatureScore(gameData, permanent, aiPlayer.getId(), opponentId);
+                    // Use sacrificeCost so doomed/dying creatures are near-free
+                    // (e.g. Mogg Fanatic pinging before Wrath resolves)
+                    cost += boardEval.sacrificeCost(gameData, permanent, aiPlayer.getId(), opponentId);
                 } else {
                     cost += permanent.getCard().getManaValue() * 3.0;
                 }

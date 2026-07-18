@@ -4221,6 +4221,80 @@ class HardAiDecisionEngineTest {
                 p.getCard().getName().equals("Spiketail Hatchling"))).isTrue();
     }
 
+    @Test
+    @DisplayName("Hard AI sacs fodder to Viscera Seer for Scry before Wrath of God resolves")
+    void sacrificesToVisceraSeerBeforeBoardWipe() {
+        HardAiDecisionEngine ai = createHardAi(player1);
+
+        harness.forceActivePlayer(player2);
+        harness.forceStep(TurnStep.PRECOMBAT_MAIN);
+        harness.clearPriorityPassed();
+        gd.priorityPassedBy.add(player2.getId());
+        gd.status = GameStatus.RUNNING;
+        gd.interaction.clearAwaitingInput();
+
+        WrathOfGod wrath = new WrathOfGod();
+        gd.stack.add(new StackEntry(StackEntryType.SORCERY_SPELL, wrath, player2.getId(),
+                wrath.getName(), wrath.getEffects(EffectSlot.SPELL), 0));
+
+        Permanent seer = new Permanent(new com.github.laxika.magicalvibes.cards.v.VisceraSeer());
+        seer.setSummoningSick(false);
+        Permanent ornithopter = new Permanent(new com.github.laxika.magicalvibes.cards.o.Ornithopter());
+        ornithopter.setSummoningSick(false);
+        Permanent bears = new Permanent(new GrizzlyBears());
+        bears.setSummoningSick(false);
+        gd.playerBattlefields.get(player1.getId()).add(seer);
+        gd.playerBattlefields.get(player1.getId()).add(ornithopter);
+        gd.playerBattlefields.get(player1.getId()).add(bears);
+
+        harness.setHand(player1, List.of());
+
+        ai.handleMessage("GAME_STATE", "");
+        if (gd.interaction.isAwaitingInput()) {
+            ai.handleMessage("INTERACTION_PROMPT", "");
+        }
+
+        // Sac cost paid immediately — Ornithopter (cheapest non-outlet) should be gone
+        assertThat(gd.playerBattlefields.get(player1.getId()).stream()
+                .noneMatch(p -> p.getId().equals(ornithopter.getId()))).isTrue();
+        // Viscera Seer kept as the outlet
+        assertThat(gd.playerBattlefields.get(player1.getId()).stream()
+                .anyMatch(p -> p.getId().equals(seer.getId()))).isTrue();
+        // Scry ability is on the stack above Wrath
+        assertThat(gd.stack).hasSizeGreaterThanOrEqualTo(2);
+        assertThat(gd.stack.getLast().getEntryType()).isEqualTo(StackEntryType.ACTIVATED_ABILITY);
+        assertThat(gd.stack.getFirst().getCard().getName()).isEqualTo("Wrath of God");
+    }
+
+    @Test
+    @DisplayName("Hard AI does not sac a healthy flyer to Viscera Seer for Scry with empty stack")
+    void doesNotSacrificeToVisceraSeerWithEmptyStack() {
+        HardAiDecisionEngine ai = createHardAi(player1);
+
+        harness.forceActivePlayer(player2);
+        harness.forceStep(TurnStep.END_STEP);
+        harness.clearPriorityPassed();
+        gd.priorityPassedBy.add(player2.getId());
+        gd.status = GameStatus.RUNNING;
+        gd.interaction.clearAwaitingInput();
+        gd.stack.clear();
+
+        Permanent seer = new Permanent(new com.github.laxika.magicalvibes.cards.v.VisceraSeer());
+        seer.setSummoningSick(false);
+        Permanent ornithopter = new Permanent(new com.github.laxika.magicalvibes.cards.o.Ornithopter());
+        ornithopter.setSummoningSick(false);
+        gd.playerBattlefields.get(player1.getId()).add(seer);
+        gd.playerBattlefields.get(player1.getId()).add(ornithopter);
+
+        harness.setHand(player1, List.of());
+
+        ai.handleMessage("GAME_STATE", "");
+
+        // Flying Ornithopter is worth more than Scry 1 when not doomed
+        assertThat(gd.stack).isEmpty();
+        assertThat(gd.playerBattlefields.get(player1.getId())).hasSize(2);
+    }
+
     // ===== Smart Choice Overrides =====
 
     @Nested

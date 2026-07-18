@@ -8,15 +8,20 @@ import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.GameData;
 import com.github.laxika.magicalvibes.model.Keyword;
 import com.github.laxika.magicalvibes.model.Permanent;
+import com.github.laxika.magicalvibes.model.StackEntry;
 import com.github.laxika.magicalvibes.model.effect.CardDrawingEffect;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
 import com.github.laxika.magicalvibes.model.effect.CostEffect;
 import com.github.laxika.magicalvibes.model.effect.DamageDealingEffect;
+import com.github.laxika.magicalvibes.model.effect.DestroyAllPermanentsEffect;
+import com.github.laxika.magicalvibes.model.effect.DestroyPermanentsTargetPlayerControlsEffect;
+import com.github.laxika.magicalvibes.model.effect.EachPermanentScope;
 import com.github.laxika.magicalvibes.model.effect.EnchantedCreatureCantAttackEffect;
 import com.github.laxika.magicalvibes.model.effect.EnchantedCreatureCantAttackOrBlockEffect;
 import com.github.laxika.magicalvibes.model.effect.KeywordGrantingEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantScope;
 import com.github.laxika.magicalvibes.model.effect.ManaProducingEffect;
+import com.github.laxika.magicalvibes.model.effect.MassDamageEffect;
 import com.github.laxika.magicalvibes.model.effect.PutCountersOnSourceEffect;
 import com.github.laxika.magicalvibes.model.effect.RemovalEffect;
 import com.github.laxika.magicalvibes.model.effect.RemovalKind;
@@ -179,8 +184,8 @@ public class BoardEvaluator {
 
     /**
      * Computes the cost of sacrificing a specific creature.
-     * Dying creatures are near-free. Tokens, pacified creatures, and 0-power creatures
-     * are cheap. Lords get extra cost reflecting the buff they provide to allies.
+     * Dying / stack-doomed creatures are near-free. Tokens, pacified creatures, and 0-power
+     * creatures are cheap. Lords get extra cost reflecting the buff they provide to allies.
      */
     double sacrificeCost(GameData gameData, Permanent perm, UUID controllerId, UUID opponentId) {
         double baseScore = creatureScore(gameData, perm, controllerId, opponentId);
@@ -189,6 +194,12 @@ public class BoardEvaluator {
         int effectiveToughness = gameQueryService.getEffectiveToughness(gameData, perm)
                 - perm.getMarkedDamage();
         if (effectiveToughness <= 0) {
+            return 0.5;
+        }
+
+        // Creature about to die from a board wipe / removal on the stack — free fodder
+        // (e.g. sac to Viscera Seer for Scry before Wrath of God resolves)
+        if (isDoomedByStack(gameData, perm, controllerId)) {
             return 0.5;
         }
 
@@ -211,6 +222,99 @@ public class BoardEvaluator {
 
         // Valuable: lord pumping allies — sacrifice cost includes the buff they provide
         return baseScore + lordBonus(gameData, perm, controllerId);
+    }
+
+    /**
+     * True when a spell/ability already on the stack will remove this permanent if it resolves —
+     * board wipes matching the permanent, lethal mass damage, or targeted destroy/exile.
+     * Indestructible permanents are not doomed by destroy or lethal damage.
+     */
+    boolean isDoomedByStack(GameData gameData, Permanent perm, UUID controllerId) {
+        if (gameData.stack == null || gameData.stack.isEmpty()) {
+            return false;
+        }
+        for (StackEntry entry : gameData.stack) {
+            for (CardEffect effect : stackEffects(entry)) {
+                if (effectWouldDoomPermanent(gameData, entry, effect, perm, controllerId)) {
+                    return true;
+                }
+            }
+        }
+        return false;
+    }
+
+    private List<CardEffect> stackEffects(StackEntry entry) {
+        List<CardEffect> resolving = entry.getEffectsToResolve();
+        if (resolving != null && !resolving.isEmpty()) {
+            return resolving;
+        }
+        if (entry.getCard() != null) {
+            return entry.getCard().getEffects(EffectSlot.SPELL);
+        }
+        return List.of();
+    }
+
+    private boolean effectWouldDoomPermanent(GameData gameData, StackEntry entry, CardEffect effect,
+                                             Permanent perm, UUID controllerId) {
+        FilterContext filterContext = FilterContext.of(gameData)
+                .withSourceControllerId(entry.getControllerId());
+
+        if (effect instanceof DestroyAllPermanentsEffect wipe) {
+            if (wipe.scope() == EachPermanentScope.TARGET_PLAYER
+                    && !controllerId.equals(entry.getTargetId())) {
+                return false;
+            }
+            if (gameQueryService.hasKeyword(gameData, perm, Keyword.INDESTRUCTIBLE)) {
+                return false;
+            }
+            return wipe.filter() == null
+                    || predicateEvaluationService.matchesPermanentPredicate(perm, wipe.filter(), filterContext);
+        }
+
+        if (effect instanceof DestroyPermanentsTargetPlayerControlsEffect wipe) {
+            if (!controllerId.equals(entry.getTargetId())) {
+                return false;
+            }
+            if (gameQueryService.hasKeyword(gameData, perm, Keyword.INDESTRUCTIBLE)) {
+                return false;
+            }
+            return wipe.filter() == null
+                    || predicateEvaluationService.matchesPermanentPredicate(perm, wipe.filter(), filterContext);
+        }
+
+        if (effect instanceof MassDamageEffect aoe) {
+            if (gameQueryService.hasKeyword(gameData, perm, Keyword.INDESTRUCTIBLE)) {
+                return false;
+            }
+            if (aoe.filter() != null
+                    && !predicateEvaluationService.matchesPermanentPredicate(perm, aoe.filter(), filterContext)) {
+                return false;
+            }
+            int damage = amountEvaluationService.evaluate(gameData, aoe.amount(),
+                    AmountContext.forStackEntry(entry, null));
+            int remaining = gameQueryService.getEffectiveToughness(gameData, perm) - perm.getMarkedDamage();
+            return damage >= remaining;
+        }
+
+        if (effect instanceof RemovalEffect removal && removal.removalKind() != null
+                && targetsPermanent(entry, perm.getId())) {
+            if (removal.removalKind() == RemovalKind.DESTROY
+                    && gameQueryService.hasKeyword(gameData, perm, Keyword.INDESTRUCTIBLE)) {
+                return false;
+            }
+            return removal.removalKind() == RemovalKind.DESTROY
+                    || removal.removalKind() == RemovalKind.EXILE;
+        }
+
+        return false;
+    }
+
+    private static boolean targetsPermanent(StackEntry entry, UUID permanentId) {
+        if (permanentId.equals(entry.getTargetId())) {
+            return true;
+        }
+        List<UUID> ids = entry.getTargetIds();
+        return ids != null && ids.contains(permanentId);
     }
 
     /**
