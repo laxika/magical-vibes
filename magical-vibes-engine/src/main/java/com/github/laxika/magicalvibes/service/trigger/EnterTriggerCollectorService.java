@@ -17,8 +17,8 @@ import com.github.laxika.magicalvibes.model.effect.DealDamageToPlayersEffect;
 import com.github.laxika.magicalvibes.model.effect.DealDamageToTargetCreatureEffect;
 import com.github.laxika.magicalvibes.model.effect.GainLifeEffect;
 import com.github.laxika.magicalvibes.model.effect.GainLifeEqualToToughnessEffect;
+import com.github.laxika.magicalvibes.model.effect.LookAtTopCardsEffect;
 import com.github.laxika.magicalvibes.model.effect.LookAtTopCardsEqualToEnteringPowerPutOneOnTopRestOnBottomEffect;
-import com.github.laxika.magicalvibes.model.effect.LookAtTopCardsPutOneOnTopRestOnBottomEffect;
 import com.github.laxika.magicalvibes.model.effect.MayEffect;
 import com.github.laxika.magicalvibes.model.effect.MayPayManaEffect;
 import com.github.laxika.magicalvibes.model.CounterType;
@@ -300,7 +300,7 @@ public class EnterTriggerCollectorService {
             logTriggered(match);
             return true;
         }
-        var look = new LookAtTopCardsPutOneOnTopRestOnBottomEffect(power);
+        var look = LookAtTopCardsEffect.putOneOnTopRestOnBottom(power);
         var may = new MayEffect(look, "Look at the top " + power + " card(s) of your library?");
         match.gameData().queueMayAbility(sourceCard, match.controllerId(), may, null, match.permanent().getId());
         logTriggered(match);

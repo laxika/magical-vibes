@@ -6,7 +6,7 @@ import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.effect.AnimatePermanentsEffect;
 import com.github.laxika.magicalvibes.model.effect.CrewCost;
-import com.github.laxika.magicalvibes.model.effect.LookAtTopCardsMayRevealByPredicatePutIntoHandRestOnBottomEffect;
+import com.github.laxika.magicalvibes.model.effect.LookAtTopCardsEffect;
 import com.github.laxika.magicalvibes.model.filter.CardIsHistoricPredicate;
 
 import java.util.List;
@@ -16,7 +16,7 @@ public class Weatherlight extends Card {
 
     public Weatherlight() {
         addEffect(EffectSlot.ON_COMBAT_DAMAGE_TO_PLAYER,
-                new LookAtTopCardsMayRevealByPredicatePutIntoHandRestOnBottomEffect(5, new CardIsHistoricPredicate()));
+                LookAtTopCardsEffect.mayRevealOneToHandRestOnBottom(5, new CardIsHistoricPredicate()));
 
         addActivatedAbility(new ActivatedAbility(
                 false,

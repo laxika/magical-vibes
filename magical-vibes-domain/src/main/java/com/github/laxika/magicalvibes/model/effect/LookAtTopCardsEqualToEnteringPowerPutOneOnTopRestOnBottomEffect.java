@@ -5,8 +5,8 @@ package com.github.laxika.magicalvibes.model.effect;
  * of your library, where X is that creature's power. If you do, put one of those cards on top of
  * your library and the rest on the bottom of your library in any order." The entering creature's
  * power is read at trigger time and baked into a concrete
- * {@link LookAtTopCardsPutOneOnTopRestOnBottomEffect} wrapped in a {@link MayEffect} (mirroring
- * {@link PutCountersOnSourceEqualToEnteringPowerEffect}). Used by Cream of the Crop.
+ * {@link LookAtTopCardsEffect#putOneOnTopRestOnBottom(int)} wrapped in a {@link MayEffect}
+ * (mirroring {@link PutCountersOnSourceEqualToEnteringPowerEffect}). Used by Cream of the Crop.
  */
 public record LookAtTopCardsEqualToEnteringPowerPutOneOnTopRestOnBottomEffect() implements CardEffect {
 }

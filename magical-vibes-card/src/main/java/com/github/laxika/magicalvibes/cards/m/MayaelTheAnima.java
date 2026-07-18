@@ -4,7 +4,7 @@ import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.ActivatedAbility;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardType;
-import com.github.laxika.magicalvibes.model.effect.LookAtTopCardsPutMatchingPredicateOnBattlefieldEffect;
+import com.github.laxika.magicalvibes.model.effect.LookAtTopCardsEffect;
 import com.github.laxika.magicalvibes.model.filter.CardAllOfPredicate;
 import com.github.laxika.magicalvibes.model.filter.CardPowerAtLeastPredicate;
 import com.github.laxika.magicalvibes.model.filter.CardTypePredicate;
@@ -21,7 +21,7 @@ public class MayaelTheAnima extends Card {
         addActivatedAbility(new ActivatedAbility(
                 true,
                 "{3}{R}{G}{W}",
-                List.of(new LookAtTopCardsPutMatchingPredicateOnBattlefieldEffect(5, new CardAllOfPredicate(List.of(
+                List.of(LookAtTopCardsEffect.mayPutMatchingOntoBattlefield(5, new CardAllOfPredicate(List.of(
                         new CardTypePredicate(CardType.CREATURE),
                         new CardPowerAtLeastPredicate(5)
                 )))),

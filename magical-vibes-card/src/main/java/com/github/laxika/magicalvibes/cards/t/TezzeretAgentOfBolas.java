@@ -7,7 +7,7 @@ import com.github.laxika.magicalvibes.model.effect.AnimatePermanentsEffect;
 import com.github.laxika.magicalvibes.model.effect.DrainLifePerControlledPermanentEffect;
 import com.github.laxika.magicalvibes.model.effect.EffectDuration;
 import com.github.laxika.magicalvibes.model.effect.GrantScope;
-import com.github.laxika.magicalvibes.model.effect.LookAtTopCardsMayRevealByPredicatePutIntoHandRestOnBottomEffect;
+import com.github.laxika.magicalvibes.model.effect.LookAtTopCardsEffect;
 import com.github.laxika.magicalvibes.model.filter.CardTypePredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsArtifactPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentPredicateTargetFilter;
@@ -24,7 +24,7 @@ public class TezzeretAgentOfBolas extends Card {
         // from among them and put it into your hand. Put the rest on the bottom of your library in any order.
         addActivatedAbility(new ActivatedAbility(
                 +1,
-                List.of(new LookAtTopCardsMayRevealByPredicatePutIntoHandRestOnBottomEffect(5, new CardTypePredicate(CardType.ARTIFACT))),
+                List.of(LookAtTopCardsEffect.mayRevealOneToHandRestOnBottom(5, new CardTypePredicate(CardType.ARTIFACT))),
                 "+1: Look at the top five cards of your library. You may reveal an artifact card from among them and put it into your hand. Put the rest on the bottom of your library in any order."
         ));
 

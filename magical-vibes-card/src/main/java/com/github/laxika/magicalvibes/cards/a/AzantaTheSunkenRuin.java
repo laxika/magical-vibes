@@ -5,7 +5,7 @@ import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardType;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.effect.AwardManaEffect;
-import com.github.laxika.magicalvibes.model.effect.LookAtTopCardsMayRevealByPredicatePutIntoHandRestOnBottomEffect;
+import com.github.laxika.magicalvibes.model.effect.LookAtTopCardsEffect;
 import com.github.laxika.magicalvibes.model.filter.CardAllOfPredicate;
 import com.github.laxika.magicalvibes.model.filter.CardNotPredicate;
 import com.github.laxika.magicalvibes.model.filter.CardTypePredicate;
@@ -35,7 +35,7 @@ public class AzantaTheSunkenRuin extends Card {
         // of your library in any order.
         addActivatedAbility(new ActivatedAbility(
                 true, "{2}{U}",
-                List.of(new LookAtTopCardsMayRevealByPredicatePutIntoHandRestOnBottomEffect(4,
+                List.of(LookAtTopCardsEffect.mayRevealOneToHandRestOnBottom(4,
                         new CardAllOfPredicate(List.of(
                                 new CardNotPredicate(new CardTypePredicate(CardType.CREATURE)),
                                 new CardNotPredicate(new CardTypePredicate(CardType.LAND)))))),

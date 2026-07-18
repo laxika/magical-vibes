@@ -6,7 +6,7 @@ import com.github.laxika.magicalvibes.model.CardType;
 import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.condition.GainedLifeThisTurn;
 import com.github.laxika.magicalvibes.model.effect.ConditionalReplacementEffect;
-import com.github.laxika.magicalvibes.model.effect.LookAtTopCardsMayRevealByPredicatePutIntoHandRestOnBottomEffect;
+import com.github.laxika.magicalvibes.model.effect.LookAtTopCardsEffect;
 import com.github.laxika.magicalvibes.model.filter.CardAnyOfPredicate;
 import com.github.laxika.magicalvibes.model.filter.CardTypePredicate;
 import java.util.List;
@@ -24,7 +24,7 @@ public class FollowTheLumarets extends Card {
 
         addEffect(EffectSlot.SPELL, new ConditionalReplacementEffect(
                 new GainedLifeThisTurn(),
-                new LookAtTopCardsMayRevealByPredicatePutIntoHandRestOnBottomEffect(4, creatureOrLand),
-                new LookAtTopCardsMayRevealByPredicatePutIntoHandRestOnBottomEffect(4, creatureOrLand, true, 2)));
+                LookAtTopCardsEffect.mayRevealOneToHandRestOnBottom(4, creatureOrLand),
+                LookAtTopCardsEffect.mayRevealUpToToHandRestOnBottom(4, creatureOrLand, 2)));
     }
 }

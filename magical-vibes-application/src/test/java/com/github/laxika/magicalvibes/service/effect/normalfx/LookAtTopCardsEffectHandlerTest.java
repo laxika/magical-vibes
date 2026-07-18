@@ -5,11 +5,14 @@ import com.github.laxika.magicalvibes.model.PendingInteraction;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardType;
 import com.github.laxika.magicalvibes.model.GameData;
+import com.github.laxika.magicalvibes.model.LibrarySearchDestination;
+import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.StackEntry;
 import com.github.laxika.magicalvibes.model.StackEntryType;
 import com.github.laxika.magicalvibes.model.amount.DynamicAmount;
 import com.github.laxika.magicalvibes.model.amount.Fixed;
 import com.github.laxika.magicalvibes.model.effect.LookAtTopCardsEffect;
+import com.github.laxika.magicalvibes.model.filter.CardSharesNameWithAPermanentPredicate;
 import com.github.laxika.magicalvibes.model.filter.CardTypePredicate;
 import com.github.laxika.magicalvibes.networking.SessionManager;
 import com.github.laxika.magicalvibes.networking.model.CardView;
@@ -39,9 +42,9 @@ import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.*;
 
 /**
- * Unit tests for {@link LookAtTopCardsEffectHandler}, the collapsed "look at top N, put some into
- * hand" family (formerly the ChooseOne / ChooseN / PerChargeCounter records). Nested by
- * rest-destination.
+ * Unit tests for {@link LookAtTopCardsEffectHandler}, the collapsed "look at top N, choose some"
+ * family (formerly the ChooseOne / ChooseN / PerChargeCounter / MayRevealByPredicate /
+ * PutMatchingOnBattlefield / PutOneOnTop records). Nested by flow.
  */
 @ExtendWith(MockitoExtension.class)
 class LookAtTopCardsEffectHandlerTest {
@@ -250,6 +253,233 @@ class LookAtTopCardsEffectHandlerTest {
 
             verify(gameBroadcastService).logAndBroadcast(eq(gd), argThat((GameLogEntry logEntry) ->
                     logEntry.plainText().contains("reveals") && logEntry.plainText().contains("Tracker's Instincts")));
+        }
+
+        @Test
+        @DisplayName("All matching cards auto-move to hand when chooseCount == lookCount (Mulch)")
+        void allMatchingAutoMoveToHand() {
+            Card land1 = createCard("Forest");
+            Card land2 = createCard("Mountain");
+            Card spell = createCard("Lightning Bolt");
+            gd.playerDecks.get(player1Id).add(land1);
+            gd.playerDecks.get(player1Id).add(spell);
+            gd.playerDecks.get(player1Id).add(land2);
+            when(predicateEvaluationService.matchesCardPredicate(any(), any(), any(), any(), any()))
+                    .thenAnswer(inv -> ((Card) inv.getArgument(0)).getName().contains("Forest")
+                            || ((Card) inv.getArgument(0)).getName().contains("Mountain"));
+
+            LookAtTopCardsEffect effect = LookAtTopCardsEffect.chooseNToHandRestToGraveyard(
+                    3, 3, new CardTypePredicate(CardType.LAND), true);
+            handler.resolve(gd, entryFor("Mulch", effect), effect);
+
+            assertThat(gd.playerHands.get(player1Id)).containsExactlyInAnyOrder(land1, land2);
+            assertThat(gd.playerGraveyards.get(player1Id)).containsExactly(spell);
+            assertThat(gd.interaction.activeInteraction()).isNull();
+        }
+    }
+
+    // =========================================================================
+    // Optional may-reveal to hand (Commune with Nature / Lead the Stampede / Follow the Lumarets)
+    // =========================================================================
+
+    @Nested
+    class MayRevealToHand {
+
+        @Test
+        @DisplayName("Empty library logs")
+        void emptyLibraryLogs() {
+            LookAtTopCardsEffect effect = LookAtTopCardsEffect.mayRevealOneToHandRestOnBottom(
+                    3, new CardTypePredicate(CardType.CREATURE));
+            handler.resolve(gd, entryFor("Commune with Nature", effect), effect);
+
+            verify(gameBroadcastService).logAndBroadcast(eq(gd), argThat((GameLogEntry logEntry) ->
+                    logEntry.plainText().contains("library is empty")));
+        }
+
+        @Test
+        @DisplayName("No matching cards reorders remaining to bottom")
+        void noMatchesReordersToBottom() {
+            stubCardViewFactory();
+            gd.playerDecks.get(player1Id).add(createCard("Lightning Bolt"));
+            gd.playerDecks.get(player1Id).add(createCard("Giant Growth"));
+            when(predicateEvaluationService.matchesCardPredicate(any(), any(), any(), any(), any())).thenReturn(false);
+
+            LookAtTopCardsEffect effect = LookAtTopCardsEffect.mayRevealOneToHandRestOnBottom(
+                    3, new CardTypePredicate(CardType.CREATURE));
+            handler.resolve(gd, entryFor("Commune with Nature", effect), effect);
+
+            assertThat(gd.interaction.activeInteraction()).isInstanceOf(PendingInteraction.LibraryReorder.class);
+        }
+
+        @Test
+        @DisplayName("Single non-matching card goes back on the bottom without a reorder prompt")
+        void singleNonMatchGoesToBottom() {
+            gd.playerDecks.get(player1Id).add(createCard("Lightning Bolt"));
+            when(predicateEvaluationService.matchesCardPredicate(any(), any(), any(), any(), any())).thenReturn(false);
+
+            LookAtTopCardsEffect effect = LookAtTopCardsEffect.mayRevealOneToHandRestOnBottom(
+                    3, new CardTypePredicate(CardType.CREATURE));
+            handler.resolve(gd, entryFor("Commune with Nature", effect), effect);
+
+            assertThat(gd.playerDecks.get(player1Id)).hasSize(1);
+            assertThat(gd.interaction.activeInteraction()).isNull();
+        }
+
+        @Test
+        @DisplayName("Single-pick 'may reveal one' enters LIBRARY_SEARCH")
+        void singlePickEntersLibrarySearch() {
+            stubCardViewFactory();
+            Card bears = createCard("Grizzly Bears");
+            gd.playerDecks.get(player1Id).add(bears);
+            gd.playerDecks.get(player1Id).add(createCard("Lightning Bolt"));
+            when(predicateEvaluationService.matchesCardPredicate(any(), any(), any(), any(), any()))
+                    .thenAnswer(inv -> inv.getArgument(0) == bears);
+
+            LookAtTopCardsEffect effect = LookAtTopCardsEffect.mayRevealOneToHandRestOnBottom(
+                    3, new CardTypePredicate(CardType.CREATURE));
+            handler.resolve(gd, entryFor("Commune with Nature", effect), effect);
+
+            assertThat(gd.interaction.activeInteraction()).isInstanceOf(PendingInteraction.LibrarySearch.class);
+            PendingInteraction.LibrarySearch search =
+                    gd.interaction.activeInteraction(PendingInteraction.LibrarySearch.class);
+            assertThat(search.params().canFailToFind()).isTrue();
+            verify(sessionManager).sendToPlayer(eq(player1Id), any());
+        }
+
+        @Test
+        @DisplayName("Any-number 'may reveal' enters LIBRARY_REVEAL_CHOICE")
+        void anyNumberEntersRevealChoice() {
+            stubCardViewFactory();
+            gd.playerDecks.get(player1Id).add(createCard("Grizzly Bears"));
+            gd.playerDecks.get(player1Id).add(createCard("Llanowar Elves"));
+            gd.playerDecks.get(player1Id).add(createCard("Lightning Bolt"));
+            when(predicateEvaluationService.matchesCardPredicate(any(), any(), any(), any(), any()))
+                    .thenAnswer(inv -> !((Card) inv.getArgument(0)).getName().contains("Bolt"));
+
+            LookAtTopCardsEffect effect = LookAtTopCardsEffect.mayRevealAnyNumberToHandRestOnBottom(
+                    3, new CardTypePredicate(CardType.CREATURE));
+            handler.resolve(gd, entryFor("Lead the Stampede", effect), effect);
+
+            assertThat(gd.interaction.activeInteraction()).isInstanceOf(PendingInteraction.LibraryRevealChoice.class);
+            PendingInteraction.LibraryRevealChoice choice =
+                    gd.interaction.activeInteraction(PendingInteraction.LibraryRevealChoice.class);
+            assertThat(choice.maxCount()).isEqualTo(2);
+            assertThat(choice.reorderRemainingToBottom()).isTrue();
+            verify(sessionManager).sendToPlayer(eq(player1Id), any());
+        }
+
+        @Test
+        @DisplayName("Bounded 'up to N' caps the pick count (Follow the Lumarets)")
+        void boundedUpToCapsCount() {
+            stubCardViewFactory();
+            gd.playerDecks.get(player1Id).add(createCard("Grizzly Bears"));
+            gd.playerDecks.get(player1Id).add(createCard("Llanowar Elves"));
+            gd.playerDecks.get(player1Id).add(createCard("Runeclaw Bear"));
+            when(predicateEvaluationService.matchesCardPredicate(any(), any(), any(), any(), any())).thenReturn(true);
+
+            LookAtTopCardsEffect effect = LookAtTopCardsEffect.mayRevealUpToToHandRestOnBottom(
+                    3, new CardTypePredicate(CardType.CREATURE), 2);
+            handler.resolve(gd, entryFor("Follow the Lumarets", effect), effect);
+
+            PendingInteraction.LibraryRevealChoice choice =
+                    gd.interaction.activeInteraction(PendingInteraction.LibraryRevealChoice.class);
+            assertThat(choice.maxCount()).isEqualTo(2);
+        }
+    }
+
+    // =========================================================================
+    // May put one matching card onto the battlefield (Mayael / Mitotic Manipulation)
+    // =========================================================================
+
+    @Nested
+    class MayPutOntoBattlefield {
+
+        @Test
+        @DisplayName("Empty library logs")
+        void emptyLibraryLogs() {
+            LookAtTopCardsEffect effect = LookAtTopCardsEffect.mayPutMatchingOntoBattlefield(
+                    7, new CardSharesNameWithAPermanentPredicate());
+            handler.resolve(gd, entryFor("Mitotic Manipulation", effect), effect);
+
+            verify(gameBroadcastService).logAndBroadcast(eq(gd), argThat((GameLogEntry logEntry) ->
+                    logEntry.plainText().contains("library is empty")));
+        }
+
+        @Test
+        @DisplayName("No matching cards reorders remaining to bottom")
+        void noMatchesReordersToBottom() {
+            stubCardViewFactory();
+            gd.playerDecks.get(player1Id).add(createCard("Grizzly Bears"));
+            gd.playerDecks.get(player1Id).add(createCard("Llanowar Elves"));
+            when(predicateEvaluationService.matchesCardPredicate(any(), any(), any(), any(), any())).thenCallRealMethod();
+
+            // No permanents on the battlefield share a name with the looked-at cards.
+            LookAtTopCardsEffect effect = LookAtTopCardsEffect.mayPutMatchingOntoBattlefield(
+                    4, new CardSharesNameWithAPermanentPredicate());
+            handler.resolve(gd, entryFor("Mitotic Manipulation", effect), effect);
+
+            assertThat(gd.interaction.activeInteraction()).isInstanceOf(PendingInteraction.LibraryReorder.class);
+        }
+
+        @Test
+        @DisplayName("Matching permanent name enters LIBRARY_SEARCH with battlefield destination")
+        void matchingNameEntersSearchState() {
+            stubCardViewFactory();
+            Card bfCard = createCard("Grizzly Bears");
+            gd.playerBattlefields.get(player1Id).add(new Permanent(bfCard));
+            gd.playerDecks.get(player1Id).add(createCard("Grizzly Bears"));
+            gd.playerDecks.get(player1Id).add(createCard("Lightning Bolt"));
+            when(predicateEvaluationService.matchesCardPredicate(any(), any(), any(), any(), any())).thenCallRealMethod();
+
+            LookAtTopCardsEffect effect = LookAtTopCardsEffect.mayPutMatchingOntoBattlefield(
+                    4, new CardSharesNameWithAPermanentPredicate());
+            handler.resolve(gd, entryFor("Mitotic Manipulation", effect), effect);
+
+            assertThat(gd.interaction.activeInteraction()).isInstanceOf(PendingInteraction.LibrarySearch.class);
+            PendingInteraction.LibrarySearch search =
+                    gd.interaction.activeInteraction(PendingInteraction.LibrarySearch.class);
+            assertThat(search.params().destination()).isEqualTo(LibrarySearchDestination.BATTLEFIELD);
+            verify(sessionManager).sendToPlayer(eq(player1Id), any());
+        }
+    }
+
+    // =========================================================================
+    // Put one on top, rest on the bottom (Cream of the Crop)
+    // =========================================================================
+
+    @Nested
+    class PutOneOnTop {
+
+        @Test
+        @DisplayName("Single looked-at card goes back on top without a prompt")
+        void singleCardGoesBackOnTop() {
+            Card single = createCard("Grizzly Bears");
+            gd.playerDecks.get(player1Id).add(single);
+
+            LookAtTopCardsEffect effect = LookAtTopCardsEffect.putOneOnTopRestOnBottom(3);
+            handler.resolve(gd, entryFor("Cream of the Crop", effect), effect);
+
+            assertThat(gd.playerDecks.get(player1Id)).containsExactly(single);
+            assertThat(gd.interaction.activeInteraction()).isNull();
+            verify(gameBroadcastService).logAndBroadcast(eq(gd), argThat((GameLogEntry logEntry) ->
+                    logEntry.plainText().contains("on top of their library")));
+        }
+
+        @Test
+        @DisplayName("Multiple cards enter LIBRARY_SEARCH with top-of-library destination")
+        void multipleCardsEnterLibrarySearch() {
+            stubCardViewFactory();
+            gd.playerDecks.get(player1Id).add(createCard("Grizzly Bears"));
+            gd.playerDecks.get(player1Id).add(createCard("Llanowar Elves"));
+
+            LookAtTopCardsEffect effect = LookAtTopCardsEffect.putOneOnTopRestOnBottom(3);
+            handler.resolve(gd, entryFor("Cream of the Crop", effect), effect);
+
+            assertThat(gd.interaction.activeInteraction()).isInstanceOf(PendingInteraction.LibrarySearch.class);
+            PendingInteraction.LibrarySearch search =
+                    gd.interaction.activeInteraction(PendingInteraction.LibrarySearch.class);
+            assertThat(search.params().destination()).isEqualTo(LibrarySearchDestination.TOP_OF_LIBRARY);
+            assertThat(search.params().reorderRemainingToBottom()).isTrue();
         }
     }
 }

@@ -568,7 +568,7 @@ See EFFECTS_INDEX.md "Sacrifice costs" for additional cost effects.
 - `ScryEffect(int)` — scry N
 - `SurveilEffect(int)` — surveil N
 - `ShuffleLibraryEffect(boolean targetPlayer)` — shuffle library (false=controller's, true=target player's)
-- `LookAtTopCardsOfTargetLibraryMayShuffleEffect(int count)` — look at top N of target player's library (pure look, same order, no reorder), then may have that player shuffle; Visions (count=5). Benign PLAYER target; reuses `ShuffleLibraryEffect(true)` may-handler
+- `LookAtTopCardsOfTargetLibraryEffect(int count, TargetLibraryAction action)` — look at top N of target player's library, then apply the action: LOOK_ONLY (pure peek, Dewdrop/Orcish Spy), MAY_EXILE_ONE (Psychic Surgery; no target = own library, Puresight Merrow), MAY_SHUFFLE (Visions count=5, benign PLAYER target, reuses `ShuffleLibraryEffect(true)` may-handler), PUT_ONE_INTO_GRAVEYARD (Cruel Fate, Wu Spy)
 - `ShuffleIntoLibraryEffect()` — shuffle spell into library
 - `ShuffleSelfAndGraveyardIntoLibraryEffect()` — shuffle self + graveyard into library
 - `ShuffleSelfFromGraveyardIntoLibraryEffect()` — triggered ability: shuffle the source card from its owner's graveyard into their library (pair with `ON_SELF_PUT_INTO_GRAVEYARD_FROM_ANYWHERE`, e.g. Purity)

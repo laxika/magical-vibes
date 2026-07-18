@@ -577,7 +577,7 @@ Targeted effect types (they carry a target: override `targetSpec()` to a non-NON
 | `LookAtHandEffect` |  |
 | `LookAtRandomCardInTargetPlayerHandEffect` |  |
 | `LookAtTargetPlayerTopCardMayGraveyardEffect` |  |
-| `LookAtTopCardsOfTargetLibraryMayShuffleEffect` |  |
+| `LookAtTopCardsOfTargetLibraryEffect` |  |
 | `LoseAllCreatureTypesEffect` |  |
 | `LosesAllAbilitiesEffect` |  |
 | `MakeCreatureBlockableOnlyByFilterThisTurnEffect` |  |

@@ -3,6 +3,8 @@ package com.github.laxika.magicalvibes.service.effect.normalfx;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.GameData;
 import com.github.laxika.magicalvibes.model.GameLog;
+import com.github.laxika.magicalvibes.model.LibrarySearchDestination;
+import com.github.laxika.magicalvibes.model.LibrarySearchParams;
 import com.github.laxika.magicalvibes.model.PendingInteraction;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.StackEntry;
@@ -10,6 +12,7 @@ import com.github.laxika.magicalvibes.model.effect.CardEffect;
 import com.github.laxika.magicalvibes.model.effect.LookAtTopCardsEffect;
 import com.github.laxika.magicalvibes.model.effect.LookDestination;
 import com.github.laxika.magicalvibes.model.filter.CardPredicate;
+import com.github.laxika.magicalvibes.model.filter.CardPredicateUtils;
 import com.github.laxika.magicalvibes.service.GameBroadcastService;
 import com.github.laxika.magicalvibes.service.battlefield.GameQueryService;
 import com.github.laxika.magicalvibes.service.effect.AmountContext;
@@ -24,11 +27,14 @@ import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Component;
 
 /**
- * Look at (or reveal) the top N cards of your library, put up to M into your hand (optionally
- * filtered), and put the rest either on the bottom of your library or into your graveyard. Handles
- * {@link LookAtTopCardsEffect}, the collapsed "look at top, put some to hand" family. The two
- * rest-destinations keep their original pre-interaction edge-case flows verbatim; both feed the
- * shared {@link PendingInteraction.LibraryRevealChoice} backend for the actual pick.
+ * Look at (or reveal) the top N cards of your library, choose up to M of them (optionally
+ * filtered) for the chosen destination, and put the rest to the rest destination. Handles
+ * {@link LookAtTopCardsEffect}, the collapsed "look at top N, choose some" family. Each folded
+ * subfamily keeps its original flow verbatim: the mandatory to-hand flows feed
+ * {@link PendingInteraction.LibraryRevealChoice}, the optional ("may") single pick, the
+ * battlefield destination and the put-one-on-top destination feed
+ * {@link PendingInteraction.LibrarySearch}, and the optional multi pick feeds
+ * {@link PendingInteraction.LibraryRevealChoice}.
  */
 @Slf4j
 @Component
@@ -69,13 +75,129 @@ public class LookAtTopCardsEffectHandler implements NormalEffectHandlerBean {
             return;
         }
 
-        if (e.restDestination() == LookDestination.GRAVEYARD) {
+        if (e.chosenDestination() == LibrarySearchDestination.BATTLEFIELD) {
+            resolveMayPutOntoBattlefield(gameData, entry, e, lookCount);
+        } else if (e.chosenDestination() == LibrarySearchDestination.TOP_OF_LIBRARY) {
+            resolvePutOneOnTop(gameData, entry, lookCount);
+        } else if (e.optional()) {
+            resolveMayRevealToHand(gameData, entry, e, lookCount, chooseCount);
+        } else if (e.restDestination() == LookDestination.GRAVEYARD) {
             resolveRestToGraveyard(gameData, entry, e, lookCount, chooseCount);
         } else if (e.restDestination() == LookDestination.EXILE) {
             resolveRestToExile(gameData, entry, lookCount, chooseCount);
         } else {
             resolveRestToBottom(gameData, entry, lookCount, chooseCount);
         }
+    }
+
+    // ===== you may put one matching card onto the battlefield, rest on the bottom =====
+    // (Mayael the Anima; Mitotic Manipulation via CardSharesNameWithAPermanentPredicate)
+
+    private void resolveMayPutOntoBattlefield(GameData gameData, StackEntry entry,
+            LookAtTopCardsEffect e, int lookCount) {
+        LibraryRevealSupport.TopCardsResult result =
+                libraryRevealSupport.takeTopCardsFromLibrary(gameData, entry, lookCount, true);
+        if (result == null) return;
+        UUID controllerId = result.controllerId();
+        List<Card> topCards = result.topCards();
+
+        UUID sourceCardId = entry.getCard() != null ? entry.getCard().getId() : null;
+        List<Card> matchingCards = topCards.stream()
+                .filter(card -> predicateEvaluationService.matchesCardPredicate(
+                        card, e.choosePredicate(), sourceCardId, gameData, controllerId))
+                .toList();
+
+        if (matchingCards.isEmpty()) {
+            libraryRevealSupport.reorderRemainingToBottom(gameData, controllerId, topCards);
+            return;
+        }
+
+        interactionHandlerRegistry.begin(gameData, new PendingInteraction.LibrarySearch(
+                LibrarySearchParams.builder(controllerId, matchingCards)
+                        .canFailToFind(true)
+                        .sourceCards(topCards)
+                        .reorderRemainingToBottom(true)
+                        .shuffleAfterSelection(false)
+                        .prompt("You may put one of these cards onto the battlefield.")
+                        .destination(LibrarySearchDestination.BATTLEFIELD)
+                        .build(),
+                "You may put one of these cards onto the battlefield.",
+                true));
+    }
+
+    // ===== put one of the looked-at cards on top, rest on the bottom (Cream of the Crop) =====
+
+    private void resolvePutOneOnTop(GameData gameData, StackEntry entry, int lookCount) {
+        LibraryRevealSupport.TopCardsResult result =
+                libraryRevealSupport.takeTopCardsFromLibrary(gameData, entry, lookCount, true);
+        if (result == null) return;
+        UUID controllerId = result.controllerId();
+        List<Card> topCards = result.topCards();
+        String playerName = result.playerName();
+
+        if (topCards.size() == 1) {
+            // Only one card looked at — it goes back on top, nothing to put on the bottom.
+            gameData.playerDecks.get(controllerId).addFirst(topCards.getFirst());
+            gameBroadcastService.logAndBroadcast(gameData, GameLog.text(playerName + " puts a card on top of their library."));
+            return;
+        }
+
+        List<Card> sourceCards = new ArrayList<>(topCards);
+        String prompt = "Put one card on top of your library. The rest go to the bottom of your library.";
+        interactionHandlerRegistry.begin(gameData, new PendingInteraction.LibrarySearch(
+                LibrarySearchParams.builder(controllerId, topCards)
+                        .sourceCards(sourceCards)
+                        .reorderRemainingToBottom(true)
+                        .shuffleAfterSelection(false)
+                        .prompt(prompt)
+                        .destination(LibrarySearchDestination.TOP_OF_LIBRARY)
+                        .build(),
+                prompt,
+                false));
+    }
+
+    // ===== you may reveal matching cards and put them into your hand, rest on the bottom =====
+    // (Commune with Nature single pick; Lead the Stampede / Follow the Lumarets multi pick)
+
+    private void resolveMayRevealToHand(GameData gameData, StackEntry entry,
+            LookAtTopCardsEffect e, int lookCount, int chooseCount) {
+        LibraryRevealSupport.TopCardsResult result =
+                libraryRevealSupport.takeTopCardsFromLibrary(gameData, entry, lookCount, true);
+        if (result == null) return;
+        UUID controllerId = result.controllerId();
+        List<Card> topCards = result.topCards();
+
+        List<Card> matchingCards = filterEligibleCards(topCards, e.choosePredicate(), gameData, controllerId);
+        if (matchingCards.isEmpty()) {
+            libraryRevealSupport.reorderRemainingToBottom(gameData, controllerId, topCards);
+            return;
+        }
+
+        String description = CardPredicateUtils.describeFilter(e.choosePredicate());
+        if (chooseCount > 1) {
+            List<UUID> cardIds = matchingCards.stream().map(Card::getId).toList();
+            int max = Math.min(chooseCount, matchingCards.size());
+            String revealPrompt = chooseCount >= Integer.MAX_VALUE
+                    ? "You may reveal any number of " + description + "s and put them into your hand."
+                    : "You may reveal up to " + max + " " + description + "s and put them into your hand.";
+            interactionHandlerRegistry.begin(gameData, new PendingInteraction.LibraryRevealChoice(
+                    controllerId, topCards, cardIds, false, true, true, false, false, 0, null,
+                    max, revealPrompt));
+            return;
+        }
+
+        String prompt = "You may reveal a " + description + " from among them and put it into your hand.";
+        interactionHandlerRegistry.begin(gameData, new PendingInteraction.LibrarySearch(
+                LibrarySearchParams.builder(controllerId, matchingCards)
+                        .reveals(true)
+                        .canFailToFind(true)
+                        .sourceCards(topCards)
+                        .reorderRemainingToBottom(true)
+                        .shuffleAfterSelection(false)
+                        .prompt(prompt)
+                        .build(),
+                prompt,
+                true));
     }
 
     // ===== exile the rest (Browse) =====

@@ -110,8 +110,8 @@ All paths relative to `cards/`.
 | Library selection + self-damage | `d/DarkBargain.java` | LookAtTopCardsEffect.chooseNToHandRestToGraveyard(3, 2) + DealDamageToPlayersEffect(2, DamageRecipient.CONTROLLER) |
 | Library selection (one to hand, rest on bottom) | `s/StressDream.java` | LookAtTopCardsEffect.chooseOneToHandRestOnBottom(new Fixed(2)) |
 | Library selection (one to hand, exile the rest) | `b/Browse.java` | LookAtTopCardsEffect.chooseOneToHandRestToExile(new Fixed(5)) — activated ability on an enchantment |
-| Library reveal (type to hand, rest to graveyard) | `m/Mulch.java` | RevealTopCardsTypeToHandRestToGraveyardEffect(count, cardTypes) — deterministic, no player choice |
-| Library match-permanent-to-battlefield | `m/MitoticManipulation.java` | LookAtTopCardsPutMatchingPermanentNameOnBattlefieldEffect |
+| Library reveal (all matching type to hand, rest to graveyard) | `m/Mulch.java` | LookAtTopCardsEffect.chooseNToHandRestToGraveyard(N, N, CardTypePredicate(LAND), true) — chooseCount == lookCount makes it deterministic, no player choice |
+| Library match-permanent-to-battlefield | `m/MitoticManipulation.java` | LookAtTopCardsEffect.mayPutMatchingOntoBattlefield(7, CardSharesNameWithAPermanentPredicate()) |
 | Aura upkeep — library creature sharing type to battlefield | `c/CallToTheKindred.java` | MayEffect wrapping LookAtTopCardsCreatureSharingTypeWithEnchantedToBattlefieldEffect(5) in UPKEEP_TRIGGERED |
 | Targeted discard / exile / top-of-library from hand | `d/Distress.java` | ChooseCardsFromTargetHandEffect(count, excludedTypes[, includedTypes], HandChoiceDestination[, returnOnSourceLeave]) — DISCARD / EXILE / TOP_OF_LIBRARY |
 | Exile by name (multi-zone) | `m/Memoricide.java` | ChooseCardNameAndExileFromZonesEffect(excludedTypes) — choose nonland name, exile from hand+graveyard+library, shuffle |

@@ -8,7 +8,7 @@ import com.github.laxika.magicalvibes.model.amount.Fixed;
 import com.github.laxika.magicalvibes.model.effect.AnimatePermanentsEffect;
 import com.github.laxika.magicalvibes.model.effect.EffectDuration;
 import com.github.laxika.magicalvibes.model.effect.GrantScope;
-import com.github.laxika.magicalvibes.model.effect.LookAtTopCardsMayRevealByPredicatePutIntoHandRestOnBottomEffect;
+import com.github.laxika.magicalvibes.model.effect.LookAtTopCardsEffect;
 import com.github.laxika.magicalvibes.model.filter.CardTypePredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsArtifactPredicate;
 
@@ -31,12 +31,12 @@ public class TheAntiquitiesWar extends Card {
     public TheAntiquitiesWar() {
         // Chapter I: Look at top 5 cards, may reveal an artifact to hand, rest on bottom
         addEffect(EffectSlot.SAGA_CHAPTER_I,
-                new LookAtTopCardsMayRevealByPredicatePutIntoHandRestOnBottomEffect(
+                LookAtTopCardsEffect.mayRevealOneToHandRestOnBottom(
                         5, new CardTypePredicate(CardType.ARTIFACT)));
 
         // Chapter II: Same as chapter I
         addEffect(EffectSlot.SAGA_CHAPTER_II,
-                new LookAtTopCardsMayRevealByPredicatePutIntoHandRestOnBottomEffect(
+                LookAtTopCardsEffect.mayRevealOneToHandRestOnBottom(
                         5, new CardTypePredicate(CardType.ARTIFACT)));
 
         // Chapter III: Artifacts you control become artifact creatures with base P/T 5/5 until end of turn

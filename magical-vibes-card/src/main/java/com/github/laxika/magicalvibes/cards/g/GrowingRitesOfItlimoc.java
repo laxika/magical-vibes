@@ -7,7 +7,7 @@ import com.github.laxika.magicalvibes.model.CardType;
 import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.condition.ControlsPermanentCount;
 import com.github.laxika.magicalvibes.model.effect.ConditionalEffect;
-import com.github.laxika.magicalvibes.model.effect.LookAtTopCardsMayRevealByPredicatePutIntoHandRestOnBottomEffect;
+import com.github.laxika.magicalvibes.model.effect.LookAtTopCardsEffect;
 import com.github.laxika.magicalvibes.model.effect.TransformSelfEffect;
 import com.github.laxika.magicalvibes.model.filter.CardTypePredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsCreaturePredicate;
@@ -26,7 +26,7 @@ public class GrowingRitesOfItlimoc extends Card {
         // You may reveal a creature card from among them and put it into your hand.
         // Put the rest on the bottom of your library in any order.
         addEffect(EffectSlot.ON_ENTER_BATTLEFIELD,
-                new LookAtTopCardsMayRevealByPredicatePutIntoHandRestOnBottomEffect(4,
+                LookAtTopCardsEffect.mayRevealOneToHandRestOnBottom(4,
                         new CardTypePredicate(CardType.CREATURE)));
 
         // At the beginning of your end step, if you control four or more creatures,

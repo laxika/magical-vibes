@@ -30,6 +30,7 @@ import com.github.laxika.magicalvibes.model.filter.CardNotPredicate;
 import com.github.laxika.magicalvibes.model.filter.CardPowerAtLeastPredicate;
 import com.github.laxika.magicalvibes.model.filter.CardPowerAtMostPredicate;
 import com.github.laxika.magicalvibes.model.filter.CardPredicate;
+import com.github.laxika.magicalvibes.model.filter.CardSharesNameWithAPermanentPredicate;
 import com.github.laxika.magicalvibes.model.filter.CardSubtypePredicate;
 import com.github.laxika.magicalvibes.model.filter.CardSupertypePredicate;
 import com.github.laxika.magicalvibes.model.filter.CardTypePredicate;
@@ -202,6 +203,10 @@ public class PredicateEvaluationService {
                     card.getPower() != null && card.getPower() <= p.maxPower();
             case CardNamedPredicate p ->
                     p.cardName().equals(card.getName());
+            case CardSharesNameWithAPermanentPredicate ignored ->
+                    gameData != null && gameData.playerBattlefields.values().stream()
+                            .flatMap(java.util.List::stream)
+                            .anyMatch(perm -> perm.getCard().getName().equals(card.getName()));
             case CardNotPredicate p ->
                     !matchesCardPredicate(card, p.predicate(), sourceCardId, gameData, cardOwnerId);
             case CardAllOfPredicate p ->
