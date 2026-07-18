@@ -695,20 +695,25 @@ public class GameService {
 
 
     public void declareAttackers(GameData gameData, Player player, List<Integer> attackerIndices) {
-        declareAttackers(gameData, player, attackerIndices, null);
+        declareAttackers(gameData, player, attackerIndices, null, null);
     }
 
     public void declareAttackers(GameData gameData, Player player, List<Integer> attackerIndices, Map<Integer, UUID> attackTargets) {
+        declareAttackers(gameData, player, attackerIndices, attackTargets, null);
+    }
+
+    public void declareAttackers(GameData gameData, Player player, List<Integer> attackerIndices,
+                                 Map<Integer, UUID> attackTargets, List<List<Integer>> bands) {
         synchronized (gameData) {
             player = resolveActingPlayer(gameData, player);
             if (interactionHandlerRegistry.dispatchAnswer(gameData, player,
-                    new InteractionAnswer.AttackersDeclared(attackerIndices, attackTargets))) {
+                    new InteractionAnswer.AttackersDeclared(attackerIndices, attackTargets, bands))) {
                 return;
             }
             // No declaration is active — preserve the legacy stray-message path (the combat
             // flow rejects with "Not awaiting attacker declaration" and re-sends).
             try {
-                turnProgressionService.handleCombatResult(combatService.declareAttackers(gameData, player, attackerIndices, attackTargets), gameData);
+                turnProgressionService.handleCombatResult(combatService.declareAttackers(gameData, player, attackerIndices, attackTargets, bands), gameData);
             } catch (IllegalStateException | IllegalArgumentException e) {
                 // Re-send available attackers so the player (or AI) can retry
                 combatService.handleDeclareAttackersStep(gameData);

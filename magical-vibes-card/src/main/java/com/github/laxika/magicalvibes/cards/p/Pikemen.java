@@ -5,7 +5,7 @@ import com.github.laxika.magicalvibes.model.Card;
 
 /**
  * Pikemen — {1}{W} Creature — Human Soldier (1/1).
- * First strike (auto-loaded from Scryfall). Banding is not modeled by the engine.
+ * First strike and banding (auto-loaded from Scryfall).
  * No card-specific engine logic.
  */
 @CardRegistration(set = "5ED", collectorNumber = "52")

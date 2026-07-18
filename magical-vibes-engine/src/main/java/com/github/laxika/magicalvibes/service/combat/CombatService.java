@@ -93,7 +93,12 @@ public class CombatService {
     }
 
     public CombatResult declareAttackers(GameData gameData, Player player, List<Integer> attackerIndices, Map<Integer, UUID> attackTargets) {
-        return combatAttackService.declareAttackers(gameData, player, attackerIndices, attackTargets);
+        return declareAttackers(gameData, player, attackerIndices, attackTargets, null);
+    }
+
+    public CombatResult declareAttackers(GameData gameData, Player player, List<Integer> attackerIndices,
+                                         Map<Integer, UUID> attackTargets, List<List<Integer>> bands) {
+        return combatAttackService.declareAttackers(gameData, player, attackerIndices, attackTargets, bands);
     }
 
     public List<Integer> getAttackingCreatureIndices(GameData gameData, UUID playerId) {

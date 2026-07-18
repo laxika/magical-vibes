@@ -46,7 +46,8 @@ public enum Keyword {
     PARADIGM,
     HORSEMANSHIP,
     CONSPIRE,
-    RETRACE;
+    RETRACE,
+    BANDING;
 
     /**
      * Maps each landwalk keyword to the land subtype it walks over.

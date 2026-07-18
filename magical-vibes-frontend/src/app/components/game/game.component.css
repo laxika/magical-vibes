@@ -219,6 +219,14 @@
   cursor: pointer;
 }
 
+/* Below the attack-target badge while declaring: which attacking band (CR 702.22) this
+   creature belongs to; clicking cycles it through the available bands. */
+.band-badge {
+  background: #6b3fa0;
+  color: var(--color-parchment);
+  cursor: pointer;
+}
+
 .blocking-badge {
   background: var(--color-blue-primary);
   color: var(--color-parchment);

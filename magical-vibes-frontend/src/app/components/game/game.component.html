@@ -492,6 +492,11 @@
                     title="Click to change attack target"
                     (click)="$event.stopPropagation(); cycleAttackTarget(ip.originalIndex)">&#8594; {{ getAttackTargetName(ip.originalIndex) }}</div>
                 }
+                @if (declaringAttackers() && isSelectedAttacker(ip.originalIndex) && selectedAttackerIndices().size > 1) {
+                  <div badge-tl class="card-combat-badge band-badge"
+                    title="Banding (CR 702.22): click to group attackers into a band"
+                    (click)="$event.stopPropagation(); cycleBand(ip.originalIndex)">{{ getBandLabel(ip.originalIndex) }}</div>
+                }
                 @if (isBlockingCreature(ip.originalIndex, true)) { <div badge-tl class="card-combat-badge blocking-badge">{{ getBlockingBadgeText(ip.originalIndex, true) }}</div> }
                 @if (choice.damage.distributingDamage && choice.damage.getDamageAssigned(ip.perm.id) > 0) {
                   <div badge-br class="card-combat-badge damage-badge">{{ choice.damage.getDamageAssigned(ip.perm.id) }} dmg</div>

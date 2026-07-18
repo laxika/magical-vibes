@@ -95,7 +95,7 @@ class CombatDeclarationInteractionHandlersTest {
         void dispatchDelegates() {
             registry.begin(gd, new PendingInteraction.AttackerDeclaration(PLAYER1_ID));
             Player player = new Player(PLAYER1_ID, "Player1");
-            when(combatService.declareAttackers(gd, player, List.of(0), null)).thenReturn(CombatResult.DONE);
+            when(combatService.declareAttackers(gd, player, List.of(0), null, null)).thenReturn(CombatResult.DONE);
 
             boolean handled = registry.dispatchAnswer(gd, player,
                     new InteractionAnswer.AttackersDeclared(List.of(0), null));
@@ -109,7 +109,7 @@ class CombatDeclarationInteractionHandlersTest {
         void dispatchResendsOnInvalidDeclaration() {
             registry.begin(gd, new PendingInteraction.AttackerDeclaration(PLAYER1_ID));
             Player player = new Player(PLAYER1_ID, "Player1");
-            when(combatService.declareAttackers(gd, player, List.of(5), null))
+            when(combatService.declareAttackers(gd, player, List.of(5), null, null))
                     .thenThrow(new IllegalStateException("Invalid attacker index: 5"));
 
             assertThatThrownBy(() -> registry.dispatchAnswer(gd, player,

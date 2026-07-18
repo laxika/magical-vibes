@@ -53,6 +53,7 @@ public class ScryfallOracleLoader {
 
     static {
         KEYWORD_MAP.put("Flying", Keyword.FLYING);
+        KEYWORD_MAP.put("Banding", Keyword.BANDING);
         KEYWORD_MAP.put("Reach", Keyword.REACH);
         KEYWORD_MAP.put("Defender", Keyword.DEFENDER);
         KEYWORD_MAP.put("Double strike", Keyword.DOUBLE_STRIKE);

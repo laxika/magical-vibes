@@ -339,21 +339,36 @@ public class CombatDamageService {
         UUID activeId = gameData.activePlayerId;
         UUID defenderId = gameQueryService.getOpponentId(gameData, activeId);
 
-        // CR 510.1d — the defending player's answer is a multi-blocking creature's damage
-        // division; the carried index is the blocker's defending-battlefield index.
-        if (player.getId().equals(defenderId)) {
-            handleBlockerCombatDamageAssigned(gameData, attackerIndex, assignments, activeId, defenderId);
-            return;
-        }
-
+        // Route by which pending list owns this index, not by the answering player's role: banding
+        // (CR 702.22j/k) can flip which player assigns. Attacker assignments (CR 510.1c) are always
+        // drained before blocker divisions (CR 510.1d), so the carried index is unambiguous — the
+        // carried index is a blocker's defending-battlefield index once no attacker prompts remain.
+        // (Done before reading the defending battlefield so a non-pending index is rejected cleanly.)
         if (!gameData.combatDamagePendingIndices.contains(attackerIndex)) {
+            if (gameData.combatDamagePendingBlockerIndices.contains(attackerIndex)) {
+                handleBlockerCombatDamageAssigned(gameData, player, attackerIndex, assignments, activeId, defenderId);
+                return;
+            }
             throw new IllegalStateException("Attacker index " + attackerIndex + " is not pending assignment");
         }
-        if (!player.getId().equals(activeId)) {
-            throw new IllegalStateException("Only the active player can assign combat damage");
-        }
+
         List<Permanent> atkBf = gameData.playerBattlefields.get(activeId);
-        List<Permanent> defBf = gameData.playerBattlefields.get(defenderId);
+        List<Permanent> defBf = defenderId != null ? gameData.playerBattlefields.get(defenderId) : null;
+
+        // CR 702.22j — a blocked attacker's combat damage is assigned by the defending player (not
+        // the active player) when any of its living blockers has banding.
+        CombatDamagePhase1State authState = gameData.combatDamagePhase1State;
+        List<Integer> authLivingBlockers = new ArrayList<>();
+        for (int i : authState.blockerMap.getOrDefault(attackerIndex, List.of())) {
+            if (!authState.deadDefenderIndices.contains(i)) authLivingBlockers.add(i);
+        }
+        UUID expectedAssigner = attackerDamageAssigner(gameData, authLivingBlockers, defBf, activeId, defenderId);
+        if (!player.getId().equals(expectedAssigner)) {
+            throw new IllegalStateException(expectedAssigner.equals(defenderId)
+                    ? "Only the defending player can assign this attacker's combat damage"
+                    : "Only the active player can assign combat damage");
+        }
+
         Permanent atk = atkBf.get(attackerIndex);
         int totalDamage = gameQueryService.getEffectiveCombatDamage(gameData, atk);
 
@@ -482,7 +497,7 @@ public class CombatDamageService {
      * ordering among the attackers — but must total the blocker's combat damage and only name
      * attackers the creature is blocking.
      */
-    private void handleBlockerCombatDamageAssigned(GameData gameData, int blockerIndex,
+    private void handleBlockerCombatDamageAssigned(GameData gameData, Player player, int blockerIndex,
                                                    Map<UUID, Integer> assignments,
                                                    UUID activeId, UUID defenderId) {
         if (!gameData.combatDamagePendingIndices.isEmpty()) {
@@ -494,6 +509,17 @@ public class CombatDamageService {
 
         List<Permanent> atkBf = gameData.playerBattlefields.get(activeId);
         List<Permanent> defBf = gameData.playerBattlefields.get(defenderId);
+
+        // CR 702.22k — the active player (not the defending player) divides this blocker's damage
+        // when the blocker is blocking any attacker with banding.
+        UUID expectedAssigner = blockerDamageAssigner(gameData, blockerIndex,
+                gameData.combatDamagePhase1State, atkBf, activeId, defenderId);
+        if (!player.getId().equals(expectedAssigner)) {
+            throw new IllegalStateException(expectedAssigner.equals(activeId)
+                    ? "Only the active player can divide this blocker's combat damage"
+                    : "Only the defending player can divide this blocker's combat damage");
+        }
+
         Permanent blk = defBf.get(blockerIndex);
         int totalDamage = gameQueryService.getEffectiveCombatDamage(gameData, blk);
 
@@ -2084,6 +2110,42 @@ public class CombatDamageService {
         return false;
     }
 
+    /**
+     * CR 702.22j — the player who assigns a blocked attacker's combat damage among its blockers.
+     * Normally the active player (CR 510.1c), but the defending player instead when any of the
+     * attacker's living blockers has banding.
+     */
+    private UUID attackerDamageAssigner(GameData gameData, List<Integer> livingBlockers,
+                                        List<Permanent> defBf, UUID activeId, UUID defenderId) {
+        if (defBf == null) {
+            return activeId;
+        }
+        for (int blkIdx : livingBlockers) {
+            if (gameQueryService.hasKeyword(gameData, defBf.get(blkIdx), Keyword.BANDING)) {
+                return defenderId;
+            }
+        }
+        return activeId;
+    }
+
+    /**
+     * CR 702.22k — the player who divides a blocking creature's combat damage among the creatures it
+     * blocks. Normally the defending player (CR 510.1d), but the active player instead when the
+     * blocker is blocking any attacker with banding.
+     */
+    private UUID blockerDamageAssigner(GameData gameData, int blkIdx, CombatDamagePhase1State p1,
+                                       List<Permanent> atkBf, UUID activeId, UUID defenderId) {
+        for (var bEntry : p1.blockerMap.entrySet()) {
+            int atkIdx = bEntry.getKey();
+            if (p1.deadAttackerIndices.contains(atkIdx)) continue;
+            if (!bEntry.getValue().contains(blkIdx)) continue;
+            if (gameQueryService.hasKeyword(gameData, atkBf.get(atkIdx), Keyword.BANDING)) {
+                return activeId;
+            }
+        }
+        return defenderId;
+    }
+
     private void restorePhase1State(GameData gameData, CombatDamageState state) {
         CombatDamagePhase1State p1 = gameData.combatDamagePhase1State;
         state.deadAttackerIndices.addAll(p1.deadAttackerIndices);
@@ -2159,7 +2221,7 @@ public class CombatDamageService {
                                                  List<Permanent> defBf, UUID activeId, UUID defenderId) {
         // Attacker assignments first (CR 510.1c before 510.1d); blocker divisions after.
         if (gameData.combatDamagePendingIndices.isEmpty()) {
-            sendNextBlockerDamageAssignment(gameData, atkBf, defBf, defenderId);
+            sendNextBlockerDamageAssignment(gameData, atkBf, defBf, activeId, defenderId);
             return;
         }
         int atkIdx = gameData.combatDamagePendingIndices.get(0);
@@ -2221,8 +2283,10 @@ public class CombatDamageService {
                 gameData.id, atkIdx, atk.getCard().getName(), totalDamage, isTrample, isDeathtouch,
                 blockerDescriptions);
 
+        // CR 702.22j — route the prompt to the defending player when a banding blocker is present.
+        UUID assigningPlayer = attackerDamageAssigner(gameData, livingBlockers, defBf, activeId, defenderId);
         interactionHandlerRegistry.begin(gameData, new PendingInteraction.CombatDamageAssignment(
-                activeId, atkIdx, atk.getId(), atk.getCard().getName(), totalDamage,
+                assigningPlayer, atkIdx, atk.getId(), atk.getCard().getName(), totalDamage,
                 domainTargets, isTrample, isDeathtouch, unblockedRedirect));
     }
 
@@ -2233,7 +2297,7 @@ public class CombatDamageService {
      * {@link #handleCombatDamageAssigned} routes the answer by the answering player.
      */
     private void sendNextBlockerDamageAssignment(GameData gameData, List<Permanent> atkBf,
-                                                  List<Permanent> defBf, UUID defenderId) {
+                                                  List<Permanent> defBf, UUID activeId, UUID defenderId) {
         int blkIdx = gameData.combatDamagePendingBlockerIndices.get(0);
         Permanent blk = defBf.get(blkIdx);
         CombatDamagePhase1State p1 = gameData.combatDamagePhase1State;
@@ -2257,8 +2321,11 @@ public class CombatDamageService {
                 gameData.id, blkIdx, blk.getCard().getName(), totalDamage,
                 domainTargets.stream().map(CombatDamageTarget::name).toList());
 
+        // CR 702.22k — route the prompt to the active player when the blocker is blocking a
+        // creature with banding.
+        UUID assigningPlayer = blockerDamageAssigner(gameData, blkIdx, p1, atkBf, activeId, defenderId);
         interactionHandlerRegistry.begin(gameData, new PendingInteraction.CombatDamageAssignment(
-                defenderId, blkIdx, blk.getId(), blk.getCard().getName(), totalDamage,
+                assigningPlayer, blkIdx, blk.getId(), blk.getCard().getName(), totalDamage,
                 domainTargets, false, isDeathtouch, false));
     }
 }

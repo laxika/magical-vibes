@@ -589,7 +589,7 @@ public class GameMessageHandler implements MessageHandler {
                     attackTargets.put(entry.getKey(), UUID.fromString(entry.getValue()));
                 }
             }
-            gameService.declareAttackers(gameData, player, request.attackerIndices(), attackTargets);
+            gameService.declareAttackers(gameData, player, request.attackerIndices(), attackTargets, request.bands());
         } catch (IllegalArgumentException | IllegalStateException e) {
             handleError(connection, e.getMessage());
         }

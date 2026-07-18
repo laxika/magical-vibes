@@ -5,7 +5,7 @@ import com.github.laxika.magicalvibes.model.Card;
 
 /**
  * Shield Bearer — {1}{W} Creature — Human Soldier (0/3).
- * Banding is not modeled by the engine.
+ * Banding (auto-loaded from Scryfall).
  * No card-specific engine logic.
  */
 @CardRegistration(set = "5ED", collectorNumber = "62")

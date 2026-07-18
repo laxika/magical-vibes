@@ -2,6 +2,7 @@ package com.github.laxika.magicalvibes.cards.f;
 
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
 import com.github.laxika.magicalvibes.cards.w.WallOfWood;
+import com.github.laxika.magicalvibes.model.Keyword;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
 import org.junit.jupiter.api.DisplayName;
@@ -22,6 +23,18 @@ class FortifiedAreaTest extends BaseCardTest {
         // Wall of Wood is 0/3 → 1/3
         assertThat(gqs.getEffectivePower(gd, wall)).isEqualTo(1);
         assertThat(gqs.getEffectiveToughness(gd, wall)).isEqualTo(3);
+    }
+
+    @Test
+    @DisplayName("Wall creatures you control gain banding")
+    void wallsGainBanding() {
+        harness.addToBattlefield(player1, new FortifiedArea());
+        harness.addToBattlefield(player1, new WallOfWood());
+        harness.addToBattlefield(player1, new GrizzlyBears());
+
+        assertThat(gqs.hasKeyword(gd, findPermanent(player1, "Wall of Wood"), Keyword.BANDING)).isTrue();
+        // Non-Wall creatures you control are unaffected.
+        assertThat(gqs.hasKeyword(gd, findPermanent(player1, "Grizzly Bears"), Keyword.BANDING)).isFalse();
     }
 
     @Test

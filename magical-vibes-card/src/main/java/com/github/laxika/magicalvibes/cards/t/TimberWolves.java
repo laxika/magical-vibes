@@ -5,7 +5,7 @@ import com.github.laxika.magicalvibes.model.Card;
 
 /**
  * Timber Wolves — {G} Creature — Wolf (1/1).
- * Banding (auto-loaded from Scryfall). Banding is not modeled by the engine.
+ * Banding (auto-loaded from Scryfall).
  * No card-specific engine logic.
  */
 @CardRegistration(set = "4ED", collectorNumber = "275")

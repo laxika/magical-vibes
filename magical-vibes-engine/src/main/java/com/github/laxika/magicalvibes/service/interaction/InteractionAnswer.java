@@ -62,10 +62,21 @@ public sealed interface InteractionAnswer {
             implements InteractionAnswer {
     }
 
-    /** The active player's attacker declaration ({@code attackTargets} may be null). */
+    /**
+     * The active player's attacker declaration ({@code attackTargets} may be null). {@code bands}
+     * carries the optional attacking bands (CR 702.22) — each inner list is the set of attacker
+     * indices grouped into one band; may be null/empty.
+     */
     record AttackersDeclared(java.util.List<Integer> attackerIndices,
-                             java.util.Map<Integer, java.util.UUID> attackTargets)
+                             java.util.Map<Integer, java.util.UUID> attackTargets,
+                             java.util.List<java.util.List<Integer>> bands)
             implements InteractionAnswer {
+
+        /** Backwards-compatible constructor for callers that declare no bands. */
+        AttackersDeclared(java.util.List<Integer> attackerIndices,
+                          java.util.Map<Integer, java.util.UUID> attackTargets) {
+            this(attackerIndices, attackTargets, null);
+        }
     }
 
     /** The defending player's blocker declaration. */

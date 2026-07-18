@@ -13,7 +13,6 @@ import java.util.List;
  * Urza's Avenger — {6} Artifact Creature.
  * "{0}: This creature gets -1/-1 and gains your choice of banding, flying, first strike,
  * or trample until end of turn."
- * Banding is not modeled by the engine, so it is omitted from the keyword options.
  */
 @CardRegistration(set = "5ED", collectorNumber = "405")
 @CardRegistration(set = "4ED", collectorNumber = "355")
@@ -23,7 +22,7 @@ public class UrzasAvenger extends Card {
         addActivatedAbility(new ActivatedAbility(false, "{0}",
                 List.of(new BoostSelfEffect(-1, -1),
                         new GrantChosenKeywordToSelfEffect(
-                                List.of(Keyword.FLYING, Keyword.FIRST_STRIKE, Keyword.TRAMPLE))),
-                "{0}: This creature gets -1/-1 and gains your choice of flying, first strike, or trample until end of turn."));
+                                List.of(Keyword.BANDING, Keyword.FLYING, Keyword.FIRST_STRIKE, Keyword.TRAMPLE))),
+                "{0}: This creature gets -1/-1 and gains your choice of banding, flying, first strike, or trample until end of turn."));
     }
 }

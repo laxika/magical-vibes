@@ -160,6 +160,15 @@ public class CombatAttackService {
      * Validates and processes a player's attacker declaration.
      */
     public CombatResult declareAttackers(GameData gameData, Player player, List<Integer> attackerIndices, Map<Integer, UUID> attackTargets) {
+        return declareAttackers(gameData, player, attackerIndices, attackTargets, null);
+    }
+
+    /**
+     * Validates and processes a player's attacker declaration, including any attacking bands
+     * (CR 702.22): each entry of {@code bands} is the set of attacker indices grouped into one band.
+     */
+    public CombatResult declareAttackers(GameData gameData, Player player, List<Integer> attackerIndices,
+                                         Map<Integer, UUID> attackTargets, List<List<Integer>> bands) {
         if (gameData.interaction.activeInteraction(PendingInteraction.AttackerDeclaration.class) == null) {
             throw new IllegalStateException("Not awaiting attacker declaration");
         }
@@ -257,6 +266,10 @@ public class CombatAttackService {
             resolvedTargets.put(idx, targetId);
         }
 
+        // Validate attacking bands (CR 702.22c/d): each band needs >=1 creature with banding and
+        // <=1 without, and all its members must attack the same player or planeswalker.
+        List<Set<Integer>> validatedBands = validateBands(gameData, battlefield, uniqueIndices, resolvedTargets, bands);
+
         // --- All validation passed — commit state changes ---
         gameData.interaction.clearAwaitingInput();
 
@@ -297,6 +310,15 @@ public class CombatAttackService {
             if (!gameQueryService.hasKeyword(gameData, attacker, Keyword.VIGILANCE)) {
                 attacker.tap();
                 triggerCollectionService.checkEnchantedPermanentTapTriggers(gameData, attacker);
+            }
+        }
+
+        // Assign band membership (CR 702.22): every member of a band shares one band id, which
+        // persists for the rest of combat even if banding is later removed (CR 702.22e).
+        for (Set<Integer> band : validatedBands) {
+            UUID bandId = UUID.randomUUID();
+            for (int idx : band) {
+                battlefield.get(idx).setBandId(bandId);
             }
         }
 
@@ -1086,6 +1108,65 @@ public class CombatAttackService {
                         }
                     });
         }
+    }
+
+    /**
+     * Validates the declared attacking bands (CR 702.22c/d) and returns them as index sets ready to
+     * stamp with band ids. Each band must: contain at least two declared attackers, include at least
+     * one creature with banding and at most one without, keep every member attacking the same target,
+     * and not share a creature with another band. Returns an empty list when no bands are declared.
+     */
+    private List<Set<Integer>> validateBands(GameData gameData, List<Permanent> battlefield,
+                                             Set<Integer> declaredAttackerIndices,
+                                             Map<Integer, UUID> resolvedTargets,
+                                             List<List<Integer>> bands) {
+        List<Set<Integer>> result = new ArrayList<>();
+        if (bands == null || bands.isEmpty()) {
+            return result;
+        }
+        Set<Integer> alreadyBanded = new HashSet<>();
+        for (List<Integer> band : bands) {
+            if (band == null || band.isEmpty()) {
+                continue;
+            }
+            Set<Integer> members = new LinkedHashSet<>(band);
+            if (members.size() < 2) {
+                throw new IllegalStateException("A band must contain at least two creatures");
+            }
+            int withBanding = 0;
+            int withoutBanding = 0;
+            UUID sharedTarget = null;
+            boolean first = true;
+            for (int idx : members) {
+                if (!declaredAttackerIndices.contains(idx)) {
+                    throw new IllegalStateException("Band member " + idx + " is not a declared attacker");
+                }
+                if (!alreadyBanded.add(idx)) {
+                    throw new IllegalStateException("Creature at index " + idx + " can't be a member of more than one band");
+                }
+                Permanent creature = battlefield.get(idx);
+                if (gameQueryService.hasKeyword(gameData, creature, Keyword.BANDING)) {
+                    withBanding++;
+                } else {
+                    withoutBanding++;
+                }
+                UUID target = resolvedTargets.get(idx);
+                if (first) {
+                    sharedTarget = target;
+                    first = false;
+                } else if (!Objects.equals(sharedTarget, target)) {
+                    throw new IllegalStateException("All creatures in a band must attack the same player or planeswalker");
+                }
+            }
+            if (withBanding < 1) {
+                throw new IllegalStateException("A band must contain at least one creature with banding");
+            }
+            if (withoutBanding > 1) {
+                throw new IllegalStateException("A band can contain at most one creature without banding");
+            }
+            result.add(members);
+        }
+        return result;
     }
 
     void payGenericMana(ManaPool pool, int amount) {

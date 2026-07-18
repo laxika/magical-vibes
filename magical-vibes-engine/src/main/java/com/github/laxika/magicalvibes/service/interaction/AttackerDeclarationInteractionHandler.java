@@ -62,7 +62,7 @@ public class AttackerDeclarationInteractionHandler
         InteractionAnswer.AttackersDeclared declared = (InteractionAnswer.AttackersDeclared) answer;
         try {
             turnProgressionService.handleCombatResult(
-                    combatService.declareAttackers(gameData, player, declared.attackerIndices(), declared.attackTargets()),
+                    combatService.declareAttackers(gameData, player, declared.attackerIndices(), declared.attackTargets(), declared.bands()),
                     gameData);
         } catch (IllegalStateException | IllegalArgumentException e) {
             // Re-send available attackers so the player (or AI) can retry

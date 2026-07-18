@@ -146,13 +146,13 @@ class CombatServiceTest {
             Player player = new Player(player1Id, "Player1");
             List<Integer> indices = List.of(0, 1);
             Map<Integer, UUID> targets = Map.of(0, player2Id);
-            when(combatAttackService.declareAttackers(gd, player, indices, targets))
+            when(combatAttackService.declareAttackers(gd, player, indices, targets, null))
                     .thenReturn(CombatResult.AUTO_PASS_ONLY);
 
             CombatResult result = combatService.declareAttackers(gd, player, indices, targets);
 
             assertThat(result).isEqualTo(CombatResult.AUTO_PASS_ONLY);
-            verify(combatAttackService).declareAttackers(gd, player, indices, targets);
+            verify(combatAttackService).declareAttackers(gd, player, indices, targets, null);
         }
 
         @Test

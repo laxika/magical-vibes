@@ -5,7 +5,7 @@ import com.github.laxika.magicalvibes.model.Card;
 
 /**
  * Kjeldoran Skycaptain — {4}{W} Creature — Human Soldier (2/2).
- * Flying, first strike (auto-loaded from Scryfall). Banding is not modeled by the engine.
+ * Flying, first strike, banding (auto-loaded from Scryfall).
  * No card-specific engine logic.
  */
 @CardRegistration(set = "5ED", collectorNumber = "45")

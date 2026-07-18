@@ -120,7 +120,7 @@ public class DamageSupport {
         // path — combat damage is prevented in DamagePreventionService.applyCreaturePreventionShield.
         if (gameQueryService.isCreatureSourceDamageToSelfPrevented(gameData, target, entry, damageSource)) {
             gameBroadcastService.logAndBroadcast(gameData, GameLog.text("Damage to " + target.getCard().getName() + " is prevented."));
-            return false;
+            return;
         }
         int damage = damagePreventionService.applyCreaturePreventionShield(gameData, target, rawDamage);
 

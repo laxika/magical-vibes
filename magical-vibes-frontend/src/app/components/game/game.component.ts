@@ -91,6 +91,7 @@ export class GameComponent implements OnInit, OnDestroy {
     this.mustAttackIndices.set(new Set());
     this.availableBlockerIndices.set(new Set());
     this.selectedAttackerIndices.set(new Set());
+    this.bandAssignments.set(new Map());
     this.opponentAttackerIndices.set([]);
     this.blockerAssignments.set(new Map());
     this.legalBlockPairs.set(new Map());
@@ -707,6 +708,7 @@ export class GameComponent implements OnInit, OnDestroy {
     // Clear pending combat state when server confirms battlefield
     if (!this.declaringAttackers()) {
       this.selectedAttackerIndices.set(new Set());
+      this.bandAssignments.set(new Map());
     }
     if (!this.declaringBlockers()) {
       this.blockerAssignments.set(new Map());
@@ -867,6 +869,8 @@ export class GameComponent implements OnInit, OnDestroy {
   selectedAttackerIndices = signal(new Set<number>());
   availableAttackTargets = signal<AttackTarget[]>([]);
   attackerTargetAssignments = signal(new Map<number, string>());
+  /** Attacking-band grouping (CR 702.22): attacker index → band number (1-based). Absent = not in a band. */
+  bandAssignments = signal(new Map<number, number>());
   opponentAttackerIndices = signal<number[]>([]);
   blockerAssignments = signal(new Map<number, number>());
   legalBlockPairs = signal(new Map<number, number[]>());
@@ -886,6 +890,7 @@ export class GameComponent implements OnInit, OnDestroy {
     this.selectedAttackerIndices.set(new Set(msg.mustAttackIndices));
     this.availableAttackTargets.set(msg.availableTargets || []);
     this.attackerTargetAssignments.set(new Map());
+    this.bandAssignments.set(new Map());
     this.attackTaxPerCreature.set(msg.taxPerCreature || 0);
     this.mustAttackWithAtLeastOne.set(msg.mustAttackWithAtLeastOne || false);
   }
@@ -936,14 +941,42 @@ export class GameComponent implements OnInit, OnDestroy {
     if (updated.has(index)) {
       if (this.mustAttackIndices().has(index)) return;
       updated.delete(index);
-      // Remove target assignment when deselecting
+      // Remove target and band assignment when deselecting
       const updatedTargets = new Map(this.attackerTargetAssignments());
       updatedTargets.delete(index);
       this.attackerTargetAssignments.set(updatedTargets);
+      const updatedBands = new Map(this.bandAssignments());
+      updatedBands.delete(index);
+      this.bandAssignments.set(updatedBands);
     } else {
       updated.add(index);
     }
     this.selectedAttackerIndices.set(updated);
+  }
+
+  /**
+   * Cycles the band grouping (CR 702.22) of a selected attacker: no band → Band A → Band B → …
+   * → no band. Group two or more attackers under the same letter to attack as a band.
+   */
+  cycleBand(index: number): void {
+    if (!this.selectedAttackerIndices().has(index)) return;
+    const current = this.bandAssignments().get(index) ?? 0;
+    const maxBand = Math.max(1, this.selectedAttackerIndices().size - 1);
+    const next = current >= maxBand ? 0 : current + 1;
+    const updated = new Map(this.bandAssignments());
+    if (next === 0) {
+      updated.delete(index);
+    } else {
+      updated.set(index, next);
+    }
+    this.bandAssignments.set(updated);
+  }
+
+  /** Badge text for an attacker's band: "+ Band" when ungrouped, "Band A"/"Band B"/… when grouped. */
+  getBandLabel(index: number): string {
+    const band = this.bandAssignments().get(index);
+    if (!band) return '+ Band';
+    return 'Band ' + String.fromCharCode(64 + band);
   }
 
   /** Cycles through available attack targets for a selected attacker (player → planeswalker1 → ...) */
@@ -988,12 +1021,26 @@ export class GameComponent implements OnInit, OnDestroy {
       }
       msg['attackTargets'] = attackTargets;
     }
+    // Build attacking bands (CR 702.22): group selected attackers by band number, keeping only
+    // groups of two or more. The engine validates band legality (>=1 banding, <=1 non-banding).
+    const bandGroups = new Map<number, number[]>();
+    for (const [idx, band] of this.bandAssignments()) {
+      if (!this.selectedAttackerIndices().has(idx)) continue;
+      const group = bandGroups.get(band) ?? [];
+      group.push(idx);
+      bandGroups.set(band, group);
+    }
+    const bands = Array.from(bandGroups.values()).filter(g => g.length >= 2);
+    if (bands.length > 0) {
+      msg['bands'] = bands;
+    }
     this.websocketService.send(msg as unknown as WebSocketMessage);
     this.declaringAttackers.set(false);
     this.availableAttackerIndices.set(new Set());
     this.mustAttackIndices.set(new Set());
     this.availableAttackTargets.set([]);
     this.attackerTargetAssignments.set(new Map());
+    this.bandAssignments.set(new Map());
     this.attackTaxPerCreature.set(0);
     this.mustAttackWithAtLeastOne.set(false);
   }

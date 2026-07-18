@@ -37,6 +37,11 @@ public class Permanent {
     private boolean blocking;
     private final List<Integer> blockingTargets = new ArrayList<>();
     private final List<UUID> blockingTargetIds = new ArrayList<>();
+    /** Identifies the attacking band (CR 702.22) this creature was declared in, or null if it is not
+     *  in a band. Shared by every member of the same band. Set at declare-attackers time and cleared
+     *  by {@link #clearCombatState()} when combat ends; persists for the rest of combat even if banding
+     *  is later removed (CR 702.22e). */
+    @Setter private UUID bandId;
     private boolean summoningSick;
     @Setter private int powerModifier;
     @Setter private int toughnessModifier;
@@ -312,6 +317,7 @@ public class Permanent {
         this.blocking = source.blocking;
         this.blockingTargets.addAll(source.blockingTargets);
         this.blockingTargetIds.addAll(source.blockingTargetIds);
+        this.bandId = source.bandId;
         this.summoningSick = source.summoningSick;
         this.powerModifier = source.powerModifier;
         this.toughnessModifier = source.toughnessModifier;
@@ -463,6 +469,7 @@ public class Permanent {
         this.blocking = false;
         this.blockingTargets.clear();
         this.blockingTargetIds.clear();
+        this.bandId = null;
         clearUntilEndOfCombatAnimation();
     }
 

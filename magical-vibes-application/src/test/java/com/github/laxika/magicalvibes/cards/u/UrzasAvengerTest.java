@@ -11,7 +11,6 @@ import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
 import static org.assertj.core.api.Assertions.assertThat;
-import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
 class UrzasAvengerTest extends BaseCardTest {
 
@@ -90,15 +89,15 @@ class UrzasAvengerTest extends BaseCardTest {
     }
 
     @Test
-    @DisplayName("Choosing an unmodeled keyword (banding) is rejected")
-    void choosingBandingRejected() {
-        addAvengerReady(player1);
+    @DisplayName("Can choose banding")
+    void canChooseBanding() {
+        Permanent avenger = addAvengerReady(player1);
 
         harness.activateAbility(player1, 0, 0, null, null);
         harness.passBothPriorities();
+        harness.handleListChoice(player1, "BANDING");
 
-        assertThatThrownBy(() -> harness.handleListChoice(player1, "BANDING"))
-                .isInstanceOf(IllegalArgumentException.class);
+        assertThat(gqs.hasKeyword(gd, avenger, Keyword.BANDING)).isTrue();
     }
 
     private Permanent addAvengerReady(Player player) {

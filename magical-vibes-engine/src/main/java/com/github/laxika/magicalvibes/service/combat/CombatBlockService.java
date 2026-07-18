@@ -320,6 +320,12 @@ public class CombatBlockService {
             blocker.addBlockingTargetId(attacker.getId());
         }
 
+        // CR 702.22h: when a blocker blocks one member of an attacking band, every other creature in
+        // that band becomes blocked by that same blocker (even one it couldn't otherwise block, e.g.
+        // a flyer). Applied after validation, so these consequential blocks don't count against
+        // max-blocks or menace.
+        applyBandSharedBlocking(attackerBattlefield, defenderBattlefield, blockerAssignments);
+
         if (!blockerAssignments.isEmpty()) {
             String logEntry = player.getUsername() + " declares " + blockerAssignments.size() +
                     " blocker" + (blockerAssignments.size() > 1 ? "s" : "") + ".";
@@ -438,6 +444,8 @@ public class CombatBlockService {
         for (BlockerAssignment assignment : blockerAssignments) {
             blockedAttackerIndices.add(assignment.attackerIndex());
         }
+        // CR 702.22h: a band-mate of any blocked attacker also became blocked.
+        addBandMatesOfBlockedAttackers(attackerBattlefield, blockedAttackerIndices);
         for (int atkIdx : blockedAttackerIndices) {
             Permanent attacker = attackerBattlefield.get(atkIdx);
             List<EffectRegistration> becomesBlockedRegs = attacker.getCard().getEffectRegistrations(EffectSlot.ON_BECOMES_BLOCKED);
@@ -744,6 +752,75 @@ public class CombatBlockService {
             }
         }
         return pushed;
+    }
+
+    /**
+     * CR 702.22h: for each declared block of a band member, marks the blocker as also blocking every
+     * other member of that band. These consequential blocks bypass block legality (a non-flyer can end
+     * up "blocking" a flying band-mate) and are applied only after all declared blocks have been
+     * validated, so they never count toward max-blocks or menace requirements.
+     */
+    private void applyBandSharedBlocking(List<Permanent> attackerBattlefield,
+                                         List<Permanent> defenderBattlefield,
+                                         List<BlockerAssignment> blockerAssignments) {
+        Map<UUID, List<Integer>> bandMembers = groupAttackingBands(attackerBattlefield);
+        if (bandMembers.isEmpty()) {
+            return;
+        }
+        for (BlockerAssignment assignment : blockerAssignments) {
+            Permanent attacker = attackerBattlefield.get(assignment.attackerIndex());
+            UUID bandId = attacker.getBandId();
+            if (bandId == null) {
+                continue;
+            }
+            Permanent blocker = defenderBattlefield.get(assignment.blockerIndex());
+            for (int memberIdx : bandMembers.getOrDefault(bandId, List.of())) {
+                if (memberIdx == assignment.attackerIndex()) {
+                    continue;
+                }
+                Permanent member = attackerBattlefield.get(memberIdx);
+                if (!blocker.getBlockingTargetIds().contains(member.getId())) {
+                    blocker.setBlocking(true);
+                    blocker.addBlockingTarget(memberIdx);
+                    blocker.addBlockingTargetId(member.getId());
+                }
+            }
+        }
+    }
+
+    /**
+     * CR 702.22h: expands {@code blockedAttackerIndices} to include every band-mate of an already
+     * blocked attacker, since blocking one member of a band blocks the whole band.
+     */
+    private void addBandMatesOfBlockedAttackers(List<Permanent> attackerBattlefield,
+                                                Set<Integer> blockedAttackerIndices) {
+        Map<UUID, List<Integer>> bandMembers = groupAttackingBands(attackerBattlefield);
+        if (bandMembers.isEmpty()) {
+            return;
+        }
+        Set<Integer> additions = new LinkedHashSet<>();
+        for (int idx : blockedAttackerIndices) {
+            if (idx < 0 || idx >= attackerBattlefield.size()) {
+                continue;
+            }
+            UUID bandId = attackerBattlefield.get(idx).getBandId();
+            if (bandId != null) {
+                additions.addAll(bandMembers.getOrDefault(bandId, List.of()));
+            }
+        }
+        blockedAttackerIndices.addAll(additions);
+    }
+
+    /** Groups the currently attacking creatures by their band id (CR 702.22). */
+    private Map<UUID, List<Integer>> groupAttackingBands(List<Permanent> attackerBattlefield) {
+        Map<UUID, List<Integer>> bandMembers = new HashMap<>();
+        for (int i = 0; i < attackerBattlefield.size(); i++) {
+            Permanent atk = attackerBattlefield.get(i);
+            if (atk.isAttacking() && atk.getBandId() != null) {
+                bandMembers.computeIfAbsent(atk.getBandId(), k -> new ArrayList<>()).add(i);
+            }
+        }
+        return bandMembers;
     }
 
     /**

@@ -3,8 +3,7 @@ package com.github.laxika.magicalvibes.cards.e;
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.ActivatedAbility;
 import com.github.laxika.magicalvibes.model.Card;
-import com.github.laxika.magicalvibes.model.effect.PreventAllDamageByTargetCreatureEffect;
-import com.github.laxika.magicalvibes.model.effect.PreventAllDamageToTargetCreatureEffect;
+import com.github.laxika.magicalvibes.model.effect.PreventDamageEffect;
 import com.github.laxika.magicalvibes.model.effect.TapUntapScope;
 import com.github.laxika.magicalvibes.model.effect.UntapPermanentsEffect;
 import com.github.laxika.magicalvibes.model.filter.PermanentAllOfPredicate;
@@ -26,8 +25,8 @@ public class EbonyHorse extends Card {
                 "{2}",
                 List.of(
                         new UntapPermanentsEffect(TapUntapScope.TARGET),
-                        new PreventAllDamageToTargetCreatureEffect(true),
-                        new PreventAllDamageByTargetCreatureEffect(true)),
+                        PreventDamageEffect.allCombatToTargetCreatures(),
+                        PreventDamageEffect.allCombatByTargetCreatures()),
                 "{2}, {T}: Untap target attacking creature you control. Prevent all combat damage that would be dealt to and dealt by that creature this turn.",
                 new PermanentPredicateTargetFilter(
                         new PermanentAllOfPredicate(List.of(
