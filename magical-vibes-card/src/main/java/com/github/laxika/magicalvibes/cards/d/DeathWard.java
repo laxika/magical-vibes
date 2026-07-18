@@ -8,6 +8,7 @@ import com.github.laxika.magicalvibes.model.filter.PermanentIsCreaturePredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentPredicateTargetFilter;
 
 @CardRegistration(set = "5ED", collectorNumber = "25")
+@CardRegistration(set = "4ED", collectorNumber = "21")
 public class DeathWard extends Card {
 
     public DeathWard() {

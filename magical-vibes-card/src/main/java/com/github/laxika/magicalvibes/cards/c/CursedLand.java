@@ -9,6 +9,7 @@ import com.github.laxika.magicalvibes.model.filter.PermanentIsLandPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentPredicateTargetFilter;
 
 @CardRegistration(set = "5ED", collectorNumber = "152")
+@CardRegistration(set = "4ED", collectorNumber = "127")
 public class CursedLand extends Card {
 
     public CursedLand() {

@@ -17,7 +17,10 @@ import com.github.laxika.magicalvibes.model.amount.Fixed;
 import com.github.laxika.magicalvibes.model.effect.CreateTokenEffect;
 import com.github.laxika.magicalvibes.model.effect.DamageRecipient;
 import com.github.laxika.magicalvibes.model.effect.DealDamageToPlayersEffect;
+import com.github.laxika.magicalvibes.model.effect.DestroySourceAndDamageControllerIfDestroyedEffect;
 import com.github.laxika.magicalvibes.model.effect.ForcedCostOrElseEffect;
+import com.github.laxika.magicalvibes.model.effect.LoseLifeEffect;
+import com.github.laxika.magicalvibes.model.effect.LoseLifeRecipient;
 import com.github.laxika.magicalvibes.model.effect.SacrificeSelfEffect;
 import com.github.laxika.magicalvibes.model.effect.TapPermanentsEffect;
 import com.github.laxika.magicalvibes.model.effect.TapUntapScope;
@@ -397,10 +400,32 @@ public class DestructionSupport {
                 gameOutcomeService.checkWinCondition(gameData);
             } else if (elseEffect instanceof SacrificeSelfEffect) {
                 sacrificeSource(gameData, entry);
+            } else if (elseEffect instanceof LoseLifeEffect loseLife
+                    && loseLife.recipient() == LoseLifeRecipient.CONTROLLER
+                    && loseLife.amount() instanceof Fixed lifeAmount) {
+                // "unless you pay {cost}, you lose N life" (Nafs Asp). Life loss, not damage
+                // (CR 118.2) — never routed through damage plumbing.
+                lifeSupport.applyLifeLoss(gameData, entry.getControllerId(), lifeAmount.value(), entry.getCard().getName());
+                gameOutcomeService.checkWinCondition(gameData);
+            } else if (elseEffect instanceof DestroySourceAndDamageControllerIfDestroyedEffect destroyDamage) {
+                destroySourceAndDamageControllerIfDestroyed(gameData, entry, destroyDamage.damage());
             } else {
                 log.warn("Game {} - Unsupported ForcedCostOrElse fallback effect: {}",
                         gameData.id, elseEffect.getClass().getSimpleName());
             }
+        }
+    }
+
+    private void destroySourceAndDamageControllerIfDestroyed(GameData gameData, StackEntry entry, int damage) {
+        Permanent source = gameQueryService.findPermanentById(gameData, entry.getSourcePermanentId());
+        if (source == null) {
+            return;
+        }
+        boolean destroyed = tryDestroyAndLog(gameData, source, entry.getCard().getName());
+        if (destroyed) {
+            dealNoncombatDamageToPlayer(gameData, entry.getControllerId(), damage,
+                    entry.getCard().getName(), entry.getCard().getColor());
+            gameOutcomeService.checkWinCondition(gameData);
         }
     }
 

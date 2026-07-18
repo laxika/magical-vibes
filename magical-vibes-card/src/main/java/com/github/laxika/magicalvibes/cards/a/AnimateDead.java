@@ -13,6 +13,7 @@ import com.github.laxika.magicalvibes.model.effect.StaticBoostEffect;
 import com.github.laxika.magicalvibes.model.filter.CardTypePredicate;
 
 @CardRegistration(set = "5ED", collectorNumber = "140")
+@CardRegistration(set = "4ED", collectorNumber = "118")
 public class AnimateDead extends Card {
 
     public AnimateDead() {

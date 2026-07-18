@@ -9,6 +9,7 @@ import java.util.List;
 
 @CardRegistration(set = "6ED", collectorNumber = "244")
 @CardRegistration(set = "5ED", collectorNumber = "317")
+@CardRegistration(set = "4ED", collectorNumber = "265")
 public class PradeshGypsies extends Card {
 
     public PradeshGypsies() {

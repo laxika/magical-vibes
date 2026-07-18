@@ -10,6 +10,7 @@ import com.github.laxika.magicalvibes.model.filter.PermanentColorInPredicate;
 import java.util.List;
 import java.util.Set;
 
+@CardRegistration(set = "4ED", collectorNumber = "14")
 @CardRegistration(set = "5ED", collectorNumber = "17")
 @CardRegistration(set = "6ED", collectorNumber = "8")
 @CardRegistration(set = "7ED", collectorNumber = "6")

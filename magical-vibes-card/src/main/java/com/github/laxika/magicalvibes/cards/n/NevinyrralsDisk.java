@@ -13,6 +13,7 @@ import com.github.laxika.magicalvibes.model.filter.PermanentIsEnchantmentPredica
 
 import java.util.List;
 
+@CardRegistration(set = "4ED", collectorNumber = "338")
 @CardRegistration(set = "5ED", collectorNumber = "391")
 public class NevinyrralsDisk extends Card {
 

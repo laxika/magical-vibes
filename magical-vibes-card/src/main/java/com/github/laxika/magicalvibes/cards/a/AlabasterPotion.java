@@ -11,6 +11,7 @@ import com.github.laxika.magicalvibes.model.effect.TargetPlayerGainsLifeEffect;
 import java.util.List;
 
 @CardRegistration(set = "5ED", collectorNumber = "3")
+@CardRegistration(set = "4ED", collectorNumber = "1")
 public class AlabasterPotion extends Card {
 
     public AlabasterPotion() {

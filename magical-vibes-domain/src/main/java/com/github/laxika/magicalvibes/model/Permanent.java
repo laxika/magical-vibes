@@ -26,6 +26,14 @@ public class Permanent {
     /** The UUID of the player or planeswalker this creature is attacking. Null when not attacking. */
     @Setter private UUID attackTarget;
     private boolean attackedThisTurn;
+    /** When true, this creature can't be declared as an attacker during its controller's next turn
+     *  (Wall of Dust's block trigger). Promoted into {@link #cantAttackThisTurn} at the start of the
+     *  controller's next turn by {@link #promoteCantAttackNextTurn()}. */
+    @Setter private boolean cantAttackNextTurn;
+    /** When true, this creature can't be declared as an attacker this turn. Armed from
+     *  {@link #cantAttackNextTurn} at the controller's turn start and self-clears the following
+     *  controller turn, so the restriction lasts exactly one turn. */
+    @Setter private boolean cantAttackThisTurn;
     private boolean blocking;
     private final List<Integer> blockingTargets = new ArrayList<>();
     private final List<UUID> blockingTargetIds = new ArrayList<>();
@@ -162,6 +170,11 @@ public class Permanent {
      *  Each entry means: "this permanent doesn't untap for as long as that source permanent is on the battlefield."
      *  Unlike {@link #untapPreventedByPermanentIds}, the tapped state of the source does not matter. */
     private final Set<UUID> untapPreventedWhileSourceOnBattlefieldIds = new HashSet<>();
+    /** Ids of lands this permanent has turned into a Forest "until this creature leaves the
+     *  battlefield" (Gaea's Liege's {@code {T}} ability). Read by {@code TrackedLandsBecomeForestEffect}
+     *  in layer 4; the grant ends automatically when this permanent leaves (its static effects stop
+     *  being collected). Survives turn resets — not cleared by {@link #resetModifiers()}. */
+    private final Set<UUID> forestedLandIds = new HashSet<>();
     /** Number of untap steps this permanent should skip. Decremented each untap step.
      *  Multiple triggers (e.g. land tapped twice while Vorinclex is out) stack independently.
      *  Used by Vorinclex, Voice of Hunger's opponent-land lock. */
@@ -294,6 +307,8 @@ public class Permanent {
         this.attacking = source.attacking;
         this.attackTarget = source.attackTarget;
         this.attackedThisTurn = source.attackedThisTurn;
+        this.cantAttackNextTurn = source.cantAttackNextTurn;
+        this.cantAttackThisTurn = source.cantAttackThisTurn;
         this.blocking = source.blocking;
         this.blockingTargets.addAll(source.blockingTargets);
         this.blockingTargetIds.addAll(source.blockingTargetIds);
@@ -356,6 +371,7 @@ public class Permanent {
         this.mustBlockIds.addAll(source.mustBlockIds);
         this.untapPreventedByPermanentIds.addAll(source.untapPreventedByPermanentIds);
         this.untapPreventedWhileSourceOnBattlefieldIds.addAll(source.untapPreventedWhileSourceOnBattlefieldIds);
+        this.forestedLandIds.addAll(source.forestedLandIds);
         this.skipUntapCount = source.skipUntapCount;
         this.markedDamage = source.markedDamage;
         this.damagedByDeathtouch = source.damagedByDeathtouch;
@@ -722,6 +738,19 @@ public class Permanent {
         this.untilNextTurnSubtypes.clear();
         this.untilNextTurnKeywords.clear();
         this.untilNextTurnLandTypeOverride = null;
+    }
+
+    /**
+     * Promotes a pending Wall of Dust "can't attack next turn" restriction into an active this-turn
+     * restriction and clears any restriction that has already expired. Because it assigns
+     * {@code cantAttackThisTurn = cantAttackNextTurn}, calling it at the start of every one of the
+     * controller's turns makes the restriction hold for exactly one turn. Must be called only for the
+     * active player's permanents at turn start (so a creature's restriction arms on ITS controller's
+     * turn, never an opponent's).
+     */
+    public void promoteCantAttackNextTurn() {
+        this.cantAttackThisTurn = this.cantAttackNextTurn;
+        this.cantAttackNextTurn = false;
     }
 
     /**

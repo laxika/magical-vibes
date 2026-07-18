@@ -8,6 +8,7 @@ import com.github.laxika.magicalvibes.model.filter.PermanentHasSubtypePredicate;
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 
 @CardRegistration(set = "5ED", collectorNumber = "334")
+@CardRegistration(set = "4ED", collectorNumber = "278")
 public class Tsunami extends Card {
 
     public Tsunami() {

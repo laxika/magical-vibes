@@ -7,8 +7,10 @@ import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.effect.BecomeCopyOfTargetCreatureUntilEndOfTurnEffect;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
 import com.github.laxika.magicalvibes.model.effect.NoMaximumHandSizeEffect;
+import com.github.laxika.magicalvibes.model.effect.OpponentMaxHandSizeEffect;
 import com.github.laxika.magicalvibes.model.effect.PreventManaDrainEffect;
 import com.github.laxika.magicalvibes.model.effect.ReduceOpponentMaxHandSizeEffect;
+import com.github.laxika.magicalvibes.model.effect.SetOpponentMaximumHandSizeEffect;
 import com.github.laxika.magicalvibes.model.layer.FloatingContinuousEffect;
 import com.github.laxika.magicalvibes.service.battlefield.CreatureControlService;
 import lombok.RequiredArgsConstructor;
@@ -146,6 +148,7 @@ public class TurnCleanupService {
         gameData.creaturesPreventedFromDealingCombatDamage.clear();
         gameData.damageCantBePreventedThisTurn = false;
         gameData.drawReplacementTargetToController.clear();
+        gameData.pendingNextDrawLookAtTop.clear();
         gameData.colorSourceDamageBonusThisTurn.clear();
         gameData.playerSpellsCantBeCounteredByColorsThisTurn.clear();
         gameData.playerCreaturesCantBeTargetedByColorsThisTurn.clear();
@@ -155,6 +158,7 @@ public class TurnCleanupService {
         gameData.playersCantCastCreatureSpellsThisTurn.clear();
         gameData.cardsGrantedFlashbackUntilEndOfTurn.clear();
         gameData.mayTapLandsForSpellsUntilEndOfTurn.clear();
+        gameData.mayPayLifeForColorlessManaUntilEndOfTurn.clear();
         gameData.graveyardCreatureCastPermissionsUntilEndOfTurn.clear();
         for (var cardId : gameData.graveyardPlayPermissionsExpireEndOfTurn) {
             gameData.graveyardPlayPermissions.remove(cardId);
@@ -244,8 +248,10 @@ public class TurnCleanupService {
 
     /**
      * Calculates the effective maximum hand size for the given player.
-     * Starts at the default 7, then subtracts reductions from opponents'
-     * {@link ReduceOpponentMaxHandSizeEffect} permanents.
+     * Starts at the default 7, then applies each opponent-controlled
+     * {@link OpponentMaxHandSizeEffect} (e.g. {@link ReduceOpponentMaxHandSizeEffect} reducing by
+     * N, {@link SetOpponentMaximumHandSizeEffect} setting to a specific value) to the running
+     * value in battlefield/timestamp order (CR 402.2).
      *
      * @param gameData the current game state
      * @param playerId the player whose hand-size limit to compute
@@ -253,15 +259,15 @@ public class TurnCleanupService {
      */
     public int getMaxHandSize(GameData gameData, UUID playerId) {
         int maxHandSize = 7;
-        // Check all opponents' battlefields for ReduceOpponentMaxHandSizeEffect
+        // Fold every opponent-controlled hand-size effect over the running value in timestamp order.
         for (UUID otherPlayerId : gameData.orderedPlayerIds) {
             if (otherPlayerId.equals(playerId)) continue;
             List<Permanent> bf = gameData.playerBattlefields.get(otherPlayerId);
             if (bf == null) continue;
             for (Permanent perm : bf) {
                 for (CardEffect effect : perm.getCard().getEffects(EffectSlot.STATIC)) {
-                    if (effect instanceof ReduceOpponentMaxHandSizeEffect reduce) {
-                        maxHandSize -= reduce.reduction();
+                    if (effect instanceof OpponentMaxHandSizeEffect handSizeEffect) {
+                        maxHandSize = handSizeEffect.applyToMaximumHandSize(maxHandSize);
                     }
                 }
             }

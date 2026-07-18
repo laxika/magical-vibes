@@ -24,6 +24,7 @@ import com.github.laxika.magicalvibes.model.effect.CantAttackOrBlockUnlessCountA
 import com.github.laxika.magicalvibes.model.effect.CantAttackOrBlockUnlessGreaterPowerAlsoDoesEffect;
 import com.github.laxika.magicalvibes.model.effect.CanBlockAnyNumberOfCreaturesEffect;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
+import com.github.laxika.magicalvibes.model.effect.CombatOpponentReferencingEffect;
 import com.github.laxika.magicalvibes.model.effect.DealDamageToTargetCreatureEffect;
 import com.github.laxika.magicalvibes.model.effect.DestroyBlockedCreatureAndSelfEffect;
 import com.github.laxika.magicalvibes.model.effect.DestroyCombatOpponentAtEndOfCombatEffect;
@@ -375,6 +376,7 @@ public class CombatBlockService {
                                 || (e instanceof SkipNextUntapEffect s && s.scope() == TapUntapScope.TARGET)
                                 || e instanceof DealDamageToTargetCreatureEffect
                                 || e instanceof DestroyCombatOpponentAtEndOfCombatEffect
+                                || e instanceof CombatOpponentReferencingEffect
                                 || e instanceof PutCounterOnCombatOpponentAtEndOfCombatEffect
                                 || e instanceof DestroyEquipmentOnEquippedCombatOpponentAtEndOfCombatEffect
                                 || (e instanceof GrantKeywordEffect gk && gk.scope() == GrantScope.TARGET));

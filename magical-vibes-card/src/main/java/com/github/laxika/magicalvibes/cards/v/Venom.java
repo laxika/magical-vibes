@@ -12,6 +12,7 @@ import com.github.laxika.magicalvibes.model.filter.PermanentNotPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentPredicateTargetFilter;
 
 @CardRegistration(set = "5ED", collectorNumber = "336")
+@CardRegistration(set = "4ED", collectorNumber = "280")
 public class Venom extends Card {
 
     public Venom() {

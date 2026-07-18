@@ -38,6 +38,7 @@ import com.github.laxika.magicalvibes.model.filter.PermanentIsEnchantmentPredica
 import com.github.laxika.magicalvibes.model.filter.PermanentIsHistoricPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsLandPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsPlaneswalkerPredicate;
+import com.github.laxika.magicalvibes.model.filter.PermanentIsTappedPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsTokenPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentNamedPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentNotPredicate;
@@ -354,6 +355,8 @@ public class StaticEffectSupport {
             return target.getCard().getSupertypes().contains(p.supertype());
         if (filter instanceof PermanentIsAttackingPredicate)
             return target.isAttacking();
+        if (filter instanceof PermanentIsTappedPredicate)
+            return target.isTapped();
         if (filter instanceof PermanentTruePredicate) return true;
         if (filter instanceof PermanentNamedPredicate p)
             return target.getCard().getName().equals(p.cardName());

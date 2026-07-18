@@ -6,11 +6,13 @@ import com.github.laxika.magicalvibes.model.action.DelayedGraveyardToHandReturn;
 import com.github.laxika.magicalvibes.model.action.DelayedCreateToken;
 import com.github.laxika.magicalvibes.model.action.DelayedUntapPermanents;
 import com.github.laxika.magicalvibes.model.action.DrawCardsAtNextUpkeep;
+import com.github.laxika.magicalvibes.model.action.LoseLifeAtNextDrawStepUnlessPays;
 import com.github.laxika.magicalvibes.model.action.ExileToOwnerGraveyardAtNextUpkeep;
 import com.github.laxika.magicalvibes.model.action.RevokeExilePlayPermissionAtNextUpkeep;
 import com.github.laxika.magicalvibes.model.action.DelayedPlusOneCounters;
 import com.github.laxika.magicalvibes.model.action.DelayedPlusZeroPlusOneCounters;
 import com.github.laxika.magicalvibes.model.action.DestroyAtEndStep;
+import com.github.laxika.magicalvibes.model.action.DestroyNonAttackersAtEndStep;
 import com.github.laxika.magicalvibes.model.action.LoseGameAtEndStep;
 import com.github.laxika.magicalvibes.model.action.ReturnExiledCardToHandAtEndStep;
 import com.github.laxika.magicalvibes.model.action.ReturnToHandAtEndStep;
@@ -84,6 +86,7 @@ import com.github.laxika.magicalvibes.model.effect.ExchangeControlOfTargetPerman
 import com.github.laxika.magicalvibes.model.effect.ExileGraveyardCardsEffect;
 import com.github.laxika.magicalvibes.model.effect.GraveyardExileScope;
 import com.github.laxika.magicalvibes.model.effect.LeylineStartOnBattlefieldEffect;
+import com.github.laxika.magicalvibes.model.effect.LoseLifeEffect;
 import com.github.laxika.magicalvibes.model.effect.MayEffect;
 import com.github.laxika.magicalvibes.model.effect.MayPayManaEffect;
 import com.github.laxika.magicalvibes.model.effect.MayRevealSubtypeFromHandEffect;
@@ -96,6 +99,7 @@ import com.github.laxika.magicalvibes.model.effect.TargetPlayerLosesGameEffect;
 import com.github.laxika.magicalvibes.model.effect.WinGameIfCreaturesInGraveyardEffect;
 import com.github.laxika.magicalvibes.model.filter.TargetFilter;
 import com.github.laxika.magicalvibes.model.filter.PermanentPredicateTargetFilter;
+import com.github.laxika.magicalvibes.model.filter.PermanentIsLandPredicate;
 import com.github.laxika.magicalvibes.service.DrawService;
 import com.github.laxika.magicalvibes.service.GameBroadcastService;
 import com.github.laxika.magicalvibes.service.input.PlayerInputService;
@@ -132,6 +136,8 @@ import com.github.laxika.magicalvibes.model.CounterType;
 @Slf4j
 @Service
 public class StepTriggerService {
+
+    private static final PermanentIsLandPredicate LAND_PREDICATE = new PermanentIsLandPredicate();
 
     private final DrawService drawService;
     private final GameQueryService gameQueryService;
@@ -252,6 +258,11 @@ public class StepTriggerService {
         }
 
         UUID activePlayerId = gameData.activePlayerId;
+        // Snapshot untapped lands the active player controls now (post-untap, pre-priority) — the
+        // "number of untapped lands they controlled at the beginning of this turn" for Power Surge.
+        // Locked here so tapping lands in response to the upkeep trigger cannot reduce the value.
+        gameData.untappedLandsAtTurnStart.put(activePlayerId, countUntappedLands(gameData, activePlayerId));
+
         List<Permanent> battlefield = gameData.playerBattlefields.get(activePlayerId);
         if (battlefield == null) return;
 
@@ -820,6 +831,20 @@ public class StepTriggerService {
         playerInputService.processNextMayAbility(gameData);
     }
 
+    /** Counts the untapped lands the given player currently controls (layer-aware land check). */
+    private int countUntappedLands(GameData gameData, UUID playerId) {
+        List<Permanent> battlefield = gameData.playerBattlefields.get(playerId);
+        if (battlefield == null) return 0;
+        int count = 0;
+        for (Permanent perm : battlefield) {
+            if (!perm.isTapped()
+                    && predicateEvaluationService.matchesPermanentPredicate(gameData, perm, LAND_PREDICATE)) {
+                count++;
+            }
+        }
+        return count;
+    }
+
     /**
      * Energy Flux grants every artifact "At the beginning of your upkeep, sacrifice this artifact
      * unless you pay {N}." If any {@link AllArtifactsUpkeepSacrificeUnlessPayEffect} is on the
@@ -1324,6 +1349,33 @@ public class StepTriggerService {
     private void handleDrawStepTriggers(GameData gameData) {
         UUID activePlayerId = gameData.activePlayerId;
 
+        // Nafs Asp: "that player loses N life at the beginning of their next draw step unless they
+        // pay {M} before that draw step." Delayed trigger keyed to the damaged player's own draw
+        // step — fired here as a "you may pay {M}; if you don't, lose N life" prompt controlled by
+        // that player (paying avoids the loss, declining incurs it).
+        if (gameData.hasDelayedAction(LoseLifeAtNextDrawStepUnlessPays.class)) {
+            List<LoseLifeAtNextDrawStepUnlessPays> pending = gameData.drainDelayedActions(
+                    LoseLifeAtNextDrawStepUnlessPays.class, a -> a.playerId().equals(activePlayerId));
+            for (LoseLifeAtNextDrawStepUnlessPays action : pending) {
+                ForcedCostOrElseEffect payOrLoseLife = new ForcedCostOrElseEffect(
+                        new PayManaCost("{" + action.payAmount() + "}"),
+                        new ArrayList<>(List.of(new LoseLifeEffect(action.lifeLoss()))),
+                        true);
+                gameData.stack.add(new StackEntry(
+                        StackEntryType.TRIGGERED_ABILITY,
+                        action.sourceCard(),
+                        activePlayerId,
+                        action.sourceCard().getName() + "'s delayed ability",
+                        new ArrayList<>(List.of(payOrLoseLife))));
+
+                gameBroadcastService.logAndBroadcast(gameData, GameLog.text(action.sourceCard().getName()
+                        + "'s delayed ability triggers — " + gameData.playerIdToName.get(activePlayerId)
+                        + " loses " + action.lifeLoss() + " life unless they pay {" + action.payAmount() + "}."));
+                log.info("Game {} - {} delayed draw-step pay-or-lose-life trigger pushed for {}",
+                        gameData.id, action.sourceCard().getName(), gameData.playerIdToName.get(activePlayerId));
+            }
+        }
+
         // Check active player's battlefield for DRAW_TRIGGERED effects (controller's own draw step only)
         List<Permanent> activeBattlefield = gameData.playerBattlefields.get(activePlayerId);
         if (activeBattlefield != null) {
@@ -1664,6 +1716,36 @@ public class StepTriggerService {
                         String logEntry = perm.getCard().getName() + " is destroyed at end step.";
                         gameBroadcastService.logAndBroadcast(gameData, GameLog.text(logEntry));
                         log.info("Game {} - {} destroyed at end step (delayed trigger)", gameData.id, perm.getCard().getName());
+                    }
+                }
+            }
+        }
+
+        // Process Siren's Call: destroy all non-Wall creatures the player controls that didn't attack
+        // this turn, ignoring creatures they didn't control continuously since the beginning of the
+        // turn (summoning sick).
+        if (gameData.hasDelayedAction(DestroyNonAttackersAtEndStep.class)) {
+            List<DestroyNonAttackersAtEndStep> pending =
+                    gameData.drainDelayedActions(DestroyNonAttackersAtEndStep.class);
+            for (DestroyNonAttackersAtEndStep action : pending) {
+                List<Permanent> battlefield = gameData.playerBattlefields.get(action.playerId());
+                if (battlefield == null) continue;
+                // Snapshot first: tryDestroyPermanent mutates the battlefield list.
+                List<Permanent> toDestroy = new ArrayList<>();
+                for (Permanent perm : battlefield) {
+                    if (gameQueryService.isCreature(gameData, perm)
+                            && !GameQueryService.permanentHasSubtype(perm, CardSubtype.WALL)
+                            && !perm.isAttackedThisTurn()
+                            && !perm.isSummoningSick()) {
+                        toDestroy.add(perm);
+                    }
+                }
+                for (Permanent perm : toDestroy) {
+                    if (permanentRemovalService.tryDestroyPermanent(gameData, perm)) {
+                        String logEntry = perm.getCard().getName() + " is destroyed for not attacking.";
+                        gameBroadcastService.logAndBroadcast(gameData, GameLog.text(logEntry));
+                        log.info("Game {} - {} destroyed by Siren's Call for not attacking",
+                                gameData.id, perm.getCard().getName());
                     }
                 }
             }

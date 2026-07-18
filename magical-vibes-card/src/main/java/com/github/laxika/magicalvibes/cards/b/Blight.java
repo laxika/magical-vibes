@@ -9,6 +9,7 @@ import com.github.laxika.magicalvibes.model.filter.PermanentPredicateTargetFilte
 
 @CardRegistration(set = "6ED", collectorNumber = "113")
 @CardRegistration(set = "5ED", collectorNumber = "144")
+@CardRegistration(set = "4ED", collectorNumber = "122")
 public class Blight extends Card {
 
     public Blight() {

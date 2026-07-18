@@ -9,6 +9,7 @@ import com.github.laxika.magicalvibes.model.filter.PermanentIsEnchantmentPredica
 import com.github.laxika.magicalvibes.model.filter.PermanentPredicateTargetFilter;
 
 @CardRegistration(set = "5ED", collectorNumber = "85")
+@CardRegistration(set = "4ED", collectorNumber = "71")
 public class Feedback extends Card {
 
     public Feedback() {

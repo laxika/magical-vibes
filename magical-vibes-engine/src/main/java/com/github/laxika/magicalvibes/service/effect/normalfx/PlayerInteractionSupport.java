@@ -132,7 +132,43 @@ public class PlayerInteractionSupport {
         for (int i = 0; i < amount; i++) {
             drawService.resolveDrawCard(gameData, playerId);
         }
-    
+
+    }
+    /**
+     * Sindbad: the player draws a card and reveals it; if the revealed card isn't a land card, it is
+     * discarded. The reveal is public (logged); the discard is not opponent-caused. The freshly drawn
+     * card is the last card appended to the hand, so nothing is discarded when the draw produced no
+     * card (empty library) or was consumed by a draw-replacement interaction.
+     */
+    public void applyDrawRevealDiscardUnlessLand(GameData gameData, UUID playerId) {
+
+        List<Card> hand = gameData.playerHands.get(playerId);
+        int before = hand == null ? 0 : hand.size();
+        applyDrawCards(gameData, playerId, 1);
+
+        hand = gameData.playerHands.get(playerId);
+        if (hand == null || hand.size() <= before) {
+            return;
+        }
+
+        Card drawn = hand.get(hand.size() - 1);
+        String playerName = gameData.playerIdToName.get(playerId);
+        gameBroadcastService.logAndBroadcast(gameData, GameLog.text(playerName + " reveals " + drawn.getName() + "."));
+
+        if (drawn.hasType(CardType.LAND)) {
+            return;
+        }
+
+        hand.remove(hand.size() - 1);
+        gameData.discardCausedByOpponent = false;
+        graveyardService.discardCard(gameData, playerId, drawn);
+        gameBroadcastService.logAndBroadcast(gameData, GameLog.text(playerName + " discards " + drawn.getName() + "."));
+        triggerCollectionService.checkDiscardTriggers(gameData, playerId, drawn);
+
+        if (gameData.hasPendingInteraction(PermanentChoiceContext.DiscardTriggerAnyTarget.class)) {
+            triggerCollectionService.processNextDiscardSelfTrigger(gameData);
+        }
+
     }
     public void resolveDiscardCards(GameData gameData, UUID playerId, int amount) {
         resolveDiscardCards(gameData, playerId, amount, DiscardFollowUp.NONE);

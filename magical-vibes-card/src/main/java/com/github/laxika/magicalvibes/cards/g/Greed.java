@@ -10,6 +10,7 @@ import java.util.List;
 
 @CardRegistration(set = "7ED", collectorNumber = "140")
 @CardRegistration(set = "6ED", collectorNumber = "135")
+@CardRegistration(set = "4ED", collectorNumber = "140")
 public class Greed extends Card {
 
     public Greed() {

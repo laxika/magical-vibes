@@ -11,6 +11,7 @@ import com.github.laxika.magicalvibes.model.effect.RemoveCounterFromSourceAndGai
 import com.github.laxika.magicalvibes.model.filter.PermanentIsArtifactPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentPredicateTargetFilter;
 
+@CardRegistration(set = "4ED", collectorNumber = "259")
 @CardRegistration(set = "5ED", collectorNumber = "311")
 public class LivingArtifact extends Card {
 

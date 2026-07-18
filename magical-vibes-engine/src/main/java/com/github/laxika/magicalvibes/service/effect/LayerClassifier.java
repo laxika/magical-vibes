@@ -37,6 +37,7 @@ import com.github.laxika.magicalvibes.model.effect.GrantCardTypeEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantChosenSubtypeToOwnCreaturesEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantColorEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantColorUntilEndOfTurnEffect;
+import com.github.laxika.magicalvibes.model.effect.SetTargetColorEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantEffectEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantEquipByManaValueEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantKeywordEffect;
@@ -46,7 +47,9 @@ import com.github.laxika.magicalvibes.model.effect.GrantSupertypeToEnchantedPerm
 import com.github.laxika.magicalvibes.model.effect.LoseAllCreatureTypesEffect;
 import com.github.laxika.magicalvibes.model.effect.LosesAllAbilitiesEffect;
 import com.github.laxika.magicalvibes.model.effect.MakeTargetCopyOfTargetCreatureUntilNextTurnEffect;
+import com.github.laxika.magicalvibes.model.effect.LandsOfSubtypeBecomeTypeEffect;
 import com.github.laxika.magicalvibes.model.effect.NonbasicLandsBecomeTypeEffect;
+import com.github.laxika.magicalvibes.model.effect.TrackedLandsBecomeForestEffect;
 import com.github.laxika.magicalvibes.model.effect.ProtectionFromChosenColorEffect;
 import com.github.laxika.magicalvibes.model.effect.ProtectionFromColorsEffect;
 import com.github.laxika.magicalvibes.model.effect.RemoveKeywordEffect;
@@ -185,6 +188,9 @@ public final class LayerClassifier {
         // the handler fills the fixed base P/T in the accumulator pass.
         map.put(AllLandsAreCreaturesEffect.class, fixed(Layer.L4_TYPE));
         map.put(NonbasicLandsBecomeTypeEffect.class, fixed(Layer.L4_TYPE));
+        map.put(LandsOfSubtypeBecomeTypeEffect.class, fixed(Layer.L4_TYPE));
+        // Gaea's Liege: lands it has recorded become Forests (CR 305.7 basic-land-type replacement).
+        map.put(TrackedLandsBecomeForestEffect.class, fixed(Layer.L4_TYPE));
         map.put(LoseAllCreatureTypesEffect.class, fixed(Layer.L4_TYPE));
         // Animate-and-set-P/T: the type change applies in layer 4, the MV-based base P/T in
         // sublayer 7b, both with ONE timestamp (CR 613.4, March of the Machines). Titania's Song
@@ -205,6 +211,9 @@ public final class LayerClassifier {
         // additive ("becomes blue in addition to its other colors" — Indigo Faerie).
         map.put(GrantColorUntilEndOfTurnEffect.class, new Entry(Set.of(Layer.L5_COLOR), (effect, fromOwnStaticSlot) ->
                 new LayerClassification(Set.of(Layer.L5_COLOR), false, !((GrantColorUntilEndOfTurnEffect) effect).additive())));
+        // "Target spell or permanent becomes [color]" indefinitely (Purelace) — replaces colors (CR 105.3).
+        map.put(SetTargetColorEffect.class, new Entry(Set.of(Layer.L5_COLOR),
+                (effect, fromOwnStaticSlot) -> new LayerClassification(Set.of(Layer.L5_COLOR), false, true)));
         // "All nonland permanents are the chosen color" (Shifting Sky) replaces colors (CR 105.3).
         map.put(AllNonlandPermanentsAreChosenColorEffect.class, new Entry(Set.of(Layer.L5_COLOR),
                 (effect, fromOwnStaticSlot) -> new LayerClassification(Set.of(Layer.L5_COLOR), false, true)));

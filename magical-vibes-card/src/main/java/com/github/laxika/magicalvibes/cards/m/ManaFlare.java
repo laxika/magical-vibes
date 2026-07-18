@@ -6,6 +6,7 @@ import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.effect.AddOneOfEachManaTypeProducedByLandEffect;
 
 @CardRegistration(set = "5ED", collectorNumber = "249")
+@CardRegistration(set = "4ED", collectorNumber = "211")
 public class ManaFlare extends Card {
 
     public ManaFlare() {

@@ -8,6 +8,7 @@ import com.github.laxika.magicalvibes.model.effect.PreventDamageEffect;
 import java.util.List;
 
 @CardRegistration(set = "5ED", collectorNumber = "347")
+@CardRegistration(set = "4ED", collectorNumber = "293")
 public class AmuletOfKroog extends Card {
 
     public AmuletOfKroog() {

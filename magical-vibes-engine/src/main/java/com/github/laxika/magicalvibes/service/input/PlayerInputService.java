@@ -241,6 +241,16 @@ public class PlayerInputService {
         log.info("Game {} - Awaiting {} to choose protection (you and your permanents)", gameData.id, playerName);
     }
 
+    public void beginRelicBindModeChoice(GameData gameData, UUID controllerId, Card sourceCard) {
+        ChoiceContext.RelicBindModeChoice ctx = new ChoiceContext.RelicBindModeChoice(sourceCard, controllerId);
+        interactionHandlerRegistry.begin(gameData, new PendingInteraction.ColorChoice(
+                controllerId, null, null, ctx,
+                ChoiceContext.RelicBindModeChoice.OPTIONS, sourceCard.getName() + " — Choose one."));
+
+        String playerName = gameData.playerIdToName.get(controllerId);
+        log.info("Game {} - Awaiting {} to choose Relic Bind's mode", gameData.id, playerName);
+    }
+
     public void beginKeywordChoice(GameData gameData, UUID playerId, UUID targetId, List<Keyword> options) {
         ChoiceContext.KeywordGrantChoice choiceContext = new ChoiceContext.KeywordGrantChoice(targetId, options);
 
@@ -303,6 +313,25 @@ public class PlayerInputService {
 
         String playerName = gameData.playerIdToName.get(playerId);
         log.info("Game {} - Awaiting {} to choose a number between {} and {}", gameData.id, playerName, min, max);
+    }
+
+    public void beginTetravusCounterRemovalChoice(GameData gameData, UUID playerId, UUID permanentId,
+                                                  int maxCounters,
+                                                  com.github.laxika.magicalvibes.model.effect.CreateTokenEffect tokenTemplate) {
+        ChoiceContext.TetravusCounterRemoval choiceContext =
+                new ChoiceContext.TetravusCounterRemoval(permanentId, tokenTemplate);
+
+        List<String> options = java.util.stream.IntStream.rangeClosed(0, maxCounters)
+                .mapToObj(Integer::toString)
+                .toList();
+        interactionHandlerRegistry.begin(gameData, new PendingInteraction.ColorChoice(
+                playerId, null, null, choiceContext, options,
+                "Remove any number of +1/+1 counters (0-" + maxCounters
+                        + ") to create that many Tetravite tokens."));
+
+        String playerName = gameData.playerIdToName.get(playerId);
+        log.info("Game {} - Awaiting {} to choose how many +1/+1 counters to remove (0-{})",
+                gameData.id, playerName, maxCounters);
     }
 
     public void beginPrimalClayFormChoice(GameData gameData, UUID playerId, UUID permanentId) {

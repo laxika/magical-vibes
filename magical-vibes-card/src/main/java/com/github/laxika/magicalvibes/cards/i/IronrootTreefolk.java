@@ -8,5 +8,6 @@ import com.github.laxika.magicalvibes.model.Card;
  * Vanilla creature, no special abilities.
  */
 @CardRegistration(set = "5ED", collectorNumber = "305")
+@CardRegistration(set = "4ED", collectorNumber = "253")
 public class IronrootTreefolk extends Card {
 }

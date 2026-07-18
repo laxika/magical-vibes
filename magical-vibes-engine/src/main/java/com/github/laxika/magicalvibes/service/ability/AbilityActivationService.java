@@ -424,6 +424,36 @@ public class AbilityActivationService {
     }
 
     /**
+     * Pays 1 life to add {@code {C}} to the player's mana pool (Channel). This is a mana ability special
+     * action, legal only while the player is marked in
+     * {@code gameData.mayPayLifeForColorlessManaUntilEndOfTurn} and only if they have at least 1 life.
+     *
+     * @param gameData the current game state
+     * @param player   the player paying life for mana
+     * @throws IllegalStateException if the player may not pay life for mana this turn or has less than 1 life
+     */
+    public void payLifeForColorlessMana(GameData gameData, Player player) {
+        UUID playerId = player.getId();
+        if (!gameData.mayPayLifeForColorlessManaUntilEndOfTurn.contains(playerId)) {
+            throw new IllegalStateException("You may not pay life for mana");
+        }
+
+        int life = gameData.getLife(playerId);
+        if (life < 1) {
+            throw new IllegalStateException("Not enough life to pay (need 1, have " + life + ")");
+        }
+
+        gameData.playerLifeTotals.put(playerId, life - 1);
+        gameData.playerManaPools.get(playerId).add(ManaColor.COLORLESS, 1);
+
+        String logEntry = player.getUsername() + " pays 1 life to add {C} (Channel).";
+        gameBroadcastService.logAndBroadcast(gameData, GameLog.text(logEntry));
+        log.info("Game {} - {} pays 1 life for colorless mana", gameData.id, player.getUsername());
+
+        gameBroadcastService.broadcastGameState(gameData);
+    }
+
+    /**
      * Activates an ON_SACRIFICE ability by sacrificing the source permanent and placing the ability on the stack.
      *
      * @param gameData          the current game state
@@ -546,6 +576,9 @@ public class AbilityActivationService {
     public void activateGraveyardAbility(GameData gameData, Player player, int graveyardCardIndex, Integer abilityIndex, Integer xValue) {
         // Spell-only mana (Piracy) can't pay ability costs — hide it for the duration of this activation.
         ManaPool pool = gameData.playerManaPools.get(player.getId());
+        if (pool != null) {
+            pool.setWhiteSpendableAsRed(gameQueryService.canSpendWhiteManaAsRed(gameData, player.getId()));
+        }
         Map<ManaColor, Integer> withheldSpellOnlyMana = pool != null ? pool.withdrawSpellOnlyMana() : Map.of();
         try {
             activateGraveyardAbilityImpl(gameData, player, graveyardCardIndex, abilityIndex, xValue != null ? xValue : 0);
@@ -1034,6 +1067,11 @@ public class AbilityActivationService {
         // restore it afterward. Re-entrant callbacks (discard/exile cost) call this method afresh, so each
         // pass withdraws and restores symmetrically.
         ManaPool pool = gameData.playerManaPools.get(player.getId());
+        if (pool != null) {
+            // Refresh the "spend white as red" permission (Sunglasses of Urza) so this ability's cost
+            // affordability check and payment honor it.
+            pool.setWhiteSpendableAsRed(gameQueryService.canSpendWhiteManaAsRed(gameData, player.getId()));
+        }
         Map<ManaColor, Integer> withheldSpellOnlyMana = pool != null ? pool.withdrawSpellOnlyMana() : Map.of();
         try {
             activateAbilityInternalImpl(gameData, player, permanentIndex, abilityIndex, xValue, targetId, targetZone,
@@ -1237,6 +1275,12 @@ public class AbilityActivationService {
                 case CHARGE -> {
                     permanent.setCounterCount(CounterType.CHARGE, permanent.getCounterCount(CounterType.CHARGE) - count);
                 }
+                case CARRION -> {
+                    permanent.setCounterCount(CounterType.CARRION, permanent.getCounterCount(CounterType.CARRION) - count);
+                }
+                case CORPSE -> {
+                    permanent.setCounterCount(CounterType.CORPSE, permanent.getCounterCount(CounterType.CORPSE) - count);
+                }
                 case HATCHLING -> {
                     permanent.setCounterCount(CounterType.HATCHLING, permanent.getCounterCount(CounterType.HATCHLING) - count);
                 }
@@ -1279,6 +1323,10 @@ public class AbilityActivationService {
                 counterTypeLabel = "study";
             } else if (ct == CounterType.WISH) {
                 counterTypeLabel = "wish";
+            } else if (ct == CounterType.CARRION) {
+                counterTypeLabel = "carrion";
+            } else if (ct == CounterType.CORPSE) {
+                counterTypeLabel = "corpse";
             } else if (removedMinus > 0 && removedPlus == 0) {
                 counterTypeLabel = "-1/-1";
             } else if (removedPlus > 0 && removedMinus == 0) {

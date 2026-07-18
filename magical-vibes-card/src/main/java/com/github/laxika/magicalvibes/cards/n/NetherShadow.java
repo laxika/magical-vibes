@@ -13,6 +13,7 @@ import com.github.laxika.magicalvibes.model.filter.CardIsSelfPredicate;
 import com.github.laxika.magicalvibes.model.filter.CardTypePredicate;
 
 @CardRegistration(set = "5ED", collectorNumber = "183")
+@CardRegistration(set = "4ED", collectorNumber = "149")
 public class NetherShadow extends Card {
 
     public NetherShadow() {

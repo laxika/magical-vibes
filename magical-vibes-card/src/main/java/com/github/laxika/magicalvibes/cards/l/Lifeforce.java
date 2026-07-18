@@ -11,6 +11,7 @@ import com.github.laxika.magicalvibes.model.filter.StackEntryPredicateTargetFilt
 import java.util.List;
 import java.util.Set;
 
+@CardRegistration(set = "4ED", collectorNumber = "257")
 @CardRegistration(set = "5ED", collectorNumber = "310")
 public class Lifeforce extends Card {
 

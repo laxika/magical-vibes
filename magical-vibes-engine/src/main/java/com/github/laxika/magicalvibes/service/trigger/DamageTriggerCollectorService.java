@@ -335,6 +335,36 @@ public class DamageTriggerCollectorService {
         return true;
     }
 
+    // ── ON_SELF_DEALS_DAMAGE (El-Hajjâj) ───────────────────────────────
+
+    @CollectsTrigger(value = CardEffect.class, slot = EffectSlot.ON_SELF_DEALS_DAMAGE)
+    private boolean handleSelfDealsDamage(TriggerMatchContext match, CardEffect effect, TriggerContext ctx) {
+        TriggerContext.SourceDealsDamage sd = (TriggerContext.SourceDealsDamage) ctx;
+        if (sd.totalDamage() <= 0) return false;
+
+        GameData gameData = match.gameData();
+        Card sourceCard = sd.sourceCard();
+        // The source may have died dealing the damage; keep its last-known permanent id when present.
+        UUID sourcePermanentId = match.permanent() != null ? match.permanent().getId() : null;
+
+        StackEntry entry = new StackEntry(
+                StackEntryType.TRIGGERED_ABILITY,
+                sourceCard,
+                match.controllerId(),
+                sourceCard.getName() + "'s ability",
+                new ArrayList<>(List.of(effect)),
+                null,
+                sourcePermanentId);
+        // Snapshot the total damage dealt so an EventValue amount ("you gain that much life") reads it.
+        entry.setEventValue(sd.totalDamage());
+        gameData.enqueueTrigger(entry);
+
+        gameBroadcastService.logAndBroadcast(gameData, GameLog.text(sourceCard.getName() + "'s ability triggers."));
+        log.info("Game {} - {} ON_SELF_DEALS_DAMAGE trigger fires ({} damage)",
+                gameData.id, sourceCard.getName(), sd.totalDamage());
+        return true;
+    }
+
     private boolean sourceHasColor(Card card, CardColor color) {
         if (card == null || color == null) return false;
         if (card.getColor() == color) return true;

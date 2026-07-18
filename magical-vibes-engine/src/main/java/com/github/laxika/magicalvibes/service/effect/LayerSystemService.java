@@ -25,13 +25,16 @@ import com.github.laxika.magicalvibes.model.effect.GrantCardTypeEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantChosenSubtypeToOwnCreaturesEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantColorEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantColorUntilEndOfTurnEffect;
+import com.github.laxika.magicalvibes.model.effect.SetTargetColorEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantKeywordEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantScope;
 import com.github.laxika.magicalvibes.model.effect.GrantSubtypeEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantSupertypeToEnchantedPermanentEffect;
+import com.github.laxika.magicalvibes.model.effect.LandsOfSubtypeBecomeTypeEffect;
 import com.github.laxika.magicalvibes.model.effect.LoseAllCreatureTypesEffect;
 import com.github.laxika.magicalvibes.model.effect.LosesAllAbilitiesEffect;
 import com.github.laxika.magicalvibes.model.effect.NonbasicLandsBecomeTypeEffect;
+import com.github.laxika.magicalvibes.model.effect.TrackedLandsBecomeForestEffect;
 import com.github.laxika.magicalvibes.model.effect.ProtectionFromColorsEffect;
 import com.github.laxika.magicalvibes.model.effect.RemoveKeywordEffect;
 import com.github.laxika.magicalvibes.model.effect.SetBasePowerToughnessEffect;
@@ -480,6 +483,13 @@ public class LayerSystemService {
         h = mix(h, enumOrdinal(p.getTransientLandTypeOverride()));
         h = mix(h, enumOrdinal(p.getUntilNextTurnLandTypeOverride()));
         h = mix(h, enumOrdinal(p.getTransientCreatureTypeOverride()));
+        // Lands this permanent turned into Forests (Gaea's Liege) drive a layer-4 type grant.
+        long forestedSum = 0;
+        for (UUID forested : p.getForestedLandIds()) {
+            forestedSum += mix64(forested.hashCode());
+        }
+        h = mix(h, forestedSum);
+        h = mix(h, p.getForestedLandIds().size());
 
         for (TextReplacement replacement : p.getTextReplacements()) {
             h = mix(h, System.identityHashCode(replacement));
@@ -1057,6 +1067,32 @@ public class LayerSystemService {
                     }
                 }
             }
+            case LandsOfSubtypeBecomeTypeEffect becomes -> {
+                manage(board, instance);
+                for (PermanentSlot target : slots) {
+                    if (isSource(instance, target)) continue;
+                    CharacteristicState state = states.get(target.permanent().getId());
+                    if (state.hasCardType(CardType.LAND) && state.hasSubtype(becomes.fromSubtype())) {
+                        setLandType(state, target.permanent().getId(), becomes.toSubtype(), landTypeOverrides);
+                        record(board, instance, target, new L4Contribution(
+                                becomes.toSubtype(), true, true, null, null));
+                    }
+                }
+            }
+            case TrackedLandsBecomeForestEffect ignored -> {
+                // Gaea's Liege: each land its {T} ability recorded becomes a Forest (CR 305.7).
+                manage(board, instance);
+                if (instance.source() == null) return;
+                for (UUID landId : instance.source().permanent().getForestedLandIds()) {
+                    PermanentSlot target = slotsById.get(landId);
+                    if (target == null || isSource(instance, target)) continue;
+                    CharacteristicState state = states.get(landId);
+                    if (state == null || !state.hasCardType(CardType.LAND)) continue;
+                    setLandType(state, landId, CardSubtype.FOREST, landTypeOverrides);
+                    record(board, instance, target, new L4Contribution(
+                            CardSubtype.FOREST, true, true, null, null));
+                }
+            }
             case AnimateNoncreatureArtifactsEffect ignored -> {
                 // NOT managed: the effect also contributes to 7b, so its legacy handler keeps
                 // running during assembly (setting the animated flag) with the MV base P/T
@@ -1427,6 +1463,7 @@ public class LayerSystemService {
             CardColor color = switch (instance.effect()) {
                 case GrantColorUntilEndOfTurnEffect becomes -> becomes.color();
                 case GrantColorEffect grant -> grant.color();
+                case SetTargetColorEffect set -> set.color();
                 default -> null;
             };
             if (color == null) return;

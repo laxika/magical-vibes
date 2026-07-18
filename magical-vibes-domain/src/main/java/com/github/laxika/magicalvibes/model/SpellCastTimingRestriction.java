@@ -22,5 +22,12 @@ public enum SpellCastTimingRestriction {
      * beginning-of-combat and declare-attackers steps (any player's combat), not once the
      * declare-blockers step has begun.
      */
-    COMBAT_BEFORE_BLOCKERS
+    COMBAT_BEFORE_BLOCKERS,
+
+    /**
+     * "Cast this spell only during an opponent's turn, before attackers are declared." Siren's Call.
+     * Legal only when the caster is not the active player and the current step precedes the declare
+     * attackers step (any step of the beginning, precombat main, or beginning-of-combat).
+     */
+    OPPONENTS_TURN_BEFORE_ATTACKERS
 }

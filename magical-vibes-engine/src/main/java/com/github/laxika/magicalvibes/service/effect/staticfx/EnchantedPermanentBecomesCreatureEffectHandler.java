@@ -25,18 +25,30 @@ public class EnchantedPermanentBecomesCreatureEffectHandler implements StaticEff
     @Override
     public void apply(StaticEffectContext context, CardEffect effect, StaticBonusAccumulator accumulator) {
         var becomes = (EnchantedPermanentBecomesCreatureEffect) effect;
-        if (context.source().isAttached()
-                && context.source().getAttachedTo().equals(context.target().getId())) {
-            accumulator.setAnimatedCreature(true);
-            accumulator.setBasePTOverride(becomes.power(), becomes.toughness());
-            accumulator.addGrantedCardType(CardType.CREATURE);
-            for (CardSubtype subtype : becomes.subtypes()) {
-                accumulator.addGrantedSubtype(subtype);
+        if (!context.source().isAttached()
+                || !context.source().getAttachedTo().equals(context.target().getId())) {
+            return;
+        }
+        int power = becomes.power();
+        int toughness = becomes.toughness();
+        if (becomes.powerToughnessEqualsManaValue()) {
+            // Animate Artifact: only while the enchanted artifact isn't already a creature, and
+            // base P/T each equal to its mana value.
+            if (context.target().getCard().hasType(CardType.CREATURE)) {
+                return;
             }
-            if (becomes.color() != null) {
-                accumulator.addGrantedColor(becomes.color());
-                accumulator.setColorOverriding(true);
-            }
+            power = context.target().getCard().getManaValue();
+            toughness = power;
+        }
+        accumulator.setAnimatedCreature(true);
+        accumulator.setBasePTOverride(power, toughness);
+        accumulator.addGrantedCardType(CardType.CREATURE);
+        for (CardSubtype subtype : becomes.subtypes()) {
+            accumulator.addGrantedSubtype(subtype);
+        }
+        if (becomes.color() != null) {
+            accumulator.addGrantedColor(becomes.color());
+            accumulator.setColorOverriding(true);
         }
     }
 }

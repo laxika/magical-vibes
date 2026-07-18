@@ -9,6 +9,7 @@ import com.github.laxika.magicalvibes.model.filter.PermanentIsArtifactPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentPredicateTargetFilter;
 
 @CardRegistration(set = "5ED", collectorNumber = "204")
+@CardRegistration(set = "4ED", collectorNumber = "169")
 public class WarpArtifact extends Card {
 
     public WarpArtifact() {

@@ -12,6 +12,7 @@ import com.github.laxika.magicalvibes.model.filter.PermanentIsCreaturePredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentPredicateTargetFilter;
 
 @CardRegistration(set = "5ED", collectorNumber = "185")
+@CardRegistration(set = "4ED", collectorNumber = "151")
 public class Paralyze extends Card {
 
     public Paralyze() {

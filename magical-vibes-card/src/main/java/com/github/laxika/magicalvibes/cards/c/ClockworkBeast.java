@@ -15,6 +15,7 @@ import com.github.laxika.magicalvibes.model.effect.RemoveCounterFromSourceAtEndO
 import java.util.List;
 
 @CardRegistration(set = "5ED", collectorNumber = "356")
+@CardRegistration(set = "4ED", collectorNumber = "307")
 public class ClockworkBeast extends Card {
 
     public ClockworkBeast() {

@@ -14,6 +14,7 @@ import com.github.laxika.magicalvibes.cards.CardRegistration;
 @CardRegistration(set = "7ED", collectorNumber = "314")
 @CardRegistration(set = "6ED", collectorNumber = "309")
 @CardRegistration(set = "5ED", collectorNumber = "396")
+@CardRegistration(set = "4ED", collectorNumber = "344")
 public class RodOfRuin extends Card {
 
     public RodOfRuin() {

@@ -29,6 +29,7 @@ import com.github.laxika.magicalvibes.model.action.ExileToOwnerGraveyardAtNextUp
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
 import com.github.laxika.magicalvibes.model.effect.OpponentMayReturnExiledCardOrDrawEffect;
 import com.github.laxika.magicalvibes.model.filter.PermanentPredicateTargetFilter;
+import com.github.laxika.magicalvibes.service.DrawService;
 import com.github.laxika.magicalvibes.service.GameBroadcastService;
 import com.github.laxika.magicalvibes.service.trigger.TriggerCollectionService;
 import com.github.laxika.magicalvibes.service.exile.ExileService;
@@ -75,6 +76,7 @@ public class LibraryChoiceHandlerService {
     private final com.github.laxika.magicalvibes.service.interaction.InteractionHandlerRegistry interactionHandlerRegistry;
     private final TriggerCollectionService triggerCollectionService;
     private final com.github.laxika.magicalvibes.service.effect.normalfx.LibrarySearchSupport librarySearchSupport;
+    private final DrawService drawService;
 
 
     public void handleLibraryCardChosen(GameData gameData, Player player, int cardIndex) {
@@ -130,6 +132,12 @@ public class LibraryChoiceHandlerService {
             if (destination == LibrarySearchDestination.CAST_WITHOUT_PAYING) {
                 handleCastWithoutPayingChoice(gameData, player, cardIndex, canFailToFind,
                         searchCards, sourceCards, deck);
+                return;
+            }
+
+            // Aladdin's Lamp: keep the chosen card on top, rest to bottom in a random order, then draw it.
+            if (destination == LibrarySearchDestination.DRAW_CHOSEN_REST_TO_BOTTOM_RANDOM) {
+                handleDrawChosenRestToBottomRandom(gameData, cardIndex, searchCards, sourceCards, deck, deckOwnerId);
                 return;
             }
 
@@ -681,6 +689,7 @@ public class LibraryChoiceHandlerService {
                 case SPHINX_AMBASSADOR -> throw new IllegalStateException("SPHINX_AMBASSADOR should be handled earlier");
                 case CAST_WITHOUT_PAYING -> throw new IllegalStateException("CAST_WITHOUT_PAYING should be handled earlier");
                 case BATTLEFIELD_UNDER_SEARCHER -> throw new IllegalStateException("BATTLEFIELD_UNDER_SEARCHER should be handled earlier");
+                case DRAW_CHOSEN_REST_TO_BOTTOM_RANDOM -> throw new IllegalStateException("DRAW_CHOSEN_REST_TO_BOTTOM_RANDOM should be handled earlier");
             };
             String logEntry;
             if (targetPlayerId != null) {
@@ -1344,6 +1353,41 @@ public class LibraryChoiceHandlerService {
         }
 
         castCardWithoutPaying(gameData, player, chosenCard);
+    }
+
+    /**
+     * Aladdin's Lamp — the player has chosen which looked-at card to keep. Put the chosen card back
+     * on top of the library and the rest on the bottom in a random order, then draw a card (the kept
+     * one, now on top). The final draw is a real draw event, routed through {@code resolveDrawCard}.
+     */
+    private void handleDrawChosenRestToBottomRandom(GameData gameData, int cardIndex,
+                                                    List<Card> searchCards, List<Card> sourceCards,
+                                                    List<Card> deck, UUID deckOwnerId) {
+        if (cardIndex < 0 || cardIndex >= searchCards.size()) {
+            throw new IllegalStateException("Aladdin's Lamp requires choosing one card to keep");
+        }
+        Card chosenCard = searchCards.get(cardIndex);
+        sourceCards.removeIf(c -> c.getId().equals(chosenCard.getId()));
+
+        // The rest go to the bottom of the library in a random order.
+        int bottomed = sourceCards.size();
+        if (!sourceCards.isEmpty()) {
+            Collections.shuffle(sourceCards);
+            deck.addAll(sourceCards);
+        }
+        // Chosen card back on top, then draw it (fires draw triggers, counts as a draw).
+        deck.addFirst(chosenCard);
+
+        String playerName = gameData.playerIdToName.get(deckOwnerId);
+        gameBroadcastService.logAndBroadcast(gameData, GameLog.text(playerName + " puts " + bottomed
+                + " card" + (bottomed != 1 ? "s" : "") + " on the bottom of their library in a random order."));
+        log.info("Game {} - {} keeps a card and bottoms {} (Aladdin's Lamp)", gameData.id, playerName, bottomed);
+
+        drawService.resolveDrawCard(gameData, deckOwnerId);
+
+        if (!gameData.interaction.isAwaitingInput()) {
+            turnProgressionService.resolveAutoPass(gameData);
+        }
     }
 
     /**

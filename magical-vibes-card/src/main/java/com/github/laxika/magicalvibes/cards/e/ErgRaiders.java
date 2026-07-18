@@ -14,6 +14,7 @@ import com.github.laxika.magicalvibes.model.effect.DealDamageToPlayersEffect;
 import java.util.List;
 
 @CardRegistration(set = "5ED", collectorNumber = "158")
+@CardRegistration(set = "4ED", collectorNumber = "135")
 public class ErgRaiders extends Card {
 
     public ErgRaiders() {

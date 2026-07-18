@@ -20,6 +20,7 @@ import java.util.List;
  * to that artifact's controller.
  */
 @CardRegistration(set = "5ED", collectorNumber = "218")
+@CardRegistration(set = "4ED", collectorNumber = "184")
 public class Detonate extends Card {
 
     public Detonate() {

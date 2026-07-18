@@ -23,6 +23,7 @@ import com.github.laxika.magicalvibes.model.effect.CardEffect;
 import com.github.laxika.magicalvibes.model.effect.DamageRecipient;
 import com.github.laxika.magicalvibes.model.effect.DamageDamagedCreatureControllerAndSelfEffect;
 import com.github.laxika.magicalvibes.model.effect.DealDamageToPlayersEffect;
+import com.github.laxika.magicalvibes.model.effect.EnchantedCreatureDealsDamageEqualToDealtDamageToControllerEffect;
 import com.github.laxika.magicalvibes.model.effect.ReflectAllyDamageToDamagedCreatureControllerEffect;
 import com.github.laxika.magicalvibes.model.effect.SacrificeSelfEffect;
 import com.github.laxika.magicalvibes.model.CardType;
@@ -62,6 +63,7 @@ import org.springframework.stereotype.Component;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Map;
 import java.util.UUID;
 
 /**
@@ -461,6 +463,58 @@ public class TriggerCollectionService {
         }
     }
 
+    // ── Enchanted-creature-deals-damage-to-you reflect triggers (Backfire) ──
+
+    /**
+     * Handles {@link EffectSlot#ON_ENCHANTED_CREATURE_DEALS_DAMAGE_TO_YOU} — "Whenever enchanted creature
+     * deals damage to you, this Aura deals that much damage to that creature's controller" (Backfire).
+     *
+     * <p>The aura is on its controller's battlefield, so scanning the damaged player's battlefield for auras
+     * attached to the damage source naturally restricts the trigger to damage dealt to the aura's controller
+     * ("to you"). Called for both combat and non-combat damage dealt to a player. Queues a triggered ability
+     * running {@link EnchantedCreatureDealsDamageEqualToDealtDamageToControllerEffect}, whose handler deals
+     * {@code amount} damage to the enchanted creature's controller.
+     */
+    public void checkEnchantedCreatureDealtDamageToControllerReflectTriggers(GameData gameData, UUID damagedPlayerId,
+            UUID sourcePermanentId, int amount) {
+        if (sourcePermanentId == null || amount <= 0) return;
+
+        List<Permanent> damagedPlayerBattlefield = gameData.playerBattlefields.get(damagedPlayerId);
+        if (damagedPlayerBattlefield == null) return;
+
+        Permanent enchantedCreature = gameQueryService.findPermanentById(gameData, sourcePermanentId);
+        if (enchantedCreature == null) return;
+
+        for (Permanent aura : new ArrayList<>(damagedPlayerBattlefield)) {
+            if (!aura.isAttached() || !sourcePermanentId.equals(aura.getAttachedTo())) continue;
+            if (aura.getCard().getEffects(EffectSlot.ON_ENCHANTED_CREATURE_DEALS_DAMAGE_TO_YOU).isEmpty()) continue;
+
+            UUID creatureControllerId = gameQueryService.findPermanentController(gameData, sourcePermanentId);
+            if (creatureControllerId == null) continue;
+
+            StackEntry entry = new StackEntry(
+                    StackEntryType.TRIGGERED_ABILITY,
+                    aura.getCard(),
+                    damagedPlayerId,
+                    aura.getCard().getName() + "'s ability",
+                    new ArrayList<>(List.of(new EnchantedCreatureDealsDamageEqualToDealtDamageToControllerEffect())),
+                    amount,
+                    creatureControllerId,
+                    aura.getId(),
+                    Map.of(),
+                    null,
+                    List.of(),
+                    List.of()
+            );
+            entry.setDamageSourceCard(enchantedCreature.getCard());
+            gameData.stack.add(entry);
+
+            gameBroadcastService.logAndBroadcast(gameData, GameLog.text(aura.getCard().getName() + "'s ability triggers."));
+            log.info("Game {} - {} ON_ENCHANTED_CREATURE_DEALS_DAMAGE_TO_YOU trigger fires ({} damage)",
+                    gameData.id, aura.getCard().getName(), amount);
+        }
+    }
+
     // ── Controller-dealt-damage triggers (Living Artifact) ─────────────
 
     /**
@@ -505,6 +559,14 @@ public class TriggerCollectionService {
                 }
             }
         });
+
+        // Self triggers (El-Hajjâj): only the damage source's own "whenever this creature deals
+        // damage" abilities fire. Keyed off the source card (not a battlefield scan) so it still
+        // triggers when the source died dealing that damage.
+        for (CardEffect effect : sourceCard.getEffects(EffectSlot.ON_SELF_DEALS_DAMAGE)) {
+            var match = new TriggerMatchContext(gameData, null, sourceControllerId, effect);
+            registry.dispatch(match, EffectSlot.ON_SELF_DEALS_DAMAGE, effect, ctx);
+        }
     }
 
     // ── Land-tap triggers ──────────────────────────────────────────────

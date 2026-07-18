@@ -7,6 +7,7 @@ import com.github.laxika.magicalvibes.model.effect.StaticOrbEffect;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsLandPredicate;
 
 @CardRegistration(set = "5ED", collectorNumber = "408")
+@CardRegistration(set = "4ED", collectorNumber = "358")
 public class WinterOrb extends Card {
 
     public WinterOrb() {

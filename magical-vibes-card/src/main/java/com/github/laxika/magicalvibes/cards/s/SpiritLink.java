@@ -13,6 +13,7 @@ import com.github.laxika.magicalvibes.cards.CardRegistration;
 @CardRegistration(set = "7ED", collectorNumber = "47")
 @CardRegistration(set = "6ED", collectorNumber = "43")
 @CardRegistration(set = "5ED", collectorNumber = "64")
+@CardRegistration(set = "4ED", collectorNumber = "51")
 public class SpiritLink extends Card {
 
     public SpiritLink() {

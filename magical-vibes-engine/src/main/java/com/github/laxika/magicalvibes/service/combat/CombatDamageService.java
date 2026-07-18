@@ -302,6 +302,7 @@ public class CombatDamageService {
         for (var dmgEntry : state.combatDamageDealtToPlayer.entrySet()) {
             if (dmgEntry.getValue() > 0) {
                 triggerCollectionService.checkDamageDealtToControllerTriggers(gameData, defenderId, dmgEntry.getKey().getId(), true);
+                triggerCollectionService.checkEnchantedCreatureDealtDamageToControllerReflectTriggers(gameData, defenderId, dmgEntry.getKey().getId(), dmgEntry.getValue());
                 triggerCollectionService.checkControllerDealtDamageTriggers(gameData, defenderId, dmgEntry.getValue());
             }
         }

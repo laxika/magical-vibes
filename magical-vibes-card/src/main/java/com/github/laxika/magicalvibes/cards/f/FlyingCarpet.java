@@ -15,6 +15,7 @@ import java.util.List;
 @CardRegistration(set = "5ED", collectorNumber = "371")
 @CardRegistration(set = "7ED", collectorNumber = "297")
 @CardRegistration(set = "6ED", collectorNumber = "285")
+@CardRegistration(set = "4ED", collectorNumber = "320")
 public class FlyingCarpet extends Card {
 
     public FlyingCarpet() {

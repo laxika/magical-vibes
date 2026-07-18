@@ -14,6 +14,7 @@ import com.github.laxika.magicalvibes.cards.CardRegistration;
 @CardRegistration(set = "M10", collectorNumber = "79")
 @CardRegistration(set = "M11", collectorNumber = "78")
 @CardRegistration(set = "5ED", collectorNumber = "132")
+@CardRegistration(set = "4ED", collectorNumber = "111")
 public class Unsummon extends Card {
 
     public Unsummon() {

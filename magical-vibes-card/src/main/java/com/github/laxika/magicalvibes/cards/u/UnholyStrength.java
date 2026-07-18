@@ -15,6 +15,7 @@ import com.github.laxika.magicalvibes.model.filter.PermanentPredicateTargetFilte
 @CardRegistration(set = "M10", collectorNumber = "116")
 @CardRegistration(set = "M11", collectorNumber = "119")
 @CardRegistration(set = "5ED", collectorNumber = "201")
+@CardRegistration(set = "4ED", collectorNumber = "166")
 public class UnholyStrength extends Card {
 
     public UnholyStrength() {

@@ -20,5 +20,9 @@ public enum LibrarySearchDestination {
     SPHINX_AMBASSADOR,
     CAST_WITHOUT_PAYING,
     /** Put the chosen card onto the battlefield under the searching player's control (Bribery). */
-    BATTLEFIELD_UNDER_SEARCHER
+    BATTLEFIELD_UNDER_SEARCHER,
+    /** Aladdin's Lamp — put the chosen looked-at card back on top of the library and the rest on the
+     *  bottom in a random order, then draw a card (the chosen one). The final draw is a real draw
+     *  event (fires draw triggers), routed back through {@code DrawService.resolveDrawCard}. */
+    DRAW_CHOSEN_REST_TO_BOTTOM_RANDOM
 }

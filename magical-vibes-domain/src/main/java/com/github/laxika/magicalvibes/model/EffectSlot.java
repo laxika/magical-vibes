@@ -136,6 +136,13 @@ ON_ALLY_CREATURE_ENTERS_BATTLEFIELD,
     /** Triggers whenever the permanent this aura is attached to is dealt damage (combat or non-combat).
      *  Fires on the aura permanent; the dealt damage amount is passed via {@code TriggerContext.DamageToCreature}. */
     ON_ENCHANTED_CREATURE_DEALT_DAMAGE,
+    /** Triggers whenever the creature this aura is attached to deals damage (combat or non-combat) to the
+     *  aura's controller — i.e. "whenever enchanted creature deals damage to you" (Backfire). Because the
+     *  aura sits on its controller's battlefield, the trigger is scanned on the damaged player's battlefield
+     *  in {@code TriggerCollectionService.checkEnchantedCreatureDealtDamageToControllerReflectTriggers}, so it
+     *  fires only when the damaged player is the aura's controller. Reuses
+     *  {@code EnchantedCreatureDealsDamageEqualToDealtDamageToControllerEffect} for resolution. */
+    ON_ENCHANTED_CREATURE_DEALS_DAMAGE_TO_YOU,
     ON_EQUIPPED_CREATURE_DIES,
     ON_ENCHANTED_PERMANENT_PUT_INTO_GRAVEYARD,
     ON_OPPONENT_LAND_ENTERS_BATTLEFIELD,
@@ -385,6 +392,18 @@ ON_ALLY_CREATURE_ENTERS_BATTLEFIELD,
      *  {@code EffectResolutionService} flushes). Queued via
      *  {@code TriggerCollectionService.queueSourceDealsDamageReflections}. Used by Justice. */
     ON_ANY_SOURCE_DEALS_DAMAGE,
+    /** Triggers whenever <em>this permanent itself</em> deals damage (combat or non-combat) to
+     *  anything — a creature, a player, or a planeswalker. Unlike {@link #ON_ANY_SOURCE_DEALS_DAMAGE}
+     *  (a global watcher that reacts to every source), this fires only for the damage the source keyed
+     *  by the trigger dealt, so it stays with the source even when it dies dealing that damage. All
+     *  damage the source deals simultaneously is summed into one trigger (CR ruling), and that summed
+     *  total is snapshotted onto the queued ability's {@code eventValue} so a "that much" amount
+     *  ({@code EventValue}) can read it. Shares the batched choke point that drives
+     *  {@link #ON_ANY_SOURCE_DEALS_DAMAGE} ({@code CombatDamageService} per source,
+     *  {@code DamageSupport} for non-combat), via
+     *  {@code TriggerCollectionService.queueSourceDealsDamageReflections}. Used by El-Hajjâj
+     *  ({@code GainLifeEffect(new EventValue())} — "you gain that much life"). */
+    ON_SELF_DEALS_DAMAGE,
     /** Triggers whenever this permanent's controller is dealt damage (combat or non-combat, from any
      *  source — creatures, spells, abilities). Unlike {@link #ON_ANY_PERMANENT_DEALS_DAMAGE_TO_YOU}
      *  (which reacts to the damage <em>source</em> and only fires for permanent sources), this fires

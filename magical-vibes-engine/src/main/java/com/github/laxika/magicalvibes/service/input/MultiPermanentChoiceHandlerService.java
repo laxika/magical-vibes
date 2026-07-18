@@ -72,6 +72,7 @@ public class MultiPermanentChoiceHandlerService {
     private final PermanentCounterSupport permanentCounterSupport;
     private final AnimationSupport animationSupport;
     private final LifeSupport lifeSupport;
+    private final com.github.laxika.magicalvibes.service.effect.normalfx.TapUntapSupport tapUntapSupport;
     private final com.github.laxika.magicalvibes.service.effect.normalfx.LibrarySearchSupport librarySearchSupport;
     private final com.github.laxika.magicalvibes.service.effect.normalfx.PlayerInteractionSupport playerInteractionSupport;
 
@@ -159,8 +160,12 @@ public class MultiPermanentChoiceHandlerService {
             handleChooseFivePermanentsSearchSameName(gameData, playerId, permanentIds);
         } else if (context instanceof MultiPermanentChoiceContext.DevourSacrifice ctx) {
             handleDevourSacrifice(gameData, playerId, permanentIds, ctx);
+        } else if (context instanceof MultiPermanentChoiceContext.PayManaPerCreatureUntap ctx) {
+            handlePayManaPerCreatureUntap(gameData, permanentIds, ctx);
         } else if (context instanceof MultiPermanentChoiceContext.StaticOrbUntap ctx) {
             handleStaticOrbUntap(gameData, permanentIds, ctx);
+        } else if (context instanceof MultiPermanentChoiceContext.ExileTetraviteTokensPutCountersOnSource ctx) {
+            handleExileTetraviteTokensPutCountersOnSource(gameData, permanentIds, ctx);
         } else if (gameData.hasPendingInteraction(PendingCapriciousEfreetState.class)) {
             handleCapriciousEfreetOpponentTargets(gameData, permanentIds);
         } else if (gameData.hasPendingInteraction(PendingPileSeparation.class)) {
@@ -1082,6 +1087,98 @@ public class MultiPermanentChoiceHandlerService {
         if (!gameData.interaction.isAwaitingInput()) {
             inputCompletionService.sbaMayAbilitiesThenBroadcastAutoPass(gameData);
         }
+    }
+
+    private void handlePayManaPerCreatureUntap(GameData gameData, List<UUID> permanentIds,
+                                               MultiPermanentChoiceContext.PayManaPerCreatureUntap context) {
+        UUID actingPlayerId = context.actingPlayerId();
+        String playerName = gameData.playerIdToName.get(actingPlayerId);
+
+        if (permanentIds.isEmpty()) {
+            gameBroadcastService.logAndBroadcast(gameData, GameLog.text(playerName + " untaps no creatures."));
+        } else {
+            int totalCost = context.manaPerCreature() * permanentIds.size();
+            com.github.laxika.magicalvibes.model.ManaCost cost =
+                    new com.github.laxika.magicalvibes.model.ManaCost("{" + totalCost + "}");
+            com.github.laxika.magicalvibes.model.ManaPool pool = gameData.playerManaPools.get(actingPlayerId);
+            if (pool != null && cost.canPay(pool)) {
+                cost.pay(pool);
+                List<String> untappedNames = new ArrayList<>();
+                for (UUID permId : permanentIds) {
+                    Permanent perm = gameQueryService.findPermanentById(gameData, permId);
+                    if (perm != null && tapUntapSupport.untapPermanent(gameData, perm)) {
+                        untappedNames.add(perm.getCard().getName());
+                    }
+                }
+                gameBroadcastService.logAndBroadcast(gameData, GameLog.text(playerName + " pays {" + totalCost
+                        + "} and untaps " + String.join(", ", untappedNames) + "."));
+                log.info("Game {} - {} pays {} to untap {} creature(s)", gameData.id, playerName, totalCost,
+                        untappedNames.size());
+            } else {
+                gameBroadcastService.logAndBroadcast(gameData, GameLog.text(playerName
+                        + " can't pay {" + totalCost + "} — untaps no creatures."));
+            }
+        }
+
+        // Resume resolving any remaining effects on the trigger, then continue the game.
+        if (gameData.pendingEffectResolutionEntry != null) {
+            effectResolutionService.resolveEffectsFrom(gameData,
+                    gameData.pendingEffectResolutionEntry,
+                    gameData.pendingEffectResolutionIndex);
+        }
+
+        gameBroadcastService.broadcastGameState(gameData);
+        turnProgressionService.resolveAutoPass(gameData);
+    }
+
+    private void handleExileTetraviteTokensPutCountersOnSource(GameData gameData, List<UUID> permanentIds,
+                                                               MultiPermanentChoiceContext.ExileTetraviteTokensPutCountersOnSource context) {
+        UUID sourceId = context.sourcePermanentId();
+        Permanent source = gameQueryService.findPermanentById(gameData, sourceId);
+        String sourceName = source != null ? source.getCard().getName() : "Tetravus";
+        Set<UUID> created = gameData.tetravusCreatedTokens.get(sourceId);
+
+        int exiled = 0;
+        for (UUID permId : permanentIds) {
+            Permanent token = gameQueryService.findPermanentById(gameData, permId);
+            if (token != null) {
+                permanentRemovalService.removePermanentToExile(gameData, token);
+                if (created != null) {
+                    created.remove(permId);
+                }
+                exiled++;
+            }
+        }
+
+        if (exiled > 0) {
+            permanentRemovalService.removeOrphanedAuras(gameData);
+            gameBroadcastService.logAndBroadcast(gameData, GameLog.text(
+                    exiled + " token" + (exiled == 1 ? "" : "s") + " created with " + sourceName
+                            + (exiled == 1 ? " is" : " are") + " exiled."));
+            // "Put that many +1/+1 counters on this creature" — only if the source is still around.
+            if (source != null) {
+                permanentCounterSupport.applyPlusOnePlusOneCounters(gameData, null, source, exiled);
+            }
+            log.info("Game {} - {} tokens created with {} exiled to add +1/+1 counters",
+                    gameData.id, exiled, sourceName);
+        }
+
+        // Standard completion: SBA → may abilities → resume effects
+        stateBasedActionService.performStateBasedActions(gameData);
+
+        if (!gameData.pendingMayAbilities.isEmpty()) {
+            playerInputService.processNextMayAbility(gameData);
+            return;
+        }
+
+        if (gameData.pendingEffectResolutionEntry != null) {
+            effectResolutionService.resolveEffectsFrom(gameData,
+                    gameData.pendingEffectResolutionEntry,
+                    gameData.pendingEffectResolutionIndex);
+        }
+
+        gameBroadcastService.broadcastGameState(gameData);
+        turnProgressionService.resolveAutoPass(gameData);
     }
 
     private void handleStaticOrbUntap(GameData gameData, List<UUID> permanentIds,

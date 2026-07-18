@@ -14,6 +14,7 @@ import com.github.laxika.magicalvibes.model.filter.PermanentIsEnchantmentPredica
 import java.util.List;
 import java.util.Set;
 
+@CardRegistration(set = "4ED", collectorNumber = "139")
 @CardRegistration(set = "5ED", collectorNumber = "165")
 public class Gloom extends Card {
 

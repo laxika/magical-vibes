@@ -7,5 +7,6 @@ import com.github.laxika.magicalvibes.cards.CardRegistration;
 @CardRegistration(set = "5ED", collectorNumber = "66")
 @CardRegistration(set = "8ED", collectorNumber = "54")
 @CardRegistration(set = "6ED", collectorNumber = "48")
+@CardRegistration(set = "4ED", collectorNumber = "53")
 public class TundraWolves extends Card {
 }

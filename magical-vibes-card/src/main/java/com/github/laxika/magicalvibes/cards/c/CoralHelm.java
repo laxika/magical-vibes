@@ -8,6 +8,7 @@ import com.github.laxika.magicalvibes.model.effect.DiscardRandomCardCost;
 
 import java.util.List;
 
+@CardRegistration(set = "4ED", collectorNumber = "310")
 @CardRegistration(set = "5ED", collectorNumber = "359")
 public class CoralHelm extends Card {
 

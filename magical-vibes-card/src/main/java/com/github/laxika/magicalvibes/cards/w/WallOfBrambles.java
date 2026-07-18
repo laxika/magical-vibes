@@ -8,6 +8,7 @@ import com.github.laxika.magicalvibes.model.effect.RegenerateEffect;
 import java.util.List;
 
 @CardRegistration(set = "5ED", collectorNumber = "338")
+@CardRegistration(set = "4ED", collectorNumber = "282")
 public class WallOfBrambles extends Card {
 
     public WallOfBrambles() {

@@ -16,6 +16,7 @@ import java.util.List;
  * Banding is not modeled by the engine, so it is omitted from the keyword options.
  */
 @CardRegistration(set = "5ED", collectorNumber = "405")
+@CardRegistration(set = "4ED", collectorNumber = "355")
 public class UrzasAvenger extends Card {
 
     public UrzasAvenger() {

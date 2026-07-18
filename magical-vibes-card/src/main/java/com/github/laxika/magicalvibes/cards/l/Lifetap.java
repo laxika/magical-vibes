@@ -9,6 +9,7 @@ import com.github.laxika.magicalvibes.model.effect.TriggeringPermanentConditiona
 import com.github.laxika.magicalvibes.model.filter.PermanentHasSubtypePredicate;
 
 @CardRegistration(set = "5ED", collectorNumber = "99")
+@CardRegistration(set = "4ED", collectorNumber = "81")
 public class Lifetap extends Card {
 
     public Lifetap() {

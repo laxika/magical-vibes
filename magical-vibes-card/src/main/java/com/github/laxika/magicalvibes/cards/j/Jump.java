@@ -10,6 +10,7 @@ import com.github.laxika.magicalvibes.model.filter.PermanentIsCreaturePredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentPredicateTargetFilter;
 
 @CardRegistration(set = "M10", collectorNumber = "59")
+@CardRegistration(set = "4ED", collectorNumber = "79")
 public class Jump extends Card {
 
     public Jump() {

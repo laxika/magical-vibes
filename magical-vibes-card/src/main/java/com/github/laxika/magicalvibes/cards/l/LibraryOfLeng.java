@@ -6,6 +6,7 @@ import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.effect.DiscardToTopOfLibraryInsteadEffect;
 import com.github.laxika.magicalvibes.model.effect.NoMaximumHandSizeEffect;
 
+@CardRegistration(set = "4ED", collectorNumber = "333")
 @CardRegistration(set = "5ED", collectorNumber = "387")
 public class LibraryOfLeng extends Card {
 

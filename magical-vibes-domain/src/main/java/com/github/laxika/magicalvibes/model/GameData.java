@@ -147,6 +147,8 @@ public class GameData {
     public final Map<UUID, Set<UUID>> seraphReturnedCreatures = new ConcurrentHashMap<>();
     /** Seraph: source Seraph permanent id → the player who last controlled it, watched for control-loss sacrifices. */
     public final Map<UUID, UUID> seraphControlWatch = new ConcurrentHashMap<>();
+    /** Tetravus: source Tetravus permanent id → ids of the Tetravite tokens it created ("tokens created with this creature"). */
+    public final Map<UUID, Set<UUID>> tetravusCreatedTokens = new ConcurrentHashMap<>();
     /** Unified exile zone: every exiled card with its owner and optional source permanent. */
     public final List<ExiledCardEntry> exiledCards = Collections.synchronizedList(new ArrayList<>());
     /** Maps exiled card UUID → egg counter count (for Darigaaz Reincarnated-style effects). */
@@ -231,6 +233,11 @@ public class GameData {
 
     public PendingAbilityActivation pendingAbilityActivation;
     public final Map<UUID, UUID> drawReplacementTargetToController = new ConcurrentHashMap<>();
+    /** Aladdin's Lamp — a one-shot, turn-scoped delayed replacement of a player's next draw this
+     *  turn: "instead look at the top X cards of your library, put all but one on the bottom in a
+     *  random order, then draw a card." Keyed by drawing player id, value = X. Consumed on the next
+     *  draw in {@code DrawService.resolveDrawCard} and cleared at end-of-turn cleanup. */
+    public final Map<UUID, Integer> pendingNextDrawLookAtTop = new ConcurrentHashMap<>();
     public final Map<UUID, Map<Integer, Integer>> activatedAbilityUsesThisTurn = new ConcurrentHashMap<>();
     /** Per-permanent count of how many times its resolution-counting activated ability has resolved
      *  this turn (the {@code NthAbilityResolutionThisTurn} condition, e.g. Ashling the Pilgrim).
@@ -346,6 +353,11 @@ public class GameData {
      *  Keyed by the spell's card id; carried onto the permanent it resolves into (CR 613.7). */
     public final Map<UUID, List<TextReplacement>> spellTextReplacements = new ConcurrentHashMap<>();
 
+    /** Color override applied to a spell on the stack (e.g. Purelace targeting a spell — "becomes white").
+     *  Keyed by the spell's card id; carried onto the permanent it resolves into (CR 613.7), where it
+     *  replaces that permanent's colors indefinitely. */
+    public final Map<UUID, CardColor> spellColorOverrides = new ConcurrentHashMap<>();
+
     /** Per-player: this player has protection from these colors until end of turn (e.g. Faith's Shield fateful hour). Cleared at end of turn. */
     public final Map<UUID, Set<CardColor>> playerProtectionFromColorsUntilEndOfTurn = new ConcurrentHashMap<>();
 
@@ -365,6 +377,10 @@ public class GameData {
     /** Player IDs that may tap lands they don't control for mana until end of turn (Piracy). The
      *  mana produced this way may only be spent to cast spells. Cleared at end of turn. */
     public final Set<UUID> mayTapLandsForSpellsUntilEndOfTurn = ConcurrentHashMap.newKeySet();
+
+    /** Player IDs that may pay 1 life to add {C} any time they could activate a mana ability until end
+     *  of turn (Channel). Cleared at end of turn. */
+    public final Set<UUID> mayPayLifeForColorlessManaUntilEndOfTurn = ConcurrentHashMap.newKeySet();
 
     public record GraveyardCreatureCastPermission(UUID sourcePermanentId, UUID castingPlayerId) {}
 
@@ -485,6 +501,11 @@ public class GameData {
         playersDealtDamageThisTurn.add(playerId);
         damageDealtToPlayersThisTurn.merge(playerId, amount, Integer::sum);
     }
+
+    /** Snapshot of how many untapped lands each player controlled at the beginning of their most recent
+     *  turn (recorded as their upkeep begins, after the untap step). Locked so responses that tap lands
+     *  don't change it. Read via {@code UntappedLandsAtTurnStart} for Power Surge. */
+    public final Map<UUID, Integer> untappedLandsAtTurnStart = new ConcurrentHashMap<>();
 
     /** Tracks which permanents (by UUID) have been dealt damage this turn (from any source — combat, spells, abilities).
      *  Survives regeneration (which removes marked damage but does not undo "was dealt damage").
@@ -1507,6 +1528,7 @@ public class GameData {
         copy.playerDamagePreventionShields.putAll(this.playerDamagePreventionShields);
         copy.stolenCreatures.putAll(this.stolenCreatures);
         copy.drawReplacementTargetToController.putAll(this.drawReplacementTargetToController);
+        copy.pendingNextDrawLookAtTop.putAll(this.pendingNextDrawLookAtTop);
         copy.cardsDrawnThisTurn.putAll(this.cardsDrawnThisTurn);
         this.cardsDrawnThisTurnIds.forEach((k, v) -> copy.cardsDrawnThisTurnIds.put(k, new ArrayList<>(v)));
         copy.cardsDiscardedThisTurn.putAll(this.cardsDiscardedThisTurn);
@@ -1515,6 +1537,7 @@ public class GameData {
                 copy.combatDamageToPlayersThisTurn.put(k, new HashSet<>(v)));
         copy.playersDealtDamageThisTurn.addAll(this.playersDealtDamageThisTurn);
         copy.damageDealtToPlayersThisTurn.putAll(this.damageDealtToPlayersThisTurn);
+        copy.untappedLandsAtTurnStart.putAll(this.untappedLandsAtTurnStart);
         copy.permanentsDealtDamageThisTurn.addAll(this.permanentsDealtDamageThisTurn);
         this.combatDamageSourceSubtypesThisTurn.forEach((k, v) ->
                 copy.combatDamageSourceSubtypesThisTurn.put(k, new HashSet<>(v)));
@@ -1569,6 +1592,8 @@ public class GameData {
         this.seraphReturnedCreatures.forEach((k, v) ->
                 copy.seraphReturnedCreatures.put(k, new HashSet<>(v)));
         copy.seraphControlWatch.putAll(this.seraphControlWatch);
+        this.tetravusCreatedTokens.forEach((k, v) ->
+                copy.tetravusCreatedTokens.put(k, new HashSet<>(v)));
 
         // --- Map<UUID, Map<CardColor, Integer>> ---
         this.playerColorDamagePreventionCount.forEach((k, v) ->
@@ -1658,6 +1683,7 @@ public class GameData {
                 copy.playerCreaturesCantBeTargetedByColorsThisTurn.put(k, new HashSet<>(v)));
         copy.spellsMadeUncounterable.addAll(this.spellsMadeUncounterable);
         this.spellTextReplacements.forEach((k, v) -> copy.spellTextReplacements.put(k, new ArrayList<>(v)));
+        copy.spellColorOverrides.putAll(this.spellColorOverrides);
         this.playerProtectionFromColorsUntilEndOfTurn.forEach((k, v) ->
                 copy.playerProtectionFromColorsUntilEndOfTurn.put(k, new HashSet<>(v)));
 

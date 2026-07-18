@@ -437,6 +437,31 @@ public class DeathTriggerCollectorService {
         return true;
     }
 
+    @CollectsTrigger(value = DealDamageToPlayersEffect.class, slot = EffectSlot.ON_ENCHANTED_PERMANENT_PUT_INTO_GRAVEYARD)
+    boolean handleEnchantedCreatureDeathDamageController(TriggerMatchContext match,
+            DealDamageToPlayersEffect effect, TriggerContext ctx) {
+        // Creature Bond: the dying creature's controller is dealt damage equal to its toughness.
+        // The creature has already left the battlefield, so snapshot its last-known toughness as the
+        // fixed damage amount (>= 0) and bake its controller as the stack targetId — the
+        // ENCHANTED_PERMANENT_CONTROLLER recipient reads that player from the stack entry.
+        TriggerContext.EnchantedPermanentDeath epd = (TriggerContext.EnchantedPermanentDeath) ctx;
+        DealDamageToPlayersEffect baked = new DealDamageToPlayersEffect(
+                Math.max(0, epd.dyingCreatureToughness()), effect.recipient());
+        match.gameData().stack.add(new StackEntry(
+                StackEntryType.TRIGGERED_ABILITY,
+                match.permanent().getCard(),
+                match.controllerId(),
+                match.permanent().getCard().getName() + "'s ability",
+                new ArrayList<>(List.of(baked)),
+                epd.dyingPermanentControllerId(),
+                match.permanent().getId()
+        ));
+        String triggerLog = match.permanent().getCard().getName() + "'s ability triggers (enchanted permanent put into graveyard).";
+        gameBroadcastService.logAndBroadcast(match.gameData(), GameLog.text(triggerLog));
+        log.info("Game {} - {} triggers (enchanted permanent put into graveyard)", match.gameData().id, match.permanent().getCard().getName());
+        return true;
+    }
+
     @CollectsTrigger(value = CardEffect.class, slot = EffectSlot.ON_ENCHANTED_PERMANENT_PUT_INTO_GRAVEYARD)
     boolean handleEnchantedPermanentDeathDefault(TriggerMatchContext match,
             CardEffect effect, TriggerContext ctx) {

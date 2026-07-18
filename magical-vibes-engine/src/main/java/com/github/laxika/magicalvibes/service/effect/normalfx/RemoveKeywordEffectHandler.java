@@ -79,9 +79,10 @@ public class RemoveKeywordEffectHandler implements NormalEffectHandlerBean {
         target.getRemovedKeywords().add(remove.keyword());
         gameData.addFloatingEffect(new FloatingContinuousEffect(UUID.randomUUID(),
                 entry.getCard().getName(), null, entry.getControllerId(), remove,
-                target.getId(), null, null, EffectDuration.UNTIL_END_OF_TURN, 0));
+                target.getId(), null, null, remove.duration(), 0));
         String keywordName = remove.keyword().name().charAt(0) + remove.keyword().name().substring(1).toLowerCase().replace('_', ' ');
-        String logEntry = target.getCard().getName() + " loses " + keywordName + " until end of turn.";
+        String durationLabel = remove.duration() == EffectDuration.UNTIL_END_OF_TURN ? " until end of turn" : "";
+        String logEntry = target.getCard().getName() + " loses " + keywordName + durationLabel + ".";
         gameBroadcastService.logAndBroadcast(gameData, GameLog.text(logEntry));
         log.info("Game {} - {} loses {} ({})", gameData.id, target.getCard().getName(), remove.keyword(), remove.scope());
     }

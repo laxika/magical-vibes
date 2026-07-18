@@ -40,6 +40,12 @@ public class ManaPool {
      * {@link #subtypeCreatureMana}, which is spell-only.
      */
     private final Map<CardSubtype, EnumMap<ManaColor, Integer>> subtypeSpellOrAbilityMana = new HashMap<>();
+    /**
+     * Permission flag (not mana): while set, white mana in this pool may additionally be spent to pay
+     * red mana costs (Sunglasses of Urza — "you may spend white mana as though it were red mana"). Set
+     * from board state at the payment/affordability sites; honored by {@link ManaCost#canPay}/{@code pay}.
+     */
+    private boolean whiteSpendableAsRed;
 
     public ManaPool() {
         for (ManaColor color : ManaColor.values()) {
@@ -74,6 +80,17 @@ public class ManaPool {
         for (Map.Entry<CardSubtype, EnumMap<ManaColor, Integer>> entry : source.subtypeSpellOrAbilityMana.entrySet()) {
             subtypeSpellOrAbilityMana.put(entry.getKey(), new EnumMap<>(entry.getValue()));
         }
+        this.whiteSpendableAsRed = source.whiteSpendableAsRed;
+    }
+
+    /** See {@link #whiteSpendableAsRed}. */
+    public boolean isWhiteSpendableAsRed() {
+        return whiteSpendableAsRed;
+    }
+
+    /** See {@link #whiteSpendableAsRed}. */
+    public void setWhiteSpendableAsRed(boolean whiteSpendableAsRed) {
+        this.whiteSpendableAsRed = whiteSpendableAsRed;
     }
 
     public void add(ManaColor color) {

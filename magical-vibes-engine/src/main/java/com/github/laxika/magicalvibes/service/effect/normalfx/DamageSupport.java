@@ -116,6 +116,12 @@ public class DamageSupport {
             gameBroadcastService.logAndBroadcast(gameData, GameLog.text("Damage to " + target.getCard().getName() + " is prevented."));
             return;
         }
+        // Uncle Istvan: "Prevent all damage that would be dealt to this creature by creatures." Noncombat
+        // path — combat damage is prevented in DamagePreventionService.applyCreaturePreventionShield.
+        if (gameQueryService.isCreatureSourceDamageToSelfPrevented(gameData, target, entry, damageSource)) {
+            gameBroadcastService.logAndBroadcast(gameData, GameLog.text("Damage to " + target.getCard().getName() + " is prevented."));
+            return false;
+        }
         int damage = damagePreventionService.applyCreaturePreventionShield(gameData, target, rawDamage);
 
         if (damageSource != null) {
@@ -504,6 +510,7 @@ public class DamageSupport {
                 accumulateSourceDamageForReflection(gameData, source, entry.getControllerId(), effectiveDamage);
                 gameData.recordDamageToPlayer(playerId, effectiveDamage);
                 triggerCollectionService.checkDamageDealtToControllerTriggers(gameData, playerId, entry.getSourcePermanentId(), false);
+                triggerCollectionService.checkEnchantedCreatureDealtDamageToControllerReflectTriggers(gameData, playerId, entry.getSourcePermanentId(), effectiveDamage);
                 triggerCollectionService.checkControllerDealtDamageTriggers(gameData, playerId, effectiveDamage);
                 triggerCollectionService.checkNoncombatDamageToOpponentTriggers(gameData, playerId);
                 checkSpellLifelink(gameData, entry, effectiveDamage);

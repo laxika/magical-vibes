@@ -12,6 +12,7 @@ import com.github.laxika.magicalvibes.model.filter.PermanentPredicateTargetFilte
 @CardRegistration(set = "5ED", collectorNumber = "342")
 @CardRegistration(set = "7ED", collectorNumber = "282")
 @CardRegistration(set = "6ED", collectorNumber = "268")
+@CardRegistration(set = "4ED", collectorNumber = "289")
 public class WildGrowth extends Card {
 
     public WildGrowth() {

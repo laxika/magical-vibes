@@ -10,6 +10,7 @@ import com.github.laxika.magicalvibes.cards.CardRegistration;
 
 @CardRegistration(set = "6ED", collectorNumber = "17")
 @CardRegistration(set = "5ED", collectorNumber = "28")
+@CardRegistration(set = "4ED", collectorNumber = "23")
 public class DivineTransformation extends Card {
 
     public DivineTransformation() {

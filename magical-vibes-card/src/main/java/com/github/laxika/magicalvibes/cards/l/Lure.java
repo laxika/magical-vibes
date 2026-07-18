@@ -8,6 +8,7 @@ import com.github.laxika.magicalvibes.model.filter.PermanentIsCreaturePredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentPredicateTargetFilter;
 
 @CardRegistration(set = "5ED", collectorNumber = "314")
+@CardRegistration(set = "4ED", collectorNumber = "262")
 @CardRegistration(set = "10E", collectorNumber = "276")
 @CardRegistration(set = "8ED", collectorNumber = "263")
 @CardRegistration(set = "7ED", collectorNumber = "255")

@@ -24,6 +24,7 @@ import com.github.laxika.magicalvibes.model.amount.CountersOnSource;
 import com.github.laxika.magicalvibes.model.amount.CreatureDeathsThisTurn;
 import com.github.laxika.magicalvibes.model.amount.CreaturesBlockingSource;
 import com.github.laxika.magicalvibes.model.amount.CreaturesDevoured;
+import com.github.laxika.magicalvibes.model.amount.DamageDealtToControllerThisTurn;
 import com.github.laxika.magicalvibes.model.amount.DamageDealtToOpponentsThisTurn;
 import com.github.laxika.magicalvibes.model.amount.CardsDiscardedByTargetPlayerThisTurn;
 import com.github.laxika.magicalvibes.model.amount.DamageDealtToTargetPlayerThisTurn;
@@ -37,15 +38,18 @@ import com.github.laxika.magicalvibes.model.amount.FixedIfControlledCreaturesTot
 import com.github.laxika.magicalvibes.model.amount.FixedIfControlsAllNamed;
 import com.github.laxika.magicalvibes.model.amount.GreatestPowerAmongControlled;
 import com.github.laxika.magicalvibes.model.amount.HalvedRoundedUp;
+import com.github.laxika.magicalvibes.model.amount.IfSourceAttacking;
 import com.github.laxika.magicalvibes.model.amount.ImprintedCreaturePower;
 import com.github.laxika.magicalvibes.model.amount.ImprintedCreatureToughness;
 import com.github.laxika.magicalvibes.model.amount.LandsMatchingImprintedName;
 import com.github.laxika.magicalvibes.model.amount.ManaSpentToCast;
 import com.github.laxika.magicalvibes.model.amount.MatchingCardsInHand;
+import com.github.laxika.magicalvibes.model.amount.Max;
 import com.github.laxika.magicalvibes.model.amount.Min;
 import com.github.laxika.magicalvibes.model.amount.OpponentPoisonCounters;
 import com.github.laxika.magicalvibes.model.amount.OtherAttackersSharingCreatureTypeWithTarget;
 import com.github.laxika.magicalvibes.model.amount.PermanentCount;
+import com.github.laxika.magicalvibes.model.amount.UntappedLandsAtTurnStart;
 import com.github.laxika.magicalvibes.model.amount.Scaled;
 import com.github.laxika.magicalvibes.model.amount.SourcePower;
 import com.github.laxika.magicalvibes.model.amount.SourceToughness;
@@ -108,6 +112,8 @@ public class AmountEvaluationService {
                     s.amounts().stream().mapToInt(a -> evaluate(gameData, a, ctx)).sum();
             case Min m ->
                     m.amounts().stream().mapToInt(a -> evaluate(gameData, a, ctx)).min().orElse(0);
+            case Max m ->
+                    m.amounts().stream().mapToInt(a -> evaluate(gameData, a, ctx)).max().orElse(0);
             case DuringControllerTurn d ->
                     ctx.controllerId() != null && ctx.controllerId().equals(gameData.activePlayerId)
                             ? evaluate(gameData, d.amount(), ctx) : 0;
@@ -144,6 +150,10 @@ public class AmountEvaluationService {
                     Math.floorDiv(evaluate(gameData, h.amount(), ctx) + 1, 2);
             case HalfControllerLifeRoundedUp ignored ->
                     (gameData.playerLifeTotals.getOrDefault(ctx.controllerId(), 0) + 1) / 2;
+            case IfSourceAttacking a ->
+                    ctx.sourcePermanent() != null && ctx.sourcePermanent().isAttacking()
+                            ? evaluate(gameData, a.whileAttacking(), ctx)
+                            : evaluate(gameData, a.otherwise(), ctx);
             case GreatestPowerAmongControlled ignored ->
                     greatestPowerAmongControlled(gameData, ctx);
             case AttachmentsOnSource a ->
@@ -159,9 +169,15 @@ public class AmountEvaluationService {
             case DamageDealtToTargetPlayerThisTurn ignored ->
                     ctx.targetPermanentId() == null ? 0
                             : gameData.damageDealtToPlayersThisTurn.getOrDefault(ctx.targetPermanentId(), 0);
+            case UntappedLandsAtTurnStart ignored ->
+                    ctx.targetPermanentId() == null ? 0
+                            : gameData.untappedLandsAtTurnStart.getOrDefault(ctx.targetPermanentId(), 0);
             case CardsDiscardedByTargetPlayerThisTurn ignored ->
                     ctx.targetPermanentId() == null ? 0
                             : gameData.cardsDiscardedThisTurn.getOrDefault(ctx.targetPermanentId(), 0);
+            case DamageDealtToControllerThisTurn ignored ->
+                    ctx.controllerId() == null ? 0
+                            : gameData.damageDealtToPlayersThisTurn.getOrDefault(ctx.controllerId(), 0);
             case DamageDealtToOpponentsThisTurn ignored ->
                     damageDealtToOpponentsThisTurn(gameData, ctx);
             case ImprintedCreaturePower ignored ->
@@ -247,6 +263,7 @@ public class AmountEvaluationService {
             case HalvedRoundedUp h -> referencesXValue(h.amount());
             case Sum s -> s.amounts().stream().anyMatch(this::referencesXValue);
             case Min m -> m.amounts().stream().anyMatch(this::referencesXValue);
+            case Max m -> m.amounts().stream().anyMatch(this::referencesXValue);
             default -> false;
         };
     }
@@ -264,6 +281,7 @@ public class AmountEvaluationService {
             case HalvedRoundedUp h -> referencesEventValue(h.amount());
             case Sum s -> s.amounts().stream().anyMatch(this::referencesEventValue);
             case Min m -> m.amounts().stream().anyMatch(this::referencesEventValue);
+            case Max m -> m.amounts().stream().anyMatch(this::referencesEventValue);
             default -> false;
         };
     }
@@ -285,7 +303,7 @@ public class AmountEvaluationService {
         }
         int matches = 0;
         for (UUID playerId : gameData.orderedPlayerIds) {
-            if (!isPlayerInScope(playerId, count.scope(), ctx)) continue;
+            if (!isPlayerInScope(gameData, playerId, count.scope(), ctx)) continue;
             List<Permanent> battlefield = gameData.playerBattlefields.get(playerId);
             if (battlefield == null) continue;
             for (Permanent permanent : battlefield) {
@@ -345,7 +363,7 @@ public class AmountEvaluationService {
             GameData gameData, ColorManaSymbolsInGraveyard amount, AmountContext ctx) {
         int total = 0;
         for (UUID playerId : gameData.orderedPlayerIds) {
-            if (!isPlayerInScope(playerId, amount.scope(), ctx)) continue;
+            if (!isPlayerInScope(gameData, playerId, amount.scope(), ctx)) continue;
             List<Card> graveyard = gameData.playerGraveyards.get(playerId);
             if (graveyard == null) continue;
             for (Card card : graveyard) {
@@ -362,7 +380,7 @@ public class AmountEvaluationService {
     private int countGraveyardCards(GameData gameData, CardsInGraveyard count, AmountContext ctx) {
         int matches = 0;
         for (UUID playerId : gameData.orderedPlayerIds) {
-            if (!isPlayerInScope(playerId, count.scope(), ctx)) continue;
+            if (!isPlayerInScope(gameData, playerId, count.scope(), ctx)) continue;
             List<Card> graveyard = gameData.playerGraveyards.get(playerId);
             if (graveyard == null) continue;
             for (Card card : graveyard) {
@@ -397,7 +415,7 @@ public class AmountEvaluationService {
     private int countHandCards(GameData gameData, CardsInHand count, AmountContext ctx) {
         int total = 0;
         for (UUID playerId : gameData.orderedPlayerIds) {
-            if (!isPlayerInScope(playerId, count.scope(), ctx)) continue;
+            if (!isPlayerInScope(gameData, playerId, count.scope(), ctx)) continue;
             List<Card> hand = gameData.playerHands.get(playerId);
             if (hand != null) {
                 total += hand.size();
@@ -410,7 +428,7 @@ public class AmountEvaluationService {
         UUID sourceCardId = ctx.sourcePermanent() != null ? ctx.sourcePermanent().getCard().getId() : null;
         int total = 0;
         for (UUID playerId : gameData.orderedPlayerIds) {
-            if (!isPlayerInScope(playerId, count.scope(), ctx)) continue;
+            if (!isPlayerInScope(gameData, playerId, count.scope(), ctx)) continue;
             List<Card> hand = gameData.playerHands.get(playerId);
             if (hand == null) continue;
             for (Card card : hand) {
@@ -425,7 +443,7 @@ public class AmountEvaluationService {
     private int countLibraryCards(GameData gameData, CardsInLibrary count, AmountContext ctx) {
         int total = 0;
         for (UUID playerId : gameData.orderedPlayerIds) {
-            if (!isPlayerInScope(playerId, count.scope(), ctx)) continue;
+            if (!isPlayerInScope(gameData, playerId, count.scope(), ctx)) continue;
             List<Card> deck = gameData.playerDecks.get(playerId);
             if (deck != null) {
                 total += deck.size();
@@ -544,7 +562,7 @@ public class AmountEvaluationService {
     private int countCreatureDeathsThisTurn(GameData gameData, CreatureDeathsThisTurn count, AmountContext ctx) {
         int total = 0;
         for (UUID playerId : gameData.orderedPlayerIds) {
-            if (!isPlayerInScope(playerId, count.scope(), ctx)) continue;
+            if (!isPlayerInScope(gameData, playerId, count.scope(), ctx)) continue;
             total += gameData.creatureDeathCountThisTurn.getOrDefault(playerId, 0);
         }
         return total;
@@ -594,13 +612,32 @@ public class AmountEvaluationService {
         return total;
     }
 
-    private boolean isPlayerInScope(UUID playerId, CountScope scope, AmountContext ctx) {
+    private boolean isPlayerInScope(GameData gameData, UUID playerId, CountScope scope, AmountContext ctx) {
         return switch (scope) {
             case CONTROLLER -> playerId.equals(ctx.controllerId());
             case OPPONENTS -> !playerId.equals(ctx.controllerId());
             case ANY_PLAYER -> true;
             // The target channel carries the target player's id for player-targeting effects.
             case TARGET_PLAYER -> playerId.equals(ctx.targetPermanentId());
+            case DEFENDING_PLAYER -> playerId.equals(defendingPlayerId(gameData, ctx));
         };
+    }
+
+    /**
+     * The player the source permanent is attacking (its attack target when that is a player,
+     * otherwise the controller of the attacked planeswalker), or {@code null} when the source is
+     * not attacking or has no attack target. See {@link CountScope#DEFENDING_PLAYER}.
+     */
+    private UUID defendingPlayerId(GameData gameData, AmountContext ctx) {
+        Permanent source = ctx.sourcePermanent();
+        if (source == null || !source.isAttacking() || source.getAttackTarget() == null) {
+            return null;
+        }
+        UUID attackTarget = source.getAttackTarget();
+        if (gameData.orderedPlayerIds.contains(attackTarget)) {
+            return attackTarget;
+        }
+        // Attacking a planeswalker: the defending player is that planeswalker's controller.
+        return gameQueryService.findPermanentController(gameData, attackTarget);
     }
 }

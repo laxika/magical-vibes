@@ -10,6 +10,7 @@ import com.github.laxika.magicalvibes.model.Card;
  * No card-specific engine logic.
  */
 @CardRegistration(set = "5ED", collectorNumber = "376")
+@CardRegistration(set = "4ED", collectorNumber = "324")
 public class HelmOfChatzuk extends Card {
 
     public HelmOfChatzuk() {

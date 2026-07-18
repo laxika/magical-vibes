@@ -2,6 +2,7 @@ package com.github.laxika.magicalvibes.model;
 
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
 import com.github.laxika.magicalvibes.model.effect.ChangeColorTextEffect;
+import com.github.laxika.magicalvibes.model.effect.SetTargetColorEffect;
 import com.github.laxika.magicalvibes.model.effect.ChooseOneEffect;
 import com.github.laxika.magicalvibes.model.effect.ConditionalEffect;
 import com.github.laxika.magicalvibes.model.effect.CostEffect;
@@ -177,7 +178,8 @@ public final class EffectResolution {
      */
     public static boolean targetsSpellOnStack(CardEffect e) {
         return e.targetSpec().category() == TargetCategory.SPELL_ON_STACK
-                || (e instanceof ChangeColorTextEffect c && c.canTargetSpell());
+                || (e instanceof ChangeColorTextEffect c && c.canTargetSpell())
+                || e instanceof SetTargetColorEffect;
     }
 
     /**

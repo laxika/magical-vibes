@@ -16,6 +16,7 @@ import com.github.laxika.magicalvibes.model.effect.MayEffect;
 import com.github.laxika.magicalvibes.model.effect.MayPayManaEffect;
 import com.github.laxika.magicalvibes.model.effect.MillOpponentOnLifeLossEffect;
 import com.github.laxika.magicalvibes.model.CounterType;
+import com.github.laxika.magicalvibes.model.effect.PutCounterOnEnchantedCreatureEffect;
 import com.github.laxika.magicalvibes.model.effect.PutCountersOnSelfEffect;
 import com.github.laxika.magicalvibes.model.effect.PutCountersOnSourceEffect;
 import com.github.laxika.magicalvibes.model.effect.PutCounterOnEachControlledPermanentEffect;
@@ -293,6 +294,36 @@ class MiscTriggerCollectorServiceTest {
                     EffectSlot.ON_ENCHANTED_PERMANENT_TAPPED, effect, ctx);
 
             verify(gameBroadcastService).logAndBroadcast(eq(gd), any(GameLogEntry.class));
+        }
+    }
+
+    // ===== ON_ENCHANTED_PERMANENT_TAPPED — PutCounterOnEnchantedCreatureEffect =====
+
+    @Nested
+    @DisplayName("ON_ENCHANTED_PERMANENT_TAPPED — PutCounterOnEnchantedCreatureEffect")
+    class EnchantedPermanentTapCounter {
+
+        @Test
+        @DisplayName("puts triggered ability on stack carrying the aura as its source permanent")
+        void putsTriggeredAbilityOnStack() {
+            Permanent aura = createPermanent("Spirit Shackle");
+            Permanent tappedPerm = createPermanent("Grizzly Bears");
+            var effect = new PutCounterOnEnchantedCreatureEffect(CounterType.MINUS_ZERO_MINUS_TWO);
+            var ctx = new TriggerContext.EnchantedPermanentTap(tappedPerm, player2Id);
+
+            boolean result = registry.dispatch(
+                    match(aura, player1Id, effect),
+                    EffectSlot.ON_ENCHANTED_PERMANENT_TAPPED, effect, ctx);
+
+            assertThat(result).isTrue();
+            assertThat(gd.stack).hasSize(1);
+            var stackEntry = gd.stack.getLast();
+            assertThat(stackEntry.getEntryType()).isEqualTo(StackEntryType.TRIGGERED_ABILITY);
+            assertThat(stackEntry.getDescription()).contains("Spirit Shackle");
+            // Ability controlled by the aura's controller (CR 603.3b), not the tapped permanent's.
+            assertThat(stackEntry.getControllerId()).isEqualTo(player1Id);
+            assertThat(stackEntry.getSourcePermanentId()).isEqualTo(aura.getId());
+            assertThat(stackEntry.getEffectsToResolve().getFirst()).isSameAs(effect);
         }
     }
 

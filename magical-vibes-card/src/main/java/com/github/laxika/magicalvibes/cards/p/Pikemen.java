@@ -9,6 +9,7 @@ import com.github.laxika.magicalvibes.model.Card;
  * No card-specific engine logic.
  */
 @CardRegistration(set = "5ED", collectorNumber = "52")
+@CardRegistration(set = "4ED", collectorNumber = "42")
 public class Pikemen extends Card {
 
     public Pikemen() {

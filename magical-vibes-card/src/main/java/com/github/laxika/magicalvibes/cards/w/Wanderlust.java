@@ -9,6 +9,7 @@ import com.github.laxika.magicalvibes.model.filter.PermanentIsCreaturePredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentPredicateTargetFilter;
 
 @CardRegistration(set = "5ED", collectorNumber = "339")
+@CardRegistration(set = "4ED", collectorNumber = "285")
 public class Wanderlust extends Card {
 
     public Wanderlust() {

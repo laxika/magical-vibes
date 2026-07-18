@@ -11,6 +11,8 @@ import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.PendingInteraction;
 import com.github.laxika.magicalvibes.model.PermanentChoiceContext;
 import com.github.laxika.magicalvibes.model.GraveyardChoiceDestination;
+import com.github.laxika.magicalvibes.model.LibrarySearchDestination;
+import com.github.laxika.magicalvibes.model.LibrarySearchParams;
 import com.github.laxika.magicalvibes.model.StackEntry;
 import com.github.laxika.magicalvibes.model.StackEntryType;
 import com.github.laxika.magicalvibes.model.effect.AbundanceDrawReplacementEffect;
@@ -72,6 +74,14 @@ public class DrawService {
             String playerName = gameData.playerIdToName.get(playerId);
             gameBroadcastService.logAndBroadcast(gameData, GameLog.text(playerName + " can't draw a card."));
             log.info("Game {} - {} can't draw (draw prevention in effect)", gameData.id, playerName);
+            return;
+        }
+
+        // Aladdin's Lamp — one-shot, turn-scoped delayed replacement of this player's next draw:
+        // instead look at the top X cards, put all but one on the bottom in a random order, then draw.
+        Integer lookAtTopX = gameData.pendingNextDrawLookAtTop.remove(playerId);
+        if (lookAtTopX != null) {
+            resolveNextDrawLookAtTop(gameData, playerId, lookAtTopX);
             return;
         }
 
@@ -267,6 +277,52 @@ public class DrawService {
             }
         }
         return null;
+    }
+
+    /**
+     * Aladdin's Lamp replacement: look at the top X cards of the player's library, keep the chosen
+     * one, put the rest on the bottom in a random order, then draw a card (the kept one). With one or
+     * zero cards to look at, this is just a normal draw. Otherwise a {@link PendingInteraction.LibrarySearch}
+     * lets the player pick which card to keep; the bottoming-plus-final-draw completes in
+     * {@code LibraryChoiceHandlerService} (the {@code DRAW_CHOSEN_REST_TO_BOTTOM_RANDOM} destination).
+     */
+    private void resolveNextDrawLookAtTop(GameData gameData, UUID playerId, int x) {
+        List<Card> deck = gameData.playerDecks.get(playerId);
+        if (deck == null || deck.isEmpty()) {
+            // No cards to look at — "then draw a card" from an empty library (handles the loss).
+            performDrawCard(gameData, playerId);
+            return;
+        }
+
+        int lookCount = Math.min(x, deck.size());
+        if (lookCount <= 1) {
+            // Looking at a single card (or X == 1) — nothing to put on the bottom; just draw it.
+            performDrawCard(gameData, playerId);
+            return;
+        }
+
+        List<Card> looked = new ArrayList<>();
+        for (int i = 0; i < lookCount; i++) {
+            looked.add(deck.removeFirst());
+        }
+
+        String playerName = gameData.playerIdToName.get(playerId);
+        gameBroadcastService.logAndBroadcast(gameData,
+                GameLog.text(playerName + " looks at the top " + lookCount + " cards of their library."));
+        log.info("Game {} - {} looks at top {} cards (Aladdin's Lamp)", gameData.id, playerName, lookCount);
+
+        String prompt = "Look at the top " + lookCount + " cards. Choose one to draw; the rest go to the "
+                + "bottom of your library in a random order.";
+        interactionHandlerRegistry.begin(gameData, new PendingInteraction.LibrarySearch(
+                LibrarySearchParams.builder(playerId, looked)
+                        .sourceCards(new ArrayList<>(looked))
+                        .reorderRemainingToBottom(true)
+                        .shuffleAfterSelection(false)
+                        .prompt(prompt)
+                        .destination(LibrarySearchDestination.DRAW_CHOSEN_REST_TO_BOTTOM_RANDOM)
+                        .build(),
+                prompt,
+                false));
     }
 
     void performDrawCard(GameData gameData, UUID playerId) {

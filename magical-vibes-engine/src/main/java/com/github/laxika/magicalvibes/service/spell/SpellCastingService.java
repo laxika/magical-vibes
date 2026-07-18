@@ -589,6 +589,13 @@ public class SpellCastingService {
 
         UUID playerId = player.getId();
 
+        // Refresh the caster's "spend white as red" permission (Sunglasses of Urza) from current board
+        // state so this cast's affordability checks and payment honor it.
+        ManaPool casterPool = gameData.playerManaPools.get(playerId);
+        if (casterPool != null) {
+            casterPool.setWhiteSpendableAsRed(gameQueryService.canSpendWhiteManaAsRed(gameData, playerId));
+        }
+
         List<Card> handEarly = gameData.playerHands.get(playerId);
         if (!fromGraveyard && (cardIndex < 0 || cardIndex >= handEarly.size())) {
             throw new IllegalArgumentException("Invalid card index");

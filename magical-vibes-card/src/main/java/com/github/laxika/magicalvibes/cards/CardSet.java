@@ -10,6 +10,7 @@ import java.util.concurrent.ConcurrentHashMap;
 @RequiredArgsConstructor
 public enum CardSet {
 
+    SET_4ED("4ED"),
     SET_5ED("5ED"),
     SET_6ED("6ED"),
     SET_7ED("7ED"),

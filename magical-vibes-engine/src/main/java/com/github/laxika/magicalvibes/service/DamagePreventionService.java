@@ -20,6 +20,7 @@ import com.github.laxika.magicalvibes.model.effect.PreventCombatDamageToAttackin
 import com.github.laxika.magicalvibes.model.effect.PreventDamageAndRemovePlusOnePlusOneCountersEffect;
 import com.github.laxika.magicalvibes.model.effect.PreventDamageFromOpponentSourcesEffect;
 import com.github.laxika.magicalvibes.model.effect.PreventDamageToOtherCreaturesAndAddPlusCountersEffect;
+import com.github.laxika.magicalvibes.model.effect.PreventDamageToSelfFromCreaturesEffect;
 import com.github.laxika.magicalvibes.model.effect.PreventDamageToControllerPerClericEffect;
 import com.github.laxika.magicalvibes.model.effect.PreventFixedDamagePerSourceToControllerEffect;
 import com.github.laxika.magicalvibes.model.effect.PreventNoncombatDamageToControllerAndGainLifeEffect;
@@ -161,6 +162,12 @@ public class DamagePreventionService {
             if (isCombatDamage && gameQueryService.hasAuraWithEffect(gameData, permanent, PreventAllCombatDamageToAndByEnchantedCreatureEffect.class)) return 0;
             // Dolmen Gate: "Prevent all combat damage that would be dealt to attacking creatures you control."
             if (isCombatDamage && permanent.isAttacking() && hasAttackingCreatureCombatDamagePreventionSource(gameData, permanent)) return 0;
+            // Uncle Istvan: "Prevent all damage that would be dealt to this creature by creatures." Combat
+            // damage is always dealt by a creature (CR 510.1c), so all combat damage to such a permanent is
+            // prevented. Noncombat creature-sourced damage is handled in DamageSupport.dealCreatureDamage,
+            // where the source is known.
+            if (isCombatDamage && permanent.getCard().getEffects(EffectSlot.STATIC).stream()
+                    .anyMatch(PreventDamageToSelfFromCreaturesEffect.class::isInstance)) return 0;
             if (!isCombatDamage && gameQueryService.hasAuraWithEffect(gameData, permanent, PreventAllNoncombatDamageToAttachedCreatureEffect.class)) return 0;
             // Shield of the Realm: "If a source would deal damage to equipped creature, prevent N of that damage."
             damage = applyAttachedPerSourceDamageReduction(gameData, permanent, damage);

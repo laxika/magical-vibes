@@ -13,6 +13,7 @@ import com.github.laxika.magicalvibes.model.effect.PutCountersOnSelfEffect;
 import java.util.Set;
 
 @CardRegistration(set = "5ED", collectorNumber = "341")
+@CardRegistration(set = "4ED", collectorNumber = "288")
 public class WhirlingDervish extends Card {
 
     public WhirlingDervish() {

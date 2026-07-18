@@ -9,6 +9,7 @@ import com.github.laxika.magicalvibes.model.filter.PermanentIsArtifactPredicate;
 import java.util.List;
 
 @CardRegistration(set = "5ED", collectorNumber = "16")
+@CardRegistration(set = "4ED", collectorNumber = "13")
 public class CircleOfProtectionArtifacts extends Card {
 
     public CircleOfProtectionArtifacts() {

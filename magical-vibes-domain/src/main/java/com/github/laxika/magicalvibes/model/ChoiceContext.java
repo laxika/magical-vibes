@@ -121,6 +121,16 @@ public sealed interface ChoiceContext {
                                        CounterType counterType, boolean fromCreature,
                                        int manaMultiplier) implements ChoiceContext {}
 
+    /**
+     * Tetravus first upkeep trigger: the controller chooses how many of {@code permanentId}'s +1/+1
+     * counters (0..the count present) to remove; on the answer that many are removed and that many
+     * Tetravite tokens are created from {@code tokenTemplate}, each recorded as "created with" the
+     * source in {@code GameData.tetravusCreatedTokens} (read by the paired exile trigger).
+     */
+    record TetravusCounterRemoval(UUID permanentId,
+                                  com.github.laxika.magicalvibes.model.effect.CreateTokenEffect tokenTemplate)
+            implements ChoiceContext {}
+
     /** Choosing one of Primal Clay's three shapes "as this creature enters". */
     record PrimalClayFormChoice(UUID permanentId) implements ChoiceContext {}
 
@@ -252,4 +262,18 @@ public sealed interface ChoiceContext {
      */
     record BecomeChosenColorsChoice(UUID targetId, String sourceCardName,
                                     List<CardColor> chosen) implements ChoiceContext {}
+
+    /**
+     * Relic Bind's "choose one" mode pick, made as the enchanted-artifact-tap triggered ability
+     * resolves. {@code sourceCard} is the Aura (used for the follow-up target choice and logging);
+     * {@code controllerId} chooses the mode and then the target. The two options are
+     * {@link #DAMAGE} (deal 1 damage to target player or planeswalker) and {@link #LIFE}
+     * (target player gains 1 life).
+     */
+    record RelicBindModeChoice(Card sourceCard, UUID controllerId) implements ChoiceContext {
+
+        public static final String DAMAGE = "Deal 1 damage to target player or planeswalker";
+        public static final String LIFE = "Target player gains 1 life";
+        public static final List<String> OPTIONS = List.of(DAMAGE, LIFE);
+    }
 }

@@ -12,6 +12,7 @@ import java.util.Set;
 
 @CardRegistration(set = "6ED", collectorNumber = "13")
 @CardRegistration(set = "5ED", collectorNumber = "22")
+@CardRegistration(set = "4ED", collectorNumber = "20")
 public class Crusade extends Card {
 
     public Crusade() {

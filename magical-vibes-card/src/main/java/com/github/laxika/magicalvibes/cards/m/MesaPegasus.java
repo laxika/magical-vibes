@@ -9,6 +9,7 @@ import com.github.laxika.magicalvibes.model.Card;
  * No card-specific engine logic.
  */
 @CardRegistration(set = "5ED", collectorNumber = "47")
+@CardRegistration(set = "4ED", collectorNumber = "35")
 public class MesaPegasus extends Card {
 
     public MesaPegasus() {

@@ -25,8 +25,10 @@ import com.github.laxika.magicalvibes.model.effect.PoisonRecipient;
 import com.github.laxika.magicalvibes.model.effect.MayEffect;
 import com.github.laxika.magicalvibes.model.effect.MayPayManaEffect;
 import com.github.laxika.magicalvibes.model.effect.MillOpponentOnLifeLossEffect;
+import com.github.laxika.magicalvibes.model.effect.PutCounterOnEnchantedCreatureEffect;
 import com.github.laxika.magicalvibes.model.effect.PutCountersOnSelfEffect;
 import com.github.laxika.magicalvibes.model.effect.PutCountersOnSourceEffect;
+import com.github.laxika.magicalvibes.model.effect.RelicBindTapEffect;
 import com.github.laxika.magicalvibes.model.effect.PutCounterOnEachControlledPermanentEffect;
 import com.github.laxika.magicalvibes.model.effect.DamageRecipient;
 import com.github.laxika.magicalvibes.model.effect.DealDamageOnSpellLifeGainEffect;
@@ -197,6 +199,27 @@ public class MiscTriggerCollectorService {
         return true;
     }
 
+    @CollectsTrigger(value = PutCounterOnEnchantedCreatureEffect.class, slot = EffectSlot.ON_ENCHANTED_PERMANENT_TAPPED)
+    private boolean handleEnchantedPermanentTapCounter(TriggerMatchContext match,
+            PutCounterOnEnchantedCreatureEffect e, TriggerContext ctx) {
+        // The effect re-derives the enchanted creature from the source Aura at resolution, so the
+        // trigger only needs to carry the Aura as its source permanent (like the destroy variant).
+        match.gameData().enqueueTrigger(new StackEntry(
+                StackEntryType.TRIGGERED_ABILITY,
+                match.permanent().getCard(),
+                match.controllerId(),
+                match.permanent().getCard().getName() + "'s triggered ability",
+                new ArrayList<>(List.of(e)),
+                null,
+                match.permanent().getId()
+        ));
+        String triggerLog = match.permanent().getCard().getName() + "'s ability triggers.";
+        gameBroadcastService.logAndBroadcast(match.gameData(), GameLog.text(triggerLog));
+        log.info("Game {} - {} triggers to put a counter on enchanted creature",
+                match.gameData().id, match.permanent().getCard().getName());
+        return true;
+    }
+
     @CollectsTrigger(value = DealDamageToPlayersEffect.class, slot = EffectSlot.ON_ENCHANTED_PERMANENT_TAPPED)
     private boolean handleEnchantedPermanentTapDamage(TriggerMatchContext match,
             DealDamageToPlayersEffect e, TriggerContext ctx) {
@@ -214,6 +237,28 @@ public class MiscTriggerCollectorService {
         String triggerLog = match.permanent().getCard().getName() + "'s ability triggers.";
         gameBroadcastService.logAndBroadcast(match.gameData(), GameLog.text(triggerLog));
         log.info("Game {} - {} triggers to damage enchanted permanent's controller",
+                match.gameData().id, match.permanent().getCard().getName());
+        return true;
+    }
+
+    @CollectsTrigger(value = RelicBindTapEffect.class, slot = EffectSlot.ON_ENCHANTED_PERMANENT_TAPPED)
+    private boolean handleEnchantedPermanentTapRelicBind(TriggerMatchContext match,
+            RelicBindTapEffect e, TriggerContext ctx) {
+        // Modal, targeted ability — the mode and target are chosen when the ability resolves
+        // (RelicBindTapEffectHandler). The trigger goes on the stack non-targeting; targets are
+        // free (any player / planeswalker), so the tapped permanent's controller is not needed here.
+        match.gameData().enqueueTrigger(new StackEntry(
+                StackEntryType.TRIGGERED_ABILITY,
+                match.permanent().getCard(),
+                match.controllerId(),
+                match.permanent().getCard().getName() + "'s triggered ability",
+                new ArrayList<>(List.of(e)),
+                null,
+                match.permanent().getId()
+        ));
+        String triggerLog = match.permanent().getCard().getName() + "'s ability triggers.";
+        gameBroadcastService.logAndBroadcast(match.gameData(), GameLog.text(triggerLog));
+        log.info("Game {} - {} triggers on enchanted permanent tap (modal)",
                 match.gameData().id, match.permanent().getCard().getName());
         return true;
     }

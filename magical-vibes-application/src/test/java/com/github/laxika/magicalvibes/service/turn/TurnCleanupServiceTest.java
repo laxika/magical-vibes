@@ -17,6 +17,7 @@ import com.github.laxika.magicalvibes.model.effect.EffectDuration;
 import com.github.laxika.magicalvibes.model.effect.NoMaximumHandSizeEffect;
 import com.github.laxika.magicalvibes.model.effect.PreventManaDrainEffect;
 import com.github.laxika.magicalvibes.model.effect.ReduceOpponentMaxHandSizeEffect;
+import com.github.laxika.magicalvibes.model.effect.SetOpponentMaximumHandSizeEffect;
 import com.github.laxika.magicalvibes.model.layer.FloatingContinuousEffect;
 import com.github.laxika.magicalvibes.service.battlefield.CreatureControlService;
 import org.junit.jupiter.api.BeforeEach;
@@ -613,6 +614,52 @@ class TurnCleanupServiceTest {
             gd.playerBattlefields.get(player2Id).add(new Permanent(card2));
 
             assertThat(sut.getMaxHandSize(gd, player1Id)).isEqualTo(2);
+        }
+
+        @Test
+        @DisplayName("Sets hand size to a specific value when opponent controls SetOpponentMaximumHandSizeEffect")
+        void setByOpponentSetEffect() {
+            Card card = createCardWithName("Cursed Rack");
+            card.addEffect(EffectSlot.STATIC, new SetOpponentMaximumHandSizeEffect(4));
+            gd.playerBattlefields.get(player2Id).add(new Permanent(card));
+
+            assertThat(sut.getMaxHandSize(gd, player1Id)).isEqualTo(4);
+        }
+
+        @Test
+        @DisplayName("A set effect does not affect its own controller")
+        void setEffectDoesNotAffectOwnController() {
+            Card card = createCardWithName("Cursed Rack");
+            card.addEffect(EffectSlot.STATIC, new SetOpponentMaximumHandSizeEffect(4));
+            gd.playerBattlefields.get(player1Id).add(new Permanent(card));
+
+            assertThat(sut.getMaxHandSize(gd, player1Id)).isEqualTo(7);
+        }
+
+        @Test
+        @DisplayName("A later set effect overrides an earlier reduction (timestamp order)")
+        void setAppliedAfterReduceOverridesIt() {
+            Card reducer = createCardWithName("Jin-Gitaxias, Core Augur");
+            reducer.addEffect(EffectSlot.STATIC, new ReduceOpponentMaxHandSizeEffect(3));
+            Card rack = createCardWithName("Cursed Rack");
+            rack.addEffect(EffectSlot.STATIC, new SetOpponentMaximumHandSizeEffect(4));
+            gd.playerBattlefields.get(player2Id).add(new Permanent(reducer));
+            gd.playerBattlefields.get(player2Id).add(new Permanent(rack));
+
+            assertThat(sut.getMaxHandSize(gd, player1Id)).isEqualTo(4);
+        }
+
+        @Test
+        @DisplayName("A reduction after a set is applied on top of the set value (timestamp order)")
+        void reduceAppliedAfterSet() {
+            Card rack = createCardWithName("Cursed Rack");
+            rack.addEffect(EffectSlot.STATIC, new SetOpponentMaximumHandSizeEffect(4));
+            Card reducer = createCardWithName("Jin-Gitaxias, Core Augur");
+            reducer.addEffect(EffectSlot.STATIC, new ReduceOpponentMaxHandSizeEffect(1));
+            gd.playerBattlefields.get(player2Id).add(new Permanent(rack));
+            gd.playerBattlefields.get(player2Id).add(new Permanent(reducer));
+
+            assertThat(sut.getMaxHandSize(gd, player1Id)).isEqualTo(3);
         }
     }
 

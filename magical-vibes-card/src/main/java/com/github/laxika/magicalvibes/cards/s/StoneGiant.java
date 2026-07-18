@@ -16,6 +16,7 @@ import java.util.List;
 
 @CardRegistration(set = "M10", collectorNumber = "159")
 @CardRegistration(set = "5ED", collectorNumber = "269")
+@CardRegistration(set = "4ED", collectorNumber = "223")
 public class StoneGiant extends Card {
 
     public StoneGiant() {

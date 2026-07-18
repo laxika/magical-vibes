@@ -10,6 +10,7 @@ import com.github.laxika.magicalvibes.model.amount.Sum;
 import com.github.laxika.magicalvibes.model.amount.TargetToughness;
 import com.github.laxika.magicalvibes.model.effect.BoostTargetCreatureEffect;
 
+@CardRegistration(set = "4ED", collectorNumber = "178")
 @CardRegistration(set = "5ED", collectorNumber = "212")
 public class BloodLust extends Card {
 

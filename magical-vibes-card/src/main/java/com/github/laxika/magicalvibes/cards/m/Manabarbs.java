@@ -9,6 +9,7 @@ import com.github.laxika.magicalvibes.cards.CardRegistration;
 @CardRegistration(set = "10E", collectorNumber = "218")
 @CardRegistration(set = "M10", collectorNumber = "149")
 @CardRegistration(set = "5ED", collectorNumber = "250")
+@CardRegistration(set = "4ED", collectorNumber = "212")
 public class Manabarbs extends Card {
 
     public Manabarbs() {

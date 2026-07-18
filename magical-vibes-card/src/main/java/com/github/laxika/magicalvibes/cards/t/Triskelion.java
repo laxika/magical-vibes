@@ -12,6 +12,7 @@ import com.github.laxika.magicalvibes.model.effect.RemoveCounterFromSourceCost;
 import java.util.List;
 
 @CardRegistration(set = "M11", collectorNumber = "218")
+@CardRegistration(set = "4ED", collectorNumber = "354")
 public class Triskelion extends Card {
 
     public Triskelion() {

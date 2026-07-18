@@ -15,6 +15,7 @@ import com.github.laxika.magicalvibes.model.filter.PermanentPredicateTargetFilte
 import java.util.List;
 
 @CardRegistration(set = "5ED", collectorNumber = "87")
+@CardRegistration(set = "4ED", collectorNumber = "73")
 public class Flood extends Card {
 
     public Flood() {

@@ -2,6 +2,7 @@ package com.github.laxika.magicalvibes.service.battlefield;
 import com.github.laxika.magicalvibes.model.action.SacrificeAtEndStep;
 
 import com.github.laxika.magicalvibes.model.Card;
+import com.github.laxika.magicalvibes.model.CardColor;
 import com.github.laxika.magicalvibes.model.CardType;
 import com.github.laxika.magicalvibes.model.CounterType;
 import com.github.laxika.magicalvibes.model.EffectResolution;
@@ -34,7 +35,10 @@ import com.github.laxika.magicalvibes.model.effect.CreaturesEnterAsCopyOfSourceE
 import com.github.laxika.magicalvibes.model.effect.DevourEffect;
 import com.github.laxika.magicalvibes.model.effect.EnterPermanentsOfTypesTappedEffect;
 import com.github.laxika.magicalvibes.model.effect.EnterWithCountersEffect;
+import com.github.laxika.magicalvibes.model.effect.EffectDuration;
 import com.github.laxika.magicalvibes.model.effect.EntersTappedEffect;
+import com.github.laxika.magicalvibes.model.effect.SetTargetColorEffect;
+import com.github.laxika.magicalvibes.model.layer.FloatingContinuousEffect;
 import com.github.laxika.magicalvibes.model.effect.ExileCardsFromGraveyardEffect;
 import com.github.laxika.magicalvibes.model.effect.ExileTargetCardFromGraveyardMayPlayUntilNextTurnEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantFlashbackToTargetGraveyardCardEffect;
@@ -155,6 +159,7 @@ public class BattlefieldEntryService {
                                              int xValue, boolean kicked) {
         controllerId = resolveEnteringController(gameData, controllerId, permanent);
         carrySpellTextReplacements(gameData, permanent);
+        carrySpellColorOverride(gameData, controllerId, permanent);
         applyCreaturesEnterAsCopyReplacementEffect(gameData, controllerId, permanent);
         applyEnterTappedEffects(permanent, enterTappedTypes);
         applySelfEnterTapped(permanent);
@@ -214,6 +219,25 @@ public class BattlefieldEntryService {
         if (replacements != null) {
             permanent.getTextReplacements().addAll(replacements);
         }
+    }
+
+    /**
+     * CR 613.7: a color set on a permanent spell (e.g. Purelace targeting a creature spell "becomes
+     * white") carries onto the permanent that spell resolves into. The override was recorded keyed by
+     * the spell's card id; the entering permanent shares that card id, so seed its colors and float an
+     * indefinite layer-5 color setter (mirroring {@code SetTargetColorEffectHandler}'s permanent path).
+     */
+    private void carrySpellColorOverride(GameData gameData, UUID controllerId, Permanent permanent) {
+        CardColor color = gameData.spellColorOverrides.remove(permanent.getCard().getId());
+        if (color == null) {
+            return;
+        }
+        permanent.getTransientColors().clear();
+        permanent.getTransientColors().add(color);
+        permanent.setColorOverridden(true);
+        gameData.addFloatingEffect(new FloatingContinuousEffect(UUID.randomUUID(),
+                permanent.getCard().getName(), null, controllerId, new SetTargetColorEffect(color),
+                permanent.getId(), null, null, EffectDuration.PERMANENT, 0));
     }
 
     /**

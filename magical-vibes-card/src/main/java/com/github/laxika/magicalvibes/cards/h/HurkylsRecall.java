@@ -8,6 +8,7 @@ import com.github.laxika.magicalvibes.cards.CardRegistration;
 
 @CardRegistration(set = "10E", collectorNumber = "88")
 @CardRegistration(set = "5ED", collectorNumber = "93")
+@CardRegistration(set = "4ED", collectorNumber = "77")
 public class HurkylsRecall extends Card {
 
     public HurkylsRecall() {

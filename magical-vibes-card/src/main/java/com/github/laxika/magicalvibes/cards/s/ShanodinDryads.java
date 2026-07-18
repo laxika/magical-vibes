@@ -3,6 +3,7 @@ package com.github.laxika.magicalvibes.cards.s;
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
 
+@CardRegistration(set = "4ED", collectorNumber = "271")
 @CardRegistration(set = "5ED", collectorNumber = "325")
 @CardRegistration(set = "6ED", collectorNumber = "252")
 @CardRegistration(set = "7ED", collectorNumber = "269")

@@ -12,6 +12,7 @@ import com.github.laxika.magicalvibes.model.filter.PermanentTruePredicate;
 import java.util.List;
 
 @CardRegistration(set = "5ED", collectorNumber = "127")
+@CardRegistration(set = "4ED", collectorNumber = "104")
 public class Stasis extends Card {
 
     public Stasis() {

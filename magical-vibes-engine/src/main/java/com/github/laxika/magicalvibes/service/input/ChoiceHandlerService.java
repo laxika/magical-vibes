@@ -5,6 +5,7 @@ import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardSubtype;
 import com.github.laxika.magicalvibes.model.CardType;
 import com.github.laxika.magicalvibes.model.ChoiceContext;
+import com.github.laxika.magicalvibes.model.CounterType;
 import com.github.laxika.magicalvibes.model.Keyword;
 import com.github.laxika.magicalvibes.model.DrawReplacementKind;
 import com.github.laxika.magicalvibes.model.GameData;
@@ -19,9 +20,13 @@ import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.Player;
 import com.github.laxika.magicalvibes.model.StackEntry;
 import com.github.laxika.magicalvibes.model.StackEntryType;
+import com.github.laxika.magicalvibes.model.PermanentChoiceContext;
 import com.github.laxika.magicalvibes.model.effect.BecomeChosenColorsUntilEndOfTurnEffect;
+import com.github.laxika.magicalvibes.model.effect.CardEffect;
+import com.github.laxika.magicalvibes.model.effect.DealDamageToTargetPlayerOrPlaneswalkerEffect;
 import com.github.laxika.magicalvibes.model.effect.EffectDuration;
 import com.github.laxika.magicalvibes.model.effect.SphinxAmbassadorPutOnBattlefieldEffect;
+import com.github.laxika.magicalvibes.model.effect.TargetPlayerGainsLifeEffect;
 import com.github.laxika.magicalvibes.model.layer.FloatingContinuousEffect;
 import com.github.laxika.magicalvibes.service.effect.normalfx.GrantBasicLandTypeToTargetEffectHandler;
 import java.util.Collections;
@@ -46,6 +51,7 @@ import java.util.Set;
 import java.util.TreeSet;
 import java.util.UUID;
 import java.util.ArrayList;
+import java.util.concurrent.ConcurrentHashMap;
 
 @Slf4j
 @Service
@@ -162,6 +168,10 @@ public class ChoiceHandlerService {
             handleRemoveCountersForManaChoice(gameData, player, colorName, ctx);
             return;
         }
+        if (colorChoice.context() instanceof ChoiceContext.TetravusCounterRemoval ctx) {
+            handleTetravusCounterRemoval(gameData, player, colorName, ctx);
+            return;
+        }
         if (colorChoice.context() instanceof ChoiceContext.PrimalClayFormChoice ctx) {
             handlePrimalClayFormChoice(gameData, player, colorName, ctx);
             return;
@@ -204,6 +214,10 @@ public class ChoiceHandlerService {
         }
         if (colorChoice.context() instanceof ChoiceContext.TargetPlayerNameCardRevealTopChoice ctx) {
             handleTargetPlayerNameCardRevealTopChoice(gameData, player, colorName, ctx);
+            return;
+        }
+        if (colorChoice.context() instanceof ChoiceContext.RelicBindModeChoice ctx) {
+            handleRelicBindModeChoice(gameData, player, colorName, ctx);
             return;
         }
         CardColor color = CardColor.valueOf(colorName);
@@ -501,6 +515,56 @@ public class ChoiceHandlerService {
         gameData.priorityPassedBy.clear();
         gameBroadcastService.broadcastGameState(gameData);
         turnProgressionService.resolveAutoPass(gameData);
+    }
+
+    /**
+     * Relic Bind's "choose one" modal triggered ability, resolved after the enchanted artifact
+     * became tapped. The chosen mode's targeted effect is handed to the shared
+     * {@link PermanentChoiceContext.MayAbilityTriggerTarget} flow: DAMAGE targets any player or
+     * planeswalker, LIFE targets any player. A legal target always exists (both modes can hit a
+     * player), so the ability never fizzles for lack of one.
+     */
+    private void handleRelicBindModeChoice(GameData gameData, Player player, String chosen,
+            ChoiceContext.RelicBindModeChoice ctx) {
+        if (!ChoiceContext.RelicBindModeChoice.OPTIONS.contains(chosen)) {
+            throw new IllegalArgumentException("Invalid Relic Bind mode: " + chosen);
+        }
+
+        gameData.interaction.clearAwaitingInput();
+        // The modal trigger's single effect has fully resolved into this choice; nothing remains to
+        // resume on the RelicBindTapEffect entry, so drop the resume pointer before the target step.
+        gameData.pendingEffectResolutionEntry = null;
+        gameData.pendingEffectResolutionIndex = 0;
+
+        boolean damageMode = ChoiceContext.RelicBindModeChoice.DAMAGE.equals(chosen);
+        CardEffect modeEffect = damageMode
+                ? new DealDamageToTargetPlayerOrPlaneswalkerEffect(1)
+                : new TargetPlayerGainsLifeEffect(1);
+
+        List<UUID> validTargets = new ArrayList<>(gameData.orderedPlayerIds);
+        if (damageMode) {
+            for (UUID pid : gameData.orderedPlayerIds) {
+                List<Permanent> battlefield = gameData.playerBattlefields.get(pid);
+                if (battlefield == null) {
+                    continue;
+                }
+                for (Permanent permanent : battlefield) {
+                    if (permanent.getCard().hasType(CardType.PLANESWALKER)) {
+                        validTargets.add(permanent.getId());
+                    }
+                }
+            }
+        }
+
+        gameData.interaction.setPermanentChoiceContext(new PermanentChoiceContext.MayAbilityTriggerTarget(
+                ctx.sourceCard(), ctx.controllerId(), List.of(modeEffect)));
+        String targetDescription = damageMode ? "player or planeswalker" : "player";
+        playerInputService.beginPermanentChoice(gameData, ctx.controllerId(), validTargets,
+                ctx.sourceCard().getName() + " — Choose target " + targetDescription + ".");
+
+        String logEntry = player.getUsername() + " chooses \"" + chosen + "\" for " + ctx.sourceCard().getName() + ".";
+        gameBroadcastService.logAndBroadcast(gameData, GameLog.text(logEntry));
+        gameBroadcastService.broadcastGameState(gameData);
     }
 
     private void handleDrawReplacementChoice(GameData gameData, String chosenKind, ChoiceContext.DrawReplacementChoice ctx) {
@@ -998,6 +1062,39 @@ public class ChoiceHandlerService {
             gameBroadcastService.logAndBroadcast(gameData, GameLog.text(logEntry));
             log.info("Game {} - {} removes {} {} counters and adds {} {} mana", gameData.id,
                     player.getUsername(), removed, ctx.counterType(), mana, ctx.color());
+        }
+
+        gameData.priorityPassedBy.clear();
+        gameBroadcastService.broadcastGameState(gameData);
+        resumeAndAutoPass(gameData);
+    }
+
+    private void handleTetravusCounterRemoval(GameData gameData, Player player, String numberName,
+                                              ChoiceContext.TetravusCounterRemoval ctx) {
+        int chosen = Integer.parseInt(numberName);
+
+        gameData.interaction.clearAwaitingInput();
+
+        Permanent source = gameQueryService.findPermanentById(gameData, ctx.permanentId());
+        if (source != null && chosen > 0) {
+            // Remove the chosen number of +1/+1 counters and create that many Tetravite tokens,
+            // recording each as "created with" this Tetravus so the paired exile trigger sees them.
+            int available = source.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE);
+            int removed = Math.min(chosen, available);
+            source.setCounterCount(CounterType.PLUS_ONE_PLUS_ONE, available - removed);
+
+            List<UUID> createdIds = permanentControlSupport.applyCreateToken(gameData, player.getId(),
+                    ctx.tokenTemplate(), removed, source.getCard().getSetCode());
+            gameData.tetravusCreatedTokens
+                    .computeIfAbsent(ctx.permanentId(), k -> ConcurrentHashMap.<UUID>newKeySet())
+                    .addAll(createdIds);
+
+            String logEntry = player.getUsername() + " removes " + removed + " +1/+1 counter"
+                    + (removed == 1 ? "" : "s") + " from " + source.getCard().getName()
+                    + " to create " + removed + " Tetravite token" + (removed == 1 ? "" : "s") + ".";
+            gameBroadcastService.logAndBroadcast(gameData, GameLog.text(logEntry));
+            log.info("Game {} - {} removes {} +1/+1 counters from {} to create {} Tetravite tokens",
+                    gameData.id, player.getUsername(), removed, source.getCard().getName(), removed);
         }
 
         gameData.priorityPassedBy.clear();

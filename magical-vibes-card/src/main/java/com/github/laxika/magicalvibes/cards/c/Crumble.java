@@ -11,6 +11,7 @@ import com.github.laxika.magicalvibes.model.effect.ThenEffectRecipient;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsArtifactPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentPredicateTargetFilter;
 
+@CardRegistration(set = "4ED", collectorNumber = "239")
 @CardRegistration(set = "5ED", collectorNumber = "287")
 public class Crumble extends Card {
 

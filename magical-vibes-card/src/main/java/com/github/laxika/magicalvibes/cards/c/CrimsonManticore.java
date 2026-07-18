@@ -19,6 +19,7 @@ import java.util.List;
  * {R}, {T}: This creature deals 1 damage to target attacking or blocking creature.
  */
 @CardRegistration(set = "5ED", collectorNumber = "217")
+@CardRegistration(set = "4ED", collectorNumber = "183")
 public class CrimsonManticore extends Card {
 
     public CrimsonManticore() {

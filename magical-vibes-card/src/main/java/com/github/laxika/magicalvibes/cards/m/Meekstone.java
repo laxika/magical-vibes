@@ -9,6 +9,7 @@ import com.github.laxika.magicalvibes.model.filter.PermanentPowerAtLeastPredicat
 @CardRegistration(set = "7ED", collectorNumber = "307")
 @CardRegistration(set = "6ED", collectorNumber = "299")
 @CardRegistration(set = "5ED", collectorNumber = "389")
+@CardRegistration(set = "4ED", collectorNumber = "335")
 public class Meekstone extends Card {
 
     public Meekstone() {

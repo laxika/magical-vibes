@@ -168,6 +168,26 @@ public sealed interface MultiPermanentChoiceContext {
     }
 
     /**
+     * Magnetic Mountain: the acting player ({@code actingPlayerId}, the player whose upkeep it is)
+     * chose any number of their tapped blue creatures (up to what they can afford). They pay
+     * {@code manaPerCreature} for each chosen creature from their mana pool, then those creatures
+     * untap. The choice was already capped at begin time by the mana available, so payment always
+     * succeeds; the empty selection means "untap none".
+     */
+    record PayManaPerCreatureUntap(UUID actingPlayerId, int manaPerCreature)
+            implements MultiPermanentChoiceContext {
+    }
+
+    /**
+     * Tetravus second upkeep trigger: exile the chosen tokens (each of which must be a token
+     * {@code sourcePermanentId} created, tracked in {@code GameData.tetravusCreatedTokens}), then put
+     * that many +1/+1 counters on the source.
+     */
+    record ExileTetraviteTokensPutCountersOnSource(UUID sourcePermanentId)
+            implements MultiPermanentChoiceContext {
+    }
+
+    /**
      * Static Orb / Stoic Angel: the active player chose up to the cap of the permanents matching
      * {@code filter} that would otherwise untap; only those (plus any permanents the filter excludes)
      * untap this step. A {@code null} filter means all permanents count against the cap (Static Orb).

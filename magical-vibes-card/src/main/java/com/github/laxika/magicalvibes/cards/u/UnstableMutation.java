@@ -10,6 +10,7 @@ import com.github.laxika.magicalvibes.model.effect.StaticBoostEffect;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsCreaturePredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentPredicateTargetFilter;
 
+@CardRegistration(set = "4ED", collectorNumber = "110")
 @CardRegistration(set = "5ED", collectorNumber = "131")
 public class UnstableMutation extends Card {
 

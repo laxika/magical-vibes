@@ -9,6 +9,7 @@ import com.github.laxika.magicalvibes.model.effect.GrantScope;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsCreaturePredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentPredicateTargetFilter;
 
+@CardRegistration(set = "4ED", collectorNumber = "190")
 @CardRegistration(set = "5ED", collectorNumber = "225")
 public class EternalWarrior extends Card {
 

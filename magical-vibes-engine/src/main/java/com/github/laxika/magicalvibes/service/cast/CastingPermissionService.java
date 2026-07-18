@@ -355,6 +355,9 @@ public class CastingPermissionService {
             case COMBAT_BEFORE_BLOCKERS ->
                     gameData.currentStep.isCombatPhase()
                             && gameData.currentStep.ordinal() < TurnStep.DECLARE_BLOCKERS.ordinal();
+            case OPPONENTS_TURN_BEFORE_ATTACKERS ->
+                    !playerId.equals(gameData.activePlayerId)
+                            && gameData.currentStep.isBeforeAttackersDeclared();
         };
     }
 

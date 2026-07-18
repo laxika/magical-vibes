@@ -9,6 +9,7 @@ import com.github.laxika.magicalvibes.model.effect.SetPowerToughnessToAmountEffe
 import com.github.laxika.magicalvibes.model.filter.PermanentNamedPredicate;
 
 @CardRegistration(set = "5ED", collectorNumber = "188")
+@CardRegistration(set = "4ED", collectorNumber = "154")
 public class PlagueRats extends Card {
 
     public PlagueRats() {

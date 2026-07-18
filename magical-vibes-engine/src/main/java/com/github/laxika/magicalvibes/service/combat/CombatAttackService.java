@@ -734,6 +734,7 @@ public class CombatAttackService {
     private boolean canCreatureAttack(GameData gameData, Permanent creature, UUID controllerId) {
         if (!gameQueryService.isCreature(gameData, creature)) return false;
         if (creature.isTapped()) return false;
+        if (creature.isCantAttackThisTurn()) return false;
         if (creature.isSummoningSick() && !gameQueryService.hasKeyword(gameData, creature, Keyword.HASTE)
                 && !gameQueryService.hasAuraWithEffect(gameData, creature, EnchantedCreatureCanAttackAsThoughHasteEffect.class)) return false;
         if (gameQueryService.hasKeyword(gameData, creature, Keyword.DEFENDER)

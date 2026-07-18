@@ -9,6 +9,7 @@ import com.github.laxika.magicalvibes.model.effect.DestroyCombatOpponentAtEndOfC
 import com.github.laxika.magicalvibes.model.filter.PermanentHasSubtypePredicate;
 
 @CardRegistration(set = "5ED", collectorNumber = "353")
+@CardRegistration(set = "4ED", collectorNumber = "297")
 public class BatteringRam extends Card {
 
     public BatteringRam() {

@@ -10,6 +10,7 @@ import com.github.laxika.magicalvibes.cards.CardRegistration;
 
 @CardRegistration(set = "6ED", collectorNumber = "181")
 @CardRegistration(set = "5ED", collectorNumber = "233")
+@CardRegistration(set = "4ED", collectorNumber = "196")
 public class GiantStrength extends Card {
 
     public GiantStrength() {

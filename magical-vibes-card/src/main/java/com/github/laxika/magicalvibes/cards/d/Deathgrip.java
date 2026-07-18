@@ -12,6 +12,7 @@ import java.util.List;
 import java.util.Set;
 
 @CardRegistration(set = "5ED", collectorNumber = "154")
+@CardRegistration(set = "4ED", collectorNumber = "130")
 public class Deathgrip extends Card {
 
     public Deathgrip() {

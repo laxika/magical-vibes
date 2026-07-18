@@ -95,6 +95,15 @@ class ColorChoiceAiStrategy implements AiInteractionStrategy<PendingInteraction.
             return;
         }
 
+        if (context instanceof ChoiceContext.TetravusCounterRemoval) {
+            // Options are 0..N +1/+1 counters. Remove them all to make the most flying bodies.
+            List<String> options = interaction.options();
+            String chosenNumber = options.isEmpty() ? "0" : options.get(options.size() - 1);
+            log.info("AI: Removing {} +1/+1 counters to create Tetravite tokens in game {}", chosenNumber, gameId);
+            ctx.gameActions().handleListChoice(ctx.selfConnection(), new ChosenFromListRequest(null, chosenNumber));
+            return;
+        }
+
         if (context instanceof ChoiceContext.RemoveCountersForManaChoice) {
             // Storage land mana ability: options are 0..N storage counters. Remove them all for the
             // most mana (the AI only activates the ability when it wants the mana).

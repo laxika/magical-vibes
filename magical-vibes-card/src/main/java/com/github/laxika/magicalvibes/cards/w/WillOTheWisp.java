@@ -8,6 +8,7 @@ import com.github.laxika.magicalvibes.model.effect.RegenerateEffect;
 import java.util.List;
 
 @CardRegistration(set = "9ED", collectorNumber = "169")
+@CardRegistration(set = "4ED", collectorNumber = "171")
 public class WillOTheWisp extends Card {
 
     public WillOTheWisp() {

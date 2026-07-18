@@ -15,9 +15,11 @@ import com.github.laxika.magicalvibes.model.StackEntryType;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
 import com.github.laxika.magicalvibes.model.effect.CounterUnlessEffect;
 import com.github.laxika.magicalvibes.model.effect.CounterUnlessPaysEffect;
+import com.github.laxika.magicalvibes.model.effect.DamageControllerUnlessDiscardThenTapSourceEffect;
 import com.github.laxika.magicalvibes.model.effect.DamageRecipient;
 import com.github.laxika.magicalvibes.model.effect.DamageUnlessPaysEffect;
 import com.github.laxika.magicalvibes.model.effect.DealDamageToPlayersEffect;
+import com.github.laxika.magicalvibes.model.effect.DestroyEnchantedPermanentUnlessPaysManaOrLifeEffect;
 import com.github.laxika.magicalvibes.model.effect.DiscardHandUnlessPaysLifeEffect;
 import com.github.laxika.magicalvibes.model.effect.DiscardUnlessExileCardFromGraveyardEffect;
 import com.github.laxika.magicalvibes.model.effect.ForcedCostOrElseEffect;
@@ -74,6 +76,7 @@ public class MayPenaltyChoiceHandlerService {
     private final CounterSupport counterSupport;
     private final com.github.laxika.magicalvibes.service.effect.normalfx.PlayerInteractionSupport playerInteractionSupport;
     private final com.github.laxika.magicalvibes.service.effect.normalfx.DealDamageToPlayersEffectHandler dealDamageToPlayersEffectHandler;
+    private final com.github.laxika.magicalvibes.service.effect.normalfx.DamageControllerUnlessDiscardThenTapSourceEffectHandler damageControllerUnlessDiscardThenTapSourceEffectHandler;
     private final com.github.laxika.magicalvibes.service.interaction.InteractionHandlerRegistry interactionHandlerRegistry;
 
     public void handleCounterUnlessPaysChoice(GameData gameData, Player player, boolean accepted, PendingMayAbility ability) {
@@ -404,6 +407,52 @@ public class MayPenaltyChoiceHandlerService {
         inputCompletionService.sbaProcessMayAbilitiesThenAutoPass(gameData);
     }
 
+    public void handleDestroyEnchantedPermanentUnlessPaysChoice(GameData gameData, Player player, boolean accepted, PendingMayAbility ability) {
+        DestroyEnchantedPermanentUnlessPaysManaOrLifeEffect effect = ability.effects().stream()
+                .filter(e -> e instanceof DestroyEnchantedPermanentUnlessPaysManaOrLifeEffect)
+                .map(e -> (DestroyEnchantedPermanentUnlessPaysManaOrLifeEffect) e)
+                .findFirst().orElseThrow();
+
+        UUID payerId = ability.controllerId();
+
+        if (accepted) {
+            ManaCost cost = new ManaCost(ability.manaCost());
+            ManaPool pool = gameData.playerManaPools.get(payerId);
+            if (cost.canPay(pool)) {
+                cost.pay(pool);
+                gameBroadcastService.logAndBroadcast(gameData, GameLog.text(
+                        player.getUsername() + " pays " + ability.manaCost() + ". (" + ability.sourceCard().getName() + ")"));
+                log.info("Game {} - {} pays {} to save the enchanted permanent ({})",
+                        gameData.id, player.getUsername(), ability.manaCost(), ability.sourceCard().getName());
+                inputCompletionService.sbaProcessMayAbilitiesThenAutoPass(gameData);
+                return;
+            }
+            boolean canPayLife = gameQueryService.canPlayerLifeChange(gameData, payerId)
+                    && gameData.getLife(payerId) >= effect.lifeCost();
+            if (canPayLife) {
+                gameData.playerLifeTotals.put(payerId, gameData.getLife(payerId) - effect.lifeCost());
+                gameBroadcastService.logAndBroadcast(gameData, GameLog.text(
+                        player.getUsername() + " pays " + effect.lifeCost() + " life. (" + ability.sourceCard().getName() + ")"));
+                log.info("Game {} - {} pays {} life to save the enchanted permanent ({})",
+                        gameData.id, player.getUsername(), effect.lifeCost(), ability.sourceCard().getName());
+                inputCompletionService.sbaProcessMayAbilitiesThenAutoPass(gameData);
+                return;
+            }
+            // Accepted but can no longer pay either resource — fall through to destruction.
+        }
+
+        // Declined (or unable to pay) — destroy the enchanted permanent.
+        Permanent aura = gameQueryService.findPermanentById(gameData, ability.sourcePermanentId());
+        if (aura != null && aura.isAttached()) {
+            Permanent enchanted = gameQueryService.findPermanentById(gameData, aura.getAttachedTo());
+            if (enchanted != null) {
+                destructionSupport.tryDestroyAndLog(gameData, enchanted, ability.sourceCard().getName());
+            }
+        }
+
+        inputCompletionService.sbaProcessMayAbilitiesThenAutoPass(gameData);
+    }
+
     public void handleDamageUnlessPaysChoice(GameData gameData, Player player, boolean accepted, PendingMayAbility ability) {
         DamageUnlessPaysEffect effect = ability.effects().stream()
                 .filter(e -> e instanceof DamageUnlessPaysEffect)
@@ -441,6 +490,46 @@ public class MayPenaltyChoiceHandlerService {
                 targetPlayerId, ability.sourcePermanentId());
         dealDamageToPlayersEffectHandler.resolve(gameData, damageEntry, damage);
 
+        inputCompletionService.sbaProcessMayAbilitiesThenAutoPass(gameData);
+    }
+
+    public void handleDamageControllerUnlessDiscardThenTapChoice(GameData gameData, Player player, boolean accepted, PendingMayAbility ability) {
+        DamageControllerUnlessDiscardThenTapSourceEffect effect = ability.effects().stream()
+                .filter(e -> e instanceof DamageControllerUnlessDiscardThenTapSourceEffect)
+                .map(e -> (DamageControllerUnlessDiscardThenTapSourceEffect) e)
+                .findFirst().orElseThrow();
+
+        UUID controllerId = ability.controllerId();
+
+        if (accepted) {
+            List<Card> hand = gameData.playerHands.get(controllerId);
+            List<Integer> validIndices = new ArrayList<>();
+            if (hand != null) {
+                for (int i = 0; i < hand.size(); i++) {
+                    validIndices.add(i);
+                }
+            }
+
+            if (!validIndices.isEmpty()) {
+                gameData.discardCausedByOpponent = false;
+                playerInputService.beginDiscardChoice(gameData, controllerId, validIndices,
+                        "Choose a card to discard.", 1);
+
+                String logEntry = player.getUsername() + " chooses to discard a card. (" + ability.sourceCard().getName() + ")";
+                gameBroadcastService.logAndBroadcast(gameData, GameLog.text(logEntry));
+                log.info("Game {} - {} accepts damage-unless-discard for {}", gameData.id, player.getUsername(), ability.sourceCard().getName());
+                return;
+            }
+
+            // Hand changed since prompt — no cards left, fall through to the damage-then-tap penalty.
+        }
+
+        // Declined or no cards — deal the damage and tap the source if it landed.
+        StackEntry syntheticEntry = new StackEntry(
+                StackEntryType.TRIGGERED_ABILITY, ability.sourceCard(), controllerId,
+                ability.sourceCard().getName() + "'s ability", new ArrayList<>(),
+                null, ability.sourcePermanentId());
+        damageControllerUnlessDiscardThenTapSourceEffectHandler.applyDamageThenTapIfDealt(gameData, syntheticEntry, effect.damage());
         inputCompletionService.sbaProcessMayAbilitiesThenAutoPass(gameData);
     }
 

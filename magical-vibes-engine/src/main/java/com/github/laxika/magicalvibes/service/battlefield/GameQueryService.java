@@ -59,6 +59,7 @@ import com.github.laxika.magicalvibes.model.effect.DamageDealtAsInfectBelowZeroL
 import com.github.laxika.magicalvibes.model.effect.LifeTotalCantChangeEffect;
 import com.github.laxika.magicalvibes.model.effect.PlayerHasProtectionFromChosenNameEffect;
 import com.github.laxika.magicalvibes.model.effect.ActivateCreatureAbilitiesAsThoughHasteEffect;
+import com.github.laxika.magicalvibes.model.effect.SpendWhiteManaAsRedEffect;
 import com.github.laxika.magicalvibes.model.effect.PlayersCantActivateAbilitiesOfGraveyardCardsEffect;
 import com.github.laxika.magicalvibes.model.effect.PlayersCantCastSpellsFromZonesEffect;
 import com.github.laxika.magicalvibes.model.effect.CardsCantEnterBattlefieldFromZonesEffect;
@@ -88,6 +89,7 @@ import com.github.laxika.magicalvibes.model.effect.ManaReflectionEffect;
 import com.github.laxika.magicalvibes.model.effect.PreventAllCombatDamageToAndByEnchantedCreatureEffect;
 import com.github.laxika.magicalvibes.model.effect.PreventAllDamageToAndByEnchantedCreatureEffect;
 import com.github.laxika.magicalvibes.model.effect.PreventColorDamageToEnchantedCreatureEffect;
+import com.github.laxika.magicalvibes.model.effect.PreventDamageToSelfFromCreaturesEffect;
 import com.github.laxika.magicalvibes.model.effect.ProtectionGrantingEffect;
 import com.github.laxika.magicalvibes.model.effect.SetPowerToughnessToAmountEffect;
 import com.github.laxika.magicalvibes.model.filter.CardIsHistoricPredicate;
@@ -596,6 +598,15 @@ public class GameQueryService {
      */
     public boolean canActivateCreatureAbilitiesAsThoughHaste(GameData gameData, UUID playerId) {
         return playerBattlefieldHasStaticEffect(gameData, playerId, ActivateCreatureAbilitiesAsThoughHasteEffect.class);
+    }
+
+    /**
+     * Returns {@code true} if the given player may spend white mana as though it were red mana (i.e.
+     * they control a permanent with {@link SpendWhiteManaAsRedEffect}, e.g. Sunglasses of Urza). Set
+     * onto the player's {@code ManaPool} at the payment/affordability sites so {@code ManaCost} honors it.
+     */
+    public boolean canSpendWhiteManaAsRed(GameData gameData, UUID playerId) {
+        return playerBattlefieldHasStaticEffect(gameData, playerId, SpendWhiteManaAsRedEffect.class);
     }
 
     /**
@@ -2037,6 +2048,36 @@ public class GameQueryService {
      * @param explicitSource an already-resolved source permanent, or {@code null} to look up
      *                       from the entry
      */
+    /**
+     * Returns {@code true} when the source of a damage event is currently a creature: the explicit
+     * source permanent if given, else the stack entry's source permanent. A spell source (no source
+     * permanent on the battlefield) is never a creature. Used by Uncle Istvan-style "prevent all damage
+     * that would be dealt to this creature by creatures" effects.
+     */
+    public boolean isDamageSourceCreature(GameData gameData, StackEntry entry, Permanent explicitSource) {
+        Permanent source = explicitSource;
+        if (source == null && entry != null && entry.getSourcePermanentId() != null) {
+            source = findPermanentById(gameData, entry.getSourcePermanentId());
+        }
+        return source != null && isCreature(gameData, source);
+    }
+
+    /**
+     * Uncle Istvan: whether damage from a creature source to {@code target} is prevented by the target's
+     * own {@link PreventDamageToSelfFromCreaturesEffect}. True only while damage is preventable, the target
+     * carries the effect, and the damage source is a creature. Combat damage is handled directly in
+     * {@link com.github.laxika.magicalvibes.service.DamagePreventionService#applyCreaturePreventionShield}
+     * (its source is always a creature); this covers the noncombat path where the source is known.
+     */
+    public boolean isCreatureSourceDamageToSelfPrevented(GameData gameData, Permanent target, StackEntry entry, Permanent explicitSource) {
+        if (!isDamagePreventable(gameData)) return false;
+        if (target.getCard().getEffects(EffectSlot.STATIC).stream()
+                .noneMatch(PreventDamageToSelfFromCreaturesEffect.class::isInstance)) {
+            return false;
+        }
+        return isDamageSourceCreature(gameData, entry, explicitSource);
+    }
+
     public boolean sourceHasKeyword(GameData gameData, StackEntry entry, Permanent explicitSource, Keyword keyword) {
         Permanent source = explicitSource;
         if (source == null && entry.getSourcePermanentId() != null) {

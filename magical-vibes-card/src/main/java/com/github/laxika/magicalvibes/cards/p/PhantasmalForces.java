@@ -10,6 +10,7 @@ import com.github.laxika.magicalvibes.model.effect.SacrificeSelfEffect;
 import java.util.List;
 
 @CardRegistration(set = "5ED", collectorNumber = "106")
+@CardRegistration(set = "4ED", collectorNumber = "88")
 public class PhantasmalForces extends Card {
 
     public PhantasmalForces() {

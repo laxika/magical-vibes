@@ -8,6 +8,7 @@ import com.github.laxika.magicalvibes.model.effect.DealDamageToAnyTargetEffect;
 import com.github.laxika.magicalvibes.model.effect.GainLifeEffect;
 
 @CardRegistration(set = "5ED", collectorNumber = "156")
+@CardRegistration(set = "4ED", collectorNumber = "132")
 public class DrainLife extends Card {
 
     public DrainLife() {

@@ -29,6 +29,7 @@ public sealed interface DynamicAmount permits
         CreatureDeathsThisTurn,
         CreaturesDevoured,
         CreaturesBlockingSource,
+        DamageDealtToControllerThisTurn,
         DamageDealtToOpponentsThisTurn,
         DamageDealtToTargetPlayerThisTurn,
         Divided,
@@ -41,11 +42,13 @@ public sealed interface DynamicAmount permits
         GreatestPowerAmongControlled,
         HalvedRoundedUp,
         HalfControllerLifeRoundedUp,
+        IfSourceAttacking,
         ImprintedCreaturePower,
         ImprintedCreatureToughness,
         LandsMatchingImprintedName,
         ManaSpentToCast,
         MatchingCardsInHand,
+        Max,
         Min,
         OpponentPoisonCounters,
         OtherAttackersSharingCreatureTypeWithTarget,
@@ -58,5 +61,6 @@ public sealed interface DynamicAmount permits
         TargetManaValue,
         TargetToughness,
         TargetPower,
+        UntappedLandsAtTurnStart,
         XValue {
 }

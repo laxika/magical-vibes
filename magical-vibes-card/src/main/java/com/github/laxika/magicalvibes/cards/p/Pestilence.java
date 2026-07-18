@@ -14,6 +14,7 @@ import java.util.List;
 
 @CardRegistration(set = "6ED", collectorNumber = "149")
 @CardRegistration(set = "5ED", collectorNumber = "186")
+@CardRegistration(set = "4ED", collectorNumber = "152")
 public class Pestilence extends Card {
 
     public Pestilence() {

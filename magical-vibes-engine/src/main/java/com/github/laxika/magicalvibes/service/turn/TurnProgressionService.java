@@ -237,6 +237,7 @@ public class TurnProgressionService {
         gameData.controllersDealtCombatDamageWithChangelingThisTurn.clear();
         gameData.playersDealtDamageThisTurn.clear();
         gameData.damageDealtToPlayersThisTurn.clear();
+        gameData.untappedLandsAtTurnStart.clear();
         gameData.permanentsDealtDamageThisTurn.clear();
         gameData.creatureCardsDamagedThisTurnBySourcePermanent.clear();
         gameData.creatureGivingControllerPoisonOnDeathThisTurn.clear();
@@ -254,6 +255,9 @@ public class TurnProgressionService {
         List<Permanent> activePlayerBf = gameData.playerBattlefields.get(nextActive);
         if (activePlayerBf != null) {
             activePlayerBf.forEach(Permanent::clearUntilNextTurnEffects);
+            // Promote/expire Wall of Dust "can't attack next turn" restrictions on the active player's
+            // creatures (scoped to their controller's turn so it never arms on an opponent's turn).
+            activePlayerBf.forEach(Permanent::promoteCantAttackNextTurn);
         }
         // "Until your next turn" floating continuous effects controlled by the player whose turn
         // is beginning wear off now. An expiring layer-1 copy effect (e.g. Shapesharer) reverts

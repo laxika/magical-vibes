@@ -7,6 +7,7 @@ import com.github.laxika.magicalvibes.model.effect.DamageRecipient;
 import com.github.laxika.magicalvibes.model.effect.DealDamageToPlayersEffect;
 
 @CardRegistration(set = "5ED", collectorNumber = "364")
+@CardRegistration(set = "4ED", collectorNumber = "315")
 @CardRegistration(set = "8ED", collectorNumber = "297")
 @CardRegistration(set = "7ED", collectorNumber = "292")
 @CardRegistration(set = "6ED", collectorNumber = "280")

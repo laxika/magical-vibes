@@ -6,6 +6,7 @@ import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.effect.GivePoisonCountersEffect;
 import com.github.laxika.magicalvibes.model.effect.PoisonRecipient;
 
+@CardRegistration(set = "4ED", collectorNumber = "263")
 @CardRegistration(set = "5ED", collectorNumber = "315")
 public class MarshViper extends Card {
 

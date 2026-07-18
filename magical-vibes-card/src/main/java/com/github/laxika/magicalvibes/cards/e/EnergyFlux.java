@@ -6,6 +6,7 @@ import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.effect.AllArtifactsUpkeepSacrificeUnlessPayEffect;
 
 @CardRegistration(set = "5ED", collectorNumber = "83")
+@CardRegistration(set = "4ED", collectorNumber = "68")
 public class EnergyFlux extends Card {
 
     public EnergyFlux() {

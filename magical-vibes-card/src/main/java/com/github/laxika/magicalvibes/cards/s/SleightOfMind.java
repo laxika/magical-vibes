@@ -6,6 +6,7 @@ import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.effect.ChangeColorTextEffect;
 
 @CardRegistration(set = "5ED", collectorNumber = "124")
+@CardRegistration(set = "4ED", collectorNumber = "102")
 public class SleightOfMind extends Card {
 
     public SleightOfMind() {

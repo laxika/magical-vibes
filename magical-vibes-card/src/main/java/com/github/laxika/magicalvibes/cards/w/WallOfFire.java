@@ -7,6 +7,7 @@ import com.github.laxika.magicalvibes.model.effect.BoostSelfEffect;
 
 import java.util.List;
 
+@CardRegistration(set = "4ED", collectorNumber = "230")
 @CardRegistration(set = "6ED", collectorNumber = "216")
 @CardRegistration(set = "7ED", collectorNumber = "227")
 @CardRegistration(set = "10E", collectorNumber = "247")

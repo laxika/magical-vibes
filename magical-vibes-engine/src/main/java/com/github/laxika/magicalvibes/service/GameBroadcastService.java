@@ -432,6 +432,13 @@ public class GameBroadcastService {
 
     private boolean isCardPlayable(GameData gameData, UUID playerId, Card card, ManaPool pool,
                                    int extraConvokeMana, int additionalGenericCost, SpellPlayabilityContext ctx) {
+        // Sunglasses of Urza: reflect the "spend white as red" permission for affordability without
+        // mutating the caller's pool. Only copy when the player actually has the permission (rare).
+        if (gameQueryService.canSpendWhiteManaAsRed(gameData, playerId) && !pool.isWhiteSpendableAsRed()) {
+            ManaPool flagged = new ManaPool(pool);
+            flagged.setWhiteSpendableAsRed(true);
+            pool = flagged;
+        }
         boolean landPlayable = card.hasType(CardType.LAND)
                 && ctx.isActivePlayer() && ctx.isMainPhase()
                 && ctx.landsPlayed() < gameData.getMaxLandsThisTurn(playerId) && ctx.stackEmpty()

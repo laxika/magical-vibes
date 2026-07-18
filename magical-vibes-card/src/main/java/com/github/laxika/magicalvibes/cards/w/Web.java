@@ -11,6 +11,7 @@ import com.github.laxika.magicalvibes.model.filter.PermanentPredicateTargetFilte
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 
 @CardRegistration(set = "9ED", collectorNumber = "281")
+@CardRegistration(set = "4ED", collectorNumber = "287")
 public class Web extends Card {
 
     public Web() {

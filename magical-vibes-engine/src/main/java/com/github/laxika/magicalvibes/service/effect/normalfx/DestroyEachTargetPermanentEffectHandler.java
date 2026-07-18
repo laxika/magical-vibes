@@ -32,12 +32,19 @@ public class DestroyEachTargetPermanentEffectHandler implements NormalEffectHand
             targets = List.of(entry.getTargetId());
         }
 
+        // Count the permanents actually put into a graveyard this way (indestructible/regenerated
+        // targets don't count) and snapshot it onto the entry as its event value, so a later effect
+        // on the same entry can reference "that many" via an EventValue amount (Volcanic Eruption).
+        int destroyed = 0;
         for (UUID targetId : targets) {
             Permanent target = gameQueryService.findPermanentById(gameData, targetId);
             if (target == null) {
                 continue;
             }
-            destructionSupport.tryDestroyAndLog(gameData, target, entry.getCard().getName(), destroy.cannotBeRegenerated());
+            if (destructionSupport.tryDestroyAndLog(gameData, target, entry.getCard().getName(), destroy.cannotBeRegenerated())) {
+                destroyed++;
+            }
         }
+        entry.setEventValue(destroyed);
     }
 }
