@@ -1,8 +1,7 @@
 package com.github.laxika.magicalvibes.service.combat;
 import com.github.laxika.magicalvibes.model.action.ExileAndReturnTransformedAtEndOfCombat;
 import com.github.laxika.magicalvibes.model.action.DestroyEquipmentAtEndOfCombat;
-import com.github.laxika.magicalvibes.model.action.DestroyPermanentAtEndOfCombat;
-import com.github.laxika.magicalvibes.model.action.ExileTokenAtEndOfCombat;
+import com.github.laxika.magicalvibes.model.action.DelayedPermanentActionKind;
 import com.github.laxika.magicalvibes.model.action.GainControlOfPermanentAtEndOfCombat;
 import com.github.laxika.magicalvibes.model.action.PutCounterOnPermanentAtEndOfCombat;
 import com.github.laxika.magicalvibes.model.action.PutMinusOneCounterAtEndOfCombat;
@@ -38,9 +37,7 @@ import org.springframework.stereotype.Service;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
-import java.util.Set;
 import java.util.UUID;
-import java.util.stream.Collectors;
 
 /**
  * Facade for the complete combat phase lifecycle. Delegates to focused sub-services:
@@ -198,20 +195,8 @@ public class CombatService {
      * Exiles all tokens marked for end-of-combat exile (e.g. Geist of Saint Traft's Angel token).
      */
     public void processEndOfCombatExiles(GameData gameData) {
-        Set<UUID> toExileIds = gameData.drainDelayedActions(ExileTokenAtEndOfCombat.class).stream()
-                .map(ExileTokenAtEndOfCombat::permanentId)
-                .collect(Collectors.toSet());
-        gameData.forEachBattlefield((playerId, battlefield) -> {
-            List<Permanent> toExile = battlefield.stream()
-                    .filter(p -> toExileIds.contains(p.getId()))
-                    .toList();
-            for (Permanent perm : toExile) {
-                permanentRemovalService.removePermanentToExile(gameData, perm);
-                String logEntry = perm.getCard().getName() + " token is exiled.";
-                gameBroadcastService.logAndBroadcast(gameData, GameLog.text(logEntry));
-                log.info("Game {} - {} exiled at end of combat", gameData.id, perm.getCard().getName());
-            }
-        });
+        permanentRemovalService.processDelayedPermanentActions(gameData,
+                DelayedPermanentActionKind.EXILE_TOKEN_AT_END_OF_COMBAT);
         permanentRemovalService.removeOrphanedAuras(gameData);
     }
 
@@ -253,23 +238,8 @@ public class CombatService {
      * {@link PermanentRemovalService#tryDestroyPermanent}.
      */
     public void processEndOfCombatDestructions(GameData gameData) {
-        List<DestroyPermanentAtEndOfCombat> toDestroy =
-                gameData.drainDelayedActions(DestroyPermanentAtEndOfCombat.class);
-        for (DestroyPermanentAtEndOfCombat action : toDestroy) {
-            Permanent perm = gameData.playerBattlefields.values().stream()
-                    .flatMap(List::stream)
-                    .filter(p -> p.getId().equals(action.permanentId()))
-                    .findFirst()
-                    .orElse(null);
-            if (perm == null) {
-                continue;
-            }
-            if (permanentRemovalService.tryDestroyPermanent(gameData, perm, action.cannotBeRegenerated())) {
-                String logEntry = perm.getCard().getName() + " is destroyed.";
-                gameBroadcastService.logAndBroadcast(gameData, GameLog.text(logEntry));
-                log.info("Game {} - {} destroyed at end of combat", gameData.id, perm.getCard().getName());
-            }
-        }
+        permanentRemovalService.processDelayedPermanentActions(gameData,
+                DelayedPermanentActionKind.DESTROY_AT_END_OF_COMBAT);
         permanentRemovalService.removeOrphanedAuras(gameData);
     }
 

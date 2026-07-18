@@ -4,7 +4,7 @@ import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.ActivatedAbility;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardColor;
-import com.github.laxika.magicalvibes.model.effect.PreventNextDamageFromChosenSourceMatchingEffect;
+import com.github.laxika.magicalvibes.model.effect.PreventDamageFromChosenSourceEffect;
 import com.github.laxika.magicalvibes.model.filter.PermanentColorInPredicate;
 
 import java.util.List;
@@ -22,7 +22,7 @@ public class CircleOfProtectionRed extends Card {
         addActivatedAbility(new ActivatedAbility(
                 false,
                 "{1}",
-                List.of(new PreventNextDamageFromChosenSourceMatchingEffect(new PermanentColorInPredicate(Set.of(CardColor.RED)), "red")),
+                List.of(PreventDamageFromChosenSourceEffect.nextDamageToYou(new PermanentColorInPredicate(Set.of(CardColor.RED)), "red")),
                 "The next time a red source of your choice would deal damage to you this turn, prevent that damage."
         ));
     }

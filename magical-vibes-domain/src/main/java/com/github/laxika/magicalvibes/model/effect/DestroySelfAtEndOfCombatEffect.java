@@ -6,7 +6,7 @@ package com.github.laxika.magicalvibes.model.effect;
  * Wall's "When this creature blocks, destroy it at end of combat"). Unlike
  * {@link SacrificeAtEndOfCombatEffect} this is a destruction, so regeneration and indestructible
  * apply. At resolution a delayed
- * {@link com.github.laxika.magicalvibes.model.action.DestroyPermanentAtEndOfCombat} is queued for
+ * {@link com.github.laxika.magicalvibes.model.action.DelayedPermanentAction} is queued for
  * the source permanent; it is drained in {@code CombatService.processEndOfCombatDestructions()}.
  */
 public record DestroySelfAtEndOfCombatEffect() implements CardEffect {

@@ -1,6 +1,7 @@
 package com.github.laxika.magicalvibes.service.effect.normalfx;
-import com.github.laxika.magicalvibes.model.action.ExileTokenAtEndStep;
 
+import com.github.laxika.magicalvibes.model.action.DelayedPermanentAction;
+import com.github.laxika.magicalvibes.model.action.DelayedPermanentActionKind;
 import com.github.laxika.magicalvibes.model.ActivatedAbility;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.EffectRegistration;
@@ -96,7 +97,7 @@ public class CreateTokenCopyOfImprintedCardEffectHandler implements NormalEffect
 
                     // Conditionally schedule for exile at beginning of next end step
                     if (e.exileAtEndStep()) {
-                        gameData.queueDelayedAction(new ExileTokenAtEndStep(tokenPermanent.getId()));
+                        gameData.queueDelayedAction(new DelayedPermanentAction(tokenPermanent.getId(), DelayedPermanentActionKind.EXILE_TOKEN_AT_END_STEP));
                     }
 
                     String logMsg = e.grantHaste()

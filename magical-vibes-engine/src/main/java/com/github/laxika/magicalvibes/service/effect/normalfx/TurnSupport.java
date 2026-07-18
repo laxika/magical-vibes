@@ -1,5 +1,6 @@
 package com.github.laxika.magicalvibes.service.effect.normalfx;
-import com.github.laxika.magicalvibes.model.action.ExileTokenAtEndOfCombat;
+import com.github.laxika.magicalvibes.model.action.DelayedPermanentAction;
+import com.github.laxika.magicalvibes.model.action.DelayedPermanentActionKind;
 import com.github.laxika.magicalvibes.model.action.SacrificeAtEndOfCombat;
 
 import com.github.laxika.magicalvibes.model.Card;
@@ -72,7 +73,8 @@ public class TurnSupport {
     public void clearCombatState(GameData gameData) {
         combatService.clearCombatState(gameData);
         gameData.clearDelayedActions(SacrificeAtEndOfCombat.class);
-        gameData.clearDelayedActions(ExileTokenAtEndOfCombat.class);
+        gameData.clearDelayedActions(DelayedPermanentAction.class,
+                a -> a.kind() == DelayedPermanentActionKind.EXILE_TOKEN_AT_END_OF_COMBAT);
     }
 
     public void skipToCleanupStep(GameData gameData) {

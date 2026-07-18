@@ -1,7 +1,8 @@
 package com.github.laxika.magicalvibes.cards.c;
 
+import com.github.laxika.magicalvibes.model.action.DelayedPermanentAction;
+import com.github.laxika.magicalvibes.model.action.DelayedPermanentActionKind;
 import com.github.laxika.magicalvibes.model.GameLogEntry;
-import com.github.laxika.magicalvibes.model.action.SacrificeAtEndStep;
 
 import com.github.laxika.magicalvibes.cards.a.AngelsMercy;
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
@@ -113,7 +114,7 @@ class ChoreographedSparksTest extends BaseCardTest {
                 .findFirst()
                 .orElseThrow();
         assertThat(token.getCard().getKeywords()).contains(Keyword.HASTE);
-        assertThat(gd.getDelayedActions(SacrificeAtEndStep.class)).contains(new SacrificeAtEndStep(token.getId()));
+        assertThat(gd.getDelayedActions(DelayedPermanentAction.class)).contains(new DelayedPermanentAction(token.getId(), DelayedPermanentActionKind.SACRIFICE_AT_END_STEP));
     }
 
     // ===== Mode 2 — copy both =====

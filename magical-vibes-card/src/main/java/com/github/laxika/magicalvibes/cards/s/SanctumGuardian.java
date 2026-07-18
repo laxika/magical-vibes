@@ -3,7 +3,7 @@ package com.github.laxika.magicalvibes.cards.s;
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.ActivatedAbility;
 import com.github.laxika.magicalvibes.model.Card;
-import com.github.laxika.magicalvibes.model.effect.PreventNextDamageFromChosenSourceToAnyTargetEffect;
+import com.github.laxika.magicalvibes.model.effect.PreventDamageFromChosenSourceEffect;
 import com.github.laxika.magicalvibes.model.effect.SacrificeSelfCost;
 
 import java.util.List;
@@ -19,7 +19,7 @@ public class SanctumGuardian extends Card {
                 null,
                 List.of(
                         new SacrificeSelfCost(),
-                        new PreventNextDamageFromChosenSourceToAnyTargetEffect()
+                        PreventDamageFromChosenSourceEffect.nextDamageToAnyTarget()
                 ),
                 "Sacrifice this creature: The next time a source of your choice would deal damage to any target this turn, prevent that damage."
         ));

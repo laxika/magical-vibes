@@ -1,6 +1,7 @@
 package com.github.laxika.magicalvibes.service.battlefield;
-import com.github.laxika.magicalvibes.model.action.SacrificeAtEndStep;
 
+import com.github.laxika.magicalvibes.model.action.DelayedPermanentAction;
+import com.github.laxika.magicalvibes.model.action.DelayedPermanentActionKind;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardColor;
 import com.github.laxika.magicalvibes.model.CardType;
@@ -182,7 +183,7 @@ public class BattlefieldEntryService {
                 .add(permanent.getCard());
         // Delayed "sacrifice this token at the beginning of the next end step" (Choreographed Sparks).
         if (permanent.getCard().isSacrificeAtEndStep()) {
-            gameData.queueDelayedAction(new SacrificeAtEndStep(permanent.getId()));
+            gameData.queueDelayedAction(new DelayedPermanentAction(permanent.getId(), DelayedPermanentActionKind.SACRIFICE_AT_END_STEP));
         }
         // "As this enters, you may reveal a [subtype] card from your hand; if you don't, it enters
         // tapped." Must run after the permanent is on the battlefield so we can reference/tap it.

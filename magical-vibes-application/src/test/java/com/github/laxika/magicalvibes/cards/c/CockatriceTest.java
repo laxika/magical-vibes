@@ -1,12 +1,12 @@
 package com.github.laxika.magicalvibes.cards.c;
 
+import com.github.laxika.magicalvibes.model.action.DelayedPermanentAction;
 import com.github.laxika.magicalvibes.cards.g.GiantSpider;
 import com.github.laxika.magicalvibes.cards.w.WallOfAir;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.Player;
 import com.github.laxika.magicalvibes.model.StackEntryType;
 import com.github.laxika.magicalvibes.model.TurnStep;
-import com.github.laxika.magicalvibes.model.action.DestroyPermanentAtEndOfCombat;
 import com.github.laxika.magicalvibes.networking.message.BlockerAssignment;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
 import org.junit.jupiter.api.DisplayName;
@@ -36,7 +36,7 @@ class CockatriceTest extends BaseCardTest {
                         && se.getTargetId().equals(spider.getId()));
 
         harness.passBothPriorities();
-        assertThat(gd.getDelayedActions(DestroyPermanentAtEndOfCombat.class))
+        assertThat(gd.getDelayedActions(DelayedPermanentAction.class))
                 .anyMatch(a -> a.permanentId().equals(spider.getId()));
     }
 
@@ -74,7 +74,7 @@ class CockatriceTest extends BaseCardTest {
 
         // The trigger still fires but the non-Wall filter fails at resolution
         harness.passBothPriorities();
-        assertThat(gd.hasDelayedAction(DestroyPermanentAtEndOfCombat.class)).isFalse();
+        assertThat(gd.hasDelayedAction(DelayedPermanentAction.class)).isFalse();
     }
 
     // ===== Cockatrice blocks =====
@@ -95,7 +95,7 @@ class CockatriceTest extends BaseCardTest {
                         && se.getTargetId().equals(attacker.getId()));
 
         harness.passBothPriorities();
-        assertThat(gd.getDelayedActions(DestroyPermanentAtEndOfCombat.class))
+        assertThat(gd.getDelayedActions(DelayedPermanentAction.class))
                 .anyMatch(a -> a.permanentId().equals(attacker.getId()));
     }
 

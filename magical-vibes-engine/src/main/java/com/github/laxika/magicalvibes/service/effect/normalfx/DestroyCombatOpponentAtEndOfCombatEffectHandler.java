@@ -4,7 +4,8 @@ import com.github.laxika.magicalvibes.model.GameData;
 import com.github.laxika.magicalvibes.model.GameLog;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.StackEntry;
-import com.github.laxika.magicalvibes.model.action.DestroyPermanentAtEndOfCombat;
+import com.github.laxika.magicalvibes.model.action.DelayedPermanentAction;
+import com.github.laxika.magicalvibes.model.action.DelayedPermanentActionKind;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
 import com.github.laxika.magicalvibes.model.effect.DestroyCombatOpponentAtEndOfCombatEffect;
 import com.github.laxika.magicalvibes.service.GameBroadcastService;
@@ -18,7 +19,7 @@ import java.util.UUID;
 /**
  * Resolves {@link DestroyCombatOpponentAtEndOfCombatEffect}: if the referenced combat opponent
  * (carried as the stack entry's target) is a creature matching the effect's filter, schedule it
- * for destruction at end of combat via {@link DestroyPermanentAtEndOfCombat}. Basilisk-style
+ * for destruction at end of combat via {@link DelayedPermanentAction}. Basilisk-style
  * "destroy that creature at end of combat" triggers (e.g. Deathgazer).
  */
 @Component
@@ -50,7 +51,8 @@ public class DestroyCombatOpponentAtEndOfCombatEffectHandler implements NormalEf
             return;
         }
 
-        gameData.queueDelayedAction(new DestroyPermanentAtEndOfCombat(targetId, destroyEffect.cannotBeRegenerated()));
+        gameData.queueDelayedAction(new DelayedPermanentAction(targetId,
+                DelayedPermanentActionKind.DESTROY_AT_END_OF_COMBAT, destroyEffect.cannotBeRegenerated()));
         String logEntry = target.getCard().getName() + " will be destroyed at end of combat.";
         gameBroadcastService.logAndBroadcast(gameData, GameLog.text(logEntry));
     }

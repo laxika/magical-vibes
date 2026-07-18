@@ -3,8 +3,8 @@ import com.github.laxika.magicalvibes.model.action.DelayedCombatDamageLoot;
 import com.github.laxika.magicalvibes.model.action.DelayedCombatDamageReflection;
 import com.github.laxika.magicalvibes.model.action.ExileAndReturnTransformedAtEndOfCombat;
 import com.github.laxika.magicalvibes.model.action.DestroyEquipmentAtEndOfCombat;
-import com.github.laxika.magicalvibes.model.action.DestroyPermanentAtEndOfCombat;
-import com.github.laxika.magicalvibes.model.action.ExileTokenAtEndOfCombat;
+import com.github.laxika.magicalvibes.model.action.DelayedPermanentAction;
+import com.github.laxika.magicalvibes.model.action.DelayedPermanentActionKind;
 import com.github.laxika.magicalvibes.model.action.GainControlOfPermanentAtEndOfCombat;
 import com.github.laxika.magicalvibes.model.action.PutCounterOnPermanentAtEndOfCombat;
 import com.github.laxika.magicalvibes.model.action.RemoveCounterFromSourceAtEndOfCombat;
@@ -53,9 +53,10 @@ public class TurnProgressionService {
         // Process end-of-combat sacrifices, exiles, and equipment destruction when leaving END_OF_COMBAT
         if (gameData.currentStep == TurnStep.END_OF_COMBAT
                 && (gameData.hasDelayedAction(SacrificeAtEndOfCombat.class)
-                    || gameData.hasDelayedAction(ExileTokenAtEndOfCombat.class)
+                    || gameData.hasDelayedAction(DelayedPermanentAction.class,
+                            a -> a.kind() == DelayedPermanentActionKind.EXILE_TOKEN_AT_END_OF_COMBAT
+                                    || a.kind() == DelayedPermanentActionKind.DESTROY_AT_END_OF_COMBAT)
                     || gameData.hasDelayedAction(DestroyEquipmentAtEndOfCombat.class)
-                    || gameData.hasDelayedAction(DestroyPermanentAtEndOfCombat.class)
                     || gameData.hasDelayedAction(PutMinusOneCounterAtEndOfCombat.class)
                     || gameData.hasDelayedAction(PutCounterOnPermanentAtEndOfCombat.class)
                     || gameData.hasDelayedAction(RemoveCounterFromSourceAtEndOfCombat.class)

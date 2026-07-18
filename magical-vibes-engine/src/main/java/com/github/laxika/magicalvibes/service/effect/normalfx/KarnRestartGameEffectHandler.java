@@ -1,7 +1,6 @@
 package com.github.laxika.magicalvibes.service.effect.normalfx;
-import com.github.laxika.magicalvibes.model.action.SacrificeAtEndStep;
-import com.github.laxika.magicalvibes.model.action.ExileTokenAtEndStep;
-import com.github.laxika.magicalvibes.model.action.ExileTokenAtEndOfCombat;
+import com.github.laxika.magicalvibes.model.action.DelayedPermanentAction;
+import com.github.laxika.magicalvibes.model.action.DelayedPermanentActionKind;
 import com.github.laxika.magicalvibes.model.action.SacrificeAtEndOfCombat;
 
 import com.github.laxika.magicalvibes.model.PendingKarnRestart;
@@ -158,8 +157,9 @@ public class KarnRestartGameEffectHandler implements NormalEffectHandlerBean {
         gameData.clearDelayedActions(PendingExileReturn.class);
         gameData.exileReturnOnPermanentLeave.clear();
         gameData.sourceLinkedAnimations.clear();
-        gameData.clearDelayedActions(ExileTokenAtEndStep.class);
-        gameData.clearDelayedActions(SacrificeAtEndStep.class);
+        gameData.clearDelayedActions(DelayedPermanentAction.class,
+                a -> a.kind() == DelayedPermanentActionKind.EXILE_TOKEN_AT_END_STEP
+                        || a.kind() == DelayedPermanentActionKind.SACRIFICE_AT_END_STEP);
         gameData.pendingMayAbilities.clear();
         gameData.clearPendingInteractions(PermanentChoiceContext.DeathTriggerTarget.class);
         gameData.clearPendingInteractions(PermanentChoiceContext.DiscardTriggerAnyTarget.class);
@@ -182,7 +182,8 @@ public class KarnRestartGameEffectHandler implements NormalEffectHandlerBean {
         gameData.playersWhoCantGainLifeRestOfGame.clear();
         gameData.priorityPassedBy.clear();
         gameData.clearDelayedActions(SacrificeAtEndOfCombat.class);
-        gameData.clearDelayedActions(ExileTokenAtEndOfCombat.class);
+        gameData.clearDelayedActions(DelayedPermanentAction.class,
+                a -> a.kind() == DelayedPermanentActionKind.EXILE_TOKEN_AT_END_OF_COMBAT);
         gameData.permanentsPreventedFromDealingDamage.clear();
         gameData.drawReplacementTargetToController.clear();
         gameData.playerSpellsCantBeCounteredByColorsThisTurn.clear();

@@ -2,7 +2,7 @@ package com.github.laxika.magicalvibes.cards.a;
 
 import com.github.laxika.magicalvibes.model.ActivatedAbility;
 import com.github.laxika.magicalvibes.model.Card;
-import com.github.laxika.magicalvibes.model.effect.PreventAllDamageFromChosenSourceEffect;
+import com.github.laxika.magicalvibes.model.effect.PreventDamageFromChosenSourceEffect;
 import com.github.laxika.magicalvibes.model.effect.SacrificeSelfCost;
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 
@@ -15,7 +15,7 @@ public class AuriokReplica extends Card {
         addActivatedAbility(new ActivatedAbility(
                 false,
                 "{W}",
-                List.of(new SacrificeSelfCost(), new PreventAllDamageFromChosenSourceEffect()),
+                List.of(new SacrificeSelfCost(), PreventDamageFromChosenSourceEffect.allDamageToYou()),
                 "{W}, Sacrifice Auriok Replica: Prevent all damage a source of your choice would deal to you this turn."
         ));
     }

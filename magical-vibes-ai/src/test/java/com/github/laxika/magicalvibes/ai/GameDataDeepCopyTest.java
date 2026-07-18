@@ -1,7 +1,7 @@
 package com.github.laxika.magicalvibes.ai;
+import com.github.laxika.magicalvibes.model.action.DelayedPermanentAction;
+import com.github.laxika.magicalvibes.model.action.DelayedPermanentActionKind;
 import com.github.laxika.magicalvibes.model.action.DelayedPlusOneCounters;
-import com.github.laxika.magicalvibes.model.action.DestroyAtEndStep;
-import com.github.laxika.magicalvibes.model.action.ExileTokenAtEndStep;
 
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
 import com.github.laxika.magicalvibes.cards.s.SerraAngel;
@@ -211,22 +211,24 @@ class GameDataDeepCopyTest {
     void deepCopyPreservesDelayedActions() {
         UUID a = UUID.randomUUID();
         UUID b = UUID.randomUUID();
-        gd.queueDelayedAction(new ExileTokenAtEndStep(a));
-        gd.queueDelayedAction(new DestroyAtEndStep(b));
+        gd.queueDelayedAction(new DelayedPermanentAction(a, DelayedPermanentActionKind.EXILE_TOKEN_AT_END_STEP));
+        gd.queueDelayedAction(new DelayedPermanentAction(b, DelayedPermanentActionKind.DESTROY_AT_END_STEP));
         gd.addDelayedPlusOneCounters(a, 4);
 
         GameData copy = gd.simulationCopy();
 
         // Same values, same insertion order (records are immutable, shallow copy).
         assertThat(copy.delayedActions).containsExactly(
-                new ExileTokenAtEndStep(a),
-                new DestroyAtEndStep(b),
+                new DelayedPermanentAction(a, DelayedPermanentActionKind.EXILE_TOKEN_AT_END_STEP),
+                new DelayedPermanentAction(b, DelayedPermanentActionKind.DESTROY_AT_END_STEP),
                 new DelayedPlusOneCounters(a, 4));
 
         // Independent list — mutating the copy leaves the original untouched.
         copy.delayedActions.clear();
         assertThat(gd.delayedActions).hasSize(3);
-        assertThat(gd.getDelayedActions(DestroyAtEndStep.class))
-                .containsExactly(new DestroyAtEndStep(b));
+        assertThat(gd.getDelayedActions(DelayedPermanentAction.class))
+                .containsExactly(
+                        new DelayedPermanentAction(a, DelayedPermanentActionKind.EXILE_TOKEN_AT_END_STEP),
+                        new DelayedPermanentAction(b, DelayedPermanentActionKind.DESTROY_AT_END_STEP));
     }
 }

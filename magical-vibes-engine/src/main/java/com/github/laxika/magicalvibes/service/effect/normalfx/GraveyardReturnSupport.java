@@ -1,6 +1,7 @@
 package com.github.laxika.magicalvibes.service.effect.normalfx;
-import com.github.laxika.magicalvibes.model.action.ExileTokenAtEndStep;
 
+import com.github.laxika.magicalvibes.model.action.DelayedPermanentAction;
+import com.github.laxika.magicalvibes.model.action.DelayedPermanentActionKind;
 import com.github.laxika.magicalvibes.service.GameBroadcastService;
 import com.github.laxika.magicalvibes.service.battlefield.BattlefieldEntryService;
 import com.github.laxika.magicalvibes.service.battlefield.LegendRuleService;
@@ -681,7 +682,7 @@ public class GraveyardReturnSupport {
         permanent.setEnteredFromGraveyardOwnerId(controllerId);
         battlefieldEntryService.putPermanentOntoBattlefield(gameData, controllerId, permanent, enterTappedTypes);
         if (exileAtEndStep) {
-            gameData.queueDelayedAction(new ExileTokenAtEndStep(permanent.getId()));
+            gameData.queueDelayedAction(new DelayedPermanentAction(permanent.getId(), DelayedPermanentActionKind.EXILE_TOKEN_AT_END_STEP));
         }
 
         String playerName = gameData.playerIdToName.get(controllerId);
@@ -872,7 +873,7 @@ public class GraveyardReturnSupport {
             battlefieldEntryService.putPermanentOntoBattlefield(gameData, controllerId, tokenPermanent);
 
             if (exileAtEndStep) {
-                gameData.queueDelayedAction(new ExileTokenAtEndStep(tokenPermanent.getId()));
+                gameData.queueDelayedAction(new DelayedPermanentAction(tokenPermanent.getId(), DelayedPermanentActionKind.EXILE_TOKEN_AT_END_STEP));
             }
 
             String logMsg = grantHaste

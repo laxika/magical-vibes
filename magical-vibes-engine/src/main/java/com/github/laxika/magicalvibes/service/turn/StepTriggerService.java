@@ -11,14 +11,10 @@ import com.github.laxika.magicalvibes.model.action.ExileToOwnerGraveyardAtNextUp
 import com.github.laxika.magicalvibes.model.action.RevokeExilePlayPermissionAtNextUpkeep;
 import com.github.laxika.magicalvibes.model.action.DelayedPlusOneCounters;
 import com.github.laxika.magicalvibes.model.action.DelayedPlusZeroPlusOneCounters;
-import com.github.laxika.magicalvibes.model.action.DestroyAtEndStep;
+import com.github.laxika.magicalvibes.model.action.DelayedPermanentActionKind;
 import com.github.laxika.magicalvibes.model.action.DestroyNonAttackersAtEndStep;
 import com.github.laxika.magicalvibes.model.action.LoseGameAtEndStep;
 import com.github.laxika.magicalvibes.model.action.ReturnExiledCardToHandAtEndStep;
-import com.github.laxika.magicalvibes.model.action.ReturnToHandAtEndStep;
-import com.github.laxika.magicalvibes.model.action.SacrificeAtEndStep;
-import com.github.laxika.magicalvibes.model.action.ExileTokenAtEndStep;
-import com.github.laxika.magicalvibes.model.action.ExilePermanentAtEndStep;
 
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardSubtype;
@@ -1657,69 +1653,17 @@ public class StepTriggerService {
      * @param gameData the current game state to modify
      */
     public void handleEndStepTriggers(GameData gameData) {
-        // Process pending token exiles (e.g. Mimic Vat tokens)
-        if (gameData.hasDelayedAction(ExileTokenAtEndStep.class)) {
-            List<ExileTokenAtEndStep> toExile = gameData.drainDelayedActions(ExileTokenAtEndStep.class);
-            for (ExileTokenAtEndStep action : toExile) {
-                UUID permId = action.permanentId();
-                Permanent token = gameQueryService.findPermanentById(gameData, permId);
-                if (token != null) {
-                    permanentRemovalService.removePermanentToExile(gameData, token);
-                    String logEntry = token.getCard().getName() + " token is exiled.";
-                    gameBroadcastService.logAndBroadcast(gameData, GameLog.text(logEntry));
-                    log.info("Game {} - {} token exiled at end step (Mimic Vat)", gameData.id, token.getCard().getName());
-                    permanentRemovalService.removeOrphanedAuras(gameData);
-                }
-            }
-        }
-
-        // Process pending nontoken permanent exiles (e.g. Dark Maze)
-        if (gameData.hasDelayedAction(ExilePermanentAtEndStep.class)) {
-            List<ExilePermanentAtEndStep> toExile = gameData.drainDelayedActions(ExilePermanentAtEndStep.class);
-            for (ExilePermanentAtEndStep action : toExile) {
-                UUID permId = action.permanentId();
-                Permanent perm = gameQueryService.findPermanentById(gameData, permId);
-                if (perm != null) {
-                    permanentRemovalService.removePermanentToExile(gameData, perm);
-                    String logEntry = perm.getCard().getName() + " is exiled.";
-                    gameBroadcastService.logAndBroadcast(gameData, GameLog.text(logEntry));
-                    log.info("Game {} - {} exiled at end step (delayed trigger)", gameData.id, perm.getCard().getName());
-                    permanentRemovalService.removeOrphanedAuras(gameData);
-                }
-            }
-        }
-
-        // Process pending end-step sacrifices (e.g. Choreographed Sparks' creature-copy token)
-        if (gameData.hasDelayedAction(SacrificeAtEndStep.class)) {
-            List<SacrificeAtEndStep> toSacrifice = gameData.drainDelayedActions(SacrificeAtEndStep.class);
-            for (SacrificeAtEndStep action : toSacrifice) {
-                UUID permId = action.permanentId();
-                Permanent perm = gameQueryService.findPermanentById(gameData, permId);
-                if (perm != null) {
-                    permanentRemovalService.removePermanentToGraveyard(gameData, perm);
-                    String logEntry = perm.getCard().getName() + " is sacrificed.";
-                    gameBroadcastService.logAndBroadcast(gameData, GameLog.text(logEntry));
-                    log.info("Game {} - {} sacrificed at end step (delayed trigger)", gameData.id, perm.getCard().getName());
-                    permanentRemovalService.removeOrphanedAuras(gameData);
-                }
-            }
-        }
-
-        // Process pending end-step destructions (e.g. Stone Giant)
-        if (gameData.hasDelayedAction(DestroyAtEndStep.class)) {
-            List<DestroyAtEndStep> toDestroy = gameData.drainDelayedActions(DestroyAtEndStep.class);
-            for (DestroyAtEndStep action : toDestroy) {
-                UUID permId = action.permanentId();
-                Permanent perm = gameQueryService.findPermanentById(gameData, permId);
-                if (perm != null) {
-                    if (permanentRemovalService.tryDestroyPermanent(gameData, perm)) {
-                        String logEntry = perm.getCard().getName() + " is destroyed at end step.";
-                        gameBroadcastService.logAndBroadcast(gameData, GameLog.text(logEntry));
-                        log.info("Game {} - {} destroyed at end step (delayed trigger)", gameData.id, perm.getCard().getName());
-                    }
-                }
-            }
-        }
+        // Perform the scheduled end-step zone changes: token exiles (e.g. Mimic Vat), nontoken
+        // exiles (e.g. Dark Maze), sacrifices (e.g. Choreographed Sparks' creature-copy token) and
+        // destructions (e.g. Stone Giant).
+        permanentRemovalService.processDelayedPermanentActions(gameData,
+                DelayedPermanentActionKind.EXILE_TOKEN_AT_END_STEP);
+        permanentRemovalService.processDelayedPermanentActions(gameData,
+                DelayedPermanentActionKind.EXILE_AT_END_STEP);
+        permanentRemovalService.processDelayedPermanentActions(gameData,
+                DelayedPermanentActionKind.SACRIFICE_AT_END_STEP);
+        permanentRemovalService.processDelayedPermanentActions(gameData,
+                DelayedPermanentActionKind.DESTROY_AT_END_STEP);
 
         // Process Siren's Call: destroy all non-Wall creatures the player controls that didn't attack
         // this turn, ignoring creatures they didn't control continuously since the beginning of the
@@ -1751,21 +1695,9 @@ public class StepTriggerService {
             }
         }
 
-        // Process pending end-step returns to hand (e.g. Dragon Mask)
-        if (gameData.hasDelayedAction(ReturnToHandAtEndStep.class)) {
-            List<ReturnToHandAtEndStep> toReturn = gameData.drainDelayedActions(ReturnToHandAtEndStep.class);
-            for (ReturnToHandAtEndStep action : toReturn) {
-                UUID permId = action.permanentId();
-                Permanent perm = gameQueryService.findPermanentById(gameData, permId);
-                if (perm != null) {
-                    permanentRemovalService.removePermanentToHand(gameData, perm);
-                    String logEntry = perm.getCard().getName() + " is returned to its owner's hand.";
-                    gameBroadcastService.logAndBroadcast(gameData, GameLog.text(logEntry));
-                    log.info("Game {} - {} returned to hand at end step (delayed trigger)", gameData.id, perm.getCard().getName());
-                    permanentRemovalService.removeOrphanedAuras(gameData);
-                }
-            }
-        }
+        // Perform the scheduled end-step returns to hand (e.g. Dragon Mask)
+        permanentRemovalService.processDelayedPermanentActions(gameData,
+                DelayedPermanentActionKind.RETURN_TO_HAND_AT_END_STEP);
 
         // Process delayed "lose the game" triggers (e.g. Last Chance). Only fire entries scheduled on
         // an earlier turn, so the current turn's own end step is skipped and the loss lands on the

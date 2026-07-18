@@ -1,12 +1,13 @@
 package com.github.laxika.magicalvibes.service.effect.normalfx;
 
+import com.github.laxika.magicalvibes.model.action.DelayedPermanentAction;
+import com.github.laxika.magicalvibes.model.action.DelayedPermanentActionKind;
 import com.github.laxika.magicalvibes.model.CardColor;
 import com.github.laxika.magicalvibes.model.CardSubtype;
 import com.github.laxika.magicalvibes.model.GameData;
 import com.github.laxika.magicalvibes.model.Keyword;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.StackEntry;
-import com.github.laxika.magicalvibes.model.action.SacrificeAtEndStep;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
 import com.github.laxika.magicalvibes.model.effect.CreateTokenEffect;
 import com.github.laxika.magicalvibes.model.effect.DestroyTargetCreatureAndCreateSpiritCopyToSacrificeEffect;
@@ -56,7 +57,7 @@ public class DestroyTargetCreatureAndCreateSpiritCopyToSacrificeEffectHandler im
                 gameData, entry.getControllerId(), spirit, 1, entry.getCard().getSetCode());
 
         for (UUID id : createdIds) {
-            gameData.queueDelayedAction(new SacrificeAtEndStep(id));
+            gameData.queueDelayedAction(new DelayedPermanentAction(id, DelayedPermanentActionKind.SACRIFICE_AT_END_STEP));
         }
     }
 }

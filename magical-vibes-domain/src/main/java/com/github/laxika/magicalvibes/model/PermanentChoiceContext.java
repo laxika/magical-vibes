@@ -75,13 +75,10 @@ public sealed interface PermanentChoiceContext extends PendingInteraction {
 
     record MayAbilityTriggerTarget(Card sourceCard, UUID controllerId, List<CardEffect> effects) implements PermanentChoiceContext {}
 
-    record PreventDamageSourceChoice(UUID controllerId, boolean controllerOnly, Set<CardColor> colorFilter)
-            implements PermanentChoiceContext {
-
-        public PreventDamageSourceChoice(UUID controllerId) {
-            this(controllerId, true, Set.of());
-        }
-    }
+    /** "Prevent all damage [the chosen source] would deal this turn" — to the controller only
+     *  (Auriok Replica) or to everything (Burrenton Forge-Tender). The legal source choices are
+     *  already filtered when the choice begins. */
+    record PreventDamageSourceChoice(UUID controllerId, boolean controllerOnly) implements PermanentChoiceContext {}
 
     record RedirectDamageSourceChoice(UUID controllerId, int amount, UUID redirectTargetId) implements PermanentChoiceContext {}
 

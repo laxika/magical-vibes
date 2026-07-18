@@ -1,7 +1,7 @@
 package com.github.laxika.magicalvibes.service.effect.normalfx;
-import com.github.laxika.magicalvibes.model.action.ExileTokenAtEndStep;
-import com.github.laxika.magicalvibes.model.action.ExileTokenAtEndOfCombat;
 
+import com.github.laxika.magicalvibes.model.action.DelayedPermanentAction;
+import com.github.laxika.magicalvibes.model.action.DelayedPermanentActionKind;
 import com.github.laxika.magicalvibes.model.ActivatedAbility;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardSupertype;
@@ -158,10 +158,10 @@ public class PermanentControlSupport {
             }
 
             if (token.exileAtEndOfCombat()) {
-                gameData.queueDelayedAction(new ExileTokenAtEndOfCombat(tokenPermanent.getId()));
+                gameData.queueDelayedAction(new DelayedPermanentAction(tokenPermanent.getId(), DelayedPermanentActionKind.EXILE_TOKEN_AT_END_OF_COMBAT));
             }
             if (token.exileAtEndStep()) {
-                gameData.queueDelayedAction(new ExileTokenAtEndStep(tokenPermanent.getId()));
+                gameData.queueDelayedAction(new DelayedPermanentAction(tokenPermanent.getId(), DelayedPermanentActionKind.EXILE_TOKEN_AT_END_STEP));
             }
 
             String colorDesc;

@@ -1,15 +1,15 @@
 package com.github.laxika.magicalvibes.cards.p;
 
+import com.github.laxika.magicalvibes.model.action.DelayedPermanentAction;
+import com.github.laxika.magicalvibes.model.action.DelayedPermanentActionKind;
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
 import com.github.laxika.magicalvibes.cards.i.Island;
-import com.github.laxika.magicalvibes.cards.p.Pacifism;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.Keyword;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.PendingInteraction;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.TurnStep;
-import com.github.laxika.magicalvibes.model.action.ExileTokenAtEndStep;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
@@ -80,8 +80,8 @@ class PuppeteerCliqueTest extends BaseCardTest {
         assertThat(stolen.getGrantedKeywords()).contains(Keyword.HASTE);
         assertThat(stolen.isExileIfLeavesBattlefield()).isTrue();
         assertThat(gd.stolenCreatures).containsKey(stolen.getId());
-        assertThat(gd.getDelayedActions(ExileTokenAtEndStep.class))
-                .contains(new ExileTokenAtEndStep(stolen.getId()));
+        assertThat(gd.getDelayedActions(DelayedPermanentAction.class))
+                .contains(new DelayedPermanentAction(stolen.getId(), DelayedPermanentActionKind.EXILE_TOKEN_AT_END_STEP));
         assertThat(gd.playerGraveyards.get(player2.getId()))
                 .noneMatch(c -> c.getName().equals("Grizzly Bears"));
     }

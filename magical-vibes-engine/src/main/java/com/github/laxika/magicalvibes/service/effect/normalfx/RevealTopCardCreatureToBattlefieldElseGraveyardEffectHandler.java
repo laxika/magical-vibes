@@ -1,5 +1,7 @@
 package com.github.laxika.magicalvibes.service.effect.normalfx;
 
+import com.github.laxika.magicalvibes.model.action.DelayedPermanentAction;
+import com.github.laxika.magicalvibes.model.action.DelayedPermanentActionKind;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardType;
 import com.github.laxika.magicalvibes.model.GameData;
@@ -7,7 +9,6 @@ import com.github.laxika.magicalvibes.model.GameLog;
 import com.github.laxika.magicalvibes.model.Keyword;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.StackEntry;
-import com.github.laxika.magicalvibes.model.action.SacrificeAtEndStep;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
 import com.github.laxika.magicalvibes.model.effect.RevealTopCardCreatureToBattlefieldElseGraveyardEffect;
 import com.github.laxika.magicalvibes.service.GameBroadcastService;
@@ -66,7 +67,7 @@ public class RevealTopCardCreatureToBattlefieldElseGraveyardEffectHandler implem
                     gameData, controllerId, topCard, null, false);
 
             if (fx.sacrificeAtEndStep()) {
-                gameData.queueDelayedAction(new SacrificeAtEndStep(perm.getId()));
+                gameData.queueDelayedAction(new DelayedPermanentAction(perm.getId(), DelayedPermanentActionKind.SACRIFICE_AT_END_STEP));
             }
 
             log.info("Game {} - {} puts {} onto the battlefield ({})",

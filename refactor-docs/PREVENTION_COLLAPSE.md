@@ -52,12 +52,11 @@ tests (214 tests, 0 failures) + the architecture suite (TargetSpec ratchet/consi
 CardImmutability) all PASS.
 
 ### Deliberately left out (and why)
-- **Chosen-source shields** — `PreventAllDamageFromChosenSourceEffect`,
-  `PreventNextDamageFromChosenSource{,Matching,ToAnyTarget}Effect`,
-  `PreventDamageToTargetFromChosenSourceEffect`, `PreventNextColorDamageToControllerEffect`:
-  resolution-time `PermanentChoiceContext` interaction (pick the source), different shield stores
-  (`playerSourceNextDamageShields` / `sourceNextDamageToAnyTargetShields` / color counts). A future
-  session can add a `CHOSEN_SOURCE` scope axis + the interaction branch; kept whole for now.
+- **Chosen-source shields** — 4 of the 6 folded in session 2 (below). Still out:
+  `PreventDamageToTargetFromChosenSourceEffect` (cast-time target + amount + the
+  `PreventDamageToTargetFromSourceChoice` context resumes a suspended effect resolution via
+  `pendingEffectResolutionEntry` — a different answer-side mechanism) and
+  `PreventNextColorDamageToControllerEffect` (chooses a *color*, not a source; color-count shield).
 - **`PreventDividedDamageEffect`** — rides the divided-damage cast flow
   (`EffectResolution.needsDamageDistribution` + `damageAssignments`); folding it means threading the
   division machinery through the spec record for one user (Remedy).
@@ -76,3 +75,30 @@ CardImmutability) all PASS.
 - Prevent* records: 41 → 29 (−12); handlers: 22 → 11 (−12 deleted, +1 added).
 - The remaining 29 split: 6 chosen-source/divided/Sacred-Boon one-shots (future scope axes),
   ~14 static markers with riders, the rest redirect/reflection records.
+
+## Session 2 (2026-07-18): chosen-source subfamily
+
+`PreventNextDamageFromChosenSourceEffect(gainLife)`, `…MatchingEffect(filter, label)`,
+`…ToAnyTargetEffect()` and `PreventAllDamageFromChosenSourceEffect(controllerOnly, colorFilter)`
+(4 records + 4 handlers) collapsed onto
+`PreventDamageFromChosenSourceEffect(ChosenSourcePreventionScope scope, boolean gainLife,
+boolean controllerOnly, PermanentPredicate sourceFilter, String sourceLabel)` with 6 static
+factories (`nextDamageToYou[AndGainLife]`, `nextDamageToYou(filter, label)`,
+`nextDamageToAnyTarget`, `allDamageToYou`, `allDamage(filter, label)`) + ONE handler.
+
+- **Creation-side only again**: the three answer-side `PermanentChoiceContext` variants and their
+  `PermanentChoiceBattlefieldHandlerService` handlers (shield stores
+  `playerSourceNextDamageShields` / `sourceNextDamageToAnyTargetShields` /
+  `playerSourceDamagePreventionIds` / `permanentsPreventedFromDealingDamage`) are untouched; the
+  merged handler just picks the right context + prompt per scope. All prompts byte-identical
+  (including the pre-existing "Choose a artifact source." article quirk — kept, cosmetic).
+- Burrenton Forge-Tender's `Set<CardColor>` colorFilter folded into the generic
+  `sourceFilter`/`sourceLabel` axes (`PermanentColorInPredicate` + "red");
+  `PermanentChoiceContext.PreventDamageSourceChoice` lost its dead `colorFilter` field (the answer
+  handler never read it) and its unused 1-arg ctor.
+- Zero validators / zero AI / zero live-instanceof / zero test references to the old records
+  (grep-verified) — pure record+handler+card sweep (12 cards: Reverse Damage, Pentagram of the
+  Ages, CoP White/Red/Green/Blue/Black/Artifacts, Greater Realm of Preservation, Sanctum Guardian,
+  Auriok Replica, Burrenton Forge-Tender). All 12 behavioral card tests + DamagePreventionSpecTest
+  green.
+- Records now 26 (−4 +1), handlers 8 (−4 +1) in the family.

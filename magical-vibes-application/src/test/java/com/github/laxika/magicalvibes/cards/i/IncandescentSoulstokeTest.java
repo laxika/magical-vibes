@@ -1,5 +1,7 @@
 package com.github.laxika.magicalvibes.cards.i;
 
+import com.github.laxika.magicalvibes.model.action.DelayedPermanentAction;
+import com.github.laxika.magicalvibes.model.action.DelayedPermanentActionKind;
 import com.github.laxika.magicalvibes.cards.a.AirElemental;
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
 import com.github.laxika.magicalvibes.cards.m.Mountain;
@@ -7,7 +9,6 @@ import com.github.laxika.magicalvibes.model.Keyword;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.PendingInteraction;
 import com.github.laxika.magicalvibes.model.Permanent;
-import com.github.laxika.magicalvibes.model.action.SacrificeAtEndStep;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
@@ -102,8 +103,8 @@ class IncandescentSoulstokeTest extends BaseCardTest {
         Permanent elemental = findPermanent(player1, "Air Elemental");
         assertThat(elemental.hasKeyword(Keyword.HASTE)).isTrue();
         assertThat(gd.playerHands.get(player1.getId())).isEmpty();
-        assertThat(gd.getDelayedActions(SacrificeAtEndStep.class))
-                .contains(new SacrificeAtEndStep(elemental.getId()));
+        assertThat(gd.getDelayedActions(DelayedPermanentAction.class))
+                .contains(new DelayedPermanentAction(elemental.getId(), DelayedPermanentActionKind.SACRIFICE_AT_END_STEP));
     }
 
     @Test
@@ -120,7 +121,7 @@ class IncandescentSoulstokeTest extends BaseCardTest {
         assertThat(gd.playerHands.get(player1.getId())).hasSize(1);
         assertThat(gd.playerBattlefields.get(player1.getId()))
                 .noneMatch(p -> p.getCard().getName().equals("Air Elemental"));
-        assertThat(gd.getDelayedActions(SacrificeAtEndStep.class)).isEmpty();
+        assertThat(gd.getDelayedActions(DelayedPermanentAction.class)).isEmpty();
     }
 
     private Permanent addReadySoulstoke() {

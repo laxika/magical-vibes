@@ -14,6 +14,8 @@ import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.GameData;
 import com.github.laxika.magicalvibes.model.GameLog;
 import com.github.laxika.magicalvibes.model.Keyword;
+import com.github.laxika.magicalvibes.model.action.DelayedPermanentAction;
+import com.github.laxika.magicalvibes.model.action.DelayedPermanentActionKind;
 import com.github.laxika.magicalvibes.model.action.PendingExileReturn;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.StackEntry;
@@ -386,6 +388,40 @@ public class PermanentRemovalService {
         removePermanentToGraveyard(gameData, target);
         removeOrphanedAuras(gameData);
         return true;
+    }
+
+    /**
+     * Drains and performs all scheduled {@link DelayedPermanentAction}s of the given kind, in
+     * insertion order. Permanents that already left the battlefield are skipped. Exile, sacrifice
+     * and return-to-hand clean up orphaned auras after each removal; destruction goes through
+     * {@link #tryDestroyPermanent} (which does its own aura cleanup) so indestructible and
+     * regeneration still apply, and logs only when the permanent actually died.
+     */
+    public void processDelayedPermanentActions(GameData gameData, DelayedPermanentActionKind kind) {
+        List<DelayedPermanentAction> actions =
+                gameData.drainDelayedActions(DelayedPermanentAction.class, a -> a.kind() == kind);
+        for (DelayedPermanentAction action : actions) {
+            Permanent perm = gameQueryService.findPermanentById(gameData, action.permanentId());
+            if (perm == null) {
+                continue;
+            }
+            String logEntry = perm.getCard().getName() + kind.logSuffix();
+            switch (kind.op()) {
+                case EXILE -> removePermanentToExile(gameData, perm);
+                case SACRIFICE -> removePermanentToGraveyard(gameData, perm);
+                case RETURN_TO_HAND -> removePermanentToHand(gameData, perm);
+                case DESTROY -> {
+                    if (!tryDestroyPermanent(gameData, perm, action.cannotBeRegenerated())) {
+                        continue;
+                    }
+                }
+            }
+            gameBroadcastService.logAndBroadcast(gameData, GameLog.text(logEntry));
+            log.info("Game {} - {}{}", gameData.id, perm.getCard().getName(), kind.logSuffix());
+            if (kind.op() != DelayedPermanentActionKind.Op.DESTROY) {
+                removeOrphanedAuras(gameData);
+            }
+        }
     }
 
     /**

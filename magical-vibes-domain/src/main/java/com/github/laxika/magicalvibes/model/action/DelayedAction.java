@@ -18,21 +18,15 @@ package com.github.laxika.magicalvibes.model.action;
  * {@code GameData} god-class.
  */
 public sealed interface DelayedAction permits
+        DelayedPermanentAction,
         SacrificeAtEndOfCombat,
-        ExileTokenAtEndOfCombat,
         DestroyEquipmentAtEndOfCombat,
-        DestroyPermanentAtEndOfCombat,
         PutMinusOneCounterAtEndOfCombat,
         PutCounterOnPermanentAtEndOfCombat,
         RemoveCounterFromSourceAtEndOfCombat,
         GainControlOfPermanentAtEndOfCombat,
         ExileAndReturnTransformedAtEndOfCombat,
-        ExileTokenAtEndStep,
-        ExilePermanentAtEndStep,
-        SacrificeAtEndStep,
-        DestroyAtEndStep,
         DestroyNonAttackersAtEndStep,
-        ReturnToHandAtEndStep,
         LoseGameAtEndStep,
         DelayedPlusOneCounters,
         DelayedPlusZeroPlusOneCounters,

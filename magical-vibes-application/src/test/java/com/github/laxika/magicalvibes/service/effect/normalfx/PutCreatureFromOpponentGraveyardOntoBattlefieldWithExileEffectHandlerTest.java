@@ -1,6 +1,6 @@
 package com.github.laxika.magicalvibes.service.effect.normalfx;
+import com.github.laxika.magicalvibes.model.action.DelayedPermanentAction;
 import com.github.laxika.magicalvibes.model.GameLogEntry;
-import com.github.laxika.magicalvibes.model.action.ExileTokenAtEndStep;
 
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.GameData;
@@ -122,7 +122,7 @@ class PutCreatureFromOpponentGraveyardOntoBattlefieldWithExileEffectHandlerTest 
                         argThat(p -> p.getGrantedKeywords().contains(Keyword.HASTE)
                                 && p.isExileIfLeavesBattlefield()),
                         eq(Set.of()));
-                assertThat(gd.getDelayedActions(ExileTokenAtEndStep.class)).isNotEmpty();
+                assertThat(gd.getDelayedActions(DelayedPermanentAction.class)).isNotEmpty();
                 assertThat(gd.stolenCreatures).isNotEmpty();
                 assertThat(gd.floatingEffects).anyMatch(fe -> fe.isControlEffect());
             }

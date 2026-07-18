@@ -1,8 +1,9 @@
 package com.github.laxika.magicalvibes.service.turn;
+import com.github.laxika.magicalvibes.model.action.DelayedPermanentAction;
+import com.github.laxika.magicalvibes.model.action.DelayedPermanentActionKind;
 import com.github.laxika.magicalvibes.model.GameLog;
 import com.github.laxika.magicalvibes.model.GameLogEntry;
 import com.github.laxika.magicalvibes.model.action.DelayedCombatDamageLoot;
-import com.github.laxika.magicalvibes.model.action.ExileTokenAtEndOfCombat;
 import com.github.laxika.magicalvibes.model.action.SacrificeAtEndOfCombat;
 
 import com.github.laxika.magicalvibes.model.PendingInteraction;
@@ -304,7 +305,7 @@ class TurnProgressionServiceTest {
         @DisplayName("Processes exiles when leaving END_OF_COMBAT with pending token exiles")
         void processesEndOfCombatExiles() {
             gd.currentStep = TurnStep.END_OF_COMBAT;
-            gd.queueDelayedAction(new ExileTokenAtEndOfCombat(UUID.randomUUID()));
+            gd.queueDelayedAction(new DelayedPermanentAction(UUID.randomUUID(), DelayedPermanentActionKind.EXILE_TOKEN_AT_END_OF_COMBAT));
 
             turnProgressionService.advanceStep(gd);
 

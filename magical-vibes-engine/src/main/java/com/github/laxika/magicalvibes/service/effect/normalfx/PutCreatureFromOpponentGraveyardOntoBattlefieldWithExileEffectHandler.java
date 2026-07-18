@@ -1,6 +1,7 @@
 package com.github.laxika.magicalvibes.service.effect.normalfx;
-import com.github.laxika.magicalvibes.model.action.ExileTokenAtEndStep;
 
+import com.github.laxika.magicalvibes.model.action.DelayedPermanentAction;
+import com.github.laxika.magicalvibes.model.action.DelayedPermanentActionKind;
 import com.github.laxika.magicalvibes.model.CardType;
 import com.github.laxika.magicalvibes.model.GameData;
 import com.github.laxika.magicalvibes.model.GameLog;
@@ -43,7 +44,7 @@ public class PutCreatureFromOpponentGraveyardOntoBattlefieldWithExileEffectHandl
         battlefieldEntryService.putPermanentOntoBattlefield(gameData, controllerId, result.permanent(), enterTappedTypes);
 
         graveyardReturnSupport.trackStolenCreature(gameData, result.permanent().getId(), controllerId, result.originalOwnerId());
-        gameData.queueDelayedAction(new ExileTokenAtEndStep(result.permanent().getId()));
+        gameData.queueDelayedAction(new DelayedPermanentAction(result.permanent().getId(), DelayedPermanentActionKind.EXILE_TOKEN_AT_END_STEP));
 
         String playerName = gameData.playerIdToName.get(controllerId);
         gameBroadcastService.logAndBroadcast(gameData, GameLog.text(playerName + " puts " + result.card().getName() + " onto the battlefield under their control with haste."));

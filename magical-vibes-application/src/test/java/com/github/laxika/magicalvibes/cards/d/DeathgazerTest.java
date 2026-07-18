@@ -1,12 +1,12 @@
 package com.github.laxika.magicalvibes.cards.d;
 
+import com.github.laxika.magicalvibes.model.action.DelayedPermanentAction;
 import com.github.laxika.magicalvibes.cards.g.GiantSpider;
 import com.github.laxika.magicalvibes.cards.v.VampireAristocrat;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.Player;
 import com.github.laxika.magicalvibes.model.StackEntryType;
 import com.github.laxika.magicalvibes.model.TurnStep;
-import com.github.laxika.magicalvibes.model.action.DestroyPermanentAtEndOfCombat;
 import com.github.laxika.magicalvibes.networking.message.BlockerAssignment;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
 import org.junit.jupiter.api.DisplayName;
@@ -38,7 +38,7 @@ class DeathgazerTest extends BaseCardTest {
 
         // Resolving it schedules the blocker for destruction at end of combat
         harness.passBothPriorities();
-        assertThat(gd.getDelayedActions(DestroyPermanentAtEndOfCombat.class))
+        assertThat(gd.getDelayedActions(DelayedPermanentAction.class))
                 .anyMatch(a -> a.permanentId().equals(spider.getId()));
     }
 
@@ -77,7 +77,7 @@ class DeathgazerTest extends BaseCardTest {
 
         // The trigger still fires but the nonblack filter fails at resolution
         harness.passBothPriorities();
-        assertThat(gd.hasDelayedAction(DestroyPermanentAtEndOfCombat.class)).isFalse();
+        assertThat(gd.hasDelayedAction(DelayedPermanentAction.class)).isFalse();
     }
 
     // ===== Deathgazer blocks =====
@@ -99,7 +99,7 @@ class DeathgazerTest extends BaseCardTest {
                         && se.getTargetId().equals(attacker.getId()));
 
         harness.passBothPriorities();
-        assertThat(gd.getDelayedActions(DestroyPermanentAtEndOfCombat.class))
+        assertThat(gd.getDelayedActions(DelayedPermanentAction.class))
                 .anyMatch(a -> a.permanentId().equals(attacker.getId()));
     }
 
@@ -114,7 +114,7 @@ class DeathgazerTest extends BaseCardTest {
         gs.declareBlockers(gd, player2, List.of(new BlockerAssignment(0, 0)));
 
         harness.passBothPriorities();
-        assertThat(gd.hasDelayedAction(DestroyPermanentAtEndOfCombat.class)).isFalse();
+        assertThat(gd.hasDelayedAction(DelayedPermanentAction.class)).isFalse();
     }
 
     // ===== Helpers =====

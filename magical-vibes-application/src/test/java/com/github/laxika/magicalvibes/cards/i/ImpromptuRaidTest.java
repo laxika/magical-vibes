@@ -1,12 +1,13 @@
 package com.github.laxika.magicalvibes.cards.i;
 
+import com.github.laxika.magicalvibes.model.action.DelayedPermanentAction;
+import com.github.laxika.magicalvibes.model.action.DelayedPermanentActionKind;
 import com.github.laxika.magicalvibes.cards.f.Forest;
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.Keyword;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
-import com.github.laxika.magicalvibes.model.action.SacrificeAtEndStep;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
@@ -31,8 +32,8 @@ class ImpromptuRaidTest extends BaseCardTest {
         assertThat(bears.hasKeyword(Keyword.HASTE)).isTrue();
         assertThat(gd.playerDecks.get(player1.getId()))
                 .noneMatch(c -> c.getId().equals(creature.getId()));
-        assertThat(gd.getDelayedActions(SacrificeAtEndStep.class))
-                .contains(new SacrificeAtEndStep(bears.getId()));
+        assertThat(gd.getDelayedActions(DelayedPermanentAction.class))
+                .contains(new DelayedPermanentAction(bears.getId(), DelayedPermanentActionKind.SACRIFICE_AT_END_STEP));
     }
 
     @Test
@@ -50,6 +51,6 @@ class ImpromptuRaidTest extends BaseCardTest {
                 .anyMatch(c -> c.getId().equals(land.getId()));
         assertThat(gd.playerBattlefields.get(player1.getId()))
                 .noneMatch(p -> p.getCard().getId().equals(land.getId()));
-        assertThat(gd.getDelayedActions(SacrificeAtEndStep.class)).isEmpty();
+        assertThat(gd.getDelayedActions(DelayedPermanentAction.class)).isEmpty();
     }
 }

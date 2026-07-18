@@ -7,6 +7,8 @@ import com.github.laxika.magicalvibes.model.CardType;
 import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.GameData;
 import com.github.laxika.magicalvibes.model.Keyword;
+import com.github.laxika.magicalvibes.model.action.DelayedPermanentAction;
+import com.github.laxika.magicalvibes.model.action.DelayedPermanentActionKind;
 import com.github.laxika.magicalvibes.model.action.PendingExileReturn;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.Zone;
@@ -144,6 +146,113 @@ class PermanentRemovalServiceTest {
         when(gameQueryService.isCreature(gd, target)).thenReturn(true);
         when(gameQueryService.isArtifact(target)).thenReturn(false);
         when(graveyardService.addCardToGraveyard(eq(gd), eq(ownerId), any(Card.class), eq(Zone.BATTLEFIELD))).thenReturn(true);
+    }
+
+    // =========================================================================
+    // processDelayedPermanentActions
+    // =========================================================================
+
+    @Nested
+    @DisplayName("processDelayedPermanentActions")
+    class ProcessDelayedPermanentActions {
+
+        @Test
+        @DisplayName("Exile kind exiles the permanent, logs, and drains only that kind")
+        void exileKindExilesAndDrainsOnlyThatKind() {
+            Permanent token = addPermanent(player1Id, createCreature("Token"));
+            gd.queueDelayedAction(new DelayedPermanentAction(token.getId(),
+                    DelayedPermanentActionKind.EXILE_TOKEN_AT_END_STEP));
+            DelayedPermanentAction otherKind = new DelayedPermanentAction(UUID.randomUUID(),
+                    DelayedPermanentActionKind.SACRIFICE_AT_END_STEP);
+            gd.queueDelayedAction(otherKind);
+            when(gameQueryService.findPermanentById(gd, token.getId())).thenReturn(token);
+
+            prs.processDelayedPermanentActions(gd, DelayedPermanentActionKind.EXILE_TOKEN_AT_END_STEP);
+
+            assertThat(gd.playerBattlefields.get(player1Id)).doesNotContain(token);
+            verify(exileService).exileCard(gd, player1Id, token.getOriginalCard());
+            verify(gameBroadcastService).logAndBroadcast(eq(gd),
+                    argThat((GameLogEntry logEntry) -> logEntry.plainText().equals("Token token is exiled.")));
+            assertThat(gd.getDelayedActions(DelayedPermanentAction.class)).containsExactly(otherKind);
+        }
+
+        @Test
+        @DisplayName("Sacrifice kind puts the permanent into its owner's graveyard")
+        void sacrificeKindMovesToGraveyard() {
+            Permanent token = addPermanent(player1Id, createCreature("Spark Token"));
+            stubGraveyardForCreature(token, player1Id);
+            gd.queueDelayedAction(new DelayedPermanentAction(token.getId(),
+                    DelayedPermanentActionKind.SACRIFICE_AT_END_STEP));
+            when(gameQueryService.findPermanentById(gd, token.getId())).thenReturn(token);
+
+            prs.processDelayedPermanentActions(gd, DelayedPermanentActionKind.SACRIFICE_AT_END_STEP);
+
+            assertThat(gd.playerBattlefields.get(player1Id)).doesNotContain(token);
+            verify(graveyardService).addCardToGraveyard(eq(gd), eq(player1Id), eq(token.getOriginalCard()), eq(Zone.BATTLEFIELD));
+            verify(gameBroadcastService).logAndBroadcast(eq(gd),
+                    argThat((GameLogEntry logEntry) -> logEntry.plainText().equals("Spark Token is sacrificed.")));
+        }
+
+        @Test
+        @DisplayName("Return-to-hand kind returns the permanent to its owner's hand")
+        void returnToHandKindMovesToHand() {
+            Permanent perm = addPermanent(player1Id, createCreature("Bouncy Creature"));
+            gd.queueDelayedAction(new DelayedPermanentAction(perm.getId(),
+                    DelayedPermanentActionKind.RETURN_TO_HAND_AT_END_STEP));
+            when(gameQueryService.findPermanentById(gd, perm.getId())).thenReturn(perm);
+
+            prs.processDelayedPermanentActions(gd, DelayedPermanentActionKind.RETURN_TO_HAND_AT_END_STEP);
+
+            assertThat(gd.playerBattlefields.get(player1Id)).doesNotContain(perm);
+            assertThat(gd.playerHands.get(player1Id)).contains(perm.getOriginalCard());
+            verify(gameBroadcastService).logAndBroadcast(eq(gd),
+                    argThat((GameLogEntry logEntry) -> logEntry.plainText().equals("Bouncy Creature is returned to its owner's hand.")));
+        }
+
+        @Test
+        @DisplayName("Destroy kind goes through regeneration and logs nothing when the permanent survives")
+        void destroyKindRespectsRegeneration() {
+            Permanent perm = addPermanent(player1Id, createCreature("Doomed Creature"));
+            gd.queueDelayedAction(new DelayedPermanentAction(perm.getId(),
+                    DelayedPermanentActionKind.DESTROY_AT_END_STEP));
+            when(gameQueryService.findPermanentById(gd, perm.getId())).thenReturn(perm);
+            when(graveyardService.tryRegenerate(gd, perm)).thenReturn(true);
+
+            prs.processDelayedPermanentActions(gd, DelayedPermanentActionKind.DESTROY_AT_END_STEP);
+
+            assertThat(gd.playerBattlefields.get(player1Id)).contains(perm);
+            verify(gameBroadcastService, never()).logAndBroadcast(eq(gd), any(GameLogEntry.class));
+            assertThat(gd.getDelayedActions(DelayedPermanentAction.class)).isEmpty();
+        }
+
+        @Test
+        @DisplayName("Destroy kind with cannotBeRegenerated bypasses regeneration and destroys")
+        void destroyKindHonorsCannotBeRegenerated() {
+            Permanent perm = addPermanent(player1Id, createCreature("Doomed Creature"));
+            stubGraveyardForCreature(perm, player1Id);
+            gd.queueDelayedAction(new DelayedPermanentAction(perm.getId(),
+                    DelayedPermanentActionKind.DESTROY_AT_END_OF_COMBAT, true));
+            when(gameQueryService.findPermanentById(gd, perm.getId())).thenReturn(perm);
+
+            prs.processDelayedPermanentActions(gd, DelayedPermanentActionKind.DESTROY_AT_END_OF_COMBAT);
+
+            assertThat(gd.playerBattlefields.get(player1Id)).doesNotContain(perm);
+            verify(graveyardService, never()).tryRegenerate(any(), any());
+            verify(gameBroadcastService).logAndBroadcast(eq(gd),
+                    argThat((GameLogEntry logEntry) -> logEntry.plainText().equals("Doomed Creature is destroyed.")));
+        }
+
+        @Test
+        @DisplayName("Skips actions whose permanent already left the battlefield")
+        void skipsMissingPermanents() {
+            gd.queueDelayedAction(new DelayedPermanentAction(UUID.randomUUID(),
+                    DelayedPermanentActionKind.EXILE_AT_END_STEP));
+
+            prs.processDelayedPermanentActions(gd, DelayedPermanentActionKind.EXILE_AT_END_STEP);
+
+            verify(gameBroadcastService, never()).logAndBroadcast(eq(gd), any(GameLogEntry.class));
+            assertThat(gd.getDelayedActions(DelayedPermanentAction.class)).isEmpty();
+        }
     }
 
     // =========================================================================

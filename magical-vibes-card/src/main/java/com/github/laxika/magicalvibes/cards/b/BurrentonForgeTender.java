@@ -5,7 +5,8 @@ import com.github.laxika.magicalvibes.model.ActivatedAbility;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardColor;
 import com.github.laxika.magicalvibes.model.EffectSlot;
-import com.github.laxika.magicalvibes.model.effect.PreventAllDamageFromChosenSourceEffect;
+import com.github.laxika.magicalvibes.model.effect.PreventDamageFromChosenSourceEffect;
+import com.github.laxika.magicalvibes.model.filter.PermanentColorInPredicate;
 import com.github.laxika.magicalvibes.model.effect.ProtectionFromColorsEffect;
 import com.github.laxika.magicalvibes.model.effect.SacrificeSelfCost;
 
@@ -23,7 +24,7 @@ public class BurrentonForgeTender extends Card {
                 null,
                 List.of(
                         new SacrificeSelfCost(),
-                        new PreventAllDamageFromChosenSourceEffect(false, Set.of(CardColor.RED))
+                        PreventDamageFromChosenSourceEffect.allDamage(new PermanentColorInPredicate(Set.of(CardColor.RED)), "red")
                 ),
                 "Sacrifice this creature: Prevent all damage a red source of your choice would deal this turn."
         ));

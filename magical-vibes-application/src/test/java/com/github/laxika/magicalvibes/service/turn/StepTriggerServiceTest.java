@@ -1,9 +1,7 @@
 package com.github.laxika.magicalvibes.service.turn;
+import com.github.laxika.magicalvibes.model.action.DelayedPermanentActionKind;
 import com.github.laxika.magicalvibes.model.GameLog;
 import com.github.laxika.magicalvibes.model.action.DelayedPlusOneCounters;
-import com.github.laxika.magicalvibes.model.action.DestroyAtEndStep;
-import com.github.laxika.magicalvibes.model.action.SacrificeAtEndStep;
-import com.github.laxika.magicalvibes.model.action.ExileTokenAtEndStep;
 
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardSubtype;
@@ -1230,53 +1228,20 @@ class StepTriggerServiceTest {
         }
 
         @Test
-        @DisplayName("Pending token exiles are processed at end step")
-        void pendingTokenExilesProcessed() {
-            Card tokenCard = createCardWithName("Token");
-            Permanent token = new Permanent(tokenCard);
-            gd.playerBattlefields.get(player1Id).add(token);
-            gd.queueDelayedAction(new ExileTokenAtEndStep(token.getId()));
-
-            when(gameQueryService.findPermanentById(gd, token.getId())).thenReturn(token);
-
+        @DisplayName("Delegates scheduled end-step zone changes to PermanentRemovalService")
+        void delegatesEndStepDelayedPermanentActions() {
             sut.handleEndStepTriggers(gd);
 
-            verify(permanentRemovalService).removePermanentToExile(gd, token);
-            verify(permanentRemovalService).removeOrphanedAuras(gd);
-            assertThat(gd.getDelayedActions(ExileTokenAtEndStep.class)).isEmpty();
-        }
-
-        @Test
-        @DisplayName("Pending end-step sacrifices are processed at end step")
-        void pendingEndStepSacrificesProcessed() {
-            Card tokenCard = createCardWithName("Spark Token");
-            Permanent token = new Permanent(tokenCard);
-            gd.playerBattlefields.get(player1Id).add(token);
-            gd.queueDelayedAction(new SacrificeAtEndStep(token.getId()));
-
-            when(gameQueryService.findPermanentById(gd, token.getId())).thenReturn(token);
-
-            sut.handleEndStepTriggers(gd);
-
-            verify(permanentRemovalService).removePermanentToGraveyard(gd, token);
-            assertThat(gd.getDelayedActions(SacrificeAtEndStep.class)).isEmpty();
-        }
-
-        @Test
-        @DisplayName("Pending destroy at end step destroys permanents")
-        void pendingDestroyAtEndStepProcessed() {
-            Card card = createCardWithName("Doomed Creature");
-            Permanent perm = new Permanent(card);
-            gd.playerBattlefields.get(player1Id).add(perm);
-            gd.queueDelayedAction(new DestroyAtEndStep(perm.getId()));
-
-            when(gameQueryService.findPermanentById(gd, perm.getId())).thenReturn(perm);
-            when(permanentRemovalService.tryDestroyPermanent(gd, perm)).thenReturn(true);
-
-            sut.handleEndStepTriggers(gd);
-
-            verify(permanentRemovalService).tryDestroyPermanent(gd, perm);
-            assertThat(gd.getDelayedActions(DestroyAtEndStep.class)).isEmpty();
+            verify(permanentRemovalService).processDelayedPermanentActions(gd,
+                    DelayedPermanentActionKind.EXILE_TOKEN_AT_END_STEP);
+            verify(permanentRemovalService).processDelayedPermanentActions(gd,
+                    DelayedPermanentActionKind.EXILE_AT_END_STEP);
+            verify(permanentRemovalService).processDelayedPermanentActions(gd,
+                    DelayedPermanentActionKind.SACRIFICE_AT_END_STEP);
+            verify(permanentRemovalService).processDelayedPermanentActions(gd,
+                    DelayedPermanentActionKind.DESTROY_AT_END_STEP);
+            verify(permanentRemovalService).processDelayedPermanentActions(gd,
+                    DelayedPermanentActionKind.RETURN_TO_HAND_AT_END_STEP);
         }
 
         @Test

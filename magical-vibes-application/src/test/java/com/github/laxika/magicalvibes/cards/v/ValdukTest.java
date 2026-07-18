@@ -1,6 +1,7 @@
 package com.github.laxika.magicalvibes.cards.v;
-import com.github.laxika.magicalvibes.model.action.ExileTokenAtEndStep;
 
+import com.github.laxika.magicalvibes.model.action.DelayedPermanentAction;
+import com.github.laxika.magicalvibes.model.action.DelayedPermanentActionKind;
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
 import com.github.laxika.magicalvibes.cards.l.LeoninScimitar;
 import com.github.laxika.magicalvibes.model.CardColor;
@@ -171,7 +172,7 @@ class ValdukTest extends BaseCardTest {
 
         List<Permanent> tokens = getTokens();
         assertThat(tokens).hasSize(1);
-        assertThat(gd.getDelayedActions(ExileTokenAtEndStep.class)).contains(new ExileTokenAtEndStep(tokens.getFirst().getId()));
+        assertThat(gd.getDelayedActions(DelayedPermanentAction.class)).contains(new DelayedPermanentAction(tokens.getFirst().getId(), DelayedPermanentActionKind.EXILE_TOKEN_AT_END_STEP));
     }
 
     // ===== Tokens are exiled at end step =====
@@ -192,7 +193,7 @@ class ValdukTest extends BaseCardTest {
         harness.passBothPriorities(); // resolve trigger
 
         assertThat(getTokens()).hasSize(1);
-        assertThat(gd.getDelayedActions(ExileTokenAtEndStep.class)).isNotEmpty();
+        assertThat(gd.getDelayedActions(DelayedPermanentAction.class)).isNotEmpty();
 
         // Advance to end step to trigger exile (clear interaction from declare-attackers prompt)
         gd.interaction.clearAwaitingInput();

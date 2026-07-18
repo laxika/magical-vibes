@@ -982,6 +982,17 @@ public class GameData {
     }
 
     /**
+     * Returns {@code true} if the queue holds at least one delayed action of the given kind that
+     * matches {@code filter} (e.g. one timing point's {@link DelayedPermanentAction} kinds).
+     */
+    public <T extends DelayedAction> boolean hasDelayedAction(Class<T> type, Predicate<T> filter) {
+        for (DelayedAction action : delayedActions) {
+            if (type.isInstance(action) && filter.test(type.cast(action))) return true;
+        }
+        return false;
+    }
+
+    /**
      * Returns an unmodifiable snapshot of all queued delayed actions of the given kind in insertion
      * order, WITHOUT removing them (for read-only consumers such as the per-combat-step loot check).
      */
@@ -1036,6 +1047,14 @@ public class GameData {
      */
     public void clearDelayedActions(Class<? extends DelayedAction> type) {
         delayedActions.removeIf(type::isInstance);
+    }
+
+    /**
+     * Removes every queued delayed action of the given kind that matches {@code filter} (e.g. only
+     * some {@link DelayedPermanentAction} kinds), leaving non-matching entries in place.
+     */
+    public <T extends DelayedAction> void clearDelayedActions(Class<T> type, Predicate<T> filter) {
+        delayedActions.removeIf(action -> type.isInstance(action) && filter.test(type.cast(action)));
     }
 
     /**

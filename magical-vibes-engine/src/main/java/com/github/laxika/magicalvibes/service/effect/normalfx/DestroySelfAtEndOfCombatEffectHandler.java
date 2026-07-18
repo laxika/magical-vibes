@@ -4,7 +4,8 @@ import com.github.laxika.magicalvibes.model.GameData;
 import com.github.laxika.magicalvibes.model.GameLog;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.StackEntry;
-import com.github.laxika.magicalvibes.model.action.DestroyPermanentAtEndOfCombat;
+import com.github.laxika.magicalvibes.model.action.DelayedPermanentAction;
+import com.github.laxika.magicalvibes.model.action.DelayedPermanentActionKind;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
 import com.github.laxika.magicalvibes.model.effect.DestroySelfAtEndOfCombatEffect;
 import com.github.laxika.magicalvibes.service.GameBroadcastService;
@@ -14,7 +15,7 @@ import org.springframework.stereotype.Component;
 
 /**
  * Resolves {@link DestroySelfAtEndOfCombatEffect}: schedule the source permanent for destruction at
- * end of combat via {@link DestroyPermanentAtEndOfCombat} (regeneration/indestructible apply). E.g.
+ * end of combat via {@link DelayedPermanentAction} (regeneration/indestructible apply). E.g.
  * Cinder Wall's "When this creature blocks, destroy it at end of combat".
  */
 @Component
@@ -35,7 +36,8 @@ public class DestroySelfAtEndOfCombatEffectHandler implements NormalEffectHandle
         if (self == null) {
             return;
         }
-        gameData.queueDelayedAction(new DestroyPermanentAtEndOfCombat(self.getId(), false));
+        gameData.queueDelayedAction(new DelayedPermanentAction(self.getId(),
+                DelayedPermanentActionKind.DESTROY_AT_END_OF_COMBAT));
         String logEntry = self.getCard().getName() + " will be destroyed at end of combat.";
         gameBroadcastService.logAndBroadcast(gameData, GameLog.text(logEntry));
     }
