@@ -448,9 +448,9 @@ Only effect types with at least one out-of-zone `instanceof` are listed.
 
 Targeted effect types (they carry a target: override `targetSpec()` to a non-NONE spec per `model/effect/CardEffect.java`, or are instanceof-checked in the targeting services) that have **no** `@ValidatesTarget` validator under `service/validate/`. On the single-`targetId` validation path (`TargetLegalityService.checkSpellTargeting`) these effects get NO type checking — this is the class of bug that let the AI cast Fireball at a Plains (July 2026, `DealDividedDamageEffect`). This list feeds refactor step 3.
 
-- **Targeted effect types:** 267
+- **Targeted effect types:** 263
 - **With a validator:** 31
-- **Coverage gap (targeted, no validator):** 234
+- **Coverage gap (targeted, no validator):** 230
 
 | Effect type | Dispatched outside zones? |
 |-------------|---------------------------|
@@ -511,8 +511,6 @@ Targeted effect types (they carry a target: override `targetSpec()` to a non-NON
 | `DestroySubtypeCombatOpponentEffect` | yes |
 | `DestroyTargetAndEachPlayerSearchesBasicLandToBattlefieldEffect` |  |
 | `DestroyTargetCreatureAndCreateSpiritCopyToSacrificeEffect` |  |
-| `DestroyTargetLandAndDamageControllerEffect` |  |
-| `DestroyTargetPermanentAndControllerSearchesLibraryToBattlefieldEffect` |  |
 | `DestroyTargetPermanentAndDamageControllerIfDestroyedEffect` |  |
 | `DestroyTargetPermanentAtEndStepEffect` |  |
 | `DestroyTargetPermanentEffect` | yes |
@@ -602,10 +600,8 @@ Targeted effect types (they carry a target: override `targetSpec()` to a non-NON
 | `PayXManaDealXDamageToAnyTargetEffect` |  |
 | `PlaneswalkerDealDamageAndReceivePowerDamageEffect` |  |
 | `PlayerDestroysPermanentsEffect` |  |
-| `PreventAllDamageByTargetCreatureEffect` |  |
-| `PreventAllDamageToTargetCreatureEffect` |  |
+| `PreventDamageEffect` |  |
 | `PreventDamageFromChosenSourceAndRedirectToAnyTargetEffect` |  |
-| `PreventDamageToTargetEffect` |  |
 | `PreventDamageToTargetFromChosenSourceEffect` |  |
 | `PreventNextDamageToTargetAndAddToughnessCountersEffect` |  |
 | `PreventXDamageToControllerAndRedirectToTargetPlayerEffect` |  |
