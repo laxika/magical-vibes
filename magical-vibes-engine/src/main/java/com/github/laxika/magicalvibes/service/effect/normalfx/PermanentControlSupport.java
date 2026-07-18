@@ -12,6 +12,7 @@ import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.GameData;
 import com.github.laxika.magicalvibes.model.GameLog;
 import com.github.laxika.magicalvibes.model.Permanent;
+import com.github.laxika.magicalvibes.model.amount.DynamicAmount;
 import com.github.laxika.magicalvibes.model.amount.Fixed;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
 import com.github.laxika.magicalvibes.model.effect.CreateTokenEffect;
@@ -60,6 +61,24 @@ public class PermanentControlSupport {
      * tokens later in the same resolution, e.g. Gilt-Leaf Ambush's clash-win deathtouch grant).
      */
     public List<UUID> applyCreateToken(GameData gameData, UUID controllerId, CreateTokenEffect token, int amount, String sourceSetCode) {
+        return applyCreateToken(gameData, controllerId, token, amount, sourceSetCode,
+                fixedStat(token.power(), token), fixedStat(token.toughness(), token));
+    }
+
+    private static int fixedStat(DynamicAmount stat, CreateTokenEffect token) {
+        if (!(stat instanceof Fixed fixed)) {
+            throw new IllegalStateException(
+                    "Dynamic token power/toughness must be evaluated before applyCreateToken: " + token.tokenName());
+        }
+        return fixed.value();
+    }
+
+    /**
+     * Creates {@code amount} tokens with the given already-evaluated power/toughness (dynamic-P/T
+     * blueprints like Phyrexian Rebirth's X/X token are resolved by {@code CreateTokenEffectHandler}).
+     */
+    public List<UUID> applyCreateToken(GameData gameData, UUID controllerId, CreateTokenEffect token, int amount,
+                                       String sourceSetCode, int power, int toughness) {
         List<UUID> createdIds = new ArrayList<>();
         Set<Keyword> grantedKeywordsUntilEndOfTurn = token.grantedKeywordsUntilEndOfTurn();
         int tokenMultiplier = gameQueryService.getTokenMultiplier(gameData, controllerId);
@@ -78,8 +97,8 @@ public class PermanentControlSupport {
                 tokenCard.setColors(token.colors().stream().toList());
             }
             if (isCreature) {
-                tokenCard.setPower(token.power());
-                tokenCard.setToughness(token.toughness());
+                tokenCard.setPower(power);
+                tokenCard.setToughness(toughness);
             }
             tokenCard.setSubtypes(token.subtypes());
             if (token.keywords() != null && !token.keywords().isEmpty()) {
@@ -106,7 +125,7 @@ public class PermanentControlSupport {
             ScryfallOracleLoader.TokenImageData imageData;
             if (isCreature) {
                 imageData = ScryfallOracleLoader.getTokenImage(
-                        sourceSetCode, token.tokenName(), token.power(), token.toughness(), token.color()
+                        sourceSetCode, token.tokenName(), power, toughness, token.color()
                 );
             } else {
                 imageData = ScryfallOracleLoader.getTokenImage(
@@ -157,7 +176,7 @@ public class PermanentControlSupport {
 
             if (isCreature) {
                 String tappedAttackingDesc = token.tappedAndAttacking() ? " tapped and attacking" : (token.tapped() ? " tapped" : "");
-                String logEntry = "A " + token.power() + "/" + token.toughness() + " " + colorDesc + token.tokenName() + " creature token enters the battlefield" + tappedAttackingDesc + ".";
+                String logEntry = "A " + power + "/" + toughness + " " + colorDesc + token.tokenName() + " creature token enters the battlefield" + tappedAttackingDesc + ".";
                 gameBroadcastService.logAndBroadcast(gameData, GameLog.text(logEntry));
 
                 battlefieldEntryService.handleCreatureEnteredBattlefield(gameData, controllerId, tokenCard, null, false);

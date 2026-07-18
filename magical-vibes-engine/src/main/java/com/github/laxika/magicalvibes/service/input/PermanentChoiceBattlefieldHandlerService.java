@@ -807,13 +807,7 @@ public class PermanentChoiceBattlefieldHandlerService {
 
         // Create X tokens, where X is the sacrificed creature's toughness
         if (toughness > 0) {
-            CreateTokenEffect t = ctx.tokenTemplate();
-            CreateTokenEffect sized = new CreateTokenEffect(
-                    t.primaryType(), toughness, t.tokenName(), t.power(), t.toughness(),
-                    t.color(), t.colors(), t.subtypes(), t.keywords(), t.additionalTypes(),
-                    t.tappedAndAttacking(), t.tapped(), t.tokenEffects(), t.tokenAbilities(),
-                    t.exileAtEndOfCombat(), t.exileAtEndStep(), t.legendary(), t.initialPlusOnePlusOneCounters(),
-                    t.grantedKeywordsUntilEndOfTurn());
+            CreateTokenEffect sized = ctx.tokenTemplate().withAmount(toughness);
             gameData.stack.add(new StackEntry(
                     StackEntryType.TRIGGERED_ABILITY,
                     ctx.sourceCard(),

@@ -31,12 +31,19 @@ import java.util.Collections;
 import java.util.List;
 import java.util.UUID;
 
+import static org.assertj.core.api.Assertions.assertThat;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
+import com.github.laxika.magicalvibes.model.amount.EventValue;
+import com.github.laxika.magicalvibes.model.effect.EachPermanentScope;
+import com.github.laxika.magicalvibes.model.effect.GainLifeEffect;
+import com.github.laxika.magicalvibes.service.effect.EffectHandler;
+import com.github.laxika.magicalvibes.service.effect.EffectHandlerRegistry;
 import com.github.laxika.magicalvibes.service.filter.PredicateEvaluationService;
+import org.mockito.ArgumentCaptor;
 
 @ExtendWith(MockitoExtension.class)
 class DestroyAllPermanentsEffectHandlerTest {
@@ -51,6 +58,7 @@ class DestroyAllPermanentsEffectHandlerTest {
     @Mock private GameBroadcastService gameBroadcastService;
     @Mock private PlayerInputService playerInputService;
     @Mock private LifeSupport lifeSupport;
+    @Mock private EffectHandlerRegistry effectHandlerRegistry;
     @InjectMocks private DestructionSupport destructionSupport;
     private GameData gd;
     private UUID player1Id;
@@ -71,7 +79,8 @@ class DestroyAllPermanentsEffectHandlerTest {
         gd.playerIdToName.put(player2Id, "Player2");
         gd.playerBattlefields.put(player1Id, Collections.synchronizedList(new ArrayList<>()));
         gd.playerBattlefields.put(player2Id, Collections.synchronizedList(new ArrayList<>()));
-        destroyAllPermanentsHandler = new DestroyAllPermanentsEffectHandler(destructionSupport, gameQueryService, predicateEvaluationService);
+        destroyAllPermanentsHandler = new DestroyAllPermanentsEffectHandler(destructionSupport, gameQueryService,
+                predicateEvaluationService, effectHandlerRegistry, gameOutcomeService);
 
     }
 
@@ -308,5 +317,73 @@ class DestroyAllPermanentsEffectHandlerTest {
 
                 verify(gameBroadcastService).logAndBroadcast(gd, GameLog.text("Grizzly Bears is destroyed."));
                 verify(gameBroadcastService).logAndBroadcast(gd, GameLog.text("Llanowar Elves is destroyed."));
+            }
+
+            @Test
+            @DisplayName("TARGET_PLAYER scope destroys only the targeted player's matching permanents")
+            void targetPlayerScopeDestroysOnlyTargetsPermanents() {
+                Permanent myBears = addCreature(player1Id, "Grizzly Bears");
+                Permanent angel = addCreature(player2Id, "Serra Angel");
+
+                Card rainCard = createCard("Rain of Daggers");
+                StackEntry entry = sorceryEntry(rainCard, player1Id, player2Id);
+                PermanentPredicate filter = new PermanentIsCreaturePredicate();
+                DestroyAllPermanentsEffect effect = new DestroyAllPermanentsEffect(filter,
+                        EachPermanentScope.TARGET_PLAYER, null);
+
+                when(predicateEvaluationService.matchesPermanentPredicate(eq(angel), eq(filter), any())).thenReturn(true);
+                when(gameQueryService.hasKeyword(gd, angel, Keyword.INDESTRUCTIBLE)).thenReturn(false);
+
+                destroyAllPermanentsHandler.resolve(gd, entry, effect);
+
+                verify(permanentRemovalService).removePermanentToGraveyard(gd, angel);
+                verify(permanentRemovalService, never()).removePermanentToGraveyard(gd, myBears);
+            }
+
+            @Test
+            @DisplayName("Rider resolves through its handler with the destroyed count on eventValue")
+            void riderReceivesDestroyedCountOnEventValue() {
+                Permanent bears = addCreature(player2Id, "Grizzly Bears");
+                Permanent elves = addCreature(player2Id, "Llanowar Elves");
+                Permanent golem = addCreature(player2Id, "Indestructible Golem");
+
+                Card gustCard = createCard("Fracturing Gust");
+                StackEntry entry = sorceryEntry(gustCard, player1Id, null);
+                PermanentPredicate filter = new PermanentIsCreaturePredicate();
+                GainLifeEffect rider = new GainLifeEffect(new EventValue());
+                DestroyAllPermanentsEffect effect = new DestroyAllPermanentsEffect(filter, rider);
+
+                when(predicateEvaluationService.matchesPermanentPredicate(any(), eq(filter), any())).thenReturn(true);
+                when(gameQueryService.hasKeyword(gd, bears, Keyword.INDESTRUCTIBLE)).thenReturn(false);
+                when(gameQueryService.hasKeyword(gd, elves, Keyword.INDESTRUCTIBLE)).thenReturn(false);
+                when(gameQueryService.hasKeyword(gd, golem, Keyword.INDESTRUCTIBLE)).thenReturn(true);
+                EffectHandler riderHandler = org.mockito.Mockito.mock(EffectHandler.class);
+                when(effectHandlerRegistry.getHandler(rider)).thenReturn(riderHandler);
+
+                destroyAllPermanentsHandler.resolve(gd, entry, effect);
+
+                ArgumentCaptor<StackEntry> entryCaptor = ArgumentCaptor.forClass(StackEntry.class);
+                verify(riderHandler).resolve(eq(gd), entryCaptor.capture(), eq(rider));
+                assertThat(entryCaptor.getValue().getEventValue()).isEqualTo(2);
+                assertThat(entryCaptor.getValue().getControllerId()).isEqualTo(player1Id);
+                verify(gameOutcomeService).checkWinCondition(gd);
+            }
+
+            @Test
+            @DisplayName("No rider dispatch when thenEffect is null")
+            void noRiderDispatchWithoutThenEffect() {
+                Permanent bears = addCreature(player1Id, "Grizzly Bears");
+
+                Card wrathCard = createCard("Wrath of God");
+                StackEntry entry = sorceryEntry(wrathCard, player1Id, null);
+                PermanentPredicate filter = new PermanentIsCreaturePredicate();
+                DestroyAllPermanentsEffect effect = new DestroyAllPermanentsEffect(filter, true);
+
+                when(predicateEvaluationService.matchesPermanentPredicate(eq(bears), eq(filter), any())).thenReturn(true);
+                when(gameQueryService.hasKeyword(gd, bears, Keyword.INDESTRUCTIBLE)).thenReturn(false);
+
+                destroyAllPermanentsHandler.resolve(gd, entry, effect);
+
+                verify(effectHandlerRegistry, never()).getHandler(any());
             }
 }

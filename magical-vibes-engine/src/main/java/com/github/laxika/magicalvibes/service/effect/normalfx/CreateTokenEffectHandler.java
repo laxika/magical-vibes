@@ -35,12 +35,15 @@ public class CreateTokenEffectHandler implements NormalEffectHandlerBean {
         if (source == null) {
             source = entry.getSourcePermanentSnapshot();
         }
-        int amount = amountEvaluationService.evaluate(gameData, e.amount(),
-                AmountContext.forStackEntry(entry, source));
+        AmountContext context = AmountContext.forStackEntry(entry, source);
+        int amount = amountEvaluationService.evaluate(gameData, e.amount(), context);
         if (amount <= 0) {
             return;
         }
+        int power = amountEvaluationService.evaluate(gameData, e.power(), context);
+        int toughness = amountEvaluationService.evaluate(gameData, e.toughness(), context);
         entry.getCreatedPermanentIds().addAll(
-                permanentControlSupport.applyCreateToken(gameData, entry.getControllerId(), e, amount, entry.getCard().getSetCode()));
+                permanentControlSupport.applyCreateToken(gameData, entry.getControllerId(), e, amount,
+                        entry.getCard().getSetCode(), power, toughness));
     }
 }

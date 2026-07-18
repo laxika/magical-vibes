@@ -17,8 +17,8 @@ public record CreateTokenEffect(
         CardType primaryType,
         DynamicAmount amount,
         String tokenName,
-        int power,
-        int toughness,
+        DynamicAmount power,
+        DynamicAmount toughness,
         CardColor color,
         Set<CardColor> colors,
         List<CardSubtype> subtypes,
@@ -45,17 +45,18 @@ public record CreateTokenEffect(
         return primaryType;
     }
 
+    /** Printed power when fixed; dynamic power/toughness ("an X/X token") reports 0 to the AI estimators. */
     @Override
     public int tokenPower() {
-        return power;
+        return power instanceof Fixed f ? f.value() : 0;
     }
 
     @Override
     public int tokenToughness() {
-        return toughness;
+        return toughness instanceof Fixed f ? f.value() : 0;
     }
 
-    /** Canonical shape with a fixed token count */
+    /** Canonical shape with a fixed token count and printed power/toughness */
     public CreateTokenEffect(CardType primaryType, int amount, String tokenName, int power, int toughness,
                              CardColor color, Set<CardColor> colors, List<CardSubtype> subtypes,
                              Set<Keyword> keywords, Set<CardType> additionalTypes,
@@ -63,7 +64,23 @@ public record CreateTokenEffect(
                              Map<EffectSlot, CardEffect> tokenEffects, List<ActivatedAbility> tokenAbilities,
                              boolean exileAtEndOfCombat, boolean exileAtEndStep, boolean legendary,
                              int initialPlusOnePlusOneCounters, Set<Keyword> grantedKeywordsUntilEndOfTurn) {
-        this(primaryType, new Fixed(amount), tokenName, power, toughness, color, colors, subtypes, keywords, additionalTypes, tappedAndAttacking, tapped, tokenEffects, tokenAbilities, exileAtEndOfCombat, exileAtEndStep, legendary, initialPlusOnePlusOneCounters, grantedKeywordsUntilEndOfTurn);
+        this(primaryType, new Fixed(amount), tokenName, new Fixed(power), new Fixed(toughness), color, colors, subtypes, keywords, additionalTypes, tappedAndAttacking, tapped, tokenEffects, tokenAbilities, exileAtEndOfCombat, exileAtEndStep, legendary, initialPlusOnePlusOneCounters, grantedKeywordsUntilEndOfTurn);
+    }
+
+    /** Copy of this blueprint with a different (already-evaluated) token count, all other fields preserved. */
+    public CreateTokenEffect withAmount(int newAmount) {
+        return new CreateTokenEffect(primaryType, new Fixed(newAmount), tokenName, power, toughness, color, colors, subtypes, keywords, additionalTypes, tappedAndAttacking, tapped, tokenEffects, tokenAbilities, exileAtEndOfCombat, exileAtEndStep, legendary, initialPlusOnePlusOneCounters, grantedKeywordsUntilEndOfTurn);
+    }
+
+    /** Canonical shape with a dynamic token count and printed power/toughness */
+    public CreateTokenEffect(CardType primaryType, DynamicAmount amount, String tokenName, int power, int toughness,
+                             CardColor color, Set<CardColor> colors, List<CardSubtype> subtypes,
+                             Set<Keyword> keywords, Set<CardType> additionalTypes,
+                             boolean tappedAndAttacking, boolean tapped,
+                             Map<EffectSlot, CardEffect> tokenEffects, List<ActivatedAbility> tokenAbilities,
+                             boolean exileAtEndOfCombat, boolean exileAtEndStep, boolean legendary,
+                             int initialPlusOnePlusOneCounters, Set<Keyword> grantedKeywordsUntilEndOfTurn) {
+        this(primaryType, amount, tokenName, new Fixed(power), new Fixed(toughness), color, colors, subtypes, keywords, additionalTypes, tappedAndAttacking, tapped, tokenEffects, tokenAbilities, exileAtEndOfCombat, exileAtEndStep, legendary, initialPlusOnePlusOneCounters, grantedKeywordsUntilEndOfTurn);
     }
 
     /** Single-color creature token (existing pattern) */
@@ -84,7 +101,14 @@ public record CreateTokenEffect(
     public CreateTokenEffect(DynamicAmount amount, String tokenName, int power, int toughness,
                              CardColor color, List<CardSubtype> subtypes,
                              Set<Keyword> keywords, Set<CardType> additionalTypes) {
-        this(CardType.CREATURE, amount, tokenName, power, toughness, color, null, subtypes, keywords, additionalTypes, false, false, Map.of(), List.of(), false, false, false, 0, Set.of());
+        this(CardType.CREATURE, amount, tokenName, new Fixed(power), new Fixed(toughness), color, null, subtypes, keywords, additionalTypes, false, false, Map.of(), List.of(), false, false, false, 0, Set.of());
+    }
+
+    /** Single creature token with dynamically computed power/toughness ("an X/X … token, where X is …") */
+    public CreateTokenEffect(String tokenName, DynamicAmount power, DynamicAmount toughness,
+                             CardColor color, List<CardSubtype> subtypes,
+                             Set<Keyword> keywords, Set<CardType> additionalTypes) {
+        this(CardType.CREATURE, new Fixed(1), tokenName, power, toughness, color, null, subtypes, keywords, additionalTypes, false, false, Map.of(), List.of(), false, false, false, 0, Set.of());
     }
 
     /** Multi-color creature token */

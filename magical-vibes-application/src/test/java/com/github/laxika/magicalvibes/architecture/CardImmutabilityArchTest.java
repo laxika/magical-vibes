@@ -50,8 +50,7 @@ class CardImmutabilityArchTest {
             "GraveyardReturnSupport",
             "PermanentControlSupport",
             "LivingWeaponEffectHandler",
-            "ExileCreaturesFromGraveyardAndCreateTokensEffectHandler",
-            "DestroyAllCreaturesAndCreateTokenFromDestroyedCountEffectHandler");
+            "ExileCreaturesFromGraveyardAndCreateTokensEffectHandler");
 
     private static boolean isWhitelisted(JavaClass javaClass) {
         String outermost = javaClass.getName().replaceAll("\\$.*", "");

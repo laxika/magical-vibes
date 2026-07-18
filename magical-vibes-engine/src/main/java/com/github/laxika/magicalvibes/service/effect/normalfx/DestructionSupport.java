@@ -138,7 +138,8 @@ public class DestructionSupport {
         destroyBatch(gameData, toDestroy, cardName, false);
     }
 
-    public void destroyBatch(GameData gameData, List<Permanent> toDestroy, String sourceName,
+    /** @return the number of permanents actually destroyed (indestructible / regenerated don't count) */
+    public int destroyBatch(GameData gameData, List<Permanent> toDestroy, String sourceName,
                               boolean cannotBeRegenerated) {
         Set<Permanent> indestructible = new HashSet<>();
         for (Permanent perm : toDestroy) {
@@ -147,6 +148,7 @@ public class DestructionSupport {
             }
         }
 
+        int destroyedCount = 0;
         for (Permanent perm : toDestroy) {
             if (indestructible.contains(perm)) {
                 gameBroadcastService.logAndBroadcast(gameData, GameLog.text(perm.getCard().getName() + " is indestructible."));
@@ -158,7 +160,9 @@ public class DestructionSupport {
             permanentRemovalService.removePermanentToGraveyard(gameData, perm);
             gameBroadcastService.logAndBroadcast(gameData, GameLog.text(perm.getCard().getName() + " is destroyed."));
             log.info("Game {} - {} is destroyed by {}", gameData.id, perm.getCard().getName(), sourceName);
+            destroyedCount++;
         }
+        return destroyedCount;
     }
 
     public boolean tryDestroyAndLog(GameData gameData, Permanent target, String sourceName) {
@@ -450,8 +454,8 @@ public class DestructionSupport {
             tokenCard.setToken(true);
             tokenCard.setColor(token.color());
             if (isCreature) {
-                tokenCard.setPower(token.power());
-                tokenCard.setToughness(token.toughness());
+                tokenCard.setPower(token.tokenPower());
+                tokenCard.setToughness(token.tokenToughness());
             }
             tokenCard.setSubtypes(token.subtypes());
             if (token.keywords() != null && !token.keywords().isEmpty()) {

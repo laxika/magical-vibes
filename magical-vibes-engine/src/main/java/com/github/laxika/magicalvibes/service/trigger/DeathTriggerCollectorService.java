@@ -158,13 +158,7 @@ public class DeathTriggerCollectorService {
             return false;
         }
 
-        CreateTokenEffect t = effect.tokenTemplate();
-        CreateTokenEffect resolved = new CreateTokenEffect(
-                t.primaryType(), counters, t.tokenName(), t.power(), t.toughness(),
-                t.color(), t.colors(), t.subtypes(), t.keywords(), t.additionalTypes(),
-                t.tappedAndAttacking(), t.tapped(), t.tokenEffects(), t.tokenAbilities(),
-                t.exileAtEndOfCombat(), t.exileAtEndStep(), t.legendary(), t.initialPlusOnePlusOneCounters(),
-                t.grantedKeywordsUntilEndOfTurn());
+        CreateTokenEffect resolved = effect.tokenTemplate().withAmount(counters);
 
         match.gameData().stack.add(new StackEntry(
                 StackEntryType.TRIGGERED_ABILITY,
