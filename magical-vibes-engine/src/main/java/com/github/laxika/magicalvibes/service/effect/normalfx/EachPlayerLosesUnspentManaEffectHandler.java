@@ -36,7 +36,7 @@ public class EachPlayerLosesUnspentManaEffectHandler implements NormalEffectHand
             }
             manaPool.clear();
             manaPool.clearPersistentMana();
-            gameBroadcastService.logAndBroadcast(gameData, GameLog.text(gameData.playerIdToName.get(playerId) + " loses all unspent mana (" + entry.getCard().getName() + ")."));
+            gameBroadcastService.logAndBroadcast(gameData, GameLog.textCardText(gameData.playerIdToName.get(playerId) + " loses all unspent mana (", entry.getCard(), ")."));
             log.info("Game {} - {} loses all unspent mana ({})",
                     gameData.id, gameData.playerIdToName.get(playerId), entry.getCard().getName());
         }

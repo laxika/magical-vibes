@@ -53,7 +53,7 @@ public class UntapUpToControlledPermanentsEffectHandler implements NormalEffectH
 
         if (count > 0) {
             String logEntry = entry.getCard().getName() + " untaps " + count + " permanent(s).";
-            gameBroadcastService.logAndBroadcast(gameData, GameLog.text(logEntry));
+            gameBroadcastService.logAndBroadcast(gameData, GameLog.builder().card(entry.getCard()).text(" untaps " + count + " permanent(s).").build());
         }
         log.info("Game {} - {} untaps {} permanent(s) via delayed trigger", gameData.id, entry.getCard().getName(), count);
     }

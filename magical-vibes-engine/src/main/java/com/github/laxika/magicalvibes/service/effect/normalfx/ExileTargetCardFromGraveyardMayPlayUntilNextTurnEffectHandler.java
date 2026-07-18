@@ -57,7 +57,6 @@ public class ExileTargetCardFromGraveyardMayPlayUntilNextTurnEffectHandler imple
         exileSupport.grantPlayUntilOwnersNextTurn(gameData, targetCard.getId(), controllerId);
 
         String playerName = gameData.playerIdToName.get(controllerId);
-        gameBroadcastService.logAndBroadcast(gameData, GameLog.text(playerName + " exiles " + targetCard.getName()
-                        + " from a graveyard (may play until end of next turn)."));
+        gameBroadcastService.logAndBroadcast(gameData, GameLog.textCardText(playerName + " exiles ", targetCard, " from a graveyard (may play until end of next turn)."));
     }
 }

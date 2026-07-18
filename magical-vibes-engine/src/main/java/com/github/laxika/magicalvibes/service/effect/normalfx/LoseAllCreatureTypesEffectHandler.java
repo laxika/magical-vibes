@@ -47,8 +47,7 @@ public class LoseAllCreatureTypesEffectHandler implements NormalEffectHandlerBea
                     count++;
                 }
             }
-            gameBroadcastService.logAndBroadcast(gameData, GameLog.text(entry.getCard().getName()
-                    + " makes " + count + " creature(s) lose all creature types until end of turn."));
+            gameBroadcastService.logAndBroadcast(gameData, GameLog.builder().card(entry.getCard()).text(" makes " + count + " creature(s) lose all creature types until end of turn.").build());
             return;
         }
 
@@ -57,6 +56,6 @@ public class LoseAllCreatureTypesEffectHandler implements NormalEffectHandlerBea
             return;
         }
         target.setLosesAllCreatureTypesUntilEndOfTurn(true);
-        gameBroadcastService.logAndBroadcast(gameData, GameLog.text(target.getCard().getName() + " loses all creature types until end of turn."));
+        gameBroadcastService.logAndBroadcast(gameData, GameLog.cardThen(target.getCard(), " loses all creature types until end of turn."));
     }
 }

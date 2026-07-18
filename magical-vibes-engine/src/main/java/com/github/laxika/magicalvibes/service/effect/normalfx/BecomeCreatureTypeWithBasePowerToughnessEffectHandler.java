@@ -52,7 +52,6 @@ public class BecomeCreatureTypeWithBasePowerToughnessEffectHandler implements No
             source.getGrantedSubtypes().add(e.addedSubtype());
         }
 
-        gameBroadcastService.logAndBroadcast(gameData, GameLog.text(source.getCard().getName() + " becomes a " + e.addedSubtype().getDisplayName()
-                        + " with base power and toughness " + e.power() + "/" + e.toughness() + "."));
+        gameBroadcastService.logAndBroadcast(gameData, GameLog.builder().card(source.getCard()).text(" becomes a " + e.addedSubtype().getDisplayName() + " with base power and toughness " + e.power() + "/" + e.toughness() + ".").build());
     }
 }

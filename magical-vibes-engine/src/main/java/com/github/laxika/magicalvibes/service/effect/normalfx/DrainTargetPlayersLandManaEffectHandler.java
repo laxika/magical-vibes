@@ -95,7 +95,7 @@ public class DrainTargetPlayersLandManaEffectHandler implements NormalEffectHand
         targetPool.clearPersistentMana();
 
         String logMsg = entry.getCard().getName() + " drains " + totalTransferred + " mana.";
-        gameBroadcastService.logAndBroadcast(gameData, GameLog.text(logMsg));
+        gameBroadcastService.logAndBroadcast(gameData, GameLog.builder().card(entry.getCard()).text(" drains " + totalTransferred + " mana.").build());
         log.info("Game {} - {} drains {} mana from target player", gameData.id, entry.getCard().getName(), totalTransferred);
     }
 

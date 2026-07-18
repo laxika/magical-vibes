@@ -50,7 +50,7 @@ public class LookAtTopXCardsPermanentsToBattlefieldRestToGraveyardEffectHandler 
             String logMsg = entry.getCard().getName() + ": " + playerName
                     + (deck.isEmpty() ? "'s library is empty."
                     : toBottomRandom ? " reveals 0 cards (0 damage dealt)." : " looks at 0 cards (X is 0).");
-            gameBroadcastService.logAndBroadcast(gameData, GameLog.text(logMsg));
+            gameBroadcastService.logAndBroadcast(gameData, GameLog.builder().card(entry.getCard()).text(": " + playerName + (deck.isEmpty() ? "'s library is empty." : toBottomRandom ? " reveals 0 cards (0 damage dealt)." : " looks at 0 cards (X is 0).")).build());
             return;
         }
 

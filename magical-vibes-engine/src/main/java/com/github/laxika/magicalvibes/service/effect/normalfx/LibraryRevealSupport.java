@@ -47,7 +47,7 @@ public class LibraryRevealSupport {
         int actual = Math.min(count, deck.size());
         if (actual == 0) {
             String msg = entry.getCard().getName() + ": " + playerName + "'s library is empty.";
-            gameBroadcastService.logAndBroadcast(gameData, GameLog.text(msg));
+            gameBroadcastService.logAndBroadcast(gameData, GameLog.builder().card(entry.getCard()).text(": " + playerName + "'s library is empty.").build());
             return null;
         }
 

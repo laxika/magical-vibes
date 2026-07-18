@@ -29,6 +29,8 @@ import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Nested;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
+import static org.mockito.ArgumentMatchers.argThat;
+import static org.mockito.ArgumentMatchers.eq;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 
@@ -279,7 +281,7 @@ class GameBroadcastServiceTest {
         @Test
         @DisplayName("plain string logs as a single text segment")
         void plainStringLog() {
-            svc.logAndBroadcast(gd, GameLog.text("Game started!"));
+            svc.logAndBroadcast(eq(gd), argThat((GameLogEntry e) -> e.plainText().equals("Game started!")));
 
             assertThat(gd.gameLog).containsExactly(GameLogEntry.text("Game started!"));
         }

@@ -37,7 +37,7 @@ public class GrantSourceActivatedAbilitiesUntilEndOfTurnEffectHandler implements
         source.getTemporaryActivatedAbilities().addAll(e.abilities());
         String logEntry = source.getCard().getName() + " gains activated abilities of "
                 + e.copiedFromCardName() + " until end of turn.";
-        gameBroadcastService.logAndBroadcast(gameData, GameLog.text(logEntry));
+        gameBroadcastService.logAndBroadcast(gameData, GameLog.builder().card(source.getCard()).text(" gains activated abilities of " + e.copiedFromCardName() + " until end of turn.").build());
         log.info("Game {} - {} gains {} activated ability/abilities from {}", gameData.id,
                 source.getCard().getName(), e.abilities().size(), e.copiedFromCardName());
     }

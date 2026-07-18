@@ -38,19 +38,16 @@ public class PutImprintedCreatureOntoBattlefieldEffectHandler implements NormalE
         String playerName = gameData.playerIdToName.get(controllerId);
 
         if (imprintedCard == null) {
-            String logMsg = entry.getCard().getName() + "'s imprint ability resolves but no card was imprinted.";
-            gameBroadcastService.logAndBroadcast(gameData, GameLog.text(logMsg));
+            gameBroadcastService.logAndBroadcast(gameData, GameLog.cardThen(entry.getCard(), "'s imprint ability resolves but no card was imprinted."));
             return;
         }
 
-        String revealLog = playerName + " turns the exiled card face up: " + imprintedCard.getName() + ".";
-        gameBroadcastService.logAndBroadcast(gameData, GameLog.text(revealLog));
+        gameBroadcastService.logAndBroadcast(gameData, GameLog.textCardText(playerName + " turns the exiled card face up: " , imprintedCard, "."));
 
         boolean isCreature = imprintedCard.hasType(CardType.CREATURE);
 
         if (!isCreature) {
-            String notCreatureLog = imprintedCard.getName() + " is not a creature card. It remains in exile.";
-            gameBroadcastService.logAndBroadcast(gameData, GameLog.text(notCreatureLog));
+            gameBroadcastService.logAndBroadcast(gameData, GameLog.cardThen(imprintedCard, " is not a creature card. It remains in exile."));
             return;
         }
 

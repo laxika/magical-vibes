@@ -48,8 +48,7 @@ public class KinshipHandler implements MayEffectHandlerBean {
             if (accepted) {
                 List<Card> deck = gameData.playerDecks.get(ability.controllerId());
                 if (deck != null && !deck.isEmpty()) {
-                    gameBroadcastService.logAndBroadcast(gameData, GameLog.text(player.getUsername() + " reveals "
-                            + deck.getFirst().getName() + " from the top of their library."));
+                    gameBroadcastService.logAndBroadcast(gameData, GameLog.textCardText(player.getUsername() + " reveals ", deck.getFirst(), " from the top of their library."));
                 }
                 Permanent self = ability.sourcePermanentId() != null
                         ? gameQueryService.findPermanentById(gameData, ability.sourcePermanentId()) : null;

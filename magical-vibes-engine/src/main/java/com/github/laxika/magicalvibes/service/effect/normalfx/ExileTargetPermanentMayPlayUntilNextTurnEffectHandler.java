@@ -42,7 +42,7 @@ public class ExileTargetPermanentMayPlayUntilNextTurnEffectHandler implements No
 
         Permanent target = gameQueryService.findPermanentById(gameData, targetId);
         if (target == null) {
-            gameBroadcastService.logAndBroadcast(gameData, GameLog.text(entry.getCard().getName() + " fizzles (target no longer on the battlefield)."));
+            gameBroadcastService.logAndBroadcast(gameData, GameLog.cardThen(entry.getCard(), " fizzles (target no longer on the battlefield)."));
             return;
         }
 
@@ -55,10 +55,9 @@ public class ExileTargetPermanentMayPlayUntilNextTurnEffectHandler implements No
         if (ownerId != null) {
             exileSupport.grantPlayUntilOwnersNextTurn(gameData, exiledCard.getId(), ownerId);
             String ownerName = gameData.playerIdToName.get(ownerId);
-            gameBroadcastService.logAndBroadcast(gameData, GameLog.text(exiledCard.getName() + " is exiled — " + ownerName
-                            + " may play it until the end of their next turn."));
+            gameBroadcastService.logAndBroadcast(gameData, GameLog.builder().card(exiledCard).text(" is exiled — " + ownerName + " may play it until the end of their next turn.").build());
         } else {
-            gameBroadcastService.logAndBroadcast(gameData, GameLog.text(exiledCard.getName() + " is exiled."));
+            gameBroadcastService.logAndBroadcast(gameData, GameLog.cardThen(exiledCard, " is exiled."));
         }
         log.info("Game {} - {} exiled by {} (owner may play until next turn)",
                 gameData.id, exiledCard.getName(), entry.getCard().getName());

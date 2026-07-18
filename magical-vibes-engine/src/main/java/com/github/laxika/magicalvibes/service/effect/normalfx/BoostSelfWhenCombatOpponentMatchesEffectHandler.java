@@ -55,8 +55,10 @@ public class BoostSelfWhenCombatOpponentMatchesEffectHandler implements NormalEf
         self.setPowerModifier(self.getPowerModifier() + boost.powerBoost());
         self.setToughnessModifier(self.getToughnessModifier() + boost.toughnessBoost());
 
-        gameBroadcastService.logAndBroadcast(gameData, GameLog.text(String.format(
-                "%s gets %+d/%+d until end of turn.", self.getCard().getName(), boost.powerBoost(), boost.toughnessBoost())));
+        gameBroadcastService.logAndBroadcast(gameData, GameLog.builder()
+                .card(self.getCard())
+                .text(String.format(" gets %+d/%+d until end of turn.", boost.powerBoost(), boost.toughnessBoost()))
+                .build());
         log.info("Game {} - {} gets {}/{} from combat-opponent trigger", gameData.id,
                 self.getCard().getName(), boost.powerBoost(), boost.toughnessBoost());
     }

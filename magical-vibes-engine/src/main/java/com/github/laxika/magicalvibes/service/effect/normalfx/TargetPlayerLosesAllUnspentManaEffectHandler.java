@@ -40,8 +40,7 @@ public class TargetPlayerLosesAllUnspentManaEffectHandler implements NormalEffec
         manaPool.clear();
         manaPool.clearPersistentMana();
 
-        String logMsg = entry.getCard().getName() + " empties the targeted player's mana pool.";
-        gameBroadcastService.logAndBroadcast(gameData, GameLog.text(logMsg));
+        gameBroadcastService.logAndBroadcast(gameData, GameLog.cardThen(entry.getCard(), " empties the targeted player's mana pool."));
         log.info("Game {} - {} empties target player's mana pool", gameData.id, entry.getCard().getName());
     }
 }

@@ -45,8 +45,7 @@ public class SwitchPowerToughnessEffectHandler implements NormalEffectHandlerBea
                 entry.getCard().getName(), entry.getSourcePermanentId(), entry.getControllerId(),
                 switchEffect, target.getId(), null, null, EffectDuration.UNTIL_END_OF_TURN, 0));
 
-        String logEntry = target.getCard().getName() + "'s power and toughness are switched until end of turn.";
-        gameBroadcastService.logAndBroadcast(gameData, GameLog.text(logEntry));
+        gameBroadcastService.logAndBroadcast(gameData, GameLog.cardThen(target.getCard(), "'s power and toughness are switched until end of turn."));
 
         log.info("Game {} - {}'s power and toughness switched", gameData.id, target.getCard().getName());
     }

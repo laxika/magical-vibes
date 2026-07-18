@@ -46,8 +46,7 @@ public class RevealTopCardCreatureToBattlefieldElseGraveyardEffectHandler implem
 
         Card topCard = deck.removeFirst();
 
-        gameBroadcastService.logAndBroadcast(gameData, GameLog.text(playerName + " reveals " + topCard.getName()
-                        + " from the top of their library (" + sourceName + ")."));
+        gameBroadcastService.logAndBroadcast(gameData, GameLog.builder().text(playerName + " reveals ").card(topCard).text(" from the top of their library (" + sourceName + ").").build());
 
         if (topCard.hasType(CardType.CREATURE)) {
             RevealTopCardCreatureToBattlefieldElseGraveyardEffect fx =
@@ -74,7 +73,7 @@ public class RevealTopCardCreatureToBattlefieldElseGraveyardEffectHandler implem
                     gameData.id, playerName, topCard.getName(), sourceName);
         } else {
             gameData.playerGraveyards.get(controllerId).add(topCard);
-            gameBroadcastService.logAndBroadcast(gameData, GameLog.text(playerName + " puts " + topCard.getName() + " into their graveyard (" + sourceName + ")."));
+            gameBroadcastService.logAndBroadcast(gameData, GameLog.builder().text(playerName + " puts ").card(topCard).text(" into their graveyard (" + sourceName + ").").build());
         }
     }
 }

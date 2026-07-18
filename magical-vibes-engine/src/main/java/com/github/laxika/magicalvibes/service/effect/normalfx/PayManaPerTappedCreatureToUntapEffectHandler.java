@@ -68,9 +68,7 @@ public class PayManaPerTappedCreatureToUntapEffectHandler implements NormalEffec
         int maxCount = Math.min(tappedMatchingIds.size(), affordable);
 
         if (maxCount <= 0) {
-            gameBroadcastService.logAndBroadcast(gameData, GameLog.text(entry.getCard().getName()
-                    + " triggers, but " + gameData.playerIdToName.get(actingPlayerId)
-                    + " can't pay to untap any creatures."));
+            gameBroadcastService.logAndBroadcast(gameData, GameLog.builder().card(entry.getCard()).text(" triggers, but " + gameData.playerIdToName.get(actingPlayerId) + " can't pay to untap any creatures.").build());
             return;
         }
 

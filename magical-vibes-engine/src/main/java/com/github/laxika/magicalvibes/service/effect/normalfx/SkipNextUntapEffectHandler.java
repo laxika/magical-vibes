@@ -52,7 +52,7 @@ public class SkipNextUntapEffectHandler implements NormalEffectHandlerBean {
         source.setSkipUntapCount(source.getSkipUntapCount() + 1);
 
         String logEntry = source.getCard().getName() + " won't untap during its controller's next untap step.";
-        gameBroadcastService.logAndBroadcast(gameData, GameLog.text(logEntry));
+        gameBroadcastService.logAndBroadcast(gameData, GameLog.cardThen(source.getCard(), " won't untap during its controller's next untap step."));
         log.info("Game {} - {} skip next untap set (self)", gameData.id, source.getCard().getName());
     }
 
@@ -64,8 +64,7 @@ public class SkipNextUntapEffectHandler implements NormalEffectHandlerBean {
 
         target.setSkipUntapCount(target.getSkipUntapCount() + 1);
 
-        String logEntry = target.getCard().getName() + " won't untap during its controller's next untap step.";
-        gameBroadcastService.logAndBroadcast(gameData, GameLog.text(logEntry));
+        gameBroadcastService.logAndBroadcast(gameData, GameLog.cardThen(target.getCard(), " won't untap during its controller's next untap step."));
         log.info("Game {} - {} skip next untap set", gameData.id, target.getCard().getName());
     }
 
@@ -92,7 +91,7 @@ public class SkipNextUntapEffectHandler implements NormalEffectHandlerBean {
         }
 
         String logMsg = entry.getCard().getName() + " prevents " + count + " permanent(s) from untapping during their controller's next untap step.";
-        gameBroadcastService.logAndBroadcast(gameData, GameLog.text(logMsg));
+        gameBroadcastService.logAndBroadcast(gameData, GameLog.builder().card(entry.getCard()).text(" prevents " + count + " permanent(s) from untapping during their controller's next untap step.").build());
         log.info("Game {} - {} skip next untap set on {} permanent(s)", gameData.id, entry.getCard().getName(), count);
     }
 
@@ -112,7 +111,7 @@ public class SkipNextUntapEffectHandler implements NormalEffectHandlerBean {
         });
 
         String logMsg = entry.getCard().getName() + " prevents " + count[0] + " creature(s) from untapping during their controller's next untap step.";
-        gameBroadcastService.logAndBroadcast(gameData, GameLog.text(logMsg));
+        gameBroadcastService.logAndBroadcast(gameData, GameLog.builder().card(entry.getCard()).text(" prevents " + count[0] + " creature(s) from untapping during their controller's next untap step.").build());
         log.info("Game {} - {} skip next untap set on {} creature(s)", gameData.id, entry.getCard().getName(), count[0]);
     }
 }

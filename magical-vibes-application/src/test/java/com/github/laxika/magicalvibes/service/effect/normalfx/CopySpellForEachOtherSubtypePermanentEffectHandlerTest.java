@@ -1,4 +1,7 @@
 package com.github.laxika.magicalvibes.service.effect.normalfx;
+
+import static org.mockito.ArgumentMatchers.argThat;
+import static org.mockito.ArgumentMatchers.eq;
 import com.github.laxika.magicalvibes.model.GameLog;
 import com.github.laxika.magicalvibes.model.GameLogEntry;
 import com.github.laxika.magicalvibes.service.battlefield.GameQueryService;
@@ -271,7 +274,7 @@ class CopySpellForEachOtherSubtypePermanentEffectHandlerTest {
 
                 copySpellForEachOtherSubtypeHandler.resolve(gd, triggerEntry, effect);
 
-                verify(gameBroadcastService, times(2)).logAndBroadcast(eq(gd), eq(GameLog.text("A copy of Shock is created targeting Golem.")));
+                verify(gameBroadcastService, times(2)).logAndBroadcast(eq(gd), argThat((GameLogEntry e) -> e.plainText().equals("A copy of Shock is created targeting Golem.")));
             }
 
             @Test

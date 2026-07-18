@@ -57,12 +57,12 @@ public class LandTapTriggerCollectorService {
         TriggerContext.LandTap lt = (TriggerContext.LandTap) ctx;
         var gameData = match.gameData();
         var tappingPlayerId = lt.tappingPlayerId();
-        String cardName = match.permanent().getCard().getName();
+        var sourceCard = match.permanent().getCard();
+        String cardName = sourceCard.getName();
         int damage = gameQueryService.applyDamageMultiplier(gameData, trigger.damage());
 
-        String logEntry = cardName + " triggers — deals " + damage + " damage to "
-                + gameData.playerIdToName.get(tappingPlayerId) + ".";
-        gameBroadcastService.logAndBroadcast(gameData, GameLog.text(logEntry));
+        gameBroadcastService.logAndBroadcast(gameData, GameLog.cardThen(sourceCard,
+                " triggers — deals " + damage + " damage to " + gameData.playerIdToName.get(tappingPlayerId) + "."));
         log.info("Game {} - {} triggers on land tap, dealing {} damage to {}",
                 gameData.id, cardName, damage, gameData.playerIdToName.get(tappingPlayerId));
 
@@ -77,7 +77,9 @@ public class LandTapTriggerCollectorService {
                 if (gameQueryService.canPlayerGetPoisonCounters(gameData, tappingPlayerId)) {
                     int currentPoison = gameData.playerPoisonCounters.getOrDefault(tappingPlayerId, 0);
                     gameData.playerPoisonCounters.put(tappingPlayerId, currentPoison + effectiveDamage);
-                    gameBroadcastService.logAndBroadcast(gameData, GameLog.text(gameData.playerIdToName.get(tappingPlayerId) + " gets " + effectiveDamage + " poison counters from " + cardName + "."));
+                    gameBroadcastService.logAndBroadcast(gameData, GameLog.textCardText(
+                            gameData.playerIdToName.get(tappingPlayerId) + " gets " + effectiveDamage + " poison counters from ",
+                            sourceCard, "."));
                 }
             } else if (effectiveDamage > 0 && !gameQueryService.canPlayerLifeChange(gameData, tappingPlayerId)) {
                 gameBroadcastService.logAndBroadcast(gameData, GameLog.text(gameData.playerIdToName.get(tappingPlayerId) + "'s life total can't change."));
@@ -106,10 +108,9 @@ public class LandTapTriggerCollectorService {
 
         lifeSupport.applyGainLife(match.gameData(), match.controllerId(), trigger.lifeAmount());
 
-        String logEntry = match.permanent().getCard().getName() + " triggers — "
-                + match.gameData().playerIdToName.get(match.controllerId())
-                + " gains " + trigger.lifeAmount() + " life.";
-        gameBroadcastService.logAndBroadcast(match.gameData(), GameLog.text(logEntry));
+        gameBroadcastService.logAndBroadcast(match.gameData(), GameLog.cardThen(match.permanent().getCard(),
+                " triggers — " + match.gameData().playerIdToName.get(match.controllerId())
+                        + " gains " + trigger.lifeAmount() + " life."));
         return true;
     }
 
@@ -125,7 +126,8 @@ public class LandTapTriggerCollectorService {
         var gameData = match.gameData();
         UUID tappingPlayerId = lt.tappingPlayerId();
         String playerName = gameData.playerIdToName.get(tappingPlayerId);
-        String cardName = match.permanent().getCard().getName();
+        var sourceCard = match.permanent().getCard();
+        String cardName = sourceCard.getName();
         ManaProducingEffect mana = trigger.mana();
 
         if (mana instanceof AwardAnyColorManaEffect anyColor) {
@@ -135,8 +137,8 @@ public class LandTapTriggerCollectorService {
             interactionHandlerRegistry.begin(gameData, new PendingInteraction.ColorChoice(
                     tappingPlayerId, null, null, choiceContext, colors, "Choose a color of mana to add."));
 
-            String logEntry = cardName + " triggers — " + playerName + " chooses a color of mana to add.";
-            gameBroadcastService.logAndBroadcast(gameData, GameLog.text(logEntry));
+            gameBroadcastService.logAndBroadcast(gameData, GameLog.cardThen(sourceCard,
+                    " triggers — " + playerName + " chooses a color of mana to add."));
             log.info("Game {} - Awaiting {} to choose a mana color from {}", gameData.id, playerName, cardName);
             return true;
         }
@@ -150,9 +152,8 @@ public class LandTapTriggerCollectorService {
 
             gameData.playerManaPools.get(tappingPlayerId).add(award.color(), amount);
 
-            String logEntry = cardName + " triggers - " + playerName
-                    + " adds " + amount + " " + award.color().name().toLowerCase() + " mana.";
-            gameBroadcastService.logAndBroadcast(gameData, GameLog.text(logEntry));
+            gameBroadcastService.logAndBroadcast(gameData, GameLog.cardThen(sourceCard,
+                    " triggers - " + playerName + " adds " + amount + " " + award.color().name().toLowerCase() + " mana."));
             return true;
         }
 
@@ -181,10 +182,9 @@ public class LandTapTriggerCollectorService {
         ManaPool pool = match.gameData().playerManaPools.get(lt.tappingPlayerId());
         pool.add(chosenManaColor);
 
-        String logEntry = match.permanent().getCard().getName() + " triggers — "
-                + match.gameData().playerIdToName.get(lt.tappingPlayerId())
-                + " adds 1 additional " + chosenColor.name().toLowerCase() + " mana.";
-        gameBroadcastService.logAndBroadcast(match.gameData(), GameLog.text(logEntry));
+        gameBroadcastService.logAndBroadcast(match.gameData(), GameLog.cardThen(match.permanent().getCard(),
+                " triggers — " + match.gameData().playerIdToName.get(lt.tappingPlayerId())
+                        + " adds 1 additional " + chosenColor.name().toLowerCase() + " mana."));
         return true;
     }
 
@@ -210,10 +210,9 @@ public class LandTapTriggerCollectorService {
         ManaPool pool = match.gameData().playerManaPools.get(lt.tappingPlayerId());
         pool.add(producedColor);
 
-        String logEntry = match.permanent().getCard().getName() + " triggers — "
-                + match.gameData().playerIdToName.get(lt.tappingPlayerId())
-                + " adds 1 additional " + producedColor.name().toLowerCase() + " mana.";
-        gameBroadcastService.logAndBroadcast(match.gameData(), GameLog.text(logEntry));
+        gameBroadcastService.logAndBroadcast(match.gameData(), GameLog.cardThen(match.permanent().getCard(),
+                " triggers — " + match.gameData().playerIdToName.get(lt.tappingPlayerId())
+                        + " adds 1 additional " + producedColor.name().toLowerCase() + " mana."));
         return true;
     }
 
@@ -241,10 +240,9 @@ public class LandTapTriggerCollectorService {
         ManaPool pool = match.gameData().playerManaPools.get(lt.tappingPlayerId());
         pool.add(producedColor);
 
-        String logEntry = match.permanent().getCard().getName() + " triggers — "
-                + match.gameData().playerIdToName.get(lt.tappingPlayerId())
-                + " adds 1 additional " + producedColor.name().toLowerCase() + " mana.";
-        gameBroadcastService.logAndBroadcast(match.gameData(), GameLog.text(logEntry));
+        gameBroadcastService.logAndBroadcast(match.gameData(), GameLog.cardThen(match.permanent().getCard(),
+                " triggers — " + match.gameData().playerIdToName.get(lt.tappingPlayerId())
+                        + " adds 1 additional " + producedColor.name().toLowerCase() + " mana."));
         return true;
     }
 
@@ -261,10 +259,9 @@ public class LandTapTriggerCollectorService {
         ManaPool pool = match.gameData().playerManaPools.get(lt.tappingPlayerId());
         pool.add(trigger.color());
 
-        String logEntry = match.permanent().getCard().getName() + " triggers — "
-                + match.gameData().playerIdToName.get(lt.tappingPlayerId())
-                + " adds 1 additional " + trigger.color().name().toLowerCase() + " mana.";
-        gameBroadcastService.logAndBroadcast(match.gameData(), GameLog.text(logEntry));
+        gameBroadcastService.logAndBroadcast(match.gameData(), GameLog.cardThen(match.permanent().getCard(),
+                " triggers — " + match.gameData().playerIdToName.get(lt.tappingPlayerId())
+                        + " adds 1 additional " + trigger.color().name().toLowerCase() + " mana."));
         return true;
     }
 
@@ -278,9 +275,8 @@ public class LandTapTriggerCollectorService {
         if (tappedLand == null) return false;
         if (!permanentRemovalService.removePermanentToHand(match.gameData(), tappedLand)) return false;
 
-        String logEntry = match.permanent().getCard().getName() + " triggers — "
-                + tappedLand.getCard().getName() + " is returned to its owner's hand.";
-        gameBroadcastService.logAndBroadcast(match.gameData(), GameLog.text(logEntry));
+        gameBroadcastService.logAndBroadcast(match.gameData(), GameLog.cardTextCard(match.permanent().getCard(),
+                " triggers — ", tappedLand.getCard(), " is returned to its owner's hand."));
         return true;
     }
 
@@ -296,10 +292,8 @@ public class LandTapTriggerCollectorService {
 
         tappedLand.setSkipUntapCount(tappedLand.getSkipUntapCount() + 1);
 
-        String logEntry = match.permanent().getCard().getName() + " triggers — "
-                + tappedLand.getCard().getName()
-                + " doesn't untap during its controller's next untap step.";
-        gameBroadcastService.logAndBroadcast(match.gameData(), GameLog.text(logEntry));
+        gameBroadcastService.logAndBroadcast(match.gameData(), GameLog.cardTextCard(match.permanent().getCard(),
+                " triggers — ", tappedLand.getCard(), " doesn't untap during its controller's next untap step."));
         return true;
     }
 }

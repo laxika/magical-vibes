@@ -77,7 +77,7 @@ public class DamageControllerUnlessDiscardThenTapSourceEffectHandler implements 
                     ? gameQueryService.findPermanentById(gameData, entry.getSourcePermanentId())
                     : null;
             if (source != null && tapUntapSupport.tapPermanent(gameData, source)) {
-                gameBroadcastService.logAndBroadcast(gameData, GameLog.text(source.getCard().getName() + " taps itself."));
+                gameBroadcastService.logAndBroadcast(gameData, GameLog.cardThen(source.getCard(), " taps itself."));
                 log.info("Game {} - {} taps itself after dealing damage to its controller", gameData.id, source.getCard().getName());
             }
         }

@@ -18,7 +18,6 @@ import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
 import java.util.UUID;
-import java.util.stream.Collectors;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Component;
@@ -109,9 +108,13 @@ public class SearchLibraryToTopChoiceInteractionHandler
         LibraryShuffleHelper.shuffleLibrary(gameData, controllerId);
 
         if (!chosen.isEmpty()) {
-            String revealed = chosen.stream().map(Card::getName).collect(Collectors.joining(", "));
-            gameBroadcastService.logAndBroadcast(gameData, GameLog.text(controllerName + " reveals " + revealed
-                    + " and shuffles their library."));
+            GameLog.Builder revealBuilder = GameLog.builder().text(controllerName + " reveals ");
+            for (int i = 0; i < chosen.size(); i++) {
+                if (i > 0) revealBuilder.text(", ");
+                revealBuilder.card(chosen.get(i));
+            }
+            revealBuilder.text(" and shuffles their library.");
+            gameBroadcastService.logAndBroadcast(gameData, revealBuilder.build());
         }
 
         if (chosen.isEmpty()) {
@@ -119,8 +122,7 @@ public class SearchLibraryToTopChoiceInteractionHandler
             finishResolution(gameData);
         } else if (chosen.size() == 1) {
             deck.addFirst(chosen.getFirst());
-            gameBroadcastService.logAndBroadcast(gameData, GameLog.text(controllerName + " puts "
-                    + chosen.getFirst().getName() + " on top of their library."));
+            gameBroadcastService.logAndBroadcast(gameData, GameLog.textCardText(controllerName + " puts ", chosen.getFirst(), " on top of their library."));
             finishResolution(gameData);
         } else {
             gameBroadcastService.logAndBroadcast(gameData, GameLog.text(controllerName + " puts " + chosen.size()

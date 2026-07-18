@@ -46,7 +46,7 @@ public class TargetDealsPowerDamageToTargetEffectHandler implements NormalEffect
         // The biting creature deals the damage — check if it is prevented from dealing damage
         if (gameQueryService.isDamagePreventable(gameData) && gameQueryService.isPreventedFromDealingDamage(gameData, biter)) {
             String logEntry = biter.getCard().getName() + "'s damage is prevented.";
-            gameBroadcastService.logAndBroadcast(gameData, GameLog.text(logEntry));
+            gameBroadcastService.logAndBroadcast(gameData, GameLog.cardThen(biter.getCard(), "'s damage is prevented."));
             return;
         }
 
@@ -54,7 +54,7 @@ public class TargetDealsPowerDamageToTargetEffectHandler implements NormalEffect
         if (gameQueryService.isDamagePreventable(gameData) && gameQueryService.hasProtectionFromSource(gameData, target, biter)) {
             CardColor biterColor = gameQueryService.getEffectiveColor(gameData, biter);
             String logEntry = target.getCard().getName() + " has protection from " + (biterColor != null ? biterColor.name().toLowerCase() : "source") + " — damage prevented.";
-            gameBroadcastService.logAndBroadcast(gameData, GameLog.text(logEntry));
+            gameBroadcastService.logAndBroadcast(gameData, GameLog.cardThen(biter.getCard(), "'s damage is prevented."));
             return;
         }
 

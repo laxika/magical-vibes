@@ -159,8 +159,7 @@ public class BrilliantUltimatumSupport {
         int landsPlayed = gameData.landsPlayedThisTurn.getOrDefault(playerId, 0);
         if (!isControllersTurn || landsPlayed >= gameData.getMaxLandsThisTurn(playerId)) {
             String reason = !isControllersTurn ? "not your turn" : "land already played this turn";
-            gameBroadcastService.logAndBroadcast(gameData, GameLog.text(card.getName()
-                    + " can't be played (" + reason + ") and stays exiled."));
+            gameBroadcastService.logAndBroadcast(gameData, GameLog.builder().card(card).text(" can't be played (" + reason + ") and stays exiled.").build());
             return;
         }
 

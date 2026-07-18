@@ -71,7 +71,7 @@ public class EachPlayerSacrificesFractionRoundedUpEffectHandler implements Norma
 
         if (autoSacrificeIds.isEmpty() && choosers.isEmpty()) {
             gameBroadcastService.logAndBroadcast(gameData,
-                    GameLog.text("No permanents to sacrifice for " + entry.getCard().getName() + "."));
+                    GameLog.textCardText("No permanents to sacrifice for ", entry.getCard(), "."));
             return;
         }
 

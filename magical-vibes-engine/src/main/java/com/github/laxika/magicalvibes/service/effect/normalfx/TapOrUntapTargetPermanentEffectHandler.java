@@ -38,13 +38,13 @@ public class TapOrUntapTargetPermanentEffectHandler implements NormalEffectHandl
             target.untap();
             triggerCollectionService.checkBecomesUntappedTriggers(gameData, target);
             String logEntry = entry.getCard().getName() + " untaps " + target.getCard().getName() + ".";
-            gameBroadcastService.logAndBroadcast(gameData, GameLog.text(logEntry));
+            gameBroadcastService.logAndBroadcast(gameData, GameLog.cardTextCard(entry.getCard(), " untaps ", target.getCard(), "."));
             log.info("Game {} - {} untaps {}", gameData.id, entry.getCard().getName(), target.getCard().getName());
         } else {
             target.tap();
             triggerCollectionService.checkEnchantedPermanentTapTriggers(gameData, target);
             String logEntry = entry.getCard().getName() + " taps " + target.getCard().getName() + ".";
-            gameBroadcastService.logAndBroadcast(gameData, GameLog.text(logEntry));
+            gameBroadcastService.logAndBroadcast(gameData, GameLog.cardTextCard(entry.getCard(), " taps ", target.getCard(), "."));
             log.info("Game {} - {} taps {}", gameData.id, entry.getCard().getName(), target.getCard().getName());
         }
     }

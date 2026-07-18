@@ -67,7 +67,7 @@ public class DealDamageToPlayersEffectHandler implements NormalEffectHandlerBean
     /** CONTROLLER: "deals N damage to you". */
     private void resolveController(GameData gameData, StackEntry entry, DealDamageToPlayersEffect e) {
         if (gameQueryService.isDamageFromSourcePrevented(gameData, entry.getCard().getColor())) {
-            gameBroadcastService.logAndBroadcast(gameData, GameLog.text(entry.getCard().getName() + "'s damage to controller is prevented."));
+            gameBroadcastService.logAndBroadcast(gameData, GameLog.cardThen(entry.getCard(), "'s damage to controller is prevented."));
         } else {
             int amount = evaluateAmount(gameData, entry, e, entry.getControllerId());
             int rawDamage = gameQueryService.applyDamageMultiplier(gameData, amount, entry);

@@ -66,13 +66,13 @@ public class ShuffleSelfAndGraveyardIntoLibraryEffectHandler implements NormalEf
         if (selfShuffled && graveyardCount > 0) {
             String logEntry = playerName + " shuffles " + entry.getCard().getName()
                     + " and their graveyard (" + LibraryShuffleSupport.pluralCards(graveyardCount) + ") into their library.";
-            gameBroadcastService.logAndBroadcast(gameData, GameLog.text(logEntry));
+            gameBroadcastService.logAndBroadcast(gameData, GameLog.builder().text(playerName + " shuffles ").card(entry.getCard()).text(" and their graveyard (" + LibraryShuffleSupport.pluralCards(graveyardCount) + ") into their library.").build());
         } else if (selfShuffled) {
             String logEntry = playerName + " shuffles " + entry.getCard().getName() + " into their library.";
-            gameBroadcastService.logAndBroadcast(gameData, GameLog.text(logEntry));
+            gameBroadcastService.logAndBroadcast(gameData, GameLog.textCardText(playerName + " shuffles " , entry.getCard(), " into their library."));
         } else if (graveyardCount > 0) {
-            String logEntry = playerName + " shuffles their graveyard (" + LibraryShuffleSupport.pluralCards(graveyardCount) + ") into their library.";
-            gameBroadcastService.logAndBroadcast(gameData, GameLog.text(logEntry));
+            gameBroadcastService.logAndBroadcast(gameData, GameLog.text(playerName + " shuffles their graveyard ("
+                    + LibraryShuffleSupport.pluralCards(graveyardCount) + ") into their library."));
         } else {
             String logEntry = playerName + " shuffles their library.";
             gameBroadcastService.logAndBroadcast(gameData, GameLog.text(logEntry));

@@ -48,7 +48,7 @@ public class ExileTopCardMayPlayUntilNextUpkeepEffectHandler implements NormalEf
 
         String logEntry = controllerName + " exiles " + topCard.getName()
                 + " from the top of their library (may play it until their next upkeep).";
-        gameBroadcastService.logAndBroadcast(gameData, GameLog.text(logEntry));
+        gameBroadcastService.logAndBroadcast(gameData, GameLog.builder().text(controllerName + " exiles ").card(topCard).text(" from the top of their library (may play it until their next upkeep).").build());
         log.info("Game {} - {} exiles {} from library top (may play until next upkeep)",
                 gameData.id, controllerName, topCard.getName());
     }

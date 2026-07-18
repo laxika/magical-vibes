@@ -51,8 +51,7 @@ public class ExileCreaturesFromGraveyardAndCreateTokensEffectHandler implements 
             Card card = gameQueryService.findCardInGraveyardById(gameData, cardId);
             if (card != null) {
                 graveyardReturnSupport.exileCardFromAnyGraveyard(gameData, cardId, card);
-                String exileLog = playerName + " exiles " + card.getName() + " from graveyard.";
-                gameBroadcastService.logAndBroadcast(gameData, GameLog.text(exileLog));
+                gameBroadcastService.logAndBroadcast(gameData, GameLog.textCardText(playerName + " exiles " , card, " from graveyard."));
                 tokensToCreate++;
             }
         }

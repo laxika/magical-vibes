@@ -64,8 +64,7 @@ public class PutCounterOnCreatureCostHandler implements PermanentChoiceCostHandl
         String counterWord = cost.count() == 1
                 ? "a " + counterLabel() + " counter"
                 : cost.count() + " " + counterLabel() + " counters";
-        String log = player.getUsername() + " puts " + counterWord + " on " + chosen.getCard().getName() + ".";
-        gameBroadcastService.logAndBroadcast(gameData, GameLog.text(log));
+        gameBroadcastService.logAndBroadcast(gameData, GameLog.textCardText(player.getUsername() + " puts " + counterWord + " on " , chosen.getCard(), "."));
     }
 
     @Override

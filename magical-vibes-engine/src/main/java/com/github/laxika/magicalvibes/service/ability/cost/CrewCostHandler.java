@@ -89,7 +89,7 @@ public class CrewCostHandler implements PermanentChoiceCostHandler {
         triggerCollectionService.checkEnchantedPermanentTapTriggers(gameData, chosen);
         String tapLog = player.getUsername() + " taps " + chosen.getCard().getName()
                 + " (power " + lastTappedCreaturePower + ") to crew.";
-        gameBroadcastService.logAndBroadcast(gameData, GameLog.text(tapLog));
+        gameBroadcastService.logAndBroadcast(gameData, GameLog.builder().text(player.getUsername() + " taps ").card(chosen.getCard()).text(" (power " + lastTappedCreaturePower + ") to crew.").build());
     }
 
     @Override

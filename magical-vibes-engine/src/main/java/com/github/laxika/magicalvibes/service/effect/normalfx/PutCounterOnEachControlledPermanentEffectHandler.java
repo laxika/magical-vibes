@@ -72,7 +72,7 @@ public class PutCounterOnEachControlledPermanentEffectHandler implements NormalE
         String counterName = permanentCounterSupport.counterTypeName(e.counterType());
         String counterText = amount == 1 ? "a " + counterName + " counter" : amount + " " + counterName + " counters";
         String logEntry = entry.getCard().getName() + " puts " + counterText + " on " + count + " permanent(s) you control.";
-        gameBroadcastService.logAndBroadcast(gameData, GameLog.text(logEntry));
+        gameBroadcastService.logAndBroadcast(gameData, GameLog.builder().card(entry.getCard()).text(" puts " + counterText + " on " + count + " permanent(s) you control.").build());
         log.info("Game {} - {} puts {} {} counter(s) on {} controlled permanent(s)", gameData.id,
                 entry.getCard().getName(), amount, counterName, count);
 

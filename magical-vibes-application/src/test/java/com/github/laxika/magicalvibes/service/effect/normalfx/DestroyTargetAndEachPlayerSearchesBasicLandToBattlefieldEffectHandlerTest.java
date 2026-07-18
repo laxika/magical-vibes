@@ -164,7 +164,7 @@ class DestroyTargetAndEachPlayerSearchesBasicLandToBattlefieldEffectHandlerTest 
                 destroyTargetAndEachPlayerSearchesBasicLandHandler.resolve(gd, entry, effect);
 
                 verify(permanentRemovalService).tryDestroyPermanent(gd, target, false);
-                verify(gameBroadcastService).logAndBroadcast(eq(gd), eq(GameLog.text("Ghost Quarter is destroyed.")));
+                verify(gameBroadcastService).logAndBroadcast(eq(gd), eq(GameLog.isDestroyed(target.getCard())));
             }
 
             @Test

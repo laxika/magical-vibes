@@ -49,8 +49,7 @@ public class RemoveCounterFromSourceAndGainLifeEffectHandler implements NormalEf
 
         self.setCounterCount(e.counterType(), self.getCounterCount(e.counterType()) - 1);
         String counterName = permanentCounterSupport.counterTypeName(e.counterType());
-        gameBroadcastService.logAndBroadcast(gameData, GameLog.text(
-                "A " + counterName + " counter removed from " + self.getCard().getName() + "."));
+        gameBroadcastService.logAndBroadcast(gameData, GameLog.textCardText("A " + counterName + " counter removed from ", self.getCard(), "."));
         log.info("Game {} - {} counter removed from {}", gameData.id, e.counterType(), self.getCard().getName());
 
         lifeSupport.applyGainLife(gameData, entry.getControllerId(), e.lifeGain(), null,

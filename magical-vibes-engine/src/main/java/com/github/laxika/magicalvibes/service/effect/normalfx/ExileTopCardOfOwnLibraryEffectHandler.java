@@ -53,8 +53,7 @@ public class ExileTopCardOfOwnLibraryEffectHandler implements NormalEffectHandle
             exileService.exileCard(gameData, controllerId, topCard);
         }
 
-        String logEntry = controllerName + " exiles " + topCard.getName() + " from the top of their library.";
-        gameBroadcastService.logAndBroadcast(gameData, GameLog.text(logEntry));
+        gameBroadcastService.logAndBroadcast(gameData, GameLog.textCardText(controllerName + " exiles " , topCard, " from the top of their library."));
         log.info("Game {} - {} exiles {} from library top", gameData.id, controllerName, topCard.getName());
     }
 }

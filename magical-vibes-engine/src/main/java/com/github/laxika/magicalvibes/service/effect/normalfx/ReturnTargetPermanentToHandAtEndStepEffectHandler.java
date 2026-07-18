@@ -36,8 +36,7 @@ public class ReturnTargetPermanentToHandAtEndStepEffectHandler implements Normal
 
         gameData.queueDelayedAction(new DelayedPermanentAction(target.getId(), DelayedPermanentActionKind.RETURN_TO_HAND_AT_END_STEP));
 
-        String logEntry = target.getCard().getName() + " will be returned to its owner's hand at the beginning of the next end step.";
-        gameBroadcastService.logAndBroadcast(gameData, GameLog.text(logEntry));
+        gameBroadcastService.logAndBroadcast(gameData, GameLog.cardThen(target.getCard(), " will be returned to its owner's hand at the beginning of the next end step."));
         log.info("Game {} - {} scheduled for return to hand at end step", gameData.id, target.getCard().getName());
     }
 }

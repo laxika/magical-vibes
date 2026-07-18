@@ -1,5 +1,9 @@
 package com.github.laxika.magicalvibes.service.effect.normalfx;
+
+import static org.mockito.ArgumentMatchers.argThat;
+import static org.mockito.ArgumentMatchers.eq;
 import com.github.laxika.magicalvibes.model.GameLog;
+import com.github.laxika.magicalvibes.model.GameLogEntry;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.mockito.ArgumentMatchers.any;
@@ -139,7 +143,7 @@ class ReturnToHandEffectHandlerTest {
 
             verify(permanentRemovalService).removePermanentToHand(gd, target);
             verify(permanentRemovalService).removeOrphanedAuras(gd);
-            verify(gameBroadcastService).logAndBroadcast(eq(gd), eq(GameLog.text("Grizzly Bears is returned to its owner's hand.")));
+            verify(gameBroadcastService).logAndBroadcast(eq(gd), argThat((GameLogEntry e) -> e.plainText().equals("Grizzly Bears is returned to its owner's hand.")));
         }
 
         @Test
@@ -243,7 +247,7 @@ class ReturnToHandEffectHandlerTest {
 
             verify(permanentRemovalService).removePermanentToHand(gd, permanent);
             verify(permanentRemovalService).removeOrphanedAuras(gd);
-            verify(gameBroadcastService).logAndBroadcast(eq(gd), eq(GameLog.text("Viashino Sandscout is returned to its owner's hand.")));
+            verify(gameBroadcastService).logAndBroadcast(eq(gd), argThat((GameLogEntry e) -> e.plainText().equals("Viashino Sandscout is returned to its owner's hand.")));
         }
 
         @Test
@@ -260,7 +264,7 @@ class ReturnToHandEffectHandlerTest {
             handler.resolve(gd, entry, effect);
 
             verify(permanentRemovalService, never()).removePermanentToHand(any(), any());
-            verify(gameBroadcastService).logAndBroadcast(eq(gd), eq(GameLog.text("Viashino Sandscout is no longer on the battlefield.")));
+            verify(gameBroadcastService).logAndBroadcast(eq(gd), argThat((GameLogEntry e) -> e.plainText().equals("Viashino Sandscout is no longer on the battlefield.")));
         }
     }
 

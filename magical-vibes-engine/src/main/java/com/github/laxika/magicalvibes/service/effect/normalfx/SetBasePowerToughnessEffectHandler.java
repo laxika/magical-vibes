@@ -54,7 +54,7 @@ public class SetBasePowerToughnessEffectHandler implements NormalEffectHandlerBe
                 e, target.getId(), null, null, EffectDuration.UNTIL_END_OF_TURN, 0));
 
         String logEntry = target.getCard().getName() + " has base power and toughness " + e.power() + "/" + e.toughness() + " until end of turn.";
-        gameBroadcastService.logAndBroadcast(gameData, GameLog.text(logEntry));
+        gameBroadcastService.logAndBroadcast(gameData, GameLog.builder().card(target.getCard()).text(" has base power and toughness " + e.power() + "/" + e.toughness() + " until end of turn.").build());
 
         log.info("Game {} - {} base P/T set to {}/{}", gameData.id, target.getCard().getName(), e.power(), e.toughness());
     }

@@ -868,8 +868,8 @@ public class BattlefieldEntryService {
                         gameData.queueInteraction(new PermanentChoiceContext.ETBTokenMultiTargetTrigger(
                                 card, controllerId, new ArrayList<>(otherEffects), sourcePermanentId, List.of(), 0, 0));
                     }
-                    String etbLog = card.getName() + "'s enter-the-battlefield ability triggers — choose targets.";
-                    gameBroadcastService.logAndBroadcast(gameData, GameLog.text(etbLog));
+                    gameBroadcastService.logAndBroadcast(gameData,
+                            GameLog.cardThen(card, "'s enter-the-battlefield ability triggers — choose targets."));
                     log.info("Game {} - {} ETB multi-target trigger queued (no target chosen at cast time)",
                             gameData.id, card.getName());
                 } else {
@@ -881,8 +881,8 @@ public class BattlefieldEntryService {
                         gameData.queueInteraction(new PermanentChoiceContext.ETBTokenTargetTrigger(
                                 card, controllerId, new ArrayList<>(otherEffects), sourcePermanentId, etbTargetFilter));
                     }
-                    String etbLog = card.getName() + "'s enter-the-battlefield ability triggers — choose a target.";
-                    gameBroadcastService.logAndBroadcast(gameData, GameLog.text(etbLog));
+                    gameBroadcastService.logAndBroadcast(gameData,
+                            GameLog.cardThen(card, "'s enter-the-battlefield ability triggers — choose a target."));
                     log.info("Game {} - {} ETB trigger queued for target selection (no target chosen at cast time)",
                             gameData.id, card.getName());
                 }
@@ -908,8 +908,7 @@ public class BattlefieldEntryService {
                     etbEntry.setTargetFilter(modeTargetFilter);
                 }
                 gameData.stack.add(etbEntry);
-                String etbLog = card.getName() + "'s enter-the-battlefield ability triggers.";
-                gameBroadcastService.logAndBroadcast(gameData, GameLog.text(etbLog));
+                gameBroadcastService.logAndBroadcast(gameData, GameLog.cardThen(card, "'s enter-the-battlefield ability triggers."));
                 log.info("Game {} - {} ETB ability pushed onto stack", gameData.id, card.getName());
                 // Naban: extra triggers for Wizard ETB
                 for (int i = 0; i < extraWizardTriggers; i++) {
@@ -931,7 +930,7 @@ public class BattlefieldEntryService {
                         extraEtbEntry.setTargetFilter(modeTargetFilter);
                     }
                     gameData.stack.add(extraEtbEntry);
-                    gameBroadcastService.logAndBroadcast(gameData, GameLog.text(etbLog));
+                    gameBroadcastService.logAndBroadcast(gameData, GameLog.cardThen(card, "'s enter-the-battlefield ability triggers."));
                     log.info("Game {} - {} ETB ability pushed onto stack (Wizard ETB extra trigger)", gameData.id, card.getName());
                 }
             }

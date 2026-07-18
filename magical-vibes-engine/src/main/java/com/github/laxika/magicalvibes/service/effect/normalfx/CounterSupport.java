@@ -105,10 +105,13 @@ public class CounterSupport {
             graveyardService.addCardToGraveyard(gameData, target.getControllerId(), target.getCard());
         }
 
-        String logMsg = isAbility
-                ? target.getCard().getName() + "'s ability is countered."
-                : target.getCard().getName() + " is countered.";
-        gameBroadcastService.logAndBroadcast(gameData, GameLog.text(logMsg));
+        if (isAbility) {
+            gameBroadcastService.logAndBroadcast(gameData,
+                    GameLog.cardThen(target.getCard(), "'s ability is countered."));
+        } else {
+            gameBroadcastService.logAndBroadcast(gameData,
+                    GameLog.cardThen(target.getCard(), " is countered."));
+        }
         log.info("Game {} - {} countered {}", gameData.id, source.getCard().getName(), target.getCard().getName());
     }
 
@@ -125,8 +128,7 @@ public class CounterSupport {
             gameData.playerDecks.get(target.getControllerId()).add(0, target.getCard());
         }
 
-        String logMsg = target.getCard().getName() + " is countered and put on top of its owner's library.";
-        gameBroadcastService.logAndBroadcast(gameData, GameLog.text(logMsg));
+        gameBroadcastService.logAndBroadcast(gameData, GameLog.cardThen(target.getCard(), " is countered and put on top of its owner's library."));
         log.info("Game {} - {} countered {} onto its owner's library", gameData.id,
                 source.getCard().getName(), target.getCard().getName());
     }
@@ -161,7 +163,7 @@ public class CounterSupport {
         }
 
         String logMsg = target.getCard().getName() + " is countered.";
-        gameBroadcastService.logAndBroadcast(gameData, GameLog.text(logMsg));
+        gameBroadcastService.logAndBroadcast(gameData, GameLog.cardThen(target.getCard(), " is countered."));
         log.info("Game {} - {} countered {}", gameData.id, source.getCard().getName(), target.getCard().getName());
         return gained;
     }
@@ -179,8 +181,7 @@ public class CounterSupport {
             exileService.exileCard(gameData, target.getControllerId(), target.getCard());
         }
 
-        String logMsg = target.getCard().getName() + " is countered and exiled.";
-        gameBroadcastService.logAndBroadcast(gameData, GameLog.text(logMsg));
+        gameBroadcastService.logAndBroadcast(gameData, GameLog.cardThen(target.getCard(), " is countered and exiled."));
         log.info("Game {} - {} countered and exiled {}", gameData.id, source.getCard().getName(), target.getCard().getName());
     }
 
@@ -213,8 +214,7 @@ public class CounterSupport {
                 spell.getId()
         ));
 
-        String logMsg = spell.getName() + " is exiled instead of countered (Guile).";
-        gameBroadcastService.logAndBroadcast(gameData, GameLog.text(logMsg));
+        gameBroadcastService.logAndBroadcast(gameData, GameLog.cardThen(spell, " is exiled instead of countered (Guile)."));
         log.info("Game {} - {} exiled {} instead of countering (Guile)", gameData.id,
                 source.getCard().getName(), spell.getName());
         return true;

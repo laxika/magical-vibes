@@ -133,7 +133,7 @@ class DestroyAttachmentsOnTargetCreatureEffectHandlerTest {
             handler.resolve(gd, entry, new DestroyAttachmentsOnTargetCreatureEffect(false, true));
 
             verify(permanentRemovalService).tryDestroyPermanent(gd, scimitar, false);
-            verify(gameBroadcastService).logAndBroadcast(gd, GameLog.text("Leonin Scimitar is destroyed."));
+            verify(gameBroadcastService).logAndBroadcast(gd, GameLog.isDestroyed(scimitar.getCard()));
         }
 
         @Test

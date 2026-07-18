@@ -68,8 +68,7 @@ public class MultiplePermanentUntapCostHandler implements PermanentChoiceCostHan
             throw new IllegalStateException("Permanent does not match the required predicate");
         }
         chosen.untap();
-        String untapLog = player.getUsername() + " untaps " + chosen.getCard().getName() + " as a cost.";
-        gameBroadcastService.logAndBroadcast(gameData, GameLog.text(untapLog));
+        gameBroadcastService.logAndBroadcast(gameData, GameLog.textCardText(player.getUsername() + " untaps " , chosen.getCard(), " as a cost."));
     }
 
     @Override

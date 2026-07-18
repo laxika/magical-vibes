@@ -117,16 +117,20 @@ public class CreatureControlService {
                 && permanent.getCard().getSubtypes().contains(CardSubtype.EQUIPMENT)) {
             permanent.setAttachedTo(null);
             gameData.expireFloatingEffectsForUnattachedSource(permanent.getId());
-            String unattachLog = permanent.getCard().getName() + " becomes unattached.";
-            gameBroadcastService.logAndBroadcast(gameData, GameLog.text(unattachLog));
+            gameBroadcastService.logAndBroadcast(gameData, GameLog.cardThen(permanent.getCard(), " becomes unattached."));
             log.info("Game {} - {} unattached on control change", gameData.id, permanent.getCard().getName());
         }
 
         String newControllerName = gameData.playerIdToName.get(derived);
-        String logEntry = revertedToDefault
-                ? permanent.getCard().getName() + " returns to " + newControllerName + "'s control."
-                : newControllerName + " gains control of " + permanent.getCard().getName() + ".";
-        gameBroadcastService.logAndBroadcast(gameData, GameLog.text(logEntry));
+        if (revertedToDefault) {
+            gameBroadcastService.logAndBroadcast(gameData, GameLog.builder()
+                    .card(permanent.getCard())
+                    .text(" returns to " + newControllerName + "'s control.")
+                    .build());
+        } else {
+            gameBroadcastService.logAndBroadcast(gameData, GameLog.textCardText(
+                    newControllerName + " gains control of ", permanent.getCard(), "."));
+        }
         log.info("Game {} - {} controls {}", gameData.id, newControllerName, permanent.getCard().getName());
 
         // "For as long as you control [source]" effects keyed to THIS permanent end when it

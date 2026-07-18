@@ -56,8 +56,7 @@ public class ExileTopCardOfOpponentLibraryControllerMayPlayThisTurnEffectHandler
         gameData.exilePlayPermissionsExpireEndOfTurn.add(topCard.getId());
 
         String controllerName = gameData.playerIdToName.get(controllerId);
-        gameBroadcastService.logAndBroadcast(gameData, GameLog.text(opponentName + " exiles " + topCard.getName()
-                + " from the top of their library — " + controllerName + " may play it this turn."));
+        gameBroadcastService.logAndBroadcast(gameData, GameLog.builder().text(opponentName + " exiles ").card(topCard).text(" from the top of their library — " + controllerName + " may play it this turn.").build());
         log.info("Game {} - {} exiles {} from {}'s library top; {} may play it this turn",
                 gameData.id, opponentName, topCard.getName(), opponentName, controllerName);
     }

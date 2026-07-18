@@ -28,6 +28,6 @@ public class PutTargetCardsFromGraveyardOnTopOfLibraryEffectHandler implements N
         List<Card> library = gameData.playerDecks.get(entry.getControllerId());
         graveyardReturnSupport.processTargetedGraveyardCards(gameData, entry,
                 (graveyard, card) -> library.addFirst(card),
-                movedNames -> " puts " + String.join(", ", movedNames) + " on top of their library from graveyard.");
+                " puts ", " on top of their library from graveyard.");
     }
 }

@@ -40,7 +40,7 @@ public class ReorderTopCardsOfTargetLibraryEffectHandler implements NormalEffect
         int count = Math.min(reorder.count(), deck.size());
         if (count == 0) {
             String logMsg = entry.getCard().getName() + ": " + targetName + "'s library is empty, nothing to reorder.";
-            gameBroadcastService.logAndBroadcast(gameData, GameLog.text(logMsg));
+            gameBroadcastService.logAndBroadcast(gameData, GameLog.builder().card(entry.getCard()).text(": " + targetName + "'s library is empty, nothing to reorder.").build());
             return;
         }
 

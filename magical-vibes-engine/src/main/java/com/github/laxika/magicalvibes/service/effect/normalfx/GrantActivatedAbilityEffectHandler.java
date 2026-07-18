@@ -82,7 +82,7 @@ public class GrantActivatedAbilityEffectHandler implements NormalEffectHandlerBe
                 ? "until your next turn" : "until end of turn";
         String logEntry = entry.getCard().getName() + " grants \"" + e.ability().getDescription()
                 + "\" to " + count + " creature(s) " + durationText + ".";
-        gameBroadcastService.logAndBroadcast(gameData, GameLog.text(logEntry));
+        gameBroadcastService.logAndBroadcast(gameData, GameLog.builder().card(entry.getCard()).text(" grants \"" + e.ability().getDescription() + "\" to " + count + " creature(s) " + durationText + ".").build());
         log.info("Game {} - {} grants activated ability to {} creature(s) {}",
                 gameData.id, entry.getCard().getName(), count, durationText);
     }

@@ -46,7 +46,6 @@ public class RemoveCounterFromSourceEffectHandler implements NormalEffectHandler
         self.setCounterCount(e.counterType(), current - removed);
 
         String counterName = permanentCounterSupport.counterTypeName(e.counterType());
-        gameBroadcastService.logAndBroadcast(gameData, GameLog.text(self.getCard().getName()
-                + " removes " + removed + " " + counterName + " counter(s)."));
+        gameBroadcastService.logAndBroadcast(gameData, GameLog.builder().card(self.getCard()).text(" removes " + removed + " " + counterName + " counter(s).").build());
     }
 }

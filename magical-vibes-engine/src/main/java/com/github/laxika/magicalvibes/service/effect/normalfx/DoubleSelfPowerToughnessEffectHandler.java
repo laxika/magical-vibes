@@ -42,7 +42,7 @@ public class DoubleSelfPowerToughnessEffectHandler implements NormalEffectHandle
         self.setToughnessModifier(self.getToughnessModifier() + currentToughness);
 
         String logEntry = self.getCard().getName() + "'s power and toughness are doubled (+" + currentPower + "/+" + currentToughness + ").";
-        gameBroadcastService.logAndBroadcast(gameData, GameLog.text(logEntry));
+        gameBroadcastService.logAndBroadcast(gameData, GameLog.builder().card(self.getCard()).text("'s power and toughness are doubled (+" + currentPower + "/+" + currentToughness + ").").build());
 
         log.info("Game {} - {} power/toughness doubled (+{}/+{})", gameData.id, self.getCard().getName(), currentPower, currentToughness);
     }

@@ -53,9 +53,7 @@ public class TapCreaturesGainLifePerCreatureEffectHandler implements NormalEffec
         }
 
         if (untappedCreatureIds.isEmpty()) {
-            gameBroadcastService.logAndBroadcast(gameData, GameLog.text(entry.getCard().getName()
-                    + " resolves, but " + gameData.playerIdToName.get(controllerId)
-                    + " controls no untapped creatures."));
+            gameBroadcastService.logAndBroadcast(gameData, GameLog.builder().card(entry.getCard()).text(" resolves, but " + gameData.playerIdToName.get(controllerId) + " controls no untapped creatures.").build());
             return;
         }
 

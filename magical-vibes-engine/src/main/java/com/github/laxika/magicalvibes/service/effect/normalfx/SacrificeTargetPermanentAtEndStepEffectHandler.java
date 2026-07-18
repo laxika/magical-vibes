@@ -36,8 +36,7 @@ public class SacrificeTargetPermanentAtEndStepEffectHandler implements NormalEff
 
         gameData.queueDelayedAction(new DelayedPermanentAction(target.getId(), DelayedPermanentActionKind.SACRIFICE_AT_END_STEP));
 
-        String logEntry = target.getCard().getName() + " will be sacrificed at the beginning of the next end step.";
-        gameBroadcastService.logAndBroadcast(gameData, GameLog.text(logEntry));
+        gameBroadcastService.logAndBroadcast(gameData, GameLog.cardThen(target.getCard(), " will be sacrificed at the beginning of the next end step."));
         log.info("Game {} - {} scheduled for sacrifice at end step", gameData.id, target.getCard().getName());
     }
 }

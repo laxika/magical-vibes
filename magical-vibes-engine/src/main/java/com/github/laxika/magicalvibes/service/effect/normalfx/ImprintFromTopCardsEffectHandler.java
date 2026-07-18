@@ -50,8 +50,7 @@ public class ImprintFromTopCardsEffectHandler implements NormalEffectHandlerBean
             if (sourcePermanentId != null) {
                 gameQueryService.setImprintedCardOnPermanent(gameData, sourcePermanentId, topCards.getFirst());
             }
-            String exileLog = playerName + " exiles a card face down with " + entry.getCard().getName() + ".";
-            gameBroadcastService.logAndBroadcast(gameData, GameLog.text(exileLog));
+            gameBroadcastService.logAndBroadcast(gameData, GameLog.textCardText(playerName + " exiles a card face down with " , entry.getCard(), "."));
             return;
         }
 

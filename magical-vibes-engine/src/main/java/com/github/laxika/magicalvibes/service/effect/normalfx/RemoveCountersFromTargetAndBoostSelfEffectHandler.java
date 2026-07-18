@@ -103,8 +103,7 @@ public class RemoveCountersFromTargetAndBoostSelfEffectHandler implements Normal
         }
 
         if (totalRemoved > 0) {
-            String logEntry = totalRemoved + " counter(s) removed from " + target.getCard().getName() + ".";
-            gameBroadcastService.logAndBroadcast(gameData, GameLog.text(logEntry));
+            gameBroadcastService.logAndBroadcast(gameData, GameLog.textCardText(totalRemoved + " counter(s) removed from " , target.getCard(), "."));
             log.info("Game {} - {} counter(s) removed from {}", gameData.id, totalRemoved, target.getCard().getName());
         }
 
@@ -114,7 +113,7 @@ public class RemoveCountersFromTargetAndBoostSelfEffectHandler implements Normal
             if (source != null) {
                 source.setPowerModifier(source.getPowerModifier() + totalRemoved);
                 String boostLog = source.getCard().getName() + " gets +" + totalRemoved + "/+0 until end of turn.";
-                gameBroadcastService.logAndBroadcast(gameData, GameLog.text(boostLog));
+                gameBroadcastService.logAndBroadcast(gameData, GameLog.builder().card(source.getCard()).text(" gets +" + totalRemoved + "/+0 until end of turn.").build());
                 log.info("Game {} - {} gets +{}/+0", gameData.id, source.getCard().getName(), totalRemoved);
             }
         }

@@ -40,12 +40,12 @@ public class SacrificeSelfAndTargetDiscardsPerPoisonCounterEffectHandler impleme
 
         Permanent source = gameQueryService.findPermanentById(gameData, sourcePermanentId);
         if (source == null) {
-            gameBroadcastService.logAndBroadcast(gameData, GameLog.text(entry.getCard().getName() + "'s ability fizzles — source no longer on the battlefield."));
+            gameBroadcastService.logAndBroadcast(gameData, GameLog.cardThen(entry.getCard(), "'s ability fizzles — source no longer on the battlefield."));
             return;
         }
 
         permanentRemovalService.removePermanentToGraveyard(gameData, source);
-        gameBroadcastService.logAndBroadcast(gameData, GameLog.text(entry.getCard().getName() + " is sacrificed."));
+        gameBroadcastService.logAndBroadcast(gameData, GameLog.cardThen(entry.getCard(), " is sacrificed."));
 
         int poisonCounters = gameData.playerPoisonCounters.getOrDefault(targetPlayerId, 0);
         if (poisonCounters <= 0) {
@@ -55,8 +55,7 @@ public class SacrificeSelfAndTargetDiscardsPerPoisonCounterEffectHandler impleme
         }
 
         String playerName = gameData.playerIdToName.get(targetPlayerId);
-        gameBroadcastService.logAndBroadcast(gameData, GameLog.text(playerName + " must discard " + poisonCounters + " card" + (poisonCounters > 1 ? "s" : "")
-                        + " (" + entry.getCard().getName() + ")."));
+        gameBroadcastService.logAndBroadcast(gameData, GameLog.textCardText(playerName + " must discard " + poisonCounters + " card" + (poisonCounters > 1 ? "s" : "") + " (", entry.getCard(), ")."));
 
         playerInteractionSupport.resolveDiscardCards(gameData, targetPlayerId, poisonCounters);
     

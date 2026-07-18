@@ -38,7 +38,7 @@ public class PlayImprintedCardWithoutPayingManaCostEffectHandler implements Norm
         Card imprintedCard = gameData.getImprintedCard(entry.getCard());
 
         if (imprintedCard == null || gameData.findExiledCard(imprintedCard.getId()) == null) {
-            gameBroadcastService.logAndBroadcast(gameData, GameLog.text(entry.getCard().getName() + " has no exiled card to play."));
+            gameBroadcastService.logAndBroadcast(gameData, GameLog.cardThen(entry.getCard(), " has no exiled card to play."));
             return;
         }
 

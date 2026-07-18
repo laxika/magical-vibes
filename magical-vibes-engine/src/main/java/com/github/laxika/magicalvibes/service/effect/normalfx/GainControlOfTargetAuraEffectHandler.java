@@ -49,8 +49,7 @@ public class GainControlOfTargetAuraEffectHandler implements NormalEffectHandler
                     gameData.playerBattlefields.get(currentControllerId).remove(aura);
                     gameData.playerBattlefields.get(casterId).add(aura);
                     String casterName = gameData.playerIdToName.get(casterId);
-                    String logEntry = casterName + " gains control of " + aura.getCard().getName() + ".";
-                    gameBroadcastService.logAndBroadcast(gameData, GameLog.text(logEntry));
+                    gameBroadcastService.logAndBroadcast(gameData, GameLog.textCardText(casterName + " gains control of " , aura.getCard(), "."));
                     log.info("Game {} - {} gains control of {}", gameData.id, casterName, aura.getCard().getName());
 
                     // A control Aura (e.g. In Bolas's Clutches) grants control to whoever controls
@@ -82,8 +81,7 @@ public class GainControlOfTargetAuraEffectHandler implements NormalEffectHandler
                     playerInputService.beginPermanentChoice(gameData, casterId, validTargetIds,
                             "Attach " + aura.getCard().getName() + " to another permanent it can enchant.");
                 } else {
-                    String logEntry = aura.getCard().getName() + " stays attached to its current target (no other valid permanents).";
-                    gameBroadcastService.logAndBroadcast(gameData, GameLog.text(logEntry));
+                    gameBroadcastService.logAndBroadcast(gameData, GameLog.cardThen(aura.getCard(), " stays attached to its current target (no other valid permanents)."));
                 }
     
     }

@@ -48,8 +48,7 @@ public class CopyControllerCastSpellEffectHandler implements NormalEffectHandler
 
         gameData.stack.add(copyEntry);
 
-        String logMsg = "A copy of " + spellCard.getName() + " is created.";
-        gameBroadcastService.logAndBroadcast(gameData, GameLog.text(logMsg));
+        gameBroadcastService.logAndBroadcast(gameData, GameLog.textCardText("A copy of ", spellCard, " is created."));
         log.info("Game {} - copy of {} created for controller", gameData.id, spellCard.getName());
 
         if (copyEntry.getTargetId() != null) {

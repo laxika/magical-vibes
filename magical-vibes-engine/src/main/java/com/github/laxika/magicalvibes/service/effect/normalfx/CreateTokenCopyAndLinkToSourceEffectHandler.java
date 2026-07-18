@@ -66,8 +66,7 @@ public class CreateTokenCopyAndLinkToSourceEffectHandler implements NormalEffect
         sourceEnchantment.setChosenPermanentId(tokenPermanent.getId());
         tokenPermanent.setChosenPermanentId(sourceEnchantment.getId());
 
-        String logMsg = "A token copy of " + sourceCard.getName() + " is created.";
-        gameBroadcastService.logAndBroadcast(gameData, GameLog.text(logMsg));
+        gameBroadcastService.logAndBroadcast(gameData, GameLog.textCardText("A token copy of ", sourceCard, " is created."));
         log.info("Game {} - Dance of Many creates a token copy of {}", gameData.id, sourceCard.getName());
 
         // The token wasn't cast; any targeted ETB ability of the copied creature chooses its target at

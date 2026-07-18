@@ -72,7 +72,7 @@ public class SacrificeUnlessDiscardCardTypeEffectHandler implements NormalEffect
                 permanentRemovalService.removePermanentToGraveyard(gameData, sourcePermanent);
                 String logEntry = playerName + " has no " + typeName
                         + " to discard. " + sourceCard.getName() + " is sacrificed.";
-                gameBroadcastService.logAndBroadcast(gameData, GameLog.text(logEntry));
+                gameBroadcastService.logAndBroadcast(gameData, GameLog.builder().text(playerName + " has no " + typeName + " to discard. ").card(sourceCard).text(" is sacrificed.").build());
                 log.info("Game {} - {} sacrificed (no {} to discard)", gameData.id, sourceCard.getName(), typeName);
             } else {
                 // Permanent already gone and no valid cards — nothing to do

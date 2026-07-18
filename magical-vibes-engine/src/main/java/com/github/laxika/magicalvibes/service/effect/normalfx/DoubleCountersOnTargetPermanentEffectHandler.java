@@ -46,8 +46,7 @@ public class DoubleCountersOnTargetPermanentEffectHandler implements NormalEffec
         }
 
         if (doubledAny) {
-            String logEntry = "Doubled the number of each kind of counter on " + target.getCard().getName() + ".";
-            gameBroadcastService.logAndBroadcast(gameData, GameLog.text(logEntry));
+            gameBroadcastService.logAndBroadcast(gameData, GameLog.textCardText("Doubled the number of each kind of counter on ", target.getCard(), "."));
             log.info("Game {} - doubled counters on {}", gameData.id, target.getCard().getName());
         }
     }

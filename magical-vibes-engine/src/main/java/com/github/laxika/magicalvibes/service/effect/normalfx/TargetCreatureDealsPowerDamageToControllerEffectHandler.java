@@ -44,7 +44,7 @@ public class TargetCreatureDealsPowerDamageToControllerEffectHandler implements 
         // damage, nothing happens.
         if (gameQueryService.isDamagePreventable(gameData)
                 && gameQueryService.isPreventedFromDealingDamage(gameData, target)) {
-            gameBroadcastService.logAndBroadcast(gameData, GameLog.text(target.getCard().getName() + "'s damage is prevented."));
+            gameBroadcastService.logAndBroadcast(gameData, GameLog.cardThen(target.getCard(), "'s damage is prevented."));
             return;
         }
 

@@ -54,13 +54,13 @@ public class AttachTargetAuraToTargetCreatureEffectHandler implements NormalEffe
         aura.setTimestamp(gameData.nextTimestamp());
 
         String logEntry = aura.getCard().getName() + " is now attached to " + creature.getCard().getName() + ".";
-        gameBroadcastService.logAndBroadcast(gameData, GameLog.text(logEntry));
+        gameBroadcastService.logAndBroadcast(gameData, GameLog.cardTextCard(aura.getCard(), " is now attached to ", creature.getCard(), "."));
         log.info("Game {} - {} attached to {} via {}", gameData.id, aura.getCard().getName(), creature.getCard().getName(), entry.getCard().getName());
     }
 
     private void fizzle(GameData gameData, StackEntry entry, String reason) {
         String logEntry = entry.getCard().getName() + "'s ability fizzles (" + reason + ").";
-        gameBroadcastService.logAndBroadcast(gameData, GameLog.text(logEntry));
+        gameBroadcastService.logAndBroadcast(gameData, GameLog.builder().card(entry.getCard()).text("'s ability fizzles (" + reason + ").").build());
         log.info("Game {} - Crown of the Ages ability fizzles: {}", gameData.id, reason);
     }
 }

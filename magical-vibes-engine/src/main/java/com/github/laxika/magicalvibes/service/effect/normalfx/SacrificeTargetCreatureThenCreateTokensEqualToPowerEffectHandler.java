@@ -54,8 +54,7 @@ public class SacrificeTargetCreatureThenCreateTokensEqualToPowerEffectHandler im
         permanentRemovalService.removePermanentToGraveyard(gameData, target);
 
         String playerName = gameData.playerIdToName.get(controllerId);
-        String logEntry = playerName + " sacrifices " + target.getCard().getName() + ".";
-        gameBroadcastService.logAndBroadcast(gameData, GameLog.text(logEntry));
+        gameBroadcastService.logAndBroadcast(gameData, GameLog.textCardText(playerName + " sacrifices " , target.getCard(), "."));
         log.info("Game {} - {} sacrifices {} for {}", gameData.id, playerName,
                 target.getCard().getName(), entry.getCard().getName());
 

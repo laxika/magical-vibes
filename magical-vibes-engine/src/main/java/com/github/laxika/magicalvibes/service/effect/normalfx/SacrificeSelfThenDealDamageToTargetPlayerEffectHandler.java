@@ -49,7 +49,7 @@ public class SacrificeSelfThenDealDamageToTargetPlayerEffectHandler implements N
             return;
         }
         triggerCollectionService.checkAllyPermanentSacrificedTriggers(gameData, entry.getControllerId(), self.getCard());
-        gameBroadcastService.logAndBroadcast(gameData, GameLog.text(self.getCard().getName() + " is sacrificed."));
+        gameBroadcastService.logAndBroadcast(gameData, GameLog.cardThen(self.getCard(), " is sacrificed."));
         permanentRemovalService.removeOrphanedAuras(gameData);
 
         UUID targetId = entry.getTargetId();

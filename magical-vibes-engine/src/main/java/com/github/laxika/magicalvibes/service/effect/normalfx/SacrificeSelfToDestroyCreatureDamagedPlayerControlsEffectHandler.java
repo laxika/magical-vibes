@@ -46,7 +46,7 @@ public class SacrificeSelfToDestroyCreatureDamagedPlayerControlsEffectHandler im
                 Permanent source = gameQueryService.findPermanentById(gameData, sourcePermanentId);
                 if (source == null) {
                     String logEntry = entry.getCard().getName() + "'s ability fizzles — source no longer on the battlefield.";
-                    gameBroadcastService.logAndBroadcast(gameData, GameLog.text(logEntry));
+                    gameBroadcastService.logAndBroadcast(gameData, GameLog.cardThen(entry.getCard(), "'s ability fizzles — source no longer on the battlefield."));
                     return;
                 }
 
@@ -64,7 +64,7 @@ public class SacrificeSelfToDestroyCreatureDamagedPlayerControlsEffectHandler im
                 if (validCreatureIds.isEmpty()) {
                     String logEntry = entry.getCard().getName() + "'s ability resolves, but "
                             + gameData.playerIdToName.get(defenderId) + " has no creatures.";
-                    gameBroadcastService.logAndBroadcast(gameData, GameLog.text(logEntry));
+                    gameBroadcastService.logAndBroadcast(gameData, GameLog.cardThen(entry.getCard(), "'s ability fizzles — source no longer on the battlefield."));
                     return;
                 }
 

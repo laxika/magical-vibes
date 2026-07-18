@@ -47,8 +47,7 @@ public class RevealSubtypeOrEntersTappedHandler implements MayEffectHandlerBean 
                         .filter(c -> c.getSubtypes().contains(revealOrTapped.subtype()))
                         .findFirst().orElse(null);
                 String revealedName = revealed != null ? revealed.getName() : revealOrTapped.subtype().getDisplayName();
-                gameBroadcastService.logAndBroadcast(gameData, GameLog.text(player.getUsername() + " reveals "
-                        + revealedName + " — " + ability.sourceCard().getName() + " enters untapped."));
+                gameBroadcastService.logAndBroadcast(gameData, GameLog.textCardText(player.getUsername() + " reveals " + revealedName + " — ", ability.sourceCard(), " enters untapped."));
                 log.info("Game {} - {} reveals {} to keep {} untapped", gameData.id,
                         player.getUsername(), revealedName, ability.sourceCard().getName());
             } else {
@@ -57,8 +56,7 @@ public class RevealSubtypeOrEntersTappedHandler implements MayEffectHandlerBean 
                 if (source != null) {
                     source.tap();
                 }
-                gameBroadcastService.logAndBroadcast(gameData, GameLog.text(player.getUsername() + " declines — "
-                        + ability.sourceCard().getName() + " enters tapped."));
+                gameBroadcastService.logAndBroadcast(gameData, GameLog.textCardText(player.getUsername() + " declines — ", ability.sourceCard(), " enters tapped."));
                 log.info("Game {} - {} declines to reveal; {} enters tapped", gameData.id,
                         player.getUsername(), ability.sourceCard().getName());
             }

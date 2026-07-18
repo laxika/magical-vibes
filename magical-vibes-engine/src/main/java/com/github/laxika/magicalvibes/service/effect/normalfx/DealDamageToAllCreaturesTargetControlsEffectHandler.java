@@ -46,7 +46,7 @@ public class DealDamageToAllCreaturesTargetControlsEffectHandler implements Norm
             for (Permanent creature : new ArrayList<>(battlefield)) {
                 if (!gameQueryService.isCreature(gameData, creature)) continue;
                 if (gameQueryService.isDamagePreventable(gameData) && gameQueryService.hasProtectionFromSource(gameData, creature, entry.getCard())) {
-                    gameBroadcastService.logAndBroadcast(gameData, GameLog.text(cardName + "'s damage to " + creature.getCard().getName() + " is prevented."));
+                    gameBroadcastService.logAndBroadcast(gameData, GameLog.textCardText(cardName + "'s damage to ", creature.getCard(), " is prevented."));
                     continue;
                 }
                 damageSupport.dealCreatureDamage(gameData, entry, creature, rawDamage);

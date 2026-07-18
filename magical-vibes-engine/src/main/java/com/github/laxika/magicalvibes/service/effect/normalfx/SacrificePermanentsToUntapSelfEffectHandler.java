@@ -78,7 +78,7 @@ public class SacrificePermanentsToUntapSelfEffectHandler implements NormalEffect
         if (self != null) {
             tapUntapSupport.untapPermanent(gameData, self);
             gameBroadcastService.logAndBroadcast(gameData,
-                    GameLog.text(entry.getCard().getName() + " untaps."));
+                    GameLog.cardThen(entry.getCard(), " untaps."));
             log.info("Game {} - {} untaps", gameData.id, entry.getCard().getName());
         }
     }

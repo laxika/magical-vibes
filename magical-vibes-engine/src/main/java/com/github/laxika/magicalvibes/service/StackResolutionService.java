@@ -246,11 +246,11 @@ public class StackResolutionService {
 
         String playerName = gameData.playerIdToName.get(controllerId);
         if (hasEnterWithCountersEffect(enteredCard, CounterType.PLUS_ONE_PLUS_ONE) && perm.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE) > 0) {
-            String logEntry = enteredCard.getName() + " enters the battlefield with " + perm.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE) + " +1/+1 counters under " + playerName + "'s control.";
-            gameBroadcastService.logAndBroadcast(gameData, GameLog.text(logEntry));
+            gameBroadcastService.logAndBroadcast(gameData, GameLog.entersBattlefieldWithUnder(
+                    enteredCard, perm.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE) + " +1/+1 counters", playerName));
         } else if (perm.getCounterCount(CounterType.WISH) > 0) {
-            String logEntry = enteredCard.getName() + " enters the battlefield with " + perm.getCounterCount(CounterType.WISH) + " wish counters under " + playerName + "'s control.";
-            gameBroadcastService.logAndBroadcast(gameData, GameLog.text(logEntry));
+            gameBroadcastService.logAndBroadcast(gameData, GameLog.entersBattlefieldWithUnder(
+                    enteredCard, perm.getCounterCount(CounterType.WISH) + " wish counters", playerName));
         } else {
             logEnterBattlefield(gameData, enteredCard, controllerId);
         }
@@ -430,8 +430,7 @@ public class StackResolutionService {
             // Saga ETB: place first lore counter and trigger chapter I (MTG Rule 714.3a)
             if (card.isSaga()) {
                 enchPerm.setCounterCount(CounterType.LORE, 1);
-                String counterLog = card.getName() + " gets a lore counter (1).";
-                gameBroadcastService.logAndBroadcast(gameData, GameLog.text(counterLog));
+                gameBroadcastService.logAndBroadcast(gameData, GameLog.cardThen(card, " gets a lore counter (1)."));
                 log.info("Game {} - {} enters with lore counter 1", gameData.id, card.getName());
                 triggerSagaChapter(gameData, enchPerm, card, controllerId, 1);
             }
@@ -580,8 +579,8 @@ public class StackResolutionService {
         battlefieldEntryService.putPermanentOntoBattlefield(gameData, controllerId, perm);
 
         String playerName = gameData.playerIdToName.get(controllerId);
-        String logEntry = card.getName() + " enters the battlefield with " + perm.getCounterCount(CounterType.LOYALTY) + " loyalty under " + playerName + "'s control.";
-        gameBroadcastService.logAndBroadcast(gameData, GameLog.text(logEntry));
+        gameBroadcastService.logAndBroadcast(gameData, GameLog.entersBattlefieldWithUnder(
+                card, perm.getCounterCount(CounterType.LOYALTY) + " loyalty", playerName));
 
         log.info("Game {} - {} resolves, enters battlefield for {}", gameData.id, card.getName(), playerName);
         checkLegendRuleIfIdle(gameData, controllerId);
@@ -604,15 +603,13 @@ public class StackResolutionService {
             if (isNonCopySpell(entry)) {
                 if (entry.isCastWithFlashback()) {
                     exileService.exileCard(gameData, entry.getControllerId(), entry.getCard());
-                    String exileLog = entry.getCard().getName() + " is exiled (flashback).";
-                    gameBroadcastService.logAndBroadcast(gameData, GameLog.text(exileLog));
+                    gameBroadcastService.logAndBroadcast(gameData, GameLog.cardThen(entry.getCard(), " is exiled (flashback)."));
                 } else {
                     graveyardService.addCardToGraveyard(gameData, entry.getControllerId(), entry.getCard());
                 }
             }
         } else {
-            String logEntry = entry.getDescription() + " resolves.";
-            gameBroadcastService.logAndBroadcast(gameData, GameLog.text(logEntry));
+            gameBroadcastService.logAndBroadcast(gameData, GameLog.resolves(entry.getCard(), entry.getDescription()));
             log.info("Game {} - {} resolves", gameData.id, entry.getDescription());
 
             countAbilityResolution(gameData, entry);
@@ -676,12 +673,10 @@ public class StackResolutionService {
         // return-to-hand, shuffle-into-library, and all other disposition effects.
         if (entry.isCastWithFlashback()) {
             gameData.addToExile(entry.getControllerId(), entry.getCard());
-            String exileLog = entry.getCard().getName() + " is exiled (flashback).";
-            gameBroadcastService.logAndBroadcast(gameData, GameLog.text(exileLog));
+            gameBroadcastService.logAndBroadcast(gameData, GameLog.cardThen(entry.getCard(), " is exiled (flashback)."));
         } else if (entry.isReturnToHandAfterResolving()) {
             gameData.addCardToHand(entry.getControllerId(), entry.getCard());
-            String returnLog = entry.getCard().getName() + " is returned to its owner's hand.";
-            gameBroadcastService.logAndBroadcast(gameData, GameLog.text(returnLog));
+            gameBroadcastService.logAndBroadcast(gameData, GameLog.cardThen(entry.getCard(), " is returned to its owner's hand."));
         } else if (gameData.pendingReturnToHandOnDiscardType != null) {
             // Spell disposition deferred — will be resolved after the async discard
             // completes (e.g. Psychic Miasma: goes to hand if a land is discarded,
@@ -689,8 +684,7 @@ public class StackResolutionService {
         } else if (entry.getEffectsToResolve().stream()
                 .anyMatch(e -> e instanceof ExileSpellEffect)) {
             gameData.addToExile(entry.getControllerId(), entry.getCard());
-            String exileLog = entry.getCard().getName() + " is exiled.";
-            gameBroadcastService.logAndBroadcast(gameData, GameLog.text(exileLog));
+            gameBroadcastService.logAndBroadcast(gameData, GameLog.isExiled(entry.getCard()));
         } else if (entry.getEffectsToResolve().stream()
                 .anyMatch(e -> e instanceof ShuffleIntoLibraryEffect)) {
             // Ensure the card is shuffled into library even when an earlier effect
@@ -700,15 +694,13 @@ public class StackResolutionService {
             if (!deck.contains(entry.getCard())) {
                 deck.add(entry.getCard());
                 LibraryShuffleHelper.shuffleLibrary(gameData, entry.getControllerId());
-                String shuffleLog = entry.getCard().getName() + " is shuffled into its owner's library.";
-                gameBroadcastService.logAndBroadcast(gameData, GameLog.text(shuffleLog));
+                gameBroadcastService.logAndBroadcast(gameData, GameLog.cardThen(entry.getCard(), " is shuffled into its owner's library."));
             }
         } else if (entry.getEffectsToResolve().stream()
                 .anyMatch(e -> e instanceof PutSelfOnBottomOfOwnersLibraryEffect)) {
             List<Card> deck = gameData.playerDecks.get(entry.getControllerId());
             deck.add(entry.getCard());
-            String bottomLog = entry.getCard().getName() + " is put on the bottom of its owner's library.";
-            gameBroadcastService.logAndBroadcast(gameData, GameLog.text(bottomLog));
+            gameBroadcastService.logAndBroadcast(gameData, GameLog.cardThen(entry.getCard(), " is put on the bottom of its owner's library."));
         } else if (entry.getCard().getKeywords().contains(Keyword.PARADIGM)) {
             paradigmService.onParadigmSpellResolved(gameData, entry);
         } else {
@@ -736,8 +728,8 @@ public class StackResolutionService {
         if (gameQueryService.cantHaveCounters(gameData, target)) return;
 
         target.setCounterCount(CounterType.PHYLACTERY, target.getCounterCount(CounterType.PHYLACTERY) + 1);
-        String logEntry = card.getName() + " puts a phylactery counter on " + target.getCard().getName() + ".";
-        gameBroadcastService.logAndBroadcast(gameData, GameLog.text(logEntry));
+        gameBroadcastService.logAndBroadcast(gameData,
+                GameLog.cardTextCard(card, " puts a phylactery counter on ", target.getCard(), "."));
         log.info("Game {} - {} puts a phylactery counter on {}", gameData.id, card.getName(), target.getCard().getName());
     }
 
@@ -778,16 +770,14 @@ public class StackResolutionService {
                     new PermanentChoiceContext.SagaChapterTarget(card, controllerId,
                             new ArrayList<>(chapterEffects), sagaPerm.getId(), chapterName,
                             card.getSagaChapterTargetFilters(chapterSlot)));
-            String logEntry = card.getName() + "'s chapter " + chapterName + " ability triggers.";
-            gameBroadcastService.logAndBroadcast(gameData, GameLog.text(logEntry));
+            gameBroadcastService.logAndBroadcast(gameData, GameLog.cardThen(card, "'s chapter " + chapterName + " ability triggers."));
             log.info("Game {} - {} chapter {} triggers (awaiting target selection)", gameData.id, card.getName(), chapterName);
             triggerCollectionService.processNextSagaChapterTarget(gameData);
         } else if (needsGraveyardTarget) {
             gameData.queueInteraction(
                     new PermanentChoiceContext.SagaChapterGraveyardTarget(card, controllerId,
                             new ArrayList<>(chapterEffects), sagaPerm.getId(), chapterName));
-            String logEntry = card.getName() + "'s chapter " + chapterName + " ability triggers.";
-            gameBroadcastService.logAndBroadcast(gameData, GameLog.text(logEntry));
+            gameBroadcastService.logAndBroadcast(gameData, GameLog.cardThen(card, "'s chapter " + chapterName + " ability triggers."));
             log.info("Game {} - {} chapter {} triggers (awaiting graveyard target selection)", gameData.id, card.getName(), chapterName);
             triggerCollectionService.processNextSagaChapterGraveyardTarget(gameData);
         } else {
@@ -801,8 +791,7 @@ public class StackResolutionService {
                     sagaPerm.getId()
             ));
 
-            String logEntry = card.getName() + "'s chapter " + chapterName + " ability triggers.";
-            gameBroadcastService.logAndBroadcast(gameData, GameLog.text(logEntry));
+            gameBroadcastService.logAndBroadcast(gameData, GameLog.cardThen(card, "'s chapter " + chapterName + " ability triggers."));
             log.info("Game {} - {} chapter {} triggers", gameData.id, card.getName(), chapterName);
         }
     }

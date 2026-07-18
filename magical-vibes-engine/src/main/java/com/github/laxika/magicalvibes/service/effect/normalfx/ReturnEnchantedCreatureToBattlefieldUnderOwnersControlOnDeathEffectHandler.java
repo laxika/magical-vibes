@@ -43,8 +43,7 @@ public class ReturnEnchantedCreatureToBattlefieldUnderOwnersControlOnDeathEffect
 
         Card creatureCard = gameQueryService.findCardInGraveyardById(gameData, dyingCreatureCardId);
         if (creatureCard == null) {
-            String fizzleLog = entry.getCard().getName() + "'s ability fizzles (creature not in graveyard).";
-            gameBroadcastService.logAndBroadcast(gameData, GameLog.text(fizzleLog));
+            gameBroadcastService.logAndBroadcast(gameData, GameLog.cardThen(entry.getCard(), "'s ability fizzles (creature not in graveyard)."));
             log.info("Game {} - {} death trigger fizzles (creature card {} not in graveyard)",
                     gameData.id, entry.getCard().getName(), dyingCreatureCardId);
             return;

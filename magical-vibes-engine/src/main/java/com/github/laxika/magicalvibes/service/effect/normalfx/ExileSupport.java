@@ -64,9 +64,8 @@ public class ExileSupport {
         Card card = permanent.getOriginalCard();
         permanentRemovalService.removePermanentToExile(gameData, permanent);
 
-        String logEntry = card.getName() + " is exiled. It will return at the beginning of the next "
-                + returnStep.getDisplayName().toLowerCase() + ".";
-        gameBroadcastService.logAndBroadcast(gameData, GameLog.text(logEntry));
+        gameBroadcastService.logAndBroadcast(gameData, GameLog.cardThen(card, " is exiled. It will return at the beginning of the next "
+                + returnStep.getDisplayName().toLowerCase() + "."));
         log.info("Game {} - {} exiles {}; will return at next {}",
                 gameData.id, entry.getCard().getName(), card.getName(), returnStep);
 
@@ -185,8 +184,8 @@ public class ExileSupport {
             if (validTargets.isEmpty()) {
                 // No valid targets — card goes to graveyard
                 graveyardService.addCardToGraveyard(gameData, playerId, chosenCard);
-                String logEntry = chosenCard.getName() + " has no valid targets (Knowledge Pool). It is put into the graveyard.";
-                gameBroadcastService.logAndBroadcast(gameData, GameLog.text(logEntry));
+                gameBroadcastService.logAndBroadcast(gameData, GameLog.cardThen(chosenCard,
+                        " has no valid targets (Knowledge Pool). It is put into the graveyard."));
                 log.info("Game {} - {} Knowledge Pool cast has no valid targets", gameData.id, chosenCard.getName());
                 gameBroadcastService.broadcastGameState(gameData);
                 return;
@@ -197,8 +196,8 @@ public class ExileSupport {
             playerInputService.beginPermanentChoice(gameData, playerId, validTargets,
                     "Choose a target for " + chosenCard.getName() + ".");
 
-            String logEntry = playerName + " casts " + chosenCard.getName() + " without paying its mana cost (Knowledge Pool) — choosing target.";
-            gameBroadcastService.logAndBroadcast(gameData, GameLog.text(logEntry));
+            gameBroadcastService.logAndBroadcast(gameData, GameLog.textCardText(playerName + " casts ", chosenCard,
+                    " without paying its mana cost (Knowledge Pool) — choosing target."));
             log.info("Game {} - {} casts {} from Knowledge Pool, choosing target", gameData.id, playerName, chosenCard.getName());
             return;
         }
@@ -212,8 +211,8 @@ public class ExileSupport {
         gameData.recordSpellCast(playerId, chosenCard);
         gameData.priorityPassedBy.clear();
 
-        String logEntry = playerName + " casts " + chosenCard.getName() + " without paying its mana cost (Knowledge Pool).";
-        gameBroadcastService.logAndBroadcast(gameData, GameLog.text(logEntry));
+        gameBroadcastService.logAndBroadcast(gameData, GameLog.textCardText(playerName + " casts ", chosenCard,
+                " without paying its mana cost (Knowledge Pool)."));
         log.info("Game {} - {} casts {} from Knowledge Pool without paying mana", gameData.id, playerName, chosenCard.getName());
 
         triggerCollectionService.checkSpellCastTriggers(gameData, chosenCard, playerId, false);
@@ -293,9 +292,8 @@ public class ExileSupport {
         } else if (chosenCards.size() == 1) {
             // Single card: put directly on top, no ordering needed
             library.addFirst(chosenCards.getFirst());
-            String putLog = controllerName + " puts " + chosenCards.getFirst().getName()
-                    + " on top of their library (Mirror of Fate).";
-            gameBroadcastService.logAndBroadcast(gameData, GameLog.text(putLog));
+            gameBroadcastService.logAndBroadcast(gameData, GameLog.textCardText(controllerName + " puts ",
+                    chosenCards.getFirst(), " on top of their library (Mirror of Fate)."));
             log.info("Game {} - {} puts 1 exiled card on top of library (Mirror of Fate)",
                     gameData.id, controllerName);
             gameData.priorityPassedBy.clear();

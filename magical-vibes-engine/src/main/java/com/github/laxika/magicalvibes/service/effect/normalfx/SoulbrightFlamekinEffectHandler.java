@@ -57,6 +57,6 @@ public class SoulbrightFlamekinEffectHandler implements NormalEffectHandlerBean 
             pool.addCreatureMana(ManaColor.RED, MANA_AMOUNT);
         }
 
-        gameBroadcastService.logAndBroadcast(gameData, GameLog.text(entry.getCard().getName() + " adds " + MANA_AMOUNT + " " + ManaColor.RED.getCode() + "."));
+        gameBroadcastService.logAndBroadcast(gameData, GameLog.builder().card(entry.getCard()).text(" adds " + MANA_AMOUNT + " " + ManaColor.RED.getCode() + ".").build());
     }
 }

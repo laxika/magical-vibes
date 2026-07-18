@@ -58,7 +58,7 @@ public class GrantColorUntilEndOfTurnEffectHandler implements NormalEffectHandle
         String colorName = e.color().name().charAt(0) + e.color().name().substring(1).toLowerCase();
         String suffix = e.additive() ? " in addition to its other colors until end of turn." : " until end of turn.";
         String logEntry = target.getCard().getName() + " becomes " + colorName + suffix;
-        gameBroadcastService.logAndBroadcast(gameData, GameLog.text(logEntry));
+        gameBroadcastService.logAndBroadcast(gameData, GameLog.builder().card(target.getCard()).text(" becomes " + colorName + suffix).build());
 
         log.info("Game {} - {} becomes {} until end of turn", gameData.id, target.getCard().getName(), colorName);
     }

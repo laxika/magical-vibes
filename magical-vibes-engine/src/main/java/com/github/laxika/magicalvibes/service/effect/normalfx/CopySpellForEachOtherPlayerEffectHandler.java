@@ -65,7 +65,7 @@ public class CopySpellForEachOtherPlayerEffectHandler implements NormalEffectHan
 
             String logMsg = "A copy of " + spellCard.getName() + " is created for "
                     + gameData.playerIdToName.get(playerId) + ".";
-            gameBroadcastService.logAndBroadcast(gameData, GameLog.text(logMsg));
+            gameBroadcastService.logAndBroadcast(gameData, GameLog.builder().text("A copy of ").card(spellCard).text(" is created for " + gameData.playerIdToName.get(playerId) + ".").build());
 
             if (copyEntry.getTargetId() != null) {
                 PendingMayAbility retargetAbility = new PendingMayAbility(

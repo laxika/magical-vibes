@@ -137,7 +137,7 @@ public class FlickerEffectHandler implements NormalEffectHandlerBean {
 
         String logEntry = card.getName() + " is exiled by " + entry.getCard().getName()
                 + " and returns to the battlefield under " + gameData.playerIdToName.get(ownerId) + "'s control.";
-        gameBroadcastService.logAndBroadcast(gameData, GameLog.text(logEntry));
+        gameBroadcastService.logAndBroadcast(gameData, GameLog.builder().card(card).text(" is exiled by ").card(entry.getCard()).text(" and returns to the battlefield under " + gameData.playerIdToName.get(ownerId) + "'s control.").build());
         log.info("Game {} - {} flickers {} (immediate return)", gameData.id, entry.getCard().getName(), card.getName());
 
         battlefieldEntryService.handleCreatureEnteredBattlefield(gameData, ownerId, card, null, false);
@@ -151,7 +151,7 @@ public class FlickerEffectHandler implements NormalEffectHandlerBean {
             }
             String drawLog = gameData.playerIdToName.get(entry.getControllerId())
                     + " draws a card (" + card.getName() + " was a " + e.bonusSubtype().getDisplayName() + ").";
-            gameBroadcastService.logAndBroadcast(gameData, GameLog.text(drawLog));
+            gameBroadcastService.logAndBroadcast(gameData, GameLog.builder().text(gameData.playerIdToName.get(entry.getControllerId()) + " draws a card (").card(card).text(" was a " + e.bonusSubtype().getDisplayName() + ").").build());
         }
     }
 }

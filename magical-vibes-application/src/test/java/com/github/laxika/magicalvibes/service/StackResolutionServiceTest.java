@@ -1,5 +1,9 @@
 package com.github.laxika.magicalvibes.service;
+
+import static org.mockito.ArgumentMatchers.argThat;
+import static org.mockito.ArgumentMatchers.eq;
 import com.github.laxika.magicalvibes.model.GameLog;
+import com.github.laxika.magicalvibes.model.GameLogEntry;
 
 import com.github.laxika.magicalvibes.model.PendingInteraction;
 import com.github.laxika.magicalvibes.service.input.PlayerInputService;
@@ -578,8 +582,8 @@ class StackResolutionServiceTest {
 
             svc.resolveTopOfStack(gd);
 
-            verify(gameBroadcastService).logAndBroadcast(gd, GameLog.text("Chainer's Torment gets a lore counter (1)."));
-            verify(gameBroadcastService).logAndBroadcast(gd, GameLog.text("Chainer's Torment's chapter I ability triggers."));
+            verify(gameBroadcastService).logAndBroadcast(eq(gd), argThat((GameLogEntry e) -> e.plainText().equals("Chainer's Torment gets a lore counter (1).")));
+            verify(gameBroadcastService).logAndBroadcast(eq(gd), argThat((GameLogEntry e) -> e.plainText().equals("Chainer's Torment's chapter I ability triggers.")));
         }
 
         @Test

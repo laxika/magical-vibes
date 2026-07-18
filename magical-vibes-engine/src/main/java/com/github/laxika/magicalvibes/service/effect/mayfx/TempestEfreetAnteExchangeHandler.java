@@ -46,9 +46,7 @@ public class TempestEfreetAnteExchangeHandler implements MayEffectHandlerBean {
 
         if (accepted && canPay) {
             gameData.playerLifeTotals.put(opponentId, gameData.getLife(opponentId) - effect.lifeCost());
-            gameBroadcastService.logAndBroadcast(gameData, GameLog.text(
-                    player.getUsername() + " pays " + effect.lifeCost() + " life. ("
-                            + ability.sourceCard().getName() + ")"));
+            gameBroadcastService.logAndBroadcast(gameData, GameLog.textCardText(player.getUsername() + " pays " + effect.lifeCost() + " life. (", ability.sourceCard(), ")"));
             log.info("Game {} - {} pays {} life to avoid the {} exchange", gameData.id,
                     player.getUsername(), effect.lifeCost(), ability.sourceCard().getName());
         } else {

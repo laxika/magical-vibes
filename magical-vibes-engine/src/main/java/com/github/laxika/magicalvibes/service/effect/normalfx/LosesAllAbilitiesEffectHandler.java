@@ -56,8 +56,7 @@ public class LosesAllAbilitiesEffectHandler implements NormalEffectHandlerBean {
                 entry.getCard().getName(), null, entry.getControllerId(), e,
                 target.getId(), null, null, EffectDuration.UNTIL_END_OF_TURN, 0));
 
-        String logEntry = target.getCard().getName() + " loses all abilities until end of turn.";
-        gameBroadcastService.logAndBroadcast(gameData, GameLog.text(logEntry));
+        gameBroadcastService.logAndBroadcast(gameData, GameLog.cardThen(target.getCard(), " loses all abilities until end of turn."));
         log.info("Game {} - {} loses all abilities until end of turn", gameData.id, target.getCard().getName());
     }
 }

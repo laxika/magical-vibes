@@ -38,8 +38,7 @@ public class DestroyTargetPermanentAtEndStepEffectHandler implements NormalEffec
 
                 gameData.queueDelayedAction(new DelayedPermanentAction(target.getId(), DelayedPermanentActionKind.DESTROY_AT_END_STEP));
 
-                String logEntry = target.getCard().getName() + " will be destroyed at the beginning of the next end step.";
-                gameBroadcastService.logAndBroadcast(gameData, GameLog.text(logEntry));
+                gameBroadcastService.logAndBroadcast(gameData, GameLog.cardThen(target.getCard(), " will be destroyed at the beginning of the next end step."));
                 log.info("Game {} - {} scheduled for destruction at end step", gameData.id, target.getCard().getName());
     }
 }

@@ -38,7 +38,6 @@ public class DestroySelfAtEndOfCombatEffectHandler implements NormalEffectHandle
         }
         gameData.queueDelayedAction(new DelayedPermanentAction(self.getId(),
                 DelayedPermanentActionKind.DESTROY_AT_END_OF_COMBAT));
-        String logEntry = self.getCard().getName() + " will be destroyed at end of combat.";
-        gameBroadcastService.logAndBroadcast(gameData, GameLog.text(logEntry));
+        gameBroadcastService.logAndBroadcast(gameData, GameLog.cardThen(self.getCard(), " will be destroyed at end of combat."));
     }
 }

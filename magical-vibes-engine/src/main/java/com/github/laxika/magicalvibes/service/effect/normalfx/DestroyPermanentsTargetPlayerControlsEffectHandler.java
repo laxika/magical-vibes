@@ -74,14 +74,14 @@ public class DestroyPermanentsTargetPlayerControlsEffectHandler implements Norma
         String sourceName = entry.getCard().getName();
         for (Permanent perm : toDestroy) {
             if (indestructible.contains(perm)) {
-                gameBroadcastService.logAndBroadcast(gameData, GameLog.text(perm.getCard().getName() + " is indestructible."));
+                gameBroadcastService.logAndBroadcast(gameData, GameLog.cardThen(perm.getCard(), " is indestructible."));
                 continue;
             }
             if (graveyardService.tryRegenerate(gameData, perm)) {
                 continue;
             }
             permanentRemovalService.removePermanentToGraveyard(gameData, perm);
-            gameBroadcastService.logAndBroadcast(gameData, GameLog.text(perm.getCard().getName() + " is destroyed."));
+            gameBroadcastService.logAndBroadcast(gameData, GameLog.cardThen(perm.getCard(), " is destroyed."));
             log.info("Game {} - {} is destroyed by {}", gameData.id, perm.getCard().getName(), sourceName);
         }
     }

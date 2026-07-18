@@ -43,8 +43,7 @@ public class RegenerateEffectHandler implements NormalEffectHandlerBean {
                 }
                 perm.setRegenerationShield(perm.getRegenerationShield() + 1);
 
-                String logEntry = perm.getCard().getName() + " gains a regeneration shield.";
-                gameBroadcastService.logAndBroadcast(gameData, GameLog.text(logEntry));
+                gameBroadcastService.logAndBroadcast(gameData, GameLog.cardThen(perm.getCard(), " gains a regeneration shield."));
                 log.info("Game {} - {} gains a regeneration shield", gameData.id, perm.getCard().getName());
     
     }

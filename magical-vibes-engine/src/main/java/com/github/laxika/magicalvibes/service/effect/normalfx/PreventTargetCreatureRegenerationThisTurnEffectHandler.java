@@ -34,8 +34,7 @@ public class PreventTargetCreatureRegenerationThisTurnEffectHandler implements N
 
         target.setCantRegenerateThisTurn(true);
 
-        String logEntry = target.getCard().getName() + " can't be regenerated this turn.";
-        gameBroadcastService.logAndBroadcast(gameData, GameLog.text(logEntry));
+        gameBroadcastService.logAndBroadcast(gameData, GameLog.cardThen(target.getCard(), " can't be regenerated this turn."));
         log.info("Game {} - {} can't be regenerated this turn", gameData.id, target.getCard().getName());
     }
 }

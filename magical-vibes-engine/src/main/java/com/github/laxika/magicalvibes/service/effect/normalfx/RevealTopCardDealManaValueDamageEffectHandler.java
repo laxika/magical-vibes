@@ -49,7 +49,7 @@ public class RevealTopCardDealManaValueDamageEffectHandler implements NormalEffe
 
         Card topCard = deck.getFirst();
         int manaValue = topCard.getManaValue();
-        gameBroadcastService.logAndBroadcast(gameData, GameLog.text(targetPlayerName + " reveals " + topCard.getName() + " (mana value " + manaValue + ") from the top of their library."));
+        gameBroadcastService.logAndBroadcast(gameData, GameLog.builder().text(targetPlayerName + " reveals ").card(topCard).text(" (mana value " + manaValue + ") from the top of their library.").build());
 
         if (manaValue > 0 && !gameQueryService.isDamageFromSourcePrevented(gameData, entry.getCard().getColor())) {
             int damage = gameQueryService.applyDamageMultiplier(gameData, manaValue, entry);

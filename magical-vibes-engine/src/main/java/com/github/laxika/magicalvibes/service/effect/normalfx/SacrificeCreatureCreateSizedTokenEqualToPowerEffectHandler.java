@@ -53,7 +53,7 @@ public class SacrificeCreatureCreateSizedTokenEqualToPowerEffectHandler implemen
 
         if (validIds.isEmpty()) {
             String logEntry = playerName + " has no creature to sacrifice for " + entry.getCard().getName() + ".";
-            gameBroadcastService.logAndBroadcast(gameData, GameLog.text(logEntry));
+            gameBroadcastService.logAndBroadcast(gameData, GameLog.textCardText(playerName + " has no creature to sacrifice for " , entry.getCard(), "."));
             log.info("Game {} - {} has no creature to sacrifice for {}",
                     gameData.id, playerName, entry.getCard().getName());
             return;
@@ -65,8 +65,7 @@ public class SacrificeCreatureCreateSizedTokenEqualToPowerEffectHandler implemen
         playerInputService.beginPermanentChoice(gameData, controllerId, validIds,
                 entry.getCard().getName() + " — Choose a creature to sacrifice.");
 
-        String logEntry = playerName + " is choosing a creature to sacrifice for " + entry.getCard().getName() + ".";
-        gameBroadcastService.logAndBroadcast(gameData, GameLog.text(logEntry));
+        gameBroadcastService.logAndBroadcast(gameData, GameLog.textCardText(playerName + " is choosing a creature to sacrifice for " , entry.getCard(), "."));
         log.info("Game {} - {} choosing a creature to sacrifice for {}",
                 gameData.id, playerName, entry.getCard().getName());
     }

@@ -142,7 +142,7 @@ public class TariffSupport {
             cost.pay(pool);
             String logEntry = player.getUsername() + " pays " + ability.manaCost() + " and keeps "
                     + creature.getCard().getName() + ". (" + sourceCard.getName() + ")";
-            gameBroadcastService.logAndBroadcast(gameData, GameLog.text(logEntry));
+            gameBroadcastService.logAndBroadcast(gameData, GameLog.builder().text(player.getUsername() + " pays " + ability.manaCost() + " and keeps ").card(creature.getCard()).text(". (").card(sourceCard).text(")").build());
             log.info("Game {} - {} pays {} to keep {} ({})", gameData.id, player.getUsername(),
                     ability.manaCost(), creature.getCard().getName(), sourceCard.getName());
         } else {

@@ -35,8 +35,7 @@ public class ReturnSourceCardFromGraveyardToOwnerHandEffectHandler implements No
         UUID cardId = entry.getCard().getId();
         Card sourceCard = gameQueryService.findCardInGraveyardById(gameData, cardId);
         if (sourceCard == null) {
-            String fizzleLog = entry.getCard().getName() + "'s ability fizzles (card not in graveyard).";
-            gameBroadcastService.logAndBroadcast(gameData, GameLog.text(fizzleLog));
+            gameBroadcastService.logAndBroadcast(gameData, GameLog.cardThen(entry.getCard(), "'s ability fizzles (card not in graveyard)."));
             log.info("Game {} - {} return-to-hand trigger fizzles (card {} not in graveyard)",
                     gameData.id, entry.getCard().getName(), cardId);
             return;
@@ -48,7 +47,7 @@ public class ReturnSourceCardFromGraveyardToOwnerHandEffectHandler implements No
 
         String ownerName = gameData.playerIdToName.get(ownerId);
         String logEntry = sourceCard.getName() + " returns from graveyard to " + ownerName + "'s hand.";
-        gameBroadcastService.logAndBroadcast(gameData, GameLog.text(logEntry));
+        gameBroadcastService.logAndBroadcast(gameData, GameLog.builder().card(sourceCard).text(" returns from graveyard to " + ownerName + "'s hand.").build());
         log.info("Game {} - {} returns from graveyard to {}'s hand", gameData.id, sourceCard.getName(), ownerName);
     }
 }

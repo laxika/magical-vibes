@@ -44,7 +44,7 @@ public class RevealTopCardPutIntoHandAndChangeLifeEffectHandler implements Norma
         int manaValue = topCard.getManaValue();
 
         // Reveal the card and put it into hand.
-        gameBroadcastService.logAndBroadcast(gameData, GameLog.text(playerName + " reveals " + topCard.getName() + " (mana value " + manaValue + ") from the top of their library."));
+        gameBroadcastService.logAndBroadcast(gameData, GameLog.builder().text(playerName + " reveals ").card(topCard).text(" (mana value " + manaValue + ") from the top of their library.").build());
         gameData.addCardToHand(controllerId, topCard);
 
         // Change life equal to the revealed card's mana value.
@@ -56,7 +56,7 @@ public class RevealTopCardPutIntoHandAndChangeLifeEffectHandler implements Norma
                 lifeSupport.applyLifeLoss(gameData, controllerId, manaValue, sourceName);
             }
         } else {
-            gameBroadcastService.logAndBroadcast(gameData, GameLog.text(playerName + " puts " + topCard.getName() + " into their hand (" + sourceName + ")."));
+            gameBroadcastService.logAndBroadcast(gameData, GameLog.builder().text(playerName + " puts ").card(topCard).text(" into their hand (" + sourceName + ").").build());
         }
 
         log.info("Game {} - {} reveals {} (MV {}) via {}", gameData.id, playerName, topCard.getName(), manaValue, sourceName);

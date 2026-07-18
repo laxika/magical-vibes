@@ -80,7 +80,7 @@ public class ExileOwnGraveyardCardThenDamageTargetCreatureControllerEffectHandle
             graveyard.remove(card);
             graveyardService.notifyCardsLeftGraveyard(gameData, controllerId);
             exileService.exileCard(gameData, controllerId, card);
-            gameBroadcastService.logAndBroadcast(gameData, GameLog.text(playerName + " exiles " + card.getName() + " from their graveyard (" + sourceName + ")."));
+            gameBroadcastService.logAndBroadcast(gameData, GameLog.builder().text(playerName + " exiles ").card(card).text(" from their graveyard (" + sourceName + ").").build());
         } else {
             graveyardReturnSupport.beginGraveyardExileChoice(gameData, controllerId, 1, sourceCard);
         }

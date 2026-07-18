@@ -41,7 +41,7 @@ public class RevealTopCardCreatureGainToughnessLosePowerToHandEffectHandler impl
 
         // Reveal the top card. It only leaves the library if it's a creature card.
         Card topCard = deck.getFirst();
-        gameBroadcastService.logAndBroadcast(gameData, GameLog.text(playerName + " reveals " + topCard.getName() + " from the top of their library (" + sourceName + ")."));
+        gameBroadcastService.logAndBroadcast(gameData, GameLog.builder().text(playerName + " reveals ").card(topCard).text(" from the top of their library (" + sourceName + ").").build());
 
         if (!topCard.hasType(CardType.CREATURE)) {
             return;
@@ -62,7 +62,7 @@ public class RevealTopCardCreatureGainToughnessLosePowerToHandEffectHandler impl
         }
 
         gameData.addCardToHand(controllerId, topCard);
-        gameBroadcastService.logAndBroadcast(gameData, GameLog.text(playerName + " puts " + topCard.getName() + " into their hand (" + sourceName + ")."));
+        gameBroadcastService.logAndBroadcast(gameData, GameLog.builder().text(playerName + " puts ").card(topCard).text(" into their hand (" + sourceName + ").").build());
 
         log.info("Game {} - {} reveals creature {} (P/T {}/{}) via {}",
                 gameData.id, playerName, topCard.getName(), power, toughness, sourceName);

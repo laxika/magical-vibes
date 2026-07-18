@@ -47,8 +47,7 @@ public class ExileUpToNAttackingCreaturesEffectHandler implements NormalEffectHa
         });
 
         if (attackingCreatureIds.isEmpty()) {
-            gameBroadcastService.logAndBroadcast(gameData, GameLog.text(
-                    entry.getCard().getName() + " has no attacking creatures to exile."));
+            gameBroadcastService.logAndBroadcast(gameData, GameLog.cardThen(entry.getCard(), " has no attacking creatures to exile."));
             return;
         }
 

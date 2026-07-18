@@ -1,4 +1,7 @@
 package com.github.laxika.magicalvibes.service.effect.normalfx;
+
+import static org.mockito.ArgumentMatchers.argThat;
+import static org.mockito.ArgumentMatchers.eq;
 import com.github.laxika.magicalvibes.model.GameLog;
 import com.github.laxika.magicalvibes.model.GameLogEntry;
 import com.github.laxika.magicalvibes.service.battlefield.GameQueryService;
@@ -202,7 +205,7 @@ class KnowledgePoolExileAndCastEffectHandlerTest {
 
                 knowledgePoolExileAndCastHandler.resolve(gd, entry, effect);
 
-                verify(gameBroadcastService).logAndBroadcast(eq(gd), eq(GameLog.text("Knowledge Pool's ability — original spell is no longer on the stack.")));
+                verify(gameBroadcastService).logAndBroadcast(eq(gd), argThat((GameLogEntry e) -> e.plainText().equals("Knowledge Pool's ability — original spell is no longer on the stack.")));
             }
 
             @Test
@@ -236,7 +239,7 @@ class KnowledgePoolExileAndCastEffectHandlerTest {
                 assertThat(gd.getCardsExiledByPermanent(kp.getId())).contains(originalCard);
                 verify(exileService).exileCard(gd, player1Id, originalCard, kp.getId());
                 // No eligible cards â†’ log message
-                verify(gameBroadcastService).logAndBroadcast(eq(gd), eq(GameLog.text("Knowledge Pool — no other nonland cards exiled. Player1 cannot cast a spell.")));
+                verify(gameBroadcastService).logAndBroadcast(eq(gd), argThat((GameLogEntry e) -> e.plainText().equals("Knowledge Pool — no other nonland cards exiled. Player1 cannot cast a spell.")));
             }
 
             @Test
@@ -287,7 +290,7 @@ class KnowledgePoolExileAndCastEffectHandlerTest {
 
                 exileSupport.handleKnowledgePoolCastChoice(gd, player, List.of());
 
-                verify(gameBroadcastService).logAndBroadcast(eq(gd), eq(GameLog.text("Player1 declines to cast a spell from Knowledge Pool.")));
+                verify(gameBroadcastService).logAndBroadcast(eq(gd), argThat((GameLogEntry e) -> e.plainText().equals("Player1 declines to cast a spell from Knowledge Pool.")));
                 verify(gameBroadcastService).broadcastGameState(gd);
                 assertThat(gd.peekPendingInteraction(PendingKnowledgePoolCast.class)).isNull();
             }

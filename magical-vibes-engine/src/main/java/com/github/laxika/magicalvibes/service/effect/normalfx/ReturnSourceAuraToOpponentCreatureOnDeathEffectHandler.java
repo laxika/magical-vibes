@@ -53,8 +53,7 @@ public class ReturnSourceAuraToOpponentCreatureOnDeathEffectHandler implements N
         // Find the aura card in the graveyard
         Card auraCard = gameQueryService.findCardInGraveyardById(gameData, auraCardId);
         if (auraCard == null) {
-            String fizzleLog = entry.getCard().getName() + "'s ability fizzles (card not in graveyard).";
-            gameBroadcastService.logAndBroadcast(gameData, GameLog.text(fizzleLog));
+            gameBroadcastService.logAndBroadcast(gameData, GameLog.cardThen(entry.getCard(), "'s ability fizzles (card not in graveyard)."));
             log.info("Game {} - {} not found in graveyard, death trigger fizzles",
                     gameData.id, entry.getCard().getName());
             return;
@@ -75,8 +74,7 @@ public class ReturnSourceAuraToOpponentCreatureOnDeathEffectHandler implements N
         }
 
         if (validTargetIds.isEmpty()) {
-            String fizzleLog = entry.getCard().getName() + "'s ability fizzles (no opponent creatures to attach to).";
-            gameBroadcastService.logAndBroadcast(gameData, GameLog.text(fizzleLog));
+            gameBroadcastService.logAndBroadcast(gameData, GameLog.cardThen(entry.getCard(), "'s ability fizzles (no opponent creatures to attach to)."));
             log.info("Game {} - {} death trigger fizzles (no opponent creatures)",
                     gameData.id, entry.getCard().getName());
             return;
@@ -95,7 +93,7 @@ public class ReturnSourceAuraToOpponentCreatureOnDeathEffectHandler implements N
             String ownerName = gameData.playerIdToName.get(auraOwnerId);
             String logEntry = auraCard.getName() + " returns to the battlefield attached to "
                     + target.getCard().getName() + " under " + ownerName + "'s control.";
-            gameBroadcastService.logAndBroadcast(gameData, GameLog.text(logEntry));
+            gameBroadcastService.logAndBroadcast(gameData, GameLog.builder().card(auraCard).text(" returns to the battlefield attached to ").card(target.getCard()).text(" under " + ownerName + "'s control.").build());
             log.info("Game {} - {} returns attached to {} (auto-selected)",
                     gameData.id, auraCard.getName(), target.getCard().getName());
         } else {

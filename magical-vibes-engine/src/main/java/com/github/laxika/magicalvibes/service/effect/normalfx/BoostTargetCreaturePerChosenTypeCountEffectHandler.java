@@ -89,9 +89,10 @@ public class BoostTargetCreaturePerChosenTypeCountEffectHandler implements Norma
         target.setPowerModifier(target.getPowerModifier() + powerBoost);
         target.setToughnessModifier(target.getToughnessModifier() + toughnessBoost);
 
-        String logEntry = String.format("%s gets %+d/%+d until end of turn.",
-                target.getCard().getName(), powerBoost, toughnessBoost);
-        gameBroadcastService.logAndBroadcast(gameData, GameLog.text(logEntry));
+        gameBroadcastService.logAndBroadcast(gameData, GameLog.builder()
+                .card(target.getCard())
+                .text(String.format(" gets %+d/%+d until end of turn.", powerBoost, toughnessBoost))
+                .build());
         log.info("Game {} - {} gets {}/{}", gameData.id, target.getCard().getName(), powerBoost, toughnessBoost);
     }
 }

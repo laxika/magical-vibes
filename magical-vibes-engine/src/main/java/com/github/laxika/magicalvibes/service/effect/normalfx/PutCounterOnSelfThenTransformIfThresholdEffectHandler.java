@@ -64,7 +64,7 @@ public class PutCounterOnSelfThenTransformIfThresholdEffectHandler implements No
         if (counterName == null) return;
 
         String logEntry = self.getCard().getName() + " gets a " + counterName + " counter.";
-        gameBroadcastService.logAndBroadcast(gameData, GameLog.text(logEntry));
+        gameBroadcastService.logAndBroadcast(gameData, GameLog.builder().card(self.getCard()).text(" gets a " + counterName + " counter.").build());
         log.info("Game {} - {} gets a {} counter", gameData.id, self.getCard().getName(), counterName);
 
         if (e.counterType() == CounterType.MINUS_ONE_MINUS_ONE) {

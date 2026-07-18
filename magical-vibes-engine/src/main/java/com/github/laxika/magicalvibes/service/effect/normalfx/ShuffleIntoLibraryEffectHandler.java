@@ -40,7 +40,6 @@ public class ShuffleIntoLibraryEffectHandler implements NormalEffectHandlerBean 
         deck.add(entry.getCard());
         LibraryShuffleHelper.shuffleLibrary(gameData, entry.getControllerId());
 
-        String shuffleLog = entry.getCard().getName() + " is shuffled into its owner's library.";
-        gameBroadcastService.logAndBroadcast(gameData, GameLog.text(shuffleLog));
+        gameBroadcastService.logAndBroadcast(gameData, GameLog.cardThen(entry.getCard(), " is shuffled into its owner's library."));
     }
 }

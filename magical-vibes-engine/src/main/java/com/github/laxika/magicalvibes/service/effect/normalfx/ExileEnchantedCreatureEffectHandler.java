@@ -52,7 +52,7 @@ public class ExileEnchantedCreatureEffectHandler implements NormalEffectHandlerB
 
         String exileLog = enchantedCreature.getCard().getName() + " is exiled ("
                 + entry.getCard().getName() + ").";
-        gameBroadcastService.logAndBroadcast(gameData, GameLog.text(exileLog));
+        gameBroadcastService.logAndBroadcast(gameData, GameLog.cardTextCard(enchantedCreature.getCard(), " is exiled (", entry.getCard(), ")."));
         log.info("Game {} - {} exiled by {}", gameData.id,
                 enchantedCreature.getCard().getName(), entry.getCard().getName());
 

@@ -31,7 +31,7 @@ public class MayPayLifeForColorlessManaUntilEndOfTurnEffectHandler implements No
 
         String logEntry = entry.getCard().getName()
                 + ": until end of turn, you may pay 1 life to add {C} any time you could activate a mana ability.";
-        gameBroadcastService.logAndBroadcast(gameData, GameLog.text(logEntry));
+        gameBroadcastService.logAndBroadcast(gameData, GameLog.cardThen(entry.getCard(), ": until end of turn, you may pay 1 life to add {C} any time you could activate a mana ability."));
         log.info("Game {} - {} may pay life for colorless mana until end of turn", gameData.id, controllerId);
     }
 }

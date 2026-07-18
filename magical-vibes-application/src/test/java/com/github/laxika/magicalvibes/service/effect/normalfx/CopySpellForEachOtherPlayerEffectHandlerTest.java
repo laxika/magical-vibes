@@ -1,4 +1,7 @@
 package com.github.laxika.magicalvibes.service.effect.normalfx;
+
+import static org.mockito.ArgumentMatchers.argThat;
+import static org.mockito.ArgumentMatchers.eq;
 import com.github.laxika.magicalvibes.model.GameLog;
 import com.github.laxika.magicalvibes.model.GameLogEntry;
 import com.github.laxika.magicalvibes.service.battlefield.GameQueryService;
@@ -187,7 +190,7 @@ class CopySpellForEachOtherPlayerEffectHandlerTest {
 
                 copySpellForEachOtherPlayerHandler.resolve(gd, triggerEntry, effect);
 
-                verify(gameBroadcastService).logAndBroadcast(eq(gd), eq(GameLog.text("A copy of Syphon Mind is created for Player2.")));
+                verify(gameBroadcastService).logAndBroadcast(eq(gd), argThat((GameLogEntry e) -> e.plainText().equals("A copy of Syphon Mind is created for Player2.")));
             }
 
             @Test

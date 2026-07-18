@@ -1,5 +1,9 @@
 package com.github.laxika.magicalvibes.service.battlefield;
+
+import static org.mockito.ArgumentMatchers.argThat;
+import static org.mockito.ArgumentMatchers.eq;
 import com.github.laxika.magicalvibes.model.GameLog;
+import com.github.laxika.magicalvibes.model.GameLogEntry;
 
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.EffectSlot;
@@ -104,7 +108,7 @@ class ETBTokenTargetServiceTest {
 
         assertThat(gd.hasPendingInteraction(PermanentChoiceContext.ETBSpellTargetTrigger.class)).isFalse();
         assertThat(gd.stack).isEmpty();
-        verify(gameBroadcastService).logAndBroadcast(gd, GameLog.text("Snapcaster Mage's enter-the-battlefield ability has no valid spell targets."));
+        verify(gameBroadcastService).logAndBroadcast(eq(gd), argThat((GameLogEntry e) -> e.plainText().equals("Snapcaster Mage's enter-the-battlefield ability has no valid spell targets.")));
     }
 
     @Test

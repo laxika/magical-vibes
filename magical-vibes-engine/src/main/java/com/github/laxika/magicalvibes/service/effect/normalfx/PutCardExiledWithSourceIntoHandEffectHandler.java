@@ -59,7 +59,7 @@ public class PutCardExiledWithSourceIntoHandEffectHandler implements NormalEffec
             Card card = matching.getFirst();
             gameData.removeFromExile(card.getId());
             gameData.addCardToHand(controllerId, card);
-            gameBroadcastService.logAndBroadcast(gameData, GameLog.text(controllerName + " puts " + card.getName() + " from exile into their hand."));
+            gameBroadcastService.logAndBroadcast(gameData, GameLog.textCardText(controllerName + " puts ", card, " from exile into their hand."));
             log.info("Game {} - {} returns {} from exile ({}) to hand",
                     gameData.id, controllerName, card.getName(), sourceName);
             return;

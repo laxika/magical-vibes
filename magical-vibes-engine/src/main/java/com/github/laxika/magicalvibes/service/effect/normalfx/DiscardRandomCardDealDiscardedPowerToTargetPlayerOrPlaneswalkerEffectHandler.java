@@ -59,7 +59,7 @@ public class DiscardRandomCardDealDiscardedPowerToTargetPlayerOrPlaneswalkerEffe
         int randomIndex = ThreadLocalRandom.current().nextInt(hand.size());
         Card discarded = hand.remove(randomIndex);
         graveyardService.discardCard(gameData, controllerId, discarded);
-        gameBroadcastService.logAndBroadcast(gameData, GameLog.text(playerName + " discards " + discarded.getName() + " at random."));
+        gameBroadcastService.logAndBroadcast(gameData, GameLog.textCardText(playerName + " discards ", discarded, " at random."));
         log.info("Game {} - {} discards {} at random ({})", gameData.id, playerName, discarded.getName(), sourceName);
         triggerCollectionService.checkDiscardTriggers(gameData, controllerId, discarded);
 

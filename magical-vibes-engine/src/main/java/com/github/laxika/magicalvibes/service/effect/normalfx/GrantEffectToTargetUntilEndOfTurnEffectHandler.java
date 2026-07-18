@@ -57,7 +57,7 @@ public class GrantEffectToTargetUntilEndOfTurnEffectHandler implements NormalEff
 
         String logEntry = entry.getCard().getName() + " grants a temporary " + e.slot().name()
                 + " ability to " + target.getCard().getName() + " until end of turn.";
-        gameBroadcastService.logAndBroadcast(gameData, GameLog.text(logEntry));
+        gameBroadcastService.logAndBroadcast(gameData, GameLog.builder().card(entry.getCard()).text(" grants a temporary " + e.slot().name() + " ability to ").card(target.getCard()).text(" until end of turn.").build());
         log.info("Game {} - {} grants temporary {} effect to {}", gameData.id,
                 entry.getCard().getName(), e.slot().name(), target.getCard().getName());
     }

@@ -74,7 +74,7 @@ public class CreateLifeTotalAvatarTokenEffectHandler implements NormalEffectHand
                     int lifeTotal = gameData.playerLifeTotals.getOrDefault(controllerId, 0);
                     String logEntry = entry.getCard().getName() + " creates a " + lifeTotal + "/" + lifeTotal
                             + " white " + e.tokenName() + " creature token.";
-                    gameBroadcastService.logAndBroadcast(gameData, GameLog.text(logEntry));
+                    gameBroadcastService.logAndBroadcast(gameData, GameLog.builder().card(entry.getCard()).text(" creates a " + lifeTotal + "/" + lifeTotal + " white " + e.tokenName() + " creature token.").build());
                     log.info("Game {} - {} creates a {}/{} {} token", gameData.id, entry.getCard().getName(),
                             lifeTotal, lifeTotal, e.tokenName());
                 }

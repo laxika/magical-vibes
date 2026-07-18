@@ -50,7 +50,7 @@ public class PutCardFromOpponentGraveyardOntoBattlefieldEffectHandler implements
 
         String tappedText = e.tapped() ? " tapped" : "";
         String playerName = gameData.playerIdToName.get(controllerId);
-        gameBroadcastService.logAndBroadcast(gameData, GameLog.text(playerName + " puts " + result.card().getName() + " onto the battlefield" + tappedText + " under their control."));
+        gameBroadcastService.logAndBroadcast(gameData, GameLog.builder().text(playerName + " puts ").card(result.card()).text(" onto the battlefield" + tappedText + " under their control.").build());
 
         graveyardReturnSupport.handleCreatureEtbAndLegendRule(gameData, controllerId, result.permanent(), result.card());
 

@@ -34,8 +34,7 @@ public class MustBeBlockedIfAbleThisTurnEffectHandler implements NormalEffectHan
 
         target.setMustBeBlockedThisTurn(true);
 
-        String logEntry = target.getCard().getName() + " must be blocked this turn if able.";
-        gameBroadcastService.logAndBroadcast(gameData, GameLog.text(logEntry));
+        gameBroadcastService.logAndBroadcast(gameData, GameLog.cardThen(target.getCard(), " must be blocked this turn if able."));
         log.info("Game {} - {} must be blocked this turn if able", gameData.id, target.getCard().getName());
     }
 }

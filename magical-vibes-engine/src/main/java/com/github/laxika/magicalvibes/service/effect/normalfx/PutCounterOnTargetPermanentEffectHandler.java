@@ -115,7 +115,7 @@ public class PutCounterOnTargetPermanentEffectHandler implements NormalEffectHan
             int effectiveToughness = gameQueryService.getEffectiveToughness(gameData, target);
             if (effectiveToughness >= 1) {
                 target.setRegenerationShield(target.getRegenerationShield() + 1);
-                gameBroadcastService.logAndBroadcast(gameData, GameLog.text(target.getCard().getName() + " gains a regeneration shield."));
+                gameBroadcastService.logAndBroadcast(gameData, GameLog.cardThen(target.getCard(), " gains a regeneration shield."));
                 log.info("Game {} - {} gains a regeneration shield (toughness {})",
                         gameData.id, target.getCard().getName(), effectiveToughness);
             }

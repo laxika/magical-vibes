@@ -68,7 +68,7 @@ public class SacrificeUnlessReturnOwnPermanentTypeToHandEffectHandler implements
                 permanentRemovalService.removePermanentToGraveyard(gameData, sourcePermanent);
                 String logEntry = playerName + " controls no " + typeName
                         + "s. " + sourceCard.getName() + " is sacrificed.";
-                gameBroadcastService.logAndBroadcast(gameData, GameLog.text(logEntry));
+                gameBroadcastService.logAndBroadcast(gameData, GameLog.builder().text(playerName + " controls no " + typeName + "s. ").card(sourceCard).text(" is sacrificed.").build());
                 log.info("Game {} - {} sacrificed (no {}s to return)", gameData.id, sourceCard.getName(), typeName);
             }
             return;

@@ -59,8 +59,7 @@ public class TargetPlayerExilesCardFromGraveyardEffectHandler implements NormalE
             graveyardService.notifyCardsLeftGraveyard(gameData, targetPlayerId);
             exileService.exileCard(gameData, targetPlayerId, card);
 
-            String logEntry = targetName + " exiles " + card.getName() + " from their graveyard.";
-            gameBroadcastService.logAndBroadcast(gameData, GameLog.text(logEntry));
+            gameBroadcastService.logAndBroadcast(gameData, GameLog.textCardText(targetName + " exiles " , card, " from their graveyard."));
             log.info("Game {} - {} exiles {} from graveyard", gameData.id, targetName, card.getName());
 
             if (e.lifeGainIfCreature() > 0 && card.hasType(CardType.CREATURE)) {

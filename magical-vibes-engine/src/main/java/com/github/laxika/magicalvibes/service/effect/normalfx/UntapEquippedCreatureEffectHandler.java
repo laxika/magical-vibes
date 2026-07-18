@@ -43,8 +43,7 @@ public class UntapEquippedCreatureEffectHandler implements NormalEffectHandlerBe
 
         tapUntapSupport.untapPermanent(gameData, equippedCreature);
 
-        String logEntry = sourceName + " untaps " + equippedCreature.getCard().getName() + ".";
-        gameBroadcastService.logAndBroadcast(gameData, GameLog.text(logEntry));
+        gameBroadcastService.logAndBroadcast(gameData, GameLog.textCardText(sourceName + " untaps " , equippedCreature.getCard(), "."));
         log.info("Game {} - {} untaps {}", gameData.id, sourceName, equippedCreature.getCard().getName());
     }
 }

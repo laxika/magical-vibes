@@ -46,9 +46,10 @@ public class BoostSelfEffectHandler implements NormalEffectHandlerBean {
         self.setPowerModifier(self.getPowerModifier() + powerBoost);
         self.setToughnessModifier(self.getToughnessModifier() + toughnessBoost);
 
-        String logEntry = String.format("%s gets %+d/%+d until end of turn.",
-                self.getCard().getName(), powerBoost, toughnessBoost);
-        gameBroadcastService.logAndBroadcast(gameData, GameLog.text(logEntry));
+        gameBroadcastService.logAndBroadcast(gameData, GameLog.builder()
+                .card(self.getCard())
+                .text(String.format(" gets %+d/%+d until end of turn.", powerBoost, toughnessBoost))
+                .build());
 
         log.info("Game {} - {} gets {}/{}", gameData.id, self.getCard().getName(), powerBoost, toughnessBoost);
     }

@@ -221,8 +221,7 @@ public class MulliganService {
                     battlefieldEntryService.handleCreatureEnteredBattlefield(gameData, controllerId, card, null, false);
                 }
 
-                String entryLog = controllerName + " puts " + card.getName() + " onto the battlefield (Karn Liberated).";
-                gameBroadcastService.logAndBroadcast(gameData, GameLog.text(entryLog));
+                gameBroadcastService.logAndBroadcast(gameData, GameLog.textCardText(controllerName + " puts " , card, " onto the battlefield (Karn Liberated)."));
                 log.info("Game {} - {} puts {} onto the battlefield from Karn's exile",
                         gameData.id, controllerName, card.getName());
             }

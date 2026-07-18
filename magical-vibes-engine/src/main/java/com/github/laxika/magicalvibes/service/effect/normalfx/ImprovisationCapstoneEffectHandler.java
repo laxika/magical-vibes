@@ -46,7 +46,7 @@ public class ImprovisationCapstoneEffectHandler implements NormalEffectHandlerBe
             gameData.addToExile(controllerId, card);
             exiledThisProcess.add(card.getId());
             totalManaValue += card.getManaValue();
-            gameBroadcastService.logAndBroadcast(gameData, GameLog.text(playerName + " exiles " + card.getName() + " (mana value " + card.getManaValue() + ") (" + sourceName + ")."));
+            gameBroadcastService.logAndBroadcast(gameData, GameLog.builder().text(playerName + " exiles ").card(card).text(" (mana value " + card.getManaValue() + ") (" + sourceName + ").").build());
         }
 
         if (deck.isEmpty() && totalManaValue < e.totalManaValueThreshold()) {

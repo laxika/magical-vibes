@@ -57,6 +57,6 @@ public class InnerFlameIgniterEffectHandler implements NormalEffectHandlerBean {
             }
         }
 
-        gameBroadcastService.logAndBroadcast(gameData, GameLog.text(entry.getCard().getName() + " gives first strike to " + count + " creature(s) until end of turn."));
+        gameBroadcastService.logAndBroadcast(gameData, GameLog.builder().card(entry.getCard()).text(" gives first strike to " + count + " creature(s) until end of turn.").build());
     }
 }

@@ -43,7 +43,6 @@ public class CantAttackNextTurnCombatOpponentEffectHandler implements NormalEffe
         }
 
         target.setCantAttackNextTurn(true);
-        String logEntry = target.getCard().getName() + " can't attack during its controller's next turn.";
-        gameBroadcastService.logAndBroadcast(gameData, GameLog.text(logEntry));
+        gameBroadcastService.logAndBroadcast(gameData, GameLog.cardThen(target.getCard(), " can't attack during its controller's next turn."));
     }
 }

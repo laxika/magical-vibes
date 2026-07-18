@@ -53,8 +53,7 @@ public class CanAttackAsThoughNoDefenderEffectHandler implements NormalEffectHan
                 entry.getCard().getName(), sourceId, entry.getControllerId(), effect,
                 sourceId, null, null, EffectDuration.UNTIL_END_OF_TURN, 0));
 
-        String logEntry = source.getCard().getName() + " can attack this turn as though it didn't have defender.";
-        gameBroadcastService.logAndBroadcast(gameData, GameLog.text(logEntry));
+        gameBroadcastService.logAndBroadcast(gameData, GameLog.cardThen(source.getCard(), " can attack this turn as though it didn't have defender."));
         log.info("Game {} - {} can attack despite defender until end of turn", gameData.id, source.getCard().getName());
     }
 }

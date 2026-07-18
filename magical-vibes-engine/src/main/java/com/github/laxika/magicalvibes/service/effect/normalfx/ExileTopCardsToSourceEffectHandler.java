@@ -78,7 +78,7 @@ public class ExileTopCardsToSourceEffectHandler implements NormalEffectHandlerBe
             String logEntry = playerName + " exiles the top " + toExile + " card"
                     + (toExile != 1 ? "s" : "") + " of their library face down ("
                     + sourcePermanent.getCard().getName() + ").";
-            gameBroadcastService.logAndBroadcast(gameData, GameLog.text(logEntry));
+            gameBroadcastService.logAndBroadcast(gameData, GameLog.builder().text(playerName + " exiles the top " + toExile + " card" + (toExile != 1 ? "s" : "") + " of their library face down (").card(sourcePermanent.getCard()).text(").").build());
             log.info("Game {} - {} exiles {} cards from library to {}",
                     gameData.id, playerName, toExile, sourcePermanent.getCard().getName());
         }

@@ -46,8 +46,7 @@ public class PutAuraFromHandOntoSelfEffectHandler implements NormalEffectHandler
                 }
 
                 if (self == null) {
-                    String fizzleLog = entry.getCard().getName() + "'s ability fizzles (no longer on the battlefield).";
-                    gameBroadcastService.logAndBroadcast(gameData, GameLog.text(fizzleLog));
+                    gameBroadcastService.logAndBroadcast(gameData, GameLog.cardThen(entry.getCard(), "'s ability fizzles (no longer on the battlefield)."));
                     log.info("Game {} - {} ETB fizzles, creature left battlefield", gameData.id, entry.getCard().getName());
                     return;
                 }

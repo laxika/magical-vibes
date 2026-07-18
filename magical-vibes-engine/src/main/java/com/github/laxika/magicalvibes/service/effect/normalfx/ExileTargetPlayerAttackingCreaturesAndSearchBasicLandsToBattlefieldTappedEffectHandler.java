@@ -62,8 +62,7 @@ public class ExileTargetPlayerAttackingCreaturesAndSearchBasicLandsToBattlefield
         int exiledCount = 0;
         for (Permanent creature : attackingCreatures) {
             permanentRemovalService.removePermanentToExile(gameData, creature);
-            String logEntry = creature.getCard().getName() + " is exiled.";
-            gameBroadcastService.logAndBroadcast(gameData, GameLog.text(logEntry));
+            gameBroadcastService.logAndBroadcast(gameData, GameLog.cardThen(creature.getCard(), " is exiled."));
             log.info("Game {} - {} is exiled by {}",
                     gameData.id, creature.getCard().getName(), entry.getCard().getName());
             exiledCount++;

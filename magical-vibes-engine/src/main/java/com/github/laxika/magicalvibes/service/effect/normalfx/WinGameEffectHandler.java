@@ -38,13 +38,12 @@ public class WinGameEffectHandler implements NormalEffectHandlerBean {
         if (!gameQueryService.canPlayerLoseGame(gameData, opponentId)) {
             String logEntry = entry.getCard().getName() + "'s win condition is met but " +
                     gameData.playerIdToName.get(opponentId) + " can't lose the game.";
-            gameBroadcastService.logAndBroadcast(gameData, GameLog.text(logEntry));
+            gameBroadcastService.logAndBroadcast(gameData, GameLog.builder().card(entry.getCard()).text("'s win condition is met but " + gameData.playerIdToName.get(opponentId) + " can't lose the game.").build());
             log.info("Game {} - {} win prevented — opponent can't lose", gameData.id, entry.getCard().getName());
             return;
         }
 
-        String logEntry = playerName + " wins the game from " + entry.getCard().getName() + "!";
-        gameBroadcastService.logAndBroadcast(gameData, GameLog.text(logEntry));
+        gameBroadcastService.logAndBroadcast(gameData, GameLog.textCardText(playerName + " wins the game from " , entry.getCard(), "!"));
         log.info("Game {} - {} wins via {}", gameData.id, playerName, entry.getCard().getName());
 
         gameOutcomeService.declareWinner(gameData, controllerId);

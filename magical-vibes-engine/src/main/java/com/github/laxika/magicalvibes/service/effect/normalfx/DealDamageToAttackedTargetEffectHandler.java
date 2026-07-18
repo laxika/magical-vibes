@@ -52,13 +52,13 @@ public class DealDamageToAttackedTargetEffectHandler implements NormalEffectHand
         if (damageSupport.isDamageSourcePreventedWithLog(gameData, entry)
                 || damageSupport.isSourcePermanentPreventedFromDealingDamage(gameData, entry)
                 || gameQueryService.hasProtectionFromSource(gameData, target, source)) {
-            gameBroadcastService.logAndBroadcast(gameData, GameLog.text(source.getName() + "'s damage is prevented."));
+            gameBroadcastService.logAndBroadcast(gameData, GameLog.cardThen(source, "'s damage is prevented."));
             return;
         }
 
         int newLoyalty = Math.max(0, target.getCounterCount(CounterType.LOYALTY) - rawDamage);
         target.setCounterCount(CounterType.LOYALTY, newLoyalty);
-        gameBroadcastService.logAndBroadcast(gameData, GameLog.text(source.getName() + " deals " + rawDamage + " damage to " + target.getCard().getName() + "."));
+        gameBroadcastService.logAndBroadcast(gameData, GameLog.builder().card(source).text(" deals " + rawDamage + " damage to ").card(target.getCard()).text(".").build());
         gameOutcomeService.checkWinCondition(gameData);
     
     }

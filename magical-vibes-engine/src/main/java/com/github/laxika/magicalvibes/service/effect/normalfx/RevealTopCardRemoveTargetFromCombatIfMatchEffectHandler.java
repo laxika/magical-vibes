@@ -46,20 +46,20 @@ public class RevealTopCardRemoveTargetFromCombatIfMatchEffectHandler implements 
         }
 
         Card topCard = deck.removeFirst();
-        gameBroadcastService.logAndBroadcast(gameData, GameLog.text(playerName + " reveals " + topCard.getName() + " from the top of their library (" + sourceName + ")."));
+        gameBroadcastService.logAndBroadcast(gameData, GameLog.builder().text(playerName + " reveals ").card(topCard).text(" from the top of their library (" + sourceName + ").").build());
 
         if (predicateEvaluationService.matchesCardPredicate(topCard, e.matchPredicate(), null, gameData, controllerId)) {
             Permanent attacker = gameQueryService.findPermanentById(gameData, entry.getTargetId());
             if (attacker != null && attacker.isAttacking()) {
                 attacker.setAttacking(false);
                 attacker.setAttackTarget(null);
-                gameBroadcastService.logAndBroadcast(gameData, GameLog.text(sourceName + " removes " + attacker.getCard().getName() + " from combat."));
+                gameBroadcastService.logAndBroadcast(gameData, GameLog.textCardText(sourceName + " removes ", attacker.getCard(), " from combat."));
                 log.info("Game {} - {} removes {} from combat", gameData.id, sourceName, attacker.getCard().getName());
             }
         }
 
         deck.add(topCard);
-        gameBroadcastService.logAndBroadcast(gameData, GameLog.text(playerName + " puts " + topCard.getName() + " on the bottom of their library."));
+        gameBroadcastService.logAndBroadcast(gameData, GameLog.textCardText(playerName + " puts ", topCard, " on the bottom of their library."));
         log.info("Game {} - {} bottoms {} ({})", gameData.id, playerName, topCard.getName(), sourceName);
     
     }

@@ -46,8 +46,7 @@ public class RemoveAllCountersFromSelfEffectHandler implements NormalEffectHandl
 
         if (removed > 0) {
             String counterName = permanentCounterSupport.counterTypeName(e.counterType());
-            gameBroadcastService.logAndBroadcast(gameData, GameLog.text(self.getCard().getName()
-                    + " removes all its " + counterName + " counters (" + removed + ")."));
+            gameBroadcastService.logAndBroadcast(gameData, GameLog.builder().card(self.getCard()).text(" removes all its " + counterName + " counters (" + removed + ").").build());
         }
     }
 }

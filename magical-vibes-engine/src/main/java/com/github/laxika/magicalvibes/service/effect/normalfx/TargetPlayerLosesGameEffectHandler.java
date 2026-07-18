@@ -54,8 +54,7 @@ public class TargetPlayerLosesGameEffectHandler implements NormalEffectHandlerBe
         String loserName = gameData.playerIdToName.get(losingPlayerId);
         String winnerName = gameData.playerIdToName.get(winnerId);
 
-        String logEntry = loserName + " loses the game from " + entry.getCard().getName() + ".";
-        gameBroadcastService.logAndBroadcast(gameData, GameLog.text(logEntry));
+        gameBroadcastService.logAndBroadcast(gameData, GameLog.textCardText(loserName + " loses the game from " , entry.getCard(), "."));
         log.info("Game {} - {} loses the game from {}", gameData.id, loserName, entry.getCard().getName());
 
         gameOutcomeService.declareWinner(gameData, winnerId);

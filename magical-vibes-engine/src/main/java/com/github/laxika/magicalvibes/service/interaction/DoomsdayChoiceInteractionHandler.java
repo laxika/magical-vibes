@@ -122,8 +122,7 @@ public class DoomsdayChoiceInteractionHandler
             finishResolution(gameData);
         } else if (chosen.size() == 1) {
             deck.addFirst(chosen.getFirst());
-            gameBroadcastService.logAndBroadcast(gameData, GameLog.text(controllerName + " puts "
-                    + chosen.getFirst().getName() + " on top of their library (Doomsday)."));
+            gameBroadcastService.logAndBroadcast(gameData, GameLog.textCardText(controllerName + " puts ", chosen.getFirst(), " on top of their library (Doomsday)."));
             finishResolution(gameData);
         } else {
             gameBroadcastService.logAndBroadcast(gameData, GameLog.text(controllerName + " puts " + chosen.size()

@@ -1,10 +1,14 @@
 package com.github.laxika.magicalvibes.service;
 
+import static org.mockito.ArgumentMatchers.argThat;
+import static org.mockito.ArgumentMatchers.eq;
+
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardType;
 import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.GameData;
 import com.github.laxika.magicalvibes.model.GameLog;
+import com.github.laxika.magicalvibes.model.GameLogEntry;
 import com.github.laxika.magicalvibes.model.Keyword;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.StackEntryType;
@@ -121,8 +125,7 @@ class DrawServiceTest {
             assertThat(gd.stack.getFirst().getSourcePermanentId()).isEqualTo(equipment.getId());
             assertThat(gd.stack.getFirst().getEffectsToResolve())
                     .containsExactly(new BoostEquippedCreatureAndGrantKeywordUntilEndOfTurnEffect(1, 1, Keyword.FLYING));
-            verify(gameBroadcastService).logAndBroadcast(eq(gd),
-                    eq(GameLog.text("Diviner's Wand's ability triggers.")));
+            verify(gameBroadcastService).logAndBroadcast(eq(gd), argThat((GameLogEntry e) -> e.plainText().equals("Diviner's Wand's ability triggers.")));
         }
 
         @Test
@@ -138,8 +141,7 @@ class DrawServiceTest {
 
             assertThat(gd.stack).hasSize(1);
             assertThat(gd.stack.getFirst().getSourcePermanentId()).isEqualTo(crawler.getId());
-            verify(gameBroadcastService).logAndBroadcast(eq(gd),
-                    eq(GameLog.text("Psychosis Crawler's ability triggers.")));
+            verify(gameBroadcastService).logAndBroadcast(eq(gd), argThat((GameLogEntry e) -> e.plainText().equals("Psychosis Crawler's ability triggers.")));
         }
     }
 }

@@ -50,8 +50,7 @@ public class ExileAllPermanentsEffectHandler implements NormalEffectHandlerBean 
 
         for (Permanent perm : toExile) {
             permanentRemovalService.removePermanentToExile(gameData, perm);
-            String logEntry = perm.getCard().getName() + " is exiled.";
-            gameBroadcastService.logAndBroadcast(gameData, GameLog.text(logEntry));
+            gameBroadcastService.logAndBroadcast(gameData, GameLog.cardThen(perm.getCard(), " is exiled."));
             log.info("Game {} - {} is exiled by {}",
                     gameData.id, perm.getCard().getName(), entry.getCard().getName());
         }

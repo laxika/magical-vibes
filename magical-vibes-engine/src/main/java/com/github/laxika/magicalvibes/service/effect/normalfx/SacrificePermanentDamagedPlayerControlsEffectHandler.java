@@ -52,7 +52,7 @@ public class SacrificePermanentDamagedPlayerControlsEffectHandler implements Nor
         if (validIds.isEmpty()) {
             String logEntry = entry.getCard().getName() + "'s ability resolves, but "
                     + gameData.playerIdToName.get(defenderId) + " has no valid permanents.";
-            gameBroadcastService.logAndBroadcast(gameData, GameLog.text(logEntry));
+            gameBroadcastService.logAndBroadcast(gameData, GameLog.builder().card(entry.getCard()).text("'s ability resolves, but " + gameData.playerIdToName.get(defenderId) + " has no valid permanents.").build());
             return;
         }
 

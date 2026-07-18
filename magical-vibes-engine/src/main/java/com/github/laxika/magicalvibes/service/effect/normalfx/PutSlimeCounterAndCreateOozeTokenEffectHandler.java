@@ -61,7 +61,7 @@ public class PutSlimeCounterAndCreateOozeTokenEffectHandler implements NormalEff
                 int slimeCount = source.getCounterCount(CounterType.SLIME);
 
                 String counterLog = source.getCard().getName() + " gets a slime counter (" + slimeCount + " total).";
-                gameBroadcastService.logAndBroadcast(gameData, GameLog.text(counterLog));
+                gameBroadcastService.logAndBroadcast(gameData, GameLog.builder().card(source.getCard()).text(" gets a slime counter (" + slimeCount + " total).").build());
                 log.info("Game {} - {} gets a slime counter ({} total)", gameData.id, source.getCard().getName(), slimeCount);
 
                 // Create a 0/0 green Ooze token with a CDA linking to this Gutter Grime

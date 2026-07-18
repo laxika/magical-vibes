@@ -58,7 +58,7 @@ public class GainControlOfTargetEffectHandler implements NormalEffectHandlerBean
             if (e.grantedSubtype() != null && !target.getGrantedSubtypes().contains(e.grantedSubtype())) {
                 target.getGrantedSubtypes().add(e.grantedSubtype());
                 String subtypeLog = target.getCard().getName() + " becomes a " + e.grantedSubtype().getDisplayName() + " in addition to its other types.";
-                gameBroadcastService.logAndBroadcast(gameData, GameLog.text(subtypeLog));
+                gameBroadcastService.logAndBroadcast(gameData, GameLog.builder().card(target.getCard()).text(" becomes a " + e.grantedSubtype().getDisplayName() + " in addition to its other types.").build());
             }
         }
     }
@@ -89,13 +89,13 @@ public class GainControlOfTargetEffectHandler implements NormalEffectHandlerBean
         Permanent source = gameQueryService.findPermanentById(gameData, sourcePermanentId);
         if (source == null) {
             String logEntry = entry.getCard().getName() + "'s ability has no effect (source left the battlefield).";
-            gameBroadcastService.logAndBroadcast(gameData, GameLog.text(logEntry));
+            gameBroadcastService.logAndBroadcast(gameData, GameLog.cardThen(entry.getCard(), "'s ability has no effect (source left the battlefield)."));
             return;
         }
         UUID sourceController = gameQueryService.findPermanentController(gameData, sourcePermanentId);
         if (sourceController == null || !sourceController.equals(entry.getControllerId())) {
             String logEntry = entry.getCard().getName() + "'s ability has no effect (controller no longer controls " + source.getCard().getName() + ").";
-            gameBroadcastService.logAndBroadcast(gameData, GameLog.text(logEntry));
+            gameBroadcastService.logAndBroadcast(gameData, GameLog.cardThen(entry.getCard(), "'s ability has no effect (source left the battlefield)."));
             return;
         }
 

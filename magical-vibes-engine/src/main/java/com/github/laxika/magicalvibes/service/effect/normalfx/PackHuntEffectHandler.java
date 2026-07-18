@@ -53,7 +53,7 @@ public class PackHuntEffectHandler implements NormalEffectHandlerBean {
                         && p.getCard().getSubtypes().contains(huntSubtype)) {
                     p.tap();
                     tappedHunters.add(p);
-                    gameBroadcastService.logAndBroadcast(gameData, GameLog.text(entry.getCard().getName() + " taps " + p.getCard().getName() + "."));
+                    gameBroadcastService.logAndBroadcast(gameData, GameLog.cardTextCard(entry.getCard(), " taps ", p.getCard(), "."));
                 }
             }
         }
@@ -68,7 +68,7 @@ public class PackHuntEffectHandler implements NormalEffectHandlerBean {
                 int damage = gameQueryService.applyDamageMultiplier(gameData, hunterPower, entry);
                 damageSupport.dealCreatureDamage(gameData, entry, target, damage, hunter);
             } else {
-                gameBroadcastService.logAndBroadcast(gameData, GameLog.text(hunter.getCard().getName() + "'s damage to " + target.getCard().getName() + " is prevented."));
+                gameBroadcastService.logAndBroadcast(gameData, GameLog.cardTextCard(hunter.getCard(), "'s damage to ", target.getCard(), " is prevented."));
             }
         }
 
@@ -88,7 +88,7 @@ public class PackHuntEffectHandler implements NormalEffectHandlerBean {
                         int actualDamage = gameQueryService.applyDamageMultiplier(gameData, damage, entry);
                         damageSupport.dealCreatureDamage(gameData, entry, hunter, actualDamage, target);
                     } else {
-                        gameBroadcastService.logAndBroadcast(gameData, GameLog.text(target.getCard().getName() + "'s damage to " + hunter.getCard().getName() + " is prevented."));
+                        gameBroadcastService.logAndBroadcast(gameData, GameLog.cardTextCard(target.getCard(), "'s damage to ", hunter.getCard(), " is prevented."));
                     }
                 }
             }

@@ -86,7 +86,7 @@ public class PutCounterOnEachMatchingPermanentEffectHandler implements NormalEff
 
         String counterName = permanentCounterSupport.counterTypeName(e.counterType());
         String counterText = amount == 1 ? "a " + counterName + " counter" : amount + " " + counterName + " counters";
-        gameBroadcastService.logAndBroadcast(gameData, GameLog.text(entry.getCard().getName() + " puts " + counterText + " on " + count + " creature(s)."));
+        gameBroadcastService.logAndBroadcast(gameData, GameLog.builder().card(entry.getCard()).text(" puts " + counterText + " on " + count + " creature(s).").build());
         log.info("Game {} - {} puts {} {} counter(s) on {} matching permanent(s)", gameData.id,
                 entry.getCard().getName(), amount, counterName, count);
 

@@ -47,7 +47,7 @@ public class PutCreatureFromOpponentGraveyardOntoBattlefieldWithExileEffectHandl
         gameData.queueDelayedAction(new DelayedPermanentAction(result.permanent().getId(), DelayedPermanentActionKind.EXILE_TOKEN_AT_END_STEP));
 
         String playerName = gameData.playerIdToName.get(controllerId);
-        gameBroadcastService.logAndBroadcast(gameData, GameLog.text(playerName + " puts " + result.card().getName() + " onto the battlefield under their control with haste."));
+        gameBroadcastService.logAndBroadcast(gameData, GameLog.textCardText(playerName + " puts ", result.card(), " onto the battlefield under their control with haste."));
 
         graveyardReturnSupport.handleCreatureEtbAndLegendRule(gameData, controllerId, result.permanent(), result.card());
     }

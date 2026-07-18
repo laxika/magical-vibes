@@ -94,11 +94,11 @@ public class SacrificeEnchantedPermanentAndReattachSourceAuraEffectHandler imple
         // Sacrifice the enchanted permanent.
         permanentRemovalService.removePermanentToGraveyard(gameData, enchanted);
         String playerName = gameData.playerIdToName.get(controllerId);
-        gameBroadcastService.logAndBroadcast(gameData, GameLog.text(playerName + " sacrifices " + enchanted.getCard().getName() + "."));
+        gameBroadcastService.logAndBroadcast(gameData, GameLog.textCardText(playerName + " sacrifices ", enchanted.getCard(), "."));
 
         if (validTargetIds.isEmpty()) {
             // No legal destination — the Aura stays unattached and is removed as a state-based action.
-            gameBroadcastService.logAndBroadcast(gameData, GameLog.text("There is no creature or land to attach " + aura.getCard().getName() + " to."));
+            gameBroadcastService.logAndBroadcast(gameData, GameLog.textCardText("There is no creature or land to attach ", aura.getCard(), " to."));
             permanentRemovalService.removeOrphanedAuras(gameData);
             return;
         }
@@ -108,7 +108,7 @@ public class SacrificeEnchantedPermanentAndReattachSourceAuraEffectHandler imple
         aura.setAttachedTo(newTarget.getId());
         // CR 613.7e: an Aura receives a new timestamp each time it becomes attached.
         aura.setTimestamp(gameData.nextTimestamp());
-        gameBroadcastService.logAndBroadcast(gameData, GameLog.text(aura.getCard().getName() + " is now attached to " + newTarget.getCard().getName() + "."));
+        gameBroadcastService.logAndBroadcast(gameData, GameLog.cardTextCard(aura.getCard(), " is now attached to ", newTarget.getCard(), "."));
         log.info("Game {} - {} reattached to {} after sacrifice", gameData.id,
                 aura.getCard().getName(), newTarget.getCard().getName());
     }

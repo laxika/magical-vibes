@@ -53,10 +53,12 @@ public class BuffTargetCreatureIndefinitelyEffectHandler implements NormalEffect
                     entry.getCard().getName(), null, entry.getControllerId(), buff,
                     target.getId(), null, null, EffectDuration.PERMANENT, 0));
 
-            String logEntry = String.format("%s gets %+d/%+d%s indefinitely.",
-                    target.getCard().getName(), buff.powerBoost(), buff.toughnessBoost(),
-                    buff.keywords().isEmpty() ? "" : " and gains " + formatKeywords(buff.keywords()));
-            gameBroadcastService.logAndBroadcast(gameData, GameLog.text(logEntry));
+            gameBroadcastService.logAndBroadcast(gameData, GameLog.builder()
+                    .card(target.getCard())
+                    .text(String.format(" gets %+d/%+d%s indefinitely.",
+                            buff.powerBoost(), buff.toughnessBoost(),
+                            buff.keywords().isEmpty() ? "" : " and gains " + formatKeywords(buff.keywords())))
+                    .build());
             log.info("Game {} - {} gets {}/{} and {} indefinitely", gameData.id,
                     target.getCard().getName(), buff.powerBoost(), buff.toughnessBoost(), buff.keywords());
         }

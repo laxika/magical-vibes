@@ -107,8 +107,7 @@ public class TargetPlayerSacrificesCreatureThenCreateTokensIfSubtypeEffectHandle
         permanentRemovalService.removePermanentToGraveyard(gameData, creature);
 
         String playerName = gameData.playerIdToName.get(sacrificingPlayerId);
-        String logEntry = playerName + " sacrifices " + creature.getCard().getName() + ".";
-        gameBroadcastService.logAndBroadcast(gameData, GameLog.text(logEntry));
+        gameBroadcastService.logAndBroadcast(gameData, GameLog.textCardText(playerName + " sacrifices " , creature.getCard(), "."));
         log.info("Game {} - {} sacrifices {}", gameData.id, playerName, creature.getCard().getName());
 
         if (hadSubtype) {

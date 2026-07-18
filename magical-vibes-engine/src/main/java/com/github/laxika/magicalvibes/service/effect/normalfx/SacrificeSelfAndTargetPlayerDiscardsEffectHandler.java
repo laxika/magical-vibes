@@ -40,16 +40,15 @@ public class SacrificeSelfAndTargetPlayerDiscardsEffectHandler implements Normal
 
         Permanent source = gameQueryService.findPermanentById(gameData, sourcePermanentId);
         if (source == null) {
-            gameBroadcastService.logAndBroadcast(gameData, GameLog.text(entry.getCard().getName() + "'s ability fizzles — source no longer on the battlefield."));
+            gameBroadcastService.logAndBroadcast(gameData, GameLog.cardThen(entry.getCard(), "'s ability fizzles — source no longer on the battlefield."));
             return;
         }
 
         permanentRemovalService.removePermanentToGraveyard(gameData, source);
-        gameBroadcastService.logAndBroadcast(gameData, GameLog.text(entry.getCard().getName() + " is sacrificed."));
+        gameBroadcastService.logAndBroadcast(gameData, GameLog.cardThen(entry.getCard(), " is sacrificed."));
 
         String playerName = gameData.playerIdToName.get(targetPlayerId);
-        gameBroadcastService.logAndBroadcast(gameData, GameLog.text(playerName + " must discard " + e.amount() + " card" + (e.amount() > 1 ? "s" : "")
-                        + " (" + entry.getCard().getName() + ")."));
+        gameBroadcastService.logAndBroadcast(gameData, GameLog.textCardText(playerName + " must discard " + e.amount() + " card" + (e.amount() > 1 ? "s" : "") + " (", entry.getCard(), ")."));
 
         playerInteractionSupport.resolveDiscardCards(gameData, targetPlayerId, e.amount());
     }

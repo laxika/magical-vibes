@@ -51,7 +51,7 @@ public class TargetPlayerChoosesCreatureRestCantBlockEffectHandler implements No
         // With 0 or 1 creatures there are no "other" creatures to restrict — nothing happens.
         if (creatureIds.size() <= 1) {
             String playerName = gameData.playerIdToName.get(targetPlayerId);
-            gameBroadcastService.logAndBroadcast(gameData, GameLog.text(entry.getCard().getName() + " resolves but " + playerName + " has no other creatures to restrict."));
+            gameBroadcastService.logAndBroadcast(gameData, GameLog.builder().card(entry.getCard()).text(" resolves but " + playerName + " has no other creatures to restrict.").build());
             return;
         }
 

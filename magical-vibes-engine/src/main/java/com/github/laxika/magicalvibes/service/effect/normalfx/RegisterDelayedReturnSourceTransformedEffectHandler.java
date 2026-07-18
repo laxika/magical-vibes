@@ -35,8 +35,7 @@ public class RegisterDelayedReturnSourceTransformedEffectHandler implements Norm
         Card card = entry.getCard();
         UUID ownerId = gameQueryService.findGraveyardOwnerById(gameData, card.getId());
         if (ownerId == null) {
-            String logEntry = card.getName() + "'s delayed return fizzles - it is no longer in a graveyard.";
-            gameBroadcastService.logAndBroadcast(gameData, GameLog.text(logEntry));
+            gameBroadcastService.logAndBroadcast(gameData, GameLog.cardThen(card, "'s delayed return fizzles - it is no longer in a graveyard."));
             log.info("Game {} - Delayed transformed return for {} not registered (no longer in graveyard)",
                     gameData.id, card.getName());
             return;
@@ -46,8 +45,7 @@ public class RegisterDelayedReturnSourceTransformedEffectHandler implements Norm
         gameData.queueDelayedAction(
                 new DelayedGraveyardToBattlefieldTransformedReturn(card.getId(), ownerId, controllerId));
         String playerName = gameData.playerIdToName.get(controllerId);
-        gameBroadcastService.logAndBroadcast(gameData, GameLog.text(card.getName() + " will return to the battlefield transformed under " + playerName
-                        + "'s control at the beginning of the next end step."));
+        gameBroadcastService.logAndBroadcast(gameData, GameLog.builder().card(card).text(" will return to the battlefield transformed under " + playerName + "'s control at the beginning of the next end step.").build());
         log.info("Game {} - Delayed transformed return registered for {} (owner {}, controller {})",
                 gameData.id, card.getName(), ownerId, controllerId);
     }

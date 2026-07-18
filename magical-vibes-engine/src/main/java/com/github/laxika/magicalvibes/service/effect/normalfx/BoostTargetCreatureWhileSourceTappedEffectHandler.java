@@ -59,9 +59,12 @@ public class BoostTargetCreatureWhileSourceTappedEffectHandler implements Normal
                     new BuffTargetCreatureIndefinitelyEffect(boost.power(), boost.toughness()),
                     target.getId(), null, null, EffectDuration.WHILE_SOURCE_TAPPED, 0));
 
-            String logEntry = String.format("%s gets %+d/%+d for as long as %s remains tapped.",
-                    target.getCard().getName(), boost.power(), boost.toughness(), entry.getCard().getName());
-            gameBroadcastService.logAndBroadcast(gameData, GameLog.text(logEntry));
+            gameBroadcastService.logAndBroadcast(gameData, GameLog.builder()
+                    .card(target.getCard())
+                    .text(String.format(" gets %+d/%+d for as long as ", boost.power(), boost.toughness()))
+                    .card(entry.getCard())
+                    .text(" remains tapped.")
+                    .build());
             log.info("Game {} - {} gets {}/{} while {} remains tapped", gameData.id,
                     target.getCard().getName(), boost.power(), boost.toughness(), entry.getCard().getName());
         }

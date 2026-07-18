@@ -41,8 +41,7 @@ public class SacrificeSelfEffectHandler implements NormalEffectHandlerBean {
 
                 if (permanentRemovalService.removePermanentToGraveyard(gameData, self)) {
                     triggerCollectionService.checkAllyPermanentSacrificedTriggers(gameData, entry.getControllerId(), self.getCard());
-                    String logEntry = self.getCard().getName() + " is sacrificed.";
-                    gameBroadcastService.logAndBroadcast(gameData, GameLog.text(logEntry));
+                    gameBroadcastService.logAndBroadcast(gameData, GameLog.cardThen(self.getCard(), " is sacrificed."));
                     permanentRemovalService.removeOrphanedAuras(gameData);
                 }
     

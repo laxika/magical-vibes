@@ -57,8 +57,7 @@ public class ChooseOpponentPermanentsAndPutCountersEffectHandler implements Norm
         }
 
         if (eligibleIds.isEmpty()) {
-            String logEntry = entry.getCard().getName() + "'s ability finds no eligible permanents.";
-            gameBroadcastService.logAndBroadcast(gameData, GameLog.text(logEntry));
+            gameBroadcastService.logAndBroadcast(gameData, GameLog.cardThen(entry.getCard(), "'s ability finds no eligible permanents."));
             log.info("Game {} - {} ETB: no eligible permanents for counter placement", gameData.id, entry.getCard().getName());
             return;
         }

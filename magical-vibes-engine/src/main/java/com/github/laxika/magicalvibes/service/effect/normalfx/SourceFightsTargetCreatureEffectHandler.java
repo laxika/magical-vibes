@@ -55,9 +55,9 @@ public class SourceFightsTargetCreatureEffectHandler implements NormalEffectHand
         if (!(gameQueryService.isDamagePreventable(gameData) && gameQueryService.hasProtectionFromSource(gameData, target, entry.getCard()))) {
             int sourceDamage = gameQueryService.applyDamageMultiplier(gameData, sourcePower, entry);
             damageSupport.dealCreatureDamage(gameData, entry, target, sourceDamage);
-            gameBroadcastService.logAndBroadcast(gameData, GameLog.text(cardName + " deals " + sourceDamage + " damage to " + target.getCard().getName() + "."));
+            gameBroadcastService.logAndBroadcast(gameData, GameLog.textCardText(cardName + " deals " + sourceDamage + " damage to ", target.getCard(), "."));
         } else {
-            gameBroadcastService.logAndBroadcast(gameData, GameLog.text(cardName + "'s damage to " + target.getCard().getName() + " is prevented."));
+            gameBroadcastService.logAndBroadcast(gameData, GameLog.textCardText(cardName + "'s damage to ", target.getCard(), " is prevented."));
         }
 
         // Target deals damage equal to its power back to source (only if source is still on the battlefield)
@@ -66,9 +66,9 @@ public class SourceFightsTargetCreatureEffectHandler implements NormalEffectHand
             if (!(gameQueryService.isDamagePreventable(gameData) && gameQueryService.hasProtectionFromSource(gameData, source, target.getCard()))) {
                 int targetDamage = gameQueryService.applyDamageMultiplier(gameData, targetPower, entry);
                 damageSupport.dealCreatureDamage(gameData, entry, source, targetDamage, target);
-                gameBroadcastService.logAndBroadcast(gameData, GameLog.text(target.getCard().getName() + " deals " + targetDamage + " damage to " + cardName + "."));
+                gameBroadcastService.logAndBroadcast(gameData, GameLog.builder().card(target.getCard()).text(" deals " + targetDamage + " damage to " + cardName + ".").build());
             } else {
-                gameBroadcastService.logAndBroadcast(gameData, GameLog.text(target.getCard().getName() + "'s damage to " + cardName + " is prevented."));
+                gameBroadcastService.logAndBroadcast(gameData, GameLog.builder().card(target.getCard()).text("'s damage to " + cardName + " is prevented.").build());
             }
         }
 

@@ -45,8 +45,7 @@ public class RebirthAnteHandler implements MayEffectHandlerBean {
         if (accepted && library != null && !library.isEmpty()) {
             Card anted = library.removeFirst();
             gameData.addToExile(playerId, anted);
-            gameBroadcastService.logAndBroadcast(gameData, GameLog.text(
-                    player.getUsername() + " antes " + anted.getName() + ". (" + ability.sourceCard().getName() + ")"));
+            gameBroadcastService.logAndBroadcast(gameData, GameLog.builder().text(player.getUsername() + " antes ").card(anted).text(". (").card(ability.sourceCard()).text(")").build());
             log.info("Game {} - {} antes {} to {}", gameData.id, player.getUsername(), anted.getName(),
                     ability.sourceCard().getName());
 
@@ -55,8 +54,7 @@ public class RebirthAnteHandler implements MayEffectHandlerBean {
                         player.getUsername() + "'s life total becomes 20."));
             }
         } else {
-            gameBroadcastService.logAndBroadcast(gameData, GameLog.text(
-                    player.getUsername() + " declines to ante. (" + ability.sourceCard().getName() + ")"));
+            gameBroadcastService.logAndBroadcast(gameData, GameLog.textCardText(player.getUsername() + " declines to ante. (", ability.sourceCard(), ")"));
             log.info("Game {} - {} declines the {} ante", gameData.id, player.getUsername(),
                     ability.sourceCard().getName());
         }

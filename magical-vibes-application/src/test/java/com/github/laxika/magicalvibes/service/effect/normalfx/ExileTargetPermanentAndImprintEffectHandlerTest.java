@@ -1,5 +1,9 @@
 package com.github.laxika.magicalvibes.service.effect.normalfx;
+
+import static org.mockito.ArgumentMatchers.argThat;
+import static org.mockito.ArgumentMatchers.eq;
 import com.github.laxika.magicalvibes.model.GameLog;
+import com.github.laxika.magicalvibes.model.GameLogEntry;
 import com.github.laxika.magicalvibes.service.battlefield.GameQueryService;
 import com.github.laxika.magicalvibes.service.battlefield.BattlefieldEntryService;
 import com.github.laxika.magicalvibes.service.battlefield.PermanentRemovalService;
@@ -170,7 +174,7 @@ class ExileTargetPermanentAndImprintEffectHandlerTest {
 
                 verify(permanentRemovalService).removePermanentToExile(gd, target);
                 assertThat(gd.getImprintedCard(source.getCard())).isSameAs(targetCard);
-                verify(gameBroadcastService).logAndBroadcast(eq(gd), eq(GameLog.text("Grizzly Bears is exiled by Exclusion Ritual.")));
+                verify(gameBroadcastService).logAndBroadcast(eq(gd), argThat((GameLogEntry e) -> e.plainText().equals("Grizzly Bears is exiled by Exclusion Ritual.")));
                 verify(permanentRemovalService).removeOrphanedAuras(gd);
             }
 

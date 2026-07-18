@@ -37,8 +37,7 @@ public class ExileSourceCardFromGraveyardEffectHandler implements NormalEffectHa
         UUID cardId = entry.getCard().getId();
         Card sourceCard = gameQueryService.findCardInGraveyardById(gameData, cardId);
         if (sourceCard == null) {
-            String fizzleLog = entry.getCard().getName() + "'s ability fizzles (card not in graveyard).";
-            gameBroadcastService.logAndBroadcast(gameData, GameLog.text(fizzleLog));
+            gameBroadcastService.logAndBroadcast(gameData, GameLog.cardThen(entry.getCard(), "'s ability fizzles (card not in graveyard)."));
             log.info("Game {} - {} exile-on-death trigger fizzles (card {} not in graveyard)",
                     gameData.id, entry.getCard().getName(), cardId);
             return;
@@ -50,8 +49,7 @@ public class ExileSourceCardFromGraveyardEffectHandler implements NormalEffectHa
             exileService.exileCard(gameData, ownerId, sourceCard);
         }
 
-        String logEntry = sourceCard.getName() + " is exiled.";
-        gameBroadcastService.logAndBroadcast(gameData, GameLog.text(logEntry));
+        gameBroadcastService.logAndBroadcast(gameData, GameLog.cardThen(sourceCard, " is exiled."));
         log.info("Game {} - {} exiled from graveyard on death", gameData.id, sourceCard.getName());
     }
 }

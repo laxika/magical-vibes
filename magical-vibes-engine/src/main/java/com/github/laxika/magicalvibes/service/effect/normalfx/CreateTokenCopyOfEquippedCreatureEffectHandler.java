@@ -110,8 +110,7 @@ public class CreateTokenCopyOfEquippedCreatureEffectHandler implements NormalEff
                     Permanent tokenPermanent = new Permanent(tokenCard);
                     battlefieldEntryService.putPermanentOntoBattlefield(gameData, entry.getControllerId(), tokenPermanent);
 
-                    String logMsg = "A token copy of " + sourceCard.getName() + " is created (non-legendary, with haste).";
-                    gameBroadcastService.logAndBroadcast(gameData, GameLog.text(logMsg));
+                    gameBroadcastService.logAndBroadcast(gameData, GameLog.textCardText("A token copy of ", sourceCard, " is created (non-legendary, with haste)."));
                     log.info("Game {} - Token copy of {} created via Helm of the Host", gameData.id, sourceCard.getName());
 
                     // Pass null targetId: the token wasn't cast, so no target was chosen. Any targeted

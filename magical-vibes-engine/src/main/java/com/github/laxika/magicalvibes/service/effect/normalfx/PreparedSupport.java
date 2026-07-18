@@ -46,8 +46,7 @@ public class PreparedSupport {
         permanent.setPrepared(true);
         permanent.setPreparedSpellCardId(copy.getId());
 
-        String logEntry = permanent.getCard().getName() + " becomes prepared.";
-        gameBroadcastService.logAndBroadcast(gameData, GameLog.text(logEntry));
+        gameBroadcastService.logAndBroadcast(gameData, GameLog.cardThen(permanent.getCard(), " becomes prepared."));
         log.info("Game {} - {} becomes prepared (prepare spell {} exiled)",
                 gameData.id, permanent.getCard().getName(), copy.getName());
         return true;
@@ -71,8 +70,7 @@ public class PreparedSupport {
         permanent.setPrepared(false);
         permanent.setPreparedSpellCardId(null);
 
-        String logEntry = permanent.getCard().getName() + " becomes unprepared.";
-        gameBroadcastService.logAndBroadcast(gameData, GameLog.text(logEntry));
+        gameBroadcastService.logAndBroadcast(gameData, GameLog.cardThen(permanent.getCard(), " becomes unprepared."));
         log.info("Game {} - {} becomes unprepared", gameData.id, permanent.getCard().getName());
         return true;
     }

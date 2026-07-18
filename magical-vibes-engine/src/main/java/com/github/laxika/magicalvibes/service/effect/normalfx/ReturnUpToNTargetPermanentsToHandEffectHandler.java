@@ -40,8 +40,7 @@ public class ReturnUpToNTargetPermanentsToHandEffectHandler implements NormalEff
         gameData.forEachPermanent((pid, permanent) -> permanentIds.add(permanent.getId()));
 
         if (permanentIds.isEmpty()) {
-            gameBroadcastService.logAndBroadcast(gameData, GameLog.text(
-                    entry.getCard().getName() + " has no permanents to return."));
+            gameBroadcastService.logAndBroadcast(gameData, GameLog.cardThen(entry.getCard(), " has no permanents to return."));
             return;
         }
 

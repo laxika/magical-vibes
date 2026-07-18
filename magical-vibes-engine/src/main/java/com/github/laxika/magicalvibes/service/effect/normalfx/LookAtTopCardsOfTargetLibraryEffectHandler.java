@@ -69,8 +69,7 @@ public class LookAtTopCardsOfTargetLibraryEffectHandler implements NormalEffectH
 
         int actual = deck != null ? Math.min(e.count(), deck.size()) : 0;
         if (actual == 0) {
-            gameBroadcastService.logAndBroadcast(gameData, GameLog.text(
-                    entry.getCard().getName() + ": " + targetName + "'s library is empty."));
+            gameBroadcastService.logAndBroadcast(gameData, GameLog.builder().card(entry.getCard()).text(": " + targetName + "'s library is empty.").build());
             return;
         }
 

@@ -91,7 +91,7 @@ public class CreateTokenCopyOfEachControlledCreatureTokenEffectHandler implement
         Permanent tokenPermanent = new Permanent(tokenCard);
         battlefieldEntryService.putPermanentOntoBattlefield(gameData, entry.getControllerId(), tokenPermanent);
 
-        gameBroadcastService.logAndBroadcast(gameData, GameLog.text("A token copy of " + sourceCard.getName() + " is created."));
+        gameBroadcastService.logAndBroadcast(gameData, GameLog.textCardText("A token copy of ", sourceCard, " is created."));
         log.info("Game {} - Token copy of {} created via {}", gameData.id, sourceCard.getName(),
                 entry.getCard() != null ? entry.getCard().getName() : "ability");
 

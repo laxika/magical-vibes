@@ -43,7 +43,7 @@ public class RemoveTargetFromCombatEffectHandler implements NormalEffectHandlerB
         }
 
         String logEntry = entry.getCard().getName() + " removes " + target.getCard().getName() + " from combat.";
-        gameBroadcastService.logAndBroadcast(gameData, GameLog.text(logEntry));
+        gameBroadcastService.logAndBroadcast(gameData, GameLog.cardTextCard(entry.getCard(), " removes ", target.getCard(), " from combat."));
         log.info("Game {} - {} removes {} from combat", gameData.id, entry.getCard().getName(), target.getCard().getName());
     }
 }

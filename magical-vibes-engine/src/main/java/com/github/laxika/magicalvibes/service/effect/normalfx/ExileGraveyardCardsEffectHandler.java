@@ -78,13 +78,13 @@ public class ExileGraveyardCardsEffectHandler implements NormalEffectHandlerBean
             List<Card> toExile = new ArrayList<>(graveyard);
             graveyard.clear();
             graveyardService.notifyCardsLeftGraveyard(gameData, affectedPlayerId);
-            List<String> exiledNames = new ArrayList<>();
             for (Card card : toExile) {
                 exileService.exileCard(gameData, affectedPlayerId, card);
-                exiledNames.add(card.getName());
             }
-            String logEntry = playerName + " exiles " + String.join(", ", exiledNames) + " from their graveyard.";
-            gameBroadcastService.logAndBroadcast(gameData, GameLog.text(logEntry));
+            GameLog.Builder builder = GameLog.builder().text(playerName + " exiles ");
+            appendCardList(builder, toExile);
+            builder.text(" from their graveyard.");
+            gameBroadcastService.logAndBroadcast(gameData, builder.build());
             log.info("Game {} - {} auto-exiles {} cards from graveyard", gameData.id, playerName, toExile.size());
         } else {
             // Player must choose which cards to exile
@@ -123,7 +123,7 @@ public class ExileGraveyardCardsEffectHandler implements NormalEffectHandlerBean
         }
 
         String playerName = gameData.playerIdToName.get(entry.getControllerId());
-        gameBroadcastService.logAndBroadcast(gameData, GameLog.text(playerName + " exiles " + targetCard.getName() + " from a graveyard."));
+        gameBroadcastService.logAndBroadcast(gameData, GameLog.textCardText(playerName + " exiles ", targetCard, " from a graveyard."));
     }
 
     private void resolveTargetOpponentCards(GameData gameData, StackEntry entry) {
@@ -135,21 +135,22 @@ public class ExileGraveyardCardsEffectHandler implements NormalEffectHandlerBean
             return;
         }
 
-        List<String> exiledNames = new ArrayList<>();
+        List<Card> exiledCards = new ArrayList<>();
         for (UUID cardId : targetCardIds) {
             Card card = gameQueryService.findCardInGraveyardById(gameData, cardId);
             if (card != null) {
-                exiledNames.add(card.getName());
+                exiledCards.add(card);
                 graveyardReturnSupport.exileCardFromAnyGraveyard(gameData, cardId, card);
             }
         }
 
-        if (!exiledNames.isEmpty()) {
-            String logEntry = playerName + " exiles " + String.join(", ", exiledNames)
-                    + " from an opponent's graveyard.";
-            gameBroadcastService.logAndBroadcast(gameData, GameLog.text(logEntry));
+        if (!exiledCards.isEmpty()) {
+            GameLog.Builder builder = GameLog.builder().text(playerName + " exiles ");
+            appendCardList(builder, exiledCards);
+            builder.text(" from an opponent's graveyard.");
+            gameBroadcastService.logAndBroadcast(gameData, builder.build());
             log.info("Game {} - {} exiled {} cards from opponent's graveyard",
-                    gameData.id, playerName, exiledNames.size());
+                    gameData.id, playerName, exiledCards.size());
         }
     }
 
@@ -201,6 +202,16 @@ public class ExileGraveyardCardsEffectHandler implements NormalEffectHandlerBean
             gameBroadcastService.logAndBroadcast(gameData, GameLog.text(logEntry));
             log.info("Game {} - All graveyards already empty when {} resolved",
                     gameData.id, entry.getCard().getName());
+        }
+    }
+
+    /** Appends {@code cards} to {@code builder} as comma-separated card segments. */
+    private static void appendCardList(GameLog.Builder builder, List<Card> cards) {
+        for (int i = 0; i < cards.size(); i++) {
+            if (i > 0) {
+                builder.text(", ");
+            }
+            builder.card(cards.get(i));
         }
     }
 

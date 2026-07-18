@@ -53,7 +53,6 @@ public class DestroyCombatOpponentAtEndOfCombatEffectHandler implements NormalEf
 
         gameData.queueDelayedAction(new DelayedPermanentAction(targetId,
                 DelayedPermanentActionKind.DESTROY_AT_END_OF_COMBAT, destroyEffect.cannotBeRegenerated()));
-        String logEntry = target.getCard().getName() + " will be destroyed at end of combat.";
-        gameBroadcastService.logAndBroadcast(gameData, GameLog.text(logEntry));
+        gameBroadcastService.logAndBroadcast(gameData, GameLog.cardThen(target.getCard(), " will be destroyed at end of combat."));
     }
 }

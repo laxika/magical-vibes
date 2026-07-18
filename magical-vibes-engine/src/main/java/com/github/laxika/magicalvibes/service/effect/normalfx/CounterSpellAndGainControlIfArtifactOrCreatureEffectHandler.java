@@ -53,7 +53,6 @@ public class CounterSpellAndGainControlIfArtifactOrCreatureEffectHandler impleme
         }
         graveyardReturnSupport.handleCreatureEtbAndLegendRule(gameData, controllerId, permanent, gained);
 
-        gameBroadcastService.logAndBroadcast(gameData, GameLog.text(gameData.playerIdToName.get(controllerId) + " puts " + gained.getName()
-                        + " onto the battlefield under their control."));
+        gameBroadcastService.logAndBroadcast(gameData, GameLog.textCardText(gameData.playerIdToName.get(controllerId) + " puts ", gained, " onto the battlefield under their control."));
     }
 }

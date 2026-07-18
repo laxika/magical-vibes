@@ -149,8 +149,7 @@ public class MiscTriggerCollectorService {
                 null,
                 match.permanent().getId()
         ));
-        String triggerLog = cardName + "'s ability triggers.";
-        gameBroadcastService.logAndBroadcast(match.gameData(), GameLog.text(triggerLog));
+        gameBroadcastService.logAndBroadcast(match.gameData(), GameLog.abilityTriggers(match.permanent().getCard()));
         log.info("Game {} - {} triggers on matching permanent sacrifice", match.gameData().id, cardName);
         return true;
     }
@@ -172,8 +171,7 @@ public class MiscTriggerCollectorService {
                 null,
                 match.permanent().getId()
         ));
-        String triggerLog = match.permanent().getCard().getName() + "'s ability triggers.";
-        gameBroadcastService.logAndBroadcast(match.gameData(), GameLog.text(triggerLog));
+        gameBroadcastService.logAndBroadcast(match.gameData(), GameLog.abilityTriggers(match.permanent().getCard()));
         log.info("Game {} - {} triggers on enchanted permanent tap ({})",
                 match.gameData().id, match.permanent().getCard().getName(),
                 ept.tappedPermanent().getCard().getName());
@@ -192,8 +190,7 @@ public class MiscTriggerCollectorService {
                 null,
                 match.permanent().getId()
         ));
-        String triggerLog = match.permanent().getCard().getName() + "'s ability triggers.";
-        gameBroadcastService.logAndBroadcast(match.gameData(), GameLog.text(triggerLog));
+        gameBroadcastService.logAndBroadcast(match.gameData(), GameLog.abilityTriggers(match.permanent().getCard()));
         log.info("Game {} - {} triggers to destroy enchanted permanent",
                 match.gameData().id, match.permanent().getCard().getName());
         return true;
@@ -213,8 +210,7 @@ public class MiscTriggerCollectorService {
                 null,
                 match.permanent().getId()
         ));
-        String triggerLog = match.permanent().getCard().getName() + "'s ability triggers.";
-        gameBroadcastService.logAndBroadcast(match.gameData(), GameLog.text(triggerLog));
+        gameBroadcastService.logAndBroadcast(match.gameData(), GameLog.abilityTriggers(match.permanent().getCard()));
         log.info("Game {} - {} triggers to put a counter on enchanted creature",
                 match.gameData().id, match.permanent().getCard().getName());
         return true;
@@ -234,8 +230,7 @@ public class MiscTriggerCollectorService {
                 ept.tappedPermanentControllerId(),
                 match.permanent().getId()
         ));
-        String triggerLog = match.permanent().getCard().getName() + "'s ability triggers.";
-        gameBroadcastService.logAndBroadcast(match.gameData(), GameLog.text(triggerLog));
+        gameBroadcastService.logAndBroadcast(match.gameData(), GameLog.abilityTriggers(match.permanent().getCard()));
         log.info("Game {} - {} triggers to damage enchanted permanent's controller",
                 match.gameData().id, match.permanent().getCard().getName());
         return true;
@@ -256,8 +251,7 @@ public class MiscTriggerCollectorService {
                 null,
                 match.permanent().getId()
         ));
-        String triggerLog = match.permanent().getCard().getName() + "'s ability triggers.";
-        gameBroadcastService.logAndBroadcast(match.gameData(), GameLog.text(triggerLog));
+        gameBroadcastService.logAndBroadcast(match.gameData(), GameLog.abilityTriggers(match.permanent().getCard()));
         log.info("Game {} - {} triggers on enchanted permanent tap (modal)",
                 match.gameData().id, match.permanent().getCard().getName());
         return true;
@@ -274,9 +268,8 @@ public class MiscTriggerCollectorService {
         String playerName = gameData.playerIdToName.get(ll.losingPlayerId());
         int amount = ll.lifeLostAmount();
 
-        String logEntry = cardName + " triggers — " + playerName + " mills " + amount
-                + " card" + (amount != 1 ? "s" : "") + ".";
-        gameBroadcastService.logAndBroadcast(gameData, GameLog.text(logEntry));
+        gameBroadcastService.logAndBroadcast(gameData, GameLog.cardThen(match.permanent().getCard(),
+                " triggers — " + playerName + " mills " + amount + " card" + (amount != 1 ? "s" : "") + "."));
         log.info("Game {} - {} triggers on life loss, milling {} for {} cards",
                 gameData.id, cardName, playerName, amount);
 
@@ -302,8 +295,7 @@ public class MiscTriggerCollectorService {
                 match.permanent().getId()
         ));
 
-        String triggerLog = cardName + "'s ability triggers.";
-        gameBroadcastService.logAndBroadcast(gameData, GameLog.text(triggerLog));
+        gameBroadcastService.logAndBroadcast(gameData, GameLog.abilityTriggers(match.permanent().getCard()));
         log.info("Game {} - {} triggers on life gain", gameData.id, cardName);
         return true;
     }
@@ -324,8 +316,7 @@ public class MiscTriggerCollectorService {
                 match.permanent().getId()
         ));
 
-        String triggerLog = cardName + "'s ability triggers.";
-        gameBroadcastService.logAndBroadcast(gameData, GameLog.text(triggerLog));
+        gameBroadcastService.logAndBroadcast(gameData, GameLog.abilityTriggers(match.permanent().getCard()));
         log.info("Game {} - {} triggers on life gain (put counter on self)", gameData.id, cardName);
         return true;
     }
@@ -346,8 +337,7 @@ public class MiscTriggerCollectorService {
                 match.permanent().getId()
         ));
 
-        String triggerLog = cardName + "'s ability triggers.";
-        gameBroadcastService.logAndBroadcast(gameData, GameLog.text(triggerLog));
+        gameBroadcastService.logAndBroadcast(gameData, GameLog.abilityTriggers(match.permanent().getCard()));
         log.info("Game {} - {} triggers (land put into graveyard, put counter on self)", gameData.id, cardName);
         return true;
     }
@@ -368,8 +358,7 @@ public class MiscTriggerCollectorService {
                 match.permanent().getId()
         ));
 
-        String triggerLog = cardName + "'s ability triggers.";
-        gameBroadcastService.logAndBroadcast(gameData, GameLog.text(triggerLog));
+        gameBroadcastService.logAndBroadcast(gameData, GameLog.abilityTriggers(match.permanent().getCard()));
         log.info("Game {} - {} triggers on life gain (draw a card)", gameData.id, cardName);
         return true;
     }
@@ -391,8 +380,7 @@ public class MiscTriggerCollectorService {
                 match.permanent().getId()
         ));
 
-        String triggerLog = cardName + "'s ability triggers.";
-        gameBroadcastService.logAndBroadcast(gameData, GameLog.text(triggerLog));
+        gameBroadcastService.logAndBroadcast(gameData, GameLog.abilityTriggers(match.permanent().getCard()));
         log.info("Game {} - {} triggers on life gain (put +1/+1 counters)", gameData.id, cardName);
         return true;
     }
@@ -418,8 +406,7 @@ public class MiscTriggerCollectorService {
                 match.permanent().getId()
         ));
 
-        String triggerLog = cardName + "'s ability triggers.";
-        gameBroadcastService.logAndBroadcast(gameData, GameLog.text(triggerLog));
+        gameBroadcastService.logAndBroadcast(gameData, GameLog.abilityTriggers(match.permanent().getCard()));
         log.info("Game {} - {} triggers on spell life gain (source: {})",
                 gameData.id, cardName, lg.sourceCard().getName());
         return true;
@@ -457,8 +444,7 @@ public class MiscTriggerCollectorService {
                 match.permanent().getId(),
                 true));
 
-        String triggerLog = cardName + "'s ability triggers.";
-        gameBroadcastService.logAndBroadcast(gameData, GameLog.text(triggerLog));
+        gameBroadcastService.logAndBroadcast(gameData, GameLog.abilityTriggers(match.permanent().getCard()));
         log.info("Game {} - {} triggers on life gain ({} life), pay for +1/+1 counters on target creature",
                 gameData.id, cardName, lifeGained);
         return true;
@@ -488,8 +474,7 @@ public class MiscTriggerCollectorService {
         }
         gameData.enqueueTrigger(entry);
 
-        String triggerLog = cardName + "'s ability triggers.";
-        gameBroadcastService.logAndBroadcast(gameData, GameLog.text(triggerLog));
+        gameBroadcastService.logAndBroadcast(gameData, GameLog.abilityTriggers(match.permanent().getCard()));
         log.info("Game {} - {} triggers on life gain ({} life), target opponent loses that much",
                 gameData.id, cardName, lg.lifeGainedAmount());
         return true;
@@ -521,9 +506,8 @@ public class MiscTriggerCollectorService {
                 gameData, match.controllerId(), tokenEffect, match.permanent().getCard().getSetCode()
         );
 
-        String logEntry = cardName + "'s ability triggers — exiling " + milledCardName
-                + " and creating a 2/2 black Zombie creature token.";
-        gameBroadcastService.logAndBroadcast(gameData, GameLog.text(logEntry));
+        gameBroadcastService.logAndBroadcast(gameData, GameLog.cardTextCard(match.permanent().getCard(),
+                "'s ability triggers — exiling ", milled.milledCard(), " and creating a 2/2 black Zombie creature token."));
         log.info("Game {} - {} triggers on creature card milled: exile {} + create Zombie token",
                 gameData.id, cardName, milledCardName);
         return true;
@@ -547,8 +531,7 @@ public class MiscTriggerCollectorService {
                 match.permanent().getId()
         ));
 
-        String triggerLog = cardName + "'s ability triggers.";
-        gameBroadcastService.logAndBroadcast(gameData, GameLog.text(triggerLog));
+        gameBroadcastService.logAndBroadcast(gameData, GameLog.abilityTriggers(match.permanent().getCard()));
         log.info("Game {} - {} triggers on noncombat damage to opponent", gameData.id, cardName);
         return true;
     }
@@ -564,9 +547,9 @@ public class MiscTriggerCollectorService {
         UUID controllerId = match.controllerId();
         int amount = lg.lifeGainedAmount();
 
-        String triggerLog = cardName + " triggers — " + gameData.playerIdToName.get(controllerId)
-                + " draws " + amount + " card" + (amount != 1 ? "s" : "") + ".";
-        gameBroadcastService.logAndBroadcast(gameData, GameLog.text(triggerLog));
+        gameBroadcastService.logAndBroadcast(gameData, GameLog.cardThen(match.permanent().getCard(),
+                " triggers — " + gameData.playerIdToName.get(controllerId)
+                        + " draws " + amount + " card" + (amount != 1 ? "s" : "") + "."));
         log.info("Game {} - {} triggers on life gain, drawing {} cards",
                 gameData.id, cardName, amount);
 
@@ -587,9 +570,9 @@ public class MiscTriggerCollectorService {
         UUID controllerId = match.controllerId();
         int amount = ll.lifeLostAmount();
 
-        String triggerLog = cardName + " triggers — " + gameData.playerIdToName.get(controllerId)
-                + " must exile " + amount + " card" + (amount != 1 ? "s" : "") + "/permanent" + (amount != 1 ? "s" : "") + ".";
-        gameBroadcastService.logAndBroadcast(gameData, GameLog.text(triggerLog));
+        gameBroadcastService.logAndBroadcast(gameData, GameLog.cardThen(match.permanent().getCard(),
+                " triggers — " + gameData.playerIdToName.get(controllerId)
+                        + " must exile " + amount + " card" + (amount != 1 ? "s" : "") + "/permanent" + (amount != 1 ? "s" : "") + "."));
         log.info("Game {} - {} triggers on life loss, exiling {} cards/permanents",
                 gameData.id, cardName, amount);
 
@@ -614,9 +597,8 @@ public class MiscTriggerCollectorService {
                     Card card = graveyard.removeLast();
                     graveyardService.notifyCardsLeftGraveyard(gameData, controllerId);
                     exileService.exileCard(gameData, controllerId, card);
-                    String logEntry = gameData.playerIdToName.get(controllerId) + " exiles "
-                            + card.getName() + " from their graveyard.";
-                    gameBroadcastService.logAndBroadcast(gameData, GameLog.text(logEntry));
+                    gameBroadcastService.logAndBroadcast(gameData, GameLog.textCardText(
+                            gameData.playerIdToName.get(controllerId) + " exiles ", card, " from their graveyard."));
                     remaining--;
                 }
             } finally {
@@ -630,9 +612,8 @@ public class MiscTriggerCollectorService {
             while (remaining > 0 && !hand.isEmpty()) {
                 Card card = hand.removeLast();
                 exileService.exileCard(gameData, controllerId, card);
-                String logEntry = gameData.playerIdToName.get(controllerId) + " exiles "
-                        + card.getName() + " from their hand.";
-                gameBroadcastService.logAndBroadcast(gameData, GameLog.text(logEntry));
+                gameBroadcastService.logAndBroadcast(gameData, GameLog.textCardText(
+                        gameData.playerIdToName.get(controllerId) + " exiles ", card, " from their hand."));
                 remaining--;
             }
         }
@@ -658,12 +639,11 @@ public class MiscTriggerCollectorService {
                     }
                     if (toExile == null) break;
 
-                    String permName = toExile.getCard().getName();
+                    Card exiledCard = toExile.getCard();
                     permanentRemovalService.removePermanentToExile(gameData, toExile);
                     permanentRemovalService.removeOrphanedAuras(gameData);
-                    String logEntry = gameData.playerIdToName.get(controllerId) + " exiles "
-                            + permName + " from the battlefield.";
-                    gameBroadcastService.logAndBroadcast(gameData, GameLog.text(logEntry));
+                    gameBroadcastService.logAndBroadcast(gameData, GameLog.textCardText(
+                            gameData.playerIdToName.get(controllerId) + " exiles ", exiledCard, " from the battlefield."));
                     remaining--;
                 }
             }
@@ -692,8 +672,7 @@ public class MiscTriggerCollectorService {
                 null,
                 match.permanent().getId()
         ));
-        String triggerLog = match.permanent().getCard().getName() + "'s ability triggers.";
-        gameBroadcastService.logAndBroadcast(match.gameData(), GameLog.text(triggerLog));
+        gameBroadcastService.logAndBroadcast(match.gameData(), GameLog.abilityTriggers(match.permanent().getCard()));
         log.info("Game {} - {} triggers (cards left graveyard)",
                 match.gameData().id, match.permanent().getCard().getName());
         return true;

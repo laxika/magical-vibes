@@ -47,8 +47,7 @@ public class CopyControllerActivatedAbilityEffectHandler implements NormalEffect
 
         gameData.stack.add(copyEntry);
 
-        String logMsg = "A copy of " + snapshot.getCard().getName() + "'s ability is created.";
-        gameBroadcastService.logAndBroadcast(gameData, GameLog.text(logMsg));
+        gameBroadcastService.logAndBroadcast(gameData, GameLog.textCardText("A copy of ", snapshot.getCard(), "'s ability is created."));
         log.info("Game {} - copy of {}'s ability created for controller", gameData.id, snapshot.getCard().getName());
 
         // "You may choose new targets for the copy." Only single-target abilities are retargetable here;

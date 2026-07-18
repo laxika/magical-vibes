@@ -40,7 +40,7 @@ public class DealDamageToTriggeringAttackerEffectHandler implements NormalEffect
             return;
         }
 
-        gameBroadcastService.logAndBroadcast(gameData, GameLog.text(entry.getCard().getName() + " deals " + e.damage() + " damage to " + attacker.getCard().getName() + "."));
+        gameBroadcastService.logAndBroadcast(gameData, GameLog.builder().card(entry.getCard()).text(" deals " + e.damage() + " damage to ").card(attacker.getCard()).text(".").build());
         damageSupport.dealCreatureDamage(gameData, entry, attacker, e.damage());
     }
 }

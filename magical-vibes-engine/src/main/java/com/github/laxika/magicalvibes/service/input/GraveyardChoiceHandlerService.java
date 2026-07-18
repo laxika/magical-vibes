@@ -144,8 +144,7 @@ public class GraveyardChoiceHandlerService {
                 case HAND -> {
                     gameData.addCardToHand(playerId, card);
 
-                    String logEntry = player.getUsername() + " returns " + card.getName() + " from graveyard to hand.";
-                    gameBroadcastService.logAndBroadcast(gameData, GameLog.text(logEntry));
+                    gameBroadcastService.logAndBroadcast(gameData, GameLog.textCardText(player.getUsername() + " returns " , card, " from graveyard to hand."));
                     log.info("Game {} - {} returns {} from graveyard to hand", gameData.id, player.getUsername(), card.getName());
 
                     if (gainLifeEqualToManaValue) {
@@ -163,8 +162,7 @@ public class GraveyardChoiceHandlerService {
                         Permanent sourcePerm = gameQueryService.findPermanentById(gameData, grantSourceHasteSourcePermanentId);
                         if (sourcePerm != null) {
                             sourcePerm.getGrantedKeywords().add(com.github.laxika.magicalvibes.model.Keyword.HASTE);
-                            String hasteLog = sourcePerm.getCard().getName() + " gains haste until end of turn.";
-                            gameBroadcastService.logAndBroadcast(gameData, GameLog.text(hasteLog));
+                            gameBroadcastService.logAndBroadcast(gameData, GameLog.cardThen(sourcePerm.getCard(), " gains haste until end of turn."));
                         }
                     }
                 }
@@ -174,8 +172,7 @@ public class GraveyardChoiceHandlerService {
                     if (gameQueryService.isCardBlockedFromEnteringFromZone(gameData, card, Zone.GRAVEYARD)) {
                         UUID returnTo = cardGraveyardOwnerId != null ? cardGraveyardOwnerId : playerId;
                         gameData.playerGraveyards.computeIfAbsent(returnTo, k -> new ArrayList<>()).add(card);
-                        gameBroadcastService.logAndBroadcast(gameData, GameLog.text(card.getName()
-                                + " can't enter the battlefield from a graveyard; it stays in the graveyard."));
+                        gameBroadcastService.logAndBroadcast(gameData, GameLog.cardThen(card, " can't enter the battlefield from a graveyard; it stays in the graveyard."));
                         log.info("Game {} - {} blocked from entering the battlefield from a graveyard",
                                 gameData.id, card.getName());
                         break;
@@ -189,8 +186,7 @@ public class GraveyardChoiceHandlerService {
                     }
                     battlefieldEntryService.putPermanentOntoBattlefield(gameData, playerId, perm);
 
-                    String logEntry = player.getUsername() + " puts " + card.getName() + " from a graveyard onto the battlefield.";
-                    gameBroadcastService.logAndBroadcast(gameData, GameLog.text(logEntry));
+                    gameBroadcastService.logAndBroadcast(gameData, GameLog.textCardText(player.getUsername() + " puts " , card, " from a graveyard onto the battlefield."));
                     log.info("Game {} - {} puts {} from graveyard onto battlefield", gameData.id, player.getUsername(), card.getName());
 
                     if (attachToSourcePermanentId != null) {
@@ -221,7 +217,7 @@ public class GraveyardChoiceHandlerService {
 
                     String logEntry = player.getUsername() + " shuffles " + card.getName()
                             + " from their graveyard into their library.";
-                    gameBroadcastService.logAndBroadcast(gameData, GameLog.text(logEntry));
+                    gameBroadcastService.logAndBroadcast(gameData, GameLog.builder().text(player.getUsername() + " shuffles ").card(card).text(" from their graveyard into their library.").build());
                     log.info("Game {} - {} shuffles {} from graveyard into library", gameData.id,
                             player.getUsername(), card.getName());
                 }
@@ -231,7 +227,7 @@ public class GraveyardChoiceHandlerService {
 
                     String logEntry = player.getUsername() + " puts " + card.getName()
                             + " on top of their library from their graveyard.";
-                    gameBroadcastService.logAndBroadcast(gameData, GameLog.text(logEntry));
+                    gameBroadcastService.logAndBroadcast(gameData, GameLog.builder().text(player.getUsername() + " puts ").card(card).text(" on top of their library from their graveyard.").build());
                     log.info("Game {} - {} puts {} on top of library from graveyard", gameData.id,
                             player.getUsername(), card.getName());
                 }
@@ -241,7 +237,7 @@ public class GraveyardChoiceHandlerService {
 
                     String logEntry = player.getUsername() + " puts " + card.getName()
                             + " on the bottom of their library from their graveyard.";
-                    gameBroadcastService.logAndBroadcast(gameData, GameLog.text(logEntry));
+                    gameBroadcastService.logAndBroadcast(gameData, GameLog.builder().text(player.getUsername() + " puts ").card(card).text(" on the bottom of their library from their graveyard.").build());
                     log.info("Game {} - {} puts {} on bottom of library from graveyard", gameData.id,
                             player.getUsername(), card.getName());
                 }
@@ -252,8 +248,7 @@ public class GraveyardChoiceHandlerService {
                         exileService.exileCard(gameData, playerId, card);
                     }
 
-                    String logEntry = player.getUsername() + " exiles " + card.getName() + " from their graveyard.";
-                    gameBroadcastService.logAndBroadcast(gameData, GameLog.text(logEntry));
+                    gameBroadcastService.logAndBroadcast(gameData, GameLog.textCardText(player.getUsername() + " exiles " , card, " from their graveyard."));
                     log.info("Game {} - {} exiles {} from graveyard", gameData.id, player.getUsername(), card.getName());
 
                     // Conditional life gain (e.g. Graveyard Shovel: "If it's a creature card, you gain 2 life.")
@@ -284,7 +279,7 @@ public class GraveyardChoiceHandlerService {
                         gameData.resolvedMayTargetingEntry = null;
                         String resolveLog = player.getUsername() + " targets " + card.getName() + " in graveyard with "
                                 + pendingEntry.getCard().getName() + "'s ability.";
-                        gameBroadcastService.logAndBroadcast(gameData, GameLog.text(resolveLog));
+                        gameBroadcastService.logAndBroadcast(gameData, GameLog.builder().text(player.getUsername() + " targets ").card(card).text(" in graveyard with ").card(pendingEntry.getCard()).text("'s ability.").build());
                         log.info("Game {} - {} targets {} in graveyard for may ability", gameData.id,
                                 player.getUsername(), card.getName());
                         pendingEntry.setTargetId(card.getId());
@@ -297,7 +292,7 @@ public class GraveyardChoiceHandlerService {
 
                     String logEntry = player.getUsername() + " targets " + card.getName() + " in graveyard with "
                             + mayAbilitySourceCard.getName() + "'s ability.";
-                    gameBroadcastService.logAndBroadcast(gameData, GameLog.text(logEntry));
+                    gameBroadcastService.logAndBroadcast(gameData, GameLog.builder().text(player.getUsername() + " targets ").card(card).text(" in graveyard with ").card(mayAbilitySourceCard).text("'s ability.").build());
                     log.info("Game {} - {} targets {} in graveyard for may ability", gameData.id,
                             player.getUsername(), card.getName());
 
@@ -440,7 +435,7 @@ public class GraveyardChoiceHandlerService {
 
             String castLog = gameData.playerIdToName.get(controllerId) + " casts " + pendingCard.getName()
                     + " targeting " + String.join(", ", targetNames) + ".";
-            gameBroadcastService.logAndBroadcast(gameData, GameLog.text(castLog));
+            gameBroadcastService.logAndBroadcast(gameData, GameLog.builder().text(gameData.playerIdToName.get(controllerId) + " casts ").card(pendingCard).text(" targeting " + String.join(", ", targetNames) + ".").build());
             log.info("Game {} - {} casts {} with {} graveyard targets", gameData.id, pendingCard.getName(),
                     pendingCard.getName(), cardIds.size());
 

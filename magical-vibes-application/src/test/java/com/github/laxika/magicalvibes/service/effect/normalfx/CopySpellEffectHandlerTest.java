@@ -1,4 +1,7 @@
 package com.github.laxika.magicalvibes.service.effect.normalfx;
+
+import static org.mockito.ArgumentMatchers.argThat;
+import static org.mockito.ArgumentMatchers.eq;
 import com.github.laxika.magicalvibes.model.GameLog;
 import com.github.laxika.magicalvibes.model.GameLogEntry;
 import com.github.laxika.magicalvibes.model.amount.Fixed;
@@ -329,7 +332,7 @@ class CopySpellEffectHandlerTest {
 
                 copySpellHandler.resolve(gd, twincastEntry, new CopySpellEffect());
 
-                verify(gameBroadcastService).logAndBroadcast(eq(gd), eq(GameLog.text("A copy of Counsel of the Soratami is created.")));
+                verify(gameBroadcastService).logAndBroadcast(eq(gd), argThat((GameLogEntry e) -> e.plainText().equals("A copy of Counsel of the Soratami is created.")));
             }
 
             @Test

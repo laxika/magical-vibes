@@ -47,8 +47,7 @@ public class ExileTargetPermanentEffectHandler implements NormalEffectHandlerBea
             UUID controllerId = gameQueryService.findPermanentController(gameData, target.getId());
 
             permanentRemovalService.removePermanentToExile(gameData, target);
-            String logEntry = target.getCard().getName() + " is exiled.";
-            gameBroadcastService.logAndBroadcast(gameData, GameLog.text(logEntry));
+            gameBroadcastService.logAndBroadcast(gameData, GameLog.cardThen(target.getCard(), " is exiled."));
             log.info("Game {} - {} is exiled by {}",
                     gameData.id, target.getCard().getName(), entry.getCard().getName());
 

@@ -77,8 +77,7 @@ public class TapXPermanentsCostHandler implements PermanentChoiceCostHandler {
         }
         chosen.tap();
         triggerCollectionService.checkEnchantedPermanentTapTriggers(gameData, chosen);
-        String tapLog = player.getUsername() + " taps " + chosen.getCard().getName() + " as a cost.";
-        gameBroadcastService.logAndBroadcast(gameData, GameLog.text(tapLog));
+        gameBroadcastService.logAndBroadcast(gameData, GameLog.textCardText(player.getUsername() + " taps " , chosen.getCard(), " as a cost."));
     }
 
     @Override

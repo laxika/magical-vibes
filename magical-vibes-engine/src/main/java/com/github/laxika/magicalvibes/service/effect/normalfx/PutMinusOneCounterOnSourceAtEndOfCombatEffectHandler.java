@@ -37,7 +37,6 @@ public class PutMinusOneCounterOnSourceAtEndOfCombatEffectHandler implements Nor
             return;
         }
         gameData.queueDelayedAction(new PutMinusOneCounterAtEndOfCombat(self.getId(), 1));
-        String logEntry = self.getCard().getName() + " will get a -1/-1 counter at end of combat.";
-        gameBroadcastService.logAndBroadcast(gameData, GameLog.text(logEntry));
+        gameBroadcastService.logAndBroadcast(gameData, GameLog.cardThen(self.getCard(), " will get a -1/-1 counter at end of combat."));
     }
 }

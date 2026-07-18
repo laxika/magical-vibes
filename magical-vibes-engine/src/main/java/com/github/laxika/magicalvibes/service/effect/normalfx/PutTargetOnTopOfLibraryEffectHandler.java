@@ -38,8 +38,7 @@ public class PutTargetOnTopOfLibraryEffectHandler implements NormalEffectHandler
                 if (target == null) return;
 
                 if (permanentRemovalService.removePermanentToLibraryTop(gameData, target)) {
-                    String logEntry = target.getCard().getName() + " is put on top of its owner's library.";
-                    gameBroadcastService.logAndBroadcast(gameData, GameLog.text(logEntry));
+                    gameBroadcastService.logAndBroadcast(gameData, GameLog.cardThen(target.getCard(), " is put on top of its owner's library."));
                     log.info("Game {} - {} put on top of library", gameData.id, target.getCard().getName());
                 }
 

@@ -61,7 +61,7 @@ public class PayXManaGainXLifeEffectHandler implements NormalEffectHandlerBean {
         int maxX = pool.getTotal() + pool.getArtifactOnlyColorless() + pool.getMyrOnlyColorless();
         if (maxX <= 0) {
             String playerName = gameData.playerIdToName.get(controllerId);
-            gameBroadcastService.logAndBroadcast(gameData, GameLog.text(playerName + " has no mana to pay for " + entry.getCard().getName() + "'s ability."));
+            gameBroadcastService.logAndBroadcast(gameData, GameLog.textCardText(playerName + " has no mana to pay for ", entry.getCard(), "'s ability."));
             log.info("Game {} - {} has no mana for {}'s pay-X ability", gameData.id,
                     gameData.playerIdToName.get(controllerId), entry.getCard().getName());
             return;

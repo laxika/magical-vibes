@@ -62,7 +62,7 @@ public class SetAllUnblockedCreaturesBasePowerToughnessEffectHandler implements 
 
         String logEntry = entry.getCard().getName() + " sets base power and toughness of " + count
                 + " unblocked creature(s) to " + power + "/" + toughness + " until end of turn.";
-        gameBroadcastService.logAndBroadcast(gameData, GameLog.text(logEntry));
+        gameBroadcastService.logAndBroadcast(gameData, GameLog.builder().card(entry.getCard()).text(" sets base power and toughness of " + count + " unblocked creature(s) to " + power + "/" + toughness + " until end of turn.").build());
 
         log.info("Game {} - {} sets base P/T of {} unblocked creature(s) to {}/{}",
                 gameData.id, entry.getCard().getName(), count, power, toughness);

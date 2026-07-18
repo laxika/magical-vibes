@@ -74,8 +74,7 @@ public class StealDyingOpponentPermanentUnlessPaysLifeEffectHandler implements N
         UUID ownerId = gameQueryService.findGraveyardOwnerById(gameData, dyingCardId);
         Card card = gameQueryService.findCardInGraveyardById(gameData, dyingCardId);
         if (card == null || ownerId == null) {
-            gameBroadcastService.logAndBroadcast(gameData, GameLog.text(
-                    sourceCard.getName() + "'s ability fizzles (the permanent is no longer in a graveyard)."));
+            gameBroadcastService.logAndBroadcast(gameData, GameLog.cardThen(sourceCard, "'s ability fizzles (the permanent is no longer in a graveyard)."));
             return;
         }
 
@@ -86,8 +85,7 @@ public class StealDyingOpponentPermanentUnlessPaysLifeEffectHandler implements N
         graveyardReturnSupport.trackStolenCreature(gameData, permanent.getId(), controllerId, ownerId);
 
         String playerName = gameData.playerIdToName.get(controllerId);
-        gameBroadcastService.logAndBroadcast(gameData, GameLog.text(
-                playerName + " puts " + card.getName() + " onto the battlefield under their control."));
+        gameBroadcastService.logAndBroadcast(gameData, GameLog.textCardText(playerName + " puts ", card, " onto the battlefield under their control."));
         log.info("Game {} - {} steals {} via {}", gameData.id, playerName, card.getName(), sourceCard.getName());
 
         graveyardReturnSupport.handleCreatureEtbAndLegendRule(gameData, controllerId, permanent, card);

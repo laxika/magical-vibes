@@ -82,8 +82,7 @@ public class CreateTokenCopyOfTargetCreatureForTargetPlayerEffectHandler impleme
         battlefieldEntryService.putPermanentOntoBattlefield(gameData, tokenControllerId, tokenPermanent);
 
         String controllerName = gameData.playerIdToName.get(tokenControllerId);
-        String logMsg = controllerName + " creates a token copy of " + sourceCard.getName() + ".";
-        gameBroadcastService.logAndBroadcast(gameData, GameLog.text(logMsg));
+        gameBroadcastService.logAndBroadcast(gameData, GameLog.textCardText(controllerName + " creates a token copy of " , sourceCard, "."));
         log.info("Game {} - {} creates token copy of {} for {}", gameData.id, controllerName,
                 sourceCard.getName(), tokenControllerId);
 

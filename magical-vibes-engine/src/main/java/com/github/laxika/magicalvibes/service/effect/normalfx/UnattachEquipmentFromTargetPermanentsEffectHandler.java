@@ -55,7 +55,7 @@ public class UnattachEquipmentFromTargetPermanentsEffectHandler implements Norma
                     gameData.expireFloatingEffectsForUnattachedSource(p.getId());
                     String unattachLog = entry.getCard().getName() + " unattaches " + p.getCard().getName()
                             + " from " + target.getCard().getName() + ".";
-                    gameBroadcastService.logAndBroadcast(gameData, GameLog.text(unattachLog));
+                    gameBroadcastService.logAndBroadcast(gameData, GameLog.builder().card(entry.getCard()).text(" unattaches ").card(p.getCard()).text(" from ").card(target.getCard()).text(".").build());
                     log.info("Game {} - {} unattaches {} from {}", gameData.id, entry.getCard().getName(),
                             p.getCard().getName(), target.getCard().getName());
 
@@ -72,8 +72,7 @@ public class UnattachEquipmentFromTargetPermanentsEffectHandler implements Norma
         for (UUID creatureId : sacrificeTargetIds) {
             Permanent creature = gameQueryService.findPermanentById(gameData, creatureId);
             if (creature != null) {
-                String sacrificeLog = creature.getCard().getName() + " is sacrificed (equipment with sacrifice-on-unattach became unattached).";
-                gameBroadcastService.logAndBroadcast(gameData, GameLog.text(sacrificeLog));
+                gameBroadcastService.logAndBroadcast(gameData, GameLog.cardThen(creature.getCard(), " is sacrificed (equipment with sacrifice-on-unattach became unattached)."));
                 log.info("Game {} - {} sacrificed due to equipment unattach", gameData.id, creature.getCard().getName());
                 permanentRemovalService.removePermanentToGraveyard(gameData, creature);
                 permanentRemovalService.removeOrphanedAuras(gameData);

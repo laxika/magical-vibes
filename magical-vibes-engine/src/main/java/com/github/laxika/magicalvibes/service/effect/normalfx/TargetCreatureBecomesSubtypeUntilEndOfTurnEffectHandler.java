@@ -31,7 +31,6 @@ public class TargetCreatureBecomesSubtypeUntilEndOfTurnEffectHandler implements 
             return;
         }
         target.setTransientCreatureTypeOverride(e.subtype());
-        gameBroadcastService.logAndBroadcast(gameData, GameLog.text(target.getCard().getName()
-                + " becomes a " + e.subtype().getDisplayName() + " until end of turn."));
+        gameBroadcastService.logAndBroadcast(gameData, GameLog.builder().card(target.getCard()).text(" becomes a " + e.subtype().getDisplayName() + " until end of turn.").build());
     }
 }

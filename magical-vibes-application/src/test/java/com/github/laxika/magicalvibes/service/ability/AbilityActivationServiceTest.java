@@ -1,5 +1,9 @@
 package com.github.laxika.magicalvibes.service.ability;
+
+import static org.mockito.ArgumentMatchers.argThat;
+import static org.mockito.ArgumentMatchers.eq;
 import com.github.laxika.magicalvibes.model.GameLog;
+import com.github.laxika.magicalvibes.model.GameLogEntry;
 
 import com.github.laxika.magicalvibes.model.ActivatedAbility;
 import com.github.laxika.magicalvibes.model.ActivationTimingRestriction;
@@ -259,7 +263,7 @@ class AbilityActivationServiceTest {
 
             service.tapPermanent(gameData, player1, 0);
 
-            verify(gameBroadcastService).logAndBroadcast(eq(gameData), eq(GameLog.text("Player1 taps Island.")));
+            verify(gameBroadcastService).logAndBroadcast(eq(gameData), eq(GameLog.playerTaps("Player1", island)));
         }
     }
 
@@ -351,7 +355,7 @@ class AbilityActivationServiceTest {
 
             service.sacrificePermanent(gameData, player1, 0, targetId);
 
-            verify(gameBroadcastService).logAndBroadcast(eq(gameData), eq(GameLog.text("Player1 sacrifices Aura of Silence.")));
+            verify(gameBroadcastService).logAndBroadcast(eq(gameData), argThat((GameLogEntry e) -> e.plainText().equals("Player1 sacrifices Aura of Silence.")));
         }
     }
 
@@ -999,7 +1003,7 @@ class AbilityActivationServiceTest {
 
             verify(permanentRemovalService).removePermanentToGraveyard(gameData, husk);
             verify(triggerCollectionService).checkAllyPermanentSacrificedTriggers(gameData, player1Id, husk.getCard());
-            verify(gameBroadcastService).logAndBroadcast(eq(gameData), eq(GameLog.text("Player1 sacrifices Nantuko Husk.")));
+            verify(gameBroadcastService).logAndBroadcast(eq(gameData), argThat((GameLogEntry e) -> e.plainText().equals("Player1 sacrifices Nantuko Husk.")));
         }
 
         @Test

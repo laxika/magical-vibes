@@ -69,9 +69,8 @@ public class DamageTriggerCollectorService {
         // Bounce the source to its owner's hand
         if (permanentRemovalService.removePermanentToHand(gameData, currentSource)) {
             permanentRemovalService.removeOrphanedAuras(gameData);
-            String logEntry = match.permanent().getCard().getName() + " triggers — "
-                    + currentSource.getCard().getName() + " is returned to its owner's hand.";
-            gameBroadcastService.logAndBroadcast(gameData, GameLog.text(logEntry));
+            gameBroadcastService.logAndBroadcast(gameData, GameLog.cardTextCard(match.permanent().getCard(),
+                    " triggers — ", currentSource.getCard(), " is returned to its owner's hand."));
             log.info("Game {} - {} triggers, bouncing {} to owner's hand",
                     gameData.id, match.permanent().getCard().getName(), currentSource.getCard().getName());
         }
@@ -121,9 +120,8 @@ public class DamageTriggerCollectorService {
 
         boolean destroyed = permanentRemovalService.tryDestroyPermanent(gameData, currentSource);
         if (destroyed) {
-            String logEntry = match.permanent().getCard().getName() + " triggers - "
-                    + currentSource.getCard().getName() + " is destroyed.";
-            gameBroadcastService.logAndBroadcast(gameData, GameLog.text(logEntry));
+            gameBroadcastService.logAndBroadcast(gameData, GameLog.cardTextCard(match.permanent().getCard(),
+                    " triggers - ", currentSource.getCard(), " is destroyed."));
         }
         log.info("Game {} - {} triggers, destroying damage source {}",
                 gameData.id, match.permanent().getCard().getName(), currentSource.getCard().getName());
@@ -200,8 +198,7 @@ public class DamageTriggerCollectorService {
             ));
         }
 
-        String logEntry = dc.damagedCreature().getCard().getName() + "'s ability triggers.";
-        gameBroadcastService.logAndBroadcast(gameData, GameLog.text(logEntry));
+        gameBroadcastService.logAndBroadcast(gameData, GameLog.abilityTriggers(dc.damagedCreature().getCard()));
         log.info("Game {} - {} ON_DEALT_DAMAGE target-opponent-or-planeswalker trigger fires",
                 gameData.id, dc.damagedCreature().getCard().getName());
         return true;
@@ -224,8 +221,7 @@ public class DamageTriggerCollectorService {
                 damagedCreature.getCard(), controllerId, new ArrayList<>(List.of(trigger)),
                 false, null, dc.damageDealt()));
 
-        String logEntry = damagedCreature.getCard().getName() + "'s ability triggers.";
-        gameBroadcastService.logAndBroadcast(gameData, GameLog.text(logEntry));
+        gameBroadcastService.logAndBroadcast(gameData, GameLog.abilityTriggers(damagedCreature.getCard()));
         log.info("Game {} - {} ON_DEALT_DAMAGE deal-damage-to-any-target trigger fires",
                 gameData.id, damagedCreature.getCard().getName());
         return true;
@@ -264,8 +260,7 @@ public class DamageTriggerCollectorService {
         entry.setDamageSourceCard(enchantedCreature.getCard());
         gameData.stack.add(entry);
 
-        String logEntry = aura.getCard().getName() + "'s ability triggers.";
-        gameBroadcastService.logAndBroadcast(gameData, GameLog.text(logEntry));
+        gameBroadcastService.logAndBroadcast(gameData, GameLog.abilityTriggers(aura.getCard()));
         log.info("Game {} - {} ON_ENCHANTED_CREATURE_DEALT_DAMAGE trigger fires",
                 gameData.id, aura.getCard().getName());
         return true;
@@ -293,8 +288,7 @@ public class DamageTriggerCollectorService {
         entry.setEventValue(dc.amount());
         gameData.enqueueTrigger(entry);
 
-        String logEntry = perm.getCard().getName() + "'s ability triggers.";
-        gameBroadcastService.logAndBroadcast(gameData, GameLog.text(logEntry));
+        gameBroadcastService.logAndBroadcast(gameData, GameLog.abilityTriggers(perm.getCard()));
         log.info("Game {} - {} ON_CONTROLLER_DEALT_DAMAGE trigger fires ({} damage)",
                 gameData.id, perm.getCard().getName(), dc.amount());
         return true;
@@ -327,9 +321,9 @@ public class DamageTriggerCollectorService {
         se.setNonTargeting(true);
         gameData.stack.add(se);
 
-        gameBroadcastService.logAndBroadcast(gameData, GameLog.text(watcher.getCard().getName()
-                + "'s ability triggers — it deals " + sd.totalDamage() + " damage to "
-                + gameData.playerIdToName.get(recipientId) + "."));
+        gameBroadcastService.logAndBroadcast(gameData, GameLog.cardThen(watcher.getCard(),
+                "'s ability triggers — it deals " + sd.totalDamage() + " damage to "
+                        + gameData.playerIdToName.get(recipientId) + "."));
         log.info("Game {} - {} reflects {} damage to {}", gameData.id, watcher.getCard().getName(),
                 sd.totalDamage(), gameData.playerIdToName.get(recipientId));
         return true;
@@ -359,7 +353,7 @@ public class DamageTriggerCollectorService {
         entry.setEventValue(sd.totalDamage());
         gameData.enqueueTrigger(entry);
 
-        gameBroadcastService.logAndBroadcast(gameData, GameLog.text(sourceCard.getName() + "'s ability triggers."));
+        gameBroadcastService.logAndBroadcast(gameData, GameLog.abilityTriggers(sourceCard));
         log.info("Game {} - {} ON_SELF_DEALS_DAMAGE trigger fires ({} damage)",
                 gameData.id, sourceCard.getName(), sd.totalDamage());
         return true;
@@ -392,8 +386,7 @@ public class DamageTriggerCollectorService {
                 null,
                 damagedCreature.getId()
         ));
-        String logEntry = damagedCreature.getCard().getName() + "'s ability triggers.";
-        gameBroadcastService.logAndBroadcast(gameData, GameLog.text(logEntry));
+        gameBroadcastService.logAndBroadcast(gameData, GameLog.abilityTriggers(damagedCreature.getCard()));
         log.info("Game {} - {} ON_DEALT_DAMAGE trigger fires", gameData.id, damagedCreature.getCard().getName());
     }
 }

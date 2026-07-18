@@ -75,8 +75,7 @@ public class ReturnToHandEffectHandler implements NormalEffectHandlerBean {
                     : null;
 
             if (permanentRemovalService.removePermanentToHand(gameData, target)) {
-                String logEntry = target.getCard().getName() + " is returned to its owner's hand.";
-                gameBroadcastService.logAndBroadcast(gameData, GameLog.text(logEntry));
+                gameBroadcastService.logAndBroadcast(gameData, GameLog.cardThen(target.getCard(), " is returned to its owner's hand."));
                 log.info("Game {} - {} returned to owner's hand by {}", gameData.id, target.getCard().getName(), entry.getCard().getName());
             }
 
@@ -92,8 +91,7 @@ public class ReturnToHandEffectHandler implements NormalEffectHandlerBean {
                     gameData.playerLifeTotals.put(controllerId, currentLife - e.lifeLoss());
 
                     String playerName = gameData.playerIdToName.get(controllerId);
-                    String lifeLog = playerName + " loses " + e.lifeLoss() + " life (" + entry.getCard().getName() + ").";
-                    gameBroadcastService.logAndBroadcast(gameData, GameLog.text(lifeLog));
+                    gameBroadcastService.logAndBroadcast(gameData, GameLog.textCardText(playerName + " loses " + e.lifeLoss() + " life (" , entry.getCard(), ")."));
                     log.info("Game {} - {} loses {} life from {}", gameData.id, playerName, e.lifeLoss(), entry.getCard().getName());
                 }
             }
@@ -164,8 +162,7 @@ public class ReturnToHandEffectHandler implements NormalEffectHandlerBean {
         for (Permanent permanent : toReturn) {
             permanentRemovalService.removePermanentToHand(gameData, permanent);
 
-            String logEntry = permanent.getCard().getName() + " is returned to its owner's hand.";
-            gameBroadcastService.logAndBroadcast(gameData, GameLog.text(logEntry));
+            gameBroadcastService.logAndBroadcast(gameData, GameLog.cardThen(permanent.getCard(), " is returned to its owner's hand."));
             log.info("Game {} - {} returned to owner's hand by {}", gameData.id, permanent.getCard().getName(), entry.getCard().getName());
         }
 

@@ -160,10 +160,12 @@ public class EnterTriggerCollectorService {
     private boolean enqueueGainLife(TriggerMatchContext match, TriggerContext ctx, int amount) {
         TriggerContext.PermanentEnters pe = (TriggerContext.PermanentEnters) ctx;
         var gameData = match.gameData();
-        String cardName = match.permanent().getCard().getName();
+        Card sourceCard = match.permanent().getCard();
+        String cardName = sourceCard.getName();
         enqueue(match, new GainLifeEffect(amount), pe.defaultTargetPlayerId(), pe.perEffectTriggerCount());
         String controllerName = gameData.playerIdToName.get(match.controllerId());
-        gameBroadcastService.logAndBroadcast(gameData, GameLog.text(cardName + " triggers — " + controllerName + " will gain " + amount + " life."));
+        gameBroadcastService.logAndBroadcast(gameData, GameLog.cardThen(sourceCard,
+                " triggers — " + controllerName + " will gain " + amount + " life."));
         log.info("Game {} - {} triggers for {} entering (gain {} life)",
                 gameData.id, cardName, pe.enteringCard().getName(), amount);
         return true;
@@ -177,12 +179,14 @@ public class EnterTriggerCollectorService {
             DealDamageToPlayersEffect damageEffect, TriggerContext ctx) {
         TriggerContext.PermanentEnters pe = (TriggerContext.PermanentEnters) ctx;
         var gameData = match.gameData();
-        String cardName = match.permanent().getCard().getName();
+        Card sourceCard = match.permanent().getCard();
+        String cardName = sourceCard.getName();
         UUID targetPlayerId = pe.enteringControllerId();
         enqueue(match, new DealDamageToPlayersEffect(damageEffect.amount(), DamageRecipient.TARGET_PLAYER), targetPlayerId,
                 pe.perEffectTriggerCount());
         String targetName = gameData.playerIdToName.get(targetPlayerId);
-        gameBroadcastService.logAndBroadcast(gameData, GameLog.text(cardName + " triggers — deals " + damageEffect.amount() + " damage to " + targetName + "."));
+        gameBroadcastService.logAndBroadcast(gameData, GameLog.cardThen(sourceCard,
+                " triggers — deals " + damageEffect.amount() + " damage to " + targetName + "."));
         log.info("Game {} - {} triggers for {} entering (deal {} damage to controller)",
                 gameData.id, cardName, pe.enteringCard().getName(), damageEffect.amount());
         return true;
@@ -391,7 +395,7 @@ public class EnterTriggerCollectorService {
     }
 
     private void logTriggered(TriggerMatchContext match) {
-        gameBroadcastService.logAndBroadcast(match.gameData(), GameLog.text(match.permanent().getCard().getName() + "'s ability triggers."));
+        gameBroadcastService.logAndBroadcast(match.gameData(), GameLog.abilityTriggers(match.permanent().getCard()));
     }
 
     private static boolean isTargeting(CardEffect effect) {

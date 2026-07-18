@@ -38,8 +38,6 @@ public class TargetLandBecomesForestUntilSourceLeavesEffectHandler implements No
             return;
         }
         source.getForestedLandIds().add(target.getId());
-        gameBroadcastService.logAndBroadcast(gameData, GameLog.text(
-                target.getCard().getName() + " becomes a Forest until "
-                        + source.getCard().getName() + " leaves the battlefield."));
+        gameBroadcastService.logAndBroadcast(gameData, GameLog.cardTextCard(target.getCard(), " becomes a Forest until ", source.getCard(), " leaves the battlefield."));
     }
 }

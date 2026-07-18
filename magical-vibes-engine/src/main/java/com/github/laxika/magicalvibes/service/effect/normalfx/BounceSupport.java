@@ -30,15 +30,14 @@ public class BounceSupport {
 
         if (toReturn == null) {
             String logEntry = entry.getCard().getName() + " is no longer on the battlefield.";
-            gameBroadcastService.logAndBroadcast(gameData, GameLog.text(logEntry));
+            gameBroadcastService.logAndBroadcast(gameData, GameLog.cardThen(entry.getCard(), " is no longer on the battlefield."));
             return;
         }
 
         permanentRemovalService.removePermanentToHand(gameData, toReturn);
         permanentRemovalService.removeOrphanedAuras(gameData);
 
-        String logEntry = entry.getCard().getName() + " is returned to its owner's hand.";
-        gameBroadcastService.logAndBroadcast(gameData, GameLog.text(logEntry));
+        gameBroadcastService.logAndBroadcast(gameData, GameLog.cardThen(entry.getCard(), " is returned to its owner's hand."));
         log.info("Game {} - {} returned to hand", gameData.id, entry.getCard().getName());
     }
 }

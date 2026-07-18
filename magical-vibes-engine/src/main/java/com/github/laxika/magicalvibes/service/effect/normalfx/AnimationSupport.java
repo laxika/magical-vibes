@@ -117,8 +117,8 @@ public class AnimationSupport {
         target.getUntilNextTurnKeywords().addAll(effect.grantedKeywords());
         addAnimationBasePtFloatingEffect(gameData, entry, target, power, toughness, EffectDuration.UNTIL_YOUR_NEXT_TURN);
 
-        String logEntry = target.getCard().getName() + " becomes a " + power + "/" + toughness + " creature until your next turn.";
-        gameBroadcastService.logAndBroadcast(gameData, GameLog.text(logEntry));
+        gameBroadcastService.logAndBroadcast(gameData, GameLog.cardThen(target.getCard(),
+                " becomes a " + power + "/" + toughness + " creature until your next turn."));
 
         log.info("Game {} - {} becomes a {}/{} creature until next turn", gameData.id, target.getCard().getName(), power, toughness);
     }
@@ -156,8 +156,8 @@ public class AnimationSupport {
         self.getGrantedCardTypes().addAll(effect.grantedCardTypes());
 
         String durationText = untilEndOfCombat ? "until end of combat" : "until end of turn";
-        String logEntry = self.getCard().getName() + " becomes a " + power + "/" + toughness + " creature " + durationText + ".";
-        gameBroadcastService.logAndBroadcast(gameData, GameLog.text(logEntry));
+        gameBroadcastService.logAndBroadcast(gameData, GameLog.cardThen(self.getCard(),
+                " becomes a " + power + "/" + toughness + " creature " + durationText + "."));
 
         log.info("Game {} - {} becomes a {}/{} creature", gameData.id, self.getCard().getName(), power, toughness);
     }
@@ -275,8 +275,7 @@ public class AnimationSupport {
                 if (permanent.isAttached() && permanent.getCard().getSubtypes().contains(CardSubtype.EQUIPMENT)) {
                     permanent.setAttachedTo(null);
                     gameData.expireFloatingEffectsForUnattachedSource(permanent.getId());
-                    String unattachLog = permanent.getCard().getName() + " becomes unattached.";
-                    gameBroadcastService.logAndBroadcast(gameData, GameLog.text(unattachLog));
+                    gameBroadcastService.logAndBroadcast(gameData, GameLog.cardThen(permanent.getCard(), " becomes unattached."));
                 }
                 count++;
             }
@@ -317,13 +316,12 @@ public class AnimationSupport {
         if (target.isAttached() && target.getCard().getSubtypes().contains(CardSubtype.EQUIPMENT)) {
             target.setAttachedTo(null);
             gameData.expireFloatingEffectsForUnattachedSource(target.getId());
-            String unattachLog = target.getCard().getName() + " becomes unattached.";
-            gameBroadcastService.logAndBroadcast(gameData, GameLog.text(unattachLog));
+            gameBroadcastService.logAndBroadcast(gameData, GameLog.cardThen(target.getCard(), " becomes unattached."));
             log.info("Game {} - {} unattached (equipment became creature)", gameData.id, target.getCard().getName());
         }
 
-        String logEntry = target.getCard().getName() + " becomes a " + power + "/" + toughness + " creature.";
-        gameBroadcastService.logAndBroadcast(gameData, GameLog.text(logEntry));
+        gameBroadcastService.logAndBroadcast(gameData, GameLog.cardThen(target.getCard(),
+                " becomes a " + power + "/" + toughness + " creature."));
 
         log.info("Game {} - {} becomes a {}/{} creature permanently", gameData.id, target.getCard().getName(), power, toughness);
     }
@@ -342,8 +340,8 @@ public class AnimationSupport {
         // nothing happens to the targeted land.
         UUID sourcePermanentId = entry.getSourcePermanentId();
         if (sourcePermanentId == null || gameQueryService.findPermanentById(gameData, sourcePermanentId) == null) {
-            String fizzleLog = entry.getCard().getName() + "'s ability has no effect (it is no longer on the battlefield).";
-            gameBroadcastService.logAndBroadcast(gameData, GameLog.text(fizzleLog));
+            gameBroadcastService.logAndBroadcast(gameData, GameLog.cardThen(entry.getCard(),
+                    "'s ability has no effect (it is no longer on the battlefield)."));
             log.info("Game {} - {} ETB has no effect, source left battlefield", gameData.id, entry.getCard().getName());
             return;
         }
@@ -370,9 +368,8 @@ public class AnimationSupport {
 
         gameData.sourceLinkedAnimations.put(target.getId(), sourcePermanentId);
 
-        String logEntry = target.getCard().getName() + " becomes a " + power + "/" + toughness
-                + " green Treefolk creature. It's still a land.";
-        gameBroadcastService.logAndBroadcast(gameData, GameLog.text(logEntry));
+        gameBroadcastService.logAndBroadcast(gameData, GameLog.cardThen(target.getCard(),
+                " becomes a " + power + "/" + toughness + " green Treefolk creature. It's still a land."));
 
         log.info("Game {} - {} becomes a {}/{} creature while {} is on the battlefield",
                 gameData.id, target.getCard().getName(), power, toughness,
@@ -391,8 +388,8 @@ public class AnimationSupport {
             return;
         }
         if (target == null || !gameQueryService.isCreature(gameData, target)) {
-            String logEntry = source.getCard().getName() + "'s ability fizzles — target creature no longer exists.";
-            gameBroadcastService.logAndBroadcast(gameData, GameLog.text(logEntry));
+            gameBroadcastService.logAndBroadcast(gameData, GameLog.cardThen(source.getCard(),
+                    "'s ability fizzles — target creature no longer exists."));
             return;
         }
 
@@ -404,8 +401,7 @@ public class AnimationSupport {
         source.setAttachedTo(target.getId());
         // CR 613.7e: an attachment receives a new timestamp each time it becomes attached.
         source.setTimestamp(gameData.nextTimestamp());
-        String attachLog = source.getCard().getName() + " is attached to " + target.getCard().getName() + ".";
-        gameBroadcastService.logAndBroadcast(gameData, GameLog.text(attachLog));
+        gameBroadcastService.logAndBroadcast(gameData, GameLog.cardTextCard(source.getCard(), " is attached to ", target.getCard(), "."));
         log.info("Game {} - {} attached to {}", gameData.id, source.getCard().getName(), target.getCard().getName());
 
         boolean hasControlEffect = source.getCard().getEffects(EffectSlot.STATIC).stream()
@@ -430,19 +426,18 @@ public class AnimationSupport {
             return false;
         }
 
-        String frontName = self.getCard().getName();
+        Card frontCard = self.getCard();
+        String frontName = frontCard.getName();
         if (self.isAttached() && !backFace.getSubtypes().contains(CardSubtype.EQUIPMENT)) {
             self.setAttachedTo(null);
             gameData.expireFloatingEffectsForUnattachedSource(self.getId());
-            String unattachLog = frontName + " becomes unattached.";
-            gameBroadcastService.logAndBroadcast(gameData, GameLog.text(unattachLog));
+            gameBroadcastService.logAndBroadcast(gameData, GameLog.cardThen(frontCard, " becomes unattached."));
             log.info("Game {} - {} unattached (transformed into non-Equipment)", gameData.id, frontName);
         }
 
         self.setCard(backFace);
         self.setTransformed(true);
-        String logEntry = frontName + " transforms into " + backFace.getName() + ".";
-        gameBroadcastService.logAndBroadcast(gameData, GameLog.text(logEntry));
+        gameBroadcastService.logAndBroadcast(gameData, GameLog.cardTextCard(frontCard, " transforms into ", backFace, "."));
         log.info("Game {} - {} transforms into {}", gameData.id, frontName, backFace.getName());
 
         fireTransformTriggers(gameData, self, backFace, EffectSlot.ON_TRANSFORM_TO_BACK_FACE);
@@ -451,11 +446,11 @@ public class AnimationSupport {
 
     public void transformToFrontFace(GameData gameData, Permanent self) {
         Card originalCard = self.getOriginalCard();
-        String backName = self.getCard().getName();
+        Card backCard = self.getCard();
+        String backName = backCard.getName();
         self.setCard(originalCard);
         self.setTransformed(false);
-        String logEntry = backName + " transforms into " + originalCard.getName() + ".";
-        gameBroadcastService.logAndBroadcast(gameData, GameLog.text(logEntry));
+        gameBroadcastService.logAndBroadcast(gameData, GameLog.cardTextCard(backCard, " transforms into ", originalCard, "."));
         log.info("Game {} - {} transforms into {}", gameData.id, backName, originalCard.getName());
 
         fireTransformTriggers(gameData, self, originalCard, EffectSlot.ON_TRANSFORM_TO_FRONT_FACE);
@@ -478,8 +473,7 @@ public class AnimationSupport {
         for (CardEffect e : effects) {
             if (e instanceof MayEffect may) {
                 gameData.queueMayAbility(triggerCard, controllerId, may, null, self.getId());
-                String triggerLog = triggerCard.getName() + "'s transform ability triggers.";
-                gameBroadcastService.logAndBroadcast(gameData, GameLog.text(triggerLog));
+                gameBroadcastService.logAndBroadcast(gameData, GameLog.cardThen(triggerCard, "'s transform ability triggers."));
                 log.info("Game {} - {} transform trigger queued (may ability)", gameData.id, triggerCard.getName());
             } else if (e instanceof DealDamageToTargetOpponentAndUpToCreaturesThatPlayerControlsEffect) {
                 gameData.interaction.setPermanentChoiceContext(
@@ -490,8 +484,8 @@ public class AnimationSupport {
                         .toList();
                 playerInputService.beginAnyTargetChoice(gameData, controllerId, List.of(), opponents,
                         triggerCard.getName() + "'s ability - Choose target opponent.");
-                String triggerLog = triggerCard.getName() + "'s transform ability triggers - choose target opponent.";
-                gameBroadcastService.logAndBroadcast(gameData, GameLog.text(triggerLog));
+                gameBroadcastService.logAndBroadcast(gameData, GameLog.cardThen(triggerCard,
+                        "'s transform ability triggers - choose target opponent."));
                 log.info("Game {} - {} transform trigger awaiting opponent target", gameData.id, triggerCard.getName());
                 return;
             } else {
@@ -504,8 +498,7 @@ public class AnimationSupport {
                         null,
                         self.getId()
                 ));
-                String triggerLog = triggerCard.getName() + "'s transform ability triggers.";
-                gameBroadcastService.logAndBroadcast(gameData, GameLog.text(triggerLog));
+                gameBroadcastService.logAndBroadcast(gameData, GameLog.cardThen(triggerCard, "'s transform ability triggers."));
                 log.info("Game {} - {} transform trigger pushed onto stack", gameData.id, triggerCard.getName());
                 return;
             }

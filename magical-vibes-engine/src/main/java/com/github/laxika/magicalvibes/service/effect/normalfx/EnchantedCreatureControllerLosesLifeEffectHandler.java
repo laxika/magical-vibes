@@ -42,8 +42,7 @@ public class EnchantedCreatureControllerLosesLifeEffectHandler implements Normal
         gameData.playerLifeTotals.put(playerId, currentLife - e.amount());
 
         String playerName = gameData.playerIdToName.get(playerId);
-        String logEntry = playerName + " loses " + e.amount() + " life (" + entry.getCard().getName() + ").";
-        gameBroadcastService.logAndBroadcast(gameData, GameLog.text(logEntry));
+        gameBroadcastService.logAndBroadcast(gameData, GameLog.textCardText(playerName + " loses " + e.amount() + " life (" , entry.getCard(), ")."));
 
         log.info("Game {} - {} loses {} life from {}", gameData.id, playerName, e.amount(), entry.getCard().getName());
     }

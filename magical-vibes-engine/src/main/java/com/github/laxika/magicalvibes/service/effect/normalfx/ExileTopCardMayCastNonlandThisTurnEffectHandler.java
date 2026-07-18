@@ -52,7 +52,7 @@ public class ExileTopCardMayCastNonlandThisTurnEffectHandler implements NormalEf
         String castNote = isNonland ? " (may cast this turn)" : "";
         String logEntry = controllerName + " exiles " + topCard.getName()
                 + " from the top of their library" + castNote + ".";
-        gameBroadcastService.logAndBroadcast(gameData, GameLog.text(logEntry));
+        gameBroadcastService.logAndBroadcast(gameData, GameLog.builder().text(controllerName + " exiles ").card(topCard).text(" from the top of their library" + castNote + ".").build());
         log.info("Game {} - {} exiles {} from library top (nonland={})",
                 gameData.id, controllerName, topCard.getName(), isNonland);
     }

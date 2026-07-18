@@ -75,7 +75,7 @@ public class EachPlayerExilesTopCardsToSourceEffectHandler implements NormalEffe
                 String playerName = gameData.playerIdToName.get(playerId);
                 String logEntry = playerName + " exiles " + String.join(", ", exiledNames)
                         + " from the top of their library (" + sourcePermanent.getCard().getName() + ").";
-                gameBroadcastService.logAndBroadcast(gameData, GameLog.text(logEntry));
+                gameBroadcastService.logAndBroadcast(gameData, GameLog.builder().text(playerName + " exiles " + String.join(", ", exiledNames) + " from the top of their library (").card(sourcePermanent.getCard()).text(").").build());
                 log.info("Game {} - {} exiles {} cards from library to {}",
                         gameData.id, playerName, toExile, sourcePermanent.getCard().getName());
             }

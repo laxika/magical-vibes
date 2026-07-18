@@ -1,4 +1,7 @@
 package com.github.laxika.magicalvibes.service.effect.normalfx;
+
+import static org.mockito.ArgumentMatchers.argThat;
+import static org.mockito.ArgumentMatchers.eq;
 import com.github.laxika.magicalvibes.model.GameLog;
 import com.github.laxika.magicalvibes.model.GameLogEntry;
 
@@ -169,7 +172,7 @@ class AdditionalCombatMainPhaseEffectHandlerTest {
 
                 additionalCombatMainPhaseEffectHandler.resolve(gd, entry, effect);
 
-                verify(gameBroadcastService).logAndBroadcast(eq(gd), eq(GameLog.text("After this main phase, there is an additional combat phase followed by an additional main phase.")));
+                verify(gameBroadcastService).logAndBroadcast(eq(gd), argThat((GameLogEntry e) -> e.plainText().equals("After this main phase, there is an additional combat phase followed by an additional main phase.")));
             }
 
             @Test
@@ -181,6 +184,6 @@ class AdditionalCombatMainPhaseEffectHandlerTest {
 
                 additionalCombatMainPhaseEffectHandler.resolve(gd, entry, effect);
 
-                verify(gameBroadcastService).logAndBroadcast(eq(gd), eq(GameLog.text("After this main phase, there are 3 additional combat phases followed by additional main phases.")));
+                verify(gameBroadcastService).logAndBroadcast(eq(gd), argThat((GameLogEntry e) -> e.plainText().equals("After this main phase, there are 3 additional combat phases followed by additional main phases.")));
             }
 }

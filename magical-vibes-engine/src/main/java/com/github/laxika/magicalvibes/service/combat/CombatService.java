@@ -183,8 +183,7 @@ public class CombatService {
             }
             if (perm != null) {
                 permanentRemovalService.removePermanentToGraveyard(gameData, perm);
-                String logEntry = perm.getCard().getName() + " is sacrificed.";
-                gameBroadcastService.logAndBroadcast(gameData, GameLog.text(logEntry));
+                gameBroadcastService.logAndBroadcast(gameData, GameLog.isSacrificed(perm.getCard()));
                 log.info("Game {} - {} sacrificed at end of combat", gameData.id, perm.getCard().getName());
             }
         }
@@ -221,8 +220,7 @@ public class CombatService {
 
             for (Permanent equipment : equipmentToDestroy) {
                 if (permanentRemovalService.tryDestroyPermanent(gameData, equipment)) {
-                    String logEntry = equipment.getCard().getName() + " is destroyed.";
-                    gameBroadcastService.logAndBroadcast(gameData, GameLog.text(logEntry));
+                    gameBroadcastService.logAndBroadcast(gameData, GameLog.isDestroyed(equipment.getCard()));
                     log.info("Game {} - {} destroyed at end of combat (equipment destruction)",
                             gameData.id, equipment.getCard().getName());
                 }
@@ -263,8 +261,8 @@ public class CombatService {
             }
             perm.setCounterCount(CounterType.MINUS_ONE_MINUS_ONE,
                     perm.getCounterCount(CounterType.MINUS_ONE_MINUS_ONE) + action.amount());
-            String logEntry = perm.getCard().getName() + " gets " + action.amount() + " -1/-1 counter(s).";
-            gameBroadcastService.logAndBroadcast(gameData, GameLog.text(logEntry));
+            gameBroadcastService.logAndBroadcast(gameData, GameLog.cardThen(perm.getCard(),
+                    " gets " + action.amount() + " -1/-1 counter(s)."));
             log.info("Game {} - {} gets {} -1/-1 counter(s) at end of combat",
                     gameData.id, perm.getCard().getName(), action.amount());
             permanentCounterSupport.fireMinusOneMinusOneCounterPutOnCreatureTriggers(gameData, perm, action.amount());
@@ -289,8 +287,8 @@ public class CombatService {
             }
             perm.setCounterCount(action.counterType(),
                     perm.getCounterCount(action.counterType()) + action.amount());
-            String logEntry = perm.getCard().getName() + " gets " + action.amount() + " counter(s).";
-            gameBroadcastService.logAndBroadcast(gameData, GameLog.text(logEntry));
+            gameBroadcastService.logAndBroadcast(gameData, GameLog.cardThen(perm.getCard(),
+                    " gets " + action.amount() + " counter(s)."));
             log.info("Game {} - {} gets {} {} counter(s) at end of combat",
                     gameData.id, perm.getCard().getName(), action.amount(), action.counterType());
         }
@@ -315,8 +313,8 @@ public class CombatService {
             }
             int removed = Math.min(action.amount(), current);
             perm.setCounterCount(action.counterType(), current - removed);
-            String logEntry = perm.getCard().getName() + " loses " + removed + " counter(s).";
-            gameBroadcastService.logAndBroadcast(gameData, GameLog.text(logEntry));
+            gameBroadcastService.logAndBroadcast(gameData, GameLog.cardThen(perm.getCard(),
+                    " loses " + removed + " counter(s)."));
             log.info("Game {} - {} loses {} {} counter(s) at end of combat",
                     gameData.id, perm.getCard().getName(), removed, action.counterType());
         }
@@ -391,8 +389,8 @@ public class CombatService {
 
             battlefieldEntryService.putPermanentOntoBattlefield(gameData, controllerId, newPerm);
 
-            String logEntry = originalCard.getName() + " is exiled and returns transformed as " + backFace.getName() + ".";
-            gameBroadcastService.logAndBroadcast(gameData, GameLog.text(logEntry));
+            gameBroadcastService.logAndBroadcast(gameData, GameLog.cardTextCard(originalCard,
+                    " is exiled and returns transformed as ", backFace, "."));
             log.info("Game {} - {} exiled and returned transformed as {}",
                     gameData.id, originalCard.getName(), backFace.getName());
         }

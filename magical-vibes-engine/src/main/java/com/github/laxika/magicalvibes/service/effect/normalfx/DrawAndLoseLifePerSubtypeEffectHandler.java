@@ -61,14 +61,14 @@ public class DrawAndLoseLifePerSubtypeEffectHandler implements NormalEffectHandl
         if (!gameQueryService.canPlayerLifeChange(gameData, controllerId)) {
             String logEntry = playerName + " draws " + count + " card" + (count != 1 ? "s" : "")
                     + " (" + entry.getCard().getName() + "). " + playerName + "'s life total can't change.";
-            gameBroadcastService.logAndBroadcast(gameData, GameLog.text(logEntry));
+            gameBroadcastService.logAndBroadcast(gameData, GameLog.builder().text(playerName + " draws " + count + " card" + (count != 1 ? "s" : "") + " (").card(entry.getCard()).text("). " + playerName + "'s life total can't change.").build());
         } else {
             int currentLife = gameData.getLife(controllerId);
             gameData.playerLifeTotals.put(controllerId, currentLife - count);
 
             String logEntry = playerName + " draws " + count + " card" + (count != 1 ? "s" : "")
                     + " and loses " + count + " life (" + entry.getCard().getName() + ").";
-            gameBroadcastService.logAndBroadcast(gameData, GameLog.text(logEntry));
+            gameBroadcastService.logAndBroadcast(gameData, GameLog.builder().text(playerName + " draws " + count + " card" + (count != 1 ? "s" : "") + " and loses " + count + " life (").card(entry.getCard()).text(").").build());
             log.info("Game {} - {} draws {} and loses {} life from {}", gameData.id, playerName, count, count, entry.getCard().getName());
         }
     

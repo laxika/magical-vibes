@@ -32,6 +32,6 @@ public class MakeTargetSpellUncounterableEffectHandler implements NormalEffectHa
         if (targetSpell == null) return;
 
         gameData.spellsMadeUncounterable.add(targetCardId);
-        gameBroadcastService.logAndBroadcast(gameData, GameLog.text(targetSpell.getCard().getName() + " can't be countered."));
+        gameBroadcastService.logAndBroadcast(gameData, GameLog.cardThen(targetSpell.getCard(), " can't be countered."));
     }
 }

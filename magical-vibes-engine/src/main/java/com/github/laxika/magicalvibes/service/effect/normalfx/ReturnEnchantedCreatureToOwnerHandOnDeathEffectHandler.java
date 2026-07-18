@@ -42,8 +42,7 @@ public class ReturnEnchantedCreatureToOwnerHandOnDeathEffectHandler implements N
 
         Card creatureCard = gameQueryService.findCardInGraveyardById(gameData, dyingCreatureCardId);
         if (creatureCard == null) {
-            String fizzleLog = entry.getCard().getName() + "'s ability fizzles (creature not in graveyard).";
-            gameBroadcastService.logAndBroadcast(gameData, GameLog.text(fizzleLog));
+            gameBroadcastService.logAndBroadcast(gameData, GameLog.cardThen(entry.getCard(), "'s ability fizzles (creature not in graveyard)."));
             log.info("Game {} - {} death trigger fizzles (creature card {} not in graveyard)",
                     gameData.id, entry.getCard().getName(), dyingCreatureCardId);
             return;
@@ -55,7 +54,7 @@ public class ReturnEnchantedCreatureToOwnerHandOnDeathEffectHandler implements N
 
         String ownerName = gameData.playerIdToName.get(ownerId);
         String logEntry = creatureCard.getName() + " returns from graveyard to " + ownerName + "'s hand.";
-        gameBroadcastService.logAndBroadcast(gameData, GameLog.text(logEntry));
+        gameBroadcastService.logAndBroadcast(gameData, GameLog.builder().card(creatureCard).text(" returns from graveyard to " + ownerName + "'s hand.").build());
         log.info("Game {} - {} returns {} from graveyard to {}'s hand",
                 gameData.id, entry.getCard().getName(), creatureCard.getName(), ownerName);
     }

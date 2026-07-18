@@ -1,4 +1,7 @@
 package com.github.laxika.magicalvibes.service.battlefield;
+
+import static org.mockito.ArgumentMatchers.argThat;
+import static org.mockito.ArgumentMatchers.eq;
 import com.github.laxika.magicalvibes.model.GameLog;
 import com.github.laxika.magicalvibes.model.GameLogEntry;
 
@@ -181,7 +184,7 @@ class CreatureControlServiceTest {
 
             applySteal(player2Id, bear, EffectDuration.UNTIL_END_OF_TURN, null);
 
-            verify(gameBroadcastService).logAndBroadcast(eq(gd), eq(GameLog.text("Player2 gains control of Grizzly Bears.")));
+            verify(gameBroadcastService).logAndBroadcast(eq(gd), argThat((GameLogEntry e) -> e.plainText().equals("Player2 gains control of Grizzly Bears.")));
         }
 
         @Test
@@ -213,7 +216,7 @@ class CreatureControlServiceTest {
 
             assertThat(gd.playerBattlefields.get(player2Id)).contains(bear);
             assertThat(gd.stolenCreatures).doesNotContainKey(bear.getId());
-            verify(gameBroadcastService).logAndBroadcast(eq(gd), eq(GameLog.text("Grizzly Bears returns to Player2's control.")));
+            verify(gameBroadcastService).logAndBroadcast(eq(gd), argThat((GameLogEntry e) -> e.plainText().equals("Grizzly Bears returns to Player2's control.")));
         }
 
         @Test

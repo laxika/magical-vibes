@@ -153,7 +153,7 @@ public class PlayerInteractionSupport {
 
         Card drawn = hand.get(hand.size() - 1);
         String playerName = gameData.playerIdToName.get(playerId);
-        gameBroadcastService.logAndBroadcast(gameData, GameLog.text(playerName + " reveals " + drawn.getName() + "."));
+        gameBroadcastService.logAndBroadcast(gameData, GameLog.textCardText(playerName + " reveals ", drawn, "."));
 
         if (drawn.hasType(CardType.LAND)) {
             return;
@@ -162,7 +162,7 @@ public class PlayerInteractionSupport {
         hand.remove(hand.size() - 1);
         gameData.discardCausedByOpponent = false;
         graveyardService.discardCard(gameData, playerId, drawn);
-        gameBroadcastService.logAndBroadcast(gameData, GameLog.text(playerName + " discards " + drawn.getName() + "."));
+        gameBroadcastService.logAndBroadcast(gameData, GameLog.textCardText(playerName + " discards ", drawn, "."));
         triggerCollectionService.checkDiscardTriggers(gameData, playerId, drawn);
 
         if (gameData.hasPendingInteraction(PermanentChoiceContext.DiscardTriggerAnyTarget.class)) {
@@ -203,8 +203,7 @@ public class PlayerInteractionSupport {
             int randomIndex = ThreadLocalRandom.current().nextInt(currentHand.size());
             Card discarded = currentHand.remove(randomIndex);
             graveyardService.discardCard(gameData, playerId, discarded);
-            String logEntry = playerName + " discards " + discarded.getName() + " at random.";
-            gameBroadcastService.logAndBroadcast(gameData, GameLog.text(logEntry));
+            gameBroadcastService.logAndBroadcast(gameData, GameLog.textCardText(playerName + " discards " , discarded, " at random."));
             log.info("Game {} - {} discards {} at random ({})", gameData.id, playerName, discarded.getName(), sourceName);
             triggerCollectionService.checkDiscardTriggers(gameData, playerId, discarded);
         }
@@ -231,8 +230,10 @@ public class PlayerInteractionSupport {
             return;
         }
 
-        String cardNames = String.join(", ", hand.stream().map(Card::getName).toList());
-        gameBroadcastService.logAndBroadcast(gameData, GameLog.text(playerName + " reveals their hand: " + cardNames + "."));
+        GameLog.Builder revealBuilder = GameLog.builder().text(playerName + " reveals their hand: ");
+        appendCardList(revealBuilder, hand);
+        revealBuilder.text(".");
+        gameBroadcastService.logAndBroadcast(gameData, revealBuilder.build());
 
         List<Integer> matchingIndices = new ArrayList<>();
         for (int i = 0; i < hand.size(); i++) {
@@ -249,7 +250,7 @@ public class PlayerInteractionSupport {
         int chosen = matchingIndices.get(ThreadLocalRandom.current().nextInt(matchingIndices.size()));
         Card discarded = hand.remove(chosen);
         graveyardService.discardCard(gameData, playerId, discarded);
-        gameBroadcastService.logAndBroadcast(gameData, GameLog.text(playerName + " discards " + discarded.getName() + " at random."));
+        gameBroadcastService.logAndBroadcast(gameData, GameLog.textCardText(playerName + " discards ", discarded, " at random."));
         log.info("Game {} - {} discards {} at random ({})", gameData.id, playerName, discarded.getName(), sourceName);
         triggerCollectionService.checkDiscardTriggers(gameData, playerId, discarded);
 
@@ -272,8 +273,10 @@ public class PlayerInteractionSupport {
             return;
         }
 
-        String cardNames = String.join(", ", hand.stream().map(Card::getName).toList());
-        gameBroadcastService.logAndBroadcast(gameData, GameLog.text(playerName + " reveals their hand: " + cardNames + "."));
+        GameLog.Builder revealBuilder = GameLog.builder().text(playerName + " reveals their hand: ");
+        appendCardList(revealBuilder, hand);
+        revealBuilder.text(".");
+        gameBroadcastService.logAndBroadcast(gameData, revealBuilder.build());
     }
 
     public void resolveHandRevealAndChoose(GameData gameData, StackEntry entry,
@@ -295,9 +298,10 @@ public class PlayerInteractionSupport {
         }
 
         // Log and reveal hand to caster
-        String cardNames = String.join(", ", hand.stream().map(Card::getName).toList());
-        String logEntry = targetName + " reveals their hand: " + cardNames + ".";
-        gameBroadcastService.logAndBroadcast(gameData, GameLog.text(logEntry));
+        GameLog.Builder revealBuilder = GameLog.builder().text(targetName + " reveals their hand: ");
+        appendCardList(revealBuilder, hand);
+        revealBuilder.text(".");
+        gameBroadcastService.logAndBroadcast(gameData, revealBuilder.build());
 
         // Build valid indices based on included or excluded types
         List<Integer> validIndices = new ArrayList<>();
@@ -364,9 +368,10 @@ public class PlayerInteractionSupport {
             return;
         }
 
-        String cardNames = String.join(", ", hand.stream().map(Card::getName).toList());
-        String logEntry = casterName + " looks at " + targetName + "'s hand: " + cardNames + ".";
-        gameBroadcastService.logAndBroadcast(gameData, GameLog.text(logEntry));
+        GameLog.Builder revealBuilder = GameLog.builder().text(casterName + " looks at " + targetName + "'s hand: ");
+        appendCardList(revealBuilder, hand);
+        revealBuilder.text(".");
+        gameBroadcastService.logAndBroadcast(gameData, revealBuilder.build());
 
         List<Integer> validIndices = new ArrayList<>();
         for (int i = 0; i < hand.size(); i++) {
@@ -450,8 +455,10 @@ public class PlayerInteractionSupport {
                 .map(id -> hand.stream().filter(c -> c.getId().equals(id)).findFirst().orElse(null))
                 .filter(java.util.Objects::nonNull)
                 .toList();
-        String cardNames = String.join(", ", revealedCards.stream().map(Card::getName).toList());
-        gameBroadcastService.logAndBroadcast(gameData, GameLog.text(targetName + " reveals " + cardNames + "."));
+        GameLog.Builder revealBuilder = GameLog.builder().text(targetName + " reveals ");
+        appendCardList(revealBuilder, revealedCards);
+        revealBuilder.text(".");
+        gameBroadcastService.logAndBroadcast(gameData, revealBuilder.build());
 
         List<Integer> validIndices = new ArrayList<>();
         for (int i = 0; i < revealedCardIds.size(); i++) {
@@ -537,5 +544,14 @@ public class PlayerInteractionSupport {
             return;
         }
 
+    }
+
+    private static void appendCardList(GameLog.Builder builder, List<Card> cards) {
+        for (int i = 0; i < cards.size(); i++) {
+            if (i > 0) {
+                builder.text(", ");
+            }
+            builder.card(cards.get(i));
+        }
     }
 }

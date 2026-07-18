@@ -49,13 +49,13 @@ public class ExploreEffectHandler implements NormalEffectHandlerBean {
         Card topCard = deck.getFirst();
 
         // Reveal the top card to all players
-        gameBroadcastService.logAndBroadcast(gameData, GameLog.text(sourceName + " explores — " + playerName + " reveals " + topCard.getName() + "."));
+        gameBroadcastService.logAndBroadcast(gameData, GameLog.textCardText(sourceName + " explores — " + playerName + " reveals ", topCard, "."));
 
         if (topCard.hasType(CardType.LAND)) {
             // Land — put into controller's hand
             deck.removeFirst();
             gameData.addCardToHand(controllerId, topCard);
-            gameBroadcastService.logAndBroadcast(gameData, GameLog.text(playerName + " puts " + topCard.getName() + " into their hand."));
+            gameBroadcastService.logAndBroadcast(gameData, GameLog.textCardText(playerName + " puts ", topCard, " into their hand."));
             log.info("Game {} - {} explores, reveals land {} — to hand",
                     gameData.id, sourceName, topCard.getName());
             // Explore is complete — check for "whenever a creature you control explores" triggers
@@ -67,7 +67,7 @@ public class ExploreEffectHandler implements NormalEffectHandlerBean {
                     : null;
             if (source != null && !gameQueryService.cantHaveCounters(gameData, source)) {
                 source.setCounterCount(CounterType.PLUS_ONE_PLUS_ONE, source.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE) + 1);
-                gameBroadcastService.logAndBroadcast(gameData, GameLog.text(source.getCard().getName() + " gets a +1/+1 counter."));
+                gameBroadcastService.logAndBroadcast(gameData, GameLog.cardThen(source.getCard(), " gets a +1/+1 counter."));
             }
 
             // Ask: put the revealed card into your graveyard?

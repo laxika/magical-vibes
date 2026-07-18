@@ -58,8 +58,7 @@ public class ExchangeLifeTotalWithCreatureStatEffectHandler implements NormalEff
 
         if (currentLife == currentStat) {
             String playerName = gameData.playerIdToName.get(controllerId);
-            gameBroadcastService.logAndBroadcast(gameData, GameLog.text(playerName + " exchanges life total with " + source.getCard().getName()
-                            + "'s " + statName + " (both at " + currentLife + ")."));
+            gameBroadcastService.logAndBroadcast(gameData, GameLog.builder().text(playerName + " exchanges life total with ").card(source.getCard()).text("'s " + statName + " (both at " + currentLife + ").").build());
             return;
         }
 
@@ -72,9 +71,7 @@ public class ExchangeLifeTotalWithCreatureStatEffectHandler implements NormalEff
         }
 
         String playerName = gameData.playerIdToName.get(controllerId);
-        gameBroadcastService.logAndBroadcast(gameData, GameLog.text(playerName + " exchanges life total with " + source.getCard().getName()
-                        + "'s " + statName + " (" + playerName + ": " + currentLife + " -> " + currentStat
-                        + ", " + source.getCard().getName() + " " + statName + ": " + currentStat + " -> " + currentLife + ")."));
+        gameBroadcastService.logAndBroadcast(gameData, GameLog.builder().text(playerName + " exchanges life total with ").card(source.getCard()).text("'s " + statName + " (" + playerName + ": " + currentLife + " -> " + currentStat + ", ").card(source.getCard()).text(" " + statName + ": " + currentStat + " -> " + currentLife + ").").build());
 
         // Set player's life total to the creature's stat
         gameData.playerLifeTotals.put(controllerId, currentStat);

@@ -37,14 +37,13 @@ public class ChangeTargetOfTargetSpellWithSingleTargetEffectHandler implements N
 
         if (!targetSpell.isSingleTarget()) {
             String logEntry = entry.getCard().getName() + " has no effect (" + targetSpell.getCard().getName() + " no longer has a single target).";
-            gameBroadcastService.logAndBroadcast(gameData, GameLog.text(logEntry));
+            gameBroadcastService.logAndBroadcast(gameData, GameLog.cardTextCard(entry.getCard(), " has no effect (", targetSpell.getCard(), " no longer has a single target)."));
             return;
         }
 
         List<UUID> validNewTargets = targetRedirectionSupport.collectValidNewTargets(gameData, targetSpell);
         if (validNewTargets.isEmpty()) {
-            String logEntry = "No legal new target for " + targetSpell.getCard().getName() + ".";
-            gameBroadcastService.logAndBroadcast(gameData, GameLog.text(logEntry));
+            gameBroadcastService.logAndBroadcast(gameData, GameLog.textCardText("No legal new target for ", targetSpell.getCard(), "."));
             return;
         }
 

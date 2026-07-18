@@ -1,4 +1,7 @@
 package com.github.laxika.magicalvibes.service.effect.normalfx;
+
+import static org.mockito.ArgumentMatchers.argThat;
+import static org.mockito.ArgumentMatchers.eq;
 import com.github.laxika.magicalvibes.model.GameLog;
 import com.github.laxika.magicalvibes.model.GameLogEntry;
 
@@ -151,7 +154,7 @@ class GainControlOfTargetEffectHandlerTest {
             verify(creatureControlService).applyControlEffect(gd, player1Id, target,
                     effect, EffectDuration.PERMANENT, null, "Captivating Vampire");
             assertThat(target.getGrantedSubtypes()).contains(CardSubtype.VAMPIRE);
-            verify(gameBroadcastService).logAndBroadcast(eq(gd), eq(GameLog.text("Grizzly Bears becomes a Vampire in addition to its other types.")));
+            verify(gameBroadcastService).logAndBroadcast(eq(gd), argThat((GameLogEntry e) -> e.plainText().equals("Grizzly Bears becomes a Vampire in addition to its other types.")));
         }
 
         @Test

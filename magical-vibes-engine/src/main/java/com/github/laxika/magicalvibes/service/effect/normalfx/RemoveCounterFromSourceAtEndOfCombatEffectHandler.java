@@ -38,7 +38,6 @@ public class RemoveCounterFromSourceAtEndOfCombatEffectHandler implements Normal
             return;
         }
         gameData.queueDelayedAction(new RemoveCounterFromSourceAtEndOfCombat(self.getId(), e.counterType(), 1));
-        String logEntry = self.getCard().getName() + " will have a counter removed at end of combat.";
-        gameBroadcastService.logAndBroadcast(gameData, GameLog.text(logEntry));
+        gameBroadcastService.logAndBroadcast(gameData, GameLog.cardThen(self.getCard(), " will have a counter removed at end of combat."));
     }
 }

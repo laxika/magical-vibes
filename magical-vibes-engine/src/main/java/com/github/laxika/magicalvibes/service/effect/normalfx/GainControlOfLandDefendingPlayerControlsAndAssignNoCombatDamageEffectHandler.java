@@ -52,8 +52,7 @@ public class GainControlOfLandDefendingPlayerControlsAndAssignNoCombatDamageEffe
         // Per ruling: if you no longer control the source when this resolves, it does nothing.
         Permanent source = gameQueryService.findPermanentById(gameData, sourcePermanentId);
         if (source == null) {
-            gameBroadcastService.logAndBroadcast(gameData, GameLog.text(entry.getCard().getName()
-                    + "'s ability has no effect (source left the battlefield)."));
+            gameBroadcastService.logAndBroadcast(gameData, GameLog.cardThen(entry.getCard(), "'s ability has no effect (source left the battlefield)."));
             return;
         }
 
@@ -68,9 +67,7 @@ public class GainControlOfLandDefendingPlayerControlsAndAssignNoCombatDamageEffe
         }
 
         if (validLandIds.isEmpty()) {
-            gameBroadcastService.logAndBroadcast(gameData, GameLog.text(entry.getCard().getName()
-                    + "'s ability resolves, but " + gameData.playerIdToName.get(defenderId)
-                    + " controls no lands."));
+            gameBroadcastService.logAndBroadcast(gameData, GameLog.builder().card(entry.getCard()).text("'s ability resolves, but " + gameData.playerIdToName.get(defenderId) + " controls no lands.").build());
             return;
         }
 

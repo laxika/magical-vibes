@@ -39,7 +39,7 @@ public class MakeCreatureBlockableOnlyByFilterThisTurnEffectHandler implements N
 
         String logEntry = target.getCard().getName() + " can't be blocked this turn except by "
                 + grant.allowedBlockersDescription() + ".";
-        gameBroadcastService.logAndBroadcast(gameData, GameLog.text(logEntry));
+        gameBroadcastService.logAndBroadcast(gameData, GameLog.builder().card(target.getCard()).text(" can't be blocked this turn except by " + grant.allowedBlockersDescription() + ".").build());
         log.info("Game {} - {} can't be blocked this turn except by {}",
                 gameData.id, target.getCard().getName(), grant.allowedBlockersDescription());
     }

@@ -52,8 +52,7 @@ public class ControllerLosesGameEffectHandler implements NormalEffectHandlerBean
         UUID winnerId = gameQueryService.getOpponentId(gameData, losingPlayerId);
         String loserName = gameData.playerIdToName.get(losingPlayerId);
 
-        String logEntry = loserName + " loses the game from " + entry.getCard().getName() + ".";
-        gameBroadcastService.logAndBroadcast(gameData, GameLog.text(logEntry));
+        gameBroadcastService.logAndBroadcast(gameData, GameLog.textCardText(loserName + " loses the game from " , entry.getCard(), "."));
         log.info("Game {} - {} loses the game from {}", gameData.id, loserName, entry.getCard().getName());
 
         gameOutcomeService.declareWinner(gameData, winnerId);

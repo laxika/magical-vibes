@@ -57,8 +57,7 @@ public class UntapPermanentsEffectHandler implements NormalEffectHandlerBean {
 
         tapUntapSupport.untapPermanent(gameData, target);
 
-        String logEntry = entry.getCard().getName() + " untaps " + target.getCard().getName() + ".";
-        gameBroadcastService.logAndBroadcast(gameData, GameLog.text(logEntry));
+        gameBroadcastService.logAndBroadcast(gameData, GameLog.cardTextCard(entry.getCard(), " untaps ", target.getCard(), "."));
 
         log.info("Game {} - {} untaps {}", gameData.id, entry.getCard().getName(), target.getCard().getName());
     }
@@ -76,8 +75,7 @@ public class UntapPermanentsEffectHandler implements NormalEffectHandlerBean {
 
             tapUntapSupport.untapPermanent(gameData, target);
 
-            String logEntry = entry.getCard().getName() + " untaps " + target.getCard().getName() + ".";
-            gameBroadcastService.logAndBroadcast(gameData, GameLog.text(logEntry));
+            gameBroadcastService.logAndBroadcast(gameData, GameLog.cardTextCard(entry.getCard(), " untaps ", target.getCard(), "."));
             log.info("Game {} - {} untaps {}", gameData.id, entry.getCard().getName(), target.getCard().getName());
         }
     }
@@ -91,8 +89,7 @@ public class UntapPermanentsEffectHandler implements NormalEffectHandlerBean {
 
         tapUntapSupport.untapPermanent(gameData, self);
 
-        String logEntry = entry.getCard().getName() + " untaps.";
-        gameBroadcastService.logAndBroadcast(gameData, GameLog.text(logEntry));
+        gameBroadcastService.logAndBroadcast(gameData, GameLog.cardThen(entry.getCard(), " untaps."));
 
         log.info("Game {} - {} untaps", gameData.id, entry.getCard().getName());
     }
@@ -120,8 +117,7 @@ public class UntapPermanentsEffectHandler implements NormalEffectHandlerBean {
 
         tapUntapSupport.untapPermanent(gameData, enchantedCreature);
 
-        String logMsg = entry.getCard().getName() + " untaps " + enchantedCreature.getCard().getName() + ".";
-        gameBroadcastService.logAndBroadcast(gameData, GameLog.text(logMsg));
+        gameBroadcastService.logAndBroadcast(gameData, GameLog.cardTextCard(entry.getCard(), " untaps ", enchantedCreature.getCard(), "."));
         log.info("Game {} - {} untaps enchanted creature {}", gameData.id, entry.getCard().getName(), enchantedCreature.getCard().getName());
     }
 
@@ -140,8 +136,7 @@ public class UntapPermanentsEffectHandler implements NormalEffectHandlerBean {
             count++;
         }
 
-        String logEntry = entry.getCard().getName() + " untaps " + count + " permanent(s) you control.";
-        gameBroadcastService.logAndBroadcast(gameData, GameLog.text(logEntry));
+        gameBroadcastService.logAndBroadcast(gameData, GameLog.cardThen(entry.getCard(), " untaps " + count + " permanent(s) you control."));
         log.info("Game {} - {} untaps {} controlled permanent(s)", gameData.id, entry.getCard().getName(), count);
     }
 
@@ -167,8 +162,7 @@ public class UntapPermanentsEffectHandler implements NormalEffectHandlerBean {
             count++;
         }
 
-        String logEntry = entry.getCard().getName() + " untaps " + count + " other creature(s) you control.";
-        gameBroadcastService.logAndBroadcast(gameData, GameLog.text(logEntry));
+        gameBroadcastService.logAndBroadcast(gameData, GameLog.cardThen(entry.getCard(), " untaps " + count + " other creature(s) you control."));
         log.info("Game {} - {} untaps {} other creature(s)", gameData.id, entry.getCard().getName(), count);
     }
 
@@ -195,8 +189,7 @@ public class UntapPermanentsEffectHandler implements NormalEffectHandlerBean {
             count++;
         }
 
-        String logEntry = entry.getCard().getName() + " untaps " + count + " permanent(s).";
-        gameBroadcastService.logAndBroadcast(gameData, GameLog.text(logEntry));
+        gameBroadcastService.logAndBroadcast(gameData, GameLog.cardThen(entry.getCard(), " untaps " + count + " permanent(s)."));
         log.info("Game {} - {} untaps {} permanent(s) of target player", gameData.id, entry.getCard().getName(), count);
     }
 
@@ -216,8 +209,7 @@ public class UntapPermanentsEffectHandler implements NormalEffectHandlerBean {
             count[0]++;
         });
 
-        String logEntry = entry.getCard().getName() + " untaps " + count[0] + " creature(s).";
-        gameBroadcastService.logAndBroadcast(gameData, GameLog.text(logEntry));
+        gameBroadcastService.logAndBroadcast(gameData, GameLog.cardThen(entry.getCard(), " untaps " + count[0] + " creature(s)."));
         log.info("Game {} - {} untaps {} creature(s)", gameData.id, entry.getCard().getName(), count[0]);
     }
 
@@ -232,8 +224,10 @@ public class UntapPermanentsEffectHandler implements NormalEffectHandlerBean {
             count[0]++;
         });
 
-        String logEntry = entry.getCard().getName() + " untaps " + count[0] + " creature(s) that attacked this turn.";
-        gameBroadcastService.logAndBroadcast(gameData, GameLog.text(logEntry));
+        gameBroadcastService.logAndBroadcast(gameData, GameLog.builder()
+                .card(entry.getCard())
+                .text(" untaps " + count[0] + " creature(s) that attacked this turn.")
+                .build());
         log.info("Game {} - {} untaps {} attacked creature(s)", gameData.id, entry.getCard().getName(), count[0]);
     }
 }

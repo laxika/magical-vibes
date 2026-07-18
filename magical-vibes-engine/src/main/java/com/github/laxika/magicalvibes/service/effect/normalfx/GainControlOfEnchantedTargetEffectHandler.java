@@ -33,7 +33,7 @@ public class GainControlOfEnchantedTargetEffectHandler implements NormalEffectHa
 
         if (!gameQueryService.isEnchanted(gameData, target)) {
             String logEntry = entry.getCard().getName() + "'s ability has no effect (" + target.getCard().getName() + " is not enchanted).";
-            gameBroadcastService.logAndBroadcast(gameData, GameLog.text(logEntry));
+            gameBroadcastService.logAndBroadcast(gameData, GameLog.cardTextCard(entry.getCard(), "'s ability has no effect (", target.getCard(), " is not enchanted)."));
             return;
         }
 

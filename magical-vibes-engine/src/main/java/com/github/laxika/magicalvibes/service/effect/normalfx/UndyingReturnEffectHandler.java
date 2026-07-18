@@ -50,7 +50,7 @@ public class UndyingReturnEffectHandler implements NormalEffectHandlerBean {
         // Grafdigger's Cage etc.: creature cards in graveyards can't enter the battlefield, so the
         // undying return does nothing and the card stays in the graveyard.
         if (graveyardReturnSupport.isCardBlockedFromEnteringFromZone(gameData, card, Zone.GRAVEYARD)) {
-            gameBroadcastService.logAndBroadcast(gameData, GameLog.text(card.getName() + " can't return from the graveyard (undying); it stays in the graveyard."));
+            gameBroadcastService.logAndBroadcast(gameData, GameLog.cardThen(card, " can't return from the graveyard (undying); it stays in the graveyard."));
             log.info("Game {} - {} undying return blocked (can't enter from a graveyard)", gameData.id, card.getName());
             return;
         }
@@ -64,7 +64,7 @@ public class UndyingReturnEffectHandler implements NormalEffectHandlerBean {
         battlefieldEntryService.putPermanentOntoBattlefield(gameData, ownerId, permanent, enterTappedTypes);
 
         String playerName = gameData.playerIdToName.get(ownerId);
-        gameBroadcastService.logAndBroadcast(gameData, GameLog.text(playerName + " returns " + card.getName() + " to the battlefield with a +1/+1 counter (undying)."));
+        gameBroadcastService.logAndBroadcast(gameData, GameLog.textCardText(playerName + " returns ", card, " to the battlefield with a +1/+1 counter (undying)."));
         log.info("Game {} - {} returns via undying with a +1/+1 counter", gameData.id, card.getName());
 
         graveyardReturnSupport.handleCreatureEtbAndLegendRule(gameData, ownerId, permanent, card);

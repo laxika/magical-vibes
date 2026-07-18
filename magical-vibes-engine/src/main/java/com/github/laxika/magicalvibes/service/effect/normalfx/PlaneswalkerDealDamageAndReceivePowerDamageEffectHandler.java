@@ -48,9 +48,9 @@ public class PlaneswalkerDealDamageAndReceivePowerDamageEffectHandler implements
             if (!(gameQueryService.isDamagePreventable(gameData)
                     && gameQueryService.hasProtectionFromSource(gameData, target, entry.getCard()))) {
                 damageSupport.dealCreatureDamage(gameData, entry, target, rawDamage);
-                gameBroadcastService.logAndBroadcast(gameData, GameLog.text(cardName + " deals " + rawDamage + " damage to " + target.getCard().getName() + "."));
+                gameBroadcastService.logAndBroadcast(gameData, GameLog.textCardText(cardName + " deals " + rawDamage + " damage to ", target.getCard(), "."));
             } else {
-                gameBroadcastService.logAndBroadcast(gameData, GameLog.text(cardName + "'s damage to " + target.getCard().getName() + " is prevented."));
+                gameBroadcastService.logAndBroadcast(gameData, GameLog.textCardText(cardName + "'s damage to ", target.getCard(), " is prevented."));
             }
         }
 
@@ -64,8 +64,7 @@ public class PlaneswalkerDealDamageAndReceivePowerDamageEffectHandler implements
             int targetPower = gameQueryService.getPowerBasedDamage(gameData, target);
             int newLoyalty = Math.max(0, sourcePlaneswalker.getCounterCount(CounterType.LOYALTY) - targetPower);
             sourcePlaneswalker.setCounterCount(CounterType.LOYALTY, newLoyalty);
-            gameBroadcastService.logAndBroadcast(gameData, GameLog.text(target.getCard().getName() + " deals " + targetPower + " damage to " + cardName
-                            + ". (" + cardName + " now has " + newLoyalty + " loyalty.)"));
+            gameBroadcastService.logAndBroadcast(gameData, GameLog.builder().card(target.getCard()).text(" deals " + targetPower + " damage to " + cardName + ". (" + cardName + " now has " + newLoyalty + " loyalty.)").build());
             log.info("Game {} - {} takes {} damage from {}, loyalty now {}",
                     gameData.id, cardName, targetPower, target.getCard().getName(), newLoyalty);
         }

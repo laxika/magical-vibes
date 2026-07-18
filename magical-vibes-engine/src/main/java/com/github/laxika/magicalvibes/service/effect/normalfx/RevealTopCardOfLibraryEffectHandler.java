@@ -37,8 +37,7 @@ public class RevealTopCardOfLibraryEffectHandler implements NormalEffectHandlerB
             gameBroadcastService.logAndBroadcast(gameData, GameLog.text(logEntry));
         } else {
             Card topCard = deck.getFirst();
-            String logEntry = playerName + " reveals " + topCard.getName() + " from the top of their library.";
-            gameBroadcastService.logAndBroadcast(gameData, GameLog.text(logEntry));
+            gameBroadcastService.logAndBroadcast(gameData, GameLog.textCardText(playerName + " reveals " , topCard, " from the top of their library."));
         }
 
         log.info("Game {} - {} reveals top card of library", gameData.id, playerName);

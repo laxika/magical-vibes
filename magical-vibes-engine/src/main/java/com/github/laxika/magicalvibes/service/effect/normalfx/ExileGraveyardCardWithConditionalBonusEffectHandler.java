@@ -53,7 +53,7 @@ public class ExileGraveyardCardWithConditionalBonusEffectHandler implements Norm
 
         UUID controllerId = entry.getControllerId();
         String playerName = gameData.playerIdToName.get(controllerId);
-        gameBroadcastService.logAndBroadcast(gameData, GameLog.text(playerName + " exiles " + targetCard.getName() + " from a graveyard."));
+        gameBroadcastService.logAndBroadcast(gameData, GameLog.textCardText(playerName + " exiles ", targetCard, " from a graveyard."));
 
         boolean isCreatureCard = targetCard.hasType(CardType.CREATURE);
         if (isCreatureCard) {
@@ -72,7 +72,7 @@ public class ExileGraveyardCardWithConditionalBonusEffectHandler implements Norm
                     String boostLog = source.getCard().getName() + " gets +"
                             + e.noncreaturePowerBoost() + "/+" + e.noncreatureToughnessBoost()
                             + " until end of turn.";
-                    gameBroadcastService.logAndBroadcast(gameData, GameLog.text(boostLog));
+                    gameBroadcastService.logAndBroadcast(gameData, GameLog.builder().card(source.getCard()).text(" gets +" + e.noncreaturePowerBoost() + "/+" + e.noncreatureToughnessBoost() + " until end of turn.").build());
                     log.info("Game {} - {} gets +{}/+{}", gameData.id, source.getCard().getName(),
                             e.noncreaturePowerBoost(), e.noncreatureToughnessBoost());
                 }

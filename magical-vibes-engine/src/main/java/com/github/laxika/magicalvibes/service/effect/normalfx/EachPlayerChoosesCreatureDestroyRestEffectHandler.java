@@ -54,7 +54,7 @@ public class EachPlayerChoosesCreatureDestroyRestEffectHandler implements Normal
                         // Auto-keep the only creature
                         protectedIds.add(creatures.getFirst().getId());
                         String playerName = gameData.playerIdToName.get(playerId);
-                        gameBroadcastService.logAndBroadcast(gameData, GameLog.text(playerName + " keeps " + creatures.getFirst().getCard().getName() + " (only creature)."));
+                        gameBroadcastService.logAndBroadcast(gameData, GameLog.textCardText(playerName + " keeps ", creatures.getFirst().getCard(), " (only creature)."));
                         continue;
                     }
 

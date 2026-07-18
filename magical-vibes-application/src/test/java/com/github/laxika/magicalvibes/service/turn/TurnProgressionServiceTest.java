@@ -685,7 +685,7 @@ class TurnProgressionServiceTest {
 
             assertThat(gd.mindControlledPlayerId).isEqualTo(player2Id);
             assertThat(gd.mindControllerPlayerId).isEqualTo(player1Id);
-            verify(gameBroadcastService).logAndBroadcast(eq(gd), eq(GameLog.text("Player1 controls Player2 this turn (Mindslaver).")));
+            verify(gameBroadcastService).logAndBroadcast(eq(gd), argThat((GameLogEntry e) -> e.plainText().equals("Player1 controls Player2 this turn (Mindslaver).")));
         }
 
         @Test

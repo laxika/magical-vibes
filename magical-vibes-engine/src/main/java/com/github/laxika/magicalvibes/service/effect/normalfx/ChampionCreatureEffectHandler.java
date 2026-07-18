@@ -52,7 +52,7 @@ public class ChampionCreatureEffectHandler implements NormalEffectHandlerBean {
                 String logEntry = playerName + " controls no other "
                         + championQualityLabel(e.championedSubtypes())
                         + ". " + sourceCard.getName() + " is sacrificed.";
-                gameBroadcastService.logAndBroadcast(gameData, GameLog.text(logEntry));
+                gameBroadcastService.logAndBroadcast(gameData, GameLog.builder().text(playerName + " controls no other " + championQualityLabel(e.championedSubtypes()) + ". ").card(sourceCard).text(" is sacrificed.").build());
                 log.info("Game {} - {} sacrificed (no creature to champion)", gameData.id, sourceCard.getName());
             }
             return;

@@ -91,8 +91,7 @@ public class LivingWeaponEffectHandler implements NormalEffectHandlerBean {
                         equipment.setAttachedTo(lastTokenPermanent.getId());
                         // CR 613.7e: an Equipment receives a new timestamp each time it becomes attached.
                         equipment.setTimestamp(gameData.nextTimestamp());
-                        String attachLog = entry.getCard().getName() + " is now attached to Phyrexian Germ.";
-                        gameBroadcastService.logAndBroadcast(gameData, GameLog.text(attachLog));
+                        gameBroadcastService.logAndBroadcast(gameData, GameLog.cardThen(entry.getCard(), " is now attached to Phyrexian Germ."));
                         log.info("Game {} - {} attached to Phyrexian Germ token via living weapon", gameData.id, entry.getCard().getName());
                     }
                 }

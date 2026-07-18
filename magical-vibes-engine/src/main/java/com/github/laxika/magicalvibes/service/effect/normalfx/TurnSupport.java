@@ -63,7 +63,7 @@ public class TurnSupport {
             if (spellTypes.contains(se.getEntryType())) {
                 Card card = se.getCard();
                 exileService.exileCard(gameData, se.getControllerId(), card);
-                gameBroadcastService.logAndBroadcast(gameData, GameLog.text(card.getName() + " is exiled."));
+                gameBroadcastService.logAndBroadcast(gameData, GameLog.cardThen(card, " is exiled."));
                 log.info("Game {} - {} exiled from stack (end the turn)", gameData.id, card.getName());
             }
             // Triggered/activated abilities just cease to exist

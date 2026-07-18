@@ -100,10 +100,13 @@ public class CreateTokenCopyOfImprintedCardEffectHandler implements NormalEffect
                         gameData.queueDelayedAction(new DelayedPermanentAction(tokenPermanent.getId(), DelayedPermanentActionKind.EXILE_TOKEN_AT_END_STEP));
                     }
 
-                    String logMsg = e.grantHaste()
-                            ? "A token copy of " + imprintedCard.getName() + " is created with haste."
-                            : "A token copy of " + imprintedCard.getName() + " is created.";
-                    gameBroadcastService.logAndBroadcast(gameData, GameLog.text(logMsg));
+                    if (e.grantHaste()) {
+                        gameBroadcastService.logAndBroadcast(gameData, GameLog.textCardText(
+                                "A token copy of ", imprintedCard, " is created with haste."));
+                    } else {
+                        gameBroadcastService.logAndBroadcast(gameData, GameLog.textCardText(
+                                "A token copy of ", imprintedCard, " is created."));
+                    }
                     log.info("Game {} - Token copy of {} created via {}", gameData.id, imprintedCard.getName(), sourcePermanent.getCard().getName());
 
                     // Pass null targetId: the token wasn't cast, so no target was chosen. Any targeted

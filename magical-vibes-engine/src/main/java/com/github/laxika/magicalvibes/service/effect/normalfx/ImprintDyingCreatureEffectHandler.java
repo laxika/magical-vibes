@@ -76,8 +76,7 @@ public class ImprintDyingCreatureEffectHandler implements NormalEffectHandlerBea
             // Return to owner's graveyard (the player whose exile zone it was in)
             UUID returnToId = previousOwnerId != null ? previousOwnerId : entry.getControllerId();
             graveyardService.addCardToGraveyard(gameData, returnToId, previouslyImprinted);
-            String returnLog = previouslyImprinted.getName() + " returns to its owner's graveyard from exile.";
-            gameBroadcastService.logAndBroadcast(gameData, GameLog.text(returnLog));
+            gameBroadcastService.logAndBroadcast(gameData, GameLog.cardThen(previouslyImprinted, " returns to its owner's graveyard from exile."));
             log.info("Game {} - Previously imprinted {} returned to graveyard", gameData.id, previouslyImprinted.getName());
         }
 
@@ -92,7 +91,7 @@ public class ImprintDyingCreatureEffectHandler implements NormalEffectHandlerBea
         gameData.setImprintedCard(sourcePermanent.getCard(), dyingCard);
 
         String logMsg = dyingCard.getName() + " is exiled and imprinted on " + sourcePermanent.getCard().getName() + ".";
-        gameBroadcastService.logAndBroadcast(gameData, GameLog.text(logMsg));
+        gameBroadcastService.logAndBroadcast(gameData, GameLog.cardTextCard(dyingCard, " is exiled and imprinted on ", sourcePermanent.getCard(), "."));
         log.info("Game {} - {} imprinted on {}", gameData.id, dyingCard.getName(), sourcePermanent.getCard().getName());
     }
 }

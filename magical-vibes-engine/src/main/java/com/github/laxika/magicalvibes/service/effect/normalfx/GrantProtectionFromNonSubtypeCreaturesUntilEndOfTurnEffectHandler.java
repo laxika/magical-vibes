@@ -44,7 +44,7 @@ public class GrantProtectionFromNonSubtypeCreaturesUntilEndOfTurnEffectHandler i
         String subtypeName = e.excludedSubtype().getDisplayName();
         String logEntry = entry.getCard().getName() + " grants protection from non-" + subtypeName
                 + " creatures to " + count + " creature(s) until end of turn.";
-        gameBroadcastService.logAndBroadcast(gameData, GameLog.text(logEntry));
+        gameBroadcastService.logAndBroadcast(gameData, GameLog.builder().card(entry.getCard()).text(" grants protection from non-" + subtypeName + " creatures to " + count + " creature(s) until end of turn.").build());
         log.info("Game {} - {} grants protection from non-{} creatures to {} creature(s)",
                 gameData.id, entry.getCard().getName(), subtypeName, count);
     }

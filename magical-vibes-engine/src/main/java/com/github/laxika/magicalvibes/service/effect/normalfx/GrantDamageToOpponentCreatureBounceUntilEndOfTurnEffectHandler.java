@@ -41,7 +41,7 @@ public class GrantDamageToOpponentCreatureBounceUntilEndOfTurnEffectHandler impl
         }
 
         String logEntry = entry.getCard().getName() + " grants damage-to-opponent creature bounce to " + count + " creature(s) until end of turn.";
-        gameBroadcastService.logAndBroadcast(gameData, GameLog.text(logEntry));
+        gameBroadcastService.logAndBroadcast(gameData, GameLog.builder().card(entry.getCard()).text(" grants damage-to-opponent creature bounce to " + count + " creature(s) until end of turn.").build());
         log.info("Game {} - {} grants damage bounce to {} creature(s)", gameData.id, entry.getCard().getName(), count);
     }
 }

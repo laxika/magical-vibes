@@ -116,7 +116,7 @@ public class SylvanLibraryChoiceInteractionHandler
         }
         for (Card card : topped) {
             gameBroadcastService.logAndBroadcast(gameData,
-                    GameLog.text(playerName + " puts " + card.getName() + " on top of their library (Sylvan Library)."));
+                    GameLog.textCardText(playerName + " puts ", card, " on top of their library (Sylvan Library)."));
         }
 
         // For each remaining resolved card, pay 4 life — or, if unaffordable, put a drawn-this-turn
@@ -129,8 +129,7 @@ public class SylvanLibraryChoiceInteractionHandler
                 Card forced = takeNextEligible(hand, interaction.drawnThisTurnCardIds());
                 if (forced != null) {
                     deck.addFirst(forced);
-                    gameBroadcastService.logAndBroadcast(gameData, GameLog.text(playerName + " can't pay 4 life and puts "
-                            + forced.getName() + " on top of their library (Sylvan Library)."));
+                    gameBroadcastService.logAndBroadcast(gameData, GameLog.textCardText(playerName + " can't pay 4 life and puts ", forced, " on top of their library (Sylvan Library)."));
                 }
             }
         }

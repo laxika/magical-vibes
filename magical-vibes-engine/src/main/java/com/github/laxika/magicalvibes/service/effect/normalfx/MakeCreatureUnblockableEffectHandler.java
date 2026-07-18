@@ -39,8 +39,7 @@ public class MakeCreatureUnblockableEffectHandler implements NormalEffectHandler
 
         target.setCantBeBlocked(true);
 
-        String logEntry = target.getCard().getName() + " can't be blocked this turn.";
-        gameBroadcastService.logAndBroadcast(gameData, GameLog.text(logEntry));
+        gameBroadcastService.logAndBroadcast(gameData, GameLog.cardThen(target.getCard(), " can't be blocked this turn."));
 
         log.info("Game {} - {} can't be blocked this turn", gameData.id, target.getCard().getName());
     }

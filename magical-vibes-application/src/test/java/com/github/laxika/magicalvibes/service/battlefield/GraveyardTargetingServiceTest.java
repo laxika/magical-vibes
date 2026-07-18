@@ -1,4 +1,7 @@
 package com.github.laxika.magicalvibes.service.battlefield;
+
+import static org.mockito.ArgumentMatchers.argThat;
+import static org.mockito.ArgumentMatchers.eq;
 import com.github.laxika.magicalvibes.model.GameLog;
 import com.github.laxika.magicalvibes.model.GameLogEntry;
 
@@ -70,7 +73,7 @@ class GraveyardTargetingServiceTest {
         assertThat(gd.stack).hasSize(1);
         assertThat(gd.stack.getFirst().getEntryType()).isEqualTo(StackEntryType.TRIGGERED_ABILITY);
         assertThat(gd.stack.getFirst().getCard()).isSameAs(card);
-        verify(gameBroadcastService).logAndBroadcast(gd, GameLog.text("Agent of Treachery's enter-the-battlefield ability triggers."));
+        verify(gameBroadcastService).logAndBroadcast(eq(gd), argThat((GameLogEntry e) -> e.plainText().equals("Agent of Treachery's enter-the-battlefield ability triggers.")));
     }
 
     @Test
@@ -86,7 +89,7 @@ class GraveyardTargetingServiceTest {
         assertThat(gd.stack).hasSize(1);
         assertThat(gd.stack.getFirst().getEntryType()).isEqualTo(StackEntryType.TRIGGERED_ABILITY);
         assertThat(gd.stack.getFirst().getTargetCardIds()).isEmpty();
-        verify(gameBroadcastService).logAndBroadcast(gd, GameLog.text("Tilling Treefolk's enter-the-battlefield ability triggers."));
+        verify(gameBroadcastService).logAndBroadcast(eq(gd), argThat((GameLogEntry e) -> e.plainText().equals("Tilling Treefolk's enter-the-battlefield ability triggers.")));
     }
 
     @Test

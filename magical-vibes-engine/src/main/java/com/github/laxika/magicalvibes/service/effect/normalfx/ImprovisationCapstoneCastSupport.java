@@ -83,7 +83,7 @@ public class ImprovisationCapstoneCastSupport {
 
             if (!hasLegalTargets) {
                 graveyardService.addCardToGraveyard(gameData, playerId, card);
-                gameBroadcastService.logAndBroadcast(gameData, GameLog.text(card.getName() + " has no valid targets."));
+                gameBroadcastService.logAndBroadcast(gameData, GameLog.cardThen(card, " has no valid targets."));
                 castNextFromQueue(gameData, playerId);
                 return;
             }
@@ -92,7 +92,7 @@ public class ImprovisationCapstoneCastSupport {
                     new PermanentChoiceContext.ExileCastSpellTarget(card, playerId, spellEffects, spellType));
             playerInputService.beginPermanentChoice(gameData, playerId, firstCandidates,
                     "Choose a target for " + card.getName() + ".");
-            gameBroadcastService.logAndBroadcast(gameData, GameLog.text(playerName + " casts " + card.getName() + " without paying its mana cost — choosing target."));
+            gameBroadcastService.logAndBroadcast(gameData, GameLog.textCardText(playerName + " casts ", card, " without paying its mana cost — choosing target."));
             return;
         }
 
@@ -102,7 +102,7 @@ public class ImprovisationCapstoneCastSupport {
         ));
         gameData.recordSpellCast(playerId, card);
         gameData.priorityPassedBy.clear();
-        gameBroadcastService.logAndBroadcast(gameData, GameLog.text(playerName + " casts " + card.getName() + " without paying its mana cost."));
+        gameBroadcastService.logAndBroadcast(gameData, GameLog.textCardText(playerName + " casts ", card, " without paying its mana cost."));
         triggerCollectionService.checkSpellCastTriggers(gameData, card, playerId, false);
         castNextFromQueue(gameData, playerId);
     }

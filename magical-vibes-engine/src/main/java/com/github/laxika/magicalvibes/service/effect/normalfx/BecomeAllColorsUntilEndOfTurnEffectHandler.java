@@ -53,8 +53,7 @@ public class BecomeAllColorsUntilEndOfTurnEffectHandler implements NormalEffectH
                 new BecomeChosenColorsUntilEndOfTurnEffect(allColors),
                 self.getId(), null, null, EffectDuration.UNTIL_END_OF_TURN, 0));
 
-        String logEntry = self.getCard().getName() + " becomes all colors until end of turn.";
-        gameBroadcastService.logAndBroadcast(gameData, GameLog.text(logEntry));
+        gameBroadcastService.logAndBroadcast(gameData, GameLog.cardThen(self.getCard(), " becomes all colors until end of turn."));
         log.info("Game {} - {} becomes all colors until end of turn", gameData.id, self.getCard().getName());
     }
 }

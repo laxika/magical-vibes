@@ -58,8 +58,7 @@ public class ETBTokenTargetService {
 
             if (validSpellCardIds.isEmpty()) {
                 gameData.pollPendingInteraction(PermanentChoiceContext.ETBSpellTargetTrigger.class);
-                String etbLog = pending.sourceCard().getName() + "'s enter-the-battlefield ability has no valid spell targets.";
-                gameBroadcastService.logAndBroadcast(gameData, GameLog.text(etbLog));
+                gameBroadcastService.logAndBroadcast(gameData, GameLog.cardThen(pending.sourceCard(), "'s enter-the-battlefield ability has no valid spell targets."));
                 log.info("Game {} - {} ETB spell-target trigger skipped (no valid targets)", gameData.id, pending.sourceCard().getName());
                 continue;
             }
@@ -70,8 +69,7 @@ public class ETBTokenTargetService {
                     validSpellCardIds, List.of(),
                     pending.sourceCard().getName() + "'s ability — Choose target spell.");
 
-            String logEntry = pending.sourceCard().getName() + "'s ETB ability triggers — choose a target spell.";
-            gameBroadcastService.logAndBroadcast(gameData, GameLog.text(logEntry));
+            gameBroadcastService.logAndBroadcast(gameData, GameLog.cardThen(pending.sourceCard(), "'s ETB ability triggers — choose a target spell."));
             log.info("Game {} - {} ETB spell-target trigger awaiting target selection", gameData.id, pending.sourceCard().getName());
             return;
         }
@@ -108,8 +106,7 @@ public class ETBTokenTargetService {
 
             if (validPlayerTargets.isEmpty() && validPermanentTargets.isEmpty()) {
                 gameData.pollPendingInteraction(PermanentChoiceContext.ETBTokenTargetTrigger.class);
-                String etbLog = pending.sourceCard().getName() + "'s enter-the-battlefield ability has no valid targets.";
-                gameBroadcastService.logAndBroadcast(gameData, GameLog.text(etbLog));
+                gameBroadcastService.logAndBroadcast(gameData, GameLog.cardThen(pending.sourceCard(), "'s enter-the-battlefield ability has no valid targets."));
                 log.info("Game {} - {} ETB token-target trigger skipped (no valid targets)",
                         gameData.id, pending.sourceCard().getName());
                 continue;
@@ -197,8 +194,7 @@ public class ETBTokenTargetService {
             if (noLegalTargets) {
                 if (chosenInGroup < group.getMinTargets()) {
                     gameData.pollPendingInteraction(PermanentChoiceContext.ETBTokenMultiTargetTrigger.class);
-                    String etbLog = card.getName() + "'s enter-the-battlefield ability has no valid targets.";
-                    gameBroadcastService.logAndBroadcast(gameData, GameLog.text(etbLog));
+                    gameBroadcastService.logAndBroadcast(gameData, GameLog.cardThen(card, "'s enter-the-battlefield ability has no valid targets."));
                     log.info("Game {} - {} ETB multi-target trigger skipped (no valid targets for mandatory group {} at slot {})",
                             gameData.id, card.getName(), idx, chosenInGroup);
                     continue;
@@ -248,8 +244,7 @@ public class ETBTokenTargetService {
                 new ArrayList<>(pending.chosenTargetsSoFar())
         );
         gameData.stack.add(etbEntry);
-        String etbLog = card.getName() + "'s enter-the-battlefield ability triggers.";
-        gameBroadcastService.logAndBroadcast(gameData, GameLog.text(etbLog));
+        gameBroadcastService.logAndBroadcast(gameData, GameLog.cardThen(card, "'s enter-the-battlefield ability triggers."));
         log.info("Game {} - {} ETB multi-target ability pushed onto stack", gameData.id, card.getName());
     }
 

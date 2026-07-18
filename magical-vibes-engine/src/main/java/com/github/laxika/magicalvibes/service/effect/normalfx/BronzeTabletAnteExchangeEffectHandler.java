@@ -58,7 +58,7 @@ public class BronzeTabletAnteExchangeEffectHandler implements NormalEffectHandle
 
         // Exile the targeted permanent (unconditional — happens before the pay decision).
         permanentRemovalService.removePermanentToExile(gameData, target);
-        gameBroadcastService.logAndBroadcast(gameData, GameLog.text(target.getCard().getName() + " is exiled."));
+        gameBroadcastService.logAndBroadcast(gameData, GameLog.cardThen(target.getCard(), " is exiled."));
 
         // Exile Bronze Tablet itself if it's still on the battlefield (ruling: if it isn't, it isn't exiled).
         Card tabletCard = entry.getCard();
@@ -68,7 +68,7 @@ public class BronzeTabletAnteExchangeEffectHandler implements NormalEffectHandle
         if (tabletPermanent != null) {
             tabletCard = tabletPermanent.getOriginalCard();
             permanentRemovalService.removePermanentToExile(gameData, tabletPermanent);
-            gameBroadcastService.logAndBroadcast(gameData, GameLog.text(tabletCard.getName() + " is exiled."));
+            gameBroadcastService.logAndBroadcast(gameData, GameLog.cardThen(tabletCard, " is exiled."));
         }
         permanentRemovalService.removeOrphanedAuras(gameData);
 
@@ -78,8 +78,7 @@ public class BronzeTabletAnteExchangeEffectHandler implements NormalEffectHandle
         if (!canPay) {
             // Can't pay — the ante swap happens. Ownership changes aren't modeled, so within one game
             // both cards simply remain exiled.
-            gameBroadcastService.logAndBroadcast(gameData, GameLog.text(opponentName + " can't pay "
-                    + e.lifeCost() + " life — ownership of the exiled cards is exchanged. (" + tabletCard.getName() + ")"));
+            gameBroadcastService.logAndBroadcast(gameData, GameLog.textCardText(opponentName + " can't pay " + e.lifeCost() + " life — ownership of the exiled cards is exchanged. (", tabletCard, ")"));
             log.info("Game {} - {} can't pay {} life, {} ante swap resolves", gameData.id, opponentName,
                     e.lifeCost(), tabletCard.getName());
             return;

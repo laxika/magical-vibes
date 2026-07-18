@@ -52,7 +52,7 @@ public class KarnScionReturnSilverCounterCardEffectHandler implements NormalEffe
             gameData.exiledCardsWithSilverCounters.remove(card.getId());
             gameData.addCardToHand(controllerId, card);
 
-            gameBroadcastService.logAndBroadcast(gameData, GameLog.text(controllerName + " returns " + card.getName() + " from exile to their hand."));
+            gameBroadcastService.logAndBroadcast(gameData, GameLog.textCardText(controllerName + " returns ", card, " from exile to their hand."));
             log.info("Game {} - {} returns {} from exile (silver counter) to hand",
                     gameData.id, controllerName, card.getName());
             return;

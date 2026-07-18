@@ -1,5 +1,9 @@
 package com.github.laxika.magicalvibes.service.effect.normalfx;
+
+import static org.mockito.ArgumentMatchers.argThat;
+import static org.mockito.ArgumentMatchers.eq;
 import com.github.laxika.magicalvibes.model.GameLog;
+import com.github.laxika.magicalvibes.model.GameLogEntry;
 import com.github.laxika.magicalvibes.service.battlefield.GameQueryService;
 import com.github.laxika.magicalvibes.service.battlefield.BattlefieldEntryService;
 import com.github.laxika.magicalvibes.service.battlefield.PermanentRemovalService;
@@ -164,7 +168,7 @@ class ExileTargetPermanentEffectHandlerTest {
                 exileTargetPermanentHandler.resolve(gd, entry, entry.getEffectsToResolve().getFirst());
 
                 verify(permanentRemovalService).removePermanentToExile(gd, target);
-                verify(gameBroadcastService).logAndBroadcast(eq(gd), eq(GameLog.text("Spellbook is exiled.")));
+                verify(gameBroadcastService).logAndBroadcast(eq(gd), argThat((GameLogEntry e) -> e.plainText().equals("Spellbook is exiled.")));
                 verify(permanentRemovalService).removeOrphanedAuras(gd);
             }
 
@@ -204,7 +208,7 @@ class ExileTargetPermanentEffectHandlerTest {
 
                 verify(permanentRemovalService).removePermanentToExile(gd, target1);
                 verify(permanentRemovalService).removePermanentToExile(gd, target2);
-                verify(gameBroadcastService, times(2)).logAndBroadcast(eq(gd), eq(GameLog.text("Spellbook is exiled.")));
+                verify(gameBroadcastService, times(2)).logAndBroadcast(eq(gd), argThat((GameLogEntry e) -> e.plainText().equals("Spellbook is exiled.")));
                 verify(permanentRemovalService).removeOrphanedAuras(gd);
             }
 

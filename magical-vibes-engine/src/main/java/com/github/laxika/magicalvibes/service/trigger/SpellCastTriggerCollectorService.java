@@ -456,9 +456,8 @@ public class SpellCastTriggerCollectorService {
             match.gameData().queueInteraction(new PermanentChoiceContext.SpellTargetTriggerAnyTarget(
                     match.permanent().getCard(), match.controllerId(), new ArrayList<>(trigger.resolvedEffects())
             ));
-            String logEntry = match.permanent().getCard().getName()
-                    + "'s triggered ability triggers — choose a target.";
-            gameBroadcastService.logAndBroadcast(match.gameData(), GameLog.text(logEntry));
+            gameBroadcastService.logAndBroadcast(match.gameData(), GameLog.cardThen(match.permanent().getCard(),
+                    "'s triggered ability triggers — choose a target."));
         } else {
             match.gameData().stack.add(new StackEntry(
                     StackEntryType.TRIGGERED_ABILITY,
@@ -506,9 +505,8 @@ public class SpellCastTriggerCollectorService {
         match.gameData().queueInteraction(new PermanentChoiceContext.SpellTargetTriggerAnyTarget(
                 match.permanent().getCard(), match.controllerId(), new ArrayList<>(resolvedEffects)
         ));
-        String logEntry = match.permanent().getCard().getName()
-                + "'s triggered ability triggers — choose a target for " + manaValue + " damage.";
-        gameBroadcastService.logAndBroadcast(match.gameData(), GameLog.text(logEntry));
+        gameBroadcastService.logAndBroadcast(match.gameData(), GameLog.cardThen(match.permanent().getCard(),
+                "'s triggered ability triggers — choose a target for " + manaValue + " damage."));
         log.info("Game {} - {} spell-cast mana-value trigger queued ({} damage)",
                 match.gameData().id, match.permanent().getCard().getName(), manaValue);
         return true;
@@ -548,9 +546,8 @@ public class SpellCastTriggerCollectorService {
         match.gameData().queueInteraction(new PermanentChoiceContext.SpellTargetTriggerAnyTarget(
                 match.permanent().getCard(), match.controllerId(), new ArrayList<>(resolvedEffects), true
         ));
-        String logEntry = match.permanent().getCard().getName()
-                + "'s triggered ability triggers — choose target player for poison counter.";
-        gameBroadcastService.logAndBroadcast(match.gameData(), GameLog.text(logEntry));
+        gameBroadcastService.logAndBroadcast(match.gameData(), GameLog.cardThen(match.permanent().getCard(),
+                "'s triggered ability triggers — choose target player for poison counter."));
         log.info("Game {} - {} spell-cast poison trigger queued",
                 match.gameData().id, match.permanent().getCard().getName());
         return true;
@@ -800,9 +797,8 @@ public class SpellCastTriggerCollectorService {
                     match.permanent().getCard(), match.controllerId(), resolved, playerTargetOnly, trigger.targetFilter(),
                     spellManaSpentX
             ));
-            String logEntry = match.permanent().getCard().getName()
-                    + "'s triggered ability triggers — choose a target.";
-            gameBroadcastService.logAndBroadcast(match.gameData(), GameLog.text(logEntry));
+            gameBroadcastService.logAndBroadcast(match.gameData(), GameLog.cardThen(match.permanent().getCard(),
+                    "'s triggered ability triggers — choose a target."));
         } else {
             StackEntry entry;
             if (selfTarget) {

@@ -1,6 +1,10 @@
 package com.github.laxika.magicalvibes.service.turn;
+
+import static org.mockito.ArgumentMatchers.argThat;
+import static org.mockito.ArgumentMatchers.eq;
 import com.github.laxika.magicalvibes.model.action.DelayedPermanentActionKind;
 import com.github.laxika.magicalvibes.model.GameLog;
+import com.github.laxika.magicalvibes.model.GameLogEntry;
 import com.github.laxika.magicalvibes.model.action.DelayedPlusOneCounters;
 
 import com.github.laxika.magicalvibes.model.Card;
@@ -1453,8 +1457,8 @@ class StepTriggerServiceTest {
 
             sut.handlePrecombatMainTriggers(gd);
 
-            verify(gameBroadcastService).logAndBroadcast(gd, GameLog.text("Chainer's Torment gets a lore counter (2)."));
-            verify(gameBroadcastService).logAndBroadcast(gd, GameLog.text("Chainer's Torment's chapter II ability triggers."));
+            verify(gameBroadcastService).logAndBroadcast(eq(gd), argThat((GameLogEntry e) -> e.plainText().equals("Chainer's Torment gets a lore counter (2).")));
+            verify(gameBroadcastService).logAndBroadcast(eq(gd), argThat((GameLogEntry e) -> e.plainText().equals("Chainer's Torment's chapter II ability triggers.")));
         }
     }
 

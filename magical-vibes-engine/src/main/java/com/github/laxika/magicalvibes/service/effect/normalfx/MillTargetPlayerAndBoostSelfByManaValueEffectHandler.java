@@ -63,7 +63,7 @@ public class MillTargetPlayerAndBoostSelfByManaValueEffectHandler implements Nor
 
         String logEntry = cardName + " gets +" + manaValue + "/+" + manaValue
                 + " until end of turn (milled " + topCard.getName() + ", mana value " + manaValue + ").";
-        gameBroadcastService.logAndBroadcast(gameData, GameLog.text(logEntry));
+        gameBroadcastService.logAndBroadcast(gameData, GameLog.builder().text(cardName + " gets +" + manaValue + "/+" + manaValue + " until end of turn (milled ").card(topCard).text(", mana value " + manaValue + ").").build());
         log.info("Game {} - {} gets +{}/+{} from milling {}", gameData.id, cardName, manaValue, manaValue, topCard.getName());
     }
 }

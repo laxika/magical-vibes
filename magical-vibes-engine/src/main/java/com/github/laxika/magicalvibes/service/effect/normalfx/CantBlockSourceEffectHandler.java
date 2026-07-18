@@ -39,7 +39,7 @@ public class CantBlockSourceEffectHandler implements NormalEffectHandlerBean {
         target.getCantBlockIds().add(e.sourcePermanentId());
 
         String logEntry = target.getCard().getName() + " can't block " + sourceName + " this turn.";
-        gameBroadcastService.logAndBroadcast(gameData, GameLog.text(logEntry));
+        gameBroadcastService.logAndBroadcast(gameData, GameLog.builder().card(target.getCard()).text(" can't block " + sourceName + " this turn.").build());
 
         log.info("Game {} - {} can't block {} this turn", gameData.id, target.getCard().getName(), sourceName);
     }

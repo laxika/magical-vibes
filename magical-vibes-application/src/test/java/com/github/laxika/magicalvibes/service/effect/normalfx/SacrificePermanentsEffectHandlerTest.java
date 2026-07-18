@@ -1,4 +1,7 @@
 package com.github.laxika.magicalvibes.service.effect.normalfx;
+
+import static org.mockito.ArgumentMatchers.argThat;
+import static org.mockito.ArgumentMatchers.eq;
 import com.github.laxika.magicalvibes.model.GameLog;
 import com.github.laxika.magicalvibes.model.GameLogEntry;
 
@@ -141,7 +144,7 @@ class SacrificePermanentsEffectHandlerTest {
             handler.resolve(gd, entry(player1Id, player2Id), creatureSac(SacrificeRecipient.TARGET_PLAYER));
 
             verify(permanentRemovalService).removePermanentToGraveyard(gd, bears);
-            verify(gameBroadcastService).logAndBroadcast(gd, GameLog.text("Player2 sacrifices Grizzly Bears."));
+            verify(gameBroadcastService).logAndBroadcast(eq(gd), argThat((GameLogEntry e) -> e.plainText().equals("Player2 sacrifices Grizzly Bears.")));
         }
 
         @Test
@@ -202,7 +205,7 @@ class SacrificePermanentsEffectHandlerTest {
             handler.resolve(gd, entry(player1Id, player2Id), landSac());
 
             verify(permanentRemovalService).removePermanentToGraveyard(gd, forest);
-            verify(gameBroadcastService).logAndBroadcast(gd, GameLog.text("Player2 sacrifices Forest."));
+            verify(gameBroadcastService).logAndBroadcast(eq(gd), argThat((GameLogEntry e) -> e.plainText().equals("Player2 sacrifices Forest.")));
         }
 
         @Test
@@ -264,7 +267,7 @@ class SacrificePermanentsEffectHandlerTest {
             handler.resolve(gd, entry(player1Id, null), creatureSac(SacrificeRecipient.CONTROLLER));
 
             verify(permanentRemovalService).removePermanentToGraveyard(gd, bears);
-            verify(gameBroadcastService).logAndBroadcast(gd, GameLog.text("Player1 sacrifices Grizzly Bears."));
+            verify(gameBroadcastService).logAndBroadcast(eq(gd), argThat((GameLogEntry e) -> e.plainText().equals("Player1 sacrifices Grizzly Bears.")));
         }
     }
 
@@ -286,7 +289,7 @@ class SacrificePermanentsEffectHandlerTest {
             handler.resolve(gd, entry(player1Id, null), creatureSac(SacrificeRecipient.EACH_OPPONENT));
 
             verify(permanentRemovalService).removePermanentToGraveyard(gd, bears);
-            verify(gameBroadcastService).logAndBroadcast(gd, GameLog.text("Player2 sacrifices Grizzly Bears."));
+            verify(gameBroadcastService).logAndBroadcast(eq(gd), argThat((GameLogEntry e) -> e.plainText().equals("Player2 sacrifices Grizzly Bears.")));
         }
 
         @Test

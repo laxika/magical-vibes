@@ -45,7 +45,7 @@ public class DrainLifePerControlledPermanentEffectHandler implements NormalEffec
         int drainAmount = (int) count * e.multiplier();
 
         if (drainAmount <= 0) {
-            gameBroadcastService.logAndBroadcast(gameData, GameLog.text(entry.getCard().getName() + " drains 0 life (no matching permanents)."));
+            gameBroadcastService.logAndBroadcast(gameData, GameLog.cardThen(entry.getCard(), " drains 0 life (no matching permanents)."));
             return;
         }
 
@@ -57,8 +57,7 @@ public class DrainLifePerControlledPermanentEffectHandler implements NormalEffec
             int targetCurrentLife = gameData.getLife(targetPlayerId);
             gameData.playerLifeTotals.put(targetPlayerId, targetCurrentLife - drainAmount);
 
-            String lossLog = targetName + " loses " + drainAmount + " life (" + entry.getCard().getName() + ").";
-            gameBroadcastService.logAndBroadcast(gameData, GameLog.text(lossLog));
+            gameBroadcastService.logAndBroadcast(gameData, GameLog.textCardText(targetName + " loses " + drainAmount + " life (" , entry.getCard(), ")."));
             log.info("Game {} - {} loses {} life from {}", gameData.id, targetName, drainAmount, entry.getCard().getName());
         }
 

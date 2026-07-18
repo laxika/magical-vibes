@@ -1,5 +1,9 @@
 package com.github.laxika.magicalvibes.service.effect.normalfx;
+
+import static org.mockito.ArgumentMatchers.argThat;
+import static org.mockito.ArgumentMatchers.eq;
 import com.github.laxika.magicalvibes.model.GameLog;
+import com.github.laxika.magicalvibes.model.GameLogEntry;
 import com.github.laxika.magicalvibes.service.battlefield.GameQueryService;
 import com.github.laxika.magicalvibes.service.battlefield.BattlefieldEntryService;
 import com.github.laxika.magicalvibes.service.battlefield.PermanentRemovalService;
@@ -180,7 +184,7 @@ class SacrificeOtherCreatureOrDamageEffectHandlerTest {
                 sacrificeOtherOrDamageHandler.resolve(gd, entry, effect);
 
                 verify(permanentRemovalService).removePermanentToGraveyard(gd, elves);
-                verify(gameBroadcastService).logAndBroadcast(gd, GameLog.text("Player1 sacrifices Llanowar Elves."));
+                verify(gameBroadcastService).logAndBroadcast(eq(gd), argThat((GameLogEntry e) -> e.plainText().equals("Player1 sacrifices Llanowar Elves.")));
                 // No damage dealt
                 assertThat(gd.getLife(player1Id)).isEqualTo(20);
             }
@@ -227,6 +231,6 @@ class SacrificeOtherCreatureOrDamageEffectHandlerTest {
 
                 sacrificeOtherOrDamageHandler.resolve(gd, entry, effect);
 
-                verify(gameBroadcastService).logAndBroadcast(gd, GameLog.text("Lord of the Pit deals 7 damage to Player1."));
+                verify(gameBroadcastService).logAndBroadcast(eq(gd), argThat((GameLogEntry e) -> e.plainText().equals("Lord of the Pit deals 7 damage to Player1.")));
             }
 }

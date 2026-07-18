@@ -55,7 +55,7 @@ public class TargetCreatureDealsPowerDamageToAnyTargetEffectHandler implements N
         // damage, nothing happens.
         if (gameQueryService.isDamagePreventable(gameData)
                 && gameQueryService.isPreventedFromDealingDamage(gameData, biter)) {
-            gameBroadcastService.logAndBroadcast(gameData, GameLog.text(biter.getCard().getName() + "'s damage is prevented."));
+            gameBroadcastService.logAndBroadcast(gameData, GameLog.cardThen(biter.getCard(), "'s damage is prevented."));
             return;
         }
 

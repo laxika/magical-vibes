@@ -49,6 +49,6 @@ public class GainControlOfCombatOpponentAtEndOfCombatEffectHandler implements No
                 targetId, entry.getControllerId(), sourceId, entry.getCard().getName()));
         String logEntry = entry.getCard().getName() + " will gain control of "
                 + target.getCard().getName() + " at end of combat.";
-        gameBroadcastService.logAndBroadcast(gameData, GameLog.text(logEntry));
+        gameBroadcastService.logAndBroadcast(gameData, GameLog.cardTextCard(entry.getCard(), " will gain control of ", target.getCard(), " at end of combat."));
     }
 }

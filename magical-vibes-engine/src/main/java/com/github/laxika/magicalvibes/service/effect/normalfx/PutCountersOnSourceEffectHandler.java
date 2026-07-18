@@ -54,7 +54,7 @@ public class PutCountersOnSourceEffectHandler implements NormalEffectHandlerBean
             source.setCounterCount(CounterType.MINUS_ONE_MINUS_ONE, source.getCounterCount(CounterType.MINUS_ONE_MINUS_ONE) + e.amount());
         }
         String logEntry = source.getCard().getName() + " gets " + e.amount() + " " + counterLabel + " counter(s).";
-        gameBroadcastService.logAndBroadcast(gameData, GameLog.text(logEntry));
+        gameBroadcastService.logAndBroadcast(gameData, GameLog.builder().card(source.getCard()).text(" gets " + e.amount() + " " + counterLabel + " counter(s).").build());
         log.info("Game {} - {} gets {} {} counter(s)", gameData.id, source.getCard().getName(), e.amount(), counterLabel);
 
         if (e.powerModifier() <= 0 && !plusZeroPlusOne) {

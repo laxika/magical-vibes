@@ -47,7 +47,7 @@ public class MillControllerAndMayPlayFromGraveyardThisTurnEffectHandler implemen
 
         String logEntry = controllerName + " mills " + milledCard.getName()
                 + " and may play it from their graveyard this turn.";
-        gameBroadcastService.logAndBroadcast(gameData, GameLog.text(logEntry));
+        gameBroadcastService.logAndBroadcast(gameData, GameLog.builder().text(controllerName + " mills ").card(milledCard).text(" and may play it from their graveyard this turn.").build());
         log.info("Game {} - {} mills {} and may play it from graveyard this turn",
                 gameData.id, controllerName, milledCard.getName());
     }

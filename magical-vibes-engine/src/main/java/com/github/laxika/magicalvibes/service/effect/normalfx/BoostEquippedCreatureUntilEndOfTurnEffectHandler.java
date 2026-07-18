@@ -51,9 +51,10 @@ public class BoostEquippedCreatureUntilEndOfTurnEffectHandler implements NormalE
         equippedCreature.setPowerModifier(equippedCreature.getPowerModifier() + powerBoost);
         equippedCreature.setToughnessModifier(equippedCreature.getToughnessModifier() + toughnessBoost);
 
-        String logEntry = String.format("%s gets %+d/%+d until end of turn.",
-                equippedCreature.getCard().getName(), powerBoost, toughnessBoost);
-        gameBroadcastService.logAndBroadcast(gameData, GameLog.text(logEntry));
+        gameBroadcastService.logAndBroadcast(gameData, GameLog.builder()
+                .card(equippedCreature.getCard())
+                .text(String.format(" gets %+d/%+d until end of turn.", powerBoost, toughnessBoost))
+                .build());
         log.info("Game {} - {} gets {}/{} until end of turn", gameData.id,
                 equippedCreature.getCard().getName(), powerBoost, toughnessBoost);
     }

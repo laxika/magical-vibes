@@ -67,7 +67,7 @@ public class ReturnOneOfEachSubtypeFromGraveyardToHandEffectHandler implements N
                 gameData.addCardToHand(controllerId, card);
 
                 String playerName = gameData.playerIdToName.get(controllerId);
-                gameBroadcastService.logAndBroadcast(gameData, GameLog.text(playerName + " returns " + card.getName() + " from graveyard to hand."));
+                gameBroadcastService.logAndBroadcast(gameData, GameLog.textCardText(playerName + " returns ", card, " from graveyard to hand."));
             } else {
                 // Multiple matches — queue a choice prompt
                 gameData.pendingGraveyardReturnQueue.add(

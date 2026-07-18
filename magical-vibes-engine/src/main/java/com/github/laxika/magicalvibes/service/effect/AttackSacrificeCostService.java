@@ -78,7 +78,7 @@ public class AttackSacrificeCostService {
             }
             permanentRemovalService.removePermanentToGraveyard(gameData, toSacrifice);
             gameBroadcastService.logAndBroadcast(gameData,
-                    GameLog.text(playerName + " sacrifices " + toSacrifice.getCard().getName() + "."));
+                    GameLog.textCardText(playerName + " sacrifices ", toSacrifice.getCard(), "."));
             log.info("Game {} - {} sacrifices {} to attack", gameData.id, playerName,
                     toSacrifice.getCard().getName());
             sacrificed++;

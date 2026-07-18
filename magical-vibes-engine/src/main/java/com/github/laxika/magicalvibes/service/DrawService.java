@@ -134,7 +134,13 @@ public class DrawService {
                 UUID otherPlayerId = gameQueryService.getOpponentId(gameData, playerId);
                 Card revealed = deck.getFirst();
                 String playerName = gameData.playerIdToName.get(playerId);
-                gameBroadcastService.logAndBroadcast(gameData, GameLog.text(playerName + " reveals " + revealed.getName() + " with " + zursWeirdingSource.getName() + "."));
+                gameBroadcastService.logAndBroadcast(gameData, GameLog.builder()
+                        .text(playerName + " reveals ")
+                        .card(revealed)
+                        .text(" with ")
+                        .card(zursWeirdingSource)
+                        .text(".")
+                        .build());
 
                 if (gameData.getLife(otherPlayerId) >= 2) {
                     gameData.pendingMayAbilities.add(new PendingMayAbility(
@@ -399,7 +405,13 @@ public class DrawService {
             if (!reveals) continue;
 
             String drawerName = gameData.playerIdToName.get(drawingPlayerId);
-            gameBroadcastService.logAndBroadcast(gameData, GameLog.text(drawerName + " reveals " + drawn.getName() + " with " + perm.getCard().getName() + "."));
+            gameBroadcastService.logAndBroadcast(gameData, GameLog.builder()
+                    .text(drawerName + " reveals ")
+                    .card(drawn)
+                    .text(" with ")
+                    .card(perm.getCard())
+                    .text(".")
+                    .build());
 
             boolean basicLand = drawn.hasType(CardType.LAND)
                     && drawn.getSupertypes().contains(CardSupertype.BASIC);
@@ -413,7 +425,7 @@ public class DrawService {
                         drawingPlayerId,
                         perm.getId()
                 ));
-                gameBroadcastService.logAndBroadcast(gameData, GameLog.text(perm.getCard().getName() + " triggers — draw a card."));
+                gameBroadcastService.logAndBroadcast(gameData, GameLog.cardThen(perm.getCard(), " triggers — draw a card."));
                 log.info("Game {} - {} triggers on {} revealing a basic land",
                         gameData.id, perm.getCard().getName(), drawerName);
             }
@@ -436,7 +448,13 @@ public class DrawService {
                 if (!isBoobyTrap) continue;
 
                 String drawerName = gameData.playerIdToName.get(drawingPlayerId);
-                gameBroadcastService.logAndBroadcast(gameData, GameLog.text(drawerName + " reveals " + drawn.getName() + " with " + perm.getCard().getName() + "."));
+                gameBroadcastService.logAndBroadcast(gameData, GameLog.builder()
+                        .text(drawerName + " reveals ")
+                        .card(drawn)
+                        .text(" with ")
+                        .card(perm.getCard())
+                        .text(".")
+                        .build());
 
                 if (drawn.getName().equals(perm.getChosenName())) {
                     gameData.stack.add(new StackEntry(
@@ -448,7 +466,12 @@ public class DrawService {
                             drawingPlayerId,
                             perm.getId()
                     ));
-                    gameBroadcastService.logAndBroadcast(gameData, GameLog.text(perm.getCard().getName() + " triggers on " + drawerName + " drawing " + drawn.getName() + "."));
+                    gameBroadcastService.logAndBroadcast(gameData, GameLog.builder()
+                            .card(perm.getCard())
+                            .text(" triggers on " + drawerName + " drawing ")
+                            .card(drawn)
+                            .text(".")
+                            .build());
                     log.info("Game {} - Booby Trap triggers on {} drawing {}",
                             gameData.id, drawerName, drawn.getName());
                 }
@@ -484,8 +507,7 @@ public class DrawService {
                             perm.getId()
                     ));
 
-                    String triggerLog = perm.getCard().getName() + "'s ability triggers.";
-                    gameBroadcastService.logAndBroadcast(gameData, GameLog.text(triggerLog));
+                    gameBroadcastService.logAndBroadcast(gameData, GameLog.abilityTriggers(perm.getCard()));
                     log.info("Game {} - {} controller-draw any-target trigger queued",
                             gameData.id, perm.getCard().getName());
                 } else {
@@ -499,8 +521,7 @@ public class DrawService {
                             perm.getId()
                     ));
 
-                    String triggerLog = perm.getCard().getName() + "'s ability triggers.";
-                    gameBroadcastService.logAndBroadcast(gameData, GameLog.text(triggerLog));
+                    gameBroadcastService.logAndBroadcast(gameData, GameLog.abilityTriggers(perm.getCard()));
                     log.info("Game {} - {} controller-draw trigger pushed onto stack",
                             gameData.id, perm.getCard().getName());
                 }
@@ -566,8 +587,7 @@ public class DrawService {
                         ));
                     }
 
-                    String logEntry = perm.getCard().getName() + "'s ability triggers.";
-                    gameBroadcastService.logAndBroadcast(gameData, GameLog.text(logEntry));
+                    gameBroadcastService.logAndBroadcast(gameData, GameLog.abilityTriggers(perm.getCard()));
                     log.info("Game {} - {} triggers on opponent draw", gameData.id, perm.getCard().getName());
                 }
             }

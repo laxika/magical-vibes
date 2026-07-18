@@ -64,7 +64,7 @@ public class MayCastHandlerService {
             // Verify the card is still on top of the library
             if (deck.isEmpty() || !deck.getFirst().getId().equals(cardToCast.getId())) {
                 String logEntry = cardToCast.getName() + " is no longer on top of the library.";
-                gameBroadcastService.logAndBroadcast(gameData, GameLog.text(logEntry));
+                gameBroadcastService.logAndBroadcast(gameData, GameLog.cardThen(cardToCast, " is no longer on top of the library."));
                 log.info("Game {} - {} no longer on top of library for cast-from-library", gameData.id, cardToCast.getName());
             } else {
                 deck.removeFirst();
@@ -81,7 +81,7 @@ public class MayCastHandlerService {
                         // No valid targets — spell can't be cast, put card back on top of library
                         deck.addFirst(cardToCast);
                         String logEntry = cardToCast.getName() + " has no valid targets.";
-                        gameBroadcastService.logAndBroadcast(gameData, GameLog.text(logEntry));
+                        gameBroadcastService.logAndBroadcast(gameData, GameLog.cardThen(cardToCast, " has no valid targets."));
                         log.info("Game {} - {} cast-from-library has no valid targets", gameData.id, cardToCast.getName());
                     } else {
                         gameData.interaction.setPermanentChoiceContext(
@@ -90,7 +90,7 @@ public class MayCastHandlerService {
                                 "Choose a target for " + cardToCast.getName() + ".");
 
                         String logEntry = playerName + " casts " + cardToCast.getName() + " without paying its mana cost — choosing target.";
-                        gameBroadcastService.logAndBroadcast(gameData, GameLog.text(logEntry));
+                        gameBroadcastService.logAndBroadcast(gameData, GameLog.textCardText(playerName + " casts " , cardToCast, " without paying its mana cost — choosing target."));
                         log.info("Game {} - {} casts {} from library, choosing target", gameData.id, playerName, cardToCast.getName());
                         return; // Wait for target choice
                     }
@@ -105,15 +105,14 @@ public class MayCastHandlerService {
                     gameData.priorityPassedBy.clear();
 
                     String logEntry = playerName + " casts " + cardToCast.getName() + " without paying its mana cost.";
-                    gameBroadcastService.logAndBroadcast(gameData, GameLog.text(logEntry));
+                    gameBroadcastService.logAndBroadcast(gameData, GameLog.textCardText(playerName + " casts " , cardToCast, " without paying its mana cost."));
                     log.info("Game {} - {} casts {} from library without paying mana", gameData.id, playerName, cardToCast.getName());
 
                     triggerCollectionService.checkSpellCastTriggers(gameData, cardToCast, player.getId(), false);
                 }
             }
         } else {
-            String logEntry = playerName + " declines to cast " + cardToCast.getName() + ".";
-            gameBroadcastService.logAndBroadcast(gameData, GameLog.text(logEntry));
+            gameBroadcastService.logAndBroadcast(gameData, GameLog.textCardText(playerName + " declines to cast " , cardToCast, "."));
             log.info("Game {} - {} declines to cast {} from library", gameData.id, playerName, cardToCast.getName());
         }
 
@@ -140,7 +139,7 @@ public class MayCastHandlerService {
                 exileTopCardFromLibrary(gameData, player.getId(), deck, cardToPlay, playerName);
             } else {
                 // Declined — the card stays on top of the library
-                gameBroadcastService.logAndBroadcast(gameData, GameLog.text(playerName + " declines to play " + cardToPlay.getName() + "."));
+                gameBroadcastService.logAndBroadcast(gameData, GameLog.textCardText(playerName + " declines to play ", cardToPlay, "."));
                 log.info("Game {} - {} declines to play {}, stays on top", gameData.id, playerName, cardToPlay.getName());
             }
             inputCompletionService.processMayAbilitiesThenAutoPass(gameData);
@@ -149,8 +148,7 @@ public class MayCastHandlerService {
 
         // Verify the card is still on top of the library
         if (deck.isEmpty() || !deck.getFirst().getId().equals(cardToPlay.getId())) {
-            String logEntry = cardToPlay.getName() + " is no longer on top of the library.";
-            gameBroadcastService.logAndBroadcast(gameData, GameLog.text(logEntry));
+            gameBroadcastService.logAndBroadcast(gameData, GameLog.cardThen(cardToPlay, " is no longer on top of the library."));
             log.info("Game {} - {} no longer on top of library for play-from-library", gameData.id, cardToPlay.getName());
             inputCompletionService.processMayAbilitiesThenAutoPass(gameData);
             return;
@@ -200,12 +198,12 @@ public class MayCastHandlerService {
                     if (exileIfNotPlayed) {
                         // No valid targets — exile the card instead
                         exileService.exileCard(gameData, player.getId(), cardToPlay);
-                        gameBroadcastService.logAndBroadcast(gameData, GameLog.text(cardToPlay.getName() + " has no valid targets and is exiled."));
+                        gameBroadcastService.logAndBroadcast(gameData, GameLog.cardThen(cardToPlay, " has no valid targets and is exiled."));
                         log.info("Game {} - {} play-from-library has no valid targets, exiled", gameData.id, cardToPlay.getName());
                     } else {
                         // No valid targets — return the card to the top of the library
                         deck.addFirst(cardToPlay);
-                        gameBroadcastService.logAndBroadcast(gameData, GameLog.text(cardToPlay.getName() + " has no valid targets and stays on top of the library."));
+                        gameBroadcastService.logAndBroadcast(gameData, GameLog.cardThen(cardToPlay, " has no valid targets and stays on top of the library."));
                         log.info("Game {} - {} play-from-library has no valid targets, stays on top", gameData.id, cardToPlay.getName());
                     }
                 } else {
@@ -215,7 +213,7 @@ public class MayCastHandlerService {
                             "Choose a target for " + cardToPlay.getName() + ".");
 
                     String logEntry = playerName + " casts " + cardToPlay.getName() + " without paying its mana cost — choosing target.";
-                    gameBroadcastService.logAndBroadcast(gameData, GameLog.text(logEntry));
+                    gameBroadcastService.logAndBroadcast(gameData, GameLog.textCardText(playerName + " casts " , cardToPlay, " without paying its mana cost — choosing target."));
                     log.info("Game {} - {} casts {} from library, choosing target", gameData.id, playerName, cardToPlay.getName());
                     return; // Wait for target choice
                 }
@@ -229,8 +227,7 @@ public class MayCastHandlerService {
                 gameData.recordSpellCast(player.getId(), cardToPlay);
                 gameData.priorityPassedBy.clear();
 
-                String logEntry = playerName + " casts " + cardToPlay.getName() + " without paying its mana cost.";
-                gameBroadcastService.logAndBroadcast(gameData, GameLog.text(logEntry));
+                gameBroadcastService.logAndBroadcast(gameData, GameLog.textCardText(playerName + " casts " , cardToPlay, " without paying its mana cost."));
                 log.info("Game {} - {} casts {} from library without paying mana", gameData.id, playerName, cardToPlay.getName());
 
                 triggerCollectionService.checkSpellCastTriggers(gameData, cardToPlay, player.getId(), false);
@@ -276,7 +273,7 @@ public class MayCastHandlerService {
         }
         exileService.exileCard(gameData, playerId, card);
         String logEntry = playerName + " exiles " + card.getName() + ".";
-        gameBroadcastService.logAndBroadcast(gameData, GameLog.text(logEntry));
+        gameBroadcastService.logAndBroadcast(gameData, GameLog.textCardText(playerName + " exiles " , card, "."));
         log.info("Game {} - {} exiles {} from library", gameData.id, playerName, card.getName());
     }
 
@@ -291,7 +288,7 @@ public class MayCastHandlerService {
         // Ashes of the Abhorrent etc.: players can't cast spells from graveyards
         if (accepted && !gameQueryService.canPlayersCastSpellsFromZone(gameData, Zone.GRAVEYARD)) {
             String logEntry = cardToCast.getName() + " can't be cast from the graveyard.";
-            gameBroadcastService.logAndBroadcast(gameData, GameLog.text(logEntry));
+            gameBroadcastService.logAndBroadcast(gameData, GameLog.cardThen(cardToCast, " can't be cast from the graveyard."));
             accepted = false;
         }
 
@@ -300,7 +297,7 @@ public class MayCastHandlerService {
             Card graveyardCard = gameQueryService.findCardInGraveyardById(gameData, cardToCast.getId());
             if (graveyardCard == null) {
                 String logEntry = cardToCast.getName() + " is no longer in the graveyard.";
-                gameBroadcastService.logAndBroadcast(gameData, GameLog.text(logEntry));
+                gameBroadcastService.logAndBroadcast(gameData, GameLog.cardThen(cardToCast, " is no longer in the graveyard."));
                 log.info("Game {} - {} no longer in graveyard for cast-from-graveyard", gameData.id, cardToCast.getName());
             } else {
                 UUID graveyardOwnerId = gameQueryService.findGraveyardOwnerById(gameData, cardToCast.getId());
@@ -311,7 +308,7 @@ public class MayCastHandlerService {
                 };
                 if (!validScope) {
                     String logEntry = cardToCast.getName() + " is no longer in a valid graveyard.";
-                    gameBroadcastService.logAndBroadcast(gameData, GameLog.text(logEntry));
+                    gameBroadcastService.logAndBroadcast(gameData, GameLog.cardThen(cardToCast, " is no longer in a valid graveyard."));
                     log.info("Game {} - {} not in valid graveyard (scope={})", gameData.id, cardToCast.getName(), scope);
                 } else {
                     permanentRemovalService.removeCardFromGraveyardById(gameData, cardToCast.getId());
@@ -328,7 +325,7 @@ public class MayCastHandlerService {
                             // No valid targets — card goes to owner's graveyard
                             graveyardService.addCardToGraveyard(gameData, graveyardOwnerId, cardToCast);
                             String logEntry = cardToCast.getName() + " has no valid targets.";
-                            gameBroadcastService.logAndBroadcast(gameData, GameLog.text(logEntry));
+                            gameBroadcastService.logAndBroadcast(gameData, GameLog.cardThen(cardToCast, " has no valid targets."));
                             log.info("Game {} - {} cast-from-graveyard has no valid targets", gameData.id, cardToCast.getName());
                         } else {
                             gameData.interaction.setPermanentChoiceContext(
@@ -337,7 +334,7 @@ public class MayCastHandlerService {
                                     "Choose a target for " + cardToCast.getName() + ".");
 
                             String logEntry = playerName + " casts " + cardToCast.getName() + castLabel + " — choosing target.";
-                            gameBroadcastService.logAndBroadcast(gameData, GameLog.text(logEntry));
+                            gameBroadcastService.logAndBroadcast(gameData, GameLog.cardThen(cardToCast, " is no longer in a valid graveyard."));
                             log.info("Game {} - {} casts {} from graveyard, choosing target", gameData.id, playerName, cardToCast.getName());
                             return; // Wait for target choice
                         }
@@ -352,7 +349,7 @@ public class MayCastHandlerService {
                         gameData.priorityPassedBy.clear();
 
                         String logEntry = playerName + " casts " + cardToCast.getName() + castLabel + ".";
-                        gameBroadcastService.logAndBroadcast(gameData, GameLog.text(logEntry));
+                        gameBroadcastService.logAndBroadcast(gameData, GameLog.builder().text(playerName + " casts ").card(cardToCast).text(castLabel + ".").build());
                         log.info("Game {} - {} casts {} from graveyard", gameData.id, playerName, cardToCast.getName());
 
                         triggerCollectionService.checkSpellCastTriggers(gameData, cardToCast, player.getId(), false);
@@ -361,7 +358,7 @@ public class MayCastHandlerService {
             }
         } else {
             String logEntry = playerName + " declines to cast " + cardToCast.getName() + ".";
-            gameBroadcastService.logAndBroadcast(gameData, GameLog.text(logEntry));
+            gameBroadcastService.logAndBroadcast(gameData, GameLog.textCardText(playerName + " declines to cast " , cardToCast, "."));
             log.info("Game {} - {} declines to cast {} from graveyard", gameData.id, playerName, cardToCast.getName());
         }
 
@@ -381,7 +378,7 @@ public class MayCastHandlerService {
 
         if (!accepted) {
             String logEntry = playerName + " declines to play " + cardToPlay.getName() + ".";
-            gameBroadcastService.logAndBroadcast(gameData, GameLog.text(logEntry));
+            gameBroadcastService.logAndBroadcast(gameData, GameLog.textCardText(playerName + " declines to play " , cardToPlay, "."));
             log.info("Game {} - {} declines to play {} from graveyard", gameData.id, playerName, cardToPlay.getName());
             inputCompletionService.processMayAbilitiesThenAutoPass(gameData);
             return;
@@ -391,7 +388,7 @@ public class MayCastHandlerService {
         if (!cardToPlay.hasType(CardType.LAND)
                 && !gameQueryService.canPlayersCastSpellsFromZone(gameData, Zone.GRAVEYARD)) {
             String logEntry = cardToPlay.getName() + " can't be cast from the graveyard.";
-            gameBroadcastService.logAndBroadcast(gameData, GameLog.text(logEntry));
+            gameBroadcastService.logAndBroadcast(gameData, GameLog.cardThen(cardToPlay, " can't be cast from the graveyard."));
             inputCompletionService.processMayAbilitiesThenAutoPass(gameData);
             return;
         }
@@ -402,8 +399,7 @@ public class MayCastHandlerService {
                 ? null : gameQueryService.findGraveyardOwnerById(gameData, cardToPlay.getId());
         if (graveyardCard == null || graveyardOwnerId == null || !graveyardOwnerId.equals(player.getId())
                 || !predicateEvaluationService.matchesCardPredicate(graveyardCard, effect.filter(), null)) {
-            String logEntry = cardToPlay.getName() + " is no longer a legal target in your graveyard.";
-            gameBroadcastService.logAndBroadcast(gameData, GameLog.text(logEntry));
+            gameBroadcastService.logAndBroadcast(gameData, GameLog.cardThen(cardToPlay, " is no longer a legal target in your graveyard."));
             log.info("Game {} - {} no longer a legal graveyard target for play-from-graveyard", gameData.id, cardToPlay.getName());
             inputCompletionService.processMayAbilitiesThenAutoPass(gameData);
             return;
@@ -449,8 +445,7 @@ public class MayCastHandlerService {
             if (validTargets.isEmpty()) {
                 // No valid targets — card goes back to owner's graveyard.
                 graveyardService.addCardToGraveyard(gameData, player.getId(), cardToPlay);
-                String logEntry = cardToPlay.getName() + " has no valid targets.";
-                gameBroadcastService.logAndBroadcast(gameData, GameLog.text(logEntry));
+                gameBroadcastService.logAndBroadcast(gameData, GameLog.cardThen(cardToPlay, " has no valid targets."));
                 log.info("Game {} - {} play-from-graveyard has no valid targets", gameData.id, cardToPlay.getName());
                 inputCompletionService.processMayAbilitiesThenAutoPass(gameData);
                 return;
@@ -494,7 +489,7 @@ public class MayCastHandlerService {
         String playerName = player.getUsername();
 
         if (!accepted) {
-            gameBroadcastService.logAndBroadcast(gameData, GameLog.text(playerName + " declines to play " + cardToPlay.getName() + "."));
+            gameBroadcastService.logAndBroadcast(gameData, GameLog.textCardText(playerName + " declines to play ", cardToPlay, "."));
             log.info("Game {} - {} declines to play imprinted {}", gameData.id, playerName, cardToPlay.getName());
             inputCompletionService.processMayAbilitiesThenAutoPass(gameData);
             return;
@@ -502,7 +497,7 @@ public class MayCastHandlerService {
 
         // Verify the card is still in exile (nothing else has moved it out).
         if (gameData.findExiledCard(cardToPlay.getId()) == null) {
-            gameBroadcastService.logAndBroadcast(gameData, GameLog.text(cardToPlay.getName() + " is no longer in exile."));
+            gameBroadcastService.logAndBroadcast(gameData, GameLog.cardThen(cardToPlay, " is no longer in exile."));
             log.info("Game {} - imprinted {} no longer in exile", gameData.id, cardToPlay.getName());
             inputCompletionService.processMayAbilitiesThenAutoPass(gameData);
             return;
@@ -516,7 +511,7 @@ public class MayCastHandlerService {
             }
         }
 
-        gameBroadcastService.logAndBroadcast(gameData, GameLog.text(playerName + " turns the exiled card face up: " + cardToPlay.getName() + "."));
+        gameBroadcastService.logAndBroadcast(gameData, GameLog.textCardText(playerName + " turns the exiled card face up: ", cardToPlay, "."));
 
         if (cardToPlay.hasType(CardType.LAND)) {
             gameData.removeFromExile(cardToPlay.getId());
@@ -545,7 +540,7 @@ public class MayCastHandlerService {
 
         if (!accepted) {
             String logEntry = playerName + " declines to cast " + cardToCast.getName() + ".";
-            gameBroadcastService.logAndBroadcast(gameData, GameLog.text(logEntry));
+            gameBroadcastService.logAndBroadcast(gameData, GameLog.textCardText(playerName + " declines to cast " , cardToCast, "."));
             log.info("Game {} - {} declines to cast {} from hand (Counterlash)", gameData.id, playerName, cardToCast.getName());
             inputCompletionService.processMayAbilitiesThenAutoPass(gameData);
             return;
@@ -562,8 +557,7 @@ public class MayCastHandlerService {
         }
 
         if (cardIndex == -1) {
-            String logEntry = cardToCast.getName() + " is no longer in hand.";
-            gameBroadcastService.logAndBroadcast(gameData, GameLog.text(logEntry));
+            gameBroadcastService.logAndBroadcast(gameData, GameLog.cardThen(cardToCast, " is no longer in hand."));
             log.info("Game {} - {} no longer in hand for cast-from-hand", gameData.id, cardToCast.getName());
             inputCompletionService.processMayAbilitiesThenAutoPass(gameData);
             return;
@@ -608,7 +602,7 @@ public class MayCastHandlerService {
                 // No valid targets — card goes to graveyard
                 graveyardService.addCardToGraveyard(gameData, playerId, card);
                 String logEntry = card.getName() + " has no valid targets.";
-                gameBroadcastService.logAndBroadcast(gameData, GameLog.text(logEntry));
+                gameBroadcastService.logAndBroadcast(gameData, GameLog.cardThen(card, " has no valid targets."));
                 log.info("Game {} - {} cast-from-hand has no valid targets", gameData.id, card.getName());
                 inputCompletionService.processMayAbilitiesThenAutoPass(gameData);
                 return;
@@ -620,7 +614,7 @@ public class MayCastHandlerService {
                     "Choose a target for " + card.getName() + ".");
 
             String logEntry = playerName + " casts " + card.getName() + " without paying its mana cost — choosing target.";
-            gameBroadcastService.logAndBroadcast(gameData, GameLog.text(logEntry));
+            gameBroadcastService.logAndBroadcast(gameData, GameLog.textCardText(playerName + " casts " , card, " without paying its mana cost — choosing target."));
             log.info("Game {} - {} casts {} from hand, choosing target", gameData.id, playerName, card.getName());
             return; // Wait for target choice
         }
@@ -634,8 +628,7 @@ public class MayCastHandlerService {
         gameData.recordSpellCast(playerId, card);
         gameData.priorityPassedBy.clear();
 
-        String logEntry = playerName + " casts " + card.getName() + " without paying its mana cost.";
-        gameBroadcastService.logAndBroadcast(gameData, GameLog.text(logEntry));
+        gameBroadcastService.logAndBroadcast(gameData, GameLog.textCardText(playerName + " casts " , card, " without paying its mana cost."));
         log.info("Game {} - {} casts {} from hand without paying mana", gameData.id, playerName, card.getName());
 
         triggerCollectionService.checkSpellCastTriggers(gameData, card, playerId, false);

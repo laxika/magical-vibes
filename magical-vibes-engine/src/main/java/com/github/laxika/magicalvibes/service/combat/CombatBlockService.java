@@ -368,8 +368,8 @@ public class CombatBlockService {
                 if (targetsChosenPermanent) {
                     gameData.queueInteraction(new PermanentChoiceContext.AttackTriggerTarget(
                             blocker.getCard(), defenderId, new ArrayList<>(blockEffects), blocker.getId()));
-                    String triggerLog = blocker.getCard().getName() + "'s block ability triggers.";
-                    gameBroadcastService.logAndBroadcast(gameData, GameLog.text(triggerLog));
+                    gameBroadcastService.logAndBroadcast(gameData, GameLog.cardThen(blocker.getCard(),
+                            "'s block ability triggers."));
                     log.info("Game {} - {} block trigger queued for target selection", gameData.id,
                             blocker.getCard().getName());
                     continue;
@@ -398,8 +398,8 @@ public class CombatBlockService {
                 // Block triggers reference "that creature" but don't target — they can't fizzle
                 blockTrigger.setNonTargeting(true);
                 gameData.stack.add(blockTrigger);
-                String triggerLog = blocker.getCard().getName() + "'s block ability triggers.";
-                gameBroadcastService.logAndBroadcast(gameData, GameLog.text(triggerLog));
+                gameBroadcastService.logAndBroadcast(gameData, GameLog.cardThen(blocker.getCard(),
+                        "'s block ability triggers."));
                 log.info("Game {} - {} block trigger pushed onto stack", gameData.id, blocker.getCard().getName());
             }
 
@@ -434,8 +434,8 @@ public class CombatBlockService {
             );
             multiBlockTrigger.setNonTargeting(true);
             gameData.stack.add(multiBlockTrigger);
-            String triggerLog = blocker.getCard().getName() + "'s block ability triggers.";
-            gameBroadcastService.logAndBroadcast(gameData, GameLog.text(triggerLog));
+            gameBroadcastService.logAndBroadcast(gameData, GameLog.cardThen(blocker.getCard(),
+                    "'s block ability triggers."));
             log.info("Game {} - {} multi-block trigger pushed onto stack", gameData.id, blocker.getCard().getName());
         }
 
@@ -469,8 +469,8 @@ public class CombatBlockService {
                             attacker.getId(),
                             attacker.getId()
                     ));
-                    String triggerLog = attacker.getCard().getName() + "'s becomes-blocked ability triggers.";
-                    gameBroadcastService.logAndBroadcast(gameData, GameLog.text(triggerLog));
+                    gameBroadcastService.logAndBroadcast(gameData, GameLog.cardThen(attacker.getCard(),
+                            "'s becomes-blocked ability triggers."));
                     log.info("Game {} - {} becomes-blocked trigger pushed onto stack", gameData.id, attacker.getCard().getName());
                 }
 
@@ -506,8 +506,8 @@ public class CombatBlockService {
                         // "That creature" wording references a blocker without targeting it.
                         trigger.setNonTargeting(true);
                         gameData.stack.add(trigger);
-                        String triggerLog = attacker.getCard().getName() + "'s becomes-blocked ability triggers.";
-                        gameBroadcastService.logAndBroadcast(gameData, GameLog.text(triggerLog));
+                        gameBroadcastService.logAndBroadcast(gameData, GameLog.cardThen(attacker.getCard(),
+                                "'s becomes-blocked ability triggers."));
                         log.info("Game {} - {} becomes-blocked trigger pushed onto stack", gameData.id, attacker.getCard().getName());
                     }
                 }
@@ -652,8 +652,8 @@ public class CombatBlockService {
                 // "Defending player" is determined by the combat, not chosen — the trigger can't fizzle.
                 trigger.setNonTargeting(true);
                 gameData.stack.add(trigger);
-                gameBroadcastService.logAndBroadcast(gameData, GameLog.text(attacker.getCard().getName()
-                        + "'s unblocked-attack ability triggers."));
+                gameBroadcastService.logAndBroadcast(gameData, GameLog.cardThen(attacker.getCard(),
+                        "'s unblocked-attack ability triggers."));
                 log.info("Game {} - {} unblocked-attack trigger pushed onto stack", gameData.id, attacker.getCard().getName());
                 pushed++;
             }
@@ -691,8 +691,7 @@ public class CombatBlockService {
             // Enchanted attacker and defending player are determined by the combat — the trigger can't fizzle.
             trigger.setNonTargeting(true);
             gameData.stack.add(trigger);
-            gameBroadcastService.logAndBroadcast(gameData, GameLog.text(perm.getCard().getName()
-                    + "'s ability triggers."));
+            gameBroadcastService.logAndBroadcast(gameData, GameLog.abilityTriggers(perm.getCard()));
             log.info("Game {} - {} enchanted-creature unblocked-attack trigger pushed onto stack (enchanted {})",
                     gameData.id, perm.getCard().getName(), attacker.getCard().getName());
             pushed[0]++;
@@ -745,8 +744,7 @@ public class CombatBlockService {
                 trigger.setNonTargeting(true);
                 gameData.stack.add(trigger);
                 pushed++;
-                String triggerLog = perm.getCard().getName() + "'s ability triggers.";
-                gameBroadcastService.logAndBroadcast(gameData, GameLog.text(triggerLog));
+                gameBroadcastService.logAndBroadcast(gameData, GameLog.abilityTriggers(perm.getCard()));
                 log.info("Game {} - {} ON_ALLY_CREATURE_ATTACKS_UNBLOCKED trigger for {} unblocked",
                         gameData.id, perm.getCard().getName(), attacker.getCard().getName());
             }
@@ -879,8 +877,7 @@ public class CombatBlockService {
             // "It" references the blocked creature without targeting it — can't fizzle.
             trigger.setNonTargeting(true);
             gameData.stack.add(trigger);
-            String triggerLog = perm.getCard().getName() + "'s ability triggers.";
-            gameBroadcastService.logAndBroadcast(gameData, GameLog.text(triggerLog));
+            gameBroadcastService.logAndBroadcast(gameData, GameLog.abilityTriggers(perm.getCard()));
             log.info("Game {} - {} ON_ALLY_CREATURE_BECOMES_BLOCKED trigger for {} blocked",
                     gameData.id, perm.getCard().getName(), blockedAttacker.getCard().getName());
         }

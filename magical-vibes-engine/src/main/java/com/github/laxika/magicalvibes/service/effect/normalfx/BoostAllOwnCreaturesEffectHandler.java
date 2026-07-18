@@ -61,9 +61,11 @@ public class BoostAllOwnCreaturesEffectHandler implements NormalEffectHandlerBea
             }
         }
 
-        String logEntry = String.format("%s gives %+d/%+d to %d creature(s) until end of turn.",
-                entry.getCard().getName(), powerBoost, toughnessBoost, count);
-        gameBroadcastService.logAndBroadcast(gameData, GameLog.text(logEntry));
+        gameBroadcastService.logAndBroadcast(gameData, GameLog.builder()
+                .card(entry.getCard())
+                .text(String.format(" gives %+d/%+d to %d creature(s) until end of turn.",
+                        powerBoost, toughnessBoost, count))
+                .build());
 
         log.info("Game {} - {} boosts {} creatures {}/{}", gameData.id, entry.getCard().getName(), count, powerBoost, toughnessBoost);
     }

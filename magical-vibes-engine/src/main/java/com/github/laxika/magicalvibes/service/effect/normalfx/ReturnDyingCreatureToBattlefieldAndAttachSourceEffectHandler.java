@@ -43,8 +43,7 @@ public class ReturnDyingCreatureToBattlefieldAndAttachSourceEffectHandler implem
         // Find the dying card in a graveyard
         Card dyingCard = gameQueryService.findCardInGraveyardById(gameData, e.dyingCardId());
         if (dyingCard == null) {
-            String logEntry = entry.getCard().getName() + "'s ability fizzles (card is no longer in graveyard).";
-            gameBroadcastService.logAndBroadcast(gameData, GameLog.text(logEntry));
+            gameBroadcastService.logAndBroadcast(gameData, GameLog.cardThen(entry.getCard(), "'s ability fizzles (card is no longer in graveyard)."));
             log.info("Game {} - Return+attach fizzles, card not in {}'s graveyard", gameData.id, playerName);
             return;
         }
@@ -57,7 +56,7 @@ public class ReturnDyingCreatureToBattlefieldAndAttachSourceEffectHandler implem
         battlefieldEntryService.putPermanentOntoBattlefield(gameData, controllerId, creature);
 
         String enterLog = dyingCard.getName() + " returns to the battlefield under " + playerName + "'s control.";
-        gameBroadcastService.logAndBroadcast(gameData, GameLog.text(enterLog));
+        gameBroadcastService.logAndBroadcast(gameData, GameLog.builder().card(dyingCard).text(" returns to the battlefield under " + playerName + "'s control.").build());
         log.info("Game {} - {} returns {} to battlefield via {}", gameData.id, playerName, dyingCard.getName(), entry.getCard().getName());
 
         // Attach the source equipment to the returned creature
@@ -68,7 +67,7 @@ public class ReturnDyingCreatureToBattlefieldAndAttachSourceEffectHandler implem
             // CR 613.7e: an Equipment receives a new timestamp each time it becomes attached.
             equipment.setTimestamp(gameData.nextTimestamp());
             String attachLog = entry.getCard().getName() + " is now attached to " + dyingCard.getName() + ".";
-            gameBroadcastService.logAndBroadcast(gameData, GameLog.text(attachLog));
+            gameBroadcastService.logAndBroadcast(gameData, GameLog.cardTextCard(entry.getCard(), " is now attached to ", dyingCard, "."));
             log.info("Game {} - {} attached to {}", gameData.id, entry.getCard().getName(), dyingCard.getName());
         }
 

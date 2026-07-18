@@ -48,14 +48,13 @@ public class TransformAllEffectHandler implements NormalEffectHandlerBean {
                 perm.setCard(backFace);
                 perm.setTransformed(true);
                 String logEntry = frontName + " transforms into " + backFace.getName() + ".";
-                gameBroadcastService.logAndBroadcast(gameData, GameLog.text(logEntry));
+                gameBroadcastService.logAndBroadcast(gameData, GameLog.textCardText(frontName + " transforms into " , backFace, "."));
                 log.info("Game {} - {} transforms into {}", gameData.id, frontName, backFace.getName());
             } else {
                 String backName = perm.getCard().getName();
                 perm.setCard(originalCard);
                 perm.setTransformed(false);
-                String logEntry = backName + " transforms into " + originalCard.getName() + ".";
-                gameBroadcastService.logAndBroadcast(gameData, GameLog.text(logEntry));
+                gameBroadcastService.logAndBroadcast(gameData, GameLog.textCardText(backName + " transforms into " , originalCard, "."));
                 log.info("Game {} - {} transforms into {}", gameData.id, backName, originalCard.getName());
             }
         });

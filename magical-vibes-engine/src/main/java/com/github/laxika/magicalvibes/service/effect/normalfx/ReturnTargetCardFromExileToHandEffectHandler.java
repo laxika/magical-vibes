@@ -60,7 +60,6 @@ public class ReturnTargetCardFromExileToHandEffectHandler implements NormalEffec
         UUID controllerId = entry.getControllerId();
         gameData.playerHands.get(controllerId).add(targetCard);
 
-        String logMsg = entry.getDescription() + " returns " + targetCard.getName() + " from exile to hand.";
-        gameBroadcastService.logAndBroadcast(gameData, GameLog.text(logMsg));
+        gameBroadcastService.logAndBroadcast(gameData, GameLog.textCardText(entry.getDescription() + " returns " , targetCard, " from exile to hand."));
     }
 }

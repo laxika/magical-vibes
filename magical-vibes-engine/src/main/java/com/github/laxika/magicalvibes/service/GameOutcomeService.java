@@ -182,9 +182,8 @@ public class GameOutcomeService {
             se.setNonTargeting(true);
             gameData.stack.add(se);
 
-            String logEntry = perm.getCard().getName() + "'s triggered ability goes on the stack ("
-                    + gameData.playerIdToName.get(losingPlayerId) + " loses the game).";
-            gameBroadcastService.logAndBroadcast(gameData, GameLog.text(logEntry));
+            gameBroadcastService.logAndBroadcast(gameData, GameLog.cardThen(perm.getCard(), "'s triggered ability goes on the stack ("
+                    + gameData.playerIdToName.get(losingPlayerId) + " loses the game)."));
         });
     }
 

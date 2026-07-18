@@ -51,14 +51,12 @@ public class BronzeTabletAnteExchangeHandler implements MayEffectHandlerBean {
         if (accepted && canPay) {
             gameData.playerLifeTotals.put(opponentId, gameData.getLife(opponentId) - effect.lifeCost());
             moveTabletFromExileToOwnerGraveyard(gameData, tabletCard);
-            gameBroadcastService.logAndBroadcast(gameData, GameLog.text(player.getUsername() + " pays "
-                    + effect.lifeCost() + " life. " + tabletCard.getName() + " is put into its owner's graveyard."));
+            gameBroadcastService.logAndBroadcast(gameData, GameLog.textCardText(player.getUsername() + " pays " + effect.lifeCost() + " life. ", tabletCard, " is put into its owner's graveyard."));
             log.info("Game {} - {} pays {} life to keep {}", gameData.id, player.getUsername(),
                     effect.lifeCost(), tabletCard.getName());
         } else {
             // Declined (or can no longer pay) — the ante swap resolves; both cards remain exiled.
-            gameBroadcastService.logAndBroadcast(gameData, GameLog.text(player.getUsername()
-                    + " declines to pay — ownership of the exiled cards is exchanged. (" + tabletCard.getName() + ")"));
+            gameBroadcastService.logAndBroadcast(gameData, GameLog.textCardText(player.getUsername() + " declines to pay — ownership of the exiled cards is exchanged. (", tabletCard, ")"));
             log.info("Game {} - {} declines the {} ante swap", gameData.id, player.getUsername(), tabletCard.getName());
         }
 

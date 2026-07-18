@@ -1,5 +1,9 @@
 package com.github.laxika.magicalvibes.service.state;
+
+import static org.mockito.ArgumentMatchers.argThat;
+import static org.mockito.ArgumentMatchers.eq;
 import com.github.laxika.magicalvibes.model.GameLog;
+import com.github.laxika.magicalvibes.model.GameLogEntry;
 
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardType;
@@ -104,7 +108,7 @@ class StateTriggerServiceTest {
             assertThat(entry.getSourcePermanentId()).isEqualTo(perm.getId());
             assertThat(entry.getStateTriggerEffectIndex()).isZero();
             assertThat(gd.stateTriggerOnStack).contains(new StateTriggerKey(perm.getId(), 0));
-            verify(gameBroadcastService).logAndBroadcast(eq(gd), eq(GameLog.text("Test trigger triggers.")));
+            verify(gameBroadcastService).logAndBroadcast(eq(gd), argThat((GameLogEntry e) -> e.plainText().equals("Test trigger triggers.")));
         }
 
         @Test

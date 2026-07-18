@@ -32,8 +32,7 @@ public class DestroyCreatureBlockingThisEffectHandler implements NormalEffectHan
                 }
 
                 if (!gameQueryService.isCreature(gameData, target)) {
-                    String fizzleLog = entry.getCard().getName() + "'s ability fizzles (invalid target).";
-                    gameBroadcastService.logAndBroadcast(gameData, GameLog.text(fizzleLog));
+                    gameBroadcastService.logAndBroadcast(gameData, GameLog.cardThen(entry.getCard(), "'s ability fizzles (invalid target)."));
                     return;
                 }
 

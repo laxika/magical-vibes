@@ -129,9 +129,9 @@ public class EffectResolutionService {
             if (effect instanceof ConditionalEffect conditional) {
                 if (!conditionEvaluationService.isMet(gameData, conditional.condition(),
                         conditionContext)) {
-                    String logEntry = entry.getCard().getName() + "'s " + conditional.conditionName()
-                            + " ability does nothing (" + conditional.conditionNotMetReason() + ").";
-                    gameBroadcastService.logAndBroadcast(gameData, GameLog.text(logEntry));
+                    gameBroadcastService.logAndBroadcast(gameData, GameLog.cardThen(entry.getCard(),
+                            "'s " + conditional.conditionName() + " ability does nothing ("
+                                    + conditional.conditionNotMetReason() + ")."));
                     log.info("Game {} - {} condition no longer met for {}", gameData.id,
                             conditional.conditionName(), entry.getCard().getName());
                     continue;

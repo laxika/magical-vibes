@@ -41,7 +41,7 @@ public class ShuffleTargetCardsFromGraveyardIntoLibraryEffectHandler implements 
             // No targets — just shuffle the target player's library if we have a target player
             if (targetPlayerId != null) {
                 LibraryShuffleHelper.shuffleLibrary(gameData, targetPlayerId);
-                gameBroadcastService.logAndBroadcast(gameData, GameLog.text(playerName + " shuffles their library (" + entry.getCard().getName() + ")."));
+                gameBroadcastService.logAndBroadcast(gameData, GameLog.textCardText(playerName + " shuffles their library (", entry.getCard(), ")."));
             }
             return;
         }
@@ -73,7 +73,7 @@ public class ShuffleTargetCardsFromGraveyardIntoLibraryEffectHandler implements 
             log.info("Game {} - {} shuffles {} card(s) from graveyard into library",
                     gameData.id, playerName, movedNames.size());
         } else {
-            gameBroadcastService.logAndBroadcast(gameData, GameLog.text(playerName + " shuffles their library (" + entry.getCard().getName() + ")."));
+            gameBroadcastService.logAndBroadcast(gameData, GameLog.textCardText(playerName + " shuffles their library (", entry.getCard(), ")."));
         }
     }
 }

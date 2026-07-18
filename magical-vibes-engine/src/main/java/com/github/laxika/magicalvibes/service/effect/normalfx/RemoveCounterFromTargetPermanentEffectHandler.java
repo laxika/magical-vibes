@@ -40,8 +40,7 @@ public class RemoveCounterFromTargetPermanentEffectHandler implements NormalEffe
             }
             if (target.getCounterCount(counterType) > 0) {
                 target.setCounterCount(counterType, target.getCounterCount(counterType) - 1);
-                String logEntry = "A " + counterType + " counter removed from " + target.getCard().getName() + ".";
-                gameBroadcastService.logAndBroadcast(gameData, GameLog.text(logEntry));
+                gameBroadcastService.logAndBroadcast(gameData, GameLog.textCardText("A " + counterType + " counter removed from " , target.getCard(), "."));
                 log.info("Game {} - {} counter removed from {}", gameData.id, counterType, target.getCard().getName());
                 return;
             }

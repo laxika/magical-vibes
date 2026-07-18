@@ -48,7 +48,7 @@ public class RemoveCounterFromEachControlledPermanentEffectHandler implements No
         String counterName = permanentCounterSupport.counterTypeName(e.counterType());
         String counterText = e.amount() == 1 ? "a " + counterName + " counter" : e.amount() + " " + counterName + " counters";
         String logEntry = entry.getCard().getName() + " removes " + counterText + " from " + count + " permanent(s) you control.";
-        gameBroadcastService.logAndBroadcast(gameData, GameLog.text(logEntry));
+        gameBroadcastService.logAndBroadcast(gameData, GameLog.builder().card(entry.getCard()).text(" removes " + counterText + " from " + count + " permanent(s) you control.").build());
         log.info("Game {} - {} removes {} {} counter(s) from {} controlled permanent(s)", gameData.id,
                 entry.getCard().getName(), e.amount(), counterName, count);
     }

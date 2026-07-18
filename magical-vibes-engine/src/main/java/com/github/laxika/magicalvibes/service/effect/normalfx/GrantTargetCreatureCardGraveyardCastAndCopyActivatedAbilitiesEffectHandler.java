@@ -53,7 +53,7 @@ public class GrantTargetCreatureCardGraveyardCastAndCopyActivatedAbilitiesEffect
 
         String logEntry = entry.getCard().getName() + " allows " + targetCard.getName()
                 + " to be cast from a graveyard this turn.";
-        gameBroadcastService.logAndBroadcast(gameData, GameLog.text(logEntry));
+        gameBroadcastService.logAndBroadcast(gameData, GameLog.cardTextCard(entry.getCard(), " allows ", targetCard, " to be cast from a graveyard this turn."));
         log.info("Game {} - {} grants graveyard cast permission for {}", gameData.id, entry.getCard().getName(), targetCard.getName());
     }
 }

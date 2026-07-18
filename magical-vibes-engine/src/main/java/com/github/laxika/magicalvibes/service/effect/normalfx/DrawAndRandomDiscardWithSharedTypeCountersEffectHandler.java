@@ -62,7 +62,7 @@ public class DrawAndRandomDiscardWithSharedTypeCountersEffectHandler implements 
             discardedCards.add(discarded);
             graveyardService.discardCard(gameData, controllerId, discarded);
             String logEntry = playerName + " discards " + discarded.getName() + " at random.";
-            gameBroadcastService.logAndBroadcast(gameData, GameLog.text(logEntry));
+            gameBroadcastService.logAndBroadcast(gameData, GameLog.textCardText(playerName + " discards " , discarded, " at random."));
             log.info("Game {} - {} discards {} at random ({})", gameData.id, playerName, discarded.getName(), sourceName);
             triggerCollectionService.checkDiscardTriggers(gameData, controllerId, discarded);
         }
@@ -79,10 +79,12 @@ public class DrawAndRandomDiscardWithSharedTypeCountersEffectHandler implements 
                 Permanent source = gameQueryService.findPermanentById(gameData, sourcePermanentId);
                 if (source != null && !gameQueryService.cantHaveCounters(gameData, source)) {
                     source.setCounterCount(CounterType.PLUS_ONE_PLUS_ONE, source.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE) + e.counterAmount());
-                    String logEntry = sourceName + " gets " + e.counterAmount()
-                            + " +1/+1 counter" + (e.counterAmount() != 1 ? "s" : "")
-                            + " (discarded cards share a card type).";
-                    gameBroadcastService.logAndBroadcast(gameData, GameLog.text(logEntry));
+                    gameBroadcastService.logAndBroadcast(gameData, GameLog.builder()
+                            .card(source.getCard())
+                            .text(" gets " + e.counterAmount()
+                                    + " +1/+1 counter" + (e.counterAmount() != 1 ? "s" : "")
+                                    + " (discarded cards share a card type).")
+                            .build());
                     log.info("Game {} - {} gets {} +1/+1 counters (shared card type)", gameData.id, sourceName, e.counterAmount());
                 }
             }

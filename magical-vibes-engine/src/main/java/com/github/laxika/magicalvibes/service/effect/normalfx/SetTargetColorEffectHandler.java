@@ -50,7 +50,7 @@ public class SetTargetColorEffectHandler implements NormalEffectHandlerBean {
                     target.getId(), null, null, EffectDuration.PERMANENT, 0));
 
             String logEntry = target.getCard().getName() + " becomes " + colorName + ".";
-            gameBroadcastService.logAndBroadcast(gameData, GameLog.text(logEntry));
+            gameBroadcastService.logAndBroadcast(gameData, GameLog.builder().card(target.getCard()).text(" becomes " + colorName + ".").build());
             log.info("Game {} - {} becomes {}", gameData.id, target.getCard().getName(), colorName);
             return;
         }
@@ -61,7 +61,7 @@ public class SetTargetColorEffectHandler implements NormalEffectHandlerBean {
         if (targetSpell != null) {
             gameData.spellColorOverrides.put(targetId, e.color());
             String logEntry = targetSpell.getCard().getName() + " becomes " + colorName + ".";
-            gameBroadcastService.logAndBroadcast(gameData, GameLog.text(logEntry));
+            gameBroadcastService.logAndBroadcast(gameData, GameLog.builder().card(targetSpell.getCard()).text(" becomes " + colorName + ".").build());
             log.info("Game {} - spell {} becomes {}", gameData.id, targetSpell.getCard().getName(), colorName);
         }
     }

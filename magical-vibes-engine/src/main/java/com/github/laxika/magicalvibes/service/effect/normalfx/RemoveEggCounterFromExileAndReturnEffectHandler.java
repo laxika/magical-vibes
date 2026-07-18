@@ -54,7 +54,7 @@ public class RemoveEggCounterFromExileAndReturnEffectHandler implements NormalEf
         if (remaining > 0) {
             gameData.exiledCardEggCounters.put(cardId, remaining);
             String logEntry = exiledCard.getName() + " has an egg counter removed (" + remaining + " remaining).";
-            gameBroadcastService.logAndBroadcast(gameData, GameLog.text(logEntry));
+            gameBroadcastService.logAndBroadcast(gameData, GameLog.builder().card(exiledCard).text(" has an egg counter removed (" + remaining + " remaining).").build());
             log.info("Game {} - {} egg counter removed, {} remaining", gameData.id, exiledCard.getName(), remaining);
         } else {
             // Last counter removed — return to the battlefield
@@ -69,8 +69,7 @@ public class RemoveEggCounterFromExileAndReturnEffectHandler implements NormalEf
             Permanent perm = new Permanent(exiledCard);
             battlefieldEntryService.putPermanentOntoBattlefield(gameData, returnControllerId, perm);
 
-            String logEntry = exiledCard.getName() + " has its last egg counter removed and returns to the battlefield.";
-            gameBroadcastService.logAndBroadcast(gameData, GameLog.text(logEntry));
+            gameBroadcastService.logAndBroadcast(gameData, GameLog.cardThen(exiledCard, " has its last egg counter removed and returns to the battlefield."));
             log.info("Game {} - {} returns to the battlefield from exile (all egg counters removed)",
                     gameData.id, exiledCard.getName());
 

@@ -1,4 +1,7 @@
 package com.github.laxika.magicalvibes.service.trigger;
+
+import static org.mockito.ArgumentMatchers.argThat;
+import static org.mockito.ArgumentMatchers.eq;
 import com.github.laxika.magicalvibes.model.GameLog;
 import com.github.laxika.magicalvibes.model.GameLogEntry;
 
@@ -380,7 +383,7 @@ class MiscTriggerCollectorServiceTest {
                     match(mindcrank, player1Id, effect),
                     EffectSlot.ON_OPPONENT_LOSES_LIFE, effect, ctx);
 
-            verify(gameBroadcastService).logAndBroadcast(eq(gd), eq(GameLog.text("Mindcrank triggers — Opponent mills 5 cards.")));
+            verify(gameBroadcastService).logAndBroadcast(eq(gd), argThat((GameLogEntry e) -> e.plainText().equals("Mindcrank triggers — Opponent mills 5 cards.")));
         }
     }
 

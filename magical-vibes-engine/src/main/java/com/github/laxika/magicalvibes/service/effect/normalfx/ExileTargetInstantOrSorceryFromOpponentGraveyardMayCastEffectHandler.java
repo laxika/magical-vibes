@@ -60,7 +60,6 @@ public class ExileTargetInstantOrSorceryFromOpponentGraveyardMayCastEffectHandle
         gameData.exileInsteadOfGraveyard.add(targetCard.getId());
 
         String playerName = gameData.playerIdToName.get(controllerId);
-        gameBroadcastService.logAndBroadcast(gameData, GameLog.text(playerName + " exiles " + targetCard.getName()
-                        + " from an opponent's graveyard (may cast it this turn)."));
+        gameBroadcastService.logAndBroadcast(gameData, GameLog.textCardText(playerName + " exiles ", targetCard, " from an opponent's graveyard (may cast it this turn)."));
     }
 }

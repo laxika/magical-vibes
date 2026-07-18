@@ -39,8 +39,7 @@ public class RegisterLoseLifeAtNextDrawStepUnlessPaysEffectHandler implements No
                 playerId, e.lifeLoss(), e.payAmount(), entry.getCard()));
 
         String playerName = gameData.playerIdToName.get(playerId);
-        gameBroadcastService.logAndBroadcast(gameData, GameLog.text(playerName + " must pay {" + e.payAmount()
-                + "} before their next draw step or lose " + e.lifeLoss() + " life. (" + entry.getCard().getName() + ")"));
+        gameBroadcastService.logAndBroadcast(gameData, GameLog.textCardText(playerName + " must pay {" + e.payAmount() + "} before their next draw step or lose " + e.lifeLoss() + " life. (", entry.getCard(), ")"));
         log.info("Game {} - {} scheduled a draw-step pay-or-lose-{}-life obligation on {}",
                 gameData.id, entry.getCard().getName(), e.lifeLoss(), playerName);
     }

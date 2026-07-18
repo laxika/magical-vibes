@@ -76,9 +76,11 @@ public class BoostAllCreaturesEffectHandler implements NormalEffectHandlerBean {
             gameData.forEachPermanent(apply);
         }
 
-        String logEntry = String.format("%s gives %+d/%+d to %d creature(s) until end of turn.",
-                entry.getCard().getName(), powerBoost, toughnessBoost, count[0]);
-        gameBroadcastService.logAndBroadcast(gameData, GameLog.text(logEntry));
+        gameBroadcastService.logAndBroadcast(gameData, GameLog.builder()
+                .card(entry.getCard())
+                .text(String.format(" gives %+d/%+d to %d creature(s) until end of turn.",
+                        powerBoost, toughnessBoost, count[0]))
+                .build());
 
         log.info("Game {} - {} gives {}/{} to {} creatures", gameData.id, entry.getCard().getName(), powerBoost, toughnessBoost, count[0]);
     }

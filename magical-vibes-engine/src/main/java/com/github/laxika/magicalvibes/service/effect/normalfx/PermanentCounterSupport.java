@@ -55,8 +55,8 @@ public class PermanentCounterSupport {
             default -> throw new IllegalStateException("Unsupported counter type: " + counterType);
         }
 
-        String removeLog = "All " + counterName + " counters removed from " + self.getCard().getName() + ".";
-        gameBroadcastService.logAndBroadcast(gameData, GameLog.text(removeLog));
+        gameBroadcastService.logAndBroadcast(gameData, GameLog.textCardText(
+                "All " + counterName + " counters removed from ", self.getCard(), "."));
         log.info("Game {} - All {} counters removed from {}", gameData.id, counterName, self.getCard().getName());
 
         // Transform
@@ -64,19 +64,19 @@ public class PermanentCounterSupport {
         if (!self.isTransformed()) {
             Card backFace = originalCard.getBackFaceCard();
             if (backFace != null) {
-                String frontName = self.getCard().getName();
+                Card frontCard = self.getCard();
+                String frontName = frontCard.getName();
                 self.setCard(backFace);
                 self.setTransformed(true);
-                String transformLog = frontName + " transforms into " + backFace.getName() + ".";
-                gameBroadcastService.logAndBroadcast(gameData, GameLog.text(transformLog));
+                gameBroadcastService.logAndBroadcast(gameData, GameLog.cardTextCard(frontCard, " transforms into ", backFace, "."));
                 log.info("Game {} - {} transforms into {}", gameData.id, frontName, backFace.getName());
             }
         } else {
-            String backName = self.getCard().getName();
+            Card backCard = self.getCard();
+            String backName = backCard.getName();
             self.setCard(originalCard);
             self.setTransformed(false);
-            String transformLog = backName + " transforms into " + originalCard.getName() + ".";
-            gameBroadcastService.logAndBroadcast(gameData, GameLog.text(transformLog));
+            gameBroadcastService.logAndBroadcast(gameData, GameLog.cardTextCard(backCard, " transforms into ", originalCard, "."));
             log.info("Game {} - {} transforms into {}", gameData.id, backName, originalCard.getName());
         }
     }
@@ -88,15 +88,14 @@ public class PermanentCounterSupport {
         target.setCounterCount(CounterType.PLUS_ONE_PLUS_ONE, target.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE) + counters);
 
         String counterText = counters == 1 ? "a +1/+1 counter" : counters + " +1/+1 counters";
-        String logEntry = target.getCard().getName() + " gets " + counterText + ".";
-        gameBroadcastService.logAndBroadcast(gameData, GameLog.text(logEntry));
+        gameBroadcastService.logAndBroadcast(gameData, GameLog.cardThen(target.getCard(), " gets " + counterText + "."));
         log.info("Game {} - {} gets {} +1/+1 counter(s)", gameData.id, target.getCard().getName(), counters);
 
         firePlusOnePlusOneCountersPutOnSelfTriggers(gameData, target);
     }
 
     public void placeCountersOnPermanents(GameData gameData, StackEntry entry, List<UUID> permanentIds, CounterType counterType) {
-        List<String> names = new ArrayList<>();
+        List<Card> affectedCards = new ArrayList<>();
         for (UUID permId : permanentIds) {
             Permanent perm = gameQueryService.findPermanentById(gameData, permId);
             if (perm != null && !gameQueryService.cantHaveCounters(gameData, perm)) {
@@ -105,17 +104,25 @@ public class PermanentCounterSupport {
                     case CHARGE -> perm.setCounterCount(CounterType.CHARGE, perm.getCounterCount(CounterType.CHARGE) + 1);
                     default -> throw new IllegalArgumentException("Unsupported counter type for placement: " + counterType);
                 }
-                names.add(perm.getCard().getName());
+                affectedCards.add(perm.getCard());
             }
         }
 
-        if (!names.isEmpty()) {
+        if (!affectedCards.isEmpty()) {
             String counterName = counterType.name().toLowerCase();
-            String logEntry = entry.getCard().getName() + " puts an " + counterName + " counter on "
-                    + String.join(", ", names) + ".";
-            gameBroadcastService.logAndBroadcast(gameData, GameLog.text(logEntry));
+            GameLog.Builder builder = GameLog.builder()
+                    .card(entry.getCard())
+                    .text(" puts an " + counterName + " counter on ");
+            for (int i = 0; i < affectedCards.size(); i++) {
+                if (i > 0) {
+                    builder.text(", ");
+                }
+                builder.card(affectedCards.get(i));
+            }
+            builder.text(".");
+            gameBroadcastService.logAndBroadcast(gameData, builder.build());
             log.info("Game {} - {} places {} counters on {} permanents", gameData.id,
-                    entry.getCard().getName(), counterName, names.size());
+                    entry.getCard().getName(), counterName, affectedCards.size());
         }
     }
 
@@ -137,8 +144,7 @@ public class PermanentCounterSupport {
         }
 
         if (eligibleIds.isEmpty()) {
-            String logEntry = entry.getCard().getName() + ": no eligible permanent to put counters on.";
-            gameBroadcastService.logAndBroadcast(gameData, GameLog.text(logEntry));
+            gameBroadcastService.logAndBroadcast(gameData, GameLog.cardThen(entry.getCard(), ": no eligible permanent to put counters on."));
             log.info("Game {} - {} no eligible permanent for counter placement", gameData.id, entry.getCard().getName());
             return;
         }
@@ -210,8 +216,7 @@ public class PermanentCounterSupport {
 
         Card card = target.getCard();
         String counterText = count == 1 ? "a " + counterName + " counter" : count + " " + counterName + " counters";
-        String logEntry = entry.getCard().getName() + " puts " + counterText + " on " + card.getName() + ".";
-        gameBroadcastService.logAndBroadcast(gameData, GameLog.text(logEntry));
+        gameBroadcastService.logAndBroadcast(gameData, GameLog.cardTextCard(entry.getCard(), " puts " + counterText + " on ", card, "."));
         log.info("Game {} - {} puts {} {} counter(s) on {}", gameData.id,
                 entry.getCard().getName(), count, counterName, card.getName());
 
@@ -274,8 +279,7 @@ public class PermanentCounterSupport {
                 saga.getId()
         ));
 
-        String logEntry = card.getName() + "'s chapter " + chapterName + " ability triggers.";
-        gameBroadcastService.logAndBroadcast(gameData, GameLog.text(logEntry));
+        gameBroadcastService.logAndBroadcast(gameData, GameLog.cardThen(card, "'s chapter " + chapterName + " ability triggers."));
         log.info("Game {} - {} chapter {} triggers", gameData.id, card.getName(), chapterName);
     }
 
@@ -308,7 +312,7 @@ public class PermanentCounterSupport {
                             null,
                             source.getId()
                     ));
-                    gameBroadcastService.logAndBroadcast(gameData, GameLog.text(card.getName() + "'s triggered ability triggers."));
+                    gameBroadcastService.logAndBroadcast(gameData, GameLog.cardThen(card, "'s triggered ability triggers."));
                 }
                 log.info("Game {} - {} -1/-1-counter watcher fires {} time(s)", gameData.id, card.getName(), count);
             }
@@ -344,8 +348,7 @@ public class PermanentCounterSupport {
                 target.getId()
         ));
 
-        String logEntry = card.getName() + "'s triggered ability triggers.";
-        gameBroadcastService.logAndBroadcast(gameData, GameLog.text(logEntry));
+        gameBroadcastService.logAndBroadcast(gameData, GameLog.cardThen(card, "'s triggered ability triggers."));
         log.info("Game {} - {} +1/+1 counter trigger fires", gameData.id, card.getName());
     }
 }

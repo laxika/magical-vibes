@@ -47,8 +47,7 @@ public class DestroyTargetAndEachPlayerSearchesBasicLandToBattlefieldEffectHandl
 
         // Attempt to destroy the permanent
         if (permanentRemovalService.tryDestroyPermanent(gameData, target, false)) {
-            String logEntry = target.getCard().getName() + " is destroyed.";
-            gameBroadcastService.logAndBroadcast(gameData, GameLog.text(logEntry));
+            gameBroadcastService.logAndBroadcast(gameData, GameLog.isDestroyed(target.getCard()));
             log.info("Game {} - {} is destroyed by {}", gameData.id, target.getCard().getName(), entry.getCard().getName());
         }
 

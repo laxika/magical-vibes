@@ -74,8 +74,7 @@ public class KnowledgePoolExileAndCastEffectHandler implements NormalEffectHandl
         exileService.exileCard(gameData, castingPlayerId, originalCard, kpPermanentId);
 
         String playerName = gameData.playerIdToName.get(castingPlayerId);
-        String exileLog = playerName + " exiles " + originalCard.getName() + " (Knowledge Pool).";
-        gameBroadcastService.logAndBroadcast(gameData, GameLog.text(exileLog));
+        gameBroadcastService.logAndBroadcast(gameData, GameLog.textCardText(playerName + " exiles " , originalCard, " (Knowledge Pool)."));
         log.info("Game {} - {} exiles {} to Knowledge Pool", gameData.id, playerName, originalCard.getName());
 
         // Step 4: Collect eligible cards — nonland, not the just-exiled card, from KP's pool

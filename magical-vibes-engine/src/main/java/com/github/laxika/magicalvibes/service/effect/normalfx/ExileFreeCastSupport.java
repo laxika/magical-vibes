@@ -73,8 +73,7 @@ public class ExileFreeCastSupport {
 
             if (!hasLegalTargets) {
                 // Can't be legally cast — the card stays exiled (no second chance to play it).
-                String logEntry = card.getName() + " has no valid targets and stays exiled.";
-                gameBroadcastService.logAndBroadcast(gameData, GameLog.text(logEntry));
+                gameBroadcastService.logAndBroadcast(gameData, GameLog.cardThen(card, " has no valid targets and stays exiled."));
                 log.info("Game {} - {} exile free-cast has no valid targets", gameData.id, card.getName());
                 inputCompletionService.processMayAbilitiesThenAutoPass(gameData);
                 return;

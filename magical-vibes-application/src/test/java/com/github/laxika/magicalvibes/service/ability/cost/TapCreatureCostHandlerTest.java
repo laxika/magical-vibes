@@ -1,5 +1,6 @@
 package com.github.laxika.magicalvibes.service.ability.cost;
 import com.github.laxika.magicalvibes.model.GameLog;
+import com.github.laxika.magicalvibes.model.GameLogEntry;
 
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardColor;
@@ -16,6 +17,8 @@ import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
+import static org.mockito.ArgumentMatchers.argThat;
+import static org.mockito.ArgumentMatchers.eq;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 
@@ -299,7 +302,7 @@ class TapCreatureCostHandlerTest {
 
         assertThat(blueCreature.isTapped()).isTrue();
         verify(triggerCollectionService).checkEnchantedPermanentTapTriggers(gameData, blueCreature);
-        verify(gameBroadcastService).logAndBroadcast(eq(gameData), eq(GameLog.text("TestPlayer taps Blue Wizard as a cost.")));
+        verify(gameBroadcastService).logAndBroadcast(eq(gameData), argThat((GameLogEntry e) -> e.plainText().equals("TestPlayer taps Blue Wizard as a cost.")));
     }
 
     // =========================================================================

@@ -23,6 +23,6 @@ public class DamageCantBePreventedThisTurnEffectHandler implements NormalEffectH
     @Override
     public void resolve(GameData gameData, StackEntry entry, CardEffect effect) {
         gameData.damageCantBePreventedThisTurn = true;
-        gameBroadcastService.logAndBroadcast(gameData, GameLog.text(entry.getCard().getName() + ": damage can't be prevented this turn."));
+        gameBroadcastService.logAndBroadcast(gameData, GameLog.cardThen(entry.getCard(), ": damage can't be prevented this turn."));
     }
 }

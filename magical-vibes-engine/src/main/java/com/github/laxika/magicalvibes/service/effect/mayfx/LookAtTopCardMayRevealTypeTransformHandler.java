@@ -46,8 +46,7 @@ public class LookAtTopCardMayRevealTypeTransformHandler implements MayEffectHand
                 List<Card> deck = gameData.playerDecks.get(ability.controllerId());
                 if (!deck.isEmpty()) {
                     Card topCard = deck.getFirst();
-                    String revealLog = player.getUsername() + " reveals " + topCard.getName() + " from the top of their library.";
-                    gameBroadcastService.logAndBroadcast(gameData, GameLog.text(revealLog));
+                    gameBroadcastService.logAndBroadcast(gameData, GameLog.textCardText(player.getUsername() + " reveals " , topCard, " from the top of their library."));
 
                     // Transform only if the revealed card matches the required types
                     boolean matches = revealTypeTransform.cardTypes().contains(topCard.getType())
@@ -61,8 +60,7 @@ public class LookAtTopCardMayRevealTypeTransformHandler implements MayEffectHand
                                 String frontName = self.getCard().getName();
                                 self.setCard(backFace);
                                 self.setTransformed(true);
-                                String transformLog = frontName + " transforms into " + backFace.getName() + ".";
-                                gameBroadcastService.logAndBroadcast(gameData, GameLog.text(transformLog));
+                                gameBroadcastService.logAndBroadcast(gameData, GameLog.textCardText(frontName + " transforms into " , backFace, "."));
                                 log.info("Game {} - {} transforms into {} (revealed instant/sorcery)",
                                         gameData.id, frontName, backFace.getName());
                             }

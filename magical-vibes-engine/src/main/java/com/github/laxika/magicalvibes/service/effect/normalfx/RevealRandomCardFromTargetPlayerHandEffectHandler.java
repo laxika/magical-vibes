@@ -50,8 +50,7 @@ public class RevealRandomCardFromTargetPlayerHandEffectHandler implements Normal
 
         int randomIndex = ThreadLocalRandom.current().nextInt(hand.size());
         Card revealed = hand.get(randomIndex);
-        String logEntry = targetName + " reveals " + revealed.getName() + " at random.";
-        gameBroadcastService.logAndBroadcast(gameData, GameLog.text(logEntry));
+        gameBroadcastService.logAndBroadcast(gameData, GameLog.textCardText(targetName + " reveals " , revealed, " at random."));
 
         List<CardView> cardViews = List.of(cardViewFactory.create(revealed));
         for (UUID playerId : gameData.orderedPlayerIds) {

@@ -52,8 +52,7 @@ public class TargetPlayerGainsControlOfSourceCreatureEffectHandler implements No
                 }
 
                 if (source == null) {
-                    String fizzleLog = entry.getCard().getName() + "'s ability has no effect (it is no longer on the battlefield).";
-                    gameBroadcastService.logAndBroadcast(gameData, GameLog.text(fizzleLog));
+                    gameBroadcastService.logAndBroadcast(gameData, GameLog.cardThen(entry.getCard(), "'s ability has no effect (it is no longer on the battlefield)."));
                     return;
                 }
 

@@ -94,7 +94,7 @@ public class ExchangeControlOfSharedTypeTargetsAndDestroyAurasEffectHandler impl
 
         String logEntry = entry.getCard().getName() + ": " + ownTarget.getCard().getName() + " and "
                 + opponentTarget.getCard().getName() + " exchange controllers.";
-        gameBroadcastService.logAndBroadcast(gameData, GameLog.text(logEntry));
+        gameBroadcastService.logAndBroadcast(gameData, GameLog.builder().card(entry.getCard()).text(": ").card(ownTarget.getCard()).text(" and ").card(opponentTarget.getCard()).text(" exchange controllers.").build());
         log.info("Game {} - {} exchanges control of {} and {}", gameData.id, entry.getCard().getName(),
                 ownTarget.getCard().getName(), opponentTarget.getCard().getName());
 
@@ -105,8 +105,7 @@ public class ExchangeControlOfSharedTypeTargetsAndDestroyAurasEffectHandler impl
     }
 
     private void logFizzle(GameData gameData, StackEntry entry) {
-        String logEntry = entry.getCard().getName() + "'s exchange has no effect (a target is no longer legal).";
-        gameBroadcastService.logAndBroadcast(gameData, GameLog.text(logEntry));
+        gameBroadcastService.logAndBroadcast(gameData, GameLog.cardThen(entry.getCard(), "'s exchange has no effect (a target is no longer legal)."));
         log.info("Game {} - {} exchange fizzles (illegal target)", gameData.id, entry.getCard().getName());
     }
 }

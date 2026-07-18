@@ -116,12 +116,12 @@ public class DealDividedDamageEffectHandler implements NormalEffectHandlerBean {
                 damageSupport.dealDamageToPlayer(gameData, entry, targetId, rawDamage);
             } else if (gameQueryService.isDamagePreventable(gameData)
                     && gameQueryService.hasProtectionFromSource(gameData, targetPermanent, entry.getCard())) {
-                gameBroadcastService.logAndBroadcast(gameData, GameLog.text(cardName + "'s damage to " + targetPermanent.getCard().getName() + " is prevented."));
+                gameBroadcastService.logAndBroadcast(gameData, GameLog.textCardText(cardName + "'s damage to ", targetPermanent.getCard(), " is prevented."));
             } else {
                 damageSupport.dealCreatureDamage(gameData, entry, targetPermanent, rawDamage);
                 if (e.damagedCreaturesCantBlock() && rawDamage > 0) {
                     targetPermanent.setCantBlockThisTurn(true);
-                    gameBroadcastService.logAndBroadcast(gameData, GameLog.text(targetPermanent.getCard().getName() + " can't block this turn."));
+                    gameBroadcastService.logAndBroadcast(gameData, GameLog.cardThen(targetPermanent.getCard(), " can't block this turn."));
                 }
             }
         }

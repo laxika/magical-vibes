@@ -36,7 +36,7 @@ public class PreventNextDamageToTargetAndAddToughnessCountersEffectHandler imple
 
         String logEntry = "The next " + prevent.amount() + " damage that would be dealt to "
                 + target.getCard().getName() + " is prevented.";
-        gameBroadcastService.logAndBroadcast(gameData, GameLog.text(logEntry));
+        gameBroadcastService.logAndBroadcast(gameData, GameLog.builder().text("The next " + prevent.amount() + " damage that would be dealt to ").card(target.getCard()).text(" is prevented.").build());
         log.info("Game {} - Sacred Boon prevention shield {} added to permanent {}", gameData.id, prevent.amount(), target.getCard().getName());
     }
 }

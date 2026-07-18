@@ -85,7 +85,7 @@ public class RevealUntilTypeMillAndBoostAttackerEffectHandler implements NormalE
             String boostLog = equippedCreature.getCard().getName() + " gets +"
                     + powerBoost + "/+" + toughnessBoost + " until end of turn ("
                     + revealedCount + " " + (revealedCount != 1 ? "cards" : "card") + " revealed).";
-            gameBroadcastService.logAndBroadcast(gameData, GameLog.text(boostLog));
+            gameBroadcastService.logAndBroadcast(gameData, GameLog.builder().card(equippedCreature.getCard()).text(" gets +" + powerBoost + "/+" + toughnessBoost + " until end of turn (" + revealedCount + " " + (revealedCount != 1 ? "cards" : "card") + " revealed).").build());
         }
 
         // Put all revealed cards into the graveyard

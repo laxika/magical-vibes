@@ -54,13 +54,12 @@ public class MassFightTargetCreatureEffectHandler implements NormalEffectHandler
         boolean targetPrevented = gameQueryService.isDamagePreventable(gameData)
                 && gameQueryService.isPreventedFromDealingDamage(gameData, target);
         if (targetPrevented) {
-            gameBroadcastService.logAndBroadcast(gameData, GameLog.text(target.getCard().getName() + "'s damage is prevented."));
+            gameBroadcastService.logAndBroadcast(gameData, GameLog.cardThen(target.getCard(), "'s damage is prevented."));
         } else {
             for (Permanent other : otherCreatures) {
                 if (gameQueryService.isDamagePreventable(gameData)
                         && gameQueryService.hasProtectionFromSource(gameData, other, target)) {
-                    gameBroadcastService.logAndBroadcast(gameData, GameLog.text(other.getCard().getName() + " has protection — damage from "
-                                    + target.getCard().getName() + " prevented."));
+                    gameBroadcastService.logAndBroadcast(gameData, GameLog.cardTextCard(other.getCard(), " has protection — damage from ", target.getCard(), " prevented."));
                     continue;
                 }
                 int damage = gameQueryService.applyDamageMultiplier(gameData, targetPower, entry);
@@ -74,13 +73,12 @@ public class MassFightTargetCreatureEffectHandler implements NormalEffectHandler
 
             if (gameQueryService.isDamagePreventable(gameData)
                     && gameQueryService.isPreventedFromDealingDamage(gameData, other)) {
-                gameBroadcastService.logAndBroadcast(gameData, GameLog.text(other.getCard().getName() + "'s damage is prevented."));
+                gameBroadcastService.logAndBroadcast(gameData, GameLog.cardThen(other.getCard(), "'s damage is prevented."));
                 continue;
             }
             if (gameQueryService.isDamagePreventable(gameData)
                     && gameQueryService.hasProtectionFromSource(gameData, target, other)) {
-                gameBroadcastService.logAndBroadcast(gameData, GameLog.text(target.getCard().getName() + " has protection — damage from "
-                                + other.getCard().getName() + " prevented."));
+                gameBroadcastService.logAndBroadcast(gameData, GameLog.cardTextCard(target.getCard(), " has protection — damage from ", other.getCard(), " prevented."));
                 continue;
             }
             int damage = gameQueryService.applyDamageMultiplier(gameData, otherPower, entry);

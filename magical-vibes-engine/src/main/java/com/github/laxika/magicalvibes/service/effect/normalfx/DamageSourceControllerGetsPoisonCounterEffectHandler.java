@@ -37,8 +37,7 @@ public class DamageSourceControllerGetsPoisonCounterEffectHandler implements Nor
         gameData.playerPoisonCounters.put(playerId, currentPoison + 1);
 
         String playerName = gameData.playerIdToName.get(playerId);
-        String logEntry = playerName + " gets a poison counter (" + entry.getCard().getName() + ").";
-        gameBroadcastService.logAndBroadcast(gameData, GameLog.text(logEntry));
+        gameBroadcastService.logAndBroadcast(gameData, GameLog.textCardText(playerName + " gets a poison counter (" , entry.getCard(), ")."));
 
         log.info("Game {} - {} gets a poison counter from {}", gameData.id, playerName, entry.getCard().getName());
     }

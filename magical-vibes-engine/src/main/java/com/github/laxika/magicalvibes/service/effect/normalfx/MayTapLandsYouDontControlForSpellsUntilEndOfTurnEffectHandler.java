@@ -31,7 +31,7 @@ public class MayTapLandsYouDontControlForSpellsUntilEndOfTurnEffectHandler imple
 
         String logEntry = entry.getCard().getName()
                 + ": you may tap lands you don't control for mana until end of turn (spend only to cast spells).";
-        gameBroadcastService.logAndBroadcast(gameData, GameLog.text(logEntry));
+        gameBroadcastService.logAndBroadcast(gameData, GameLog.cardThen(entry.getCard(), ": you may tap lands you don't control for mana until end of turn (spend only to cast spells)."));
         log.info("Game {} - {} may tap foreign lands for spells until end of turn", gameData.id, controllerId);
     }
 }

@@ -61,7 +61,7 @@ public class SacrificeSelfAndReturnCardsExiledWithSourceEffectHandler implements
             return;
         }
         triggerCollectionService.checkAllyPermanentSacrificedTriggers(gameData, entry.getControllerId(), self.getCard());
-        gameBroadcastService.logAndBroadcast(gameData, GameLog.text(self.getCard().getName() + " is sacrificed."));
+        gameBroadcastService.logAndBroadcast(gameData, GameLog.cardThen(self.getCard(), " is sacrificed."));
         permanentRemovalService.removeOrphanedAuras(gameData);
 
         // Return every card exiled with it to the battlefield under its owner's control.
@@ -75,7 +75,7 @@ public class SacrificeSelfAndReturnCardsExiledWithSourceEffectHandler implements
             battlefieldEntryService.putPermanentOntoBattlefield(gameData, ownerId, perm);
             String logEntry = card.getName() + " returns to the battlefield under "
                     + gameData.playerIdToName.get(ownerId) + "'s control.";
-            gameBroadcastService.logAndBroadcast(gameData, GameLog.text(logEntry));
+            gameBroadcastService.logAndBroadcast(gameData, GameLog.builder().card(card).text(" returns to the battlefield under " + gameData.playerIdToName.get(ownerId) + "'s control.").build());
             log.info("Game {} - {} returns from exile via {} (three or more cards exiled)",
                     gameData.id, card.getName(), entry.getCard().getName());
             battlefieldEntryService.handleCreatureEnteredBattlefield(gameData, ownerId, card, null, false);

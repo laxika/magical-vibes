@@ -108,10 +108,13 @@ public class CreateTokenCopyOfSourceEffectHandler implements NormalEffectHandler
 
                     battlefieldEntryService.putPermanentOntoBattlefield(gameData, entry.getControllerId(), tokenPermanent);
 
-                    String logMsg = e.removeLegendary()
-                            ? "A non-legendary token copy of " + sourceCard.getName() + " is created."
-                            : "A token copy of " + sourceCard.getName() + " is created.";
-                    gameBroadcastService.logAndBroadcast(gameData, GameLog.text(logMsg));
+                    if (e.removeLegendary()) {
+                        gameBroadcastService.logAndBroadcast(gameData, GameLog.textCardText(
+                                "A non-legendary token copy of ", sourceCard, " is created."));
+                    } else {
+                        gameBroadcastService.logAndBroadcast(gameData, GameLog.textCardText(
+                                "A token copy of ", sourceCard, " is created."));
+                    }
                     log.info("Game {} - Token copy of {} created via {}", gameData.id, sourceCard.getName(), sourceCard.getName());
 
                     // Pass null targetId: the token wasn't cast, so no target was chosen. Any targeted

@@ -50,6 +50,6 @@ public class PutCounterOnCombatOpponentAtEndOfCombatEffectHandler implements Nor
                 targetId, counterEffect.counterType(), counterEffect.amount()));
         String logEntry = target.getCard().getName() + " will get " + counterEffect.amount()
                 + " counter(s) at end of combat.";
-        gameBroadcastService.logAndBroadcast(gameData, GameLog.text(logEntry));
+        gameBroadcastService.logAndBroadcast(gameData, GameLog.builder().card(target.getCard()).text(" will get " + counterEffect.amount() + " counter(s) at end of combat.").build());
     }
 }

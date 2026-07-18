@@ -35,8 +35,7 @@ public class PutSourceCardFromGraveyardOnTopOfOwnersLibraryEffectHandler impleme
         UUID cardId = entry.getCard().getId();
         Card sourceCard = gameQueryService.findCardInGraveyardById(gameData, cardId);
         if (sourceCard == null) {
-            String fizzleLog = entry.getCard().getName() + "'s ability fizzles (card not in graveyard).";
-            gameBroadcastService.logAndBroadcast(gameData, GameLog.text(fizzleLog));
+            gameBroadcastService.logAndBroadcast(gameData, GameLog.cardThen(entry.getCard(), "'s ability fizzles (card not in graveyard)."));
             log.info("Game {} - {} tuck-on-death trigger fizzles (card {} not in graveyard)",
                     gameData.id, entry.getCard().getName(), cardId);
             return;
@@ -48,7 +47,7 @@ public class PutSourceCardFromGraveyardOnTopOfOwnersLibraryEffectHandler impleme
 
         String ownerName = gameData.playerIdToName.get(ownerId);
         String logEntry = sourceCard.getName() + " is put on top of " + ownerName + "'s library.";
-        gameBroadcastService.logAndBroadcast(gameData, GameLog.text(logEntry));
+        gameBroadcastService.logAndBroadcast(gameData, GameLog.builder().card(sourceCard).text(" is put on top of " + ownerName + "'s library.").build());
         log.info("Game {} - {} put on top of {}'s library from graveyard", gameData.id, sourceCard.getName(), ownerName);
     }
 }

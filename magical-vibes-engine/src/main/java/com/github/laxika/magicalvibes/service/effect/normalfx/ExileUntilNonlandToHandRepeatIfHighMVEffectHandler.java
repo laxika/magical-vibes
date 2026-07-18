@@ -58,17 +58,16 @@ public class ExileUntilNonlandToHandRepeatIfHighMVEffectHandler implements Norma
 
                 if (card.hasType(CardType.LAND)) {
                     gameData.addToExile(controllerId, card);
-                    gameBroadcastService.logAndBroadcast(gameData, GameLog.text(playerName + " exiles " + card.getName() + " (land) (" + sourceName + ")."));
+                    gameBroadcastService.logAndBroadcast(gameData, GameLog.builder().text(playerName + " exiles ").card(card).text(" (land) (" + sourceName + ").").build());
                 } else {
                     // Nonland card — put into hand
                     gameData.addCardToHand(controllerId, card);
                     cardsToHand++;
                     int manaValue = card.getManaValue();
-                    gameBroadcastService.logAndBroadcast(gameData, GameLog.text(playerName + " exiles " + card.getName() + " (mana value " + manaValue
-                                    + ") and puts it into their hand (" + sourceName + ")."));
+                    gameBroadcastService.logAndBroadcast(gameData, GameLog.builder().text(playerName + " exiles ").card(card).text(" (mana value " + manaValue + ") and puts it into their hand (" + sourceName + ").").build());
 
                     if (manaValue >= e.manaValueThreshold()) {
-                        gameBroadcastService.logAndBroadcast(gameData, GameLog.text(card.getName() + " has mana value " + manaValue + " or greater — repeating the process."));
+                        gameBroadcastService.logAndBroadcast(gameData, GameLog.builder().card(card).text(" has mana value " + manaValue + " or greater — repeating the process.").build());
                         repeat = true;
                     }
                     foundNonland = true;

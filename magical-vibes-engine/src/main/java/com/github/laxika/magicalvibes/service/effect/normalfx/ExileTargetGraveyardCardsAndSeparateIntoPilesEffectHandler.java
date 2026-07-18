@@ -69,7 +69,7 @@ public class ExileTargetGraveyardCardsAndSeparateIntoPilesEffectHandler implemen
 
         if (exiledCards.isEmpty()) {
             String playerName = gameData.playerIdToName.get(controllerId);
-            gameBroadcastService.logAndBroadcast(gameData, GameLog.text(playerName + "'s " + entry.getCard().getName() + " fizzles — no valid targets."));
+            gameBroadcastService.logAndBroadcast(gameData, GameLog.textCardText(playerName + "'s ", entry.getCard(), " fizzles — no valid targets."));
             return;
         }
 

@@ -51,7 +51,7 @@ public class CopySpellEffectHandler implements NormalEffectHandlerBean {
 
         // CR 706.2 — "This spell can't be copied": the copy is simply not created.
         if (targetEntry.getCard().isCantBeCopied()) {
-            gameBroadcastService.logAndBroadcast(gameData, GameLog.text(targetEntry.getCard().getName() + " can't be copied."));
+            gameBroadcastService.logAndBroadcast(gameData, GameLog.cardThen(targetEntry.getCard(), " can't be copied."));
             log.info("Game {} - {} can't be copied", gameData.id, targetEntry.getCard().getName());
             return;
         }
@@ -75,8 +75,7 @@ public class CopySpellEffectHandler implements NormalEffectHandlerBean {
 
         gameData.stack.add(copyEntry);
 
-        String logMsg = "A copy of " + targetEntry.getCard().getName() + " is created.";
-        gameBroadcastService.logAndBroadcast(gameData, GameLog.text(logMsg));
+        gameBroadcastService.logAndBroadcast(gameData, GameLog.textCardText("A copy of ", targetEntry.getCard(), " is created."));
         log.info("Game {} - {} copies {}", gameData.id, entry.getCard().getName(), targetEntry.getCard().getName());
 
         // Only the instant/sorcery-copy mode offers "you may choose new targets for the copy".

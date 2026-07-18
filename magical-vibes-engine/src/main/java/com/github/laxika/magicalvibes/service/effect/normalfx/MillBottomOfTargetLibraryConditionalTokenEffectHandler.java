@@ -48,8 +48,7 @@ public class MillBottomOfTargetLibraryConditionalTokenEffectHandler implements N
         Card bottomCard = deck.removeLast();
         graveyardService.addCardToGraveyard(gameData, targetPlayerId, bottomCard);
 
-        String logEntry = targetPlayerName + " puts " + bottomCard.getName() + " from the bottom of their library into their graveyard.";
-        gameBroadcastService.logAndBroadcast(gameData, GameLog.text(logEntry));
+        gameBroadcastService.logAndBroadcast(gameData, GameLog.textCardText(targetPlayerName + " puts " , bottomCard, " from the bottom of their library into their graveyard."));
         log.info("Game {} - {} ability: {} puts {} from bottom of library into graveyard",
                 gameData.id, sourceName, targetPlayerName, bottomCard.getName());
 

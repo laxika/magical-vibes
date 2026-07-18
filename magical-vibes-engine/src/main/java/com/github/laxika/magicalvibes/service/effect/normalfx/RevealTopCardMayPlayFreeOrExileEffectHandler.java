@@ -47,7 +47,7 @@ public class RevealTopCardMayPlayFreeOrExileEffectHandler implements NormalEffec
         Card topCard = deck.getFirst();
 
         String revealLog = playerName + " reveals " + topCard.getName() + " from the top of their library (" + sourceName + ").";
-        gameBroadcastService.logAndBroadcast(gameData, GameLog.text(revealLog));
+        gameBroadcastService.logAndBroadcast(gameData, GameLog.builder().text(playerName + " reveals ").card(topCard).text(" from the top of their library (" + sourceName + ").").build());
         log.info("Game {} - {} reveals top card: {} ({})", gameData.id, playerName, topCard.getName(), sourceName);
 
         // Lands can only be played if it's the controller's turn and they haven't played a land this turn
@@ -60,11 +60,11 @@ public class RevealTopCardMayPlayFreeOrExileEffectHandler implements NormalEffec
                     // Can't play the land — exile it
                     deck.removeFirst();
                     exileService.exileCard(gameData, controllerId, topCard);
-                    gameBroadcastService.logAndBroadcast(gameData, GameLog.text(topCard.getName() + " can't be played (" + reason + ") and is exiled."));
+                    gameBroadcastService.logAndBroadcast(gameData, GameLog.builder().card(topCard).text(" can't be played (" + reason + ") and is exiled.").build());
                     log.info("Game {} - {} exiled (can't play land: {})", gameData.id, topCard.getName(), reason);
                 } else {
                     // Can't play the land — it stays on top of the library
-                    gameBroadcastService.logAndBroadcast(gameData, GameLog.text(topCard.getName() + " can't be played (" + reason + ") and stays on top of the library."));
+                    gameBroadcastService.logAndBroadcast(gameData, GameLog.builder().card(topCard).text(" can't be played (" + reason + ") and stays on top of the library.").build());
                     log.info("Game {} - {} stays on top (can't play land: {})", gameData.id, topCard.getName(), reason);
                 }
                 return;

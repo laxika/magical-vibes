@@ -50,8 +50,7 @@ public class CantBlockThisTurnEffectHandler implements NormalEffectHandlerBean {
                     continue;
                 }
                 target.setCantBlockThisTurn(true);
-                String logMsg = target.getCard().getName() + " can't block this turn.";
-                gameBroadcastService.logAndBroadcast(gameData, GameLog.text(logMsg));
+                gameBroadcastService.logAndBroadcast(gameData, GameLog.cardThen(target.getCard(), " can't block this turn."));
                 log.info("Game {} - {} can't block this turn", gameData.id, target.getCard().getName());
             }
             return;
@@ -65,8 +64,7 @@ public class CantBlockThisTurnEffectHandler implements NormalEffectHandlerBean {
 
         target.setCantBlockThisTurn(true);
 
-        String logEntry = target.getCard().getName() + " can't block this turn.";
-        gameBroadcastService.logAndBroadcast(gameData, GameLog.text(logEntry));
+        gameBroadcastService.logAndBroadcast(gameData, GameLog.cardThen(target.getCard(), " can't block this turn."));
         log.info("Game {} - {} can't block this turn", gameData.id, target.getCard().getName());
     }
 

@@ -187,16 +187,14 @@ public class MultiPermanentChoiceHandlerService {
             if (source != null) {
                 if (permanentRemovalService.removePermanentToGraveyard(gameData, source)) {
                     triggerCollectionService.checkAllyPermanentSacrificedTriggers(gameData, playerId, source.getCard());
-                    String logEntry = source.getCard().getName() + " is sacrificed.";
-                    gameBroadcastService.logAndBroadcast(gameData, GameLog.text(logEntry));
+                    gameBroadcastService.logAndBroadcast(gameData, GameLog.isSacrificed(source.getCard()));
                     log.info("Game {} - {} sacrificed for combat damage trigger", gameData.id, source.getCard().getName());
 
                     UUID chosenPermId = permanentIds.getFirst();
                     Permanent target = gameQueryService.findPermanentById(gameData, chosenPermId);
                     if (target != null) {
                         if (permanentRemovalService.tryDestroyPermanent(gameData, target, context.cannotBeRegenerated())) {
-                            String destroyLog = target.getCard().getName() + " is destroyed.";
-                            gameBroadcastService.logAndBroadcast(gameData, GameLog.text(destroyLog));
+                            gameBroadcastService.logAndBroadcast(gameData, GameLog.isDestroyed(target.getCard()));
                             log.info("Game {} - {} destroyed by sacrifice trigger", gameData.id, target.getCard().getName());
                         }
                     }
@@ -232,7 +230,7 @@ public class MultiPermanentChoiceHandlerService {
                         EffectDuration.WHILE_SOURCE_ON_BATTLEFIELD, sourcePermId, source.getCard().getName());
                 gameData.creaturesPreventedFromDealingCombatDamage.add(sourcePermId);
                 gameBroadcastService.logAndBroadcast(gameData,
-                        GameLog.text(source.getCard().getName() + " assigns no combat damage this turn."));
+                        GameLog.cardThen(source.getCard(), " assigns no combat damage this turn."));
                 log.info("Game {} - {} gains control of {} and assigns no combat damage",
                         gameData.id, gameData.playerIdToName.get(playerId), land.getCard().getName());
             } else {
@@ -268,8 +266,7 @@ public class MultiPermanentChoiceHandlerService {
             Permanent target = gameQueryService.findPermanentById(gameData, chosenPermId);
             if (target != null) {
                 permanentRemovalService.removePermanentToExile(gameData, target);
-                String logEntry = target.getCard().getName() + " is exiled.";
-                gameBroadcastService.logAndBroadcast(gameData, GameLog.text(logEntry));
+                gameBroadcastService.logAndBroadcast(gameData, GameLog.isExiled(target.getCard()));
                 log.info("Game {} - {} exiled by combat damage trigger", gameData.id, target.getCard().getName());
 
                 permanentRemovalService.removeOrphanedAuras(gameData);
@@ -303,8 +300,7 @@ public class MultiPermanentChoiceHandlerService {
                     if (controllerId != null) {
                         triggerCollectionService.checkAllyPermanentSacrificedTriggers(gameData, controllerId, target.getCard());
                     }
-                    String logEntry = ownerName + " sacrifices " + target.getCard().getName() + ".";
-                    gameBroadcastService.logAndBroadcast(gameData, GameLog.text(logEntry));
+                    gameBroadcastService.logAndBroadcast(gameData, GameLog.playerSacrifices(ownerName, target.getCard()));
                     log.info("Game {} - {} sacrificed by {}", gameData.id, target.getCard().getName(), context.sourceName());
                 }
                 permanentRemovalService.removeOrphanedAuras(gameData);
@@ -328,8 +324,7 @@ public class MultiPermanentChoiceHandlerService {
                 }
                 permanentRemovalService.removePermanentToGraveyard(gameData, creature);
                 String ownerName = ownerId != null ? gameData.playerIdToName.get(ownerId) : "Unknown";
-                String logEntry = ownerName + " sacrifices " + creature.getCard().getName() + ".";
-                gameBroadcastService.logAndBroadcast(gameData, GameLog.text(logEntry));
+                gameBroadcastService.logAndBroadcast(gameData, GameLog.playerSacrifices(ownerName, creature.getCard()));
                 log.info("Game {} - {} sacrifices {}", gameData.id, ownerName, creature.getCard().getName());
             }
         }
@@ -342,20 +337,21 @@ public class MultiPermanentChoiceHandlerService {
             gameBroadcastService.logAndBroadcast(gameData, GameLog.text(
                     gameData.playerIdToName.get(playerId) + " chooses not to exile any attacking creatures."));
         } else {
-            List<String> exiledNames = new ArrayList<>();
+            List<Card> exiledCards = new ArrayList<>();
             for (UUID permId : permanentIds) {
                 Permanent creature = gameQueryService.findPermanentById(gameData, permId);
                 if (creature != null) {
                     permanentRemovalService.removePermanentToExile(gameData, creature);
-                    exiledNames.add(creature.getCard().getName());
+                    exiledCards.add(creature.getCard());
                 }
             }
-            if (!exiledNames.isEmpty()) {
+            if (!exiledCards.isEmpty()) {
                 permanentRemovalService.removeOrphanedAuras(gameData);
-                gameBroadcastService.logAndBroadcast(gameData, GameLog.text(
-                        String.join(", ", exiledNames) + (exiledNames.size() == 1 ? " is" : " are") + " exiled."));
+                gameBroadcastService.logAndBroadcast(gameData,
+                        appendCards(GameLog.builder(), exiledCards)
+                                .text((exiledCards.size() == 1 ? " is" : " are") + " exiled.").build());
                 log.info("Game {} - {} exiles {} attacking creatures", gameData.id,
-                        gameData.playerIdToName.get(playerId), exiledNames.size());
+                        gameData.playerIdToName.get(playerId), exiledCards.size());
             }
         }
 
@@ -375,20 +371,21 @@ public class MultiPermanentChoiceHandlerService {
             gameBroadcastService.logAndBroadcast(gameData, GameLog.text(
                     gameData.playerIdToName.get(playerId) + " chooses not to return any permanents."));
         } else {
-            List<String> bouncedNames = new ArrayList<>();
+            List<Card> bouncedCards = new ArrayList<>();
             for (UUID permId : permanentIds) {
                 Permanent perm = gameQueryService.findPermanentById(gameData, permId);
                 if (perm != null && permanentRemovalService.removePermanentToHand(gameData, perm)) {
-                    bouncedNames.add(perm.getCard().getName());
+                    bouncedCards.add(perm.getCard());
                 }
             }
-            if (!bouncedNames.isEmpty()) {
+            if (!bouncedCards.isEmpty()) {
                 permanentRemovalService.removeOrphanedAuras(gameData);
-                gameBroadcastService.logAndBroadcast(gameData, GameLog.text(
-                        String.join(", ", bouncedNames) + (bouncedNames.size() == 1 ? " is" : " are")
-                                + " returned to their owners' hands."));
+                gameBroadcastService.logAndBroadcast(gameData,
+                        appendCards(GameLog.builder(), bouncedCards)
+                                .text((bouncedCards.size() == 1 ? " is" : " are")
+                                        + " returned to their owners' hands.").build());
                 log.info("Game {} - {} returns {} permanents to hand", gameData.id,
-                        gameData.playerIdToName.get(playerId), bouncedNames.size());
+                        gameData.playerIdToName.get(playerId), bouncedCards.size());
             }
         }
 
@@ -430,8 +427,7 @@ public class MultiPermanentChoiceHandlerService {
                     UUID controllerId = gameQueryService.findPermanentController(gameData, perm.getId());
                     String ownerName = controllerId != null ? gameData.playerIdToName.get(controllerId) : "Unknown";
                     permanentRemovalService.removePermanentToGraveyard(gameData, perm);
-                    String logEntry = ownerName + " sacrifices " + perm.getCard().getName() + ".";
-                    gameBroadcastService.logAndBroadcast(gameData, GameLog.text(logEntry));
+                    gameBroadcastService.logAndBroadcast(gameData, GameLog.playerSacrifices(ownerName, perm.getCard()));
                     log.info("Game {} - {} sacrifices {}", gameData.id, ownerName, perm.getCard().getName());
                 }
             }
@@ -442,8 +438,7 @@ public class MultiPermanentChoiceHandlerService {
                 if (perm != null) {
                     String ownerName = sacrificingPlayerId != null ? gameData.playerIdToName.get(sacrificingPlayerId) : "Unknown";
                     permanentRemovalService.removePermanentToGraveyard(gameData, perm);
-                    String logEntry = ownerName + " sacrifices " + perm.getCard().getName() + ".";
-                    gameBroadcastService.logAndBroadcast(gameData, GameLog.text(logEntry));
+                    gameBroadcastService.logAndBroadcast(gameData, GameLog.playerSacrifices(ownerName, perm.getCard()));
                     log.info("Game {} - {} sacrifices {}", gameData.id, ownerName, perm.getCard().getName());
                 }
             }
@@ -754,24 +749,25 @@ public class MultiPermanentChoiceHandlerService {
             String logEntry = gameData.playerIdToName.get(playerId) + " chooses not to put awakening counters on any lands.";
             gameBroadcastService.logAndBroadcast(gameData, GameLog.text(logEntry));
         } else {
-            List<String> awakenedNames = new ArrayList<>();
+            List<Card> awakenedCards = new ArrayList<>();
             for (UUID permId : permanentIds) {
                 Permanent perm = gameQueryService.findPermanentById(gameData, permId);
                 if (perm != null) {
                     perm.setCounterCount(CounterType.AWAKENING, perm.getCounterCount(CounterType.AWAKENING) + 1);
-                    awakenedNames.add(perm.getCard().getName());
+                    awakenedCards.add(perm.getCard());
                 }
             }
 
-            if (!awakenedNames.isEmpty()) {
-                String logEntry = String.join(", ", awakenedNames)
-                        + (awakenedNames.size() == 1 ? " receives" : " receive")
-                        + " an awakening counter and "
-                        + (awakenedNames.size() == 1 ? "becomes an" : "become")
-                        + " 8/8 green Elemental creature"
-                        + (awakenedNames.size() == 1 ? "." : "s.");
-                gameBroadcastService.logAndBroadcast(gameData, GameLog.text(logEntry));
-                log.info("Game {} - Awakening counters placed on {} lands", gameData.id, awakenedNames.size());
+            if (!awakenedCards.isEmpty()) {
+                gameBroadcastService.logAndBroadcast(gameData,
+                        appendCards(GameLog.builder(), awakenedCards)
+                                .text((awakenedCards.size() == 1 ? " receives" : " receive")
+                                        + " an awakening counter and "
+                                        + (awakenedCards.size() == 1 ? "becomes an" : "become")
+                                        + " 8/8 green Elemental creature"
+                                        + (awakenedCards.size() == 1 ? "." : "s."))
+                                .build());
+                log.info("Game {} - Awakening counters placed on {} lands", gameData.id, awakenedCards.size());
             }
         }
 
@@ -833,7 +829,7 @@ public class MultiPermanentChoiceHandlerService {
             String logEntry = gameData.playerIdToName.get(playerId) + " chooses not to proliferate any permanents.";
             gameBroadcastService.logAndBroadcast(gameData, GameLog.text(logEntry));
         } else {
-            List<String> proliferatedNames = new ArrayList<>();
+            List<Card> proliferatedCards = new ArrayList<>();
             for (UUID permId : permanentIds) {
                 Permanent perm = gameQueryService.findPermanentById(gameData, permId);
                 if (perm != null) {
@@ -859,14 +855,15 @@ public class MultiPermanentChoiceHandlerService {
                             perm.setCounterCount(CounterType.AIM, perm.getCounterCount(CounterType.AIM) + 1);
                         }
                     }
-                    proliferatedNames.add(perm.getCard().getName());
+                    proliferatedCards.add(perm.getCard());
                 }
             }
 
-            if (!proliferatedNames.isEmpty()) {
-                String logEntry = "Proliferate adds counters to " + String.join(", ", proliferatedNames) + ".";
-                gameBroadcastService.logAndBroadcast(gameData, GameLog.text(logEntry));
-                log.info("Game {} - Proliferated {} permanents", gameData.id, proliferatedNames.size());
+            if (!proliferatedCards.isEmpty()) {
+                gameBroadcastService.logAndBroadcast(gameData,
+                        appendCards(GameLog.builder().text("Proliferate adds counters to "), proliferatedCards)
+                                .text(".").build());
+                log.info("Game {} - Proliferated {} permanents", gameData.id, proliferatedCards.size());
             }
         }
 
@@ -926,32 +923,33 @@ public class MultiPermanentChoiceHandlerService {
             gameBroadcastService.logAndBroadcast(gameData, GameLog.text(logEntry));
         } else {
             // Tap the chosen permanents
-            List<String> tappedNames = new ArrayList<>();
+            List<Card> tappedCards = new ArrayList<>();
             for (UUID permId : permanentIds) {
                 Permanent perm = gameQueryService.findPermanentById(gameData, permId);
                 if (perm != null) {
                     perm.tap();
                     triggerCollectionService.checkEnchantedPermanentTapTriggers(gameData, perm);
-                    tappedNames.add(perm.getCard().getName());
+                    tappedCards.add(perm.getCard());
                 }
             }
 
-            if (!tappedNames.isEmpty()) {
-                String tapLog = gameData.playerIdToName.get(playerId) + " taps " + tappedNames.size()
-                        + " Myr: " + String.join(", ", tappedNames) + ".";
-                gameBroadcastService.logAndBroadcast(gameData, GameLog.text(tapLog));
+            if (!tappedCards.isEmpty()) {
+                gameBroadcastService.logAndBroadcast(gameData,
+                        appendCards(GameLog.builder().text(gameData.playerIdToName.get(playerId) + " taps "
+                                + tappedCards.size() + " Myr: "), tappedCards).text(".").build());
                 log.info("Game {} - {} taps {} Myr for attack trigger", gameData.id,
-                        gameData.playerIdToName.get(playerId), tappedNames.size());
+                        gameData.playerIdToName.get(playerId), tappedCards.size());
             }
 
             // Boost source permanent +X/+0 (only if still on battlefield)
             Permanent sourcePermanent = gameQueryService.findPermanentById(gameData, sourcePermanentId);
+            Card sourceCard = sourcePermanent != null ? sourcePermanent.getCard() : null;
             String sourceName;
             if (sourcePermanent != null) {
                 sourcePermanent.setPowerModifier(sourcePermanent.getPowerModifier() + count);
                 sourceName = sourcePermanent.getCard().getName();
-                String boostLog = sourceName + " gets +" + count + "/+0 until end of turn.";
-                gameBroadcastService.logAndBroadcast(gameData, GameLog.text(boostLog));
+                gameBroadcastService.logAndBroadcast(gameData,
+                        GameLog.cardThen(sourceCard, " gets +" + count + "/+0 until end of turn."));
                 log.info("Game {} - {} gets +{}/+0", gameData.id, sourceName, count);
             } else {
                 sourceName = "Myr Battlesphere";
@@ -967,7 +965,8 @@ public class MultiPermanentChoiceHandlerService {
             boolean sourcePrevented = preventedSources != null && preventedSources.contains(sourcePermanentId);
 
             if (sourcePrevented) {
-                gameBroadcastService.logAndBroadcast(gameData, GameLog.text(sourceName + "'s damage to " + defenderName + " is prevented."));
+                gameBroadcastService.logAndBroadcast(gameData, appendCardOrText(GameLog.builder(), sourceCard, sourceName)
+                        .text("'s damage to " + defenderName + " is prevented.").build());
             } else {
                 // Apply damage multiplier (GlobalDamageMultiplyingEffect)
                 int damage = count;
@@ -1003,15 +1002,17 @@ public class MultiPermanentChoiceHandlerService {
                     if (treatAsInfect && gameQueryService.canPlayerGetPoisonCounters(gameData, defendingPlayerId)) {
                         int currentPoison = gameData.playerPoisonCounters.getOrDefault(defendingPlayerId, 0);
                         gameData.playerPoisonCounters.put(defendingPlayerId, currentPoison + damage);
-                        gameBroadcastService.logAndBroadcast(gameData, GameLog.text(defenderName + " gets "
-                                + damage + " poison counter" + (damage > 1 ? "s" : "") + " from " + sourceName + "."));
+                        GameLog.Builder poisonLog = GameLog.builder().text(defenderName + " gets "
+                                + damage + " poison counter" + (damage > 1 ? "s" : "") + " from ");
+                        gameBroadcastService.logAndBroadcast(gameData,
+                                appendCardOrText(poisonLog, sourceCard, sourceName).text(".").build());
                     } else if (!gameQueryService.canPlayerLifeChange(gameData, defendingPlayerId)) {
                         gameBroadcastService.logAndBroadcast(gameData, GameLog.text(defenderName + "'s life total can't change."));
                     } else {
                         int currentLife = gameData.getLife(defendingPlayerId);
                         gameData.playerLifeTotals.put(defendingPlayerId, currentLife - damage);
-                        gameBroadcastService.logAndBroadcast(gameData, GameLog.text(sourceName + " deals "
-                                + damage + " damage to " + defenderName + "."));
+                        gameBroadcastService.logAndBroadcast(gameData, appendCardOrText(GameLog.builder(), sourceCard, sourceName)
+                                .text(" deals " + damage + " damage to " + defenderName + ".").build());
                     }
                     gameData.recordDamageToPlayer(defendingPlayerId, damage);
                 }
@@ -1023,23 +1024,24 @@ public class MultiPermanentChoiceHandlerService {
 
     private void handleTapCreaturesGainLife(GameData gameData, UUID playerId, List<UUID> permanentIds,
                                             MultiPermanentChoiceContext.TapCreaturesGainLife context) {
-        List<String> tappedNames = new ArrayList<>();
+        List<Card> tappedCards = new ArrayList<>();
         for (UUID permId : permanentIds) {
             Permanent perm = gameQueryService.findPermanentById(gameData, permId);
             if (perm != null && !perm.isTapped()) {
                 perm.tap();
                 triggerCollectionService.checkEnchantedPermanentTapTriggers(gameData, perm);
-                tappedNames.add(perm.getCard().getName());
+                tappedCards.add(perm.getCard());
             }
         }
 
-        int tappedCount = tappedNames.size();
+        int tappedCount = tappedCards.size();
         if (tappedCount == 0) {
             gameBroadcastService.logAndBroadcast(gameData, GameLog.text(gameData.playerIdToName.get(playerId) + " taps no creatures."));
         } else {
-            gameBroadcastService.logAndBroadcast(gameData, GameLog.text(gameData.playerIdToName.get(playerId)
-                    + " taps " + tappedCount + " creature" + (tappedCount == 1 ? "" : "s")
-                    + ": " + String.join(", ", tappedNames) + "."));
+            gameBroadcastService.logAndBroadcast(gameData,
+                    appendCards(GameLog.builder().text(gameData.playerIdToName.get(playerId)
+                            + " taps " + tappedCount + " creature" + (tappedCount == 1 ? "" : "s") + ": "), tappedCards)
+                            .text(".").build());
             lifeSupport.applyGainLife(gameData, playerId, context.lifePerCreature() * tappedCount);
         }
 
@@ -1074,9 +1076,9 @@ public class MultiPermanentChoiceHandlerService {
                 int added = context.multiplier() * devoured;
                 entering.setCounterCount(CounterType.PLUS_ONE_PLUS_ONE,
                         entering.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE) + added);
-                gameBroadcastService.logAndBroadcast(gameData, GameLog.text(context.card().getName()
-                        + " devours " + devoured + " creature" + (devoured == 1 ? "" : "s")
-                        + " and enters with " + added + " +1/+1 counter" + (added == 1 ? "" : "s") + "."));
+                gameBroadcastService.logAndBroadcast(gameData, GameLog.cardThen(context.card(),
+                        " devours " + devoured + " creature" + (devoured == 1 ? "" : "s")
+                                + " and enters with " + added + " +1/+1 counter" + (added == 1 ? "" : "s") + "."));
             }
         }
 
@@ -1103,17 +1105,18 @@ public class MultiPermanentChoiceHandlerService {
             com.github.laxika.magicalvibes.model.ManaPool pool = gameData.playerManaPools.get(actingPlayerId);
             if (pool != null && cost.canPay(pool)) {
                 cost.pay(pool);
-                List<String> untappedNames = new ArrayList<>();
+                List<Card> untappedCards = new ArrayList<>();
                 for (UUID permId : permanentIds) {
                     Permanent perm = gameQueryService.findPermanentById(gameData, permId);
                     if (perm != null && tapUntapSupport.untapPermanent(gameData, perm)) {
-                        untappedNames.add(perm.getCard().getName());
+                        untappedCards.add(perm.getCard());
                     }
                 }
-                gameBroadcastService.logAndBroadcast(gameData, GameLog.text(playerName + " pays {" + totalCost
-                        + "} and untaps " + String.join(", ", untappedNames) + "."));
+                gameBroadcastService.logAndBroadcast(gameData,
+                        appendCards(GameLog.builder().text(playerName + " pays {" + totalCost + "} and untaps "),
+                                untappedCards).text(".").build());
                 log.info("Game {} - {} pays {} to untap {} creature(s)", gameData.id, playerName, totalCost,
-                        untappedNames.size());
+                        untappedCards.size());
             } else {
                 gameBroadcastService.logAndBroadcast(gameData, GameLog.text(playerName
                         + " can't pay {" + totalCost + "} — untaps no creatures."));
@@ -1152,9 +1155,11 @@ public class MultiPermanentChoiceHandlerService {
 
         if (exiled > 0) {
             permanentRemovalService.removeOrphanedAuras(gameData);
-            gameBroadcastService.logAndBroadcast(gameData, GameLog.text(
-                    exiled + " token" + (exiled == 1 ? "" : "s") + " created with " + sourceName
-                            + (exiled == 1 ? " is" : " are") + " exiled."));
+            GameLog.Builder tetraviteLog = GameLog.builder().text(
+                    exiled + " token" + (exiled == 1 ? "" : "s") + " created with ");
+            gameBroadcastService.logAndBroadcast(gameData,
+                    appendCardOrText(tetraviteLog, source != null ? source.getCard() : null, sourceName)
+                            .text((exiled == 1 ? " is" : " are") + " exiled.").build());
             // "Put that many +1/+1 counters on this creature" — only if the source is still around.
             if (source != null) {
                 permanentCounterSupport.applyPlusOnePlusOneCounters(gameData, null, source, exiled);
@@ -1185,19 +1190,20 @@ public class MultiPermanentChoiceHandlerService {
                                       MultiPermanentChoiceContext.StaticOrbUntap context) {
         UUID activePlayerId = context.activePlayerId();
 
-        List<String> untappedNames = new ArrayList<>();
+        List<Card> untappedCards = new ArrayList<>();
         for (UUID permId : permanentIds) {
             Permanent perm = gameQueryService.findPermanentById(gameData, permId);
             if (perm != null) {
-                untappedNames.add(perm.getCard().getName());
+                untappedCards.add(perm.getCard());
             }
         }
         String playerName = gameData.playerIdToName.get(activePlayerId);
-        if (untappedNames.isEmpty()) {
+        if (untappedCards.isEmpty()) {
             gameBroadcastService.logAndBroadcast(gameData, GameLog.text(playerName + " untaps no permanents (untap lock)."));
         } else {
-            gameBroadcastService.logAndBroadcast(gameData, GameLog.text(playerName + " untaps "
-                    + String.join(", ", untappedNames) + " (untap lock)."));
+            gameBroadcastService.logAndBroadcast(gameData,
+                    appendCards(GameLog.builder().text(playerName + " untaps "), untappedCards)
+                            .text(" (untap lock).").build());
         }
 
         // Resume the untap step: of the permanents matching the lock's filter only the chosen ones
@@ -1227,12 +1233,18 @@ public class MultiPermanentChoiceHandlerService {
         gameData.stack.add(entry);
 
         List<String> targetNames = new ArrayList<>();
-        for (UUID targetId : allTargets) {
+        GameLog.Builder targetsLog = GameLog.builder().card(state.sourceCard()).text("'s ability targets ");
+        for (int i = 0; i < allTargets.size(); i++) {
+            UUID targetId = allTargets.get(i);
             Permanent target = gameQueryService.findPermanentById(gameData, targetId);
             targetNames.add(target != null ? target.getCard().getName() : targetId.toString());
+            if (i > 0) {
+                targetsLog.text(", ");
+            }
+            appendCardOrText(targetsLog, target != null ? target.getCard() : null, targetId.toString());
         }
-        String logEntry = state.sourceCard().getName() + "'s ability targets " + String.join(", ", targetNames) + ".";
-        gameBroadcastService.logAndBroadcast(gameData, GameLog.text(logEntry));
+        targetsLog.text(".");
+        gameBroadcastService.logAndBroadcast(gameData, targetsLog.build());
         log.info("Game {} - {} upkeep trigger targets: {}", gameData.id, state.sourceCard().getName(), targetNames);
 
         // Continue processing: more Efreet triggers → may abilities → priority
@@ -1258,5 +1270,26 @@ public class MultiPermanentChoiceHandlerService {
 
     private void handlePileSeparation(GameData gameData, List<UUID> permanentIds) {
         destructionSupport.completePileSeparationStep1(gameData, permanentIds);
+    }
+
+    /** Appends {@code cards} as comma-separated card segments (each hoverable) to {@code builder}. */
+    private static GameLog.Builder appendCards(GameLog.Builder builder, List<Card> cards) {
+        for (int i = 0; i < cards.size(); i++) {
+            if (i > 0) {
+                builder.text(", ");
+            }
+            builder.card(cards.get(i));
+        }
+        return builder;
+    }
+
+    /** Appends a hoverable card segment when {@code card} is known, otherwise falls back to plain text. */
+    private static GameLog.Builder appendCardOrText(GameLog.Builder builder, Card card, String fallbackText) {
+        if (card != null) {
+            builder.card(card);
+        } else {
+            builder.text(fallbackText);
+        }
+        return builder;
     }
 }

@@ -25,6 +25,6 @@ public class ReturnTargetCardsFromGraveyardToHandEffectHandler implements Normal
 
         graveyardReturnSupport.processTargetedGraveyardCards(gameData, entry,
                 (graveyard, card) -> gameData.addCardToHand(entry.getControllerId(), card),
-                movedNames -> " returns " + String.join(", ", movedNames) + " from graveyard to hand.");
+                " returns ", " from graveyard to hand.");
     }
 }
