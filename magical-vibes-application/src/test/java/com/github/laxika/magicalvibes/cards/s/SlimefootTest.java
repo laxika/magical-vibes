@@ -38,8 +38,8 @@ class SlimefootTest extends BaseCardTest {
         CreateTokenEffect tokenEffect =
                 (CreateTokenEffect) card.getActivatedAbilities().get(0).getEffects().get(0);
         assertThat(tokenEffect.tokenName()).isEqualTo("Saproling");
-        assertThat(tokenEffect.power()).isEqualTo(1);
-        assertThat(tokenEffect.toughness()).isEqualTo(1);
+        assertThat(tokenEffect.tokenPower()).isEqualTo(1);
+        assertThat(tokenEffect.tokenToughness()).isEqualTo(1);
         assertThat(tokenEffect.color()).isEqualTo(CardColor.GREEN);
         assertThat(tokenEffect.subtypes()).containsExactly(CardSubtype.SAPROLING);
     }

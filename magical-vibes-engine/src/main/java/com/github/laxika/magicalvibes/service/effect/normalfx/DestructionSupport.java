@@ -496,11 +496,11 @@ public class DestructionSupport {
             String playerName = gameData.playerIdToName.get(controllerId);
             String colorName = token.color() != null ? token.color().name().toLowerCase() + " " : "";
             if (isCreature) {
-                String logEntry = playerName + " creates a " + token.power() + "/" + token.toughness()
+                String logEntry = playerName + " creates a " + token.tokenPower() + "/" + token.tokenToughness()
                         + " " + colorName + token.tokenName() + " creature token.";
                 gameBroadcastService.logAndBroadcast(gameData, GameLog.text(logEntry));
                 log.info("Game {} - {} creates a {}/{} {} token for {}", gameData.id, sourceName,
-                        token.power(), token.toughness(), token.tokenName(), playerName);
+                        token.tokenPower(), token.tokenToughness(), token.tokenName(), playerName);
 
                 battlefieldEntryService.handleCreatureEnteredBattlefield(gameData, controllerId, tokenCard, null, false);
             } else {

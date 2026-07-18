@@ -54,8 +54,8 @@ class LegionsLandingTest extends BaseCardTest {
         assertThat(makeVampire.getEffects().getFirst()).isInstanceOf(CreateTokenEffect.class);
         CreateTokenEffect token = (CreateTokenEffect) makeVampire.getEffects().getFirst();
         assertThat(token.tokenName()).isEqualTo("Vampire");
-        assertThat(token.power()).isEqualTo(1);
-        assertThat(token.toughness()).isEqualTo(1);
+        assertThat(token.tokenPower()).isEqualTo(1);
+        assertThat(token.tokenToughness()).isEqualTo(1);
         assertThat(token.color()).isEqualTo(CardColor.WHITE);
         assertThat(token.subtypes()).containsExactly(CardSubtype.VAMPIRE);
         assertThat(token.keywords()).containsExactly(Keyword.LIFELINK);

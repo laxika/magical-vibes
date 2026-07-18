@@ -79,6 +79,7 @@ import java.util.UUID;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.eq;
+import static org.mockito.Mockito.lenient;
 import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
@@ -423,7 +424,11 @@ class StepTriggerServiceTest {
             Permanent otherPerm = new Permanent(otherCard);
             gd.playerBattlefields.get(player1Id).add(otherPerm);
 
-            when(predicateEvaluationService.matchesPermanentPredicate(eq(gd), eq(otherPerm), any())).thenReturn(true);
+            // lenient(): the Power Surge upkeep snapshot (countUntappedLands) also probes
+            // matchesPermanentPredicate with a land predicate for every untapped permanent the active
+            // player controls, so the source permanent is queried too — that unrelated call must not
+            // trip strict-stubbing.
+            lenient().when(predicateEvaluationService.matchesPermanentPredicate(eq(gd), eq(otherPerm), any())).thenReturn(true);
 
             sut.handleUpkeepTriggers(gd);
 

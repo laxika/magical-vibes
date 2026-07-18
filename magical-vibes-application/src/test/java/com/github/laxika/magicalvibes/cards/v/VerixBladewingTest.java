@@ -39,8 +39,8 @@ class VerixBladewingTest extends BaseCardTest {
         assertThat(conditional.wrapped()).isInstanceOf(CreateTokenEffect.class);
         CreateTokenEffect tokenEffect = (CreateTokenEffect) conditional.wrapped();
         assertThat(tokenEffect.tokenName()).isEqualTo("Karox Bladewing");
-        assertThat(tokenEffect.power()).isEqualTo(4);
-        assertThat(tokenEffect.toughness()).isEqualTo(4);
+        assertThat(tokenEffect.tokenPower()).isEqualTo(4);
+        assertThat(tokenEffect.tokenToughness()).isEqualTo(4);
         assertThat(tokenEffect.legendary()).isTrue();
     }
 

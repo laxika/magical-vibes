@@ -45,8 +45,8 @@ class HavengulRunebinderTest extends BaseCardTest {
         assertThat(ability.getEffects().get(1)).isInstanceOf(CreateTokenEffect.class);
         CreateTokenEffect tokenEffect = (CreateTokenEffect) ability.getEffects().get(1);
         assertThat(tokenEffect.tokenName()).isEqualTo("Zombie");
-        assertThat(tokenEffect.power()).isEqualTo(2);
-        assertThat(tokenEffect.toughness()).isEqualTo(2);
+        assertThat(tokenEffect.tokenPower()).isEqualTo(2);
+        assertThat(tokenEffect.tokenToughness()).isEqualTo(2);
         assertThat(tokenEffect.color()).isEqualTo(CardColor.BLACK);
         assertThat(tokenEffect.subtypes()).containsExactly(CardSubtype.ZOMBIE);
 
