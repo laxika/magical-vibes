@@ -176,4 +176,26 @@ class TriggerTargetCollectorTest {
 
         assertThat(result.validTargets()).contains(noncreature.getId());
     }
+
+    @Test
+    @DisplayName("ATTACK any-target excludes lands (creature / planeswalker / player only)")
+    void attackAnyTargetExcludesLands() {
+        Permanent creature = new Permanent(new Card());
+        Permanent land = new Permanent(new Card());
+        gd.playerBattlefields.get(player2Id).add(creature);
+        gd.playerBattlefields.get(player2Id).add(land);
+        lenient().when(gameQueryService.isCreature(gd, creature)).thenReturn(true);
+        lenient().when(gameQueryService.isCreature(gd, land)).thenReturn(false);
+
+        List<CardEffect> effects = List.of(new DealDamageToAnyTargetEffect(1));
+
+        TriggerTargetCollector.Result result = collector.collect(
+                gd, effects, null, player1Id, sourceCard, TriggerTargetCollector.Options.ATTACK);
+
+        assertThat(result.canTargetPlayers()).isTrue();
+        assertThat(result.canTargetPermanents()).isTrue();
+        assertThat(result.validTargets())
+                .contains(player1Id, player2Id, creature.getId())
+                .doesNotContain(land.getId());
+    }
 }

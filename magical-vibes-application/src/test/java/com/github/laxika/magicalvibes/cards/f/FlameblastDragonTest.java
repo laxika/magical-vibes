@@ -1,7 +1,9 @@
 package com.github.laxika.magicalvibes.cards.f;
 
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
+import com.github.laxika.magicalvibes.cards.m.Mountain;
 import com.github.laxika.magicalvibes.model.ManaColor;
+import com.github.laxika.magicalvibes.model.PendingInteraction;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.Player;
 import com.github.laxika.magicalvibes.model.TurnStep;
@@ -79,6 +81,43 @@ class FlameblastDragonTest extends BaseCardTest {
         assertThat(bears.getMarkedDamage()).isZero();
         assertThat(gd.playerGraveyards.get(player2.getId()))
                 .noneMatch(c -> c.getName().equals("Grizzly Bears"));
+    }
+
+    @Test
+    @DisplayName("Attack trigger cannot target a land — any target is creature/planeswalker/player")
+    void cannotTargetLand() {
+        addCreatureReady(player1, new FlameblastDragon());
+        Permanent bears = addCreatureReady(player2, new GrizzlyBears());
+        Permanent mountain = harness.addToBattlefieldAndReturn(player1, new Mountain());
+
+        declareAttackers(player1, List.of(0));
+
+        PendingInteraction.PermanentChoice choice =
+                gd.interaction.activeInteraction(PendingInteraction.PermanentChoice.class);
+        assertThat(choice).isNotNull();
+        assertThat(choice.validIds())
+                .contains(bears.getId(), player1.getId(), player2.getId())
+                .doesNotContain(mountain.getId());
+    }
+
+    @Test
+    @DisplayName("Empty mana pool with untapped Mountains still prompts to pay {X}{R}")
+    void emptyPoolWithUntappedLandsStillPromptsForX() {
+        addCreatureReady(player1, new FlameblastDragon());
+        Permanent bears = addCreatureReady(player2, new GrizzlyBears());
+        harness.addToBattlefield(player1, new Mountain());
+        harness.addToBattlefield(player1, new Mountain());
+        harness.addToBattlefield(player1, new Mountain());
+
+        declareAttackers(player1, List.of(0));
+        harness.handlePermanentChosen(player1, bears.getId());
+        harness.passBothPriorities();
+
+        PendingInteraction.XValueChoice choice =
+                gd.interaction.activeInteraction(PendingInteraction.XValueChoice.class);
+        assertThat(choice).isNotNull();
+        assertThat(choice.maxValue()).isGreaterThanOrEqualTo(2);
+        assertThat(choice.prompt()).containsIgnoringCase("you may pay");
     }
 
     private void declareAttackers(Player player, List<Integer> attackerIndices) {

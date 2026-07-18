@@ -11,6 +11,7 @@ import com.github.laxika.magicalvibes.model.effect.PayXManaDealXDamageToAnyTarge
 import com.github.laxika.magicalvibes.service.GameBroadcastService;
 import com.github.laxika.magicalvibes.service.GameOutcomeService;
 import com.github.laxika.magicalvibes.service.battlefield.GameQueryService;
+import com.github.laxika.magicalvibes.service.cast.PotentialManaService;
 import com.github.laxika.magicalvibes.service.interaction.InteractionHandlerRegistry;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -20,8 +21,10 @@ import java.util.UUID;
 
 /**
  * Resolves {@link PayXManaDealXDamageToAnyTargetEffect}: prompts the controller for X (capped by
- * how much of {@code manaCost} they can pay), charges {@code manaCost}, then deals X damage to the
- * target chosen when the ability was put on the stack. Choosing X=0 declines.
+ * how much of {@code manaCost} they can pay, including mana from untapped sources), charges
+ * {@code manaCost}, then deals X damage to the target chosen when the ability was put on the
+ * stack. Choosing X=0 declines. Mana abilities may be activated while the prompt is open
+ * (frontend allows tapping lands during {@code XValueChoice}).
  */
 @Slf4j
 @Component
@@ -33,6 +36,7 @@ public class PayXManaDealXDamageToAnyTargetEffectHandler implements NormalEffect
     private final GameOutcomeService gameOutcomeService;
     private final GameBroadcastService gameBroadcastService;
     private final InteractionHandlerRegistry interactionHandlerRegistry;
+    private final PotentialManaService potentialManaService;
 
     @Override
     public Class<? extends CardEffect> handledEffect() {
@@ -48,6 +52,8 @@ public class PayXManaDealXDamageToAnyTargetEffectHandler implements NormalEffect
         UUID controllerId = entry.getControllerId();
         String cardName = entry.getCard().getName();
         String playerName = gameData.playerIdToName.get(controllerId);
+        ManaCost cost = new ManaCost(e.manaCost());
+        ManaPool pool = gameData.playerManaPools.get(controllerId);
 
         // Re-entry after the player chose X value
         if (gameData.chosenXValue != null) {
@@ -60,8 +66,19 @@ public class PayXManaDealXDamageToAnyTargetEffectHandler implements NormalEffect
                 return;
             }
 
-            ManaPool pool = gameData.playerManaPools.get(controllerId);
-            new ManaCost(e.manaCost()).pay(pool, chosenValue);
+            // Cap was based on potential mana so the player could tap lands during the prompt;
+            // re-check the actual pool before charging.
+            if (!cost.canPay(pool, chosenValue)) {
+                gameBroadcastService.logAndBroadcast(gameData, GameLog.text(
+                        playerName + " can't pay " + e.manaCost().replace("{X}", "{" + chosenValue + "}")
+                                + " for " + cardName + " (tap mana sources, then choose X again)."));
+                log.info("Game {} - {} cannot yet pay X={} for {} — re-prompting",
+                        gameData.id, playerName, chosenValue, cardName);
+                beginXPrompt(gameData, controllerId, cost, e.manaCost(), cardName);
+                return;
+            }
+
+            cost.pay(pool, chosenValue);
             gameBroadcastService.logAndBroadcast(gameData, GameLog.text(playerName + " pays " + e.manaCost().replace("{X}", "{" + chosenValue + "}") + " for " + cardName + "."));
             log.info("Game {} - {} pays X={} for {}", gameData.id, playerName, chosenValue, cardName);
 
@@ -71,15 +88,21 @@ public class PayXManaDealXDamageToAnyTargetEffectHandler implements NormalEffect
             return;
         }
 
-        // First call: prompt for X value (capped by how much of manaCost the pool can pay)
-        ManaPool pool = gameData.playerManaPools.get(controllerId);
-        int maxX = new ManaCost(e.manaCost()).calculateMaxX(pool);
+        // First call: prompt for X. Cap includes untapped mana sources so an empty pool with
+        // untapped lands still opens the Pay / Don't Pay UI (CR 605.3 — mana abilities before cost).
+        int maxX = cost.calculateMaxX(potentialManaService.buildVirtualManaPool(gameData, controllerId));
         if (maxX <= 0) {
             gameBroadcastService.logAndBroadcast(gameData, GameLog.text(playerName + " can't pay for " + cardName + "'s ability."));
             log.info("Game {} - {} can't pay {} for {}", gameData.id, playerName, e.manaCost(), cardName);
             return;
         }
-        String prompt = "Pay " + e.manaCost() + " for " + cardName + "? It deals X damage to the target.";
+        beginXPrompt(gameData, controllerId, cost, e.manaCost(), cardName);
+    }
+
+    private void beginXPrompt(GameData gameData, UUID controllerId, ManaCost cost, String manaCost, String cardName) {
+        int maxX = cost.calculateMaxX(potentialManaService.buildVirtualManaPool(gameData, controllerId));
+        String prompt = "You may pay " + manaCost + " for " + cardName
+                + ". Choose X (0 = don't pay). It deals X damage to the target.";
         interactionHandlerRegistry.begin(gameData,
                 new PendingInteraction.XValueChoice(controllerId, maxX, prompt, cardName));
     }

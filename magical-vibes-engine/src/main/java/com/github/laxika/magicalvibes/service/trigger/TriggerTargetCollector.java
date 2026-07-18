@@ -1,12 +1,15 @@
 package com.github.laxika.magicalvibes.service.trigger;
 
 import com.github.laxika.magicalvibes.model.Card;
+import com.github.laxika.magicalvibes.model.CardType;
 import com.github.laxika.magicalvibes.model.GameData;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.filter.TargetFilter;
 import com.github.laxika.magicalvibes.model.EffectResolution;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
 import com.github.laxika.magicalvibes.model.effect.ConditionalEffect;
+import com.github.laxika.magicalvibes.model.effect.TargetCategory;
+import com.github.laxika.magicalvibes.model.filter.AnyTargetPredicateTargetFilter;
 import com.github.laxika.magicalvibes.model.filter.ControlledPermanentPredicateTargetFilter;
 import com.github.laxika.magicalvibes.model.filter.FilterContext;
 import com.github.laxika.magicalvibes.model.filter.PermanentPredicate;
@@ -156,17 +159,40 @@ public class TriggerTargetCollector {
             boolean creaturesOnly = options.creaturesOnly()
                     && !(targetFilter instanceof PermanentPredicateTargetFilter);
 
+            // "Any target" = creature / planeswalker / player — never a land or other noncreature
+            // permanent. Mirror ValidTargetService / TargetValidationService for true ANY_TARGET
+            // effects (Flameblast Dragon attack trigger, Form of the Dragon upkeep, etc.). An
+            // explicit PermanentPredicateTargetFilter fully governs instead (e.g. destroy land).
+            List<CardEffect> permanentEffects = effects.stream()
+                    .map(e -> options.unwrapConditional() && e instanceof ConditionalEffect ce
+                            ? ce.wrapped() : e)
+                    .filter(e -> e.targetSpec().category().includesPermanents())
+                    .toList();
+            boolean anyTargetPermanentsOnly = !(targetFilter instanceof PermanentPredicateTargetFilter)
+                    && !permanentEffects.isEmpty()
+                    && permanentEffects.stream()
+                            .allMatch(e -> e.targetSpec().category() == TargetCategory.ANY_TARGET);
+
             for (UUID pid : gameData.orderedPlayerIds) {
                 List<Permanent> battlefield = gameData.playerBattlefields.get(pid);
                 if (battlefield == null) continue;
                 for (Permanent p : battlefield) {
                     if (creaturesOnly && !gameQueryService.isCreature(gameData, p)) continue;
 
+                    if (anyTargetPermanentsOnly
+                            && !gameQueryService.isCreature(gameData, p)
+                            && !p.getCard().hasType(CardType.PLANESWALKER)) {
+                        continue;
+                    }
+
                     if (options.supportControlledFilter()
                             && targetFilter instanceof ControlledPermanentPredicateTargetFilter cpf) {
                         if (!predicateEvaluationService.matchesFilters(p, Set.of(cpf), filterCtx)) continue;
                     } else if (targetFilter instanceof PermanentPredicateTargetFilter ppf) {
                         if (!predicateEvaluationService.matchesPermanentPredicate(p, ppf.predicate(), filterCtx)) continue;
+                    } else if (targetFilter instanceof AnyTargetPredicateTargetFilter anyFilter) {
+                        if (!predicateEvaluationService.matchesPermanentPredicate(
+                                p, anyFilter.permanentPredicate(), filterCtx)) continue;
                     }
 
                     if (effectPredicate != null

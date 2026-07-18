@@ -22,7 +22,12 @@ Targeting for triggered abilities happens in two layers:
      `TriggerTargetCollector` (`service/trigger/TriggerTargetCollector.java`), configured by one of the
      `Options` constants (`DEATH`, `ATTACK`, `END_STEP`). These pipelines honour every filter the collector
      understands: `PlayerPredicateTargetFilter` (incl. `PlayerRelationPredicate.OPPONENT`),
-     `PermanentPredicateTargetFilter`, and (for death/attack) `ControlledPermanentPredicateTargetFilter`.
+     `PermanentPredicateTargetFilter`, `AnyTargetPredicateTargetFilter`, and (for death/attack)
+     `ControlledPermanentPredicateTargetFilter`. **True `ANY_TARGET` effects** (category
+     `ANY_TARGET` — Flameblast Dragon, Form of the Dragon, etc.) further restrict permanent candidates
+     to creatures and planeswalkers (never lands/artifacts/enchantments), matching spell-path
+     `ValidTargetService` / `TargetValidationService`. An explicit `PermanentPredicateTargetFilter`
+     overrides that narrowing (e.g. Fire Snake's destroy-land).
    - Other pipelines (`DiscardSelf`, `SpellTarget`, `LifeGain`, `Explore`, `Emblem`, `SagaChapter*`) are
      bespoke — each supports a different subset of filters. See the table below before assuming any of them
      works the way the death/attack/end-step pipelines do.
@@ -118,7 +123,7 @@ combat damage step is processed.
 | `ON_CONTROLLER_GAINS_LIFE` | `MiscTriggerCollectorService` | Life-gain |
 | `ON_CONTROLLER_DRAWS` (any-target effects) | `DrawService.checkControllerDrawTriggers` → `DrawTriggerAnyTarget` (queued when the effect's `targetSpec().category() == ANY_TARGET`, e.g. Niv-Mizzet, the Firemind's "deals 1 damage to any target"). Processed by `TriggeredAbilityQueueService.processNextDrawTriggerTarget` (creature/player any-target choice). Non–any-target draw triggers (Psychosis Crawler) still push a non-targeting entry straight to the stack. | Draw (any target) |
 | `ON_CREATURE_ENTERS_FROM_GRAVEYARD` | `TriggerCollectionService.checkEntersFromGraveyardTriggers` | Enters-from-graveyard (any target) |
-| `ON_ALLY_CREATURE_ENTERS_BATTLEFIELD` / `ON_OPPONENT_CREATURE_ENTERS_BATTLEFIELD` / `ON_OPPONENT_LAND_ENTERS_BATTLEFIELD` / `ON_ALLY_NONTOKEN_ARTIFACT_ENTERS_BATTLEFIELD` (permanent-targeting effects only) | `EnterTriggerCollectorService.handleEnterDefault` → `EntersTriggerTarget` (queued when the effect's `targetSpec()` includes permanents, e.g. Reaper King's "destroy target permanent"). Player-targeting effects still push straight to the stack with the pre-set `defaultTargetPlayerId`. | Enters (reuses `TriggerTargetCollector.Options.ATTACK` for the target list — any permanent, honours the card's `PermanentPredicateTargetFilter` / `ControlledPermanentPredicateTargetFilter`) |
+| `ON_ALLY_CREATURE_ENTERS_BATTLEFIELD` / `ON_OPPONENT_CREATURE_ENTERS_BATTLEFIELD` / `ON_OPPONENT_LAND_ENTERS_BATTLEFIELD` / `ON_ALLY_NONTOKEN_ARTIFACT_ENTERS_BATTLEFIELD` (permanent-targeting effects only) | `EnterTriggerCollectorService.handleEnterDefault` → `EntersTriggerTarget` (queued when the effect's `targetSpec()` includes permanents, e.g. Reaper King's "destroy target permanent"). Player-targeting effects still push straight to the stack with the pre-set `defaultTargetPlayerId`. | Enters (reuses `TriggerTargetCollector.Options.ATTACK` for the target list — permanents honouring the card's `PermanentPredicateTargetFilter` / `ControlledPermanentPredicateTargetFilter`; true `ANY_TARGET` effects are creature/planeswalker only) |
 | `ON_ALLY_CREATURE_EXPLORES` | `TriggerCollectionService.checkExploreTriggers` | Explore |
 | `ON_CONTROLLER_CLASHES` | `TriggerCollectionService.fireClashTriggers` | Clash — targeting triggers via `ClashTriggerTarget` (opponent-creature only); non-targeting triggers pushed straight to the stack |
 | `ON_CHAMPIONED` | `PermanentChoiceBattlefieldHandlerService.handleChampionCreature` | Player/permanent target via `ChampionedTriggerTarget` (collected with `Options.END_STEP`; Mistbind Clique taps target player's lands) |
