@@ -17,6 +17,7 @@ import com.github.laxika.magicalvibes.cards.h.HealingGrace;
 import com.github.laxika.magicalvibes.cards.h.Hibernation;
 import com.github.laxika.magicalvibes.cards.i.InspiringCleric;
 import com.github.laxika.magicalvibes.cards.m.MidnightHaunting;
+import com.github.laxika.magicalvibes.cards.n.Nekrataal;
 import com.github.laxika.magicalvibes.cards.p.Pacifism;
 import com.github.laxika.magicalvibes.cards.p.Pyroclasm;
 import com.github.laxika.magicalvibes.cards.s.SerraAngel;
@@ -1279,5 +1280,71 @@ class SpellEvaluatorTest {
 
         // No AI losses means no rebuild discount — value should be the same
         assertThat(fullHand).isEqualTo(emptyHand);
+    }
+
+    // ===== Targeted removal: legality and forced self-kill =====
+
+    @Test
+    @DisplayName("ETB removal creature valued higher when opponent has a legal target")
+    void etbRemovalValuedHigherWithLegalOpponentTarget() {
+        double emptyBoard = spellEvaluator.estimateSpellValue(gd, new Nekrataal(), player1.getId());
+
+        Permanent oppAngel = new Permanent(new SerraAngel());
+        oppAngel.setSummoningSick(false);
+        gd.playerBattlefields.get(player2.getId()).add(oppAngel);
+        double withTarget = spellEvaluator.estimateSpellValue(gd, new Nekrataal(), player1.getId());
+
+        assertThat(withTarget).isGreaterThan(emptyBoard);
+        assertThat(emptyBoard).isGreaterThan(0); // still a 2/1 first strike body
+    }
+
+    @Test
+    @DisplayName("ETB removal creature not cast when it would be forced to kill the AI's own creature")
+    void etbRemovalNegativeWhenForcedOntoOwnBoard() {
+        // Opponent's only creature is black — not a legal Nekrataal target, so the
+        // mandatory ETB kill would be forced onto the AI's own Serra Angel.
+        Permanent oppNoble = new Permanent(new FalkenrathNoble());
+        oppNoble.setSummoningSick(false);
+        gd.playerBattlefields.get(player2.getId()).add(oppNoble);
+
+        Permanent ownAngel = new Permanent(new SerraAngel());
+        ownAngel.setSummoningSick(false);
+        gd.playerBattlefields.get(player1.getId()).add(ownAngel);
+
+        double value = spellEvaluator.estimateSpellValue(gd, new Nekrataal(), player1.getId());
+
+        assertThat(value).isLessThanOrEqualTo(0.0);
+    }
+
+    @Test
+    @DisplayName("ETB removal creature not cast when the opponent's board is empty and the AI's only creature is better")
+    void etbRemovalNegativeWithEmptyOpponentBoard() {
+        // Opponent has nothing at all — Nekrataal's mandatory ETB kill could only hit
+        // the AI's own Serra Angel, which is worth far more than the 2/1 body gained.
+        Permanent ownAngel = new Permanent(new SerraAngel());
+        ownAngel.setSummoningSick(false);
+        gd.playerBattlefields.get(player1.getId()).add(ownAngel);
+
+        double value = spellEvaluator.estimateSpellValue(gd, new Nekrataal(), player1.getId());
+
+        assertThat(value).isLessThanOrEqualTo(0.0);
+    }
+
+    @Test
+    @DisplayName("Removal ignores opponent creatures the spell cannot legally target")
+    void removalIgnoresIllegalOpponentTargets() {
+        // Doom Blade can't target the black Falkenrath Noble; with the AI's own white
+        // creature as the only legal target, casting it would be a pure self-kill.
+        Permanent oppNoble = new Permanent(new FalkenrathNoble());
+        oppNoble.setSummoningSick(false);
+        gd.playerBattlefields.get(player2.getId()).add(oppNoble);
+
+        Permanent ownAngel = new Permanent(new SerraAngel());
+        ownAngel.setSummoningSick(false);
+        gd.playerBattlefields.get(player1.getId()).add(ownAngel);
+
+        double value = spellEvaluator.estimateSpellValue(gd, new DoomBlade(), player1.getId());
+
+        assertThat(value).isLessThanOrEqualTo(0.0);
     }
 }

@@ -469,14 +469,15 @@ class AiTargetSelector {
     private UUID chooseDestroyTarget(GameData gameData, Card card, UUID aiPlayerId, UUID opponentId) {
         // Search opponent's battlefield first
         List<Permanent> oppBattlefield = gameData.playerBattlefields.getOrDefault(opponentId, List.of());
-        UUID oppTarget = findDestroyCandidate(gameData, card, oppBattlefield, aiPlayerId);
+        UUID oppTarget = findDestroyCandidate(gameData, card, oppBattlefield, aiPlayerId, false);
         if (oppTarget != null) {
             return oppTarget;
         }
 
-        // Fall back to own battlefield
+        // No legal opponent target — a mandatory target forces the removal onto the AI's
+        // own board, so pick the least valuable legal permanent, not the best one.
         List<Permanent> ownBattlefield = gameData.playerBattlefields.getOrDefault(aiPlayerId, List.of());
-        return findDestroyCandidate(gameData, card, ownBattlefield, aiPlayerId);
+        return findDestroyCandidate(gameData, card, ownBattlefield, aiPlayerId, true);
     }
 
     /**
@@ -707,7 +708,8 @@ class AiTargetSelector {
                 && d.canTargetPlayers() && d.totalDamage() instanceof Fixed;
     }
 
-    private UUID findDestroyCandidate(GameData gameData, Card card, List<Permanent> battlefield, UUID aiPlayerId) {
+    private UUID findDestroyCandidate(GameData gameData, Card card, List<Permanent> battlefield,
+                                      UUID aiPlayerId, boolean pickLeastValuable) {
         List<Permanent> candidates = battlefield.stream()
                 .filter(p -> isValidPermanentTarget(gameData, card, p, aiPlayerId))
                 .toList();
@@ -716,12 +718,19 @@ class AiTargetSelector {
             return null;
         }
 
-        UUID controllerId = !candidates.isEmpty()
-                ? gameQueryService.findPermanentController(gameData, candidates.getFirst().getId())
-                : null;
+        UUID controllerId = gameQueryService.findPermanentController(gameData, candidates.getFirst().getId());
         UUID opponentOfController = controllerId != null
                 ? AiUtils.getOpponentId(gameData, controllerId)
                 : null;
+
+        if (pickLeastValuable) {
+            // Forced self-removal: give up the least valuable legal candidate (weakest
+            // creature, or cheapest non-creature) instead of the most threatening one.
+            return candidates.stream()
+                    .min(Comparator.comparingDouble(p -> generalTargetPriority(gameData, p, controllerId, opponentOfController)))
+                    .map(Permanent::getId)
+                    .orElse(null);
+        }
 
         // Prefer creature kills when legal, then choose the most threatening one.
         UUID creatureTarget = candidates.stream()

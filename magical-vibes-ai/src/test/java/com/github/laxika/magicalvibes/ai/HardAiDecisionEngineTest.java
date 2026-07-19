@@ -34,6 +34,7 @@ import com.github.laxika.magicalvibes.cards.k.KuldothaRebirth;
 import com.github.laxika.magicalvibes.cards.l.LlanowarElves;
 import com.github.laxika.magicalvibes.cards.m.Mountain;
 import com.github.laxika.magicalvibes.cards.n.Negate;
+import com.github.laxika.magicalvibes.cards.n.Nekrataal;
 import com.github.laxika.magicalvibes.cards.p.Plains;
 import com.github.laxika.magicalvibes.cards.s.Slagstorm;
 import com.github.laxika.magicalvibes.cards.s.SteelSabotage;
@@ -341,6 +342,88 @@ class HardAiDecisionEngineTest {
         // Myr Superion should be on the stack — creature mana is available from elves
         assertThat(gd.stack).hasSize(1);
         assertThat(gd.stack.getFirst().getCard().getName()).isEqualTo("Myr Superion");
+    }
+
+    // ===== ETB removal forced onto own board =====
+
+    @Test
+    @DisplayName("Hard AI does not cast Nekrataal when the only target for its ETB kill is its own Serra Angel")
+    void doesNotCastNekrataalWhenOnlyOwnCreatureIsTargetable() {
+        FakeConnection aiConn = new FakeConnection("ai-hard-test");
+        harness.getSessionManager().registerPlayer(aiConn, player1.getId(), "Alice");
+        HardAiDecisionEngine ai = new HardAiDecisionEngine(
+                gd.id, player1, harness.getGameRegistry(),
+                harness.getGameService(), harness.getGameQueryService(), harness.getCombatAttackService(),
+                harness.getGameBroadcastService(), harness.getCastingCostService(), harness.getCastingPermissionService(), harness.getTargetValidationService(), harness.getTargetLegalityService());
+        ai.setSelfConnection(aiConn);
+
+        harness.forceActivePlayer(player1);
+        // Postcombat with a single castable spell exercises the evaluator path
+        harness.forceStep(TurnStep.POSTCOMBAT_MAIN);
+        harness.clearPriorityPassed();
+        gd.status = GameStatus.RUNNING;
+        gd.interaction.clearAwaitingInput();
+        gd.stack.clear();
+
+        for (int i = 0; i < 4; i++) {
+            Permanent swamp = new Permanent(new Swamp());
+            swamp.setSummoningSick(false);
+            gd.playerBattlefields.get(player1.getId()).add(swamp);
+        }
+
+        // AI's only creature is a Serra Angel; the opponent's board is empty, so the
+        // mandatory ETB kill could only hit the angel — far worse than the 2/1 body gained.
+        Permanent angel = new Permanent(new SerraAngel());
+        angel.setSummoningSick(false);
+        gd.playerBattlefields.get(player1.getId()).add(angel);
+
+        harness.setHand(player1, List.of(new Nekrataal()));
+
+        ai.handleMessage("GAME_STATE", "");
+
+        assertThat(gd.stack).isEmpty();
+        harness.assertOnBattlefield(player1, "Serra Angel");
+    }
+
+    @Test
+    @DisplayName("Hard AI still casts Nekrataal when the opponent has a legal creature to kill")
+    void castsNekrataalWhenOpponentHasLegalTarget() {
+        FakeConnection aiConn = new FakeConnection("ai-hard-test");
+        harness.getSessionManager().registerPlayer(aiConn, player1.getId(), "Alice");
+        HardAiDecisionEngine ai = new HardAiDecisionEngine(
+                gd.id, player1, harness.getGameRegistry(),
+                harness.getGameService(), harness.getGameQueryService(), harness.getCombatAttackService(),
+                harness.getGameBroadcastService(), harness.getCastingCostService(), harness.getCastingPermissionService(), harness.getTargetValidationService(), harness.getTargetLegalityService());
+        ai.setSelfConnection(aiConn);
+
+        harness.forceActivePlayer(player1);
+        harness.forceStep(TurnStep.POSTCOMBAT_MAIN);
+        harness.clearPriorityPassed();
+        gd.status = GameStatus.RUNNING;
+        gd.interaction.clearAwaitingInput();
+        gd.stack.clear();
+
+        for (int i = 0; i < 4; i++) {
+            Permanent swamp = new Permanent(new Swamp());
+            swamp.setSummoningSick(false);
+            gd.playerBattlefields.get(player1.getId()).add(swamp);
+        }
+
+        Permanent angel = new Permanent(new SerraAngel());
+        angel.setSummoningSick(false);
+        gd.playerBattlefields.get(player1.getId()).add(angel);
+
+        // Opponent has a legal (white, nonartifact) creature — Nekrataal is a clean two-for-one
+        Permanent oppAngel = new Permanent(new SerraAngel());
+        oppAngel.setSummoningSick(false);
+        gd.playerBattlefields.get(player2.getId()).add(oppAngel);
+
+        harness.setHand(player1, List.of(new Nekrataal()));
+
+        ai.handleMessage("GAME_STATE", "");
+
+        assertThat(gd.stack).hasSize(1);
+        assertThat(gd.stack.getFirst().getCard().getName()).isEqualTo("Nekrataal");
     }
 
     // ===== Must-attack =====

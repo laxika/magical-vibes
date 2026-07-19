@@ -5,6 +5,7 @@ import com.github.laxika.magicalvibes.cards.b.BenalishMarshal;
 import com.github.laxika.magicalvibes.cards.e.ElaborateFirecannon;
 import com.github.laxika.magicalvibes.cards.e.EliteVanguard;
 import com.github.laxika.magicalvibes.cards.e.EntrancingMelody;
+import com.github.laxika.magicalvibes.cards.f.FalkenrathNoble;
 import com.github.laxika.magicalvibes.cards.f.FertileGround;
 import com.github.laxika.magicalvibes.cards.f.Forest;
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
@@ -12,6 +13,7 @@ import com.github.laxika.magicalvibes.cards.i.Island;
 import com.github.laxika.magicalvibes.cards.k.KarnsTemporalSundering;
 import com.github.laxika.magicalvibes.cards.l.LlanowarElves;
 import com.github.laxika.magicalvibes.cards.b.BloodcrazedNeonate;
+import com.github.laxika.magicalvibes.cards.n.Nekrataal;
 import com.github.laxika.magicalvibes.cards.p.Pounce;
 import com.github.laxika.magicalvibes.cards.s.SerraAngel;
 import com.github.laxika.magicalvibes.cards.s.Skulduggery;
@@ -147,6 +149,33 @@ class AiTargetSelectorTest {
         UUID target = targetSelector.chooseTarget(gd, new FertileGround(), aiPlayer.getId());
 
         assertThat(target).isNull();
+    }
+
+    // ===== chooseTarget: forced own-board removal fallback =====
+
+    @Test
+    @DisplayName("Nekrataal's ETB kill targets the opponent's legal creature when one exists")
+    void nekrataalTargetsOpponentCreature() {
+        Permanent oppBears = harness.addToBattlefieldAndReturn(human, new GrizzlyBears());
+        harness.addToBattlefield(aiPlayer, new SerraAngel());
+
+        UUID target = targetSelector.chooseTarget(gd, new Nekrataal(), aiPlayer.getId());
+
+        assertThat(target).isEqualTo(oppBears.getId());
+    }
+
+    @Test
+    @DisplayName("Forced onto its own board, Nekrataal's ETB kill picks the AI's weakest creature, not its best")
+    void nekrataalForcedSelfTargetPicksWeakestOwnCreature() {
+        // Opponent's only creature is black — not a legal Nekrataal target, so the
+        // mandatory ETB kill falls back to the AI's own board.
+        harness.addToBattlefield(human, new FalkenrathNoble());
+        harness.addToBattlefield(aiPlayer, new SerraAngel());
+        Permanent ownElves = harness.addToBattlefieldAndReturn(aiPlayer, new LlanowarElves());
+
+        UUID target = targetSelector.chooseTarget(gd, new Nekrataal(), aiPlayer.getId());
+
+        assertThat(target).isEqualTo(ownElves.getId());
     }
 
     // ===== findValidPermanentTargetsForManaValueX =====

@@ -363,7 +363,7 @@ public class SpellEvaluator {
 
         // Removal (destroy / exile / single-target bounce) — see removalScore for the per-kind factors
         if (effect instanceof RemovalEffect rem && rem.removalKind() != null) {
-            return removalScore(gameData, rem.removalKind(), oppBattlefield, opponentId, aiPlayerId);
+            return removalScore(gameData, card, rem.removalKind(), oppBattlefield, opponentId, aiPlayerId);
         }
         if (effect instanceof ControlStealingEffect steal
                 && steal.controlDuration() == ControlDuration.PERMANENT) {
@@ -443,7 +443,7 @@ public class SpellEvaluator {
 
         // Removal (destroy / exile / single-target bounce) — see removalScore for the per-kind factors
         if (effect instanceof RemovalEffect rem && rem.removalKind() != null) {
-            return removalScore(gameData, rem.removalKind(), oppBattlefield, opponentId, aiPlayerId);
+            return removalScore(gameData, card, rem.removalKind(), oppBattlefield, opponentId, aiPlayerId);
         }
 
         // Steal (opponent loses creature + we gain it)
@@ -968,15 +968,72 @@ public class SpellEvaluator {
      * Scores single-target removal against the opponent's best creature, weighted by kind:
      * exile (1.1x) edges destroy (1.0x) because it dodges regeneration/death triggers, while
      * bounce (0.6x) is temporary. These are the exact factors the former per-type branches used.
+     * <p>
+     * Only creatures the spell can legally target count (target filter, shroud/hexproof,
+     * protection). When the opponent has no legal target but the AI does, a mandatory-target
+     * removal would be forced onto the AI's own board, so the least valuable own legal
+     * creature is scored as a loss — this stops the AI from casting e.g. Nekrataal just to
+     * destroy its own Serra Angel.
      */
-    private double removalScore(GameData gameData, RemovalKind kind, List<Permanent> oppBattlefield,
-                                UUID opponentId, UUID aiPlayerId) {
-        double base = bestTargetCreatureValue(gameData, oppBattlefield, opponentId, aiPlayerId);
-        return switch (kind) {
-            case DESTROY -> base;
-            case EXILE -> base * 1.1;
-            case BOUNCE -> base * 0.6;
+    private double removalScore(GameData gameData, Card card, RemovalKind kind,
+                                List<Permanent> oppBattlefield, UUID opponentId, UUID aiPlayerId) {
+        double kindFactor = switch (kind) {
+            case DESTROY -> 1.0;
+            case EXILE -> 1.1;
+            case BOUNCE -> 0.6;
         };
+
+        List<Permanent> legalOppTargets = oppBattlefield.stream()
+                .filter(p -> gameQueryService.isCreature(gameData, p))
+                .filter(p -> canBeRemovalTarget(gameData, card, p, aiPlayerId, true))
+                .toList();
+        if (!legalOppTargets.isEmpty()) {
+            double best = legalOppTargets.stream()
+                    .mapToDouble(p -> boardEvaluator.creatureThreatScore(gameData, p, opponentId, aiPlayerId))
+                    .max()
+                    .orElse(0);
+            return Math.max(best, 0) * kindFactor;
+        }
+
+        // No legal opponent target — the removal could only be aimed at the AI's own board.
+        // Count the creature the AI would be forced to give up (the least valuable legal one)
+        // as a loss so the rest of the card must outweigh it.
+        List<Permanent> aiBattlefield = gameData.playerBattlefields.getOrDefault(aiPlayerId, List.of());
+        double forcedOwnLoss = aiBattlefield.stream()
+                .filter(p -> gameQueryService.isCreature(gameData, p))
+                .filter(p -> canBeRemovalTarget(gameData, card, p, aiPlayerId, false))
+                .mapToDouble(p -> boardEvaluator.creatureThreatScore(gameData, p, aiPlayerId, opponentId))
+                .min()
+                .orElse(0);
+        return -Math.max(forcedOwnLoss, 0) * kindFactor;
+    }
+
+    /**
+     * Cheap targeting-legality estimate for removal scoring: the card's target filter plus
+     * the untargetability keywords. Hexproof only blocks opponents, so it is checked only
+     * for the opponent's creatures. {@code card} is null on the activated-ability path,
+     * where only the keyword checks apply.
+     */
+    private boolean canBeRemovalTarget(GameData gameData, Card card, Permanent target,
+                                       UUID aiPlayerId, boolean opponentControlsTarget) {
+        if (gameQueryService.hasKeyword(gameData, target, Keyword.SHROUD)) return false;
+        if (opponentControlsTarget && gameQueryService.hasKeyword(gameData, target, Keyword.HEXPROOF)) return false;
+        if (card == null) return true;
+        if (opponentControlsTarget && gameQueryService.hasHexproofFromColor(gameData, target, card.getColor())) return false;
+        if (gameQueryService.hasProtectionFromSource(gameData, target, card)) return false;
+        if (gameQueryService.cantBeTargetedBySpellColor(gameData, target, card.getColor())) return false;
+        if (gameQueryService.cantBeTargetedByNonColorSources(gameData, target, card)) return false;
+        if (card.getTargetFilter() != null) {
+            try {
+                predicateEvaluationService.validateTargetFilter(card.getTargetFilter(), target,
+                        FilterContext.of(gameData)
+                                .withSourceCardId(card.getId())
+                                .withSourceControllerId(aiPlayerId));
+            } catch (IllegalStateException e) {
+                return false;
+            }
+        }
+        return true;
     }
 
     private double bestTargetCreatureValue(GameData gameData, List<Permanent> battlefield,
