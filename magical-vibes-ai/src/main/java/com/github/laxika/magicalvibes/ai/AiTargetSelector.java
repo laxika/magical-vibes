@@ -16,6 +16,7 @@ import com.github.laxika.magicalvibes.model.effect.AddManaOnEnchantedLandTapEffe
 import com.github.laxika.magicalvibes.model.effect.CreatureBoostEffect;
 import com.github.laxika.magicalvibes.model.effect.CostEffect;
 import com.github.laxika.magicalvibes.model.effect.DamageDealingEffect;
+import com.github.laxika.magicalvibes.model.effect.DealDamageToTargetCreatureOrPlaneswalkerEffect;
 import com.github.laxika.magicalvibes.model.effect.DealDividedDamageEffect;
 import com.github.laxika.magicalvibes.model.effect.DivisionMode;
 import com.github.laxika.magicalvibes.model.amount.Fixed;
@@ -28,7 +29,6 @@ import com.github.laxika.magicalvibes.model.effect.CardEffect;
 import com.github.laxika.magicalvibes.model.effect.TargetCategory;
 import com.github.laxika.magicalvibes.model.effect.CastTargetInstantOrSorceryFromGraveyardEffect;
 import com.github.laxika.magicalvibes.model.effect.RemovalEffect;
-import com.github.laxika.magicalvibes.model.effect.RemovalKind;
 import com.github.laxika.magicalvibes.model.effect.ExileGraveyardCardsEffect;
 import com.github.laxika.magicalvibes.model.effect.ExileTargetCardFromGraveyardAndImprintOnSourceEffect;
 import com.github.laxika.magicalvibes.model.effect.ExileTargetGraveyardCardAndSameNameFromZonesEffect;
@@ -115,16 +115,32 @@ class AiTargetSelector {
                     .orElse(null);
         }
 
-        // Handle destroy/exile removal effects (ETB creatures or removal spells). Bounce removal is
-        // deliberately excluded — it keeps its general-fallback target selection.
+        // Handle single-target removal effects (ETB creatures or removal spells): destroy,
+        // exile, and bounce all aim at the opponent's board first. Bounce must not fall into
+        // the general fallback below — its own-battlefield-first search would return the AI's
+        // own permanents (e.g. Quicksilver Geyser bouncing the AI's own artifact).
         for (CardEffect effect : card.getEffects(EffectSlot.ON_ENTER_BATTLEFIELD)) {
-            if (isDestroyOrExileRemoval(effect)) {
-                return chooseDestroyTarget(gameData, card, aiPlayerId, opponentId);
+            if (isSingleTargetRemoval(effect)) {
+                return chooseRemovalTarget(gameData, card, aiPlayerId, opponentId);
             }
         }
         for (CardEffect effect : card.getEffects(EffectSlot.SPELL)) {
-            if (isDestroyOrExileRemoval(effect)) {
-                return chooseDestroyTarget(gameData, card, aiPlayerId, opponentId);
+            if (isSingleTargetRemoval(effect)) {
+                return chooseRemovalTarget(gameData, card, aiPlayerId, opponentId);
+            }
+        }
+
+        // Damage that can hit permanents is harmful to its target and must not fall into the
+        // general fallback below — its own-battlefield-first search would burn the AI's own
+        // creatures whenever it controls any.
+        for (CardEffect effect : card.getEffects(EffectSlot.ON_ENTER_BATTLEFIELD)) {
+            if (isPermanentDamageEffect(effect)) {
+                return chooseDamageTarget(gameData, card, aiPlayerId, opponentId, allowedTargets);
+            }
+        }
+        for (CardEffect effect : card.getEffects(EffectSlot.SPELL)) {
+            if (isPermanentDamageEffect(effect)) {
+                return chooseDamageTarget(gameData, card, aiPlayerId, opponentId, allowedTargets);
             }
         }
 
@@ -188,7 +204,7 @@ class AiTargetSelector {
             }
         }
         // Then search opponent battlefield — prefer the most threatening valid target so that
-        // damage, bounce, tap, and similar "soft" removal spells still attack the real threat
+        // tap-down and similar "soft" disruption spells still attack the real threat
         // (e.g. a 2/2 lord pumping four other creatures) rather than whichever creature happens
         // to come first in the battlefield list.
         List<Permanent> oppBattlefield = gameData.playerBattlefields.getOrDefault(opponentId, List.of());
@@ -457,19 +473,59 @@ class AiTargetSelector {
     }
 
     /**
-     * True for single-target destroy or exile removal (the two removal kinds routed through the
-     * dedicated destroy-target selection). Bounce removal ({@code RemovalKind.BOUNCE}) is excluded
-     * so it keeps its general-fallback target selection.
+     * True for single-target removal ({@code removalKind()} non-null: destroy, exile, or bounce),
+     * routed through the dedicated removal-target selection. This mirrors
+     * {@code SpellEvaluator.removalScore}, which prices all three kinds against the opponent's
+     * best creature — target selection must aim at the same board or the AI casts a spell it
+     * valued for hitting the opponent and then targets its own permanents.
      */
-    private static boolean isDestroyOrExileRemoval(CardEffect effect) {
-        return effect instanceof RemovalEffect rem
-                && (rem.removalKind() == RemovalKind.DESTROY || rem.removalKind() == RemovalKind.EXILE);
+    private static boolean isSingleTargetRemoval(CardEffect effect) {
+        return effect instanceof RemovalEffect rem && rem.removalKind() != null;
     }
 
-    private UUID chooseDestroyTarget(GameData gameData, Card card, UUID aiPlayerId, UUID opponentId) {
+    /**
+     * True when the effect deals damage to a chosen permanent target (any-target or
+     * target-creature damage). Player-only damage stays out — it is handled by the
+     * player-targeting branch.
+     */
+    private static boolean isPermanentDamageEffect(CardEffect effect) {
+        return ((effect instanceof DamageDealingEffect dmg && dmg.canDamageCreatures())
+                || effect instanceof DealDamageToTargetCreatureOrPlaneswalkerEffect)
+                && effect.targetSpec().category().includesPermanents();
+    }
+
+    /**
+     * Picks a target for a spell or ETB that damages its permanent target. Aims at the
+     * opponent's most threatening legal permanent, then (for any-target damage) the
+     * opponent's face. Only a mandatory target with no legal opponent choice (e.g. a
+     * damage ETB while the opponent's board is empty) falls onto the AI's own board,
+     * giving up the least valuable permanent.
+     */
+    private UUID chooseDamageTarget(GameData gameData, Card card, UUID aiPlayerId, UUID opponentId,
+                                    Set<TargetType> allowedTargets) {
+        List<Permanent> oppBattlefield = gameData.playerBattlefields.getOrDefault(opponentId, List.of());
+        UUID oppTarget = oppBattlefield.stream()
+                .filter(p -> isValidPermanentTarget(gameData, card, p, aiPlayerId))
+                .max(Comparator.comparingDouble(p -> generalTargetPriority(gameData, p, opponentId, aiPlayerId)))
+                .map(Permanent::getId)
+                .orElse(null);
+        if (oppTarget != null) {
+            return oppTarget;
+        }
+        if (allowedTargets.contains(TargetType.PLAYER)
+                && opponentId != null
+                && !gameQueryService.playerHasShroud(gameData, opponentId)
+                && !gameQueryService.playerHasHexproof(gameData, opponentId)) {
+            return opponentId;
+        }
+        List<Permanent> ownBattlefield = gameData.playerBattlefields.getOrDefault(aiPlayerId, List.of());
+        return findRemovalCandidate(gameData, card, ownBattlefield, aiPlayerId, true);
+    }
+
+    private UUID chooseRemovalTarget(GameData gameData, Card card, UUID aiPlayerId, UUID opponentId) {
         // Search opponent's battlefield first
         List<Permanent> oppBattlefield = gameData.playerBattlefields.getOrDefault(opponentId, List.of());
-        UUID oppTarget = findDestroyCandidate(gameData, card, oppBattlefield, aiPlayerId, false);
+        UUID oppTarget = findRemovalCandidate(gameData, card, oppBattlefield, aiPlayerId, false);
         if (oppTarget != null) {
             return oppTarget;
         }
@@ -477,7 +533,7 @@ class AiTargetSelector {
         // No legal opponent target — a mandatory target forces the removal onto the AI's
         // own board, so pick the least valuable legal permanent, not the best one.
         List<Permanent> ownBattlefield = gameData.playerBattlefields.getOrDefault(aiPlayerId, List.of());
-        return findDestroyCandidate(gameData, card, ownBattlefield, aiPlayerId, true);
+        return findRemovalCandidate(gameData, card, ownBattlefield, aiPlayerId, true);
     }
 
     /**
@@ -708,7 +764,7 @@ class AiTargetSelector {
                 && d.canTargetPlayers() && d.totalDamage() instanceof Fixed;
     }
 
-    private UUID findDestroyCandidate(GameData gameData, Card card, List<Permanent> battlefield,
+    private UUID findRemovalCandidate(GameData gameData, Card card, List<Permanent> battlefield,
                                       UUID aiPlayerId, boolean pickLeastValuable) {
         List<Permanent> candidates = battlefield.stream()
                 .filter(p -> isValidPermanentTarget(gameData, card, p, aiPlayerId))

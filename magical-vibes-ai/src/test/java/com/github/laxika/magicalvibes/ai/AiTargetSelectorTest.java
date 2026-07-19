@@ -15,6 +15,7 @@ import com.github.laxika.magicalvibes.cards.l.LlanowarElves;
 import com.github.laxika.magicalvibes.cards.b.BloodcrazedNeonate;
 import com.github.laxika.magicalvibes.cards.n.Nekrataal;
 import com.github.laxika.magicalvibes.cards.p.Pounce;
+import com.github.laxika.magicalvibes.cards.q.QuicksilverGeyser;
 import com.github.laxika.magicalvibes.cards.s.SerraAngel;
 import com.github.laxika.magicalvibes.cards.s.Skulduggery;
 import com.github.laxika.magicalvibes.cards.w.WildGrowth;
@@ -55,6 +56,7 @@ import com.github.laxika.magicalvibes.model.effect.ConditionalReplacementEffect;
 import com.github.laxika.magicalvibes.model.effect.PutCardFromOpponentGraveyardOntoBattlefieldEffect;
 import com.github.laxika.magicalvibes.model.effect.PutCreatureFromOpponentGraveyardOntoBattlefieldWithExileEffect;
 import com.github.laxika.magicalvibes.model.effect.RegenerateEffect;
+import com.github.laxika.magicalvibes.model.effect.ReturnToHandEffect;
 import com.github.laxika.magicalvibes.model.effect.SacrificeSelfCost;
 import com.github.laxika.magicalvibes.model.filter.CardTypePredicate;
 import com.github.laxika.magicalvibes.service.battlefield.GameQueryService;
@@ -174,6 +176,85 @@ class AiTargetSelectorTest {
         Permanent ownElves = harness.addToBattlefieldAndReturn(aiPlayer, new LlanowarElves());
 
         UUID target = targetSelector.chooseTarget(gd, new Nekrataal(), aiPlayer.getId());
+
+        assertThat(target).isEqualTo(ownElves.getId());
+    }
+
+    // ===== chooseTarget: damage spells =====
+
+    @Test
+    @DisplayName("Damage spell targets the opponent's creature, not the AI's own")
+    void damageSpellTargetsOpponentCreatureNotOwnBoard() {
+        // Regression: damage used to fall through to the general fallback, whose
+        // own-battlefield-first search made the AI burn its own creatures.
+        harness.addToBattlefield(aiPlayer, new GrizzlyBears());
+        Permanent oppAngel = harness.addToBattlefieldAndReturn(human, new SerraAngel());
+
+        Card damageSpell = new Card();
+        damageSpell.setName("Test Shock");
+        damageSpell.setType(CardType.INSTANT);
+        damageSpell.addEffect(EffectSlot.SPELL, new DealDamageToAnyTargetEffect(2));
+
+        UUID target = targetSelector.chooseTarget(gd, damageSpell, aiPlayer.getId());
+
+        assertThat(target).isEqualTo(oppAngel.getId());
+    }
+
+    @Test
+    @DisplayName("Any-target damage goes to the opponent's face when their board is empty")
+    void anyTargetDamageGoesFaceWhenOpponentBoardEmpty() {
+        harness.addToBattlefield(aiPlayer, new GrizzlyBears());
+
+        Card damageSpell = new Card();
+        damageSpell.setName("Test Shock");
+        damageSpell.setType(CardType.INSTANT);
+        damageSpell.addEffect(EffectSlot.SPELL, new DealDamageToAnyTargetEffect(2));
+
+        UUID target = targetSelector.chooseTarget(gd, damageSpell, aiPlayer.getId());
+
+        assertThat(target).isEqualTo(human.getId());
+    }
+
+    @Test
+    @DisplayName("Creature-only damage forced onto the AI's own board picks its weakest creature")
+    void creatureDamageForcedSelfTargetPicksWeakestOwnCreature() {
+        // No opponent creatures and no player fallback — a mandatory damage target can
+        // only come from the AI's own board, so give up the least valuable creature.
+        harness.addToBattlefield(aiPlayer, new SerraAngel());
+        Permanent ownElves = harness.addToBattlefieldAndReturn(aiPlayer, new LlanowarElves());
+
+        Card damageSpell = new Card();
+        damageSpell.setName("Test Creature Burn");
+        damageSpell.setType(CardType.INSTANT);
+        damageSpell.addEffect(EffectSlot.SPELL, new DealDamageToTargetCreatureEffect(2));
+
+        UUID target = targetSelector.chooseTarget(gd, damageSpell, aiPlayer.getId());
+
+        assertThat(target).isEqualTo(ownElves.getId());
+    }
+
+    // ===== chooseTarget: bounce removal =====
+
+    @Test
+    @DisplayName("Bounce spell targets the opponent's creature, not the AI's own permanents")
+    void bounceTargetsOpponentCreatureNotOwnBoard() {
+        // Regression: bounce used to fall through to the general fallback, whose
+        // own-battlefield-first search made Quicksilver Geyser bounce the AI's own permanent.
+        harness.addToBattlefield(aiPlayer, new GrizzlyBears());
+        Permanent oppAngel = harness.addToBattlefieldAndReturn(human, new SerraAngel());
+
+        UUID target = targetSelector.chooseTarget(gd, new QuicksilverGeyser(), aiPlayer.getId());
+
+        assertThat(target).isEqualTo(oppAngel.getId());
+    }
+
+    @Test
+    @DisplayName("Bounce with no legal opponent target falls back to the AI's least valuable permanent")
+    void bounceForcedSelfTargetPicksLeastValuable() {
+        harness.addToBattlefield(aiPlayer, new SerraAngel());
+        Permanent ownElves = harness.addToBattlefieldAndReturn(aiPlayer, new LlanowarElves());
+
+        UUID target = targetSelector.chooseTarget(gd, new QuicksilverGeyser(), aiPlayer.getId());
 
         assertThat(target).isEqualTo(ownElves.getId());
     }
@@ -1321,6 +1402,31 @@ class AiTargetSelectorTest {
             exileSpell.addEffect(EffectSlot.SPELL, new ExileTargetPermanentEffect());
 
             UUID target = threatAwareSelector.chooseTarget(gd, exileSpell, aiPlayer.getId());
+
+            assertThat(target).isEqualTo(marshal.getId());
+        }
+
+        @Test
+        @DisplayName("Bounce spell targets lord over bigger vanilla creature")
+        void bounceSpellTargetsLordOverVanilla() {
+            // Same wide-board setup — single-target bounce routes through the same
+            // removal-target selection as destroy/exile, and the AI's own creature
+            // must not distract it (bounce previously used the own-first fallback).
+            harness.addToBattlefield(aiPlayer, new GrizzlyBears());
+            Permanent marshal = harness.addToBattlefieldAndReturn(human, new BenalishMarshal());
+            harness.addToBattlefield(human, new GrizzlyBears());
+            harness.addToBattlefield(human, new GrizzlyBears());
+            harness.addToBattlefield(human, new GrizzlyBears());
+            harness.addToBattlefield(human, new GrizzlyBears());
+            harness.addToBattlefield(human, new GrizzlyBears());
+            harness.addToBattlefield(human, new AirElemental());
+
+            Card bounceSpell = new Card();
+            bounceSpell.setName("Test Bounce");
+            bounceSpell.setType(CardType.INSTANT);
+            bounceSpell.addEffect(EffectSlot.SPELL, ReturnToHandEffect.target());
+
+            UUID target = threatAwareSelector.chooseTarget(gd, bounceSpell, aiPlayer.getId());
 
             assertThat(target).isEqualTo(marshal.getId());
         }
