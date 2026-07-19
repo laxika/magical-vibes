@@ -1147,7 +1147,10 @@ export class GameComponent implements OnInit, OnDestroy {
      carry transforms, making the measurement stable and idempotent; the screen
      delta is divided by the blocker side's zoom because the transform runs
      inside the zoomed card. */
-  private static readonly BLOCKER_SPREAD = 110;
+  /* Center-to-center spacing between co-blockers fanned under one attacker:
+     a full card width plus the row gap, so they sit side by side instead of
+     overlapping ("merging") each other. */
+  private static readonly BLOCKER_SPREAD = GameComponent.CARD_WIDTH + GameComponent.ROW_GAP;
 
   private battlefieldAreaEl: HTMLElement | null = null;
   private combatShiftFrame: number | null = null;
