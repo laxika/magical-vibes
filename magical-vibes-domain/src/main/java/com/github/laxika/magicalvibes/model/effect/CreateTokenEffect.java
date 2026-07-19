@@ -195,6 +195,12 @@ public record CreateTokenEffect(
                 List.of(CardSubtype.SOLDIER), Set.of(), Set.of(), false, false, Map.of(), List.of(), false, false, false, 0, Set.of());
     }
 
+    /** 1/1 white Soldier creature token(s) with a dynamically computed count ("create X … Soldier tokens"). */
+    public static CreateTokenEffect whiteSoldier(DynamicAmount amount) {
+        return new CreateTokenEffect(CardType.CREATURE, amount, "Soldier", 1, 1, CardColor.WHITE, null,
+                List.of(CardSubtype.SOLDIER), Set.of(), Set.of(), false, false, Map.of(), List.of(), false, false, false, 0, Set.of());
+    }
+
     /** Treasure token: colorless artifact with "{T}, Sacrifice this artifact: Add one mana of any color." */
     public static CreateTokenEffect ofTreasureToken(int amount) {
         return ofArtifactToken(amount, "Treasure", List.of(CardSubtype.TREASURE),

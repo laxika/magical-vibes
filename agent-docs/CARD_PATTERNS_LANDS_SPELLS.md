@@ -30,6 +30,7 @@ All paths relative to `cards/`.
 |---------|-----------|-------|
 | Targeted burn | `s/Shock.java` | SPELL DealDamageToAnyTargetEffect (targeting auto-derived) |
 | Burn creature + controller | `c/ChandrasOutrage.java` | DealDamageToTargetCreatureEffect + DealDamageToPlayersEffect(2, DamageRecipient.TARGET_PERMANENT_CONTROLLER) |
+| Burn player/PW + delayed "pay or take more" | `q/QuenchableFire.java` | DealDamageToTargetPlayerOrPlaneswalkerEffect(3) + RegisterDamageAtNextUpkeepUnlessPaysEffect(3, "{U}") — 3 damage now, then at the caster's next upkeep the target's controller pays {U} or takes 3 more (delayed `DamageAtNextUpkeepUnlessPays` drained in StepTriggerService). Registrar piggybacks on the damage target |
 | Uncounterable + unpreventable burn | `c/Combust.java` | STATIC CantBeCounteredEffect + DealDamageToTargetCreatureEffect(5, true) + PermanentColorInPredicate target filter |
 | X burn | `b/Blaze.java` | DealDamageToAnyTargetEffect(new XValue()) |
 | Burn + fixed life gain | `e/EssenceDrain.java` | DealDamageToAnyTargetEffect(3) + GainLifeEffect(3) — two effects on SPELL (also `d/DarkNourishment.java`, `a/AjaniVengeant.java` −2). Targeting auto-derives from the damage effect; the fixed life is gained whenever the spell resolves (independent of damage dealt), and the whole spell fizzles with no life if its single target becomes illegal |

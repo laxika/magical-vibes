@@ -4,6 +4,7 @@ public enum CounterType {
     AIM,
     ANY,
     AWAKENING,
+    BRIBERY,
     CARRION,
     CHARGE,
     CORPSE,

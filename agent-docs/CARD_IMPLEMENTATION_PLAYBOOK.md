@@ -150,6 +150,9 @@ public class ExampleCard extends Card {
   - Card goes to graveyard normally if it dies, allowing repeated graveyard casts
   - Can be combined with additional costs like `ExileNCardsFromGraveyardCost`
   - Example: `magical-vibes-card/src/main/java/com/github/laxika/magicalvibes/cards/s/SkaabRuinator.java`
+  - `new GraveyardCast("{cost}")` overrides the normal mana cost with an alternate one paid *rather than* the card's mana cost when cast from the graveyard ("by paying {W}{U}{B}{R}{G} rather than paying its mana cost"). Paid like a normal mana cost (no flashback mana restriction) in `SpellCastingService.payFlashbackOrGraveyardCastCost`; advertised via the same alternate string in `GameBroadcastService`.
+  - For "If you do, it enters with … counters" (i.e. only when cast from the graveyard), add `ON_ENTER_BATTLEFIELD ConditionalEffect(new CastFromZone(Zone.GRAVEYARD), new EnterWithCountersEffect(...))`. The entering permanent carries its cast-from zone (`Permanent.castFromZone`, stamped in `StackResolutionService.resolveCreatureSpell`) so the as-enters replacement `applyEnterWithCounters` can gate on it.
+  - Example (alternate cost + graveyard-only ETB counters): `magical-vibes-card/src/main/java/com/github/laxika/magicalvibes/cards/w/WorldheartPhoenix.java`
 
 - Exile cast ("You may cast this card from exile"):
   - `addCastingOption(new ExileCast())` — uses the card's normal mana cost, card goes to graveyard normally after resolution

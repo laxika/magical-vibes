@@ -29,6 +29,7 @@ public sealed interface DynamicAmount permits
         CreatureDeathsThisTurn,
         CreaturesDevoured,
         CreaturesBlockingSource,
+        DevouredCreaturesOfSubtype,
         DamageDealtToControllerThisTurn,
         DamageDealtToOpponentsThisTurn,
         DamageDealtToTargetPlayerThisTurn,

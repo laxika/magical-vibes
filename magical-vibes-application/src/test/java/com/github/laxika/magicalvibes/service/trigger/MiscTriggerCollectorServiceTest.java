@@ -330,6 +330,53 @@ class MiscTriggerCollectorServiceTest {
         }
     }
 
+    // ===== ON_ENCHANTED_PERMANENT_TAPPED — LoseLifeEffect (TARGET_PERMANENT_CONTROLLER) =====
+
+    @Nested
+    @DisplayName("ON_ENCHANTED_PERMANENT_TAPPED — LoseLifeEffect (TARGET_PERMANENT_CONTROLLER)")
+    class EnchantedPermanentTapLoseLife {
+
+        @Test
+        @DisplayName("bakes the tapped land into targetId so its controller loses life at resolution")
+        void putsTriggeredAbilityOnStack() {
+            Permanent aura = createPermanent("Corrupted Roots");
+            Permanent tappedPerm = createPermanent("Forest");
+            var effect = new LoseLifeEffect(2, LoseLifeRecipient.TARGET_PERMANENT_CONTROLLER);
+            var ctx = new TriggerContext.EnchantedPermanentTap(tappedPerm, player2Id);
+
+            boolean result = registry.dispatch(
+                    match(aura, player1Id, effect),
+                    EffectSlot.ON_ENCHANTED_PERMANENT_TAPPED, effect, ctx);
+
+            assertThat(result).isTrue();
+            assertThat(gd.stack).hasSize(1);
+            var stackEntry = gd.stack.getLast();
+            assertThat(stackEntry.getEntryType()).isEqualTo(StackEntryType.TRIGGERED_ABILITY);
+            assertThat(stackEntry.getDescription()).contains("Corrupted Roots");
+            // Ability controlled by the aura's controller (CR 603.3b), not the tapped land's.
+            assertThat(stackEntry.getControllerId()).isEqualTo(player1Id);
+            assertThat(stackEntry.getSourcePermanentId()).isEqualTo(aura.getId());
+            // targetId is the tapped land; TARGET_PERMANENT_CONTROLLER re-derives its controller.
+            assertThat(stackEntry.getTargetId()).isEqualTo(tappedPerm.getId());
+            assertThat(stackEntry.getEffectsToResolve()).containsExactly(effect);
+        }
+
+        @Test
+        @DisplayName("broadcasts trigger log message")
+        void broadcastsTriggerLog() {
+            Permanent aura = createPermanent("Corrupted Roots");
+            Permanent tappedPerm = createPermanent("Plains");
+            var effect = new LoseLifeEffect(2, LoseLifeRecipient.TARGET_PERMANENT_CONTROLLER);
+            var ctx = new TriggerContext.EnchantedPermanentTap(tappedPerm, player2Id);
+
+            registry.dispatch(
+                    match(aura, player1Id, effect),
+                    EffectSlot.ON_ENCHANTED_PERMANENT_TAPPED, effect, ctx);
+
+            verify(gameBroadcastService).logAndBroadcast(eq(gd), any(GameLogEntry.class));
+        }
+    }
+
     // ===== ON_OPPONENT_LOSES_LIFE — MillOpponentOnLifeLossEffect =====
 
     @Nested

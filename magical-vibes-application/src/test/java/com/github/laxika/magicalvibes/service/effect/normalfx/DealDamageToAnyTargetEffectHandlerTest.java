@@ -22,7 +22,7 @@ class DealDamageToAnyTargetEffectHandlerTest extends AbstractDamageHandlerTest {
 
     @Override
     protected void setUpHandler() {
-        dealDamageToAnyTargetHandler = new DealDamageToAnyTargetEffectHandler(damageSupport, gameQueryService, gameOutcomeService, amountEvaluationService);
+        dealDamageToAnyTargetHandler = new DealDamageToAnyTargetEffectHandler(damageSupport, gameQueryService, gameOutcomeService, amountEvaluationService, conditionEvaluationService);
     }
 
     @Test

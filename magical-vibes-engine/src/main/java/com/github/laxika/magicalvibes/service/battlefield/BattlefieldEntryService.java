@@ -446,7 +446,7 @@ public class BattlefieldEntryService {
             } else if (effect instanceof ConditionalEffect conditional
                     && conditional.wrapped() instanceof EnterWithCountersEffect wrapped) {
                 ConditionContext conditionContext = new ConditionContext(controllerId, null, permanent,
-                        card, kicked, false, null, xValue, null, null, false);
+                        card, kicked, false, permanent.getCastFromZone(), xValue, null, null, false);
                 if (!conditionEvaluationService.isMet(gameData, conditional.condition(), conditionContext)) {
                     continue;
                 }
@@ -613,7 +613,7 @@ public class BattlefieldEntryService {
                         card.getName() + " — Devour: sacrifice any number of creatures.");
                 return;
             }
-            // No other creatures — devours nothing; ETB triggers proceed with devouredCount 0.
+            // No other creatures — devours nothing; ETB triggers proceed with 0 devoured creatures.
         }
 
         processCreatureETBEffects(gameData, controllerId, card, targetId, wasCastFromHand, etbMode, kicked, targetIds);

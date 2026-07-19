@@ -193,6 +193,7 @@ public class KarnRestartGameEffectHandler implements NormalEffectHandlerBean {
         gameData.permanentAbilityResolutionsThisTurn.clear();
         gameData.pendingTurnControl.clear();
         gameData.combatDamageToPlayersThisTurn.clear();
+        gameData.noncombatDamageToPlayersThisTurn.clear();
         gameData.combatDamageSourceSubtypesThisTurn.clear();
         gameData.combatDamageSourcesWithChangelingThisTurn.clear();
         gameData.combatDamageToPlayerControllerSubtypesThisTurn.clear();

@@ -484,6 +484,23 @@ public class GameData {
      *  Maps source permanent UUID → set of damaged player UUIDs. */
     public final Map<UUID, Set<UUID>> combatDamageToPlayersThisTurn = new ConcurrentHashMap<>();
 
+    /** Tracks which permanents dealt noncombat damage (spells/abilities) to which players this turn.
+     *  Maps source permanent UUID → set of damaged player UUIDs. Combined with
+     *  {@link #combatDamageToPlayersThisTurn}, gives every source that dealt any damage to a player
+     *  (Giltspire Avenger). Cleared at turn cleanup. */
+    public final Map<UUID, Set<UUID>> noncombatDamageToPlayersThisTurn = new ConcurrentHashMap<>();
+
+    /** Records that {@code sourcePermanentId} dealt noncombat damage to {@code playerId} this turn.
+     *  No-op when the source permanent is unknown. */
+    public void recordNoncombatDamageSourceToPlayer(UUID sourcePermanentId, UUID playerId) {
+        if (sourcePermanentId == null) {
+            return;
+        }
+        noncombatDamageToPlayersThisTurn
+                .computeIfAbsent(sourcePermanentId, k -> ConcurrentHashMap.newKeySet())
+                .add(playerId);
+    }
+
     /** Tracks which players have been dealt damage this turn (from any source — combat, spells, abilities). */
     public final Set<UUID> playersDealtDamageThisTurn = ConcurrentHashMap.newKeySet();
 
@@ -1579,6 +1596,8 @@ public class GameData {
         copy.lifeGainedThisTurn.putAll(this.lifeGainedThisTurn);
         this.combatDamageToPlayersThisTurn.forEach((k, v) ->
                 copy.combatDamageToPlayersThisTurn.put(k, new HashSet<>(v)));
+        this.noncombatDamageToPlayersThisTurn.forEach((k, v) ->
+                copy.noncombatDamageToPlayersThisTurn.put(k, new HashSet<>(v)));
         copy.playersDealtDamageThisTurn.addAll(this.playersDealtDamageThisTurn);
         copy.damageDealtToPlayersThisTurn.putAll(this.damageDealtToPlayersThisTurn);
         copy.untappedLandsAtTurnStart.putAll(this.untappedLandsAtTurnStart);

@@ -14,6 +14,7 @@ import java.util.List;
 import java.util.Set;
 
 @CardRegistration(set = "M10", collectorNumber = "141")
+@CardRegistration(set = "CON", collectorNumber = "66")
 public class IgniteDisorder extends Card {
 
     public IgniteDisorder() {

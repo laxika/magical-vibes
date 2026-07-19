@@ -235,6 +235,21 @@ ON_ALLY_CREATURE_ENTERS_BATTLEFIELD,
     /** Triggers when this permanent leaves the battlefield by any means (destruction, exile,
      *  bounce, sacrifice, tuck). Checked in PermanentRemovalService after removal. */
     ON_SELF_LEAVES_BATTLEFIELD,
+    /** Triggers whenever another creature (any player's) leaves the battlefield by any means
+     *  (destruction, exile, bounce, sacrifice, tuck). Global watcher — fires on every permanent
+     *  with this slot except the leaving creature itself. Checked in PermanentRemovalService via
+     *  TriggerCollectionService.checkAnotherCreatureLeavesBattlefieldTriggers. Used by Extractor
+     *  Demon ("you may have target player mill two cards" — a non-targeting MayEffect whose "may"
+     *  and player target are resolved on the stack). */
+    ON_ANOTHER_CREATURE_LEAVES_BATTLEFIELD,
+    /** Triggers whenever another artifact controlled by this permanent's controller leaves the
+     *  battlefield by any means (destruction, exile, bounce, sacrifice, tuck). Controller-scoped
+     *  watcher — fires only on permanents sharing the leaving artifact's controller, except the
+     *  leaving artifact itself. Checked in PermanentRemovalService via
+     *  TriggerCollectionService.checkAnotherArtifactLeavesBattlefieldTriggers. Pairs with
+     *  {@link #ON_ALLY_ARTIFACT_ENTERS_BATTLEFIELD} for "whenever another artifact you control
+     *  enters or leaves the battlefield" (Sludge Strider). */
+    ON_ANOTHER_ARTIFACT_LEAVES_BATTLEFIELD,
     /** Triggers whenever an Aura or Equipment controlled by the same player is put into a
      *  graveyard from the battlefield. Checked in DeathTriggerService after the card enters
      *  the graveyard. Used by Tiana, Ship's Caretaker. */

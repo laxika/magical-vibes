@@ -9,6 +9,8 @@ import com.github.laxika.magicalvibes.service.GameOutcomeService;
 import com.github.laxika.magicalvibes.service.battlefield.GameQueryService;
 import com.github.laxika.magicalvibes.service.effect.AmountContext;
 import com.github.laxika.magicalvibes.service.effect.AmountEvaluationService;
+import com.github.laxika.magicalvibes.service.effect.ConditionContext;
+import com.github.laxika.magicalvibes.service.effect.ConditionEvaluationService;
 import java.util.UUID;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Component;
@@ -21,6 +23,7 @@ public class DealDamageToAnyTargetEffectHandler implements NormalEffectHandlerBe
     private final GameQueryService gameQueryService;
     private final GameOutcomeService gameOutcomeService;
     private final AmountEvaluationService amountEvaluationService;
+    private final ConditionEvaluationService conditionEvaluationService;
 
     @Override
     public Class<? extends CardEffect> handledEffect() {
@@ -63,7 +66,23 @@ public class DealDamageToAnyTargetEffectHandler implements NormalEffectHandlerBe
                 AmountContext.forStackEntry(entry, source));
 
         int rawDamage = gameQueryService.applyDamageMultiplier(gameData, damage, entry);
-        damageSupport.resolveAnyTargetDamage(gameData, entry, targetId, rawDamage, e.cantRegenerate());
+
+        // "If X is 5 or more, … the damage can't be prevented" (Banefire): while the gate holds,
+        // suppress every prevention path (all guarded by isDamagePreventable) for the duration of
+        // this one damage event, then restore. Reuses the whole any-target damage pipeline.
+        boolean unpreventable = e.unpreventableWhen() != null
+                && conditionEvaluationService.isMet(gameData, e.unpreventableWhen(), ConditionContext.forStackEntry(entry));
+        if (unpreventable) {
+            boolean previous = gameData.damageCantBePreventedThisTurn;
+            gameData.damageCantBePreventedThisTurn = true;
+            try {
+                damageSupport.resolveAnyTargetDamage(gameData, entry, targetId, rawDamage, e.cantRegenerate());
+            } finally {
+                gameData.damageCantBePreventedThisTurn = previous;
+            }
+        } else {
+            damageSupport.resolveAnyTargetDamage(gameData, entry, targetId, rawDamage, e.cantRegenerate());
+        }
         gameOutcomeService.checkWinCondition(gameData);
 
     }

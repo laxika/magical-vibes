@@ -14,4 +14,9 @@ public record ControlsPermanent(PermanentPredicate filter) implements Condition 
     public String conditionNotMetReason() {
         return "controller does not control a matching permanent";
     }
+
+    @Override
+    public boolean isEtbTriggerGate() {
+        return true;
+    }
 }

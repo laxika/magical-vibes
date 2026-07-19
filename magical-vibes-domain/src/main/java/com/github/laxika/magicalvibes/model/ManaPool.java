@@ -41,6 +41,12 @@ public class ManaPool {
      */
     private final Map<CardSubtype, EnumMap<ManaColor, Integer>> subtypeSpellOrAbilityMana = new HashMap<>();
     /**
+     * Per-color mana that can only be spent to cast a creature spell of any type (e.g. Ancient
+     * Ziggurat). Distinct from {@link #subtypeCreatureMana}, which is restricted to one chosen
+     * creature subtype; this bucket pays for every creature spell.
+     */
+    private final EnumMap<ManaColor, Integer> creatureSpellOnlyMana = new EnumMap<>(ManaColor.class);
+    /**
      * Permission flag (not mana): while set, white mana in this pool may additionally be spent to pay
      * red mana costs (Sunglasses of Urza — "you may spend white mana as though it were red mana"). Set
      * from board state at the payment/affordability sites; honored by {@link ManaCost#canPay}/{@code pay}.
@@ -55,6 +61,7 @@ public class ManaPool {
             persistentMana.put(color, 0);
             flashbackOnlyMana.put(color, 0);
             instantSorceryOnlyColored.put(color, 0);
+            creatureSpellOnlyMana.put(color, 0);
         }
     }
 
@@ -80,6 +87,7 @@ public class ManaPool {
         for (Map.Entry<CardSubtype, EnumMap<ManaColor, Integer>> entry : source.subtypeSpellOrAbilityMana.entrySet()) {
             subtypeSpellOrAbilityMana.put(entry.getKey(), new EnumMap<>(entry.getValue()));
         }
+        creatureSpellOnlyMana.putAll(source.creatureSpellOnlyMana);
         this.whiteSpendableAsRed = source.whiteSpendableAsRed;
     }
 
@@ -116,6 +124,7 @@ public class ManaPool {
         xCostOnlyColorless = 0;
         for (ManaColor color : ManaColor.values()) {
             instantSorceryOnlyColored.put(color, 0);
+            creatureSpellOnlyMana.put(color, 0);
         }
         subtypeCreatureMana.clear();
         subtypeSpellOrAbilityMana.clear();
@@ -176,6 +185,7 @@ public class ManaPool {
                 total += value;
             }
         }
+        total += getCreatureSpellOnlyManaTotal();
         return total;
     }
 
@@ -491,6 +501,28 @@ public class ManaPool {
         }
     }
 
+    /** Adds creature-spell-only mana of the given color (Ancient Ziggurat). */
+    public void addCreatureSpellOnlyMana(ManaColor color, int amount) {
+        creatureSpellOnlyMana.merge(color, amount, Integer::sum);
+    }
+
+    public int getCreatureSpellOnlyMana(ManaColor color) {
+        return creatureSpellOnlyMana.getOrDefault(color, 0);
+    }
+
+    public int getCreatureSpellOnlyManaTotal() {
+        int total = 0;
+        for (int value : creatureSpellOnlyMana.values()) {
+            total += value;
+        }
+        return total;
+    }
+
+    public void removeCreatureSpellOnlyMana(ManaColor color, int amount) {
+        int current = creatureSpellOnlyMana.getOrDefault(color, 0);
+        creatureSpellOnlyMana.put(color, Math.max(0, current - amount));
+    }
+
     /**
      * Adds mana that persists through step/phase transitions until end of turn.
      * The mana is added to both the regular pool and the persistent tracker.
@@ -530,6 +562,7 @@ public class ManaPool {
         for (ManaColor color : ManaColor.values()) {
             flashbackOnlyMana.put(color, 0);
             instantSorceryOnlyColored.put(color, 0);
+            creatureSpellOnlyMana.put(color, 0);
         }
         subtypeCreatureMana.clear();
         subtypeSpellOrAbilityMana.clear();
@@ -570,6 +603,7 @@ public class ManaPool {
             for (EnumMap<ManaColor, Integer> colorMap : subtypeSpellOrAbilityMana.values()) {
                 amount += colorMap.getOrDefault(color, 0);
             }
+            amount += creatureSpellOnlyMana.getOrDefault(color, 0);
             map.put(color.getCode(), amount);
         }
         return map;
@@ -600,6 +634,7 @@ public class ManaPool {
             for (EnumMap<ManaColor, Integer> colorMap : subtypeSpellOrAbilityMana.values()) {
                 amount += colorMap.getOrDefault(color, 0);
             }
+            amount += creatureSpellOnlyMana.getOrDefault(color, 0);
             totals.put(color, amount);
         }
         return totals;

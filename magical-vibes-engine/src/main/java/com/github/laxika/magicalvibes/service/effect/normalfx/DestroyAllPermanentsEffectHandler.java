@@ -48,6 +48,12 @@ public class DestroyAllPermanentsEffectHandler implements NormalEffectHandlerBea
                 .withSourceCardId(entry.getCard().getId())
                 .withSourceControllerId(entry.getControllerId());
 
+        // "Destroy all other creatures" (Martial Coup): spare permanents this same resolution just
+        // created, so the Soldier tokens made moments earlier survive the wipe.
+        List<UUID> sparedIds = e.sparesPermanentsCreatedThisResolution()
+                ? entry.getCreatedPermanentIds()
+                : List.of();
+
         List<Permanent> toDestroy = new ArrayList<>();
         if (e.scope() == EachPermanentScope.TARGET_PLAYER) {
             UUID targetPlayerId = entry.getTargetId();
@@ -59,14 +65,16 @@ public class DestroyAllPermanentsEffectHandler implements NormalEffectHandlerBea
                 return;
             }
             for (Permanent perm : List.copyOf(battlefield)) {
-                if (predicateEvaluationService.matchesPermanentPredicate(perm, e.filter(), filterContext)) {
+                if (!sparedIds.contains(perm.getId())
+                        && predicateEvaluationService.matchesPermanentPredicate(perm, e.filter(), filterContext)) {
                     toDestroy.add(perm);
                 }
             }
         } else {
             gameData.forEachBattlefield((playerId, battlefield) -> {
                 for (Permanent perm : battlefield) {
-                    if (predicateEvaluationService.matchesPermanentPredicate(perm, e.filter(), filterContext)) {
+                    if (!sparedIds.contains(perm.getId())
+                            && predicateEvaluationService.matchesPermanentPredicate(perm, e.filter(), filterContext)) {
                         toDestroy.add(perm);
                     }
                 }

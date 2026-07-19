@@ -1857,6 +1857,28 @@ public class GameQueryService {
     }
 
     /**
+     * Returns {@code true} if the given permanent is a creature with the least power among all
+     * creatures on the battlefield (across every player's battlefield). Ties allowed.
+     * Used by Wretched Banquet.
+     */
+    public boolean hasLeastPowerAmongAllCreatures(GameData gameData, Permanent permanent) {
+        if (gameData == null || !isCreature(gameData, permanent)) {
+            return false;
+        }
+        int least = Integer.MAX_VALUE;
+        for (UUID playerId : gameData.orderedPlayerIds) {
+            List<Permanent> battlefield = gameData.playerBattlefields.get(playerId);
+            if (battlefield == null) continue;
+            for (Permanent candidate : battlefield) {
+                if (isCreature(gameData, candidate)) {
+                    least = Math.min(least, getEffectivePower(gameData, candidate));
+                }
+            }
+        }
+        return getEffectivePower(gameData, permanent) == least;
+    }
+
+    /**
      * Returns {@code true} if the target permanent has protection from any of the source
      * permanent's card types. Accounts for artifact status (including granted) and creature
      * status (including animation).
@@ -1866,6 +1888,9 @@ public class GameQueryService {
         protectedTypes.addAll(target.getProtectionFromCardTypes());
         for (CardEffect effect : target.getCard().getEffects(EffectSlot.STATIC)) {
             if (effect instanceof ProtectionGrantingEffect protection) {
+                // Protection from everything (Progenitus): every source has a card type, so this is
+                // the shared gate that stops all damage/combat/targeting/enchant from any source.
+                if (protection.protectsFromEverything()) return true;
                 protectedTypes.addAll(protection.protectionFromCardTypes());
             }
         }
@@ -1889,6 +1914,9 @@ public class GameQueryService {
         protectedTypes.addAll(target.getProtectionFromCardTypes());
         for (CardEffect effect : target.getCard().getEffects(EffectSlot.STATIC)) {
             if (effect instanceof ProtectionGrantingEffect protection) {
+                // Protection from everything (Progenitus): every source has a card type, so this is
+                // the shared gate that stops all damage/combat/targeting/enchant from any source.
+                if (protection.protectsFromEverything()) return true;
                 protectedTypes.addAll(protection.protectionFromCardTypes());
             }
         }
@@ -2390,8 +2418,10 @@ public class GameQueryService {
      * a {@link CreatureSpellsCantBeCounteredEffect} on the battlefield protects creature spells.
      */
     public boolean isUncounterable(GameData gameData, Card card) {
-        if (card.getEffects(EffectSlot.STATIC).stream().anyMatch(e -> e instanceof CantBeCounteredEffect)) {
-            return true;
+        for (CardEffect effect : card.getEffects(EffectSlot.STATIC)) {
+            if (effect instanceof CantBeCounteredEffect cbc && isCantBeCounteredActive(gameData, card, cbc)) {
+                return true;
+            }
         }
         if (gameData.spellsMadeUncounterable.contains(card.getId())) {
             return true;
@@ -2400,6 +2430,20 @@ public class GameQueryService {
             return false;
         }
         return anyBattlefieldHasStaticEffect(gameData, CreatureSpellsCantBeCounteredEffect.class);
+    }
+
+    /**
+     * An unconditional {@link CantBeCounteredEffect} always applies. A conditional one
+     * (Banefire's "If X is 5 or more") applies only while its condition holds, evaluated against
+     * the spell's stack entry — the only place a spell is ever the target of a counter.
+     */
+    private boolean isCantBeCounteredActive(GameData gameData, Card card, CantBeCounteredEffect effect) {
+        if (effect.condition() == null) {
+            return true;
+        }
+        StackEntry entry = findStackEntryByCardId(gameData, card.getId());
+        return entry != null
+                && conditionEvaluationService.isMet(gameData, effect.condition(), ConditionContext.forStackEntry(entry));
     }
 
     /**

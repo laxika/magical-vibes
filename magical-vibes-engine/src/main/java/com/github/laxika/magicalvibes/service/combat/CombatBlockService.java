@@ -295,6 +295,8 @@ public class CombatBlockService {
                 blockerAssignments);
         validateMustBeBlockedIfAbleRequirements(gameData, blockContext, attackerBattlefield, defenderBattlefield, blockable,
                 blockerAssignments);
+        validateMustBlockIfAbleRequirements(blockContext, attackerBattlefield, defenderBattlefield, blockable,
+                blockerAssignments);
 
         // Block tax (e.g. Hipparion): the block is legal only if its additional cost can be paid.
         if (blockTaxTotal > 0) {
@@ -1065,6 +1067,35 @@ public class CombatBlockService {
                 if (gameQueryService.canBlockAttacker(blockContext, blocker, attacker)) {
                     throw new IllegalStateException(attacker.getCard().getName()
                             + " must be blocked if able");
+                }
+            }
+        }
+    }
+
+    /**
+     * "Target creature blocks this turn if able" (Nacatl Hunt-Pride): a creature flagged with
+     * {@link Permanent#isMustBlockThisTurnIfAble()} must be declared as a blocker of at least one
+     * attacker if it is able to block any of them. The requirement is satisfied vacuously when the
+     * creature can't legally block any declared attacker (evasion, tapped, etc.).
+     */
+    private void validateMustBlockIfAbleRequirements(BlockLegalityContext blockContext,
+                                                     List<Permanent> attackerBattlefield,
+                                                     List<Permanent> defenderBattlefield,
+                                                     List<Integer> blockable,
+                                                     List<BlockerAssignment> blockerAssignments) {
+        Set<Integer> assignedBlockerIndices = new HashSet<>();
+        for (BlockerAssignment assignment : blockerAssignments) {
+            assignedBlockerIndices.add(assignment.blockerIndex());
+        }
+
+        for (int blockerIdx : blockable) {
+            Permanent blocker = defenderBattlefield.get(blockerIdx);
+            if (!blocker.isMustBlockThisTurnIfAble() || assignedBlockerIndices.contains(blockerIdx)) {
+                continue;
+            }
+            for (Permanent attacker : attackerBattlefield) {
+                if (attacker.isAttacking() && gameQueryService.canBlockAttacker(blockContext, blocker, attacker)) {
+                    throw new IllegalStateException(blocker.getCard().getName() + " must block this turn if able");
                 }
             }
         }

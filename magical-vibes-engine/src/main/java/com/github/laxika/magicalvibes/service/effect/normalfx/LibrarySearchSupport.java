@@ -1,6 +1,7 @@
 package com.github.laxika.magicalvibes.service.effect.normalfx;
 
 import com.github.laxika.magicalvibes.model.Card;
+import com.github.laxika.magicalvibes.model.CardColor;
 import com.github.laxika.magicalvibes.model.CardSupertype;
 import com.github.laxika.magicalvibes.model.CardType;
 import com.github.laxika.magicalvibes.model.EffectSlot;
@@ -192,6 +193,49 @@ public class LibrarySearchSupport {
                             .build(), prompt, true);
             return true;
         }
+        return false;
+    }
+
+    /**
+     * Starts the next "search for a card of the queued colour, reveal it, put it into your hand" pick
+     * from the follow-up's colour queue (Conflux). Each queue entry is one colour, searched in order;
+     * the advanced remainder rides the begun search. Colours with no matching card left in the library
+     * are skipped without shuffling. When the queue is exhausted the library is shuffled once (the
+     * single shuffle for the whole search) and false is returned; returns true if a search was begun,
+     * false if the search is prevented or no colour remains to search.
+     */
+    public boolean startNextColorToHandPick(GameData gameData, UUID playerId, LibrarySearchFollowUp followUp) {
+        if (isSearchPrevented(gameData, playerId)) return false;
+
+        List<Card> deck = gameData.playerDecks.get(playerId);
+        String playerName = gameData.playerIdToName.get(playerId);
+        List<CardColor> remaining = new ArrayList<>(followUp.remainingColorToHandPicks());
+        while (!remaining.isEmpty()) {
+            CardColor color = remaining.remove(0);
+            List<Card> matches = deck == null ? List.of()
+                    : deck.stream().filter(card -> card.getColors().contains(color)).toList();
+            if (matches.isEmpty()) {
+                continue;
+            }
+            String colorName = color.name().toLowerCase();
+            sendLibrarySearchToPlayer(gameData, playerId,
+                    LibrarySearchParams.builder(playerId, new ArrayList<>(matches))
+                            .reveals(true)
+                            .canFailToFind(true)
+                            .destination(LibrarySearchDestination.HAND)
+                            .shuffleAfterSelection(false)
+                            .followUp(followUp.withRemainingColorToHandPicks(remaining))
+                            .build(),
+                    "Search your library for a " + colorName + " card to reveal and put into your hand.", true,
+                    playerName + " searches their library for a " + colorName + " card.");
+            return true;
+        }
+
+        // Every colour has been searched; the single shuffle for the whole search happens now.
+        if (deck != null) {
+            LibraryShuffleHelper.shuffleLibrary(gameData, playerId);
+        }
+        gameBroadcastService.logAndBroadcast(gameData, GameLog.text(playerName + "'s library is shuffled."));
         return false;
     }
 

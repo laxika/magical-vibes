@@ -224,6 +224,9 @@ public class StackResolutionService {
         }
 
         Permanent perm = new Permanent(card);
+        // Carry the zone the spell was cast from so an "if cast from a graveyard, it enters with …
+        // counters" as-enters replacement (e.g. Worldheart Phoenix) can gate on it during entry.
+        perm.setCastFromZone(entry.getSourceZone());
 
         // Gather Specimens (CR 614.1): if this creature would enter under an opponent's control, it
         // enters under the gatherer's control instead. Resolve up front so the log, ETB triggers, and

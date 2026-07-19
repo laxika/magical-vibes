@@ -5,6 +5,7 @@ import com.github.laxika.magicalvibes.model.action.DelayedGraveyardToBattlefield
 import com.github.laxika.magicalvibes.model.action.DelayedGraveyardToHandReturn;
 import com.github.laxika.magicalvibes.model.action.DelayedCreateToken;
 import com.github.laxika.magicalvibes.model.action.DelayedUntapPermanents;
+import com.github.laxika.magicalvibes.model.action.DamageAtNextUpkeepUnlessPays;
 import com.github.laxika.magicalvibes.model.action.DrawCardsAtNextUpkeep;
 import com.github.laxika.magicalvibes.model.action.LoseLifeAtNextDrawStepUnlessPays;
 import com.github.laxika.magicalvibes.model.action.ExileToOwnerGraveyardAtNextUpkeep;
@@ -60,6 +61,7 @@ import com.github.laxika.magicalvibes.model.condition.TwoOrMoreSpellsCastLastTur
 import com.github.laxika.magicalvibes.model.effect.AllArtifactsUpkeepSacrificeUnlessPayEffect;
 import com.github.laxika.magicalvibes.model.effect.AwardManaEffect;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
+import com.github.laxika.magicalvibes.model.effect.DamageTargetPlayerOrPlaneswalkerUnlessPaysEffect;
 import com.github.laxika.magicalvibes.model.effect.ForcedCostOrElseEffect;
 import com.github.laxika.magicalvibes.model.effect.PayManaCost;
 import com.github.laxika.magicalvibes.model.effect.SacrificeSelfEffect;
@@ -208,6 +210,35 @@ public class StepTriggerService {
                         playerName + " draws " + pending.count() + " cards from ", pending.sourceCard(), "."));
                 log.info("Game {} - {} draws {} cards from delayed upkeep trigger ({})",
                         gameData.id, playerName, pending.count(), pending.sourceCard().getName());
+            }
+        }
+
+        // Quenchable Fire: "It deals an additional N damage to that player or planeswalker at the
+        // beginning of your next upkeep step unless that player or that planeswalker's controller pays
+        // {cost} before that step." Fires only at the spell controller's own upkeep; the paying party
+        // is the targeted player, or the targeted planeswalker's controller (skip if the target is
+        // gone). Pushed onto the stack as a "you may pay; if you don't, take damage" trigger.
+        if (gameData.hasDelayedAction(DamageAtNextUpkeepUnlessPays.class)) {
+            List<DamageAtNextUpkeepUnlessPays> pending = gameData.drainDelayedActions(
+                    DamageAtNextUpkeepUnlessPays.class, a -> a.spellControllerId().equals(gameData.activePlayerId));
+            for (DamageAtNextUpkeepUnlessPays action : pending) {
+                UUID payerId = gameData.playerIds.contains(action.targetId())
+                        ? action.targetId()
+                        : gameQueryService.findPermanentController(gameData, action.targetId());
+                if (payerId == null) continue; // targeted planeswalker (or player) is gone — trigger fizzles
+
+                DamageTargetPlayerOrPlaneswalkerUnlessPaysEffect effect =
+                        new DamageTargetPlayerOrPlaneswalkerUnlessPaysEffect(action.damage(), action.manaCost());
+                gameData.stack.add(new StackEntry(
+                        StackEntryType.TRIGGERED_ABILITY, action.sourceCard(), payerId,
+                        action.sourceCard().getName() + "'s delayed ability",
+                        new ArrayList<>(List.of(effect)), action.targetId(), (UUID) null));
+
+                gameBroadcastService.logAndBroadcast(gameData, GameLog.text(action.sourceCard().getName()
+                        + "'s delayed ability triggers — pay " + action.manaCost() + " or take "
+                        + action.damage() + " damage."));
+                log.info("Game {} - {} delayed upkeep pay-or-take-damage trigger pushed for {}",
+                        gameData.id, action.sourceCard().getName(), gameData.playerIdToName.get(payerId));
             }
         }
 
@@ -2216,7 +2247,23 @@ public class StepTriggerService {
                             log.info("Game {} - {} controller end-step raid trigger pushed onto stack", gameData.id, perm.getCard().getName());
                         }
                     } else if (effect instanceof MayEffect may) {
-                        gameData.queueMayAbility(perm.getCard(), activePlayerId, may);
+                        if (perm.getCard().getTargetFilter() == null
+                                && (may.targetSpec().category().includesPermanents()
+                                    || may.targetSpec().category().includesPlayers())) {
+                            // "You may" end-step trigger whose targeting is declared by the wrapped
+                            // effect's targetSpec rather than a card-level TargetFilter (e.g. Goblin
+                            // Razerunners' "you may have this creature deal damage ... to target player or
+                            // planeswalker"). Queue for target selection first; the "you may" is honoured at
+                            // resolution. Card-level-filter targeting (e.g. Wall of Reverence) instead falls
+                            // through to queueMayAbility, which resolves its target after the may prompt.
+                            gameData.queueInteraction(new PermanentChoiceContext.EndStepTriggerTarget(
+                                    perm.getCard(), activePlayerId, new ArrayList<>(List.of(may)), perm.getId()));
+                            String logEntry = perm.getCard().getName() + "'s end step ability triggers.";
+                            gameBroadcastService.logAndBroadcast(gameData, GameLog.text(logEntry));
+                            log.info("Game {} - {} controller end-step targeting may-trigger queued", gameData.id, perm.getCard().getName());
+                        } else {
+                            gameData.queueMayAbility(perm.getCard(), activePlayerId, may);
+                        }
                     } else if (effect instanceof DestroyRandomOpponentPermanentWithCounterEffect destroyRandom) {
                         // Intervening-if: only trigger if enough opponent permanents have the counter
                         int count = 0;

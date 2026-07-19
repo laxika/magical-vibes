@@ -542,10 +542,12 @@ public class GameBroadcastService {
         Set<CardSubtype> subtypeCreatureContext = card.hasType(CardType.CREATURE) ? gameQueryService.getCardSubtypes(card, gameData, playerId) : Set.of();
         // Spell-or-ability restricted mana (e.g. Smokebraider) can pay for any spell of the matching subtype.
         Set<CardSubtype> subtypeSpellOrAbilityContext = gameQueryService.getCardSubtypes(card, gameData, playerId);
-        boolean hasRestricted = isArtifact || isMyr || hasRestrictedRedContext || kickedOnlyGreen || instantSorceryOnlyColorless
+        // Creature-spell-only mana (e.g. Ancient Ziggurat) can pay for any creature spell.
+        boolean creatureSpellOnly = card.hasType(CardType.CREATURE);
+        boolean hasRestricted = isArtifact || isMyr || hasRestrictedRedContext || kickedOnlyGreen || instantSorceryOnlyColorless || creatureSpellOnly
                 || !subtypeCreatureContext.isEmpty() || !subtypeSpellOrAbilityContext.isEmpty();
         boolean canAfford = hasRestricted
-                ? cost.canPay(pool, additionalCost, isArtifact, isMyr, hasRestrictedRedContext, kickedOnlyGreen, instantSorceryOnlyColorless, subtypeCreatureContext, subtypeSpellOrAbilityContext)
+                ? cost.canPay(pool, additionalCost, isArtifact, isMyr, hasRestrictedRedContext, kickedOnlyGreen, instantSorceryOnlyColorless, subtypeCreatureContext, subtypeSpellOrAbilityContext, creatureSpellOnly)
                 : cost.canPay(pool, additionalCost);
         if (canAfford && card.isRequiresCreatureMana()) {
             canAfford = cost.canPayCreatureOnly(pool, additionalCost);
@@ -771,12 +773,22 @@ public class GameBroadcastService {
                 continue;
             }
 
+            // A GraveyardCast may override the normal mana cost with an alternate one paid instead
+            // (e.g. Worldheart Phoenix's "by paying {W}{U}{B}{R}{G}").
+            String graveyardAlternateManaCost = isGraveyardCast
+                    ? graveyardCast.map(GraveyardCast::alternateManaCost).orElse(null)
+                    : null;
             // GraveyardCast, granted flashback, emblem flashback, granted graveyard cast, and granted
             // graveyard play use the card's mana cost
-            String manaCostStr = (isGraveyardCast || grantedFlashback || emblemFlashback || grantedHavengulCast
-                    || isGrantedGraveyardCast || isGrantedGraveyardPlay || isRetrace)
-                    ? card.getManaCost()
-                    : flashback.get().getCost(ManaCastingCost.class).map(ManaCastingCost::manaCost).orElse(null);
+            String manaCostStr;
+            if (graveyardAlternateManaCost != null) {
+                manaCostStr = graveyardAlternateManaCost;
+            } else if (isGraveyardCast || grantedFlashback || emblemFlashback || grantedHavengulCast
+                    || isGrantedGraveyardCast || isGrantedGraveyardPlay || isRetrace) {
+                manaCostStr = card.getManaCost();
+            } else {
+                manaCostStr = flashback.get().getCost(ManaCastingCost.class).map(ManaCastingCost::manaCost).orElse(null);
+            }
             if (manaCostStr == null) {
                 // Flashback with no mana cost — e.g. Group Project's "tap three creatures" cost.
                 if (flashback.isPresent() && castingCostService.canPayFlashbackTapCost(gameData, playerId, flashback.get())) {

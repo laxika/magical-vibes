@@ -174,6 +174,11 @@ untapped permanent),
 `ON_ALLY_EQUIPMENT_ENTERS_BATTLEFIELD`, `ON_OPPONENT_CREATURE_ENTERS_BATTLEFIELD`,
 `ON_OPPONENT_DEALT_NONCOMBAT_DAMAGE`, `ON_ALLY_CREATURE_COMBAT_DAMAGE_TO_PLAYER`,
 `ON_OPPONENT_CREATURE_CARD_MILLED`, `ON_ENCHANTED_PERMANENT_LEAVES_BATTLEFIELD`,
+`ON_ANOTHER_CREATURE_LEAVES_BATTLEFIELD` (Extractor Demon; global watcher — fires on every permanent
+with the slot whenever another creature leaves the battlefield by any means, checked in
+`PermanentRemovalService` via `TriggerCollectionService.checkAnotherCreatureLeavesBattlefieldTriggers`.
+Non-targeting: a "you may have target player mill two cards" is a `MayEffect`-wrapped
+`MillEffect(2, TARGET_PLAYER)` whose "may" and player target are resolved on the stack),
 `ON_SELF_MILLED`, `STATE_TRIGGERED`, `BEGINNING_OF_COMBAT_TRIGGERED`,
 `ON_OPPONENT_CREATURE_DEALT_DAMAGE`, `GRAVEYARD_ON_CONTROLLER_CASTS_SPELL`,
 `ON_CONTROLLER_LOSES_LIFE`,
@@ -204,8 +209,8 @@ ability is put on the stack (CR 603.3b / 603.6c). The entering permanent's
 spells that chose 0 targets are unaffected because they passed through cast-time selection.
 
 **Gate-conditional targeted ETBs** (`ConditionalEffect` whose condition returns
-`Condition.isEtbTriggerGate()` — Metalcraft, Morbid, Raid, ControlsAnotherPermanent; e.g. Bleak
-Coven Vampires, Morkrut Banshee, Storm Fleet Pyromancer, Dreamcaller Siren) **never** target at
+`Condition.isEtbTriggerGate()` — Metalcraft, Morbid, Raid, ControlsAnotherPermanent, ControlsPermanent; e.g. Bleak
+Coven Vampires, Morkrut Banshee, Storm Fleet Pyromancer, Dreamcaller Siren, Parasitic Strix) **never** target at
 cast time: whether the ability triggers at all depends on game state as the permanent enters
 (intervening-if, CR 603.4), so `EffectResolution.computeAllowedTargets` excludes them from the
 spell's cast-time target requirement and `EtbEffectResolver` drops the trigger entirely when the

@@ -1124,6 +1124,18 @@ public class CombatDamageService {
                     continue;
                 }
 
+                // Graveyard-targeting return ("return target card from your graveyard to your hand",
+                // e.g. Charnelhoard Wurm): choose the graveyard target as the trigger goes on the
+                // stack via the shared SpellGraveyardTargetTrigger flow (drained by AutoPassService).
+                // The trigger path allows an empty selection, so "you may return target" reads as
+                // up-to-one (decline = choose 0) with no MayEffect wrapper.
+                if (effect.targetSpec().category().isGraveyard()) {
+                    gameData.queueInteraction(new PermanentChoiceContext.SpellGraveyardTargetTrigger(
+                            creature.getCard(), attackerId, new ArrayList<>(List.of(effect))));
+                    gameBroadcastService.logAndBroadcast(gameData, GameLog.text(creature.getCard().getName() + "'s combat damage trigger fires."));
+                    continue;
+                }
+
                 String desc = creature.getCard().getName() + "'s triggered ability";
                 StackEntry se;
                 // A single capability interface reports the context the fired trigger needs (which

@@ -1983,6 +1983,79 @@ public class TriggerCollectionService {
         }
     }
 
+    /**
+     * "Whenever another creature leaves the battlefield" triggers (e.g. Extractor Demon). Called from
+     * every leave-the-battlefield path in {@link com.github.laxika.magicalvibes.service.battlefield.PermanentRemovalService}
+     * (graveyard, hand, exile, library) after the permanent has been removed. Global watcher: fires on
+     * every permanent with {@link EffectSlot#ON_ANOTHER_CREATURE_LEAVES_BATTLEFIELD}, on any battlefield,
+     * except the leaving creature itself ("another"). No-op unless the leaving permanent was a creature
+     * (last-known information, captured before removal). Queues a non-targeting triggered ability whose
+     * {@code sourcePermanentId} is the watching permanent; any player targeting for a wrapped
+     * {@code MayEffect} happens at resolution.
+     */
+    public void checkAnotherCreatureLeavesBattlefieldTriggers(GameData gameData, Permanent leavingPermanent, boolean wasCreature) {
+        if (!wasCreature) return;
+        UUID leavingId = leavingPermanent.getId();
+
+        gameData.forEachPermanent((ownerId, perm) -> {
+            if (perm.getId().equals(leavingId)) return;
+            if (perm.isLosesAllAbilitiesUntilEndOfTurn()) return;
+            for (CardEffect effect : perm.getCard().getEffects(EffectSlot.ON_ANOTHER_CREATURE_LEAVES_BATTLEFIELD)) {
+                gameData.enqueueTrigger(new StackEntry(
+                        StackEntryType.TRIGGERED_ABILITY,
+                        perm.getCard(),
+                        ownerId,
+                        perm.getCard().getName() + "'s ability",
+                        new ArrayList<>(List.of(effect)),
+                        null,
+                        perm.getId()
+                ));
+                gameBroadcastService.logAndBroadcast(gameData, GameLog.text(perm.getCard().getName() + "'s ability triggers."));
+                log.info("Game {} - {} triggers on another creature leaving the battlefield ({})",
+                        gameData.id, perm.getCard().getName(), leavingPermanent.getCard().getName());
+            }
+        });
+    }
+
+    /**
+     * "Whenever another artifact you control leaves the battlefield" triggers (e.g. Sludge Strider).
+     * Called from every leave-the-battlefield path in {@link com.github.laxika.magicalvibes.service.battlefield.PermanentRemovalService}
+     * (graveyard, hand, exile, library) after the permanent has been removed. Controller-scoped
+     * watcher: fires only on permanents on the leaving artifact's controller's battlefield with
+     * {@link EffectSlot#ON_ANOTHER_ARTIFACT_LEAVES_BATTLEFIELD}, except the leaving artifact itself
+     * ("another"). No-op unless the leaving permanent was an artifact (last-known information, read
+     * off the permanent object which is unaffected by removal). Queues a non-targeting triggered
+     * ability whose {@code sourcePermanentId} is the watching permanent; any player targeting for a
+     * wrapped {@code MayPayManaEffect} happens at resolution.
+     */
+    public void checkAnotherArtifactLeavesBattlefieldTriggers(GameData gameData, Permanent leavingPermanent, UUID controllerId) {
+        if (controllerId == null) return;
+        if (!gameQueryService.isArtifact(leavingPermanent)) return;
+        UUID leavingId = leavingPermanent.getId();
+
+        List<Permanent> battlefield = gameData.playerBattlefields.get(controllerId);
+        if (battlefield == null) return;
+
+        for (Permanent perm : battlefield) {
+            if (perm.getId().equals(leavingId)) continue;
+            if (perm.isLosesAllAbilitiesUntilEndOfTurn()) continue;
+            for (CardEffect effect : perm.getCard().getEffects(EffectSlot.ON_ANOTHER_ARTIFACT_LEAVES_BATTLEFIELD)) {
+                gameData.enqueueTrigger(new StackEntry(
+                        StackEntryType.TRIGGERED_ABILITY,
+                        perm.getCard(),
+                        controllerId,
+                        perm.getCard().getName() + "'s ability",
+                        new ArrayList<>(List.of(effect)),
+                        null,
+                        perm.getId()
+                ));
+                gameBroadcastService.logAndBroadcast(gameData, GameLog.text(perm.getCard().getName() + "'s ability triggers."));
+                log.info("Game {} - {} triggers on another artifact leaving the battlefield ({})",
+                        gameData.id, perm.getCard().getName(), leavingPermanent.getCard().getName());
+            }
+        }
+    }
+
     public void checkAllyAuraOrEquipmentPutIntoGraveyardTriggers(GameData gameData, Card dyingCard, UUID controllerId) {
         List<Permanent> battlefield = gameData.playerBattlefields.get(controllerId);
         if (battlefield == null) return;

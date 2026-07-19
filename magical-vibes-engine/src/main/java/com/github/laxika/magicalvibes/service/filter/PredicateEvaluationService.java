@@ -45,11 +45,13 @@ import com.github.laxika.magicalvibes.model.filter.PermanentColorInPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentControlledBySourceControllerPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentControllerControlsPermanentPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentDealtDamageThisTurnPredicate;
+import com.github.laxika.magicalvibes.model.filter.PermanentDealtDamageToSourceControllerThisTurnPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentHasAnySubtypePredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentHasCountersPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentHasGreatestManaValueAmongAllCreaturesPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentHasGreatestPowerAmongControlledCreaturesPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentHasKeywordPredicate;
+import com.github.laxika.magicalvibes.model.filter.PermanentHasLeastPowerAmongAllCreaturesPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentHasSameNameAsSourcePredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentHasSubtypePredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentHasSupertypePredicate;
@@ -546,6 +548,7 @@ public class PredicateEvaluationService {
                         case WISH -> permanent.getCounterCount(CounterType.WISH) > 0;
                         case LORE -> permanent.getCounterCount(CounterType.LORE) > 0;
                         case AIM -> permanent.getCounterCount(CounterType.AIM) > 0;
+                        case BRIBERY -> permanent.getCounterCount(CounterType.BRIBERY) > 0;
                         case ANY -> permanent.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE) > 0
                                 || permanent.getCounterCount(CounterType.MINUS_ONE_MINUS_ONE) > 0
                                 || permanent.getCounterCount(CounterType.CHARGE) > 0
@@ -555,15 +558,27 @@ public class PredicateEvaluationService {
                                 || permanent.getCounterCount(CounterType.STUDY) > 0
                                 || permanent.getCounterCount(CounterType.WISH) > 0
                                 || permanent.getCounterCount(CounterType.LORE) > 0
-                                || permanent.getCounterCount(CounterType.AIM) > 0;
+                                || permanent.getCounterCount(CounterType.AIM) > 0
+                                || permanent.getCounterCount(CounterType.BRIBERY) > 0;
                         default -> false;
                     };
             case PermanentDealtDamageThisTurnPredicate ignored ->
                     gameData != null && gameData.permanentsDealtDamageThisTurn.contains(permanent.getId());
+            case PermanentDealtDamageToSourceControllerThisTurnPredicate ignored -> {
+                if (sourceControllerId == null || gameData == null) {
+                    yield false;
+                }
+                Set<UUID> combatVictims = gameData.combatDamageToPlayersThisTurn.get(permanent.getId());
+                Set<UUID> noncombatVictims = gameData.noncombatDamageToPlayersThisTurn.get(permanent.getId());
+                yield (combatVictims != null && combatVictims.contains(sourceControllerId))
+                        || (noncombatVictims != null && noncombatVictims.contains(sourceControllerId));
+            }
             case PermanentTruePredicate ignored ->
                     true;
             case PermanentHasGreatestManaValueAmongAllCreaturesPredicate ignored ->
                     gameQueryService.hasGreatestManaValueAmongAllCreatures(gameData, permanent);
+            case PermanentHasLeastPowerAmongAllCreaturesPredicate ignored ->
+                    gameQueryService.hasLeastPowerAmongAllCreatures(gameData, permanent);
             case PermanentHasGreatestPowerAmongControlledCreaturesPredicate ignored -> {
                 if (gameData == null || sourceControllerId == null) yield false;
                 List<Permanent> controllerBf = gameData.playerBattlefields.get(sourceControllerId);

@@ -11,6 +11,7 @@ import com.github.laxika.magicalvibes.model.LibrarySearchDestination;
 import com.github.laxika.magicalvibes.model.LibrarySearchFollowUp;
 import com.github.laxika.magicalvibes.model.LibrarySearchParams;
 import com.github.laxika.magicalvibes.model.Player;
+import com.github.laxika.magicalvibes.model.StackEntry;
 import com.github.laxika.magicalvibes.networking.SessionManager;
 import com.github.laxika.magicalvibes.networking.model.CardView;
 import com.github.laxika.magicalvibes.networking.service.CardViewFactory;
@@ -304,6 +305,65 @@ class LibraryChoiceHandlerServiceTest {
             assertThat(gd.interaction.activeInteraction(PendingInteraction.LibrarySearch.class).params().cards()).hasSize(2);
             assertThat(gd.interaction.activeInteraction(PendingInteraction.LibrarySearch.class).params().cards())
                     .allMatch(c -> c.hasType(CardType.LAND) && c.getSupertypes().contains(CardSupertype.BASIC));
+        }
+    }
+
+    // =========================================================================
+    // handleLibraryCardChosen — resumes trailing spell effects (Exploding Borders)
+    // =========================================================================
+
+    @Nested
+    @DisplayName("handleLibraryCardChosen resumes remaining effects on the paused spell")
+    class ResumesTrailingSpellEffects {
+
+        @Test
+        @DisplayName("Successful pick resumes the paused stack entry's remaining effects, then auto-passes")
+        void successfulPickResumesRemainingEffects() {
+            stubCardViewFactory();
+            Card plains = createBasicLand("Plains");
+            gd.playerDecks.get(player1Id).add(plains);
+            beginBasicLandBattlefieldSearch(player1Id, List.of(plains));
+
+            StackEntry paused = mock(StackEntry.class);
+            gd.pendingEffectResolutionEntry = paused;
+            gd.pendingEffectResolutionIndex = 1;
+
+            service.handleLibraryCardChosen(gd, player1, 0);
+
+            verify(effectResolutionService).resolveEffectsFrom(gd, paused, 1);
+            verify(turnProgressionService).resolveAutoPass(gd);
+        }
+
+        @Test
+        @DisplayName("Fail-to-find still resumes the paused stack entry's remaining effects")
+        void failToFindResumesRemainingEffects() {
+            stubCardViewFactory();
+            Card plains = createBasicLand("Plains");
+            gd.playerDecks.get(player1Id).add(plains);
+            beginBasicLandBattlefieldSearch(player1Id, List.of(plains));
+
+            StackEntry paused = mock(StackEntry.class);
+            gd.pendingEffectResolutionEntry = paused;
+            gd.pendingEffectResolutionIndex = 1;
+
+            service.handleLibraryCardChosen(gd, player1, -1);
+
+            verify(effectResolutionService).resolveEffectsFrom(gd, paused, 1);
+            verify(turnProgressionService).resolveAutoPass(gd);
+        }
+
+        @Test
+        @DisplayName("Search-only spell (no pending entry) does not attempt a resume")
+        void noPendingEntryDoesNotResume() {
+            stubCardViewFactory();
+            Card plains = createBasicLand("Plains");
+            gd.playerDecks.get(player1Id).add(plains);
+            beginBasicLandBattlefieldSearch(player1Id, List.of(plains));
+
+            service.handleLibraryCardChosen(gd, player1, 0);
+
+            verify(effectResolutionService, never()).resolveEffectsFrom(any(), any(), anyInt());
+            verify(turnProgressionService).resolveAutoPass(gd);
         }
     }
 

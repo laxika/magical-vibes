@@ -4,6 +4,7 @@ import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardSubtype;
 import com.github.laxika.magicalvibes.model.CardType;
 import com.github.laxika.magicalvibes.model.GameData;
+import com.github.laxika.magicalvibes.model.Keyword;
 import com.github.laxika.magicalvibes.model.ManaCost;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.amount.AttachmentsOnSource;
@@ -24,6 +25,7 @@ import com.github.laxika.magicalvibes.model.amount.CountersOnSource;
 import com.github.laxika.magicalvibes.model.amount.CreatureDeathsThisTurn;
 import com.github.laxika.magicalvibes.model.amount.CreaturesBlockingSource;
 import com.github.laxika.magicalvibes.model.amount.CreaturesDevoured;
+import com.github.laxika.magicalvibes.model.amount.DevouredCreaturesOfSubtype;
 import com.github.laxika.magicalvibes.model.amount.DamageDealtToControllerThisTurn;
 import com.github.laxika.magicalvibes.model.amount.DamageDealtToOpponentsThisTurn;
 import com.github.laxika.magicalvibes.model.amount.CardsDiscardedByTargetPlayerThisTurn;
@@ -138,7 +140,9 @@ public class AmountEvaluationService {
             case CountersOnSource c ->
                     ctx.sourcePermanent() == null ? 0 : ctx.sourcePermanent().getCounterCount(c.counterType());
             case CreaturesDevoured ignored ->
-                    ctx.sourcePermanent() == null ? 0 : ctx.sourcePermanent().getDevouredCount();
+                    ctx.sourcePermanent() == null ? 0 : ctx.sourcePermanent().getDevouredCreatures().size();
+            case DevouredCreaturesOfSubtype d ->
+                    countDevouredCreaturesOfSubtype(ctx, d.subtype());
             case CountersOnLinkedPermanent c ->
                     countCountersOnLinkedPermanent(gameData, c);
             case ControllerLifeTotal ignored ->
@@ -576,6 +580,19 @@ public class AmountEvaluationService {
             }
         }
         return total;
+    }
+
+    /**
+     * Number of creatures the source devoured (CR 702.82) that had the given subtype. A devoured
+     * Changeling counts as every creature type, so it matches any subtype. Reads the intrinsic card
+     * subtypes/keywords snapshotted at devour time (see {@code Permanent.recordDevouredCreature}).
+     */
+    private int countDevouredCreaturesOfSubtype(AmountContext ctx, CardSubtype subtype) {
+        if (ctx.sourcePermanent() == null) return 0;
+        return (int) ctx.sourcePermanent().getDevouredCreatures().stream()
+                .filter(card -> card.getSubtypes().contains(subtype)
+                        || card.getKeywords().contains(Keyword.CHANGELING))
+                .count();
     }
 
     private int countLandsMatchingImprintedName(GameData gameData, AmountContext ctx) {

@@ -38,6 +38,7 @@ import com.github.laxika.magicalvibes.model.condition.ControlledCreaturesTotalPo
 import com.github.laxika.magicalvibes.model.condition.CreatureAttackingController;
 import com.github.laxika.magicalvibes.model.condition.DefendingPlayerControlsPermanent;
 import com.github.laxika.magicalvibes.model.condition.DefendingPlayerPoisoned;
+import com.github.laxika.magicalvibes.model.condition.DevouredCreature;
 import com.github.laxika.magicalvibes.model.condition.DidntAttack;
 import com.github.laxika.magicalvibes.model.condition.DidntGainLifeThisTurn;
 import com.github.laxika.magicalvibes.model.condition.Enchanted;
@@ -76,6 +77,7 @@ import com.github.laxika.magicalvibes.model.condition.SourceHasSubtype;
 import com.github.laxika.magicalvibes.model.condition.SourceUntapped;
 import com.github.laxika.magicalvibes.model.condition.ColorSpentToCast;
 import com.github.laxika.magicalvibes.model.condition.SpellManaSpentAtLeast;
+import com.github.laxika.magicalvibes.model.condition.SpellXAtLeast;
 import com.github.laxika.magicalvibes.model.condition.TargetPermanentMatches;
 import com.github.laxika.magicalvibes.model.condition.TargetSpellMatches;
 import com.github.laxika.magicalvibes.model.condition.TopCardOfLibraryColor;
@@ -242,6 +244,8 @@ public class ConditionEvaluationService {
                             gameData, ctx.controllerId(), ctx.sourceCard(), c.filter());
             case SpellManaSpentAtLeast c ->
                     ctx.xValue() >= c.minMana();
+            case SpellXAtLeast c ->
+                    ctx.xValue() >= c.minX();
             case ColorSpentToCast c ->
                     ctx.sourceCard() != null
                             && gameData.getSpellCastColorsSpent(ctx.sourceCard().getId()).contains(c.color());
@@ -270,6 +274,10 @@ public class ConditionEvaluationService {
             case SourceCounterThreshold c -> {
                 Permanent source = sourcePermanent(gameData, ctx);
                 yield source != null && source.getCounterCount(c.counterType()) >= c.threshold();
+            }
+            case DevouredCreature ignored -> {
+                Permanent source = sourcePermanent(gameData, ctx);
+                yield source != null && !source.getDevouredCreatures().isEmpty();
             }
             case SourceUntapped ignored -> {
                 Permanent source = sourcePermanent(gameData, ctx);

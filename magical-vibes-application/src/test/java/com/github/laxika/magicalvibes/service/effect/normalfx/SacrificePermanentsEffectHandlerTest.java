@@ -28,6 +28,7 @@ import com.github.laxika.magicalvibes.model.effect.SacrificeRecipient;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsCreaturePredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsLandPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentPredicate;
+import com.github.laxika.magicalvibes.model.filter.PermanentTruePredicate;
 import com.github.laxika.magicalvibes.service.DamagePreventionService;
 import com.github.laxika.magicalvibes.service.GameBroadcastService;
 import com.github.laxika.magicalvibes.service.GameOutcomeService;
@@ -346,6 +347,61 @@ class SacrificePermanentsEffectHandlerTest {
 
             verify(playerInputService).beginMultiPermanentChoice(eq(gd), eq(player2Id), any(), eq(1),
                     any(MultiPermanentChoiceContext.ForcedSacrifice.class), anyString());
+        }
+    }
+
+    // ===================================================================================
+    // TARGET_PLAYER_OR_PERMANENT_CONTROLLER — piggybacks on a companion player-or-planeswalker
+    // damage effect's targetId (Nicol Bolas, Planeswalker -9)
+    // ===================================================================================
+
+    @Nested
+    class TargetPlayerOrPermanentController {
+
+        private SacrificePermanentsEffect anyPermanentSac() {
+            return new SacrificePermanentsEffect(1, new PermanentTruePredicate(),
+                    SacrificeRecipient.TARGET_PLAYER_OR_PERMANENT_CONTROLLER);
+        }
+
+        @Test
+        @DisplayName("When targetId is a player, that player sacrifices")
+        void targetedPlayerSacrifices() {
+            Permanent forest = addPermanent(player2Id, "Forest", CardType.LAND);
+            stubCount(1);
+            when(predicateEvaluationService.matchesPermanentPredicate(eq(gd), eq(forest),
+                    any(PermanentPredicate.class))).thenReturn(true);
+
+            handler.resolve(gd, entry(player1Id, player2Id), anyPermanentSac());
+
+            verify(permanentRemovalService).removePermanentToGraveyard(gd, forest);
+            verify(gameBroadcastService).logAndBroadcast(gd, GameLog.text("Player2 sacrifices Forest."));
+        }
+
+        @Test
+        @DisplayName("When targetId is a planeswalker, its controller sacrifices")
+        void targetedPlaneswalkerControllerSacrifices() {
+            UUID planeswalkerId = UUID.randomUUID();
+            when(gameQueryService.findPermanentController(gd, planeswalkerId)).thenReturn(player2Id);
+            Permanent forest = addPermanent(player2Id, "Forest", CardType.LAND);
+            stubCount(1);
+            when(predicateEvaluationService.matchesPermanentPredicate(eq(gd), eq(forest),
+                    any(PermanentPredicate.class))).thenReturn(true);
+
+            handler.resolve(gd, entry(player1Id, planeswalkerId), anyPermanentSac());
+
+            verify(permanentRemovalService).removePermanentToGraveyard(gd, forest);
+            verify(gameBroadcastService).logAndBroadcast(gd, GameLog.text("Player2 sacrifices Forest."));
+        }
+
+        @Test
+        @DisplayName("No effect when the targeted planeswalker has no controller")
+        void noEffectWhenControllerMissing() {
+            UUID planeswalkerId = UUID.randomUUID();
+            when(gameQueryService.findPermanentController(gd, planeswalkerId)).thenReturn(null);
+
+            handler.resolve(gd, entry(player1Id, planeswalkerId), anyPermanentSac());
+
+            verify(permanentRemovalService, never()).removePermanentToGraveyard(any(), any());
         }
     }
 }

@@ -84,7 +84,11 @@ class CardEffectTargetingConsistencyTest {
             "TargetPlayerCantPlayLandsThisTurnEffect",
             // Piggyback: rides on the counterspell's existing spell target (Dream Fracture) — reads
             // the targeted spell from entry.getTargetId(); never contributes a chosen player target.
-            "TargetSpellControllerDrawsCardEffect"
+            "TargetSpellControllerDrawsCardEffect",
+            // Piggyback: rides on the ability's permanent target chosen for the sibling counter effect
+            // (Gwafa Hazid, Profiteer) — reads the targeted permanent from entry.getTargetId(); never
+            // contributes a chosen player target.
+            "TargetPermanentControllerDrawsCardEffect"
     );
 
     @Test

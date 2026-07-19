@@ -1064,6 +1064,9 @@ public class MultiPermanentChoiceHandlerService {
         for (UUID permId : permanentIds) {
             Permanent perm = gameQueryService.findPermanentById(gameData, permId);
             if (perm != null) {
+                if (entering != null) {
+                    entering.recordDevouredCreature(perm.getCard());
+                }
                 destructionSupport.sacrificeAndLog(gameData, perm, playerId);
                 devoured++;
             }
@@ -1071,7 +1074,6 @@ public class MultiPermanentChoiceHandlerService {
         permanentRemovalService.removeOrphanedAuras(gameData);
 
         if (entering != null && devoured > 0) {
-            entering.setDevouredCount(devoured);
             if (!gameQueryService.cantHaveCounters(gameData, entering)) {
                 int added = context.multiplier() * devoured;
                 entering.setCounterCount(CounterType.PLUS_ONE_PLUS_ONE,

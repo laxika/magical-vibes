@@ -16,6 +16,7 @@ import com.github.laxika.magicalvibes.model.StackEntryType;
 import com.github.laxika.magicalvibes.model.Zone;
 import com.github.laxika.magicalvibes.model.CardSubtype;
 import com.github.laxika.magicalvibes.model.effect.AwardAnyColorChosenSubtypeCreatureManaEffect;
+import com.github.laxika.magicalvibes.model.effect.AwardAnyColorCreatureSpellManaEffect;
 import com.github.laxika.magicalvibes.model.effect.AwardAnyColorSubtypeSpellOrAbilityManaEffect;
 import com.github.laxika.magicalvibes.model.effect.AwardAnyColorManaEffect;
 import com.github.laxika.magicalvibes.model.effect.AwardAnyOneColorInstantSorceryOnlyManaEffect;
@@ -472,6 +473,12 @@ public class ActivatedAbilityExecutionService {
                             playerId, null, null, choiceContext, colors, "Choose a color of mana to add."));
                     log.info("Game {} - Awaiting {} to choose a mana color (restricted to {} creatures)", gameData.id, player.getUsername(), chosenSubtype);
                 }
+            } else if (effect instanceof AwardAnyColorCreatureSpellManaEffect) {
+                ChoiceContext.ManaColorChoice choiceContext = ChoiceContext.ManaColorChoice.creatureSpellOnly(playerId, manaMultiplier);
+                List<String> colors = List.of("WHITE", "BLUE", "BLACK", "RED", "GREEN");
+                interactionHandlerRegistry.begin(gameData, new PendingInteraction.ColorChoice(
+                        playerId, null, null, choiceContext, colors, "Choose a color of mana to add."));
+                log.info("Game {} - Awaiting {} to choose a mana color (creature spells only)", gameData.id, player.getUsername());
             } else if (effect instanceof AwardAnyColorSubtypeSpellOrAbilityManaEffect soa) {
                 ChoiceContext.ManaColorChoice choiceContext =
                         ChoiceContext.ManaColorChoice.subtypeSpellOrAbility(playerId, soa.amount() * manaMultiplier, soa.subtype());
@@ -654,6 +661,7 @@ public class ActivatedAbilityExecutionService {
                     }
                     if (effectiveDamage > 0) {
                         gameData.recordDamageToPlayer(playerId, effectiveDamage);
+                        gameData.recordNoncombatDamageSourceToPlayer(permanent.getId(), playerId);
                     }
                 }
             } else if (effect instanceof DealDamageToPlayersEffect dmg && dmg.recipient() == DamageRecipient.EACH_OPPONENT) {
@@ -726,6 +734,7 @@ public class ActivatedAbilityExecutionService {
             }
             if (effectiveDamage > 0) {
                 gameData.recordDamageToPlayer(playerId, effectiveDamage);
+                gameData.recordNoncombatDamageSourceToPlayer(permanent.getId(), playerId);
             }
         }
     }

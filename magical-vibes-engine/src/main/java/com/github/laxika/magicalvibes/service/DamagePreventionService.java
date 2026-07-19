@@ -24,6 +24,7 @@ import com.github.laxika.magicalvibes.model.effect.PreventDamageToSelfFromCreatu
 import com.github.laxika.magicalvibes.model.effect.PreventDamageToControllerPerClericEffect;
 import com.github.laxika.magicalvibes.model.effect.PreventFixedDamagePerSourceToControllerEffect;
 import com.github.laxika.magicalvibes.model.effect.PreventNoncombatDamageToControllerAndGainLifeEffect;
+import com.github.laxika.magicalvibes.model.effect.PreventNoncombatDamageToCreaturesYouControlEffect;
 import com.github.laxika.magicalvibes.model.effect.PreventDamageToSelfAndSourceControllerDrawsEffect;
 import com.github.laxika.magicalvibes.model.CardSubtype;
 import com.github.laxika.magicalvibes.model.effect.PreventSpellDamageToOpponentAndCreateTokensEffect;
@@ -162,6 +163,8 @@ public class DamagePreventionService {
             if (isCombatDamage && gameQueryService.hasAuraWithEffect(gameData, permanent, PreventAllCombatDamageToAndByEnchantedCreatureEffect.class)) return 0;
             // Dolmen Gate: "Prevent all combat damage that would be dealt to attacking creatures you control."
             if (isCombatDamage && permanent.isAttacking() && hasAttackingCreatureCombatDamagePreventionSource(gameData, permanent)) return 0;
+            // Mark of Asylum: "Prevent all noncombat damage that would be dealt to creatures you control."
+            if (!isCombatDamage && hasNoncombatCreatureDamagePreventionSource(gameData, permanent)) return 0;
             // Uncle Istvan: "Prevent all damage that would be dealt to this creature by creatures." Combat
             // damage is always dealt by a creature (CR 510.1c), so all combat damage to such a permanent is
             // prevented. Noncombat creature-sourced damage is handled in DamageSupport.dealCreatureDamage,
@@ -239,6 +242,21 @@ public class DamagePreventionService {
         return battlefield.stream()
                 .flatMap(p -> p.getCard().getEffects(EffectSlot.STATIC).stream())
                 .anyMatch(e -> e instanceof PreventCombatDamageToAttackingCreaturesYouControlEffect);
+    }
+
+    /**
+     * Mark of Asylum-style protection: returns true when the given creature's controller controls a
+     * permanent carrying {@link PreventNoncombatDamageToCreaturesYouControlEffect}. Noncombat damage
+     * dealt to such a creature is fully prevented by the caller (combat damage is unaffected).
+     */
+    private boolean hasNoncombatCreatureDamagePreventionSource(GameData gameData, Permanent creature) {
+        UUID controllerId = gameQueryService.findPermanentController(gameData, creature.getId());
+        if (controllerId == null) return false;
+        List<Permanent> battlefield = gameData.playerBattlefields.get(controllerId);
+        if (battlefield == null) return false;
+        return battlefield.stream()
+                .flatMap(p -> p.getCard().getEffects(EffectSlot.STATIC).stream())
+                .anyMatch(e -> e instanceof PreventNoncombatDamageToCreaturesYouControlEffect);
     }
 
     /**

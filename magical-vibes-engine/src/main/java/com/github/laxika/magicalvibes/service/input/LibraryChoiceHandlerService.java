@@ -298,7 +298,8 @@ public class LibraryChoiceHandlerService {
             if (librarySearchSupport.startNextEachPlayerCreatureToHandSearch(gameData, followUp)) return;
             if (librarySearchSupport.startNextEachPlayerCreatureToBattlefieldSearch(gameData, followUp)) return;
             if (librarySearchSupport.startNextSameNamePick(gameData, playerId, followUp)) return;
-            turnProgressionService.resolveAutoPass(gameData);
+            if (librarySearchSupport.startNextColorToHandPick(gameData, playerId, followUp)) return;
+            resumeRemainingEffectsThenAutoPass(gameData);
             return;
         }
 
@@ -724,6 +725,23 @@ public class LibraryChoiceHandlerService {
         if (librarySearchSupport.startNextEachPlayerCreatureToHandSearch(gameData, followUp)) return;
         if (librarySearchSupport.startNextEachPlayerCreatureToBattlefieldSearch(gameData, followUp)) return;
         if (librarySearchSupport.startNextSameNamePick(gameData, playerId, followUp)) return;
+        if (librarySearchSupport.startNextColorToHandPick(gameData, playerId, followUp)) return;
+        resumeRemainingEffectsThenAutoPass(gameData);
+    }
+
+    /**
+     * After a library search resolves, continue any effects that still remain on the same
+     * spell/ability which paused for this search — e.g. Exploding Borders ("search for a basic
+     * land, put it onto the battlefield tapped, then deal domain damage"). Mirrors the resume in
+     * {@code ScryInteractionHandler} / {@code LibraryReorderInteractionHandler}; a no-op when the
+     * search was the last (or only) effect. Then hands control back via auto-pass.
+     */
+    private void resumeRemainingEffectsThenAutoPass(GameData gameData) {
+        if (gameData.pendingEffectResolutionEntry != null) {
+            effectResolutionService.resolveEffectsFrom(gameData,
+                    gameData.pendingEffectResolutionEntry,
+                    gameData.pendingEffectResolutionIndex);
+        }
         turnProgressionService.resolveAutoPass(gameData);
     }
     /**

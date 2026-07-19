@@ -523,6 +523,7 @@ public class DamageSupport {
             if (effectiveDamage > 0) {
                 accumulateSourceDamageForReflection(gameData, source, entry.getControllerId(), effectiveDamage);
                 gameData.recordDamageToPlayer(playerId, effectiveDamage);
+                gameData.recordNoncombatDamageSourceToPlayer(entry.getSourcePermanentId(), playerId);
                 triggerCollectionService.checkDamageDealtToControllerTriggers(gameData, playerId, entry.getSourcePermanentId(), false);
                 triggerCollectionService.checkEnchantedCreatureDealtDamageToControllerReflectTriggers(gameData, playerId, entry.getSourcePermanentId(), effectiveDamage);
                 triggerCollectionService.checkControllerDealtDamageTriggers(gameData, playerId, effectiveDamage);

@@ -14,11 +14,11 @@ public sealed interface ChoiceContext {
 
     record ManaColorChoice(UUID playerId, boolean fromCreature, int amount, CardSubtype restrictedToCreatureSubtype,
                            boolean flashbackOnly, boolean instantSorceryOnly, boolean spellOrAbilitySubtype,
-                           List<ManaColor> fixedColorOptions) implements ChoiceContext {
+                           List<ManaColor> fixedColorOptions, boolean creatureSpellOnly) implements ChoiceContext {
 
         public ManaColorChoice(UUID playerId, boolean fromCreature, int amount, CardSubtype restrictedToCreatureSubtype,
                                boolean flashbackOnly, boolean instantSorceryOnly, boolean spellOrAbilitySubtype) {
-            this(playerId, fromCreature, amount, restrictedToCreatureSubtype, flashbackOnly, instantSorceryOnly, spellOrAbilitySubtype, null);
+            this(playerId, fromCreature, amount, restrictedToCreatureSubtype, flashbackOnly, instantSorceryOnly, spellOrAbilitySubtype, null, false);
         }
 
         public ManaColorChoice(UUID playerId, boolean fromCreature) {
@@ -61,7 +61,16 @@ public sealed interface ChoiceContext {
          * from {@code colors}, re-prompting until all {@code amount} have been chosen.
          */
         public static ManaColorChoice fixedColorCombination(UUID playerId, boolean fromCreature, int amount, List<ManaColor> colors) {
-            return new ManaColorChoice(playerId, fromCreature, amount, null, false, false, false, colors);
+            return new ManaColorChoice(playerId, fromCreature, amount, null, false, false, false, colors, false);
+        }
+
+        /**
+         * "Add N mana of any one color, spendable only to cast a creature spell of any type"
+         * (Ancient Ziggurat). The color is chosen at activation; the mana routes to the pool's
+         * creature-spell-only bucket.
+         */
+        public static ManaColorChoice creatureSpellOnly(UUID playerId, int amount) {
+            return new ManaColorChoice(playerId, false, amount, null, false, false, false, null, true);
         }
     }
 

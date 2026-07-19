@@ -230,6 +230,7 @@ public class TurnProgressionService {
         gameData.lifeGainedThisTurn.clear();
         gameData.lifeLostThisTurn.clear();
         gameData.combatDamageToPlayersThisTurn.clear();
+        gameData.noncombatDamageToPlayersThisTurn.clear();
         gameData.clearDelayedActions(DelayedCombatDamageLoot.class);
         gameData.clearDelayedActions(DelayedCombatDamageReflection.class);
         gameData.combatDamageSourceSubtypesThisTurn.clear();

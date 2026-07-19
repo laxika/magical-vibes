@@ -46,6 +46,7 @@ abstract class AbstractDamageHandlerTest {
     @Mock protected PermanentRemovalService permanentRemovalService;
     @Mock protected TriggerCollectionService triggerCollectionService;
     @Mock protected LifeSupport lifeSupport;
+    @Mock protected com.github.laxika.magicalvibes.service.effect.ConditionEvaluationService conditionEvaluationService;
 
     @InjectMocks protected DamageSupport damageSupport;
 

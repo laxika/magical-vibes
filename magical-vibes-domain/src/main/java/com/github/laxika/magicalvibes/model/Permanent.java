@@ -63,6 +63,9 @@ public class Permanent {
     @Setter private UUID chosenPermanentId;
     @Setter private boolean cantBeBlocked;
     @Setter private boolean cantBlockThisTurn;
+    /** When true, this creature must be declared as a blocker this turn if it can block any attacker
+     *  (general "blocks this turn if able", e.g. Nacatl Hunt-Pride). Cleared at end of turn. */
+    @Setter private boolean mustBlockThisTurnIfAble;
     @Setter private boolean mustAttackThisTurn;
     /** When non-null, this creature must attack this specific player (not their planeswalkers). Cleared at end of turn. */
     @Setter private UUID mustAttackTargetId;
@@ -227,9 +230,13 @@ public class Permanent {
     @Setter private boolean evoked;
     /** Whether this permanent was cast for its prowl cost (gates "if its prowl cost was paid" ETB triggers). */
     @Setter private boolean prowl;
-    /** Number of creatures sacrificed to this permanent's devour ability as it entered (CR 702.82),
-     *  read by {@code CreaturesDevoured} for "for each creature it devoured" ETB effects (Tar Fiend). */
-    @Setter private int devouredCount;
+    /** Zone the spell that produced this permanent was cast from, when known (gates "if cast from a
+     *  graveyard, it enters with … counters" as-enters replacements — e.g. Worldheart Phoenix). */
+    @Setter private Zone castFromZone;
+    /** Cards of the creatures sacrificed to this permanent's devour ability as it entered (CR 702.82).
+     *  Read by {@code CreaturesDevoured} ("for each creature it devoured" — Tar Fiend) via its size and by
+     *  {@code DevouredCreaturesOfSubtype} ("twice the number of Goblins it devoured" — Voracious Dragon). */
+    private final List<Card> devouredCreatures = new ArrayList<>();
     /** Activated abilities temporarily granted by one-shot effects until end of turn
      *  (e.g. Navigator's Compass adding a basic land mana ability to a land).
      *  Cleared every turn by {@link #resetModifiers()}. */
@@ -333,6 +340,7 @@ public class Permanent {
         this.chosenPermanentId = source.chosenPermanentId;
         this.cantBeBlocked = source.cantBeBlocked;
         this.cantBlockThisTurn = source.cantBlockThisTurn;
+        this.mustBlockThisTurnIfAble = source.mustBlockThisTurnIfAble;
         this.mustAttackThisTurn = source.mustAttackThisTurn;
         this.mustAttackTargetId = source.mustAttackTargetId;
         this.mustBeBlockedThisTurn = source.mustBeBlockedThisTurn;
@@ -395,7 +403,8 @@ public class Permanent {
         this.kicked = source.kicked;
         this.evoked = source.evoked;
         this.prowl = source.prowl;
-        this.devouredCount = source.devouredCount;
+        this.castFromZone = source.castFromZone;
+        this.devouredCreatures.addAll(source.devouredCreatures);
         this.temporaryActivatedAbilities.addAll(source.temporaryActivatedAbilities);
         this.persistentGrantedActivatedAbilities.addAll(source.persistentGrantedActivatedAbilities);
         this.copyUntilEndOfTurn = source.copyUntilEndOfTurn;
@@ -493,6 +502,11 @@ public class Permanent {
 
     public void setAttackedThisTurn(boolean attackedThisTurn) {
         this.attackedThisTurn = attackedThisTurn;
+    }
+
+    /** Records a creature devoured by this permanent's devour ability as it entered (CR 702.82). */
+    public void recordDevouredCreature(Card devoured) {
+        devouredCreatures.add(devoured);
     }
 
     /**
@@ -686,6 +700,7 @@ public class Permanent {
         this.baseToughnessOverride = 0;
         this.cantBeBlocked = false;
         this.cantBlockThisTurn = false;
+        this.mustBlockThisTurnIfAble = false;
         this.mustAttackThisTurn = false;
         this.mustAttackTargetId = null;
         this.mustBeBlockedThisTurn = false;

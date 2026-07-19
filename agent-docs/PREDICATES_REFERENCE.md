@@ -72,7 +72,9 @@ These predicates need `FilterContext` with `gameData` and/or `sourceControllerId
 | `PermanentInCombatWithSourcePredicate` | `()` | creatures blocking or blocked by the source permanent | `gameData` + `sourceCardId` |
 | `PermanentHasGreatestPowerAmongControlledCreaturesPredicate` | `()` | creatures with greatest power among source controller's creatures (ties allowed) | `gameData` + `sourceControllerId` |
 | `PermanentHasGreatestManaValueAmongAllCreaturesPredicate` | `()` | creatures with greatest mana value among all creatures on the battlefield across every player (ties allowed) | `gameData` |
+| `PermanentHasLeastPowerAmongAllCreaturesPredicate` | `()` | creatures with the least effective power among all creatures on the battlefield across every player (ties allowed). Wretched Banquet | `gameData` |
 | `PermanentDealtDamageThisTurnPredicate` | `()` | permanents dealt damage this turn (evaluated against `GameData.permanentsDealtDamageThisTurn`) | `gameData` |
+| `PermanentDealtDamageToSourceControllerThisTurnPredicate` | `()` | permanents that dealt damage — combat or noncombat — to the source's controller this turn ("target creature that dealt damage to you this turn", Giltspire Avenger). Checks `GameData.combatDamageToPlayersThisTurn` + `GameData.noncombatDamageToPlayersThisTurn` for `sourceControllerId` | `gameData` + `sourceControllerId` |
 | `PermanentHasSameNameAsSourcePredicate` | `()` | permanents with same name as source (works with clones) | `gameData` + `sourceCardId` |
 | `PermanentNamedPredicate` | `(String cardName)` | permanents with the given name (exact `Card.getName()` equality); e.g. "a permanent named Guan Yu, Sainted Warrior" | none |
 

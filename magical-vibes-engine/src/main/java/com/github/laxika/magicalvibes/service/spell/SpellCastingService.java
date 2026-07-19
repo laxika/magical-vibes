@@ -119,9 +119,9 @@ public class SpellCastingService {
             SacrificePermanentCost sacrificePermanentCost
     ) {}
 
-    private record ManaRestrictionFlags(boolean isArtifact, boolean isMyr, boolean hasRestrictedRedContext, boolean kickedOnlyGreen, boolean instantSorceryOnlyColorless, Set<CardSubtype> subtypeCreatureContext, Set<CardSubtype> subtypeSpellOrAbilityContext) {
+    private record ManaRestrictionFlags(boolean isArtifact, boolean isMyr, boolean hasRestrictedRedContext, boolean kickedOnlyGreen, boolean instantSorceryOnlyColorless, Set<CardSubtype> subtypeCreatureContext, Set<CardSubtype> subtypeSpellOrAbilityContext, boolean creatureSpellOnly) {
         boolean hasRestricted() {
-            return isArtifact || isMyr || hasRestrictedRedContext || kickedOnlyGreen || instantSorceryOnlyColorless
+            return isArtifact || isMyr || hasRestrictedRedContext || kickedOnlyGreen || instantSorceryOnlyColorless || creatureSpellOnly
                     || (subtypeCreatureContext != null && !subtypeCreatureContext.isEmpty())
                     || (subtypeSpellOrAbilityContext != null && !subtypeSpellOrAbilityContext.isEmpty());
         }
@@ -431,7 +431,8 @@ public class SpellCastingService {
         // Spell-or-ability restricted mana (e.g. Smokebraider) can pay for any spell of the matching
         // subtype, so compute subtypes for every spell (Elemental spells are creatures in practice).
         Set<CardSubtype> subtypeSpellOrAbilityContext = gameQueryService.getCardSubtypes(card, gameData, playerId);
-        return new ManaRestrictionFlags(isArtifact, isMyr, hasRestrictedRedContext, kicked, instantSorceryOnlyColorless, subtypeCreatureContext, subtypeSpellOrAbilityContext);
+        boolean creatureSpellOnly = card.hasType(CardType.CREATURE);
+        return new ManaRestrictionFlags(isArtifact, isMyr, hasRestrictedRedContext, kicked, instantSorceryOnlyColorless, subtypeCreatureContext, subtypeSpellOrAbilityContext, creatureSpellOnly);
     }
 
     private StackEntryType cardTypeToStackEntryType(CardType type) {
@@ -853,7 +854,7 @@ public class SpellCastingService {
                                 throw new IllegalStateException("Not enough mana to pay for X=" + effectiveXValue);
                             }
                         } else if (flags.hasRestricted()) {
-                            if (!cost.canPay(pool, effectiveXValue + totalAdditionalCost, flags.isArtifact(), flags.isMyr(), flags.hasRestrictedRedContext(), flags.kickedOnlyGreen(), flags.instantSorceryOnlyColorless(), flags.subtypeCreatureContext(), flags.subtypeSpellOrAbilityContext())) {
+                            if (!cost.canPay(pool, effectiveXValue + totalAdditionalCost, flags.isArtifact(), flags.isMyr(), flags.hasRestrictedRedContext(), flags.kickedOnlyGreen(), flags.instantSorceryOnlyColorless(), flags.subtypeCreatureContext(), flags.subtypeSpellOrAbilityContext(), flags.creatureSpellOnly())) {
                                 throw new IllegalStateException("Not enough mana to pay for X=" + effectiveXValue);
                             }
                         } else if (!cost.canPay(pool, effectiveXValue + totalAdditionalCost)) {
@@ -2494,13 +2495,13 @@ public class SpellCastingService {
             cost.pay(pool, effectiveXValue, card.getXColorRestriction(), additionalCost);
         } else if (cost.hasX()) {
             if (flags.hasRestricted()) {
-                cost.pay(pool, effectiveXValue + additionalCost, flags.isArtifact(), flags.isMyr(), flags.hasRestrictedRedContext(), flags.kickedOnlyGreen(), flags.instantSorceryOnlyColorless(), flags.subtypeCreatureContext(), flags.subtypeSpellOrAbilityContext());
+                cost.pay(pool, effectiveXValue + additionalCost, flags.isArtifact(), flags.isMyr(), flags.hasRestrictedRedContext(), flags.kickedOnlyGreen(), flags.instantSorceryOnlyColorless(), flags.subtypeCreatureContext(), flags.subtypeSpellOrAbilityContext(), flags.creatureSpellOnly());
             } else {
                 cost.pay(pool, effectiveXValue + additionalCost);
             }
         } else {
             if (flags.hasRestricted()) {
-                cost.pay(pool, additionalCost, flags.isArtifact(), flags.isMyr(), flags.hasRestrictedRedContext(), flags.kickedOnlyGreen(), flags.instantSorceryOnlyColorless(), flags.subtypeCreatureContext(), flags.subtypeSpellOrAbilityContext());
+                cost.pay(pool, additionalCost, flags.isArtifact(), flags.isMyr(), flags.hasRestrictedRedContext(), flags.kickedOnlyGreen(), flags.instantSorceryOnlyColorless(), flags.subtypeCreatureContext(), flags.subtypeSpellOrAbilityContext(), flags.creatureSpellOnly());
             } else {
                 cost.pay(pool, additionalCost);
             }
@@ -2656,13 +2657,33 @@ public class SpellCastingService {
                                                 boolean isRetrace, int effectiveXValue, int additionalCost,
                                                 List<UUID> tapPermanentIds, Integer retraceDiscardHandCardIndex) {
         UUID playerId = player.getId();
-        boolean usesNormalManaCost = isGraveyardCast || grantedFlashback || emblemFlashback || grantedHavengulCast
+        // GraveyardCast may override the normal mana cost with an alternate one ("by paying {W}{U}{B}{R}{G}
+        // rather than paying its mana cost" — Worldheart Phoenix). When present, it is paid like a normal
+        // mana cost (no flashback mana restriction).
+        String graveyardAlternateManaCost = isGraveyardCast
+                ? graveyardCastOpt.map(GraveyardCast::alternateManaCost).orElse(null)
+                : null;
+        boolean usesNormalManaCost = (isGraveyardCast && graveyardAlternateManaCost == null)
+                || grantedFlashback || emblemFlashback || grantedHavengulCast
                 || isGrantedGraveyardCast || isGrantedGraveyardPlay || isRetrace;
         int manaSpent = 0;
 
         // Retrace (CR 702.81): as an additional cost, discard a land card from hand.
         if (isRetrace) {
             payRetraceDiscardCost(gameData, player, card, retraceDiscardHandCardIndex);
+        }
+
+        if (graveyardAlternateManaCost != null) {
+            ManaCost cost = new ManaCost(graveyardAlternateManaCost);
+            ManaPool pool = gameData.playerManaPools.get(playerId);
+            int before = pool.getTotalAllMana();
+            if (!cost.canPay(pool, effectiveXValue + additionalCost)) {
+                throw new IllegalStateException("Not enough mana to pay graveyard cast cost");
+            }
+            cost.pay(pool, effectiveXValue + additionalCost);
+            manaSpent = before - pool.getTotalAllMana();
+            gameData.addSpellCastManaSpent(card.getId(), manaSpent);
+            return effectiveXValue;
         }
 
         if (usesNormalManaCost) {

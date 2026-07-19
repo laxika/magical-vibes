@@ -40,6 +40,7 @@ public sealed interface DelayedAction permits
         DelayedCombatDamageReflection,
         AddManaAtNextMainPhase,
         LoseLifeAtNextDrawStepUnlessPays,
+        DamageAtNextUpkeepUnlessPays,
         DrawCardsAtNextUpkeep,
         ExileToOwnerGraveyardAtNextUpkeep,
         RevokeExilePlayPermissionAtNextUpkeep,

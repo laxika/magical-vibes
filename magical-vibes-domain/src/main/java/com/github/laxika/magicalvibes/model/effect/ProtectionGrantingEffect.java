@@ -60,4 +60,15 @@ public interface ProtectionGrantingEffect extends CardEffect {
     default OptionalInt protectionFromManaValueAtLeast() {
         return OptionalInt.empty();
     }
+
+    /**
+     * Whether this effect grants "protection from everything" (e.g. Progenitus) — protection from
+     * every source, regardless of its colour, card type, subtype or mana value. {@code false} for
+     * every narrower protection shape. Because every source is an object with at least one card
+     * type, {@code GameQueryService.hasProtectionFromSourceCardTypes()} treats this as protection
+     * from all sources, which is the shared gate for damage, combat, targeting and enchant/equip.
+     */
+    default boolean protectsFromEverything() {
+        return false;
+    }
 }

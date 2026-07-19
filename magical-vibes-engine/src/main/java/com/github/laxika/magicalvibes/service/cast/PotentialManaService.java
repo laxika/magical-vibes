@@ -16,6 +16,7 @@ import com.github.laxika.magicalvibes.model.amount.DynamicAmount;
 import com.github.laxika.magicalvibes.model.amount.Fixed;
 import com.github.laxika.magicalvibes.model.amount.SourcePower;
 import com.github.laxika.magicalvibes.model.effect.AwardAnyColorChosenSubtypeCreatureManaEffect;
+import com.github.laxika.magicalvibes.model.effect.AwardAnyColorCreatureSpellManaEffect;
 import com.github.laxika.magicalvibes.model.effect.AwardAnyColorManaEffect;
 import com.github.laxika.magicalvibes.model.effect.AwardAnyColorManaWithInstantSorceryCopyEffect;
 import com.github.laxika.magicalvibes.model.effect.AwardFlashbackOnlyAnyColorManaEffect;
@@ -373,6 +374,7 @@ public class PotentialManaService {
             for (CardEffect effect : ability.getEffects()) {
                 if (effect instanceof AwardAnyColorManaEffect
                         || effect instanceof AwardAnyColorChosenSubtypeCreatureManaEffect
+                        || effect instanceof AwardAnyColorCreatureSpellManaEffect
                         || effect instanceof AwardAnyColorManaWithInstantSorceryCopyEffect
                         || effect instanceof AwardFlashbackOnlyAnyColorManaEffect) {
                     return true;

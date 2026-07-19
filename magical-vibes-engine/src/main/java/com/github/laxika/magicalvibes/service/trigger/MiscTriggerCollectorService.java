@@ -236,6 +236,28 @@ public class MiscTriggerCollectorService {
         return true;
     }
 
+    @CollectsTrigger(value = LoseLifeEffect.class, slot = EffectSlot.ON_ENCHANTED_PERMANENT_TAPPED)
+    private boolean handleEnchantedPermanentTapLoseLife(TriggerMatchContext match,
+            LoseLifeEffect e, TriggerContext ctx) {
+        TriggerContext.EnchantedPermanentTap ept = (TriggerContext.EnchantedPermanentTap) ctx;
+        // TARGET_PERMANENT_CONTROLLER re-derives the losing player from the entry's targetId
+        // permanent; bake it to the tapped land so its controller loses life. Life loss (not
+        // damage, CR 118.2) — fires "loses life" triggers via LifeSupport.
+        match.gameData().enqueueTrigger(new StackEntry(
+                StackEntryType.TRIGGERED_ABILITY,
+                match.permanent().getCard(),
+                match.controllerId(),
+                match.permanent().getCard().getName() + "'s triggered ability",
+                new ArrayList<>(List.of(e)),
+                ept.tappedPermanent().getId(),
+                match.permanent().getId()));
+        String triggerLog = match.permanent().getCard().getName() + "'s ability triggers.";
+        gameBroadcastService.logAndBroadcast(match.gameData(), GameLog.text(triggerLog));
+        log.info("Game {} - {} triggers, enchanted permanent's controller loses life",
+                match.gameData().id, match.permanent().getCard().getName());
+        return true;
+    }
+
     @CollectsTrigger(value = RelicBindTapEffect.class, slot = EffectSlot.ON_ENCHANTED_PERMANENT_TAPPED)
     private boolean handleEnchantedPermanentTapRelicBind(TriggerMatchContext match,
             RelicBindTapEffect e, TriggerContext ctx) {

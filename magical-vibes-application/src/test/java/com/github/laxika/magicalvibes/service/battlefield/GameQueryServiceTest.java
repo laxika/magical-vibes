@@ -37,11 +37,15 @@ import com.github.laxika.magicalvibes.model.effect.GrantControllerShroudEffect;
 import com.github.laxika.magicalvibes.model.effect.LifeTotalCantChangeEffect;
 import com.github.laxika.magicalvibes.model.effect.PreventAllDamageToAndByEnchantedCreatureEffect;
 import com.github.laxika.magicalvibes.model.effect.ProtectionFromColorsEffect;
+import com.github.laxika.magicalvibes.model.effect.ProtectionFromEverythingEffect;
 import com.github.laxika.magicalvibes.model.filter.PermanentHasSubtypePredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsArtifactPredicate;
 import com.github.laxika.magicalvibes.model.filter.StackEntryAllOfPredicate;
 import com.github.laxika.magicalvibes.model.filter.StackEntryColorInPredicate;
 import com.github.laxika.magicalvibes.model.filter.StackEntryTypeInPredicate;
+import com.github.laxika.magicalvibes.model.condition.SpellXAtLeast;
+import com.github.laxika.magicalvibes.model.effect.CantBeCounteredEffect;
+import com.github.laxika.magicalvibes.service.effect.ConditionEvaluationService;
 import com.github.laxika.magicalvibes.service.effect.LayerSystemService;
 import com.github.laxika.magicalvibes.service.effect.StaticEffectHandlerRegistry;
 import com.github.laxika.magicalvibes.service.filter.PredicateEvaluationService;
@@ -64,6 +68,7 @@ import java.util.Set;
 import java.util.UUID;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.when;
 import com.github.laxika.magicalvibes.model.CounterType;
 
@@ -72,6 +77,9 @@ class GameQueryServiceTest {
 
     @Mock
     private StaticEffectHandlerRegistry staticEffectRegistry;
+
+    @Mock
+    private ConditionEvaluationService conditionEvaluationService;
 
     @InjectMocks
     private GameQueryService gqs;
@@ -89,6 +97,7 @@ class GameQueryServiceTest {
         ReflectionTestUtils.setField(layerSystemService, "staticEffectRegistry", staticEffectRegistry);
         ReflectionTestUtils.setField(layerSystemService, "gameQueryService", gqs);
         ReflectionTestUtils.setField(gqs, "layerSystemService", layerSystemService);
+        ReflectionTestUtils.setField(gqs, "conditionEvaluationService", conditionEvaluationService);
 
         player1Id = UUID.randomUUID();
         player2Id = UUID.randomUUID();
@@ -1254,6 +1263,17 @@ class GameQueryServiceTest {
 
             assertThat(gqs.hasProtectionFromSourceCardTypes(gd, target, source)).isFalse();
         }
+
+        @Test
+        @DisplayName("returns true against any source when the target has protection from everything")
+        void returnsTrueFromProtectionFromEverything() {
+            Card targetCard = createCreature("Progenitus", 10, 10, CardColor.GREEN);
+            targetCard.addEffect(EffectSlot.STATIC, new ProtectionFromEverythingEffect());
+            Permanent target = addPermanent(player1Id, targetCard);
+            Permanent source = addPermanent(player2Id, createCreature("Red Goblin", 1, 1, CardColor.RED));
+
+            assertThat(gqs.hasProtectionFromSourceCardTypes(gd, target, source)).isTrue();
+        }
     }
 
     // ===== hasProtectionFromSource =====
@@ -1414,6 +1434,34 @@ class GameQueryServiceTest {
             Card creature = createCreatureWithSubtypes("Grizzly Bears", 2, 2, CardColor.GREEN, List.of(CardSubtype.BEAR));
 
             assertThat(gqs.isUncounterable(gd, creature)).isTrue();
+        }
+
+        @Test
+        @DisplayName("conditional 'can't be countered' applies while its condition holds (Banefire X>=5)")
+        void conditionalCantBeCounteredWhenMet() {
+            Card banefire = spellWithConditionalCantBeCountered();
+            when(conditionEvaluationService.isMet(any(), any(), any())).thenReturn(true);
+
+            assertThat(gqs.isUncounterable(gd, banefire)).isTrue();
+        }
+
+        @Test
+        @DisplayName("conditional 'can't be countered' does not apply while its condition is unmet (Banefire X<5)")
+        void conditionalCantBeCounteredWhenUnmet() {
+            Card banefire = spellWithConditionalCantBeCountered();
+            when(conditionEvaluationService.isMet(any(), any(), any())).thenReturn(false);
+
+            assertThat(gqs.isUncounterable(gd, banefire)).isFalse();
+        }
+
+        private Card spellWithConditionalCantBeCountered() {
+            Card banefire = new Card();
+            banefire.setName("Banefire");
+            banefire.setType(CardType.SORCERY);
+            banefire.addEffect(EffectSlot.STATIC, new CantBeCounteredEffect(new SpellXAtLeast(5)));
+            gd.stack.add(new StackEntry(StackEntryType.SORCERY_SPELL, banefire, player1Id,
+                    "Banefire", new ArrayList<>()));
+            return banefire;
         }
     }
 
