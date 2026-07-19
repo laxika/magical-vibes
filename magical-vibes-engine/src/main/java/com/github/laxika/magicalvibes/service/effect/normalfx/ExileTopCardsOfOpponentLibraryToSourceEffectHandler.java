@@ -59,7 +59,7 @@ public class ExileTopCardsOfOpponentLibraryToSourceEffectHandler implements Norm
         int toExile = Math.min(e.count(), deck.size());
         for (int i = 0; i < toExile; i++) {
             Card card = deck.removeFirst();
-            exileService.exileCard(gameData, opponentId, card, sourcePermanentId);
+            exileService.exileCardFaceDown(gameData, opponentId, card, sourcePermanentId);
         }
 
         if (toExile > 0) {

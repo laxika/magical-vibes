@@ -69,7 +69,7 @@ public class ExileTopCardsToSourceEffectHandler implements NormalEffectHandlerBe
         List<String> exiledNames = new ArrayList<>();
         for (int i = 0; i < toExile; i++) {
             Card card = deck.removeFirst();
-            exileService.exileCard(gameData, controllerId, card, sourcePermanentId);
+            exileService.exileCardFaceDown(gameData, controllerId, card, sourcePermanentId);
             exiledNames.add(card.getName());
         }
 

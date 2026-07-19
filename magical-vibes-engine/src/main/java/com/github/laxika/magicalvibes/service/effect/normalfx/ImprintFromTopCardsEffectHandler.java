@@ -45,7 +45,7 @@ public class ImprintFromTopCardsEffectHandler implements NormalEffectHandlerBean
 
         if (topCards.size() == 1) {
             // Only one card — must exile it, nothing to reorder
-            exileService.exileCard(gameData, controllerId, topCards.getFirst());
+            exileService.exileCardFaceDown(gameData, controllerId, topCards.getFirst(), null);
             UUID sourcePermanentId = entry.getSourcePermanentId();
             if (sourcePermanentId != null) {
                 gameQueryService.setImprintedCardOnPermanent(gameData, sourcePermanentId, topCards.getFirst());

@@ -12,6 +12,8 @@ import com.github.laxika.magicalvibes.model.effect.IncreaseOpponentCastCostEffec
 import com.github.laxika.magicalvibes.model.amount.Fixed;
 import com.github.laxika.magicalvibes.model.effect.ReduceOwnCastCostForCardTypeEffect;
 import com.github.laxika.magicalvibes.networking.SessionManager;
+import com.github.laxika.magicalvibes.networking.model.CardView;
+import com.github.laxika.magicalvibes.networking.model.PermanentView;
 import com.github.laxika.magicalvibes.networking.service.CardViewFactory;
 import com.github.laxika.magicalvibes.networking.service.PermanentViewFactory;
 import com.github.laxika.magicalvibes.model.GameLog;
@@ -29,6 +31,7 @@ import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Nested;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
+import org.mockito.ArgumentCaptor;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 
@@ -39,6 +42,13 @@ import java.util.Set;
 import java.util.UUID;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.ArgumentMatchers.anyBoolean;
+import static org.mockito.ArgumentMatchers.anyInt;
+import static org.mockito.ArgumentMatchers.anyList;
+import static org.mockito.ArgumentMatchers.eq;
+import static org.mockito.ArgumentMatchers.same;
+import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 import com.github.laxika.magicalvibes.service.filter.PredicateEvaluationService;
 
@@ -300,6 +310,160 @@ class GameBroadcastServiceTest {
             assertThat(gd.gameLog).hasSize(1);
             assertThat(gd.gameLog.getFirst().plainText()).isEqualTo("Player1 casts Lightning Bolt.");
             assertThat(gd.gameLog.getFirst().segments()).hasSize(3);
+        }
+    }
+
+    @Nested
+    @DisplayName("getBattlefields — cards exiled with a permanent, shown tucked under it")
+    class ExiledWithDisplayTests {
+
+        private Permanent sourcePermanent;
+
+        @BeforeEach
+        void addSourcePermanent() {
+            Card source = artifact("Mimic Vat");
+            sourcePermanent = new Permanent(source);
+            gd.playerBattlefields.get(player1Id).add(sourcePermanent);
+        }
+
+        private Card artifact(String name) {
+            Card card = new Card();
+            card.setName(name);
+            card.setType(CardType.ARTIFACT);
+            return card;
+        }
+
+        @Test
+        @DisplayName("imprinted card still in exile is listed under its permanent")
+        void imprintedCardListedWhileInExile() {
+            Card imprinted = artifact("Gravecrawler");
+            gd.addToExile(player1Id, imprinted);
+            gd.setImprintedCard(sourcePermanent.getCard(), imprinted);
+
+            assertThat(gd.getExiledWithPermanentEntries(sourcePermanent.getId(), sourcePermanent.getCard().getId()))
+                    .extracting(com.github.laxika.magicalvibes.model.ExiledCardEntry::card)
+                    .containsExactly(imprinted);
+        }
+
+        @Test
+        @DisplayName("imprint map entry whose card left exile is not listed")
+        void imprintedCardNoLongerInExileNotListed() {
+            Card imprinted = artifact("Gravecrawler");
+            gd.setImprintedCard(sourcePermanent.getCard(), imprinted);
+            // Card was never added to exile (e.g. already played from exile)
+
+            assertThat(gd.getExiledWithPermanentEntries(sourcePermanent.getId(), sourcePermanent.getCard().getId()))
+                    .isEmpty();
+        }
+
+        @Test
+        @DisplayName("card recorded both as imprint and source-tracked exile (O-Ring style) appears once")
+        void imprintAlsoSourceTrackedListedOnce() {
+            Card exiled = artifact("Bound Permanent");
+            gd.addToExile(player1Id, exiled, sourcePermanent.getId());
+            gd.setImprintedCard(sourcePermanent.getCard(), exiled);
+
+            assertThat(gd.getExiledWithPermanentEntries(sourcePermanent.getId(), sourcePermanent.getCard().getId()))
+                    .extracting(com.github.laxika.magicalvibes.model.ExiledCardEntry::card)
+                    .containsExactly(exiled);
+        }
+
+        @Test
+        @DisplayName("face-down entries keep their flag (hideaway imprint and source-tracked exiles)")
+        void faceDownEntriesKeepTheirFlag() {
+            // Hideaway-style: imprinted face down, exile entry has no source id
+            Card hideawayCard = artifact("Hidden Prize");
+            gd.addToExile(player1Id, hideawayCard, null, true);
+            gd.setImprintedCard(sourcePermanent.getCard(), hideawayCard);
+            // Grimoire Thief-style: source-tracked face-down exile
+            Card stolenCard = artifact("Stolen Secret");
+            gd.addToExile(player2Id, stolenCard, sourcePermanent.getId(), true);
+
+            assertThat(gd.getExiledWithPermanentEntries(sourcePermanent.getId(), sourcePermanent.getCard().getId()))
+                    .allMatch(com.github.laxika.magicalvibes.model.ExiledCardEntry::faceDown)
+                    .extracting(com.github.laxika.magicalvibes.model.ExiledCardEntry::card)
+                    .containsExactly(hideawayCard, stolenCard);
+        }
+
+        private CardView cardViewNamed(String name) {
+            return new CardView(UUID.randomUUID(), name, null, Set.of(), Set.of(), List.of(), null, null,
+                    null, null, Set.of(), false, null, null, null, List.of(), false, false, List.of(), null,
+                    false, false, 0, false, null, false, 0, 0, 0, null, List.of(), List.of(), false, null,
+                    0, false, List.of());
+        }
+
+        private PermanentView permanentView(UUID permId, int faceDownCount) {
+            return new PermanentView(permId, null, false, false, false, List.of(), false, 0, 0, Set.of(),
+                    Set.of(), 0, 0, null, null, null, 0, false, false, java.util.Map.of(), null, 0, false,
+                    false, List.of(), List.of(), faceDownCount, List.of());
+        }
+
+        @Test
+        @DisplayName("face-down exiled cards are collected as a reveal for the permanent's controller")
+        void faceDownCardsCollectedForController() {
+            Card hidden = artifact("Hidden Prize");
+            gd.addToExile(player1Id, hidden, sourcePermanent.getId(), true);
+            CardView hiddenView = cardViewNamed("Hidden Prize");
+            when(cardViewFactory.create(hidden)).thenReturn(hiddenView);
+
+            var reveals = svc.collectFaceDownReveals(gd);
+
+            assertThat(reveals).containsOnlyKeys(sourcePermanent.getId());
+            assertThat(reveals.get(sourcePermanent.getId()).viewerId()).isEqualTo(player1Id);
+            assertThat(reveals.get(sourcePermanent.getId()).cards()).containsExactly(hiddenView);
+        }
+
+        @Test
+        @DisplayName("face-up exiles produce no reveal entry")
+        void faceUpExilesProduceNoReveal() {
+            gd.addToExile(player1Id, artifact("Shown Card"), sourcePermanent.getId());
+
+            assertThat(svc.collectFaceDownReveals(gd)).isEmpty();
+        }
+
+        @Test
+        @DisplayName("the controller's view gets the face-down cards; the opponent keeps only the count")
+        void faceDownCardsRevealedOnlyToController() {
+            PermanentView shared = permanentView(sourcePermanent.getId(), 1);
+            List<List<PermanentView>> battlefields = List.of(List.of(shared), List.of());
+            CardView hiddenView = cardViewNamed("Hidden Prize");
+            var reveals = java.util.Map.of(sourcePermanent.getId(),
+                    new GameBroadcastService.FaceDownReveal(player1Id, List.of(hiddenView)));
+
+            PermanentView controllerView = svc.applyFaceDownReveals(battlefields, reveals, player1Id)
+                    .getFirst().getFirst();
+            assertThat(controllerView.faceDownExiledCards()).containsExactly(hiddenView);
+            assertThat(controllerView.faceDownExiledCount()).isZero();
+
+            PermanentView opponentView = svc.applyFaceDownReveals(battlefields, reveals, player2Id)
+                    .getFirst().getFirst();
+            assertThat(opponentView).isSameAs(shared);
+            assertThat(opponentView.faceDownExiledCards()).isEmpty();
+            assertThat(opponentView.faceDownExiledCount()).isEqualTo(1);
+        }
+
+        @Test
+        @DisplayName("battlefield views receive face-up cards and the face-down count separately")
+        void battlefieldViewSplitsFaceUpAndFaceDown() {
+            Card faceUpCard = artifact("Welded Artifact");
+            gd.addToExile(player1Id, faceUpCard, sourcePermanent.getId());
+            Card hiddenCard = artifact("Hidden Card");
+            gd.addToExile(player1Id, hiddenCard, sourcePermanent.getId(), true);
+
+            GameQueryService.StaticBonus noBonus = new GameQueryService.StaticBonus(
+                    0, 0, Set.of(), Set.of(), false, List.of(), List.of(), Set.of(), List.of(), Set.of(),
+                    Set.of(), false, false, false, Set.of(), false, 0, 0, false, false);
+            when(gameQueryService.explainStaticBonus(gd, sourcePermanent))
+                    .thenReturn(new GameQueryService.ExplainedBonus(noBonus, List.of()));
+
+            svc.getBattlefields(gd);
+
+            @SuppressWarnings("unchecked")
+            ArgumentCaptor<List<Card>> faceUpCaptor = ArgumentCaptor.forClass(List.class);
+            verify(permanentViewFactory).create(same(sourcePermanent), anyInt(), anyInt(), any(), anyBoolean(),
+                    anyList(), any(), anyList(), any(), anyBoolean(), anyBoolean(), anyBoolean(), any(),
+                    anyBoolean(), any(), anyList(), faceUpCaptor.capture(), eq(1));
+            assertThat(faceUpCaptor.getValue()).containsExactly(faceUpCard);
         }
     }
 }

@@ -48,8 +48,9 @@ class JestersCapTest extends BaseCardTest {
 
         // Three cards left the library, one remains
         assertThat(gd.playerDecks.get(player2.getId())).hasSize(1);
-        // Exiled cards are owned by the target player
+        // Exiled cards are owned by the target player and, being an unrevealed search, face down
         assertThat(gd.getPlayerExiledCards(player2.getId())).hasSize(3);
+        assertThat(gd.exiledCards).allMatch(com.github.laxika.magicalvibes.model.ExiledCardEntry::faceDown);
         // No further interaction pending
         assertThat(gd.interaction.activeInteraction(PendingInteraction.LibrarySearch.class)).isNull();
         // Jester's Cap was sacrificed

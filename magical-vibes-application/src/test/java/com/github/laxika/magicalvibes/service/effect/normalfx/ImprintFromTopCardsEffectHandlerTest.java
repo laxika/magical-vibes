@@ -136,7 +136,7 @@ class ImprintFromTopCardsEffectHandlerTest {
                 imprintFromTopCardsEffectHandler.resolve(gd, entry, effect);
 
                 assertThat(gd.interaction.activeInteraction()).isNull();
-                verify(exileService).exileCard(gd, player1Id, singleCard);
+                verify(exileService).exileCardFaceDown(gd, player1Id, singleCard, null);
                 assertThat(gd.playerDecks.get(player1Id)).isEmpty();
                 verify(gameBroadcastService).logAndBroadcast(eq(gd), argThat((GameLogEntry logEntry) ->
                         logEntry.plainText().contains("exiles a card face down")));

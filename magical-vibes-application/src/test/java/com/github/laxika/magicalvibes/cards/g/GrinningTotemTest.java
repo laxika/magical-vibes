@@ -43,9 +43,10 @@ class GrinningTotemTest extends BaseCardTest {
         activateGrinningTotem();
         gs.handleInteractionAnswer(gd, player1, new InteractionAnswer.LibraryCardChosen(0));
 
-        // Card is exiled under the caster's zone with play permission.
+        // Card is exiled under the caster's zone, face down, with play permission.
         assertThat(gd.getPlayerExiledCards(player1.getId()))
                 .anyMatch(c -> c.getId().equals(swamp.getId()));
+        assertThat(gd.findExiledCard(swamp.getId()).faceDown()).isTrue();
         assertThat(gd.exilePlayPermissions.get(swamp.getId())).isEqualTo(player1.getId());
         assertThat(gd.playerDecks.get(player2.getId()))
                 .noneMatch(c -> c.getId().equals(swamp.getId()));

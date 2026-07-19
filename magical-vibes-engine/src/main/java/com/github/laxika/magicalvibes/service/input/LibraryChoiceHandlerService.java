@@ -153,7 +153,7 @@ public class LibraryChoiceHandlerService {
                 }
                 chosenCard = searchCards.get(cardIndex);
                 if (destination == LibrarySearchDestination.EXILE_IMPRINT) {
-                    exileService.exileCard(gameData, playerId, chosenCard);
+                    exileService.exileCardFaceDown(gameData, playerId, chosenCard, null);
                     UUID sourcePermanentId = followUp.imprintSourcePermanentId();
                     if (sourcePermanentId != null) {
                         gameQueryService.setImprintedCardOnPermanent(gameData, sourcePermanentId, chosenCard);
@@ -372,7 +372,8 @@ public class LibraryChoiceHandlerService {
         }
 
         if (destination == LibrarySearchDestination.EXILE) {
-            exileService.exileCard(gameData, deckOwnerId, chosenCard);
+            // Unrestricted search — the found card is not revealed, so it is exiled face down.
+            exileService.exileCardFaceDown(gameData, deckOwnerId, chosenCard, null);
 
             // Multi-card exile (Jester's Cap): re-prompt for the next card until the count is
             // spent or the library runs out. Only the final pick shuffles the library.
@@ -479,7 +480,7 @@ public class LibraryChoiceHandlerService {
 
         if (destination == LibrarySearchDestination.EXILE_PLAYABLE
                 || destination == LibrarySearchDestination.EXILE_PLAYABLE_UNTIL_NEXT_UPKEEP) {
-            exileService.exileCard(gameData, playerId, chosenCard);
+            exileService.exileCardFaceDown(gameData, playerId, chosenCard, null);
             gameData.exilePlayPermissions.put(chosenCard.getId(), playerId);
             if (destination == LibrarySearchDestination.EXILE_PLAYABLE_UNTIL_NEXT_UPKEEP) {
                 // Grinning Totem: permission lasts only until the searcher's next upkeep; an unplayed

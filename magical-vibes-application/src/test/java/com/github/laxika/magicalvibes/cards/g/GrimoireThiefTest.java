@@ -32,6 +32,8 @@ class GrimoireThiefTest extends BaseCardTest {
 
         assertThat(gd.playerDecks.get(player2.getId())).hasSize(1);
         assertThat(gd.getCardsExiledByPermanent(thief.getId())).hasSize(3);
+        assertThat(gd.exiledCards).filteredOn(e -> thief.getId().equals(e.sourcePermanentId()))
+                .allMatch(com.github.laxika.magicalvibes.model.ExiledCardEntry::faceDown);
     }
 
     // ===== Sacrifice ability counters matching spells =====

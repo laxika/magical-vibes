@@ -323,6 +323,23 @@
                           (mouseenter)="onCardHover(aura.perm.card, aura.perm, $event)"
                           (mouseleave)="onCardHoverEnd()" />
                       }
+                      @for (ec of exiledWithCards(ip.perm); track ec.id) {
+                        <app-card-display
+                          [card]="ec"
+                          class="attached-aura exiled-with-card"
+                          (mouseenter)="onCardHover(ec)"
+                          (mouseleave)="onCardHoverEnd()" />
+                      }
+                      @for (fc of faceDownExiledCards(ip.perm); track fc.id) {
+                        <app-card-display
+                          [card]="fc"
+                          class="attached-aura exiled-with-card face-down-visible"
+                          (mouseenter)="onCardHover(fc)"
+                          (mouseleave)="onCardHoverEnd()" />
+                      }
+                      @for (slot of faceDownExiledSlots(ip.perm); track slot) {
+                        <div class="card attached-aura face-down-exiled-card"></div>
+                      }
                       <app-card-display
                         [card]="ip.perm.card"
                         [permanent]="ip.perm"
@@ -350,6 +367,23 @@
                     (click)="onAuraClick(aura)"
                     (mouseenter)="onCardHover(aura.perm.card, aura.perm, $event)"
                     (mouseleave)="onCardHoverEnd()" />
+                }
+                @for (ec of exiledWithCards(item.perm); track ec.id) {
+                  <app-card-display
+                    [card]="ec"
+                    class="attached-aura exiled-with-card"
+                    (mouseenter)="onCardHover(ec)"
+                    (mouseleave)="onCardHoverEnd()" />
+                }
+                @for (fc of faceDownExiledCards(item.perm); track fc.id) {
+                  <app-card-display
+                    [card]="fc"
+                    class="attached-aura exiled-with-card face-down-visible"
+                    (mouseenter)="onCardHover(fc)"
+                    (mouseleave)="onCardHoverEnd()" />
+                }
+                @for (slot of faceDownExiledSlots(item.perm); track slot) {
+                  <div class="card attached-aura face-down-exiled-card"></div>
                 }
                 <app-card-display
                   [card]="item.perm.card"
@@ -380,6 +414,25 @@
                   (click)="onAuraClick(aura)"
                   (mouseenter)="onCardHover(aura.perm.card, aura.perm, $event)"
                   (mouseleave)="onCardHoverEnd()" />
+              }
+              @for (ec of exiledWithCards(ip.perm); track ec.id) {
+                <app-card-display
+                  [card]="ec"
+                  class="attached-aura exiled-with-card"
+                  [style.--card-shift-x]="combatShift(ip.perm.id)"
+                  (mouseenter)="onCardHover(ec)"
+                  (mouseleave)="onCardHoverEnd()" />
+              }
+              @for (fc of faceDownExiledCards(ip.perm); track fc.id) {
+                <app-card-display
+                  [card]="fc"
+                  class="attached-aura exiled-with-card face-down-visible"
+                  [style.--card-shift-x]="combatShift(ip.perm.id)"
+                  (mouseenter)="onCardHover(fc)"
+                  (mouseleave)="onCardHoverEnd()" />
+              }
+              @for (slot of faceDownExiledSlots(ip.perm); track slot) {
+                <div class="card attached-aura face-down-exiled-card" [style.--card-shift-x]="combatShift(ip.perm.id)"></div>
               }
               <app-card-display
                 [card]="ip.perm.card"
@@ -461,6 +514,25 @@
                   (mouseenter)="onCardHover(aura.perm.card, aura.perm, $event)"
                   (mouseleave)="onCardHoverEnd()" />
               }
+              @for (ec of exiledWithCards(ip.perm); track ec.id) {
+                <app-card-display
+                  [card]="ec"
+                  class="attached-aura exiled-with-card"
+                  [style.--card-shift-x]="combatShift(ip.perm.id)"
+                  (mouseenter)="onCardHover(ec)"
+                  (mouseleave)="onCardHoverEnd()" />
+              }
+              @for (fc of faceDownExiledCards(ip.perm); track fc.id) {
+                <app-card-display
+                  [card]="fc"
+                  class="attached-aura exiled-with-card face-down-visible"
+                  [style.--card-shift-x]="combatShift(ip.perm.id)"
+                  (mouseenter)="onCardHover(fc)"
+                  (mouseleave)="onCardHoverEnd()" />
+              }
+              @for (slot of faceDownExiledSlots(ip.perm); track slot) {
+                <div class="card attached-aura face-down-exiled-card" [style.--card-shift-x]="combatShift(ip.perm.id)"></div>
+              }
               <app-card-display
                 [card]="ip.perm.card"
                 [permanent]="ip.perm"
@@ -531,6 +603,23 @@
                           (mouseenter)="onCardHover(aura.perm.card, aura.perm, $event)"
                           (mouseleave)="onCardHoverEnd()" />
                       }
+                      @for (ec of exiledWithCards(ip.perm); track ec.id) {
+                        <app-card-display
+                          [card]="ec"
+                          class="attached-aura exiled-with-card"
+                          (mouseenter)="onCardHover(ec)"
+                          (mouseleave)="onCardHoverEnd()" />
+                      }
+                      @for (fc of faceDownExiledCards(ip.perm); track fc.id) {
+                        <app-card-display
+                          [card]="fc"
+                          class="attached-aura exiled-with-card face-down-visible"
+                          (mouseenter)="onCardHover(fc)"
+                          (mouseleave)="onCardHoverEnd()" />
+                      }
+                      @for (slot of faceDownExiledSlots(ip.perm); track slot) {
+                        <div class="card attached-aura face-down-exiled-card"></div>
+                      }
                       <app-card-display
                         [card]="ip.perm.card"
                         [permanent]="ip.perm"
@@ -568,6 +657,23 @@
                     (click)="onAuraClick(aura)"
                     (mouseenter)="onCardHover(aura.perm.card, aura.perm, $event)"
                     (mouseleave)="onCardHoverEnd()" />
+                }
+                @for (ec of exiledWithCards(item.perm); track ec.id) {
+                  <app-card-display
+                    [card]="ec"
+                    class="attached-aura exiled-with-card"
+                    (mouseenter)="onCardHover(ec)"
+                    (mouseleave)="onCardHoverEnd()" />
+                }
+                @for (fc of faceDownExiledCards(item.perm); track fc.id) {
+                  <app-card-display
+                    [card]="fc"
+                    class="attached-aura exiled-with-card face-down-visible"
+                    (mouseenter)="onCardHover(fc)"
+                    (mouseleave)="onCardHoverEnd()" />
+                }
+                @for (slot of faceDownExiledSlots(item.perm); track slot) {
+                  <div class="card attached-aura face-down-exiled-card"></div>
                 }
                 <app-card-display
                   [card]="item.perm.card"

@@ -79,9 +79,10 @@ class HoardingDragonTest extends BaseCardTest {
         // Choose the artifact (Spellbook)
         gs.handleInteractionAnswer(gd, player1, new InteractionAnswer.LibraryCardChosen(0));
 
-        // Spellbook should be in exile
+        // Spellbook should be in exile, face up (searches for a stated quality reveal the card)
         assertThat(gd.getPlayerExiledCards(player1.getId()))
                 .anyMatch(c -> c.getName().equals("Spellbook"));
+        assertThat(gd.findExiledCard(spellbook.getId()).faceDown()).isFalse();
 
         // Hoarding Dragon should have Spellbook imprinted
         Permanent dragon = findPermanent(player1, "Hoarding Dragon");

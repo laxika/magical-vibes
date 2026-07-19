@@ -35,5 +35,26 @@ public record PermanentView(
         boolean prepared,
         /** Per-source attribution of the continuous effects modifying this permanent, for the
          *  client's hover breakdown. Display-only; the aggregate fields above stay authoritative. */
-        List<ModifierLine> modifierLines
-) {}
+        List<ModifierLine> modifierLines,
+        /** Face-up cards imprinted on / exiled with this permanent (Mimic Vat, Oblivion Ring,
+         *  Myr Welder, ...), shown tucked under it on the battlefield. */
+        List<CardView> exiledWithCards,
+        /** Cards exiled face down with this permanent (hideaway lands, Grimoire Thief, ...);
+         *  rendered as card backs so hidden information is not leaked. Zero in the controller's
+         *  copy of the view — they receive the cards in {@link #faceDownExiledCards} instead. */
+        int faceDownExiledCount,
+        /** The face-down exiled cards themselves — populated only in the copy of the view sent
+         *  to the permanent's controller (see {@link #withFaceDownRevealed}); empty for everyone
+         *  else, who only get {@link #faceDownExiledCount} card backs. */
+        List<CardView> faceDownExiledCards
+) {
+    /** Controller's copy of this view: the actual face-down cards replace the anonymous
+     *  card-back count. */
+    public PermanentView withFaceDownRevealed(List<CardView> cards) {
+        return new PermanentView(id, card, tapped, attacking, blocking, blockingTargets, summoningSick,
+                powerModifier, toughnessModifier, grantedKeywords, removedKeywords, effectivePower,
+                effectiveToughness, attachedTo, chosenColor, chosenName, regenerationShield, cantBeBlocked,
+                animatedCreature, counters, attackTargetId, markedDamage, transformed, prepared,
+                modifierLines, exiledWithCards, 0, cards);
+    }
+}

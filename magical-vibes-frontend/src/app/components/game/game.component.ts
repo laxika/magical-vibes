@@ -346,11 +346,12 @@ export class GameComponent implements OnInit, OnDestroy {
     return lines;
   }
 
-  /** Footprint width (zoom 1) of a permanent plus any attached auras. */
+  /** Footprint width (zoom 1) of a permanent plus any attached auras or exiled-with cards. */
   private stackWidth(perm: Permanent): number {
     const C = GameComponent;
     const base = perm.tapped ? C.TAPPED_CARD_WIDTH : C.CARD_WIDTH;
-    return base + (this.getAttachedAuras(perm.id).length > 0 ? C.AURA_X_OFFSET : 0);
+    const tucked = this.getAttachedAuras(perm.id).length + this.exiledWithCount(perm);
+    return base + (tucked > 0 ? C.AURA_X_OFFSET : 0);
   }
 
   /** Reserved footprint height (zoom 1) of a permanent plus any attached auras.
@@ -361,7 +362,7 @@ export class GameComponent implements OnInit, OnDestroy {
       card just leaves a little unused vertical space, never an overflow. */
   private stackHeight(perm: Permanent): number {
     const C = GameComponent;
-    return C.CARD_HEIGHT + this.getAttachedAuras(perm.id).length * C.AURA_STRIP;
+    return C.CARD_HEIGHT + (this.getAttachedAuras(perm.id).length + this.exiledWithCount(perm)) * C.AURA_STRIP;
   }
 
   /** Height of one player's battlefield (creatures row + lands row + revealed rows)
@@ -1067,6 +1068,28 @@ export class GameComponent implements OnInit, OnDestroy {
 
   getAttachedAuras(permanentId: string): AttachedAura[] {
     return getAttachedAuras(permanentId, this.myBattlefield, this.opponentBattlefield);
+  }
+
+  /** Face-up cards imprinted on / exiled with a permanent, shown tucked under it. */
+  exiledWithCards(perm: Permanent): Card[] {
+    return perm.exiledWithCards ?? [];
+  }
+
+  /** One entry per face-down card exiled with the permanent, for rendering card backs.
+      Empty on the viewer's own permanents — those send the cards themselves instead. */
+  faceDownExiledSlots(perm: Permanent): number[] {
+    return Array.from({ length: perm.faceDownExiledCount ?? 0 }, (_, i) => i);
+  }
+
+  /** Face-down exiled cards revealed to their controller (opponents get card backs). */
+  faceDownExiledCards(perm: Permanent): Card[] {
+    return perm.faceDownExiledCards ?? [];
+  }
+
+  /** Total tucked-under cards (face-up + face-down) of a permanent, for the fit model. */
+  private exiledWithCount(perm: Permanent): number {
+    return (perm.exiledWithCards?.length ?? 0) + (perm.faceDownExiledCount ?? 0)
+      + (perm.faceDownExiledCards?.length ?? 0);
   }
 
   onAuraClick(aura: AttachedAura): void {

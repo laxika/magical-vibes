@@ -90,6 +90,7 @@ public class GameBroadcastService {
         gameData.lastBroadcastedLogSize = logSize;
 
         List<List<PermanentView>> battlefields = getBattlefields(gameData);
+        Map<UUID, FaceDownReveal> faceDownReveals = collectFaceDownReveals(gameData);
         List<StackEntryView> stack = getStackViews(gameData);
         List<List<CardView>> graveyards = getGraveyardViews(gameData);
         List<Integer> deckSizes = getDeckSizes(gameData);
@@ -138,7 +139,8 @@ public class GameBroadcastService {
             sessionManager.sendToPlayer(playerId, new GameStateMessage(
                     gameData.status, gameData.activePlayerId, gameData.turnNumber,
                     gameData.currentStep, priorityPlayerId,
-                    battlefields, stack, graveyards, deckSizes, handSizes, lifeTotals, poisonCounters,
+                    applyFaceDownReveals(battlefields, faceDownReveals, playerId),
+                    stack, graveyards, deckSizes, handSizes, lifeTotals, poisonCounters,
                     hand, opponentHand, mulliganCount, manaPool, autoStopSteps, playableCardIndices,
                     playableGraveyardLandIndices, playableExileCards, newLogEntries, searchTaxCost,
                     gameData.mindControlledPlayerId, revealedLibraryTopCards, playableFlashbackIndices,
@@ -173,12 +175,68 @@ public class GameBroadcastService {
                     allGrantedAbilities.addAll(p.getPersistentGrantedActivatedAbilities());
                     allGrantedAbilities.addAll(p.getTemporaryActivatedAbilities());
                     allGrantedAbilities.addAll(p.getUntilNextTurnActivatedAbilities());
-                    views.add(permanentViewFactory.create(p, adjustedBonusPower, adjustedBonusToughness, bonus.keywords(), bonus.animatedCreature(), allGrantedAbilities, bonus.grantedColors(), bonus.grantedSubtypes(), bonus.grantedCardTypes(), bonus.colorOverriding(), bonus.subtypeOverriding(), bonus.landSubtypeOverriding(), bonus.removedKeywords(), bonus.losesAllAbilities() || p.isLosesAllAbilitiesUntilEndOfTurn(), bonus.grantedSupertypes(), explained.lines()));
+                    List<Card> faceUpExiledWith = new ArrayList<>();
+                    int faceDownExiledCount = 0;
+                    for (ExiledCardEntry exiledWith : data.getExiledWithPermanentEntries(p.getId(), p.getCard().getId())) {
+                        if (exiledWith.faceDown()) {
+                            faceDownExiledCount++;
+                        } else {
+                            faceUpExiledWith.add(exiledWith.card());
+                        }
+                    }
+                    views.add(permanentViewFactory.create(p, adjustedBonusPower, adjustedBonusToughness, bonus.keywords(), bonus.animatedCreature(), allGrantedAbilities, bonus.grantedColors(), bonus.grantedSubtypes(), bonus.grantedCardTypes(), bonus.colorOverriding(), bonus.subtypeOverriding(), bonus.landSubtypeOverriding(), bonus.removedKeywords(), bonus.losesAllAbilities() || p.isLosesAllAbilitiesUntilEndOfTurn(), bonus.grantedSupertypes(), explained.lines(), faceUpExiledWith, faceDownExiledCount));
                 }
                 battlefields.add(views);
             }
         }
         return battlefields;
+    }
+
+    /** Face-down exiled cards of one permanent, revealed only to the viewer controlling it. */
+    record FaceDownReveal(UUID viewerId, List<CardView> cards) {}
+
+    /**
+     * Face-down exiled cards (hideaway lands, Grimoire Thief, ...) keyed by their permanent's id.
+     * The shared battlefield views carry only a card-back count for these; the actual cards are
+     * swapped into the controller's copy by {@link #applyFaceDownReveals}.
+     */
+    Map<UUID, FaceDownReveal> collectFaceDownReveals(GameData data) {
+        Map<UUID, FaceDownReveal> reveals = new HashMap<>();
+        for (UUID pid : data.orderedPlayerIds) {
+            List<Permanent> bf = data.playerBattlefields.get(pid);
+            if (bf == null) continue;
+            for (Permanent p : bf) {
+                List<CardView> cards = data.getExiledWithPermanentEntries(p.getId(), p.getCard().getId()).stream()
+                        .filter(ExiledCardEntry::faceDown)
+                        .map(e -> cardViewFactory.create(e.card()))
+                        .toList();
+                if (!cards.isEmpty()) {
+                    reveals.put(p.getId(), new FaceDownReveal(pid, cards));
+                }
+            }
+        }
+        return reveals;
+    }
+
+    /** The battlefields as seen by {@code viewerId}: permanents they control get their face-down
+     *  exiled cards revealed; everything else is shared untouched. */
+    List<List<PermanentView>> applyFaceDownReveals(List<List<PermanentView>> battlefields,
+                                                   Map<UUID, FaceDownReveal> reveals, UUID viewerId) {
+        if (reveals.isEmpty()) {
+            return battlefields;
+        }
+        List<List<PermanentView>> result = new ArrayList<>(battlefields.size());
+        for (List<PermanentView> side : battlefields) {
+            List<PermanentView> viewerSide = new ArrayList<>(side.size());
+            for (PermanentView view : side) {
+                FaceDownReveal reveal = reveals.get(view.id());
+                viewerSide.add(reveal != null && reveal.viewerId().equals(viewerId)
+                        ? view.withFaceDownRevealed(reveal.cards())
+                        : view);
+            }
+            result.add(viewerSide);
+        }
+        return result;
     }
 
     List<List<CardView>> getGraveyardViews(GameData data) {

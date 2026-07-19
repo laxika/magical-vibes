@@ -45,7 +45,7 @@ public class NecropotenceSetAsideTopCardEffectHandler implements NormalEffectHan
         }
 
         Card topCard = deck.removeFirst();
-        gameData.addToExile(controllerId, topCard);
+        gameData.addToExile(controllerId, topCard, null, true);
         gameData.queueDelayedAction(new ReturnExiledCardToHandAtEndStep(topCard.getId(), controllerId));
 
         gameBroadcastService.logAndBroadcast(gameData, GameLog.text(controllerName

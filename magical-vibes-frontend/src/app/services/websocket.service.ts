@@ -228,6 +228,16 @@ export interface Permanent {
   /** Per-source attribution of the continuous effects modifying this permanent (hover breakdown).
    * Optional: absent in hand-built mock data (e.g. the tutorial). */
   modifierLines?: ModifierLine[];
+  /** Face-up cards imprinted on / exiled with this permanent (Mimic Vat, Oblivion Ring, ...),
+   * shown tucked under it. Optional: absent in hand-built mock data. */
+  exiledWithCards?: Card[];
+  /** Cards exiled face down with this permanent (hideaway, Grimoire Thief, ...);
+   * rendered as card backs so hidden information stays hidden. Zero when this is the
+   * viewer's own permanent — the server sends faceDownExiledCards instead. */
+  faceDownExiledCount?: number;
+  /** The face-down exiled cards themselves — only present in the controller's copy of the
+   * view; opponents receive faceDownExiledCount card backs instead. */
+  faceDownExiledCards?: Card[];
 }
 
 export interface StackEntry {

@@ -29,9 +29,10 @@ class NecropotenceTest extends BaseCardTest {
         harness.activateAbility(player1, 0, null, null);
         harness.passBothPriorities();
 
-        // 1 life paid, card exiled (not yet in hand), off the top of the library
+        // 1 life paid, card exiled face down (not yet in hand), off the top of the library
         assertThat(gd.playerLifeTotals.get(player1.getId())).isEqualTo(19);
         assertThat(gd.getPlayerExiledCards(player1.getId())).anyMatch(c -> c.getId().equals(top.getId()));
+        assertThat(gd.findExiledCard(top.getId()).faceDown()).isTrue();
         assertThat(gd.playerHands.get(player1.getId())).noneMatch(c -> c.getId().equals(top.getId()));
         assertThat(gd.playerDecks.get(player1.getId())).noneMatch(c -> c.getId().equals(top.getId()));
 

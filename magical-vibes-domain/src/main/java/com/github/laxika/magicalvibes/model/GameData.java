@@ -1350,6 +1350,36 @@ public class GameData {
         exiledCards.add(new ExiledCardEntry(card, ownerId, sourcePermanentId));
     }
 
+    /** Adds a card to exile with source permanent tracking and an explicit face-down status. */
+    public void addToExile(UUID ownerId, Card card, UUID sourcePermanentId, boolean faceDown) {
+        exiledCards.add(new ExiledCardEntry(card, ownerId, sourcePermanentId, faceDown));
+    }
+
+    /**
+     * Exile entries displayed tucked under the given permanent: its imprinted card (if still in
+     * exile) plus all entries tracked with the permanent as source. An imprinted card that is
+     * also source-tracked (e.g. Ixalan's Binding records both) appears only once.
+     */
+    public List<ExiledCardEntry> getExiledWithPermanentEntries(UUID permanentId, UUID permanentCardId) {
+        List<ExiledCardEntry> entries = new ArrayList<>();
+        Card imprinted = permanentCardId != null ? imprintedCards.get(permanentCardId) : null;
+        if (imprinted != null) {
+            ExiledCardEntry imprintEntry = findExiledCard(imprinted.getId());
+            if (imprintEntry != null) {
+                entries.add(imprintEntry);
+            }
+        }
+        if (permanentId != null) {
+            for (ExiledCardEntry e : exiledCards) {
+                if (permanentId.equals(e.sourcePermanentId())
+                        && (imprinted == null || !e.card().getId().equals(imprinted.getId()))) {
+                    entries.add(e);
+                }
+            }
+        }
+        return entries;
+    }
+
     /** Registers a pending exile-return linked to a source permanent (O-ring style).
      *  When the source leaves the battlefield, all pending returns for it are processed. */
     public void addExileReturnOnPermanentLeave(UUID sourcePermanentId, PendingExileReturn pending) {
@@ -1396,7 +1426,7 @@ public class GameData {
             ExiledCardEntry e = it.next();
             if (e.sourcePermanentId() != null) {
                 it.remove();
-                updated.add(new ExiledCardEntry(e.card(), e.ownerId(), null));
+                updated.add(new ExiledCardEntry(e.card(), e.ownerId(), null, e.faceDown()));
             }
         }
         exiledCards.addAll(updated);

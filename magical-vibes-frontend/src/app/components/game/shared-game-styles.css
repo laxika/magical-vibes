@@ -472,6 +472,39 @@
   z-index: 0;
 }
 
+/* Cards imprinted on / exiled with a permanent peek out like attached auras, but render
+   desaturated so they read as being in exile rather than on the battlefield. */
+.permanent-stack > .card.exiled-with-card {
+  filter: grayscale(0.5) brightness(0.8);
+}
+
+.permanent-stack > .card.exiled-with-card:hover {
+  filter: none;
+}
+
+/* A face-down exiled card revealed to its controller: the full face shows, but a
+   card-back-brown border marks that the opponent only sees a card back. */
+.permanent-stack > .card.exiled-with-card.face-down-visible {
+  border-color: #6b4423;
+}
+
+/* A card exiled face down (hideaway, Grimoire Thief, ...) shows only a card back.
+   Mirrors the card component's :host box (165×231, zoom var) so the stack geometry
+   and fit model treat it exactly like a face-up tucked card. */
+.permanent-stack > .face-down-exiled-card {
+  width: 165px;
+  height: 231px;
+  box-sizing: border-box;
+  border: 4px solid #14100c;
+  border-radius: 9px;
+  background:
+    radial-gradient(ellipse 58% 40% at 50% 44%, #6b4423 0%, #53341a 60%, rgba(0, 0, 0, 0) 61%),
+    linear-gradient(180deg, #38250f 0%, #241708 100%);
+  box-shadow: 0 3px 8px rgba(0, 0, 0, 0.4), inset 0 0 0 5px #1d1206;
+  zoom: var(--card-zoom, 1);
+  transform: translateX(var(--card-shift-x, 0px));
+}
+
 .permanent-stack:has(.attached-aura):has(.tapped) {
   min-height: calc(var(--density-zoom, 1) * 231px);
 }

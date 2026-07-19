@@ -40,6 +40,8 @@ class ColfenorsPlansTest extends BaseCardTest {
 
         UUID permId = harness.getPermanentId(player1, "Colfenor's Plans");
         assertThat(gd.getCardsExiledByPermanent(permId)).hasSize(7);
+        assertThat(gd.exiledCards).filteredOn(e -> permId.equals(e.sourcePermanentId()))
+                .allMatch(com.github.laxika.magicalvibes.model.ExiledCardEntry::faceDown);
         assertThat(gd.playerDecks.get(player1.getId())).hasSize(1);
         // Opponent's library is untouched (this exiles only the controller's cards).
         assertThat(gd.playerDecks.get(player2.getId())).hasSize(p2DeckBefore);
