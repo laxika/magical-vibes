@@ -11,7 +11,9 @@ import com.github.laxika.magicalvibes.model.ManaCost;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.ManaPool;
 import com.github.laxika.magicalvibes.model.Permanent;
+import com.github.laxika.magicalvibes.model.TurnStep;
 import com.github.laxika.magicalvibes.model.amount.DynamicAmount;
+import com.github.laxika.magicalvibes.model.effect.AdditionalCombatMainPhaseEffect;
 import com.github.laxika.magicalvibes.model.effect.BoardWipeEffect;
 import com.github.laxika.magicalvibes.model.effect.StaticCreatureBoostEffect;
 import com.github.laxika.magicalvibes.model.effect.BoostSelfEffect;
@@ -51,6 +53,7 @@ import com.github.laxika.magicalvibes.model.effect.ScryEffect;
 import com.github.laxika.magicalvibes.model.effect.SequenceEffect;
 import com.github.laxika.magicalvibes.model.effect.TapPermanentsEffect;
 import com.github.laxika.magicalvibes.model.effect.TapUntapScope;
+import com.github.laxika.magicalvibes.model.effect.UntapPermanentsEffect;
 import com.github.laxika.magicalvibes.model.effect.DiscardEffect;
 import com.github.laxika.magicalvibes.model.effect.DiscardRecipient;
 import com.github.laxika.magicalvibes.service.battlefield.GameQueryService;
@@ -457,6 +460,12 @@ public class SpellEvaluator {
             return bestTargetCreatureValue(gameData, oppBattlefield, opponentId, aiPlayerId) * 1.2;
         }
 
+        // Extra combat phase (Relentless Assault) — worth the attack damage it adds;
+        // 0 when nothing gets an additional attack, so the cast is never a pure waste.
+        if (effect instanceof AdditionalCombatMainPhaseEffect) {
+            return extraCombatDamageGain(gameData, card, aiPlayerId) * 1.2;
+        }
+
         // Damage to creatures / any target. Player-only damage (canDamageCreatures() == false)
         // falls through to the DealDamageToPlayersEffect survivor branches below, whose recipient
         // decides the sign — a fact no descriptive interface method expresses.
@@ -824,6 +833,34 @@ public class SpellEvaluator {
         // Detrimental aura - value based on neutralizing opponent's best creature
         double bestOppCreature = bestTargetCreatureValue(gameData, oppBattlefield, opponentId, aiPlayerId);
         return bestOppCreature > 0 ? bestOppCreature * 0.8 : 0;
+    }
+
+    /**
+     * Estimates the attack damage an extra-combat card (Relentless Assault) adds this
+     * turn. Creatures that already attacked count when the card untaps attackers (or
+     * they stayed untapped via vigilance); creatures that haven't attacked count only
+     * after combat, where the extra phase grants an attack they otherwise wouldn't get —
+     * in the precombat main the extra combat merely front-loads their single attack.
+     * Returns 0 when the cast would grant no additional attacks.
+     */
+    public double extraCombatDamageGain(GameData gameData, Card card, UUID aiPlayerId) {
+        boolean untapsAttackers = card != null && card.getEffects(EffectSlot.SPELL).stream()
+                .anyMatch(e -> e instanceof UntapPermanentsEffect untap
+                        && untap.scope() == TapUntapScope.ATTACKED_CREATURES);
+        boolean afterCombat = gameData.currentStep == TurnStep.POSTCOMBAT_MAIN;
+
+        double gain = 0;
+        for (Permanent p : gameData.playerBattlefields.getOrDefault(aiPlayerId, List.of())) {
+            if (!gameQueryService.isCreature(gameData, p)) continue;
+            if (gameQueryService.hasKeyword(gameData, p, Keyword.DEFENDER)) continue;
+            if (p.isSummoningSick() && !gameQueryService.hasKeyword(gameData, p, Keyword.HASTE)) continue;
+            boolean attacksAgain = p.isAttackedThisTurn()
+                    ? (untapsAttackers || !p.isTapped())
+                    : (afterCombat && !p.isTapped());
+            if (!attacksAgain) continue;
+            gain += Math.max(0, gameQueryService.getEffectivePower(gameData, p));
+        }
+        return gain;
     }
 
     /**

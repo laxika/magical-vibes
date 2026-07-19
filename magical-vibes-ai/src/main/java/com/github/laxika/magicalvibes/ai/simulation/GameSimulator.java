@@ -23,6 +23,7 @@ import com.github.laxika.magicalvibes.model.TargetType;
 import com.github.laxika.magicalvibes.model.TurnStep;
 import com.github.laxika.magicalvibes.model.GraveyardSearchScope;
 import com.github.laxika.magicalvibes.model.effect.AddManaOnEnchantedLandTapEffect;
+import com.github.laxika.magicalvibes.model.effect.AdditionalCombatMainPhaseEffect;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
 import com.github.laxika.magicalvibes.model.effect.TargetCategory;
 import com.github.laxika.magicalvibes.model.effect.CostEffect;
@@ -477,6 +478,14 @@ public class GameSimulator {
             }
             // Non-mana additional costs (sacrifice / graveyard-exile) must be payable.
             if (!castingCostService.canPayAdditionalSpellCosts(gd, playerId, card)) {
+                continue;
+            }
+            // Policy: an extra-combat spell that grants no additional attacks (no
+            // surviving attackers to untap, nothing held back after combat) is a dead
+            // cast — the few rollout iterations can't reliably punish it, so skip it.
+            if (card.getEffects(EffectSlot.SPELL).stream()
+                        .anyMatch(AdditionalCombatMainPhaseEffect.class::isInstance)
+                    && spellEvaluator.extraCombatDamageGain(gd, card, playerId) <= 0) {
                 continue;
             }
             // For targeted spells, enumerate candidate targets (policy: which targets

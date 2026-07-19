@@ -20,6 +20,7 @@ import com.github.laxika.magicalvibes.cards.m.MidnightHaunting;
 import com.github.laxika.magicalvibes.cards.n.Nekrataal;
 import com.github.laxika.magicalvibes.cards.p.Pacifism;
 import com.github.laxika.magicalvibes.cards.p.Pyroclasm;
+import com.github.laxika.magicalvibes.cards.r.RelentlessAssault;
 import com.github.laxika.magicalvibes.cards.s.SerraAngel;
 import com.github.laxika.magicalvibes.cards.s.ShivanDragon;
 import com.github.laxika.magicalvibes.cards.s.Shock;
@@ -29,6 +30,7 @@ import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.GameData;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.Player;
+import com.github.laxika.magicalvibes.model.TurnStep;
 import com.github.laxika.magicalvibes.model.effect.BoostSelfEffect;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
 import com.github.laxika.magicalvibes.model.effect.DealDamageToAnyTargetEffect;
@@ -217,6 +219,59 @@ class SpellEvaluatorTest {
         double value = spellEvaluator.estimateSpellValue(gd, new ActOfTreason(), player1.getId());
 
         assertThat(value).isEqualTo(0);
+    }
+
+    // ===== Extra combat (Relentless Assault) =====
+
+    @Test
+    @DisplayName("Relentless Assault has zero value with no creatures on the board")
+    void extraCombatZeroValueWithEmptyBoard() {
+        gd.currentStep = TurnStep.POSTCOMBAT_MAIN;
+
+        double value = spellEvaluator.estimateSpellValue(gd, new RelentlessAssault(), player1.getId());
+
+        assertThat(value).isEqualTo(0);
+    }
+
+    @Test
+    @DisplayName("Relentless Assault has positive value postcombat with tapped attackers to untap")
+    void extraCombatValuesTappedAttackers() {
+        gd.currentStep = TurnStep.POSTCOMBAT_MAIN;
+        Permanent bears = new Permanent(new GrizzlyBears());
+        bears.setSummoningSick(false);
+        bears.setAttackedThisTurn(true);
+        bears.tap();
+        gd.playerBattlefields.get(player1.getId()).add(bears);
+
+        double value = spellEvaluator.estimateSpellValue(gd, new RelentlessAssault(), player1.getId());
+
+        assertThat(value).isGreaterThan(0);
+    }
+
+    @Test
+    @DisplayName("Relentless Assault has zero value in the precombat main — the extra combat adds no attack")
+    void extraCombatZeroValuePrecombat() {
+        gd.currentStep = TurnStep.PRECOMBAT_MAIN;
+        Permanent bears = new Permanent(new GrizzlyBears());
+        bears.setSummoningSick(false);
+        gd.playerBattlefields.get(player1.getId()).add(bears);
+
+        double value = spellEvaluator.estimateSpellValue(gd, new RelentlessAssault(), player1.getId());
+
+        assertThat(value).isEqualTo(0);
+    }
+
+    @Test
+    @DisplayName("Relentless Assault postcombat also counts untapped creatures that were held back")
+    void extraCombatValuesHeldBackCreatures() {
+        gd.currentStep = TurnStep.POSTCOMBAT_MAIN;
+        Permanent bears = new Permanent(new GrizzlyBears());
+        bears.setSummoningSick(false);
+        gd.playerBattlefields.get(player1.getId()).add(bears);
+
+        double value = spellEvaluator.estimateSpellValue(gd, new RelentlessAssault(), player1.getId());
+
+        assertThat(value).isGreaterThan(0);
     }
 
     @Test
