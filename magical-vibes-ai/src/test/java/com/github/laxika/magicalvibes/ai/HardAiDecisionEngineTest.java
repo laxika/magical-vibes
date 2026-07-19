@@ -29,8 +29,12 @@ import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
 import com.github.laxika.magicalvibes.cards.l.LightningBolt;
 import com.github.laxika.magicalvibes.cards.r.RagingGoblin;
 import com.github.laxika.magicalvibes.cards.s.Shock;
+import com.github.laxika.magicalvibes.cards.b.BogardanFirefiend;
+import com.github.laxika.magicalvibes.cards.c.CruelEdict;
 import com.github.laxika.magicalvibes.cards.i.Island;
+import com.github.laxika.magicalvibes.cards.i.IronStar;
 import com.github.laxika.magicalvibes.cards.k.KuldothaRebirth;
+import com.github.laxika.magicalvibes.cards.v.VigilForTheLost;
 import com.github.laxika.magicalvibes.cards.l.LlanowarElves;
 import com.github.laxika.magicalvibes.cards.m.Mountain;
 import com.github.laxika.magicalvibes.cards.n.Negate;
@@ -4567,6 +4571,132 @@ class HardAiDecisionEngineTest {
 
             // The choice should be processed (AI should pick PLAINS for white mana demand)
             assertThat(gd.interaction.isAwaitingInput()).isFalse();
+        }
+    }
+
+    @Nested
+    @DisplayName("May-Pay Trigger Economics")
+    class MayPayTriggerTests {
+
+        /** Opponent casts a red spell so Iron Star's trigger resolves into the may-pay prompt. */
+        private void fireIronStarTriggerFromOpponent() {
+            harness.forceActivePlayer(player2);
+            harness.forceStep(TurnStep.PRECOMBAT_MAIN);
+            harness.clearPriorityPassed();
+            harness.setHand(player2, List.of(new BogardanFirefiend()));
+            harness.addMana(player2, ManaColor.RED, 3);
+            harness.castCreature(player2, 0);
+            harness.passBothPriorities();
+            assertThat(gd.interaction.activeInteraction(PendingInteraction.MayAbilityChoice.class).playerId())
+                    .isEqualTo(player1.getId());
+        }
+
+        @Test
+        @DisplayName("Hard AI taps a spare land to pay for Iron Star's trigger when the mana has no other use")
+        void paysMayPayTriggerWithSpareMana() {
+            HardAiDecisionEngine ai = createHardAi(player1);
+            gd.status = GameStatus.RUNNING;
+
+            harness.addToBattlefield(player1, new IronStar());
+            Permanent mountain = new Permanent(new Mountain());
+            mountain.setSummoningSick(false);
+            gd.playerBattlefields.get(player1.getId()).add(mountain);
+            harness.setHand(player1, List.of());
+
+            int lifeBefore = gd.playerLifeTotals.get(player1.getId());
+            fireIronStarTriggerFromOpponent();
+
+            ai.handleMessage("INTERACTION_PROMPT", "");
+
+            assertThat(gd.playerLifeTotals.get(player1.getId())).isEqualTo(lifeBefore + 1);
+            assertThat(mountain.isTapped()).isTrue();
+        }
+
+        @Test
+        @DisplayName("Hard AI declines Iron Star's trigger when paying would deny a held instant")
+        void declinesMayPayTriggerWhenPaymentDeniesACast() {
+            HardAiDecisionEngine ai = createHardAi(player1);
+            gd.status = GameStatus.RUNNING;
+
+            harness.addToBattlefield(player1, new IronStar());
+            Permanent mountain = new Permanent(new Mountain());
+            mountain.setSummoningSick(false);
+            gd.playerBattlefields.get(player1.getId()).add(mountain);
+            // A castable Shock and exactly one mana source — paying {1} would deny the Shock
+            harness.setHand(player1, List.of(new Shock()));
+
+            int lifeBefore = gd.playerLifeTotals.get(player1.getId());
+            fireIronStarTriggerFromOpponent();
+
+            ai.handleMessage("INTERACTION_PROMPT", "");
+
+            assertThat(gd.playerLifeTotals.get(player1.getId())).isEqualTo(lifeBefore);
+            assertThat(mountain.isTapped()).isFalse();
+            assertThat(gd.interaction.activeInteraction(PendingInteraction.MayAbilityChoice.class)).isNull();
+        }
+
+        @Test
+        @DisplayName("Hard AI declines its own-turn trigger when paying would starve a main-phase cast")
+        void declinesOwnTurnTriggerWhenPaymentStarvesMainPhaseCast() {
+            HardAiDecisionEngine ai = createHardAi(player1);
+            gd.status = GameStatus.RUNNING;
+
+            harness.addToBattlefield(player1, new IronStar());
+            for (int i = 0; i < 2; i++) {
+                Permanent mountain = new Permanent(new Mountain());
+                mountain.setSummoningSick(false);
+                gd.playerBattlefields.get(player1.getId()).add(mountain);
+            }
+
+            harness.forceActivePlayer(player1);
+            harness.forceStep(TurnStep.PRECOMBAT_MAIN);
+            harness.clearPriorityPassed();
+            // Cast the AI's own red spell off floating mana; the Goblin Piker ({1}{R})
+            // stays in hand and needs both untapped Mountains, so the {1} is not spare.
+            harness.setHand(player1, List.of(new BogardanFirefiend(), new GoblinPiker()));
+            harness.addMana(player1, ManaColor.RED, 3);
+
+            int lifeBefore = gd.playerLifeTotals.get(player1.getId());
+            harness.castCreature(player1, 0);
+            harness.passBothPriorities();
+            assertThat(gd.interaction.activeInteraction(PendingInteraction.MayAbilityChoice.class).playerId())
+                    .isEqualTo(player1.getId());
+
+            ai.handleMessage("INTERACTION_PROMPT", "");
+
+            assertThat(gd.playerLifeTotals.get(player1.getId())).isEqualTo(lifeBefore);
+        }
+
+        @Test
+        @DisplayName("Hard AI floats spare mana to pay a pay-X prompt (Vigil for the Lost)")
+        void floatsSpareManaForPayXPrompt() {
+            HardAiDecisionEngine ai = createHardAi(player1);
+            gd.status = GameStatus.RUNNING;
+
+            harness.addToBattlefield(player1, new VigilForTheLost());
+            harness.addToBattlefield(player1, new GrizzlyBears());
+            for (int i = 0; i < 2; i++) {
+                Permanent mountain = new Permanent(new Mountain());
+                mountain.setSummoningSick(false);
+                gd.playerBattlefields.get(player1.getId()).add(mountain);
+            }
+            harness.setHand(player1, List.of());
+
+            harness.forceActivePlayer(player2);
+            harness.forceStep(TurnStep.PRECOMBAT_MAIN);
+            harness.clearPriorityPassed();
+            harness.setHand(player2, List.of(new CruelEdict()));
+            harness.addMana(player2, ManaColor.BLACK, 2);
+
+            int lifeBefore = gd.playerLifeTotals.get(player1.getId());
+            harness.castSorcery(player2, 0, player1.getId());
+            harness.passBothPriorities(); // Edict resolves, creature dies, Vigil triggers
+            harness.passBothPriorities(); // trigger resolves -> X payment prompt
+            assertThat(gd.interaction.activeInteraction(PendingInteraction.XValueChoice.class)).isNotNull();
+
+            ai.handleMessage("INTERACTION_PROMPT", "");
+
+            assertThat(gd.playerLifeTotals.get(player1.getId())).isEqualTo(lifeBefore + 2);
         }
     }
 }

@@ -2,6 +2,7 @@ package com.github.laxika.magicalvibes.cards.v;
 
 import com.github.laxika.magicalvibes.cards.c.CruelEdict;
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
+import com.github.laxika.magicalvibes.cards.p.Plains;
 import com.github.laxika.magicalvibes.model.GameData;
 import com.github.laxika.magicalvibes.model.PendingInteraction;
 import com.github.laxika.magicalvibes.model.ManaColor;
@@ -235,6 +236,65 @@ class VigilForTheLostTest extends BaseCardTest {
         gd = harness.getGameData();
         assertThat(gd.playerLifeTotals.get(player1.getId())).isEqualTo(lifeBefore + 4);
         assertThat(gd.playerManaPools.get(player1.getId()).getTotal()).isEqualTo(0);
+    }
+
+    // ===== Paying by tapping lands during the prompt (CR 605.3a) =====
+
+    private void setupVigilWithPlainsAndKillBears() {
+        harness.addToBattlefield(player1, new VigilForTheLost());
+        harness.addToBattlefield(player1, new GrizzlyBears());
+        harness.addToBattlefield(player1, new Plains());
+        harness.addToBattlefield(player1, new Plains());
+
+        setupPlayer2Active();
+        harness.setHand(player2, List.of(new CruelEdict()));
+        harness.addMana(player2, ManaColor.BLACK, 2);
+        harness.castSorcery(player2, 0, player1.getId());
+
+        harness.passBothPriorities(); // Edict resolves, creature dies, Vigil triggers
+        harness.passBothPriorities(); // trigger resolves -> X prompt from potential mana
+    }
+
+    @Test
+    @DisplayName("Untapped lands open the X prompt; tapping during the prompt pays")
+    void untappedLandsOpenPromptAndTapDuringPromptPays() {
+        int lifeBefore = harness.getGameData().playerLifeTotals.get(player1.getId());
+        setupVigilWithPlainsAndKillBears();
+
+        GameData gd = harness.getGameData();
+        PendingInteraction.XValueChoice choice =
+                gd.interaction.activeInteraction(PendingInteraction.XValueChoice.class);
+        assertThat(choice).isNotNull();
+        assertThat(choice.maxValue()).isEqualTo(2);
+        assertThat(choice.manaPayment()).isTrue();
+
+        // CR 605.3a: tap the Plains while the prompt is open (battlefield after the
+        // Bears died: Vigil 0, Plains 1, Plains 2)
+        harness.getGameService().tapPermanent(gd, player1, 1);
+        harness.getGameService().tapPermanent(gd, player1, 2);
+        harness.handleXValueChosen(player1, 2);
+
+        assertThat(gd.playerLifeTotals.get(player1.getId())).isEqualTo(lifeBefore + 2);
+    }
+
+    @Test
+    @DisplayName("Choosing X above the floating mana re-prompts instead of fizzling")
+    void overclaimingRepromptsUntilManaIsFloated() {
+        int lifeBefore = harness.getGameData().playerLifeTotals.get(player1.getId());
+        setupVigilWithPlainsAndKillBears();
+
+        // Claim X=2 with an empty pool — the engine re-prompts instead of paying
+        harness.handleXValueChosen(player1, 2);
+        GameData gd = harness.getGameData();
+        assertThat(gd.playerLifeTotals.get(player1.getId())).isEqualTo(lifeBefore);
+        assertThat(gd.interaction.activeInteraction(PendingInteraction.XValueChoice.class)).isNotNull();
+
+        // Float one mana, then pay X=1
+        harness.getGameService().tapPermanent(gd, player1, 1);
+        harness.handleXValueChosen(player1, 1);
+
+        assertThat(gd.playerLifeTotals.get(player1.getId())).isEqualTo(lifeBefore + 1);
+        assertThat(gd.interaction.isAwaitingInput()).isFalse();
     }
 
     // ===== Does not trigger for opponent's creatures =====

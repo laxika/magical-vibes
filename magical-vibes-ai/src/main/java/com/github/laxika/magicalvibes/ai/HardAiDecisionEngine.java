@@ -2910,9 +2910,10 @@ public class HardAiDecisionEngine extends AiDecisionEngine {
         double value = spellEvaluator.evaluateAbilityEffects(gameData, pending.effects(), aiPlayer.getId());
 
         // If the ability has a mana cost, factor that in — paying mana is a real cost
-        if (pending.manaCost() != null && !pending.manaCost().isEmpty()) {
+        ManaCost cost = pending.manaCost() != null && !pending.manaCost().isEmpty()
+                ? new ManaCost(pending.manaCost()) : null;
+        if (cost != null) {
             ManaPool virtualPool = manaManager.buildVirtualManaPool(gameData, aiPlayer.getId());
-            ManaCost cost = new ManaCost(pending.manaCost());
             if (!cost.canPay(virtualPool, 0)) {
                 // Can't afford it — decline
                 log.info("AI (Hard): Declining may ability '{}' (can't afford mana cost {}) in game {}",
@@ -2921,16 +2922,25 @@ public class HardAiDecisionEngine extends AiDecisionEngine {
                         new InteractionAnswer.MayAbilityChosen(false)));
                 return;
             }
-            // Deduct mana value as opportunity cost
-            value -= cost.getManaValue() * 1.5;
+            // Paying only has an opportunity cost when the mana competes with a spell the
+            // AI could otherwise cast; spare mana that would go unspent anyway is free.
+            if (manaPaymentDeniesACast(gameData, cost.getManaValue(), virtualPool)) {
+                value -= cost.getManaValue() * 1.5;
+            }
         }
 
         boolean accept = value > 0;
+        if (accept && cost != null && !floatManaForMayCost(gameData)) {
+            // The engine pays may-costs from the actual mana pool; when the cost could not
+            // be floated (e.g. only color-choice sources were available), decline.
+            accept = false;
+        }
+        boolean finalAccept = accept;
         log.info("AI (Hard): {} may ability '{}' (value={}) in game {}",
                 accept ? "Accepting" : "Declining", pending.description(),
                 String.format("%.1f", value), gameId);
         send(() -> gameActions.answerInteraction(selfConnection,
-                new InteractionAnswer.MayAbilityChosen(accept)));
+                new InteractionAnswer.MayAbilityChosen(finalAccept)));
     }
 
     /**

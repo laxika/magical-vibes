@@ -79,9 +79,18 @@ public sealed interface PendingInteraction permits PermanentChoiceContext,
     // engine's InteractionHandlerRegistry).
     // ------------------------------------------------------------------
 
-    /** "Choose a value for X" (e.g. Vigil for the Lost's ETB payment, Jaya's rummage count). */
-    record XValueChoice(UUID playerId, int maxValue, String prompt, String cardName)
+    /**
+     * "Choose a value for X" (e.g. Vigil for the Lost's ETB payment, Jaya's rummage count).
+     * {@code manaPayment} marks prompts whose X is charged from the mana pool — those open
+     * the CR 605.3a window so the player may tap mana sources while the prompt is up.
+     */
+    record XValueChoice(UUID playerId, int maxValue, String prompt, String cardName, boolean manaPayment)
             implements PendingInteraction {
+
+        /** Non-mana number pick (discard counts, life payments, bids). */
+        public XValueChoice(UUID playerId, int maxValue, String prompt, String cardName) {
+            this(playerId, maxValue, prompt, cardName, false);
+        }
 
         @Override
         public UUID decidingPlayerId() {

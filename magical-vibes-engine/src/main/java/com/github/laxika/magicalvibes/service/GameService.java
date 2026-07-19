@@ -85,6 +85,22 @@ public class GameService {
     }
 
     /**
+     * Returns true if the given player is being asked to pay mana mid-resolution — a
+     * "may pay" ability prompt or a pay-{X} amount prompt. Per CR 605.3a, mana abilities
+     * may be activated whenever a rule or effect asks for a mana payment, even in the
+     * middle of resolving a spell or ability.
+     */
+    private boolean isMayCostManaPayment(GameData gameData, Player player) {
+        return switch (gameData.interaction.activeInteraction()) {
+            case PendingInteraction.MayAbilityChoice mc ->
+                    mc.playerId().equals(player.getId()) && mc.manaCost() != null;
+            case PendingInteraction.XValueChoice xc ->
+                    xc.playerId().equals(player.getId()) && xc.manaPayment();
+            case null, default -> false;
+        };
+    }
+
+    /**
      * the controlled player when the controlled player should be acting (has priority
      * or is the expected respondent for an interaction).
      * If the controller is acting as themselves (e.g., passing their own priority as
@@ -431,7 +447,7 @@ public class GameService {
     public void tapPermanent(GameData gameData, Player player, int permanentIndex) {
         synchronized (gameData) {
             player = resolveActingPlayer(gameData, player);
-            if (!isAttackTaxManaPayment(gameData, player)) {
+            if (!isAttackTaxManaPayment(gameData, player) && !isMayCostManaPayment(gameData, player)) {
                 requirePriority(gameData, player);
             }
             abilityActivationService.tapPermanent(gameData, player, permanentIndex);
@@ -442,12 +458,13 @@ public class GameService {
      * Undoes the player's still-revertable mana-ability activations (MTGO-style cancel while
      * paying for a spell): tapped sources untap and the mana they produced leaves the pool.
      * Allowed whenever the player could have activated the abilities in the first place —
-     * holding priority, or while paying attack tax during attacker declaration.
+     * holding priority, paying attack tax during attacker declaration, or answering a
+     * "may pay" prompt.
      */
     public void revertManaActivations(GameData gameData, Player player) {
         synchronized (gameData) {
             player = resolveActingPlayer(gameData, player);
-            if (!isAttackTaxManaPayment(gameData, player)) {
+            if (!isAttackTaxManaPayment(gameData, player) && !isMayCostManaPayment(gameData, player)) {
                 requirePriority(gameData, player);
             }
             abilityActivationService.revertManaActivations(gameData, player);

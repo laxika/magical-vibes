@@ -11,6 +11,7 @@ import com.github.laxika.magicalvibes.model.effect.EnchantedControllerMayPayToPr
 import com.github.laxika.magicalvibes.service.GameBroadcastService;
 import com.github.laxika.magicalvibes.service.GameOutcomeService;
 import com.github.laxika.magicalvibes.service.battlefield.GameQueryService;
+import com.github.laxika.magicalvibes.service.cast.PotentialManaService;
 import com.github.laxika.magicalvibes.service.interaction.InteractionHandlerRegistry;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -35,6 +36,7 @@ public class EnchantedControllerMayPayToPreventDamageEffectHandler implements No
     private final GameOutcomeService gameOutcomeService;
     private final GameBroadcastService gameBroadcastService;
     private final InteractionHandlerRegistry interactionHandlerRegistry;
+    private final PotentialManaService potentialManaService;
 
     @Override
     public Class<? extends CardEffect> handledEffect() {
@@ -56,7 +58,18 @@ public class EnchantedControllerMayPayToPreventDamageEffectHandler implements No
             gameData.chosenXValue = null;
 
             if (paid > 0) {
+                // Cap was based on potential mana so the player could tap lands during the
+                // prompt; re-check the actual pool before charging.
                 ManaPool pool = gameData.playerManaPools.get(playerId);
+                if (payableFromPool(pool) < paid) {
+                    gameBroadcastService.logAndBroadcast(gameData, GameLog.text(
+                            playerName + " can't pay {" + paid + "} for " + cardName
+                                    + " (tap mana sources, then choose the amount again)."));
+                    log.info("Game {} - {} cannot yet pay {} for {} — re-prompting",
+                            gameData.id, playerName, paid, cardName);
+                    beginPayPrompt(gameData, playerId, e.amount(), cardName);
+                    return;
+                }
                 new ManaCost("{0}").pay(pool, paid);
                 gameBroadcastService.logAndBroadcast(gameData, GameLog.text(
                         playerName + " pays {" + paid + "} to prevent " + paid + " damage from " + cardName + "."));
@@ -69,19 +82,34 @@ public class EnchantedControllerMayPayToPreventDamageEffectHandler implements No
         }
 
         // First call: prompt the enchanted controller for how much mana to pay (0..amount).
-        ManaPool pool = gameData.playerManaPools.get(playerId);
-        int available = pool.getTotal() + pool.getArtifactOnlyColorless() + pool.getMyrOnlyColorless();
-        int maxX = Math.min(e.amount(), available);
-        if (maxX <= 0) {
+        // The cap includes untapped mana sources so an empty pool with untapped lands still
+        // opens the prompt (CR 605.3a — mana abilities during the payment).
+        if (maxPayable(gameData, playerId, e.amount()) <= 0) {
             dealRemainingDamage(gameData, entry, playerId, e.amount());
             gameOutcomeService.checkWinCondition(gameData);
             return;
         }
+        beginPayPrompt(gameData, playerId, e.amount(), cardName);
+    }
 
+    private void beginPayPrompt(GameData gameData, UUID playerId, int amount, String cardName) {
+        int maxX = maxPayable(gameData, playerId, amount);
         String prompt = "Pay any amount of mana to prevent that much of " + cardName + "'s "
-                + e.amount() + " damage to you?";
+                + amount + " damage to you?";
         interactionHandlerRegistry.begin(gameData,
-                new PendingInteraction.XValueChoice(playerId, maxX, prompt, cardName));
+                new PendingInteraction.XValueChoice(playerId, maxX, prompt, cardName, true));
+    }
+
+    private int maxPayable(GameData gameData, UUID playerId, int amount) {
+        int untappedSources = potentialManaService.buildVirtualManaPool(gameData, playerId).getTotal()
+                - gameData.playerManaPools.get(playerId).getTotal();
+        int available = payableFromPool(gameData.playerManaPools.get(playerId)) + untappedSources;
+        return Math.min(amount, available);
+    }
+
+    /** Generic-payable mana in the pool right now — mirrors what {@code pay} can drain. */
+    private static int payableFromPool(ManaPool pool) {
+        return pool.getTotal() + pool.getArtifactOnlyColorless() + pool.getMyrOnlyColorless();
     }
 
     private void dealRemainingDamage(GameData gameData, StackEntry entry, UUID playerId, int remaining) {

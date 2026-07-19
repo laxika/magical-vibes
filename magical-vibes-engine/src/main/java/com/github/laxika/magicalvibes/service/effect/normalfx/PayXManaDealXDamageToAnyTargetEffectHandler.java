@@ -104,6 +104,6 @@ public class PayXManaDealXDamageToAnyTargetEffectHandler implements NormalEffect
         String prompt = "You may pay " + manaCost + " for " + cardName
                 + ". Choose X (0 = don't pay). It deals X damage to the target.";
         interactionHandlerRegistry.begin(gameData,
-                new PendingInteraction.XValueChoice(controllerId, maxX, prompt, cardName));
+                new PendingInteraction.XValueChoice(controllerId, maxX, prompt, cardName, true));
     }
 }

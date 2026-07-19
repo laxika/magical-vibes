@@ -23,7 +23,9 @@ import com.github.laxika.magicalvibes.model.filter.PermanentManaValueEqualsXPred
 import com.github.laxika.magicalvibes.model.filter.PermanentPredicateTargetFilter;
 import com.github.laxika.magicalvibes.model.ManaCost;
 import com.github.laxika.magicalvibes.model.ManaPool;
+import com.github.laxika.magicalvibes.model.TurnStep;
 import com.github.laxika.magicalvibes.model.VirtualManaPool;
+import com.github.laxika.magicalvibes.service.interaction.InteractionAnswer;
 import com.github.laxika.magicalvibes.model.filter.TargetFilter;
 import com.github.laxika.magicalvibes.model.effect.CostEffect;
 import com.github.laxika.magicalvibes.model.filter.PermanentPredicate;
@@ -170,7 +172,108 @@ public abstract class AiDecisionEngine {
     }
 
     protected void handleMayAbilityChoice(GameData gameData) {
+        if (!floatManaForMayCost(gameData)) {
+            // Accepting would fizzle on the payment — decline outright.
+            log.info("AI: Declining may ability (cannot float its mana cost) in game {}", gameId);
+            send(() -> gameActions.answerInteraction(selfConnection,
+                    new InteractionAnswer.MayAbilityChosen(false)));
+            return;
+        }
         choiceHandler.handleMayAbilityChoice(gameData);
+    }
+
+    /**
+     * Answers a pay-{X} amount prompt. For mana payments belonging to this AI, spare mana
+     * is floated first (CR 605.3a opens the tap window during the prompt); the strategy
+     * then pays what is actually floating. Non-mana number picks go straight to the
+     * strategy default.
+     */
+    protected void handleXValueChoice(GameData gameData) {
+        PendingInteraction.XValueChoice choice =
+                gameData.interaction.activeInteraction(PendingInteraction.XValueChoice.class);
+        if (choice != null && choice.manaPayment() && aiPlayer.getId().equals(choice.playerId())) {
+            int spare = spareManaForPayment(gameData);
+            if (spare > 0) {
+                manaManager.tapLandsForCost(gameData, aiPlayer.getId(), "{" + spare + "}", 0,
+                        manaTapAction(), true);
+            }
+        }
+        choiceHandler.handleActiveInteraction(gameData);
+    }
+
+    /**
+     * Floats mana for the active may-pay prompt when the choice is this AI's and carries a
+     * mana cost — the engine pays may-costs from the actual pool, so the mana must be
+     * floating before answering yes (CR 605.3a opens the tap window during the prompt).
+     * X costs are paid with everything floating, so only spare mana is floated for them.
+     * Returns false when the cost could not be floated and accepting would fizzle.
+     */
+    protected boolean floatManaForMayCost(GameData gameData) {
+        PendingInteraction.MayAbilityChoice mayChoice =
+                gameData.interaction.activeInteraction(PendingInteraction.MayAbilityChoice.class);
+        if (mayChoice == null || !aiPlayer.getId().equals(mayChoice.playerId())
+                || mayChoice.manaCost() == null || mayChoice.manaCost().isEmpty()) {
+            return true;
+        }
+        ManaCost cost = new ManaCost(mayChoice.manaCost());
+        if (cost.hasX()) {
+            int spare = spareManaForPayment(gameData);
+            if (spare > 0) {
+                manaManager.tapLandsForCost(gameData, aiPlayer.getId(), "{" + spare + "}", 0,
+                        manaTapAction(), true);
+            }
+            return gameData.playerManaPools.get(aiPlayer.getId()).getTotal() > 0;
+        }
+        manaManager.tapLandsForCost(gameData, aiPlayer.getId(), mayChoice.manaCost(), 0,
+                manaTapAction(), true);
+        return cost.canPay(gameData.playerManaPools.get(aiPlayer.getId()));
+    }
+
+    /**
+     * Largest mana payment the AI can make right now without denying a spell it could
+     * otherwise cast this turn; 0 when every point of mana is spoken for.
+     */
+    protected int spareManaForPayment(GameData gameData) {
+        ManaPool virtualPool = manaManager.buildVirtualManaPool(gameData, aiPlayer.getId());
+        for (int amount = virtualPool.getTotal(); amount >= 1; amount--) {
+            if (!manaPaymentDeniesACast(gameData, amount, virtualPool)) {
+                return amount;
+            }
+        }
+        return 0;
+    }
+
+    /**
+     * True when reserving the given amount of mana for a payment would deny a spell the AI
+     * can otherwise cast this turn — some castable card in hand would no longer be
+     * affordable. Held instants count (they are castable off-turn), so counterspell and
+     * combat-trick mana stays protected.
+     */
+    protected boolean manaPaymentDeniesACast(GameData gameData, int reservedManaValue, ManaPool virtualPool) {
+        List<Card> hand = gameData.playerHands.getOrDefault(aiPlayer.getId(), List.of());
+        for (Card card : hand) {
+            if (card.hasType(CardType.LAND)) continue;
+            if (isSpellCastable(gameData, card, virtualPool)
+                    && !canAffordSpell(gameData, card, virtualPool, reservedManaValue)) {
+                return true;
+            }
+        }
+        // While a trigger resolves the stack is never empty, so sorcery-speed cards in
+        // hand always fail the castable-now check above. On the AI's own turn with a
+        // main phase still ongoing or ahead, reserve their mana by raw totals instead.
+        if (aiPlayer.getId().equals(gameData.activePlayerId)
+                && gameData.currentStep != null
+                && gameData.currentStep.ordinal() <= TurnStep.POSTCOMBAT_MAIN.ordinal()) {
+            int available = virtualPool.getTotal();
+            for (Card card : hand) {
+                if (card.hasType(CardType.LAND) || card.getManaCost() == null) continue;
+                int manaValue = card.getManaValue();
+                if (manaValue <= available && manaValue + reservedManaValue > available) {
+                    return true;
+                }
+            }
+        }
+        return false;
     }
 
     protected void handleScry(GameData gameData) {
@@ -192,6 +295,7 @@ public abstract class AiDecisionEngine {
             case PendingInteraction.HandChoice ignored -> handleCardChoice(gameData);
             case PendingInteraction.ColorChoice ignored -> handleListChoice(gameData);
             case PendingInteraction.MayAbilityChoice ignored -> handleMayAbilityChoice(gameData);
+            case PendingInteraction.XValueChoice ignored -> handleXValueChoice(gameData);
             case PendingInteraction.Scry ignored -> handleScry(gameData);
             case null -> { }
             default -> choiceHandler.handleActiveInteraction(gameData);

@@ -1393,4 +1393,80 @@ class EasyAiDecisionEngineTest {
             assertThat(testGd.stack).isEmpty();
         }
     }
+
+    // ===== May-pay mana floating (base AiDecisionEngine behavior) =====
+
+    @Nested
+    @DisplayName("May-pay mana floating")
+    class MayPayFloatingTests {
+
+        private GameTestHarness testHarness;
+        private Player human;
+        private Player aiTestPlayer;
+        private GameData testGd;
+        private EasyAiDecisionEngine easyAi;
+
+        @BeforeEach
+        void setUpHarness() {
+            testHarness = new GameTestHarness();
+            human = testHarness.getPlayer1();
+            aiTestPlayer = testHarness.getPlayer2();
+            testGd = testHarness.getGameData();
+            testHarness.skipMulligan();
+            testHarness.clearMessages();
+
+            FakeConnection aiConn = new FakeConnection("ai-easy-test");
+            testHarness.getSessionManager().registerPlayer(aiConn, aiTestPlayer.getId(), "Bob");
+            easyAi = new EasyAiDecisionEngine(testGd.id, aiTestPlayer, testHarness.getGameRegistry(),
+                    testHarness.getGameService(), testHarness.getGameQueryService(),
+                    testHarness.getCombatAttackService(), testHarness.getGameBroadcastService(), testHarness.getCastingCostService(), testHarness.getCastingPermissionService(),
+                    testHarness.getTargetValidationService(), testHarness.getTargetLegalityService());
+            easyAi.setSelfConnection(aiConn);
+        }
+
+        /** Human casts a red spell so the AI's Iron Star trigger resolves into the may-pay prompt. */
+        private void fireIronStarTrigger() {
+            testHarness.forceActivePlayer(human);
+            testHarness.forceStep(TurnStep.PRECOMBAT_MAIN);
+            testHarness.clearPriorityPassed();
+            testGd.status = GameStatus.RUNNING;
+            testHarness.setHand(human, List.of(new com.github.laxika.magicalvibes.cards.b.BogardanFirefiend()));
+            testHarness.addMana(human, ManaColor.RED, 3);
+            testHarness.castCreature(human, 0);
+            testHarness.passBothPriorities();
+            assertThat(testGd.interaction.activeInteraction(PendingInteraction.MayAbilityChoice.class).playerId())
+                    .isEqualTo(aiTestPlayer.getId());
+        }
+
+        @Test
+        @DisplayName("Easy AI taps a land to pay a may-cost instead of accepting into a fizzle")
+        void tapsLandToPayMayCost() {
+            testHarness.addToBattlefield(aiTestPlayer, new com.github.laxika.magicalvibes.cards.i.IronStar());
+            Permanent mountain = new Permanent(new com.github.laxika.magicalvibes.cards.m.Mountain());
+            mountain.setSummoningSick(false);
+            testGd.playerBattlefields.get(aiTestPlayer.getId()).add(mountain);
+
+            int lifeBefore = testGd.playerLifeTotals.get(aiTestPlayer.getId());
+            fireIronStarTrigger();
+
+            easyAi.handleMessage("INTERACTION_PROMPT", "");
+
+            assertThat(testGd.playerLifeTotals.get(aiTestPlayer.getId())).isEqualTo(lifeBefore + 1);
+            assertThat(mountain.isTapped()).isTrue();
+        }
+
+        @Test
+        @DisplayName("Easy AI declines a may-cost it cannot pay")
+        void declinesUnpayableMayCost() {
+            testHarness.addToBattlefield(aiTestPlayer, new com.github.laxika.magicalvibes.cards.i.IronStar());
+
+            int lifeBefore = testGd.playerLifeTotals.get(aiTestPlayer.getId());
+            fireIronStarTrigger();
+
+            easyAi.handleMessage("INTERACTION_PROMPT", "");
+
+            assertThat(testGd.playerLifeTotals.get(aiTestPlayer.getId())).isEqualTo(lifeBefore);
+            assertThat(testGd.interaction.activeInteraction(PendingInteraction.MayAbilityChoice.class)).isNull();
+        }
+    }
 }
