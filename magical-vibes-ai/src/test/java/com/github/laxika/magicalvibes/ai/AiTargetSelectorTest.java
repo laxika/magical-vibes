@@ -3,8 +3,12 @@ package com.github.laxika.magicalvibes.ai;
 import com.github.laxika.magicalvibes.cards.a.ActOfTreason;
 import com.github.laxika.magicalvibes.cards.a.AirElemental;
 import com.github.laxika.magicalvibes.cards.b.Befuddle;
+import com.github.laxika.magicalvibes.cards.a.AgonyWarp;
 import com.github.laxika.magicalvibes.cards.b.BenalishMarshal;
 import com.github.laxika.magicalvibes.cards.c.ContagionClasp;
+import com.github.laxika.magicalvibes.cards.d.Diminish;
+import com.github.laxika.magicalvibes.cards.f.FeelingOfDread;
+import com.github.laxika.magicalvibes.cards.f.FulgentDistraction;
 import com.github.laxika.magicalvibes.cards.e.ElaborateFirecannon;
 import com.github.laxika.magicalvibes.cards.e.EliteVanguard;
 import com.github.laxika.magicalvibes.cards.e.EntrancingMelody;
@@ -65,6 +69,8 @@ import com.github.laxika.magicalvibes.model.effect.SacrificeSelfCost;
 import com.github.laxika.magicalvibes.model.effect.TapPermanentsEffect;
 import com.github.laxika.magicalvibes.model.effect.TapUntapScope;
 import com.github.laxika.magicalvibes.model.filter.CardTypePredicate;
+import com.github.laxika.magicalvibes.model.filter.PermanentIsCreaturePredicate;
+import com.github.laxika.magicalvibes.model.filter.PermanentPredicateTargetFilter;
 import com.github.laxika.magicalvibes.service.battlefield.GameQueryService;
 import com.github.laxika.magicalvibes.service.effect.TargetValidationService;
 import com.github.laxika.magicalvibes.service.target.TargetLegalityService;
@@ -345,6 +351,17 @@ class AiTargetSelectorTest {
         Permanent oppAngel = harness.addToBattlefieldAndReturn(human, new SerraAngel());
 
         UUID target = targetSelector.chooseTarget(gd, new ContagionClasp(), aiPlayer.getId());
+
+        assertThat(target).isEqualTo(oppAngel.getId());
+    }
+
+    @Test
+    @DisplayName("Base-P/T shrink (Diminish) targets the opponent's creature, not the AI's own")
+    void basePowerToughnessShrinkTargetsOpponentCreature() {
+        harness.addToBattlefield(aiPlayer, new GrizzlyBears());
+        Permanent oppAngel = harness.addToBattlefieldAndReturn(human, new SerraAngel());
+
+        UUID target = targetSelector.chooseTarget(gd, new Diminish(), aiPlayer.getId());
 
         assertThat(target).isEqualTo(oppAngel.getId());
     }
@@ -1045,6 +1062,84 @@ class AiTargetSelectorTest {
                     .filter(p -> p.getCard().getName().equals("Grizzly Bears"))
                     .findFirst().orElseThrow();
             assertThat(targets.get(1)).isEqualTo(oppPerm.getId());
+        }
+
+        @Test
+        @DisplayName("Up-to-two tap spell (Feeling of Dread) taps the opponent's two biggest threats")
+        void upToTwoTapSpellTapsTopTwoOpponentThreats() {
+            // Regression: single-group "up to N" spells used to take the single-target
+            // path and submit only one target.
+            harness.addToBattlefield(aiPlayer, new GrizzlyBears());
+            Permanent oppElves = harness.addToBattlefieldAndReturn(human, new LlanowarElves());
+            Permanent oppBears = harness.addToBattlefieldAndReturn(human, new GrizzlyBears());
+            Permanent oppAngel = harness.addToBattlefieldAndReturn(human, new SerraAngel());
+
+            List<UUID> targets = targetSelector.chooseMultiTargets(gd, new FeelingOfDread(), aiPlayer.getId());
+
+            assertThat(targets).containsExactlyInAnyOrder(oppAngel.getId(), oppBears.getId());
+            assertThat(targets).doesNotContain(oppElves.getId());
+        }
+
+        @Test
+        @DisplayName("Up-to-two tap spell does not pad optional targets from the AI's own board")
+        void upToTwoTapSpellDoesNotPadFromOwnBoard() {
+            harness.addToBattlefield(aiPlayer, new SerraAngel());
+            harness.addToBattlefield(aiPlayer, new LlanowarElves());
+            Permanent oppBears = harness.addToBattlefieldAndReturn(human, new GrizzlyBears());
+
+            List<UUID> targets = targetSelector.chooseMultiTargets(gd, new FeelingOfDread(), aiPlayer.getId());
+
+            assertThat(targets).containsExactly(oppBears.getId());
+        }
+
+        @Test
+        @DisplayName("Beneficial up-to-two pump picks the AI's own creatures, not the opponent's")
+        void beneficialUpToTwoPumpPicksOwnCreatures() {
+            Permanent ownBears = harness.addToBattlefieldAndReturn(aiPlayer, new GrizzlyBears());
+            Permanent ownVanguard = harness.addToBattlefieldAndReturn(aiPlayer, new EliteVanguard());
+            Permanent oppAngel = harness.addToBattlefieldAndReturn(human, new SerraAngel());
+
+            Card pumpSpell = new Card();
+            pumpSpell.setName("Test Mass Pump");
+            pumpSpell.setType(CardType.INSTANT);
+            pumpSpell.target(new PermanentPredicateTargetFilter(
+                    new PermanentIsCreaturePredicate(), "Target must be a creature"), 0, 2)
+                    .addEffect(EffectSlot.SPELL, new BoostTargetCreatureEffect(2, 2));
+
+            List<UUID> targets = targetSelector.chooseMultiTargets(gd, pumpSpell, aiPlayer.getId());
+
+            assertThat(targets).containsExactlyInAnyOrder(ownBears.getId(), ownVanguard.getId());
+            assertThat(targets).doesNotContain(oppAngel.getId());
+        }
+
+        @Test
+        @DisplayName("Mandatory two-target tap (Fulgent Distraction) fills from the AI's board only when forced")
+        void mandatoryTwoTargetTapFillsFromOwnBoardWhenForced() {
+            Permanent ownElves = harness.addToBattlefieldAndReturn(aiPlayer, new LlanowarElves());
+            Permanent oppBears = harness.addToBattlefieldAndReturn(human, new GrizzlyBears());
+
+            List<UUID> targets = targetSelector.chooseMultiTargets(gd, new FulgentDistraction(), aiPlayer.getId());
+
+            assertThat(targets).containsExactlyInAnyOrder(oppBears.getId(), ownElves.getId());
+        }
+
+        @Test
+        @DisplayName("Mandatory two-target tap returns null when only one legal target exists")
+        void mandatoryTwoTargetTapReturnsNullWhenUnsatisfiable() {
+            harness.addToBattlefield(aiPlayer, new LlanowarElves());
+
+            List<UUID> targets = targetSelector.chooseMultiTargets(gd, new FulgentDistraction(), aiPlayer.getId());
+
+            assertThat(targets).isNull();
+        }
+
+        @Test
+        @DisplayName("needsMultiTargetSelection covers multi-group and single-group up-to-N spells")
+        void needsMultiTargetSelectionClassifiesSpellShapes() {
+            assertThat(targetSelector.needsMultiTargetSelection(new FeelingOfDread())).isTrue();
+            assertThat(targetSelector.needsMultiTargetSelection(new FulgentDistraction())).isTrue();
+            assertThat(targetSelector.needsMultiTargetSelection(new AgonyWarp())).isTrue();
+            assertThat(targetSelector.needsMultiTargetSelection(new Stun())).isFalse();
         }
 
         @Test

@@ -1013,7 +1013,7 @@ public class HardAiDecisionEngine extends AiDecisionEngine {
         // 3. Targeting
         UUID targetId = initialTargetId;
         List<UUID> multiTargetIds = null;
-        boolean isMultiTarget = card.getSpellTargets().size() > 1;
+        boolean isMultiTarget = targetSelector.needsMultiTargetSelection(card);
         if (isMultiTarget && modalPlan == null) {
             multiTargetIds = targetSelector.chooseMultiTargets(gameData, card, aiPlayer.getId());
             if (multiTargetIds == null) return null;

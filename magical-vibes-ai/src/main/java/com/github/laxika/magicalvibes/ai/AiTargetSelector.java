@@ -13,19 +13,13 @@ import com.github.laxika.magicalvibes.model.StackEntry;
 import com.github.laxika.magicalvibes.model.StackEntryType;
 import com.github.laxika.magicalvibes.model.filter.TargetFilter;
 import com.github.laxika.magicalvibes.model.effect.AddManaOnEnchantedLandTapEffect;
-import com.github.laxika.magicalvibes.model.effect.CantBlockThisTurnEffect;
 import com.github.laxika.magicalvibes.model.effect.CreatureBoostEffect;
 import com.github.laxika.magicalvibes.model.effect.CostEffect;
 import com.github.laxika.magicalvibes.model.effect.DamageDealingEffect;
-import com.github.laxika.magicalvibes.model.effect.DealDamageToTargetCreatureOrPlaneswalkerEffect;
 import com.github.laxika.magicalvibes.model.effect.DealDividedDamageEffect;
 import com.github.laxika.magicalvibes.model.effect.DivisionMode;
 import com.github.laxika.magicalvibes.model.amount.Fixed;
 import com.github.laxika.magicalvibes.model.effect.ExtraTurnEffect;
-import com.github.laxika.magicalvibes.model.effect.GainControlOfTargetEffect;
-import com.github.laxika.magicalvibes.model.effect.MustAttackThisTurnEffect;
-import com.github.laxika.magicalvibes.model.CounterType;
-import com.github.laxika.magicalvibes.model.effect.PutCounterOnTargetPermanentEffect;
 import com.github.laxika.magicalvibes.model.effect.RegenerationEffect;
 import com.github.laxika.magicalvibes.model.effect.ConditionalReplacementEffect;
 import com.github.laxika.magicalvibes.model.effect.StaticCreatureBoostEffect;
@@ -33,7 +27,6 @@ import com.github.laxika.magicalvibes.model.EffectResolution;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
 import com.github.laxika.magicalvibes.model.effect.TargetCategory;
 import com.github.laxika.magicalvibes.model.effect.CastTargetInstantOrSorceryFromGraveyardEffect;
-import com.github.laxika.magicalvibes.model.effect.RemovalEffect;
 import com.github.laxika.magicalvibes.model.effect.ExileGraveyardCardsEffect;
 import com.github.laxika.magicalvibes.model.effect.ExileTargetCardFromGraveyardAndImprintOnSourceEffect;
 import com.github.laxika.magicalvibes.model.effect.ExileTargetGraveyardCardAndSameNameFromZonesEffect;
@@ -44,9 +37,6 @@ import com.github.laxika.magicalvibes.model.effect.GrantScope;
 import com.github.laxika.magicalvibes.model.effect.PutCardFromOpponentGraveyardOntoBattlefieldEffect;
 import com.github.laxika.magicalvibes.model.effect.PutCreatureFromOpponentGraveyardOntoBattlefieldWithExileEffect;
 import com.github.laxika.magicalvibes.model.effect.ReturnCardFromGraveyardEffect;
-import com.github.laxika.magicalvibes.model.effect.SkipNextUntapEffect;
-import com.github.laxika.magicalvibes.model.effect.TapPermanentsEffect;
-import com.github.laxika.magicalvibes.model.effect.TapUntapScope;
 import com.github.laxika.magicalvibes.model.TargetType;
 import com.github.laxika.magicalvibes.service.battlefield.GameQueryService;
 import com.github.laxika.magicalvibes.service.filter.PredicateEvaluationService;
@@ -78,6 +68,7 @@ class AiTargetSelector {
     private final TargetLegalityService targetLegalityService;
     private final ValidTargetService validTargetService;
     private final AmountEvaluationService amountEvaluationService;
+    private final TargetPolarityClassifier polarityClassifier;
     private final BoardEvaluator boardEvaluator;
 
     AiTargetSelector(GameQueryService gameQueryService, TargetValidationService targetValidationService,
@@ -94,6 +85,7 @@ class AiTargetSelector {
         this.validTargetService = new ValidTargetService(gameQueryService, predicateEvaluationService,
                 targetLegalityService, targetValidationService);
         this.amountEvaluationService = new AmountEvaluationService(predicateEvaluationService, gameQueryService);
+        this.polarityClassifier = new TargetPolarityClassifier(amountEvaluationService);
         this.boardEvaluator = boardEvaluator;
     }
 
@@ -123,33 +115,19 @@ class AiTargetSelector {
                     .orElse(null);
         }
 
-        // Handle single-target removal effects (ETB creatures or removal spells): destroy,
-        // exile, and bounce all aim at the opponent's board first. Bounce must not fall into
-        // the general fallback below — its own-battlefield-first search would return the AI's
-        // own permanents (e.g. Quicksilver Geyser bouncing the AI's own artifact).
-        for (CardEffect effect : card.getEffects(EffectSlot.ON_ENTER_BATTLEFIELD)) {
-            if (isSingleTargetRemoval(effect)) {
-                return chooseRemovalTarget(gameData, card, aiPlayerId, opponentId);
-            }
+        // Harmful shapes must not fall into the general fallback below — its
+        // own-battlefield-first search would aim them at the AI's own permanents (e.g.
+        // Quicksilver Geyser bouncing the AI's own artifact, Stun tapping the AI's own
+        // blocker). TargetPolarityClassifier is the single source of truth for which
+        // shapes are harmful; a guard test keeps it exhaustive over the card pool.
+        // Removal and damage route here, before the aura branches (as they always have);
+        // other harm routes after them so aura-specific handling keeps precedence.
+        TargetPolarity polarity = polarityClassifier.classifyCard(gameData, card, aiPlayerId);
+        if (polarity == TargetPolarity.HARMFUL_REMOVAL) {
+            return chooseRemovalTarget(gameData, card, aiPlayerId, opponentId);
         }
-        for (CardEffect effect : card.getEffects(EffectSlot.SPELL)) {
-            if (isSingleTargetRemoval(effect)) {
-                return chooseRemovalTarget(gameData, card, aiPlayerId, opponentId);
-            }
-        }
-
-        // Damage that can hit permanents is harmful to its target and must not fall into the
-        // general fallback below — its own-battlefield-first search would burn the AI's own
-        // creatures whenever it controls any.
-        for (CardEffect effect : card.getEffects(EffectSlot.ON_ENTER_BATTLEFIELD)) {
-            if (isPermanentDamageEffect(effect)) {
-                return chooseHarmfulPermanentTarget(gameData, card, aiPlayerId, opponentId, allowedTargets);
-            }
-        }
-        for (CardEffect effect : card.getEffects(EffectSlot.SPELL)) {
-            if (isPermanentDamageEffect(effect)) {
-                return chooseHarmfulPermanentTarget(gameData, card, aiPlayerId, opponentId, allowedTargets);
-            }
+        if (polarity == TargetPolarity.HARMFUL_DAMAGE) {
+            return chooseHarmfulPermanentTarget(gameData, card, aiPlayerId, opponentId, allowedTargets);
         }
 
         // Controller-beneficial land auras (mana ramp like Wild Growth / Fertile Ground) help
@@ -203,20 +181,11 @@ class AiTargetSelector {
             return null; // Aura was handled by specific logic — don't fall through
         }
 
-        // Tap-downs, untap-step locks, "can't block", -1/-1 counters, debuffs, forced attacks,
-        // and control steal are harmful to (or seize) their target and must not fall into the
-        // general fallback below — its own-battlefield-first search would aim them at the AI's
-        // own permanents (e.g. Stun stopping the AI's own blocker, or Act of Treason "stealing"
-        // the AI's own creature).
-        for (CardEffect effect : card.getEffects(EffectSlot.ON_ENTER_BATTLEFIELD)) {
-            if (isHarmfulPermanentDisruption(gameData, effect, aiPlayerId)) {
-                return chooseHarmfulPermanentTarget(gameData, card, aiPlayerId, opponentId, allowedTargets);
-            }
-        }
-        for (CardEffect effect : card.getEffects(EffectSlot.SPELL)) {
-            if (isHarmfulPermanentDisruption(gameData, effect, aiPlayerId)) {
-                return chooseHarmfulPermanentTarget(gameData, card, aiPlayerId, opponentId, allowedTargets);
-            }
+        // Other harm (tap-downs, untap-step locks, "can't block", -1/-1 counters, debuffs,
+        // forced attacks, control steal) aims at the opponent's board; see the polarity
+        // routing comment above.
+        if (polarity == TargetPolarity.HARMFUL) {
+            return chooseHarmfulPermanentTarget(gameData, card, aiPlayerId, opponentId, allowedTargets);
         }
 
         // General fallback: find any valid target using target filter + effect validators
@@ -341,9 +310,29 @@ class AiTargetSelector {
     }
 
     /**
-     * Selects targets for multi-target spells (cards with more than one SpellTarget group).
-     * Returns a list of target UUIDs (one per satisfied target group), or null if
-     * mandatory targets cannot be satisfied.
+     * True when the spell must go through {@link #chooseMultiTargets} instead of the
+     * single-target {@link #chooseTarget}: either it declares several target groups, or its
+     * one group accepts more than one target ("up to N" spells like Feeling of Dread, which
+     * previously took the single-target path and always submitted just one target).
+     * X-scaled targeting (target count decided with X elsewhere), divided-damage spells
+     * (damage-assignment path), and stack-targeting spells keep their existing paths.
+     */
+    boolean needsMultiTargetSelection(Card card) {
+        List<SpellTarget> groups = card.getSpellTargets();
+        if (groups.size() > 1) {
+            return true;
+        }
+        return groups.size() == 1
+                && card.getMaxTargets() > 1
+                && !card.hasXScaledTargets()
+                && !EffectResolution.needsDamageDistribution(card)
+                && !EffectResolution.needsSpellTarget(card);
+    }
+
+    /**
+     * Selects targets for multi-target spells (several target groups, or one group that
+     * accepts several targets). Returns the flat target list in group order, or null if
+     * a group's mandatory targets cannot be satisfied.
      */
     List<UUID> chooseMultiTargets(GameData gameData, Card card, UUID aiPlayerId) {
         UUID opponentId = AiUtils.getOpponentId(gameData, aiPlayerId);
@@ -358,17 +347,22 @@ class AiTargetSelector {
             boolean wantsPermanent = groupEffects.stream().anyMatch(e -> e.targetSpec().category().includesPermanents())
                     || st.getFilter() != null;
 
-            UUID chosen = null;
-
             if (wantsPlayer && !wantsPermanent) {
-                chosen = pickPlayerTargetForGroup(gameData, aiPlayerId, opponentId, groupEffects);
+                UUID chosen = pickPlayerTargetForGroup(gameData, aiPlayerId, opponentId, groupEffects);
+                if (chosen != null) {
+                    result.add(chosen);
+                    alreadyChosen.add(chosen);
+                } else if (st.getMinTargets() > 0) {
+                    return null; // Mandatory target cannot be satisfied
+                }
             } else if (wantsPermanent) {
-                chosen = pickPermanentTargetForGroup(gameData, card, aiPlayerId, opponentId, st, alreadyChosen);
-            }
-
-            if (chosen != null) {
-                result.add(chosen);
-                alreadyChosen.add(chosen);
+                List<UUID> chosen = pickPermanentTargetsForGroup(gameData, card, aiPlayerId, opponentId,
+                        st, alreadyChosen, groupEffects);
+                if (chosen.size() < st.getMinTargets()) {
+                    return null; // Mandatory targets cannot be satisfied
+                }
+                result.addAll(chosen);
+                alreadyChosen.addAll(chosen);
             } else if (st.getMinTargets() > 0) {
                 return null; // Mandatory target cannot be satisfied
             }
@@ -418,30 +412,53 @@ class AiTargetSelector {
     }
 
     /**
-     * Picks a permanent target for a specific multi-target group, using the group's filter.
-     * Searches opponent's battlefield first (more likely target for harmful effects), picking
-     * the most threatening valid target. Falls back to the AI's own battlefield if nothing on
-     * the opponent's side is legal (e.g. when the target group only accepts own permanents).
+     * Picks up to {@code maxTargets} permanents for one multi-target group, using the
+     * group's filter. The group's {@link TargetPolarity} decides which board to draw from:
+     * harmful (and unclassified) groups take the opponent's most threatening valid
+     * permanents, beneficial groups the AI's own best. Optional targets beyond the group's
+     * minimum are never padded from the other board — an "up to N" tap spell taps as many
+     * opponent creatures as it legally can and stops, instead of filling the quota with the
+     * AI's own permanents. Only an unmet minimum forces picks from the other board (best
+     * candidate first, e.g. Pounce's own-fighter group choosing the AI's strongest creature).
      */
-    private UUID pickPermanentTargetForGroup(GameData gameData, Card card, UUID aiPlayerId,
-                                              UUID opponentId, SpellTarget st, Set<UUID> alreadyChosen) {
+    private List<UUID> pickPermanentTargetsForGroup(GameData gameData, Card card, UUID aiPlayerId,
+                                                    UUID opponentId, SpellTarget st, Set<UUID> alreadyChosen,
+                                                    List<CardEffect> groupEffects) {
         TargetFilter groupFilter = st.getFilter();
-        for (UUID playerId : new UUID[]{opponentId, aiPlayerId}) {
-            if (playerId == null) continue;
-            boolean searchingOpponent = playerId.equals(opponentId);
-            UUID best = gameData.playerBattlefields.getOrDefault(playerId, List.of()).stream()
-                    .filter(p -> !alreadyChosen.contains(p.getId()))
-                    .filter(p -> validTargetService.isValidMultiTargetPermanent(gameData, card, p, aiPlayerId, groupFilter))
-                    .max(Comparator.comparingDouble(p -> searchingOpponent
-                            ? generalTargetPriority(gameData, p, opponentId, aiPlayerId)
-                            : generalTargetPriority(gameData, p, aiPlayerId, opponentId)))
-                    .map(Permanent::getId)
-                    .orElse(null);
-            if (best != null) {
-                return best;
-            }
+        boolean beneficial = polarityClassifier.classifyGroup(gameData, groupEffects, aiPlayerId)
+                == TargetPolarity.BENEFICIAL;
+        UUID preferredBoard = beneficial ? aiPlayerId : opponentId;
+        UUID fallbackBoard = beneficial ? opponentId : aiPlayerId;
+
+        List<UUID> chosen = new ArrayList<>();
+        takeGroupTargets(gameData, card, aiPlayerId, opponentId, groupFilter, preferredBoard,
+                st.getMaxTargets(), alreadyChosen, chosen);
+        if (chosen.size() < st.getMinTargets()) {
+            takeGroupTargets(gameData, card, aiPlayerId, opponentId, groupFilter, fallbackBoard,
+                    st.getMinTargets(), alreadyChosen, chosen);
         }
-        return null;
+        return chosen;
+    }
+
+    /**
+     * Appends the given board's valid group targets to {@code chosen}, best priority first,
+     * until it holds {@code limit} targets or the board runs out of legal candidates.
+     */
+    private void takeGroupTargets(GameData gameData, Card card, UUID aiPlayerId, UUID opponentId,
+                                  TargetFilter groupFilter, UUID boardOwner, int limit,
+                                  Set<UUID> alreadyChosen, List<UUID> chosen) {
+        if (boardOwner == null || chosen.size() >= limit) {
+            return;
+        }
+        UUID boardOpponent = boardOwner.equals(aiPlayerId) ? opponentId : aiPlayerId;
+        gameData.playerBattlefields.getOrDefault(boardOwner, List.of()).stream()
+                .filter(p -> !alreadyChosen.contains(p.getId()) && !chosen.contains(p.getId()))
+                .filter(p -> validTargetService.isValidMultiTargetPermanent(gameData, card, p, aiPlayerId, groupFilter))
+                .sorted(Comparator.comparingDouble(
+                        (Permanent p) -> generalTargetPriority(gameData, p, boardOwner, boardOpponent)).reversed())
+                .limit((long) limit - chosen.size())
+                .map(Permanent::getId)
+                .forEach(chosen::add);
     }
 
     boolean isValidPermanentTarget(GameData gameData, Card card, Permanent target, UUID aiPlayerId) {
@@ -494,58 +511,6 @@ class AiTargetSelector {
             if (category.includesPermanents()) result.add(TargetType.PERMANENT);
         }
         return result;
-    }
-
-    /**
-     * True for single-target removal ({@code removalKind()} non-null: destroy, exile, or bounce),
-     * routed through the dedicated removal-target selection. This mirrors
-     * {@code SpellEvaluator.removalScore}, which prices all three kinds against the opponent's
-     * best creature — target selection must aim at the same board or the AI casts a spell it
-     * valued for hitting the opponent and then targets its own permanents.
-     */
-    private static boolean isSingleTargetRemoval(CardEffect effect) {
-        return effect instanceof RemovalEffect rem && rem.removalKind() != null;
-    }
-
-    /**
-     * True when the effect deals damage to a chosen permanent target (any-target or
-     * target-creature damage). Player-only damage stays out — it is handled by the
-     * player-targeting branch.
-     */
-    private static boolean isPermanentDamageEffect(CardEffect effect) {
-        return ((effect instanceof DamageDealingEffect dmg && dmg.canDamageCreatures())
-                || effect instanceof DealDamageToTargetCreatureOrPlaneswalkerEffect)
-                && effect.targetSpec().category().includesPermanents();
-    }
-
-    /**
-     * True when the effect is harmful to (or seizes) the permanent it targets without being
-     * removal or damage: tap-downs, untap-step locks, "can't block" riders, forced attacks,
-     * -1/-1 counters, negative P/T debuffs, and control steal. Positive boosts and untap
-     * effects stay out — they benefit the target and keep the own-battlefield-first fallback.
-     */
-    private boolean isHarmfulPermanentDisruption(GameData gameData, CardEffect effect, UUID aiPlayerId) {
-        if (effect instanceof TapPermanentsEffect tap) {
-            return tap.scope() == TapUntapScope.TARGET;
-        }
-        if (effect instanceof SkipNextUntapEffect skip) {
-            return skip.scope() == TapUntapScope.TARGET;
-        }
-        if (effect instanceof CantBlockThisTurnEffect cantBlock) {
-            return cantBlock.scope() == TapUntapScope.TARGET;
-        }
-        if (effect instanceof MustAttackThisTurnEffect || effect instanceof GainControlOfTargetEffect) {
-            return true;
-        }
-        if (effect instanceof PutCounterOnTargetPermanentEffect counter) {
-            return counter.counterType() == CounterType.MINUS_ONE_MINUS_ONE;
-        }
-        if (effect instanceof CreatureBoostEffect boost) {
-            AmountContext ctx = AmountContext.forEstimation(aiPlayerId);
-            return amountEvaluationService.evaluate(gameData, boost.powerBoost(), ctx) < 0
-                    || amountEvaluationService.evaluate(gameData, boost.toughnessBoost(), ctx) < 0;
-        }
-        return false;
     }
 
     /**

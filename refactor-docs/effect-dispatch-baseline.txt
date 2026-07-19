@@ -1,12 +1,13 @@
 magical-vibes-ai/src/main/java/com/github/laxika/magicalvibes/ai/AiDecisionEngine.java=4
 magical-vibes-ai/src/main/java/com/github/laxika/magicalvibes/ai/AiManaManager.java=3
 magical-vibes-ai/src/main/java/com/github/laxika/magicalvibes/ai/AiTargetSelector.java=10
-magical-vibes-ai/src/main/java/com/github/laxika/magicalvibes/ai/BoardEvaluator.java=1
+magical-vibes-ai/src/main/java/com/github/laxika/magicalvibes/ai/BoardEvaluator.java=4
 magical-vibes-ai/src/main/java/com/github/laxika/magicalvibes/ai/EasyAiDecisionEngine.java=1
 magical-vibes-ai/src/main/java/com/github/laxika/magicalvibes/ai/HardAiDecisionEngine.java=3
 magical-vibes-ai/src/main/java/com/github/laxika/magicalvibes/ai/InstantCategoryClassifier.java=2
 magical-vibes-ai/src/main/java/com/github/laxika/magicalvibes/ai/RaceEvaluator.java=2
-magical-vibes-ai/src/main/java/com/github/laxika/magicalvibes/ai/SpellEvaluator.java=16
+magical-vibes-ai/src/main/java/com/github/laxika/magicalvibes/ai/SpellEvaluator.java=18
+magical-vibes-ai/src/main/java/com/github/laxika/magicalvibes/ai/TargetPolarityClassifier.java=12
 magical-vibes-ai/src/main/java/com/github/laxika/magicalvibes/ai/simulation/GameSimulator.java=2
 magical-vibes-engine/src/main/java/com/github/laxika/magicalvibes/service/DamagePreventionService.java=13
 magical-vibes-engine/src/main/java/com/github/laxika/magicalvibes/service/DrawService.java=10
