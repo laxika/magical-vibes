@@ -64,8 +64,8 @@ public class WinGameIfCreaturesInGraveyardEffectHandler implements NormalEffectH
 
             gameOutcomeService.declareWinner(gameData, controllerId);
         } else {
-            String logEntry = entry.getCard().getName() + "'s ability resolves but condition is no longer met (" + creatureCount + " creature cards in graveyard).";
-            gameBroadcastService.logAndBroadcast(gameData, GameLog.textCardText(playerName + " has " + creatureCount + " creature cards in their graveyard — " , entry.getCard(), " wins the game!"));
+            gameBroadcastService.logAndBroadcast(gameData, GameLog.cardThen(entry.getCard(),
+                    "'s ability resolves but condition is no longer met (" + creatureCount + " creature cards in graveyard)."));
             log.info("Game {} - {} intervening-if no longer met ({} creatures in graveyard, need {})",
                     gameData.id, entry.getCard().getName(), creatureCount, e.threshold());
         }

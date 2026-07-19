@@ -48,8 +48,8 @@ public class ChangeTargetOfTargetSpellToSourceEffectHandler implements NormalEff
 
         if (targetSpell.isSingleTarget()) {
             if (sourcePermanentId.equals(targetSpell.getTargetId())) {
-                String logEntry = targetSpell.getCard().getName() + " already targets " + entry.getCard().getName() + ".";
-                gameBroadcastService.logAndBroadcast(gameData, GameLog.cardThen(entry.getCard(), " has no effect (source permanent no longer on the battlefield)."));
+                gameBroadcastService.logAndBroadcast(gameData,
+                        GameLog.cardTextCard(targetSpell.getCard(), " already targets ", entry.getCard(), "."));
                 return;
             }
             if (targetRedirectionSupport.isValidNewTargetForSpell(gameData, targetSpell, sourcePermanentId)) {

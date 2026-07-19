@@ -50,7 +50,8 @@ public final class GameLog {
     /**
      * Logs that a stack entry resolves. When {@code description} is the card name (spells) this is
      * "{card} resolves."; when it starts with the card name (e.g. "Iron Star's ability") the
-     * remainder is kept after the card segment.
+     * remainder is kept after the card segment; when the card name appears mid-description
+     * (e.g. "Copy of Lightning Bolt") the surrounding text is kept around the card segment.
      */
     public static GameLogEntry resolves(Card card, String description) {
         if (card == null) {
@@ -59,6 +60,11 @@ public final class GameLog {
         String name = card.getName();
         if (description != null && description.startsWith(name)) {
             return builder().card(card).text(description.substring(name.length()) + " resolves.").build();
+        }
+        int nameIndex = description != null ? description.indexOf(name) : -1;
+        if (nameIndex > 0) {
+            return builder().text(description.substring(0, nameIndex)).card(card)
+                    .text(description.substring(nameIndex + name.length()) + " resolves.").build();
         }
         return builder().card(card).text(" resolves.").build();
     }
