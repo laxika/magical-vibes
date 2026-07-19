@@ -1,0 +1,87 @@
+/* ============================ Phone layout ============================
+   Every rule here is inert on desktop: layout overrides live inside the
+   phone media queries (mirroring PHONE_LAYOUT_MEDIA in
+   card-preview.service.ts), and the long-press preview overlay is
+   display: none outside them. Portrait phones stack the side panel under
+   the board as a compact control strip; small coarse-pointer landscape
+   screens keep the desktop side-by-side layout with a slimmer panel
+   (see side-panel.component.css for the panel's own phone rules; the
+   long-press preview overlay lives in the app root, app.css). */
+
+@media (max-width: 700px), ((pointer: coarse) and (max-width: 1024px) and (max-height: 500px)) {
+  .game-container {
+    /* 100vh includes the browser chrome on phones; dvh tracks the really
+       visible height so the hand never sits under the URL bar. */
+    height: 100dvh;
+    padding: 2px;
+  }
+
+  .game-layout {
+    gap: 2px;
+  }
+
+  /* The hand becomes one horizontally scrollable strip of smaller cards;
+     long-press previews them at full size. */
+  .hand-cards {
+    flex-wrap: nowrap;
+    overflow-x: auto;
+    padding-top: 6px;
+    min-height: calc(0.45 * 231px + 6px);
+  }
+
+  .hand-cards .card {
+    --card-zoom: 0.45;
+    flex-shrink: 0;
+  }
+
+  /* Overlay windows must never outgrow the screen. */
+  .reveal-hand-card,
+  .reveal-hand-window {
+    max-width: 97vw;
+    max-height: 85dvh;
+  }
+
+  .reveal-hand-card {
+    padding: 14px 10px;
+    overflow-y: auto;
+  }
+
+  .reveal-hand-body {
+    padding: 10px 8px;
+  }
+
+  .reveal-hand-cards .card,
+  .reorder-cards .card {
+    --card-zoom: 0.55;
+  }
+
+  .game-over-card {
+    padding: 24px 20px;
+    max-width: 92vw;
+  }
+
+  .combat-damage-popup {
+    min-width: 0;
+    width: min(340px, 94vw);
+    box-sizing: border-box;
+  }
+}
+
+/* Portrait: the side panel leaves the right edge and docks below the board
+   as a full-width control strip. */
+@media (max-width: 700px) {
+  .game-layout {
+    flex-direction: column;
+  }
+
+  .game-area {
+    /* Column flex child: allow shrinking so the panel strip always fits. */
+    min-height: 0;
+  }
+
+  app-side-panel {
+    width: 100%;
+    flex-shrink: 0;
+    min-height: 0;
+  }
+}

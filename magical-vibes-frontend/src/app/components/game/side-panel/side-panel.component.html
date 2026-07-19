@@ -1,4 +1,4 @@
-<div class="side-panel">
+<div class="side-panel" [class.phone-tabs-open]="phoneTabsOpen()">
   <div class="card-preview-panel">
     @if (effectivePreviewCard()) {
       <app-card-display [card]="effectivePreviewCard()!" [permanent]="effectivePreviewPermanent()" [preview]="true" class="preview-card" />
@@ -78,7 +78,7 @@
   </div>
 
   <div class="tab-header">
-    <div class="tab" [class.active]="activeTab() === 'log'" (click)="openLogTab()">
+    <div class="tab" [class.active]="activeTab() === 'log'" (click)="onTabTap('log')">
       Log
       @if (logUnreadCount() > 0) {
         <span class="tab-badges">
@@ -86,13 +86,13 @@
         </span>
       }
     </div>
-    <div class="tab" [class.active]="activeTab() === 'stack'" (click)="activeTab.set('stack')">
+    <div class="tab" [class.active]="activeTab() === 'stack'" (click)="onTabTap('stack')">
       Stack
       <span class="tab-badges">
         <span class="tab-badge">{{ stackEntries.length }}</span>
       </span>
     </div>
-    <div class="tab" [class.active]="activeTab() === 'graveyard'" (click)="activeTab.set('graveyard')">
+    <div class="tab" [class.active]="activeTab() === 'graveyard'" (click)="onTabTap('graveyard')">
       Grave
       <span class="tab-badges">
         <span class="tab-badge">{{ myGraveyard.length }}</span>

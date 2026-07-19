@@ -248,3 +248,16 @@
   font-family: var(--font-display);
   opacity: 0.9;
 }
+
+/* Phone layouts (see PHONE_LAYOUT_MEDIA in card-preview.service.ts): smaller
+   cards so a 7-card opening hand doesn't force a screen of scrolling.
+   Desktop is untouched. */
+@media (max-width: 700px), ((pointer: coarse) and (max-width: 1024px) and (max-height: 500px)) {
+  .hand-cards {
+    gap: 6px;
+  }
+
+  .hand-cards .card {
+    --card-zoom: 0.52;
+  }
+}

@@ -19,7 +19,7 @@ import { PermanentClickResolverService } from '../../services/permanent-click-re
   standalone: true,
   imports: [CommonModule, FormsModule, CardDisplayComponent, MulliganModalComponent, SidePanelComponent, ModifierTooltipComponent],
   templateUrl: './game.component.html',
-  styleUrls: ['./shared-game-styles.css', './game.component.css']
+  styleUrls: ['./shared-game-styles.css', './game.component.css', './game-phone.css']
 })
 export class GameComponent implements OnInit, OnDestroy {
   game = signal<Game | null>(null);

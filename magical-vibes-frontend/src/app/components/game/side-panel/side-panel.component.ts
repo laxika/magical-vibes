@@ -79,6 +79,23 @@ export class SidePanelComponent implements OnChanges, AfterViewChecked {
   showPlayerMenu = signal(false);
   logUnreadCount = signal(0);
   previewOverride = signal<Card | null>(null);
+  /* Phone layout only: the tab content is collapsed by default to keep the
+     bottom control strip compact; tapping a tab expands it, tapping the
+     active tab again collapses it. Desktop CSS ignores the toggled class. */
+  phoneTabsOpen = signal(false);
+
+  onTabTap(tab: 'log' | 'stack' | 'graveyard'): void {
+    if (this.activeTab() === tab) {
+      this.phoneTabsOpen.update(open => !open);
+    } else {
+      this.phoneTabsOpen.set(true);
+    }
+    if (tab === 'log') {
+      this.openLogTab();
+    } else {
+      this.activeTab.set(tab);
+    }
+  }
 
   @ViewChild('logEntries') private logEntriesRef?: ElementRef<HTMLElement>;
   private logPinnedToBottom = true;

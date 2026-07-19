@@ -26,6 +26,8 @@
   overflow: visible;
   user-select: none;
   -webkit-user-drag: none;
+  /* iOS-only: no image callout on long-press; ours previews the card instead. */
+  -webkit-touch-callout: none;
 }
 
 :host img,

@@ -1,6 +1,7 @@
-import { Component, Input, HostBinding, OnInit, OnChanges, AfterViewChecked, SimpleChanges, ElementRef, ViewChild, inject, signal } from '@angular/core';
+import { Component, Input, HostBinding, OnInit, OnChanges, OnDestroy, AfterViewChecked, SimpleChanges, ElementRef, ViewChild, inject, signal } from '@angular/core';
 import { DomSanitizer, SafeHtml } from '@angular/platform-browser';
 import { Card, Permanent } from '../../../services/websocket.service';
+import { CardPreviewService } from '../../../services/card-preview.service';
 import { ScryfallImageService } from '../../../services/scryfall-image.service';
 import { ScryfallCardDataService } from '../../../services/scryfall-card-data.service';
 import { ManaSymbolService } from '../../../services/mana-symbol.service';
@@ -20,9 +21,16 @@ export interface PlaneswalkerAbilityLine {
   standalone: true,
   templateUrl: './card-display.component.html',
   styleUrl: './card-display.component.css',
-  host: { 'class': 'card' }
+  host: {
+    'class': 'card',
+    '(touchstart)': 'onTouchStart($event)',
+    '(touchmove)': 'onTouchMove($event)',
+    '(touchend)': 'onTouchEnd($event)',
+    '(touchcancel)': 'onTouchCancel()',
+    '(contextmenu)': 'onContextMenu($event)',
+  }
 })
-export class CardDisplayComponent implements OnInit, OnChanges, AfterViewChecked {
+export class CardDisplayComponent implements OnInit, OnChanges, OnDestroy, AfterViewChecked {
   @Input({ required: true }) card!: Card;
   @Input() permanent: Permanent | null = null;
   @Input() preview = false;
@@ -49,11 +57,84 @@ export class CardDisplayComponent implements OnInit, OnChanges, AfterViewChecked
   private manaSymbolService = inject(ManaSymbolService);
   private setSymbolService = inject(SetSymbolService);
   private watermarkService = inject(WatermarkService);
+  private cardPreviewService = inject(CardPreviewService);
   private sanitizer = inject(DomSanitizer);
+
+  /* Long-press preview (phone layouts only): touch cards can't hover, so
+     holding a finger on any card shows it in the fullscreen preview overlay
+     and releasing dismisses it. A completed long-press suppresses the
+     synthetic click (preventDefault on touchend) so previewing a card never
+     also plays/targets it. */
+  private static readonly LONG_PRESS_MS = 400;
+  private static readonly LONG_PRESS_SLOP_PX = 12;
+  private longPressTimer: ReturnType<typeof setTimeout> | null = null;
+  private longPressFired = false;
+  private touchStartX = 0;
+  private touchStartY = 0;
 
   ngOnInit(): void {
     this.fetchCardArt();
     this.fetchWatermark();
+  }
+
+  ngOnDestroy(): void {
+    this.cancelLongPress();
+  }
+
+  onTouchStart(event: TouchEvent): void {
+    if (event.touches.length !== 1 || !this.cardPreviewService.isPhoneLayout()) return;
+    this.cancelLongPress();
+    this.touchStartX = event.touches[0].clientX;
+    this.touchStartY = event.touches[0].clientY;
+    this.longPressTimer = setTimeout(() => {
+      this.longPressTimer = null;
+      this.longPressFired = true;
+      this.cardPreviewService.show(this.card, this.permanent);
+    }, CardDisplayComponent.LONG_PRESS_MS);
+  }
+
+  onTouchMove(event: TouchEvent): void {
+    if (this.longPressTimer === null || event.touches.length !== 1) return;
+    const dx = event.touches[0].clientX - this.touchStartX;
+    const dy = event.touches[0].clientY - this.touchStartY;
+    if (Math.hypot(dx, dy) > CardDisplayComponent.LONG_PRESS_SLOP_PX) {
+      // The finger is scrolling, not holding; give up on the preview.
+      this.clearLongPressTimer();
+    }
+  }
+
+  onTouchEnd(event: TouchEvent): void {
+    const fired = this.longPressFired;
+    this.cancelLongPress();
+    if (fired) {
+      event.preventDefault();
+    }
+  }
+
+  onTouchCancel(): void {
+    this.cancelLongPress();
+  }
+
+  /** Android opens a context menu on long-press; swallow it while ours runs. */
+  onContextMenu(event: Event): void {
+    if (this.longPressTimer !== null || this.longPressFired) {
+      event.preventDefault();
+    }
+  }
+
+  private clearLongPressTimer(): void {
+    if (this.longPressTimer !== null) {
+      clearTimeout(this.longPressTimer);
+      this.longPressTimer = null;
+    }
+  }
+
+  private cancelLongPress(): void {
+    this.clearLongPressTimer();
+    if (this.longPressFired) {
+      this.longPressFired = false;
+      this.cardPreviewService.clear();
+    }
   }
 
   ngOnChanges(changes: SimpleChanges): void {

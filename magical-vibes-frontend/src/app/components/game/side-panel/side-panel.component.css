@@ -1277,3 +1277,69 @@
   0%, 100% { box-shadow: 0 0 12px rgba(231, 76, 60, 0.5); }
   50% { box-shadow: 0 0 20px rgba(231, 76, 60, 0.8); }
 }
+
+/* ============================ Phone layouts ============================
+   Scoped to the phone media queries (mirroring PHONE_LAYOUT_MEDIA in
+   card-preview.service.ts); the desktop panel is untouched. */
+
+/* Portrait: the panel is a full-width control strip docked under the board.
+   The hover preview is dropped (long-press previews instead), the tab strip
+   moves to the bottom edge, and tab content is collapsed unless a tab was
+   tapped (.phone-tabs-open, toggled in the component). */
+@media (max-width: 700px) {
+  .side-panel {
+    width: 100%;
+    height: auto;
+    max-height: 45dvh;
+    overflow-y: auto;
+  }
+
+  .card-preview-panel {
+    display: none;
+  }
+
+  .mana-strip {
+    margin-top: 4px;
+  }
+
+  .turn-info {
+    margin: 4px 6px;
+  }
+
+  .side-prompts {
+    max-height: 30dvh;
+  }
+
+  .tab-header {
+    order: 10;
+  }
+
+  .tab {
+    /* Comfortable touch targets. */
+    padding: 8px 2px;
+  }
+
+  .tab-content {
+    order: 11;
+    display: none;
+  }
+
+  .side-panel.phone-tabs-open .tab-content {
+    display: flex;
+    flex: 0 0 auto;
+    max-height: 32dvh;
+    overflow-y: auto;
+  }
+}
+
+/* Small landscape (coarse pointer): keep the desktop side-by-side layout but
+   slim the panel and drop the hover preview to fit the reduced height. */
+@media (pointer: coarse) and (min-width: 701px) and (max-width: 1024px) and (max-height: 500px) {
+  .side-panel {
+    width: 230px;
+  }
+
+  .card-preview-panel {
+    display: none;
+  }
+}

@@ -1,1 +1,13 @@
 <router-outlet/>
+
+<!-- Phone-only (hidden on desktop via CSS): fullscreen card preview shown
+     while a finger long-presses any card; dismissed with the release. -->
+@if (cardPreview.previewCard(); as previewedCard) {
+  <div class="phone-card-preview-overlay">
+    <app-card-display
+      [card]="previewedCard"
+      [permanent]="cardPreview.previewPermanent()"
+      [preview]="true"
+      [style.--card-zoom]="phonePreviewZoom" />
+  </div>
+}

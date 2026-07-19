@@ -1,0 +1,21 @@
+/* Fullscreen long-press card preview (see CardPreviewService). Hidden on
+   desktop; shown on phone layouts (mirrors PHONE_LAYOUT_MEDIA in
+   card-preview.service.ts). The base (hidden) rule must precede the media
+   block that shows it, since both selectors have equal specificity. */
+.phone-card-preview-overlay {
+  display: none;
+  position: fixed;
+  inset: 0;
+  z-index: 1200;
+  align-items: center;
+  justify-content: center;
+  background: rgba(0, 0, 0, 0.55);
+  /* View-only: the held finger keeps interacting with the card beneath. */
+  pointer-events: none;
+}
+
+@media (max-width: 700px), ((pointer: coarse) and (max-width: 1024px) and (max-height: 500px)) {
+  .phone-card-preview-overlay {
+    display: flex;
+  }
+}
