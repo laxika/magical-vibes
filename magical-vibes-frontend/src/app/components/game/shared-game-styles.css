@@ -286,6 +286,10 @@
   display: flex;
   gap: 4px;
   flex-wrap: wrap;
+  /* Reserve one card row so an empty hand keeps the hand area at its usual
+     height instead of collapsing (which would also feed a bigger allocation
+     back into the battlefield zoom model). */
+  min-height: calc(var(--density-zoom, 1) * 231px);
 }
 
 .card.playable {
