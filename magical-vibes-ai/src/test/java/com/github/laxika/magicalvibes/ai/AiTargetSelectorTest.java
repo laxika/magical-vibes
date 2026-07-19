@@ -1,7 +1,10 @@
 package com.github.laxika.magicalvibes.ai;
 
+import com.github.laxika.magicalvibes.cards.a.ActOfTreason;
 import com.github.laxika.magicalvibes.cards.a.AirElemental;
+import com.github.laxika.magicalvibes.cards.b.Befuddle;
 import com.github.laxika.magicalvibes.cards.b.BenalishMarshal;
+import com.github.laxika.magicalvibes.cards.c.ContagionClasp;
 import com.github.laxika.magicalvibes.cards.e.ElaborateFirecannon;
 import com.github.laxika.magicalvibes.cards.e.EliteVanguard;
 import com.github.laxika.magicalvibes.cards.e.EntrancingMelody;
@@ -18,6 +21,7 @@ import com.github.laxika.magicalvibes.cards.p.Pounce;
 import com.github.laxika.magicalvibes.cards.q.QuicksilverGeyser;
 import com.github.laxika.magicalvibes.cards.s.SerraAngel;
 import com.github.laxika.magicalvibes.cards.s.Skulduggery;
+import com.github.laxika.magicalvibes.cards.s.Stun;
 import com.github.laxika.magicalvibes.cards.w.WildGrowth;
 import com.github.laxika.magicalvibes.cards.w.WizardsLightning;
 import com.github.laxika.magicalvibes.model.ActivatedAbility;
@@ -58,6 +62,8 @@ import com.github.laxika.magicalvibes.model.effect.PutCreatureFromOpponentGravey
 import com.github.laxika.magicalvibes.model.effect.RegenerateEffect;
 import com.github.laxika.magicalvibes.model.effect.ReturnToHandEffect;
 import com.github.laxika.magicalvibes.model.effect.SacrificeSelfCost;
+import com.github.laxika.magicalvibes.model.effect.TapPermanentsEffect;
+import com.github.laxika.magicalvibes.model.effect.TapUntapScope;
 import com.github.laxika.magicalvibes.model.filter.CardTypePredicate;
 import com.github.laxika.magicalvibes.service.battlefield.GameQueryService;
 import com.github.laxika.magicalvibes.service.effect.TargetValidationService;
@@ -257,6 +263,108 @@ class AiTargetSelectorTest {
         UUID target = targetSelector.chooseTarget(gd, new QuicksilverGeyser(), aiPlayer.getId());
 
         assertThat(target).isEqualTo(ownElves.getId());
+    }
+
+    // ===== chooseTarget: harmful disruption (tap, can't-block, debuff, steal) =====
+
+    @Test
+    @DisplayName("Tap spell targets the opponent's most threatening creature, not the AI's own")
+    void tapSpellTargetsOpponentThreatNotOwnBoard() {
+        // Regression: tap-downs used to fall through to the general fallback, whose
+        // own-battlefield-first search made the AI tap its own creatures.
+        harness.addToBattlefield(aiPlayer, new GrizzlyBears());
+        harness.addToBattlefield(human, new LlanowarElves());
+        Permanent oppAngel = harness.addToBattlefieldAndReturn(human, new SerraAngel());
+
+        Card tapSpell = new Card();
+        tapSpell.setName("Test Tap");
+        tapSpell.setType(CardType.INSTANT);
+        tapSpell.addEffect(EffectSlot.SPELL, new TapPermanentsEffect(TapUntapScope.TARGET));
+
+        UUID target = targetSelector.chooseTarget(gd, tapSpell, aiPlayer.getId());
+
+        assertThat(target).isEqualTo(oppAngel.getId());
+    }
+
+    @Test
+    @DisplayName("Tap spell with an empty opponent board falls back to the AI's least valuable creature")
+    void tapSpellForcedSelfTargetPicksLeastValuable() {
+        harness.addToBattlefield(aiPlayer, new SerraAngel());
+        Permanent ownElves = harness.addToBattlefieldAndReturn(aiPlayer, new LlanowarElves());
+
+        Card tapSpell = new Card();
+        tapSpell.setName("Test Tap");
+        tapSpell.setType(CardType.INSTANT);
+        tapSpell.addEffect(EffectSlot.SPELL, new TapPermanentsEffect(TapUntapScope.TARGET));
+
+        UUID target = targetSelector.chooseTarget(gd, tapSpell, aiPlayer.getId());
+
+        assertThat(target).isEqualTo(ownElves.getId());
+    }
+
+    @Test
+    @DisplayName("Can't-block spell (Stun) targets the opponent's creature, not the AI's own")
+    void cantBlockSpellTargetsOpponentCreatureNotOwnBoard() {
+        harness.addToBattlefield(aiPlayer, new GrizzlyBears());
+        Permanent oppAngel = harness.addToBattlefieldAndReturn(human, new SerraAngel());
+
+        UUID target = targetSelector.chooseTarget(gd, new Stun(), aiPlayer.getId());
+
+        assertThat(target).isEqualTo(oppAngel.getId());
+    }
+
+    @Test
+    @DisplayName("Debuff spell (Befuddle, -4/-0) targets the opponent's creature, not the AI's own")
+    void debuffSpellTargetsOpponentCreatureNotOwnBoard() {
+        harness.addToBattlefield(aiPlayer, new GrizzlyBears());
+        Permanent oppAngel = harness.addToBattlefieldAndReturn(human, new SerraAngel());
+
+        UUID target = targetSelector.chooseTarget(gd, new Befuddle(), aiPlayer.getId());
+
+        assertThat(target).isEqualTo(oppAngel.getId());
+    }
+
+    @Test
+    @DisplayName("Steal spell (Act of Treason) targets the opponent's creature, not the AI's own")
+    void stealSpellTargetsOpponentCreatureNotOwnBoard() {
+        // Act of Treason has no controller restriction on its target filter, so the general
+        // fallback would happily "steal" the AI's own creature. Its leading untap effect must
+        // also not classify the card as beneficial.
+        harness.addToBattlefield(aiPlayer, new GrizzlyBears());
+        Permanent oppAngel = harness.addToBattlefieldAndReturn(human, new SerraAngel());
+
+        UUID target = targetSelector.chooseTarget(gd, new ActOfTreason(), aiPlayer.getId());
+
+        assertThat(target).isEqualTo(oppAngel.getId());
+    }
+
+    @Test
+    @DisplayName("-1/-1 counter ETB (Contagion Clasp) targets the opponent's creature, not the AI's own")
+    void minusCounterEtbTargetsOpponentCreatureNotOwnBoard() {
+        harness.addToBattlefield(aiPlayer, new GrizzlyBears());
+        Permanent oppAngel = harness.addToBattlefieldAndReturn(human, new SerraAngel());
+
+        UUID target = targetSelector.chooseTarget(gd, new ContagionClasp(), aiPlayer.getId());
+
+        assertThat(target).isEqualTo(oppAngel.getId());
+    }
+
+    @Test
+    @DisplayName("Positive pump spell still targets the AI's own creature first")
+    void positivePumpSpellStillTargetsOwnBoard() {
+        // The harmful-disruption classification is sign-aware: a Giant Growth-shaped boost
+        // must keep the own-battlefield-first fallback, not get routed at the opponent.
+        Permanent ownBears = harness.addToBattlefieldAndReturn(aiPlayer, new GrizzlyBears());
+        harness.addToBattlefield(human, new SerraAngel());
+
+        Card pumpSpell = new Card();
+        pumpSpell.setName("Test Growth");
+        pumpSpell.setType(CardType.INSTANT);
+        pumpSpell.addEffect(EffectSlot.SPELL, new BoostTargetCreatureEffect(3, 3));
+
+        UUID target = targetSelector.chooseTarget(gd, pumpSpell, aiPlayer.getId());
+
+        assertThat(target).isEqualTo(ownBears.getId());
     }
 
     // ===== findValidPermanentTargetsForManaValueX =====

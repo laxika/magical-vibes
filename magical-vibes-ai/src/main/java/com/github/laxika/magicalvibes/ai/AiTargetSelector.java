@@ -13,6 +13,7 @@ import com.github.laxika.magicalvibes.model.StackEntry;
 import com.github.laxika.magicalvibes.model.StackEntryType;
 import com.github.laxika.magicalvibes.model.filter.TargetFilter;
 import com.github.laxika.magicalvibes.model.effect.AddManaOnEnchantedLandTapEffect;
+import com.github.laxika.magicalvibes.model.effect.CantBlockThisTurnEffect;
 import com.github.laxika.magicalvibes.model.effect.CreatureBoostEffect;
 import com.github.laxika.magicalvibes.model.effect.CostEffect;
 import com.github.laxika.magicalvibes.model.effect.DamageDealingEffect;
@@ -21,6 +22,10 @@ import com.github.laxika.magicalvibes.model.effect.DealDividedDamageEffect;
 import com.github.laxika.magicalvibes.model.effect.DivisionMode;
 import com.github.laxika.magicalvibes.model.amount.Fixed;
 import com.github.laxika.magicalvibes.model.effect.ExtraTurnEffect;
+import com.github.laxika.magicalvibes.model.effect.GainControlOfTargetEffect;
+import com.github.laxika.magicalvibes.model.effect.MustAttackThisTurnEffect;
+import com.github.laxika.magicalvibes.model.CounterType;
+import com.github.laxika.magicalvibes.model.effect.PutCounterOnTargetPermanentEffect;
 import com.github.laxika.magicalvibes.model.effect.RegenerationEffect;
 import com.github.laxika.magicalvibes.model.effect.ConditionalReplacementEffect;
 import com.github.laxika.magicalvibes.model.effect.StaticCreatureBoostEffect;
@@ -39,6 +44,9 @@ import com.github.laxika.magicalvibes.model.effect.GrantScope;
 import com.github.laxika.magicalvibes.model.effect.PutCardFromOpponentGraveyardOntoBattlefieldEffect;
 import com.github.laxika.magicalvibes.model.effect.PutCreatureFromOpponentGraveyardOntoBattlefieldWithExileEffect;
 import com.github.laxika.magicalvibes.model.effect.ReturnCardFromGraveyardEffect;
+import com.github.laxika.magicalvibes.model.effect.SkipNextUntapEffect;
+import com.github.laxika.magicalvibes.model.effect.TapPermanentsEffect;
+import com.github.laxika.magicalvibes.model.effect.TapUntapScope;
 import com.github.laxika.magicalvibes.model.TargetType;
 import com.github.laxika.magicalvibes.service.battlefield.GameQueryService;
 import com.github.laxika.magicalvibes.service.filter.PredicateEvaluationService;
@@ -135,12 +143,12 @@ class AiTargetSelector {
         // creatures whenever it controls any.
         for (CardEffect effect : card.getEffects(EffectSlot.ON_ENTER_BATTLEFIELD)) {
             if (isPermanentDamageEffect(effect)) {
-                return chooseDamageTarget(gameData, card, aiPlayerId, opponentId, allowedTargets);
+                return chooseHarmfulPermanentTarget(gameData, card, aiPlayerId, opponentId, allowedTargets);
             }
         }
         for (CardEffect effect : card.getEffects(EffectSlot.SPELL)) {
             if (isPermanentDamageEffect(effect)) {
-                return chooseDamageTarget(gameData, card, aiPlayerId, opponentId, allowedTargets);
+                return chooseHarmfulPermanentTarget(gameData, card, aiPlayerId, opponentId, allowedTargets);
             }
         }
 
@@ -195,6 +203,22 @@ class AiTargetSelector {
             return null; // Aura was handled by specific logic — don't fall through
         }
 
+        // Tap-downs, untap-step locks, "can't block", -1/-1 counters, debuffs, forced attacks,
+        // and control steal are harmful to (or seize) their target and must not fall into the
+        // general fallback below — its own-battlefield-first search would aim them at the AI's
+        // own permanents (e.g. Stun stopping the AI's own blocker, or Act of Treason "stealing"
+        // the AI's own creature).
+        for (CardEffect effect : card.getEffects(EffectSlot.ON_ENTER_BATTLEFIELD)) {
+            if (isHarmfulPermanentDisruption(gameData, effect, aiPlayerId)) {
+                return chooseHarmfulPermanentTarget(gameData, card, aiPlayerId, opponentId, allowedTargets);
+            }
+        }
+        for (CardEffect effect : card.getEffects(EffectSlot.SPELL)) {
+            if (isHarmfulPermanentDisruption(gameData, effect, aiPlayerId)) {
+                return chooseHarmfulPermanentTarget(gameData, card, aiPlayerId, opponentId, allowedTargets);
+            }
+        }
+
         // General fallback: find any valid target using target filter + effect validators
         // Search own battlefield first (for beneficial ETB effects like Awakener Druid)
         List<Permanent> ownBattlefield = gameData.playerBattlefields.getOrDefault(aiPlayerId, List.of());
@@ -204,7 +228,7 @@ class AiTargetSelector {
             }
         }
         // Then search opponent battlefield — prefer the most threatening valid target so that
-        // tap-down and similar "soft" disruption spells still attack the real threat
+        // any remaining unclassified disruption shape still attacks the real threat
         // (e.g. a 2/2 lord pumping four other creatures) rather than whichever creature happens
         // to come first in the battlefield list.
         List<Permanent> oppBattlefield = gameData.playerBattlefields.getOrDefault(opponentId, List.of());
@@ -495,14 +519,44 @@ class AiTargetSelector {
     }
 
     /**
-     * Picks a target for a spell or ETB that damages its permanent target. Aims at the
-     * opponent's most threatening legal permanent, then (for any-target damage) the
-     * opponent's face. Only a mandatory target with no legal opponent choice (e.g. a
-     * damage ETB while the opponent's board is empty) falls onto the AI's own board,
-     * giving up the least valuable permanent.
+     * True when the effect is harmful to (or seizes) the permanent it targets without being
+     * removal or damage: tap-downs, untap-step locks, "can't block" riders, forced attacks,
+     * -1/-1 counters, negative P/T debuffs, and control steal. Positive boosts and untap
+     * effects stay out — they benefit the target and keep the own-battlefield-first fallback.
      */
-    private UUID chooseDamageTarget(GameData gameData, Card card, UUID aiPlayerId, UUID opponentId,
-                                    Set<TargetType> allowedTargets) {
+    private boolean isHarmfulPermanentDisruption(GameData gameData, CardEffect effect, UUID aiPlayerId) {
+        if (effect instanceof TapPermanentsEffect tap) {
+            return tap.scope() == TapUntapScope.TARGET;
+        }
+        if (effect instanceof SkipNextUntapEffect skip) {
+            return skip.scope() == TapUntapScope.TARGET;
+        }
+        if (effect instanceof CantBlockThisTurnEffect cantBlock) {
+            return cantBlock.scope() == TapUntapScope.TARGET;
+        }
+        if (effect instanceof MustAttackThisTurnEffect || effect instanceof GainControlOfTargetEffect) {
+            return true;
+        }
+        if (effect instanceof PutCounterOnTargetPermanentEffect counter) {
+            return counter.counterType() == CounterType.MINUS_ONE_MINUS_ONE;
+        }
+        if (effect instanceof CreatureBoostEffect boost) {
+            AmountContext ctx = AmountContext.forEstimation(aiPlayerId);
+            return amountEvaluationService.evaluate(gameData, boost.powerBoost(), ctx) < 0
+                    || amountEvaluationService.evaluate(gameData, boost.toughnessBoost(), ctx) < 0;
+        }
+        return false;
+    }
+
+    /**
+     * Picks a target for a spell or ETB whose effect is harmful to the targeted permanent
+     * (damage, tap-down, debuff, forced attack, steal). Aims at the opponent's most
+     * threatening legal permanent, then (for any-target damage) the opponent's face. Only a
+     * mandatory target with no legal opponent choice (e.g. a damage ETB while the opponent's
+     * board is empty) falls onto the AI's own board, giving up the least valuable permanent.
+     */
+    private UUID chooseHarmfulPermanentTarget(GameData gameData, Card card, UUID aiPlayerId, UUID opponentId,
+                                              Set<TargetType> allowedTargets) {
         List<Permanent> oppBattlefield = gameData.playerBattlefields.getOrDefault(opponentId, List.of());
         UUID oppTarget = oppBattlefield.stream()
                 .filter(p -> isValidPermanentTarget(gameData, card, p, aiPlayerId))
