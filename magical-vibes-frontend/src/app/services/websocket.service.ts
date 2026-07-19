@@ -360,6 +360,7 @@ export interface GameStateNotification {
   playableCardIndices: number[];
   potentialPlayableCardIndices: number[];
   potentialManaTotal: number;
+  potentialPayableAbilityIndices: Record<string, number[]>;
   playableGraveyardLandIndices: number[];
   playableFlashbackIndices: number[];
   playableExileCards: Card[];

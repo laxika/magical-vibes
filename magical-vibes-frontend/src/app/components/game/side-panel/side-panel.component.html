@@ -397,6 +397,9 @@
     } @else if (choice.targeting.payingForCast) {
       <div class="attack-tax-banner">Casting {{ choice.targeting.pendingCastCardName }} — activate mana abilities to pay the cost.</div>
       <button class="btn-pass" (click)="choice.targeting.cancelPendingCast()">Cancel</button>
+    } @else if (choice.targeting.payingForAbility) {
+      <div class="attack-tax-banner">Activating {{ choice.targeting.pendingActivationSourceName }}'s ability — activate mana abilities to pay the cost.</div>
+      <button class="btn-pass" (click)="choice.targeting.cancelPendingAbility()">Cancel</button>
     } @else {
       <button class="btn-pass" (click)="passPriority.emit()" [disabled]="!hasPriority">Pass Priority</button>
     }

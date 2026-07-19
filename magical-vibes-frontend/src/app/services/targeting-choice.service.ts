@@ -16,6 +16,7 @@ export class TargetingChoiceService {
   private totalManaFn!: () => number;
   private isStrictlyPlayableFn: (index: number) => boolean = () => false;
   private potentialTotalManaFn: () => number = () => 0;
+  private potentialPayableAbilityIndicesFn: () => Record<string, number[]> = () => ({});
 
   init(
     gameSignal: Signal<Game | null>,
@@ -23,7 +24,8 @@ export class TargetingChoiceService {
     opponentBattlefieldFn: () => Permanent[],
     totalManaFn: () => number,
     isStrictlyPlayableFn: (index: number) => boolean = () => false,
-    potentialTotalManaFn: () => number = () => 0
+    potentialTotalManaFn: () => number = () => 0,
+    potentialPayableAbilityIndicesFn: () => Record<string, number[]> = () => ({})
   ): void {
     this.gameSignal = gameSignal;
     this.myBattlefieldFn = myBattlefieldFn;
@@ -31,6 +33,7 @@ export class TargetingChoiceService {
     this.totalManaFn = totalManaFn;
     this.isStrictlyPlayableFn = isStrictlyPlayableFn;
     this.potentialTotalManaFn = potentialTotalManaFn;
+    this.potentialPayableAbilityIndicesFn = potentialPayableAbilityIndicesFn;
   }
 
   reset(): void {
@@ -120,6 +123,7 @@ export class TargetingChoiceService {
     this.graveyardTargetPrompt = '';
     // MTGO-style cast payment
     this.clearCastPayment();
+    this.clearAbilityPayment();
   }
 
   private get hasPriority(): boolean {
@@ -255,6 +259,19 @@ export class TargetingChoiceService {
   private pendingCastXValue = 0;
   private pendingCastMessage: any = null;
 
+  // --- MTGO-style ability activation payment state ---
+  // The ACTIVATE_ABILITY counterpart of the cast payment above: the activation is fully
+  // specified (X announced, targets locked in) but the mana cost isn't covered by the
+  // pool yet, so the message is held back while the player taps mana sources. It fires
+  // automatically once the pool covers the cost; Cancel reverts the taps.
+  payingForAbility = false;
+  pendingActivationSourceName = '';
+  pendingActivationPermanentId: string | null = null;
+  private pendingActivationManaCost: string | null = null;
+  private pendingActivationXValue = 0;
+  private pendingActivationRequiresTap = false;
+  private pendingActivationMessage: any = null;
+
   // ========== Message handlers ==========
 
   handleValidTargetsResponse(msg: ValidTargetsResponse): void {
@@ -340,8 +357,8 @@ export class TargetingChoiceService {
   }
 
   playCard(index: number, isCardPlayable: (i: number) => boolean): void {
-    // While paying for a held-back cast, hand clicks are ignored — cancel first.
-    if (this.payingForCast) return;
+    // While paying for a held-back cast/activation, hand clicks are ignored — cancel first.
+    if (this.payingForCast || this.payingForAbility) return;
     const g = this.gameSignal();
     if (g && isCardPlayable(index)) {
       const card = g.hand[index];
@@ -799,9 +816,14 @@ export class TargetingChoiceService {
     return true;
   }
 
-  /** Called after every GAME_STATE while paying: sends the held-back cast once the pool
-      covers it, or abandons payment mode when the game moved on under us. */
+  /** Called after every GAME_STATE while paying: sends the held-back cast/activation once
+      the pool covers it, or abandons payment mode when the game moved on under us. */
   onGameStateUpdate(): void {
+    this.onCastPaymentGameState();
+    this.onAbilityPaymentGameState();
+  }
+
+  private onCastPaymentGameState(): void {
     if (!this.payingForCast) return;
     const g = this.gameSignal();
     const card = g?.hand?.[this.pendingCastCardIndex];
@@ -835,6 +857,74 @@ export class TargetingChoiceService {
     this.pendingCastManaCost = null;
     this.pendingCastXValue = 0;
     this.pendingCastMessage = null;
+  }
+
+  // ========== MTGO-style ability activation payment ==========
+
+  /** Sends an ACTIVATE_ABILITY message, or holds it back in payment mode when its mana
+      cost isn't covered by the current pool (mirroring sendPlayCardMessage for casts). */
+  private sendActivateAbilityMessage(msg: any): void {
+    if (this.beginAbilityPaymentIfUnaffordable(msg)) return;
+    this.websocketService.send(msg);
+  }
+
+  /** Enters payment mode for the given ACTIVATE_ABILITY message when its mana cost isn't
+      covered by the current pool. Returns true when the message was held back. */
+  private beginAbilityPaymentIfUnaffordable(msg: any): boolean {
+    // Never stack a second payment on one already in progress — while paying, clicks are
+    // restricted to strictly affordable mana production, so this is just a safety net.
+    if (this.payingForCast || this.payingForAbility) return false;
+    const perm = this.myBattlefieldFn()[msg.permanentIndex];
+    const ability = perm?.card.activatedAbilities?.[msg.abilityIndex];
+    // Loyalty and tap/sacrifice-only costs have no mana component to pay for.
+    if (!perm || !ability?.manaCost) return false;
+    const hasX = ability.manaCost.includes('{X}');
+    const xGeneric = hasX && typeof msg.xValue === 'number' && msg.xValue > 0 ? msg.xValue : 0;
+    if (this.canPayManaCost(ability.manaCost, xGeneric)) return false;
+
+    this.payingForAbility = true;
+    this.pendingActivationSourceName = perm.card.name;
+    this.pendingActivationPermanentId = perm.id;
+    this.pendingActivationManaCost = ability.manaCost;
+    this.pendingActivationXValue = xGeneric;
+    this.pendingActivationRequiresTap = ability.requiresTap;
+    this.pendingActivationMessage = msg;
+    return true;
+  }
+
+  private onAbilityPaymentGameState(): void {
+    if (!this.payingForAbility) return;
+    const g = this.gameSignal();
+    const index = this.myBattlefieldFn().findIndex(p => p.id === this.pendingActivationPermanentId);
+    if (!g || index < 0 || !this.hasPriority) {
+      this.clearAbilityPayment();
+      return;
+    }
+    if (this.pendingActivationManaCost != null
+        && this.canPayManaCost(this.pendingActivationManaCost, this.pendingActivationXValue)) {
+      const msg = this.pendingActivationMessage;
+      msg.permanentIndex = index; // battlefield order may have changed while paying
+      this.clearAbilityPayment();
+      this.websocketService.send(msg);
+    }
+  }
+
+  /** Cancel button / Esc while paying: drop the pending activation and untap the mana
+      sources tapped for it (the server reverts the recorded mana activations). */
+  cancelPendingAbility(): void {
+    if (!this.payingForAbility) return;
+    this.clearAbilityPayment();
+    this.websocketService.send({ type: MessageType.REVERT_MANA_ACTIVATIONS });
+  }
+
+  private clearAbilityPayment(): void {
+    this.payingForAbility = false;
+    this.pendingActivationSourceName = '';
+    this.pendingActivationPermanentId = null;
+    this.pendingActivationManaCost = null;
+    this.pendingActivationXValue = 0;
+    this.pendingActivationRequiresTap = false;
+    this.pendingActivationMessage = null;
   }
 
   /** Open the X prompt for a graveyard activated ability whose cost contains {X} (e.g. Evershrike). */
@@ -886,7 +976,7 @@ export class TargetingChoiceService {
         return;
       }
       // X value only, no target
-      this.websocketService.send({
+      this.sendActivateAbilityMessage({
         type: MessageType.ACTIVATE_ABILITY,
         permanentIndex: this.xValueCardIndex,
         abilityIndex: this.targetingAbilityIndex,
@@ -958,7 +1048,7 @@ export class TargetingChoiceService {
       if (this.pendingAbilityXValue != null) {
         msg.xValue = this.pendingAbilityXValue;
       }
-      this.websocketService.send(msg);
+      this.sendActivateAbilityMessage(msg);
     } else if (this.pendingConvokeCard?.hasConvoke) {
       // Single-target spell with convoke — save target and enter convoke mode.
       // Preserve a pending X value / mode selection across the targeting-state reset.
@@ -987,7 +1077,7 @@ export class TargetingChoiceService {
     const playerId = g.playerIds[playerIndex];
     if (!this.validTargetPlayerIds().has(playerId)) return;
     if (this.targetingForAbility) {
-      this.websocketService.send({
+      this.sendActivateAbilityMessage({
         type: MessageType.ACTIVATE_ABILITY,
         permanentIndex: this.targetingCardIndex,
         abilityIndex: this.targetingAbilityIndex,
@@ -1054,7 +1144,7 @@ export class TargetingChoiceService {
   selectSpellTarget(entry: StackEntry): void {
     if (!this.targetingSpell || !entry.isSpell) return;
     if (this.targetingForAbility) {
-      this.websocketService.send({
+      this.sendActivateAbilityMessage({
         type: MessageType.ACTIVATE_ABILITY,
         permanentIndex: this.targetingSpellCardIndex,
         abilityIndex: this.targetingAbilityIndex,
@@ -1171,7 +1261,7 @@ export class TargetingChoiceService {
 
     if (this.targetingForAbility) {
       // Multi-target activated ability (e.g. Brass Squire)
-      this.websocketService.send({
+      this.sendActivateAbilityMessage({
         type: MessageType.ACTIVATE_ABILITY,
         permanentIndex: this.multiTargetCardIndex,
         abilityIndex: this.targetingAbilityIndex,
@@ -1401,8 +1491,12 @@ export class TargetingChoiceService {
       const canIntrinsicTap = perm.card.hasTapAbility && !perm.tapped
         && !(perm.summoningSick && isPermanentCreature(perm));
 
+      // While paying for a held-back cast/activation only mana production is actionable —
+      // starting another non-mana activation would clobber the held message.
+      const paying = this.payingForCast || this.payingForAbility;
+
       // Filter to usable abilities
-      const usable = abilities.filter(a => this.canUseAbility(perm, a));
+      const usable = abilities.filter(a => this.abilityUsableNow(perm, a, paying));
       if (usable.length === 0) {
         // Has abilities but none usable — fall back to tap for mana if ON_TAP
         if (canIntrinsicTap) {
@@ -1419,7 +1513,7 @@ export class TargetingChoiceService {
         // Multiple options — show picker
         this.choosingAbility = true;
         this.abilityChoicePermanentIndex = index;
-        this.abilityChoices = abilities.map((a, i) => ({ ability: a, index: i, usable: this.canUseAbility(perm, a) }));
+        this.abilityChoices = abilities.map((a, i) => ({ ability: a, index: i, usable: this.abilityUsableNow(perm, a, paying) }));
         if (canIntrinsicTap) {
           this.abilityChoices.unshift({
             ability: this.intrinsicTapAbilityView(perm),
@@ -1448,7 +1542,16 @@ export class TargetingChoiceService {
     };
   }
 
-  canUseAbility(perm: Permanent, ability: ActivatedAbilityView): boolean {
+  /** Whether the ability is a legal click right now: any usable ability normally, but only
+      strictly affordable mana abilities while a cast/activation payment is in progress. */
+  private abilityUsableNow(perm: Permanent, ability: ActivatedAbilityView, paying: boolean): boolean {
+    if (paying) {
+      return ability.isManaAbility && this.canUseAbility(perm, ability, false);
+    }
+    return this.canUseAbility(perm, ability);
+  }
+
+  canUseAbility(perm: Permanent, ability: ActivatedAbilityView, allowPotentialMana = true): boolean {
     if (ability.loyaltyCost != null || ability.variableLoyaltyCost) {
       const g = this.gameSignal();
       if (!g) return false;
@@ -1469,8 +1572,20 @@ export class TargetingChoiceService {
       if (perm.tapped) return false;
       if (perm.summoningSick && isPermanentCreature(perm)) return false;
     }
-    if (ability.manaCost && !this.canPayManaCost(ability.manaCost)) return false;
+    if (ability.manaCost && !this.canPayManaCost(ability.manaCost)
+        && !(allowPotentialMana && this.isPotentiallyPayableAbility(perm, ability))) return false;
     return true;
+  }
+
+  /** MTGO-style: an ability whose cost exceeds the floating pool is still activatable when
+      the server marked it payable after tapping every untapped mana source — activating it
+      enters payment mode. The server list is the activated-ability counterpart of
+      potentialPlayableCardIndices: color-aware and dual-land-correct. */
+  private isPotentiallyPayableAbility(perm: Permanent, ability: ActivatedAbilityView): boolean {
+    const indices = this.potentialPayableAbilityIndicesFn()[perm.id];
+    if (!indices) return false;
+    const abilityIndex = perm.card.activatedAbilities.indexOf(ability);
+    return abilityIndex >= 0 && indices.includes(abilityIndex);
   }
 
   private canPayManaCost(manaCost: string, extraGeneric = 0): boolean {
@@ -1535,7 +1650,9 @@ export class TargetingChoiceService {
       this.xValueCardIndex = permanentIndex;
       this.xValueCardName = perm.card.name;
       this.xValueInput = 0;
-      this.xValueMaximum = this.totalManaFn() - base;
+      // X can be paid MTGO-style by tapping more lands after announcing, so the cap is
+      // the potential mana (pool + untapped sources), not just what's floating now.
+      this.xValueMaximum = Math.max(this.totalManaFn(), this.potentialTotalManaFn()) - base;
       this.targetingForAbility = true;
       this.targetingAbilityIndex = abilityIndex;
       return;
@@ -1564,8 +1681,8 @@ export class TargetingChoiceService {
       return;
     }
 
-    // No target or X needed — send immediately
-    this.websocketService.send({
+    // No target or X needed — send immediately (or enter payment mode if unaffordable)
+    this.sendActivateAbilityMessage({
       type: MessageType.ACTIVATE_ABILITY,
       permanentIndex,
       abilityIndex
@@ -1597,9 +1714,14 @@ export class TargetingChoiceService {
     if (perm == null || !this.hasPriority) return false;
     // Mid-targeting: the player must lock in a target before they can tap mana.
     if (this.selectingCastTarget) return false;
+    // The held activation's own {T} cost: tapping the source for mana would break the
+    // pending activation, so it stays locked while its payment is in progress.
+    if (this.payingForAbility && this.pendingActivationRequiresTap
+        && perm.id === this.pendingActivationPermanentId) return false;
     const abilities = perm.card.activatedAbilities;
     // Check if any activated ability can be used right now
-    if (abilities.some(a => this.canUseAbility(perm, a))) return true;
+    const paying = this.payingForCast || this.payingForAbility;
+    if (abilities.some(a => this.abilityUsableNow(perm, a, paying))) return true;
     // Can tap for mana (ON_TAP mana effects)
     if (perm.tapped) return false;
     if (!perm.card.hasTapAbility) return false;

@@ -283,6 +283,132 @@ class GameBroadcastServiceTest {
     }
 
     @Nested
+    @DisplayName("getPotentialPayableAbilityIndices — abilities payable after tapping mana sources")
+    class GetPotentialPayableAbilityIndicesTests {
+
+        private Permanent manaLand(com.github.laxika.magicalvibes.model.ManaColor color) {
+            Card card = new Card();
+            card.setName(color + " land");
+            card.setType(CardType.LAND);
+            card.addEffect(EffectSlot.ON_TAP,
+                    new com.github.laxika.magicalvibes.model.effect.AwardManaEffect(color));
+            return new Permanent(card);
+        }
+
+        private Permanent abilitySource(String name, com.github.laxika.magicalvibes.model.ActivatedAbility ability) {
+            Card card = new Card();
+            card.setName(name);
+            card.setType(CardType.CREATURE);
+            card.addActivatedAbility(ability);
+            return new Permanent(card);
+        }
+
+        @Test
+        @DisplayName("Ability is listed when untapped sources can produce its colors")
+        void abilityPayableWhenSourceColorsMatch() {
+            when(gameQueryService.getPriorityPlayerId(gd)).thenReturn(player1Id);
+            when(gameQueryService.canActivateManaAbility(same(gd), any())).thenReturn(true);
+
+            Permanent source = abilitySource("Twinblade Paladin",
+                    new com.github.laxika.magicalvibes.model.ActivatedAbility(
+                            false, "{W}{W}", List.of(), "gain double strike"));
+            gd.playerBattlefields.get(player1Id).add(source);
+            gd.playerBattlefields.get(player1Id).add(manaLand(com.github.laxika.magicalvibes.model.ManaColor.WHITE));
+            gd.playerBattlefields.get(player1Id).add(manaLand(com.github.laxika.magicalvibes.model.ManaColor.WHITE));
+
+            assertThat(svc.getPotentialPayableAbilityIndices(gd, player1Id))
+                    .containsExactly(java.util.Map.entry(source.getId(), List.of(0)));
+        }
+
+        @Test
+        @DisplayName("Ability is not listed when the source colors can't meet the cost")
+        void abilityNotPayableWhenColorsCantMeet() {
+            when(gameQueryService.getPriorityPlayerId(gd)).thenReturn(player1Id);
+            when(gameQueryService.canActivateManaAbility(same(gd), any())).thenReturn(true);
+
+            Permanent source = abilitySource("Twinblade Paladin",
+                    new com.github.laxika.magicalvibes.model.ActivatedAbility(
+                            false, "{W}{W}", List.of(), "gain double strike"));
+            gd.playerBattlefields.get(player1Id).add(source);
+            gd.playerBattlefields.get(player1Id).add(manaLand(com.github.laxika.magicalvibes.model.ManaColor.GREEN));
+            gd.playerBattlefields.get(player1Id).add(manaLand(com.github.laxika.magicalvibes.model.ManaColor.GREEN));
+
+            assertThat(svc.getPotentialPayableAbilityIndices(gd, player1Id)).isEmpty();
+        }
+
+        @Test
+        @DisplayName("A {T}-cost ability can't count its own source's mana toward the cost")
+        void tapCostAbilityExcludesOwnSourceMana() {
+            when(gameQueryService.getPriorityPlayerId(gd)).thenReturn(player1Id);
+            when(gameQueryService.canActivateManaAbility(same(gd), any())).thenReturn(true);
+
+            // A Rishadan Port-style land: "{T}: Add {C}" plus "{1}, {T}: tap target land".
+            Card port = new Card();
+            port.setName("Rishadan Port");
+            port.setType(CardType.LAND);
+            port.addEffect(EffectSlot.ON_TAP,
+                    new com.github.laxika.magicalvibes.model.effect.AwardManaEffect(
+                            com.github.laxika.magicalvibes.model.ManaColor.COLORLESS));
+            port.addActivatedAbility(new com.github.laxika.magicalvibes.model.ActivatedAbility(
+                    true, "{1}", List.of(), "tap target land"));
+            Permanent portPerm = new Permanent(port);
+            gd.playerBattlefields.get(player1Id).add(portPerm);
+
+            // Alone, the Port's own mana can't pay its own {T} ability
+            assertThat(svc.getPotentialPayableAbilityIndices(gd, player1Id)).isEmpty();
+
+            // A second mana source makes the ability payable
+            gd.playerBattlefields.get(player1Id).add(manaLand(com.github.laxika.magicalvibes.model.ManaColor.GREEN));
+            assertThat(svc.getPotentialPayableAbilityIndices(gd, player1Id))
+                    .containsExactly(java.util.Map.entry(portPerm.getId(), List.of(0)));
+        }
+
+        @Test
+        @DisplayName("Abilities without a mana cost are omitted")
+        void abilitiesWithoutManaCostOmitted() {
+            when(gameQueryService.getPriorityPlayerId(gd)).thenReturn(player1Id);
+            when(gameQueryService.canActivateManaAbility(same(gd), any())).thenReturn(true);
+
+            Permanent source = abilitySource("Pendelhaven",
+                    new com.github.laxika.magicalvibes.model.ActivatedAbility(
+                            true, null, List.of(), "pump a 1/1"));
+            gd.playerBattlefields.get(player1Id).add(source);
+            gd.playerBattlefields.get(player1Id).add(manaLand(com.github.laxika.magicalvibes.model.ManaColor.GREEN));
+
+            assertThat(svc.getPotentialPayableAbilityIndices(gd, player1Id)).isEmpty();
+        }
+
+        @Test
+        @DisplayName("Floating mana already in the pool counts toward payability")
+        void floatingPoolCountsTowardPayable() {
+            when(gameQueryService.getPriorityPlayerId(gd)).thenReturn(player1Id);
+            when(gameQueryService.canActivateManaAbility(same(gd), any())).thenReturn(true);
+
+            Permanent source = abilitySource("Steel Overseer",
+                    new com.github.laxika.magicalvibes.model.ActivatedAbility(
+                            false, "{2}", List.of(), "grow artifacts"));
+            gd.playerBattlefields.get(player1Id).add(source);
+            gd.playerManaPools.get(player1Id).add(com.github.laxika.magicalvibes.model.ManaColor.COLORLESS, 2);
+
+            assertThat(svc.getPotentialPayableAbilityIndices(gd, player1Id))
+                    .containsExactly(java.util.Map.entry(source.getId(), List.of(0)));
+        }
+
+        @Test
+        @DisplayName("Empty for a player who does not hold priority")
+        void emptyWithoutPriority() {
+            when(gameQueryService.getPriorityPlayerId(gd)).thenReturn(player2Id);
+
+            Permanent source = abilitySource("Twinblade Paladin",
+                    new com.github.laxika.magicalvibes.model.ActivatedAbility(
+                            false, "{W}{W}", List.of(), "gain double strike"));
+            gd.playerBattlefields.get(player1Id).add(source);
+
+            assertThat(svc.getPotentialPayableAbilityIndices(gd, player1Id)).isEmpty();
+        }
+    }
+
+    @Nested
     @DisplayName("logAndBroadcast — structured game log entries")
     class LogAndBroadcastTests {
 

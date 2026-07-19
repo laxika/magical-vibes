@@ -99,6 +99,7 @@ export class GameComponent implements OnInit, OnDestroy {
     this.playableCardIndices.set(new Set());
     this.potentialPlayableCardIndices.set(new Set());
     this.potentialManaTotal.set(0);
+    this.potentialPayableAbilityIndices.set({});
     this.playableGraveyardLandIndices.set(new Set());
     this.playableFlashbackIndices.set(new Set());
     this.playableExileCards.set([]);
@@ -117,7 +118,8 @@ export class GameComponent implements OnInit, OnDestroy {
       () => this.opponentBattlefield,
       () => this.totalMana,
       (index: number) => this.playableCardIndices().has(index),
-      () => this.potentialManaTotal()
+      () => this.potentialManaTotal(),
+      () => this.potentialPayableAbilityIndices()
     );
 
     const initialStops = this.websocketService.currentGame?.autoStopSteps;
@@ -641,6 +643,7 @@ export class GameComponent implements OnInit, OnDestroy {
     this.playableCardIndices.set(new Set(state.playableCardIndices));
     this.potentialPlayableCardIndices.set(new Set(state.potentialPlayableCardIndices ?? []));
     this.potentialManaTotal.set(state.potentialManaTotal ?? 0);
+    this.potentialPayableAbilityIndices.set(state.potentialPayableAbilityIndices ?? {});
     this.playableGraveyardLandIndices.set(new Set(state.playableGraveyardLandIndices ?? []));
     this.playableFlashbackIndices.set(new Set(state.playableFlashbackIndices ?? []));
     this.playableExileCards.set(state.playableExileCards ?? []);
@@ -699,6 +702,7 @@ export class GameComponent implements OnInit, OnDestroy {
   playableCardIndices = signal(new Set<number>());
   potentialPlayableCardIndices = signal(new Set<number>());
   potentialManaTotal = signal(0);
+  potentialPayableAbilityIndices = signal<Record<string, number[]>>({});
   playableGraveyardLandIndices = signal(new Set<number>());
   playableFlashbackIndices = signal(new Set<number>());
   playableExileCards = signal<Card[]>([]);
@@ -1607,6 +1611,7 @@ export class GameComponent implements OnInit, OnDestroy {
     if (this.showShortcutsPopup()) { this.showShortcutsPopup.set(false); return true; }
     if (this.showSurrenderConfirm()) { this.cancelSurrender(); return true; }
     if (t.payingForCast) { t.cancelPendingCast(); return true; }
+    if (t.payingForAbility) { t.cancelPendingAbility(); return true; }
     if (t.choosingAbility) { t.cancelAbilityChoice(); return true; }
     if (t.choosingMode) { t.cancelModes(); return true; }
     if (t.choosingKicker) { t.cancelKicker(); return true; }
@@ -1632,7 +1637,7 @@ export class GameComponent implements OnInit, OnDestroy {
       || c.revealingHand || c.choosingFromGraveyard || c.awaitingXValueChoice
       || c.library.scrying || c.library.reorderingLibrary || c.library.searchingLibrary || c.library.choosingHandTopBottom
       || c.damage.assigningCombatDamage || c.damage.distributingDamage
-      || t.selectingTarget || t.targetingSpell || t.multiTargeting || t.convoking || t.payingForCast
+      || t.selectingTarget || t.targetingSpell || t.multiTargeting || t.convoking || t.payingForCast || t.payingForAbility
       || t.choosingAbility || t.choosingXValue || t.choosingMode || t.choosingKicker
       || t.choosingPhyrexianPayment || t.choosingAlternateCost || t.selectingAlternateCostCreatures
       || t.targetingGraveyard;

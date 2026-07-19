@@ -28,6 +28,7 @@ import com.github.laxika.magicalvibes.model.ManaCost;
 import com.github.laxika.magicalvibes.model.ManaPool;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.StackEntry;
+import com.github.laxika.magicalvibes.model.VirtualManaPool;
 import com.github.laxika.magicalvibes.model.TurnStep;
 import com.github.laxika.magicalvibes.model.effect.DiscardCardTypeCost;
 import com.github.laxika.magicalvibes.model.effect.ExileNCardsFromGraveyardCost;
@@ -112,6 +113,7 @@ public class GameBroadcastService {
             List<Integer> playableCardIndices = getPlayableCardIndices(gameData, playerId);
             List<Integer> potentialPlayableCardIndices = getPotentialPlayableCardIndices(gameData, playerId, playableCardIndices);
             int potentialManaTotal = getPotentialManaTotal(gameData, playerId);
+            Map<UUID, List<Integer>> potentialPayableAbilityIndices = getPotentialPayableAbilityIndices(gameData, playerId);
             List<Integer> playableGraveyardLandIndices = getPlayableGraveyardLandIndices(gameData, playerId);
             List<CardView> playableExileCards = getPlayableExileCards(gameData, playerId);
             List<Integer> playableFlashbackIndices = getPlayableFlashbackIndices(gameData, playerId);
@@ -129,6 +131,7 @@ public class GameBroadcastService {
                     playableCardIndices = getPlayableCardIndices(gameData, controlledId);
                     potentialPlayableCardIndices = getPotentialPlayableCardIndices(gameData, controlledId, playableCardIndices);
                     potentialManaTotal = getPotentialManaTotal(gameData, controlledId);
+                    potentialPayableAbilityIndices = getPotentialPayableAbilityIndices(gameData, controlledId);
                     playableGraveyardLandIndices = getPlayableGraveyardLandIndices(gameData, controlledId);
                     playableExileCards = getPlayableExileCards(gameData, controlledId);
                     playableFlashbackIndices = getPlayableFlashbackIndices(gameData, controlledId);
@@ -144,7 +147,8 @@ public class GameBroadcastService {
                     hand, opponentHand, mulliganCount, manaPool, autoStopSteps, playableCardIndices,
                     playableGraveyardLandIndices, playableExileCards, newLogEntries, searchTaxCost,
                     gameData.mindControlledPlayerId, revealedLibraryTopCards, playableFlashbackIndices,
-                    playableLibraryTopCards, potentialPlayableCardIndices, potentialManaTotal
+                    playableLibraryTopCards, potentialPlayableCardIndices, potentialManaTotal,
+                    potentialPayableAbilityIndices
             ));
         }
     }
@@ -413,6 +417,55 @@ public class GameBroadcastService {
     /** Total mana the player could have available after tapping every untapped mana source. */
     public int getPotentialManaTotal(GameData gameData, UUID playerId) {
         return potentialManaService.buildVirtualManaPool(gameData, playerId).getTotal();
+    }
+
+    /**
+     * Ability indices per battlefield permanent whose mana cost the player could cover after
+     * tapping every untapped mana source — the activated-ability counterpart of
+     * {@link #getPotentialPlayableCardIndices} for the MTGO-style payment flow. Only mana
+     * affordability is checked (the client already gates tap state, summoning sickness and
+     * loyalty); abilities without a mana cost are omitted, and X is priced at 0 like the
+     * card list does. For a {T}-cost ability the source's own mana production is excluded,
+     * since it can't be tapped both for mana and for the ability's tap cost.
+     */
+    public Map<UUID, List<Integer>> getPotentialPayableAbilityIndices(GameData gameData, UUID playerId) {
+        // Same gating as getPotentialPlayableCardIndices — skip the virtual-pool build for the
+        // player who couldn't act anyway (broadcasts compute this for both players).
+        if (gameData.status != GameStatus.RUNNING || gameData.interaction.isAwaitingInput()
+                || !playerId.equals(gameQueryService.getPriorityPlayerId(gameData))) {
+            return Map.of();
+        }
+        List<Permanent> battlefield = gameData.playerBattlefields.get(playerId);
+        if (battlefield == null || battlefield.isEmpty()) {
+            return Map.of();
+        }
+        VirtualManaPool fullPool = potentialManaService.buildVirtualManaPool(gameData, playerId);
+        Map<UUID, List<Integer>> result = new HashMap<>();
+        for (Permanent perm : battlefield) {
+            List<ActivatedAbility> abilities = perm.getCard().getActivatedAbilities();
+            List<Integer> payable = new ArrayList<>();
+            VirtualManaPool poolWithoutSource = null;
+            for (int i = 0; i < abilities.size(); i++) {
+                ActivatedAbility ability = abilities.get(i);
+                if (ability.getManaCost() == null) {
+                    continue;
+                }
+                ManaPool pool = fullPool;
+                if (ability.isRequiresTap()) {
+                    if (poolWithoutSource == null) {
+                        poolWithoutSource = potentialManaService.buildVirtualManaPool(gameData, playerId, perm.getId());
+                    }
+                    pool = poolWithoutSource;
+                }
+                if (new ManaCost(ability.getManaCost()).canPay(pool, 0)) {
+                    payable.add(i);
+                }
+            }
+            if (!payable.isEmpty()) {
+                result.put(perm.getId(), payable);
+            }
+        }
+        return result;
     }
 
     private List<Integer> getPlayableCardIndices(GameData gameData, UUID playerId, int extraConvokeMana, ManaPool pool) {

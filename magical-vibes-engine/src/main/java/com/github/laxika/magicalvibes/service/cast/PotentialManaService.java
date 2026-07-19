@@ -48,6 +48,15 @@ public class PotentialManaService {
     }
 
     public VirtualManaPool buildVirtualManaPool(GameData gameData, UUID playerId) {
+        return buildVirtualManaPool(gameData, playerId, null);
+    }
+
+    /**
+     * Variant that leaves out one permanent's own mana production. Used when checking whether
+     * a {T}-cost activated ability could be paid by tapping mana sources: the ability's source
+     * is tapped by the activation itself, so its mana can never help pay that cost.
+     */
+    public VirtualManaPool buildVirtualManaPool(GameData gameData, UUID playerId, UUID excludedPermanentId) {
         VirtualManaPool virtual = new VirtualManaPool();
 
         ManaPool current = gameData.playerManaPools.get(playerId);
@@ -61,7 +70,7 @@ public class PotentialManaService {
         List<Permanent> battlefield = gameData.playerBattlefields.get(playerId);
         if (battlefield != null) {
             for (Permanent perm : battlefield) {
-                if (perm.isTapped()) {
+                if (perm.isTapped() || perm.getId().equals(excludedPermanentId)) {
                     continue;
                 }
                 boolean isCreature = gameQueryService.isCreature(gameData, perm);

@@ -41,7 +41,8 @@ public record GameStateMessage(
         List<Integer> playableFlashbackIndices,
         List<CardView> playableLibraryTopCards,
         List<Integer> potentialPlayableCardIndices,
-        int potentialManaTotal
+        int potentialManaTotal,
+        Map<UUID, List<Integer>> potentialPayableAbilityIndices
 ) {
     public GameStateMessage(
             GameStatus status,
@@ -71,13 +72,15 @@ public record GameStateMessage(
             List<Integer> playableFlashbackIndices,
             List<CardView> playableLibraryTopCards,
             List<Integer> potentialPlayableCardIndices,
-            int potentialManaTotal
+            int potentialManaTotal,
+            Map<UUID, List<Integer>> potentialPayableAbilityIndices
     ) {
         this(MessageType.GAME_STATE, status, activePlayerId, turnNumber, currentStep, priorityPlayerId,
                 battlefields, stack, graveyards, deckSizes, handSizes, lifeTotals, poisonCounters,
                 hand, opponentHand, mulliganCount, manaPool, autoStopSteps, playableCardIndices,
                 playableGraveyardLandIndices, playableExileCards, newLogEntries, searchTaxCost,
                 mindControlledPlayerId, revealedLibraryTopCards, playableFlashbackIndices,
-                playableLibraryTopCards, potentialPlayableCardIndices, potentialManaTotal);
+                playableLibraryTopCards, potentialPlayableCardIndices, potentialManaTotal,
+                potentialPayableAbilityIndices);
     }
 }
