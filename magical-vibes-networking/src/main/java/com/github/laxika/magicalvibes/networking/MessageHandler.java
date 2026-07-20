@@ -10,6 +10,7 @@ import com.github.laxika.magicalvibes.networking.message.LoginRequest;
 import com.github.laxika.magicalvibes.networking.message.MulliganRequest;
 import com.github.laxika.magicalvibes.networking.message.PassPriorityRequest;
 import com.github.laxika.magicalvibes.networking.message.PlayCardRequest;
+import com.github.laxika.magicalvibes.networking.message.RegisterRequest;
 import com.github.laxika.magicalvibes.networking.message.SetAutoStopsRequest;
 import com.github.laxika.magicalvibes.networking.message.ActivateAbilityRequest;
 import com.github.laxika.magicalvibes.networking.message.ActivateGraveyardAbilityRequest;
@@ -32,6 +33,8 @@ import java.util.UUID;
 public interface MessageHandler {
 
     void handleLogin(Connection connection, LoginRequest request) throws Exception;
+
+    void handleRegister(Connection connection, RegisterRequest request) throws Exception;
 
     void handleCreateGame(Connection connection, CreateGameRequest request) throws Exception;
 

@@ -9,3 +9,5 @@ databaseChangeLog:
       file: db/changelog/changes/004-convert-user-id-to-uuid.yaml
   - include:
       file: db/changelog/changes/005-create-decks-table.yaml
+  - include:
+      file: db/changelog/changes/006-remove-test-users.yaml

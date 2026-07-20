@@ -7,6 +7,9 @@ export enum MessageType {
   JOIN_GAME = 'JOIN_GAME',
   LOGIN_SUCCESS = 'LOGIN_SUCCESS',
   LOGIN_FAILURE = 'LOGIN_FAILURE',
+  REGISTER = 'REGISTER',
+  REGISTER_SUCCESS = 'REGISTER_SUCCESS',
+  REGISTER_FAILURE = 'REGISTER_FAILURE',
   TIMEOUT = 'TIMEOUT',
   GAME_JOINED = 'GAME_JOINED',
   OPPONENT_JOINED = 'OPPONENT_JOINED',
@@ -320,6 +323,11 @@ export interface LoginResponse {
   sets?: SetInfo[];
   activeGame?: Game;
   activeDraftId?: string;
+}
+
+export interface RegisterResponse {
+  type: MessageType;
+  message: string;
 }
 
 export interface GameNotification {
@@ -696,6 +704,45 @@ export class WebsocketService {
         } else if (!observer.closed) {
           observer.complete();
           this.cleanup();
+        }
+      };
+    });
+  }
+
+  register(username: string, password: string, confirmPassword: string): Observable<RegisterResponse> {
+    return new Observable(observer => {
+      // One-shot socket: the server answers the REGISTER message and closes
+      const ws = new WebSocket(this.WS_URL);
+
+      ws.onopen = () => {
+        ws.send(JSON.stringify({
+          type: MessageType.REGISTER,
+          username: username,
+          password: password,
+          confirmPassword: confirmPassword
+        }));
+      };
+
+      ws.onmessage = (event) => {
+        try {
+          const response: RegisterResponse = JSON.parse(event.data);
+          observer.next(response);
+          observer.complete();
+        } catch (error) {
+          observer.error('Failed to parse response');
+        }
+        ws.close();
+      };
+
+      ws.onerror = () => {
+        if (!observer.closed) {
+          observer.error('WebSocket connection error');
+        }
+      };
+
+      ws.onclose = () => {
+        if (!observer.closed) {
+          observer.complete();
         }
       };
     });

@@ -49,7 +49,7 @@
   box-shadow: 0 0 15px rgba(139, 26, 26, 0.2), 0 8px 24px rgba(0, 0, 0, 0.5);
 }
 
-/* Same plate as the lobby header, so login reads as the same product */
+/* Same plate as the lobby header, so register reads as the same product */
 .card-header {
   background: var(--gradient-dark-wood);
   padding: 10px 14px;

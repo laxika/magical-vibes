@@ -1,13 +1,13 @@
 import { Component, signal } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
-import { Router } from '@angular/router';
+import { Router, RouterLink } from '@angular/router';
 import { WebsocketService, MessageType } from '../../services/websocket.service';
 
 @Component({
   selector: 'app-login',
   standalone: true,
-  imports: [CommonModule, FormsModule],
+  imports: [CommonModule, FormsModule, RouterLink],
   templateUrl: './login.component.html',
   styleUrl: './login.component.css'
 })
@@ -17,22 +17,10 @@ export class LoginComponent {
   loading = signal(false);
   errorMessage = signal('');
 
-  readonly testAccounts = [
-    { username: 'admin', password: 'admin123' },
-    { username: 'testuser', password: 'testpass' },
-    { username: 'player3', password: 'player3pass' }
-  ];
-
   constructor(
     private websocketService: WebsocketService,
     private router: Router
   ) {}
-
-  fillCredentials(account: { username: string; password: string }) {
-    this.username.set(account.username);
-    this.password.set(account.password);
-    this.errorMessage.set('');
-  }
 
   onSubmit() {
     this.errorMessage.set('');

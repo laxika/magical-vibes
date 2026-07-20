@@ -5,9 +5,9 @@
     </div>
 
     <div class="card-body">
-      <h2 class="panel-title">Sign In</h2>
+      <h2 class="panel-title">Create Account</h2>
 
-      <form (ngSubmit)="onSubmit()" #loginForm="ngForm">
+      <form (ngSubmit)="onSubmit()" #registerForm="ngForm">
         <div class="form-group">
           <label for="username">Username</label>
           <input
@@ -30,7 +30,20 @@
             [(ngModel)]="password"
             [disabled]="loading()"
             required
-            autocomplete="current-password"
+            autocomplete="new-password"
+          />
+        </div>
+
+        <div class="form-group">
+          <label for="confirmPassword">Confirm Password</label>
+          <input
+            type="password"
+            id="confirmPassword"
+            name="confirmPassword"
+            [(ngModel)]="confirmPassword"
+            [disabled]="loading()"
+            required
+            autocomplete="new-password"
           />
         </div>
 
@@ -40,20 +53,20 @@
 
         <button
           type="submit"
-          [disabled]="loading() || !loginForm.form.valid"
+          [disabled]="loading() || !registerForm.form.valid"
           class="btn-login"
         >
           @if (loading()) {
             <span class="spinner"></span>
-            Logging in...
+            Creating account...
           } @else {
-            Log in
+            Create account
           }
         </button>
       </form>
 
       <div class="auth-switch">
-        Need an account? <a routerLink="/register">Create one</a>
+        Already have an account? <a routerLink="/">Log in</a>
       </div>
     </div>
   </div>

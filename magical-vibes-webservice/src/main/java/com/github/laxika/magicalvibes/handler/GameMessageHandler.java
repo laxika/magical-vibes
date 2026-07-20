@@ -27,6 +27,8 @@ import com.github.laxika.magicalvibes.networking.message.PassPriorityRequest;
 import com.github.laxika.magicalvibes.networking.message.PaySearchTaxRequest;
 import com.github.laxika.magicalvibes.networking.message.RevertManaActivationsRequest;
 import com.github.laxika.magicalvibes.networking.message.PlayCardRequest;
+import com.github.laxika.magicalvibes.networking.message.RegisterRequest;
+import com.github.laxika.magicalvibes.networking.message.RegisterResponse;
 import com.github.laxika.magicalvibes.networking.message.SaveDeckRequest;
 import com.github.laxika.magicalvibes.networking.message.SaveDeckResponse;
 import com.github.laxika.magicalvibes.networking.message.ActivateAbilityRequest;
@@ -174,6 +176,16 @@ public class GameMessageHandler implements MessageHandler {
         } else {
             connection.close();
         }
+    }
+
+    @Override
+    public void handleRegister(Connection connection, RegisterRequest request) throws Exception {
+        RegisterResponse response = loginService.register(request);
+
+        connection.sendMessage(objectMapper.writeValueAsString(response));
+        log.info("Sent register response to connection {}: {}", connection.getId(), response.getType());
+
+        connection.close();
     }
 
     @Override
