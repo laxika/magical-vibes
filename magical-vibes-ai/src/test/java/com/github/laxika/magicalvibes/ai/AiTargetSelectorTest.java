@@ -21,11 +21,14 @@ import com.github.laxika.magicalvibes.cards.k.KarnsTemporalSundering;
 import com.github.laxika.magicalvibes.cards.l.LlanowarElves;
 import com.github.laxika.magicalvibes.cards.b.BloodcrazedNeonate;
 import com.github.laxika.magicalvibes.cards.n.Nekrataal;
+import com.github.laxika.magicalvibes.cards.p.PathToExile;
 import com.github.laxika.magicalvibes.cards.p.Pounce;
 import com.github.laxika.magicalvibes.cards.q.QuicksilverGeyser;
 import com.github.laxika.magicalvibes.cards.s.SerraAngel;
 import com.github.laxika.magicalvibes.cards.s.Skulduggery;
+import com.github.laxika.magicalvibes.cards.s.SplendidAgony;
 import com.github.laxika.magicalvibes.cards.s.Stun;
+import com.github.laxika.magicalvibes.cards.s.SynchronizedStrike;
 import com.github.laxika.magicalvibes.cards.w.WildGrowth;
 import com.github.laxika.magicalvibes.cards.w.WizardsLightning;
 import com.github.laxika.magicalvibes.model.ActivatedAbility;
@@ -258,6 +261,17 @@ class AiTargetSelectorTest {
         UUID target = targetSelector.chooseTarget(gd, new QuicksilverGeyser(), aiPlayer.getId());
 
         assertThat(target).isEqualTo(oppAngel.getId());
+    }
+
+    @Test
+    @DisplayName("Exile-then removal (Path to Exile) targets the opponent's creature, not the AI's own")
+    void exileThenRemovalTargetsOpponentCreature() {
+        Permanent oppBears = harness.addToBattlefieldAndReturn(human, new GrizzlyBears());
+        harness.addToBattlefield(aiPlayer, new SerraAngel());
+
+        UUID target = targetSelector.chooseTarget(gd, new PathToExile(), aiPlayer.getId());
+
+        assertThat(target).isEqualTo(oppBears.getId());
     }
 
     @Test
@@ -1107,6 +1121,32 @@ class AiTargetSelectorTest {
                     .addEffect(EffectSlot.SPELL, new BoostTargetCreatureEffect(2, 2));
 
             List<UUID> targets = targetSelector.chooseMultiTargets(gd, pumpSpell, aiPlayer.getId());
+
+            assertThat(targets).containsExactlyInAnyOrder(ownBears.getId(), ownVanguard.getId());
+            assertThat(targets).doesNotContain(oppAngel.getId());
+        }
+
+        @Test
+        @DisplayName("-1/-1 counter distribution (Splendid Agony) picks opponent creatures, not the AI's own")
+        void harmfulCounterDistributionPicksOpponentCreatures() {
+            Permanent oppBears = harness.addToBattlefieldAndReturn(human, new GrizzlyBears());
+            Permanent oppAngel = harness.addToBattlefieldAndReturn(human, new SerraAngel());
+            Permanent ownElves = harness.addToBattlefieldAndReturn(aiPlayer, new LlanowarElves());
+
+            List<UUID> targets = targetSelector.chooseMultiTargets(gd, new SplendidAgony(), aiPlayer.getId());
+
+            assertThat(targets).containsExactlyInAnyOrder(oppBears.getId(), oppAngel.getId());
+            assertThat(targets).doesNotContain(ownElves.getId());
+        }
+
+        @Test
+        @DisplayName("Targeted untap-plus-pump (Synchronized Strike) picks the AI's own creatures")
+        void beneficialUntapPumpPicksOwnCreatures() {
+            Permanent ownBears = harness.addToBattlefieldAndReturn(aiPlayer, new GrizzlyBears());
+            Permanent ownVanguard = harness.addToBattlefieldAndReturn(aiPlayer, new EliteVanguard());
+            Permanent oppAngel = harness.addToBattlefieldAndReturn(human, new SerraAngel());
+
+            List<UUID> targets = targetSelector.chooseMultiTargets(gd, new SynchronizedStrike(), aiPlayer.getId());
 
             assertThat(targets).containsExactlyInAnyOrder(ownBears.getId(), ownVanguard.getId());
             assertThat(targets).doesNotContain(oppAngel.getId());

@@ -319,6 +319,13 @@ class LibraryChoiceHandlerServiceTest {
     @DisplayName("handleLibraryCardChosen resumes remaining effects on the paused spell")
     class ResumesTrailingSpellEffects {
 
+        /** A paused spell whose search (index 0) has a trailing effect left at index 1. */
+        private StackEntry pausedEntryWithTrailingEffect() {
+            List<CardEffect> effects = List.of(new DrawCardEffect(1), new DrawCardEffect(1));
+            return new StackEntry(StackEntryType.SORCERY_SPELL, createCard("Exploding Borders"),
+                    player1Id, "Exploding Borders", effects);
+        }
+
         @Test
         @DisplayName("Successful pick resumes the paused stack entry's remaining effects, then auto-passes")
         void successfulPickResumesRemainingEffects() {
@@ -327,7 +334,7 @@ class LibraryChoiceHandlerServiceTest {
             gd.playerDecks.get(player1Id).add(plains);
             beginBasicLandBattlefieldSearch(player1Id, List.of(plains));
 
-            StackEntry paused = mock(StackEntry.class);
+            StackEntry paused = pausedEntryWithTrailingEffect();
             gd.pendingEffectResolutionEntry = paused;
             gd.pendingEffectResolutionIndex = 1;
 
@@ -345,7 +352,7 @@ class LibraryChoiceHandlerServiceTest {
             gd.playerDecks.get(player1Id).add(plains);
             beginBasicLandBattlefieldSearch(player1Id, List.of(plains));
 
-            StackEntry paused = mock(StackEntry.class);
+            StackEntry paused = pausedEntryWithTrailingEffect();
             gd.pendingEffectResolutionEntry = paused;
             gd.pendingEffectResolutionIndex = 1;
 

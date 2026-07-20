@@ -26,11 +26,15 @@ import com.github.laxika.magicalvibes.model.effect.ReduceOwnCastCostIfTargetingS
 import com.github.laxika.magicalvibes.model.filter.PermanentHasSubtypePredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsTappedPredicate;
 import com.github.laxika.magicalvibes.service.GameBroadcastService;
+import com.github.laxika.magicalvibes.service.effect.AmountEvaluationService;
+import com.github.laxika.magicalvibes.service.effect.ConditionEvaluationService;
+import com.github.laxika.magicalvibes.service.effect.cost.AdditionalSpellCostService;
 import com.github.laxika.magicalvibes.service.graveyard.GraveyardService;
 import com.github.laxika.magicalvibes.service.trigger.TriggerCollectionService;
 import com.github.laxika.magicalvibes.service.turn.TurnProgressionService;
 import com.github.laxika.magicalvibes.service.battlefield.BattlefieldEntryService;
 import com.github.laxika.magicalvibes.service.battlefield.GameQueryService;
+import com.github.laxika.magicalvibes.service.battlefield.GraveyardTargetingService;
 import com.github.laxika.magicalvibes.service.battlefield.PermanentRemovalService;
 import com.github.laxika.magicalvibes.service.target.TargetLegalityService;
 import org.junit.jupiter.api.BeforeEach;
@@ -38,7 +42,6 @@ import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Nested;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
-import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 
@@ -94,7 +97,15 @@ class SpellCastingServiceTest {
     @Mock
     private GraveyardService graveyardService;
 
-    @InjectMocks
+    @Mock
+    private GraveyardTargetingService graveyardTargetingService;
+
+    @Mock
+    private AmountEvaluationService amountEvaluationService;
+
+    @Mock
+    private ConditionEvaluationService conditionEvaluationService;
+
     private SpellCastingService svc;
 
     private GameData gd;
@@ -105,6 +116,14 @@ class SpellCastingServiceTest {
 
     @BeforeEach
     void setUp() {
+        // Real cost service (pure logic over two already-mocked collaborators), matching
+        // GameBroadcastServiceTest — cast-time cost extraction/validation runs for real.
+        svc = new SpellCastingService(battlefieldEntryService, graveyardTargetingService,
+                gameQueryService, predicateEvaluationService, gameBroadcastService,
+                castingCostService, castingPermissionService, turnProgressionService,
+                targetLegalityService, permanentRemovalService, triggerCollectionService,
+                graveyardService, amountEvaluationService, conditionEvaluationService,
+                new AdditionalSpellCostService(gameQueryService, predicateEvaluationService));
         player1Id = UUID.randomUUID();
         player2Id = UUID.randomUUID();
         player1 = new Player(player1Id, "Player1");

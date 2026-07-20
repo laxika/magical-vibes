@@ -374,7 +374,7 @@ class SacrificePermanentsEffectHandlerTest {
             handler.resolve(gd, entry(player1Id, player2Id), anyPermanentSac());
 
             verify(permanentRemovalService).removePermanentToGraveyard(gd, forest);
-            verify(gameBroadcastService).logAndBroadcast(gd, GameLog.text("Player2 sacrifices Forest."));
+            verify(gameBroadcastService).logAndBroadcast(gd, GameLog.playerSacrifices("Player2", forest.getCard()));
         }
 
         @Test
@@ -390,7 +390,7 @@ class SacrificePermanentsEffectHandlerTest {
             handler.resolve(gd, entry(player1Id, planeswalkerId), anyPermanentSac());
 
             verify(permanentRemovalService).removePermanentToGraveyard(gd, forest);
-            verify(gameBroadcastService).logAndBroadcast(gd, GameLog.text("Player2 sacrifices Forest."));
+            verify(gameBroadcastService).logAndBroadcast(gd, GameLog.playerSacrifices("Player2", forest.getCard()));
         }
 
         @Test

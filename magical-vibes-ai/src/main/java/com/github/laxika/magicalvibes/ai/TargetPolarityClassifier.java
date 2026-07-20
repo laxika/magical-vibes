@@ -11,6 +11,7 @@ import com.github.laxika.magicalvibes.model.effect.ConditionalReplacementEffect;
 import com.github.laxika.magicalvibes.model.effect.CreatureBoostEffect;
 import com.github.laxika.magicalvibes.model.effect.DamageDealingEffect;
 import com.github.laxika.magicalvibes.model.effect.DealDamageToTargetCreatureOrPlaneswalkerEffect;
+import com.github.laxika.magicalvibes.model.effect.DistributeCountersAmongTargetsEffect;
 import com.github.laxika.magicalvibes.model.effect.GainControlOfTargetEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantScope;
 import com.github.laxika.magicalvibes.model.effect.KeywordGrantingEffect;
@@ -19,6 +20,7 @@ import com.github.laxika.magicalvibes.model.effect.MustAttackThisTurnEffect;
 import com.github.laxika.magicalvibes.model.effect.PutCounterOnTargetPermanentEffect;
 import com.github.laxika.magicalvibes.model.effect.RegenerationEffect;
 import com.github.laxika.magicalvibes.model.effect.RemovalEffect;
+import com.github.laxika.magicalvibes.model.effect.RemoveAllCountersFromTargetPermanentEffect;
 import com.github.laxika.magicalvibes.model.effect.SequenceEffect;
 import com.github.laxika.magicalvibes.model.effect.SkipNextUntapEffect;
 import com.github.laxika.magicalvibes.model.effect.TapOrUntapTargetPermanentEffect;
@@ -147,7 +149,9 @@ class TargetPolarityClassifier {
             return cantBlock.scope() == TapUntapScope.TARGET ? TargetPolarity.HARMFUL : null;
         }
         if (effect instanceof UntapPermanentsEffect untap) {
-            return untap.scope() == TapUntapScope.TARGET ? TargetPolarity.BENEFICIAL : null;
+            return untap.scope() == TapUntapScope.TARGET || untap.scope() == TapUntapScope.ALL_TARGETS
+                    ? TargetPolarity.BENEFICIAL
+                    : null;
         }
         if (effect instanceof TapOrUntapTargetPermanentEffect) {
             return TargetPolarity.NEUTRAL;
@@ -164,6 +168,24 @@ class TargetPolarityClassifier {
             }
             return counter.counterType() == CounterType.PLUS_ONE_PLUS_ONE
                     ? TargetPolarity.BENEFICIAL
+                    : TargetPolarity.NEUTRAL;
+        }
+        if (effect instanceof DistributeCountersAmongTargetsEffect distribute) {
+            if (distribute.counterType() == CounterType.MINUS_ONE_MINUS_ONE) {
+                return TargetPolarity.HARMFUL;
+            }
+            return distribute.counterType() == CounterType.PLUS_ONE_PLUS_ONE
+                    ? TargetPolarity.BENEFICIAL
+                    : TargetPolarity.NEUTRAL;
+        }
+        // Removing counters inverts the sign: stripping -1/-1 counters helps the target,
+        // stripping +1/+1 counters hurts it.
+        if (effect instanceof RemoveAllCountersFromTargetPermanentEffect removeAll) {
+            if (removeAll.counterType() == CounterType.MINUS_ONE_MINUS_ONE) {
+                return TargetPolarity.BENEFICIAL;
+            }
+            return removeAll.counterType() == CounterType.PLUS_ONE_PLUS_ONE
+                    ? TargetPolarity.HARMFUL
                     : TargetPolarity.NEUTRAL;
         }
 
@@ -216,6 +238,7 @@ class TargetPolarityClassifier {
             entry("ExileTargetCreatureAndAllWithSameNameEffect", TargetPolarity.HARMFUL_REMOVAL),
             entry("ExileTargetPermanentAndImprintEffect", TargetPolarity.HARMFUL_REMOVAL),
             entry("ExileTargetPermanentMayPlayUntilNextTurnEffect", TargetPolarity.HARMFUL_REMOVAL),
+            entry("ExileTargetPermanentThenEffect", TargetPolarity.HARMFUL_REMOVAL),
             entry("ExileTargetPermanentUntilSourceLeavesEffect", TargetPolarity.HARMFUL_REMOVAL),
             entry("PutTargetOnBottomOfLibraryEffect", TargetPolarity.HARMFUL_REMOVAL),
             entry("PutTargetOnTopOfLibraryEffect", TargetPolarity.HARMFUL_REMOVAL),
@@ -234,10 +257,12 @@ class TargetPolarityClassifier {
             entry("DealDividedDamageEffect", TargetPolarity.HARMFUL_DAMAGE),
             entry("DiscardRandomCardDealDiscardedPowerToTargetPlayerOrPlaneswalkerEffect", TargetPolarity.HARMFUL_DAMAGE),
             entry("RevealTopCardsBottomThenDamageIfCopyRevealedEffect", TargetPolarity.HARMFUL_DAMAGE),
+            entry("SacrificeAnotherCreatureDealPowerDamageToAnyTargetEffect", TargetPolarity.HARMFUL_DAMAGE),
             entry("TargetCreatureDealsPowerDamageToSelfEffect", TargetPolarity.HARMFUL_DAMAGE),
 
             // Other harm: fights, steals, strips, debuffs, forced blocks.
             entry("DestroyAttachmentsOnTargetCreatureEffect", TargetPolarity.HARMFUL),
+            entry("EnchantedCreatureFightsTargetCreatureEffect", TargetPolarity.HARMFUL),
             entry("ExileOwnGraveyardCardThenDamageTargetCreatureControllerEffect", TargetPolarity.HARMFUL),
             entry("FightTargetsEffect", TargetPolarity.HARMFUL),
             entry("SourceFightsTargetCreatureEffect", TargetPolarity.HARMFUL),
@@ -278,6 +303,8 @@ class TargetPolarityClassifier {
             // Polymorph/Shape Anew-style upgrades that are usually aimed at the AI's own
             // permanents (NEUTRAL keeps the own-battlefield-first fallback for them).
             entry("AddCardTypeToTargetPermanentEffect", TargetPolarity.NEUTRAL),
+            // Quarry Hauler chooses add-or-remove per counter kind at resolution — no fixed direction.
+            entry("AdjustEachCounterKindOnTargetEffect", TargetPolarity.NEUTRAL),
             entry("AttachAllAurasToAnotherPermanentEffect", TargetPolarity.NEUTRAL),
             entry("BecomeChosenColorsUntilEndOfTurnEffect", TargetPolarity.NEUTRAL),
             entry("ChangeColorTextEffect", TargetPolarity.NEUTRAL),
