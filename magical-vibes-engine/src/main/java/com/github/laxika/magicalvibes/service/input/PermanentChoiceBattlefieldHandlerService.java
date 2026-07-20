@@ -33,7 +33,6 @@ import com.github.laxika.magicalvibes.service.effect.normalfx.DestructionSupport
 import com.github.laxika.magicalvibes.service.battlefield.GameQueryService;
 import com.github.laxika.magicalvibes.service.battlefield.PermanentRemovalService;
 import com.github.laxika.magicalvibes.service.effect.normalfx.DamageSupport;
-import com.github.laxika.magicalvibes.service.effect.EffectResolutionService;
 import com.github.laxika.magicalvibes.service.effect.normalfx.LifeSupport;
 import com.github.laxika.magicalvibes.service.effect.normalfx.LibrarySearchSupport;
 import com.github.laxika.magicalvibes.service.effect.normalfx.TargetPlayerSacrificesCreatureThenCreateTokensIfSubtypeEffectHandler;
@@ -73,7 +72,6 @@ public class PermanentChoiceBattlefieldHandlerService {
     private final TriggerTargetCollector triggerTargetCollector;
     private final CreatureControlService creatureControlService;
     private final TurnProgressionService turnProgressionService;
-    private final EffectResolutionService effectResolutionService;
     private final DamageSupport damageSupport;
     private final DestructionSupport destructionSupport;
     private final LifeSupport lifeSupport;
@@ -132,12 +130,9 @@ public class PermanentChoiceBattlefieldHandlerService {
                 }
             }
 
-            if (!gameData.pendingMayAbilities.isEmpty()) {
-                playerInputService.processNextMayAbility(gameData);
-                return;
-            }
-
-            turnProgressionService.resolveAutoPass(gameData);
+            // A clone choice can also arise mid-resolution (token-copy effects), so the canonical
+            // epilogue must run to resume the parked entry.
+            inputCompletionService.processMayAbilitiesThenAutoPass(gameData);
         }
     }
 
@@ -152,8 +147,9 @@ public class PermanentChoiceBattlefieldHandlerService {
             equipment.setTimestamp(gameData.nextTimestamp());
             gameBroadcastService.logAndBroadcast(gameData, GameLog.cardTextCard(equipment.getCard(), " is now attached to ", creature.getCard(), "."));
         }
-        stateBasedActionService.performStateBasedActions(gameData);
-        turnProgressionService.resolveAutoPass(gameData);
+        // Begun from a library-search resume (Stonehewer Giant) while the search's stack entry is
+        // still parked — the canonical epilogue resumes it.
+        inputCompletionService.sbaProcessMayAbilitiesThenAutoPass(gameData);
     }
 
     public void handleAuraGraft(GameData gameData, UUID permanentId, PermanentChoiceContext.AuraGraft auraGraft) {
@@ -175,7 +171,8 @@ public class PermanentChoiceBattlefieldHandlerService {
         gameBroadcastService.logAndBroadcast(gameData, GameLog.cardTextCard(aura.getCard(), " is now attached to ", newTarget.getCard(), "."));
         log.info("Game {} - {} reattached to {}", gameData.id, aura.getCard().getName(), newTarget.getCard().getName());
 
-        turnProgressionService.resolveAutoPass(gameData);
+        // Begun mid-resolution (Aura Graft's own spell entry is parked) — canonical epilogue resumes it.
+        inputCompletionService.sbaProcessMayAbilitiesThenAutoPass(gameData);
     }
 
     public void handleAttachAllAurasToAnotherPermanent(GameData gameData, UUID permanentId,
@@ -200,7 +197,7 @@ public class PermanentChoiceBattlefieldHandlerService {
         // A moved control Aura (e.g. Control Magic) grants control of its new host to the Aura's controller.
         creatureControlService.recomputeControl(gameData, newTarget);
 
-        turnProgressionService.resolveAutoPass(gameData);
+        inputCompletionService.sbaProcessMayAbilitiesThenAutoPass(gameData);
     }
 
     public void handleReattachSourceAuraAfterSacrifice(GameData gameData, UUID permanentId,
@@ -233,7 +230,7 @@ public class PermanentChoiceBattlefieldHandlerService {
                 aura.getCard().getName(), newTarget.getCard().getName());
 
         permanentRemovalService.removeOrphanedAuras(gameData);
-        turnProgressionService.resolveAutoPass(gameData);
+        inputCompletionService.sbaProcessMayAbilitiesThenAutoPass(gameData);
     }
 
     public void handleLegendRule(GameData gameData, UUID playerId, UUID permanentId, PermanentChoiceContext.LegendRule legendRule) {
@@ -253,13 +250,10 @@ public class PermanentChoiceBattlefieldHandlerService {
         permanentRemovalService.removeOrphanedAuras(gameData);
 
         // The removals can cascade (a lost anthem making marked damage lethal) and another legend
-        // violation may still exist — re-run the CR 704.3 check, which repeats until settled.
-        stateBasedActionService.performStateBasedActions(gameData);
-        if (gameData.interaction.isAwaitingInput()) {
-            return;
-        }
-
-        turnProgressionService.resolveAutoPass(gameData);
+        // violation may still exist — the epilogue re-runs the CR 704.3 check, which repeats until
+        // settled, and resumes any resolution parked by a mid-effect legend check (many normalfx
+        // handlers that put legendaries onto the battlefield call checkLegendRule directly).
+        inputCompletionService.sbaProcessMayAbilitiesThenAutoPass(gameData);
     }
 
     public void handleSacrificeCreature(GameData gameData, UUID permanentId, PermanentChoiceContext.SacrificeCreature sacrificeCreature) {
@@ -312,9 +306,9 @@ public class PermanentChoiceBattlefieldHandlerService {
         // "If you do" — sacrifice happened, now search library for a creature card
         librarySearchSupport.searchLibraryForCreatureToHand(gameData, sacrificingPlayerId);
 
+        // When the search awaits input, the library-choice completion owns the epilogue.
         if (!gameData.interaction.isAwaitingInput()) {
-            stateBasedActionService.performStateBasedActions(gameData);
-            turnProgressionService.resolveAutoPass(gameData);
+            inputCompletionService.sbaProcessMayAbilitiesThenAutoPass(gameData);
         }
     }
 
@@ -339,28 +333,14 @@ public class PermanentChoiceBattlefieldHandlerService {
         // Each opponent loses life equal to the sacrificed creature's power
         destructionSupport.applyOpponentsLoseLife(gameData, sacrificingPlayerId, power, context.sourceCardName());
 
-        stateBasedActionService.performStateBasedActions(gameData);
-
-        if (!gameData.pendingMayAbilities.isEmpty()) {
-            playerInputService.processNextMayAbility(gameData);
-            return;
-        }
-
-        turnProgressionService.resolveAutoPass(gameData);
+        inputCompletionService.sbaProcessMayAbilitiesThenAutoPass(gameData);
     }
 
     public void handleForcedCostOrElse(GameData gameData, UUID permanentId,
                                        PermanentChoiceContext.ForcedCostOrElse context) {
         destructionSupport.completeForcedCostOrElse(gameData, permanentId, context);
 
-        stateBasedActionService.performStateBasedActions(gameData);
-
-        if (!gameData.pendingMayAbilities.isEmpty()) {
-            playerInputService.processNextMayAbility(gameData);
-            return;
-        }
-
-        turnProgressionService.resolveAutoPass(gameData);
+        inputCompletionService.sbaProcessMayAbilitiesThenAutoPass(gameData);
     }
 
     public void handleSacrificeCreatureControllerGainsLifeEqualToToughness(GameData gameData, UUID permanentId,
@@ -384,14 +364,7 @@ public class PermanentChoiceBattlefieldHandlerService {
         // Controller gains life equal to the sacrificed creature's toughness
         lifeSupport.applyGainLife(gameData, context.controllerId(), toughness, context.sourceCardName());
 
-        stateBasedActionService.performStateBasedActions(gameData);
-
-        if (!gameData.pendingMayAbilities.isEmpty()) {
-            playerInputService.processNextMayAbility(gameData);
-            return;
-        }
-
-        turnProgressionService.resolveAutoPass(gameData);
+        inputCompletionService.sbaProcessMayAbilitiesThenAutoPass(gameData);
     }
 
     public void handleActivatedAbilityCostChoice(GameData gameData, Player player, UUID permanentId, PermanentChoiceContext.ActivatedAbilityCostChoice costChoice) {
@@ -420,9 +393,7 @@ public class PermanentChoiceBattlefieldHandlerService {
             log.info("Game {} - {} returned to owner's hand by bounce effect", gameData.id, target.getCard().getName());
         }
 
-        stateBasedActionService.performStateBasedActions(gameData);
-
-        turnProgressionService.resolveAutoPass(gameData);
+        inputCompletionService.sbaProcessMayAbilitiesThenAutoPass(gameData);
     }
 
     public void handleBounceOwnPermanentOrSacrificeSelf(GameData gameData, UUID permanentId) {
@@ -527,9 +498,7 @@ public class PermanentChoiceBattlefieldHandlerService {
 
         log.info("Game {} - {} chose {} as prevented damage source", gameData.id, playerName, sourceName);
 
-        stateBasedActionService.performStateBasedActions(gameData);
-        resumeParkedEffectResolution(gameData);
-        turnProgressionService.resolveAutoPass(gameData);
+        inputCompletionService.sbaProcessMayAbilitiesThenAutoPass(gameData);
     }
 
     public void handleRedirectDamageSourceChoice(GameData gameData, UUID permanentId,
@@ -550,9 +519,7 @@ public class PermanentChoiceBattlefieldHandlerService {
         log.info("Game {} - {} chose {} as redirect damage source (up to {} damage redirected)",
                 gameData.id, playerName, chosenPermanent.getCard().getName(), redirectSource.amount());
 
-        stateBasedActionService.performStateBasedActions(gameData);
-        resumeParkedEffectResolution(gameData);
-        turnProgressionService.resolveAutoPass(gameData);
+        inputCompletionService.sbaProcessMayAbilitiesThenAutoPass(gameData);
     }
 
     public void handleRedirectCreatureDamageSourceChoice(GameData gameData, UUID permanentId,
@@ -585,9 +552,7 @@ public class PermanentChoiceBattlefieldHandlerService {
         log.info("Game {} - {} chose {} as creature damage redirect source", gameData.id,
                 gameData.playerIdToName.get(redirectSource.controllerId()), chosenPermanent.getCard().getName());
 
-        stateBasedActionService.performStateBasedActions(gameData);
-        resumeParkedEffectResolution(gameData);
-        turnProgressionService.resolveAutoPass(gameData);
+        inputCompletionService.sbaProcessMayAbilitiesThenAutoPass(gameData);
     }
 
     public void handlePreventDamageToTargetFromSourceChoice(GameData gameData, UUID permanentId,
@@ -613,11 +578,7 @@ public class PermanentChoiceBattlefieldHandlerService {
         log.info("Game {} - Chose {} as damage source, preventing up to {} damage to {}",
                 gameData.id, chosenPermanent.getCard().getName(), ctx.amount(), targetName);
 
-        stateBasedActionService.performStateBasedActions(gameData);
-
-        resumeParkedEffectResolution(gameData);
-
-        turnProgressionService.resolveAutoPass(gameData);
+        inputCompletionService.sbaProcessMayAbilitiesThenAutoPass(gameData);
     }
 
     public void handlePreventNextDamageFromSourceChoice(GameData gameData, UUID permanentId,
@@ -638,9 +599,7 @@ public class PermanentChoiceBattlefieldHandlerService {
         gameBroadcastService.logAndBroadcast(gameData, GameLog.text(logEntry));
         log.info("Game {} - {} chose {} as next-damage prevention source", gameData.id, playerName, sourceName);
 
-        stateBasedActionService.performStateBasedActions(gameData);
-        resumeParkedEffectResolution(gameData);
-        turnProgressionService.resolveAutoPass(gameData);
+        inputCompletionService.sbaProcessMayAbilitiesThenAutoPass(gameData);
     }
 
     public void handleEyeForAnEyeSourceChoice(GameData gameData, UUID permanentId,
@@ -661,9 +620,7 @@ public class PermanentChoiceBattlefieldHandlerService {
         gameBroadcastService.logAndBroadcast(gameData, GameLog.text(logEntry));
         log.info("Game {} - {} chose {} as Eye for an Eye reflection source", gameData.id, playerName, sourceName);
 
-        stateBasedActionService.performStateBasedActions(gameData);
-        resumeParkedEffectResolution(gameData);
-        turnProgressionService.resolveAutoPass(gameData);
+        inputCompletionService.sbaProcessMayAbilitiesThenAutoPass(gameData);
     }
 
     public void handlePreventNextDamageFromSourceToAnyTargetChoice(GameData gameData, UUID permanentId,
@@ -681,9 +638,7 @@ public class PermanentChoiceBattlefieldHandlerService {
         log.info("Game {} - {} chose {} as Sanctum Guardian next-damage prevention source", gameData.id,
                 gameData.playerIdToName.get(ctx.controllerId()), sourceName);
 
-        stateBasedActionService.performStateBasedActions(gameData);
-        resumeParkedEffectResolution(gameData);
-        turnProgressionService.resolveAutoPass(gameData);
+        inputCompletionService.sbaProcessMayAbilitiesThenAutoPass(gameData);
     }
 
     public void handleSacrificeArtifactForDividedDamage(GameData gameData, UUID permanentId, PermanentChoiceContext.SacrificeArtifactForDividedDamage sadd) {
@@ -703,18 +658,7 @@ public class PermanentChoiceBattlefieldHandlerService {
 
         gameData.pendingETBDamageAssignments = Map.of();
 
-        stateBasedActionService.performStateBasedActions(gameData);
-
-        if (!gameData.pendingMayAbilities.isEmpty()) {
-            playerInputService.processNextMayAbility(gameData);
-            return;
-        }
-
-        resumeParkedEffectResolution(gameData);
-
-        gameData.priorityPassedBy.clear();
-        gameBroadcastService.broadcastGameState(gameData);
-        turnProgressionService.resolveAutoPass(gameData);
+        inputCompletionService.sbaProcessMayAbilitiesThenAutoPass(gameData);
     }
 
     public void handleSacrificeAnotherCreatureDealPowerDamage(GameData gameData, UUID permanentId,
@@ -743,22 +687,7 @@ public class PermanentChoiceBattlefieldHandlerService {
                     Map.of(ctx.targetId(), power));
         }
 
-        stateBasedActionService.performStateBasedActions(gameData);
-
-        if (!gameData.pendingMayAbilities.isEmpty()) {
-            playerInputService.processNextMayAbility(gameData);
-            return;
-        }
-
-        if (gameData.pendingEffectResolutionEntry != null) {
-            effectResolutionService.resolveEffectsFrom(gameData,
-                    gameData.pendingEffectResolutionEntry,
-                    gameData.pendingEffectResolutionIndex);
-        }
-
-        gameData.priorityPassedBy.clear();
-        gameBroadcastService.broadcastGameState(gameData);
-        turnProgressionService.resolveAutoPass(gameData);
+        inputCompletionService.sbaProcessMayAbilitiesThenAutoPass(gameData);
     }
 
     public void handleSacrificePermanentThen(GameData gameData, UUID permanentId,
@@ -787,18 +716,7 @@ public class PermanentChoiceBattlefieldHandlerService {
             ));
         }
 
-        stateBasedActionService.performStateBasedActions(gameData);
-
-        if (!gameData.pendingMayAbilities.isEmpty()) {
-            playerInputService.processNextMayAbility(gameData);
-            return;
-        }
-
-        resumeParkedEffectResolution(gameData);
-
-        gameData.priorityPassedBy.clear();
-        gameBroadcastService.broadcastGameState(gameData);
-        turnProgressionService.resolveAutoPass(gameData);
+        inputCompletionService.sbaProcessMayAbilitiesThenAutoPass(gameData);
     }
 
     public void handleSacrificeCreatureCreateTokensEqualToToughness(GameData gameData, UUID permanentId,
@@ -830,18 +748,7 @@ public class PermanentChoiceBattlefieldHandlerService {
             ));
         }
 
-        stateBasedActionService.performStateBasedActions(gameData);
-
-        if (!gameData.pendingMayAbilities.isEmpty()) {
-            playerInputService.processNextMayAbility(gameData);
-            return;
-        }
-
-        resumeParkedEffectResolution(gameData);
-
-        gameData.priorityPassedBy.clear();
-        gameBroadcastService.broadcastGameState(gameData);
-        turnProgressionService.resolveAutoPass(gameData);
+        inputCompletionService.sbaProcessMayAbilitiesThenAutoPass(gameData);
     }
 
     public void handleSacrificeCreatureCreateSizedTokenEqualToPower(GameData gameData, UUID permanentId,
@@ -877,18 +784,7 @@ public class PermanentChoiceBattlefieldHandlerService {
                 new ArrayList<>(List.of(sized))
         ));
 
-        stateBasedActionService.performStateBasedActions(gameData);
-
-        if (!gameData.pendingMayAbilities.isEmpty()) {
-            playerInputService.processNextMayAbility(gameData);
-            return;
-        }
-
-        resumeParkedEffectResolution(gameData);
-
-        gameData.priorityPassedBy.clear();
-        gameBroadcastService.broadcastGameState(gameData);
-        turnProgressionService.resolveAutoPass(gameData);
+        inputCompletionService.sbaProcessMayAbilitiesThenAutoPass(gameData);
     }
 
     public void handleSacrificeCreatureCreateTokensIfSubtype(GameData gameData, UUID permanentId,
@@ -902,18 +798,7 @@ public class PermanentChoiceBattlefieldHandlerService {
                 gameData, ctx.sacrificingPlayerId(), target, ctx.requiredSubtype(),
                 ctx.tokenTemplate(), ctx.sourceCard().getSetCode());
 
-        stateBasedActionService.performStateBasedActions(gameData);
-
-        if (!gameData.pendingMayAbilities.isEmpty()) {
-            playerInputService.processNextMayAbility(gameData);
-            return;
-        }
-
-        resumeParkedEffectResolution(gameData);
-
-        gameData.priorityPassedBy.clear();
-        gameBroadcastService.broadcastGameState(gameData);
-        turnProgressionService.resolveAutoPass(gameData);
+        inputCompletionService.sbaProcessMayAbilitiesThenAutoPass(gameData);
     }
 
     public void handleTariffTieBreak(GameData gameData, UUID permanentId,
@@ -1002,21 +887,8 @@ public class PermanentChoiceBattlefieldHandlerService {
                     gameData.id, playerName, auraCard.getName(), enchantTarget.getCard().getName());
         }
 
-        turnProgressionService.resolveAutoPass(gameData);
-    }
-
-    /**
-     * Resumes a stack entry parked in {@link GameData#pendingEffectResolutionEntry} while the
-     * just-answered choice was awaiting input. Every completion handler for a choice begun
-     * mid-resolution must resume (or clear) the parked entry: left dangling, it truncates the
-     * spell's remaining effects and keeps {@link GameData#deferPlayerLossCheck} suppressing the
-     * player-loss state-based action until some unrelated resolution completes.
-     */
-    private void resumeParkedEffectResolution(GameData gameData) {
-        if (gameData.pendingEffectResolutionEntry != null) {
-            effectResolutionService.resolveEffectsFrom(gameData,
-                    gameData.pendingEffectResolutionEntry,
-                    gameData.pendingEffectResolutionIndex);
-        }
+        // Aura placements are begun by normalfx handlers mid-resolution (including Warp World,
+        // whose own entry is parked while the choices run) — the epilogue resumes the parked entry.
+        inputCompletionService.sbaProcessMayAbilitiesThenAutoPass(gameData);
     }
 }

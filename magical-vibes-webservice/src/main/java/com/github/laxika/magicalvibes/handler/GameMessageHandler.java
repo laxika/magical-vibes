@@ -1,7 +1,6 @@
 package com.github.laxika.magicalvibes.handler;
 
 import com.github.laxika.magicalvibes.model.AiDifficulty;
-import com.github.laxika.magicalvibes.model.CardType;
 import com.github.laxika.magicalvibes.model.GameData;
 import com.github.laxika.magicalvibes.model.GameStatus;
 import com.github.laxika.magicalvibes.model.Player;
@@ -57,6 +56,7 @@ import com.github.laxika.magicalvibes.webservice.DeckService;
 import com.github.laxika.magicalvibes.service.GameRegistry;
 import com.github.laxika.magicalvibes.service.GameService;
 import com.github.laxika.magicalvibes.service.GameTimeoutService;
+import com.github.laxika.magicalvibes.service.PlayCardRequestDispatchService;
 
 import java.util.HashMap;
 import java.util.Map;
@@ -87,6 +87,7 @@ public class GameMessageHandler implements MessageHandler {
     private final ValidTargetService validTargetService;
     private final DeckService deckService;
     private final GameTimeoutService gameTimeoutService;
+    private final PlayCardRequestDispatchService playCardRequestDispatchService;
 
     public GameMessageHandler(LoginService loginService,
             GameService gameService,
@@ -101,7 +102,8 @@ public class GameMessageHandler implements MessageHandler {
             CardBrowserService cardBrowserService,
             ValidTargetService validTargetService,
             DeckService deckService,
-            GameTimeoutService gameTimeoutService) {
+            GameTimeoutService gameTimeoutService,
+            PlayCardRequestDispatchService playCardRequestDispatchService) {
         this.loginService = loginService;
         this.gameService = gameService;
         this.gameBroadcastService = gameBroadcastService;
@@ -116,6 +118,7 @@ public class GameMessageHandler implements MessageHandler {
         this.validTargetService = validTargetService;
         this.deckService = deckService;
         this.gameTimeoutService = gameTimeoutService;
+        this.playCardRequestDispatchService = playCardRequestDispatchService;
     }
 
     @Override
@@ -368,50 +371,7 @@ public class GameMessageHandler implements MessageHandler {
         }
 
         try {
-            if (Boolean.TRUE.equals(request.fromLibraryTop())) {
-                gameService.playCardFromLibraryTop(gameData, player, request.xValue(), request.targetId());
-            } else if (Boolean.TRUE.equals(request.flashback())) {
-                CardType chosenGraveyardType = request.chosenGraveyardType() != null
-                        ? CardType.valueOf(request.chosenGraveyardType()) : null;
-                java.util.List<UUID> tapPermanentIds = request.alternateCostSacrificePermanentIds() != null
-                        ? request.alternateCostSacrificePermanentIds() : java.util.List.of();
-                gameService.playFlashbackSpell(gameData, player, request.cardIndex(), request.xValue(), request.targetId(),
-                        request.targetIds() != null ? request.targetIds() : java.util.List.of(),
-                        request.exileGraveyardCardIndices(), chosenGraveyardType, tapPermanentIds,
-                        request.discardHandCardIndex());
-            } else if (request.fromExileCardId() != null) {
-                gameService.playCardFromExile(gameData, player, request.fromExileCardId(), request.xValue(), request.targetId());
-            } else if (request.alternateCostSacrificePermanentIds() != null && !request.alternateCostSacrificePermanentIds().isEmpty()) {
-                gameService.playCard(gameData, player, request.cardIndex(), request.xValue(), request.targetId(), request.damageAssignments(),
-                        request.targetIds() != null ? request.targetIds() : java.util.List.of(),
-                        request.convokeCreatureIds() != null ? request.convokeCreatureIds() : java.util.List.of(),
-                        Boolean.TRUE.equals(request.fromGraveyard()), request.sacrificePermanentId(), request.phyrexianLifeCount(),
-                        request.alternateCostSacrificePermanentIds());
-            } else if (request.exileGraveyardCardIndices() != null && !request.exileGraveyardCardIndices().isEmpty()) {
-                gameService.playCard(gameData, player, request.cardIndex(), request.xValue(), request.targetId(), request.damageAssignments(),
-                        request.targetIds() != null ? request.targetIds() : java.util.List.of(),
-                        request.convokeCreatureIds() != null ? request.convokeCreatureIds() : java.util.List.of(),
-                        Boolean.TRUE.equals(request.fromGraveyard()), request.sacrificePermanentId(), request.phyrexianLifeCount(),
-                        null, null, request.exileGraveyardCardIndices());
-            } else if (request.exileGraveyardCardIndex() != null) {
-                gameService.playCard(gameData, player, request.cardIndex(), request.xValue(), request.targetId(), request.damageAssignments(),
-                        request.targetIds() != null ? request.targetIds() : java.util.List.of(),
-                        request.convokeCreatureIds() != null ? request.convokeCreatureIds() : java.util.List.of(),
-                        Boolean.TRUE.equals(request.fromGraveyard()), request.sacrificePermanentId(), request.phyrexianLifeCount(),
-                        null, request.exileGraveyardCardIndex());
-            } else if (request.discardHandCardIndex() != null) {
-                gameService.playCard(gameData, player, request.cardIndex(), request.xValue(), request.targetId(), request.damageAssignments(),
-                        request.targetIds() != null ? request.targetIds() : java.util.List.of(),
-                        request.convokeCreatureIds() != null ? request.convokeCreatureIds() : java.util.List.of(),
-                        Boolean.TRUE.equals(request.fromGraveyard()), request.sacrificePermanentId(), request.phyrexianLifeCount(),
-                        null, null, null, Boolean.TRUE.equals(request.kicked()), request.discardHandCardIndex());
-            } else {
-                gameService.playCard(gameData, player, request.cardIndex(), request.xValue(), request.targetId(), request.damageAssignments(),
-                        request.targetIds() != null ? request.targetIds() : java.util.List.of(),
-                        request.convokeCreatureIds() != null ? request.convokeCreatureIds() : java.util.List.of(),
-                        Boolean.TRUE.equals(request.fromGraveyard()), request.sacrificePermanentId(), request.phyrexianLifeCount(),
-                        null, null, null, Boolean.TRUE.equals(request.kicked()));
-            }
+            playCardRequestDispatchService.dispatch(gameData, player, request);
         } catch (IllegalArgumentException | IllegalStateException e) {
             handleError(connection, e.getMessage());
         }

@@ -1,7 +1,6 @@
 package com.github.laxika.magicalvibes.ai;
 
 import com.github.laxika.magicalvibes.model.ActivatedAbility;
-import com.github.laxika.magicalvibes.model.CardType;
 import com.github.laxika.magicalvibes.model.GameData;
 import com.github.laxika.magicalvibes.model.GameStatus;
 import com.github.laxika.magicalvibes.model.ManaPool;
@@ -20,6 +19,7 @@ import com.github.laxika.magicalvibes.networking.message.PlayCardRequest;
 import com.github.laxika.magicalvibes.networking.message.TapPermanentRequest;
 import com.github.laxika.magicalvibes.service.GameRegistry;
 import com.github.laxika.magicalvibes.service.GameService;
+import com.github.laxika.magicalvibes.service.PlayCardRequestDispatchService;
 import com.github.laxika.magicalvibes.service.interaction.InteractionAnswer;
 import lombok.extern.slf4j.Slf4j;
 
@@ -35,7 +35,9 @@ import java.util.UUID;
  *
  * <p>This is the AI-side equivalent of what the backend {@code GameMessageHandler} does for human
  * players — but it lives in the AI module and speaks only to {@link GameService}, so the engine
- * never learns about message handlers, connections, or the wire protocol. Like the backend handler,
+ * never learns about message handlers or connections. The cast dispatch is NOT mirrored here:
+ * both this adapter and the backend handler share {@link PlayCardRequestDispatchService}, so the
+ * two can no longer drift apart field-by-field. Like the backend handler,
  * each method swallows {@link IllegalArgumentException}/{@link IllegalStateException} (an illegal
  * action is simply a no-op for the AI). The {@link Connection} parameter is accepted for call-site
  * symmetry with the broadcast pipeline but is unused here — the acting player is fixed.
@@ -47,12 +49,15 @@ public class AiGameActions {
     private final Player aiPlayer;
     private final GameService gameService;
     private final GameRegistry gameRegistry;
+    private final PlayCardRequestDispatchService playCardRequestDispatchService;
 
     public AiGameActions(UUID gameId, Player aiPlayer, GameService gameService, GameRegistry gameRegistry) {
         this.gameId = gameId;
         this.aiPlayer = aiPlayer;
         this.gameService = gameService;
         this.gameRegistry = gameRegistry;
+        // Stateless; constructed directly because AiGameActions is a per-game object, not a bean.
+        this.playCardRequestDispatchService = new PlayCardRequestDispatchService(gameService);
     }
 
     private GameData game() {
@@ -107,41 +112,7 @@ public class AiGameActions {
         GameData gameData = game();
         if (gameData == null) return;
         try {
-            if (Boolean.TRUE.equals(request.fromLibraryTop())) {
-                gameService.playCardFromLibraryTop(gameData, aiPlayer, request.xValue(), request.targetId());
-            } else if (Boolean.TRUE.equals(request.flashback())) {
-                CardType chosenGraveyardType = request.chosenGraveyardType() != null
-                        ? CardType.valueOf(request.chosenGraveyardType()) : null;
-                gameService.playFlashbackSpell(gameData, aiPlayer, request.cardIndex(), request.xValue(), request.targetId(),
-                        request.targetIds() != null ? request.targetIds() : List.of(),
-                        request.exileGraveyardCardIndices(), chosenGraveyardType);
-            } else if (request.fromExileCardId() != null) {
-                gameService.playCardFromExile(gameData, aiPlayer, request.fromExileCardId(), request.xValue(), request.targetId());
-            } else if (request.alternateCostSacrificePermanentIds() != null && !request.alternateCostSacrificePermanentIds().isEmpty()) {
-                gameService.playCard(gameData, aiPlayer, request.cardIndex(), request.xValue(), request.targetId(), request.damageAssignments(),
-                        request.targetIds() != null ? request.targetIds() : List.of(),
-                        request.convokeCreatureIds() != null ? request.convokeCreatureIds() : List.of(),
-                        Boolean.TRUE.equals(request.fromGraveyard()), request.sacrificePermanentId(), request.phyrexianLifeCount(),
-                        request.alternateCostSacrificePermanentIds());
-            } else if (request.exileGraveyardCardIndices() != null && !request.exileGraveyardCardIndices().isEmpty()) {
-                gameService.playCard(gameData, aiPlayer, request.cardIndex(), request.xValue(), request.targetId(), request.damageAssignments(),
-                        request.targetIds() != null ? request.targetIds() : List.of(),
-                        request.convokeCreatureIds() != null ? request.convokeCreatureIds() : List.of(),
-                        Boolean.TRUE.equals(request.fromGraveyard()), request.sacrificePermanentId(), request.phyrexianLifeCount(),
-                        null, null, request.exileGraveyardCardIndices());
-            } else if (request.exileGraveyardCardIndex() != null) {
-                gameService.playCard(gameData, aiPlayer, request.cardIndex(), request.xValue(), request.targetId(), request.damageAssignments(),
-                        request.targetIds() != null ? request.targetIds() : List.of(),
-                        request.convokeCreatureIds() != null ? request.convokeCreatureIds() : List.of(),
-                        Boolean.TRUE.equals(request.fromGraveyard()), request.sacrificePermanentId(), request.phyrexianLifeCount(),
-                        null, request.exileGraveyardCardIndex());
-            } else {
-                gameService.playCard(gameData, aiPlayer, request.cardIndex(), request.xValue(), request.targetId(), request.damageAssignments(),
-                        request.targetIds() != null ? request.targetIds() : List.of(),
-                        request.convokeCreatureIds() != null ? request.convokeCreatureIds() : List.of(),
-                        Boolean.TRUE.equals(request.fromGraveyard()), request.sacrificePermanentId(), request.phyrexianLifeCount(),
-                        null, null, null, Boolean.TRUE.equals(request.kicked()), request.discardHandCardIndex());
-            }
+            playCardRequestDispatchService.dispatch(gameData, aiPlayer, request);
         } catch (IllegalArgumentException | IllegalStateException e) {
             // Illegal action is a no-op for the AI; logged so fuzz failures show the engine's reason
             log.info("AI: engine rejected playCard (index={}) in game {}: {}", request.cardIndex(), gameId, e.getMessage());
