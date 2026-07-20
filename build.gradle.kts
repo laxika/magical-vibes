@@ -59,7 +59,7 @@ subprojects {
             jvmArgs("-Xmx2g", "-XX:TieredStopAtLevel=1", "-XX:+UseParallelGC")
             forkEvery = 2000
             // Forward select system properties to the forked test JVM
-            listOf("runCardFuzz", "runAiStress", "fuzzSeed", "fuzzGames",
+            listOf("runCardFuzz", "runAiStress", "fuzzGames",
                     "runScenarioFuzz", "scenarioCard", "scenarioIterations", "scenarioSeed",
                     "layerBench", "mctsBench", "disableLayerBoardCache", "oracle.data-provider").forEach { prop ->
                 System.getProperty(prop)?.let { systemProperty(prop, it) }

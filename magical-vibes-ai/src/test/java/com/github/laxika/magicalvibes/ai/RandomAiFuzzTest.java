@@ -35,8 +35,10 @@ import static org.assertj.core.api.Assertions.fail;
  * far more edge cases — unusual spell timing, bizarre combat assignments, random
  * targets, random ability activations, occasional mulligans, etc.
  *
- * <p>Each game prints its random seed so failures can be reproduced by hardcoding
- * the seed in code or via {@code -DfuzzSeed=12345} system property.</p>
+ * <p>Games are not reproducible from a seed: the engine draws from unseeded RNG
+ * (shuffles, coin flips) and the two AI connections race on their own executors,
+ * so replaying identical decisions is impossible anyway. Diagnose failures from
+ * the captured stack traces and the game-state dump instead.</p>
  *
  * <p>Game-state invariants live in {@link FuzzInvariants}; a batch-wide coverage
  * report ({@link FuzzTelemetry}) is printed at the end of the run, even when a game
@@ -58,16 +60,14 @@ class RandomAiFuzzTest {
     @Test
     void fuzzTestRandomAi() throws Exception {
         int gameCount = Integer.getInteger("fuzzGames", DEFAULT_GAME_COUNT);
-        Long fixedSeed = Long.getLong("fuzzSeed");
 
         FuzzTelemetry telemetry = new FuzzTelemetry();
         try {
             int passed = 0;
             for (int game = 1; game <= gameCount; game++) {
-                long seed = fixedSeed != null ? fixedSeed : System.nanoTime();
-                System.out.printf("=== Game #%d/%d  seed=%d ===%n", game, gameCount, seed);
+                System.out.printf("=== Game #%d/%d ===%n", game, gameCount);
                 long start = System.currentTimeMillis();
-                runOneGame(game, seed, telemetry);
+                runOneGame(game, telemetry);
                 telemetry.recordGameCompleted();
                 long elapsed = System.currentTimeMillis() - start;
                 System.out.printf("=== Game #%d completed in %d ms ===%n%n", game, elapsed);
@@ -83,16 +83,16 @@ class RandomAiFuzzTest {
     // Game lifecycle
     // ------------------------------------------------------------------
 
-    private void runOneGame(int gameNumber, long seed, FuzzTelemetry telemetry) throws Exception {
+    private void runOneGame(int gameNumber, FuzzTelemetry telemetry) throws Exception {
         FuzzLogWatcher watcher = FuzzLogWatcher.install();
         try {
-            runOneGameInternal(gameNumber, seed, new Random(seed), watcher, telemetry);
+            runOneGameInternal(gameNumber, new Random(), watcher, telemetry);
         } finally {
             watcher.uninstall();
         }
     }
 
-    private void runOneGameInternal(int gameNumber, long seed, Random rng, FuzzLogWatcher watcher,
+    private void runOneGameInternal(int gameNumber, Random rng, FuzzLogWatcher watcher,
                                     FuzzTelemetry telemetry) throws Exception {
         // 1. Bootstrap the full service graph via the test harness
         GameTestHarness harness = new GameTestHarness();
@@ -176,17 +176,17 @@ class RandomAiFuzzTest {
             List<String> logFailures = watcher.drainFailures();
             if (!logFailures.isEmpty()) {
                 failGame("failure captured in logs:\n" + String.join("\n", logFailures),
-                        gameNumber, seed, gd, player1, player2, aiConn1, aiConn2);
+                        gameNumber, gd, player1, player2, aiConn1, aiConn2);
             }
 
             String invariantViolation = invariants.check(gd);
             if (invariantViolation != null) {
-                failGame(invariantViolation, gameNumber, seed, gd, player1, player2, aiConn1, aiConn2);
+                failGame(invariantViolation, gameNumber, gd, player1, player2, aiConn1, aiConn2);
             }
 
             if (System.currentTimeMillis() - startTime > MAX_GAME_DURATION_MS) {
                 failGame("timed out after " + (MAX_GAME_DURATION_MS / 1000) + "s",
-                        gameNumber, seed, gd, player1, player2, aiConn1, aiConn2);
+                        gameNumber, gd, player1, player2, aiConn1, aiConn2);
             }
 
             if (gd.turnNumber > MAX_TURNS) {
@@ -202,7 +202,7 @@ class RandomAiFuzzTest {
                 if (sameCount >= MAX_SAME_STATE_COUNT) {
                     failGame("stuck — same state observed " + MAX_SAME_STATE_COUNT
                             + " consecutive times:\n" + fingerprint,
-                            gameNumber, seed, gd, player1, player2, aiConn1, aiConn2);
+                            gameNumber, gd, player1, player2, aiConn1, aiConn2);
                 }
             } else {
                 sameCount = 0;
@@ -218,17 +218,17 @@ class RandomAiFuzzTest {
         // during the final combat that also happened to end the game).
         List<String> trailingFailures = watcher.drainFailures();
         if (!trailingFailures.isEmpty()) {
-            fail("Game #" + gameNumber + " (seed=" + seed + ") finished, but failures were captured in logs:\n"
+            fail("Game #" + gameNumber + " finished, but failures were captured in logs:\n"
                     + String.join("\n", trailingFailures));
         }
     }
 
-    private void failGame(String reason, int gameNumber, long seed, GameData gd, Player p1, Player p2,
+    private void failGame(String reason, int gameNumber, GameData gd, Player p1, Player p2,
                           AiConnection conn1, AiConnection conn2) {
         dumpGameState(gameNumber, gd, p1, p2);
         conn1.close();
         conn2.close();
-        fail("Game #" + gameNumber + " (seed=" + seed + ") " + reason);
+        fail("Game #" + gameNumber + " " + reason);
     }
 
     // ------------------------------------------------------------------
