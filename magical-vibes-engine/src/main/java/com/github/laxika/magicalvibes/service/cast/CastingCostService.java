@@ -18,15 +18,7 @@ import com.github.laxika.magicalvibes.model.TapUntappedPermanentsCost;
 import com.github.laxika.magicalvibes.model.effect.ActivatedAbilityCostIncreasingEffect;
 import com.github.laxika.magicalvibes.model.effect.AlternativeCostForSpellsEffect;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
-import com.github.laxika.magicalvibes.model.effect.ExileCardFromGraveyardCost;
-import com.github.laxika.magicalvibes.model.effect.ExileNCardsFromGraveyardCost;
-import com.github.laxika.magicalvibes.model.effect.ExileXCardsFromGraveyardCost;
 import com.github.laxika.magicalvibes.model.effect.GraveyardActivatedAbilityCostReducingEffect;
-import com.github.laxika.magicalvibes.model.effect.SacrificeArtifactCost;
-import com.github.laxika.magicalvibes.model.effect.ReturnCreatureToHandCost;
-import com.github.laxika.magicalvibes.model.effect.PutCounterOnControlledCreatureCost;
-import com.github.laxika.magicalvibes.model.effect.SacrificeCreatureCost;
-import com.github.laxika.magicalvibes.model.effect.SacrificePermanentCost;
 import com.github.laxika.magicalvibes.model.effect.IncreaseOpponentCostForTargetingControlledPermanentEffect;
 import com.github.laxika.magicalvibes.model.effect.ReduceOwnCastCostIfTargetingControlledPermanentEffect;
 import com.github.laxika.magicalvibes.model.effect.ReduceOwnCastCostIfTargetingPermanentEffect;
@@ -187,19 +179,86 @@ public class CastingCostService {
         return tax;
     }
 
+    /**
+     * Generic mana removed from the cost of activating an activated ability of {@code graveyardCard}
+     * from {@code activatingPlayerId}'s graveyard, summed over every
+     * {@link GraveyardActivatedAbilityCostReducingEffect} that player controls whose card predicate
+     * matches the card (e.g. Embalmer's Tools makes creature cards' graveyard abilities cost {1} less).
+     * Controller-scoped — "in your graveyard" benefits only the effect's own controller, and the
+     * activating player is always the graveyard's owner, so only their battlefield is scanned.
+     */
+    public int getGraveyardActivatedAbilityCostReduction(GameData gameData, UUID activatingPlayerId, Card graveyardCard) {
+        List<Permanent> battlefield = gameData.playerBattlefields.get(activatingPlayerId);
+        if (battlefield == null) return 0;
+        int reduction = 0;
+        for (Permanent perm : battlefield) {
+            for (CardEffect effect : perm.getCard().getEffects(EffectSlot.STATIC)) {
+                if (effect instanceof GraveyardActivatedAbilityCostReducingEffect reducer
+                        && predicateEvaluationService.matchesCardPredicate(
+                                graveyardCard, reducer.affectedGraveyardCards(), null)) {
+                    reduction += reducer.genericCostReduction();
+                }
+            }
+        }
+        return reduction;
+    }
+
     public boolean hasAlternativeZeroCostFromBattlefield(GameData gameData, UUID playerId, Card card) {
+        return findFreeCastSource(gameData, playerId, card) != null;
+    }
+
+    /**
+     * Applies a battlefield "you may pay {0}" alternative cost to the card being cast and, for a
+     * once-each-turn source (As Foretold), records that the source has been used this turn so it
+     * offers no further free cast until the next turn. Returns whether a free cast applied.
+     * Non-mutating callers (playability previews, validation) must use
+     * {@link #hasAlternativeZeroCostFromBattlefield} instead.
+     */
+    public boolean consumeFreeCastFromBattlefield(GameData gameData, UUID playerId, Card card) {
+        FreeCastSource source = findFreeCastSource(gameData, playerId, card);
+        if (source == null) return false;
+        if (source.effect().oncePerTurn()) {
+            gameData.freeCastPermanentUsedThisTurn.add(source.permanent().getId());
+        }
+        return true;
+    }
+
+    private record FreeCastSource(Permanent permanent, AlternativeCostForSpellsEffect effect) {
+    }
+
+    /**
+     * A permanent the player controls whose {@link AlternativeCostForSpellsEffect} offers a zero
+     * alternative cost currently applicable to {@code card}: the filter matches, any counter-based
+     * mana-value cap is satisfied, and a once-each-turn source has not yet been used this turn. An
+     * unlimited source (e.g. Rooftop Storm) is preferred over a once-each-turn source (As Foretold)
+     * so the limited use is not spent while a free one is available.
+     */
+    private FreeCastSource findFreeCastSource(GameData gameData, UUID playerId, Card card) {
         List<Permanent> bf = gameData.playerBattlefields.get(playerId);
-        if (bf == null) return false;
+        if (bf == null) return null;
+        FreeCastSource oncePerTurnFallback = null;
         for (Permanent perm : bf) {
             for (CardEffect effect : perm.getCard().getEffects(EffectSlot.STATIC)) {
                 if (effect instanceof AlternativeCostForSpellsEffect altCost
                         && new ManaCost(altCost.manaCost()).getManaValue() == 0
-                        && predicateEvaluationService.matchesCardPredicate(card, altCost.filter(), null)) {
-                    return true;
+                        && predicateEvaluationService.matchesCardPredicate(card, altCost.filter(), null)
+                        && manaValueCapSatisfied(perm, card, altCost)
+                        && !(altCost.oncePerTurn() && gameData.freeCastPermanentUsedThisTurn.contains(perm.getId()))) {
+                    if (!altCost.oncePerTurn()) {
+                        return new FreeCastSource(perm, altCost);
+                    }
+                    if (oncePerTurnFallback == null) {
+                        oncePerTurnFallback = new FreeCastSource(perm, altCost);
+                    }
                 }
             }
         }
-        return false;
+        return oncePerTurnFallback;
+    }
+
+    private boolean manaValueCapSatisfied(Permanent perm, Card card, AlternativeCostForSpellsEffect altCost) {
+        if (altCost.manaValueCapCounter() == null) return true;
+        return card.getManaValue() <= perm.getCounterCount(altCost.manaValueCapCounter());
     }
 
     /**
@@ -426,58 +485,22 @@ public class CastingCostService {
     }
 
     /**
-     * CR 601.2b/601.2f: can the player currently satisfy every non-mana additional cost baked into
-     * the card's SPELL effects that must be paid from a zone other than the mana pool — sacrifice
-     * costs (creature / artifact / filtered-permanent) and graveyard-exile costs (a single card, a
-     * fixed count, or all-cards-for-X)? Pure query over the player's battlefield and graveyard;
-     * never mutates state.
-     *
-     * <p>This is the single source of truth for the "additional costs are payable" gate that
-     * {@code SpellCastingService.playCard} enforces card-by-card at cast time. Callers that offer a
-     * spell before the player commits to it (the playable-card previews and the AI's move
-     * generation) consult it so they never advertise a spell whose additional costs can't be paid.
-     * It deliberately does NOT re-check the mana affordability, targeting, or ExileN 601.2b gates
-     * that {@code GameBroadcastService.isCardPlayable} already covers (ExileN is included here too
-     * so the query stands alone as a complete additional-cost check).
+     * CR 601.2b/601.2f: can the player currently satisfy every non-mana additional cast cost on
+     * the card? Thin delegate to {@link AdditionalSpellCostService#satisfiable} — the engine's
+     * single satisfiability query — so the playable-card previews and the AI's move generation
+     * can never disagree with cast-time validation. Pure query; never mutates state.
      */
     public boolean canPayAdditionalSpellCosts(GameData gameData, UUID playerId, Card card) {
-        List<Permanent> battlefield = gameData.playerBattlefields.getOrDefault(playerId, List.of());
-        List<Card> graveyard = gameData.playerGraveyards.getOrDefault(playerId, List.of());
-        for (CardEffect effect : card.getEffects(EffectSlot.SPELL)) {
-            switch (effect) {
-                case SacrificeCreatureCost ignored -> {
-                    if (battlefield.stream().noneMatch(p -> gameQueryService.isCreature(gameData, p))) return false;
-                }
-                case ReturnCreatureToHandCost ignored -> {
-                    if (battlefield.stream().noneMatch(p -> gameQueryService.isCreature(gameData, p))) return false;
-                }
-                case PutCounterOnControlledCreatureCost ignored -> {
-                    if (battlefield.stream().noneMatch(p -> gameQueryService.isCreature(gameData, p))) return false;
-                }
-                case SacrificeArtifactCost ignored -> {
-                    if (battlefield.stream().noneMatch(p -> gameQueryService.isArtifact(gameData, p))) return false;
-                }
-                case SacrificePermanentCost sacCost -> {
-                    if (battlefield.stream().noneMatch(p ->
-                            predicateEvaluationService.matchesPermanentPredicate(gameData, p, sacCost.filter()))) return false;
-                }
-                case ExileNCardsFromGraveyardCost cost -> {
-                    long matchingCount = graveyard.stream()
-                            .filter(c -> cost.requiredType() == null || c.hasType(cost.requiredType()))
-                            .count();
-                    if (matchingCount < cost.count()) return false;
-                }
-                case ExileCardFromGraveyardCost cost -> {
-                    if (graveyard.stream().noneMatch(c ->
-                            (cost.requiredType() == null || c.hasType(cost.requiredType()))
-                                    && (cost.requiredSubtype() == null || c.getSubtypes().contains(cost.requiredSubtype())))) return false;
-                }
-                case ExileXCardsFromGraveyardCost ignored -> {
-                    if (graveyard.isEmpty()) return false;
-                }
-                default -> { }
-            }
-        }
-        return true;
+        return additionalSpellCostService.satisfiable(gameData, playerId, card);
+    }
+
+    /** @see AdditionalSpellCostService#validDiscardCostIndices */
+    public List<Integer> validDiscardCostIndices(GameData gameData, UUID playerId, Card card) {
+        return additionalSpellCostService.validDiscardCostIndices(gameData, playerId, card);
+    }
+
+    /** True when the card carries any non-mana additional cast cost. */
+    public boolean hasAdditionalSpellCosts(Card card) {
+        return additionalSpellCostService.peek(card).any();
     }
 }

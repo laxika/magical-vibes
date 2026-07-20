@@ -40,6 +40,7 @@ class CostEffectClassificationTest {
             "DiscardHandCost",
             "DiscardRandomCardCost",
             "ExileSelfCost",
+            "ExileSelfFromGraveyardCost",
             "MillControllerCost",
             "PayLifeCost",
             "PayManaCost",
