@@ -39,6 +39,7 @@ import com.github.laxika.magicalvibes.model.filter.StackEntryPredicate;
 import com.github.laxika.magicalvibes.service.battlefield.GameQueryService;
 import com.github.laxika.magicalvibes.service.effect.ConditionContext;
 import com.github.laxika.magicalvibes.service.effect.ConditionEvaluationService;
+import com.github.laxika.magicalvibes.service.effect.cost.AdditionalSpellCostService;
 import com.github.laxika.magicalvibes.service.filter.PredicateEvaluationService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Component;
@@ -67,6 +68,7 @@ public class CastingCostService {
     private final GameQueryService gameQueryService;
     private final PredicateEvaluationService predicateEvaluationService;
     private final ConditionEvaluationService conditionEvaluationService;
+    private final AdditionalSpellCostService additionalSpellCostService;
 
     /**
      * All cost-modifying static effects currently on the battlefield that could affect spells
@@ -185,86 +187,19 @@ public class CastingCostService {
         return tax;
     }
 
-    /**
-     * Generic mana removed from the cost of activating an activated ability of {@code graveyardCard}
-     * from {@code activatingPlayerId}'s graveyard, summed over every
-     * {@link GraveyardActivatedAbilityCostReducingEffect} that player controls whose card predicate
-     * matches the card (e.g. Embalmer's Tools makes creature cards' graveyard abilities cost {1} less).
-     * Controller-scoped — "in your graveyard" benefits only the effect's own controller, and the
-     * activating player is always the graveyard's owner, so only their battlefield is scanned.
-     */
-    public int getGraveyardActivatedAbilityCostReduction(GameData gameData, UUID activatingPlayerId, Card graveyardCard) {
-        List<Permanent> battlefield = gameData.playerBattlefields.get(activatingPlayerId);
-        if (battlefield == null) return 0;
-        int reduction = 0;
-        for (Permanent perm : battlefield) {
-            for (CardEffect effect : perm.getCard().getEffects(EffectSlot.STATIC)) {
-                if (effect instanceof GraveyardActivatedAbilityCostReducingEffect reducer
-                        && predicateEvaluationService.matchesCardPredicate(
-                                graveyardCard, reducer.affectedGraveyardCards(), null)) {
-                    reduction += reducer.genericCostReduction();
-                }
-            }
-        }
-        return reduction;
-    }
-
     public boolean hasAlternativeZeroCostFromBattlefield(GameData gameData, UUID playerId, Card card) {
-        return findFreeCastSource(gameData, playerId, card) != null;
-    }
-
-    /**
-     * Applies a battlefield "you may pay {0}" alternative cost to the card being cast and, for a
-     * once-each-turn source (As Foretold), records that the source has been used this turn so it
-     * offers no further free cast until the next turn. Returns whether a free cast applied.
-     * Non-mutating callers (playability previews, validation) must use
-     * {@link #hasAlternativeZeroCostFromBattlefield} instead.
-     */
-    public boolean consumeFreeCastFromBattlefield(GameData gameData, UUID playerId, Card card) {
-        FreeCastSource source = findFreeCastSource(gameData, playerId, card);
-        if (source == null) return false;
-        if (source.effect().oncePerTurn()) {
-            gameData.freeCastPermanentUsedThisTurn.add(source.permanent().getId());
-        }
-        return true;
-    }
-
-    private record FreeCastSource(Permanent permanent, AlternativeCostForSpellsEffect effect) {
-    }
-
-    /**
-     * A permanent the player controls whose {@link AlternativeCostForSpellsEffect} offers a zero
-     * alternative cost currently applicable to {@code card}: the filter matches, any counter-based
-     * mana-value cap is satisfied, and a once-each-turn source has not yet been used this turn. An
-     * unlimited source (e.g. Rooftop Storm) is preferred over a once-each-turn source (As Foretold)
-     * so the limited use is not spent while a free one is available.
-     */
-    private FreeCastSource findFreeCastSource(GameData gameData, UUID playerId, Card card) {
         List<Permanent> bf = gameData.playerBattlefields.get(playerId);
-        if (bf == null) return null;
-        FreeCastSource oncePerTurnFallback = null;
+        if (bf == null) return false;
         for (Permanent perm : bf) {
             for (CardEffect effect : perm.getCard().getEffects(EffectSlot.STATIC)) {
                 if (effect instanceof AlternativeCostForSpellsEffect altCost
                         && new ManaCost(altCost.manaCost()).getManaValue() == 0
-                        && predicateEvaluationService.matchesCardPredicate(card, altCost.filter(), null)
-                        && manaValueCapSatisfied(perm, card, altCost)
-                        && !(altCost.oncePerTurn() && gameData.freeCastPermanentUsedThisTurn.contains(perm.getId()))) {
-                    if (!altCost.oncePerTurn()) {
-                        return new FreeCastSource(perm, altCost);
-                    }
-                    if (oncePerTurnFallback == null) {
-                        oncePerTurnFallback = new FreeCastSource(perm, altCost);
-                    }
+                        && predicateEvaluationService.matchesCardPredicate(card, altCost.filter(), null)) {
+                    return true;
                 }
             }
         }
-        return oncePerTurnFallback;
-    }
-
-    private boolean manaValueCapSatisfied(Permanent perm, Card card, AlternativeCostForSpellsEffect altCost) {
-        if (altCost.manaValueCapCounter() == null) return true;
-        return card.getManaValue() <= perm.getCounterCount(altCost.manaValueCapCounter());
+        return false;
     }
 
     /**

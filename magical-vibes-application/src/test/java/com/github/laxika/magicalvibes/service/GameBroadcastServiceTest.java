@@ -77,7 +77,9 @@ class GameBroadcastServiceTest {
         CostModificationSupport support = new CostModificationSupport(gameQueryService, predicateEvaluationService);
         CastingCostService castingCostService = new CastingCostService(
                 CostModificationTestRegistry.build(gameQueryService, predicateEvaluationService, support),
-                support, gameQueryService, predicateEvaluationService, conditionEvaluationService);
+                support, gameQueryService, predicateEvaluationService, conditionEvaluationService,
+                new com.github.laxika.magicalvibes.service.effect.cost.AdditionalSpellCostService(
+                        gameQueryService, predicateEvaluationService));
         CastingPermissionService castingPermissionService =
                 new CastingPermissionService(gameQueryService, predicateEvaluationService, conditionEvaluationService);
         svc = new GameBroadcastService(sessionManager, cardViewFactory, gameLogViewFactory, permanentViewFactory,

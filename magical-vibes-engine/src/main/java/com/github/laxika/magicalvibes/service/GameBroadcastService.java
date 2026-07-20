@@ -30,7 +30,6 @@ import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.StackEntry;
 import com.github.laxika.magicalvibes.model.VirtualManaPool;
 import com.github.laxika.magicalvibes.model.TurnStep;
-import com.github.laxika.magicalvibes.model.effect.DiscardCardTypeCost;
 import com.github.laxika.magicalvibes.model.effect.ExileNCardsFromGraveyardCost;
 import com.github.laxika.magicalvibes.model.effect.KickerEffect;
 import com.github.laxika.magicalvibes.model.effect.CantSearchLibrariesEffect;
@@ -491,10 +490,12 @@ public class GameBroadcastService {
             }
         }
 
-        // MTG rule 601.2b: "as an additional cost, discard a card" — need another card in hand to
-        // discard. The spell itself is still in hand here, so at least 2 cards are required.
-        playable.removeIf(i -> hand.get(i).getEffects(EffectSlot.SPELL).stream()
-                .anyMatch(DiscardCardTypeCost.class::isInstance) && hand.size() < 2);
+        // MTG rule 601.2b: "as an additional cost, discard a card" — need another card in hand
+        // (matching the cost's predicate) to discard; the spell itself can never be its own discard.
+        playable.removeIf(i -> {
+            List<Integer> discardable = castingCostService.validDiscardCostIndices(gameData, playerId, hand.get(i));
+            return discardable != null && discardable.isEmpty();
+        });
 
         return playable;
     }
@@ -1087,6 +1088,12 @@ public class GameBroadcastService {
         boolean matchesType = castableTypes.contains(topCard.getType())
                 || topCard.getAdditionalTypes().stream().anyMatch(castableTypes::contains);
         if (!matchesType || topCard.getManaCost() == null) {
+            return playable;
+        }
+
+        // The from-library-top cast path rejects cards with additional cast costs (no wire for
+        // the payment selections) — never advertise them as playable.
+        if (castingCostService.hasAdditionalSpellCosts(topCard)) {
             return playable;
         }
 

@@ -390,6 +390,19 @@ class RandomAiDecisionEngine extends AiDecisionEngine {
                 }
             }
 
+            // Pick a random card to discard if the spell has a "discard a card" additional cost
+            // (e.g. Seize the Spoils) — the engine rejects the cast without a selection.
+            Integer discardHandCardIndex = null;
+            List<Integer> validDiscardIndices = castingCostService.validDiscardCostIndices(
+                    gameData, aiPlayer.getId(), card);
+            if (validDiscardIndices != null) {
+                if (validDiscardIndices.isEmpty()) {
+                    telemetry.recordSkip("spell: discard cost unpayable", card.getName());
+                    continue;
+                }
+                discardHandCardIndex = validDiscardIndices.get(rng.nextInt(validDiscardIndices.size()));
+            }
+
             // Select sacrifice target if the spell has a sacrifice cost
             UUID sacrificePermanentId = selectRandomSacrificeTarget(gameData, card);
 
@@ -446,8 +459,9 @@ class RandomAiDecisionEngine extends AiDecisionEngine {
             final UUID finalSacrificePermanentId = sacrificePermanentId;
             final Map<UUID, Integer> finalDamageAssignments = damageAssignments;
             final List<UUID> finalMultiTargetIds = multiTargetIds;
+            final Integer finalDiscardHandCardIndex = discardHandCardIndex;
             send(() -> gameActions.handlePlayCard(selfConnection,
-                    new PlayCardRequest(cardIndex, finalXValue, finalTargetId, finalDamageAssignments, finalMultiTargetIds, null, null, finalSacrificePermanentId, null, null, null, null, finalExileGraveyardCardIndex, finalExileGraveyardCardIndices, null, null, null, null)));
+                    new PlayCardRequest(cardIndex, finalXValue, finalTargetId, finalDamageAssignments, finalMultiTargetIds, null, null, finalSacrificePermanentId, null, null, null, null, finalExileGraveyardCardIndex, finalExileGraveyardCardIndices, null, null, null, finalDiscardHandCardIndex)));
 
             // Game may have ended while paying costs (e.g. Manabarbs killing the caster
             // on a land tap) — every later action no-ops, which is not a legality bug.

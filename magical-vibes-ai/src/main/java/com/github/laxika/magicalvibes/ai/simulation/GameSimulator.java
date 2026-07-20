@@ -525,9 +525,11 @@ public class GameSimulator {
         tapLandsForCard(gd, playerId, card, pc.xValue());
         List<Integer> exileIndices = computeExileNGraveyardIndices(gd, playerId, card);
         UUID sacrificeId = computeSacrificeTarget(gd, playerId, card);
-        if (exileIndices != null || sacrificeId != null) {
+        Integer discardIndex = computeDiscardCostIndex(gd, playerId, card);
+        if (exileIndices != null || sacrificeId != null || discardIndex != null) {
             gameService.playCard(gd, player, pc.handIndex(), pc.xValue(), pc.targetId(),
-                    null, List.of(), List.of(), false, sacrificeId, null, null, null, exileIndices);
+                    null, List.of(), List.of(), false, sacrificeId, null, null, null, exileIndices,
+                    false, discardIndex);
         } else {
             gameService.playCard(gd, player, pc.handIndex(), pc.xValue(), pc.targetId(), null);
         }
@@ -935,6 +937,16 @@ public class GameSimulator {
             }
         }
         return null;
+    }
+
+    /**
+     * Finds the first valid hand card to pay the card's "discard a card" additional cast cost.
+     * Returns null if the card has no such cost (or, defensively, no valid discard exists —
+     * enumeration already filters unpayable casts via canPayAdditionalSpellCosts).
+     */
+    private Integer computeDiscardCostIndex(GameData gd, UUID playerId, Card card) {
+        List<Integer> valid = castingCostService.validDiscardCostIndices(gd, playerId, card);
+        return valid == null || valid.isEmpty() ? null : valid.get(0);
     }
 
     /**

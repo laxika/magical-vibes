@@ -8,6 +8,7 @@ import com.github.laxika.magicalvibes.model.ManaCost;
 import com.github.laxika.magicalvibes.model.ManaPool;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
+import com.github.laxika.magicalvibes.model.effect.DiscardCardTypeCost;
 import com.github.laxika.magicalvibes.model.effect.ExileCardFromGraveyardCost;
 import com.github.laxika.magicalvibes.model.effect.ExileNCardsFromGraveyardCost;
 import com.github.laxika.magicalvibes.model.effect.ExileXCardsFromGraveyardCost;
@@ -48,6 +49,28 @@ final class AiTestPlayabilityStub {
                     UUID playerId = inv.getArgument(1);
                     Card card = inv.getArgument(2);
                     return canPayAdditionalSpellCosts(gameData, playerId, card);
+                });
+        // Mirror of the card-level discard-cost query: null = no discard cost on the card,
+        // else the indices of every other hand card (predicate treated as satisfiable).
+        Mockito.lenient().when(castingCostService.validDiscardCostIndices(
+                        any(GameData.class), any(UUID.class), any(Card.class)))
+                .thenAnswer(inv -> {
+                    GameData gameData = inv.getArgument(0);
+                    UUID playerId = inv.getArgument(1);
+                    Card card = inv.getArgument(2);
+                    boolean hasDiscardCost = card.getEffects(EffectSlot.SPELL).stream()
+                            .anyMatch(DiscardCardTypeCost.class::isInstance);
+                    if (!hasDiscardCost) {
+                        return null;
+                    }
+                    List<Card> hand = gameData.playerHands.getOrDefault(playerId, List.of());
+                    List<Integer> indices = new java.util.ArrayList<>();
+                    for (int i = 0; i < hand.size(); i++) {
+                        if (!hand.get(i).getId().equals(card.getId())) {
+                            indices.add(i);
+                        }
+                    }
+                    return indices;
                 });
         Mockito.lenient().when(gameBroadcastService.isCardPlayable(
                         any(GameData.class), any(UUID.class), any(Card.class), any(ManaPool.class), anyInt()))
@@ -98,6 +121,12 @@ final class AiTestPlayabilityStub {
                 }
                 case ExileXCardsFromGraveyardCost ignored -> {
                     if (graveyard.isEmpty()) return false;
+                }
+                case DiscardCardTypeCost ignored -> {
+                    // Predicate treated as satisfiable (like permanent-predicate sacrifice costs);
+                    // the spell itself can never be its own discard, so another card is required.
+                    List<Card> hand = gameData.playerHands.getOrDefault(playerId, List.of());
+                    if (hand.stream().noneMatch(c -> !c.getId().equals(card.getId()))) return false;
                 }
                 default -> { }
             }

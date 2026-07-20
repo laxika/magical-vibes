@@ -204,6 +204,27 @@ class PrecognitionFieldTest extends BaseCardTest {
         }
 
         @Test
+        @DisplayName("Cannot cast a spell with an additional cast cost from the library top")
+        void cannotCastAdditionalCostSpellFromTop() {
+            harness.addToBattlefield(player1, new PrecognitionField());
+            // A card in hand makes the discard cost satisfiable in principle — the cast is
+            // still rejected because this path has no wire for the discard selection.
+            harness.setHand(player1, List.of(new Shock()));
+            Card spoils = new com.github.laxika.magicalvibes.cards.s.SeizeTheSpoils();
+            gd.playerDecks.get(player1.getId()).addFirst(spoils);
+            harness.addMana(player1, ManaColor.RED, 1);
+            harness.addMana(player1, ManaColor.COLORLESS, 2);
+
+            assertThatThrownBy(() -> harness.castFromLibraryTop(player1))
+                    .isInstanceOf(IllegalStateException.class)
+                    .hasMessageContaining("additional cast cost");
+
+            // Rejected atomically: card still on top, mana unspent.
+            assertThat(gd.playerDecks.get(player1.getId()).getFirst()).isSameAs(spoils);
+            assertThat(gd.playerManaPools.get(player1.getId()).getTotalAllMana()).isEqualTo(3);
+        }
+
+        @Test
         @DisplayName("Cannot cast from empty library")
         void cannotCastFromEmptyLibrary() {
             harness.addToBattlefield(player1, new PrecognitionField());

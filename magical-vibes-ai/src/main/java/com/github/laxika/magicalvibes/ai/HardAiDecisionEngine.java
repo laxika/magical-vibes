@@ -1107,10 +1107,11 @@ public class HardAiDecisionEngine extends AiDecisionEngine {
         final UUID fSacrifice = plan.sacrificePermanentId;
         final List<Integer> fExileIndices = plan.exileGraveyardCardIndices;
         final List<UUID> fMultiTargets = plan.multiTargetIds;
+        final Integer fDiscardHandCardIndex = chooseDiscardCostIndex(gameData, plan.card);
         send(() -> gameActions.handlePlayCard(selfConnection,
                 new PlayCardRequest(idx, fXValue, fTargetId, fDamage,
                         fMultiTargets, null, null, fSacrifice,
-                        null, null, null, null, null, fExileIndices, null, null, null, null)));
+                        null, null, null, null, null, fExileIndices, null, null, null, fDiscardHandCardIndex)));
         // Identity check: hand size alone is unreliable because ETB/cast triggers
         // can add cards back to hand (e.g. Explore), masking a successful cast.
         if (hand.contains(plan.card)) {

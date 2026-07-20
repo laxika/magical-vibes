@@ -599,6 +599,17 @@ public abstract class AiDecisionEngine {
         return castingCostService.getTargetingSubtypeTax(gameData, aiPlayer.getId(), targetId, multiTargetIds);
     }
 
+    /**
+     * Chooses a hand card to pay a spell's "discard a card" additional cast cost (e.g. Seize
+     * the Spoils), or null when the spell has no such cost. Legal by construction — indices come
+     * from the engine's own {@code CastingCostService.validDiscardCostIndices}. Also returns null
+     * when the cost is unpayable; {@link #isSpellCastable} filters such spells out beforehand.
+     */
+    protected Integer chooseDiscardCostIndex(GameData gameData, Card card) {
+        List<Integer> valid = castingCostService.validDiscardCostIndices(gameData, aiPlayer.getId(), card);
+        return valid == null || valid.isEmpty() ? null : valid.get(0);
+    }
+
 
     /**
      * Returns the maximum X value allowed by graveyard creature requirements.

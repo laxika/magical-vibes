@@ -71,7 +71,9 @@ class CastingCostServiceTest {
         CostModificationSupport support = new CostModificationSupport(gameQueryService, predicateEvaluationService);
         svc = new CastingCostService(
                 CostModificationTestRegistry.build(gameQueryService, predicateEvaluationService, support),
-                support, gameQueryService, predicateEvaluationService, conditionEvaluationService);
+                support, gameQueryService, predicateEvaluationService, conditionEvaluationService,
+                new com.github.laxika.magicalvibes.service.effect.cost.AdditionalSpellCostService(
+                        gameQueryService, predicateEvaluationService));
 
         player1Id = UUID.randomUUID();
         player2Id = UUID.randomUUID();
@@ -828,6 +830,63 @@ class CastingCostServiceTest {
 
             gd.playerGraveyards.get(player1Id).add(graveyardCard("Bolt", CardType.INSTANT));
             assertThat(svc.canPayAdditionalSpellCosts(gd, player1Id, spell)).isTrue();
+        }
+
+        @Test
+        @DisplayName("DiscardCardTypeCost — needs a card in hand other than the spell itself")
+        void discardCardTypeCost() {
+            Card spell = spellWith(new com.github.laxika.magicalvibes.model.effect.DiscardCardTypeCost(null, null));
+            gd.playerHands.get(player1Id).add(spell);
+            // Only the spell itself in hand — it is on the stack when costs are paid, so it
+            // can never be its own discard.
+            assertThat(svc.canPayAdditionalSpellCosts(gd, player1Id, spell)).isFalse();
+
+            gd.playerHands.get(player1Id).add(graveyardCard("Bear", CardType.CREATURE));
+            assertThat(svc.canPayAdditionalSpellCosts(gd, player1Id, spell)).isTrue();
+        }
+
+        @Test
+        @DisplayName("DiscardCardTypeCost — predicate must match some other hand card")
+        void discardCardTypeCostPredicate() {
+            var predicate = new CardTypePredicate(CardType.LAND);
+            Card spell = spellWith(new com.github.laxika.magicalvibes.model.effect.DiscardCardTypeCost(predicate, "land"));
+            gd.playerHands.get(player1Id).add(spell);
+            gd.playerHands.get(player1Id).add(graveyardCard("Bear", CardType.CREATURE));
+
+            when(predicateEvaluationService.matchesCardPredicate(any(), any(), any()))
+                    .thenAnswer(inv -> ((Card) inv.getArgument(0)).hasType(CardType.LAND));
+
+            assertThat(svc.canPayAdditionalSpellCosts(gd, player1Id, spell)).isFalse();
+
+            gd.playerHands.get(player1Id).add(graveyardCard("Mountain", CardType.LAND));
+            assertThat(svc.canPayAdditionalSpellCosts(gd, player1Id, spell)).isTrue();
+        }
+
+        @Test
+        @DisplayName("validDiscardCostIndices excludes the spell itself and non-matching cards")
+        void validDiscardCostIndicesExcludesSpellAndNonMatching() {
+            var predicate = new CardTypePredicate(CardType.LAND);
+            var cost = new com.github.laxika.magicalvibes.model.effect.DiscardCardTypeCost(predicate, "land");
+            Card spell = spellWith(cost);
+            gd.playerHands.get(player1Id).add(graveyardCard("Mountain", CardType.LAND));
+            gd.playerHands.get(player1Id).add(spell);
+            gd.playerHands.get(player1Id).add(graveyardCard("Bear", CardType.CREATURE));
+            gd.playerHands.get(player1Id).add(graveyardCard("Island", CardType.LAND));
+
+            when(predicateEvaluationService.matchesCardPredicate(any(), any(), any()))
+                    .thenAnswer(inv -> ((Card) inv.getArgument(0)).hasType(CardType.LAND));
+
+            assertThat(svc.validDiscardCostIndices(gd, player1Id, spell)).containsExactly(0, 3);
+        }
+
+        @Test
+        @DisplayName("validDiscardCostIndices is null for a spell with no discard cost")
+        void validDiscardCostIndicesNullWithoutCost() {
+            Card spell = spellWith();
+            gd.playerHands.get(player1Id).add(spell);
+            gd.playerHands.get(player1Id).add(graveyardCard("Bear", CardType.CREATURE));
+
+            assertThat(svc.validDiscardCostIndices(gd, player1Id, spell)).isNull();
         }
 
         @Test

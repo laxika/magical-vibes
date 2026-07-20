@@ -274,6 +274,7 @@ class RandomAiFuzzTest {
             System.err.println("Stack size:      " + gd.stack.size());
             System.err.println("Priority passed: " + gd.priorityPassedBy);
             System.err.println("Awaiting input:  " + gd.interaction.isAwaitingInput());
+            System.err.println("Interaction:     " + gd.interaction.activeInteraction());
             System.err.printf("P1 (%s): life=%d hand=%d battlefield=%d graveyard=%d%n",
                     p1.getUsername(),
                     gd.playerLifeTotals.getOrDefault(p1.getId(), 0),

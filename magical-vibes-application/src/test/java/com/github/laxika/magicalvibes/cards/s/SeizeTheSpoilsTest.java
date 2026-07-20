@@ -60,4 +60,21 @@ class SeizeTheSpoilsTest extends BaseCardTest {
                 .isInstanceOf(IllegalStateException.class)
                 .hasMessageContaining("not playable");
     }
+
+    @Test
+    @DisplayName("A cast missing the discard selection is rejected before any cost is paid")
+    void rejectedCastLeavesManaAndHandUntouched() {
+        harness.setHand(player1, List.of(new SeizeTheSpoils(), new Forest()));
+        harness.addMana(player1, ManaColor.RED, 1);
+        harness.addMana(player1, ManaColor.COLORLESS, 2);
+
+        assertThatThrownBy(() -> harness.castSorcery(player1, 0, 0))
+                .isInstanceOf(IllegalStateException.class)
+                .hasMessageContaining("Must discard");
+
+        // CR 601.2h: the rejected cast must leave the game state untouched — spell back in
+        // hand, floating mana still unspent.
+        assertThat(gd.playerHands.get(player1.getId())).hasSize(2);
+        assertThat(gd.playerManaPools.get(player1.getId()).getTotalAllMana()).isEqualTo(3);
+    }
 }

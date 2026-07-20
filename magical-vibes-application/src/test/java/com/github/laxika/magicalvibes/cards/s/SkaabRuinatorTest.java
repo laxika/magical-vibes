@@ -186,6 +186,30 @@ class SkaabRuinatorTest extends BaseCardTest {
     }
 
     @Test
+    @DisplayName("A graveyard cast with an invalid exile selection is rejected before any cost is paid")
+    void rejectedGraveyardCastLeavesStateUntouched() {
+        GrizzlyBears bears1 = new GrizzlyBears();
+        GrizzlyBears bears2 = new GrizzlyBears();
+        GrizzlyBears bears3 = new GrizzlyBears();
+        Shock shock = new Shock();
+        SkaabRuinator ruinator = new SkaabRuinator();
+        harness.setGraveyard(player1, List.of(ruinator, bears1, bears2, bears3, shock));
+
+        harness.addMana(player1, ManaColor.BLUE, 2);
+        harness.addMana(player1, ManaColor.COLORLESS, 1);
+
+        // Post-removal index 3 is the Shock — an illegal exile for the creature-card cost.
+        assertThatThrownBy(() -> harness.castFromGraveyard(player1, 0, List.of(0, 1, 3)))
+                .isInstanceOf(IllegalStateException.class)
+                .hasMessageContaining("creature");
+
+        // CR 601.2h: the rejected cast leaks nothing — mana unspent, the card still in the graveyard.
+        assertThat(gd.playerManaPools.get(player1.getId()).getTotalAllMana()).isEqualTo(3);
+        assertThat(gd.playerGraveyards.get(player1.getId()))
+                .anyMatch(c -> c.getName().equals("Skaab Ruinator"));
+    }
+
+    @Test
     @DisplayName("Casting from graveyard requires sorcery-speed timing")
     void castFromGraveyardRequiresSorceryTiming() {
         GrizzlyBears bears1 = new GrizzlyBears();

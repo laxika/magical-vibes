@@ -140,7 +140,7 @@ public class AiGameActions {
                         request.targetIds() != null ? request.targetIds() : List.of(),
                         request.convokeCreatureIds() != null ? request.convokeCreatureIds() : List.of(),
                         Boolean.TRUE.equals(request.fromGraveyard()), request.sacrificePermanentId(), request.phyrexianLifeCount(),
-                        null, null, null, Boolean.TRUE.equals(request.kicked()));
+                        null, null, null, Boolean.TRUE.equals(request.kicked()), request.discardHandCardIndex());
             }
         } catch (IllegalArgumentException | IllegalStateException e) {
             // Illegal action is a no-op for the AI; logged so fuzz failures show the engine's reason
