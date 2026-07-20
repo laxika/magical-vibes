@@ -44,11 +44,16 @@ class CruelTutorTest extends BaseCardTest {
         List<Card> offered = gd.interaction.activeInteraction(PendingInteraction.LibrarySearch.class).params().cards();
         String chosenName = offered.get(1).getName();
 
+        // Effects resolve in oracle order: the life loss waits behind the search and only
+        // resolves when the search completes and the paused resolution resumes.
+        assertThat(gd.playerLifeTotals.get(player1.getId())).isEqualTo(20);
+
         gs.handleInteractionAnswer(gd, player1, new InteractionAnswer.LibraryCardChosen(1));
 
         List<Card> deck = gd.playerDecks.get(player1.getId());
         assertThat(deck.getFirst().getName()).isEqualTo(chosenName);
         assertThat(gd.playerLifeTotals.get(player1.getId())).isEqualTo(18);
+        assertThat(gd.pendingEffectResolutionEntry).isNull();
     }
 
     @Test

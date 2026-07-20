@@ -262,7 +262,7 @@ public class LibraryChoiceHandlerService {
                     }
                     gameBroadcastService.logAndBroadcast(gameData, graveyardLog.build());
                 }
-                turnProgressionService.resolveAutoPass(gameData);
+                finishSearchAndResume(gameData);
                 return;
             }
 
@@ -287,7 +287,7 @@ public class LibraryChoiceHandlerService {
                 stateBasedActionService.performStateBasedActions(gameData);
             }
 
-            turnProgressionService.resolveAutoPass(gameData);
+            finishSearchAndResume(gameData);
             return;
         }
 
@@ -373,7 +373,7 @@ public class LibraryChoiceHandlerService {
             log.info("Game {} - {} puts {} onto the battlefield under their control from a library search",
                     gameData.id, player.getUsername(), chosenCard.getName());
             stateBasedActionService.performStateBasedActions(gameData);
-            turnProgressionService.resolveAutoPass(gameData);
+            finishSearchAndResume(gameData);
             return;
         }
 
@@ -406,7 +406,7 @@ public class LibraryChoiceHandlerService {
                         LibraryShuffleHelper.shuffleLibrary(gameData, deckOwnerId);
                     }
                     gameBroadcastService.logAndBroadcast(gameData, GameLog.text(player.getUsername() + " exiles a card face down. Library is shuffled."));
-                    turnProgressionService.resolveAutoPass(gameData);
+                    finishSearchAndResume(gameData);
                     return;
                 }
                 String exilePrompt = targetPlayerId != null
@@ -458,7 +458,7 @@ public class LibraryChoiceHandlerService {
                     playerInputService.processNextMayAbility(gameData);
                 }
             } else {
-                turnProgressionService.resolveAutoPass(gameData);
+                finishSearchAndResume(gameData);
             }
             return;
         }
@@ -495,7 +495,7 @@ public class LibraryChoiceHandlerService {
                 LibraryShuffleHelper.shuffleLibrary(gameData, deckOwnerId);
                 gameBroadcastService.logAndBroadcast(gameData, GameLog.text(player.getUsername() + "'s library is shuffled."));
             }
-            turnProgressionService.resolveAutoPass(gameData);
+            finishSearchAndResume(gameData);
             return;
         }
 
@@ -521,7 +521,7 @@ public class LibraryChoiceHandlerService {
             gameBroadcastService.logAndBroadcast(gameData, GameLog.text(logMsg));
             log.info("Game {} - {} exiles {} from library search (with play permission)", gameData.id, player.getUsername(), chosenCard.getName());
 
-            turnProgressionService.resolveAutoPass(gameData);
+            finishSearchAndResume(gameData);
             return;
         }
 
@@ -573,7 +573,7 @@ public class LibraryChoiceHandlerService {
                 }
             }
             if (creatureIds.isEmpty()) {
-                turnProgressionService.resolveAutoPass(gameData);
+                finishSearchAndResume(gameData);
                 return;
             }
             gameData.interaction.setPermanentChoiceContext(
@@ -594,7 +594,7 @@ public class LibraryChoiceHandlerService {
                     " and puts it on top of their library. Library is shuffled."));
             log.info("Game {} - {} searches library and puts {} on top",
                     gameData.id, player.getUsername(), chosenCard.getName());
-            turnProgressionService.resolveAutoPass(gameData);
+            finishSearchAndResume(gameData);
             return;
         } else if (toGraveyard) {
             graveyardService.addCardToGraveyard(gameData, deckOwnerId, chosenCard);
@@ -656,7 +656,7 @@ public class LibraryChoiceHandlerService {
                 if (toBattlefield) {
                     stateBasedActionService.performStateBasedActions(gameData);
                 }
-                turnProgressionService.resolveAutoPass(gameData);
+                finishSearchAndResume(gameData);
                 return;
             }
 
@@ -752,17 +752,18 @@ public class LibraryChoiceHandlerService {
     }
 
     /**
-     * Resume any effects queued after the search on the same spell/ability, then auto-pass. A
-     * reflexive search folded before another effect (e.g. Shefet Monitor's "search ... then draw",
-     * where the cycling draw follows the land search) leaves {@code pendingEffectResolutionEntry}
-     * pointing at the not-yet-resolved remainder; drive it here on search completion. When the
-     * search was the effect list's last effect (the resume index is past the end), the guard skips
-     * the resume and this behaves exactly like {@code resolveAutoPass}.
+     * Shared completion tail for every flow in this handler that finishes a choice begun
+     * mid-resolution: resume the stack entry parked in {@code pendingEffectResolutionEntry}
+     * (e.g. Shefet Monitor's "search ... then draw", where the cycling draw follows the land
+     * search), then auto-pass. The resume must run even when the choice was the effect list's
+     * last effect — the past-the-end drain in {@code resolveEffectsFrom} is what clears the
+     * parked entry, releases the deferred player-loss check, and runs the post-resolution
+     * state-based actions; skipping it leaves the entry dangling. When nothing is parked this
+     * behaves exactly like {@code resolveAutoPass}.
      */
     private void finishSearchAndResume(GameData gameData) {
         StackEntry pending = gameData.pendingEffectResolutionEntry;
-        if (pending != null
-                && gameData.pendingEffectResolutionIndex < pending.getEffectsToResolve().size()) {
+        if (pending != null) {
             effectResolutionService.resolveEffectsFrom(gameData, pending, gameData.pendingEffectResolutionIndex);
             if (gameData.interaction.isAwaitingInput() || !gameData.pendingMayAbilities.isEmpty()) {
                 return;
@@ -1120,7 +1121,7 @@ public class LibraryChoiceHandlerService {
         log.info("Game {} - {} resolves library reveal choice, {} cards to battlefield", gameData.id, playerName, selectedCards.size());
 
         stateBasedActionService.performStateBasedActions(gameData);
-        turnProgressionService.resolveAutoPass(gameData);
+        finishSearchAndResume(gameData);
     }
 
     private void resolveRevealChoiceToHand(GameData gameData, UUID controllerId, String playerName,
@@ -1155,7 +1156,7 @@ public class LibraryChoiceHandlerService {
                                 .text(".").build());
             }
             log.info("Game {} - {} puts {} card(s) to hand, {} exiled", gameData.id, playerName, selectedCards.size(), remainingCards.size());
-            turnProgressionService.resolveAutoPass(gameData);
+            finishSearchAndResume(gameData);
             return;
         }
 
@@ -1184,13 +1185,7 @@ public class LibraryChoiceHandlerService {
 
             // Resume resolving remaining effects on the same spell/ability
             // (e.g. Dark Bargain: "Look at top 3, put 2 to hand, rest to graveyard. Deals 2 damage to you.")
-            if (gameData.pendingEffectResolutionEntry != null) {
-                effectResolutionService.resolveEffectsFrom(gameData,
-                        gameData.pendingEffectResolutionEntry,
-                        gameData.pendingEffectResolutionIndex);
-            }
-
-            turnProgressionService.resolveAutoPass(gameData);
+            finishSearchAndResume(gameData);
             return;
         }
 
@@ -1209,7 +1204,7 @@ public class LibraryChoiceHandlerService {
         }
 
         log.info("Game {} - {} reveals {} creature cards to hand", gameData.id, playerName, selectedCards.size());
-        turnProgressionService.resolveAutoPass(gameData);
+        finishSearchAndResume(gameData);
     }
 
     private void handleKarnScionRevealChoice(GameData gameData, List<Card> allRevealedCards, List<UUID> selectedCardIds) {
@@ -1248,7 +1243,7 @@ public class LibraryChoiceHandlerService {
                 toHand != null ? toHand.getName() : "none",
                 toExile != null ? toExile.getName() : "none");
 
-        turnProgressionService.resolveAutoPass(gameData);
+        finishSearchAndResume(gameData);
     }
 
     private void handleKarnScionReturnFromExile(GameData gameData, List<Card> allRevealedCards,
@@ -1274,7 +1269,7 @@ public class LibraryChoiceHandlerService {
             }
         }
 
-        turnProgressionService.resolveAutoPass(gameData);
+        finishSearchAndResume(gameData);
     }
 
     private void handleReturnExiledWithSourceCard(GameData gameData, List<Card> allRevealedCards,
@@ -1295,7 +1290,7 @@ public class LibraryChoiceHandlerService {
             }
         }
 
-        turnProgressionService.resolveAutoPass(gameData);
+        finishSearchAndResume(gameData);
     }
 
     private void handlePunisherRevealChoice(GameData gameData, List<Card> allRevealedCards,
@@ -1363,7 +1358,7 @@ public class LibraryChoiceHandlerService {
                 gameData.id, toHand.size(), toExile.size(), opponentName, totalLifeCost);
 
         stateBasedActionService.performStateBasedActions(gameData);
-        turnProgressionService.resolveAutoPass(gameData);
+        finishSearchAndResume(gameData);
     }
 
 
@@ -1408,7 +1403,7 @@ public class LibraryChoiceHandlerService {
             String logEntry = playerName + " declines to cast a spell.";
             gameBroadcastService.logAndBroadcast(gameData, GameLog.text(logEntry));
             log.info("Game {} - {} declines Sunbird's Invocation cast", gameData.id, playerName);
-            turnProgressionService.resolveAutoPass(gameData);
+            finishSearchAndResume(gameData);
             return;
         }
 
@@ -1446,7 +1441,7 @@ public class LibraryChoiceHandlerService {
         drawService.resolveDrawCard(gameData, deckOwnerId);
 
         if (!gameData.interaction.isAwaitingInput()) {
-            turnProgressionService.resolveAutoPass(gameData);
+            finishSearchAndResume(gameData);
         }
     }
 
@@ -1494,7 +1489,7 @@ public class LibraryChoiceHandlerService {
                 gameBroadcastService.logAndBroadcast(gameData, GameLog.cardThen(chosenCard,
                         " has no valid targets and is put into the graveyard."));
                 log.info("Game {} - {} cast-without-paying has no valid targets", gameData.id, chosenCard.getName());
-                turnProgressionService.resolveAutoPass(gameData);
+                finishSearchAndResume(gameData);
                 return;
             }
 

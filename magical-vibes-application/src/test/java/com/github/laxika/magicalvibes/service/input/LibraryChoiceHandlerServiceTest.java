@@ -473,8 +473,8 @@ class LibraryChoiceHandlerServiceTest {
         }
 
         @Test
-        @DisplayName("Does not resume when the search was the effect list's last effect")
-        void doesNotResumeWhenSearchWasLast() {
+        @DisplayName("Search as last effect still drains the parked entry via resolveEffectsFrom")
+        void searchAsLastEffectStillDrainsParkedEntry() {
             stubCardViewFactory();
             when(battlefieldEntryService.snapshotEnterTappedTypes(gd)).thenReturn(Set.of());
 
@@ -482,14 +482,39 @@ class LibraryChoiceHandlerServiceTest {
             gd.playerDecks.get(player1Id).add(plains);
             beginBasicLandBattlefieldSearch(player1Id, List.of(plains));
 
-            // Resume index is past the end of the (two-effect) list — nothing remains to resolve.
+            // Resume index is past the end of the (two-effect) list. The past-the-end drain in
+            // resolveEffectsFrom is what clears the parked entry and releases the deferred
+            // player-loss check — skipping it leaves the entry dangling (fuzz invariant).
             StackEntry entry = entryWithTwoEffects();
             gd.pendingEffectResolutionEntry = entry;
             gd.pendingEffectResolutionIndex = 2;
 
             service.handleLibraryCardChosen(gd, player1, 0);
 
-            verify(effectResolutionService, never()).resolveEffectsFrom(any(), any(), anyInt());
+            verify(effectResolutionService).resolveEffectsFrom(gd, entry, 2);
+            verify(turnProgressionService).resolveAutoPass(gd);
+        }
+
+        @Test
+        @DisplayName("Search-to-top completion resumes the parked entry's trailing effects")
+        void searchToTopResumesParkedEntry() {
+            Card plains = createBasicLand("Plains");
+            gd.playerDecks.get(player1Id).add(plains);
+            LibrarySearchParams params = LibrarySearchParams.builder(player1Id, List.of(plains))
+                    .canFailToFind(true)
+                    .destination(LibrarySearchDestination.TOP_OF_LIBRARY)
+                    .build();
+            gd.interaction.beginInteraction(new PendingInteraction.LibrarySearch(
+                    params, "Search your library for a card to put on top.", true));
+
+            // Cruel Tutor shape: the trailing "you lose 2 life" waits at index 1.
+            StackEntry entry = entryWithTwoEffects();
+            gd.pendingEffectResolutionEntry = entry;
+            gd.pendingEffectResolutionIndex = 1;
+
+            service.handleLibraryCardChosen(gd, player1, 0);
+
+            verify(effectResolutionService).resolveEffectsFrom(gd, entry, 1);
             verify(turnProgressionService).resolveAutoPass(gd);
         }
     }

@@ -11,10 +11,7 @@ import com.github.laxika.magicalvibes.cards.CardRegistration;
 public class CruelTutor extends Card {
 
     public CruelTutor() {
-        // Life loss is added first because an async library search pauses resolution and
-        // remaining effects in the same stack entry are not resumed afterwards. The life
-        // loss is unconditional, so resolving it before the (mandatory) search is equivalent.
-        addEffect(EffectSlot.SPELL, new LoseLifeEffect(2));
         addEffect(EffectSlot.SPELL, new SearchLibraryEffect(null, LibrarySearchDestination.TOP_OF_LIBRARY));
+        addEffect(EffectSlot.SPELL, new LoseLifeEffect(2));
     }
 }

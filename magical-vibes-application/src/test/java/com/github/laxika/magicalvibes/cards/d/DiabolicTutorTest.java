@@ -173,6 +173,25 @@ class DiabolicTutorTest extends BaseCardTest {
         assertThat(gd.gameLog.stream().map(GameLogEntry::plainText)).anyMatch(entry -> entry.contains("it is empty"));
     }
 
+    // ===== Completing the search fully finishes the paused resolution =====
+
+    @Test
+    @DisplayName("Completing the search leaves no dangling paused resolution")
+    void completingSearchClearsPausedResolution() {
+        setupAndCast();
+        setupLibrary();
+
+        harness.passBothPriorities(); // resolve sorcery → library search prompt
+
+        GameData gd = harness.getGameData();
+        harness.getGameService().handleInteractionAnswer(gd, player1, new InteractionAnswer.LibraryCardChosen(0));
+
+        // The search was the spell's last effect: the parked resolution entry must be cleared
+        // and the deferred player-loss check released, or the game state dangles mid-resolution.
+        assertThat(gd.pendingEffectResolutionEntry).isNull();
+        assertThat(gd.deferPlayerLossCheck).isFalse();
+    }
+
     // ===== Sorcery goes to graveyard after resolution =====
 
     @Test

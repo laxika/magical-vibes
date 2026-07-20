@@ -53,7 +53,7 @@ class InputHandlerEpilogueRatchetTest {
             "CardChoiceHandlerService.java", 8,
             "ChoiceHandlerService.java", 19,
             "GraveyardChoiceHandlerService.java", 2,
-            "LibraryChoiceHandlerService.java", 22,
+            "LibraryChoiceHandlerService.java", 1,
             "MayCopyHandlerService.java", 2,
             "MayMiscHandlerService.java", 6,
             "MultiPermanentChoiceHandlerService.java", 17,
