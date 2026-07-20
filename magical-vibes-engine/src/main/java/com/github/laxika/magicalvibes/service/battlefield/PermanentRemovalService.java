@@ -182,7 +182,15 @@ public class PermanentRemovalService {
         triggerCollectionService.checkSelfLeavesTriggered(gameData, target, controllerId);
         triggerCollectionService.checkAnotherCreatureLeavesBattlefieldTriggers(gameData, target, wasCreature);
         triggerCollectionService.checkAnotherArtifactLeavesBattlefieldTriggers(gameData, target, controllerId);
-        gameData.addCardToHand(ownerId, target.getOriginalCard());
+        // CR 704.5d — a token never reaches the hand: it ceases to exist instead. The return
+        // event still happened, so the leave-the-battlefield triggers above and the
+        // returned-to-hand triggers below fire normally.
+        if (target.getOriginalCard().isToken()) {
+            gameBroadcastService.logAndBroadcast(gameData, GameLog.cardThen(target.getCard(), " ceases to exist."));
+            log.info("Game {} - token {} ceases to exist instead of returning to hand", gameData.id, target.getCard().getName());
+        } else {
+            gameData.addCardToHand(ownerId, target.getOriginalCard());
+        }
         handleExileReturnOnLeave(gameData, target);
         triggerCollectionService.checkPermanentReturnedToHandTriggers(gameData, ownerId);
         return true;

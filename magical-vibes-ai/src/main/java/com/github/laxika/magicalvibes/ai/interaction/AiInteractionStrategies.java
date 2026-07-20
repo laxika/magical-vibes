@@ -19,6 +19,8 @@ public final class AiInteractionStrategies {
         register(new XValueChoiceAiStrategy());
         register(new ScryAiStrategy());
         register(new HandTopBottomChoiceAiStrategy());
+        register(new PutCardsFromHandOnLibraryCardChoiceAiStrategy());
+        register(new PutCardsFromHandOnLibraryDestinationChoiceAiStrategy());
         register(new LibraryReorderAiStrategy());
         register(new MayAbilityChoiceAiStrategy());
         register(new KnowledgePoolCastChoiceAiStrategy());

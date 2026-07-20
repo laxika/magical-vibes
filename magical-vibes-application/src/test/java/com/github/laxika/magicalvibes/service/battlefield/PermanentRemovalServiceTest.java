@@ -594,6 +594,35 @@ class PermanentRemovalServiceTest {
             assertThat(gd.exileReturnOnPermanentLeave).doesNotContainKey(source.getId());
             verify(battlefieldEntryService).putPermanentOntoBattlefield(eq(gd), eq(player2Id), any(Permanent.class));
         }
+
+        @Test
+        @DisplayName("Bounced token ceases to exist instead of going to hand (CR 704.5d)")
+        void bouncedTokenCeasesToExist() {
+            Card tokenCard = createCreature("Saproling");
+            tokenCard.setToken(true);
+            Permanent token = addPermanent(player1Id, tokenCard);
+
+            boolean result = prs.removePermanentToHand(gd, token);
+
+            assertThat(result).isTrue();
+            assertThat(gd.playerBattlefields.get(player1Id)).doesNotContain(token);
+            assertThat(gd.playerHands.get(player1Id)).isEmpty();
+            verify(gameBroadcastService).logAndBroadcast(eq(gd), argThat((GameLogEntry logEntry) ->
+                    logEntry.plainText().contains("Saproling") && logEntry.plainText().contains("ceases to exist")));
+        }
+
+        @Test
+        @DisplayName("Bounced token still fires leave-battlefield and returned-to-hand triggers")
+        void bouncedTokenStillFiresTriggers() {
+            Card tokenCard = createCreature("Saproling");
+            tokenCard.setToken(true);
+            Permanent token = addPermanent(player1Id, tokenCard);
+
+            prs.removePermanentToHand(gd, token);
+
+            verify(triggerCollectionService).checkSelfLeavesTriggered(gd, token, player1Id);
+            verify(triggerCollectionService).checkPermanentReturnedToHandTriggers(gd, player1Id);
+        }
     }
 
     // =========================================================================
@@ -648,6 +677,7 @@ class PermanentRemovalServiceTest {
 
             when(auraAttachmentService.removeOrphanedAuras(any())).thenReturn(List.of());
             when(gameQueryService.findPermanentById(gd, creature.getId())).thenReturn(creature);
+            when(gameQueryService.isCreature(gd, equipment)).thenReturn(false);
             when(gameQueryService.isCreature(gd, creature)).thenReturn(true);
             when(gameQueryService.isArtifact(creature)).thenReturn(false);
             when(graveyardService.addCardToGraveyard(eq(gd), eq(player1Id), any(Card.class), eq(Zone.BATTLEFIELD))).thenReturn(true);
