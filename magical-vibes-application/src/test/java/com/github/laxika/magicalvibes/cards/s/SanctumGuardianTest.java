@@ -201,6 +201,22 @@ class SanctumGuardianTest extends BaseCardTest {
         assertThat(gd.gameLog.stream().map(GameLogEntry::plainText)).anyMatch(log -> log.contains("No permanents on the battlefield"));
     }
 
+    @Test
+    @DisplayName("Answering the source choice resumes the parked resolution entry")
+    void answeringSourceChoiceClearsParkedResolution() {
+        Permanent guardian = addReady(player1, new SanctumGuardian());
+        Permanent source = addReadyStats(player2, 2, 2);
+
+        harness.activateAbility(player1, indexOf(player1, guardian), null, null);
+        harness.passBothPriorities();
+        assertThat(gd.pendingEffectResolutionEntry).isNotNull();
+
+        harness.handlePermanentChosen(player1, source.getId());
+
+        assertThat(gd.pendingEffectResolutionEntry).isNull();
+        assertThat(gd.deferPlayerLossCheck).isFalse();
+    }
+
     // ===== Helpers =====
 
     private Permanent addReady(Player player, Card card) {

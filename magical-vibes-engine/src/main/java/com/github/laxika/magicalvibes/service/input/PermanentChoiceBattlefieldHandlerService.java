@@ -537,6 +537,7 @@ public class PermanentChoiceBattlefieldHandlerService {
         log.info("Game {} - {} chose {} as prevented damage source", gameData.id, playerName, sourceName);
 
         stateBasedActionService.performStateBasedActions(gameData);
+        resumeParkedEffectResolution(gameData);
         turnProgressionService.resolveAutoPass(gameData);
     }
 
@@ -559,6 +560,7 @@ public class PermanentChoiceBattlefieldHandlerService {
                 gameData.id, playerName, chosenPermanent.getCard().getName(), redirectSource.amount());
 
         stateBasedActionService.performStateBasedActions(gameData);
+        resumeParkedEffectResolution(gameData);
         turnProgressionService.resolveAutoPass(gameData);
     }
 
@@ -593,6 +595,7 @@ public class PermanentChoiceBattlefieldHandlerService {
                 gameData.playerIdToName.get(redirectSource.controllerId()), chosenPermanent.getCard().getName());
 
         stateBasedActionService.performStateBasedActions(gameData);
+        resumeParkedEffectResolution(gameData);
         turnProgressionService.resolveAutoPass(gameData);
     }
 
@@ -621,12 +624,7 @@ public class PermanentChoiceBattlefieldHandlerService {
 
         stateBasedActionService.performStateBasedActions(gameData);
 
-        // Resume pending effect resolution (e.g. GainLifeEffect after prevention source choice)
-        if (gameData.pendingEffectResolutionEntry != null) {
-            effectResolutionService.resolveEffectsFrom(gameData,
-                    gameData.pendingEffectResolutionEntry,
-                    gameData.pendingEffectResolutionIndex);
-        }
+        resumeParkedEffectResolution(gameData);
 
         turnProgressionService.resolveAutoPass(gameData);
     }
@@ -650,6 +648,7 @@ public class PermanentChoiceBattlefieldHandlerService {
         log.info("Game {} - {} chose {} as next-damage prevention source", gameData.id, playerName, sourceName);
 
         stateBasedActionService.performStateBasedActions(gameData);
+        resumeParkedEffectResolution(gameData);
         turnProgressionService.resolveAutoPass(gameData);
     }
 
@@ -672,6 +671,7 @@ public class PermanentChoiceBattlefieldHandlerService {
         log.info("Game {} - {} chose {} as Eye for an Eye reflection source", gameData.id, playerName, sourceName);
 
         stateBasedActionService.performStateBasedActions(gameData);
+        resumeParkedEffectResolution(gameData);
         turnProgressionService.resolveAutoPass(gameData);
     }
 
@@ -691,6 +691,7 @@ public class PermanentChoiceBattlefieldHandlerService {
                 gameData.playerIdToName.get(ctx.controllerId()), sourceName);
 
         stateBasedActionService.performStateBasedActions(gameData);
+        resumeParkedEffectResolution(gameData);
         turnProgressionService.resolveAutoPass(gameData);
     }
 
@@ -718,11 +719,7 @@ public class PermanentChoiceBattlefieldHandlerService {
             return;
         }
 
-        if (gameData.pendingEffectResolutionEntry != null) {
-            effectResolutionService.resolveEffectsFrom(gameData,
-                    gameData.pendingEffectResolutionEntry,
-                    gameData.pendingEffectResolutionIndex);
-        }
+        resumeParkedEffectResolution(gameData);
 
         gameData.priorityPassedBy.clear();
         gameBroadcastService.broadcastGameState(gameData);
@@ -806,11 +803,7 @@ public class PermanentChoiceBattlefieldHandlerService {
             return;
         }
 
-        if (gameData.pendingEffectResolutionEntry != null) {
-            effectResolutionService.resolveEffectsFrom(gameData,
-                    gameData.pendingEffectResolutionEntry,
-                    gameData.pendingEffectResolutionIndex);
-        }
+        resumeParkedEffectResolution(gameData);
 
         gameData.priorityPassedBy.clear();
         gameBroadcastService.broadcastGameState(gameData);
@@ -853,11 +846,7 @@ public class PermanentChoiceBattlefieldHandlerService {
             return;
         }
 
-        if (gameData.pendingEffectResolutionEntry != null) {
-            effectResolutionService.resolveEffectsFrom(gameData,
-                    gameData.pendingEffectResolutionEntry,
-                    gameData.pendingEffectResolutionIndex);
-        }
+        resumeParkedEffectResolution(gameData);
 
         gameData.priorityPassedBy.clear();
         gameBroadcastService.broadcastGameState(gameData);
@@ -904,11 +893,7 @@ public class PermanentChoiceBattlefieldHandlerService {
             return;
         }
 
-        if (gameData.pendingEffectResolutionEntry != null) {
-            effectResolutionService.resolveEffectsFrom(gameData,
-                    gameData.pendingEffectResolutionEntry,
-                    gameData.pendingEffectResolutionIndex);
-        }
+        resumeParkedEffectResolution(gameData);
 
         gameData.priorityPassedBy.clear();
         gameBroadcastService.broadcastGameState(gameData);
@@ -933,11 +918,7 @@ public class PermanentChoiceBattlefieldHandlerService {
             return;
         }
 
-        if (gameData.pendingEffectResolutionEntry != null) {
-            effectResolutionService.resolveEffectsFrom(gameData,
-                    gameData.pendingEffectResolutionEntry,
-                    gameData.pendingEffectResolutionIndex);
-        }
+        resumeParkedEffectResolution(gameData);
 
         gameData.priorityPassedBy.clear();
         gameBroadcastService.broadcastGameState(gameData);
@@ -1031,5 +1012,20 @@ public class PermanentChoiceBattlefieldHandlerService {
         }
 
         turnProgressionService.resolveAutoPass(gameData);
+    }
+
+    /**
+     * Resumes a stack entry parked in {@link GameData#pendingEffectResolutionEntry} while the
+     * just-answered choice was awaiting input. Every completion handler for a choice begun
+     * mid-resolution must resume (or clear) the parked entry: left dangling, it truncates the
+     * spell's remaining effects and keeps {@link GameData#deferPlayerLossCheck} suppressing the
+     * player-loss state-based action until some unrelated resolution completes.
+     */
+    private void resumeParkedEffectResolution(GameData gameData) {
+        if (gameData.pendingEffectResolutionEntry != null) {
+            effectResolutionService.resolveEffectsFrom(gameData,
+                    gameData.pendingEffectResolutionEntry,
+                    gameData.pendingEffectResolutionIndex);
+        }
     }
 }

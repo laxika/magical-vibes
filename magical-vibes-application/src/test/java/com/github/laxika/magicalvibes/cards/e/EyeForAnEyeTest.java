@@ -101,6 +101,21 @@ class EyeForAnEyeTest extends BaseCardTest {
         assertThat(gd.eyeForAnEyeShields).isEmpty();
     }
 
+    @Test
+    @DisplayName("Answering the source choice resumes the parked resolution entry")
+    void answeringSourceChoiceClearsParkedResolution() {
+        castEyeForAnEye(player1);
+        Permanent goblin = addReadyGoblin(player2);
+
+        harness.passBothPriorities();
+        assertThat(gd.pendingEffectResolutionEntry).isNotNull();
+
+        harness.handlePermanentChosen(player1, goblin.getId());
+
+        assertThat(gd.pendingEffectResolutionEntry).isNull();
+        assertThat(gd.deferPlayerLossCheck).isFalse();
+    }
+
     private void castEyeForAnEye(Player player) {
         harness.setHand(player, List.of(new EyeForAnEye()));
         harness.addMana(player, ManaColor.WHITE, 2);

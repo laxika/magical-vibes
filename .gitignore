@@ -6,6 +6,7 @@ nul
 **/.settings
 .project
 token-usage-output.txt
+fuzz.log
 
 .claude/worktrees/*
 

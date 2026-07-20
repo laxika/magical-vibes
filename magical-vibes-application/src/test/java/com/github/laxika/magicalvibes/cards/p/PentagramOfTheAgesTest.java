@@ -1,6 +1,7 @@
 package com.github.laxika.magicalvibes.cards.p;
 
 import com.github.laxika.magicalvibes.cards.g.GoblinPiker;
+import com.github.laxika.magicalvibes.model.GameStatus;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.PendingInteraction;
 import com.github.laxika.magicalvibes.model.Permanent;
@@ -104,6 +105,42 @@ class PentagramOfTheAgesTest extends BaseCardTest {
         harness.passBothPriorities();
 
         assertThat(gd.playerSourceNextDamageShields).isEmpty();
+    }
+
+    @Test
+    @DisplayName("Answering the source choice resumes the parked resolution entry")
+    void answeringSourceChoiceClearsParkedResolution() {
+        addReadyPentagram(player1);
+        Permanent goblin = addReadyGoblin(player2);
+        harness.addMana(player1, ManaColor.WHITE, 4);
+
+        harness.activateAbility(player1, 0, null, null);
+        harness.passBothPriorities();
+        assertThat(gd.pendingEffectResolutionEntry).isNotNull();
+
+        harness.handlePermanentChosen(player1, goblin.getId());
+
+        assertThat(gd.pendingEffectResolutionEntry).isNull();
+        assertThat(gd.deferPlayerLossCheck).isFalse();
+    }
+
+    @Test
+    @DisplayName("Lethal damage dealt after the source choice still ends the game")
+    void lethalDamageAfterSourceChoiceEndsGame() {
+        harness.setLife(player2, 2);
+        addReadyPentagram(player1);
+        Permanent attacker = addReadyGoblin(player1);
+        Permanent source = addReadyGoblin(player2);
+        harness.addMana(player1, ManaColor.WHITE, 4);
+
+        harness.activateAbility(player1, 0, null, null);
+        harness.passBothPriorities();
+        harness.handlePermanentChosen(player1, source.getId());
+
+        attacker.setAttacking(true);
+        resolveCombat(player1);
+
+        assertThat(gd.status).isEqualTo(GameStatus.FINISHED);
     }
 
     private Permanent addReadyPentagram(Player player) {

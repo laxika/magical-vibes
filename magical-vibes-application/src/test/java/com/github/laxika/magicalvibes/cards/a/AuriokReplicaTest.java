@@ -205,6 +205,23 @@ class AuriokReplicaTest extends BaseCardTest {
                 .contains(ownCreature.getId());
     }
 
+    @Test
+    @DisplayName("Answering the source choice resumes the parked resolution entry")
+    void answeringSourceChoiceClearsParkedResolution() {
+        addReadyReplica(player1);
+        Permanent opponentCreature = addReadyCreature(player2);
+        harness.addMana(player1, ManaColor.WHITE, 1);
+
+        harness.activateAbility(player1, 0, null, null);
+        harness.passBothPriorities();
+        assertThat(gd.pendingEffectResolutionEntry).isNotNull();
+
+        harness.handlePermanentChosen(player1, opponentCreature.getId());
+
+        assertThat(gd.pendingEffectResolutionEntry).isNull();
+        assertThat(gd.deferPlayerLossCheck).isFalse();
+    }
+
     // ===== Helpers =====
 
     private Permanent addReadyReplica(Player player) {

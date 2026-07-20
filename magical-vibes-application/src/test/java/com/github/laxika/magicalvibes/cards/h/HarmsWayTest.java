@@ -254,6 +254,23 @@ class HarmsWayTest extends BaseCardTest {
         assertThat(gd.sourceDamageRedirectShields).isEmpty();
     }
 
+    @Test
+    @DisplayName("Answering the source choice resumes the parked resolution entry")
+    void answeringSourceChoiceClearsParkedResolution() {
+        Permanent opponentCreature = addReadyCreature(player2);
+        harness.setHand(player1, List.of(new HarmsWay()));
+        harness.addMana(player1, ManaColor.WHITE, 1);
+
+        harness.castInstant(player1, 0, player2.getId());
+        harness.passBothPriorities();
+        assertThat(gd.pendingEffectResolutionEntry).isNotNull();
+
+        harness.handlePermanentChosen(player1, opponentCreature.getId());
+
+        assertThat(gd.pendingEffectResolutionEntry).isNull();
+        assertThat(gd.deferPlayerLossCheck).isFalse();
+    }
+
     // ===== Helpers =====
 
     private Permanent addReadyCreature(Player player) {

@@ -157,6 +157,24 @@ class JadeMonolithTest extends BaseCardTest {
         assertThat(gd.creatureDamageRedirectShields).isEmpty();
     }
 
+    @Test
+    @DisplayName("Answering the source choice resumes the parked resolution entry")
+    void answeringSourceChoiceClearsParkedResolution() {
+        Permanent monolith = addReadyPermanent(player1, new JadeMonolith());
+        Permanent creature = addReadyStats(player2, 3, 3);
+        Permanent source = addReadyStats(player2, 2, 2);
+
+        harness.addMana(player1, ManaColor.COLORLESS, 1);
+        harness.activateAbility(player1, indexOf(player1, monolith), null, creature.getId());
+        harness.passBothPriorities();
+        assertThat(gd.pendingEffectResolutionEntry).isNotNull();
+
+        harness.handlePermanentChosen(player1, source.getId());
+
+        assertThat(gd.pendingEffectResolutionEntry).isNull();
+        assertThat(gd.deferPlayerLossCheck).isFalse();
+    }
+
     // ===== Helpers =====
 
     private Permanent addReadyPermanent(Player player, com.github.laxika.magicalvibes.model.Card card) {
