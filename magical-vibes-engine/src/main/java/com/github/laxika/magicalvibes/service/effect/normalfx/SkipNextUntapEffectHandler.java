@@ -35,7 +35,7 @@ public class SkipNextUntapEffectHandler implements NormalEffectHandlerBean {
     public void resolve(GameData gameData, StackEntry entry, CardEffect effect) {
         var e = (SkipNextUntapEffect) effect;
         switch (e.scope()) {
-            case TARGET -> resolveTarget(gameData, entry);
+            case TARGET -> resolveTarget(gameData, entry, effect);
             case SELF -> resolveSelf(gameData, entry);
             case TARGET_PLAYERS_PERMANENTS -> resolveTargetPlayersPermanents(gameData, entry, e);
             case ALL_CREATURES -> resolveAllCreatures(gameData, entry, e);
@@ -56,12 +56,33 @@ public class SkipNextUntapEffectHandler implements NormalEffectHandlerBean {
         log.info("Game {} - {} skip next untap set (self)", gameData.id, source.getCard().getName());
     }
 
-    private void resolveTarget(GameData gameData, StackEntry entry) {
+    private void resolveTarget(GameData gameData, StackEntry entry, CardEffect effect) {
+        // Multi-target: lock each valid target of this effect's target group — the group's slice of
+        // the flat target list for effects bound via target(...).addEffect(...) (e.g. Decision
+        // Paralysis: "Tap up to two target creatures. Those creatures don't untap …"), or the whole
+        // flat list for unbound effects. An empty group (optional target omitted) locks nothing.
+        List<UUID> targetIds = entry.targetsForEffect(effect);
+        if (!targetIds.isEmpty()) {
+            for (UUID targetId : targetIds) {
+                Permanent target = gameQueryService.findPermanentById(gameData, targetId);
+                if (target == null) {
+                    continue;
+                }
+                lockTarget(gameData, target);
+            }
+            return;
+        }
+
+        // Single-target fallback
         Permanent target = gameQueryService.findPermanentById(gameData, entry.getTargetId());
         if (target == null) {
             return;
         }
 
+        lockTarget(gameData, target);
+    }
+
+    private void lockTarget(GameData gameData, Permanent target) {
         target.setSkipUntapCount(target.getSkipUntapCount() + 1);
 
         gameBroadcastService.logAndBroadcast(gameData, GameLog.cardThen(target.getCard(), " won't untap during its controller's next untap step."));

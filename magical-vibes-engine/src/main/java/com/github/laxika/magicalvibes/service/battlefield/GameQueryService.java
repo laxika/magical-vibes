@@ -49,21 +49,25 @@ import com.github.laxika.magicalvibes.model.effect.TargetingSourceKind;
 import com.github.laxika.magicalvibes.model.effect.CantBeEnchantedByOtherAurasEffect;
 import com.github.laxika.magicalvibes.model.effect.CantHaveCountersEffect;
 import com.github.laxika.magicalvibes.model.effect.CantHaveMinusOneMinusOneCountersEffect;
+import com.github.laxika.magicalvibes.model.effect.ReduceMinusOneMinusOneCountersEffect;
 import com.github.laxika.magicalvibes.model.effect.PlayerCantGetPoisonCountersEffect;
 import com.github.laxika.magicalvibes.model.effect.CantLoseGameEffect;
 import com.github.laxika.magicalvibes.model.effect.CantLoseGameFromLifeEffect;
 import com.github.laxika.magicalvibes.model.effect.AllDamageDealtWithWitherEffect;
+import com.github.laxika.magicalvibes.model.effect.NoncombatDamageToOpponentCreaturesAsMinusCountersEffect;
 import com.github.laxika.magicalvibes.model.effect.DamageCantBePreventedEffect;
 import com.github.laxika.magicalvibes.model.effect.DamageCantReduceLifeBelowOneEffect;
 import com.github.laxika.magicalvibes.model.effect.DamageDealtAsInfectBelowZeroLifeEffect;
 import com.github.laxika.magicalvibes.model.effect.LifeTotalCantChangeEffect;
 import com.github.laxika.magicalvibes.model.effect.PlayerHasProtectionFromChosenNameEffect;
+import com.github.laxika.magicalvibes.model.effect.PreventDamageFromChosenNameEffect;
 import com.github.laxika.magicalvibes.model.effect.ActivateCreatureAbilitiesAsThoughHasteEffect;
 import com.github.laxika.magicalvibes.model.effect.SpendWhiteManaAsRedEffect;
 import com.github.laxika.magicalvibes.model.effect.PlayersCantActivateAbilitiesOfGraveyardCardsEffect;
 import com.github.laxika.magicalvibes.model.effect.PlayersCantCastSpellsFromZonesEffect;
 import com.github.laxika.magicalvibes.model.effect.CardsCantEnterBattlefieldFromZonesEffect;
 import com.github.laxika.magicalvibes.model.effect.PlayersCantGainLifeEffect;
+import com.github.laxika.magicalvibes.model.effect.PermanentLockEffect;
 import com.github.laxika.magicalvibes.model.effect.DoubleLifeGainEffect;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
 import com.github.laxika.magicalvibes.model.effect.EnchantedPermanentBecomesCreatureEffect;
@@ -116,6 +120,7 @@ import com.github.laxika.magicalvibes.service.effect.ConditionEvaluationService;
 
 import java.util.*;
 import java.util.function.BiFunction;
+import java.util.function.Predicate;
 import java.util.function.Supplier;
 import com.github.laxika.magicalvibes.model.CounterType;
 
@@ -232,6 +237,14 @@ public class GameQueryService {
     public boolean playerCastHistoricSpellThisTurn(GameData gameData, UUID playerId) {
         return gameData.getSpellsCastThisTurn(playerId).stream()
                 .anyMatch(card -> predicateEvaluationService.matchesCardPredicate(card, new CardIsHistoricPredicate(), card.getId()));
+    }
+
+    /**
+     * Returns true if the given player has cast at least one noncreature spell this turn.
+     */
+    public boolean playerCastNoncreatureSpellThisTurn(GameData gameData, UUID playerId) {
+        return gameData.getSpellsCastThisTurn(playerId).stream()
+                .anyMatch(card -> !card.hasType(CardType.CREATURE));
     }
 
     private boolean hasCardType(Permanent permanent, CardType type) {
@@ -624,7 +637,26 @@ public class GameQueryService {
      * {@link CantLoseGameEffect} is present on their battlefield).
      */
     public boolean canPlayerLoseGame(GameData gameData, UUID playerId) {
-        return !playerBattlefieldHasStaticEffect(gameData, playerId, CantLoseGameEffect.class);
+        if (playerBattlefieldHasStaticEffect(gameData, playerId, CantLoseGameEffect.class)) {
+            return false;
+        }
+        // Emblem-sourced "you can't lose the game" effects (Gideon of the Trials' emblem applies only
+        // while its controller controls a Gideon planeswalker, so it's a ConditionalEffect).
+        for (Emblem emblem : gameData.emblems) {
+            if (!playerId.equals(emblem.controllerId())) continue;
+            for (CardEffect effect : emblem.staticEffects()) {
+                if (effect instanceof CantLoseGameEffect) {
+                    return false;
+                }
+                if (effect instanceof ConditionalEffect conditional
+                        && conditional.wrapped() instanceof CantLoseGameEffect
+                        && conditionEvaluationService.isMet(gameData, conditional.condition(),
+                                ConditionContext.forCasting(playerId))) {
+                    return false;
+                }
+            }
+        }
+        return true;
     }
 
     /**
@@ -1037,6 +1069,38 @@ public class GameQueryService {
      */
     public boolean cantHaveMinusOneMinusOneCounters(GameData gameData, Permanent permanent) {
         return hasGrantedEffect(gameData, permanent, CantHaveMinusOneMinusOneCountersEffect.class);
+    }
+
+    /**
+     * Applies Vizier of Remedies-style replacement effects (CR 616) that reduce the number of -1/-1
+     * counters put on a creature its controller controls: "If one or more -1/-1 counters would be put
+     * on a creature you control, that many -1/-1 counters minus one are put on it instead." For each
+     * permanent carrying {@link ReduceMinusOneMinusOneCountersEffect} that {@code controllerId}
+     * controls, one fewer counter is placed (floored at zero), so multiple copies stack. A
+     * {@code count} of zero or fewer is returned unchanged — no counters "would be put", so the
+     * replacement never applies.
+     */
+    public int reduceMinusOneMinusOneCounters(GameData gameData, UUID controllerId, int count) {
+        if (count <= 0 || controllerId == null) {
+            return count;
+        }
+        List<Permanent> battlefield = gameData.playerBattlefields.get(controllerId);
+        if (battlefield == null) {
+            return count;
+        }
+        long reducers = battlefield.stream()
+                .filter(p -> p.getCard().getEffects(EffectSlot.STATIC).stream()
+                        .anyMatch(ReduceMinusOneMinusOneCountersEffect.class::isInstance))
+                .count();
+        return Math.max(0, count - (int) reducers);
+    }
+
+    /**
+     * Convenience overload of {@link #reduceMinusOneMinusOneCounters(GameData, UUID, int)} that
+     * resolves the affected creature's controller from a permanent already on the battlefield.
+     */
+    public int reduceMinusOneMinusOneCounters(GameData gameData, Permanent permanent, int count) {
+        return reduceMinusOneMinusOneCounters(gameData, findPermanentController(gameData, permanent.getId()), count);
     }
 
     /**
@@ -2151,6 +2215,34 @@ public class GameQueryService {
     }
 
     /**
+     * Soul-Scar Mage: whether noncombat damage from one of {@code sourceControllerId}'s sources to a
+     * creature controlled by {@code targetCreatureControllerId} should be dealt as -1/-1 counters
+     * instead. True when the source's controller controls a permanent with
+     * {@link NoncombatDamageToOpponentCreaturesAsMinusCountersEffect} and the target creature's
+     * controller is a different player (an opponent). Combat is not checked here: this is only
+     * consulted on the noncombat damage path.
+     */
+    public boolean noncombatDamageToOpponentCreatureAsCounters(GameData gameData, UUID sourceControllerId,
+                                                               UUID targetCreatureControllerId) {
+        if (sourceControllerId == null || targetCreatureControllerId == null
+                || sourceControllerId.equals(targetCreatureControllerId)) {
+            return false;
+        }
+        return playerControlsStaticEffect(gameData, sourceControllerId,
+                NoncombatDamageToOpponentCreaturesAsMinusCountersEffect.class);
+    }
+
+    /** Whether {@code playerId} controls a permanent carrying the given STATIC-slot effect. */
+    private boolean playerControlsStaticEffect(GameData gameData, UUID playerId, Class<? extends CardEffect> effectType) {
+        List<Permanent> battlefield = gameData.playerBattlefields.get(playerId);
+        if (battlefield == null) {
+            return false;
+        }
+        return battlefield.stream().anyMatch(p ->
+                p.getCard().getEffects(EffectSlot.STATIC).stream().anyMatch(effectType::isInstance));
+    }
+
+    /**
      * Returns {@code true} if the given damage amount is lethal. Damage is lethal if it
      * meets or exceeds the effective toughness, or if the source has deathtouch and deals
      * at least 1 damage.
@@ -2396,6 +2488,30 @@ public class GameQueryService {
             if (cardName.equals(perm.getChosenName())
                     && perm.getCard().getEffects(EffectSlot.STATIC).stream()
                             .anyMatch(PlayerHasProtectionFromChosenNameEffect.class::isInstance)) {
+                return true;
+            }
+        }
+        return false;
+    }
+
+    /**
+     * Returns {@code true} if {@code controllerId} controls a permanent with a
+     * {@link PreventDamageFromChosenNameEffect} static effect whose chosen card name equals
+     * {@code sourceName} (Gideon's Intervention). Damage from such a source to that player or to the
+     * permanents they control is prevented (damage only — targeting and enchanting are unaffected).
+     */
+    public boolean isDamageFromChosenNamePreventedForController(GameData gameData, UUID controllerId, String sourceName) {
+        if (sourceName == null || controllerId == null) {
+            return false;
+        }
+        List<Permanent> bf = gameData.playerBattlefields.get(controllerId);
+        if (bf == null) {
+            return false;
+        }
+        for (Permanent perm : bf) {
+            if (sourceName.equals(perm.getChosenName())
+                    && perm.getCard().getEffects(EffectSlot.STATIC).stream()
+                            .anyMatch(PreventDamageFromChosenNameEffect.class::isInstance)) {
                 return true;
             }
         }
@@ -2825,6 +2941,9 @@ public class GameQueryService {
         }
         if (blocker.isCantBlockThisTurn()) {
             return BlockDenial.CANT_BLOCK_THIS_TURN;
+        }
+        if (isLockedFromBlocking(gameData, blocker.getId())) {
+            return BlockDenial.CANT_BLOCK;
         }
         if (blk.cantBlock()) {
             return BlockDenial.CANT_BLOCK;
@@ -3262,7 +3381,7 @@ public class GameQueryService {
     public boolean isPreventedFromDealingDamage(GameData gameData, Permanent creature, boolean isCombatDamage) {
         if (!isDamagePreventable(gameData)) return false;
         if (hasAuraWithEffect(gameData, creature, PreventAllDamageToAndByEnchantedCreatureEffect.class)
-                || gameData.permanentsPreventedFromDealingDamage.contains(creature.getId())) {
+                || gameData.isPreventedFromDealingDamage(creature.getId())) {
             return true;
         }
         for (CardColor color : getEffectiveColors(gameData, creature)) {
@@ -3297,6 +3416,34 @@ public class GameQueryService {
      * Used by ability activation restrictions such as Leechridden Swamp's "Activate only if you
      * control two or more black permanents".
      */
+    /** Whether a floating {@link PermanentLockEffect} (e.g. Edifice of Authority) forbids the given
+     *  permanent from being declared as an attacker. */
+    public boolean isLockedFromAttacking(GameData gameData, UUID permanentId) {
+        return hasPermanentLock(gameData, permanentId, PermanentLockEffect::locksAttacking);
+    }
+
+    /** Whether a floating {@link PermanentLockEffect} forbids the given permanent from blocking. */
+    public boolean isLockedFromBlocking(GameData gameData, UUID permanentId) {
+        return hasPermanentLock(gameData, permanentId, PermanentLockEffect::locksBlocking);
+    }
+
+    /** Whether a floating {@link PermanentLockEffect} forbids activating the given permanent's abilities. */
+    public boolean isLockedFromActivatingAbilities(GameData gameData, UUID permanentId) {
+        return hasPermanentLock(gameData, permanentId, PermanentLockEffect::locksActivatedAbilities);
+    }
+
+    private boolean hasPermanentLock(GameData gameData, UUID permanentId, Predicate<PermanentLockEffect> facet) {
+        synchronized (gameData.floatingEffects) {
+            for (FloatingContinuousEffect fe : gameData.floatingEffects) {
+                if (permanentId.equals(fe.affectedPermanentId())
+                        && fe.effect() instanceof PermanentLockEffect lock && facet.test(lock)) {
+                    return true;
+                }
+            }
+        }
+        return false;
+    }
+
     public int countControlledPermanentsMatching(GameData gameData, UUID controllerId, PermanentPredicate predicate) {
         List<Permanent> battlefield = gameData.playerBattlefields.get(controllerId);
         if (battlefield == null) {

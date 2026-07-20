@@ -59,12 +59,12 @@ public class ChooseCardsFromTargetHandEffectHandler implements NormalEffectHandl
             case DISCARD -> {
                 gameData.discardCausedByOpponent = true;
                 playerInteractionSupport.resolveHandRevealAndChoose(gameData, entry, count,
-                        e.excludedTypes(), e.includedTypes(), true, false, null);
+                        e.excludedTypes(), e.includedTypes(), e.filter(), true, false, null);
             }
             case EXILE -> {
                 UUID sourcePermanentId = e.returnOnSourceLeave() ? entry.getSourcePermanentId() : null;
                 playerInteractionSupport.resolveHandRevealAndChoose(gameData, entry, count,
-                        e.excludedTypes(), e.includedTypes(), false, true, sourcePermanentId);
+                        e.excludedTypes(), e.includedTypes(), e.filter(), false, true, sourcePermanentId);
             }
             case TOP_OF_LIBRARY -> resolveToTopOfLibrary(gameData, entry, count);
         }

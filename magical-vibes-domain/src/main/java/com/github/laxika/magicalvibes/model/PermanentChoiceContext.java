@@ -108,10 +108,29 @@ public sealed interface PermanentChoiceContext extends PendingInteraction {
 
     record AttackTriggerTarget(Card sourceCard, UUID controllerId, List<CardEffect> effects, UUID sourcePermanentId) implements PermanentChoiceContext {}
 
+    /** Decimator Beetle attack trigger, stage 1: choose the creature you control to remove a counter
+     *  from. Only this stage is parked on the pending-interaction queue; stage 2 is begun directly by
+     *  the stage-1 handler. {@code defendingPlayerId} is the player whose creatures are legal stage-2
+     *  targets (null when the attack has no defending player). */
+    record AttackCounterMoveFirstTarget(Card sourceCard, UUID controllerId, List<CardEffect> effects,
+                                        UUID sourcePermanentId, UUID defendingPlayerId) implements PermanentChoiceContext {}
+
+    /** Decimator Beetle attack trigger, stage 2: choose up to one creature the defending player
+     *  controls to put a counter on. Choosing {@code controllerId} means "no second target".
+     *  {@code firstTargetId} is the stage-1 choice. */
+    record AttackCounterMoveSecondTarget(Card sourceCard, UUID controllerId, List<CardEffect> effects,
+                                         UUID sourcePermanentId, UUID defendingPlayerId, UUID firstTargetId) implements PermanentChoiceContext {}
+
     /** Targeted "whenever a permanent enters" trigger (e.g. Reaper King — "Whenever another Scarecrow
      *  you control enters, destroy target permanent."). The controller chooses the target when the
      *  enter trigger is serviced; mirrors {@link AttackTriggerTarget}'s any-permanent target flow. */
     record EntersTriggerTarget(Card sourceCard, UUID controllerId, List<CardEffect> effects, UUID sourcePermanentId) implements PermanentChoiceContext {}
+
+    /** Targeted "whenever you cycle or discard a card" trigger on a battlefield permanent
+     *  ({@code EffectSlot.ON_CONTROLLER_DISCARDS}), e.g. Zenith Seeker — "target creature gains
+     *  flying until end of turn." The controller chooses the target when the discard trigger is
+     *  serviced; mirrors {@link EntersTriggerTarget}'s any-permanent target flow. */
+    record DiscardControllerTriggerTarget(Card sourceCard, UUID controllerId, List<CardEffect> effects, UUID sourcePermanentId) implements PermanentChoiceContext {}
 
     record SpellTargetTriggerAnyTarget(Card sourceCard, UUID controllerId, List<CardEffect> effects, boolean playerTargetOnly, TargetFilter targetFilter, int spellManaSpentX) implements PermanentChoiceContext {
 
@@ -174,6 +193,13 @@ public sealed interface PermanentChoiceContext extends PendingInteraction {
     record LibraryCastSpellTarget(Card cardToCast, UUID controllerId, List<CardEffect> spellEffects, StackEntryType spellType) implements PermanentChoiceContext {}
 
     record SacrificeArtifactForDividedDamage(UUID controllerId, Card sourceCard, Map<UUID, Integer> damageAssignments) implements PermanentChoiceContext {}
+
+    /**
+     * Heart-Piercer Manticore: its enter trigger's any-target was chosen ({@code targetId}); the
+     * controller now picks another creature to sacrifice, whereupon {@code sourceCard} deals that
+     * creature's power as damage to {@code targetId}.
+     */
+    record SacrificeAnotherCreatureDealPowerDamage(UUID controllerId, Card sourceCard, UUID targetId) implements PermanentChoiceContext {}
 
     record ExileCastSpellTarget(Card cardToCast, UUID controllerId, List<CardEffect> spellEffects, StackEntryType spellType,
                                 boolean copy, List<UUID> chosenTargets) implements PermanentChoiceContext {

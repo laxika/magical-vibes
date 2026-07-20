@@ -31,6 +31,7 @@ public enum CardSet {
     SET_DKA("DKA"),
     SET_ALA("ALA"),
     SET_CON("CON"),
+    SET_AKH("AKH"),
     SET_XLN("XLN"),
     SET_DOM("DOM"),
     SET_SOS("SOS"),

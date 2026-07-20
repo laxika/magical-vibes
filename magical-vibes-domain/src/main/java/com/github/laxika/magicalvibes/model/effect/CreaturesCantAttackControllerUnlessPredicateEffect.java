@@ -9,8 +9,17 @@ import com.github.laxika.magicalvibes.model.filter.PermanentPredicate;
  * evaluated per attacked player at attack-declaration time.
  * Example: Form of the Dragon — "Creatures without flying can't attack you." The
  * exemptionPredicate would match creatures WITH flying.
+ * When {@code protectsPlaneswalkers} is true the restriction also covers attacks aimed at the
+ * controller's planeswalkers (Sandwurm Convergence — "can't attack you or planeswalkers you
+ * control").
  *
- * @param exemptionPredicate creatures matching this predicate ARE allowed to attack the controller
+ * @param exemptionPredicate    creatures matching this predicate ARE allowed to attack the controller
+ * @param protectsPlaneswalkers whether the restriction also forbids attacking the controller's planeswalkers
  */
-public record CreaturesCantAttackControllerUnlessPredicateEffect(PermanentPredicate exemptionPredicate) implements CardEffect {
+public record CreaturesCantAttackControllerUnlessPredicateEffect(
+        PermanentPredicate exemptionPredicate, boolean protectsPlaneswalkers) implements CardEffect {
+
+    public CreaturesCantAttackControllerUnlessPredicateEffect(PermanentPredicate exemptionPredicate) {
+        this(exemptionPredicate, false);
+    }
 }

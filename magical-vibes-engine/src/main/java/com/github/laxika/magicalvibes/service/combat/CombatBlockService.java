@@ -55,6 +55,7 @@ import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
 
 import java.util.*;
+import java.util.concurrent.ConcurrentHashMap;
 
 /**
  * Handles declare-blockers step: computing legal blockers, validating blocker assignments
@@ -313,13 +314,16 @@ public class CombatBlockService {
             combatAttackService.payGenericMana(gameData.playerManaPools.get(defenderId), blockTaxTotal);
         }
 
-        // Mark creatures as blocking
+        // Mark creatures as blocking, and record turn-scoped combat-block opponent subtypes so
+        // "target creature that blocked or was blocked by a [subtype] this turn" spells (Time to
+        // Reflect) can find their targets even after combat ends.
         for (BlockerAssignment assignment : blockerAssignments) {
             Permanent blocker = defenderBattlefield.get(assignment.blockerIndex());
             Permanent attacker = attackerBattlefield.get(assignment.attackerIndex());
             blocker.setBlocking(true);
             blocker.addBlockingTarget(assignment.attackerIndex());
             blocker.addBlockingTargetId(attacker.getId());
+            recordCombatBlockOpponentSubtypes(gameData, blocker, attacker);
         }
 
         // CR 702.22h: when a blocker blocks one member of an attacking band, every other creature in
@@ -1208,6 +1212,29 @@ public class CombatBlockService {
             }
         });
         return found[0];
+    }
+
+    /**
+     * Records, for both creatures in a declared block, the subtypes of the other creature at block time
+     * into the turn-scoped {@link GameData#combatBlockOpponentSubtypesThisTurn} map (plus the Changeling
+     * set). The blocker "blocked" the attacker and the attacker "was blocked by" the blocker, so both
+     * directions are recorded. Time to Reflect reads this to target a creature that blocked or was
+     * blocked by a Zombie this turn, even after combat ends or the other creature leaves / changes types.
+     */
+    private void recordCombatBlockOpponentSubtypes(GameData gameData, Permanent blocker, Permanent attacker) {
+        recordCombatOpponentSubtypes(gameData, blocker, attacker);
+        recordCombatOpponentSubtypes(gameData, attacker, blocker);
+    }
+
+    private void recordCombatOpponentSubtypes(GameData gameData, Permanent creature, Permanent opponent) {
+        Set<CardSubtype> subtypes = gameData.combatBlockOpponentSubtypesThisTurn
+                .computeIfAbsent(creature.getId(), k -> ConcurrentHashMap.newKeySet());
+        subtypes.addAll(opponent.getCard().getSubtypes());
+        subtypes.addAll(opponent.getGrantedSubtypes());
+        subtypes.addAll(opponent.getTransientSubtypes());
+        if (gameQueryService.hasKeyword(gameData, opponent, Keyword.CHANGELING)) {
+            gameData.creaturesInCombatWithChangelingThisTurn.add(creature.getId());
+        }
     }
 
 }

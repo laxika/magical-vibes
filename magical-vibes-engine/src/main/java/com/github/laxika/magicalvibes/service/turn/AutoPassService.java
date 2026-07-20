@@ -97,9 +97,19 @@ public class AutoPassService {
             triggerCollectionService.processNextDiscardSelfTrigger(gameData);
         }
 
+        // Process any pending targeted controller-discard triggers (e.g. Zenith Seeker)
+        if (!gameData.interaction.isAwaitingInput() && gameData.hasPendingInteraction(PermanentChoiceContext.DiscardControllerTriggerTarget.class)) {
+            triggerCollectionService.processNextDiscardControllerTriggerTarget(gameData);
+        }
+
         // Process any pending targeted attack triggers before death triggers
         if (!gameData.interaction.isAwaitingInput() && gameData.hasPendingInteraction(PermanentChoiceContext.AttackTriggerTarget.class)) {
             triggerCollectionService.processNextAttackTriggerTarget(gameData);
+        }
+
+        // Process any pending two-target attack counter-move triggers (Decimator Beetle)
+        if (!gameData.interaction.isAwaitingInput() && gameData.hasPendingInteraction(PermanentChoiceContext.AttackCounterMoveFirstTarget.class)) {
+            triggerCollectionService.processNextAttackCounterMoveFirstTarget(gameData);
         }
 
         // Process any pending targeted enter triggers (e.g. Reaper King's "destroy target permanent")

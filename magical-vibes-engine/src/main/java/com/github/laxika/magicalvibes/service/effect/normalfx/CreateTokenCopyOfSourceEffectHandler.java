@@ -2,6 +2,7 @@ package com.github.laxika.magicalvibes.service.effect.normalfx;
 
 import com.github.laxika.magicalvibes.model.ActivatedAbility;
 import com.github.laxika.magicalvibes.model.Card;
+import com.github.laxika.magicalvibes.model.CardSubtype;
 import com.github.laxika.magicalvibes.model.CardSupertype;
 import com.github.laxika.magicalvibes.model.CardType;
 import com.github.laxika.magicalvibes.model.CounterType;
@@ -12,11 +13,15 @@ import com.github.laxika.magicalvibes.model.GameLog;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.StackEntry;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
+import com.github.laxika.magicalvibes.model.effect.CopyPermanentOnEnterEffect;
 import com.github.laxika.magicalvibes.model.effect.CreateTokenCopyOfSourceEffect;
 import com.github.laxika.magicalvibes.service.GameBroadcastService;
 import com.github.laxika.magicalvibes.service.battlefield.BattlefieldEntryService;
+import com.github.laxika.magicalvibes.service.battlefield.CloneService;
 import com.github.laxika.magicalvibes.service.battlefield.GameQueryService;
+import java.util.ArrayList;
 import java.util.EnumSet;
+import java.util.List;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Component;
@@ -29,6 +34,7 @@ public class CreateTokenCopyOfSourceEffectHandler implements NormalEffectHandler
     private final BattlefieldEntryService battlefieldEntryService;
     private final GameQueryService gameQueryService;
     private final GameBroadcastService gameBroadcastService;
+    private final CloneService cloneService;
 
     @Override
     public Class<? extends CardEffect> handledEffect() {
@@ -62,13 +68,27 @@ public class CreateTokenCopyOfSourceEffectHandler implements NormalEffectHandler
                     tokenCard.setName(sourceCard.getName());
                     tokenCard.setType(sourceCard.getType());
                     tokenCard.setAdditionalTypes(sourceCard.getAdditionalTypes());
-                    tokenCard.setManaCost(sourceCard.getManaCost() != null ? sourceCard.getManaCost() : "");
+                    // Embalm / Eternalize copies have no mana cost.
+                    tokenCard.setManaCost(!e.removeManaCost() && sourceCard.getManaCost() != null ? sourceCard.getManaCost() : "");
                     tokenCard.setToken(true);
-                    tokenCard.setColor(sourceCard.getColor());
+                    // Embalm / Eternalize recolors the copy (e.g. a white Zombie); otherwise keep the source's color.
+                    if (e.colorOverride() != null) {
+                        tokenCard.setColor(e.colorOverride());
+                        tokenCard.setColors(List.of(e.colorOverride()));
+                    } else {
+                        tokenCard.setColor(sourceCard.getColor());
+                    }
                     tokenCard.setLoyalty(sourceCard.getLoyalty());
                     tokenCard.setPower(sourceCard.getPower());
                     tokenCard.setToughness(sourceCard.getToughness());
-                    tokenCard.setSubtypes(sourceCard.getSubtypes());
+                    // Embalm / Eternalize adds a creature type (e.g. Zombie) to the copy.
+                    if (e.addedSubtype() != null && !sourceCard.getSubtypes().contains(e.addedSubtype())) {
+                        List<CardSubtype> subtypes = new ArrayList<>(sourceCard.getSubtypes());
+                        subtypes.add(e.addedSubtype());
+                        tokenCard.setSubtypes(subtypes);
+                    } else {
+                        tokenCard.setSubtypes(sourceCard.getSubtypes());
+                    }
                     tokenCard.setCardText(sourceCard.getCardText());
                     tokenCard.setSetCode(sourceCard.getSetCode());
                     tokenCard.setCollectorNumber(sourceCard.getCollectorNumber());
@@ -97,6 +117,19 @@ public class CreateTokenCopyOfSourceEffectHandler implements NormalEffectHandler
                         tokenCard.addActivatedAbility(ability);
                     }
                     tokenCard.copyTargetingFrom(sourceCard);
+
+                    // Vizier of Many Faces: the embalm token is itself a Clone. Route it through the
+                    // copy-on-enter replacement so it enters as a copy of a chosen creature; the clone
+                    // flow (CloneService.completeCloneEntry) puts it onto the battlefield and re-applies
+                    // the embalm color/type/no-mana-cost transformation to the final copy.
+                    if (tokenCard.getEffects(EffectSlot.ON_ENTER_BATTLEFIELD).stream()
+                            .anyMatch(eff -> eff instanceof CopyPermanentOnEnterEffect)
+                            && cloneService.prepareCloneReplacementEffect(gameData, entry.getControllerId(), tokenCard, null)) {
+                        gameBroadcastService.logAndBroadcast(gameData, GameLog.textCardText(
+                                "A token copy of ", sourceCard, " is created."));
+                        log.info("Game {} - Token clone copy of {} created via embalm", gameData.id, sourceCard.getName());
+                        return;
+                    }
 
                     Permanent tokenPermanent = new Permanent(tokenCard);
 

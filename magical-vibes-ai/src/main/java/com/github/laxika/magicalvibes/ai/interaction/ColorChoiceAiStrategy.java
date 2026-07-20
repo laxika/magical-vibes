@@ -5,6 +5,7 @@ import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardColor;
 import com.github.laxika.magicalvibes.model.CardType;
 import com.github.laxika.magicalvibes.model.ChoiceContext;
+import com.github.laxika.magicalvibes.model.CounterType;
 import com.github.laxika.magicalvibes.model.DrawReplacementKind;
 import com.github.laxika.magicalvibes.model.GameData;
 import com.github.laxika.magicalvibes.model.PendingInteraction;
@@ -201,6 +202,23 @@ class ColorChoiceAiStrategy implements AiInteractionStrategy<PendingInteraction.
                     .orElse("Lightning Bolt");
             log.info("AI: Choosing card name \"{}\" for exile in game {}", chosenName, gameId);
             ctx.gameActions().answerInteraction(ctx.selfConnection(), new InteractionAnswer.ListChoiceMade(chosenName));
+            return;
+        }
+
+        if (context instanceof ChoiceContext.AdjustCounterKindChoice acc) {
+            // Quarry Hauler: for each kind of counter on the target, add or remove one. Grow our own
+            // good counters / shrink opponents'; and the reverse for detrimental counters.
+            CounterType kind = acc.remainingKinds().getFirst();
+            boolean badCounter = kind == CounterType.MINUS_ONE_MINUS_ONE
+                    || kind == CounterType.MINUS_ZERO_MINUS_TWO
+                    || kind == CounterType.STUN;
+            boolean ownTarget = gameData.playerBattlefields.getOrDefault(aiPlayerId, List.of()).stream()
+                    .anyMatch(p -> p.getId().equals(acc.targetId()));
+            String chosen = (ownTarget != badCounter)
+                    ? ChoiceContext.AdjustCounterKindChoice.ADD
+                    : ChoiceContext.AdjustCounterKindChoice.REMOVE;
+            log.info("AI: {} a {} counter in game {}", chosen, kind, gameId);
+            ctx.gameActions().answerInteraction(ctx.selfConnection(), new InteractionAnswer.ListChoiceMade(chosen));
             return;
         }
 

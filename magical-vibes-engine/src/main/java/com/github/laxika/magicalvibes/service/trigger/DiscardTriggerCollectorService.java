@@ -3,12 +3,21 @@ package com.github.laxika.magicalvibes.service.trigger;
 import com.github.laxika.magicalvibes.model.CardColor;
 
 import com.github.laxika.magicalvibes.model.EffectSlot;
+import com.github.laxika.magicalvibes.model.StackEntry;
+import com.github.laxika.magicalvibes.model.StackEntryType;
 import com.github.laxika.magicalvibes.model.amount.Fixed;
 import com.github.laxika.magicalvibes.model.Card;
+import com.github.laxika.magicalvibes.model.PermanentChoiceContext;
+import com.github.laxika.magicalvibes.model.effect.BoostSelfEffect;
 import com.github.laxika.magicalvibes.model.effect.DealDamageToDiscardingPlayerEffect;
 import com.github.laxika.magicalvibes.model.effect.ExileDiscardedCardFromGraveyardEffect;
+import com.github.laxika.magicalvibes.model.effect.GrantKeywordEffect;
 import com.github.laxika.magicalvibes.model.effect.LoseLifeEffect;
 import com.github.laxika.magicalvibes.model.effect.MayEffect;
+import com.github.laxika.magicalvibes.model.effect.MayPayManaEffect;
+import com.github.laxika.magicalvibes.model.effect.PutCounterOnEachMatchingPermanentEffect;
+import com.github.laxika.magicalvibes.model.effect.ScryEffect;
+import java.util.ArrayList;
 import java.util.List;
 import java.util.UUID;
 import com.github.laxika.magicalvibes.service.DamagePreventionService;
@@ -59,7 +68,7 @@ public class DiscardTriggerCollectorService {
         CardColor sourceColor = gameQueryService.getEffectiveColor(gameData, match.permanent());
         if (!gameQueryService.isDamageFromSourcePrevented(gameData, sourceColor)
                 && !damagePreventionService.isSourceDamagePreventedForPlayer(gameData, discardingPlayerId, match.permanent().getId())
-                && !gameData.permanentsPreventedFromDealingDamage.contains(match.permanent().getId())
+                && !gameData.isPreventedFromDealingDamage(match.permanent().getId())
                 && !damagePreventionService.applyColorDamagePreventionForPlayer(gameData, discardingPlayerId, sourceColor)) {
             int effectiveDamage = damagePreventionService.applyPlayerPreventionShield(gameData, discardingPlayerId, damage);
             effectiveDamage = permanentRemovalService.redirectPlayerDamageToEnchantedCreature(gameData, discardingPlayerId, effectiveDamage, cardName);
@@ -109,6 +118,119 @@ public class DiscardTriggerCollectorService {
         gameBroadcastService.logAndBroadcast(gameData, GameLog.cardTextCard(sourceCard, " exiles ", discarded,
                 " from " + gameData.playerIdToName.get(ownerId) + "'s graveyard."));
         log.info("Game {} - {} exiles discarded card {} from graveyard", gameData.id, cardName, discarded.getName());
+        return true;
+    }
+
+    @CollectsTrigger(value = ScryEffect.class, slot = EffectSlot.ON_CONTROLLER_DISCARDS)
+    private boolean handleScryOnDiscard(TriggerMatchContext match, ScryEffect trigger, TriggerContext ctx) {
+        // "Whenever you cycle or discard another card, scry N." Cycling discards the card (CR 702.29e),
+        // so this single controller-discard trigger fires for both. Queue it as a proper triggered
+        // ability so it uses the stack (and, when cycling, resolves above the cycling draw).
+        var gameData = match.gameData();
+        Card sourceCard = match.permanent().getCard();
+        gameData.enqueueTrigger(new StackEntry(
+                StackEntryType.TRIGGERED_ABILITY,
+                sourceCard,
+                match.controllerId(),
+                sourceCard.getName() + "'s ability",
+                new ArrayList<>(List.of(trigger)),
+                null,
+                match.permanent().getId()));
+        gameBroadcastService.logAndBroadcast(gameData, GameLog.abilityTriggers(sourceCard));
+        log.info("Game {} - {} triggers on cycle/discard (scry {})", gameData.id, sourceCard.getName(), trigger.count());
+        return true;
+    }
+
+    @CollectsTrigger(value = BoostSelfEffect.class, slot = EffectSlot.ON_CONTROLLER_DISCARDS)
+    private boolean handleSelfBoostOnDiscard(TriggerMatchContext match, BoostSelfEffect trigger, TriggerContext ctx) {
+        // "Whenever you cycle or discard a card, this creature gets +X/+Y until end of turn." Cycling
+        // discards the card (CR 702.29e), so this single controller-discard trigger fires for both. Queue
+        // it as a proper triggered ability carrying the source permanent id so the self-boost lands on it.
+        // (Hekma Sentinels)
+        var gameData = match.gameData();
+        Card sourceCard = match.permanent().getCard();
+        gameData.enqueueTrigger(new StackEntry(
+                StackEntryType.TRIGGERED_ABILITY,
+                sourceCard,
+                match.controllerId(),
+                sourceCard.getName() + "'s ability",
+                new ArrayList<>(List.of(trigger)),
+                null,
+                match.permanent().getId()));
+        gameBroadcastService.logAndBroadcast(gameData, GameLog.abilityTriggers(sourceCard));
+        log.info("Game {} - {} triggers on cycle/discard (self-boost)", gameData.id, sourceCard.getName());
+        return true;
+    }
+
+    @CollectsTrigger(value = GrantKeywordEffect.class, slot = EffectSlot.ON_CONTROLLER_DISCARDS)
+    private boolean handleGrantKeywordOnDiscard(TriggerMatchContext match, GrantKeywordEffect trigger, TriggerContext ctx) {
+        // "Whenever you cycle or discard a card, target creature gains [keyword] until end of turn."
+        // Cycling discards the card (CR 702.29e), so this single controller-discard trigger fires for
+        // both. (Zenith Seeker)
+        var gameData = match.gameData();
+        Card sourceCard = match.permanent().getCard();
+        if (trigger.targetSpec().category().includesPermanents()) {
+            // Targeted grant: queue a target choice so the controller picks the creature before the
+            // ability goes on the stack (resolves above the cycling draw). Serviced by
+            // TriggeredAbilityQueueService.processNextDiscardControllerTriggerTarget.
+            gameData.queueInteraction(new PermanentChoiceContext.DiscardControllerTriggerTarget(
+                    sourceCard, match.controllerId(), new ArrayList<>(List.of(trigger)), match.permanent().getId()));
+        } else {
+            // Non-targeting grant (self / your creatures) — straight onto the stack as a triggered ability.
+            gameData.enqueueTrigger(new StackEntry(
+                    StackEntryType.TRIGGERED_ABILITY,
+                    sourceCard,
+                    match.controllerId(),
+                    sourceCard.getName() + "'s ability",
+                    new ArrayList<>(List.of(trigger)),
+                    null,
+                    match.permanent().getId()));
+        }
+        gameBroadcastService.logAndBroadcast(gameData, GameLog.abilityTriggers(sourceCard));
+        log.info("Game {} - {} triggers on cycle/discard (grant keyword)", gameData.id, sourceCard.getName());
+        return true;
+    }
+
+    @CollectsTrigger(value = PutCounterOnEachMatchingPermanentEffect.class, slot = EffectSlot.ON_CONTROLLER_DISCARDS)
+    private boolean handlePutCountersOnDiscard(TriggerMatchContext match,
+            PutCounterOnEachMatchingPermanentEffect trigger, TriggerContext ctx) {
+        // "Whenever you cycle or discard another card, put a -1/-1 counter on each creature your
+        // opponents control." Cycling discards the card (CR 702.29e), so this single controller-discard
+        // trigger fires for both. Queue it as a proper triggered ability carrying the source permanent id
+        // so the "your opponents" predicate resolves against the ability's controller. (Archfiend of Ifnir)
+        var gameData = match.gameData();
+        Card sourceCard = match.permanent().getCard();
+        gameData.enqueueTrigger(new StackEntry(
+                StackEntryType.TRIGGERED_ABILITY,
+                sourceCard,
+                match.controllerId(),
+                sourceCard.getName() + "'s ability",
+                new ArrayList<>(List.of(trigger)),
+                null,
+                match.permanent().getId()));
+        gameBroadcastService.logAndBroadcast(gameData, GameLog.abilityTriggers(sourceCard));
+        log.info("Game {} - {} triggers on cycle/discard (put counters on matching permanents)", gameData.id, sourceCard.getName());
+        return true;
+    }
+
+    @CollectsTrigger(value = MayPayManaEffect.class, slot = EffectSlot.ON_CONTROLLER_DISCARDS)
+    private boolean handleMayPayManaOnDiscard(TriggerMatchContext match, MayPayManaEffect trigger, TriggerContext ctx) {
+        // "Whenever you cycle or discard a card, you may pay {N}. If you do, ..." Cycling discards the card
+        // (CR 702.29e), so this single controller-discard trigger fires for both. Queue it as a proper
+        // triggered ability so it uses the stack (and, when cycling, resolves above the cycling draw); its
+        // MayAbilityChoice pay prompt then comes up at resolution. (Drake Haven)
+        var gameData = match.gameData();
+        Card sourceCard = match.permanent().getCard();
+        gameData.enqueueTrigger(new StackEntry(
+                StackEntryType.TRIGGERED_ABILITY,
+                sourceCard,
+                match.controllerId(),
+                sourceCard.getName() + "'s ability",
+                new ArrayList<>(List.of(trigger)),
+                null,
+                match.permanent().getId()));
+        gameBroadcastService.logAndBroadcast(gameData, GameLog.abilityTriggers(sourceCard));
+        log.info("Game {} - {} triggers on cycle/discard (may pay {})", gameData.id, sourceCard.getName(), trigger.manaCost());
         return true;
     }
 

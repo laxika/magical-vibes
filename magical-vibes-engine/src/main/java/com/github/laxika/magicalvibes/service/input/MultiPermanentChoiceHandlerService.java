@@ -116,6 +116,8 @@ public class MultiPermanentChoiceHandlerService {
             handleExileDamagedPlayerControlsPermanent(gameData, playerId, permanentIds);
         } else if (context instanceof MultiPermanentChoiceContext.DestroyDamagedPlayerControls ctx) {
             handleDestroyDamagedPlayerControlsPermanent(gameData, permanentIds, ctx);
+        } else if (context instanceof MultiPermanentChoiceContext.UntapChosenPermanent ctx) {
+            handleUntapChosenPermanent(gameData, permanentIds, ctx);
         } else if (context instanceof MultiPermanentChoiceContext.SacrificeDamagedPlayerControls ctx) {
             handleSacrificeDamagedPlayerControlsPermanent(gameData, permanentIds, ctx);
         } else if (context instanceof MultiPermanentChoiceContext.SacrificeSelfToDestroy ctx) {
@@ -283,6 +285,21 @@ public class MultiPermanentChoiceHandlerService {
             if (target != null) {
                 destructionSupport.tryDestroyAndLog(gameData, target, context.sourceName());
                 permanentRemovalService.removeOrphanedAuras(gameData);
+            }
+        }
+
+        inputCompletionService.sbaMayAbilitiesThenBroadcastAutoPass(gameData);
+    }
+
+    private void handleUntapChosenPermanent(GameData gameData, List<UUID> permanentIds,
+                                            MultiPermanentChoiceContext.UntapChosenPermanent context) {
+        if (!permanentIds.isEmpty()) {
+            Permanent target = gameQueryService.findPermanentById(gameData, permanentIds.getFirst());
+            if (target != null) {
+                tapUntapSupport.untapPermanent(gameData, target);
+                gameBroadcastService.logAndBroadcast(gameData,
+                        GameLog.builder().text(context.sourceName() + " untaps ").card(target.getCard()).text(".").build());
+                log.info("Game {} - {} untaps {}", gameData.id, context.sourceName(), target.getCard().getName());
             }
         }
 
@@ -838,9 +855,11 @@ public class MultiPermanentChoiceHandlerService {
                             perm.setCounterCount(CounterType.PLUS_ONE_PLUS_ONE, perm.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE) + 1);
                         }
                         if (perm.getCounterCount(CounterType.MINUS_ONE_MINUS_ONE) > 0
-                                && !gameQueryService.cantHaveMinusOneMinusOneCounters(gameData, perm)) {
+                                && !gameQueryService.cantHaveMinusOneMinusOneCounters(gameData, perm)
+                                && gameQueryService.reduceMinusOneMinusOneCounters(gameData, perm, 1) > 0) {
                             perm.setCounterCount(CounterType.MINUS_ONE_MINUS_ONE, perm.getCounterCount(CounterType.MINUS_ONE_MINUS_ONE) + 1);
-                            permanentCounterSupport.fireMinusOneMinusOneCounterPutOnCreatureTriggers(gameData, perm, 1);
+                            // The proliferating player is the one putting the counter (Nest of Scarabs).
+                            permanentCounterSupport.fireMinusOneMinusOneCounterPutOnCreatureTriggers(gameData, perm, 1, playerId);
                         }
                         if (perm.getCounterCount(CounterType.LOYALTY) > 0) {
                             perm.setCounterCount(CounterType.LOYALTY, perm.getCounterCount(CounterType.LOYALTY) + 1);

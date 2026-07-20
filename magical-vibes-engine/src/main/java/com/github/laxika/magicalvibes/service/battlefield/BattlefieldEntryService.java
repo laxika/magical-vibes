@@ -457,6 +457,11 @@ public class BattlefieldEntryService {
 
             int count = amountEvaluationService.evaluate(gameData, enterWith.count(),
                     new AmountContext(controllerId, permanent, null, xValue, 0, false));
+            // Vizier of Remedies also replaces "enters with N -1/-1 counters" (both are replacement
+            // effects). The permanent isn't on the battlefield yet, so use its entering controller.
+            if (enterWith.type() == CounterType.MINUS_ONE_MINUS_ONE) {
+                count = gameQueryService.reduceMinusOneMinusOneCounters(gameData, controllerId, count);
+            }
             if (count > 0) {
                 permanent.setCounterCount(enterWith.type(), permanent.getCounterCount(enterWith.type()) + count);
                 log.info("Game {} - {} enters with {} {} counter(s)",
@@ -713,9 +718,11 @@ public class BattlefieldEntryService {
         triggerCollectionService.checkAllyNontokenCreatureEntersTriggers(gameData, controllerId, card);
         triggerCollectionService.checkAllyArtifactEntersTriggers(gameData, controllerId, card);
         triggerCollectionService.checkAllyEquipmentEntersTriggers(gameData, controllerId, card);
+        triggerCollectionService.checkAllyEnchantmentEntersTriggers(gameData, controllerId, card);
         triggerCollectionService.checkAllyNontokenArtifactEntersTriggers(gameData, controllerId, card);
         triggerCollectionService.checkOpponentCreatureEntersTriggers(gameData, controllerId, card);
         triggerCollectionService.checkAnyCreatureEntersTriggers(gameData, controllerId, card);
+        triggerCollectionService.checkEnchantedPlayerCreatureEntersTriggers(gameData, controllerId, card);
         triggerCollectionService.checkEntersFromGraveyardTriggers(gameData, controllerId, card);
         triggerCollectionService.checkPermanentEntersFromGraveyardTriggers(gameData, controllerId, card);
         if (card.hasType(CardType.LAND)) {
@@ -826,16 +833,19 @@ public class BattlefieldEntryService {
             boolean hasTarget = targetId != null || !targetIds.isEmpty();
 
             // A permanent that entered without a target chosen at cast time — a token copy,
-            // or a creature put onto the battlefield from a graveyard via undying,
-            // reanimation, etc. — must still choose targets for its mandatory ETB as the
-            // ability is put on the stack (CR 603.3b). Cast spells with "up to" targets that
-            // chose 0 targets are excluded; they passed through cast-time target selection.
+            // a creature put onto the battlefield from a graveyard via undying / reanimation,
+            // or a land (lands are played, never cast, so they never went through cast-time
+            // target selection; e.g. Sunscorched Desert's "deals 1 damage to target player or
+            // planeswalker") — must still choose targets for its mandatory ETB as the ability is
+            // put on the stack (CR 603.3b). Cast spells with "up to" targets that chose 0 targets
+            // are excluded; they passed through cast-time target selection.
             List<Permanent> enteredBf = gameData.playerBattlefields.get(controllerId);
             Permanent justEnteredPermanent = enteredBf != null && !enteredBf.isEmpty()
                     ? enteredBf.getLast() : null;
             boolean enteredFromGraveyard = justEnteredPermanent != null
                     && justEnteredPermanent.getEnteredFromGraveyardOwnerId() != null;
-            boolean choosesTargetAtTriggerTime = card.isToken() || enteredFromGraveyard;
+            boolean choosesTargetAtTriggerTime = card.isToken() || enteredFromGraveyard
+                    || card.hasType(CardType.LAND);
 
             // A surviving gate-conditional ETB (Metalcraft, Morbid, Raid, … — the gate was met
             // as the permanent entered) that targets never chose a target at cast time

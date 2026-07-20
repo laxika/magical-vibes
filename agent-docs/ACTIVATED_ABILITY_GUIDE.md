@@ -34,6 +34,7 @@ Quick reference for building `ActivatedAbility` instances. Covers all constructo
 | `ONLY_DURING_COMBAT` | Activate only during the combat phase (checks `gameData.currentStep.isCombatPhase()`). Jade Statue |
 | `ONLY_DURING_DECLARE_ATTACKERS_IF_ATTACKED` | Activate only during the declare attackers step and only if you've been attacked this step (a creature is attacking you or a planeswalker you control). Kongming's Contraptions. Checks `gameData.currentStep == DECLARE_ATTACKERS` + `gameQueryService.isPlayerBeingAttacked(gd, playerId)` |
 | `ONLY_WHILE_CREATURE` | Abilities on creature lands that only work while animated |
+| `CAST_NONCREATURE_SPELL_THIS_TURN` | Activate only if you've cast a noncreature spell this turn (checks `gameQueryService.playerCastNoncreatureSpellThisTurn()`). Seeker of Insight |
 | `METALCRAFT` | Activate only if you control three or more artifacts |
 | `MORBID` | Activate only if a creature died this turn (checks `gameQueryService.isMorbidMet()`) |
 | `OPPONENT_CONTROLS_FLYING_CREATURE` | Activate only if an opponent controls a creature with flying (checks `gameQueryService.anyOpponentControlsFlyingCreature()`). Groundling Pouncer |
@@ -257,6 +258,48 @@ Cards: `LeechriddenSwamp`
 
 ---
 
+### 8a-counters. Ability gated on counters on the source (`.withRequiredSourceCounters`)
+
+```java
+new ActivatedAbility(requiresTap, manaCost, effects, description)
+    .withRequiredSourceCounters(CounterType counterType, int count)
+```
+
+**Use when:** Ability text says "Activate only if there are N or more [type] counters on this permanent." Checked against the **source permanent itself** (`permanent.getCounterCount(type) >= count`) in `AbilityActivationService.validateTimingRestrictions` — source-exact, unlike the board-wide `.withRequiredControlledPermanents`. Does NOT remove the counters (that would be `RemoveCounterFromSourceCost`).
+
+```java
+// {1}, {T}: <detain effect>. Activate only if there are three or more brick counters on this artifact.
+new ActivatedAbility(true, "{1}",
+    List.of(new LockTargetPermanentEffect(true, true, true, EffectDuration.UNTIL_YOUR_NEXT_TURN)),
+    "{1}, {T}: Until your next turn, ...")
+    .withRequiredSourceCounters(CounterType.BRICK, 3)
+```
+
+Cards: `EdificeOfAuthority`
+
+---
+
+### 8a-graveyard. Ability gated on cards in the controller's graveyard (`.withRequiredGraveyardCards`)
+
+```java
+new ActivatedAbility(requiresTap, manaCost, effects, description)
+    .withRequiredGraveyardCards(CardPredicate predicate, int count, String description)
+```
+
+**Use when:** Ability text says "Activate only if there are N or more [matching] cards in your graveyard" (e.g. Gate to the Afterlife's "six or more creature cards in your graveyard"). Counts only **non-token** cards in the controller's own graveyard matching the `CardPredicate`, in `AbilityActivationService.validateTimingRestrictions`. `description` is the noun phrase spliced into the error ("Activate only if there are N or more <description>").
+
+```java
+// {2}, {T}, Sacrifice this artifact: <tutor>. Activate only if there are six or more creature cards in your graveyard.
+new ActivatedAbility(true, "{2}",
+    List.of(new SacrificeSelfCost(), new SearchZonesForCardNamedToBattlefieldEffect("God-Pharaoh's Gift")),
+    "{2}, {T}, Sacrifice Gate to the Afterlife: Search your graveyard, hand, and/or library for a card named God-Pharaoh's Gift and put it onto the battlefield. ...")
+    .withRequiredGraveyardCards(new CardTypePredicate(CardType.CREATURE), 6, "creature cards in your graveyard")
+```
+
+Cards: `GateToTheAfterlife`
+
+---
+
 ### 8b. Ability any player may activate
 
 ```java
@@ -364,6 +407,21 @@ addGraveyardActivatedAbility(new ActivatedAbility(
 
 Cards: `MagmaPhoenix`
 
+**Embalm / Eternalize** ("{cost}, Exile this card from your graveyard: Create a token that's a copy of it, except ... Activate only as a sorcery.") is a graveyard activated ability whose cost exiles the source card. Use `ExileSelfFromGraveyardCost()` (paid at activation, before the ability hits the stack, so it can't be activated twice off the same card) plus `CreateTokenCopyOfSourceEffect(false, 1, colorOverride, addedSubtype, removeManaCost)` for the transformed copy, and `ActivationTimingRestriction.SORCERY_SPEED` (now enforced for graveyard abilities by `validateGraveyardTimingRestrictions`).
+
+```java
+// Embalm {5}{W}: white Zombie copy with no mana cost. (Eternalize would use BLACK + P/T overrides.)
+addGraveyardActivatedAbility(new ActivatedAbility(
+    false, "{5}{W}",
+    List.of(
+        new ExileSelfFromGraveyardCost(),
+        new CreateTokenCopyOfSourceEffect(false, 1, CardColor.WHITE, CardSubtype.ZOMBIE, true)),
+    "Embalm {5}{W} (...)",
+    ActivationTimingRestriction.SORCERY_SPEED));
+```
+
+Cards: `AngelOfSanctions`
+
 **X-cost graveyard abilities** are supported: use an `{X}...` mana cost and read the paid X at
 resolution via `entry.getXValue()` in your effect handler. The paid X flows through
 `activateGraveyardAbility(gameData, player, graveyardCardIndex, abilityIndex, xValue)` onto the stack
@@ -433,7 +491,7 @@ Cards: `FaerieMacabre`
 
 ## Mana ability riders ("Add {X}. When you do, ...")
 
-An ability that produces mana and has no target/loyalty cost is a **mana ability** (resolves immediately, no stack). Any non-mana effects in its list are treated as reflexive "when you do" riders resolved inline by `ActivatedAbilityExecutionService.doResolveManaAbility`. Only a fixed set of rider effects are supported there: `GainLifeEffect`, `DealDamageToPlayersEffect` with recipient `CONTROLLER`, and `DealDamageToPlayersEffect` with recipient `EACH_OPPONENT` (Rubble Rouser: `{T}, Exile a card from your graveyard: Add {R}. When you do, deal 1 damage to each opponent.`). To support a new rider, add a branch in `doResolveManaAbility` — a rider effect placed on a mana ability but not handled there is silently dropped.
+An ability that produces mana and has no target/loyalty cost is a **mana ability** (resolves immediately, no stack). Any non-mana effects in its list are treated as reflexive "when you do" riders resolved inline by `ActivatedAbilityExecutionService.doResolveManaAbility`. Only a fixed set of rider effects are supported there: `GainLifeEffect`, `DealDamageToPlayersEffect` with recipient `CONTROLLER`, `DealDamageToPlayersEffect` with recipient `EACH_OPPONENT` (Rubble Rouser: `{T}, Exile a card from your graveyard: Add {R}. When you do, deal 1 damage to each opponent.`), and `PutCountersOnSelfEffect` (Pyramid of the Pantheon: `{2}, {T}: Add one mana of any color. Put a brick counter on this artifact.` — the counter is placed on the source, respecting `cantHaveCounters`). To support a new rider, add a branch in `doResolveManaAbility` — a rider effect placed on a mana ability but not handled there is silently dropped.
 
 ## Costs in the effects list
 
@@ -547,6 +605,7 @@ addEffect(EffectSlot.SPELL, effect);     // effect resolved when spell resolves
 | `OPPONENT_UPKEEP_TRIGGERED` | Each opponent's upkeep |
 | `ENCHANTED_PERMANENT_CONTROLLER_UPKEEP_TRIGGERED` | Upkeep of the enchanted permanent's controller (fires regardless of which player controls the aura). `affectedPlayerId` is baked in at trigger time for effects like `EnchantedCreatureControllerLosesLifeEffect` |
 | `ENCHANTED_PLAYER_UPKEEP_TRIGGERED` | Upkeep of the enchanted player (for player auras/Curses). The enchanted player's ID is passed as `targetId` on the stack entry. Curse subtype is auto-detected via `isEnchantPlayer()` |
+| `ON_ENCHANTED_PLAYER_CREATURE_ENTERS_BATTLEFIELD` | "Whenever a creature enchanted player controls enters, …" (player-aura/Curse slot). `TriggerCollectionService.checkEnchantedPlayerCreatureEntersTriggers` scans every battlefield for Curses attached to the entering creature's controller and queues one non-targeting triggered ability each, controlled by the Aura's controller with the enchanted player baked as `targetId` — so `LoseLifeEffect(TARGET_PLAYER)` hits them and an accompanying `GainLifeEffect` feeds "you". Used by Trespasser's Curse (`LoseLifeEffect(1, TARGET_PLAYER)` + `GainLifeEffect(1)`) |
 | `GRAVEYARD_UPKEEP_TRIGGERED` | Upkeep trigger from graveyard |
 | `GRAVEYARD_ON_CONTROLLER_CASTS_SPELL` | Spell-cast trigger from graveyard — fires when the controller casts a spell matching the `SpellCastTriggerEffect.spellFilter()` while this card is in their graveyard (e.g. Lingering Phantom). Supports `manaCost` for "you may pay" patterns |
 | `DRAW_TRIGGERED` | At the beginning of controller's draw step (draw step only, not spell draws) |
@@ -554,7 +613,7 @@ addEffect(EffectSlot.SPELL, effect);     // effect resolved when spell resolves
 | `ON_CONTROLLER_DRAWS` | Whenever controller draws a card (all draws: draw step, spells, abilities) |
 | `ON_OPPONENT_DRAWS` | Whenever an opponent draws a card (all draws: draw step, spells, abilities) |
 | `ON_OPPONENT_DISCARDS` | An opponent discards a card |
-| `ON_CONTROLLER_DISCARDS` | The controller discards a card ("whenever you discard a card"). Scanned on the discarding player's own battlefield in `TriggerCollectionService.checkDiscardTriggers`. Used by Necropotence (`ExileDiscardedCardFromGraveyardEffect`) |
+| `ON_CONTROLLER_DISCARDS` | The controller discards a card ("whenever you discard a card"; cycling counts, CR 702.29e). Scanned on the discarding player's own battlefield in `TriggerCollectionService.checkDiscardTriggers`. Used by Necropotence (`ExileDiscardedCardFromGraveyardEffect`, resolved inline), Curator of Mysteries (`ScryEffect`, enqueued as a `TRIGGERED_ABILITY`), Drake Haven (`MayPayManaEffect`, enqueued as a `TRIGGERED_ABILITY` — its may-pay prompt comes up at resolution) and Hekma Sentinels (`BoostSelfEffect`, enqueued as a `TRIGGERED_ABILITY` carrying the source permanent id so "this creature gets +1/+1") |
 | `ON_SELF_DISCARDED_BY_OPPONENT` | This card is discarded by an opponent |
 | `END_STEP_TRIGGERED` | End step (any player's turn — "at the beginning of the end step") |
 | `CONTROLLER_END_STEP_TRIGGERED` | Controller's end step only ("at the beginning of your end step") |

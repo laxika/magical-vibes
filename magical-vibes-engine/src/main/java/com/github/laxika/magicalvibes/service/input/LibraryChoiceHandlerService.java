@@ -101,6 +101,7 @@ public class LibraryChoiceHandlerService {
         List<Card> sourceCards = librarySearch.sourceCards();
         boolean reorderRemainingToBottom = librarySearch.reorderRemainingToBottom();
         boolean reorderRemainingToTop = librarySearch.reorderRemainingToTop();
+        boolean restToGraveyard = librarySearch.restToGraveyard();
         boolean shuffleAfterSelection = librarySearch.shuffleAfterSelection();
         LibrarySearchFollowUp followUp = librarySearch.followUp();
         LibrarySearchDestination destination = librarySearch.destination() != null
@@ -124,7 +125,7 @@ public class LibraryChoiceHandlerService {
 
         List<Card> deck = gameData.playerDecks.get(deckOwnerId);
 
-        if (reorderRemainingToBottom || reorderRemainingToTop) {
+        if (reorderRemainingToBottom || reorderRemainingToTop || restToGraveyard) {
             if (sourceCards == null) {
                 throw new IllegalStateException("Missing source cards for revealed-card choice");
             }
@@ -239,9 +240,29 @@ public class LibraryChoiceHandlerService {
                 return;
             }
 
-            // Gift of the Gargantuan: after the creature pick, run the land pick over the same
-            // looked-at cards before bottoming the rest.
-            if (followUp.giftLandPick() && startGiftLandPick(gameData, deckOwnerId, sourceCards)) {
+            // Two-bounded-pick (Gift of the Gargantuan / Benefaction of Rhonas): after the first
+            // pick, run the second-type pick over the same looked-at cards before disposing the rest.
+            if (followUp.secondBoundedPick() != null
+                    && startSecondBoundedPick(gameData, deckOwnerId, sourceCards, followUp.secondBoundedPick())) {
+                return;
+            }
+
+            if (restToGraveyard) {
+                if (!sourceCards.isEmpty()) {
+                    GameLog.Builder graveyardLog = GameLog.builder().text(player.getUsername() + " puts ");
+                    for (int i = 0; i < sourceCards.size(); i++) {
+                        if (i > 0) {
+                            graveyardLog.text(", ");
+                        }
+                        graveyardLog.card(sourceCards.get(i));
+                    }
+                    graveyardLog.text(" into their graveyard.");
+                    for (Card card : new ArrayList<>(sourceCards)) {
+                        graveyardService.addCardToGraveyard(gameData, deckOwnerId, card);
+                    }
+                    gameBroadcastService.logAndBroadcast(gameData, graveyardLog.build());
+                }
+                turnProgressionService.resolveAutoPass(gameData);
                 return;
             }
 
@@ -299,7 +320,7 @@ public class LibraryChoiceHandlerService {
             if (librarySearchSupport.startNextEachPlayerCreatureToBattlefieldSearch(gameData, followUp)) return;
             if (librarySearchSupport.startNextSameNamePick(gameData, playerId, followUp)) return;
             if (librarySearchSupport.startNextColorToHandPick(gameData, playerId, followUp)) return;
-            resumeRemainingEffectsThenAutoPass(gameData);
+            finishSearchAndResume(gameData);
             return;
         }
 
@@ -727,21 +748,25 @@ public class LibraryChoiceHandlerService {
         if (librarySearchSupport.startNextEachPlayerCreatureToBattlefieldSearch(gameData, followUp)) return;
         if (librarySearchSupport.startNextSameNamePick(gameData, playerId, followUp)) return;
         if (librarySearchSupport.startNextColorToHandPick(gameData, playerId, followUp)) return;
-        resumeRemainingEffectsThenAutoPass(gameData);
+        finishSearchAndResume(gameData);
     }
 
     /**
-     * After a library search resolves, continue any effects that still remain on the same
-     * spell/ability which paused for this search — e.g. Exploding Borders ("search for a basic
-     * land, put it onto the battlefield tapped, then deal domain damage"). Mirrors the resume in
-     * {@code ScryInteractionHandler} / {@code LibraryReorderInteractionHandler}; a no-op when the
-     * search was the last (or only) effect. Then hands control back via auto-pass.
+     * Resume any effects queued after the search on the same spell/ability, then auto-pass. A
+     * reflexive search folded before another effect (e.g. Shefet Monitor's "search ... then draw",
+     * where the cycling draw follows the land search) leaves {@code pendingEffectResolutionEntry}
+     * pointing at the not-yet-resolved remainder; drive it here on search completion. When the
+     * search was the effect list's last effect (the resume index is past the end), the guard skips
+     * the resume and this behaves exactly like {@code resolveAutoPass}.
      */
-    private void resumeRemainingEffectsThenAutoPass(GameData gameData) {
-        if (gameData.pendingEffectResolutionEntry != null) {
-            effectResolutionService.resolveEffectsFrom(gameData,
-                    gameData.pendingEffectResolutionEntry,
-                    gameData.pendingEffectResolutionIndex);
+    private void finishSearchAndResume(GameData gameData) {
+        StackEntry pending = gameData.pendingEffectResolutionEntry;
+        if (pending != null
+                && gameData.pendingEffectResolutionIndex < pending.getEffectsToResolve().size()) {
+            effectResolutionService.resolveEffectsFrom(gameData, pending, gameData.pendingEffectResolutionIndex);
+            if (gameData.interaction.isAwaitingInput() || !gameData.pendingMayAbilities.isEmpty()) {
+                return;
+            }
         }
         turnProgressionService.resolveAutoPass(gameData);
     }
@@ -843,22 +868,26 @@ public class LibraryChoiceHandlerService {
     }
 
     /**
-     * If any land remains among the Gift of the Gargantuan looked-at cards, begins the second pick
-     * (may reveal a land card to hand, then bottom the rest) and returns true. Otherwise returns
-     * false so the caller bottoms the remaining cards immediately.
+     * If any card of the second pick's type remains among the two-bounded-pick looked-at cards
+     * (Gift of the Gargantuan land pick, Benefaction of Rhonas enchantment pick), begins the second
+     * pick (may reveal such a card to hand, then dispose the rest per the pick's rest destination)
+     * and returns true. Otherwise returns false so the caller disposes the remaining cards immediately.
      */
-    private boolean startGiftLandPick(GameData gameData, UUID controllerId, List<Card> lookedAtCards) {
-        List<Card> lands = lookedAtCards.stream().filter(card -> card.hasType(CardType.LAND)).toList();
-        if (lands.isEmpty()) {
+    private boolean startSecondBoundedPick(GameData gameData, UUID controllerId, List<Card> lookedAtCards,
+            LibrarySearchFollowUp.SecondBoundedPick spec) {
+        List<Card> eligible = lookedAtCards.stream().filter(card -> card.hasType(spec.type())).toList();
+        if (eligible.isEmpty()) {
             return false;
         }
-        String prompt = "You may reveal a land card from among them and put it into your hand.";
-        LibrarySearchParams params = LibrarySearchParams.builder(controllerId, new ArrayList<>(lands))
+        String prompt = "You may reveal a " + spec.type().getDisplayName().toLowerCase()
+                + " card from among them and put it into your hand.";
+        LibrarySearchParams params = LibrarySearchParams.builder(controllerId, new ArrayList<>(eligible))
                 .reveals(true)
                 .canFailToFind(true)
                 .destination(LibrarySearchDestination.HAND)
                 .sourceCards(new ArrayList<>(lookedAtCards))
-                .reorderRemainingToBottom(true)
+                .reorderRemainingToBottom(!spec.restToGraveyard())
+                .restToGraveyard(spec.restToGraveyard())
                 .shuffleAfterSelection(false)
                 .build();
         interactionHandlerRegistry.begin(gameData, new PendingInteraction.LibrarySearch(params, prompt, true));

@@ -29,6 +29,9 @@ public class StackEntry {
     @Setter private boolean copy;
     @Setter private boolean nonTargeting;
     @Setter private boolean returnToHandAfterResolving;
+    /** When set, the resolved spell card is put into its owner's library at this 0-based position from the
+     *  top instead of going to the graveyard (Approach of the Second Sun's "seventh from the top" = 6). */
+    @Setter private Integer putIntoLibraryPositionAfterResolving;
     @Setter private boolean castWithFlashback;
     @Setter private Zone sourceZone;
     @Setter private boolean kicked;
@@ -263,6 +266,7 @@ public class StackEntry {
         this.copy = source.copy;
         this.nonTargeting = source.nonTargeting;
         this.returnToHandAfterResolving = source.returnToHandAfterResolving;
+        this.putIntoLibraryPositionAfterResolving = source.putIntoLibraryPositionAfterResolving;
         this.castWithFlashback = source.castWithFlashback;
         this.sourceZone = source.sourceZone;
         this.kicked = source.kicked;

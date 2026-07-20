@@ -373,6 +373,16 @@ public class GraveyardChoiceHandlerService {
             }
         }
 
+        // "... from a single graveyard" (Scarab Feast): all chosen targets must share one graveyard.
+        if (gameData.graveyardTargetOperation.singleGraveyard && cardIds.size() > 1) {
+            UUID firstOwner = gameQueryService.findGraveyardOwnerById(gameData, cardIds.get(0));
+            for (UUID cardId : cardIds) {
+                if (!java.util.Objects.equals(firstOwner, gameQueryService.findGraveyardOwnerById(gameData, cardId))) {
+                    throw new IllegalStateException("All targets must be in a single graveyard");
+                }
+            }
+        }
+
         // Card pile separation (Boneyard Parley, Brilliant Ultimatum): opponent assigns exiled cards to piles
         PendingPileSeparation pileSeparation = gameData.peekPendingInteraction(PendingPileSeparation.class);
         if (pileSeparation != null && pileSeparation.cardPileMode()) {
@@ -404,6 +414,7 @@ public class GraveyardChoiceHandlerService {
         gameData.graveyardTargetOperation.entryType = null;
         gameData.graveyardTargetOperation.xValue = 0;
         gameData.graveyardTargetOperation.anyNumber = false;
+        gameData.graveyardTargetOperation.singleGraveyard = false;
         gameData.graveyardTargetOperation.targetPlayerId = null;
         gameData.graveyardTargetOperation.flashback = false;
         gameData.graveyardTargetOperation.sourcePermanentId = null;

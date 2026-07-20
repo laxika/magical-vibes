@@ -54,6 +54,7 @@ public class ExileGraveyardCardsEffectHandler implements NormalEffectHandlerBean
             case TARGET_PLAYER_ENTIRE -> resolveTargetPlayerEntire(gameData, entry);
             case ALL_PLAYERS -> resolveAllGraveyards(gameData, entry);
             case ALL_OPPONENTS -> resolveAllOpponentsGraveyards(gameData, entry);
+            case EACH_OPPONENT_KEEP -> resolveEachOpponentKeep(gameData, entry, e);
         }
     }
 
@@ -89,6 +90,34 @@ public class ExileGraveyardCardsEffectHandler implements NormalEffectHandlerBean
         } else {
             // Player must choose which cards to exile
             graveyardReturnSupport.beginGraveyardExileChoice(gameData, affectedPlayerId, count);
+        }
+    }
+
+    private void resolveEachOpponentKeep(GameData gameData, StackEntry entry, ExileGraveyardCardsEffect e) {
+        UUID controllerId = entry.getControllerId();
+        int keepCount = e.count();
+
+        // Two-player engine: exactly one opponent. Each opponent keeps `keepCount` cards of their
+        // choice in their graveyard and exiles the rest. Choosing which to exile is the exact
+        // complement of choosing which to keep, so this reuses the standard graveyard-exile choice.
+        for (UUID playerId : gameData.orderedPlayerIds) {
+            if (playerId.equals(controllerId)) {
+                continue;
+            }
+            List<Card> graveyard = gameData.playerGraveyards.get(playerId);
+            String playerName = gameData.playerIdToName.get(playerId);
+            int size = graveyard == null ? 0 : graveyard.size();
+
+            if (size <= keepCount) {
+                String logEntry = playerName + " keeps their graveyard (" + size + " card"
+                        + (size != 1 ? "s" : "") + "); nothing is exiled.";
+                gameBroadcastService.logAndBroadcast(gameData, GameLog.text(logEntry));
+                log.info("Game {} - {} keeps {} graveyard card(s); nothing exiled (each-opponent-keep)",
+                        gameData.id, playerName, size);
+                continue;
+            }
+
+            graveyardReturnSupport.beginGraveyardExileChoice(gameData, playerId, size - keepCount);
         }
     }
 

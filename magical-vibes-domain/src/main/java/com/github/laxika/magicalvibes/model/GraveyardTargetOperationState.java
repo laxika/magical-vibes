@@ -13,6 +13,11 @@ public class GraveyardTargetOperationState {
     public StackEntryType entryType;
     public int xValue;
     public boolean anyNumber;
+    /**
+     * Whether all chosen targets must come from one graveyard ("... from a single graveyard",
+     * Scarab Feast). Enforced in {@code GraveyardChoiceHandlerService.handleMultipleCardsChosen}.
+     */
+    public boolean singleGraveyard;
     /** Target player for effects like "Target player shuffles ... from their graveyard" */
     public UUID targetPlayerId;
     /** Whether the spell is being cast with flashback */

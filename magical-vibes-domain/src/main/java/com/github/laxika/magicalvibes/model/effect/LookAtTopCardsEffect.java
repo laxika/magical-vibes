@@ -35,8 +35,8 @@ import com.github.laxika.magicalvibes.model.filter.CardPredicate;
  * </ul>
  *
  * <p>Still separate records (genuinely different mechanics): the hand/top/bottom three-way split
- * ({@code LookAtTopCardsHandTopBottomEffect}), the two-bounded-picks Gift of the Gargantuan shape
- * ({@code LookAtTopCardsRevealCreatureAndLandToHandRestOnBottomEffect}), the attachment-relative
+ * ({@code LookAtTopCardsHandTopBottomEffect}), the two-bounded-picks Gift of the Gargantuan / Benefaction
+ * of Rhonas shape ({@code LookAtTopCardsRevealTwoTypesToHandThenRestEffect}), the attachment-relative
  * Call to the Kindred shape, the X-based multi-select-to-battlefield shape, and the target-library
  * family ({@link LookAtTopCardsOfTargetLibraryEffect}).
  *

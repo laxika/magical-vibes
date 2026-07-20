@@ -56,6 +56,10 @@ import lombok.Builder;
  *                             from any zone this turn (e.g. Garna, the Bloodflame); uses the
  *                             {@code cardsPutIntoGraveyardFromAnywhereThisTurn} tracking in GameData;
  *                             only meaningful when {@link #returnAll} is {@code true}
+ * @param discardedOrCycledThisTurn {@code true} to restrict returned cards to those the controller cycled
+ *                             or discarded this turn (e.g. Shadow of the Grave); uses the
+ *                             {@code cardsDiscardedOrCycledThisTurn} tracking in GameData; only meaningful
+ *                             when {@link #returnAll} is {@code true}
  * @param attachmentTarget     when non-null, the returned card (typically an Aura) is attached to a
  *                             permanent matching this predicate after entering the battlefield; the
  *                             controller chooses which permanent to attach to (e.g. Nomad Mythmaker)
@@ -121,6 +125,7 @@ public record ReturnCardFromGraveyardEffect(
         boolean thisTurnOnly,
         boolean fromBattlefieldThisTurn,
         boolean fromAnywhereThisTurn,
+        boolean discardedOrCycledThisTurn,
         PermanentPredicate attachmentTarget,
         boolean gainLifeEqualToManaValue,
         boolean attachToSource,

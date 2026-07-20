@@ -5,6 +5,7 @@ import com.github.laxika.magicalvibes.model.CardColor;
 import com.github.laxika.magicalvibes.model.CardSubtype;
 import com.github.laxika.magicalvibes.model.CardType;
 import com.github.laxika.magicalvibes.model.ChoiceContext;
+import com.github.laxika.magicalvibes.model.CounterType;
 import com.github.laxika.magicalvibes.model.DiscardFollowUp;
 import com.github.laxika.magicalvibes.model.effect.EffectDuration;
 import com.github.laxika.magicalvibes.model.GameData;
@@ -334,6 +335,26 @@ public class PlayerInputService {
                 gameData.id, playerName, maxCounters);
     }
 
+    /**
+     * Quarry Hauler: prompt {@code playerId} to add or remove one counter of the FIRST kind in
+     * {@code remainingKinds} on {@code targetId}. {@link ChoiceHandlerService} applies the answer and
+     * re-invokes this with the remaining kinds until every kind has been resolved.
+     */
+    public void beginAdjustCounterKindChoice(GameData gameData, UUID playerId, UUID targetId,
+                                             String sourceCardName, List<CounterType> remainingKinds) {
+        ChoiceContext.AdjustCounterKindChoice ctx = new ChoiceContext.AdjustCounterKindChoice(
+                targetId, playerId, sourceCardName, new ArrayList<>(remainingKinds));
+
+        CounterType current = remainingKinds.getFirst();
+        String label = current.name().toLowerCase().replace('_', ' ');
+        interactionHandlerRegistry.begin(gameData, new PendingInteraction.ColorChoice(
+                playerId, null, null, ctx, ChoiceContext.AdjustCounterKindChoice.OPTIONS,
+                sourceCardName + " — Add or remove a " + label + " counter?"));
+
+        String playerName = gameData.playerIdToName.get(playerId);
+        log.info("Game {} - Awaiting {} to add/remove a {} counter", gameData.id, playerName, current);
+    }
+
     public void beginPrimalClayFormChoice(GameData gameData, UUID playerId, UUID permanentId) {
         ChoiceContext.PrimalClayFormChoice choiceContext = new ChoiceContext.PrimalClayFormChoice(permanentId);
 
@@ -450,12 +471,20 @@ public class PlayerInputService {
         log.info("Game {} - Awaiting {} to choose a card name", gameData.id, playerName);
     }
 
-    public void beginSpellCardNameChoice(GameData gameData, UUID choosingPlayerId, UUID targetPlayerId, List<CardType> excludedTypes) {
+    public void beginSpellCardNameChoice(GameData gameData, UUID choosingPlayerId, UUID targetPlayerId,
+                                         List<CardType> excludedTypes, CardType requiredType) {
         ChoiceContext.ExileByNameChoice choiceContext = new ChoiceContext.ExileByNameChoice(targetPlayerId, choosingPlayerId, excludedTypes);
 
-        List<String> cardNames = collectCardNamesInGameExcluding(gameData, excludedTypes);
-        String excludedLabel = excludedTypes.stream().map(t -> t.name().toLowerCase()).reduce((a, b) -> a + "/" + b).orElse("");
-        String prompt = "Choose a non" + excludedLabel + " card name.";
+        List<String> cardNames = collectCardNamesInGameExcluding(gameData, excludedTypes, requiredType);
+        String prompt;
+        if (requiredType != null) {
+            String typeLabel = requiredType.name().toLowerCase();
+            String article = "aeiou".indexOf(typeLabel.charAt(0)) >= 0 ? "an " : "a ";
+            prompt = "Choose " + article + typeLabel + " card name.";
+        } else {
+            String excludedLabel = excludedTypes.stream().map(t -> t.name().toLowerCase()).reduce((a, b) -> a + "/" + b).orElse("");
+            prompt = "Choose a non" + excludedLabel + " card name.";
+        }
         interactionHandlerRegistry.begin(gameData, new PendingInteraction.ColorChoice(
                 choosingPlayerId, null, null, choiceContext, cardNames, prompt));
 
@@ -476,28 +505,37 @@ public class PlayerInputService {
     }
 
     private List<String> collectCardNamesInGameExcluding(GameData gameData, List<CardType> excludedTypes) {
+        return collectCardNamesInGameExcluding(gameData, excludedTypes, null);
+    }
+
+    private List<String> collectCardNamesInGameExcluding(GameData gameData, List<CardType> excludedTypes, CardType requiredType) {
         Set<String> names = new TreeSet<>();
         for (UUID pid : gameData.playerIds) {
             gameData.playerBattlefields.getOrDefault(pid, List.of()).stream()
-                    .filter(p -> !hasExcludedType(p.getCard(), excludedTypes))
+                    .filter(p -> isNameCandidate(p.getCard(), excludedTypes, requiredType))
                     .forEach(p -> names.add(p.getCard().getName()));
             gameData.playerHands.getOrDefault(pid, List.of()).stream()
-                    .filter(c -> !hasExcludedType(c, excludedTypes))
+                    .filter(c -> isNameCandidate(c, excludedTypes, requiredType))
                     .forEach(c -> names.add(c.getName()));
             gameData.playerGraveyards.getOrDefault(pid, List.of()).stream()
-                    .filter(c -> !hasExcludedType(c, excludedTypes))
+                    .filter(c -> isNameCandidate(c, excludedTypes, requiredType))
                     .forEach(c -> names.add(c.getName()));
             gameData.playerDecks.getOrDefault(pid, List.of()).stream()
-                    .filter(c -> !hasExcludedType(c, excludedTypes))
+                    .filter(c -> isNameCandidate(c, excludedTypes, requiredType))
                     .forEach(c -> names.add(c.getName()));
             gameData.getPlayerExiledCards(pid).stream()
-                    .filter(c -> !hasExcludedType(c, excludedTypes))
+                    .filter(c -> isNameCandidate(c, excludedTypes, requiredType))
                     .forEach(c -> names.add(c.getName()));
         }
         gameData.stack.stream()
-                .filter(se -> !hasExcludedType(se.getCard(), excludedTypes))
+                .filter(se -> isNameCandidate(se.getCard(), excludedTypes, requiredType))
                 .forEach(se -> names.add(se.getCard().getName()));
         return new ArrayList<>(names);
+    }
+
+    /** A card's name is offered only when it has none of {@code excludedTypes} and, if set, has {@code requiredType}. */
+    private boolean isNameCandidate(Card card, List<CardType> excludedTypes, CardType requiredType) {
+        return !hasExcludedType(card, excludedTypes) && (requiredType == null || card.hasType(requiredType));
     }
 
     private boolean hasExcludedType(Card card, List<CardType> excludedTypes) {

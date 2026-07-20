@@ -285,4 +285,23 @@ public sealed interface ChoiceContext {
         public static final String LIFE = "Target player gains 1 life";
         public static final List<String> OPTIONS = List.of(DAMAGE, LIFE);
     }
+
+    /**
+     * Quarry Hauler: "for each kind of counter on target permanent, put another counter of that kind
+     * on it or remove one from it." The controller answers {@link #ADD}/{@link #REMOVE} once for the
+     * first entry of {@code remainingKinds}; the answer is applied to {@code targetId} and, if any
+     * kinds are left, the choice re-prompts for the next one until every kind has been resolved.
+     *
+     * @param targetId       the permanent whose counters are being adjusted
+     * @param controllerId   the player making the add/remove decisions
+     * @param sourceCardName name of the source card (for the prompt/log)
+     * @param remainingKinds the counter kinds still awaiting a decision (first is the current one)
+     */
+    record AdjustCounterKindChoice(UUID targetId, UUID controllerId, String sourceCardName,
+                                   List<CounterType> remainingKinds) implements ChoiceContext {
+
+        public static final String ADD = "ADD";
+        public static final String REMOVE = "REMOVE";
+        public static final List<String> OPTIONS = List.of(ADD, REMOVE);
+    }
 }

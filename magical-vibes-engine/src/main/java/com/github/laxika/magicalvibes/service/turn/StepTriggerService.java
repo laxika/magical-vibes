@@ -1705,12 +1705,17 @@ public class StepTriggerService {
         permanentRemovalService.processDelayedPermanentActions(gameData,
                 DelayedPermanentActionKind.RETURN_TO_HAND_AT_END_STEP);
 
-        // Process delayed "lose the game" triggers (e.g. Last Chance). Only fire entries scheduled on
-        // an earlier turn, so the current turn's own end step is skipped and the loss lands on the
-        // extra turn's end step.
+        // Process delayed "lose the game" triggers (e.g. Last Chance, Glorious End). These fire at the
+        // beginning of the scheduling player's *own* next end step ("your next end step"): only entries
+        // scheduled on an earlier turn (so the scheduling turn's own end step is skipped) AND only while
+        // that player is the active player (so opponents' end steps are skipped). For the extra-turn
+        // cards the very next turn is the controller's, so the loss lands on it; for Glorious End cast
+        // on your own turn it skips the intervening opponent turn and lands on your next turn's end step.
         if (gameData.hasDelayedAction(LoseGameAtEndStep.class)) {
             List<LoseGameAtEndStep> toLose = gameData.drainDelayedActions(
-                    LoseGameAtEndStep.class, a -> gameData.turnNumber > a.registeredTurnNumber());
+                    LoseGameAtEndStep.class,
+                    a -> gameData.turnNumber > a.registeredTurnNumber()
+                            && a.playerId().equals(gameData.activePlayerId));
             for (LoseGameAtEndStep action : toLose) {
                 gameData.stack.add(new StackEntry(
                         StackEntryType.TRIGGERED_ABILITY,

@@ -19,6 +19,7 @@ public record LibrarySearchParams(
         List<Card> sourceCards,
         boolean reorderRemainingToBottom,
         boolean reorderRemainingToTop,
+        boolean restToGraveyard,
         boolean shuffleAfterSelection,
         String prompt,
         LibrarySearchDestination destination,
@@ -40,6 +41,14 @@ public record LibrarySearchParams(
         return new Builder(playerId, cards);
     }
 
+    /** Returns a copy with a different searchable card list (all other fields unchanged). */
+    public LibrarySearchParams withCards(List<Card> newCards) {
+        return new LibrarySearchParams(playerId, newCards, reveals, canFailToFind, targetPlayerId,
+                remainingCount, sourceCards, reorderRemainingToBottom, reorderRemainingToTop,
+                restToGraveyard, shuffleAfterSelection, prompt, destination, filterCardTypes,
+                accumulatedCards, filterCardName, attachToPlayerId, filterPredicate, sourcePermanentId, followUp);
+    }
+
     public static class Builder {
         private final UUID playerId;
         private final List<Card> cards;
@@ -50,6 +59,7 @@ public record LibrarySearchParams(
         private List<Card> sourceCards;
         private boolean reorderRemainingToBottom;
         private boolean reorderRemainingToTop;
+        private boolean restToGraveyard;
         private boolean shuffleAfterSelection = true;
         private String prompt;
         private LibrarySearchDestination destination = LibrarySearchDestination.HAND;
@@ -98,6 +108,11 @@ public record LibrarySearchParams(
 
         public Builder reorderRemainingToTop(boolean reorderRemainingToTop) {
             this.reorderRemainingToTop = reorderRemainingToTop;
+            return this;
+        }
+
+        public Builder restToGraveyard(boolean restToGraveyard) {
+            this.restToGraveyard = restToGraveyard;
             return this;
         }
 
@@ -154,8 +169,8 @@ public record LibrarySearchParams(
         public LibrarySearchParams build() {
             return new LibrarySearchParams(playerId, cards, reveals, canFailToFind, targetPlayerId,
                     remainingCount, sourceCards, reorderRemainingToBottom, reorderRemainingToTop,
-                    shuffleAfterSelection, prompt, destination, filterCardTypes, accumulatedCards,
-                    filterCardName, attachToPlayerId, filterPredicate, sourcePermanentId, followUp);
+                    restToGraveyard, shuffleAfterSelection, prompt, destination, filterCardTypes,
+                    accumulatedCards, filterCardName, attachToPlayerId, filterPredicate, sourcePermanentId, followUp);
         }
     }
 }

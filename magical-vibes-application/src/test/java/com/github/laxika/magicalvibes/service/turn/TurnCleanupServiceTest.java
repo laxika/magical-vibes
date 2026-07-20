@@ -181,6 +181,19 @@ class TurnCleanupServiceTest {
         }
 
         @Test
+        @DisplayName("Clears cantBlockThisTurn flag when it is the only modifier")
+        void clearsCantBlockThisTurn() {
+            Card card = createCardWithName("Grizzly Bears");
+            Permanent perm = new Permanent(card);
+            perm.setCantBlockThisTurn(true);
+            gd.playerBattlefields.get(player1Id).add(perm);
+
+            sut.resetEndOfTurnModifiers(gd);
+
+            assertThat(perm.isCantBlockThisTurn()).isFalse();
+        }
+
+        @Test
         @DisplayName("Clears until-end-of-turn block restrictions on permanents")
         void clearsBlockRestrictionsUntilEndOfTurn() {
             Card card = createCardWithName("Grizzly Bears");

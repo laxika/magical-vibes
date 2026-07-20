@@ -116,6 +116,13 @@ public class DamageSupport {
             gameBroadcastService.logAndBroadcast(gameData, GameLog.textCardText("Damage to ", target.getCard(), " is prevented."));
             return;
         }
+        // Gideon's Intervention: prevent all damage to permanents you control from sources with the chosen name.
+        String preventionSourceName = (damageSource != null ? damageSource.getCard() : entry.getEffectiveDamageSourceCard()).getName();
+        if (gameQueryService.isDamagePreventable(gameData)
+                && gameQueryService.isDamageFromChosenNamePreventedForController(gameData, targetControllerId, preventionSourceName)) {
+            gameBroadcastService.logAndBroadcast(gameData, GameLog.textCardText("Damage to ", target.getCard(), " is prevented."));
+            return;
+        }
         // Uncle Istvan: "Prevent all damage that would be dealt to this creature by creatures." Noncombat
         // path — combat damage is prevented in DamagePreventionService.applyCreaturePreventionShield.
         if (gameQueryService.isCreatureSourceDamageToSelfPrevented(gameData, target, entry, damageSource)) {
@@ -185,16 +192,31 @@ public class DamageSupport {
                 && gameQueryService.sourceHasKeyword(gameData, entry, damageSource, Keyword.DEATHTOUCH);
 
         // Infect and wither both deal creature damage as -1/-1 counters (CR 702.90 / 702.80).
-        boolean dealsCounterDamage = gameQueryService.sourceDealsCounterDamageToCreatures(gameData, entry, damageSource);
+        // Soul-Scar Mage likewise replaces its controller's noncombat damage to an opponent's
+        // creature with that many -1/-1 counters. This helper is the noncombat damage path only
+        // (combat damage is handled in CombatDamageService), so the "noncombat" clause is satisfied
+        // structurally — no combat check is needed here.
+        UUID damageSourceControllerId = damageSource != null
+                ? gameQueryService.findPermanentController(gameData, damageSource.getId())
+                : entry.getControllerId();
+        boolean dealsCounterDamage = gameQueryService.sourceDealsCounterDamageToCreatures(gameData, entry, damageSource)
+                || gameQueryService.noncombatDamageToOpponentCreatureAsCounters(gameData, damageSourceControllerId, targetControllerId);
 
         if (dealsCounterDamage) {
             if (damage > 0 && !gameQueryService.cantHaveCounters(gameData, target)
                     && !gameQueryService.cantHaveMinusOneMinusOneCounters(gameData, target)) {
-                target.setCounterCount(CounterType.MINUS_ONE_MINUS_ONE, target.getCounterCount(CounterType.MINUS_ONE_MINUS_ONE) + damage);
-                gameBroadcastService.logAndBroadcast(gameData, GameLog.cardTextCard(sourceCard,
-                        " puts " + damage + " -1/-1 counters on ", target.getCard(), "."));
-                log.info("Game {} - {} puts {} -1/-1 counters on {}", gameData.id, sourceName, damage, target.getCard().getName());
-                permanentCounterSupport.fireMinusOneMinusOneCounterPutOnCreatureTriggers(gameData, target, damage);
+                // Vizier of Remedies reduces the -1/-1 counters (CR ruling: wither/infect counters
+                // count), while the deathtouch marking below still keys off the full damage dealt.
+                int counters = gameQueryService.reduceMinusOneMinusOneCounters(gameData, target, damage);
+                if (counters > 0) {
+                    target.setCounterCount(CounterType.MINUS_ONE_MINUS_ONE, target.getCounterCount(CounterType.MINUS_ONE_MINUS_ONE) + counters);
+                    gameBroadcastService.logAndBroadcast(gameData, GameLog.cardTextCard(sourceCard,
+                            " puts " + counters + " -1/-1 counters on ", target.getCard(), "."));
+                    log.info("Game {} - {} puts {} -1/-1 counters on {}", gameData.id, sourceName, counters, target.getCard().getName());
+                    // CR ruling (Nest of Scarabs): the damage source's controller is the player who
+                    // "puts" the wither/infect counters, so the controller-restricted watcher keys off it.
+                    permanentCounterSupport.fireMinusOneMinusOneCounterPutOnCreatureTriggers(gameData, target, counters, damageSourceControllerId);
+                }
             }
             // Counter damage is still damage dealt, so a deathtouch+wither/infect source
             // marks the creature for the CR 704.5h destruction check as well.
@@ -333,7 +355,7 @@ public class DamageSupport {
 
     public boolean isSourcePermanentPreventedFromDealingDamage(GameData gameData, StackEntry entry) {
         return entry.getSourcePermanentId() != null
-                && gameData.permanentsPreventedFromDealingDamage.contains(entry.getSourcePermanentId());
+                && gameData.isPreventedFromDealingDamage(entry.getSourcePermanentId());
     }
 
     public void resolveAnyTargetDamage(GameData gameData, StackEntry entry, UUID targetId, int rawDamage, boolean cantRegenerate) {
@@ -356,6 +378,14 @@ public class DamageSupport {
                 return;
             }
             if (targetPermanent.getCard().hasType(CardType.PLANESWALKER)) {
+                // "Prevent all damage that would be dealt to ~" (e.g. Gideon of the Trials 0) also stops
+                // loyalty loss. The creature-damage path applies this set in DamagePreventionService, but
+                // the loyalty branch below bypasses it, so guard it here.
+                if (gameQueryService.isDamagePreventable(gameData)
+                        && gameData.creaturesWithAllDamagePrevented.contains(targetPermanent.getId())) {
+                    gameBroadcastService.logAndBroadcast(gameData, GameLog.cardThen(source, "'s damage is prevented."));
+                    return;
+                }
                 // CR 306.8: damage dealt to a planeswalker removes that many loyalty counters from it
                 // (SBAs then move it to the graveyard once it has 0 loyalty). Mirrors the combat path.
                 int loyaltyDamage = Math.max(0, rawDamage);
@@ -410,8 +440,10 @@ public class DamageSupport {
             return;
         }
         // Protection from card name (Runed Halo) prevents all damage from sources with that name.
+        // Gideon's Intervention likewise prevents damage from sources with the chosen name.
         if (gameQueryService.isDamagePreventable(gameData)
-                && gameQueryService.playerHasProtectionFromChosenName(gameData, playerId, cardName)) {
+                && (gameQueryService.playerHasProtectionFromChosenName(gameData, playerId, cardName)
+                        || gameQueryService.isDamageFromChosenNamePreventedForController(gameData, playerId, cardName))) {
             gameBroadcastService.logAndBroadcast(gameData, GameLog.cardThen(source,
                     "'s damage to " + gameData.playerIdToName.get(playerId) + " is prevented."));
             return;

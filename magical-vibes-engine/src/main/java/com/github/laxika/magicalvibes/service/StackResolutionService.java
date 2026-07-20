@@ -577,7 +577,14 @@ public class StackResolutionService {
         UUID controllerId = entry.getControllerId();
 
         Permanent perm = new Permanent(card);
-        perm.setCounterCount(CounterType.LOYALTY, card.getLoyalty() != null ? card.getLoyalty() : 0);
+        // Planeswalkers with printed loyalty "X" (e.g. Nissa, Steward of Elements) enter with
+        // loyalty counters equal to the X paid for their {X} cost. Scryfall's non-numeric "X"
+        // loyalty parses to 0, so an {X} in the mana cost is the reliable signal.
+        int startingLoyalty = card.getLoyalty() != null ? card.getLoyalty() : 0;
+        if (card.getParsedManaCost() != null && card.getParsedManaCost().hasX()) {
+            startingLoyalty = entry.getXValue();
+        }
+        perm.setCounterCount(CounterType.LOYALTY, startingLoyalty);
         perm.setSummoningSick(false);
         battlefieldEntryService.putPermanentOntoBattlefield(gameData, controllerId, perm);
 
@@ -680,6 +687,13 @@ public class StackResolutionService {
         } else if (entry.isReturnToHandAfterResolving()) {
             gameData.addCardToHand(entry.getControllerId(), entry.getCard());
             gameBroadcastService.logAndBroadcast(gameData, GameLog.cardThen(entry.getCard(), " is returned to its owner's hand."));
+        } else if (entry.getPutIntoLibraryPositionAfterResolving() != null) {
+            // Approach of the Second Sun: the resolved spell goes into its owner's library N from the top.
+            List<Card> deck = gameData.playerDecks.get(entry.getControllerId());
+            int position = Math.min(entry.getPutIntoLibraryPositionAfterResolving(), deck.size());
+            deck.add(position, entry.getCard());
+            gameBroadcastService.logAndBroadcast(gameData, GameLog.cardThen(entry.getCard(),
+                    " is put " + (position + 1) + " from the top of its owner's library."));
         } else if (gameData.pendingReturnToHandOnDiscardType != null) {
             // Spell disposition deferred — will be resolved after the async discard
             // completes (e.g. Psychic Miasma: goes to hand if a land is discarded,

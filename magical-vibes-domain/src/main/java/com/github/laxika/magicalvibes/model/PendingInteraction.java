@@ -103,8 +103,18 @@ public sealed interface PendingInteraction permits PermanentChoiceContext,
         }
     }
 
-    /** Scry N: {@code cards} are held out of the library while the player splits them top/bottom. */
-    record Scry(UUID playerId, java.util.List<Card> cards) implements PendingInteraction {
+    /**
+     * Scry N / surveil N: {@code cards} are held out of the library while the player splits them
+     * into a keep-on-top pile and a reject pile. When {@code toGraveyard} is false (scry) the
+     * reject pile goes to the bottom of the library; when true (surveil) it goes to the
+     * graveyard. Both variants share the SCRY_ORDER interaction shape and answer.
+     */
+    record Scry(UUID playerId, java.util.List<Card> cards, boolean toGraveyard) implements PendingInteraction {
+
+        /** Scry variant: the reject pile goes to the bottom of the library. */
+        public Scry(UUID playerId, java.util.List<Card> cards) {
+            this(playerId, cards, false);
+        }
 
         @Override
         public UUID decidingPlayerId() {

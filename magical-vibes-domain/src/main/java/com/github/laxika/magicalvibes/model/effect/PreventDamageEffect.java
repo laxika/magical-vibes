@@ -105,6 +105,16 @@ public record PreventDamageEffect(
         return new PreventDamageEffect(PreventionScope.ALL_BY_TARGET_CREATURES, null, true, null, null);
     }
 
+    /** "Until your next turn, prevent all damage target permanent would deal" (Gideon of the Trials +1). */
+    public static PreventDamageEffect allByTargetPermanentUntilNextTurn() {
+        return new PreventDamageEffect(PreventionScope.ALL_BY_TARGET_PERMANENT_UNTIL_NEXT_TURN, null, false, null, null);
+    }
+
+    /** "Prevent all damage that would be dealt to ~ this turn" — the source permanent (Gideon of the Trials 0). */
+    public static PreventDamageEffect allToSelf() {
+        return new PreventDamageEffect(PreventionScope.ALL_TO_SELF, null, false, null, null);
+    }
+
     /** "Prevent all damage that would be dealt to you and creatures you control this turn." */
     public static PreventDamageEffect allToControllerAndCreatures() {
         return new PreventDamageEffect(PreventionScope.ALL_TO_CONTROLLER_AND_CREATURES, null, false, null, null);
@@ -130,6 +140,7 @@ public record PreventDamageEffect(
         return switch (scope) {
             case NEXT_TO_TARGET -> TargetSpec.benign(TargetCategory.ANY_TARGET);
             case ALL_TO_TARGET_CREATURES, ALL_BY_TARGET_CREATURES -> TargetSpec.benign(TargetCategory.CREATURE);
+            case ALL_BY_TARGET_PERMANENT_UNTIL_NEXT_TURN -> TargetSpec.benign(TargetCategory.PERMANENT);
             default -> TargetSpec.NONE;
         };
     }

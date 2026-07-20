@@ -2,6 +2,8 @@ package com.github.laxika.magicalvibes.service.battlefield;
 
 import com.github.laxika.magicalvibes.model.ActivatedAbility;
 import com.github.laxika.magicalvibes.model.Card;
+import com.github.laxika.magicalvibes.model.CardColor;
+import com.github.laxika.magicalvibes.model.CardSubtype;
 import com.github.laxika.magicalvibes.model.CardType;
 import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.GameData;
@@ -58,6 +60,9 @@ public class CloneService {
         gameData.cloneOperation.toughnessOverride = copyEffect.toughnessOverride();
         gameData.cloneOperation.additionalTypesOverride = copyEffect.additionalTypesOverride();
         gameData.cloneOperation.additionalActivatedAbilities = copyEffect.additionalActivatedAbilities();
+        gameData.cloneOperation.embalmColorOverride = copyEffect.embalmColorOverride();
+        gameData.cloneOperation.embalmAddedSubtype = copyEffect.embalmAddedSubtype();
+        gameData.cloneOperation.embalmRemoveManaCost = copyEffect.embalmRemoveManaCost();
         gameData.interaction.setPermanentChoiceContext(new PermanentChoiceContext.CloneCopy());
 
         gameData.pendingMayAbilities.add(new PendingMayAbility(
@@ -78,6 +83,9 @@ public class CloneService {
         Integer toughnessOverride = gameData.cloneOperation.toughnessOverride;
         Set<CardType> additionalTypesOverride = gameData.cloneOperation.additionalTypesOverride;
         List<ActivatedAbility> additionalActivatedAbilities = gameData.cloneOperation.additionalActivatedAbilities;
+        CardColor embalmColorOverride = gameData.cloneOperation.embalmColorOverride;
+        CardSubtype embalmAddedSubtype = gameData.cloneOperation.embalmAddedSubtype;
+        boolean embalmRemoveManaCost = gameData.cloneOperation.embalmRemoveManaCost;
 
         gameData.cloneOperation.card = null;
         gameData.cloneOperation.controllerId = null;
@@ -86,6 +94,9 @@ public class CloneService {
         gameData.cloneOperation.toughnessOverride = null;
         gameData.cloneOperation.additionalTypesOverride = Set.of();
         gameData.cloneOperation.additionalActivatedAbilities = List.of();
+        gameData.cloneOperation.embalmColorOverride = null;
+        gameData.cloneOperation.embalmAddedSubtype = null;
+        gameData.cloneOperation.embalmRemoveManaCost = false;
 
         Permanent perm = new Permanent(card);
 
@@ -96,6 +107,14 @@ public class CloneService {
                 // "except it has..." — add additional abilities to the copy (e.g. Evil Twin)
                 for (ActivatedAbility extraAbility : additionalActivatedAbilities) {
                     perm.getCard().addActivatedAbility(extraAbility);
+                }
+                // Vizier of Many Faces embalm exception: a token that re-clones stays a token (so it
+                // still ceases to exist on death), and the white / no-mana-cost / added-Zombie
+                // transformation is re-applied on top of the freshly copied card — but only for an
+                // embalm token; a hard-cast Clone keeps the copied creature's own color, cost, and types.
+                if (card.isToken()) {
+                    perm.getCard().setToken(true);
+                    applyEmbalmExceptionToCopy(perm.getCard(), embalmColorOverride, embalmAddedSubtype, embalmRemoveManaCost);
                 }
             }
         }
@@ -128,6 +147,22 @@ public class CloneService {
 
         if (!gameData.interaction.isAwaitingInput()) {
             legendRuleService.checkLegendRule(gameData, controllerId);
+        }
+    }
+
+    private void applyEmbalmExceptionToCopy(Card copy, CardColor embalmColorOverride,
+                                            CardSubtype embalmAddedSubtype, boolean embalmRemoveManaCost) {
+        if (embalmColorOverride != null) {
+            copy.setColor(embalmColorOverride);
+            copy.setColors(List.of(embalmColorOverride));
+        }
+        if (embalmRemoveManaCost) {
+            copy.setManaCost("");
+        }
+        if (embalmAddedSubtype != null && !copy.getSubtypes().contains(embalmAddedSubtype)) {
+            List<CardSubtype> subtypes = new ArrayList<>(copy.getSubtypes());
+            subtypes.add(embalmAddedSubtype);
+            copy.setSubtypes(subtypes);
         }
     }
 }

@@ -15,7 +15,9 @@ import com.github.laxika.magicalvibes.service.effect.AmountContext;
 import com.github.laxika.magicalvibes.service.effect.AmountEvaluationService;
 import com.github.laxika.magicalvibes.service.filter.PredicateEvaluationService;
 import java.util.ArrayList;
+import java.util.LinkedHashMap;
 import java.util.List;
+import java.util.Map;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Component;
@@ -65,22 +67,30 @@ public class PutCounterOnEachMatchingPermanentEffectHandler implements NormalEff
         int amount = amountEvaluationService.evaluate(gameData, e.amount(),
                 AmountContext.forStackEntry(entry, source));
 
-        FilterContext ctx = FilterContext.of(gameData).withSourceCardId(entry.getCard().getId());
+        FilterContext ctx = FilterContext.of(gameData)
+                .withSourceCardId(entry.getCard().getId())
+                .withSourceControllerId(entry.getControllerId());
         int count = 0;
         List<Permanent> plusOneTargets = new ArrayList<>();
-        List<Permanent> minusOneTargets = new ArrayList<>();
+        // Vizier of Remedies reduces per creature by its own controller's copies, so the placed -1/-1
+        // amount can differ per permanent; remember each so the trigger fires the right number of times.
+        Map<Permanent, Integer> minusOneTargets = new LinkedHashMap<>();
         for (Permanent p : candidates) {
             if (!predicateEvaluationService.matchesPermanentPredicate(p, e.predicate(), ctx)) continue;
             if (gameQueryService.cantHaveCounters(gameData, p)) continue;
-            if (e.counterType() == CounterType.MINUS_ONE_MINUS_ONE
-                    && gameQueryService.cantHaveMinusOneMinusOneCounters(gameData, p)) continue;
+            int placed = amount;
+            if (e.counterType() == CounterType.MINUS_ONE_MINUS_ONE) {
+                if (gameQueryService.cantHaveMinusOneMinusOneCounters(gameData, p)) continue;
+                placed = gameQueryService.reduceMinusOneMinusOneCounters(gameData, p, amount);
+                if (placed <= 0) continue;
+            }
 
-            p.setCounterCount(e.counterType(), p.getCounterCount(e.counterType()) + amount);
+            p.setCounterCount(e.counterType(), p.getCounterCount(e.counterType()) + placed);
             count++;
             if (e.counterType() == CounterType.PLUS_ONE_PLUS_ONE && amount > 0) {
                 plusOneTargets.add(p);
-            } else if (e.counterType() == CounterType.MINUS_ONE_MINUS_ONE && amount > 0) {
-                minusOneTargets.add(p);
+            } else if (e.counterType() == CounterType.MINUS_ONE_MINUS_ONE) {
+                minusOneTargets.put(p, placed);
             }
         }
 
@@ -93,8 +103,8 @@ public class PutCounterOnEachMatchingPermanentEffectHandler implements NormalEff
         for (Permanent p : plusOneTargets) {
             permanentCounterSupport.firePlusOnePlusOneCountersPutOnSelfTriggers(gameData, p);
         }
-        for (Permanent p : minusOneTargets) {
-            permanentCounterSupport.fireMinusOneMinusOneCounterPutOnCreatureTriggers(gameData, p, amount);
+        for (Map.Entry<Permanent, Integer> placement : minusOneTargets.entrySet()) {
+            permanentCounterSupport.fireMinusOneMinusOneCounterPutOnCreatureTriggers(gameData, placement.getKey(), placement.getValue());
         }
     }
 }

@@ -24,6 +24,18 @@ class ChooseCardNameAndExileFromZonesEffectHandlerTest extends AbstractPlayerInt
 
                 resolveEffect(gd, entry, effect);
 
-                verify(playerInputService).beginSpellCardNameChoice(gd, player1Id, player2Id, List.of(CardType.LAND));
+                verify(playerInputService).beginSpellCardNameChoice(gd, player1Id, player2Id, List.of(CardType.LAND), null);
+            }
+
+    @Test
+            @DisplayName("Passes the required type through to the card name choice")
+            void passesRequiredType() {
+                Card card = createCard("Dispossess");
+                ChooseCardNameAndExileFromZonesEffect effect = new ChooseCardNameAndExileFromZonesEffect(List.of(), CardType.ARTIFACT);
+                StackEntry entry = createEntryWithTarget(card, player1Id, List.of(effect), player2Id);
+
+                resolveEffect(gd, entry, effect);
+
+                verify(playerInputService).beginSpellCardNameChoice(gd, player1Id, player2Id, List.of(), CardType.ARTIFACT);
             }
 }

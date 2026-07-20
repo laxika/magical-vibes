@@ -17,9 +17,11 @@ import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Component;
 
 /**
- * The player carried on the trigger's {@code targetId} returns a land they control to its
- * owner's hand (Mana Breach). Reuses the shared {@code BounceCreature} choice context to
- * prompt that player and return the chosen land via {@code handleBounceCreature}.
+ * A player returns a land they control to its owner's hand. The acting player is the one carried
+ * on the entry's {@code targetId} (Mana Breach — "that player" i.e. the caster) or, when no target
+ * is set, the resolving controller (Kefnet the Mindful — "you may return a land you control",
+ * wrapped in a {@code MayEffect} so the whole return is optional). Reuses the shared
+ * {@code BounceCreature} choice context to prompt that player and return the chosen land.
  */
 @Component
 @RequiredArgsConstructor
@@ -35,7 +37,7 @@ public class ReturnLandControlledByPlayerToHandEffectHandler implements NormalEf
 
     @Override
     public void resolve(GameData gameData, StackEntry entry, CardEffect effect) {
-        UUID playerId = entry.getTargetId();
+        UUID playerId = entry.getTargetId() != null ? entry.getTargetId() : entry.getControllerId();
         if (playerId == null || !gameData.playerIds.contains(playerId)) {
             return;
         }

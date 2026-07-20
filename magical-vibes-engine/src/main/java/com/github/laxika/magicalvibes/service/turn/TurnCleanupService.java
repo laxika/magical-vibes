@@ -101,7 +101,7 @@ public class TurnCleanupService {
             if (p.getPowerModifier() != 0 || p.getToughnessModifier() != 0 || !p.getGrantedKeywords().isEmpty()
                     || !p.getRemovedKeywords().isEmpty()
                     || p.getDamagePreventionShield() != 0 || p.getDamageToCounterPreventionShield() != 0
-                    || p.getRegenerationShield() != 0 || p.isCantBeBlocked()
+                    || p.getRegenerationShield() != 0 || p.isCantBeBlocked() || p.isCantBlockThisTurn()
                     || p.isAnimatedUntilEndOfTurn() || p.isAnimatedUntilEndOfCombat() || p.isCantRegenerateThisTurn()
                     || p.isExileInsteadOfDieThisTurn() || !p.getGrantedCardTypes().isEmpty()
                     || p.isMustAttackThisTurn() || p.isMustBeBlockedByAllThisTurn()
@@ -181,6 +181,7 @@ public class TurnCleanupService {
 
         // Per-card "this turn" exile-cast riders (e.g. Nita, Forum Conciliator) end with the turn.
         gameData.exilePlayAnyManaType.clear();
+        gameData.exilePlayWithoutPayingManaCost.clear();
         gameData.exileInsteadOfGraveyard.clear();
 
         int currentTurn = gameData.turnNumber;

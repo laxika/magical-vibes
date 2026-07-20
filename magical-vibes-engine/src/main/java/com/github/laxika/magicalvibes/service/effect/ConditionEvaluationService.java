@@ -18,6 +18,7 @@ import com.github.laxika.magicalvibes.model.condition.AttacksAlone;
 import com.github.laxika.magicalvibes.model.condition.BlockedByMinCreatures;
 import com.github.laxika.magicalvibes.model.condition.CameUnderControlThisTurn;
 import com.github.laxika.magicalvibes.model.condition.CardsInHandAtLeast;
+import com.github.laxika.magicalvibes.model.condition.CardsInHandAtMost;
 import com.github.laxika.magicalvibes.model.condition.CardsInLibraryAtLeast;
 import com.github.laxika.magicalvibes.model.condition.CardsAboveSelfInGraveyard;
 import com.github.laxika.magicalvibes.model.condition.CardsLeftGraveyardThisTurn;
@@ -32,6 +33,7 @@ import com.github.laxika.magicalvibes.model.condition.ControllerLifeAtMost;
 import com.github.laxika.magicalvibes.model.condition.ControllerTurn;
 import com.github.laxika.magicalvibes.model.condition.ControlsAnotherPermanent;
 import com.github.laxika.magicalvibes.model.condition.ControlsPermanent;
+import com.github.laxika.magicalvibes.model.condition.ControlsOtherPermanentCount;
 import com.github.laxika.magicalvibes.model.condition.ControlsPermanentCount;
 import com.github.laxika.magicalvibes.model.condition.ControlsPermanentCountAtMost;
 import com.github.laxika.magicalvibes.model.condition.ControlledCreaturesTotalPowerAtLeast;
@@ -171,6 +173,8 @@ public class ConditionEvaluationService {
                     countControlledMatchingPermanents(gameData, ctx, c.filter()) >= c.minCount();
             case ControlsPermanentCountAtMost c ->
                     countControlledMatchingPermanents(gameData, ctx, c.filter()) <= c.maxCount();
+            case ControlsOtherPermanentCount c ->
+                    countOtherControlledMatchingPermanents(gameData, ctx, c.filter()) >= c.minCount();
             case ControlledCreaturesTotalPowerAtLeast c ->
                     controlledCreaturesTotalPower(gameData, ctx.controllerId()) >= c.threshold();
             case NoOtherPermanent c ->
@@ -193,6 +197,8 @@ public class ConditionEvaluationService {
                     anyLibraryAtMost(gameData, c.threshold());
             case CardsInHandAtLeast c ->
                     countCardsInHand(gameData, ctx.controllerId()) >= c.threshold();
+            case CardsInHandAtMost c ->
+                    countCardsInHand(gameData, ctx.controllerId()) <= c.threshold();
             case ActivePlayerHandEmpty ignored ->
                     countCardsInHand(gameData, gameData.activePlayerId) == 0;
             case ControllerHandEmpty ignored ->
@@ -504,6 +510,15 @@ public class ConditionEvaluationService {
         List<Permanent> battlefield = gameData.playerBattlefields.get(ctx.controllerId());
         if (battlefield == null) return 0;
         return battlefield.stream().filter(p -> matchesPermanent(gameData, p, filter, ctx)).count();
+    }
+
+    private long countOtherControlledMatchingPermanents(GameData gameData, ConditionContext ctx, PermanentPredicate filter) {
+        if (ctx.controllerId() == null) return 0;
+        List<Permanent> battlefield = gameData.playerBattlefields.get(ctx.controllerId());
+        if (battlefield == null) return 0;
+        return battlefield.stream()
+                .filter(p -> !isSource(p, ctx) && matchesPermanent(gameData, p, filter, ctx))
+                .count();
     }
 
     private boolean noOtherMatchingPermanent(GameData gameData, ConditionContext ctx, PermanentPredicate filter) {

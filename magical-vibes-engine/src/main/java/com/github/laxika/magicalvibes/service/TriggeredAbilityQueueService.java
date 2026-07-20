@@ -42,17 +42,30 @@ public class TriggeredAbilityQueueService {
     private final GameBroadcastService gameBroadcastService;
     private final PlayerInputService playerInputService;
     private final TriggerTargetCollector triggerTargetCollector;
+    private final com.github.laxika.magicalvibes.service.target.TargetLegalityService targetLegalityService;
 
     public void processNextDeathTriggerTarget(GameData gameData) {
         while (gameData.hasPendingInteraction(PermanentChoiceContext.DeathTriggerTarget.class)) {
             PermanentChoiceContext.DeathTriggerTarget pending = gameData.peekPendingInteraction(PermanentChoiceContext.DeathTriggerTarget.class);
 
+            var dyingCard = pending.dyingCard();
+            TargetFilter deathFilter = dyingCard.getTargetFilter();
+            // The card-level target filter belongs to whichever ability declared it via
+            // target(...).addEffect(...). If none of THIS death trigger's effects are bound to a
+            // declared target group, that filter is a different ability's cast-time filter (e.g.
+            // Soulstinger's ETB "target creature you control") and must not narrow this death
+            // trigger — its own effect targets any creature.
+            if (deathFilter != null
+                    && pending.effects().stream().noneMatch(e -> dyingCard.getEffectTargetIndex(e) >= 0)) {
+                deathFilter = null;
+            }
+
             TriggerTargetCollector.Result result = triggerTargetCollector.collect(
                     gameData,
                     pending.effects(),
-                    pending.dyingCard().getTargetFilter(),
+                    deathFilter,
                     pending.controllerId(),
-                    pending.dyingCard(),
+                    dyingCard,
                     TriggerTargetCollector.Options.DEATH);
 
             if (result.validTargets().isEmpty()) {
@@ -217,6 +230,62 @@ public class TriggeredAbilityQueueService {
         }
     }
 
+    /**
+     * Stage 1 of Decimator Beetle's attack trigger: prompt the controller to choose the creature they
+     * control that a counter is removed from. The stage-2 (defending-player) choice is begun by the
+     * stage-1 response handler in {@code PermanentChoiceTriggerHandlerService}.
+     */
+    public void processNextAttackCounterMoveFirstTarget(GameData gameData) {
+        while (gameData.hasPendingInteraction(PermanentChoiceContext.AttackCounterMoveFirstTarget.class)) {
+            PermanentChoiceContext.AttackCounterMoveFirstTarget pending =
+                    gameData.peekPendingInteraction(PermanentChoiceContext.AttackCounterMoveFirstTarget.class);
+
+            List<UUID> validTargets = targetableCreaturesControlledBy(
+                    gameData, pending.controllerId(), pending.sourceCard(), pending.controllerId());
+            if (validTargets.isEmpty()) {
+                gameData.pollPendingInteraction(PermanentChoiceContext.AttackCounterMoveFirstTarget.class);
+                gameBroadcastService.logAndBroadcast(gameData, GameLog.cardThen(pending.sourceCard(),
+                        "'s attack trigger has no valid targets."));
+                log.info("Game {} - {} attack trigger skipped (no valid targets)",
+                        gameData.id, pending.sourceCard().getName());
+                continue;
+            }
+
+            gameData.pollPendingInteraction(PermanentChoiceContext.AttackCounterMoveFirstTarget.class);
+            gameData.interaction.setPermanentChoiceContext(pending);
+            playerInputService.beginPermanentChoice(gameData, pending.controllerId(), validTargets,
+                    pending.sourceCard().getName() + "'s ability - Choose target creature you control.");
+
+            gameBroadcastService.logAndBroadcast(gameData, GameLog.cardThen(pending.sourceCard(),
+                    "'s attack trigger - choose target creature you control."));
+            log.info("Game {} - {} attack trigger awaiting first target selection",
+                    gameData.id, pending.sourceCard().getName());
+            return;
+        }
+    }
+
+    /**
+     * Ids of every creature the given player controls that {@code sourceCard}, controlled by
+     * {@code choosingPlayerId}, may legally target (excludes shroud / opponent-hexproof / protection).
+     * Shared by both stages of the attack counter-move target choices.
+     */
+    public List<UUID> targetableCreaturesControlledBy(GameData gameData, UUID playerId,
+                                                      Card sourceCard, UUID choosingPlayerId) {
+        List<Permanent> battlefield = gameData.playerBattlefields.get(playerId);
+        if (battlefield == null) {
+            return List.of();
+        }
+        List<UUID> result = new ArrayList<>();
+        for (Permanent permanent : battlefield) {
+            if (gameQueryService.isCreature(gameData, permanent)
+                    && targetLegalityService.checkSpellPermanentTargetableReason(
+                            gameData, permanent, sourceCard, choosingPlayerId).isEmpty()) {
+                result.add(permanent.getId());
+            }
+        }
+        return result;
+    }
+
     public void processNextEntersTriggerTarget(GameData gameData) {
         while (gameData.hasPendingInteraction(PermanentChoiceContext.EntersTriggerTarget.class)) {
             PermanentChoiceContext.EntersTriggerTarget pending = gameData.peekPendingInteraction(PermanentChoiceContext.EntersTriggerTarget.class);
@@ -250,6 +319,44 @@ public class TriggeredAbilityQueueService {
             gameBroadcastService.logAndBroadcast(gameData, GameLog.cardThen(pending.sourceCard(),
                     "'s enter trigger - choose " + targetDescription + "."));
             log.info("Game {} - {} enter trigger awaiting target selection", gameData.id, pending.sourceCard().getName());
+            return;
+        }
+    }
+
+    public void processNextDiscardControllerTriggerTarget(GameData gameData) {
+        while (gameData.hasPendingInteraction(PermanentChoiceContext.DiscardControllerTriggerTarget.class)) {
+            PermanentChoiceContext.DiscardControllerTriggerTarget pending =
+                    gameData.peekPendingInteraction(PermanentChoiceContext.DiscardControllerTriggerTarget.class);
+
+            TriggerTargetCollector.Result result = triggerTargetCollector.collect(
+                    gameData,
+                    pending.effects(),
+                    pending.sourceCard().getTargetFilter(),
+                    pending.controllerId(),
+                    pending.sourceCard(),
+                    TriggerTargetCollector.Options.ATTACK);
+
+            if (result.validTargets().isEmpty()) {
+                gameData.pollPendingInteraction(PermanentChoiceContext.DiscardControllerTriggerTarget.class);
+                gameBroadcastService.logAndBroadcast(gameData, GameLog.cardThen(pending.sourceCard(),
+                        "'s discard trigger has no valid targets."));
+                log.info("Game {} - {} discard trigger skipped (no valid targets)",
+                        gameData.id, pending.sourceCard().getName());
+                continue;
+            }
+
+            String targetDescription = (result.canTargetPlayers() && result.canTargetPermanents()) ? "any target"
+                    : result.canTargetPlayers()
+                            ? (result.opponentOnly() ? "target opponent" : "target player")
+                            : "target permanent";
+            gameData.pollPendingInteraction(PermanentChoiceContext.DiscardControllerTriggerTarget.class);
+            gameData.interaction.setPermanentChoiceContext(pending);
+            playerInputService.beginPermanentChoice(gameData, pending.controllerId(), result.validTargets(),
+                    pending.sourceCard().getName() + "'s ability - Choose " + targetDescription + ".");
+
+            gameBroadcastService.logAndBroadcast(gameData, GameLog.cardThen(pending.sourceCard(),
+                    "'s discard trigger - choose " + targetDescription + "."));
+            log.info("Game {} - {} discard trigger awaiting target selection", gameData.id, pending.sourceCard().getName());
             return;
         }
     }
@@ -296,7 +403,9 @@ public class TriggeredAbilityQueueService {
             if (!pending.playerTargetOnly()) {
                 TargetFilter filter = pending.targetFilter();
                 FilterContext filterContext = filter != null
-                        ? FilterContext.of(gameData).withSourceControllerId(pending.controllerId())
+                        ? FilterContext.of(gameData)
+                                .withSourceControllerId(pending.controllerId())
+                                .withSourceCardId(pending.sourceCard().getId())
                         : null;
 
                 for (UUID pid : gameData.orderedPlayerIds) {

@@ -14,6 +14,7 @@ import com.github.laxika.magicalvibes.model.filter.PermanentIsCreaturePredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentPredicateTargetFilter;
 
 @CardRegistration(set = "ISD", collectorNumber = "204")
+@CardRegistration(set = "AKH", collectorNumber = "188")
 public class SpideryGrasp extends Card {
 
     public SpideryGrasp() {

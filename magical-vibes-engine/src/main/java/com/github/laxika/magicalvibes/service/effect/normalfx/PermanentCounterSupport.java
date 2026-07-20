@@ -6,22 +6,27 @@ import com.github.laxika.magicalvibes.model.GameData;
 import com.github.laxika.magicalvibes.model.GameLog;
 import com.github.laxika.magicalvibes.model.MultiPermanentChoiceContext;
 import com.github.laxika.magicalvibes.model.Permanent;
+import com.github.laxika.magicalvibes.model.PermanentChoiceContext;
 import com.github.laxika.magicalvibes.model.StackEntry;
 import com.github.laxika.magicalvibes.model.StackEntryType;
 import com.github.laxika.magicalvibes.model.CounterType;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
+import com.github.laxika.magicalvibes.model.effect.TargetCategory;
 import com.github.laxika.magicalvibes.service.GameBroadcastService;
 import com.github.laxika.magicalvibes.service.battlefield.GameQueryService;
 import com.github.laxika.magicalvibes.service.filter.PredicateEvaluationService;
 import com.github.laxika.magicalvibes.service.input.PlayerInputService;
 import com.github.laxika.magicalvibes.model.filter.FilterContext;
 import com.github.laxika.magicalvibes.model.filter.PermanentPredicate;
+import com.github.laxika.magicalvibes.model.filter.PermanentPredicateTargetFilter;
+import com.github.laxika.magicalvibes.model.filter.TargetFilter;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Component;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Objects;
 import java.util.UUID;
 
 /**
@@ -181,6 +186,8 @@ public class PermanentCounterSupport {
             }
             case MINUS_ONE_MINUS_ONE -> {
                 if (gameQueryService.cantHaveMinusOneMinusOneCounters(gameData, target)) { yield null; }
+                count = gameQueryService.reduceMinusOneMinusOneCounters(gameData, target, count);
+                if (count <= 0) { yield null; }
                 target.setCounterCount(CounterType.MINUS_ONE_MINUS_ONE, target.getCounterCount(CounterType.MINUS_ONE_MINUS_ONE) + count);
                 yield "-1/-1";
             }
@@ -204,6 +211,7 @@ public class PermanentCounterSupport {
             case STORAGE -> { target.setCounterCount(CounterType.STORAGE, target.getCounterCount(CounterType.STORAGE) + count); yield "storage"; }
             case AIM -> { target.setCounterCount(CounterType.AIM, target.getCounterCount(CounterType.AIM) + count); yield "aim"; }
             case BRIBERY -> { target.setCounterCount(CounterType.BRIBERY, target.getCounterCount(CounterType.BRIBERY) + count); yield "bribery"; }
+            case BRICK -> { target.setCounterCount(CounterType.BRICK, target.getCounterCount(CounterType.BRICK) + count); yield "brick"; }
             case EYEBALL -> { target.setCounterCount(CounterType.EYEBALL, target.getCounterCount(CounterType.EYEBALL) + count); yield "eyeball"; }
             case GROWTH -> { target.setCounterCount(CounterType.GROWTH, target.getCounterCount(CounterType.GROWTH) + count); yield "growth"; }
             case PAGE -> { target.setCounterCount(CounterType.PAGE, target.getCounterCount(CounterType.PAGE) + count); yield "page"; }
@@ -226,9 +234,13 @@ public class PermanentCounterSupport {
             triggerSagaChapter(gameData, entry, target);
         }
 
-        // Flourishing Defenses etc.: "whenever a -1/-1 counter is put on a creature."
+        // Flourishing Defenses etc.: "whenever a -1/-1 counter is put on a creature." The placing player
+        // is the resolving spell/ability's controller — read it from the entry rather than
+        // currentlyResolvingControllerId, which is null when resolution was resumed asynchronously after a
+        // target choice (e.g. Hapatra's combat-damage "put a -1/-1 counter on target creature").
         if (counterType == CounterType.MINUS_ONE_MINUS_ONE) {
-            fireMinusOneMinusOneCounterPutOnCreatureTriggers(gameData, target, count);
+            UUID placingPlayerId = entry != null ? entry.getControllerId() : gameData.currentlyResolvingControllerId;
+            fireMinusOneMinusOneCounterPutOnCreatureTriggers(gameData, target, count, placingPlayerId);
         }
     }
 
@@ -285,39 +297,146 @@ public class PermanentCounterSupport {
     }
 
     /**
-     * Fires the "whenever a -1/-1 counter is put on a creature" global watcher (Flourishing Defenses)
-     * once for each of the {@code count} -1/-1 counters just placed on {@code creature}. Every
-     * permanent on any battlefield carrying
-     * {@link EffectSlot#ON_MINUS_ONE_MINUS_ONE_COUNTER_PUT_ON_CREATURE} triggers under its own
-     * controller. Per the Gatherer ruling the ability triggers once for each individual counter, so a
-     * separate trigger is pushed per counter. No-op unless {@code creature} is actually a creature.
+     * Convenience overload that infers the placing player from
+     * {@link GameData#currentlyResolvingControllerId} — correct for every counter placed while a spell
+     * or ability resolves (target/mass/source counter effects). Combat callers that place counters
+     * outside stack resolution (wither/infect damage, end-of-combat self counters) must use the
+     * {@code placingPlayerId} overload so the controller-restricted watcher fires correctly.
      */
     public void fireMinusOneMinusOneCounterPutOnCreatureTriggers(GameData gameData, Permanent creature, int count) {
+        fireMinusOneMinusOneCounterPutOnCreatureTriggers(gameData, creature, count, gameData.currentlyResolvingControllerId);
+    }
+
+    /**
+     * Fires the "whenever a -1/-1 counter is put on a creature" watchers once for each of the
+     * {@code count} -1/-1 counters just placed on {@code creature}. Every permanent on any battlefield
+     * carrying {@link EffectSlot#ON_MINUS_ONE_MINUS_ONE_COUNTER_PUT_ON_CREATURE} (the global watcher,
+     * Flourishing Defenses) triggers under its own controller. Permanents carrying
+     * {@link EffectSlot#ON_YOU_PUT_MINUS_ONE_MINUS_ONE_COUNTER_ON_CREATURE} (Nest of Scarabs) trigger
+     * only when their controller equals {@code placingPlayerId} — i.e. only when that player is the one
+     * putting the counters. Per the Gatherer ruling that ability triggers once for each individual
+     * counter, so a separate trigger is pushed per counter.
+     *
+     * <p>Permanents carrying {@link EffectSlot#ON_YOU_PUT_MINUS_ONE_MINUS_ONE_COUNTERS_ON_CREATURE}
+     * (Hapatra, Vizier of Poisons) are the "one or more counters, do it once" variant: they also trigger
+     * only when their controller equals {@code placingPlayerId}, but fire exactly once for this creature
+     * regardless of {@code count}. No-op unless {@code creature} is a creature.</p>
+     */
+    public void fireMinusOneMinusOneCounterPutOnCreatureTriggers(GameData gameData, Permanent creature, int count, UUID placingPlayerId) {
         if (count <= 0 || creature == null || !gameQueryService.isCreature(gameData, creature)) {
             return;
         }
         gameData.forEachBattlefield((controllerId, battlefield) -> {
+            boolean placedByThisController = controllerId.equals(placingPlayerId);
             for (Permanent source : new ArrayList<>(battlefield)) {
-                List<CardEffect> effects = source.getCard().getEffects(EffectSlot.ON_MINUS_ONE_MINUS_ONE_COUNTER_PUT_ON_CREATURE);
-                if (effects.isEmpty()) {
-                    continue;
-                }
                 Card card = source.getCard();
-                for (int i = 0; i < count; i++) {
+
+                // Per-counter watchers: global (Flourishing Defenses) + you-put (Nest of Scarabs).
+                List<CardEffect> globalEffects = card.getEffects(EffectSlot.ON_MINUS_ONE_MINUS_ONE_COUNTER_PUT_ON_CREATURE);
+                List<CardEffect> youPutEffects = placedByThisController
+                        ? card.getEffects(EffectSlot.ON_YOU_PUT_MINUS_ONE_MINUS_ONE_COUNTER_ON_CREATURE)
+                        : List.of();
+                List<CardEffect> perCounterEffects = globalEffects.isEmpty() ? youPutEffects
+                        : youPutEffects.isEmpty() ? globalEffects
+                        : concat(globalEffects, youPutEffects);
+                if (!perCounterEffects.isEmpty()) {
+                    for (int i = 0; i < count; i++) {
+                        gameData.stack.add(new StackEntry(
+                                StackEntryType.TRIGGERED_ABILITY,
+                                card,
+                                controllerId,
+                                card.getName() + "'s triggered ability",
+                                new ArrayList<>(perCounterEffects),
+                                null,
+                                source.getId()
+                        ));
+                        gameBroadcastService.logAndBroadcast(gameData, GameLog.cardThen(card, "'s triggered ability triggers."));
+                    }
+                    log.info("Game {} - {} -1/-1-counter watcher fires {} time(s)", gameData.id, card.getName(), count);
+                }
+
+                // Once-per-creature you-put watcher (Hapatra): fires a single trigger regardless of count.
+                List<CardEffect> youPutOnceEffects = placedByThisController
+                        ? card.getEffects(EffectSlot.ON_YOU_PUT_MINUS_ONE_MINUS_ONE_COUNTERS_ON_CREATURE)
+                        : List.of();
+                if (!youPutOnceEffects.isEmpty()) {
                     gameData.stack.add(new StackEntry(
                             StackEntryType.TRIGGERED_ABILITY,
                             card,
                             controllerId,
                             card.getName() + "'s triggered ability",
-                            new ArrayList<>(effects),
+                            new ArrayList<>(youPutOnceEffects),
                             null,
                             source.getId()
                     ));
                     gameBroadcastService.logAndBroadcast(gameData, GameLog.cardThen(card, "'s triggered ability triggers."));
+                    log.info("Game {} - {} once-per-creature -1/-1-counter watcher fires", gameData.id, card.getName());
                 }
-                log.info("Game {} - {} -1/-1-counter watcher fires {} time(s)", gameData.id, card.getName(), count);
             }
         });
+
+        // Self-scoped "Whenever you put one or more -1/-1 counters on this creature" (Defiant Greatmaw):
+        // fires once per event (not per counter), only when the controller is the placing player.
+        fireSelfMinusOneMinusOneCountersPutTriggers(gameData, creature, placingPlayerId);
+    }
+
+    /**
+     * Fires {@link EffectSlot#ON_SELF_MINUS_ONE_MINUS_ONE_COUNTERS_PUT} on {@code creature} — the -1/-1
+     * mirror of {@link #firePlusOnePlusOneCountersPutOnSelfTriggers}. Fires once per placement event
+     * (regardless of the counter count) and only when {@code placingPlayerId} is the creature's own
+     * controller ("Whenever you put …"). A targeted effect in the slot has its target chosen as the
+     * ability goes on the stack, reusing the {@code SpellTargetTriggerAnyTarget} interaction; the effect
+     * declares its legal targets through its {@code targetSpec()} predicate.
+     */
+    void fireSelfMinusOneMinusOneCountersPutTriggers(GameData gameData, Permanent creature, UUID placingPlayerId) {
+        Card card = creature.getCard();
+        List<CardEffect> effects = card.getEffects(EffectSlot.ON_SELF_MINUS_ONE_MINUS_ONE_COUNTERS_PUT);
+        if (effects.isEmpty()) {
+            return;
+        }
+
+        UUID controllerId = controllerOf(gameData, creature);
+        if (controllerId == null || !controllerId.equals(placingPlayerId)) {
+            return;
+        }
+
+        boolean needsTarget = effects.stream().anyMatch(e -> e.targetSpec().category() != TargetCategory.NONE);
+        if (needsTarget) {
+            PermanentPredicate targetPredicate = effects.stream()
+                    .map(e -> e.targetSpec().predicate())
+                    .filter(Objects::nonNull)
+                    .findFirst().orElse(null);
+            TargetFilter targetFilter = targetPredicate != null
+                    ? new PermanentPredicateTargetFilter(targetPredicate, "Choose a target.")
+                    : null;
+            gameData.queueInteraction(new PermanentChoiceContext.SpellTargetTriggerAnyTarget(
+                    card, controllerId, new ArrayList<>(effects), false, targetFilter));
+            gameBroadcastService.logAndBroadcast(gameData,
+                    GameLog.cardThen(card, "'s triggered ability triggers — choose a target."));
+        } else {
+            gameData.stack.add(new StackEntry(
+                    StackEntryType.TRIGGERED_ABILITY, card, controllerId,
+                    card.getName() + "'s triggered ability",
+                    new ArrayList<>(effects), null, creature.getId()));
+            gameBroadcastService.logAndBroadcast(gameData, GameLog.cardThen(card, "'s triggered ability triggers."));
+        }
+        log.info("Game {} - {} self -1/-1-counter trigger fires", gameData.id, card.getName());
+    }
+
+    private UUID controllerOf(GameData gameData, Permanent permanent) {
+        for (UUID playerId : gameData.orderedPlayerIds) {
+            List<Permanent> battlefield = gameData.playerBattlefields.get(playerId);
+            if (battlefield != null && battlefield.contains(permanent)) {
+                return playerId;
+            }
+        }
+        return null;
+    }
+
+    private static List<CardEffect> concat(List<CardEffect> a, List<CardEffect> b) {
+        List<CardEffect> merged = new ArrayList<>(a);
+        merged.addAll(b);
+        return merged;
     }
 
     void firePlusOnePlusOneCountersPutOnSelfTriggers(GameData gameData, Permanent target) {

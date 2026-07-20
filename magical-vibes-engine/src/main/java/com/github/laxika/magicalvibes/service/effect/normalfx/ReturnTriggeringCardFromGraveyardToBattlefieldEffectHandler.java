@@ -41,7 +41,8 @@ public class ReturnTriggeringCardFromGraveyardToBattlefieldEffectHandler impleme
             return;
         }
 
+        boolean enterTapped = ((ReturnTriggeringCardFromGraveyardToBattlefieldEffect) effect).enterTapped();
         permanentRemovalService.removeCardFromGraveyardById(gameData, card.getId());
-        graveyardReturnSupport.putCardOntoBattlefield(gameData, ownerId, card);
+        graveyardReturnSupport.putCardOntoBattlefield(gameData, ownerId, card, null, null, enterTapped);
     }
 }

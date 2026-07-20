@@ -1022,6 +1022,25 @@ class SpellCastingServiceTest {
         }
 
         @Test
+        @DisplayName("Free-play card from exile goes on stack without paying its mana cost")
+        void freeCardFromExileGoesOnStackWithoutPayingMana() {
+            Card creature = createCreature("Free Bear", "{4}{G}{G}");
+            gd.addToExile(player1Id, creature);
+            gd.exilePlayPermissions.put(creature.getId(), player1Id);
+            gd.exilePlayWithoutPayingManaCost.add(creature.getId());
+            // Player has no mana at all — the play must still succeed.
+
+            svc.playCardFromExile(gd, player1, creature.getId(), 0, null);
+
+            assertThat(gd.stack).hasSize(1);
+            assertThat(gd.stack.getLast().getCard().getName()).isEqualTo("Free Bear");
+            assertThat(gd.getPlayerExiledCards(player1Id)).isEmpty();
+            assertThat(gd.exilePlayPermissions).doesNotContainKey(creature.getId());
+            assertThat(gd.exilePlayWithoutPayingManaCost).doesNotContain(creature.getId());
+            assertThat(gd.playerManaPools.get(player1Id).getTotal()).isEqualTo(0);
+        }
+
+        @Test
         @DisplayName("Playing from exile increments spellsCastThisTurn")
         void exilePlayIncrementsSpellCount() {
             Card creature = createCreature("Exiled Bear", "{G}");

@@ -73,6 +73,7 @@ public class ChoiceHandlerService {
     private final com.github.laxika.magicalvibes.service.effect.normalfx.LifeSupport lifeSupport;
     private final com.github.laxika.magicalvibes.service.effect.normalfx.DamageSupport damageSupport;
     private final com.github.laxika.magicalvibes.service.effect.normalfx.PermanentControlSupport permanentControlSupport;
+    private final com.github.laxika.magicalvibes.service.effect.normalfx.PermanentCounterSupport permanentCounterSupport;
 
     public void handleListChoice(GameData gameData, Player player, String colorName) {
         if (gameData.interaction.activeInteraction(PendingInteraction.ColorChoice.class) == null) {
@@ -218,6 +219,10 @@ public class ChoiceHandlerService {
         }
         if (colorChoice.context() instanceof ChoiceContext.RelicBindModeChoice ctx) {
             handleRelicBindModeChoice(gameData, player, colorName, ctx);
+            return;
+        }
+        if (colorChoice.context() instanceof ChoiceContext.AdjustCounterKindChoice ctx) {
+            handleAdjustCounterKindChoice(gameData, player, colorName, ctx);
             return;
         }
         CardColor color = CardColor.valueOf(colorName);
@@ -567,6 +572,63 @@ public class ChoiceHandlerService {
 
         gameBroadcastService.logAndBroadcast(gameData, GameLog.textCardText(player.getUsername() + " chooses \"" + chosen + "\" for " , ctx.sourceCard(), "."));
         gameBroadcastService.broadcastGameState(gameData);
+    }
+
+    /**
+     * Quarry Hauler: apply the controller's add/remove decision to the first remaining counter kind
+     * on the target, then re-prompt for the next kind (if any) or resume the paused ETB resolution.
+     * ADD routes through {@link PermanentCounterSupport#placeCounterOnPermanent} so counter-specific
+     * behaviour (+1/+1 triggers, -1/-1 prevention/watchers, saga chapters) is preserved; REMOVE simply
+     * decrements. State-based actions are checked once all kinds are done (a lethal -1/-1 or a
+     * planeswalker at 0 loyalty resolves only after the whole ability finishes).
+     */
+    private void handleAdjustCounterKindChoice(GameData gameData, Player player, String choice,
+            ChoiceContext.AdjustCounterKindChoice ctx) {
+        if (!ChoiceContext.AdjustCounterKindChoice.OPTIONS.contains(choice)) {
+            throw new IllegalArgumentException("Invalid counter adjustment: " + choice);
+        }
+
+        gameData.interaction.clearAwaitingInput();
+
+        List<CounterType> remaining = new ArrayList<>(ctx.remainingKinds());
+        CounterType kind = remaining.removeFirst();
+
+        Permanent target = gameQueryService.findPermanentById(gameData, ctx.targetId());
+        if (target != null) {
+            if (ChoiceContext.AdjustCounterKindChoice.ADD.equals(choice)) {
+                // The paused ETB trigger is the counter source (used for logging / saga chapters).
+                StackEntry sourceEntry = gameData.pendingEffectResolutionEntry;
+                if (sourceEntry != null) {
+                    permanentCounterSupport.placeCounterOnPermanent(gameData, sourceEntry, target, kind, 1);
+                } else {
+                    target.setCounterCount(kind, target.getCounterCount(kind) + 1);
+                }
+            } else {
+                int current = target.getCounterCount(kind);
+                if (current > 0) {
+                    target.setCounterCount(kind, current - 1);
+                    String label = kind.name().toLowerCase().replace('_', ' ');
+                    gameBroadcastService.logAndBroadcast(gameData, GameLog.textCardText(
+                            ctx.sourceCardName() + " removes a " + label + " counter from ", target.getCard(), "."));
+                    log.info("Game {} - {} removes a {} counter from {}", gameData.id,
+                            ctx.sourceCardName(), kind, target.getCard().getName());
+                }
+            }
+        }
+
+        // Still a kind left (and the target survived) — prompt for it before finishing.
+        if (target != null && !remaining.isEmpty()) {
+            playerInputService.beginAdjustCounterKindChoice(gameData, ctx.controllerId(), ctx.targetId(),
+                    ctx.sourceCardName(), remaining);
+            gameBroadcastService.broadcastGameState(gameData);
+            return;
+        }
+
+        stateBasedActionService.performStateBasedActions(gameData);
+
+        gameData.priorityPassedBy.clear();
+        gameBroadcastService.broadcastGameState(gameData);
+        resumeAndAutoPass(gameData);
     }
 
     private void handleDrawReplacementChoice(GameData gameData, String chosenKind, ChoiceContext.DrawReplacementChoice ctx) {

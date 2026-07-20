@@ -15,6 +15,8 @@ export class LibraryChoiceService {
   scryPrompt = '';
   scryTopIndices: number[] = [];
   scryBottomIndices: number[] = [];
+  // Surveil reuses the scry pile UI, but the reject pile goes to the graveyard, not the bottom.
+  scryToGraveyard = false;
 
   // --- Library search state ---
   searchingLibrary = false;
@@ -41,6 +43,7 @@ export class LibraryChoiceService {
     this.scryPrompt = '';
     this.scryTopIndices = [];
     this.scryBottomIndices = [];
+    this.scryToGraveyard = false;
     this.searchingLibrary = false;
     this.librarySearchCards = [];
     this.librarySearchPrompt = '';
@@ -64,6 +67,7 @@ export class LibraryChoiceService {
     this.scryPrompt = msg.prompt;
     this.scryTopIndices = [];
     this.scryBottomIndices = [];
+    this.scryToGraveyard = msg.allGraveyards === true;
   }
 
   handleReorderLibraryCards(msg: InteractionPromptNotification): void {
@@ -153,6 +157,7 @@ export class LibraryChoiceService {
     this.scryPrompt = '';
     this.scryTopIndices = [];
     this.scryBottomIndices = [];
+    this.scryToGraveyard = false;
   }
 
   // ========== Library search ==========

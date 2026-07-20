@@ -178,7 +178,10 @@ public class DamagePreventionService {
             if (damage > 0 && permanent.getCard().getEffects(EffectSlot.STATIC).stream()
                     .anyMatch(e -> e instanceof PreventDamageAndAddMinusCountersEffect)) {
                 if (!gameQueryService.cantHaveCounters(gameData, permanent)) {
-                    permanent.setCounterCount(CounterType.MINUS_ONE_MINUS_ONE, permanent.getCounterCount(CounterType.MINUS_ONE_MINUS_ONE) + damage);
+                    int counters = gameQueryService.reduceMinusOneMinusOneCounters(gameData, permanent, damage);
+                    if (counters > 0) {
+                        permanent.setCounterCount(CounterType.MINUS_ONE_MINUS_ONE, permanent.getCounterCount(CounterType.MINUS_ONE_MINUS_ONE) + counters);
+                    }
                 }
                 return 0;
             }

@@ -19,6 +19,7 @@ import com.github.laxika.magicalvibes.model.condition.ControlsPermanent;
 import com.github.laxika.magicalvibes.model.condition.HasAttacker;
 import com.github.laxika.magicalvibes.model.condition.Condition;
 import com.github.laxika.magicalvibes.model.condition.MinimumAttackers;
+import com.github.laxika.magicalvibes.model.effect.AttackCounterMoveEffect;
 import com.github.laxika.magicalvibes.model.effect.ConditionalEffect;
 import com.github.laxika.magicalvibes.model.effect.DefendingPlayerMayDrawCardEffect;
 import com.github.laxika.magicalvibes.model.effect.DrawCardEffect;
@@ -404,9 +405,22 @@ public class CombatAttackService {
                     }
 
                     if (!otherEffects.isEmpty()) {
+                        // Two-target "remove a counter from a creature you control, then put one on up
+                        // to one creature the defending player controls" (Decimator Beetle). The normal
+                        // pipeline collects only one target, so route to the bespoke two-step flow.
+                        boolean isCounterMove = otherEffects.stream().anyMatch(e -> e instanceof AttackCounterMoveEffect);
                         boolean needsTarget = otherEffects.stream()
                                 .anyMatch(e -> e.targetSpec().category().includesPermanents() || e.targetSpec().category().includesPlayers());
-                        if (needsTarget) {
+                        if (isCounterMove) {
+                            UUID attackedTargetId = attacker.getAttackTarget();
+                            UUID defendingPlayerId = attackedTargetId == null ? null
+                                    : gameData.playerIds.contains(attackedTargetId)
+                                            ? attackedTargetId
+                                            : gameQueryService.findPermanentController(gameData, attackedTargetId);
+                            gameData.queueInteraction(
+                                    new PermanentChoiceContext.AttackCounterMoveFirstTarget(
+                                            attacker.getCard(), playerId, otherEffects, attacker.getId(), defendingPlayerId));
+                        } else if (needsTarget) {
                             gameData.queueInteraction(
                                     new PermanentChoiceContext.AttackTriggerTarget(
                                             attacker.getCard(), playerId, otherEffects, attacker.getId()));
@@ -757,6 +771,7 @@ public class CombatAttackService {
         if (!gameQueryService.isCreature(gameData, creature)) return false;
         if (creature.isTapped()) return false;
         if (creature.isCantAttackThisTurn()) return false;
+        if (gameQueryService.isLockedFromAttacking(gameData, creature.getId())) return false;
         if (creature.isSummoningSick() && !gameQueryService.hasKeyword(gameData, creature, Keyword.HASTE)
                 && !gameQueryService.hasAuraWithEffect(gameData, creature, EnchantedCreatureCanAttackAsThoughHasteEffect.class)) return false;
         if (gameQueryService.hasKeyword(gameData, creature, Keyword.DEFENDER)
@@ -800,15 +815,20 @@ public class CombatAttackService {
      * Defender-scoped attack restriction (CR 508.1a): the attacked player controls a permanent with a
      * {@link CreaturesCantAttackControllerUnlessPredicateEffect}, and the attacker does not match its
      * exemption predicate (e.g. Form of the Dragon's "Creatures without flying can't attack you").
-     * Only players can carry this restriction, so it never applies to attacks aimed at a planeswalker.
+     * When the attack is aimed at a planeswalker, only restrictions whose {@code protectsPlaneswalkers}
+     * flag is set apply (Sandwurm Convergence — "can't attack you or planeswalkers you control").
      */
     private boolean isCantAttackDefenderDueToRestriction(GameData gameData, Permanent attacker, UUID targetId) {
-        if (!gameData.playerIds.contains(targetId)) return false;
-        // Restrictions come from static abilities of the attacked player's permanents (Form of the
-        // Dragon) and from player-scoped floating effects (Island Sanctuary's "until your next turn"
-        // shield, which persists independently of its source permanent).
+        boolean targetIsPlayer = gameData.playerIds.contains(targetId);
+        // The protected player is the attacked player, or the controller of the attacked planeswalker.
+        UUID protectedPlayerId = targetIsPlayer ? targetId
+                : gameQueryService.findPermanentController(gameData, targetId);
+        if (protectedPlayerId == null) return false;
+        // Restrictions come from static abilities of the protected player's permanents (Form of the
+        // Dragon, Sandwurm Convergence) and from player-scoped floating effects (Island Sanctuary's
+        // "until your next turn" shield, which persists independently of its source permanent).
         List<CardEffect> restrictions = new ArrayList<>();
-        List<Permanent> defenderBattlefield = gameData.playerBattlefields.get(targetId);
+        List<Permanent> defenderBattlefield = gameData.playerBattlefields.get(protectedPlayerId);
         if (defenderBattlefield != null) {
             for (Permanent perm : defenderBattlefield) {
                 restrictions.addAll(perm.getCard().getEffects(EffectSlot.STATIC));
@@ -816,13 +836,14 @@ public class CombatAttackService {
         }
         synchronized (gameData.floatingEffects) {
             for (FloatingContinuousEffect fe : gameData.floatingEffects) {
-                if (targetId.equals(fe.affectedPlayerId())) {
+                if (protectedPlayerId.equals(fe.affectedPlayerId())) {
                     restrictions.add(fe.effect());
                 }
             }
         }
         for (CardEffect effect : restrictions) {
             if (effect instanceof CreaturesCantAttackControllerUnlessPredicateEffect restriction
+                    && (targetIsPlayer || restriction.protectsPlaneswalkers())
                     && !predicateEvaluationService.matchesPermanentPredicate(gameData, attacker, restriction.exemptionPredicate())) {
                 return true;
             }

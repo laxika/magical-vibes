@@ -53,6 +53,8 @@ public class PreventDamageEffectHandler implements NormalEffectHandlerBean {
             }
             case ALL_TO_TARGET_CREATURES -> allToTargetCreatures(gameData, entry, e);
             case ALL_BY_TARGET_CREATURES -> allByTargetCreatures(gameData, entry, e);
+            case ALL_BY_TARGET_PERMANENT_UNTIL_NEXT_TURN -> allByTargetPermanentUntilNextTurn(gameData, entry);
+            case ALL_TO_SELF -> allToSelf(gameData, entry);
             case ALL_TO_CONTROLLER_AND_CREATURES -> {
                 UUID controllerId = entry.getControllerId();
                 gameData.playersWithAllDamagePrevented.add(controllerId);
@@ -207,6 +209,33 @@ public class PreventDamageEffectHandler implements NormalEffectHandlerBean {
             log.info("Game {} - {} prevented from dealing {}damage this turn",
                     gameData.id, target.getCard().getName(), combatOnly ? "combat " : "");
         }
+    }
+
+    private void allByTargetPermanentUntilNextTurn(GameData gameData, StackEntry entry) {
+        UUID targetId = entry.getTargetId();
+        UUID controllerId = entry.getControllerId();
+        if (targetId == null || controllerId == null) return;
+
+        Permanent target = gameQueryService.findPermanentById(gameData, targetId);
+        if (target == null) return;
+
+        gameData.permanentsPreventedFromDealingDamageUntilNextTurn.put(targetId, controllerId);
+        gameBroadcastService.logAndBroadcast(gameData, GameLog.textCardText(
+                "All damage ", target.getCard(), " would deal is prevented until its controller's next turn."));
+        log.info("Game {} - {} prevented from dealing damage until next turn", gameData.id, target.getCard().getName());
+    }
+
+    private void allToSelf(GameData gameData, StackEntry entry) {
+        UUID sourceId = entry.getSourcePermanentId();
+        if (sourceId == null) return;
+
+        Permanent source = gameQueryService.findPermanentById(gameData, sourceId);
+        if (source == null) return;
+
+        gameData.creaturesWithAllDamagePrevented.add(sourceId);
+        gameBroadcastService.logAndBroadcast(gameData, GameLog.textCardText(
+                "All damage that would be dealt to ", source.getCard(), " this turn is prevented."));
+        log.info("Game {} - all damage to {} prevented this turn", gameData.id, source.getCard().getName());
     }
 
     private int evaluate(GameData gameData, StackEntry entry, PreventDamageEffect e) {

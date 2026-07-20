@@ -14,6 +14,7 @@ import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.PendingInteraction;
 import com.github.laxika.magicalvibes.model.effect.CantSearchLibrariesEffect;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
+import com.github.laxika.magicalvibes.model.effect.OpponentSearchesTopCardsInsteadEffect;
 import com.github.laxika.magicalvibes.model.filter.CardTypePredicate;
 import com.github.laxika.magicalvibes.service.GameBroadcastService;
 import com.github.laxika.magicalvibes.service.library.LibraryShuffleHelper;
@@ -22,6 +23,8 @@ import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Component;
 
 import java.util.ArrayList;
+import java.util.Collections;
+import java.util.IdentityHashMap;
 import java.util.List;
 import java.util.Set;
 import java.util.UUID;
@@ -378,10 +381,67 @@ public class LibrarySearchSupport {
 
     public void sendLibrarySearchToPlayer(GameData gameData, UUID playerId, LibrarySearchParams params,
                                             String prompt, boolean canFailToFind, String logMessage) {
+        // Aven Mindcensor & friends: an opponent's search is limited to the top N cards of that library.
+        int topLimit = opponentSearchTopCardsLimit(gameData, params.playerId());
+        if (topLimit != Integer.MAX_VALUE) {
+            UUID libraryOwnerId = params.targetPlayerId() != null ? params.targetPlayerId() : params.playerId();
+            List<Card> restricted = restrictToTopCards(gameData, libraryOwnerId, params.cards(), topLimit);
+            if (restricted.isEmpty()) {
+                // None of the top N cards match the search: the player searched but found nothing.
+                gameBroadcastService.logAndBroadcast(gameData, GameLog.text(logMessage));
+                if (params.shuffleAfterSelection()) {
+                    LibraryShuffleHelper.shuffleLibrary(gameData, libraryOwnerId);
+                }
+                String searcherName = gameData.playerIdToName.get(params.playerId());
+                gameBroadcastService.logAndBroadcast(gameData, GameLog.text(
+                        searcherName + " finds no matching card among the top " + topLimit
+                                + " cards. Library is shuffled."));
+                return;
+            }
+            params = params.withCards(restricted);
+        }
+
         interactionHandlerRegistry.begin(gameData, new com.github.laxika.magicalvibes.model.PendingInteraction.LibrarySearch(
                 params, prompt, canFailToFind));
 
         gameBroadcastService.logAndBroadcast(gameData, GameLog.text(logMessage));
+    }
+
+    /**
+     * The strictest "search only the top N cards" limit imposed on {@code searchingPlayerId} by an
+     * {@link OpponentSearchesTopCardsInsteadEffect} (Aven Mindcensor) that one of their opponents
+     * controls, or {@link Integer#MAX_VALUE} when none applies. A player's own copy never limits
+     * their own searches — the effect only cares about opponents.
+     */
+    public int opponentSearchTopCardsLimit(GameData gameData, UUID searchingPlayerId) {
+        int limit = Integer.MAX_VALUE;
+        for (UUID pid : gameData.orderedPlayerIds) {
+            if (pid.equals(searchingPlayerId)) continue;
+            List<Permanent> bf = gameData.playerBattlefields.get(pid);
+            if (bf == null) continue;
+            for (Permanent perm : bf) {
+                for (CardEffect effect : perm.getCard().getEffects(EffectSlot.STATIC)) {
+                    if (effect instanceof OpponentSearchesTopCardsInsteadEffect restriction) {
+                        limit = Math.min(limit, restriction.count());
+                    }
+                }
+            }
+        }
+        return limit;
+    }
+
+    /**
+     * Narrows {@code candidates} to only the cards that are among the top {@code limit} cards of
+     * {@code libraryOwnerId}'s library, preserving candidate order. Uses reference identity so a
+     * duplicate-named card deeper in the library is not wrongly treated as searchable.
+     */
+    private List<Card> restrictToTopCards(GameData gameData, UUID libraryOwnerId, List<Card> candidates, int limit) {
+        List<Card> deck = gameData.playerDecks.get(libraryOwnerId);
+        if (deck == null || deck.isEmpty()) return candidates;
+        List<Card> top = deck.subList(0, Math.min(limit, deck.size()));
+        Set<Card> topCards = Collections.newSetFromMap(new IdentityHashMap<>());
+        topCards.addAll(top);
+        return candidates.stream().filter(topCards::contains).toList();
     }
 
     public boolean isSearchPrevented(GameData gameData, UUID searchingPlayerId) {

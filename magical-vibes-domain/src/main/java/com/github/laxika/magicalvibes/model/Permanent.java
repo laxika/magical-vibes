@@ -35,6 +35,14 @@ public class Permanent {
      *  controller turn, so the restriction lasts exactly one turn. */
     @Setter private boolean cantAttackThisTurn;
     private boolean blocking;
+    /** Set when this creature is declared as a blocker; persists after combat ends (mirroring
+     *  {@link #attackedThisTurn}) and is reset at each turn start. Read by
+     *  {@code PermanentAttackedOrBlockedThisTurnPredicate} (Vizier of Deferment). */
+    private boolean blockedThisTurn;
+    /** Set when this permanent's "whenever this becomes the target of a spell or ability for the first
+     *  time each turn, counter that spell or ability" trigger (Glyph Keeper) has already fired this
+     *  turn, so it won't trigger again until the flag is reset at the next turn start. */
+    @Setter private boolean becomeTargetCounterUsedThisTurn;
     private final List<Integer> blockingTargets = new ArrayList<>();
     private final List<UUID> blockingTargetIds = new ArrayList<>();
     /** Identifies the attacking band (CR 702.22) this creature was declared in, or null if it is not
@@ -322,6 +330,8 @@ public class Permanent {
         this.cantAttackNextTurn = source.cantAttackNextTurn;
         this.cantAttackThisTurn = source.cantAttackThisTurn;
         this.blocking = source.blocking;
+        this.blockedThisTurn = source.blockedThisTurn;
+        this.becomeTargetCounterUsedThisTurn = source.becomeTargetCounterUsedThisTurn;
         this.blockingTargets.addAll(source.blockingTargets);
         this.blockingTargetIds.addAll(source.blockingTargetIds);
         this.bandId = source.bandId;
@@ -454,6 +464,9 @@ public class Permanent {
 
     public void setBlocking(boolean blocking) {
         this.blocking = blocking;
+        if (blocking) {
+            this.blockedThisTurn = true;
+        }
     }
 
     public void addBlockingTarget(int blockingTarget) {
@@ -507,6 +520,10 @@ public class Permanent {
     /** Records a creature devoured by this permanent's devour ability as it entered (CR 702.82). */
     public void recordDevouredCreature(Card devoured) {
         devouredCreatures.add(devoured);
+    }
+
+    public void setBlockedThisTurn(boolean blockedThisTurn) {
+        this.blockedThisTurn = blockedThisTurn;
     }
 
     /**

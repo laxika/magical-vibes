@@ -17,8 +17,10 @@ import java.util.UUID;
  * search for a creature card to battlefield" flow (Boldwyr Heavyweights);
  * {@code opponentExileChoice} prompts the opponent after the Distant Memories exile;
  * {@code imprintSourcePermanentId} receives the imprinted card at EXILE_IMPRINT completion;
- * {@code giftLandPick} begins the second Gift of the Gargantuan pick (may reveal a land card from
- * the same looked-at cards to hand, then bottom the rest) after the creature pick resolves;
+ * {@code secondBoundedPick} begins the second of two bounded picks (may reveal a card of its type
+ * from the same looked-at cards to hand, then dispose the rest) after the first pick resolves —
+ * Gift of the Gargantuan (land, rest on bottom), Benefaction of Rhonas (enchantment, rest to
+ * graveyard);
  * {@code remainingSameNamePicks} is the queue of permanent names still to search for, one entry
  * per chosen permanent, in a "for each chosen permanent, you may search for a card with the same
  * name and put it onto the battlefield tapped" flow (Clarion Ultimatum) — after each single-name
@@ -36,12 +38,20 @@ public record LibrarySearchFollowUp(boolean basicLandToHand, boolean cardToGrave
                                     List<UUID> remainingEachPlayerCreatureToHandSearches,
                                     int eachPlayerCreatureToHandCount,
                                     List<UUID> remainingEachPlayerCreatureToBattlefieldSearches,
-                                    boolean giftLandPick,
+                                    SecondBoundedPick secondBoundedPick,
                                     List<String> remainingSameNamePicks,
                                     List<CardColor> remainingColorToHandPicks) {
 
+    /**
+     * State for the second of two bounded picks: the card {@code type} still to be offered and where
+     * the unchosen looked-at cards go once it resolves ({@code restToGraveyard} true = graveyard,
+     * false = bottom of the library).
+     */
+    public record SecondBoundedPick(CardType type, boolean restToGraveyard) {
+    }
+
     public static final LibrarySearchFollowUp NONE =
-            new LibrarySearchFollowUp(false, false, List.of(), false, null, null, List.of(), 0, List.of(), false, List.of(), List.of());
+            new LibrarySearchFollowUp(false, false, List.of(), false, null, null, List.of(), 0, List.of(), null, List.of(), List.of());
 
     public LibrarySearchFollowUp {
         remainingEachPlayerBasicLandSearches = List.copyOf(remainingEachPlayerBasicLandSearches);
@@ -52,45 +62,46 @@ public record LibrarySearchFollowUp(boolean basicLandToHand, boolean cardToGrave
     }
 
     public static LibrarySearchFollowUp forBasicLandToHand() {
-        return new LibrarySearchFollowUp(true, false, List.of(), false, null, null, List.of(), 0, List.of(), false, List.of(), List.of());
+        return new LibrarySearchFollowUp(true, false, List.of(), false, null, null, List.of(), 0, List.of(), null, List.of(), List.of());
     }
 
     public static LibrarySearchFollowUp forCardToGraveyard() {
-        return new LibrarySearchFollowUp(false, true, List.of(), false, null, null, List.of(), 0, List.of(), false, List.of(), List.of());
+        return new LibrarySearchFollowUp(false, true, List.of(), false, null, null, List.of(), 0, List.of(), null, List.of(), List.of());
     }
 
-    public static LibrarySearchFollowUp forGiftLandPick() {
-        return new LibrarySearchFollowUp(false, false, List.of(), false, null, null, List.of(), 0, List.of(), true, List.of(), List.of());
+    public static LibrarySearchFollowUp forSecondBoundedPick(CardType type, boolean restToGraveyard) {
+        return new LibrarySearchFollowUp(false, false, List.of(), false, null, null, List.of(), 0, List.of(),
+                new SecondBoundedPick(type, restToGraveyard), List.of(), List.of());
     }
 
     public static LibrarySearchFollowUp eachPlayerBasicLand(List<UUID> remainingSearchers, boolean tapped) {
-        return new LibrarySearchFollowUp(false, false, remainingSearchers, tapped, null, null, List.of(), 0, List.of(), false, List.of(), List.of());
+        return new LibrarySearchFollowUp(false, false, remainingSearchers, tapped, null, null, List.of(), 0, List.of(), null, List.of(), List.of());
     }
 
     public static LibrarySearchFollowUp eachPlayerCreaturesToHand(List<UUID> remainingSearchers, int count) {
-        return new LibrarySearchFollowUp(false, false, List.of(), false, null, null, remainingSearchers, count, List.of(), false, List.of(), List.of());
+        return new LibrarySearchFollowUp(false, false, List.of(), false, null, null, remainingSearchers, count, List.of(), null, List.of(), List.of());
     }
 
     public static LibrarySearchFollowUp eachPlayerCreatureToBattlefield(List<UUID> remainingSearchers) {
-        return new LibrarySearchFollowUp(false, false, List.of(), false, null, null, List.of(), 0, remainingSearchers, false, List.of(), List.of());
+        return new LibrarySearchFollowUp(false, false, List.of(), false, null, null, List.of(), 0, remainingSearchers, null, List.of(), List.of());
     }
 
     public static LibrarySearchFollowUp opponentExile(PendingOpponentExileChoice choice) {
-        return new LibrarySearchFollowUp(false, false, List.of(), false, choice, null, List.of(), 0, List.of(), false, List.of(), List.of());
+        return new LibrarySearchFollowUp(false, false, List.of(), false, choice, null, List.of(), 0, List.of(), null, List.of(), List.of());
     }
 
     public static LibrarySearchFollowUp imprint(UUID sourcePermanentId) {
-        return new LibrarySearchFollowUp(false, false, List.of(), false, null, sourcePermanentId, List.of(), 0, List.of(), false, List.of(), List.of());
+        return new LibrarySearchFollowUp(false, false, List.of(), false, null, sourcePermanentId, List.of(), 0, List.of(), null, List.of(), List.of());
     }
 
     /** The queue of permanent names still to search for (Clarion Ultimatum), one entry per chosen permanent. */
     public static LibrarySearchFollowUp sameNamePicks(List<String> names) {
-        return new LibrarySearchFollowUp(false, false, List.of(), false, null, null, List.of(), 0, List.of(), false, names, List.of());
+        return new LibrarySearchFollowUp(false, false, List.of(), false, null, null, List.of(), 0, List.of(), null, names, List.of());
     }
 
     /** The queue of colours still to search for, one card per colour to hand (Conflux). */
     public static LibrarySearchFollowUp colorToHandPicks(List<CardColor> colors) {
-        return new LibrarySearchFollowUp(false, false, List.of(), false, null, null, List.of(), 0, List.of(), false, List.of(), colors);
+        return new LibrarySearchFollowUp(false, false, List.of(), false, null, null, List.of(), 0, List.of(), null, List.of(), colors);
     }
 
     /** The same follow-up with the each-player basic-land remainder advanced past the current searcher. */
@@ -98,7 +109,7 @@ public record LibrarySearchFollowUp(boolean basicLandToHand, boolean cardToGrave
         return new LibrarySearchFollowUp(basicLandToHand, cardToGraveyard, remaining,
                 eachPlayerSearchTapped, opponentExileChoice, imprintSourcePermanentId,
                 remainingEachPlayerCreatureToHandSearches, eachPlayerCreatureToHandCount,
-                remainingEachPlayerCreatureToBattlefieldSearches, giftLandPick, remainingSameNamePicks,
+                remainingEachPlayerCreatureToBattlefieldSearches, secondBoundedPick, remainingSameNamePicks,
                 remainingColorToHandPicks);
     }
 
@@ -107,7 +118,7 @@ public record LibrarySearchFollowUp(boolean basicLandToHand, boolean cardToGrave
         return new LibrarySearchFollowUp(basicLandToHand, cardToGraveyard,
                 remainingEachPlayerBasicLandSearches, eachPlayerSearchTapped, opponentExileChoice,
                 imprintSourcePermanentId, remaining, eachPlayerCreatureToHandCount,
-                remainingEachPlayerCreatureToBattlefieldSearches, giftLandPick, remainingSameNamePicks,
+                remainingEachPlayerCreatureToBattlefieldSearches, secondBoundedPick, remainingSameNamePicks,
                 remainingColorToHandPicks);
     }
 
@@ -116,7 +127,7 @@ public record LibrarySearchFollowUp(boolean basicLandToHand, boolean cardToGrave
         return new LibrarySearchFollowUp(basicLandToHand, cardToGraveyard,
                 remainingEachPlayerBasicLandSearches, eachPlayerSearchTapped, opponentExileChoice,
                 imprintSourcePermanentId, remainingEachPlayerCreatureToHandSearches,
-                eachPlayerCreatureToHandCount, remaining, giftLandPick, remainingSameNamePicks,
+                eachPlayerCreatureToHandCount, remaining, secondBoundedPick, remainingSameNamePicks,
                 remainingColorToHandPicks);
     }
 
@@ -126,7 +137,7 @@ public record LibrarySearchFollowUp(boolean basicLandToHand, boolean cardToGrave
                 remainingEachPlayerBasicLandSearches, eachPlayerSearchTapped, opponentExileChoice,
                 imprintSourcePermanentId, remainingEachPlayerCreatureToHandSearches,
                 eachPlayerCreatureToHandCount, remainingEachPlayerCreatureToBattlefieldSearches,
-                giftLandPick, remaining, remainingColorToHandPicks);
+                secondBoundedPick, remaining, remainingColorToHandPicks);
     }
 
     /** The same follow-up with the colour-to-hand queue advanced past the current colour (Conflux). */
@@ -135,7 +146,7 @@ public record LibrarySearchFollowUp(boolean basicLandToHand, boolean cardToGrave
                 remainingEachPlayerBasicLandSearches, eachPlayerSearchTapped, opponentExileChoice,
                 imprintSourcePermanentId, remainingEachPlayerCreatureToHandSearches,
                 eachPlayerCreatureToHandCount, remainingEachPlayerCreatureToBattlefieldSearches,
-                giftLandPick, remainingSameNamePicks, remaining);
+                secondBoundedPick, remainingSameNamePicks, remaining);
     }
 
     /** The same follow-up with the consumed basic-land-to-hand flag cleared. */
@@ -143,7 +154,7 @@ public record LibrarySearchFollowUp(boolean basicLandToHand, boolean cardToGrave
         return new LibrarySearchFollowUp(false, cardToGraveyard, remainingEachPlayerBasicLandSearches,
                 eachPlayerSearchTapped, opponentExileChoice, imprintSourcePermanentId,
                 remainingEachPlayerCreatureToHandSearches, eachPlayerCreatureToHandCount,
-                remainingEachPlayerCreatureToBattlefieldSearches, giftLandPick, remainingSameNamePicks,
+                remainingEachPlayerCreatureToBattlefieldSearches, secondBoundedPick, remainingSameNamePicks,
                 remainingColorToHandPicks);
     }
 
@@ -152,7 +163,7 @@ public record LibrarySearchFollowUp(boolean basicLandToHand, boolean cardToGrave
         return new LibrarySearchFollowUp(basicLandToHand, false, remainingEachPlayerBasicLandSearches,
                 eachPlayerSearchTapped, opponentExileChoice, imprintSourcePermanentId,
                 remainingEachPlayerCreatureToHandSearches, eachPlayerCreatureToHandCount,
-                remainingEachPlayerCreatureToBattlefieldSearches, giftLandPick, remainingSameNamePicks,
+                remainingEachPlayerCreatureToBattlefieldSearches, secondBoundedPick, remainingSameNamePicks,
                 remainingColorToHandPicks);
     }
 }

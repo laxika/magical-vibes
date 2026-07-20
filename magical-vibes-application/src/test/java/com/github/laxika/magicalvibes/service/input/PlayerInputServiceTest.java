@@ -717,7 +717,7 @@ class PlayerInputServiceTest {
             Card card = createCreature("Bear");
             gd.playerHands.get(PLAYER2_ID).add(card);
 
-            svc.beginSpellCardNameChoice(gd, PLAYER1_ID, PLAYER2_ID, List.of(CardType.LAND));
+            svc.beginSpellCardNameChoice(gd, PLAYER1_ID, PLAYER2_ID, List.of(CardType.LAND), null);
 
             verify(sessionManager).sendToPlayer(eq(PLAYER1_ID), any(InteractionPromptMessage.class));
         }
@@ -725,12 +725,28 @@ class PlayerInputServiceTest {
         @Test
         @DisplayName("Stores ExileByNameChoice context")
         void storesContext() {
-            svc.beginSpellCardNameChoice(gd, PLAYER1_ID, PLAYER2_ID, List.of(CardType.LAND));
+            svc.beginSpellCardNameChoice(gd, PLAYER1_ID, PLAYER2_ID, List.of(CardType.LAND), null);
 
             assertThat(gd.interaction.activeInteraction(PendingInteraction.ColorChoice.class).context()).isInstanceOf(ChoiceContext.ExileByNameChoice.class);
             ChoiceContext.ExileByNameChoice ctx = (ChoiceContext.ExileByNameChoice) gd.interaction.activeInteraction(PendingInteraction.ColorChoice.class).context();
             assertThat(ctx.targetPlayerId()).isEqualTo(PLAYER2_ID);
             assertThat(ctx.controllerId()).isEqualTo(PLAYER1_ID);
+        }
+
+        @Test
+        @DisplayName("A required type offers only names of cards with that type")
+        void requiredTypeOffersOnlyMatchingNames() {
+            Card artifact = createCard("Sol Ring", CardType.ARTIFACT);
+            Card creature = createCreature("Bear");
+            gd.playerHands.get(PLAYER2_ID).add(artifact);
+            gd.playerHands.get(PLAYER2_ID).add(creature);
+
+            svc.beginSpellCardNameChoice(gd, PLAYER1_ID, PLAYER2_ID, List.of(), CardType.ARTIFACT);
+
+            verify(sessionManager).sendToPlayer(eq(PLAYER1_ID), messageCaptor.capture());
+            InteractionPromptMessage msg = (InteractionPromptMessage) messageCaptor.getValue();
+            assertThat(msg.options()).contains("Sol Ring");
+            assertThat(msg.options()).doesNotContain("Bear");
         }
     }
 

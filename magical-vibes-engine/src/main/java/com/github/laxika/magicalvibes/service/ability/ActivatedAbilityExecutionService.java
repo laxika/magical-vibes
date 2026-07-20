@@ -49,6 +49,7 @@ import com.github.laxika.magicalvibes.model.effect.ReplaceLandExcessManaWithColo
 import com.github.laxika.magicalvibes.model.effect.PreventNextColorDamageToControllerEffect;
 import com.github.laxika.magicalvibes.model.effect.RegenerateEffect;
 import com.github.laxika.magicalvibes.model.effect.RegisterDrawCardsAtNextUpkeepEffect;
+import com.github.laxika.magicalvibes.model.effect.PutCountersOnSelfEffect;
 import com.github.laxika.magicalvibes.model.action.DrawCardsAtNextUpkeep;
 import com.github.laxika.magicalvibes.model.effect.ExileSelfCost;
 import com.github.laxika.magicalvibes.model.CounterType;
@@ -334,6 +335,9 @@ public class ActivatedAbilityExecutionService {
         // may pay {2} to copy it." Collected after the ability is on the stack so it can be snapshotted.
         StackEntry abilityEntry = abilityStackIndex < gameData.stack.size() ? gameData.stack.get(abilityStackIndex) : null;
         triggerCollectionService.checkControllerActivatesNonManaAbilityTriggers(gameData, playerId, abilityEntry, ability);
+        // "Whenever an opponent activates a non-mana ability" triggers (Harsh Mentor). Reached only on
+        // the non-mana path, so the "if it isn't a mana ability" clause is satisfied automatically.
+        triggerCollectionService.checkOpponentActivatesNonManaAbilityTriggers(gameData, playerId, permanent);
         // Add "whenever you activate an ability" triggers ON TOP so they resolve first (per CR rules)
         gameData.stack.addAll(deferredActivationTriggers);
         // Add "becomes tapped" triggers ON TOP of the ability so they resolve first (per CR rules)
@@ -630,7 +634,7 @@ public class ActivatedAbilityExecutionService {
                     CardColor sourceColor = gameQueryService.getEffectiveColor(gameData, permanent);
                     if (gameQueryService.isDamageFromSourcePrevented(gameData, sourceColor)
                             || damagePreventionService.isSourceDamagePreventedForPlayer(gameData, playerId, permanent.getId())
-                            || gameData.permanentsPreventedFromDealingDamage.contains(permanent.getId())
+                            || gameData.isPreventedFromDealingDamage(permanent.getId())
                             || damagePreventionService.applyColorDamagePreventionForPlayer(gameData, playerId, sourceColor)) {
                         damage = 0;
                     } else {
@@ -676,6 +680,25 @@ public class ActivatedAbilityExecutionService {
             } else if (effect instanceof RegisterDrawCardsAtNextUpkeepEffect draw) {
                 // "Draw a card at the beginning of the next turn's upkeep." rider on a mana ability (Barbed Sextant).
                 gameData.queueDelayedAction(new DrawCardsAtNextUpkeep(playerId, draw.count(), permanent.getCard()));
+            } else if (effect instanceof PutCountersOnSelfEffect counters
+                    && !gameQueryService.cantHaveCounters(gameData, permanent)) {
+                // "Add one mana of any color. Put a brick counter on this artifact." (Pyramid of the
+                // Pantheon). A mana ability resolves without the stack, so the counter is placed
+                // inline here rather than through the normal effect-handler path.
+                int count = counters.amount() != null
+                        ? amountEvaluationService.evaluate(gameData, counters.amount(),
+                                AmountContext.forManaAbility(permanent, playerId))
+                        : counters.count();
+                if (count > 0) {
+                    permanent.setCounterCount(counters.counterType(),
+                            permanent.getCounterCount(counters.counterType()) + count);
+                    String counterName = counters.counterType().name().toLowerCase();
+                    String counterText = count == 1
+                            ? "a " + counterName + " counter"
+                            : count + " " + counterName + " counters";
+                    gameBroadcastService.logAndBroadcast(gameData, GameLog.textCardText(
+                            player.getUsername() + " puts " + counterText + " on ", permanent.getCard(), "."));
+                }
             }
         }
         stateBasedActionService.performStateBasedActions(gameData);
@@ -705,7 +728,7 @@ public class ActivatedAbilityExecutionService {
             CardColor sourceColor = gameQueryService.getEffectiveColor(gameData, permanent);
             if (gameQueryService.isDamageFromSourcePrevented(gameData, sourceColor)
                     || damagePreventionService.isSourceDamagePreventedForPlayer(gameData, playerId, permanent.getId())
-                    || gameData.permanentsPreventedFromDealingDamage.contains(permanent.getId())
+                    || gameData.isPreventedFromDealingDamage(permanent.getId())
                     || damagePreventionService.applyColorDamagePreventionForPlayer(gameData, playerId, sourceColor)) {
                 damage = 0;
             } else {

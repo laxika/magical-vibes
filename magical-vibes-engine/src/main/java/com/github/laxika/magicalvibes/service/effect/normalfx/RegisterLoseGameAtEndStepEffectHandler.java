@@ -26,7 +26,7 @@ public class RegisterLoseGameAtEndStepEffectHandler implements NormalEffectHandl
                 new LoseGameAtEndStep(controllerId, entry.getCard(), gameData.turnNumber));
 
         String playerName = gameData.playerIdToName.get(controllerId);
-        log.info("Game {} - {} registers a delayed 'lose the game' at the next turn's end step",
+        log.info("Game {} - {} registers a delayed 'lose the game' at their own next end step",
                 gameData.id, playerName);
     }
 }

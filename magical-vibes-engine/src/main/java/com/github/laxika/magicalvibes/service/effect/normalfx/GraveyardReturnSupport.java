@@ -189,16 +189,23 @@ public class GraveyardReturnSupport {
         List<Card> graveyard = gameData.playerGraveyards.get(controllerId);
         String filterLabel = CardPredicateUtils.describeFilter(effect.filter());
 
-        if (effect.thisTurnOnly() || effect.fromBattlefieldThisTurn() || effect.fromAnywhereThisTurn()) {
+        if (effect.thisTurnOnly() || effect.fromBattlefieldThisTurn() || effect.fromAnywhereThisTurn()
+                || effect.discardedOrCycledThisTurn()) {
             Set<UUID> trackedIds;
-            if (effect.fromAnywhereThisTurn()) {
+            String sourceLabel;
+            if (effect.discardedOrCycledThisTurn()) {
+                trackedIds = gameData.cardsDiscardedOrCycledThisTurn.getOrDefault(controllerId, Set.of());
+                sourceLabel = "by cycling or discarding";
+            } else if (effect.fromAnywhereThisTurn()) {
                 trackedIds = gameData.cardsPutIntoGraveyardFromAnywhereThisTurn.getOrDefault(controllerId, Set.of());
+                sourceLabel = "from anywhere";
             } else if (effect.fromBattlefieldThisTurn()) {
                 trackedIds = gameData.cardsPutIntoGraveyardFromBattlefieldThisTurn.getOrDefault(controllerId, Set.of());
+                sourceLabel = "from the battlefield";
             } else {
                 trackedIds = gameData.creatureCardsPutIntoGraveyardFromBattlefieldThisTurn.getOrDefault(controllerId, Set.of());
+                sourceLabel = "from the battlefield";
             }
-            String sourceLabel = effect.fromAnywhereThisTurn() ? "from anywhere" : "from the battlefield";
 
             if (graveyard == null || graveyard.isEmpty() || trackedIds.isEmpty()) {
                 String logEntry = entry.getDescription() + " - no cards were put into your graveyard " + sourceLabel + " this turn.";

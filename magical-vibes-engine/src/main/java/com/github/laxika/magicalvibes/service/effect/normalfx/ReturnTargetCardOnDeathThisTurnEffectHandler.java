@@ -30,7 +30,8 @@ public class ReturnTargetCardOnDeathThisTurnEffectHandler implements NormalEffec
             return;
         }
 
-        gameData.creaturesReturnedToBattlefieldOnDeathThisTurn.add(target.getCard().getId());
+        boolean enterTapped = ((ReturnTargetCardOnDeathThisTurnEffect) effect).enterTapped();
+        gameData.creaturesReturnedToBattlefieldOnDeathThisTurn.put(target.getCard().getId(), enterTapped);
 
         log.info("Game {} - Delayed trigger registered: if {} dies this turn, return it to the battlefield",
                 gameData.id, target.getCard().getName());

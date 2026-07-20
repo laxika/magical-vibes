@@ -59,13 +59,17 @@ public class PersistReturnEffectHandler implements NormalEffectHandlerBean {
 
         Set<CardType> enterTappedTypes = battlefieldEntryService.snapshotEnterTappedTypes(gameData);
         Permanent permanent = new Permanent(card);
-        permanent.setCounterCount(CounterType.MINUS_ONE_MINUS_ONE, 1);
+        // Vizier of Remedies replaces the persist -1/-1 counter (the creature isn't on the battlefield
+        // yet, so use its owner as the entering controller); reduced to zero it re-persists.
+        int persistCounters = gameQueryService.reduceMinusOneMinusOneCounters(gameData, ownerId, 1);
+        permanent.setCounterCount(CounterType.MINUS_ONE_MINUS_ONE, persistCounters);
         permanent.setEnteredFromGraveyardOwnerId(ownerId);
         battlefieldEntryService.putPermanentOntoBattlefield(gameData, ownerId, permanent, enterTappedTypes);
 
         String playerName = gameData.playerIdToName.get(ownerId);
-        gameBroadcastService.logAndBroadcast(gameData, GameLog.textCardText(playerName + " returns ", card, " to the battlefield with a -1/-1 counter (persist)."));
-        log.info("Game {} - {} returns via persist with a -1/-1 counter", gameData.id, card.getName());
+        String persistSuffix = persistCounters > 0 ? " to the battlefield with a -1/-1 counter (persist)." : " to the battlefield (persist).";
+        gameBroadcastService.logAndBroadcast(gameData, GameLog.textCardText(playerName + " returns ", card, persistSuffix));
+        log.info("Game {} - {} returns via persist with {} -1/-1 counter(s)", gameData.id, card.getName(), persistCounters);
 
         graveyardReturnSupport.handleCreatureEtbAndLegendRule(gameData, ownerId, permanent, card);
     }

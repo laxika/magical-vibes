@@ -17,6 +17,7 @@ import com.github.laxika.magicalvibes.cards.CardRegistration;
 @CardRegistration(set = "8ED", collectorNumber = "138")
 @CardRegistration(set = "7ED", collectorNumber = "139")
 @CardRegistration(set = "6ED", collectorNumber = "134")
+@CardRegistration(set = "AKH", collectorNumber = "93")
 public class Gravedigger extends Card {
 
     public Gravedigger() {

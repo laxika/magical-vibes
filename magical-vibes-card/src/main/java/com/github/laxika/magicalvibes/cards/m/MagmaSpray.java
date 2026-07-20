@@ -9,6 +9,7 @@ import com.github.laxika.magicalvibes.model.filter.PermanentIsCreaturePredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentPredicateTargetFilter;
 
 @CardRegistration(set = "ALA", collectorNumber = "108")
+@CardRegistration(set = "AKH", collectorNumber = "141")
 public class MagmaSpray extends Card {
 
     public MagmaSpray() {

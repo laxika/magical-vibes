@@ -49,6 +49,12 @@ public class PutCounterOnEachControlledPermanentEffectHandler implements NormalE
         }
         int amount = amountEvaluationService.evaluate(gameData, e.amount(),
                 AmountContext.forStackEntry(entry, source));
+        // Vizier of Remedies: every target is controlled by this same player, so the reduction is
+        // uniform. If it drops the count to zero no counters are placed.
+        if (e.counterType() == CounterType.MINUS_ONE_MINUS_ONE) {
+            amount = gameQueryService.reduceMinusOneMinusOneCounters(gameData, entry.getControllerId(), amount);
+            if (amount <= 0) return;
+        }
 
         FilterContext ctx = FilterContext.of(gameData).withSourceCardId(entry.getCard().getId());
         int count = 0;

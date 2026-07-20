@@ -729,6 +729,50 @@ public class PermanentChoiceBattlefieldHandlerService {
         turnProgressionService.resolveAutoPass(gameData);
     }
 
+    public void handleSacrificeAnotherCreatureDealPowerDamage(GameData gameData, UUID permanentId,
+                                                              PermanentChoiceContext.SacrificeAnotherCreatureDealPowerDamage ctx) {
+        Permanent toSacrifice = gameQueryService.findPermanentById(gameData, permanentId);
+        if (toSacrifice == null) {
+            throw new IllegalStateException("Chosen creature no longer exists");
+        }
+
+        // Capture effective power before removing from battlefield (static bonuses still apply;
+        // CR 510.1a clamps negative power to 0).
+        int power = Math.max(0, gameQueryService.getEffectivePower(gameData, toSacrifice));
+
+        permanentRemovalService.removePermanentToGraveyard(gameData, toSacrifice);
+
+        String playerName = gameData.playerIdToName.get(ctx.controllerId());
+        gameBroadcastService.logAndBroadcast(gameData, GameLog.textCardText(playerName + " sacrifices ", toSacrifice.getCard(), "."));
+        log.info("Game {} - {} sacrifices {} for {}", gameData.id, playerName,
+                toSacrifice.getCard().getName(), ctx.sourceCard().getName());
+
+        // The source deals damage equal to the sacrificed creature's power to the chosen any-target.
+        // Reuses the divided-damage helper with a single assignment; it finds the source permanent by
+        // card, so the damage is dealt by the entering creature (honouring protection / prevention).
+        if (power > 0 && ctx.targetId() != null) {
+            damageSupport.dealDividedDamageToAnyTargets(gameData, ctx.sourceCard(), ctx.controllerId(),
+                    Map.of(ctx.targetId(), power));
+        }
+
+        stateBasedActionService.performStateBasedActions(gameData);
+
+        if (!gameData.pendingMayAbilities.isEmpty()) {
+            playerInputService.processNextMayAbility(gameData);
+            return;
+        }
+
+        if (gameData.pendingEffectResolutionEntry != null) {
+            effectResolutionService.resolveEffectsFrom(gameData,
+                    gameData.pendingEffectResolutionEntry,
+                    gameData.pendingEffectResolutionIndex);
+        }
+
+        gameData.priorityPassedBy.clear();
+        gameBroadcastService.broadcastGameState(gameData);
+        turnProgressionService.resolveAutoPass(gameData);
+    }
+
     public void handleSacrificePermanentThen(GameData gameData, UUID permanentId,
                                               PermanentChoiceContext.SacrificePermanentThen ctx) {
         Permanent toSacrifice = gameQueryService.findPermanentById(gameData, permanentId);

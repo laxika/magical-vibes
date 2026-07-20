@@ -16,6 +16,7 @@ import com.github.laxika.magicalvibes.model.filter.CardAllOfPredicate;
 import com.github.laxika.magicalvibes.model.filter.CardAnyOfPredicate;
 import com.github.laxika.magicalvibes.model.filter.CardControllerDoesNotOwnPredicate;
 import com.github.laxika.magicalvibes.model.filter.CardColorPredicate;
+import com.github.laxika.magicalvibes.model.filter.CardHasCyclingPredicate;
 import com.github.laxika.magicalvibes.model.filter.CardHasFlashbackPredicate;
 import com.github.laxika.magicalvibes.model.filter.CardIsAuraPredicate;
 import com.github.laxika.magicalvibes.model.filter.CardIsHistoricPredicate;
@@ -41,6 +42,8 @@ import com.github.laxika.magicalvibes.model.filter.OwnedPermanentPredicateTarget
 import com.github.laxika.magicalvibes.model.filter.PermanentAllOfPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentAnyOfPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentAttachedToSourceControllerPredicate;
+import com.github.laxika.magicalvibes.model.filter.PermanentAttackedOrBlockedThisTurnPredicate;
+import com.github.laxika.magicalvibes.model.filter.PermanentBlockedOrWasBlockedBySubtypeThisTurnPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentColorInPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentControlledBySourceControllerPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentControllerControlsPermanentPredicate;
@@ -185,6 +188,10 @@ public class PredicateEvaluationService {
                     card.isAura();
             case CardHasFlashbackPredicate ignored ->
                     card.getCastingOption(FlashbackCast.class).isPresent();
+            case CardHasCyclingPredicate ignored ->
+                    card.getHandActivatedAbilities().stream()
+                            .anyMatch(ability -> ability.getDescription() != null
+                                    && ability.getDescription().startsWith("Cycling"));
             case CardIsPermanentPredicate ignored ->
                     card.getType().isPermanentType();
             case CardIsTokenPredicate ignored ->
@@ -359,8 +366,19 @@ public class PredicateEvaluationService {
                             && sourceControllerId.equals(permanent.getAttackTarget());
             case PermanentIsBlockingPredicate ignored ->
                     permanent.isBlocking();
+            case PermanentAttackedOrBlockedThisTurnPredicate ignored ->
+                    permanent.isAttackedThisTurn() || permanent.isBlockedThisTurn();
             case PermanentIsBlockedPredicate ignored ->
                     gameData != null && permanent.isAttacking() && isBlocked(gameData, permanent);
+            case PermanentBlockedOrWasBlockedBySubtypeThisTurnPredicate p -> {
+                if (gameData == null) {
+                    yield false;
+                }
+                UUID id = permanent.getId();
+                yield gameData.creaturesInCombatWithChangelingThisTurn.contains(id)
+                        || gameData.combatBlockOpponentSubtypesThisTurn
+                                .getOrDefault(id, java.util.Set.of()).contains(p.subtype());
+            }
             case PermanentPowerAtMostPredicate powerAtMostPredicate -> {
                 if (gameData == null) {
                     yield permanent.getEffectivePower() <= powerAtMostPredicate.maxPower();

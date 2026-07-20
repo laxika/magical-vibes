@@ -28,8 +28,19 @@ public class RemoveCounterFromTargetPermanentEffectHandler implements NormalEffe
 
     @Override
     public void resolve(GameData gameData, StackEntry entry, CardEffect effect) {
+        var e = (RemoveCounterFromTargetPermanentEffect) effect;
         Permanent target = gameQueryService.findPermanentById(gameData, entry.getTargetId());
         if (target == null) {
+            return;
+        }
+
+        // Specific counter type ("remove a -1/-1 counter"): remove one of exactly that type, no-op if none.
+        if (e.counterType() != null) {
+            if (target.getCounterCount(e.counterType()) > 0) {
+                target.setCounterCount(e.counterType(), target.getCounterCount(e.counterType()) - 1);
+                gameBroadcastService.logAndBroadcast(gameData, GameLog.textCardText("A " + e.counterType() + " counter removed from ", target.getCard(), "."));
+                log.info("Game {} - {} counter removed from {}", gameData.id, e.counterType(), target.getCard().getName());
+            }
             return;
         }
 

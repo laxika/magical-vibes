@@ -12,6 +12,7 @@ public enum CardSubtype {
     ISLAND("Island"),
     PLAINS("Plains"),
     SWAMP("Swamp"),
+    DESERT("Desert"),
     ANGEL("Angel"),
     ANTELOPE("Antelope"),
     AUROCHS("Aurochs"),
@@ -135,8 +136,10 @@ public enum CardSubtype {
     HOMUNCULUS("Homunculus"),
     PRAETOR("Praetor"),
     KARN("Karn"),
+    GIDEON("Gideon"),
     JACE("Jace"),
     CURSE("Curse"),
+    CARTOUCHE("Cartouche"),
     CHANDRA("Chandra"),
     DEVIL("Devil"),
     SAGA("Saga"),
@@ -156,7 +159,9 @@ public enum CardSubtype {
     CITIZEN("Citizen"),
     SCARECROW("Scarecrow"),
     CARIBOU("Caribou"),
-    SERF("Serf");
+    SERF("Serf"),
+    MINOTAUR("Minotaur"),
+    HYDRA("Hydra");
 
     @Getter
     private final String displayName;

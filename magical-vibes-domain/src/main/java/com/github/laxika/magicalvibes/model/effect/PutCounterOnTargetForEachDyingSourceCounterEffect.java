@@ -16,11 +16,19 @@ import com.github.laxika.magicalvibes.model.filter.PermanentIsCreaturePredicate;
  * @param counterType the counter type counted on the dying creature and placed on the target
  * @param count       snapshot of the dying creature's counter count (0 on the marker instance placed
  *                    on the card; filled in by the collector)
+ * @param optional    when {@code true} this is a "you may" death trigger (Soulstinger) — the target
+ *                    is still chosen as the trigger goes on the stack (CR 603.3d), but the controller
+ *                    may decline placing the counters at resolution; the collector wraps the
+ *                    snapshotted effect in a {@code MayEffect}
  */
-public record PutCounterOnTargetForEachDyingSourceCounterEffect(CounterType counterType, int count) implements CardEffect {
+public record PutCounterOnTargetForEachDyingSourceCounterEffect(CounterType counterType, int count, boolean optional) implements CardEffect {
 
     public PutCounterOnTargetForEachDyingSourceCounterEffect(CounterType counterType) {
-        this(counterType, 0);
+        this(counterType, 0, false);
+    }
+
+    public PutCounterOnTargetForEachDyingSourceCounterEffect(CounterType counterType, boolean optional) {
+        this(counterType, 0, optional);
     }
 
     @Override

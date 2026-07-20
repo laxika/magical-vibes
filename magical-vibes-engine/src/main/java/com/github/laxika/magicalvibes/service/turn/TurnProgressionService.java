@@ -223,6 +223,7 @@ public class TurnProgressionService {
         gameData.creatureCardsPutIntoGraveyardFromBattlefieldThisTurn.clear();
         gameData.cardsPutIntoGraveyardFromBattlefieldThisTurn.clear();
         gameData.cardsPutIntoGraveyardFromAnywhereThisTurn.clear();
+        gameData.cardsDiscardedOrCycledThisTurn.clear();
         gameData.creatureDeathCountThisTurn.clear();
         gameData.cardsDrawnThisTurn.clear();
         gameData.cardsDrawnThisTurnIds.clear();
@@ -237,10 +238,13 @@ public class TurnProgressionService {
         gameData.combatDamageSourcesWithChangelingThisTurn.clear();
         gameData.combatDamageToPlayerControllerSubtypesThisTurn.clear();
         gameData.controllersDealtCombatDamageWithChangelingThisTurn.clear();
+        gameData.combatBlockOpponentSubtypesThisTurn.clear();
+        gameData.creaturesInCombatWithChangelingThisTurn.clear();
         gameData.playersDealtDamageThisTurn.clear();
         gameData.damageDealtToPlayersThisTurn.clear();
         gameData.untappedLandsAtTurnStart.clear();
         gameData.permanentsDealtDamageThisTurn.clear();
+        gameData.freeCastPermanentUsedThisTurn.clear();
         gameData.creatureCardsDamagedThisTurnBySourcePermanent.clear();
         gameData.creatureGivingControllerPoisonOnDeathThisTurn.clear();
         gameData.creaturesReturnedToBattlefieldOnDeathThisTurn.clear();
@@ -251,7 +255,11 @@ public class TurnProgressionService {
 
         turnCleanupService.drainManaPools(gameData);
 
-        gameData.forEachPermanent((playerId, p) -> p.setAttackedThisTurn(false));
+        gameData.forEachPermanent((playerId, p) -> {
+            p.setAttackedThisTurn(false);
+            p.setBlockedThisTurn(false);
+            p.setBecomeTargetCounterUsedThisTurn(false);
+        });
 
         // Clear "until your next turn" activated abilities for the active player's permanents
         List<Permanent> activePlayerBf = gameData.playerBattlefields.get(nextActive);
@@ -261,6 +269,9 @@ public class TurnProgressionService {
             // creatures (scoped to their controller's turn so it never arms on an opponent's turn).
             activePlayerBf.forEach(Permanent::promoteCantAttackNextTurn);
         }
+        // Gideon of the Trials +1: "until your next turn" damage-dealing prevention ends now for the
+        // player whose turn is beginning (its entries are keyed by that controlling player).
+        gameData.permanentsPreventedFromDealingDamageUntilNextTurn.values().removeIf(nextActive::equals);
         // "Until your next turn" floating continuous effects controlled by the player whose turn
         // is beginning wear off now. An expiring layer-1 copy effect (e.g. Shapesharer) reverts
         // the copied permanent's card — which may sit on any player's battlefield. A newer copy

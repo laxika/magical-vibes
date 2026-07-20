@@ -36,6 +36,7 @@ import com.github.laxika.magicalvibes.model.filter.CardPredicate;
 import com.github.laxika.magicalvibes.model.filter.CardPredicateUtils;
 import com.github.laxika.magicalvibes.model.filter.FilterContext;
 import com.github.laxika.magicalvibes.model.filter.PermanentPredicateTargetFilter;
+import com.github.laxika.magicalvibes.model.filter.TargetFilter;
 import com.github.laxika.magicalvibes.service.GameBroadcastService;
 import com.github.laxika.magicalvibes.service.effect.normalfx.DestructionSupport;
 import com.github.laxika.magicalvibes.service.battlefield.GameQueryService;
@@ -347,9 +348,10 @@ public class MayAbilityHandlerService {
     }
 
     private void handleTargetedMayAbilityAccepted(GameData gameData, Player player, PendingMayAbility ability) {
-        // Collect valid permanent targets from all battlefields using card's target filter
+        // Collect valid permanent targets from all battlefields using the may-ability's target filter
         List<UUID> validTargets = new ArrayList<>();
         Card sourceCard = ability.sourceCard();
+        TargetFilter targetFilter = mayAbilityTargetFilter(sourceCard, ability);
         boolean canTargetPermanent = ability.effects().stream().anyMatch(e -> e.targetSpec().category().includesPermanents());
         if (canTargetPermanent) {
             FilterContext ctx = FilterContext.of(gameData)
@@ -359,7 +361,7 @@ public class MayAbilityHandlerService {
                 List<Permanent> battlefield = gameData.playerBattlefields.get(pid);
                 if (battlefield == null) continue;
                 for (Permanent p : battlefield) {
-                    if (sourceCard.getTargetFilter() instanceof PermanentPredicateTargetFilter filter) {
+                    if (targetFilter instanceof PermanentPredicateTargetFilter filter) {
                         if (predicateEvaluationService.matchesPermanentPredicate(p, filter.predicate(), ctx)) {
                             validTargets.add(p.getId());
                         }
@@ -375,7 +377,7 @@ public class MayAbilityHandlerService {
         boolean canTargetPlayer = ability.effects().stream().anyMatch(e -> e.targetSpec().category().includesPlayers());
         if (canTargetPlayer) {
             validTargets.addAll(validTargetService.filterValidPlayerTargets(
-                    gameData, sourceCard.getTargetFilter(), gameData.orderedPlayerIds, ability.controllerId()));
+                    gameData, targetFilter, gameData.orderedPlayerIds, ability.controllerId()));
         }
 
         if (validTargets.isEmpty()) {
@@ -393,7 +395,7 @@ public class MayAbilityHandlerService {
         String targetDescription;
         if (!canTargetPermanent && canTargetPlayer) {
             targetDescription = "player";
-        } else if (sourceCard.getTargetFilter() instanceof PermanentPredicateTargetFilter filter) {
+        } else if (targetFilter instanceof PermanentPredicateTargetFilter filter) {
             targetDescription = filter.errorMessage().replace("Target must be ", "").replace("an ", "").replace("a ", "");
         } else if (canTargetPlayer) {
             targetDescription = "any target";
@@ -575,6 +577,28 @@ public class MayAbilityHandlerService {
         inputCompletionService.sbaProcessMayAbilitiesThenAutoPass(gameData);
     }
 
+    /**
+     * The target filter that governs a targeted may-ability's target choice. Prefers the filter of
+     * the card target group the may-ability's own effect is bound to, so a multi-target card whose
+     * may-ability targets a different set than its primary target picks the right filter — e.g. an
+     * aura that enchants a "creature you control" but whose ETB "you may put a -1/-1 counter on
+     * target creature" may hit ANY creature (Cartouche of Ambition). Falls back to the card's
+     * primary target filter when the effect is not bound to a declared target group (single-target
+     * may abilities are bound to group 0, whose filter equals {@code getTargetFilter()}).
+     */
+    private TargetFilter mayAbilityTargetFilter(Card sourceCard, PendingMayAbility ability) {
+        for (CardEffect e : ability.effects()) {
+            int idx = sourceCard.getEffectTargetIndex(e);
+            if (idx >= 0 && idx < sourceCard.getSpellTargets().size()) {
+                TargetFilter groupFilter = sourceCard.getSpellTargets().get(idx).getFilter();
+                if (groupFilter != null) {
+                    return groupFilter;
+                }
+            }
+        }
+        return sourceCard.getTargetFilter();
+    }
+
     private CardEffect extractInnerEffect(PendingMayAbility ability) {
         if (ability.effects().isEmpty()) return null;
         CardEffect first = ability.effects().getFirst();
@@ -675,8 +699,9 @@ public class MayAbilityHandlerService {
     private void handleResolutionTimeTargetSelection(GameData gameData, Player player, PendingMayAbility ability, StackEntry pendingEntry, boolean canTargetPermanent, boolean canTargetPlayer) {
         List<UUID> validTargets = new ArrayList<>();
         Card sourceCard = ability.sourceCard();
-        if (canTargetPermanent) { FilterContext ctx = FilterContext.of(gameData).withSourceCardId(sourceCard.getId()).withSourceControllerId(ability.controllerId()); for (UUID pid : gameData.orderedPlayerIds) { List<Permanent> battlefield = gameData.playerBattlefields.get(pid); if (battlefield == null) continue; for (Permanent p : battlefield) { if (sourceCard.getTargetFilter() instanceof PermanentPredicateTargetFilter filter) { if (predicateEvaluationService.matchesPermanentPredicate(p, filter.predicate(), ctx)) { validTargets.add(p.getId()); } } else if (gameQueryService.isCreature(gameData, p)) { validTargets.add(p.getId()); } } } }
-        if (canTargetPlayer) { validTargets.addAll(validTargetService.filterValidPlayerTargets(gameData, sourceCard.getTargetFilter(), gameData.orderedPlayerIds, ability.controllerId())); }
+        TargetFilter targetFilter = mayAbilityTargetFilter(sourceCard, ability);
+        if (canTargetPermanent) { FilterContext ctx = FilterContext.of(gameData).withSourceCardId(sourceCard.getId()).withSourceControllerId(ability.controllerId()); for (UUID pid : gameData.orderedPlayerIds) { List<Permanent> battlefield = gameData.playerBattlefields.get(pid); if (battlefield == null) continue; for (Permanent p : battlefield) { if (targetFilter instanceof PermanentPredicateTargetFilter filter) { if (predicateEvaluationService.matchesPermanentPredicate(p, filter.predicate(), ctx)) { validTargets.add(p.getId()); } } else if (gameQueryService.isCreature(gameData, p)) { validTargets.add(p.getId()); } } } }
+        if (canTargetPlayer) { validTargets.addAll(validTargetService.filterValidPlayerTargets(gameData, targetFilter, gameData.orderedPlayerIds, ability.controllerId())); }
         if (validTargets.isEmpty()) {
             gameBroadcastService.logAndBroadcast(gameData,
                     GameLog.cardThen(ability.sourceCard(), "'s ability has no valid targets."));

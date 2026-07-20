@@ -989,6 +989,9 @@ public class CombatDamageService {
             List<CardEffect> allDamageEffects = new ArrayList<>();
             allDamageEffects.addAll(creature.getCard().getEffects(EffectSlot.ON_COMBAT_DAMAGE_TO_PLAYER));
             allDamageEffects.addAll(creature.getCard().getEffects(EffectSlot.ON_DAMAGE_TO_PLAYER));
+            // Combat-damage-to-player triggers granted until end of turn by one-shot effects
+            // (e.g. Open into Wonder grants "deals combat damage to a player, draw a card").
+            allDamageEffects.addAll(creature.getTemporaryTriggeredEffects(EffectSlot.ON_COMBAT_DAMAGE_TO_PLAYER));
             for (CardEffect effect : allDamageEffects) {
                 if (effect instanceof ConditionalEffect metalcraft && metalcraft.condition() instanceof Metalcraft) {
                     if (!conditionEvaluationService.isMet(gameData, metalcraft.condition(),
@@ -1055,7 +1058,13 @@ public class CombatDamageService {
                     // cards" (DrawCardEffect with an EventValue amount, e.g. Cold-Eyed Selkie) reads it.
                     int mayEventValue = may.wrapped() instanceof DrawCardEffect draw
                             && draw.amount() instanceof EventValue ? damageDealt : 0;
-                    gameData.queueMayAbility(creature.getCard(), attackerId, may, defenderId, creature.getId(), mayEventValue);
+                    // A "target creature" (any) may-ability — e.g. Hapatra's "you may put a -1/-1 counter
+                    // on target creature" — is queued with a null target so its target is chosen at
+                    // resolution. Effects that instead act on a creature the damaged player controls have
+                    // a NONE target spec and keep the baked-in defender context.
+                    UUID mayTargetId = may.wrapped().targetSpec().category().includesPermanents()
+                            ? null : defenderId;
+                    gameData.queueMayAbility(creature.getCard(), attackerId, may, mayTargetId, creature.getId(), mayEventValue);
                     gameBroadcastService.logAndBroadcast(gameData, GameLog.cardThen(creature.getCard(), "'s combat damage trigger fires."));
                     continue;
                 }
@@ -1825,6 +1834,13 @@ public class CombatDamageService {
             Permanent pw = gameQueryService.findPermanentById(gameData, attackTarget);
             if (pw == null) return;
             // Attacking a planeswalker — damage removes loyalty counters (CR 306.8)
+            // Gideon's Intervention: prevent damage to a planeswalker you control from a source with the chosen name.
+            UUID pwControllerId = gameQueryService.findPermanentController(gameData, pw.getId());
+            if (gameQueryService.isDamagePreventable(gameData)
+                    && gameQueryService.isDamageFromChosenNamePreventedForController(gameData, pwControllerId, atk.getCard().getName())) {
+                state.combatDamageDealt.merge(atk, 0, Integer::sum);
+                return;
+            }
             // Apply one-shot Sanctum Guardian shields (prevent the next damage from the chosen source to any target)
             damage = damagePreventionService.applyChosenSourceNextDamageToAnyTargetShield(gameData, atk.getId(), damage);
             state.damageToPlaneswalkers.merge(attackTarget, damage, Integer::sum);
@@ -1868,6 +1884,8 @@ public class CombatDamageService {
                             && gameQueryService.playerHasProtectionFromColor(gameData, defenderId, attackerColor))
                     && !(gameQueryService.isDamagePreventable(gameData)
                             && gameQueryService.playerHasProtectionFromChosenName(gameData, defenderId, atk.getCard().getName()))
+                    && !(gameQueryService.isDamagePreventable(gameData)
+                            && gameQueryService.isDamageFromChosenNamePreventedForController(gameData, defenderId, atk.getCard().getName()))
                     && !damagePreventionService.applyColorDamagePreventionForPlayer(gameData, defenderId, attackerColor)) {
                 UUID attackerControllerId = gameQueryService.findPermanentController(gameData, atk.getId());
                 damage = damagePreventionService.applyOpponentSourceDamageReduction(gameData, defenderId, attackerControllerId, damage);
@@ -1955,11 +1973,22 @@ public class CombatDamageService {
             gameBroadcastService.logAndBroadcast(gameData, GameLog.textCardText("Combat damage to ", target.getCard(), " is prevented."));
             return;
         }
+        // Gideon's Intervention: prevent all combat damage to a creature you control from a source with the chosen name.
+        if (gameQueryService.isDamagePreventable(gameData)
+                && gameQueryService.isDamageFromChosenNamePreventedForController(gameData, targetControllerId, source.getCard().getName())) {
+            gameBroadcastService.logAndBroadcast(gameData, GameLog.textCardText("Combat damage to ", target.getCard(), " is prevented."));
+            return;
+        }
         if (gameQueryService.dealsCounterDamageToCreatures(gameData, source)) {
             int afterShield = damagePreventionService.applyCreaturePreventionShield(gameData, target, damage, true);
             if (afterShield > 0 && !gameQueryService.cantHaveCounters(gameData, target)
                     && !gameQueryService.cantHaveMinusOneMinusOneCounters(gameData, target)) {
-                target.setCounterCount(CounterType.MINUS_ONE_MINUS_ONE, target.getCounterCount(CounterType.MINUS_ONE_MINUS_ONE) + afterShield);
+                // Vizier of Remedies reduces the -1/-1 counters; the deathtouch marking below still
+                // keys off the full damage dealt (afterShield).
+                int counters = gameQueryService.reduceMinusOneMinusOneCounters(gameData, target, afterShield);
+                if (counters > 0) {
+                    target.setCounterCount(CounterType.MINUS_ONE_MINUS_ONE, target.getCounterCount(CounterType.MINUS_ONE_MINUS_ONE) + counters);
+                }
             }
             // Counter damage is still damage dealt (CR 702.90e), so a deathtouch source marks
             // the creature for the CR 704.5h destruction check directly — it never reaches the

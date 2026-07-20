@@ -6,11 +6,20 @@ import com.github.laxika.magicalvibes.model.CardType;
 import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.GameData;
 import com.github.laxika.magicalvibes.model.Permanent;
+import com.github.laxika.magicalvibes.model.StackEntry;
+import com.github.laxika.magicalvibes.model.StackEntryType;
+import com.github.laxika.magicalvibes.model.effect.BoostSelfEffect;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
 import com.github.laxika.magicalvibes.model.effect.DealDamageToDiscardingPlayerEffect;
 import com.github.laxika.magicalvibes.model.effect.ExileDiscardedCardFromGraveyardEffect;
 import com.github.laxika.magicalvibes.model.effect.LoseLifeEffect;
 import com.github.laxika.magicalvibes.model.effect.MayEffect;
+import com.github.laxika.magicalvibes.model.CounterType;
+import com.github.laxika.magicalvibes.model.effect.EachPermanentScope;
+import com.github.laxika.magicalvibes.model.effect.MayPayManaEffect;
+import com.github.laxika.magicalvibes.model.effect.PutCounterOnEachMatchingPermanentEffect;
+import com.github.laxika.magicalvibes.model.effect.ScryEffect;
+import com.github.laxika.magicalvibes.model.filter.PermanentIsCreaturePredicate;
 import com.github.laxika.magicalvibes.service.DamagePreventionService;
 import com.github.laxika.magicalvibes.service.GameBroadcastService;
 import com.github.laxika.magicalvibes.service.battlefield.GameQueryService;
@@ -400,6 +409,117 @@ class DiscardTriggerCollectorServiceTest {
 
             assertThat(result).isFalse();
             assertThat(gd.getPlayerExiledCards(player1Id)).isEmpty();
+        }
+    }
+
+    // ===== ON_CONTROLLER_DISCARDS — ScryEffect =====
+
+    @Nested
+    @DisplayName("ON_CONTROLLER_DISCARDS — ScryEffect")
+    class ControllerDiscardScry {
+
+        @Test
+        @DisplayName("queues a scry triggered ability for the discarding player and returns true")
+        void queuesScryTrigger() {
+            Permanent curator = createPermanent("Curator of Mysteries");
+            var effect = new ScryEffect(1);
+            var ctx = new TriggerContext.Discard(player1Id, createCard("Grizzly Bears"));
+
+            boolean result = registry.dispatch(
+                    match(curator, player1Id, effect),
+                    EffectSlot.ON_CONTROLLER_DISCARDS, effect, ctx);
+
+            assertThat(result).isTrue();
+            assertThat(gd.stack).hasSize(1);
+            StackEntry entry = gd.stack.getFirst();
+            assertThat(entry.getEntryType()).isEqualTo(StackEntryType.TRIGGERED_ABILITY);
+            assertThat(entry.getControllerId()).isEqualTo(player1Id);
+            assertThat(entry.getSourcePermanentId()).isEqualTo(curator.getId());
+            assertThat(entry.getEffectsToResolve()).hasSize(1).first().isInstanceOf(ScryEffect.class);
+        }
+    }
+
+    // ===== ON_CONTROLLER_DISCARDS — BoostSelfEffect =====
+
+    @Nested
+    @DisplayName("ON_CONTROLLER_DISCARDS — BoostSelfEffect")
+    class ControllerDiscardSelfBoost {
+
+        @Test
+        @DisplayName("queues a self-boost triggered ability carrying the source permanent and returns true")
+        void queuesSelfBoostTrigger() {
+            Permanent hekma = createPermanent("Hekma Sentinels");
+            var effect = new BoostSelfEffect(1, 1);
+            var ctx = new TriggerContext.Discard(player1Id, createCard("Grizzly Bears"));
+
+            boolean result = registry.dispatch(
+                    match(hekma, player1Id, effect),
+                    EffectSlot.ON_CONTROLLER_DISCARDS, effect, ctx);
+
+            assertThat(result).isTrue();
+            assertThat(gd.stack).hasSize(1);
+            StackEntry entry = gd.stack.getFirst();
+            assertThat(entry.getEntryType()).isEqualTo(StackEntryType.TRIGGERED_ABILITY);
+            assertThat(entry.getControllerId()).isEqualTo(player1Id);
+            assertThat(entry.getSourcePermanentId()).isEqualTo(hekma.getId());
+            assertThat(entry.getEffectsToResolve()).hasSize(1).first().isInstanceOf(BoostSelfEffect.class);
+        }
+    }
+
+    // ===== ON_CONTROLLER_DISCARDS — PutCounterOnEachMatchingPermanentEffect =====
+
+    @Nested
+    @DisplayName("ON_CONTROLLER_DISCARDS — PutCounterOnEachMatchingPermanentEffect")
+    class ControllerDiscardPutCounters {
+
+        @Test
+        @DisplayName("queues a put-counters triggered ability carrying the source permanent and returns true")
+        void queuesPutCountersTrigger() {
+            Permanent archfiend = createPermanent("Archfiend of Ifnir");
+            var effect = new PutCounterOnEachMatchingPermanentEffect(
+                    CounterType.MINUS_ONE_MINUS_ONE, 1,
+                    new PermanentIsCreaturePredicate(), EachPermanentScope.ALL_PLAYERS);
+            var ctx = new TriggerContext.Discard(player1Id, createCard("Grizzly Bears"));
+
+            boolean result = registry.dispatch(
+                    match(archfiend, player1Id, effect),
+                    EffectSlot.ON_CONTROLLER_DISCARDS, effect, ctx);
+
+            assertThat(result).isTrue();
+            assertThat(gd.stack).hasSize(1);
+            StackEntry entry = gd.stack.getFirst();
+            assertThat(entry.getEntryType()).isEqualTo(StackEntryType.TRIGGERED_ABILITY);
+            assertThat(entry.getControllerId()).isEqualTo(player1Id);
+            assertThat(entry.getSourcePermanentId()).isEqualTo(archfiend.getId());
+            assertThat(entry.getEffectsToResolve()).hasSize(1).first()
+                    .isInstanceOf(PutCounterOnEachMatchingPermanentEffect.class);
+        }
+    }
+
+    // ===== ON_CONTROLLER_DISCARDS — MayPayManaEffect =====
+
+    @Nested
+    @DisplayName("ON_CONTROLLER_DISCARDS — MayPayManaEffect")
+    class ControllerDiscardMayPayMana {
+
+        @Test
+        @DisplayName("queues a may-pay triggered ability for the discarding player and returns true")
+        void queuesMayPayManaTrigger() {
+            Permanent drakeHaven = createPermanent("Drake Haven");
+            var effect = new MayPayManaEffect("{1}", new ScryEffect(1), "Pay {1}?");
+            var ctx = new TriggerContext.Discard(player1Id, createCard("Grizzly Bears"));
+
+            boolean result = registry.dispatch(
+                    match(drakeHaven, player1Id, effect),
+                    EffectSlot.ON_CONTROLLER_DISCARDS, effect, ctx);
+
+            assertThat(result).isTrue();
+            assertThat(gd.stack).hasSize(1);
+            StackEntry entry = gd.stack.getFirst();
+            assertThat(entry.getEntryType()).isEqualTo(StackEntryType.TRIGGERED_ABILITY);
+            assertThat(entry.getControllerId()).isEqualTo(player1Id);
+            assertThat(entry.getSourcePermanentId()).isEqualTo(drakeHaven.getId());
+            assertThat(entry.getEffectsToResolve()).hasSize(1).first().isInstanceOf(MayPayManaEffect.class);
         }
     }
 }

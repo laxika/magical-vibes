@@ -14,6 +14,7 @@ import com.github.laxika.magicalvibes.model.SpellCastTimingRestriction;
 import com.github.laxika.magicalvibes.model.TurnStep;
 import com.github.laxika.magicalvibes.model.effect.AllowCastFromCardsExiledWithSourceEffect;
 import com.github.laxika.magicalvibes.model.effect.AllowCastFromTopOfLibraryEffect;
+import com.github.laxika.magicalvibes.model.effect.AnyManaTypeCastEffect;
 import com.github.laxika.magicalvibes.model.effect.CantCastAdditionalNonartifactSpellsEffect;
 import com.github.laxika.magicalvibes.model.effect.CantCastSpellTypeEffect;
 import com.github.laxika.magicalvibes.model.effect.CantCastSpellsWithSameNameAsExiledCardEffect;
@@ -278,7 +279,11 @@ public class CastingPermissionService {
                             forbidden.add(imprinted.getName());
                         }
                     }
-                    if (effect instanceof SpellsWithChosenNameCantBeCastEffect) {
+                    if (effect instanceof SpellsWithChosenNameCantBeCastEffect chosenNameCast) {
+                        // Gideon's Intervention restricts only opponents; the controller may still cast.
+                        if (chosenNameCast.opponentsOnly() && pid.equals(castingPlayerId)) {
+                            continue;
+                        }
                         String chosenName = perm.getChosenName();
                         if (chosenName != null) {
                             forbidden.add(chosenName);
@@ -493,6 +498,31 @@ public class CastingPermissionService {
             }
         }
         return castableTypes;
+    }
+
+    /**
+     * Vizier of the Menagerie etc.: returns true if the player controls a permanent that lets them
+     * spend mana of any type to cast spells sharing one of this card's types (e.g. creature spells).
+     */
+    public boolean canSpendAnyManaTypeToCast(GameData gameData, UUID playerId, Card card) {
+        List<Permanent> battlefield = gameData.playerBattlefields.get(playerId);
+        if (battlefield == null) return false;
+        for (Permanent perm : battlefield) {
+            for (CardEffect effect : perm.getCard().getEffects(EffectSlot.STATIC)) {
+                if (effect instanceof AnyManaTypeCastEffect anyMana && cardHasAnyType(card, anyMana.spellTypes())) {
+                    return true;
+                }
+            }
+        }
+        return false;
+    }
+
+    private static boolean cardHasAnyType(Card card, Set<CardType> types) {
+        if (types.contains(card.getType())) return true;
+        for (CardType type : card.getAdditionalTypes()) {
+            if (types.contains(type)) return true;
+        }
+        return false;
     }
 
     /**

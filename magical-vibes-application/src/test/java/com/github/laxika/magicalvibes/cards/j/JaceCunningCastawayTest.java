@@ -1,16 +1,16 @@
 package com.github.laxika.magicalvibes.cards.j;
 import com.github.laxika.magicalvibes.model.action.DelayedCombatDamageLoot;
 
+import com.github.laxika.magicalvibes.cards.s.Shock;
 import com.github.laxika.magicalvibes.model.CardColor;
 import com.github.laxika.magicalvibes.model.CardSubtype;
 import com.github.laxika.magicalvibes.model.CardSupertype;
 import com.github.laxika.magicalvibes.model.CardType;
-import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.GameData;
+import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.Player;
 import com.github.laxika.magicalvibes.model.TurnStep;
-import com.github.laxika.magicalvibes.model.effect.SacrificeSelfEffect;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
@@ -99,23 +99,28 @@ class JaceCunningCastawayTest extends BaseCardTest {
     }
 
     @Test
-    @DisplayName("-2 Illusion token has ON_BECOMES_TARGET_OF_SPELL sacrifice trigger")
-    void illusionTokenHasSacrificeOnTargetTrigger() {
+    @DisplayName("-2 Illusion token sacrifices itself when it becomes the target of a spell")
+    void illusionTokenSacrificesWhenTargeted() {
         addReadyJace(player1);
 
         harness.activateAbility(player1, 0, 1, null, null);
         harness.passBothPriorities();
 
         GameData gd = harness.getGameData();
-        List<Permanent> bf = gd.playerBattlefields.get(player1.getId());
-        Permanent illusionToken = bf.stream()
+        Permanent illusionToken = gd.playerBattlefields.get(player1.getId()).stream()
                 .filter(p -> p.getCard().getName().equals("Illusion"))
                 .findFirst()
                 .orElseThrow();
 
-        assertThat(illusionToken.getCard().getEffects(EffectSlot.ON_BECOMES_TARGET_OF_SPELL)).hasSize(1);
-        assertThat(illusionToken.getCard().getEffects(EffectSlot.ON_BECOMES_TARGET_OF_SPELL).getFirst())
-                .isInstanceOf(SacrificeSelfEffect.class);
+        harness.setHand(player2, List.of(new Shock()));
+        harness.addMana(player2, ManaColor.RED, 1);
+        harness.castInstant(player2, 0, illusionToken.getId());
+
+        // The non-targeting sacrifice trigger resolves above Shock, sacrificing the token.
+        harness.passBothPriorities();
+
+        assertThat(gd.playerBattlefields.get(player1.getId()))
+                .noneMatch(p -> p.getId().equals(illusionToken.getId()));
     }
 
     @Test

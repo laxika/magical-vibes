@@ -87,6 +87,8 @@ public class PermanentChoiceHandlerService {
             triggerHandler.handleSpellTargetTrigger(gameData, permanentId, stt);
         } else if (context instanceof PermanentChoiceContext.DiscardTriggerAnyTarget dtt) {
             triggerHandler.handleDiscardTrigger(gameData, permanentId, dtt);
+        } else if (context instanceof PermanentChoiceContext.DiscardControllerTriggerTarget dct) {
+            triggerHandler.handleDiscardControllerTrigger(gameData, permanentId, dct);
         } else if (context instanceof PermanentChoiceContext.DeathTriggerTarget dtt) {
             triggerHandler.handleDeathTrigger(gameData, permanentId, dtt);
         } else if (context instanceof PermanentChoiceContext.SelfLeavesTriggerTarget slt) {
@@ -117,6 +119,8 @@ public class PermanentChoiceHandlerService {
             battlefieldHandler.handleSacrificeCreatureCreateTokensIfSubtype(gameData, permanentId, scts);
         } else if (context instanceof PermanentChoiceContext.SacrificeArtifactForDividedDamage sadd) {
             battlefieldHandler.handleSacrificeArtifactForDividedDamage(gameData, permanentId, sadd);
+        } else if (context instanceof PermanentChoiceContext.SacrificeAnotherCreatureDealPowerDamage sacpd) {
+            battlefieldHandler.handleSacrificeAnotherCreatureDealPowerDamage(gameData, permanentId, sacpd);
         } else if (context instanceof PermanentChoiceContext.LibraryCastSpellTarget lct) {
             spellHandler.handleLibraryCastSpellTarget(gameData, permanentId, lct);
         } else if (context instanceof PermanentChoiceContext.ExileCastSpellTarget ect) {
@@ -173,6 +177,10 @@ public class PermanentChoiceHandlerService {
             triggerHandler.handleTransformOpponentTarget(gameData, permanentId, tot);
         } else if (context instanceof PermanentChoiceContext.TransformCreatureTarget tct) {
             triggerHandler.handleTransformCreatureTarget(gameData, permanentId, tct);
+        } else if (context instanceof PermanentChoiceContext.AttackCounterMoveFirstTarget acmf) {
+            triggerHandler.handleAttackCounterMoveFirstTarget(gameData, permanentId, acmf);
+        } else if (context instanceof PermanentChoiceContext.AttackCounterMoveSecondTarget acms) {
+            triggerHandler.handleAttackCounterMoveSecondTarget(gameData, permanentId, acms);
         } else if (context instanceof PermanentChoiceContext.SagaChapterTarget sct) {
             triggerHandler.handleSagaChapterTarget(gameData, permanentId, sct);
         } else if (context instanceof PermanentChoiceContext.TariffTieBreak tariffTieBreak) {

@@ -26,7 +26,7 @@
         <h2>{{ choice.library.scryPrompt }}</h2>
         @if (choice.library.scryAvailableCards.length > 0) {
           <div class="reorder-section">
-            <div class="reorder-label">Click a card then choose Top or Bottom:</div>
+            <div class="reorder-label">Click a card then choose Top or {{ choice.library.scryToGraveyard ? 'Graveyard' : 'Bottom' }}:</div>
             <div class="reorder-cards">
               @for (item of choice.library.scryAvailableCards; track item.originalIndex) {
                 <div class="reorder-card-wrapper">
@@ -37,7 +37,7 @@
                     (mouseleave)="onCardHoverEnd()" />
                   <div class="scry-buttons">
                     <button class="btn-scry-top" (click)="choice.library.scryToTop(item.originalIndex)">Top</button>
-                    <button class="btn-scry-bottom" (click)="choice.library.scryToBottom(item.originalIndex)">Bottom</button>
+                    <button class="btn-scry-bottom" (click)="choice.library.scryToBottom(item.originalIndex)">{{ choice.library.scryToGraveyard ? 'Graveyard' : 'Bottom' }}</button>
                   </div>
                 </div>
               }
@@ -64,7 +64,7 @@
         }
         @if (choice.library.scryBottomCards.length > 0) {
           <div class="reorder-section">
-            <div class="reorder-label">Bottom of library:</div>
+            <div class="reorder-label">{{ choice.library.scryToGraveyard ? 'Graveyard:' : 'Bottom of library:' }}</div>
             <div class="reorder-cards">
               @for (item of choice.library.scryBottomCards; track item.originalIndex) {
                 <app-card-display
@@ -74,11 +74,11 @@
                   (mouseleave)="onCardHoverEnd()" />
               }
             </div>
-            <button class="btn-keep" (click)="choice.library.undoScryBottom()" [disabled]="choice.library.scryBottomCards.length === 0">Undo Bottom</button>
+            <button class="btn-keep" (click)="choice.library.undoScryBottom()" [disabled]="choice.library.scryBottomCards.length === 0">Undo {{ choice.library.scryToGraveyard ? 'Graveyard' : 'Bottom' }}</button>
           </div>
         }
         <div class="reorder-actions">
-          <button class="btn-keep" (click)="choice.library.confirmScry()" [disabled]="choice.library.scryAvailableCards.length > 0">Confirm Scry</button>
+          <button class="btn-keep" (click)="choice.library.confirmScry()" [disabled]="choice.library.scryAvailableCards.length > 0">{{ choice.library.scryToGraveyard ? 'Confirm Surveil' : 'Confirm Scry' }}</button>
         </div>
         </div>
       </div>

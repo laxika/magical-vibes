@@ -12,6 +12,9 @@ import com.github.laxika.magicalvibes.model.LibrarySearchFollowUp;
 import com.github.laxika.magicalvibes.model.LibrarySearchParams;
 import com.github.laxika.magicalvibes.model.Player;
 import com.github.laxika.magicalvibes.model.StackEntry;
+import com.github.laxika.magicalvibes.model.StackEntryType;
+import com.github.laxika.magicalvibes.model.effect.CardEffect;
+import com.github.laxika.magicalvibes.model.effect.DrawCardEffect;
 import com.github.laxika.magicalvibes.networking.SessionManager;
 import com.github.laxika.magicalvibes.networking.model.CardView;
 import com.github.laxika.magicalvibes.networking.service.CardViewFactory;
@@ -423,6 +426,64 @@ class LibraryChoiceHandlerServiceTest {
             verify(graveyardService, never()).addCardToGraveyard(any(), any(), any());
             verify(gameBroadcastService).logAndBroadcast(eq(gd), argThat((GameLogEntry logEntry) ->
                     logEntry.plainText().contains("bottom of their library") && logEntry.plainText().contains("random order")));
+        }
+    }
+
+    // =========================================================================
+    // handleLibraryCardChosen — resuming effects queued after the search
+    // =========================================================================
+
+    @Nested
+    @DisplayName("handleLibraryCardChosen resuming effects after the search")
+    class HandleLibraryCardChosenResumesRemainingEffects {
+
+        private StackEntry entryWithTwoEffects() {
+            List<CardEffect> effects = List.of(new DrawCardEffect(1), new DrawCardEffect(1));
+            return new StackEntry(StackEntryType.ACTIVATED_ABILITY, createCard("Shefet Monitor"),
+                    player1Id, "Shefet Monitor's ability", effects);
+        }
+
+        @Test
+        @DisplayName("Resumes the effect after the search when one is queued (search-then-draw)")
+        void resumesEffectQueuedAfterSearch() {
+            stubCardViewFactory();
+            when(battlefieldEntryService.snapshotEnterTappedTypes(gd)).thenReturn(Set.of());
+
+            Card plains = createBasicLand("Plains");
+            gd.playerDecks.get(player1Id).add(plains);
+            beginBasicLandBattlefieldSearch(player1Id, List.of(plains));
+
+            // The reflexive land search is index 0 of the effect list; the cycling draw at index 1
+            // has not resolved yet — the search interrupted resolution here.
+            StackEntry entry = entryWithTwoEffects();
+            gd.pendingEffectResolutionEntry = entry;
+            gd.pendingEffectResolutionIndex = 1;
+
+            service.handleLibraryCardChosen(gd, player1, 0);
+
+            verify(effectResolutionService).resolveEffectsFrom(gd, entry, 1);
+            verify(turnProgressionService).resolveAutoPass(gd);
+        }
+
+        @Test
+        @DisplayName("Does not resume when the search was the effect list's last effect")
+        void doesNotResumeWhenSearchWasLast() {
+            stubCardViewFactory();
+            when(battlefieldEntryService.snapshotEnterTappedTypes(gd)).thenReturn(Set.of());
+
+            Card plains = createBasicLand("Plains");
+            gd.playerDecks.get(player1Id).add(plains);
+            beginBasicLandBattlefieldSearch(player1Id, List.of(plains));
+
+            // Resume index is past the end of the (two-effect) list — nothing remains to resolve.
+            StackEntry entry = entryWithTwoEffects();
+            gd.pendingEffectResolutionEntry = entry;
+            gd.pendingEffectResolutionIndex = 2;
+
+            service.handleLibraryCardChosen(gd, player1, 0);
+
+            verify(effectResolutionService, never()).resolveEffectsFrom(any(), any(), anyInt());
+            verify(turnProgressionService).resolveAutoPass(gd);
         }
     }
 }

@@ -45,20 +45,22 @@ public class PutCountersOnSourceEffectHandler implements NormalEffectHandlerBean
 
         String counterLabel = String.format("%+d/%+d", e.powerModifier(), e.toughnessModifier());
         boolean plusZeroPlusOne = e.powerModifier() == 0 && e.toughnessModifier() > 0;
+        int amount = e.amount();
         if (e.powerModifier() > 0) {
-            source.setCounterCount(CounterType.PLUS_ONE_PLUS_ONE, source.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE) + e.amount());
+            source.setCounterCount(CounterType.PLUS_ONE_PLUS_ONE, source.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE) + amount);
         } else if (plusZeroPlusOne) {
-            source.setCounterCount(CounterType.PLUS_ZERO_PLUS_ONE, source.getCounterCount(CounterType.PLUS_ZERO_PLUS_ONE) + e.amount());
+            source.setCounterCount(CounterType.PLUS_ZERO_PLUS_ONE, source.getCounterCount(CounterType.PLUS_ZERO_PLUS_ONE) + amount);
         } else {
             if (gameQueryService.cantHaveMinusOneMinusOneCounters(gameData, source)) return;
-            source.setCounterCount(CounterType.MINUS_ONE_MINUS_ONE, source.getCounterCount(CounterType.MINUS_ONE_MINUS_ONE) + e.amount());
+            amount = gameQueryService.reduceMinusOneMinusOneCounters(gameData, source, amount);
+            if (amount <= 0) return;
+            source.setCounterCount(CounterType.MINUS_ONE_MINUS_ONE, source.getCounterCount(CounterType.MINUS_ONE_MINUS_ONE) + amount);
         }
-        String logEntry = source.getCard().getName() + " gets " + e.amount() + " " + counterLabel + " counter(s).";
-        gameBroadcastService.logAndBroadcast(gameData, GameLog.builder().card(source.getCard()).text(" gets " + e.amount() + " " + counterLabel + " counter(s).").build());
-        log.info("Game {} - {} gets {} {} counter(s)", gameData.id, source.getCard().getName(), e.amount(), counterLabel);
+        gameBroadcastService.logAndBroadcast(gameData, GameLog.builder().card(source.getCard()).text(" gets " + amount + " " + counterLabel + " counter(s).").build());
+        log.info("Game {} - {} gets {} {} counter(s)", gameData.id, source.getCard().getName(), amount, counterLabel);
 
         if (e.powerModifier() <= 0 && !plusZeroPlusOne) {
-            permanentCounterSupport.fireMinusOneMinusOneCounterPutOnCreatureTriggers(gameData, source, e.amount());
+            permanentCounterSupport.fireMinusOneMinusOneCounterPutOnCreatureTriggers(gameData, source, amount);
         }
     }
 }

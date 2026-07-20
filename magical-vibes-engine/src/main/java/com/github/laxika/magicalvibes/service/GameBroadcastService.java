@@ -639,6 +639,11 @@ public class GameBroadcastService {
         ManaCost cost = card.getParsedManaCost();
         int additionalCost = castingCostService.getCastCostModifier(gameData, playerId, card, ctx.costSnapshot())
                 + additionalGenericCost;
+        // Vizier of the Menagerie: eligible spells can be paid with mana of any type.
+        if (castingPermissionService.canSpendAnyManaTypeToCast(gameData, playerId, card)
+                && cost.canPayAsGeneric(pool, 0, additionalCost)) {
+            return true;
+        }
         boolean isArtifact = card.hasType(CardType.ARTIFACT);
         boolean isMyr = gameQueryService.cardHasSubtype(card, CardSubtype.MYR, gameData, playerId);
         boolean hasRestrictedRedContext = isArtifact
@@ -1115,6 +1120,9 @@ public class GameBroadcastService {
             ManaPool pool = gameData.playerManaPools.get(playerId);
             int additionalCost = castingCostService.getCastCostModifier(gameData, playerId, topCard);
             boolean canAfford = cost.canPay(pool, additionalCost);
+            if (!canAfford && castingPermissionService.canSpendAnyManaTypeToCast(gameData, playerId, topCard)) {
+                canAfford = cost.canPayAsGeneric(pool, 0, additionalCost);
+            }
             if (!canAfford) {
                 canAfford = castingCostService.canAffordAlternativeCostFromBattlefield(gameData, playerId, topCard, pool, additionalCost);
             }

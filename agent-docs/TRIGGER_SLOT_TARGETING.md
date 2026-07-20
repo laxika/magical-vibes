@@ -75,6 +75,7 @@ cast path type-checks the target automatically; an effect that targets a permane
 | Attack (`AttackTriggerTarget`)      | `Options.ATTACK`   | ✅ | ✅ any permanent  | ✅ | ✅ | ✅ | ❌ (ignored) |
 | End step (`EndStepTriggerTarget`)   | `Options.END_STEP` | ✅ | ✅ any permanent  | ✅ | ✅ | ❌ | ✅ (unwraps `ConditionalEffect`) |
 | Discard-self (`DiscardTriggerAnyTarget`) | —                  | ✅ all players | ✅ creatures + planeswalkers only | ❌ | ❌ | ❌ | ❌ |
+| Controller-discard (`DiscardControllerTriggerTarget`) | `Options.ATTACK` | ✅ | ✅ any permanent | ✅ | ✅ | ✅ | ✅ (Zenith Seeker's creature-only grant) |
 | Spell-target (`SpellTargetTriggerAnyTarget`) | —                  | ✅ unless filter present | ✅ via `TargetFilter` only | ❌ | ✅ (via `PredicateEvaluationService.matchesFilters`) | ❌ | ❌ |
 | Life-gain (`LifeGainTriggerAnyTarget`) | —                  | ✅ all players | ✅ creatures only | ❌ | ❌ | ❌ | ❌ |
 | Enters-from-graveyard (`EntersFromGraveyardTriggerTarget`) | — | ✅ all players | ✅ creatures + planeswalkers (any target) | ❌ | ❌ | ❌ | ❌ |
@@ -106,6 +107,7 @@ combat damage step is processed.
 | `ON_ENCHANTED_PERMANENT_PUT_INTO_GRAVEYARD` (targeting branches) | `DeathTriggerCollectorService.addEnchantedPermanentDeathEntry` | Death |
 | `ON_ATTACK` (attached-permanent flavour) | `CombatTriggerService` aura/equipment flow | Attack |
 | `ON_ATTACK` / `ON_ALLY_CREATURE_ATTACKS` | `CombatAttackService.declareAttackers` (per-attacker mandatory triggers store the triggering attacker as a non-targeting `targetId`, and the attacked player/planeswalker as `attackedTargetId` — so effects can act on "that creature", e.g. Shared Animosity's boost) | Attack |
+| `ON_ATTACK` (two-target counter move) | `CombatAttackService.declareAttackers` routes any trigger whose effect implements the marker `AttackCounterMoveEffect` (Decimator Beetle's `RemoveAndPutCounterOnAttackEffect`) to the bespoke two-step `AttackCounterMoveFirstTarget` → `AttackCounterMoveSecondTarget` flow, because the normal Attack pipeline collects only ONE target. Stage 1 = a creature you control; stage 2 = up to one creature the defending player controls (choose yourself to decline). Drained in `AutoPassService`; both stages filter targetability via `TargetLegalityService.checkSpellPermanentTargetableReason`; the two chosen ids land on the entry's flat `targetIds` (0, 1) | bespoke |
 | `ON_BLOCK` (targeting variant only) | `CombatBlockService.declareBlockers` queues an `AttackTriggerTarget` when the blocker's **card carries a target filter** and a block effect's `targetSpec()` includes permanents (e.g. Elite Javelineer's "deals 1 damage to target attacking creature"); honours the card's `PermanentPredicateTargetFilter`. Block triggers with **no** card-level target filter (Ashmouth Hound, Inferno Elemental — "that creature") still push a non-targeting stack entry referencing the blocked attacker. | Attack |
 | `ON_ALLY_CREATURE_ATTACKS_UNBLOCKED` | `CombatBlockService` (declare-blockers step; unblocked creature stored as non-targeting `sourcePermanentId`) | Non-targeting |
 | `ON_CREATURE_ATTACKS_YOU` | `CombatAttackService.declareAttackers` (defender's permanents; attacking creature stored as non-targeting `targetId`) | Attack |
@@ -117,6 +119,7 @@ combat damage step is processed.
 | `CONTROLLER_END_STEP_TRIGGERED` | `StepTriggerService.handleEndOfTurnTriggers` (raid / default) | End step |
 | `ON_SELF_LEAVES_BATTLEFIELD` (targeting effects only) | `DeathTriggerCollectorService.handleSelfLeavesDefault` → `SelfLeavesTriggerTarget` (queued when an effect's `targetSpec()` includes players/permanents, e.g. Meadowboon, or is a graveyard category — `category().isGraveyard()`, e.g. Offalsnout). `TriggeredAbilityQueueService.processNextSelfLeavesTriggerTarget` routes graveyard-targeting effects (`ExileGraveyardCardsEffect(TARGET_CARDS_ANY_GRAVEYARD)`) to a `MultiGraveyardChoice` card choice instead of the permanent/player path. | End step (reuses `TriggerTargetCollector.Options.END_STEP`); non-targeting effects push straight to the stack |
 | `ON_SELF_DISCARDED_BY_OPPONENT` | `TriggerCollectionService.checkDiscardSelfTriggers` | Discard-self |
+| `ON_CONTROLLER_DISCARDS` (targeting variants) | `DiscardTriggerCollectorService` → `DiscardControllerTriggerTarget` (queued when a controller-discard effect's `targetSpec()` includes permanents, e.g. Zenith Seeker's "target creature gains flying"). Non-targeting controller-discard effects (Hekma Sentinels self-boost, Curator of Mysteries scry, Necropotence exile) still enqueue a `TRIGGERED_ABILITY` straight onto the stack. | Controller-discard (reuses `TriggerTargetCollector.Options.ATTACK`; honours the effect's `targetSpec().predicate()`) |
 | `ON_BECOMES_TARGET_OF_SPELL` / `…_OR_ABILITY` / `…_OF_OPPONENT_SPELL` | `TriggerCollectionService.checkBecomesTargetOfSpell*` | Spell-target |
 | `ON_CONTROLLER_CASTS_SPELL` / `ON_ANY_PLAYER_CASTS_SPELL` (targeting variants) | `SpellCastTriggerCollectorService` | Spell-target |
 | `ON_ANY_PERMANENT_DEALS_DAMAGE_TO_YOU` (targeting branch) | `DamageTriggerCollectorService` | Spell-target |
@@ -171,7 +174,12 @@ untapped permanent),
 `ON_OPPONENT_LAND_ENTERS_BATTLEFIELD`, `ON_ALLY_LAND_ENTERS_BATTLEFIELD`,
 `ON_OPENING_HAND_REVEAL`, `ON_OPPONENT_LOSES_LIFE`, `ON_OPPONENT_SHUFFLES_LIBRARY`,
 `ENCHANTED_PERMANENT_CONTROLLER_UPKEEP_TRIGGERED`, `ENCHANTED_PLAYER_UPKEEP_TRIGGERED`,
-`ON_ALLY_EQUIPMENT_ENTERS_BATTLEFIELD`, `ON_OPPONENT_CREATURE_ENTERS_BATTLEFIELD`,
+`ON_ALLY_EQUIPMENT_ENTERS_BATTLEFIELD`,
+`ON_ALLY_ENCHANTMENT_ENTERS_BATTLEFIELD` (Trial of Solidarity; "Whenever an enchantment enters under
+your control" — checked in `TriggerCollectionService.checkAllyEnchantmentEntersTriggers` from
+`BattlefieldEntryService.processCreatureETBEffects`, skips the entering permanent itself; gate by subtype
+with a `TriggeringCardConditionalEffect(CardSubtypePredicate(...))` for "Whenever a Cartouche you control enters"),
+`ON_OPPONENT_CREATURE_ENTERS_BATTLEFIELD`,
 `ON_OPPONENT_DEALT_NONCOMBAT_DAMAGE`, `ON_ALLY_CREATURE_COMBAT_DAMAGE_TO_PLAYER`,
 `ON_OPPONENT_CREATURE_CARD_MILLED`, `ON_ENCHANTED_PERMANENT_LEAVES_BATTLEFIELD`,
 `ON_ANOTHER_CREATURE_LEAVES_BATTLEFIELD` (Extractor Demon; global watcher — fires on every permanent
@@ -187,26 +195,45 @@ Non-targeting: a "you may have target player mill two cards" is a `MayEffect`-wr
 every permanent with this slot, under that permanent's controller, once per individual -1/-1 counter put
 on any creature from any source, via `PermanentCounterSupport.fireMinusOneMinusOneCounterPutOnCreatureTriggers`;
 non-targeting — a "you may create …" is a `MayEffect` resolved on the stack),
+`ON_YOU_PUT_MINUS_ONE_MINUS_ONE_COUNTER_ON_CREATURE` (Nest of Scarabs; controller-restricted variant of
+the above — same firing method and per-counter cadence, but a permanent only triggers when its controller
+is the player who put the counters. The placing player is `gameData.currentlyResolvingControllerId` for
+spell/ability resolution and the damage source's / permanent's controller for combat placements, passed via
+the 4-arg overload of `fireMinusOneMinusOneCounterPutOnCreatureTriggers`; non-targeting),
+`ON_YOU_PUT_MINUS_ONE_MINUS_ONE_COUNTERS_ON_CREATURE` (Hapatra, Vizier of Poisons; the "one or more
+counters, do it once" cadence — same controller restriction and firing method as the per-counter slot
+above, but fires exactly one trigger per creature per placement instance regardless of how many -1/-1
+counters were placed at once; non-targeting — the Snake creation is a plain `CreateTokenEffect`),
 `ON_ALLY_AURA_OR_EQUIPMENT_PUT_INTO_GRAVEYARD_FROM_BATTLEFIELD`,
 `GRAVEYARD_ON_ALLY_CREATURES_ATTACK`, `GRAVEYARD_ON_ALLY_CREATURE_COMBAT_DAMAGE_TO_PLAYER`,
 `ON_ALLY_CREATURE_BECOMES_TARGET_OF_OPPONENT_SPELL_OR_ABILITY`,
 `ON_TRANSFORM_TO_BACK_FACE`, `ON_TRANSFORM_TO_FRONT_FACE`,
 `ON_CONTROLLER_ACTIVATES_ABILITY` (Ceaseless Searblades; fires on every permanent with this slot on
 the activating player's battlefield, once per activated-ability activation incl. mana abilities;
-wrap in `TriggeringPermanentConditionalEffect` to filter by the permanent whose ability was activated).
+wrap in `TriggeringPermanentConditionalEffect` to filter by the permanent whose ability was activated),
+`ON_OPPONENT_ACTIVATES_NONMANA_ABILITY` (Harsh Mentor; the opponent-scoped mirror — fires on every
+permanent NOT controlled by the activating player, only on the non-mana activation path so mana
+abilities never trigger it; wrap in `TriggeringPermanentConditionalEffect` to filter by the activated
+permanent's type; the activating opponent is baked as the non-targeting `targetId`).
 
 ## `ON_ENTER_BATTLEFIELD` targeted triggers
 
 A targeted ETB (the card has a `TargetFilter` and a mandatory `ON_ENTER_BATTLEFIELD` effect, e.g.
 Pierce Strider, Geralf's Messenger) normally has its target chosen **at cast time** and the trigger
 is pushed directly onto the stack with that target. When the permanent enters **without a cast** —
-a token copy, or a creature put onto the battlefield from a graveyard via undying / reanimation /
-flicker — there is no cast-time target, so `BattlefieldEntryService.processCreatureETBEffects`
-routes the trigger through `ETBTokenTargetTrigger` (single target) or
-`ETBTokenMultiTargetTrigger` (multi-target), letting the controller choose the target as the
-ability is put on the stack (CR 603.3b / 603.6c). The entering permanent's
-`getEnteredFromGraveyardOwnerId()` distinguishes a graveyard return from a cast; "up to N" cast
-spells that chose 0 targets are unaffected because they passed through cast-time selection.
+a token copy, a creature put onto the battlefield from a graveyard via undying / reanimation /
+flicker, or **any land** (lands are played, never cast; e.g. Sunscorched Desert's "deals 1 damage
+to target player or planeswalker") — there is no cast-time target, so
+`BattlefieldEntryService.processCreatureETBEffects` routes the trigger through
+`ETBTokenTargetTrigger` (single target) or `ETBTokenMultiTargetTrigger` (multi-target), letting the
+controller choose the target as the ability is put on the stack (CR 603.3b / 603.6c). The
+`choosesTargetAtTriggerTime` gate is `card.isToken() || enteredFromGraveyard || hasType(LAND)`; the
+entering permanent's `getEnteredFromGraveyardOwnerId()` distinguishes a graveyard return from a
+cast; "up to N" cast spells that chose 0 targets are unaffected because they passed through
+cast-time selection. A land with a targeted ETB still declares its `target(...)` filter like any
+other card — for a "player or planeswalker" effect use a `PermanentPredicateTargetFilter(new
+PermanentIsPlaneswalkerPredicate(), …)` (the permanent side narrows to planeswalkers; players are
+always legal), the same idiom as Noggle Hedge-Mage. Sunscorched Desert is the reference land.
 
 **Gate-conditional targeted ETBs** (`ConditionalEffect` whose condition returns
 `Condition.isEtbTriggerGate()` — Metalcraft, Morbid, Raid, ControlsAnotherPermanent, ControlsPermanent; e.g. Bleak
@@ -279,6 +306,15 @@ such restriction.
 
 Honoured **only** by Death and Attack pipelines. End-step does not read this filter; use
 `PermanentPredicateTargetFilter` with `opponentControlled(...)` / `allied(...)` instead.
+
+**Per-effect attribution (Death):** the card-level `getTargetFilter()` is the first `target(...)`
+group's filter. When a card has two differently-targeted abilities (e.g. Soulstinger's cast-time ETB
+"target creature you control" plus a death trigger that targets any creature),
+`TriggeredAbilityQueueService.processNextDeathTriggerTarget` skips that filter unless one of the death
+trigger's own effects is bound to a declared target group (checked via `Card.getEffectTargetIndex`). So
+attach the ETB filter with `target(...).addEffect(ON_ENTER_BATTLEFIELD, …)` and add the death effect via
+plain `addEffect(ON_DEATH, …)` (no `target(...)`); the ETB filter then does not leak into the death
+trigger.
 
 ### Effect-level target predicate (`targetSpec().predicate()`)
 

@@ -1,0 +1,103 @@
+package com.github.laxika.magicalvibes.cards.b;
+
+import com.github.laxika.magicalvibes.model.GameLogEntry;
+
+import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
+import com.github.laxika.magicalvibes.model.Keyword;
+import com.github.laxika.magicalvibes.model.ManaColor;
+import com.github.laxika.magicalvibes.model.Permanent;
+import com.github.laxika.magicalvibes.model.StackEntryType;
+import com.github.laxika.magicalvibes.model.TurnStep;
+import com.github.laxika.magicalvibes.testutil.BaseCardTest;
+import org.junit.jupiter.api.DisplayName;
+import org.junit.jupiter.api.Test;
+
+import java.util.List;
+import java.util.UUID;
+
+import static org.assertj.core.api.Assertions.assertThat;
+
+class BruteStrengthTest extends BaseCardTest {
+
+    // ===== Casting and resolving =====
+
+    @Test
+    @DisplayName("Casting Brute Strength puts it on the stack targeting the creature")
+    void castingPutsOnStack() {
+        harness.addToBattlefield(player1, new GrizzlyBears());
+        harness.setHand(player1, List.of(new BruteStrength()));
+        harness.addMana(player1, ManaColor.RED, 2);
+
+        UUID targetId = harness.getPermanentId(player1, "Grizzly Bears");
+        harness.castInstant(player1, 0, targetId);
+
+        assertThat(gd.stack).hasSize(1);
+        assertThat(gd.stack.getFirst().getEntryType()).isEqualTo(StackEntryType.INSTANT_SPELL);
+        assertThat(gd.stack.getFirst().getTargetId()).isEqualTo(targetId);
+    }
+
+    @Test
+    @DisplayName("Resolving Brute Strength gives +3/+1 and trample to target creature")
+    void resolvingBoostsAndGrantsTrample() {
+        harness.addToBattlefield(player1, new GrizzlyBears());
+        harness.setHand(player1, List.of(new BruteStrength()));
+        harness.addMana(player1, ManaColor.RED, 2);
+
+        UUID targetId = harness.getPermanentId(player1, "Grizzly Bears");
+        harness.castInstant(player1, 0, targetId);
+        harness.passBothPriorities();
+
+        Permanent bears = gd.playerBattlefields.get(player1.getId()).getFirst();
+        assertThat(bears.getPowerModifier()).isEqualTo(3);
+        assertThat(bears.getToughnessModifier()).isEqualTo(1);
+        assertThat(bears.getEffectivePower()).isEqualTo(5);
+        assertThat(bears.getEffectiveToughness()).isEqualTo(3);
+        assertThat(bears.hasKeyword(Keyword.TRAMPLE)).isTrue();
+    }
+
+    // ===== End of turn cleanup =====
+
+    @Test
+    @DisplayName("Boost and trample wear off at end of turn")
+    void effectsWearOffAtEndOfTurn() {
+        harness.addToBattlefield(player1, new GrizzlyBears());
+        harness.setHand(player1, List.of(new BruteStrength()));
+        harness.addMana(player1, ManaColor.RED, 2);
+
+        UUID targetId = harness.getPermanentId(player1, "Grizzly Bears");
+        harness.castInstant(player1, 0, targetId);
+        harness.passBothPriorities();
+
+        harness.forceStep(TurnStep.END_STEP);
+        harness.clearPriorityPassed();
+        harness.passBothPriorities();
+
+        Permanent bears = gd.playerBattlefields.get(player1.getId()).getFirst();
+        assertThat(bears.getPowerModifier()).isEqualTo(0);
+        assertThat(bears.getToughnessModifier()).isEqualTo(0);
+        assertThat(bears.hasKeyword(Keyword.TRAMPLE)).isFalse();
+    }
+
+    // ===== Fizzle =====
+
+    @Test
+    @DisplayName("Brute Strength fizzles if target creature is removed before resolution")
+    void fizzlesIfTargetRemoved() {
+        harness.addToBattlefield(player1, new GrizzlyBears());
+        harness.setHand(player1, List.of(new BruteStrength()));
+        harness.addMana(player1, ManaColor.RED, 2);
+
+        UUID targetId = harness.getPermanentId(player1, "Grizzly Bears");
+        harness.castInstant(player1, 0, targetId);
+
+        // Remove target before resolution
+        gd.playerBattlefields.get(player1.getId()).clear();
+
+        harness.passBothPriorities();
+
+        assertThat(gd.stack).isEmpty();
+        assertThat(gd.gameLog.stream().map(GameLogEntry::plainText)).anyMatch(log -> log.contains("fizzles"));
+        assertThat(gd.playerGraveyards.get(player1.getId()))
+                .anyMatch(c -> c.getName().equals("Brute Strength"));
+    }
+}

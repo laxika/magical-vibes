@@ -15,6 +15,12 @@ ON_ALLY_CREATURE_ENTERS_BATTLEFIELD,
     ON_ALLY_ARTIFACT_ENTERS_BATTLEFIELD,
     ON_ALLY_NONTOKEN_ARTIFACT_ENTERS_BATTLEFIELD,
     ON_ANY_OTHER_CREATURE_ENTERS_BATTLEFIELD,
+    /** Aura slot for player-enchanting Curses: "Whenever a creature enchanted player controls enters, …".
+     *  Fires once per matching Curse attached to the entering creature's controller. The enchanted player
+     *  is baked as the (non-targeting) {@code targetId} so a {@code LoseLifeEffect(TARGET_PLAYER)} lands on
+     *  them while an accompanying {@code GainLifeEffect} feeds the Aura's controller ("you"). Checked in
+     *  {@code TriggerCollectionService.checkEnchantedPlayerCreatureEntersTriggers}. Used by Trespasser's Curse. */
+    ON_ENCHANTED_PLAYER_CREATURE_ENTERS_BATTLEFIELD,
     STATIC,
     ON_SACRIFICE,
     ON_BLOCK,
@@ -161,6 +167,10 @@ ON_ALLY_CREATURE_ENTERS_BATTLEFIELD,
     ENCHANTED_PERMANENT_CONTROLLER_END_STEP_TRIGGERED,
     ENCHANTED_PLAYER_UPKEEP_TRIGGERED,
     ON_ALLY_EQUIPMENT_ENTERS_BATTLEFIELD,
+    /** "Whenever an enchantment enters under your control" (excludes this permanent). Filter by
+     *  subtype with a {@code TriggeringCardConditionalEffect}. Checked in
+     *  {@code TriggerCollectionService.checkAllyEnchantmentEntersTriggers}. Used by Trial of Solidarity. */
+    ON_ALLY_ENCHANTMENT_ENTERS_BATTLEFIELD,
     ON_OPPONENT_CREATURE_ENTERS_BATTLEFIELD,
     /** Triggers whenever this creature or another creature enters the battlefield from the
      *  controller's graveyard. Checked in {@code BattlefieldEntryService.checkEntersFromGraveyardTriggers}
@@ -273,6 +283,16 @@ ON_ALLY_CREATURE_ENTERS_BATTLEFIELD,
      *  Fired from {@code PermanentCounterSupport} after each counter-placement event (once per
      *  event regardless of count). Used by Berta, Wise Extrapolator. */
     ON_SELF_PLUS_ONE_PLUS_ONE_COUNTERS_PUT,
+    /** Triggers whenever the controller puts one or more -1/-1 counters on this permanent — the -1/-1
+     *  mirror of {@link #ON_SELF_PLUS_ONE_PLUS_ONE_COUNTERS_PUT}, restricted to the controller's own
+     *  placements ("Whenever you put one or more -1/-1 counters on this creature"). Fired once per
+     *  counter-placement event regardless of how many counters were placed, only when the placing
+     *  player is this permanent's controller. Fired from
+     *  {@code PermanentCounterSupport.fireSelfMinusOneMinusOneCountersPutTriggers}. A targeted effect
+     *  in this slot (its {@code targetSpec()} narrows the legal target) has its target chosen as the
+     *  ability goes on the stack via the {@code SpellTargetTriggerAnyTarget} interaction. Used by
+     *  Defiant Greatmaw ("… remove a -1/-1 counter from another target creature you control"). */
+    ON_SELF_MINUS_ONE_MINUS_ONE_COUNTERS_PUT,
     /** Global watcher: triggers whenever a -1/-1 counter is put on a creature (any creature, on any
      *  battlefield, from any source — counter placement, infect/wither damage, proliferate, or a
      *  creature entering with -1/-1 counters incl. persist). Fired from
@@ -280,6 +300,24 @@ ON_ALLY_CREATURE_ENTERS_BATTLEFIELD,
      *  Gatherer ruling the ability triggers once for each individual -1/-1 counter, so the firing
      *  pushes a separate trigger per counter. Used by Flourishing Defenses. */
     ON_MINUS_ONE_MINUS_ONE_COUNTER_PUT_ON_CREATURE,
+    /** Controller-restricted watcher: triggers only when the permanent's controller is the player who
+     *  puts one or more -1/-1 counters on a creature (any creature, on any battlefield). Unlike the
+     *  global {@link #ON_MINUS_ONE_MINUS_ONE_COUNTER_PUT_ON_CREATURE}, a counter an opponent puts (e.g.
+     *  their wither/infect creature dealing damage, or their spell) does NOT fire this. The placing
+     *  player is {@code gameData.currentlyResolvingControllerId} for stack-resolution placements and the
+     *  damage source's / permanent's controller for combat placements. Fired per individual counter from
+     *  {@code PermanentCounterSupport.fireMinusOneMinusOneCounterPutOnCreatureTriggers}. Used by
+     *  Nest of Scarabs ("Whenever you put one or more -1/-1 counters on a creature"). */
+    ON_YOU_PUT_MINUS_ONE_MINUS_ONE_COUNTER_ON_CREATURE,
+    /** Controller-restricted watcher that fires **once per creature per placement instance**,
+     *  regardless of how many -1/-1 counters were placed on that creature at once — the "one or more
+     *  counters, do it once" cadence. Contrast with {@link #ON_YOU_PUT_MINUS_ONE_MINUS_ONE_COUNTER_ON_CREATURE}
+     *  (Nest of Scarabs), which fires once per individual counter to produce "that many" of something.
+     *  Like that slot it triggers only when the permanent's controller is the player placing the counters.
+     *  Fired from {@code PermanentCounterSupport.fireMinusOneMinusOneCounterPutOnCreatureTriggers}.
+     *  Non-targeting. Used by Hapatra, Vizier of Poisons ("Whenever you put one or more -1/-1 counters on
+     *  a creature, create a 1/1 green Snake creature token with deathtouch"). */
+    ON_YOU_PUT_MINUS_ONE_MINUS_ONE_COUNTERS_ON_CREATURE,
     /** Triggers whenever one or more cards leave the controller's graveyard.
      *  Fires once per leave event (batched when multiple cards leave together).
      *  Checked in {@code GraveyardService.notifyCardsLeftGraveyard}. */
@@ -382,6 +420,17 @@ ON_ALLY_CREATURE_ENTERS_BATTLEFIELD,
      *  trigger is built in {@code TriggerCollectionService.checkControllerActivatesNonManaAbilityTriggers}.
      *  Used by Rings of Brighthearth. */
     ON_CONTROLLER_ACTIVATES_NONMANA_ABILITY,
+    /** Triggers whenever an <em>opponent</em> of this permanent's controller activates a non-mana
+     *  activated ability (CR 605.1a) of a permanent. Fires on every permanent NOT controlled by the
+     *  activating player that has this slot; like mana abilities never reach the check, the
+     *  "if it isn't a mana ability" clause is automatic. Wrap the effect in
+     *  {@code TriggeringPermanentConditionalEffect} to filter by the permanent whose ability was
+     *  activated (e.g. Harsh Mentor — "an ability of an artifact, creature, or land"). The activating
+     *  player is baked as the non-targeting {@code targetId} so a player-directed effect (e.g.
+     *  {@code DealDamageToPlayersEffect(2, TARGET_PLAYER)}) acts on "that player". Checked in
+     *  {@code TriggerCollectionService.checkOpponentActivatesNonManaAbilityTriggers}, driven from
+     *  {@code ActivatedAbilityExecutionService.completeActivationAfterCosts}. Used by Harsh Mentor. */
+    ON_OPPONENT_ACTIVATES_NONMANA_ABILITY,
     /** Triggers whenever a creature the controller controls becomes blocked. Fires once per blocked
      *  attacker, on every permanent with this slot on the blocked creature's controller's battlefield
      *  (not just the blocked creature). The blocked creature's permanent ID is set as the non-targeting

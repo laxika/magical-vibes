@@ -21,6 +21,14 @@ public sealed interface MultiPermanentChoiceContext {
     record DestroyDamagedPlayerControls(String sourceName) implements MultiPermanentChoiceContext {
     }
 
+    /**
+     * Untap the single chosen permanent (any battlefield), for a triggered ability with no cast-time
+     * target — e.g. Initiate's Companion's "untap target creature or land". The choosable permanents
+     * were narrowed at begin time by the effect's predicate.
+     */
+    record UntapChosenPermanent(String sourceName) implements MultiPermanentChoiceContext {
+    }
+
     /** Sacrifice a permanent the damaged player controls (mandatory combat damage trigger, e.g. Ashling, the Extinguisher). */
     record SacrificeDamagedPlayerControls(String sourceName) implements MultiPermanentChoiceContext {
     }

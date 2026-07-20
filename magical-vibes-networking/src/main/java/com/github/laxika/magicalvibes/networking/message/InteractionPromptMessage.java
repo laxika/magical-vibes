@@ -106,8 +106,18 @@ public record InteractionPromptMessage(
     }
 
     public static InteractionPromptMessage scryOrder(List<CardView> cards, String prompt) {
+        return scryOrder(cards, prompt, false);
+    }
+
+    /**
+     * Scry / surveil order prompt. {@code toGraveyard} (carried in the {@code allGraveyards}
+     * field) tells the client the reject pile is the graveyard (surveil) rather than the bottom
+     * of the library (scry), so it can label the second pile accordingly.
+     */
+    public static InteractionPromptMessage scryOrder(List<CardView> cards, String prompt,
+                                                     boolean toGraveyard) {
         return of(InteractionShape.SCRY_ORDER, prompt, null, cards, null, null, null, null,
-                null, null, null, null, null, null, null);
+                null, null, null, null, null, toGraveyard ? Boolean.TRUE : null, null);
     }
 
     public static InteractionPromptMessage cardOrder(List<CardView> cards, String prompt) {

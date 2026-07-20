@@ -613,10 +613,20 @@ public class TargetLegalityService {
                         targetFizzled = isNonColorSourceRestricted(gameData, targetPerm, entry);
                     }
                     if (!targetFizzled) {
+                        // A triggered ability falls back to the card-level target filter only when one
+                        // of its effects is actually bound to that declared target group. Otherwise the
+                        // filter belongs to a different ability of the same card (e.g. Soulstinger's
+                        // ETB "target creature you control") and must not fizzle this trigger, whose
+                        // own effect targets any creature. Cast spells / activated abilities are
+                        // unaffected — their effects are always bound to their target group.
+                        TargetFilter cardFilter = entry.getCard() != null ? entry.getCard().getTargetFilter() : null;
+                        if (cardFilter != null && entry.getEntryType() == StackEntryType.TRIGGERED_ABILITY
+                                && entry.getEffectsToResolve().stream()
+                                        .noneMatch(e -> entry.getCard().getEffectTargetIndex(e) >= 0)) {
+                            cardFilter = null;
+                        }
                         TargetFilter effectiveTargetFilter =
-                                entry.getTargetFilter() != null
-                                        ? entry.getTargetFilter()
-                                        : entry.getCard() != null ? entry.getCard().getTargetFilter() : null;
+                                entry.getTargetFilter() != null ? entry.getTargetFilter() : cardFilter;
                         if (effectiveTargetFilter != null) {
                             try {
                                 predicateEvaluationService.validateTargetFilter(effectiveTargetFilter, targetPerm,

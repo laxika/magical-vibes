@@ -1,5 +1,6 @@
 package com.github.laxika.magicalvibes.model;
 
+import com.github.laxika.magicalvibes.model.filter.CardPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentPredicate;
 import com.github.laxika.magicalvibes.model.filter.TargetFilter;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
@@ -29,6 +30,8 @@ public class ActivatedAbility {
     private final int requiredControlledSubtypeCount;
     /** Minimum number of cards the controller must have in hand to activate (0 = no restriction). Set via {@link #withMinCardsInHand(int)}. */
     private int minCardsInHandToActivate;
+    /** Maximum number of cards the controller may have in hand to activate, or null for no restriction (e.g. Dread Wanderer's "one or fewer cards in hand" = 1). Set via {@link #withMaxCardsInHand(int)}. */
+    private Integer maxCardsInHandToActivate;
     /** When true, any player (not just the source's controller) may activate this ability, e.g. Oona's Prowler. Set via {@link #withActivatableByAnyPlayer()}. */
     private boolean activatableByAnyPlayer;
     /** When true, the ability's cost includes the untap symbol {@code {Q}}: the permanent must be tapped and is untapped to pay (e.g. Order of Whiteclay). Set via {@link #withRequiresUntap()}. */
@@ -41,6 +44,16 @@ public class ActivatedAbility {
     private String requiredControlledPermanentDescription;
     /** Cross-target restriction on the whole chosen set for a multi-target ability (CR 601.2c), beyond the per-position filters (e.g. Gauntlets of Chaos). Null = no such restriction. Set via {@link #withMultiTargetConstraint}. */
     private MultiTargetConstraint multiTargetConstraint;
+    /** Counter type the source permanent must carry at least {@link #requiredSourceCounterCount} of to activate (e.g. Edifice of Authority's "three or more brick counters on this artifact"). Null = no such restriction. Set via {@link #withRequiredSourceCounters}. */
+    private CounterType requiredSourceCounterType;
+    /** Minimum number of {@link #requiredSourceCounterType} counters the source permanent must have to activate. */
+    private int requiredSourceCounterCount;
+    /** Predicate a non-token card in the controller's graveyard must match to count toward {@link #requiredGraveyardCardCount} (e.g. Gate to the Afterlife's "six or more creature cards in your graveyard"). Null = no such restriction. Set via {@link #withRequiredGraveyardCards}. */
+    private CardPredicate requiredGraveyardCardPredicate;
+    /** Minimum number of matching cards in the controller's graveyard required to activate. */
+    private int requiredGraveyardCardCount;
+    /** Human-readable description of the graveyard-count restriction, used in the activation error message. */
+    private String requiredGraveyardCardDescription;
 
     public ActivatedAbility(boolean requiresTap, String manaCost, List<CardEffect> effects, String description) {
         this(requiresTap, manaCost, effects, description, null, null, null, null, List.of(), 1, 1, false, null, null, 0);
@@ -137,13 +150,30 @@ public class ActivatedAbility {
                 maxActivationsPerTurn, timingRestriction, multiTargetFilters, minTargets, maxTargets,
                 variableLoyaltyCost, sourcePermanentId, requiredControlledSubtype, requiredControlledSubtypeCount);
         copy.minCardsInHandToActivate = this.minCardsInHandToActivate;
+        copy.maxCardsInHandToActivate = this.maxCardsInHandToActivate;
         copy.activatableByAnyPlayer = this.activatableByAnyPlayer;
         copy.requiresUntap = this.requiresUntap;
         copy.requiredControlledPermanentPredicate = this.requiredControlledPermanentPredicate;
         copy.requiredControlledPermanentCount = this.requiredControlledPermanentCount;
         copy.requiredControlledPermanentDescription = this.requiredControlledPermanentDescription;
         copy.multiTargetConstraint = this.multiTargetConstraint;
+        copy.requiredSourceCounterType = this.requiredSourceCounterType;
+        copy.requiredSourceCounterCount = this.requiredSourceCounterCount;
+        copy.requiredGraveyardCardPredicate = this.requiredGraveyardCardPredicate;
+        copy.requiredGraveyardCardCount = this.requiredGraveyardCardCount;
+        copy.requiredGraveyardCardDescription = this.requiredGraveyardCardDescription;
         return copy;
+    }
+
+    /**
+     * Fluent setter for an "Activate only if there are N or more [type] counters on this permanent"
+     * restriction (e.g. Edifice of Authority's "three or more brick counters on this artifact"). The
+     * count is checked against the source permanent itself. Returns this ability for chaining.
+     */
+    public ActivatedAbility withRequiredSourceCounters(CounterType counterType, int count) {
+        this.requiredSourceCounterType = counterType;
+        this.requiredSourceCounterCount = count;
+        return this;
     }
 
     /**
@@ -179,11 +209,34 @@ public class ActivatedAbility {
     }
 
     /**
+     * Fluent setter for an "Activate only if there are N or more [matching] cards in your graveyard"
+     * restriction (e.g. Gate to the Afterlife's "six or more creature cards in your graveyard").
+     * {@code description} is the noun phrase spliced into the activation error message. Counts only
+     * non-token cards in the controller's own graveyard. Returns this ability for chaining.
+     */
+    public ActivatedAbility withRequiredGraveyardCards(CardPredicate predicate, int count, String description) {
+        this.requiredGraveyardCardPredicate = predicate;
+        this.requiredGraveyardCardCount = count;
+        this.requiredGraveyardCardDescription = description;
+        return this;
+    }
+
+    /**
      * Fluent setter for a "activate only if you have N or more cards in your hand" restriction
      * (e.g. Resonating Lute). Returns this ability for chaining in card constructors.
      */
     public ActivatedAbility withMinCardsInHand(int minCards) {
         this.minCardsInHandToActivate = minCards;
+        return this;
+    }
+
+    /**
+     * Fluent setter for an "activate only if you have N or fewer cards in your hand" restriction
+     * (e.g. Dread Wanderer's "one or fewer cards in hand"). Returns this ability for chaining in
+     * card constructors.
+     */
+    public ActivatedAbility withMaxCardsInHand(int maxCards) {
+        this.maxCardsInHandToActivate = maxCards;
         return this;
     }
 

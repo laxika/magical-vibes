@@ -1,6 +1,7 @@
 package com.github.laxika.magicalvibes.service.input;
 
 import com.github.laxika.magicalvibes.model.Card;
+import com.github.laxika.magicalvibes.model.CardType;
 import com.github.laxika.magicalvibes.model.ChoiceContext;
 import com.github.laxika.magicalvibes.model.DrawReplacementKind;
 import com.github.laxika.magicalvibes.model.GameData;
@@ -410,6 +411,34 @@ public class MayMiscHandlerService {
             String logEntry = player.getUsername() + " leaves the revealed card on top of their library.";
             gameBroadcastService.logAndBroadcast(gameData, GameLog.text(logEntry));
             log.info("Game {} - {} leaves revealed card on top", gameData.id, player.getUsername());
+        }
+
+        inputCompletionService.processMayAbilitiesThenAutoPass(gameData);
+    }
+
+    /**
+     * Nissa, Steward of Elements 0 — the controller may put the looked-at top card (already
+     * confirmed to be a land or a low-enough-cost creature) onto the battlefield; otherwise it
+     * stays on top of the library.
+     */
+    public void handleLookAtTopCardPutLandOrCreatureChoice(GameData gameData, Player player, boolean accepted) {
+        UUID controllerId = player.getId();
+        List<Card> deck = gameData.playerDecks.get(controllerId);
+
+        if (accepted && !deck.isEmpty()) {
+            Card topCard = deck.removeFirst();
+            Permanent perm = new Permanent(topCard);
+            battlefieldEntryService.putPermanentOntoBattlefield(gameData, controllerId, perm);
+            if (topCard.hasType(CardType.CREATURE)) {
+                battlefieldEntryService.handleCreatureEnteredBattlefield(gameData, controllerId, topCard, null, false);
+            }
+            gameBroadcastService.logAndBroadcast(gameData, GameLog.textCardText(
+                    player.getUsername() + " puts ", topCard, " onto the battlefield."));
+            log.info("Game {} - {} puts {} onto the battlefield (Nissa)",
+                    gameData.id, player.getUsername(), topCard.getName());
+        } else {
+            gameBroadcastService.logAndBroadcast(gameData, GameLog.text(
+                    player.getUsername() + " leaves the top card on their library."));
         }
 
         inputCompletionService.processMayAbilitiesThenAutoPass(gameData);

@@ -10,6 +10,8 @@ public sealed interface PermanentPredicate permits
         PermanentAllOfPredicate,
         PermanentAnyOfPredicate,
         PermanentAttachedToSourceControllerPredicate,
+        PermanentAttackedOrBlockedThisTurnPredicate,
+        PermanentBlockedOrWasBlockedBySubtypeThisTurnPredicate,
         PermanentColorInPredicate,
         PermanentControlledBySourceControllerPredicate,
         PermanentControllerControlsPermanentPredicate,

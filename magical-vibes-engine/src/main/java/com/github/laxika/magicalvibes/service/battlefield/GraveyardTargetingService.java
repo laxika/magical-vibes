@@ -405,6 +405,35 @@ public class GraveyardTargetingService {
                 "Choose up to " + maxTargetsCap + " target " + filterLabel + "s from " + targetPlayerName + "'s graveyard.");
     }
 
+    /**
+     * "Exile up to N target cards from a single graveyard" (Scarab Feast). Pools every card in
+     * every graveyard as a legal target, but flags the choice {@code singleGraveyard} so
+     * {@code GraveyardChoiceHandlerService} rejects a selection spanning more than one graveyard.
+     * Any card type is a legal target (no filter).
+     */
+    public void handleUpToNSingleGraveyardSpellTargeting(GameData gameData, UUID controllerId, Card card,
+                                                         StackEntryType entryType, int maxTargetsCap,
+                                                         List<CardEffect> spellEffects) {
+        List<Card> matchingCards = new ArrayList<>();
+        for (UUID playerId : gameData.orderedPlayerIds) {
+            List<Card> graveyard = gameData.playerGraveyards.get(playerId);
+            if (graveyard == null) continue;
+            matchingCards.addAll(graveyard);
+        }
+
+        int maxTargets = Math.min(maxTargetsCap, matchingCards.size());
+        gameData.graveyardTargetOperation.card = card;
+        gameData.graveyardTargetOperation.controllerId = controllerId;
+        gameData.graveyardTargetOperation.effects = new ArrayList<>(spellEffects);
+        gameData.graveyardTargetOperation.entryType = entryType;
+        gameData.graveyardTargetOperation.xValue = 0;
+        gameData.graveyardTargetOperation.anyNumber = true;
+        gameData.graveyardTargetOperation.singleGraveyard = true;
+        playerInputService.beginMultiGraveyardChoice(gameData, controllerId, matchingCards, maxTargets,
+                "Choose up to " + maxTargetsCap + " target card" + (maxTargetsCap != 1 ? "s" : "")
+                        + " from a single graveyard to exile.");
+    }
+
     public void handleUpToNAllGraveyardsSpellTargeting(GameData gameData, UUID controllerId, Card card,
                                                         StackEntryType entryType, CardPredicate filter, int maxTargetsCap,
                                                         List<CardEffect> spellEffects) {

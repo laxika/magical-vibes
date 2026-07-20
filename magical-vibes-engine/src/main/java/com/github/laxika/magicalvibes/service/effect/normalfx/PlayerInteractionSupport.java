@@ -10,6 +10,7 @@ import com.github.laxika.magicalvibes.model.PermanentChoiceContext;
 import com.github.laxika.magicalvibes.model.StackEntry;
 import com.github.laxika.magicalvibes.model.StackEntryType;
 import com.github.laxika.magicalvibes.model.effect.PutCardToBattlefieldEffect;
+import com.github.laxika.magicalvibes.model.filter.CardPredicate;
 import com.github.laxika.magicalvibes.networking.SessionManager;
 import com.github.laxika.magicalvibes.networking.service.CardViewFactory;
 import com.github.laxika.magicalvibes.service.DrawService;
@@ -281,7 +282,7 @@ public class PlayerInteractionSupport {
 
     public void resolveHandRevealAndChoose(GameData gameData, StackEntry entry,
                                              int count, List<CardType> excludedTypes, List<CardType> includedTypes,
-                                             boolean discardMode, boolean exileMode, UUID sourcePermanentId) {
+                                             CardPredicate filter, boolean discardMode, boolean exileMode, UUID sourcePermanentId) {
 
         UUID targetPlayerId = entry.getTargetId();
         UUID casterId = entry.getControllerId();
@@ -303,18 +304,21 @@ public class PlayerInteractionSupport {
         revealBuilder.text(".");
         gameBroadcastService.logAndBroadcast(gameData, revealBuilder.build());
 
-        // Build valid indices based on included or excluded types
+        // Build valid indices based on included or excluded types, then the optional predicate filter
+        UUID sourceCardId = entry.getCard() != null ? entry.getCard().getId() : null;
         List<Integer> validIndices = new ArrayList<>();
         for (int i = 0; i < hand.size(); i++) {
             Card handCard = hand.get(i);
+            boolean typeMatches;
             if (!includedTypes.isEmpty()) {
                 // Included mode: card must match at least one included type (primary or additional)
-                boolean matches = includedTypes.contains(handCard.getType())
+                typeMatches = includedTypes.contains(handCard.getType())
                         || handCard.getAdditionalTypes().stream().anyMatch(includedTypes::contains);
-                if (matches) {
-                    validIndices.add(i);
-                }
-            } else if (!excludedTypes.contains(handCard.getType())) {
+            } else {
+                typeMatches = !excludedTypes.contains(handCard.getType());
+            }
+            if (typeMatches
+                    && (filter == null || predicateEvaluationService.matchesCardPredicate(handCard, filter, sourceCardId))) {
                 validIndices.add(i);
             }
         }

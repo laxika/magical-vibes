@@ -60,6 +60,7 @@ import com.github.laxika.magicalvibes.model.effect.CreateTokenCopyOfImprintedCar
 import com.github.laxika.magicalvibes.model.effect.EnchantedCreatureCantActivateAbilitiesEffect;
 import com.github.laxika.magicalvibes.model.effect.EnchantedCreatureCantActivateTapAbilitiesEffect;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
+import com.github.laxika.magicalvibes.model.effect.FreeCyclingEffect;
 import com.github.laxika.magicalvibes.model.effect.DestroyTargetPermanentEffect;
 import com.github.laxika.magicalvibes.model.effect.DiscardCardTypeCost;
 import com.github.laxika.magicalvibes.model.effect.DiscardHandCost;
@@ -67,6 +68,7 @@ import com.github.laxika.magicalvibes.model.effect.DiscardRandomCardCost;
 import com.github.laxika.magicalvibes.model.effect.RevealTwoCardsSharingColorCost;
 import com.github.laxika.magicalvibes.model.effect.ExileCardFromGraveyardCost;
 import com.github.laxika.magicalvibes.model.effect.ExileNCardsFromGraveyardCost;
+import com.github.laxika.magicalvibes.model.effect.ExileSelfFromGraveyardCost;
 import com.github.laxika.magicalvibes.model.effect.ManaProducingEffect;
 import com.github.laxika.magicalvibes.model.effect.PayLifeCost;
 import com.github.laxika.magicalvibes.model.effect.ReplaceLandExcessManaWithColorlessEffect;
@@ -654,15 +656,31 @@ public class AbilityActivationService {
                     + exileNGraveyardCost.count() + ")");
         }
 
-        // Pay mana cost
+        // Pay mana cost. Static effects (Embalmer's Tools) can make a matching graveyard card's
+        // ability cost {N} less to activate; the reduction is floored to the generic portion so the
+        // cost never drops below its colored requirements, then threaded through as a negative
+        // additional generic cost.
         String abilityCost = ability.getManaCost();
         if (abilityCost != null) {
-            payManaCost(gameData, playerId, abilityCost, xValue, false, false);
+            int reduction = Math.min(
+                    castingCostService.getGraveyardActivatedAbilityCostReduction(gameData, playerId, card),
+                    new ManaCost(abilityCost).getGenericCost());
+            payManaCost(gameData, playerId, abilityCost, xValue, false, false, null, -reduction);
         }
 
         // Pay the exile-N-cards-from-graveyard cost
         if (exileNGraveyardCost != null) {
             payGraveyardExileNCost(gameData, player, exileNGraveyardCost, card);
+        }
+
+        // Pay the exile-this-card cost (Embalm / Eternalize). Exiling the source now — before the
+        // ability is put on the stack — prevents the same graveyard card from being activated twice.
+        if (ability.getEffects().stream().anyMatch(ExileSelfFromGraveyardCost.class::isInstance)) {
+            graveyard.remove(card);
+            graveyardService.notifyCardsLeftGraveyard(gameData, playerId);
+            exileService.exileCard(gameData, playerId, card);
+            gameBroadcastService.logAndBroadcast(gameData, GameLog.textCardText(
+                    player.getUsername() + " exiles ", card, " from the graveyard as an activation cost."));
         }
 
         // Pay permanent-choice costs (auto-pay or enter interactive mode)
@@ -840,8 +858,14 @@ public class AbilityActivationService {
         targetLegalityService.validateActivatedAbilityTargeting(
                 gameData, playerId, ability, abilityEffects, targetId, null, card, effectiveXValue);
 
-        // Pay mana cost (throws before mutating the pool if it can't be afforded)
+        // Pay mana cost (throws before mutating the pool if it can't be afforded). A static effect
+        // may replace a cycling ability's mana cost with {0} (New Perspectives, CR 118.9): the card
+        // being cycled still counts toward the hand-size condition, so check the current hand size
+        // before it is discarded below as part of the cost.
         String abilityCost = ability.getManaCost();
+        if (abilityCost != null && cyclingCostReplacedWithZero(gameData, playerId, ability, hand.size())) {
+            abilityCost = null;
+        }
         if (abilityCost != null) {
             payManaCost(gameData, playerId, abilityCost, effectiveXValue, false, false);
         }
@@ -850,7 +874,6 @@ public class AbilityActivationService {
         hand.remove(handCardIndex);
         graveyardService.addCardToGraveyard(gameData, playerId, card);
         gameData.discardCausedByOpponent = false;
-        triggerCollectionService.checkDiscardTriggers(gameData, playerId, card);
 
         // Push the ability onto the stack (cost effects are not part of the resolution snapshot)
         List<CardEffect> snapshotEffects = new ArrayList<>();
@@ -870,6 +893,11 @@ public class AbilityActivationService {
                 Map.of()
         ));
 
+        // Discard triggers fire after the ability is on the stack (CR 601.2h), so a "whenever you
+        // cycle or discard" trigger (e.g. Curator of Mysteries) lands above the cycling draw and
+        // resolves first.
+        triggerCollectionService.checkDiscardTriggers(gameData, playerId, card);
+
         gameBroadcastService.logAndBroadcast(gameData, GameLog.textCardText(player.getUsername() + " activates " , card, "'s ability from their hand."));
         log.info("Game {} - {} activates {}'s hand ability", gameData.id, player.getUsername(), card.getName());
 
@@ -878,6 +906,32 @@ public class AbilityActivationService {
             playerInputService.processNextMayAbility(gameData);
         }
         gameBroadcastService.broadcastGameState(gameData);
+    }
+
+    /**
+     * True if {@code ability}'s mana cost is currently replaced with {0} for {@code playerId}: the
+     * ability is a cycling ability and the player controls a permanent granting free cycling while
+     * they hold enough cards in hand (New Perspectives, CR 118.9). Cycling is identified by the
+     * ability's reminder-text description prefix, the engine's convention for cycling abilities.
+     * {@code handSize} is the hand size at activation, which still includes the card being cycled.
+     */
+    private boolean cyclingCostReplacedWithZero(GameData gameData, UUID playerId, ActivatedAbility ability, int handSize) {
+        String description = ability.getDescription();
+        if (description == null || !description.startsWith("Cycling")) {
+            return false;
+        }
+        List<Permanent> battlefield = gameData.playerBattlefields.get(playerId);
+        if (battlefield == null) {
+            return false;
+        }
+        for (Permanent permanent : battlefield) {
+            for (CardEffect effect : permanent.getCard().getEffects(EffectSlot.STATIC)) {
+                if (effect instanceof FreeCyclingEffect freeCycling && handSize >= freeCycling.minCardsInHand()) {
+                    return true;
+                }
+            }
+        }
+        return false;
     }
 
     /**
@@ -1354,17 +1408,22 @@ public class AbilityActivationService {
                 .findFirst();
         if (putCounterCost.isPresent() && !gameQueryService.cantHaveCounters(gameData, permanent)) {
             PutCounterOnSourceCost c = putCounterCost.get();
+            int placedCount = c.count();
             boolean placed = false;
             if (c.powerModifier() > 0) {
-                permanent.setCounterCount(CounterType.PLUS_ONE_PLUS_ONE, permanent.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE) + c.count());
+                permanent.setCounterCount(CounterType.PLUS_ONE_PLUS_ONE, permanent.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE) + placedCount);
                 placed = true;
             } else if (!gameQueryService.cantHaveMinusOneMinusOneCounters(gameData, permanent)) {
-                permanent.setCounterCount(CounterType.MINUS_ONE_MINUS_ONE, permanent.getCounterCount(CounterType.MINUS_ONE_MINUS_ONE) + c.count());
-                placed = true;
+                // Vizier of Remedies reduces the -1/-1 counters put on as a cost (e.g. Devoted Druid).
+                placedCount = gameQueryService.reduceMinusOneMinusOneCounters(gameData, permanent, placedCount);
+                if (placedCount > 0) {
+                    permanent.setCounterCount(CounterType.MINUS_ONE_MINUS_ONE, permanent.getCounterCount(CounterType.MINUS_ONE_MINUS_ONE) + placedCount);
+                    placed = true;
+                }
             }
             if (placed) {
                 String counterLabel = String.format("%+d/%+d", c.powerModifier(), c.toughnessModifier());
-                String counterWord = c.count() == 1 ? "a " + counterLabel + " counter" : c.count() + " " + counterLabel + " counters";
+                String counterWord = placedCount == 1 ? "a " + counterLabel + " counter" : placedCount + " " + counterLabel + " counters";
                 gameBroadcastService.logAndBroadcast(gameData, GameLog.textCardText(player.getUsername() + " puts " + counterWord + " on ", permanent.getCard(), "."));
             }
         }
@@ -1956,6 +2015,11 @@ public class AbilityActivationService {
                     throw new IllegalStateException("Morbid — activate only if a creature died this turn");
                 }
             }
+            if (ability.getTimingRestriction() == ActivationTimingRestriction.CAST_NONCREATURE_SPELL_THIS_TURN) {
+                if (!gameQueryService.playerCastNoncreatureSpellThisTurn(gameData, playerId)) {
+                    throw new IllegalStateException("Activate only if you've cast a noncreature spell this turn");
+                }
+            }
             if (ability.getTimingRestriction() == ActivationTimingRestriction.OPPONENT_CONTROLS_FLYING_CREATURE) {
                 if (!gameQueryService.anyOpponentControlsFlyingCreature(gameData, playerId)) {
                     throw new IllegalStateException("Activate only if an opponent controls a creature with flying");
@@ -2048,6 +2112,15 @@ public class AbilityActivationService {
             }
         }
 
+        // Source-counter restriction (e.g. Edifice of Authority's "Activate only if there are three
+        // or more brick counters on this artifact").
+        if (ability.getRequiredSourceCounterType() != null
+                && permanent.getCounterCount(ability.getRequiredSourceCounterType()) < ability.getRequiredSourceCounterCount()) {
+            throw new IllegalStateException("Activate only if there are " + ability.getRequiredSourceCounterCount()
+                    + " or more " + ability.getRequiredSourceCounterType().name().toLowerCase() + " counters on "
+                    + permanent.getCard().getName());
+        }
+
         // Predicate-count restriction (e.g. Leechridden Swamp's "Activate only if you control two or more black permanents")
         if (ability.getRequiredControlledPermanentPredicate() != null) {
             int count = gameQueryService.countControlledPermanentsMatching(gameData, playerId, ability.getRequiredControlledPermanentPredicate());
@@ -2057,18 +2130,62 @@ public class AbilityActivationService {
             }
         }
 
-        // Hand-size restriction (e.g. Resonating Lute's "Activate only if you have seven or more cards in your hand")
-        if (ability.getMinCardsInHandToActivate() > 0) {
-            List<Card> hand = gameData.playerHands.get(playerId);
-            int handSize = hand != null ? hand.size() : 0;
-            if (handSize < ability.getMinCardsInHandToActivate()) {
-                throw new IllegalStateException("Activate only if you have " + ability.getMinCardsInHandToActivate()
-                        + " or more cards in your hand");
+        // Graveyard-card-count restriction (e.g. Gate to the Afterlife's "Activate only if there are
+        // six or more creature cards in your graveyard"). Counts non-token cards in the controller's graveyard.
+        if (ability.getRequiredGraveyardCardPredicate() != null) {
+            List<Card> graveyard = gameData.playerGraveyards.get(playerId);
+            int count = 0;
+            if (graveyard != null) {
+                for (Card card : graveyard) {
+                    if (!card.isToken()
+                            && predicateEvaluationService.matchesCardPredicate(card, ability.getRequiredGraveyardCardPredicate(), null)) {
+                        count++;
+                    }
+                }
             }
+            if (count < ability.getRequiredGraveyardCardCount()) {
+                throw new IllegalStateException("Activate only if there are " + ability.getRequiredGraveyardCardCount()
+                        + " or more " + ability.getRequiredGraveyardCardDescription());
+            }
+        }
+
+        validateHandSizeRestrictions(gameData, playerId, ability);
+    }
+
+    /**
+     * Enforces hand-size activation gates common to battlefield and graveyard abilities: a minimum
+     * (e.g. Resonating Lute's "seven or more cards in your hand") and/or a maximum (e.g. Dread
+     * Wanderer's "one or fewer cards in hand").
+     */
+    private void validateHandSizeRestrictions(GameData gameData, UUID playerId, ActivatedAbility ability) {
+        if (ability.getMinCardsInHandToActivate() <= 0 && ability.getMaxCardsInHandToActivate() == null) {
+            return;
+        }
+        List<Card> hand = gameData.playerHands.get(playerId);
+        int handSize = hand != null ? hand.size() : 0;
+        if (ability.getMinCardsInHandToActivate() > 0 && handSize < ability.getMinCardsInHandToActivate()) {
+            throw new IllegalStateException("Activate only if you have " + ability.getMinCardsInHandToActivate()
+                    + " or more cards in your hand");
+        }
+        if (ability.getMaxCardsInHandToActivate() != null && handSize > ability.getMaxCardsInHandToActivate()) {
+            throw new IllegalStateException("Activate only if you have " + ability.getMaxCardsInHandToActivate()
+                    + " or fewer cards in your hand");
         }
     }
 
     private void validateGraveyardTimingRestrictions(GameData gameData, UUID playerId, ActivatedAbility ability) {
+        validateHandSizeRestrictions(gameData, playerId, ability);
+        if (ability.getTimingRestriction() == ActivationTimingRestriction.SORCERY_SPEED) {
+            if (!playerId.equals(gameData.activePlayerId)) {
+                throw new IllegalStateException("This ability can only be activated at sorcery speed");
+            }
+            if (gameData.currentStep != TurnStep.PRECOMBAT_MAIN && gameData.currentStep != TurnStep.POSTCOMBAT_MAIN) {
+                throw new IllegalStateException("This ability can only be activated during a main phase");
+            }
+            if (!gameData.stack.isEmpty()) {
+                throw new IllegalStateException("This ability can only be activated when the stack is empty");
+            }
+        }
         if (ability.getTimingRestriction() == ActivationTimingRestriction.RAID) {
             if (!gameData.playersDeclaredAttackersThisTurn.contains(playerId)) {
                 throw new IllegalStateException("Raid — activate only if you attacked this turn");
@@ -2174,7 +2291,9 @@ public class AbilityActivationService {
                 }
                 cost.pay(pool, additionalCost, artifactContext, myrContext, false, false, false, null, subtypeSpellOrAbilityContext);
             } else {
-                if (additionalCost > 0) {
+                if (additionalCost != 0) {
+                    // additionalCost may be negative (a static generic-cost reduction, floored to the
+                    // generic portion by the caller so the net generic never goes below zero).
                     if (!cost.canPay(pool, additionalCost)) {
                         throw new IllegalStateException("Not enough mana to activate ability");
                     }
@@ -2461,6 +2580,12 @@ public class AbilityActivationService {
     }
 
     private void validateNotBlockedByStaticAbilityLock(GameData gameData, Permanent permanent) {
+        // Detain / Edifice of Authority: a floating lock forbids activating this permanent's
+        // activated abilities (mana abilities included; triggered abilities are unaffected).
+        if (gameQueryService.isLockedFromActivatingAbilities(gameData, permanent.getId())) {
+            throw new IllegalStateException("Activated abilities of " + permanent.getCard().getName()
+                    + " can't be activated (detained)");
+        }
         for (UUID pid : gameData.playerIds) {
             for (Permanent p : gameData.playerBattlefields.getOrDefault(pid, List.of())) {
                 for (CardEffect effect : p.getCard().getEffects(EffectSlot.STATIC)) {

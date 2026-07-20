@@ -51,10 +51,19 @@ public class ScryInteractionHandler implements InteractionHandler<PendingInterac
     @Override
     public void prompt(GameData gameData, PendingInteraction.Scry interaction, UUID recipientId) {
         List<CardView> cardViews = interaction.cards().stream().map(cardViewFactory::create).toList();
-        String prompt = interaction.cards().size() == 1
-                ? "Scry 1: Keep on top or put on the bottom of your library."
-                : "Scry " + interaction.cards().size() + ": Put cards on the top or bottom of your library.";
-        sessionManager.sendToPlayer(recipientId, InteractionPromptMessage.scryOrder(cardViews, prompt));
+        int n = interaction.cards().size();
+        String prompt;
+        if (interaction.toGraveyard()) {
+            prompt = n == 1
+                    ? "Surveil 1: Keep on top of your library or put into your graveyard."
+                    : "Surveil " + n + ": Put cards on top of your library or into your graveyard.";
+        } else {
+            prompt = n == 1
+                    ? "Scry 1: Keep on top or put on the bottom of your library."
+                    : "Scry " + n + ": Put cards on the top or bottom of your library.";
+        }
+        sessionManager.sendToPlayer(recipientId,
+                InteractionPromptMessage.scryOrder(cardViews, prompt, interaction.toGraveyard()));
     }
 
     @Override
@@ -99,16 +108,33 @@ public class ScryInteractionHandler implements InteractionHandler<PendingInterac
             deck.add(0, scryCards.get(topCardOrder.get(i)));
         }
 
-        // Put bottom cards on bottom of library in order
-        for (int idx : bottomCardOrder) {
-            deck.add(scryCards.get(idx));
+        if (interaction.toGraveyard()) {
+            // Surveil: the reject pile goes into the graveyard in the chosen order.
+            List<Card> graveyard = gameData.playerGraveyards.get(player.getId());
+            for (int idx : bottomCardOrder) {
+                graveyard.add(scryCards.get(idx));
+            }
+        } else {
+            // Scry: the reject pile goes to the bottom of the library in order.
+            for (int idx : bottomCardOrder) {
+                deck.add(scryCards.get(idx));
+            }
         }
 
         // Clear awaiting state
         gameData.interaction.clearAwaitingInput();
 
         String logMsg;
-        if (bottomCardOrder.isEmpty()) {
+        if (interaction.toGraveyard()) {
+            if (bottomCardOrder.isEmpty()) {
+                logMsg = player.getUsername() + " keeps " + count + " card(s) on top of their library (surveil).";
+            } else if (topCardOrder.isEmpty()) {
+                logMsg = player.getUsername() + " puts " + count + " card(s) into their graveyard (surveil).";
+            } else {
+                logMsg = player.getUsername() + " keeps " + topCardOrder.size() + " card(s) on top and puts "
+                        + bottomCardOrder.size() + " into their graveyard (surveil).";
+            }
+        } else if (bottomCardOrder.isEmpty()) {
             logMsg = player.getUsername() + " puts " + count + " card(s) on top of their library.";
         } else if (topCardOrder.isEmpty()) {
             logMsg = player.getUsername() + " puts " + count + " card(s) on the bottom of their library.";
@@ -117,8 +143,8 @@ public class ScryInteractionHandler implements InteractionHandler<PendingInterac
                     + bottomCardOrder.size() + " on the bottom of their library.";
         }
         gameBroadcastService.logAndBroadcast(gameData, GameLog.text(logMsg));
-        log.info("Game {} - {} scry completed: {} top, {} bottom", gameData.id, player.getUsername(),
-                topCardOrder.size(), bottomCardOrder.size());
+        log.info("Game {} - {} {} completed: {} top, {} reject", gameData.id, player.getUsername(),
+                interaction.toGraveyard() ? "surveil" : "scry", topCardOrder.size(), bottomCardOrder.size());
 
         if (!gameData.interaction.isAwaitingInput() && !gameData.pendingMayAbilities.isEmpty()) {
             playerInputService.processNextMayAbility(gameData);

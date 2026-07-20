@@ -53,6 +53,7 @@ import com.github.laxika.magicalvibes.model.effect.PreventDividedDamageEffect;
 import com.github.laxika.magicalvibes.model.amount.Fixed;
 import com.github.laxika.magicalvibes.model.effect.ReturnCardFromGraveyardEffect;
 import com.github.laxika.magicalvibes.model.effect.ReturnTargetCardFromExileToHandEffect;
+import com.github.laxika.magicalvibes.model.effect.ExileCardsFromGraveyardEffect;
 import com.github.laxika.magicalvibes.model.effect.ExileTargetGraveyardCardsAndSeparateIntoPilesEffect;
 import com.github.laxika.magicalvibes.model.effect.ReturnTargetCardsFromGraveyardToHandEffect;
 import com.github.laxika.magicalvibes.model.effect.ExileCardFromGraveyardCost;
@@ -1121,8 +1122,10 @@ public class SpellCastingService {
         } else if (card.hasType(CardType.CREATURE) || card.hasType(CardType.ENCHANTMENT)
                 || card.hasType(CardType.ARTIFACT) || card.hasType(CardType.PLANESWALKER)) {
             // Permanent spells: pay mana (or alternate cost), put on stack, finish
-            int manaCostX = (card.hasType(CardType.ARTIFACT)) ? effectiveXValue : 0;
-            int stackX = (card.hasType(CardType.CREATURE) || card.hasType(CardType.ARTIFACT))
+            // Planeswalkers with an {X} cost (e.g. Nissa, Steward of Elements) pay the X in mana and
+            // thread it onto the stack entry, where it becomes the loyalty they enter with.
+            int manaCostX = (card.hasType(CardType.ARTIFACT) || card.hasType(CardType.PLANESWALKER)) ? effectiveXValue : 0;
+            int stackX = (card.hasType(CardType.CREATURE) || card.hasType(CardType.ARTIFACT) || card.hasType(CardType.PLANESWALKER))
                     ? effectiveXValue : 0;
             UUID stackTarget = (card.hasType(CardType.PLANESWALKER)) ? null : targetId;
 
@@ -1277,6 +1280,12 @@ public class SpellCastingService {
                             .filter(ShuffleTargetCardsFromGraveyardIntoLibraryEffect.class::isInstance)
                             .findFirst().orElse(null);
 
+            // Check for "exile up to N target cards from a single graveyard" spells (e.g. Scarab Feast)
+            ExileCardsFromGraveyardEffect exileFromGraveyardEffect =
+                    (ExileCardsFromGraveyardEffect) filteredSpellEffects.stream()
+                            .filter(ExileCardsFromGraveyardEffect.class::isInstance)
+                            .findFirst().orElse(null);
+
             if (pileSeparationEffect != null) {
                 // Target up to N creature cards from ALL graveyards
                 long matchingCount = 0;
@@ -1344,6 +1353,22 @@ public class SpellCastingService {
                     return; // finishSpellCast handled in handleMultipleCardsChosen
                 }
                 // No matching cards — put spell on stack with 0 targets (still draws, etc.)
+                gameData.stack.add(new StackEntry(
+                        entryType, card, playerId, card.getName(),
+                        filteredSpellEffects, 0, null,
+                        null, Map.of(), null, List.of(), List.of()
+                ));
+            } else if (exileFromGraveyardEffect != null) {
+                long matchingCount = 0;
+                for (UUID pid : gameData.orderedPlayerIds) {
+                    matchingCount += gameData.playerGraveyards.getOrDefault(pid, List.of()).size();
+                }
+                if (matchingCount > 0) {
+                    graveyardTargetingService.handleUpToNSingleGraveyardSpellTargeting(gameData, playerId, card,
+                            entryType, exileFromGraveyardEffect.maxTargets(), filteredSpellEffects);
+                    return; // finishSpellCast handled in handleMultipleCardsChosen
+                }
+                // No cards in any graveyard — put spell on stack with 0 targets (resolves doing nothing)
                 gameData.stack.add(new StackEntry(
                         entryType, card, playerId, card.getName(),
                         filteredSpellEffects, 0, null,
@@ -2191,6 +2216,7 @@ public class SpellCastingService {
         }
 
         // Remove from exile and clean up permission
+        boolean playWithoutPaying = gameData.exilePlayWithoutPayingManaCost.remove(exileCardId);
         gameData.removeFromExile(exileCardId);
         gameData.exilePlayPermissions.remove(exileCardId);
 
@@ -2207,8 +2233,11 @@ public class SpellCastingService {
             return;
         }
 
-        // Pay mana cost — if anyManaType, any mana can pay for any color requirement
-        if (anyManaType && card.getManaCost() != null) {
+        // Pay mana cost — unless this card was granted a free play (e.g. Oracle's Vault), in which
+        // case it is cast without paying its mana cost. If anyManaType, any mana can pay for any color.
+        if (playWithoutPaying) {
+            // Cast without paying its mana cost — no payment.
+        } else if (anyManaType && card.getManaCost() != null) {
             ManaCost cost = new ManaCost(card.getManaCost());
             cost.payAsGeneric(gameData.playerManaPools.get(playerId));
         } else {
@@ -2452,12 +2481,23 @@ public class SpellCastingService {
                                         List<ManaColor> convokeContributions, Integer phyrexianLifeCount,
                                         boolean kicked, int extraCostReduction, int targetingTax) {
         if (card.getManaCost() == null) return 0;
-        // Alternative zero cost (e.g. Rooftop Storm): skip mana payment entirely
-        if (castingCostService.hasAlternativeZeroCostFromBattlefield(gameData, playerId, card)) return 0;
+        // Alternative zero cost (e.g. Rooftop Storm, As Foretold): skip mana payment entirely.
+        // Consuming here marks a once-each-turn source (As Foretold) as used for this turn.
+        if (castingCostService.consumeFreeCastFromBattlefield(gameData, playerId, card)) return 0;
         ManaCost cost = new ManaCost(card.getManaCost());
         ManaPool pool = gameData.playerManaPools.get(playerId);
         int before = pool.getTotalAllMana();
         int additionalCost = castingCostService.getCastCostModifier(gameData, playerId, card) - extraCostReduction + targetingTax;
+
+        // Vizier of the Menagerie: eligible spells (e.g. creature spells) may be paid with mana of any
+        // type — pay the whole cost as generic. Convoke handles its own colour selection, so defer to
+        // the normal path when creatures were tapped for it.
+        if ((convokeContributions == null || convokeContributions.isEmpty())
+                && castingPermissionService.canSpendAnyManaTypeToCast(gameData, playerId, card)) {
+            cost.payAsGeneric(pool, effectiveXValue, additionalCost);
+            return before - pool.getTotalAllMana();
+        }
+
         ManaRestrictionFlags flags = computeManaRestrictionFlags(gameData, playerId, card, kicked);
 
         // Check if we should use a non-zero alternative cost from the battlefield (e.g. Jodah)

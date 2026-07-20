@@ -7,6 +7,7 @@ import com.github.laxika.magicalvibes.model.CardType;
 import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.GameData;
 import com.github.laxika.magicalvibes.model.Permanent;
+import com.github.laxika.magicalvibes.model.PermanentChoiceContext;
 import com.github.laxika.magicalvibes.model.CounterType;
 import com.github.laxika.magicalvibes.model.amount.CountScope;
 import com.github.laxika.magicalvibes.model.amount.CreatureDeathsThisTurn;
@@ -17,6 +18,7 @@ import com.github.laxika.magicalvibes.model.condition.Kicked;
 import com.github.laxika.magicalvibes.model.condition.Raid;
 import com.github.laxika.magicalvibes.model.effect.CantHaveCountersEffect;
 import com.github.laxika.magicalvibes.model.effect.ConditionalEffect;
+import com.github.laxika.magicalvibes.model.effect.DealDamageToTargetPlayerOrPlaneswalkerEffect;
 import com.github.laxika.magicalvibes.model.effect.ConditionalReplacementEffect;
 import com.github.laxika.magicalvibes.model.effect.EnterWithCountersEffect;
 import com.github.laxika.magicalvibes.model.effect.EntersTappedEffect;
@@ -79,6 +81,24 @@ class BattlefieldEntryServiceTest {
         gd = new GameData(UUID.randomUUID(), "test", player1Id, "Player1");
         gd.orderedPlayerIds.add(player1Id);
         gd.playerBattlefields.put(player1Id, Collections.synchronizedList(new ArrayList<>()));
+    }
+
+    @Test
+    @DisplayName("A land's targeted ETB chooses its target at trigger time (queues an ETBTokenTargetTrigger)")
+    void landTargetedEtbChoosesTargetAtTriggerTime() {
+        Card land = new Card();
+        land.setName("Sunscorched Desert");
+        land.setType(CardType.LAND);
+        land.addEffect(EffectSlot.ON_ENTER_BATTLEFIELD, new DealDamageToTargetPlayerOrPlaneswalkerEffect(1));
+        // Lands bypass the stack — the permanent has already entered the battlefield.
+        gd.playerBattlefields.get(player1Id).add(new Permanent(land));
+
+        service.processCreatureETBEffects(gd, player1Id, land, null, false);
+
+        // A land is played, never cast, so its mandatory ETB has no cast-time target: the target
+        // is chosen as the trigger goes on the stack rather than pushing a targetless entry.
+        assertThat(gd.hasPendingInteraction(PermanentChoiceContext.ETBTokenTargetTrigger.class)).isTrue();
+        assertThat(gd.stack).isEmpty();
     }
 
     @Test

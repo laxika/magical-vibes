@@ -29,6 +29,7 @@ import java.util.UUID;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.ArgumentMatchers.anyInt;
 import static org.mockito.ArgumentMatchers.argThat;
 import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.never;
@@ -134,6 +135,58 @@ class ExileGraveyardCardsEffectHandlerTest {
                     logEntry.plainText().contains("already empty")));
             // No cards left the graveyard, so no trigger fires
             verify(triggerCollectionService, never()).checkControllerCardsLeaveGraveyardTriggers(eq(gd), any());
+        }
+    }
+
+    @Nested
+    @DisplayName("EACH_OPPONENT_KEEP — each opponent keeps N cards, exiles the rest")
+    class EachOpponentKeep {
+
+        @Test
+        @DisplayName("Prompts opponent to exile (size - keepCount) cards when graveyard exceeds keep count")
+        void promptsExileChoiceWhenGraveyardExceedsKeepCount() {
+            gd.playerGraveyards.get(player2Id).addAll(List.of(
+                    createCard("A"), createCard("B"), createCard("C"), createCard("D")));
+
+            ExileGraveyardCardsEffect effect = new ExileGraveyardCardsEffect(2, GraveyardExileScope.EACH_OPPONENT_KEEP);
+            StackEntry entry = new StackEntry(StackEntryType.ACTIVATED_ABILITY, createCard("Watchers of the Dead"),
+                    player1Id, "Watchers of the Dead", List.of(effect), 0, null, null);
+
+            handler.resolve(gd, entry, effect);
+
+            // 4 cards, keep 2 -> opponent chooses 2 to exile
+            verify(graveyardReturnSupport).beginGraveyardExileChoice(gd, player2Id, 2);
+        }
+
+        @Test
+        @DisplayName("Exiles nothing and never prompts when opponent has keepCount or fewer cards")
+        void keepsEverythingWhenAtOrBelowKeepCount() {
+            gd.playerGraveyards.get(player2Id).addAll(List.of(createCard("A"), createCard("B")));
+
+            ExileGraveyardCardsEffect effect = new ExileGraveyardCardsEffect(2, GraveyardExileScope.EACH_OPPONENT_KEEP);
+            StackEntry entry = new StackEntry(StackEntryType.ACTIVATED_ABILITY, createCard("Watchers of the Dead"),
+                    player1Id, "Watchers of the Dead", List.of(effect), 0, null, null);
+
+            handler.resolve(gd, entry, effect);
+
+            verify(graveyardReturnSupport, never()).beginGraveyardExileChoice(any(), any(), anyInt());
+            assertThat(gd.getPlayerExiledCards(player2Id)).isEmpty();
+        }
+
+        @Test
+        @DisplayName("Does not touch the controller's own graveyard")
+        void doesNotTouchControllerGraveyard() {
+            gd.playerGraveyards.get(player1Id).addAll(List.of(
+                    createCard("A"), createCard("B"), createCard("C"), createCard("D")));
+
+            ExileGraveyardCardsEffect effect = new ExileGraveyardCardsEffect(2, GraveyardExileScope.EACH_OPPONENT_KEEP);
+            StackEntry entry = new StackEntry(StackEntryType.ACTIVATED_ABILITY, createCard("Watchers of the Dead"),
+                    player1Id, "Watchers of the Dead", List.of(effect), 0, null, null);
+
+            handler.resolve(gd, entry, effect);
+
+            // Controller (player1) is skipped; the only opponent (player2) has an empty graveyard.
+            verify(graveyardReturnSupport, never()).beginGraveyardExileChoice(any(), any(), anyInt());
         }
     }
 }

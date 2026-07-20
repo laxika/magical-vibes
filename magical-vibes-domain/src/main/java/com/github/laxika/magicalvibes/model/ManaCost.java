@@ -1218,11 +1218,27 @@ public class ManaCost {
     }
 
     /**
+     * {@link #canPayAsGeneric(ManaPool)} including the chosen X (times the {X} multiplier) and an
+     * additional generic cost modifier (positive taxes, negative reductions).
+     */
+    public boolean canPayAsGeneric(ManaPool pool, int xValue, int additionalGenericCost) {
+        return pool.getTotal() >= getManaValue() + xValue * effectiveXMultiplier() + additionalGenericCost;
+    }
+
+    /**
      * Pays the full mana value using any mana from the pool, ignoring color requirements
      * (mana of any type can be spent to cast the spell).
      */
     public void payAsGeneric(ManaPool pool) {
         payGenericPreferColorless(pool, getManaValue());
+    }
+
+    /**
+     * {@link #payAsGeneric(ManaPool)} including the chosen X (times the {X} multiplier) and an
+     * additional generic cost modifier (positive taxes, negative reductions).
+     */
+    public void payAsGeneric(ManaPool pool, int xValue, int additionalGenericCost) {
+        payGenericPreferColorless(pool, getManaValue() + xValue * effectiveXMultiplier() + additionalGenericCost);
     }
 
     private void payGenericPreferColorless(ManaPool pool, int remainingGeneric) {

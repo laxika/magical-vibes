@@ -13,4 +13,8 @@ public class CloneOperationState {
     public Integer toughnessOverride;
     public Set<CardType> additionalTypesOverride = Set.of();
     public List<ActivatedAbility> additionalActivatedAbilities = List.of();
+    // Vizier-of-Many-Faces embalm exception: applied to the final copy only when the entering permanent is a token.
+    public CardColor embalmColorOverride;
+    public CardSubtype embalmAddedSubtype;
+    public boolean embalmRemoveManaCost;
 }

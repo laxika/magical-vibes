@@ -207,10 +207,16 @@ public class DeathTriggerCollectorService {
         // Snapshot the counter count at death — the permanent is off the battlefield by the time this
         // resolves, so bake the fixed amount into the effect carried to target selection.
         int counters = dyingPermanent.getCounterCount(effect.counterType());
+        CardEffect baked = new PutCounterOnTargetForEachDyingSourceCounterEffect(
+                effect.counterType(), counters, effect.optional());
+        // "you may …" (Soulstinger): the target is still chosen now (CR 603.3d), but the controller
+        // may decline placing the counters when the trigger resolves — gate it behind a MayEffect.
+        CardEffect queued = effect.optional()
+                ? new MayEffect(baked, "put a -1/-1 counter on target creature for each -1/-1 counter on "
+                        + sd.dyingCard().getName() + "?")
+                : baked;
         match.gameData().queueInteraction(new PermanentChoiceContext.DeathTriggerTarget(
-                sd.dyingCard(), sd.controllerId(),
-                new ArrayList<>(List.of(
-                        new PutCounterOnTargetForEachDyingSourceCounterEffect(effect.counterType(), counters)))
+                sd.dyingCard(), sd.controllerId(), new ArrayList<>(List.of(queued))
         ));
         return true;
     }

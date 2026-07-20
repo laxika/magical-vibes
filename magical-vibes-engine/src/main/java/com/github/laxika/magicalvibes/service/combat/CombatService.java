@@ -259,13 +259,19 @@ public class CombatService {
                     || gameQueryService.cantHaveMinusOneMinusOneCounters(gameData, perm)) {
                 continue;
             }
+            int counters = gameQueryService.reduceMinusOneMinusOneCounters(gameData, perm, action.amount());
+            if (counters <= 0) {
+                continue;
+            }
             perm.setCounterCount(CounterType.MINUS_ONE_MINUS_ONE,
-                    perm.getCounterCount(CounterType.MINUS_ONE_MINUS_ONE) + action.amount());
+                    perm.getCounterCount(CounterType.MINUS_ONE_MINUS_ONE) + counters);
             gameBroadcastService.logAndBroadcast(gameData, GameLog.cardThen(perm.getCard(),
-                    " gets " + action.amount() + " -1/-1 counter(s)."));
+                    " gets " + counters + " -1/-1 counter(s)."));
             log.info("Game {} - {} gets {} -1/-1 counter(s) at end of combat",
-                    gameData.id, perm.getCard().getName(), action.amount());
-            permanentCounterSupport.fireMinusOneMinusOneCounterPutOnCreatureTriggers(gameData, perm, action.amount());
+                    gameData.id, perm.getCard().getName(), counters);
+            // The permanent's controller is the player putting these self-counters (Nest of Scarabs).
+            UUID counterPlacerId = gameQueryService.findPermanentController(gameData, perm.getId());
+            permanentCounterSupport.fireMinusOneMinusOneCounterPutOnCreatureTriggers(gameData, perm, counters, counterPlacerId);
         }
     }
 
