@@ -3,14 +3,10 @@ package com.github.laxika.magicalvibes.ai;
 import com.github.laxika.magicalvibes.cards.RandomDeckGenerator;
 import com.github.laxika.magicalvibes.service.JacksonConfig;
 import com.github.laxika.magicalvibes.model.Card;
-import com.github.laxika.magicalvibes.model.ExiledCardEntry;
 import com.github.laxika.magicalvibes.model.GameData;
 import com.github.laxika.magicalvibes.model.GameLogEntry;
 import com.github.laxika.magicalvibes.model.GameStatus;
-import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.Player;
-import com.github.laxika.magicalvibes.model.StackEntry;
-import com.github.laxika.magicalvibes.model.StackEntryType;
 import com.github.laxika.magicalvibes.service.GameRegistry;
 import com.github.laxika.magicalvibes.service.GameService;
 import com.github.laxika.magicalvibes.service.battlefield.GameQueryService;
@@ -25,24 +21,26 @@ import tools.jackson.databind.ObjectMapper;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.HashMap;
-import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Random;
-import java.util.Set;
 import java.util.UUID;
 
 import static org.assertj.core.api.Assertions.fail;
 
 /**
  * Fuzz test that pits two Random AI players against each other with randomly built
- * 1â€“3-color decks (up to 4 copies per card). Unlike {@link AiVsAiStressTest} which
+ * 1–3-color decks (up to 4 copies per card). Unlike {@link AiVsAiStressTest} which
  * uses the smart Hard AI, this test uses purely random decision-making to exercise
- * far more edge cases â€” unusual spell timing, bizarre combat assignments, random
+ * far more edge cases — unusual spell timing, bizarre combat assignments, random
  * targets, random ability activations, occasional mulligans, etc.
  *
  * <p>Each game prints its random seed so failures can be reproduced by hardcoding
  * the seed in code or via {@code -DfuzzSeed=12345} system property.</p>
+ *
+ * <p>Game-state invariants live in {@link FuzzInvariants}; a batch-wide coverage
+ * report ({@link FuzzTelemetry}) is printed at the end of the run, even when a game
+ * fails.</p>
  *
  * <p>Disabled by default; enable manually to run.</p>
  */
@@ -62,33 +60,40 @@ class RandomAiFuzzTest {
         int gameCount = Integer.getInteger("fuzzGames", DEFAULT_GAME_COUNT);
         Long fixedSeed = Long.getLong("fuzzSeed");
 
-        int passed = 0;
-        for (int game = 1; game <= gameCount; game++) {
-            long seed = fixedSeed != null ? fixedSeed : System.nanoTime();
-            System.out.printf("=== Game #%d/%d  seed=%d ===%n", game, gameCount, seed);
-            long start = System.currentTimeMillis();
-            runOneGame(game, seed);
-            long elapsed = System.currentTimeMillis() - start;
-            System.out.printf("=== Game #%d completed in %d ms ===%n%n", game, elapsed);
-            passed++;
+        FuzzTelemetry telemetry = new FuzzTelemetry();
+        try {
+            int passed = 0;
+            for (int game = 1; game <= gameCount; game++) {
+                long seed = fixedSeed != null ? fixedSeed : System.nanoTime();
+                System.out.printf("=== Game #%d/%d  seed=%d ===%n", game, gameCount, seed);
+                long start = System.currentTimeMillis();
+                runOneGame(game, seed, telemetry);
+                telemetry.recordGameCompleted();
+                long elapsed = System.currentTimeMillis() - start;
+                System.out.printf("=== Game #%d completed in %d ms ===%n%n", game, elapsed);
+                passed++;
+            }
+            System.out.printf("All %d fuzz games passed.%n", passed);
+        } finally {
+            telemetry.printReport();
         }
-        System.out.printf("All %d fuzz games passed.%n", passed);
     }
 
     // ------------------------------------------------------------------
     // Game lifecycle
     // ------------------------------------------------------------------
 
-    private void runOneGame(int gameNumber, long seed) throws Exception {
+    private void runOneGame(int gameNumber, long seed, FuzzTelemetry telemetry) throws Exception {
         FuzzLogWatcher watcher = FuzzLogWatcher.install();
         try {
-            runOneGameInternal(gameNumber, seed, new Random(seed), watcher);
+            runOneGameInternal(gameNumber, seed, new Random(seed), watcher, telemetry);
         } finally {
             watcher.uninstall();
         }
     }
 
-    private void runOneGameInternal(int gameNumber, long seed, Random rng, FuzzLogWatcher watcher) throws Exception {
+    private void runOneGameInternal(int gameNumber, long seed, Random rng, FuzzLogWatcher watcher,
+                                    FuzzTelemetry telemetry) throws Exception {
         // 1. Bootstrap the full service graph via the test harness
         GameTestHarness harness = new GameTestHarness();
 
@@ -112,6 +117,8 @@ class RandomAiFuzzTest {
         Collections.shuffle(deck2, rng);
         assignDeck(gd, player1.getId(), deck1);
         assignDeck(gd, player2.getId(), deck2);
+        telemetry.recordDeckCards(deck1);
+        telemetry.recordDeckCards(deck2);
 
         // Snapshot the identity of every card in the game for the conservation
         // invariant: none of these may ever vanish or appear in two zones at once.
@@ -122,6 +129,7 @@ class RandomAiFuzzTest {
         for (Card c : deck2) {
             initialCardNames.put(c.getId(), c.getName());
         }
+        FuzzInvariants invariants = new FuzzInvariants(gqs, initialCardNames);
 
         // 4. Replace the harness's FakeConnections with Random AI connections
         FakeConnection fakeConn1 = harness.getConn1();
@@ -135,11 +143,11 @@ class RandomAiFuzzTest {
         RandomAiDecisionEngine engine1 = new RandomAiDecisionEngine(
                 gd.id, player1, gameRegistry, gameService, gqs,
                 harness.getCombatAttackService(), harness.getGameBroadcastService(), harness.getCastingCostService(), harness.getCastingPermissionService(),
-                harness.getTargetValidationService(), harness.getTargetLegalityService(), new Random(rng.nextLong()));
+                harness.getTargetValidationService(), harness.getTargetLegalityService(), new Random(rng.nextLong()), telemetry);
         RandomAiDecisionEngine engine2 = new RandomAiDecisionEngine(
                 gd.id, player2, gameRegistry, gameService, gqs,
                 harness.getCombatAttackService(), harness.getGameBroadcastService(), harness.getCastingCostService(), harness.getCastingPermissionService(),
-                harness.getTargetValidationService(), harness.getTargetLegalityService(), new Random(rng.nextLong()));
+                harness.getTargetValidationService(), harness.getTargetLegalityService(), new Random(rng.nextLong()), telemetry);
 
         AiConnection aiConn1 = new AiConnection("ai-fuzz-1", engine1, objectMapper, AI_DECISION_DELAY_MS);
         AiConnection aiConn2 = new AiConnection("ai-fuzz-2", engine2, objectMapper, AI_DECISION_DELAY_MS);
@@ -161,7 +169,6 @@ class RandomAiFuzzTest {
         String lastFingerprint = "";
         int sameCount = 0;
         long startTime = System.currentTimeMillis();
-        TwoStrikeState strikes = new TwoStrikeState();
 
         while (gd.status != GameStatus.FINISHED) {
             Thread.sleep(POLL_INTERVAL_MS);
@@ -172,7 +179,7 @@ class RandomAiFuzzTest {
                         gameNumber, seed, gd, player1, player2, aiConn1, aiConn2);
             }
 
-            String invariantViolation = checkInvariants(gd, initialCardNames, strikes, gqs);
+            String invariantViolation = invariants.check(gd);
             if (invariantViolation != null) {
                 failGame(invariantViolation, gameNumber, seed, gd, player1, player2, aiConn1, aiConn2);
             }
@@ -193,7 +200,7 @@ class RandomAiFuzzTest {
                 sameCount++;
 
                 if (sameCount >= MAX_SAME_STATE_COUNT) {
-                    failGame("stuck â€” same state observed " + MAX_SAME_STATE_COUNT
+                    failGame("stuck — same state observed " + MAX_SAME_STATE_COUNT
                             + " consecutive times:\n" + fingerprint,
                             gameNumber, seed, gd, player1, player2, aiConn1, aiConn2);
                 }
@@ -222,144 +229,6 @@ class RandomAiFuzzTest {
         conn1.close();
         conn2.close();
         fail("Game #" + gameNumber + " (seed=" + seed + ") " + reason);
-    }
-
-    // ------------------------------------------------------------------
-    // Game-state invariants
-    // ------------------------------------------------------------------
-
-    /**
-     * Conservation and SBA violations must be observed on two consecutive polls
-     * before failing: a poll can land between two engine steps of a multi-part
-     * zone move, so a single observation may be a transient, not a bug.
-     */
-    private static final class TwoStrikeState {
-        String lastConservationViolation;
-        String lastSbaViolation;
-    }
-
-    /**
-     * Returns a violation description, or {@code null} if all invariants hold.
-     * Structural violations (duplicate/corrupt permanents) fail immediately;
-     * conservation and SBA violations use the two-strike rule.
-     */
-    private String checkInvariants(GameData gd, Map<UUID, String> initialCardNames,
-                                   TwoStrikeState strikes, GameQueryService gqs) {
-        synchronized (gd) {
-            Set<UUID> seenPermanentIds = new HashSet<>();
-            for (UUID pid : gd.orderedPlayerIds) {
-                for (Permanent p : gd.playerBattlefields.getOrDefault(pid, List.of())) {
-                    if (p.getCard() == null) {
-                        return "invariant violated: permanent " + p.getId() + " has a null card";
-                    }
-                    if (!seenPermanentIds.add(p.getId())) {
-                        return "invariant violated: permanent " + p.getCard().getName()
-                                + " (" + p.getId() + ") appears on multiple battlefields";
-                    }
-                }
-            }
-
-            // Skip zone-content checks while the engine is holding cards aside for a
-            // pending choice (e.g. "look at the top N") â€” they are legitimately
-            // outside every zone at that moment.
-            if (gd.interaction.isAwaitingInput()) {
-                return null;
-            }
-
-            String conservation = findConservationViolation(gd, initialCardNames);
-            if (conservation != null && conservation.equals(strikes.lastConservationViolation)) {
-                return conservation;
-            }
-            strikes.lastConservationViolation = conservation;
-
-            if (gd.stack.isEmpty()) {
-                String sba = findSbaViolation(gd, gqs);
-                if (sba != null && sba.equals(strikes.lastSbaViolation)) {
-                    return sba;
-                }
-                strikes.lastSbaViolation = sba;
-            }
-        }
-        return null;
-    }
-
-    /**
-     * Every card the game started with must appear exactly once across all zones:
-     * libraries, hands, graveyards, battlefields, exile and spells on the stack.
-     * Token and copy cards created mid-game are ignored (they may legitimately
-     * cease to exist). Battlefields are counted via {@link Permanent#getOriginalCard()}
-     * because that is the object the engine moves between zones (transformed
-     * permanents carry a different face on {@code getCard()}).
-     */
-    private String findConservationViolation(GameData gd, Map<UUID, String> initialCardNames) {
-        Map<UUID, Integer> counts = new HashMap<>();
-        for (UUID pid : gd.orderedPlayerIds) {
-            countCardIds(gd.playerDecks.get(pid), counts);
-            countCardIds(gd.playerHands.get(pid), counts);
-            countCardIds(gd.playerGraveyards.get(pid), counts);
-            for (Permanent p : gd.playerBattlefields.getOrDefault(pid, List.of())) {
-                if (p.getOriginalCard() != null) {
-                    counts.merge(p.getOriginalCard().getId(), 1, Integer::sum);
-                }
-            }
-        }
-        for (ExiledCardEntry entry : gd.exiledCards) {
-            counts.merge(entry.card().getId(), 1, Integer::sum);
-        }
-        for (StackEntry entry : gd.stack) {
-            // Ability entries reference a source card that is already counted in its
-            // own zone; copy entries were never part of the initial pool.
-            if (entry.isCopy()
-                    || entry.getEntryType() == StackEntryType.TRIGGERED_ABILITY
-                    || entry.getEntryType() == StackEntryType.ACTIVATED_ABILITY) {
-                continue;
-            }
-            if (entry.getCard() != null) {
-                counts.merge(entry.getCard().getId(), 1, Integer::sum);
-            }
-        }
-
-        List<String> problems = new ArrayList<>();
-        for (Map.Entry<UUID, String> expected : initialCardNames.entrySet()) {
-            int count = counts.getOrDefault(expected.getKey(), 0);
-            if (count != 1) {
-                problems.add(expected.getValue() + " (" + expected.getKey() + ") found "
-                        + count + " times across all zones");
-            }
-        }
-        return problems.isEmpty() ? null
-                : "card conservation violated: " + String.join("; ", problems);
-    }
-
-    private void countCardIds(List<Card> cards, Map<UUID, Integer> counts) {
-        if (cards == null) {
-            return;
-        }
-        for (Card c : cards) {
-            counts.merge(c.getId(), 1, Integer::sum);
-        }
-    }
-
-    /**
-     * With an empty stack and no pending input, state-based actions must have
-     * finished: no creature with toughness &le; 0 may still be on a battlefield.
-     * (Toughness only â€” lethal-damage SBAs are excluded because indestructible
-     * and regeneration make them unreliable to verify from outside the engine.)
-     */
-    private String findSbaViolation(GameData gd, GameQueryService gqs) {
-        List<String> problems = new ArrayList<>();
-        for (UUID pid : gd.orderedPlayerIds) {
-            for (Permanent p : gd.playerBattlefields.getOrDefault(pid, List.of())) {
-                if (gqs.isCreature(gd, p)) {
-                    int toughness = gqs.getEffectiveToughness(gd, p);
-                    if (toughness <= 0) {
-                        problems.add(p.getCard().getName() + " (" + p.getId() + ") has toughness "
-                                + toughness + " but survived state-based actions");
-                    }
-                }
-            }
-        }
-        return problems.isEmpty() ? null : "SBA violation: " + String.join("; ", problems);
     }
 
     // ------------------------------------------------------------------
@@ -398,7 +267,7 @@ class RandomAiFuzzTest {
 
     private void dumpGameState(int gameNumber, GameData gd, Player p1, Player p2) {
         synchronized (gd) {
-            System.err.println("=== STUCK GAME STATE â€” Game #" + gameNumber + " ===");
+            System.err.println("=== STUCK GAME STATE — Game #" + gameNumber + " ===");
             System.err.println("Turn:            " + gd.turnNumber);
             System.err.println("Step:            " + gd.currentStep);
             System.err.println("Active player:   " + gd.activePlayerId);

@@ -67,6 +67,7 @@ class RandomAiDecisionEngine extends AiDecisionEngine {
     private static final Logger log = LoggerFactory.getLogger(RandomAiDecisionEngine.class);
 
     private final Random rng;
+    private final FuzzTelemetry telemetry;
 
     RandomAiDecisionEngine(UUID gameId, Player aiPlayer, GameRegistry gameRegistry,
                            GameService gameService, GameQueryService gameQueryService,
@@ -75,9 +76,23 @@ class RandomAiDecisionEngine extends AiDecisionEngine {
                            com.github.laxika.magicalvibes.service.cast.CastingCostService castingCostService,
                            com.github.laxika.magicalvibes.service.cast.CastingPermissionService castingPermissionService,
                            TargetValidationService targetValidationService,
-                           TargetLegalityService targetLegalityService, Random rng) {
+                           TargetLegalityService targetLegalityService, Random rng, FuzzTelemetry telemetry) {
         super(gameId, aiPlayer, gameRegistry, gameService, gameQueryService, combatAttackService, gameBroadcastService, castingCostService, castingPermissionService, targetValidationService, targetLegalityService);
         this.rng = rng;
+        this.telemetry = telemetry;
+    }
+
+    /**
+     * Records every interaction prompt this engine is responsible for answering, so the
+     * batch report shows which interaction kinds the fuzzer actually exercised.
+     */
+    @Override
+    protected void handleInteractionPrompt(GameData gameData) {
+        PendingInteraction active = gameData.interaction.activeInteraction();
+        if (active != null && AiUtils.isRespondingFor(gameData, aiPlayer.getId(), active.decidingPlayerId())) {
+            telemetry.recordInteractionPrompt(active.getClass().getSimpleName());
+        }
+        super.handleInteractionPrompt(gameData);
     }
 
     // ===== Priority / Main Phase =====
@@ -158,10 +173,22 @@ class RandomAiDecisionEngine extends AiDecisionEngine {
             for (int abilIdx = 0; abilIdx < abilities.size(); abilIdx++) {
                 ActivatedAbility ability = abilities.get(abilIdx);
                 if (isManaAbility(ability)) continue;
-                if (ability.isVariableLoyaltyCost()) continue;
-                if (ability.isMultiTarget()) continue;
-                if (ability.isNeedsSpellTarget()) continue;
-                if (ability.getManaCost() != null && new ManaCost(ability.getManaCost()).hasX()) continue;
+                if (ability.isVariableLoyaltyCost()) {
+                    telemetry.recordSkip("ability: variable loyalty cost (unsupported)", permanent.getCard().getName());
+                    continue;
+                }
+                if (ability.isMultiTarget()) {
+                    telemetry.recordSkip("ability: multi-target (unsupported)", permanent.getCard().getName());
+                    continue;
+                }
+                if (ability.isNeedsSpellTarget()) {
+                    telemetry.recordSkip("ability: targets a spell (unsupported)", permanent.getCard().getName());
+                    continue;
+                }
+                if (ability.getManaCost() != null && new ManaCost(ability.getManaCost()).hasX()) {
+                    telemetry.recordSkip("ability: X mana cost (unsupported)", permanent.getCard().getName());
+                    continue;
+                }
                 if (!canActivateAbility(gameData, permanent, ability, abilIdx, virtualPool)) continue;
                 candidates.add(new AbilityCandidate(permanent, abilIdx, ability));
             }
@@ -183,6 +210,7 @@ class RandomAiDecisionEngine extends AiDecisionEngine {
                 targetId = targetSelector.chooseAbilityTarget(gameData, candidate.ability(),
                         aiPlayer.getId(), permanent);
                 if (targetId == null) {
+                    telemetry.recordSkip("ability: no valid target", permanent.getCard().getName());
                     continue;
                 }
             }
@@ -237,6 +265,7 @@ class RandomAiDecisionEngine extends AiDecisionEngine {
                         gameData.currentStep, gameData.activePlayerId);
                 continue;
             }
+            telemetry.recordAbilityActivation(permanent.getCard().getName());
             return true;
         }
         return false;
@@ -269,6 +298,7 @@ class RandomAiDecisionEngine extends AiDecisionEngine {
 
             // Skip spells that target spells on the stack (e.g. Twincast) — AI can't pick spell targets
             if (EffectResolution.needsSpellTarget(card)) {
+                telemetry.recordSkip("spell: targets a spell on the stack (unsupported)", card.getName());
                 continue;
             }
 
@@ -291,6 +321,7 @@ class RandomAiDecisionEngine extends AiDecisionEngine {
             // Handle modal spells (ChooseOneEffect)
             ModalCastPlan modalPlan = prepareModalSpellCast(gameData, card);
             if (modalPlan == null && findChooseOneEffect(card) != null) {
+                telemetry.recordSkip("spell: modal with no castable mode", card.getName());
                 continue; // No valid mode for this modal spell
             }
 
@@ -299,6 +330,7 @@ class RandomAiDecisionEngine extends AiDecisionEngine {
             if (modalPlan == null && EffectResolution.needsDamageDistribution(card)) {
                 damageAssignments = targetSelector.buildDamageAssignments(gameData, card, aiPlayer.getId());
                 if (damageAssignments == null) {
+                    telemetry.recordSkip("spell: no damage-distribution targets", card.getName());
                     continue; // No valid targets for damage distribution
                 }
             }
@@ -310,11 +342,13 @@ class RandomAiDecisionEngine extends AiDecisionEngine {
             if (isMultiTarget && modalPlan == null) {
                 multiTargetIds = targetSelector.chooseMultiTargets(gameData, card, aiPlayer.getId());
                 if (multiTargetIds == null) {
+                    telemetry.recordSkip("spell: multi-target requirements unsatisfiable", card.getName());
                     continue; // Can't satisfy mandatory targets, try next spell
                 }
             } else if (modalPlan == null && !EffectResolution.needsDamageDistribution(card) && (EffectResolution.needsTarget(card) || card.isAura())) {
                 targetId = pickRandomTarget(gameData, card);
                 if (targetId == null) {
+                    telemetry.recordSkip("spell: no valid target", card.getName());
                     continue; // No valid target, try next spell
                 }
             }
@@ -322,6 +356,7 @@ class RandomAiDecisionEngine extends AiDecisionEngine {
             // Check targeting tax (e.g. Kopala, Warden of Waves)
             int targetingTax = computeTargetingTax(gameData, targetId, multiTargetIds);
             if (targetingTax > 0 && !canAffordSpell(gameData, card, virtualPool, targetingTax)) {
+                telemetry.recordSkip("spell: targeting tax unaffordable", card.getName());
                 continue; // Can't afford with targeting tax, try next spell
             }
 
@@ -331,6 +366,7 @@ class RandomAiDecisionEngine extends AiDecisionEngine {
             if (exileCost != null) {
                 exileGraveyardCardIndex = findValidGraveyardIndex(graveyard, exileCost);
                 if (exileGraveyardCardIndex == null) {
+                    telemetry.recordSkip("spell: graveyard exile cost unpayable", card.getName());
                     continue; // No valid graveyard card, try next spell
                 }
             }
@@ -340,6 +376,7 @@ class RandomAiDecisionEngine extends AiDecisionEngine {
             if (findExileXGraveyardCost(card) != null) {
                 List<Integer> allIndices = selectAllGraveyardIndices(gameData);
                 if (allIndices.isEmpty()) {
+                    telemetry.recordSkip("spell: graveyard exile cost unpayable", card.getName());
                     continue; // No graveyard cards, try next spell
                 }
                 Collections.shuffle(allIndices, rng);
@@ -348,6 +385,7 @@ class RandomAiDecisionEngine extends AiDecisionEngine {
             } else if (findExileNGraveyardCost(card) != null) {
                 exileGraveyardCardIndices = selectNGraveyardIndicesToExile(gameData, findExileNGraveyardCost(card));
                 if (exileGraveyardCardIndices == null) {
+                    telemetry.recordSkip("spell: graveyard exile cost unpayable", card.getName());
                     continue; // Not enough matching graveyard cards, try next spell
                 }
             }
@@ -363,6 +401,7 @@ class RandomAiDecisionEngine extends AiDecisionEngine {
                 int maxX = manaManager.calculateMaxAffordableX(card, virtualPool, costModifier);
                 maxX = Math.min(maxX, getMaxXForGraveyardRequirements(gameData, card));
                 if (maxX <= 0) {
+                    telemetry.recordSkip("spell: X cost unaffordable", card.getName());
                     continue;
                 }
                 // For requiresManaValueEqualsX spells (e.g. Postmortem Lunge), X must match the
@@ -371,6 +410,7 @@ class RandomAiDecisionEngine extends AiDecisionEngine {
                     List<Card> validTargets = targetSelector.findValidGraveyardTargets(
                             gameData, card, aiPlayer.getId(), maxX);
                     if (validTargets.isEmpty()) {
+                        telemetry.recordSkip("spell: no affordable mana-value-X target", card.getName());
                         continue;
                     }
                     Card chosen = validTargets.get(rng.nextInt(validTargets.size()));
@@ -382,6 +422,7 @@ class RandomAiDecisionEngine extends AiDecisionEngine {
                     List<Permanent> validTargets = targetSelector.findValidPermanentTargetsForManaValueX(
                             gameData, card, aiPlayer.getId(), maxX);
                     if (validTargets.isEmpty()) {
+                        telemetry.recordSkip("spell: no affordable mana-value-X target", card.getName());
                         continue;
                     }
                     Permanent chosen = validTargets.get(rng.nextInt(validTargets.size()));
@@ -426,6 +467,7 @@ class RandomAiDecisionEngine extends AiDecisionEngine {
                         virtualPool.toMap(), gameData.priorityPassedBy);
                 continue; // Try next spell
             }
+            telemetry.recordSpellCast(card.getName());
             return true;
         }
         return false;
