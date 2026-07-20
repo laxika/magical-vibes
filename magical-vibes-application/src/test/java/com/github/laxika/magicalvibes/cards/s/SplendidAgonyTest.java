@@ -54,6 +54,9 @@ class SplendidAgonyTest extends BaseCardTest {
     @DisplayName("Cannot target a non-creature permanent")
     void cannotTargetNonCreature() {
         Permanent artifact = harness.addToBattlefieldAndReturn(player2, new FountainOfYouth());
+        // A legal creature target must exist so the spell is castable (CR 601.2c); the artifact is
+        // still rejected as an illegal target by the per-target creature filter.
+        harness.addToBattlefield(player2, new HillGiant());
         harness.setHand(player1, List.of(new SplendidAgony()));
         harness.addMana(player1, ManaColor.BLACK, 3);
 

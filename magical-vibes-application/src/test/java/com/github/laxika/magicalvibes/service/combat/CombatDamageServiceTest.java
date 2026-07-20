@@ -275,6 +275,9 @@ class CombatDamageServiceTest {
         when(gameQueryService.cantHaveCounters(eq(gameData), any(Permanent.class))).thenReturn(false);
         when(gameQueryService.cantHaveMinusOneMinusOneCounters(eq(gameData), any(Permanent.class)))
                 .thenReturn(false);
+        // No Vizier of Remedies-style reducer in these scenarios: every -1/-1 counter lands.
+        when(gameQueryService.reduceMinusOneMinusOneCounters(eq(gameData), any(Permanent.class), anyInt()))
+                .thenAnswer(inv -> (int) inv.getArgument(2));
     }
 
     /** Stubs for infect damage to player (poison counters via accumulatePlayerDamage path). */

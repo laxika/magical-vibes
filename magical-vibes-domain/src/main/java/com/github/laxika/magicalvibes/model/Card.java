@@ -8,6 +8,8 @@ import com.github.laxika.magicalvibes.model.effect.ConditionalReplacementEffect;
 import com.github.laxika.magicalvibes.model.effect.MayEffect;
 import com.github.laxika.magicalvibes.model.effect.MayPayManaEffect;
 import com.github.laxika.magicalvibes.model.effect.MayPayTapPermanentsEffect;
+import com.github.laxika.magicalvibes.model.effect.TriggeringCardConditionalEffect;
+import com.github.laxika.magicalvibes.model.effect.TriggeringPermanentConditionalEffect;
 import com.github.laxika.magicalvibes.model.effect.StateTriggerEffect;
 import lombok.AccessLevel;
 import lombok.Getter;
@@ -345,6 +347,12 @@ public class Card {
             case MayEffect e -> registerEffectTargetIndex(e.wrapped(), targetIndex);
             case MayPayManaEffect e -> registerEffectTargetIndex(e.wrapped(), targetIndex);
             case MayPayTapPermanentsEffect e -> registerEffectTargetIndex(e.wrapped(), targetIndex);
+            // Triggering conditionals (e.g. Diregraf Captain's "whenever another Zombie you control
+            // dies") are unwrapped to their inner effect when the trigger is serviced, so the inner
+            // effect must resolve to the same declared target group — otherwise the card-level target
+            // filter (e.g. opponent-only) is lost after unwrapping.
+            case TriggeringCardConditionalEffect e -> registerEffectTargetIndex(e.wrapped(), targetIndex);
+            case TriggeringPermanentConditionalEffect e -> registerEffectTargetIndex(e.wrapped(), targetIndex);
             default -> { }
         }
     }
