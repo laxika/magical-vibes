@@ -51,6 +51,7 @@ import com.github.laxika.magicalvibes.model.effect.ReturnTriggeringLandFromGrave
 import com.github.laxika.magicalvibes.model.effect.StealDyingOpponentPermanentUnlessPaysLifeEffect;
 import com.github.laxika.magicalvibes.model.effect.TargetPlayerLosesGameEffect;
 import com.github.laxika.magicalvibes.model.effect.UntapEquippedCreatureEffect;
+import com.github.laxika.magicalvibes.model.effect.UntapPermanentsEffect;
 import com.github.laxika.magicalvibes.model.effect.TargetPlayerLosesLifeEqualToPowerEffect;
 import com.github.laxika.magicalvibes.model.effect.LoseLifeEffect;
 import com.github.laxika.magicalvibes.model.effect.LoseLifeRecipient;
@@ -787,6 +788,24 @@ public class DeathTriggerCollectorService {
     boolean handleAnyCreatureDeathUntapEquipped(TriggerMatchContext match,
             UntapEquippedCreatureEffect effect, TriggerContext ctx) {
         // Equipment-granted untap trigger needs its source permanent id to locate the equipment.
+        match.gameData().stack.add(new StackEntry(
+                StackEntryType.TRIGGERED_ABILITY,
+                match.permanent().getCard(),
+                match.controllerId(),
+                match.permanent().getCard().getName() + "'s ability",
+                new ArrayList<>(List.of(effect)),
+                null,
+                match.permanent().getId()
+        ));
+        logAnyCreatureDeath(match);
+        return true;
+    }
+
+    @CollectsTrigger(value = UntapPermanentsEffect.class, slot = EffectSlot.ON_ANY_CREATURE_DIES)
+    boolean handleAnyCreatureDeathUntap(TriggerMatchContext match,
+            UntapPermanentsEffect effect, TriggerContext ctx) {
+        // "Whenever another creature dies, untap this creature." SELF-scope untap needs its source
+        // permanent id to locate this creature at resolution (Galvanic Juggernaut).
         match.gameData().stack.add(new StackEntry(
                 StackEntryType.TRIGGERED_ABILITY,
                 match.permanent().getCard(),
