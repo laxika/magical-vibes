@@ -73,6 +73,33 @@ class GameSetupServiceAllRandomTest {
     }
 
     @Test
+    void allRandomGameCanRestrictGeneratedDecksToASingleSet() {
+        GameData gd = gameSetupService.createGame("Set Random", creator, "10e-white-theme-deck", true, "10E");
+        gameSetupService.joinGame(gd, joiner, "10e-red-theme-deck");
+
+        assertThat(gd.allRandom).isTrue();
+        assertThat(gd.randomSetCode).isEqualTo("10E");
+        assertThat(gd.status).isEqualTo(GameStatus.MULLIGAN);
+
+        for (Player player : List.of(creator, joiner)) {
+            List<Card> allCards = new ArrayList<>(gd.playerHands.get(player.getId()));
+            allCards.addAll(gd.playerDecks.get(player.getId()));
+
+            assertThat(allCards).hasSize(RandomDeckGenerator.DECK_SIZE);
+
+            // Every non-land card must come from the chosen set. Basic lands are excluded — they
+            // always come from the generator's fixed basic-land printings, and the pool holds no
+            // other lands.
+            assertThat(allCards)
+                    .filteredOn(card -> !card.hasType(CardType.LAND))
+                    .isNotEmpty()
+                    .allSatisfy(card -> assertThat(card.getSetCode()).isEqualTo("10E"));
+        }
+
+        gameRegistry.remove(gd.id);
+    }
+
+    @Test
     void standardGameStillResolvesPrebuiltDecks() {
         GameData gd = gameSetupService.createGame("Normal", creator, "10e-white-theme-deck", false);
         gameSetupService.joinGame(gd, joiner, "10e-red-theme-deck");

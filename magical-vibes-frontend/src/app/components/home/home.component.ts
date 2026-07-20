@@ -2,7 +2,7 @@ import { Component, OnInit, OnDestroy, signal } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { Router } from '@angular/router';
-import { WebsocketService, GameNotification, LobbyGame, LobbyGameNotification, LobbyGamesNotification, DeckInfo, GameStatus, MessageType, DraftJoinedNotification, DraftPackUpdateNotification } from '../../services/websocket.service';
+import { WebsocketService, GameNotification, LobbyGame, LobbyGameNotification, LobbyGamesNotification, DeckInfo, GameStatus, MessageType, DraftJoinedNotification, DraftPackUpdateNotification, SetInfo } from '../../services/websocket.service';
 import { Subscription } from 'rxjs';
 
 @Component({
@@ -22,6 +22,7 @@ export class HomeComponent implements OnInit, OnDestroy {
   errorMessage = signal('');
   creating = signal(false);
   activeTab = signal<'1v1' | 'allrandom' | 'draft'>('1v1');
+  randomSetCode = signal<string>('');
   draftAiCount = signal(7);
   draftSetCode = signal('');
   draftGameName = signal('');
@@ -125,6 +126,11 @@ export class HomeComponent implements OnInit, OnDestroy {
 
   readonly aiCountOptions = [1, 2, 3, 4, 5, 6, 7];
 
+  // Sets complete enough to seed set-restricted random decks (the All Random "Set" picker).
+  get randomSets(): SetInfo[] {
+    return this.websocketService.availableSets.filter(s => s.randomEligible);
+  }
+
   createGame() {
     if (this.creating()) {
       return;
@@ -143,7 +149,8 @@ export class HomeComponent implements OnInit, OnDestroy {
       vsAi: this.vsAi(),
       aiDeckId: this.aiDeckId(),
       aiDifficulty: this.aiDifficulty(),
-      allRandom: this.activeTab() === 'allrandom'
+      allRandom: this.activeTab() === 'allrandom',
+      randomSet: this.activeTab() === 'allrandom' ? this.randomSetCode() : ''
     });
   }
 

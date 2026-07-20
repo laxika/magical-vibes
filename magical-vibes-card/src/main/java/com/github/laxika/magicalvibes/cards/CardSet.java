@@ -41,6 +41,7 @@ public enum CardSet {
     SET_DRB("DRB");
 
     private static final Map<String, String> setNameRegistry = new ConcurrentHashMap<>();
+    private static final Map<String, Integer> setCardTotalRegistry = new ConcurrentHashMap<>();
     private static volatile Map<CardSet, List<CardPrinting>> scannedPrintings;
 
     @Getter
@@ -52,6 +53,37 @@ public enum CardSet {
 
     public static void clearSetNameRegistry() {
         setNameRegistry.clear();
+    }
+
+    /**
+     * Records how many cards the set actually contains per the loaded oracle data source — the
+     * denominator for {@link #getImplementedFraction()}. Populated by the oracle loaders at startup.
+     */
+    public static void registerSetCardTotal(String code, int total) {
+        setCardTotalRegistry.put(code, total);
+    }
+
+    public static void clearSetCardTotalRegistry() {
+        setCardTotalRegistry.clear();
+    }
+
+    /** Total number of cards in this set per the loaded oracle data, or 0 if not yet loaded. */
+    public int getSetCardTotal() {
+        return setCardTotalRegistry.getOrDefault(code, 0);
+    }
+
+    /**
+     * Fraction (0..1) of this set's real card pool that is implemented: implemented printings over
+     * the set's total card count. Returns 0 when the total is unknown (oracle data not yet loaded).
+     */
+    public double getImplementedFraction() {
+        int total = getSetCardTotal();
+        if (total <= 0) {
+            return 0.0;
+        }
+        List<CardPrinting> printings = getPrintings();
+        int implemented = printings == null ? 0 : printings.size();
+        return Math.min(1.0, (double) implemented / total);
     }
 
     public List<CardPrinting> getPrintings() {

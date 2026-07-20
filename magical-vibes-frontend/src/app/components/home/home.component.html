@@ -114,6 +114,15 @@
             />
           </div>
           <div class="form-group">
+            <label for="allRandomSet">Set</label>
+            <select id="allRandomSet" [ngModel]="randomSetCode()" (ngModelChange)="randomSetCode.set($event)">
+              <option value="">All sets</option>
+              @for (set of randomSets; track set.code) {
+                <option [value]="set.code">{{ set.name }}</option>
+              }
+            </select>
+          </div>
+          <div class="form-group">
             <label class="toggle-label">
               <input
                 type="checkbox"

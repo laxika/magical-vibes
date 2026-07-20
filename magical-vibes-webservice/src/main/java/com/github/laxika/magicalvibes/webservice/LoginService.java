@@ -2,6 +2,7 @@ package com.github.laxika.magicalvibes.webservice;
 
 import com.github.laxika.magicalvibes.cards.CardSet;
 import com.github.laxika.magicalvibes.cards.PrebuiltDeck;
+import com.github.laxika.magicalvibes.cards.RandomDeckGenerator;
 import com.github.laxika.magicalvibes.networking.message.DeckInfo;
 import com.github.laxika.magicalvibes.networking.message.LoginRequest;
 import com.github.laxika.magicalvibes.networking.message.LoginResponse;
@@ -65,9 +66,9 @@ public class LoginService {
             decks.addAll(customDecks);
             decks.addAll(prebuiltDecks);
 
-            // Build available sets list
+            // Build available sets list, flagging those complete enough for set-restricted random decks
             List<SetInfo> sets = Arrays.stream(CardSet.values())
-                    .map(s -> new SetInfo(s.getCode(), s.getName()))
+                    .map(s -> new SetInfo(s.getCode(), s.getName(), RandomDeckGenerator.isSetRandomEligible(s)))
                     .toList();
 
             return LoginResponse.success(user.getId(), user.getUsername(), games, decks, sets, null);

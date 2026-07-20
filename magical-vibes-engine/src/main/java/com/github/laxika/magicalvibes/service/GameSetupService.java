@@ -50,15 +50,21 @@ public class GameSetupService {
      * {@link GameData} so callers can build their own presentation/DTOs from it.
      */
     public GameData createGame(String gameName, Player player, String deckId) {
-        return createGame(gameName, player, deckId, false);
+        return createGame(gameName, player, deckId, false, null);
+    }
+
+    public GameData createGame(String gameName, Player player, String deckId, boolean allRandom) {
+        return createGame(gameName, player, deckId, allRandom, null);
     }
 
     /**
      * Creates and registers a new game. When {@code allRandom} is set, the game runs in the
      * "All Random" mode: every player's deck choice is ignored and replaced with a freshly
-     * generated {@link RandomDeckGenerator} deck.
+     * generated {@link RandomDeckGenerator} deck. {@code randomSetCode} restricts the random decks
+     * to a single set (by set code); {@code null} means all sets. It is only consulted when
+     * {@code allRandom} is set.
      */
-    public GameData createGame(String gameName, Player player, String deckId, boolean allRandom) {
+    public GameData createGame(String gameName, Player player, String deckId, boolean allRandom, String randomSetCode) {
         UUID gameId = UUID.randomUUID();
 
         if (allRandom) {
@@ -67,6 +73,7 @@ public class GameSetupService {
 
         GameData gameData = new GameData(gameId, gameName, player.getId(), player.getUsername());
         gameData.allRandom = allRandom;
+        gameData.randomSetCode = allRandom ? randomSetCode : null;
         gameData.playerIds.add(player.getId());
         gameData.orderedPlayerIds.add(player.getId());
         gameData.playerNames.add(player.getUsername());
@@ -113,7 +120,7 @@ public class GameSetupService {
     private void initializeGame(GameData gameData) {
         for (UUID playerId : gameData.playerIds) {
             String deckId = gameData.playerDeckChoices.get(playerId);
-            List<Card> deck = resolveDeck(deckId);
+            List<Card> deck = resolveDeck(deckId, gameData.randomSetCode);
 
             // Stamp card ownership: each card is owned by the player whose deck it started in.
             // Preserved across zone changes; used to evaluate "a spell you don't own".
@@ -175,9 +182,9 @@ public class GameSetupService {
         return source != null && source.isCustomDeck(deckId);
     }
 
-    private List<Card> resolveDeck(String deckId) {
+    private List<Card> resolveDeck(String deckId, String randomSetCode) {
         if (RandomDeckGenerator.RANDOM_DECK_ID.equals(deckId)) {
-            return RandomDeckGenerator.generate(random).cards();
+            return RandomDeckGenerator.generate(random, randomSetCode).cards();
         }
         CustomDeckSource source = customDeckSourceProvider.getIfAvailable();
         if (source != null && source.isCustomDeck(deckId)) {

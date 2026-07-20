@@ -101,6 +101,9 @@ public class ScryfallOracleLoader {
             for (CardSet cardSet : CardSet.values()) {
                 Map<String, JsonNode> cardsByCollectorNumber = loadSet(cachePath, cardSet.getCode());
 
+                // Total cards in the set (all collector numbers) — the denominator for set-completeness.
+                CardSet.registerSetCardTotal(cardSet.getCode(), cardsByCollectorNumber.size());
+
                 // Register set name from the first card's set_name field
                 if (!cardsByCollectorNumber.isEmpty()) {
                     JsonNode firstCard = cardsByCollectorNumber.values().iterator().next();

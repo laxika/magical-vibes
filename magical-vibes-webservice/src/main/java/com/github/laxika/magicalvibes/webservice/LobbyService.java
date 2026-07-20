@@ -28,8 +28,8 @@ public class LobbyService {
     private final GameBroadcastService gameBroadcastService;
     private final GameSetupService gameSetupService;
 
-    public GameResult createGame(String gameName, Player player, String deckId, boolean allRandom) {
-        GameData gameData = gameSetupService.createGame(gameName, player, deckId, allRandom);
+    public GameResult createGame(String gameName, Player player, String deckId, boolean allRandom, String randomSetCode) {
+        GameData gameData = gameSetupService.createGame(gameName, player, deckId, allRandom, randomSetCode);
         return new GameResult(gameBroadcastService.getJoinGame(gameData, null), toLobbyGame(gameData));
     }
 

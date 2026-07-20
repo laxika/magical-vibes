@@ -1,5 +1,6 @@
 package com.github.laxika.magicalvibes.handler;
 
+import com.github.laxika.magicalvibes.cards.RandomDeckGenerator;
 import com.github.laxika.magicalvibes.model.AiDifficulty;
 import com.github.laxika.magicalvibes.model.GameData;
 import com.github.laxika.magicalvibes.model.GameStatus;
@@ -204,8 +205,16 @@ public class GameMessageHandler implements MessageHandler {
             return;
         }
 
+        boolean allRandom = Boolean.TRUE.equals(request.allRandom());
+        // Blank means "All sets".
+        String randomSet = (request.randomSet() != null && !request.randomSet().isBlank()) ? request.randomSet() : null;
+        if (allRandom && randomSet != null && !RandomDeckGenerator.hasDeckableCards(randomSet)) {
+            handleError(connection, "The selected set has no cards available for random decks");
+            return;
+        }
+
         LobbyService.GameResult result = lobbyService.createGame(request.gameName(), player, request.deckId(),
-                Boolean.TRUE.equals(request.allRandom()));
+                allRandom, randomSet);
 
         // Mark creator as in-game
         sessionManager.setInGame(connection.getId());

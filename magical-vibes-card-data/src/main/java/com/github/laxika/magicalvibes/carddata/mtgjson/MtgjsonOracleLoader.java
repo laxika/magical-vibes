@@ -86,6 +86,9 @@ public class MtgjsonOracleLoader {
                     }
                 }
 
+                // Total cards in the set (one entry per physical card) — the set-completeness denominator.
+                CardSet.registerSetCardTotal(cardSet.getCode(), frontFaces.size());
+
                 for (Map.Entry<String, JsonNode> entry : frontFaces.entrySet()) {
                     JsonNode cardNode = entry.getValue();
                     if (cardNode.has("rarity")) {

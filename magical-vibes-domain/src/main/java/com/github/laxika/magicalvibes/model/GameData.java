@@ -40,6 +40,8 @@ public class GameData {
     public volatile GameStatus status;
     /** "All Random" game mode: every player is dealt a randomly generated deck. */
     public volatile boolean allRandom;
+    /** For an {@link #allRandom} game: the set code the random decks draw from, or {@code null} for all sets. */
+    public volatile String randomSetCode;
     public final Set<UUID> playerIds = ConcurrentHashMap.newKeySet();
     public final List<UUID> orderedPlayerIds = Collections.synchronizedList(new ArrayList<>());
     public final List<String> playerNames = Collections.synchronizedList(new ArrayList<>());

@@ -311,6 +311,7 @@ export interface DeckInfo {
 export interface SetInfo {
   code: string;
   name: string;
+  randomEligible: boolean;
 }
 
 export interface LoginResponse {
