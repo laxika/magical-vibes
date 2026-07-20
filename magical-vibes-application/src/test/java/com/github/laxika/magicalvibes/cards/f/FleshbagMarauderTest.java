@@ -59,6 +59,61 @@ class FleshbagMarauderTest extends BaseCardTest {
                 .isInstanceOf(PermanentChoiceContext.SacrificeCreature.class);
     }
 
+    @Test
+    @DisplayName("Answering the sacrifice choice resumes and clears the parked ETB resolution")
+    void answeringSacrificeChoiceClearsParkedResolution() {
+        GameData gd = harness.getGameData();
+        Permanent p2Bears = new Permanent(new GrizzlyBears());
+        gd.playerBattlefields.get(player2.getId()).add(p2Bears);
+        gd.playerBattlefields.get(player2.getId()).add(new Permanent(new GiantSpider()));
+
+        setupAndCast();
+        harness.passBothPriorities();
+        harness.passBothPriorities();
+
+        assertThat(gd.interaction.activeInteraction()).isInstanceOf(PendingInteraction.PermanentChoice.class);
+        harness.handlePermanentChosen(player2, p2Bears.getId());
+
+        assertThat(gd.interaction.activeInteraction()).isNull();
+        assertThat(gd.pendingEffectResolutionEntry)
+                .withFailMessage("dangling pendingEffectResolutionEntry after ETB sacrifice flow")
+                .isNull();
+    }
+
+    @Test
+    @DisplayName("ETB sacrifice flow survives an interleaved may-pay cast trigger (Throne of Bone)")
+    void etbSacrificeSurvivesInterleavedMayTrigger() {
+        GameData gd = harness.getGameData();
+        // The opponent owns a "whenever a player casts a black spell, you may pay {1}" trigger
+        // plus two creatures, so both the may-pay prompt and a real sacrifice choice interleave
+        // with the Marauder's parked ETB resolution (fuzz-found dangling-park scenario).
+        gd.playerBattlefields.get(player2.getId())
+                .add(new Permanent(new com.github.laxika.magicalvibes.cards.t.ThroneOfBone()));
+        Permanent p2Bears = new Permanent(new GrizzlyBears());
+        gd.playerBattlefields.get(player2.getId()).add(p2Bears);
+        gd.playerBattlefields.get(player2.getId()).add(new Permanent(new GiantSpider()));
+        harness.addMana(player2, ManaColor.COLORLESS, 1);
+
+        setupAndCast();
+        harness.passBothPriorities(); // Throne of Bone's cast trigger resolves → may-pay prompt
+        harness.handleMayAbilityChosen(player2, true);
+        harness.passBothPriorities(); // Fleshbag Marauder resolves → ETB trigger on stack
+        harness.passBothPriorities(); // ETB resolves → sacrifice choices
+
+        // Controller auto-sacrifices the Marauder (only creature); opponent chooses the Bears.
+        assertThat(gd.interaction.activeInteraction()).isInstanceOf(PendingInteraction.PermanentChoice.class);
+        harness.handlePermanentChosen(player2, p2Bears.getId());
+
+        assertThat(gd.interaction.activeInteraction()).isNull();
+        assertThat(gd.pendingEffectResolutionEntry)
+                .withFailMessage("dangling pendingEffectResolutionEntry after ETB sacrifice flow")
+                .isNull();
+        assertThat(gd.playerGraveyards.get(player1.getId()))
+                .anyMatch(c -> c.getName().equals("Fleshbag Marauder"));
+        assertThat(gd.playerGraveyards.get(player2.getId()))
+                .anyMatch(c -> c.getName().equals("Grizzly Bears"));
+    }
+
     private void setupAndCast() {
         harness.setHand(player1, List.of(new FleshbagMarauder()));
         harness.addMana(player1, ManaColor.BLACK, 1);

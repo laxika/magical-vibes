@@ -275,14 +275,10 @@ public class PermanentChoiceBattlefieldHandlerService {
         gameBroadcastService.logAndBroadcast(gameData, GameLog.textCardText(playerName + " sacrifices " , target.getCard(), "."));
         log.info("Game {} - {} sacrifices {}", gameData.id, playerName, target.getCard().getName());
 
-        stateBasedActionService.performStateBasedActions(gameData);
-
-        if (!gameData.pendingMayAbilities.isEmpty()) {
-            playerInputService.processNextMayAbility(gameData);
-            return;
-        }
-
-        turnProgressionService.resolveAutoPass(gameData);
+        // The choice was begun mid-resolution (e.g. Fleshbag Marauder's "each player sacrifices"),
+        // so the standard epilogue must run: it resumes the parked resolution entry — otherwise
+        // the spell's remaining effects are silently dropped and the park dangles forever.
+        inputCompletionService.sbaProcessMayAbilitiesThenAutoPass(gameData);
     }
 
     public void handleDestroyChosenCreature(GameData gameData, UUID permanentId,
@@ -294,14 +290,9 @@ public class PermanentChoiceBattlefieldHandlerService {
 
         destructionSupport.tryDestroyAndLog(gameData, target, context.sourceCardName());
 
-        stateBasedActionService.performStateBasedActions(gameData);
-
-        if (!gameData.pendingMayAbilities.isEmpty()) {
-            playerInputService.processNextMayAbility(gameData);
-            return;
-        }
-
-        turnProgressionService.resolveAutoPass(gameData);
+        // Begun mid-resolution (opponent/target-player-chooses-creature-to-destroy effects) —
+        // same parked-resolution resume requirement as handleSacrificeCreature above.
+        inputCompletionService.sbaProcessMayAbilitiesThenAutoPass(gameData);
     }
 
     public void handleSacrificeCreatureThenSearchLibrary(GameData gameData, UUID permanentId,
