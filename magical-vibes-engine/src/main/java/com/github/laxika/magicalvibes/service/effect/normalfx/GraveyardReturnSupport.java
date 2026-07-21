@@ -703,6 +703,9 @@ public class GraveyardReturnSupport {
         permanent.setEnteredFromGraveyardOwnerId(controllerId);
         battlefieldEntryService.putPermanentOntoBattlefield(gameData, controllerId, permanent, enterTappedTypes);
         if (exileAtEndStep) {
+            // Unearth / Postmortem Lunge etc.: exile at next end step, and if it would leave
+            // the battlefield for any other reason, exile it instead (CR 702.100).
+            permanent.setExileIfLeavesBattlefield(true);
             gameData.queueDelayedAction(new DelayedPermanentAction(permanent.getId(), DelayedPermanentActionKind.EXILE_TOKEN_AT_END_STEP));
         }
 

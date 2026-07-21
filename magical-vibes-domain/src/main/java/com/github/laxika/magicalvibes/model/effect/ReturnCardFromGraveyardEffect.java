@@ -72,7 +72,8 @@ import lombok.Builder;
  * @param grantHaste           {@code true} to grant haste to the permanent when it enters the battlefield
  *                             (e.g. Postmortem Lunge)
  * @param exileAtEndStep       {@code true} to schedule the permanent for exile at the beginning of the
- *                             next end step (e.g. Postmortem Lunge)
+ *                             next end step, and to exile it instead if it would leave the battlefield
+ *                             for any other reason (Unearth / Postmortem Lunge; CR 702.100)
  * @param requiresManaValueEqualsX {@code true} to restrict targeting to cards whose mana value equals
  *                             the spell's X value (e.g. Postmortem Lunge)
  * @param grantColor           when non-null, permanently grants this color to the returned creature
