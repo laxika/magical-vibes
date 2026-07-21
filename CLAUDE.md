@@ -1,4 +1,5 @@
 - Do not start committing changes until I tell you to do so.
+- In commit messages and descriptions, never write out full card set names — refer to a set only by its short set code (e.g. `INR`).
 - You should always work on the main branch!
 - Rules accuracy is the number one priority — never ship rules-incorrect engine behavior. If a card's behavior is at all ambiguous, search the web for the official ruling.
 - Reuse over creation: build effects by combining existing ones (e.g. "2 damage to any target and 3 to you" = `DealDamageToAnyTargetEffect` + `DealDamageToPlayersEffect(3, DamageRecipient.CONTROLLER)`) and parameterize with predicates (`DestroyTargetPermanentEffect` + a `PermanentPredicate`, not `DestroyTargetArtifactEffect`) rather than adding new classes. When you do add a new effect/predicate, update the relevant `agent-docs/` files.
