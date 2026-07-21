@@ -1207,7 +1207,13 @@ public class HardAiDecisionEngine extends AiDecisionEngine {
                     bestReservedMana, bestInstantsHeld,
                     String.format("%.1f", sorceryWithReserve),
                     String.format("%.1f", bestCombinedValue - sorceryWithReserve), gameId);
-            return tryCastSpellMCTS(gameData);
+            // Instant-awareness already decided cast+hold beats hold-only. Let MCTS pick
+            // which spell, but if it passes (rollouts don't model held-instant value),
+            // fall back to the evaluator so the reserve decision is not undone.
+            if (tryCastSpellMCTS(gameData)) {
+                return true;
+            }
+            return tryCastSpell(gameData, bestReservedMana);
         }
 
         log.info("AI (Hard): Holding mana for {} instant(s) (held={}, totalSorcery={}) in game {}",
@@ -1384,6 +1390,14 @@ public class HardAiDecisionEngine extends AiDecisionEngine {
     // ===== Spell Casting (evaluator-based fallback) =====
 
     boolean tryCastSpell(GameData gameData) {
+        return tryCastSpell(gameData, 0);
+    }
+
+    /**
+     * Evaluator-based spell casting. When {@code reservedMana} &gt; 0, only considers
+     * spells that leave that much mana free (e.g. holding up instants).
+     */
+    boolean tryCastSpell(GameData gameData, int reservedMana) {
         List<Card> hand = gameData.playerHands.get(aiPlayer.getId());
         if (hand == null) {
             return false;
@@ -1423,7 +1437,7 @@ public class HardAiDecisionEngine extends AiDecisionEngine {
         // plus the greedy value of remaining castable spells within leftover mana.
         // E.g. with 4 mana: 3-drop(10) + 1-drop(5) = 15 beats 4-drop(12) alone.
         candidates.sort(Comparator.comparingDouble(CastCandidate::value).reversed());
-        int totalMana = virtualPool.getTotal();
+        int totalMana = virtualPool.getTotal() - Math.max(0, reservedMana);
 
         CastCandidate best = null;
         double bestSequenceValue = 0;
