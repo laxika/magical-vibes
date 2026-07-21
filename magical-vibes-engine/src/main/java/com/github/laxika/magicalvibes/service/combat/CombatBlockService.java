@@ -466,7 +466,7 @@ public class CombatBlockService {
                         .toList();
 
                 if (!regularEffects.isEmpty()) {
-                    gameData.stack.add(new StackEntry(
+                    StackEntry becomesBlockedTrigger = new StackEntry(
                             StackEntryType.TRIGGERED_ABILITY,
                             attacker.getCard(),
                             activeId,
@@ -474,7 +474,11 @@ public class CombatBlockService {
                             new ArrayList<>(regularEffects),
                             attacker.getId(),
                             attacker.getId()
-                    ));
+                    );
+                    // Capture the attacked player/planeswalker so effects acting on the defending
+                    // player (e.g. Vedalken Ghoul's DEFENDING_PLAYER life loss) can read it.
+                    becomesBlockedTrigger.setAttackedTargetId(attacker.getAttackTarget());
+                    gameData.stack.add(becomesBlockedTrigger);
                     gameBroadcastService.logAndBroadcast(gameData, GameLog.cardThen(attacker.getCard(),
                             "'s becomes-blocked ability triggers."));
                     log.info("Game {} - {} becomes-blocked trigger pushed onto stack", gameData.id, attacker.getCard().getName());

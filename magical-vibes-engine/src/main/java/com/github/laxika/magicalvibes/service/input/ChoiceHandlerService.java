@@ -23,6 +23,7 @@ import com.github.laxika.magicalvibes.model.StackEntryType;
 import com.github.laxika.magicalvibes.model.PermanentChoiceContext;
 import com.github.laxika.magicalvibes.model.effect.BecomeChosenColorsUntilEndOfTurnEffect;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
+import com.github.laxika.magicalvibes.model.effect.ChooseOneEffect;
 import com.github.laxika.magicalvibes.model.effect.DealDamageToTargetPlayerOrPlaneswalkerEffect;
 import com.github.laxika.magicalvibes.model.effect.EffectDuration;
 import com.github.laxika.magicalvibes.model.effect.SphinxAmbassadorPutOnBattlefieldEffect;
@@ -125,6 +126,10 @@ public class ChoiceHandlerService {
             handleExileByNameChoice(gameData, player, colorName, ctx);
             return;
         }
+        if (colorChoice.context() instanceof ChoiceContext.RevealHandDamageAndExileByNameChoice ctx) {
+            handleRevealHandDamageAndExileByNameChoice(gameData, colorName, ctx);
+            return;
+        }
         if (colorChoice.context() instanceof ChoiceContext.ProtectionColorChoice ctx) {
             handleProtectionColorChoice(gameData, player, colorName, ctx);
             return;
@@ -223,6 +228,10 @@ public class ChoiceHandlerService {
         }
         if (colorChoice.context() instanceof ChoiceContext.AdjustCounterKindChoice ctx) {
             handleAdjustCounterKindChoice(gameData, player, colorName, ctx);
+            return;
+        }
+        if (colorChoice.context() instanceof ChoiceContext.ChooseModeChoice ctx) {
+            handleChooseModeChoice(gameData, player, colorName, ctx);
             return;
         }
         CardColor color = CardColor.valueOf(colorName);
@@ -625,6 +634,39 @@ public class ChoiceHandlerService {
         }
 
         stateBasedActionService.performStateBasedActions(gameData);
+
+        gameData.priorityPassedBy.clear();
+        gameBroadcastService.broadcastGameState(gameData);
+        resumeAndAutoPass(gameData);
+    }
+
+    /**
+     * A modal ("choose one") triggered ability's mode pick, made as the ability resolves. The chosen
+     * mode's effects are spliced into the ability's paused resolution (right where the
+     * {@link ChooseOneEffect} sat) and resolved in order via the shared pause/resume machinery — so
+     * gain-life / lose-life resolve immediately and a surveil mode still queues its "may" prompt.
+     * Used by non-targeting modal upkeep triggers such as Etherwrought Page.
+     */
+    private void handleChooseModeChoice(GameData gameData, Player player, String chosenLabel,
+            ChoiceContext.ChooseModeChoice ctx) {
+        ChooseOneEffect.ChooseOneOption chosen = ctx.effect().options().stream()
+                .filter(o -> o.label().equals(chosenLabel))
+                .findFirst()
+                .orElseThrow(() -> new IllegalArgumentException("Invalid mode: " + chosenLabel));
+
+        gameData.interaction.clearAwaitingInput();
+
+        // Splice the chosen mode's effects into the paused resolution at the ChooseOneEffect's slot
+        // so they resolve in card-text order through the same effect loop.
+        if (gameData.pendingEffectResolutionEntry != null) {
+            gameData.pendingEffectResolutionEntry.insertEffectsToResolve(
+                    gameData.pendingEffectResolutionIndex, chosen.effects());
+        }
+
+        gameBroadcastService.logAndBroadcast(gameData, GameLog.textCardText(
+                player.getUsername() + " chooses \"" + chosenLabel + "\" for ", ctx.sourceCard(), "."));
+        log.info("Game {} - {} chooses mode \"{}\" for {}", gameData.id, player.getUsername(),
+                chosenLabel, ctx.sourceCard().getName());
 
         gameData.priorityPassedBy.clear();
         gameBroadcastService.broadcastGameState(gameData);
@@ -1577,6 +1619,85 @@ public class ChoiceHandlerService {
         // Present matching cards for "any number" selection
         playerInputService.beginMultiZoneExileChoice(gameData, controllerId, matchingCards, targetPlayerId, cardName);
         gameBroadcastService.broadcastGameState(gameData);
+    }
+
+    /**
+     * Thought Hemorrhage: the controller named a card; the target player reveals their hand, the
+     * source deals {@code damagePerCard} damage per copy revealed from that hand, then every copy in
+     * their hand, graveyard, and library is exiled (mandatory) and they shuffle.
+     */
+    private void handleRevealHandDamageAndExileByNameChoice(GameData gameData, String cardName,
+            ChoiceContext.RevealHandDamageAndExileByNameChoice ctx) {
+        gameData.interaction.clearAwaitingInput();
+
+        UUID targetPlayerId = ctx.targetPlayerId();
+        UUID controllerId = ctx.controllerId();
+        String controllerName = gameData.playerIdToName.get(controllerId);
+        String targetName = gameData.playerIdToName.get(targetPlayerId);
+
+        gameBroadcastService.logAndBroadcast(gameData, GameLog.text(controllerName + " chooses \"" + cardName + "\"."));
+        log.info("Game {} - {} chooses card name \"{}\" (reveal hand, damage, exile)", gameData.id, controllerName, cardName);
+
+        // Target player reveals their hand.
+        List<Card> hand = gameData.playerHands.get(targetPlayerId);
+        if (hand == null || hand.isEmpty()) {
+            gameBroadcastService.logAndBroadcast(gameData, GameLog.text(targetName + " reveals an empty hand."));
+        } else {
+            gameBroadcastService.logAndBroadcast(gameData,
+                    appendCards(GameLog.builder().text(targetName + " reveals their hand: "), hand).text(".").build());
+        }
+
+        // Damage = damagePerCard for each copy with the chosen name revealed from hand this way.
+        long copiesInHand = hand == null ? 0 : hand.stream().filter(c -> c.getName().equals(cardName)).count();
+        int damage = (int) (copiesInHand * ctx.damagePerCard());
+        if (damage > 0) {
+            StackEntry damageEntry = new StackEntry(
+                    StackEntryType.SORCERY_SPELL, ctx.sourceCard(), controllerId,
+                    ctx.sourceCard().getName(), List.of(), targetPlayerId, (UUID) null);
+            damageSupport.dealDamageToPlayer(gameData, damageEntry, targetPlayerId, damage);
+        }
+
+        // Exile every copy from the target's hand, graveyard, and library (mandatory, no choice).
+        int exiledCount = 0;
+
+        if (hand != null) {
+            List<Card> toExile = hand.stream().filter(c -> c.getName().equals(cardName)).toList();
+            hand.removeAll(toExile);
+            toExile.forEach(card -> gameData.addToExile(targetPlayerId, card));
+            exiledCount += toExile.size();
+        }
+
+        List<Card> graveyard = gameData.playerGraveyards.get(targetPlayerId);
+        if (graveyard != null) {
+            List<Card> toExile = graveyard.stream().filter(c -> c.getName().equals(cardName)).toList();
+            graveyard.removeAll(toExile);
+            toExile.forEach(card -> gameData.addToExile(targetPlayerId, card));
+            if (!toExile.isEmpty()) {
+                graveyardService.notifyCardsLeftGraveyard(gameData, targetPlayerId);
+            }
+            exiledCount += toExile.size();
+        }
+
+        List<Card> library = gameData.playerDecks.get(targetPlayerId);
+        if (library != null) {
+            List<Card> toExile = library.stream().filter(c -> c.getName().equals(cardName)).toList();
+            library.removeAll(toExile);
+            toExile.forEach(card -> gameData.addToExile(targetPlayerId, card));
+            exiledCount += toExile.size();
+            Collections.shuffle(library);
+        }
+
+        String exileLog = controllerName + " exiles " + exiledCount + " card" + (exiledCount != 1 ? "s" : "")
+                + " named \"" + cardName + "\" from " + targetName + "'s hand, graveyard, and library. "
+                + targetName + " shuffles their library.";
+        gameBroadcastService.logAndBroadcast(gameData, GameLog.text(exileLog));
+        log.info("Game {} - {} exiled {} card(s) named \"{}\" from {}'s zones and dealt {} damage",
+                gameData.id, controllerName, exiledCount, cardName, targetName, damage);
+
+        stateBasedActionService.performStateBasedActions(gameData);
+        gameData.priorityPassedBy.clear();
+        gameBroadcastService.broadcastGameState(gameData);
+        turnProgressionService.resolveAutoPass(gameData);
     }
 
     private void handleSphinxAmbassadorNameChoice(GameData gameData, Player player, String cardName, ChoiceContext.SphinxAmbassadorNameChoice ctx) {

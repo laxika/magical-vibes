@@ -76,6 +76,18 @@ public class GameService {
     }
 
     /**
+     * Sen Triplets: a player locked out this turn can't activate any ability, including mana and
+     * sacrifice abilities. The standard activated-ability path is gated in
+     * {@code AbilityActivationService.validateActivationLegality}; this guards the special-action entry
+     * points (mana taps, sacrifice, graveyard/hand abilities) that bypass that check.
+     */
+    private void requireCanActivateAbilities(GameData gameData, Player player) {
+        if (gameData.playersCantActivateAbilitiesThisTurn.contains(player.getId())) {
+            throw new IllegalStateException("You can't activate abilities this turn");
+        }
+    }
+
+    /**
      * Returns true if the game is currently in attacker declaration and the given player
      * is the declaring player. Per CR 508.1i, mana abilities may be activated during this window.
      */
@@ -450,6 +462,7 @@ public class GameService {
             if (!isAttackTaxManaPayment(gameData, player) && !isMayCostManaPayment(gameData, player)) {
                 requirePriority(gameData, player);
             }
+            requireCanActivateAbilities(gameData, player);
             abilityActivationService.tapPermanent(gameData, player, permanentIndex);
         }
     }
@@ -475,6 +488,7 @@ public class GameService {
         synchronized (gameData) {
             player = resolveActingPlayer(gameData, player);
             requirePriority(gameData, player);
+            requireCanActivateAbilities(gameData, player);
             abilityActivationService.sacrificePermanent(gameData, player, permanentIndex, targetId);
         }
     }
@@ -483,6 +497,7 @@ public class GameService {
         synchronized (gameData) {
             player = resolveActingPlayer(gameData, player);
             requirePriority(gameData, player);
+            requireCanActivateAbilities(gameData, player);
             abilityActivationService.tapForeignLandForMana(gameData, player, permanentId);
         }
     }
@@ -526,6 +541,7 @@ public class GameService {
         synchronized (gameData) {
             player = resolveActingPlayer(gameData, player);
             requirePriority(gameData, player);
+            requireCanActivateAbilities(gameData, player);
             abilityActivationService.activateGraveyardAbility(gameData, player, graveyardCardIndex, abilityIndex, xValue);
         }
     }
@@ -538,6 +554,7 @@ public class GameService {
         synchronized (gameData) {
             player = resolveActingPlayer(gameData, player);
             requirePriority(gameData, player);
+            requireCanActivateAbilities(gameData, player);
             abilityActivationService.activateHandAbility(gameData, player, handCardIndex, abilityIndex, targetId, xValue);
         }
     }
@@ -546,6 +563,7 @@ public class GameService {
         synchronized (gameData) {
             player = resolveActingPlayer(gameData, player);
             requirePriority(gameData, player);
+            requireCanActivateAbilities(gameData, player);
             abilityActivationService.activateHandAbilityWithGraveyardTargets(gameData, player, handCardIndex, abilityIndex, graveyardCardIds);
         }
     }

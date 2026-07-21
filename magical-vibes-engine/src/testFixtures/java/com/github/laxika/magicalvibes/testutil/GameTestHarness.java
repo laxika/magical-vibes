@@ -358,6 +358,12 @@ public class GameTestHarness {
         gameService.playCard(gameData, player, cardIndex, 0, null, null, List.of(), List.of(), false, null, null, sacrificePermanentIds);
     }
 
+    /** Cast any spell (creature, artifact, etc.) using its alternate hand cost, paying the given permanent IDs. */
+    public void castWithAlternateCost(Player player, int cardIndex, List<UUID> alternateCostPermanentIds) {
+        ensurePriority(player);
+        gameService.playCard(gameData, player, cardIndex, 0, null, null, List.of(), List.of(), false, null, null, alternateCostPermanentIds);
+    }
+
     public void castCreatureWithEvoke(Player player, int cardIndex, UUID targetId) {
         ensurePriority(player);
         gameService.playCardWithEvoke(gameData, player, cardIndex, 0, targetId, null, List.of());

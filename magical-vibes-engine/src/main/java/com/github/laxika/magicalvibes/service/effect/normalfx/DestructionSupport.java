@@ -182,10 +182,14 @@ public class DestructionSupport {
     }
 
     public void sacrificeAndLog(GameData gameData, Permanent creature, UUID playerId) {
+        Card sacrificedCard = creature.getCard();
         permanentRemovalService.removePermanentToGraveyard(gameData, creature);
         String playerName = gameData.playerIdToName.get(playerId);
-        gameBroadcastService.logAndBroadcast(gameData, GameLog.playerSacrifices(playerName, creature.getCard()));
-        log.info("Game {} - {} sacrifices {}", gameData.id, playerName, creature.getCard().getName());
+        gameBroadcastService.logAndBroadcast(gameData, GameLog.playerSacrifices(playerName, sacrificedCard));
+        log.info("Game {} - {} sacrifices {}", gameData.id, playerName, sacrificedCard.getName());
+        // Global "whenever a player sacrifices a creature" watchers (Thraximundar) for the
+        // edict / chosen / forced-sacrifice paths that funnel through this shared helper.
+        triggerCollectionService.checkAnyCreatureSacrificedTriggers(gameData, playerId, sacrificedCard);
     }
 
     /**

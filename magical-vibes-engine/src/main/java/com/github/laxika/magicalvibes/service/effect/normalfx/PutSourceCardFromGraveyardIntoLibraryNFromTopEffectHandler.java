@@ -5,10 +5,11 @@ import com.github.laxika.magicalvibes.model.GameData;
 import com.github.laxika.magicalvibes.model.GameLog;
 import com.github.laxika.magicalvibes.model.StackEntry;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
-import com.github.laxika.magicalvibes.model.effect.PutSourceCardFromGraveyardOnTopOfOwnersLibraryEffect;
+import com.github.laxika.magicalvibes.model.effect.PutSourceCardFromGraveyardIntoLibraryNFromTopEffect;
 import com.github.laxika.magicalvibes.service.GameBroadcastService;
 import com.github.laxika.magicalvibes.service.battlefield.GameQueryService;
 import com.github.laxika.magicalvibes.service.battlefield.PermanentRemovalService;
+import java.util.List;
 import java.util.UUID;
 
 import lombok.extern.slf4j.Slf4j;
@@ -18,7 +19,7 @@ import org.springframework.stereotype.Component;
 @Slf4j
 @Component
 @RequiredArgsConstructor
-public class PutSourceCardFromGraveyardOnTopOfOwnersLibraryEffectHandler implements NormalEffectHandlerBean {
+public class PutSourceCardFromGraveyardIntoLibraryNFromTopEffectHandler implements NormalEffectHandlerBean {
 
     private final PermanentRemovalService permanentRemovalService;
     private final GameQueryService gameQueryService;
@@ -26,11 +27,12 @@ public class PutSourceCardFromGraveyardOnTopOfOwnersLibraryEffectHandler impleme
 
     @Override
     public Class<? extends CardEffect> handledEffect() {
-        return PutSourceCardFromGraveyardOnTopOfOwnersLibraryEffect.class;
+        return PutSourceCardFromGraveyardIntoLibraryNFromTopEffect.class;
     }
 
     @Override
     public void resolve(GameData gameData, StackEntry entry, CardEffect effect) {
+        int position = ((PutSourceCardFromGraveyardIntoLibraryNFromTopEffect) effect).position();
 
         UUID cardId = entry.getCard().getId();
         Card sourceCard = gameQueryService.findCardInGraveyardById(gameData, cardId);
@@ -43,11 +45,18 @@ public class PutSourceCardFromGraveyardOnTopOfOwnersLibraryEffectHandler impleme
 
         UUID ownerId = gameQueryService.findGraveyardOwnerById(gameData, cardId);
         permanentRemovalService.removeCardFromGraveyardById(gameData, cardId);
-        gameData.playerDecks.get(ownerId).add(0, sourceCard);
+        List<Card> library = gameData.playerDecks.get(ownerId);
+        // If the library has fewer cards than the position, the card goes on the bottom (CR 701).
+        library.add(Math.min(position, library.size()), sourceCard);
 
         String ownerName = gameData.playerIdToName.get(ownerId);
-        String logEntry = sourceCard.getName() + " is put on top of " + ownerName + "'s library.";
-        gameBroadcastService.logAndBroadcast(gameData, GameLog.builder().card(sourceCard).text(" is put on top of " + ownerName + "'s library.").build());
-        log.info("Game {} - {} put on top of {}'s library from graveyard", gameData.id, sourceCard.getName(), ownerName);
+        String ordinal = switch (position) {
+            case 0 -> "on top of";
+            case 1 -> "second from the top of";
+            case 2 -> "third from the top of";
+            default -> (position + 1) + "th from the top of";
+        };
+        gameBroadcastService.logAndBroadcast(gameData, GameLog.builder().card(sourceCard).text(" is put " + ordinal + " " + ownerName + "'s library.").build());
+        log.info("Game {} - {} put {} {}'s library from graveyard (position {})", gameData.id, sourceCard.getName(), ordinal, ownerName, position);
     }
 }

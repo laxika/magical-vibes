@@ -383,6 +383,36 @@ public class GraveyardChoiceHandlerService {
             }
         }
 
+        // Resolution-time "exile up to one target card from a graveyard" (Grixis Sojourners' death
+        // and cycling triggers): the choice was begun mid-resolution, so exile the chosen card and
+        // resume the paused ability (e.g. the cycling draw) rather than pushing a new stack entry.
+        if (gameData.graveyardTargetOperation.resolutionTimeExileResume) {
+            gameData.interaction.clearAwaitingInput();
+            gameData.graveyardTargetOperation.resolutionTimeExileResume = false;
+            if (cardIds.isEmpty()) {
+                gameBroadcastService.logAndBroadcast(gameData, GameLog.text(
+                        player.getUsername() + " chooses not to exile a card from a graveyard."));
+            } else {
+                for (UUID cardId : cardIds) {
+                    Card card = gameQueryService.findCardInGraveyardById(gameData, cardId);
+                    if (card != null) {
+                        graveyardReturnSupport.exileCardFromAnyGraveyard(gameData, cardId, card);
+                        gameBroadcastService.logAndBroadcast(gameData, GameLog.textCardText(
+                                player.getUsername() + " exiles ", card, " from a graveyard."));
+                    }
+                }
+            }
+            if (gameData.pendingEffectResolutionEntry != null && !gameData.interaction.isAwaitingInput()) {
+                effectResolutionService.resolveEffectsFrom(gameData,
+                        gameData.pendingEffectResolutionEntry, gameData.pendingEffectResolutionIndex);
+                if (gameData.interaction.isAwaitingInput()) {
+                    return;
+                }
+            }
+            turnProgressionService.resolveAutoPass(gameData);
+            return;
+        }
+
         // Card pile separation (Boneyard Parley, Brilliant Ultimatum): opponent assigns exiled cards to piles
         PendingPileSeparation pileSeparation = gameData.peekPendingInteraction(PendingPileSeparation.class);
         if (pileSeparation != null && pileSeparation.cardPileMode()) {
@@ -405,6 +435,7 @@ public class GraveyardChoiceHandlerService {
         boolean pendingFlashback = gameData.graveyardTargetOperation.flashback;
         UUID pendingSourcePermanentId = gameData.graveyardTargetOperation.sourcePermanentId;
         String pendingChapterName = gameData.graveyardTargetOperation.chapterName;
+        UUID pendingSpellCounterTargetId = gameData.graveyardTargetOperation.spellCounterTargetId;
 
         // Clear awaiting state
         gameData.interaction.clearAwaitingInput();
@@ -419,6 +450,7 @@ public class GraveyardChoiceHandlerService {
         gameData.graveyardTargetOperation.flashback = false;
         gameData.graveyardTargetOperation.sourcePermanentId = null;
         gameData.graveyardTargetOperation.chapterName = null;
+        gameData.graveyardTargetOperation.spellCounterTargetId = null;
 
         List<String> targetNames = new ArrayList<>();
         for (UUID cardId : cardIds) {
@@ -429,11 +461,20 @@ public class GraveyardChoiceHandlerService {
         }
 
         if (pendingEntryType != null) {
-            // Spell casting — put spell on stack with targets
+            // Spell casting — put spell on stack with targets. When a modal "both" mode also
+            // countered a spell (Soul Manipulation), the counter's spell-on-stack target rides in
+            // targetId alongside the graveyard return's targetCardIds. Otherwise targetId carries
+            // the target-player (e.g. Memory's Journey) or nothing.
+            UUID spellEntryTargetId = pendingSpellCounterTargetId != null
+                    ? pendingSpellCounterTargetId : pendingTargetPlayerId;
+            // A counter target rides on the stack (Zone.STACK) so on-resolution fizzle checks look for
+            // it there rather than treating it as a missing permanent; the graveyard return reads its
+            // own targetCardIds independently.
+            Zone spellEntryTargetZone = pendingSpellCounterTargetId != null ? Zone.STACK : null;
             StackEntry spellEntry = new StackEntry(
                     pendingEntryType, pendingCard, controllerId, pendingCard.getName(),
-                    new ArrayList<>(pendingEffects), pendingXValue, pendingTargetPlayerId,
-                    null, Map.of(), null, new ArrayList<>(cardIds), List.of()
+                    new ArrayList<>(pendingEffects), pendingXValue, spellEntryTargetId,
+                    null, Map.of(), spellEntryTargetZone, new ArrayList<>(cardIds), List.of()
             );
             if (pendingFlashback) {
                 spellEntry.setCastWithFlashback(true);

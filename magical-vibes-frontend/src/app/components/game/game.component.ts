@@ -9,7 +9,7 @@ import { CardDisplayComponent } from './card-display/card-display.component';
 import { MulliganModalComponent } from './mulligan-modal/mulligan-modal.component';
 import { SidePanelComponent } from './side-panel/side-panel.component';
 import { ModifierTooltipComponent } from './modifier-tooltip/modifier-tooltip.component';
-import { IndexedPermanent, AttachedAura, LandStack, splitBattlefield, stackBasicLands, getAttachedAuras, isLandStack, isPermanentCreature, isPermanentArtifact } from './battlefield.utils';
+import { IndexedPermanent, AttachedAura, LandStack, splitBattlefield, stackBasicLands, getAttachedAuras, isLandStack, isPermanentCreature, isPermanentArtifact, isPermanentLand } from './battlefield.utils';
 import { Subscription } from 'rxjs';
 import { ManaSymbolService } from '../../services/mana-symbol.service';
 import { PermanentClickResolverService } from '../../services/permanent-click-resolver.service';
@@ -1358,7 +1358,8 @@ export class GameComponent implements OnInit, OnDestroy {
       if (perm) {
         const canSelectCreature = this.choice.targeting.alternateCostSacrificeCount > 0 && isPermanentCreature(perm);
         const canSelectArtifact = this.choice.targeting.alternateCostTapCount > 0 && isPermanentArtifact(perm) && !perm.tapped;
-        if (canSelectCreature || canSelectArtifact) {
+        const canSelectLand = this.choice.targeting.alternateCostReturnCount > 0 && isPermanentLand(perm);
+        if (canSelectCreature || canSelectArtifact || canSelectLand) {
           this.choice.targeting.toggleAlternateCostCreature(perm.id);
         }
       }

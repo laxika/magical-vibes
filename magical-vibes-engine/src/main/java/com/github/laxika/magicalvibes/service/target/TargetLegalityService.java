@@ -135,11 +135,20 @@ public class TargetLegalityService {
      * Validates a spell that targets multiple distinct spells on the stack, each with its own
      * per-position filter (e.g. Choreographed Sparks' "both" mode: one instant/sorcery spell and
      * one creature spell). Targets must be distinct and each must satisfy its position's filter.
+     *
+     * <p>The chosen count must fall within {@code [card.getMinTargets(), perPositionFilters.size()]}.
+     * A modal "both" mode (two required 1..1 groups) has {@code min == max}, so it still demands exactly
+     * that many; a non-modal "counter up to N target spells" (Double Negative: one 0..N group) has
+     * {@code min == 0}, so 0..N targets are legal.</p>
      */
     public void validateMultiSpellTargetsOnStack(GameData gameData, Card card, List<UUID> targetIds, UUID controllerId) {
         List<TargetFilter> perPositionFilters = card.getMultiTargetFilters();
-        if (targetIds == null || targetIds.size() != perPositionFilters.size()) {
-            throw new IllegalStateException("Must choose " + perPositionFilters.size() + " target spells");
+        int maxTargets = perPositionFilters.size();
+        int minTargets = card.getMinTargets();
+        if (targetIds == null || targetIds.size() < minTargets || targetIds.size() > maxTargets) {
+            throw new IllegalStateException(minTargets == maxTargets
+                    ? "Must choose " + maxTargets + " target spells"
+                    : "Must choose up to " + maxTargets + " target spells");
         }
         for (int i = 0; i < targetIds.size(); i++) {
             for (int j = i + 1; j < targetIds.size(); j++) {

@@ -56,6 +56,14 @@ class ColorChoiceAiStrategy implements AiInteractionStrategy<PendingInteraction.
             return;
         }
 
+        if (context instanceof ChoiceContext.ChooseModeChoice) {
+            // Modal triggered ability (e.g. Etherwrought Page): take the first mode (always a legal label).
+            String chosenMode = interaction.options().getFirst();
+            log.info("AI: Choosing modal option \"{}\" in game {}", chosenMode, gameId);
+            ctx.gameActions().answerInteraction(ctx.selfConnection(), new InteractionAnswer.ListChoiceMade(chosenMode));
+            return;
+        }
+
         if (context instanceof ChoiceContext.CardNameChoice) {
             UUID opponentId = getOpponentId(gameData, aiPlayerId);
             List<Permanent> opponentField = gameData.playerBattlefields.getOrDefault(opponentId, List.of());
@@ -219,6 +227,23 @@ class ColorChoiceAiStrategy implements AiInteractionStrategy<PendingInteraction.
                     : ChoiceContext.AdjustCounterKindChoice.REMOVE;
             log.info("AI: {} a {} counter in game {}", chosen, kind, gameId);
             ctx.gameActions().answerInteraction(ctx.selfConnection(), new InteractionAnswer.ListChoiceMade(chosen));
+            return;
+        }
+
+        if (context instanceof ChoiceContext.RevealHandDamageAndExileByNameChoice exile) {
+            // Thought Hemorrhage: name whatever card is most numerous in the target's hand to maximise
+            // both the damage and the number of copies exiled.
+            UUID targetId = exile.targetPlayerId();
+            List<Card> targetHand = gameData.playerHands.getOrDefault(targetId, List.of());
+            String chosenName = targetHand.stream()
+                    .filter(c -> !exile.excludedTypes().contains(c.getType()))
+                    .collect(java.util.stream.Collectors.groupingBy(Card::getName, java.util.stream.Collectors.counting()))
+                    .entrySet().stream()
+                    .max(Map.Entry.comparingByValue())
+                    .map(Map.Entry::getKey)
+                    .orElse("Lightning Bolt");
+            log.info("AI: Choosing card name \"{}\" for reveal-damage-exile in game {}", chosenName, gameId);
+            ctx.gameActions().answerInteraction(ctx.selfConnection(), new InteractionAnswer.ListChoiceMade(chosenName));
             return;
         }
 

@@ -558,7 +558,9 @@ public class DamageSupport {
                 gameData.recordNoncombatDamageSourceToPlayer(entry.getSourcePermanentId(), playerId);
                 triggerCollectionService.checkDamageDealtToControllerTriggers(gameData, playerId, entry.getSourcePermanentId(), false);
                 triggerCollectionService.checkEnchantedCreatureDealtDamageToControllerReflectTriggers(gameData, playerId, entry.getSourcePermanentId(), effectiveDamage);
-                triggerCollectionService.checkControllerDealtDamageTriggers(gameData, playerId, effectiveDamage);
+                // The stack entry's controller is the damage source's controller (caster/activator);
+                // used to gate the opponent-only ON_CONTROLLER_DEALT_DAMAGE_BY_OPPONENT slot.
+                triggerCollectionService.checkControllerDealtDamageTriggers(gameData, playerId, entry.getControllerId(), effectiveDamage);
                 triggerCollectionService.checkNoncombatDamageToOpponentTriggers(gameData, playerId);
                 checkSpellLifelink(gameData, entry, effectiveDamage);
             }

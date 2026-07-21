@@ -8,6 +8,8 @@ import com.github.laxika.magicalvibes.model.effect.DealDamageToTargetAndTheirCre
 import com.github.laxika.magicalvibes.service.GameBroadcastService;
 import com.github.laxika.magicalvibes.service.GameOutcomeService;
 import com.github.laxika.magicalvibes.service.battlefield.GameQueryService;
+import com.github.laxika.magicalvibes.service.effect.AmountContext;
+import com.github.laxika.magicalvibes.service.effect.AmountEvaluationService;
 import java.util.UUID;
 import java.util.ArrayList;
 import java.util.List;
@@ -23,6 +25,7 @@ public class DealDamageToTargetAndTheirCreaturesEffectHandler implements NormalE
     private final GameQueryService gameQueryService;
     private final GameBroadcastService gameBroadcastService;
     private final GameOutcomeService gameOutcomeService;
+    private final AmountEvaluationService amountEvaluationService;
 
     @Override
     public Class<? extends CardEffect> handledEffect() {
@@ -36,7 +39,9 @@ public class DealDamageToTargetAndTheirCreaturesEffectHandler implements NormalE
         UUID targetId = entry.getTargetId();
         if (targetId == null) return;
 
-        int rawDamage = gameQueryService.applyDamageMultiplier(gameData, e.damage(), entry);
+        int damage = amountEvaluationService.evaluate(gameData, e.amount(),
+                AmountContext.forStackEntry(entry, null));
+        int rawDamage = gameQueryService.applyDamageMultiplier(gameData, damage, entry);
         String cardName = entry.getCard().getName();
 
         if (damageSupport.isDamageSourcePreventedWithLog(gameData, entry)) return;

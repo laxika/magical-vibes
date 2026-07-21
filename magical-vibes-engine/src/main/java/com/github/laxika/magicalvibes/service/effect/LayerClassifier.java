@@ -11,6 +11,7 @@ import com.github.laxika.magicalvibes.model.effect.BecomeCopyOfTargetCreatureUnt
 import com.github.laxika.magicalvibes.model.effect.BoostByOtherCreaturesWithSameNameEffect;
 import com.github.laxika.magicalvibes.model.effect.BoostBySharedCreatureTypeEffect;
 import com.github.laxika.magicalvibes.model.effect.BoostOwnCreaturesByManaSymbolEffect;
+import com.github.laxika.magicalvibes.model.effect.BoostOtherMulticoloredCreaturesByColorCountEffect;
 import com.github.laxika.magicalvibes.model.effect.BoostCreaturesOfChosenColorEffect;
 import com.github.laxika.magicalvibes.model.effect.BoostCreaturesOfChosenSubtypeEffect;
 import com.github.laxika.magicalvibes.model.effect.BoostSelfEffect;
@@ -280,6 +281,7 @@ public final class LayerClassifier {
         map.put(BoostByOtherCreaturesWithSameNameEffect.class, fixed(Layer.L7C_MODIFY_PT));
         map.put(BoostBySharedCreatureTypeEffect.class, fixed(Layer.L7C_MODIFY_PT));
         map.put(BoostOwnCreaturesByManaSymbolEffect.class, fixed(Layer.L7C_MODIFY_PT));
+        map.put(BoostOtherMulticoloredCreaturesByColorCountEffect.class, fixed(Layer.L7C_MODIFY_PT));
         map.put(BoostCreaturesOfChosenColorEffect.class, fixed(Layer.L7C_MODIFY_PT));
         map.put(BoostCreaturesOfChosenSubtypeEffect.class, fixed(Layer.L7C_MODIFY_PT));
 

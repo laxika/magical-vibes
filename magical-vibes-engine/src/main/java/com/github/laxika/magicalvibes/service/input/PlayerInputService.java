@@ -252,6 +252,19 @@ public class PlayerInputService {
         log.info("Game {} - Awaiting {} to choose Relic Bind's mode", gameData.id, playerName);
     }
 
+    public void beginChooseModeChoice(GameData gameData, UUID controllerId, Card sourceCard,
+            com.github.laxika.magicalvibes.model.effect.ChooseOneEffect effect) {
+        ChoiceContext.ChooseModeChoice ctx = new ChoiceContext.ChooseModeChoice(sourceCard, controllerId, effect);
+        List<String> optionLabels = effect.options().stream()
+                .map(com.github.laxika.magicalvibes.model.effect.ChooseOneEffect.ChooseOneOption::label)
+                .toList();
+        interactionHandlerRegistry.begin(gameData, new PendingInteraction.ColorChoice(
+                controllerId, null, null, ctx, optionLabels, sourceCard.getName() + " — Choose one."));
+
+        String playerName = gameData.playerIdToName.get(controllerId);
+        log.info("Game {} - Awaiting {} to choose a mode for {}", gameData.id, playerName, sourceCard.getName());
+    }
+
     public void beginKeywordChoice(GameData gameData, UUID playerId, UUID targetId, List<Keyword> options) {
         ChoiceContext.KeywordGrantChoice choiceContext = new ChoiceContext.KeywordGrantChoice(targetId, options);
 
@@ -490,6 +503,21 @@ public class PlayerInputService {
 
         String playerName = gameData.playerIdToName.get(choosingPlayerId);
         log.info("Game {} - Awaiting {} to choose a card name (exile from zones)", gameData.id, playerName);
+    }
+
+    public void beginRevealHandDamageAndExileCardNameChoice(GameData gameData, UUID choosingPlayerId, UUID targetPlayerId,
+                                                            List<CardType> excludedTypes, int damagePerCard, Card sourceCard) {
+        ChoiceContext.RevealHandDamageAndExileByNameChoice choiceContext =
+                new ChoiceContext.RevealHandDamageAndExileByNameChoice(targetPlayerId, choosingPlayerId, excludedTypes, damagePerCard, sourceCard);
+
+        List<String> cardNames = collectCardNamesInGameExcluding(gameData, excludedTypes);
+        String excludedLabel = excludedTypes.stream().map(t -> t.name().toLowerCase()).reduce((a, b) -> a + "/" + b).orElse("");
+        String prompt = "Choose a non" + excludedLabel + " card name.";
+        interactionHandlerRegistry.begin(gameData, new PendingInteraction.ColorChoice(
+                choosingPlayerId, null, null, choiceContext, cardNames, prompt));
+
+        String playerName = gameData.playerIdToName.get(choosingPlayerId);
+        log.info("Game {} - Awaiting {} to choose a card name (reveal hand, damage, exile)", gameData.id, playerName);
     }
 
     public void beginSphinxAmbassadorCardNameChoice(GameData gameData, UUID namingPlayerId, UUID controllerId) {

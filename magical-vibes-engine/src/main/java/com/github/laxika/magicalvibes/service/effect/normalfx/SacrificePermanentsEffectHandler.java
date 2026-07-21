@@ -86,6 +86,21 @@ public class SacrificePermanentsEffectHandler implements NormalEffectHandlerBean
             }
             case EACH_PLAYER -> resolveEachPlayer(gameData, entry, e, false, creatureSingleSac);
             case EACH_OPPONENT -> resolveEachPlayer(gameData, entry, e, true, creatureSingleSac);
+            case DEFENDING_PLAYER -> {
+                // Non-targeting ON_ATTACK edict: the attacked player, or the controller of the
+                // attacked planeswalker, sacrifices (reads the trigger's attackedTargetId).
+                UUID attackedTargetId = entry.getAttackedTargetId();
+                if (attackedTargetId == null) {
+                    return;
+                }
+                UUID defendingPlayerId = gameData.playerIds.contains(attackedTargetId)
+                        ? attackedTargetId
+                        : gameQueryService.findPermanentController(gameData, attackedTargetId);
+                if (defendingPlayerId == null || !gameData.playerIds.contains(defendingPlayerId)) {
+                    return;
+                }
+                resolveSinglePlayer(gameData, entry, e, defendingPlayerId, creatureSingleSac);
+            }
         }
     }
 

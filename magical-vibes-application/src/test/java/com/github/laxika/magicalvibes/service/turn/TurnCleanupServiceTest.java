@@ -393,6 +393,16 @@ class TurnCleanupServiceTest {
         }
 
         @Test
+        @DisplayName("Clears allDamagePreventionPredicates")
+        void clearsAllDamagePreventionPredicates() {
+            gd.allDamagePreventionPredicates.add(new com.github.laxika.magicalvibes.model.filter.PermanentTruePredicate());
+
+            sut.resetEndOfTurnModifiers(gd);
+
+            assertThat(gd.allDamagePreventionPredicates).isEmpty();
+        }
+
+        @Test
         @DisplayName("Clears playerColorDamagePreventionCount")
         void clearsPlayerColorDamagePreventionCount() {
             gd.playerColorDamagePreventionCount.put(player1Id,

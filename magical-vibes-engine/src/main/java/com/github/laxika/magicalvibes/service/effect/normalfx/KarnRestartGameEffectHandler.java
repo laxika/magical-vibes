@@ -223,6 +223,7 @@ public class KarnRestartGameEffectHandler implements NormalEffectHandlerBean {
         gameData.preventAllCombatDamage = false;
         gameData.preventAllDamageToAllCreatures = false;
         gameData.combatDamageExemptPredicate = null;
+        gameData.allDamagePreventionPredicates.clear();
         gameData.allPermanentsEnterTappedThisTurn = false;
         gameData.endTurnRequested = false;
         gameData.additionalCombatMainPhasePairs = 0;

@@ -30,6 +30,7 @@ import com.github.laxika.magicalvibes.model.effect.DrawCardEffect;
 import com.github.laxika.magicalvibes.model.effect.TargetCategory;
 import com.github.laxika.magicalvibes.model.effect.PlayersCannotDrawCardsEffect;
 import com.github.laxika.magicalvibes.model.effect.ReplaceSingleDrawEffect;
+import com.github.laxika.magicalvibes.model.effect.RevealTopCardsCreaturesToHandDrawReplacementEffect;
 import com.github.laxika.magicalvibes.model.effect.RevealFirstDrawDrawOnBasicLandEffect;
 import com.github.laxika.magicalvibes.model.effect.SacrificeSelfThenDealDamageToTargetPlayerEffect;
 import com.github.laxika.magicalvibes.model.effect.WinGameOnEmptyLibraryDrawEffect;
@@ -43,6 +44,7 @@ import org.springframework.stereotype.Component;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.UUID;
+import java.util.stream.Collectors;
 import java.util.stream.IntStream;
 
 @Slf4j
@@ -124,6 +126,15 @@ public class DrawService {
                     List.of(new ReplaceSingleDrawEffect(playerId, DrawReplacementKind.ABUNDANCE)),
                     "Replace this draw with Abundance?"
             ));
+            return;
+        }
+
+        // Sages of the Anima — "If you would draw a card, instead reveal the top three cards of your
+        // library. Put all creature cards revealed this way into your hand and the rest on the bottom of
+        // your library in any order." Mandatory replacement for the drawing controller.
+        Permanent revealCreaturesSource = findRevealCreaturesDrawReplacementSource(gameData, playerId);
+        if (revealCreaturesSource != null) {
+            resolveRevealCreaturesDrawReplacement(gameData, playerId, revealCreaturesSource);
             return;
         }
 
@@ -283,6 +294,98 @@ public class DrawService {
             }
         }
         return null;
+    }
+
+    private Permanent findRevealCreaturesDrawReplacementSource(GameData gameData, UUID playerId) {
+        List<Permanent> battlefield = gameData.playerBattlefields.get(playerId);
+        if (battlefield == null) {
+            return null;
+        }
+
+        for (Permanent permanent : battlefield) {
+            boolean hasEffect = permanent.getCard().getEffects(EffectSlot.STATIC).stream()
+                    .anyMatch(effect -> effect instanceof RevealTopCardsCreaturesToHandDrawReplacementEffect);
+            if (hasEffect) {
+                return permanent;
+            }
+        }
+        return null;
+    }
+
+    /**
+     * Sages of the Anima replacement: reveal the top {@code revealCount} cards of the drawing player's
+     * library, put every revealed creature card into their hand, and put the rest on the bottom of their
+     * library in any order (an async {@link PendingInteraction.LibraryReorder} when two or more remain).
+     *
+     * <p>The draw is replaced entirely, so the revealed creatures are put into hand rather than "drawn"
+     * (no draw triggers, no cards-drawn bookkeeping), and an empty library does not lose the game — the
+     * player simply reveals nothing.
+     */
+    private void resolveRevealCreaturesDrawReplacement(GameData gameData, UUID playerId, Permanent source) {
+        // A prior reveal from the same multi-card draw is still awaiting a bottom-order choice; don't
+        // stack another interaction over it (consistent with Forbidden Crypt's multi-draw handling).
+        if (gameData.interaction.isAwaitingInput()) {
+            return;
+        }
+
+        int revealCount = source.getCard().getEffects(EffectSlot.STATIC).stream()
+                .filter(effect -> effect instanceof RevealTopCardsCreaturesToHandDrawReplacementEffect)
+                .map(effect -> ((RevealTopCardsCreaturesToHandDrawReplacementEffect) effect).revealCount())
+                .findFirst().orElse(0);
+
+        List<Card> deck = gameData.playerDecks.get(playerId);
+        String playerName = gameData.playerIdToName.get(playerId);
+
+        int actual = deck == null ? 0 : Math.min(revealCount, deck.size());
+        if (actual == 0) {
+            // Library empty — the draw is replaced, so nothing happens and the player does not lose.
+            gameBroadcastService.logAndBroadcast(gameData, GameLog.textCardText(
+                    playerName + "'s library is empty; ", source.getCard(), " reveals no cards."));
+            log.info("Game {} - {} reveals no cards for {} (empty library)",
+                    gameData.id, playerName, source.getCard().getName());
+            return;
+        }
+
+        List<Card> revealed = new ArrayList<>();
+        for (int i = 0; i < actual; i++) {
+            revealed.add(deck.removeFirst());
+        }
+
+        String revealedNames = revealed.stream().map(Card::getName).collect(Collectors.joining(", "));
+        gameBroadcastService.logAndBroadcast(gameData, GameLog.textCardText(
+                playerName + " reveals " + revealedNames + " with ", source.getCard(), "."));
+        log.info("Game {} - {} reveals top {} cards for {}",
+                gameData.id, playerName, actual, source.getCard().getName());
+
+        List<Card> creatures = new ArrayList<>();
+        List<Card> rest = new ArrayList<>();
+        for (Card card : revealed) {
+            if (card.hasType(CardType.CREATURE)) {
+                creatures.add(card);
+            } else {
+                rest.add(card);
+            }
+        }
+
+        for (Card creature : creatures) {
+            gameData.addCardToHand(playerId, creature);
+        }
+        if (!creatures.isEmpty()) {
+            String creatureNames = creatures.stream().map(Card::getName).collect(Collectors.joining(", "));
+            gameBroadcastService.logAndBroadcast(gameData, GameLog.text(
+                    playerName + " puts " + creatureNames + " into their hand."));
+        }
+
+        // Put the non-creature cards on the bottom of the library in any order.
+        if (rest.size() == 1) {
+            deck.add(rest.getFirst());
+            gameBroadcastService.logAndBroadcast(gameData, GameLog.text(
+                    playerName + " puts 1 card on the bottom of their library."));
+        } else if (rest.size() >= 2) {
+            interactionHandlerRegistry.begin(gameData, new PendingInteraction.LibraryReorder(
+                    playerId, new ArrayList<>(rest), true, playerId,
+                    "Put these cards on the bottom of your library in any order (first chosen will be closest to the top)."));
+        }
     }
 
     /**

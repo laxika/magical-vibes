@@ -34,6 +34,13 @@ public class StackEntry {
     @Setter private Integer putIntoLibraryPositionAfterResolving;
     @Setter private boolean castWithFlashback;
     @Setter private Zone sourceZone;
+    /**
+     * Overrides the card's disposition owner when this spell is controlled by someone other than its
+     * owner (e.g. cast from an opponent's hand via Sen Triplets). Null for the overwhelming majority of
+     * casts, where owner == controller; {@link #getOwnerId()} then falls back to {@link #controllerId}.
+     * Read by the graveyard/hand/library disposition paths and the permanent-spell entry ownership stamp.
+     */
+    @Setter private UUID ownerIdOverride;
     @Setter private boolean kicked;
     /** Whether this spell was cast for its evoke (alternate) cost — carried to the entering permanent. */
     @Setter private boolean evoked;
@@ -269,6 +276,7 @@ public class StackEntry {
         this.putIntoLibraryPositionAfterResolving = source.putIntoLibraryPositionAfterResolving;
         this.castWithFlashback = source.castWithFlashback;
         this.sourceZone = source.sourceZone;
+        this.ownerIdOverride = source.ownerIdOverride;
         this.kicked = source.kicked;
         this.evoked = source.evoked;
         this.prowl = source.prowl;
@@ -330,6 +338,15 @@ public class StackEntry {
      */
     public Card getEffectiveDamageSourceCard() {
         return damageSourceCard != null ? damageSourceCard : card;
+    }
+
+    /**
+     * The player to whom this spell's card belongs for disposition purposes (graveyard/hand/library on
+     * leaving the stack). Defaults to the controller — correct for every normal cast, where owner ==
+     * controller — unless an {@link #ownerIdOverride} was set for a control-diverged cast (Sen Triplets).
+     */
+    public UUID getOwnerId() {
+        return ownerIdOverride != null ? ownerIdOverride : controllerId;
     }
 
     /**

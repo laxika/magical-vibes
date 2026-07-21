@@ -27,6 +27,7 @@ public record LibrarySearchParams(
         List<Card> accumulatedCards,
         String filterCardName,
         UUID attachToPlayerId,
+        UUID attachToPermanentId,
         CardPredicate filterPredicate,
         UUID sourcePermanentId,
         LibrarySearchFollowUp followUp
@@ -46,7 +47,8 @@ public record LibrarySearchParams(
         return new LibrarySearchParams(playerId, newCards, reveals, canFailToFind, targetPlayerId,
                 remainingCount, sourceCards, reorderRemainingToBottom, reorderRemainingToTop,
                 restToGraveyard, shuffleAfterSelection, prompt, destination, filterCardTypes,
-                accumulatedCards, filterCardName, attachToPlayerId, filterPredicate, sourcePermanentId, followUp);
+                accumulatedCards, filterCardName, attachToPlayerId, attachToPermanentId,
+                filterPredicate, sourcePermanentId, followUp);
     }
 
     public static class Builder {
@@ -67,6 +69,7 @@ public record LibrarySearchParams(
         private List<Card> accumulatedCards = List.of();
         private String filterCardName;
         private UUID attachToPlayerId;
+        private UUID attachToPermanentId;
         private CardPredicate filterPredicate;
         private UUID sourcePermanentId;
         private LibrarySearchFollowUp followUp = LibrarySearchFollowUp.NONE;
@@ -151,6 +154,11 @@ public record LibrarySearchParams(
             return this;
         }
 
+        public Builder attachToPermanentId(UUID attachToPermanentId) {
+            this.attachToPermanentId = attachToPermanentId;
+            return this;
+        }
+
         public Builder filterPredicate(CardPredicate filterPredicate) {
             this.filterPredicate = filterPredicate;
             return this;
@@ -170,7 +178,8 @@ public record LibrarySearchParams(
             return new LibrarySearchParams(playerId, cards, reveals, canFailToFind, targetPlayerId,
                     remainingCount, sourceCards, reorderRemainingToBottom, reorderRemainingToTop,
                     restToGraveyard, shuffleAfterSelection, prompt, destination, filterCardTypes,
-                    accumulatedCards, filterCardName, attachToPlayerId, filterPredicate, sourcePermanentId, followUp);
+                    accumulatedCards, filterCardName, attachToPlayerId, attachToPermanentId,
+                    filterPredicate, sourcePermanentId, followUp);
         }
     }
 }

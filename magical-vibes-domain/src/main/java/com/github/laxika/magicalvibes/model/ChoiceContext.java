@@ -4,6 +4,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.UUID;
 
+import com.github.laxika.magicalvibes.model.effect.ChooseOneEffect;
 import com.github.laxika.magicalvibes.model.effect.EffectDuration;
 
 public sealed interface ChoiceContext {
@@ -81,6 +82,15 @@ public sealed interface ChoiceContext {
     record KeywordGrantChoice(UUID targetId, List<Keyword> options) implements ChoiceContext {}
 
     record ExileByNameChoice(UUID targetPlayerId, UUID controllerId, List<CardType> excludedTypes) implements ChoiceContext {}
+
+    /**
+     * The controller chose a card name; {@code targetPlayerId} reveals their hand, the source deals
+     * {@code damagePerCard} damage per revealed copy, then every copy in their hand/graveyard/library
+     * is exiled and they shuffle (Thought Hemorrhage). {@code sourceCard} attributes the damage.
+     */
+    record RevealHandDamageAndExileByNameChoice(UUID targetPlayerId, UUID controllerId,
+                                                List<CardType> excludedTypes, int damagePerCard,
+                                                Card sourceCard) implements ChoiceContext {}
 
     record ProtectionColorChoice(UUID targetId, boolean includeArtifacts) implements ChoiceContext {}
 
@@ -304,4 +314,13 @@ public sealed interface ChoiceContext {
         public static final String REMOVE = "REMOVE";
         public static final List<String> OPTIONS = List.of(ADD, REMOVE);
     }
+
+    /**
+     * A modal triggered ability's "choose one" mode pick, made as the ability resolves (the engine
+     * has no cast-time modal machinery for triggered abilities). {@code sourceCard} is the ability's
+     * source (used for logging), {@code controllerId} chooses the mode, and {@code effect} carries the
+     * {@link ChooseOneEffect}'s options; the chosen mode's effects are spliced into the paused
+     * resolution. Used by non-targeting modal upkeep triggers such as Etherwrought Page.
+     */
+    record ChooseModeChoice(Card sourceCard, UUID controllerId, ChooseOneEffect effect) implements ChoiceContext {}
 }

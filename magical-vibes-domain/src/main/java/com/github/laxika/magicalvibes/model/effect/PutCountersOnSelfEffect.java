@@ -8,7 +8,8 @@ import com.github.laxika.magicalvibes.model.amount.DynamicAmount;
  * {@code count} or, when {@code amount} is non-null, a {@link DynamicAmount} resolved at
  * resolution time (e.g. {@code XValue} for "{X}: Put X tower counters on this enchantment").
  */
-public record PutCountersOnSelfEffect(CounterType counterType, int count, DynamicAmount amount) implements CardEffect {
+public record PutCountersOnSelfEffect(CounterType counterType, int count, DynamicAmount amount)
+        implements CombatDamageTriggerContextEffect {
 
     public PutCountersOnSelfEffect(CounterType counterType) {
         this(counterType, 1, null);
@@ -25,5 +26,14 @@ public record PutCountersOnSelfEffect(CounterType counterType, int count, Dynami
     @Override
     public TargetSpec targetSpec() {
         return new TargetSpec(TargetCategory.NONE, false, null, true, 1);
+    }
+
+    /**
+     * Always binds the source permanent so an {@code ON_COMBAT_DAMAGE_TO_PLAYER} trigger places the
+     * counters on the damage-dealing creature itself (e.g. Lightning Reaver's charge counter).
+     */
+    @Override
+    public TriggerContext combatDamageTriggerContext() {
+        return TriggerContext.SOURCE_SELF;
     }
 }

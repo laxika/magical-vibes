@@ -44,6 +44,7 @@ import com.github.laxika.magicalvibes.model.amount.IfSourceAttacking;
 import com.github.laxika.magicalvibes.model.amount.ImprintedCreaturePower;
 import com.github.laxika.magicalvibes.model.amount.ImprintedCreatureToughness;
 import com.github.laxika.magicalvibes.model.amount.LandsMatchingImprintedName;
+import com.github.laxika.magicalvibes.model.amount.LifeLostThisTurn;
 import com.github.laxika.magicalvibes.model.amount.ManaSpentToCast;
 import com.github.laxika.magicalvibes.model.amount.MatchingCardsInHand;
 import com.github.laxika.magicalvibes.model.amount.Max;
@@ -170,6 +171,8 @@ public class AmountEvaluationService {
                     countOtherAttackersSharingCreatureTypeWithTarget(gameData, ctx);
             case CreatureDeathsThisTurn c ->
                     countCreatureDeathsThisTurn(gameData, c, ctx);
+            case LifeLostThisTurn c ->
+                    countLifeLostThisTurn(gameData, c, ctx);
             case DamageDealtToTargetPlayerThisTurn ignored ->
                     ctx.targetPermanentId() == null ? 0
                             : gameData.damageDealtToPlayersThisTurn.getOrDefault(ctx.targetPermanentId(), 0);
@@ -568,6 +571,15 @@ public class AmountEvaluationService {
         for (UUID playerId : gameData.orderedPlayerIds) {
             if (!isPlayerInScope(gameData, playerId, count.scope(), ctx)) continue;
             total += gameData.creatureDeathCountThisTurn.getOrDefault(playerId, 0);
+        }
+        return total;
+    }
+
+    private int countLifeLostThisTurn(GameData gameData, LifeLostThisTurn count, AmountContext ctx) {
+        int total = 0;
+        for (UUID playerId : gameData.orderedPlayerIds) {
+            if (!isPlayerInScope(gameData, playerId, count.scope(), ctx)) continue;
+            total += gameData.lifeLostThisTurn.getOrDefault(playerId, 0);
         }
         return total;
     }

@@ -20,6 +20,7 @@ import com.github.laxika.magicalvibes.model.filter.CardHasCyclingPredicate;
 import com.github.laxika.magicalvibes.model.filter.CardHasFlashbackPredicate;
 import com.github.laxika.magicalvibes.model.filter.CardIsAuraPredicate;
 import com.github.laxika.magicalvibes.model.filter.CardIsHistoricPredicate;
+import com.github.laxika.magicalvibes.model.filter.CardIsMulticoloredPredicate;
 import com.github.laxika.magicalvibes.model.filter.CardIsPermanentPredicate;
 import com.github.laxika.magicalvibes.model.filter.CardIsSelfPredicate;
 import com.github.laxika.magicalvibes.model.filter.CardIsTokenPredicate;
@@ -70,6 +71,8 @@ import com.github.laxika.magicalvibes.model.filter.PermanentIsEnchantedPredicate
 import com.github.laxika.magicalvibes.model.filter.PermanentIsEnchantmentPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsHistoricPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsLandPredicate;
+import com.github.laxika.magicalvibes.model.filter.PermanentIsMonocoloredPredicate;
+import com.github.laxika.magicalvibes.model.filter.PermanentIsMulticoloredPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsPlaneswalkerPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsSourceCardPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsTappedPredicate;
@@ -120,6 +123,7 @@ import com.github.laxika.magicalvibes.service.effect.LayerSystemService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 
+import java.util.EnumSet;
 import java.util.List;
 import java.util.Optional;
 import java.util.Set;
@@ -182,6 +186,8 @@ public class PredicateEvaluationService {
                     sourceCardId != null && card.getId().equals(sourceCardId);
             case CardColorPredicate p ->
                     card.getColors().contains(p.color());
+            case CardIsMulticoloredPredicate ignored ->
+                    card.getColors().size() >= 2;
             case PhyrexianManaPredicate ignored ->
                     card.getManaCost() != null && new ManaCost(card.getManaCost()).hasPhyrexianMana();
             case CardIsAuraPredicate ignored ->
@@ -458,6 +464,44 @@ public class PredicateEvaluationService {
                         || permanent.getTransientColors().stream().anyMatch(colorInPredicate.colors()::contains)
                         || permanent.getGrantedColors().stream().anyMatch(colorInPredicate.colors()::contains);
             }
+            case PermanentIsMonocoloredPredicate ignored -> {
+                // Monocolored = exactly one effective colour (colourless and multicoloured don't match).
+                // Colours come from the same sources as PermanentColorInPredicate above.
+                CharacteristicState layeredColors = LayerSystemService.activeStateFor(permanent.getId());
+                if (layeredColors != null) {
+                    yield layeredColors.getColors().size() == 1;
+                }
+                if (gameData != null) {
+                    yield gameQueryService.getEffectiveColors(gameData, permanent).size() == 1;
+                }
+                if (permanent.isColorOverridden()) {
+                    yield permanent.getTransientColors().size() == 1;
+                }
+                Set<CardColor> combined = EnumSet.noneOf(CardColor.class);
+                combined.addAll(permanent.getEffectiveColors());
+                combined.addAll(permanent.getTransientColors());
+                combined.addAll(permanent.getGrantedColors());
+                yield combined.size() == 1;
+            }
+            case PermanentIsMulticoloredPredicate ignored -> {
+                // Multicolored = two or more effective colours (colourless and monocoloured don't match).
+                // Colours come from the same sources as PermanentIsMonocoloredPredicate above.
+                CharacteristicState layeredColors = LayerSystemService.activeStateFor(permanent.getId());
+                if (layeredColors != null) {
+                    yield layeredColors.getColors().size() >= 2;
+                }
+                if (gameData != null) {
+                    yield gameQueryService.getEffectiveColors(gameData, permanent).size() >= 2;
+                }
+                if (permanent.isColorOverridden()) {
+                    yield permanent.getTransientColors().size() >= 2;
+                }
+                Set<CardColor> combined = EnumSet.noneOf(CardColor.class);
+                combined.addAll(permanent.getEffectiveColors());
+                combined.addAll(permanent.getTransientColors());
+                combined.addAll(permanent.getGrantedColors());
+                yield combined.size() >= 2;
+            }
             case PermanentAnyOfPredicate anyOfPredicate -> {
                 for (PermanentPredicate nested : anyOfPredicate.predicates()) {
                     if (matchesPermanentPredicate(permanent, nested, filterContext)) {
@@ -567,6 +611,7 @@ public class PredicateEvaluationService {
                         case LORE -> permanent.getCounterCount(CounterType.LORE) > 0;
                         case AIM -> permanent.getCounterCount(CounterType.AIM) > 0;
                         case BRIBERY -> permanent.getCounterCount(CounterType.BRIBERY) > 0;
+                        case FEATHER -> permanent.getCounterCount(CounterType.FEATHER) > 0;
                         case ANY -> permanent.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE) > 0
                                 || permanent.getCounterCount(CounterType.MINUS_ONE_MINUS_ONE) > 0
                                 || permanent.getCounterCount(CounterType.CHARGE) > 0
@@ -577,7 +622,8 @@ public class PredicateEvaluationService {
                                 || permanent.getCounterCount(CounterType.WISH) > 0
                                 || permanent.getCounterCount(CounterType.LORE) > 0
                                 || permanent.getCounterCount(CounterType.AIM) > 0
-                                || permanent.getCounterCount(CounterType.BRIBERY) > 0;
+                                || permanent.getCounterCount(CounterType.BRIBERY) > 0
+                                || permanent.getCounterCount(CounterType.FEATHER) > 0;
                         default -> false;
                     };
             case PermanentDealtDamageThisTurnPredicate ignored ->

@@ -18,6 +18,7 @@ import com.github.laxika.magicalvibes.model.effect.LoseLifeRecipient;
 import com.github.laxika.magicalvibes.model.effect.CopyControllerCastSpellEffect;
 import com.github.laxika.magicalvibes.model.effect.CopyControllerCastSpellOnSpellCastEffect;
 import com.github.laxika.magicalvibes.model.effect.CopySpellForEachOtherPlayerEffect;
+import com.github.laxika.magicalvibes.model.effect.MayPayManaEffect;
 import com.github.laxika.magicalvibes.model.effect.MayPayTapPermanentsEffect;
 import com.github.laxika.magicalvibes.model.effect.CopySpellForEachOtherSubtypePermanentEffect;
 import com.github.laxika.magicalvibes.model.effect.CounterUnlessPaysEffect;
@@ -332,13 +333,21 @@ public class SpellCastTriggerCollectorService {
         CopyControllerCastSpellEffect copyEffect =
                 new CopyControllerCastSpellEffect(snapshot, sc.castingPlayerId());
 
-        CardEffect resolutionEffect = trigger.tapCost() != null
-                ? new MayPayTapPermanentsEffect(
-                        trigger.tapCost(),
-                        copyEffect,
-                        "Tap " + trigger.tapCost().count() + " untapped creatures you control to copy "
-                                + sc.spellCard().getName() + "?")
-                : copyEffect;
+        CardEffect resolutionEffect;
+        if (trigger.tapCost() != null) {
+            resolutionEffect = new MayPayTapPermanentsEffect(
+                    trigger.tapCost(),
+                    copyEffect,
+                    "Tap " + trigger.tapCost().count() + " untapped creatures you control to copy "
+                            + sc.spellCard().getName() + "?");
+        } else if (trigger.manaCost() != null) {
+            resolutionEffect = new MayPayManaEffect(
+                    trigger.manaCost(),
+                    copyEffect,
+                    "Pay " + trigger.manaCost() + " to copy " + sc.spellCard().getName() + "?");
+        } else {
+            resolutionEffect = copyEffect;
+        }
 
         match.gameData().stack.add(new StackEntry(
                 StackEntryType.TRIGGERED_ABILITY,

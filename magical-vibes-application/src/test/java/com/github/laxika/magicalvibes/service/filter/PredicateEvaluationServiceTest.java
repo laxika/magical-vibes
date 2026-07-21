@@ -18,6 +18,7 @@ import com.github.laxika.magicalvibes.model.effect.ProtectionFromColorsEffect;
 import com.github.laxika.magicalvibes.model.filter.CardAllOfPredicate;
 import com.github.laxika.magicalvibes.model.filter.CardAnyOfPredicate;
 import com.github.laxika.magicalvibes.model.filter.CardColorPredicate;
+import com.github.laxika.magicalvibes.model.filter.CardIsMulticoloredPredicate;
 import com.github.laxika.magicalvibes.model.filter.CardIsAuraPredicate;
 import com.github.laxika.magicalvibes.model.filter.CardSupertypePredicate;
 import com.github.laxika.magicalvibes.model.filter.CardIsSelfPredicate;
@@ -44,6 +45,8 @@ import com.github.laxika.magicalvibes.model.filter.PermanentIsBlockingPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsCreaturePredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsEnchantmentPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsLandPredicate;
+import com.github.laxika.magicalvibes.model.filter.PermanentIsMonocoloredPredicate;
+import com.github.laxika.magicalvibes.model.filter.PermanentIsMulticoloredPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsPlaneswalkerPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsSourceCardPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsTappedPredicate;
@@ -298,6 +301,20 @@ class PredicateEvaluationServiceTest {
         }
 
         @Test
+        @DisplayName("CardIsMulticoloredPredicate matches only two-or-more-colour cards")
+        void cardIsMulticoloredPredicateMatches() {
+            Card multicolored = createCreatureWithSubtypes("Golgari Spy", 2, 2, CardColor.BLACK, List.of());
+            multicolored.setColors(List.of(CardColor.BLACK, CardColor.GREEN));
+            Card monocolored = createCreatureWithSubtypes("Grizzly Bears", 2, 2, CardColor.GREEN, List.of(CardSubtype.BEAR));
+            Card colorless = createCreatureWithSubtypes("Ornithopter", 0, 2, CardColor.GREEN, List.of());
+            colorless.setColors(List.of());
+
+            assertThat(evaluator.matchesCardPredicate(multicolored, new CardIsMulticoloredPredicate(), null)).isTrue();
+            assertThat(evaluator.matchesCardPredicate(monocolored, new CardIsMulticoloredPredicate(), null)).isFalse();
+            assertThat(evaluator.matchesCardPredicate(colorless, new CardIsMulticoloredPredicate(), null)).isFalse();
+        }
+
+        @Test
         @DisplayName("CardIsAuraPredicate matches aura cards")
         void cardIsAuraPredicateMatches() {
             Card aura = createAura("Heart of Light", new PreventAllDamageToAndByEnchantedCreatureEffect());
@@ -418,6 +435,58 @@ class PredicateEvaluationServiceTest {
             Permanent perm = addPermanent(player1Id, createCreatureWithSubtypes("Grizzly Bears", 2, 2, CardColor.GREEN, List.of(CardSubtype.BEAR)));
 
             assertThat(evaluator.matchesPermanentPredicate(gd, perm, new PermanentIsArtifactPredicate())).isFalse();
+        }
+
+        @Test
+        @DisplayName("PermanentIsMonocoloredPredicate matches a single-colored permanent")
+        void monocoloredPredicateMatchesMonocolored() {
+            Permanent perm = addPermanent(player1Id, createCreature("Grizzly Bears", 2, 2, CardColor.GREEN));
+
+            assertThat(evaluator.matchesPermanentPredicate(gd, perm, new PermanentIsMonocoloredPredicate())).isTrue();
+        }
+
+        @Test
+        @DisplayName("PermanentIsMonocoloredPredicate rejects a colorless permanent")
+        void monocoloredPredicateRejectsColorless() {
+            Permanent perm = addPermanent(player1Id, createCreature("Ornithopter", 0, 2, null));
+
+            assertThat(evaluator.matchesPermanentPredicate(gd, perm, new PermanentIsMonocoloredPredicate())).isFalse();
+        }
+
+        @Test
+        @DisplayName("PermanentIsMonocoloredPredicate rejects a multicolored permanent")
+        void monocoloredPredicateRejectsMulticolored() {
+            Card gold = createCreature("Gold Hybrid", 2, 2, CardColor.BLACK);
+            gold.setColors(List.of(CardColor.BLACK, CardColor.RED));
+            Permanent perm = addPermanent(player1Id, gold);
+
+            assertThat(evaluator.matchesPermanentPredicate(gd, perm, new PermanentIsMonocoloredPredicate())).isFalse();
+        }
+
+        @Test
+        @DisplayName("PermanentIsMulticoloredPredicate matches a two-or-more-colored permanent")
+        void multicoloredPredicateMatchesMulticolored() {
+            Card gold = createCreature("Gold Hybrid", 2, 2, CardColor.BLACK);
+            gold.setColors(List.of(CardColor.BLACK, CardColor.RED));
+            Permanent perm = addPermanent(player1Id, gold);
+
+            assertThat(evaluator.matchesPermanentPredicate(gd, perm, new PermanentIsMulticoloredPredicate())).isTrue();
+        }
+
+        @Test
+        @DisplayName("PermanentIsMulticoloredPredicate rejects a monocolored permanent")
+        void multicoloredPredicateRejectsMonocolored() {
+            Permanent perm = addPermanent(player1Id, createCreature("Grizzly Bears", 2, 2, CardColor.GREEN));
+
+            assertThat(evaluator.matchesPermanentPredicate(gd, perm, new PermanentIsMulticoloredPredicate())).isFalse();
+        }
+
+        @Test
+        @DisplayName("PermanentIsMulticoloredPredicate rejects a colorless permanent")
+        void multicoloredPredicateRejectsColorless() {
+            Permanent perm = addPermanent(player1Id, createCreature("Ornithopter", 0, 2, null));
+
+            assertThat(evaluator.matchesPermanentPredicate(gd, perm, new PermanentIsMulticoloredPredicate())).isFalse();
         }
 
         @Test

@@ -114,12 +114,11 @@ public class EnterTriggerCollectorService {
         if (may.wrapped() instanceof GainLifeEqualToToughnessEffect) {
             may = new MayEffect(new GainLifeEffect(pe.enteringCard().getToughness()), may.prompt());
         }
-        if (pe.defaultTargetPlayerId() != null) {
-            match.gameData().queueMayAbility(sourceCard, match.controllerId(), may,
-                    pe.defaultTargetPlayerId(), match.permanent().getId());
-        } else {
-            match.gameData().queueMayAbility(sourceCard, match.controllerId(), may);
-        }
+        // Always bind the source permanent so a "may put a counter on this creature" wrapper
+        // (e.g. Godtracker of Jund) resolves against the source; ally scans leave the target
+        // player unset (null), which is harmless for player-directed wrapped effects.
+        match.gameData().queueMayAbility(sourceCard, match.controllerId(), may,
+                pe.defaultTargetPlayerId(), match.permanent().getId());
         logTriggered(match);
         log.info("Game {} - {} triggers for {} entering (may effect)",
                 match.gameData().id, sourceCard.getName(), pe.enteringCard().getName());
@@ -264,11 +263,11 @@ public class EnterTriggerCollectorService {
     }
 
     /**
-     * "Whenever a creature you control [with power N or greater] enters, you may put M +1/+1 counters
-     * on it" (Mighty Emergence). The power gate is applied upstream by
-     * {@code EnteringCreatureMinPowerConditionalEffect}; here we resolve the entering permanent and
-     * queue a "you may" whose {@code targetId} is that creature, resolved via
-     * {@link PutCounterOnTargetPermanentEffect}.
+     * "Whenever a creature you control [gated] enters, [you may] put M +1/+1 counters on it"
+     * (Mighty Emergence "you may", Sigil Captain mandatory). The gate is applied upstream by an
+     * {@code EnterCreatureConditionalEffect}; here we resolve the entering permanent and either queue a
+     * "you may" ({@code optional}) or bake a mandatory counter placement onto the stack — both whose
+     * {@code targetId} is that creature, resolved via {@link PutCounterOnTargetPermanentEffect}.
      */
     @CollectsTrigger(value = PutCountersOnEnteringCreatureEffect.class,
             slot = EffectSlot.ON_ALLY_CREATURE_ENTERS_BATTLEFIELD)
@@ -281,14 +280,26 @@ public class EnterTriggerCollectorService {
             // The creature already left the battlefield; nothing to add counters to.
             return true;
         }
-        var may = new MayEffect(
-                new PutCounterOnTargetPermanentEffect(CounterType.PLUS_ONE_PLUS_ONE, effect.count()),
-                "Put " + effect.count() + " +1/+1 counter(s) on " + pe.enteringCard().getName() + "?");
-        match.gameData().queueMayAbility(sourceCard, match.controllerId(), may,
-                enteringPermanentId, match.permanent().getId());
+        var counters = new PutCounterOnTargetPermanentEffect(CounterType.PLUS_ONE_PLUS_ONE, effect.count());
+        if (effect.optional()) {
+            var may = new MayEffect(counters,
+                    "Put " + effect.count() + " +1/+1 counter(s) on " + pe.enteringCard().getName() + "?");
+            match.gameData().queueMayAbility(sourceCard, match.controllerId(), may,
+                    enteringPermanentId, match.permanent().getId());
+        } else {
+            match.gameData().stack.add(new StackEntry(
+                    StackEntryType.TRIGGERED_ABILITY,
+                    sourceCard,
+                    match.controllerId(),
+                    sourceCard.getName() + "'s ability",
+                    new ArrayList<>(List.of(counters)),
+                    enteringPermanentId,
+                    match.permanent().getId()));
+        }
         logTriggered(match);
-        log.info("Game {} - {} triggers for {} entering (may put {} +1/+1 counter(s) on it)",
-                match.gameData().id, sourceCard.getName(), pe.enteringCard().getName(), effect.count());
+        log.info("Game {} - {} triggers for {} entering ({} put {} +1/+1 counter(s) on it)",
+                match.gameData().id, sourceCard.getName(), pe.enteringCard().getName(),
+                effect.optional() ? "may" : "mandatory", effect.count());
         return true;
     }
 

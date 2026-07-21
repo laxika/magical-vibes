@@ -6,7 +6,7 @@ package com.github.laxika.magicalvibes.model.effect;
  * card to exile.
  *
  * <p>This is the exile analogue of
- * {@link PutSourceCardFromGraveyardOnTopOfOwnersLibraryEffect} and
+ * {@link PutSourceCardFromGraveyardIntoLibraryNFromTopEffect} and
  * {@link ReturnSourceCardFromGraveyardToOwnerHandEffect}. Used by Cyclopean Mummy
  * ("When this creature dies, exile it.").
  */

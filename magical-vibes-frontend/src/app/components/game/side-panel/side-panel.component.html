@@ -250,6 +250,8 @@
             <button class="btn-side-prompt" (click)="choice.targeting.choosePayAlternateCost()">Pay {{ choice.targeting.alternateCostLifePayment }} Life + Sacrifice {{ choice.targeting.alternateCostSacrificeCount }} Creatures</button>
           } @else if (choice.targeting.alternateCostTapCount > 0) {
             <button class="btn-side-prompt" (click)="choice.targeting.choosePayAlternateCost()">Pay {{ choice.targeting.alternateCostManaCost }} + Tap {{ choice.targeting.alternateCostTapCount }} Artifact</button>
+          } @else if (choice.targeting.alternateCostReturnCount > 0) {
+            <button class="btn-side-prompt" (click)="choice.targeting.choosePayAlternateCost()">Pay {{ choice.targeting.alternateCostManaCost }} + Return {{ choice.targeting.alternateCostReturnCount }} Basic Land</button>
           }
           <button class="btn-side-prompt" (click)="choice.targeting.cancelAlternateCost()">Cancel</button>
         </div>
@@ -262,12 +264,16 @@
           <span class="side-prompt-text">Select {{ choice.targeting.alternateCostSacrificeCount }} creatures to sacrifice for {{ choice.targeting.alternateCostCardName }} ({{ choice.targeting.alternateCostSelectedIds().length }}/{{ choice.targeting.alternateCostSacrificeCount }})</span>
         } @else if (choice.targeting.alternateCostTapCount > 0) {
           <span class="side-prompt-text">Select {{ choice.targeting.alternateCostTapCount }} untapped artifact to tap for {{ choice.targeting.alternateCostCardName }} ({{ choice.targeting.alternateCostSelectedIds().length }}/{{ choice.targeting.alternateCostTapCount }})</span>
+        } @else if (choice.targeting.alternateCostReturnCount > 0) {
+          <span class="side-prompt-text">Select {{ choice.targeting.alternateCostReturnCount }} basic land to return for {{ choice.targeting.alternateCostCardName }} ({{ choice.targeting.alternateCostSelectedIds().length }}/{{ choice.targeting.alternateCostReturnCount }})</span>
         }
         <div class="side-prompt-buttons">
           @if (choice.targeting.alternateCostSacrificeCount > 0) {
             <button class="btn-side-prompt" (click)="choice.targeting.confirmAlternateCost()" [disabled]="choice.targeting.alternateCostSelectedIds().length !== choice.targeting.alternateCostSacrificeCount">Cast</button>
           } @else if (choice.targeting.alternateCostTapCount > 0) {
             <button class="btn-side-prompt" (click)="choice.targeting.confirmAlternateCost()" [disabled]="choice.targeting.alternateCostSelectedIds().length !== choice.targeting.alternateCostTapCount">Cast</button>
+          } @else if (choice.targeting.alternateCostReturnCount > 0) {
+            <button class="btn-side-prompt" (click)="choice.targeting.confirmAlternateCost()" [disabled]="choice.targeting.alternateCostSelectedIds().length !== choice.targeting.alternateCostReturnCount">Cast</button>
           }
           <button class="btn-side-prompt" (click)="choice.targeting.cancelAlternateCost()">Cancel</button>
         </div>

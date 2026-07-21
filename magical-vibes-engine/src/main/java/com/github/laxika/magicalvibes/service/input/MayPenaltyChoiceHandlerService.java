@@ -33,6 +33,7 @@ import com.github.laxika.magicalvibes.model.effect.OpponentMayReturnExiledCardOr
 import com.github.laxika.magicalvibes.model.effect.SacrificeUnlessDiscardCardTypeEffect;
 import com.github.laxika.magicalvibes.model.effect.SacrificeUnlessReturnOwnPermanentTypeToHandEffect;
 import com.github.laxika.magicalvibes.model.effect.StealDyingOpponentPermanentUnlessPaysLifeEffect;
+import com.github.laxika.magicalvibes.model.effect.TapTargetCreatureUnlessControllerPaysLifeEffect;
 import com.github.laxika.magicalvibes.service.DrawService;
 import com.github.laxika.magicalvibes.service.effect.normalfx.CounterSupport;
 import com.github.laxika.magicalvibes.service.effect.normalfx.DestructionSupport;
@@ -73,6 +74,7 @@ public class MayPenaltyChoiceHandlerService {
     private final DestructionSupport destructionSupport;
     private final com.github.laxika.magicalvibes.service.effect.normalfx.DiscardHandUnlessPaysLifeEffectHandler discardHandUnlessPaysLifeEffectHandler;
     private final com.github.laxika.magicalvibes.service.effect.normalfx.StealDyingOpponentPermanentUnlessPaysLifeEffectHandler stealDyingOpponentPermanentUnlessPaysLifeEffectHandler;
+    private final com.github.laxika.magicalvibes.service.effect.normalfx.TapTargetCreatureUnlessControllerPaysLifeEffectHandler tapTargetCreatureUnlessControllerPaysLifeEffectHandler;
     private final CounterSupport counterSupport;
     private final com.github.laxika.magicalvibes.service.effect.normalfx.PlayerInteractionSupport playerInteractionSupport;
     private final com.github.laxika.magicalvibes.service.effect.normalfx.DealDamageToPlayersEffectHandler dealDamageToPlayersEffectHandler;
@@ -584,6 +586,37 @@ public class MayPenaltyChoiceHandlerService {
             // Declined (or can no longer pay) — the thief puts that card onto the battlefield.
             stealDyingOpponentPermanentUnlessPaysLifeEffectHandler.stealPermanent(
                     gameData, thiefId, effect.dyingCardId(), ability.sourceCard());
+        }
+
+        inputCompletionService.sbaProcessMayAbilitiesThenAutoPass(gameData);
+    }
+
+    public void handleTapTargetCreatureUnlessControllerPaysLifeChoice(GameData gameData, Player player, boolean accepted, PendingMayAbility ability) {
+        TapTargetCreatureUnlessControllerPaysLifeEffect effect = ability.effects().stream()
+                .filter(e -> e instanceof TapTargetCreatureUnlessControllerPaysLifeEffect)
+                .map(e -> (TapTargetCreatureUnlessControllerPaysLifeEffect) e)
+                .findFirst().orElseThrow();
+
+        UUID payingPlayerId = ability.controllerId();    // the target creature's controller — decision maker
+        UUID targetPermanentId = ability.targetCardId(); // the creature to tap on decline
+
+        boolean canPay = gameQueryService.canPlayerLifeChange(gameData, payingPlayerId)
+                && gameData.getLife(payingPlayerId) >= effect.lifeCost();
+
+        if (accepted && canPay) {
+            gameData.playerLifeTotals.put(payingPlayerId, gameData.getLife(payingPlayerId) - effect.lifeCost());
+            gameBroadcastService.logAndBroadcast(gameData, GameLog.textCardText(
+                    player.getUsername() + " pays " + effect.lifeCost() + " life. (", ability.sourceCard(), ")"));
+            log.info("Game {} - {} pays {} life to avoid the tap ({})", gameData.id,
+                    player.getUsername(), effect.lifeCost(), ability.sourceCard().getName());
+        } else {
+            // Declined (or can no longer pay) — tap the creature.
+            UUID abilityControllerId = gameQueryService.findPermanentController(gameData, ability.sourcePermanentId());
+            if (abilityControllerId == null) {
+                abilityControllerId = payingPlayerId;
+            }
+            tapTargetCreatureUnlessControllerPaysLifeEffectHandler.tapTargetCreature(
+                    gameData, ability.sourceCard(), abilityControllerId, targetPermanentId);
         }
 
         inputCompletionService.sbaProcessMayAbilitiesThenAutoPass(gameData);

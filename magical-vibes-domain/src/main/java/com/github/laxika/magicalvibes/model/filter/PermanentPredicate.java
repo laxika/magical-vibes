@@ -38,6 +38,8 @@ public sealed interface PermanentPredicate permits
         PermanentIsEnchantmentPredicate,
         PermanentIsHistoricPredicate,
         PermanentIsLandPredicate,
+        PermanentIsMonocoloredPredicate,
+        PermanentIsMulticoloredPredicate,
         PermanentIsPlaneswalkerPredicate,
         PermanentIsSourceCardPredicate,
         PermanentIsTappedPredicate,

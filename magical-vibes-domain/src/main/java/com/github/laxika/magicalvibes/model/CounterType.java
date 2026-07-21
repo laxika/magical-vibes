@@ -11,6 +11,7 @@ public enum CounterType {
     CORPSE,
     DOOM,
     EYEBALL,
+    FEATHER,
     FLOOD,
     GROWTH,
     HATCHLING,

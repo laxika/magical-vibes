@@ -63,8 +63,23 @@ public class LoseLifeEffectHandler implements NormalEffectHandlerBean {
             case CONTROLLER -> lifeSupport.applyLifeLoss(gameData, controllerId, amount, sourceName);
             case TARGET_PLAYER -> loseTargetPlayerLife(gameData, entry, amount, sourceName);
             case TARGET_PERMANENT_CONTROLLER -> loseTargetPermanentControllerLife(gameData, entry, amount, sourceName);
+            case DEFENDING_PLAYER -> defendingPlayerLosesLife(gameData, entry, amount, sourceName);
             case EACH_PLAYER -> eachPlayerLosesLife(gameData, e, controllerId, amount, sourceName, false);
             case EACH_OPPONENT -> eachPlayerLosesLife(gameData, e, controllerId, amount, sourceName, true);
+        }
+    }
+
+    private void defendingPlayerLosesLife(GameData gameData, StackEntry entry, int amount, String sourceName) {
+        // The attacked player/planeswalker was baked onto the combat trigger as attackedTargetId.
+        UUID attackedTargetId = entry.getAttackedTargetId();
+        if (attackedTargetId == null) {
+            return;
+        }
+        UUID defendingPlayerId = gameData.playerIds.contains(attackedTargetId)
+                ? attackedTargetId
+                : gameQueryService.findPermanentController(gameData, attackedTargetId);
+        if (defendingPlayerId != null) {
+            lifeSupport.applyLifeLoss(gameData, defendingPlayerId, amount, sourceName);
         }
     }
 

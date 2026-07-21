@@ -51,6 +51,10 @@ public class PreventDamageEffectHandler implements NormalEffectHandlerBean {
                 gameData.preventAllDamageToAllCreatures = true;
                 gameBroadcastService.logAndBroadcast(gameData, GameLog.text("All damage that would be dealt to creatures this turn is prevented."));
             }
+            case ALL_TO_MATCHING_PERMANENTS -> {
+                gameData.allDamagePreventionPredicates.add(e.victimPredicate());
+                gameBroadcastService.logAndBroadcast(gameData, GameLog.text("All damage that would be dealt to the affected permanents this turn is prevented."));
+            }
             case ALL_TO_TARGET_CREATURES -> allToTargetCreatures(gameData, entry, e);
             case ALL_BY_TARGET_CREATURES -> allByTargetCreatures(gameData, entry, e);
             case ALL_BY_TARGET_PERMANENT_UNTIL_NEXT_TURN -> allByTargetPermanentUntilNextTurn(gameData, entry);

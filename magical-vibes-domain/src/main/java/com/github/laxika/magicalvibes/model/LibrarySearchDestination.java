@@ -17,6 +17,10 @@ public enum LibrarySearchDestination {
     GRAVEYARD,
     BATTLEFIELD_ATTACHED_TO_PLAYER,
     BATTLEFIELD_ATTACHED_TO_CREATURE,
+    /** Put the chosen card (an Aura) onto the battlefield attached to a specific permanent named by
+     *  {@link LibrarySearchParams#attachToPermanentId()} (Sovereigns of Lost Alara). Unlike
+     *  {@link #BATTLEFIELD_ATTACHED_TO_CREATURE} the host is fixed, not chosen by the searcher. */
+    BATTLEFIELD_ATTACHED_TO_PERMANENT,
     SPHINX_AMBASSADOR,
     CAST_WITHOUT_PAYING,
     /** Put the chosen card onto the battlefield under the searching player's control (Bribery). */

@@ -263,11 +263,16 @@ public class PermanentChoiceBattlefieldHandlerService {
         }
 
         UUID sacrificingPlayerId = sacrificeCreature.sacrificingPlayerId();
+        Card sacrificedCard = target.getCard();
         permanentRemovalService.removePermanentToGraveyard(gameData, target);
 
         String playerName = gameData.playerIdToName.get(sacrificingPlayerId);
-        gameBroadcastService.logAndBroadcast(gameData, GameLog.textCardText(playerName + " sacrifices " , target.getCard(), "."));
-        log.info("Game {} - {} sacrifices {}", gameData.id, playerName, target.getCard().getName());
+        gameBroadcastService.logAndBroadcast(gameData, GameLog.textCardText(playerName + " sacrifices " , sacrificedCard, "."));
+        log.info("Game {} - {} sacrifices {}", gameData.id, playerName, sacrificedCard.getName());
+
+        // Fire the "whenever a player sacrifices a creature" watchers (Thraximundar) — this
+        // interactive single-creature-choice path bypasses DestructionSupport.sacrificeAndLog.
+        triggerCollectionService.checkAnyCreatureSacrificedTriggers(gameData, sacrificingPlayerId, sacrificedCard);
 
         // The choice was begun mid-resolution (e.g. Fleshbag Marauder's "each player sacrifices"),
         // so the standard epilogue must run: it resumes the parked resolution entry — otherwise
@@ -445,6 +450,23 @@ public class PermanentChoiceBattlefieldHandlerService {
             return;
         }
 
+        inputCompletionService.sbaProcessMayAbilitiesThenAutoPass(gameData);
+    }
+
+    public void handlePutControlledCreatureOnTopOfLibrary(GameData gameData, UUID chosenPermanentId,
+                                                          PermanentChoiceContext.PutControlledCreatureOnTopOfLibrary context) {
+        Permanent chosen = gameQueryService.findPermanentById(gameData, chosenPermanentId);
+        if (chosen == null) {
+            throw new IllegalStateException("Chosen creature no longer exists");
+        }
+
+        if (permanentRemovalService.removePermanentToLibraryTop(gameData, chosen)) {
+            gameBroadcastService.logAndBroadcast(gameData,
+                    GameLog.cardThen(chosen.getCard(), " is put on top of its owner's library."));
+            log.info("Game {} - {} put on top of library (chosen)", gameData.id, chosen.getCard().getName());
+        }
+
+        permanentRemovalService.removeOrphanedAuras(gameData);
         inputCompletionService.sbaProcessMayAbilitiesThenAutoPass(gameData);
     }
 

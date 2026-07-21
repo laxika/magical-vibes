@@ -144,6 +144,7 @@ public class TurnCleanupService {
         gameData.playersWithDamageFromAttackersPrevented.clear();
         gameData.playersGatheringSpecimensThisTurn.clear();
         gameData.creaturesWithAllDamagePrevented.clear();
+        gameData.allDamagePreventionPredicates.clear();
         gameData.creaturesWithCombatDamagePrevented.clear();
         gameData.creaturesPreventedFromDealingCombatDamage.clear();
         gameData.damageCantBePreventedThisTurn = false;
@@ -156,6 +157,9 @@ public class TurnCleanupService {
         gameData.playersSilencedThisTurn.clear();
         gameData.playersCantPlayLandsThisTurn.clear();
         gameData.playersCantCastCreatureSpellsThisTurn.clear();
+        gameData.playersCantActivateAbilitiesThisTurn.clear();
+        gameData.senControllerPlayerId = null;
+        gameData.senControlledPlayerId = null;
         gameData.cardsGrantedFlashbackUntilEndOfTurn.clear();
         gameData.mayTapLandsForSpellsUntilEndOfTurn.clear();
         gameData.mayPayLifeForColorlessManaUntilEndOfTurn.clear();

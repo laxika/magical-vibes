@@ -12,6 +12,8 @@ import com.github.laxika.magicalvibes.model.StackEntryType;
 import com.github.laxika.magicalvibes.model.Zone;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
 import com.github.laxika.magicalvibes.model.effect.DiscardToTopOfLibraryInsteadEffect;
+import com.github.laxika.magicalvibes.model.effect.DyingCreatureCardAwareEffect;
+import com.github.laxika.magicalvibes.model.effect.MayEffect;
 import com.github.laxika.magicalvibes.model.effect.ExileOpponentCardsInsteadOfGraveyardEffect;
 import com.github.laxika.magicalvibes.model.effect.ExileOwnCardsInsteadOfGraveyardEffect;
 import com.github.laxika.magicalvibes.model.effect.GainLifeEffect;
@@ -478,44 +480,84 @@ public class GraveyardService {
             }
 
             UUID controllerId = findPermanentController(gameData, sourcePermanentId);
-            if (controllerId == null) {
-                continue;
+            if (controllerId != null) {
+                // The damaging permanent's own ON_DAMAGED_CREATURE_DIES abilities (e.g. Seraph, Vein Drinker).
+                enqueueDamagedCreatureDiesTriggers(gameData, dyingCreatureCard, source.getCard(), controllerId, sourcePermanentId);
             }
 
-            List<CardEffect> effects = source.getCard().getEffects(EffectSlot.ON_DAMAGED_CREATURE_DIES);
-            if (effects == null || effects.isEmpty()) {
-                continue;
-            }
-
-            for (CardEffect effect : effects) {
-                // Convert GainLifeEqualToToughnessEffect to a concrete GainLifeEffect
-                // using the dying creature's toughness (last known information)
-                CardEffect resolvedEffect = effect;
-                if (effect instanceof GainLifeEqualToToughnessEffect) {
-                    resolvedEffect = new GainLifeEffect(dyingCreatureCard.getToughness());
+            // Equipment attached to the damaging creature carries the ability keyed off the creature it
+            // is CURRENTLY attached to (e.g. Unscythe, Killer of Kings). Per the rulings, only the
+            // currently-equipped creature is checked — even if the Equipment wasn't attached when the
+            // damage was dealt — so we look at what is attached to the source right now. The Equipment's
+            // own controller (not the creature's) is "you", since an Equipment may be attached to a
+            // creature another player controls.
+            for (UUID playerId : gameData.orderedPlayerIds) {
+                List<Permanent> battlefield = gameData.playerBattlefields.get(playerId);
+                if (battlefield == null) {
+                    continue;
                 }
-
-                StackEntry triggerEntry = new StackEntry(
-                        StackEntryType.TRIGGERED_ABILITY,
-                        source.getCard(),
-                        controllerId,
-                        source.getCard().getName() + "'s ability",
-                        new ArrayList<>(List.of(resolvedEffect)),
-                        null,
-                        sourcePermanentId
-                );
-                // The dying creature's card id as last-known information, for effects that act on it
-                // (e.g. Seraph returns "that card" at the next end step).
-                triggerEntry.setTriggeringCardId(dyingCreatureCardId);
-                gameData.stack.add(triggerEntry);
-                gameBroadcastService.logAndBroadcast(gameData, GameLog.abilityTriggers(source.getCard()));
-                log.info("Game {} - {} triggers (damaged creature died this turn)", gameData.id, source.getCard().getName());
+                for (Permanent equipment : battlefield) {
+                    if (!equipment.isAttached() || !sourcePermanentId.equals(equipment.getAttachedTo())) {
+                        continue;
+                    }
+                    enqueueDamagedCreatureDiesTriggers(gameData, dyingCreatureCard, equipment.getCard(),
+                            playerId, equipment.getId());
+                }
             }
         }
 
         for (Set<UUID> damagedCreatureIds : gameData.creatureCardsDamagedThisTurnBySourcePermanent.values()) {
             damagedCreatureIds.remove(dyingCreatureCardId);
         }
+    }
+
+    /**
+     * Puts each {@code ON_DAMAGED_CREATURE_DIES} ability of {@code sourceCard} onto the stack for the
+     * given controller, materialising any last-known-information the effect needs about the dying
+     * creature (its toughness, or its card id for a "may exile that card" ability).
+     */
+    private void enqueueDamagedCreatureDiesTriggers(GameData gameData, Card dyingCreatureCard,
+                                                    Card sourceCard, UUID controllerId, UUID sourcePermanentId) {
+        List<CardEffect> effects = sourceCard.getEffects(EffectSlot.ON_DAMAGED_CREATURE_DIES);
+        if (effects == null || effects.isEmpty()) {
+            return;
+        }
+        UUID dyingCreatureCardId = dyingCreatureCard.getId();
+        for (CardEffect effect : effects) {
+            StackEntry triggerEntry = new StackEntry(
+                    StackEntryType.TRIGGERED_ABILITY,
+                    sourceCard,
+                    controllerId,
+                    sourceCard.getName() + "'s ability",
+                    new ArrayList<>(List.of(materializeDamagedCreatureDiesEffect(effect, dyingCreatureCard))),
+                    null,
+                    sourcePermanentId
+            );
+            // The dying creature's card id as last-known information, for effects that act on it
+            // (e.g. Seraph returns "that card" at the next end step).
+            triggerEntry.setTriggeringCardId(dyingCreatureCardId);
+            gameData.stack.add(triggerEntry);
+            gameBroadcastService.logAndBroadcast(gameData, GameLog.abilityTriggers(sourceCard));
+            log.info("Game {} - {} triggers (damaged creature died this turn)", gameData.id, sourceCard.getName());
+        }
+    }
+
+    /**
+     * Binds the dying creature's last-known information into effects that need it. The "you may exile
+     * that card" ability (Unscythe) loses the stack entry's triggering-card id once wrapped as a may
+     * ability, so the dying card id is bound onto the wrapped effect here instead.
+     */
+    private CardEffect materializeDamagedCreatureDiesEffect(CardEffect effect, Card dyingCreatureCard) {
+        if (effect instanceof GainLifeEqualToToughnessEffect) {
+            return new GainLifeEffect(dyingCreatureCard.getToughness());
+        }
+        if (effect instanceof MayEffect may && may.wrapped() instanceof DyingCreatureCardAwareEffect aware) {
+            return new MayEffect(aware.boundToDyingCard(dyingCreatureCard.getId()), may.prompt());
+        }
+        if (effect instanceof DyingCreatureCardAwareEffect aware) {
+            return aware.boundToDyingCard(dyingCreatureCard.getId());
+        }
+        return effect;
     }
 
     private UUID findPermanentController(GameData gameData, UUID permanentId) {

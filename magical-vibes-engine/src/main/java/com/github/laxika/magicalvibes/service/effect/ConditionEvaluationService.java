@@ -2,6 +2,7 @@ package com.github.laxika.magicalvibes.service.effect;
 
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardSubtype;
+import com.github.laxika.magicalvibes.model.CardType;
 import com.github.laxika.magicalvibes.model.GameData;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.Zone;
@@ -44,7 +45,9 @@ import com.github.laxika.magicalvibes.model.condition.DevouredCreature;
 import com.github.laxika.magicalvibes.model.condition.DidntAttack;
 import com.github.laxika.magicalvibes.model.condition.DidntGainLifeThisTurn;
 import com.github.laxika.magicalvibes.model.condition.Enchanted;
+import com.github.laxika.magicalvibes.model.condition.EndStepPlayerDidntCastCreatureSpell;
 import com.github.laxika.magicalvibes.model.condition.Equipped;
+import com.github.laxika.magicalvibes.model.condition.FirstCombatPhase;
 import com.github.laxika.magicalvibes.model.condition.GainedLifeThisTurn;
 import com.github.laxika.magicalvibes.model.condition.GraveyardCardThreshold;
 import com.github.laxika.magicalvibes.model.condition.HasAttacker;
@@ -153,6 +156,10 @@ public class ConditionEvaluationService {
                     isSourceEquipped(gameData, ctx);
             case Enchanted ignored ->
                     isSourceEnchanted(gameData, ctx);
+            case EndStepPlayerDidntCastCreatureSpell ignored ->
+                    ctx.targetId() != null
+                            && gameData.getSpellsCastThisTurn(ctx.targetId()).stream()
+                                    .noneMatch(spell -> spell.hasType(CardType.CREATURE));
             case GainedLifeThisTurn ignored ->
                     ctx.controllerId() != null && gameData.hasGainedLifeThisTurn(ctx.controllerId());
             case DidntGainLifeThisTurn ignored ->
@@ -211,6 +218,8 @@ public class ConditionEvaluationService {
                     sourceDidntAttackThisTurn(gameData, ctx);
             case AttacksAlone ignored ->
                     countAttackingCreatures(gameData, ctx.controllerId()) == 1;
+            case FirstCombatPhase ignored ->
+                    gameData.combatPhasesThisTurn == 1;
             case MinimumAttackers c ->
                     ctx.xValue() >= c.minimumAttackers();
             case HasAttacker c ->

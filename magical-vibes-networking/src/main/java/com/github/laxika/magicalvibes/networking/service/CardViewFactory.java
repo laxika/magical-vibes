@@ -7,6 +7,7 @@ import com.github.laxika.magicalvibes.model.LifeCastingCost;
 import com.github.laxika.magicalvibes.model.ManaCastingCost;
 import com.github.laxika.magicalvibes.model.SacrificePermanentsCost;
 import com.github.laxika.magicalvibes.model.TapUntappedPermanentsCost;
+import com.github.laxika.magicalvibes.model.ReturnPermanentsCost;
 import com.github.laxika.magicalvibes.model.EffectResolution;
 import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.Keyword;
@@ -49,7 +50,7 @@ public class CardViewFactory {
                 base.activatedAbilities(), base.loyalty(), base.hasConvoke(), base.hasPhyrexianMana(),
                 base.phyrexianManaCount(), base.token(), base.watermark(), base.hasAlternateCastingCost(),
                 base.alternateCostLifePayment(), base.alternateCostSacrificeCount(),
-                base.alternateCostTapCount(), base.alternateCostManaCost(),
+                base.alternateCostTapCount(), base.alternateCostReturnCount(), base.alternateCostManaCost(),
                 base.graveyardActivatedAbilities(), base.handActivatedAbilities(), base.transformable(), base.kickerCost(),
                 base.modalChoicesRequired(), base.modalOptional(), base.modalOptions());
     }
@@ -75,7 +76,7 @@ public class CardViewFactory {
                 base.activatedAbilities(), base.loyalty(), base.hasConvoke(), base.hasPhyrexianMana(),
                 base.phyrexianManaCount(), base.token(), base.watermark(), base.hasAlternateCastingCost(),
                 base.alternateCostLifePayment(), base.alternateCostSacrificeCount(),
-                base.alternateCostTapCount(), base.alternateCostManaCost(),
+                base.alternateCostTapCount(), base.alternateCostReturnCount(), base.alternateCostManaCost(),
                 mergedGraveyard, base.handActivatedAbilities(), base.transformable(), base.kickerCost(),
                 base.modalChoicesRequired(), base.modalOptional(), base.modalOptions());
     }
@@ -112,6 +113,7 @@ public class CardViewFactory {
         int alternateCostLifePayment = altCastOpt.flatMap(a -> a.getCost(LifeCastingCost.class)).map(LifeCastingCost::amount).orElse(0);
         int alternateCostSacrificeCount = altCastOpt.flatMap(a -> a.getCost(SacrificePermanentsCost.class)).map(SacrificePermanentsCost::count).orElse(0);
         int alternateCostTapCount = altCastOpt.flatMap(a -> a.getCost(TapUntappedPermanentsCost.class)).map(TapUntappedPermanentsCost::count).orElse(0);
+        int alternateCostReturnCount = altCastOpt.flatMap(a -> a.getCost(ReturnPermanentsCost.class)).map(ReturnPermanentsCost::count).orElse(0);
         String alternateCostManaCost = altCastOpt.flatMap(a -> a.getCost(ManaCastingCost.class)).map(ManaCastingCost::manaCost).orElse(null);
 
         return new CardView(
@@ -144,6 +146,7 @@ public class CardViewFactory {
                 alternateCostLifePayment,
                 alternateCostSacrificeCount,
                 alternateCostTapCount,
+                alternateCostReturnCount,
                 alternateCostManaCost,
                 graveyardAbilityViews,
                 handAbilityViews,

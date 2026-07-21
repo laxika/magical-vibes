@@ -2505,6 +2505,44 @@ public class StepTriggerService {
             }
         }
 
+        // OPPONENT_END_STEP_TRIGGERED: "At the beginning of each opponent's end step, ..." Fires only
+        // during the end step of a player who is an opponent of the permanent's controller (never the
+        // controller's own end step). The end-step player is baked into the stack entry's targetId so
+        // an intervening-if ConditionalEffect can gate on "that player" — checked here (CR 603.4) and
+        // re-checked at resolution. Predatory Advantage.
+        gameData.forEachBattlefield((playerId, playerBattlefield) -> {
+            if (playerId.equals(activePlayerId)) return; // the controller's own end step is not an opponent's
+
+            for (Permanent perm : playerBattlefield) {
+                List<CardEffect> opponentEndStepEffects = perm.getCard().getEffects(EffectSlot.OPPONENT_END_STEP_TRIGGERED);
+                if (opponentEndStepEffects == null || opponentEndStepEffects.isEmpty()) continue;
+
+                for (CardEffect effect : opponentEndStepEffects) {
+                    if (effect instanceof ConditionalEffect conditional
+                            && !conditionEvaluationService.isMet(gameData, conditional.condition(),
+                                    ConditionContext.forPermanent(perm, playerId).withTargetId(activePlayerId))) {
+                        log.info("Game {} - {} opponent end-step trigger skipped ({})",
+                                gameData.id, perm.getCard().getName(), conditional.conditionNotMetReason());
+                        continue;
+                    }
+
+                    gameData.stack.add(new StackEntry(
+                            StackEntryType.TRIGGERED_ABILITY,
+                            perm.getCard(),
+                            playerId,
+                            perm.getCard().getName() + "'s end step ability",
+                            new ArrayList<>(List.of(effect)),
+                            activePlayerId,
+                            perm.getId()
+                    ));
+
+                    gameBroadcastService.logAndBroadcast(gameData,
+                            GameLog.cardThen(perm.getCard(), "'s end step ability triggers."));
+                    log.info("Game {} - {} opponent end-step trigger pushed onto stack", gameData.id, perm.getCard().getName());
+                }
+            }
+        });
+
         // Check all battlefields for auras with ENCHANTED_PERMANENT_CONTROLLER_END_STEP_TRIGGERED
         // effects. These fire during the enchanted permanent's controller's end step (e.g. Nettlevine
         // Blight). The ability is controlled by the enchanted permanent's controller, so the stack

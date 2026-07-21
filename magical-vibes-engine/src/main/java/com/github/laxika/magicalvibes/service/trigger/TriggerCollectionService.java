@@ -363,6 +363,33 @@ public class TriggerCollectionService {
                     gameData.id, spellCard.getName(), castingPlayerId);
         }
 
+        // "The first spell you cast each turn has cascade" (Maelstrom Nexus). A permanent-granted
+        // keyword, detected by the presence of a GRANT_CASCADE_TO_FIRST_SPELL slot on the caster's
+        // battlefield rather than an effect-type check. recordSpellCast runs before this method in
+        // every cast path, so a count of 1 identifies the caster's first spell of the turn. The held
+        // CascadeEffect is queued keyed to the just-cast spell so CascadeEffectHandler's threshold is
+        // the spell's mana value (not the granting permanent's). One trigger per granting permanent.
+        if (gameData.getSpellsCastThisTurnCount(castingPlayerId) == 1) {
+            List<Permanent> casterBattlefield = gameData.playerBattlefields.get(castingPlayerId);
+            if (casterBattlefield != null) {
+                for (Permanent perm : new ArrayList<>(casterBattlefield)) {
+                    List<CardEffect> grantEffects = perm.getCard().getEffects(EffectSlot.GRANT_CASCADE_TO_FIRST_SPELL);
+                    if (grantEffects.isEmpty()) continue;
+
+                    gameData.stack.add(new StackEntry(
+                            StackEntryType.TRIGGERED_ABILITY,
+                            spellCard,
+                            castingPlayerId,
+                            spellCard.getName() + "'s ability",
+                            new ArrayList<>(grantEffects)
+                    ));
+                    gameBroadcastService.logAndBroadcast(gameData, GameLog.abilityTriggers(perm.getCard()));
+                    log.info("Game {} - {} grants cascade to first spell {} for {}",
+                            gameData.id, perm.getCard().getName(), spellCard.getName(), castingPlayerId);
+                }
+            }
+        }
+
         playerInputService.processNextMayAbility(gameData);
     }
 
@@ -528,19 +555,33 @@ public class TriggerCollectionService {
      * Fires once per damage source (per the CR ruling that simultaneous sources trigger separately),
      * carrying only the amount so an {@code EventValue} amount ("put that many counters") can read it.
      * Scans the damaged player's own battlefield.
+     * <p>
+     * Also handles {@link EffectSlot#ON_CONTROLLER_DEALT_DAMAGE_BY_OPPONENT} — "Whenever a source an
+     * opponent controls deals damage to you, ..." (Retaliator Griffin) — but only when the damage
+     * source is controlled by an opponent of the damaged player. {@code sourceControllerId} is the
+     * controller of the damage source (the active player for combat damage to the defender, the
+     * spell/ability's controller for non-combat damage); {@code null} disables the opponent-gated slot.
      */
-    public void checkControllerDealtDamageTriggers(GameData gameData, UUID damagedPlayerId, int amount) {
+    public void checkControllerDealtDamageTriggers(GameData gameData, UUID damagedPlayerId,
+            UUID sourceControllerId, int amount) {
         if (amount <= 0) return;
 
         List<Permanent> damagedPlayerBattlefield = gameData.playerBattlefields.get(damagedPlayerId);
         if (damagedPlayerBattlefield == null) return;
 
         var ctx = new TriggerContext.DamageToControllerAmount(damagedPlayerId, amount);
+        boolean fromOpponent = sourceControllerId != null && !sourceControllerId.equals(damagedPlayerId);
 
         for (Permanent perm : List.copyOf(damagedPlayerBattlefield)) {
             for (CardEffect effect : perm.getCard().getEffects(EffectSlot.ON_CONTROLLER_DEALT_DAMAGE)) {
                 var match = new TriggerMatchContext(gameData, perm, damagedPlayerId, effect);
                 registry.dispatch(match, EffectSlot.ON_CONTROLLER_DEALT_DAMAGE, effect, ctx);
+            }
+            if (fromOpponent) {
+                for (CardEffect effect : perm.getCard().getEffects(EffectSlot.ON_CONTROLLER_DEALT_DAMAGE_BY_OPPONENT)) {
+                    var match = new TriggerMatchContext(gameData, perm, damagedPlayerId, effect);
+                    registry.dispatch(match, EffectSlot.ON_CONTROLLER_DEALT_DAMAGE_BY_OPPONENT, effect, ctx);
+                }
             }
         }
     }
@@ -656,7 +697,42 @@ public class TriggerCollectionService {
             }
         }
 
+        // Fire the global "whenever a player sacrifices a creature" watchers for the
+        // sacrifice-self / sacrifice-as-cost paths that funnel through this method.
+        checkAnyCreatureSacrificedTriggers(gameData, sacrificingPlayerId, sacrificedCard);
+
         playerInputService.processNextMayAbility(gameData);
+    }
+
+    /**
+     * Fires {@link EffectSlot#ON_ANY_CREATURE_SACRIFICED} global watchers ("Whenever a player
+     * sacrifices a creature", e.g. Thraximundar). Scans every battlefield, once per sacrificed
+     * creature (creature-ness decided by last-known info on {@code sacrificedCard}); the trigger
+     * belongs to the scanning permanent's own controller. Called from the two sacrifice choke
+     * points — {@code DestructionSupport.sacrificeAndLog} (edict / chosen sacrifices) and
+     * {@link #checkAllyPermanentSacrificedTriggers} (sacrifice-self / sacrifice-as-cost) — which are
+     * mutually exclusive per event, so a single sacrifice never double-fires. Queues only; the may
+     * abilities are drained by the caller / main resolution loop.
+     */
+    public void checkAnyCreatureSacrificedTriggers(GameData gameData, UUID sacrificingPlayerId, Card sacrificedCard) {
+        if (sacrificedCard == null || !sacrificedCard.hasType(CardType.CREATURE)) return;
+
+        var ctx = new TriggerContext.AllySacrificed(sacrificingPlayerId, sacrificedCard);
+
+        for (UUID controllerId : gameData.orderedPlayerIds) {
+            List<Permanent> battlefield = gameData.playerBattlefields.get(controllerId);
+            if (battlefield == null) continue;
+
+            for (Permanent perm : new ArrayList<>(battlefield)) {
+                List<CardEffect> effects = perm.getCard().getEffects(EffectSlot.ON_ANY_CREATURE_SACRIFICED);
+                if (effects == null || effects.isEmpty()) continue;
+
+                for (CardEffect effect : effects) {
+                    var match = new TriggerMatchContext(gameData, perm, controllerId, effect);
+                    registry.dispatch(match, EffectSlot.ON_ANY_CREATURE_SACRIFICED, effect, ctx);
+                }
+            }
+        }
     }
 
     // ── Becomes-target-of-spell triggers ───────────────────────────────

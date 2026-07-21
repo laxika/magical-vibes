@@ -1,11 +1,22 @@
 package com.github.laxika.magicalvibes.model.effect;
 
+import com.github.laxika.magicalvibes.model.amount.DynamicAmount;
+import com.github.laxika.magicalvibes.model.amount.Fixed;
+
 /**
- * Deals a fixed amount of damage to target player or planeswalker AND each creature
+ * Deals damage to target player or planeswalker AND each creature
  * that player or that planeswalker's controller controls.
- * Used by Chandra Nalaar's ultimate ability.
+ * The amount is any {@link DynamicAmount} evaluated at resolution — a {@link Fixed}
+ * constant (Chandra Nalaar's ultimate, Flame Wave) or a cost-snapshotted {@code XValue}
+ * (Lavalanche).
+ *
+ * @param amount the amount of damage to deal
  */
-public record DealDamageToTargetAndTheirCreaturesEffect(int damage) implements CardEffect {
+public record DealDamageToTargetAndTheirCreaturesEffect(DynamicAmount amount) implements CardEffect {
+
+    public DealDamageToTargetAndTheirCreaturesEffect(int damage) {
+        this(new Fixed(damage));
+    }
 
     @Override
     public TargetSpec targetSpec() {

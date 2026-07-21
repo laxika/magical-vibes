@@ -12,6 +12,8 @@ import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Component;
 
+import java.util.UUID;
+
 @Slf4j
 @Component
 @RequiredArgsConstructor
@@ -29,14 +31,17 @@ public class MustBlockSourceEffectHandler implements NormalEffectHandlerBean {
     public void resolve(GameData gameData, StackEntry entry, CardEffect effect) {
         var e = (MustBlockSourceEffect) effect;
         Permanent target = gameQueryService.findPermanentById(gameData, entry.getTargetId());
-        if (target == null || e.sourcePermanentId() == null) {
+        // Activated abilities and combat triggers snapshot the source onto the effect; targeted-ETB
+        // "may" triggers (Giant Ambush Beetle) leave it null and carry the source on the stack entry.
+        UUID sourceId = e.sourcePermanentId() != null ? e.sourcePermanentId() : entry.getSourcePermanentId();
+        if (target == null || sourceId == null) {
             return;
         }
 
-        Permanent source = gameQueryService.findPermanentById(gameData, e.sourcePermanentId());
+        Permanent source = gameQueryService.findPermanentById(gameData, sourceId);
         String sourceName = source != null ? source.getCard().getName() : entry.getCard().getName();
 
-        target.getMustBlockIds().add(e.sourcePermanentId());
+        target.getMustBlockIds().add(sourceId);
 
         String logEntry = target.getCard().getName() + " must block " + sourceName + " this turn if able.";
         gameBroadcastService.logAndBroadcast(gameData, GameLog.builder().card(target.getCard()).text(" must block " + sourceName + " this turn if able.").build());

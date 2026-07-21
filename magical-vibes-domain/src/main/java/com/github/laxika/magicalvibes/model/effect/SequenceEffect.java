@@ -37,7 +37,7 @@ import java.util.List;
  * table, so every targeting step reads the entry's shared {@code targetId}. Use flat, group-bound
  * effects on the card for genuinely multi-target abilities.</p>
  */
-public record SequenceEffect(List<CardEffect> steps) implements CardEffect {
+public record SequenceEffect(List<CardEffect> steps) implements CombatDamageTriggerContextEffect {
 
     public SequenceEffect {
         steps = List.copyOf(steps);
@@ -60,5 +60,34 @@ public record SequenceEffect(List<CardEffect> steps) implements CardEffect {
             }
         }
         return TargetSpec.NONE;
+    }
+
+    /**
+     * On an {@code ON_COMBAT_DAMAGE_TO_PLAYER} slot the sequence resolves as one stack entry, so it
+     * must request the richest stack-entry shape any step needs. {@code DAMAGED_PLAYER} binds both
+     * the damaged player and the source (a superset of {@code SOURCE_SELF}); a step that only needs
+     * the source ("…and sacrifice this creature") still resolves correctly under it. Steps combining
+     * {@code DAMAGED_PLAYER_WITH_DAMAGE_AMOUNT} (no source) with a source-bound step are not a real
+     * card and left to the coarse priority below.
+     */
+    @Override
+    public TriggerContext combatDamageTriggerContext() {
+        TriggerContext result = null;
+        for (CardEffect step : steps) {
+            if (!(step instanceof CombatDamageTriggerContextEffect contextEffect)) {
+                continue;
+            }
+            TriggerContext stepContext = contextEffect.combatDamageTriggerContext();
+            if (stepContext == null) {
+                continue;
+            }
+            if (stepContext == TriggerContext.DAMAGED_PLAYER) {
+                return TriggerContext.DAMAGED_PLAYER;
+            }
+            if (result == null || stepContext == TriggerContext.SOURCE_SELF) {
+                result = stepContext;
+            }
+        }
+        return result;
     }
 }

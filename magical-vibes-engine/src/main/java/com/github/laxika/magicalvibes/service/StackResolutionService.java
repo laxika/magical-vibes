@@ -223,6 +223,20 @@ public class StackResolutionService {
             return;
         }
 
+        // "As enters" card name choice (e.g. Meddling Mage) — name must be chosen BEFORE the
+        // permanent enters the battlefield (MTG Rule 614.1c)
+        var chooseNameEffect = card.getEffects(EffectSlot.ON_ENTER_BATTLEFIELD).stream()
+                .filter(e -> e instanceof ChooseCardNameOnEnterEffect)
+                .map(e -> (ChooseCardNameOnEnterEffect) e)
+                .findFirst().orElse(null);
+        if (chooseNameEffect != null) {
+            if (chooseNameEffect.lookAtOpponentHand()) {
+                gameBroadcastService.revealOpponentHandToPlayer(gameData, controllerId);
+            }
+            playerInputService.beginCardNameChoice(gameData, controllerId, card, chooseNameEffect.excludedTypes());
+            return;
+        }
+
         Permanent perm = new Permanent(card);
         // Carry the zone the spell was cast from so an "if cast from a graveyard, it enters with …
         // counters" as-enters replacement (e.g. Worldheart Phoenix) can gate on it during entry.
@@ -678,14 +692,19 @@ public class StackResolutionService {
             return;
         }
 
+        // A spell leaves for its OWNER's zone (graveyard / hand / library), which equals the controller
+        // for every normal cast; it only diverges when the spell was cast by a non-owner (Sen Triplets),
+        // where entry.getOwnerId() carries the true owner so the card returns to their zones.
+        UUID ownerId = entry.getOwnerId();
+
         // CR 702.33a: "If the flashback cost was paid, exile this card instead of
         // putting it anywhere else any time it would leave the stack." This overrides
         // return-to-hand, shuffle-into-library, and all other disposition effects.
         if (entry.isCastWithFlashback()) {
-            gameData.addToExile(entry.getControllerId(), entry.getCard());
+            gameData.addToExile(ownerId, entry.getCard());
             gameBroadcastService.logAndBroadcast(gameData, GameLog.cardThen(entry.getCard(), " is exiled (flashback)."));
         } else if (entry.isReturnToHandAfterResolving()) {
-            gameData.addCardToHand(entry.getControllerId(), entry.getCard());
+            gameData.addCardToHand(ownerId, entry.getCard());
             gameBroadcastService.logAndBroadcast(gameData, GameLog.cardThen(entry.getCard(), " is returned to its owner's hand."));
         } else if (entry.getPutIntoLibraryPositionAfterResolving() != null) {
             // Approach of the Second Sun: the resolved spell goes into its owner's library N from the top.
@@ -700,28 +719,28 @@ public class StackResolutionService {
             // otherwise to graveyard).
         } else if (entry.getEffectsToResolve().stream()
                 .anyMatch(e -> e instanceof ExileSpellEffect)) {
-            gameData.addToExile(entry.getControllerId(), entry.getCard());
+            gameData.addToExile(ownerId, entry.getCard());
             gameBroadcastService.logAndBroadcast(gameData, GameLog.isExiled(entry.getCard()));
         } else if (entry.getEffectsToResolve().stream()
                 .anyMatch(e -> e instanceof ShuffleIntoLibraryEffect)) {
             // Ensure the card is shuffled into library even when an earlier effect
             // required user input and broke the effect resolution loop before
             // the ShuffleIntoLibraryEffect handler could run.
-            List<Card> deck = gameData.playerDecks.get(entry.getControllerId());
+            List<Card> deck = gameData.playerDecks.get(ownerId);
             if (!deck.contains(entry.getCard())) {
                 deck.add(entry.getCard());
-                LibraryShuffleHelper.shuffleLibrary(gameData, entry.getControllerId());
+                LibraryShuffleHelper.shuffleLibrary(gameData, ownerId);
                 gameBroadcastService.logAndBroadcast(gameData, GameLog.cardThen(entry.getCard(), " is shuffled into its owner's library."));
             }
         } else if (entry.getEffectsToResolve().stream()
                 .anyMatch(e -> e instanceof PutSelfOnBottomOfOwnersLibraryEffect)) {
-            List<Card> deck = gameData.playerDecks.get(entry.getControllerId());
+            List<Card> deck = gameData.playerDecks.get(ownerId);
             deck.add(entry.getCard());
             gameBroadcastService.logAndBroadcast(gameData, GameLog.cardThen(entry.getCard(), " is put on the bottom of its owner's library."));
         } else if (entry.getCard().getKeywords().contains(Keyword.PARADIGM)) {
             paradigmService.onParadigmSpellResolved(gameData, entry);
         } else {
-            graveyardService.addCardToGraveyard(gameData, entry.getControllerId(), entry.getCard());
+            graveyardService.addCardToGraveyard(gameData, ownerId, entry.getCard());
         }
     }
 

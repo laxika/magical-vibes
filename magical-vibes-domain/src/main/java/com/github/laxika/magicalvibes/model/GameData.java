@@ -273,6 +273,7 @@ public class GameData {
     public boolean discardCausedByOpponent;
     public PendingReturnToHandOnDiscardType pendingReturnToHandOnDiscardType;
     public PendingTransformOnCreatureDiscard pendingTransformOnCreatureDiscard;
+    public PendingBoostSourceByDiscardedManaValue pendingBoostSourceByDiscardedManaValue;
     public final Deque<UUID> extraTurns = new ArrayDeque<>();
     /**
      * Parallel to {@link #extraTurns}: whether the correspondingly-positioned extra turn skips its
@@ -281,6 +282,12 @@ public class GameData {
      */
     public final Deque<Boolean> extraTurnSkipsUntap = new ArrayDeque<>();
     public int additionalCombatMainPhasePairs;
+    /** Additional combat phases with NO additional main phase (e.g. Finest Hour), queued after the
+     *  current combat phase and consumed when leaving END_OF_COMBAT. Reset at the start of each turn. */
+    public int additionalCombatPhasesOnly;
+    /** How many combat phases have begun this turn (1 during the first combat phase). Reset at the
+     *  start of each turn and incremented on entering BEGINNING_OF_COMBAT; read by FirstCombatPhase. */
+    public int combatPhasesThisTurn;
     public int lastBroadcastedLogSize = 0;
     public UUID draftId;
     public final Deque<LibraryBottomReorderRequest> pendingLibraryBottomReorders = new ArrayDeque<>();
@@ -322,6 +329,12 @@ public class GameData {
     public final Set<UUID> playersGatheringSpecimensThisTurn = ConcurrentHashMap.newKeySet();
     /** Specific creatures whose damage is fully prevented this turn (Wellgabber Apothecary). */
     public final Set<UUID> creaturesWithAllDamagePrevented = ConcurrentHashMap.newKeySet();
+    /**
+     * Predicates whose matching permanents have all damage to them prevented this turn
+     * (Ethersworn Shieldmage). Re-evaluated per damage event, so it covers permanents that
+     * start/stop matching after the effect resolved (official ruling).
+     */
+    public final Set<PermanentPredicate> allDamagePreventionPredicates = ConcurrentHashMap.newKeySet();
     /** Specific creatures whose combat damage dealt to them is prevented this turn (Foxfire). */
     public final Set<UUID> creaturesWithCombatDamagePrevented = ConcurrentHashMap.newKeySet();
     /** Specific creatures whose combat damage is prevented this turn (Resistance Fighter). */
@@ -385,6 +398,16 @@ public class GameData {
 
     /** Players who can't cast creature spells this turn (e.g. Moonhold). Cleared at end of turn. */
     public final Set<UUID> playersCantCastCreatureSpellsThisTurn = ConcurrentHashMap.newKeySet();
+
+    /** Players who can't activate abilities this turn — including mana abilities (e.g. Sen Triplets).
+     *  Cleared at end of turn. */
+    public final Set<UUID> playersCantActivateAbilitiesThisTurn = ConcurrentHashMap.newKeySet();
+
+    /** Sen Triplets: while set, {@link #senControllerPlayerId} may play lands and cast spells from
+     *  {@link #senControlledPlayerId}'s hand this turn (that hand is also revealed to the controller,
+     *  and the controlled player is silenced + can't activate abilities). Both cleared at end of turn. */
+    public UUID senControllerPlayerId;
+    public UUID senControlledPlayerId;
 
     /** Card IDs that have been granted flashback until end of turn (e.g. Past in Flames).
      *  The flashback cost for these cards equals their mana cost. Cleared at end of turn. */
@@ -596,6 +619,15 @@ public class GameData {
     public final Map<UUID, UUID> tauntedNextTurn = new ConcurrentHashMap<>();
     /** Active this turn: affectedPlayerId -> controllerId all their creatures must attack if able. */
     public final Map<UUID, UUID> tauntedThisTurn = new ConcurrentHashMap<>();
+
+    /** Intimidation Bolt — "Other creatures can't attack this turn." Each resolution appends the
+     *  targeted (exempted) creature's permanent ID; a creature may attack only if its ID equals every
+     *  entry, so multiple copies stack and an empty list means no restriction. A dead target's ID
+     *  matches no living creature, locking everyone (CR-accurate: if the target dies, no creature may
+     *  attack). Enforced in {@code CombatAttackService.canCreatureAttack}, so it also covers creatures
+     *  that enter later this turn. Cleared at each turn transition. */
+    public final List<UUID> otherCreaturesCantAttackExemptCreatureIds =
+            Collections.synchronizedList(new ArrayList<>());
 
     /** Stores context for a pending Leonin Arbiter search tax MayAbility choice. */
     public PendingSearchContext pendingSearchContext;
@@ -1612,6 +1644,8 @@ public class GameData {
         copy.endTurnRequested = this.endTurnRequested;
         copy.discardCausedByOpponent = this.discardCausedByOpponent;
         copy.additionalCombatMainPhasePairs = this.additionalCombatMainPhasePairs;
+        copy.additionalCombatPhasesOnly = this.additionalCombatPhasesOnly;
+        copy.combatPhasesThisTurn = this.combatPhasesThisTurn;
         copy.lastBroadcastedLogSize = this.lastBroadcastedLogSize;
         copy.draftId = this.draftId;
         copy.cleanupDiscardPending = this.cleanupDiscardPending;
@@ -1635,6 +1669,7 @@ public class GameData {
         copy.playersGatheringSpecimensThisTurn.addAll(this.playersGatheringSpecimensThisTurn);
         copy.creaturesWithAllDamagePrevented.addAll(this.creaturesWithAllDamagePrevented);
         copy.permanentsPreventedFromDealingDamageUntilNextTurn.putAll(this.permanentsPreventedFromDealingDamageUntilNextTurn);
+        copy.allDamagePreventionPredicates.addAll(this.allDamagePreventionPredicates);
         copy.creaturesWithCombatDamagePrevented.addAll(this.creaturesWithCombatDamagePrevented);
         copy.creaturesPreventedFromDealingCombatDamage.addAll(this.creaturesPreventedFromDealingCombatDamage);
         copy.damageCantBePreventedThisTurn = this.damageCantBePreventedThisTurn;
@@ -1777,6 +1812,8 @@ public class GameData {
         copy.graveyardTargetOperation.entryType = this.graveyardTargetOperation.entryType;
         copy.graveyardTargetOperation.xValue = this.graveyardTargetOperation.xValue;
         copy.graveyardTargetOperation.singleGraveyard = this.graveyardTargetOperation.singleGraveyard;
+        copy.graveyardTargetOperation.spellCounterTargetId = this.graveyardTargetOperation.spellCounterTargetId;
+        copy.graveyardTargetOperation.resolutionTimeExileResume = this.graveyardTargetOperation.resolutionTimeExileResume;
 
         // --- CloneOperationState ---
         copy.cloneOperation.card = this.cloneOperation.card;
@@ -1847,6 +1884,9 @@ public class GameData {
         copy.playersSilencedThisTurn.addAll(this.playersSilencedThisTurn);
         copy.playersCantPlayLandsThisTurn.addAll(this.playersCantPlayLandsThisTurn);
         copy.playersCantCastCreatureSpellsThisTurn.addAll(this.playersCantCastCreatureSpellsThisTurn);
+        copy.playersCantActivateAbilitiesThisTurn.addAll(this.playersCantActivateAbilitiesThisTurn);
+        copy.senControllerPlayerId = this.senControllerPlayerId;
+        copy.senControlledPlayerId = this.senControlledPlayerId;
 
         // --- Spell copy until end of turn (The Mirari Conjecture chapter III) ---
         copy.playersWithSpellCopyUntilEndOfTurn.addAll(this.playersWithSpellCopyUntilEndOfTurn);
@@ -1881,6 +1921,7 @@ public class GameData {
         copy.mindControllerPlayerId = this.mindControllerPlayerId;
         copy.tauntedNextTurn.putAll(this.tauntedNextTurn);
         copy.tauntedThisTurn.putAll(this.tauntedThisTurn);
+        copy.otherCreaturesCantAttackExemptCreatureIds.addAll(this.otherCreaturesCantAttackExemptCreatureIds);
         copy.currentlyResolvingControllerId = this.currentlyResolvingControllerId;
 
         // --- Opening hand reveal triggers (Chancellor cycle) ---

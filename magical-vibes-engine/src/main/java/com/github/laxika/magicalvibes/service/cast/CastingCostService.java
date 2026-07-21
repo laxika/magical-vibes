@@ -13,6 +13,7 @@ import com.github.laxika.magicalvibes.model.ManaCost;
 import com.github.laxika.magicalvibes.model.ManaPool;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.SacrificePermanentsCost;
+import com.github.laxika.magicalvibes.model.ReturnPermanentsCost;
 import com.github.laxika.magicalvibes.model.StackEntry;
 import com.github.laxika.magicalvibes.model.TapUntappedPermanentsCost;
 import com.github.laxika.magicalvibes.model.effect.ActivatedAbilityCostIncreasingEffect;
@@ -333,6 +334,15 @@ public class CastingCostService {
                     .filter(p -> !p.isTapped() && predicateEvaluationService.matchesPermanentPredicate(gameData, p, tapCost.get().filter()))
                     .count();
             if (matchingCount < tapCost.get().count()) return false;
+        }
+
+        var returnCost = altCast.getCost(ReturnPermanentsCost.class);
+        if (returnCost.isPresent()) {
+            if (battlefield == null) return false;
+            long matchingCount = battlefield.stream()
+                    .filter(p -> predicateEvaluationService.matchesPermanentPredicate(gameData, p, returnCost.get().filter()))
+                    .count();
+            if (matchingCount < returnCost.get().count()) return false;
         }
 
         var manaCost = altCast.getCost(ManaCastingCost.class);

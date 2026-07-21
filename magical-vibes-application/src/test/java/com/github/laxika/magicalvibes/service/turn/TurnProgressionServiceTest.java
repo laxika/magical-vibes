@@ -243,6 +243,39 @@ class TurnProgressionServiceTest {
 
             verify(stepTriggerService, never()).handleDrawStep(gd);
         }
+
+        @Test
+        @DisplayName("Entering BEGINNING_OF_COMBAT counts the combat phase for the turn")
+        void countsCombatPhaseOnEnteringCombat() {
+            gd.currentStep = TurnStep.PRECOMBAT_MAIN;
+
+            turnProgressionService.advanceStep(gd);
+
+            assertThat(gd.currentStep).isEqualTo(TurnStep.BEGINNING_OF_COMBAT);
+            assertThat(gd.combatPhasesThisTurn).isEqualTo(1);
+        }
+
+        @Test
+        @DisplayName("Without a queued combat-only phase, END_OF_COMBAT advances to the postcombat main phase")
+        void endOfCombatAdvancesToPostcombatMainByDefault() {
+            gd.currentStep = TurnStep.END_OF_COMBAT;
+
+            turnProgressionService.advanceStep(gd);
+
+            assertThat(gd.currentStep).isEqualTo(TurnStep.POSTCOMBAT_MAIN);
+        }
+
+        @Test
+        @DisplayName("A queued combat-only phase (Finest Hour) loops END_OF_COMBAT back to BEGINNING_OF_COMBAT")
+        void additionalCombatPhaseOnlyLoopsStraightBackToCombat() {
+            gd.currentStep = TurnStep.END_OF_COMBAT;
+            gd.additionalCombatPhasesOnly = 1;
+
+            turnProgressionService.advanceStep(gd);
+
+            assertThat(gd.currentStep).isEqualTo(TurnStep.BEGINNING_OF_COMBAT);
+            assertThat(gd.additionalCombatPhasesOnly).isEqualTo(0);
+        }
     }
 
     // =========================================================================

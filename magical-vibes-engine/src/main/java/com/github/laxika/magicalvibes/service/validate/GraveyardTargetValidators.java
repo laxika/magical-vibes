@@ -9,6 +9,7 @@ import com.github.laxika.magicalvibes.model.effect.ExileGraveyardCardsEffect;
 import com.github.laxika.magicalvibes.model.effect.ExileTargetCardFromGraveyardAndCreateTokenCopyEffect;
 import com.github.laxika.magicalvibes.model.effect.ExileTargetCardFromGraveyardAndImprintOnSourceEffect;
 import com.github.laxika.magicalvibes.model.effect.ExileTargetCardFromGraveyardMayPlayUntilNextTurnEffect;
+import com.github.laxika.magicalvibes.model.effect.ExileTargetCreatureCardCreateTokensEqualToToughnessEffect;
 import com.github.laxika.magicalvibes.model.GraveyardSearchScope;
 import com.github.laxika.magicalvibes.model.effect.GraveyardExileScope;
 import com.github.laxika.magicalvibes.model.effect.ExileTargetGraveyardCardAndSameNameFromZonesEffect;
@@ -230,6 +231,23 @@ public class GraveyardTargetValidators {
         }
         if (effect.filter() != null && !predicateEvaluationService.matchesCardPredicate(graveyardCard, effect.filter(), null)) {
             throw new IllegalStateException("Target must be a " + CardPredicateUtils.describeFilter(effect.filter()));
+        }
+    }
+
+    @ValidatesTarget(ExileTargetCreatureCardCreateTokensEqualToToughnessEffect.class)
+    public void validateExileTargetCreatureCardCreateTokens(TargetValidationContext ctx) {
+        if (ctx.targetZone() != Zone.GRAVEYARD) {
+            throw new IllegalStateException("Spell requires a graveyard target");
+        }
+        if (ctx.targetId() == null) {
+            throw new IllegalStateException("Spell requires a target card");
+        }
+        Card graveyardCard = gameQueryService.findCardInGraveyardById(ctx.gameData(), ctx.targetId());
+        if (graveyardCard == null) {
+            throw new IllegalStateException("Target card not found in any graveyard");
+        }
+        if (!graveyardCard.hasType(CardType.CREATURE)) {
+            throw new IllegalStateException("Target must be a creature card");
         }
     }
 

@@ -135,9 +135,10 @@ public class ExampleCard extends Card {
 
 - Alternate hand cast (non-mana alternate cost from hand):
   - `addCastingOption(new AlternateHandCast(List.of(new LifeCastingCost(N), new SacrificePermanentsCost(N, predicate))))`
-  - Replaces normal mana cost; composed from `CastingCost` components (`LifeCastingCost`, `SacrificePermanentsCost`, `ManaCastingCost`, `TapUntappedPermanentsCost`)
+  - Replaces normal mana cost; composed from `CastingCost` components (`LifeCastingCost`, `SacrificePermanentsCost`, `ManaCastingCost`, `TapUntappedPermanentsCost`, `ReturnPermanentsCost`)
   - Example (sacrifice + life): `magical-vibes-card/src/main/java/com/github/laxika/magicalvibes/cards/d/DemonOfDeathsGate.java`
   - Example (mana + tap artifact): `magical-vibes-card/src/main/java/com/github/laxika/magicalvibes/cards/z/ZahidDjinnOfTheLamp.java`
+  - Example (mana + return basic land — the Alara Reborn Borderposts): `magical-vibes-card/src/main/java/com/github/laxika/magicalvibes/cards/f/FieldmistBorderpost.java` uses `new ReturnPermanentsCost(1, new PermanentAllOfPredicate(List.of(new PermanentIsLandPredicate(), new PermanentHasSupertypePredicate(CardSupertype.BASIC))))`
 
 - Prowl ("Prowl {cost}" — an alternate hand cost gated on combat damage):
   - `addCastingOption(new AlternateHandCast(List.of(new ManaCastingCost("{cost}")), CardSubtype.X))` — the second arg gates the alternate cost on "you dealt combat damage to a player this turn with a [subtype]" (a Changeling creature counts). For "with a Faerie or Rogue" (multiple qualifying subtypes) pass `Set.of(CardSubtype.FAERIE, CardSubtype.ROGUE)` instead. Populated in `CombatDamageService`, tracked per controller in `GameData.combatDamageToPlayerControllerSubtypesThisTurn`, checked by `CastingCostService.prowlConditionMet`.

@@ -425,7 +425,10 @@ public class CombatAttackService {
                                     new PermanentChoiceContext.AttackTriggerTarget(
                                             attacker.getCard(), playerId, otherEffects, attacker.getId()));
                         } else {
-                            gameData.stack.add(new StackEntry(
+                            // Capture the attacked player/planeswalker so non-targeting attack
+                            // triggers that act on the defending player (e.g. Nemesis of Reason's
+                            // MillDefendingPlayerEffect) can read it as attackedTargetId.
+                            StackEntry attackTrigger = new StackEntry(
                                     StackEntryType.TRIGGERED_ABILITY,
                                     attacker.getCard(),
                                     playerId,
@@ -433,7 +436,9 @@ public class CombatAttackService {
                                     otherEffects,
                                     null,
                                     attacker.getId()
-                            ));
+                            );
+                            attackTrigger.setAttackedTargetId(attacker.getAttackTarget());
+                            gameData.stack.add(attackTrigger);
                         }
                     }
 
@@ -772,6 +777,7 @@ public class CombatAttackService {
         if (creature.isTapped()) return false;
         if (creature.isCantAttackThisTurn()) return false;
         if (gameQueryService.isLockedFromAttacking(gameData, creature.getId())) return false;
+        if (isRestrictedByOtherCreaturesCantAttack(gameData, creature)) return false;
         if (creature.isSummoningSick() && !gameQueryService.hasKeyword(gameData, creature, Keyword.HASTE)
                 && !gameQueryService.hasAuraWithEffect(gameData, creature, EnchantedCreatureCanAttackAsThoughHasteEffect.class)) return false;
         if (gameQueryService.hasKeyword(gameData, creature, Keyword.DEFENDER)
@@ -846,6 +852,28 @@ public class CombatAttackService {
                     && (targetIsPlayer || restriction.protectsPlaneswalkers())
                     && !predicateEvaluationService.matchesPermanentPredicate(gameData, attacker, restriction.exemptionPredicate())) {
                 return true;
+            }
+        }
+        return false;
+    }
+
+    /**
+     * Intimidation Bolt lock ("Other creatures can't attack this turn"). While
+     * {@code gameData.otherCreaturesCantAttackExemptCreatureIds} holds any exemptions, a creature may
+     * attack only if its ID equals every one of them — i.e. it is the creature every Intimidation Bolt
+     * resolved this turn targeted. Evaluated at declaration time, so it also bars creatures that entered
+     * after the spell resolved. Empty list = no restriction.
+     */
+    private boolean isRestrictedByOtherCreaturesCantAttack(GameData gameData, Permanent creature) {
+        List<UUID> exemptions = gameData.otherCreaturesCantAttackExemptCreatureIds;
+        if (exemptions.isEmpty()) {
+            return false;
+        }
+        synchronized (exemptions) {
+            for (UUID exemptId : exemptions) {
+                if (!creature.getId().equals(exemptId)) {
+                    return true;
+                }
             }
         }
         return false;

@@ -12,6 +12,7 @@ import com.github.laxika.magicalvibes.model.GameLog;
 import com.github.laxika.magicalvibes.model.GraveyardChoiceDestination;
 import com.github.laxika.magicalvibes.model.Keyword;
 import com.github.laxika.magicalvibes.model.PendingGraveyardReturnChoice;
+import com.github.laxika.magicalvibes.model.PendingBoostSourceByDiscardedManaValue;
 import com.github.laxika.magicalvibes.model.PendingMayAbility;
 import com.github.laxika.magicalvibes.model.effect.EnterBattlefieldOnDiscardEffect;
 import com.github.laxika.magicalvibes.model.effect.ForcedCostOrElseEffect;
@@ -193,6 +194,9 @@ public class CardChoiceHandlerService {
 
         // Check if a creature discard should untap + transform the source (e.g. Civilized Scholar)
         checkPendingTransformOnCreatureDiscard(gameData, card);
+
+        // Check if the discarded card should pump the source by its mana value (e.g. Spellbound Dragon)
+        checkPendingBoostSourceByDiscardedManaValue(gameData, card);
 
         int remainingDiscards = Math.max(discardChoice.remainingCount() - 1, 0);
 
@@ -995,6 +999,28 @@ public class CardChoiceHandlerService {
                 log.info("Game {} - {} transforms into {}", gameData.id, frontCard.getName(), backFace.getName());
             }
         }
+    }
+
+    private void checkPendingBoostSourceByDiscardedManaValue(GameData gameData, Card discardedCard) {
+        PendingBoostSourceByDiscardedManaValue pending = gameData.pendingBoostSourceByDiscardedManaValue;
+        if (pending == null) {
+            return;
+        }
+        gameData.pendingBoostSourceByDiscardedManaValue = null;
+        int boost = discardedCard.getManaValue();
+        if (boost <= 0) {
+            return;
+        }
+        Permanent source = gameQueryService.findPermanentById(gameData, pending.sourcePermanentId());
+        if (source == null) {
+            return;
+        }
+        source.setPowerModifier(source.getPowerModifier() + boost);
+        gameBroadcastService.logAndBroadcast(gameData, GameLog.builder()
+                .card(source.getCard())
+                .text(String.format(" gets +%d/+0 until end of turn.", boost))
+                .build());
+        log.info("Game {} - {} gets +{}/+0 (discarded card mana value)", gameData.id, source.getCard().getName(), boost);
     }
 
     private boolean hasEnterBattlefieldOnDiscardEffect(Card card) {

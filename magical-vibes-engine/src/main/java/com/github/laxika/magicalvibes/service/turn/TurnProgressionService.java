@@ -100,6 +100,13 @@ public class TurnProgressionService {
             gameData.additionalCombatMainPhasePairs--;
         }
 
+        // Finest Hour: an additional combat phase with no additional main phase — loop straight from
+        // this combat's end back into another combat phase (skipping the postcombat main phase).
+        if (gameData.currentStep == TurnStep.END_OF_COMBAT && gameData.additionalCombatPhasesOnly > 0) {
+            next = TurnStep.BEGINNING_OF_COMBAT;
+            gameData.additionalCombatPhasesOnly--;
+        }
+
         // Blinding Angel: the active player skips their next combat phase — jump straight from the
         // precombat main phase to the postcombat main phase.
         if (gameData.currentStep == TurnStep.PRECOMBAT_MAIN
@@ -135,6 +142,7 @@ public class TurnProgressionService {
             } else if (next == TurnStep.DRAW) {
                 stepTriggerService.handleDrawStep(gameData);
             } else if (next == TurnStep.BEGINNING_OF_COMBAT) {
+                gameData.combatPhasesThisTurn++;
                 stepTriggerService.handleBeginningOfCombatTriggers(gameData);
             } else if (next == TurnStep.DECLARE_ATTACKERS) {
                 combatService.handleDeclareAttackersStep(gameData);
@@ -250,8 +258,11 @@ public class TurnProgressionService {
         gameData.creaturesReturnedToBattlefieldOnDeathThisTurn.clear();
         gameData.creatureCreatingTokenOnDeathThisTurn.clear();
         gameData.additionalCombatMainPhasePairs = 0;
+        gameData.additionalCombatPhasesOnly = 0;
+        gameData.combatPhasesThisTurn = 0;
         gameData.cleanupDiscardPending = false;
         gameData.paidSearchTaxPermanentIds.clear();
+        gameData.otherCreaturesCantAttackExemptCreatureIds.clear();
 
         turnCleanupService.drainManaPools(gameData);
 

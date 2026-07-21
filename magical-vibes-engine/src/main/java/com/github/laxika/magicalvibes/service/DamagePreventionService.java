@@ -128,6 +128,8 @@ public class DamagePreventionService {
         if (gameQueryService.isDamagePreventable(gameData) && gameData.preventAllDamageToAllCreatures) return 0;
         // Wellgabber Apothecary: prevent all damage to specific target creatures this turn
         if (gameQueryService.isDamagePreventable(gameData) && gameData.creaturesWithAllDamagePrevented.contains(permanent.getId())) return 0;
+        // Ethersworn Shieldmage: prevent all damage to permanents matching an active predicate this turn (e.g. artifact creatures)
+        if (gameQueryService.isDamagePreventable(gameData) && gameQueryService.isAllDamagePreventedByPredicate(gameData, permanent)) return 0;
         // Foxfire: prevent all combat damage that would be dealt to specific target creatures this turn
         if (isCombatDamage && gameQueryService.isDamagePreventable(gameData) && gameData.creaturesWithCombatDamagePrevented.contains(permanent.getId())) return 0;
         // Safe Passage: prevent all damage to creatures controlled by a player with full prevention

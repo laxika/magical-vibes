@@ -1738,6 +1738,11 @@ public class AbilityActivationService {
                                            ManaPool manaPool, int additionalGenericCost) {
         List<CardEffect> abilityEffects = ability.getEffects();
 
+        // Sen Triplets: a player locked out this turn can't activate any ability.
+        if (gameData.playersCantActivateAbilitiesThisTurn.contains(playerId)) {
+            throw new IllegalStateException("You can't activate abilities this turn");
+        }
+
         // Pithing Needle check: block non-mana activated abilities of the chosen name
         validateNotBlockedByPithingNeedle(gameData, permanent, ability);
 

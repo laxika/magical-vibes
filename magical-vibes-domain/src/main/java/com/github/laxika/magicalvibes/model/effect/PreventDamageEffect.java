@@ -22,13 +22,15 @@ import java.util.Set;
  * @param combatOnly      combat-only window for the target-creature scopes (Foxfire)
  * @param sourceColors    the prevented source colors for {@link PreventionScope#ALL_FROM_COLORS}
  * @param exemptPredicate creatures still dealing combat damage for {@link PreventionScope#ALL_COMBAT_EXCEPT}
+ * @param victimPredicate permanents all damage to which is prevented for {@link PreventionScope#ALL_TO_MATCHING_PERMANENTS}
  */
 public record PreventDamageEffect(
         PreventionScope scope,
         DynamicAmount amount,
         boolean combatOnly,
         Set<CardColor> sourceColors,
-        PermanentPredicate exemptPredicate
+        PermanentPredicate exemptPredicate,
+        PermanentPredicate victimPredicate
 ) implements CardEffect {
 
     public PreventDamageEffect {
@@ -48,21 +50,24 @@ public record PreventDamageEffect(
         if ((exemptPredicate != null) != (scope == PreventionScope.ALL_COMBAT_EXCEPT)) {
             throw new IllegalArgumentException("exemptPredicate is exactly the ALL_COMBAT_EXCEPT parameter: " + scope);
         }
+        if ((victimPredicate != null) != (scope == PreventionScope.ALL_TO_MATCHING_PERMANENTS)) {
+            throw new IllegalArgumentException("victimPredicate is exactly the ALL_TO_MATCHING_PERMANENTS parameter: " + scope);
+        }
     }
 
     /** "Prevent the next {@code amount} damage that would be dealt to any permanent or player." */
     public static PreventDamageEffect nextToAny(int amount) {
-        return new PreventDamageEffect(PreventionScope.NEXT_TO_ANY, new Fixed(amount), false, null, null);
+        return new PreventDamageEffect(PreventionScope.NEXT_TO_ANY, new Fixed(amount), false, null, null, null);
     }
 
     /** "Prevent the next {@code amount} damage that would be dealt to you." */
     public static PreventDamageEffect nextToController(int amount) {
-        return new PreventDamageEffect(PreventionScope.NEXT_TO_CONTROLLER, new Fixed(amount), false, null, null);
+        return new PreventDamageEffect(PreventionScope.NEXT_TO_CONTROLLER, new Fixed(amount), false, null, null, null);
     }
 
     /** "Prevent the next {@code amount} damage that would be dealt to ~." */
     public static PreventDamageEffect nextToSelf(int amount) {
-        return new PreventDamageEffect(PreventionScope.NEXT_TO_SELF, new Fixed(amount), false, null, null);
+        return new PreventDamageEffect(PreventionScope.NEXT_TO_SELF, new Fixed(amount), false, null, null, null);
     }
 
     /** "Prevent the next {@code amount} damage that would be dealt to any target." */
@@ -72,67 +77,72 @@ public record PreventDamageEffect(
 
     /** "Prevent the next X damage that would be dealt to any target" (Alabaster Potion). */
     public static PreventDamageEffect nextToTarget(DynamicAmount amount) {
-        return new PreventDamageEffect(PreventionScope.NEXT_TO_TARGET, amount, false, null, null);
+        return new PreventDamageEffect(PreventionScope.NEXT_TO_TARGET, amount, false, null, null, null);
     }
 
     /** "Prevent all combat damage that would be dealt this turn." */
     public static PreventDamageEffect allCombat() {
-        return new PreventDamageEffect(PreventionScope.ALL_COMBAT, null, false, null, null);
+        return new PreventDamageEffect(PreventionScope.ALL_COMBAT, null, false, null, null, null);
     }
 
     /** "Prevent all damage that would be dealt to creatures this turn." */
     public static PreventDamageEffect allToCreatures() {
-        return new PreventDamageEffect(PreventionScope.ALL_TO_CREATURES, null, false, null, null);
+        return new PreventDamageEffect(PreventionScope.ALL_TO_CREATURES, null, false, null, null, null);
+    }
+
+    /** "Prevent all damage that would be dealt to [permanents matching {@code victimPredicate}] this turn" (Ethersworn Shieldmage). */
+    public static PreventDamageEffect allToMatchingPermanents(PermanentPredicate victimPredicate) {
+        return new PreventDamageEffect(PreventionScope.ALL_TO_MATCHING_PERMANENTS, null, false, null, null, victimPredicate);
     }
 
     /** "Prevent all damage that would be dealt to target creature(s) this turn." */
     public static PreventDamageEffect allToTargetCreatures() {
-        return new PreventDamageEffect(PreventionScope.ALL_TO_TARGET_CREATURES, null, false, null, null);
+        return new PreventDamageEffect(PreventionScope.ALL_TO_TARGET_CREATURES, null, false, null, null, null);
     }
 
     /** "Prevent all combat damage that would be dealt to target creature(s) this turn" (Foxfire). */
     public static PreventDamageEffect allCombatToTargetCreatures() {
-        return new PreventDamageEffect(PreventionScope.ALL_TO_TARGET_CREATURES, null, true, null, null);
+        return new PreventDamageEffect(PreventionScope.ALL_TO_TARGET_CREATURES, null, true, null, null, null);
     }
 
     /** "Prevent all damage target creature(s) would deal this turn" (Soul Parry). */
     public static PreventDamageEffect allByTargetCreatures() {
-        return new PreventDamageEffect(PreventionScope.ALL_BY_TARGET_CREATURES, null, false, null, null);
+        return new PreventDamageEffect(PreventionScope.ALL_BY_TARGET_CREATURES, null, false, null, null, null);
     }
 
     /** "Prevent all combat damage target creature(s) would deal this turn" (Foxfire, Inquisitor's Snare). */
     public static PreventDamageEffect allCombatByTargetCreatures() {
-        return new PreventDamageEffect(PreventionScope.ALL_BY_TARGET_CREATURES, null, true, null, null);
+        return new PreventDamageEffect(PreventionScope.ALL_BY_TARGET_CREATURES, null, true, null, null, null);
     }
 
     /** "Until your next turn, prevent all damage target permanent would deal" (Gideon of the Trials +1). */
     public static PreventDamageEffect allByTargetPermanentUntilNextTurn() {
-        return new PreventDamageEffect(PreventionScope.ALL_BY_TARGET_PERMANENT_UNTIL_NEXT_TURN, null, false, null, null);
+        return new PreventDamageEffect(PreventionScope.ALL_BY_TARGET_PERMANENT_UNTIL_NEXT_TURN, null, false, null, null, null);
     }
 
     /** "Prevent all damage that would be dealt to ~ this turn" — the source permanent (Gideon of the Trials 0). */
     public static PreventDamageEffect allToSelf() {
-        return new PreventDamageEffect(PreventionScope.ALL_TO_SELF, null, false, null, null);
+        return new PreventDamageEffect(PreventionScope.ALL_TO_SELF, null, false, null, null, null);
     }
 
     /** "Prevent all damage that would be dealt to you and creatures you control this turn." */
     public static PreventDamageEffect allToControllerAndCreatures() {
-        return new PreventDamageEffect(PreventionScope.ALL_TO_CONTROLLER_AND_CREATURES, null, false, null, null);
+        return new PreventDamageEffect(PreventionScope.ALL_TO_CONTROLLER_AND_CREATURES, null, false, null, null, null);
     }
 
     /** "Prevent all damage attacking creatures would deal to you this turn" (Deep Wood). */
     public static PreventDamageEffect allToControllerFromAttackers() {
-        return new PreventDamageEffect(PreventionScope.ALL_TO_CONTROLLER_FROM_ATTACKERS, null, false, null, null);
+        return new PreventDamageEffect(PreventionScope.ALL_TO_CONTROLLER_FROM_ATTACKERS, null, false, null, null, null);
     }
 
     /** "Prevent all damage that sources of the given colors would deal this turn" (Luminesce). */
     public static PreventDamageEffect fromColors(Set<CardColor> colors) {
-        return new PreventDamageEffect(PreventionScope.ALL_FROM_COLORS, null, false, colors, null);
+        return new PreventDamageEffect(PreventionScope.ALL_FROM_COLORS, null, false, colors, null, null);
     }
 
     /** "Prevent all combat damage this turn except that dealt by matching creatures" (Moonmist). */
     public static PreventDamageEffect allCombatExcept(PermanentPredicate exemptPredicate) {
-        return new PreventDamageEffect(PreventionScope.ALL_COMBAT_EXCEPT, null, false, null, exemptPredicate);
+        return new PreventDamageEffect(PreventionScope.ALL_COMBAT_EXCEPT, null, false, null, exemptPredicate, null);
     }
 
     @Override

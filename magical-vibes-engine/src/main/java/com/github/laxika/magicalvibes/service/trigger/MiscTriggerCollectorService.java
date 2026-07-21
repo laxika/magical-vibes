@@ -117,6 +117,19 @@ public class MiscTriggerCollectorService {
         return true;
     }
 
+    // ── ON_ANY_CREATURE_SACRIFICED ─────────────────────────────────────
+
+    @CollectsTrigger(value = MayEffect.class, slot = EffectSlot.ON_ANY_CREATURE_SACRIFICED)
+    private boolean handleAnyCreatureSacrificedMay(TriggerMatchContext match, MayEffect may, TriggerContext ctx) {
+        // "Whenever a player sacrifices a creature, you may put a +1/+1 counter on this creature"
+        // (Thraximundar). The wrapped PutCountersOnSourceEffect resolves onto the source permanent,
+        // and the "you may" is offered to the source's controller (not the sacrificing player).
+        match.gameData().queueMayAbility(match.permanent().getCard(), match.controllerId(), may,
+                null, match.permanent().getId());
+        gameBroadcastService.logAndBroadcast(match.gameData(), GameLog.abilityTriggers(match.permanent().getCard()));
+        return true;
+    }
+
     @CollectsTrigger(value = CardEffect.class, slot = EffectSlot.ON_ALLY_PERMANENT_SACRIFICED)
     private boolean handleSacrificeDefault(TriggerMatchContext match, CardEffect effect, TriggerContext ctx) {
         TriggerContext.AllySacrificed as = (TriggerContext.AllySacrificed) ctx;

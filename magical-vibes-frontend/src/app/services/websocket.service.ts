@@ -167,6 +167,7 @@ export interface Card {
   alternateCostLifePayment: number;
   alternateCostSacrificeCount: number;
   alternateCostTapCount: number;
+  alternateCostReturnCount: number;
   alternateCostManaCost: string | null;
   graveyardActivatedAbilities: ActivatedAbilityView[];
   handActivatedAbilities?: ActivatedAbilityView[];

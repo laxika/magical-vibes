@@ -52,6 +52,9 @@ public final class CardPredicateUtils {
         if (predicate instanceof CardColorPredicate p) {
             return p.color().name().toLowerCase();
         }
+        if (predicate instanceof CardIsMulticoloredPredicate) {
+            return "multicolored card";
+        }
         if (predicate instanceof CardMaxManaValuePredicate p) {
             return "card with mana value " + p.maxManaValue() + " or less";
         }

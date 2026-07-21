@@ -79,6 +79,8 @@ public class PermanentChoiceHandlerService {
             battlefieldHandler.handleBounceOwnPermanentOrSacrificeSelf(gameData, permanentId);
         } else if (context instanceof PermanentChoiceContext.ChampionCreature championCreature) {
             battlefieldHandler.handleChampionCreature(gameData, permanentId, championCreature);
+        } else if (context instanceof PermanentChoiceContext.PutControlledCreatureOnTopOfLibrary putOnTop) {
+            battlefieldHandler.handlePutControlledCreatureOnTopOfLibrary(gameData, permanentId, putOnTop);
         } else if (context instanceof PermanentChoiceContext.ChampionedTriggerTarget championedTrigger) {
             triggerHandler.handleChampionedTrigger(gameData, permanentId, championedTrigger);
         } else if (context instanceof PermanentChoiceContext.SpellRetarget retarget) {

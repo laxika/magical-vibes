@@ -664,6 +664,8 @@ public class GameSimulator {
                     gameService.handleInteractionAnswer(gd, player, new InteractionAnswer.ListChoiceMade(kgc.options().getFirst().name()));
                 } else if (ccCtx.context() instanceof ChoiceContext.StorageMatrixUntapChoice) {
                     gameService.handleInteractionAnswer(gd, player, new InteractionAnswer.ListChoiceMade("LAND"));
+                } else if (ccCtx.context() instanceof ChoiceContext.ChooseModeChoice) {
+                    gameService.handleInteractionAnswer(gd, player, new InteractionAnswer.ListChoiceMade(ccCtx.options().getFirst()));
                 } else {
                     gameService.handleInteractionAnswer(gd, player, new InteractionAnswer.ListChoiceMade("RED"));
                 }

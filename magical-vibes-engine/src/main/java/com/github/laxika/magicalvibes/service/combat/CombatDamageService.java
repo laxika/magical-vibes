@@ -314,7 +314,9 @@ public class CombatDamageService {
             if (dmgEntry.getValue() > 0) {
                 triggerCollectionService.checkDamageDealtToControllerTriggers(gameData, defenderId, dmgEntry.getKey().getId(), true);
                 triggerCollectionService.checkEnchantedCreatureDealtDamageToControllerReflectTriggers(gameData, defenderId, dmgEntry.getKey().getId(), dmgEntry.getValue());
-                triggerCollectionService.checkControllerDealtDamageTriggers(gameData, defenderId, dmgEntry.getValue());
+                // Combat damage to the defender always comes from the active player's attackers, so the
+                // source's controller is the active player (an opponent of the defender).
+                triggerCollectionService.checkControllerDealtDamageTriggers(gameData, defenderId, activeId, dmgEntry.getValue());
             }
         }
 

@@ -40,6 +40,7 @@ public record CardView(
         int alternateCostLifePayment,
         int alternateCostSacrificeCount,
         int alternateCostTapCount,
+        int alternateCostReturnCount,
         String alternateCostManaCost,
         List<ActivatedAbilityView> graveyardActivatedAbilities,
         List<ActivatedAbilityView> handActivatedAbilities,

@@ -18,6 +18,8 @@ public enum PreventionScope {
     ALL_COMBAT,
     /** "Prevent all damage that would be dealt to creatures this turn" (Blinding Fog). */
     ALL_TO_CREATURES,
+    /** "Prevent all damage that would be dealt to [permanents matching a predicate] this turn" (Ethersworn Shieldmage). */
+    ALL_TO_MATCHING_PERMANENTS,
     /** "Prevent all [combat] damage that would be dealt to target creature(s) this turn" (Foxfire, Redeem). */
     ALL_TO_TARGET_CREATURES,
     /** "Prevent all [combat] damage target creature(s) would deal this turn" (Soul Parry, Resistance Fighter). */

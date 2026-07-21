@@ -37,6 +37,7 @@ import com.github.laxika.magicalvibes.model.filter.PermanentIsEnchantedPredicate
 import com.github.laxika.magicalvibes.model.filter.PermanentIsEnchantmentPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsHistoricPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsLandPredicate;
+import com.github.laxika.magicalvibes.model.filter.PermanentIsMulticoloredPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsPlaneswalkerPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsTappedPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsTokenPredicate;
@@ -345,6 +346,22 @@ public class StaticEffectSupport {
                     || target.getCard().getSupertypes().contains(CardSupertype.LEGENDARY)
                     || target.getCard().getSubtypes().contains(CardSubtype.SAGA)
                     || target.getTransientSubtypes().contains(CardSubtype.SAGA);
+        if (filter instanceof PermanentIsMulticoloredPredicate) {
+            // Multicolored = two or more effective colours (colourless and monocoloured don't match).
+            // Colours come from the same sources as the PermanentColorInPredicate branch above.
+            CharacteristicState layeredColors = LayerSystemService.activeStateFor(target.getId());
+            if (layeredColors != null) {
+                return layeredColors.getColors().size() >= 2;
+            }
+            if (target.isColorOverridden()) {
+                return target.getTransientColors().size() >= 2;
+            }
+            Set<CardColor> combined = EnumSet.noneOf(CardColor.class);
+            combined.addAll(target.getEffectiveColors());
+            combined.addAll(target.getTransientColors());
+            combined.addAll(target.getGrantedColors());
+            return combined.size() >= 2;
+        }
         if (filter instanceof PermanentNotPredicate p)
             return !matchesStaticFilter(target, p.predicate());
         if (filter instanceof PermanentAllOfPredicate p)
@@ -378,6 +395,7 @@ public class StaticEffectSupport {
                 case WISH -> target.getCounterCount(CounterType.WISH) > 0;
                 case LORE -> target.getCounterCount(CounterType.LORE) > 0;
                 case AIM -> target.getCounterCount(CounterType.AIM) > 0;
+                case FEATHER -> target.getCounterCount(CounterType.FEATHER) > 0;
                 case ANY -> target.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE) > 0
                         || target.getCounterCount(CounterType.MINUS_ONE_MINUS_ONE) > 0
                         || target.getCounterCount(CounterType.CHARGE) > 0
@@ -387,7 +405,8 @@ public class StaticEffectSupport {
                         || target.getCounterCount(CounterType.STUDY) > 0
                         || target.getCounterCount(CounterType.WISH) > 0
                         || target.getCounterCount(CounterType.LORE) > 0
-                        || target.getCounterCount(CounterType.AIM) > 0;
+                        || target.getCounterCount(CounterType.AIM) > 0
+                        || target.getCounterCount(CounterType.FEATHER) > 0;
                 default -> false;
             };
         throw new IllegalArgumentException("Unsupported static filter predicate: " + filter.getClass().getSimpleName());

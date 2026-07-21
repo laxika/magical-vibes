@@ -153,6 +153,10 @@ public sealed interface PermanentChoiceContext extends PendingInteraction {
     /** Champion a creature: exile the chosen creature until the source permanent leaves the battlefield. */
     record ChampionCreature(UUID sourcePermanentId, UUID controllerId) implements PermanentChoiceContext {}
 
+    /** "Put a creature you control on top of its owner's library." The controller chooses one of their
+     *  creatures (the source itself is a legal choice) as the effect resolves. (Nulltread Gargantuan.) */
+    record PutControlledCreatureOnTopOfLibrary(UUID controllerId) implements PermanentChoiceContext {}
+
     /** "When a creature is championed with this permanent, [targeted effect]." Chooses the target for a
      *  {@code EffectSlot.ON_CHAMPIONED} triggered ability (e.g. Mistbind Clique — tap all lands target
      *  player controls). Fired mid-resolution when the Faerie is championed. */

@@ -32,6 +32,7 @@ import com.github.laxika.magicalvibes.model.effect.LosesAllAbilitiesEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantSubtypeEffect;
 import com.github.laxika.magicalvibes.model.effect.AnimateNoncreatureArtifactsEffect;
 import com.github.laxika.magicalvibes.model.effect.CantLoseGameEffect;
+import com.github.laxika.magicalvibes.model.effect.ControllerCreatureSpellsCantBeCounteredEffect;
 import com.github.laxika.magicalvibes.model.effect.CreatureSpellsCantBeCounteredEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantControllerShroudEffect;
 import com.github.laxika.magicalvibes.model.effect.LifeTotalCantChangeEffect;
@@ -1462,6 +1463,46 @@ class GameQueryServiceTest {
             gd.stack.add(new StackEntry(StackEntryType.SORCERY_SPELL, banefire, player1Id,
                     "Banefire", new ArrayList<>()));
             return banefire;
+        }
+
+        @Test
+        @DisplayName("controller's power-5-or-greater creature spell is protected (Spellbreaker Behemoth, boundary)")
+        void controllerHighPowerCreatureSpellProtected() {
+            addPermanent(player1Id, createCreatureWithStaticEffect(
+                    "Spellbreaker Behemoth", 5, 5, CardColor.RED,
+                    new ControllerCreatureSpellsCantBeCounteredEffect(5)));
+            Card creature = creatureOnStack("Big Beast", 5, player1Id);
+
+            assertThat(gqs.isUncounterable(gd, creature)).isTrue();
+        }
+
+        @Test
+        @DisplayName("controller's below-threshold creature spell is not protected")
+        void controllerLowPowerCreatureSpellNotProtected() {
+            addPermanent(player1Id, createCreatureWithStaticEffect(
+                    "Spellbreaker Behemoth", 5, 5, CardColor.RED,
+                    new ControllerCreatureSpellsCantBeCounteredEffect(5)));
+            Card creature = creatureOnStack("Small Beast", 4, player1Id);
+
+            assertThat(gqs.isUncounterable(gd, creature)).isFalse();
+        }
+
+        @Test
+        @DisplayName("high-power creature spell is not protected by an opponent's Behemoth")
+        void opponentBehemothDoesNotProtect() {
+            addPermanent(player2Id, createCreatureWithStaticEffect(
+                    "Spellbreaker Behemoth", 5, 5, CardColor.RED,
+                    new ControllerCreatureSpellsCantBeCounteredEffect(5)));
+            Card creature = creatureOnStack("Big Beast", 8, player1Id);
+
+            assertThat(gqs.isUncounterable(gd, creature)).isFalse();
+        }
+
+        private Card creatureOnStack(String name, int power, UUID controllerId) {
+            Card creature = createCreature(name, power, power, CardColor.GREEN);
+            gd.stack.add(new StackEntry(StackEntryType.CREATURE_SPELL, creature, controllerId,
+                    name, new ArrayList<>()));
+            return creature;
         }
     }
 

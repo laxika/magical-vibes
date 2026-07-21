@@ -26,4 +26,18 @@ public class GraveyardTargetOperationState {
     public UUID sourcePermanentId;
     /** Chapter name for saga chapter graveyard targets (e.g. "I", "II"). */
     public String chapterName;
+    /**
+     * Spell-on-stack target (a counter) chosen at cast time for a modal mode that pairs a counter
+     * with an interactive graveyard return (e.g. Soul Manipulation's "both" mode). Carried through
+     * the graveyard-choice flow so the counter survives onto the resulting stack entry's targetId.
+     */
+    public UUID spellCounterTargetId;
+    /**
+     * Resolution-time "exile up to one target card from a graveyard" (Grixis Sojourners' death and
+     * cycling triggers). When set, {@code GraveyardChoiceHandlerService.handleMultipleCardsChosen}
+     * exiles the chosen card and resumes the paused ability resolution (e.g. the cycling draw)
+     * instead of pushing a new stack entry. Set by
+     * {@code ExileUpToOneCardFromGraveyardEffectHandler}.
+     */
+    public boolean resolutionTimeExileResume;
 }

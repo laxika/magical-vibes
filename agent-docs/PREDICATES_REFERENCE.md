@@ -44,6 +44,8 @@ All of these base interfaces are **sealed**: a new predicate/filter must be adde
 | Predicate | Constructor | Matches |
 |-----------|-------------|---------|
 | `PermanentColorInPredicate` | `(Set<CardColor>)` | permanents of specified colors |
+| `PermanentIsMonocoloredPredicate` | `()` | permanents with exactly one effective color (colorless and multicolored don't match); Defiler of Souls |
+| `PermanentIsMulticoloredPredicate` | `()` | permanents with two or more effective colors (colorless and monocolored don't match); complement of `PermanentIsMonocoloredPredicate`, battlefield counterpart of `CardIsMulticoloredPredicate`; Esper Stormblade ("another multicolored permanent" via `ControlsAnotherPermanent`) |
 | `PermanentHasSubtypePredicate` | `(CardSubtype)` | permanents with specific subtype |
 | `PermanentHasAnySubtypePredicate` | `(Set<CardSubtype>)` | permanents with any of the subtypes |
 | `PermanentHasSupertypePredicate` | `(CardSupertype)` | permanents with specific supertype (e.g. LEGENDARY) |
@@ -134,6 +136,7 @@ These predicates need `FilterContext` with `gameData` and/or `sourceControllerId
 | Predicate | Constructor | Matches |
 |-----------|-------------|---------|
 | `CardIsTokenPredicate` | `()` | token cards. Wrap in `CardNotPredicate` for "nontoken" (e.g. Militia's Pride: nontoken attacker filter on `ON_ALLY_CREATURE_ATTACKS` via `TriggeringCardConditionalEffect`) |
+| `CardIsMulticoloredPredicate` | `()` | a card with two or more colours (`Card.getColors().size() >= 2`); monocoloured and colourless cards never match. Card-in-any-zone counterpart of `PermanentIsMonocoloredPredicate`; used as a graveyard filter for "target multicolored card from your graveyard" (Reborn Hope) |
 | `CardControllerDoesNotOwnPredicate` | `()` | a card whose owner is not the perspective player (the `cardOwnerId` argument of `matchesCardPredicate`, which is the casting player in the spell-cast trigger path). Cards with no tracked owner (tokens/copies) never match. Use as a `SpellCastTriggerEffect` filter for "a spell you don't own" (Nita, Forum Conciliator). Ownership is stamped at game setup on `Card.ownerId` and preserved across zones |
 | `CardPowerAtMostPredicate` | `(int maxPower)` | a card whose printed power is <= `maxPower`; cards without power (non-creatures) never match. Compose with `CardTypePredicate(CREATURE)` via `CardAllOfPredicate` for library searches like "a creature card with power 2 or less" (Imperial Recruiter) |
 | `CardPowerAtLeastPredicate` | `(int minPower)` | a card whose printed power is >= `minPower`; cards without power (non-creatures) never match. Compose with `CardTypePredicate(CREATURE)` via `CardAllOfPredicate` for "a creature card with power 5 or greater" (Sacellum Godspeaker) |

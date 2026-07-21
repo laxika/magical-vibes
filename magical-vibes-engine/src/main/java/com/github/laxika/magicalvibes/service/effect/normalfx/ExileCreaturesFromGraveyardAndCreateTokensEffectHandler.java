@@ -41,13 +41,25 @@ public class ExileCreaturesFromGraveyardAndCreateTokensEffectHandler implements 
     public void resolve(GameData gameData, StackEntry entry, CardEffect effect) {
 
         UUID controllerId = entry.getControllerId();
-        List<UUID> targetCardIds = entry.getTargetCardIds();
         String playerName = gameData.playerIdToName.get(controllerId);
         Set<CardType> enterTappedTypesSnapshot = EnumSet.noneOf(CardType.class);
         enterTappedTypesSnapshot.addAll(battlefieldEntryService.snapshotEnterTappedTypes(gameData));
 
+        List<UUID> cardIdsToExile;
+        if (((ExileCreaturesFromGraveyardAndCreateTokensEffect) effect).targetPlayerGraveyard()) {
+            // Necromancer's Covenant: exile all creature cards from the single targeted player's graveyard.
+            List<Card> graveyard = gameData.playerGraveyards.getOrDefault(entry.getTargetId(), List.of());
+            cardIdsToExile = graveyard.stream()
+                    .filter(card -> card.hasType(CardType.CREATURE))
+                    .map(Card::getId)
+                    .toList();
+        } else {
+            // Midnight Ritual: exile the individually targeted creature cards.
+            cardIdsToExile = entry.getTargetCardIds();
+        }
+
         int tokensToCreate = 0;
-        for (UUID cardId : targetCardIds) {
+        for (UUID cardId : cardIdsToExile) {
             Card card = gameQueryService.findCardInGraveyardById(gameData, cardId);
             if (card != null) {
                 graveyardReturnSupport.exileCardFromAnyGraveyard(gameData, cardId, card);

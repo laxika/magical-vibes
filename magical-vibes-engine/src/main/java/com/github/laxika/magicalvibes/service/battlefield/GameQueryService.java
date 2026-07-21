@@ -72,6 +72,7 @@ import com.github.laxika.magicalvibes.model.effect.DoubleLifeGainEffect;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
 import com.github.laxika.magicalvibes.model.effect.EnchantedPermanentBecomesCreatureEffect;
 import com.github.laxika.magicalvibes.model.effect.CreatureEnteringDontCauseTriggersEffect;
+import com.github.laxika.magicalvibes.model.effect.ControllerCreatureSpellsCantBeCounteredEffect;
 import com.github.laxika.magicalvibes.model.effect.CreatureSpellsCantBeCounteredEffect;
 import com.github.laxika.magicalvibes.model.effect.ETBDoubleTriggerEffect;
 import com.github.laxika.magicalvibes.model.effect.DoubleControllerDamageEffect;
@@ -2545,7 +2546,37 @@ public class GameQueryService {
         if (!hasCardType(card, CardType.CREATURE)) {
             return false;
         }
-        return anyBattlefieldHasStaticEffect(gameData, CreatureSpellsCantBeCounteredEffect.class);
+        if (anyBattlefieldHasStaticEffect(gameData, CreatureSpellsCantBeCounteredEffect.class)) {
+            return true;
+        }
+        return controllerProtectsHighPowerCreatureSpell(gameData, card);
+    }
+
+    /**
+     * Returns {@code true} if the given creature spell's controller has a permanent whose
+     * {@link ControllerCreatureSpellsCantBeCounteredEffect} protects it — i.e. the spell's power is
+     * at least that effect's threshold (Spellbreaker Behemoth: "Creature spells you control with
+     * power 5 or greater can't be countered"). Read via {@code Class::isInstance}/{@code cast}, the
+     * sanctioned way to poll static marker effects here.
+     */
+    private boolean controllerProtectsHighPowerCreatureSpell(GameData gameData, Card card) {
+        Integer power = card.getPower();
+        if (power == null) {
+            return false;
+        }
+        StackEntry entry = findStackEntryByCardId(gameData, card.getId());
+        if (entry == null) {
+            return false;
+        }
+        List<Permanent> battlefield = gameData.playerBattlefields.get(entry.getControllerId());
+        if (battlefield == null) {
+            return false;
+        }
+        return battlefield.stream()
+                .flatMap(perm -> perm.getCard().getEffects(EffectSlot.STATIC).stream())
+                .filter(ControllerCreatureSpellsCantBeCounteredEffect.class::isInstance)
+                .map(ControllerCreatureSpellsCantBeCounteredEffect.class::cast)
+                .anyMatch(effect -> power >= effect.minimumPower());
     }
 
     /**
@@ -3398,6 +3429,18 @@ public class GameQueryService {
             return true;
         }
         return false;
+    }
+
+    /**
+     * Ethersworn Shieldmage: "prevent all damage that would be dealt to [permanents matching a
+     * predicate] this turn." Returns {@code true} when the given permanent currently matches any
+     * active turn-scoped all-damage-prevention predicate. Re-evaluated per damage event, so it
+     * covers permanents that start/stop matching after the effect resolved (official ruling).
+     */
+    public boolean isAllDamagePreventedByPredicate(GameData gameData, Permanent permanent) {
+        if (gameData.allDamagePreventionPredicates.isEmpty()) return false;
+        return gameData.allDamagePreventionPredicates.stream()
+                .anyMatch(p -> predicateEvaluationService.matchesPermanentPredicate(gameData, permanent, p));
     }
 
     /**

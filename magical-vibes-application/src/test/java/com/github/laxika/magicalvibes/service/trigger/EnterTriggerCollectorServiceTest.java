@@ -7,6 +7,7 @@ import com.github.laxika.magicalvibes.model.GameData;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.StackEntryType;
 import com.github.laxika.magicalvibes.model.effect.DestroyTargetPermanentEffect;
+import com.github.laxika.magicalvibes.model.effect.EnteringCreatureExactStatsConditionalEffect;
 import com.github.laxika.magicalvibes.model.effect.EnteringCreatureMinPowerConditionalEffect;
 import com.github.laxika.magicalvibes.model.effect.GainLifeEffect;
 import com.github.laxika.magicalvibes.model.effect.MayEffect;
@@ -170,6 +171,38 @@ class EnterTriggerCollectorServiceTest {
         assertThat(gd.stack.getFirst().getTargetId()).isEqualTo(enteringPermanent.getId());
         MayEffect may = (MayEffect) gd.stack.getFirst().getEffectsToResolve().getFirst();
         assertThat(may.wrapped()).isInstanceOf(PutCounterOnTargetPermanentEffect.class);
+    }
+
+    @Test
+    @DisplayName("Ally-creature exact-stats gate bakes a mandatory put-counters on a 1/1 entrant (Sigil Captain)")
+    void allyCreatureMandatoryPutCountersOnEntering1_1() {
+        addAllyCreatureTrigger(EffectSlot.ON_ALLY_CREATURE_ENTERS_BATTLEFIELD,
+                new EnteringCreatureExactStatsConditionalEffect(1, 1,
+                        new PutCountersOnEnteringCreatureEffect(2, false)));
+
+        Card entering = enteringCreature(1, 1);
+        Permanent enteringPermanent = new Permanent(entering);
+        gd.playerBattlefields.get(player1Id).add(enteringPermanent);
+
+        service.checkAllyCreatureEntersTriggers(gd, player1Id, entering, 0);
+
+        assertThat(gd.stack).hasSize(1);
+        assertThat(gd.stack.getFirst().getEntryType()).isEqualTo(StackEntryType.TRIGGERED_ABILITY);
+        assertThat(gd.stack.getFirst().getTargetId()).isEqualTo(enteringPermanent.getId());
+        assertThat(gd.stack.getFirst().getEffectsToResolve().getFirst())
+                .isInstanceOf(PutCounterOnTargetPermanentEffect.class);
+    }
+
+    @Test
+    @DisplayName("Ally-creature exact-stats gate skips an entrant that is not 1/1")
+    void allyCreatureExactStatsGatesNon1_1() {
+        addAllyCreatureTrigger(EffectSlot.ON_ALLY_CREATURE_ENTERS_BATTLEFIELD,
+                new EnteringCreatureExactStatsConditionalEffect(1, 1,
+                        new PutCountersOnEnteringCreatureEffect(2, false)));
+
+        service.checkAllyCreatureEntersTriggers(gd, player1Id, enteringCreature(1, 2), 0);
+
+        assertThat(gd.stack).isEmpty();
     }
 
     @Test

@@ -49,6 +49,8 @@ public sealed interface Condition permits
         DidntAttack,
         DidntGainLifeThisTurn,
         Enchanted,
+        FirstCombatPhase,
+        EndStepPlayerDidntCastCreatureSpell,
         Equipped,
         GainedLifeThisTurn,
         GraveyardCardThreshold,

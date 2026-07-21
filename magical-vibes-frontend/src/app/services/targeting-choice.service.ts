@@ -114,6 +114,7 @@ export class TargetingChoiceService {
     this.alternateCostSacrificeCount = 0;
     this.alternateCostLifePayment = 0;
     this.alternateCostTapCount = 0;
+    this.alternateCostReturnCount = 0;
     this.alternateCostManaCost = '';
     this.alternateCostSelectedIds.set([]);
     // Graveyard targeting
@@ -235,6 +236,7 @@ export class TargetingChoiceService {
   alternateCostSacrificeCount = 0;
   alternateCostLifePayment = 0;
   alternateCostTapCount = 0;
+  alternateCostReturnCount = 0;
   alternateCostManaCost = '';
   alternateCostSelectedIds = signal<string[]>([]);
 
@@ -371,6 +373,7 @@ export class TargetingChoiceService {
         this.alternateCostSacrificeCount = card.alternateCostSacrificeCount;
         this.alternateCostLifePayment = card.alternateCostLifePayment;
         this.alternateCostTapCount = card.alternateCostTapCount;
+        this.alternateCostReturnCount = card.alternateCostReturnCount;
         this.alternateCostManaCost = card.alternateCostManaCost ?? '';
         return;
       }
@@ -1424,7 +1427,7 @@ export class TargetingChoiceService {
 
   toggleAlternateCostCreature(permanentId: string): void {
     if (!this.selectingAlternateCostCreatures) return;
-    const totalNeeded = this.alternateCostSacrificeCount + this.alternateCostTapCount;
+    const totalNeeded = this.alternateCostSacrificeCount + this.alternateCostTapCount + this.alternateCostReturnCount;
     const current = this.alternateCostSelectedIds();
     if (current.includes(permanentId)) {
       this.alternateCostSelectedIds.set(current.filter(id => id !== permanentId));
@@ -1440,7 +1443,7 @@ export class TargetingChoiceService {
 
   confirmAlternateCost(): void {
     if (!this.selectingAlternateCostCreatures) return;
-    const totalNeeded = this.alternateCostSacrificeCount + this.alternateCostTapCount;
+    const totalNeeded = this.alternateCostSacrificeCount + this.alternateCostTapCount + this.alternateCostReturnCount;
     const selected = this.alternateCostSelectedIds();
     if (selected.length !== totalNeeded) return;
     this.websocketService.send({
@@ -1463,6 +1466,7 @@ export class TargetingChoiceService {
     this.alternateCostSacrificeCount = 0;
     this.alternateCostLifePayment = 0;
     this.alternateCostTapCount = 0;
+    this.alternateCostReturnCount = 0;
     this.alternateCostManaCost = '';
     this.alternateCostSelectedIds.set([]);
   }

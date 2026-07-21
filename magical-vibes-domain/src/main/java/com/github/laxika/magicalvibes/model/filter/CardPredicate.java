@@ -15,6 +15,7 @@ public sealed interface CardPredicate permits
         CardHasFlashbackPredicate,
         CardIsAuraPredicate,
         CardIsHistoricPredicate,
+        CardIsMulticoloredPredicate,
         CardIsPermanentPredicate,
         CardIsTokenPredicate,
         CardIsSelfPredicate,

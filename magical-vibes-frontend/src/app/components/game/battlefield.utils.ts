@@ -97,3 +97,7 @@ export function isPermanentCreature(perm: Permanent): boolean {
 export function isPermanentArtifact(perm: Permanent): boolean {
   return perm.card.type === 'ARTIFACT' || perm.card.additionalTypes?.includes('ARTIFACT');
 }
+
+export function isPermanentLand(perm: Permanent): boolean {
+  return perm.card.type === 'LAND' || perm.card.additionalTypes?.includes('LAND');
+}

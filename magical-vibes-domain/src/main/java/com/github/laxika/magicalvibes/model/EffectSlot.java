@@ -60,6 +60,13 @@ ON_ALLY_CREATURE_ENTERS_BATTLEFIELD,
     MAY_SKIP_DRAW_STEP_DRAW,
     END_STEP_TRIGGERED,
     CONTROLLER_END_STEP_TRIGGERED,
+    /** "At the beginning of each opponent's end step" — fires during the end step of any player who
+     *  is an opponent of this permanent's controller (i.e. not the controller's own end step).
+     *  Checked in {@code StepTriggerService.handleEndStepTriggers}, which bakes the end-step player
+     *  (that opponent) into the stack entry's {@code targetId} so an intervening-if
+     *  {@link com.github.laxika.magicalvibes.model.effect.ConditionalEffect} can gate on "that player"
+     *  (e.g. {@code EndStepPlayerDidntCastCreatureSpell}). Used by Predatory Advantage. */
+    OPPONENT_END_STEP_TRIGGERED,
     ON_CONTROLLER_DRAWS,
     ON_OPPONENT_DRAWS,
     ON_OPPONENT_DISCARDS,
@@ -70,6 +77,16 @@ ON_ALLY_CREATURE_ENTERS_BATTLEFIELD,
     ON_ANY_PLAYER_TAPS_LAND,
     ON_ANY_PERMANENT_DEALS_DAMAGE_TO_YOU,
     ON_ALLY_PERMANENT_SACRIFICED,
+    /** Global watcher: triggers whenever any player sacrifices a creature ("Whenever a player
+     *  sacrifices a creature"). Fires on every permanent with this slot across all battlefields, once
+     *  per sacrificed creature (last-known info decides creature-ness). The trigger belongs to the
+     *  scanning permanent's controller; a wrapped {@code MayEffect(PutCountersOnSourceEffect)} resolves
+     *  onto that permanent (like Scavenger Drake's {@code ON_ANY_CREATURE_DIES}). Checked in
+     *  {@code TriggerCollectionService.checkAnyCreatureSacrificedTriggers}, fired from the two sacrifice
+     *  choke points ({@code DestructionSupport.sacrificeAndLog} for edict/chosen sacrifices,
+     *  {@code checkAllyPermanentSacrificedTriggers} for sacrifice-self / sacrifice-as-cost). Used by
+     *  Thraximundar. */
+    ON_ANY_CREATURE_SACRIFICED,
     ON_BECOMES_TARGET_OF_SPELL,
     ON_BECOMES_TARGET_OF_OPPONENT_SPELL,
     ON_ANY_CREATURE_DIES,
@@ -377,6 +394,12 @@ ON_ALLY_CREATURE_ENTERS_BATTLEFIELD,
      *  {@code TriggerCollectionService.checkSpellCastTriggers}. Used by the SOS Infusion copy cycle
      *  (e.g. Lumaret's Favor) via {@code CopyThisSpellIfConditionEffect}. */
     ON_SELF_CAST,
+    /** Marker slot: "The first spell you cast each turn has cascade." Holds a {@code CascadeEffect};
+     *  detected by presence (not effect type) in {@code TriggerCollectionService.checkSpellCastTriggers},
+     *  which — when the casting player casts their first spell of the turn — queues that CascadeEffect as
+     *  a triggered ability keyed to the just-cast spell (so the cascade threshold is the spell's mana
+     *  value, not this permanent's). Used by Maelstrom Nexus. */
+    GRANT_CASCADE_TO_FIRST_SPELL,
     /** Triggers whenever the controller clashes (MTG rule 701.29). Fired from
      *  {@code TriggerCollectionService.performClash} after the clash ends. Targeting triggers route
      *  through the {@code PermanentChoiceContext.ClashTriggerTarget} interaction so the controller
@@ -477,5 +500,16 @@ ON_ALLY_CREATURE_ENTERS_BATTLEFIELD,
      *  once for each source. Fired from the two player-damage choke points
      *  ({@code CombatDamageService} per source, {@code DamageSupport} for non-combat) via
      *  {@code TriggerCollectionService.checkControllerDealtDamageTriggers}. Used by Living Artifact. */
-    ON_CONTROLLER_DEALT_DAMAGE
+    ON_CONTROLLER_DEALT_DAMAGE,
+    /** Triggers whenever this permanent's controller is dealt damage (combat or non-combat) by a
+     *  source an <em>opponent</em> controls — "Whenever a source an opponent controls deals damage to
+     *  you, ...". Like {@link #ON_CONTROLLER_DEALT_DAMAGE} (fires once per damage source, snapshots the
+     *  amount onto the queued ability's {@code eventValue}) but gated so damage from the controller's
+     *  own sources (e.g. their pain lands or self-damage spells) is ignored. The opponent gate is
+     *  applied in {@code TriggerCollectionService.checkControllerDealtDamageTriggers} from the source's
+     *  controller supplied by the two player-damage choke points ({@code CombatDamageService} — combat
+     *  damage to the defender always comes from the active player's attackers; {@code DamageSupport} —
+     *  the damaging spell/ability's controller). Used by Retaliator Griffin
+     *  ({@code MayEffect(PutCountersOnSelfEffect(PLUS_ONE_PLUS_ONE, new EventValue()))}). */
+    ON_CONTROLLER_DEALT_DAMAGE_BY_OPPONENT
 }

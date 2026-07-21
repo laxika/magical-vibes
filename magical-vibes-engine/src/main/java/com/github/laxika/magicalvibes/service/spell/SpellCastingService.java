@@ -21,6 +21,7 @@ import com.github.laxika.magicalvibes.model.LifeCastingCost;
 import com.github.laxika.magicalvibes.model.ManaCastingCost;
 import com.github.laxika.magicalvibes.model.SacrificePermanentsCost;
 import com.github.laxika.magicalvibes.model.TapUntappedPermanentsCost;
+import com.github.laxika.magicalvibes.model.ReturnPermanentsCost;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardColor;
 import com.github.laxika.magicalvibes.model.ExiledCardEntry;
@@ -620,10 +621,15 @@ public class SpellCastingService {
                     return category.includesPermanents() || category.includesPlayers() || category.isGraveyard();
                 })
                 : EffectResolution.needsSpellCastTarget(card);
-        // Modal mode that targets multiple distinct spells on the stack (e.g. Choreographed Sparks'
-        // "both": one instant/sorcery spell + one creature spell). unwrapChooseOneEffect declared one
-        // target() slot per filter, so the card now reports more than one spell target.
-        boolean multipleSpellTargets = wasModal && unwrappedNeedsSpellTarget && card.getSpellTargets().size() > 1;
+        // Targets multiple distinct spells on the stack. Two shapes qualify:
+        //  - a modal mode that declares more than one spell target() slot (Choreographed Sparks' "both":
+        //    one instant/sorcery spell + one creature spell);
+        //  - a non-modal "counter up to N target spells" (Double Negative): a single spell-on-stack
+        //    target group with max > 1 (bound to a CounterEachTargetSpellEffect) and no permanent/player
+        //    targets. In both cases the chosen targets ride in the flat targetIds list.
+        boolean multipleSpellTargets = unwrappedNeedsSpellTarget && (wasModal
+                ? card.getSpellTargets().size() > 1
+                : !unwrappedNeedsTarget && card.getMaxTargets() > 1);
 
         // A "spell or permanent" single-target chooser (e.g. Glamerdye) can target either zone. Infer
         // which one this cast is using from the actual target id so the right validation/entry path runs.
@@ -710,6 +716,32 @@ public class SpellCastingService {
                     if (!predicateEvaluationService.matchesPermanentPredicate(toTap, tapCost.get().filter(),
                             FilterContext.of(gameData).withSourceControllerId(playerId))) {
                         throw new IllegalStateException("Tap target does not match the required filter");
+                    }
+                }
+            }
+
+            var returnCost = altCast.getCost(ReturnPermanentsCost.class);
+            if (returnCost.isPresent()) {
+                int requiredCount = returnCost.get().count();
+                // Return IDs occupy the tail of the list, after any sacrifice and tap IDs.
+                int sacCount = sacCost.map(SacrificePermanentsCost::count).orElse(0);
+                int tapCount = tapCost.map(TapUntappedPermanentsCost::count).orElse(0);
+                int returnIdCount = alternateCostSacrificePermanentIds.size() - sacCount - tapCount;
+                if (returnIdCount != requiredCount) {
+                    throw new IllegalStateException("Must return exactly " + requiredCount + " permanents");
+                }
+                List<Permanent> battlefield = gameData.playerBattlefields.get(playerId);
+                List<UUID> returnIds = alternateCostSacrificePermanentIds.subList(sacCount + tapCount, alternateCostSacrificePermanentIds.size());
+                for (UUID returnId : returnIds) {
+                    Permanent toReturn = battlefield == null ? null : battlefield.stream()
+                            .filter(p -> p.getId().equals(returnId))
+                            .findFirst()
+                            .orElse(null);
+                    if (toReturn == null) {
+                        throw new IllegalStateException("Return target not found on your battlefield");
+                    }
+                    if (!predicateEvaluationService.matchesPermanentPredicate(gameData, toReturn, returnCost.get().filter())) {
+                        throw new IllegalStateException("Return target does not match the required filter");
                     }
                 }
             }
@@ -1244,20 +1276,26 @@ public class SpellCastingService {
                         null, Map.of(), null, List.of(), List.of()
                 ));
             } else if (graveyardToHandEffect != null) {
+                // A modal "both" mode may pair the graveyard return with a spell-on-stack counter
+                // (Soul Manipulation): carry the counter's spell target through the interactive
+                // graveyard choice so it survives onto the resulting stack entry's targetId.
+                UUID spellCounterTargetId = (unwrappedNeedsSpellTarget && targetingSpellOnStack) ? targetId : null;
                 long matchingCount = gameData.playerGraveyards.getOrDefault(playerId, List.of()).stream()
                         .filter(c -> predicateEvaluationService.matchesCardPredicate(c, graveyardToHandEffect.filter(), card.getId()))
                         .count();
                 if (matchingCount > 0) {
+                    gameData.graveyardTargetOperation.spellCounterTargetId = spellCounterTargetId;
                     graveyardTargetingService.handleUpToNGraveyardSpellTargeting(gameData, playerId, card,
                             entryType, graveyardToHandEffect.filter(),
                             graveyardToHandEffect.maxTargets(), filteredSpellEffects);
                     return; // finishSpellCast handled in handleMultipleCardsChosen
                 }
-                // No matching cards — put spell on stack with 0 targets (fizzles on resolution)
+                // No matching cards — put spell on stack with 0 graveyard targets (the return fizzles),
+                // preserving any spell-on-stack counter target (Zone.STACK) so the counter still resolves.
                 gameData.stack.add(new StackEntry(
                         entryType, card, playerId, card.getName(),
-                        filteredSpellEffects, 0, null,
-                        null, Map.of(), null, List.of(), List.of()
+                        filteredSpellEffects, 0, spellCounterTargetId,
+                        null, Map.of(), spellCounterTargetId != null ? Zone.STACK : null, List.of(), List.of()
                 ));
             } else if (graveyardToTopEffect != null) {
                 long matchingCount = gameData.playerGraveyards.getOrDefault(playerId, List.of()).stream()
@@ -2782,6 +2820,26 @@ public class SpellCastingService {
                             .text(player.getUsername() + " taps ")
                             .card(toTap.getCard())
                             .text(" for ")
+                            .card(card)
+                            .text(".")
+                            .build());
+                }
+            }
+        }
+
+        // Return permanents to their owner's hand (tail of the ID list, after sacrifice and tap IDs)
+        var returnCost = altCast.getCost(ReturnPermanentsCost.class);
+        if (returnCost.isPresent()) {
+            int sacCount = altCast.getCost(SacrificePermanentsCost.class).map(SacrificePermanentsCost::count).orElse(0);
+            int tapCount = altCast.getCost(TapUntappedPermanentsCost.class).map(TapUntappedPermanentsCost::count).orElse(0);
+            List<UUID> returnIds = sacrificePermanentIds.subList(sacCount + tapCount, sacrificePermanentIds.size());
+            for (UUID returnId : returnIds) {
+                Permanent toReturn = gameQueryService.findPermanentById(gameData, returnId);
+                if (toReturn != null && permanentRemovalService.removePermanentToHand(gameData, toReturn)) {
+                    gameBroadcastService.logAndBroadcast(gameData, GameLog.builder()
+                            .text(player.getUsername() + " returns ")
+                            .card(toReturn.getCard())
+                            .text(" to hand for ")
                             .card(card)
                             .text(".")
                             .build());

@@ -17,6 +17,7 @@ import com.github.laxika.magicalvibes.model.effect.DealDamageToPlayersEffect;
 import com.github.laxika.magicalvibes.model.effect.DealDamageToTargetOpponentOrPlaneswalkerEffect;
 import com.github.laxika.magicalvibes.model.effect.EnchantedCreatureDealsDamageEqualToDealtDamageToControllerEffect;
 import com.github.laxika.magicalvibes.model.effect.DestroyDamageSourcePermanentEffect;
+import com.github.laxika.magicalvibes.model.effect.MayEffect;
 import com.github.laxika.magicalvibes.model.effect.PutCountersOnSelfEffect;
 import com.github.laxika.magicalvibes.model.effect.ReflectSourceDamageToItsControllerEffect;
 import com.github.laxika.magicalvibes.model.effect.ReturnDamageSourcePermanentToHandEffect;
@@ -290,6 +291,34 @@ public class DamageTriggerCollectorService {
 
         gameBroadcastService.logAndBroadcast(gameData, GameLog.abilityTriggers(perm.getCard()));
         log.info("Game {} - {} ON_CONTROLLER_DEALT_DAMAGE trigger fires ({} damage)",
+                gameData.id, perm.getCard().getName(), dc.amount());
+        return true;
+    }
+
+    // ── ON_CONTROLLER_DEALT_DAMAGE_BY_OPPONENT (Retaliator Griffin) ────
+
+    @CollectsTrigger(value = MayEffect.class, slot = EffectSlot.ON_CONTROLLER_DEALT_DAMAGE_BY_OPPONENT)
+    private boolean handleControllerDealtDamageByOpponentMay(TriggerMatchContext match,
+            MayEffect may, TriggerContext ctx) {
+        TriggerContext.DamageToControllerAmount dc = (TriggerContext.DamageToControllerAmount) ctx;
+        GameData gameData = match.gameData();
+        Permanent perm = match.permanent();
+
+        StackEntry entry = new StackEntry(
+                StackEntryType.TRIGGERED_ABILITY,
+                perm.getCard(),
+                match.controllerId(),
+                perm.getCard().getName() + "'s ability",
+                new ArrayList<>(List.of(may)),
+                null,
+                perm.getId());
+        // Snapshot the damage dealt so the wrapped effect's EventValue amount ("put that many
+        // +1/+1 counters") reads it back at resolution, after the "you may" is accepted.
+        entry.setEventValue(dc.amount());
+        gameData.enqueueTrigger(entry);
+
+        gameBroadcastService.logAndBroadcast(gameData, GameLog.abilityTriggers(perm.getCard()));
+        log.info("Game {} - {} ON_CONTROLLER_DEALT_DAMAGE_BY_OPPONENT trigger fires ({} damage)",
                 gameData.id, perm.getCard().getName(), dc.amount());
         return true;
     }
