@@ -244,6 +244,9 @@ class TargetPolarityClassifier {
             entry("PutTargetOnTopOfLibraryEffect", TargetPolarity.HARMFUL_REMOVAL),
             entry("ReturnTargetPermanentToHandOrLibraryTopByPredicateEffect", TargetPolarity.HARMFUL_REMOVAL),
             entry("SacrificeTargetCreatureThenCreateTokensEqualToPowerEffect", TargetPolarity.HARMFUL_REMOVAL),
+            // Slave of Bolas: the stolen target is sacrificed at end step — net removal. Own-board
+            // uses (Hazoret's Favor) are safe: their target filters restrict candidates anyway.
+            entry("SacrificeTargetPermanentAtEndStepEffect", TargetPolarity.HARMFUL_REMOVAL),
             entry("ShuffleTargetPermanentIntoLibraryEffect", TargetPolarity.HARMFUL_REMOVAL),
 
             // The target (or a permanent tied to it) takes damage.
@@ -274,6 +277,7 @@ class TargetPolarityClassifier {
             entry("BecomeColorlessEffect", TargetPolarity.HARMFUL),
             entry("MarkTargetCreatureExileInsteadOfDieThisTurnEffect", TargetPolarity.HARMFUL),
             entry("MassFightTargetCreatureEffect", TargetPolarity.HARMFUL),
+            entry("MustBlockSourceEffect", TargetPolarity.HARMFUL),
             entry("MustBlockTargetCreatureEffect", TargetPolarity.HARMFUL),
             entry("RemoveKeywordEffect", TargetPolarity.HARMFUL),
             entry("RemoveTargetFromCombatEffect", TargetPolarity.HARMFUL),

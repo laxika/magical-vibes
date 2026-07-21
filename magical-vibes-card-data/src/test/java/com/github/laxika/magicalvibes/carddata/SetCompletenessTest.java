@@ -3,6 +3,7 @@ package com.github.laxika.magicalvibes.carddata;
 import com.github.laxika.magicalvibes.cards.CardSet;
 import com.github.laxika.magicalvibes.cards.RandomDeckGenerator;
 import org.junit.jupiter.api.AfterEach;
+import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 
 import static org.assertj.core.api.Assertions.assertThat;
@@ -18,6 +19,13 @@ class SetCompletenessTest {
 
     // Any set with implemented cards; only its printing count (not oracle data) matters here.
     private static final CardSet SET = CardSet.SET_SOM;
+
+    @BeforeEach
+    void setUp() {
+        // The oracle loaders register set totals as a side effect, so a loader test that ran
+        // earlier in the same test JVM leaves the registry populated — start from a clean slate.
+        CardSet.clearSetCardTotalRegistry();
+    }
 
     @AfterEach
     void tearDown() {

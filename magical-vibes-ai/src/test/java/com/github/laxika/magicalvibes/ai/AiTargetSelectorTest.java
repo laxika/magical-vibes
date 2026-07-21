@@ -15,6 +15,7 @@ import com.github.laxika.magicalvibes.cards.e.EntrancingMelody;
 import com.github.laxika.magicalvibes.cards.f.FalkenrathNoble;
 import com.github.laxika.magicalvibes.cards.f.FertileGround;
 import com.github.laxika.magicalvibes.cards.f.Forest;
+import com.github.laxika.magicalvibes.cards.g.GiantAmbushBeetle;
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
 import com.github.laxika.magicalvibes.cards.i.Island;
 import com.github.laxika.magicalvibes.cards.k.KarnsTemporalSundering;
@@ -26,6 +27,7 @@ import com.github.laxika.magicalvibes.cards.p.Pounce;
 import com.github.laxika.magicalvibes.cards.q.QuicksilverGeyser;
 import com.github.laxika.magicalvibes.cards.s.SerraAngel;
 import com.github.laxika.magicalvibes.cards.s.Skulduggery;
+import com.github.laxika.magicalvibes.cards.s.SlaveOfBolas;
 import com.github.laxika.magicalvibes.cards.s.SplendidAgony;
 import com.github.laxika.magicalvibes.cards.s.Stun;
 import com.github.laxika.magicalvibes.cards.s.SynchronizedStrike;
@@ -376,6 +378,32 @@ class AiTargetSelectorTest {
         Permanent oppAngel = harness.addToBattlefieldAndReturn(human, new SerraAngel());
 
         UUID target = targetSelector.chooseTarget(gd, new Diminish(), aiPlayer.getId());
+
+        assertThat(target).isEqualTo(oppAngel.getId());
+    }
+
+    @Test
+    @DisplayName("Steal-and-sacrifice spell (Slave of Bolas) targets the opponent's creature, not the AI's own")
+    void stealAndSacrificeSpellTargetsOpponentCreatureNotOwnBoard() {
+        // The sacrifice-at-end-step rider classifies the card as removal, so it must aim at
+        // the opponent's best creature rather than the AI stealing (and sacrificing) its own.
+        harness.addToBattlefield(aiPlayer, new GrizzlyBears());
+        Permanent oppAngel = harness.addToBattlefieldAndReturn(human, new SerraAngel());
+
+        UUID target = targetSelector.chooseTarget(gd, new SlaveOfBolas(), aiPlayer.getId());
+
+        assertThat(target).isEqualTo(oppAngel.getId());
+    }
+
+    @Test
+    @DisplayName("Forced-block ETB (Giant Ambush Beetle) targets the opponent's creature, not the AI's own")
+    void forcedBlockEtbTargetsOpponentCreatureNotOwnBoard() {
+        // The may-wrapped MustBlockSourceEffect is harmful to the blocker it targets — it must
+        // not fall into the own-battlefield-first fallback and force the AI's own creature to block.
+        harness.addToBattlefield(aiPlayer, new GrizzlyBears());
+        Permanent oppAngel = harness.addToBattlefieldAndReturn(human, new SerraAngel());
+
+        UUID target = targetSelector.chooseTarget(gd, new GiantAmbushBeetle(), aiPlayer.getId());
 
         assertThat(target).isEqualTo(oppAngel.getId());
     }
