@@ -35,6 +35,7 @@ import com.github.laxika.magicalvibes.model.filter.PlayerRelationPredicate;
 import com.github.laxika.magicalvibes.model.filter.StackEntryAllOfPredicate;
 import com.github.laxika.magicalvibes.model.filter.StackEntryAnyOfPredicate;
 import com.github.laxika.magicalvibes.model.filter.StackEntryColorInPredicate;
+import com.github.laxika.magicalvibes.model.filter.StackEntryControlledByPredicate;
 import com.github.laxika.magicalvibes.model.filter.StackEntryHasTargetPredicate;
 import com.github.laxika.magicalvibes.model.filter.StackEntryIsSingleTargetPredicate;
 import com.github.laxika.magicalvibes.model.filter.StackEntryManaValuePredicate;
@@ -298,6 +299,51 @@ class TargetLegalityServiceTest {
             assertThatThrownBy(() -> sut.validateSpellTargetOnStack(gd, UUID.randomUUID(), filter, player1Id))
                     .isInstanceOf(IllegalStateException.class)
                     .hasMessage("Target must be a spell or ability on the stack");
+        }
+
+        // ----- Ability-type filter admits abilities without a HasTarget predicate (Nimble Obstructionist) -----
+
+        private StackEntryPredicateTargetFilter counterOpponentAbilityFilter() {
+            return new StackEntryPredicateTargetFilter(
+                    new StackEntryAllOfPredicate(List.of(
+                            new StackEntryTypeInPredicate(Set.of(
+                                    StackEntryType.ACTIVATED_ABILITY, StackEntryType.TRIGGERED_ABILITY)),
+                            new StackEntryNotPredicate(new StackEntryControlledByPredicate()))),
+                    "Target must be an activated or triggered ability you don't control.");
+        }
+
+        @Test
+        @DisplayName("accepts an opponent's ability when the filter names an ability type (no HasTarget)")
+        void acceptsAbilityViaAbilityTypeFilter() {
+            Card source = createCreature("Bear", CardColor.GREEN);
+            StackEntry entry = new StackEntry(StackEntryType.ACTIVATED_ABILITY, source, player2Id, "test", List.of());
+            gd.stack.add(entry);
+
+            sut.validateSpellTargetOnStack(gd, source.getId(), counterOpponentAbilityFilter(), player1Id);
+        }
+
+        @Test
+        @DisplayName("rejects an activated ability the validator controls")
+        void rejectsAbilityYouControl() {
+            Card source = createCreature("Bear", CardColor.GREEN);
+            StackEntry entry = new StackEntry(StackEntryType.ACTIVATED_ABILITY, source, player1Id, "test", List.of());
+            gd.stack.add(entry);
+
+            assertThatThrownBy(() -> sut.validateSpellTargetOnStack(gd, source.getId(), counterOpponentAbilityFilter(), player1Id))
+                    .isInstanceOf(IllegalStateException.class)
+                    .hasMessage("Target must be an activated or triggered ability you don't control.");
+        }
+
+        @Test
+        @DisplayName("rejects a spell when the filter requires an ability type")
+        void rejectsSpellWhenAbilityTypeRequired() {
+            Card spell = createCreature("Bear", CardColor.GREEN);
+            StackEntry entry = new StackEntry(spell, player2Id);
+            gd.stack.add(entry);
+
+            assertThatThrownBy(() -> sut.validateSpellTargetOnStack(gd, spell.getId(), counterOpponentAbilityFilter(), player1Id))
+                    .isInstanceOf(IllegalStateException.class)
+                    .hasMessage("Target must be an activated or triggered ability you don't control.");
         }
     }
 

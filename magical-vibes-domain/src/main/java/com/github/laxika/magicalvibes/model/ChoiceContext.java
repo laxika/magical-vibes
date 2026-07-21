@@ -323,4 +323,17 @@ public sealed interface ChoiceContext {
      * resolution. Used by non-targeting modal upkeep triggers such as Etherwrought Page.
      */
     record ChooseModeChoice(Card sourceCard, UUID controllerId, ChooseOneEffect effect) implements ChoiceContext {}
+
+    /**
+     * Torment of Hailfire: {@code affectedPlayerId} (an opponent) chooses one of "sacrifice a nonland
+     * permanent", "discard a card", or "lose N life" for one iteration of the effect. The offered
+     * options are pruned to what the player can actually do (life is always offered); the "lose life"
+     * label is dynamic ({@code "Lose N life"}), so a chosen value that is neither {@link #SACRIFICE}
+     * nor {@link #DISCARD} means the life-loss outcome. Answered via {@code handleListChoice}.
+     */
+    record TormentPenaltyChoice(UUID affectedPlayerId, String sourceCardName) implements ChoiceContext {
+
+        public static final String SACRIFICE = "Sacrifice a nonland permanent";
+        public static final String DISCARD = "Discard a card";
+    }
 }

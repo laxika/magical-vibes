@@ -42,6 +42,7 @@ import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.ManaCost;
 import com.github.laxika.magicalvibes.model.ManaPool;
 import com.github.laxika.magicalvibes.model.PendingAbilityActivation;
+import com.github.laxika.magicalvibes.model.PendingGraveyardAbilityActivation;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.PermanentChoiceContext;
 import com.github.laxika.magicalvibes.model.Player;
@@ -482,6 +483,8 @@ public class AbilityActivationService {
             throw new IllegalStateException("Activated abilities of " + permanent.getCard().getName() + " can't be activated (Arrest)");
         }
         validateNotBlockedByStaticAbilityLock(gameData, permanent);
+        // Overwhelming Splendor: sacrifice abilities are never mana / loyalty abilities
+        validateEnchantedPlayerAbilityRestriction(gameData, playerId, null);
 
         // Validate target for effects that need one
         for (CardEffect effect : permanent.getCard().getEffects(EffectSlot.ON_SACRIFICE)) {
@@ -629,6 +632,9 @@ public class AbilityActivationService {
             }
         }
 
+        // Overwhelming Splendor: the enchanted player may activate only mana / loyalty abilities
+        validateEnchantedPlayerAbilityRestriction(gameData, playerId, ability);
+
         // Identify permanent-choice costs (e.g. return lands to hand)
         List<PermanentChoiceCostHandler> permanentChoiceCosts = ability.getEffects().stream()
                 .map(e -> toPermanentChoiceCostHandler(e, null, 0))
@@ -654,6 +660,19 @@ public class AbilityActivationService {
             String typeName = graveyardExileFilterLabel(exileNGraveyardCost.requiredType(), null);
             throw new IllegalStateException("Not enough " + typeName + "cards in graveyard to exile (need "
                     + exileNGraveyardCost.count() + ")");
+        }
+
+        // Discard-a-card activation cost (Eternalize—{cost}, Discard a card): validate up front that a
+        // legal card to discard exists before paying any cost, so an unpayable discard makes activation
+        // illegal without side effects (CR 602.2a).
+        DiscardCardTypeCost discardCardTypeCost = ability.getEffects().stream()
+                .filter(DiscardCardTypeCost.class::isInstance)
+                .map(DiscardCardTypeCost.class::cast)
+                .findFirst()
+                .orElse(null);
+        if (discardCardTypeCost != null
+                && collectDiscardIndices(gameData.playerHands.get(playerId), discardCardTypeCost, xValue).isEmpty()) {
+            throw new IllegalStateException("No valid card to discard for the activation cost");
         }
 
         // Pay mana cost. Static effects (Embalmer's Tools) can make a matching graveyard card's
@@ -688,6 +707,18 @@ public class AbilityActivationService {
             if (handleGraveyardPermanentChoiceCost(gameData, player, card, graveyardCardIndex, idx, handler)) {
                 return; // Entering interactive choice mode; activation will complete later
             }
+        }
+
+        // Discard-a-card cost: enter interactive discard-choice mode. The source card has already been
+        // exiled above, so the suspended activation is resumed via handleActivatedAbilityDiscardCostChosen.
+        if (discardCardTypeCost != null) {
+            List<Integer> validDiscardIndices = collectDiscardIndices(gameData.playerHands.get(playerId), discardCardTypeCost, xValue);
+            gameData.pendingGraveyardAbilityActivation = new PendingGraveyardAbilityActivation(playerId, card, ability, xValue);
+            String labelText = discardCardTypeCost.label() != null ? discardCardTypeCost.label() + " " : "";
+            interactionHandlerRegistry.begin(gameData, new PendingInteraction.DiscardCostChoice(
+                    playerId, validDiscardIndices,
+                    "Choose a " + labelText + "card to discard as an activation cost."));
+            return;
         }
 
         completeGraveyardAbilityActivation(gameData, player, card, ability, xValue);
@@ -817,6 +848,12 @@ public class AbilityActivationService {
         gameBroadcastService.logAndBroadcast(gameData, GameLog.textCardText(player.getUsername() + " activates " , card, "'s ability from the graveyard."));
         log.info("Game {} - {} activates {}'s graveyard ability", gameData.id, player.getUsername(), card.getName());
 
+        // "Whenever you activate an eternalize or embalm ability, draw a card" (Vizier of the
+        // Anointed). Fired after the ability is on the stack so the draw trigger lands above it.
+        if (ability.isEmbalmOrEternalize()) {
+            triggerCollectionService.checkControllerActivatesEternalizeOrEmbalmTriggers(gameData, playerId);
+        }
+
         gameData.priorityPassedBy.clear();
         gameBroadcastService.broadcastGameState(gameData);
     }
@@ -854,9 +891,22 @@ public class AbilityActivationService {
         List<CardEffect> abilityEffects = ability.getEffects();
         int effectiveXValue = xValue != null ? xValue : 0;
 
+        // Overwhelming Splendor: the enchanted player may activate only mana / loyalty abilities
+        validateEnchantedPlayerAbilityRestriction(gameData, playerId, ability);
+
         // Validate targeting before any cost is paid — an illegal activation rewinds cleanly (CR 601.2c)
         targetLegalityService.validateActivatedAbilityTargeting(
                 gameData, playerId, ability, abilityEffects, targetId, null, card, effectiveXValue);
+
+        // A hand ability whose (reflexive) effect counters a spell or ability on the stack — e.g.
+        // Nimble Obstructionist's cycling trigger — validates the chosen stack target against the
+        // ability's target filter, mirroring the battlefield activated-ability path (which
+        // validateActivatedAbilityTargeting only applies to permanent/player targets). A minTargets==0
+        // ability with no target chosen (targetId == null) is the legal "decline" case, so cycling
+        // still resolves and draws even with nothing to counter (CR 603.3c / 115.1d).
+        if (ability.isNeedsSpellTarget() && targetId != null) {
+            targetLegalityService.validateSpellTargetOnStack(gameData, targetId, ability.getTargetFilter(), playerId);
+        }
 
         // Pay mana cost (throws before mutating the pool if it can't be afforded). A static effect
         // may replace a cycling ability's mana cost with {0} (New Perspectives, CR 118.9): the card
@@ -882,6 +932,9 @@ public class AbilityActivationService {
                 snapshotEffects.add(effect);
             }
         }
+        // A spell/ability-on-stack target (e.g. a cycling counter trigger) must carry Zone.STACK so
+        // the ability resolves against the stack instead of fizzling as a missing permanent target.
+        Zone targetZone = ability.isNeedsSpellTarget() ? Zone.STACK : null;
         gameData.stack.add(new StackEntry(
                 StackEntryType.ACTIVATED_ABILITY,
                 card,
@@ -890,7 +943,11 @@ public class AbilityActivationService {
                 snapshotEffects,
                 effectiveXValue,
                 targetId,
-                Map.of()
+                null,
+                Map.of(),
+                targetZone,
+                List.of(),
+                List.of()
         ));
 
         // Discard triggers fire after the ability is on the stack (CR 601.2h), so a "whenever you
@@ -965,6 +1022,9 @@ public class AbilityActivationService {
         ActivatedAbility ability = abilities.get(idx);
         List<CardEffect> abilityEffects = ability.getEffects();
 
+        // Overwhelming Splendor: the enchanted player may activate only mana / loyalty abilities
+        validateEnchantedPlayerAbilityRestriction(gameData, playerId, ability);
+
         // Validate targeting before any cost is paid — an illegal activation rewinds cleanly (CR 601.2c)
         targetLegalityService.validateMultiTargetGraveyardAbility(gameData, playerId, abilityEffects, graveyardCardIds);
 
@@ -1028,6 +1088,12 @@ public class AbilityActivationService {
         if (cardChoice == null || !player.getId().equals(cardChoice.playerId())) {
             throw new IllegalStateException("Not your turn to choose");
         }
+        // A graveyard-activated ability (Eternalize) suspended on its discard cost resumes down its own
+        // completion path rather than the battlefield re-entry below.
+        if (gameData.pendingGraveyardAbilityActivation != null) {
+            handleGraveyardAbilityDiscardCostChosen(gameData, player, cardChoice, cardIndex);
+            return;
+        }
         if (gameData.pendingAbilityActivation == null) {
             throw new IllegalStateException("No pending ability activation");
         }
@@ -1068,6 +1134,36 @@ public class AbilityActivationService {
                 null,
                 source
         );
+    }
+
+    /**
+     * Resumes a graveyard-activated ability (Eternalize) suspended on its "Discard a card" cost after the
+     * player picks which card to discard. Pays the discard, then pushes the ability onto the stack.
+     */
+    private void handleGraveyardAbilityDiscardCostChosen(GameData gameData, Player player,
+                                                         PendingInteraction.DiscardCostChoice cardChoice, int cardIndex) {
+        PendingGraveyardAbilityActivation pending = gameData.pendingGraveyardAbilityActivation;
+        Card card = pending.card();
+        ActivatedAbility ability = pending.ability();
+        DiscardCardTypeCost discardCost = ability.getEffects().stream()
+                .filter(DiscardCardTypeCost.class::isInstance)
+                .map(DiscardCardTypeCost.class::cast)
+                .findFirst()
+                .orElseThrow();
+
+        if (cardChoice.validIndices() == null || !cardChoice.validIndices().contains(cardIndex)) {
+            // Invalid index — re-prompt the discard cost choice.
+            String labelText = discardCost.label() != null ? discardCost.label() + " " : "";
+            sessionManager.sendToPlayer(player.getId(), InteractionPromptMessage.cardIndexPick(
+                    new ArrayList<>(cardChoice.validIndices()),
+                    "Choose a " + labelText + "card to discard as an activation cost.", false));
+            return;
+        }
+
+        gameData.pendingGraveyardAbilityActivation = null;
+        gameData.interaction.clearAwaitingInput();
+        payDiscardCost(gameData, player, discardCost, cardIndex, pending.xValue());
+        completeGraveyardAbilityActivation(gameData, player, card, ability, pending.xValue());
     }
 
     public void handleActivatedAbilityGraveyardExileCostChosen(GameData gameData, Player player, int cardIndex) {
@@ -1751,6 +1847,9 @@ public class AbilityActivationService {
             throw new IllegalStateException("Activated abilities of " + permanent.getCard().getName() + " can't be activated (Arrest)");
         }
         validateNotBlockedByStaticAbilityLock(gameData, permanent);
+
+        // Overwhelming Splendor: the enchanted player may activate only mana / loyalty abilities
+        validateEnchantedPlayerAbilityRestriction(gameData, playerId, ability);
 
         // Activation timing restrictions (e.g. "Activate only during your upkeep")
         validateTimingRestrictions(gameData, playerId, permanent, ability);
@@ -2582,6 +2681,21 @@ public class AbilityActivationService {
 
     private void validateNotBlockedByPithingNeedle(GameData gameData, Permanent permanent, ActivatedAbility ability) {
         validateNotBlockedByNameLock(gameData, permanent.getCard().getName(), isManaAbility(ability));
+    }
+
+    /**
+     * Overwhelming Splendor: the enchanted player can activate only mana abilities and loyalty
+     * abilities. {@code ability} is the activated ability being played, or {@code null} for
+     * activations that are never mana or loyalty abilities (e.g. an ON_SACRIFICE ability).
+     */
+    private void validateEnchantedPlayerAbilityRestriction(GameData gameData, UUID playerId, ActivatedAbility ability) {
+        if (ability != null && (isManaAbility(ability) || ability.getLoyaltyCost() != null)) {
+            return;
+        }
+        if (gameQueryService.playerCantActivateNonManaOrLoyaltyAbilities(gameData, playerId)) {
+            throw new IllegalStateException(
+                    "You can only activate mana abilities and loyalty abilities (Overwhelming Splendor)");
+        }
     }
 
     private void validateNotBlockedByStaticAbilityLock(GameData gameData, Permanent permanent) {

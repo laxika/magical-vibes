@@ -9,6 +9,7 @@ import com.github.laxika.magicalvibes.model.amount.Fixed;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.PermanentChoiceContext;
 import com.github.laxika.magicalvibes.model.effect.BoostSelfEffect;
+import com.github.laxika.magicalvibes.model.effect.BoostTargetCreatureEffect;
 import com.github.laxika.magicalvibes.model.effect.DealDamageToDiscardingPlayerEffect;
 import com.github.laxika.magicalvibes.model.effect.ExileDiscardedCardFromGraveyardEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantKeywordEffect;
@@ -17,6 +18,7 @@ import com.github.laxika.magicalvibes.model.effect.MayEffect;
 import com.github.laxika.magicalvibes.model.effect.MayPayManaEffect;
 import com.github.laxika.magicalvibes.model.effect.PutCounterOnEachMatchingPermanentEffect;
 import com.github.laxika.magicalvibes.model.effect.ScryEffect;
+import com.github.laxika.magicalvibes.model.effect.SequenceEffect;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.UUID;
@@ -162,6 +164,28 @@ public class DiscardTriggerCollectorService {
         return true;
     }
 
+    @CollectsTrigger(value = SequenceEffect.class, slot = EffectSlot.ON_CONTROLLER_DISCARDS)
+    private boolean handleSequenceOnDiscard(TriggerMatchContext match, SequenceEffect trigger, TriggerContext ctx) {
+        // "Whenever you cycle or discard a card, this creature gets +X/+Y until end of turn and can't be
+        // blocked this turn" (and similar mandatory multi-step self-triggers). Cycling discards the card
+        // (CR 702.29e), so this single controller-discard trigger fires for both. The steps must stay ONE
+        // atomic triggered ability (SequenceEffect), so queue a single stack entry carrying the source
+        // permanent id — each self step then resolves against this creature. (Cunning Survivor)
+        var gameData = match.gameData();
+        Card sourceCard = match.permanent().getCard();
+        gameData.enqueueTrigger(new StackEntry(
+                StackEntryType.TRIGGERED_ABILITY,
+                sourceCard,
+                match.controllerId(),
+                sourceCard.getName() + "'s ability",
+                new ArrayList<>(List.of(trigger)),
+                null,
+                match.permanent().getId()));
+        gameBroadcastService.logAndBroadcast(gameData, GameLog.abilityTriggers(sourceCard));
+        log.info("Game {} - {} triggers on cycle/discard (sequence)", gameData.id, sourceCard.getName());
+        return true;
+    }
+
     @CollectsTrigger(value = GrantKeywordEffect.class, slot = EffectSlot.ON_CONTROLLER_DISCARDS)
     private boolean handleGrantKeywordOnDiscard(TriggerMatchContext match, GrantKeywordEffect trigger, TriggerContext ctx) {
         // "Whenever you cycle or discard a card, target creature gains [keyword] until end of turn."
@@ -188,6 +212,22 @@ public class DiscardTriggerCollectorService {
         }
         gameBroadcastService.logAndBroadcast(gameData, GameLog.abilityTriggers(sourceCard));
         log.info("Game {} - {} triggers on cycle/discard (grant keyword)", gameData.id, sourceCard.getName());
+        return true;
+    }
+
+    @CollectsTrigger(value = BoostTargetCreatureEffect.class, slot = EffectSlot.ON_CONTROLLER_DISCARDS)
+    private boolean handleBoostTargetCreatureOnDiscard(TriggerMatchContext match, BoostTargetCreatureEffect trigger, TriggerContext ctx) {
+        // "Whenever you cycle or discard a card, target creature an opponent controls gets -X/-Y until
+        // end of turn." Cycling discards the card (CR 702.29e), so this single controller-discard
+        // trigger fires for both. The effect's targetSpec predicate (a "creature an opponent controls"
+        // filter) drives the legal-target list via the DiscardControllerTriggerTarget pipeline, so the
+        // controller picks the creature before the ability goes on the stack. (Ominous Sphinx)
+        var gameData = match.gameData();
+        Card sourceCard = match.permanent().getCard();
+        gameData.queueInteraction(new PermanentChoiceContext.DiscardControllerTriggerTarget(
+                sourceCard, match.controllerId(), new ArrayList<>(List.of(trigger)), match.permanent().getId()));
+        gameBroadcastService.logAndBroadcast(gameData, GameLog.abilityTriggers(sourceCard));
+        log.info("Game {} - {} triggers on cycle/discard (boost target creature)", gameData.id, sourceCard.getName());
         return true;
     }
 

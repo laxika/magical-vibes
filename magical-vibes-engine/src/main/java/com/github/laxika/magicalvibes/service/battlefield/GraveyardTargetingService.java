@@ -72,6 +72,58 @@ public class GraveyardTargetingService {
     }
 
     /**
+     * ETB targeting for {@link ExileGraveyardCardsEffect} whose scope targets card(s) in a graveyard —
+     * "exile target card from an opponent's graveyard" (Disposal Mummy) or "... from a graveyard"
+     * ({@code TARGET_CARDS_ANY_GRAVEYARD}). Graveyard-targeting ETBs never target at cast time, so the
+     * card is chosen as the trigger goes on the stack; the chosen ids land on the triggered ability's
+     * {@code targetCardIds} and {@code ExileGraveyardCardsEffectHandler} exiles them at resolution.
+     * Opponent scope ({@code GRAVEYARD_CARD}) searches only opponents' graveyards; any scope
+     * ({@code ANY_GRAVEYARD_CARD}) searches every graveyard. With no legal target the trigger is still
+     * pushed onto the stack with 0 targets and fizzles harmlessly.
+     */
+    public void handleGraveyardCardsExileETBTargeting(GameData gameData, UUID controllerId, Card card,
+                                                      List<CardEffect> allEffects, ExileGraveyardCardsEffect exile) {
+        CardPredicate filter = exile.filter();
+        boolean anyGraveyard = exile.targetSpec().category() == TargetCategory.ANY_GRAVEYARD_CARD;
+
+        List<Card> matchingCards = new ArrayList<>();
+        for (UUID playerId : gameData.orderedPlayerIds) {
+            if (!anyGraveyard && playerId.equals(controllerId)) continue; // opponent's graveyard only
+            List<Card> graveyard = gameData.playerGraveyards.get(playerId);
+            if (graveyard == null) continue;
+            for (Card graveyardCard : graveyard) {
+                if (filter == null
+                        || predicateEvaluationService.matchesCardPredicate(graveyardCard, filter, card.getId())) {
+                    matchingCards.add(graveyardCard);
+                }
+            }
+        }
+
+        if (matchingCards.isEmpty()) {
+            gameData.stack.add(new StackEntry(
+                    StackEntryType.TRIGGERED_ABILITY,
+                    card,
+                    controllerId,
+                    card.getName() + "'s ETB ability",
+                    new ArrayList<>(allEffects),
+                    List.of()
+            ));
+            gameBroadcastService.logAndBroadcast(gameData, GameLog.cardThen(card, "'s enter-the-battlefield ability triggers."));
+            log.info("Game {} - {} ETB graveyard-exile pushed onto stack with 0 targets (no valid graveyard cards)",
+                    gameData.id, card.getName());
+            return;
+        }
+
+        int maxTargets = Math.min(exile.count(), matchingCards.size());
+        gameData.graveyardTargetOperation.card = card;
+        gameData.graveyardTargetOperation.controllerId = controllerId;
+        gameData.graveyardTargetOperation.effects = new ArrayList<>(allEffects);
+        String zoneLabel = anyGraveyard ? "a graveyard" : "an opponent's graveyard";
+        playerInputService.beginMultiGraveyardChoice(gameData, controllerId, matchingCards, maxTargets,
+                "Choose " + maxTargets + " target card" + (maxTargets != 1 ? "s" : "") + " from " + zoneLabel + " to exile.");
+    }
+
+    /**
      * ETB targeting for "return up to N target [type] cards from your graveyard to your hand"
      * (Tilling Treefolk). The controller picks up to {@code maxTargets} matching cards from their
      * own graveyard as the trigger goes on the stack; the chosen ids are stored on the triggered

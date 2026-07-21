@@ -7,6 +7,7 @@ import com.github.laxika.magicalvibes.model.CardSubtype;
 import com.github.laxika.magicalvibes.model.CardType;
 import com.github.laxika.magicalvibes.model.GameData;
 import com.github.laxika.magicalvibes.model.GameLog;
+import com.github.laxika.magicalvibes.model.CardPileDisposition;
 import com.github.laxika.magicalvibes.model.PendingPileSeparation;
 import com.github.laxika.magicalvibes.model.GraveyardChoiceDestination;
 import com.github.laxika.magicalvibes.model.Permanent;
@@ -413,13 +414,14 @@ public class GraveyardChoiceHandlerService {
             return;
         }
 
-        // Card pile separation (Boneyard Parley, Brilliant Ultimatum): opponent assigns exiled cards to piles
+        // Card pile separation (Boneyard Parley, Brilliant Ultimatum, Unesh): opponent assigns cards to piles
         PendingPileSeparation pileSeparation = gameData.peekPendingInteraction(PendingPileSeparation.class);
         if (pileSeparation != null && pileSeparation.cardPileMode()) {
             gameData.interaction.clearAwaitingInput();
-            if (pileSeparation.playFromExile()) {
+            if (pileSeparation.disposition() == CardPileDisposition.PLAY_FROM_EXILE) {
                 brilliantUltimatumSupport.completePileSeparationStep1(gameData, cardIds);
             } else {
+                // BATTLEFIELD (Boneyard Parley) and HAND (Unesh) both share step 1; step 2 branches.
                 graveyardReturnSupport.completeCardPileSeparationStep1(gameData, cardIds);
             }
             return;

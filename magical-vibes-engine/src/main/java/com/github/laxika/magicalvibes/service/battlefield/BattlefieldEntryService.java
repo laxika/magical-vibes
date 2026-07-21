@@ -22,7 +22,6 @@ import com.github.laxika.magicalvibes.model.filter.PermanentPredicateTargetFilte
 import com.github.laxika.magicalvibes.model.filter.TargetFilter;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
 import com.github.laxika.magicalvibes.model.effect.TargetCategory;
-import com.github.laxika.magicalvibes.model.effect.CantHaveCountersEffect;
 import com.github.laxika.magicalvibes.model.effect.CastTargetInstantOrSorceryFromGraveyardEffect;
 import com.github.laxika.magicalvibes.model.effect.ChooseAnotherCreatureOnEnterEffect;
 import com.github.laxika.magicalvibes.model.effect.ChooseColorEffect;
@@ -41,6 +40,7 @@ import com.github.laxika.magicalvibes.model.effect.EntersTappedEffect;
 import com.github.laxika.magicalvibes.model.effect.SetTargetColorEffect;
 import com.github.laxika.magicalvibes.model.layer.FloatingContinuousEffect;
 import com.github.laxika.magicalvibes.model.effect.ExileCardsFromGraveyardEffect;
+import com.github.laxika.magicalvibes.model.effect.ExileGraveyardCardsEffect;
 import com.github.laxika.magicalvibes.model.effect.ExileTargetCardFromGraveyardMayPlayUntilNextTurnEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantFlashbackToTargetGraveyardCardEffect;
 import com.github.laxika.magicalvibes.model.effect.PutCreatureFromOpponentGraveyardOntoBattlefieldWithExileEffect;
@@ -435,9 +435,8 @@ public class BattlefieldEntryService {
     private void applyEnterWithCounters(GameData gameData, UUID controllerId, Permanent permanent,
                                         int xValue, boolean kicked) {
         Card card = permanent.getCard();
-        boolean cantHaveCounters = card.getEffects(EffectSlot.STATIC).stream()
-                .anyMatch(e -> e instanceof CantHaveCountersEffect);
-        if (cantHaveCounters) return;
+        // Solemnity and Tatterkite/Melira's Keepers-style locks also replace "enters with N counters".
+        if (gameQueryService.cantHaveCounters(gameData, permanent)) return;
 
         for (CardEffect effect : card.getEffects(EffectSlot.ON_ENTER_BATTLEFIELD)) {
             EnterWithCountersEffect enterWith;
@@ -482,9 +481,7 @@ public class BattlefieldEntryService {
                                                             Permanent permanent, List<Permanent> simultaneouslyEntered) {
         if (!permanent.getCard().hasType(CardType.CREATURE)) return;
 
-        boolean cantHaveCounters = permanent.getCard().getEffects(EffectSlot.STATIC).stream()
-                .anyMatch(e -> e instanceof CantHaveCountersEffect);
-        if (cantHaveCounters) return;
+        if (gameQueryService.cantHaveCounters(gameData, permanent)) return;
 
         List<Card> graveyard = gameData.playerGraveyards.get(controllerId);
         if (graveyard == null || graveyard.isEmpty()) return;
@@ -520,9 +517,7 @@ public class BattlefieldEntryService {
                                                                      Permanent permanent, List<Permanent> simultaneouslyEntered) {
         if (!permanent.getCard().hasType(CardType.CREATURE)) return;
 
-        boolean cantHaveCounters = permanent.getCard().getEffects(EffectSlot.STATIC).stream()
-                .anyMatch(e -> e instanceof CantHaveCountersEffect);
-        if (cantHaveCounters) return;
+        if (gameQueryService.cantHaveCounters(gameData, permanent)) return;
 
         List<Permanent> battlefield = gameData.playerBattlefields.get(controllerId);
         if (battlefield == null || battlefield.isEmpty()) return;
@@ -785,6 +780,12 @@ public class BattlefieldEntryService {
         // Separate graveyard exile effects (need multi-target selection at trigger time)
         List<CardEffect> graveyardExileEffects = mandatoryEffects.stream()
                 .filter(e -> e instanceof ExileCardsFromGraveyardEffect).toList();
+        // Separate targeted graveyard-card exile effects (Disposal Mummy: "exile target card from an
+        // opponent's graveyard"). Distinct from the whole-set ExileCardsFromGraveyardEffect above: the
+        // scope decides which graveyards are searched, and targets are chosen at trigger time.
+        List<CardEffect> graveyardCardsExileEffects = mandatoryEffects.stream()
+                .filter(e -> e instanceof ExileGraveyardCardsEffect ege && ege.targetSpec().category().isGraveyard())
+                .toList();
         // Separate graveyard cast effects (need single-target selection at trigger time)
         List<CardEffect> graveyardCastEffects = mandatoryEffects.stream()
                 .filter(e -> e instanceof CastTargetInstantOrSorceryFromGraveyardEffect).toList();
@@ -808,6 +809,7 @@ public class BattlefieldEntryService {
         List<CardEffect> graveyardTargetReturnEffects = mandatoryEffects.stream()
                 .filter(e -> e.targetSpec().category().isGraveyard())
                 .filter(e -> !graveyardExileEffects.contains(e))
+                .filter(e -> !graveyardCardsExileEffects.contains(e))
                 .filter(e -> !graveyardCastEffects.contains(e))
                 .filter(e -> !graveyardFlashbackEffects.contains(e))
                 .filter(e -> !graveyardMayPlayEffects.contains(e))
@@ -822,6 +824,7 @@ public class BattlefieldEntryService {
                 .filter(e -> !(e instanceof PutCreatureFromOpponentGraveyardOntoBattlefieldWithExileEffect))
                 .filter(e -> !(e instanceof ReturnTargetCardsFromGraveyardToHandEffect))
                 .filter(e -> !graveyardTargetReturnEffects.contains(e))
+                .filter(e -> !graveyardCardsExileEffects.contains(e))
                 .filter(e -> !EffectResolution.targetsSpellOnStack(e)).toList();
         // Separate spell-targeting effects (need stack-target selection at trigger time)
         List<CardEffect> spellTargetEffects = mandatoryEffects.stream()
@@ -951,6 +954,15 @@ public class BattlefieldEntryService {
             ExileCardsFromGraveyardEffect exile = (ExileCardsFromGraveyardEffect) effect;
             for (int t = 0; t < 1 + extraWizardTriggers; t++) {
                 graveyardTargetingService.handleGraveyardExileETBTargeting(gameData, controllerId, card, mandatoryEffects, exile);
+            }
+        }
+
+        // Handle targeted graveyard-card exile effects (opponent's/any graveyard, e.g. Disposal Mummy):
+        // choose the graveyard target as the trigger goes on the stack.
+        for (CardEffect effect : graveyardCardsExileEffects) {
+            ExileGraveyardCardsEffect exile = (ExileGraveyardCardsEffect) effect;
+            for (int t = 0; t < 1 + extraWizardTriggers; t++) {
+                graveyardTargetingService.handleGraveyardCardsExileETBTargeting(gameData, controllerId, card, List.of(effect), exile);
             }
         }
 

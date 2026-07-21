@@ -21,6 +21,7 @@ import com.github.laxika.magicalvibes.model.CardType;
 import com.github.laxika.magicalvibes.model.CounterType;
 import com.github.laxika.magicalvibes.model.GameData;
 import com.github.laxika.magicalvibes.model.GameLog;
+import com.github.laxika.magicalvibes.model.CardPileDisposition;
 import com.github.laxika.magicalvibes.model.PendingPileSeparation;
 import com.github.laxika.magicalvibes.model.GraveyardChoiceDestination;
 import com.github.laxika.magicalvibes.model.Keyword;
@@ -840,6 +841,20 @@ public class GraveyardReturnSupport {
     public void createTokenCopyFromCard(GameData gameData, StackEntry entry, Card sourceCard,
                                          List<CardSubtype> additionalSubtypes, boolean grantHaste,
                                          boolean exileAtEndStep) {
+        createTokenCopyFromCard(gameData, entry, sourceCard, additionalSubtypes, grantHaste,
+                exileAtEndStep, null, null, null);
+    }
+
+    /**
+     * Variant that applies an Eternalize-style "except it's a 4/4 black Zombie" transformation to the
+     * token copy: {@code colorOverride} (if non-null) replaces the copy's color and
+     * {@code powerOverride}/{@code toughnessOverride} (if non-null) set its base P/T. The additional
+     * subtypes are still added "in addition to" the copy's other types. Used by Hour of Eternity.
+     */
+    public void createTokenCopyFromCard(GameData gameData, StackEntry entry, Card sourceCard,
+                                         List<CardSubtype> additionalSubtypes, boolean grantHaste,
+                                         boolean exileAtEndStep, CardColor colorOverride,
+                                         Integer powerOverride, Integer toughnessOverride) {
         UUID controllerId = entry.getControllerId();
         int tokenMultiplier = gameQueryService.getTokenMultiplier(gameData, controllerId);
         for (int copy = 0; copy < tokenMultiplier; copy++) {
@@ -849,10 +864,15 @@ public class GraveyardReturnSupport {
             tokenCard.setAdditionalTypes(sourceCard.getAdditionalTypes());
             tokenCard.setManaCost(sourceCard.getManaCost() != null ? sourceCard.getManaCost() : "");
             tokenCard.setToken(true);
-            tokenCard.setColor(sourceCard.getColor());
+            if (colorOverride != null) {
+                tokenCard.setColor(colorOverride);
+                tokenCard.setColors(List.of(colorOverride));
+            } else {
+                tokenCard.setColor(sourceCard.getColor());
+            }
             tokenCard.setSupertypes(sourceCard.getSupertypes());
-            tokenCard.setPower(sourceCard.getPower());
-            tokenCard.setToughness(sourceCard.getToughness());
+            tokenCard.setPower(powerOverride != null ? powerOverride : sourceCard.getPower());
+            tokenCard.setToughness(toughnessOverride != null ? toughnessOverride : sourceCard.getToughness());
             tokenCard.setCardText(sourceCard.getCardText());
             tokenCard.setSetCode(sourceCard.getSetCode());
             tokenCard.setCollectorNumber(sourceCard.getCollectorNumber());
@@ -1130,9 +1150,10 @@ public class GraveyardReturnSupport {
             }
         }
 
-        // Re-queue with the piles filled — step 2 (the pile-choice may prompt) polls it.
+        // Re-queue with the piles filled — step 2 (the pile-choice may prompt) polls it. Preserve the
+        // disposition so BATTLEFIELD (Boneyard Parley) and HAND (Unesh) both survive the re-queue.
         gameData.queueInteraction(new PendingPileSeparation(state.controllerId(), state.targetPlayerId(),
-                state.allPermanentIds(), state.cards(), state.cardOwners(), pile1, pile2));
+                state.allPermanentIds(), state.cards(), state.cardOwners(), pile1, pile2, state.disposition()));
 
         String pile1Desc = buildCardPileDescription(state.cards(), pile1);
         String pile2Desc = buildCardPileDescription(state.cards(), pile2);
@@ -1147,7 +1168,8 @@ public class GraveyardReturnSupport {
         gameBroadcastService.logAndBroadcast(gameData, pileLog.build());
 
         UUID controllerId = state.controllerId();
-        String prompt = "Choose a pile to put onto the battlefield. Yes = Pile 1 (" + pile1Desc + "), No = Pile 2 (" + pile2Desc + ").";
+        String destText = state.disposition() == CardPileDisposition.HAND ? "put into your hand" : "put onto the battlefield";
+        String prompt = "Choose a pile to " + destText + ". Yes = Pile 1 (" + pile1Desc + "), No = Pile 2 (" + pile2Desc + ").";
         gameData.pendingMayAbilities.addFirst(new PendingMayAbility(null, controllerId, List.of(), prompt));
         playerInputService.processNextMayAbility(gameData);
     }
@@ -1176,6 +1198,25 @@ public class GraveyardReturnSupport {
         String otherDesc = buildCardPileDescription(allCards, otherPileCardIds);
 
         gameBroadcastService.logAndBroadcast(gameData, GameLog.text(controllerName + " chooses " + chosenPileName + "."));
+
+        if (state.disposition() == CardPileDisposition.HAND) {
+            // Fact-or-Fiction (Unesh): chosen pile → controller's hand; other pile → controller's graveyard.
+            for (UUID cardId : chosenPileCardIds) {
+                Card card = allCards.stream().filter(c -> c.getId().equals(cardId)).findFirst().orElse(null);
+                if (card != null) {
+                    gameData.addCardToHand(controllerId, card);
+                    gameBroadcastService.logAndBroadcast(gameData, GameLog.textCardText(controllerName + " puts ", card, " into their hand."));
+                }
+            }
+            for (UUID cardId : otherPileCardIds) {
+                Card card = allCards.stream().filter(c -> c.getId().equals(cardId)).findFirst().orElse(null);
+                if (card != null) {
+                    gameData.playerGraveyards.computeIfAbsent(controllerId, k -> new ArrayList<>()).add(card);
+                    gameBroadcastService.logAndBroadcast(gameData, GameLog.textCardText(controllerName + " puts ", card, " into their graveyard."));
+                }
+            }
+            return;
+        }
 
         // Chosen pile → battlefield under controller's control
         for (UUID cardId : chosenPileCardIds) {

@@ -23,6 +23,7 @@ import com.github.laxika.magicalvibes.model.effect.AllowExtraLoyaltyActivationEf
 import com.github.laxika.magicalvibes.model.effect.AllLandsAreCreaturesEffect;
 import com.github.laxika.magicalvibes.model.effect.AnimateNoncreatureArtifactsEffect;
 import com.github.laxika.magicalvibes.model.effect.AnimatePermanentsEffect;
+import com.github.laxika.magicalvibes.model.condition.Condition;
 import com.github.laxika.magicalvibes.model.effect.AttackOrBlockRestrictionEffect;
 import com.github.laxika.magicalvibes.model.effect.BlockabilityRestrictionEffect;
 import com.github.laxika.magicalvibes.model.effect.BlockingRestrictionEffect;
@@ -48,6 +49,7 @@ import com.github.laxika.magicalvibes.model.effect.TargetingRestrictionEffect;
 import com.github.laxika.magicalvibes.model.effect.TargetingSourceKind;
 import com.github.laxika.magicalvibes.model.effect.CantBeEnchantedByOtherAurasEffect;
 import com.github.laxika.magicalvibes.model.effect.CantHaveCountersEffect;
+import com.github.laxika.magicalvibes.model.effect.CountersCantBePlacedEffect;
 import com.github.laxika.magicalvibes.model.effect.CantHaveMinusOneMinusOneCountersEffect;
 import com.github.laxika.magicalvibes.model.effect.ReduceMinusOneMinusOneCountersEffect;
 import com.github.laxika.magicalvibes.model.effect.PlayerCantGetPoisonCountersEffect;
@@ -79,6 +81,7 @@ import com.github.laxika.magicalvibes.model.effect.DoubleControllerDamageEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantLifelinkToControllerSpellsByColorEffect;
 import com.github.laxika.magicalvibes.model.effect.GlobalDamageMultiplyingEffect;
 import com.github.laxika.magicalvibes.model.effect.DoubleDamageToEnchantedPlayerEffect;
+import com.github.laxika.magicalvibes.model.effect.EnchantedPlayerCantActivateNonManaNonLoyaltyAbilitiesEffect;
 import com.github.laxika.magicalvibes.model.effect.MultiplyTokenCreationEffect;
 import com.github.laxika.magicalvibes.model.effect.DoubleEquippedCreatureCombatDamageEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantActivatedAbilityEffect;
@@ -1026,7 +1029,20 @@ public class GameQueryService {
                 .anyMatch(CantHaveCountersEffect.class::isInstance)) {
             return true;
         }
-        return hasGrantedEffect(gameData, permanent, CantHaveCountersEffect.class);
+        if (hasGrantedEffect(gameData, permanent, CantHaveCountersEffect.class)) {
+            return true;
+        }
+        // Solemnity: "Counters can't be put on artifacts, creatures, enchantments, or lands."
+        // Planeswalkers (that aren't also one of those types) are unaffected and still get loyalty.
+        return anyBattlefieldHasStaticEffect(gameData, CountersCantBePlacedEffect.class)
+                && isArtifactCreatureEnchantmentOrLand(gameData, permanent);
+    }
+
+    private boolean isArtifactCreatureEnchantmentOrLand(GameData gameData, Permanent permanent) {
+        return isArtifact(gameData, permanent)
+                || isCreature(gameData, permanent)
+                || isEnchantment(gameData, permanent)
+                || hasCardType(permanent, CardType.LAND);
     }
 
     /**
@@ -1109,6 +1125,10 @@ public class GameQueryService {
      * because they control a permanent with {@link PlayerCantGetPoisonCountersEffect}.
      */
     public boolean canPlayerGetPoisonCounters(GameData gameData, UUID playerId) {
+        // Solemnity: "Players can't get counters." (poison is the only player counter here.)
+        if (anyBattlefieldHasStaticEffect(gameData, CountersCantBePlacedEffect.class)) {
+            return false;
+        }
         List<Permanent> battlefield = gameData.playerBattlefields.get(playerId);
         if (battlefield == null) return true;
         for (Permanent p : battlefield) {
@@ -2826,22 +2846,30 @@ public class GameQueryService {
     }
 
     /**
-     * Returns {@code true} if the creature has a "can't attack or block unless …" restriction whose
-     * condition is not met (block side, mirrors the attack side in {@code CombatAttackService}).
+     * Returns {@code true} if the creature has a "can't [attack or] block unless …" restriction whose
+     * condition is not met (block side, mirrors the attack side in {@code CombatAttackService}). Covers
+     * both the combined {@code CantAttackOrBlockUnlessEffect} and the block-only
+     * {@code CantBlockUnlessEffect}.
      */
     private boolean isCantBlockUnlessConditionUnmet(GameData gameData, Permanent creature) {
         UUID controllerId = null;
         for (CardEffect effect : creature.getCard().getEffects(EffectSlot.STATIC)) {
-            if (effect instanceof AttackOrBlockRestrictionEffect restriction
-                    && restriction.cantAttackOrBlockUnless() != null) {
-                if (controllerId == null) {
-                    controllerId = findPermanentController(gameData, creature.getId());
-                    if (controllerId == null) return false;
-                }
-                if (!conditionEvaluationService.isMet(gameData, restriction.cantAttackOrBlockUnless(),
-                        ConditionContext.forPermanent(creature, controllerId))) {
-                    return true;
-                }
+            Condition unless = null;
+            if (effect instanceof AttackOrBlockRestrictionEffect restriction) {
+                unless = restriction.cantAttackOrBlockUnless();
+            } else if (effect instanceof BlockingRestrictionEffect restriction) {
+                unless = restriction.cantBlockUnless();
+            }
+            if (unless == null) {
+                continue;
+            }
+            if (controllerId == null) {
+                controllerId = findPermanentController(gameData, creature.getId());
+                if (controllerId == null) return false;
+            }
+            if (!conditionEvaluationService.isMet(gameData, unless,
+                    ConditionContext.forPermanent(creature, controllerId))) {
+                return true;
             }
         }
         return false;
@@ -3221,6 +3249,18 @@ public class GameQueryService {
             }
         });
         return multiplier[0];
+    }
+
+    /**
+     * True if {@code playerId} is enchanted by a Curse carrying
+     * {@link EnchantedPlayerCantActivateNonManaNonLoyaltyAbilitiesEffect} (Overwhelming Splendor):
+     * that player may activate only mana abilities and loyalty abilities.
+     */
+    public boolean playerCantActivateNonManaOrLoyaltyAbilities(GameData gameData, UUID playerId) {
+        return gameData.anyPermanentMatches(p ->
+                p.isAttached() && playerId.equals(p.getAttachedTo())
+                        && p.getCard().getEffects(EffectSlot.STATIC).stream()
+                        .anyMatch(e -> e instanceof EnchantedPlayerCantActivateNonManaNonLoyaltyAbilitiesEffect));
     }
 
     /**

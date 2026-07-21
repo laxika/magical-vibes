@@ -1,6 +1,7 @@
 package com.github.laxika.magicalvibes.service.input;
 
 import com.github.laxika.magicalvibes.model.Card;
+import com.github.laxika.magicalvibes.model.CardType;
 import com.github.laxika.magicalvibes.model.ExiledCardEntry;
 import com.github.laxika.magicalvibes.model.GameData;
 import com.github.laxika.magicalvibes.model.GameLog;
@@ -22,6 +23,7 @@ import com.github.laxika.magicalvibes.model.effect.DealDamageToPlayersEffect;
 import com.github.laxika.magicalvibes.model.effect.DestroyEnchantedPermanentUnlessPaysManaOrLifeEffect;
 import com.github.laxika.magicalvibes.model.effect.DiscardHandUnlessPaysLifeEffect;
 import com.github.laxika.magicalvibes.model.effect.DiscardUnlessExileCardFromGraveyardEffect;
+import com.github.laxika.magicalvibes.model.effect.DiscardUnlessReturnLandToHandEffect;
 import com.github.laxika.magicalvibes.model.effect.ForcedCostOrElseEffect;
 import com.github.laxika.magicalvibes.model.effect.LoseLifeUnlessDiscardEffect;
 import com.github.laxika.magicalvibes.model.effect.SacrificePermanentCost;
@@ -872,8 +874,10 @@ public class MayPenaltyChoiceHandlerService {
         }
 
         if (accepted && effect.forcedCost() instanceof SacrificePermanentCost sacrificeCost) {
+            UUID sourcePermanentId = ability.sourcePermanentId();
             List<UUID> matchingIds = destructionSupport.collectPermanentIds(gameData, controllerId,
-                    p -> predicateEvaluationService.matchesPermanentPredicate(gameData, p, sacrificeCost.filter()));
+                    p -> (!sacrificeCost.excludeSource() || !p.getId().equals(sourcePermanentId))
+                            && predicateEvaluationService.matchesPermanentPredicate(gameData, p, sacrificeCost.filter()));
 
             if (matchingIds.size() == 1) {
                 Permanent perm = gameQueryService.findPermanentById(gameData, matchingIds.getFirst());
@@ -959,6 +963,67 @@ public class MayPenaltyChoiceHandlerService {
         }
 
         // No cards in hand either — nothing happens
+        gameBroadcastService.logAndBroadcast(gameData, GameLog.textCardText(
+                player.getUsername() + " has no cards to discard. (", ability.sourceCard(), ")"));
+        log.info("Game {} - {} has no cards to discard for {}", gameData.id,
+                player.getUsername(), ability.sourceCard().getName());
+        inputCompletionService.sbaProcessMayAbilitiesThenAutoPass(gameData);
+    }
+
+    public void handleDiscardUnlessReturnLandChoice(GameData gameData, Player player, boolean accepted, PendingMayAbility ability) {
+        // Presence check — the effect is a marker.
+        ability.effects().stream()
+                .filter(e -> e instanceof DiscardUnlessReturnLandToHandEffect)
+                .findFirst().orElseThrow();
+
+        UUID controllerId = ability.controllerId();
+
+        if (accepted) {
+            List<Permanent> battlefield = gameData.playerBattlefields.get(controllerId);
+            List<UUID> landIds = new ArrayList<>();
+            if (battlefield != null) {
+                for (Permanent p : battlefield) {
+                    if (p.getCard().hasType(CardType.LAND)) {
+                        landIds.add(p.getId());
+                    }
+                }
+            }
+
+            if (!landIds.isEmpty()) {
+                // The BounceCreature completion (handleBounceCreature) calls resolveAutoPass rather
+                // than sbaProcessMayAbilitiesThenAutoPass, so clear any paused effect-resolution
+                // state — the discard-unless effect is the last on the stack entry, so nothing
+                // remains to resume.
+                gameData.pendingEffectResolutionEntry = null;
+                gameData.pendingEffectResolutionIndex = 0;
+
+                gameData.interaction.setPermanentChoiceContext(new PermanentChoiceContext.BounceCreature(controllerId));
+                playerInputService.beginPermanentChoice(gameData, controllerId, landIds,
+                        "Choose a land to return to its owner's hand.");
+
+                gameBroadcastService.logAndBroadcast(gameData, GameLog.textCardText(
+                        player.getUsername() + " chooses to return a land to their hand. (", ability.sourceCard(), ")"));
+                log.info("Game {} - {} accepts discard-unless-return-land for {}", gameData.id,
+                        player.getUsername(), ability.sourceCard().getName());
+                return;
+            }
+            // Fall through — no lands anymore, the discard is mandatory.
+        }
+
+        // Declined or no lands — discard a card.
+        List<Card> hand = gameData.playerHands.get(controllerId);
+        if (hand != null && !hand.isEmpty()) {
+            gameData.discardCausedByOpponent = false;
+            playerInputService.beginDiscardChoice(gameData, controllerId, 1);
+
+            gameBroadcastService.logAndBroadcast(gameData, GameLog.textCardText(
+                    player.getUsername() + " must discard a card. (", ability.sourceCard(), ")"));
+            log.info("Game {} - {} declines return, must discard for {}", gameData.id,
+                    player.getUsername(), ability.sourceCard().getName());
+            return;
+        }
+
+        // No cards to discard either — nothing happens.
         gameBroadcastService.logAndBroadcast(gameData, GameLog.textCardText(
                 player.getUsername() + " has no cards to discard. (", ability.sourceCard(), ")"));
         log.info("Game {} - {} has no cards to discard for {}", gameData.id,

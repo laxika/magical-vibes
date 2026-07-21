@@ -45,6 +45,8 @@ import java.util.Set;
 import java.util.UUID;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.Mockito.when;
 
 @ExtendWith(MockitoExtension.class)
 class BattlefieldEntryServiceTest {
@@ -235,6 +237,8 @@ class BattlefieldEntryServiceTest {
         Permanent entering = enteringWithEffect(
                 new EnterWithCountersEffect(CounterType.CHARGE, new Fixed(3)));
         TestCards.mutableCard(entering).addEffect(EffectSlot.STATIC, new CantHaveCountersEffect());
+        // The enters-with-counters replacement now routes through the counter chokepoint.
+        when(gameQueryService.cantHaveCounters(any(), any())).thenReturn(true);
 
         service.putPermanentOntoBattlefield(gd, player1Id, entering);
 

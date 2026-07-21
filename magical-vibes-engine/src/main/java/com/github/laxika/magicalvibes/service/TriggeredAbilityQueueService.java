@@ -48,6 +48,19 @@ public class TriggeredAbilityQueueService {
         while (gameData.hasPendingInteraction(PermanentChoiceContext.DeathTriggerTarget.class)) {
             PermanentChoiceContext.DeathTriggerTarget pending = gameData.peekPendingInteraction(PermanentChoiceContext.DeathTriggerTarget.class);
 
+            // Graveyard-targeting death trigger (e.g. Ruin Rat): choose a target card in a graveyard
+            // to exile, at the time the trigger is put on the stack.
+            ExileGraveyardCardsEffect gyExile = pending.effects().stream()
+                    .filter(e -> e instanceof ExileGraveyardCardsEffect ege && ege.targetSpec().category().isGraveyard())
+                    .map(e -> (ExileGraveyardCardsEffect) e)
+                    .findFirst().orElse(null);
+            if (gyExile != null) {
+                if (beginDeathGraveyardTarget(gameData, pending, gyExile)) {
+                    return;
+                }
+                continue;
+            }
+
             var dyingCard = pending.dyingCard();
             TargetFilter deathFilter = dyingCard.getTargetFilter();
             // The card-level target filter belongs to whichever ability declared it via
@@ -93,6 +106,59 @@ public class TriggeredAbilityQueueService {
             log.info("Game {} - {} death trigger awaiting target selection", gameData.id, pending.dyingCard().getName());
             return;
         }
+    }
+
+    /**
+     * Collects the graveyard target for a "when this creature dies, exile target card from a(n
+     * opponent's) graveyard" trigger (Ruin Rat) and begins the card choice, at the time the trigger
+     * is put on the stack. Opponent scope ({@code GRAVEYARD_CARD}) searches only opponents'
+     * graveyards; any scope ({@code ANY_GRAVEYARD_CARD}) searches every graveyard. Returns
+     * {@code true} if input was begun (caller should return), or {@code false} if the trigger was
+     * skipped for lack of a legal target (caller should continue) — a targeted death trigger with no
+     * legal target is never put on the stack (CR 603.3c).
+     */
+    private boolean beginDeathGraveyardTarget(GameData gameData,
+            PermanentChoiceContext.DeathTriggerTarget pending, ExileGraveyardCardsEffect gyExile) {
+        CardPredicate filter = gyExile.filter();
+        boolean anyGraveyard = gyExile.targetSpec().category() == TargetCategory.ANY_GRAVEYARD_CARD;
+
+        List<Card> matchingCards = new ArrayList<>();
+        for (UUID playerId : gameData.orderedPlayerIds) {
+            if (!anyGraveyard && playerId.equals(pending.controllerId())) continue; // opponent's graveyard only
+            List<Card> graveyard = gameData.playerGraveyards.get(playerId);
+            if (graveyard == null) continue;
+            for (Card graveyardCard : graveyard) {
+                if (filter == null
+                        || predicateEvaluationService.matchesCardPredicate(graveyardCard, filter, pending.dyingCard().getId())) {
+                    matchingCards.add(graveyardCard);
+                }
+            }
+        }
+
+        gameData.pollPendingInteraction(PermanentChoiceContext.DeathTriggerTarget.class);
+
+        if (matchingCards.isEmpty()) {
+            gameBroadcastService.logAndBroadcast(gameData, GameLog.cardThen(pending.dyingCard(),
+                    "'s death trigger has no valid graveyard targets."));
+            log.info("Game {} - {} death graveyard trigger skipped (no valid targets)",
+                    gameData.id, pending.dyingCard().getName());
+            return false;
+        }
+
+        gameData.graveyardTargetOperation.card = pending.dyingCard();
+        gameData.graveyardTargetOperation.controllerId = pending.controllerId();
+        gameData.graveyardTargetOperation.effects = new ArrayList<>(pending.effects());
+
+        String zoneLabel = anyGraveyard ? "a graveyard" : "an opponent's graveyard";
+        String filterLabel = CardPredicateUtils.describeFilter(filter);
+        playerInputService.beginMultiGraveyardChoice(gameData, pending.controllerId(), matchingCards, 1,
+                pending.dyingCard().getName() + "'s ability — Choose target " + filterLabel + " from " + zoneLabel + " to exile.");
+
+        gameBroadcastService.logAndBroadcast(gameData, GameLog.cardThen(pending.dyingCard(),
+                "'s death trigger — choose a graveyard target."));
+        log.info("Game {} - {} death graveyard trigger awaiting target selection",
+                gameData.id, pending.dyingCard().getName());
+        return true;
     }
 
     public void processNextSelfLeavesTriggerTarget(GameData gameData) {

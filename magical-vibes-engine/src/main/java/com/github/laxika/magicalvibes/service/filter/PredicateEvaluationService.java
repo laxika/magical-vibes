@@ -14,9 +14,11 @@ import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.StackEntry;
 import com.github.laxika.magicalvibes.model.filter.CardAllOfPredicate;
 import com.github.laxika.magicalvibes.model.filter.CardAnyOfPredicate;
+import com.github.laxika.magicalvibes.model.ActivatedAbility;
 import com.github.laxika.magicalvibes.model.filter.CardControllerDoesNotOwnPredicate;
 import com.github.laxika.magicalvibes.model.filter.CardColorPredicate;
 import com.github.laxika.magicalvibes.model.filter.CardHasCyclingPredicate;
+import com.github.laxika.magicalvibes.model.filter.CardHasEmbalmOrEternalizePredicate;
 import com.github.laxika.magicalvibes.model.filter.CardHasFlashbackPredicate;
 import com.github.laxika.magicalvibes.model.filter.CardIsAuraPredicate;
 import com.github.laxika.magicalvibes.model.filter.CardIsHistoricPredicate;
@@ -86,6 +88,7 @@ import com.github.laxika.magicalvibes.model.filter.PermanentNotPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentPowerAtLeastPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentPowerAtMostControlledCreatureCountPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentPowerAtMostPredicate;
+import com.github.laxika.magicalvibes.model.filter.PermanentPowerAtMostSourcePowerPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentPowerAtMostXPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentPredicateTargetFilter;
@@ -198,6 +201,9 @@ public class PredicateEvaluationService {
                     card.getHandActivatedAbilities().stream()
                             .anyMatch(ability -> ability.getDescription() != null
                                     && ability.getDescription().startsWith("Cycling"));
+            case CardHasEmbalmOrEternalizePredicate ignored ->
+                    card.getGraveyardActivatedAbilities().stream()
+                            .anyMatch(ActivatedAbility::isEmbalmOrEternalize);
             case CardIsPermanentPredicate ignored ->
                     card.getType().isPermanentType();
             case CardIsTokenPredicate ignored ->
@@ -569,6 +575,24 @@ public class PredicateEvaluationService {
                 int targetToughness = gameQueryService.getEffectiveToughness(gameData, permanent);
                 yield targetToughness < sourcePower;
             }
+            case PermanentPowerAtMostSourcePowerPredicate ignored -> {
+                if (gameData == null || sourceCardId == null) {
+                    yield false;
+                }
+                // "target creature with power <= this creature's power" (Earthshaker Khenra). When the
+                // source is already on the battlefield (e.g. the 4/4 Eternalize token choosing its
+                // target at trigger time), use its effective power. During cast-time ETB validation the
+                // source isn't a permanent yet, so fall back to the source card's base power.
+                Permanent sourcePermanent = findPermanentByOriginalCardId(gameData, sourceCardId);
+                Integer sourcePower = sourcePermanent != null
+                        ? gameQueryService.getEffectivePower(gameData, sourcePermanent)
+                        : basePowerOfCardInAnyZone(gameData, sourceCardId);
+                if (sourcePower == null) {
+                    yield false;
+                }
+                int targetPower = gameQueryService.getEffectivePower(gameData, permanent);
+                yield targetPower <= sourcePower;
+            }
             case PermanentInCombatWithSourcePredicate ignored -> {
                 if (gameData == null || sourceCardId == null) {
                     yield false;
@@ -740,6 +764,42 @@ public class PredicateEvaluationService {
                         return p;
                     }
                 }
+            }
+        }
+        return null;
+    }
+
+    /**
+     * Base (printed) power of a card identified by id, searched across the hand, graveyard, and exile
+     * zones. Used by source-relative power filters (e.g. Earthshaker Khenra's ETB) during cast-time
+     * target validation, when the source is not yet a battlefield permanent. Returns {@code null} when
+     * the card can't be found or has no power (non-creature).
+     */
+    private Integer basePowerOfCardInAnyZone(GameData gameData, UUID cardId) {
+        for (UUID playerId : gameData.orderedPlayerIds) {
+            Integer fromHand = basePowerOfCardInList(gameData.playerHands.get(playerId), cardId);
+            if (fromHand != null) {
+                return fromHand;
+            }
+            Integer fromGraveyard = basePowerOfCardInList(gameData.playerGraveyards.get(playerId), cardId);
+            if (fromGraveyard != null) {
+                return fromGraveyard;
+            }
+            Integer fromExile = basePowerOfCardInList(gameData.getPlayerExiledCards(playerId), cardId);
+            if (fromExile != null) {
+                return fromExile;
+            }
+        }
+        return null;
+    }
+
+    private Integer basePowerOfCardInList(List<Card> cards, UUID cardId) {
+        if (cards == null) {
+            return null;
+        }
+        for (Card card : cards) {
+            if (card.getId().equals(cardId)) {
+                return card.getPower();
             }
         }
         return null;

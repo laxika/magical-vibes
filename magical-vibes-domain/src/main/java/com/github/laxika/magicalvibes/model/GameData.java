@@ -231,6 +231,8 @@ public class GameData {
     public final EachPlayerPayLifeState eachPlayerPayLife = new EachPlayerPayLifeState();
     /** Progress state for Illicit Auction's "each player may bid life for control" auction. */
     public final IllicitAuctionState illicitAuction = new IllicitAuctionState();
+    /** Progress state for Torment of Hailfire's "repeat X times: each opponent loses life unless…" flow. */
+    public final TormentState torment = new TormentState();
     /**
      * Unified queue of scheduled {@link DelayedAction}s ("do X later at timing point Y"). Replaces the
      * former per-mechanic ad-hoc fields (end-of-combat sacrifice/exile/equipment-destruction, end-step
@@ -243,6 +245,8 @@ public class GameData {
     public final List<DelayedAction> delayedActions = Collections.synchronizedList(new ArrayList<>());
 
     public PendingAbilityActivation pendingAbilityActivation;
+    /** A graveyard-activated ability suspended on its "Discard a card" cost choice (Eternalize). */
+    public PendingGraveyardAbilityActivation pendingGraveyardAbilityActivation;
     public final Map<UUID, UUID> drawReplacementTargetToController = new ConcurrentHashMap<>();
     /** Aladdin's Lamp — a one-shot, turn-scoped delayed replacement of a player's next draw this
      *  turn: "instead look at the top X cards of your library, put all but one on the bottom in a
@@ -353,6 +357,8 @@ public class GameData {
     public final List<SourceDamageRedirectShield> pendingSourceRedirectDamage = Collections.synchronizedList(new ArrayList<>());
     /** Creature-specific damage redirect shields (e.g. Oracle's Attendants): redirect all damage a chosen source would deal to a specific creature this turn onto another permanent. */
     public final List<CreatureDamageRedirectShield> creatureDamageRedirectShields = Collections.synchronizedList(new ArrayList<>());
+    /** Saving Grace: redirect all damage this turn dealt to a protected player or their permanents onto a fixed creature (any source, unlimited). */
+    public final List<TurnDamageRedirectToCreatureShield> turnDamageRedirectToCreatureShields = Collections.synchronizedList(new ArrayList<>());
     /** Queue for "each player returns up to N cards from graveyard to battlefield" choices. */
     public final List<PendingGraveyardReturnChoice> pendingGraveyardReturnQueue = Collections.synchronizedList(new ArrayList<>());
     /** APNAP-ordered queue of players still to choose for "each player may draw up to N" effects (Temporary Truce). Head player is the one currently prompted. */
@@ -1640,7 +1646,13 @@ public class GameData {
         copy.illicitAuction.highBid = this.illicitAuction.highBid;
         copy.illicitAuction.highBidderId = this.illicitAuction.highBidderId;
         copy.illicitAuction.currentBidderId = this.illicitAuction.currentBidderId;
+        copy.torment.active = this.torment.active;
+        copy.torment.remainingIterations = this.torment.remainingIterations;
+        copy.torment.remaining.addAll(this.torment.remaining);
+        copy.torment.currentOpponentId = this.torment.currentOpponentId;
+        copy.torment.chosenMode = this.torment.chosenMode;
         copy.pendingAbilityActivation = this.pendingAbilityActivation; // immutable record
+        copy.pendingGraveyardAbilityActivation = this.pendingGraveyardAbilityActivation; // immutable record
         copy.endTurnRequested = this.endTurnRequested;
         copy.discardCausedByOpponent = this.discardCausedByOpponent;
         copy.additionalCombatMainPhasePairs = this.additionalCombatMainPhasePairs;
@@ -1676,6 +1688,7 @@ public class GameData {
         copy.damageRedirectShields.addAll(this.damageRedirectShields);
         copy.sourceDamageRedirectShields.addAll(this.sourceDamageRedirectShields);
         copy.creatureDamageRedirectShields.addAll(this.creatureDamageRedirectShields);
+        copy.turnDamageRedirectToCreatureShields.addAll(this.turnDamageRedirectToCreatureShields);
         copy.targetSourceDamagePreventionShields.addAll(this.targetSourceDamagePreventionShields);
         copy.playerSourceNextDamageShields.addAll(this.playerSourceNextDamageShields);
         copy.sourceNextDamageToAnyTargetShields.addAll(this.sourceNextDamageToAnyTargetShields);

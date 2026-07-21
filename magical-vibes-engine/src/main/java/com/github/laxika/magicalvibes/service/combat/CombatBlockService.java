@@ -901,7 +901,8 @@ public class CombatBlockService {
             }
         }
 
-        int additionalBlocks = 0;
+        // One-shot "can block an additional creature this turn" grants (e.g. Act of Heroism).
+        int additionalBlocks = creature.getAdditionalBlocksUntilEndOfTurn();
         for (Permanent p : battlefield) {
             for (CardEffect effect : p.getCard().getEffects(EffectSlot.STATIC)) {
                 if (effect instanceof GrantAdditionalBlockEffect e) {

@@ -17,4 +17,9 @@ public record GraveyardCardThreshold(int threshold, CardPredicate filter) implem
     public String conditionNotMetReason() {
         return "fewer than " + threshold + " matching cards in graveyard";
     }
+
+    @Override
+    public boolean isEtbTriggerGate() {
+        return true;
+    }
 }

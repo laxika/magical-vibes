@@ -183,6 +183,12 @@ ON_ALLY_CREATURE_ENTERS_BATTLEFIELD,
      *  {@code StepTriggerService.handleEndStepTriggers}. Used by Nettlevine Blight. */
     ENCHANTED_PERMANENT_CONTROLLER_END_STEP_TRIGGERED,
     ENCHANTED_PLAYER_UPKEEP_TRIGGERED,
+    /** Aura slot for player-enchanting Curses: "At the beginning of each end step, enchanted player …".
+     *  Fires at EVERY end step (any player's turn), unlike {@link #ENCHANTED_PLAYER_UPKEEP_TRIGGERED}
+     *  which is gated to the enchanted player's own upkeep. The enchanted player's id is baked as the
+     *  (non-targeting) {@code targetId} so a {@code MillEffect(TARGET_PLAYER)} lands on them. Checked in
+     *  {@code StepTriggerService.handleEndStepTriggers}. Used by Fraying Sanity. */
+    ENCHANTED_PLAYER_END_STEP_TRIGGERED,
     ON_ALLY_EQUIPMENT_ENTERS_BATTLEFIELD,
     /** "Whenever an enchantment enters under your control" (excludes this permanent). Filter by
      *  subtype with a {@code TriggeringCardConditionalEffect}. Checked in
@@ -296,6 +302,12 @@ ON_ALLY_CREATURE_ENTERS_BATTLEFIELD,
      *  entering land (e.g. Reach of Branches — "whenever a Forest you control enters"). Checked in
      *  {@code TriggerCollectionService.checkAllyLandEntersTriggers}. */
     GRAVEYARD_ON_ALLY_LAND_ENTERS_BATTLEFIELD,
+    /** Triggers whenever a creature the controller controls enters the battlefield, while this card is
+     *  in the controller's graveyard. Like {@link #ON_ALLY_CREATURE_ENTERS_BATTLEFIELD} but fired from
+     *  the graveyard. Wrap the effect in {@code TriggeringCardConditionalEffect} to filter by the
+     *  entering creature (e.g. Unconventional Tactics — "whenever a Zombie you control enters"). Checked
+     *  in {@code TriggerCollectionService.checkAllyCreatureEntersTriggers}. */
+    GRAVEYARD_ON_ALLY_CREATURE_ENTERS_BATTLEFIELD,
     /** Triggers whenever one or more +1/+1 counters are put on this permanent.
      *  Fired from {@code PermanentCounterSupport} after each counter-placement event (once per
      *  event regardless of count). Used by Berta, Wise Extrapolator. */
@@ -443,6 +455,14 @@ ON_ALLY_CREATURE_ENTERS_BATTLEFIELD,
      *  trigger is built in {@code TriggerCollectionService.checkControllerActivatesNonManaAbilityTriggers}.
      *  Used by Rings of Brighthearth. */
     ON_CONTROLLER_ACTIVATES_NONMANA_ABILITY,
+    /** Triggers whenever the controller of this permanent activates an embalm or eternalize ability
+     *  (a graveyard-activated ability that creates a token copy of its source, see
+     *  {@code ActivatedAbility.isEmbalmOrEternalize()}). Fires once per activation on every permanent
+     *  with this slot on the activating player's battlefield, after the ability is on the stack.
+     *  Checked in {@code TriggerCollectionService.checkControllerActivatesEternalizeOrEmbalmTriggers},
+     *  driven from {@code AbilityActivationService.completeGraveyardAbilityActivation}. Used by
+     *  Vizier of the Anointed ("whenever you activate an eternalize or embalm ability, draw a card"). */
+    ON_CONTROLLER_ACTIVATES_ETERNALIZE_OR_EMBALM,
     /** Triggers whenever an <em>opponent</em> of this permanent's controller activates a non-mana
      *  activated ability (CR 605.1a) of a permanent. Fires on every permanent NOT controlled by the
      *  activating player that has this slot; like mana abilities never reach the check, the

@@ -79,8 +79,9 @@ public class CreateTokenCopyOfSourceEffectHandler implements NormalEffectHandler
                         tokenCard.setColor(sourceCard.getColor());
                     }
                     tokenCard.setLoyalty(sourceCard.getLoyalty());
-                    tokenCard.setPower(sourceCard.getPower());
-                    tokenCard.setToughness(sourceCard.getToughness());
+                    // Embalm keeps the source's P/T; Eternalize sets a fixed base P/T (e.g. a 4/4).
+                    tokenCard.setPower(e.powerOverride() != null ? e.powerOverride() : sourceCard.getPower());
+                    tokenCard.setToughness(e.toughnessOverride() != null ? e.toughnessOverride() : sourceCard.getToughness());
                     // Embalm / Eternalize adds a creature type (e.g. Zombie) to the copy.
                     if (e.addedSubtype() != null && !sourceCard.getSubtypes().contains(e.addedSubtype())) {
                         List<CardSubtype> subtypes = new ArrayList<>(sourceCard.getSubtypes());

@@ -12,6 +12,7 @@ public sealed interface CardPredicate permits
         CardColorPredicate,
         CardControllerDoesNotOwnPredicate,
         CardHasCyclingPredicate,
+        CardHasEmbalmOrEternalizePredicate,
         CardHasFlashbackPredicate,
         CardIsAuraPredicate,
         CardIsHistoricPredicate,

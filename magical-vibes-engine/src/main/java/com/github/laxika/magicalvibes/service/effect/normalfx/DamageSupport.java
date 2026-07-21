@@ -88,6 +88,11 @@ public class DamageSupport {
             rawDamage = damagePreventionService.applySourceRedirectShields(gameData, targetControllerId, sourcePermId, rawDamage);
             processSourceRedirectDamage(gameData);
         }
+        // Saving Grace: redirect all damage this turn to a permanent you control onto the enchanted creature.
+        if (targetControllerId != null) {
+            rawDamage = damagePreventionService.applyTurnDamageRedirectToCreature(gameData, targetControllerId, target.getId(), rawDamage);
+            processSourceRedirectDamage(gameData);
+        }
         // Apply creature-specific redirect shields (e.g. Oracle's Attendants): redirect all damage from
         // a chosen source to the protected creature onto another permanent.
         if (sourcePermId != null) {
@@ -130,6 +135,12 @@ public class DamageSupport {
             return;
         }
         int damage = damagePreventionService.applyCreaturePreventionShield(gameData, target, rawDamage);
+        // Djeru, With Eyes Open: "If a source would deal damage to a planeswalker you control, prevent
+        // N of that damage." Applied before recording/triggers so reflection and damage-counting see the
+        // reduced amount; the loyalty branch below then removes the reduced amount.
+        if (target.getCard().hasType(CardType.PLANESWALKER)) {
+            damage -= damagePreventionService.applyPlaneswalkerFixedPerSourceDamagePrevention(gameData, targetControllerId, damage);
+        }
 
         if (damageSource != null) {
             graveyardService.recordCreatureDamagedByPermanent(gameData, damageSource.getId(), target, damage);
@@ -389,6 +400,9 @@ public class DamageSupport {
                 // CR 306.8: damage dealt to a planeswalker removes that many loyalty counters from it
                 // (SBAs then move it to the graveyard once it has 0 loyalty). Mirrors the combat path.
                 int loyaltyDamage = Math.max(0, rawDamage);
+                // Djeru, With Eyes Open: prevent N of the damage dealt to a planeswalker you control.
+                UUID pwControllerId = gameQueryService.findPermanentController(gameData, targetPermanent.getId());
+                loyaltyDamage -= damagePreventionService.applyPlaneswalkerFixedPerSourceDamagePrevention(gameData, pwControllerId, loyaltyDamage);
                 if (loyaltyDamage > 0) {
                     accumulateSourceDamageForReflection(gameData, source, entry.getControllerId(), loyaltyDamage);
                     targetPermanent.setCounterCount(CounterType.LOYALTY,
@@ -450,6 +464,9 @@ public class DamageSupport {
         }
         // Apply source-specific redirect shields (e.g. Harm's Way) before general prevention
         rawDamage = damagePreventionService.applySourceRedirectShields(gameData, playerId, entry.getSourcePermanentId(), rawDamage);
+        processSourceRedirectDamage(gameData);
+        // Saving Grace: redirect all damage this turn to the player onto the enchanted creature.
+        rawDamage = damagePreventionService.applyTurnDamageRedirectToCreature(gameData, playerId, null, rawDamage);
         processSourceRedirectDamage(gameData);
         if (rawDamage <= 0) return;
         if (!damagePreventionService.applyColorDamagePreventionForPlayer(gameData, playerId, source.getColor())) {

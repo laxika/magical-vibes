@@ -333,6 +333,20 @@ public class SpellCastTriggerCollectorService {
         CopyControllerCastSpellEffect copyEffect =
                 new CopyControllerCastSpellEffect(snapshot, sc.castingPlayerId());
 
+        // "you may copy that spell" with no cost (Swarm Intelligence) — offer an immediate optional
+        // prompt; accepting puts the copy-creating ability on the stack.
+        if (trigger.tapCost() == null && trigger.manaCost() == null && match.rawEffect() instanceof MayEffect may) {
+            match.gameData().pendingMayAbilities.add(new PendingMayAbility(
+                    match.permanent().getCard(),
+                    match.controllerId(),
+                    new ArrayList<>(List.of(copyEffect)),
+                    match.permanent().getCard().getName() + " — " + may.prompt(),
+                    null,
+                    null,
+                    match.permanent().getId()));
+            return true;
+        }
+
         CardEffect resolutionEffect;
         if (trigger.tapCost() != null) {
             resolutionEffect = new MayPayTapPermanentsEffect(
@@ -568,6 +582,26 @@ public class SpellCastTriggerCollectorService {
     private boolean handleOpponentSpellCastTrigger(TriggerMatchContext match, SpellCastTriggerEffect trigger, TriggerContext ctx) {
         TriggerContext.SpellCast sc = (TriggerContext.SpellCast) ctx;
         return handleGenericSpellCastTrigger(match, trigger, sc.spellCard(), sc.castingPlayerId());
+    }
+
+    @CollectsTrigger(value = PutCountersOnSourceEffect.class, slot = EffectSlot.ON_OPPONENT_CASTS_SPELL)
+    private boolean handleOpponentSpellCastPutCountersOnSource(TriggerMatchContext match,
+            PutCountersOnSourceEffect trigger, TriggerContext ctx) {
+        // "Whenever an opponent casts a spell, put a counter on this creature" (Ammit Eternal, -1/-1).
+        // Mandatory — carry the source permanent id so the counter effect knows which permanent to
+        // modify (the generic SpellCastTriggerEffect path only binds the source for "may" abilities).
+        match.gameData().stack.add(new StackEntry(
+                StackEntryType.TRIGGERED_ABILITY,
+                match.permanent().getCard(),
+                match.controllerId(),
+                match.permanent().getCard().getName() + "'s ability",
+                new ArrayList<>(List.of(trigger)),
+                null,
+                match.permanent().getId()
+        ));
+        log.info("Game {} - {} opponent-spell-cast put-counters trigger queued",
+                match.gameData().id, match.permanent().getCard().getName());
+        return true;
     }
 
     @CollectsTrigger(value = LoseLifeUnlessDiscardEffect.class, slot = EffectSlot.ON_OPPONENT_CASTS_SPELL)

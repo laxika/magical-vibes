@@ -71,6 +71,10 @@ public class Permanent {
     @Setter private UUID chosenPermanentId;
     @Setter private boolean cantBeBlocked;
     @Setter private boolean cantBlockThisTurn;
+    /** Extra creatures this permanent may block this turn beyond the base one, granted by a one-shot
+     *  effect (e.g. Act of Heroism). Stacks on top of any static "can block an additional creature"
+     *  grants counted in {@code CombatBlockService}. Cleared at end of turn by {@link #resetModifiers()}. */
+    @Setter private int additionalBlocksUntilEndOfTurn;
     /** When true, this creature must be declared as a blocker this turn if it can block any attacker
      *  (general "blocks this turn if able", e.g. Nacatl Hunt-Pride). Cleared at end of turn. */
     @Setter private boolean mustBlockThisTurnIfAble;
@@ -350,6 +354,7 @@ public class Permanent {
         this.chosenPermanentId = source.chosenPermanentId;
         this.cantBeBlocked = source.cantBeBlocked;
         this.cantBlockThisTurn = source.cantBlockThisTurn;
+        this.additionalBlocksUntilEndOfTurn = source.additionalBlocksUntilEndOfTurn;
         this.mustBlockThisTurnIfAble = source.mustBlockThisTurnIfAble;
         this.mustAttackThisTurn = source.mustAttackThisTurn;
         this.mustAttackTargetId = source.mustAttackTargetId;
@@ -717,6 +722,7 @@ public class Permanent {
         this.baseToughnessOverride = 0;
         this.cantBeBlocked = false;
         this.cantBlockThisTurn = false;
+        this.additionalBlocksUntilEndOfTurn = 0;
         this.mustBlockThisTurnIfAble = false;
         this.mustAttackThisTurn = false;
         this.mustAttackTargetId = null;

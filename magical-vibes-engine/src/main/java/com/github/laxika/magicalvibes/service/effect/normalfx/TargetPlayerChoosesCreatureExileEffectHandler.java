@@ -1,0 +1,73 @@
+package com.github.laxika.magicalvibes.service.effect.normalfx;
+
+import com.github.laxika.magicalvibes.model.GameData;
+import com.github.laxika.magicalvibes.model.GameLog;
+import com.github.laxika.magicalvibes.model.Permanent;
+import com.github.laxika.magicalvibes.model.PermanentChoiceContext;
+import com.github.laxika.magicalvibes.model.StackEntry;
+import com.github.laxika.magicalvibes.model.effect.CardEffect;
+import com.github.laxika.magicalvibes.model.effect.TargetPlayerChoosesCreatureExileEffect;
+import com.github.laxika.magicalvibes.service.GameBroadcastService;
+import com.github.laxika.magicalvibes.service.battlefield.GameQueryService;
+import com.github.laxika.magicalvibes.service.input.PlayerInputService;
+import java.util.List;
+import java.util.UUID;
+import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
+import org.springframework.stereotype.Component;
+
+/**
+ * Resolves {@link TargetPlayerChoosesCreatureExileEffect}: the targeted player chooses a creature
+ * they control and it is exiled (Doomfall). Unlike the destroy edict, exile ignores regeneration
+ * and indestructible and fires no "dies" triggers. With 0 creatures nothing happens; with exactly
+ * 1 it is exiled automatically; with 2+ the target player picks which to lose.
+ */
+@Component
+@RequiredArgsConstructor
+@Slf4j
+public class TargetPlayerChoosesCreatureExileEffectHandler implements NormalEffectHandlerBean {
+
+    private final DestructionSupport destructionSupport;
+    private final ExileSupport exileSupport;
+    private final GameBroadcastService gameBroadcastService;
+    private final GameQueryService gameQueryService;
+    private final PlayerInputService playerInputService;
+
+    @Override
+    public Class<? extends CardEffect> handledEffect() {
+        return TargetPlayerChoosesCreatureExileEffect.class;
+    }
+
+    @Override
+    public void resolve(GameData gameData, StackEntry entry, CardEffect effect) {
+        UUID targetPlayerId = entry.getTargetId();
+        if (targetPlayerId == null || !gameData.playerIds.contains(targetPlayerId)) {
+            return;
+        }
+
+        String cardName = entry.getCard().getName();
+        List<UUID> creatureIds = destructionSupport.collectCreatureIds(gameData, targetPlayerId, p -> true);
+
+        if (creatureIds.isEmpty()) {
+            String playerName = gameData.playerIdToName.get(targetPlayerId);
+            String logEntry = playerName + " has no creatures to exile.";
+            gameBroadcastService.logAndBroadcast(gameData, GameLog.text(logEntry));
+            log.info("Game {} - {} has no creatures to exile", gameData.id, playerName);
+            return;
+        }
+
+        if (creatureIds.size() == 1) {
+            Permanent creature = gameQueryService.findPermanentById(gameData, creatureIds.getFirst());
+            if (creature != null) {
+                exileSupport.exilePermanentAndLog(gameData, creature, cardName);
+            }
+            return;
+        }
+
+        // Multiple creatures — prompt the target player to choose which one to exile.
+        gameData.interaction.setPermanentChoiceContext(
+                new PermanentChoiceContext.DestroyChosenCreature(targetPlayerId, cardName, true));
+        playerInputService.beginPermanentChoice(gameData, targetPlayerId, creatureIds,
+                "Choose a creature to exile.");
+    }
+}

@@ -37,6 +37,7 @@ public class SkipNextUntapEffectHandler implements NormalEffectHandlerBean {
         switch (e.scope()) {
             case TARGET -> resolveTarget(gameData, entry, effect);
             case SELF -> resolveSelf(gameData, entry);
+            case CONTROLLED -> resolveControlled(gameData, entry, e);
             case TARGET_PLAYERS_PERMANENTS -> resolveTargetPlayersPermanents(gameData, entry, e);
             case ALL_CREATURES -> resolveAllCreatures(gameData, entry, e);
             default -> throw new IllegalStateException("Unsupported skip-next-untap scope: " + e.scope());
@@ -87,6 +88,28 @@ public class SkipNextUntapEffectHandler implements NormalEffectHandlerBean {
 
         gameBroadcastService.logAndBroadcast(gameData, GameLog.cardThen(target.getCard(), " won't untap during its controller's next untap step."));
         log.info("Game {} - {} skip next untap set", gameData.id, target.getCard().getName());
+    }
+
+    private void resolveControlled(GameData gameData, StackEntry entry, SkipNextUntapEffect e) {
+        UUID controllerId = entry.getControllerId();
+        List<Permanent> battlefield = gameData.playerBattlefields.get(controllerId);
+        if (battlefield == null) return;
+
+        FilterContext filterContext = FilterContext.of(gameData)
+                .withSourceCardId(entry.getCard().getId())
+                .withSourceControllerId(entry.getControllerId());
+
+        int count = 0;
+        for (Permanent p : battlefield) {
+            if (e.filter() != null
+                    && !predicateEvaluationService.matchesPermanentPredicate(p, e.filter(), filterContext)) continue;
+
+            p.setSkipUntapCount(p.getSkipUntapCount() + 1);
+            count++;
+        }
+
+        gameBroadcastService.logAndBroadcast(gameData, GameLog.builder().card(entry.getCard()).text(" prevents " + count + " permanent(s) you control from untapping during your next untap step.").build());
+        log.info("Game {} - {} skip next untap set on {} controlled permanent(s)", gameData.id, entry.getCard().getName(), count);
     }
 
     private void resolveTargetPlayersPermanents(GameData gameData, StackEntry entry, SkipNextUntapEffect e) {

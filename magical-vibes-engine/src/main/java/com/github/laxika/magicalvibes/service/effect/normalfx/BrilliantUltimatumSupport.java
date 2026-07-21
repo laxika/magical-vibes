@@ -1,6 +1,7 @@
 package com.github.laxika.magicalvibes.service.effect.normalfx;
 
 import com.github.laxika.magicalvibes.model.Card;
+import com.github.laxika.magicalvibes.model.CardPileDisposition;
 import com.github.laxika.magicalvibes.model.CardType;
 import com.github.laxika.magicalvibes.model.ExiledCardEntry;
 import com.github.laxika.magicalvibes.model.GameData;
@@ -73,7 +74,8 @@ public class BrilliantUltimatumSupport {
 
         // Re-queue with the piles filled — step 2 (the pile-choice may prompt) polls it.
         gameData.queueInteraction(new PendingPileSeparation(state.controllerId(), state.targetPlayerId(),
-                state.allPermanentIds(), state.cards(), state.cardOwners(), pile1, pile2, true));
+                state.allPermanentIds(), state.cards(), state.cardOwners(), pile1, pile2,
+                CardPileDisposition.PLAY_FROM_EXILE));
 
         String pile1Desc = describePile(state.cards(), pile1);
         String pile2Desc = describePile(state.cards(), pile2);

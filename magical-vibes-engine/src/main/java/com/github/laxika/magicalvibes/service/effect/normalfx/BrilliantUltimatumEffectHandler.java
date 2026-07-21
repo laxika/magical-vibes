@@ -1,6 +1,7 @@
 package com.github.laxika.magicalvibes.service.effect.normalfx;
 
 import com.github.laxika.magicalvibes.model.Card;
+import com.github.laxika.magicalvibes.model.CardPileDisposition;
 import com.github.laxika.magicalvibes.model.GameData;
 import com.github.laxika.magicalvibes.model.GameLog;
 import com.github.laxika.magicalvibes.model.PendingPileSeparation;
@@ -22,7 +23,7 @@ import org.springframework.stereotype.Component;
 /**
  * Resolves {@link BrilliantUltimatumEffect}: exile the top {@code count} cards of the controller's
  * library, then hand the pile-separation choice to an opponent. Reuses the card-pile separation
- * flow ({@link PendingPileSeparation} with {@code playFromExile = true}); the opponent's pile
+ * flow ({@link PendingPileSeparation} with {@code CardPileDisposition.PLAY_FROM_EXILE}); the opponent's pile
  * selection and the controller's pile choice are completed by {@link BrilliantUltimatumSupport}.
  */
 @Slf4j
@@ -74,7 +75,7 @@ public class BrilliantUltimatumEffectHandler implements NormalEffectHandlerBean 
         }
 
         gameData.queueInteraction(new PendingPileSeparation(controllerId, opponentId,
-                List.of(), exiledCards, cardOwners, List.of(), List.of(), true));
+                List.of(), exiledCards, cardOwners, List.of(), List.of(), CardPileDisposition.PLAY_FROM_EXILE));
 
         playerInputService.beginMultiGraveyardChoice(gameData, opponentId, exiledCards, exiledCards.size(),
                 "Separate the exiled cards into two piles. Select cards for Pile 1 (unselected form Pile 2).");

@@ -529,6 +529,7 @@ Which engine layers support each ConditionalEffect. Check this before using a co
 | `ConditionalEffect(new DidntAttack(), wrapped)` | - | yes | yes (end step) |
 | `ConditionalEffect(new CameUnderControlThisTurn(), wrapped)` | yes | yes | - | source is still summoning sick (came under your control this turn); usually wrapped in `NotCondition` |
 | `ConditionalEffect(new AllOf(List.of(a, b, ...)), wrapped)` | yes | yes | yes (end step) | compound intervening-if — met only when every inner condition holds (Erg Raiders: `DidntAttack` + `NotCondition(CameUnderControlThisTurn)`) |
+| `ConditionalEffect(new AnyOf(List.of(a, b, ...)), wrapped)` | yes | yes | yes (ETB) | compound intervening-if OR — met when at least one inner condition holds (Desert's Hold: `ControlsPermanent(DESERT)` or `GraveyardCardThreshold(1, DESERT)`) |
 | `ConditionalEffect(new AttacksAlone(), wrapped)` | - | yes | yes (attack) |
 | `ConditionalEffect(new MinimumAttackers(minimumAttackers), wrapped)` | - | yes | yes (attack) |
 | `ConditionalEffect(new HasAttacker(predicate), wrapped)` | - | yes | yes (attack) |

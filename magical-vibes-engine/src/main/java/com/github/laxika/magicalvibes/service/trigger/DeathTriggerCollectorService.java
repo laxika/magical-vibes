@@ -314,7 +314,11 @@ public class DeathTriggerCollectorService {
     boolean handleDeathDefault(TriggerMatchContext match,
             CardEffect effect, TriggerContext ctx) {
         TriggerContext.SelfDeath sd = (TriggerContext.SelfDeath) ctx;
-        if (effect.targetSpec().category().includesPermanents() || effect.targetSpec().category().includesPlayers()) {
+        // Graveyard-targeting death triggers (e.g. Ruin Rat: "exile target card from an opponent's
+        // graveyard") also queue as a DeathTriggerTarget; processNextDeathTriggerTarget routes them
+        // to a graveyard card choice made as the trigger goes on the stack.
+        if (effect.targetSpec().category().includesPermanents() || effect.targetSpec().category().includesPlayers()
+                || effect.targetSpec().category().isGraveyard()) {
             match.gameData().queueInteraction(new PermanentChoiceContext.DeathTriggerTarget(
                     sd.dyingCard(), sd.controllerId(), new ArrayList<>(List.of(effect))
             ));

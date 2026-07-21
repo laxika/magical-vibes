@@ -22,7 +22,8 @@ public class NecromancersCovenant extends Card {
         target(new PlayerPredicateTargetFilter(
                 new PlayerRelationPredicate(PlayerRelation.ANY),
                 "Target must be a player"
-        )).addEffect(EffectSlot.ON_ENTER_BATTLEFIELD, new ExileCreaturesFromGraveyardAndCreateTokensEffect(true));
+        )).addEffect(EffectSlot.ON_ENTER_BATTLEFIELD,
+                new ExileCreaturesFromGraveyardAndCreateTokensEffect(true, false, null, null, null, null));
 
         // Zombies you control have lifelink.
         addEffect(EffectSlot.STATIC, new GrantKeywordEffect(Keyword.LIFELINK, GrantScope.OWN_CREATURES,

@@ -17,6 +17,8 @@ import com.github.laxika.magicalvibes.model.effect.CantBeBlockedEffect;
 import com.github.laxika.magicalvibes.model.effect.TargetingRestrictionEffect;
 import com.github.laxika.magicalvibes.model.effect.CantHaveCountersEffect;
 import com.github.laxika.magicalvibes.model.effect.CantHaveMinusOneMinusOneCountersEffect;
+import com.github.laxika.magicalvibes.model.effect.CountersCantBePlacedEffect;
+import com.github.laxika.magicalvibes.model.effect.PlayerCantGetPoisonCountersEffect;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
 import com.github.laxika.magicalvibes.model.effect.DoubleControllerDamageEffect;
 import com.github.laxika.magicalvibes.model.effect.EnchantedCreatureCantAttackOrBlockEffect;
@@ -175,6 +177,13 @@ class GameQueryServiceTest {
         Card card = new Card();
         card.setName(name);
         card.setType(CardType.ENCHANTMENT);
+        return card;
+    }
+
+    private static Card createPlaneswalker(String name) {
+        Card card = new Card();
+        card.setName(name);
+        card.setType(CardType.PLANESWALKER);
         return card;
     }
 
@@ -851,6 +860,64 @@ class GameQueryServiceTest {
             Permanent perm = addPermanent(player1Id, createCreatureWithSubtypes("Grizzly Bears", 2, 2, CardColor.GREEN, List.of(CardSubtype.BEAR)));
 
             assertThat(gqs.cantHaveCounters(gd, perm)).isTrue();
+        }
+
+        @Test
+        @DisplayName("Solemnity blocks a creature — the lock is global (any battlefield)")
+        void solemnityBlocksCreature() {
+            addPermanent(player2Id, createEnchantmentWithStaticEffect("Solemnity", new CountersCantBePlacedEffect()));
+            Permanent perm = addPermanent(player1Id, createCreatureWithSubtypes("Grizzly Bears", 2, 2, CardColor.GREEN, List.of(CardSubtype.BEAR)));
+
+            assertThat(gqs.cantHaveCounters(gd, perm)).isTrue();
+        }
+
+        @Test
+        @DisplayName("Solemnity blocks an artifact")
+        void solemnityBlocksArtifact() {
+            addPermanent(player1Id, createEnchantmentWithStaticEffect("Solemnity", new CountersCantBePlacedEffect()));
+            Permanent perm = addPermanent(player1Id, createArtifact("Angel's Feather"));
+
+            assertThat(gqs.cantHaveCounters(gd, perm)).isTrue();
+        }
+
+        @Test
+        @DisplayName("Solemnity does not block a planeswalker (loyalty still allowed)")
+        void solemnityDoesNotBlockPlaneswalker() {
+            addPermanent(player1Id, createEnchantmentWithStaticEffect("Solemnity", new CountersCantBePlacedEffect()));
+            Permanent perm = addPermanent(player1Id, createPlaneswalker("Some Planeswalker"));
+
+            assertThat(gqs.cantHaveCounters(gd, perm)).isFalse();
+        }
+    }
+
+    // ===== canPlayerGetPoisonCounters =====
+
+    @Nested
+    @DisplayName("canPlayerGetPoisonCounters")
+    class CanPlayerGetPoisonCounters {
+
+        @Test
+        @DisplayName("returns true by default")
+        void returnsTrueByDefault() {
+            assertThat(gqs.canPlayerGetPoisonCounters(gd, player1Id)).isTrue();
+        }
+
+        @Test
+        @DisplayName("returns false only for the controller of a PlayerCantGetPoisonCountersEffect permanent")
+        void returnsFalseWithCantGetPoisonEffect() {
+            addPermanent(player1Id, createCreatureWithStaticEffect("Melira", 2, 2, CardColor.GREEN, new PlayerCantGetPoisonCountersEffect()));
+
+            assertThat(gqs.canPlayerGetPoisonCounters(gd, player1Id)).isFalse();
+            assertThat(gqs.canPlayerGetPoisonCounters(gd, player2Id)).isTrue();
+        }
+
+        @Test
+        @DisplayName("Solemnity: no player can get poison counters (global lock)")
+        void solemnityBlocksAllPlayers() {
+            addPermanent(player1Id, createEnchantmentWithStaticEffect("Solemnity", new CountersCantBePlacedEffect()));
+
+            assertThat(gqs.canPlayerGetPoisonCounters(gd, player1Id)).isFalse();
+            assertThat(gqs.canPlayerGetPoisonCounters(gd, player2Id)).isFalse();
         }
     }
 

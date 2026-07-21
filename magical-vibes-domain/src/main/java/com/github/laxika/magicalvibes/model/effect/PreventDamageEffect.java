@@ -125,6 +125,11 @@ public record PreventDamageEffect(
         return new PreventDamageEffect(PreventionScope.ALL_TO_SELF, null, false, null, null, null);
     }
 
+    /** "Prevent all combat damage that would be dealt to ~ this turn" — the source permanent (Oketra's Avenger). */
+    public static PreventDamageEffect allCombatToSelf() {
+        return new PreventDamageEffect(PreventionScope.ALL_TO_SELF, null, true, null, null, null);
+    }
+
     /** "Prevent all damage that would be dealt to you and creatures you control this turn." */
     public static PreventDamageEffect allToControllerAndCreatures() {
         return new PreventDamageEffect(PreventionScope.ALL_TO_CONTROLLER_AND_CREATURES, null, false, null, null, null);

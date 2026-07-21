@@ -4,6 +4,7 @@ import com.github.laxika.magicalvibes.model.filter.CardPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentPredicate;
 import com.github.laxika.magicalvibes.model.filter.TargetFilter;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
+import com.github.laxika.magicalvibes.model.effect.CreateTokenCopyOfSourceEffect;
 import com.github.laxika.magicalvibes.model.effect.TargetCategory;
 import lombok.Getter;
 
@@ -264,5 +265,17 @@ public class ActivatedAbility {
 
     public boolean isNeedsSpellTarget() {
         return effects.stream().anyMatch(EffectResolution::targetsSpellOnStack);
+    }
+
+    /**
+     * Whether this is an embalm or eternalize ability. Both keywords are modelled as a
+     * graveyard-activated ability that creates a token copy of its source
+     * ({@link CreateTokenCopyOfSourceEffect}), so the presence of that effect is the structural
+     * marker shared by both. Read by "creature card with eternalize or embalm" searches
+     * ({@code CardHasEmbalmOrEternalizePredicate}) and by the "whenever you activate an eternalize
+     * or embalm ability" trigger (Vizier of the Anointed).
+     */
+    public boolean isEmbalmOrEternalize() {
+        return effects.stream().anyMatch(CreateTokenCopyOfSourceEffect.class::isInstance);
     }
 }

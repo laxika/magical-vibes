@@ -15,6 +15,7 @@ import com.github.laxika.magicalvibes.model.condition.AnyLibraryAtMost;
 import com.github.laxika.magicalvibes.model.condition.AnyPlayerControlsPermanent;
 import com.github.laxika.magicalvibes.model.condition.AnyPlayerControlsPermanentCount;
 import com.github.laxika.magicalvibes.model.condition.AnyPlayerControlsPermanentCountAtMost;
+import com.github.laxika.magicalvibes.model.condition.AnyOf;
 import com.github.laxika.magicalvibes.model.condition.AttacksAlone;
 import com.github.laxika.magicalvibes.model.condition.BlockedByMinCreatures;
 import com.github.laxika.magicalvibes.model.condition.CameUnderControlThisTurn;
@@ -129,6 +130,8 @@ public class ConditionEvaluationService {
                     ctx.controllerId() != null && creatureAttackingPlayer(gameData, ctx.controllerId());
             case AllOf c ->
                     c.conditions().stream().allMatch(inner -> isMet(gameData, inner, ctx));
+            case AnyOf c ->
+                    c.conditions().stream().anyMatch(inner -> isMet(gameData, inner, ctx));
             case CameUnderControlThisTurn ignored -> {
                 Permanent source = sourcePermanent(gameData, ctx);
                 yield source != null && source.isSummoningSick();

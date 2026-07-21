@@ -234,6 +234,10 @@ public class ChoiceHandlerService {
             handleChooseModeChoice(gameData, player, colorName, ctx);
             return;
         }
+        if (colorChoice.context() instanceof ChoiceContext.TormentPenaltyChoice ctx) {
+            handleTormentPenaltyChoice(gameData, player, colorName, ctx);
+            return;
+        }
         CardColor color = CardColor.valueOf(colorName);
         UUID permanentId = colorChoice.permanentId();
         UUID etbTargetId = colorChoice.etbTargetId();
@@ -1043,6 +1047,32 @@ public class ChoiceHandlerService {
                 .reduce((a, b) -> a + " and " + b).orElse("");
         gameBroadcastService.logAndBroadcast(gameData, GameLog.cardThen(target.getCard(), " becomes " + colorList + " until end of turn."));
         log.info("Game {} - {} becomes {} until end of turn", gameData.id, target.getCard().getName(), colorList);
+    }
+
+    /**
+     * Torment of Hailfire: the affected opponent picked one of the pruned penalty options. Record the
+     * choice on {@link GameData#torment} and resume the paused spell, which re-runs
+     * {@code TormentOfHailfireEffectHandler} to apply the choice (a sacrifice/discard sub-choice, or
+     * an inline life loss) and advance to the next opponent.
+     */
+    private void handleTormentPenaltyChoice(GameData gameData, Player player, String chosen,
+            ChoiceContext.TormentPenaltyChoice ctx) {
+        PendingInteraction.ColorChoice active =
+                gameData.interaction.activeInteraction(PendingInteraction.ColorChoice.class);
+        if (active == null || !active.options().contains(chosen)) {
+            throw new IllegalArgumentException("Invalid Torment of Hailfire choice: " + chosen);
+        }
+
+        gameData.interaction.clearAwaitingInput();
+        gameData.torment.chosenMode = chosen;
+
+        gameBroadcastService.logAndBroadcast(gameData, GameLog.text(
+                player.getUsername() + " chooses \"" + chosen + "\" for " + ctx.sourceCardName() + "."));
+        log.info("Game {} - {} chooses {} for {}", gameData.id, player.getUsername(), chosen, ctx.sourceCardName());
+
+        gameData.priorityPassedBy.clear();
+        gameBroadcastService.broadcastGameState(gameData);
+        resumeAndAutoPass(gameData);
     }
 
     /**

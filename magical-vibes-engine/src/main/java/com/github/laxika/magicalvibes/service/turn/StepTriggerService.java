@@ -2575,6 +2575,36 @@ public class StepTriggerService {
             }
         });
 
+        // Check all battlefields for curses with ENCHANTED_PLAYER_END_STEP_TRIGGERED effects. Unlike
+        // the upkeep variant, these fire at EACH end step (any player's turn) and act on the enchanted
+        // player, whose id is baked as the (non-targeting) targetId (e.g. Fraying Sanity's mill).
+        gameData.forEachPermanent((auraOwnerId, perm) -> {
+            List<CardEffect> enchantedPlayerEndStepEffects =
+                    perm.getCard().getEffects(EffectSlot.ENCHANTED_PLAYER_END_STEP_TRIGGERED);
+            if (enchantedPlayerEndStepEffects == null || enchantedPlayerEndStepEffects.isEmpty()) return;
+            if (!perm.isAttached()) return;
+
+            // For curses, attachedTo is the enchanted player's UUID.
+            UUID enchantedPlayerId = perm.getAttachedTo();
+
+            for (CardEffect effect : enchantedPlayerEndStepEffects) {
+                gameData.stack.add(new StackEntry(
+                        StackEntryType.TRIGGERED_ABILITY,
+                        perm.getCard(),
+                        auraOwnerId,
+                        perm.getCard().getName() + "'s end step ability",
+                        new ArrayList<>(List.of(effect)),
+                        enchantedPlayerId,
+                        perm.getId()
+                ));
+
+                gameBroadcastService.logAndBroadcast(gameData,
+                        GameLog.cardThen(perm.getCard(), "'s end step ability triggers."));
+                log.info("Game {} - {} enchanted-player end-step trigger pushed onto stack",
+                        gameData.id, perm.getCard().getName());
+            }
+        });
+
         // Process pending end-step targeted triggers (e.g. Reaper from the Abyss morbid, Voltaic Servant)
         if (gameData.hasPendingInteraction(PermanentChoiceContext.EndStepTriggerTarget.class)) {
             processNextEndStepTriggerTarget(gameData);

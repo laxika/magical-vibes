@@ -99,7 +99,7 @@ public class TargetLegalityService {
             return Optional.of("Must target a spell on the stack");
         }
 
-        boolean includeAbilities = containsHasTargetPredicate(targetFilter);
+        boolean includeAbilities = filterAdmitsAbilityTarget(targetFilter);
         StackEntry targetSpell = includeAbilities
                 ? findAnyEntryOnStack(gameData, targetId)
                 : findSpellOnStack(gameData, targetId);
@@ -948,25 +948,37 @@ public class TargetLegalityService {
                 .orElse(null);
     }
 
-    private boolean containsHasTargetPredicate(TargetFilter targetFilter) {
+    /**
+     * Whether {@code targetFilter} can legally match an activated or triggered ability on the stack
+     * (not just a spell), which decides whether the candidate lookup includes ability entries
+     * ({@link #findAnyEntryOnStack}) or only spells ({@link #findSpellOnStack}). True when the filter
+     * explicitly admits abilities: a {@link StackEntryHasTargetPredicate} (an ability that targets,
+     * e.g. Siren Stormtamer) or a {@link StackEntryTypeInPredicate} naming an ability type ("counter
+     * target activated or triggered ability", Nimble Obstructionist).
+     */
+    private boolean filterAdmitsAbilityTarget(TargetFilter targetFilter) {
         if (!(targetFilter instanceof StackEntryPredicateTargetFilter filter)) {
             return false;
         }
-        return predicateContainsHasTarget(filter.predicate());
+        return predicateAdmitsAbilityTarget(filter.predicate());
     }
 
-    private boolean predicateContainsHasTarget(StackEntryPredicate predicate) {
+    private boolean predicateAdmitsAbilityTarget(StackEntryPredicate predicate) {
         if (predicate instanceof StackEntryHasTargetPredicate) {
             return true;
         }
+        if (predicate instanceof StackEntryTypeInPredicate typeIn) {
+            return typeIn.spellTypes().contains(StackEntryType.ACTIVATED_ABILITY)
+                    || typeIn.spellTypes().contains(StackEntryType.TRIGGERED_ABILITY);
+        }
         if (predicate instanceof StackEntryAllOfPredicate allOf) {
-            return allOf.predicates().stream().anyMatch(this::predicateContainsHasTarget);
+            return allOf.predicates().stream().anyMatch(this::predicateAdmitsAbilityTarget);
         }
         if (predicate instanceof StackEntryAnyOfPredicate anyOf) {
-            return anyOf.predicates().stream().anyMatch(this::predicateContainsHasTarget);
+            return anyOf.predicates().stream().anyMatch(this::predicateAdmitsAbilityTarget);
         }
         if (predicate instanceof StackEntryNotPredicate not) {
-            return predicateContainsHasTarget(not.predicate());
+            return predicateAdmitsAbilityTarget(not.predicate());
         }
         return false;
     }

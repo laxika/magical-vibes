@@ -1845,6 +1845,8 @@ public class CombatDamageService {
             }
             // Apply one-shot Sanctum Guardian shields (prevent the next damage from the chosen source to any target)
             damage = damagePreventionService.applyChosenSourceNextDamageToAnyTargetShield(gameData, atk.getId(), damage);
+            // Djeru, With Eyes Open: prevent N combat damage per attacker to a planeswalker you control.
+            damage -= damagePreventionService.applyPlaneswalkerFixedPerSourceDamagePrevention(gameData, pwControllerId, damage);
             state.damageToPlaneswalkers.merge(attackTarget, damage, Integer::sum);
             state.combatDamageDealt.merge(atk, damage, Integer::sum);
             return;
@@ -1879,6 +1881,9 @@ public class CombatDamageService {
             // Apply source-specific redirect shields (e.g. Harm's Way) per-attacker.
             // Redirection is a replacement effect, not prevention, so it fires before prevention checks.
             damage = damagePreventionService.applySourceRedirectShields(gameData, defenderId, atk.getId(), damage);
+            processSourceRedirectDamage(gameData);
+            // Saving Grace: redirect all combat damage this turn to the defending player onto the enchanted creature.
+            damage = damagePreventionService.applyTurnDamageRedirectToCreature(gameData, defenderId, null, damage);
             processSourceRedirectDamage(gameData);
             CardColor attackerColor = atkStats.color();
             if (damage > 0
@@ -1955,6 +1960,9 @@ public class CombatDamageService {
         UUID targetControllerId = gameQueryService.findPermanentController(gameData, target.getId());
         if (targetControllerId != null) {
             damage = damagePreventionService.applySourceRedirectShields(gameData, targetControllerId, source.getId(), damage);
+            processSourceRedirectDamage(gameData);
+            // Saving Grace: redirect all combat damage this turn to a permanent you control onto the enchanted creature.
+            damage = damagePreventionService.applyTurnDamageRedirectToCreature(gameData, targetControllerId, target.getId(), damage);
             processSourceRedirectDamage(gameData);
         }
         // Apply creature-specific redirect shields (e.g. Oracle's Attendants) per-source for creature targets

@@ -16,6 +16,7 @@ public sealed interface Condition permits
         AnyPlayerControlsPermanent,
         AnyPlayerControlsPermanentCount,
         AnyPlayerControlsPermanentCountAtMost,
+        AnyOf,
         AttackedWithCreaturesThisTurn,
         AttacksAlone,
         BlockedByMinCreatures,

@@ -124,6 +124,7 @@ public class TurnCleanupService {
         gameData.damageRedirectShields.clear();
         gameData.sourceDamageRedirectShields.clear();
         gameData.creatureDamageRedirectShields.clear();
+        gameData.turnDamageRedirectToCreatureShields.clear();
         gameData.targetSourceDamagePreventionShields.clear();
         gameData.globalDamagePreventionShield = 0;
         gameData.preventAllCombatDamage = false;

@@ -13,6 +13,7 @@ import com.github.laxika.magicalvibes.model.effect.ExileCreaturesFromGraveyardAn
 import com.github.laxika.magicalvibes.service.GameBroadcastService;
 import com.github.laxika.magicalvibes.service.battlefield.BattlefieldEntryService;
 import com.github.laxika.magicalvibes.service.battlefield.GameQueryService;
+import java.util.ArrayList;
 import java.util.EnumSet;
 import java.util.List;
 import java.util.Set;
@@ -39,6 +40,7 @@ public class ExileCreaturesFromGraveyardAndCreateTokensEffectHandler implements 
 
     @Override
     public void resolve(GameData gameData, StackEntry entry, CardEffect effect) {
+        var e = (ExileCreaturesFromGraveyardAndCreateTokensEffect) effect;
 
         UUID controllerId = entry.getControllerId();
         String playerName = gameData.playerIdToName.get(controllerId);
@@ -46,7 +48,7 @@ public class ExileCreaturesFromGraveyardAndCreateTokensEffectHandler implements 
         enterTappedTypesSnapshot.addAll(battlefieldEntryService.snapshotEnterTappedTypes(gameData));
 
         List<UUID> cardIdsToExile;
-        if (((ExileCreaturesFromGraveyardAndCreateTokensEffect) effect).targetPlayerGraveyard()) {
+        if (e.targetPlayerGraveyard()) {
             // Necromancer's Covenant: exile all creature cards from the single targeted player's graveyard.
             List<Card> graveyard = gameData.playerGraveyards.getOrDefault(entry.getTargetId(), List.of());
             cardIdsToExile = graveyard.stream()
@@ -54,20 +56,31 @@ public class ExileCreaturesFromGraveyardAndCreateTokensEffectHandler implements 
                     .map(Card::getId)
                     .toList();
         } else {
-            // Midnight Ritual: exile the individually targeted creature cards.
+            // Midnight Ritual / Hour of Eternity: exile the individually targeted creature cards.
             cardIdsToExile = entry.getTargetCardIds();
         }
 
-        int tokensToCreate = 0;
+        List<Card> exiledCards = new ArrayList<>();
         for (UUID cardId : cardIdsToExile) {
             Card card = gameQueryService.findCardInGraveyardById(gameData, cardId);
             if (card != null) {
                 graveyardReturnSupport.exileCardFromAnyGraveyard(gameData, cardId, card);
                 gameBroadcastService.logAndBroadcast(gameData, GameLog.textCardText(playerName + " exiles " , card, " from graveyard."));
-                tokensToCreate++;
+                exiledCards.add(card);
             }
         }
 
+        // Hour of Eternity: create a token that's a copy of each exiled card, except it's a 4/4 black Zombie.
+        if (e.copyExiledCards()) {
+            List<CardSubtype> addedSubtypes = e.addedSubtype() != null ? List.of(e.addedSubtype()) : List.of();
+            for (Card exiledCard : exiledCards) {
+                graveyardReturnSupport.createTokenCopyFromCard(gameData, entry, exiledCard, addedSubtypes,
+                        false, false, e.colorOverride(), e.powerOverride(), e.toughnessOverride());
+            }
+            return;
+        }
+
+        int tokensToCreate = exiledCards.size();
         int tokenMultiplier = gameQueryService.getTokenMultiplier(gameData, controllerId);
         int totalTokens = tokensToCreate * tokenMultiplier;
         for (int i = 0; i < totalTokens; i++) {

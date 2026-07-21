@@ -247,6 +247,31 @@ class ColorChoiceAiStrategy implements AiInteractionStrategy<PendingInteraction.
             return;
         }
 
+        if (context instanceof ChoiceContext.TormentPenaltyChoice) {
+            // Torment of Hailfire: lose life while comfortably ahead, otherwise preserve life by
+            // pitching a card (then a permanent). The "lose life" option is the one that is neither
+            // the sacrifice nor the discard label.
+            List<String> options = interaction.options();
+            String loseLife = options.stream()
+                    .filter(o -> !o.equals(ChoiceContext.TormentPenaltyChoice.SACRIFICE)
+                            && !o.equals(ChoiceContext.TormentPenaltyChoice.DISCARD))
+                    .findFirst()
+                    .orElse(options.getLast());
+            String chosen;
+            if (gameData.getLife(aiPlayerId) > 6) {
+                chosen = loseLife;
+            } else if (options.contains(ChoiceContext.TormentPenaltyChoice.DISCARD)) {
+                chosen = ChoiceContext.TormentPenaltyChoice.DISCARD;
+            } else if (options.contains(ChoiceContext.TormentPenaltyChoice.SACRIFICE)) {
+                chosen = ChoiceContext.TormentPenaltyChoice.SACRIFICE;
+            } else {
+                chosen = loseLife;
+            }
+            log.info("AI: Choosing \"{}\" for Torment of Hailfire in game {}", chosen, gameId);
+            ctx.gameActions().answerInteraction(ctx.selfConnection(), new InteractionAnswer.ListChoiceMade(chosen));
+            return;
+        }
+
         // Pick the color that appears most on opponent's battlefield
         UUID opponentId = getOpponentId(gameData, aiPlayerId);
         List<Permanent> opponentField = gameData.playerBattlefields.getOrDefault(opponentId, List.of());

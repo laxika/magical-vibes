@@ -8,6 +8,7 @@ import com.github.laxika.magicalvibes.model.GameData;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.SourceDamageRedirectShield;
 import com.github.laxika.magicalvibes.model.TargetSourceDamagePreventionShield;
+import com.github.laxika.magicalvibes.model.TurnDamageRedirectToCreatureShield;
 import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.effect.PreventAllDamageEffect;
 import com.github.laxika.magicalvibes.model.effect.PreventAllCombatDamageToAndByEnchantedCreatureEffect;
@@ -22,6 +23,7 @@ import com.github.laxika.magicalvibes.model.effect.PreventDamageFromOpponentSour
 import com.github.laxika.magicalvibes.model.effect.PreventDamageToOtherCreaturesAndAddPlusCountersEffect;
 import com.github.laxika.magicalvibes.model.effect.PreventDamageToSelfFromCreaturesEffect;
 import com.github.laxika.magicalvibes.model.effect.PreventDamageToControllerPerClericEffect;
+import com.github.laxika.magicalvibes.model.effect.PlaneswalkerDamagePreventionEffect;
 import com.github.laxika.magicalvibes.model.effect.PreventFixedDamagePerSourceToControllerEffect;
 import com.github.laxika.magicalvibes.model.effect.PreventNoncombatDamageToControllerAndGainLifeEffect;
 import com.github.laxika.magicalvibes.model.effect.PreventNoncombatDamageToCreaturesYouControlEffect;
@@ -520,6 +522,40 @@ public class DamagePreventionService {
         return remaining;
     }
 
+    /**
+     * Saving Grace: redirect all damage this turn dealt to a protected player or a permanent they
+     * control onto a fixed creature. Any source, unlimited amount, persists for the turn. This is a
+     * redirection (replacement) effect, so it applies even when damage can't be prevented. The redirect
+     * only happens while the destination is still a creature on the battlefield (ruling: if it isn't a
+     * creature on the battlefield when the damage would be dealt, the damage isn't redirected). Damage
+     * that would be dealt to the destination creature itself is left alone — redirecting to itself is a
+     * no-op that would otherwise skip its own damage triggers. Redirected damage is queued in
+     * {@link GameData#pendingSourceRedirectDamage} for the caller's {@code processSourceRedirectDamage}.
+     *
+     * @param protectedPlayerId  the player receiving damage, or the controller of the damaged permanent
+     * @param damagedPermanentId the permanent being damaged, or {@code null} when the damage is to the player
+     * @param damage             the raw damage amount
+     * @return the remaining damage after redirection (0 if redirected)
+     */
+    public int applyTurnDamageRedirectToCreature(GameData gameData, UUID protectedPlayerId,
+                                                 UUID damagedPermanentId, int damage) {
+        // No isDamagePreventable check — this is redirection (replacement), not prevention.
+        if (damage <= 0 || protectedPlayerId == null || gameData.turnDamageRedirectToCreatureShields.isEmpty()) return damage;
+
+        for (TurnDamageRedirectToCreatureShield shield : gameData.turnDamageRedirectToCreatureShields) {
+            if (!shield.protectedPlayerId().equals(protectedPlayerId)) continue;
+            UUID targetId = shield.redirectTargetCreatureId();
+            // Redirecting damage to the destination creature itself is a no-op; deal it normally.
+            if (targetId.equals(damagedPermanentId)) continue;
+            // Ruling: only redirect while the destination is still a creature on the battlefield.
+            Permanent target = gameQueryService.findPermanentById(gameData, targetId);
+            if (target == null || !gameQueryService.isCreature(gameData, target)) continue;
+            gameData.pendingSourceRedirectDamage.add(new SourceDamageRedirectShield(protectedPlayerId, null, damage, targetId));
+            return 0;
+        }
+        return damage;
+    }
+
     public boolean applyColorDamagePreventionForPlayer(GameData gameData, UUID playerId, CardColor sourceColor) {
         if (!gameQueryService.isDamagePreventable(gameData)) return false;
         if (sourceColor == null) return false;
@@ -618,6 +654,29 @@ public class DamagePreventionService {
                 .flatMap(p -> p.getCard().getEffects(EffectSlot.STATIC).stream())
                 .filter(e -> e instanceof PreventFixedDamagePerSourceToControllerEffect)
                 .mapToInt(e -> ((PreventFixedDamagePerSourceToControllerEffect) e).amount())
+                .sum();
+        return Math.min(damage, reduction);
+    }
+
+    /**
+     * Djeru, With Eyes Open-style prevention: "If a source would deal damage to a planeswalker you
+     * control, prevent N of that damage." Keyed on the controller of the damaged planeswalker: sums
+     * the {@code amount} of every {@link PlaneswalkerDamagePreventionEffect} that player controls and
+     * prevents up to that from each source that would deal damage to a planeswalker they control
+     * (combat and noncombat). Returns the amount prevented (the caller subtracts it); 0 when damage
+     * can't be prevented or no such permanent is present.
+     */
+    public int applyPlaneswalkerFixedPerSourceDamagePrevention(GameData gameData, UUID planeswalkerControllerId, int damage) {
+        if (!gameQueryService.isDamagePreventable(gameData)) return 0;
+        if (damage <= 0 || planeswalkerControllerId == null) return 0;
+
+        List<Permanent> battlefield = gameData.playerBattlefields.get(planeswalkerControllerId);
+        if (battlefield == null) return 0;
+
+        int reduction = battlefield.stream()
+                .flatMap(p -> p.getCard().getEffects(EffectSlot.STATIC).stream())
+                .filter(e -> e instanceof PlaneswalkerDamagePreventionEffect)
+                .mapToInt(e -> ((PlaneswalkerDamagePreventionEffect) e).amount())
                 .sum();
         return Math.min(damage, reduction);
     }

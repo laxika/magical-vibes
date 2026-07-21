@@ -53,6 +53,7 @@ import com.github.laxika.magicalvibes.model.filter.PermanentIsTappedPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsTokenPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentNotPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentPowerAtMostPredicate;
+import com.github.laxika.magicalvibes.model.filter.PermanentPowerAtMostSourcePowerPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentPredicateTargetFilter;
 import com.github.laxika.magicalvibes.model.filter.PermanentTruePredicate;
 import com.github.laxika.magicalvibes.model.filter.StackEntryAllOfPredicate;
@@ -657,6 +658,28 @@ class PredicateEvaluationServiceTest {
             Permanent perm = addPermanent(player1Id, createCreatureWithSubtypes("Grizzly Bears", 2, 2, CardColor.GREEN, List.of(CardSubtype.BEAR))); // power 2
 
             assertThat(evaluator.matchesPermanentPredicate(gd, perm, new PermanentPowerAtMostPredicate(1))).isFalse();
+        }
+
+        @Test
+        @DisplayName("PermanentPowerAtMostSourcePowerPredicate matches when target power is at or below source power")
+        void powerAtMostSourcePowerMatches() {
+            Card source = createCreatureWithSubtypes("Hill Giant", 3, 3, CardColor.RED, List.of(CardSubtype.GIANT)); // power 3
+            addPermanent(player1Id, source);
+            Permanent target = addPermanent(player2Id, createCreatureWithSubtypes("Hill Giant", 3, 3, CardColor.RED, List.of(CardSubtype.GIANT))); // power 3
+            FilterContext ctx = FilterContext.of(gd).withSourceCardId(source.getId());
+
+            assertThat(evaluator.matchesPermanentPredicate(target, new PermanentPowerAtMostSourcePowerPredicate(), ctx)).isTrue();
+        }
+
+        @Test
+        @DisplayName("PermanentPowerAtMostSourcePowerPredicate rejects when target power exceeds source power")
+        void powerAtMostSourcePowerRejectsAbove() {
+            Card source = createCreatureWithSubtypes("Grizzly Bears", 2, 2, CardColor.GREEN, List.of(CardSubtype.BEAR)); // power 2
+            addPermanent(player1Id, source);
+            Permanent target = addPermanent(player2Id, createCreatureWithSubtypes("Hill Giant", 3, 3, CardColor.RED, List.of(CardSubtype.GIANT))); // power 3
+            FilterContext ctx = FilterContext.of(gd).withSourceCardId(source.getId());
+
+            assertThat(evaluator.matchesPermanentPredicate(target, new PermanentPowerAtMostSourcePowerPredicate(), ctx)).isFalse();
         }
 
         @Test

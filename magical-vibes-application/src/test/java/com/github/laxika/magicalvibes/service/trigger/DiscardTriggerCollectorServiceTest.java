@@ -8,7 +8,9 @@ import com.github.laxika.magicalvibes.model.GameData;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.StackEntry;
 import com.github.laxika.magicalvibes.model.StackEntryType;
+import com.github.laxika.magicalvibes.model.PermanentChoiceContext;
 import com.github.laxika.magicalvibes.model.effect.BoostSelfEffect;
+import com.github.laxika.magicalvibes.model.effect.BoostTargetCreatureEffect;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
 import com.github.laxika.magicalvibes.model.effect.DealDamageToDiscardingPlayerEffect;
 import com.github.laxika.magicalvibes.model.effect.ExileDiscardedCardFromGraveyardEffect;
@@ -18,8 +20,13 @@ import com.github.laxika.magicalvibes.model.CounterType;
 import com.github.laxika.magicalvibes.model.effect.EachPermanentScope;
 import com.github.laxika.magicalvibes.model.effect.MayPayManaEffect;
 import com.github.laxika.magicalvibes.model.effect.PutCounterOnEachMatchingPermanentEffect;
+import com.github.laxika.magicalvibes.model.effect.MakeCreatureUnblockableEffect;
 import com.github.laxika.magicalvibes.model.effect.ScryEffect;
+import com.github.laxika.magicalvibes.model.effect.SequenceEffect;
+import com.github.laxika.magicalvibes.model.filter.PermanentAllOfPredicate;
+import com.github.laxika.magicalvibes.model.filter.PermanentControlledBySourceControllerPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsCreaturePredicate;
+import com.github.laxika.magicalvibes.model.filter.PermanentNotPredicate;
 import com.github.laxika.magicalvibes.service.DamagePreventionService;
 import com.github.laxika.magicalvibes.service.GameBroadcastService;
 import com.github.laxika.magicalvibes.service.battlefield.GameQueryService;
@@ -34,6 +41,7 @@ import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 
 import java.util.ArrayList;
+import java.util.List;
 import java.util.UUID;
 
 import static org.assertj.core.api.Assertions.assertThat;
@@ -466,6 +474,33 @@ class DiscardTriggerCollectorServiceTest {
         }
     }
 
+    // ===== ON_CONTROLLER_DISCARDS — SequenceEffect =====
+
+    @Nested
+    @DisplayName("ON_CONTROLLER_DISCARDS — SequenceEffect")
+    class ControllerDiscardSequence {
+
+        @Test
+        @DisplayName("queues one atomic triggered ability carrying the source permanent and returns true")
+        void queuesSequenceTrigger() {
+            Permanent survivor = createPermanent("Cunning Survivor");
+            var effect = SequenceEffect.of(new BoostSelfEffect(1, 0), new MakeCreatureUnblockableEffect(true));
+            var ctx = new TriggerContext.Discard(player1Id, createCard("Grizzly Bears"));
+
+            boolean result = registry.dispatch(
+                    match(survivor, player1Id, effect),
+                    EffectSlot.ON_CONTROLLER_DISCARDS, effect, ctx);
+
+            assertThat(result).isTrue();
+            assertThat(gd.stack).hasSize(1);
+            StackEntry entry = gd.stack.getFirst();
+            assertThat(entry.getEntryType()).isEqualTo(StackEntryType.TRIGGERED_ABILITY);
+            assertThat(entry.getControllerId()).isEqualTo(player1Id);
+            assertThat(entry.getSourcePermanentId()).isEqualTo(survivor.getId());
+            assertThat(entry.getEffectsToResolve()).hasSize(1).first().isInstanceOf(SequenceEffect.class);
+        }
+    }
+
     // ===== ON_CONTROLLER_DISCARDS — PutCounterOnEachMatchingPermanentEffect =====
 
     @Nested
@@ -493,6 +528,35 @@ class DiscardTriggerCollectorServiceTest {
             assertThat(entry.getSourcePermanentId()).isEqualTo(archfiend.getId());
             assertThat(entry.getEffectsToResolve()).hasSize(1).first()
                     .isInstanceOf(PutCounterOnEachMatchingPermanentEffect.class);
+        }
+    }
+
+    // ===== ON_CONTROLLER_DISCARDS — BoostTargetCreatureEffect =====
+
+    @Nested
+    @DisplayName("ON_CONTROLLER_DISCARDS — BoostTargetCreatureEffect")
+    class ControllerDiscardBoostTargetCreature {
+
+        @Test
+        @DisplayName("queues a target-creature choice carrying the source permanent and returns true")
+        void queuesTargetChoice() {
+            Permanent sphinx = createPermanent("Ominous Sphinx");
+            var effect = new BoostTargetCreatureEffect(-2, 0, new PermanentAllOfPredicate(List.of(
+                    new PermanentIsCreaturePredicate(),
+                    new PermanentNotPredicate(new PermanentControlledBySourceControllerPredicate()))));
+            var ctx = new TriggerContext.Discard(player1Id, createCard("Grizzly Bears"));
+
+            boolean result = registry.dispatch(
+                    match(sphinx, player1Id, effect),
+                    EffectSlot.ON_CONTROLLER_DISCARDS, effect, ctx);
+
+            assertThat(result).isTrue();
+            assertThat(gd.hasPendingInteraction(PermanentChoiceContext.DiscardControllerTriggerTarget.class)).isTrue();
+            PermanentChoiceContext.DiscardControllerTriggerTarget pending =
+                    gd.peekPendingInteraction(PermanentChoiceContext.DiscardControllerTriggerTarget.class);
+            assertThat(pending.controllerId()).isEqualTo(player1Id);
+            assertThat(pending.sourcePermanentId()).isEqualTo(sphinx.getId());
+            assertThat(pending.effects()).hasSize(1).first().isInstanceOf(BoostTargetCreatureEffect.class);
         }
     }
 

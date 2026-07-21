@@ -10,7 +10,7 @@ package com.github.laxika.magicalvibes.model.effect;
  *   <li>On resolution: exile the top {@code count} cards of the controller's library.</li>
  *   <li>An opponent separates the exiled cards into two piles (reuses the card-pile separation
  *       flow via {@link com.github.laxika.magicalvibes.model.PendingPileSeparation} with
- *       {@code playFromExile = true}).</li>
+ *       {@code CardPileDisposition.PLAY_FROM_EXILE}).</li>
  *   <li>Controller chooses a pile (may-ability: Yes = Pile 1, No = Pile 2).</li>
  *   <li>Controller may play lands (respecting the one-land-per-turn limit) and cast spells for
  *       free from the chosen pile. Everything not played remains exiled.</li>

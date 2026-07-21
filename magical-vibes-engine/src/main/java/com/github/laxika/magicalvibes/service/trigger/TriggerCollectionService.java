@@ -1454,6 +1454,33 @@ public class TriggerCollectionService {
     }
 
     /**
+     * "Whenever you activate an eternalize or embalm ability" triggers (Vizier of the Anointed).
+     * Fires once per activation on every permanent the activating player controls that has an
+     * {@link EffectSlot#ON_CONTROLLER_ACTIVATES_ETERNALIZE_OR_EMBALM} effect. Called from the
+     * graveyard-ability activation path only when the activated ability is an embalm/eternalize
+     * ability, so no per-permanent condition is needed.
+     */
+    public void checkControllerActivatesEternalizeOrEmbalmTriggers(GameData gameData, UUID activatingPlayerId) {
+        gameData.forEachPermanent((ownerId, perm) -> {
+            if (!ownerId.equals(activatingPlayerId)) return;
+            for (CardEffect effect : perm.getCard().getEffects(EffectSlot.ON_CONTROLLER_ACTIVATES_ETERNALIZE_OR_EMBALM)) {
+                gameData.enqueueTrigger(new StackEntry(
+                        StackEntryType.TRIGGERED_ABILITY,
+                        perm.getCard(),
+                        ownerId,
+                        perm.getCard().getName() + "'s ability",
+                        new ArrayList<>(List.of(effect)),
+                        null,
+                        perm.getId()
+                ));
+                gameBroadcastService.logAndBroadcast(gameData, GameLog.abilityTriggers(perm.getCard()));
+                log.info("Game {} - {} triggers on eternalize/embalm activation",
+                        gameData.id, perm.getCard().getName());
+            }
+        });
+    }
+
+    /**
      * "Whenever an opponent activates an ability of {a permanent}, if it isn't a mana ability, ..."
      * triggers (e.g. Harsh Mentor). Fires on every permanent NOT controlled by the activating player
      * that has an {@link EffectSlot#ON_OPPONENT_ACTIVATES_NONMANA_ABILITY} effect, optionally filtered
@@ -2388,6 +2415,36 @@ public class TriggerCollectionService {
             for (int i = 0; i < extraWizardTriggers; i++) {
                 for (StackEntry entry : newEntries) {
                     gameData.stack.add(new StackEntry(entry));
+                }
+            }
+        }
+
+        // Graveyard-resident creature-enters triggers (GRAVEYARD_ON_ALLY_CREATURE_ENTERS_BATTLEFIELD,
+        // e.g. Unconventional Tactics). A graveyard card is not a permanent, so it is excluded from Naban
+        // doubling — hence added after the extra-trigger duplication above.
+        List<Card> graveyard = gameData.playerGraveyards.get(controllerId);
+        if (graveyard != null) {
+            for (Card card : new ArrayList<>(graveyard)) {
+                List<CardEffect> effects = card.getEffects(EffectSlot.GRAVEYARD_ON_ALLY_CREATURE_ENTERS_BATTLEFIELD);
+                if (effects == null || effects.isEmpty()) continue;
+
+                for (CardEffect effect : effects) {
+                    CardEffect resolved = unwrapTriggeringCardConditional(effect, enteringCreature, gameData, controllerId);
+                    if (resolved == null) continue;
+
+                    if (resolved instanceof MayEffect may) {
+                        gameData.queueMayAbility(card, controllerId, may);
+                    } else {
+                        gameData.stack.add(new StackEntry(
+                                StackEntryType.TRIGGERED_ABILITY,
+                                card,
+                                controllerId,
+                                card.getName() + "'s ability",
+                                new ArrayList<>(List.of(resolved))
+                        ));
+                    }
+                    gameBroadcastService.logAndBroadcast(gameData, GameLog.abilityTriggers(card));
+                    log.info("Game {} - {} graveyard creature-enters trigger queued", gameData.id, card.getName());
                 }
             }
         }

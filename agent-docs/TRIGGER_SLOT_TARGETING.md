@@ -207,6 +207,8 @@ above, but fires exactly one trigger per creature per placement instance regardl
 counters were placed at once; non-targeting — the Snake creation is a plain `CreateTokenEffect`),
 `ON_ALLY_AURA_OR_EQUIPMENT_PUT_INTO_GRAVEYARD_FROM_BATTLEFIELD`,
 `GRAVEYARD_ON_ALLY_CREATURES_ATTACK`, `GRAVEYARD_ON_ALLY_CREATURE_COMBAT_DAMAGE_TO_PLAYER`,
+`GRAVEYARD_ON_ALLY_CREATURE_ENTERS_BATTLEFIELD` (graveyard mirror of `ON_ALLY_CREATURE_ENTERS_BATTLEFIELD`;
+`TriggeringCardConditionalEffect` subtype-gate + `MayPayManaEffect` pay-to-return — Unconventional Tactics),
 `ON_ALLY_CREATURE_BECOMES_TARGET_OF_OPPONENT_SPELL_OR_ABILITY`,
 `ON_TRANSFORM_TO_BACK_FACE`, `ON_TRANSFORM_TO_FRONT_FACE`,
 `ON_CONTROLLER_ACTIVATES_ABILITY` (Ceaseless Searblades; fires on every permanent with this slot on
@@ -215,7 +217,11 @@ wrap in `TriggeringPermanentConditionalEffect` to filter by the permanent whose 
 `ON_OPPONENT_ACTIVATES_NONMANA_ABILITY` (Harsh Mentor; the opponent-scoped mirror — fires on every
 permanent NOT controlled by the activating player, only on the non-mana activation path so mana
 abilities never trigger it; wrap in `TriggeringPermanentConditionalEffect` to filter by the activated
-permanent's type; the activating opponent is baked as the non-targeting `targetId`).
+permanent's type; the activating opponent is baked as the non-targeting `targetId`),
+`ON_CONTROLLER_ACTIVATES_ETERNALIZE_OR_EMBALM` (Vizier of the Anointed; fires once per activation on
+every permanent with this slot on the activating player's battlefield when the activated graveyard
+ability is embalm/eternalize — `ActivatedAbility.isEmbalmOrEternalize()`; no conditional wrapper, the
+keyword gate is applied at the call site in `AbilityActivationService.completeGraveyardAbilityActivation`).
 
 ## `ON_ENTER_BATTLEFIELD` targeted triggers
 
@@ -250,7 +256,9 @@ condition — both the cast-time exclusion and the `EtbEffectResolver` gate key 
 
 **Graveyard-targeting ETBs** ("When ~ enters, return/exile/… target card from a graveyard") never
 target at cast time. `BattlefieldEntryService.queueMandatoryETBEffects` partitions these by kind and
-routes each to its trigger-time graveyard selector: exile → `handleGraveyardExileETBTargeting`,
+routes each to its trigger-time graveyard selector: `ExileCardsFromGraveyardEffect` (all graveyards) →
+`handleGraveyardExileETBTargeting`, `ExileGraveyardCardsEffect` with a graveyard-card scope (Disposal
+Mummy: opponent's graveyard, or `TARGET_CARDS_ANY_GRAVEYARD`) → `handleGraveyardCardsExileETBTargeting`,
 cast/flashback/may-play/opponent-steal → their dedicated handlers, return-to-hand →
 `handleReturnToHandETBTargeting`. Any remaining `targetSpec().category().isGraveyard()` effect (i.e. a
 `targetGraveyard(true)` `ReturnCardFromGraveyardEffect`, e.g. Bladewing the Risen reanimating to the
@@ -259,6 +267,16 @@ controller with a `MultiGraveyardChoice` (maxCount 1) as the trigger goes on the
 lands on the entry's `targetCardIds` and the effect handler's pre-targeted path resolves it. Because
 the trigger path allows an empty selection, a "you may return target …" reads correctly as up-to-one
 (choose 0 to decline) with no `MayEffect` wrapper.
+
+**Graveyard-targeting death triggers** ("When ~ dies, exile target card from an opponent's graveyard" —
+Ruin Rat) use the same trigger-time graveyard selection, but on the `ON_DEATH` path. `handleDeathDefault`
+routes any death effect whose `targetSpec().category().isGraveyard()` to a `DeathTriggerTarget` (alongside
+the permanent/player routing), and `TriggeredAbilityQueueService.processNextDeathTriggerTarget` detects the
+`ExileGraveyardCardsEffect` and calls `beginDeathGraveyardTarget`, which searches opponents' graveyards
+(opponent scope, `GRAVEYARD_CARD`) or every graveyard (`ANY_GRAVEYARD_CARD`) and prompts a
+`MultiGraveyardChoice`. With no legal target the death trigger is skipped, never put on the stack (CR
+603.3c). Use `ON_DEATH`, never `ON_SELF_LEAVES_BATTLEFIELD` (Offalsnout), for a "dies" trigger — the latter
+also fires on exile/bounce.
 
 If the card you are implementing needs one of these slots **and** a user target choice (either player
 or permanent), **that is an engine change**. The work required is:

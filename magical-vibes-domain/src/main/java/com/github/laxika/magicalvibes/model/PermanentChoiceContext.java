@@ -35,7 +35,15 @@ public sealed interface PermanentChoiceContext extends PendingInteraction {
 
     record SacrificeCreature(UUID sacrificingPlayerId) implements PermanentChoiceContext {}
 
-    record DestroyChosenCreature(UUID choosingPlayerId, String sourceCardName) implements PermanentChoiceContext {}
+    /** Torment of Hailfire: {@code playerId} sacrifices the chosen nonland permanent they control. */
+    record TormentSacrifice(UUID playerId) implements PermanentChoiceContext {}
+
+    /** The chosen creature is destroyed, or exiled instead when {@code exile} is true (Doomfall). */
+    record DestroyChosenCreature(UUID choosingPlayerId, String sourceCardName, boolean exile) implements PermanentChoiceContext {
+        public DestroyChosenCreature(UUID choosingPlayerId, String sourceCardName) {
+            this(choosingPlayerId, sourceCardName, false);
+        }
+    }
 
     record SacrificeCreatureThenSearchLibrary(UUID sacrificingPlayerId) implements PermanentChoiceContext {}
 

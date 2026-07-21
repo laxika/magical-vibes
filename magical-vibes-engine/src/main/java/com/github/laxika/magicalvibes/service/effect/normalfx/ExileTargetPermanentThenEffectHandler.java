@@ -13,6 +13,7 @@ import com.github.laxika.magicalvibes.service.battlefield.GameQueryService;
 import com.github.laxika.magicalvibes.service.battlefield.PermanentRemovalService;
 import com.github.laxika.magicalvibes.service.effect.EffectHandler;
 import com.github.laxika.magicalvibes.service.effect.EffectHandlerRegistry;
+import com.github.laxika.magicalvibes.service.filter.PredicateEvaluationService;
 import java.util.List;
 import java.util.UUID;
 import lombok.RequiredArgsConstructor;
@@ -40,6 +41,7 @@ public class ExileTargetPermanentThenEffectHandler implements NormalEffectHandle
     private final GameBroadcastService gameBroadcastService;
     private final EffectHandlerRegistry effectHandlerRegistry;
     private final GameOutcomeService gameOutcomeService;
+    private final PredicateEvaluationService predicateEvaluationService;
 
     @Override
     public Class<? extends CardEffect> handledEffect() {
@@ -54,9 +56,12 @@ public class ExileTargetPermanentThenEffectHandler implements NormalEffectHandle
             return;
         }
 
-        // Snapshot the exiled permanent's controller / owner BEFORE it leaves the battlefield.
+        // Snapshot the exiled permanent's controller / owner and evaluate the optional condition
+        // (e.g. "if it was a Gideon planeswalker") BEFORE it leaves the battlefield.
         UUID targetControllerId = gameQueryService.findPermanentController(gameData, target.getId());
         UUID targetOwnerId = gameData.defaultControllerOf(target.getId());
+        boolean runThen = e.thenCondition() == null
+                || predicateEvaluationService.matchesPermanentPredicate(gameData, target, e.thenCondition());
 
         permanentRemovalService.removePermanentToExile(gameData, target);
         gameBroadcastService.logAndBroadcast(gameData, GameLog.text(target.getCard().getName() + " is exiled."));
@@ -64,27 +69,27 @@ public class ExileTargetPermanentThenEffectHandler implements NormalEffectHandle
                 gameData.id, target.getCard().getName(), entry.getCard().getName());
         permanentRemovalService.removeOrphanedAuras(gameData);
 
-        UUID thenControllerId = switch (e.recipient()) {
-            case TARGET_CONTROLLER -> targetControllerId;
-            case TARGET_OWNER -> targetOwnerId;
-            case CONTROLLER, TARGET_CONTROLLER_AS_TARGET -> entry.getControllerId();
-        };
-        if (thenControllerId == null) {
-            return;
-        }
+        if (runThen) {
+            UUID thenControllerId = switch (e.recipient()) {
+                case TARGET_CONTROLLER -> targetControllerId;
+                case TARGET_OWNER -> targetOwnerId;
+                case CONTROLLER, TARGET_CONTROLLER_AS_TARGET -> entry.getControllerId();
+            };
+            if (thenControllerId != null) {
+                UUID thenTargetId = e.recipient() == ThenEffectRecipient.TARGET_CONTROLLER_AS_TARGET
+                        ? targetControllerId
+                        : entry.getTargetId();
+                StackEntry thenEntry = new StackEntry(entry.getEntryType(), entry.getCard(), thenControllerId,
+                        entry.getDescription(), List.of(e.thenEffect()), thenTargetId, entry.getSourcePermanentId());
+                thenEntry.setSourcePermanentSnapshot(entry.getSourcePermanentSnapshot());
 
-        UUID thenTargetId = e.recipient() == ThenEffectRecipient.TARGET_CONTROLLER_AS_TARGET
-                ? targetControllerId
-                : entry.getTargetId();
-        StackEntry thenEntry = new StackEntry(entry.getEntryType(), entry.getCard(), thenControllerId,
-                entry.getDescription(), List.of(e.thenEffect()), thenTargetId, entry.getSourcePermanentId());
-        thenEntry.setSourcePermanentSnapshot(entry.getSourcePermanentSnapshot());
-
-        EffectHandler handler = effectHandlerRegistry.getHandler(e.thenEffect());
-        if (handler != null) {
-            handler.resolve(gameData, thenEntry, e.thenEffect());
-        } else {
-            log.warn("Game {} - No handler for then-effect: {}", gameData.id, e.thenEffect().getClass().getSimpleName());
+                EffectHandler handler = effectHandlerRegistry.getHandler(e.thenEffect());
+                if (handler != null) {
+                    handler.resolve(gameData, thenEntry, e.thenEffect());
+                } else {
+                    log.warn("Game {} - No handler for then-effect: {}", gameData.id, e.thenEffect().getClass().getSimpleName());
+                }
+            }
         }
 
         gameOutcomeService.checkWinCondition(gameData);

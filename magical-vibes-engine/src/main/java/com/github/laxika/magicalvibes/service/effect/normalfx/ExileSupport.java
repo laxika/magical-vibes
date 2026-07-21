@@ -53,6 +53,18 @@ public class ExileSupport {
     private final TriggerCollectionService triggerCollectionService;
     private final com.github.laxika.magicalvibes.service.interaction.InteractionHandlerRegistry interactionHandlerRegistry;
 
+    /**
+     * Exiles {@code permanent} outright (no return), logs it against {@code sourceCardName}, and
+     * cleans up any orphaned Auras. Shared by the edict-style exile paths (Doomfall).
+     */
+    public void exilePermanentAndLog(GameData gameData, Permanent permanent, String sourceCardName) {
+        Card card = permanent.getCard();
+        permanentRemovalService.removePermanentToExile(gameData, permanent);
+        gameBroadcastService.logAndBroadcast(gameData, GameLog.cardThen(card, " is exiled."));
+        log.info("Game {} - {} exiles {}", gameData.id, sourceCardName, card.getName());
+        permanentRemovalService.removeOrphanedAuras(gameData);
+    }
+
     public void exileAndScheduleReturn(GameData gameData, StackEntry entry,
                                         Permanent permanent, UUID ownerId, boolean returnTapped) {
         exileAndScheduleReturn(gameData, entry, permanent, ownerId, returnTapped, TurnStep.END_STEP);

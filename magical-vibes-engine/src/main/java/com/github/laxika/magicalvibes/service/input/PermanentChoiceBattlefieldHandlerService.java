@@ -287,7 +287,15 @@ public class PermanentChoiceBattlefieldHandlerService {
             throw new IllegalStateException("Target creature no longer exists");
         }
 
-        destructionSupport.tryDestroyAndLog(gameData, target, context.sourceCardName());
+        if (context.exile()) {
+            Card exiledCard = target.getCard();
+            permanentRemovalService.removePermanentToExile(gameData, target);
+            gameBroadcastService.logAndBroadcast(gameData, GameLog.cardThen(exiledCard, " is exiled."));
+            log.info("Game {} - {} exiles {}", gameData.id, context.sourceCardName(), exiledCard.getName());
+            permanentRemovalService.removeOrphanedAuras(gameData);
+        } else {
+            destructionSupport.tryDestroyAndLog(gameData, target, context.sourceCardName());
+        }
 
         // Begun mid-resolution (opponent/target-player-chooses-creature-to-destroy effects) —
         // same parked-resolution resume requirement as handleSacrificeCreature above.
@@ -736,6 +744,20 @@ public class PermanentChoiceBattlefieldHandlerService {
                     ctx.sourceCard().getName() + "'s effect",
                     new ArrayList<>(List.of(ctx.thenEffect()))
             ));
+        }
+
+        inputCompletionService.sbaProcessMayAbilitiesThenAutoPass(gameData);
+    }
+
+    /**
+     * Torment of Hailfire: {@code ctx.playerId()} sacrifices the nonland permanent they chose, then the
+     * paused spell resumes ({@code TormentOfHailfireEffectHandler} re-runs to advance to the next opponent).
+     */
+    public void handleTormentSacrifice(GameData gameData, UUID permanentId,
+                                       PermanentChoiceContext.TormentSacrifice ctx) {
+        Permanent toSacrifice = gameQueryService.findPermanentById(gameData, permanentId);
+        if (toSacrifice != null) {
+            destructionSupport.sacrificeAndLog(gameData, toSacrifice, ctx.playerId());
         }
 
         inputCompletionService.sbaProcessMayAbilitiesThenAutoPass(gameData);
