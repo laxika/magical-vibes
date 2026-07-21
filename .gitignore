@@ -21,5 +21,9 @@ magical-vibes.db-journal
 scryfall-cache/
 card-data-cache/
 
+# Card review script output
+scripts/result/
+
 # Python bytecode cache
 __pycache__/
+
