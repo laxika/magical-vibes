@@ -112,4 +112,48 @@ class CradleOfVitalityTest extends BaseCardTest {
         assertThat(gd.hasPendingInteraction(PermanentChoiceContext.LifeGainTriggerAnyTarget.class)).isFalse();
         assertThat(gd.stack).isEmpty();
     }
+
+    @Test
+    @DisplayName("Can put counters on an opponent's creature")
+    void canTargetOpponentCreature() {
+        harness.addToBattlefield(player1, new CradleOfVitality());
+        Permanent opponentBears = harness.addToBattlefieldAndReturn(player2, new GrizzlyBears());
+
+        harness.setHand(player1, List.of(new AngelOfMercy()));
+        harness.addMana(player1, ManaColor.WHITE, 7);
+
+        harness.castCreature(player1, 0);
+        harness.passBothPriorities();
+        harness.passBothPriorities();
+
+        harness.handlePermanentChosen(player1, opponentBears.getId());
+        harness.passBothPriorities();
+
+        harness.handleMayAbilityChosen(player1, true);
+        harness.passBothPriorities();
+
+        assertThat(opponentBears.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isEqualTo(3);
+    }
+
+    @Test
+    @DisplayName("Does not trigger when only the opponent gains life")
+    void noTriggerWhenOpponentGainsLife() {
+        harness.addToBattlefield(player1, new CradleOfVitality());
+        harness.addToBattlefield(player1, new GrizzlyBears());
+
+        harness.forceActivePlayer(player2);
+        harness.forceStep(TurnStep.PRECOMBAT_MAIN);
+        harness.clearPriorityPassed();
+
+        harness.setHand(player2, List.of(new AngelOfMercy()));
+        harness.addMana(player2, ManaColor.WHITE, 5);
+
+        harness.castCreature(player2, 0);
+        harness.passBothPriorities();
+        harness.passBothPriorities();
+
+        assertThat(gd.hasPendingInteraction(PermanentChoiceContext.LifeGainTriggerAnyTarget.class)).isFalse();
+        assertThat(gd.stack).isEmpty();
+        assertThat(findPermanent(player1, "Grizzly Bears").getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isZero();
+    }
 }

@@ -97,4 +97,17 @@ class MasterOfEtheriumTest extends BaseCardTest {
         assertThat(gqs.getEffectivePower(gd, master)).isEqualTo(1);
         assertThat(gqs.getEffectiveToughness(gd, master)).isEqualTo(1);
     }
+
+    @Test
+    @DisplayName("Two Masters: each counts both for */* and each gets the other's +1/+1")
+    void twoMastersInteract() {
+        Permanent masterA = harness.addToBattlefieldAndReturn(player1, new MasterOfEtherium());
+        Permanent masterB = harness.addToBattlefieldAndReturn(player1, new MasterOfEtherium());
+
+        // Each sees 2 artifacts for base */*, plus +1/+1 from the other Master → 3/3
+        assertThat(gqs.getEffectivePower(gd, masterA)).isEqualTo(3);
+        assertThat(gqs.getEffectiveToughness(gd, masterA)).isEqualTo(3);
+        assertThat(gqs.getEffectivePower(gd, masterB)).isEqualTo(3);
+        assertThat(gqs.getEffectiveToughness(gd, masterB)).isEqualTo(3);
+    }
 }

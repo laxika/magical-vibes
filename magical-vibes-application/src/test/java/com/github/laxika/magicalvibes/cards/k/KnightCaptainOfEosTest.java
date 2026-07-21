@@ -1,6 +1,8 @@
 package com.github.laxika.magicalvibes.cards.k;
 
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
+import com.github.laxika.magicalvibes.cards.s.Shock;
+import com.github.laxika.magicalvibes.cards.v.VeteranSwordsmith;
 import com.github.laxika.magicalvibes.model.CardSubtype;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
@@ -73,6 +75,43 @@ class KnightCaptainOfEosTest extends BaseCardTest {
 
         assertThatThrownBy(() -> harness.activateAbility(player1, 0, null, null))
                 .isInstanceOf(IllegalStateException.class);
+    }
+
+    @Test
+    @DisplayName("Can sacrifice a nontoken Soldier as the activation cost")
+    void canSacrificeNontokenSoldier() {
+        castAndResolve();
+        Permanent swordsmith = addCreatureReady(player1, new VeteranSwordsmith());
+        harness.addMana(player1, ManaColor.WHITE, 1);
+
+        harness.activateAbility(player1, 0, null, null);
+        harness.handlePermanentChosen(player1, swordsmith.getId());
+        harness.passBothPriorities();
+
+        assertThat(gd.playerBattlefields.get(player1.getId())).doesNotContain(swordsmith);
+        assertThat(gd.preventAllCombatDamage).isTrue();
+    }
+
+    @Test
+    @DisplayName("Ability prevents only combat damage — noncombat damage still lands")
+    void doesNotPreventNoncombatDamage() {
+        castAndResolve();
+        harness.setLife(player2, 20);
+        harness.addMana(player1, ManaColor.WHITE, 1);
+
+        harness.activateAbility(player1, 0, null, null);
+        harness.handlePermanentChosen(player1, getAnySoldierTokenId(player1));
+        harness.passBothPriorities();
+
+        harness.forceActivePlayer(player1);
+        harness.forceStep(TurnStep.PRECOMBAT_MAIN);
+        harness.clearPriorityPassed();
+        harness.setHand(player1, List.of(new Shock()));
+        harness.addMana(player1, ManaColor.RED, 1);
+        harness.castInstant(player1, 0, player2.getId());
+        harness.passBothPriorities();
+
+        assertThat(gd.playerLifeTotals.get(player2.getId())).isEqualTo(18);
     }
 
     private void castAndResolve() {

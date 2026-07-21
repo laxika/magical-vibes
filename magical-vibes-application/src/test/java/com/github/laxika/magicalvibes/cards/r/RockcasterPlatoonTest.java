@@ -56,4 +56,15 @@ class RockcasterPlatoonTest extends BaseCardTest {
         assertThat(gd.getLife(player1.getId())).isEqualTo(player1LifeBefore - 2);
         assertThat(gd.getLife(player2.getId())).isEqualTo(player2LifeBefore - 2);
     }
+
+    @Test
+    @DisplayName("Also damages the controller's own flying creatures")
+    void damagesOwnFlyers() {
+        harness.addToBattlefield(player1, new RockcasterPlatoon());
+        harness.addToBattlefield(player1, new AngelOfMercy());
+
+        activate();
+
+        assertThat(findPermanent(player1, "Angel of Mercy").getMarkedDamage()).isEqualTo(2);
+    }
 }

@@ -3,6 +3,7 @@ package com.github.laxika.magicalvibes.cards.k;
 import com.github.laxika.magicalvibes.cards.f.Forest;
 import com.github.laxika.magicalvibes.cards.g.GloriousAnthem;
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
+import com.github.laxika.magicalvibes.cards.t.Terminate;
 import com.github.laxika.magicalvibes.model.Keyword;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
@@ -14,6 +15,7 @@ import org.junit.jupiter.api.Test;
 import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
 @DisplayName("Kederekt Leviathan")
 class KederektLeviathanTest extends BaseCardTest {
@@ -112,5 +114,73 @@ class KederektLeviathanTest extends BaseCardTest {
                 .noneMatch(p -> p.getCard().getName().equals("Kederekt Leviathan"));
         assertThat(gd.getPlayerExiledCards(player1.getId()))
                 .anyMatch(c -> c.getName().equals("Kederekt Leviathan"));
+    }
+
+    @Test
+    @DisplayName("Unearth can only be activated at sorcery speed")
+    void unearthOnlyAtSorcerySpeed() {
+        harness.setGraveyard(player1, List.of(new KederektLeviathan()));
+        harness.addMana(player1, ManaColor.BLUE, 7);
+
+        harness.forceActivePlayer(player2);
+        harness.forceStep(TurnStep.PRECOMBAT_MAIN);
+
+        assertThatThrownBy(() -> harness.activateGraveyardAbility(player1, 0))
+                .isInstanceOf(IllegalStateException.class);
+
+        assertThat(gd.playerGraveyards.get(player1.getId()))
+                .anyMatch(c -> c.getName().equals("Kederekt Leviathan"));
+    }
+
+    @Test
+    @DisplayName("Unearthed Kederekt Leviathan is exiled if it would leave the battlefield")
+    void unearthExiledIfWouldLeaveBattlefield() {
+        harness.setGraveyard(player1, List.of(new KederektLeviathan()));
+        harness.addMana(player1, ManaColor.BLUE, 7);
+
+        harness.activateGraveyardAbility(player1, 0);
+        harness.passBothPriorities(); // resolve unearth
+        harness.passBothPriorities(); // resolve ETB
+
+        Permanent perm = gd.playerBattlefields.get(player1.getId()).stream()
+                .filter(p -> p.getCard().getName().equals("Kederekt Leviathan"))
+                .findFirst().orElseThrow();
+
+        harness.setHand(player2, List.of(new Terminate()));
+        harness.addMana(player2, ManaColor.BLACK, 1);
+        harness.addMana(player2, ManaColor.RED, 1);
+        harness.castInstant(player2, 0, perm.getId());
+        harness.passBothPriorities();
+
+        assertThat(gd.playerBattlefields.get(player1.getId()))
+                .noneMatch(p -> p.getCard().getName().equals("Kederekt Leviathan"));
+        assertThat(gd.playerGraveyards.get(player1.getId()))
+                .noneMatch(c -> c.getName().equals("Kederekt Leviathan"));
+        assertThat(gd.getPlayerExiledCards(player1.getId()))
+                .anyMatch(c -> c.getName().equals("Kederekt Leviathan"));
+    }
+
+    @Test
+    @DisplayName("Unearth ETB still returns all other nonland permanents")
+    void unearthEtbReturnsOtherNonlandPermanents() {
+        harness.addToBattlefield(player1, new GrizzlyBears());
+        harness.addToBattlefield(player2, new GloriousAnthem());
+        harness.setGraveyard(player1, List.of(new KederektLeviathan()));
+        harness.addMana(player1, ManaColor.BLUE, 7);
+
+        harness.activateGraveyardAbility(player1, 0);
+        harness.passBothPriorities(); // resolve unearth
+        harness.passBothPriorities(); // resolve ETB
+
+        assertThat(gd.playerBattlefields.get(player1.getId()))
+                .noneMatch(p -> p.getCard().getName().equals("Grizzly Bears"));
+        assertThat(gd.playerBattlefields.get(player2.getId()))
+                .noneMatch(p -> p.getCard().getName().equals("Glorious Anthem"));
+        assertThat(gd.playerHands.get(player1.getId()))
+                .anyMatch(c -> c.getName().equals("Grizzly Bears"));
+        assertThat(gd.playerHands.get(player2.getId()))
+                .anyMatch(c -> c.getName().equals("Glorious Anthem"));
+        assertThat(gd.playerBattlefields.get(player1.getId()))
+                .anyMatch(p -> p.getCard().getName().equals("Kederekt Leviathan"));
     }
 }

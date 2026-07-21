@@ -123,6 +123,50 @@ class ResoundingSilenceTest extends BaseCardTest {
                 .anyMatch(c -> c.getName().equals("Grizzly Bears"));
     }
 
+    @Test
+    @DisplayName("Cycling may exile exactly one of two attackers and still draws")
+    void cyclingMayExileOneOfTwo() {
+        harness.forceStep(TurnStep.DECLARE_ATTACKERS);
+        harness.setHand(player1, List.of(new ResoundingSilence()));
+        harness.setLibrary(player1, List.of(new GrizzlyBears()));
+        Permanent a1 = addAttacker(player2);
+        Permanent a2 = addAttacker(player2);
+        addMana(player1);
+
+        harness.activateHandAbility(player1, 0, null);
+        harness.passBothPriorities();
+        harness.handleMultiplePermanentsChosen(player1, List.of(a1.getId()));
+
+        GameData gd = harness.getGameData();
+        assertThat(gd.exiledCards)
+                .filteredOn(e -> e.card().getName().equals("Grizzly Bears"))
+                .hasSize(1);
+        assertThat(gd.playerBattlefields.get(player2.getId()))
+                .anyMatch(p -> p.getId().equals(a2.getId()));
+        assertThat(gd.playerHands.get(player1.getId()))
+                .anyMatch(c -> c.getName().equals("Grizzly Bears"));
+    }
+
+    @Test
+    @DisplayName("Cycling with no attacking creatures still draws a card")
+    void cyclingWithNoAttackersStillDraws() {
+        harness.setHand(player1, List.of(new ResoundingSilence()));
+        harness.setLibrary(player1, List.of(new GrizzlyBears()));
+        harness.addToBattlefield(player2, new GrizzlyBears());
+        addMana(player1);
+
+        harness.activateHandAbility(player1, 0, null);
+        harness.passBothPriorities();
+
+        GameData gd = harness.getGameData();
+        assertThat(gd.exiledCards)
+                .noneMatch(e -> e.card().getName().equals("Grizzly Bears"));
+        assertThat(gd.playerBattlefields.get(player2.getId()))
+                .anyMatch(p -> p.getCard().getName().equals("Grizzly Bears"));
+        assertThat(gd.playerHands.get(player1.getId()))
+                .anyMatch(c -> c.getName().equals("Grizzly Bears"));
+    }
+
     private void addMana(Player player) {
         harness.addMana(player, ManaColor.COLORLESS, 5);
         harness.addMana(player, ManaColor.GREEN, 1);

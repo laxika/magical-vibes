@@ -1,7 +1,8 @@
 package com.github.laxika.magicalvibes.cards.g;
 
 import com.github.laxika.magicalvibes.cards.a.AvatarOfMight;
-import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
+import com.github.laxika.magicalvibes.cards.w.WoollyThoctar;
+import com.github.laxika.magicalvibes.model.CounterType;
 import com.github.laxika.magicalvibes.model.Keyword;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.TurnStep;
@@ -25,6 +26,49 @@ class GustriderExuberantTest extends BaseCardTest {
         harness.assertInGraveyard(player1, "Gustrider Exuberant");
         assertThat(big.hasKeyword(Keyword.FLYING)).isTrue();
         assertThat(small.hasKeyword(Keyword.FLYING)).isFalse();
+    }
+
+    @Test
+    @DisplayName("Creature with exactly power 5 gains flying")
+    void grantsFlyingAtPowerFive() {
+        addReadyGustrider();
+        Permanent thoctar = addReadyCreature(new WoollyThoctar()); // 5/4
+
+        activateGustrider();
+
+        assertThat(thoctar.hasKeyword(Keyword.FLYING)).isTrue();
+    }
+
+    @Test
+    @DisplayName("Opponent's creatures with power 5 or greater do not gain flying")
+    void doesNotGrantFlyingToOpponentsCreatures() {
+        addReadyGustrider();
+        addReadyCreature(new AvatarOfMight());
+        harness.addToBattlefield(player2, new AvatarOfMight());
+
+        activateGustrider();
+
+        assertThat(findPermanent(player1, "Avatar of Might").hasKeyword(Keyword.FLYING)).isTrue();
+        assertThat(findPermanent(player2, "Avatar of Might").hasKeyword(Keyword.FLYING)).isFalse();
+    }
+
+    @Test
+    @DisplayName("Power is checked only as the ability resolves")
+    void powerCheckedOnlyAtResolution() {
+        addReadyGustrider();
+        Permanent small = addReadyCreature(new GrizzlyBears()); // 2/2
+        Permanent big = addReadyCreature(new WoollyThoctar());  // 5/4
+
+        activateGustrider();
+        assertThat(small.hasKeyword(Keyword.FLYING)).isFalse();
+        assertThat(big.hasKeyword(Keyword.FLYING)).isTrue();
+
+        // Later power change does not add or remove the grant (ruling).
+        small.setCounterCount(CounterType.PLUS_ONE_PLUS_ONE, 3); // now 5/5
+        big.setCounterCount(CounterType.MINUS_ONE_MINUS_ONE, 3); // now 2/1
+
+        assertThat(small.hasKeyword(Keyword.FLYING)).isFalse();
+        assertThat(big.hasKeyword(Keyword.FLYING)).isTrue();
     }
 
     @Test

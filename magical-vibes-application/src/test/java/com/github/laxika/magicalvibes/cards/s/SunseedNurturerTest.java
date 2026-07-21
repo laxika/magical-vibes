@@ -2,6 +2,7 @@ package com.github.laxika.magicalvibes.cards.s;
 
 import com.github.laxika.magicalvibes.cards.a.AvatarOfMight;
 import com.github.laxika.magicalvibes.model.ManaColor;
+import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.Player;
 import com.github.laxika.magicalvibes.model.TurnStep;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
@@ -51,6 +52,49 @@ class SunseedNurturerTest extends BaseCardTest {
         advanceToEndStep(player1);
 
         assertThat(gd.stack).isEmpty();
+        harness.assertLife(player1, 20);
+    }
+
+    @Test
+    @DisplayName("Opponent's power-5-or-greater creature does not satisfy the intervening-if")
+    void opponentBigCreatureDoesNotCount() {
+        harness.addToBattlefield(player1, new SunseedNurturer());
+        harness.addToBattlefield(player2, new AvatarOfMight()); // 8/8
+        harness.setLife(player1, 20);
+
+        advanceToEndStep(player1);
+
+        assertThat(gd.stack).isEmpty();
+        harness.assertLife(player1, 20);
+    }
+
+    @Test
+    @DisplayName("Does not trigger on opponent's end step")
+    void noTriggerOnOpponentsEndStep() {
+        harness.addToBattlefield(player1, new SunseedNurturer());
+        harness.addToBattlefield(player1, new AvatarOfMight()); // 8/8
+        harness.setLife(player1, 20);
+
+        advanceToEndStep(player2);
+
+        assertThat(gd.stack).isEmpty();
+        harness.assertLife(player1, 20);
+    }
+
+    @Test
+    @DisplayName("Intervening-if: no life if the power-5 creature leaves before resolution")
+    void interveningIfFailsAtResolution() {
+        harness.addToBattlefield(player1, new SunseedNurturer());
+        Permanent big = harness.addToBattlefieldAndReturn(player1, new AvatarOfMight()); // 8/8
+        harness.setLife(player1, 20);
+
+        advanceToEndStep(player1);
+        assertThat(gd.stack).hasSize(1);
+
+        gd.playerBattlefields.get(player1.getId()).remove(big);
+
+        harness.passBothPriorities(); // resolve trigger — intervening-if fails
+
         harness.assertLife(player1, 20);
     }
 

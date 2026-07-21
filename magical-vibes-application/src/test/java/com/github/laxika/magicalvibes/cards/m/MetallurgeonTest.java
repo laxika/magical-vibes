@@ -76,11 +76,25 @@ class MetallurgeonTest extends BaseCardTest {
         assertThat(gd.stack).isEmpty();
     }
 
-    private void setupMetallurgeon() {
+    @Test
+    @DisplayName("Can regenerate itself as an artifact creature")
+    void canRegenerateSelf() {
+        Permanent metallurgeon = setupMetallurgeon();
+
+        harness.activateAbility(player1, 0, null, metallurgeon.getId());
+        harness.passBothPriorities();
+
+        assertThat(metallurgeon.getRegenerationShield()).isEqualTo(1);
+        assertThat(metallurgeon.isTapped()).isTrue();
+    }
+
+    private Permanent setupMetallurgeon() {
         harness.addToBattlefield(player1, new Metallurgeon());
-        findPermanent(player1, "Metallurgeon").setSummoningSick(false);
+        Permanent metallurgeon = findPermanent(player1, "Metallurgeon");
+        metallurgeon.setSummoningSick(false);
         harness.addMana(player1, ManaColor.WHITE, 1);
         harness.forceActivePlayer(player1);
+        return metallurgeon;
     }
 
     private Permanent addArtifact(Player player) {

@@ -1,6 +1,7 @@
 package com.github.laxika.magicalvibes.cards.f;
 
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
+import com.github.laxika.magicalvibes.cards.t.Terminate;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.Keyword;
 import com.github.laxika.magicalvibes.model.ManaColor;
@@ -56,6 +57,18 @@ class FatestitcherTest extends BaseCardTest {
                 .hasMessageContaining("another permanent");
     }
 
+    @Test
+    @DisplayName("Taps an untapped land (another permanent, not only creatures)")
+    void tapsUntappedLand() {
+        addReadyFatestitcher(player1);
+        Permanent land = addReadyLand(player2);
+
+        harness.activateAbility(player1, 0, null, land.getId());
+        harness.passBothPriorities();
+
+        assertThat(land.isTapped()).isTrue();
+    }
+
     // ===== Unearth {U} =====
 
     @Test
@@ -96,6 +109,51 @@ class FatestitcherTest extends BaseCardTest {
                 .anyMatch(c -> c.getName().equals("Fatestitcher"));
     }
 
+    @Test
+    @DisplayName("Unearth can only be activated at sorcery speed")
+    void unearthOnlyAtSorcerySpeed() {
+        Fatestitcher fatestitcher = new Fatestitcher();
+        harness.setGraveyard(player1, List.of(fatestitcher));
+        harness.addMana(player1, ManaColor.BLUE, 1);
+
+        harness.forceActivePlayer(player2);
+        harness.forceStep(TurnStep.PRECOMBAT_MAIN);
+
+        assertThatThrownBy(() -> harness.activateGraveyardAbility(player1, 0))
+                .isInstanceOf(IllegalStateException.class);
+
+        assertThat(gd.playerGraveyards.get(player1.getId()))
+                .anyMatch(c -> c.getName().equals("Fatestitcher"));
+    }
+
+    @Test
+    @DisplayName("Unearthed Fatestitcher is exiled if it would leave the battlefield")
+    void unearthExiledIfWouldLeaveBattlefield() {
+        Fatestitcher fatestitcher = new Fatestitcher();
+        harness.setGraveyard(player1, List.of(fatestitcher));
+        harness.addMana(player1, ManaColor.BLUE, 1);
+
+        harness.activateGraveyardAbility(player1, 0);
+        harness.passBothPriorities();
+
+        Permanent perm = gd.playerBattlefields.get(player1.getId()).stream()
+                .filter(p -> p.getCard().getName().equals("Fatestitcher"))
+                .findFirst().orElseThrow();
+
+        harness.setHand(player2, List.of(new Terminate()));
+        harness.addMana(player2, ManaColor.BLACK, 1);
+        harness.addMana(player2, ManaColor.RED, 1);
+        harness.castInstant(player2, 0, perm.getId());
+        harness.passBothPriorities();
+
+        assertThat(gd.playerBattlefields.get(player1.getId()))
+                .noneMatch(p -> p.getCard().getName().equals("Fatestitcher"));
+        assertThat(gd.playerGraveyards.get(player1.getId()))
+                .noneMatch(c -> c.getName().equals("Fatestitcher"));
+        assertThat(gd.getPlayerExiledCards(player1.getId()))
+                .anyMatch(c -> c.getName().equals("Fatestitcher"));
+    }
+
     // ===== Helpers =====
 
     private Permanent addReadyFatestitcher(Player player) {
@@ -110,6 +168,13 @@ class FatestitcherTest extends BaseCardTest {
         Card card = new GrizzlyBears();
         Permanent perm = new Permanent(card);
         perm.setSummoningSick(false);
+        gd.playerBattlefields.get(player.getId()).add(perm);
+        return perm;
+    }
+
+    private Permanent addReadyLand(Player player) {
+        Forest card = new Forest();
+        Permanent perm = new Permanent(card);
         gd.playerBattlefields.get(player.getId()).add(perm);
         return perm;
     }

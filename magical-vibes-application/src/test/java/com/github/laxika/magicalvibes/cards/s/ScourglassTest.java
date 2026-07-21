@@ -2,6 +2,8 @@ package com.github.laxika.magicalvibes.cards.s;
 
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
 import com.github.laxika.magicalvibes.cards.i.IcyManipulator;
+import com.github.laxika.magicalvibes.cards.o.Ornithopter;
+import com.github.laxika.magicalvibes.cards.p.Pacifism;
 import com.github.laxika.magicalvibes.cards.p.Plains;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.Player;
@@ -9,8 +11,6 @@ import com.github.laxika.magicalvibes.model.TurnStep;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
-
-import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
@@ -78,6 +78,31 @@ class ScourglassTest extends BaseCardTest {
         assertThatThrownBy(() -> harness.activateAbility(player1, 0, null, null))
                 .isInstanceOf(IllegalStateException.class)
                 .hasMessageContaining("upkeep");
+    }
+
+    @Test
+    @DisplayName("Artifact creatures survive; enchantments are destroyed")
+    void sparesArtifactCreaturesDestroysEnchantments() {
+        addScourglassReady(player1);
+
+        Permanent ornithopter = new Permanent(new Ornithopter());
+        ornithopter.setSummoningSick(false);
+        gd.playerBattlefields.get(player2.getId()).add(ornithopter);
+
+        Permanent pacifism = new Permanent(new Pacifism());
+        gd.playerBattlefields.get(player2.getId()).add(pacifism);
+
+        harness.forceActivePlayer(player1);
+        harness.forceStep(TurnStep.UPKEEP);
+        harness.clearPriorityPassed();
+
+        harness.activateAbility(player1, 0, null, null);
+        harness.passBothPriorities();
+
+        assertThat(gd.playerBattlefields.get(player2.getId())).contains(ornithopter);
+        assertThat(gd.playerBattlefields.get(player2.getId())).doesNotContain(pacifism);
+        assertThat(gd.playerGraveyards.get(player2.getId()))
+                .anyMatch(c -> c.getName().equals("Pacifism"));
     }
 
     private Permanent addScourglassReady(Player player) {

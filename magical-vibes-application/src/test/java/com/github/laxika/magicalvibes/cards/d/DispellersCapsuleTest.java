@@ -6,6 +6,7 @@ import com.github.laxika.magicalvibes.cards.g.GloriousAnthem;
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
 import com.github.laxika.magicalvibes.cards.i.Island;
 import com.github.laxika.magicalvibes.cards.l.LeoninScimitar;
+import com.github.laxika.magicalvibes.cards.o.Ornithopter;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.Player;
@@ -77,6 +78,22 @@ class DispellersCapsuleTest extends BaseCardTest {
                 .noneMatch(p -> p.getCard().getName().equals("Glorious Anthem"));
         assertThat(gd.playerGraveyards.get(player2.getId()))
                 .anyMatch(c -> c.getName().equals("Glorious Anthem"));
+    }
+
+    @Test
+    @DisplayName("Resolving ability destroys target artifact creature")
+    void resolvingAbilityDestroysTargetArtifactCreature() {
+        addReadyCapsule(player1);
+        Permanent target = addReadyArtifactCreature(player2);
+        addCapsuleMana(player1);
+
+        harness.activateAbility(player1, 0, null, target.getId());
+        harness.passBothPriorities();
+
+        assertThat(gd.playerBattlefields.get(player2.getId()))
+                .noneMatch(p -> p.getCard().getName().equals("Ornithopter"));
+        assertThat(gd.playerGraveyards.get(player2.getId()))
+                .anyMatch(c -> c.getName().equals("Ornithopter"));
     }
 
     // ===== Mana requirements =====
@@ -178,6 +195,14 @@ class DispellersCapsuleTest extends BaseCardTest {
 
     private Permanent addReadyArtifact(Player player) {
         LeoninScimitar card = new LeoninScimitar();
+        Permanent perm = new Permanent(card);
+        perm.setSummoningSick(false);
+        gd.playerBattlefields.get(player.getId()).add(perm);
+        return perm;
+    }
+
+    private Permanent addReadyArtifactCreature(Player player) {
+        Ornithopter card = new Ornithopter();
         Permanent perm = new Permanent(card);
         perm.setSummoningSick(false);
         gd.playerBattlefields.get(player.getId()).add(perm);

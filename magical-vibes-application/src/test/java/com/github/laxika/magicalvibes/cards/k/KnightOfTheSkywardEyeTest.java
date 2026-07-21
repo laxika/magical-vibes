@@ -59,6 +59,43 @@ class KnightOfTheSkywardEyeTest extends BaseCardTest {
         assertThat(knight.getToughnessModifier()).isEqualTo(0);
     }
 
+    @Test
+    @DisplayName("Activation limit resets on a new turn")
+    void activationLimitResetsOnNewTurn() {
+        addReadyKnight(player1);
+        harness.addMana(player1, ManaColor.GREEN, 4);
+
+        harness.activateAbility(player1, 0, null, null);
+        harness.passBothPriorities();
+
+        harness.forceStep(TurnStep.CLEANUP);
+        harness.clearPriorityPassed();
+        harness.passBothPriorities();
+
+        harness.forceActivePlayer(player1);
+        harness.forceStep(TurnStep.PRECOMBAT_MAIN);
+        harness.addMana(player1, ManaColor.GREEN, 4);
+        harness.activateAbility(player1, 0, null, null);
+
+        assertThat(gd.stack).hasSize(1);
+    }
+
+    @Test
+    @DisplayName("Can activate while summoning sick (no tap cost)")
+    void canActivateWhileSummoningSick() {
+        KnightOfTheSkywardEye card = new KnightOfTheSkywardEye();
+        Permanent knight = new Permanent(card);
+        knight.setSummoningSick(true);
+        gd.playerBattlefields.get(player1.getId()).add(knight);
+        harness.addMana(player1, ManaColor.GREEN, 4);
+
+        harness.activateAbility(player1, 0, null, null);
+        harness.passBothPriorities();
+
+        assertThat(gqs.getEffectivePower(gd, knight)).isEqualTo(5);
+        assertThat(gqs.getEffectiveToughness(gd, knight)).isEqualTo(5);
+    }
+
     private Permanent addReadyKnight(Player player) {
         KnightOfTheSkywardEye card = new KnightOfTheSkywardEye();
         Permanent perm = new Permanent(card);

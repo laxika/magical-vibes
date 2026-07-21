@@ -112,4 +112,46 @@ class EtherswornCanonistTest extends BaseCardTest {
                 .isInstanceOf(IllegalStateException.class)
                 .hasMessageContaining("not playable");
     }
+
+    @Test
+    @DisplayName("Counts nonartifact spells cast before Canonist entered")
+    void countsSpellsCastBeforeCanonistEntered() {
+        // Ruling: takes into account spells cast earlier in the turn before it ETB'd.
+        gd.recordSpellCast(player1.getId(), new GrizzlyBears());
+        harness.addToBattlefield(player1, new EtherswornCanonist());
+        harness.setHand(player1, List.of(new GrizzlyBears()));
+        harness.addMana(player1, ManaColor.GREEN, 2);
+
+        harness.forceActivePlayer(player1);
+        harness.forceStep(TurnStep.PRECOMBAT_MAIN);
+        harness.clearPriorityPassed();
+
+        assertThatThrownBy(() -> harness.castCreature(player1, 0))
+                .isInstanceOf(IllegalStateException.class)
+                .hasMessageContaining("not playable");
+    }
+
+    @Test
+    @DisplayName("One player's nonartifact spell does not restrict the other")
+    void restrictionIsPerPlayer() {
+        harness.addToBattlefield(player1, new EtherswornCanonist());
+        harness.setHand(player1, List.of(new GrizzlyBears()));
+        harness.setHand(player2, List.of(new GrizzlyBears()));
+        harness.addMana(player1, ManaColor.GREEN, 2);
+        harness.addMana(player2, ManaColor.GREEN, 2);
+
+        harness.forceActivePlayer(player1);
+        harness.forceStep(TurnStep.PRECOMBAT_MAIN);
+        harness.clearPriorityPassed();
+
+        harness.castCreature(player1, 0);
+        harness.passBothPriorities();
+
+        harness.forceActivePlayer(player2);
+        harness.clearPriorityPassed();
+        harness.castCreature(player2, 0);
+
+        assertThat(gd.stack).hasSize(1);
+        assertThat(gd.stack.getFirst().getEntryType()).isEqualTo(StackEntryType.CREATURE_SPELL);
+    }
 }

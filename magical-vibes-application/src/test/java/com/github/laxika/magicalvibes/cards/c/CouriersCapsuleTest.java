@@ -68,6 +68,25 @@ class CouriersCapsuleTest extends BaseCardTest {
                 .isInstanceOf(IllegalStateException.class);
     }
 
+    @Test
+    @DisplayName("Noncreature artifact can activate while summoning sick")
+    void canActivateWhileSummoningSick() {
+        CouriersCapsule card = new CouriersCapsule();
+        Permanent perm = new Permanent(card);
+        perm.setSummoningSick(true);
+        gd.playerBattlefields.get(player1.getId()).add(perm);
+        harness.setHand(player1, List.of());
+        harness.setLibrary(player1, List.of(new GrizzlyBears(), new Island()));
+        addCapsuleMana(player1);
+
+        harness.activateAbility(player1, 0, null, null);
+        harness.passBothPriorities();
+
+        assertThat(gd.playerHands.get(player1.getId())).hasSize(2);
+        assertThat(gd.playerGraveyards.get(player1.getId()))
+                .anyMatch(c -> c.getName().equals("Courier's Capsule"));
+    }
+
     private void addCapsuleMana(Player player) {
         harness.addMana(player, ManaColor.BLUE, 1);
         harness.addMana(player, ManaColor.COLORLESS, 1);

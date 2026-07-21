@@ -8,6 +8,8 @@ import com.github.laxika.magicalvibes.testutil.BaseCardTest;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
+import java.util.List;
+
 import static org.assertj.core.api.Assertions.assertThat;
 
 class CloudheathDrakeTest extends BaseCardTest {
@@ -42,5 +44,25 @@ class CloudheathDrakeTest extends BaseCardTest {
         harness.passBothPriorities();
 
         assertThat(gqs.hasKeyword(gd, drake, Keyword.VIGILANCE)).isFalse();
+    }
+
+    @Test
+    @DisplayName("Granted vigilance: does not tap when attacking")
+    void grantedVigilanceDoesNotTapWhenAttacking() {
+        Permanent drake = addCreatureReady(player1, new CloudheathDrake());
+        harness.addMana(player1, ManaColor.WHITE, 1);
+        harness.addMana(player1, ManaColor.COLORLESS, 1);
+
+        harness.activateAbility(player1, 0, 0, null, null);
+        harness.passBothPriorities();
+        assertThat(gqs.hasKeyword(gd, drake, Keyword.VIGILANCE)).isTrue();
+
+        harness.forceActivePlayer(player1);
+        harness.forceStep(TurnStep.DECLARE_ATTACKERS);
+        harness.clearPriorityPassed();
+        harness.beginAttackerDeclarationInput();
+        gs.declareAttackers(gd, player1, List.of(0));
+
+        assertThat(drake.isTapped()).isFalse();
     }
 }

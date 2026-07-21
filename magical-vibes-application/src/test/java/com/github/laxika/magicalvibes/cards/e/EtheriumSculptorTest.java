@@ -1,6 +1,7 @@
 package com.github.laxika.magicalvibes.cards.e;
 
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
+import com.github.laxika.magicalvibes.cards.j.JhoirasFamiliar;
 import com.github.laxika.magicalvibes.cards.s.SylvokLifestaff;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
@@ -64,5 +65,19 @@ class EtheriumSculptorTest extends BaseCardTest {
         // No mana is not enough for {1} — reduction does not apply to opponent
         assertThatThrownBy(() -> harness.castArtifact(player2, 0))
                 .isInstanceOf(IllegalStateException.class);
+    }
+
+    @Test
+    @DisplayName("Artifact creature spells also cost {1} less")
+    void artifactCreatureSpellsReduced() {
+        harness.addToBattlefield(player1, new EtheriumSculptor());
+        // Jhoira's Familiar costs {4} — with {1} reduction, {3} should suffice
+        harness.setHand(player1, List.of(new JhoirasFamiliar()));
+        harness.addMana(player1, ManaColor.COLORLESS, 3);
+
+        harness.castCreature(player1, 0);
+
+        assertThat(gd.stack).hasSize(1);
+        assertThat(gd.stack.getFirst().getCard().getName()).isEqualTo("Jhoira's Familiar");
     }
 }

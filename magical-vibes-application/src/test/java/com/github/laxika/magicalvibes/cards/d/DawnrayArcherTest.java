@@ -33,6 +33,36 @@ class DawnrayArcherTest extends BaseCardTest {
     }
 
     @Test
+    @DisplayName("Exalted — the Archer attacking alone boosts itself")
+    void selfAttackingAloneBoosted() {
+        Permanent archer = addCreatureReady(player1, new DawnrayArcher());
+
+        declareAttackers(player1, List.of(0));
+        harness.passBothPriorities(); // resolve exalted trigger
+
+        assertThat(gqs.getEffectivePower(gd, archer)).isEqualTo(2);
+        assertThat(gqs.getEffectiveToughness(gd, archer)).isEqualTo(2);
+    }
+
+    @Test
+    @DisplayName("Exalted boost wears off at end of turn")
+    void boostWearsOff() {
+        addCreatureReady(player1, new DawnrayArcher());
+        Permanent bears = addCreatureReady(player1, new GrizzlyBears());
+
+        declareAttackers(player1, List.of(1));
+        harness.passBothPriorities();
+        assertThat(gqs.getEffectivePower(gd, bears)).isEqualTo(3);
+
+        harness.forceStep(TurnStep.END_STEP);
+        harness.clearPriorityPassed();
+        harness.passBothPriorities();
+
+        assertThat(gqs.getEffectivePower(gd, bears)).isEqualTo(2);
+        assertThat(gqs.getEffectiveToughness(gd, bears)).isEqualTo(2);
+    }
+
+    @Test
     @DisplayName("Exalted does not trigger when attacking with more than one creature")
     void noTriggerWhenNotAlone() {
         addCreatureReady(player1, new DawnrayArcher());

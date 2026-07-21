@@ -77,4 +77,17 @@ class FiligreeSagesTest extends BaseCardTest {
         assertThatThrownBy(() -> harness.activateAbility(player1, 0, null, targetId))
                 .isInstanceOf(IllegalStateException.class);
     }
+
+    @Test
+    @DisplayName("Can untap itself as an artifact creature")
+    void canUntapSelf() {
+        Permanent sages = harness.addToBattlefieldAndReturn(player1, new FiligreeSages());
+        sages.tap();
+        addAbilityMana();
+
+        harness.activateAbility(player1, 0, null, sages.getId());
+        harness.passBothPriorities();
+
+        assertThat(sages.isTapped()).isFalse();
+    }
 }

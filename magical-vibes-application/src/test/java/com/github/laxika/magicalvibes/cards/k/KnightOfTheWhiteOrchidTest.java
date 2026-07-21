@@ -72,6 +72,41 @@ class KnightOfTheWhiteOrchidTest extends BaseCardTest {
                 .noneMatch(p -> p.getCard().getName().equals("Plains"));
     }
 
+    @Test
+    @DisplayName("Intervening-if: ability never goes on the stack when land condition is unmet at ETB")
+    void interveningIfDoesNotPutTriggerOnStack() {
+        castKnight();
+        harness.addToBattlefield(player1, new Forest());
+        harness.addToBattlefield(player2, new Forest());
+        setupLibrary();
+
+        harness.passBothPriorities(); // resolve creature spell
+
+        // CR 603.4 / Gatherer: ability won't trigger at all unless an opponent has more lands.
+        assertThat(gd.stack).isEmpty();
+        assertThat(gd.interaction.activeInteraction(PendingInteraction.LibrarySearch.class)).isNull();
+    }
+
+    @Test
+    @DisplayName("Intervening-if: ability does nothing if land counts equalize before resolution")
+    void interveningIfFailsAtResolution() {
+        castKnight();
+        harness.addToBattlefield(player2, new Forest());
+        setupLibrary();
+
+        harness.passBothPriorities(); // resolve creature spell — trigger on stack
+        assertThat(gd.stack).hasSize(1);
+
+        // Equalize lands before the trigger resolves.
+        harness.addToBattlefield(player1, new Forest());
+
+        harness.passBothPriorities(); // resolve ETB trigger
+
+        assertThat(gd.interaction.activeInteraction(PendingInteraction.LibrarySearch.class)).isNull();
+        assertThat(gd.playerBattlefields.get(player1.getId()))
+                .noneMatch(p -> p.getCard().getName().equals("Plains"));
+    }
+
     private void castKnight() {
         harness.setHand(player1, List.of(new KnightOfTheWhiteOrchid()));
         harness.addMana(player1, ManaColor.WHITE, 2);

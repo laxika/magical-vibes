@@ -1,7 +1,10 @@
 package com.github.laxika.magicalvibes.cards.e;
 
+import com.github.laxika.magicalvibes.cards.g.GloriousAnthem;
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
+import com.github.laxika.magicalvibes.cards.o.Ornithopter;
 import com.github.laxika.magicalvibes.cards.p.Plains;
+import com.github.laxika.magicalvibes.model.CardColor;
 import com.github.laxika.magicalvibes.model.CounterType;
 import com.github.laxika.magicalvibes.model.Keyword;
 import com.github.laxika.magicalvibes.model.Permanent;
@@ -35,6 +38,7 @@ class ElspethKnightErrantTest extends BaseCardTest {
                 .findFirst().orElseThrow();
         assertThat(gqs.getEffectivePower(gd, soldier)).isEqualTo(1);
         assertThat(gqs.getEffectiveToughness(gd, soldier)).isEqualTo(1);
+        assertThat(soldier.getCard().getColor()).isEqualTo(CardColor.WHITE);
     }
 
     // ===== +1: Target creature gets +3/+3 and gains flying =====
@@ -118,6 +122,33 @@ class ElspethKnightErrantTest extends BaseCardTest {
         assertThat(gqs.hasKeyword(gd, ownLand, Keyword.INDESTRUCTIBLE)).isTrue();
         // Opponent's permanents are unaffected.
         assertThat(gqs.hasKeyword(gd, opponentCreature, Keyword.INDESTRUCTIBLE)).isFalse();
+        // Planeswalkers are not in the emblem's type list.
+        assertThat(gqs.hasKeyword(gd, elspeth, Keyword.INDESTRUCTIBLE)).isFalse();
+    }
+
+    @Test
+    @DisplayName("-8 emblem also covers artifacts and enchantments; applies to permanents entering later")
+    void ultimateCoversArtifactsEnchantmentsAndLaterPermanents() {
+        Permanent elspeth = addReadyElspeth(player1);
+        elspeth.setCounterCount(CounterType.LOYALTY, 8);
+
+        harness.addToBattlefield(player1, new Ornithopter());
+        harness.addToBattlefield(player1, new GloriousAnthem());
+
+        harness.activateAbility(player1, 0, 2, null, null);
+        harness.passBothPriorities();
+
+        Permanent artifact = gd.playerBattlefields.get(player1.getId()).stream()
+                .filter(p -> p.getCard().getName().equals("Ornithopter")).findFirst().orElseThrow();
+        Permanent enchantment = gd.playerBattlefields.get(player1.getId()).stream()
+                .filter(p -> p.getCard().getName().equals("Glorious Anthem")).findFirst().orElseThrow();
+        assertThat(gqs.hasKeyword(gd, artifact, Keyword.INDESTRUCTIBLE)).isTrue();
+        assertThat(gqs.hasKeyword(gd, enchantment, Keyword.INDESTRUCTIBLE)).isTrue();
+
+        harness.addToBattlefield(player1, new Plains());
+        Permanent laterLand = gd.playerBattlefields.get(player1.getId()).stream()
+                .filter(p -> p.getCard().getName().equals("Plains")).findFirst().orElseThrow();
+        assertThat(gqs.hasKeyword(gd, laterLand, Keyword.INDESTRUCTIBLE)).isTrue();
     }
 
     @Test
