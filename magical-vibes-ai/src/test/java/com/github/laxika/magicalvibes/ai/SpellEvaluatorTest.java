@@ -19,11 +19,13 @@ import com.github.laxika.magicalvibes.cards.i.InspiringCleric;
 import com.github.laxika.magicalvibes.cards.m.MidnightHaunting;
 import com.github.laxika.magicalvibes.cards.n.Nekrataal;
 import com.github.laxika.magicalvibes.cards.p.Pacifism;
+import com.github.laxika.magicalvibes.cards.p.PanicAttack;
 import com.github.laxika.magicalvibes.cards.p.Pyroclasm;
 import com.github.laxika.magicalvibes.cards.r.RelentlessAssault;
 import com.github.laxika.magicalvibes.cards.s.SerraAngel;
 import com.github.laxika.magicalvibes.cards.s.ShivanDragon;
 import com.github.laxika.magicalvibes.cards.s.Shock;
+import com.github.laxika.magicalvibes.cards.s.Stun;
 import com.github.laxika.magicalvibes.cards.w.WallOfFire;
 import com.github.laxika.magicalvibes.cards.w.WrathOfGod;
 import com.github.laxika.magicalvibes.model.Card;
@@ -270,6 +272,73 @@ class SpellEvaluatorTest {
         gd.playerBattlefields.get(player1.getId()).add(bears);
 
         double value = spellEvaluator.estimateSpellValue(gd, new RelentlessAssault(), player1.getId());
+
+        assertThat(value).isGreaterThan(0);
+    }
+
+    // ===== Can't block this turn (Panic Attack / Stun) =====
+
+    @Test
+    @DisplayName("Panic Attack has zero value with no creatures on the board")
+    void panicAttackZeroValueWithEmptyBoard() {
+        double value = spellEvaluator.estimateSpellValue(gd, new PanicAttack(), player1.getId());
+
+        assertThat(value).isEqualTo(0);
+    }
+
+    @Test
+    @DisplayName("Panic Attack has zero value when the AI has no attackers")
+    void panicAttackZeroValueWithoutAttackers() {
+        Permanent oppBears = new Permanent(new GrizzlyBears());
+        oppBears.setSummoningSick(false);
+        gd.playerBattlefields.get(player2.getId()).add(oppBears);
+
+        double value = spellEvaluator.estimateSpellValue(gd, new PanicAttack(), player1.getId());
+
+        assertThat(value).isEqualTo(0);
+    }
+
+    @Test
+    @DisplayName("Panic Attack has zero value when the AI's only creature is summoning sick")
+    void panicAttackZeroValueWithSummoningSickOnly() {
+        Permanent sickBears = new Permanent(new GrizzlyBears());
+        sickBears.setSummoningSick(true);
+        gd.playerBattlefields.get(player1.getId()).add(sickBears);
+
+        Permanent oppBears = new Permanent(new GrizzlyBears());
+        oppBears.setSummoningSick(false);
+        gd.playerBattlefields.get(player2.getId()).add(oppBears);
+
+        double value = spellEvaluator.estimateSpellValue(gd, new PanicAttack(), player1.getId());
+
+        assertThat(value).isEqualTo(0);
+    }
+
+    @Test
+    @DisplayName("Panic Attack has positive value with attackers and opponent blockers")
+    void panicAttackPositiveWithAttackersAndBlockers() {
+        Permanent ownBears = new Permanent(new GrizzlyBears());
+        ownBears.setSummoningSick(false);
+        gd.playerBattlefields.get(player1.getId()).add(ownBears);
+
+        Permanent oppAngel = new Permanent(new SerraAngel());
+        oppAngel.setSummoningSick(false);
+        gd.playerBattlefields.get(player2.getId()).add(oppAngel);
+
+        double value = spellEvaluator.estimateSpellValue(gd, new PanicAttack(), player1.getId());
+
+        assertThat(value).isGreaterThan(0);
+    }
+
+    @Test
+    @DisplayName("Stun keeps cantrip value when the AI has no attackers")
+    void stunKeepsDrawValueWithoutAttackers() {
+        Permanent oppBears = new Permanent(new GrizzlyBears());
+        oppBears.setSummoningSick(false);
+        gd.playerBattlefields.get(player2.getId()).add(oppBears);
+
+        // Can't-block is dead without attackers, but Draw a card still scores.
+        double value = spellEvaluator.estimateSpellValue(gd, new Stun(), player1.getId());
 
         assertThat(value).isGreaterThan(0);
     }

@@ -47,6 +47,7 @@ import com.github.laxika.magicalvibes.model.effect.PutCounterOnEachControlledPer
 import com.github.laxika.magicalvibes.model.effect.PutCounterOnTargetPermanentEffect;
 import com.github.laxika.magicalvibes.model.effect.RegenerationEffect;
 import com.github.laxika.magicalvibes.model.effect.BounceScope;
+import com.github.laxika.magicalvibes.model.effect.CantBlockThisTurnEffect;
 import com.github.laxika.magicalvibes.model.effect.ReturnToHandEffect;
 import com.github.laxika.magicalvibes.model.effect.ReturnTargetPermanentToHandWithManaValueConditionalEffect;
 import com.github.laxika.magicalvibes.model.effect.ScryEffect;
@@ -61,6 +62,7 @@ import com.github.laxika.magicalvibes.service.effect.AmountContext;
 import com.github.laxika.magicalvibes.service.effect.AmountEvaluationService;
 import com.github.laxika.magicalvibes.service.filter.PredicateEvaluationService;
 
+import java.util.Comparator;
 import java.util.List;
 import java.util.UUID;
 
@@ -467,6 +469,14 @@ public class SpellEvaluator {
             return extraCombatDamageGain(gameData, card, aiPlayerId) * 1.2;
         }
 
+        // "Can't block this turn" (Panic Attack, Stun, …) — only useful when the AI can
+        // attack into blockers. Empty board / no attackers → 0 so "up to N" optional
+        // targeting never looks like a free cast.
+        if (effect instanceof CantBlockThisTurnEffect cantBlock) {
+            return evaluateCantBlockValue(gameData, card, cantBlock, aiPlayerId, opponentId,
+                    aiBattlefield, oppBattlefield);
+        }
+
         // Damage to creatures / any target. Player-only damage (canDamageCreatures() == false)
         // falls through to the DealDamageToPlayersEffect survivor branches below, whose recipient
         // decides the sign — a fact no descriptive interface method expresses.
@@ -834,6 +844,50 @@ public class SpellEvaluator {
         // Detrimental aura - value based on neutralizing opponent's best creature
         double bestOppCreature = bestTargetCreatureValue(gameData, oppBattlefield, opponentId, aiPlayerId);
         return bestOppCreature > 0 ? bestOppCreature * 0.8 : 0;
+    }
+
+    /**
+     * Scores a "creatures can't block this turn" effect. Returns 0 when the AI has no
+     * creatures that can attack this turn, or when no opponent blockers would be
+     * affected — so Panic Attack / Stun are never cast as empty board dumps. TARGET
+     * scope is capped at the spell's max targets; mass scopes score every matching
+     * untapped opposing creature.
+     */
+    private double evaluateCantBlockValue(GameData gameData, Card card, CantBlockThisTurnEffect effect,
+                                          UUID aiPlayerId, UUID opponentId,
+                                          List<Permanent> aiBattlefield, List<Permanent> oppBattlefield) {
+        boolean hasAttacker = aiBattlefield.stream().anyMatch(p -> canAttackThisTurn(gameData, p));
+        if (!hasAttacker) return 0;
+
+        FilterContext filterContext = FilterContext.of(gameData).withSourceControllerId(aiPlayerId);
+        List<Permanent> blockers = oppBattlefield.stream()
+                .filter(p -> gameQueryService.isCreature(gameData, p) && !p.isTapped())
+                .filter(p -> effect.filter() == null
+                        || predicateEvaluationService.matchesPermanentPredicate(p, effect.filter(), filterContext))
+                .sorted(Comparator.comparingDouble(
+                        (Permanent p) -> boardEvaluator.creatureScore(gameData, p, opponentId, aiPlayerId)).reversed())
+                .toList();
+        if (blockers.isEmpty()) return 0;
+
+        int maxNeutralized = switch (effect.scope()) {
+            case TARGET -> card != null && card.getMaxTargets() > 0 ? card.getMaxTargets() : 1;
+            case TARGET_PLAYERS_PERMANENTS, ALL_CREATURES -> blockers.size();
+            default -> 0;
+        };
+        if (maxNeutralized <= 0) return 0;
+
+        return blockers.stream()
+                .limit(maxNeutralized)
+                .mapToDouble(p -> boardEvaluator.creatureScore(gameData, p, opponentId, aiPlayerId) * 0.3)
+                .sum();
+    }
+
+    private boolean canAttackThisTurn(GameData gameData, Permanent permanent) {
+        if (!gameQueryService.isCreature(gameData, permanent)) return false;
+        if (gameQueryService.hasKeyword(gameData, permanent, Keyword.DEFENDER)) return false;
+        if (permanent.isTapped()) return false;
+        return !permanent.isSummoningSick()
+                || gameQueryService.hasKeyword(gameData, permanent, Keyword.HASTE);
     }
 
     /**

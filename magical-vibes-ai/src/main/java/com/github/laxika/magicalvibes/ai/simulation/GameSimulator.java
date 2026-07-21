@@ -24,6 +24,7 @@ import com.github.laxika.magicalvibes.model.TurnStep;
 import com.github.laxika.magicalvibes.model.GraveyardSearchScope;
 import com.github.laxika.magicalvibes.model.effect.AddManaOnEnchantedLandTapEffect;
 import com.github.laxika.magicalvibes.model.effect.AdditionalCombatMainPhaseEffect;
+import com.github.laxika.magicalvibes.model.effect.CantBlockThisTurnEffect;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
 import com.github.laxika.magicalvibes.model.effect.TargetCategory;
 import com.github.laxika.magicalvibes.model.effect.CostEffect;
@@ -486,6 +487,14 @@ public class GameSimulator {
             if (card.getEffects(EffectSlot.SPELL).stream()
                         .anyMatch(AdditionalCombatMainPhaseEffect.class::isInstance)
                     && spellEvaluator.extraCombatDamageGain(gd, card, playerId) <= 0) {
+                continue;
+            }
+            // Policy: "can't block this turn" with no attackers (or no blockers to shut
+            // off) is a dead cast — Panic Attack is legal with zero targets, and MCTS
+            // would otherwise explore dumping it.
+            if (card.getEffects(EffectSlot.SPELL).stream()
+                        .anyMatch(CantBlockThisTurnEffect.class::isInstance)
+                    && spellEvaluator.estimateSpellValue(gd, card, playerId) <= 0) {
                 continue;
             }
             // For targeted spells, enumerate candidate targets (policy: which targets

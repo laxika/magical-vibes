@@ -20,6 +20,7 @@ import com.github.laxika.magicalvibes.service.cast.CastingCostService;
 import com.github.laxika.magicalvibes.service.cast.CastingPermissionService;
 import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.amount.Fixed;
+import com.github.laxika.magicalvibes.model.effect.CantBlockThisTurnEffect;
 import com.github.laxika.magicalvibes.model.effect.MassDamageEffect;
 import com.github.laxika.magicalvibes.model.effect.MustBeBlockedByAllCreaturesEffect;
 import com.github.laxika.magicalvibes.model.effect.MustBeBlockedIfAbleEffect;
@@ -399,6 +400,23 @@ public class EasyAiDecisionEngine extends AiDecisionEngine {
                                 && gameQueryService.getEffectiveToughness(gameData, p) <= aoeDamage)
                         .count();
                 if (oppKilled <= aiKilled) {
+                    return 0;
+                }
+            }
+            // "Can't block this turn" is useless without attackers (Panic Attack is legal
+            // with zero targets via "up to N").
+            if (effect instanceof CantBlockThisTurnEffect) {
+                boolean hasAttacker = false;
+                for (Permanent perm : gameData.playerBattlefields.getOrDefault(aiPlayer.getId(), List.of())) {
+                    if (!gameQueryService.isCreature(gameData, perm)) continue;
+                    if (gameQueryService.hasKeyword(gameData, perm, Keyword.DEFENDER)) continue;
+                    if (perm.isTapped()) continue;
+                    if (perm.isSummoningSick()
+                            && !gameQueryService.hasKeyword(gameData, perm, Keyword.HASTE)) continue;
+                    hasAttacker = true;
+                    break;
+                }
+                if (!hasAttacker) {
                     return 0;
                 }
             }
