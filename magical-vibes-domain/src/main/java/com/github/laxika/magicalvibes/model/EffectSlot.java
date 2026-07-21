@@ -249,12 +249,16 @@ ON_ALLY_CREATURE_ENTERS_BATTLEFIELD,
     /** Triggers at the beginning of combat on the controller's turn.
      *  Checked in {@code StepTriggerService.handleBeginningOfCombatTriggers}. */
     BEGINNING_OF_COMBAT_TRIGGERED,
-    /** Triggers at the beginning of each combat (any player's turn).
-     *  Checked in {@code StepTriggerService.handleBeginningOfCombatTriggers} across all battlefields. */
+    /** Triggers at the beginning of each combat (any player's turn), not only the controller's.
+     *  Checked in {@code StepTriggerService.handleBeginningOfCombatTriggers} by scanning all
+     *  battlefields. Used by Majestic Myriarch / Odric, Lunarch Marshal. */
     EACH_BEGINNING_OF_COMBAT_TRIGGERED,
     /** Triggers at the beginning of the active player's precombat main phase on the
      *  controller's turn. Checked in {@code StepTriggerService.handlePrecombatMainTriggers}. */
     PRECOMBAT_MAIN_TRIGGERED,
+    /** Triggers at the beginning of each of the controller's postcombat main phases.
+     *  Checked in {@code StepTriggerService.handlePostcombatMainTriggers}. */
+    POSTCOMBAT_MAIN_TRIGGERED,
     /** Triggers whenever a creature an opponent controls is dealt damage (combat or non-combat).
      *  Fires on the permanent with this slot, not on the damaged creature. Scans all battlefields
      *  for permanents with this slot whose controller is different from the damaged creature's controller. */

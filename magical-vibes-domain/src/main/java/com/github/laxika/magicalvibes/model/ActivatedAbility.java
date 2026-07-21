@@ -1,5 +1,6 @@
 package com.github.laxika.magicalvibes.model;
 
+import com.github.laxika.magicalvibes.model.condition.Condition;
 import com.github.laxika.magicalvibes.model.filter.CardPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentPredicate;
 import com.github.laxika.magicalvibes.model.filter.TargetFilter;
@@ -55,6 +56,16 @@ public class ActivatedAbility {
     private int requiredGraveyardCardCount;
     /** Human-readable description of the graveyard-count restriction, used in the activation error message. */
     private String requiredGraveyardCardDescription;
+    /**
+     * Arbitrary activation gate evaluated via {@code ConditionEvaluationService} (e.g. Desert's
+     * "control a Desert or Desert in graveyard" OR). Null = no such restriction. Set via
+     * {@link #withActivationCondition}. Prefer the typed helpers ({@link #withRequiredControlledPermanents},
+     * {@link #withRequiredGraveyardCards}, timing enums) when they cover the oracle text; use this for
+     * compound conditions those helpers cannot express alone.
+     */
+    private Condition activationCondition;
+    /** Human-readable activation-condition failure message (full sentence shown to the player). */
+    private String activationConditionDescription;
 
     public ActivatedAbility(boolean requiresTap, String manaCost, List<CardEffect> effects, String description) {
         this(requiresTap, manaCost, effects, description, null, null, null, null, List.of(), 1, 1, false, null, null, 0);
@@ -163,6 +174,8 @@ public class ActivatedAbility {
         copy.requiredGraveyardCardPredicate = this.requiredGraveyardCardPredicate;
         copy.requiredGraveyardCardCount = this.requiredGraveyardCardCount;
         copy.requiredGraveyardCardDescription = this.requiredGraveyardCardDescription;
+        copy.activationCondition = this.activationCondition;
+        copy.activationConditionDescription = this.activationConditionDescription;
         return copy;
     }
 
@@ -223,6 +236,18 @@ public class ActivatedAbility {
     }
 
     /**
+     * Fluent setter for a compound "Activate only if …" restriction expressed as a {@link Condition}
+     * (e.g. Wall of Forgotten Pharaohs' "you control a Desert or there is a Desert card in your
+     * graveyard"). {@code description} is the full error message shown when the condition is not met.
+     * Returns this ability for chaining.
+     */
+    public ActivatedAbility withActivationCondition(Condition condition, String description) {
+        this.activationCondition = condition;
+        this.activationConditionDescription = description;
+        return this;
+    }
+
+    /**
      * Fluent setter for a "activate only if you have N or more cards in your hand" restriction
      * (e.g. Resonating Lute). Returns this ability for chaining in card constructors.
      */
@@ -277,5 +302,19 @@ public class ActivatedAbility {
      */
     public boolean isEmbalmOrEternalize() {
         return effects.stream().anyMatch(CreateTokenCopyOfSourceEffect.class::isInstance);
+    }
+
+    /**
+     * Whether this is a cycling ability (or typecycling / landcycling variant). Detected from the
+     * ability description's name segment ending in {@code "cycling"} (engine convention —
+     * {@code "Cycling {2} …"}, {@code "Islandcycling {2} …"}, {@code "Basic landcycling {2} …"}).
+     */
+    public boolean isCyclingAbility() {
+        if (description == null) {
+            return false;
+        }
+        int brace = description.indexOf('{');
+        String namePart = (brace >= 0 ? description.substring(0, brace) : description).trim();
+        return namePart.toLowerCase().endsWith("cycling");
     }
 }

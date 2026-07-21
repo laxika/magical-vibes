@@ -66,6 +66,7 @@ import com.github.laxika.magicalvibes.service.GameBroadcastService;
 import com.github.laxika.magicalvibes.service.cast.CastingCostService;
 import com.github.laxika.magicalvibes.service.trigger.TriggerCollectionService;
 import com.github.laxika.magicalvibes.service.battlefield.GameQueryService;
+import com.github.laxika.magicalvibes.service.battlefield.GraveyardTargetingService;
 import com.github.laxika.magicalvibes.service.filter.PredicateEvaluationService;
 import com.github.laxika.magicalvibes.service.interaction.InteractionHandlerRegistry;
 import lombok.RequiredArgsConstructor;
@@ -94,6 +95,7 @@ public class CombatAttackService {
     private final CombatTriggerService combatTriggerService;
     private final InteractionHandlerRegistry interactionHandlerRegistry;
     private final com.github.laxika.magicalvibes.service.effect.AttackSacrificeCostService attackSacrificeCostService;
+    private final GraveyardTargetingService graveyardTargetingService;
 
     /**
      * Returns the battlefield indices of creatures the given player can legally declare as attackers.
@@ -411,17 +413,26 @@ public class CombatAttackService {
                         // to one creature the defending player controls" (Decimator Beetle). The normal
                         // pipeline collects only one target, so route to the bespoke two-step flow.
                         boolean isCounterMove = otherEffects.stream().anyMatch(e -> e instanceof AttackCounterMoveEffect);
+                        boolean needsGraveyardTarget = otherEffects.stream()
+                                .anyMatch(e -> e.targetSpec().category().isGraveyard());
                         boolean needsTarget = otherEffects.stream()
                                 .anyMatch(e -> e.targetSpec().category().includesPermanents() || e.targetSpec().category().includesPlayers());
+                        UUID attackedTargetId = attacker.getAttackTarget();
+                        UUID defendingPlayerId = attackedTargetId == null ? null
+                                : gameData.playerIds.contains(attackedTargetId)
+                                        ? attackedTargetId
+                                        : gameQueryService.findPermanentController(gameData, attackedTargetId);
                         if (isCounterMove) {
-                            UUID attackedTargetId = attacker.getAttackTarget();
-                            UUID defendingPlayerId = attackedTargetId == null ? null
-                                    : gameData.playerIds.contains(attackedTargetId)
-                                            ? attackedTargetId
-                                            : gameQueryService.findPermanentController(gameData, attackedTargetId);
                             gameData.queueInteraction(
                                     new PermanentChoiceContext.AttackCounterMoveFirstTarget(
                                             attacker.getCard(), playerId, otherEffects, attacker.getId(), defendingPlayerId));
+                        } else if (needsGraveyardTarget) {
+                            // "exile target card from defending player's graveyard" (Graven Abomination):
+                            // choose as the trigger goes on the stack (same shape as ETB/death GY exile).
+                            // Handler owns its own broadcast (including the no-legal-target skip).
+                            graveyardTargetingService.handleAttackGraveyardTargeting(
+                                    gameData, playerId, attacker.getCard(), otherEffects,
+                                    attacker.getId(), defendingPlayerId);
                         } else if (needsTarget) {
                             gameData.queueInteraction(
                                     new PermanentChoiceContext.AttackTriggerTarget(
@@ -442,11 +453,17 @@ public class CombatAttackService {
                             attackTrigger.setAttackedTargetId(attacker.getAttackTarget());
                             gameData.stack.add(attackTrigger);
                         }
-                    }
 
-                    gameBroadcastService.logAndBroadcast(gameData,
-                            GameLog.builder().card(attacker.getCard()).text("'s attack ability triggers.").build());
-                    log.info("Game {} - {} attack trigger pushed onto stack", gameData.id, attacker.getCard().getName());
+                        if (!needsGraveyardTarget) {
+                            gameBroadcastService.logAndBroadcast(gameData,
+                                    GameLog.builder().card(attacker.getCard()).text("'s attack ability triggers.").build());
+                            log.info("Game {} - {} attack trigger pushed onto stack", gameData.id, attacker.getCard().getName());
+                        }
+                    } else {
+                        gameBroadcastService.logAndBroadcast(gameData,
+                                GameLog.builder().card(attacker.getCard()).text("'s attack ability triggers.").build());
+                        log.info("Game {} - {} attack trigger pushed onto stack", gameData.id, attacker.getCard().getName());
+                    }
                 }
             }
 

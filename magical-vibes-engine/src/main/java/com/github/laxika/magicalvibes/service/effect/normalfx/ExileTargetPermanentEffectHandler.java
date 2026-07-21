@@ -33,11 +33,18 @@ public class ExileTargetPermanentEffectHandler implements NormalEffectHandlerBea
     @Override
     public void resolve(GameData gameData, StackEntry entry, CardEffect effect) {
         var exile = (ExileTargetPermanentEffect) effect;
-        List<UUID> targetIds = entry.getTargetIds().isEmpty()
-                ? List.of(entry.getTargetId())
-                : entry.getTargetIds();
+        // Multi-target / optional group: exile each chosen target for this effect's group
+        // (targetsForEffect). An empty group ("any number" / "up to N" with none chosen) exiles
+        // nothing — do not fall back to List.of(null) when targetId is unset.
+        List<UUID> targetIds = entry.targetsForEffect(effect);
+        if (targetIds.isEmpty() && entry.getTargetId() != null) {
+            targetIds = List.of(entry.getTargetId());
+        }
 
         for (UUID targetId : targetIds) {
+            if (targetId == null) {
+                continue;
+            }
             Permanent target = gameQueryService.findPermanentById(gameData, targetId);
             if (target == null) {
                 continue;

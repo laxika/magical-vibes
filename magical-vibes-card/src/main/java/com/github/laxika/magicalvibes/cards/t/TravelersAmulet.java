@@ -10,6 +10,7 @@ import com.github.laxika.magicalvibes.model.filter.CardPredicateUtils;
 import java.util.List;
 
 @CardRegistration(set = "ISD", collectorNumber = "234")
+@CardRegistration(set = "HOU", collectorNumber = "167")
 public class TravelersAmulet extends Card {
 
     public TravelersAmulet() {

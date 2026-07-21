@@ -6,6 +6,8 @@ import com.github.laxika.magicalvibes.service.cast.CastingCostService;
 import com.github.laxika.magicalvibes.service.exile.ExileService;
 import com.github.laxika.magicalvibes.service.graveyard.GraveyardService;
 import com.github.laxika.magicalvibes.service.battlefield.GameQueryService;
+import com.github.laxika.magicalvibes.service.effect.ConditionContext;
+import com.github.laxika.magicalvibes.service.effect.ConditionEvaluationService;
 import com.github.laxika.magicalvibes.service.filter.PredicateEvaluationService;
 import com.github.laxika.magicalvibes.service.battlefield.PermanentRemovalService;
 import com.github.laxika.magicalvibes.service.input.PlayerInputService;
@@ -132,6 +134,7 @@ public class AbilityActivationService {
     private final GraveyardService graveyardService;
     private final GameQueryService gameQueryService;
     private final PredicateEvaluationService predicateEvaluationService;
+    private final ConditionEvaluationService conditionEvaluationService;
     private final GameBroadcastService gameBroadcastService;
     private final CastingCostService castingCostService;
     private final TargetLegalityService targetLegalityService;
@@ -942,7 +945,15 @@ public class AbilityActivationService {
 
         // Pay the "discard this card" cost intrinsic to a hand-activated ability
         hand.remove(handCardIndex);
-        graveyardService.addCardToGraveyard(gameData, playerId, card);
+        UUID previousCyclingCard = gameData.cardEnteringGraveyardByCycling;
+        if (ability.isCyclingAbility()) {
+            gameData.cardEnteringGraveyardByCycling = card.getId();
+        }
+        try {
+            graveyardService.addCardToGraveyard(gameData, playerId, card);
+        } finally {
+            gameData.cardEnteringGraveyardByCycling = previousCyclingCard;
+        }
         gameData.discardCausedByOpponent = false;
 
         // Push the ability onto the stack (cost effects are not part of the resolution snapshot)
@@ -989,12 +1000,11 @@ public class AbilityActivationService {
      * True if {@code ability}'s mana cost is currently replaced with {0} for {@code playerId}: the
      * ability is a cycling ability and the player controls a permanent granting free cycling while
      * they hold enough cards in hand (New Perspectives, CR 118.9). Cycling is identified by the
-     * ability's reminder-text description prefix, the engine's convention for cycling abilities.
+     * ability's reminder-text description ending in "cycling", the engine's convention for cycling.
      * {@code handSize} is the hand size at activation, which still includes the card being cycled.
      */
     private boolean cyclingCostReplacedWithZero(GameData gameData, UUID playerId, ActivatedAbility ability, int handSize) {
-        String description = ability.getDescription();
-        if (description == null || !description.startsWith("Cycling")) {
+        if (!ability.isCyclingAbility()) {
             return false;
         }
         List<Permanent> battlefield = gameData.playerBattlefields.get(playerId);
@@ -1056,7 +1066,15 @@ public class AbilityActivationService {
 
         // Pay the "discard this card" cost intrinsic to a hand-activated ability
         hand.remove(handCardIndex);
-        graveyardService.addCardToGraveyard(gameData, playerId, card);
+        UUID previousCyclingCard = gameData.cardEnteringGraveyardByCycling;
+        if (ability.isCyclingAbility()) {
+            gameData.cardEnteringGraveyardByCycling = card.getId();
+        }
+        try {
+            graveyardService.addCardToGraveyard(gameData, playerId, card);
+        } finally {
+            gameData.cardEnteringGraveyardByCycling = previousCyclingCard;
+        }
         gameData.discardCausedByOpponent = false;
         triggerCollectionService.checkDiscardTriggers(gameData, playerId, card);
 
@@ -1437,21 +1455,6 @@ public class AbilityActivationService {
             int removedMinus = 0;
             int removedPlus = 0;
             switch (ct) {
-                case CHARGE -> {
-                    permanent.setCounterCount(CounterType.CHARGE, permanent.getCounterCount(CounterType.CHARGE) - count);
-                }
-                case CARRION -> {
-                    permanent.setCounterCount(CounterType.CARRION, permanent.getCounterCount(CounterType.CARRION) - count);
-                }
-                case CORPSE -> {
-                    permanent.setCounterCount(CounterType.CORPSE, permanent.getCounterCount(CounterType.CORPSE) - count);
-                }
-                case HATCHLING -> {
-                    permanent.setCounterCount(CounterType.HATCHLING, permanent.getCounterCount(CounterType.HATCHLING) - count);
-                }
-                case HOOFPRINT -> {
-                    permanent.setCounterCount(CounterType.HOOFPRINT, permanent.getCounterCount(CounterType.HOOFPRINT) - count);
-                }
                 case MINUS_ONE_MINUS_ONE -> {
                     removedMinus = count;
                     permanent.setCounterCount(CounterType.MINUS_ONE_MINUS_ONE, permanent.getCounterCount(CounterType.MINUS_ONE_MINUS_ONE) - count);
@@ -1459,15 +1462,6 @@ public class AbilityActivationService {
                 case PLUS_ONE_PLUS_ONE -> {
                     removedPlus = count;
                     permanent.setCounterCount(CounterType.PLUS_ONE_PLUS_ONE, permanent.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE) - count);
-                }
-                case SLIME -> {
-                    permanent.setCounterCount(CounterType.SLIME, permanent.getCounterCount(CounterType.SLIME) - count);
-                }
-                case STUDY -> {
-                    permanent.setCounterCount(CounterType.STUDY, permanent.getCounterCount(CounterType.STUDY) - count);
-                }
-                case WISH -> {
-                    permanent.setCounterCount(CounterType.WISH, permanent.getCounterCount(CounterType.WISH) - count);
                 }
                 case ANY -> {
                     removedMinus = Math.min(count, permanent.getCounterCount(CounterType.MINUS_ONE_MINUS_ONE));
@@ -1478,26 +1472,24 @@ public class AbilityActivationService {
                         permanent.setCounterCount(CounterType.PLUS_ONE_PLUS_ONE, permanent.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE) - remaining);
                     }
                 }
+                case SILVER -> throw new IllegalStateException("Silver counters are not on permanents");
+                default -> permanent.setCounterCount(ct, permanent.getCounterCount(ct) - count);
             }
             String counterTypeLabel;
-            if (ct == CounterType.CHARGE) {
-                counterTypeLabel = "charge";
-            } else if (ct == CounterType.SLIME) {
-                counterTypeLabel = "slime";
-            } else if (ct == CounterType.STUDY) {
-                counterTypeLabel = "study";
-            } else if (ct == CounterType.WISH) {
-                counterTypeLabel = "wish";
-            } else if (ct == CounterType.CARRION) {
-                counterTypeLabel = "carrion";
-            } else if (ct == CounterType.CORPSE) {
-                counterTypeLabel = "corpse";
-            } else if (removedMinus > 0 && removedPlus == 0) {
+            if (ct == CounterType.ANY) {
+                if (removedMinus > 0 && removedPlus == 0) {
+                    counterTypeLabel = "-1/-1";
+                } else if (removedPlus > 0 && removedMinus == 0) {
+                    counterTypeLabel = "+1/+1";
+                } else {
+                    counterTypeLabel = "";
+                }
+            } else if (ct == CounterType.MINUS_ONE_MINUS_ONE) {
                 counterTypeLabel = "-1/-1";
-            } else if (removedPlus > 0 && removedMinus == 0) {
+            } else if (ct == CounterType.PLUS_ONE_PLUS_ONE) {
                 counterTypeLabel = "+1/+1";
             } else {
-                counterTypeLabel = "";
+                counterTypeLabel = ct.name().toLowerCase().replace('_', ' ');
             }
             String counterWord = count == 1 ? "a " + counterTypeLabel + " counter" : count + " " + counterTypeLabel + " counters";
             gameBroadcastService.logAndBroadcast(gameData, GameLog.textCardText(
@@ -2276,6 +2268,15 @@ public class AbilityActivationService {
                 throw new IllegalStateException("Activate only if there are " + ability.getRequiredGraveyardCardCount()
                         + " or more " + ability.getRequiredGraveyardCardDescription());
             }
+        }
+
+        // Compound activation condition (e.g. "Activate only if you control a Desert or there is a
+        // Desert card in your graveyard"). Prefer typed helpers above when they alone express the gate.
+        if (ability.getActivationCondition() != null
+                && !conditionEvaluationService.isMet(gameData, ability.getActivationCondition(),
+                        ConditionContext.forPermanent(permanent, playerId))) {
+            String message = ability.getActivationConditionDescription();
+            throw new IllegalStateException(message != null ? message : "Activation condition not met");
         }
 
         validateHandSizeRestrictions(gameData, playerId, ability);

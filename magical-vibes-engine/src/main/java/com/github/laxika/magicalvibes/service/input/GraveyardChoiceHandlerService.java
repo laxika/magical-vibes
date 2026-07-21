@@ -384,12 +384,17 @@ public class GraveyardChoiceHandlerService {
             }
         }
 
-        // Resolution-time "exile up to one target card from a graveyard" (Grixis Sojourners' death
-        // and cycling triggers): the choice was begun mid-resolution, so exile the chosen card and
-        // resume the paused ability (e.g. the cycling draw) rather than pushing a new stack entry.
-        if (gameData.graveyardTargetOperation.resolutionTimeExileResume) {
+        // Resolution-time "exile up to one …" mid-resolution choices (Grixis Sojourners exile-only,
+        // God-Pharaoh's Gift exile+4/4 black Zombie token copy with haste until EOT): the choice was
+        // begun mid-resolution, so complete the effect and resume the paused ability rather than
+        // pushing a new stack entry.
+        if (gameData.graveyardTargetOperation.resolutionTimeExileResume
+                || gameData.graveyardTargetOperation.resolutionTimeExileCreateZombieTokenCopyResume) {
+            boolean createZombieTokenCopy =
+                    gameData.graveyardTargetOperation.resolutionTimeExileCreateZombieTokenCopyResume;
             gameData.interaction.clearAwaitingInput();
             gameData.graveyardTargetOperation.resolutionTimeExileResume = false;
+            gameData.graveyardTargetOperation.resolutionTimeExileCreateZombieTokenCopyResume = false;
             if (cardIds.isEmpty()) {
                 gameBroadcastService.logAndBroadcast(gameData, GameLog.text(
                         player.getUsername() + " chooses not to exile a card from a graveyard."));
@@ -400,6 +405,20 @@ public class GraveyardChoiceHandlerService {
                         graveyardReturnSupport.exileCardFromAnyGraveyard(gameData, cardId, card);
                         gameBroadcastService.logAndBroadcast(gameData, GameLog.textCardText(
                                 player.getUsername() + " exiles ", card, " from a graveyard."));
+                        if (createZombieTokenCopy && gameData.pendingEffectResolutionEntry != null) {
+                            graveyardReturnSupport.createTokenCopyFromCard(
+                                    gameData,
+                                    gameData.pendingEffectResolutionEntry,
+                                    card,
+                                    List.of(CardSubtype.ZOMBIE),
+                                    false,
+                                    false,
+                                    CardColor.BLACK,
+                                    4,
+                                    4,
+                                    true,
+                                    true);
+                        }
                     }
                 }
             }

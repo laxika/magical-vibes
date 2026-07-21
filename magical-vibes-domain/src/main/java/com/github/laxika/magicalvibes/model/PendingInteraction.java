@@ -969,11 +969,21 @@ public sealed interface PendingInteraction permits PermanentChoiceContext,
      * {@code sourcePermanentId} when non-null (e.g. Karn Liberated). {@code remainingCount}
      * works as in {@link DiscardChoice}. A non-null {@code playPermissionControllerId}
      * grants that player permission to play each exiled card (e.g. Fiend of the Shadows).
+     * {@code remainingChoosers} + {@code cardsPerPlayer} chain additional opponents after this
+     * player's picks (Nicol Bolas, God-Pharaoh +1 "each opponent exiles two cards").
      */
     record ExileFromHandChoice(UUID playerId, java.util.List<Integer> validIndices,
                                UUID sourcePermanentId, UUID playPermissionControllerId,
-                               int remainingCount, String prompt)
+                               int remainingCount, String prompt,
+                               java.util.List<UUID> remainingChoosers, int cardsPerPlayer)
             implements PendingInteraction, HandChoice {
+
+        public ExileFromHandChoice(UUID playerId, java.util.List<Integer> validIndices,
+                                   UUID sourcePermanentId, UUID playPermissionControllerId,
+                                   int remainingCount, String prompt) {
+            this(playerId, validIndices, sourcePermanentId, playPermissionControllerId,
+                    remainingCount, prompt, java.util.List.of(), 0);
+        }
 
         @Override
         public UUID decidingPlayerId() {

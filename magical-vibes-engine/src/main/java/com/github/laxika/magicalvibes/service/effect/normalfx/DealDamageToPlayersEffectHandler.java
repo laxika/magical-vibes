@@ -47,6 +47,7 @@ public class DealDamageToPlayersEffectHandler implements NormalEffectHandlerBean
             case EACH_OPPONENT -> resolveEachPlayer(gameData, entry, e, true);
             case EACH_PLAYER -> resolveEachPlayer(gameData, entry, e, false);
             case TARGET_PERMANENT_CONTROLLER -> resolveTargetPermanentController(gameData, entry, e);
+            case TARGET_SPELL_CONTROLLER -> resolveTargetSpellController(gameData, entry, e);
         }
 
         gameOutcomeService.checkWinCondition(gameData);
@@ -102,6 +103,29 @@ public class DealDamageToPlayersEffectHandler implements NormalEffectHandlerBean
             int amount = evaluateAmount(gameData, entry, e, controllerId);
             int rawDamage = gameQueryService.applyDamageMultiplier(gameData, amount, entry);
             damageSupport.dealDamageToPlayer(gameData, entry, controllerId, rawDamage);
+        }
+    }
+
+    /** TARGET_SPELL_CONTROLLER: victim = the controller of the targeted spell still on the stack. */
+    private void resolveTargetSpellController(GameData gameData, StackEntry entry, DealDamageToPlayersEffect e) {
+        UUID targetCardId = entry.getTargetId();
+        if (targetCardId == null) return;
+
+        StackEntry targetSpell = null;
+        for (StackEntry se : gameData.stack) {
+            if (se.getCard().getId().equals(targetCardId)) {
+                targetSpell = se;
+                break;
+            }
+        }
+        if (targetSpell == null) return;
+
+        UUID victimId = targetSpell.getControllerId();
+        if (!damageSupport.isDamageSourcePreventedWithLog(gameData, entry)) {
+            int amount = evaluateAmount(gameData, entry, e, victimId);
+            if (amount <= 0) return;
+            int rawDamage = gameQueryService.applyDamageMultiplier(gameData, amount, entry);
+            damageSupport.dealDamageToPlayer(gameData, entry, victimId, rawDamage);
         }
     }
 

@@ -116,7 +116,8 @@ public class SpellEvaluator {
         }
         // Scry
         if (effect instanceof ScryEffect scry) {
-            return scry.count() * 2.0;
+            return amountEvaluationService.evaluate(gameData, scry.count(),
+                    AmountContext.forEstimation(aiPlayerId)) * 2.0;
         }
         // +1/+1 counters on all own creatures
         if (effect instanceof PutCounterOnEachControlledPermanentEffect counters

@@ -14,8 +14,10 @@ import com.github.laxika.magicalvibes.networking.service.CardViewFactory;
 import com.github.laxika.magicalvibes.service.GameBroadcastService;
 import com.github.laxika.magicalvibes.service.battlefield.BattlefieldEntryService;
 import com.github.laxika.magicalvibes.service.battlefield.GameQueryService;
+import com.github.laxika.magicalvibes.service.effect.AmountEvaluationService;
 import com.github.laxika.magicalvibes.service.exile.ExileService;
 import com.github.laxika.magicalvibes.service.effect.EffectResolutionService;
+import com.github.laxika.magicalvibes.service.filter.PredicateEvaluationService;
 import com.github.laxika.magicalvibes.service.input.PlayerInputService;
 import com.github.laxika.magicalvibes.service.interaction.InteractionHandlerRegistry;
 import com.github.laxika.magicalvibes.service.interaction.ScryInteractionHandler;
@@ -88,7 +90,11 @@ class ScryEffectHandlerTest {
                 sessionManager, cardViewFactory, gameBroadcastService,
                 mock(PlayerInputService.class), mock(TurnProgressionService.class),
                 mock(EffectResolutionService.class)));
-        scryEffectHandler = new ScryEffectHandler(gameBroadcastService, interactionHandlerRegistry);
+        scryEffectHandler = new ScryEffectHandler(
+                gameBroadcastService,
+                interactionHandlerRegistry,
+                new AmountEvaluationService(mock(PredicateEvaluationService.class), gameQueryService),
+                gameQueryService);
 
     }
 

@@ -139,6 +139,8 @@ public class TurnProgressionService {
                 stepTriggerService.handleUpkeepTriggers(gameData);
             } else if (next == TurnStep.PRECOMBAT_MAIN) {
                 stepTriggerService.handlePrecombatMainTriggers(gameData);
+            } else if (next == TurnStep.POSTCOMBAT_MAIN) {
+                stepTriggerService.handlePostcombatMainTriggers(gameData);
             } else if (next == TurnStep.DRAW) {
                 stepTriggerService.handleDrawStep(gameData);
             } else if (next == TurnStep.BEGINNING_OF_COMBAT) {

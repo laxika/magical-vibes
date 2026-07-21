@@ -444,6 +444,41 @@ public class MayMiscHandlerService {
         inputCompletionService.processMayAbilitiesThenAutoPass(gameData);
     }
 
+    /**
+     * Believe: accept → top card onto battlefield; decline → top card into hand.
+     */
+    public void handleLookAtTopCardMayPutCreatureElseToHandChoice(
+            GameData gameData, Player player, boolean accepted) {
+        UUID controllerId = player.getId();
+        List<Card> deck = gameData.playerDecks.get(controllerId);
+
+        if (deck.isEmpty()) {
+            inputCompletionService.processMayAbilitiesThenAutoPass(gameData);
+            return;
+        }
+
+        Card topCard = deck.removeFirst();
+        if (accepted) {
+            Permanent perm = new Permanent(topCard);
+            battlefieldEntryService.putPermanentOntoBattlefield(gameData, controllerId, perm);
+            if (topCard.hasType(CardType.CREATURE)) {
+                battlefieldEntryService.handleCreatureEnteredBattlefield(gameData, controllerId, topCard, null, false);
+            }
+            gameBroadcastService.logAndBroadcast(gameData, GameLog.textCardText(
+                    player.getUsername() + " puts ", topCard, " onto the battlefield."));
+            log.info("Game {} - {} puts {} onto the battlefield (Believe)",
+                    gameData.id, player.getUsername(), topCard.getName());
+        } else {
+            gameData.playerHands.get(controllerId).add(topCard);
+            gameBroadcastService.logAndBroadcast(gameData, GameLog.text(
+                    player.getUsername() + " puts the top card into their hand."));
+            log.info("Game {} - {} puts {} into hand from library top (Believe)",
+                    gameData.id, player.getUsername(), topCard.getName());
+        }
+
+        inputCompletionService.processMayAbilitiesThenAutoPass(gameData);
+    }
+
     public void handleLeylineChoice(GameData gameData, Player player, boolean accepted, PendingMayAbility ability) {
         if (accepted) {
             Card card = ability.sourceCard();

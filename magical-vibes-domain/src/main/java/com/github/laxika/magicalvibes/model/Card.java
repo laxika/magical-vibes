@@ -557,6 +557,36 @@ public class Card {
                 .findFirst();
     }
 
+    /**
+     * Flashback casting option on this card, or on its back face when only the back half is
+     * castable from the graveyard (aftermath-style split cards such as Farm // Market).
+     */
+    public Optional<FlashbackCast> effectiveFlashbackCast() {
+        Optional<FlashbackCast> own = getCastingOption(FlashbackCast.class);
+        if (own.isPresent()) {
+            return own;
+        }
+        return backFaceCard != null
+                ? backFaceCard.getCastingOption(FlashbackCast.class)
+                : Optional.empty();
+    }
+
+    /**
+     * Half whose SPELL effects, type line, and targeting apply when casting via
+     * {@link #effectiveFlashbackCast()}. For aftermath splits this is the back face; otherwise
+     * this card. The physical card object in the graveyard / on the stack remains {@code this}
+     * so exile disposition still moves the parent split card.
+     */
+    public Card graveyardCastHalf() {
+        if (getCastingOption(FlashbackCast.class).isPresent()) {
+            return this;
+        }
+        if (backFaceCard != null && backFaceCard.getCastingOption(FlashbackCast.class).isPresent()) {
+            return backFaceCard;
+        }
+        return this;
+    }
+
     public void setSagaChapterTargetFilter(EffectSlot slot, Set<TargetFilter> filters) {
         assertMutable();
         sagaChapterTargetFilters.put(slot, filters);

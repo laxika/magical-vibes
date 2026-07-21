@@ -343,6 +343,28 @@ class ActivatedAbilityExecutionServiceTest {
             verify(interactionHandlerRegistry).begin(eq(gameData),
                     any(com.github.laxika.magicalvibes.model.PendingInteraction.ColorChoice.class));
         }
+
+        @Test
+        @DisplayName("SkipNextUntapEffect(SELF) rider on a mana ability increments skipUntapCount inline")
+        void skipNextUntapSelfRiderOnManaAbility() {
+            Card card = createCreature("Oasis Ritualist");
+            Permanent perm = addReadyPermanent(player1Id, card);
+            List<CardEffect> effects = List.of(
+                    new com.github.laxika.magicalvibes.model.effect.SkipNextUntapEffect(
+                            com.github.laxika.magicalvibes.model.effect.TapUntapScope.SELF),
+                    new com.github.laxika.magicalvibes.model.effect.AwardAnyColorManaEffect(2));
+            ActivatedAbility ability = new ActivatedAbility(true, null, effects,
+                    "{T}, Exert this creature: Add two mana of any one color.");
+
+            stubIsCreature(perm, true);
+
+            service.completeActivationAfterCosts(gameData, player1, perm, ability, effects, 0, null, null, false);
+
+            assertThat(perm.getSkipUntapCount()).isEqualTo(1);
+            assertThat(gameData.stack).isEmpty();
+            verify(interactionHandlerRegistry).begin(eq(gameData),
+                    any(com.github.laxika.magicalvibes.model.PendingInteraction.ColorChoice.class));
+        }
     }
 
     // =========================================================================

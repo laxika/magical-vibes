@@ -10,6 +10,7 @@ import com.github.laxika.magicalvibes.service.GameBroadcastService;
 import com.github.laxika.magicalvibes.service.battlefield.GameQueryService;
 import com.github.laxika.magicalvibes.service.battlefield.PermanentRemovalService;
 import com.github.laxika.magicalvibes.service.exile.ExileService;
+import com.github.laxika.magicalvibes.service.filter.PredicateEvaluationService;
 import com.github.laxika.magicalvibes.service.graveyard.GraveyardService;
 import com.github.laxika.magicalvibes.service.trigger.TriggerCollectionService;
 import org.junit.jupiter.api.BeforeEach;
@@ -41,6 +42,8 @@ class ShuffleGraveyardIntoLibraryEffectHandlerTest {
     private ExileService exileService;
     @Mock
     private TriggerCollectionService triggerCollectionService;
+    @Mock
+    private PredicateEvaluationService predicateEvaluationService;
     private GameData gd;
     private UUID player1Id;
     private UUID player2Id;
@@ -69,7 +72,7 @@ player1Id = UUID.randomUUID();
         gd.playerDecks.put(player2Id, Collections.synchronizedList(new ArrayList<>()));
         gd.activePlayerId = player1Id;
         GraveyardService graveyardService = new GraveyardService(
-                gameQueryService, gameBroadcastService, exileService, triggerCollectionService);
+                gameQueryService, gameBroadcastService, exileService, predicateEvaluationService, triggerCollectionService);
         shuffleGraveyardIntoLibraryEffectHandler =
                 new ShuffleGraveyardIntoLibraryEffectHandler(gameBroadcastService, graveyardService);
 

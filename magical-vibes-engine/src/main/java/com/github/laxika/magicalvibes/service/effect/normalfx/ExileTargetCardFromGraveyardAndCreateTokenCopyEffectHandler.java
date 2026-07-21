@@ -38,6 +38,9 @@ public class ExileTargetCardFromGraveyardAndCreateTokenCopyEffectHandler impleme
         var e = (ExileTargetCardFromGraveyardAndCreateTokenCopyEffect) effect;
 
         Card targetCard = gameQueryService.findCardInGraveyardById(gameData, entry.getTargetId());
+        if (targetCard == null && entry.getTargetCardIds() != null && !entry.getTargetCardIds().isEmpty()) {
+            targetCard = gameQueryService.findCardInGraveyardById(gameData, entry.getTargetCardIds().getFirst());
+        }
         if (targetCard == null) {
             gameBroadcastService.logAndBroadcast(gameData, GameLog.text(entry.getDescription() + " fizzles (target no longer in a graveyard)."));
             return;
@@ -65,6 +68,6 @@ public class ExileTargetCardFromGraveyardAndCreateTokenCopyEffectHandler impleme
         gameBroadcastService.logAndBroadcast(gameData, GameLog.textCardText(playerName + " exiles ", targetCard, " from a graveyard."));
 
         graveyardReturnSupport.createTokenCopyFromCard(gameData, entry, targetCard, e.additionalSubtypes(),
-                e.grantHaste(), e.exileAtEndStep());
+                e.grantHaste(), e.exileAtEndStep(), e.colorOverride(), e.powerOverride(), e.toughnessOverride());
     }
 }

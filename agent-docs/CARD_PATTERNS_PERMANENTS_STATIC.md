@@ -93,6 +93,7 @@ All paths relative to `cards/`.
 | Cost reduction per creature card in graveyard | `g/Ghoultree.java` | STATIC ReduceOwnCastCostEffect(CardsInGraveyard(CardTypePredicate(CREATURE), CONTROLLER)) — this spell costs {1} less per creature card in your graveyard |
 | Cost reduction per distinct card type in graveyard | `e/EmrakulThePromisedEnd.java` | STATIC ReduceOwnCastCostEffect(CardTypesAmongCardsInGraveyard()) + ON_SELF_CAST ControlTargetPlayerNextTurnEffect(true) + STATIC ProtectionFromCardTypesEffect(INSTANT) — Emrakul |
 | Cost reduction per creature on battlefield | `b/BlasphemousAct.java` | STATIC ReduceOwnCastCostEffect(PermanentCount(PermanentIsCreaturePredicate, ANY_PLAYER)) — this spell costs {1} less for each creature on the battlefield |
+| Cost reduction per card cycled/discarded this turn | `h/HollowOne.java` | STATIC ReduceOwnCastCostEffect(Scaled(CardsDiscardedOrCycledThisTurn(), 2)) + hand Cycling {2} — costs {2} less per card you've cycled or discarded this turn |
 | Creature mana only | `m/MyrSuperion.java` | setRequiresCreatureMana(true) — can only be cast with mana produced by creatures |
 | No max hand size | `s/Spellbook.java` | STATIC NoMaximumHandSizeEffect |
 | Toughness as combat damage (controller) | `b/BelligerentBrontodon.java` | STATIC AssignCombatDamageWithToughnessEffect(ALL_OWN_CREATURES) — all your creatures assign combat damage equal to toughness |
@@ -104,12 +105,14 @@ All paths relative to `cards/`.
 | Double mana produced (tap for mana) | `m/ManaReflection.java` | STATIC ManaReflectionEffect — tapping any permanent for mana produces twice as much of that mana (2^count, controller-scoped) via GameQueryService.manaProductionMultiplier |
 | Symmetric land-tap mana doubling | `m/ManaFlare.java` | ON_ANY_PLAYER_TAPS_LAND `AddOneOfEachManaTypeProducedByLandEffect(false)` — every player's land tap adds one extra mana of a type it produced (controller-scoped variant `true` = Vorinclex) |
 | Play lands from GY | `c/CrucibleOfWorlds.java` | STATIC PlayLandsFromGraveyardEffect |
+| Cast cycling spells from GY + exile non-cycled cycling cards | `a/AbandonedSarcophagus.java` | STATIC `CastSpellsWithCyclingFromGraveyardEffect` + `ExileOwnCyclingCardsUnlessCycledEffect` |
 | Draw replacement | `a/Abundance.java` | STATIC AbundanceDrawReplacementEffect |
 | Draw replacement — reveal top 3, creatures to hand | `s/SagesOfTheAnima.java` | STATIC SagesOfTheAnimaDrawReplacementEffect — if you would draw, instead reveal top 3, creatures → hand, rest → bottom in any order. Detected in `DrawService` via the capability interface `RevealTopCardsCreaturesToHandDrawReplacementEffect` (no concrete instanceof). Fully replaces the draw (no draw triggers, no empty-library loss) |
 | Return-from-GY-instead-of-draw + self-exile GY | `f/ForbiddenCrypt.java` | STATIC ReturnFromGraveyardInsteadOfDrawEffect + STATIC ExileOwnCardsInsteadOfGraveyardEffect — draws are replaced by returning a GY card to hand (lose if GY empty); your cards are exiled instead of hitting your GY |
 | Grant flash to spell type | `s/ShimmerMyr.java` | STATIC GrantFlashToCardTypeEffect(ARTIFACT) — controller may cast artifact spells as though they had flash |
 | Grant flash to all spells + leyline | `l/LeylineOfAnticipation.java` | ON_OPENING_HAND_REVEAL MayEffect(LeylineStartOnBattlefieldEffect) + STATIC GrantFlashToCardTypeEffect(null) — may start on battlefield from opening hand, grants flash to all spells |
 | Grant conspire to your spells + ETB tokens | `w/WortTheRaidmother.java` | ON_ENTER_BATTLEFIELD CreateTokenEffect(2 Goblin Warrior) + STATIC GrantConspireToSpellsEffect(CardAllOfPredicate(type instant/sorcery, color red/green)) — red or green instant/sorcery spells you cast have conspire |
+| Conditional keywords while any creature has -1/-1 | `t/TenaciousHunter.java` | STATIC ConditionalEffect(AnyPlayerControlsPermanent(AllOf(IsCreature, HasCounters(MINUS_ONE_MINUS_ONE))), GrantKeywordEffect(Set.of(VIGILANCE, DEATHTOUCH), SELF)) |
 | Metalcraft keyword | `a/AuriokEdgewright.java` | STATIC ConditionalEffect(new Metalcraft(), GrantKeywordEffect(DOUBLE_STRIKE, SELF)) |
 | Metalcraft keyword + boost | `a/AuriokSunchaser.java` | STATIC ConditionalEffect(new Metalcraft(), GrantKeywordEffect) + ConditionalEffect(new Metalcraft(), StaticBoostEffect) |
 | Metalcraft boost only | `c/CarapaceForger.java` | STATIC ConditionalEffect(new Metalcraft(), StaticBoostEffect(2, 2, SELF)) |

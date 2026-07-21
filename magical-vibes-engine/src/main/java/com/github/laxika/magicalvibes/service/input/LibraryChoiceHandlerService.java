@@ -118,6 +118,10 @@ public class LibraryChoiceHandlerService {
         com.github.laxika.magicalvibes.model.filter.CardPredicate filterPredicate = librarySearch.filterPredicate();
         List<Card> accumulatedCards = librarySearch.accumulatedCards() != null
                 ? new ArrayList<>(librarySearch.accumulatedCards()) : new ArrayList<>();
+        boolean requireDifferentNames = librarySearch.requireDifferentNames();
+        Integer manaValueBoundValue = librarySearch.manaValueBoundValue();
+        boolean manaValueExact = librarySearch.manaValueExact();
+        List<String> excludedCardNames = new ArrayList<>(librarySearch.excludedCardNames());
 
         UUID deckOwnerId = targetPlayerId != null ? targetPlayerId : playerId;
         UUID handOwnerId = targetPlayerId != null ? targetPlayerId : playerId;
@@ -341,6 +345,10 @@ public class LibraryChoiceHandlerService {
                 removed = true;
                 break;
             }
+        }
+
+        if (requireDifferentNames) {
+            excludedCardNames.add(chosenCard.getName());
         }
 
         if (!removed) {
@@ -648,6 +656,20 @@ public class LibraryChoiceHandlerService {
                 newSearchCards = new ArrayList<>(deck);
             }
 
+            if (manaValueBoundValue != null) {
+                final int bound = manaValueBoundValue;
+                final boolean exact = manaValueExact;
+                newSearchCards = newSearchCards.stream()
+                        .filter(c -> exact ? c.getManaValue() == bound : c.getManaValue() <= bound)
+                        .toList();
+            }
+            if (requireDifferentNames && !excludedCardNames.isEmpty()) {
+                java.util.Set<String> excluded = java.util.Set.copyOf(excludedCardNames);
+                newSearchCards = newSearchCards.stream()
+                        .filter(c -> !excluded.contains(c.getName()))
+                        .toList();
+            }
+
             if (newSearchCards.isEmpty()) {
                 // CR 608.2f: Place any accumulated battlefield cards before finishing
                 if (!accumulatedCards.isEmpty() && toBattlefield) {
@@ -678,7 +700,8 @@ public class LibraryChoiceHandlerService {
             } else {
                 String destinationDesc = toBattlefieldTapped ? "onto the battlefield tapped"
                         : toBattlefield ? "onto the battlefield" : "into your hand";
-                prompt = "Search your library for a matching card to put " + destinationDesc + " (" + newRemaining + " remaining).";
+                String distinct = requireDifferentNames ? " with a different name" : "";
+                prompt = "Search your library for a matching card" + distinct + " to put " + destinationDesc + " (" + newRemaining + " remaining).";
             }
 
             interactionHandlerRegistry.begin(gameData, new PendingInteraction.LibrarySearch(
@@ -692,6 +715,9 @@ public class LibraryChoiceHandlerService {
                     .filterPredicate(filterPredicate)
                     .accumulatedCards(accumulatedCards)
                     .followUp(followUp)
+                    .requireDifferentNames(requireDifferentNames)
+                    .manaValueBound(manaValueBoundValue, manaValueExact)
+                    .excludedCardNames(excludedCardNames)
                     .build(),
                     prompt, toGraveyard || canFailToFind));
 

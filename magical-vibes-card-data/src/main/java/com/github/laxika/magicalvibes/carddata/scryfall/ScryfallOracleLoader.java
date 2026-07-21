@@ -82,6 +82,8 @@ public class ScryfallOracleLoader {
         KEYWORD_MAP.put("Living weapon", Keyword.LIVING_WEAPON);
         KEYWORD_MAP.put("Deathtouch", Keyword.DEATHTOUCH);
         KEYWORD_MAP.put("Transform", Keyword.TRANSFORM);
+        KEYWORD_MAP.put("Flashback", Keyword.FLASHBACK);
+        KEYWORD_MAP.put("Aftermath", Keyword.AFTERMATH);
         KEYWORD_MAP.put("Kicker", Keyword.KICKER);
         KEYWORD_MAP.put("Converge", Keyword.CONVERGE);
         KEYWORD_MAP.put("Undying", Keyword.UNDYING);
@@ -384,8 +386,9 @@ public class ScryfallOracleLoader {
             }
         }
 
-        // Type line
-        String typeLine = card.get("type_line").asText();
+        // Type line — prefer face node for split/transform DFCs
+        JsonNode typeLineSource = faceNode.has("type_line") ? faceNode : card;
+        String typeLine = typeLineSource.get("type_line").asText();
         ScryfallTypeLineParser.ParsedTypeLine parsed = ScryfallTypeLineParser.parse(typeLine);
 
         // Color — prefer face node for DFCs
@@ -501,12 +504,16 @@ public class ScryfallOracleLoader {
     }
 
     /**
-     * Returns card_faces[0] for transform DFCs, or the card itself for normal cards.
+     * Returns card_faces[0] for transform DFCs and split cards (including aftermath),
+     * or the card itself for normal cards.
      */
     private static JsonNode getFrontFaceNode(JsonNode card) {
-        if (card.has("card_faces") && card.has("layout")
-                && "transform".equals(card.get("layout").asText())) {
-            return card.get("card_faces").get(0);
+        if (card.has("card_faces") && card.has("layout")) {
+            String layout = card.get("layout").asText();
+            if ("transform".equals(layout) || "split".equals(layout) || "flip".equals(layout)
+                    || "adventure".equals(layout) || "modal_dfc".equals(layout)) {
+                return card.get("card_faces").get(0);
+            }
         }
         return card;
     }

@@ -22,6 +22,7 @@ import com.github.laxika.magicalvibes.model.effect.CardEffect;
 import com.github.laxika.magicalvibes.model.effect.ChooseOneEffect;
 import com.github.laxika.magicalvibes.model.effect.ExileCardsFromGraveyardEffect;
 import com.github.laxika.magicalvibes.model.effect.ExileGraveyardCardsEffect;
+import com.github.laxika.magicalvibes.model.effect.ExileTargetCardFromGraveyardAndCreateTokenCopyEffect;
 import com.github.laxika.magicalvibes.model.effect.GraveyardExileScope;
 import com.github.laxika.magicalvibes.model.effect.ConditionalEffect;
 import com.github.laxika.magicalvibes.model.effect.ReturnCardFromGraveyardEffect;
@@ -43,6 +44,7 @@ import com.github.laxika.magicalvibes.model.filter.StackEntryHasTargetPredicate;
 import com.github.laxika.magicalvibes.model.filter.StackEntryIsSingleTargetPredicate;
 import com.github.laxika.magicalvibes.model.filter.StackEntryManaValuePredicate;
 import com.github.laxika.magicalvibes.model.filter.StackEntryManaValueEqualsXPredicate;
+import com.github.laxika.magicalvibes.model.filter.StackEntryManaValueEqualsSourceCountersPredicate;
 import com.github.laxika.magicalvibes.model.filter.StackEntryManaValueAtMostControlledCountPredicate;
 import com.github.laxika.magicalvibes.model.filter.StackEntryNotPredicate;
 import com.github.laxika.magicalvibes.model.filter.StackEntryPredicate;
@@ -225,6 +227,28 @@ public class TargetLegalityService {
                 }
                 break;
             }
+            if (effect instanceof ExileTargetCardFromGraveyardAndCreateTokenCopyEffect exileCopy) {
+                if (targetCardIds.size() != 1) {
+                    throw new IllegalStateException("Must select exactly 1 target card");
+                }
+                UUID cardId = targetCardIds.getFirst();
+                Card card = gameQueryService.findCardInGraveyardById(gameData, cardId);
+                if (card == null) {
+                    throw new IllegalStateException("Target card not found in any graveyard");
+                }
+                if (exileCopy.filter() != null
+                        && !predicateEvaluationService.matchesCardPredicate(card, exileCopy.filter(), null)) {
+                    throw new IllegalStateException("Target card must be a "
+                            + CardPredicateUtils.describeFilter(exileCopy.filter()));
+                }
+                if (exileCopy.ownGraveyardOnly()) {
+                    UUID graveyardOwnerId = gameQueryService.findGraveyardOwnerById(gameData, cardId);
+                    if (graveyardOwnerId != null && !graveyardOwnerId.equals(playerId)) {
+                        throw new IllegalStateException("Target must be in your graveyard");
+                    }
+                }
+                break;
+            }
         }
     }
 
@@ -298,6 +322,9 @@ public class TargetLegalityService {
             } else if (gameData.playerIds.contains(targetId)
                     && ability.getTargetFilter() instanceof PlayerPredicateTargetFilter playerFilter) {
                 validatePlayerPredicate(gameData, playerId, targetId, playerFilter.predicate(), playerFilter.errorMessage());
+            } else if (gameData.playerIds.contains(targetId)
+                    && ability.getTargetFilter() instanceof AnyTargetPredicateTargetFilter anyFilter) {
+                validatePlayerPredicate(gameData, playerId, targetId, anyFilter.playerPredicate(), anyFilter.errorMessage());
             }
         }
 
@@ -1054,6 +1081,13 @@ public class TargetLegalityService {
             // When X is unknown (target enumeration before X is chosen), match permissively —
             // any spell is potentially a legal target since X can be any non-negative integer.
             return xValue == null || stackEntry.getCard().getManaValue() == xValue;
+        }
+        if (predicate instanceof StackEntryManaValueEqualsSourceCountersPredicate equalsCounters) {
+            if (source == null) {
+                return false;
+            }
+            int manaValue = stackEntry.getCard().getManaValue() + stackEntry.getXValue();
+            return manaValue == source.getCounterCount(equalsCounters.counterType());
         }
         if (predicate instanceof StackEntryManaValueAtMostControlledCountPredicate atMostPredicate) {
             int count = countControlledMatching(gameData, controllerId, atMostPredicate.countFilter());

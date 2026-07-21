@@ -152,7 +152,8 @@ public class GameQueryService {
             CardSubtype.SWAMP,
             CardSubtype.AURA,
             CardSubtype.EQUIPMENT,
-            CardSubtype.AJANI
+            CardSubtype.AJANI,
+            CardSubtype.BOLAS
     );
 
     private final StaticEffectHandlerRegistry staticEffectRegistry;

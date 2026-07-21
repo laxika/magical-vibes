@@ -40,4 +40,12 @@ public class GraveyardTargetOperationState {
      * {@code ExileUpToOneCardFromGraveyardEffectHandler}.
      */
     public boolean resolutionTimeExileResume;
+    /**
+     * Resolution-time "you may exile a creature card from your graveyard. If you do, create a 4/4
+     * black Zombie token copy with haste until end of turn" (God-Pharaoh's Gift). When set,
+     * {@code GraveyardChoiceHandlerService.handleMultipleCardsChosen} exiles the chosen card,
+     * creates the transformed token copy, and resumes the paused ability resolution. Set by
+     * {@code ExileOwnCreatureFromGraveyardCreateZombieTokenCopyEffectHandler}.
+     */
+    public boolean resolutionTimeExileCreateZombieTokenCopyResume;
 }

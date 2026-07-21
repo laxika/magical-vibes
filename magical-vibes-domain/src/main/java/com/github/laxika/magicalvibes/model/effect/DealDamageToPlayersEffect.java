@@ -37,14 +37,16 @@ public record DealDamageToPlayersEffect(DynamicAmount amount, DamageRecipient re
 
     // Per-recipient targeting: only TARGET_PLAYER chooses a player; TARGET_PERMANENT_CONTROLLER
     // rides the shared permanent target of a companion effect (e.g. Chandra's Outrage), so it takes
-    // no independent target. The kept @ValidatesTarget validator (DamageTargetValidators) enforces
-    // "must be a player" for TARGET_PLAYER — a check the no-op PLAYER spec cannot express. Benign:
-    // the validator performs no protection check (the damage lands on a player, not the permanent).
+    // no independent target. TARGET_SPELL_CONTROLLER owns a spell-on-stack target (Refuse). The kept
+    // @ValidatesTarget validator (DamageTargetValidators) enforces "must be a player" for
+    // TARGET_PLAYER — a check the no-op PLAYER spec cannot express. Benign: the validator performs
+    // no protection check (the damage lands on a player, not the permanent/spell).
     @Override
     public TargetSpec targetSpec() {
         return switch (recipient) {
             case TARGET_PLAYER -> TargetSpec.benign(TargetCategory.PLAYER);
             case TARGET_PERMANENT_CONTROLLER -> TargetSpec.benign(TargetCategory.PERMANENT);
+            case TARGET_SPELL_CONTROLLER -> TargetSpec.benign(TargetCategory.SPELL_ON_STACK);
             default -> TargetSpec.NONE;
         };
     }

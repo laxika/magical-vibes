@@ -15,7 +15,7 @@ import com.github.laxika.magicalvibes.model.effect.DiscardToTopOfLibraryInsteadE
 import com.github.laxika.magicalvibes.model.effect.DyingCreatureCardAwareEffect;
 import com.github.laxika.magicalvibes.model.effect.MayEffect;
 import com.github.laxika.magicalvibes.model.effect.ExileOpponentCardsInsteadOfGraveyardEffect;
-import com.github.laxika.magicalvibes.model.effect.ExileOwnCardsInsteadOfGraveyardEffect;
+import com.github.laxika.magicalvibes.model.effect.OwnGraveyardExileReplacement;
 import com.github.laxika.magicalvibes.model.effect.GainLifeEffect;
 import com.github.laxika.magicalvibes.model.effect.GainLifeEqualToToughnessEffect;
 import com.github.laxika.magicalvibes.model.effect.RegeneratesIfWouldBeDestroyedEffect;
@@ -29,6 +29,7 @@ import com.github.laxika.magicalvibes.service.GameBroadcastService;
 import com.github.laxika.magicalvibes.service.trigger.TriggerCollectionService;
 import com.github.laxika.magicalvibes.service.library.LibraryShuffleHelper;
 import com.github.laxika.magicalvibes.service.battlefield.GameQueryService;
+import com.github.laxika.magicalvibes.service.filter.PredicateEvaluationService;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.context.annotation.Lazy;
 import org.springframework.stereotype.Service;
@@ -47,6 +48,7 @@ public class GraveyardService {
     private final GameQueryService gameQueryService;
     private final GameBroadcastService gameBroadcastService;
     private final ExileService exileService;
+    private final PredicateEvaluationService predicateEvaluationService;
     // @Lazy to break indirect circular dependency:
     // GraveyardService → TriggerCollectionService → PermanentRemovalService → GraveyardService
     private TriggerCollectionService triggerCollectionService;
@@ -54,10 +56,12 @@ public class GraveyardService {
     public GraveyardService(GameQueryService gameQueryService,
                             GameBroadcastService gameBroadcastService,
                             ExileService exileService,
+                            PredicateEvaluationService predicateEvaluationService,
                             @Lazy TriggerCollectionService triggerCollectionService) {
         this.gameQueryService = gameQueryService;
         this.gameBroadcastService = gameBroadcastService;
         this.exileService = exileService;
+        this.predicateEvaluationService = predicateEvaluationService;
         this.triggerCollectionService = triggerCollectionService;
     }
 
@@ -233,9 +237,8 @@ public class GraveyardService {
             return false;
         }
 
-        // Forbidden Crypt — if the graveyard's owner controls a permanent with
-        // ExileOwnCardsInsteadOfGraveyardEffect, exile the card instead
-        if (ownerHasExileOwnGraveyardReplacementEffect(gameData, ownerId)) {
+        // Forbidden Crypt / Abandoned Sarcophagus — controller's own cards matching a replacement
+        if (shouldExileOwnCardInsteadOfGraveyard(gameData, ownerId, card)) {
             exileService.exileCard(gameData, ownerId, card);
             gameBroadcastService.logAndBroadcast(gameData, GameLog.cardThen(card, " is exiled instead of being put into a graveyard."));
             log.info("Game {} - {} replacement effect: exiled instead of graveyard (own)", gameData.id, card.getName());
@@ -435,14 +438,27 @@ public class GraveyardService {
         return false;
     }
 
-    private boolean ownerHasExileOwnGraveyardReplacementEffect(GameData gameData, UUID ownerId) {
+    private boolean shouldExileOwnCardInsteadOfGraveyard(GameData gameData, UUID ownerId, Card card) {
         List<Permanent> bf = gameData.playerBattlefields.get(ownerId);
         if (bf == null) {
             return false;
         }
+        boolean beingCycled = card.getId().equals(gameData.cardEnteringGraveyardByCycling);
         for (Permanent p : bf) {
-            if (p.getCard().getEffects(EffectSlot.STATIC).stream()
-                    .anyMatch(ExileOwnCardsInsteadOfGraveyardEffect.class::isInstance)) {
+            for (CardEffect effect : p.getCard().getEffects(EffectSlot.STATIC)) {
+                if (!(effect instanceof OwnGraveyardExileReplacement replacement)) {
+                    continue;
+                }
+                if (card.isToken() && !replacement.appliesToTokens()) {
+                    continue;
+                }
+                if (replacement.exemptWhenCycled() && beingCycled) {
+                    continue;
+                }
+                if (replacement.filter() != null
+                        && !predicateEvaluationService.matchesCardPredicate(card, replacement.filter(), null)) {
+                    continue;
+                }
                 return true;
             }
         }

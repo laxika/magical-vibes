@@ -7,6 +7,7 @@ import com.github.laxika.magicalvibes.model.GameData;
 import com.github.laxika.magicalvibes.model.Keyword;
 import com.github.laxika.magicalvibes.model.ManaCost;
 import com.github.laxika.magicalvibes.model.Permanent;
+import com.github.laxika.magicalvibes.model.StackEntry;
 import com.github.laxika.magicalvibes.model.amount.AttachmentsOnSource;
 import com.github.laxika.magicalvibes.model.amount.BasicLandTypesAmongControlledLands;
 import com.github.laxika.magicalvibes.model.amount.CardTypesAmongCardsInGraveyard;
@@ -30,6 +31,7 @@ import com.github.laxika.magicalvibes.model.amount.DevouredCreaturesOfSubtype;
 import com.github.laxika.magicalvibes.model.amount.DamageDealtToControllerThisTurn;
 import com.github.laxika.magicalvibes.model.amount.DamageDealtToOpponentsThisTurn;
 import com.github.laxika.magicalvibes.model.amount.CardsDiscardedByTargetPlayerThisTurn;
+import com.github.laxika.magicalvibes.model.amount.CardsDiscardedOrCycledThisTurn;
 import com.github.laxika.magicalvibes.model.amount.CardsPutIntoGraveyardByTargetPlayerThisTurn;
 import com.github.laxika.magicalvibes.model.amount.DamageDealtToTargetPlayerThisTurn;
 import com.github.laxika.magicalvibes.model.amount.Divided;
@@ -61,6 +63,7 @@ import com.github.laxika.magicalvibes.model.amount.SourceToughness;
 import com.github.laxika.magicalvibes.model.amount.Sum;
 import com.github.laxika.magicalvibes.model.amount.TargetPlayerLifeTotal;
 import com.github.laxika.magicalvibes.model.amount.TargetManaValue;
+import com.github.laxika.magicalvibes.model.amount.TargetSpellManaValue;
 import com.github.laxika.magicalvibes.model.amount.TargetPower;
 import com.github.laxika.magicalvibes.model.amount.TargetToughness;
 import com.github.laxika.magicalvibes.model.amount.XValue;
@@ -190,6 +193,9 @@ public class AmountEvaluationService {
             case CardsDiscardedByTargetPlayerThisTurn ignored ->
                     ctx.targetPermanentId() == null ? 0
                             : gameData.cardsDiscardedThisTurn.getOrDefault(ctx.targetPermanentId(), 0);
+            case CardsDiscardedOrCycledThisTurn ignored ->
+                    ctx.controllerId() == null ? 0
+                            : gameData.cardsDiscardedThisTurn.getOrDefault(ctx.controllerId(), 0);
             case CardsPutIntoGraveyardByTargetPlayerThisTurn ignored ->
                     ctx.targetPermanentId() == null ? 0
                             : gameData.cardsPutIntoGraveyardFromAnywhereThisTurn
@@ -217,6 +223,8 @@ public class AmountEvaluationService {
                     targetEffectivePower(gameData, ctx);
             case TargetManaValue ignored ->
                     targetManaValue(gameData, ctx);
+            case TargetSpellManaValue ignored ->
+                    targetSpellManaValue(gameData, ctx);
             case ChosenPermanentPower ignored ->
                     chosenPermanentEffectivePower(gameData, ctx);
             case ChosenNumberOnSource ignored ->
@@ -267,6 +275,17 @@ public class AmountEvaluationService {
         Permanent target = gameQueryService.findPermanentById(gameData, ctx.targetPermanentId());
         // No legal target at resolution -> 0, matching the fizzle behaviour of the targeted handlers.
         return target == null ? 0 : target.getCard().getManaValue();
+    }
+
+    /** Mana value of the targeted spell on the stack (Refuse); 0 if it has already left. */
+    private int targetSpellManaValue(GameData gameData, AmountContext ctx) {
+        if (ctx.targetPermanentId() == null) return 0;
+        for (StackEntry se : gameData.stack) {
+            if (se.getCard().getId().equals(ctx.targetPermanentId())) {
+                return se.getCard().getManaValue() + se.getXValue();
+            }
+        }
+        return 0;
     }
 
     /**

@@ -187,6 +187,64 @@ public class GraveyardTargetingService {
         }
     }
 
+    /**
+     * Attack-trigger targeting for "Whenever this creature attacks, exile target card from defending
+     * player's graveyard" (Graven Abomination). Chooses the graveyard card as the trigger goes on the
+     * stack. Prefer {@code defendingPlayerId} when known; otherwise search all opponents' graveyards
+     * ({@link TargetCategory#GRAVEYARD_CARD}) or every graveyard ({@link TargetCategory#ANY_GRAVEYARD_CARD}).
+     * No legal target ⇒ trigger skipped (CR 603.3c). Routes by {@code targetSpec()} so callers need no
+     * concrete-effect {@code instanceof}.
+     */
+    public void handleAttackGraveyardTargeting(GameData gameData, UUID controllerId, Card card,
+            List<CardEffect> effects, UUID sourcePermanentId, UUID defendingPlayerId) {
+        CardEffect gyEffect = effects.stream()
+                .filter(e -> e.targetSpec().category().isGraveyard())
+                .findFirst()
+                .orElse(null);
+        if (gyEffect == null) {
+            return;
+        }
+
+        TargetCategory category = gyEffect.targetSpec().category();
+        boolean anyGraveyard = category == TargetCategory.ANY_GRAVEYARD_CARD;
+
+        List<Card> matchingCards = new ArrayList<>();
+        for (UUID playerId : gameData.orderedPlayerIds) {
+            if (defendingPlayerId != null) {
+                if (!playerId.equals(defendingPlayerId)) continue;
+            } else if (!anyGraveyard && playerId.equals(controllerId)) {
+                continue; // opponent's graveyard only
+            }
+            List<Card> graveyard = gameData.playerGraveyards.get(playerId);
+            if (graveyard == null) continue;
+            matchingCards.addAll(graveyard);
+        }
+
+        if (matchingCards.isEmpty()) {
+            gameBroadcastService.logAndBroadcast(gameData, GameLog.cardThen(card,
+                    "'s attack trigger has no valid graveyard targets."));
+            log.info("Game {} - {} attack graveyard trigger skipped (no valid targets)",
+                    gameData.id, card.getName());
+            return;
+        }
+
+        gameData.graveyardTargetOperation.card = card;
+        gameData.graveyardTargetOperation.controllerId = controllerId;
+        gameData.graveyardTargetOperation.effects = new ArrayList<>(effects);
+        gameData.graveyardTargetOperation.sourcePermanentId = sourcePermanentId;
+
+        String zoneLabel = defendingPlayerId != null
+                ? "defending player's graveyard"
+                : (anyGraveyard ? "a graveyard" : "an opponent's graveyard");
+        playerInputService.beginMultiGraveyardChoice(gameData, controllerId, matchingCards, 1,
+                card.getName() + "'s ability — Choose target card from " + zoneLabel + " to exile.");
+
+        gameBroadcastService.logAndBroadcast(gameData, GameLog.cardThen(card,
+                "'s attack trigger — choose a graveyard target."));
+        log.info("Game {} - {} attack graveyard trigger awaiting target selection",
+                gameData.id, card.getName());
+    }
+
     public void handleBeginningOfCombatGraveyardTargeting(GameData gameData, UUID controllerId, Card card,
             List<CardEffect> effects, UUID sourcePermanentId,
             ExileGraveyardCardsEffect exileEffect) {

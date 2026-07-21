@@ -231,4 +231,16 @@ class ExileTargetPermanentEffectHandlerTest {
                 verify(permanentRemovalService).removePermanentToExile(gd, target2);
                 verify(permanentRemovalService).removeOrphanedAuras(gd);
             }
+
+            @Test
+            @DisplayName("Exiles nothing when optional multi-target list is empty")
+            void emptyTargetListExilesNothing() {
+                Card sourceCard = createCard("Dust");
+                StackEntry entry = createMultiTargetEntry(sourceCard, player1Id, List.of());
+
+                exileTargetPermanentHandler.resolve(gd, entry, entry.getEffectsToResolve().getFirst());
+
+                verify(permanentRemovalService, never()).removePermanentToExile(any(), any());
+                verify(permanentRemovalService).removeOrphanedAuras(gd);
+            }
 }

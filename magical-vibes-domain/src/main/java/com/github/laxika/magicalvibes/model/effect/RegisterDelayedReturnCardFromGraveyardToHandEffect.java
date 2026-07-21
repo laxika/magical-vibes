@@ -8,9 +8,12 @@ import java.util.UUID;
  *
  * <p>Used by Tiana, Ship's Caretaker: "Whenever an Aura or Equipment you control is put into
  * a graveyard from the battlefield, you may return that card to its owner's hand at the
- * beginning of the next end step."
+ * beginning of the next end step." The collector bakes the dying card's id into {@code cardId}.
  *
- * @param cardId the UUID of the card to return from the graveyard at the next end step
+ * <p>Also used by The Locust God on {@code ON_DEATH} with {@code cardId == null}: the handler
+ * falls back to the stack-entry source card.
+ *
+ * @param cardId the UUID of the card to return, or {@code null} to use the resolving source card
  */
 public record RegisterDelayedReturnCardFromGraveyardToHandEffect(UUID cardId) implements CardEffect {
 }

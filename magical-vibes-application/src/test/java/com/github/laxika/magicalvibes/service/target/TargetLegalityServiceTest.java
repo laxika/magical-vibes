@@ -26,6 +26,7 @@ import com.github.laxika.magicalvibes.model.effect.DestroyTargetPermanentEffect;
 import com.github.laxika.magicalvibes.model.effect.MillHalfLibraryEffect;
 import com.github.laxika.magicalvibes.model.effect.ReturnToHandEffect;
 import com.github.laxika.magicalvibes.model.effect.ReturnCardFromGraveyardEffect;
+import com.github.laxika.magicalvibes.model.filter.AnyTargetPredicateTargetFilter;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsArtifactPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsCreaturePredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentPredicateTargetFilter;
@@ -772,6 +773,22 @@ class TargetLegalityServiceTest {
                     List.of(), player1Id, null, sourceCard, 0))
                     .isInstanceOf(IllegalStateException.class)
                     .hasMessage("Must target an opponent");
+        }
+
+        @Test
+        @DisplayName("throws when AnyTarget OPPONENT predicate targets self")
+        void throwsWhenAnyTargetOpponentPredicateTargetsSelf() {
+            Card sourceCard = createCreature("Source", CardColor.RED);
+            ActivatedAbility ability = new ActivatedAbility(true, "{R}", List.of(), "test",
+                    new AnyTargetPredicateTargetFilter(
+                            new PermanentIsCreaturePredicate(),
+                            new PlayerRelationPredicate(PlayerRelation.OPPONENT),
+                            "Target must be an opponent or a permanent an opponent controls"));
+
+            assertThatThrownBy(() -> sut.validateActivatedAbilityTargeting(gd, player1Id, ability,
+                    List.of(), player1Id, null, sourceCard, 0))
+                    .isInstanceOf(IllegalStateException.class)
+                    .hasMessage("Target must be an opponent or a permanent an opponent controls");
         }
 
         @Test

@@ -855,6 +855,21 @@ public class GraveyardReturnSupport {
                                          List<CardSubtype> additionalSubtypes, boolean grantHaste,
                                          boolean exileAtEndStep, CardColor colorOverride,
                                          Integer powerOverride, Integer toughnessOverride) {
+        createTokenCopyFromCard(gameData, entry, sourceCard, additionalSubtypes, grantHaste,
+                exileAtEndStep, colorOverride, powerOverride, toughnessOverride, false, false);
+    }
+
+    /**
+     * Full copy-from-card token creation. When {@code replaceSubtypes} is true, the token's creature
+     * types become exactly {@code additionalSubtypes} (God-Pharaoh's Gift: "a Zombie instead of its
+     * other types"). When {@code grantHasteUntilEndOfTurn} is true, haste is applied as a
+     * non-copiable until-EOT grant on the permanent rather than as a printed keyword on the token.
+     */
+    public void createTokenCopyFromCard(GameData gameData, StackEntry entry, Card sourceCard,
+                                         List<CardSubtype> additionalSubtypes, boolean grantHaste,
+                                         boolean exileAtEndStep, CardColor colorOverride,
+                                         Integer powerOverride, Integer toughnessOverride,
+                                         boolean replaceSubtypes, boolean grantHasteUntilEndOfTurn) {
         UUID controllerId = entry.getControllerId();
         int tokenMultiplier = gameQueryService.getTokenMultiplier(gameData, controllerId);
         for (int copy = 0; copy < tokenMultiplier; copy++) {
@@ -878,13 +893,19 @@ public class GraveyardReturnSupport {
             tokenCard.setCollectorNumber(sourceCard.getCollectorNumber());
 
             List<CardSubtype> subtypes = new ArrayList<>();
-            if (sourceCard.getSubtypes() != null) {
-                subtypes.addAll(sourceCard.getSubtypes());
-            }
-            if (additionalSubtypes != null) {
-                for (CardSubtype subtype : additionalSubtypes) {
-                    if (!subtypes.contains(subtype)) {
-                        subtypes.add(subtype);
+            if (replaceSubtypes) {
+                if (additionalSubtypes != null) {
+                    subtypes.addAll(additionalSubtypes);
+                }
+            } else {
+                if (sourceCard.getSubtypes() != null) {
+                    subtypes.addAll(sourceCard.getSubtypes());
+                }
+                if (additionalSubtypes != null) {
+                    for (CardSubtype subtype : additionalSubtypes) {
+                        if (!subtypes.contains(subtype)) {
+                            subtypes.add(subtype);
+                        }
                     }
                 }
             }
@@ -894,7 +915,7 @@ public class GraveyardReturnSupport {
             if (sourceCard.getKeywords() != null) {
                 keywords.addAll(sourceCard.getKeywords());
             }
-            if (grantHaste) {
+            if (grantHaste && !grantHasteUntilEndOfTurn) {
                 keywords.add(Keyword.HASTE);
             }
             tokenCard.setKeywords(keywords);
@@ -910,14 +931,18 @@ public class GraveyardReturnSupport {
             tokenCard.copyTargetingFrom(sourceCard);
 
             Permanent tokenPermanent = new Permanent(tokenCard);
+            if (grantHasteUntilEndOfTurn) {
+                tokenPermanent.getGrantedKeywords().add(Keyword.HASTE);
+            }
             battlefieldEntryService.putPermanentOntoBattlefield(gameData, controllerId, tokenPermanent);
 
             if (exileAtEndStep) {
                 gameData.queueDelayedAction(new DelayedPermanentAction(tokenPermanent.getId(), DelayedPermanentActionKind.EXILE_TOKEN_AT_END_STEP));
             }
 
+            boolean hasHaste = grantHaste || grantHasteUntilEndOfTurn;
             gameBroadcastService.logAndBroadcast(gameData, GameLog.textCardText("A token copy of ", sourceCard,
-                    grantHaste ? " is created with haste." : " is created."));
+                    hasHaste ? " is created with haste." : " is created."));
             log.info("Game {} - Token copy of {} created via {}", gameData.id, sourceCard.getName(),
                     entry.getCard().getName());
 

@@ -301,6 +301,32 @@ Cards: `GateToTheAfterlife`
 
 ---
 
+### 8a-condition. Ability gated on an arbitrary Condition (`.withActivationCondition`)
+
+```java
+new ActivatedAbility(requiresTap, manaCost, effects, description)
+    .withActivationCondition(Condition condition, String description)
+```
+
+**Use when:** Ability text says "Activate only if …" and the gate is a **compound** condition the typed helpers above cannot express alone (notably OR of board + graveyard Desert). Reuses the sealed `Condition` hierarchy / `ConditionEvaluationService` (same `AnyOf` + `ControlsPermanent` + `GraveyardCardThreshold` pattern as Sidewinder Naga / Desert's Hold). `description` is the full error message thrown when the condition is not met. Prefer `.withRequiredControlledPermanents` / `.withRequiredGraveyardCards` / timing enums when they cover the oracle text by themselves.
+
+```java
+// {T}: deals 1 damage to target player or planeswalker.
+// Activate only if you control a Desert or there is a Desert card in your graveyard.
+new ActivatedAbility(true, null,
+    List.of(new DealDamageToTargetPlayerOrPlaneswalkerEffect(1)),
+    "{T}: … Activate only if you control a Desert or there is a Desert card in your graveyard.")
+    .withActivationCondition(
+        new AnyOf(List.of(
+            new ControlsPermanent(new PermanentHasSubtypePredicate(CardSubtype.DESERT)),
+            new GraveyardCardThreshold(1, new CardSubtypePredicate(CardSubtype.DESERT)))),
+        "Activate only if you control a Desert or there is a Desert card in your graveyard")
+```
+
+Cards: `WallOfForgottenPharaohs`
+
+---
+
 ### 8b. Ability any player may activate
 
 ```java
@@ -656,7 +682,7 @@ addEffect(EffectSlot.SPELL, effect);     // effect resolved when spell resolves
 | `ON_ALLY_CREATURE_BECOMES_BLOCKED` | Whenever a creature you control becomes blocked. Fires once per blocked attacker, on every permanent with this slot on the blocked creature's controller's battlefield. The blocked creature is set as the non-targeting `sourcePermanentId`, so self-scoped effects like `BoostSelfEffect` apply to "it". Wrap in `TriggeringCardConditionalEffect` to filter by the blocked creature. Checked in `CombatBlockService`. Used by Unstoppable Ash |
 | `ON_ANY_PERMANENT_RETURNED_TO_HAND` | Whenever a permanent is returned to a player's hand (bounced from the battlefield). Fires on every permanent with this slot across all battlefields, once per returned permanent. The owner the permanent returned to is the non-targeting `targetId`, so a player-directed effect (e.g. `DiscardEffect(1, TARGET_PLAYER)`) acts on "that player". Fired from `PermanentRemovalService.removePermanentToHand` via `TriggerCollectionService.checkPermanentReturnedToHandTriggers`. Used by Warped Devotion |
 | `ON_COMBAT_DAMAGE_TO_PLAYER` | This creature deals combat damage to a player. Fires once per combat damage step, so double strike can trigger in both first-strike and regular damage steps |
-| `ON_COMBAT_DAMAGE_TO_CREATURE` | This creature deals combat damage to a creature. Fires once per combat damage step |
+| `ON_COMBAT_DAMAGE_TO_CREATURE` | This creature deals combat damage to a creature. Fires once per damaged creature; the damaged creature is baked as non-targeting `targetId` so effects like `DestroyTargetPermanentEffect` / `PutCounterOnTargetPermanentEffect` act on "that creature" |
 | `ON_DAMAGE_TO_PLAYER` | Any damage to a player (not just combat) |
 | `ON_DEATH` | This permanent dies |
 | `ON_SACRIFICE` | This permanent is sacrificed |
@@ -718,6 +744,7 @@ addEffect(EffectSlot.SPELL, effect);     // effect resolved when spell resolves
 | `BEGINNING_OF_COMBAT_TRIGGERED` | Beginning of combat on controller's turn |
 | `EACH_BEGINNING_OF_COMBAT_TRIGGERED` | Beginning of each combat (any player's turn) |
 | `PRECOMBAT_MAIN_TRIGGERED` | Beginning of precombat main phase on controller's turn |
+| `POSTCOMBAT_MAIN_TRIGGERED` | Beginning of each postcombat main phase on controller's turn |
 | `ON_OPPONENT_CREATURE_DEALT_DAMAGE` | An opponent's creature is dealt damage |
 | `ON_ANY_CREATURE_DEALT_DAMAGE` | Any creature (yours or an opponent's) is dealt damage. Queued stack entry targets the damaged creature (targetId set, non-targeting). Register a target-taking effect like `DestroyTargetPermanentEffect(true)` — Death Pits of Rath |
 | `ON_ALLY_CREATURE_DEALS_DAMAGE_TO_CREATURE` | A creature you control (matching the effect's source filter) deals damage — combat or non-combat — to a creature. Fires on the watcher, not the damaged creature; the damage-source creature reflects that much damage to the damaged creature's controller. Register `ReflectAllyDamageToDamagedCreatureControllerEffect(sourceFilter)` — Greatbow Doyen |

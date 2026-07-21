@@ -110,6 +110,7 @@ import com.github.laxika.magicalvibes.model.filter.StackEntryHasTargetPredicate;
 import com.github.laxika.magicalvibes.model.filter.StackEntryIsSingleTargetPredicate;
 import com.github.laxika.magicalvibes.model.filter.StackEntryManaValuePredicate;
 import com.github.laxika.magicalvibes.model.filter.StackEntryManaValueEqualsXPredicate;
+import com.github.laxika.magicalvibes.model.filter.StackEntryManaValueEqualsSourceCountersPredicate;
 import com.github.laxika.magicalvibes.model.filter.StackEntryManaValueAtMostControlledCountPredicate;
 import com.github.laxika.magicalvibes.model.filter.StackEntryNotPredicate;
 import com.github.laxika.magicalvibes.model.filter.StackEntryPredicate;
@@ -202,8 +203,7 @@ public class PredicateEvaluationService {
                     card.getCastingOption(FlashbackCast.class).isPresent();
             case CardHasCyclingPredicate ignored ->
                     card.getHandActivatedAbilities().stream()
-                            .anyMatch(ability -> ability.getDescription() != null
-                                    && ability.getDescription().startsWith("Cycling"));
+                            .anyMatch(ActivatedAbility::isCyclingAbility);
             case CardHasEmbalmOrEternalizePredicate ignored ->
                     card.getGraveyardActivatedAbilities().stream()
                             .anyMatch(ActivatedAbility::isEmbalmOrEternalize);
@@ -882,6 +882,7 @@ public class PredicateEvaluationService {
             case StackEntryHasTargetPredicate ignored -> false;
             case StackEntryManaValuePredicate ignored -> false;
             case StackEntryManaValueEqualsXPredicate ignored -> false;
+            case StackEntryManaValueEqualsSourceCountersPredicate ignored -> false;
             case StackEntryManaValueAtMostControlledCountPredicate ignored -> false;
             case StackEntryControlledByPredicate ignored -> false;
             case StackEntryTargetsYourPermanentPredicate ignored -> false;

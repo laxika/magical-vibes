@@ -83,6 +83,13 @@ public class SearchLibraryEffectHandler implements NormalEffectHandlerBean {
             return;
         }
 
+        // "Up to X" with X=0 still searches and shuffles (Uncage the Menagerie ruling).
+        if (count <= 0) {
+            LibraryShuffleHelper.shuffleLibrary(gameData, controllerId);
+            gameBroadcastService.logAndBroadcast(gameData, GameLog.text(playerName + " searches their library. Library is shuffled."));
+            return;
+        }
+
         Predicate<Card> deckFilter = card ->
                 (filter == null || predicateEvaluationService.matchesCardPredicate(card, filter, null, gameData, controllerId))
                         && matchesBound(card, boundValue, bound);
@@ -102,7 +109,7 @@ public class SearchLibraryEffectHandler implements NormalEffectHandlerBean {
         }
 
         LibrarySearchDestination destination = effect.destination();
-        String prompt = buildPrompt(baseDesc, destination, restricted, count);
+        String prompt = buildPrompt(baseDesc, destination, restricted, count, effect.requireDifferentNames());
 
         librarySearchSupport.sendLibrarySearchToPlayer(gameData, controllerId,
                 LibrarySearchParams.builder(controllerId, new ArrayList<>(matchingCards))
@@ -111,6 +118,8 @@ public class SearchLibraryEffectHandler implements NormalEffectHandlerBean {
                         .canFailToFind(restricted)
                         .destination(destination)
                         .filterPredicate(restricted ? filter : null)
+                        .requireDifferentNames(effect.requireDifferentNames())
+                        .manaValueBound(boundValue, bound != null && bound.exact())
                         .build(),
                 prompt, restricted);
 
@@ -149,10 +158,11 @@ public class SearchLibraryEffectHandler implements NormalEffectHandlerBean {
     }
 
     private String buildPrompt(String desc, LibrarySearchDestination destination,
-                               boolean restricted, int count) {
+                               boolean restricted, int count, boolean requireDifferentNames) {
         String remaining = count > 1 ? " (" + count + " remaining)" : "";
+        String distinct = requireDifferentNames ? " with a different name" : "";
         return switch (destination) {
-            case HAND -> "Search your library for a " + desc
+            case HAND -> "Search your library for a " + desc + distinct
                     + (restricted ? " to reveal and put into your hand" : " to put into your hand")
                     + remaining + ".";
             case TOP_OF_LIBRARY -> "Search your library for a " + desc

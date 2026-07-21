@@ -79,9 +79,10 @@ import com.github.laxika.magicalvibes.model.condition.SelfDealtDamageToOpponentT
 import com.github.laxika.magicalvibes.model.condition.SelfHasKeyword;
 import com.github.laxika.magicalvibes.model.condition.SourceCanSoulbond;
 import com.github.laxika.magicalvibes.model.condition.SourceCounterThreshold;
+import com.github.laxika.magicalvibes.model.condition.SourceHasSubtype;
+import com.github.laxika.magicalvibes.model.condition.SourceIsAttacking;
 import com.github.laxika.magicalvibes.model.condition.SourceIsPaired;
 import com.github.laxika.magicalvibes.model.condition.SourceIsTapped;
-import com.github.laxika.magicalvibes.model.condition.SourceHasSubtype;
 import com.github.laxika.magicalvibes.model.condition.SourceUntapped;
 import com.github.laxika.magicalvibes.model.condition.ColorSpentToCast;
 import com.github.laxika.magicalvibes.model.condition.SpellManaSpentAtLeast;
@@ -312,6 +313,10 @@ public class ConditionEvaluationService {
             case SourceUntapped ignored -> {
                 Permanent source = sourcePermanent(gameData, ctx);
                 yield source != null && !source.isTapped();
+            }
+            case SourceIsAttacking ignored -> {
+                Permanent source = sourcePermanent(gameData, ctx);
+                yield source != null && source.isAttacking();
             }
             case SourceIsTapped ignored -> {
                 Permanent source = sourcePermanent(gameData, ctx);

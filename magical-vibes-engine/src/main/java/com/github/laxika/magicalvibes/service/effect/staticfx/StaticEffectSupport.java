@@ -86,7 +86,8 @@ public class StaticEffectSupport {
             CardSubtype.AURA,
             CardSubtype.EQUIPMENT,
             CardSubtype.AJANI,
-            CardSubtype.KOTH
+            CardSubtype.KOTH,
+            CardSubtype.BOLAS
     );
 
     /**

@@ -49,21 +49,45 @@ public class PermanentChoiceTriggerHandlerService {
     private final ETBTokenTargetService etbTokenTargetService;
 
     public void handleSpellTargetTrigger(GameData gameData, UUID permanentId, PermanentChoiceContext.SpellTargetTriggerAnyTarget stt) {
-        StackEntry entry = stt.spellManaSpentX() > 0
-                ? new StackEntry(
-                        StackEntryType.TRIGGERED_ABILITY,
-                        stt.sourceCard(),
-                        stt.controllerId(),
-                        stt.sourceCard().getName() + "'s ability",
-                        new ArrayList<>(stt.effects()),
-                        stt.spellManaSpentX())
-                : new StackEntry(
-                        StackEntryType.TRIGGERED_ABILITY,
-                        stt.sourceCard(),
-                        stt.controllerId(),
-                        stt.sourceCard().getName() + "'s ability",
-                        new ArrayList<>(stt.effects()));
-        entry.setTargetId(permanentId);
+        StackEntry entry;
+        if (stt.sourcePermanentId() != null) {
+            entry = stt.spellManaSpentX() > 0
+                    ? new StackEntry(
+                            StackEntryType.TRIGGERED_ABILITY,
+                            stt.sourceCard(),
+                            stt.controllerId(),
+                            stt.sourceCard().getName() + "'s ability",
+                            new ArrayList<>(stt.effects()),
+                            stt.spellManaSpentX(),
+                            stt.sourcePermanentId())
+                    : new StackEntry(
+                            StackEntryType.TRIGGERED_ABILITY,
+                            stt.sourceCard(),
+                            stt.controllerId(),
+                            stt.sourceCard().getName() + "'s ability",
+                            new ArrayList<>(stt.effects()),
+                            permanentId,
+                            stt.sourcePermanentId());
+            if (stt.spellManaSpentX() > 0) {
+                entry.setTargetId(permanentId);
+            }
+        } else {
+            entry = stt.spellManaSpentX() > 0
+                    ? new StackEntry(
+                            StackEntryType.TRIGGERED_ABILITY,
+                            stt.sourceCard(),
+                            stt.controllerId(),
+                            stt.sourceCard().getName() + "'s ability",
+                            new ArrayList<>(stt.effects()),
+                            stt.spellManaSpentX())
+                    : new StackEntry(
+                            StackEntryType.TRIGGERED_ABILITY,
+                            stt.sourceCard(),
+                            stt.controllerId(),
+                            stt.sourceCard().getName() + "'s ability",
+                            new ArrayList<>(stt.effects()));
+            entry.setTargetId(permanentId);
+        }
         gameData.stack.add(entry);
 
         String targetName = getTargetDisplayName(gameData, permanentId);

@@ -21,6 +21,7 @@ import com.github.laxika.magicalvibes.model.effect.CantCastSpellTypeEffect;
 import com.github.laxika.magicalvibes.model.effect.CantCastSpellsWithSameNameAsExiledCardEffect;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
 import com.github.laxika.magicalvibes.model.effect.CastPermanentSpellsFromGraveyardEffect;
+import com.github.laxika.magicalvibes.model.effect.CastSpellsFromGraveyardPermission;
 import com.github.laxika.magicalvibes.model.effect.EmblemGrantsFlashbackEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantFlashToCardTypeEffect;
 import com.github.laxika.magicalvibes.model.effect.LimitSpellsForControllerEffect;
@@ -446,6 +447,46 @@ public class CastingPermissionService {
                 if (effect instanceof PlayLandsFromGraveyardEffect) {
                     return true;
                 }
+            }
+        }
+        return false;
+    }
+
+    /**
+     * Returns true if the player controls a permanent granting permission to cast this card from
+     * their graveyard as a spell matching a {@link CastSpellsFromGraveyardPermission} filter
+     * (Abandoned Sarcophagus). Lands that are not also another permanent type are not spells.
+     */
+    public boolean canCastViaFilteredGraveyardPermission(GameData gameData, UUID playerId, Card card) {
+        if (!isCastableSpellCard(card)) {
+            return false;
+        }
+        List<Permanent> battlefield = gameData.playerBattlefields.get(playerId);
+        if (battlefield == null) {
+            return false;
+        }
+        for (Permanent perm : battlefield) {
+            for (CardEffect effect : perm.getCard().getEffects(EffectSlot.STATIC)) {
+                if (effect instanceof CastSpellsFromGraveyardPermission permission
+                        && predicateEvaluationService.matchesCardPredicate(card, permission.filter(), null)) {
+                    return true;
+                }
+            }
+        }
+        return false;
+    }
+
+    private static boolean isCastableSpellCard(Card card) {
+        if (card.hasType(CardType.INSTANT) || card.hasType(CardType.SORCERY)) {
+            return true;
+        }
+        CardType primary = card.getType();
+        if (primary.isPermanentType() && primary != CardType.LAND) {
+            return true;
+        }
+        for (CardType additional : card.getAdditionalTypes()) {
+            if (additional.isPermanentType() && additional != CardType.LAND) {
+                return true;
             }
         }
         return false;

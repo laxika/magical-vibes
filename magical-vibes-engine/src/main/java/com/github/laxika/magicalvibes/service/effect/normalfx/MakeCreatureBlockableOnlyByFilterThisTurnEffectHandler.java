@@ -13,6 +13,8 @@ import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Component;
 
+import java.util.UUID;
+
 @Slf4j
 @Component
 @RequiredArgsConstructor
@@ -29,7 +31,12 @@ public class MakeCreatureBlockableOnlyByFilterThisTurnEffectHandler implements N
     @Override
     public void resolve(GameData gameData, StackEntry entry, CardEffect effect) {
         var grant = (MakeCreatureBlockableOnlyByFilterThisTurnEffect) effect;
-        Permanent target = gameQueryService.findPermanentById(gameData, entry.getTargetId());
+        // Self-targeting triggers populate sourcePermanentId rather than targetId
+        // (same pattern as MakeCreatureUnblockableEffect).
+        UUID permanentId = grant.selfTargeting()
+                ? (entry.getTargetId() != null ? entry.getTargetId() : entry.getSourcePermanentId())
+                : entry.getTargetId();
+        Permanent target = gameQueryService.findPermanentById(gameData, permanentId);
         if (target == null) {
             return;
         }
@@ -37,8 +44,6 @@ public class MakeCreatureBlockableOnlyByFilterThisTurnEffectHandler implements N
         target.getBlockRestrictionsUntilEndOfTurn().add(
                 new CanBeBlockedOnlyByFilterEffect(grant.blockerPredicate(), grant.allowedBlockersDescription()));
 
-        String logEntry = target.getCard().getName() + " can't be blocked this turn except by "
-                + grant.allowedBlockersDescription() + ".";
         gameBroadcastService.logAndBroadcast(gameData, GameLog.builder().card(target.getCard()).text(" can't be blocked this turn except by " + grant.allowedBlockersDescription() + ".").build());
         log.info("Game {} - {} can't be blocked this turn except by {}",
                 gameData.id, target.getCard().getName(), grant.allowedBlockersDescription());

@@ -50,6 +50,8 @@ import com.github.laxika.magicalvibes.model.effect.PreventNextColorDamageToContr
 import com.github.laxika.magicalvibes.model.effect.RegenerateEffect;
 import com.github.laxika.magicalvibes.model.effect.RegisterDrawCardsAtNextUpkeepEffect;
 import com.github.laxika.magicalvibes.model.effect.PutCountersOnSelfEffect;
+import com.github.laxika.magicalvibes.model.effect.SkipNextUntapEffect;
+import com.github.laxika.magicalvibes.model.effect.TapUntapScope;
 import com.github.laxika.magicalvibes.model.action.DrawCardsAtNextUpkeep;
 import com.github.laxika.magicalvibes.model.effect.ExileSelfCost;
 import com.github.laxika.magicalvibes.model.CounterType;
@@ -706,6 +708,14 @@ public class ActivatedAbilityExecutionService {
                     gameBroadcastService.logAndBroadcast(gameData, GameLog.textCardText(
                             player.getUsername() + " puts " + counterText + " on ", permanent.getCard(), "."));
                 }
+            } else if (effect instanceof SkipNextUntapEffect skip
+                    && skip.scope() == TapUntapScope.SELF) {
+                // "{T}, Exert this creature: Add …" (Oasis Ritualist). Exert is modeled as
+                // SkipNextUntapEffect(SELF); on a mana ability it must apply inline here because
+                // mana abilities never hit the stack / NormalEffectHandlerBean path.
+                permanent.setSkipUntapCount(permanent.getSkipUntapCount() + 1);
+                gameBroadcastService.logAndBroadcast(gameData, GameLog.cardThen(
+                        permanent.getCard(), " won't untap during its controller's next untap step."));
             }
         }
         stateBasedActionService.performStateBasedActions(gameData);

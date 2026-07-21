@@ -137,6 +137,13 @@ public class ExampleCard extends Card {
   - Do **not** use `AlternateHandCast` — miracle cost is only available via the draw→reveal→trigger path
   - Example: `magical-vibes-card/src/main/java/com/github/laxika/magicalvibes/cards/t/TemporalMastery.java`
 
+- Aftermath split (front half from hand; back half from graveyard only, then exile):
+  - Front class: normal SPELL effects + `setBackFaceCard(back)` + `getBackFaceClassName()` (same DFC wiring as transform)
+  - Back class (no `@CardRegistration`): its own SPELL effects + `addCastingOption(new FlashbackCast("{cost}"))` using the back half's mana cost
+  - Do **not** put `FlashbackCast` on the front — that would allow casting the front half from the graveyard
+  - Engine uses `Card.effectiveFlashbackCast()` / `graveyardCastHalf()` so GY cast pays the back cost, resolves the back effects/type, and exiles the parent card
+  - Example: `magical-vibes-card/src/main/java/com/github/laxika/magicalvibes/cards/f/FarmMarket.java` (+ `cards/m/Market.java`)
+
 - Alternate hand cast (non-mana alternate cost from hand):
   - `addCastingOption(new AlternateHandCast(List.of(new LifeCastingCost(N), new SacrificePermanentsCost(N, predicate))))`
 - Emerge (sacrifice a creature; pay emerge mana cost reduced by its mana value):
@@ -544,6 +551,7 @@ Which engine layers support each ConditionalEffect. Check this before using a co
 | `ConditionalEffect(new CardsInLibraryAtLeast(threshold), wrapped)` | - | yes | yes (upkeep) |
 | `ConditionalEffect(new CardsInHandAtLeast(threshold), wrapped)` | - | yes | yes (upkeep) |
 | `ConditionalEffect(new SourceIsTapped(), wrapped)` | - | yes | - | intervening-if "if this permanent is tapped" — reads `source.isTapped()`. Mana Vault's `DRAW_TRIGGERED` deals 1 damage to controller only while tapped |
+| `ConditionalEffect(new SourceIsAttacking(), wrapped)` | yes | - | - | "as long as this creature is attacking" — reads `source.isAttacking()`. Thorned Moloch STATIC first strike |
 | `ConditionalEffect(new DefendingPlayerPoisoned(), wrapped)` | - | yes | - |
 | `ConditionalEffect(new PermanentEnteredThisTurn(predicate, minCount), wrapped)` | - | yes | - |
 | `ConditionalEffect(new ControllerTurn(), wrapped)` | yes | - | - |

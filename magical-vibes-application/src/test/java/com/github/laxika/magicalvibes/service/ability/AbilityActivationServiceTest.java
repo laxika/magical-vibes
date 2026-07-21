@@ -1014,6 +1014,33 @@ class AbilityActivationServiceTest {
 
             assertThat(perm.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isEqualTo(2);
         }
+
+        @Test
+        @DisplayName("RemoveCounterFromSourceCost: removes a brick counter")
+        void removeBrickCounter() {
+            Card card = new Card();
+            card.setName("Sunset Pyramid");
+            card.setType(CardType.ARTIFACT);
+            card.setManaCost("{0}");
+            card.setColor(null);
+            card.addActivatedAbility(new ActivatedAbility(
+                    false, "{2}", List.of(
+                            new RemoveCounterFromSourceCost(1, CounterType.BRICK),
+                            new PutCountersOnSelfEffect(CounterType.CHARGE)),
+                    "Remove a brick counter"
+            ));
+            Permanent perm = addReadyPermanent(player1Id, card);
+            perm.setCounterCount(CounterType.BRICK, 3);
+            gameData.playerManaPools.get(player1Id).add(ManaColor.COLORLESS, 2);
+
+            when(gameQueryService.computeStaticBonus(gameData, perm)).thenReturn(EMPTY_BONUS);
+            when(gameQueryService.hasAuraWithEffect(eq(gameData), eq(perm), eq(EnchantedCreatureCantActivateAbilitiesEffect.class)))
+                    .thenReturn(false);
+
+            service.activateAbility(gameData, player1, 0, null, null, null, null);
+
+            assertThat(perm.getCounterCount(CounterType.BRICK)).isEqualTo(2);
+        }
     }
 
     // =========================================================================

@@ -35,6 +35,7 @@ public enum Keyword {
     DEATHTOUCH,
     SCRY,
     FLASHBACK,
+    AFTERMATH,
     TRANSFORM,
     KICKER,
     CREW,

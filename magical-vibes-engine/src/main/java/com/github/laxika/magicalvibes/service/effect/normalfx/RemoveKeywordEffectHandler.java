@@ -35,11 +35,12 @@ public class RemoveKeywordEffectHandler implements NormalEffectHandlerBean {
     public void resolve(GameData gameData, StackEntry entry, CardEffect effect) {
         var remove = (RemoveKeywordEffect) effect;
 
-        // OPPONENT_CREATURES: mass one-shot removal from every creature opponents control
-        // (e.g. Invert the Skies: "creatures your opponents control lose flying until end of turn").
-        if (remove.scope() == GrantScope.OPPONENT_CREATURES) {
+        // OPPONENT_CREATURES / ALL_CREATURES: mass one-shot removal (floats a per-permanent
+        // layer-6 removal). Invert the Skies = opponents; Hour of Devastation = all creatures.
+        if (remove.scope() == GrantScope.OPPONENT_CREATURES || remove.scope() == GrantScope.ALL_CREATURES) {
             for (UUID playerId : gameData.playerIds) {
-                if (playerId.equals(entry.getControllerId())) {
+                if (remove.scope() == GrantScope.OPPONENT_CREATURES
+                        && playerId.equals(entry.getControllerId())) {
                     continue;
                 }
                 List<Permanent> battlefield = gameData.playerBattlefields.get(playerId);

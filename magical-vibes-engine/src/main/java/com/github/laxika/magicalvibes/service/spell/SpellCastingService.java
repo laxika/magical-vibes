@@ -1887,7 +1887,10 @@ public class SpellCastingService {
         if (castingPermissionService.isOpponentsManaValueSpellCastRestricted(gameData, playerId, card, effectiveXValue)) {
             throw new IllegalStateException("Card is not playable");
         }
-        var flashbackOpt = card.getCastingOption(FlashbackCast.class);
+        // Aftermath splits: FlashbackCast lives on the back face; effects/type come from that half,
+        // but the physical parent card stays on the stack so exile disposition moves the whole card.
+        var flashbackOpt = card.effectiveFlashbackCast();
+        Card castHalf = card.graveyardCastHalf();
         var disturbOpt = card.getCastingOption(DisturbCast.class);
         var graveyardCastOpt = card.getCastingOption(GraveyardCast.class);
         boolean isDisturb = disturbOpt.isPresent() && flashbackOpt.isEmpty();
@@ -1928,17 +1931,25 @@ public class SpellCastingService {
             }
         }
 
+        // Abandoned Sarcophagus: cast spells with cycling from graveyard (any number, normal cost)
+        boolean isGrantedCyclingGraveyardCast = flashbackOpt.isEmpty()
+                && !isDisturb
+                && !grantedFlashback && !emblemFlashback && !grantedHavengulCast
+                && !isGrantedGraveyardPlay && !isGraveyardCast && !isGrantedGraveyardCast
+                && castingPermissionService.canCastViaFilteredGraveyardPermission(gameData, playerId, card);
+
         if (flashbackOpt.isEmpty() && !isDisturb && !grantedFlashback && !emblemFlashback && !grantedHavengulCast
-                && !isGraveyardCast && !isGrantedGraveyardCast && !isGrantedGraveyardPlay && !isRetrace) {
+                && !isGraveyardCast && !isGrantedGraveyardCast && !isGrantedGraveyardPlay && !isRetrace
+                && !isGrantedCyclingGraveyardCast) {
             throw new IllegalStateException("Card cannot be cast from graveyard");
         }
 
-        // Validate timing
+        // Validate timing (aftermath / flashback half may differ in type from the parent split card)
         boolean isActivePlayer = playerId.equals(gameData.activePlayerId);
         boolean isMainPhase = gameData.currentStep == TurnStep.PRECOMBAT_MAIN
                 || gameData.currentStep == TurnStep.POSTCOMBAT_MAIN;
         boolean stackEmpty = gameData.stack.isEmpty();
-        boolean isInstantSpeed = card.hasType(CardType.INSTANT);
+        boolean isInstantSpeed = castHalf.hasType(CardType.INSTANT);
         if (!isInstantSpeed && !(isActivePlayer && isMainPhase && stackEmpty)) {
             throw new IllegalStateException("Cannot cast sorcery-speed spell from graveyard now");
         }
@@ -1950,7 +1961,7 @@ public class SpellCastingService {
         // spell's graveyard position (CR 601.2h). The spell itself still sits in this graveyard
         // here (removed further down), so the caller's post-removal indices are checked with the
         // spell's own slot excluded.
-        List<CardEffect> spellEffects = new ArrayList<>(card.getEffects(EffectSlot.SPELL));
+        List<CardEffect> spellEffects = new ArrayList<>(castHalf.getEffects(EffectSlot.SPELL));
         AdditionalSpellCostService.ExtractedCosts additionalCosts = additionalSpellCostService.extractAndRemove(spellEffects);
         ExileNCardsFromGraveyardCost exileNCost = additionalCosts.exileNCardsCost();
         boolean hasUnsupportedAdditionalCost = additionalCosts.sacrificeAllCreatures()
@@ -1959,7 +1970,7 @@ public class SpellCastingService {
                 || additionalCosts.putCounterCost() != null || additionalCosts.exileGraveyardCost() != null
                 || additionalCosts.exileXCardsCost() != null || additionalCosts.discardCost() != null;
         if (hasUnsupportedAdditionalCost) {
-            throw new IllegalStateException("Cannot cast " + card.getName()
+            throw new IllegalStateException("Cannot cast " + castHalf.getName()
                     + " from the graveyard — paying its additional cast cost is not supported from this zone");
         }
         if (exileNCost != null) {
@@ -1974,8 +1985,9 @@ public class SpellCastingService {
         additionalCost += castingCostService.getTargetingSubtypeTax(gameData, playerId, targetId, targetIds);
         effectiveXValue = payFlashbackOrGraveyardCastCost(gameData, player, card, flashbackOpt, disturbOpt, graveyardCastOpt,
                 grantedFlashback, emblemFlashback, grantedHavengulCast, isGrantedGraveyardCast, isGrantedGraveyardPlay,
-                isGraveyardCast, isRetrace, isDisturb, effectiveXValue, additionalCost, tapPermanentIds, retraceDiscardHandCardIndex);
-        if (EffectResolution.hasManaSpentToCastDamageEffect(card)) {
+                isGraveyardCast, isRetrace, isDisturb, isGrantedCyclingGraveyardCast, effectiveXValue, additionalCost,
+                tapPermanentIds, retraceDiscardHandCardIndex);
+        if (EffectResolution.hasManaSpentToCastDamageEffect(castHalf)) {
             effectiveXValue = gameData.getSpellCastManaSpent(card.getId());
         }
 
@@ -1989,6 +2001,7 @@ public class SpellCastingService {
         payExileNCardsFromGraveyardCost(gameData, player, card, exileNCost, exileGraveyardCardIndices);
 
         if (isGraveyardCast || grantedHavengulCast || isGrantedGraveyardCast
+                || (isGrantedCyclingGraveyardCast && castHalf.getType().isPermanentType() && castHalf.getType() != CardType.LAND)
                 || (isGrantedGraveyardPlay && card.getType().isPermanentType() && card.getType() != CardType.LAND)) {
             // GraveyardCast / granted graveyard cast: permanent spell — enters battlefield on resolution, no exile
             if (isGrantedGraveyardCast && graveyardCastSourceId.isPresent()) {
@@ -2058,7 +2071,7 @@ public class SpellCastingService {
             return;
         }
 
-        if (isGrantedGraveyardPlay) {
+        if (isGrantedGraveyardPlay || isGrantedCyclingGraveyardCast) {
             StackEntryType entryType = card.hasType(CardType.INSTANT)
                     ? StackEntryType.INSTANT_SPELL : StackEntryType.SORCERY_SPELL;
             StackEntry stackEntry;
@@ -2080,7 +2093,8 @@ public class SpellCastingService {
             return;
         }
 
-        StackEntryType entryType = card.hasType(CardType.INSTANT) ? StackEntryType.INSTANT_SPELL : StackEntryType.SORCERY_SPELL;
+        StackEntryType entryType = castHalf.hasType(CardType.INSTANT) ? StackEntryType.INSTANT_SPELL : StackEntryType.SORCERY_SPELL;
+        String spellName = castHalf.getName() != null ? castHalf.getName() : card.getName();
 
         // Check for "target player shuffles up to N cards from their graveyard" flashback spells (e.g. Memory's Journey)
         ShuffleTargetCardsFromGraveyardIntoLibraryEffect shuffleGraveyardCardsEffect =
@@ -2105,7 +2119,7 @@ public class SpellCastingService {
             }
             // No matching cards — put on stack with 0 targets
             StackEntry stackEntry = new StackEntry(
-                    entryType, card, playerId, card.getName(),
+                    entryType, card, playerId, spellName,
                     spellEffects, 0, targetId,
                     null, Map.of(), null, List.of(), List.of()
             );
@@ -2117,44 +2131,47 @@ public class SpellCastingService {
         }
 
         StackEntry stackEntry;
-        if (!targetIds.isEmpty()) {
-            // Multi-target flashback spell
-            if (card.getMaxTargets() > 0) {
-                targetLegalityService.validateMultiSpellTargets(gameData, card, targetIds, playerId, effectiveXValue);
+        // Multi-target flashback (incl. "up to N" with zero chosen: maxTargets > 0, minTargets == 0,
+        // empty targetIds). Mirrors the hand-cast gate that allows empty targetIds when maxTargets > 0.
+        boolean multiTargetFlashback = !targetIds.isEmpty()
+                || (castHalf.getMaxTargets() > 0 && castHalf.getMinTargets() == 0 && targetId == null);
+        if (multiTargetFlashback) {
+            if (castHalf.getMaxTargets() > 0) {
+                targetLegalityService.validateMultiSpellTargets(gameData, castHalf, targetIds, playerId, effectiveXValue);
             }
             stackEntry = new StackEntry(
-                    entryType, card, playerId, card.getName(),
+                    entryType, card, playerId, spellName,
                     spellEffects, effectiveXValue, targetIds
             );
-        } else if (EffectResolution.needsSpellTarget(card)
-                && (!EffectResolution.needsTarget(card) || targetLegalityService.isSpellOnStack(gameData, targetId))) {
+        } else if (EffectResolution.needsSpellTarget(castHalf)
+                && (!EffectResolution.needsTarget(castHalf) || targetLegalityService.isSpellOnStack(gameData, targetId))) {
             // Spell that targets a spell on the stack (e.g. Increasing Vengeance flashback, or a
             // Glamerdye retrace aimed at a spell rather than a permanent).
-            targetLegalityService.validateSpellTargetOnStack(gameData, targetId, card.getTargetFilter(), playerId);
+            targetLegalityService.validateSpellTargetOnStack(gameData, targetId, castHalf.getTargetFilter(), playerId);
             stackEntry = new StackEntry(
-                    entryType, card, playerId, card.getName(),
+                    entryType, card, playerId, spellName,
                     spellEffects, effectiveXValue, targetId,
                     null, Map.of(), Zone.STACK, List.of(), List.of()
             );
         } else {
             // Single-target or no-target flashback spell
             boolean needsGraveyardEffectTargeting = spellEffects.stream().anyMatch(e -> e.targetSpec().category().isGraveyard());
-            if (targetId != null && EffectResolution.needsTarget(card) && needsGraveyardEffectTargeting) {
-                targetLegalityService.validateEffectTargetInZone(gameData, card, targetId, Zone.GRAVEYARD);
-            } else if (targetId != null && EffectResolution.needsTarget(card)) {
-                targetLegalityService.validateSpellTargeting(gameData, card, targetId, null, playerId, true);
-            } else if (EffectResolution.needsTarget(card) && targetId == null) {
+            if (targetId != null && EffectResolution.needsTarget(castHalf) && needsGraveyardEffectTargeting) {
+                targetLegalityService.validateEffectTargetInZone(gameData, castHalf, targetId, Zone.GRAVEYARD);
+            } else if (targetId != null && EffectResolution.needsTarget(castHalf)) {
+                targetLegalityService.validateSpellTargeting(gameData, castHalf, targetId, null, playerId, true);
+            } else if (EffectResolution.needsTarget(castHalf) && targetId == null) {
                 throw new IllegalStateException("Spell requires a target");
             }
             if (needsGraveyardEffectTargeting) {
                 stackEntry = new StackEntry(
-                        entryType, card, playerId, card.getName(),
+                        entryType, card, playerId, spellName,
                         spellEffects, effectiveXValue, targetId, null,
                         Map.of(), Zone.GRAVEYARD, List.of(), List.of()
                 );
             } else {
                 stackEntry = new StackEntry(
-                        entryType, card, playerId, card.getName(),
+                        entryType, card, playerId, spellName,
                         spellEffects, effectiveXValue, targetId, null
                 );
             }
@@ -2716,7 +2733,8 @@ public class SpellCastingService {
                                                 boolean grantedFlashback, boolean emblemFlashback,
                                                 boolean grantedHavengulCast, boolean isGrantedGraveyardCast,
                                                 boolean isGrantedGraveyardPlay, boolean isGraveyardCast,
-                                                boolean isRetrace, boolean isDisturb, int effectiveXValue, int additionalCost,
+                                                boolean isRetrace, boolean isDisturb, boolean isGrantedCyclingGraveyardCast,
+                                                int effectiveXValue, int additionalCost,
                                                 List<UUID> tapPermanentIds, Integer retraceDiscardHandCardIndex) {
         UUID playerId = player.getId();
         // GraveyardCast may override the normal mana cost with an alternate one ("by paying {W}{U}{B}{R}{G}
@@ -2727,7 +2745,8 @@ public class SpellCastingService {
                 : null;
         boolean usesNormalManaCost = (isGraveyardCast && graveyardAlternateManaCost == null)
                 || grantedFlashback || emblemFlashback || grantedHavengulCast
-                || isGrantedGraveyardCast || isGrantedGraveyardPlay || isRetrace;
+                || isGrantedGraveyardCast || isGrantedGraveyardPlay || isRetrace
+                || isGrantedCyclingGraveyardCast;
         int manaSpent = 0;
 
         // Retrace (CR 702.81): as an additional cost, discard a land card from hand. Validated

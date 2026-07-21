@@ -1001,6 +1001,18 @@ class StepTriggerServiceTest {
         }
 
         @Test
+        @DisplayName("BEGINNING_OF_COMBAT_TRIGGERED does not fire for non-active player's permanents")
+        void beginningOfCombatSkipsNonActivePlayer() {
+            Card card = createCardWithName("Combat Trigger Card");
+            card.addEffect(EffectSlot.BEGINNING_OF_COMBAT_TRIGGERED, new GainLifeEffect(1));
+            gd.playerBattlefields.get(player2Id).add(new Permanent(card));
+
+            sut.handleBeginningOfCombatTriggers(gd);
+
+            assertThat(gd.stack).isEmpty();
+        }
+
+        @Test
         @DisplayName("EACH_BEGINNING_OF_COMBAT_TRIGGERED fires for non-active player's permanents")
         void eachBeginningOfCombatFiresForAllPlayers() {
             Card card = createCardWithName("Each Combat Card");
@@ -1011,6 +1023,7 @@ class StepTriggerServiceTest {
 
             assertThat(gd.stack).isNotEmpty();
             assertThat(gd.stack.getFirst().getDescription()).contains("Each Combat Card");
+            assertThat(gd.stack.getFirst().getControllerId()).isEqualTo(player2Id);
         }
     }
 
@@ -1514,6 +1527,38 @@ class StepTriggerServiceTest {
 
             verify(gameBroadcastService).logAndBroadcast(eq(gd), argThat((GameLogEntry e) -> e.plainText().equals("Chainer's Torment gets a lore counter (2).")));
             verify(gameBroadcastService).logAndBroadcast(eq(gd), argThat((GameLogEntry e) -> e.plainText().equals("Chainer's Torment's chapter II ability triggers.")));
+        }
+    }
+
+    @Nested
+    @DisplayName("handlePostcombatMainTriggers")
+    class HandlePostcombatMainTriggers {
+
+        @Test
+        @DisplayName("Pushes POSTCOMBAT_MAIN_TRIGGERED effects for the active player")
+        void firesTriggerForActivePlayer() {
+            Card card = createCardWithName("Neheb, the Eternal");
+            card.addEffect(EffectSlot.POSTCOMBAT_MAIN_TRIGGERED, new GainLifeEffect(1));
+            Permanent perm = new Permanent(card);
+            gd.playerBattlefields.get(player1Id).add(perm);
+
+            sut.handlePostcombatMainTriggers(gd);
+
+            assertThat(gd.stack).hasSize(1);
+            assertThat(gd.stack.getFirst().getEntryType()).isEqualTo(StackEntryType.TRIGGERED_ABILITY);
+            assertThat(gd.stack.getFirst().getSourcePermanentId()).isEqualTo(perm.getId());
+        }
+
+        @Test
+        @DisplayName("Does not fire for permanents the non-active player controls")
+        void doesNotFireForNonActivePlayer() {
+            Card card = createCardWithName("Neheb, the Eternal");
+            card.addEffect(EffectSlot.POSTCOMBAT_MAIN_TRIGGERED, new GainLifeEffect(1));
+            gd.playerBattlefields.get(player2Id).add(new Permanent(card));
+
+            sut.handlePostcombatMainTriggers(gd);
+
+            assertThat(gd.stack).isEmpty();
         }
     }
 

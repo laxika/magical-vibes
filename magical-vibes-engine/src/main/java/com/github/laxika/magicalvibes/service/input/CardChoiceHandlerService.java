@@ -306,7 +306,8 @@ public class CardChoiceHandlerService {
         if (!validIndices.contains(cardIndex)) {
             log.warn("Game {} - {} sent invalid exile card index {}, re-prompting", gameData.id, player.getUsername(), cardIndex);
             playerInputService.beginExileFromHandChoice(gameData, player.getId(), exileChoice.sourcePermanentId(),
-                    exileChoice.playPermissionControllerId(), exileChoice.remainingCount());
+                    exileChoice.playPermissionControllerId(), exileChoice.remainingCount(),
+                    exileChoice.remainingChoosers(), exileChoice.cardsPerPlayer());
             return;
         }
 
@@ -337,7 +338,18 @@ public class CardChoiceHandlerService {
         if (remainingExiles > 0 && !hand.isEmpty()) {
             gameBroadcastService.broadcastGameState(gameData);
             playerInputService.beginExileFromHandChoice(gameData, playerId, sourcePermanentId,
-                    exileChoice.playPermissionControllerId(), remainingExiles);
+                    exileChoice.playPermissionControllerId(), remainingExiles,
+                    exileChoice.remainingChoosers(), exileChoice.cardsPerPlayer());
+        } else if (exileChoice.remainingChoosers() != null && !exileChoice.remainingChoosers().isEmpty()) {
+            // Next opponent in the each-opponent exile queue (Nicol Bolas, God-Pharaoh +1).
+            UUID next = exileChoice.remainingChoosers().getFirst();
+            List<UUID> rest = exileChoice.remainingChoosers().size() > 1
+                    ? List.copyOf(exileChoice.remainingChoosers().subList(1, exileChoice.remainingChoosers().size()))
+                    : List.of();
+            gameBroadcastService.broadcastGameState(gameData);
+            playerInputService.beginExileFromHandChoice(gameData, next, sourcePermanentId,
+                    exileChoice.playPermissionControllerId(), exileChoice.cardsPerPlayer(), rest,
+                    exileChoice.cardsPerPlayer());
         } else {
             gameData.interaction.clearAwaitingInput();
 

@@ -1,8 +1,9 @@
 package com.github.laxika.magicalvibes.model.filter;
 
 /**
- * Matches cards that have a cycling ability (a hand-activated ability whose description begins with
- * "Cycling", the engine's convention for cycling — see {@code AbilityActivationService}).
+ * Matches cards that have a cycling ability (or a typecycling / landcycling variant — a
+ * hand-activated ability whose description name ends with {@code "cycling"}; see
+ * {@code ActivatedAbility#isCyclingAbility()}).
  */
 public record CardHasCyclingPredicate() implements CardPredicate {
 }

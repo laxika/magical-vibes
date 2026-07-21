@@ -107,6 +107,9 @@ public class CombatTriggerService {
                                 perm.getId()
                         );
                         trigger.setNonTargeting(true);
+                        // Bake attacked player/planeswalker so DEFENDING_PLAYER effects
+                        // (e.g. equipment-granted Afflict) can resolve.
+                        trigger.setAttackedTargetId(creature.getAttackTarget());
                         gameData.stack.add(trigger);
                         gameBroadcastService.logAndBroadcast(gameData, GameLog.abilityTriggers(perm.getCard()));
                         log.info("Game {} - {} auto-targeted combat trigger pushed onto stack (attached to {})",
@@ -123,7 +126,7 @@ public class CombatTriggerService {
                             log.info("Game {} - {} targeted attack trigger queued for target selection (attached to {})",
                                     gameData.id, perm.getCard().getName(), creature.getCard().getName());
                         } else {
-                            gameData.stack.add(new StackEntry(
+                            StackEntry trigger = new StackEntry(
                                     StackEntryType.TRIGGERED_ABILITY,
                                     perm.getCard(),
                                     auraOwnerId,
@@ -131,7 +134,11 @@ public class CombatTriggerService {
                                     effectsForStack,
                                     null,
                                     perm.getId()
-                            ));
+                            );
+                            // Bake attacked player/planeswalker so DEFENDING_PLAYER effects
+                            // (e.g. equipment-granted Afflict) can resolve.
+                            trigger.setAttackedTargetId(creature.getAttackTarget());
+                            gameData.stack.add(trigger);
                             gameBroadcastService.logAndBroadcast(gameData, GameLog.abilityTriggers(perm.getCard()));
                             log.info("Game {} - {} aura trigger pushed onto stack (enchanted creature {})",
                                     gameData.id, perm.getCard().getName(), creature.getCard().getName());

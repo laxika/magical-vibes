@@ -142,9 +142,12 @@ public enum CardSubtype {
     GIDEON("Gideon"),
     LILIANA("Liliana"),
     JACE("Jace"),
+    NISSA("Nissa"),
     CURSE("Curse"),
     CARTOUCHE("Cartouche"),
     CHANDRA("Chandra"),
+    CHIMERA("Chimera"),
+    BOLAS("Bolas"),
     DEVIL("Devil"),
     SAGA("Saga"),
     UNICORN("Unicorn"),
@@ -166,7 +169,10 @@ public enum CardSubtype {
     CARIBOU("Caribou"),
     SERF("Serf"),
     MINOTAUR("Minotaur"),
-    HYDRA("Hydra");
+    HYDRA("Hydra"),
+    MANTICORE("Manticore"),
+    JACKAL("Jackal"),
+    SAMUT("Samut");
 
     @Getter
     private final String displayName;

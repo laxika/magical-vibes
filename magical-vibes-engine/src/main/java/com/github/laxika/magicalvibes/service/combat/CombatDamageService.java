@@ -34,8 +34,6 @@ import com.github.laxika.magicalvibes.model.effect.DealDamageToAnyTargetEffect;
 import com.github.laxika.magicalvibes.model.effect.DamageRecipient;
 import com.github.laxika.magicalvibes.model.effect.DealDamageToPlayersEffect;
 import com.github.laxika.magicalvibes.model.effect.DealDamageToTargetOpponentOrPlaneswalkerEffect;
-import com.github.laxika.magicalvibes.model.effect.DestroyTargetPermanentEffect;
-import com.github.laxika.magicalvibes.model.effect.FlipCoinWinEffect;
 import com.github.laxika.magicalvibes.model.effect.ExilePermanentDamagedPlayerControlsEffect;
 import com.github.laxika.magicalvibes.model.effect.GainLifeEqualToControlledCreatureCombatDamageEffect;
 import com.github.laxika.magicalvibes.model.effect.GainLifeEqualToDamageDealtEffect;
@@ -1422,26 +1420,19 @@ public class CombatDamageService {
 
             for (UUID damagedCreatureId : entry.getValue()) {
                 for (CardEffect effect : effects) {
-                    CardEffect effectToUse = null;
-                    if (effect instanceof DestroyTargetPermanentEffect destroyEffect) {
-                        effectToUse = destroyEffect;
-                    } else if (effect instanceof FlipCoinWinEffect flipEffect) {
-                        effectToUse = flipEffect;
-                    }
-                    if (effectToUse != null) {
-                        StackEntry trigger = new StackEntry(
-                                StackEntryType.TRIGGERED_ABILITY,
-                                source.getCard(),
-                                controllerId,
-                                source.getCard().getName() + "'s triggered ability",
-                                List.of(effectToUse),
-                                damagedCreatureId,
-                                source.getId()
-                        );
-                        trigger.setNonTargeting(true);
-                        gameData.stack.add(trigger);
-                        gameBroadcastService.logAndBroadcast(gameData, GameLog.abilityTriggers(source.getCard()));
-                    }
+                    // Damaged creature is the fixed "that creature" — bake it as targetId, no choice.
+                    StackEntry trigger = new StackEntry(
+                            StackEntryType.TRIGGERED_ABILITY,
+                            source.getCard(),
+                            controllerId,
+                            source.getCard().getName() + "'s triggered ability",
+                            List.of(effect),
+                            damagedCreatureId,
+                            source.getId()
+                    );
+                    trigger.setNonTargeting(true);
+                    gameData.stack.add(trigger);
+                    gameBroadcastService.logAndBroadcast(gameData, GameLog.abilityTriggers(source.getCard()));
                 }
             }
         }

@@ -30,11 +30,20 @@ public record LibrarySearchParams(
         UUID attachToPermanentId,
         CardPredicate filterPredicate,
         UUID sourcePermanentId,
-        LibrarySearchFollowUp followUp
+        LibrarySearchFollowUp followUp,
+        boolean requireDifferentNames,
+        Integer manaValueBoundValue,
+        boolean manaValueExact,
+        List<String> excludedCardNames
 ) {
     public LibrarySearchParams {
         if (followUp == null) {
             followUp = LibrarySearchFollowUp.NONE;
+        }
+        if (excludedCardNames == null) {
+            excludedCardNames = List.of();
+        } else {
+            excludedCardNames = List.copyOf(excludedCardNames);
         }
     }
 
@@ -48,7 +57,8 @@ public record LibrarySearchParams(
                 remainingCount, sourceCards, reorderRemainingToBottom, reorderRemainingToTop,
                 restToGraveyard, shuffleAfterSelection, prompt, destination, filterCardTypes,
                 accumulatedCards, filterCardName, attachToPlayerId, attachToPermanentId,
-                filterPredicate, sourcePermanentId, followUp);
+                filterPredicate, sourcePermanentId, followUp, requireDifferentNames,
+                manaValueBoundValue, manaValueExact, excludedCardNames);
     }
 
     public static class Builder {
@@ -73,6 +83,10 @@ public record LibrarySearchParams(
         private CardPredicate filterPredicate;
         private UUID sourcePermanentId;
         private LibrarySearchFollowUp followUp = LibrarySearchFollowUp.NONE;
+        private boolean requireDifferentNames;
+        private Integer manaValueBoundValue;
+        private boolean manaValueExact;
+        private List<String> excludedCardNames = List.of();
 
         private Builder(UUID playerId, List<Card> cards) {
             this.playerId = playerId;
@@ -174,12 +188,29 @@ public record LibrarySearchParams(
             return this;
         }
 
+        public Builder requireDifferentNames(boolean requireDifferentNames) {
+            this.requireDifferentNames = requireDifferentNames;
+            return this;
+        }
+
+        public Builder manaValueBound(Integer manaValueBoundValue, boolean manaValueExact) {
+            this.manaValueBoundValue = manaValueBoundValue;
+            this.manaValueExact = manaValueExact;
+            return this;
+        }
+
+        public Builder excludedCardNames(List<String> excludedCardNames) {
+            this.excludedCardNames = excludedCardNames == null ? List.of() : excludedCardNames;
+            return this;
+        }
+
         public LibrarySearchParams build() {
             return new LibrarySearchParams(playerId, cards, reveals, canFailToFind, targetPlayerId,
                     remainingCount, sourceCards, reorderRemainingToBottom, reorderRemainingToTop,
                     restToGraveyard, shuffleAfterSelection, prompt, destination, filterCardTypes,
                     accumulatedCards, filterCardName, attachToPlayerId, attachToPermanentId,
-                    filterPredicate, sourcePermanentId, followUp);
+                    filterPredicate, sourcePermanentId, followUp, requireDifferentNames,
+                    manaValueBoundValue, manaValueExact, excludedCardNames);
         }
     }
 }

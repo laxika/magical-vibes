@@ -27,6 +27,8 @@ import com.github.laxika.magicalvibes.model.effect.DiscardEffect;
 import com.github.laxika.magicalvibes.model.effect.DamageUnlessPaysEffect;
 import com.github.laxika.magicalvibes.model.effect.DealDamageToAnyTargetEffect;
 import com.github.laxika.magicalvibes.model.effect.DealDamageToPlayersEffect;
+import com.github.laxika.magicalvibes.model.amount.CountersOnSource;
+import com.github.laxika.magicalvibes.model.amount.Fixed;
 import com.github.laxika.magicalvibes.model.effect.DrawCardForTargetPlayerEffect;
 import com.github.laxika.magicalvibes.model.effect.GivePoisonCountersEffect;
 import com.github.laxika.magicalvibes.model.effect.PoisonRecipient;
@@ -801,15 +803,19 @@ public class SpellCastTriggerCollectorService {
         if (!predicateEvaluationService.matchesCardPredicate(spellCard, trigger.spellFilter(), null,
                 match.gameData(), castingPlayerId)) return false;
 
-        // Repartee-style condition on the cast spell's chosen targets (e.g. "targets a creature").
+        // Repartee-style condition on the cast spell's chosen targets (e.g. "targets a creature"),
+        // or source-relative mana-value gates (e.g. Imminent Doom — MV equals counters on source).
         if (trigger.castSpellTargetCondition() != null) {
             StackEntry spellEntry = findStackEntryForCard(match.gameData(), spellCard.getId());
             if (spellEntry == null) return false;
             if (!targetLegalityService.matchesStackEntryPredicate(match.gameData(), spellEntry,
-                    trigger.castSpellTargetCondition(), castingPlayerId)) return false;
+                    trigger.castSpellTargetCondition(), castingPlayerId, match.permanent())) return false;
         }
 
         List<CardEffect> resolved = new ArrayList<>(trigger.resolvedEffects());
+        // Snapshot CountersOnSource damage at trigger time (Imminent Doom ruling: damage equals
+        // the counter count as the ability triggered, not as it resolves).
+        resolved = snapshotCountersOnSourceDamage(resolved, match.permanent());
         boolean selfTarget = resolved.stream().anyMatch(e -> e.targetSpec().selfTargeting());
         boolean needsPlayerTarget = resolved.stream().anyMatch(e -> e.targetSpec().category().includesPlayers());
         boolean needsPermanentTarget = resolved.stream().anyMatch(e -> e.targetSpec().category().includesPermanents());
@@ -838,7 +844,7 @@ public class SpellCastTriggerCollectorService {
         } else if (needsTargeting) {
             match.gameData().queueInteraction(new PermanentChoiceContext.SpellTargetTriggerAnyTarget(
                     match.permanent().getCard(), match.controllerId(), resolved, playerTargetOnly, trigger.targetFilter(),
-                    spellManaSpentX
+                    spellManaSpentX, match.permanent().getId()
             ));
             gameBroadcastService.logAndBroadcast(match.gameData(), GameLog.cardThen(match.permanent().getCard(),
                     "'s triggered ability triggers — choose a target."));
@@ -861,6 +867,21 @@ public class SpellCastTriggerCollectorService {
             match.gameData().stack.add(entry);
         }
         return true;
+    }
+
+    private List<CardEffect> snapshotCountersOnSourceDamage(List<CardEffect> effects, Permanent source) {
+        List<CardEffect> snapshotted = new ArrayList<>(effects.size());
+        for (CardEffect effect : effects) {
+            if (effect instanceof DealDamageToAnyTargetEffect damage
+                    && damage.damage() instanceof CountersOnSource counters) {
+                int count = source.getCounterCount(counters.counterType());
+                snapshotted.add(new DealDamageToAnyTargetEffect(
+                        new Fixed(count), damage.cantRegenerate(), damage.exileInsteadOfDie()));
+            } else {
+                snapshotted.add(effect);
+            }
+        }
+        return snapshotted;
     }
 
     private StackEntry findStackEntryForCard(com.github.laxika.magicalvibes.model.GameData gameData, UUID cardId) {

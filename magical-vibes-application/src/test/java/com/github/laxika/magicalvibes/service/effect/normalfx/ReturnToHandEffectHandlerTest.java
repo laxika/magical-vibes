@@ -165,6 +165,19 @@ class ReturnToHandEffectHandlerTest {
         }
 
         @Test
+        @DisplayName("No-ops when any-number / up-to targets choose zero")
+        void noOpsWhenZeroTargetsChosen() {
+            Card card = createCard("Leave");
+            ReturnToHandEffect effect = ReturnToHandEffect.target();
+            StackEntry entry = entryWithTarget(card, player1Id, List.of(effect), null);
+
+            handler.resolve(gd, entry, effect);
+
+            verify(permanentRemovalService, never()).removePermanentToHand(any(), any());
+            verify(permanentRemovalService).removeOrphanedAuras(gd);
+        }
+
+        @Test
         @DisplayName("Controller loses life when lifeLoss is set (Vapor Snag)")
         void controllerLosesLifeWhenLifeLossSet() {
             Card card = createCard("Vapor Snag");

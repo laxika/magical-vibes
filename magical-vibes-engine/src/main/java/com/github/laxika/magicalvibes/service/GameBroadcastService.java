@@ -839,8 +839,9 @@ public class GameBroadcastService {
                 continue;
             }
 
-            var flashback = card.getCastingOption(FlashbackCast.class);
+            var flashback = card.effectiveFlashbackCast();
             var disturb = card.getCastingOption(DisturbCast.class);
+            Card castHalf = card.graveyardCastHalf();
             var graveyardCast = card.getCastingOption(GraveyardCast.class);
             boolean isDisturb = disturb.isPresent() && flashback.isEmpty();
             boolean grantedFlashback = flashback.isEmpty()
@@ -878,6 +879,16 @@ public class GameBroadcastService {
                 isGrantedGraveyardCast = CastingPermissionService.hasUnusedPermanentTypeSlot(card, typesCastFromGraveyard);
             }
 
+            boolean isGrantedCyclingGraveyardCast = flashback.isEmpty()
+                    && !isDisturb
+                    && !grantedFlashback
+                    && !emblemFlashback
+                    && !grantedHavengulCast
+                    && !isGrantedGraveyardPlay
+                    && !isGraveyardCast
+                    && !isGrantedGraveyardCast
+                    && castingPermissionService.canCastViaFilteredGraveyardPermission(gameData, playerId, card);
+
             // Retrace (CR 702.81): castable from the graveyard for its normal mana cost if the
             // player has a land card in hand to discard as the additional cost.
             boolean isRetrace = card.getCastingOption(Retrace.class).isPresent()
@@ -889,15 +900,17 @@ public class GameBroadcastService {
                     && !isGrantedGraveyardPlay
                     && !isGraveyardCast
                     && !isGrantedGraveyardCast
+                    && !isGrantedCyclingGraveyardCast
                     && gameData.playerHands.getOrDefault(playerId, List.of()).stream()
                             .anyMatch(c -> c.hasType(CardType.LAND));
 
             if (flashback.isEmpty() && !isDisturb && !grantedFlashback && !emblemFlashback && !grantedHavengulCast && !isGraveyardCast
-                    && !isGrantedGraveyardCast && !isGrantedGraveyardPlay && !isRetrace) {
+                    && !isGrantedGraveyardCast && !isGrantedGraveyardPlay && !isRetrace
+                    && !isGrantedCyclingGraveyardCast) {
                 continue;
             }
 
-            boolean isInstantSpeed = card.hasType(CardType.INSTANT);
+            boolean isInstantSpeed = castHalf.hasType(CardType.INSTANT);
             boolean canCastTiming = isInstantSpeed || (isActivePlayer && isMainPhase && stackEmpty);
             if (!canCastTiming) {
                 continue;
@@ -916,8 +929,9 @@ public class GameBroadcastService {
             } else if (isDisturb) {
                 manaCostStr = disturb.get().getCost(ManaCastingCost.class).map(ManaCastingCost::manaCost).orElse(null);
             } else if (isGraveyardCast || grantedFlashback || emblemFlashback || grantedHavengulCast
-                    || isGrantedGraveyardCast || isGrantedGraveyardPlay || isRetrace) {
-                manaCostStr = card.getManaCost();
+                    || isGrantedGraveyardCast || isGrantedGraveyardPlay || isRetrace
+                    || isGrantedCyclingGraveyardCast) {
+                manaCostStr = castHalf.getManaCost() != null ? castHalf.getManaCost() : card.getManaCost();
             } else {
                 manaCostStr = flashback.get().getCost(ManaCastingCost.class).map(ManaCastingCost::manaCost).orElse(null);
             }

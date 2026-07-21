@@ -1560,6 +1560,41 @@ public class StepTriggerService {
     }
 
     /**
+     * Fires triggered abilities on permanents the active player controls at the
+     * beginning of each postcombat main phase (e.g. Neheb, the Eternal).
+     *
+     * @param gameData the current game state to modify
+     */
+    public void handlePostcombatMainTriggers(GameData gameData) {
+        UUID activePlayerId = gameData.activePlayerId;
+        List<Permanent> battlefield = gameData.playerBattlefields.get(activePlayerId);
+        if (battlefield == null) {
+            return;
+        }
+
+        for (Permanent perm : battlefield) {
+            List<CardEffect> effects = perm.getCard().getEffects(EffectSlot.POSTCOMBAT_MAIN_TRIGGERED);
+            if (effects == null || effects.isEmpty()) {
+                continue;
+            }
+
+            gameData.stack.add(new StackEntry(
+                    StackEntryType.TRIGGERED_ABILITY,
+                    perm.getCard(),
+                    activePlayerId,
+                    perm.getCard().getName() + "'s ability",
+                    new ArrayList<>(effects),
+                    null,
+                    perm.getId()
+            ));
+
+            gameBroadcastService.logAndBroadcast(gameData, GameLog.abilityTriggers(perm.getCard()));
+            log.info("Game {} - {} postcombat main trigger pushed onto stack",
+                    gameData.id, perm.getCard().getName());
+        }
+    }
+
+    /**
      * Adds a lore counter to each Saga the active player controls and triggers
      * the appropriate chapter ability (MTG Rule 714.3b).
      * Called at the beginning of the active player's precombat main phase.
@@ -2705,7 +2740,8 @@ public class StepTriggerService {
      * Scans battlefields for beginning-of-combat triggered abilities and pushes them onto the stack.
      * {@code BEGINNING_OF_COMBAT_TRIGGERED} fires only for the active player's permanents
      * (CR 507.1: "At the beginning of combat on your turn").
-     * {@code EACH_BEGINNING_OF_COMBAT_TRIGGERED} fires for every player's permanents at each combat.
+     * {@code EACH_BEGINNING_OF_COMBAT_TRIGGERED} fires for every permanent on every
+     * battlefield (e.g. Majestic Myriarch / Odric, Lunarch Marshal).
      *
      * @param gameData the current game state to modify
      */

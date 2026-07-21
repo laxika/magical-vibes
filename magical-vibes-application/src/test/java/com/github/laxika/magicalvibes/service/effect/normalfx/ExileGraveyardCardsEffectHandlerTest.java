@@ -81,7 +81,7 @@ class ExileGraveyardCardsEffectHandlerTest {
         gd.playerGraveyards.put(player2Id, Collections.synchronizedList(new ArrayList<>()));
 
         GraveyardService graveyardService = new GraveyardService(
-                gameQueryService, gameBroadcastService, exileService, triggerCollectionService);
+                gameQueryService, gameBroadcastService, exileService, predicateEvaluationService, triggerCollectionService);
         handler = new ExileGraveyardCardsEffectHandler(gameQueryService, gameBroadcastService, exileService,
                 permanentRemovalService, predicateEvaluationService, graveyardReturnSupport, graveyardService);
     }

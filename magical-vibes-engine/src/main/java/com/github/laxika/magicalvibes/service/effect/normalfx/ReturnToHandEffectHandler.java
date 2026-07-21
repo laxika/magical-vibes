@@ -60,47 +60,57 @@ public class ReturnToHandEffectHandler implements NormalEffectHandlerBean {
     }
 
     private void resolveTarget(GameData gameData, StackEntry entry, ReturnToHandEffect e) {
-        List<UUID> targetIds = entry.getTargetIds().isEmpty()
-                ? List.of(entry.getTargetId())
-                : entry.getTargetIds();
-
-        for (UUID targetId : targetIds) {
-            Permanent target = gameQueryService.findPermanentById(gameData, targetId);
-            if (target == null) {
-                continue;
+        // Multi-target: bounce each valid target of this effect's target group — the group's slice
+        // of the flat target list for effects bound via target(...).addEffect(...) (e.g. Leave:
+        // "any number of target permanents you own"), or the whole flat list for unbound effects.
+        // An empty group (optional / any-number targets omitted) bounces nothing.
+        List<UUID> targetIds = entry.targetsForEffect(e);
+        if (!targetIds.isEmpty()) {
+            for (UUID targetId : targetIds) {
+                bounceTarget(gameData, entry, e, targetId);
             }
-
-            UUID controllerId = (e.lifeLoss() > 0 || e.drawCount() > 0)
-                    ? gameQueryService.findPermanentController(gameData, target.getId())
-                    : null;
-
-            if (permanentRemovalService.removePermanentToHand(gameData, target)) {
-                gameBroadcastService.logAndBroadcast(gameData, GameLog.cardThen(target.getCard(), " is returned to its owner's hand."));
-                log.info("Game {} - {} returned to owner's hand by {}", gameData.id, target.getCard().getName(), entry.getCard().getName());
-            }
-
-            if (controllerId != null && e.drawCount() > 0) {
-                playerInteractionSupport.applyDrawCards(gameData, controllerId, e.drawCount());
-            }
-
-            if (controllerId != null && e.lifeLoss() > 0) {
-                if (!gameQueryService.canPlayerLifeChange(gameData, controllerId)) {
-                    gameBroadcastService.logAndBroadcast(gameData, GameLog.text(gameData.playerIdToName.get(controllerId) + "'s life total can't change."));
-                } else {
-                    int currentLife = gameData.getLife(controllerId);
-                    gameData.playerLifeTotals.put(controllerId, currentLife - e.lifeLoss());
-
-                    String playerName = gameData.playerIdToName.get(controllerId);
-                    gameBroadcastService.logAndBroadcast(gameData, GameLog.textCardText(playerName + " loses " + e.lifeLoss() + " life (" , entry.getCard(), ")."));
-                    log.info("Game {} - {} loses {} life from {}", gameData.id, playerName, e.lifeLoss(), entry.getCard().getName());
-                }
-            }
+        } else if (entry.getTargetId() != null) {
+            // Single-target fallback (targetId)
+            bounceTarget(gameData, entry, e, entry.getTargetId());
         }
 
         permanentRemovalService.removeOrphanedAuras(gameData);
 
         if (e.lifeLoss() > 0) {
             gameOutcomeService.checkWinCondition(gameData);
+        }
+    }
+
+    private void bounceTarget(GameData gameData, StackEntry entry, ReturnToHandEffect e, UUID targetId) {
+        Permanent target = gameQueryService.findPermanentById(gameData, targetId);
+        if (target == null) {
+            return;
+        }
+
+        UUID controllerId = (e.lifeLoss() > 0 || e.drawCount() > 0)
+                ? gameQueryService.findPermanentController(gameData, target.getId())
+                : null;
+
+        if (permanentRemovalService.removePermanentToHand(gameData, target)) {
+            gameBroadcastService.logAndBroadcast(gameData, GameLog.cardThen(target.getCard(), " is returned to its owner's hand."));
+            log.info("Game {} - {} returned to owner's hand by {}", gameData.id, target.getCard().getName(), entry.getCard().getName());
+        }
+
+        if (controllerId != null && e.drawCount() > 0) {
+            playerInteractionSupport.applyDrawCards(gameData, controllerId, e.drawCount());
+        }
+
+        if (controllerId != null && e.lifeLoss() > 0) {
+            if (!gameQueryService.canPlayerLifeChange(gameData, controllerId)) {
+                gameBroadcastService.logAndBroadcast(gameData, GameLog.text(gameData.playerIdToName.get(controllerId) + "'s life total can't change."));
+            } else {
+                int currentLife = gameData.getLife(controllerId);
+                gameData.playerLifeTotals.put(controllerId, currentLife - e.lifeLoss());
+
+                String playerName = gameData.playerIdToName.get(controllerId);
+                gameBroadcastService.logAndBroadcast(gameData, GameLog.textCardText(playerName + " loses " + e.lifeLoss() + " life (" , entry.getCard(), ")."));
+                log.info("Game {} - {} loses {} life from {}", gameData.id, playerName, e.lifeLoss(), entry.getCard().getName());
+            }
         }
     }
 

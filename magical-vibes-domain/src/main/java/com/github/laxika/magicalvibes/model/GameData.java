@@ -145,6 +145,12 @@ public class GameData {
     /** Tracks card IDs each player cycled or discarded this turn (populated in the central discard hook
      *  {@code TriggerCollectionService.checkDiscardTriggers}; cycling is a discard). Used by Shadow of the Grave. */
     public final Map<UUID, Set<UUID>> cardsDiscardedOrCycledThisTurn = new ConcurrentHashMap<>();
+    /**
+     * When non-null, the card with this ID is currently being put into a graveyard as the discard cost
+     * of activating a cycling ability. Read by {@link com.github.laxika.magicalvibes.model.effect.OwnGraveyardExileReplacement}
+     * (Abandoned Sarcophagus "and it wasn't cycled").
+     */
+    public UUID cardEnteringGraveyardByCycling;
     /** Counts all creature deaths (including tokens) from battlefield this turn, per controller. */
     public final Map<UUID, Integer> creatureDeathCountThisTurn = new ConcurrentHashMap<>();
     public final Map<UUID, Set<UUID>> creatureCardsDamagedThisTurnBySourcePermanent = new ConcurrentHashMap<>();
@@ -1660,6 +1666,7 @@ public class GameData {
         copy.pendingGraveyardAbilityActivation = this.pendingGraveyardAbilityActivation; // immutable record
         copy.endTurnRequested = this.endTurnRequested;
         copy.discardCausedByOpponent = this.discardCausedByOpponent;
+        copy.cardEnteringGraveyardByCycling = this.cardEnteringGraveyardByCycling;
         copy.additionalCombatMainPhasePairs = this.additionalCombatMainPhasePairs;
         copy.additionalCombatPhasesOnly = this.additionalCombatPhasesOnly;
         copy.combatPhasesThisTurn = this.combatPhasesThisTurn;

@@ -18,7 +18,7 @@ magical-vibes-engine/src/main/java/com/github/laxika/magicalvibes/service/StackR
 magical-vibes-engine/src/main/java/com/github/laxika/magicalvibes/service/TriggeredAbilityQueueService.java=4
 magical-vibes-engine/src/main/java/com/github/laxika/magicalvibes/service/WarpWorldService.java=1
 magical-vibes-engine/src/main/java/com/github/laxika/magicalvibes/service/ability/AbilityActivationService.java=40
-magical-vibes-engine/src/main/java/com/github/laxika/magicalvibes/service/ability/ActivatedAbilityExecutionService.java=45
+magical-vibes-engine/src/main/java/com/github/laxika/magicalvibes/service/ability/ActivatedAbilityExecutionService.java=46
 magical-vibes-engine/src/main/java/com/github/laxika/magicalvibes/service/battlefield/BattlefieldEntryService.java=30
 magical-vibes-engine/src/main/java/com/github/laxika/magicalvibes/service/battlefield/CloneService.java=1
 magical-vibes-engine/src/main/java/com/github/laxika/magicalvibes/service/battlefield/CreatureControlService.java=2
@@ -30,7 +30,7 @@ magical-vibes-engine/src/main/java/com/github/laxika/magicalvibes/service/cast/C
 magical-vibes-engine/src/main/java/com/github/laxika/magicalvibes/service/cast/PotentialManaService.java=20
 magical-vibes-engine/src/main/java/com/github/laxika/magicalvibes/service/combat/CombatAttackService.java=13
 magical-vibes-engine/src/main/java/com/github/laxika/magicalvibes/service/combat/CombatBlockService.java=19
-magical-vibes-engine/src/main/java/com/github/laxika/magicalvibes/service/combat/CombatDamageService.java=23
+magical-vibes-engine/src/main/java/com/github/laxika/magicalvibes/service/combat/CombatDamageService.java=21
 magical-vibes-engine/src/main/java/com/github/laxika/magicalvibes/service/combat/CombatTriggerService.java=3
 magical-vibes-engine/src/main/java/com/github/laxika/magicalvibes/service/graveyard/GraveyardService.java=7
 magical-vibes-engine/src/main/java/com/github/laxika/magicalvibes/service/input/CardChoiceHandlerService.java=1
@@ -40,12 +40,12 @@ magical-vibes-engine/src/main/java/com/github/laxika/magicalvibes/service/input/
 magical-vibes-engine/src/main/java/com/github/laxika/magicalvibes/service/input/PermanentChoiceBattlefieldHandlerService.java=1
 magical-vibes-engine/src/main/java/com/github/laxika/magicalvibes/service/spell/SpellCastingService.java=9
 magical-vibes-engine/src/main/java/com/github/laxika/magicalvibes/service/state/StateBasedActionService.java=1
-magical-vibes-engine/src/main/java/com/github/laxika/magicalvibes/service/target/TargetLegalityService.java=5
+magical-vibes-engine/src/main/java/com/github/laxika/magicalvibes/service/target/TargetLegalityService.java=6
 magical-vibes-engine/src/main/java/com/github/laxika/magicalvibes/service/target/ValidTargetService.java=14
 magical-vibes-engine/src/main/java/com/github/laxika/magicalvibes/service/trigger/DeathTriggerCollectorService.java=1
 magical-vibes-engine/src/main/java/com/github/laxika/magicalvibes/service/trigger/EnterTriggerCollectorService.java=1
 magical-vibes-engine/src/main/java/com/github/laxika/magicalvibes/service/trigger/LandTapTriggerCollectorService.java=5
-magical-vibes-engine/src/main/java/com/github/laxika/magicalvibes/service/trigger/SpellCastTriggerCollectorService.java=1
+magical-vibes-engine/src/main/java/com/github/laxika/magicalvibes/service/trigger/SpellCastTriggerCollectorService.java=2
 magical-vibes-engine/src/main/java/com/github/laxika/magicalvibes/service/trigger/TriggerCollectionService.java=15
 magical-vibes-engine/src/main/java/com/github/laxika/magicalvibes/service/turn/StepTriggerService.java=19
 magical-vibes-engine/src/main/java/com/github/laxika/magicalvibes/service/turn/TurnCleanupService.java=1

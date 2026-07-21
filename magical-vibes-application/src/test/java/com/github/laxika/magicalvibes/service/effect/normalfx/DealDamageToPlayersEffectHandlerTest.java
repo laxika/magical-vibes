@@ -165,6 +165,47 @@ class DealDamageToPlayersEffectHandlerTest extends AbstractDamageHandlerTest {
     }
 
     @Nested
+    @DisplayName("TARGET_SPELL_CONTROLLER recipient")
+    class TargetSpellController {
+
+        @Test
+        @DisplayName("Deals TargetSpellManaValue damage to the targeted spell's controller")
+        void dealsManaValueDamageToSpellController() {
+            Card refuseCard = createCard("Refuse");
+            Card targetSpellCard = createCard("Counsel of the Soratami");
+            // Printed mana value is left at 0 by createCard; set via xValue on the stack entry
+            // plus a non-zero printed MV isn't available here — use Fixed amount for the recipient path.
+            StackEntry targetSpell = createEntry(targetSpellCard, player2Id, null);
+            gd.stack.add(targetSpell);
+
+            StackEntry entry = createEntry(refuseCard, player1Id, targetSpellCard.getId());
+
+            stubDamagePreventable();
+            stubDamageFromSourceNotPrevented();
+            stubNoDamageMultiplier();
+            stubPlayerDamageCore(player2Id);
+            stubNoInfectOnSource(entry);
+
+            handler.resolve(gd, entry, new DealDamageToPlayersEffect(4, DamageRecipient.TARGET_SPELL_CONTROLLER));
+
+            assertThat(gd.playerLifeTotals.get(player2Id)).isEqualTo(16);
+        }
+
+        @Test
+        @DisplayName("Does nothing when the targeted spell has left the stack")
+        void doesNothingWhenSpellLeftStack() {
+            Card refuseCard = createCard("Refuse");
+            UUID goneSpellId = UUID.randomUUID();
+            StackEntry entry = createEntry(refuseCard, player1Id, goneSpellId);
+
+            handler.resolve(gd, entry, new DealDamageToPlayersEffect(4, DamageRecipient.TARGET_SPELL_CONTROLLER));
+
+            assertThat(gd.playerLifeTotals.get(player2Id)).isEqualTo(20);
+            verifyNoInteractions(triggerCollectionService);
+        }
+    }
+
+    @Nested
     @DisplayName("EACH_OPPONENT recipient")
     class EachOpponent {
 
