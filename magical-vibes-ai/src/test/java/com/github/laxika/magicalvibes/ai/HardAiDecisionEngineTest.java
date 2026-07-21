@@ -21,6 +21,7 @@ import com.github.laxika.magicalvibes.cards.e.EliteVanguard;
 import com.github.laxika.magicalvibes.cards.e.ElvishVisionary;
 import com.github.laxika.magicalvibes.cards.e.EntrancingMelody;
 import com.github.laxika.magicalvibes.cards.e.Eviscerate;
+import com.github.laxika.magicalvibes.cards.f.FitOfRage;
 import com.github.laxika.magicalvibes.cards.f.Forest;
 import com.github.laxika.magicalvibes.cards.g.GiantGrowth;
 import com.github.laxika.magicalvibes.cards.g.GoblinChieftain;
@@ -41,6 +42,7 @@ import com.github.laxika.magicalvibes.cards.n.Negate;
 import com.github.laxika.magicalvibes.cards.n.Nekrataal;
 import com.github.laxika.magicalvibes.cards.p.Plains;
 import com.github.laxika.magicalvibes.cards.s.Slagstorm;
+import com.github.laxika.magicalvibes.cards.s.SmiteTheMonstrous;
 import com.github.laxika.magicalvibes.cards.s.SteelSabotage;
 import com.github.laxika.magicalvibes.cards.s.SerraAngel;
 import com.github.laxika.magicalvibes.cards.s.Swamp;
@@ -1067,6 +1069,42 @@ class HardAiDecisionEngineTest {
 
         assertThat(gd.stack).hasSize(1);
         assertThat(gd.stack.getFirst().getCard().getName()).isEqualTo("Slagstorm");
+    }
+
+    @Test
+    @DisplayName("Hard AI casts Fit of Rage on an undersized opponent creature to enable Smite the Monstrous")
+    void pumpsUndersizedCreatureToEnableSizeGatedRemoval() {
+        HardAiDecisionEngine ai = createHardAi(player1);
+        // Deterministic evaluator path — the cast-vs-pass margin for this two-spell
+        // setup is thin for MCTS under UUID map-ordering noise.
+        MCTSEngine failingMcts = Mockito.mock(MCTSEngine.class);
+        Mockito.when(failingMcts.search(any(), any(), Mockito.anyInt()))
+                .thenThrow(new RuntimeException("MCTS disabled for test"));
+        ai.setMctsEngine(failingMcts);
+
+        harness.forceActivePlayer(player1);
+        harness.forceStep(TurnStep.POSTCOMBAT_MAIN);
+        harness.clearPriorityPassed();
+        gd.status = GameStatus.RUNNING;
+        gd.interaction.clearAwaitingInput();
+        gd.stack.clear();
+
+        // Opponent's only creature is below Smite's power-4 gate; AI has no creatures
+        Permanent oppBears = harness.addToBattlefieldAndReturn(player2, new GrizzlyBears()); // 2/2
+
+        harness.addMana(player1, ManaColor.RED, 2);
+        harness.addMana(player1, ManaColor.WHITE, 4);
+        harness.setHand(player1, List.of(new FitOfRage(), new SmiteTheMonstrous()));
+
+        ai.handleMessage("GAME_STATE", "");
+
+        // The critical combo setup: pump the undersized threat so Smite becomes legal
+        assertThat(gd.stack).hasSize(1);
+        assertThat(gd.stack.getFirst().getCard().getName()).isEqualTo("Fit of Rage");
+        assertThat(gd.stack.getFirst().getTargetId())
+                .withFailMessage("Hard AI should Fit of Rage the opponent's 2/2 to enable Smite (power 4+), "
+                        + "not refuse the cast or pump an empty board")
+                .isEqualTo(oppBears.getId());
     }
 
     // ===== Attack tax handling =====

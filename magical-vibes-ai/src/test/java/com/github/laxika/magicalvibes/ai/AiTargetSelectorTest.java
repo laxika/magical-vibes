@@ -9,6 +9,7 @@ import com.github.laxika.magicalvibes.cards.c.CompellingDeterrence;
 import com.github.laxika.magicalvibes.cards.c.ContagionClasp;
 import com.github.laxika.magicalvibes.cards.d.Diminish;
 import com.github.laxika.magicalvibes.cards.f.FeelingOfDread;
+import com.github.laxika.magicalvibes.cards.f.FitOfRage;
 import com.github.laxika.magicalvibes.cards.f.FulgentDistraction;
 import com.github.laxika.magicalvibes.cards.e.ElaborateFirecannon;
 import com.github.laxika.magicalvibes.cards.e.EliteVanguard;
@@ -17,6 +18,7 @@ import com.github.laxika.magicalvibes.cards.f.FalkenrathNoble;
 import com.github.laxika.magicalvibes.cards.f.FertileGround;
 import com.github.laxika.magicalvibes.cards.f.Forest;
 import com.github.laxika.magicalvibes.cards.g.GiantAmbushBeetle;
+import com.github.laxika.magicalvibes.cards.g.GiantGrowth;
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
 import com.github.laxika.magicalvibes.cards.i.Island;
 import com.github.laxika.magicalvibes.cards.k.KarnsTemporalSundering;
@@ -29,6 +31,7 @@ import com.github.laxika.magicalvibes.cards.q.QuicksilverGeyser;
 import com.github.laxika.magicalvibes.cards.s.SerraAngel;
 import com.github.laxika.magicalvibes.cards.s.Skulduggery;
 import com.github.laxika.magicalvibes.cards.s.SlaveOfBolas;
+import com.github.laxika.magicalvibes.cards.s.SmiteTheMonstrous;
 import com.github.laxika.magicalvibes.cards.s.SplendidAgony;
 import com.github.laxika.magicalvibes.cards.s.Stun;
 import com.github.laxika.magicalvibes.cards.s.SynchronizedStrike;
@@ -434,6 +437,66 @@ class AiTargetSelectorTest {
         pumpSpell.addEffect(EffectSlot.SPELL, new BoostTargetCreatureEffect(3, 3));
 
         UUID target = targetSelector.chooseTarget(gd, pumpSpell, aiPlayer.getId());
+
+        assertThat(target).isEqualTo(ownBears.getId());
+    }
+
+    @Test
+    @DisplayName("Fit of Rage pumps the AI's own creature, never the opponent's")
+    void fitOfRageTargetsOwnCreature() {
+        Permanent ownBears = harness.addToBattlefieldAndReturn(aiPlayer, new GrizzlyBears());
+        Permanent oppAngel = harness.addToBattlefieldAndReturn(human, new SerraAngel());
+
+        UUID target = targetSelector.chooseTarget(gd, new FitOfRage(), aiPlayer.getId());
+
+        assertThat(target).isEqualTo(ownBears.getId());
+        assertThat(target).isNotEqualTo(oppAngel.getId());
+    }
+
+    @Test
+    @DisplayName("Fit of Rage picks no target when the AI controls no creature")
+    void fitOfRageNoTargetWithoutOwnCreature() {
+        harness.addToBattlefield(human, new SerraAngel());
+
+        UUID target = targetSelector.chooseTarget(gd, new FitOfRage(), aiPlayer.getId());
+
+        assertThat(target).isNull();
+    }
+
+    @Test
+    @DisplayName("Fit of Rage targets opponent 2/2 when Smite the Monstrous needs power 4+")
+    void fitOfRageTargetsOpponentToEnableSmite() {
+        Permanent oppBears = harness.addToBattlefieldAndReturn(human, new GrizzlyBears()); // 2/2
+        harness.setHand(aiPlayer, List.of(new FitOfRage(), new SmiteTheMonstrous()));
+
+        UUID target = targetSelector.chooseTarget(gd, gd.playerHands.get(aiPlayer.getId()).getFirst(),
+                aiPlayer.getId());
+
+        assertThat(target).isEqualTo(oppBears.getId());
+    }
+
+    @Test
+    @DisplayName("Giant Growth targets opponent 2/2 when Smite the Monstrous needs power 4+")
+    void pumpTargetsOpponentToEnableSizeGatedRemoval() {
+        Permanent oppBears = harness.addToBattlefieldAndReturn(human, new GrizzlyBears()); // 2/2
+        harness.addToBattlefield(aiPlayer, new EliteVanguard()); // own creature present — kill setup still wins
+        harness.setHand(aiPlayer, List.of(new GiantGrowth(), new SmiteTheMonstrous()));
+
+        UUID target = targetSelector.chooseTarget(gd, gd.playerHands.get(aiPlayer.getId()).getFirst(),
+                aiPlayer.getId());
+
+        assertThat(target).isEqualTo(oppBears.getId());
+    }
+
+    @Test
+    @DisplayName("Giant Growth does not target opponent when no size-gated removal is available")
+    void pumpDoesNotTargetOpponentWithoutSizeGatedRemoval() {
+        harness.addToBattlefield(human, new GrizzlyBears());
+        Permanent ownBears = harness.addToBattlefieldAndReturn(aiPlayer, new GrizzlyBears());
+        harness.setHand(aiPlayer, List.of(new GiantGrowth()));
+
+        UUID target = targetSelector.chooseTarget(gd, gd.playerHands.get(aiPlayer.getId()).getFirst(),
+                aiPlayer.getId());
 
         assertThat(target).isEqualTo(ownBears.getId());
     }

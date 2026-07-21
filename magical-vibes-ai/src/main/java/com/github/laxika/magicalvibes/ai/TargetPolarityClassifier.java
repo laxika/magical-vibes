@@ -52,11 +52,11 @@ import static java.util.Map.entry;
  * for the long tail. When you add a new permanent-targeting effect, add a rule or mapping
  * here — the guard test's failure message points back to this class.
  */
-class TargetPolarityClassifier {
+public class TargetPolarityClassifier {
 
     private final AmountEvaluationService amountEvaluationService;
 
-    TargetPolarityClassifier(AmountEvaluationService amountEvaluationService) {
+    public TargetPolarityClassifier(AmountEvaluationService amountEvaluationService) {
         this.amountEvaluationService = amountEvaluationService;
     }
 
@@ -66,7 +66,7 @@ class TargetPolarityClassifier {
      * This mirrors (and must preserve) the branch order {@code chooseTarget} routed with
      * before the consolidation. Returns null when no effect classifies.
      */
-    TargetPolarity classifyCard(GameData gameData, Card card, UUID aiPlayerId) {
+    public TargetPolarity classifyCard(GameData gameData, Card card, UUID aiPlayerId) {
         TargetPolarity best = null;
         for (EffectSlot slot : new EffectSlot[]{EffectSlot.ON_ENTER_BATTLEFIELD, EffectSlot.SPELL}) {
             for (CardEffect effect : card.getEffects(slot)) {

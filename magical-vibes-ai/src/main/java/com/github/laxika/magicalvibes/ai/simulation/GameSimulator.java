@@ -4,7 +4,10 @@ import com.github.laxika.magicalvibes.ai.AiManaManager;
 import com.github.laxika.magicalvibes.ai.BoardEvaluator;
 import com.github.laxika.magicalvibes.ai.CombatDamageAssignmentHeuristic;
 import com.github.laxika.magicalvibes.ai.CombatSimulator;
+import com.github.laxika.magicalvibes.ai.SizeGatedRemovalPump;
 import com.github.laxika.magicalvibes.ai.SpellEvaluator;
+import com.github.laxika.magicalvibes.ai.TargetPolarity;
+import com.github.laxika.magicalvibes.ai.TargetPolarityClassifier;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardType;
 import com.github.laxika.magicalvibes.model.EffectResolution;
@@ -41,6 +44,7 @@ import com.github.laxika.magicalvibes.service.interaction.InteractionAnswer;
 import com.github.laxika.magicalvibes.service.combat.CombatAttackService;
 import com.github.laxika.magicalvibes.service.GameBroadcastService;
 import com.github.laxika.magicalvibes.service.battlefield.GameQueryService;
+import com.github.laxika.magicalvibes.service.effect.AmountEvaluationService;
 import com.github.laxika.magicalvibes.service.filter.PredicateEvaluationService;
 import com.github.laxika.magicalvibes.service.GameRegistry;
 import com.github.laxika.magicalvibes.service.GameService;
@@ -109,6 +113,8 @@ public class GameSimulator {
     private final SpellEvaluator spellEvaluator;
     private final CombatSimulator combatSimulator;
     private final CombatAttackService combatAttackService;
+    private final TargetPolarityClassifier polarityClassifier;
+    private final AmountEvaluationService amountEvaluationService;
 
     /**
      * Returns the cached headless simulator. {@link GameQueryService} instances from the same
@@ -136,6 +142,8 @@ public class GameSimulator {
         this.boardEvaluator = new BoardEvaluator(gameQueryService);
         this.spellEvaluator = new SpellEvaluator(gameQueryService, boardEvaluator);
         this.combatSimulator = new CombatSimulator(gameQueryService, boardEvaluator);
+        this.amountEvaluationService = new AmountEvaluationService(predicateEvaluationService, gameQueryService);
+        this.polarityClassifier = new TargetPolarityClassifier(amountEvaluationService);
     }
 
 
@@ -1109,6 +1117,38 @@ public class GameSimulator {
                         .toList();
             }
             // Detrimental aura — fall through to opponent's battlefield targeting below
+        }
+
+        // Beneficial non-aura spells (pumps, keyword grants, untaps, …) normally aim at the
+        // caster's own board. Exception: pumping an undersized opponent creature so a
+        // size-gated removal in hand / on board (Smite the Monstrous, Intrepid Hero, …)
+        // becomes legal — MCTS must be able to explore that line.
+        TargetPolarity polarity = polarityClassifier.classifyCard(gd, card, playerId);
+        if (polarity == TargetPolarity.BENEFICIAL) {
+            List<UUID> candidates = new ArrayList<>();
+            gd.playerBattlefields.getOrDefault(playerId, List.of()).stream()
+                    .filter(p -> passesTargetFilter(gd, card, p, playerId))
+                    .sorted(Comparator.comparingInt((Permanent p) ->
+                            gameQueryService.getEffectivePower(gd, p)
+                                    + gameQueryService.getEffectiveToughness(gd, p)).reversed())
+                    .limit(Math.min(2, maxCandidates))
+                    .map(Permanent::getId)
+                    .forEach(candidates::add);
+
+            if (candidates.size() < maxCandidates) {
+                SizeGatedRemovalPump.findEnabledOpponentCreatures(
+                                gd, card, playerId, opponentId, gameQueryService,
+                                amountEvaluationService)
+                        .stream()
+                        .filter(p -> passesTargetFilter(gd, card, p, playerId))
+                        .sorted(Comparator.comparingInt((Permanent p) ->
+                                gameQueryService.getEffectivePower(gd, p)).reversed())
+                        .map(Permanent::getId)
+                        .filter(id -> !candidates.contains(id))
+                        .limit((long) maxCandidates - candidates.size())
+                        .forEach(candidates::add);
+            }
+            return candidates;
         }
 
         List<Permanent> oppBattlefield = gd.playerBattlefields.getOrDefault(opponentId, List.of());

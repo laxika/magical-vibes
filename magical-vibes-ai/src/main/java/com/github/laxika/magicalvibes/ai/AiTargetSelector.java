@@ -188,6 +188,33 @@ class AiTargetSelector {
             return chooseHarmfulPermanentTarget(gameData, card, aiPlayerId, opponentId, allowedTargets);
         }
 
+        // Beneficial non-aura spells (Fit of Rage, Giant Growth, …) — own board by default.
+        // Exception: pump an undersized opponent creature so a size-gated removal
+        // (Smite the Monstrous, etc.) becomes legal — that kill line beats a self-pump.
+        if (polarity == TargetPolarity.BENEFICIAL) {
+            List<Permanent> enableKill = SizeGatedRemovalPump.findEnabledOpponentCreatures(
+                    gameData, card, aiPlayerId, opponentId, gameQueryService, amountEvaluationService);
+            UUID killSetupTarget = enableKill.stream()
+                    .filter(p -> isValidPermanentTarget(gameData, card, p, aiPlayerId))
+                    .max(Comparator.comparingDouble(p -> threatScore(gameData, p, opponentId, aiPlayerId)))
+                    .map(Permanent::getId)
+                    .orElse(null);
+            if (killSetupTarget != null) {
+                return killSetupTarget;
+            }
+            return gameData.playerBattlefields.getOrDefault(aiPlayerId, List.of()).stream()
+                    .filter(p -> isValidPermanentTarget(gameData, card, p, aiPlayerId))
+                    .max(Comparator.comparingInt(p -> {
+                        if (!gameQueryService.isCreature(gameData, p)) {
+                            return 0;
+                        }
+                        return gameQueryService.getEffectivePower(gameData, p)
+                                + gameQueryService.getEffectiveToughness(gameData, p);
+                    }))
+                    .map(Permanent::getId)
+                    .orElse(null);
+        }
+
         // General fallback: find any valid target using target filter + effect validators
         // Search own battlefield first (for beneficial ETB effects like Awakener Druid)
         List<Permanent> ownBattlefield = gameData.playerBattlefields.getOrDefault(aiPlayerId, List.of());

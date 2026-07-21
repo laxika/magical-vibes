@@ -7,10 +7,12 @@ import com.github.laxika.magicalvibes.cards.a.AirElemental;
 import com.github.laxika.magicalvibes.cards.a.ArmoredAscension;
 import com.github.laxika.magicalvibes.cards.b.BerserkersOfBloodRidge;
 import com.github.laxika.magicalvibes.cards.e.EliteVanguard;
+import com.github.laxika.magicalvibes.cards.f.FitOfRage;
 import com.github.laxika.magicalvibes.cards.f.Forest;
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
 import com.github.laxika.magicalvibes.cards.p.Pacifism;
 import com.github.laxika.magicalvibes.cards.s.SerraAngel;
+import com.github.laxika.magicalvibes.cards.s.SmiteTheMonstrous;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.GameData;
 import com.github.laxika.magicalvibes.model.ManaColor;
@@ -328,6 +330,70 @@ class GameSimulatorTest {
         List<SimulationAction> actions = simulator.getLegalActions(gd, player1.getId());
 
         assertThat(actions).noneMatch(a -> a instanceof SimulationAction.PlayCard);
+    }
+
+    @Test
+    @DisplayName("Beneficial pump sorcery (Fit of Rage) targets own creature, not opponent's")
+    void beneficialPumpSpellTargetsOwnCreature() {
+        Permanent ownCreature = harness.addToBattlefieldAndReturn(player1, new GrizzlyBears());
+        Permanent oppCreature = harness.addToBattlefieldAndReturn(player2, new SerraAngel());
+
+        harness.setHand(player1, List.of(new FitOfRage()));
+        harness.addMana(player1, ManaColor.RED, 2); // 1R
+        setUpMainPhase(player1);
+
+        List<SimulationAction> actions = simulator.getLegalActions(gd, player1.getId());
+
+        assertThat(actions).anyMatch(a -> a instanceof SimulationAction.PlayCard pc
+                && pc.targetId().equals(ownCreature.getId()));
+        assertThat(actions).noneMatch(a -> a instanceof SimulationAction.PlayCard pc
+                && pc.targetId().equals(oppCreature.getId()));
+    }
+
+    @Test
+    @DisplayName("Beneficial pump sorcery generates no PlayCard when AI has no creatures")
+    void beneficialPumpSpellNoActionWhenNoOwnCreatures() {
+        harness.addToBattlefield(player2, new GrizzlyBears());
+
+        harness.setHand(player1, List.of(new FitOfRage()));
+        harness.addMana(player1, ManaColor.RED, 2);
+        setUpMainPhase(player1);
+
+        List<SimulationAction> actions = simulator.getLegalActions(gd, player1.getId());
+
+        assertThat(actions).noneMatch(a -> a instanceof SimulationAction.PlayCard);
+    }
+
+    @Test
+    @DisplayName("Pump offers opponent target when it enables size-gated removal (Smite the Monstrous)")
+    void pumpOffersOpponentTargetWhenItEnablesSizeGatedRemoval() {
+        Permanent oppCreature = harness.addToBattlefieldAndReturn(player2, new GrizzlyBears()); // 2/2
+
+        harness.setHand(player1, List.of(new FitOfRage(), new SmiteTheMonstrous()));
+        harness.addMana(player1, ManaColor.RED, 2);
+        harness.addMana(player1, ManaColor.WHITE, 4);
+        setUpMainPhase(player1);
+
+        List<SimulationAction> actions = simulator.getLegalActions(gd, player1.getId());
+
+        assertThat(actions).anyMatch(a -> a instanceof SimulationAction.PlayCard pc
+                && gd.playerHands.get(player1.getId()).get(pc.handIndex()).getName().equals("Fit of Rage")
+                && pc.targetId().equals(oppCreature.getId()));
+    }
+
+    @Test
+    @DisplayName("Pump does not offer opponent target without a size-gated follow-up")
+    void pumpDoesNotOfferOpponentWithoutSizeGatedFollowUp() {
+        Permanent oppCreature = harness.addToBattlefieldAndReturn(player2, new GrizzlyBears());
+
+        harness.setHand(player1, List.of(new FitOfRage()));
+        harness.addMana(player1, ManaColor.RED, 2);
+        setUpMainPhase(player1);
+
+        List<SimulationAction> actions = simulator.getLegalActions(gd, player1.getId());
+
+        assertThat(actions).noneMatch(a -> a instanceof SimulationAction.PlayCard pc
+                && pc.targetId() != null && pc.targetId().equals(oppCreature.getId()));
     }
 
     @Test
