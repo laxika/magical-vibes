@@ -250,13 +250,11 @@ public class PermanentChoiceTriggerHandlerService {
             return;
         }
 
-        if (!gameData.pendingMayAbilities.isEmpty()) {
-            playerInputService.processNextMayAbility(gameData);
-            return;
-        }
-
+        // The exploit source's ETB resolution is still parked (the sacrifice choice paused it);
+        // the shared epilogue resumes it — and presents any queued may abilities — before
+        // auto-passing, so the parked entry is never left dangling.
         gameData.priorityPassedBy.clear();
-        turnProgressionService.resolveAutoPass(gameData);
+        inputCompletionService.processMayAbilitiesThenAutoPass(gameData);
     }
 
     public void handleClashTrigger(GameData gameData, UUID permanentId, PermanentChoiceContext.ClashTriggerTarget ctt) {

@@ -92,6 +92,7 @@ import com.github.laxika.magicalvibes.model.condition.TopCardOfLibraryColor;
 import com.github.laxika.magicalvibes.model.condition.TwoOrMoreSpellsCastLastTurn;
 import com.github.laxika.magicalvibes.model.condition.WonClash;
 import com.github.laxika.magicalvibes.model.filter.FilterContext;
+import com.github.laxika.magicalvibes.model.filter.PermanentIsCreaturePredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentPredicate;
 import com.github.laxika.magicalvibes.service.battlefield.GameQueryService;
 import com.github.laxika.magicalvibes.service.filter.PredicateEvaluationService;
@@ -115,6 +116,8 @@ import java.util.UUID;
 @Service
 @RequiredArgsConstructor
 public class ConditionEvaluationService {
+
+    private static final PermanentIsCreaturePredicate CREATURE_FILTER = new PermanentIsCreaturePredicate();
 
     private final GameQueryService gameQueryService;
     private final PredicateEvaluationService predicateEvaluationService;
@@ -189,7 +192,7 @@ public class ConditionEvaluationService {
             case ControlsOtherPermanentCount c ->
                     countOtherControlledMatchingPermanents(gameData, ctx, c.filter()) >= c.minCount();
             case ControlledCreaturesTotalPowerAtLeast c ->
-                    controlledCreaturesTotalPower(gameData, ctx.controllerId()) >= c.threshold();
+                    controlledCreaturesTotalPower(gameData, ctx) >= c.threshold();
             case NoOtherPermanent c ->
                     noOtherMatchingPermanent(gameData, ctx, c.filter());
             case ControllerHasMoreLifeThanAnOpponent ignored ->
@@ -321,7 +324,7 @@ public class ConditionEvaluationService {
             case ImprintedCardNameMatchesEnteringPermanent ignored ->
                     imprintedCardNameMatches(gameData, ctx);
             case OpponentControlsMoreCreatures c ->
-                    anyOpponentControlsAtLeastNMoreCreatures(gameData, ctx.controllerId(), c.minimumCreatureDifference());
+                    anyOpponentControlsAtLeastNMoreCreatures(gameData, ctx, c.minimumCreatureDifference());
             case OpponentControlsMoreLands ignored ->
                     gameQueryService.anyOpponentControlsMoreLands(gameData, ctx.controllerId());
             case CardsLeftGraveyardThisTurn ignored ->
@@ -337,12 +340,13 @@ public class ConditionEvaluationService {
      * True if any opponent controls at least {@code minimumDifference} more creatures than the
      * controller (Avatar of Might's cast-cost reduction).
      */
-    private boolean anyOpponentControlsAtLeastNMoreCreatures(GameData gameData, UUID controllerId, int minimumDifference) {
+    private boolean anyOpponentControlsAtLeastNMoreCreatures(GameData gameData, ConditionContext ctx, int minimumDifference) {
+        UUID controllerId = ctx.controllerId();
         if (controllerId == null) return false;
-        int yourCreatures = countCreaturesControlled(gameData, controllerId);
+        int yourCreatures = countCreaturesControlled(gameData, controllerId, ctx);
         for (UUID candidateOpponentId : gameData.orderedPlayerIds) {
             if (candidateOpponentId.equals(controllerId)) continue;
-            if (countCreaturesControlled(gameData, candidateOpponentId) >= yourCreatures + minimumDifference) {
+            if (countCreaturesControlled(gameData, candidateOpponentId, ctx) >= yourCreatures + minimumDifference) {
                 return true;
             }
         }
@@ -366,29 +370,43 @@ public class ConditionEvaluationService {
     }
 
     /** Sum of the effective power of every creature the given player controls. */
-    private int controlledCreaturesTotalPower(GameData gameData, UUID controllerId) {
+    private int controlledCreaturesTotalPower(GameData gameData, ConditionContext ctx) {
+        UUID controllerId = ctx.controllerId();
         if (controllerId == null) return 0;
         List<Permanent> battlefield = gameData.playerBattlefields.get(controllerId);
         if (battlefield == null) return 0;
         int totalPower = 0;
         for (Permanent permanent : battlefield) {
-            if (gameQueryService.isCreature(gameData, permanent)) {
+            if (isCreatureForCondition(gameData, permanent, ctx)) {
                 totalPower += gameQueryService.getEffectivePower(gameData, permanent);
             }
         }
         return totalPower;
     }
 
-    private int countCreaturesControlled(GameData gameData, UUID playerId) {
+    private int countCreaturesControlled(GameData gameData, UUID playerId, ConditionContext ctx) {
         List<Permanent> battlefield = gameData.playerBattlefields.get(playerId);
         if (battlefield == null) return 0;
         int count = 0;
         for (Permanent permanent : battlefield) {
-            if (gameQueryService.isCreature(gameData, permanent)) {
+            if (isCreatureForCondition(gameData, permanent, ctx)) {
                 count++;
             }
         }
         return count;
+    }
+
+    /**
+     * Creature check for condition evaluation. During static bonus computation
+     * ({@link ConditionContext#staticEvaluation()}) the fully layered
+     * {@link GameQueryService#isCreature} would recurse back into static assembly, so the
+     * recursion-safe static filter matcher is used instead — the same contract
+     * {@link #matchesPermanent} follows for permanent predicates.
+     */
+    private boolean isCreatureForCondition(GameData gameData, Permanent permanent, ConditionContext ctx) {
+        return ctx.staticEvaluation()
+                ? staticEffectSupport.matchesStaticFilter(permanent, CREATURE_FILTER)
+                : gameQueryService.isCreature(gameData, permanent);
     }
 
     /** True if any opponent controls strictly more lands than the controller (Gift of Estates). */
@@ -782,7 +800,7 @@ public class ConditionEvaluationService {
         if (source == null || source.getPairedWithId() != null) {
             return false;
         }
-        if (!gameQueryService.isCreature(gameData, source)) {
+        if (!isCreatureForCondition(gameData, source, ctx)) {
             return false;
         }
         UUID controllerId = ctx.controllerId();
@@ -797,7 +815,7 @@ public class ConditionEvaluationService {
             if (p.getId().equals(source.getId())) {
                 continue;
             }
-            if (p.getPairedWithId() == null && gameQueryService.isCreature(gameData, p)) {
+            if (p.getPairedWithId() == null && isCreatureForCondition(gameData, p, ctx)) {
                 return true;
             }
         }

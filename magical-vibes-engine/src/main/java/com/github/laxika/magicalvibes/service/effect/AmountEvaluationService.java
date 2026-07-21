@@ -151,14 +151,18 @@ public class AmountEvaluationService {
             case CountersOnLinkedPermanent c ->
                     countCountersOnLinkedPermanent(gameData, c);
             case ControllerLifeTotal ignored ->
-                    gameData.playerLifeTotals.getOrDefault(ctx.controllerId(), 0);
+                    // Null controller happens transiently while the source is still entering the
+                    // battlefield (e.g. a CDA evaluated from an entry-time query); playerLifeTotals
+                    // is a ConcurrentHashMap, which rejects null keys.
+                    ctx.controllerId() == null ? 0 : gameData.playerLifeTotals.getOrDefault(ctx.controllerId(), 0);
             case TargetPlayerLifeTotal ignored ->
                     ctx.targetPermanentId() == null ? 0
                             : gameData.playerLifeTotals.getOrDefault(ctx.targetPermanentId(), 0);
             case HalvedRoundedUp h ->
                     Math.floorDiv(evaluate(gameData, h.amount(), ctx) + 1, 2);
             case HalfControllerLifeRoundedUp ignored ->
-                    (gameData.playerLifeTotals.getOrDefault(ctx.controllerId(), 0) + 1) / 2;
+                    ctx.controllerId() == null ? 0
+                            : (gameData.playerLifeTotals.getOrDefault(ctx.controllerId(), 0) + 1) / 2;
             case IfSourceAttacking a ->
                     ctx.sourcePermanent() != null && ctx.sourcePermanent().isAttacking()
                             ? evaluate(gameData, a.whileAttacking(), ctx)

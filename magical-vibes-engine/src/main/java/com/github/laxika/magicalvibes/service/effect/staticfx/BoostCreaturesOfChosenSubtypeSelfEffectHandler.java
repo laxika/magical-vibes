@@ -5,7 +5,7 @@ import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.effect.BoostCreaturesOfChosenSubtypeEffect;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
 import com.github.laxika.magicalvibes.model.filter.PermanentHasSubtypePredicate;
-import com.github.laxika.magicalvibes.service.battlefield.GameQueryService;
+import com.github.laxika.magicalvibes.model.filter.PermanentIsCreaturePredicate;
 import com.github.laxika.magicalvibes.service.effect.StaticBonusAccumulator;
 import com.github.laxika.magicalvibes.service.effect.StaticEffectContext;
 import lombok.RequiredArgsConstructor;
@@ -21,7 +21,6 @@ import org.springframework.stereotype.Component;
 public class BoostCreaturesOfChosenSubtypeSelfEffectHandler implements StaticEffectHandlerBean {
 
     private final StaticEffectSupport support;
-    private final GameQueryService gameQueryService;
 
     @Override
     public Class<? extends CardEffect> handledEffect() {
@@ -39,7 +38,9 @@ public class BoostCreaturesOfChosenSubtypeSelfEffectHandler implements StaticEff
         CardSubtype chosenSubtype = context.source().getChosenSubtype();
         if (chosenSubtype == null) return;
         Permanent source = context.source();
-        if (!gameQueryService.isCreature(context.gameData(), source)) return;
+        // Recursion-safe creature check: the fully layered GameQueryService.isCreature would
+        // re-enter static bonus assembly from inside this static pass.
+        if (!support.matchesStaticFilter(source, new PermanentIsCreaturePredicate())) return;
         if (support.matchesStaticFilter(source, new PermanentHasSubtypePredicate(chosenSubtype))) {
             int multiplier = boost.scalingCounter() == null
                     ? 1

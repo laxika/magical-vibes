@@ -609,8 +609,14 @@ public class ChoiceHandlerService {
         }
 
         gameData.interaction.clearAwaitingInput();
-        gameData.pendingEffectResolutionEntry = null;
-        gameData.pendingEffectResolutionIndex = 0;
+        // The mode choice paused the trigger's resolution after its only effect. Drain the parked
+        // entry now (a past-the-end resume): that clears pendingEffectResolutionEntry, releases
+        // deferPlayerLossCheck, and runs the post-resolution SBA. Nulling the entry instead would
+        // leave the loss check wedged (see InputHandlerEpilogueRatchetTest).
+        if (gameData.pendingEffectResolutionEntry != null) {
+            effectResolutionService.resolveEffectsFrom(gameData,
+                    gameData.pendingEffectResolutionEntry, gameData.pendingEffectResolutionIndex);
+        }
 
         gameBroadcastService.logAndBroadcast(gameData,
                 GameLog.textCardText(player.getUsername() + " chooses \"" + chosen + "\" for ",
@@ -618,7 +624,7 @@ public class ChoiceHandlerService {
 
         if (noneMode) {
             gameBroadcastService.broadcastGameState(gameData);
-            turnProgressionService.resolveAutoPass(gameData);
+            resumeAndAutoPass(gameData);
             return;
         }
 
@@ -635,7 +641,7 @@ public class ChoiceHandlerService {
             }
             if (validSpellCardIds.isEmpty()) {
                 gameBroadcastService.broadcastGameState(gameData);
-                turnProgressionService.resolveAutoPass(gameData);
+                resumeAndAutoPass(gameData);
                 return;
             }
             gameData.interaction.setPermanentChoiceContext(new PermanentChoiceContext.MayAbilityTriggerTarget(
@@ -662,7 +668,7 @@ public class ChoiceHandlerService {
         }
         if (validPermanents.isEmpty()) {
             gameBroadcastService.broadcastGameState(gameData);
-            turnProgressionService.resolveAutoPass(gameData);
+            resumeAndAutoPass(gameData);
             return;
         }
         gameData.interaction.setPermanentChoiceContext(new PermanentChoiceContext.MayAbilityTriggerTarget(
@@ -1812,7 +1818,7 @@ public class ChoiceHandlerService {
         stateBasedActionService.performStateBasedActions(gameData);
         gameData.priorityPassedBy.clear();
         gameBroadcastService.broadcastGameState(gameData);
-        turnProgressionService.resolveAutoPass(gameData);
+        resumeAndAutoPass(gameData);
     }
 
     private void handleSphinxAmbassadorNameChoice(GameData gameData, Player player, String cardName, ChoiceContext.SphinxAmbassadorNameChoice ctx) {

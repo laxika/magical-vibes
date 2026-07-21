@@ -403,14 +403,9 @@ public class GraveyardChoiceHandlerService {
                     }
                 }
             }
-            if (gameData.pendingEffectResolutionEntry != null && !gameData.interaction.isAwaitingInput()) {
-                effectResolutionService.resolveEffectsFrom(gameData,
-                        gameData.pendingEffectResolutionEntry, gameData.pendingEffectResolutionIndex);
-                if (gameData.interaction.isAwaitingInput()) {
-                    return;
-                }
-            }
-            turnProgressionService.resolveAutoPass(gameData);
+            // The shared epilogue resumes the paused resolution (e.g. the cycling draw) and
+            // auto-passes once no further input is needed.
+            inputCompletionService.processMayAbilitiesThenAutoPass(gameData);
             return;
         }
 
