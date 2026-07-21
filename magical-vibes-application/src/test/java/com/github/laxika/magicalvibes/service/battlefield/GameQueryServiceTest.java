@@ -2562,8 +2562,16 @@ class GameQueryServiceTest {
             Permanent myr = addPermanent(player1Id, myrCard);
 
             // Deep Freeze-style aura that removes all abilities
-            Card auraCard = createAura("Deep Freeze",
-                    new LosesAllAbilitiesEffect(GrantScope.ENCHANTED_CREATURE));
+            LosesAllAbilitiesEffect loseAll = new LosesAllAbilitiesEffect(GrantScope.ENCHANTED_CREATURE);
+            Card auraCard = createAura("Deep Freeze", loseAll);
+            // Stub the static handler to mimic real LosesAllAbilitiesEffectHandler behavior:
+            // the enchanted creature loses all abilities (resolved via the CR 613 layered pass).
+            when(staticEffectRegistry.getHandler(loseAll)).thenReturn((ctx, eff, acc) -> {
+                if (ctx.source().isAttached()
+                        && ctx.source().getAttachedTo().equals(ctx.target().getId())) {
+                    acc.setLosesAllAbilities(true);
+                }
+            });
             Permanent aura = addPermanent(player1Id, auraCard);
             aura.setAttachedTo(myr.getId());
 

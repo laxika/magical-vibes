@@ -136,6 +136,7 @@ class AbilityActivationServiceTest {
             Card island = createLandWithManaAbility("Island", ManaColor.BLUE);
             Permanent perm = addReadyPermanent(player1Id, island);
 
+            when(gameQueryService.computeStaticBonus(gameData, perm)).thenReturn(EMPTY_BONUS);
             when(gameQueryService.isCreature(gameData, perm)).thenReturn(false);
             when(gameQueryService.hasAuraWithEffect(eq(gameData), eq(perm), eq(EnchantedCreatureCantActivateAbilitiesEffect.class)))
                     .thenReturn(false);
@@ -170,6 +171,8 @@ class AbilityActivationServiceTest {
             Card card = createCreatureCard("Grizzly Bears", 2, 2);
             Permanent perm = addReadyPermanent(player1Id, card);
 
+            when(gameQueryService.computeStaticBonus(gameData, perm)).thenReturn(EMPTY_BONUS);
+
             assertThatThrownBy(() -> service.tapPermanent(gameData, player1, 0))
                     .isInstanceOf(IllegalStateException.class)
                     .hasMessageContaining("no tap effects");
@@ -183,6 +186,7 @@ class AbilityActivationServiceTest {
             // summoningSick is true by default
             gameData.playerBattlefields.get(player1Id).add(perm);
 
+            when(gameQueryService.computeStaticBonus(gameData, perm)).thenReturn(EMPTY_BONUS);
             when(gameQueryService.isCreature(gameData, perm)).thenReturn(true);
             when(gameQueryService.hasKeyword(gameData, perm, Keyword.HASTE)).thenReturn(false);
 
@@ -197,6 +201,7 @@ class AbilityActivationServiceTest {
             Card elves = createCreatureWithTapAbility("Llanowar Elves", ManaColor.GREEN);
             Permanent perm = addReadyPermanent(player1Id, elves);
 
+            when(gameQueryService.computeStaticBonus(gameData, perm)).thenReturn(EMPTY_BONUS);
             when(gameQueryService.isCreature(gameData, perm)).thenReturn(true);
             when(gameQueryService.hasAuraWithEffect(eq(gameData), eq(perm), eq(EnchantedCreatureCantActivateAbilitiesEffect.class)))
                     .thenReturn(false);
@@ -217,6 +222,7 @@ class AbilityActivationServiceTest {
             // summoningSick is true by default for all permanents, but lands should still be tappable
             gameData.playerBattlefields.get(player1Id).add(perm);
 
+            when(gameQueryService.computeStaticBonus(gameData, perm)).thenReturn(EMPTY_BONUS);
             when(gameQueryService.isCreature(gameData, perm)).thenReturn(false);
             when(gameQueryService.hasAuraWithEffect(eq(gameData), eq(perm), eq(EnchantedCreatureCantActivateAbilitiesEffect.class)))
                     .thenReturn(false);
@@ -235,6 +241,7 @@ class AbilityActivationServiceTest {
             Card elves = createCreatureWithTapAbility("Llanowar Elves", ManaColor.GREEN);
             Permanent perm = addReadyPermanent(player1Id, elves);
 
+            when(gameQueryService.computeStaticBonus(gameData, perm)).thenReturn(EMPTY_BONUS);
             when(gameQueryService.hasAuraWithEffect(eq(gameData), eq(perm), eq(EnchantedCreatureCantActivateAbilitiesEffect.class)))
                     .thenReturn(true);
 
@@ -257,6 +264,7 @@ class AbilityActivationServiceTest {
             Card island = createLandWithManaAbility("Island", ManaColor.BLUE);
             Permanent perm = addReadyPermanent(player1Id, island);
 
+            when(gameQueryService.computeStaticBonus(gameData, perm)).thenReturn(EMPTY_BONUS);
             when(gameQueryService.isCreature(gameData, perm)).thenReturn(false);
             when(gameQueryService.hasAuraWithEffect(eq(gameData), eq(perm), eq(EnchantedCreatureCantActivateAbilitiesEffect.class)))
                     .thenReturn(false);
@@ -866,6 +874,7 @@ class AbilityActivationServiceTest {
 
             addPithingNeedle(player2Id, "Island");
 
+            when(gameQueryService.computeStaticBonus(gameData, perm)).thenReturn(EMPTY_BONUS);
             when(gameQueryService.isCreature(gameData, perm)).thenReturn(false);
             when(gameQueryService.hasAuraWithEffect(eq(gameData), eq(perm), eq(EnchantedCreatureCantActivateAbilitiesEffect.class)))
                     .thenReturn(false);
