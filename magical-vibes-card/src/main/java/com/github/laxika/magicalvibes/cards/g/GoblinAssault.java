@@ -18,7 +18,7 @@ public class GoblinAssault extends Card {
 
     public GoblinAssault() {
         // At the beginning of your upkeep, create a 1/1 red Goblin creature token with haste.
-        addEffect(EffectSlot.EACH_UPKEEP_TRIGGERED, new CreateTokenEffect(
+        addEffect(EffectSlot.UPKEEP_TRIGGERED, new CreateTokenEffect(
                 "Goblin",
                 1,
                 1,

@@ -54,6 +54,21 @@ class GoblinAssaultTest extends BaseCardTest {
         assertThat(goblin.hasKeyword(Keyword.HASTE)).isTrue();
     }
 
+    @Test
+    @DisplayName("Does not create a token during an opponent's upkeep (\"your upkeep\" only)")
+    void noTokenDuringOpponentUpkeep() {
+        harness.addToBattlefield(player1, new GoblinAssault());
+
+        advanceToUpkeep(player2);
+        harness.passBothPriorities(); // resolve any triggers
+
+        List<Permanent> tokens = gd.playerBattlefields.get(player1.getId()).stream()
+                .filter(p -> p.getCard().isToken())
+                .toList();
+
+        assertThat(tokens).isEmpty();
+    }
+
     // ===== Static "Goblin creatures attack each combat if able" =====
 
     @Test
