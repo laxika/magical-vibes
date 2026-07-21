@@ -746,7 +746,34 @@ public class GameQueryService {
         if (bonus.cardTypeOverriding()) {
             return bonus.grantedCardTypes().contains(type);
         }
-        return hasCardType(permanent, type) || bonus.grantedCardTypes().contains(type);
+        // A type-changing effect that added a type "in addition to its other types" stores it on
+        // the permanent (transient until-end-of-turn or persistent), not in the static bonus — e.g.
+        // Phyrexian Scriptures' chapter I making a creature an artifact. Mirror the non-layered
+        // isArtifact/isEnchantment so the layered checks see those grants too.
+        return hasCardType(permanent, type)
+                || permanent.getGrantedCardTypes().contains(type)
+                || permanent.getPersistentGrantedCardTypes().contains(type)
+                || bonus.grantedCardTypes().contains(type);
+    }
+
+    /**
+     * Recursion-safe creature check for use INSIDE {@link #assembleStaticBonus}: reads the
+     * layer-4 board state already computed for this pass rather than calling {@link #isCreature},
+     * which re-enters {@code computeStaticBonus} for the same permanent and would recurse forever.
+     * Mirrors {@code LayerSystemService.isCreatureForL4} (the layered card type plus the one-shot
+     * animation flags).
+     */
+    private boolean isCreatureInStaticPass(LayerSystemService.LayeredBoardState board, Permanent permanent) {
+        CharacteristicState state = board.states().get(permanent.getId());
+        boolean typeCreature = state != null
+                ? state.hasCardType(CardType.CREATURE)
+                : hasCardType(permanent, CardType.CREATURE);
+        return typeCreature
+                || permanent.isAnimatedUntilEndOfTurn()
+                || permanent.isAnimatedUntilEndOfCombat()
+                || permanent.isAnimatedUntilNextTurn()
+                || permanent.isPermanentlyAnimated()
+                || permanent.getCounterCount(CounterType.AWAKENING) > 0;
     }
 
     /**
@@ -1645,7 +1672,11 @@ public class GameQueryService {
                     accumulator.addActivatedAbility(grant.ability());
                 } else if (effect instanceof StaticBoostEffect boost
                         && (boost.scope() == GrantScope.OWN_CREATURES || boost.scope() == GrantScope.ALL_OWN_CREATURES)
-                        && isCreature(gameData, target)
+                        // Recursion-safe: isCreature(gameData, target) re-enters computeStaticBonus for
+                        // this same target (this method IS the assembly), so an emblem's "creatures you
+                        // control get +1/+0" (Sorin, Lord of Innistrad) would recurse forever. Read the
+                        // layer-4 board state already computed for this pass instead.
+                        && isCreatureInStaticPass(board, target)
                         && (boost.filter() == null || predicateEvaluationService.matchesPermanentPredicate(gameData, target, boost.filter()))) {
                     accumulator.addPower(boost.powerBoost());
                     accumulator.addToughness(boost.toughnessBoost());

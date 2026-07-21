@@ -75,6 +75,8 @@ public class StaticEffectSupport {
     private final GameQueryService gameQueryService;
     private final PredicateEvaluationService predicateEvaluationService;
 
+    private static final PermanentIsCreaturePredicate CREATURE_PREDICATE = new PermanentIsCreaturePredicate();
+
     private static final Set<CardSubtype> NON_CREATURE_SUBTYPES = EnumSet.of(
             CardSubtype.FOREST,
             CardSubtype.MOUNTAIN,
@@ -135,12 +137,36 @@ public class StaticEffectSupport {
      */
     private boolean matchesStaticFilter(StaticEffectContext context, PermanentPredicate filter) {
         if (filter instanceof PermanentHasGreatestManaValueAmongAllCreaturesPredicate) {
-            return gameQueryService.hasGreatestManaValueAmongAllCreatures(context.gameData(), context.target());
+            return hasGreatestManaValueAmongAllCreaturesStatic(context.gameData(), context.target());
         }
         if (filter instanceof PermanentIsEnchantedPredicate) {
             return gameQueryService.isEnchanted(context.gameData(), context.target());
         }
         return matchesStaticFilter(context.target(), filter);
+    }
+
+    /**
+     * Recursion-safe "greatest mana value among all creatures" (Favor of the Mighty) for the
+     * static pass. {@link GameQueryService#hasGreatestManaValueAmongAllCreatures} calls the fully
+     * layered {@code isCreature}, which re-enters static-bonus assembly and recurses forever when
+     * invoked from a static handler; use the recursion-safe creature matcher instead. Mana value is
+     * a copiable characteristic unaffected by layer 7, so the printed value is authoritative.
+     */
+    private boolean hasGreatestManaValueAmongAllCreaturesStatic(GameData gameData, Permanent target) {
+        if (gameData == null || !matchesStaticFilter(target, CREATURE_PREDICATE)) {
+            return false;
+        }
+        int greatest = -1;
+        for (UUID playerId : gameData.orderedPlayerIds) {
+            List<Permanent> battlefield = gameData.playerBattlefields.get(playerId);
+            if (battlefield == null) continue;
+            for (Permanent candidate : battlefield) {
+                if (matchesStaticFilter(candidate, CREATURE_PREDICATE)) {
+                    greatest = Math.max(greatest, candidate.getCard().getManaValue());
+                }
+            }
+        }
+        return target.getCard().getManaValue() == greatest;
     }
 
     public boolean isEffectivelyCreature(Permanent permanent, boolean hasAnimateArtifacts) {

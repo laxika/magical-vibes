@@ -100,6 +100,12 @@ class MagefireWingsTest extends BaseCardTest {
     @Test
     @DisplayName("Cannot target a noncreature permanent with Magefire Wings")
     void cannotTargetNonCreature() {
+        // A creature must exist for the Aura to be castable at all (CR 601.2c); otherwise it is
+        // unplayable for lack of any legal target. With one present, picking the noncreature
+        // exercises the targeting restriction itself.
+        Permanent bears = new Permanent(new GrizzlyBears());
+        bears.setSummoningSick(false);
+        gd.playerBattlefields.get(player1.getId()).add(bears);
         harness.addToBattlefield(player1, new FountainOfYouth());
         harness.setHand(player1, List.of(new MagefireWings()));
         harness.addMana(player1, ManaColor.BLUE, 1);
