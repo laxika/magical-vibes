@@ -25,12 +25,14 @@ import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Component;
 
 /**
- * Resolves every "exile permanent(s), return under owner's control" flicker via {@link FlickerEffect},
- * dispatching on {@link FlickerEffect#timing()} then {@link FlickerEffect#scope()}.
+ * Resolves every "exile permanent(s), return under owner's (or controller's) control" flicker via
+ * {@link FlickerEffect}, dispatching on {@link FlickerEffect#timing()} then {@link FlickerEffect#scope()}.
  *
  * <p>{@code AT_STEP} scopes delegate to {@link ExileSupport#exileAndScheduleReturn} (a delayed trigger
  * that survives the source leaving the battlefield). {@code IMMEDIATE} exiles and re-creates the
  * permanent inline, optionally with returned +1/+1 counters or a subtype-conditional bonus effect.
+ * When {@link FlickerEffect#returnUnderController()} is true, the permanent returns under the effect
+ * controller and is tracked as stolen if the owner differs (Restoration Angel).
  */
 @Slf4j
 @Component
@@ -45,6 +47,7 @@ public class FlickerEffectHandler implements NormalEffectHandlerBean {
     private final BattlefieldEntryService battlefieldEntryService;
     private final DrawService drawService;
     private final AmountEvaluationService amountEvaluationService;
+    private final GraveyardReturnSupport graveyardReturnSupport;
 
     @Override
     public Class<? extends CardEffect> handledEffect() {
@@ -110,13 +113,17 @@ public class FlickerEffectHandler implements NormalEffectHandlerBean {
     }
 
     private void resolveImmediate(GameData gameData, StackEntry entry, FlickerEffect e) {
-        Permanent target = gameQueryService.findPermanentById(gameData, entry.getTargetId());
+        UUID permanentId = e.scope() == com.github.laxika.magicalvibes.model.effect.FlickerScope.SELF
+                ? entry.getSourcePermanentId()
+                : entry.getTargetId();
+        Permanent target = gameQueryService.findPermanentById(gameData, permanentId);
         if (target == null) {
             return;
         }
 
-        UUID controllerId = gameQueryService.findPermanentController(gameData, target.getId());
-        UUID ownerId = gameData.stolenCreatures.getOrDefault(target.getId(), controllerId);
+        UUID previousControllerId = gameQueryService.findPermanentController(gameData, target.getId());
+        UUID ownerId = gameData.stolenCreatures.getOrDefault(target.getId(), previousControllerId);
+        UUID returnControllerId = e.returnUnderController() ? entry.getControllerId() : ownerId;
 
         Card card = target.getOriginalCard();
         boolean hadBonusSubtype = e.bonusSubtype() != null
@@ -129,18 +136,20 @@ public class FlickerEffectHandler implements NormalEffectHandlerBean {
         // Immediately return from exile as a new permanent
         gameData.removeFromExile(card.getId());
         Permanent returned = new Permanent(card);
-        if (e.plusOnePlusOneCountersOnReturn() > 0
-                && !gameQueryService.cantHaveCounters(gameData, returned)) {
+        boolean applyReturnCounters = e.plusOnePlusOneCountersOnReturn() > 0
+                && (e.bonusSubtype() == null || hadBonusSubtype);
+        if (applyReturnCounters && !gameQueryService.cantHaveCounters(gameData, returned)) {
             returned.setCounterCount(CounterType.PLUS_ONE_PLUS_ONE, e.plusOnePlusOneCountersOnReturn());
         }
-        battlefieldEntryService.putPermanentOntoBattlefield(gameData, ownerId, returned);
+        battlefieldEntryService.putPermanentOntoBattlefield(gameData, returnControllerId, returned);
+        if (e.returnUnderController() && !returnControllerId.equals(ownerId)) {
+            graveyardReturnSupport.trackStolenCreature(gameData, returned.getId(), returnControllerId, ownerId);
+        }
 
-        String logEntry = card.getName() + " is exiled by " + entry.getCard().getName()
-                + " and returns to the battlefield under " + gameData.playerIdToName.get(ownerId) + "'s control.";
-        gameBroadcastService.logAndBroadcast(gameData, GameLog.builder().card(card).text(" is exiled by ").card(entry.getCard()).text(" and returns to the battlefield under " + gameData.playerIdToName.get(ownerId) + "'s control.").build());
+        gameBroadcastService.logAndBroadcast(gameData, GameLog.builder().card(card).text(" is exiled by ").card(entry.getCard()).text(" and returns to the battlefield under " + gameData.playerIdToName.get(returnControllerId) + "'s control.").build());
         log.info("Game {} - {} flickers {} (immediate return)", gameData.id, entry.getCard().getName(), card.getName());
 
-        battlefieldEntryService.handleCreatureEnteredBattlefield(gameData, ownerId, card, null, false);
+        battlefieldEntryService.handleCreatureEnteredBattlefield(gameData, returnControllerId, card, null, false);
 
         // Apply bonus if the exiled permanent had the required subtype
         if (hadBonusSubtype && e.bonusEffect() instanceof DrawCardEffect drawEffect) {
@@ -149,8 +158,6 @@ public class FlickerEffectHandler implements NormalEffectHandlerBean {
             for (int i = 0; i < drawAmount; i++) {
                 drawService.resolveDrawCard(gameData, entry.getControllerId());
             }
-            String drawLog = gameData.playerIdToName.get(entry.getControllerId())
-                    + " draws a card (" + card.getName() + " was a " + e.bonusSubtype().getDisplayName() + ").";
             gameBroadcastService.logAndBroadcast(gameData, GameLog.builder().text(gameData.playerIdToName.get(entry.getControllerId()) + " draws a card (").card(card).text(" was a " + e.bonusSubtype().getDisplayName() + ").").build());
         }
     }

@@ -37,6 +37,9 @@ public final class CardPredicateUtils {
         if (predicate instanceof CardIsAuraPredicate) {
             return "Aura card";
         }
+        if (predicate instanceof CardIsColorlessPredicate) {
+            return "colorless card";
+        }
         if (predicate instanceof CardIsPermanentPredicate) {
             return "permanent card";
         }

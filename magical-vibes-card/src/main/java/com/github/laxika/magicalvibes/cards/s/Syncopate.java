@@ -6,6 +6,7 @@ import com.github.laxika.magicalvibes.model.effect.CounterUnlessPaysEffect;
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 
 @CardRegistration(set = "DOM", collectorNumber = "67")
+@CardRegistration(set = "INR", collectorNumber = "89")
 public class Syncopate extends Card {
 
     public Syncopate() {

@@ -9,6 +9,7 @@ import com.github.laxika.magicalvibes.model.filter.ControlledPermanentPredicateT
 import com.github.laxika.magicalvibes.model.filter.PermanentIsCreaturePredicate;
 
 @CardRegistration(set = "ISD", collectorNumber = "46")
+@CardRegistration(set = "INR", collectorNumber = "55")
 public class CacklingCounterpart extends Card {
 
     public CacklingCounterpart() {

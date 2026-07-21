@@ -903,6 +903,25 @@ class StepTriggerServiceTest {
         }
 
         @Test
+        @DisplayName("TransformSourceAtNextUpkeep pushes delayed transform trigger onto stack")
+        void transformSourceAtNextUpkeepPushesTrigger() {
+            gd.turnNumber = 2;
+            Card card = createCardWithName("Archangel Avacyn");
+            Permanent perm = new Permanent(card);
+            gd.playerBattlefields.get(player1Id).add(perm);
+            gd.queueDelayedAction(new com.github.laxika.magicalvibes.model.action.TransformSourceAtNextUpkeep(
+                    perm.getId(), player1Id, card));
+
+            sut.handleUpkeepTriggers(gd);
+
+            assertThat(gd.stack).isNotEmpty();
+            assertThat(gd.stack.getFirst().getDescription()).contains("transform");
+            assertThat(gd.stack.getFirst().getSourcePermanentId()).isEqualTo(perm.getId());
+            assertThat(gd.stack.getFirst().getEffectsToResolve().getFirst())
+                    .isInstanceOf(com.github.laxika.magicalvibes.model.effect.TransformToBackFaceEffect.class);
+        }
+
+        @Test
         @DisplayName("MayRevealSubtypeFromHandEffect queues may ability when hand contains matching subtype")
         void mayRevealSubtypeQueuesWhenSubtypeInHand() {
             gd.turnNumber = 2;
@@ -956,6 +975,41 @@ class StepTriggerServiceTest {
             sut.handleUpkeepTriggers(gd);
 
             assertThat(gd.stack).isEmpty();
+        }
+    }
+
+    @Nested
+    @DisplayName("handleBeginningOfCombatTriggers")
+    class HandleBeginningOfCombatTriggers {
+
+        @Test
+        @DisplayName("BEGINNING_OF_COMBAT_TRIGGERED fires only for active player's permanents")
+        void beginningOfCombatFiresForActivePlayerOnly() {
+            Card activeCard = createCardWithName("Active Combat Card");
+            activeCard.addEffect(EffectSlot.BEGINNING_OF_COMBAT_TRIGGERED, new GainLifeEffect(1));
+            gd.playerBattlefields.get(player1Id).add(new Permanent(activeCard));
+
+            Card opponentCard = createCardWithName("Opponent Combat Card");
+            opponentCard.addEffect(EffectSlot.BEGINNING_OF_COMBAT_TRIGGERED, new GainLifeEffect(1));
+            gd.playerBattlefields.get(player2Id).add(new Permanent(opponentCard));
+
+            sut.handleBeginningOfCombatTriggers(gd);
+
+            assertThat(gd.stack).hasSize(1);
+            assertThat(gd.stack.getFirst().getDescription()).contains("Active Combat Card");
+        }
+
+        @Test
+        @DisplayName("EACH_BEGINNING_OF_COMBAT_TRIGGERED fires for non-active player's permanents")
+        void eachBeginningOfCombatFiresForAllPlayers() {
+            Card card = createCardWithName("Each Combat Card");
+            card.addEffect(EffectSlot.EACH_BEGINNING_OF_COMBAT_TRIGGERED, new GainLifeEffect(1));
+            gd.playerBattlefields.get(player2Id).add(new Permanent(card));
+
+            sut.handleBeginningOfCombatTriggers(gd);
+
+            assertThat(gd.stack).isNotEmpty();
+            assertThat(gd.stack.getFirst().getDescription()).contains("Each Combat Card");
         }
     }
 

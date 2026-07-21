@@ -297,6 +297,18 @@ public sealed interface ChoiceContext {
     }
 
     /**
+     * Hullbreaker Horror's "choose up to one" mode pick, made as the spell-cast triggered ability
+     * resolves. {@code sourceCard} is Hullbreaker Horror; {@code controllerId} chooses the mode and
+     * then (for SPELL / PERMANENT) the target. {@link #NONE} skips both modes.
+     */
+    record HullbreakerHorrorModeChoice(Card sourceCard, UUID controllerId) implements ChoiceContext {
+
+        public static final String SPELL = "Return target spell you don't control to its owner's hand";
+        public static final String PERMANENT = "Return target nonland permanent to its owner's hand";
+        public static final String NONE = "Do nothing";
+    }
+
+    /**
      * Quarry Hauler: "for each kind of counter on target permanent, put another counter of that kind
      * on it or remove one from it." The controller answers {@link #ADD}/{@link #REMOVE} once for the
      * first entry of {@code remainingKinds}; the answer is applied to {@code targetId} and, if any

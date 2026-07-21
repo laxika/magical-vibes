@@ -35,6 +35,7 @@ import com.github.laxika.magicalvibes.service.battlefield.PermanentRemovalServic
 import com.github.laxika.magicalvibes.service.effect.normalfx.DamageSupport;
 import com.github.laxika.magicalvibes.service.effect.normalfx.LifeSupport;
 import com.github.laxika.magicalvibes.service.effect.normalfx.LibrarySearchSupport;
+import com.github.laxika.magicalvibes.service.effect.normalfx.SoulbondSupport;
 import com.github.laxika.magicalvibes.service.effect.normalfx.TargetPlayerSacrificesCreatureThenCreateTokensIfSubtypeEffectHandler;
 
 import lombok.RequiredArgsConstructor;
@@ -76,6 +77,7 @@ public class PermanentChoiceBattlefieldHandlerService {
     private final DestructionSupport destructionSupport;
     private final LifeSupport lifeSupport;
     private final LibrarySearchSupport librarySearchSupport;
+    private final SoulbondSupport soulbondSupport;
     private final MayAbilityTapCostService mayAbilityTapCostService;
     private final TargetPlayerSacrificesCreatureThenCreateTokensIfSubtypeEffectHandler sacrificeCreatureCreateTokensIfSubtypeHandler;
     private final com.github.laxika.magicalvibes.service.effect.normalfx.TariffSupport tariffSupport;
@@ -478,6 +480,26 @@ public class PermanentChoiceBattlefieldHandlerService {
         inputCompletionService.sbaProcessMayAbilitiesThenAutoPass(gameData);
     }
 
+    public void handleSoulbondChoosePartner(GameData gameData, UUID partnerPermanentId,
+                                            PermanentChoiceContext.SoulbondChoosePartner context) {
+        Permanent source = gameQueryService.findPermanentById(gameData, context.sourcePermanentId());
+        Permanent partner = gameQueryService.findPermanentById(gameData, partnerPermanentId);
+        if (source == null || partner == null
+                || !soulbondSupport.isUnpairedCreature(gameData, source)
+                || !soulbondSupport.isUnpairedCreature(gameData, partner)) {
+            inputCompletionService.sbaProcessMayAbilitiesThenAutoPass(gameData);
+            return;
+        }
+        UUID sourceController = gameQueryService.findPermanentController(gameData, source.getId());
+        UUID partnerController = gameQueryService.findPermanentController(gameData, partner.getId());
+        if (!context.controllerId().equals(sourceController) || !context.controllerId().equals(partnerController)) {
+            inputCompletionService.sbaProcessMayAbilitiesThenAutoPass(gameData);
+            return;
+        }
+        soulbondSupport.pair(gameData, source, partner);
+        inputCompletionService.sbaProcessMayAbilitiesThenAutoPass(gameData);
+    }
+
     private void beginChampionedTrigger(GameData gameData, Permanent source, UUID controllerId,
                                         List<CardEffect> effects) {
         stateBasedActionService.performStateBasedActions(gameData);
@@ -715,6 +737,38 @@ public class PermanentChoiceBattlefieldHandlerService {
         if (power > 0 && ctx.targetId() != null) {
             damageSupport.dealDividedDamageToAnyTargets(gameData, ctx.sourceCard(), ctx.controllerId(),
                     Map.of(ctx.targetId(), power));
+        }
+
+        inputCompletionService.sbaProcessMayAbilitiesThenAutoPass(gameData);
+    }
+
+    public void handleExploitSacrifice(GameData gameData, UUID permanentId,
+                                       PermanentChoiceContext.ExploitSacrifice ctx) {
+        Permanent toSacrifice = gameQueryService.findPermanentById(gameData, permanentId);
+        if (toSacrifice == null) {
+            throw new IllegalStateException("Chosen creature no longer exists");
+        }
+
+        permanentRemovalService.removePermanentToGraveyard(gameData, toSacrifice);
+
+        String playerName = gameData.playerIdToName.get(ctx.controllerId());
+        gameBroadcastService.logAndBroadcast(gameData,
+                GameLog.textCardText(playerName + " sacrifices ", toSacrifice.getCard(), " for exploit."));
+        log.info("Game {} - {} sacrifices {} for {} exploit", gameData.id, playerName,
+                toSacrifice.getCard().getName(), ctx.sourceCard().getName());
+
+        // CR 702.110: "exploits a creature" only if the exploit permanent was on the battlefield
+        // as the ability started resolving (sacrificing itself still counts).
+        if (ctx.sourceStillOnBattlefield()) {
+            triggerCollectionService.checkExploitTriggers(
+                    gameData, ctx.sourceCard(), ctx.controllerId(), ctx.sourcePermanentId());
+            if (gameData.hasPendingInteraction(PermanentChoiceContext.ExploitTriggerTarget.class)
+                    && !gameData.interaction.isAwaitingInput()) {
+                triggerCollectionService.processNextExploitTriggerTarget(gameData);
+            }
+            if (gameData.interaction.isAwaitingInput()) {
+                return;
+            }
         }
 
         inputCompletionService.sbaProcessMayAbilitiesThenAutoPass(gameData);

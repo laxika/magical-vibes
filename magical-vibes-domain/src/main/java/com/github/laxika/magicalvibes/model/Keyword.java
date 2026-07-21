@@ -39,6 +39,7 @@ public enum Keyword {
     KICKER,
     CREW,
     EXPLORE,
+    EXPLOIT,
     UNDYING,
     PERSIST,
     CONVERGE,
@@ -47,7 +48,15 @@ public enum Keyword {
     HORSEMANSHIP,
     CONSPIRE,
     RETRACE,
-    BANDING;
+    BANDING,
+    EMERGE,
+    COVEN,
+    MELD,
+    TRAINING,
+    DISTURB,
+    SKULK,
+    SOULBOND,
+    MIRACLE;
 
     /**
      * Maps each landwalk keyword to the land subtype it walks over.

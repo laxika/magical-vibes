@@ -87,6 +87,11 @@ public class AutoPassService {
             triggerCollectionService.processNextSpellTargetTrigger(gameData);
         }
 
+        // Process any pending multi-target triggers (ETB copies / ON_SELF_CAST up-to-N, e.g. Elder Deep-Fiend)
+        if (!gameData.interaction.isAwaitingInput() && gameData.hasPendingInteraction(PermanentChoiceContext.ETBTokenMultiTargetTrigger.class)) {
+            triggerCollectionService.processNextETBTokenMultiTargetTrigger(gameData);
+        }
+
         // Process any pending spell-cast graveyard-target triggers (e.g. Teshar, Ancestor's Apostle)
         if (!gameData.interaction.isAwaitingInput() && gameData.hasPendingInteraction(PermanentChoiceContext.SpellGraveyardTargetTrigger.class)) {
             triggerCollectionService.processNextSpellGraveyardTargetTrigger(gameData);
@@ -130,6 +135,10 @@ public class AutoPassService {
         // Process any pending explore targeted triggers
         if (!gameData.interaction.isAwaitingInput() && gameData.hasPendingInteraction(PermanentChoiceContext.ExploreTriggerTarget.class)) {
             triggerCollectionService.processNextExploreTriggerTarget(gameData);
+        }
+        // Process any pending exploit stack-target triggers
+        if (!gameData.interaction.isAwaitingInput() && gameData.hasPendingInteraction(PermanentChoiceContext.ExploitTriggerTarget.class)) {
+            triggerCollectionService.processNextExploitTriggerTarget(gameData);
         }
 
         // Process any pending clash targeted triggers

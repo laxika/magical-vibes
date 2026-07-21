@@ -164,6 +164,8 @@ public sealed interface PermanentChoiceContext extends PendingInteraction {
     /** "Put a creature you control on top of its owner's library." The controller chooses one of their
      *  creatures (the source itself is a legal choice) as the effect resolves. (Nulltread Gargantuan.) */
     record PutControlledCreatureOnTopOfLibrary(UUID controllerId) implements PermanentChoiceContext {}
+    /** Soulbond self-enter: choose another unpaired creature you control to pair with the source. */
+    record SoulbondChoosePartner(UUID sourcePermanentId, UUID controllerId) implements PermanentChoiceContext {}
 
     /** "When a creature is championed with this permanent, [targeted effect]." Chooses the target for a
      *  {@code EffectSlot.ON_CHAMPIONED} triggered ability (e.g. Mistbind Clique — tap all lands target
@@ -260,6 +262,23 @@ public sealed interface PermanentChoiceContext extends PendingInteraction {
                                  StackEntryPredicate spellFilter) implements PermanentChoiceContext {}
 
     /**
+     * Exploit sacrifice choice: controller picks any creature they control (including the exploit
+     * source) to sacrifice. {@code sourceStillOnBattlefield} gates whether {@code ON_EXPLOIT}
+     * fires after the sacrifice (false when the exploit permanent left before resolution).
+     */
+    record ExploitSacrifice(UUID controllerId, Card sourceCard, UUID sourcePermanentId,
+                            boolean sourceStillOnBattlefield) implements PermanentChoiceContext {}
+
+    /**
+     * "When this creature exploits a creature" trigger that needs a stack target (spell and/or
+     * ability). {@code includeAbilities} is true when the card's stack filter includes
+     * {@code StackEntryHasTargetPredicate} (Overcharged Amalgam).
+     */
+    record ExploitTriggerTarget(Card sourceCard, UUID controllerId, List<CardEffect> effects,
+                                UUID sourcePermanentId, StackEntryPredicate stackFilter,
+                                boolean includeAbilities) implements PermanentChoiceContext {}
+
+    /**
      * ETB trigger on a token copy that needs to choose a target at trigger time (CR 603.3).
      * Used when a token copy is created of a creature with a targeted ETB ability
      * (e.g. Cackling Counterpart → Homarid Explorer). The target can't be chosen at cast
@@ -269,13 +288,13 @@ public sealed interface PermanentChoiceContext extends PendingInteraction {
                                  UUID sourcePermanentId, TargetFilter targetFilter) implements PermanentChoiceContext {}
 
     /**
-     * ETB trigger on a token copy of a creature with multiple target groups or groups with
-     * {@code maxTargets > 1} (e.g. Burning Sun's Avatar: mandatory opponent/planeswalker +
-     * optional creature; or "up to 3 target creatures"). Targets are chosen slot-by-slot at
-     * trigger time: each group can accept up to {@code maxTargets} targets before advancing.
-     * Chosen targets accumulate in {@code chosenTargetsSoFar}. A response equal to
-     * {@code controllerId} signals "done with this group" — only valid once the group's
-     * minimum has been met.
+     * Multi-target trigger for creatures with multiple target groups or groups with
+     * {@code maxTargets > 1} (e.g. Burning Sun's Avatar ETB; Elder Deep-Fiend ON_SELF_CAST
+     * "tap up to four target permanents"). Targets are chosen slot-by-slot at trigger time:
+     * each group can accept up to {@code maxTargets} targets before advancing. Chosen targets
+     * accumulate in {@code chosenTargetsSoFar}. A response equal to {@code controllerId}
+     * signals "done with this group" — only valid once the group's minimum has been met.
+     * {@code sourcePermanentId} is null for cast-time (ON_SELF_CAST) triggers.
      */
     record ETBTokenMultiTargetTrigger(Card sourceCard, UUID controllerId, List<CardEffect> effects,
                                       UUID sourcePermanentId, List<UUID> chosenTargetsSoFar,

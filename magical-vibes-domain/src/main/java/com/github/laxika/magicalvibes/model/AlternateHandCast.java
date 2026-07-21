@@ -19,21 +19,26 @@ import java.util.Set;
  * Forest and a Plains"). {@code grantsFlash} additionally lets the alternate cast be made any time
  * the caster has priority ("as though it had flash"). An empty {@code costs} list models a free
  * cast ("without paying its mana cost").
+ *
+ * <p>{@code reduceManaBySacrificedManaValue} models emerge (CR 702.123): the alternate cost's mana
+ * component is reduced by generic mana equal to the sacrificed creature's mana value (colored
+ * components cannot be reduced). Pair with {@link ManaCastingCost} + {@link SacrificePermanentsCost}.
  */
 public record AlternateHandCast(List<CastingCost> costs, Set<CardSubtype> prowlDamageSubtypes,
-                                Condition availabilityCondition, boolean grantsFlash) implements CastingOption {
+                                Condition availabilityCondition, boolean grantsFlash,
+                                boolean reduceManaBySacrificedManaValue) implements CastingOption {
 
     public AlternateHandCast(List<CastingCost> costs) {
-        this(costs, Set.of(), null, false);
+        this(costs, Set.of(), null, false, false);
     }
 
     public AlternateHandCast(List<CastingCost> costs, Set<CardSubtype> prowlDamageSubtypes) {
-        this(costs, prowlDamageSubtypes, null, false);
+        this(costs, prowlDamageSubtypes, null, false, false);
     }
 
     /** Convenience constructor for prowl with a single qualifying creature subtype. */
     public AlternateHandCast(List<CastingCost> costs, CardSubtype prowlDamageSubtype) {
-        this(costs, Set.of(prowlDamageSubtype), null, false);
+        this(costs, Set.of(prowlDamageSubtype), null, false, false);
     }
 
     /**
@@ -41,7 +46,15 @@ public record AlternateHandCast(List<CastingCost> costs, Set<CardSubtype> prowlD
      * timing (e.g. Qasali Ambusher's free "as though it had flash" cast).
      */
     public AlternateHandCast(List<CastingCost> costs, Condition availabilityCondition, boolean grantsFlash) {
-        this(costs, Set.of(), availabilityCondition, grantsFlash);
+        this(costs, Set.of(), availabilityCondition, grantsFlash, false);
+    }
+
+    /**
+     * Convenience constructor for emerge: mana + sacrifice alternate cost reduced by the
+     * sacrificed permanent's mana value.
+     */
+    public AlternateHandCast(List<CastingCost> costs, boolean reduceManaBySacrificedManaValue) {
+        this(costs, Set.of(), null, false, reduceManaBySacrificedManaValue);
     }
 
     @Override

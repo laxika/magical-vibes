@@ -63,10 +63,10 @@ public class PermanentViewFactory {
     }
 
     public PermanentView create(Permanent p, int bonusPower, int bonusToughness, Set<Keyword> bonusKeywords, boolean animatedCreature, List<ActivatedAbility> grantedActivatedAbilities, Set<CardColor> staticGrantedColors, List<CardSubtype> staticGrantedSubtypes, Set<CardType> staticGrantedCardTypes, boolean colorOverriding, boolean subtypeOverriding, boolean landSubtypeOverriding, Set<Keyword> staticRemovedKeywords, boolean losesAllAbilities, Set<CardSupertype> staticGrantedSupertypes, List<ModifierLine> modifierLines) {
-        return create(p, bonusPower, bonusToughness, bonusKeywords, animatedCreature, grantedActivatedAbilities, staticGrantedColors, staticGrantedSubtypes, staticGrantedCardTypes, colorOverriding, subtypeOverriding, landSubtypeOverriding, staticRemovedKeywords, losesAllAbilities, staticGrantedSupertypes, modifierLines, List.of(), 0);
+        return create(p, bonusPower, bonusToughness, bonusKeywords, animatedCreature, grantedActivatedAbilities, staticGrantedColors, staticGrantedSubtypes, staticGrantedCardTypes, colorOverriding, subtypeOverriding, landSubtypeOverriding, false, staticRemovedKeywords, losesAllAbilities, staticGrantedSupertypes, modifierLines, List.of(), 0);
     }
 
-    public PermanentView create(Permanent p, int bonusPower, int bonusToughness, Set<Keyword> bonusKeywords, boolean animatedCreature, List<ActivatedAbility> grantedActivatedAbilities, Set<CardColor> staticGrantedColors, List<CardSubtype> staticGrantedSubtypes, Set<CardType> staticGrantedCardTypes, boolean colorOverriding, boolean subtypeOverriding, boolean landSubtypeOverriding, Set<Keyword> staticRemovedKeywords, boolean losesAllAbilities, Set<CardSupertype> staticGrantedSupertypes, List<ModifierLine> modifierLines, List<Card> faceUpExiledWithCards, int faceDownExiledCount) {
+    public PermanentView create(Permanent p, int bonusPower, int bonusToughness, Set<Keyword> bonusKeywords, boolean animatedCreature, List<ActivatedAbility> grantedActivatedAbilities, Set<CardColor> staticGrantedColors, List<CardSubtype> staticGrantedSubtypes, Set<CardType> staticGrantedCardTypes, boolean colorOverriding, boolean subtypeOverriding, boolean landSubtypeOverriding, boolean cardTypeOverriding, Set<Keyword> staticRemovedKeywords, boolean losesAllAbilities, Set<CardSupertype> staticGrantedSupertypes, List<ModifierLine> modifierLines, List<Card> faceUpExiledWithCards, int faceDownExiledCount) {
         Set<Keyword> allKeywords = new HashSet<>(p.getGrantedKeywords());
         allKeywords.addAll(p.getUntilNextTurnKeywords());
         allKeywords.addAll(bonusKeywords);
@@ -87,13 +87,14 @@ public class PermanentViewFactory {
         cardView = applyAwakeningCounterSubtype(cardView, p);
         cardView = applyGrantedCardTypes(cardView, p);
         cardView = applyPermanentAnimation(cardView, p);
-        cardView = applyStaticGrantedCardTypes(cardView, staticGrantedCardTypes);
+        cardView = applyStaticGrantedCardTypes(cardView, staticGrantedCardTypes, cardTypeOverriding);
         cardView = applyStaticGrantedSupertypes(cardView, staticGrantedSupertypes);
         cardView = applyGrantedActivatedAbilities(cardView, grantedActivatedAbilities);
         cardView = applyStaticGrantedColors(cardView, p, staticGrantedColors, colorOverriding);
-        // When creature loses all abilities, strip its own activated abilities from the view
+        // When creature loses all abilities, strip its own activated abilities and intrinsic tap
         if (losesAllAbilities) {
             cardView = stripCardActivatedAbilities(cardView);
+            cardView = clearHasTapAbility(cardView);
         }
         return new PermanentView(
                 p.getId(), cardView,
@@ -264,9 +265,45 @@ public class PermanentViewFactory {
         );
     }
 
-    private CardView applyStaticGrantedCardTypes(CardView cardView, Set<CardType> staticGrantedCardTypes) {
-        if (staticGrantedCardTypes.isEmpty()) {
+    private CardView applyStaticGrantedCardTypes(CardView cardView, Set<CardType> staticGrantedCardTypes, boolean cardTypeOverriding) {
+        if (!cardTypeOverriding && staticGrantedCardTypes.isEmpty()) {
             return cardView;
+        }
+        if (cardTypeOverriding) {
+            CardType primary = staticGrantedCardTypes.isEmpty()
+                    ? CardType.LAND
+                    : staticGrantedCardTypes.iterator().next();
+            Set<CardType> additional = EnumSet.noneOf(CardType.class);
+            for (CardType type : staticGrantedCardTypes) {
+                if (type != primary) {
+                    additional.add(type);
+                }
+            }
+            return new CardView(
+                    cardView.id(), cardView.name(), primary, additional, cardView.supertypes(), cardView.subtypes(),
+                    cardView.cardText(), cardView.manaCost(), cardView.power(), cardView.toughness(),
+                    cardView.keywords(), cardView.hasTapAbility(), cardView.setCode(),
+                    cardView.collectorNumber(), cardView.color(), cardView.colors(), cardView.needsTarget(),
+                    cardView.needsSpellTarget(), cardView.activatedAbilities(), cardView.loyalty(),
+                    cardView.hasConvoke(), cardView.hasPhyrexianMana(), cardView.phyrexianManaCount(),
+                    cardView.token(),
+                    cardView.watermark(),
+                    cardView.hasAlternateCastingCost(),
+                    cardView.alternateCostLifePayment(),
+                    cardView.alternateCostSacrificeCount(),
+                    cardView.alternateCostTapCount(),
+
+                    cardView.alternateCostReturnCount(),
+
+                    cardView.alternateCostManaCost(),
+                    cardView.graveyardActivatedAbilities(),
+                    cardView.handActivatedAbilities(),
+                    cardView.transformable(),
+                    cardView.kickerCost(),
+                    cardView.modalChoicesRequired(),
+                    cardView.modalOptional(),
+                    cardView.modalOptions()
+            );
         }
         Set<CardType> mergedTypes = new HashSet<>(cardView.additionalTypes());
         mergedTypes.addAll(staticGrantedCardTypes);
@@ -500,7 +537,7 @@ public class PermanentViewFactory {
     private CardView applyStaticGrantedColors(CardView cardView, Permanent p, Set<CardColor> staticGrantedColors, boolean colorOverriding) {
         // Determine the effective color: static grants add to permanent's colors
         // If the permanent already has a color override (from non-static effects), use that
-        if (staticGrantedColors.isEmpty() && !p.isColorOverridden() && p.getGrantedColors().isEmpty()) {
+        if (staticGrantedColors.isEmpty() && !colorOverriding && !p.isColorOverridden() && p.getGrantedColors().isEmpty()) {
             return cardView;
         }
         CardColor effectiveColor = cardView.color();
@@ -520,7 +557,11 @@ public class PermanentViewFactory {
             effectiveColor = p.getTransientColors().iterator().next();
             effectiveColors = new ArrayList<>(p.getTransientColors());
         }
-        if (!staticGrantedColors.isEmpty()) {
+        if (colorOverriding) {
+            // Color-setting (including "becomes colorless" with an empty set)
+            effectiveColors = new ArrayList<>(staticGrantedColors);
+            effectiveColor = staticGrantedColors.isEmpty() ? null : staticGrantedColors.iterator().next();
+        } else if (!staticGrantedColors.isEmpty()) {
             // Static color grants take precedence for display if the card has no color
             // For multicolor, we display the first granted color as primary
             effectiveColor = staticGrantedColors.iterator().next();
@@ -543,6 +584,37 @@ public class PermanentViewFactory {
                 cardView.alternateCostSacrificeCount(),
                 cardView.alternateCostTapCount(),
                 cardView.alternateCostReturnCount(),
+                cardView.alternateCostManaCost(),
+                cardView.graveyardActivatedAbilities(),
+                cardView.handActivatedAbilities(),
+                cardView.transformable(),
+                cardView.kickerCost(),
+                cardView.modalChoicesRequired(),
+                cardView.modalOptional(),
+                cardView.modalOptions()
+        );
+    }
+
+    private CardView clearHasTapAbility(CardView cardView) {
+        if (!cardView.hasTapAbility()) {
+            return cardView;
+        }
+        return new CardView(
+                cardView.id(), cardView.name(), cardView.type(), cardView.additionalTypes(), cardView.supertypes(), cardView.subtypes(),
+                cardView.cardText(), cardView.manaCost(), cardView.power(), cardView.toughness(),
+                cardView.keywords(), false, cardView.setCode(),
+                cardView.collectorNumber(), cardView.color(), cardView.colors(), cardView.needsTarget(),
+                cardView.needsSpellTarget(), cardView.activatedAbilities(), cardView.loyalty(),
+                cardView.hasConvoke(), cardView.hasPhyrexianMana(), cardView.phyrexianManaCount(),
+                cardView.token(),
+                cardView.watermark(),
+                cardView.hasAlternateCastingCost(),
+                cardView.alternateCostLifePayment(),
+                cardView.alternateCostSacrificeCount(),
+                cardView.alternateCostTapCount(),
+
+                cardView.alternateCostReturnCount(),
+
                 cardView.alternateCostManaCost(),
                 cardView.graveyardActivatedAbilities(),
                 cardView.handActivatedAbilities(),

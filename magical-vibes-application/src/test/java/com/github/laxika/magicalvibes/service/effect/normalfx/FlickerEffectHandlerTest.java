@@ -61,6 +61,7 @@ class FlickerEffectHandlerTest {
     @Mock private PredicateEvaluationService predicateEvaluationService;
     @Mock private DrawService drawService;
     @Mock private AmountEvaluationService amountEvaluationService;
+    @Mock private GraveyardReturnSupport graveyardReturnSupport;
     @InjectMocks
     private ExileSupport exileSupport;
 
@@ -90,7 +91,7 @@ class FlickerEffectHandlerTest {
         gd.playerDecks.put(player2Id, Collections.synchronizedList(new ArrayList<>()));
         handler = new FlickerEffectHandler(exileSupport, gameQueryService, predicateEvaluationService,
                 gameBroadcastService, permanentRemovalService, battlefieldEntryService,
-                drawService, amountEvaluationService);
+                drawService, amountEvaluationService, graveyardReturnSupport);
     }
 
     private Card createCreatureCard(String name) {

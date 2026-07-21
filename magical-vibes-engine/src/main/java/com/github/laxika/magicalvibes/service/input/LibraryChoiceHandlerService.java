@@ -1061,7 +1061,7 @@ public class LibraryChoiceHandlerService {
         if (libraryRevealChoice.selectedToHand()) {
             resolveRevealChoiceToHand(gameData, controllerId, playerName, selectedCards, remainingCards,
                     libraryRevealChoice.reorderRemainingToBottom(), libraryRevealChoice.remainingToGraveyard(),
-                    libraryRevealChoice.remainingToExile());
+                    libraryRevealChoice.remainingToExile(), libraryRevealChoice.randomRemainingToBottom());
             return;
         }
 
@@ -1139,13 +1139,21 @@ public class LibraryChoiceHandlerService {
                                               List<Card> selectedCards, List<Card> remainingCards,
                                               boolean reorderRemainingToBottom) {
         resolveRevealChoiceToHand(gameData, controllerId, playerName, selectedCards, remainingCards,
-                reorderRemainingToBottom, false, false);
+                reorderRemainingToBottom, false, false, false);
     }
 
     private void resolveRevealChoiceToHand(GameData gameData, UUID controllerId, String playerName,
                                               List<Card> selectedCards, List<Card> remainingCards,
                                               boolean reorderRemainingToBottom, boolean remainingToGraveyard,
                                               boolean remainingToExile) {
+        resolveRevealChoiceToHand(gameData, controllerId, playerName, selectedCards, remainingCards,
+                reorderRemainingToBottom, remainingToGraveyard, remainingToExile, false);
+    }
+
+    private void resolveRevealChoiceToHand(GameData gameData, UUID controllerId, String playerName,
+                                              List<Card> selectedCards, List<Card> remainingCards,
+                                              boolean reorderRemainingToBottom, boolean remainingToGraveyard,
+                                              boolean remainingToExile, boolean randomRemainingToBottom) {
         // Put selected cards into hand
         for (Card card : selectedCards) {
             gameData.addCardToHand(controllerId, card);
@@ -1181,6 +1189,11 @@ public class LibraryChoiceHandlerService {
         } else if (selectedCards.isEmpty()) {
             String logEntry = playerName + " does not reveal any creature cards.";
             gameBroadcastService.logAndBroadcast(gameData, GameLog.text(logEntry));
+        } else if (randomRemainingToBottom) {
+            gameBroadcastService.logAndBroadcast(gameData,
+                    appendCards(GameLog.builder().text(playerName + " puts "), selectedCards)
+                            .text(" into their hand. The rest are put on the bottom of their library in a random order.")
+                            .build());
         } else {
             gameBroadcastService.logAndBroadcast(gameData,
                     appendCards(GameLog.builder().text(playerName + " reveals "), selectedCards)
@@ -1196,6 +1209,17 @@ public class LibraryChoiceHandlerService {
 
             // Resume resolving remaining effects on the same spell/ability
             // (e.g. Dark Bargain: "Look at top 3, put 2 to hand, rest to graveyard. Deals 2 damage to you.")
+            finishSearchAndResume(gameData);
+            return;
+        }
+
+        if (randomRemainingToBottom) {
+            if (!remainingCards.isEmpty()) {
+                Collections.shuffle(remainingCards);
+                gameData.playerDecks.get(controllerId).addAll(remainingCards);
+            }
+            log.info("Game {} - {} puts {} card(s) to hand, {} to bottom randomly",
+                    gameData.id, playerName, selectedCards.size(), remainingCards.size());
             finishSearchAndResume(gameData);
             return;
         }

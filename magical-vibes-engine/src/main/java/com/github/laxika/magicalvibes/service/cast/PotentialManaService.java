@@ -330,6 +330,7 @@ public class PotentialManaService {
         }
         return switch (ability.getTimingRestriction()) {
             case CAST_NONCREATURE_SPELL_THIS_TURN -> gameQueryService.playerCastNoncreatureSpellThisTurn(gameData, playerId);
+            case COVEN -> gameQueryService.isCovenMet(gameData, playerId);
             case METALCRAFT -> gameQueryService.isMetalcraftMet(gameData, playerId);
             case MORBID -> gameQueryService.isMorbidMet(gameData);
             case OPPONENT_CONTROLS_FLYING_CREATURE -> gameQueryService.anyOpponentControlsFlyingCreature(gameData, playerId);

@@ -7,6 +7,7 @@ import com.github.laxika.magicalvibes.model.FlashbackCast;
 import com.github.laxika.magicalvibes.model.effect.CreateTokenEffect;
 
 @CardRegistration(set = "DKA", collectorNumber = "12")
+@CardRegistration(set = "INR", collectorNumber = "30")
 public class LingeringSouls extends Card {
 
     public LingeringSouls() {

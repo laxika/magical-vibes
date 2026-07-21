@@ -110,6 +110,14 @@ ON_ALLY_CREATURE_ENTERS_BATTLEFIELD,
      *  via {@code TriggerCollectionService.checkLandPutIntoGraveyardFromAnywhereTriggers}. Used by
      *  Countryside Crusher. */
     ON_ALLY_LAND_PUT_INTO_GRAVEYARD_FROM_ANYWHERE,
+    /** Triggers whenever a creature card the controller owns is put into their graveyard from anywhere
+     *  (battlefield, hand, library, stack, exile). Fires on permanents the graveyard owner controls.
+     *  Uses the card's printed types (not battlefield creature-ness), so tokens never trigger and a
+     *  creature card that was a noncreature permanent still does. Checked in
+     *  {@code GraveyardService.addCardToGraveyard} via
+     *  {@code TriggerCollectionService.checkCreatureCardPutIntoGraveyardFromAnywhereTriggers}.
+     *  Used by Soulcipher Board. */
+    ON_ALLY_CREATURE_CARD_PUT_INTO_GRAVEYARD_FROM_ANYWHERE,
     /** Triggers whenever a land (any player's) is put into a graveyard from the battlefield. Fires
      *  for destroy, sacrifice, etc. Checked in {@code PermanentRemovalService} via
      *  {@code TriggerCollectionService.checkAnyLandPutIntoGraveyardFromBattlefieldTriggers}. Used by
@@ -241,6 +249,9 @@ ON_ALLY_CREATURE_ENTERS_BATTLEFIELD,
     /** Triggers at the beginning of combat on the controller's turn.
      *  Checked in {@code StepTriggerService.handleBeginningOfCombatTriggers}. */
     BEGINNING_OF_COMBAT_TRIGGERED,
+    /** Triggers at the beginning of each combat (any player's turn).
+     *  Checked in {@code StepTriggerService.handleBeginningOfCombatTriggers} across all battlefields. */
+    EACH_BEGINNING_OF_COMBAT_TRIGGERED,
     /** Triggers at the beginning of the active player's precombat main phase on the
      *  controller's turn. Checked in {@code StepTriggerService.handlePrecombatMainTriggers}. */
     PRECOMBAT_MAIN_TRIGGERED,
@@ -283,6 +294,13 @@ ON_ALLY_CREATURE_ENTERS_BATTLEFIELD,
      *  {@link #ON_ALLY_ARTIFACT_ENTERS_BATTLEFIELD} for "whenever another artifact you control
      *  enters or leaves the battlefield" (Sludge Strider). */
     ON_ANOTHER_ARTIFACT_LEAVES_BATTLEFIELD,
+    /** Triggers whenever another creature controlled by this permanent's controller leaves the
+     *  battlefield by any means (destruction, exile, bounce, sacrifice, tuck). Controller-scoped
+     *  watcher — fires only on permanents sharing the leaving creature's controller, except the
+     *  leaving creature itself. Checked in PermanentRemovalService via
+     *  TriggerCollectionService.checkAllyCreatureLeavesBattlefieldTriggers. Used by Luminous
+     *  Phantom ("you gain 1 life"). */
+    ON_ALLY_CREATURE_LEAVES_BATTLEFIELD,
     /** Triggers whenever an Aura or Equipment controlled by the same player is put into a
      *  graveyard from the battlefield. Checked in DeathTriggerService after the card enters
      *  the graveyard. Used by Tiana, Ship's Caretaker. */
@@ -355,6 +373,11 @@ ON_ALLY_CREATURE_ENTERS_BATTLEFIELD,
      *  Fired from {@code ExploreEffectHandler} (land branch) and
      *  {@code MayMiscHandlerService} (non-land branch) after explore completes. */
     ON_ALLY_CREATURE_EXPLORES,
+    /** Triggers when this permanent exploits a creature (CR 702.110): its controller sacrificed
+     *  a creature as its {@code ExploitEffect} ETB ability resolved, and this permanent was still
+     *  on the battlefield at the start of that resolution (sacrificing itself still counts).
+     *  Fired from the exploit sacrifice completion path. Used by Overcharged Amalgam. */
+    ON_EXPLOIT,
     /** Triggers once per attacking creature the controller controls. Unlike ON_ALLY_CREATURES_ATTACK
      *  (which fires once per combat), this fires separately for each creature declared as an attacker.
      *  Supports TriggeringCardConditionalEffect to filter by the attacking creature (e.g. Vampires).

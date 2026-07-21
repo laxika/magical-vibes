@@ -10,6 +10,7 @@ import com.github.laxika.magicalvibes.model.effect.MillControllerCost;
 import java.util.List;
 
 @CardRegistration(set = "ISD", collectorNumber = "52")
+@CardRegistration(set = "INR", collectorNumber = "61")
 public class DerangedAssistant extends Card {
 
     public DerangedAssistant() {

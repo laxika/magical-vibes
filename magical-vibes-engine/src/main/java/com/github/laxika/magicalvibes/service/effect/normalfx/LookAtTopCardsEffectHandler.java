@@ -85,8 +85,10 @@ public class LookAtTopCardsEffectHandler implements NormalEffectHandlerBean {
             resolveRestToGraveyard(gameData, entry, e, lookCount, chooseCount);
         } else if (e.restDestination() == LookDestination.EXILE) {
             resolveRestToExile(gameData, entry, lookCount, chooseCount);
+        } else if (e.restDestination() == LookDestination.BOTTOM_OF_LIBRARY_RANDOM) {
+            resolveRestToBottom(gameData, entry, lookCount, chooseCount, true);
         } else {
-            resolveRestToBottom(gameData, entry, lookCount, chooseCount);
+            resolveRestToBottom(gameData, entry, lookCount, chooseCount, false);
         }
     }
 
@@ -234,9 +236,11 @@ public class LookAtTopCardsEffectHandler implements NormalEffectHandlerBean {
                         + " into your hand and exile the rest."));
     }
 
-    // ===== rest on the bottom of the library (Stress Dream / Shrine / Jar of Eyeballs) =====
+    // ===== rest on the bottom of the library (Stress Dream / Shrine / Jar of Eyeballs;
+    //       Memory Deluge when randomRemaining) =====
 
-    private void resolveRestToBottom(GameData gameData, StackEntry entry, int lookCount, int chooseCount) {
+    private void resolveRestToBottom(GameData gameData, StackEntry entry, int lookCount, int chooseCount,
+            boolean randomRemaining) {
         LibraryRevealSupport.TopCardsResult result =
                 libraryRevealSupport.takeTopCardsFromLibrary(gameData, entry, lookCount, true);
         if (result == null) return;
@@ -260,12 +264,15 @@ public class LookAtTopCardsEffectHandler implements NormalEffectHandlerBean {
         }
 
         String handWord = chooseCount == 1 ? "one" : String.valueOf(chooseCount);
+        String restPhrase = randomRemaining
+                ? "the rest on the bottom of your library in a random order."
+                : "the rest on the bottom of your library.";
         List<UUID> cardIds = topCards.stream().map(Card::getId).toList();
         interactionHandlerRegistry.begin(gameData, new PendingInteraction.LibraryRevealChoice(
                 controllerId, topCards, cardIds,
-                false, true, true, false, false, 0, null, chooseCount,
+                false, true, !randomRemaining, randomRemaining, false, 0, null, chooseCount,
                 "Look at the top " + topCards.size() + " cards of your library. Put " + handWord
-                        + " into your hand and the rest on the bottom of your library."));
+                        + " into your hand and " + restPhrase));
     }
 
     // ===== rest into the graveyard (Forbidden Alchemy / Dark Bargain / Tower Geist / Tracker's) =====

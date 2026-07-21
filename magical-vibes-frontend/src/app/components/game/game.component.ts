@@ -745,6 +745,10 @@ export class GameComponent implements OnInit, OnDestroy {
       this.choice.targeting.startGraveyardXValue(index, ability);
       return;
     }
+    if (ability.needsTarget) {
+      this.choice.targeting.startGraveyardAbilityTargeting(index, ability);
+      return;
+    }
     this.websocketService.send({ type: MessageType.ACTIVATE_GRAVEYARD_ABILITY, graveyardCardIndex: index, abilityIndex: 0 });
   }
 

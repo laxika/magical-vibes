@@ -9,6 +9,7 @@ import com.github.laxika.magicalvibes.model.filter.PermanentIsCreaturePredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentPredicateTargetFilter;
 
 @CardRegistration(set = "ISD", collectorNumber = "75")
+@CardRegistration(set = "INR", collectorNumber = "84")
 public class SilentDeparture extends Card {
 
     public SilentDeparture() {

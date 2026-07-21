@@ -210,4 +210,14 @@ public record CreateTokenEffect(
                         "{T}, Sacrifice this artifact: Add one mana of any color."
                 )));
     }
+
+    /** Clue token: colorless artifact with "{2}, Sacrifice this token: Draw a card." */
+    public static CreateTokenEffect ofClueToken(int amount) {
+        return ofArtifactToken(amount, "Clue", List.of(CardSubtype.CLUE),
+                List.of(new ActivatedAbility(
+                        false, "{2}",
+                        List.of(new SacrificeSelfCost(), new DrawCardEffect()),
+                        "{2}, Sacrifice this token: Draw a card."
+                )));
+    }
 }

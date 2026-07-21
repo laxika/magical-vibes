@@ -270,6 +270,8 @@ class TargetPolarityClassifier {
             entry("IllicitAuctionEffect", TargetPolarity.HARMFUL),
             entry("LoseAllCreatureTypesEffect", TargetPolarity.HARMFUL),
             entry("LosesAllAbilitiesEffect", TargetPolarity.HARMFUL),
+            entry("EnchantedPermanentBecomesOnlyLandEffect", TargetPolarity.HARMFUL),
+            entry("BecomeColorlessEffect", TargetPolarity.HARMFUL),
             entry("MarkTargetCreatureExileInsteadOfDieThisTurnEffect", TargetPolarity.HARMFUL),
             entry("MassFightTargetCreatureEffect", TargetPolarity.HARMFUL),
             entry("MustBlockTargetCreatureEffect", TargetPolarity.HARMFUL),

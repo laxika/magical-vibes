@@ -34,6 +34,7 @@ public class StaticBonusAccumulator {
     private boolean colorOverriding;
     private boolean subtypeOverriding;
     private boolean landSubtypeOverriding;
+    private boolean cardTypeOverriding;
     private boolean basePTOverridden;
     private int basePowerOverride;
     private int baseToughnessOverride;
@@ -193,6 +194,14 @@ public class StaticBonusAccumulator {
         this.landSubtypeOverriding = landSubtypeOverriding;
     }
 
+    public boolean isCardTypeOverriding() {
+        return cardTypeOverriding;
+    }
+
+    public void setCardTypeOverriding(boolean cardTypeOverriding) {
+        this.cardTypeOverriding = cardTypeOverriding;
+    }
+
     public boolean isBasePTOverridden() {
         return basePTOverridden;
     }
@@ -231,7 +240,8 @@ public class StaticBonusAccumulator {
         return new StaticBonus(
                 finalPower, finalToughness, keywords, protectionColors,
                 animated, grantedActivatedAbilities, grantedEffects,
-                grantedColors, grantedSubtypes, grantedCardTypes, grantedSupertypes, colorOverriding, subtypeOverriding, landSubtypeOverriding, removedKeywords,
+                grantedColors, grantedSubtypes, grantedCardTypes, grantedSupertypes, colorOverriding,
+                subtypeOverriding, landSubtypeOverriding, cardTypeOverriding, removedKeywords,
                 basePTOverridden, basePowerOverride, baseToughnessOverride, losesAllAbilities,
                 false);
     }

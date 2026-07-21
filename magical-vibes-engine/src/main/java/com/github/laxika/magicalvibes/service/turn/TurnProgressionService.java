@@ -206,6 +206,7 @@ public class TurnProgressionService {
 
         // Check for pending Mindslaver control on the new active player
         UUID pendingController = gameData.pendingTurnControl.remove(nextActive);
+        boolean grantExtraTurnAfter = gameData.pendingTurnControlExtraTurn.remove(nextActive);
         if (pendingController != null && gameData.playerIds.contains(pendingController)) {
             gameData.mindControlledPlayerId = nextActive;
             gameData.mindControllerPlayerId = pendingController;
@@ -213,6 +214,15 @@ public class TurnProgressionService {
             String controlLog = controllerName + " controls " + nextActiveName + " this turn (Mindslaver).";
             gameBroadcastService.logAndBroadcast(gameData, GameLog.text(controlLog));
             log.info("Game {} - {} controls {} this turn (Mindslaver)", gameData.id, controllerName, nextActiveName);
+            // Emrakul: schedule the extra turn only once control actually activates (after that turn).
+            if (grantExtraTurnAfter) {
+                gameData.extraTurns.addFirst(nextActive);
+                gameData.extraTurnSkipsUntap.addFirst(false);
+                String extraLog = nextActiveName + " takes an extra turn after this one.";
+                gameBroadcastService.logAndBroadcast(gameData, GameLog.text(extraLog));
+                log.info("Game {} - {} granted an extra turn after the controlled turn",
+                        gameData.id, nextActiveName);
+            }
         }
         gameData.turnNumber++;
         gameData.currentStep = TurnStep.first();

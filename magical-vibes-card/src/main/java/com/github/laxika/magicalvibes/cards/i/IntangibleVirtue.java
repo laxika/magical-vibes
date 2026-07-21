@@ -11,6 +11,7 @@ import com.github.laxika.magicalvibes.cards.CardRegistration;
 import java.util.Set;
 
 @CardRegistration(set = "ISD", collectorNumber = "19")
+@CardRegistration(set = "INR", collectorNumber = "29")
 public class IntangibleVirtue extends Card {
 
     public IntangibleVirtue() {

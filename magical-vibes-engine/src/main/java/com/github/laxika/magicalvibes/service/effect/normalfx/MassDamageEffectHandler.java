@@ -50,8 +50,13 @@ public class MassDamageEffectHandler implements NormalEffectHandlerBean {
                 AmountContext.forStackEntry(entry, source));
         int damage = gameQueryService.applyDamageMultiplier(gameData, baseDamage, entry);
 
+        // Prefer the permanent's original (front-face) card id so PermanentIsSourceCardPredicate
+        // correctly excludes the source on transform DFCs (back-face stack entry ≠ original id).
+        UUID sourceCardId = source != null && source.getOriginalCard() != null
+                ? source.getOriginalCard().getId()
+                : entry.getCard().getId();
         FilterContext filterContext = FilterContext.of(gameData)
-                .withSourceCardId(entry.getCard().getId())
+                .withSourceCardId(sourceCardId)
                 .withSourceControllerId(entry.getControllerId());
         Predicate<Permanent> baseFilter = e.damagesPlaneswalkers()
                 ? p -> gameQueryService.isCreature(gameData, p) || p.getCard().hasType(CardType.PLANESWALKER)

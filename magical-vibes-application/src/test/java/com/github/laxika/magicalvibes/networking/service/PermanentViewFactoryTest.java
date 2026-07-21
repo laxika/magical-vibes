@@ -27,7 +27,7 @@ class PermanentViewFactoryTest {
 
     private PermanentView createWithExiled(Permanent p, List<Card> faceUpExiled, int faceDownCount) {
         return factory.create(p, 0, 0, Set.of(), false, List.of(), Set.of(), List.of(), Set.of(),
-                false, false, false, Set.of(), false, Set.of(), List.of(), faceUpExiled, faceDownCount);
+                false, false, false, false, Set.of(), false, Set.of(), List.of(), faceUpExiled, faceDownCount);
     }
 
     @Test

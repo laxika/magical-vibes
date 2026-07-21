@@ -1,6 +1,7 @@
 package com.github.laxika.magicalvibes.service.combat;
 
 import com.github.laxika.magicalvibes.model.CardType;
+import com.github.laxika.magicalvibes.model.CounterType;
 import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.GameData;
 import com.github.laxika.magicalvibes.model.Keyword;
@@ -31,6 +32,7 @@ import com.github.laxika.magicalvibes.model.effect.TriggeringCardConditionalEffe
 import com.github.laxika.magicalvibes.model.effect.TriggeringPermanentConditionalEffect;
 import com.github.laxika.magicalvibes.model.effect.MayEffect;
 import com.github.laxika.magicalvibes.model.effect.BoostAllOwnCreaturesEffect;
+import com.github.laxika.magicalvibes.model.effect.PutCountersOnSelfEffect;
 import com.github.laxika.magicalvibes.model.effect.AttackOrBlockRestrictionEffect;
 import com.github.laxika.magicalvibes.model.effect.CantAttackOrBlockAloneEffect;
 import com.github.laxika.magicalvibes.model.effect.CantAttackOrBlockUnlessCountAlsoDoesEffect;
@@ -475,6 +477,42 @@ public class CombatAttackService {
                         GameLog.builder().card(attacker.getCard()).text("'s battle cry triggers.").build());
                 log.info("Game {} - {} battle cry trigger pushed onto stack", gameData.id, attacker.getCard().getName());
             }
+        }
+
+        // Engine-level training triggers: attacks with another creature of greater power → +1/+1 counter
+        for (int idx : attackerIndices) {
+            Permanent attacker = battlefield.get(idx);
+            if (!gameQueryService.hasKeyword(gameData, attacker, Keyword.TRAINING)) {
+                continue;
+            }
+            int selfPower = gameQueryService.getEffectivePower(gameData, attacker);
+            boolean hasGreaterPowerAlly = false;
+            for (int otherIdx : attackerIndices) {
+                if (otherIdx == idx) {
+                    continue;
+                }
+                Permanent other = battlefield.get(otherIdx);
+                if (gameQueryService.getEffectivePower(gameData, other) > selfPower) {
+                    hasGreaterPowerAlly = true;
+                    break;
+                }
+            }
+            if (!hasGreaterPowerAlly) {
+                continue;
+            }
+            List<CardEffect> trainingEffects = List.of(new PutCountersOnSelfEffect(CounterType.PLUS_ONE_PLUS_ONE));
+            gameData.stack.add(new StackEntry(
+                    StackEntryType.TRIGGERED_ABILITY,
+                    attacker.getCard(),
+                    playerId,
+                    attacker.getCard().getName() + "'s training",
+                    trainingEffects,
+                    null,
+                    attacker.getId()
+            ));
+            gameBroadcastService.logAndBroadcast(gameData,
+                    GameLog.builder().card(attacker.getCard()).text("'s training triggers.").build());
+            log.info("Game {} - {} training trigger pushed onto stack", gameData.id, attacker.getCard().getName());
         }
 
         // Check for "whenever one or more creatures you control attack" triggers (ON_ALLY_CREATURES_ATTACK)

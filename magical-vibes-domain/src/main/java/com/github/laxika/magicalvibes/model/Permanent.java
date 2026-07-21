@@ -60,6 +60,12 @@ public class Permanent {
     @Setter private int damageToCounterPreventionShield;
     @Setter private int regenerationShield;
     @Setter private UUID attachedTo;
+    /**
+     * Soulbond pairing (CR 702.94): id of the other creature this permanent is paired with, or
+     * {@code null} when unpaired. Cleared when either leaves the battlefield, changes controller,
+     * or ceases to be a creature.
+     */
+    @Setter private UUID pairedWithId;
     @Setter private CardColor chosenColor;
     @Setter private String chosenName;
     @Setter private CardSubtype chosenSubtype;
@@ -249,6 +255,12 @@ public class Permanent {
      *  Read by {@code CreaturesDevoured} ("for each creature it devoured" — Tar Fiend) via its size and by
      *  {@code DevouredCreaturesOfSubtype} ("twice the number of Goblins it devoured" — Voracious Dragon). */
     private final List<Card> devouredCreatures = new ArrayList<>();
+    /**
+     * Physical cards that represent a melded permanent (CR 701.37). Empty when not melded.
+     * When this permanent leaves the battlefield, these cards (not {@link #originalCard}) move
+     * to the destination zone.
+     */
+    private final List<Card> meldComponentCards = new ArrayList<>();
     /** Activated abilities temporarily granted by one-shot effects until end of turn
      *  (e.g. Navigator's Compass adding a basic land mana ability to a land).
      *  Cleared every turn by {@link #resetModifiers()}. */
@@ -346,6 +358,7 @@ public class Permanent {
         this.damageToCounterPreventionShield = source.damageToCounterPreventionShield;
         this.regenerationShield = source.regenerationShield;
         this.attachedTo = source.attachedTo;
+        this.pairedWithId = source.pairedWithId;
         this.chosenColor = source.chosenColor;
         this.chosenName = source.chosenName;
         this.chosenSubtype = source.chosenSubtype;
@@ -420,6 +433,7 @@ public class Permanent {
         this.prowl = source.prowl;
         this.castFromZone = source.castFromZone;
         this.devouredCreatures.addAll(source.devouredCreatures);
+        this.meldComponentCards.addAll(source.meldComponentCards);
         this.temporaryActivatedAbilities.addAll(source.temporaryActivatedAbilities);
         this.persistentGrantedActivatedAbilities.addAll(source.persistentGrantedActivatedAbilities);
         this.copyUntilEndOfTurn = source.copyUntilEndOfTurn;
@@ -525,6 +539,17 @@ public class Permanent {
     /** Records a creature devoured by this permanent's devour ability as it entered (CR 702.82). */
     public void recordDevouredCreature(Card devoured) {
         devouredCreatures.add(devoured);
+    }
+
+    /**
+     * Cards that move when this permanent leaves the battlefield. Melded permanents are
+     * represented by their component cards (CR 701.37); otherwise the original card.
+     */
+    public List<Card> cardsLeavingBattlefield() {
+        if (!meldComponentCards.isEmpty()) {
+            return List.copyOf(meldComponentCards);
+        }
+        return List.of(originalCard);
     }
 
     public void setBlockedThisTurn(boolean blockedThisTurn) {

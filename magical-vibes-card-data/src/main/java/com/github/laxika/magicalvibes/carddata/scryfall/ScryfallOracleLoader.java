@@ -91,6 +91,16 @@ public class ScryfallOracleLoader {
         KEYWORD_MAP.put("Horsemanship", Keyword.HORSEMANSHIP);
         KEYWORD_MAP.put("Conspire", Keyword.CONSPIRE);
         KEYWORD_MAP.put("Retrace", Keyword.RETRACE);
+        KEYWORD_MAP.put("Emerge", Keyword.EMERGE);
+        KEYWORD_MAP.put("Coven", Keyword.COVEN);
+        KEYWORD_MAP.put("Meld", Keyword.MELD);
+        KEYWORD_MAP.put("Training", Keyword.TRAINING);
+        KEYWORD_MAP.put("Disturb", Keyword.DISTURB);
+        KEYWORD_MAP.put("Skulk", Keyword.SKULK);
+        KEYWORD_MAP.put("Soulbond", Keyword.SOULBOND);
+        KEYWORD_MAP.put("Flashback", Keyword.FLASHBACK);
+        KEYWORD_MAP.put("Exploit", Keyword.EXPLOIT);
+        KEYWORD_MAP.put("Miracle", Keyword.MIRACLE);
     }
 
     public static void loadAll(String cacheDir) {

@@ -7,6 +7,7 @@ import com.github.laxika.magicalvibes.service.cast.PotentialManaService;
 import com.github.laxika.magicalvibes.service.target.ValidTargetService;
 import com.github.laxika.magicalvibes.model.ExiledCardEntry;
 import com.github.laxika.magicalvibes.model.ExileCast;
+import com.github.laxika.magicalvibes.model.DisturbCast;
 import com.github.laxika.magicalvibes.model.FlashbackCast;
 import com.github.laxika.magicalvibes.model.GraveyardCast;
 import com.github.laxika.magicalvibes.model.Retrace;
@@ -187,7 +188,7 @@ public class GameBroadcastService {
                             faceUpExiledWith.add(exiledWith.card());
                         }
                     }
-                    views.add(permanentViewFactory.create(p, adjustedBonusPower, adjustedBonusToughness, bonus.keywords(), bonus.animatedCreature(), allGrantedAbilities, bonus.grantedColors(), bonus.grantedSubtypes(), bonus.grantedCardTypes(), bonus.colorOverriding(), bonus.subtypeOverriding(), bonus.landSubtypeOverriding(), bonus.removedKeywords(), bonus.losesAllAbilities() || p.isLosesAllAbilitiesUntilEndOfTurn(), bonus.grantedSupertypes(), explained.lines(), faceUpExiledWith, faceDownExiledCount));
+                    views.add(permanentViewFactory.create(p, adjustedBonusPower, adjustedBonusToughness, bonus.keywords(), bonus.animatedCreature(), allGrantedAbilities, bonus.grantedColors(), bonus.grantedSubtypes(), bonus.grantedCardTypes(), bonus.colorOverriding(), bonus.subtypeOverriding(), bonus.landSubtypeOverriding(), bonus.cardTypeOverriding(), bonus.removedKeywords(), bonus.losesAllAbilities() || p.isLosesAllAbilitiesUntilEndOfTurn(), bonus.grantedSupertypes(), explained.lines(), faceUpExiledWith, faceDownExiledCount));
                 }
                 battlefields.add(views);
             }
@@ -248,7 +249,9 @@ public class GameBroadcastService {
             List<Card> gy = data.playerGraveyards.get(pid);
             List<CardSubtype> granted = gameQueryService.computeGrantedSubtypesForOwnedCreatureCard(data, pid);
             List<ActivatedAbility> grantedGraveyardAbilities = gameQueryService.computeGrantedGraveyardAbilitiesForOwnedCreatureCard(data, pid);
-            graveyards.add(gy != null ? gy.stream().map(c -> cardViewFactory.create(c, granted, grantedGraveyardAbilities)).toList() : new ArrayList<>());
+            graveyards.add(gy != null
+                    ? gy.stream().map(c -> cardViewFactory.createForGraveyard(c, granted, grantedGraveyardAbilities)).toList()
+                    : new ArrayList<>());
         }
         return graveyards;
     }
@@ -618,6 +621,9 @@ public class GameBroadcastService {
         if (castingPermissionService.isNoncreatureSpellCastRestricted(gameData, card)) {
             return false;
         }
+        if (castingPermissionService.isOpponentsManaValueSpellCastRestricted(gameData, playerId, card)) {
+            return false;
+        }
         if (castingPermissionService.isAdditionalNonartifactSpellRestricted(gameData, playerId, card)) {
             return false;
         }
@@ -834,23 +840,29 @@ public class GameBroadcastService {
             }
 
             var flashback = card.getCastingOption(FlashbackCast.class);
+            var disturb = card.getCastingOption(DisturbCast.class);
             var graveyardCast = card.getCastingOption(GraveyardCast.class);
+            boolean isDisturb = disturb.isPresent() && flashback.isEmpty();
             boolean grantedFlashback = flashback.isEmpty()
+                    && !isDisturb
                     && gameData.cardsGrantedFlashbackUntilEndOfTurn.contains(card.getId());
-            boolean emblemFlashback = flashback.isEmpty() && !grantedFlashback
+            boolean emblemFlashback = flashback.isEmpty() && !isDisturb && !grantedFlashback
                     && castingPermissionService.hasEmblemGrantedFlashback(gameData, playerId, card);
             boolean grantedHavengulCast = flashback.isEmpty()
+                    && !isDisturb
                     && !grantedFlashback
                     && !emblemFlashback
                     && card.hasType(CardType.CREATURE)
                     && castingPermissionService.hasHavengulCastPermission(gameData, card, playerId);
             boolean isGrantedGraveyardPlay = flashback.isEmpty()
+                    && !isDisturb
                     && !grantedFlashback
                     && !emblemFlashback
                     && !grantedHavengulCast
                     && castingPermissionService.hasGraveyardPlayPermission(gameData, card.getId(), playerId);
             boolean isGraveyardCast = graveyardCast.isPresent()
                     && flashback.isEmpty()
+                    && !isDisturb
                     && !grantedFlashback
                     && !emblemFlashback
                     && !grantedHavengulCast
@@ -859,7 +871,7 @@ public class GameBroadcastService {
 
             // Check if this card is castable via a Muldrotha-style graveyard permanent cast effect
             boolean isGrantedGraveyardCast = false;
-            if (flashback.isEmpty() && !grantedFlashback && !emblemFlashback && !grantedHavengulCast
+            if (flashback.isEmpty() && !isDisturb && !grantedFlashback && !emblemFlashback && !grantedHavengulCast
                     && !isGrantedGraveyardPlay && !isGraveyardCast
                     && graveyardCastSourceId.isPresent()) {
                 // Card must be a non-land permanent type with at least one unused type slot
@@ -870,6 +882,7 @@ public class GameBroadcastService {
             // player has a land card in hand to discard as the additional cost.
             boolean isRetrace = card.getCastingOption(Retrace.class).isPresent()
                     && flashback.isEmpty()
+                    && !isDisturb
                     && !grantedFlashback
                     && !emblemFlashback
                     && !grantedHavengulCast
@@ -879,7 +892,7 @@ public class GameBroadcastService {
                     && gameData.playerHands.getOrDefault(playerId, List.of()).stream()
                             .anyMatch(c -> c.hasType(CardType.LAND));
 
-            if (flashback.isEmpty() && !grantedFlashback && !emblemFlashback && !grantedHavengulCast && !isGraveyardCast
+            if (flashback.isEmpty() && !isDisturb && !grantedFlashback && !emblemFlashback && !grantedHavengulCast && !isGraveyardCast
                     && !isGrantedGraveyardCast && !isGrantedGraveyardPlay && !isRetrace) {
                 continue;
             }
@@ -900,6 +913,8 @@ public class GameBroadcastService {
             String manaCostStr;
             if (graveyardAlternateManaCost != null) {
                 manaCostStr = graveyardAlternateManaCost;
+            } else if (isDisturb) {
+                manaCostStr = disturb.get().getCost(ManaCastingCost.class).map(ManaCastingCost::manaCost).orElse(null);
             } else if (isGraveyardCast || grantedFlashback || emblemFlashback || grantedHavengulCast
                     || isGrantedGraveyardCast || isGrantedGraveyardPlay || isRetrace) {
                 manaCostStr = card.getManaCost();
@@ -1020,6 +1035,7 @@ public class GameBroadcastService {
             if (card.getManaCost() == null || spellLimitReached || cantCastDueToAttackExile) continue;
             if (castingPermissionService.isSpellRestricted(card, restrictedSpellTypes, forbiddenCardNames)) continue;
             if (castingPermissionService.isNoncreatureSpellCastRestricted(gameData, card)) continue;
+            if (castingPermissionService.isOpponentsManaValueSpellCastRestricted(gameData, playerId, card)) continue;
             if (castingPermissionService.isAdditionalNonartifactSpellRestricted(gameData, playerId, card)) continue;
 
             if (castingPermissionService.canCastWithTiming(gameData, playerId, card, isActivePlayer, isMainPhase, stackEmpty)) {
@@ -1111,6 +1127,7 @@ public class GameBroadcastService {
         if (spellLimitReached || cantCastDueToAttack) return playable;
         if (castingPermissionService.isSpellRestricted(topCard, restrictedSpellTypes, forbiddenCardNames)) return playable;
         if (castingPermissionService.isNoncreatureSpellCastRestricted(gameData, topCard)) return playable;
+        if (castingPermissionService.isOpponentsManaValueSpellCastRestricted(gameData, playerId, topCard)) return playable;
         if (castingPermissionService.isAdditionalNonartifactSpellRestricted(gameData, playerId, topCard)) return playable;
 
         if (!castingPermissionService.canCastWithTiming(gameData, playerId, topCard, isActivePlayer, isMainPhase, stackEmpty)) return playable;

@@ -11,6 +11,7 @@ import com.github.laxika.magicalvibes.model.StackEntry;
 import com.github.laxika.magicalvibes.model.StackEntryType;
 import com.github.laxika.magicalvibes.model.effect.PutCardToBattlefieldEffect;
 import com.github.laxika.magicalvibes.model.filter.CardPredicate;
+import com.github.laxika.magicalvibes.model.filter.CardPredicateUtils;
 import com.github.laxika.magicalvibes.networking.SessionManager;
 import com.github.laxika.magicalvibes.networking.service.CardViewFactory;
 import com.github.laxika.magicalvibes.service.DrawService;
@@ -351,6 +352,80 @@ public class PlayerInteractionSupport {
                 gameData.id, casterName, cardsToChoose, targetName, actionVerb);
     
     }
+
+    /**
+     * Distended Mindbender: reveal the target's hand, then choose one card matching {@code firstFilter}
+     * (if any) and one matching {@code secondFilter} (if any); those are discarded. The second band
+     * rides {@link PendingInteraction.RevealedHandChoice#followUpFilter()}.
+     */
+    public void resolveHandRevealAndChooseTwoFilters(GameData gameData, StackEntry entry,
+                                                     CardPredicate firstFilter, CardPredicate secondFilter) {
+
+        UUID targetPlayerId = entry.getTargetId();
+        UUID casterId = entry.getControllerId();
+        List<Card> hand = gameData.playerHands.get(targetPlayerId);
+        String targetName = gameData.playerIdToName.get(targetPlayerId);
+        String casterName = gameData.playerIdToName.get(casterId);
+
+        if (hand == null || hand.isEmpty()) {
+            gameBroadcastService.logAndBroadcast(gameData,
+                    GameLog.text(targetName + " reveals their hand. It is empty."));
+            log.info("Game {} - {}'s hand is empty for dual-filter hand discard", gameData.id, targetName);
+            return;
+        }
+
+        GameLog.Builder revealBuilder = GameLog.builder().text(targetName + " reveals their hand: ");
+        appendCardList(revealBuilder, hand);
+        revealBuilder.text(".");
+        gameBroadcastService.logAndBroadcast(gameData, revealBuilder.build());
+
+        UUID sourceCardId = entry.getCard() != null ? entry.getCard().getId() : null;
+        List<Integer> firstIndices = matchingHandIndices(hand, firstFilter, sourceCardId);
+        List<Integer> secondIndices = matchingHandIndices(hand, secondFilter, sourceCardId);
+
+        if (firstIndices.isEmpty() && secondIndices.isEmpty()) {
+            gameBroadcastService.logAndBroadcast(gameData, GameLog.text(
+                    casterName + " cannot choose a card (" + targetName + "'s hand contains no valid choices)."));
+            log.info("Game {} - {}'s hand has no dual-filter matches for {}", gameData.id, targetName, casterName);
+            return;
+        }
+
+        gameData.discardCausedByOpponent = true;
+
+        String firstPrompt = "Choose a " + CardPredicateUtils.describeFilter(firstFilter) + " to discard.";
+        String secondPrompt = "Choose a " + CardPredicateUtils.describeFilter(secondFilter) + " to discard.";
+
+        if (firstIndices.isEmpty()) {
+            // Skip the empty first band — only the second band is choosable.
+            interactionHandlerRegistry.begin(gameData, new PendingInteraction.RevealedHandChoice(
+                    casterId, targetPlayerId, secondIndices, 1, true, false,
+                    List.of(), null, secondPrompt, false, false, false, null, null));
+            log.info("Game {} - {} choosing second-band card only from {}'s hand",
+                    gameData.id, casterName, targetName);
+            return;
+        }
+
+        CardPredicate followUp = secondIndices.isEmpty() ? null : secondFilter;
+        String followUpPrompt = followUp == null ? null : secondPrompt;
+        interactionHandlerRegistry.begin(gameData, new PendingInteraction.RevealedHandChoice(
+                casterId, targetPlayerId, firstIndices, 1, true, false,
+                List.of(), null, firstPrompt, false, false, false, followUp, followUpPrompt));
+
+        log.info("Game {} - {} choosing dual-filter cards from {}'s hand (first band{}; follow-up {})",
+                gameData.id, casterName, targetName,
+                firstIndices.size(), followUp != null);
+    }
+
+    private List<Integer> matchingHandIndices(List<Card> hand, CardPredicate filter, UUID sourceCardId) {
+        List<Integer> indices = new ArrayList<>();
+        for (int i = 0; i < hand.size(); i++) {
+            if (predicateEvaluationService.matchesCardPredicate(hand.get(i), filter, sourceCardId)) {
+                indices.add(i);
+            }
+        }
+        return indices;
+    }
+
     /**
      * Vendilion Clique: the caster looks at the target player's hand, then may choose a nonland
      * card. The choice is optional; the chosen card is revealed, put on the bottom of that

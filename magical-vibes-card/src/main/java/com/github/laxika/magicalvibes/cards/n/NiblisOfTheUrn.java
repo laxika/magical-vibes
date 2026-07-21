@@ -11,6 +11,7 @@ import com.github.laxika.magicalvibes.model.filter.PermanentIsCreaturePredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentPredicateTargetFilter;
 
 @CardRegistration(set = "DKA", collectorNumber = "16")
+@CardRegistration(set = "INR", collectorNumber = "35")
 public class NiblisOfTheUrn extends Card {
 
     public NiblisOfTheUrn() {

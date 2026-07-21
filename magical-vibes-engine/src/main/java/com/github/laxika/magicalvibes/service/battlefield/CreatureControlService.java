@@ -106,6 +106,16 @@ public class CreatureControlService {
         gameData.playerBattlefields.get(derived).add(permanent);
         permanent.setSummoningSick(true);
 
+        // Soulbond lasts only while you control both (CR 702.94) — control change breaks the pair.
+        UUID partnerId = permanent.getPairedWithId();
+        if (partnerId != null) {
+            permanent.setPairedWithId(null);
+            Permanent partner = gameQueryService.findPermanentById(gameData, partnerId);
+            if (partner != null && permanent.getId().equals(partner.getPairedWithId())) {
+                partner.setPairedWithId(null);
+            }
+        }
+
         gameData.stolenCreatures.putIfAbsent(permanent.getId(), current);
         if (derived.equals(gameData.stolenCreatures.get(permanent.getId()))) {
             gameData.stolenCreatures.remove(permanent.getId());

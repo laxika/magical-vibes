@@ -40,6 +40,7 @@ import com.github.laxika.magicalvibes.model.effect.CanBlockOnlyIfAttackerMatches
 import com.github.laxika.magicalvibes.model.effect.CantBeBlockedEffect;
 import com.github.laxika.magicalvibes.model.effect.CantBlockCreaturesWithPowerGreaterOrEqualToOwnToughnessEffect;
 import com.github.laxika.magicalvibes.model.effect.CantBlockEffect;
+import com.github.laxika.magicalvibes.model.effect.EnchantedCreatureCantTransformEffect;
 import com.github.laxika.magicalvibes.model.effect.PreventTransformEffect;
 import com.github.laxika.magicalvibes.model.effect.EnchantedCreatureCantAttackOrBlockEffect;
 import com.github.laxika.magicalvibes.model.effect.EnchantedCreatureCantAttackUnlessPaysEffect;
@@ -92,7 +93,7 @@ import com.github.laxika.magicalvibes.model.effect.GrantControllerHexproofEffect
 import com.github.laxika.magicalvibes.model.effect.GrantControllerShroudEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantKeywordEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantScope;
-import com.github.laxika.magicalvibes.model.effect.LosesAllAbilitiesEffect;
+import com.github.laxika.magicalvibes.model.effect.ManaProducingEffect;
 import com.github.laxika.magicalvibes.model.effect.ManaReflectionEffect;
 import com.github.laxika.magicalvibes.model.effect.PreventAllCombatDamageToAndByEnchantedCreatureEffect;
 import com.github.laxika.magicalvibes.model.effect.PreventAllDamageToAndByEnchantedCreatureEffect;
@@ -200,9 +201,10 @@ public class GameQueryService {
      * @param grantedCardTypes          card types granted by static effects
      * @param colorOverriding           whether granted colors replace the permanent's natural color
      * @param subtypeOverriding         whether granted subtypes replace the permanent's natural subtypes
+     * @param cardTypeOverriding        whether granted card types replace the permanent's natural card types
      */
-    public record StaticBonus(int power, int toughness, Set<Keyword> keywords, Set<CardColor> protectionColors, boolean animatedCreature, List<ActivatedAbility> grantedActivatedAbilities, List<CardEffect> grantedEffects, Set<CardColor> grantedColors, List<CardSubtype> grantedSubtypes, Set<CardType> grantedCardTypes, Set<CardSupertype> grantedSupertypes, boolean colorOverriding, boolean subtypeOverriding, boolean landSubtypeOverriding, Set<Keyword> removedKeywords, boolean basePTOverridden, int basePowerOverride, int baseToughnessOverride, boolean losesAllAbilities, boolean ptSwitched) {
-        static final StaticBonus NONE = new StaticBonus(0, 0, Set.of(), Set.of(), false, List.of(), List.of(), Set.of(), List.of(), Set.of(), Set.of(), false, false, false, Set.of(), false, 0, 0, false, false);
+    public record StaticBonus(int power, int toughness, Set<Keyword> keywords, Set<CardColor> protectionColors, boolean animatedCreature, List<ActivatedAbility> grantedActivatedAbilities, List<CardEffect> grantedEffects, Set<CardColor> grantedColors, List<CardSubtype> grantedSubtypes, Set<CardType> grantedCardTypes, Set<CardSupertype> grantedSupertypes, boolean colorOverriding, boolean subtypeOverriding, boolean landSubtypeOverriding, boolean cardTypeOverriding, Set<Keyword> removedKeywords, boolean basePTOverridden, int basePowerOverride, int baseToughnessOverride, boolean losesAllAbilities, boolean ptSwitched) {
+        static final StaticBonus NONE = new StaticBonus(0, 0, Set.of(), Set.of(), false, List.of(), List.of(), Set.of(), List.of(), Set.of(), Set.of(), false, false, false, false, Set.of(), false, 0, 0, false, false);
     }
 
     // --- Lookup helpers ---
@@ -269,10 +271,14 @@ public class GameQueryService {
     /**
      * Returns {@code true} if the given permanent can't transform because its controller controls a
      * permanent with a {@link PreventTransformEffect} whose filter matches it (e.g. Immerwolf's
-     * "Non-Human Werewolves you control can't transform"). The filter is evaluated against the
-     * permanent's current face.
+     * "Non-Human Werewolves you control can't transform"), or because it is enchanted by an Aura with
+     * {@link EnchantedCreatureCantTransformEffect} (e.g. Bound by Moonsilver). The filter is evaluated
+     * against the permanent's current face.
      */
     public boolean isTransformPrevented(GameData gameData, Permanent permanent) {
+        if (hasAuraWithEffect(gameData, permanent, EnchantedCreatureCantTransformEffect.class)) {
+            return true;
+        }
         UUID controllerId = findPermanentController(gameData, permanent.getId());
         if (controllerId == null) {
             return false;
@@ -707,16 +713,40 @@ public class GameQueryService {
      * global artifact animation, and metalcraft-conditional self-animation.
      */
     public boolean isCreature(GameData gameData, Permanent permanent) {
-        if (hasCardType(permanent, CardType.CREATURE)) return true;
+        StaticBonus bonus = computeStaticBonus(gameData, permanent);
+        if (hasEffectiveCardType(permanent, bonus, CardType.CREATURE)) return true;
         if (permanent.isAnimatedUntilEndOfTurn()) return true;
         if (permanent.isAnimatedUntilEndOfCombat()) return true;
         if (permanent.isAnimatedUntilNextTurn()) return true;
         if (permanent.isPermanentlyAnimated()) return true;
         if (permanent.getCounterCount(CounterType.AWAKENING) > 0) return true;
-        if (isArtifact(permanent) && hasAnimateArtifactEffect(gameData)) return true;
-        if (hasCardType(permanent, CardType.LAND) && matchesAnimateLand(gameData, permanent)) return true;
+        if (isArtifact(gameData, permanent) && hasAnimateArtifactEffect(gameData)) return true;
+        if (hasEffectiveCardType(permanent, bonus, CardType.LAND) && matchesAnimateLand(gameData, permanent)) return true;
         if (hasAuraBecomeCreatureEffect(gameData, permanent)) return true;
         return hasSelfBecomeCreatureEffect(gameData, permanent);
+    }
+
+    /**
+     * Returns {@code true} if the permanent is currently a land, including type-replacing
+     * effects such as Imprisoned in the Moon.
+     */
+    public boolean isLand(GameData gameData, Permanent permanent) {
+        return hasEffectiveCardType(permanent, computeStaticBonus(gameData, permanent), CardType.LAND);
+    }
+
+    /**
+     * Returns {@code true} if the permanent is currently a planeswalker after continuous
+     * type-changing effects.
+     */
+    public boolean isPlaneswalker(GameData gameData, Permanent permanent) {
+        return hasEffectiveCardType(permanent, computeStaticBonus(gameData, permanent), CardType.PLANESWALKER);
+    }
+
+    private boolean hasEffectiveCardType(Permanent permanent, StaticBonus bonus, CardType type) {
+        if (bonus.cardTypeOverriding()) {
+            return bonus.grantedCardTypes().contains(type);
+        }
+        return hasCardType(permanent, type) || bonus.grantedCardTypes().contains(type);
     }
 
     /**
@@ -770,6 +800,25 @@ public class GameQueryService {
                 .filter(p -> isArtifact(gameData, p))
                 .count();
         return artifactCount >= 3;
+    }
+
+    /**
+     * Returns {@code true} if the given player controls three or more creatures with different
+     * powers (Coven). Powers are effective P/T including static bonuses; duplicates are fine so
+     * long as at least three distinct power values are present.
+     */
+    public boolean isCovenMet(GameData gameData, UUID controllerId) {
+        List<Permanent> battlefield = gameData.playerBattlefields.get(controllerId);
+        if (battlefield == null) return false;
+        HashSet<Integer> distinctPowers = new HashSet<>();
+        for (Permanent permanent : battlefield) {
+            if (!isCreature(gameData, permanent)) continue;
+            distinctPowers.add(getEffectivePower(gameData, permanent));
+            if (distinctPowers.size() >= 3) {
+                return true;
+            }
+        }
+        return false;
     }
 
     /**
@@ -926,8 +975,7 @@ public class GameQueryService {
      * temporary granted card types, and static card type grants (e.g. from equipment).
      */
     public boolean isArtifact(GameData gameData, Permanent permanent) {
-        return isArtifact(permanent)
-                || computeStaticBonus(gameData, permanent).grantedCardTypes().contains(CardType.ARTIFACT);
+        return hasEffectiveCardType(permanent, computeStaticBonus(gameData, permanent), CardType.ARTIFACT);
     }
 
     /**
@@ -945,8 +993,7 @@ public class GameQueryService {
      * temporary granted card types, and static card type grants (e.g. from Enchanted Evening).
      */
     public boolean isEnchantment(GameData gameData, Permanent permanent) {
-        return isEnchantment(permanent)
-                || computeStaticBonus(gameData, permanent).grantedCardTypes().contains(CardType.ENCHANTMENT);
+        return hasEffectiveCardType(permanent, computeStaticBonus(gameData, permanent), CardType.ENCHANTMENT);
     }
 
     // --- Keyword & effect checking ---
@@ -1005,8 +1052,8 @@ public class GameQueryService {
      */
     public CardColor getEffectiveColor(GameData gameData, Permanent permanent) {
         StaticBonus bonus = computeStaticBonus(gameData, permanent);
-        if (bonus.colorOverriding() && !bonus.grantedColors().isEmpty()) {
-            return bonus.grantedColors().iterator().next();
+        if (bonus.colorOverriding()) {
+            return bonus.grantedColors().isEmpty() ? null : bonus.grantedColors().iterator().next();
         }
         return permanent.getEffectiveColor();
     }
@@ -1725,6 +1772,7 @@ public class GameQueryService {
                 && accumulator.getGrantedColors().isEmpty()
                 && accumulator.getGrantedSubtypes().isEmpty()
                 && accumulator.getGrantedCardTypes().isEmpty()
+                && !accumulator.isCardTypeOverriding()
                 && accumulator.getGrantedSupertypes().isEmpty()) {
             return StaticBonus.NONE;
         }
@@ -1800,6 +1848,7 @@ public class GameQueryService {
                 accumulator.getGrantedSubtypes(), accumulator.getGrantedCardTypes(),
                 accumulator.getGrantedSupertypes(), colorOverriding,
                 accumulator.isSubtypeOverriding(), accumulator.isLandSubtypeOverriding(),
+                accumulator.isCardTypeOverriding(),
                 removedKeywords, accumulator.isBasePTOverridden(),
                 accumulator.getBasePowerOverride(), accumulator.getBaseToughnessOverride(),
                 losesAllAbilities, ptSwitched);
@@ -2960,6 +3009,10 @@ public class GameQueryService {
                 && Collections.disjoint(blk.colors(), atk.colors())) {
             return BlockDenial.INTIMIDATE;
         }
+        // Skulk: can't be blocked by creatures with greater power (CR 702.129a).
+        if (atk.skulk() && getEffectivePower(gameData, blocker) > getEffectivePower(gameData, attacker)) {
+            return BlockDenial.SKULK;
+        }
         for (CanBlockOnlyIfAttackerMatchesPredicateEffect restriction : blk.attackerFilterRestrictions()) {
             if (!predicateEvaluationService.matchesPermanentPredicate(gameData, attacker, restriction.attackerPredicate())) {
                 return new BlockDenial(BlockDenial.Reason.BLOCKER_LIMITED_TO_ATTACKERS, restriction.allowedAttackersDescription());
@@ -3074,6 +3127,7 @@ public class GameQueryService {
                 hasKeyword(attacker, bonus, Keyword.HORSEMANSHIP),
                 hasKeyword(attacker, bonus, Keyword.FEAR),
                 intimidate,
+                hasKeyword(attacker, bonus, Keyword.SKULK),
                 intimidate ? getEffectiveColors(gameData, attacker) : Set.of(),
                 pairRestrictionStatics == null ? List.of() : pairRestrictionStatics,
                 getAuraGrantedBlockingRestrictions(gameData, attacker),
@@ -3131,6 +3185,7 @@ public class GameQueryService {
             case HORSEMANSHIP -> blockerName + " cannot block " + attackerName + " (horsemanship)";
             case FEAR -> blockerName + " cannot block " + attackerName + " (fear)";
             case INTIMIDATE -> blockerName + " cannot block " + attackerName + " (intimidate)";
+            case SKULK -> blockerName + " cannot block " + attackerName + " (skulk)";
             case BLOCKER_LIMITED_TO_ATTACKERS -> blockerName + " can only block " + denial.detail();
             case GLOBAL_RESTRICTION -> denial.detail();
             case ATTACKER_LIMITED_TO_BLOCKERS -> attackerName + " can only be blocked by " + denial.detail();
@@ -3570,15 +3625,17 @@ public class GameQueryService {
             return false;
         }
 
-        // Check continuous ability loss (e.g. Deep Freeze aura)
+        // Continuous ability loss strips printed mana abilities, but later-timestamp grants
+        // (e.g. Imprisoned in the Moon's "{T}: Add {C}") still work.
         StaticBonus staticBonus = computeStaticBonus(gameData, permanent);
         if (staticBonus.losesAllAbilities()) {
-            return false;
-        }
-
-        // Check aura-based ability removal (Deep Freeze)
-        if (hasAuraWithEffect(gameData, permanent, LosesAllAbilitiesEffect.class)) {
-            return false;
+            boolean hasGrantedMana = staticBonus.grantedActivatedAbilities().stream()
+                    .anyMatch(a -> !a.isNeedsTarget() && !a.isNeedsSpellTarget()
+                            && a.getLoyaltyCost() == null
+                            && a.getEffects().stream().anyMatch(e -> e instanceof ManaProducingEffect));
+            if (!hasGrantedMana) {
+                return false;
+            }
         }
 
         // Check aura-based locks (Arrest, Ice Cage)

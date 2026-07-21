@@ -13,6 +13,7 @@ import com.github.laxika.magicalvibes.service.target.TargetLegalityService;
 import com.github.laxika.magicalvibes.service.trigger.TriggerCollectionService;
 import com.github.laxika.magicalvibes.service.turn.TurnProgressionService;
 import com.github.laxika.magicalvibes.model.AlternateHandCast;
+import com.github.laxika.magicalvibes.model.DisturbCast;
 import com.github.laxika.magicalvibes.model.ExileCast;
 import com.github.laxika.magicalvibes.model.FlashbackCast;
 import com.github.laxika.magicalvibes.model.GraveyardCast;
@@ -606,6 +607,9 @@ public class SpellCastingService {
         if (wasModal && modalXValue != null) {
             effectiveXValue = modalXValue;
         }
+        if (castingPermissionService.isOpponentsManaValueSpellCastRestricted(gameData, playerId, card, effectiveXValue)) {
+            throw new IllegalStateException("Card is not playable");
+        }
 
         // For modal spells, derive targeting from the chosen mode's unwrapped effect;
         // for non-modal spells, use the card's declared targeting (which accounts for auras, ETB effects, etc.)
@@ -750,7 +754,8 @@ public class SpellCastingService {
             if (manaCost.isPresent()) {
                 ManaPool pool = gameData.playerManaPools.get(playerId);
                 ManaCost cost = new ManaCost(manaCost.get().manaCost());
-                if (!cost.canPay(pool, 0)) {
+                int emergeReduction = computeEmergeManaReduction(gameData, altCast, alternateCostSacrificePermanentIds);
+                if (!cost.canPay(pool, -emergeReduction)) {
                     throw new IllegalStateException("Not enough mana to pay alternate casting cost");
                 }
             }
@@ -1638,6 +1643,7 @@ public class SpellCastingService {
                     .card(sourceCard)
                     .text(".")
                     .build());
+            triggerCollectionService.checkAllyPermanentSacrificedTriggers(gameData, player.getId(), toSacrifice.getCard());
         }
         return new SacrificedCreatureStats(power, toughness);
     }
@@ -1663,6 +1669,7 @@ public class SpellCastingService {
                         .card(sourceCard)
                         .text(".")
                         .build());
+                triggerCollectionService.checkAllyPermanentSacrificedTriggers(gameData, player.getId(), creature.getCard());
             }
         }
         return Math.max(0, totalPower);
@@ -1700,6 +1707,7 @@ public class SpellCastingService {
                         .card(card)
                         .text(".")
                         .build());
+                triggerCollectionService.checkAllyPermanentSacrificedTriggers(gameData, player.getId(), toSacrifice.getCard());
                 sacrificedCount++;
             }
         }
@@ -1876,24 +1884,33 @@ public class SpellCastingService {
         }
 
         Card card = graveyard.get(graveyardCardIndex);
+        if (castingPermissionService.isOpponentsManaValueSpellCastRestricted(gameData, playerId, card, effectiveXValue)) {
+            throw new IllegalStateException("Card is not playable");
+        }
         var flashbackOpt = card.getCastingOption(FlashbackCast.class);
+        var disturbOpt = card.getCastingOption(DisturbCast.class);
         var graveyardCastOpt = card.getCastingOption(GraveyardCast.class);
-        boolean isRetrace = card.getCastingOption(Retrace.class).isPresent() && flashbackOpt.isEmpty();
+        boolean isDisturb = disturbOpt.isPresent() && flashbackOpt.isEmpty();
+        boolean isRetrace = card.getCastingOption(Retrace.class).isPresent() && flashbackOpt.isEmpty() && !isDisturb;
         boolean grantedFlashback = flashbackOpt.isEmpty()
+                && !isDisturb
                 && gameData.cardsGrantedFlashbackUntilEndOfTurn.contains(card.getId());
-        boolean emblemFlashback = flashbackOpt.isEmpty() && !grantedFlashback
+        boolean emblemFlashback = flashbackOpt.isEmpty() && !isDisturb && !grantedFlashback
                 && castingPermissionService.hasEmblemGrantedFlashback(gameData, playerId, card);
         boolean grantedHavengulCast = flashbackOpt.isEmpty()
+                && !isDisturb
                 && !grantedFlashback
                 && !emblemFlashback
                 && card.hasType(CardType.CREATURE)
                 && castingPermissionService.hasHavengulCastPermission(gameData, card, playerId);
         boolean isGrantedGraveyardPlay = flashbackOpt.isEmpty()
+                && !isDisturb
                 && !grantedFlashback
                 && !emblemFlashback
                 && !grantedHavengulCast
                 && castingPermissionService.hasGraveyardPlayPermission(gameData, card.getId(), playerId);
         boolean isGraveyardCast = graveyardCastOpt.isPresent() && flashbackOpt.isEmpty()
+                && !isDisturb
                 && !grantedFlashback && !emblemFlashback && !grantedHavengulCast
                 && !isGrantedGraveyardPlay
                 && castingPermissionService.isGraveyardCastAvailable(gameData, playerId, graveyardCastOpt.get());
@@ -1901,7 +1918,7 @@ public class SpellCastingService {
         // Check if this card is castable via a Muldrotha-style static graveyard permanent cast effect
         boolean isGrantedGraveyardCast = false;
         Optional<UUID> graveyardCastSourceId = Optional.empty();
-        if (flashbackOpt.isEmpty() && !grantedFlashback && !emblemFlashback && !grantedHavengulCast
+        if (flashbackOpt.isEmpty() && !isDisturb && !grantedFlashback && !emblemFlashback && !grantedHavengulCast
                 && !isGrantedGraveyardPlay && !isGraveyardCast) {
             graveyardCastSourceId = castingPermissionService.findGraveyardCastSourcePermanentId(gameData, playerId);
             if (graveyardCastSourceId.isPresent()) {
@@ -1911,7 +1928,7 @@ public class SpellCastingService {
             }
         }
 
-        if (flashbackOpt.isEmpty() && !grantedFlashback && !emblemFlashback && !grantedHavengulCast
+        if (flashbackOpt.isEmpty() && !isDisturb && !grantedFlashback && !emblemFlashback && !grantedHavengulCast
                 && !isGraveyardCast && !isGrantedGraveyardCast && !isGrantedGraveyardPlay && !isRetrace) {
             throw new IllegalStateException("Card cannot be cast from graveyard");
         }
@@ -1952,12 +1969,12 @@ public class SpellCastingService {
                     exileGraveyardCardIndices, excludedGraveyardIndex);
         }
 
-        // Validate and pay flashback / graveyard cast cost
+        // Validate and pay flashback / disturb / graveyard cast cost
         int additionalCost = castingCostService.getCastCostModifier(gameData, playerId, card);
         additionalCost += castingCostService.getTargetingSubtypeTax(gameData, playerId, targetId, targetIds);
-        effectiveXValue = payFlashbackOrGraveyardCastCost(gameData, player, card, flashbackOpt, graveyardCastOpt,
+        effectiveXValue = payFlashbackOrGraveyardCastCost(gameData, player, card, flashbackOpt, disturbOpt, graveyardCastOpt,
                 grantedFlashback, emblemFlashback, grantedHavengulCast, isGrantedGraveyardCast, isGrantedGraveyardPlay,
-                isGraveyardCast, isRetrace, effectiveXValue, additionalCost, tapPermanentIds, retraceDiscardHandCardIndex);
+                isGraveyardCast, isRetrace, isDisturb, effectiveXValue, additionalCost, tapPermanentIds, retraceDiscardHandCardIndex);
         if (EffectResolution.hasManaSpentToCastDamageEffect(card)) {
             effectiveXValue = gameData.getSpellCastManaSpent(card.getId());
         }
@@ -2008,6 +2025,35 @@ public class SpellCastingService {
             if (grantedHavengulCast) {
                 queueHavengulLichCastTrigger(gameData, playerId, card);
             }
+            finishSpellCast(gameData, playerId, player, graveyard, card, false);
+            return;
+        }
+
+        if (isDisturb) {
+            // CR 702.146: cast transformed from graveyard — permanent spell enters back-face up.
+            if (card.getBackFaceCard() == null) {
+                throw new IllegalStateException("Disturb requires a double-faced card");
+            }
+            StackEntryType entryType = cardTypeToStackEntryType(card.getType());
+            // Aura disturb backs are possible; use back-face type when it differs.
+            Card backFace = card.getBackFaceCard();
+            if (backFace.getType().isPermanentType()) {
+                entryType = cardTypeToStackEntryType(backFace.getType());
+            }
+            // Target using back-face characteristics (e.g. Disturb Aura "enchant creature").
+            if (EffectResolution.needsTarget(backFace)) {
+                if (targetId == null) {
+                    throw new IllegalStateException("Spell requires a target");
+                }
+                targetLegalityService.validateSpellTargeting(gameData, backFace, targetId, null, playerId, true);
+            }
+            StackEntry stackEntry = new StackEntry(
+                    entryType, card, playerId, backFace.getName(),
+                    List.of(), 0, targetId, null
+            );
+            stackEntry.setCastWithDisturb(true);
+            stackEntry.setSourceZone(Zone.GRAVEYARD);
+            gameData.stack.add(stackEntry);
             finishSpellCast(gameData, playerId, player, graveyard, card, false);
             return;
         }
@@ -2144,6 +2190,9 @@ public class SpellCastingService {
             throw new IllegalStateException("Card not found in exile");
         }
         Card card = exiledEntry.card();
+        if (castingPermissionService.isOpponentsManaValueSpellCastRestricted(gameData, playerId, card, effectiveXValue)) {
+            throw new IllegalStateException("Card is not playable");
+        }
 
         // CR 601.2b: this path has no wire for additional-cost selections and pays no additional
         // costs — reject such casts up front (before any payment) instead of silently casting the
@@ -2359,6 +2408,9 @@ public class SpellCastingService {
         }
 
         Card card = deck.getFirst();
+        if (castingPermissionService.isOpponentsManaValueSpellCastRestricted(gameData, playerId, card, effectiveXValue)) {
+            throw new IllegalStateException("Card is not playable");
+        }
 
         // Validate card type matches
         boolean matchesType = castableTypes.contains(card.getType())
@@ -2659,11 +2711,12 @@ public class SpellCastingService {
 
     private int payFlashbackOrGraveyardCastCost(GameData gameData, Player player, Card card,
                                                 Optional<FlashbackCast> flashbackOpt,
+                                                Optional<DisturbCast> disturbOpt,
                                                 Optional<GraveyardCast> graveyardCastOpt,
                                                 boolean grantedFlashback, boolean emblemFlashback,
                                                 boolean grantedHavengulCast, boolean isGrantedGraveyardCast,
                                                 boolean isGrantedGraveyardPlay, boolean isGraveyardCast,
-                                                boolean isRetrace, int effectiveXValue, int additionalCost,
+                                                boolean isRetrace, boolean isDisturb, int effectiveXValue, int additionalCost,
                                                 List<UUID> tapPermanentIds, Integer retraceDiscardHandCardIndex) {
         UUID playerId = player.getId();
         // GraveyardCast may override the normal mana cost with an alternate one ("by paying {W}{U}{B}{R}{G}
@@ -2696,6 +2749,24 @@ public class SpellCastingService {
             if (isRetrace) {
                 payRetraceDiscardCost(gameData, player, card, retraceDiscardHandCardIndex);
             }
+            gameData.addSpellCastManaSpent(card.getId(), manaSpent);
+            return effectiveXValue;
+        }
+
+        if (isDisturb) {
+            DisturbCast disturb = disturbOpt.orElseThrow(() -> new IllegalStateException("Disturb has no cost"));
+            var manaCostOpt = disturb.getCost(ManaCastingCost.class);
+            if (manaCostOpt.isEmpty()) {
+                throw new IllegalStateException("Disturb has no mana cost");
+            }
+            ManaCost cost = new ManaCost(manaCostOpt.get().manaCost());
+            ManaPool pool = gameData.playerManaPools.get(playerId);
+            int before = pool.getTotalAllMana();
+            if (!cost.canPay(pool, effectiveXValue + additionalCost)) {
+                throw new IllegalStateException("Not enough mana to pay disturb cost");
+            }
+            cost.pay(pool, effectiveXValue + additionalCost);
+            manaSpent = before - pool.getTotalAllMana();
             gameData.addSpellCastManaSpent(card.getId(), manaSpent);
             return effectiveXValue;
         }
@@ -2778,10 +2849,29 @@ public class SpellCastingService {
         gameData.addSpellCastManaSpent(card.getId(), computeAlternateCastingManaPayment(gameData, player, card, sacrificePermanentIds));
     }
 
+    /** Emerge (CR 702.123): total cost reduced by generic mana equal to sacrificed permanents' mana values. */
+    private int computeEmergeManaReduction(GameData gameData, AlternateHandCast altCast, List<UUID> sacrificePermanentIds) {
+        if (!altCast.reduceManaBySacrificedManaValue()) {
+            return 0;
+        }
+        int reduction = 0;
+        for (UUID sacId : sacrificePermanentIds) {
+            Permanent toSacrifice = gameQueryService.findPermanentById(gameData, sacId);
+            if (toSacrifice != null) {
+                reduction += toSacrifice.getCard().getManaValue();
+            }
+        }
+        return reduction;
+    }
+
     private int computeAlternateCastingManaPayment(GameData gameData, Player player, Card card, List<UUID> sacrificePermanentIds) {
         AlternateHandCast altCast = card.getCastingOption(AlternateHandCast.class)
                 .orElseThrow(() -> new IllegalStateException("Card does not have an alternate casting cost"));
         UUID playerId = player.getId();
+
+        // Snapshot emerge reduction before sacrifice (creature must still be on the battlefield
+        // when its mana value is read — CR 702.123).
+        int emergeReduction = computeEmergeManaReduction(gameData, altCast, sacrificePermanentIds);
 
         // Sacrifice all required permanents
         if (altCast.getCost(SacrificePermanentsCost.class).isPresent()) {
@@ -2795,6 +2885,7 @@ public class SpellCastingService {
                             .card(card)
                             .text(".")
                             .build());
+                    triggerCollectionService.checkAllyPermanentSacrificedTriggers(gameData, player.getId(), toSacrifice.getCard());
                 }
             }
         }
@@ -2855,7 +2946,7 @@ public class SpellCastingService {
         ManaPool pool = gameData.playerManaPools.get(playerId);
         int before = pool.getTotalAllMana();
         ManaCost cost = new ManaCost(manaCostOpt.get().manaCost());
-        cost.pay(pool);
+        cost.pay(pool, -emergeReduction);
         int manaSpent = before - pool.getTotalAllMana();
         gameBroadcastService.logAndBroadcast(gameData, GameLog.textCardText(
                 player.getUsername() + " pays " + manaCostOpt.get().manaCost() + " for ", card, "."));

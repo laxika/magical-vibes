@@ -7,6 +7,7 @@ import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.effect.ExileCardFromGraveyardCost;
 
 @CardRegistration(set = "ISD", collectorNumber = "65")
+@CardRegistration(set = "INR", collectorNumber = "73")
 public class MakeshiftMauler extends Card {
 
     public MakeshiftMauler() {

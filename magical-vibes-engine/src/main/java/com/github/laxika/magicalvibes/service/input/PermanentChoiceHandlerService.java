@@ -83,6 +83,8 @@ public class PermanentChoiceHandlerService {
             battlefieldHandler.handleChampionCreature(gameData, permanentId, championCreature);
         } else if (context instanceof PermanentChoiceContext.PutControlledCreatureOnTopOfLibrary putOnTop) {
             battlefieldHandler.handlePutControlledCreatureOnTopOfLibrary(gameData, permanentId, putOnTop);
+        } else if (context instanceof PermanentChoiceContext.SoulbondChoosePartner soulbondChoose) {
+            battlefieldHandler.handleSoulbondChoosePartner(gameData, permanentId, soulbondChoose);
         } else if (context instanceof PermanentChoiceContext.ChampionedTriggerTarget championedTrigger) {
             triggerHandler.handleChampionedTrigger(gameData, permanentId, championedTrigger);
         } else if (context instanceof PermanentChoiceContext.SpellRetarget retarget) {
@@ -125,6 +127,10 @@ public class PermanentChoiceHandlerService {
             battlefieldHandler.handleSacrificeArtifactForDividedDamage(gameData, permanentId, sadd);
         } else if (context instanceof PermanentChoiceContext.SacrificeAnotherCreatureDealPowerDamage sacpd) {
             battlefieldHandler.handleSacrificeAnotherCreatureDealPowerDamage(gameData, permanentId, sacpd);
+        } else if (context instanceof PermanentChoiceContext.ExploitSacrifice exploitSac) {
+            battlefieldHandler.handleExploitSacrifice(gameData, permanentId, exploitSac);
+        } else if (context instanceof PermanentChoiceContext.ExploitTriggerTarget exploitTt) {
+            triggerHandler.handleExploitTrigger(gameData, permanentId, exploitTt);
         } else if (context instanceof PermanentChoiceContext.LibraryCastSpellTarget lct) {
             spellHandler.handleLibraryCastSpellTarget(gameData, permanentId, lct);
         } else if (context instanceof PermanentChoiceContext.ExileCastSpellTarget ect) {

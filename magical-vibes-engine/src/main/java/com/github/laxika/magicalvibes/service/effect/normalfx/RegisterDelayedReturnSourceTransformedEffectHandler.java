@@ -41,12 +41,12 @@ public class RegisterDelayedReturnSourceTransformedEffectHandler implements Norm
             return;
         }
 
-        UUID controllerId = entry.getControllerId();
+        UUID returnControllerId = e.underOwnerControl() ? ownerId : entry.getControllerId();
         gameData.queueDelayedAction(
-                new DelayedGraveyardToBattlefieldTransformedReturn(card.getId(), ownerId, controllerId));
-        String playerName = gameData.playerIdToName.get(controllerId);
+                new DelayedGraveyardToBattlefieldTransformedReturn(card.getId(), ownerId, returnControllerId));
+        String playerName = gameData.playerIdToName.get(returnControllerId);
         gameBroadcastService.logAndBroadcast(gameData, GameLog.builder().card(card).text(" will return to the battlefield transformed under " + playerName + "'s control at the beginning of the next end step.").build());
         log.info("Game {} - Delayed transformed return registered for {} (owner {}, controller {})",
-                gameData.id, card.getName(), ownerId, controllerId);
+                gameData.id, card.getName(), ownerId, returnControllerId);
     }
 }

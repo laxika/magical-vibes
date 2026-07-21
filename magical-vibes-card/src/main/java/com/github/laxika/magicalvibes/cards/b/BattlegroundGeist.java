@@ -11,6 +11,7 @@ import com.github.laxika.magicalvibes.model.filter.PermanentHasAnySubtypePredica
 import java.util.Set;
 
 @CardRegistration(set = "ISD", collectorNumber = "45")
+@CardRegistration(set = "INR", collectorNumber = "53")
 public class BattlegroundGeist extends Card {
 
     public BattlegroundGeist() {

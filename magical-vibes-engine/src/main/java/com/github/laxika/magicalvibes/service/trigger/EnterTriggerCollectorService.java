@@ -2,6 +2,7 @@ package com.github.laxika.magicalvibes.service.trigger;
 
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.EffectSlot;
+import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.PermanentChoiceContext;
 import com.github.laxika.magicalvibes.model.StackEntry;
 import com.github.laxika.magicalvibes.model.StackEntryType;
@@ -11,6 +12,7 @@ import com.github.laxika.magicalvibes.model.effect.AttachSourceEquipmentToEnteri
 import com.github.laxika.magicalvibes.model.effect.AttachSourceEquipmentToTargetCreatureEffect;
 import com.github.laxika.magicalvibes.model.EffectResolution;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
+import com.github.laxika.magicalvibes.model.effect.CreateTokenCopyOfTargetPermanentEffect;
 import com.github.laxika.magicalvibes.model.effect.TargetCategory;
 import com.github.laxika.magicalvibes.model.effect.DamageRecipient;
 import com.github.laxika.magicalvibes.model.effect.DealDamageToPlayersEffect;
@@ -27,6 +29,7 @@ import com.github.laxika.magicalvibes.model.effect.PutCountersOnEnteringCreature
 import com.github.laxika.magicalvibes.model.effect.PutCountersOnSourceEffect;
 import com.github.laxika.magicalvibes.model.effect.PutCountersOnSourceEqualToEnteringPowerEffect;
 import com.github.laxika.magicalvibes.model.effect.SacrificePermanentsEffect;
+import com.github.laxika.magicalvibes.model.effect.SoulbondPairWithEnteringEffect;
 import com.github.laxika.magicalvibes.service.GameBroadcastService;
 import com.github.laxika.magicalvibes.service.effect.AmountContext;
 import com.github.laxika.magicalvibes.service.effect.AmountEvaluationService;
@@ -242,6 +245,43 @@ public class EnterTriggerCollectorService {
         return true;
     }
 
+    /**
+     * "Whenever a nontoken [creature] you control enters, create a token that's a copy of that
+     * creature" (Necroduality). The entering creature is fixed at trigger time — bake its id as
+     * {@code targetId} rather than routing through the EntersTriggerTarget choice pipeline that
+     * the permanent-targeting default would use. Subtype gating (e.g. Zombie) is applied upstream
+     * by {@code TriggeringCardConditionalEffect}; tokens are already excluded by the slot.
+     */
+    @CollectsTrigger(value = CreateTokenCopyOfTargetPermanentEffect.class,
+            slot = EffectSlot.ON_ALLY_NONTOKEN_CREATURE_ENTERS_BATTLEFIELD)
+    private boolean handleAllyNontokenCreatureCreateTokenCopy(TriggerMatchContext match,
+            CreateTokenCopyOfTargetPermanentEffect effect, TriggerContext ctx) {
+        TriggerContext.PermanentEnters pe = (TriggerContext.PermanentEnters) ctx;
+        UUID enteringPermanentId = pe.mayPayTargetCardId();
+        if (enteringPermanentId == null) {
+            enteringPermanentId = findEnteringPermanentId(match, pe.enteringCard());
+        }
+        if (enteringPermanentId == null) {
+            // The creature already left the battlefield; nothing to copy.
+            return true;
+        }
+        Card sourceCard = match.permanent().getCard();
+        for (int i = 0; i < pe.perEffectTriggerCount(); i++) {
+            match.gameData().stack.add(new StackEntry(
+                    StackEntryType.TRIGGERED_ABILITY,
+                    sourceCard,
+                    match.controllerId(),
+                    sourceCard.getName() + "'s ability",
+                    new ArrayList<>(List.of(effect)),
+                    enteringPermanentId,
+                    match.permanent().getId()));
+        }
+        logTriggered(match);
+        log.info("Game {} - {} triggers for {} entering (create token copy of entering creature)",
+                match.gameData().id, sourceCard.getName(), pe.enteringCard().getName());
+        return true;
+    }
+
     @CollectsTrigger(value = PutCountersOnSourceEqualToEnteringPowerEffect.class,
             slot = EffectSlot.ON_ANY_OTHER_CREATURE_ENTERS_BATTLEFIELD)
     private boolean handleAnyCreaturePutCountersEqualToPower(TriggerMatchContext match,
@@ -300,6 +340,42 @@ public class EnterTriggerCollectorService {
         log.info("Game {} - {} triggers for {} entering ({} put {} +1/+1 counter(s) on it)",
                 match.gameData().id, sourceCard.getName(), pe.enteringCard().getName(),
                 effect.optional() ? "may" : "mandatory", effect.count());
+        return true;
+    }
+
+    /**
+     * Soulbond "whenever another unpaired creature enters" (CR 702.94a). Intervening-if: both this
+     * permanent and the entering creature are unpaired creatures under the controller. Queues a may
+     * with the entering permanent baked as {@code targetId}.
+     */
+    @CollectsTrigger(value = SoulbondPairWithEnteringEffect.class,
+            slot = EffectSlot.ON_ALLY_CREATURE_ENTERS_BATTLEFIELD)
+    private boolean handleAllySoulbondPairWithEntering(TriggerMatchContext match,
+            SoulbondPairWithEnteringEffect effect, TriggerContext ctx) {
+        TriggerContext.PermanentEnters pe = (TriggerContext.PermanentEnters) ctx;
+        Card sourceCard = match.permanent().getCard();
+        if (match.permanent().getPairedWithId() != null) {
+            return true;
+        }
+        UUID enteringPermanentId = findEnteringPermanentId(match, pe.enteringCard());
+        if (enteringPermanentId == null) {
+            return true;
+        }
+        var entering = new Permanent[1];
+        match.gameData().forEachPermanent((playerId, perm) -> {
+            if (entering[0] == null && perm.getId().equals(enteringPermanentId)) {
+                entering[0] = perm;
+            }
+        });
+        if (entering[0] == null || entering[0].getPairedWithId() != null) {
+            return true;
+        }
+        var may = new MayEffect(effect, "Pair " + sourceCard.getName() + " with " + pe.enteringCard().getName() + "?");
+        match.gameData().queueMayAbility(sourceCard, match.controllerId(), may,
+                enteringPermanentId, match.permanent().getId());
+        logTriggered(match);
+        log.info("Game {} - {} soulbond may-pair with entering {}",
+                match.gameData().id, sourceCard.getName(), pe.enteringCard().getName());
         return true;
     }
 

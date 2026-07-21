@@ -45,7 +45,10 @@ public final class CardScanner {
         }
 
         for (List<CardPrinting> printings : result.values()) {
-            printings.sort(Comparator.comparingInt(p -> Integer.parseInt(p.collectorNumber())));
+            // Collector numbers may be alphanumeric (meld results like "14b").
+            printings.sort(Comparator
+                    .comparingInt((CardPrinting p) -> leadingCollectorNumber(p.collectorNumber()))
+                    .thenComparing(CardPrinting::collectorNumber));
         }
 
         return result;
@@ -69,6 +72,18 @@ public final class CardScanner {
             }
             result.get(cardSet).add(new CardPrinting(reg.set(), reg.collectorNumber(), factory));
         }
+    }
+
+    /** Leading integer of a collector number ("14b" → 14, "24" → 24). */
+    private static int leadingCollectorNumber(String collectorNumber) {
+        int i = 0;
+        while (i < collectorNumber.length() && Character.isDigit(collectorNumber.charAt(i))) {
+            i++;
+        }
+        if (i == 0) {
+            return 0;
+        }
+        return Integer.parseInt(collectorNumber.substring(0, i));
     }
 
     private static Supplier<Card> createFactory(Class<? extends Card> clazz) {

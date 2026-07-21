@@ -15,6 +15,9 @@ import com.github.laxika.magicalvibes.model.Keyword;
 import com.github.laxika.magicalvibes.model.MultiPermanentChoiceContext;
 import com.github.laxika.magicalvibes.model.PendingInteraction;
 import com.github.laxika.magicalvibes.model.PendingMayAbility;
+import com.github.laxika.magicalvibes.model.Permanent;
+import com.github.laxika.magicalvibes.model.StackEntry;
+import com.github.laxika.magicalvibes.model.StackEntryType;
 import com.github.laxika.magicalvibes.service.interaction.InteractionHandlerRegistry;
 import com.github.laxika.magicalvibes.service.turn.UntapStepService;
 import com.github.laxika.magicalvibes.networking.SessionManager;
@@ -263,6 +266,58 @@ public class PlayerInputService {
 
         String playerName = gameData.playerIdToName.get(controllerId);
         log.info("Game {} - Awaiting {} to choose a mode for {}", gameData.id, playerName, sourceCard.getName());
+    }
+
+    /**
+     * Hullbreaker Horror "choose up to one" — offers bounce-spell / bounce-permanent / do-nothing,
+     * omitting a bounce mode when it currently has no legal target.
+     */
+    public void beginHullbreakerHorrorModeChoice(GameData gameData, UUID controllerId, Card sourceCard) {
+        java.util.ArrayList<String> options = new java.util.ArrayList<>();
+        if (hasOpponentSpellOnStack(gameData, controllerId)) {
+            options.add(ChoiceContext.HullbreakerHorrorModeChoice.SPELL);
+        }
+        if (hasNonlandPermanent(gameData)) {
+            options.add(ChoiceContext.HullbreakerHorrorModeChoice.PERMANENT);
+        }
+        options.add(ChoiceContext.HullbreakerHorrorModeChoice.NONE);
+
+        ChoiceContext.HullbreakerHorrorModeChoice ctx =
+                new ChoiceContext.HullbreakerHorrorModeChoice(sourceCard, controllerId);
+        interactionHandlerRegistry.begin(gameData, new PendingInteraction.ColorChoice(
+                controllerId, null, null, ctx,
+                options, sourceCard.getName() + " — Choose up to one."));
+
+        String playerName = gameData.playerIdToName.get(controllerId);
+        log.info("Game {} - Awaiting {} to choose Hullbreaker Horror's mode", gameData.id, playerName);
+    }
+
+    private static boolean hasOpponentSpellOnStack(GameData gameData, UUID controllerId) {
+        for (StackEntry se : gameData.stack) {
+            StackEntryType type = se.getEntryType();
+            if (type == StackEntryType.ACTIVATED_ABILITY || type == StackEntryType.TRIGGERED_ABILITY) {
+                continue;
+            }
+            if (!controllerId.equals(se.getControllerId())) {
+                return true;
+            }
+        }
+        return false;
+    }
+
+    private static boolean hasNonlandPermanent(GameData gameData) {
+        for (UUID pid : gameData.orderedPlayerIds) {
+            java.util.List<Permanent> battlefield = gameData.playerBattlefields.get(pid);
+            if (battlefield == null) {
+                continue;
+            }
+            for (Permanent permanent : battlefield) {
+                if (!permanent.getCard().hasType(CardType.LAND)) {
+                    return true;
+                }
+            }
+        }
+        return false;
     }
 
     public void beginKeywordChoice(GameData gameData, UUID playerId, UUID targetId, List<Keyword> options) {

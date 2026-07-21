@@ -580,7 +580,7 @@ class GameBroadcastServiceTest {
 
             GameQueryService.StaticBonus noBonus = new GameQueryService.StaticBonus(
                     0, 0, Set.of(), Set.of(), false, List.of(), List.of(), Set.of(), List.of(), Set.of(),
-                    Set.of(), false, false, false, Set.of(), false, 0, 0, false, false);
+                    Set.of(), false, false, false, false, Set.of(), false, 0, 0, false, false);
             when(gameQueryService.explainStaticBonus(gd, sourcePermanent))
                     .thenReturn(new GameQueryService.ExplainedBonus(noBonus, List.of()));
 
@@ -589,7 +589,7 @@ class GameBroadcastServiceTest {
             @SuppressWarnings("unchecked")
             ArgumentCaptor<List<Card>> faceUpCaptor = ArgumentCaptor.forClass(List.class);
             verify(permanentViewFactory).create(same(sourcePermanent), anyInt(), anyInt(), any(), anyBoolean(),
-                    anyList(), any(), anyList(), any(), anyBoolean(), anyBoolean(), anyBoolean(), any(),
+                    anyList(), any(), anyList(), any(), anyBoolean(), anyBoolean(), anyBoolean(), anyBoolean(), any(),
                     anyBoolean(), any(), anyList(), faceUpCaptor.capture(), eq(1));
             assertThat(faceUpCaptor.getValue()).containsExactly(faceUpCard);
         }

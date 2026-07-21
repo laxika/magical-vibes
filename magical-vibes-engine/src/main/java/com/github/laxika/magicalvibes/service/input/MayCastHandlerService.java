@@ -17,9 +17,12 @@ import com.github.laxika.magicalvibes.model.Zone;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
 import com.github.laxika.magicalvibes.model.effect.CastTargetInstantOrSorceryFromGraveyardEffect;
 import com.github.laxika.magicalvibes.model.effect.RevealTopCardMayPlayFreeOrExileEffect;
+import com.github.laxika.magicalvibes.model.effect.MayCastForMiracleCostEffect;
 import com.github.laxika.magicalvibes.model.effect.MayCastFromHandWithoutPayingManaCostEffect;
 import com.github.laxika.magicalvibes.model.effect.PlayTargetCardFromGraveyardWithoutPayingManaCostEffect;
 import com.github.laxika.magicalvibes.model.filter.PermanentPredicateTargetFilter;
+import com.github.laxika.magicalvibes.model.ManaCost;
+import com.github.laxika.magicalvibes.model.ManaPool;
 import com.github.laxika.magicalvibes.service.GameBroadcastService;
 import com.github.laxika.magicalvibes.service.battlefield.BattlefieldEntryService;
 import com.github.laxika.magicalvibes.service.effect.normalfx.ExileFreeCastSupport;
@@ -530,6 +533,63 @@ public class MayCastHandlerService {
     }
 
     /**
+     * Handles the miracle "you may cast this for its miracle cost" choice (CR 702.94a).
+     * Pays {@link PendingMayAbility#manaCost()} then casts from hand, ignoring type timing.
+     */
+    public void handleMayCastForMiracleCost(GameData gameData, Player player, boolean accepted,
+                                            PendingMayAbility ability) {
+        Card cardToCast = ability.sourceCard();
+        String playerName = player.getUsername();
+
+        if (!accepted) {
+            gameBroadcastService.logAndBroadcast(gameData,
+                    GameLog.textCardText(playerName + " declines to cast ", cardToCast, " for its miracle cost."));
+            log.info("Game {} - {} declines miracle cast of {}", gameData.id, playerName, cardToCast.getName());
+            inputCompletionService.processMayAbilitiesThenAutoPass(gameData);
+            return;
+        }
+
+        List<Card> hand = gameData.playerHands.get(player.getId());
+        int cardIndex = -1;
+        if (hand != null) {
+            for (int i = 0; i < hand.size(); i++) {
+                if (hand.get(i).getId().equals(cardToCast.getId())) {
+                    cardIndex = i;
+                    break;
+                }
+            }
+        }
+
+        if (cardIndex == -1) {
+            gameBroadcastService.logAndBroadcast(gameData, GameLog.cardThen(cardToCast, " is no longer in hand."));
+            log.info("Game {} - {} no longer in hand for miracle cast", gameData.id, cardToCast.getName());
+            inputCompletionService.processMayAbilitiesThenAutoPass(gameData);
+            return;
+        }
+
+        String costStr = ability.manaCost();
+        if (costStr == null) {
+            log.warn("Game {} - miracle cast of {} has no cost on pending ability", gameData.id, cardToCast.getName());
+            inputCompletionService.processMayAbilitiesThenAutoPass(gameData);
+            return;
+        }
+
+        ManaCost cost = new ManaCost(costStr);
+        ManaPool pool = gameData.playerManaPools.get(player.getId());
+        if (!cost.canPay(pool)) {
+            gameBroadcastService.logAndBroadcast(gameData, GameLog.textCardText(
+                    playerName + " cannot pay " + costStr + " to cast ", cardToCast, " for its miracle cost."));
+            log.info("Game {} - {} can't pay miracle cost {} for {}", gameData.id, playerName, costStr, cardToCast.getName());
+            inputCompletionService.processMayAbilitiesThenAutoPass(gameData);
+            return;
+        }
+        cost.pay(pool);
+
+        hand.remove(cardIndex);
+        castCardFromHandPayingAlternateCost(gameData, player, cardToCast, costStr);
+    }
+
+    /**
      * Handles the "may cast from hand without paying mana cost" choice (e.g. Counterlash).
      * Each eligible card gets its own PendingMayAbility; accepting one removes the rest.
      */
@@ -573,8 +633,21 @@ public class MayCastHandlerService {
     }
 
     private void castCardFromHandWithoutPaying(GameData gameData, Player player, Card card) {
+        castCardFromHandPayingAlternateCost(gameData, player, card, null);
+    }
+
+    /**
+     * Puts a hand card onto the stack as a cast spell, ignoring type-based timing.
+     * {@code paidCostDescription} null means free ("without paying its mana cost"); otherwise
+     * logs that the alternate cost was paid (miracle).
+     */
+    private void castCardFromHandPayingAlternateCost(GameData gameData, Player player, Card card,
+                                                     String paidCostDescription) {
         UUID playerId = player.getId();
         String playerName = player.getUsername();
+        String costPhrase = paidCostDescription == null
+                ? " without paying its mana cost"
+                : " for its miracle cost (" + paidCostDescription + ")";
 
         StackEntryType spellType = switch (card.getType()) {
             case CREATURE -> StackEntryType.CREATURE_SPELL;
@@ -601,7 +674,6 @@ public class MayCastHandlerService {
             if (validTargets.isEmpty()) {
                 // No valid targets — card goes to graveyard
                 graveyardService.addCardToGraveyard(gameData, playerId, card);
-                String logEntry = card.getName() + " has no valid targets.";
                 gameBroadcastService.logAndBroadcast(gameData, GameLog.cardThen(card, " has no valid targets."));
                 log.info("Game {} - {} cast-from-hand has no valid targets", gameData.id, card.getName());
                 inputCompletionService.processMayAbilitiesThenAutoPass(gameData);
@@ -613,8 +685,8 @@ public class MayCastHandlerService {
             playerInputService.beginPermanentChoice(gameData, playerId, validTargets,
                     "Choose a target for " + card.getName() + ".");
 
-            String logEntry = playerName + " casts " + card.getName() + " without paying its mana cost — choosing target.";
-            gameBroadcastService.logAndBroadcast(gameData, GameLog.textCardText(playerName + " casts " , card, " without paying its mana cost — choosing target."));
+            gameBroadcastService.logAndBroadcast(gameData,
+                    GameLog.textCardText(playerName + " casts ", card, costPhrase + " — choosing target."));
             log.info("Game {} - {} casts {} from hand, choosing target", gameData.id, playerName, card.getName());
             return; // Wait for target choice
         }
@@ -628,8 +700,9 @@ public class MayCastHandlerService {
         gameData.recordSpellCast(playerId, card);
         gameData.priorityPassedBy.clear();
 
-        gameBroadcastService.logAndBroadcast(gameData, GameLog.textCardText(playerName + " casts " , card, " without paying its mana cost."));
-        log.info("Game {} - {} casts {} from hand without paying mana", gameData.id, playerName, card.getName());
+        gameBroadcastService.logAndBroadcast(gameData,
+                GameLog.textCardText(playerName + " casts ", card, costPhrase + "."));
+        log.info("Game {} - {} casts {} from hand{}", gameData.id, playerName, card.getName(), costPhrase);
 
         triggerCollectionService.checkSpellCastTriggers(gameData, card, playerId, false);
         inputCompletionService.processMayAbilitiesThenAutoPass(gameData);

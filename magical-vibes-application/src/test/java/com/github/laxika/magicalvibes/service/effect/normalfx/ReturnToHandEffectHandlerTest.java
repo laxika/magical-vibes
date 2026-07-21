@@ -54,6 +54,7 @@ class ReturnToHandEffectHandlerTest {
     @Mock private PermanentRemovalService permanentRemovalService;
     @Mock private PredicateEvaluationService predicateEvaluationService;
     @Mock private PlayerInteractionSupport playerInteractionSupport;
+    @Mock private com.github.laxika.magicalvibes.service.state.StateTriggerService stateTriggerService;
 
     private BounceSupport bounceSupport;
     private ReturnToHandEffectHandler handler;
@@ -75,7 +76,7 @@ class ReturnToHandEffectHandlerTest {
         gd.playerBattlefields.put(player1Id, Collections.synchronizedList(new ArrayList<>()));
         gd.playerBattlefields.put(player2Id, Collections.synchronizedList(new ArrayList<>()));
 
-        bounceSupport = new BounceSupport(gameQueryService, gameBroadcastService, permanentRemovalService);
+        bounceSupport = new BounceSupport(gameQueryService, gameBroadcastService, permanentRemovalService, stateTriggerService);
         handler = new ReturnToHandEffectHandler(gameQueryService, gameBroadcastService, gameOutcomeService,
                 permanentRemovalService, predicateEvaluationService, bounceSupport, playerInteractionSupport);
     }

@@ -69,7 +69,7 @@ import com.github.laxika.magicalvibes.model.CounterType;
 class AbilityActivationServiceTest {
 
     private static final GameQueryService.StaticBonus EMPTY_BONUS = new GameQueryService.StaticBonus(
-            0, 0, Set.of(), Set.of(), false, List.of(), List.of(), Set.of(), List.of(), Set.of(), Set.of(), false, false, false, Set.of(), false, 0, 0, false, false);
+            0, 0, Set.of(), Set.of(), false, List.of(), List.of(), Set.of(), List.of(), Set.of(), Set.of(), false, false, false, false, Set.of(), false, 0, 0, false, false);
 
     @Mock private GraveyardService graveyardService;
     @Mock private GameQueryService gameQueryService;
@@ -580,6 +580,39 @@ class AbilityActivationServiceTest {
             assertThatThrownBy(() -> service.activateAbility(gameData, player1, 0, null, null, null, null))
                     .isInstanceOf(IllegalStateException.class)
                     .hasMessageContaining("upkeep");
+        }
+
+        @Test
+        @DisplayName("COVEN: fewer than three different powers throws")
+        void covenInsufficientDifferentPowersThrows() {
+            Card card = createCreatureWithTimingRestriction(ActivationTimingRestriction.COVEN, 1, 1);
+            Permanent perm = addReadyPermanent(player1Id, card);
+
+            when(gameQueryService.computeStaticBonus(gameData, perm)).thenReturn(EMPTY_BONUS);
+            when(gameQueryService.hasAuraWithEffect(eq(gameData), eq(perm), eq(EnchantedCreatureCantActivateAbilitiesEffect.class)))
+                    .thenReturn(false);
+            when(gameQueryService.isCovenMet(gameData, player1Id)).thenReturn(false);
+
+            assertThatThrownBy(() -> service.activateAbility(gameData, player1, 0, null, null, null, null))
+                    .isInstanceOf(IllegalStateException.class)
+                    .hasMessageContaining("different powers");
+        }
+
+        @Test
+        @DisplayName("COVEN: three different powers succeeds")
+        void covenThreeDifferentPowersSucceeds() {
+            Card card = createCreatureWithTimingRestriction(ActivationTimingRestriction.COVEN, 1, 1);
+            Permanent perm = addReadyPermanent(player1Id, card);
+
+            when(gameQueryService.computeStaticBonus(gameData, perm)).thenReturn(EMPTY_BONUS);
+            when(gameQueryService.hasAuraWithEffect(eq(gameData), eq(perm), eq(EnchantedCreatureCantActivateAbilitiesEffect.class)))
+                    .thenReturn(false);
+            when(gameQueryService.isCovenMet(gameData, player1Id)).thenReturn(true);
+
+            service.activateAbility(gameData, player1, 0, null, null, null, null);
+
+            verify(activatedAbilityExecutionService).completeActivationAfterCosts(
+                    eq(gameData), eq(player1), eq(perm), any(), any(), eq(0), eq(null), eq(null), eq(true), any(), any());
         }
 
         @Test

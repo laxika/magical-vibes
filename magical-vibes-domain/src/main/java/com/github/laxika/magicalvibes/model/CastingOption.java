@@ -7,7 +7,7 @@ import java.util.Optional;
  * An alternate way to cast a spell. Each subtype represents a specific keyword mechanic
  * (flashback, alternate hand cast, etc.) with its own fixed zone and disposition rules.
  */
-public sealed interface CastingOption permits FlashbackCast, AlternateHandCast, GraveyardCast, ExileCast, Retrace {
+public sealed interface CastingOption permits FlashbackCast, DisturbCast, AlternateHandCast, GraveyardCast, ExileCast, Retrace, MiracleCast {
 
     Disposition disposition();
 

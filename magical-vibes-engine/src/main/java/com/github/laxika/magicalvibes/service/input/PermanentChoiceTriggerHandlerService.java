@@ -221,6 +221,44 @@ public class PermanentChoiceTriggerHandlerService {
         turnProgressionService.resolveAutoPass(gameData);
     }
 
+    public void handleExploitTrigger(GameData gameData, UUID cardId, PermanentChoiceContext.ExploitTriggerTarget ett) {
+        String targetName = "";
+        for (StackEntry se : gameData.stack) {
+            if (se.getCard().getId().equals(cardId)) {
+                targetName = se.getCard().getName();
+                break;
+            }
+        }
+
+        StackEntry entry = new StackEntry(
+                StackEntryType.TRIGGERED_ABILITY,
+                ett.sourceCard(),
+                ett.controllerId(),
+                ett.sourceCard().getName() + "'s exploit ability",
+                new ArrayList<>(ett.effects()),
+                cardId,
+                Zone.STACK
+        );
+        gameData.stack.add(entry);
+
+        gameBroadcastService.logAndBroadcast(gameData,
+                GameLog.builder().card(ett.sourceCard()).text("'s exploit ability targets " + targetName + ".").build());
+        log.info("Game {} - {} exploit trigger targets {}", gameData.id, ett.sourceCard().getName(), targetName);
+
+        if (gameData.hasPendingInteraction(PermanentChoiceContext.ExploitTriggerTarget.class)) {
+            triggerCollectionService.processNextExploitTriggerTarget(gameData);
+            return;
+        }
+
+        if (!gameData.pendingMayAbilities.isEmpty()) {
+            playerInputService.processNextMayAbility(gameData);
+            return;
+        }
+
+        gameData.priorityPassedBy.clear();
+        turnProgressionService.resolveAutoPass(gameData);
+    }
+
     public void handleClashTrigger(GameData gameData, UUID permanentId, PermanentChoiceContext.ClashTriggerTarget ctt) {
         StackEntry entry = new StackEntry(
                 StackEntryType.TRIGGERED_ABILITY,
@@ -491,16 +529,38 @@ public class PermanentChoiceTriggerHandlerService {
 
         Permanent target = gameQueryService.findPermanentById(gameData, permanentId);
         boolean isPlayerTarget = gameData.playerIds.contains(permanentId);
+        StackEntry spellOnStack = null;
+        if (target == null && !isPlayerTarget) {
+            for (StackEntry se : gameData.stack) {
+                if (se.getCard().getId().equals(permanentId)) {
+                    spellOnStack = se;
+                    break;
+                }
+            }
+        }
 
-        if (target != null || isPlayerTarget) {
-            StackEntry entry = new StackEntry(
-                    StackEntryType.TRIGGERED_ABILITY,
-                    mat.sourceCard(),
-                    mat.controllerId(),
-                    mat.sourceCard().getName() + "'s ability",
-                    new ArrayList<>(mat.effects())
-            );
-            entry.setTargetId(permanentId);
+        if (target != null || isPlayerTarget || spellOnStack != null) {
+            StackEntry entry;
+            if (spellOnStack != null) {
+                entry = new StackEntry(
+                        StackEntryType.TRIGGERED_ABILITY,
+                        mat.sourceCard(),
+                        mat.controllerId(),
+                        mat.sourceCard().getName() + "'s ability",
+                        new ArrayList<>(mat.effects()),
+                        permanentId,
+                        Zone.STACK
+                );
+            } else {
+                entry = new StackEntry(
+                        StackEntryType.TRIGGERED_ABILITY,
+                        mat.sourceCard(),
+                        mat.controllerId(),
+                        mat.sourceCard().getName() + "'s ability",
+                        new ArrayList<>(mat.effects())
+                );
+                entry.setTargetId(permanentId);
+            }
             gameData.stack.add(entry);
 
             if (isPlayerTarget) {
@@ -508,6 +568,9 @@ public class PermanentChoiceTriggerHandlerService {
                 String logEntry = mat.sourceCard().getName() + "'s ability targets " + playerName + ".";
                 gameBroadcastService.logAndBroadcast(gameData, GameLog.builder().card(mat.sourceCard()).text("'s ability targets " + playerName + ".").build());
                 log.info("Game {} - {} may-ability trigger targets player {}", gameData.id, mat.sourceCard().getName(), playerName);
+            } else if (spellOnStack != null) {
+                gameBroadcastService.logAndBroadcast(gameData, GameLog.cardTextCard(mat.sourceCard(), "'s ability targets ", spellOnStack.getCard(), "."));
+                log.info("Game {} - {} may-ability trigger targets spell {}", gameData.id, mat.sourceCard().getName(), spellOnStack.getCard().getName());
             } else {
                 String logEntry = mat.sourceCard().getName() + "'s ability targets " + target.getCard().getName() + ".";
                 gameBroadcastService.logAndBroadcast(gameData, GameLog.cardTextCard(mat.sourceCard(), "'s ability targets ", target.getCard(), "."));

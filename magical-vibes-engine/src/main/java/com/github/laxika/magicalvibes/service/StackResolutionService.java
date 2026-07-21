@@ -215,6 +215,38 @@ public class StackResolutionService {
         gameBroadcastService.broadcastGameState(gameData);
     }
 
+    /** CR 702.146: while cast via Disturb, the spell has the characteristics of its back face. */
+    private static Card disturbCharacteristics(StackEntry entry, Card card) {
+        if (entry.isCastWithDisturb() && card.getBackFaceCard() != null) {
+            return card.getBackFaceCard();
+        }
+        return card;
+    }
+
+    /** Permanent enters with front-face identity; Disturb flips current face to the back. */
+    private Permanent createEnteringPermanent(StackEntry entry, Card card, Card characteristics) {
+        Permanent perm = new Permanent(card);
+        perm.setCastFromZone(entry.getSourceZone());
+        if (entry.isCastWithDisturb() && characteristics != card) {
+            perm.setCard(characteristics);
+            perm.setTransformed(true);
+        }
+        return perm;
+    }
+
+    /**
+     * Flashback/Disturb spells that leave the stack without resolving are exiled
+     * (CR 702.33a / back-face exile replacement for Disturb).
+     */
+    private void disposeFizzledPermanentSpell(GameData gameData, StackEntry entry, Card card) {
+        UUID controllerId = entry.getControllerId();
+        if (entry.isCastWithFlashback() || entry.isCastWithDisturb()) {
+            exileService.exileCard(gameData, controllerId, card);
+        } else {
+            graveyardService.addCardToGraveyard(gameData, controllerId, card);
+        }
+    }
+
     private void resolveCreatureSpell(GameData gameData, StackEntry entry) {
         Card card = entry.getCard();
         UUID controllerId = entry.getControllerId();
@@ -237,10 +269,10 @@ public class StackResolutionService {
             return;
         }
 
-        Permanent perm = new Permanent(card);
+        Permanent perm = createEnteringPermanent(entry, card, disturbCharacteristics(entry, card));
         // Carry the zone the spell was cast from so an "if cast from a graveyard, it enters with …
         // counters" as-enters replacement (e.g. Worldheart Phoenix) can gate on it during entry.
-        perm.setCastFromZone(entry.getSourceZone());
+        // (castFromZone already set in createEnteringPermanent)
 
         // Gather Specimens (CR 614.1): if this creature would enter under an opponent's control, it
         // enters under the gatherer's control instead. Resolve up front so the log, ETB triggers, and
@@ -336,74 +368,76 @@ public class StackResolutionService {
     private void resolveEnchantmentSpell(GameData gameData, StackEntry entry) {
         Card card = entry.getCard();
         UUID controllerId = entry.getControllerId();
+        // CR 702.146: a spell cast via Disturb has the characteristics of its back face while on the stack.
+        Card characteristics = disturbCharacteristics(entry, card);
 
         // Reanimation Aura that enchants a creature card in a graveyard (e.g. Animate Dead): return
         // the enchanted card to the battlefield under the Aura's controller and attach the Aura to it.
-        if (card.isAura() && entry.getTargetZone() == Zone.GRAVEYARD && entry.getTargetId() != null) {
+        if (characteristics.isAura() && entry.getTargetZone() == Zone.GRAVEYARD && entry.getTargetId() != null) {
             resolveReanimationAura(gameData, entry, card, controllerId);
             return;
         }
 
         // Aura that enchants a player (e.g. Curses)
-        if (card.isAura() && card.isEnchantPlayer() && entry.getTargetId() != null) {
+        if (characteristics.isAura() && characteristics.isEnchantPlayer() && entry.getTargetId() != null) {
             UUID targetPlayerId = entry.getTargetId();
             if (!gameData.playerIds.contains(targetPlayerId)) {
                 gameBroadcastService.logAndBroadcast(gameData, GameLog.builder()
-                        .card(card)
+                        .card(characteristics)
                         .text(" fizzles (enchanted player no longer in the game).")
                         .build());
-                graveyardService.addCardToGraveyard(gameData, controllerId, card);
-                log.info("Game {} - {} fizzles, target player {} no longer in game", gameData.id, card.getName(), targetPlayerId);
+                disposeFizzledPermanentSpell(gameData, entry, card);
+                log.info("Game {} - {} fizzles, target player {} no longer in game", gameData.id, characteristics.getName(), targetPlayerId);
             } else {
-                Permanent perm = new Permanent(card);
+                Permanent perm = createEnteringPermanent(entry, card, characteristics);
                 perm.setAttachedTo(targetPlayerId);
                 battlefieldEntryService.putPermanentOntoBattlefield(gameData, controllerId, perm);
 
                 String targetPlayerName = gameData.playerIdToName.get(targetPlayerId);
                 String playerName = gameData.playerIdToName.get(controllerId);
                 gameBroadcastService.logAndBroadcast(gameData, GameLog.builder()
-                        .card(card)
+                        .card(characteristics)
                         .text(" enters the battlefield attached to " + targetPlayerName + " under " + playerName + "'s control.")
                         .build());
-                log.info("Game {} - {} resolves, attached to player {} for {}", gameData.id, card.getName(), targetPlayerName, playerName);
+                log.info("Game {} - {} resolves, attached to player {} for {}", gameData.id, characteristics.getName(), targetPlayerName, playerName);
             }
         // Aura fizzles if its target is no longer on the battlefield
-        } else if (card.isAura() && entry.getTargetId() != null) {
+        } else if (characteristics.isAura() && entry.getTargetId() != null) {
             Permanent target = gameQueryService.findPermanentById(gameData, entry.getTargetId());
             if (target == null) {
                 gameBroadcastService.logAndBroadcast(gameData, GameLog.builder()
-                        .card(card)
+                        .card(characteristics)
                         .text(" fizzles (enchanted creature no longer exists).")
                         .build());
-                graveyardService.addCardToGraveyard(gameData, controllerId, card);
+                disposeFizzledPermanentSpell(gameData, entry, card);
 
-                log.info("Game {} - {} fizzles, target {} no longer exists", gameData.id, card.getName(), entry.getTargetId());
+                log.info("Game {} - {} fizzles, target {} no longer exists", gameData.id, characteristics.getName(), entry.getTargetId());
             } else {
-                Permanent perm = new Permanent(card);
+                Permanent perm = createEnteringPermanent(entry, card, characteristics);
                 perm.setAttachedTo(entry.getTargetId());
                 battlefieldEntryService.putPermanentOntoBattlefield(gameData, controllerId, perm);
 
                 String playerName = gameData.playerIdToName.get(controllerId);
                 gameBroadcastService.logAndBroadcast(gameData, GameLog.builder()
-                        .card(card)
+                        .card(characteristics)
                         .text(" enters the battlefield attached to ")
                         .card(target.getCard())
                         .text(" under " + playerName + "'s control.")
                         .build());
-                log.info("Game {} - {} resolves, attached to {} for {}", gameData.id, card.getName(), target.getCard().getName(), playerName);
+                log.info("Game {} - {} resolves, attached to {} for {}", gameData.id, characteristics.getName(), target.getCard().getName(), playerName);
 
                 // Handle control-changing auras (e.g., Persuasion): a WHILE_ATTACHED floating
                 // layer-2 control effect keyed to the aura permanent
-                boolean hasControlEffect = card.getEffects(EffectSlot.STATIC).stream()
+                boolean hasControlEffect = characteristics.getEffects(EffectSlot.STATIC).stream()
                         .anyMatch(e -> e instanceof ControlEnchantedCreatureEffect);
                 if (hasControlEffect) {
                     creatureControlService.applyControlEffect(gameData, controllerId, target,
                             new ControlEnchantedCreatureEffect(), EffectDuration.WHILE_ATTACHED,
-                            perm.getId(), card.getName());
+                            perm.getId(), characteristics.getName());
                 }
 
                 // Check if aura has "as enters" basic land type choice (e.g. Convincing Mirage)
-                boolean needsBasicLandTypeChoice = card.getEffects(EffectSlot.ON_ENTER_BATTLEFIELD).stream()
+                boolean needsBasicLandTypeChoice = characteristics.getEffects(EffectSlot.ON_ENTER_BATTLEFIELD).stream()
                         .anyMatch(e -> e instanceof ChooseBasicLandTypeOnEnterEffect);
                 if (needsBasicLandTypeChoice) {
                     List<Permanent> bf = gameData.playerBattlefields.get(controllerId);
@@ -412,7 +446,7 @@ public class StackResolutionService {
                 }
 
                 // Check if aura has "as enters, choose a color" (e.g. Prismatic Ward)
-                boolean needsAuraColorChoice = card.getEffects(EffectSlot.ON_ENTER_BATTLEFIELD).stream()
+                boolean needsAuraColorChoice = characteristics.getEffects(EffectSlot.ON_ENTER_BATTLEFIELD).stream()
                         .anyMatch(e -> e instanceof ChooseColorEffect);
                 if (needsAuraColorChoice) {
                     List<Permanent> bf = gameData.playerBattlefields.get(controllerId);
@@ -422,7 +456,7 @@ public class StackResolutionService {
 
                 // Process aura ETB effects (e.g., Volition Reins)
                 if (!gameData.interaction.isAwaitingInput()) {
-                    battlefieldEntryService.processCreatureETBEffects(gameData, controllerId, card, entry.getTargetId(), true, entry.getTargetIds());
+                    battlefieldEntryService.processCreatureETBEffects(gameData, controllerId, characteristics, entry.getTargetId(), true, entry.getTargetIds());
                 }
             }
         } else {

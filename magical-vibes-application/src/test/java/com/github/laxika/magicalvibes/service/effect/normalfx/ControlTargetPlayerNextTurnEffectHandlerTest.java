@@ -160,4 +160,35 @@ class ControlTargetPlayerNextTurnEffectHandlerTest {
 
                 assertThat(gd.pendingTurnControl).containsEntry(player2Id, player1Id);
             }
+
+            @Test
+            @DisplayName("Emrakul mode registers pending control and extra-turn flag")
+            void registersExtraTurnFlag() {
+                Card card = createCard("Emrakul", CardType.CREATURE);
+                ControlTargetPlayerNextTurnEffect effect = new ControlTargetPlayerNextTurnEffect(true);
+                StackEntry entry = createTargetedEntry(card, player1Id, player2Id, List.of(effect));
+
+                controlTargetPlayerNextTurnEffectHandler.resolve(gd, entry, effect);
+
+                assertThat(gd.pendingTurnControl).containsEntry(player2Id, player1Id);
+                assertThat(gd.pendingTurnControlExtraTurn).contains(player2Id);
+                verify(gameBroadcastService).logAndBroadcast(eq(gd), eq(GameLog.text(
+                        "Player1 will control Player2 during their next turn. After that turn, Player2 takes an extra turn.")));
+            }
+
+            @Test
+            @DisplayName("Mindslaver overwrite clears a stale Emrakul extra-turn flag")
+            void mindslaverOverwriteClearsExtraTurnFlag() {
+                gd.pendingTurnControl.put(player2Id, player1Id);
+                gd.pendingTurnControlExtraTurn.add(player2Id);
+
+                Card card = createCard("Mindslaver", CardType.ARTIFACT);
+                ControlTargetPlayerNextTurnEffect effect = new ControlTargetPlayerNextTurnEffect();
+                StackEntry entry = createTargetedEntry(card, player1Id, player2Id, List.of(effect));
+
+                controlTargetPlayerNextTurnEffectHandler.resolve(gd, entry, effect);
+
+                assertThat(gd.pendingTurnControl).containsEntry(player2Id, player1Id);
+                assertThat(gd.pendingTurnControlExtraTurn).doesNotContain(player2Id);
+            }
 }

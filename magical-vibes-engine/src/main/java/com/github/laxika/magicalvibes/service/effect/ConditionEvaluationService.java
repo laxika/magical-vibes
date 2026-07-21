@@ -77,7 +77,9 @@ import com.github.laxika.magicalvibes.model.condition.AttackedWithCreaturesThisT
 import com.github.laxika.magicalvibes.model.condition.Raid;
 import com.github.laxika.magicalvibes.model.condition.SelfDealtDamageToOpponentThisTurn;
 import com.github.laxika.magicalvibes.model.condition.SelfHasKeyword;
+import com.github.laxika.magicalvibes.model.condition.SourceCanSoulbond;
 import com.github.laxika.magicalvibes.model.condition.SourceCounterThreshold;
+import com.github.laxika.magicalvibes.model.condition.SourceIsPaired;
 import com.github.laxika.magicalvibes.model.condition.SourceIsTapped;
 import com.github.laxika.magicalvibes.model.condition.SourceHasSubtype;
 import com.github.laxika.magicalvibes.model.condition.SourceUntapped;
@@ -89,6 +91,7 @@ import com.github.laxika.magicalvibes.model.condition.TargetSpellMatches;
 import com.github.laxika.magicalvibes.model.condition.TopCardOfLibraryColor;
 import com.github.laxika.magicalvibes.model.condition.TwoOrMoreSpellsCastLastTurn;
 import com.github.laxika.magicalvibes.model.condition.WonClash;
+import com.github.laxika.magicalvibes.model.filter.FilterContext;
 import com.github.laxika.magicalvibes.model.filter.PermanentPredicate;
 import com.github.laxika.magicalvibes.service.battlefield.GameQueryService;
 import com.github.laxika.magicalvibes.service.filter.PredicateEvaluationService;
@@ -289,6 +292,12 @@ public class ConditionEvaluationService {
                 Permanent source = sourcePermanent(gameData, ctx);
                 yield source != null && source.hasKeyword(c.keyword());
             }
+            case SourceIsPaired ignored -> {
+                Permanent source = sourcePermanent(gameData, ctx);
+                yield source != null && source.getPairedWithId() != null;
+            }
+            case SourceCanSoulbond ignored ->
+                    canSoulbond(gameData, ctx);
             case SourceCounterThreshold c -> {
                 Permanent source = sourcePermanent(gameData, ctx);
                 yield source != null && source.getCounterCount(c.counterType()) >= c.threshold();
@@ -400,9 +409,19 @@ public class ConditionEvaluationService {
      */
     private boolean matchesPermanent(GameData gameData, Permanent permanent, PermanentPredicate filter,
                                      ConditionContext ctx) {
-        return ctx.staticEvaluation()
-                ? staticEffectSupport.matchesStaticFilter(permanent, filter)
-                : predicateEvaluationService.matchesPermanentPredicate(gameData, permanent, filter);
+        if (ctx.staticEvaluation()) {
+            return staticEffectSupport.matchesStaticFilter(permanent, filter);
+        }
+        // Pass source card/controller so ownership and "is source" predicates work in conditions
+        // (e.g. Gisela's "own and control Gisela and Bruna" intervening-if).
+        FilterContext filterContext = FilterContext.of(gameData)
+                .withSourceControllerId(ctx.controllerId());
+        if (ctx.sourceCard() != null) {
+            filterContext = filterContext.withSourceCardId(ctx.sourceCard().getId());
+        } else if (ctx.sourcePermanent() != null) {
+            filterContext = filterContext.withSourceCardId(ctx.sourcePermanent().getOriginalCard().getId());
+        }
+        return predicateEvaluationService.matchesPermanentPredicate(permanent, filter, filterContext);
     }
 
     /** Returns {@code true} if the given permanent is the condition's own source. */
@@ -753,6 +772,36 @@ public class ConditionEvaluationService {
         List<Card> deck = gameData.playerDecks.get(controllerId);
         if (deck == null || deck.isEmpty()) return false;
         return deck.getFirst().getColors().contains(c.color());
+    }
+
+    /**
+     * Soulbond self-ETB intervening-if: source is unpaired and controller controls another unpaired creature.
+     */
+    private boolean canSoulbond(GameData gameData, ConditionContext ctx) {
+        Permanent source = sourcePermanent(gameData, ctx);
+        if (source == null || source.getPairedWithId() != null) {
+            return false;
+        }
+        if (!gameQueryService.isCreature(gameData, source)) {
+            return false;
+        }
+        UUID controllerId = ctx.controllerId();
+        if (controllerId == null) {
+            return false;
+        }
+        List<Permanent> battlefield = gameData.playerBattlefields.get(controllerId);
+        if (battlefield == null) {
+            return false;
+        }
+        for (Permanent p : battlefield) {
+            if (p.getId().equals(source.getId())) {
+                continue;
+            }
+            if (p.getPairedWithId() == null && gameQueryService.isCreature(gameData, p)) {
+                return true;
+            }
+        }
+        return false;
     }
 
     private int countBlockersOfSource(GameData gameData, ConditionContext ctx) {

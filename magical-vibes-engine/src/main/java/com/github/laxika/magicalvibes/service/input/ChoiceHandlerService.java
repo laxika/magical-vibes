@@ -26,6 +26,8 @@ import com.github.laxika.magicalvibes.model.effect.CardEffect;
 import com.github.laxika.magicalvibes.model.effect.ChooseOneEffect;
 import com.github.laxika.magicalvibes.model.effect.DealDamageToTargetPlayerOrPlaneswalkerEffect;
 import com.github.laxika.magicalvibes.model.effect.EffectDuration;
+import com.github.laxika.magicalvibes.model.effect.ReturnTargetSpellToHandEffect;
+import com.github.laxika.magicalvibes.model.effect.ReturnToHandEffect;
 import com.github.laxika.magicalvibes.model.effect.SphinxAmbassadorPutOnBattlefieldEffect;
 import com.github.laxika.magicalvibes.model.effect.TargetPlayerGainsLifeEffect;
 import com.github.laxika.magicalvibes.model.layer.FloatingContinuousEffect;
@@ -224,6 +226,10 @@ public class ChoiceHandlerService {
         }
         if (colorChoice.context() instanceof ChoiceContext.RelicBindModeChoice ctx) {
             handleRelicBindModeChoice(gameData, player, colorName, ctx);
+            return;
+        }
+        if (colorChoice.context() instanceof ChoiceContext.HullbreakerHorrorModeChoice ctx) {
+            handleHullbreakerHorrorModeChoice(gameData, player, colorName, ctx);
             return;
         }
         if (colorChoice.context() instanceof ChoiceContext.AdjustCounterKindChoice ctx) {
@@ -584,6 +590,85 @@ public class ChoiceHandlerService {
                 ctx.sourceCard().getName() + " — Choose target " + targetDescription + ".");
 
         gameBroadcastService.logAndBroadcast(gameData, GameLog.textCardText(player.getUsername() + " chooses \"" + chosen + "\" for " , ctx.sourceCard(), "."));
+        gameBroadcastService.broadcastGameState(gameData);
+    }
+
+    /**
+     * Hullbreaker Horror: after the "choose up to one" list pick, either finish (NONE) or hand the
+     * chosen bounce effect to {@link PermanentChoiceContext.MayAbilityTriggerTarget} for target
+     * selection. SPELL mode lists opponent-controlled spells on the stack; PERMANENT mode lists
+     * every nonland permanent.
+     */
+    private void handleHullbreakerHorrorModeChoice(GameData gameData, Player player, String chosen,
+            ChoiceContext.HullbreakerHorrorModeChoice ctx) {
+        boolean spellMode = ChoiceContext.HullbreakerHorrorModeChoice.SPELL.equals(chosen);
+        boolean permanentMode = ChoiceContext.HullbreakerHorrorModeChoice.PERMANENT.equals(chosen);
+        boolean noneMode = ChoiceContext.HullbreakerHorrorModeChoice.NONE.equals(chosen);
+        if (!spellMode && !permanentMode && !noneMode) {
+            throw new IllegalArgumentException("Invalid Hullbreaker Horror mode: " + chosen);
+        }
+
+        gameData.interaction.clearAwaitingInput();
+        gameData.pendingEffectResolutionEntry = null;
+        gameData.pendingEffectResolutionIndex = 0;
+
+        gameBroadcastService.logAndBroadcast(gameData,
+                GameLog.textCardText(player.getUsername() + " chooses \"" + chosen + "\" for ",
+                        ctx.sourceCard(), "."));
+
+        if (noneMode) {
+            gameBroadcastService.broadcastGameState(gameData);
+            turnProgressionService.resolveAutoPass(gameData);
+            return;
+        }
+
+        if (spellMode) {
+            List<UUID> validSpellCardIds = new ArrayList<>();
+            for (StackEntry se : gameData.stack) {
+                StackEntryType type = se.getEntryType();
+                if (type == StackEntryType.ACTIVATED_ABILITY || type == StackEntryType.TRIGGERED_ABILITY) {
+                    continue;
+                }
+                if (!ctx.controllerId().equals(se.getControllerId())) {
+                    validSpellCardIds.add(se.getCard().getId());
+                }
+            }
+            if (validSpellCardIds.isEmpty()) {
+                gameBroadcastService.broadcastGameState(gameData);
+                turnProgressionService.resolveAutoPass(gameData);
+                return;
+            }
+            gameData.interaction.setPermanentChoiceContext(new PermanentChoiceContext.MayAbilityTriggerTarget(
+                    ctx.sourceCard(), ctx.controllerId(), List.of(new ReturnTargetSpellToHandEffect())));
+            playerInputService.beginAnyTargetChoice(gameData, ctx.controllerId(),
+                    validSpellCardIds, List.of(),
+                    ctx.sourceCard().getName() + " — Choose target spell you don't control.");
+            gameBroadcastService.broadcastGameState(gameData);
+            return;
+        }
+
+        // permanent mode
+        List<UUID> validPermanents = new ArrayList<>();
+        for (UUID pid : gameData.orderedPlayerIds) {
+            List<Permanent> battlefield = gameData.playerBattlefields.get(pid);
+            if (battlefield == null) {
+                continue;
+            }
+            for (Permanent permanent : battlefield) {
+                if (!permanent.getCard().hasType(CardType.LAND)) {
+                    validPermanents.add(permanent.getId());
+                }
+            }
+        }
+        if (validPermanents.isEmpty()) {
+            gameBroadcastService.broadcastGameState(gameData);
+            turnProgressionService.resolveAutoPass(gameData);
+            return;
+        }
+        gameData.interaction.setPermanentChoiceContext(new PermanentChoiceContext.MayAbilityTriggerTarget(
+                ctx.sourceCard(), ctx.controllerId(), List.of(ReturnToHandEffect.target())));
+        playerInputService.beginPermanentChoice(gameData, ctx.controllerId(), validPermanents,
+                ctx.sourceCard().getName() + " — Choose target nonland permanent.");
         gameBroadcastService.broadcastGameState(gameData);
     }
 

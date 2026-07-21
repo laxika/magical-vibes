@@ -43,6 +43,7 @@ public class TriggeredAbilityQueueService {
     private final PlayerInputService playerInputService;
     private final TriggerTargetCollector triggerTargetCollector;
     private final com.github.laxika.magicalvibes.service.target.TargetLegalityService targetLegalityService;
+    private final com.github.laxika.magicalvibes.service.target.ValidTargetService validTargetService;
 
     public void processNextDeathTriggerTarget(GameData gameData) {
         while (gameData.hasPendingInteraction(PermanentChoiceContext.DeathTriggerTarget.class)) {
@@ -498,9 +499,23 @@ public class TriggeredAbilityQueueService {
                 }
             }
 
-            List<UUID> validPlayerTargets = pending.targetFilter() != null
-                    ? List.of()
-                    : new ArrayList<>(gameData.orderedPlayerIds);
+            List<UUID> validPlayerTargets;
+            if (pending.playerTargetOnly()) {
+                // Player-only triggers (e.g. Abundant Maw "target opponent") honour PlayerPredicateTargetFilter.
+                validPlayerTargets = validTargetService.filterValidPlayerTargets(
+                        gameData, pending.targetFilter(), gameData.orderedPlayerIds, pending.controllerId());
+                if (validPlayerTargets.isEmpty()) {
+                    gameData.pollPendingInteraction(PermanentChoiceContext.SpellTargetTriggerAnyTarget.class);
+                    log.info("Game {} - {} spell-target trigger skipped (no valid player targets)",
+                            gameData.id, pending.sourceCard().getName());
+                    continue;
+                }
+            } else if (pending.targetFilter() != null) {
+                // Permanent-filtered path: players are not offered.
+                validPlayerTargets = List.of();
+            } else {
+                validPlayerTargets = new ArrayList<>(gameData.orderedPlayerIds);
+            }
 
             String prompt = pending.playerTargetOnly()
                     ? pending.sourceCard().getName() + "'s ability - Choose target player."
@@ -859,6 +874,53 @@ public class TriggeredAbilityQueueService {
             gameBroadcastService.logAndBroadcast(gameData, GameLog.cardThen(pending.sourceCard(),
                     "'s explore trigger — choose target creature."));
             log.info("Game {} - {} explore trigger awaiting target selection", gameData.id, pending.sourceCard().getName());
+            return;
+        }
+    }
+
+    public void processNextExploitTriggerTarget(GameData gameData) {
+        while (gameData.hasPendingInteraction(PermanentChoiceContext.ExploitTriggerTarget.class)) {
+            PermanentChoiceContext.ExploitTriggerTarget pending =
+                    gameData.peekPendingInteraction(PermanentChoiceContext.ExploitTriggerTarget.class);
+
+            List<UUID> validStackCardIds = new ArrayList<>();
+            for (StackEntry se : gameData.stack) {
+                StackEntryType type = se.getEntryType();
+                boolean isAbility = type == StackEntryType.ACTIVATED_ABILITY
+                        || type == StackEntryType.TRIGGERED_ABILITY;
+                boolean isSpell = type == StackEntryType.INSTANT_SPELL || type == StackEntryType.SORCERY_SPELL
+                        || type == StackEntryType.CREATURE_SPELL || type == StackEntryType.ENCHANTMENT_SPELL
+                        || type == StackEntryType.ARTIFACT_SPELL || type == StackEntryType.PLANESWALKER_SPELL;
+                if (!isSpell && !(pending.includeAbilities() && isAbility)) {
+                    continue;
+                }
+                if (pending.stackFilter() != null
+                        && !targetLegalityService.matchesStackEntryPredicate(
+                                gameData, se, pending.stackFilter(), pending.controllerId())) {
+                    continue;
+                }
+                validStackCardIds.add(se.getCard().getId());
+            }
+
+            if (validStackCardIds.isEmpty()) {
+                gameData.pollPendingInteraction(PermanentChoiceContext.ExploitTriggerTarget.class);
+                gameBroadcastService.logAndBroadcast(gameData, GameLog.cardThen(pending.sourceCard(),
+                        "'s exploit ability has no valid spell or ability targets."));
+                log.info("Game {} - {} exploit trigger skipped (no valid stack targets)",
+                        gameData.id, pending.sourceCard().getName());
+                continue;
+            }
+
+            gameData.pollPendingInteraction(PermanentChoiceContext.ExploitTriggerTarget.class);
+            gameData.interaction.setPermanentChoiceContext(pending);
+            playerInputService.beginAnyTargetChoice(gameData, pending.controllerId(),
+                    validStackCardIds, List.of(),
+                    pending.sourceCard().getName() + "'s ability — Choose target spell or ability.");
+
+            gameBroadcastService.logAndBroadcast(gameData, GameLog.cardThen(pending.sourceCard(),
+                    "'s exploit ability triggers — choose a target spell or ability."));
+            log.info("Game {} - {} exploit trigger awaiting stack target selection",
+                    gameData.id, pending.sourceCard().getName());
             return;
         }
     }

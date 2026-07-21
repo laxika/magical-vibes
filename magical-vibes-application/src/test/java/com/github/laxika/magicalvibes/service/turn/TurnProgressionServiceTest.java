@@ -744,6 +744,36 @@ class TurnProgressionServiceTest {
 
             assertThat(gd.pendingTurnControl).isEmpty();
         }
+
+        @Test
+        @DisplayName("Emrakul flag schedules an extra turn when control activates")
+        void schedulesExtraTurnWhenControlActivates() {
+            gd.activePlayerId = player1Id;
+            gd.pendingTurnControl.put(player2Id, player1Id);
+            gd.pendingTurnControlExtraTurn.add(player2Id);
+
+            turnProgressionService.advanceTurn(gd);
+
+            assertThat(gd.mindControlledPlayerId).isEqualTo(player2Id);
+            assertThat(gd.extraTurns).containsExactly(player2Id);
+            assertThat(gd.extraTurnSkipsUntap).containsExactly(false);
+            assertThat(gd.pendingTurnControlExtraTurn).isEmpty();
+        }
+
+        @Test
+        @DisplayName("Does not schedule extra turn when control fails to activate")
+        void doesNotScheduleExtraTurnWhenControllerGone() {
+            gd.activePlayerId = player1Id;
+            UUID unknownPlayer = UUID.randomUUID();
+            gd.pendingTurnControl.put(player2Id, unknownPlayer);
+            gd.pendingTurnControlExtraTurn.add(player2Id);
+
+            turnProgressionService.advanceTurn(gd);
+
+            assertThat(gd.mindControlledPlayerId).isNull();
+            assertThat(gd.extraTurns).isEmpty();
+            assertThat(gd.pendingTurnControlExtraTurn).isEmpty();
+        }
     }
 
     // =========================================================================

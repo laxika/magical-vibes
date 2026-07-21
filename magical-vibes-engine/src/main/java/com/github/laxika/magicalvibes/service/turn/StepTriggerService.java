@@ -10,6 +10,8 @@ import com.github.laxika.magicalvibes.model.action.DrawCardsAtNextUpkeep;
 import com.github.laxika.magicalvibes.model.action.LoseLifeAtNextDrawStepUnlessPays;
 import com.github.laxika.magicalvibes.model.action.ExileToOwnerGraveyardAtNextUpkeep;
 import com.github.laxika.magicalvibes.model.action.RevokeExilePlayPermissionAtNextUpkeep;
+import com.github.laxika.magicalvibes.model.action.TransformSourceAtNextUpkeep;
+import com.github.laxika.magicalvibes.model.effect.TransformToBackFaceEffect;
 import com.github.laxika.magicalvibes.model.action.DelayedPlusOneCounters;
 import com.github.laxika.magicalvibes.model.action.DelayedPlusZeroPlusOneCounters;
 import com.github.laxika.magicalvibes.model.action.DelayedPermanentActionKind;
@@ -275,6 +277,27 @@ public class StepTriggerService {
                     gameBroadcastService.logAndBroadcast(gameData, GameLog.text(
                             "The card exiled with " + sourceName + " can no longer be played."));
                 }
+            }
+        }
+
+        // Archangel Avacyn: "transform ~ at the beginning of the next upkeep." Fires at the next
+        // upkeep regardless of active player; TransformToBackFaceEffect no-ops if already flipped.
+        if (gameData.hasDelayedAction(TransformSourceAtNextUpkeep.class)) {
+            List<TransformSourceAtNextUpkeep> pending =
+                    gameData.drainDelayedActions(TransformSourceAtNextUpkeep.class);
+            for (TransformSourceAtNextUpkeep action : pending) {
+                gameData.stack.add(new StackEntry(
+                        StackEntryType.TRIGGERED_ABILITY,
+                        action.sourceCard(),
+                        action.controllerId(),
+                        action.sourceCard().getName() + "'s delayed ability — transform",
+                        new ArrayList<>(List.of(new TransformToBackFaceEffect())),
+                        null,
+                        action.permanentId()));
+                gameBroadcastService.logAndBroadcast(gameData, GameLog.cardThen(action.sourceCard(),
+                        "'s delayed ability triggers — transform."));
+                log.info("Game {} - {} delayed transform-at-next-upkeep trigger pushed onto stack",
+                        gameData.id, action.sourceCard().getName());
             }
         }
 
@@ -2679,82 +2702,26 @@ public class StepTriggerService {
     }
 
     /**
-     * Scans the active player's battlefield for permanents with
-     * {@code BEGINNING_OF_COMBAT_TRIGGERED} effects and pushes them onto the stack.
-     * Only fires for the active player's permanents (CR 507.1: "At the beginning
-     * of combat on your turn").
+     * Scans battlefields for beginning-of-combat triggered abilities and pushes them onto the stack.
+     * {@code BEGINNING_OF_COMBAT_TRIGGERED} fires only for the active player's permanents
+     * (CR 507.1: "At the beginning of combat on your turn").
+     * {@code EACH_BEGINNING_OF_COMBAT_TRIGGERED} fires for every player's permanents at each combat.
      *
      * @param gameData the current game state to modify
      */
     public void handleBeginningOfCombatTriggers(GameData gameData) {
         UUID activePlayerId = gameData.activePlayerId;
         List<Permanent> battlefield = gameData.playerBattlefields.get(activePlayerId);
-        if (battlefield == null) return;
-
-        for (Permanent perm : battlefield) {
-            List<CardEffect> combatEffects = perm.getCard().getEffects(EffectSlot.BEGINNING_OF_COMBAT_TRIGGERED);
-            if (combatEffects == null || combatEffects.isEmpty()) continue;
-
-            // For equipment triggers, only fire if the equipment is attached to a creature
-            if (perm.isAttached()) {
-                Permanent equippedCreature = gameQueryService.findPermanentById(gameData, perm.getAttachedTo());
-                if (equippedCreature == null || !gameQueryService.isCreature(gameData, equippedCreature)) {
-                    continue;
-                }
-            }
-
-            List<CardEffect> mayEffects = combatEffects.stream()
-                    .filter(e -> e instanceof MayEffect)
-                    .toList();
-            List<CardEffect> mandatoryEffects = combatEffects.stream()
-                    .filter(e -> !(e instanceof MayEffect))
-                    .toList();
-
-            for (CardEffect effect : mayEffects) {
-                gameData.queueMayAbility(perm.getCard(), activePlayerId, (MayEffect) effect, null, perm.getId());
-            }
-
-            if (!mandatoryEffects.isEmpty()) {
-                boolean needsPermanentTarget = mandatoryEffects.stream()
-                        .anyMatch(e -> e.targetSpec().category().includesPermanents() || e.targetSpec().category().includesPlayers());
-                boolean needsGraveyardTarget = mandatoryEffects.stream()
-                        .anyMatch(e -> e.targetSpec().category().isGraveyard());
-                if (needsGraveyardTarget) {
-                    ExileGraveyardCardsEffect exileEffect = mandatoryEffects.stream()
-                            .filter(e -> e instanceof ExileGraveyardCardsEffect ge
-                                    && ge.scope() == GraveyardExileScope.TARGET_CARDS_ANY_GRAVEYARD)
-                            .map(e -> (ExileGraveyardCardsEffect) e)
-                            .findFirst()
-                            .orElseThrow();
-                    graveyardTargetingService.handleBeginningOfCombatGraveyardTargeting(
-                            gameData, activePlayerId, perm.getCard(), mandatoryEffects, perm.getId(), exileEffect);
-                } else if (needsPermanentTarget) {
-                    gameData.queueInteraction(
-                            new PermanentChoiceContext.BeginningOfCombatTriggerTarget(
-                                    perm.getCard(), activePlayerId,
-                                    new ArrayList<>(mandatoryEffects), perm.getId()));
-                    gameBroadcastService.logAndBroadcast(gameData,
-                            GameLog.cardThen(perm.getCard(), "'s beginning of combat ability triggers."));
-                    log.info("Game {} - {} beginning-of-combat trigger queued for targeting",
-                            gameData.id, perm.getCard().getName());
-                } else {
-                    gameData.stack.add(new StackEntry(
-                            StackEntryType.TRIGGERED_ABILITY,
-                            perm.getCard(),
-                            activePlayerId,
-                            perm.getCard().getName() + "'s combat ability",
-                            new ArrayList<>(mandatoryEffects),
-                            (UUID) null,
-                            perm.getId()
-                    ));
-
-                    gameBroadcastService.logAndBroadcast(gameData,
-                            GameLog.cardThen(perm.getCard(), "'s beginning of combat ability triggers."));
-                    log.info("Game {} - {} beginning-of-combat trigger pushed onto stack",
-                            gameData.id, perm.getCard().getName());
-                }
+        if (battlefield != null) {
+            for (Permanent perm : battlefield) {
+                queueBeginningOfCombatTriggers(gameData, activePlayerId, perm,
+                        perm.getCard().getEffects(EffectSlot.BEGINNING_OF_COMBAT_TRIGGERED));
             }
         }
+
+        gameData.forEachPermanent((playerId, perm) ->
+                queueBeginningOfCombatTriggers(gameData, playerId, perm,
+                        perm.getCard().getEffects(EffectSlot.EACH_BEGINNING_OF_COMBAT_TRIGGERED)));
 
         if (gameData.hasPendingInteraction(PermanentChoiceContext.BeginningOfCombatTriggerTarget.class)) {
             processNextBeginningOfCombatTriggerTarget(gameData);
@@ -2766,6 +2733,75 @@ public class StepTriggerService {
         }
 
         playerInputService.processNextMayAbility(gameData);
+    }
+
+    private void queueBeginningOfCombatTriggers(GameData gameData, UUID controllerId, Permanent perm,
+                                                List<CardEffect> combatEffects) {
+        if (combatEffects == null || combatEffects.isEmpty()) {
+            return;
+        }
+
+        // For equipment triggers, only fire if the equipment is attached to a creature
+        if (perm.isAttached()) {
+            Permanent equippedCreature = gameQueryService.findPermanentById(gameData, perm.getAttachedTo());
+            if (equippedCreature == null || !gameQueryService.isCreature(gameData, equippedCreature)) {
+                return;
+            }
+        }
+
+        List<CardEffect> mayEffects = combatEffects.stream()
+                .filter(e -> e instanceof MayEffect)
+                .toList();
+        List<CardEffect> mandatoryEffects = combatEffects.stream()
+                .filter(e -> !(e instanceof MayEffect))
+                .toList();
+
+        for (CardEffect effect : mayEffects) {
+            gameData.queueMayAbility(perm.getCard(), controllerId, (MayEffect) effect, null, perm.getId());
+        }
+
+        if (mandatoryEffects.isEmpty()) {
+            return;
+        }
+
+        boolean needsPermanentTarget = mandatoryEffects.stream()
+                .anyMatch(e -> e.targetSpec().category().includesPermanents() || e.targetSpec().category().includesPlayers());
+        boolean needsGraveyardTarget = mandatoryEffects.stream()
+                .anyMatch(e -> e.targetSpec().category().isGraveyard());
+        if (needsGraveyardTarget) {
+            ExileGraveyardCardsEffect exileEffect = mandatoryEffects.stream()
+                    .filter(e -> e instanceof ExileGraveyardCardsEffect ge
+                            && ge.scope() == GraveyardExileScope.TARGET_CARDS_ANY_GRAVEYARD)
+                    .map(e -> (ExileGraveyardCardsEffect) e)
+                    .findFirst()
+                    .orElseThrow();
+            graveyardTargetingService.handleBeginningOfCombatGraveyardTargeting(
+                    gameData, controllerId, perm.getCard(), mandatoryEffects, perm.getId(), exileEffect);
+        } else if (needsPermanentTarget) {
+            gameData.queueInteraction(
+                    new PermanentChoiceContext.BeginningOfCombatTriggerTarget(
+                            perm.getCard(), controllerId,
+                            new ArrayList<>(mandatoryEffects), perm.getId()));
+            gameBroadcastService.logAndBroadcast(gameData,
+                    GameLog.cardThen(perm.getCard(), "'s beginning of combat ability triggers."));
+            log.info("Game {} - {} beginning-of-combat trigger queued for targeting",
+                    gameData.id, perm.getCard().getName());
+        } else {
+            gameData.stack.add(new StackEntry(
+                    StackEntryType.TRIGGERED_ABILITY,
+                    perm.getCard(),
+                    controllerId,
+                    perm.getCard().getName() + "'s combat ability",
+                    new ArrayList<>(mandatoryEffects),
+                    (UUID) null,
+                    perm.getId()
+            ));
+
+            gameBroadcastService.logAndBroadcast(gameData,
+                    GameLog.cardThen(perm.getCard(), "'s beginning of combat ability triggers."));
+            log.info("Game {} - {} beginning-of-combat trigger pushed onto stack",
+                    gameData.id, perm.getCard().getName());
+        }
     }
 
     /**

@@ -132,9 +132,15 @@ public class ExampleCard extends Card {
   - Card is cast as a spell from the graveyard (counterable, triggers "whenever you cast"), then exiled whether it resolves or fizzles
   - Distinct from graveyard activated abilities (which put ABILITIES on stack, not spells)
   - Example: `magical-vibes-card/src/main/java/com/github/laxika/magicalvibes/cards/a/AncientGrudge.java`
+- Miracle spell (reveal on first draw, cast for miracle cost during trigger resolution):
+  - `addCastingOption(new MiracleCast("{cost}"))` + normal effects (e.g. `ControllerExtraTurnEffect` + `ExileSpellEffect`)
+  - Do **not** use `AlternateHandCast` — miracle cost is only available via the draw→reveal→trigger path
+  - Example: `magical-vibes-card/src/main/java/com/github/laxika/magicalvibes/cards/t/TemporalMastery.java`
 
 - Alternate hand cast (non-mana alternate cost from hand):
   - `addCastingOption(new AlternateHandCast(List.of(new LifeCastingCost(N), new SacrificePermanentsCost(N, predicate))))`
+- Emerge (sacrifice a creature; pay emerge mana cost reduced by its mana value):
+  - `addCastingOption(new AlternateHandCast(List.of(new ManaCastingCost("{cost}"), new SacrificePermanentsCost(1, PermanentIsCreaturePredicate())), true))` — trailing `true` = `reduceManaBySacrificedManaValue` (generic only)
   - Replaces normal mana cost; composed from `CastingCost` components (`LifeCastingCost`, `SacrificePermanentsCost`, `ManaCastingCost`, `TapUntappedPermanentsCost`, `ReturnPermanentsCost`)
   - Example (sacrifice + life): `magical-vibes-card/src/main/java/com/github/laxika/magicalvibes/cards/d/DemonOfDeathsGate.java`
   - Example (mana + tap artifact): `magical-vibes-card/src/main/java/com/github/laxika/magicalvibes/cards/z/ZahidDjinnOfTheLamp.java`

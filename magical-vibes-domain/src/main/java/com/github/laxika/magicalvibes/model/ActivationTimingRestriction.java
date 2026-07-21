@@ -2,6 +2,8 @@ package com.github.laxika.magicalvibes.model;
 
 public enum ActivationTimingRestriction {
     CAST_NONCREATURE_SPELL_THIS_TURN,
+    /** Activate only if you control three or more creatures with different powers (Coven). */
+    COVEN,
     METALCRAFT,
     MORBID,
     ONLY_BEFORE_ATTACKERS_DECLARED,

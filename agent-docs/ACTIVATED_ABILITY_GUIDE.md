@@ -36,6 +36,7 @@ Quick reference for building `ActivatedAbility` instances. Covers all constructo
 | `ONLY_WHILE_CREATURE` | Abilities on creature lands that only work while animated |
 | `CAST_NONCREATURE_SPELL_THIS_TURN` | Activate only if you've cast a noncreature spell this turn (checks `gameQueryService.playerCastNoncreatureSpellThisTurn()`). Seeker of Insight |
 | `METALCRAFT` | Activate only if you control three or more artifacts |
+| `COVEN` | Activate only if you control three or more creatures with different powers (checks distinct effective powers via `gameQueryService.isCovenMet()`). Ambitious Farmhand |
 | `MORBID` | Activate only if a creature died this turn (checks `gameQueryService.isMorbidMet()`) |
 | `OPPONENT_CONTROLS_FLYING_CREATURE` | Activate only if an opponent controls a creature with flying (checks `gameQueryService.anyOpponentControlsFlyingCreature()`). Groundling Pouncer |
 | `OPPONENT_CONTROLS_MORE_LANDS` | Activate only if an opponent controls strictly more lands than you (checks `gameQueryService.anyOpponentControlsMoreLands()`). Weathered Wayfarer |
@@ -407,6 +408,19 @@ addGraveyardActivatedAbility(new ActivatedAbility(
 
 Cards: `MagmaPhoenix`
 
+**Targeted graveyard abilities** (e.g. Gryff's Boon "{cost}: Return this card … attached to target creature") use an effect with a non-`NONE` `targetSpec()` plus an optional `TargetFilter` on the `ActivatedAbility`. Activation accepts `targetId` via `activateGraveyardAbility(..., xValue, targetId)` / wire `ActivateGraveyardAbilityRequest.targetId`. The stack entry carries the target and `ability.getTargetFilter()` so illegal targets fizzle on resolution.
+
+```java
+addGraveyardActivatedAbility(new ActivatedAbility(
+    false, "{3}{W}",
+    List.of(new ReturnSourceFromGraveyardAttachedToTargetEffect()),
+    "{3}{W}: Return this card … attached to target creature. Activate only as a sorcery.",
+    new PermanentPredicateTargetFilter(new PermanentIsCreaturePredicate(), "Target must be a creature"),
+    null, null, ActivationTimingRestriction.SORCERY_SPEED));
+```
+
+Cards: `GryffsBoon`
+
 **Embalm / Eternalize** ("{cost}, Exile this card from your graveyard: Create a token that's a copy of it, except ... Activate only as a sorcery.") is a graveyard activated ability whose cost exiles the source card. Use `ExileSelfFromGraveyardCost()` (paid at activation, before the ability hits the stack, so it can't be activated twice off the same card) plus `CreateTokenCopyOfSourceEffect(false, 1, colorOverride, addedSubtype, removeManaCost)` for the transformed copy, and `ActivationTimingRestriction.SORCERY_SPEED` (now enforced for graveyard abilities by `validateGraveyardTimingRestrictions`).
 
 ```java
@@ -508,7 +522,7 @@ All cost effects implement the `CostEffect` marker interface (which extends `Car
 
 | Cost effect | Constructor | Use when |
 |------------|-------------|----------|
-| `SacrificeSelfCost` | `()` | "Sacrifice this: ..." |
+| `SacrificeSelfCost` | `()` or `(true)` | "Sacrifice this: ...". `(true)` snapshots this permanent's effective power into xValue at payment (Mausoleum Wanderer) |
 | `SacrificeCreatureCost` | `()` | "Sacrifice a creature: ..." |
 | `SacrificeCreatureCost` | `(false, false, false, true)` | "Sacrifice another creature: ..." (excludeSelf prevents sacrificing the source) |
 | `SacrificeArtifactCost` | `()` | "Sacrifice an artifact: ..." |
@@ -634,6 +648,7 @@ addEffect(EffectSlot.SPELL, effect);     // effect resolved when spell resolves
 | `ON_ANY_CREATURE_ATTACKS` | Whenever ANY creature attacks (any controller, any defender). Fires once per attacking creature, on every permanent with this slot across all battlefields. The attacking creature is set as the non-targeting `targetId`, so a plain `DealDamageToTargetCreatureEffect` hits "it". Checked in `CombatAttackService.declareAttackers`. Used by Caltrops |
 | `ON_ANY_CREATURE_BECOMES_TARGET_OF_SPELL_OR_ABILITY` | Whenever ANY creature (any controller) becomes the target of ANY spell or ability. Fires on ALL permanents with this slot across every battlefield. The targeted creature is set as the non-targeting `targetId`. Checked in `TriggerCollectionService.checkBecomesTargetOfSpellTriggers`/`checkBecomesTargetOfAbilityTriggers`. Used by Cowardice (`ReturnToHandEffect.target()`) |
 | `ON_ALLY_CREATURE_EXPLORES` | Whenever a creature you control explores. Fires after the explore process completes (land into hand, or +1/+1 counter and may-graveyard choice). Supports targeted effects (e.g. BoostTargetCreatureEffect) via `ExploreTriggerTarget` queue — targets restricted to opponent's creatures. Used by Lurking Chupacabra |
+| `ON_EXPLOIT` | When this permanent exploits a creature (CR 702.110). Fired after a successful `ExploitEffect` sacrifice while the source was on the battlefield at resolution start (self-sac still counts). Stack-targeting effects (e.g. `CounterSpellEffect`) use `ExploitTriggerTarget` — pair with `StackEntryHasTargetPredicate` to include activated/triggered abilities. Used by Overcharged Amalgam |
 | `ON_BLOCK` | This creature blocks |
 | `ON_BECOMES_BLOCKED` | This creature becomes blocked. Register effects with `TriggerMode.PER_BLOCKER` to fire once per blocker |
 | `ON_ATTACKS_UNBLOCKED` | This creature attacks and isn't blocked. Fires once per unblocked attacker during the declare-blockers step (after blocks are declared, or immediately if the defender can't block) — before combat damage, and independent of whether damage is dealt. Player-affecting effects read the defending player from the non-targeting `targetId`. Checked in `CombatBlockService`. Used by Abyssal Nightstalker |
@@ -646,7 +661,7 @@ addEffect(EffectSlot.SPELL, effect);     // effect resolved when spell resolves
 | `ON_DEATH` | This permanent dies |
 | `ON_SACRIFICE` | This permanent is sacrificed |
 | `ON_ALLY_CREATURE_ENTERS_BATTLEFIELD` | A creature (including tokens) enters battlefield under your control |
-| `ON_ALLY_NONTOKEN_CREATURE_ENTERS_BATTLEFIELD` | A nontoken creature enters battlefield under your control (not this permanent, not tokens). Used with MayPayManaEffect for Minion Reflector's copy trigger. Entering permanent ID is passed via PendingMayAbility.targetCardId so `CreateTokenCopyOfTargetPermanentEffect` copies that creature |
+| `ON_ALLY_NONTOKEN_CREATURE_ENTERS_BATTLEFIELD` | A nontoken creature enters battlefield under your control (not this permanent, not tokens). Used with MayPayManaEffect for Minion Reflector's copy trigger, or mandatory `CreateTokenCopyOfTargetPermanentEffect` (optionally gated by `TriggeringCardConditionalEffect`) for Necroduality. Entering permanent ID is baked as stack `targetId` / PendingMayAbility.targetCardId so the copy effect knows which creature to copy |
 | `ON_ALLY_ARTIFACT_ENTERS_BATTLEFIELD` | An artifact enters battlefield under your control (not this permanent) |
 | `ON_ALLY_NONTOKEN_ARTIFACT_ENTERS_BATTLEFIELD` | A nontoken artifact enters battlefield under your control (not this permanent). Used with MayPayManaEffect for Mirrorworks' copy trigger. Entering permanent ID is passed via PendingMayAbility.targetCardId |
 | `ON_ANY_CREATURE_DIES` | Any creature (including tokens) on any battlefield dies. Fires for all permanents on all battlefields. Supports targeted effects via DeathTriggerTarget (e.g. Falkenrath Noble). Unwraps `TriggeringPermanentConditionalEffect` against the dying permanent — the predicate sees the dying creature's on-battlefield state incl. counters at death (e.g. Blowfly Infestation's "if it had a -1/-1 counter on it") |
@@ -655,6 +670,7 @@ addEffect(EffectSlot.SPELL, effect);     // effect resolved when spell resolves
 | `ON_ARTIFACT_PUT_INTO_OPPONENT_GRAVEYARD_FROM_BATTLEFIELD` | An artifact is put into an opponent's graveyard from the battlefield. Only fires when the graveyard owner is an opponent of this permanent's controller. Supports MayEffect wrapping. |
 | `ON_ANY_LAND_PUT_INTO_GRAVEYARD_FROM_BATTLEFIELD` | Any land (any player's) is put into a graveyard from the battlefield. Fires for destroy, sacrifice, etc. Used by Dingus Egg with `DealDamageToPlayersEffect(2, TRIGGERING_PERMANENT_CONTROLLER)` — target pre-set to the land's controller at trigger time. |
 | `ON_OPPONENT_PERMANENT_PUT_INTO_GRAVEYARD_FROM_BATTLEFIELD` | A permanent of **any** type an opponent of this permanent's controller controls is put into a graveyard from the battlefield. Fired once per removal in `PermanentRemovalService.processGraveyardAndTriggers` via `TriggerCollectionService.checkOpponentPermanentPutIntoGraveyardTriggers`; the collector bakes the dying card id + that opponent's id into the effect. Used by Prince of Thralls with `StealDyingOpponentPermanentUnlessPaysLifeEffect(3)`. |
+| `ON_ALLY_CREATURE_CARD_PUT_INTO_GRAVEYARD_FROM_ANYWHERE` | A creature card is put into your graveyard from anywhere (battlefield, hand, library, stack, exile). Uses printed card types (tokens never fire; a creature card that was a noncreature permanent still does). Fires on permanents the graveyard owner controls. Checked in `GraveyardService.addCardToGraveyard`. Used by Soulcipher Board (`SequenceEffect` of `RemoveCounterFromSourceEffect(OMEN, 1)` + `ConditionalEffect(NotCondition(SourceCounterThreshold(1, OMEN)), TransformSelfEffect)`). |
 | `ON_BLACK_CARD_PUT_INTO_OPPONENT_GRAVEYARD_FROM_ANYWHERE` | A black card is put into an opponent's graveyard from anywhere (battlefield, hand, library, stack, exile). Only fires on permanents controlled by an opponent of the graveyard owner. Checked in `GraveyardService.addCardToGraveyard`. Supports MayEffect wrapping. Used by Compost. |
 | `ON_ANY_OTHER_CREATURE_ENTERS_BATTLEFIELD` | Any other creature enters battlefield |
 | `ON_PERMANENT_ENTERS_FROM_GRAVEYARD` | Any permanent (not just creatures) enters from ANY graveyard, checked via `enteredFromGraveyardOwnerId`. Queues a non-targeting stack entry for the source's controller (`TriggerCollectionService.checkPermanentEntersFromGraveyardTriggers`). Used by River Kelpie. Contrast `ON_CREATURE_ENTERS_FROM_GRAVEYARD` (Flayer of the Hatebound): creatures-only, controller's graveyard only, any-target pipeline |
@@ -700,6 +716,7 @@ addEffect(EffectSlot.SPELL, effect);     // effect resolved when spell resolves
 | `SAGA_CHAPTER_II` | Saga chapter II (second lore counter) |
 | `SAGA_CHAPTER_III` | Saga chapter III (third lore counter, saga sacrificed after) |
 | `BEGINNING_OF_COMBAT_TRIGGERED` | Beginning of combat on controller's turn |
+| `EACH_BEGINNING_OF_COMBAT_TRIGGERED` | Beginning of each combat (any player's turn) |
 | `PRECOMBAT_MAIN_TRIGGERED` | Beginning of precombat main phase on controller's turn |
 | `ON_OPPONENT_CREATURE_DEALT_DAMAGE` | An opponent's creature is dealt damage |
 | `ON_ANY_CREATURE_DEALT_DAMAGE` | Any creature (yours or an opponent's) is dealt damage. Queued stack entry targets the damaged creature (targetId set, non-targeting). Register a target-taking effect like `DestroyTargetPermanentEffect(true)` — Death Pits of Rath |
@@ -708,6 +725,7 @@ addEffect(EffectSlot.SPELL, effect);     // effect resolved when spell resolves
 | `ON_SELF_LEAVES_BATTLEFIELD` | This permanent leaves the battlefield (any means) |
 | `ON_ANOTHER_CREATURE_LEAVES_BATTLEFIELD` | Another creature (any player's) leaves the battlefield by any means (destroy, exile, bounce, sacrifice, tuck) — broader than "dies". Global watcher fired from every leave path in `PermanentRemovalService` via `TriggerCollectionService.checkAnotherCreatureLeavesBattlefieldTriggers`; fires on every permanent with the slot except the leaving creature itself. Non-targeting: a "you may have target player mill two cards" is a `MayEffect(MillEffect(2, TARGET_PLAYER), …)` whose "may" and player target are resolved on the stack (Extractor Demon) |
 | `ON_ANOTHER_ARTIFACT_LEAVES_BATTLEFIELD` | Another artifact **you control** leaves the battlefield by any means (destroy, exile, bounce, sacrifice, tuck). Controller-scoped watcher fired from every leave path in `PermanentRemovalService` via `TriggerCollectionService.checkAnotherArtifactLeavesBattlefieldTriggers`; fires only on the leaving artifact's controller's battlefield, except the leaving artifact itself. Pair with `ON_ALLY_ARTIFACT_ENTERS_BATTLEFIELD` (same effect on both slots) for "whenever another artifact you control enters or leaves the battlefield". Non-targeting: player target + "you may pay {1}" resolve on the stack via `MayPayManaEffect(SequenceEffect.of(LoseLifeEffect(TARGET_PLAYER), GainLifeEffect))` (Sludge Strider) |
+| `ON_ALLY_CREATURE_LEAVES_BATTLEFIELD` | Another creature **you control** leaves the battlefield by any means. Controller-scoped sibling of `ON_ANOTHER_CREATURE_LEAVES_BATTLEFIELD`. Fired via `TriggerCollectionService.checkAllyCreatureLeavesBattlefieldTriggers`. Used by Luminous Phantom (`GainLifeEffect(1)`) |
 | `ON_SELF_PUT_INTO_GRAVEYARD_FROM_ANYWHERE` | This card is put into a graveyard from anywhere (battlefield/hand/library/stack). Fired for every zone→graveyard transition in `GraveyardService.addCardToGraveyard` (card enters graveyard first, then trigger). Used by Purity with `ShuffleSelfFromGraveyardIntoLibraryEffect` |
 | `ON_SELF_PUT_INTO_GRAVEYARD_FROM_BATTLEFIELD` | This card is put into a graveyard specifically **from the battlefield** ("dies" for a permanent). Fired in `GraveyardService.addCardToGraveyard` only when the source zone is `BATTLEFIELD` (card enters graveyard first, then trigger). Used by Spreading Algae with `ReturnCardFromGraveyardEffect.builder().destination(HAND).filter(new CardIsSelfPredicate()).returnAll(true).build()` ("return it to its owner's hand") |
 | `ON_ALLY_AURA_OR_EQUIPMENT_PUT_INTO_GRAVEYARD_FROM_BATTLEFIELD` | Your Aura or Equipment dies |

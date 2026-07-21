@@ -21,6 +21,7 @@ import com.github.laxika.magicalvibes.model.filter.CardHasCyclingPredicate;
 import com.github.laxika.magicalvibes.model.filter.CardHasEmbalmOrEternalizePredicate;
 import com.github.laxika.magicalvibes.model.filter.CardHasFlashbackPredicate;
 import com.github.laxika.magicalvibes.model.filter.CardIsAuraPredicate;
+import com.github.laxika.magicalvibes.model.filter.CardIsColorlessPredicate;
 import com.github.laxika.magicalvibes.model.filter.CardIsHistoricPredicate;
 import com.github.laxika.magicalvibes.model.filter.CardIsMulticoloredPredicate;
 import com.github.laxika.magicalvibes.model.filter.CardIsPermanentPredicate;
@@ -191,6 +192,8 @@ public class PredicateEvaluationService {
                     card.getColors().contains(p.color());
             case CardIsMulticoloredPredicate ignored ->
                     card.getColors().size() >= 2;
+            case CardIsColorlessPredicate ignored ->
+                    card.getColors().isEmpty();
             case PhyrexianManaPredicate ignored ->
                     card.getManaCost() != null && new ManaCost(card.getManaCost()).hasPhyrexianMana();
             case CardIsAuraPredicate ignored ->
@@ -333,8 +336,12 @@ public class PredicateEvaluationService {
                 }
                 yield gameQueryService.isCreature(gameData, permanent);
             }
-            case PermanentIsLandPredicate ignored ->
-                    permanent.getCard().hasType(CardType.LAND);
+            case PermanentIsLandPredicate ignored -> {
+                if (gameData == null) {
+                    yield permanent.getCard().hasType(CardType.LAND);
+                }
+                yield gameQueryService.isLand(gameData, permanent);
+            }
             case PermanentIsArtifactPredicate ignored -> {
                 if (gameData == null) {
                     yield gameQueryService.isArtifact(permanent);
@@ -365,8 +372,12 @@ public class PredicateEvaluationService {
                 }
                 yield gameQueryService.isEnchantment(gameData, permanent);
             }
-            case PermanentIsPlaneswalkerPredicate ignored ->
-                    permanent.getCard().hasType(CardType.PLANESWALKER);
+            case PermanentIsPlaneswalkerPredicate ignored -> {
+                if (gameData == null) {
+                    yield permanent.getCard().hasType(CardType.PLANESWALKER);
+                }
+                yield gameQueryService.isPlaneswalker(gameData, permanent);
+            }
             case PermanentIsTappedPredicate ignored ->
                     permanent.isTapped();
             case PermanentIsTokenPredicate ignored ->

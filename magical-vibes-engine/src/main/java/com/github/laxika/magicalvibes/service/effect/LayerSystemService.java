@@ -19,6 +19,7 @@ import com.github.laxika.magicalvibes.model.effect.CardEffect;
 import com.github.laxika.magicalvibes.model.effect.ConditionalEffect;
 import com.github.laxika.magicalvibes.model.effect.EnchantedPermanentBecomesChosenTypeEffect;
 import com.github.laxika.magicalvibes.model.effect.EnchantedPermanentBecomesCreatureEffect;
+import com.github.laxika.magicalvibes.model.effect.EnchantedPermanentBecomesOnlyLandEffect;
 import com.github.laxika.magicalvibes.model.effect.EnchantedPermanentBecomesTypeEffect;
 import com.github.laxika.magicalvibes.model.effect.EnchantedPermanentConditionalEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantCardTypeEffect;
@@ -152,7 +153,15 @@ public class LayerSystemService {
      */
     public record L4Contribution(CardSubtype grantedSubtype, boolean subtypeOverriding,
                                  boolean landSubtypeOverriding, CardType grantedCardType,
-                                 CardSupertype grantedSupertype) {
+                                 CardSupertype grantedSupertype, boolean cardTypeOverriding) {
+
+        /** Additive / subtype-only contribution (no card-type override). */
+        public L4Contribution(CardSubtype grantedSubtype, boolean subtypeOverriding,
+                              boolean landSubtypeOverriding, CardType grantedCardType,
+                              CardSupertype grantedSupertype) {
+            this(grantedSubtype, subtypeOverriding, landSubtypeOverriding, grantedCardType,
+                    grantedSupertype, false);
+        }
 
         public void replay(StaticBonusAccumulator accumulator) {
             if (grantedSubtype != null) {
@@ -169,6 +178,9 @@ public class LayerSystemService {
             }
             if (grantedSupertype != null) {
                 accumulator.addGrantedSupertype(grantedSupertype);
+            }
+            if (cardTypeOverriding) {
+                accumulator.setCardTypeOverriding(true);
             }
         }
     }
@@ -443,6 +455,7 @@ public class LayerSystemService {
         h = mix(h, flags);
 
         h = mix(h, p.getAttachedTo() == null ? 0 : p.getAttachedTo().hashCode());
+        h = mix(h, p.getPairedWithId() == null ? 0 : p.getPairedWithId().hashCode());
         h = mix(h, enumOrdinal(p.getChosenColor()));
         h = mix(h, enumOrdinal(p.getChosenSubtype()));
         h = mix(h, enumOrdinal(p.getChosenManaValueParity()));
@@ -1041,6 +1054,15 @@ public class LayerSystemService {
                     record(board, instance, target, new L4Contribution(chosen, true, true, null, null));
                 }
             }
+            case EnchantedPermanentBecomesOnlyLandEffect ignored -> {
+                manage(board, instance);
+                for (PermanentSlot target : scopeTargets(instance, GrantScope.ENCHANTED_PERMANENT, null, slots, slotsById, board)) {
+                    CharacteristicState state = states.get(target.permanent().getId());
+                    state.overrideCardTypes(Set.of(CardType.LAND));
+                    record(board, instance, target, new L4Contribution(
+                            null, false, false, CardType.LAND, null, true));
+                }
+            }
             case EnchantedPermanentBecomesCreatureEffect becomes -> {
                 // NOT managed: the colour and base P/T are contributed by the effect's static
                 // handler in the accumulator pass, so its handler must keep running during
@@ -1480,7 +1502,7 @@ public class LayerSystemService {
             return;
         }
         applyStaticInstanceViaHandlers(gameData, instance, slots, board, (target, harvested) -> {
-            if (harvested.getGrantedColors().isEmpty()) {
+            if (harvested.getGrantedColors().isEmpty() && !harvested.isColorOverriding()) {
                 return;
             }
             CharacteristicState state = states.get(target.permanent().getId());

@@ -50,7 +50,7 @@ class LegendRuleServiceTest {
     private UUID player2Id;
 
     private static final GameQueryService.StaticBonus EMPTY_BONUS = new GameQueryService.StaticBonus(
-            0, 0, java.util.Set.of(), java.util.Set.of(), false, List.of(), List.of(), java.util.Set.of(), List.of(), java.util.Set.of(), java.util.Set.of(), false, false, false, java.util.Set.of(), false, 0, 0, false, false);
+            0, 0, java.util.Set.of(), java.util.Set.of(), false, List.of(), List.of(), java.util.Set.of(), List.of(), java.util.Set.of(), java.util.Set.of(), false, false, false, false, java.util.Set.of(), false, 0, 0, false, false);
 
     @BeforeEach
     void setUp() {

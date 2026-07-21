@@ -33,6 +33,8 @@ public class StackEntry {
      *  top instead of going to the graveyard (Approach of the Second Sun's "seventh from the top" = 6). */
     @Setter private Integer putIntoLibraryPositionAfterResolving;
     @Setter private boolean castWithFlashback;
+    /** Whether this spell was cast via Disturb (CR 702.146) — enters transformed; exile on leave-to-GY. */
+    @Setter private boolean castWithDisturb;
     @Setter private Zone sourceZone;
     /**
      * Overrides the card's disposition owner when this spell is controlled by someone other than its
@@ -275,6 +277,7 @@ public class StackEntry {
         this.returnToHandAfterResolving = source.returnToHandAfterResolving;
         this.putIntoLibraryPositionAfterResolving = source.putIntoLibraryPositionAfterResolving;
         this.castWithFlashback = source.castWithFlashback;
+        this.castWithDisturb = source.castWithDisturb;
         this.sourceZone = source.sourceZone;
         this.ownerIdOverride = source.ownerIdOverride;
         this.kicked = source.kicked;

@@ -615,6 +615,11 @@ public class GameData {
     // Mindslaver — turn control
     /** Delayed effect: targetPlayerId -> controllerId, consumed when target player's turn begins. */
     public final Map<UUID, UUID> pendingTurnControl = new ConcurrentHashMap<>();
+    /**
+     * Players whose pending turn-control effect also grants them an extra turn after the controlled
+     * turn (Emrakul, the Promised End). Consumed with {@link #pendingTurnControl} when that turn begins.
+     */
+    public final Set<UUID> pendingTurnControlExtraTurn = ConcurrentHashMap.newKeySet();
     /** Non-null when a player is being controlled this turn (the controlled player's ID). */
     public UUID mindControlledPlayerId;
     /** Non-null when a player is being controlled this turn (the controlling player's ID). */
@@ -1930,6 +1935,7 @@ public class GameData {
 
         // --- Mindslaver turn control ---
         copy.pendingTurnControl.putAll(this.pendingTurnControl);
+        copy.pendingTurnControlExtraTurn.addAll(this.pendingTurnControlExtraTurn);
         copy.mindControlledPlayerId = this.mindControlledPlayerId;
         copy.mindControllerPlayerId = this.mindControllerPlayerId;
         copy.tauntedNextTurn.putAll(this.tauntedNextTurn);

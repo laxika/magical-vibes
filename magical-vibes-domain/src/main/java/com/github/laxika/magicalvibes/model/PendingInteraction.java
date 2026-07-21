@@ -501,14 +501,19 @@ public sealed interface PendingInteraction permits PermanentChoiceContext,
      * Clique); {@code optional} lets the caster decline (answer {@code cardIndex == -1}) even
      * when a legal choice exists. {@code gainLifeToChooserEqualToChosenToughness} (discard mode
      * only) makes the choosing player gain life equal to the chosen card's toughness before it is
-     * discarded (Talara's Bane).
+     * discarded (Talara's Bane). {@code followUpFilter}/{@code followUpPrompt} (optional) begin a
+     * second single pick under a different {@link com.github.laxika.magicalvibes.model.filter.CardPredicate}
+     * after the first pick completes (Distended Mindbender's dual MV bands) — skipped when no
+     * remaining hand card matches.
      */
     record RevealedHandChoice(UUID choosingPlayerId, UUID targetPlayerId,
                               java.util.List<Integer> validIndices, int remainingCount,
                               boolean discardMode, boolean exileMode,
                               java.util.List<Card> chosenCards, UUID sourcePermanentId,
                               String prompt, boolean bottomThenDrawMode, boolean optional,
-                              boolean gainLifeToChooserEqualToChosenToughness)
+                              boolean gainLifeToChooserEqualToChosenToughness,
+                              com.github.laxika.magicalvibes.model.filter.CardPredicate followUpFilter,
+                              String followUpPrompt)
             implements PendingInteraction {
 
         public RevealedHandChoice(UUID choosingPlayerId, UUID targetPlayerId,
@@ -517,7 +522,18 @@ public sealed interface PendingInteraction permits PermanentChoiceContext,
                                   java.util.List<Card> chosenCards, UUID sourcePermanentId,
                                   String prompt, boolean bottomThenDrawMode, boolean optional) {
             this(choosingPlayerId, targetPlayerId, validIndices, remainingCount, discardMode, exileMode,
-                    chosenCards, sourcePermanentId, prompt, bottomThenDrawMode, optional, false);
+                    chosenCards, sourcePermanentId, prompt, bottomThenDrawMode, optional, false, null, null);
+        }
+
+        public RevealedHandChoice(UUID choosingPlayerId, UUID targetPlayerId,
+                                  java.util.List<Integer> validIndices, int remainingCount,
+                                  boolean discardMode, boolean exileMode,
+                                  java.util.List<Card> chosenCards, UUID sourcePermanentId,
+                                  String prompt, boolean bottomThenDrawMode, boolean optional,
+                                  boolean gainLifeToChooserEqualToChosenToughness) {
+            this(choosingPlayerId, targetPlayerId, validIndices, remainingCount, discardMode, exileMode,
+                    chosenCards, sourcePermanentId, prompt, bottomThenDrawMode, optional,
+                    gainLifeToChooserEqualToChosenToughness, null, null);
         }
 
         @Override

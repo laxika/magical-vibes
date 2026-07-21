@@ -45,6 +45,7 @@ import com.github.laxika.magicalvibes.model.effect.ExileTargetCardFromGraveyardM
 import com.github.laxika.magicalvibes.model.effect.GrantFlashbackToTargetGraveyardCardEffect;
 import com.github.laxika.magicalvibes.model.effect.PutCreatureFromOpponentGraveyardOntoBattlefieldWithExileEffect;
 import com.github.laxika.magicalvibes.model.effect.ReturnTargetCardsFromGraveyardToHandEffect;
+import com.github.laxika.magicalvibes.model.effect.ShuffleTargetCardsFromControllerGraveyardIntoLibraryEffect;
 import com.github.laxika.magicalvibes.model.effect.ControlledCreaturesEnterWithAdditionalCountersEffect;
 import com.github.laxika.magicalvibes.model.effect.GraveyardEnterWithAdditionalCountersEffect;
 import com.github.laxika.magicalvibes.model.effect.MayEffect;
@@ -350,12 +351,20 @@ public class BattlefieldEntryService {
                     if (!enterTapped.opponentsOnly()) {
                         continue;
                     }
-                    if (matchesAnyType(enteringPermanent.getCard(), enterTapped.cardTypes())) {
+                    if (matchesEnterTappedEffect(gameData, enteringPermanent, enterTapped)) {
                         enteringPermanent.tap();
                     }
                 }
             }
         });
+    }
+
+    private boolean matchesEnterTappedEffect(GameData gameData, Permanent enteringPermanent,
+                                             EnterPermanentsOfTypesTappedEffect enterTapped) {
+        if (enterTapped.filter() != null) {
+            return predicateEvaluationService.matchesPermanentPredicate(gameData, enteringPermanent, enterTapped.filter());
+        }
+        return matchesAnyType(enteringPermanent.getCard(), enterTapped.cardTypes());
     }
 
     /**
@@ -801,6 +810,9 @@ public class BattlefieldEntryService {
         // Separate graveyard return-to-hand effects (need multi-target selection at trigger time)
         List<CardEffect> graveyardReturnToHandEffects = mandatoryEffects.stream()
                 .filter(e -> e instanceof ReturnTargetCardsFromGraveyardToHandEffect).toList();
+        // Separate controller-graveyard shuffle-into-library effects (multi-target at trigger time)
+        List<CardEffect> graveyardShuffleIntoLibraryEffects = mandatoryEffects.stream()
+                .filter(e -> e instanceof ShuffleTargetCardsFromControllerGraveyardIntoLibraryEffect).toList();
         // Separate targeted graveyard-return effects (e.g. Bladewing the Risen: "return target Dragon
         // permanent card from your graveyard to the battlefield"): any remaining graveyard-target effect
         // not covered by the specialized paths above. Its target is chosen as the trigger goes on the
@@ -815,6 +827,7 @@ public class BattlefieldEntryService {
                 .filter(e -> !graveyardMayPlayEffects.contains(e))
                 .filter(e -> !graveyardStealEffects.contains(e))
                 .filter(e -> !graveyardReturnToHandEffects.contains(e))
+                .filter(e -> !graveyardShuffleIntoLibraryEffects.contains(e))
                 .toList();
         List<CardEffect> otherEffects = mandatoryEffects.stream()
                 .filter(e -> !(e instanceof ExileCardsFromGraveyardEffect))
@@ -823,6 +836,7 @@ public class BattlefieldEntryService {
                 .filter(e -> !(e instanceof ExileTargetCardFromGraveyardMayPlayUntilNextTurnEffect))
                 .filter(e -> !(e instanceof PutCreatureFromOpponentGraveyardOntoBattlefieldWithExileEffect))
                 .filter(e -> !(e instanceof ReturnTargetCardsFromGraveyardToHandEffect))
+                .filter(e -> !(e instanceof ShuffleTargetCardsFromControllerGraveyardIntoLibraryEffect))
                 .filter(e -> !graveyardTargetReturnEffects.contains(e))
                 .filter(e -> !graveyardCardsExileEffects.contains(e))
                 .filter(e -> !EffectResolution.targetsSpellOnStack(e)).toList();
@@ -999,6 +1013,14 @@ public class BattlefieldEntryService {
             for (int t = 0; t < 1 + extraWizardTriggers; t++) {
                 graveyardTargetingService.handleReturnToHandETBTargeting(gameData, controllerId, card,
                         List.of(effect), (ReturnTargetCardsFromGraveyardToHandEffect) effect);
+            }
+        }
+
+        // Handle shuffle-into-library effects: up to N target cards in controller's graveyard
+        for (CardEffect effect : graveyardShuffleIntoLibraryEffects) {
+            for (int t = 0; t < 1 + extraWizardTriggers; t++) {
+                graveyardTargetingService.handleShuffleIntoLibraryETBTargeting(gameData, controllerId, card,
+                        List.of(effect), (ShuffleTargetCardsFromControllerGraveyardIntoLibraryEffect) effect);
             }
         }
 

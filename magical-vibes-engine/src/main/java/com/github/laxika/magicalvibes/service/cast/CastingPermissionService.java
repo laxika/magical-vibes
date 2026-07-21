@@ -9,6 +9,7 @@ import com.github.laxika.magicalvibes.model.Emblem;
 import com.github.laxika.magicalvibes.model.GameData;
 import com.github.laxika.magicalvibes.model.GraveyardCast;
 import com.github.laxika.magicalvibes.model.Keyword;
+import com.github.laxika.magicalvibes.model.ManaCost;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.SpellCastTimingRestriction;
 import com.github.laxika.magicalvibes.model.TurnStep;
@@ -27,6 +28,7 @@ import com.github.laxika.magicalvibes.model.effect.LimitSpellsForEnchantedPlayer
 import com.github.laxika.magicalvibes.model.effect.LimitSpellsPerTurnEffect;
 import com.github.laxika.magicalvibes.model.effect.NoncreatureSpellsCantBeCastEffect;
 import com.github.laxika.magicalvibes.model.effect.OpponentsCantCastSpellsIfAttackedThisTurnEffect;
+import com.github.laxika.magicalvibes.model.effect.OpponentsCantCastSpellsWithManaValueAtMostEffect;
 import com.github.laxika.magicalvibes.model.effect.PlayLandsFromGraveyardEffect;
 import com.github.laxika.magicalvibes.model.effect.SpellsWithChosenNameCantBeCastEffect;
 import com.github.laxika.magicalvibes.model.effect.WardOfBonesEffect;
@@ -79,6 +81,7 @@ public class CastingPermissionService {
         Set<String> forbidden = getForbiddenCardNames(gameData, playerId);
         if (forbidden.contains(card.getName())) return false;
         if (isNoncreatureSpellCastRestricted(gameData, card)) return false;
+        if (isOpponentsManaValueSpellCastRestricted(gameData, playerId, card)) return false;
         if (isAdditionalNonartifactSpellRestricted(gameData, playerId, card)) return false;
         // MTG rule 714.1: legendary sorceries require controlling a legendary creature or planeswalker
         if (card.getSupertypes().contains(CardSupertype.LEGENDARY)
@@ -234,6 +237,49 @@ public class CastingPermissionService {
             }
         }
         return false;
+    }
+
+    /**
+     * Brisela, Voice of Nightmares: opponents of a source controller can't cast spells with mana
+     * value ≤ the effect's {@code maxManaValue}. Playability overload (no chosen X): X-cost spells
+     * are never blocked because a high enough X is always legal. Cast-time overload includes the
+     * chosen X in mana value (CR 202.3c).
+     */
+    public boolean isOpponentsManaValueSpellCastRestricted(GameData gameData, UUID castingPlayerId, Card card) {
+        return isOpponentsManaValueSpellCastRestricted(gameData, castingPlayerId, card, null);
+    }
+
+    public boolean isOpponentsManaValueSpellCastRestricted(GameData gameData, UUID castingPlayerId, Card card,
+                                                           Integer chosenX) {
+        int tightestMax = Integer.MAX_VALUE;
+        boolean restricted = false;
+        for (UUID pid : gameData.orderedPlayerIds) {
+            if (pid.equals(castingPlayerId)) continue;
+            List<Permanent> bf = gameData.playerBattlefields.get(pid);
+            if (bf == null) continue;
+            for (Permanent perm : bf) {
+                for (CardEffect effect : perm.getCard().getEffects(EffectSlot.STATIC)) {
+                    if (effect instanceof OpponentsCantCastSpellsWithManaValueAtMostEffect restriction) {
+                        restricted = true;
+                        tightestMax = Math.min(tightestMax, restriction.maxManaValue());
+                    }
+                }
+            }
+        }
+        if (!restricted) return false;
+
+        ManaCost cost = card.getParsedManaCost();
+        boolean hasX = cost != null && cost.hasX();
+        if (chosenX == null) {
+            // Playability: any {X} spell can pick X high enough to exceed the cap.
+            if (hasX) return false;
+            return card.getManaValue() <= tightestMax;
+        }
+        int manaValue = card.getManaValue();
+        if (hasX) {
+            manaValue += chosenX * Math.max(1, cost.getXSymbolCount());
+        }
+        return manaValue <= tightestMax;
     }
 
     /**

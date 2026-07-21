@@ -464,7 +464,8 @@ public class GameMessageHandler implements MessageHandler {
         }
 
         try {
-            gameService.activateGraveyardAbility(gameData, player, request.graveyardCardIndex(), request.abilityIndex(), request.xValue());
+            gameService.activateGraveyardAbility(gameData, player, request.graveyardCardIndex(), request.abilityIndex(),
+                    request.xValue(), request.targetId());
         } catch (IllegalArgumentException | IllegalStateException e) {
             handleError(connection, e.getMessage());
         }

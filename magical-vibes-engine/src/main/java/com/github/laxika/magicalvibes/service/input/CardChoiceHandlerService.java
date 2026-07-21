@@ -18,6 +18,7 @@ import com.github.laxika.magicalvibes.model.effect.EnterBattlefieldOnDiscardEffe
 import com.github.laxika.magicalvibes.model.effect.ForcedCostOrElseEffect;
 import com.github.laxika.magicalvibes.model.effect.PayManaCost;
 import com.github.laxika.magicalvibes.model.effect.SacrificeSelfEffect;
+import com.github.laxika.magicalvibes.model.filter.CardPredicate;
 import com.github.laxika.magicalvibes.model.action.PendingExileReturn;
 import com.github.laxika.magicalvibes.model.PendingInteraction;
 import com.github.laxika.magicalvibes.model.PendingReturnToHandOnDiscardType;
@@ -35,6 +36,7 @@ import com.github.laxika.magicalvibes.service.exile.ExileService;
 import com.github.laxika.magicalvibes.service.graveyard.GraveyardService;
 import com.github.laxika.magicalvibes.service.battlefield.BattlefieldEntryService;
 import com.github.laxika.magicalvibes.service.battlefield.GameQueryService;
+import com.github.laxika.magicalvibes.service.filter.PredicateEvaluationService;
 import com.github.laxika.magicalvibes.service.trigger.TriggerCollectionService;
 import com.github.laxika.magicalvibes.service.turn.TurnProgressionService;
 import lombok.RequiredArgsConstructor;
@@ -66,6 +68,7 @@ public class CardChoiceHandlerService {
     private final ExileService exileService;
     private final com.github.laxika.magicalvibes.service.battlefield.PermanentRemovalService permanentRemovalService;
     private final com.github.laxika.magicalvibes.service.interaction.InteractionHandlerRegistry interactionHandlerRegistry;
+    private final PredicateEvaluationService predicateEvaluationService;
 
     /** Answers CARD_CHOICE and TARGETED_CARD_CHOICE (put a card/Aura from hand onto the battlefield). */
     public void handleHandCardChosen(GameData gameData, Player player, int cardIndex) {
@@ -383,6 +386,29 @@ public class CardChoiceHandlerService {
         boolean discardMode = revealedHandChoice.discardMode();
         boolean exileMode = revealedHandChoice.exileMode();
         boolean bottomThenDrawMode = revealedHandChoice.bottomThenDrawMode();
+
+        // Distended Mindbender: after the first filtered pick, begin a second pick under followUpFilter.
+        if (remainingChoices == 0 && revealedHandChoice.followUpFilter() != null && !targetHand.isEmpty()) {
+            CardPredicate followUp = revealedHandChoice.followUpFilter();
+            List<Integer> followUpIndices = new ArrayList<>();
+            for (int i = 0; i < targetHand.size(); i++) {
+                if (predicateEvaluationService.matchesCardPredicate(targetHand.get(i), followUp, null)) {
+                    followUpIndices.add(i);
+                }
+            }
+            if (!followUpIndices.isEmpty()) {
+                String followUpPrompt = revealedHandChoice.followUpPrompt() != null
+                        ? revealedHandChoice.followUpPrompt()
+                        : "Choose another card to discard.";
+                interactionHandlerRegistry.begin(gameData, new PendingInteraction.RevealedHandChoice(
+                        player.getId(), targetPlayerId, followUpIndices, 1,
+                        discardMode, exileMode, chosenCards, revealedHandChoice.sourcePermanentId(),
+                        followUpPrompt, false, false,
+                        revealedHandChoice.gainLifeToChooserEqualToChosenToughness(), null, null));
+                return;
+            }
+            // No second-band match — fall through and discard only what was already chosen.
+        }
 
         if (remainingChoices > 0 && !targetHand.isEmpty()) {
             // More cards to choose — update valid indices and prompt again

@@ -704,6 +704,24 @@ class ActivatedAbilityExecutionServiceTest {
             assertThat(gameData.stack).hasSize(1);
             assertThat(gameData.stack.getFirst().getEntryType()).isEqualTo(StackEntryType.ACTIVATED_ABILITY);
         }
+
+        @Test
+        @DisplayName("SacrificeSelfCost(trackPower) snapshots effective power into xValue")
+        void trackPowerSnapshotsIntoXValue() {
+            Card card = createCreature("Mausoleum Wanderer");
+            Permanent perm = addReadyPermanent(player1Id, card);
+            Permanent target = addReadyPermanent(player2Id, createCreature("Target Creature"));
+            when(gameQueryService.getEffectivePower(gameData, perm)).thenReturn(3);
+
+            List<CardEffect> effects = List.of(new SacrificeSelfCost(true), ReturnToHandEffect.target());
+            ActivatedAbility ability = new ActivatedAbility(false, null, effects, "Sac for X");
+
+            service.completeActivationAfterCosts(gameData, player1, perm, ability, effects, 0, target.getId(), null, false);
+
+            assertThat(gameData.stack).hasSize(1);
+            assertThat(gameData.stack.getFirst().getXValue()).isEqualTo(3);
+            verify(gameQueryService).getEffectivePower(gameData, perm);
+        }
     }
 
     // =========================================================================

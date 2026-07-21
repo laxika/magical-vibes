@@ -229,11 +229,14 @@ public class ETBTokenTargetService {
     private void pushMultiTargetETBStackEntry(GameData gameData,
                                                PermanentChoiceContext.ETBTokenMultiTargetTrigger pending) {
         Card card = pending.sourceCard();
+        String abilityLabel = pending.sourcePermanentId() == null
+                ? card.getName() + "'s ability"
+                : card.getName() + "'s ETB ability";
         StackEntry etbEntry = new StackEntry(
                 StackEntryType.TRIGGERED_ABILITY,
                 card,
                 pending.controllerId(),
-                card.getName() + "'s ETB ability",
+                abilityLabel,
                 new ArrayList<>(pending.effects()),
                 0,
                 null,
@@ -244,11 +247,16 @@ public class ETBTokenTargetService {
                 new ArrayList<>(pending.chosenTargetsSoFar())
         );
         gameData.stack.add(etbEntry);
-        gameBroadcastService.logAndBroadcast(gameData, GameLog.cardThen(card, "'s enter-the-battlefield ability triggers."));
-        log.info("Game {} - {} ETB multi-target ability pushed onto stack", gameData.id, card.getName());
+        if (pending.sourcePermanentId() == null) {
+            gameBroadcastService.logAndBroadcast(gameData, GameLog.cardThen(card, "'s ability triggers."));
+            log.info("Game {} - {} cast multi-target ability pushed onto stack", gameData.id, card.getName());
+        } else {
+            gameBroadcastService.logAndBroadcast(gameData, GameLog.cardThen(card, "'s enter-the-battlefield ability triggers."));
+            log.info("Game {} - {} ETB multi-target ability pushed onto stack", gameData.id, card.getName());
+        }
     }
 
-    boolean hasGroupWithMaxTargetsGreaterThanOne(Card card) {
+    public boolean hasGroupWithMaxTargetsGreaterThanOne(Card card) {
         return card.getSpellTargets().stream().anyMatch(g -> g.getMaxTargets() > 1);
     }
 

@@ -534,15 +534,21 @@ public class GameService {
     }
 
     public void activateGraveyardAbility(GameData gameData, Player player, int graveyardCardIndex, Integer abilityIndex) {
-        activateGraveyardAbility(gameData, player, graveyardCardIndex, abilityIndex, null);
+        activateGraveyardAbility(gameData, player, graveyardCardIndex, abilityIndex, null, null);
     }
 
     public void activateGraveyardAbility(GameData gameData, Player player, int graveyardCardIndex, Integer abilityIndex, Integer xValue) {
+        activateGraveyardAbility(gameData, player, graveyardCardIndex, abilityIndex, xValue, null);
+    }
+
+    public void activateGraveyardAbility(GameData gameData, Player player, int graveyardCardIndex, Integer abilityIndex,
+                                         Integer xValue, UUID targetId) {
         synchronized (gameData) {
             player = resolveActingPlayer(gameData, player);
             requirePriority(gameData, player);
             requireCanActivateAbilities(gameData, player);
-            abilityActivationService.activateGraveyardAbility(gameData, player, graveyardCardIndex, abilityIndex, xValue);
+            abilityActivationService.activateGraveyardAbility(gameData, player, graveyardCardIndex, abilityIndex, xValue,
+                    targetId);
         }
     }
 

@@ -16,6 +16,8 @@ import com.github.laxika.magicalvibes.model.filter.CardPredicate;
  *       the library (Stress Dream {@code Fixed(2)}; Shrine of Piercing Vision
  *       {@code CountersOnSource(CHARGE)}; Jar of Eyeballs {@code XValue()} from its remove-counters
  *       cost).</li>
+ *   <li>{@link #chooseNToHandRestOnBottomRandom(DynamicAmount, int)} — N to hand, rest on the
+ *       bottom in a random order (Memory Deluge: look = {@code ManaSpentToCast()}, choose = 2).</li>
  *   <li>{@link #chooseNToHandRestToGraveyard(int, int, CardPredicate, boolean)} — up to N to hand,
  *       rest into the graveyard, optionally filtered / revealed (Forbidden Alchemy, Dark Bargain,
  *       Tower Geist, Tracker's Instincts). With {@code chooseCount == lookCount} this is also the
@@ -44,7 +46,7 @@ import com.github.laxika.magicalvibes.model.filter.CardPredicate;
  * @param chooseCount       the maximum number of cards to choose
  * @param choosePredicate   when non-null, only matching cards are eligible to be chosen
  * @param restDestination   where the not-chosen cards go ({@code BOTTOM_OF_LIBRARY},
- *                          {@code GRAVEYARD} or {@code EXILE})
+ *                          {@code BOTTOM_OF_LIBRARY_RANDOM}, {@code GRAVEYARD} or {@code EXILE})
  * @param reveal            when true the whole look is public (the looked-at cards are logged) —
  *                          distinct from the may-reveal flows, which reveal only the chosen cards
  * @param chosenDestination where the chosen cards go ({@code HAND}, {@code BATTLEFIELD} or
@@ -73,6 +75,16 @@ public record LookAtTopCardsEffect(
     public static LookAtTopCardsEffect chooseOneToHandRestOnBottom(DynamicAmount lookCount) {
         return new LookAtTopCardsEffect(lookCount, new Fixed(1), null,
                 LookDestination.BOTTOM_OF_LIBRARY, false);
+    }
+
+    /**
+     * Up to {@code chooseCount} cards to hand; the rest go on the bottom of the library in a
+     * random order (no player reorder). Memory Deluge.
+     */
+    public static LookAtTopCardsEffect chooseNToHandRestOnBottomRandom(
+            DynamicAmount lookCount, int chooseCount) {
+        return new LookAtTopCardsEffect(lookCount, new Fixed(chooseCount), null,
+                LookDestination.BOTTOM_OF_LIBRARY_RANDOM, false);
     }
 
     /** One card to hand, exile the rest (Browse). */

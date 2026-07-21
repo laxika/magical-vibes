@@ -26,4 +26,11 @@ public interface CardEffect {
      * provides specific P/T values, CDAs that define P/T are not copied.
      */
     default boolean isPowerToughnessDefining() { return false; }
+
+    /**
+     * Returns {@code true} if this ON_DEATH effect only triggers when the permanent was
+     * sacrificed ("When you sacrifice this…"), not when it dies by other means. Filtered out
+     * of the normal death-trigger path and collected from the sacrifice path instead.
+     */
+    default boolean onlyTriggersOnSacrifice() { return false; }
 }

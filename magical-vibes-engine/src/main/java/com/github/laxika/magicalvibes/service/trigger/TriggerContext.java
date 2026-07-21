@@ -178,6 +178,14 @@ public sealed interface TriggerContext {
                                 UUID causeControllerId) implements TriggerContext {}
 
     /**
+     * Context for ON_ALLY_CREATURE_CARD_PUT_INTO_GRAVEYARD_FROM_ANYWHERE triggers (Soulcipher Board).
+     *
+     * @param creatureCard      the creature card that was put into the graveyard from anywhere
+     * @param graveyardOwnerId  the owner of the graveyard the card was put into
+     */
+    record CreatureCardPutIntoGraveyard(Card creatureCard, UUID graveyardOwnerId) implements TriggerContext {}
+
+    /**
      * Context for ON_SELF_LEAVES_BATTLEFIELD triggers.
      */
     record SelfLeaves(UUID controllerId) implements TriggerContext {}

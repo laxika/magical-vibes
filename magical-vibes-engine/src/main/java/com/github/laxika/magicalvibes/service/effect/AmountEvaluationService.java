@@ -9,6 +9,7 @@ import com.github.laxika.magicalvibes.model.ManaCost;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.amount.AttachmentsOnSource;
 import com.github.laxika.magicalvibes.model.amount.BasicLandTypesAmongControlledLands;
+import com.github.laxika.magicalvibes.model.amount.CardTypesAmongCardsInGraveyard;
 import com.github.laxika.magicalvibes.model.amount.CardsInGraveyard;
 import com.github.laxika.magicalvibes.model.amount.CardsInHand;
 import com.github.laxika.magicalvibes.model.amount.CardsInLibrary;
@@ -125,6 +126,8 @@ public class AmountEvaluationService {
                     countPermanents(gameData, c, ctx);
             case BasicLandTypesAmongControlledLands ignored ->
                     countBasicLandTypesAmongControlledLands(gameData, ctx);
+            case CardTypesAmongCardsInGraveyard c ->
+                    countCardTypesAmongCardsInGraveyard(gameData, c, ctx);
             case CardsInGraveyard c ->
                     countGraveyardCards(gameData, c, ctx);
             case CardsInHand c ->
@@ -352,6 +355,28 @@ public class AmountEvaluationService {
                 }
             } else {
                 found.addAll(gameQueryService.effectiveBasicLandTypes(gameData, permanent));
+            }
+        }
+        return found.size();
+    }
+
+    /**
+     * Distinct card types among non-token cards in the scoped graveyard(s). Multi-type cards
+     * contribute each printed type (artifact creature → Artifact + Creature).
+     */
+    private int countCardTypesAmongCardsInGraveyard(
+            GameData gameData, CardTypesAmongCardsInGraveyard amount, AmountContext ctx) {
+        java.util.Set<CardType> found = java.util.EnumSet.noneOf(CardType.class);
+        for (UUID playerId : gameData.orderedPlayerIds) {
+            if (!isPlayerInScope(gameData, playerId, amount.scope(), ctx)) continue;
+            List<Card> graveyard = gameData.playerGraveyards.get(playerId);
+            if (graveyard == null) continue;
+            for (Card card : graveyard) {
+                if (card.isToken()) continue;
+                if (card.getType() != null) {
+                    found.add(card.getType());
+                }
+                found.addAll(card.getAdditionalTypes());
             }
         }
         return found.size();

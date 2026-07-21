@@ -73,12 +73,14 @@ public class ExileTargetPermanentThenEffectHandler implements NormalEffectHandle
             UUID thenControllerId = switch (e.recipient()) {
                 case TARGET_CONTROLLER -> targetControllerId;
                 case TARGET_OWNER -> targetOwnerId;
-                case CONTROLLER, TARGET_CONTROLLER_AS_TARGET -> entry.getControllerId();
+                case CONTROLLER, TARGET_CONTROLLER_AS_TARGET, TARGET_OWNER_AS_TARGET -> entry.getControllerId();
             };
             if (thenControllerId != null) {
-                UUID thenTargetId = e.recipient() == ThenEffectRecipient.TARGET_CONTROLLER_AS_TARGET
-                        ? targetControllerId
-                        : entry.getTargetId();
+                UUID thenTargetId = switch (e.recipient()) {
+                    case TARGET_CONTROLLER_AS_TARGET -> targetControllerId;
+                    case TARGET_OWNER_AS_TARGET -> targetOwnerId;
+                    default -> entry.getTargetId();
+                };
                 StackEntry thenEntry = new StackEntry(entry.getEntryType(), entry.getCard(), thenControllerId,
                         entry.getDescription(), List.of(e.thenEffect()), thenTargetId, entry.getSourcePermanentId());
                 thenEntry.setSourcePermanentSnapshot(entry.getSourcePermanentSnapshot());

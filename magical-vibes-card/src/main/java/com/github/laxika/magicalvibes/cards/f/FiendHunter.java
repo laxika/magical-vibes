@@ -14,6 +14,7 @@ import com.github.laxika.magicalvibes.model.filter.PermanentPredicateTargetFilte
 import java.util.List;
 
 @CardRegistration(set = "ISD", collectorNumber = "15")
+@CardRegistration(set = "INR", collectorNumber = "22")
 public class FiendHunter extends Card {
 
     public FiendHunter() {

@@ -13,6 +13,7 @@ import com.github.laxika.magicalvibes.model.filter.CardTypePredicate;
 import java.util.List;
 
 @CardRegistration(set = "ISD", collectorNumber = "71")
+@CardRegistration(set = "INR", collectorNumber = "83")
 public class RooftopStorm extends Card {
 
     public RooftopStorm() {

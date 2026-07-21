@@ -172,6 +172,12 @@ public class AbilityActivationService {
         if (permanent.isTapped()) {
             throw new IllegalStateException("Permanent is already tapped");
         }
+        // Printed ON_TAP mana is an ability: a continuous "loses all abilities" strips it
+        // (Imprisoned in the Moon / Deep Freeze). Granted mana abilities use activateAbility.
+        if (gameQueryService.computeStaticBonus(gameData, permanent).losesAllAbilities()
+                || permanent.isLosesAllAbilitiesUntilEndOfTurn()) {
+            throw new IllegalStateException("Permanent has lost its abilities");
+        }
         // Check for land type override (e.g. Evil Presence making a land into a Swamp)
         ManaColor overriddenManaColor = getOverriddenLandManaColor(gameData, permanent);
         if (permanent.getCard().getEffects(EffectSlot.ON_TAP).isEmpty() && overriddenManaColor == null) {
@@ -573,10 +579,15 @@ public class AbilityActivationService {
      * the player can pay the mana cost. Pays the cost and pushes the ability onto the stack.</p>
      */
     public void activateGraveyardAbility(GameData gameData, Player player, int graveyardCardIndex, Integer abilityIndex) {
-        activateGraveyardAbility(gameData, player, graveyardCardIndex, abilityIndex, null);
+        activateGraveyardAbility(gameData, player, graveyardCardIndex, abilityIndex, null, null);
     }
 
     public void activateGraveyardAbility(GameData gameData, Player player, int graveyardCardIndex, Integer abilityIndex, Integer xValue) {
+        activateGraveyardAbility(gameData, player, graveyardCardIndex, abilityIndex, xValue, null);
+    }
+
+    public void activateGraveyardAbility(GameData gameData, Player player, int graveyardCardIndex, Integer abilityIndex,
+                                         Integer xValue, UUID targetId) {
         // Spell-only mana (Piracy) can't pay ability costs — hide it for the duration of this activation.
         ManaPool pool = gameData.playerManaPools.get(player.getId());
         if (pool != null) {
@@ -584,7 +595,8 @@ public class AbilityActivationService {
         }
         Map<ManaColor, Integer> withheldSpellOnlyMana = pool != null ? pool.withdrawSpellOnlyMana() : Map.of();
         try {
-            activateGraveyardAbilityImpl(gameData, player, graveyardCardIndex, abilityIndex, xValue != null ? xValue : 0);
+            activateGraveyardAbilityImpl(gameData, player, graveyardCardIndex, abilityIndex,
+                    xValue != null ? xValue : 0, targetId);
         } finally {
             if (pool != null && !withheldSpellOnlyMana.isEmpty()) {
                 pool.restoreSpellOnlyMana(withheldSpellOnlyMana);
@@ -592,7 +604,8 @@ public class AbilityActivationService {
         }
     }
 
-    private void activateGraveyardAbilityImpl(GameData gameData, Player player, int graveyardCardIndex, Integer abilityIndex, int xValue) {
+    private void activateGraveyardAbilityImpl(GameData gameData, Player player, int graveyardCardIndex,
+                                              Integer abilityIndex, int xValue, UUID targetId) {
         // Ashes of the Abhorrent etc.: players can't activate abilities of cards in graveyards
         if (!gameQueryService.canPlayersActivateGraveyardAbilities(gameData)) {
             throw new IllegalStateException("Abilities of cards in graveyards can't be activated");
@@ -615,6 +628,11 @@ public class AbilityActivationService {
             throw new IllegalStateException("Invalid ability index");
         }
         ActivatedAbility ability = abilities.get(idx);
+
+        // Validate targeting before any cost is paid (CR 601.2c) — same contract as hand abilities.
+        List<CardEffect> abilityEffects = ability.getEffects();
+        targetLegalityService.validateActivatedAbilityTargeting(
+                gameData, playerId, ability, abilityEffects, targetId, null, card, xValue);
 
         // Validate timing restrictions applicable to graveyard abilities (e.g. Raid)
         validateGraveyardTimingRestrictions(gameData, playerId, ability);
@@ -713,7 +731,7 @@ public class AbilityActivationService {
         // exiled above, so the suspended activation is resumed via handleActivatedAbilityDiscardCostChosen.
         if (discardCardTypeCost != null) {
             List<Integer> validDiscardIndices = collectDiscardIndices(gameData.playerHands.get(playerId), discardCardTypeCost, xValue);
-            gameData.pendingGraveyardAbilityActivation = new PendingGraveyardAbilityActivation(playerId, card, ability, xValue);
+            gameData.pendingGraveyardAbilityActivation = new PendingGraveyardAbilityActivation(playerId, card, ability, xValue, targetId);
             String labelText = discardCardTypeCost.label() != null ? discardCardTypeCost.label() + " " : "";
             interactionHandlerRegistry.begin(gameData, new PendingInteraction.DiscardCostChoice(
                     playerId, validDiscardIndices,
@@ -721,7 +739,7 @@ public class AbilityActivationService {
             return;
         }
 
-        completeGraveyardAbilityActivation(gameData, player, card, ability, xValue);
+        completeGraveyardAbilityActivation(gameData, player, card, ability, xValue, targetId);
     }
 
     /**
@@ -818,10 +836,11 @@ public class AbilityActivationService {
             }
         }
 
-        completeGraveyardAbilityActivation(gameData, player, card, ability, 0);
+        completeGraveyardAbilityActivation(gameData, player, card, ability, 0, null);
     }
 
-    private void completeGraveyardAbilityActivation(GameData gameData, Player player, Card card, ActivatedAbility ability, int xValue) {
+    private void completeGraveyardAbilityActivation(GameData gameData, Player player, Card card,
+                                                    ActivatedAbility ability, int xValue, UUID targetId) {
         UUID playerId = player.getId();
 
         // Filter out cost effects for the snapshot
@@ -840,9 +859,10 @@ public class AbilityActivationService {
                 card.getName() + "'s ability",
                 snapshotEffects,
                 xValue,
-                null,
+                targetId,
                 Map.of()
         );
+        stackEntry.setTargetFilter(ability.getTargetFilter());
         gameData.stack.add(stackEntry);
 
         gameBroadcastService.logAndBroadcast(gameData, GameLog.textCardText(player.getUsername() + " activates " , card, "'s ability from the graveyard."));
@@ -1163,7 +1183,7 @@ public class AbilityActivationService {
         gameData.pendingGraveyardAbilityActivation = null;
         gameData.interaction.clearAwaitingInput();
         payDiscardCost(gameData, player, discardCost, cardIndex, pending.xValue());
-        completeGraveyardAbilityActivation(gameData, player, card, ability, pending.xValue());
+        completeGraveyardAbilityActivation(gameData, player, card, ability, pending.xValue(), pending.targetId());
     }
 
     public void handleActivatedAbilityGraveyardExileCostChosen(GameData gameData, Player player, int cardIndex) {
@@ -2109,6 +2129,11 @@ public class AbilityActivationService {
 
     private void validateTimingRestrictions(GameData gameData, UUID playerId, Permanent permanent, ActivatedAbility ability) {
         if (ability.getTimingRestriction() != null) {
+            if (ability.getTimingRestriction() == ActivationTimingRestriction.COVEN) {
+                if (!gameQueryService.isCovenMet(gameData, playerId)) {
+                    throw new IllegalStateException("Coven — activate only if you control three or more creatures with different powers");
+                }
+            }
             if (ability.getTimingRestriction() == ActivationTimingRestriction.METALCRAFT) {
                 if (!gameQueryService.isMetalcraftMet(gameData, playerId)) {
                     throw new IllegalStateException("Metalcraft — activate only if you control three or more artifacts");

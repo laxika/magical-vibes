@@ -18,7 +18,7 @@ magical-vibes-engine/src/main/java/com/github/laxika/magicalvibes/service/StackR
 magical-vibes-engine/src/main/java/com/github/laxika/magicalvibes/service/TriggeredAbilityQueueService.java=4
 magical-vibes-engine/src/main/java/com/github/laxika/magicalvibes/service/WarpWorldService.java=1
 magical-vibes-engine/src/main/java/com/github/laxika/magicalvibes/service/ability/AbilityActivationService.java=40
-magical-vibes-engine/src/main/java/com/github/laxika/magicalvibes/service/ability/ActivatedAbilityExecutionService.java=46
+magical-vibes-engine/src/main/java/com/github/laxika/magicalvibes/service/ability/ActivatedAbilityExecutionService.java=45
 magical-vibes-engine/src/main/java/com/github/laxika/magicalvibes/service/battlefield/BattlefieldEntryService.java=28
 magical-vibes-engine/src/main/java/com/github/laxika/magicalvibes/service/battlefield/CloneService.java=1
 magical-vibes-engine/src/main/java/com/github/laxika/magicalvibes/service/battlefield/CreatureControlService.java=2

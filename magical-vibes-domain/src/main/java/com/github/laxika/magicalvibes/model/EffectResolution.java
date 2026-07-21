@@ -13,6 +13,7 @@ import com.github.laxika.magicalvibes.model.condition.Kicked;
 import com.github.laxika.magicalvibes.model.effect.ConditionalReplacementEffect;
 import com.github.laxika.magicalvibes.model.amount.ManaSpentToCast;
 import com.github.laxika.magicalvibes.model.effect.DealDamageToTargetCreatureEffect;
+import com.github.laxika.magicalvibes.model.effect.LookAtTopCardsEffect;
 import com.github.laxika.magicalvibes.model.effect.MayEffect;
 import com.github.laxika.magicalvibes.model.effect.PutCounterOnTargetPermanentEffect;
 import com.github.laxika.magicalvibes.model.effect.TargetCategory;
@@ -294,12 +295,34 @@ public final class EffectResolution {
     }
 
     public static boolean hasManaSpentToCastDamageEffect(List<CardEffect> effects) {
-        return effects.stream().anyMatch(e ->
-                e instanceof DealDamageToTargetCreatureEffect d && d.damage() instanceof ManaSpentToCast);
+        return hasManaSpentToCastAmount(effects);
     }
 
     public static boolean hasManaSpentToCastDamageEffect(Card card) {
-        return hasManaSpentToCastDamageEffect(card.getEffects(EffectSlot.SPELL));
+        return hasManaSpentToCastAmount(card);
+    }
+
+    /**
+     * True when any spell effect reads {@link ManaSpentToCast} — the cast path must snapshot total
+     * mana spent into the stack entry's {@code xValue} (Molten Note damage; Memory Deluge look count).
+     */
+    public static boolean hasManaSpentToCastAmount(Card card) {
+        return hasManaSpentToCastAmount(card.getEffects(EffectSlot.SPELL));
+    }
+
+    public static boolean hasManaSpentToCastAmount(List<CardEffect> effects) {
+        return effects.stream().anyMatch(EffectResolution::effectUsesManaSpentToCast);
+    }
+
+    private static boolean effectUsesManaSpentToCast(CardEffect e) {
+        if (e instanceof DealDamageToTargetCreatureEffect d) {
+            return d.damage() instanceof ManaSpentToCast;
+        }
+        if (e instanceof LookAtTopCardsEffect look) {
+            return look.lookCount() instanceof ManaSpentToCast
+                    || look.chooseCount() instanceof ManaSpentToCast;
+        }
+        return false;
     }
 
     /**

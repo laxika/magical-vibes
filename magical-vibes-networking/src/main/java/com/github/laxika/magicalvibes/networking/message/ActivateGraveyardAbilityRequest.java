@@ -1,4 +1,7 @@
 package com.github.laxika.magicalvibes.networking.message;
 
-public record ActivateGraveyardAbilityRequest(int graveyardCardIndex, Integer abilityIndex, Integer xValue) {
+import java.util.UUID;
+
+public record ActivateGraveyardAbilityRequest(int graveyardCardIndex, Integer abilityIndex, Integer xValue,
+                                              UUID targetId) {
 }

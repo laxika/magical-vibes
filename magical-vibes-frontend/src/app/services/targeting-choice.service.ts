@@ -177,6 +177,7 @@ export class TargetingChoiceService {
   targetingCardIndex = -1;
   targetingCardName = '';
   targetingForAbility = false;
+  targetingForGraveyardAbility = false;
   targetingAbilityIndex = -1;
   pendingAbilityXValue: number | null = null;
   validTargetIds = signal(new Set<string>());
@@ -930,6 +931,24 @@ export class TargetingChoiceService {
     this.pendingActivationMessage = null;
   }
 
+  /** Open targeting for a graveyard activated ability that needs a battlefield target (e.g. Gryff's Boon). */
+  startGraveyardAbilityTargeting(graveyardCardIndex: number, ability: ActivatedAbilityView): void {
+    this.selectingTarget = true;
+    this.targetingCardIndex = graveyardCardIndex;
+    this.targetingCardName = ability.description ?? 'Ability';
+    this.targetingForAbility = false;
+    this.targetingForGraveyardAbility = true;
+    this.targetingAbilityIndex = 0;
+    this.pendingAbilityXValue = null;
+    this.pendingConvokeCard = null;
+    const allIds = new Set<string>();
+    for (const p of this.myBattlefieldFn()) allIds.add(p.id);
+    for (const p of this.opponentBattlefieldFn()) allIds.add(p.id);
+    this.validTargetIds.set(allIds);
+    this.validTargetPlayerIds.set(new Set());
+    this.targetingPrompt = 'Choose a target for ' + (ability.description ?? 'the ability') + '.';
+  }
+
   /** Open the X prompt for a graveyard activated ability whose cost contains {X} (e.g. Evershrike). */
   startGraveyardXValue(graveyardCardIndex: number, ability: ActivatedAbilityView): void {
     let base = 0;
@@ -1041,7 +1060,18 @@ export class TargetingChoiceService {
   selectTarget(permanentId: string): void {
     if (!this.selectingTarget) return;
     if (!this.validTargetIds().has(permanentId)) return;
-    if (this.targetingForAbility) {
+    if (this.targetingForGraveyardAbility) {
+      const msg: any = {
+        type: MessageType.ACTIVATE_GRAVEYARD_ABILITY,
+        graveyardCardIndex: this.targetingCardIndex,
+        abilityIndex: this.targetingAbilityIndex >= 0 ? this.targetingAbilityIndex : 0,
+        targetId: permanentId
+      };
+      if (this.pendingAbilityXValue != null) {
+        msg.xValue = this.pendingAbilityXValue;
+      }
+      this.websocketService.send(msg);
+    } else if (this.targetingForAbility) {
       const msg: any = {
         type: MessageType.ACTIVATE_ABILITY,
         permanentIndex: this.targetingCardIndex,
@@ -1124,6 +1154,7 @@ export class TargetingChoiceService {
     this.targetingCardIndex = -1;
     this.targetingCardName = '';
     this.targetingForAbility = false;
+    this.targetingForGraveyardAbility = false;
     this.targetingAbilityIndex = -1;
     this.validTargetIds.set(new Set());
     this.validTargetPlayerIds.set(new Set());

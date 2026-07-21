@@ -15,6 +15,7 @@ import com.github.laxika.magicalvibes.model.effect.AllLandsAreCreaturesEffect;
 import com.github.laxika.magicalvibes.model.effect.AnimateNoncreatureArtifactsEffect;
 import com.github.laxika.magicalvibes.model.effect.AnimatePermanentsEffect;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
+import com.github.laxika.magicalvibes.model.effect.GrantActivatedAbilityEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantEffectEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantKeywordEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantScope;
@@ -169,6 +170,12 @@ public class StaticEffectSupport {
         } else if (wrapped instanceof GrantKeywordEffect grant) {
             if (selfInScope(context, grant.scope(), grant.filter())) {
                 accumulator.addKeywords(grant.keywords());
+            }
+        } else if (wrapped instanceof GrantActivatedAbilityEffect grant) {
+            if (grant.scope() == GrantScope.SELF || grant.scope() == GrantScope.SELF_AND_PAIRED
+                    || grant.scope() == GrantScope.ALL_OWN_CREATURES
+                    || grant.scope() == GrantScope.OWN_PERMANENTS) {
+                accumulator.addActivatedAbility(grant.ability().withGrantSource(context.source().getId()));
             }
         } else if (wrapped instanceof ProtectionFromColorsEffect protection) {
             accumulator.addProtectionColors(protection.colors());
@@ -325,20 +332,39 @@ public class StaticEffectSupport {
             }
             return target.hasKeyword(p.keyword());
         }
-        if (filter instanceof PermanentIsCreaturePredicate)
+        if (filter instanceof PermanentIsCreaturePredicate) {
+            CharacteristicState layered = LayerSystemService.activeStateFor(target.getId());
+            if (layered != null) {
+                return layered.hasCardType(CardType.CREATURE)
+                        || target.isAnimatedUntilEndOfTurn()
+                        || target.isAnimatedUntilEndOfCombat()
+                        || target.isAnimatedUntilNextTurn()
+                        || target.getCounterCount(CounterType.AWAKENING) > 0;
+            }
             return target.getCard().hasType(CardType.CREATURE)
                     || target.isAnimatedUntilEndOfTurn()
                     || target.isAnimatedUntilEndOfCombat()
                     || target.isAnimatedUntilNextTurn()
                     || target.getCounterCount(CounterType.AWAKENING) > 0;
+        }
         if (filter instanceof PermanentIsArtifactPredicate)
             return gameQueryService.isArtifact(target);
-        if (filter instanceof PermanentIsLandPredicate)
+        if (filter instanceof PermanentIsLandPredicate) {
+            CharacteristicState layered = LayerSystemService.activeStateFor(target.getId());
+            if (layered != null) {
+                return layered.hasCardType(CardType.LAND);
+            }
             return target.getCard().hasType(CardType.LAND);
+        }
         if (filter instanceof PermanentIsEnchantmentPredicate)
             return target.getCard().hasType(CardType.ENCHANTMENT);
-        if (filter instanceof PermanentIsPlaneswalkerPredicate)
+        if (filter instanceof PermanentIsPlaneswalkerPredicate) {
+            CharacteristicState layered = LayerSystemService.activeStateFor(target.getId());
+            if (layered != null) {
+                return layered.hasCardType(CardType.PLANESWALKER);
+            }
             return target.getCard().hasType(CardType.PLANESWALKER);
+        }
         if (filter instanceof PermanentIsTokenPredicate)
             return target.getCard().isToken();
         if (filter instanceof PermanentIsHistoricPredicate)

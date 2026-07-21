@@ -12,6 +12,7 @@ import com.github.laxika.magicalvibes.model.filter.PermanentPredicateTargetFilte
 import java.util.Set;
 
 @CardRegistration(set = "ISD", collectorNumber = "32")
+@CardRegistration(set = "INR", collectorNumber = "39")
 public class SlayerOfTheWicked extends Card {
 
     public SlayerOfTheWicked() {

@@ -6,7 +6,6 @@ import com.github.laxika.magicalvibes.service.battlefield.GameQueryService;
 import com.github.laxika.magicalvibes.service.GameBroadcastService;
 import com.github.laxika.magicalvibes.service.GameOutcomeService;
 import com.github.laxika.magicalvibes.model.Card;
-import com.github.laxika.magicalvibes.model.CardType;
 import com.github.laxika.magicalvibes.model.GameData;
 import com.github.laxika.magicalvibes.model.GameLog;
 import com.github.laxika.magicalvibes.model.EffectSlot;
@@ -120,7 +119,7 @@ public class StateBasedActionService {
                 // CR 704.5h — creature dealt damage by a deathtouch source since the last check
                 // is destroyed (regeneration can replace either)
                 toDie.add(new DeathEntry(p, DeathReason.LETHAL_DAMAGE));
-            } else if (p.getCard().hasType(CardType.PLANESWALKER) && p.getCounterCount(CounterType.LOYALTY) <= 0) {
+            } else if (gameQueryService.isPlaneswalker(gameData, p) && p.getCounterCount(CounterType.LOYALTY) <= 0) {
                 toDie.add(new DeathEntry(p, DeathReason.ZERO_LOYALTY));
             }
         });

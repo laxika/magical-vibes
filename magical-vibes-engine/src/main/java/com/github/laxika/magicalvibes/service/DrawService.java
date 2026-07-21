@@ -31,6 +31,8 @@ import com.github.laxika.magicalvibes.model.effect.TargetCategory;
 import com.github.laxika.magicalvibes.model.effect.PlayersCannotDrawCardsEffect;
 import com.github.laxika.magicalvibes.model.effect.ReplaceSingleDrawEffect;
 import com.github.laxika.magicalvibes.model.effect.RevealTopCardsCreaturesToHandDrawReplacementEffect;
+import com.github.laxika.magicalvibes.model.MiracleCast;
+import com.github.laxika.magicalvibes.model.effect.MiracleRevealEffect;
 import com.github.laxika.magicalvibes.model.effect.RevealFirstDrawDrawOnBasicLandEffect;
 import com.github.laxika.magicalvibes.model.effect.SacrificeSelfThenDealDamageToTargetPlayerEffect;
 import com.github.laxika.magicalvibes.model.effect.WinGameOnEmptyLibraryDrawEffect;
@@ -486,6 +488,29 @@ public class DrawService {
         checkOpponentDrawTriggers(gameData, playerId);
         checkBoobyTraps(gameData, playerId, drawn);
         checkRevealFirstDrawTriggers(gameData, playerId, drawn);
+        checkMiracleReveal(gameData, playerId, drawn);
+    }
+
+    /**
+     * Miracle (CR 702.94a): if the drawn card has a {@link MiracleCast} option and this is the
+     * first card the player has drawn this turn, offer to reveal it. Accepting queues the miracle
+     * triggered ability ({@link com.github.laxika.magicalvibes.model.effect.MiracleMayCastEffect}).
+     */
+    private void checkMiracleReveal(GameData gameData, UUID drawingPlayerId, Card drawn) {
+        if (gameData.cardsDrawnThisTurn.getOrDefault(drawingPlayerId, 0) != 1) {
+            return;
+        }
+        if (drawn.getCastingOption(MiracleCast.class).isEmpty()) {
+            return;
+        }
+
+        gameData.pendingMayAbilities.add(new PendingMayAbility(
+                drawn,
+                drawingPlayerId,
+                List.of(new MiracleRevealEffect()),
+                "Reveal " + drawn.getName() + " for its miracle ability?"
+        ));
+        log.info("Game {} - offering miracle reveal for {}", gameData.id, drawn.getName());
     }
 
     /**

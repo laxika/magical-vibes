@@ -10,5 +10,5 @@ import java.util.UUID;
  * the resolved {@code card} and {@code ability} are held directly rather than by graveyard index.
  */
 public record PendingGraveyardAbilityActivation(UUID playerId, Card card, ActivatedAbility ability,
-                                                int xValue) {
+                                                int xValue, UUID targetId) {
 }

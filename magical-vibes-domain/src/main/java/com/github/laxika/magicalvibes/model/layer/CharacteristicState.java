@@ -161,6 +161,12 @@ public class CharacteristicState {
         cardTypes.remove(type);
     }
 
+    /** "Is a [card type]" override: replaces all card types (e.g. Imprisoned in the Moon). */
+    public void overrideCardTypes(Collection<CardType> replacement) {
+        cardTypes.clear();
+        cardTypes.addAll(replacement);
+    }
+
     public void addSupertype(CardSupertype supertype) {
         supertypes.add(supertype);
     }

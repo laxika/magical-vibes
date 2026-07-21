@@ -3,6 +3,7 @@ package com.github.laxika.magicalvibes.networking.service;
 import com.github.laxika.magicalvibes.model.ActivatedAbility;
 import com.github.laxika.magicalvibes.model.AlternateHandCast;
 import com.github.laxika.magicalvibes.model.Card;
+import com.github.laxika.magicalvibes.model.DisturbCast;
 import com.github.laxika.magicalvibes.model.LifeCastingCost;
 import com.github.laxika.magicalvibes.model.ManaCastingCost;
 import com.github.laxika.magicalvibes.model.SacrificePermanentsCost;
@@ -163,6 +164,37 @@ public class CardViewFactory {
                 modalEffect != null ? modalEffect.choicesRequired() : 0,
                 modalEffect != null && modalEffect.optional(),
                 modalOptions);
+    }
+
+    /**
+     * Graveyard CardView: if this card can be cast via Disturb and the back face needs a target
+     * (e.g. Aura), report needsTarget so the flashback UI prompts before cast.
+     */
+    public CardView createForGraveyard(Card card, List<CardSubtype> grantedSubtypes,
+                                       List<ActivatedAbility> grantedGraveyardAbilities) {
+        CardView base = create(card, grantedSubtypes, grantedGraveyardAbilities);
+        if (base.needsTarget() || !disturbBackFaceNeedsTarget(card)) {
+            return base;
+        }
+        return new CardView(
+                base.id(), base.name(), base.type(), base.additionalTypes(), base.supertypes(),
+                base.subtypes(), base.cardText(), base.manaCost(), base.power(), base.toughness(),
+                base.keywords(), base.hasTapAbility(), base.setCode(), base.collectorNumber(),
+                base.color(), base.colors(), true, base.needsSpellTarget(),
+                base.activatedAbilities(), base.loyalty(), base.hasConvoke(), base.hasPhyrexianMana(),
+                base.phyrexianManaCount(), base.token(), base.watermark(), base.hasAlternateCastingCost(),
+                base.alternateCostLifePayment(), base.alternateCostSacrificeCount(),
+                base.alternateCostTapCount(), base.alternateCostReturnCount(), base.alternateCostManaCost(),
+                base.graveyardActivatedAbilities(), base.handActivatedAbilities(), base.transformable(),
+                base.kickerCost(), base.modalChoicesRequired(), base.modalOptional(), base.modalOptions());
+    }
+
+    private static boolean disturbBackFaceNeedsTarget(Card card) {
+        if (card.getCastingOption(DisturbCast.class).isEmpty()) {
+            return false;
+        }
+        Card back = card.getBackFaceCard();
+        return back != null && EffectResolution.needsTarget(back);
     }
 
     /**

@@ -234,8 +234,15 @@ public class ActivatedAbilityExecutionService {
             permanentRemovalService.removePermanentToExile(gameData, permanent);
         }
 
-        boolean shouldSacrifice = abilityEffects.stream().anyMatch(e -> e instanceof SacrificeSelfCost);
-        if (shouldSacrifice) {
+        Optional<SacrificeSelfCost> sacrificeSelfCost = abilityEffects.stream()
+                .filter(SacrificeSelfCost.class::isInstance)
+                .map(SacrificeSelfCost.class::cast)
+                .findFirst();
+        if (sacrificeSelfCost.isPresent()) {
+            // Snapshot power before leaving the battlefield (CR 608.2h last-known information).
+            if (sacrificeSelfCost.get().trackPower()) {
+                effectiveXValue = Math.max(0, gameQueryService.getEffectivePower(gameData, permanent));
+            }
             permanentRemovalService.removePermanentToGraveyard(gameData, permanent);
             triggerCollectionService.checkAllyPermanentSacrificedTriggers(gameData, player.getId(), permanent.getCard());
         }

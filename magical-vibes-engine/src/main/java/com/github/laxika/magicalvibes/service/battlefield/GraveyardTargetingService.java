@@ -16,6 +16,7 @@ import com.github.laxika.magicalvibes.model.effect.ExileGraveyardCardsEffect;
 import com.github.laxika.magicalvibes.model.effect.ExileTargetCardFromGraveyardMayPlayUntilNextTurnEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantFlashbackToTargetGraveyardCardEffect;
 import com.github.laxika.magicalvibes.model.effect.ReturnTargetCardsFromGraveyardToHandEffect;
+import com.github.laxika.magicalvibes.model.effect.ShuffleTargetCardsFromControllerGraveyardIntoLibraryEffect;
 import com.github.laxika.magicalvibes.model.filter.CardPredicate;
 import com.github.laxika.magicalvibes.model.filter.CardPredicateUtils;
 import com.github.laxika.magicalvibes.service.GameBroadcastService;
@@ -134,8 +135,24 @@ public class GraveyardTargetingService {
      */
     public void handleReturnToHandETBTargeting(GameData gameData, UUID controllerId, Card card,
             List<CardEffect> effects, ReturnTargetCardsFromGraveyardToHandEffect returnEffect) {
-        CardPredicate filter = returnEffect.filter();
+        handleControllerGraveyardMultiTargetETB(gameData, controllerId, card, effects,
+                returnEffect.filter(), returnEffect.maxTargets(),
+                " from your graveyard to return to your hand.");
+    }
 
+    /**
+     * ETB targeting for "you may shuffle up to N target cards from your graveyard into your library"
+     * (Ghostly Castigator). Same multi-select flow as return-to-hand; "up to N" covers the "you may".
+     */
+    public void handleShuffleIntoLibraryETBTargeting(GameData gameData, UUID controllerId, Card card,
+            List<CardEffect> effects, ShuffleTargetCardsFromControllerGraveyardIntoLibraryEffect shuffleEffect) {
+        handleControllerGraveyardMultiTargetETB(gameData, controllerId, card, effects,
+                shuffleEffect.filter(), shuffleEffect.maxTargets(),
+                " from your graveyard to shuffle into your library.");
+    }
+
+    private void handleControllerGraveyardMultiTargetETB(GameData gameData, UUID controllerId, Card card,
+            List<CardEffect> effects, CardPredicate filter, int requestedMaxTargets, String promptSuffix) {
         List<Card> matchingCards = new ArrayList<>();
         List<Card> graveyard = gameData.playerGraveyards.get(controllerId);
         if (graveyard != null) {
@@ -160,13 +177,13 @@ public class GraveyardTargetingService {
             log.info("Game {} - {} ETB ability pushed onto stack with 0 targets (no matching graveyard cards)",
                     gameData.id, card.getName());
         } else {
-            int maxTargets = Math.min(returnEffect.maxTargets(), matchingCards.size());
+            int maxTargets = Math.min(requestedMaxTargets, matchingCards.size());
             gameData.graveyardTargetOperation.card = card;
             gameData.graveyardTargetOperation.controllerId = controllerId;
             gameData.graveyardTargetOperation.effects = new ArrayList<>(effects);
             playerInputService.beginMultiGraveyardChoice(gameData, controllerId, matchingCards, maxTargets,
                     "Choose up to " + maxTargets + " target card" + (maxTargets != 1 ? "s" : "")
-                            + " from your graveyard to return to your hand.");
+                            + promptSuffix);
         }
     }
 

@@ -23,6 +23,7 @@ import com.github.laxika.magicalvibes.model.effect.RevealAndPutOnBottomOfLibrary
 import com.github.laxika.magicalvibes.model.effect.ExileWithEggCountersInsteadOfDyingEffect;
 import com.github.laxika.magicalvibes.model.effect.PutOnTopOfLibraryInsteadOfDyingEffect;
 import com.github.laxika.magicalvibes.model.effect.ShuffleGraveyardIntoLibraryEffect;
+import com.github.laxika.magicalvibes.model.effect.ExileInsteadOfGraveyardReplacementEffect;
 import com.github.laxika.magicalvibes.model.effect.ShuffleIntoLibraryReplacementEffect;
 import com.github.laxika.magicalvibes.service.GameBroadcastService;
 import com.github.laxika.magicalvibes.service.trigger.TriggerCollectionService;
@@ -192,6 +193,14 @@ public class GraveyardService {
             return false;
         }
 
+        if (hasExileInsteadOfGraveyardReplacementEffect(card)) {
+            exileService.exileCard(gameData, ownerId, card);
+            gameBroadcastService.logAndBroadcast(gameData, GameLog.cardThen(card, " is exiled instead of being put into a graveyard."));
+            log.info("Game {} - {} replacement effect: exiled instead of graveyard", gameData.id, card.getName());
+            updateThisTurnBattlefieldToGraveyardTracking(gameData, ownerId, card, null);
+            return false;
+        }
+
         // Wheel of Sun and Moon — if the graveyard's owner is enchanted by a player aura with this
         // replacement, cards headed to their graveyard from anywhere are revealed and put on the
         // bottom of their library instead. Tokens are not cards, so they still hit the graveyard.
@@ -242,6 +251,9 @@ public class GraveyardService {
         }
         if (!card.isToken() && card.hasType(CardType.LAND)) {
             triggerCollectionService.checkLandPutIntoGraveyardFromAnywhereTriggers(gameData, ownerId, card);
+        }
+        if (!card.isToken() && card.hasType(CardType.CREATURE)) {
+            triggerCollectionService.checkCreatureCardPutIntoGraveyardFromAnywhereTriggers(gameData, ownerId, card);
         }
         triggerCollectionService.checkBlackCardPutIntoOpponentGraveyardFromAnywhereTriggers(gameData, ownerId, card);
         return true;
@@ -386,6 +398,11 @@ public class GraveyardService {
     private boolean hasShuffleIntoLibraryReplacementEffect(Card card) {
         return card.getEffects(EffectSlot.STATIC).stream()
                 .anyMatch(e -> e instanceof ShuffleIntoLibraryReplacementEffect);
+    }
+
+    public static boolean hasExileInsteadOfGraveyardReplacementEffect(Card card) {
+        return card.getEffects(EffectSlot.STATIC).stream()
+                .anyMatch(e -> e instanceof ExileInsteadOfGraveyardReplacementEffect);
     }
 
     private boolean enchantedPlayerHasBottomOfLibraryReplacement(GameData gameData, UUID ownerId) {
