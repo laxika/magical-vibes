@@ -43,7 +43,7 @@ if (-not (Get-Command $cliName -ErrorAction SilentlyContinue)) {
     exit 1
 }
 
-$systemPrompt = "Do not ask clarifying questions, wait for confirmation, or present multiple options. Simply choose the recommended/best approach and review the card immediately. This is a read-only review — do not edit code unless the review skill requires deleting a stale pass result file. Be brief; save tokens when possible. Write scripts/result/{SET}/{collectorNumber}.txt only when there are real issues; on a clean pass delete any stale result file and write nothing."
+$systemPrompt = "Do not ask clarifying questions, wait for confirmation, or present multiple options. Simply choose the recommended/best approach and review the card immediately. This is a read-only review - do not edit code unless the review skill requires deleting a stale pass result file. Be brief; save tokens when possible. Write scripts/result/{SET}/{collectorNumber}.txt only when there are real issues; on a clean pass delete any stale result file and write nothing."
 
 $total = $To - $From + 1
 $index = 0
