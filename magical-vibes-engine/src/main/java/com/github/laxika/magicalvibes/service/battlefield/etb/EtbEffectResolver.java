@@ -34,7 +34,7 @@ import java.util.Map;
  * never both (no card nests a gate conditional inside a modal/kicked wrapper).
  *
  * <p><b>Gate vs. unwrap asymmetry (preserved deliberately):</b> trigger-time gates
- * ({@link Condition#isEtbTriggerGate()} — Metalcraft / Morbid / Raid / ControlsAnother) return the
+ * ({@link Condition#isEtbTriggerGate()} — Metalcraft / Morbid / Raid / ControlsAnother / OpponentControlsMoreLands) return the
  * <em>conditional effect unchanged</em> when met (it stays wrapped and is re-evaluated at stack
  * resolution by {@code EffectResolutionService}), whereas Kicked / CastFromZone <em>unwrap</em> to
  * their inner effect. Conditions with no ETB policy pass through unchanged. Dropping ({@code null})

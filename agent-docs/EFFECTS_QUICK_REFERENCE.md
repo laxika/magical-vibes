@@ -202,7 +202,7 @@ Core wrappers (all take `CardEffect wrapped` as first/only effect arg):
 - `ConditionalEffect(new TargetPermanentMatches(PermanentPredicate), wrapped)` — the targeted permanent matches the predicate at resolution (e.g. "destroy target permanent if it's red": wrap `DestroyTargetPermanentEffect` with `PermanentColorInPredicate(Set.of(RED))`). Targeting stays unrestricted (any permanent); the color check is a resolution-time intervening-if. Hydroblast mode 1
 - `ConditionalEffect(new TargetSpellMatches(StackEntryPredicate), wrapped)` — the targeted spell on the stack matches the predicate at resolution (e.g. "counter target spell if it's red": wrap `CounterSpellEffect` with `StackEntryColorInPredicate(Set.of(RED))`). Targeting stays unrestricted (any spell); the color check is a resolution-time intervening-if. Hydroblast mode 0
 
-Metalcraft / Morbid / Raid / ControlsAnotherPermanent are ETB trigger gates
+Metalcraft / Morbid / Raid / ControlsAnotherPermanent / OpponentControlsMoreLands are ETB trigger gates
 (`Condition.isEtbTriggerGate()`): a targeted ETB wrapped in one never asks for its target at cast
 time — the target is chosen as the trigger goes on the stack (see TRIGGER_SLOT_TARGETING.md,
 "ON_ENTER_BATTLEFIELD targeted triggers"). Override `isEtbTriggerGate()` when adding a new

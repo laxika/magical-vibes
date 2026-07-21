@@ -250,8 +250,8 @@ PermanentIsPlaneswalkerPredicate(), …)` (the permanent side narrows to planesw
 always legal), the same idiom as Noggle Hedge-Mage. Sunscorched Desert is the reference land.
 
 **Gate-conditional targeted ETBs** (`ConditionalEffect` whose condition returns
-`Condition.isEtbTriggerGate()` — Metalcraft, Morbid, Raid, ControlsAnotherPermanent, ControlsPermanent; e.g. Bleak
-Coven Vampires, Morkrut Banshee, Storm Fleet Pyromancer, Dreamcaller Siren, Parasitic Strix) **never** target at
+`Condition.isEtbTriggerGate()` — Metalcraft, Morbid, Raid, ControlsAnotherPermanent, ControlsPermanent, OpponentControlsMoreLands; e.g. Bleak
+Coven Vampires, Morkrut Banshee, Storm Fleet Pyromancer, Dreamcaller Siren, Parasitic Strix, Knight of the White Orchid) **never** target at
 cast time: whether the ability triggers at all depends on game state as the permanent enters
 (intervening-if, CR 603.4), so `EffectResolution.computeAllowedTargets` excludes them from the
 spell's cast-time target requirement and `EtbEffectResolver` drops the trigger entirely when the
