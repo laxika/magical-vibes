@@ -68,6 +68,8 @@ import com.github.laxika.magicalvibes.model.amount.Fixed;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import com.github.laxika.magicalvibes.model.amount.Fixed;
+import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.when;
 import com.github.laxika.magicalvibes.model.amount.Fixed;
 
@@ -216,10 +218,12 @@ class EtbEffectResolverTest {
         Permanent other = new Permanent(new Card());
         gameData.playerBattlefields.put(controllerId, List.of(other));
 
-        when(predicateEvaluationService.matchesPermanentPredicate(gameData, other, filter)).thenReturn(true);
+        // ConditionEvaluationService now evaluates the predicate through the FilterContext-aware
+        // overload (permanent, filter, filterContext), building the context internally — match with any().
+        when(predicateEvaluationService.matchesPermanentPredicate(eq(other), eq(filter), any())).thenReturn(true);
         assertThat(resolver.resolve(ctx(true, 0, false), effect)).isSameAs(effect);
 
-        when(predicateEvaluationService.matchesPermanentPredicate(gameData, other, filter)).thenReturn(false);
+        when(predicateEvaluationService.matchesPermanentPredicate(eq(other), eq(filter), any())).thenReturn(false);
         assertThat(resolver.resolve(ctx(true, 0, false), effect)).isNull();
     }
 

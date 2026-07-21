@@ -341,6 +341,7 @@ class StateBasedActionServiceTest {
             gd.playerBattlefields.get(player1Id).add(perm);
 
             when(gameQueryService.isCreature(gd, perm)).thenReturn(false);
+            when(gameQueryService.isPlaneswalker(gd, perm)).thenReturn(true);
 
             sut.performStateBasedActions(gd);
 
@@ -357,6 +358,7 @@ class StateBasedActionServiceTest {
             gd.playerBattlefields.get(player1Id).add(perm);
 
             when(gameQueryService.isCreature(gd, perm)).thenReturn(false);
+            when(gameQueryService.isPlaneswalker(gd, perm)).thenReturn(true);
 
             sut.performStateBasedActions(gd);
 
@@ -375,6 +377,7 @@ class StateBasedActionServiceTest {
 
             // isCreature true (animated planeswalker), but toughness is healthy
             when(gameQueryService.isCreature(gd, perm)).thenReturn(true);
+            when(gameQueryService.isPlaneswalker(gd, perm)).thenReturn(true);
             when(gameQueryService.getEffectiveToughness(gd, perm)).thenReturn(6);
 
             sut.performStateBasedActions(gd);
@@ -429,6 +432,7 @@ class StateBasedActionServiceTest {
             gd.playerBattlefields.get(player1Id).add(perm);
 
             when(gameQueryService.isCreature(gd, perm)).thenReturn(false);
+            when(gameQueryService.isPlaneswalker(gd, perm)).thenReturn(true);
 
             sut.performStateBasedActions(gd);
 

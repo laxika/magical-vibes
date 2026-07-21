@@ -319,7 +319,10 @@ class CastingCostServiceTest {
             retort.addEffect(EffectSlot.STATIC, new ConditionalEffect(
                     new ControlsPermanent(predicate), new ReduceOwnCastCostEffect(new Fixed(1))));
 
-            when(predicateEvaluationService.matchesPermanentPredicate(gd, wizardPermanent, predicate)).thenReturn(true);
+            // ControlsPermanent conditions evaluate through the FilterContext-aware overload; the battlefield
+            // holds only wizardPermanent, so matching the WIZARD predicate against any permanent is correct.
+            when(predicateEvaluationService.matchesPermanentPredicate(
+                    any(Permanent.class), any(PermanentPredicate.class), any(FilterContext.class))).thenReturn(true);
 
             var snapshot = svc.buildCostModifierSnapshot(gd, player1Id);
 

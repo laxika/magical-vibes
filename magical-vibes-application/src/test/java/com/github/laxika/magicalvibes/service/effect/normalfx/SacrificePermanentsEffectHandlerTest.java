@@ -40,6 +40,7 @@ import com.github.laxika.magicalvibes.service.effect.AmountEvaluationService;
 import com.github.laxika.magicalvibes.service.filter.PredicateEvaluationService;
 import com.github.laxika.magicalvibes.service.graveyard.GraveyardService;
 import com.github.laxika.magicalvibes.service.input.PlayerInputService;
+import com.github.laxika.magicalvibes.service.trigger.TriggerCollectionService;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
@@ -74,6 +75,7 @@ class SacrificePermanentsEffectHandlerTest {
     @Mock private LifeSupport lifeSupport;
     @Mock private PredicateEvaluationService predicateEvaluationService;
     @Mock private AmountEvaluationService amountEvaluationService;
+    @Mock private TriggerCollectionService triggerCollectionService;
     @InjectMocks private DestructionSupport destructionSupport;
 
     private SacrificePermanentsEffectHandler handler;

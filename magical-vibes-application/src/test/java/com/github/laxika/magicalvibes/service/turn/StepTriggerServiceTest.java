@@ -429,8 +429,9 @@ class StepTriggerServiceTest {
             // lenient(): the Power Surge upkeep snapshot (countUntappedLands) also probes
             // matchesPermanentPredicate with a land predicate for every untapped permanent the active
             // player controls, so the source permanent is queried too — that unrelated call must not
-            // trip strict-stubbing.
-            lenient().when(predicateEvaluationService.matchesPermanentPredicate(eq(gd), eq(otherPerm), any())).thenReturn(true);
+            // trip strict-stubbing. Conditions evaluate through the FilterContext-aware overload
+            // (permanent, filter, filterContext), so match the context with any().
+            lenient().when(predicateEvaluationService.matchesPermanentPredicate(eq(otherPerm), any(), any())).thenReturn(true);
 
             sut.handleUpkeepTriggers(gd);
 

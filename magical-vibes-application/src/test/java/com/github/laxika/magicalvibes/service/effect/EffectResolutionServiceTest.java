@@ -459,7 +459,7 @@ class EffectResolutionServiceTest {
             // Add an artifact to controller's battlefield
             Permanent artifact = mock(Permanent.class);
             gd.playerBattlefields.get(player1Id).add(artifact);
-            when(predicateEvaluationService.matchesPermanentPredicate(eq(gd), eq(artifact), any(PermanentIsArtifactPredicate.class)))
+            when(predicateEvaluationService.matchesPermanentPredicate(eq(artifact), any(PermanentIsArtifactPredicate.class), any()))
                     .thenReturn(true);
             EffectHandler handler = stubHandler(wrapped);
 
@@ -710,10 +710,10 @@ class EffectResolutionServiceTest {
         }
 
         private void stubPredicateEvaluation() {
-            when(predicateEvaluationService.matchesPermanentPredicate(eq(gd), any(Permanent.class), any(PermanentPredicate.class)))
+            when(predicateEvaluationService.matchesPermanentPredicate(any(Permanent.class), any(PermanentPredicate.class), any()))
                     .thenAnswer(invocation -> {
-                        Permanent permanent = invocation.getArgument(1);
-                        PermanentPredicate predicate = invocation.getArgument(2);
+                        Permanent permanent = invocation.getArgument(0);
+                        PermanentPredicate predicate = invocation.getArgument(1);
                         return matches(permanent, predicate);
                     });
         }
@@ -878,7 +878,7 @@ class EffectResolutionServiceTest {
             Permanent huatli = new Permanent(huatliCard);
             gd.playerBattlefields.get(player1Id).add(huatli);
 
-            when(predicateEvaluationService.matchesPermanentPredicate(eq(gd), eq(huatli), any())).thenReturn(true);
+            when(predicateEvaluationService.matchesPermanentPredicate(eq(huatli), any(), any())).thenReturn(true);
             EffectHandler handler = stubHandler(upgraded);
 
             effectResolutionService.resolveEffects(gd, entry);

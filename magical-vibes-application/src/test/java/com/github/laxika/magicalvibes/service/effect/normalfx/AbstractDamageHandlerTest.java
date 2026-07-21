@@ -65,6 +65,11 @@ abstract class AbstractDamageHandlerTest {
         gd = game.gameData();
         amountEvaluationService = new AmountEvaluationService(predicateEvaluationService, gameQueryService);
         lenient().when(gameQueryService.getEnchantedPlayerDamageMultiplier(eq(gd), any(UUID.class))).thenReturn(1);
+        // Saving Grace redirect (CR 614) is a pass-through in these unit tests — no redirect shields are set up,
+        // so it must return the damage unchanged. Called unconditionally by dealDamageToPlayer and (for
+        // controlled creatures) by dealCreatureDamage; the second UUID is null on the player path, so match with any().
+        lenient().when(damagePreventionService.applyTurnDamageRedirectToCreature(eq(gd), any(), any(), anyInt()))
+                .thenAnswer(inv -> inv.getArgument(3));
         setUpHandler();
     }
 
