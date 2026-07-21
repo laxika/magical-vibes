@@ -149,6 +149,32 @@ class MtgjsonOracleLoaderTest {
     }
 
     @Test
+    void promotesMeldResultToStandalonePrintingButKeepsTransformBacksAsBackFaces() {
+        JsonNode cards = MAPPER.readTree("""
+                [
+                  { "faceName": "Bruna, the Fading Light", "number": "14", "side": "a", "layout": "meld" },
+                  { "faceName": "Brisela, Voice of Nightmares", "number": "14b", "side": "b", "layout": "meld" },
+                  { "faceName": "Gisela, the Broken Blade", "number": "24", "side": "a", "layout": "meld" },
+                  { "faceName": "Huntmaster of the Fells", "number": "140", "side": "a", "layout": "transform" },
+                  { "faceName": "Ravager of the Fells", "number": "140", "side": "b", "layout": "transform" },
+                  { "faceName": "Grizzly Bears", "number": "200" }
+                ]
+                """);
+
+        MtgjsonOracleLoader.FaceIndex faces = MtgjsonOracleLoader.indexFacesByCollectorNumber(cards);
+
+        // Meld result: side "b" with its own collector number → a standalone printing
+        assertThat(faces.frontFaces().get("14b").get("faceName").asText())
+                .isEqualTo("Brisela, Voice of Nightmares");
+        // Transform back: shares its front face's number → stays a back face only
+        assertThat(faces.frontFaces().get("140").get("faceName").asText())
+                .isEqualTo("Huntmaster of the Fells");
+        assertThat(faces.backFaces().get("140").get("faceName").asText())
+                .isEqualTo("Ravager of the Fells");
+        assertThat(faces.frontFaces()).containsOnlyKeys("14", "14b", "24", "140", "200");
+    }
+
+    @Test
     void registersCreatureTokensUnderScryfallTokenSetCode() {
         JsonNode setData = MAPPER.readTree("""
                 {

@@ -72,21 +72,12 @@ public class MtgjsonOracleLoader {
                     CardSet.registerSetName(cardSet.getCode(), setData.get("name").asText());
                 }
 
-                // Key faces by collector number: transform DFCs are two entries sharing a number
-                Map<String, JsonNode> frontFaces = new HashMap<>();
-                Map<String, JsonNode> backFaces = new HashMap<>();
-                if (setData.has("cards")) {
-                    for (JsonNode cardNode : setData.get("cards")) {
-                        String number = cardNode.get("number").asText();
-                        if (cardNode.has("side") && "b".equals(cardNode.get("side").asText())) {
-                            backFaces.put(number, cardNode);
-                        } else {
-                            frontFaces.put(number, cardNode);
-                        }
-                    }
-                }
+                FaceIndex faces = indexFacesByCollectorNumber(setData.get("cards"));
+                Map<String, JsonNode> frontFaces = faces.frontFaces();
+                Map<String, JsonNode> backFaces = faces.backFaces();
 
-                // Total cards in the set (one entry per physical card) — the set-completeness denominator.
+                // Total cards in the set (one entry per collector number, meld results included —
+                // the same count Scryfall yields) — the set-completeness denominator.
                 CardSet.registerSetCardTotal(cardSet.getCode(), frontFaces.size());
 
                 for (Map.Entry<String, JsonNode> entry : frontFaces.entrySet()) {
@@ -127,6 +118,35 @@ public class MtgjsonOracleLoader {
         } catch (Exception e) {
             throw new RuntimeException("Failed to load MTGJSON oracle data", e);
         }
+    }
+
+    /** The set's card entries keyed by collector number, one map per side. */
+    record FaceIndex(Map<String, JsonNode> frontFaces, Map<String, JsonNode> backFaces) {
+    }
+
+    /**
+     * Keys a set file's card entries by collector number. Transform DFCs are two entries sharing
+     * a number (side "a"/"b"), so the sides land in separate maps. Meld results (INR's Brisela,
+     * Voice of Nightmares) are also tagged side "b" but own their collector number ("14b") with
+     * no side-"a" partner at it — those are standalone printings, so they are promoted into the
+     * front-face map, matching Scryfall, which serves them as ordinary card objects under the
+     * same numbers (printing lookup, rarity registration and the set total all see them).
+     */
+    static FaceIndex indexFacesByCollectorNumber(JsonNode cards) {
+        Map<String, JsonNode> frontFaces = new HashMap<>();
+        Map<String, JsonNode> backFaces = new HashMap<>();
+        if (cards != null) {
+            for (JsonNode cardNode : cards) {
+                String number = cardNode.get("number").asText();
+                if (cardNode.has("side") && "b".equals(cardNode.get("side").asText())) {
+                    backFaces.put(number, cardNode);
+                } else {
+                    frontFaces.put(number, cardNode);
+                }
+            }
+            backFaces.forEach(frontFaces::putIfAbsent);
+        }
+        return new FaceIndex(frontFaces, backFaces);
     }
 
     private static JsonNode loadSet(Path cachePath, String setCode) throws IOException, InterruptedException {

@@ -5,6 +5,7 @@ import com.github.laxika.magicalvibes.cards.a.AirElemental;
 import com.github.laxika.magicalvibes.cards.b.Befuddle;
 import com.github.laxika.magicalvibes.cards.a.AgonyWarp;
 import com.github.laxika.magicalvibes.cards.b.BenalishMarshal;
+import com.github.laxika.magicalvibes.cards.c.CompellingDeterrence;
 import com.github.laxika.magicalvibes.cards.c.ContagionClasp;
 import com.github.laxika.magicalvibes.cards.d.Diminish;
 import com.github.laxika.magicalvibes.cards.f.FeelingOfDread;
@@ -274,6 +275,17 @@ class AiTargetSelectorTest {
         UUID target = targetSelector.chooseTarget(gd, new PathToExile(), aiPlayer.getId());
 
         assertThat(target).isEqualTo(oppBears.getId());
+    }
+
+    @Test
+    @DisplayName("Bounce-then rider (Compelling Deterrence) targets the opponent's permanent, not the AI's own")
+    void bounceThenRiderTargetsOpponentPermanentNotOwnBoard() {
+        harness.addToBattlefield(aiPlayer, new GrizzlyBears());
+        Permanent oppAngel = harness.addToBattlefieldAndReturn(human, new SerraAngel());
+
+        UUID target = targetSelector.chooseTarget(gd, new CompellingDeterrence(), aiPlayer.getId());
+
+        assertThat(target).isEqualTo(oppAngel.getId());
     }
 
     @Test

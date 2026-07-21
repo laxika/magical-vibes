@@ -243,6 +243,7 @@ class TargetPolarityClassifier {
             entry("PutTargetOnBottomOfLibraryEffect", TargetPolarity.HARMFUL_REMOVAL),
             entry("PutTargetOnTopOfLibraryEffect", TargetPolarity.HARMFUL_REMOVAL),
             entry("ReturnTargetPermanentToHandOrLibraryTopByPredicateEffect", TargetPolarity.HARMFUL_REMOVAL),
+            entry("ReturnTargetPermanentToHandThenEffect", TargetPolarity.HARMFUL_REMOVAL),
             entry("SacrificeTargetCreatureThenCreateTokensEqualToPowerEffect", TargetPolarity.HARMFUL_REMOVAL),
             // Slave of Bolas: the stolen target is sacrificed at end step — net removal. Own-board
             // uses (Hazoret's Favor) are safe: their target filters restrict candidates anyway.
@@ -292,6 +293,7 @@ class TargetPolarityClassifier {
             entry("BuffTargetCreatureIndefinitelyEffect", TargetPolarity.BENEFICIAL),
             entry("FlickerEffect", TargetPolarity.BENEFICIAL),
             entry("GrantActivatedAbilityEffect", TargetPolarity.BENEFICIAL),
+            entry("GrantAdditionalBlockToTargetUntilEndOfTurnEffect", TargetPolarity.BENEFICIAL),
             entry("GrantChosenKeywordToTargetEffect", TargetPolarity.BENEFICIAL),
             entry("GrantEffectToTargetUntilEndOfTurnEffect", TargetPolarity.BENEFICIAL),
             entry("GrantProtectionChoiceUntilEndOfTurnEffect", TargetPolarity.BENEFICIAL),
