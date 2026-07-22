@@ -565,7 +565,7 @@
                     title="Click to change attack target"
                     (click)="$event.stopPropagation(); cycleAttackTarget(ip.originalIndex)">&#8594; {{ getAttackTargetName(ip.originalIndex) }}</div>
                 }
-                @if (declaringAttackers() && isSelectedAttacker(ip.originalIndex) && selectedAttackerIndices().size > 1) {
+                @if (declaringAttackers() && isSelectedAttacker(ip.originalIndex) && canDeclareBand()) {
                   <div badge-tl class="card-combat-badge band-badge"
                     title="Banding (CR 702.22): click to group attackers into a band"
                     (click)="$event.stopPropagation(); cycleBand(ip.originalIndex)">{{ getBandLabel(ip.originalIndex) }}</div>

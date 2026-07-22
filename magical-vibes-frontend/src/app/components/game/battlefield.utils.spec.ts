@@ -1,19 +1,24 @@
 import { Card, Permanent } from '../../services/websocket.service';
-import { splitBattlefield } from './battlefield.utils';
+import { canFormAttackingBand, splitBattlefield } from './battlefield.utils';
 
-/** Minimal Permanent factory — only the fields splitBattlefield reads. */
+/** Minimal Permanent factory for the battlefield utility tests. */
 function perm(over: {
   id: string;
   type?: string;
   attachedTo?: string | null;
   tapped?: boolean;
   supertypes?: string[];
+  keywords?: string[];
+  grantedKeywords?: string[];
+  removedKeywords?: string[];
 }): Permanent {
   return {
     id: over.id,
     tapped: over.tapped ?? false,
     attachedTo: over.attachedTo ?? null,
     animatedCreature: false,
+    grantedKeywords: over.grantedKeywords ?? [],
+    removedKeywords: over.removedKeywords ?? [],
     card: {
       id: over.id,
       name: over.id,
@@ -21,6 +26,7 @@ function perm(over: {
       additionalTypes: [],
       supertypes: over.supertypes ?? [],
       subtypes: [],
+      keywords: over.keywords ?? [],
     } as unknown as Card,
   } as unknown as Permanent;
 }
@@ -68,5 +74,40 @@ describe('splitBattlefield', () => {
     expect(shriekAfter.originalIndex).not.toBe(shriekBefore.originalIndex);
     // perm.id IS stable, so tracking by it keeps each card bound to its own state.
     expect(shriekAfter.perm.id).toBe(shriekBefore.perm.id);
+  });
+});
+
+describe('canFormAttackingBand', () => {
+  it('does not offer band controls when none of the selected attackers has banding', () => {
+    const battlefield = [perm({ id: 'bear' }), perm({ id: 'wolf' })];
+
+    expect(canFormAttackingBand(battlefield, new Set([0, 1]))).toBe(false);
+  });
+
+  it('allows one selected non-banding attacker to join an attacker with printed banding', () => {
+    const battlefield = [
+      perm({ id: 'wolves', keywords: ['BANDING'] }),
+      perm({ id: 'bear' }),
+    ];
+
+    expect(canFormAttackingBand(battlefield, new Set([0, 1]))).toBe(true);
+  });
+
+  it('recognizes dynamically granted banding', () => {
+    const battlefield = [
+      perm({ id: 'bear', grantedKeywords: ['BANDING'] }),
+      perm({ id: 'wolf' }),
+    ];
+
+    expect(canFormAttackingBand(battlefield, new Set([0, 1]))).toBe(true);
+  });
+
+  it('does not use banding that has been removed', () => {
+    const battlefield = [
+      perm({ id: 'wolves', keywords: ['BANDING'], removedKeywords: ['BANDING'] }),
+      perm({ id: 'bear' }),
+    ];
+
+    expect(canFormAttackingBand(battlefield, new Set([0, 1]))).toBe(false);
   });
 });

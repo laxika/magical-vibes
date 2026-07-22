@@ -9,7 +9,7 @@ import { CardDisplayComponent } from './card-display/card-display.component';
 import { MulliganModalComponent } from './mulligan-modal/mulligan-modal.component';
 import { SidePanelComponent } from './side-panel/side-panel.component';
 import { ModifierTooltipComponent } from './modifier-tooltip/modifier-tooltip.component';
-import { IndexedPermanent, AttachedAura, LandStack, splitBattlefield, stackBasicLands, getAttachedAuras, isLandStack, isPermanentCreature, isPermanentArtifact, isPermanentLand } from './battlefield.utils';
+import { IndexedPermanent, AttachedAura, LandStack, canFormAttackingBand, splitBattlefield, stackBasicLands, getAttachedAuras, isLandStack, isPermanentCreature, isPermanentArtifact, isPermanentLand } from './battlefield.utils';
 import { Subscription } from 'rxjs';
 import { ManaSymbolService } from '../../services/mana-symbol.service';
 import { PermanentClickResolverService } from '../../services/permanent-click-resolver.service';
@@ -927,7 +927,7 @@ export class GameComponent implements OnInit, OnDestroy {
    * → no band. Group two or more attackers under the same letter to attack as a band.
    */
   cycleBand(index: number): void {
-    if (!this.selectedAttackerIndices().has(index)) return;
+    if (!this.selectedAttackerIndices().has(index) || !this.canDeclareBand()) return;
     const current = this.bandAssignments().get(index) ?? 0;
     const maxBand = Math.max(1, this.selectedAttackerIndices().size - 1);
     const next = current >= maxBand ? 0 : current + 1;
@@ -938,6 +938,10 @@ export class GameComponent implements OnInit, OnDestroy {
       updated.set(index, next);
     }
     this.bandAssignments.set(updated);
+  }
+
+  canDeclareBand(): boolean {
+    return canFormAttackingBand(this.myBattlefield, this.selectedAttackerIndices());
   }
 
   /** Badge text for an attacker's band: "+ Band" when ungrouped, "Band A"/"Band B"/… when grouped. */

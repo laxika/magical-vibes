@@ -16,6 +16,23 @@ export interface LandStack {
   name: string;
 }
 
+/**
+ * Whether the selected attackers include enough creatures to form a band and at least one of them
+ * currently has banding. The other selected creature may lack banding (CR 702.22c).
+ */
+export function canFormAttackingBand(battlefield: Permanent[], attackerIndices: Set<number>): boolean {
+  const attackers = Array.from(attackerIndices)
+    .map(index => battlefield[index])
+    .filter((permanent): permanent is Permanent => permanent != null);
+
+  return attackers.length >= 2 && attackers.some(permanent => hasEffectiveKeyword(permanent, 'BANDING'));
+}
+
+function hasEffectiveKeyword(permanent: Permanent, keyword: string): boolean {
+  if (permanent.removedKeywords?.includes(keyword)) return false;
+  return permanent.card.keywords?.includes(keyword) || permanent.grantedKeywords?.includes(keyword);
+}
+
 export function splitBattlefield(battlefield: Permanent[]): { lands: IndexedPermanent[], creatures: IndexedPermanent[] } {
   const lands: IndexedPermanent[] = [];
   const creatures: IndexedPermanent[] = [];
