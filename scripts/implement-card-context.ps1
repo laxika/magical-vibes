@@ -123,28 +123,14 @@ function Get-ScryfallCard {
         [string] $CollectorNumber
     )
 
-    $query = "set:$SetCode cn:$CollectorNumber"
-    $encodedQuery = [System.Uri]::EscapeDataString($query)
-    $url = "https://api.scryfall.com/cards/search?q=$encodedQuery&format=json"
-
-    $json = & curl.exe -s -L `
-        -H "User-Agent: Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36" `
-        -H "Accept: application/json" `
-        $url
+    $cardInfoLauncher = Join-Path $PSScriptRoot "..\mcp\card-info\start.ps1"
+    $json = & $cardInfoLauncher get-card $SetCode $CollectorNumber
 
     if ($LASTEXITCODE -ne 0) {
-        throw "curl.exe exited with code $LASTEXITCODE"
+        throw "Card Info lookup exited with code $LASTEXITCODE"
     }
 
-    $response = $json | ConvertFrom-Json
-    if ($response.object -eq "error") {
-        throw $response.details
-    }
-    if (-not $response.data -or $response.data.Count -eq 0) {
-        throw "No Scryfall result for $query"
-    }
-
-    return $response.data[0]
+    return $json | ConvertFrom-Json
 }
 
 function Write-ScryfallSummary {

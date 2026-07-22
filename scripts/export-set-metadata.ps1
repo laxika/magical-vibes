@@ -5,44 +5,19 @@ param(
 
 $ErrorActionPreference = "Stop"
 
-function Invoke-ScryfallApi {
-    param(
-        [Parameter(Mandatory = $true)]
-        [string] $Url
-    )
-
-    $response = Invoke-RestMethod -Uri $Url -Method Get -Headers @{
-        "User-Agent" = "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36"
-        "Accept"     = "application/json"
-    }
-
-    if ($response.object -eq "error") {
-        throw $response.details
-    }
-
-    return $response
-}
-
 function Get-ScryfallSetCards {
     param(
         [Parameter(Mandatory = $true)]
         [string] $SetId
     )
 
-    $setCode = $SetId.ToLowerInvariant()
-    $query = "set:$setCode"
-    $encodedQuery = [System.Uri]::EscapeDataString($query)
-    $url = "https://api.scryfall.com/cards/search?q=$encodedQuery&unique=prints&order=set"
-
-    $cards = @()
-    do {
-        $page = Invoke-ScryfallApi -Url $url
-        $pageCards = @($page.data)
-        $cards += $pageCards
-        $url = if ($page.has_more) { $page.next_page } else { $null }
-    } while ($url)
-
-    return $cards
+    $cardInfoLauncher = Join-Path $PSScriptRoot "..\mcp\card-info\start.ps1"
+    $json = & $cardInfoLauncher get-set $SetId
+    if ($LASTEXITCODE -ne 0) {
+        throw "Card Info set lookup exited with code $LASTEXITCODE"
+    }
+    $cachedSet = $json | ConvertFrom-Json
+    return @($cachedSet.cards)
 }
 
 function Get-CardField {
@@ -66,7 +41,7 @@ function Get-CardField {
 }
 
 $setCode = $SetId.ToLowerInvariant()
-Write-Host "Fetching cards for set '$setCode' from Scryfall..."
+Write-Host "Loading cards for set '$setCode' through the Card Info cache..."
 
 $scryfallCards = Get-ScryfallSetCards -SetId $setCode
 if ($scryfallCards.Count -eq 0) {

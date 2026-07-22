@@ -10,6 +10,8 @@
 
 Use the **`implement-card`** skill (`/implement-card <SET> <COLLECTOR_NUMBER>`). It owns the full workflow — reprint check, Scryfall lookup, mapping oracle text to effects via `agent-docs/` (grep, never read in full), writing the card class, and writing focused tests. Reprints just get a new `@CardRegistration` annotation and nothing else.
 
+Use the configured Scryfall MCP `get_card` tool for any extra card lookup; never put raw Scryfall card JSON into model context. It caches the whole requested set and returns only implementation-relevant fields for the requested printing.
+
 ## Architecture
 
 Gradle multi-module CCG (WebSocket real-time multiplayer, Angular frontend). What card work needs:

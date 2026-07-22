@@ -1,0 +1,14 @@
+{
+  "mcpServers": {
+    "scryfall": {
+      "command": "powershell.exe",
+      "args": [
+        "-NoProfile",
+        "-ExecutionPolicy",
+        "Bypass",
+        "-File",
+        "mcp/card-info/start.ps1"
+      ]
+    }
+  }
+}

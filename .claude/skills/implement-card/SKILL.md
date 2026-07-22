@@ -13,7 +13,7 @@ The hard rules in `CLAUDE.md` (main branch, no commits, rules accuracy, reuse ov
 
 ## Step 1 — Gather context
 
-Run the helper once. It fetches Scryfall (name, mana, type, oracle, P/T, keywords), runs the reprint check, decides whether tests are needed, and prints suggested file paths + the test command. Pass every collector number in one call — the script emits a separate, clearly delimited context block per card:
+Run the helper once. It loads compact Scryfall data (name, mana, type, oracle, P/T, keywords) through the shared Card Info whole-set cache, runs the reprint check, decides whether tests are needed, and prints suggested file paths + the test command. Pass every collector number in one call — the script emits a separate, clearly delimited context block per card:
 
 ```
 bash -c 'powershell.exe -NoProfile -File scripts/implement-card-context.ps1 <SET> <COLLECTOR_NUMBER> [<COLLECTOR_NUMBER> ...]'
@@ -26,6 +26,8 @@ Once you've picked a likely reference card (see Step 3), re-run with `-Reference
 ```
 
 `-ClassName` is only valid with a single collector number; with several cards each name is derived from Scryfall. The script is a deterministic lookup only — it does **not** decide the implementation. You do that from the docs in Step 3.
+
+For any additional card lookup, use the configured Scryfall MCP `get_card` tool. Never fetch or place raw Scryfall card JSON in model context; the MCP response intentionally omits images, prices, legalities, purchase links, and other fields irrelevant to implementation.
 
 ## Step 2 — Reprint short-circuit
 

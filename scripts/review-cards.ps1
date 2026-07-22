@@ -50,6 +50,14 @@ $index = 0
 
 Write-Host "Runner: $Runner  Model: $Model"
 
+$cardInfoLauncher = Join-Path $PSScriptRoot "..\mcp\card-info\start.ps1"
+Write-Host "Warming Card Info cache for $($SetCode.ToUpperInvariant())..."
+& $cardInfoLauncher cache-set $SetCode | Out-Null
+if ($LASTEXITCODE -ne 0) {
+    Write-Error "Could not populate the Card Info cache for $SetCode."
+    exit $LASTEXITCODE
+}
+
 for ($cardId = $From; $cardId -le $To; $cardId++) {
     $index++
     Write-Host ""

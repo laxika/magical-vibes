@@ -17,7 +17,7 @@ The hard rules in `CLAUDE.md` (rules accuracy, reuse over creation, testing conv
 
 ## Step 1 — Gather context
 
-Run the helper once (same as implement-card). It fetches Scryfall oracle text, finds the existing class/test paths, and prints reprint status:
+Run the helper once (same as implement-card). It loads compact Scryfall oracle data through the shared Card Info whole-set cache, finds the existing class/test paths, and prints reprint status:
 
 ```
 bash -c 'powershell.exe -NoProfile -File scripts/implement-card-context.ps1 <SET> <COLLECTOR_NUMBER> [<COLLECTOR_NUMBER> ...]'

@@ -12,3 +12,16 @@ extra_writable_paths = [
     "./.gradle",
     "./build"
 ]
+
+[mcp_servers.scryfall]
+command = "powershell.exe"
+args = [
+    "-NoProfile",
+    "-ExecutionPolicy",
+    "Bypass",
+    "-File",
+    "mcp/card-info/start.ps1"
+]
+cwd = "."
+startup_timeout_sec = 10
+tool_timeout_sec = 30
