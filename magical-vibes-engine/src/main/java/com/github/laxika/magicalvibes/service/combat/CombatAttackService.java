@@ -235,10 +235,32 @@ public class CombatAttackService {
             selfTaxTotal += gameQueryService.getEnchantedCreatureAttackTax(gameData, battlefield.get(idx));
         }
         int totalTax = taxPerCreature * attackerIndices.size() + selfTaxTotal;
+        List<ManaColor> phyrexianPayments = castingCostService.getPhyrexianAttackPaymentsPerCreature(gameData, playerId);
         if (totalTax > 0) {
             ManaPool pool = gameData.playerManaPools.get(playerId);
             if (pool.getTotal() < totalTax) {
                 throw new IllegalStateException("Not enough mana to pay attack tax (" + totalTax + " required)");
+            }
+        }
+
+        // Validate the Phyrexian portion before paying any attack costs. Costs must be
+        // validated atomically: if the declaration cannot pay the required life, none of
+        // its generic mana or life may already have been spent (CR 508.1j / 119.4).
+        int phyrexianLifeCost = 0;
+        if (!phyrexianPayments.isEmpty()) {
+            ManaPool simulatedPool = new ManaPool(gameData.playerManaPools.get(playerId));
+            if (totalTax > 0) {
+                payGenericManaPreservingPhyrexianColors(
+                        simulatedPool, totalTax, phyrexianPayments, attackerIndices.size());
+            }
+            phyrexianLifeCost = payPhyrexianAttackTax(simulatedPool, phyrexianPayments, attackerIndices.size());
+            if (phyrexianLifeCost > 0 && !gameQueryService.canPlayerLifeChange(gameData, playerId)) {
+                throw new IllegalStateException("Life total can't change to pay Phyrexian attack tax");
+            }
+            int currentLife = gameData.playerLifeTotals.getOrDefault(playerId, 0);
+            if (currentLife < phyrexianLifeCost) {
+                throw new IllegalStateException("Not enough life to pay Phyrexian attack tax ("
+                        + phyrexianLifeCost + " required)");
             }
         }
 
@@ -281,23 +303,14 @@ public class CombatAttackService {
 
         // Pay attack tax (uniform per-attacker + per-creature aura taxes)
         if (totalTax > 0) {
-            payGenericMana(gameData.playerManaPools.get(playerId), totalTax);
+            payGenericManaPreservingPhyrexianColors(
+                    gameData.playerManaPools.get(playerId), totalTax, phyrexianPayments, attackerIndices.size());
         }
 
         // Pay Phyrexian attack tax (e.g. Norn's Annex — {W/P} per attacker)
-        List<ManaColor> phyrexianPayments = castingCostService.getPhyrexianAttackPaymentsPerCreature(gameData, playerId);
         if (!phyrexianPayments.isEmpty()) {
             ManaPool pool = gameData.playerManaPools.get(playerId);
-            int lifeCost = 0;
-            for (int i = 0; i < attackerIndices.size(); i++) {
-                for (ManaColor color : phyrexianPayments) {
-                    if (pool.get(color) > 0) {
-                        pool.remove(color);
-                    } else {
-                        lifeCost += 2;
-                    }
-                }
-            }
+            int lifeCost = payPhyrexianAttackTax(pool, phyrexianPayments, attackerIndices.size());
             if (lifeCost > 0) {
                 int currentLife = gameData.playerLifeTotals.get(playerId);
                 gameData.playerLifeTotals.put(playerId, currentLife - lifeCost);
@@ -1325,5 +1338,57 @@ public class CombatAttackService {
                 break;
             }
         }
+    }
+
+    private void payGenericManaPreservingPhyrexianColors(ManaPool pool, int amount,
+                                                          List<ManaColor> paymentsPerAttacker,
+                                                          int attackerCount) {
+        if (paymentsPerAttacker.isEmpty()) {
+            payGenericMana(pool, amount);
+            return;
+        }
+
+        EnumMap<ManaColor, Integer> reserved = new EnumMap<>(ManaColor.class);
+        for (ManaColor color : paymentsPerAttacker) {
+            reserved.merge(color, attackerCount, Integer::sum);
+        }
+
+        int remaining = amount;
+        while (remaining > 0) {
+            ManaColor bestColor = null;
+            int bestSurplus = Integer.MIN_VALUE;
+            int bestCount = 0;
+            for (ManaColor color : ManaColor.values()) {
+                int count = pool.get(color);
+                if (count <= 0) {
+                    continue;
+                }
+                int surplus = count - reserved.getOrDefault(color, 0);
+                if (surplus > bestSurplus || (surplus == bestSurplus && count > bestCount)) {
+                    bestColor = color;
+                    bestSurplus = surplus;
+                    bestCount = count;
+                }
+            }
+            if (bestColor == null) {
+                return;
+            }
+            pool.remove(bestColor);
+            remaining--;
+        }
+    }
+
+    private int payPhyrexianAttackTax(ManaPool pool, List<ManaColor> paymentsPerAttacker, int attackerCount) {
+        int lifeCost = 0;
+        for (int i = 0; i < attackerCount; i++) {
+            for (ManaColor color : paymentsPerAttacker) {
+                if (pool.get(color) > 0) {
+                    pool.remove(color);
+                } else {
+                    lifeCost += 2;
+                }
+            }
+        }
+        return lifeCost;
     }
 }

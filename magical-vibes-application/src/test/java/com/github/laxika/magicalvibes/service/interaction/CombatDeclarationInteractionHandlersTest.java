@@ -1,6 +1,7 @@
 package com.github.laxika.magicalvibes.service.interaction;
 
 import com.github.laxika.magicalvibes.model.GameData;
+import com.github.laxika.magicalvibes.model.GameStatus;
 import com.github.laxika.magicalvibes.model.PendingInteraction;
 import com.github.laxika.magicalvibes.model.Player;
 import com.github.laxika.magicalvibes.networking.SessionManager;
@@ -10,6 +11,7 @@ import com.github.laxika.magicalvibes.networking.message.BlockerAssignment;
 import com.github.laxika.magicalvibes.service.GameBroadcastService;
 import com.github.laxika.magicalvibes.service.combat.CombatResult;
 import com.github.laxika.magicalvibes.service.combat.CombatService;
+import com.github.laxika.magicalvibes.service.state.StateBasedActionService;
 import com.github.laxika.magicalvibes.service.turn.TurnProgressionService;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
@@ -40,6 +42,7 @@ class CombatDeclarationInteractionHandlersTest {
     @Mock private CombatService combatService;
     @Mock private GameBroadcastService gameBroadcastService;
     @Mock private com.github.laxika.magicalvibes.service.cast.CastingCostService castingCostService;
+    @Mock private StateBasedActionService stateBasedActionService;
     @Mock private TurnProgressionService turnProgressionService;
 
     @Captor private ArgumentCaptor<Object> messageCaptor;
@@ -54,7 +57,8 @@ class CombatDeclarationInteractionHandlersTest {
     void setUp() {
         registry = new InteractionHandlerRegistry();
         registry.register(new AttackerDeclarationInteractionHandler(
-                sessionManager, combatService, gameBroadcastService, castingCostService, turnProgressionService));
+                sessionManager, combatService, gameBroadcastService, castingCostService,
+                stateBasedActionService, turnProgressionService));
         registry.register(new BlockerDeclarationInteractionHandler(
                 sessionManager, combatService, turnProgressionService));
 
@@ -64,6 +68,7 @@ class CombatDeclarationInteractionHandlersTest {
         gd.playerIdToName.put(PLAYER1_ID, "Player1");
         gd.playerIdToName.put(PLAYER2_ID, "Player2");
         gd.activePlayerId = PLAYER1_ID;
+        gd.status = GameStatus.RUNNING;
     }
 
     @Nested
@@ -101,7 +106,26 @@ class CombatDeclarationInteractionHandlersTest {
                     new InteractionAnswer.AttackersDeclared(List.of(0), null));
 
             assertThat(handled).isTrue();
+            verify(stateBasedActionService).performStateBasedActions(gd);
             verify(turnProgressionService).handleCombatResult(CombatResult.DONE, gd);
+        }
+
+        @Test
+        @DisplayName("dispatchAnswer does not advance combat when attack-cost payment ends the game")
+        void dispatchStopsWhenStateBasedActionsEndGame() {
+            registry.begin(gd, new PendingInteraction.AttackerDeclaration(PLAYER1_ID));
+            Player player = new Player(PLAYER1_ID, "Player1");
+            when(combatService.declareAttackers(gd, player, List.of(0), null, null)).thenReturn(CombatResult.DONE);
+            org.mockito.Mockito.doAnswer(invocation -> {
+                gd.status = GameStatus.FINISHED;
+                return null;
+            }).when(stateBasedActionService).performStateBasedActions(gd);
+
+            boolean handled = registry.dispatchAnswer(gd, player,
+                    new InteractionAnswer.AttackersDeclared(List.of(0), null));
+
+            assertThat(handled).isTrue();
+            verifyNoInteractions(turnProgressionService);
         }
 
         @Test

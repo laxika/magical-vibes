@@ -1,6 +1,7 @@
 package com.github.laxika.magicalvibes.service.interaction;
 
 import com.github.laxika.magicalvibes.model.GameData;
+import com.github.laxika.magicalvibes.model.GameStatus;
 import com.github.laxika.magicalvibes.model.PendingInteraction;
 import com.github.laxika.magicalvibes.model.Player;
 import com.github.laxika.magicalvibes.networking.SessionManager;
@@ -8,6 +9,8 @@ import com.github.laxika.magicalvibes.networking.message.AvailableAttackersMessa
 import com.github.laxika.magicalvibes.service.GameBroadcastService;
 import com.github.laxika.magicalvibes.service.cast.CastingCostService;
 import com.github.laxika.magicalvibes.service.combat.CombatService;
+import com.github.laxika.magicalvibes.service.combat.CombatResult;
+import com.github.laxika.magicalvibes.service.state.StateBasedActionService;
 import com.github.laxika.magicalvibes.service.turn.TurnProgressionService;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -32,6 +35,7 @@ public class AttackerDeclarationInteractionHandler
     private final CombatService combatService;
     private final GameBroadcastService gameBroadcastService;
     private final CastingCostService castingCostService;
+    private final StateBasedActionService stateBasedActionService;
     private final TurnProgressionService turnProgressionService;
 
     @Override
@@ -60,14 +64,20 @@ public class AttackerDeclarationInteractionHandler
     public void handleAnswer(GameData gameData, Player player, PendingInteraction.AttackerDeclaration interaction,
                              InteractionAnswer answer) {
         InteractionAnswer.AttackersDeclared declared = (InteractionAnswer.AttackersDeclared) answer;
+        CombatResult result;
         try {
-            turnProgressionService.handleCombatResult(
-                    combatService.declareAttackers(gameData, player, declared.attackerIndices(), declared.attackTargets(), declared.bands()),
-                    gameData);
+            result = combatService.declareAttackers(
+                    gameData, player, declared.attackerIndices(), declared.attackTargets(), declared.bands());
         } catch (IllegalStateException | IllegalArgumentException e) {
             // Re-send available attackers so the player (or AI) can retry
             combatService.handleDeclareAttackersStep(gameData);
             throw e;
+        }
+        // Declaring attackers can pay life (Norn's Annex) or sacrifice permanents.
+        // Check SBAs before anyone receives priority or combat advances.
+        stateBasedActionService.performStateBasedActions(gameData);
+        if (gameData.status == GameStatus.RUNNING) {
+            turnProgressionService.handleCombatResult(result, gameData);
         }
     }
 }

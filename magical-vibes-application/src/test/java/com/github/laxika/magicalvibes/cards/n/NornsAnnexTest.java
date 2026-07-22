@@ -1,6 +1,7 @@
 package com.github.laxika.magicalvibes.cards.n;
 
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
+import com.github.laxika.magicalvibes.model.GameStatus;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.TurnStep;
@@ -11,6 +12,7 @@ import org.junit.jupiter.api.Test;
 import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
 class NornsAnnexTest extends BaseCardTest {
 
@@ -90,6 +92,53 @@ class NornsAnnexTest extends BaseCardTest {
 
         // 2 life paid for Phyrexian tax
         assertThat(gd.playerLifeTotals.get(player2.getId())).isEqualTo(18);
+    }
+
+    @Test
+    @DisplayName("Opponent cannot attack when they cannot pay the Phyrexian life cost")
+    void cannotAttackWithoutEnoughLife() {
+        harness.setLife(player2, 1);
+
+        gd.playerBattlefields.get(player1.getId()).add(new Permanent(new NornsAnnex()));
+
+        Permanent bears = new Permanent(new GrizzlyBears());
+        bears.setSummoningSick(false);
+        gd.playerBattlefields.get(player2.getId()).add(bears);
+
+        harness.forceActivePlayer(player2);
+        harness.forceStep(TurnStep.DECLARE_ATTACKERS);
+        harness.clearPriorityPassed();
+        harness.beginAttackerDeclarationInput();
+
+        assertThatThrownBy(() -> gs.declareAttackers(gd, player2, List.of(0)))
+                .isInstanceOf(IllegalStateException.class)
+                .hasMessageContaining("Not enough life");
+
+        assertThat(gd.playerLifeTotals.get(player2.getId())).isEqualTo(1);
+        assertThat(bears.isAttacking()).isFalse();
+        assertThat(bears.isTapped()).isFalse();
+    }
+
+    @Test
+    @DisplayName("Opponent may pay their last 2 life and then loses to state-based actions")
+    void payingLastTwoLifeEndsGameCleanly() {
+        harness.setLife(player2, 2);
+
+        gd.playerBattlefields.get(player1.getId()).add(new Permanent(new NornsAnnex()));
+
+        Permanent bears = new Permanent(new GrizzlyBears());
+        bears.setSummoningSick(false);
+        gd.playerBattlefields.get(player2.getId()).add(bears);
+
+        harness.forceActivePlayer(player2);
+        harness.forceStep(TurnStep.DECLARE_ATTACKERS);
+        harness.clearPriorityPassed();
+        harness.beginAttackerDeclarationInput();
+
+        gs.declareAttackers(gd, player2, List.of(0));
+
+        assertThat(gd.playerLifeTotals.get(player2.getId())).isZero();
+        assertThat(gd.status).isEqualTo(GameStatus.FINISHED);
     }
 
     // ===== Attack tax — multiple attackers =====

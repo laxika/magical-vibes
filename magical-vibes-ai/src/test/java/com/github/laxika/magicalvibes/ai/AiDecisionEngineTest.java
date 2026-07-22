@@ -17,6 +17,7 @@ import com.github.laxika.magicalvibes.cards.s.SunpetalGrove;
 import com.github.laxika.magicalvibes.cards.y.YavimayaCoast;
 import com.github.laxika.magicalvibes.cards.e.EliteVanguard;
 import com.github.laxika.magicalvibes.cards.e.EntrancingMelody;
+import com.github.laxika.magicalvibes.cards.e.EagerCadet;
 import com.github.laxika.magicalvibes.cards.f.Forest;
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
 import com.github.laxika.magicalvibes.cards.h.HolyDay;
@@ -27,6 +28,7 @@ import com.github.laxika.magicalvibes.cards.k.KuldothaRebirth;
 import com.github.laxika.magicalvibes.cards.l.LlanowarElves;
 import com.github.laxika.magicalvibes.cards.m.MakeshiftMauler;
 import com.github.laxika.magicalvibes.cards.m.Mountain;
+import com.github.laxika.magicalvibes.cards.n.NornsAnnex;
 import com.github.laxika.magicalvibes.cards.p.Pacifism;
 import com.github.laxika.magicalvibes.cards.p.PhantomWarrior;
 import com.github.laxika.magicalvibes.cards.p.Plains;
@@ -1586,6 +1588,74 @@ class AiDecisionEngineTest {
 
         // No lands/mana for AI
         assertThat(ai.getMaxAffordableAttackers(gd)).isEqualTo(0);
+    }
+
+    @Test
+    @DisplayName("getMaxAffordableAttackers will not spend the AI's last life on Norn's Annex")
+    void maxAffordableAttackersAvoidsSuicidalPhyrexianPayment() {
+        gd.playerBattlefields.get(human.getId()).add(new Permanent(new NornsAnnex()));
+        harness.setLife(aiPlayer, 2);
+
+        assertThat(ai.getMaxAffordableAttackers(gd)).isZero();
+        assertThat(ai.prepareAttackersForTax(gd, List.of(0, 1))).isEmpty();
+    }
+
+    @Test
+    @DisplayName("getMaxAffordableAttackers may pay life for Norn's Annex while keeping one life")
+    void maxAffordableAttackersUsesOnlyNonlethalPhyrexianPayments() {
+        gd.playerBattlefields.get(human.getId()).add(new Permanent(new NornsAnnex()));
+        harness.setLife(aiPlayer, 3);
+
+        assertThat(ai.getMaxAffordableAttackers(gd)).isEqualTo(1);
+    }
+
+    @Test
+    @DisplayName("prepareAttackersForTax taps white mana for Norn's Annex instead of paying life")
+    void prepareAttackersForTaxTapsWhiteForPhyrexianPayment() {
+        gd.playerBattlefields.get(human.getId()).add(new Permanent(new NornsAnnex()));
+        harness.setLife(aiPlayer, 2);
+        giveAiPlains(1);
+
+        Permanent bears = new Permanent(new GrizzlyBears());
+        bears.setSummoningSick(false);
+        gd.playerBattlefields.get(aiPlayer.getId()).add(bears);
+        harness.forceActivePlayer(aiPlayer);
+        harness.forceStep(TurnStep.DECLARE_ATTACKERS);
+        gd.interaction.beginInteraction(new PendingInteraction.AttackerDeclaration(aiPlayer.getId()));
+
+        assertThat(ai.prepareAttackersForTax(gd, List.of(1))).containsExactly(1);
+        assertThat(gd.playerManaPools.get(aiPlayer.getId()).get(ManaColor.WHITE)).isEqualTo(1);
+        assertThat(gd.playerBattlefields.get(aiPlayer.getId()).getFirst().isTapped()).isTrue();
+        assertThat(gd.getLife(aiPlayer.getId())).isEqualTo(2);
+    }
+
+    @Test
+    @DisplayName("prepareAttackersForTax declines a nonlethal 1/1 attack that costs 2 life")
+    void prepareAttackersForTaxDeclinesBadPhyrexianLifeTrade() {
+        gd.playerBattlefields.get(human.getId()).add(new Permanent(new NornsAnnex()));
+        harness.setLife(aiPlayer, 20);
+        harness.setLife(human, 20);
+
+        Permanent cadet = new Permanent(new EagerCadet());
+        cadet.setSummoningSick(false);
+        gd.playerBattlefields.get(aiPlayer.getId()).add(cadet);
+
+        assertThat(ai.prepareAttackersForTax(gd, List.of(0))).isEmpty();
+        assertThat(gd.getLife(aiPlayer.getId())).isEqualTo(20);
+    }
+
+    @Test
+    @DisplayName("prepareAttackersForTax allows a lethal 1/1 attack that costs 2 life")
+    void prepareAttackersForTaxAllowsLethalPhyrexianLifeTrade() {
+        gd.playerBattlefields.get(human.getId()).add(new Permanent(new NornsAnnex()));
+        harness.setLife(aiPlayer, 3);
+        harness.setLife(human, 1);
+
+        Permanent cadet = new Permanent(new EagerCadet());
+        cadet.setSummoningSick(false);
+        gd.playerBattlefields.get(aiPlayer.getId()).add(cadet);
+
+        assertThat(ai.prepareAttackersForTax(gd, List.of(0))).containsExactly(0);
     }
 
     @Test

@@ -22,6 +22,7 @@ import com.github.laxika.magicalvibes.model.filter.PermanentAllOfPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentManaValueEqualsXPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentPredicateTargetFilter;
 import com.github.laxika.magicalvibes.model.ManaCost;
+import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.ManaPool;
 import com.github.laxika.magicalvibes.model.TurnStep;
 import com.github.laxika.magicalvibes.model.VirtualManaPool;
@@ -437,18 +438,83 @@ public abstract class AiDecisionEngine {
 
     /**
      * Returns the maximum number of attackers the AI can afford given the current
-     * attack tax (e.g. Windborn Muse / Ghostly Prison). Returns {@link Integer#MAX_VALUE}
+     * attack taxes (e.g. Windborn Muse / Ghostly Prison / Norn's Annex). The AI
+     * never treats its last life point as spendable, so it cannot choose an attack
+     * declaration that immediately loses the game. Returns {@link Integer#MAX_VALUE}
      * if there is no attack tax.
      */
     protected int getMaxAffordableAttackers(GameData gameData) {
         int taxPerCreature = castingCostService.getAttackPaymentPerCreature(gameData, aiPlayer.getId());
-        if (taxPerCreature <= 0) {
+        List<ManaColor> phyrexianPayments = castingCostService.getPhyrexianAttackPaymentsPerCreature(
+                gameData, aiPlayer.getId());
+        if (taxPerCreature <= 0 && phyrexianPayments.isEmpty()) {
             return Integer.MAX_VALUE;
         }
         // Use safe pool that excludes mana sources requiring a color choice
         // (e.g. Birds of Paradise) to avoid overwriting the ATTACKER_DECLARATION state.
         VirtualManaPool virtualPool = manaManager.buildSafeVirtualManaPool(gameData, aiPlayer.getId());
-        return virtualPool.getTotal() / taxPerCreature;
+        int totalMana = virtualPool.getTotal();
+        int lifePaymentUnits = gameQueryService.canPlayerLifeChange(gameData, aiPlayer.getId())
+                ? Math.max(0, gameData.getLife(aiPlayer.getId()) - 1) / 2
+                : 0;
+
+        int upperBound = Integer.MAX_VALUE;
+        if (taxPerCreature > 0) {
+            upperBound = totalMana / taxPerCreature;
+        }
+        if (!phyrexianPayments.isEmpty()) {
+            long phyrexianUpperBound = ((long) totalMana + lifePaymentUnits) / phyrexianPayments.size();
+            upperBound = (int) Math.min(upperBound, Math.min(Integer.MAX_VALUE, phyrexianUpperBound));
+        }
+
+        int low = 0;
+        int high = upperBound;
+        while (low < high) {
+            int candidate = low + (high - low + 1) / 2;
+            if (canAffordAttackTax(candidate, taxPerCreature, phyrexianPayments,
+                    virtualPool, totalMana, lifePaymentUnits)) {
+                low = candidate;
+            } else {
+                high = candidate - 1;
+            }
+        }
+        return low;
+    }
+
+    private boolean canAffordAttackTax(int attackerCount, int genericTaxPerCreature,
+                                       List<ManaColor> phyrexianPayments, VirtualManaPool virtualPool,
+                                       int totalMana, int lifePaymentUnits) {
+        long genericRequired = (long) genericTaxPerCreature * attackerCount;
+        if (genericRequired > totalMana) {
+            return false;
+        }
+
+        return phyrexianLifePaymentUnits(attackerCount, genericTaxPerCreature,
+                phyrexianPayments, virtualPool, totalMana) <= lifePaymentUnits;
+    }
+
+    private long phyrexianLifePaymentUnits(int attackerCount, int genericTaxPerCreature,
+                                            List<ManaColor> phyrexianPayments,
+                                            VirtualManaPool virtualPool, int totalMana) {
+        long phyrexianRequired = (long) phyrexianPayments.size() * attackerCount;
+        if (phyrexianRequired == 0) {
+            return 0;
+        }
+
+        long matchingColoredMana = 0;
+        for (ManaColor color : ManaColor.values()) {
+            long symbolsOfColor = phyrexianPayments.stream().filter(color::equals).count();
+            if (symbolsOfColor == 0) {
+                continue;
+            }
+            int available = virtualPool.get(color);
+            matchingColoredMana += Math.min((long) available, symbolsOfColor * attackerCount);
+        }
+
+        long genericRequired = (long) genericTaxPerCreature * attackerCount;
+        long manaLeftAfterGenericTax = Math.max(0, totalMana - genericRequired);
+        long phyrexianPaidWithMana = Math.min(matchingColoredMana, manaLeftAfterGenericTax);
+        return phyrexianRequired - phyrexianPaidWithMana;
     }
 
     /**
@@ -464,7 +530,9 @@ public abstract class AiDecisionEngine {
      */
     protected List<Integer> prepareAttackersForTax(GameData gameData, List<Integer> attackerIndices) {
         int taxPerCreature = castingCostService.getAttackPaymentPerCreature(gameData, aiPlayer.getId());
-        if (taxPerCreature <= 0 || attackerIndices.isEmpty()) {
+        List<ManaColor> phyrexianPayments = castingCostService.getPhyrexianAttackPaymentsPerCreature(
+                gameData, aiPlayer.getId());
+        if ((taxPerCreature <= 0 && phyrexianPayments.isEmpty()) || attackerIndices.isEmpty()) {
             return dropLoneCantAttackAlone(gameData, attackerIndices);
         }
         int maxAffordable = getMaxAffordableAttackers(gameData);
@@ -474,11 +542,24 @@ public abstract class AiDecisionEngine {
         List<Integer> capped = attackerIndices.size() <= maxAffordable
                 ? attackerIndices
                 : new ArrayList<>(attackerIndices.subList(0, maxAffordable));
+        if (!phyrexianPayments.isEmpty() && !isPhyrexianLifePaymentWorthwhile(
+                gameData, capped, taxPerCreature, phyrexianPayments)) {
+            return List.of();
+        }
         // Tap lands to put enough mana in the pool to pay the tax.
         // skipChoiceSources=true avoids mana abilities like Birds of Paradise that
         // require a color choice, which would overwrite the ATTACKER_DECLARATION state.
         int totalTax = taxPerCreature * capped.size();
-        String taxCostStr = "{" + totalTax + "}";
+        StringBuilder taxCost = new StringBuilder();
+        if (totalTax > 0) {
+            taxCost.append('{').append(totalTax).append('}');
+        }
+        for (int i = 0; i < capped.size(); i++) {
+            for (ManaColor color : phyrexianPayments) {
+                taxCost.append('{').append(color.getCode()).append('}');
+            }
+        }
+        String taxCostStr = taxCost.toString();
         manaManager.tapLandsForCost(gameData, aiPlayer.getId(), taxCostStr, 0, manaTapAction(), true);
         // A mana source used to pay the tax may have been one of the selected attackers
         // (e.g. Leaden Myr tapped for mana). Remove any attackers that are now tapped.
@@ -489,6 +570,29 @@ public abstract class AiDecisionEngine {
                     .toList();
         }
         return dropLoneCantAttackAlone(gameData, capped);
+    }
+
+    private boolean isPhyrexianLifePaymentWorthwhile(GameData gameData, List<Integer> attackerIndices,
+                                                      int genericTaxPerCreature,
+                                                      List<ManaColor> phyrexianPayments) {
+        VirtualManaPool virtualPool = manaManager.buildSafeVirtualManaPool(gameData, aiPlayer.getId());
+        long lifeCost = 2L * phyrexianLifePaymentUnits(attackerIndices.size(), genericTaxPerCreature,
+                phyrexianPayments, virtualPool, virtualPool.getTotal());
+        if (lifeCost == 0) {
+            return true;
+        }
+
+        List<Permanent> battlefield = gameData.playerBattlefields.get(aiPlayer.getId());
+        if (battlefield == null) {
+            return false;
+        }
+        long totalPower = attackerIndices.stream()
+                .filter(index -> index >= 0 && index < battlefield.size())
+                .mapToLong(index -> Math.max(0, gameQueryService.getEffectivePower(gameData, battlefield.get(index))))
+                .sum();
+        UUID opponentId = gameQueryService.getOpponentId(gameData, aiPlayer.getId());
+        boolean potentiallyLethal = totalPower >= gameData.getLife(opponentId);
+        return potentiallyLethal || totalPower >= lifeCost;
     }
 
     /**
