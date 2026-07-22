@@ -19,6 +19,10 @@ import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
 class ThievingSpriteTest extends BaseCardTest {
 
+    private PendingInteraction.RevealCardsDiscardChoice activeChoice() {
+        return gd.interaction.activeInteraction(PendingInteraction.RevealCardsDiscardChoice.class);
+    }
+
     private void castThievingSprite(java.util.UUID targetPlayerId) {
         harness.setHand(player1, new ArrayList<>(List.of(new ThievingSprite())));
         harness.addMana(player1, ManaColor.COLORLESS, 2);
@@ -37,21 +41,21 @@ class ThievingSpriteTest extends BaseCardTest {
 
         castThievingSprite(player2.getId());
 
-        // Phase 1: target chooses which single card to reveal (X = 1 Faerie).
-        PendingInteraction.RevealCardsFromHandChoice reveal =
-                gd.interaction.activeInteraction(PendingInteraction.RevealCardsFromHandChoice.class);
+        // Phase 1: target chooses which single card to reveal (X = 1 Faerie — counts itself).
+        PendingInteraction.RevealCardsDiscardChoice reveal = activeChoice();
         assertThat(reveal).isNotNull();
-        assertThat(reveal.playerId()).isEqualTo(player2.getId());
+        assertThat(reveal.revealStage()).isTrue();
+        assertThat(reveal.decidingPlayerId()).isEqualTo(player2.getId());
         assertThat(reveal.remainingCount()).isEqualTo(1);
 
         harness.handleCardChosen(player2, 1); // reveal Hill Giant
 
         // Phase 2: controller chooses the revealed card for the target to discard.
-        PendingInteraction.ChooseRevealedCardToDiscardChoice discard =
-                gd.interaction.activeInteraction(PendingInteraction.ChooseRevealedCardToDiscardChoice.class);
+        PendingInteraction.RevealCardsDiscardChoice discard = activeChoice();
         assertThat(discard).isNotNull();
-        assertThat(discard.choosingPlayerId()).isEqualTo(player1.getId());
-        assertThat(discard.revealedCards()).hasSize(1);
+        assertThat(discard.revealStage()).isFalse();
+        assertThat(discard.decidingPlayerId()).isEqualTo(player1.getId());
+        assertThat(discard.revealedCardIds()).hasSize(1);
 
         harness.handleCardChosen(player1, 0);
 
@@ -73,8 +77,10 @@ class ThievingSpriteTest extends BaseCardTest {
         castThievingSprite(player2.getId());
 
         // Only one card and X = 1 -> skip phase 1, go straight to the discard pick.
-        assertThat(gd.interaction.activeInteraction())
-                .isInstanceOf(PendingInteraction.ChooseRevealedCardToDiscardChoice.class);
+        PendingInteraction.RevealCardsDiscardChoice discard = activeChoice();
+        assertThat(discard).isNotNull();
+        assertThat(discard.revealStage()).isFalse();
+        assertThat(discard.decidingPlayerId()).isEqualTo(player1.getId());
 
         harness.handleCardChosen(player1, 0);
 
@@ -93,20 +99,19 @@ class ThievingSpriteTest extends BaseCardTest {
 
         castThievingSprite(player2.getId());
 
-        PendingInteraction.RevealCardsFromHandChoice reveal =
-                gd.interaction.activeInteraction(PendingInteraction.RevealCardsFromHandChoice.class);
+        PendingInteraction.RevealCardsDiscardChoice reveal = activeChoice();
         assertThat(reveal).isNotNull();
+        assertThat(reveal.revealStage()).isTrue();
         assertThat(reveal.remainingCount()).isEqualTo(2);
 
         harness.handleCardChosen(player2, 0); // reveal first card
         // Still revealing the second card.
-        assertThat(gd.interaction.activeInteraction(PendingInteraction.RevealCardsFromHandChoice.class).remainingCount())
-                .isEqualTo(1);
+        assertThat(activeChoice().remainingCount()).isEqualTo(1);
         harness.handleCardChosen(player2, 1); // reveal Hill Giant
 
-        PendingInteraction.ChooseRevealedCardToDiscardChoice discard =
-                gd.interaction.activeInteraction(PendingInteraction.ChooseRevealedCardToDiscardChoice.class);
-        assertThat(discard.revealedCards()).hasSize(2);
+        PendingInteraction.RevealCardsDiscardChoice discard = activeChoice();
+        assertThat(discard.revealStage()).isFalse();
+        assertThat(discard.revealedCardIds()).hasSize(2);
 
         harness.handleCardChosen(player1, 1); // discard the second revealed card (Hill Giant)
 
@@ -127,7 +132,7 @@ class ThievingSpriteTest extends BaseCardTest {
         castThievingSprite(player2.getId());
 
         assertThat(gd.interaction.activeInteraction()).isNull();
-        assertThat(gd.gameLog.stream().map(GameLogEntry::plainText)).anyMatch(log -> log.contains("no cards in hand"));
+        assertThat(gd.gameLog.stream().map(GameLogEntry::plainText)).anyMatch(log -> log.contains("empty"));
     }
 
     // ===== Rejections =====

@@ -74,9 +74,9 @@ class PendingInteractionContractTest {
                     chooser, target, List.of(0), 1, true, false, List.of(), null, "p", false, false);
             assertThat(revealedHand.decidingPlayerId()).isEqualTo(chooser);
 
-            PendingInteraction chooseRevealed = new PendingInteraction.ChooseRevealedCardToDiscardChoice(
-                    chooser, target, List.of(), "p");
-            assertThat(chooseRevealed.decidingPlayerId()).isEqualTo(chooser);
+            PendingInteraction revealDiscard = new PendingInteraction.RevealCardsDiscardChoice(
+                    chooser, target, chooser, false, List.of(0), 1, List.of(), "p", 1);
+            assertThat(revealDiscard.decidingPlayerId()).isEqualTo(chooser);
 
             PendingInteraction attackers = new PendingInteraction.AttackerDeclaration(chooser);
             assertThat(attackers.decidingPlayerId()).isEqualTo(chooser);

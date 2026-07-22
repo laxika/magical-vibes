@@ -33,8 +33,6 @@ public sealed interface PendingInteraction permits PermanentChoiceContext,
         PendingInteraction.MultiZoneExileChoice,
         PendingInteraction.MultiPermanentChoice, PendingInteraction.MultiGraveyardChoice,
         PendingInteraction.ColorChoice, PendingInteraction.RevealedHandChoice,
-        PendingInteraction.RevealCardsFromHandChoice,
-        PendingInteraction.ChooseRevealedCardToDiscardChoice,
         PendingInteraction.RevealCardsDiscardChoice,
         PendingInteraction.GraveyardChoice, PendingInteraction.GraveyardExileCostChoice,
         PendingInteraction.HandCardChoice, PendingInteraction.TargetedHandCardChoice,
@@ -548,62 +546,16 @@ public sealed interface PendingInteraction permits PermanentChoiceContext,
     }
 
     /**
-     * Phase 1 of Thieving Sprite ({@link com.github.laxika.magicalvibes.model.effect.RevealCardsChooseOneToDiscardEffect}):
-     * the target ({@code playerId}) chooses which cards from their own hand to reveal, one pick at a time.
-     * {@code validIndices} are the still-selectable hand indices (cards stay in hand, so indices are stable
-     * across picks); {@code remainingCount} counts the picks left including the upcoming one; {@code revealedCards}
-     * accumulates the cards revealed so far. When the countdown ends the caster ({@code choosingPlayerId})
-     * is prompted with a {@link ChooseRevealedCardToDiscardChoice} over the revealed cards.
-     */
-    record RevealCardsFromHandChoice(UUID playerId, UUID choosingPlayerId,
-                                     java.util.List<Integer> validIndices, int remainingCount,
-                                     java.util.List<Card> revealedCards, String prompt)
-            implements PendingInteraction {
-
-        @Override
-        public UUID decidingPlayerId() {
-            return playerId;
-        }
-
-        @Override
-        public InteractionOptions legalOptions() {
-            return new InteractionOptions.CardIndexPick(validIndices, false);
-        }
-    }
-
-    /**
-     * Phase 2 of Thieving Sprite: the caster ({@code choosingPlayerId}) chooses one of the target's
-     * ({@code targetPlayerId}) {@code revealedCards} for the target to discard. The answer's card index
-     * is into {@code revealedCards} (only the revealed subset is shown to the caster, keeping the rest of
-     * the hand hidden).
-     */
-    record ChooseRevealedCardToDiscardChoice(UUID choosingPlayerId, UUID targetPlayerId,
-                                             java.util.List<Card> revealedCards, String prompt)
-            implements PendingInteraction {
-
-        @Override
-        public UUID decidingPlayerId() {
-            return choosingPlayerId;
-        }
-
-        @Override
-        public InteractionOptions legalOptions() {
-            return new InteractionOptions.CardIndexPick(
-                    java.util.stream.IntStream.range(0, revealedCards.size()).boxed().toList(), false);
-        }
-    }
-
-    /**
-     * The two-stage Blackmail flow ("Target player reveals N cards from their hand and you choose
-     * one of them. That player discards that card."). In the reveal stage {@code decidingPlayerId}
-     * is the {@code targetPlayerId}, who picks which cards to reveal: {@code validIndices} are the
-     * still-selectable indices into their hand, {@code remainingCount} counts down the reveals, and
-     * {@code revealedCardIds} accumulates the chosen (now public) card ids. When the countdown ends
-     * a fresh record begins the discard stage, where {@code decidingPlayerId} is the
-     * {@code controllerId}: {@code revealedCardIds} is the fixed revealed set shown to the
-     * controller and {@code validIndices} are the indices into that set. Answers are
-     * {@link com.github.laxika.magicalvibes.model.effect.CardEffect}-agnostic {@code CardIndexChosen}
-     * picks, dispatched by the deciding player.
+     * The two-stage reveal-and-discard flow (Blackmail, Noggin Whack, Thieving Sprite): "Target
+     * player reveals N cards from their hand and you choose one of them. That player discards that
+     * card." In the reveal stage {@code decidingPlayerId} is the {@code targetPlayerId}, who picks
+     * which cards to reveal: {@code validIndices} are the still-selectable indices into their hand,
+     * {@code remainingCount} counts down the reveals, and {@code revealedCardIds} accumulates the
+     * chosen (now public) card ids. When the countdown ends a fresh record begins the discard stage,
+     * where {@code decidingPlayerId} is the {@code controllerId}: {@code revealedCardIds} is the
+     * fixed revealed set shown to the controller and {@code validIndices} are the indices into that
+     * set. Answers are {@link com.github.laxika.magicalvibes.model.effect.CardEffect}-agnostic
+     * {@code CardIndexChosen} picks, dispatched by the deciding player.
      */
     record RevealCardsDiscardChoice(UUID decidingPlayerId, UUID targetPlayerId, UUID controllerId,
                                     boolean revealStage, java.util.List<Integer> validIndices,

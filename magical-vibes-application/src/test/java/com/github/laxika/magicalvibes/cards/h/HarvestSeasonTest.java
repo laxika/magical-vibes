@@ -81,13 +81,12 @@ class HarvestSeasonTest extends BaseCardTest {
         castHarvestSeason();
 
         harness.passBothPriorities();
-        // X is 0 (the only creature is untapped), so the degenerate "up to 0" search finds nothing.
-        assertThat(activeSearch().params().remainingCount()).isZero();
-        gs.handleInteractionAnswer(gd, player1, new InteractionAnswer.LibraryCardChosen(-1));
-
+        // X is 0 (the only creature is untapped): "up to 0" still searches/shuffles but offers no choice.
         assertThat(activeSearch()).isNull();
         assertThat(gd.stack).isEmpty();
         assertThat(gd.playerBattlefields.get(player1.getId()))
                 .noneMatch(p -> p.getCard().hasType(CardType.LAND));
+        assertThat(gd.playerGraveyards.get(player1.getId()))
+                .anyMatch(c -> c.getName().equals("Harvest Season"));
     }
 }
