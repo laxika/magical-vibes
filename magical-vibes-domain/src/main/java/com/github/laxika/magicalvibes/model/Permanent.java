@@ -128,6 +128,11 @@ public class Permanent {
      *  Read/write via {@link #getCounterCount(CounterType)} / {@link #setCounterCount(CounterType, int)}. */
     private final Map<CounterType, Integer> counters = new EnumMap<>(CounterType.class);
     @Setter private int loyaltyActivationsThisTurn;
+    /**
+     * Siege battles: the opponent chosen to protect this battle as it entered. Only that player
+     * may block attackers attacking this battle; everyone else (including the controller) may attack it.
+     */
+    @Setter private UUID protectorPlayerId;
     private final Set<Keyword> grantedKeywords = new HashSet<>();
     /** Keywords granted permanently by a one-shot effect that locks in a characteristic for the
      *  life of the permanent (e.g. Primal Clay "becomes ... with flying/defender"). Unlike
@@ -393,6 +398,7 @@ public class Permanent {
         this.permanentAnimatedToughness = source.permanentAnimatedToughness;
         this.counters.putAll(source.counters);
         this.loyaltyActivationsThisTurn = source.loyaltyActivationsThisTurn;
+        this.protectorPlayerId = source.protectorPlayerId;
         this.enteredFromGraveyardOwnerId = source.enteredFromGraveyardOwnerId;
         this.grantedKeywords.addAll(source.grantedKeywords);
         this.persistentGrantedKeywords.addAll(source.persistentGrantedKeywords);

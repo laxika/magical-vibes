@@ -187,6 +187,14 @@ public class PermanentControlSupport {
                 String tokenTypeDesc = token.primaryType().name().charAt(0) + token.primaryType().name().substring(1).toLowerCase();
                 String logEntry = "A " + colorDesc + token.tokenName() + " " + tokenTypeDesc.toLowerCase() + " token enters the battlefield.";
                 gameBroadcastService.logAndBroadcast(gameData, GameLog.text(logEntry));
+
+                // Fire ally-artifact / equipment / etc. enters triggers (e.g. Voldaren Bloodcaster
+                // watching Blood tokens). Same entry pipeline as creature tokens — type checks
+                // inside BattlefieldEntryService gate creature-only slots.
+                battlefieldEntryService.handleCreatureEnteredBattlefield(gameData, controllerId, tokenCard, null, false);
+                if (!gameData.interaction.isAwaitingInput()) {
+                    legendRuleService.checkLegendRule(gameData, controllerId);
+                }
             }
         }
 

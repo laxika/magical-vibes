@@ -73,6 +73,10 @@ ON_ALLY_CREATURE_ENTERS_BATTLEFIELD,
     /** Whenever the controller discards a card ("whenever you discard a card"). Fires on the discarding
      *  player's own battlefield in {@code TriggerCollectionService.checkDiscardTriggers}. Used by Necropotence. */
     ON_CONTROLLER_DISCARDS,
+    /** Triggers when this card is discarded for any reason ("When you discard this card, …").
+     *  Unlike {@link #ON_SELF_DISCARDED_BY_OPPONENT}, fires on self-discard and opponent-caused discard.
+     *  Checked in {@code TriggerCollectionService.checkDiscardTriggers}. Used by Edgar's Awakening. */
+    ON_SELF_DISCARDED,
     ON_SELF_DISCARDED_BY_OPPONENT,
     ON_ANY_PLAYER_TAPS_LAND,
     ON_ANY_PERMANENT_DEALS_DAMAGE_TO_YOU,
@@ -276,6 +280,11 @@ ON_ALLY_CREATURE_ENTERS_BATTLEFIELD,
      *  the controller's graveyard.  Checked per-card inside
      *  {@code TriggerCollectionService.checkSpellCastTriggers}. */
     GRAVEYARD_ON_CONTROLLER_CASTS_SPELL,
+    /** Triggers when the controller casts a spell matching the filter, while this card is in
+     *  the controller's command zone (Eminence — e.g. Edgar Markov). Checked per-card inside
+     *  {@code TriggerCollectionService.checkSpellCastTriggers}. Pair with an intervening-if
+     *  {@code SourceCardInCommandZone} so the ability fails if the card left the command zone. */
+    COMMAND_ZONE_ON_CONTROLLER_CASTS_SPELL,
     /** Triggers whenever the controller of this permanent loses life (damage or direct life loss).
      *  Fires on the controller's own permanents. The amount is passed via TriggerContext.LifeLoss.
      *  Hooked into TriggerCollectionService.checkLifeLossTriggers(). Used by Lich's Mastery. */

@@ -28,6 +28,7 @@ public class ScryfallTypeLineParser {
             "Artifact", CardType.ARTIFACT,
             "Land", CardType.LAND,
             "Planeswalker", CardType.PLANESWALKER,
+            "Battle", CardType.BATTLE,
             "Kindred", CardType.KINDRED
     );
 

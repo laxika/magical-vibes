@@ -58,7 +58,7 @@ public final class EffectResolution {
                     && cre.condition() instanceof Kicked && kicked != null) {
                 resolved.add(kicked ? cre.upgradedEffect() : cre.baseEffect());
             } else if (effect instanceof ChooseOneEffect coe && modeIndex != null) {
-                if (coe.choicesRequired() == 1) {
+                if (coe.choicesRequired() == 1 && coe.choicesMax() == 1) {
                     List<ChooseOneEffect.ChooseOneOption> options = coe.options();
                     if (modeIndex >= 0 && modeIndex < options.size()) {
                         resolved.addAll(options.get(modeIndex).effects());

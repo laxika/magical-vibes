@@ -20,6 +20,7 @@ public enum CounterType {
     INVITATION,
     LANDMARK,
     LOYALTY,
+    DEFENSE,
     MANNEQUIN,
     MINUS_ONE_MINUS_ONE,
     MINUS_ZERO_MINUS_TWO,

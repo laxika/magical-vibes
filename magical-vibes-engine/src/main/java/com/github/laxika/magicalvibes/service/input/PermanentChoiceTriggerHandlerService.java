@@ -1465,22 +1465,33 @@ public class PermanentChoiceTriggerHandlerService {
 
     public void handleBeginningOfCombatTrigger(GameData gameData, UUID permanentId,
             PermanentChoiceContext.BeginningOfCombatTriggerTarget boct) {
+        // Choose yourself to decline ("up to one" with minTargets 0)
+        boolean skipped = gameData.playerIdToName.containsKey(permanentId)
+                && permanentId.equals(boct.controllerId());
+
         StackEntry entry = new StackEntry(
                 StackEntryType.TRIGGERED_ABILITY,
                 boct.sourceCard(),
                 boct.controllerId(),
                 boct.sourceCard().getName() + "'s combat ability",
                 new ArrayList<>(boct.effects()),
-                permanentId,
+                skipped ? null : permanentId,
                 boct.sourcePermanentId()
         );
         gameData.stack.add(entry);
 
-        String targetName = getTargetDisplayName(gameData, permanentId);
-        String logEntry = boct.sourceCard().getName() + "'s ability targets " + targetName + ".";
-        gameBroadcastService.logAndBroadcast(gameData, GameLog.builder().card(boct.sourceCard()).text("'s ability targets " + targetName + ".").build());
-        log.info("Game {} - {} beginning-of-combat trigger targets {}",
-                gameData.id, boct.sourceCard().getName(), targetName);
+        if (skipped) {
+            gameBroadcastService.logAndBroadcast(gameData, GameLog.builder().card(boct.sourceCard())
+                    .text("'s ability targets nothing.").build());
+            log.info("Game {} - {} beginning-of-combat trigger declined targeting",
+                    gameData.id, boct.sourceCard().getName());
+        } else {
+            String targetName = getTargetDisplayName(gameData, permanentId);
+            gameBroadcastService.logAndBroadcast(gameData, GameLog.builder().card(boct.sourceCard())
+                    .text("'s ability targets " + targetName + ".").build());
+            log.info("Game {} - {} beginning-of-combat trigger targets {}",
+                    gameData.id, boct.sourceCard().getName(), targetName);
+        }
 
         if (gameData.hasPendingInteraction(PermanentChoiceContext.BeginningOfCombatTriggerTarget.class)) {
             turnProgressionService.processNextBeginningOfCombatTriggerTarget(gameData);

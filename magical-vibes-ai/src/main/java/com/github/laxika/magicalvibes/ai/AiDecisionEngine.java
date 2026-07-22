@@ -365,7 +365,7 @@ public abstract class AiDecisionEngine {
                 log.info("AI: Playing land {} in game {}", card.getName(), gameId);
                 final int idx = i;
                 send(() -> gameActions.handlePlayCard(selfConnection,
-                        new PlayCardRequest(idx, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null)));
+                        new PlayCardRequest(idx, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null)));
                 // Verify the land was actually played — handlePlayCard silently
                 // swallows errors, so we must confirm the state actually changed.
                 // Identity check: hand size alone is unreliable because landfall/ETB
@@ -787,7 +787,8 @@ public abstract class AiDecisionEngine {
         ChooseOneEffect coe = findChooseOneEffect(card);
         if (coe == null) return null;
 
-        if (coe.choicesRequired() > 1) {
+        // Fixed choose-N (e.g. choose two): pick the first N valid modes.
+        if (coe.choicesRequired() > 1 && coe.choicesRequired() == coe.choicesMax()) {
             List<Integer> validModes = new java.util.ArrayList<>();
             for (int i = 0; i < coe.options().size(); i++) {
                 ChooseOneEffect.ChooseOneOption option = coe.options().get(i);
@@ -803,31 +804,35 @@ public abstract class AiDecisionEngine {
             return null;
         }
 
+        // Choose-one and "choose one or more": pick the first valid single mode (avoids escalate).
         for (int i = 0; i < coe.options().size(); i++) {
             ChooseOneEffect.ChooseOneOption option = coe.options().get(i);
             CardEffect effect = option.effect();
+            int encoded = coe.variableModeCount()
+                    ? ChooseOneEffect.encodeModeSelection(coe.choicesRequired(), coe.choicesMax(), new int[]{i})
+                    : i;
 
             if (EffectResolution.targetsSpellOnStack(effect)) continue;
 
             if (effect.targetSpec().category().includesPermanents()) {
                 UUID target = findModalPermanentTarget(gameData, card, option);
-                if (target != null) return new ModalCastPlan(i, target);
+                if (target != null) return new ModalCastPlan(encoded, target);
                 continue;
             }
 
             if (effect.targetSpec().category().includesPlayers()) {
                 UUID opponentId = AiUtils.getOpponentId(gameData, aiPlayer.getId());
-                return new ModalCastPlan(i, opponentId);
+                return new ModalCastPlan(encoded, opponentId);
             }
 
             if (effect.targetSpec().category().isGraveyard()) {
                 List<Card> targets = targetSelector.findValidGraveyardTargets(gameData, card, aiPlayer.getId());
-                if (!targets.isEmpty()) return new ModalCastPlan(i, targets.getFirst().getId());
+                if (!targets.isEmpty()) return new ModalCastPlan(encoded, targets.getFirst().getId());
                 continue;
             }
 
             // No targeting required — mode is always valid
-            return new ModalCastPlan(i, null);
+            return new ModalCastPlan(encoded, null);
         }
         return null;
     }

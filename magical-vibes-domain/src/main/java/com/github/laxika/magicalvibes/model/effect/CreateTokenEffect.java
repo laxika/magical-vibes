@@ -189,6 +189,19 @@ public record CreateTokenEffect(
                 List.of(CardSubtype.ZOMBIE), Set.of(), Set.of(), false, false, Map.of(), List.of(), false, false, false, 0, Set.of());
     }
 
+    /**
+     * 2/2 black Zombie creature token with decayed (can't block; sacrifice at end of combat when it attacks).
+     */
+    public static CreateTokenEffect blackZombieWithDecayed(int amount) {
+        return new CreateTokenEffect(CardType.CREATURE, amount, "Zombie", 2, 2, CardColor.BLACK, null,
+                List.of(CardSubtype.ZOMBIE), Set.of(Keyword.DECAYED), Set.of(), false, false,
+                Map.of(
+                        EffectSlot.STATIC, new CantBlockEffect(),
+                        EffectSlot.ON_ATTACK, new SacrificeAtEndOfCombatEffect()
+                ),
+                List.of(), false, false, false, 0, Set.of());
+    }
+
     /** 1/1 white Soldier creature token */
     public static CreateTokenEffect whiteSoldier(int amount) {
         return new CreateTokenEffect(CardType.CREATURE, amount, "Soldier", 1, 1, CardColor.WHITE, null,
@@ -218,6 +231,19 @@ public record CreateTokenEffect(
                         false, "{2}",
                         List.of(new SacrificeSelfCost(), new DrawCardEffect()),
                         "{2}, Sacrifice this token: Draw a card."
+                )));
+    }
+
+    /**
+     * Blood token: colorless artifact with
+     * "{1}, {T}, Discard a card, Sacrifice this token: Draw a card."
+     */
+    public static CreateTokenEffect ofBloodToken(int amount) {
+        return ofArtifactToken(amount, "Blood", List.of(CardSubtype.BLOOD),
+                List.of(new ActivatedAbility(
+                        true, "{1}",
+                        List.of(new DiscardCardTypeCost(null, null), new SacrificeSelfCost(), new DrawCardEffect()),
+                        "{1}, {T}, Discard a card, Sacrifice this token: Draw a card."
                 )));
     }
 }

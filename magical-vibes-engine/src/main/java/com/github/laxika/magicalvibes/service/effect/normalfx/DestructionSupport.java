@@ -151,21 +151,49 @@ public class DestructionSupport {
             }
         }
 
-        int destroyedCount = 0;
+        List<Permanent> actuallyDying = new ArrayList<>();
         for (Permanent perm : toDestroy) {
             if (indestructible.contains(perm)) {
-                gameBroadcastService.logAndBroadcast(gameData, GameLog.isIndestructible(perm.getCard()));
                 continue;
             }
             if (!cannotBeRegenerated && graveyardService.tryRegenerate(gameData, perm)) {
                 continue;
             }
-            permanentRemovalService.removePermanentToGraveyard(gameData, perm);
-            gameBroadcastService.logAndBroadcast(gameData, GameLog.isDestroyed(perm.getCard()));
-            log.info("Game {} - {} is destroyed by {}", gameData.id, perm.getCard().getName(), sourceName);
-            destroyedCount++;
+            actuallyDying.add(perm);
         }
-        return destroyedCount;
+
+        for (Permanent perm : toDestroy) {
+            if (indestructible.contains(perm)) {
+                gameBroadcastService.logAndBroadcast(gameData, GameLog.isIndestructible(perm.getCard()));
+            }
+        }
+
+        try {
+            beginSimultaneousCreatureDeaths(gameData, actuallyDying);
+            for (Permanent perm : actuallyDying) {
+                permanentRemovalService.removePermanentToGraveyard(gameData, perm);
+                gameBroadcastService.logAndBroadcast(gameData, GameLog.isDestroyed(perm.getCard()));
+                log.info("Game {} - {} is destroyed by {}", gameData.id, perm.getCard().getName(), sourceName);
+            }
+        } finally {
+            endSimultaneousCreatureDeaths(gameData);
+        }
+        return actuallyDying.size();
+    }
+
+    private void beginSimultaneousCreatureDeaths(GameData gameData, List<Permanent> dying) {
+        for (Permanent perm : dying) {
+            if (!gameQueryService.isCreature(gameData, perm)) continue;
+            UUID controllerId = gameQueryService.findPermanentController(gameData, perm.getId());
+            if (controllerId == null) continue;
+            gameData.simultaneousDyingCreatures.put(perm.getId(), perm);
+            gameData.simultaneousDyingControllers.put(perm.getId(), controllerId);
+        }
+    }
+
+    private void endSimultaneousCreatureDeaths(GameData gameData) {
+        gameData.simultaneousDyingCreatures.clear();
+        gameData.simultaneousDyingControllers.clear();
     }
 
     public boolean tryDestroyAndLog(GameData gameData, Permanent target, String sourceName) {

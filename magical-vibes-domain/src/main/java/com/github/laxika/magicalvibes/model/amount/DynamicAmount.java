@@ -17,6 +17,7 @@ public sealed interface DynamicAmount permits
         CardTypesAmongCardsInGraveyard,
         CardsDiscardedByTargetPlayerThisTurn,
         CardsDiscardedOrCycledThisTurn,
+        CardsInExile,
         CardsInGraveyard,
         CardsInLibrary,
         CardsPutIntoGraveyardByTargetPlayerThisTurn,

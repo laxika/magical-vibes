@@ -17,6 +17,7 @@ import com.github.laxika.magicalvibes.model.Zone;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
 import com.github.laxika.magicalvibes.model.effect.CastTargetInstantOrSorceryFromGraveyardEffect;
 import com.github.laxika.magicalvibes.model.effect.RevealTopCardMayPlayFreeOrExileEffect;
+import com.github.laxika.magicalvibes.model.effect.MayCastForMadnessCostEffect;
 import com.github.laxika.magicalvibes.model.effect.MayCastForMiracleCostEffect;
 import com.github.laxika.magicalvibes.model.effect.MayCastFromHandWithoutPayingManaCostEffect;
 import com.github.laxika.magicalvibes.model.effect.PlayTargetCardFromGraveyardWithoutPayingManaCostEffect;
@@ -177,6 +178,7 @@ public class MayCastHandlerService {
                 case ENCHANTMENT -> StackEntryType.ENCHANTMENT_SPELL;
                 case ARTIFACT -> StackEntryType.ARTIFACT_SPELL;
                 case PLANESWALKER -> StackEntryType.PLANESWALKER_SPELL;
+                case BATTLE -> StackEntryType.BATTLE_SPELL;
                 case SORCERY -> StackEntryType.SORCERY_SPELL;
                 case INSTANT -> StackEntryType.INSTANT_SPELL;
                 default -> throw new IllegalStateException("Unsupported card type: " + cardToPlay.getType());
@@ -428,6 +430,7 @@ public class MayCastHandlerService {
             case ARTIFACT -> StackEntryType.ARTIFACT_SPELL;
             case ENCHANTMENT -> StackEntryType.ENCHANTMENT_SPELL;
             case PLANESWALKER -> StackEntryType.PLANESWALKER_SPELL;
+            case BATTLE -> StackEntryType.BATTLE_SPELL;
             case SORCERY -> StackEntryType.SORCERY_SPELL;
             case INSTANT -> StackEntryType.INSTANT_SPELL;
             default -> throw new IllegalStateException("Unsupported card type: " + cardToPlay.getType());
@@ -586,7 +589,58 @@ public class MayCastHandlerService {
         cost.pay(pool);
 
         hand.remove(cardIndex);
-        castCardFromHandPayingAlternateCost(gameData, player, cardToCast, costStr);
+        castCardFromHandPayingAlternateCost(gameData, player, cardToCast, costStr, "miracle");
+    }
+
+    /**
+     * Handles the madness "you may cast this for its madness cost" choice (CR 702.34b).
+     * Pays {@link PendingMayAbility#manaCost()} then casts from exile, ignoring type timing.
+     * Declining puts the card into its owner's graveyard.
+     */
+    public void handleMayCastForMadnessCost(GameData gameData, Player player, boolean accepted,
+                                            PendingMayAbility ability) {
+        Card cardToCast = ability.sourceCard();
+        String playerName = player.getUsername();
+
+        if (!accepted) {
+            if (gameData.findExiledCard(cardToCast.getId()) != null) {
+                gameData.removeFromExile(cardToCast.getId());
+                graveyardService.addCardToGraveyard(gameData, player.getId(), cardToCast);
+            }
+            gameBroadcastService.logAndBroadcast(gameData,
+                    GameLog.textCardText(playerName + " declines to cast ", cardToCast, " for its madness cost."));
+            log.info("Game {} - {} declines madness cast of {}", gameData.id, playerName, cardToCast.getName());
+            inputCompletionService.processMayAbilitiesThenAutoPass(gameData);
+            return;
+        }
+
+        if (gameData.findExiledCard(cardToCast.getId()) == null) {
+            gameBroadcastService.logAndBroadcast(gameData, GameLog.cardThen(cardToCast, " is no longer in exile."));
+            log.info("Game {} - {} no longer in exile for madness cast", gameData.id, cardToCast.getName());
+            inputCompletionService.processMayAbilitiesThenAutoPass(gameData);
+            return;
+        }
+
+        String costStr = ability.manaCost();
+        if (costStr == null) {
+            log.warn("Game {} - madness cast of {} has no cost on pending ability", gameData.id, cardToCast.getName());
+            inputCompletionService.processMayAbilitiesThenAutoPass(gameData);
+            return;
+        }
+
+        ManaCost cost = new ManaCost(costStr);
+        ManaPool pool = gameData.playerManaPools.get(player.getId());
+        if (!cost.canPay(pool)) {
+            gameBroadcastService.logAndBroadcast(gameData, GameLog.textCardText(
+                    playerName + " cannot pay " + costStr + " to cast ", cardToCast, " for its madness cost."));
+            log.info("Game {} - {} can't pay madness cost {} for {}", gameData.id, playerName, costStr, cardToCast.getName());
+            inputCompletionService.processMayAbilitiesThenAutoPass(gameData);
+            return;
+        }
+        cost.pay(pool);
+
+        gameData.removeFromExile(cardToCast.getId());
+        castCardFromHandPayingAlternateCost(gameData, player, cardToCast, costStr, "madness");
     }
 
     /**
@@ -633,27 +687,32 @@ public class MayCastHandlerService {
     }
 
     private void castCardFromHandWithoutPaying(GameData gameData, Player player, Card card) {
-        castCardFromHandPayingAlternateCost(gameData, player, card, null);
+        castCardFromHandPayingAlternateCost(gameData, player, card, null, null);
     }
 
     /**
-     * Puts a hand card onto the stack as a cast spell, ignoring type-based timing.
+     * Puts a card onto the stack as a cast spell, ignoring type-based timing.
      * {@code paidCostDescription} null means free ("without paying its mana cost"); otherwise
-     * logs that the alternate cost was paid (miracle).
+     * logs that the alternate cost was paid. {@code costLabel} is "miracle" / "madness" (or null for free).
      */
     private void castCardFromHandPayingAlternateCost(GameData gameData, Player player, Card card,
-                                                     String paidCostDescription) {
+                                                     String paidCostDescription, String costLabel) {
         UUID playerId = player.getId();
         String playerName = player.getUsername();
-        String costPhrase = paidCostDescription == null
-                ? " without paying its mana cost"
-                : " for its miracle cost (" + paidCostDescription + ")";
+        String costPhrase;
+        if (paidCostDescription == null) {
+            costPhrase = " without paying its mana cost";
+        } else {
+            String label = costLabel != null ? costLabel : "alternate";
+            costPhrase = " for its " + label + " cost (" + paidCostDescription + ")";
+        }
 
         StackEntryType spellType = switch (card.getType()) {
             case CREATURE -> StackEntryType.CREATURE_SPELL;
             case ARTIFACT -> StackEntryType.ARTIFACT_SPELL;
             case ENCHANTMENT -> StackEntryType.ENCHANTMENT_SPELL;
             case PLANESWALKER -> StackEntryType.PLANESWALKER_SPELL;
+            case BATTLE -> StackEntryType.BATTLE_SPELL;
             case SORCERY -> StackEntryType.SORCERY_SPELL;
             case INSTANT -> StackEntryType.INSTANT_SPELL;
             default -> throw new IllegalStateException("Unsupported card type: " + card.getType());

@@ -103,6 +103,11 @@ public class ScryfallOracleLoader {
         KEYWORD_MAP.put("Flashback", Keyword.FLASHBACK);
         KEYWORD_MAP.put("Exploit", Keyword.EXPLOIT);
         KEYWORD_MAP.put("Miracle", Keyword.MIRACLE);
+        KEYWORD_MAP.put("Madness", Keyword.MADNESS);
+        KEYWORD_MAP.put("Escalate", Keyword.ESCALATE);
+        KEYWORD_MAP.put("Decayed", Keyword.DECAYED);
+        KEYWORD_MAP.put("Splice", Keyword.SPLICE);
+        KEYWORD_MAP.put("Delirium", Keyword.DELIRIUM);
     }
 
     public static void loadAll(String cacheDir) {
@@ -404,8 +409,11 @@ public class ScryfallOracleLoader {
         Integer power = parseIntField(ptSource, "power");
         Integer toughness = parseIntField(ptSource, "toughness");
 
-        // Loyalty (planeswalkers only)
-        Integer loyalty = parseIntField(card, "loyalty");
+        // Loyalty (planeswalkers) / defense (battles) — prefer face node for DFCs
+        JsonNode loyaltySource = faceNode.has("loyalty") ? faceNode : card;
+        Integer loyalty = parseIntField(loyaltySource, "loyalty");
+        JsonNode defenseSource = faceNode.has("defense") ? faceNode : card;
+        Integer defense = parseIntField(defenseSource, "defense");
 
         // Keywords — from top level (combined for both faces)
         Set<Keyword> keywords = parseKeywords(card);
@@ -430,6 +438,7 @@ public class ScryfallOracleLoader {
                 toughness,
                 keywords,
                 loyalty,
+                defense,
                 watermark
         );
     }
@@ -498,6 +507,7 @@ public class ScryfallOracleLoader {
                 power,
                 toughness,
                 keywords,
+                null,
                 null,
                 null
         );

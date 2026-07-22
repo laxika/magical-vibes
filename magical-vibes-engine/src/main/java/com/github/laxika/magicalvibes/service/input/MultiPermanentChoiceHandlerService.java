@@ -75,6 +75,7 @@ public class MultiPermanentChoiceHandlerService {
     private final com.github.laxika.magicalvibes.service.effect.normalfx.TapUntapSupport tapUntapSupport;
     private final com.github.laxika.magicalvibes.service.effect.normalfx.LibrarySearchSupport librarySearchSupport;
     private final com.github.laxika.magicalvibes.service.effect.normalfx.PlayerInteractionSupport playerInteractionSupport;
+    private final com.github.laxika.magicalvibes.service.effect.normalfx.KillingWaveEffectHandler killingWaveEffectHandler;
 
     public void handleMultiplePermanentsChosen(GameData gameData, Player player, List<UUID> permanentIds) {
         if (gameData.interaction.activeInteraction(PendingInteraction.MultiPermanentChoice.class) == null) {
@@ -168,6 +169,8 @@ public class MultiPermanentChoiceHandlerService {
             handleStaticOrbUntap(gameData, permanentIds, ctx);
         } else if (context instanceof MultiPermanentChoiceContext.ExileTetraviteTokensPutCountersOnSource ctx) {
             handleExileTetraviteTokensPutCountersOnSource(gameData, permanentIds, ctx);
+        } else if (context instanceof MultiPermanentChoiceContext.KillingWaveKeep ctx) {
+            handleKillingWaveKeep(gameData, permanentIds, ctx);
         } else if (gameData.hasPendingInteraction(PendingCapriciousEfreetState.class)) {
             handleCapriciousEfreetOpponentTargets(gameData, permanentIds);
         } else if (gameData.hasPendingInteraction(PendingPileSeparation.class)) {
@@ -1145,6 +1148,32 @@ public class MultiPermanentChoiceHandlerService {
         }
 
         // Resume resolving any remaining effects on the trigger, then continue the game.
+        if (gameData.pendingEffectResolutionEntry != null) {
+            effectResolutionService.resolveEffectsFrom(gameData,
+                    gameData.pendingEffectResolutionEntry,
+                    gameData.pendingEffectResolutionIndex);
+        }
+
+        gameBroadcastService.broadcastGameState(gameData);
+        turnProgressionService.resolveAutoPass(gameData);
+    }
+
+    private void handleKillingWaveKeep(GameData gameData, List<UUID> permanentIds,
+                                       MultiPermanentChoiceContext.KillingWaveKeep context) {
+        killingWaveEffectHandler.completeKeepChoice(gameData, permanentIds, context);
+
+        if (gameData.interaction.isAwaitingInput()) {
+            return;
+        }
+
+        permanentRemovalService.removeOrphanedAuras(gameData);
+        stateBasedActionService.performStateBasedActions(gameData);
+
+        if (!gameData.pendingMayAbilities.isEmpty()) {
+            playerInputService.processNextMayAbility(gameData);
+            return;
+        }
+
         if (gameData.pendingEffectResolutionEntry != null) {
             effectResolutionService.resolveEffectsFrom(gameData,
                     gameData.pendingEffectResolutionEntry,

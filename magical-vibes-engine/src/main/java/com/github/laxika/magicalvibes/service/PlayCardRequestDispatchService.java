@@ -53,7 +53,8 @@ public class PlayCardRequestDispatchService {
                 Boolean.TRUE.equals(request.fromGraveyard()), request.sacrificePermanentId(),
                 request.phyrexianLifeCount(), nullIfEmpty(request.alternateCostSacrificePermanentIds()),
                 request.exileGraveyardCardIndex(), nullIfEmpty(request.exileGraveyardCardIndices()),
-                Boolean.TRUE.equals(request.kicked()), request.discardHandCardIndex());
+                Boolean.TRUE.equals(request.kicked()), request.discardHandCardIndex(),
+                nullIfEmpty(request.discardHandCardIndices()));
     }
 
     private static List<UUID> listOrEmpty(List<UUID> list) {

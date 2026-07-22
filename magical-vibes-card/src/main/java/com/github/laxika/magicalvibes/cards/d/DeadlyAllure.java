@@ -10,6 +10,7 @@ import com.github.laxika.magicalvibes.model.effect.GrantScope;
 import com.github.laxika.magicalvibes.model.effect.MustBeBlockedIfAbleThisTurnEffect;
 
 @CardRegistration(set = "DKA", collectorNumber = "58")
+@CardRegistration(set = "INR", collectorNumber = "103")
 public class DeadlyAllure extends Card {
 
     public DeadlyAllure() {

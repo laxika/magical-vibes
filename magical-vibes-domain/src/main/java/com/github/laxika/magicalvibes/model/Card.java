@@ -83,6 +83,8 @@ public class Card {
     private Integer toughness;
     private Set<Keyword> keywords = Set.of();
     private Integer loyalty;
+    /** Printed defense for Battle permanents (enters with that many defense counters). */
+    private Integer defense;
     private ManaColor xColorRestriction;
     private String setCode;
     private String collectorNumber;
@@ -167,6 +169,7 @@ public class Card {
             this.toughness = oracle.toughness();
             this.keywords = oracle.keywords();
             this.loyalty = oracle.loyalty();
+            this.defense = oracle.defense();
             this.watermark = oracle.watermark();
         }
     }
@@ -200,6 +203,7 @@ public class Card {
         this.toughness = source.toughness;
         this.keywords = source.keywords;
         this.loyalty = source.loyalty;
+        this.defense = source.defense;
         this.xColorRestriction = source.xColorRestriction;
         this.setCode = source.setCode;
         this.collectorNumber = source.collectorNumber;
@@ -272,6 +276,7 @@ public class Card {
     public void setToughness(Integer toughness) { assertMutable(); this.toughness = toughness; }
     public void setKeywords(Set<Keyword> keywords) { assertMutable(); this.keywords = keywords; }
     public void setLoyalty(Integer loyalty) { assertMutable(); this.loyalty = loyalty; }
+    public void setDefense(Integer defense) { assertMutable(); this.defense = defense; }
     public void setXColorRestriction(ManaColor xColorRestriction) { assertMutable(); this.xColorRestriction = xColorRestriction; }
     public void setSetCode(String setCode) { assertMutable(); this.setCode = setCode; }
     public void setCollectorNumber(String collectorNumber) { assertMutable(); this.collectorNumber = collectorNumber; }

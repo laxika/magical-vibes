@@ -231,7 +231,7 @@ public class EasyAiDecisionEngine extends AiDecisionEngine {
         final List<UUID> finalMultiTargetIds = multiTargetIds;
         final Integer finalDiscardHandCardIndex = chooseDiscardCostIndex(gameData, card);
         send(() -> gameActions.handlePlayCard(selfConnection,
-                new PlayCardRequest(cardIndex, finalXValue, finalTargetId, finalDamageAssignments, finalMultiTargetIds, null, null, finalSacrificePermanentId, null, null, null, null, null, finalExileGraveyardCardIndices, null, null, null, finalDiscardHandCardIndex)));
+                new PlayCardRequest(cardIndex, finalXValue, finalTargetId, finalDamageAssignments, finalMultiTargetIds, null, null, finalSacrificePermanentId, null, null, null, null, null, finalExileGraveyardCardIndices, null, null, null, finalDiscardHandCardIndex, null)));
         // Verify the spell was actually cast — handlePlayCard silently
         // swallows errors, so we must confirm the state actually changed.
         // Identity check: hand size alone is unreliable because ETB/cast triggers
@@ -355,7 +355,7 @@ public class EasyAiDecisionEngine extends AiDecisionEngine {
         final List<UUID> finalMultiTargetIds = multiTargetIds;
         final Integer finalDiscardHandCardIndex = chooseDiscardCostIndex(gameData, card);
         send(() -> gameActions.handlePlayCard(selfConnection,
-                new PlayCardRequest(cardIndex, finalXValue, finalTargetId, finalDamageAssignments, finalMultiTargetIds, null, null, finalSacrificePermanentId, null, null, null, null, null, finalExileGraveyardCardIndices, null, null, null, finalDiscardHandCardIndex)));
+                new PlayCardRequest(cardIndex, finalXValue, finalTargetId, finalDamageAssignments, finalMultiTargetIds, null, null, finalSacrificePermanentId, null, null, null, null, null, finalExileGraveyardCardIndices, null, null, null, finalDiscardHandCardIndex, null)));
         // Identity check: hand size alone is unreliable because ETB/cast triggers
         // can add cards back to hand (e.g. Explore), masking a successful cast.
         if (hand.contains(card)) {

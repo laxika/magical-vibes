@@ -1011,6 +1011,21 @@ public class DeathTriggerCollectorService {
         return true;
     }
 
+    @CollectsTrigger(value = CardEffect.class, slot = EffectSlot.ON_ANY_NONTOKEN_CREATURE_DIES)
+    boolean handleAnyNontokenCreatureDeathDefault(TriggerMatchContext match,
+            CardEffect effect, TriggerContext ctx) {
+        match.gameData().stack.add(new StackEntry(
+                StackEntryType.TRIGGERED_ABILITY,
+                match.permanent().getCard(),
+                match.controllerId(),
+                match.permanent().getCard().getName() + "'s ability",
+                new ArrayList<>(List.of(effect))
+        ));
+        gameBroadcastService.logAndBroadcast(match.gameData(), GameLog.abilityTriggers(match.permanent().getCard()));
+        log.info("Game {} - {} triggers (any nontoken creature died)", match.gameData().id, match.permanent().getCard().getName());
+        return true;
+    }
+
     // ── ON_OPPONENT_CREATURE_DIES ──────────────────────────────────────
 
     @CollectsTrigger(value = MayEffect.class, slot = EffectSlot.ON_OPPONENT_CREATURE_DIES)

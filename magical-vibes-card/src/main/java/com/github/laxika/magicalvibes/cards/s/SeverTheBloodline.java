@@ -9,6 +9,7 @@ import com.github.laxika.magicalvibes.model.filter.PermanentIsCreaturePredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentPredicateTargetFilter;
 
 @CardRegistration(set = "ISD", collectorNumber = "115")
+@CardRegistration(set = "INR", collectorNumber = "130")
 public class SeverTheBloodline extends Card {
 
     public SeverTheBloodline() {

@@ -8,6 +8,7 @@ import com.github.laxika.magicalvibes.model.effect.ConditionalEffect;
 import com.github.laxika.magicalvibes.model.effect.PutCountersOnSourceEffect;
 
 @CardRegistration(set = "ISD", collectorNumber = "179")
+@CardRegistration(set = "INR", collectorNumber = "196")
 public class FesterhideBoar extends Card {
 
     public FesterhideBoar() {

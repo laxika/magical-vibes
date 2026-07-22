@@ -52,6 +52,7 @@ public class DamageSupport {
     private final LifeSupport lifeSupport;
     private final PermanentControlSupport permanentControlSupport;
     private final PermanentCounterSupport permanentCounterSupport;
+    private final com.github.laxika.magicalvibes.service.battle.BattleDefeatSupport battleDefeatSupport;
 
     /** Colours of a non-permanent damage source (spell/ability card), for colour-based prevention. */
     private static Set<CardColor> sourceCardColors(Card card) {
@@ -188,6 +189,23 @@ public class DamageSupport {
                 gameBroadcastService.logAndBroadcast(gameData, GameLog.cardTextCard(sourceCard,
                         " deals " + damage + " damage to ", target.getCard(),
                         " (" + target.getCounterCount(CounterType.LOYALTY) + " loyalty remaining)."));
+            }
+            if (!gameQueryService.isCreature(gameData, target)) {
+                if (damage > 0) {
+                    checkSpellLifelink(gameData, entry, damage);
+                }
+                return;
+            }
+        }
+
+        // CR 310.8 — damage dealt to a battle removes that many defense counters
+        if (target.getCard().hasType(CardType.BATTLE)) {
+            if (damage > 0) {
+                target.setCounterCount(CounterType.DEFENSE, target.getCounterCount(CounterType.DEFENSE) - damage);
+                gameBroadcastService.logAndBroadcast(gameData, GameLog.cardTextCard(sourceCard,
+                        " deals " + damage + " damage to ", target.getCard(),
+                        " (" + target.getCounterCount(CounterType.DEFENSE) + " defense remaining)."));
+                battleDefeatSupport.checkAfterDefenseRemoved(gameData, target);
             }
             if (!gameQueryService.isCreature(gameData, target)) {
                 if (damage > 0) {
@@ -410,6 +428,24 @@ public class DamageSupport {
                     gameBroadcastService.logAndBroadcast(gameData, GameLog.cardTextCard(source,
                             " deals " + loyaltyDamage + " damage to ", targetPermanent.getCard(),
                             " (" + targetPermanent.getCounterCount(CounterType.LOYALTY) + " loyalty remaining)."));
+                }
+                return;
+            }
+            if (targetPermanent.getCard().hasType(CardType.BATTLE)) {
+                if (gameQueryService.isDamagePreventable(gameData)
+                        && gameData.creaturesWithAllDamagePrevented.contains(targetPermanent.getId())) {
+                    gameBroadcastService.logAndBroadcast(gameData, GameLog.cardThen(source, "'s damage is prevented."));
+                    return;
+                }
+                int defenseDamage = Math.max(0, rawDamage);
+                if (defenseDamage > 0) {
+                    accumulateSourceDamageForReflection(gameData, source, entry.getControllerId(), defenseDamage);
+                    targetPermanent.setCounterCount(CounterType.DEFENSE,
+                            targetPermanent.getCounterCount(CounterType.DEFENSE) - defenseDamage);
+                    gameBroadcastService.logAndBroadcast(gameData, GameLog.cardTextCard(source,
+                            " deals " + defenseDamage + " damage to ", targetPermanent.getCard(),
+                            " (" + targetPermanent.getCounterCount(CounterType.DEFENSE) + " defense remaining)."));
+                    battleDefeatSupport.checkAfterDefenseRemoved(gameData, targetPermanent);
                 }
                 return;
             }

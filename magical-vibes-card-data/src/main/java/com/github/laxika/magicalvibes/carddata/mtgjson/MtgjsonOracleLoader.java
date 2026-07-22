@@ -235,6 +235,7 @@ public class MtgjsonOracleLoader {
         Integer power = ScryfallOracleLoader.parseIntField(face, "power");
         Integer toughness = ScryfallOracleLoader.parseIntField(face, "toughness");
         Integer loyalty = isBackFace ? null : ScryfallOracleLoader.parseIntField(face, "loyalty");
+        Integer defense = isBackFace ? null : ScryfallOracleLoader.parseIntField(face, "defense");
 
         Set<Keyword> keywords = parseKeywords(face);
         if (isBackFace) {
@@ -261,6 +262,7 @@ public class MtgjsonOracleLoader {
                 toughness,
                 keywords,
                 loyalty,
+                defense,
                 watermark
         );
     }

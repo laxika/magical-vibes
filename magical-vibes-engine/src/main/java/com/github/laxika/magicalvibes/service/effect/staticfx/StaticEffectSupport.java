@@ -195,7 +195,8 @@ public class StaticEffectSupport {
                 accumulator.addKeywords(boost.grantedKeywords());
             }
         } else if (wrapped instanceof GrantKeywordEffect grant) {
-            if (selfInScope(context, grant.scope(), grant.filter())) {
+            if (grant.scope() == GrantScope.SELF_AND_PAIRED
+                    || selfInScope(context, grant.scope(), grant.filter())) {
                 accumulator.addKeywords(grant.keywords());
             }
         } else if (wrapped instanceof GrantActivatedAbilityEffect grant) {

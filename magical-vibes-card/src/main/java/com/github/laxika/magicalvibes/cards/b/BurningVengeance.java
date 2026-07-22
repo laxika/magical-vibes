@@ -9,6 +9,7 @@ import com.github.laxika.magicalvibes.model.effect.DealDamageToAnyTargetEffect;
 import java.util.List;
 
 @CardRegistration(set = "ISD", collectorNumber = "133")
+@CardRegistration(set = "INR", collectorNumber = "147")
 public class BurningVengeance extends Card {
 
     public BurningVengeance() {

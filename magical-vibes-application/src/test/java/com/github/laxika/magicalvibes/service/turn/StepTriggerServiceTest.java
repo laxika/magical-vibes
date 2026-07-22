@@ -1025,6 +1025,22 @@ class StepTriggerServiceTest {
             assertThat(gd.stack.getFirst().getDescription()).contains("Each Combat Card");
             assertThat(gd.stack.getFirst().getControllerId()).isEqualTo(player2Id);
         }
+
+        @Test
+        @DisplayName("AllOf intervening-if skips beginning-of-combat trigger when unmet")
+        void allOfInterveningIfSkipsWhenUnmet() {
+            Card card = createCardWithName("Graf Rats");
+            card.addEffect(EffectSlot.BEGINNING_OF_COMBAT_TRIGGERED, new ConditionalEffect(
+                    new com.github.laxika.magicalvibes.model.condition.AllOf(List.of(
+                            new com.github.laxika.magicalvibes.model.condition.ControlsPermanentCount(
+                                    1, new PermanentHasSubtypePredicate(CardSubtype.RAT)))),
+                    new GainLifeEffect(1)));
+            gd.playerBattlefields.get(player1Id).add(new Permanent(card));
+
+            sut.handleBeginningOfCombatTriggers(gd);
+
+            assertThat(gd.stack).isEmpty();
+        }
     }
 
     @Nested

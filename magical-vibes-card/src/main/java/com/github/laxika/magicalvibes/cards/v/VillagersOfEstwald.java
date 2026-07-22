@@ -8,17 +8,16 @@ import com.github.laxika.magicalvibes.model.condition.NoSpellsCastLastTurn;
 import com.github.laxika.magicalvibes.model.effect.ConditionalEffect;
 import com.github.laxika.magicalvibes.model.effect.TransformSelfEffect;
 
-@CardRegistration(set = "ISD", collectorNumber = "209")
+@CardRegistration(set = "INR", collectorNumber = "224")
 public class VillagersOfEstwald extends Card {
 
     public VillagersOfEstwald() {
-        // Set up back face
         HowlpackOfEstwald backFace = new HowlpackOfEstwald();
         backFace.setSetCode(getSetCode());
         backFace.setCollectorNumber(getCollectorNumber());
         setBackFaceCard(backFace);
 
-        // At the beginning of each upkeep, if no spells were cast last turn, transform Villagers of Estwald.
+        // At the beginning of each upkeep, if no spells were cast last turn, transform this creature.
         addEffect(EffectSlot.EACH_UPKEEP_TRIGGERED,
                 new ConditionalEffect(new NoSpellsCastLastTurn(), new TransformSelfEffect()));
     }

@@ -10,6 +10,7 @@ import com.github.laxika.magicalvibes.model.filter.PermanentIsCreaturePredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentPredicateTargetFilter;
 
 @CardRegistration(set = "ISD", collectorNumber = "110")
+@CardRegistration(set = "INR", collectorNumber = "125")
 public class MorkrutBanshee extends Card {
 
     public MorkrutBanshee() {

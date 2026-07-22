@@ -31,7 +31,6 @@ import com.github.laxika.magicalvibes.model.effect.ControlStealingEffect;
 import com.github.laxika.magicalvibes.model.effect.CostEffect;
 import com.github.laxika.magicalvibes.model.effect.CreatureBoostEffect;
 import com.github.laxika.magicalvibes.model.effect.DamageDealingEffect;
-import com.github.laxika.magicalvibes.model.effect.DealDamageToTargetCreatureOrPlaneswalkerEffect;
 import com.github.laxika.magicalvibes.model.effect.ControlDuration;
 import com.github.laxika.magicalvibes.model.effect.GrantScope;
 import com.github.laxika.magicalvibes.model.effect.ManaProducingEffect;
@@ -218,7 +217,7 @@ public class HardAiDecisionEngine extends AiDecisionEngine {
                 String.format("%.1f", bestSpellValue), bestColorCoverage, gameId);
         final int idx = bestLandIndex;
         send(() -> gameActions.handlePlayCard(selfConnection,
-                new PlayCardRequest(idx, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null)));
+                new PlayCardRequest(idx, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null)));
         // Identity check: hand size alone is unreliable because landfall/ETB triggers
         // can add cards to hand (e.g. "draw a card" effects), masking a successful play.
         if (hand.contains(landCard)) {
@@ -908,7 +907,6 @@ public class HardAiDecisionEngine extends AiDecisionEngine {
         }
         return (effect instanceof RemovalEffect removal && removal.removalKind() != null)
                 || (effect instanceof DamageDealingEffect dmg && dmg.canDamageCreatures())
-                || effect instanceof DealDamageToTargetCreatureOrPlaneswalkerEffect
                 || (effect instanceof ControlStealingEffect steal
                         && (steal.controlDuration() == ControlDuration.PERMANENT
                                 || steal.controlDuration() == ControlDuration.END_OF_TURN));
@@ -957,10 +955,6 @@ public class HardAiDecisionEngine extends AiDecisionEngine {
             int damage = spellEvaluator.estimateDamageAmount(gameData, spell, dmg.damageAmount(), aiPlayer.getId());
             int toughness = gameQueryService.getEffectiveToughness(gameData, creature);
             return damage >= toughness - creature.getMarkedDamage();
-        }
-        if (effect instanceof DealDamageToTargetCreatureOrPlaneswalkerEffect dmg) {
-            int toughness = gameQueryService.getEffectiveToughness(gameData, creature);
-            return dmg.damage() >= toughness - creature.getMarkedDamage();
         }
         return false;
     }
@@ -1111,7 +1105,7 @@ public class HardAiDecisionEngine extends AiDecisionEngine {
         send(() -> gameActions.handlePlayCard(selfConnection,
                 new PlayCardRequest(idx, fXValue, fTargetId, fDamage,
                         fMultiTargets, null, null, fSacrifice,
-                        null, null, null, null, null, fExileIndices, null, null, null, fDiscardHandCardIndex)));
+                        null, null, null, null, null, fExileIndices, null, null, null, fDiscardHandCardIndex, null)));
         // Identity check: hand size alone is unreliable because ETB/cast triggers
         // can add cards back to hand (e.g. Explore), masking a successful cast.
         if (hand.contains(plan.card)) {
@@ -2563,7 +2557,7 @@ public class HardAiDecisionEngine extends AiDecisionEngine {
             final int idx = cardIndex;
             final UUID targetId = opponentId;
             send(() -> gameActions.handlePlayCard(selfConnection,
-                    new PlayCardRequest(idx, null, targetId, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null)));
+                    new PlayCardRequest(idx, null, targetId, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null)));
             // Identity check: hand size alone is unreliable because ETB/cast triggers
             // can add cards back to hand, masking a successful cast.
             if (hand.contains(burnCard)) {

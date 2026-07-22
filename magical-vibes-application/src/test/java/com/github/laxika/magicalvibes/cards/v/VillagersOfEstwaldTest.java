@@ -1,6 +1,7 @@
 package com.github.laxika.magicalvibes.cards.v;
 
 import com.github.laxika.magicalvibes.model.Permanent;
+import com.github.laxika.magicalvibes.model.Player;
 import com.github.laxika.magicalvibes.model.TurnStep;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
 import org.junit.jupiter.api.DisplayName;
@@ -10,8 +11,6 @@ import static org.assertj.core.api.Assertions.assertThat;
 
 class VillagersOfEstwaldTest extends BaseCardTest {
 
-    // ===== Werewolf transform: front -> back (no spells cast last turn) =====
-
     @Test
     @DisplayName("Transforms to Howlpack of Estwald when no spells were cast last turn")
     void transformsWhenNoSpellsCastLastTurn() {
@@ -19,12 +18,7 @@ class VillagersOfEstwaldTest extends BaseCardTest {
         Permanent villagers = findPermanent(player1, "Villagers of Estwald");
 
         gd.spellsCastLastTurn.clear();
-
-        harness.forceActivePlayer(player1);
-        harness.forceStep(TurnStep.UNTAP);
-        harness.clearPriorityPassed();
-        harness.passBothPriorities(); // advance to upkeep, trigger goes on stack
-        harness.passBothPriorities(); // resolve triggered ability
+        advanceFromUntapToResolveUpkeepTrigger(player1);
 
         assertThat(villagers.isTransformed()).isTrue();
         assertThat(villagers.getCard().getName()).isEqualTo("Howlpack of Estwald");
@@ -49,32 +43,20 @@ class VillagersOfEstwaldTest extends BaseCardTest {
         assertThat(villagers.getCard().getName()).isEqualTo("Villagers of Estwald");
     }
 
-    // ===== Werewolf transform: back -> front (two or more spells cast last turn) =====
-
     @Test
     @DisplayName("Howlpack of Estwald transforms back when a player cast two or more spells last turn")
-    void howlpackTransformsBackWhenTwoSpellsCast() {
+    void transformsBackWhenTwoSpellsCastLastTurn() {
         harness.addToBattlefield(player1, new VillagersOfEstwald());
         Permanent villagers = findPermanent(player1, "Villagers of Estwald");
 
-        // Transform to Howlpack of Estwald first
         gd.spellsCastLastTurn.clear();
-        harness.forceActivePlayer(player1);
-        harness.forceStep(TurnStep.UNTAP);
-        harness.clearPriorityPassed();
-        harness.passBothPriorities();
-        harness.passBothPriorities();
+        advanceFromUntapToResolveUpkeepTrigger(player1);
         assertThat(villagers.isTransformed()).isTrue();
 
-        // Now simulate that a player cast 2+ spells last turn
         gd.spellsCastLastTurn.clear();
         gd.spellsCastLastTurn.put(player2.getId(), 2);
 
-        harness.forceActivePlayer(player2);
-        harness.forceStep(TurnStep.UNTAP);
-        harness.clearPriorityPassed();
-        harness.passBothPriorities(); // advance to upkeep, back-face trigger goes on stack
-        harness.passBothPriorities(); // resolve transform back
+        advanceFromUntapToResolveUpkeepTrigger(player2);
 
         assertThat(villagers.isTransformed()).isFalse();
         assertThat(villagers.getCard().getName()).isEqualTo("Villagers of Estwald");
@@ -84,20 +66,14 @@ class VillagersOfEstwaldTest extends BaseCardTest {
 
     @Test
     @DisplayName("Howlpack of Estwald does not transform back when only one spell was cast last turn")
-    void howlpackDoesNotTransformWhenOneSpellCast() {
+    void doesNotTransformBackWithOnlyOneSpellCastLastTurn() {
         harness.addToBattlefield(player1, new VillagersOfEstwald());
         Permanent villagers = findPermanent(player1, "Villagers of Estwald");
 
-        // Transform to Howlpack of Estwald first
         gd.spellsCastLastTurn.clear();
-        harness.forceActivePlayer(player1);
-        harness.forceStep(TurnStep.UNTAP);
-        harness.clearPriorityPassed();
-        harness.passBothPriorities();
-        harness.passBothPriorities();
+        advanceFromUntapToResolveUpkeepTrigger(player1);
         assertThat(villagers.isTransformed()).isTrue();
 
-        // Only 1 spell cast last turn by each player
         gd.spellsCastLastTurn.clear();
         gd.spellsCastLastTurn.put(player1.getId(), 1);
         gd.spellsCastLastTurn.put(player2.getId(), 1);
@@ -111,8 +87,6 @@ class VillagersOfEstwaldTest extends BaseCardTest {
         assertThat(villagers.getCard().getName()).isEqualTo("Howlpack of Estwald");
     }
 
-    // ===== Transform triggers on every upkeep =====
-
     @Test
     @DisplayName("Transform triggers on opponent's upkeep too")
     void transformTriggersOnOpponentUpkeep() {
@@ -120,15 +94,17 @@ class VillagersOfEstwaldTest extends BaseCardTest {
         Permanent villagers = findPermanent(player1, "Villagers of Estwald");
 
         gd.spellsCastLastTurn.clear();
-
-        harness.forceActivePlayer(player2);
-        harness.forceStep(TurnStep.UNTAP);
-        harness.clearPriorityPassed();
-        harness.passBothPriorities();
-        harness.passBothPriorities();
+        advanceFromUntapToResolveUpkeepTrigger(player2);
 
         assertThat(villagers.isTransformed()).isTrue();
         assertThat(villagers.getCard().getName()).isEqualTo("Howlpack of Estwald");
     }
 
+    private void advanceFromUntapToResolveUpkeepTrigger(Player activePlayer) {
+        harness.forceActivePlayer(activePlayer);
+        harness.forceStep(TurnStep.UNTAP);
+        harness.clearPriorityPassed();
+        harness.passBothPriorities();
+        harness.passBothPriorities();
+    }
 }

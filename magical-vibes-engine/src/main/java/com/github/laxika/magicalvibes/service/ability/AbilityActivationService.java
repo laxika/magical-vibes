@@ -683,16 +683,17 @@ public class AbilityActivationService {
                     + exileNGraveyardCost.count() + ")");
         }
 
-        // Discard-a-card activation cost (Eternalize—{cost}, Discard a card): validate up front that a
-        // legal card to discard exists before paying any cost, so an unpayable discard makes activation
-        // illegal without side effects (CR 602.2a).
+        // Discard-card(s) activation cost (Eternalize—{cost}, Discard a card / Haunted Dead Discard two):
+        // validate up front that enough legal cards exist before paying any cost, so an unpayable
+        // discard makes activation illegal without side effects (CR 602.2a).
         DiscardCardTypeCost discardCardTypeCost = ability.getEffects().stream()
                 .filter(DiscardCardTypeCost.class::isInstance)
                 .map(DiscardCardTypeCost.class::cast)
                 .findFirst()
                 .orElse(null);
         if (discardCardTypeCost != null
-                && collectDiscardIndices(gameData.playerHands.get(playerId), discardCardTypeCost, xValue).isEmpty()) {
+                && collectDiscardIndices(gameData.playerHands.get(playerId), discardCardTypeCost, xValue).size()
+                < discardCardTypeCost.count()) {
             throw new IllegalStateException("No valid card to discard for the activation cost");
         }
 
@@ -730,15 +731,19 @@ public class AbilityActivationService {
             }
         }
 
-        // Discard-a-card cost: enter interactive discard-choice mode. The source card has already been
-        // exiled above, so the suspended activation is resumed via handleActivatedAbilityDiscardCostChosen.
+        // Discard-card(s) cost: enter interactive discard-choice mode. The source card may already have
+        // been exiled above, so the suspended activation is resumed via handleActivatedAbilityDiscardCostChosen.
         if (discardCardTypeCost != null) {
             List<Integer> validDiscardIndices = collectDiscardIndices(gameData.playerHands.get(playerId), discardCardTypeCost, xValue);
-            gameData.pendingGraveyardAbilityActivation = new PendingGraveyardAbilityActivation(playerId, card, ability, xValue, targetId);
+            gameData.pendingGraveyardAbilityActivation = new PendingGraveyardAbilityActivation(
+                    playerId, card, ability, xValue, targetId, discardCardTypeCost.count());
             String labelText = discardCardTypeCost.label() != null ? discardCardTypeCost.label() + " " : "";
+            String prompt = discardCardTypeCost.count() > 1
+                    ? "Choose a " + labelText + "card to discard as an activation cost ("
+                    + discardCardTypeCost.count() + " remaining)."
+                    : "Choose a " + labelText + "card to discard as an activation cost.";
             interactionHandlerRegistry.begin(gameData, new PendingInteraction.DiscardCostChoice(
-                    playerId, validDiscardIndices,
-                    "Choose a " + labelText + "card to discard as an activation cost."));
+                    playerId, validDiscardIndices, prompt));
             return;
         }
 
@@ -1155,8 +1160,44 @@ public class AbilityActivationService {
             throw new IllegalStateException("Source permanent is no longer on the battlefield");
         }
 
+        ActivatedAbility ability = resolveAbility(gameData, source, pending.abilityIndex());
+        DiscardCardTypeCost discardCost = ability.getEffects().stream()
+                .filter(DiscardCardTypeCost.class::isInstance)
+                .map(DiscardCardTypeCost.class::cast)
+                .findFirst()
+                .orElseThrow();
+
+        gameData.interaction.clearAwaitingInput();
+        payDiscardCost(gameData, player, discardCost, cardIndex, pending.xValue());
+
+        int remaining = pending.remainingDiscards() - 1;
+        if (remaining > 0) {
+            List<Integer> validDiscardIndices = collectDiscardIndices(
+                    gameData.playerHands.get(player.getId()), discardCost, pending.xValue());
+            if (validDiscardIndices.size() < remaining) {
+                clearPendingAbilityActivation(gameData);
+                throw new IllegalStateException("No valid card to discard for the activation cost");
+            }
+            gameData.pendingAbilityActivation = new PendingAbilityActivation(
+                    pending.sourcePermanentId(),
+                    pending.abilityIndex(),
+                    pending.xValue(),
+                    pending.targetId(),
+                    pending.targetZone(),
+                    pending.discardCostLabel(),
+                    remaining
+            );
+            String labelText = pending.discardCostLabel() != null ? pending.discardCostLabel() + " " : "";
+            interactionHandlerRegistry.begin(gameData, new PendingInteraction.DiscardCostChoice(
+                    player.getId(), validDiscardIndices,
+                    "Choose a " + labelText + "card to discard as an activation cost ("
+                            + remaining + " remaining)."));
+            return;
+        }
+
         // The source may be controlled by another player (an "any player may activate" ability such as
         // Oona's Prowler); re-enter with the already-resolved source rather than an own-battlefield index.
+        // discardCardIndex = -1 signals that all required discards were already paid above.
         clearPendingAbilityActivation(gameData);
         activateAbilityInternal(
                 gameData,
@@ -1166,7 +1207,7 @@ public class AbilityActivationService {
                 pending.xValue(),
                 pending.targetId(),
                 pending.targetZone(),
-                cardIndex,
+                -1,
                 null,
                 null,
                 null,
@@ -1175,8 +1216,9 @@ public class AbilityActivationService {
     }
 
     /**
-     * Resumes a graveyard-activated ability (Eternalize) suspended on its "Discard a card" cost after the
-     * player picks which card to discard. Pays the discard, then pushes the ability onto the stack.
+     * Resumes a graveyard-activated ability suspended on its discard cost after the player picks a card.
+     * Pays one discard; if more remain (e.g. Haunted Dead's "Discard two cards"), re-prompts; otherwise
+     * pushes the ability onto the stack.
      */
     private void handleGraveyardAbilityDiscardCostChosen(GameData gameData, Player player,
                                                          PendingInteraction.DiscardCostChoice cardChoice, int cardIndex) {
@@ -1192,15 +1234,37 @@ public class AbilityActivationService {
         if (cardChoice.validIndices() == null || !cardChoice.validIndices().contains(cardIndex)) {
             // Invalid index — re-prompt the discard cost choice.
             String labelText = discardCost.label() != null ? discardCost.label() + " " : "";
+            String prompt = pending.remainingDiscards() > 1
+                    ? "Choose a " + labelText + "card to discard as an activation cost ("
+                    + pending.remainingDiscards() + " remaining)."
+                    : "Choose a " + labelText + "card to discard as an activation cost.";
             sessionManager.sendToPlayer(player.getId(), InteractionPromptMessage.cardIndexPick(
-                    new ArrayList<>(cardChoice.validIndices()),
-                    "Choose a " + labelText + "card to discard as an activation cost.", false));
+                    new ArrayList<>(cardChoice.validIndices()), prompt, false));
+            return;
+        }
+
+        gameData.interaction.clearAwaitingInput();
+        payDiscardCost(gameData, player, discardCost, cardIndex, pending.xValue());
+
+        int remaining = pending.remainingDiscards() - 1;
+        if (remaining > 0) {
+            List<Integer> validDiscardIndices = collectDiscardIndices(
+                    gameData.playerHands.get(player.getId()), discardCost, pending.xValue());
+            if (validDiscardIndices.size() < remaining) {
+                gameData.pendingGraveyardAbilityActivation = null;
+                throw new IllegalStateException("No valid card to discard for the activation cost");
+            }
+            gameData.pendingGraveyardAbilityActivation = new PendingGraveyardAbilityActivation(
+                    pending.playerId(), card, ability, pending.xValue(), pending.targetId(), remaining);
+            String labelText = discardCost.label() != null ? discardCost.label() + " " : "";
+            interactionHandlerRegistry.begin(gameData, new PendingInteraction.DiscardCostChoice(
+                    pending.playerId(), validDiscardIndices,
+                    "Choose a " + labelText + "card to discard as an activation cost ("
+                            + remaining + " remaining)."));
             return;
         }
 
         gameData.pendingGraveyardAbilityActivation = null;
-        gameData.interaction.clearAwaitingInput();
-        payDiscardCost(gameData, player, discardCost, cardIndex, pending.xValue());
         completeGraveyardAbilityActivation(gameData, player, card, ability, pending.xValue(), pending.targetId());
     }
 
@@ -1312,8 +1376,11 @@ public class AbilityActivationService {
         // All state-based legality checks, shared with the AI's dry-run query. Nothing is mutated
         // until every check (including targeting below) has passed, so an illegal activation
         // rewinds cleanly with no cost paid (CR 602.2b/601.2c).
+        // discardCardIndex < 0 means the interactive path already paid all required discards — skip
+        // the discard-hand check so the re-entry does not fail after the cards left the hand.
         validateActivationLegality(gameData, playerId, permanent, ability, effectiveIndex, effectiveXValue,
-                gameData.playerManaPools.get(playerId), targetingTax);
+                gameData.playerManaPools.get(playerId), targetingTax,
+                discardCardIndex != null && discardCardIndex < 0);
 
         // Validate spell target for abilities that counter spells
         if (ability.isNeedsSpellTarget()) {
@@ -1381,8 +1448,12 @@ public class AbilityActivationService {
             List<Card> hand = gameData.playerHands.get(playerId);
             List<Integer> validDiscardIndices = collectDiscardIndices(hand, discardCardTypeCost, effectiveXValue);
             if (discardCardIndex == null) {
+                if (validDiscardIndices.size() < discardCardTypeCost.count()) {
+                    String costLabel = discardCardTypeCost.label() != null ? discardCardTypeCost.label() + " " : "";
+                    throw new IllegalStateException("Must discard a " + costLabel + "card to activate ability");
+                }
                 beginDiscardCostChoice(gameData, playerId, permanent, effectiveIndex, effectiveXValue, targetId, targetZone,
-                        discardCardTypeCost.label(), validDiscardIndices);
+                        discardCardTypeCost.label(), validDiscardIndices, discardCardTypeCost.count());
                 return;
             }
         }
@@ -1429,7 +1500,8 @@ public class AbilityActivationService {
             gameData.playerLifeTotals.put(playerId, currentLife - amount);
         }
 
-        if (discardCardTypeCost != null) {
+        // discardCardIndex < 0 means the interactive path already paid all required discards.
+        if (discardCardTypeCost != null && discardCardIndex != null && discardCardIndex >= 0) {
             payDiscardCost(gameData, player, discardCardTypeCost, discardCardIndex, effectiveXValue);
         }
 
@@ -1844,6 +1916,18 @@ public class AbilityActivationService {
     public void validateActivationLegality(GameData gameData, UUID playerId, Permanent permanent,
                                            ActivatedAbility ability, int abilityIndex, int xValue,
                                            ManaPool manaPool, int additionalGenericCost) {
+        validateActivationLegality(gameData, playerId, permanent, ability, abilityIndex, xValue,
+                manaPool, additionalGenericCost, false);
+    }
+
+    /**
+     * @param discardCostAlreadyPaid when true, skip the discard-hand size check (interactive path
+     *                               already paid the discard(s) before re-entering activation)
+     */
+    public void validateActivationLegality(GameData gameData, UUID playerId, Permanent permanent,
+                                           ActivatedAbility ability, int abilityIndex, int xValue,
+                                           ManaPool manaPool, int additionalGenericCost,
+                                           boolean discardCostAlreadyPaid) {
         List<CardEffect> abilityEffects = ability.getEffects();
 
         // Sen Triplets: a player locked out this turn can't activate any ability.
@@ -1972,16 +2056,19 @@ public class AbilityActivationService {
             }
         }
 
-        // Discard cost needs at least one valid card in hand
-        DiscardCardTypeCost discardCardTypeCost = abilityEffects.stream()
-                .filter(DiscardCardTypeCost.class::isInstance)
-                .map(DiscardCardTypeCost.class::cast)
-                .findFirst()
-                .orElse(null);
-        if (discardCardTypeCost != null
-                && collectDiscardIndices(gameData.playerHands.get(playerId), discardCardTypeCost, xValue).isEmpty()) {
-            String costLabel = discardCardTypeCost.label() != null ? discardCardTypeCost.label() + " " : "";
-            throw new IllegalStateException("Must discard a " + costLabel + "card to activate ability");
+        // Discard cost needs enough valid cards in hand (skipped when already paid interactively)
+        if (!discardCostAlreadyPaid) {
+            DiscardCardTypeCost discardCardTypeCost = abilityEffects.stream()
+                    .filter(DiscardCardTypeCost.class::isInstance)
+                    .map(DiscardCardTypeCost.class::cast)
+                    .findFirst()
+                    .orElse(null);
+            if (discardCardTypeCost != null
+                    && collectDiscardIndices(gameData.playerHands.get(playerId), discardCardTypeCost, xValue).size()
+                    < discardCardTypeCost.count()) {
+                String costLabel = discardCardTypeCost.label() != null ? discardCardTypeCost.label() + " " : "";
+                throw new IllegalStateException("Must discard a " + costLabel + "card to activate ability");
+            }
         }
 
         // Random-discard cost needs at least one card in hand
@@ -2497,19 +2584,24 @@ public class AbilityActivationService {
     }
 
     private void beginDiscardCostChoice(GameData gameData, UUID playerId, Permanent permanent, int abilityIndex, int xValue,
-                                        UUID targetId, Zone targetZone, String costLabel, List<Integer> validDiscardIndices) {
+                                        UUID targetId, Zone targetZone, String costLabel, List<Integer> validDiscardIndices,
+                                        int remainingDiscards) {
         gameData.pendingAbilityActivation = new PendingAbilityActivation(
                 permanent.getId(),
                 abilityIndex,
                 xValue,
                 targetId,
                 targetZone,
-                costLabel
+                costLabel,
+                remainingDiscards
         );
         String labelText = costLabel != null ? costLabel + " " : "";
+        String prompt = remainingDiscards > 1
+                ? "Choose a " + labelText + "card to discard as an activation cost ("
+                + remainingDiscards + " remaining)."
+                : "Choose a " + labelText + "card to discard as an activation cost.";
         interactionHandlerRegistry.begin(gameData, new com.github.laxika.magicalvibes.model.PendingInteraction.DiscardCostChoice(
-                playerId, validDiscardIndices,
-                "Choose a " + labelText + "card to discard as an activation cost."));
+                playerId, validDiscardIndices, prompt));
     }
 
     private void payDiscardCost(GameData gameData, Player player, DiscardCardTypeCost cost, Integer discardCardIndex, int xValue) {

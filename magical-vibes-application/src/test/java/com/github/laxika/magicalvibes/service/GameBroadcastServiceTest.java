@@ -517,7 +517,7 @@ class GameBroadcastServiceTest {
             return new CardView(UUID.randomUUID(), name, null, Set.of(), Set.of(), List.of(), null, null,
                     null, null, Set.of(), false, null, null, null, List.of(), false, false, List.of(), null,
                     false, false, 0, false, null, false, 0, 0, 0, 0, null, List.of(), List.of(), false, null,
-                    0, false, List.of());
+                    0, 0, false, List.of());
         }
 
         private PermanentView permanentView(UUID permId, int faceDownCount) {

@@ -19,6 +19,7 @@ import java.util.List;
 import java.util.Set;
 
 @CardRegistration(set = "M11", collectorNumber = "87")
+@CardRegistration(set = "INR", collectorNumber = "100")
 public class CaptivatingVampire extends Card {
 
     public CaptivatingVampire() {

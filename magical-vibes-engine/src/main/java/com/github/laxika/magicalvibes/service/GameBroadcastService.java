@@ -495,9 +495,14 @@ public class GameBroadcastService {
 
         // MTG rule 601.2b: "as an additional cost, discard a card" — need another card in hand
         // (matching the cost's predicate) to discard; the spell itself can never be its own discard.
+        // Discard-or-pay-mana (Lightning Axe) stays playable when the mana option is affordable.
         playable.removeIf(i -> {
-            List<Integer> discardable = castingCostService.validDiscardCostIndices(gameData, playerId, hand.get(i));
-            return discardable != null && discardable.isEmpty();
+            Card card = hand.get(i);
+            List<Integer> discardable = castingCostService.validDiscardCostIndices(gameData, playerId, card);
+            if (discardable == null || !discardable.isEmpty()) {
+                return false;
+            }
+            return !castingCostService.canPayAdditionalSpellCosts(gameData, playerId, card);
         });
 
         return playable;

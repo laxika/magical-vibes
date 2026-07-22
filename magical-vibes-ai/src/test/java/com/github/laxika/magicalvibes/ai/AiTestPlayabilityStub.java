@@ -8,12 +8,14 @@ import com.github.laxika.magicalvibes.model.ManaCost;
 import com.github.laxika.magicalvibes.model.ManaPool;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
+import com.github.laxika.magicalvibes.model.effect.DiscardCardOrPayManaCost;
 import com.github.laxika.magicalvibes.model.effect.DiscardCardTypeCost;
 import com.github.laxika.magicalvibes.model.effect.ExileCardFromGraveyardCost;
 import com.github.laxika.magicalvibes.model.effect.ExileNCardsFromGraveyardCost;
 import com.github.laxika.magicalvibes.model.effect.ExileXCardsFromGraveyardCost;
 import com.github.laxika.magicalvibes.model.effect.SacrificeArtifactCost;
 import com.github.laxika.magicalvibes.model.effect.SacrificeCreatureCost;
+import com.github.laxika.magicalvibes.model.effect.SacrificeCreatureOrPayManaCost;
 import com.github.laxika.magicalvibes.service.GameBroadcastService;
 import com.github.laxika.magicalvibes.service.cast.CastingCostService;
 import org.mockito.Mockito;
@@ -59,7 +61,8 @@ final class AiTestPlayabilityStub {
                     UUID playerId = inv.getArgument(1);
                     Card card = inv.getArgument(2);
                     boolean hasDiscardCost = card.getEffects(EffectSlot.SPELL).stream()
-                            .anyMatch(DiscardCardTypeCost.class::isInstance);
+                            .anyMatch(e -> e instanceof DiscardCardTypeCost
+                                    || e instanceof DiscardCardOrPayManaCost);
                     if (!hasDiscardCost) {
                         return null;
                     }
@@ -104,6 +107,12 @@ final class AiTestPlayabilityStub {
             switch (effect) {
                 case SacrificeCreatureCost ignored -> {
                     if (battlefield.stream().noneMatch(p -> p.getCard().hasType(CardType.CREATURE))) return false;
+                }
+                case SacrificeCreatureOrPayManaCost ignored -> {
+                    // Mana option always keeps this cost satisfiable for stub suites.
+                }
+                case DiscardCardOrPayManaCost ignored -> {
+                    // Mana option always keeps this cost satisfiable for stub suites.
                 }
                 case SacrificeArtifactCost ignored -> {
                     if (battlefield.stream().noneMatch(p -> p.getCard().hasType(CardType.ARTIFACT))) return false;

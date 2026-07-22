@@ -50,6 +50,6 @@ class BackFaceOracleRegistrationTest {
 
     private static OracleData oracle(CardColor color, List<CardColor> colors) {
         return new OracleData("Probe Spell", CardType.INSTANT, Set.of(), "{2}{R}", color, colors,
-                Set.of(), List.of(), "Add {R}{R}{R}.", null, null, Set.of(), null, null);
+                Set.of(), List.of(), "Add {R}{R}{R}.", null, null, Set.of(), null, null, null);
     }
 }

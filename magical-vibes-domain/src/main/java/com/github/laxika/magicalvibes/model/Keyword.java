@@ -57,7 +57,12 @@ public enum Keyword {
     DISTURB,
     SKULK,
     SOULBOND,
-    MIRACLE;
+    MIRACLE,
+    MADNESS,
+    ESCALATE,
+    DECAYED,
+    SPLICE,
+    DELIRIUM;
 
     /**
      * Maps each landwalk keyword to the land subtype it walks over.

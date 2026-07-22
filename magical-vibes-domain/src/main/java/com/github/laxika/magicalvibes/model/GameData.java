@@ -137,6 +137,8 @@ public class GameData {
      *  main stack. Incremented/decremented in a try/finally pair around mana-ability resolution. */
     public int manaAbilityResolutionDepth;
     public final Map<UUID, List<Card>> playerGraveyards = new ConcurrentHashMap<>();
+    /** Cards in each player's command zone (CR 903.6). Used by Eminence and similar command-zone abilities. */
+    public final Map<UUID, List<Card>> playerCommandZones = new ConcurrentHashMap<>();
     public final Map<UUID, Set<UUID>> creatureCardsPutIntoGraveyardFromBattlefieldThisTurn = new ConcurrentHashMap<>();
     /** Tracks all non-token card IDs (any type) put into each player's graveyard from the battlefield this turn (e.g. Twilight Shepherd). */
     public final Map<UUID, Set<UUID>> cardsPutIntoGraveyardFromBattlefieldThisTurn = new ConcurrentHashMap<>();
@@ -587,6 +589,19 @@ public class GameData {
     /** Tracks which permanents (by UUID) have already provided their once-each-turn "you may pay {0}"
      *  alternative cast cost this turn (As Foretold). Cleared at start of new turn. */
     public final Set<UUID> freeCastPermanentUsedThisTurn = ConcurrentHashMap.newKeySet();
+
+    /** Tracks which permanents (by UUID) have already fired a {@code OncePerTurnTriggerEffect}
+     *  this turn (e.g. Ghoulish Procession). Cleared at start of new turn. */
+    public final Set<UUID> oncePerTurnTriggersFiredThisTurn = ConcurrentHashMap.newKeySet();
+
+    /**
+     * Creatures dying together in the current simultaneous-death event (CR 700.1 / destroy batch /
+     * SBA lethal pass). Maps permanent id → permanent (last-known) and controller id. Used so
+     * "whenever another creature dies" watchers that are themselves dying still see the other
+     * deaths (e.g. Morbid Opportunist). Cleared when the batch ends; not turn-scoped.
+     */
+    public final Map<UUID, Permanent> simultaneousDyingCreatures = new ConcurrentHashMap<>();
+    public final Map<UUID, UUID> simultaneousDyingControllers = new ConcurrentHashMap<>();
 
     /** Tracks subtypes of creatures that dealt combat damage to players this turn.
      *  Maps source permanent UUID → set of subtypes the creature had at the time of dealing damage.
@@ -1749,6 +1764,9 @@ public class GameData {
         copy.untappedLandsAtTurnStart.putAll(this.untappedLandsAtTurnStart);
         copy.permanentsDealtDamageThisTurn.addAll(this.permanentsDealtDamageThisTurn);
         copy.freeCastPermanentUsedThisTurn.addAll(this.freeCastPermanentUsedThisTurn);
+        copy.oncePerTurnTriggersFiredThisTurn.addAll(this.oncePerTurnTriggersFiredThisTurn);
+        copy.simultaneousDyingCreatures.putAll(this.simultaneousDyingCreatures);
+        copy.simultaneousDyingControllers.putAll(this.simultaneousDyingControllers);
         this.combatDamageSourceSubtypesThisTurn.forEach((k, v) ->
                 copy.combatDamageSourceSubtypesThisTurn.put(k, new HashSet<>(v)));
         copy.combatDamageSourcesWithChangelingThisTurn.addAll(this.combatDamageSourcesWithChangelingThisTurn);
@@ -1766,6 +1784,7 @@ public class GameData {
         this.playerDecks.forEach((k, v) -> copy.playerDecks.put(k, new ArrayList<>(v)));
         this.playerHands.forEach((k, v) -> copy.playerHands.put(k, new ArrayList<>(v)));
         this.playerGraveyards.forEach((k, v) -> copy.playerGraveyards.put(k, new ArrayList<>(v)));
+        this.playerCommandZones.forEach((k, v) -> copy.playerCommandZones.put(k, new ArrayList<>(v)));
         copy.exiledCards.addAll(this.exiledCards);
         copy.exiledCardEggCounters.putAll(this.exiledCardEggCounters);
         copy.exiledCardsWithSilverCounters.addAll(this.exiledCardsWithSilverCounters);

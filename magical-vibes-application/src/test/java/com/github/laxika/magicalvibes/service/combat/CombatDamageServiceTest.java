@@ -96,7 +96,8 @@ class CombatDamageServiceTest {
                         gameOutcomeService, gameQueryService, gameBroadcastService,
                         permanentRemovalService, graveyardService,
                         new com.github.laxika.magicalvibes.service.state.StateTriggerService(gameBroadcastService),
-                        org.mockito.Mockito.mock(com.github.laxika.magicalvibes.service.battlefield.LegendRuleService.class));
+                        org.mockito.Mockito.mock(com.github.laxika.magicalvibes.service.battlefield.LegendRuleService.class),
+                        org.mockito.Mockito.mock(com.github.laxika.magicalvibes.service.battle.BattleDefeatSupport.class));
         combatDamageService = new CombatDamageService(gameQueryService,
                 org.mockito.Mockito.mock(com.github.laxika.magicalvibes.service.filter.PredicateEvaluationService.class),
                 org.mockito.Mockito.mock(com.github.laxika.magicalvibes.service.effect.ConditionEvaluationService.class),
@@ -104,7 +105,8 @@ class CombatDamageServiceTest {
                 permanentRemovalService, playerInputService, registry, triggerCollectionService,
                 lifeSupport, combatAttackService, combatTriggerService,
                 org.mockito.Mockito.mock(com.github.laxika.magicalvibes.service.effect.normalfx.DamageSupport.class),
-                stateBasedActionService);
+                stateBasedActionService,
+                org.mockito.Mockito.mock(com.github.laxika.magicalvibes.service.battle.BattleDefeatSupport.class));
 
         UUID gameId = UUID.randomUUID();
         player1Id = UUID.randomUUID();

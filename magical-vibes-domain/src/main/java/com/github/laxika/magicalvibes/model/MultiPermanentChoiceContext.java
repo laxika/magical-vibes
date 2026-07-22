@@ -206,4 +206,16 @@ public sealed interface MultiPermanentChoiceContext {
                           com.github.laxika.magicalvibes.model.filter.PermanentPredicate filter)
             implements MultiPermanentChoiceContext {
     }
+
+    /**
+     * Killing Wave: the choosing player selected creatures they control to keep by paying
+     * {@code xValue} life each (capped by affordable life at begin time). Choices accumulate across
+     * APNAP players in {@code accumulatedKeepIds}; {@code remainingPlayerIds} still need to choose.
+     * After the last chooser, all life is paid and non-kept creatures are sacrificed simultaneously.
+     */
+    record KillingWaveKeep(UUID choosingPlayerId, int xValue, String sourceName,
+                           java.util.List<UUID> remainingPlayerIds,
+                           java.util.List<UUID> accumulatedKeepIds)
+            implements MultiPermanentChoiceContext {
+    }
 }

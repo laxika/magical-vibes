@@ -6,6 +6,7 @@ import com.github.laxika.magicalvibes.model.CardType;
 import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.GameData;
 import com.github.laxika.magicalvibes.model.GameLog;
+import com.github.laxika.magicalvibes.model.MadnessCast;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.StackEntry;
 import com.github.laxika.magicalvibes.model.StackEntryType;
@@ -18,6 +19,7 @@ import com.github.laxika.magicalvibes.model.effect.ExileOpponentCardsInsteadOfGr
 import com.github.laxika.magicalvibes.model.effect.OwnGraveyardExileReplacement;
 import com.github.laxika.magicalvibes.model.effect.GainLifeEffect;
 import com.github.laxika.magicalvibes.model.effect.GainLifeEqualToToughnessEffect;
+import com.github.laxika.magicalvibes.model.effect.MadnessMayCastEffect;
 import com.github.laxika.magicalvibes.model.effect.RegeneratesIfWouldBeDestroyedEffect;
 import com.github.laxika.magicalvibes.model.effect.RevealAndPutOnBottomOfLibraryInsteadOfGraveyardEffect;
 import com.github.laxika.magicalvibes.model.effect.ExileWithEggCountersInsteadOfDyingEffect;
@@ -142,6 +144,30 @@ public class GraveyardService {
             gameData.playerDecks.get(ownerId).add(0, card);
             gameBroadcastService.logAndBroadcast(gameData, GameLog.cardThen(card, " is put on top of its owner's library instead of into the graveyard."));
             log.info("Game {} - {} discard replacement: put on top of library instead of graveyard", gameData.id, card.getName());
+            return false;
+        }
+        // Madness (CR 702.34a): discard into exile; triggered ability offers cast for madness cost.
+        // Cost is snapshotted now so granted madness still works if the grant source leaves the BF
+        // before the trigger resolves (Falkenrath Gorger ruling). Native MadnessCast preferred over grant.
+        String madnessCost = null;
+        if (!card.isToken()) {
+            madnessCost = card.getCastingOption(MadnessCast.class)
+                    .map(MadnessCast::manaCostString)
+                    .orElseGet(() -> gameQueryService.findGrantedMadnessCost(gameData, ownerId, card).orElse(null));
+        }
+        if (madnessCost != null) {
+            exileService.exileCard(gameData, ownerId, card);
+            gameBroadcastService.logAndBroadcast(gameData, GameLog.cardThen(card,
+                    " is discarded into exile (madness)."));
+            log.info("Game {} - {} discarded into exile for madness", gameData.id, card.getName());
+            gameData.stack.add(new StackEntry(
+                    StackEntryType.TRIGGERED_ABILITY,
+                    card,
+                    ownerId,
+                    card.getName() + "'s madness",
+                    new ArrayList<>(List.of(new MadnessMayCastEffect(madnessCost)))
+            ));
+            gameData.priorityPassedBy.clear();
             return false;
         }
         return addCardToGraveyard(gameData, ownerId, card);

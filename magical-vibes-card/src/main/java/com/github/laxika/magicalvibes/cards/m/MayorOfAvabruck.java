@@ -13,6 +13,7 @@ import com.github.laxika.magicalvibes.model.effect.TransformSelfEffect;
 import com.github.laxika.magicalvibes.model.filter.PermanentHasSubtypePredicate;
 
 @CardRegistration(set = "ISD", collectorNumber = "193")
+@CardRegistration(set = "INR", collectorNumber = "207")
 public class MayorOfAvabruck extends Card {
 
     public MayorOfAvabruck() {

@@ -23,6 +23,7 @@ import com.github.laxika.magicalvibes.model.effect.BoostEquippedCreatureUntilEnd
 import com.github.laxika.magicalvibes.model.effect.BoostSelfEffect;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
 import com.github.laxika.magicalvibes.model.effect.CastFromGraveyardTriggerEffect;
+import com.github.laxika.magicalvibes.model.effect.CopySpellForEachOtherControlledCreatureEffect;
 import com.github.laxika.magicalvibes.model.effect.CopySpellForEachOtherPlayerEffect;
 import com.github.laxika.magicalvibes.model.effect.CopySpellForEachOtherSubtypePermanentEffect;
 import com.github.laxika.magicalvibes.model.effect.CounterUnlessPaysEffect;
@@ -413,6 +414,71 @@ class SpellCastTriggerCollectorServiceTest {
 
             assertThat(result).isFalse();
             assertThat(gd.stack).isEmpty();
+        }
+    }
+
+    // ===== ON_ANY_PLAYER_CASTS_SPELL — CopySpellForEachOtherControlledCreatureEffect =====
+
+    @Nested
+    @DisplayName("ON_ANY_PLAYER_CASTS_SPELL — CopySpellForEachOtherControlledCreatureEffect")
+    class AnyPlayerCopySpellForEachOtherControlledCreature {
+
+        @Test
+        @DisplayName("puts triggered ability on stack when spell targets only the source permanent")
+        void triggersWhenSpellTargetsOnlySource() {
+            Permanent dragon = createPermanent("Mirrorwing Dragon");
+            var effect = new CopySpellForEachOtherControlledCreatureEffect();
+            Card spellCard = createInstant("Lightning Bolt");
+            var ctx = new TriggerContext.SpellCast(spellCard, player1Id, true);
+
+            StackEntry spellOnStack = new StackEntry(spellCard, player1Id);
+            spellOnStack.setTargetId(dragon.getId());
+            gd.stack.add(spellOnStack);
+
+            boolean result = registry.dispatch(
+                    match(dragon, player1Id, effect),
+                    EffectSlot.ON_ANY_PLAYER_CASTS_SPELL, effect, ctx);
+
+            assertThat(result).isTrue();
+            assertThat(gd.stack).hasSize(2);
+            assertThat(gd.stack.getLast().getEntryType()).isEqualTo(StackEntryType.TRIGGERED_ABILITY);
+        }
+
+        @Test
+        @DisplayName("returns false when spell targets a different permanent")
+        void returnsFalseWhenTargetIsNotSource() {
+            Permanent dragon = createPermanent("Mirrorwing Dragon");
+            Permanent other = createPermanent("Grizzly Bears");
+            var effect = new CopySpellForEachOtherControlledCreatureEffect();
+            Card spellCard = createInstant("Lightning Bolt");
+            var ctx = new TriggerContext.SpellCast(spellCard, player1Id, true);
+
+            StackEntry spellOnStack = new StackEntry(spellCard, player1Id);
+            spellOnStack.setTargetId(other.getId());
+            gd.stack.add(spellOnStack);
+
+            boolean result = registry.dispatch(
+                    match(dragon, player1Id, effect),
+                    EffectSlot.ON_ANY_PLAYER_CASTS_SPELL, effect, ctx);
+
+            assertThat(result).isFalse();
+        }
+
+        @Test
+        @DisplayName("returns false when trigger already has a spell snapshot")
+        void returnsFalseWhenSnapshotNotNull() {
+            Permanent dragon = createPermanent("Mirrorwing Dragon");
+            var snapshot = new StackEntry(createCard("Dummy"), player1Id);
+            var effect = new CopySpellForEachOtherControlledCreatureEffect(
+                    snapshot, player1Id, dragon.getId());
+            Card spellCard = createInstant("Lightning Bolt");
+            var ctx = new TriggerContext.SpellCast(spellCard, player1Id, true);
+
+            boolean result = registry.dispatch(
+                    match(dragon, player1Id, effect),
+                    EffectSlot.ON_ANY_PLAYER_CASTS_SPELL, effect, ctx);
+
+            assertThat(result).isFalse();
         }
     }
 

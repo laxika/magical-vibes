@@ -16,5 +16,7 @@ public enum Zone {
     /** Exile: a holding zone for cards removed from the game, face up unless stated otherwise (CR 406). */
     EXILE,
     /** A player's hand: cards they can normally cast or play from (CR 402). */
-    HAND
+    HAND,
+    /** A player's command zone: holds their commander(s) and similar objects (CR 903.6). */
+    COMMAND
 }

@@ -32,6 +32,7 @@ import com.github.laxika.magicalvibes.model.effect.RegisterDelayedManaTriggerEff
 import com.github.laxika.magicalvibes.model.effect.ReturnDyingCreatureToBattlefieldAndAttachSourceEffect;
 import com.github.laxika.magicalvibes.model.effect.ExileTargetCardFromGraveyardAndCreateTokenCopyEffect;
 import com.github.laxika.magicalvibes.model.effect.ExileTargetCardFromGraveyardAndImprintOnSourceEffect;
+import com.github.laxika.magicalvibes.model.effect.ReturnCardFromGraveyardEffect;
 import com.github.laxika.magicalvibes.model.GraveyardChoiceDestination;
 import com.github.laxika.magicalvibes.model.filter.CardPredicate;
 import com.github.laxika.magicalvibes.model.filter.CardPredicateUtils;
@@ -429,6 +430,11 @@ public class MayAbilityHandlerService {
                 anyGraveyard = effect.targetSpec().category() == TargetCategory.ANY_GRAVEYARD_CARD;
                 break;
             }
+            if (effect instanceof ReturnCardFromGraveyardEffect ret) {
+                filter = ret.filter();
+                anyGraveyard = effect.targetSpec().category() == TargetCategory.ANY_GRAVEYARD_CARD;
+                break;
+            }
             if (effect.targetSpec().category().isGraveyard()) {
                 anyGraveyard = effect.targetSpec().category() == TargetCategory.ANY_GRAVEYARD_CARD;
                 break;
@@ -632,6 +638,11 @@ public class MayAbilityHandlerService {
             }
             if (effect instanceof ExileTargetCardFromGraveyardAndCreateTokenCopyEffect exileCopy) {
                 filter = exileCopy.filter();
+                anyGraveyard = effect.targetSpec().category() == TargetCategory.ANY_GRAVEYARD_CARD;
+                break;
+            }
+            if (effect instanceof ReturnCardFromGraveyardEffect ret) {
+                filter = ret.filter();
                 anyGraveyard = effect.targetSpec().category() == TargetCategory.ANY_GRAVEYARD_CARD;
                 break;
             }

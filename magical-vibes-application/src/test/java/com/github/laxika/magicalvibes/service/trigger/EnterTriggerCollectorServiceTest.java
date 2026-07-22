@@ -14,6 +14,8 @@ import com.github.laxika.magicalvibes.model.effect.GainLifeEffect;
 import com.github.laxika.magicalvibes.model.effect.MayEffect;
 import com.github.laxika.magicalvibes.model.effect.PutCounterOnTargetPermanentEffect;
 import com.github.laxika.magicalvibes.model.effect.PutCountersOnEnteringCreatureEffect;
+import com.github.laxika.magicalvibes.model.effect.TransformEnteringCreatureEffect;
+import com.github.laxika.magicalvibes.model.effect.TransformTargetPermanentEffect;
 import com.github.laxika.magicalvibes.model.effect.TriggeringCardConditionalEffect;
 import com.github.laxika.magicalvibes.model.effect.UntapPermanentsEffect;
 import com.github.laxika.magicalvibes.model.effect.TapUntapScope;
@@ -162,6 +164,28 @@ class EnterTriggerCollectorServiceTest {
         service.checkAllyCreatureEntersTriggers(gd, player1Id, enteringCreature(4, 4), 1);
 
         assertThat(gd.stack).hasSize(2);
+    }
+
+    @Test
+    @DisplayName("Ally-creature may-transform-entering bakes the entering permanent (Vildin-Pack Alpha)")
+    void allyCreatureMayTransformEntering() {
+        var predicate = new CardSubtypePredicate(CardSubtype.WEREWOLF);
+        addAllyCreatureTrigger(EffectSlot.ON_ALLY_CREATURE_ENTERS_BATTLEFIELD,
+                new TriggeringCardConditionalEffect(predicate, new TransformEnteringCreatureEffect()));
+
+        Card entering = enteringCreature(2, 2);
+        Permanent enteringPermanent = new Permanent(entering);
+        gd.playerBattlefields.get(player1Id).add(enteringPermanent);
+
+        when(predicateEvaluationService.matchesCardPredicate(eq(entering), eq(predicate), eq(null), any(), any()))
+                .thenReturn(true);
+
+        service.checkAllyCreatureEntersTriggers(gd, player1Id, entering, 0);
+
+        assertThat(gd.stack).hasSize(1);
+        assertThat(gd.stack.getFirst().getTargetId()).isEqualTo(enteringPermanent.getId());
+        MayEffect may = (MayEffect) gd.stack.getFirst().getEffectsToResolve().getFirst();
+        assertThat(may.wrapped()).isInstanceOf(TransformTargetPermanentEffect.class);
     }
 
     @Test

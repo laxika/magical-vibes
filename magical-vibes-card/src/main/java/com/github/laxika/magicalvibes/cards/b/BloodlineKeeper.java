@@ -14,6 +14,7 @@ import java.util.List;
 import java.util.Set;
 
 @CardRegistration(set = "ISD", collectorNumber = "90")
+@CardRegistration(set = "INR", collectorNumber = "98")
 public class BloodlineKeeper extends Card {
 
     public BloodlineKeeper() {

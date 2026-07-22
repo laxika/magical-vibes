@@ -207,9 +207,23 @@ public class ValidTargetService {
     private ChooseOneEffect.ChooseOneOption findChosenMode(Card card, Integer xValue) {
         if (xValue == null) return null;
         ChooseOneEffect modal = findModalEffect(card);
-        if (modal == null || modal.choicesRequired() != 1) return null;
-        if (xValue < 0 || xValue >= modal.options().size()) return null;
-        return modal.options().get(xValue);
+        if (modal == null) return null;
+        if (modal.choicesRequired() == 1 && modal.choicesMax() == 1) {
+            if (xValue < 0 || xValue >= modal.options().size()) return null;
+            return modal.options().get(xValue);
+        }
+        // Variable / choose-multiple: only resolve a single chosen mode for per-mode filter preview
+        if (xValue < 0) {
+            try {
+                List<Integer> chosen = modal.decodeModeIndices(xValue);
+                if (chosen.size() == 1) {
+                    return modal.options().get(chosen.getFirst());
+                }
+            } catch (IllegalStateException ignored) {
+                return null;
+            }
+        }
+        return null;
     }
 
     public ValidTargetsResponse computeValidTargetsForAbility(GameData gameData, Card sourceCard, ActivatedAbility ability, UUID controllerId, int permanentIndex) {

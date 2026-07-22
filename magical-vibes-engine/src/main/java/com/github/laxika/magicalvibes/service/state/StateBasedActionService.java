@@ -36,9 +36,10 @@ public class StateBasedActionService {
     private final GraveyardService graveyardService;
     private final StateTriggerService stateTriggerService;
     private final LegendRuleService legendRuleService;
+    private final com.github.laxika.magicalvibes.service.battle.BattleDefeatSupport battleDefeatSupport;
 
     private enum DeathReason {
-        ZERO_TOUGHNESS, LETHAL_DAMAGE, ZERO_LOYALTY
+        ZERO_TOUGHNESS, LETHAL_DAMAGE, ZERO_LOYALTY, ZERO_DEFENSE
     }
 
     private record DeathEntry(Permanent permanent, DeathReason reason) {}
@@ -121,6 +122,11 @@ public class StateBasedActionService {
                 toDie.add(new DeathEntry(p, DeathReason.LETHAL_DAMAGE));
             } else if (gameQueryService.isPlaneswalker(gameData, p) && p.getCounterCount(CounterType.LOYALTY) <= 0) {
                 toDie.add(new DeathEntry(p, DeathReason.ZERO_LOYALTY));
+            } else if (gameQueryService.isBattle(gameData, p) && p.getCounterCount(CounterType.DEFENSE) <= 0
+                    && !battleDefeatSupport.hasDefeatTriggerOnStack(gameData, p.getId())) {
+                // CR 704.5v — battle with no defense counters is put into the graveyard unless a
+                // "when this battle is defeated" ability is still on the stack.
+                toDie.add(new DeathEntry(p, DeathReason.ZERO_DEFENSE));
             }
         });
 
@@ -129,25 +135,44 @@ public class StateBasedActionService {
         // re-destroyed by a later pass or a later check.
         gameData.forEachPermanent((playerId, p) -> p.setDamagedByDeathtouch(false));
 
-        for (DeathEntry entry : toDie) {
-            processedIds.add(entry.permanent().getId());
-            permanentRemovalService.removePermanentToGraveyard(gameData, entry.permanent());
-            Card cardEntry = entry.permanent().getCard();
-            String name = cardEntry.getName();
-            switch (entry.reason()) {
-                case ZERO_TOUGHNESS -> {
-                    gameBroadcastService.logAndBroadcast(gameData, GameLog.cardThen(cardEntry, " is put into the graveyard (0 toughness)."));
-                    log.info("Game {} - {} dies to state-based actions (0 toughness)", gameData.id, name);
-                }
-                case LETHAL_DAMAGE -> {
-                    gameBroadcastService.logAndBroadcast(gameData, GameLog.cardThen(cardEntry, " is destroyed (lethal damage)."));
-                    log.info("Game {} - {} dies to state-based actions (lethal damage)", gameData.id, name);
-                }
-                case ZERO_LOYALTY -> {
-                    gameBroadcastService.logAndBroadcast(gameData, GameLog.cardThen(cardEntry, " has no loyalty counters and is put into the graveyard."));
-                    log.info("Game {} - {} dies to state-based actions (0 loyalty)", gameData.id, name);
+        try {
+            for (DeathEntry entry : toDie) {
+                if (gameQueryService.isCreature(gameData, entry.permanent())) {
+                    UUID controllerId = gameQueryService.findPermanentController(gameData, entry.permanent().getId());
+                    if (controllerId != null) {
+                        gameData.simultaneousDyingCreatures.put(entry.permanent().getId(), entry.permanent());
+                        gameData.simultaneousDyingControllers.put(entry.permanent().getId(), controllerId);
+                    }
                 }
             }
+
+            for (DeathEntry entry : toDie) {
+                processedIds.add(entry.permanent().getId());
+                permanentRemovalService.removePermanentToGraveyard(gameData, entry.permanent());
+                Card cardEntry = entry.permanent().getCard();
+                String name = cardEntry.getName();
+                switch (entry.reason()) {
+                    case ZERO_TOUGHNESS -> {
+                        gameBroadcastService.logAndBroadcast(gameData, GameLog.cardThen(cardEntry, " is put into the graveyard (0 toughness)."));
+                        log.info("Game {} - {} dies to state-based actions (0 toughness)", gameData.id, name);
+                    }
+                    case LETHAL_DAMAGE -> {
+                        gameBroadcastService.logAndBroadcast(gameData, GameLog.cardThen(cardEntry, " is destroyed (lethal damage)."));
+                        log.info("Game {} - {} dies to state-based actions (lethal damage)", gameData.id, name);
+                    }
+                    case ZERO_LOYALTY -> {
+                        gameBroadcastService.logAndBroadcast(gameData, GameLog.cardThen(cardEntry, " has no loyalty counters and is put into the graveyard."));
+                        log.info("Game {} - {} dies to state-based actions (0 loyalty)", gameData.id, name);
+                    }
+                    case ZERO_DEFENSE -> {
+                        gameBroadcastService.logAndBroadcast(gameData, GameLog.cardThen(cardEntry, " has no defense counters and is put into the graveyard."));
+                        log.info("Game {} - {} dies to state-based actions (0 defense)", gameData.id, name);
+                    }
+                }
+            }
+        } finally {
+            gameData.simultaneousDyingCreatures.clear();
+            gameData.simultaneousDyingControllers.clear();
         }
 
         if (!toDie.isEmpty()) {

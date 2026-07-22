@@ -152,6 +152,24 @@ public class GameOutcomeService {
     }
 
     /**
+     * All remaining players lose simultaneously (CR 104.4a) — e.g. Triskaidekaphobia when every
+     * player has exactly 13 life. Ends the game with no winner ({@code GameOverMessage} nulls).
+     */
+    public void declareDraw(GameData gameData) {
+        gameData.status = GameStatus.FINISHED;
+
+        if (gameData.simulation) return;
+
+        gameBroadcastService.logAndBroadcast(gameData, GameLog.text("The game is a draw."));
+        sessionManager.sendToPlayers(gameData.orderedPlayerIds, new GameOverMessage(null, null));
+
+        gameTimeoutService.onGameFinished(gameData);
+        gameRegistry.remove(gameData.id);
+
+        log.info("Game {} - draw", gameData.id);
+    }
+
+    /**
      * Puts {@link EffectSlot#ON_PLAYER_LOSES_GAME} triggers (e.g. Withengar Unbound's
      * "Whenever a player loses the game, put thirteen +1/+1 counters on it") onto the stack
      * for every permanent on the battlefield that has such a trigger.

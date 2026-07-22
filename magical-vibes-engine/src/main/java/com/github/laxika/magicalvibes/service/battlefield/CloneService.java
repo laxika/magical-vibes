@@ -5,14 +5,19 @@ import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardColor;
 import com.github.laxika.magicalvibes.model.CardSubtype;
 import com.github.laxika.magicalvibes.model.CardType;
+import com.github.laxika.magicalvibes.model.CounterType;
 import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.GameData;
 import com.github.laxika.magicalvibes.model.GameLog;
 import com.github.laxika.magicalvibes.model.PendingMayAbility;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.PermanentChoiceContext;
+import com.github.laxika.magicalvibes.model.amount.DynamicAmount;
 import com.github.laxika.magicalvibes.model.effect.CopyPermanentOnEnterEffect;
 import com.github.laxika.magicalvibes.service.GameBroadcastService;
+import com.github.laxika.magicalvibes.service.effect.AmountContext;
+import com.github.laxika.magicalvibes.service.effect.AmountEvaluationService;
+import com.github.laxika.magicalvibes.service.filter.PredicateEvaluationService;
 import com.github.laxika.magicalvibes.service.input.PlayerInputService;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -22,7 +27,6 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.Set;
 import java.util.UUID;
-import com.github.laxika.magicalvibes.service.filter.PredicateEvaluationService;
 
 @Slf4j
 @Component
@@ -36,8 +40,14 @@ public class CloneService {
     private final LegendRuleService legendRuleService;
     private final BattlefieldEntryService battlefieldEntryService;
     private final PermanentCopierService permanentCopierService;
+    private final AmountEvaluationService amountEvaluationService;
 
     public boolean prepareCloneReplacementEffect(GameData gameData, UUID controllerId, Card card, UUID targetId) {
+        return prepareCloneReplacementEffect(gameData, controllerId, card, targetId, 0);
+    }
+
+    public boolean prepareCloneReplacementEffect(GameData gameData, UUID controllerId, Card card, UUID targetId,
+                                                 int xValue) {
         CopyPermanentOnEnterEffect copyEffect = card.getEffects(EffectSlot.ON_ENTER_BATTLEFIELD).stream()
                 .filter(e -> e instanceof CopyPermanentOnEnterEffect)
                 .map(e -> (CopyPermanentOnEnterEffect) e)
@@ -63,6 +73,8 @@ public class CloneService {
         gameData.cloneOperation.embalmColorOverride = copyEffect.embalmColorOverride();
         gameData.cloneOperation.embalmAddedSubtype = copyEffect.embalmAddedSubtype();
         gameData.cloneOperation.embalmRemoveManaCost = copyEffect.embalmRemoveManaCost();
+        gameData.cloneOperation.additionalPlusOnePlusOneCounters = copyEffect.additionalPlusOnePlusOneCounters();
+        gameData.cloneOperation.xValue = xValue;
         gameData.interaction.setPermanentChoiceContext(new PermanentChoiceContext.CloneCopy());
 
         gameData.pendingMayAbilities.add(new PendingMayAbility(
@@ -86,6 +98,8 @@ public class CloneService {
         CardColor embalmColorOverride = gameData.cloneOperation.embalmColorOverride;
         CardSubtype embalmAddedSubtype = gameData.cloneOperation.embalmAddedSubtype;
         boolean embalmRemoveManaCost = gameData.cloneOperation.embalmRemoveManaCost;
+        DynamicAmount additionalPlusOnePlusOneCounters = gameData.cloneOperation.additionalPlusOnePlusOneCounters;
+        int xValue = gameData.cloneOperation.xValue;
 
         gameData.cloneOperation.card = null;
         gameData.cloneOperation.controllerId = null;
@@ -97,6 +111,8 @@ public class CloneService {
         gameData.cloneOperation.embalmColorOverride = null;
         gameData.cloneOperation.embalmAddedSubtype = null;
         gameData.cloneOperation.embalmRemoveManaCost = false;
+        gameData.cloneOperation.additionalPlusOnePlusOneCounters = null;
+        gameData.cloneOperation.xValue = 0;
 
         Permanent perm = new Permanent(card);
 
@@ -116,10 +132,16 @@ public class CloneService {
                     perm.getCard().setToken(true);
                     applyEmbalmExceptionToCopy(perm.getCard(), embalmColorOverride, embalmAddedSubtype, embalmRemoveManaCost);
                 }
+                // Altered Ego: "except it enters with X additional +1/+1 counters" — only when copying.
+                // Applied before battlefield entry so ETB triggers / SBAs see the counters. Must be
+                // done here (not via EnterWithCountersEffect) because the copy overwrites the card's
+                // effects before putPermanentOntoBattlefield runs applyEnterWithCounters.
+                applyAdditionalPlusOnePlusOneCounters(gameData, controllerId, perm,
+                        additionalPlusOnePlusOneCounters, xValue);
             }
         }
 
-        battlefieldEntryService.putPermanentOntoBattlefield(gameData, controllerId, perm);
+        battlefieldEntryService.putPermanentOntoBattlefield(gameData, controllerId, perm, xValue, false);
 
         String playerName = gameData.playerIdToName.get(controllerId);
         Card enteredCard = perm.getCard();
@@ -147,6 +169,20 @@ public class CloneService {
 
         if (!gameData.interaction.isAwaitingInput()) {
             legendRuleService.checkLegendRule(gameData, controllerId);
+        }
+    }
+
+    private void applyAdditionalPlusOnePlusOneCounters(GameData gameData, UUID controllerId, Permanent perm,
+                                                       DynamicAmount amount, int xValue) {
+        if (amount == null) return;
+        if (gameQueryService.cantHaveCounters(gameData, perm)) return;
+        int count = amountEvaluationService.evaluate(gameData, amount,
+                new AmountContext(controllerId, perm, null, xValue, 0, false));
+        if (count > 0) {
+            perm.setCounterCount(CounterType.PLUS_ONE_PLUS_ONE,
+                    perm.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE) + count);
+            log.info("Game {} - {} enters as copy with {} additional +1/+1 counter(s)",
+                    gameData.id, perm.getCard().getName(), count);
         }
     }
 

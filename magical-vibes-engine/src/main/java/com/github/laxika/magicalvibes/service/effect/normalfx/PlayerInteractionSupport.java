@@ -98,10 +98,19 @@ public class PlayerInteractionSupport {
                 : effect.enterTapped() ? " tapped"
                 : effect.enterAttacking() ? " attacking"
                 : "";
-        String prompt = "Choose a " + effect.label() + " card from your hand to put onto the battlefield" + tappedSuffix + ".";
+        boolean repeats = effect.drawAndRepeat() || effect.putAnyNumber();
+        String prompt = effect.drawAndRepeat()
+                ? "You may put a " + effect.label() + " card from your hand onto the battlefield" + tappedSuffix
+                + ". If you do, draw a card and repeat this process."
+                : effect.putAnyNumber()
+                ? "Choose a " + effect.label() + " card from your hand to put onto the battlefield" + tappedSuffix
+                + " (or decline to finish)."
+                : "Choose a " + effect.label() + " card from your hand to put onto the battlefield" + tappedSuffix + ".";
         UUID attachEquipmentCardId = effect.attachSourceEquipment() ? sourceEquipmentCardId : null;
         playerInputService.beginCardChoice(gameData, playerId, validIndices, prompt, effect.enterTapped(),
-                effect.grantHaste(), effect.sacrificeAtEndStep(), attachEquipmentCardId, effect.enterAttacking());
+                effect.grantHaste(), effect.sacrificeAtEndStep(), attachEquipmentCardId, effect.enterAttacking(),
+                effect.drawAndRepeat(), repeats ? effect.predicate() : null,
+                repeats ? effect.label() : null, effect.putAnyNumber());
 
     }
     public void resolvePlayerMayPlayCreature(GameData gameData, UUID playerId) {
@@ -595,6 +604,7 @@ public class PlayerInteractionSupport {
             case ARTIFACT -> StackEntryType.ARTIFACT_SPELL;
             case ENCHANTMENT -> StackEntryType.ENCHANTMENT_SPELL;
             case PLANESWALKER -> StackEntryType.PLANESWALKER_SPELL;
+            case BATTLE -> StackEntryType.BATTLE_SPELL;
             case INSTANT -> StackEntryType.INSTANT_SPELL;
             case SORCERY -> StackEntryType.SORCERY_SPELL;
             default -> StackEntryType.SORCERY_SPELL;

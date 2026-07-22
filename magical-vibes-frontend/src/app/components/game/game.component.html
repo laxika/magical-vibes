@@ -785,11 +785,15 @@
     </div>
   }
 
-  @if (gameOverWinner()) {
+  @if (gameOverActive()) {
     <div class="game-over-overlay">
       <div class="game-over-card">
         <h2>Game Over</h2>
-        <p class="winner-text">{{ gameOverWinner() }} wins!</p>
+        @if (gameOverWinner()) {
+          <p class="winner-text">{{ gameOverWinner() }} wins!</p>
+        } @else {
+          <p class="winner-text">The game is a draw.</p>
+        }
         <button class="btn-keep" (click)="backToLobby()">Back to Lobby</button>
       </div>
     </div>

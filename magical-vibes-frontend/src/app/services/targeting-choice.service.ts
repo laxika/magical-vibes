@@ -96,6 +96,7 @@ export class TargetingChoiceService {
     this.modeCardName = '';
     this.modeOptions = [];
     this.modeChoicesRequired = 1;
+    this.modeChoicesMax = 1;
     this.modeOptional = false;
     this.modeSelectedIndices = [];
     this.spellTargetCount = 1;
@@ -166,6 +167,7 @@ export class TargetingChoiceService {
   modeCardName = '';
   modeOptions: ModalOptionView[] = [];
   modeChoicesRequired = 1;
+  modeChoicesMax = 1;
   modeOptional = false;
   modeSelectedIndices: number[] = [];
   // Multi-spell-target modal modes (e.g. "copy target instant and target creature spell")
@@ -415,6 +417,7 @@ export class TargetingChoiceService {
       this.modeCardName = card.name;
       this.modeOptions = card.modalOptions;
       this.modeChoicesRequired = card.modalChoicesRequired;
+      this.modeChoicesMax = card.modalChoicesMax > 0 ? card.modalChoicesMax : card.modalChoicesRequired;
       this.modeOptional = card.modalOptional;
       this.modeSelectedIndices = [];
       return;
@@ -519,13 +522,13 @@ export class TargetingChoiceService {
 
   toggleMode(optionIndex: number): void {
     if (!this.choosingMode) return;
-    if (this.modeChoicesRequired === 1) {
+    if (this.modeChoicesRequired === 1 && this.modeChoicesMax === 1) {
       this.modeSelectedIndices = [optionIndex];
       return;
     }
     if (this.modeSelectedIndices.includes(optionIndex)) {
       this.modeSelectedIndices = this.modeSelectedIndices.filter(i => i !== optionIndex);
-    } else if (this.modeSelectedIndices.length < this.modeChoicesRequired) {
+    } else if (this.modeSelectedIndices.length < this.modeChoicesMax) {
       this.modeSelectedIndices = [...this.modeSelectedIndices, optionIndex];
     }
   }
@@ -536,11 +539,11 @@ export class TargetingChoiceService {
 
   /**
    * Encodes the mode selection the same way the engine's ChooseOneEffect.encodeModeSelection
-   * does: choose-one spells use the 0-based mode index, choose-two (or higher) spells use a
-   * negative bitmask.
+   * does: exact choose-one uses the 0-based mode index; choose-two / one-or-more use a
+   * negative bitmask (including selecting a single mode of a one-or-more spell).
    */
   private encodeModeSelection(indices: number[]): number {
-    if (this.modeChoicesRequired === 1) {
+    if (this.modeChoicesRequired === 1 && this.modeChoicesMax === 1) {
       return indices[0];
     }
     let mask = 0;
@@ -551,7 +554,9 @@ export class TargetingChoiceService {
   }
 
   confirmModes(): void {
-    if (!this.choosingMode || this.modeSelectedIndices.length !== this.modeChoicesRequired) return;
+    if (!this.choosingMode
+        || this.modeSelectedIndices.length < this.modeChoicesRequired
+        || this.modeSelectedIndices.length > this.modeChoicesMax) return;
     const g = this.gameSignal();
     if (!g) return;
 
@@ -623,6 +628,7 @@ export class TargetingChoiceService {
     this.modeCardName = '';
     this.modeOptions = [];
     this.modeChoicesRequired = 1;
+    this.modeChoicesMax = 1;
     this.modeOptional = false;
     this.modeSelectedIndices = [];
   }
@@ -682,6 +688,7 @@ export class TargetingChoiceService {
       this.modeCardName = card.name;
       this.modeOptions = card.modalOptions;
       this.modeChoicesRequired = card.modalChoicesRequired;
+      this.modeChoicesMax = card.modalChoicesMax > 0 ? card.modalChoicesMax : card.modalChoicesRequired;
       this.modeOptional = card.modalOptional;
       this.modeSelectedIndices = [];
       return;

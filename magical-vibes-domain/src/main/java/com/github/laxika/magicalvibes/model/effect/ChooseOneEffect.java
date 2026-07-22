@@ -10,34 +10,61 @@ import java.util.List;
  * <p>
  * Used by cards like Slagstorm: "Choose one — Slagstorm deals 3 damage to each creature.
  * — Slagstorm deals 3 damage to each player."
+ * <p>
+ * {@code choicesRequired} is the minimum number of modes that must be chosen;
+ * {@code choicesMax} is the maximum (inclusive). Classic "choose one" is {@code (1, 1)};
+ * "choose two" is {@code (2, 2)}; "choose one or more" is {@code (1, options.size())}.
  */
-public record ChooseOneEffect(List<ChooseOneOption> options, boolean optional, int choicesRequired) implements CardEffect {
+public record ChooseOneEffect(List<ChooseOneOption> options, boolean optional, int choicesRequired, int choicesMax)
+        implements CardEffect {
+
+    public ChooseOneEffect {
+        if (choicesRequired < 1) {
+            throw new IllegalArgumentException("choicesRequired must be >= 1");
+        }
+        if (choicesMax < choicesRequired) {
+            throw new IllegalArgumentException("choicesMax must be >= choicesRequired");
+        }
+    }
 
     public ChooseOneEffect(List<ChooseOneOption> options) {
-        this(options, false, 1);
+        this(options, false, 1, 1);
     }
 
     public ChooseOneEffect(List<ChooseOneOption> options, boolean optional) {
-        this(options, optional, 1);
+        this(options, optional, 1, 1);
     }
 
     public ChooseOneEffect(List<ChooseOneOption> options, int choicesRequired) {
-        this(options, false, choicesRequired);
+        this(options, false, choicesRequired, choicesRequired);
+    }
+
+    /** "Choose one or more —" modal: at least one mode, up to every mode. */
+    public static ChooseOneEffect oneOrMore(List<ChooseOneOption> options) {
+        return new ChooseOneEffect(options, false, 1, options.size());
     }
 
     /**
-     * Encodes a modal selection for casting. Choose-one spells use a 0-based mode index;
-     * choose-two (or higher) spells use a negative bitmask ({@code -(1 << mode0 | 1 << mode1 | ...)}).
+     * Encodes a modal selection for casting. Exact choose-one ({@code choicesRequired == choicesMax == 1})
+     * uses a 0-based mode index; any multi-mode or variable-count spell uses a negative bitmask
+     * ({@code -(1 << mode0 | 1 << mode1 | ...)}), including selecting a single mode of a
+     * "choose one or more" spell.
      */
     public static int encodeModeSelection(int choicesRequired, int... modeIndices) {
-        if (choicesRequired == 1) {
+        return encodeModeSelection(choicesRequired, choicesRequired, modeIndices);
+    }
+
+    /** Variable-count / ranged modal encoding ({@code choicesMin}..{@code choicesMax}). */
+    public static int encodeModeSelection(int choicesMin, int choicesMax, int[] modeIndices) {
+        if (choicesMin == 1 && choicesMax == 1) {
             if (modeIndices.length != 1) {
                 throw new IllegalArgumentException("Choose-one requires exactly one mode index");
             }
             return modeIndices[0];
         }
-        if (modeIndices.length != choicesRequired) {
-            throw new IllegalArgumentException("Expected " + choicesRequired + " mode indices");
+        if (modeIndices.length < choicesMin || modeIndices.length > choicesMax) {
+            throw new IllegalArgumentException(
+                    "Expected between " + choicesMin + " and " + choicesMax + " mode indices");
         }
         int mask = 0;
         for (int modeIndex : modeIndices) {
@@ -48,7 +75,7 @@ public record ChooseOneEffect(List<ChooseOneOption> options, boolean optional, i
 
     /** Returns the chosen mode indices in card-text order. */
     public List<Integer> decodeModeIndices(int xValue) {
-        if (choicesRequired == 1) {
+        if (choicesRequired == 1 && choicesMax == 1) {
             if (xValue < 0 || xValue >= options.size()) {
                 throw new IllegalStateException("Invalid mode index: " + xValue);
             }
@@ -64,10 +91,16 @@ public record ChooseOneEffect(List<ChooseOneOption> options, boolean optional, i
                 chosen.add(i);
             }
         }
-        if (chosen.size() != choicesRequired) {
-            throw new IllegalStateException("Expected " + choicesRequired + " modes, got " + chosen.size());
+        if (chosen.size() < choicesRequired || chosen.size() > choicesMax) {
+            throw new IllegalStateException(
+                    "Expected between " + choicesRequired + " and " + choicesMax + " modes, got " + chosen.size());
         }
         return chosen;
+    }
+
+    /** True when this modal allows a variable number of modes (e.g. "choose one or more"). */
+    public boolean variableModeCount() {
+        return choicesMax > choicesRequired;
     }
 
     /**

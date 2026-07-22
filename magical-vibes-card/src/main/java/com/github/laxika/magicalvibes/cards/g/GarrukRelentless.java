@@ -18,6 +18,7 @@ import java.util.Set;
 import com.github.laxika.magicalvibes.model.CounterType;
 
 @CardRegistration(set = "ISD", collectorNumber = "181")
+@CardRegistration(set = "INR", collectorNumber = "197")
 public class GarrukRelentless extends Card {
 
     public GarrukRelentless() {

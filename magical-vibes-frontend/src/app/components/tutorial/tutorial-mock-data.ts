@@ -37,6 +37,7 @@ function makeCard(overrides: Partial<Card>): Card {
     transformable: false,
     kickerCost: null,
     modalChoicesRequired: 0,
+    modalChoicesMax: 0,
     modalOptional: false,
     modalOptions: null,
     ...overrides

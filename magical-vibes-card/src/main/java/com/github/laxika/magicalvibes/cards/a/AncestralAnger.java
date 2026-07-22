@@ -17,6 +17,7 @@ import com.github.laxika.magicalvibes.model.filter.PermanentIsCreaturePredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentPredicateTargetFilter;
 
 @CardRegistration(set = "SOS", collectorNumber = "106")
+@CardRegistration(set = "INR", collectorNumber = "141")
 public class AncestralAnger extends Card {
 
     public AncestralAnger() {

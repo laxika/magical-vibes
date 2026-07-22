@@ -11,6 +11,7 @@ import com.github.laxika.magicalvibes.model.effect.ConditionalEffect;
 import com.github.laxika.magicalvibes.model.effect.TransformSelfEffect;
 
 @CardRegistration(set = "DKA", collectorNumber = "125")
+@CardRegistration(set = "INR", collectorNumber = "212")
 public class ScornedVillager extends Card {
 
     public ScornedVillager() {

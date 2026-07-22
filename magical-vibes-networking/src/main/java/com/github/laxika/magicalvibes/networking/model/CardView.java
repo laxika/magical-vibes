@@ -47,6 +47,7 @@ public record CardView(
         boolean transformable,
         String kickerCost,
         int modalChoicesRequired,
+        int modalChoicesMax,
         boolean modalOptional,
         List<ModalOptionView> modalOptions
 ) {

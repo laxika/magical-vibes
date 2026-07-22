@@ -113,6 +113,9 @@ public class MeldWithNamedCreatureEffectHandler implements NormalEffectHandlerBe
         melded.getMeldComponentCards().add(partnerCard);
 
         battlefieldEntryService.putPermanentOntoBattlefield(gameData, controllerId, melded);
+        // Melded permanent enters the battlefield (CR 701.37c) — fire its ETB triggers.
+        battlefieldEntryService.handleCreatureEnteredBattlefield(
+                gameData, controllerId, meldResult, null, false);
 
         gameBroadcastService.logAndBroadcast(gameData, GameLog.builder()
                 .card(sourceCard).text(" and ").card(partnerCard)

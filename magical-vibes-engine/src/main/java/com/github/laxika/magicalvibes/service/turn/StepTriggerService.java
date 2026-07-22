@@ -1502,21 +1502,31 @@ public class StepTriggerService {
             }
         }
 
-        // Scattering Stroke's clash-win reward: at the beginning of the controller's next main phase,
-        // they may add mana equal to the countered spell's mana value (snapshotted when it resolved).
+        drainAddManaAtNextMainPhase(gameData);
+    }
+
+    /**
+     * Fires delayed "add mana at the beginning of your next main phase" abilities for the active
+     * player. Called on entry to both precombat and postcombat main (Conduit of Storms schedules
+     * during combat for the postcombat main; Scattering Stroke may schedule for either).
+     */
+    public void drainAddManaAtNextMainPhase(GameData gameData) {
         UUID mainPhasePlayerId = gameData.activePlayerId;
         List<AddManaAtNextMainPhase> manaRewards = gameData.drainDelayedActions(
                 AddManaAtNextMainPhase.class, a -> a.controllerId().equals(mainPhasePlayerId));
         for (AddManaAtNextMainPhase reward : manaRewards) {
-            MayEffect mayAddMana = new MayEffect(
-                    new AwardManaEffect(reward.color(), reward.amount()),
-                    "Add " + reward.amount() + " " + reward.color().getCode() + "?");
+            CardEffect manaEffect = new AwardManaEffect(reward.color(), reward.amount());
+            if (reward.optional()) {
+                manaEffect = new MayEffect(
+                        manaEffect,
+                        "Add " + reward.amount() + " " + reward.color().getCode() + "?");
+            }
             gameData.stack.add(new StackEntry(
                     StackEntryType.TRIGGERED_ABILITY,
                     reward.sourceCard(),
                     reward.controllerId(),
                     reward.sourceCard().getName() + "'s delayed ability",
-                    new ArrayList<>(List.of(mayAddMana))
+                    new ArrayList<>(List.of(manaEffect))
             ));
 
             gameBroadcastService.logAndBroadcast(gameData, GameLog.cardThen(reward.sourceCard(), "'s delayed ability triggers."));
@@ -2788,9 +2798,26 @@ public class StepTriggerService {
         List<CardEffect> mayEffects = combatEffects.stream()
                 .filter(e -> e instanceof MayEffect)
                 .toList();
-        List<CardEffect> mandatoryEffects = combatEffects.stream()
-                .filter(e -> !(e instanceof MayEffect))
-                .toList();
+        List<CardEffect> mandatoryEffects = new ArrayList<>();
+        for (CardEffect effect : combatEffects) {
+            if (effect instanceof MayEffect) {
+                continue;
+            }
+            // Intervening-if (CR 603.4): AllOf / ControlsPermanentCount gate at trigger time
+            // (Graf Rats meld). Leave ConditionalEffect wrappers with other conditions
+            // (e.g. Odric ControlsPermanent) on the stack for resolution-time checks.
+            if (effect instanceof ConditionalEffect conditional
+                    && (conditional.condition() instanceof AllOf
+                        || conditional.condition() instanceof ControlsPermanentCount)) {
+                if (!conditionEvaluationService.isMet(gameData, conditional.condition(),
+                        ConditionContext.forPermanent(perm, controllerId))) {
+                    log.info("Game {} - {} beginning-of-combat trigger skipped ({} not met)",
+                            gameData.id, perm.getCard().getName(), conditional.condition().conditionName());
+                    continue;
+                }
+            }
+            mandatoryEffects.add(effect);
+        }
 
         for (CardEffect effect : mayEffects) {
             gameData.queueMayAbility(perm.getCard(), controllerId, (MayEffect) effect, null, perm.getId());
@@ -2863,14 +2890,39 @@ public class StepTriggerService {
                 trigger.sourceCard(),
                 TriggerTargetCollector.Options.END_STEP);
         List<UUID> validTargets = result.validTargets();
+        boolean optionalTarget = trigger.sourceCard().getMinTargets() == 0;
 
         if (validTargets.isEmpty()) {
+            if (optionalTarget) {
+                // "up to one" with no legal targets — ability still goes on the stack with no target
+                gameData.stack.add(new StackEntry(
+                        StackEntryType.TRIGGERED_ABILITY,
+                        trigger.sourceCard(),
+                        trigger.controllerId(),
+                        trigger.sourceCard().getName() + "'s combat ability",
+                        new ArrayList<>(trigger.effects()),
+                        (UUID) null,
+                        trigger.sourcePermanentId()
+                ));
+                gameBroadcastService.logAndBroadcast(gameData,
+                        GameLog.cardThen(trigger.sourceCard(), "'s beginning of combat trigger targets nothing."));
+                log.info("Game {} - {} beginning-of-combat trigger stacked with no target (up to one)",
+                        gameData.id, trigger.sourceCard().getName());
+                processNextBeginningOfCombatTriggerTarget(gameData);
+                return;
+            }
             gameBroadcastService.logAndBroadcast(gameData,
                     GameLog.cardThen(trigger.sourceCard(), "'s beginning of combat trigger has no valid targets."));
             log.info("Game {} - {} beginning-of-combat trigger skipped (no valid targets)",
                     gameData.id, trigger.sourceCard().getName());
             processNextBeginningOfCombatTriggerTarget(gameData);
             return;
+        }
+
+        if (optionalTarget) {
+            // Choose yourself to decline (Saga chapter "up to one" pattern)
+            validTargets = new ArrayList<>(validTargets);
+            validTargets.add(trigger.controllerId());
         }
 
         gameData.interaction.setPermanentChoiceContext(trigger);
@@ -2886,8 +2938,12 @@ public class StepTriggerService {
             targetDescription = "target permanent";
         }
 
-        playerInputService.beginPermanentChoice(gameData, trigger.controllerId(), validTargets,
-                trigger.sourceCard().getName() + "'s ability — Choose " + targetDescription + ".");
+        String prompt = optionalTarget
+                ? trigger.sourceCard().getName() + "'s ability — Choose up to one " + targetDescription
+                        + " (choose yourself to decline)."
+                : trigger.sourceCard().getName() + "'s ability — Choose " + targetDescription + ".";
+
+        playerInputService.beginPermanentChoice(gameData, trigger.controllerId(), validTargets, prompt);
 
         gameBroadcastService.logAndBroadcast(gameData, GameLog.cardThen(trigger.sourceCard(),
                 "'s beginning of combat trigger — choose " + targetDescription + "."));

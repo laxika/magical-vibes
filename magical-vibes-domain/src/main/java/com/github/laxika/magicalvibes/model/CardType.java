@@ -13,6 +13,7 @@ public enum CardType {
     INSTANT("Instant"),
     ARTIFACT("Artifact"),
     PLANESWALKER("Planeswalker"),
+    BATTLE("Battle"),
     KINDRED("Kindred");
 
     @Getter

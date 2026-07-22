@@ -25,6 +25,7 @@ import com.github.laxika.magicalvibes.model.StackEntryType;
 import com.github.laxika.magicalvibes.model.amount.DynamicAmount;
 import com.github.laxika.magicalvibes.model.effect.SacrificePermanentsEffect;
 import com.github.laxika.magicalvibes.model.effect.SacrificeRecipient;
+import com.github.laxika.magicalvibes.model.filter.FilterContext;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsCreaturePredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsLandPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentPredicate;
@@ -202,8 +203,8 @@ class SacrificePermanentsEffectHandlerTest {
         void autoSacrificesOnlyMatch() {
             Permanent forest = addPermanent(player2Id, "Forest", CardType.LAND);
             stubCount(1);
-            when(predicateEvaluationService.matchesPermanentPredicate(eq(gd), eq(forest),
-                    any(PermanentPredicate.class))).thenReturn(true);
+            when(predicateEvaluationService.matchesPermanentPredicate(eq(forest),
+                    any(PermanentPredicate.class), any(FilterContext.class))).thenReturn(true);
 
             handler.resolve(gd, entry(player1Id, player2Id), landSac());
 
@@ -217,8 +218,8 @@ class SacrificePermanentsEffectHandlerTest {
             Permanent forest = addPermanent(player2Id, "Forest", CardType.LAND);
             Permanent island = addPermanent(player2Id, "Island", CardType.LAND);
             stubCount(1);
-            when(predicateEvaluationService.matchesPermanentPredicate(eq(gd), any(Permanent.class),
-                    any(PermanentPredicate.class))).thenReturn(true);
+            when(predicateEvaluationService.matchesPermanentPredicate(any(Permanent.class),
+                    any(PermanentPredicate.class), any(FilterContext.class))).thenReturn(true);
 
             handler.resolve(gd, entry(player1Id, player2Id), landSac());
 
@@ -242,8 +243,8 @@ class SacrificePermanentsEffectHandlerTest {
         void logsWhenNoMatch() {
             Permanent bears = addPermanent(player2Id, "Grizzly Bears", CardType.CREATURE);
             stubCount(1);
-            when(predicateEvaluationService.matchesPermanentPredicate(eq(gd), eq(bears),
-                    any(PermanentPredicate.class))).thenReturn(false);
+            when(predicateEvaluationService.matchesPermanentPredicate(eq(bears),
+                    any(PermanentPredicate.class), any(FilterContext.class))).thenReturn(false);
 
             handler.resolve(gd, entry(player1Id, player2Id), landSac());
 
@@ -323,8 +324,8 @@ class SacrificePermanentsEffectHandlerTest {
             Permanent forest = addPermanent(player1Id, "Forest", CardType.LAND);
             Permanent island = addPermanent(player2Id, "Island", CardType.LAND);
             stubCount(1);
-            when(predicateEvaluationService.matchesPermanentPredicate(eq(gd), any(Permanent.class),
-                    any(PermanentPredicate.class))).thenReturn(true);
+            when(predicateEvaluationService.matchesPermanentPredicate(any(Permanent.class),
+                    any(PermanentPredicate.class), any(FilterContext.class))).thenReturn(true);
             when(gameQueryService.findPermanentById(gd, forest.getId())).thenReturn(forest);
             when(gameQueryService.findPermanentById(gd, island.getId())).thenReturn(island);
             when(gameQueryService.findPermanentController(gd, forest.getId())).thenReturn(player1Id);
@@ -342,8 +343,8 @@ class SacrificePermanentsEffectHandlerTest {
             addPermanent(player2Id, "Forest", CardType.LAND);
             addPermanent(player2Id, "Island", CardType.LAND);
             stubCount(1);
-            when(predicateEvaluationService.matchesPermanentPredicate(eq(gd), any(Permanent.class),
-                    any(PermanentPredicate.class))).thenReturn(true);
+            when(predicateEvaluationService.matchesPermanentPredicate(any(Permanent.class),
+                    any(PermanentPredicate.class), any(FilterContext.class))).thenReturn(true);
 
             handler.resolve(gd, entry(player1Id, null), landSac(SacrificeRecipient.EACH_PLAYER));
 
@@ -370,8 +371,8 @@ class SacrificePermanentsEffectHandlerTest {
         void targetedPlayerSacrifices() {
             Permanent forest = addPermanent(player2Id, "Forest", CardType.LAND);
             stubCount(1);
-            when(predicateEvaluationService.matchesPermanentPredicate(eq(gd), eq(forest),
-                    any(PermanentPredicate.class))).thenReturn(true);
+            when(predicateEvaluationService.matchesPermanentPredicate(eq(forest),
+                    any(PermanentPredicate.class), any(FilterContext.class))).thenReturn(true);
 
             handler.resolve(gd, entry(player1Id, player2Id), anyPermanentSac());
 
@@ -386,8 +387,8 @@ class SacrificePermanentsEffectHandlerTest {
             when(gameQueryService.findPermanentController(gd, planeswalkerId)).thenReturn(player2Id);
             Permanent forest = addPermanent(player2Id, "Forest", CardType.LAND);
             stubCount(1);
-            when(predicateEvaluationService.matchesPermanentPredicate(eq(gd), eq(forest),
-                    any(PermanentPredicate.class))).thenReturn(true);
+            when(predicateEvaluationService.matchesPermanentPredicate(eq(forest),
+                    any(PermanentPredicate.class), any(FilterContext.class))).thenReturn(true);
 
             handler.resolve(gd, entry(player1Id, planeswalkerId), anyPermanentSac());
 

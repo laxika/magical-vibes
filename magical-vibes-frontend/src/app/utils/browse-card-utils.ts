@@ -41,6 +41,7 @@ export function browseInfoToCard(info: BrowseCardInfo): Card {
     transformable: false,
     kickerCost: null,
     modalChoicesRequired: 0,
+    modalChoicesMax: 0,
     modalOptional: false,
     modalOptions: null
   };

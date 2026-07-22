@@ -3,6 +3,7 @@ package com.github.laxika.magicalvibes.service.trigger;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardType;
 import com.github.laxika.magicalvibes.model.EffectSlot;
+import com.github.laxika.magicalvibes.model.GameData;
 import com.github.laxika.magicalvibes.model.PendingMayAbility;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.PermanentChoiceContext;
@@ -20,8 +21,10 @@ import com.github.laxika.magicalvibes.model.effect.CopyControllerCastSpellOnSpel
 import com.github.laxika.magicalvibes.model.effect.CopySpellForEachOtherPlayerEffect;
 import com.github.laxika.magicalvibes.model.effect.MayPayManaEffect;
 import com.github.laxika.magicalvibes.model.effect.MayPayTapPermanentsEffect;
+import com.github.laxika.magicalvibes.model.effect.CopySpellForEachOtherControlledCreatureEffect;
 import com.github.laxika.magicalvibes.model.effect.CopySpellForEachOtherSubtypePermanentEffect;
 import com.github.laxika.magicalvibes.model.effect.CounterUnlessPaysEffect;
+import com.github.laxika.magicalvibes.model.effect.DealDamageEqualToManaSpentToCastToAnyTargetEffect;
 import com.github.laxika.magicalvibes.model.effect.DealDamageEqualToSpellManaValueToAnyTargetEffect;
 import com.github.laxika.magicalvibes.model.effect.DiscardEffect;
 import com.github.laxika.magicalvibes.model.effect.DamageUnlessPaysEffect;
@@ -130,32 +133,9 @@ public class SpellCastTriggerCollectorService {
         TriggerContext.SpellCast sc = (TriggerContext.SpellCast) ctx;
         if (trigger.spellSnapshot() != null) return false;
 
-        Card spellCard = sc.spellCard();
-        if (!spellCard.hasType(CardType.INSTANT) && !spellCard.hasType(CardType.SORCERY)) return false;
-
-        // Find the spell on the stack
-        StackEntry spellEntry = null;
-        for (StackEntry se : match.gameData().stack) {
-            if (se.getCard().getId().equals(spellCard.getId())) {
-                spellEntry = se;
-                break;
-            }
-        }
-        if (spellEntry == null) return false;
-
-        // Determine the single unique target
-        UUID singleTargetId = null;
-        if (spellEntry.getTargetId() != null
-                && spellEntry.getTargetZone() == null
-                && spellEntry.getTargetIds().isEmpty()) {
-            singleTargetId = spellEntry.getTargetId();
-        } else if (spellEntry.getTargetId() == null
-                && !spellEntry.getTargetIds().isEmpty()
-                && spellEntry.getTargetIds().stream().distinct().count() == 1) {
-            singleTargetId = spellEntry.getTargetIds().getFirst();
-        }
+        StackEntry spellEntry = findInstantOrSorceryOnStack(match, sc);
+        UUID singleTargetId = soleNonPlayerTargetId(match.gameData(), spellEntry);
         if (singleTargetId == null) return false;
-        if (match.gameData().playerIds.contains(singleTargetId)) return false;
 
         Permanent targetPerm = gameQueryService.findPermanentById(match.gameData(), singleTargetId);
         if (targetPerm == null) return false;
@@ -174,6 +154,63 @@ public class SpellCastTriggerCollectorService {
                 new ArrayList<>(List.of(resolutionEffect))
         ));
         return true;
+    }
+
+    @CollectsTrigger(value = CopySpellForEachOtherControlledCreatureEffect.class, slot = EffectSlot.ON_ANY_PLAYER_CASTS_SPELL)
+    private boolean handleCopySpellForEachOtherControlledCreature(TriggerMatchContext match,
+            CopySpellForEachOtherControlledCreatureEffect trigger, TriggerContext ctx) {
+        TriggerContext.SpellCast sc = (TriggerContext.SpellCast) ctx;
+        if (trigger.spellSnapshot() != null) return false;
+
+        StackEntry spellEntry = findInstantOrSorceryOnStack(match, sc);
+        UUID singleTargetId = soleNonPlayerTargetId(match.gameData(), spellEntry);
+        if (singleTargetId == null) return false;
+        // Mirrorwing style: spell must target only this source permanent
+        if (!singleTargetId.equals(match.permanent().getId())) return false;
+
+        StackEntry snapshot = new StackEntry(spellEntry);
+        CopySpellForEachOtherControlledCreatureEffect resolutionEffect =
+                new CopySpellForEachOtherControlledCreatureEffect(
+                        snapshot, sc.castingPlayerId(), singleTargetId);
+
+        match.gameData().stack.add(new StackEntry(
+                StackEntryType.TRIGGERED_ABILITY,
+                match.permanent().getCard(),
+                match.controllerId(),
+                match.permanent().getCard().getName() + "'s ability",
+                new ArrayList<>(List.of(resolutionEffect))
+        ));
+        return true;
+    }
+
+    private StackEntry findInstantOrSorceryOnStack(TriggerMatchContext match, TriggerContext.SpellCast sc) {
+        Card spellCard = sc.spellCard();
+        if (!spellCard.hasType(CardType.INSTANT) && !spellCard.hasType(CardType.SORCERY)) return null;
+        for (StackEntry se : match.gameData().stack) {
+            if (se.getCard().getId().equals(spellCard.getId())) {
+                return se;
+            }
+        }
+        return null;
+    }
+
+    /** Exactly one unique non-player target on the spell, else null. */
+    private UUID soleNonPlayerTargetId(GameData gameData, StackEntry spellEntry) {
+        if (spellEntry == null) return null;
+
+        UUID singleTargetId = null;
+        if (spellEntry.getTargetId() != null
+                && spellEntry.getTargetZone() == null
+                && spellEntry.getTargetIds().isEmpty()) {
+            singleTargetId = spellEntry.getTargetId();
+        } else if (spellEntry.getTargetId() == null
+                && !spellEntry.getTargetIds().isEmpty()
+                && spellEntry.getTargetIds().stream().distinct().count() == 1) {
+            singleTargetId = spellEntry.getTargetIds().getFirst();
+        }
+        if (singleTargetId == null) return null;
+        if (gameData.playerIds.contains(singleTargetId)) return null;
+        return singleTargetId;
     }
 
     @CollectsTrigger(value = CopySpellForEachOtherPlayerEffect.class, slot = EffectSlot.ON_ANY_PLAYER_CASTS_SPELL)
@@ -534,6 +571,28 @@ public class SpellCastTriggerCollectorService {
                 "'s triggered ability triggers — choose a target for " + manaValue + " damage."));
         log.info("Game {} - {} spell-cast mana-value trigger queued ({} damage)",
                 match.gameData().id, match.permanent().getCard().getName(), manaValue);
+        return true;
+    }
+
+    @CollectsTrigger(value = DealDamageEqualToManaSpentToCastToAnyTargetEffect.class, slot = EffectSlot.ON_CONTROLLER_CASTS_SPELL)
+    private boolean handleManaSpentDamage(TriggerMatchContext match,
+            DealDamageEqualToManaSpentToCastToAnyTargetEffect trigger, TriggerContext ctx) {
+        TriggerContext.SpellCast sc = (TriggerContext.SpellCast) ctx;
+        if (trigger.spellFilter() != null
+                && !predicateEvaluationService.matchesCardPredicate(sc.spellCard(), trigger.spellFilter(), null,
+                match.gameData(), sc.castingPlayerId())) {
+            return false;
+        }
+
+        int manaSpent = match.gameData().getSpellCastManaSpent(sc.spellCard().getId());
+        List<CardEffect> resolvedEffects = List.of(new DealDamageToAnyTargetEffect(manaSpent));
+        match.gameData().queueInteraction(new PermanentChoiceContext.SpellTargetTriggerAnyTarget(
+                match.permanent().getCard(), match.controllerId(), new ArrayList<>(resolvedEffects)
+        ));
+        gameBroadcastService.logAndBroadcast(match.gameData(), GameLog.cardThen(match.permanent().getCard(),
+                "'s triggered ability triggers — choose a target for " + manaSpent + " damage."));
+        log.info("Game {} - {} spell-cast mana-spent trigger queued ({} damage)",
+                match.gameData().id, match.permanent().getCard().getName(), manaSpent);
         return true;
     }
 

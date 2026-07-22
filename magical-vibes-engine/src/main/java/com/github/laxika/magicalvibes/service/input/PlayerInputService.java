@@ -75,9 +75,28 @@ public class PlayerInputService {
     public void beginCardChoice(GameData gameData, UUID playerId, List<Integer> validIndices, String prompt,
                                 boolean enterTapped, boolean grantHaste, boolean sacrificeAtEndStep,
                                 UUID attachEquipmentCardId, boolean enterAttacking) {
+        beginCardChoice(gameData, playerId, validIndices, prompt, enterTapped, grantHaste, sacrificeAtEndStep,
+                attachEquipmentCardId, enterAttacking, false, null, null, false);
+    }
+
+    public void beginCardChoice(GameData gameData, UUID playerId, List<Integer> validIndices, String prompt,
+                                boolean enterTapped, boolean grantHaste, boolean sacrificeAtEndStep,
+                                UUID attachEquipmentCardId, boolean enterAttacking, boolean drawAndRepeat,
+                                com.github.laxika.magicalvibes.model.filter.CardPredicate drawAndRepeatPredicate,
+                                String drawAndRepeatLabel) {
+        beginCardChoice(gameData, playerId, validIndices, prompt, enterTapped, grantHaste, sacrificeAtEndStep,
+                attachEquipmentCardId, enterAttacking, drawAndRepeat, drawAndRepeatPredicate, drawAndRepeatLabel, false);
+    }
+
+    public void beginCardChoice(GameData gameData, UUID playerId, List<Integer> validIndices, String prompt,
+                                boolean enterTapped, boolean grantHaste, boolean sacrificeAtEndStep,
+                                UUID attachEquipmentCardId, boolean enterAttacking, boolean drawAndRepeat,
+                                com.github.laxika.magicalvibes.model.filter.CardPredicate drawAndRepeatPredicate,
+                                String drawAndRepeatLabel, boolean putAnyNumber) {
         interactionHandlerRegistry.begin(gameData, new PendingInteraction.HandCardChoice(
                 playerId, new ArrayList<>(validIndices), prompt, enterTapped, grantHaste, sacrificeAtEndStep,
-                attachEquipmentCardId, enterAttacking));
+                attachEquipmentCardId, enterAttacking, drawAndRepeat, drawAndRepeatPredicate, drawAndRepeatLabel,
+                putAnyNumber));
     }
 
     /** Flash-style: choose a creature to put onto the battlefield, then pay its cost reduced by N or sacrifice it. */

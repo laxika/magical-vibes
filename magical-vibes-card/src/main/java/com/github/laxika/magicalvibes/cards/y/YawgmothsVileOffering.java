@@ -32,6 +32,7 @@ public class YawgmothsVileOffering extends Card {
                         new CardTypePredicate(CardType.PLANESWALKER)
                 )))
                 .targetGraveyard(true)
+                .upTo(true)
                 .build());
 
         // Destroy up to one target creature or planeswalker.

@@ -62,6 +62,7 @@ public final class BlockLegalityContext {
                          boolean fear,
                          boolean intimidate,
                          boolean skulk,
+                         boolean cantBeBlockedByLessPower,
                          Set<CardColor> colors,
                          List<CardEffect> pairRestrictionStatics,
                          List<CanBeBlockedOnlyByFilterEffect> auraGrantedRestrictions,
@@ -99,6 +100,7 @@ public final class BlockLegalityContext {
             GLOBAL_RESTRICTION,
             ATTACKER_LIMITED_TO_BLOCKERS,
             CANT_BE_BLOCKED_BY_MATCHING,
+            CANT_BE_BLOCKED_BY_LESS_POWER,
             LANDWALK,
             CANT_BLOCK_THIS_TURN,
             CANT_BLOCK,
@@ -115,6 +117,8 @@ public final class BlockLegalityContext {
         static final BlockDenial INTIMIDATE = new BlockDenial(Reason.INTIMIDATE, null);
         static final BlockDenial SKULK = new BlockDenial(Reason.SKULK, null);
         static final BlockDenial CANT_BE_BLOCKED_BY_MATCHING = new BlockDenial(Reason.CANT_BE_BLOCKED_BY_MATCHING, null);
+        static final BlockDenial CANT_BE_BLOCKED_BY_LESS_POWER =
+                new BlockDenial(Reason.CANT_BE_BLOCKED_BY_LESS_POWER, null);
         static final BlockDenial CANT_BLOCK_THIS_TURN = new BlockDenial(Reason.CANT_BLOCK_THIS_TURN, null);
         static final BlockDenial CANT_BLOCK = new BlockDenial(Reason.CANT_BLOCK, null);
         static final BlockDenial CANT_BLOCK_POWER_AT_LEAST_OWN_TOUGHNESS =

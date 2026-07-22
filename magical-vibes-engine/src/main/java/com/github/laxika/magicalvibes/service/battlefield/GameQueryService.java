@@ -89,6 +89,7 @@ import com.github.laxika.magicalvibes.model.effect.GrantActivatedAbilityEffect;
 import com.github.laxika.magicalvibes.model.effect.StaticBoostEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantChosenSubtypeToOwnCreaturesEffect;
 import com.github.laxika.magicalvibes.model.effect.GraveyardAbilityGrantingEffect;
+import com.github.laxika.magicalvibes.model.effect.MadnessGrantingEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantControllerHexproofEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantControllerShroudEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantKeywordEffect;
@@ -491,6 +492,28 @@ public class GameQueryService {
         return result;
     }
 
+    /**
+     * Returns the madness cost granted to {@code card} by a permanent the owner controls
+     * (e.g. Falkenrath Gorger), or empty if no grant applies. The cost equals the card's mana cost.
+     * Native {@link com.github.laxika.magicalvibes.model.MadnessCast} is not consulted here.
+     */
+    public Optional<String> findGrantedMadnessCost(GameData gameData, UUID ownerId, Card card) {
+        List<Permanent> bf = gameData.playerBattlefields.get(ownerId);
+        if (bf == null || card == null || card.isToken()) {
+            return Optional.empty();
+        }
+        for (Permanent perm : bf) {
+            for (CardEffect effect : perm.getCard().getEffects(EffectSlot.STATIC)) {
+                if (effect instanceof MadnessGrantingEffect g
+                        && predicateEvaluationService.matchesCardPredicate(
+                                card, g.madnessGrantFilter(), null, gameData, ownerId)) {
+                    return Optional.ofNullable(card.getManaCost());
+                }
+            }
+        }
+        return Optional.empty();
+    }
+
     // --- Player queries ---
 
     /**
@@ -741,6 +764,10 @@ public class GameQueryService {
      */
     public boolean isPlaneswalker(GameData gameData, Permanent permanent) {
         return hasEffectiveCardType(permanent, computeStaticBonus(gameData, permanent), CardType.PLANESWALKER);
+    }
+
+    public boolean isBattle(GameData gameData, Permanent permanent) {
+        return hasEffectiveCardType(permanent, computeStaticBonus(gameData, permanent), CardType.BATTLE);
     }
 
     private boolean hasEffectiveCardType(Permanent permanent, StaticBonus bonus, CardType type) {
@@ -1669,7 +1696,9 @@ public class GameQueryService {
             for (CardEffect effect : emblem.staticEffects()) {
                 if (effect instanceof GrantActivatedAbilityEffect grant
                         && grant.scope() == GrantScope.OWN_PERMANENTS
-                        && (grant.filter() == null || predicateEvaluationService.matchesPermanentPredicate(gameData, target, grant.filter()))) {
+                        // null GameData: type predicates read printed/granted types without
+                        // re-entering computeStaticBonus (same as GrantKeywordEffect below).
+                        && (grant.filter() == null || predicateEvaluationService.matchesPermanentPredicate(null, target, grant.filter()))) {
                     accumulator.addActivatedAbility(grant.ability());
                 } else if (effect instanceof StaticBoostEffect boost
                         && (boost.scope() == GrantScope.OWN_CREATURES || boost.scope() == GrantScope.ALL_OWN_CREATURES)
@@ -2889,6 +2918,7 @@ public class GameQueryService {
         return isCreature(gameData, creature)
                 && !creature.isTapped()
                 && !creature.isCantBlockThisTurn()
+                && !hasKeyword(gameData, creature, Keyword.DECAYED)
                 && creature.getCard().getEffects(EffectSlot.STATIC).stream().noneMatch(CantBlockEffect.class::isInstance)
                 && !hasAuraWithEffect(gameData, creature, EnchantedCreatureCantAttackOrBlockEffect.class)
                 && !hasAuraWithEffect(gameData, creature, CantBlockEffect.class)
@@ -3045,6 +3075,11 @@ public class GameQueryService {
         if (atk.skulk() && getEffectivePower(gameData, blocker) > getEffectivePower(gameData, attacker)) {
             return BlockDenial.SKULK;
         }
+        // Shrill Howler: creatures with power less than this creature's power can't block it.
+        if (atk.cantBeBlockedByLessPower()
+                && getEffectivePower(gameData, blocker) < getEffectivePower(gameData, attacker)) {
+            return BlockDenial.CANT_BE_BLOCKED_BY_LESS_POWER;
+        }
         for (CanBlockOnlyIfAttackerMatchesPredicateEffect restriction : blk.attackerFilterRestrictions()) {
             if (!predicateEvaluationService.matchesPermanentPredicate(gameData, attacker, restriction.attackerPredicate())) {
                 return new BlockDenial(BlockDenial.Reason.BLOCKER_LIMITED_TO_ATTACKERS, restriction.allowedAttackersDescription());
@@ -3115,6 +3150,7 @@ public class GameQueryService {
         GameData gameData = context.gameData;
         boolean unblockable = hasCantBeBlocked(gameData, attacker);
         List<CardEffect> pairRestrictionStatics = null;
+        boolean cantBeBlockedByLessPower = false;
         for (CardEffect effect : attacker.getCard().getEffects(EffectSlot.STATIC)) {
             if (effect instanceof BlockabilityRestrictionEffect restriction) {
                 if (!unblockable) {
@@ -3133,6 +3169,9 @@ public class GameQueryService {
                     if (restriction.unblockableWhileAttackingAlone() && isAttackingAlone(gameData, attacker)) {
                         unblockable = true;
                     }
+                }
+                if (restriction.cantBeBlockedByCreaturesWithLessPower()) {
+                    cantBeBlockedByLessPower = true;
                 }
                 if (restriction.blockableOnlyBy() != null || restriction.cantBeBlockedByCreaturesMatching() != null) {
                     if (pairRestrictionStatics == null) {
@@ -3160,6 +3199,7 @@ public class GameQueryService {
                 hasKeyword(attacker, bonus, Keyword.FEAR),
                 intimidate,
                 hasKeyword(attacker, bonus, Keyword.SKULK),
+                cantBeBlockedByLessPower,
                 intimidate ? getEffectiveColors(gameData, attacker) : Set.of(),
                 pairRestrictionStatics == null ? List.of() : pairRestrictionStatics,
                 getAuraGrantedBlockingRestrictions(gameData, attacker),
@@ -3201,6 +3241,7 @@ public class GameQueryService {
                 getEffectiveColors(gameData, blocker),
                 attackerFilterRestrictions == null ? List.of() : attackerFilterRestrictions,
                 cantBlockStatic || hasAuraWithEffect(gameData, blocker, CantBlockEffect.class)
+                        || hasKeyword(gameData, blocker, Keyword.DECAYED)
                         || hasGlobalCantAttackOrBlockRestriction(gameData, blocker),
                 cantBlockPowerAtLeastOwnToughnessStatic || hasAuraWithEffect(gameData, blocker,
                         CantBlockCreaturesWithPowerGreaterOrEqualToOwnToughnessEffect.class),
@@ -3222,6 +3263,8 @@ public class GameQueryService {
             case GLOBAL_RESTRICTION -> denial.detail();
             case ATTACKER_LIMITED_TO_BLOCKERS -> attackerName + " can only be blocked by " + denial.detail();
             case CANT_BE_BLOCKED_BY_MATCHING -> blockerName + " cannot block " + attackerName;
+            case CANT_BE_BLOCKED_BY_LESS_POWER ->
+                    blockerName + " cannot block " + attackerName + " (power too low)";
             case LANDWALK -> attackerName + " can't be blocked (" + denial.detail() + "walk)";
             case CANT_BLOCK_THIS_TURN -> blockerName + " can't block this turn";
             case CANT_BLOCK -> blockerName + " can't block";

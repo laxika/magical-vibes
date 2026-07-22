@@ -165,6 +165,7 @@ public class PermanentViewFactory {
                 cardView.transformable(),
                 cardView.kickerCost(),
                 cardView.modalChoicesRequired(),
+                cardView.modalChoicesMax(),
                 cardView.modalOptional(),
                 cardView.modalOptions()
         );
@@ -198,6 +199,7 @@ public class PermanentViewFactory {
                 cardView.transformable(),
                 cardView.kickerCost(),
                 cardView.modalChoicesRequired(),
+                cardView.modalChoicesMax(),
                 cardView.modalOptional(),
                 cardView.modalOptions()
         );
@@ -229,6 +231,7 @@ public class PermanentViewFactory {
                 cardView.transformable(),
                 cardView.kickerCost(),
                 cardView.modalChoicesRequired(),
+                cardView.modalChoicesMax(),
                 cardView.modalOptional(),
                 cardView.modalOptions()
         );
@@ -260,6 +263,7 @@ public class PermanentViewFactory {
                 cardView.transformable(),
                 cardView.kickerCost(),
                 cardView.modalChoicesRequired(),
+                cardView.modalChoicesMax(),
                 cardView.modalOptional(),
                 cardView.modalOptions()
         );
@@ -301,6 +305,7 @@ public class PermanentViewFactory {
                     cardView.transformable(),
                     cardView.kickerCost(),
                     cardView.modalChoicesRequired(),
+                    cardView.modalChoicesMax(),
                     cardView.modalOptional(),
                     cardView.modalOptions()
             );
@@ -327,6 +332,7 @@ public class PermanentViewFactory {
                 cardView.transformable(),
                 cardView.kickerCost(),
                 cardView.modalChoicesRequired(),
+                cardView.modalChoicesMax(),
                 cardView.modalOptional(),
                 cardView.modalOptions()
         );
@@ -361,6 +367,7 @@ public class PermanentViewFactory {
                 cardView.transformable(),
                 cardView.kickerCost(),
                 cardView.modalChoicesRequired(),
+                cardView.modalChoicesMax(),
                 cardView.modalOptional(),
                 cardView.modalOptions()
         );
@@ -394,6 +401,7 @@ public class PermanentViewFactory {
                 cardView.transformable(),
                 cardView.kickerCost(),
                 cardView.modalChoicesRequired(),
+                cardView.modalChoicesMax(),
                 cardView.modalOptional(),
                 cardView.modalOptions()
         );
@@ -427,6 +435,7 @@ public class PermanentViewFactory {
                 cardView.transformable(),
                 cardView.kickerCost(),
                 cardView.modalChoicesRequired(),
+                cardView.modalChoicesMax(),
                 cardView.modalOptional(),
                 cardView.modalOptions()
         );
@@ -500,6 +509,7 @@ public class PermanentViewFactory {
                 cardView.transformable(),
                 cardView.kickerCost(),
                 cardView.modalChoicesRequired(),
+                cardView.modalChoicesMax(),
                 cardView.modalOptional(),
                 cardView.modalOptions()
         );
@@ -529,6 +539,7 @@ public class PermanentViewFactory {
                 cardView.transformable(),
                 cardView.kickerCost(),
                 cardView.modalChoicesRequired(),
+                cardView.modalChoicesMax(),
                 cardView.modalOptional(),
                 cardView.modalOptions()
         );
@@ -590,6 +601,7 @@ public class PermanentViewFactory {
                 cardView.transformable(),
                 cardView.kickerCost(),
                 cardView.modalChoicesRequired(),
+                cardView.modalChoicesMax(),
                 cardView.modalOptional(),
                 cardView.modalOptions()
         );
@@ -621,6 +633,7 @@ public class PermanentViewFactory {
                 cardView.transformable(),
                 cardView.kickerCost(),
                 cardView.modalChoicesRequired(),
+                cardView.modalChoicesMax(),
                 cardView.modalOptional(),
                 cardView.modalOptions()
         );

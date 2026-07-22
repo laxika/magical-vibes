@@ -17,5 +17,6 @@ public record OracleData(
         Integer toughness,
         Set<Keyword> keywords,
         Integer loyalty,
+        Integer defense,
         String watermark
 ) {}

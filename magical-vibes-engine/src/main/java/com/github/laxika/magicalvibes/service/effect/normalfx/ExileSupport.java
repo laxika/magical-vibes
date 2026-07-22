@@ -106,6 +106,7 @@ public class ExileSupport {
             case ARTIFACT -> StackEntryType.ARTIFACT_SPELL;
             case ENCHANTMENT -> StackEntryType.ENCHANTMENT_SPELL;
             case PLANESWALKER -> StackEntryType.PLANESWALKER_SPELL;
+            case BATTLE -> StackEntryType.BATTLE_SPELL;
             case INSTANT -> StackEntryType.INSTANT_SPELL;
             case SORCERY -> StackEntryType.SORCERY_SPELL;
             default -> StackEntryType.SORCERY_SPELL;

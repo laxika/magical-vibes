@@ -53,7 +53,7 @@ public class CardViewFactory {
                 base.alternateCostLifePayment(), base.alternateCostSacrificeCount(),
                 base.alternateCostTapCount(), base.alternateCostReturnCount(), base.alternateCostManaCost(),
                 base.graveyardActivatedAbilities(), base.handActivatedAbilities(), base.transformable(), base.kickerCost(),
-                base.modalChoicesRequired(), base.modalOptional(), base.modalOptions());
+                base.modalChoicesRequired(), base.modalChoicesMax(), base.modalOptional(), base.modalOptions());
     }
 
     /**
@@ -79,7 +79,7 @@ public class CardViewFactory {
                 base.alternateCostLifePayment(), base.alternateCostSacrificeCount(),
                 base.alternateCostTapCount(), base.alternateCostReturnCount(), base.alternateCostManaCost(),
                 mergedGraveyard, base.handActivatedAbilities(), base.transformable(), base.kickerCost(),
-                base.modalChoicesRequired(), base.modalOptional(), base.modalOptions());
+                base.modalChoicesRequired(), base.modalChoicesMax(), base.modalOptional(), base.modalOptions());
     }
 
     public CardView create(Card card) {
@@ -162,6 +162,7 @@ public class CardViewFactory {
                         })
                         .findFirst().orElse(null),
                 modalEffect != null ? modalEffect.choicesRequired() : 0,
+                modalEffect != null ? modalEffect.choicesMax() : 0,
                 modalEffect != null && modalEffect.optional(),
                 modalOptions);
     }
@@ -186,7 +187,7 @@ public class CardViewFactory {
                 base.alternateCostLifePayment(), base.alternateCostSacrificeCount(),
                 base.alternateCostTapCount(), base.alternateCostReturnCount(), base.alternateCostManaCost(),
                 base.graveyardActivatedAbilities(), base.handActivatedAbilities(), base.transformable(),
-                base.kickerCost(), base.modalChoicesRequired(), base.modalOptional(), base.modalOptions());
+                base.kickerCost(), base.modalChoicesRequired(), base.modalChoicesMax(), base.modalOptional(), base.modalOptions());
     }
 
     private static boolean disturbBackFaceNeedsTarget(Card card) {

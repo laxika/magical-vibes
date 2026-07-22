@@ -128,6 +128,7 @@ public class StackResolutionService {
                 case ENCHANTMENT_SPELL -> resolveEnchantmentSpell(gameData, entry);
                 case ARTIFACT_SPELL -> resolveArtifactSpell(gameData, entry);
                 case PLANESWALKER_SPELL -> resolvePlaneswalkerSpell(gameData, entry);
+                case BATTLE_SPELL -> resolveBattleSpell(gameData, entry);
                 case TRIGGERED_ABILITY, ACTIVATED_ABILITY, SORCERY_SPELL, INSTANT_SPELL ->
                         resolveSpellOrAbility(gameData, entry);
             }
@@ -215,19 +216,19 @@ public class StackResolutionService {
         gameBroadcastService.broadcastGameState(gameData);
     }
 
-    /** CR 702.146: while cast via Disturb, the spell has the characteristics of its back face. */
+    /** CR 702.146 / siege defeat: while cast transformed, the spell has back-face characteristics. */
     private static Card disturbCharacteristics(StackEntry entry, Card card) {
-        if (entry.isCastWithDisturb() && card.getBackFaceCard() != null) {
+        if ((entry.isCastWithDisturb() || entry.isCastTransformed()) && card.getBackFaceCard() != null) {
             return card.getBackFaceCard();
         }
         return card;
     }
 
-    /** Permanent enters with front-face identity; Disturb flips current face to the back. */
+    /** Permanent enters with front-face identity; Disturb/siege-defeat flips current face to the back. */
     private Permanent createEnteringPermanent(StackEntry entry, Card card, Card characteristics) {
         Permanent perm = new Permanent(card);
         perm.setCastFromZone(entry.getSourceZone());
-        if (entry.isCastWithDisturb() && characteristics != card) {
+        if ((entry.isCastWithDisturb() || entry.isCastTransformed()) && characteristics != card) {
             perm.setCard(characteristics);
             perm.setTransformed(true);
         }
@@ -236,7 +237,7 @@ public class StackResolutionService {
 
     /**
      * Flashback/Disturb spells that leave the stack without resolving are exiled
-     * (CR 702.33a / back-face exile replacement for Disturb).
+     * (CR 702.33a / back-face exile replacement for Disturb). Siege-defeat casts use normal GY.
      */
     private void disposeFizzledPermanentSpell(GameData gameData, StackEntry entry, Card card) {
         UUID controllerId = entry.getControllerId();
@@ -251,7 +252,8 @@ public class StackResolutionService {
         Card card = entry.getCard();
         UUID controllerId = entry.getControllerId();
 
-        if (cloneService.prepareCloneReplacementEffect(gameData, controllerId, card, entry.getTargetId())) {
+        if (cloneService.prepareCloneReplacementEffect(gameData, controllerId, card, entry.getTargetId(),
+                entry.getXValue())) {
             return;
         }
 
@@ -474,20 +476,24 @@ public class StackResolutionService {
                 return;
             }
 
-            Permanent enchPerm = new Permanent(card);
-            battlefieldEntryService.putPermanentOntoBattlefield(gameData, controllerId, enchPerm);
-            logEnterBattlefield(gameData, card, controllerId);
+            Permanent enchPerm = createEnteringPermanent(entry, card, characteristics);
+            // Pass cast X / kicked so "enters with X counters" replacements and ETB triggers that
+            // read XValue (e.g. The Meathook Massacre) see the paid X.
+            battlefieldEntryService.putPermanentOntoBattlefield(gameData, controllerId, enchPerm,
+                    entry.getXValue(), entry.isKicked());
+            Card enteredCard = enchPerm.getCard();
+            logEnterBattlefield(gameData, enteredCard, controllerId);
 
             // Saga ETB: place first lore counter and trigger chapter I (MTG Rule 714.3a)
-            if (card.isSaga()) {
+            if (enteredCard.isSaga()) {
                 enchPerm.setCounterCount(CounterType.LORE, 1);
-                gameBroadcastService.logAndBroadcast(gameData, GameLog.cardThen(card, " gets a lore counter (1)."));
-                log.info("Game {} - {} enters with lore counter 1", gameData.id, card.getName());
-                triggerSagaChapter(gameData, enchPerm, card, controllerId, 1);
+                gameBroadcastService.logAndBroadcast(gameData, GameLog.cardThen(enteredCard, " gets a lore counter (1)."));
+                log.info("Game {} - {} enters with lore counter 1", gameData.id, enteredCard.getName());
+                triggerSagaChapter(gameData, enchPerm, enteredCard, controllerId, 1);
             }
 
             // Check if enchantment has "as enters" color choice
-            boolean needsColorChoice = card.getEffects(EffectSlot.ON_ENTER_BATTLEFIELD).stream()
+            boolean needsColorChoice = enteredCard.getEffects(EffectSlot.ON_ENTER_BATTLEFIELD).stream()
                     .anyMatch(e -> e instanceof ChooseColorEffect);
             if (needsColorChoice) {
                 List<Permanent> bf = gameData.playerBattlefields.get(controllerId);
@@ -496,7 +502,7 @@ public class StackResolutionService {
             }
 
             // Check if enchantment has "as enters" creature type choice (e.g. Xenograft)
-            boolean needsSubtypeChoice = card.getEffects(EffectSlot.ON_ENTER_BATTLEFIELD).stream()
+            boolean needsSubtypeChoice = enteredCard.getEffects(EffectSlot.ON_ENTER_BATTLEFIELD).stream()
                     .anyMatch(e -> e instanceof ChooseSubtypeOnEnterEffect);
             if (needsSubtypeChoice) {
                 List<Permanent> bf = gameData.playerBattlefields.get(controllerId);
@@ -505,7 +511,7 @@ public class StackResolutionService {
             }
 
             // Check if enchantment has "as enters, choose odd or even" (Ashling's Prerogative)
-            boolean needsParityChoice = card.getEffects(EffectSlot.ON_ENTER_BATTLEFIELD).stream()
+            boolean needsParityChoice = enteredCard.getEffects(EffectSlot.ON_ENTER_BATTLEFIELD).stream()
                     .anyMatch(e -> e instanceof ChooseManaValueParityOnEnterEffect);
             if (needsParityChoice) {
                 List<Permanent> bf = gameData.playerBattlefields.get(controllerId);
@@ -513,9 +519,11 @@ public class StackResolutionService {
                 playerInputService.beginManaValueParityChoice(gameData, controllerId, justEntered.getId());
             }
 
-            // Process general ETB effects (e.g., token creation, exile-until-leaves)
+            // Process general ETB effects (e.g., token creation, exile-until-leaves).
+            // Pass cast X as etbMode so the ETB stack entry snapshots it for XValue amounts.
             if (!gameData.interaction.isAwaitingInput()) {
-                battlefieldEntryService.processCreatureETBEffects(gameData, controllerId, card, entry.getTargetId(), true, entry.getTargetIds());
+                battlefieldEntryService.processCreatureETBEffects(gameData, controllerId, enteredCard,
+                        entry.getTargetId(), true, entry.getXValue(), entry.isKicked(), entry.getTargetIds());
             }
 
             checkLegendRuleIfIdle(gameData, controllerId);
@@ -526,7 +534,8 @@ public class StackResolutionService {
         Card card = entry.getCard();
         UUID controllerId = entry.getControllerId();
 
-        if (cloneService.prepareCloneReplacementEffect(gameData, controllerId, card, entry.getTargetId())) {
+        if (cloneService.prepareCloneReplacementEffect(gameData, controllerId, card, entry.getTargetId(),
+                entry.getXValue())) {
             return;
         }
 
@@ -641,6 +650,34 @@ public class StackResolutionService {
                 card, perm.getCounterCount(CounterType.LOYALTY) + " loyalty", playerName));
 
         log.info("Game {} - {} resolves, enters battlefield for {}", gameData.id, card.getName(), playerName);
+        checkLegendRuleIfIdle(gameData, controllerId);
+    }
+
+    private void resolveBattleSpell(GameData gameData, StackEntry entry) {
+        Card card = entry.getCard();
+        UUID controllerId = entry.getControllerId();
+
+        Permanent perm = new Permanent(card);
+        int startingDefense = card.getDefense() != null ? card.getDefense() : 0;
+        perm.setCounterCount(CounterType.DEFENSE, startingDefense);
+        perm.setSummoningSick(false);
+        // Siege: as this battle enters, choose an opponent to protect it (2p: the only opponent).
+        UUID opponentId = gameQueryService.getOpponentId(gameData, controllerId);
+        perm.setProtectorPlayerId(opponentId);
+        battlefieldEntryService.putPermanentOntoBattlefield(gameData, controllerId, perm);
+
+        String playerName = gameData.playerIdToName.get(controllerId);
+        gameBroadcastService.logAndBroadcast(gameData, GameLog.entersBattlefieldWithUnder(
+                card, perm.getCounterCount(CounterType.DEFENSE) + " defense", playerName));
+
+        log.info("Game {} - {} resolves, enters battlefield for {}", gameData.id, card.getName(), playerName);
+
+        // Process ETB (e.g. Invasion of Innistrad's -13/-13)
+        if (!gameData.interaction.isAwaitingInput()) {
+            battlefieldEntryService.handleCreatureEnteredBattlefield(
+                    gameData, controllerId, card, entry.getTargetId(), true, entry.getXValue(),
+                    entry.isKicked(), entry.getTargetIds());
+        }
         checkLegendRuleIfIdle(gameData, controllerId);
     }
 

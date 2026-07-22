@@ -10,6 +10,7 @@ import com.github.laxika.magicalvibes.model.effect.ReduceOwnCastCostEffect;
 import com.github.laxika.magicalvibes.model.filter.CardTypePredicate;
 
 @CardRegistration(set = "DKA", collectorNumber = "115")
+@CardRegistration(set = "INR", collectorNumber = "198")
 public class Ghoultree extends Card {
 
     public Ghoultree() {

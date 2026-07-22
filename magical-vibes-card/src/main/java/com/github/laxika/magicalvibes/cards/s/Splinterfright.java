@@ -12,6 +12,7 @@ import com.github.laxika.magicalvibes.model.effect.SetPowerToughnessToAmountEffe
 import com.github.laxika.magicalvibes.model.filter.CardTypePredicate;
 
 @CardRegistration(set = "ISD", collectorNumber = "205")
+@CardRegistration(set = "INR", collectorNumber = "217")
 public class Splinterfright extends Card {
 
     public Splinterfright() {

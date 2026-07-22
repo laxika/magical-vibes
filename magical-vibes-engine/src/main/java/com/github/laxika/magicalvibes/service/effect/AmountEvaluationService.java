@@ -11,6 +11,7 @@ import com.github.laxika.magicalvibes.model.StackEntry;
 import com.github.laxika.magicalvibes.model.amount.AttachmentsOnSource;
 import com.github.laxika.magicalvibes.model.amount.BasicLandTypesAmongControlledLands;
 import com.github.laxika.magicalvibes.model.amount.CardTypesAmongCardsInGraveyard;
+import com.github.laxika.magicalvibes.model.amount.CardsInExile;
 import com.github.laxika.magicalvibes.model.amount.CardsInGraveyard;
 import com.github.laxika.magicalvibes.model.amount.CardsInHand;
 import com.github.laxika.magicalvibes.model.amount.CardsInLibrary;
@@ -131,6 +132,8 @@ public class AmountEvaluationService {
                     countBasicLandTypesAmongControlledLands(gameData, ctx);
             case CardTypesAmongCardsInGraveyard c ->
                     countCardTypesAmongCardsInGraveyard(gameData, c, ctx);
+            case CardsInExile c ->
+                    countExileCards(gameData, c, ctx);
             case CardsInGraveyard c ->
                     countGraveyardCards(gameData, c, ctx);
             case CardsInHand c ->
@@ -444,6 +447,20 @@ public class AmountEvaluationService {
             List<Card> graveyard = gameData.playerGraveyards.get(playerId);
             if (graveyard == null) continue;
             for (Card card : graveyard) {
+                if (card.isToken()) continue;
+                if (predicateEvaluationService.matchesCardPredicate(card, count.filter(), null)) {
+                    matches++;
+                }
+            }
+        }
+        return matches;
+    }
+
+    private int countExileCards(GameData gameData, CardsInExile count, AmountContext ctx) {
+        int matches = 0;
+        for (UUID playerId : gameData.orderedPlayerIds) {
+            if (!isPlayerInScope(gameData, playerId, count.scope(), ctx)) continue;
+            for (Card card : gameData.getPlayerExiledCards(playerId)) {
                 if (card.isToken()) continue;
                 if (predicateEvaluationService.matchesCardPredicate(card, count.filter(), null)) {
                     matches++;

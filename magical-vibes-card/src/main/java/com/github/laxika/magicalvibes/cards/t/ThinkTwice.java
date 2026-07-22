@@ -7,6 +7,7 @@ import com.github.laxika.magicalvibes.model.FlashbackCast;
 import com.github.laxika.magicalvibes.model.effect.DrawCardEffect;
 
 @CardRegistration(set = "ISD", collectorNumber = "83")
+@CardRegistration(set = "INR", collectorNumber = "92")
 public class ThinkTwice extends Card {
 
     public ThinkTwice() {

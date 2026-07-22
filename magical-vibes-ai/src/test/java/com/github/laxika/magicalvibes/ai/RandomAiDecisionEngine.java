@@ -20,6 +20,7 @@ import com.github.laxika.magicalvibes.model.filter.PlayerRelation;
 import com.github.laxika.magicalvibes.model.filter.PlayerRelationPredicate;
 import com.github.laxika.magicalvibes.model.effect.CantAttackOrBlockAloneEffect;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
+import com.github.laxika.magicalvibes.model.effect.DiscardCardOrPayManaCost;
 import com.github.laxika.magicalvibes.model.effect.ExileCardFromGraveyardCost;
 import com.github.laxika.magicalvibes.model.effect.ReturnCardFromGraveyardEffect;
 import com.github.laxika.magicalvibes.model.effect.MustBeBlockedByAllCreaturesEffect;
@@ -392,15 +393,21 @@ class RandomAiDecisionEngine extends AiDecisionEngine {
 
             // Pick a random card to discard if the spell has a "discard a card" additional cost
             // (e.g. Seize the Spoils) — the engine rejects the cast without a selection.
+            // Discard-or-pay-mana (Lightning Axe) may leave the index null to pay the mana option.
             Integer discardHandCardIndex = null;
             List<Integer> validDiscardIndices = castingCostService.validDiscardCostIndices(
                     gameData, aiPlayer.getId(), card);
             if (validDiscardIndices != null) {
                 if (validDiscardIndices.isEmpty()) {
-                    telemetry.recordSkip("spell: discard cost unpayable", card.getName());
-                    continue;
+                    boolean hasDiscardOrPay = card.getEffects(EffectSlot.SPELL).stream()
+                            .anyMatch(DiscardCardOrPayManaCost.class::isInstance);
+                    if (!hasDiscardOrPay) {
+                        telemetry.recordSkip("spell: discard cost unpayable", card.getName());
+                        continue;
+                    }
+                } else {
+                    discardHandCardIndex = validDiscardIndices.get(rng.nextInt(validDiscardIndices.size()));
                 }
-                discardHandCardIndex = validDiscardIndices.get(rng.nextInt(validDiscardIndices.size()));
             }
 
             // Select sacrifice target if the spell has a sacrifice cost
@@ -461,7 +468,7 @@ class RandomAiDecisionEngine extends AiDecisionEngine {
             final List<UUID> finalMultiTargetIds = multiTargetIds;
             final Integer finalDiscardHandCardIndex = discardHandCardIndex;
             send(() -> gameActions.handlePlayCard(selfConnection,
-                    new PlayCardRequest(cardIndex, finalXValue, finalTargetId, finalDamageAssignments, finalMultiTargetIds, null, null, finalSacrificePermanentId, null, null, null, null, finalExileGraveyardCardIndex, finalExileGraveyardCardIndices, null, null, null, finalDiscardHandCardIndex)));
+                    new PlayCardRequest(cardIndex, finalXValue, finalTargetId, finalDamageAssignments, finalMultiTargetIds, null, null, finalSacrificePermanentId, null, null, null, null, finalExileGraveyardCardIndex, finalExileGraveyardCardIndices, null, null, null, finalDiscardHandCardIndex, null)));
 
             // Game may have ended while paying costs (e.g. Manabarbs killing the caster
             // on a land tap) — every later action no-ops, which is not a legality bug.

@@ -264,6 +264,7 @@ class TurnProgressionServiceTest {
 
             assertThat(gd.currentStep).isEqualTo(TurnStep.POSTCOMBAT_MAIN);
             verify(stepTriggerService).handlePostcombatMainTriggers(gd);
+            verify(stepTriggerService).drainAddManaAtNextMainPhase(gd);
         }
 
         @Test

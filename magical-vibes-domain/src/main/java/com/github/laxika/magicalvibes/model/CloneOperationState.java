@@ -1,5 +1,7 @@
 package com.github.laxika.magicalvibes.model;
 
+import com.github.laxika.magicalvibes.model.amount.DynamicAmount;
+
 import java.util.List;
 import java.util.Set;
 import java.util.UUID;
@@ -17,4 +19,7 @@ public class CloneOperationState {
     public CardColor embalmColorOverride;
     public CardSubtype embalmAddedSubtype;
     public boolean embalmRemoveManaCost;
+    // Altered Ego: "except it enters with X additional +1/+1 counters" — only when copying.
+    public DynamicAmount additionalPlusOnePlusOneCounters;
+    public int xValue;
 }

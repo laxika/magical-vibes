@@ -12,6 +12,7 @@ import com.github.laxika.magicalvibes.model.filter.PermanentIsCreaturePredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentPredicateTargetFilter;
 
 @CardRegistration(set = "DKA", collectorNumber = "132")
+@CardRegistration(set = "INR", collectorNumber = "225")
 public class WildHunger extends Card {
 
     public WildHunger() {

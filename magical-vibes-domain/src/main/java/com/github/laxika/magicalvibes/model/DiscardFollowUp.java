@@ -1,5 +1,7 @@
 package com.github.laxika.magicalvibes.model;
 
+import com.github.laxika.magicalvibes.model.effect.CardEffect;
+
 import java.util.List;
 import java.util.UUID;
 
@@ -9,6 +11,8 @@ import java.util.UUID;
  * replacing the per-mechanic {@code pending*} fields {@code GameData} used to hold:
  * {@code rummageDrawCount} draws that many cards afterwards ("discard, then draw");
  * {@code untapPermanentId} untaps the source afterwards ("discard a card, then untap [source]");
+ * {@code boostPermanentId}/{@code boostPower}/{@code boostToughness} pumps the source afterwards
+ * ("discard a card, then this creature gets +X/+Y until end of turn");
  * {@code graveyardReturnCount} returns that many cards from the controller's graveyard to hand
  * afterwards ("discard X cards, then return a card for each discarded", Recall);
  * the each-player trio is the APNAP remainder of an "each player discards" flow, advanced by
@@ -16,13 +20,18 @@ import java.util.UUID;
  * {@code eachPlayerAmounts} (when non-empty) overrides the shared {@code eachPlayerAmount} with a
  * per-chooser amount parallel to {@code remainingEachPlayerDiscards}, so different players can
  * discard different counts ("each player discards a third of their hand", Pox).
+ * {@code thenEffect}/{@code thenEffectSourceCard} push {@code thenEffect} as a reflexive triggered
+ * ability afterwards ("discard a [matching] card. If you do, [effect]", Pack Guardian).
  */
 public record DiscardFollowUp(int rummageDrawCount, UUID untapPermanentId,
                               List<UUID> remainingEachPlayerDiscards,
                               UUID eachPlayerControllerId, int eachPlayerAmount,
-                              int graveyardReturnCount, List<Integer> eachPlayerAmounts) {
+                              int graveyardReturnCount, List<Integer> eachPlayerAmounts,
+                              UUID boostPermanentId, int boostPower, int boostToughness,
+                              Card thenEffectSourceCard, CardEffect thenEffect) {
 
-    public static final DiscardFollowUp NONE = new DiscardFollowUp(0, null, List.of(), null, 0, 0, List.of());
+    public static final DiscardFollowUp NONE =
+            new DiscardFollowUp(0, null, List.of(), null, 0, 0, List.of(), null, 0, 0, null, null);
 
     public DiscardFollowUp {
         remainingEachPlayerDiscards = List.copyOf(remainingEachPlayerDiscards);
@@ -30,15 +39,20 @@ public record DiscardFollowUp(int rummageDrawCount, UUID untapPermanentId,
     }
 
     public static DiscardFollowUp rummage(int drawCount) {
-        return new DiscardFollowUp(drawCount, null, List.of(), null, 0, 0, List.of());
+        return new DiscardFollowUp(drawCount, null, List.of(), null, 0, 0, List.of(), null, 0, 0, null, null);
     }
 
     public static DiscardFollowUp untap(UUID permanentId) {
-        return new DiscardFollowUp(0, permanentId, List.of(), null, 0, 0, List.of());
+        return new DiscardFollowUp(0, permanentId, List.of(), null, 0, 0, List.of(), null, 0, 0, null, null);
+    }
+
+    /** Source gets +power/+toughness until end of turn once the discard completes. */
+    public static DiscardFollowUp boost(UUID permanentId, int power, int toughness) {
+        return new DiscardFollowUp(0, null, List.of(), null, 0, 0, List.of(), permanentId, power, toughness, null, null);
     }
 
     public static DiscardFollowUp eachPlayer(List<UUID> remainingChoosers, UUID controllerId, int amount) {
-        return new DiscardFollowUp(0, null, remainingChoosers, controllerId, amount, 0, List.of());
+        return new DiscardFollowUp(0, null, remainingChoosers, controllerId, amount, 0, List.of(), null, 0, 0, null, null);
     }
 
     /**
@@ -48,12 +62,20 @@ public record DiscardFollowUp(int rummageDrawCount, UUID untapPermanentId,
      */
     public static DiscardFollowUp eachPlayerVariableAmounts(List<UUID> remainingChoosers, UUID controllerId,
             List<Integer> amounts) {
-        return new DiscardFollowUp(0, null, remainingChoosers, controllerId, 0, 0, amounts);
+        return new DiscardFollowUp(0, null, remainingChoosers, controllerId, 0, 0, amounts, null, 0, 0, null, null);
     }
 
     /** Return that many cards from the controller's graveyard to hand once the discard completes. */
     public static DiscardFollowUp graveyardReturn(int returnCount) {
-        return new DiscardFollowUp(0, null, List.of(), null, 0, returnCount, List.of());
+        return new DiscardFollowUp(0, null, List.of(), null, 0, returnCount, List.of(), null, 0, 0, null, null);
+    }
+
+    /**
+     * Push {@code thenEffect} onto the stack as a reflexive triggered ability once the discard
+     * completes ("discard a [matching] card. If you do, [effect]").
+     */
+    public static DiscardFollowUp thenEffect(Card sourceCard, CardEffect thenEffect) {
+        return new DiscardFollowUp(0, null, List.of(), null, 0, 0, List.of(), null, 0, 0, sourceCard, thenEffect);
     }
 
     /**
@@ -62,6 +84,7 @@ public record DiscardFollowUp(int rummageDrawCount, UUID untapPermanentId,
      */
     public DiscardFollowUp withRemainingEachPlayer(List<UUID> remaining, List<Integer> remainingAmounts) {
         return new DiscardFollowUp(rummageDrawCount, untapPermanentId, remaining,
-                eachPlayerControllerId, eachPlayerAmount, graveyardReturnCount, remainingAmounts);
+                eachPlayerControllerId, eachPlayerAmount, graveyardReturnCount, remainingAmounts,
+                boostPermanentId, boostPower, boostToughness, thenEffectSourceCard, thenEffect);
     }
 }

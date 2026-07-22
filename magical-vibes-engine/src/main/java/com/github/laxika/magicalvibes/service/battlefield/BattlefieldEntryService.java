@@ -714,7 +714,7 @@ public class BattlefieldEntryService {
 
             if (!mandatoryEffects.isEmpty()) {
                 queueMandatoryETBEffects(gameData, controllerId, card, targetId, targetIds,
-                        mandatoryEffects, modeTargetFilter, extraWizardTriggers);
+                        mandatoryEffects, modeTargetFilter, extraWizardTriggers, etbMode);
             }
         }
 
@@ -785,7 +785,7 @@ public class BattlefieldEntryService {
      */
     private void queueMandatoryETBEffects(GameData gameData, UUID controllerId, Card card, UUID targetId,
                                           List<UUID> targetIds, List<CardEffect> mandatoryEffects,
-                                          TargetFilter modeTargetFilter, int extraWizardTriggers) {
+                                          TargetFilter modeTargetFilter, int extraWizardTriggers, int etbMode) {
         // Separate graveyard exile effects (need multi-target selection at trigger time)
         List<CardEffect> graveyardExileEffects = mandatoryEffects.stream()
                 .filter(e -> e instanceof ExileCardsFromGraveyardEffect).toList();
@@ -885,7 +885,7 @@ public class BattlefieldEntryService {
                 List<Permanent> bf = gameData.playerBattlefields.get(controllerId);
                 UUID sourcePermanentId = bf != null && !bf.isEmpty() ? bf.getLast().getId() : null;
 
-                if (card.getSpellTargets().size() > 1 || etbTokenTargetService.hasGroupWithMaxTargetsGreaterThanOne(card)) {
+                if (card.getSpellTargets().size() > 1 || etbTokenTargetService.needsSlotBySlotTargetSelection(card)) {
                     // Multi-target ETB (e.g. Burning Sun's Avatar, or a single group with
                     // "up to N" targets): choose slot-by-slot at trigger time,
                     // accumulating into targetIds.
@@ -917,13 +917,16 @@ public class BattlefieldEntryService {
                 List<Permanent> bf = gameData.playerBattlefields.get(controllerId);
                 UUID sourcePermanentId = bf != null && !bf.isEmpty() ? bf.getLast().getId() : null;
 
+                // etbMode carries the cast-time X for X-cost permanents (same wire field as modal
+                // mode index). Snapshot it onto the ETB stack entry so DynamicAmount XValue
+                // effects (e.g. Meathook Massacre's -X/-X) read the paid X on resolution.
                 StackEntry etbEntry = new StackEntry(
                         StackEntryType.TRIGGERED_ABILITY,
                         card,
                         controllerId,
                         card.getName() + "'s ETB ability",
                         new ArrayList<>(otherEffects),
-                        0,
+                        etbMode,
                         targetId,
                         sourcePermanentId,
                         Map.of(),
@@ -945,7 +948,7 @@ public class BattlefieldEntryService {
                             controllerId,
                             card.getName() + "'s ETB ability",
                             new ArrayList<>(otherEffects),
-                            0,
+                            etbMode,
                             targetId,
                             sourcePermanentId,
                             Map.of(),

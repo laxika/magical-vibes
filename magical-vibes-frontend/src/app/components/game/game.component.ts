@@ -81,6 +81,7 @@ export class GameComponent implements OnInit, OnDestroy {
     this.game.set(this.websocketService.currentGame);
 
     // Reset local component state from any previous game
+    this.gameOverActive.set(false);
     this.gameOverWinner.set(null);
     this.gameOverWinnerId.set(null);
     this.declaringAttackers.set(false);
@@ -843,6 +844,7 @@ export class GameComponent implements OnInit, OnDestroy {
   mustBeBlockedAttackerIndices = signal(new Set<number>());
   menaceAttackerIndices = signal(new Set<number>());
   mustBlockRequirements = signal(new Map<number, number[]>());
+  gameOverActive = signal(false);
   gameOverWinner = signal<string | null>(null);
   gameOverWinnerId = signal<string | null>(null);
   showSurrenderConfirm = signal(false);
@@ -882,6 +884,7 @@ export class GameComponent implements OnInit, OnDestroy {
   }
 
   private handleGameOver(msg: GameOverNotification): void {
+    this.gameOverActive.set(true);
     this.gameOverWinner.set(msg.winnerName);
     this.gameOverWinnerId.set(msg.winnerId);
     this.choice.reset();

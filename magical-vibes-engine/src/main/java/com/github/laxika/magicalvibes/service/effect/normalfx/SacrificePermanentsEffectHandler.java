@@ -8,6 +8,7 @@ import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.StackEntry;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
 import com.github.laxika.magicalvibes.model.effect.SacrificePermanentsEffect;
+import com.github.laxika.magicalvibes.model.filter.FilterContext;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsCreaturePredicate;
 import com.github.laxika.magicalvibes.service.GameBroadcastService;
 import com.github.laxika.magicalvibes.service.battlefield.GameQueryService;
@@ -122,8 +123,9 @@ public class SacrificePermanentsEffectHandler implements NormalEffectHandlerBean
             return;
         }
 
+        FilterContext filterContext = filterContextFor(gameData, entry);
         List<Permanent> matching = battlefield.stream()
-                .filter(p -> predicateEvaluationService.matchesPermanentPredicate(gameData, p, e.filter()))
+                .filter(p -> predicateEvaluationService.matchesPermanentPredicate(p, e.filter(), filterContext))
                 .toList();
 
         if (matching.isEmpty()) {
@@ -167,6 +169,7 @@ public class SacrificePermanentsEffectHandler implements NormalEffectHandlerBean
         // same time. Collect all IDs to sacrifice and defer actual sacrifice until all choices
         // are made.
         int count = evaluateCount(gameData, entry, e);
+        FilterContext filterContext = filterContextFor(gameData, entry);
         List<UUID> autoSacrificeIds = new ArrayList<>();
         List<PendingForcedSacrifice> choosers = new ArrayList<>();
 
@@ -181,7 +184,7 @@ public class SacrificePermanentsEffectHandler implements NormalEffectHandlerBean
             }
 
             List<Permanent> matching = battlefield.stream()
-                    .filter(p -> predicateEvaluationService.matchesPermanentPredicate(gameData, p, e.filter()))
+                    .filter(p -> predicateEvaluationService.matchesPermanentPredicate(p, e.filter(), filterContext))
                     .toList();
 
             if (matching.isEmpty()) {
@@ -212,12 +215,33 @@ public class SacrificePermanentsEffectHandler implements NormalEffectHandlerBean
     }
 
     private int evaluateCount(GameData gameData, StackEntry entry, SacrificePermanentsEffect e) {
+        Permanent source = resolveSourcePermanent(gameData, entry);
+        return amountEvaluationService.evaluate(gameData, e.count(), AmountContext.forStackEntry(entry, source));
+    }
+
+    /**
+     * Builds a filter context so source-relative predicates (e.g.
+     * {@code PermanentNotPredicate(PermanentIsSourceCardPredicate)} for "other than this creature")
+     * resolve correctly. Prefer the permanent's original (front-face) card id so DFC transforms
+     * still exclude the source.
+     */
+    private FilterContext filterContextFor(GameData gameData, StackEntry entry) {
+        Permanent source = resolveSourcePermanent(gameData, entry);
+        UUID sourceCardId = source != null && source.getOriginalCard() != null
+                ? source.getOriginalCard().getId()
+                : (entry.getCard() != null ? entry.getCard().getId() : null);
+        return FilterContext.of(gameData)
+                .withSourceCardId(sourceCardId)
+                .withSourceControllerId(entry.getControllerId());
+    }
+
+    private Permanent resolveSourcePermanent(GameData gameData, StackEntry entry) {
         Permanent source = entry.getSourcePermanentId() != null
                 ? gameQueryService.findPermanentById(gameData, entry.getSourcePermanentId())
                 : null;
         if (source == null) {
             source = entry.getSourcePermanentSnapshot();
         }
-        return amountEvaluationService.evaluate(gameData, e.count(), AmountContext.forStackEntry(entry, source));
+        return source;
     }
 }

@@ -30,6 +30,8 @@ import com.github.laxika.magicalvibes.model.effect.PutCountersOnSourceEffect;
 import com.github.laxika.magicalvibes.model.effect.PutCountersOnSourceEqualToEnteringPowerEffect;
 import com.github.laxika.magicalvibes.model.effect.SacrificePermanentsEffect;
 import com.github.laxika.magicalvibes.model.effect.SoulbondPairWithEnteringEffect;
+import com.github.laxika.magicalvibes.model.effect.TransformEnteringCreatureEffect;
+import com.github.laxika.magicalvibes.model.effect.TransformTargetPermanentEffect;
 import com.github.laxika.magicalvibes.service.GameBroadcastService;
 import com.github.laxika.magicalvibes.service.effect.AmountContext;
 import com.github.laxika.magicalvibes.service.effect.AmountEvaluationService;
@@ -299,6 +301,44 @@ public class EnterTriggerCollectorService {
         logTriggered(match);
         log.info("Game {} - {} triggers for {} entering (put {} +1/+1 counter(s))",
                 match.gameData().id, sourceCard.getName(), pe.enteringCard().getName(), power);
+        return true;
+    }
+
+    /**
+     * "Whenever a [subtype] you control enters, [you may] transform it" (Vildin-Pack Alpha). The
+     * subtype gate is applied upstream by {@code TriggeringCardConditionalEffect}; here we resolve
+     * the entering permanent and either queue a "you may" ({@code optional}) or bake a mandatory
+     * transform onto the stack — both whose {@code targetId} is that creature.
+     */
+    @CollectsTrigger(value = TransformEnteringCreatureEffect.class,
+            slot = EffectSlot.ON_ALLY_CREATURE_ENTERS_BATTLEFIELD)
+    private boolean handleAllyTransformEntering(TriggerMatchContext match,
+            TransformEnteringCreatureEffect effect, TriggerContext ctx) {
+        TriggerContext.PermanentEnters pe = (TriggerContext.PermanentEnters) ctx;
+        Card sourceCard = match.permanent().getCard();
+        UUID enteringPermanentId = findEnteringPermanentId(match, pe.enteringCard());
+        if (enteringPermanentId == null) {
+            return true;
+        }
+        var transform = new TransformTargetPermanentEffect();
+        if (effect.optional()) {
+            var may = new MayEffect(transform, "Transform " + pe.enteringCard().getName() + "?");
+            match.gameData().queueMayAbility(sourceCard, match.controllerId(), may,
+                    enteringPermanentId, match.permanent().getId());
+        } else {
+            match.gameData().stack.add(new StackEntry(
+                    StackEntryType.TRIGGERED_ABILITY,
+                    sourceCard,
+                    match.controllerId(),
+                    sourceCard.getName() + "'s ability",
+                    new ArrayList<>(List.of(transform)),
+                    enteringPermanentId,
+                    match.permanent().getId()));
+        }
+        logTriggered(match);
+        log.info("Game {} - {} triggers for {} entering ({} transform it)",
+                match.gameData().id, sourceCard.getName(), pe.enteringCard().getName(),
+                effect.optional() ? "may" : "mandatory");
         return true;
     }
 

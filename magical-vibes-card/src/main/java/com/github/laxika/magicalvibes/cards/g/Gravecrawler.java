@@ -9,6 +9,7 @@ import com.github.laxika.magicalvibes.model.effect.CantBlockEffect;
 import com.github.laxika.magicalvibes.model.filter.PermanentHasSubtypePredicate;
 
 @CardRegistration(set = "DKA", collectorNumber = "64")
+@CardRegistration(set = "INR", collectorNumber = "114")
 public class Gravecrawler extends Card {
 
     public Gravecrawler() {

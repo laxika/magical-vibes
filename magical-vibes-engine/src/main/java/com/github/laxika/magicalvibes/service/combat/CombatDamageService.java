@@ -99,6 +99,7 @@ public class CombatDamageService {
     private final CombatTriggerService combatTriggerService;
     private final com.github.laxika.magicalvibes.service.effect.normalfx.DamageSupport damageSupport;
     private final com.github.laxika.magicalvibes.service.state.StateBasedActionService stateBasedActionService;
+    private final com.github.laxika.magicalvibes.service.battle.BattleDefeatSupport battleDefeatSupport;
 
     /**
      * Resolves combat damage for the current combat phase.
@@ -1731,7 +1732,14 @@ public class CombatDamageService {
             int damage = entry.getValue();
             if (damage <= 0) continue;
             Permanent pw = gameQueryService.findPermanentById(gameData, pwId);
-            if (pw == null) continue; // planeswalker may have left battlefield
+            if (pw == null) continue; // planeswalker/battle may have left battlefield
+            if (pw.getCard().hasType(CardType.BATTLE)) {
+                pw.setCounterCount(CounterType.DEFENSE, pw.getCounterCount(CounterType.DEFENSE) - damage);
+                gameBroadcastService.logAndBroadcast(gameData, GameLog.cardThen(pw.getCard(), " takes " + damage + " combat damage ("
+                        + pw.getCounterCount(CounterType.DEFENSE) + " defense remaining)."));
+                battleDefeatSupport.checkAfterDefenseRemoved(gameData, pw);
+                continue;
+            }
             // CR 306.8: Damage dealt to a planeswalker removes that many loyalty counters from it
             pw.setCounterCount(CounterType.LOYALTY, pw.getCounterCount(CounterType.LOYALTY) - damage);
             gameBroadcastService.logAndBroadcast(gameData, GameLog.cardThen(pw.getCard(), " takes " + damage + " combat damage ("

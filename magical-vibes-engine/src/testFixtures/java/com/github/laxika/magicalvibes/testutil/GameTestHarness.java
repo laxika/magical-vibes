@@ -459,6 +459,12 @@ public class GameTestHarness {
         gameService.playCard(gameData, player, cardIndex, 0, null, null, List.of(), List.of(), false, null, null, List.of(), null, List.of(), false, discardHandCardIndex);
     }
 
+    /** Cast a targeted instant, discarding the hand card at {@code discardHandCardIndex} as an additional cost. */
+    public void castInstantWithDiscard(Player player, int cardIndex, UUID targetId, Integer discardHandCardIndex) {
+        ensurePriority(player);
+        gameService.playCard(gameData, player, cardIndex, 0, targetId, null, List.of(), List.of(), false, null, null, List.of(), null, List.of(), false, discardHandCardIndex);
+    }
+
     public void castSorceryWithSacrifice(Player player, int cardIndex, UUID targetId, UUID sacrificePermanentId) {
         ensurePriority(player);
         gameService.playCard(gameData, player, cardIndex, 0, targetId, null, List.of(), List.of(), false, sacrificePermanentId);
@@ -507,6 +513,18 @@ public class GameTestHarness {
     }
 
     /**
+     * Cast a variable-count modal instant (e.g. "choose one or both" / escalate) with per-mode
+     * permanent targets. {@code choicesRequired}..{@code choicesMax} bound how many modes may be picked.
+     */
+    public void castModalInstantWithModes(Player player, int cardIndex, int choicesRequired, int choicesMax,
+                                          int[] modeIndices, List<UUID> targetIds) {
+        ensurePriority(player);
+        gameService.playCard(gameData, player, cardIndex,
+                ChooseOneEffect.encodeModeSelection(choicesRequired, choicesMax, modeIndices),
+                null, null, targetIds, List.of());
+    }
+
+    /**
      * Cast a modal instant that chooses multiple modes, supplying an optional spell target
      * ({@code targetId}) and/or permanent targets ({@code targetIds}) (e.g. Cryptic Command).
      */
@@ -524,10 +542,21 @@ public class GameTestHarness {
      */
     public void castModalSorceryWithModes(Player player, int cardIndex, int choicesRequired,
                                           int[] modeIndices, List<UUID> targetIds) {
+        castModalSorceryWithModes(player, cardIndex, choicesRequired, choicesRequired, modeIndices, targetIds, null);
+    }
+
+    /**
+     * Cast a variable-count modal sorcery (e.g. "choose one or more") with optional escalate
+     * discard indices (pre-removal hand indices of cards to discard).
+     */
+    public void castModalSorceryWithModes(Player player, int cardIndex, int choicesRequired, int choicesMax,
+                                          int[] modeIndices, List<UUID> targetIds,
+                                          List<Integer> discardHandCardIndices) {
         ensurePriority(player);
         gameService.playCard(gameData, player, cardIndex,
-                ChooseOneEffect.encodeModeSelection(choicesRequired, modeIndices),
-                null, null, targetIds, List.of());
+                ChooseOneEffect.encodeModeSelection(choicesRequired, choicesMax, modeIndices),
+                null, null, targetIds, List.of(), false, null, null, List.of(), null, List.of(), false,
+                null, discardHandCardIndices);
     }
 
     public void castInstant(Player player, int cardIndex, UUID spellTargetId, UUID permanentTargetId) {
@@ -570,6 +599,11 @@ public class GameTestHarness {
         gameService.playCardWithConspire(gameData, player, cardIndex, 0, targetId, null, List.of(), conspireCreatureIds);
     }
 
+    public void castWithSplice(Player player, int cardIndex, UUID targetId, List<Integer> spliceHandCardIndices) {
+        ensurePriority(player);
+        gameService.playCardWithSplice(gameData, player, cardIndex, 0, targetId, null, List.of(), spliceHandCardIndices);
+    }
+
     public void castFromLibraryTop(Player player) {
         ensurePriority(player);
         gameService.playCardFromLibraryTop(gameData, player, null, null);
@@ -593,6 +627,11 @@ public class GameTestHarness {
     public void castFlashback(Player player, int graveyardCardIndex, UUID targetId) {
         ensurePriority(player);
         gameService.playFlashbackSpell(gameData, player, graveyardCardIndex, null, targetId);
+    }
+
+    public void castFlashback(Player player, int graveyardCardIndex, UUID targetId, List<UUID> targetIds) {
+        ensurePriority(player);
+        gameService.playFlashbackSpell(gameData, player, graveyardCardIndex, null, targetId, targetIds);
     }
 
     public void castFlashback(Player player, int graveyardCardIndex) {

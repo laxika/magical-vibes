@@ -20,4 +20,9 @@ public record OpponentLostLifeThisTurn(int minimumAmount) implements Condition {
                 ? "no opponent lost life this turn"
                 : "no opponent lost " + minimumAmount + " or more life this turn";
     }
+
+    @Override
+    public boolean isEtbTriggerGate() {
+        return true;
+    }
 }

@@ -36,17 +36,24 @@ public class CreateTokenCopyOfEachControlledCreatureTokenEffectHandler implement
 
     @Override
     public void resolve(GameData gameData, StackEntry entry, CardEffect effect) {
+        CreateTokenCopyOfEachControlledCreatureTokenEffect e =
+                (CreateTokenCopyOfEachControlledCreatureTokenEffect) effect;
+
         List<Permanent> battlefield = gameData.playerBattlefields.get(entry.getControllerId());
         if (battlefield == null || battlefield.isEmpty()) {
             return;
         }
 
-        // Snapshot the creature tokens first so the copies we create aren't themselves copied.
+        // Snapshot matching tokens first so the copies we create aren't themselves copied.
         List<Card> sourceCards = new ArrayList<>();
         for (Permanent permanent : battlefield) {
-            if (permanent.getCard().isToken() && gameQueryService.isCreature(gameData, permanent)) {
-                sourceCards.add(permanent.getCard());
+            if (!permanent.getCard().isToken()) {
+                continue;
             }
+            if (e.creaturesOnly() && !gameQueryService.isCreature(gameData, permanent)) {
+                continue;
+            }
+            sourceCards.add(permanent.getCard());
         }
 
         int tokenMultiplier = gameQueryService.getTokenMultiplier(gameData, entry.getControllerId());

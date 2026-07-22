@@ -17,6 +17,7 @@ import com.github.laxika.magicalvibes.model.PendingMayAbility;
 import com.github.laxika.magicalvibes.model.effect.EnterBattlefieldOnDiscardEffect;
 import com.github.laxika.magicalvibes.model.effect.ForcedCostOrElseEffect;
 import com.github.laxika.magicalvibes.model.effect.PayManaCost;
+import com.github.laxika.magicalvibes.model.effect.PutCardToBattlefieldEffect;
 import com.github.laxika.magicalvibes.model.effect.SacrificeSelfEffect;
 import com.github.laxika.magicalvibes.model.filter.CardPredicate;
 import com.github.laxika.magicalvibes.model.action.PendingExileReturn;
@@ -25,6 +26,9 @@ import com.github.laxika.magicalvibes.model.PendingReturnToHandOnDiscardType;
 import com.github.laxika.magicalvibes.model.PendingTransformOnCreatureDiscard;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.Player;
+import com.github.laxika.magicalvibes.model.StackEntry;
+import com.github.laxika.magicalvibes.model.StackEntryType;
+import com.github.laxika.magicalvibes.model.effect.CardEffect;
 import com.github.laxika.magicalvibes.service.DrawService;
 import com.github.laxika.magicalvibes.service.effect.EffectResolutionService;
 import com.github.laxika.magicalvibes.service.effect.normalfx.EquipSupport;
@@ -81,6 +85,10 @@ public class CardChoiceHandlerService {
         boolean grantHaste = false;
         boolean sacrificeAtEndStep = false;
         boolean enterAttacking = false;
+        boolean drawAndRepeat = false;
+        boolean putAnyNumber = false;
+        CardPredicate drawAndRepeatPredicate = null;
+        String drawAndRepeatLabel = null;
         UUID attachEquipmentCardId = null;
         UUID exileSourceIfDeclinedId = null;
         Integer sacrificeUnlessPayGenericReduction = null;
@@ -95,6 +103,10 @@ public class CardChoiceHandlerService {
             attachEquipmentCardId = hc.attachEquipmentCardId();
             enterAttacking = hc.enterAttacking();
             sacrificeUnlessPayGenericReduction = hc.sacrificeUnlessPayGenericReduction();
+            drawAndRepeat = hc.drawAndRepeat();
+            putAnyNumber = hc.putAnyNumber();
+            drawAndRepeatPredicate = hc.drawAndRepeatPredicate();
+            drawAndRepeatLabel = hc.drawAndRepeatLabel();
         } else if (active instanceof PendingInteraction.TargetedHandCardChoice thc) {
             choicePlayerId = thc.playerId();
             validIndices = thc.validIndices();
@@ -139,6 +151,16 @@ public class CardChoiceHandlerService {
             } else {
                 resolveUntargetedCardChoice(gameData, player, playerId, hand, card, enterTapped, grantHaste,
                         sacrificeAtEndStep, attachEquipmentCardId, enterAttacking, sacrificeUnlessPayGenericReduction);
+                // Cultivator Colossus / Wrenn and Seven: re-offer until decline / no matches.
+                if ((drawAndRepeat || putAnyNumber) && drawAndRepeatPredicate != null && drawAndRepeatLabel != null
+                        && !gameData.interaction.isAwaitingInput()) {
+                    if (drawAndRepeat) {
+                        drawService.resolveDrawCard(gameData, playerId);
+                    }
+                    playerInteractionSupport.applyPutCardToBattlefield(gameData, playerId,
+                            new PutCardToBattlefieldEffect(drawAndRepeatPredicate, drawAndRepeatLabel, enterTapped,
+                                    false, false, false, false, false, drawAndRepeat, putAnyNumber));
+                }
             }
         }
 
@@ -161,9 +183,10 @@ public class CardChoiceHandlerService {
         List<Integer> validIndices = discardChoice.validIndices();
         if (!validIndices.contains(cardIndex)) {
             // Invalid index (e.g. player clicked "Decline" sending -1) — re-prompt the discard choice
+            // Preserve filtered validIndices/prompt (e.g. DiscardCardThenEffect land-only discard).
             log.warn("Game {} - {} sent invalid discard card index {}, re-prompting", gameData.id, player.getUsername(), cardIndex);
-            playerInputService.beginDiscardChoice(gameData, player.getId(), discardChoice.remainingCount(),
-                    discardChoice.followUp());
+            playerInputService.beginDiscardChoice(gameData, player.getId(), discardChoice.validIndices(),
+                    discardChoice.prompt(), discardChoice.remainingCount(), discardChoice.followUp());
             return;
         }
 
@@ -255,6 +278,29 @@ public class CardChoiceHandlerService {
                 }
             }
 
+            // Boost permanent after "discard a card, then this creature gets +X/+Y" completes
+            if (followUp.boostPermanentId() != null) {
+                UUID permanentId = followUp.boostPermanentId();
+                int powerBoost = followUp.boostPower();
+                int toughnessBoost = followUp.boostToughness();
+                for (UUID pid : gameData.orderedPlayerIds) {
+                    List<Permanent> bf = gameData.playerBattlefields.get(pid);
+                    if (bf == null) continue;
+                    for (Permanent p : bf) {
+                        if (p.getId().equals(permanentId)) {
+                            p.setPowerModifier(p.getPowerModifier() + powerBoost);
+                            p.setToughnessModifier(p.getToughnessModifier() + toughnessBoost);
+                            gameBroadcastService.logAndBroadcast(gameData, GameLog.builder()
+                                    .card(p.getCard())
+                                    .text(String.format(" gets %+d/%+d until end of turn.",
+                                            powerBoost, toughnessBoost))
+                                    .build());
+                            break;
+                        }
+                    }
+                }
+            }
+
             // Return cards from graveyard to hand after "discard X cards, then return a card for
             // each discarded" completes (Recall). One sequential pick per discarded card; the
             // graveyard holds at least that many (the cards just discarded), so the choice always
@@ -269,6 +315,21 @@ public class CardChoiceHandlerService {
                 if (gameData.interaction.isAwaitingInput()) {
                     return;
                 }
+            }
+
+            // Push "if you do" rider after a filtered discard (DiscardCardThenEffect / Pack Guardian)
+            if (followUp.thenEffect() != null && followUp.thenEffectSourceCard() != null) {
+                CardEffect thenEffect = followUp.thenEffect();
+                Card sourceCard = followUp.thenEffectSourceCard();
+                gameData.stack.add(new StackEntry(
+                        StackEntryType.TRIGGERED_ABILITY,
+                        sourceCard,
+                        playerId,
+                        sourceCard.getName() + "'s effect",
+                        List.of(thenEffect)
+                ));
+                log.info("Game {} - {} discard-then rider pushed for {}",
+                        gameData.id, player.getUsername(), sourceCard.getName());
             }
 
             // Resume resolving remaining effects on the same spell/ability

@@ -3,10 +3,16 @@ package com.github.laxika.magicalvibes.service.effect.cost;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.GameData;
+import com.github.laxika.magicalvibes.model.ManaCost;
+import com.github.laxika.magicalvibes.model.ManaPool;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.Player;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
+import com.github.laxika.magicalvibes.model.effect.ChooseOneEffect;
+import com.github.laxika.magicalvibes.model.effect.DiscardCardOrPayManaCost;
 import com.github.laxika.magicalvibes.model.effect.DiscardCardTypeCost;
+import com.github.laxika.magicalvibes.model.effect.EscalateDiscardCost;
+import com.github.laxika.magicalvibes.model.effect.EscalateManaCost;
 import com.github.laxika.magicalvibes.model.effect.ExileCardFromGraveyardCost;
 import com.github.laxika.magicalvibes.model.effect.ExileNCardsFromGraveyardCost;
 import com.github.laxika.magicalvibes.model.effect.ExileXCardsFromGraveyardCost;
@@ -14,6 +20,7 @@ import com.github.laxika.magicalvibes.model.effect.PutCounterOnControlledCreatur
 import com.github.laxika.magicalvibes.model.effect.ReturnCreatureToHandCost;
 import com.github.laxika.magicalvibes.model.effect.SacrificeAllCreaturesYouControlCost;
 import com.github.laxika.magicalvibes.model.effect.SacrificeCreatureCost;
+import com.github.laxika.magicalvibes.model.effect.SacrificeCreatureOrPayManaCost;
 import com.github.laxika.magicalvibes.model.effect.SacrificeArtifactCost;
 import com.github.laxika.magicalvibes.model.effect.SacrificePermanentCost;
 import com.github.laxika.magicalvibes.model.CardType;
@@ -55,6 +62,7 @@ public class AdditionalSpellCostService {
     public static final Set<Class<? extends CardEffect>> HANDLED_SPELL_COST_TYPES = Set.of(
             SacrificeAllCreaturesYouControlCost.class,
             SacrificeCreatureCost.class,
+            SacrificeCreatureOrPayManaCost.class,
             SacrificeArtifactCost.class,
             SacrificePermanentCost.class,
             ReturnCreatureToHandCost.class,
@@ -62,7 +70,10 @@ public class AdditionalSpellCostService {
             ExileCardFromGraveyardCost.class,
             ExileXCardsFromGraveyardCost.class,
             ExileNCardsFromGraveyardCost.class,
-            DiscardCardTypeCost.class);
+            DiscardCardTypeCost.class,
+            DiscardCardOrPayManaCost.class,
+            EscalateDiscardCost.class,
+            EscalateManaCost.class);
 
     private final GameQueryService gameQueryService;
     private final PredicateEvaluationService predicateEvaluationService;
@@ -75,6 +86,7 @@ public class AdditionalSpellCostService {
     public record ExtractedCosts(
             boolean sacrificeAllCreatures,
             boolean sacrificeCreature,
+            SacrificeCreatureOrPayManaCost sacrificeCreatureOrPayManaCost,
             boolean sacrificeArtifact,
             SacrificePermanentCost sacrificePermanentCost,
             boolean returnCreatureToHand,
@@ -82,14 +94,24 @@ public class AdditionalSpellCostService {
             ExileCardFromGraveyardCost exileGraveyardCost,
             ExileXCardsFromGraveyardCost exileXCardsCost,
             ExileNCardsFromGraveyardCost exileNCardsCost,
-            DiscardCardTypeCost discardCost
+            DiscardCardTypeCost discardCost,
+            DiscardCardOrPayManaCost discardCardOrPayManaCost,
+            EscalateDiscardCost escalateDiscardCost,
+            EscalateManaCost escalateManaCost
     ) {
         /** True when the spell has any additional cast cost at all. */
         public boolean any() {
-            return sacrificeAllCreatures || sacrificeCreature || sacrificeArtifact
+            return sacrificeAllCreatures || sacrificeCreature || sacrificeCreatureOrPayManaCost != null
+                    || sacrificeArtifact
                     || sacrificePermanentCost != null || returnCreatureToHand || putCounterCost != null
                     || exileGraveyardCost != null || exileXCardsCost != null || exileNCardsCost != null
-                    || discardCost != null;
+                    || discardCost != null || discardCardOrPayManaCost != null
+                    || escalateDiscardCost != null || escalateManaCost != null;
+        }
+
+        /** True when the spell has any escalate cost (mana and/or discard). */
+        public boolean hasEscalate() {
+            return escalateDiscardCost != null || escalateManaCost != null;
         }
     }
 
@@ -97,16 +119,30 @@ public class AdditionalSpellCostService {
      * The caster's payment choices, as carried by the cast request. {@code spellCardIndex} is the
      * spell's own pre-removal hand index (used to adjust {@code discardHandCardIndex}); pass a
      * negative value for casts not from hand.
+     * <p>
+     * {@code discardHandCardIndices} pays escalate (one discard per mode beyond the first);
+     * {@code escalateModeCount} is the number of modes chosen for that escalate payment (0 when
+     * unused).
      */
     public record CostSelection(
             UUID sacrificePermanentId,
             Integer exileGraveyardCardIndex,
             List<Integer> exileGraveyardCardIndices,
             Integer discardHandCardIndex,
+            List<Integer> discardHandCardIndices,
+            int escalateModeCount,
             int spellCardIndex
     ) {
         public static CostSelection none() {
-            return new CostSelection(null, null, null, null, -1);
+            return new CostSelection(null, null, null, null, null, 0, -1);
+        }
+
+        /** Convenience for the common single-discard / no-escalate case. */
+        public CostSelection(UUID sacrificePermanentId, Integer exileGraveyardCardIndex,
+                             List<Integer> exileGraveyardCardIndices, Integer discardHandCardIndex,
+                             int spellCardIndex) {
+            this(sacrificePermanentId, exileGraveyardCardIndex, exileGraveyardCardIndices,
+                    discardHandCardIndex, null, 0, spellCardIndex);
         }
     }
 
@@ -118,6 +154,7 @@ public class AdditionalSpellCostService {
     public ExtractedCosts extractAndRemove(List<CardEffect> effects) {
         boolean sacAllCreatures = effects.removeIf(SacrificeAllCreaturesYouControlCost.class::isInstance);
         boolean sacCreature = effects.removeIf(SacrificeCreatureCost.class::isInstance);
+        SacrificeCreatureOrPayManaCost sacOrPay = removeFirst(effects, SacrificeCreatureOrPayManaCost.class);
         boolean sacArtifact = effects.removeIf(SacrificeArtifactCost.class::isInstance);
         SacrificePermanentCost permCost = removeFirst(effects, SacrificePermanentCost.class);
         boolean returnCreature = effects.removeIf(ReturnCreatureToHandCost.class::isInstance);
@@ -126,8 +163,12 @@ public class AdditionalSpellCostService {
         ExileXCardsFromGraveyardCost exileXCardsCost = removeFirst(effects, ExileXCardsFromGraveyardCost.class);
         ExileNCardsFromGraveyardCost exileNCardsCost = removeFirst(effects, ExileNCardsFromGraveyardCost.class);
         DiscardCardTypeCost discardCost = removeFirst(effects, DiscardCardTypeCost.class);
-        return new ExtractedCosts(sacAllCreatures, sacCreature, sacArtifact, permCost, returnCreature,
-                putCounterCost, exileGraveyardCost, exileXCardsCost, exileNCardsCost, discardCost);
+        DiscardCardOrPayManaCost discardOrPay = removeFirst(effects, DiscardCardOrPayManaCost.class);
+        EscalateDiscardCost escalateDiscardCost = removeFirst(effects, EscalateDiscardCost.class);
+        EscalateManaCost escalateManaCost = removeFirst(effects, EscalateManaCost.class);
+        return new ExtractedCosts(sacAllCreatures, sacCreature, sacOrPay, sacArtifact, permCost, returnCreature,
+                putCounterCost, exileGraveyardCost, exileXCardsCost, exileNCardsCost, discardCost, discardOrPay,
+                escalateDiscardCost, escalateManaCost);
     }
 
     /** Reads the card's additional cast costs without touching the card (for gating queries). */
@@ -161,6 +202,19 @@ public class AdditionalSpellCostService {
                 case SacrificeCreatureCost ignored -> {
                     if (battlefield.stream().noneMatch(p -> gameQueryService.isCreature(gameData, p))) return false;
                 }
+                case SacrificeCreatureOrPayManaCost cost -> {
+                    boolean hasCreature = battlefield.stream().anyMatch(p -> gameQueryService.isCreature(gameData, p));
+                    if (!hasCreature && !canAffordSacrificeOrPayManaOption(gameData, playerId, card, cost)) {
+                        return false;
+                    }
+                }
+                case DiscardCardOrPayManaCost cost -> {
+                    boolean hasDiscard = !discardCostIndices(gameData, playerId, card,
+                            new DiscardCardTypeCost(null, null)).isEmpty();
+                    if (!hasDiscard && !canAffordDiscardOrPayManaOption(gameData, playerId, card, cost)) {
+                        return false;
+                    }
+                }
                 case ReturnCreatureToHandCost ignored -> {
                     if (battlefield.stream().noneMatch(p -> gameQueryService.isCreature(gameData, p))) return false;
                 }
@@ -191,6 +245,10 @@ public class AdditionalSpellCostService {
                 case DiscardCardTypeCost cost -> {
                     if (discardCostIndices(gameData, playerId, card, cost).isEmpty()) return false;
                 }
+                // Escalate is payable with a single mode (zero extra payments), so it never blocks
+                // playability by itself — concrete mode+payment selections are validated at cast.
+                case EscalateDiscardCost ignored -> { }
+                case EscalateManaCost ignored -> { }
                 // Sacrificing all creatures you control is legal with zero creatures.
                 case SacrificeAllCreaturesYouControlCost ignored -> { }
                 default -> { }
@@ -201,14 +259,21 @@ public class AdditionalSpellCostService {
 
     /**
      * Hand indices (as the caller/UI sees them, with the spell still in hand) whose card can pay
-     * the spell's "discard a card" additional cast cost. Returns {@code null} when the card has no
-     * such cost, an empty list when the cost exists but is unpayable. Any card other than the
-     * spell itself that matches the cost's predicate qualifies (CR 601.2b — the spell is on the
-     * stack when costs are paid, so it can never be its own discard).
+     * the spell's "discard a card" additional cast cost (plain discard, or the discard option of
+     * discard-or-pay-mana). Returns {@code null} when the card has no such cost, an empty list when
+     * the cost exists but is unpayable via discard. Any card other than the spell itself that
+     * matches the cost's predicate qualifies (CR 601.2b — the spell is on the stack when costs are
+     * paid, so it can never be its own discard).
      */
     public List<Integer> validDiscardCostIndices(GameData gameData, UUID playerId, Card card) {
-        DiscardCardTypeCost cost = peek(card).discardCost();
-        return cost == null ? null : discardCostIndices(gameData, playerId, card, cost);
+        ExtractedCosts costs = peek(card);
+        if (costs.discardCost() != null) {
+            return discardCostIndices(gameData, playerId, card, costs.discardCost());
+        }
+        if (costs.discardCardOrPayManaCost() != null) {
+            return discardCostIndices(gameData, playerId, card, new DiscardCardTypeCost(null, null));
+        }
+        return null;
     }
 
     private List<Integer> discardCostIndices(GameData gameData, UUID playerId, Card card, DiscardCardTypeCost cost) {
@@ -238,6 +303,28 @@ public class AdditionalSpellCostService {
         if (costs.sacrificeCreature()) {
             validateSingleSacrificeCost(gameData, player, card, selection.sacrificePermanentId(),
                     "a creature", p -> gameQueryService.isCreature(gameData, p));
+        }
+        if (costs.sacrificeCreatureOrPayManaCost() != null) {
+            if (selection.sacrificePermanentId() != null) {
+                validateSingleSacrificeCost(gameData, player, card, selection.sacrificePermanentId(),
+                        "a creature", p -> gameQueryService.isCreature(gameData, p));
+            } else if (!canAffordSacrificeOrPayManaOption(gameData, player.getId(), card,
+                    costs.sacrificeCreatureOrPayManaCost())) {
+                throw new IllegalStateException("Must sacrifice a creature or pay "
+                        + costs.sacrificeCreatureOrPayManaCost().manaCost()
+                        + " to cast " + card.getName());
+            }
+        }
+        if (costs.discardCardOrPayManaCost() != null) {
+            if (selection.discardHandCardIndex() != null) {
+                validateDiscardCost(gameData, player, card, new DiscardCardTypeCost(null, null),
+                        selection.discardHandCardIndex(), selection.spellCardIndex());
+            } else if (!canAffordDiscardOrPayManaOption(gameData, player.getId(), card,
+                    costs.discardCardOrPayManaCost())) {
+                throw new IllegalStateException("Must discard a card or pay "
+                        + costs.discardCardOrPayManaCost().manaCost()
+                        + " to cast " + card.getName());
+            }
         }
         if (costs.sacrificeArtifact()) {
             validateSingleSacrificeCost(gameData, player, card, selection.sacrificePermanentId(),
@@ -272,6 +359,68 @@ public class AdditionalSpellCostService {
             validateDiscardCost(gameData, player, card, costs.discardCost(),
                     selection.discardHandCardIndex(), selection.spellCardIndex());
         }
+        if (costs.escalateDiscardCost() != null) {
+            validateEscalateDiscardCost(gameData, player, card, selection.escalateModeCount(),
+                    selection.discardHandCardIndices(), selection.spellCardIndex());
+        }
+        if (costs.escalateManaCost() != null) {
+            validateEscalateManaCost(card, costs.escalateManaCost(), selection.escalateModeCount());
+        }
+    }
+
+    /**
+     * Builds the mana-symbol suffix paid for escalate (the escalate cost repeated once per mode
+     * beyond the first). Empty when there is no escalate mana cost or only one mode is chosen.
+     */
+    public String escalateManaSuffix(EscalateManaCost cost, int modesChosen) {
+        if (cost == null || cost.manaCost() == null || cost.manaCost().isEmpty()) {
+            return "";
+        }
+        int times = Math.max(0, modesChosen - 1);
+        if (times == 0) {
+            return "";
+        }
+        return cost.manaCost().repeat(times);
+    }
+
+    /**
+     * Validates escalate's mana-cost-per-extra-mode declaration (CR 702.124). Mana affordability is
+     * checked by the cast path as part of the spell's total cost; this only guards the mode count.
+     */
+    public void validateEscalateManaCost(Card card, EscalateManaCost cost, int modesChosen) {
+        if (modesChosen < 1) {
+            throw new IllegalStateException("Must choose at least one mode to cast " + card.getName());
+        }
+        if (cost.manaCost() == null || cost.manaCost().isEmpty()) {
+            throw new IllegalStateException("Escalate mana cost is missing on " + card.getName());
+        }
+    }
+
+    /**
+     * True when the pool can pay the spell's mana cost plus the alternate mana option (no cost
+     * modifiers applied — cast-time payment re-checks after modifiers via the normal mana path).
+     */
+    public boolean canAffordSacrificeOrPayManaOption(GameData gameData, UUID playerId, Card card,
+                                                     SacrificeCreatureOrPayManaCost cost) {
+        return canAffordManaOption(gameData, playerId, card, cost.manaCost());
+    }
+
+    /**
+     * True when the pool can pay the spell's mana cost plus the discard-or-pay alternate mana
+     * option (no cost modifiers applied — cast-time payment re-checks after modifiers).
+     */
+    public boolean canAffordDiscardOrPayManaOption(GameData gameData, UUID playerId, Card card,
+                                                   DiscardCardOrPayManaCost cost) {
+        return canAffordManaOption(gameData, playerId, card, cost.manaCost());
+    }
+
+    private boolean canAffordManaOption(GameData gameData, UUID playerId, Card card, String optionManaCost) {
+        ManaPool pool = gameData.playerManaPools.get(playerId);
+        if (pool == null) {
+            return false;
+        }
+        String base = card.getManaCost() != null ? card.getManaCost() : "";
+        return new ManaCost(base + optionManaCost).canPay(pool);
     }
 
     /**
@@ -440,6 +589,63 @@ public class AdditionalSpellCostService {
             throw new IllegalStateException("Discarded card must be " + label);
         }
         return effectiveIndex;
+    }
+
+    /**
+     * Validates escalate's "discard a card for each mode beyond the first" cost without mutating.
+     * Returns the post-spell-removal hand indices that would be discarded (descending order ready
+     * for payment). {@code modesChosen} must be &gt;= 1.
+     */
+    public List<Integer> validateEscalateDiscardCost(GameData gameData, Player player, Card card,
+                                                     int modesChosen, List<Integer> discardHandCardIndices,
+                                                     int spellCardIndex) {
+        int required = Math.max(0, modesChosen - 1);
+        if (required == 0) {
+            if (discardHandCardIndices != null && !discardHandCardIndices.isEmpty()) {
+                throw new IllegalStateException("No escalate discard required for a single mode of " + card.getName());
+            }
+            return List.of();
+        }
+        if (discardHandCardIndices == null || discardHandCardIndices.size() != required) {
+            throw new IllegalStateException("Must discard " + required + " card"
+                    + (required == 1 ? "" : "s") + " to escalate " + card.getName());
+        }
+        if (discardHandCardIndices.stream().distinct().count() != discardHandCardIndices.size()) {
+            throw new IllegalStateException("Duplicate escalate discard indices");
+        }
+        List<Card> hand = gameData.playerHands.get(player.getId());
+        if (hand == null) {
+            throw new IllegalStateException("Must discard cards to escalate " + card.getName());
+        }
+        List<Integer> effectiveIndices = new ArrayList<>();
+        for (int discardHandCardIndex : discardHandCardIndices) {
+            if (discardHandCardIndex == spellCardIndex) {
+                throw new IllegalStateException("Cannot discard the spell itself to escalate " + card.getName());
+            }
+            int effectiveIndex = spellCardIndex >= 0 && discardHandCardIndex > spellCardIndex
+                    ? discardHandCardIndex - 1 : discardHandCardIndex;
+            if (effectiveIndex < 0 || effectiveIndex >= hand.size()) {
+                throw new IllegalStateException("Must discard cards to escalate " + card.getName());
+            }
+            effectiveIndices.add(effectiveIndex);
+        }
+        if (effectiveIndices.stream().distinct().count() != effectiveIndices.size()) {
+            throw new IllegalStateException("Duplicate escalate discard indices");
+        }
+        return effectiveIndices;
+    }
+
+    /**
+     * Counts how many modes a modal encoding selects for an escalate payment. Returns 0 when the
+     * card has no {@link ChooseOneEffect} (caller should not have an escalate cost in that case).
+     */
+    public int countChosenModes(Card card, int modeEncoding) {
+        return card.getEffects(EffectSlot.SPELL).stream()
+                .filter(ChooseOneEffect.class::isInstance)
+                .map(ChooseOneEffect.class::cast)
+                .findFirst()
+                .map(coe -> coe.decodeModeIndices(modeEncoding).size())
+                .orElse(0);
     }
 
     /**

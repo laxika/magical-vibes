@@ -17,6 +17,7 @@ import java.util.List;
 import java.util.Set;
 
 @CardRegistration(set = "ISD", collectorNumber = "203")
+@CardRegistration(set = "INR", collectorNumber = "216")
 public class SpiderSpawning extends Card {
 
     public SpiderSpawning() {

@@ -295,7 +295,11 @@
       <div class="side-prompt prompt-targeting">
         <span class="side-prompt-text">
           {{ choice.targeting.modeCardName }} &mdash; choose
-          {{ choice.targeting.modeChoicesRequired === 1 ? (choice.targeting.modeOptional ? 'up to one' : 'one') : (choice.targeting.modeChoicesRequired === 2 ? 'two' : choice.targeting.modeChoicesRequired) }}
+          @if (choice.targeting.modeChoicesRequired === choice.targeting.modeChoicesMax) {
+            {{ choice.targeting.modeChoicesRequired === 1 ? (choice.targeting.modeOptional ? 'up to one' : 'one') : (choice.targeting.modeChoicesRequired === 2 ? 'two' : choice.targeting.modeChoicesRequired) }}
+          } @else {
+            {{ choice.targeting.modeChoicesRequired }} or more
+          }
         </span>
         <div class="side-prompt-buttons side-prompt-buttons-stacked">
           @for (option of choice.targeting.modeOptions; track $index) {
@@ -306,7 +310,7 @@
             </button>
           }
           <button class="btn-side-prompt"
-                  [disabled]="choice.targeting.modeSelectedIndices.length !== choice.targeting.modeChoicesRequired"
+                  [disabled]="choice.targeting.modeSelectedIndices.length < choice.targeting.modeChoicesRequired || choice.targeting.modeSelectedIndices.length > choice.targeting.modeChoicesMax"
                   (click)="choice.targeting.confirmModes()">Confirm</button>
           @if (choice.targeting.modeOptional) {
             <button class="btn-side-prompt" (click)="choice.targeting.skipModes()">Choose None</button>

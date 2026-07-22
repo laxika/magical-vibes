@@ -15,8 +15,9 @@ import com.github.laxika.magicalvibes.model.filter.PermanentPredicate;
  * owns all evaluation — it feeds the returned {@link PermanentPredicate}s to its predicate service and
  * supplies engine-computed facts (attacking-alone, historic-spell-cast) itself.
  *
- * <p>Scope note: this covers the six printed attacker-side evasion shapes ({@code CantBeBlockedEffect},
+ * <p>Scope note: this covers the printed attacker-side evasion shapes ({@code CantBeBlockedEffect},
  * {@code CanBeBlockedOnlyByFilterEffect}, {@code CantBeBlockedByCreaturesMatchingPredicateEffect},
+ * {@code CantBeBlockedByCreaturesWithLessPowerEffect},
  * {@code CantBeBlockedIfDefenderControlsMatchingPermanentEffect},
  * {@code CantBeBlockedIfControllerCastHistoricSpellThisTurnEffect}, and
  * {@code CantBeBlockedIfAttackingAloneEffect}).
@@ -68,5 +69,13 @@ public interface BlockabilityRestrictionEffect extends CardEffect {
      */
     default PermanentPredicate cantBeBlockedByCreaturesMatching() {
         return null;
+    }
+
+    /**
+     * Whether creatures with power strictly less than this creature's power can't block it
+     * (Shrill Howler / Howling Chorus). Compared against effective powers at declaration.
+     */
+    default boolean cantBeBlockedByCreaturesWithLessPower() {
+        return false;
     }
 }

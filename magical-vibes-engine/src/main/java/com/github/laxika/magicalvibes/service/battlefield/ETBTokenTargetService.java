@@ -260,6 +260,16 @@ public class ETBTokenTargetService {
         return card.getSpellTargets().stream().anyMatch(g -> g.getMaxTargets() > 1);
     }
 
+    /**
+     * True when ETB / self-cast trigger targeting must walk targets slot-by-slot: either a group
+     * allows more than one target, or a group is optional ({@code minTargets == 0}, "up to N")
+     * so the controller may decline via choosing themselves.
+     */
+    public boolean needsSlotBySlotTargetSelection(Card card) {
+        return card.getSpellTargets().stream()
+                .anyMatch(g -> g.getMaxTargets() > 1 || g.getMinTargets() == 0);
+    }
+
     private List<CardEffect> effectsForTargetGroup(Card card, List<CardEffect> effects, int groupIndex) {
         List<CardEffect> matched = new ArrayList<>();
         for (CardEffect effect : effects) {

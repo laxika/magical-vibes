@@ -9,6 +9,7 @@ import com.github.laxika.magicalvibes.model.effect.ConditionalEffect;
 import com.github.laxika.magicalvibes.model.effect.TransformSelfEffect;
 
 @CardRegistration(set = "ISD", collectorNumber = "145")
+@CardRegistration(set = "INR", collectorNumber = "158")
 public class HanweirWatchkeep extends Card {
 
     public HanweirWatchkeep() {

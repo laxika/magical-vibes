@@ -30,6 +30,7 @@ public enum CardSubtype {
     RHINO("Rhino"),
     ELF("Elf"),
     SHAMAN("Shaman"),
+    SIEGE("Siege"),
     DRUID("Druid"),
     DRYAD("Dryad"),
     RANGER("Ranger"),
@@ -153,6 +154,7 @@ public enum CardSubtype {
     UNICORN("Unicorn"),
     ASSEMBLY_WORKER("Assembly-Worker"),
     PEGASUS("Pegasus"),
+    PEASANT("Peasant"),
     PEST("Pest"),
     PIRATE("Pirate"),
     PLANT("Plant"),
@@ -161,6 +163,7 @@ public enum CardSubtype {
     TEFERI("Teferi"),
     TREASURE("Treasure"),
     CLUE("Clue"),
+    BLOOD("Blood"),
     VEHICLE("Vehicle"),
     NIGHTSTALKER("Nightstalker"),
     LESSON("Lesson"),
@@ -172,7 +175,8 @@ public enum CardSubtype {
     HYDRA("Hydra"),
     MANTICORE("Manticore"),
     JACKAL("Jackal"),
-    SAMUT("Samut");
+    SAMUT("Samut"),
+    ARCANE("Arcane");
 
     @Getter
     private final String displayName;

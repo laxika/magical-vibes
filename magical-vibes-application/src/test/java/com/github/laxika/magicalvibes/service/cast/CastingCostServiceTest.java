@@ -6,6 +6,7 @@ import com.github.laxika.magicalvibes.model.CardType;
 import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.GameData;
 import com.github.laxika.magicalvibes.model.GameStatus;
+import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.ManaPool;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.TurnStep;
@@ -771,6 +772,40 @@ class CastingCostServiceTest {
             gd.playerBattlefields.get(player1Id).add(creature);
             when(gameQueryService.isCreature(gd, creature)).thenReturn(true);
 
+            assertThat(svc.canPayAdditionalSpellCosts(gd, player1Id, spell)).isTrue();
+        }
+
+        @Test
+        @DisplayName("SacrificeCreatureOrPayManaCost — true with creature, or with enough mana for combined cost")
+        void sacrificeCreatureOrPayManaCost() {
+            Card spell = spellWith(new com.github.laxika.magicalvibes.model.effect.SacrificeCreatureOrPayManaCost("{3}{B}"));
+            spell.setManaCost("{B}");
+            assertThat(svc.canPayAdditionalSpellCosts(gd, player1Id, spell)).isFalse();
+
+            gd.playerManaPools.get(player1Id).add(ManaColor.BLACK, 5);
+            assertThat(svc.canPayAdditionalSpellCosts(gd, player1Id, spell)).isTrue();
+
+            gd.playerManaPools.get(player1Id).clear();
+            Permanent creature = new Permanent(graveyardCard("Bear", CardType.CREATURE));
+            gd.playerBattlefields.get(player1Id).add(creature);
+            when(gameQueryService.isCreature(gd, creature)).thenReturn(true);
+            assertThat(svc.canPayAdditionalSpellCosts(gd, player1Id, spell)).isTrue();
+        }
+
+        @Test
+        @DisplayName("DiscardCardOrPayManaCost — true with another hand card, or with enough mana for combined cost")
+        void discardCardOrPayManaCost() {
+            Card spell = spellWith(new com.github.laxika.magicalvibes.model.effect.DiscardCardOrPayManaCost("{5}"));
+            spell.setManaCost("{R}");
+            gd.playerHands.get(player1Id).add(spell);
+            assertThat(svc.canPayAdditionalSpellCosts(gd, player1Id, spell)).isFalse();
+
+            gd.playerManaPools.get(player1Id).add(ManaColor.RED, 1);
+            gd.playerManaPools.get(player1Id).add(ManaColor.COLORLESS, 5);
+            assertThat(svc.canPayAdditionalSpellCosts(gd, player1Id, spell)).isTrue();
+
+            gd.playerManaPools.get(player1Id).clear();
+            gd.playerHands.get(player1Id).add(graveyardCard("Bear", CardType.CREATURE));
             assertThat(svc.canPayAdditionalSpellCosts(gd, player1Id, spell)).isTrue();
         }
 

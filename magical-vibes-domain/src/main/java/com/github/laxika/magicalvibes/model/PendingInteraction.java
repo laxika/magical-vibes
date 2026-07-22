@@ -805,38 +805,62 @@ public sealed interface PendingInteraction permits PermanentChoiceContext,
      */
     record HandCardChoice(UUID playerId, java.util.List<Integer> validIndices, String prompt, boolean enterTapped,
                           boolean grantHaste, boolean sacrificeAtEndStep, UUID attachEquipmentCardId,
-                          boolean enterAttacking, Integer sacrificeUnlessPayGenericReduction)
+                          boolean enterAttacking, Integer sacrificeUnlessPayGenericReduction,
+                          boolean drawAndRepeat, com.github.laxika.magicalvibes.model.filter.CardPredicate drawAndRepeatPredicate,
+                          String drawAndRepeatLabel, boolean putAnyNumber)
             implements PendingInteraction, HandChoice {
 
         public HandCardChoice(UUID playerId, java.util.List<Integer> validIndices, String prompt) {
-            this(playerId, validIndices, prompt, false, false, false, null, false, null);
+            this(playerId, validIndices, prompt, false, false, false, null, false, null, false, null, null, false);
         }
 
         public HandCardChoice(UUID playerId, java.util.List<Integer> validIndices, String prompt, boolean enterTapped) {
-            this(playerId, validIndices, prompt, enterTapped, false, false, null, false, null);
+            this(playerId, validIndices, prompt, enterTapped, false, false, null, false, null, false, null, null, false);
         }
 
         public HandCardChoice(UUID playerId, java.util.List<Integer> validIndices, String prompt, boolean enterTapped,
                               boolean grantHaste, boolean sacrificeAtEndStep) {
-            this(playerId, validIndices, prompt, enterTapped, grantHaste, sacrificeAtEndStep, null, false, null);
+            this(playerId, validIndices, prompt, enterTapped, grantHaste, sacrificeAtEndStep, null, false, null, false, null, null, false);
         }
 
         public HandCardChoice(UUID playerId, java.util.List<Integer> validIndices, String prompt, boolean enterTapped,
                               boolean grantHaste, boolean sacrificeAtEndStep, UUID attachEquipmentCardId) {
-            this(playerId, validIndices, prompt, enterTapped, grantHaste, sacrificeAtEndStep, attachEquipmentCardId, false, null);
+            this(playerId, validIndices, prompt, enterTapped, grantHaste, sacrificeAtEndStep, attachEquipmentCardId, false, null,
+                    false, null, null, false);
         }
 
         public HandCardChoice(UUID playerId, java.util.List<Integer> validIndices, String prompt, boolean enterTapped,
                               boolean grantHaste, boolean sacrificeAtEndStep, UUID attachEquipmentCardId,
                               boolean enterAttacking) {
             this(playerId, validIndices, prompt, enterTapped, grantHaste, sacrificeAtEndStep, attachEquipmentCardId,
-                    enterAttacking, null);
+                    enterAttacking, null, false, null, null, false);
+        }
+
+        /** Cultivator Colossus-style: put tapped, draw, and re-offer until declined. */
+        public HandCardChoice(UUID playerId, java.util.List<Integer> validIndices, String prompt, boolean enterTapped,
+                              boolean grantHaste, boolean sacrificeAtEndStep, UUID attachEquipmentCardId,
+                              boolean enterAttacking, boolean drawAndRepeat,
+                              com.github.laxika.magicalvibes.model.filter.CardPredicate drawAndRepeatPredicate,
+                              String drawAndRepeatLabel) {
+            this(playerId, validIndices, prompt, enterTapped, grantHaste, sacrificeAtEndStep, attachEquipmentCardId,
+                    enterAttacking, null, drawAndRepeat, drawAndRepeatPredicate, drawAndRepeatLabel, false);
+        }
+
+        /** Wrenn and Seven / Cultivator-style repeat with optional draw. */
+        public HandCardChoice(UUID playerId, java.util.List<Integer> validIndices, String prompt, boolean enterTapped,
+                              boolean grantHaste, boolean sacrificeAtEndStep, UUID attachEquipmentCardId,
+                              boolean enterAttacking, boolean drawAndRepeat,
+                              com.github.laxika.magicalvibes.model.filter.CardPredicate drawAndRepeatPredicate,
+                              String drawAndRepeatLabel, boolean putAnyNumber) {
+            this(playerId, validIndices, prompt, enterTapped, grantHaste, sacrificeAtEndStep, attachEquipmentCardId,
+                    enterAttacking, null, drawAndRepeat, drawAndRepeatPredicate, drawAndRepeatLabel, putAnyNumber);
         }
 
         /** "You may put a creature onto the battlefield; then sacrifice it unless you pay its cost reduced by N" (Flash). */
         public HandCardChoice(UUID playerId, java.util.List<Integer> validIndices, String prompt,
                               Integer sacrificeUnlessPayGenericReduction) {
-            this(playerId, validIndices, prompt, false, false, false, null, false, sacrificeUnlessPayGenericReduction);
+            this(playerId, validIndices, prompt, false, false, false, null, false, sacrificeUnlessPayGenericReduction,
+                    false, null, null, false);
         }
 
         @Override

@@ -6,6 +6,7 @@ import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.effect.PutCountersOnSourceEffect;
 
 @CardRegistration(set = "ISD", collectorNumber = "191")
+@CardRegistration(set = "INR", collectorNumber = "206")
 public class Lumberknot extends Card {
 
     public Lumberknot() {

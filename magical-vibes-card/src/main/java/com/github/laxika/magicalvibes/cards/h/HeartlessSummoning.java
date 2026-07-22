@@ -12,6 +12,7 @@ import com.github.laxika.magicalvibes.model.effect.StaticBoostEffect;
 import java.util.Set;
 
 @CardRegistration(set = "ISD", collectorNumber = "104")
+@CardRegistration(set = "INR", collectorNumber = "117")
 public class HeartlessSummoning extends Card {
 
     public HeartlessSummoning() {

@@ -312,6 +312,10 @@ public class AnimationSupport {
 
         target.getGrantedKeywords().addAll(effect.grantedKeywords());
 
+        if (effect.animatedColor() != null) {
+            target.getGrantedColors().add(effect.animatedColor());
+        }
+
         // Per MTG rules: if an Equipment becomes a creature, it becomes unattached (CR 301.5c)
         if (target.isAttached() && target.getCard().getSubtypes().contains(CardSubtype.EQUIPMENT)) {
             target.setAttachedTo(null);

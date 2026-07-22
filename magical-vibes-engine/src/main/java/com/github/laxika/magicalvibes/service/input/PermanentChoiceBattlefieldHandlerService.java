@@ -1,6 +1,7 @@
 package com.github.laxika.magicalvibes.service.input;
 
 import com.github.laxika.magicalvibes.model.Card;
+import com.github.laxika.magicalvibes.model.CardType;
 import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.GameData;
 import com.github.laxika.magicalvibes.model.GameLog;
@@ -788,16 +789,62 @@ public class PermanentChoiceBattlefieldHandlerService {
         log.info("Game {} - {} sacrifices {} for {}", gameData.id, playerName,
                 toSacrifice.getCard().getName(), ctx.sourceCard().getName());
 
-        // Execute the "if you do" effect by pushing it onto the stack as a triggered ability.
+        // Execute the "if/when you do" effect by pushing it onto the stack as a triggered ability.
         // A null thenEffect means a bare "sacrifice a permanent" with no follow-up.
+        // When the rider needs a target (Sorin, Imperious Bloodlord: "When you do, … deals 3 damage
+        // to any target"), choose the target as the reflexive trigger goes on the stack.
         if (ctx.thenEffect() != null) {
-            gameData.stack.add(new StackEntry(
-                    StackEntryType.TRIGGERED_ABILITY,
-                    ctx.sourceCard(),
-                    ctx.controllerId(),
-                    ctx.sourceCard().getName() + "'s effect",
-                    new ArrayList<>(List.of(ctx.thenEffect()))
-            ));
+            List<CardEffect> thenEffects = new ArrayList<>(List.of(ctx.thenEffect()));
+            var targetSpec = ctx.thenEffect().targetSpec();
+            boolean needsTarget = targetSpec.category().includesPermanents()
+                    || targetSpec.category().includesPlayers();
+            if (needsTarget) {
+                List<UUID> validPermanentTargets = new ArrayList<>();
+                if (targetSpec.category().includesPermanents()) {
+                    for (UUID pid : gameData.orderedPlayerIds) {
+                        List<Permanent> battlefield = gameData.playerBattlefields.get(pid);
+                        if (battlefield == null) {
+                            continue;
+                        }
+                        for (Permanent p : battlefield) {
+                            if (gameQueryService.isCreature(gameData, p)
+                                    || p.getCard().hasType(CardType.PLANESWALKER)) {
+                                validPermanentTargets.add(p.getId());
+                            }
+                        }
+                    }
+                }
+                List<UUID> validPlayerTargets = targetSpec.category().includesPlayers()
+                        ? new ArrayList<>(gameData.orderedPlayerIds)
+                        : List.of();
+                if (validPermanentTargets.isEmpty() && validPlayerTargets.isEmpty()) {
+                    gameBroadcastService.logAndBroadcast(gameData,
+                            GameLog.cardThen(ctx.sourceCard(), "'s ability has no valid targets."));
+                    log.info("Game {} - {} sacrifice-then rider skipped (no valid targets)",
+                            gameData.id, ctx.sourceCard().getName());
+                } else {
+                    gameData.interaction.setPermanentChoiceContext(
+                            new PermanentChoiceContext.MayAbilityTriggerTarget(
+                                    ctx.sourceCard(), ctx.controllerId(), thenEffects));
+                    playerInputService.beginAnyTargetChoice(gameData, ctx.controllerId(),
+                            validPermanentTargets, validPlayerTargets,
+                            ctx.sourceCard().getName() + " — Choose any target.");
+                    gameBroadcastService.logAndBroadcast(gameData,
+                            GameLog.cardThen(ctx.sourceCard(),
+                                    " — choose a target for the reflexive trigger."));
+                    log.info("Game {} - {} sacrifice-then rider awaiting any-target",
+                            gameData.id, ctx.sourceCard().getName());
+                    return;
+                }
+            } else {
+                gameData.stack.add(new StackEntry(
+                        StackEntryType.TRIGGERED_ABILITY,
+                        ctx.sourceCard(),
+                        ctx.controllerId(),
+                        ctx.sourceCard().getName() + "'s effect",
+                        thenEffects
+                ));
+            }
         }
 
         inputCompletionService.sbaProcessMayAbilitiesThenAutoPass(gameData);

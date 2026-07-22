@@ -39,9 +39,11 @@ import com.github.laxika.magicalvibes.model.condition.ControlsOtherPermanentCoun
 import com.github.laxika.magicalvibes.model.condition.ControlsPermanentCount;
 import com.github.laxika.magicalvibes.model.condition.ControlsPermanentCountAtMost;
 import com.github.laxika.magicalvibes.model.condition.ControlledCreaturesTotalPowerAtLeast;
+import com.github.laxika.magicalvibes.model.condition.Coven;
 import com.github.laxika.magicalvibes.model.condition.CreatureAttackingController;
 import com.github.laxika.magicalvibes.model.condition.DefendingPlayerControlsPermanent;
 import com.github.laxika.magicalvibes.model.condition.DefendingPlayerPoisoned;
+import com.github.laxika.magicalvibes.model.condition.Delirium;
 import com.github.laxika.magicalvibes.model.condition.DevouredCreature;
 import com.github.laxika.magicalvibes.model.condition.DidntAttack;
 import com.github.laxika.magicalvibes.model.condition.DidntGainLifeThisTurn;
@@ -77,6 +79,7 @@ import com.github.laxika.magicalvibes.model.condition.AttackedWithCreaturesThisT
 import com.github.laxika.magicalvibes.model.condition.Raid;
 import com.github.laxika.magicalvibes.model.condition.SelfDealtDamageToOpponentThisTurn;
 import com.github.laxika.magicalvibes.model.condition.SelfHasKeyword;
+import com.github.laxika.magicalvibes.model.condition.SourceCardInCommandZone;
 import com.github.laxika.magicalvibes.model.condition.SourceCanSoulbond;
 import com.github.laxika.magicalvibes.model.condition.SourceCounterThreshold;
 import com.github.laxika.magicalvibes.model.condition.SourceHasSubtype;
@@ -101,6 +104,7 @@ import com.github.laxika.magicalvibes.service.effect.staticfx.StaticEffectSuppor
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 
+import java.util.EnumSet;
 import java.util.List;
 import java.util.Set;
 import java.util.UUID;
@@ -145,6 +149,10 @@ public class ConditionEvaluationService {
             }
             case Metalcraft ignored ->
                     isMetalcraftMet(gameData, ctx);
+            case Delirium ignored ->
+                    isDeliriumMet(gameData, ctx);
+            case Coven ignored ->
+                    isCovenMet(gameData, ctx);
             case Morbid ignored ->
                     gameQueryService.isMorbidMet(gameData);
             case CreatureDiedUnderYourControlThisTurn ignored ->
@@ -296,6 +304,8 @@ public class ConditionEvaluationService {
                 Permanent source = sourcePermanent(gameData, ctx);
                 yield source != null && source.hasKeyword(c.keyword());
             }
+            case SourceCardInCommandZone ignored ->
+                    isSourceCardInCommandZone(gameData, ctx);
             case SourceIsPaired ignored -> {
                 Permanent source = sourcePermanent(gameData, ctx);
                 yield source != null && source.getPairedWithId() != null;
@@ -453,6 +463,13 @@ public class ConditionEvaluationService {
                 || (ctx.sourceCard() != null && permanent.getCard() == ctx.sourceCard());
     }
 
+    /** True when the stack entry's source card object is still in its controller's command zone. */
+    private boolean isSourceCardInCommandZone(GameData gameData, ConditionContext ctx) {
+        if (ctx.controllerId() == null || ctx.sourceCard() == null) return false;
+        List<Card> commandZone = gameData.playerCommandZones.get(ctx.controllerId());
+        return commandZone != null && commandZone.contains(ctx.sourceCard());
+    }
+
     /**
      * Metalcraft: three or more controlled artifacts. Static bonus computation must count
      * artifacts without consulting static card-type grants (the grant lookup re-enters static
@@ -468,6 +485,31 @@ public class ConditionEvaluationService {
         List<Permanent> battlefield = gameData.playerBattlefields.get(ctx.controllerId());
         if (battlefield == null) return false;
         return battlefield.stream().filter(gameQueryService::isArtifact).count() >= 3;
+    }
+
+    /** Coven: three or more controlled creatures with different effective powers. */
+    private boolean isCovenMet(GameData gameData, ConditionContext ctx) {
+        if (ctx.controllerId() == null) return false;
+        return gameQueryService.isCovenMet(gameData, ctx.controllerId());
+    }
+
+    /**
+     * Delirium: four or more distinct card types among non-token cards in the controller's
+     * graveyard (mirrors {@code CardTypesAmongCardsInGraveyard} with CONTROLLER scope).
+     */
+    private boolean isDeliriumMet(GameData gameData, ConditionContext ctx) {
+        if (ctx.controllerId() == null) return false;
+        List<Card> graveyard = gameData.playerGraveyards.get(ctx.controllerId());
+        if (graveyard == null || graveyard.isEmpty()) return false;
+        Set<CardType> found = EnumSet.noneOf(CardType.class);
+        for (Card card : graveyard) {
+            if (card.isToken()) continue;
+            if (card.getType() != null) {
+                found.add(card.getType());
+            }
+            found.addAll(card.getAdditionalTypes());
+        }
+        return found.size() >= 4;
     }
 
     private boolean isSourceEquipped(GameData gameData, ConditionContext ctx) {

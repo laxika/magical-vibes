@@ -486,8 +486,9 @@ public class ActivatedAbilityExecutionService {
                             playerId, null, null, choiceContext, colors, "Choose a color of mana to add."));
                     log.info("Game {} - Awaiting {} to choose a mana color (restricted to {} creatures)", gameData.id, player.getUsername(), chosenSubtype);
                 }
-            } else if (effect instanceof AwardAnyColorCreatureSpellManaEffect) {
-                ChoiceContext.ManaColorChoice choiceContext = ChoiceContext.ManaColorChoice.creatureSpellOnly(playerId, manaMultiplier);
+            } else if (effect instanceof AwardAnyColorCreatureSpellManaEffect acs) {
+                ChoiceContext.ManaColorChoice choiceContext =
+                        ChoiceContext.ManaColorChoice.creatureSpellOnly(playerId, acs.amount() * manaMultiplier);
                 List<String> colors = List.of("WHITE", "BLUE", "BLACK", "RED", "GREEN");
                 interactionHandlerRegistry.begin(gameData, new PendingInteraction.ColorChoice(
                         playerId, null, null, choiceContext, colors, "Choose a color of mana to add."));

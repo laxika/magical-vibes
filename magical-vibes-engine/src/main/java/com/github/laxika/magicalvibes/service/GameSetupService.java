@@ -136,6 +136,7 @@ public class GameSetupService {
             gameData.mulliganCounts.put(playerId, 0);
             gameData.playerBattlefields.put(playerId, gameData.newBattlefieldList());
             gameData.playerGraveyards.put(playerId, new ArrayList<>());
+            gameData.playerCommandZones.put(playerId, new ArrayList<>());
             gameData.playerManaPools.put(playerId, new ManaPool());
             gameData.playerLifeTotals.put(playerId, 20);
 

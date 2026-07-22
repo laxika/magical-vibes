@@ -42,6 +42,10 @@ import lombok.Builder;
  * @param targetGraveyard      {@code true} if the card in the graveyard is targeted at cast/activation
  *                             time (enables {@link #canTargetGraveyard()}); {@code false} if the choice
  *                             happens at resolution time
+ * @param upTo                 {@code true} when the graveyard target is "up to one" (optional at cast time,
+ *                             e.g. Yawgmoth's Vile Offering). Default {@code false} means the graveyard
+ *                             target is mandatory (e.g. Raise Dead, Crawl from the Cellar) even when the
+ *                             spell also has optional permanent target groups
  * @param returnAll            {@code true} to return all matching cards without player choice;
  *                             {@code false} to let the controller pick one
  * @param thisTurnOnly         {@code true} to restrict returned cards to <b>creature</b> cards put into the
@@ -122,6 +126,7 @@ public record ReturnCardFromGraveyardEffect(
         CardPredicate filter,
         GraveyardSearchScope source,
         boolean targetGraveyard,
+        boolean upTo,
         boolean returnAll,
         boolean thisTurnOnly,
         boolean fromBattlefieldThisTurn,

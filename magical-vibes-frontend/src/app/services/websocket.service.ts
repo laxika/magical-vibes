@@ -174,6 +174,7 @@ export interface Card {
   transformable: boolean;
   kickerCost: string | null;
   modalChoicesRequired: number;
+  modalChoicesMax: number;
   modalOptional: boolean;
   modalOptions: ModalOptionView[] | null;
 }
@@ -420,8 +421,9 @@ export interface AvailableBlockersNotification {
 
 export interface GameOverNotification {
   type: MessageType;
-  winnerId: string;
-  winnerName: string;
+  /** Null when the game ends in a draw (e.g. Triskaidekaphobia). */
+  winnerId: string | null;
+  winnerName: string | null;
 }
 
 export type InteractionShape =

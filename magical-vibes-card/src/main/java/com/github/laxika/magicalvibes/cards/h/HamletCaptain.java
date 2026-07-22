@@ -13,6 +13,7 @@ import com.github.laxika.magicalvibes.model.filter.PermanentNotPredicate;
 import java.util.List;
 
 @CardRegistration(set = "ISD", collectorNumber = "187")
+@CardRegistration(set = "INR", collectorNumber = "201")
 public class HamletCaptain extends Card {
 
     public HamletCaptain() {

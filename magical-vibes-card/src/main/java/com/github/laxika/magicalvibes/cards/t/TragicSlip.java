@@ -10,6 +10,7 @@ import com.github.laxika.magicalvibes.model.filter.PermanentIsCreaturePredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentPredicateTargetFilter;
 
 @CardRegistration(set = "DKA", collectorNumber = "76")
+@CardRegistration(set = "INR", collectorNumber = "134")
 public class TragicSlip extends Card {
 
     public TragicSlip() {

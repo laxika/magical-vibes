@@ -35,6 +35,11 @@ public class StackEntry {
     @Setter private boolean castWithFlashback;
     /** Whether this spell was cast via Disturb (CR 702.146) — enters transformed; exile on leave-to-GY. */
     @Setter private boolean castWithDisturb;
+    /**
+     * Whether this spell was cast transformed without paying its mana cost after a Siege battle
+     * was defeated. Enters as the back face (like Disturb) but uses normal spell disposition on fizzle.
+     */
+    @Setter private boolean castTransformed;
     @Setter private Zone sourceZone;
     /**
      * Overrides the card's disposition owner when this spell is controlled by someone other than its
@@ -278,6 +283,7 @@ public class StackEntry {
         this.putIntoLibraryPositionAfterResolving = source.putIntoLibraryPositionAfterResolving;
         this.castWithFlashback = source.castWithFlashback;
         this.castWithDisturb = source.castWithDisturb;
+        this.castTransformed = source.castTransformed;
         this.sourceZone = source.sourceZone;
         this.ownerIdOverride = source.ownerIdOverride;
         this.kicked = source.kicked;

@@ -120,6 +120,7 @@ combat damage step is processed.
 | `CONTROLLER_END_STEP_TRIGGERED` | `StepTriggerService.handleEndOfTurnTriggers` (raid / default) | End step |
 | `OPPONENT_END_STEP_TRIGGERED` | `StepTriggerService.handleEndStepTriggers` (fires only when the end-step player is an opponent of the permanent's controller; end-step player baked into `targetId` for the intervening-if `ConditionalEffect`, e.g. Predatory Advantage's `EndStepPlayerDidntCastCreatureSpell`) | Non-targeting |
 | `ON_SELF_LEAVES_BATTLEFIELD` (targeting effects only) | `DeathTriggerCollectorService.handleSelfLeavesDefault` → `SelfLeavesTriggerTarget` (queued when an effect's `targetSpec()` includes players/permanents, e.g. Meadowboon, or is a graveyard category — `category().isGraveyard()`, e.g. Offalsnout). `TriggeredAbilityQueueService.processNextSelfLeavesTriggerTarget` routes graveyard-targeting effects (`ExileGraveyardCardsEffect(TARGET_CARDS_ANY_GRAVEYARD)`) to a `MultiGraveyardChoice` card choice instead of the permanent/player path. | End step (reuses `TriggerTargetCollector.Options.END_STEP`); non-targeting effects push straight to the stack |
+| `ON_SELF_DISCARDED` | `TriggerCollectionService.checkDiscardTriggers` | Discard-self (any cause; non-targeting → stack, any-target → `DiscardTriggerAnyTarget`) |
 | `ON_SELF_DISCARDED_BY_OPPONENT` | `TriggerCollectionService.checkDiscardSelfTriggers` | Discard-self |
 | `ON_CONTROLLER_DISCARDS` (targeting variants) | `DiscardTriggerCollectorService` → `DiscardControllerTriggerTarget` (queued when a controller-discard effect's `targetSpec()` includes permanents, e.g. Zenith Seeker's "target creature gains flying"). Non-targeting controller-discard effects (Hekma Sentinels self-boost, Curator of Mysteries scry, Necropotence exile) still enqueue a `TRIGGERED_ABILITY` straight onto the stack. | Controller-discard (reuses `TriggerTargetCollector.Options.ATTACK`; honours the effect's `targetSpec().predicate()`) |
 | `ON_BECOMES_TARGET_OF_SPELL` / `…_OR_ABILITY` / `…_OF_OPPONENT_SPELL` | `TriggerCollectionService.checkBecomesTargetOfSpell*` | Spell-target |
@@ -250,8 +251,9 @@ PermanentIsPlaneswalkerPredicate(), …)` (the permanent side narrows to planesw
 always legal), the same idiom as Noggle Hedge-Mage. Sunscorched Desert is the reference land.
 
 **Gate-conditional targeted ETBs** (`ConditionalEffect` whose condition returns
-`Condition.isEtbTriggerGate()` — Metalcraft, Morbid, Raid, ControlsAnotherPermanent, ControlsPermanent, OpponentControlsMoreLands; e.g. Bleak
-Coven Vampires, Morkrut Banshee, Storm Fleet Pyromancer, Dreamcaller Siren, Parasitic Strix, Knight of the White Orchid) **never** target at
+`Condition.isEtbTriggerGate()` — Metalcraft, Morbid, Raid, ControlsAnotherPermanent, ControlsPermanent,
+OpponentControlsMoreLands, `OpponentLostLifeThisTurn`, `ControllerHandEmpty`; e.g. Bleak
+Coven Vampires, Morkrut Banshee, Storm Fleet Pyromancer, Dreamcaller Siren, Parasitic Strix, Knight of the White Orchid, Voldaren Ambusher, Bloodhall Priest) **never** target at
 cast time: whether the ability triggers at all depends on game state as the permanent enters
 (intervening-if, CR 603.4), so `EffectResolution.computeAllowedTargets` excludes them from the
 spell's cast-time target requirement and `EtbEffectResolver` drops the trigger entirely when the

@@ -15,6 +15,7 @@ import com.github.laxika.magicalvibes.model.StackEntry;
 import com.github.laxika.magicalvibes.model.StackEntryType;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.condition.AttacksAlone;
+import com.github.laxika.magicalvibes.model.condition.ControllerHandEmpty;
 import com.github.laxika.magicalvibes.model.condition.ControlsAnotherPermanent;
 import com.github.laxika.magicalvibes.model.condition.ControlsPermanent;
 import com.github.laxika.magicalvibes.model.condition.HasAttacker;
@@ -388,6 +389,12 @@ public class CombatAttackService {
                 // Filter out controls-another-permanent conditionals when condition not met (intervening-if, CR 603.4)
                 allEffects.removeIf(e -> e instanceof ConditionalEffect ce
                         && ce.condition() instanceof ControlsAnotherPermanent
+                        && !conditionEvaluationService.isMet(gameData, ce.condition(),
+                                ConditionContext.forPermanent(attacker, playerId)));
+
+                // Filter out empty-hand conditionals when controller has cards in hand (intervening-if, CR 603.4)
+                allEffects.removeIf(e -> e instanceof ConditionalEffect ce
+                        && ce.condition() instanceof ControllerHandEmpty
                         && !conditionEvaluationService.isMet(gameData, ce.condition(),
                                 ConditionContext.forPermanent(attacker, playerId)));
 
@@ -1099,7 +1106,8 @@ public class CombatAttackService {
     }
 
     /**
-     * Builds the list of available attack targets: the defending player plus any planeswalkers they control.
+     * Builds the list of available attack targets: the defending player, their planeswalkers,
+     * and battles the active player is allowed to attack (not the protector).
      */
     public List<AttackTarget> buildAvailableTargets(GameData gameData, UUID activePlayerId) {
         UUID defenderId = gameQueryService.getOpponentId(gameData, activePlayerId);
@@ -1110,6 +1118,19 @@ public class CombatAttackService {
             for (Permanent p : defBf) {
                 if (p.getCard().hasType(CardType.PLANESWALKER)) {
                     targets.add(new AttackTarget(p.getId().toString(), p.getCard().getName(), false));
+                } else if (p.getCard().hasType(CardType.BATTLE)
+                        && !activePlayerId.equals(p.getProtectorPlayerId())) {
+                    targets.add(new AttackTarget(p.getId().toString(), p.getCard().getName(), false));
+                }
+            }
+        }
+        // Sieges sit on the controller's battlefield; the controller (and non-protectors) may attack them.
+        List<Permanent> ownBf = gameData.playerBattlefields.get(activePlayerId);
+        if (ownBf != null) {
+            for (Permanent p : ownBf) {
+                if (p.getCard().hasType(CardType.BATTLE)
+                        && !activePlayerId.equals(p.getProtectorPlayerId())) {
+                    targets.add(new AttackTarget(p.getId().toString(), p.getCard().getName(), false));
                 }
             }
         }
@@ -1117,7 +1138,7 @@ public class CombatAttackService {
     }
 
     /**
-     * Returns the set of valid attack target UUIDs: the defending player plus their planeswalkers.
+     * Returns the set of valid attack target UUIDs: the defending player plus attackable planeswalkers/battles.
      */
     private Set<UUID> buildValidAttackTargetIds(GameData gameData, UUID activePlayerId) {
         UUID defenderId = gameQueryService.getOpponentId(gameData, activePlayerId);
@@ -1127,6 +1148,18 @@ public class CombatAttackService {
         if (defBf != null) {
             for (Permanent p : defBf) {
                 if (p.getCard().hasType(CardType.PLANESWALKER)) {
+                    validIds.add(p.getId());
+                } else if (p.getCard().hasType(CardType.BATTLE)
+                        && !activePlayerId.equals(p.getProtectorPlayerId())) {
+                    validIds.add(p.getId());
+                }
+            }
+        }
+        List<Permanent> ownBf = gameData.playerBattlefields.get(activePlayerId);
+        if (ownBf != null) {
+            for (Permanent p : ownBf) {
+                if (p.getCard().hasType(CardType.BATTLE)
+                        && !activePlayerId.equals(p.getProtectorPlayerId())) {
                     validIds.add(p.getId());
                 }
             }
