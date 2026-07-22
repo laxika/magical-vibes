@@ -928,7 +928,8 @@ public class SpellCastingService {
 
         ReturnCardFromGraveyardEffect graveyardReturnEffect = (ReturnCardFromGraveyardEffect) graveyardTargetingSource.stream()
                 .map(SpellCastingService::unwrapConditional)
-                .filter(e -> e instanceof ReturnCardFromGraveyardEffect)
+                .filter(e -> e instanceof ReturnCardFromGraveyardEffect returnEffect
+                        && returnEffect.targetGraveyard())
                 .findFirst().orElse(null);
         boolean needsSingleGraveyardTargeting = graveyardReturnEffect != null;
 
@@ -2339,7 +2340,8 @@ public class SpellCastingService {
         StackEntry stackEntry;
         ReturnCardFromGraveyardEffect graveyardReturnEffect = spellEffects.stream()
                 .map(SpellCastingService::unwrapConditional)
-                .filter(e -> e instanceof ReturnCardFromGraveyardEffect)
+                .filter(e -> e instanceof ReturnCardFromGraveyardEffect returnEffect
+                        && returnEffect.targetGraveyard())
                 .map(e -> (ReturnCardFromGraveyardEffect) e)
                 .findFirst()
                 .orElse(null);
@@ -2560,7 +2562,8 @@ public class SpellCastingService {
 
         ReturnCardFromGraveyardEffect graveyardReturnEffect = effectsToResolve.stream()
                 .map(SpellCastingService::unwrapConditional)
-                .filter(e -> e instanceof ReturnCardFromGraveyardEffect)
+                .filter(e -> e instanceof ReturnCardFromGraveyardEffect returnEffect
+                        && returnEffect.targetGraveyard())
                 .map(e -> (ReturnCardFromGraveyardEffect) e)
                 .findFirst()
                 .orElse(null);

@@ -50,7 +50,7 @@ class InputHandlerEpilogueRatchetTest {
      * lower the entry) — never up.
      */
     private static final Map<String, Integer> BASELINE = Map.of(
-            "CardChoiceHandlerService.java", 8,
+            "CardChoiceHandlerService.java", 7,
             "ChoiceHandlerService.java", 19,
             "GraveyardChoiceHandlerService.java", 2,
             "LibraryChoiceHandlerService.java", 1,

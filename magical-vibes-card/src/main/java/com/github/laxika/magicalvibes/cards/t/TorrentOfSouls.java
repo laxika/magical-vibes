@@ -31,6 +31,7 @@ public class TorrentOfSouls extends Card {
                         .destination(GraveyardChoiceDestination.BATTLEFIELD)
                         .filter(new CardTypePredicate(CardType.CREATURE))
                         .targetGraveyard(true)
+                        .upTo(true)
                         .build()));
 
         // Creatures target player controls get +2/+0 and gain haste until end of turn

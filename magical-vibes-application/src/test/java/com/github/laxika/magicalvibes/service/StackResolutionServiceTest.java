@@ -402,11 +402,12 @@ class StackResolutionServiceTest {
         void cloneReplacementEffectSkipsCreatureResolution() {
             Card card = createCreature("Clone");
             gd.stack.addLast(new StackEntry(card, PLAYER1_ID));
-            when(cloneService.prepareCloneReplacementEffect(any(), any(), any(), any())).thenReturn(true);
+            when(cloneService.prepareCloneReplacementEffect(any(), any(), any(), any(), anyInt())).thenReturn(true);
 
             svc.resolveTopOfStack(gd);
 
-            verify(battlefieldEntryService, never()).putPermanentOntoBattlefield(any(), any(), any());
+            verify(battlefieldEntryService, never()).putPermanentOntoBattlefield(
+                    any(), any(), any(), anyInt(), anyBoolean());
         }
     }
 
@@ -425,7 +426,7 @@ class StackResolutionServiceTest {
             svc.resolveTopOfStack(gd);
 
             verify(battlefieldEntryService).putPermanentOntoBattlefield(
-                    eq(gd), eq(PLAYER1_ID), permanentCaptor.capture());
+                    eq(gd), eq(PLAYER1_ID), permanentCaptor.capture(), eq(0), eq(false));
             assertThat(permanentCaptor.getValue().getCard().getName()).isEqualTo("Test Enchantment");
         }
 
@@ -531,7 +532,7 @@ class StackResolutionServiceTest {
             svc.resolveTopOfStack(gd);
 
             verify(battlefieldEntryService).putPermanentOntoBattlefield(
-                    eq(gd), eq(PLAYER1_ID), permanentCaptor.capture());
+                    eq(gd), eq(PLAYER1_ID), permanentCaptor.capture(), eq(0), eq(false));
             assertThat(permanentCaptor.getValue().getCounterCount(CounterType.LORE)).isEqualTo(1);
         }
 
@@ -566,7 +567,7 @@ class StackResolutionServiceTest {
             svc.resolveTopOfStack(gd);
 
             verify(battlefieldEntryService).putPermanentOntoBattlefield(
-                    eq(gd), eq(PLAYER1_ID), permanentCaptor.capture());
+                    eq(gd), eq(PLAYER1_ID), permanentCaptor.capture(), eq(0), eq(false));
             assertThat(permanentCaptor.getValue().getCounterCount(CounterType.LORE)).isZero();
             assertThat(gd.stack).isEmpty();
         }
@@ -598,7 +599,7 @@ class StackResolutionServiceTest {
             svc.resolveTopOfStack(gd);
 
             verify(battlefieldEntryService).putPermanentOntoBattlefield(
-                    eq(gd), eq(PLAYER1_ID), permanentCaptor.capture());
+                    eq(gd), eq(PLAYER1_ID), permanentCaptor.capture(), eq(0), eq(false));
             UUID sagaPermanentId = permanentCaptor.getValue().getId();
 
             assertThat(gd.stack).hasSize(1);
@@ -648,11 +649,12 @@ class StackResolutionServiceTest {
             StackEntry entry = new StackEntry(StackEntryType.ARTIFACT_SPELL, card,
                     PLAYER1_ID, card.getName(), List.of());
             gd.stack.addLast(entry);
-            when(cloneService.prepareCloneReplacementEffect(any(), any(), any(), any())).thenReturn(true);
+            when(cloneService.prepareCloneReplacementEffect(any(), any(), any(), any(), anyInt())).thenReturn(true);
 
             svc.resolveTopOfStack(gd);
 
-            verify(battlefieldEntryService, never()).putPermanentOntoBattlefield(any(), any(), any());
+            verify(battlefieldEntryService, never()).putPermanentOntoBattlefield(
+                    any(), any(), any(), anyInt(), anyBoolean());
         }
 
         @Test

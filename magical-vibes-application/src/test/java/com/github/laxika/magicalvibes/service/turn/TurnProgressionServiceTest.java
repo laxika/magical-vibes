@@ -7,7 +7,6 @@ import com.github.laxika.magicalvibes.model.action.DelayedCombatDamageLoot;
 import com.github.laxika.magicalvibes.model.action.SacrificeAtEndOfCombat;
 
 import com.github.laxika.magicalvibes.model.PendingInteraction;
-import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
 import com.github.laxika.magicalvibes.service.GameBroadcastService;
 
 import com.github.laxika.magicalvibes.model.Card;
@@ -97,6 +96,12 @@ class TurnProgressionServiceTest {
 
     private PendingMayAbility newMayAbility() {
         return new PendingMayAbility(new Card(), player1Id, null, "Test may ability");
+    }
+
+    private Card newNamedCard() {
+        Card card = new Card();
+        card.setName("Test Spell");
+        return card;
     }
 
     // =========================================================================
@@ -575,9 +580,9 @@ class TurnProgressionServiceTest {
         @DisplayName("Clears per-turn tracking maps")
         void clearsPerTurnTracking() {
             gd.landsPlayedThisTurn.put(player1Id, 1);
-            gd.recordSpellCast(player1Id, new GrizzlyBears());
-            gd.recordSpellCast(player1Id, new GrizzlyBears());
-            gd.recordSpellCast(player1Id, new GrizzlyBears());
+            gd.recordSpellCast(player1Id, newNamedCard());
+            gd.recordSpellCast(player1Id, newNamedCard());
+            gd.recordSpellCast(player1Id, newNamedCard());
             gd.playersDeclaredAttackersThisTurn.add(player1Id);
             gd.playersSilencedThisTurn.add(player1Id);
             gd.activatedAbilityUsesThisTurn.put(player1Id, new HashMap<>());
@@ -616,9 +621,9 @@ class TurnProgressionServiceTest {
         @Test
         @DisplayName("Snapshots spellsCastThisTurn into spellsCastLastTurn before clearing")
         void snapshotsSpellsCastLastTurn() {
-            gd.recordSpellCast(player1Id, new GrizzlyBears());
-            gd.recordSpellCast(player1Id, new GrizzlyBears());
-            gd.recordSpellCast(player2Id, new GrizzlyBears());
+            gd.recordSpellCast(player1Id, newNamedCard());
+            gd.recordSpellCast(player1Id, newNamedCard());
+            gd.recordSpellCast(player2Id, newNamedCard());
             gd.spellsCastLastTurn.put(player1Id, 99); // old data should be replaced
 
             turnProgressionService.advanceTurn(gd);
