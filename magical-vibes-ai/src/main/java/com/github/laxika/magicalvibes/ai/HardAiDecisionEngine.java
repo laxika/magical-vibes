@@ -1881,9 +1881,20 @@ public class HardAiDecisionEngine extends AiDecisionEngine {
                     continue;
                 }
 
-                // Timing-awareness: skip pump abilities outside combat, draw abilities outside end step
-                // Loyalty abilities are already gated to sorcery speed by canActivateAbility
-                if (ability.getLoyaltyCost() == null && !isGoodTimingForAbility(gameData, ability)) continue;
+                // Find target before timing evaluation so pump abilities can verify that the
+                // creature receiving the boost is actually participating in combat.
+                UUID targetId = null;
+                if (ability.isNeedsTarget()) {
+                    targetId = targetSelector.chooseAbilityTarget(
+                            gameData, ability, aiPlayer.getId(), permanent);
+                    if (targetId == null) continue;
+                }
+
+                // Timing-awareness: skip pump abilities outside useful combat/threat windows,
+                // and draw abilities outside the opponent's end step. Loyalty abilities are
+                // already gated to sorcery speed by canActivateAbility.
+                if (ability.getLoyaltyCost() == null
+                        && !isGoodTimingForAbility(gameData, ability, permanent, targetId)) continue;
 
                 // Evaluate value
                 double value = spellEvaluator.evaluateAbilityEffects(
@@ -1906,14 +1917,6 @@ public class HardAiDecisionEngine extends AiDecisionEngine {
                 }
 
                 if (value <= 0) continue;
-
-                // Find target if needed
-                UUID targetId = null;
-                if (ability.isNeedsTarget()) {
-                    targetId = targetSelector.chooseAbilityTarget(
-                            gameData, ability, aiPlayer.getId(), permanent);
-                    if (targetId == null) continue;
-                }
 
                 candidates.add(new AbilityCandidate(permIdx, abilIdx, ability,
                         permanent, value, targetId));
@@ -2010,22 +2013,36 @@ public class HardAiDecisionEngine extends AiDecisionEngine {
      * based on its effects. Pump abilities are best during combat, card draw is best
      * at opponent's end step, and most other abilities are fine at any priority.
      */
-    private boolean isGoodTimingForAbility(GameData gameData, ActivatedAbility ability) {
+    private boolean isGoodTimingForAbility(GameData gameData, ActivatedAbility ability,
+                                           Permanent source, UUID targetId) {
         List<CardEffect> nonCostEffects = ability.getEffects().stream()
                 .filter(e -> !(e instanceof CostEffect))
                 .toList();
 
-        boolean isPump = nonCostEffects.stream().anyMatch(e ->
-                e instanceof BoostSelfEffect || e instanceof CreatureBoostEffect);
+        boolean isSelfPump = nonCostEffects.stream().anyMatch(effect -> selfBoost(effect) != null);
+        boolean isTargetedPump = nonCostEffects.stream().anyMatch(CreatureBoostEffect.class::isInstance);
+        boolean isPump = isSelfPump || isTargetedPump;
         boolean isDraw = nonCostEffects.stream().anyMatch(e -> e instanceof CardDrawingEffect);
         boolean isRegen = nonCostEffects.stream().anyMatch(e -> e instanceof RegenerationEffect);
 
         TurnStep step = gameData.currentStep;
         boolean isOpponentsTurn = !aiPlayer.getId().equals(gameData.activePlayerId);
 
-        // Pump abilities: only during combat (declare blockers or combat damage)
+        // Pump abilities are useful only when the creature receiving the boost is actually
+        // involved in combat, or when added toughness can answer a lethal effect on the stack.
+        // Merely being in a combat step (or being targeted by destroy/exile/bounce) is not enough.
         if (isPump) {
-            return step == TurnStep.DECLARE_BLOCKERS || step == TurnStep.COMBAT_DAMAGE;
+            Permanent boostedPermanent = isSelfPump ? source : findPermanent(gameData, targetId);
+            if (boostedPermanent == null) {
+                return false;
+            }
+            boolean combatPumpWindow = step == TurnStep.DECLARE_BLOCKERS
+                    || step == TurnStep.COMBAT_DAMAGE;
+            if (combatPumpWindow
+                    && (boostedPermanent.isAttacking() || boostedPermanent.isBlocking())) {
+                return true;
+            }
+            return canPumpPreventLethalStackEffect(gameData, ability, boostedPermanent);
         }
 
         // Card draw abilities: opponent's end step (to keep mana open)
@@ -2044,6 +2061,116 @@ public class HardAiDecisionEngine extends AiDecisionEngine {
         // Sorcery-speed abilities are already gated by canMeetAbilityTimingRestriction
         // Everything else (damage, tap, tokens, etc.) can be used at any priority
         return true;
+    }
+
+    /**
+     * Returns true when one more activation's toughness boost can contribute to saving the
+     * boosted permanent from targeted damage or a targeted toughness reduction on the stack.
+     * Pump effects already above the threat are included so repeatable pumps stop as soon as
+     * the projected toughness is sufficient.
+     */
+    private boolean canPumpPreventLethalStackEffect(GameData gameData, ActivatedAbility ability,
+                                                    Permanent boostedPermanent) {
+        int toughnessPerActivation = ability.getEffects().stream()
+                .mapToInt(effect -> toughnessBoost(gameData, effect, null))
+                .sum();
+        if (toughnessPerActivation <= 0 || gameData.stack.isEmpty()) {
+            return false;
+        }
+
+        int currentRemainingToughness = gameQueryService.getEffectiveToughness(gameData, boostedPermanent)
+                - boostedPermanent.getMarkedDamage();
+
+        for (int threatIndex = 0; threatIndex < gameData.stack.size(); threatIndex++) {
+            StackEntry threat = gameData.stack.get(threatIndex);
+            if (!targetsPermanent(threat, boostedPermanent.getId())) {
+                continue;
+            }
+
+            int projectedRemainingToughness = currentRemainingToughness
+                    + pendingToughnessBoostAbove(gameData, boostedPermanent, threatIndex);
+            for (CardEffect effect : stackEffects(threat)) {
+                if (effect instanceof DamageDealingEffect damage && damage.canDamageCreatures()) {
+                    int amount = amountEvaluationService.evaluate(gameData, damage.damageAmount(),
+                            AmountContext.forStackEntry(threat, null));
+                    if (amount >= projectedRemainingToughness) {
+                        return true;
+                    }
+                } else if (effect instanceof CreatureBoostEffect) {
+                    int toughnessChange = toughnessBoost(gameData, effect, threat);
+                    if (projectedRemainingToughness + toughnessChange <= 0) {
+                        return true;
+                    }
+                }
+            }
+        }
+        return false;
+    }
+
+    /** Adds toughness changes from entries that will resolve before the indexed threat. */
+    private int pendingToughnessBoostAbove(GameData gameData, Permanent permanent, int threatIndex) {
+        int boost = 0;
+        for (int i = threatIndex + 1; i < gameData.stack.size(); i++) {
+            StackEntry pending = gameData.stack.get(i);
+            boolean selfEffect = permanent.getId().equals(pending.getSourcePermanentId());
+            boolean targetedEffect = targetsPermanent(pending, permanent.getId());
+            if (!selfEffect && !targetedEffect) {
+                continue;
+            }
+            for (CardEffect effect : stackEffects(pending)) {
+                if ((selfEffect && selfBoost(effect) != null)
+                        || (targetedEffect && effect instanceof CreatureBoostEffect)) {
+                    boost += toughnessBoost(gameData, effect, pending);
+                }
+            }
+        }
+        return boost;
+    }
+
+    private int toughnessBoost(GameData gameData, CardEffect effect, StackEntry entry) {
+        BoostSelfEffect selfBoost = selfBoost(effect);
+        if (selfBoost != null) {
+            AmountContext context = entry == null
+                    ? AmountContext.forEstimation(aiPlayer.getId())
+                    : AmountContext.forStackEntry(entry, null);
+            return amountEvaluationService.evaluate(gameData, selfBoost.toughnessBoost(), context);
+        }
+        if (effect instanceof CreatureBoostEffect boost) {
+            AmountContext context = entry == null
+                    ? AmountContext.forEstimation(aiPlayer.getId())
+                    : AmountContext.forStackEntry(entry, null);
+            return amountEvaluationService.evaluate(gameData, boost.toughnessBoost(), context);
+        }
+        return 0;
+    }
+
+    /** Keeps the AI's one sanctioned concrete self-pump dispatch in a single place. */
+    private BoostSelfEffect selfBoost(CardEffect effect) {
+        return effect instanceof BoostSelfEffect boost ? boost : null;
+    }
+
+    private List<CardEffect> stackEffects(StackEntry entry) {
+        List<CardEffect> resolving = entry.getEffectsToResolve();
+        if (resolving != null && !resolving.isEmpty()) {
+            return resolving;
+        }
+        return entry.getCard() != null ? entry.getCard().getEffects(EffectSlot.SPELL) : List.of();
+    }
+
+    private boolean targetsPermanent(StackEntry entry, UUID permanentId) {
+        return permanentId.equals(entry.getTargetId())
+                || (entry.getTargetIds() != null && entry.getTargetIds().contains(permanentId));
+    }
+
+    private Permanent findPermanent(GameData gameData, UUID permanentId) {
+        if (permanentId == null) {
+            return null;
+        }
+        return gameData.playerBattlefields.values().stream()
+                .flatMap(List::stream)
+                .filter(permanent -> permanent.getId().equals(permanentId))
+                .findFirst()
+                .orElse(null);
     }
 
     // ===== Combat =====

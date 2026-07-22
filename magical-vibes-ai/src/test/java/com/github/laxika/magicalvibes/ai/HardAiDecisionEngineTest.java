@@ -35,6 +35,7 @@ import com.github.laxika.magicalvibes.cards.c.CruelEdict;
 import com.github.laxika.magicalvibes.cards.i.Island;
 import com.github.laxika.magicalvibes.cards.i.IronStar;
 import com.github.laxika.magicalvibes.cards.k.KuldothaRebirth;
+import com.github.laxika.magicalvibes.cards.k.KillerBees;
 import com.github.laxika.magicalvibes.cards.v.VigilForTheLost;
 import com.github.laxika.magicalvibes.cards.l.LlanowarElves;
 import com.github.laxika.magicalvibes.cards.m.Mountain;
@@ -4153,6 +4154,125 @@ class HardAiDecisionEngineTest {
         // Loyalty abilities require empty stack — should not add another entry
         assertThat(gd.stack).hasSize(1);
         assertThat(gd.stack.getFirst().getCard().getName()).isEqualTo("Grizzly Bears");
+    }
+
+    // ===== Repeatable Self-Pump Ability Activation =====
+
+    @Test
+    @DisplayName("Hard AI does not pump idle Killer Bees merely because combat is in progress")
+    void doesNotPumpIdleKillerBeesDuringCombat() {
+        HardAiDecisionEngine ai = createHardAi(player1);
+        giveCombatPriority(player1);
+        addKillerBees(player1);
+        givePlayerForests(player1, 3);
+        harness.setHand(player1, List.of());
+
+        ai.handleMessage("GAME_STATE", "");
+
+        assertThat(gd.stack).isEmpty();
+        assertThat(gd.playerBattlefields.get(player1.getId()).stream()
+                .filter(permanent -> permanent.getCard().getName().equals("Forest")))
+                .allMatch(permanent -> !permanent.isTapped());
+    }
+
+    @Test
+    @DisplayName("Hard AI may pump Killer Bees when it is attacking")
+    void pumpsAttackingKillerBeesDuringCombat() {
+        HardAiDecisionEngine ai = createHardAi(player1);
+        giveCombatPriority(player1);
+        Permanent bees = addKillerBees(player1);
+        bees.setAttacking(true);
+        bees.setAttackTarget(player2.getId());
+        givePlayerForests(player1, 1);
+        harness.setHand(player1, List.of());
+
+        ai.handleMessage("GAME_STATE", "");
+
+        assertThat(gd.stack).hasSize(1);
+        assertThat(gd.stack.getFirst().getEntryType()).isEqualTo(StackEntryType.ACTIVATED_ABILITY);
+        assertThat(gd.stack.getFirst().getSourcePermanentId()).isEqualTo(bees.getId());
+    }
+
+    @Test
+    @DisplayName("Hard AI may pump Killer Bees when it is blocking")
+    void pumpsBlockingKillerBeesDuringCombat() {
+        HardAiDecisionEngine ai = createHardAi(player1);
+        giveCombatPriority(player2);
+        gd.priorityPassedBy.add(player2.getId());
+        Permanent attacker = new Permanent(new GrizzlyBears());
+        attacker.setSummoningSick(false);
+        attacker.setAttacking(true);
+        attacker.setAttackTarget(player1.getId());
+        gd.playerBattlefields.get(player2.getId()).add(attacker);
+        Permanent bees = addKillerBees(player1);
+        bees.setBlocking(true);
+        bees.addBlockingTargetId(attacker.getId());
+        givePlayerForests(player1, 1);
+        harness.setHand(player1, List.of());
+
+        ai.handleMessage("GAME_STATE", "");
+
+        assertThat(gd.stack).hasSize(1);
+        assertThat(gd.stack.getFirst().getEntryType()).isEqualTo(StackEntryType.ACTIVATED_ABILITY);
+        assertThat(gd.stack.getFirst().getSourcePermanentId()).isEqualTo(bees.getId());
+    }
+
+    @Test
+    @DisplayName("Hard AI pumps Killer Bees only enough to survive targeted damage")
+    void pumpsKillerBeesOnlyEnoughToSurviveTargetedDamage() {
+        HardAiDecisionEngine ai = createHardAi(player1);
+        giveAiPriority(player1);
+        Permanent bees = addKillerBees(player1);
+        givePlayerForests(player1, 3);
+        harness.setHand(player1, List.of());
+
+        Shock shock = new Shock();
+        gd.stack.add(new StackEntry(StackEntryType.INSTANT_SPELL, shock, player2.getId(),
+                shock.getName(), shock.getEffects(EffectSlot.SPELL), 0, bees.getId(), null));
+
+        ai.handleMessage("GAME_STATE", "");
+        ai.handleMessage("GAME_STATE", "");
+        ai.handleMessage("GAME_STATE", "");
+
+        assertThat(gd.stack).hasSize(3);
+        assertThat(gd.stack.stream()
+                .filter(entry -> entry.getEntryType() == StackEntryType.ACTIVATED_ABILITY))
+                .hasSize(2);
+    }
+
+    @Test
+    @DisplayName("Hard AI does not pump Killer Bees in response to destroy removal")
+    void doesNotPumpKillerBeesAgainstDoomBlade() {
+        HardAiDecisionEngine ai = createHardAi(player1);
+        giveAiPriority(player1);
+        Permanent bees = addKillerBees(player1);
+        givePlayerForests(player1, 3);
+        harness.setHand(player1, List.of());
+
+        DoomBlade doomBlade = new DoomBlade();
+        gd.stack.add(new StackEntry(StackEntryType.INSTANT_SPELL, doomBlade, player2.getId(),
+                doomBlade.getName(), doomBlade.getEffects(EffectSlot.SPELL), 0, bees.getId(), null));
+
+        ai.handleMessage("GAME_STATE", "");
+
+        assertThat(gd.stack).hasSize(1);
+        assertThat(gd.stack.getFirst().getCard().getName()).isEqualTo("Doom Blade");
+    }
+
+    private Permanent addKillerBees(Player player) {
+        Permanent bees = new Permanent(new KillerBees());
+        bees.setSummoningSick(false);
+        gd.playerBattlefields.get(player.getId()).add(bees);
+        return bees;
+    }
+
+    private void giveCombatPriority(Player player) {
+        harness.forceActivePlayer(player);
+        harness.forceStep(TurnStep.DECLARE_BLOCKERS);
+        harness.clearPriorityPassed();
+        gd.status = GameStatus.RUNNING;
+        gd.interaction.clearAwaitingInput();
+        gd.stack.clear();
     }
 
     @Test
