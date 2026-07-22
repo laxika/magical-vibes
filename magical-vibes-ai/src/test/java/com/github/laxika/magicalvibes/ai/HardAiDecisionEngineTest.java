@@ -2309,6 +2309,8 @@ class HardAiDecisionEngineTest {
         // Shivan Dragon with {R} available for pump
         Permanent dragon = new Permanent(new com.github.laxika.magicalvibes.cards.s.ShivanDragon());
         dragon.setSummoningSick(false);
+        dragon.setAttacking(true);
+        dragon.setAttackTarget(player2.getId());
         gd.playerBattlefields.get(player1.getId()).add(dragon);
 
         // One untapped Mountain for mana
