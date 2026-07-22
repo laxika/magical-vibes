@@ -20,6 +20,8 @@ import com.github.laxika.magicalvibes.model.filter.TargetFilter;
 import com.github.laxika.magicalvibes.service.battlefield.GameQueryService;
 import com.github.laxika.magicalvibes.service.effect.AmountContext;
 import com.github.laxika.magicalvibes.service.effect.AmountEvaluationService;
+import lombok.RequiredArgsConstructor;
+import org.springframework.stereotype.Component;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -32,21 +34,22 @@ import java.util.UUID;
  * <p>Beneficial pumps normally never aim at the opponent; this is the narrow exception where
  * buffing the opponent's creature is instrumentally correct.
  */
-public final class SizeGatedRemovalPump {
+@Component
+@RequiredArgsConstructor
+public class SizeGatedRemovalPump {
 
-    private SizeGatedRemovalPump() {}
+    private final GameQueryService gameQueryService;
+    private final AmountEvaluationService amountEvaluationService;
 
     /**
      * Opponent creatures that are currently illegal for every size-gated removal the AI can
      * follow up with, but would become legal after {@code pumpCard}'s targeted P/T boost.
      */
-    public static List<Permanent> findEnabledOpponentCreatures(
+    public List<Permanent> findEnabledOpponentCreatures(
             GameData gameData,
             Card pumpCard,
             UUID aiPlayerId,
-            UUID opponentId,
-            GameQueryService gameQueryService,
-            AmountEvaluationService amountEvaluationService) {
+            UUID opponentId) {
         int powerBoost = 0;
         int toughnessBoost = 0;
         AmountContext ctx = AmountContext.forEstimation(aiPlayerId);
@@ -84,7 +87,7 @@ public final class SizeGatedRemovalPump {
         return enabled;
     }
 
-    private static List<SizeGate> collectFollowUpSizeGates(GameData gameData, Card pumpCard, UUID aiPlayerId) {
+    private List<SizeGate> collectFollowUpSizeGates(GameData gameData, Card pumpCard, UUID aiPlayerId) {
         List<SizeGate> gates = new ArrayList<>();
         for (Card handCard : gameData.playerHands.getOrDefault(aiPlayerId, List.of())) {
             if (handCard.getId().equals(pumpCard.getId())) {
@@ -103,7 +106,7 @@ public final class SizeGatedRemovalPump {
         return gates;
     }
 
-    private static void collectSizeGatesFromCard(Card card, List<SizeGate> gates) {
+    private void collectSizeGatesFromCard(Card card, List<SizeGate> gates) {
         boolean hasRemoval = false;
         for (CardEffect effect : card.getEffects(EffectSlot.SPELL)) {
             if (effect instanceof RemovalEffect) {
@@ -136,13 +139,13 @@ public final class SizeGatedRemovalPump {
         return ability.getEffects().stream().anyMatch(RemovalEffect.class::isInstance);
     }
 
-    private static void collectSizeGatesFromFilter(TargetFilter filter, List<SizeGate> gates) {
+    private void collectSizeGatesFromFilter(TargetFilter filter, List<SizeGate> gates) {
         if (filter instanceof PermanentPredicateTargetFilter predicateFilter) {
             collectSizeGatesFromPredicate(predicateFilter.predicate(), gates);
         }
     }
 
-    private static void collectSizeGatesFromPredicate(PermanentPredicate predicate, List<SizeGate> gates) {
+    private void collectSizeGatesFromPredicate(PermanentPredicate predicate, List<SizeGate> gates) {
         switch (predicate) {
             case PermanentPowerAtLeastPredicate power -> gates.add(SizeGate.powerAtLeast(power.minPower()));
             case PermanentToughnessAtLeastPredicate toughness ->

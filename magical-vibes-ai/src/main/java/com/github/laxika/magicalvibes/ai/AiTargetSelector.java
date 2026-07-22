@@ -70,6 +70,7 @@ class AiTargetSelector {
     private final AmountEvaluationService amountEvaluationService;
     private final TargetPolarityClassifier polarityClassifier;
     private final BoardEvaluator boardEvaluator;
+    private final SizeGatedRemovalPump sizeGatedRemovalPump;
 
     AiTargetSelector(GameQueryService gameQueryService, TargetValidationService targetValidationService,
                      TargetLegalityService targetLegalityService) {
@@ -87,6 +88,7 @@ class AiTargetSelector {
         this.amountEvaluationService = new AmountEvaluationService(predicateEvaluationService, gameQueryService);
         this.polarityClassifier = new TargetPolarityClassifier(amountEvaluationService);
         this.boardEvaluator = boardEvaluator;
+        this.sizeGatedRemovalPump = new SizeGatedRemovalPump(gameQueryService, amountEvaluationService);
     }
 
     UUID chooseTarget(GameData gameData, Card card, UUID aiPlayerId) {
@@ -192,8 +194,8 @@ class AiTargetSelector {
         // Exception: pump an undersized opponent creature so a size-gated removal
         // (Smite the Monstrous, etc.) becomes legal — that kill line beats a self-pump.
         if (polarity == TargetPolarity.BENEFICIAL) {
-            List<Permanent> enableKill = SizeGatedRemovalPump.findEnabledOpponentCreatures(
-                    gameData, card, aiPlayerId, opponentId, gameQueryService, amountEvaluationService);
+            List<Permanent> enableKill = sizeGatedRemovalPump.findEnabledOpponentCreatures(
+                    gameData, card, aiPlayerId, opponentId);
             UUID killSetupTarget = enableKill.stream()
                     .filter(p -> isValidPermanentTarget(gameData, card, p, aiPlayerId))
                     .max(Comparator.comparingDouble(p -> threatScore(gameData, p, opponentId, aiPlayerId)))

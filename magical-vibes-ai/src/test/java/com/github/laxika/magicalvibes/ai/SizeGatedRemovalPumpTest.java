@@ -23,6 +23,7 @@ class SizeGatedRemovalPumpTest {
     private GameTestHarness harness;
     private Player ai;
     private Player human;
+    private SizeGatedRemovalPump pump;
 
     @BeforeEach
     void setUp() {
@@ -30,6 +31,10 @@ class SizeGatedRemovalPumpTest {
         ai = harness.getPlayer1();
         human = harness.getPlayer2();
         harness.skipMulligan();
+        var amounts = new AmountEvaluationService(
+                new PredicateEvaluationService(harness.getGameQueryService()),
+                harness.getGameQueryService());
+        pump = new SizeGatedRemovalPump(harness.getGameQueryService(), amounts);
     }
 
     @Test
@@ -38,14 +43,10 @@ class SizeGatedRemovalPumpTest {
         Permanent bears = harness.addToBattlefieldAndReturn(human, new GrizzlyBears());
         harness.setHand(ai, List.of(new FitOfRage(), new SmiteTheMonstrous()));
 
-        var amounts = new AmountEvaluationService(
-                new PredicateEvaluationService(harness.getGameQueryService()),
-                harness.getGameQueryService());
-        var enabled = SizeGatedRemovalPump.findEnabledOpponentCreatures(
+        var enabled = pump.findEnabledOpponentCreatures(
                 harness.getGameData(),
                 harness.getGameData().playerHands.get(ai.getId()).getFirst(),
-                ai.getId(), human.getId(),
-                harness.getGameQueryService(), amounts);
+                ai.getId(), human.getId());
 
         assertThat(enabled).extracting(Permanent::getId).containsExactly(bears.getId());
     }
@@ -56,14 +57,10 @@ class SizeGatedRemovalPumpTest {
         harness.addToBattlefield(human, new GrizzlyBears());
         harness.setHand(ai, List.of(new FitOfRage()));
 
-        var amounts = new AmountEvaluationService(
-                new PredicateEvaluationService(harness.getGameQueryService()),
-                harness.getGameQueryService());
-        var enabled = SizeGatedRemovalPump.findEnabledOpponentCreatures(
+        var enabled = pump.findEnabledOpponentCreatures(
                 harness.getGameData(),
                 harness.getGameData().playerHands.get(ai.getId()).getFirst(),
-                ai.getId(), human.getId(),
-                harness.getGameQueryService(), amounts);
+                ai.getId(), human.getId());
 
         assertThat(enabled).isEmpty();
     }

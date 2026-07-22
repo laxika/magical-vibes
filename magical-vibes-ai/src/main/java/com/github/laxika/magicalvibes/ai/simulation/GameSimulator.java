@@ -115,6 +115,7 @@ public class GameSimulator {
     private final CombatAttackService combatAttackService;
     private final TargetPolarityClassifier polarityClassifier;
     private final AmountEvaluationService amountEvaluationService;
+    private final SizeGatedRemovalPump sizeGatedRemovalPump;
 
     /**
      * Returns the cached headless simulator. {@link GameQueryService} instances from the same
@@ -144,6 +145,7 @@ public class GameSimulator {
         this.combatSimulator = new CombatSimulator(gameQueryService, boardEvaluator);
         this.amountEvaluationService = new AmountEvaluationService(predicateEvaluationService, gameQueryService);
         this.polarityClassifier = new TargetPolarityClassifier(amountEvaluationService);
+        this.sizeGatedRemovalPump = new SizeGatedRemovalPump(gameQueryService, amountEvaluationService);
     }
 
 
@@ -1136,9 +1138,8 @@ public class GameSimulator {
                     .forEach(candidates::add);
 
             if (candidates.size() < maxCandidates) {
-                SizeGatedRemovalPump.findEnabledOpponentCreatures(
-                                gd, card, playerId, opponentId, gameQueryService,
-                                amountEvaluationService)
+                sizeGatedRemovalPump.findEnabledOpponentCreatures(
+                                gd, card, playerId, opponentId)
                         .stream()
                         .filter(p -> passesTargetFilter(gd, card, p, playerId))
                         .sorted(Comparator.comparingInt((Permanent p) ->
