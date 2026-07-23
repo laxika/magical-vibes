@@ -66,9 +66,14 @@ import java.util.UUID;
 class RandomAiDecisionEngine extends AiDecisionEngine {
 
     private static final Logger log = LoggerFactory.getLogger(RandomAiDecisionEngine.class);
+    private static final int MAX_ACTIVATIONS_PER_ABILITY_PER_TURN = 4;
 
     private final Random rng;
     private final FuzzTelemetry telemetry;
+    private final Map<AbilityActivationKey, Integer> abilityActivationsThisTurn = new HashMap<>();
+    private int trackedActivationTurn = Integer.MIN_VALUE;
+
+    private record AbilityActivationKey(UUID permanentId, int abilityIndex) {}
 
     RandomAiDecisionEngine(UUID gameId, Player aiPlayer, GameRegistry gameRegistry,
                            GameService gameService, GameQueryService gameQueryService,
@@ -164,6 +169,11 @@ class RandomAiDecisionEngine extends AiDecisionEngine {
             return false;
         }
 
+        if (trackedActivationTurn != gameData.turnNumber) {
+            abilityActivationsThisTurn.clear();
+            trackedActivationTurn = gameData.turnNumber;
+        }
+
         ManaPool virtualPool = manaManager.buildVirtualManaPool(gameData, aiPlayer.getId());
 
         record AbilityCandidate(Permanent permanent, int abilityIndex, ActivatedAbility ability) {}
@@ -188,6 +198,11 @@ class RandomAiDecisionEngine extends AiDecisionEngine {
                 }
                 if (ability.getManaCost() != null && new ManaCost(ability.getManaCost()).hasX()) {
                     telemetry.recordSkip("ability: X mana cost (unsupported)", permanent.getCard().getName());
+                    continue;
+                }
+                AbilityActivationKey key = new AbilityActivationKey(permanent.getId(), abilIdx);
+                if (abilityActivationsThisTurn.getOrDefault(key, 0)
+                        >= MAX_ACTIVATIONS_PER_ABILITY_PER_TURN) {
                     continue;
                 }
                 if (!canActivateAbility(gameData, permanent, ability, abilIdx, virtualPool)) continue;
@@ -266,6 +281,8 @@ class RandomAiDecisionEngine extends AiDecisionEngine {
                         gameData.currentStep, gameData.activePlayerId);
                 continue;
             }
+            abilityActivationsThisTurn.merge(
+                    new AbilityActivationKey(permanent.getId(), candidate.abilityIndex()), 1, Integer::sum);
             telemetry.recordAbilityActivation(permanent.getCard().getName());
             return true;
         }
