@@ -75,7 +75,8 @@ public class InputCompletionService {
 
     /**
      * Perform state-based actions. If may abilities are pending, process the next
-     * one and stop. Otherwise, broadcast game state and resolve auto-pass.
+     * one and stop. Otherwise, resume any effect resolution parked for the completed
+     * input, then broadcast game state and resolve auto-pass once resolution is idle.
      *
      * <p>Unlike {@link #sbaProcessMayAbilitiesThenAutoPass}, this variant does NOT
      * clear priority passes before broadcasting. Used by multi-permanent and
@@ -88,6 +89,20 @@ public class InputCompletionService {
             playerInputService.processNextMayAbility(gameData);
             return;
         }
+
+        if (gameData.pendingEffectResolutionEntry != null) {
+            effectResolutionService.resolveEffectsFrom(gameData,
+                    gameData.pendingEffectResolutionEntry,
+                    gameData.pendingEffectResolutionIndex);
+        }
+
+        if (!gameData.pendingMayAbilities.isEmpty() || gameData.interaction.isAwaitingInput()) {
+            if (!gameData.interaction.isAwaitingInput() && !gameData.pendingMayAbilities.isEmpty()) {
+                playerInputService.processNextMayAbility(gameData);
+            }
+            return;
+        }
+
         gameBroadcastService.broadcastGameState(gameData);
         turnProgressionService.resolveAutoPass(gameData);
     }

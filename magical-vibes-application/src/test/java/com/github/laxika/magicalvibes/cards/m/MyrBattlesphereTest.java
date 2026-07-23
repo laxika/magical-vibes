@@ -232,6 +232,32 @@ class MyrBattlesphereTest extends BaseCardTest {
         assertThat(gd.playerLifeTotals.get(player2.getId())).isEqualTo(14);
     }
 
+    @Test
+    @DisplayName("Completing the Myr choice finishes the parked attack-trigger resolution")
+    void completingMyrChoiceFinishesParkedAttackTriggerResolution() {
+        setupBattlefieldWithMyr(1);
+
+        harness.forceActivePlayer(player1);
+        harness.forceStep(TurnStep.DECLARE_ATTACKERS);
+        harness.clearPriorityPassed();
+        harness.beginAttackerDeclarationInput();
+
+        gs.declareAttackers(gd, player1, List.of(0));
+        harness.passBothPriorities();
+
+        assertThat(gd.pendingEffectResolutionEntry)
+                .as("the attack trigger is parked while its Myr choice is active")
+                .isNotNull();
+        assertThat(gd.pendingEffectResolutionEntry.getCard().getName()).isEqualTo("Myr Battlesphere");
+
+        harness.handleMultiplePermanentsChosen(player1, getMyrTokenIds(1));
+
+        assertThat(gd.pendingEffectResolutionEntry)
+                .as("answering the choice must resume and finish the attack trigger")
+                .isNull();
+        assertThat(gd.pendingEffectResolutionIndex).isZero();
+    }
+
     // ===== Helper methods =====
 
     /**
