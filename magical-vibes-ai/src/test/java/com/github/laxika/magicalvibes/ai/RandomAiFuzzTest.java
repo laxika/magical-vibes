@@ -225,7 +225,7 @@ class RandomAiFuzzTest {
 
     private void failGame(String reason, int gameNumber, GameData gd, Player p1, Player p2,
                           AiConnection conn1, AiConnection conn2) {
-        dumpGameState(gameNumber, gd, p1, p2);
+        dumpGameState(gameNumber, gd, p1, p2, conn1, conn2);
         conn1.close();
         conn2.close();
         fail("Game #" + gameNumber + " " + reason);
@@ -265,7 +265,8 @@ class RandomAiFuzzTest {
         }
     }
 
-    private void dumpGameState(int gameNumber, GameData gd, Player p1, Player p2) {
+    private void dumpGameState(int gameNumber, GameData gd, Player p1, Player p2,
+                               AiConnection conn1, AiConnection conn2) {
         synchronized (gd) {
             System.err.println("=== STUCK GAME STATE — Game #" + gameNumber + " ===");
             System.err.println("Turn:            " + gd.turnNumber);
@@ -275,6 +276,8 @@ class RandomAiFuzzTest {
             System.err.println("Priority passed: " + gd.priorityPassedBy);
             System.err.println("Awaiting input:  " + gd.interaction.isAwaitingInput());
             System.err.println("Interaction:     " + gd.interaction.activeInteraction());
+            System.err.println("AI 1 executor:   " + conn1.diagnosticSummary());
+            System.err.println("AI 2 executor:   " + conn2.diagnosticSummary());
             System.err.printf("P1 (%s): life=%d hand=%d battlefield=%d graveyard=%d%n",
                     p1.getUsername(),
                     gd.playerLifeTotals.getOrDefault(p1.getId(), 0),
