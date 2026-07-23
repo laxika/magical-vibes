@@ -1,5 +1,5 @@
 import { Component, HostBinding, Input } from '@angular/core';
-import { ModifierLine, Permanent } from '../../../services/websocket.service';
+import { GrantedAbilityView, ModifierLine, Permanent } from '../../../services/websocket.service';
 import { formatKeywords, formatTypeLine } from '../../../utils/format-utils';
 
 interface BreakdownRow {
@@ -52,6 +52,10 @@ export class ModifierTooltipComponent {
     const loyaltyCounters = this.permanent.counters['LOYALTY'] ?? 0;
     if (loyaltyCounters > 0) return loyaltyCounters;
     return this.permanent.card.loyalty ?? null;
+  }
+
+  get grantedAbilities(): GrantedAbilityView[] {
+    return this.permanent.grantedAbilities ?? [];
   }
 
   // ========== Modifier breakdown ==========

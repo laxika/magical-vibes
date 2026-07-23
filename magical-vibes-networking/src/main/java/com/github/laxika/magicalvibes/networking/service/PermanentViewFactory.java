@@ -103,6 +103,7 @@ public class PermanentViewFactory {
                 p.getPowerModifier() + bonusPower,
                 p.getToughnessModifier() + bonusToughness,
                 allKeywords,
+                List.of(),
                 allRemovedKeywords,
                 p.getEffectivePower() + bonusPower,
                 p.getEffectiveToughness() + bonusToughness,

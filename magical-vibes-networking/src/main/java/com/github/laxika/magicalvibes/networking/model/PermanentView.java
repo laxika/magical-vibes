@@ -16,6 +16,7 @@ public record PermanentView(
         List<Integer> blockingTargets, boolean summoningSick,
         int powerModifier, int toughnessModifier,
         Set<Keyword> grantedKeywords,
+        List<GrantedAbilityView> grantedAbilities,
         Set<Keyword> removedKeywords,
         int effectivePower, int effectiveToughness,
         UUID attachedTo,
@@ -48,11 +49,19 @@ public record PermanentView(
          *  else, who only get {@link #faceDownExiledCount} card backs. */
         List<CardView> faceDownExiledCards
 ) {
+    public PermanentView withGrantedAbilities(List<GrantedAbilityView> abilities) {
+        return new PermanentView(id, card, tapped, attacking, blocking, blockingTargets, summoningSick,
+                powerModifier, toughnessModifier, grantedKeywords, abilities, removedKeywords, effectivePower,
+                effectiveToughness, attachedTo, chosenColor, chosenName, regenerationShield, cantBeBlocked,
+                animatedCreature, counters, attackTargetId, markedDamage, transformed, prepared,
+                modifierLines, exiledWithCards, faceDownExiledCount, faceDownExiledCards);
+    }
+
     /** Controller's copy of this view: the actual face-down cards replace the anonymous
      *  card-back count. */
     public PermanentView withFaceDownRevealed(List<CardView> cards) {
         return new PermanentView(id, card, tapped, attacking, blocking, blockingTargets, summoningSick,
-                powerModifier, toughnessModifier, grantedKeywords, removedKeywords, effectivePower,
+                powerModifier, toughnessModifier, grantedKeywords, grantedAbilities, removedKeywords, effectivePower,
                 effectiveToughness, attachedTo, chosenColor, chosenName, regenerationShield, cantBeBlocked,
                 animatedCreature, counters, attackTargetId, markedDamage, transformed, prepared,
                 modifierLines, exiledWithCards, 0, cards);

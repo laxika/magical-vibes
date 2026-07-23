@@ -265,6 +265,17 @@ img.card-art {
   z-index: 1;
 }
 
+.text-box .card-granted-ability {
+  font-weight: 600;
+  font-style: italic;
+  opacity: 0.9;
+  margin-top: 2px;
+  font-size: inherit;
+  line-height: 1.2;
+  position: relative;
+  z-index: 1;
+}
+
 .flavor-separator {
   height: 1px;
   background: rgba(26, 20, 16, 0.35);
@@ -417,7 +428,8 @@ img.card-art {
   padding-right: 24px;
 }
 
-.pw-text-box .card-keywords {
+.pw-text-box .card-keywords,
+.pw-text-box .card-granted-ability {
   padding: 0 4px;
 }
 

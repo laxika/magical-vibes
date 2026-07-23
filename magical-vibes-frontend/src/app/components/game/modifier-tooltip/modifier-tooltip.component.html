@@ -7,6 +7,18 @@
         <div class="tooltip-keywords">{{ kw }}</div>
       }
     </div>
+    @if (grantedAbilities.length > 0) {
+      <div class="tooltip-abilities">
+        @for (ability of grantedAbilities; track $index) {
+          <div class="tooltip-ability">
+            @if (ability.sourceName) {
+              <span class="tooltip-ability-source">{{ ability.sourceName }}</span>
+            }
+            <span class="tooltip-ability-text">{{ ability.text }}</span>
+          </div>
+        }
+      </div>
+    }
     @if (bd.rows.length > 0) {
       @if (bd.showPt) {
         <div class="breakdown-row breakdown-base">

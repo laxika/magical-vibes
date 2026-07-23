@@ -11,7 +11,11 @@ export function formatEnumName(s: string): string {
  * e.g. ["FIRST_STRIKE", "FLYING"] → "First strike, Flying"
  */
 export function formatKeywords(keywords: string[]): string {
-  return keywords.map(k => k.charAt(0) + k.slice(1).toLowerCase().replace('_', ' ')).join(', ');
+  return keywords.map(k => k.charAt(0) + k.slice(1).toLowerCase().replaceAll('_', ' ')).join(', ');
+}
+
+export function distinctGrantedAbilityTexts(abilities: { text: string }[]): string[] {
+  return [...new Set(abilities.map(ability => ability.text))];
 }
 
 /**

@@ -1230,12 +1230,12 @@ class GameQueryServiceTest {
         }
 
         @Test
-        @DisplayName("returns true from chosen color")
-        void returnsTrueFromChosenColor() {
+        @DisplayName("chosen color alone does not grant protection")
+        void chosenColorAloneDoesNotGrantProtection() {
             Permanent perm = addPermanent(player1Id, createCreatureWithSubtypes("Grizzly Bears", 2, 2, CardColor.GREEN, List.of(CardSubtype.BEAR)));
             perm.setChosenColor(CardColor.RED);
 
-            assertThat(gqs.hasProtectionFrom(gd, perm, CardColor.RED)).isTrue();
+            assertThat(gqs.hasProtectionFrom(gd, perm, CardColor.RED)).isFalse();
         }
 
         @Test

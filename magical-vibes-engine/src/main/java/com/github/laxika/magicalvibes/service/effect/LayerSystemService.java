@@ -36,6 +36,7 @@ import com.github.laxika.magicalvibes.model.effect.LoseAllCreatureTypesEffect;
 import com.github.laxika.magicalvibes.model.effect.LosesAllAbilitiesEffect;
 import com.github.laxika.magicalvibes.model.effect.NonbasicLandsBecomeTypeEffect;
 import com.github.laxika.magicalvibes.model.effect.TrackedLandsBecomeForestEffect;
+import com.github.laxika.magicalvibes.model.effect.ProtectionFromChosenColorEffect;
 import com.github.laxika.magicalvibes.model.effect.ProtectionFromColorsEffect;
 import com.github.laxika.magicalvibes.model.effect.RemoveKeywordEffect;
 import com.github.laxika.magicalvibes.model.effect.SetBasePowerToughnessEffect;
@@ -220,7 +221,8 @@ public class LayerSystemService {
                                     Set<UUID> l56Touched,
                                     Map<UUID, BasePt> basePt7b,
                                     Set<UUID> switchedPt7d,
-                                    Map<UUID, List<ModifierLine>> provenance) {
+                                    Map<UUID, List<ModifierLine>> provenance,
+                                    Map<UUID, List<GrantedEffectAttribution>> grantedEffectProvenance) {
 
         /** Records one display-only attribution line for the given permanent — which source
          *  contributed which keyword/base-P/T/switch during this pass. Written at the layer
@@ -230,6 +232,19 @@ public class LayerSystemService {
         public void recordProvenance(UUID targetId, ModifierLine line) {
             if (line.isEmpty()) return;
             provenance.computeIfAbsent(targetId, id -> new ArrayList<>()).add(line);
+        }
+
+        /** Records which continuous-effect source granted one non-keyword ability. The effect
+         *  stays engine-internal; view construction later formats only effects that survive in
+         *  the final layered state. */
+        public void recordGrantedEffect(UUID targetId, String sourceName, CardEffect effect) {
+            grantedEffectProvenance.computeIfAbsent(targetId, id -> new ArrayList<>())
+                    .add(new GrantedEffectAttribution(sourceName, effect));
+        }
+
+        /** Drops ability attribution removed by a layer-6 "loses all abilities" effect. */
+        public void clearGrantedEffects(UUID targetId) {
+            grantedEffectProvenance.remove(targetId);
         }
 
         /** True if the layer-4 pass owns this effect's application — the legacy static handler
@@ -375,7 +390,7 @@ public class LayerSystemService {
      *     transient land-type override, lose-all flags, text replacements and persistent
      *     granted activated abilities;</li>
      * <li>the permanent's current {@code Card} identity (L1 copy swaps) plus its printed
-     *     stats/types/keywords and STATIC-effect count as insurance for tests that mutate an
+     *     stats/types/keywords and relevant ability-slot counts as insurance for tests that mutate an
      *     unfrozen card in place ({@code TestCards.mutableCard});</li>
      * <li>the floating continuous effects (immutable records — identity suffices);</li>
      * <li>graveyard and exile contents (CDA inputs: the Cairn Wanderer family scans
@@ -529,6 +544,8 @@ public class LayerSystemService {
         h = hashEnums(h, card.getAdditionalTypes());
         h = hashEnums(h, card.getSupertypes());
         h = mix(h, card.getEffects(EffectSlot.STATIC).size());
+        // Chosen-as-enters protection is seeded from this slot in layer 6.
+        h = mix(h, card.getEffects(EffectSlot.ON_ENTER_BATTLEFIELD).size());
         return h;
     }
 
@@ -622,7 +639,7 @@ public class LayerSystemService {
         LayeredBoardState board = new LayeredBoardState(states, new HashMap<>(), new HashSet<>(),
                 Collections.newSetFromMap(new IdentityHashMap<>()), new IdentityHashMap<>(),
                 new IdentityHashMap<>(), Collections.newSetFromMap(new IdentityHashMap<>()),
-                new HashSet<>(), new HashMap<>(), new HashSet<>(), new HashMap<>());
+                new HashSet<>(), new HashMap<>(), new HashSet<>(), new HashMap<>(), new HashMap<>());
         // Publish the in-flight board immediately: nested queries made by handlers during the
         // layer 5/6 passes read the states as of the layers applied so far.
         pass.board = board;
@@ -941,7 +958,7 @@ public class LayerSystemService {
                 Collections.newSetFromMap(new IdentityHashMap<>()), new IdentityHashMap<>(),
                 trialVerdicts, Collections.newSetFromMap(new IdentityHashMap<>()),
                 new HashSet<>(board.l56Touched()), new HashMap<>(board.basePt7b()),
-                new HashSet<>(board.switchedPt7d()), new HashMap<>());
+                new HashSet<>(board.switchedPt7d()), new HashMap<>(), new HashMap<>());
         LayeredBoardState saved = pass.board;
         pass.board = trialBoard;
         try {
@@ -1405,6 +1422,11 @@ public class LayerSystemService {
                 state.addProtectionColors(rewritten.colors());
             }
         }
+        if (permanent.getChosenColor() != null && permanent.getCard()
+                .getEffects(EffectSlot.ON_ENTER_BATTLEFIELD).stream()
+                .anyMatch(ProtectionFromChosenColorEffect.class::isInstance)) {
+            state.addProtectionColors(Set.of(permanent.getChosenColor()));
+        }
 
         if (permanent.isLosesAllAbilitiesUntilEndOfTurn()) {
             // Legacy one-shot lose-all flag (no timestamp): treat as applied before every
@@ -1556,6 +1578,7 @@ public class LayerSystemService {
                 switch (instance.effect()) {
                     case LosesAllAbilitiesEffect ignored -> {
                         state.loseAllAbilities(instance.timestamp());
+                        board.clearGrantedEffects(target.permanent().getId());
                         board.recordProvenance(target.permanent().getId(),
                                 ModifierLine.abilities(provenanceSourceName(instance), Set.of(), Set.of(), true));
                     }
@@ -1584,6 +1607,7 @@ public class LayerSystemService {
             // abilities" never eats what the same printed ability grants.
             if (harvested.isLosesAllAbilities()) {
                 state.loseAllAbilities(instance.timestamp());
+                board.clearGrantedEffects(target.permanent().getId());
                 touched = true;
             }
             for (Keyword removed : harvested.getRemovedKeywords()) {
@@ -1599,6 +1623,12 @@ public class LayerSystemService {
                             harvested.getRemovedKeywords(), harvested.isLosesAllAbilities()));
             if (!harvested.getProtectionColors().isEmpty()) {
                 state.addProtectionColors(harvested.getProtectionColors());
+                if (!instance.source().permanent().getId().equals(target.permanent().getId())) {
+                    ProtectionFromColorsEffect attributedProtection =
+                            new ProtectionFromColorsEffect(Set.copyOf(harvested.getProtectionColors()));
+                    board.recordGrantedEffect(target.permanent().getId(),
+                            provenanceSourceName(instance), attributedProtection);
+                }
                 touched = true;
             }
             if (!harvested.getGrantedActivatedAbilities().isEmpty()) {
@@ -1606,7 +1636,11 @@ public class LayerSystemService {
                 touched = true;
             }
             if (!harvested.getGrantedEffects().isEmpty()) {
-                harvested.getGrantedEffects().forEach(state::addStaticEffect);
+                harvested.getGrantedEffects().forEach(effect -> {
+                    state.addStaticEffect(effect);
+                    board.recordGrantedEffect(target.permanent().getId(),
+                            provenanceSourceName(instance), effect);
+                });
                 touched = true;
             }
             if (touched) {

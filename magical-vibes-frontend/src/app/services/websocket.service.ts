@@ -202,6 +202,13 @@ export interface ModifierLine {
   switchesPt: boolean;
 }
 
+export interface GrantedAbilityView {
+  /** Final display text for an ability added beyond the permanent's printed rules text. */
+  text: string;
+  /** Source card/emblem name when the engine can retain attribution. */
+  sourceName: string | null;
+}
+
 export interface Permanent {
   id: string;
   card: Card;
@@ -213,6 +220,8 @@ export interface Permanent {
   powerModifier: number;
   toughnessModifier: number;
   grantedKeywords: string[];
+  /** Final abilities added beyond the card's printed rules text. */
+  grantedAbilities?: GrantedAbilityView[];
   removedKeywords: string[];
   effectivePower: number;
   effectiveToughness: number;

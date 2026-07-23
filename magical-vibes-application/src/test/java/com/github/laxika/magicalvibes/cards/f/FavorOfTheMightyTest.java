@@ -114,4 +114,19 @@ class FavorOfTheMightyTest extends BaseCardTest {
 
         assertThat(gd.stack).hasSize(1);
     }
+
+    @Test
+    @DisplayName("Battlefield view describes granted protection and its source")
+    void battlefieldViewDescribesGrantedProtection() {
+        addFavor();
+        addCreature(createCreature("Colossus", 6, 6, CardColor.GREEN, "{6}"));
+        addCreature(createCreature("Runt", 1, 1, CardColor.GREEN, "{1}"));
+        harness.clearMessages();
+
+        harness.getGameBroadcastService().broadcastGameState(gd);
+
+        assertThat(harness.getConn1().getMessagesContaining(
+                "\"text\":\"Protection from each color\",\"sourceName\":\"Favor of the Mighty\""))
+                .isNotEmpty();
+    }
 }

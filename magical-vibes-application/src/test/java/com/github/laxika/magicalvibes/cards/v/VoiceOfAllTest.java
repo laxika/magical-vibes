@@ -120,6 +120,24 @@ class VoiceOfAllTest extends BaseCardTest {
     }
 
     @Test
+    @DisplayName("Chosen-color protection is included in the battlefield view")
+    void chosenColorProtectionIsIncludedInBattlefieldView() {
+        harness.setHand(player1, List.of(new VoiceOfAll()));
+        harness.addMana(player1, ManaColor.WHITE, 4);
+
+        harness.castCreature(player1, 0);
+        harness.passBothPriorities();
+        harness.handleListChoice(player1, "RED");
+        harness.clearMessages();
+
+        harness.getGameBroadcastService().broadcastGameState(gd);
+
+        assertThat(harness.getConn1().getMessagesContaining(
+                "\"grantedAbilities\":[{\"text\":\"Protection from red\",\"sourceName\":\"Voice of All\"}]"))
+                .isNotEmpty();
+    }
+
+    @Test
     @DisplayName("Color choice clears awaiting state")
     void colorChoiceClearsAwaitingState() {
         harness.setHand(player1, List.of(new VoiceOfAll()));

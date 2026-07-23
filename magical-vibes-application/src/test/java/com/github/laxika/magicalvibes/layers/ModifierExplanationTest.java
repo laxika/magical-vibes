@@ -1,5 +1,6 @@
 package com.github.laxika.magicalvibes.layers;
 
+import com.github.laxika.magicalvibes.cards.b.BlackWard;
 import com.github.laxika.magicalvibes.cards.d.Dub;
 import com.github.laxika.magicalvibes.cards.g.GiantGrowth;
 import com.github.laxika.magicalvibes.cards.g.GloriousAnthem;
@@ -9,10 +10,12 @@ import com.github.laxika.magicalvibes.cards.l.Lignify;
 import com.github.laxika.magicalvibes.cards.r.RagingGoblin;
 import com.github.laxika.magicalvibes.cards.t.TwistedImage;
 import com.github.laxika.magicalvibes.model.Card;
+import com.github.laxika.magicalvibes.model.CardColor;
 import com.github.laxika.magicalvibes.model.Keyword;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.Player;
+import com.github.laxika.magicalvibes.model.effect.ProtectionFromColorsEffect;
 import com.github.laxika.magicalvibes.model.layer.ModifierLine;
 import com.github.laxika.magicalvibes.service.battlefield.GameQueryService;
 import org.junit.jupiter.api.DisplayName;
@@ -102,6 +105,25 @@ class ModifierExplanationTest extends BaseCardTest {
         assertThat(line.power()).isEqualTo(2);
         assertThat(line.toughness()).isEqualTo(2);
         assertThat(line.gainedKeywords()).contains(Keyword.FIRST_STRIKE);
+    }
+
+    @Test
+    @DisplayName("An Aura's protection grant retains the Aura as its source")
+    void auraProtectionAttributedByName() {
+        Permanent bears = addPermanent(player1, new GrizzlyBears());
+        attach(player1, new BlackWard(), bears);
+
+        GameQueryService.ExplainedBonus explained = gqs.explainStaticBonus(gd, bears);
+
+        assertThat(explained.grantedEffectAttributions())
+                .singleElement()
+                .satisfies(attribution -> {
+                    assertThat(attribution.sourceName()).isEqualTo("Black Ward");
+                    assertThat(attribution.effect())
+                            .isInstanceOfSatisfying(ProtectionFromColorsEffect.class,
+                                    protection -> assertThat(protection.colors())
+                                            .containsExactly(CardColor.BLACK));
+                });
     }
 
     @Test

@@ -7,7 +7,7 @@ import { ScryfallCardDataService } from '../../../services/scryfall-card-data.se
 import { ManaSymbolService } from '../../../services/mana-symbol.service';
 import { SetSymbolService } from '../../../services/set-symbol.service';
 import { WatermarkService } from '../../../services/watermark.service';
-import { formatEnumName, formatKeywords, formatTypeLine } from '../../../utils/format-utils';
+import { distinctGrantedAbilityTexts, formatEnumName, formatKeywords, formatTypeLine } from '../../../utils/format-utils';
 
 export interface PlaneswalkerAbilityLine {
   /** Display cost, e.g. "+1", "−2", "0"; null for static ability lines. */
@@ -236,6 +236,10 @@ export class CardDisplayComponent implements OnInit, OnChanges, OnDestroy, After
     return [];
   }
 
+  get grantedAbilityTexts(): string[] {
+    return distinctGrantedAbilityTexts(this.permanent?.grantedAbilities ?? []);
+  }
+
   get isBuffed(): boolean {
     return this.permanent != null &&
       (this.permanent.powerModifier > 0 || this.permanent.toughnessModifier > 0);
@@ -347,6 +351,7 @@ export class CardDisplayComponent implements OnInit, OnChanges, OnDestroy, After
 
     const fp = (this.card.cardText ?? '') + '|' +
       this.formatKeywords(this.effectiveKeywords) + '|' +
+      this.grantedAbilityTexts.join('|') + '|' +
       (this.flavorText ?? '');
     if (fp === this.lastTextFingerprint) return;
     this.lastTextFingerprint = fp;

@@ -110,6 +110,7 @@ import com.github.laxika.magicalvibes.model.layer.CharacteristicState;
 import com.github.laxika.magicalvibes.service.battlefield.BlockLegalityContext.BlockDenial;
 import com.github.laxika.magicalvibes.model.layer.FloatingContinuousEffect;
 import com.github.laxika.magicalvibes.model.layer.ModifierLine;
+import com.github.laxika.magicalvibes.service.effect.GrantedEffectAttribution;
 import com.github.laxika.magicalvibes.service.effect.LayerSystemService;
 import com.github.laxika.magicalvibes.service.effect.StaticBonusAccumulator;
 import com.github.laxika.magicalvibes.service.filter.PredicateEvaluationService;
@@ -1506,7 +1507,8 @@ public class GameQueryService {
      * layer-6/7b/7d contributions read from the board's provenance). Display-only — computed
      * by the view-building path, never consulted by rules code.
      */
-    public record ExplainedBonus(StaticBonus bonus, List<ModifierLine> lines) {
+    public record ExplainedBonus(StaticBonus bonus, List<ModifierLine> lines,
+                                 List<GrantedEffectAttribution> grantedEffectAttributions) {
     }
 
     /** {@link #computeStaticBonus} plus the per-source attribution lines for the client's
@@ -1528,7 +1530,8 @@ public class GameQueryService {
 
     private ExplainedBonus explainAgainstBoard(GameData gameData, LayerSystemService.LayeredBoardState board, Permanent target) {
         List<ModifierLine> lines = new ArrayList<>();
-        StaticBonus bonus = assembleStaticBonus(gameData, board, target, lines);
+        List<GrantedEffectAttribution> effectAttributions = new ArrayList<>();
+        StaticBonus bonus = assembleStaticBonus(gameData, board, target, lines, effectAttributions);
         // Board-recorded lines (layer 6 keyword grants/removals, 7b base setters in resolved
         // order, 7d switches) follow the assembly lines: base lines must fold AFTER the 7a CDA
         // line the assembly may have emitted, mirroring the merge in assembleStaticBonus.
@@ -1536,10 +1539,26 @@ public class GameQueryService {
         if (recorded != null) {
             lines.addAll(recorded);
         }
-        if (bonus == StaticBonus.NONE) {
-            return new ExplainedBonus(bonus, List.of());
+        List<GrantedEffectAttribution> recordedEffects =
+                board.grantedEffectProvenance().get(target.getId());
+        if (recordedEffects != null) {
+            effectAttributions.addAll(recordedEffects);
         }
-        return new ExplainedBonus(bonus, mergeModifierLines(lines));
+        if (bonus == StaticBonus.NONE) {
+            return new ExplainedBonus(bonus, List.of(), List.of());
+        }
+        Set<CardEffect> finalGrantedEffects = Collections.newSetFromMap(new IdentityHashMap<>());
+        finalGrantedEffects.addAll(bonus.grantedEffects());
+        effectAttributions.removeIf(attribution -> {
+            if (finalGrantedEffects.contains(attribution.effect())) {
+                return false;
+            }
+            return !(attribution.effect() instanceof ProtectionGrantingEffect protection
+                    && !protection.protectionFromColors().isEmpty()
+                    && bonus.protectionColors().containsAll(protection.protectionFromColors()));
+        });
+        return new ExplainedBonus(bonus, mergeModifierLines(lines),
+                List.copyOf(effectAttributions));
     }
 
     /** Merges the additive/keyword lines of one source into a single display line; base-setting
@@ -1574,12 +1593,14 @@ public class GameQueryService {
      */
     private record AccumulatorSnapshot(int power, int toughness, Set<Keyword> keywords,
                                        Set<Keyword> removedKeywords, boolean losesAllAbilities,
-                                       boolean basePTOverridden, int basePowerOverride, int baseToughnessOverride) {
+                                       boolean basePTOverridden, int basePowerOverride, int baseToughnessOverride,
+                                       int grantedEffectCount) {
         static AccumulatorSnapshot of(StaticBonusAccumulator accumulator) {
             return new AccumulatorSnapshot(accumulator.getPower(), accumulator.getToughness(),
                     Set.copyOf(accumulator.getKeywords()), Set.copyOf(accumulator.getRemovedKeywords()),
                     accumulator.isLosesAllAbilities(), accumulator.isBasePTOverridden(),
-                    accumulator.getBasePowerOverride(), accumulator.getBaseToughnessOverride());
+                    accumulator.getBasePowerOverride(), accumulator.getBaseToughnessOverride(),
+                    accumulator.getGrantedEffects().size());
         }
 
         ModifierLine diff(String source, StaticBonusAccumulator accumulator, boolean includeBase) {
@@ -1598,6 +1619,27 @@ public class GameQueryService {
                     gained, removed,
                     !losesAllAbilities && accumulator.isLosesAllAbilities(), false);
         }
+
+        List<CardEffect> newlyGrantedEffects(StaticBonusAccumulator accumulator) {
+            if (accumulator.getGrantedEffects().size() <= grantedEffectCount) {
+                return List.of();
+            }
+            return List.copyOf(accumulator.getGrantedEffects()
+                    .subList(grantedEffectCount, accumulator.getGrantedEffects().size()));
+        }
+    }
+
+    private static void recordGrantedEffectDiff(
+            AccumulatorSnapshot before,
+            String sourceName,
+            StaticBonusAccumulator accumulator,
+            List<GrantedEffectAttribution> explainEffects) {
+        if (explainEffects == null) {
+            return;
+        }
+        for (CardEffect effect : before.newlyGrantedEffects(accumulator)) {
+            explainEffects.add(new GrantedEffectAttribution(sourceName, effect));
+        }
     }
 
     /** A static-effect source with the CR 613.7 ordering key used by {@link #assembleStaticBonus}. */
@@ -1613,13 +1655,15 @@ public class GameQueryService {
      * {@code LayerSystemService.applyLayer7b}) is merged over the 7a CDA / intrinsic base.
      */
     private StaticBonus assembleStaticBonus(GameData gameData, LayerSystemService.LayeredBoardState board, Permanent target) {
-        return assembleStaticBonus(gameData, board, target, null);
+        return assembleStaticBonus(gameData, board, target, null, null);
     }
 
     /** With a non-null {@code explain} list, additionally records one attribution line per
      *  contributing source by diffing the accumulator around each source's handlers. Only the
      *  view-building path passes a recorder; rules-code callers pay no diffing cost. */
-    private StaticBonus assembleStaticBonus(GameData gameData, LayerSystemService.LayeredBoardState board, Permanent target, List<ModifierLine> explain) {
+    private StaticBonus assembleStaticBonus(GameData gameData, LayerSystemService.LayeredBoardState board,
+                                            Permanent target, List<ModifierLine> explain,
+                                            List<GrantedEffectAttribution> explainEffects) {
         boolean isNaturalCreature = hasCardType(target, CardType.CREATURE);
         StaticBonusAccumulator accumulator = new StaticBonusAccumulator();
         List<StaticSource> sources = new ArrayList<>();
@@ -1686,6 +1730,8 @@ public class GameQueryService {
                 if (!line.isEmpty()) {
                     explain.add(line);
                 }
+                recordGrantedEffectDiff(beforeSource, source.getCard().getName(),
+                        accumulator, explainEffects);
             }
         }
         // Process emblem static effects
@@ -1726,6 +1772,7 @@ public class GameQueryService {
                 if (!line.isEmpty()) {
                     explain.add(line);
                 }
+                recordGrantedEffectDiff(beforeEmblem, emblemName, accumulator, explainEffects);
             }
         }
 
@@ -1790,6 +1837,8 @@ public class GameQueryService {
             if (!line.isEmpty()) {
                 explain.add(line);
             }
+            recordGrantedEffectDiff(beforeSelf, target.getCard().getName(),
+                    accumulator, explainEffects);
         }
 
         // Sublayer 7b: the timestamp-resolved base P/T from the layered pass overrides the base
@@ -1976,7 +2025,7 @@ public class GameQueryService {
     /**
      * Returns {@code true} if the target permanent has protection from the given color.
      * Checks the permanent's own {@link ProtectionGrantingEffect}, static bonuses from
-     * other permanents, and the permanent's chosen color (e.g. from a "choose a color" effect).
+     * other permanents, and temporary protection grants.
      */
     public boolean hasProtectionFrom(GameData gameData, Permanent target, CardColor sourceColor) {
         if (sourceColor == null) return false;
@@ -2003,9 +2052,6 @@ public class GameQueryService {
                     && protection.protectionFromColors().contains(sourceColor)) {
                 return true;
             }
-        }
-        if (target.getChosenColor() != null && target.getChosenColor() == sourceColor) {
-            return true;
         }
         if (target.getProtectionFromColorsUntilEndOfTurn().contains(sourceColor)) {
             return true;

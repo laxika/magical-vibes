@@ -318,7 +318,8 @@ source's replacements before any layer applies it; `EffectInstance` carries the 
 effect plus the `original`, which keys `managedL4Effects`/`l4Contributions`/`managedL56Effects`
 (the assembly looks effects up by the instance it iterates off the card's slot);
 (b) `seedLegacyColorAndAbilityState` seeds the object's own printed protection with its
-replacements applied; (c) `applyTextChangesToPrintedLandTypes` applies replacements to the
+replacements applied, plus protection tied to that object's chosen-as-enters color; (c)
+`applyTextChangesToPrintedLandTypes` applies replacements to the
 object's own printed basic land types at seed time — a Mind Bent Forest IS an Island, recorded
 in `landTypeOverrides` so the tap funnel produces the new mana color (CR 305.6); a later L4
 setter simply overwrites the entry; (d) both handler loops in
@@ -715,6 +716,13 @@ conditional wrappers, the 7a self-CDA base), appends the board lines, and merges
 source name (base/switch lines keep their order — folding is order-sensitive). Only
 `GameBroadcastService` calls it (per broadcast, per permanent); rules code and the AI never
 pay the diffing cost, and `PermanentView.modifierLines` carries the result to the client.
+The layer-6 board also keeps engine-internal source attribution for non-keyword effects granted
+through `GrantEffectEffect` and for direct scoped protection grants from Auras/Equipment. View
+construction filters that provenance against the final layered ability state, formats the
+surviving effects as `GrantedAbilityView` records, and sends only their display text/source name
+— raw `CardEffect` records never cross the wire. Chosen-color protection, legacy temporary color
+and non-subtype protection, and temporary unblockability are projected from their final runtime
+state; source attribution is omitted when legacy storage did not retain it.
 One-shot pumps stored on the `Permanent` (`powerModifier`, until-EOT keyword buckets) are
 deliberately un-attributed — the client reconciles them as an "Other effects" remainder
 against the aggregate fields, which stay authoritative. Pinned by `ModifierExplanationTest`.
@@ -725,7 +733,7 @@ against the aggregate fields, which stay authoritative. Pinned by `ModifierExpla
   behavior (also how the benchmark measures before/after from one build).
 - **Known gap**: mutating the one unfrozen runtime copy card in place after a query was
   cached would not invalidate (identity + printed values are hashed, added abilities only by
-  STATIC-effect count); today Cryptoplasm/Evil Twin exception baking happens inside the same
+  relevant effect-slot counts); today Cryptoplasm/Evil Twin exception baking happens inside the same
   resolution as the copy swap, so no query can intervene.
 
 ### Benchmark

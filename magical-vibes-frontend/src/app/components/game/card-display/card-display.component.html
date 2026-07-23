@@ -55,6 +55,9 @@
     @if (effectiveKeywords.length > 0) {
       <div class="card-keywords">{{ formatKeywords(effectiveKeywords) }}</div>
     }
+    @for (ability of grantedAbilityTexts; track ability) {
+      <div class="card-granted-ability">{{ ability }}</div>
+    }
     @if (flavorText) {
       <div class="flavor-separator"></div>
       <div class="card-flavor-text">{{ flavorText }}</div>

@@ -25,6 +25,7 @@ import com.github.laxika.magicalvibes.service.cast.CastingCostService;
 import com.github.laxika.magicalvibes.service.cast.CastingPermissionService;
 import com.github.laxika.magicalvibes.service.cast.CostModificationTestRegistry;
 import com.github.laxika.magicalvibes.service.cast.CostModificationSupport;
+import com.github.laxika.magicalvibes.service.effect.GrantedAbilityViewFactory;
 import com.github.laxika.magicalvibes.service.target.ValidTargetService;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
@@ -85,7 +86,8 @@ class GameBroadcastServiceTest {
         svc = new GameBroadcastService(sessionManager, cardViewFactory, gameLogViewFactory, permanentViewFactory,
                 stackEntryViewFactory, gameQueryService, validTargetService,
                 castingCostService, castingPermissionService,
-                new com.github.laxika.magicalvibes.service.cast.PotentialManaService(gameQueryService));
+                new com.github.laxika.magicalvibes.service.cast.PotentialManaService(gameQueryService),
+                new GrantedAbilityViewFactory());
 
         player1Id = UUID.randomUUID();
         player2Id = UUID.randomUUID();
@@ -522,7 +524,7 @@ class GameBroadcastServiceTest {
 
         private PermanentView permanentView(UUID permId, int faceDownCount) {
             return new PermanentView(permId, null, false, false, false, List.of(), false, 0, 0, Set.of(),
-                    Set.of(), 0, 0, null, null, null, 0, false, false, java.util.Map.of(), null, 0, false,
+                    List.of(), Set.of(), 0, 0, null, null, null, 0, false, false, java.util.Map.of(), null, 0, false,
                     false, List.of(), List.of(), faceDownCount, List.of());
         }
 
@@ -582,7 +584,11 @@ class GameBroadcastServiceTest {
                     0, 0, Set.of(), Set.of(), false, List.of(), List.of(), Set.of(), List.of(), Set.of(),
                     Set.of(), false, false, false, false, Set.of(), false, 0, 0, false, false);
             when(gameQueryService.explainStaticBonus(gd, sourcePermanent))
-                    .thenReturn(new GameQueryService.ExplainedBonus(noBonus, List.of()));
+                    .thenReturn(new GameQueryService.ExplainedBonus(noBonus, List.of(), List.of()));
+            when(permanentViewFactory.create(same(sourcePermanent), anyInt(), anyInt(), any(), anyBoolean(),
+                    anyList(), any(), anyList(), any(), anyBoolean(), anyBoolean(), anyBoolean(), anyBoolean(), any(),
+                    anyBoolean(), any(), anyList(), anyList(), eq(1)))
+                    .thenReturn(permanentView(sourcePermanent.getId(), 1));
 
             svc.getBattlefields(gd);
 

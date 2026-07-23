@@ -56,6 +56,7 @@ import com.github.laxika.magicalvibes.networking.service.CardViewFactory;
 import com.github.laxika.magicalvibes.networking.service.GameLogViewFactory;
 import com.github.laxika.magicalvibes.networking.service.PermanentViewFactory;
 import com.github.laxika.magicalvibes.networking.service.StackEntryViewFactory;
+import com.github.laxika.magicalvibes.service.effect.GrantedAbilityViewFactory;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Component;
 
@@ -75,6 +76,7 @@ public class GameBroadcastService {
     private final CastingCostService castingCostService;
     private final CastingPermissionService castingPermissionService;
     private final PotentialManaService potentialManaService;
+    private final GrantedAbilityViewFactory grantedAbilityViewFactory;
 
     public void broadcastGameState(GameData gameData) {
         // Skip expensive view computation during MCTS simulation (headless session manager discards the result)
@@ -188,7 +190,9 @@ public class GameBroadcastService {
                             faceUpExiledWith.add(exiledWith.card());
                         }
                     }
-                    views.add(permanentViewFactory.create(p, adjustedBonusPower, adjustedBonusToughness, bonus.keywords(), bonus.animatedCreature(), allGrantedAbilities, bonus.grantedColors(), bonus.grantedSubtypes(), bonus.grantedCardTypes(), bonus.colorOverriding(), bonus.subtypeOverriding(), bonus.landSubtypeOverriding(), bonus.cardTypeOverriding(), bonus.removedKeywords(), bonus.losesAllAbilities() || p.isLosesAllAbilitiesUntilEndOfTurn(), bonus.grantedSupertypes(), explained.lines(), faceUpExiledWith, faceDownExiledCount));
+                    PermanentView view = permanentViewFactory.create(p, adjustedBonusPower, adjustedBonusToughness, bonus.keywords(), bonus.animatedCreature(), allGrantedAbilities, bonus.grantedColors(), bonus.grantedSubtypes(), bonus.grantedCardTypes(), bonus.colorOverriding(), bonus.subtypeOverriding(), bonus.landSubtypeOverriding(), bonus.cardTypeOverriding(), bonus.removedKeywords(), bonus.losesAllAbilities() || p.isLosesAllAbilitiesUntilEndOfTurn(), bonus.grantedSupertypes(), explained.lines(), faceUpExiledWith, faceDownExiledCount);
+                    views.add(view.withGrantedAbilities(grantedAbilityViewFactory.create(
+                            p, bonus, explained.grantedEffectAttributions())));
                 }
                 battlefields.add(views);
             }

@@ -83,6 +83,28 @@
   opacity: 0.85;
 }
 
+.tooltip-abilities {
+  margin-bottom: 3px;
+  padding-bottom: 3px;
+  border-bottom: 1px solid rgba(232, 213, 176, 0.25);
+}
+
+.tooltip-ability {
+  display: flex;
+  flex-direction: column;
+  padding: 1px 0;
+}
+
+.tooltip-ability-source {
+  font-size: 9px;
+  opacity: 0.7;
+}
+
+.tooltip-ability-text {
+  color: #8fd48f;
+  font-weight: 600;
+}
+
 .breakdown-row {
   display: flex;
   justify-content: space-between;

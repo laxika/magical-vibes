@@ -4,6 +4,7 @@ import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardType;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.networking.model.CardView;
+import com.github.laxika.magicalvibes.networking.model.GrantedAbilityView;
 import com.github.laxika.magicalvibes.networking.model.PermanentView;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
@@ -75,5 +76,18 @@ class PermanentViewFactoryTest {
         assertThat(revealed.card()).isEqualTo(view.card());
         assertThat(revealed.tapped()).isTrue();
         assertThat(revealed.exiledWithCards()).isEqualTo(view.exiledWithCards());
+    }
+
+    @Test
+    @DisplayName("Granted ability views pass through to the permanent view")
+    void grantedAbilitiesPassThrough() {
+        Permanent creature = new Permanent(card("Voice of All", CardType.CREATURE));
+        GrantedAbilityView protection = new GrantedAbilityView(
+                "Protection from red", "Voice of All");
+
+        PermanentView view = factory.create(creature, 0, 0, Set.of(), false, List.of())
+                .withGrantedAbilities(List.of(protection));
+
+        assertThat(view.grantedAbilities()).containsExactly(protection);
     }
 }
