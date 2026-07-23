@@ -267,9 +267,7 @@ public class ChoiceHandlerService {
         // condition (e.g. Lurebound Scarecrow controlling no permanents of the chosen color).
         stateBasedActionService.performStateBasedActions(gameData);
 
-        gameData.priorityPassedBy.clear();
-        gameBroadcastService.broadcastGameState(gameData);
-        turnProgressionService.resolveAutoPass(gameData);
+        inputCompletionService.processMayAbilitiesThenAutoPass(gameData);
     }
 
     private void handleManaColorChosen(GameData gameData, Player player, String colorName, ChoiceContext.ManaColorChoice ctx) {
@@ -365,16 +363,9 @@ public class ChoiceHandlerService {
             log.info("Game {} - {} adds {} {} mana", gameData.id, player.getUsername(), manaWord, colorName.toLowerCase());
         }
 
-        gameData.priorityPassedBy.clear();
-        if (!gameData.pendingMayAbilities.isEmpty()) {
-            playerInputService.processNextMayAbility(gameData);
-            gameBroadcastService.broadcastGameState(gameData);
-            return;
-        }
-        gameBroadcastService.broadcastGameState(gameData);
         // Resume any remaining effects of the spell/ability that paused for this mana-color choice
         // (e.g. Manamorphose: "Add two mana in any combination of colors. Draw a card.").
-        resumeAndAutoPass(gameData);
+        inputCompletionService.processMayAbilitiesThenAutoPass(gameData);
     }
 
     private void handleAttackManaSplitChosen(GameData gameData, Player player, String colorName, ChoiceContext.AttackManaSplitChoice ctx) {
@@ -391,9 +382,7 @@ public class ChoiceHandlerService {
         log.info("Game {} - {} adds {} {} mana (attacking creatures, persistent until end of turn)",
                 gameData.id, player.getUsername(), ctx.attackerCount(), colorName.toLowerCase());
 
-        gameData.priorityPassedBy.clear();
-        gameBroadcastService.broadcastGameState(gameData);
-        turnProgressionService.resolveAutoPass(gameData);
+        inputCompletionService.processMayAbilitiesThenAutoPass(gameData);
     }
 
     private void handleTextChangeFromWordChosen(GameData gameData, Player player, String chosenWord, ChoiceContext.TextChangeFromWord ctx) {
@@ -471,9 +460,7 @@ public class ChoiceHandlerService {
             }
         }
 
-        gameData.priorityPassedBy.clear();
-        gameBroadcastService.broadcastGameState(gameData);
-        turnProgressionService.resolveAutoPass(gameData);
+        inputCompletionService.processMayAbilitiesThenAutoPass(gameData);
     }
 
     private String textChangeChoiceToWord(String choice) {
@@ -513,9 +500,7 @@ public class ChoiceHandlerService {
 
         legendRuleService.checkLegendRule(gameData, controllerId);
 
-        gameData.priorityPassedBy.clear();
-        gameBroadcastService.broadcastGameState(gameData);
-        turnProgressionService.resolveAutoPass(gameData);
+        inputCompletionService.processMayAbilitiesThenAutoPass(gameData);
     }
 
     private void handleKeywordGrantChoice(GameData gameData, Player player, String chosenKeywordName, ChoiceContext.KeywordGrantChoice ctx) {
@@ -622,8 +607,7 @@ public class ChoiceHandlerService {
                         ctx.sourceCard(), "."));
 
         if (noneMode) {
-            gameBroadcastService.broadcastGameState(gameData);
-            resumeAndAutoPass(gameData);
+            inputCompletionService.processMayAbilitiesThenAutoPass(gameData);
             return;
         }
 
@@ -639,8 +623,7 @@ public class ChoiceHandlerService {
                 }
             }
             if (validSpellCardIds.isEmpty()) {
-                gameBroadcastService.broadcastGameState(gameData);
-                resumeAndAutoPass(gameData);
+                inputCompletionService.processMayAbilitiesThenAutoPass(gameData);
                 return;
             }
             gameData.interaction.setPermanentChoiceContext(new PermanentChoiceContext.MayAbilityTriggerTarget(
@@ -666,8 +649,7 @@ public class ChoiceHandlerService {
             }
         }
         if (validPermanents.isEmpty()) {
-            gameBroadcastService.broadcastGameState(gameData);
-            resumeAndAutoPass(gameData);
+            inputCompletionService.processMayAbilitiesThenAutoPass(gameData);
             return;
         }
         gameData.interaction.setPermanentChoiceContext(new PermanentChoiceContext.MayAbilityTriggerTarget(
@@ -729,9 +711,7 @@ public class ChoiceHandlerService {
 
         stateBasedActionService.performStateBasedActions(gameData);
 
-        gameData.priorityPassedBy.clear();
-        gameBroadcastService.broadcastGameState(gameData);
-        resumeAndAutoPass(gameData);
+        inputCompletionService.processMayAbilitiesThenAutoPass(gameData);
     }
 
     /**
@@ -762,9 +742,7 @@ public class ChoiceHandlerService {
         log.info("Game {} - {} chooses mode \"{}\" for {}", gameData.id, player.getUsername(),
                 chosenLabel, ctx.sourceCard().getName());
 
-        gameData.priorityPassedBy.clear();
-        gameBroadcastService.broadcastGameState(gameData);
-        resumeAndAutoPass(gameData);
+        inputCompletionService.processMayAbilitiesThenAutoPass(gameData);
     }
 
     private void handleDrawReplacementChoice(GameData gameData, String chosenKind, ChoiceContext.DrawReplacementChoice ctx) {
@@ -832,16 +810,11 @@ public class ChoiceHandlerService {
     }
 
     private void finalizeAfterDrawReplacementChoice(GameData gameData) {
-        gameData.priorityPassedBy.clear();
-        if (!gameData.interaction.isAwaitingInput() && !gameData.pendingMayAbilities.isEmpty()) {
-            playerInputService.processNextMayAbility(gameData);
+        if (gameData.interaction.isAwaitingInput()) {
             gameBroadcastService.broadcastGameState(gameData);
             return;
         }
-        gameBroadcastService.broadcastGameState(gameData);
-        if (!gameData.interaction.isAwaitingInput()) {
-            turnProgressionService.resolveAutoPass(gameData);
-        }
+        inputCompletionService.processMayAbilitiesThenAutoPass(gameData);
     }
 
     private void handleProtectionColorChoice(GameData gameData, Player player, String chosenValue, ChoiceContext.ProtectionColorChoice ctx) {
@@ -865,9 +838,7 @@ public class ChoiceHandlerService {
         // CR 704.5n/704.5q — the new protection can make an attached aura or equipment illegal
         stateBasedActionService.performStateBasedActions(gameData);
 
-        gameData.priorityPassedBy.clear();
-        gameBroadcastService.broadcastGameState(gameData);
-        resumeAndAutoPass(gameData);
+        inputCompletionService.processMayAbilitiesThenAutoPass(gameData);
     }
 
     private void handleMassProtectionColorChoice(GameData gameData, Player player, String chosenValue,
@@ -900,9 +871,7 @@ public class ChoiceHandlerService {
         // CR 704.5n/704.5q — the new protection can make attached auras or equipment illegal
         stateBasedActionService.performStateBasedActions(gameData);
 
-        gameData.priorityPassedBy.clear();
-        gameBroadcastService.broadcastGameState(gameData);
-        resumeAndAutoPass(gameData);
+        inputCompletionService.processMayAbilitiesThenAutoPass(gameData);
     }
 
     private void handleColorSetChoice(GameData gameData, String chosenValue, ChoiceContext.ColorSetChoice ctx) {
@@ -931,9 +900,7 @@ public class ChoiceHandlerService {
             log.info("Game {} - {} becomes {} until end of turn", gameData.id, target.getCard().getName(), colorName);
         }
 
-        gameData.priorityPassedBy.clear();
-        gameBroadcastService.broadcastGameState(gameData);
-        resumeAndAutoPass(gameData);
+        inputCompletionService.processMayAbilitiesThenAutoPass(gameData);
     }
 
     private void handleDiscardChosenColorChoice(GameData gameData, String chosenValue,
@@ -984,9 +951,7 @@ public class ChoiceHandlerService {
                     + " cards to discard."));
         }
 
-        gameData.priorityPassedBy.clear();
-        gameBroadcastService.broadcastGameState(gameData);
-        resumeAndAutoPass(gameData);
+        inputCompletionService.processMayAbilitiesThenAutoPass(gameData);
     }
 
     /**
@@ -1031,9 +996,7 @@ public class ChoiceHandlerService {
                     + " Faerie Rogue token" + (matches != 1 ? "s" : "") + "."));
         }
 
-        gameData.priorityPassedBy.clear();
-        gameBroadcastService.broadcastGameState(gameData);
-        resumeAndAutoPass(gameData);
+        inputCompletionService.processMayAbilitiesThenAutoPass(gameData);
     }
 
     /**
@@ -1075,9 +1038,7 @@ public class ChoiceHandlerService {
                     + " Saproling token" + (count != 1 ? "s" : "") + "."));
         }
 
-        gameData.priorityPassedBy.clear();
-        gameBroadcastService.broadcastGameState(gameData);
-        resumeAndAutoPass(gameData);
+        inputCompletionService.processMayAbilitiesThenAutoPass(gameData);
     }
 
     /**
@@ -1107,9 +1068,7 @@ public class ChoiceHandlerService {
 
         applyBecomeChosenColors(gameData, ctx, player.getId(), chosen);
 
-        gameData.priorityPassedBy.clear();
-        gameBroadcastService.broadcastGameState(gameData);
-        resumeAndAutoPass(gameData);
+        inputCompletionService.processMayAbilitiesThenAutoPass(gameData);
     }
 
     private void applyBecomeChosenColors(GameData gameData, ChoiceContext.BecomeChosenColorsChoice ctx,
@@ -1160,25 +1119,7 @@ public class ChoiceHandlerService {
                 player.getUsername() + " chooses \"" + chosen + "\" for " + ctx.sourceCardName() + "."));
         log.info("Game {} - {} chooses {} for {}", gameData.id, player.getUsername(), chosen, ctx.sourceCardName());
 
-        gameData.priorityPassedBy.clear();
-        gameBroadcastService.broadcastGameState(gameData);
-        resumeAndAutoPass(gameData);
-    }
-
-    /**
-     * Resumes resolving any remaining effects on the spell/ability that paused for this choice,
-     * then continues the normal auto-pass flow.
-     */
-    private void resumeAndAutoPass(GameData gameData) {
-        if (gameData.pendingEffectResolutionEntry != null) {
-            effectResolutionService.resolveEffectsFrom(gameData,
-                    gameData.pendingEffectResolutionEntry,
-                    gameData.pendingEffectResolutionIndex);
-        }
-        if (gameData.interaction.isAwaitingInput()) {
-            return;
-        }
-        turnProgressionService.resolveAutoPass(gameData);
+        inputCompletionService.processMayAbilitiesThenAutoPass(gameData);
     }
 
     private void handleSubtypeChoice(GameData gameData, Player player, String subtypeName, ChoiceContext.SubtypeChoice ctx) {
@@ -1199,9 +1140,7 @@ public class ChoiceHandlerService {
             battlefieldEntryService.processCreatureETBEffects(gameData, player.getId(), perm.getCard(), null, true);
         }
 
-        gameData.priorityPassedBy.clear();
-        gameBroadcastService.broadcastGameState(gameData);
-        turnProgressionService.resolveAutoPass(gameData);
+        inputCompletionService.processMayAbilitiesThenAutoPass(gameData);
     }
 
     private void handleSpellCreatureTypeChoice(GameData gameData, Player player, String subtypeName, ChoiceContext.SpellCreatureTypeChoice ctx) {
@@ -1214,9 +1153,7 @@ public class ChoiceHandlerService {
         gameBroadcastService.logAndBroadcast(gameData, GameLog.text(logEntry));
         log.info("Game {} - {} chooses creature type {} for a spell", gameData.id, player.getUsername(), subtype);
 
-        gameData.priorityPassedBy.clear();
-        gameBroadcastService.broadcastGameState(gameData);
-        resumeAndAutoPass(gameData);
+        inputCompletionService.processMayAbilitiesThenAutoPass(gameData);
     }
 
     private void handleManaValueParityChoice(GameData gameData, Player player, String parityName, ChoiceContext.ManaValueParityChoice ctx) {
@@ -1233,9 +1170,7 @@ public class ChoiceHandlerService {
             log.info("Game {} - {} chooses {} for {}", gameData.id, player.getUsername(), parityName.toLowerCase(), perm.getCard().getName());
         }
 
-        gameData.priorityPassedBy.clear();
-        gameBroadcastService.broadcastGameState(gameData);
-        turnProgressionService.resolveAutoPass(gameData);
+        inputCompletionService.processMayAbilitiesThenAutoPass(gameData);
     }
 
     private void handleNumberChoice(GameData gameData, Player player, String numberName, ChoiceContext.NumberChoice ctx) {
@@ -1251,11 +1186,9 @@ public class ChoiceHandlerService {
             log.info("Game {} - {} chooses number {} for {}", gameData.id, player.getUsername(), chosen, perm.getCard().getName());
         }
 
-        gameData.priorityPassedBy.clear();
-        gameBroadcastService.broadcastGameState(gameData);
         // Resumes the paused upkeep may-ability resolution when present; otherwise auto-passes
         // (the "as this enters" ETB choice, which has no pending stack-effect resolution).
-        resumeAndAutoPass(gameData);
+        inputCompletionService.processMayAbilitiesThenAutoPass(gameData);
     }
 
     private void handleRemoveCountersForManaChoice(GameData gameData, Player player, String numberName,
@@ -1286,9 +1219,7 @@ public class ChoiceHandlerService {
                     player.getUsername(), removed, ctx.counterType(), mana, ctx.color());
         }
 
-        gameData.priorityPassedBy.clear();
-        gameBroadcastService.broadcastGameState(gameData);
-        resumeAndAutoPass(gameData);
+        inputCompletionService.processMayAbilitiesThenAutoPass(gameData);
     }
 
     private void handleTetravusCounterRemoval(GameData gameData, Player player, String numberName,
@@ -1318,9 +1249,7 @@ public class ChoiceHandlerService {
                     gameData.id, player.getUsername(), removed, source.getCard().getName(), removed);
         }
 
-        gameData.priorityPassedBy.clear();
-        gameBroadcastService.broadcastGameState(gameData);
-        resumeAndAutoPass(gameData);
+        inputCompletionService.processMayAbilitiesThenAutoPass(gameData);
     }
 
     private void handlePrimalClayFormChoice(GameData gameData, Player player, String formName, ChoiceContext.PrimalClayFormChoice ctx) {
@@ -1352,9 +1281,7 @@ public class ChoiceHandlerService {
             log.info("Game {} - {} chooses shape {} for {}", gameData.id, player.getUsername(), form, perm.getCard().getName());
         }
 
-        gameData.priorityPassedBy.clear();
-        gameBroadcastService.broadcastGameState(gameData);
-        turnProgressionService.resolveAutoPass(gameData);
+        inputCompletionService.processMayAbilitiesThenAutoPass(gameData);
     }
 
     private void handleBasicLandTypeChoice(GameData gameData, Player player, String subtypeName, ChoiceContext.BasicLandTypeChoice ctx) {
@@ -1370,9 +1297,7 @@ public class ChoiceHandlerService {
             log.info("Game {} - {} chooses basic land type {} for {}", gameData.id, player.getUsername(), subtype, perm.getCard().getName());
         }
 
-        gameData.priorityPassedBy.clear();
-        gameBroadcastService.broadcastGameState(gameData);
-        turnProgressionService.resolveAutoPass(gameData);
+        inputCompletionService.processMayAbilitiesThenAutoPass(gameData);
     }
 
     private void handleAddBasicLandTypeChoice(GameData gameData, Player player, String subtypeName, ChoiceContext.AddBasicLandTypeChoice ctx) {
@@ -1395,9 +1320,7 @@ public class ChoiceHandlerService {
             log.info("Game {} - {} becomes a {} (replacing={})", gameData.id, targetLand.getCard().getName(), subtype, ctx.replacing());
         }
 
-        gameData.priorityPassedBy.clear();
-        gameBroadcastService.broadcastGameState(gameData);
-        turnProgressionService.resolveAutoPass(gameData);
+        inputCompletionService.processMayAbilitiesThenAutoPass(gameData);
     }
 
     private void handleOwnLandsBecomeBasicTypeChoice(GameData gameData, Player player, String subtypeName, ChoiceContext.OwnLandsBecomeBasicTypeChoice ctx) {
@@ -1421,9 +1344,7 @@ public class ChoiceHandlerService {
         gameBroadcastService.logAndBroadcast(gameData, GameLog.text(logEntry));
         log.info("Game {} - Each land {} controls becomes a {} until end of turn", gameData.id, playerName, subtype);
 
-        gameData.priorityPassedBy.clear();
-        gameBroadcastService.broadcastGameState(gameData);
-        turnProgressionService.resolveAutoPass(gameData);
+        inputCompletionService.processMayAbilitiesThenAutoPass(gameData);
     }
 
     private void handlePermanentTypeChoice(GameData gameData, Player player, String typeName, ChoiceContext.PermanentTypeChoice ctx) {
@@ -1438,9 +1359,7 @@ public class ChoiceHandlerService {
         List<Card> graveyard = gameData.playerGraveyards.get(controllerId);
 
         if (graveyard == null || graveyard.isEmpty()) {
-            gameData.priorityPassedBy.clear();
-            gameBroadcastService.broadcastGameState(gameData);
-            turnProgressionService.resolveAutoPass(gameData);
+            inputCompletionService.processMayAbilitiesThenAutoPass(gameData);
             return;
         }
 
@@ -1477,9 +1396,7 @@ public class ChoiceHandlerService {
             gameBroadcastService.logAndBroadcast(gameData, GameLog.text(logEntry));
         }
 
-        gameData.priorityPassedBy.clear();
-        gameBroadcastService.broadcastGameState(gameData);
-        turnProgressionService.resolveAutoPass(gameData);
+        inputCompletionService.processMayAbilitiesThenAutoPass(gameData);
     }
 
     private void handleStorageMatrixUntapChoice(GameData gameData, Player player, String typeName,
@@ -1568,9 +1485,7 @@ public class ChoiceHandlerService {
             }
         }
 
-        gameData.priorityPassedBy.clear();
-        gameBroadcastService.broadcastGameState(gameData);
-        turnProgressionService.resolveAutoPass(gameData);
+        inputCompletionService.processMayAbilitiesThenAutoPass(gameData);
     }
 
     private void handleNameCardMillGainLifeChoice(GameData gameData, Player player, String cardName,
@@ -1606,9 +1521,7 @@ public class ChoiceHandlerService {
             }
         }
 
-        gameData.priorityPassedBy.clear();
-        gameBroadcastService.broadcastGameState(gameData);
-        resumeAndAutoPass(gameData);
+        inputCompletionService.processMayAbilitiesThenAutoPass(gameData);
     }
 
     private void handleTargetPlayerNameCardRevealTopChoice(GameData gameData, Player player, String cardName,
@@ -1626,9 +1539,7 @@ public class ChoiceHandlerService {
         List<Card> deck = gameData.playerDecks.get(targetPlayerId);
         if (deck == null || deck.isEmpty()) {
             gameBroadcastService.logAndBroadcast(gameData, GameLog.text(targetName + "'s library is empty."));
-            gameData.priorityPassedBy.clear();
-            gameBroadcastService.broadcastGameState(gameData);
-            resumeAndAutoPass(gameData);
+            inputCompletionService.processMayAbilitiesThenAutoPass(gameData);
             return;
         }
 
@@ -1647,9 +1558,7 @@ public class ChoiceHandlerService {
             log.info("Game {} - {} named incorrectly, {} goes to graveyard", gameData.id, targetName, topCard.getName());
         }
 
-        gameData.priorityPassedBy.clear();
-        gameBroadcastService.broadcastGameState(gameData);
-        resumeAndAutoPass(gameData);
+        inputCompletionService.processMayAbilitiesThenAutoPass(gameData);
     }
 
     private void dealRevealMissDamage(GameData gameData, ChoiceContext.TargetPlayerNameCardRevealTopChoice ctx,
@@ -1730,9 +1639,7 @@ public class ChoiceHandlerService {
             gameBroadcastService.logAndBroadcast(gameData, GameLog.text(exileLog));
             log.info("Game {} - {} found 0 cards named \"{}\" in {}'s zones", gameData.id, controllerName, cardName, targetName);
 
-            gameData.priorityPassedBy.clear();
-            gameBroadcastService.broadcastGameState(gameData);
-            turnProgressionService.resolveAutoPass(gameData);
+            inputCompletionService.processMayAbilitiesThenAutoPass(gameData);
             return;
         }
 
@@ -1815,9 +1722,7 @@ public class ChoiceHandlerService {
                 gameData.id, controllerName, exiledCount, cardName, targetName, damage);
 
         stateBasedActionService.performStateBasedActions(gameData);
-        gameData.priorityPassedBy.clear();
-        gameBroadcastService.broadcastGameState(gameData);
-        resumeAndAutoPass(gameData);
+        inputCompletionService.processMayAbilitiesThenAutoPass(gameData);
     }
 
     private void handleSphinxAmbassadorNameChoice(GameData gameData, Player player, String cardName, ChoiceContext.SphinxAmbassadorNameChoice ctx) {
@@ -1862,9 +1767,7 @@ public class ChoiceHandlerService {
             LibraryShuffleHelper.shuffleLibrary(gameData, targetPlayerId);
             gameData.clearPendingInteractions(PendingSphinxAmbassadorChoice.class);
 
-            gameData.priorityPassedBy.clear();
-            gameBroadcastService.broadcastGameState(gameData);
-            turnProgressionService.resolveAutoPass(gameData);
+            inputCompletionService.processMayAbilitiesThenAutoPass(gameData);
         }
     }
 
@@ -1945,9 +1848,7 @@ public class ChoiceHandlerService {
         log.info("Game {} - {} exiled {} card(s) named \"{}\" from {}'s zones",
                 gameData.id, controllerName, exiledCount, cardName, targetName);
 
-        gameData.priorityPassedBy.clear();
-        gameBroadcastService.broadcastGameState(gameData);
-        turnProgressionService.resolveAutoPass(gameData);
+        inputCompletionService.processMayAbilitiesThenAutoPass(gameData);
     }
 
     private static GameLog.Builder appendCards(GameLog.Builder builder, List<Card> cards) {
