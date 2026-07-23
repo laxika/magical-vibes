@@ -585,6 +585,40 @@ public class TargetLegalityService {
             return false;
         }
 
+        // CR 608.2b requires every target occurrence to be checked again. Keep illegal flat-list
+        // positions masked on the entry so a spell with at least one legal target can resolve
+        // without its handlers affecting the illegal targets or shifting later target groups.
+        List<UUID> declaredTargetIds = entry.getDeclaredTargetIds();
+        if (!declaredTargetIds.isEmpty()) {
+            UUID primaryTargetId = entry.getTargetId();
+            boolean hasPrimaryTarget = primaryTargetId != null;
+            boolean primaryTargetLegal = hasPrimaryTarget
+                    && isPrimaryTargetLegalOnResolution(gameData, entry, primaryTargetId);
+            if (hasPrimaryTarget && !primaryTargetLegal) {
+                entry.setTargetId(null);
+            }
+
+            boolean secondaryTargetsAreOnStack = entry.getTargetZone() == Zone.STACK && !hasPrimaryTarget;
+            boolean anySecondaryTargetLegal = false;
+            for (int i = 0; i < declaredTargetIds.size(); i++) {
+                UUID targetId = declaredTargetIds.get(i);
+                TargetFilter targetFilter = targetFilterForPosition(entry, i);
+                boolean legal = secondaryTargetsAreOnStack
+                        ? checkSpellTargetOnStack(gameData, targetId, targetFilter, entry.getControllerId(),
+                                entry.getSourcePermanentSnapshot(), entry.getXValue()).isEmpty()
+                        : isBattlefieldTargetLegalOnResolution(gameData, entry, targetId, targetFilter);
+                if (legal) {
+                    anySecondaryTargetLegal = true;
+                } else {
+                    entry.markTargetIllegal(i);
+                }
+            }
+
+            boolean anyGraveyardCardTargetLegal = entry.getTargetCardIds().stream()
+                    .anyMatch(id -> gameQueryService.findCardInGraveyardById(gameData, id) != null);
+            return !primaryTargetLegal && !anySecondaryTargetLegal && !anyGraveyardCardTargetLegal;
+        }
+
         // Multi-spell targeting: spell targets multiple distinct spells on the stack (e.g.
         // Choreographed Sparks' "both" mode). Per MTG CR 608.2b: fizzles only when ALL of the
         // targeted spells have left the stack; each still-legal target is handled per-effect.
@@ -712,6 +746,110 @@ public class TargetLegalityService {
         }
 
         return targetFizzled;
+    }
+
+    private boolean isPrimaryTargetLegalOnResolution(GameData gameData, StackEntry entry, UUID targetId) {
+        if (entry.getTargetZone() == Zone.EXILE) {
+            return gameQueryService.findCardInExileById(gameData, targetId) != null;
+        }
+        if (entry.getTargetZone() == Zone.GRAVEYARD) {
+            return gameQueryService.findCardInGraveyardById(gameData, targetId) != null;
+        }
+        if (entry.getTargetZone() == Zone.STACK) {
+            return checkSpellTargetOnStack(gameData, targetId, entry.getTargetFilter(), entry.getControllerId(),
+                    entry.getSourcePermanentSnapshot(), entry.getXValue()).isEmpty();
+        }
+        return isBattlefieldTargetLegalOnResolution(gameData, entry, targetId, primaryTargetFilter(entry));
+    }
+
+    private boolean isBattlefieldTargetLegalOnResolution(GameData gameData, StackEntry entry, UUID targetId,
+                                                          TargetFilter targetFilter) {
+        Permanent target = gameQueryService.findPermanentById(gameData, targetId);
+        if (target == null) {
+            if (!gameData.playerIds.contains(targetId)) {
+                return false;
+            }
+            if (checkPlayerUntargetableReason(gameData, targetId, entry.getControllerId()) != null) {
+                return false;
+            }
+            Card sourceCard = entry.getCard();
+            if (sourceCard != null && sourceCard.getColor() != null
+                    && gameQueryService.playerHasProtectionFromColor(gameData, targetId, sourceCard.getColor())) {
+                return false;
+            }
+            if (sourceCard != null
+                    && gameQueryService.playerHasProtectionFromChosenName(gameData, targetId, sourceCard.getName())) {
+                return false;
+            }
+            if (targetFilter instanceof PlayerPredicateTargetFilter playerFilter) {
+                return matchesPlayerPredicate(gameData, entry.getControllerId(), targetId, playerFilter.predicate());
+            }
+            if (targetFilter instanceof AnyTargetPredicateTargetFilter anyFilter) {
+                return matchesPlayerPredicate(gameData, entry.getControllerId(), targetId, anyFilter.playerPredicate());
+            }
+            return true;
+        }
+
+        if (untargetableReason(gameData, target, entry.getControllerId()) != null) {
+            return false;
+        }
+        if ((entry.getEntryType() == StackEntryType.ACTIVATED_ABILITY
+                || entry.getEntryType() == StackEntryType.TRIGGERED_ABILITY)
+                && isBlockedByOpponentAbilityRestriction(gameData, target, entry.getControllerId())) {
+            return false;
+        }
+        if (isProtectedFromSource(gameData, target, entry) || isSpellProtected(gameData, target, entry)
+                || isHexproofFromColorBlocked(gameData, target, entry)
+                || isNonColorSourceRestricted(gameData, target, entry)) {
+            return false;
+        }
+        if (targetFilter != null) {
+            try {
+                predicateEvaluationService.validateTargetFilter(targetFilter, target,
+                        filterContext(gameData, entry.getCard() != null ? entry.getCard().getId() : null,
+                                entry.getControllerId()).withXValue(entry.getXValue()));
+            } catch (IllegalStateException e) {
+                return false;
+            }
+        }
+        return true;
+    }
+
+    private boolean isProtectedFromSource(GameData gameData, Permanent target, StackEntry entry) {
+        Card sourceCard = entry.getCard();
+        if (sourceCard == null) {
+            return false;
+        }
+        return (sourceCard.getColor() != null
+                    && gameQueryService.hasProtectionFrom(gameData, target, sourceCard.getColor()))
+                || gameQueryService.hasProtectionFromSourceCardTypes(target, sourceCard)
+                || gameQueryService.hasProtectionFromSourceSubtypes(target, sourceCard);
+    }
+
+    private TargetFilter primaryTargetFilter(StackEntry entry) {
+        if (entry.getTargetFilter() != null) {
+            return entry.getTargetFilter();
+        }
+        if (entry.getCard() == null) {
+            return null;
+        }
+        TargetFilter cardFilter = entry.getCard().getTargetFilter();
+        if (cardFilter != null && entry.getEntryType() == StackEntryType.TRIGGERED_ABILITY
+                && entry.getEffectsToResolve().stream()
+                        .noneMatch(e -> entry.getCard().getEffectTargetIndex(e) >= 0)) {
+            return null;
+        }
+        return cardFilter;
+    }
+
+    private TargetFilter targetFilterForPosition(StackEntry entry, int targetIndex) {
+        if (entry.getCard() != null) {
+            List<TargetFilter> filters = entry.getCard().getMultiTargetFilters();
+            if (targetIndex < filters.size()) {
+                return filters.get(targetIndex);
+            }
+        }
+        return entry.getTargetFilter();
     }
 
     /**

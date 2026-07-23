@@ -2,13 +2,16 @@ package com.github.laxika.magicalvibes.model;
 
 import com.github.laxika.magicalvibes.model.filter.TargetFilter;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
+import lombok.AccessLevel;
 import lombok.Getter;
 import lombok.Setter;
 
 import java.util.ArrayList;
 import java.util.HashMap;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
 import java.util.UUID;
 
 @Getter
@@ -84,6 +87,13 @@ public class StackEntry {
      */
     @Setter private UUID triggeringCardId;
     private final List<UUID> targetIds;
+    /**
+     * Flat target positions that became illegal while this entry was resolving. Keeping positions
+     * instead of removing IDs preserves target-group boundaries when an earlier target becomes
+     * illegal (CR 608.2b).
+     */
+    @Getter(AccessLevel.NONE)
+    private final Set<Integer> illegalTargetIndices = new HashSet<>();
     /**
      * Ids of permanents (tokens) created by effects earlier in <em>this</em> resolution. Populated
      * by the token-creation handlers and read back by a later effect on the same entry that acts on
@@ -297,6 +307,7 @@ public class StackEntry {
         this.chosenPermanentId = source.chosenPermanentId;
         this.triggeringCardId = source.triggeringCardId;
         this.targetIds = source.targetIds.isEmpty() ? List.of() : new ArrayList<>(source.targetIds);
+        this.illegalTargetIndices.addAll(source.illegalTargetIndices);
     }
 
     // Multi-target triggered ability with source permanent constructor (e.g. "two target players exchange life totals")
@@ -359,6 +370,34 @@ public class StackEntry {
     }
 
     /**
+     * Returns only targets that are still legal for resolution. Before resolution-time legality is
+     * checked this is the complete target list, preserving existing cast/trigger inspection behavior.
+     */
+    public List<UUID> getTargetIds() {
+        if (illegalTargetIndices.isEmpty()) {
+            return targetIds;
+        }
+        List<UUID> legalTargets = new ArrayList<>(targetIds.size() - illegalTargetIndices.size());
+        for (int i = 0; i < targetIds.size(); i++) {
+            if (!illegalTargetIndices.contains(i)) {
+                legalTargets.add(targetIds.get(i));
+            }
+        }
+        return List.copyOf(legalTargets);
+    }
+
+    /** Complete flat target list, including occurrences found illegal during resolution. */
+    public List<UUID> getDeclaredTargetIds() {
+        return targetIds;
+    }
+
+    public void markTargetIllegal(int targetIndex) {
+        if (targetIndex >= 0 && targetIndex < targetIds.size()) {
+            illegalTargetIndices.add(targetIndex);
+        }
+    }
+
+    /**
      * Returns the targets chosen for the given target group, resolved against this entry's
      * flat {@link #targetIds} list.
      *
@@ -383,7 +422,8 @@ public class StackEntry {
     public List<UUID> targetsForGroup(int group) {
         List<SpellTarget> groups = card == null ? List.of() : card.getSpellTargets();
         if (groups.isEmpty()) {
-            return group >= 0 && group < targetIds.size() ? List.of(targetIds.get(group)) : List.of();
+            return group >= 0 && group < targetIds.size() && !illegalTargetIndices.contains(group)
+                    ? List.of(targetIds.get(group)) : List.of();
         }
         int firstFlatGroup = 0;
         if (card.isAura() && targetId != null) {
@@ -406,7 +446,13 @@ public class StackEntry {
             }
             int size = Math.min(Math.max(g.getMaxTargets(), 0), targetIds.size() - consumed);
             if (g.getIndex() == group) {
-                return List.copyOf(targetIds.subList(consumed, consumed + size));
+                List<UUID> legalTargets = new ArrayList<>(size);
+                for (int i = consumed; i < consumed + size; i++) {
+                    if (!illegalTargetIndices.contains(i)) {
+                        legalTargets.add(targetIds.get(i));
+                    }
+                }
+                return List.copyOf(legalTargets);
             }
             consumed += size;
         }
@@ -454,7 +500,7 @@ public class StackEntry {
     public List<UUID> targetsForEffect(CardEffect effect) {
         int group = card == null ? -1 : card.getEffectTargetIndex(effect);
         if (group < 0) {
-            return targetIds;
+            return getTargetIds();
         }
         if (targetIds.isEmpty()) {
             // On an aura the lone targetId is the enchant target (group 0), never a later
