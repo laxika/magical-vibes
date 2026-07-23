@@ -12,6 +12,7 @@ import com.github.laxika.magicalvibes.model.effect.SacrificeSelfEffect;
 import java.util.List;
 
 @CardRegistration(set = "5ED", collectorNumber = "41")
+@CardRegistration(set = "ICE", collectorNumber = "32")
 public class Justice extends Card {
 
     public Justice() {

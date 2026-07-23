@@ -4,7 +4,7 @@ import com.github.laxika.magicalvibes.model.CardColor;
 import com.github.laxika.magicalvibes.model.CardSubtype;
 import com.github.laxika.magicalvibes.model.GameData;
 import com.github.laxika.magicalvibes.model.Permanent;
-import com.github.laxika.magicalvibes.model.effect.CanBeBlockedOnlyByFilterEffect;
+import com.github.laxika.magicalvibes.model.effect.BlockabilityRestrictionEffect;
 import com.github.laxika.magicalvibes.model.effect.CanBlockOnlyIfAttackerMatchesPredicateEffect;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
 import com.github.laxika.magicalvibes.model.effect.MatchingCreaturesCantBlockMatchingCreaturesEffect;
@@ -65,7 +65,7 @@ public final class BlockLegalityContext {
                          boolean cantBeBlockedByLessPower,
                          Set<CardColor> colors,
                          List<CardEffect> pairRestrictionStatics,
-                         List<CanBeBlockedOnlyByFilterEffect> auraGrantedRestrictions,
+                         List<BlockabilityRestrictionEffect> auraGrantedRestrictions,
                          BlockDenial landwalkDenial) {
     }
 

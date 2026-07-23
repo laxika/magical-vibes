@@ -11,6 +11,7 @@ import com.github.laxika.magicalvibes.model.filter.PlayerRelation;
 import com.github.laxika.magicalvibes.model.filter.PlayerRelationPredicate;
 
 @CardRegistration(set = "5ED", collectorNumber = "176")
+@CardRegistration(set = "ICE", collectorNumber = "147")
 public class MindRavel extends Card {
 
     public MindRavel() {

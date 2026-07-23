@@ -11,6 +11,7 @@ import java.util.List;
 
 @CardRegistration(set = "6ED", collectorNumber = "143")
 @CardRegistration(set = "5ED", collectorNumber = "177")
+@CardRegistration(set = "ICE", collectorNumber = "148")
 public class MindWarp extends Card {
 
     public MindWarp() {

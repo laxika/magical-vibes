@@ -238,6 +238,11 @@ public class CreatureControlService {
                 UUID sourceController = fe.sourcePermanentId() == null ? null
                         : gameData.findControllerOf(fe.sourcePermanentId());
                 stale = sourceController == null || !sourceController.equals(fe.controllerId());
+            } else if (fe.duration() == EffectDuration.WHILE_SOURCE_REMAINS) {
+                // Infernal Denizen: only the source's presence matters, not who controls it.
+                Permanent source = fe.sourcePermanentId() == null ? null
+                        : gameQueryService.findPermanentById(gameData, fe.sourcePermanentId());
+                stale = source == null;
             } else if (fe.duration() == EffectDuration.WHILE_SOURCE_TAPPED) {
                 // Seasinger: control also ends the moment the source becomes untapped.
                 Permanent source = fe.sourcePermanentId() == null ? null

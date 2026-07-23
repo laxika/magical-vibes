@@ -29,6 +29,7 @@ import com.github.laxika.magicalvibes.model.effect.DealDamageEqualToSpellManaVal
 import com.github.laxika.magicalvibes.model.effect.DiscardEffect;
 import com.github.laxika.magicalvibes.model.effect.DamageUnlessPaysEffect;
 import com.github.laxika.magicalvibes.model.effect.DealDamageToAnyTargetEffect;
+import com.github.laxika.magicalvibes.model.effect.DrawCardUnlessPaysEffect;
 import com.github.laxika.magicalvibes.model.effect.DealDamageToPlayersEffect;
 import com.github.laxika.magicalvibes.model.amount.CountersOnSource;
 import com.github.laxika.magicalvibes.model.amount.Fixed;
@@ -806,6 +807,29 @@ public class SpellCastTriggerCollectorService {
         return true;
     }
 
+    @CollectsTrigger(value = DrawCardUnlessPaysEffect.class, slot = EffectSlot.ON_OPPONENT_CASTS_SPELL)
+    private boolean handleDrawCardUnlessPays(TriggerMatchContext match,
+            DrawCardUnlessPaysEffect trigger, TriggerContext ctx) {
+        TriggerContext.SpellCast sc = (TriggerContext.SpellCast) ctx;
+        if (trigger.spellFilter() != null
+                && !predicateEvaluationService.matchesCardPredicate(sc.spellCard(), trigger.spellFilter(), null,
+                        match.gameData(), sc.castingPlayerId())) {
+            return false;
+        }
+        // Casting opponent is stamped on targetId (pay decision); controller draws if they don't pay.
+        StackEntry entry = new StackEntry(
+                StackEntryType.TRIGGERED_ABILITY,
+                match.permanent().getCard(),
+                match.controllerId(),
+                match.permanent().getCard().getName() + "'s ability",
+                new ArrayList<>(List.of(trigger)),
+                sc.castingPlayerId(),
+                match.permanent().getId()
+        );
+        match.gameData().stack.add(entry);
+        return true;
+    }
+
     @CollectsTrigger(value = SpellCastLifeDrainEffect.class, slot = EffectSlot.ON_OPPONENT_CASTS_SPELL)
     private boolean handleOpponentSpellCastDrain(TriggerMatchContext match,
             SpellCastLifeDrainEffect trigger, TriggerContext ctx) {
@@ -922,6 +946,10 @@ public class SpellCastTriggerCollectorService {
                             match.permanent().getCard().getName() + "'s ability", resolved, spellManaSpentX)
                         : new StackEntry(StackEntryType.TRIGGERED_ABILITY, match.permanent().getCard(), match.controllerId(),
                             match.permanent().getCard().getName() + "'s ability", resolved);
+                // Contextual "that player" = the caster (Leshrac's Sigil may-pay look-at-hand).
+                // Non-targeting: oracle does not use the word "target".
+                entry.setTargetId(castingPlayerId);
+                entry.setNonTargeting(true);
             }
             match.gameData().stack.add(entry);
         }

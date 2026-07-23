@@ -87,6 +87,19 @@ class ColorChoiceAiStrategy implements AiInteractionStrategy<PendingInteraction.
             return;
         }
 
+        if (context instanceof ChoiceContext.ChooseNameExileTopRevealUntilNamedChoice dig) {
+            // Demonic Consultation: name a card past the initial exile window so the dig can find it.
+            List<Card> aiDeck = gameData.playerDecks.getOrDefault(aiPlayerId, List.of());
+            int skip = Math.min(dig.topExileCount(), aiDeck.size());
+            String chosenName = aiDeck.size() > skip
+                    ? aiDeck.get(skip).getName()
+                    : (aiDeck.isEmpty() ? "Island" : aiDeck.getLast().getName());
+            log.info("AI: Choosing card name \"{}\" for exile-top/reveal-until dig in game {}",
+                    chosenName, gameId);
+            ctx.gameActions().answerInteraction(ctx.selfConnection(), new InteractionAnswer.ListChoiceMade(chosenName));
+            return;
+        }
+
         if (context instanceof ChoiceContext.SubtypeChoice) {
             String chosenSubtype = "HUMAN";
             log.info("AI: Choosing creature type {} in game {}", chosenSubtype, gameId);
@@ -218,8 +231,10 @@ class ColorChoiceAiStrategy implements AiInteractionStrategy<PendingInteraction.
             // good counters / shrink opponents'; and the reverse for detrimental counters.
             CounterType kind = acc.remainingKinds().getFirst();
             boolean badCounter = kind == CounterType.MINUS_ONE_MINUS_ONE
+                    || kind == CounterType.MINUS_ZERO_MINUS_ONE
                     || kind == CounterType.MINUS_ZERO_MINUS_TWO
-                    || kind == CounterType.STUN;
+                    || kind == CounterType.STUN
+                    || kind == CounterType.PARALYZATION;
             boolean ownTarget = gameData.playerBattlefields.getOrDefault(aiPlayerId, List.of()).stream()
                     .anyMatch(p -> p.getId().equals(acc.targetId()));
             String chosen = (ownTarget != badCounter)
@@ -268,6 +283,36 @@ class ColorChoiceAiStrategy implements AiInteractionStrategy<PendingInteraction.
                 chosen = loseLife;
             }
             log.info("AI: Choosing \"{}\" for Torment of Hailfire in game {}", chosen, gameId);
+            ctx.gameActions().answerInteraction(ctx.selfConnection(), new InteractionAnswer.ListChoiceMade(chosen));
+            return;
+        }
+
+        if (context instanceof ChoiceContext.OathOfLimDulPenaltyChoice) {
+            // Prefer discarding a card over sacrificing a permanent (keep board presence).
+            List<String> options = interaction.options();
+            String chosen;
+            if (options.contains(ChoiceContext.OathOfLimDulPenaltyChoice.DISCARD)) {
+                chosen = ChoiceContext.OathOfLimDulPenaltyChoice.DISCARD;
+            } else {
+                chosen = ChoiceContext.OathOfLimDulPenaltyChoice.SACRIFICE;
+            }
+            log.info("AI: Choosing \"{}\" for Oath of Lim-Dûl in game {}", chosen, gameId);
+            ctx.gameActions().answerInteraction(ctx.selfConnection(), new InteractionAnswer.ListChoiceMade(chosen));
+            return;
+        }
+
+        if (context instanceof ChoiceContext.WintersChillPaymentChoice) {
+            // Save own attackers: prefer pay {2}, then {1}, then nothing.
+            List<String> options = interaction.options();
+            String chosen;
+            if (options.contains(ChoiceContext.WintersChillPaymentChoice.PAY_TWO)) {
+                chosen = ChoiceContext.WintersChillPaymentChoice.PAY_TWO;
+            } else if (options.contains(ChoiceContext.WintersChillPaymentChoice.PAY_ONE)) {
+                chosen = ChoiceContext.WintersChillPaymentChoice.PAY_ONE;
+            } else {
+                chosen = ChoiceContext.WintersChillPaymentChoice.PAY_NOTHING;
+            }
+            log.info("AI: Choosing \"{}\" for Winter's Chill in game {}", chosen, gameId);
             ctx.gameActions().answerInteraction(ctx.selfConnection(), new InteractionAnswer.ListChoiceMade(chosen));
             return;
         }

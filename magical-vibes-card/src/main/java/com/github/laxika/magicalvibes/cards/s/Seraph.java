@@ -6,6 +6,7 @@ import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.effect.RegisterDelayedReturnDamagedCreatureUnderControlEffect;
 
 @CardRegistration(set = "5ED", collectorNumber = "59")
+@CardRegistration(set = "ICE", collectorNumber = "51")
 public class Seraph extends Card {
 
     public Seraph() {

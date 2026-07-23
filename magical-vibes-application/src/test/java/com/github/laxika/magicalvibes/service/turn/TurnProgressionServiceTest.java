@@ -595,6 +595,8 @@ class TurnProgressionServiceTest {
             gd.playersDealtDamageThisTurn.add(player1Id);
             gd.permanentsDealtDamageThisTurn.add(UUID.randomUUID());
             gd.creatureCardsDamagedThisTurnBySourcePermanent.put(UUID.randomUUID(), new HashSet<>());
+            gd.sourcesWhoseDamagedCreaturesDiedThisTurn.add(UUID.randomUUID());
+            gd.creatureCardsDamagedBySourceThatDiedThisTurn.put(UUID.randomUUID(), new HashSet<>());
             gd.creatureGivingControllerPoisonOnDeathThisTurn.put(UUID.randomUUID(), 1);
             gd.paidSearchTaxPermanentIds.put(player1Id, new HashSet<>());
 
@@ -614,6 +616,8 @@ class TurnProgressionServiceTest {
             assertThat(gd.playersDealtDamageThisTurn).isEmpty();
             assertThat(gd.permanentsDealtDamageThisTurn).isEmpty();
             assertThat(gd.creatureCardsDamagedThisTurnBySourcePermanent).isEmpty();
+            assertThat(gd.sourcesWhoseDamagedCreaturesDiedThisTurn).isEmpty();
+            assertThat(gd.creatureCardsDamagedBySourceThatDiedThisTurn).isEmpty();
             assertThat(gd.creatureGivingControllerPoisonOnDeathThisTurn).isEmpty();
             assertThat(gd.paidSearchTaxPermanentIds).isEmpty();
         }

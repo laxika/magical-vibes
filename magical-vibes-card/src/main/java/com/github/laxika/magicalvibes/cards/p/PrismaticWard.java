@@ -9,6 +9,7 @@ import com.github.laxika.magicalvibes.model.filter.PermanentPredicateTargetFilte
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 
 @CardRegistration(set = "5ED", collectorNumber = "53")
+@CardRegistration(set = "ICE", collectorNumber = "47")
 public class PrismaticWard extends Card {
 
     public PrismaticWard() {

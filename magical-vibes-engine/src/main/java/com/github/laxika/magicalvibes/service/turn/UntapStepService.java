@@ -1,5 +1,6 @@
 package com.github.laxika.magicalvibes.service.turn;
 
+import com.github.laxika.magicalvibes.model.CounterType;
 import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.GameData;
 import com.github.laxika.magicalvibes.model.GameLog;
@@ -168,6 +169,9 @@ public class UntapStepService {
                 boolean skipsNextUntap = p.getSkipUntapCount() > 0;
                 // A global static (e.g. Marble Titan) can lock this permanent based on a predicate.
                 boolean hasMatchingDoesntUntap = matchingStaticPreventsUntap(gameData, p);
+                // Paralyzation counters (Dread Wight): doesn't untap during the untap step for as
+                // long as it has such a counter — source-independent continuous rule.
+                boolean hasParalyzationLock = p.getCounterCount(CounterType.PARALYZATION) > 0;
 
                 boolean blockedByStorageMatrix = restrictPredicate != null
                         && !predicateEvaluationService.matchesPermanentPredicate(gameData, p, restrictPredicate);
@@ -188,7 +192,7 @@ public class UntapStepService {
                     // Present choice to controller later — skip untap for now
                     mayNotUntapPermanents.add(p);
                 } else if (!hasAttachedDoesntUntap && !hasSelfDoesntUntap && !hasUntapLock
-                        && !hasMatchingDoesntUntap) {
+                        && !hasMatchingDoesntUntap && !hasParalyzationLock) {
                     tapUntapSupport.untapPermanent(gameData, p);
                 }
                 p.setSummoningSick(false);
@@ -318,8 +322,9 @@ public class UntapStepService {
             boolean hasUntapLock = !p.getUntapPreventedByPermanentIds().isEmpty()
                     || !p.getUntapPreventedWhileSourceOnBattlefieldIds().isEmpty();
             boolean hasMatchingDoesntUntap = matchingStaticPreventsUntap(gameData, p);
+            boolean hasParalyzationLock = p.getCounterCount(CounterType.PARALYZATION) > 0;
             if (!hasAttachedDoesntUntap && !hasSelfDoesntUntap && !hasMayNotUntap
-                    && !hasUntapLock && !hasMatchingDoesntUntap) {
+                    && !hasUntapLock && !hasMatchingDoesntUntap && !hasParalyzationLock) {
                 candidates.add(p.getId());
             }
         }

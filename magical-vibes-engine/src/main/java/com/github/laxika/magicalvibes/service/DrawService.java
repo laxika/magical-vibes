@@ -31,6 +31,7 @@ import com.github.laxika.magicalvibes.model.effect.TargetCategory;
 import com.github.laxika.magicalvibes.model.effect.PlayersCannotDrawCardsEffect;
 import com.github.laxika.magicalvibes.model.effect.ReplaceSingleDrawEffect;
 import com.github.laxika.magicalvibes.model.effect.RevealTopCardsCreaturesToHandDrawReplacementEffect;
+import com.github.laxika.magicalvibes.model.effect.RevealTopCreatureToGraveyardElseDrawReplacementEffect;
 import com.github.laxika.magicalvibes.model.MiracleCast;
 import com.github.laxika.magicalvibes.model.effect.MiracleRevealEffect;
 import com.github.laxika.magicalvibes.model.effect.RevealFirstDrawDrawOnBasicLandEffect;
@@ -137,6 +138,14 @@ public class DrawService {
         Permanent revealCreaturesSource = findRevealCreaturesDrawReplacementSource(gameData, playerId);
         if (revealCreaturesSource != null) {
             resolveRevealCreaturesDrawReplacement(gameData, playerId, revealCreaturesSource);
+            return;
+        }
+
+        // Enduring Renewal — "If you would draw a card, reveal the top card of your library instead.
+        // If it's a creature card, put it into your graveyard. Otherwise, draw a card."
+        Permanent enduringRenewalSource = findRevealTopCreatureToGraveyardElseDrawSource(gameData, playerId);
+        if (enduringRenewalSource != null) {
+            resolveRevealTopCreatureToGraveyardElseDraw(gameData, playerId, enduringRenewalSource);
             return;
         }
 
@@ -312,6 +321,64 @@ public class DrawService {
             }
         }
         return null;
+    }
+
+    private Permanent findRevealTopCreatureToGraveyardElseDrawSource(GameData gameData, UUID playerId) {
+        List<Permanent> battlefield = gameData.playerBattlefields.get(playerId);
+        if (battlefield == null) {
+            return null;
+        }
+
+        for (Permanent permanent : battlefield) {
+            boolean hasEffect = permanent.getCard().getEffects(EffectSlot.STATIC).stream()
+                    .anyMatch(effect -> effect instanceof RevealTopCreatureToGraveyardElseDrawReplacementEffect);
+            if (hasEffect) {
+                return permanent;
+            }
+        }
+        return null;
+    }
+
+    /**
+     * Enduring Renewal replacement: reveal the top card of the drawing player's library. If it's a
+     * creature card, put it into their graveyard (not drawn). Otherwise, draw that card (a real draw).
+     * An empty library reveals nothing and does not lose the game — the draw was replaced.
+     */
+    private void resolveRevealTopCreatureToGraveyardElseDraw(GameData gameData, UUID playerId, Permanent source) {
+        List<Card> deck = gameData.playerDecks.get(playerId);
+        String playerName = gameData.playerIdToName.get(playerId);
+
+        if (deck == null || deck.isEmpty()) {
+            gameBroadcastService.logAndBroadcast(gameData, GameLog.textCardText(
+                    playerName + "'s library is empty; ", source.getCard(), " reveals no cards."));
+            log.info("Game {} - {} reveals no cards for {} (empty library)",
+                    gameData.id, playerName, source.getCard().getName());
+            return;
+        }
+
+        Card revealed = deck.getFirst();
+        gameBroadcastService.logAndBroadcast(gameData, GameLog.builder()
+                .text(playerName + " reveals ")
+                .card(revealed)
+                .text(" with ")
+                .card(source.getCard())
+                .text(".")
+                .build());
+        log.info("Game {} - {} reveals {} with {}",
+                gameData.id, playerName, revealed.getName(), source.getCard().getName());
+
+        if (revealed.hasType(CardType.CREATURE)) {
+            deck.removeFirst();
+            gameData.playerGraveyards.get(playerId).add(revealed);
+            gameBroadcastService.logAndBroadcast(gameData, GameLog.textCardText(
+                    playerName + " puts ", revealed, " into their graveyard."));
+            log.info("Game {} - {} puts revealed creature {} into graveyard (Enduring Renewal)",
+                    gameData.id, playerName, revealed.getName());
+        } else {
+            // Otherwise draw a card — the revealed card is still on top; use performDrawCard so this
+            // is a real draw (triggers, empty-library loss) and does not re-enter the replacement.
+            performDrawCard(gameData, playerId);
+        }
     }
 
     /**

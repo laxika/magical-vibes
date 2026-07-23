@@ -49,7 +49,10 @@ public class CopySupport {
         copy.setToughness(original.getToughness());
         copy.setKeywords(original.getKeywords());
         copy.setLoyalty(original.getLoyalty());
-        copy.setXColorRestriction(original.getXColorRestriction());
+        copy.setXColorRestrictions(original.getXColorRestrictions());
+        if (original.getXValueCap() != null) {
+            copy.setXValueCap(original.getXValueCap());
+        }
 
         for (EffectSlot slot : EffectSlot.values()) {
             for (var reg : original.getEffectRegistrations(slot)) {

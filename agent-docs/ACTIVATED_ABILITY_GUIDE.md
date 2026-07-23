@@ -31,8 +31,10 @@ Quick reference for building `ActivatedAbility` instances. Covers all constructo
 | `ONLY_DURING_ANY_UPKEEP` | Abilities usable during any player's upkeep step (only checks `currentStep == UPKEEP`, not the active player). Pair with `.withActivatableByAnyPlayer()` for "any player may activate this ability but only during any upkeep step" (Infinite Hourglass) |
 | `ONLY_WHILE_ATTACKING` | Activate only if this creature is attacking (checks `permanent.isAttacking()`) |
 | `ONLY_BEFORE_ATTACKERS_DECLARED` | Activate only during your turn, before attackers are declared (active player + step before `DECLARE_ATTACKERS`). Stern Marshal |
+| `BEFORE_ATTACKERS_DECLARED` | Activate only before attackers are declared (any player's turn). Also requires `combatPhasesThisTurn <= 1` so a turn with multiple combats only allows activation before the first declare-attackers step. Norritt |
 | `ONLY_DURING_COMBAT` | Activate only during the combat phase (checks `gameData.currentStep.isCombatPhase()`). Jade Statue |
 | `ONLY_DURING_DECLARE_ATTACKERS_IF_ATTACKED` | Activate only during the declare attackers step and only if you've been attacked this step (a creature is attacking you or a planeswalker you control). Kongming's Contraptions. Checks `gameData.currentStep == DECLARE_ATTACKERS` + `gameQueryService.isPlayerBeingAttacked(gd, playerId)` |
+| `ONLY_DURING_DECLARE_BLOCKERS` | Activate only during the declare blockers step (`currentStep == DECLARE_BLOCKERS`). General Jarkeld |
 | `ONLY_WHILE_CREATURE` | Abilities on creature lands that only work while animated |
 | `CAST_NONCREATURE_SPELL_THIS_TURN` | Activate only if you've cast a noncreature spell this turn (checks `gameQueryService.playerCastNoncreatureSpellThisTurn()`). Seeker of Insight |
 | `METALCRAFT` | Activate only if you control three or more artifacts |
@@ -325,6 +327,12 @@ new ActivatedAbility(true, null,
 
 Cards: `WallOfForgottenPharaohs`
 
+Also used for graveyard activated abilities whose gate needs the source card itself (e.g. Ashen Ghoul's
+`CardsAboveSelfInGraveyard(3, CardTypePredicate(CREATURE))` with `ONLY_DURING_YOUR_UPKEEP`). Evaluated in
+`validateGraveyardTimingRestrictions` via `ConditionContext.forCard`.
+
+Cards: `AshenGhoul`
+
 ---
 
 ### 8b. Ability any player may activate
@@ -348,7 +356,7 @@ new ActivatedAbility(false, null,
     .withActivatableByAnyPlayer()
 ```
 
-Cards: `OonasProwler`
+Cards: `OonasProwler`, `Mercenaries`, `ArmageddonClock`, `InfiniteHourglass`, `AetherStorm`, `FeralHydra`
 
 ---
 

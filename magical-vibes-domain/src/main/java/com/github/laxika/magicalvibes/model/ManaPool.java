@@ -22,14 +22,20 @@ public class ManaPool {
     /** Mana that doesn't drain at step/phase transitions until end of turn (e.g. Grand Warlord Radha). */
     private final EnumMap<ManaColor, Integer> persistentMana = new EnumMap<>(ManaColor.class);
     private int artifactOnlyColorless;
+    /** Colorless mana spendable only to activate abilities of artifacts (Soldevi Machinist). */
+    private int artifactAbilityOnlyColorless;
     private int myrOnlyColorless;
     private int restrictedRed;
     private int kickedOnlyGreen;
     private int instantSorceryOnlyColorless;
     /** Colorless mana spendable only on costs that contain {X} (Rosheen Meanderer). */
     private int xCostOnlyColorless;
+    /** Colorless mana spendable only to pay cumulative upkeep costs (Adarkar Unicorn, Snowfall). */
+    private int cumulativeUpkeepOnlyColorless;
     /** Colored mana that can only be spent to cast instant or sorcery spells (e.g. Abstract Paintmage). */
     private final EnumMap<ManaColor, Integer> instantSorceryOnlyColored = new EnumMap<>(ManaColor.class);
+    /** Colored mana spendable only to pay cumulative upkeep costs (Adarkar Unicorn). */
+    private final EnumMap<ManaColor, Integer> cumulativeUpkeepOnlyColored = new EnumMap<>(ManaColor.class);
     /** Per-color mana that can only be spent to cast spells with flashback from a graveyard (e.g. Altar of the Lost). */
     private final EnumMap<ManaColor, Integer> flashbackOnlyMana = new EnumMap<>(ManaColor.class);
     /** Per-subtype, per-color mana that can only be spent to cast creature spells with a matching subtype (e.g. Pillar of Origins). */
@@ -61,6 +67,7 @@ public class ManaPool {
             persistentMana.put(color, 0);
             flashbackOnlyMana.put(color, 0);
             instantSorceryOnlyColored.put(color, 0);
+            cumulativeUpkeepOnlyColored.put(color, 0);
             creatureSpellOnlyMana.put(color, 0);
         }
     }
@@ -75,12 +82,15 @@ public class ManaPool {
         persistentMana.putAll(source.persistentMana);
         flashbackOnlyMana.putAll(source.flashbackOnlyMana);
         this.artifactOnlyColorless = source.artifactOnlyColorless;
+        this.artifactAbilityOnlyColorless = source.artifactAbilityOnlyColorless;
         this.myrOnlyColorless = source.myrOnlyColorless;
         this.restrictedRed = source.restrictedRed;
         this.kickedOnlyGreen = source.kickedOnlyGreen;
         this.instantSorceryOnlyColorless = source.instantSorceryOnlyColorless;
         this.xCostOnlyColorless = source.xCostOnlyColorless;
+        this.cumulativeUpkeepOnlyColorless = source.cumulativeUpkeepOnlyColorless;
         instantSorceryOnlyColored.putAll(source.instantSorceryOnlyColored);
+        cumulativeUpkeepOnlyColored.putAll(source.cumulativeUpkeepOnlyColored);
         for (Map.Entry<CardSubtype, EnumMap<ManaColor, Integer>> entry : source.subtypeCreatureMana.entrySet()) {
             subtypeCreatureMana.put(entry.getKey(), new EnumMap<>(entry.getValue()));
         }
@@ -117,13 +127,16 @@ public class ManaPool {
             flashbackOnlyMana.put(color, 0);
         }
         artifactOnlyColorless = 0;
+        artifactAbilityOnlyColorless = 0;
         myrOnlyColorless = 0;
         restrictedRed = 0;
         kickedOnlyGreen = 0;
         instantSorceryOnlyColorless = 0;
         xCostOnlyColorless = 0;
+        cumulativeUpkeepOnlyColorless = 0;
         for (ManaColor color : ManaColor.values()) {
             instantSorceryOnlyColored.put(color, 0);
+            cumulativeUpkeepOnlyColored.put(color, 0);
             creatureSpellOnlyMana.put(color, 0);
         }
         subtypeCreatureMana.clear();
@@ -169,11 +182,14 @@ public class ManaPool {
         // separate buckets, so they are already counted by getTotal() and must not be added again.
         int total = getTotal();
         total += artifactOnlyColorless;
+        total += artifactAbilityOnlyColorless;
         total += myrOnlyColorless;
         total += restrictedRed;
         total += kickedOnlyGreen;
         total += instantSorceryOnlyColorless;
         total += xCostOnlyColorless;
+        total += cumulativeUpkeepOnlyColorless;
+        total += getCumulativeUpkeepOnlyColoredTotal();
         total += getFlashbackOnlyManaTotal();
         for (EnumMap<ManaColor, Integer> colorMap : subtypeCreatureMana.values()) {
             for (int value : colorMap.values()) {
@@ -291,6 +307,18 @@ public class ManaPool {
         artifactOnlyColorless = Math.max(0, artifactOnlyColorless - amount);
     }
 
+    public int getArtifactAbilityOnlyColorless() {
+        return artifactAbilityOnlyColorless;
+    }
+
+    public void addArtifactAbilityOnlyColorless(int amount) {
+        artifactAbilityOnlyColorless += amount;
+    }
+
+    public void removeArtifactAbilityOnlyColorless(int amount) {
+        artifactAbilityOnlyColorless = Math.max(0, artifactAbilityOnlyColorless - amount);
+    }
+
     public int getMyrOnlyColorless() {
         return myrOnlyColorless;
     }
@@ -370,6 +398,39 @@ public class ManaPool {
 
     public void removeXCostOnlyColorless(int amount) {
         xCostOnlyColorless = Math.max(0, xCostOnlyColorless - amount);
+    }
+
+    public int getCumulativeUpkeepOnlyColorless() {
+        return cumulativeUpkeepOnlyColorless;
+    }
+
+    public void addCumulativeUpkeepOnlyColorless(int amount) {
+        cumulativeUpkeepOnlyColorless += amount;
+    }
+
+    public void removeCumulativeUpkeepOnlyColorless(int amount) {
+        cumulativeUpkeepOnlyColorless = Math.max(0, cumulativeUpkeepOnlyColorless - amount);
+    }
+
+    public int getCumulativeUpkeepOnlyColored(ManaColor color) {
+        return cumulativeUpkeepOnlyColored.getOrDefault(color, 0);
+    }
+
+    public int getCumulativeUpkeepOnlyColoredTotal() {
+        int total = 0;
+        for (int value : cumulativeUpkeepOnlyColored.values()) {
+            total += value;
+        }
+        return total;
+    }
+
+    public void addCumulativeUpkeepOnlyColored(ManaColor color, int amount) {
+        cumulativeUpkeepOnlyColored.merge(color, amount, Integer::sum);
+    }
+
+    public void removeCumulativeUpkeepOnlyColored(ManaColor color, int amount) {
+        int current = cumulativeUpkeepOnlyColored.getOrDefault(color, 0);
+        cumulativeUpkeepOnlyColored.put(color, Math.max(0, current - amount));
     }
 
     public int getInstantSorceryOnlyColored(ManaColor color) {
@@ -554,14 +615,17 @@ public class ManaPool {
             spellOnlyMana.put(color, Math.min(spellOnly, total));
         }
         artifactOnlyColorless = 0;
+        artifactAbilityOnlyColorless = 0;
         myrOnlyColorless = 0;
         restrictedRed = 0;
         kickedOnlyGreen = 0;
         instantSorceryOnlyColorless = 0;
         xCostOnlyColorless = 0;
+        cumulativeUpkeepOnlyColorless = 0;
         for (ManaColor color : ManaColor.values()) {
             flashbackOnlyMana.put(color, 0);
             instantSorceryOnlyColored.put(color, 0);
+            cumulativeUpkeepOnlyColored.put(color, 0);
             creatureSpellOnlyMana.put(color, 0);
         }
         subtypeCreatureMana.clear();
@@ -587,7 +651,8 @@ public class ManaPool {
         for (ManaColor color : ManaColor.values()) {
             int amount = pool.getOrDefault(color, 0);
             if (color == ManaColor.COLORLESS) {
-                amount += artifactOnlyColorless + myrOnlyColorless + instantSorceryOnlyColorless + xCostOnlyColorless;
+                amount += artifactOnlyColorless + artifactAbilityOnlyColorless + myrOnlyColorless
+                        + instantSorceryOnlyColorless + xCostOnlyColorless + cumulativeUpkeepOnlyColorless;
             }
             if (color == ManaColor.RED) {
                 amount += restrictedRed;
@@ -596,6 +661,7 @@ public class ManaPool {
                 amount += kickedOnlyGreen;
             }
             amount += instantSorceryOnlyColored.getOrDefault(color, 0);
+            amount += cumulativeUpkeepOnlyColored.getOrDefault(color, 0);
             amount += flashbackOnlyMana.getOrDefault(color, 0);
             for (EnumMap<ManaColor, Integer> colorMap : subtypeCreatureMana.values()) {
                 amount += colorMap.getOrDefault(color, 0);
@@ -621,6 +687,7 @@ public class ManaPool {
             }
             int amount = pool.getOrDefault(color, 0);
             amount += instantSorceryOnlyColored.getOrDefault(color, 0);
+            amount += cumulativeUpkeepOnlyColored.getOrDefault(color, 0);
             amount += flashbackOnlyMana.getOrDefault(color, 0);
             if (color == ManaColor.RED) {
                 amount += restrictedRed;

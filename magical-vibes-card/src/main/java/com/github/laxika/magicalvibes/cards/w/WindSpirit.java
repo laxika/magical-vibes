@@ -5,5 +5,6 @@ import com.github.laxika.magicalvibes.cards.CardRegistration;
 
 @CardRegistration(set = "6ED", collectorNumber = "107")
 @CardRegistration(set = "5ED", collectorNumber = "136")
+@CardRegistration(set = "ICE", collectorNumber = "106")
 public class WindSpirit extends Card {
 }

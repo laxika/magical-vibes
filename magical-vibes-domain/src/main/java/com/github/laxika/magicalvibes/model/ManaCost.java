@@ -28,8 +28,14 @@ public class ManaCost {
     private final Map<ManaColor, Integer> phyrexianCosts;
     private final List<HybridSymbol> hybridCosts;
     private final int xSymbolCount;
+    /** When true, canPay/pay may spend cumulative-upkeep-only mana buckets. */
+    private final boolean cumulativeUpkeepPayment;
 
     public ManaCost(String manaCostString) {
+        this(manaCostString, false);
+    }
+
+    public ManaCost(String manaCostString, boolean cumulativeUpkeepPayment) {
         int generic = 0;
         int xCount = 0;
         Map<ManaColor, Integer> colored = new EnumMap<>(ManaColor.class);
@@ -73,6 +79,7 @@ public class ManaCost {
         this.phyrexianCosts = phyrexian;
         this.hybridCosts = hybrid;
         this.xSymbolCount = xCount;
+        this.cumulativeUpkeepPayment = cumulativeUpkeepPayment;
     }
 
     public boolean hasX() {
@@ -381,7 +388,15 @@ public class ManaCost {
     private Map<ManaColor, Integer> availableByColor(ManaPool pool) {
         Map<ManaColor, Integer> available = new EnumMap<>(ManaColor.class);
         for (ManaColor color : ManaColor.values()) {
-            available.put(color, pool.get(color));
+            int amount = pool.get(color);
+            if (cumulativeUpkeepPayment) {
+                if (color == ManaColor.COLORLESS) {
+                    amount += pool.getCumulativeUpkeepOnlyColorless();
+                } else {
+                    amount += pool.getCumulativeUpkeepOnlyColored(color);
+                }
+            }
+            available.put(color, amount);
         }
         return available;
     }
@@ -573,12 +588,16 @@ public class ManaCost {
     }
 
     public boolean canPay(ManaPool pool, int xValue, boolean artifactContext, boolean myrContext, boolean restrictedRedContext, boolean kickedOnlyGreenContext, boolean instantSorceryOnlyColorlessContext, Set<CardSubtype> subtypeCreatureContext, Set<CardSubtype> subtypeSpellOrAbilityContext, boolean creatureSpellOnlyContext) {
+        return canPay(pool, xValue, artifactContext, myrContext, restrictedRedContext, kickedOnlyGreenContext, instantSorceryOnlyColorlessContext, subtypeCreatureContext, subtypeSpellOrAbilityContext, creatureSpellOnlyContext, false);
+    }
+
+    public boolean canPay(ManaPool pool, int xValue, boolean artifactContext, boolean myrContext, boolean restrictedRedContext, boolean kickedOnlyGreenContext, boolean instantSorceryOnlyColorlessContext, Set<CardSubtype> subtypeCreatureContext, Set<CardSubtype> subtypeSpellOrAbilityContext, boolean creatureSpellOnlyContext, boolean artifactAbilityOnlyContext) {
         if (pool.isWhiteSpendableAsRed() && requiresRed()) {
-            return canPayWithWhiteAsRed(pool, p -> canPay(p, xValue, artifactContext, myrContext, restrictedRedContext, kickedOnlyGreenContext, instantSorceryOnlyColorlessContext, subtypeCreatureContext, subtypeSpellOrAbilityContext, creatureSpellOnlyContext));
+            return canPayWithWhiteAsRed(pool, p -> canPay(p, xValue, artifactContext, myrContext, restrictedRedContext, kickedOnlyGreenContext, instantSorceryOnlyColorlessContext, subtypeCreatureContext, subtypeSpellOrAbilityContext, creatureSpellOnlyContext, artifactAbilityOnlyContext));
         }
         boolean hasCreatureCtx = subtypeCreatureContext != null && !subtypeCreatureContext.isEmpty();
         boolean hasSpellOrAbilityCtx = subtypeSpellOrAbilityContext != null && !subtypeSpellOrAbilityContext.isEmpty();
-        if (!hasCreatureCtx && !hasSpellOrAbilityCtx && !creatureSpellOnlyContext) {
+        if (!hasCreatureCtx && !hasSpellOrAbilityCtx && !creatureSpellOnlyContext && !artifactAbilityOnlyContext) {
             return canPay(pool, xValue, artifactContext, myrContext, restrictedRedContext, kickedOnlyGreenContext, instantSorceryOnlyColorlessContext);
         }
         Set<CardSubtype> creatureCtx = hasCreatureCtx ? subtypeCreatureContext : Set.of();
@@ -621,6 +640,9 @@ public class ManaCost {
         int totalUsable = pool.getTotal();
         if (artifactContext) {
             totalUsable += pool.getArtifactOnlyColorless();
+        }
+        if (artifactAbilityOnlyContext) {
+            totalUsable += pool.getArtifactAbilityOnlyColorless();
         }
         if (myrContext) {
             totalUsable += pool.getMyrOnlyColorless();
@@ -731,15 +753,27 @@ public class ManaCost {
     }
 
     public boolean canPay(ManaPool pool, int xValue, ManaColor xColorRestriction, int additionalGenericCost) {
+        return canPay(pool, xValue, java.util.EnumSet.of(xColorRestriction), additionalGenericCost);
+    }
+
+    /**
+     * Like {@link #canPay(ManaPool, int, ManaColor, int)} but X may be paid with any mix of the
+     * allowed colors (Soul Burn: black and/or red).
+     */
+    public boolean canPay(ManaPool pool, int xValue, Set<ManaColor> xColorRestrictions, int additionalGenericCost) {
         for (Map.Entry<ManaColor, Integer> entry : coloredCosts.entrySet()) {
             if (pool.get(entry.getKey()) < entry.getValue()) {
                 return false;
             }
         }
 
-        int restrictedAvailable = pool.get(xColorRestriction);
-        if (coloredCosts.containsKey(xColorRestriction)) {
-            restrictedAvailable -= coloredCosts.get(xColorRestriction);
+        int restrictedAvailable = 0;
+        for (ManaColor color : xColorRestrictions) {
+            int available = pool.get(color);
+            if (coloredCosts.containsKey(color)) {
+                available -= coloredCosts.get(color);
+            }
+            restrictedAvailable += Math.max(0, available);
         }
         if (restrictedAvailable < xValue * xSymbolCount) {
             return false;
@@ -782,6 +816,13 @@ public class ManaCost {
      * Returns 0 if the base cost cannot be paid.
      */
     public int calculateMaxX(ManaPool pool, ManaColor xColorRestriction, int additionalGenericCost) {
+        return calculateMaxX(pool, java.util.EnumSet.of(xColorRestriction), additionalGenericCost);
+    }
+
+    /**
+     * Max X when X must be paid with any mix of the allowed colors.
+     */
+    public int calculateMaxX(ManaPool pool, Set<ManaColor> xColorRestrictions, int additionalGenericCost) {
         if (xSymbolCount <= 0) {
             return 0;
         }
@@ -791,9 +832,13 @@ public class ManaCost {
             }
         }
 
-        int restrictedAvailable = pool.get(xColorRestriction);
-        if (coloredCosts.containsKey(xColorRestriction)) {
-            restrictedAvailable -= coloredCosts.get(xColorRestriction);
+        int restrictedAvailable = 0;
+        for (ManaColor color : xColorRestrictions) {
+            int available = pool.get(color);
+            if (coloredCosts.containsKey(color)) {
+                available -= coloredCosts.get(color);
+            }
+            restrictedAvailable += Math.max(0, available);
         }
 
         int remaining = pool.getTotal();
@@ -814,6 +859,10 @@ public class ManaCost {
         if (pool.isWhiteSpendableAsRed() && requiresRed()) {
             applyWhiteAsRedForPayment(pool, p -> canPay(p, xValue));
         }
+        if (cumulativeUpkeepPayment) {
+            payWithCumulativeUpkeepMana(pool, xValue);
+            return;
+        }
         for (Map.Entry<ManaColor, Integer> entry : coloredCosts.entrySet()) {
             for (int i = 0; i < entry.getValue(); i++) {
                 pool.remove(entry.getKey());
@@ -827,6 +876,76 @@ public class ManaCost {
         int remainingGeneric = genericCost + extraHybridGeneric + xValue * effectiveXMultiplier();
         remainingGeneric = spendXCostOnlyForGeneric(pool, remainingGeneric);
         payGenericPreferColorless(pool, remainingGeneric);
+    }
+
+    /**
+     * Pays this cost using cumulative-upkeep-only mana first (colored then colorless), then regular
+     * pool mana. Used when {@link #cumulativeUpkeepPayment} is true.
+     */
+    private void payWithCumulativeUpkeepMana(ManaPool pool, int xValue) {
+        for (Map.Entry<ManaColor, Integer> entry : coloredCosts.entrySet()) {
+            ManaColor color = entry.getKey();
+            int needed = entry.getValue();
+            int fromCu = Math.min(needed, pool.getCumulativeUpkeepOnlyColored(color));
+            pool.removeCumulativeUpkeepOnlyColored(color, fromCu);
+            needed -= fromCu;
+            for (int i = 0; i < needed; i++) {
+                pool.remove(color);
+            }
+        }
+
+        int extraHybridGeneric = payHybridsPreferringCumulativeUpkeep(pool);
+
+        int remainingGeneric = genericCost + extraHybridGeneric + xValue * effectiveXMultiplier();
+        int fromCuColorless = Math.min(remainingGeneric, pool.getCumulativeUpkeepOnlyColorless());
+        pool.removeCumulativeUpkeepOnlyColorless(fromCuColorless);
+        remainingGeneric -= fromCuColorless;
+        for (ManaColor color : ManaColor.values()) {
+            if (color == ManaColor.COLORLESS || remainingGeneric <= 0) {
+                continue;
+            }
+            int fromCu = Math.min(remainingGeneric, pool.getCumulativeUpkeepOnlyColored(color));
+            pool.removeCumulativeUpkeepOnlyColored(color, fromCu);
+            remainingGeneric -= fromCu;
+        }
+        remainingGeneric = spendXCostOnlyForGeneric(pool, remainingGeneric);
+        payGenericPreferColorless(pool, remainingGeneric);
+    }
+
+    /**
+     * Like {@link #payHybrids} but prefers spending cumulative-upkeep-only colored mana when assigning
+     * hybrid symbols.
+     */
+    private int payHybridsPreferringCumulativeUpkeep(ManaPool pool) {
+        if (hybridCosts.isEmpty()) {
+            return 0;
+        }
+        Map<ManaColor, Integer> available = availableByColor(pool);
+        Map<ManaColor, Integer> before = new EnumMap<>(available);
+        int[] extraGeneric = {0};
+        assignHybrids(available, extraGeneric);
+        for (ManaColor color : ManaColor.values()) {
+            int spent = before.get(color) - available.get(color);
+            if (spent <= 0) {
+                continue;
+            }
+            if (color == ManaColor.COLORLESS) {
+                int fromCu = Math.min(spent, pool.getCumulativeUpkeepOnlyColorless());
+                pool.removeCumulativeUpkeepOnlyColorless(fromCu);
+                spent -= fromCu;
+                for (int i = 0; i < spent; i++) {
+                    pool.remove(ManaColor.COLORLESS);
+                }
+            } else {
+                int fromCu = Math.min(spent, pool.getCumulativeUpkeepOnlyColored(color));
+                pool.removeCumulativeUpkeepOnlyColored(color, fromCu);
+                spent -= fromCu;
+                for (int i = 0; i < spent; i++) {
+                    pool.remove(color);
+                }
+            }
+        }
+        return extraGeneric[0];
     }
 
     /**
@@ -958,12 +1077,16 @@ public class ManaCost {
     }
 
     public void pay(ManaPool pool, int xValue, boolean artifactContext, boolean myrContext, boolean restrictedRedContext, boolean kickedOnlyGreenContext, boolean instantSorceryOnlyColorlessContext, Set<CardSubtype> subtypeCreatureContext, Set<CardSubtype> subtypeSpellOrAbilityContext, boolean creatureSpellOnlyContext) {
+        pay(pool, xValue, artifactContext, myrContext, restrictedRedContext, kickedOnlyGreenContext, instantSorceryOnlyColorlessContext, subtypeCreatureContext, subtypeSpellOrAbilityContext, creatureSpellOnlyContext, false);
+    }
+
+    public void pay(ManaPool pool, int xValue, boolean artifactContext, boolean myrContext, boolean restrictedRedContext, boolean kickedOnlyGreenContext, boolean instantSorceryOnlyColorlessContext, Set<CardSubtype> subtypeCreatureContext, Set<CardSubtype> subtypeSpellOrAbilityContext, boolean creatureSpellOnlyContext, boolean artifactAbilityOnlyContext) {
         if (pool.isWhiteSpendableAsRed() && requiresRed()) {
-            applyWhiteAsRedForPayment(pool, p -> canPay(p, xValue, artifactContext, myrContext, restrictedRedContext, kickedOnlyGreenContext, instantSorceryOnlyColorlessContext, subtypeCreatureContext, subtypeSpellOrAbilityContext, creatureSpellOnlyContext));
+            applyWhiteAsRedForPayment(pool, p -> canPay(p, xValue, artifactContext, myrContext, restrictedRedContext, kickedOnlyGreenContext, instantSorceryOnlyColorlessContext, subtypeCreatureContext, subtypeSpellOrAbilityContext, creatureSpellOnlyContext, artifactAbilityOnlyContext));
         }
         boolean hasCreatureCtx = subtypeCreatureContext != null && !subtypeCreatureContext.isEmpty();
         boolean hasSpellOrAbilityCtx = subtypeSpellOrAbilityContext != null && !subtypeSpellOrAbilityContext.isEmpty();
-        if (!hasCreatureCtx && !hasSpellOrAbilityCtx && !creatureSpellOnlyContext) {
+        if (!hasCreatureCtx && !hasSpellOrAbilityCtx && !creatureSpellOnlyContext && !artifactAbilityOnlyContext) {
             pay(pool, xValue, artifactContext, myrContext, restrictedRedContext, kickedOnlyGreenContext, instantSorceryOnlyColorlessContext);
             return;
         }
@@ -1055,10 +1178,16 @@ public class ManaCost {
             }
         }
 
-        // Spend more-restrictive mana first: Myr-only before artifact-only
+        // Spend more-restrictive mana first: Myr-only, then artifact-ability-only, then artifact-only
         if (myrContext && remainingGeneric > 0) {
             int fromRestricted = Math.min(remainingGeneric, pool.getMyrOnlyColorless());
             pool.removeMyrOnlyColorless(fromRestricted);
+            remainingGeneric -= fromRestricted;
+        }
+
+        if (artifactAbilityOnlyContext && remainingGeneric > 0) {
+            int fromRestricted = Math.min(remainingGeneric, pool.getArtifactAbilityOnlyColorless());
+            pool.removeArtifactAbilityOnlyColorless(fromRestricted);
             remainingGeneric -= fromRestricted;
         }
 
@@ -1105,19 +1234,49 @@ public class ManaCost {
         payGenericPreferColorless(pool, remainingGeneric);
     }
 
-    public void pay(ManaPool pool, int xValue, ManaColor xColorRestriction, int additionalGenericCost) {
+    /**
+     * Pays an X cost where each point of X must come from {@code xColorRestriction}.
+     *
+     * @return per-color counts of mana removed specifically for X (not for the rest of the cost)
+     */
+    public EnumMap<ManaColor, Integer> pay(ManaPool pool, int xValue, ManaColor xColorRestriction, int additionalGenericCost) {
+        return pay(pool, xValue, java.util.EnumSet.of(xColorRestriction), additionalGenericCost);
+    }
+
+    /**
+     * Pays an X cost where each point of X must come from one of {@code xColorRestrictions}.
+     * Prefers earlier colors in {@link ManaColor} enum order when multiple are available, which
+     * for Soul Burn (BLACK before RED) maximizes black spent on X — and thus life gained.
+     *
+     * @return per-color counts of mana removed specifically for X (not for the rest of the cost)
+     */
+    public EnumMap<ManaColor, Integer> pay(ManaPool pool, int xValue, Set<ManaColor> xColorRestrictions,
+                                           int additionalGenericCost) {
         for (Map.Entry<ManaColor, Integer> entry : coloredCosts.entrySet()) {
             for (int i = 0; i < entry.getValue(); i++) {
                 pool.remove(entry.getKey());
             }
         }
 
+        EnumMap<ManaColor, Integer> spentOnX = new EnumMap<>(ManaColor.class);
         int totalX = xValue * xSymbolCount;
         for (int i = 0; i < totalX; i++) {
-            pool.remove(xColorRestriction);
+            ManaColor chosen = null;
+            for (ManaColor color : ManaColor.values()) {
+                if (xColorRestrictions.contains(color) && pool.get(color) > 0) {
+                    chosen = color;
+                    break;
+                }
+            }
+            if (chosen == null) {
+                throw new IllegalStateException("Not enough restricted mana to pay X");
+            }
+            pool.remove(chosen);
+            spentOnX.merge(chosen, 1, Integer::sum);
         }
 
         payGenericPreferColorless(pool, genericCost + additionalGenericCost);
+        return spentOnX;
     }
 
     /**

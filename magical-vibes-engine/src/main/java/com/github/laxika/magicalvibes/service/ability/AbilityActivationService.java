@@ -35,6 +35,7 @@ import com.github.laxika.magicalvibes.model.ActivatedAbility;
 import com.github.laxika.magicalvibes.model.ActivationTimingRestriction;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardColor;
+import com.github.laxika.magicalvibes.model.ChoiceContext;
 import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.GameData;
 import com.github.laxika.magicalvibes.model.GameLog;
@@ -207,7 +208,57 @@ public class AbilityActivationService {
         boolean isCreatureSource = gameQueryService.isCreature(gameData, permanent);
         // Mana Reflection: tapping a permanent for mana produces twice as much of that mana (2^count).
         int manaMultiplier = gameQueryService.manaProductionMultiplier(gameData, playerId);
-        if (overriddenManaColor != null) {
+        ManaColor fixedLandColor = permanent.getCard().hasType(CardType.LAND)
+                ? gameQueryService.fixedLandManaColor(gameData)
+                : null;
+        Set<ManaColor> twistedColors = permanent.getCard().hasType(CardType.LAND) && fixedLandColor == null
+                ? gameQueryService.twistedLandManaColors(gameData, permanent)
+                : Set.of();
+        if (fixedLandColor != null) {
+            int totalMana = 0;
+            if (overriddenManaColor != null) {
+                totalMana = manaMultiplier;
+            } else {
+                for (CardEffect effect : permanent.getCard().getEffects(EffectSlot.ON_TAP)) {
+                    if (effect instanceof AwardManaEffect awardMana) {
+                        totalMana += onTapManaAmount(awardMana) * manaMultiplier;
+                    }
+                }
+            }
+            if (totalMana > 0) {
+                manaPool.add(fixedLandColor, totalMana);
+                if (isCreatureSource) {
+                    manaPool.addCreatureMana(fixedLandColor, totalMana);
+                }
+            }
+        } else if (!twistedColors.isEmpty()) {
+            int totalMana = 0;
+            if (overriddenManaColor != null) {
+                totalMana = manaMultiplier;
+            } else {
+                for (CardEffect effect : permanent.getCard().getEffects(EffectSlot.ON_TAP)) {
+                    if (effect instanceof AwardManaEffect awardMana) {
+                        totalMana += onTapManaAmount(awardMana) * manaMultiplier;
+                    }
+                }
+            }
+            if (totalMana > 0) {
+                if (twistedColors.size() == 1) {
+                    ManaColor color = twistedColors.iterator().next();
+                    manaPool.add(color, totalMana);
+                    if (isCreatureSource) {
+                        manaPool.addCreatureMana(color, totalMana);
+                    }
+                } else {
+                    ChoiceContext.ManaColorChoice choiceContext =
+                            new ChoiceContext.ManaColorChoice(playerId, isCreatureSource, totalMana);
+                    List<String> colors = twistedColors.stream().map(Enum::name).toList();
+                    interactionHandlerRegistry.begin(gameData, new PendingInteraction.ColorChoice(
+                            playerId, null, null, choiceContext, colors,
+                            "Choose a color of mana to add (Reality Twist)."));
+                }
+            }
+        } else if (overriddenManaColor != null) {
             // Land type is overridden — produce the new basic land type's mana instead of original
             manaPool.add(overriddenManaColor, manaMultiplier);
         } else {
@@ -405,7 +456,52 @@ public class AbilityActivationService {
         permanent.tap();
 
         ManaPool manaPool = gameData.playerManaPools.get(playerId);
-        if (overriddenManaColor != null) {
+        ManaColor fixedLandColor = gameQueryService.fixedLandManaColor(gameData);
+        Set<ManaColor> twistedColors = fixedLandColor == null
+                ? gameQueryService.twistedLandManaColors(gameData, permanent)
+                : Set.of();
+        if (fixedLandColor != null) {
+            int totalMana = 0;
+            if (overriddenManaColor != null) {
+                totalMana = 1;
+            } else {
+                for (CardEffect effect : permanent.getCard().getEffects(EffectSlot.ON_TAP)) {
+                    if (effect instanceof AwardManaEffect awardMana) {
+                        totalMana += onTapManaAmount(awardMana);
+                    }
+                }
+            }
+            if (totalMana > 0) {
+                manaPool.add(fixedLandColor, totalMana);
+                manaPool.addSpellOnlyMana(fixedLandColor, totalMana);
+            }
+        } else if (!twistedColors.isEmpty()) {
+            int totalMana = 0;
+            if (overriddenManaColor != null) {
+                totalMana = 1;
+            } else {
+                for (CardEffect effect : permanent.getCard().getEffects(EffectSlot.ON_TAP)) {
+                    if (effect instanceof AwardManaEffect awardMana) {
+                        totalMana += onTapManaAmount(awardMana);
+                    }
+                }
+            }
+            if (totalMana > 0) {
+                if (twistedColors.size() == 1) {
+                    ManaColor color = twistedColors.iterator().next();
+                    manaPool.add(color, totalMana);
+                    manaPool.addSpellOnlyMana(color, totalMana);
+                } else {
+                    // Piracy + multi-type under Reality Twist: pick one color for all mana.
+                    ChoiceContext.ManaColorChoice choiceContext =
+                            new ChoiceContext.ManaColorChoice(playerId, false, totalMana);
+                    List<String> colors = twistedColors.stream().map(Enum::name).toList();
+                    interactionHandlerRegistry.begin(gameData, new PendingInteraction.ColorChoice(
+                            playerId, null, null, choiceContext, colors,
+                            "Choose a color of mana to add (Reality Twist)."));
+                }
+            }
+        } else if (overriddenManaColor != null) {
             manaPool.add(overriddenManaColor, 1);
             manaPool.addSpellOnlyMana(overriddenManaColor, 1);
         } else {
@@ -637,8 +733,8 @@ public class AbilityActivationService {
         targetLegalityService.validateActivatedAbilityTargeting(
                 gameData, playerId, ability, abilityEffects, targetId, null, card, xValue);
 
-        // Validate timing restrictions applicable to graveyard abilities (e.g. Raid)
-        validateGraveyardTimingRestrictions(gameData, playerId, ability);
+        // Validate timing restrictions applicable to graveyard abilities (e.g. Raid, activation conditions)
+        validateGraveyardTimingRestrictions(gameData, playerId, ability, card);
 
         // Pithing Needle check: block non-mana activated abilities of the chosen name
         for (UUID opponentId : gameData.playerBattlefields.keySet()) {
@@ -1389,10 +1485,20 @@ public class AbilityActivationService {
 
         UUID sourceId = permanent.getId();
         final int xValueForCost = effectiveXValue;
-        List<PermanentChoiceCostHandler> permanentChoiceCosts = abilityEffects.stream()
+        List<PermanentChoiceCostHandler> permanentChoiceCosts = new ArrayList<>(abilityEffects.stream()
                 .map(e -> toPermanentChoiceCostHandler(e, sourceId, xValueForCost))
                 .filter(Objects::nonNull)
-                .toList();
+                .toList());
+        CastingCostService.ImposedSacrificeRequirement imposedTax =
+                castingCostService.getImposedSacrificeRequirementForAbility(gameData, abilityCost);
+        if (!imposedTax.isEmpty()) {
+            PermanentChoiceCostHandler imposedHandler = toPermanentChoiceCostHandler(
+                    new SacrificeMultiplePermanentsCost(imposedTax.count(), imposedTax.filter()),
+                    sourceId, xValueForCost);
+            if (imposedHandler != null) {
+                permanentChoiceCosts.add(imposedHandler);
+            }
+        }
 
         // For regular targeting abilities, validate legality before costs are paid (CR 602.2b/601.2c).
         if (ability.isMultiTarget() || (ability.getMaxTargets() > 1 && targetIds != null)) {
@@ -1991,6 +2097,16 @@ public class AbilityActivationService {
                 handler.validateCanPay(gameData, playerId);
             }
         }
+        CastingCostService.ImposedSacrificeRequirement imposedTax =
+                castingCostService.getImposedSacrificeRequirementForAbility(gameData, ability.getManaCost());
+        if (!imposedTax.isEmpty()) {
+            PermanentChoiceCostHandler imposedHandler = toPermanentChoiceCostHandler(
+                    new SacrificeMultiplePermanentsCost(imposedTax.count(), imposedTax.filter()),
+                    sourceId, xValue);
+            if (imposedHandler != null) {
+                imposedHandler.validateCanPay(gameData, playerId);
+            }
+        }
 
         // Pay-life cost
         Optional<PayLifeCost> payLifeCost = abilityEffects.stream()
@@ -2013,11 +2129,11 @@ public class AbilityActivationService {
             boolean myrCtx = permanent.getCard().getSubtypes().contains(CardSubtype.MYR);
             Set<CardSubtype> soaCtx = effectiveSubtypes(permanent);
             if (preCheck.hasX()) {
-                if (!preCheck.canPay(manaPool, xValue + additionalGenericCost, artifactCtx, myrCtx, false, false, false, null, soaCtx)) {
+                if (!preCheck.canPay(manaPool, xValue + additionalGenericCost, artifactCtx, myrCtx, false, false, false, null, soaCtx, false, artifactCtx)) {
                     throw new IllegalStateException("Not enough mana to activate ability");
                 }
             } else {
-                if (!preCheck.canPay(manaPool, additionalGenericCost, artifactCtx, myrCtx, false, false, false, null, soaCtx)) {
+                if (!preCheck.canPay(manaPool, additionalGenericCost, artifactCtx, myrCtx, false, false, false, null, soaCtx, false, artifactCtx)) {
                     throw new IllegalStateException("Not enough mana to activate ability");
                 }
             }
@@ -2251,6 +2367,12 @@ public class AbilityActivationService {
                     throw new IllegalStateException("This ability can only be activated before attackers are declared");
                 }
             }
+            if (ability.getTimingRestriction() == ActivationTimingRestriction.BEFORE_ATTACKERS_DECLARED) {
+                if (!gameData.currentStep.isBeforeAttackersDeclared()
+                        || gameData.combatPhasesThisTurn > 1) {
+                    throw new IllegalStateException("This ability can only be activated before attackers are declared");
+                }
+            }
             if (ability.getTimingRestriction() == ActivationTimingRestriction.ONLY_DURING_COMBAT) {
                 if (!gameData.currentStep.isCombatPhase()) {
                     throw new IllegalStateException("This ability can only be activated during combat");
@@ -2262,6 +2384,11 @@ public class AbilityActivationService {
                 }
                 if (!gameQueryService.isPlayerBeingAttacked(gameData, playerId)) {
                     throw new IllegalStateException("This ability can only be activated if you've been attacked this step");
+                }
+            }
+            if (ability.getTimingRestriction() == ActivationTimingRestriction.ONLY_DURING_DECLARE_BLOCKERS) {
+                if (gameData.currentStep != TurnStep.DECLARE_BLOCKERS) {
+                    throw new IllegalStateException("This ability can only be activated during the declare blockers step");
                 }
             }
             if (ability.getTimingRestriction() == ActivationTimingRestriction.ONLY_WHILE_CREATURE) {
@@ -2390,7 +2517,8 @@ public class AbilityActivationService {
         }
     }
 
-    private void validateGraveyardTimingRestrictions(GameData gameData, UUID playerId, ActivatedAbility ability) {
+    private void validateGraveyardTimingRestrictions(GameData gameData, UUID playerId, ActivatedAbility ability,
+                                                     Card card) {
         validateHandSizeRestrictions(gameData, playerId, ability);
         if (ability.getTimingRestriction() == ActivationTimingRestriction.SORCERY_SPEED) {
             if (!playerId.equals(gameData.activePlayerId)) {
@@ -2417,6 +2545,14 @@ public class AbilityActivationService {
             if (gameData.currentStep != TurnStep.UPKEEP) {
                 throw new IllegalStateException("This ability can only be activated during an upkeep step");
             }
+        }
+        // Graveyard activation gates that need the source card (e.g. Ashen Ghoul's
+        // CardsAboveSelfInGraveyard). Battlefield gates use ConditionContext.forPermanent.
+        if (ability.getActivationCondition() != null
+                && !conditionEvaluationService.isMet(gameData, ability.getActivationCondition(),
+                        ConditionContext.forCard(card, playerId))) {
+            String message = ability.getActivationConditionDescription();
+            throw new IllegalStateException(message != null ? message : "Activation condition not met");
         }
     }
 
@@ -2491,10 +2627,10 @@ public class AbilityActivationService {
                 throw new IllegalStateException("X value cannot be negative");
             }
             if (hasRestricted) {
-                if (!cost.canPay(pool, effectiveXValue + additionalCost, artifactContext, myrContext, false, false, false, null, subtypeSpellOrAbilityContext)) {
+                if (!cost.canPay(pool, effectiveXValue + additionalCost, artifactContext, myrContext, false, false, false, null, subtypeSpellOrAbilityContext, false, artifactContext)) {
                     throw new IllegalStateException("Not enough mana to activate ability");
                 }
-                cost.pay(pool, effectiveXValue + additionalCost, artifactContext, myrContext, false, false, false, null, subtypeSpellOrAbilityContext);
+                cost.pay(pool, effectiveXValue + additionalCost, artifactContext, myrContext, false, false, false, null, subtypeSpellOrAbilityContext, false, artifactContext);
             } else {
                 if (!cost.canPay(pool, effectiveXValue + additionalCost)) {
                     throw new IllegalStateException("Not enough mana to activate ability");
@@ -2503,10 +2639,10 @@ public class AbilityActivationService {
             }
         } else {
             if (hasRestricted) {
-                if (!cost.canPay(pool, additionalCost, artifactContext, myrContext, false, false, false, null, subtypeSpellOrAbilityContext)) {
+                if (!cost.canPay(pool, additionalCost, artifactContext, myrContext, false, false, false, null, subtypeSpellOrAbilityContext, false, artifactContext)) {
                     throw new IllegalStateException("Not enough mana to activate ability");
                 }
-                cost.pay(pool, additionalCost, artifactContext, myrContext, false, false, false, null, subtypeSpellOrAbilityContext);
+                cost.pay(pool, additionalCost, artifactContext, myrContext, false, false, false, null, subtypeSpellOrAbilityContext, false, artifactContext);
             } else {
                 if (additionalCost != 0) {
                     // additionalCost may be negative (a static generic-cost reduction, floored to the

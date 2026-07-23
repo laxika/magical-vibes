@@ -9,6 +9,7 @@ import com.github.laxika.magicalvibes.model.effect.GrantScope;
 import com.github.laxika.magicalvibes.model.effect.RegisterDrawCardsAtNextUpkeepEffect;
 
 @CardRegistration(set = "5ED", collectorNumber = "133")
+@CardRegistration(set = "ICE", collectorNumber = "105")
 public class Updraft extends Card {
 
     public Updraft() {

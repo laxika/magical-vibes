@@ -15,6 +15,7 @@ import com.github.laxika.magicalvibes.model.filter.PermanentPredicateTargetFilte
 import java.util.List;
 
 @CardRegistration(set = "5ED", collectorNumber = "84")
+@CardRegistration(set = "ICE", collectorNumber = "67")
 public class Enervate extends Card {
 
     public Enervate() {

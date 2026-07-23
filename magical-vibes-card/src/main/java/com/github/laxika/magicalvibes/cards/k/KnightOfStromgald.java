@@ -11,6 +11,7 @@ import java.util.List;
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 
 @CardRegistration(set = "5ED", collectorNumber = "171")
+@CardRegistration(set = "ICE", collectorNumber = "138")
 public class KnightOfStromgald extends Card {
 
     public KnightOfStromgald() {

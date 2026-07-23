@@ -22,8 +22,13 @@ public enum EffectDuration {
     /** One-shot effect with no wear-off (e.g. "becomes a creature permanently" — Tezzeret, Waker). */
     PERMANENT,
     /** One-shot effect that lasts for as long as the source permanent remains on the battlefield
-     *  (e.g. Awakener Druid); removed when the source leaves. */
+     *  (e.g. Awakener Druid); removed when the source leaves. For control effects this duration
+     *  also ends when the creator stops controlling the source (Olivia Voldaren). */
     WHILE_SOURCE_ON_BATTLEFIELD,
+    /** One-shot effect that lasts for as long as the source permanent remains on the battlefield,
+     *  regardless of who controls it (Infernal Denizen — "for as long as this creature remains
+     *  on the battlefield"). Removed only when the source leaves. */
+    WHILE_SOURCE_REMAINS,
     /** One-shot effect that lasts for as long as the source permanent remains on the battlefield,
      *  its creator still controls it, AND it stays tapped (e.g. Seasinger's steal); removed when
      *  the source leaves, changes controllers, or becomes untapped (CR 611.2b — it does not

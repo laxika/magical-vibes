@@ -8,6 +8,7 @@ import com.github.laxika.magicalvibes.model.action.PutMinusOneCounterAtEndOfComb
 import com.github.laxika.magicalvibes.model.action.RemoveCounterFromSourceAtEndOfCombat;
 import com.github.laxika.magicalvibes.model.action.SacrificeAtEndOfCombat;
 
+import com.github.laxika.magicalvibes.model.ActivatedAbility;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardSubtype;
 import com.github.laxika.magicalvibes.model.CounterType;
@@ -20,6 +21,7 @@ import com.github.laxika.magicalvibes.model.StackEntryType;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
 import com.github.laxika.magicalvibes.model.effect.ControlDuration;
 import com.github.laxika.magicalvibes.model.effect.GainControlOfTargetEffect;
+import com.github.laxika.magicalvibes.model.effect.RemoveCounterFromSourceEffect;
 import com.github.laxika.magicalvibes.networking.message.AttackTarget;
 import com.github.laxika.magicalvibes.networking.message.AvailableBlockersMessage;
 import com.github.laxika.magicalvibes.networking.message.BlockerAssignment;
@@ -278,7 +280,10 @@ public class CombatService {
     /**
      * Puts the scheduled counters on all permanents marked for end-of-combat counter placement on a
      * combat opponent (e.g. Greater Werewolf's "put a -0/-2 counter on each creature blocking or
-     * blocked by this creature"). Respects {@code cantHaveCounters}.
+     * blocked by this creature"). Respects {@code cantHaveCounters}. When {@code alsoTap} is set
+     * the permanent is tapped (Dread Wight). Paralyzation counters also grant
+     * "{4}: Remove a paralyzation counter from this creature" for as long as the permanent remains
+     * (source-independent — survives the creating creature leaving).
      */
     public void processEndOfCombatOpponentCounters(GameData gameData) {
         List<PutCounterOnPermanentAtEndOfCombat> toCounter =
@@ -293,11 +298,35 @@ public class CombatService {
             }
             perm.setCounterCount(action.counterType(),
                     perm.getCounterCount(action.counterType()) + action.amount());
+            if (action.alsoTap()) {
+                perm.tap();
+            }
+            if (action.counterType() == CounterType.PARALYZATION) {
+                grantParalyzationRemoveAbility(perm);
+            }
+            String tapText = action.alsoTap() ? " and becomes tapped" : "";
             gameBroadcastService.logAndBroadcast(gameData, GameLog.cardThen(perm.getCard(),
-                    " gets " + action.amount() + " counter(s)."));
-            log.info("Game {} - {} gets {} {} counter(s) at end of combat",
-                    gameData.id, perm.getCard().getName(), action.amount(), action.counterType());
+                    " gets " + action.amount() + " counter(s)" + tapText + "."));
+            log.info("Game {} - {} gets {} {} counter(s){} at end of combat",
+                    gameData.id, perm.getCard().getName(), action.amount(), action.counterType(),
+                    action.alsoTap() ? " and is tapped" : "");
         }
+    }
+
+    /** Idempotent grant of Dread Wight's "{4}: Remove a paralyzation counter from this creature." */
+    private static void grantParalyzationRemoveAbility(Permanent perm) {
+        boolean alreadyGranted = perm.getPersistentGrantedActivatedAbilities().stream()
+                .anyMatch(a -> a.getEffects().stream().anyMatch(e ->
+                        e instanceof RemoveCounterFromSourceEffect r
+                                && r.counterType() == CounterType.PARALYZATION));
+        if (alreadyGranted) {
+            return;
+        }
+        perm.getPersistentGrantedActivatedAbilities().add(new ActivatedAbility(
+                false,
+                "{4}",
+                List.of(new RemoveCounterFromSourceEffect(CounterType.PARALYZATION, 1)),
+                "{4}: Remove a paralyzation counter from this creature."));
     }
 
     /**

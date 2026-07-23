@@ -12,6 +12,7 @@ import com.github.laxika.magicalvibes.model.effect.SkipDrawStepEffect;
 import java.util.List;
 
 @CardRegistration(set = "5ED", collectorNumber = "182")
+@CardRegistration(set = "ICE", collectorNumber = "154")
 public class Necropotence extends Card {
 
     public Necropotence() {

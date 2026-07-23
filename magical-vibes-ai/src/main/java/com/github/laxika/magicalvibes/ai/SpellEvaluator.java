@@ -1176,10 +1176,18 @@ public class SpellEvaluator {
             }
         }
 
-        if (card.getXColorRestriction() != null) {
-            return cost.calculateMaxX(virtualPool, card.getXColorRestriction(), 0);
+        int maxX;
+        if (card.getXColorRestrictions() != null) {
+            maxX = cost.calculateMaxX(virtualPool, card.getXColorRestrictions(), 0);
+        } else {
+            maxX = cost.calculateMaxX(virtualPool);
         }
-        return cost.calculateMaxX(virtualPool);
+        if (card.getXValueCap() != null) {
+            int cap = amountEvaluationService.evaluate(gameData, card.getXValueCap(),
+                    com.github.laxika.magicalvibes.service.effect.AmountContext.forCasting(playerId));
+            maxX = Math.min(maxX, Math.max(0, cap));
+        }
+        return maxX;
     }
 
     /**

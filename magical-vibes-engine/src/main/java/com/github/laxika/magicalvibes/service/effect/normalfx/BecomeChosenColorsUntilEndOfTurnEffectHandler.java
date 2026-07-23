@@ -5,6 +5,7 @@ import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.StackEntry;
 import com.github.laxika.magicalvibes.model.effect.BecomeChosenColorsUntilEndOfTurnEffect;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
+import com.github.laxika.magicalvibes.model.effect.EffectDuration;
 import com.github.laxika.magicalvibes.service.battlefield.GameQueryService;
 import com.github.laxika.magicalvibes.service.input.PlayerInputService;
 import lombok.RequiredArgsConstructor;
@@ -34,6 +35,6 @@ public class BecomeChosenColorsUntilEndOfTurnEffectHandler implements NormalEffe
         // The controller chooses one or more colors on resolution; the choice handler then floats
         // the layer-5 color-setting effect with the picked colors (ChoiceHandlerService).
         playerInputService.beginBecomeChosenColorsChoice(gameData, entry.getControllerId(),
-                target.getId(), entry.getCard().getName(), List.of());
+                target.getId(), entry.getCard().getName(), List.of(), EffectDuration.UNTIL_END_OF_TURN);
     }
 }

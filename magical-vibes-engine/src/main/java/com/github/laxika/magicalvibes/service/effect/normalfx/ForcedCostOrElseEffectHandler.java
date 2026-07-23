@@ -11,6 +11,7 @@ import com.github.laxika.magicalvibes.model.effect.SacrificePermanentCost;
 import com.github.laxika.magicalvibes.service.battlefield.GameQueryService;
 import com.github.laxika.magicalvibes.service.filter.PredicateEvaluationService;
 import com.github.laxika.magicalvibes.service.input.PlayerInputService;
+import java.util.ArrayList;
 import java.util.List;
 import java.util.UUID;
 import lombok.RequiredArgsConstructor;
@@ -49,10 +50,27 @@ public class ForcedCostOrElseEffectHandler implements NormalEffectHandlerBean {
                         com.github.laxika.magicalvibes.service.effect.AmountContext.forStackEntry(entry, source));
                 effectiveCost = reduceGenericManaCost(payCost.manaCost(), reduction);
             }
+            String prompt = entry.getCard().getName() + " - Pay " + effectiveCost
+                    + (payCost.lifeAmount() > 0 ? " and " + payCost.lifeAmount() + " life" : "") + "?";
+            if (e.anyPlayerMayPay()) {
+                // "unless any player pays {cost}" (Icy Prison): offer each player in APNAP order;
+                // first accept stops the sequence, full decline resolves the fallback.
+                List<UUID> order = apnapOrder(gameData);
+                UUID first = order.getFirst();
+                gameData.forcedCostOrElseRemainingPlayers.clear();
+                gameData.forcedCostOrElseRemainingPlayers.addAll(order.subList(1, order.size()));
+                gameData.forcedCostOrElseSourceControllerId = entry.getControllerId();
+                gameData.pendingMayAbilities.addFirst(new com.github.laxika.magicalvibes.model.PendingMayAbility(
+                        entry.getCard(), first, List.of(e), prompt,
+                        null, effectiveCost, entry.getSourcePermanentId()));
+                return;
+            }
+            // "that player may pay" (Mind Whip): prompt the enchanted permanent's controller
+            // carried on the stack entry's targetId, not the Aura's controller.
+            UUID payer = e.payerIsEnchantedController() ? entry.getTargetId() : entry.getControllerId();
             gameData.pendingMayAbilities.addFirst(new com.github.laxika.magicalvibes.model.PendingMayAbility(
-                    entry.getCard(), entry.getControllerId(), List.of(e),
-                    entry.getCard().getName() + " - Pay " + effectiveCost + "?",
-                    null, effectiveCost, entry.getSourcePermanentId()));
+                    entry.getCard(), payer, List.of(e), prompt,
+                    entry.getTargetId(), effectiveCost, entry.getSourcePermanentId()));
             return;
         }
 
@@ -104,6 +122,18 @@ public class ForcedCostOrElseEffectHandler implements NormalEffectHandlerBean {
                                 controllerId, entry.getSourcePermanentId(), entry.getCard(), e));
                 playerInputService.beginPermanentChoice(gameData, controllerId, matchingPermanentIds,
                         "Choose a permanent to sacrifice (" + sacrificePermanent.description() + ").");
+    }
+
+    /** Seating order rotated so the active player is first (APNAP). */
+    private List<UUID> apnapOrder(GameData gameData) {
+        List<UUID> ordered = new ArrayList<>(gameData.orderedPlayerIds);
+        int activeIndex = ordered.indexOf(gameData.activePlayerId);
+        if (activeIndex <= 0) {
+            return ordered;
+        }
+        List<UUID> rotated = new ArrayList<>(ordered.subList(activeIndex, ordered.size()));
+        rotated.addAll(ordered.subList(0, activeIndex));
+        return rotated;
     }
 
     /**

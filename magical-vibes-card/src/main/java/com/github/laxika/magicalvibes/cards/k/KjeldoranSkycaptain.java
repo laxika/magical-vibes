@@ -8,6 +8,7 @@ import com.github.laxika.magicalvibes.model.Card;
  * Flying, first strike, banding (auto-loaded from Scryfall).
  * No card-specific engine logic.
  */
+@CardRegistration(set = "ICE", collectorNumber = "39")
 @CardRegistration(set = "5ED", collectorNumber = "45")
 public class KjeldoranSkycaptain extends Card {
 

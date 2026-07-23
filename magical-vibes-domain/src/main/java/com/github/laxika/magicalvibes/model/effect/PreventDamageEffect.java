@@ -37,6 +37,7 @@ public record PreventDamageEffect(
         boolean needsAmount = scope == PreventionScope.NEXT_TO_ANY
                 || scope == PreventionScope.NEXT_TO_CONTROLLER
                 || scope == PreventionScope.NEXT_TO_SELF
+                || scope == PreventionScope.NEXT_TO_ENCHANTED
                 || scope == PreventionScope.NEXT_TO_TARGET;
         if (needsAmount && amount == null) {
             throw new IllegalArgumentException("NEXT_* prevention scopes require an amount: " + scope);
@@ -68,6 +69,11 @@ public record PreventDamageEffect(
     /** "Prevent the next {@code amount} damage that would be dealt to ~." */
     public static PreventDamageEffect nextToSelf(int amount) {
         return new PreventDamageEffect(PreventionScope.NEXT_TO_SELF, new Fixed(amount), false, null, null, null);
+    }
+
+    /** "Prevent the next {@code amount} damage that would be dealt to enchanted creature this turn" (Fylgja). */
+    public static PreventDamageEffect nextToEnchanted(int amount) {
+        return new PreventDamageEffect(PreventionScope.NEXT_TO_ENCHANTED, new Fixed(amount), false, null, null, null);
     }
 
     /** "Prevent the next {@code amount} damage that would be dealt to any target." */

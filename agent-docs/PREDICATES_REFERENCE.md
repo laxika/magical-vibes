@@ -31,7 +31,7 @@ All of these base interfaces are **sealed**: a new predicate/filter must be adde
 | `PermanentIsTappedPredicate` | `()` | tapped permanents |
 | `PermanentIsAttackingPredicate` | `()` | attacking creatures |
 | `PermanentIsAttackingSourceControllerPredicate` | `()` | creatures attacking you (the source controller) — attack target must be the source controller, not a planeswalker/other player; needs a `FilterContext` with source controller (Blessed Reversal) |
-| `PermanentIsBlockingPredicate` | `()` | blocking creatures (the blockers themselves) |
+| `PermanentIsBlockingPredicate` | `()` | blocking creatures (the blockers themselves). Also usable as a static GrantKeywordEffect/StaticBoostEffect filter (`matchesStaticFilter` supports it, like `PermanentIsAttackingPredicate`) — Snow Devil |
 | `PermanentIsBlockedPredicate` | `()` | blocked creatures — attacking creatures that at least one creature is blocking. Distinct from `PermanentIsBlockingPredicate`. Pair with `BoostAllCreaturesEffect(.., filter)` / `GrantKeywordEffect(kw, ALL_CREATURES, filter)` for "each blocked creature ..." (Tattermunge Witch) |
 | `PermanentAttackedOrBlockedThisTurnPredicate` | `()` | creatures that were declared as an attacker or blocker at some point this turn (reads `Permanent.attackedThisTurn`/`blockedThisTurn`, which persist after combat ends and clear at the next turn start — so the creature still matches in a later main phase or end step). Unlike `PermanentIsAttacking`/`IsBlockingPredicate` (current combat state only). AND with `PermanentIsCreaturePredicate` for "target creature that attacked or blocked this turn" (Vizier of Deferment) |
 | `PermanentBlockedOrWasBlockedBySubtypeThisTurnPredicate` | `(CardSubtype)` | creatures that blocked or were blocked by a creature of the subtype at any point this turn (turn-scoped, recorded at declare-blockers time in `GameData.combatBlockOpponentSubtypesThisTurn`; Changeling opponents count as every subtype). Subtype-ness is judged at block time, so the target stays legal after combat ends or the other creature leaves/changes types. Needs `gameData`. AND with `PermanentIsCreaturePredicate` for "target creature that ..." (Time to Reflect) |
@@ -51,6 +51,7 @@ All of these base interfaces are **sealed**: a new predicate/filter must be adde
 | `PermanentHasSupertypePredicate` | `(CardSupertype)` | permanents with specific supertype (e.g. LEGENDARY) |
 | `PermanentHasKeywordPredicate` | `(Keyword)` | permanents with specific keyword |
 | `PermanentHasCountersPredicate` | `(CounterType)` | permanents with one or more counters of the specified type (supports ANY for any counter) |
+| `PermanentHasCumulativeUpkeepPredicate` | `()` | permanents that have cumulative upkeep (printed or granted) |
 
 ### Static power/toughness/mana-value predicates
 
@@ -89,6 +90,8 @@ These predicates need `FilterContext` with `gameData` and/or `sourceControllerId
 |-----------|-------------|---------|---------------------|
 | `PermanentIsSourceCardPredicate` | `()` | the source card itself | `sourceCardId` |
 | `PermanentControlledBySourceControllerPredicate` | `()` | permanents controlled by source's controller | `gameData` + `sourceControllerId` |
+| `PermanentControlledByActivePlayerPredicate` | `()` | permanents controlled by the active player (`gameData.activePlayerId`) | `gameData` |
+| `PermanentControlledContinuouslySinceBeginningOfTurnPredicate` | `()` | permanents controlled continuously since the beginning of the turn (`!isSummoningSick()`; same signal as `CameUnderControlThisTurn` / Siren's Call exemption). Norritt | — |
 | `PermanentOwnedBySourceControllerPredicate` | `()` | permanents OWNED by source's controller (ownership via `stolenCreatures`). Pair inside `ControlledPermanentPredicateTargetFilter` for "you both own and control" (Obelisk of Undoing) | `gameData` + `sourceControllerId` |
 | `PermanentControllerControlsPermanentPredicate` | `(PermanentPredicate filter)` | permanents whose OWN controller controls at least one permanent matching `filter` (Seasinger — "target creature whose controller controls an Island" with `PermanentHasSubtypePredicate(ISLAND)`) | `gameData` |
 | `PermanentAttachedToSourceControllerPredicate` | `()` | permanents attached to source's controller | `sourceControllerId` |
@@ -119,6 +122,7 @@ These predicates need `FilterContext` with `gameData` and/or `sourceControllerId
 | `StackEntryControlledByEnchantedPlayerPredicate` | `()` | spells controlled by the player the source aura is attached to (the enchanted player). The enchanted player's ID is supplied externally by the evaluating service (`PredicateEvaluationService.matchesStackEntryPredicate(entry, predicate, enchantedPlayerId)`). Used by Curse of Echoes |
 | `StackEntrySharesChosenNameWithSourcePredicate` | `()` | spells whose card name equals the chosen name recorded on the source permanent (via a "choose a card name" ETB — `ChooseCardNameOnEnterEffect`). "counter target spell with the chosen name" — Declaration of Naught. Source-dependent: matches nothing unless the source permanent is passed to `TargetLegalityService.matchesStackEntryPredicate(..., source)`; the ability-activation path supplies it automatically |
 | `StackEntryTargetsYourPermanentPredicate` | `()` | spells targeting a permanent you control |
+| `StackEntryTargetsSourcePredicate` | `()` | spells/abilities targeting the evaluating **source** permanent. "counter target spell that targets this creature" — Mistfolk. Source-dependent: matches nothing unless the source permanent is passed to `TargetLegalityService.matchesStackEntryPredicate(..., source)`; the ability-activation path supplies it automatically |
 | `StackEntryTargetsYouOrCreatureYouControlPredicate` | `()` | spells/abilities targeting you or a creature you control |
 | `StackEntryTargetsYouPredicate` | `()` | spells/abilities targeting you (the player only, not your permanents). "... spell that targets you" — Mirror Sheen |
 | `StackEntryTargetsPermanentPredicate` | `(PermanentPredicate filter)` | spells/abilities targeting at least one permanent matching `filter` (any controller; filter evaluated with the evaluating source's controller as `sourceControllerId`). Used as `SpellCastTriggerEffect.castSpellTargetCondition` — e.g. Repartee ("cast an instant or sorcery spell that targets a creature") with `new PermanentIsCreaturePredicate()` |

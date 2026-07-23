@@ -7,6 +7,7 @@ import com.github.laxika.magicalvibes.model.effect.DefendingPlayerMayDrawCardEff
 
 @CardRegistration(set = "6ED", collectorNumber = "98")
 @CardRegistration(set = "5ED", collectorNumber = "123")
+@CardRegistration(set = "ICE", collectorNumber = "97")
 public class SibilantSpirit extends Card {
 
     public SibilantSpirit() {

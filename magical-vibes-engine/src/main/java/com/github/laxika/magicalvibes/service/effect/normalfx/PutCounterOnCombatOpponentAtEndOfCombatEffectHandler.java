@@ -47,9 +47,10 @@ public class PutCounterOnCombatOpponentAtEndOfCombatEffectHandler implements Nor
         }
 
         gameData.queueDelayedAction(new PutCounterOnPermanentAtEndOfCombat(
-                targetId, counterEffect.counterType(), counterEffect.amount()));
-        String logEntry = target.getCard().getName() + " will get " + counterEffect.amount()
-                + " counter(s) at end of combat.";
-        gameBroadcastService.logAndBroadcast(gameData, GameLog.builder().card(target.getCard()).text(" will get " + counterEffect.amount() + " counter(s) at end of combat.").build());
+                targetId, counterEffect.counterType(), counterEffect.amount(), counterEffect.alsoTap()));
+        String tapSuffix = counterEffect.alsoTap() ? " and become tapped" : "";
+        gameBroadcastService.logAndBroadcast(gameData, GameLog.builder().card(target.getCard())
+                .text(" will get " + counterEffect.amount() + " counter(s)" + tapSuffix + " at end of combat.")
+                .build());
     }
 }

@@ -241,6 +241,7 @@ public class EffectResolutionService {
         if (entry.getCard() != null) {
             gameData.clearSpellCastConvergeValue(entry.getCard().getId());
             gameData.clearSpellCastColorsSpent(entry.getCard().getId());
+            gameData.clearSpellCastManaSpentOnX(entry.getCard().getId());
         }
         // Lethally-damaged creatures die at the state-based action check that follows this
         // resolution (CR 704.5g/704.5h) — damage handlers only record marked damage.

@@ -191,6 +191,11 @@ public class PermanentCounterSupport {
                 target.setCounterCount(CounterType.MINUS_ONE_MINUS_ONE, target.getCounterCount(CounterType.MINUS_ONE_MINUS_ONE) + count);
                 yield "-1/-1";
             }
+            case MINUS_ZERO_MINUS_ONE -> {
+                if (count <= 0) { yield null; }
+                target.setCounterCount(CounterType.MINUS_ZERO_MINUS_ONE, target.getCounterCount(CounterType.MINUS_ZERO_MINUS_ONE) + count);
+                yield "-0/-1";
+            }
             case MINUS_ZERO_MINUS_TWO -> {
                 if (count <= 0) { yield null; }
                 target.setCounterCount(CounterType.MINUS_ZERO_MINUS_TWO, target.getCounterCount(CounterType.MINUS_ZERO_MINUS_TWO) + count);
@@ -219,8 +224,13 @@ public class PermanentCounterSupport {
             case STUN -> { target.setCounterCount(CounterType.STUN, target.getCounterCount(CounterType.STUN) + count); yield "stun"; }
             case TOWER -> { target.setCounterCount(CounterType.TOWER, target.getCounterCount(CounterType.TOWER) + count); yield "tower"; }
             case TIME -> { target.setCounterCount(CounterType.TIME, target.getCounterCount(CounterType.TIME) + count); yield "time"; }
+            case AGE -> { target.setCounterCount(CounterType.AGE, target.getCounterCount(CounterType.AGE) + count); yield "age"; }
             case VITALITY -> { target.setCounterCount(CounterType.VITALITY, target.getCounterCount(CounterType.VITALITY) + count); yield "vitality"; }
+            case HEALING -> { target.setCounterCount(CounterType.HEALING, target.getCounterCount(CounterType.HEALING) + count); yield "healing"; }
             case FEATHER -> { target.setCounterCount(CounterType.FEATHER, target.getCounterCount(CounterType.FEATHER) + count); yield "feather"; }
+            case PARALYZATION -> { target.setCounterCount(CounterType.PARALYZATION, target.getCounterCount(CounterType.PARALYZATION) + count); yield "paralyzation"; }
+            case ICE -> { target.setCounterCount(CounterType.ICE, target.getCounterCount(CounterType.ICE) + count); yield "ice"; }
+            case MUSIC -> { target.setCounterCount(CounterType.MUSIC, target.getCounterCount(CounterType.MUSIC) + count); yield "music"; }
             default -> throw new IllegalStateException("Unsupported counter type: " + counterType);
         };
         if (counterName == null) return;

@@ -6,6 +6,7 @@ import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.effect.PreventNextDamageToTargetAndAddToughnessCountersEffect;
 
 @CardRegistration(set = "5ED", collectorNumber = "57")
+@CardRegistration(set = "ICE", collectorNumber = "50")
 public class SacredBoon extends Card {
 
     public SacredBoon() {

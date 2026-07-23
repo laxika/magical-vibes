@@ -207,8 +207,8 @@ public class AiManaManager {
     }
 
     private static boolean isXSpellPaid(ManaCost cost, Card card, ManaPool pool, int xValue, int costModifier) {
-        if (card.getXColorRestriction() != null) {
-            return cost.canPay(pool, xValue, card.getXColorRestriction(), costModifier);
+        if (card.getXColorRestrictions() != null) {
+            return cost.canPay(pool, xValue, card.getXColorRestrictions(), costModifier);
         }
         return cost.canPay(pool, xValue + costModifier);
     }
@@ -359,14 +359,20 @@ public class AiManaManager {
 
     int calculateMaxAffordableX(Card card, ManaPool pool, int costModifier) {
         ManaCost cost = new ManaCost(card.getManaCost());
-        if (card.getXColorRestriction() != null) {
-            return cost.calculateMaxX(pool, card.getXColorRestriction(), costModifier);
+        if (card.getXColorRestrictions() != null) {
+            return cost.calculateMaxX(pool, card.getXColorRestrictions(), costModifier);
         }
         return Math.max(0, cost.calculateMaxX(pool) - costModifier);
     }
 
     int calculateSmartX(GameData gameData, Card card, UUID targetId, ManaPool virtualPool, int costModifier) {
+        return calculateSmartX(gameData, gameData.activePlayerId, card, targetId, virtualPool, costModifier);
+    }
+
+    int calculateSmartX(GameData gameData, UUID castingPlayerId, Card card, UUID targetId,
+            ManaPool virtualPool, int costModifier) {
         int maxX = calculateMaxAffordableX(card, virtualPool, costModifier);
+        maxX = clampByXValueCap(gameData, castingPlayerId, card, maxX);
         if (maxX <= 0) {
             return 0;
         }
@@ -395,6 +401,40 @@ public class AiManaManager {
         }
 
         return maxX;
+    }
+
+    /**
+     * Applies a card's cast-time X ceiling ("X can't be greater than …") when it is a controller
+     * {@link com.github.laxika.magicalvibes.model.amount.PermanentCount}. Used by AI X selection.
+     */
+    int clampByXValueCap(GameData gameData, UUID playerId, Card card, int maxX) {
+        if (card.getXValueCap() == null || maxX <= 0 || playerId == null) {
+            return maxX;
+        }
+        if (!(card.getXValueCap() instanceof com.github.laxika.magicalvibes.model.amount.PermanentCount pc)
+                || pc.scope() != com.github.laxika.magicalvibes.model.amount.CountScope.CONTROLLER) {
+            return maxX;
+        }
+        int cap = 0;
+        for (Permanent p : gameData.playerBattlefields.getOrDefault(playerId, List.of())) {
+            if (matchesXCapFilterIntrinsic(p, pc.filter())) {
+                cap++;
+            }
+        }
+        return Math.min(maxX, cap);
+    }
+
+    private static boolean matchesXCapFilterIntrinsic(Permanent permanent,
+            com.github.laxika.magicalvibes.model.filter.PermanentPredicate filter) {
+        return switch (filter) {
+            case com.github.laxika.magicalvibes.model.filter.PermanentIsLandPredicate ignored ->
+                    permanent.getCard().hasType(com.github.laxika.magicalvibes.model.CardType.LAND);
+            case com.github.laxika.magicalvibes.model.filter.PermanentHasSupertypePredicate has ->
+                    permanent.getCard().getSupertypes().contains(has.supertype());
+            case com.github.laxika.magicalvibes.model.filter.PermanentAllOfPredicate all ->
+                    all.predicates().stream().allMatch(p -> matchesXCapFilterIntrinsic(permanent, p));
+            default -> false;
+        };
     }
 
     /**

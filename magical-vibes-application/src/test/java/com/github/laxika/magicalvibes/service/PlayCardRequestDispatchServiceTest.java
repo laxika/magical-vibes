@@ -45,7 +45,7 @@ class PlayCardRequestDispatchServiceTest {
     /** All-null request except the fields a plain cast uses. */
     private static PlayCardRequest plainCast(int cardIndex) {
         return new PlayCardRequest(cardIndex, null, null, null, null, null, null,
-                null, null, null, null, null, null, null, null, null, null, null, null);
+                null, null, null, null, null, null, null, null, null, null, null, null, null);
     }
 
     @Test
@@ -67,6 +67,7 @@ class PlayCardRequestDispatchServiceTest {
         UUID convoke = UUID.randomUUID();
         UUID sacrifice = UUID.randomUUID();
         UUID altSacrifice = UUID.randomUUID();
+        UUID imposedSacrifice = UUID.randomUUID();
         Map<UUID, Integer> damage = Map.of(targetId, 2);
 
         PlayCardRequest request = new PlayCardRequest(1, 4, targetId, damage,
@@ -75,13 +76,14 @@ class PlayCardRequestDispatchServiceTest {
                 List.of(altSacrifice), null,
                 5, List.of(6, 7),
                 true, null, null,
-                8, List.of(9, 10));
+                8, List.of(9, 10), List.of(imposedSacrifice));
 
         dispatchService.dispatch(gameData, player, request);
 
         verify(gameService).playCard(eq(gameData), eq(player), eq(1), eq(4), eq(targetId), eq(damage),
                 eq(List.of(extraTarget)), eq(List.of(convoke)), eq(true), eq(sacrifice), eq(2),
-                eq(List.of(altSacrifice)), eq(5), eq(List.of(6, 7)), eq(true), eq(8), eq(List.of(9, 10)));
+                eq(List.of(altSacrifice)), eq(5), eq(List.of(6, 7)), eq(true), eq(8),
+                eq(List.of(9, 10)), eq(List.of(imposedSacrifice)));
         verifyNoMoreInteractions(gameService);
     }
 
@@ -89,13 +91,14 @@ class PlayCardRequestDispatchServiceTest {
     @DisplayName("Empty cost lists mean 'cost not used' and are normalized to null")
     void emptyCostListsNormalizedToNull() {
         PlayCardRequest request = new PlayCardRequest(0, null, null, null, null, null, null,
-                null, null, null, List.of(), null, null, List.of(), null, null, null, null, null);
+                null, null, null, List.of(), null, null, List.of(), null, null, null, null,
+                List.of(), List.of());
 
         dispatchService.dispatch(gameData, player, request);
 
         verify(gameService).playCard(eq(gameData), eq(player), eq(0), isNull(), isNull(), isNull(),
                 eq(List.of()), eq(List.of()), eq(false), isNull(), isNull(), isNull(),
-                isNull(), isNull(), eq(false), isNull(), isNull());
+                isNull(), isNull(), eq(false), isNull(), isNull(), isNull());
         verifyNoMoreInteractions(gameService);
     }
 
@@ -108,7 +111,7 @@ class PlayCardRequestDispatchServiceTest {
         PlayCardRequest request = new PlayCardRequest(2, 1, targetId, null,
                 null, null, null, null, null, null,
                 List.of(tapPayment), true,
-                null, List.of(4), null, null, "CREATURE", 3, null);
+                null, List.of(4), null, null, "CREATURE", 3, null, null);
 
         dispatchService.dispatch(gameData, player, request);
 
@@ -121,7 +124,7 @@ class PlayCardRequestDispatchServiceTest {
     @DisplayName("Cast from library top routes to playCardFromLibraryTop")
     void fromLibraryTopRoutes() {
         PlayCardRequest request = new PlayCardRequest(0, 2, null, null, null, null, null,
-                null, null, null, null, null, null, null, null, true, null, null, null);
+                null, null, null, null, null, null, null, null, true, null, null, null, null);
 
         dispatchService.dispatch(gameData, player, request);
 
@@ -134,7 +137,7 @@ class PlayCardRequestDispatchServiceTest {
     void fromExileRoutes() {
         UUID exileCardId = UUID.randomUUID();
         PlayCardRequest request = new PlayCardRequest(0, null, null, null, null, null, null,
-                null, null, exileCardId, null, null, null, null, null, null, null, null, null);
+                null, null, exileCardId, null, null, null, null, null, null, null, null, null, null);
 
         dispatchService.dispatch(gameData, player, request);
 

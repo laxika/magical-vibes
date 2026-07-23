@@ -69,6 +69,8 @@ public class PermanentChoiceHandlerService {
             battlefieldHandler.handleTormentSacrifice(gameData, permanentId, tormentSacrifice);
         } else if (context instanceof PermanentChoiceContext.DestroyChosenCreature destroyChosenCreature) {
             battlefieldHandler.handleDestroyChosenCreature(gameData, permanentId, destroyChosenCreature);
+        } else if (context instanceof PermanentChoiceContext.OpponentMayGainControlOfCreatureYouControl opponentSteal) {
+            battlefieldHandler.handleOpponentMayGainControlOfCreatureYouControl(gameData, permanentId, opponentSteal);
         } else if (context instanceof PermanentChoiceContext.ActivatedAbilityCostChoice costChoice) {
             battlefieldHandler.handleActivatedAbilityCostChoice(gameData, player, permanentId, costChoice);
         } else if (context instanceof PermanentChoiceContext.GraveyardAbilityCostChoice graveyardCostChoice) {

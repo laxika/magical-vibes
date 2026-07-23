@@ -14,6 +14,7 @@ import com.github.laxika.magicalvibes.model.filter.PermanentIsCreaturePredicate;
 import java.util.List;
 import java.util.Set;
 
+@CardRegistration(set = "ICE", collectorNumber = "109")
 @CardRegistration(set = "8ED", collectorNumber = "115")
 public class WrathOfMaritLage extends Card {
 

@@ -417,8 +417,61 @@ public class ActivatedAbilityExecutionService {
             }
         }
 
+        // Reality Twist / Infernal Darkness: lands produce remapped or fixed colors instead.
+        boolean twistReplacement = false;
+        ManaColor fixedLandColor = null;
+        if (!dampingReplacement && permanent.getCard().hasType(CardType.LAND)) {
+            fixedLandColor = gameQueryService.fixedLandManaColor(gameData);
+            if (fixedLandColor != null) {
+                int totalMana = calculateTotalManaProduction(gameData, playerId, permanent, snapshotEffects, xValue)
+                        * manaMultiplier;
+                if (totalMana > 0) {
+                    twistReplacement = true;
+                    ManaPool pool = gameData.playerManaPools.get(playerId);
+                    pool.add(fixedLandColor, totalMana);
+                    if (isCreatureSource) {
+                        pool.addCreatureMana(fixedLandColor, totalMana);
+                    }
+                    gameBroadcastService.logAndBroadcast(gameData, GameLog.builder()
+                            .text(player.getUsername() + " adds " + totalMana + " " + fixedLandColor.getCode()
+                                    + " from ").card(permanent.getCard())
+                            .text(" (land mana type replaced).").build());
+                }
+            } else {
+                Set<ManaColor> twistedColors = gameQueryService.twistedLandManaColors(gameData, permanent);
+                if (!twistedColors.isEmpty()) {
+                    int totalMana = calculateTotalManaProduction(gameData, playerId, permanent, snapshotEffects, xValue)
+                            * manaMultiplier;
+                    if (totalMana > 0) {
+                        twistReplacement = true;
+                        if (twistedColors.size() == 1) {
+                            ManaColor color = twistedColors.iterator().next();
+                            ManaPool pool = gameData.playerManaPools.get(playerId);
+                            pool.add(color, totalMana);
+                            if (isCreatureSource) {
+                                pool.addCreatureMana(color, totalMana);
+                            }
+                            gameBroadcastService.logAndBroadcast(gameData, GameLog.builder()
+                                    .text(player.getUsername() + " adds " + totalMana + " " + color.getCode()
+                                            + " from ").card(permanent.getCard())
+                                    .text(" (Reality Twist).").build());
+                        } else {
+                            ChoiceContext.ManaColorChoice choiceContext =
+                                    new ChoiceContext.ManaColorChoice(playerId, isCreatureSource, totalMana);
+                            List<String> colors = twistedColors.stream().map(Enum::name).toList();
+                            interactionHandlerRegistry.begin(gameData, new PendingInteraction.ColorChoice(
+                                    playerId, null, null, choiceContext, colors,
+                                    "Choose a color of mana to add (Reality Twist)."));
+                            log.info("Game {} - Awaiting {} to choose Reality Twist mana color",
+                                    gameData.id, player.getUsername());
+                        }
+                    }
+                }
+            }
+        }
+
         for (CardEffect effect : snapshotEffects) {
-            if (dampingReplacement && effect instanceof ManaProducingEffect) {
+            if ((dampingReplacement || twistReplacement) && effect instanceof ManaProducingEffect) {
                 continue;
             }
             if (effect instanceof AwardManaEffect award) {
@@ -525,8 +578,11 @@ public class ActivatedAbilityExecutionService {
                     log.info("Game {} - Awaiting {} to choose a mana color (X={})", gameData.id, player.getUsername(), xValue);
                 }
             } else if (effect instanceof AwardManaOfColorsEffect ofColors) {
-                int picks = ofColors.amount() * manaMultiplier;
-                if (ofColors.colors().size() == 1) {
+                int picks = amountEvaluationService.evaluate(gameData, ofColors.amount(),
+                        AmountContext.forManaAbility(permanent, playerId)) * manaMultiplier;
+                if (picks <= 0) {
+                    // no-op
+                } else if (ofColors.colors().size() == 1) {
                     ManaColor manaColor = ofColors.colors().get(0);
                     ManaPool pool = gameData.playerManaPools.get(playerId);
                     pool.add(manaColor, picks);
@@ -809,7 +865,8 @@ public class ActivatedAbilityExecutionService {
             } else if (effect instanceof AwardAnyColorManaEffect aace) {
                 total += aace.amount();
             } else if (effect instanceof AwardManaOfColorsEffect ofColors) {
-                total += ofColors.amount();
+                total += amountEvaluationService.evaluate(gameData, ofColors.amount(),
+                        AmountContext.forManaAbility(permanent, playerId));
             } else if (effect instanceof AwardRestrictedManaEffect arm) {
                 total += arm.amount();
             } else if (effect instanceof AwardFlashbackOnlyAnyColorManaEffect fba) {

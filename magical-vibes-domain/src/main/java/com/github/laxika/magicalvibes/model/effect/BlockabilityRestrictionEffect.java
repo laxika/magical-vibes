@@ -78,4 +78,12 @@ public interface BlockabilityRestrictionEffect extends CardEffect {
     default boolean cantBeBlockedByCreaturesWithLessPower() {
         return false;
     }
+
+    /**
+     * When non-{@code null}, {@link #cantBeBlockedByCreaturesMatching()} only applies while the
+     * defending player controls a permanent matching this predicate (Arctic Foxes).
+     */
+    default PermanentPredicate cantBeBlockedByCreaturesMatchingOnlyIfDefenderControls() {
+        return null;
+    }
 }

@@ -68,6 +68,14 @@ public record ConditionContext(
         return new ConditionContext(castingPlayerId, null, null, null, false, false, null, 0, null, null, false);
     }
 
+    /**
+     * Context for a card that is not currently a battlefield permanent (e.g. graveyard activated
+     * ability gates such as {@code CardsAboveSelfInGraveyard}).
+     */
+    public static ConditionContext forCard(Card card, UUID controllerId) {
+        return new ConditionContext(controllerId, null, null, card, false, false, null, 0, null, null, false);
+    }
+
     /** Returns a copy with the given snapshotted numeric value (attacker count, mana spent). */
     public ConditionContext withXValue(int newXValue) {
         return new ConditionContext(controllerId, sourcePermanentId, sourcePermanent, sourceCard,

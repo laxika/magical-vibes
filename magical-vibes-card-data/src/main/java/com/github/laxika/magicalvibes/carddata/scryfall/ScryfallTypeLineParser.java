@@ -17,7 +17,8 @@ public class ScryfallTypeLineParser {
 
     private static final Map<String, CardSupertype> SUPERTYPE_MAP = Map.of(
             "Basic", CardSupertype.BASIC,
-            "Legendary", CardSupertype.LEGENDARY
+            "Legendary", CardSupertype.LEGENDARY,
+            "Snow", CardSupertype.SNOW
     );
 
     private static final Map<String, CardType> TYPE_MAP = Map.of(

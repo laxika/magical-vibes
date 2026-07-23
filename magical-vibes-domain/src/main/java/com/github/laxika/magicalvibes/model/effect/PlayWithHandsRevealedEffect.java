@@ -5,5 +5,10 @@ package com.github.laxika.magicalvibes.model.effect;
  * with this effect, every player's hand is visible to every player. Consumed by
  * {@code GameBroadcastService.getRevealedOpponentHand}. Used by Zur's Weirding.
  */
-public record PlayWithHandsRevealedEffect() implements CardEffect {
+public record PlayWithHandsRevealedEffect() implements PubliclyRevealedHandEffect {
+
+    @Override
+    public boolean controllerOnly() {
+        return false;
+    }
 }

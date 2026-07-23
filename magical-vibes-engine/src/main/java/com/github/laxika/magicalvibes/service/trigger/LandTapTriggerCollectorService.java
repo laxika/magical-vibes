@@ -1,6 +1,7 @@
 package com.github.laxika.magicalvibes.service.trigger;
 
 import com.github.laxika.magicalvibes.model.CardColor;
+import com.github.laxika.magicalvibes.model.CardSupertype;
 import com.github.laxika.magicalvibes.model.ChoiceContext;
 import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.ManaColor;
@@ -9,9 +10,11 @@ import com.github.laxika.magicalvibes.model.PendingInteraction;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.effect.AddExtraManaOfChosenColorOnLandTapEffect;
 import com.github.laxika.magicalvibes.model.effect.AddManaOnEnchantedLandTapEffect;
+import com.github.laxika.magicalvibes.model.CardSupertype;
 import com.github.laxika.magicalvibes.model.effect.AddManaWhenLandOfSubtypeTappedForManaEffect;
 import com.github.laxika.magicalvibes.model.effect.AddOneOfEachManaTypeProducedByLandEffect;
 import com.github.laxika.magicalvibes.model.effect.AddProducedManaWhenLandOfSubtypeTappedEffect;
+import com.github.laxika.magicalvibes.model.effect.AddRestrictedManaWhenLandOfSubtypeTappedForManaEffect;
 import com.github.laxika.magicalvibes.model.effect.AwardAnyColorManaEffect;
 import com.github.laxika.magicalvibes.model.effect.AwardManaEffect;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
@@ -262,6 +265,28 @@ public class LandTapTriggerCollectorService {
         gameBroadcastService.logAndBroadcast(match.gameData(), GameLog.cardThen(match.permanent().getCard(),
                 " triggers — " + match.gameData().playerIdToName.get(lt.tappingPlayerId())
                         + " adds 1 additional " + trigger.color().name().toLowerCase() + " mana."));
+        return true;
+    }
+
+    @CollectsTrigger(value = AddRestrictedManaWhenLandOfSubtypeTappedForManaEffect.class,
+            slot = EffectSlot.ON_ANY_PLAYER_TAPS_LAND)
+    private boolean handleAddRestrictedManaWhenSubtypeLandTapped(TriggerMatchContext match,
+            AddRestrictedManaWhenLandOfSubtypeTappedForManaEffect trigger, TriggerContext ctx) {
+        TriggerContext.LandTap lt = (TriggerContext.LandTap) ctx;
+
+        Permanent tappedLand = gameQueryService.findPermanentById(match.gameData(), lt.tappedLandId());
+        if (tappedLand == null) return false;
+        if (!tappedLand.getCard().getSubtypes().contains(trigger.subtype())) return false;
+
+        boolean snow = tappedLand.getCard().getSupertypes().contains(CardSupertype.SNOW);
+        int amount = snow ? trigger.snowAmount() : trigger.amount();
+        ManaPool pool = match.gameData().playerManaPools.get(lt.tappingPlayerId());
+        trigger.restriction().applyTo(pool, trigger.color(), amount);
+
+        gameBroadcastService.logAndBroadcast(match.gameData(), GameLog.cardThen(match.permanent().getCard(),
+                " triggers — " + match.gameData().playerIdToName.get(lt.tappingPlayerId())
+                        + " adds " + amount + " additional " + trigger.color().name().toLowerCase()
+                        + " mana (" + trigger.restriction().description() + ")."));
         return true;
     }
 

@@ -41,7 +41,7 @@ import com.github.laxika.magicalvibes.model.effect.ReduceOwnCastCostIfTargetingS
 import com.github.laxika.magicalvibes.model.effect.SacrificeCreaturesForCostReductionEffect;
 import com.github.laxika.magicalvibes.model.effect.AllowCastFromTopOfLibraryEffect;
 import com.github.laxika.magicalvibes.model.effect.LookAtTopCardOfOwnLibraryEffect;
-import com.github.laxika.magicalvibes.model.effect.PlayWithHandsRevealedEffect;
+import com.github.laxika.magicalvibes.model.effect.PubliclyRevealedHandEffect;
 import com.github.laxika.magicalvibes.model.effect.PlayWithTopCardRevealedEffect;
 import com.github.laxika.magicalvibes.model.effect.RevealOpponentHandsEffect;
 import com.github.laxika.magicalvibes.networking.SessionManager;
@@ -273,7 +273,26 @@ public class GameBroadcastService {
         // Mindslaver: controller always sees the controlled player's hand
         // (handled separately in broadcastGameState — overrides opponentHand for controller)
 
-        boolean reveals = anyPlayerHasPlayWithHandsRevealed(gameData);
+        boolean allHandsRevealed = false;
+        boolean opponentRevealsOwnHand = false;
+        for (UUID pid : gameData.orderedPlayerIds) {
+            List<Permanent> bf = gameData.playerBattlefields.get(pid);
+            if (bf == null) continue;
+            for (Permanent perm : bf) {
+                for (CardEffect effect : perm.getCard().getEffects(EffectSlot.STATIC)) {
+                    if (effect instanceof PubliclyRevealedHandEffect reveal) {
+                        if (!reveal.controllerOnly()) {
+                            allHandsRevealed = true;
+                        } else if (!pid.equals(playerId)) {
+                            // Opponent plays with their hand revealed (Enduring Renewal).
+                            opponentRevealsOwnHand = true;
+                        }
+                    }
+                }
+            }
+        }
+
+        boolean reveals = allHandsRevealed || opponentRevealsOwnHand;
         if (!reveals) {
             List<Permanent> bf = gameData.playerBattlefields.get(playerId);
             if (bf == null) return List.of();
@@ -296,21 +315,6 @@ public class GameBroadcastService {
             }
         }
         return List.of();
-    }
-
-    private boolean anyPlayerHasPlayWithHandsRevealed(GameData gameData) {
-        for (UUID pid : gameData.orderedPlayerIds) {
-            List<Permanent> bf = gameData.playerBattlefields.get(pid);
-            if (bf == null) continue;
-            for (Permanent perm : bf) {
-                for (CardEffect effect : perm.getCard().getEffects(EffectSlot.STATIC)) {
-                    if (effect instanceof PlayWithHandsRevealedEffect) {
-                        return true;
-                    }
-                }
-            }
-        }
-        return false;
     }
 
     List<List<CardView>> getRevealedLibraryTopCards(GameData data, UUID viewerId) {
@@ -463,7 +467,13 @@ public class GameBroadcastService {
                     }
                     pool = poolWithoutSource;
                 }
-                if (new ManaCost(ability.getManaCost()).canPay(pool, 0)) {
+                ManaCost abilityManaCost = new ManaCost(ability.getManaCost());
+                boolean artifactCtx = gameQueryService.isArtifact(perm);
+                boolean myrCtx = perm.getCard().getSubtypes().contains(CardSubtype.MYR);
+                Set<CardSubtype> soaCtx = new HashSet<>(perm.getCard().getSubtypes());
+                soaCtx.addAll(perm.getTransientSubtypes());
+                soaCtx.addAll(perm.getGrantedSubtypes());
+                if (abilityManaCost.canPay(pool, 0, artifactCtx, myrCtx, false, false, false, null, soaCtx, false, artifactCtx)) {
                     payable.add(i);
                 }
             }

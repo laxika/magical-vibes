@@ -7,7 +7,8 @@ import lombok.RequiredArgsConstructor;
 public enum CardSupertype {
 
     BASIC("Basic"),
-    LEGENDARY("Legendary");
+    LEGENDARY("Legendary"),
+    SNOW("Snow");
 
     @Getter
     private final String displayName;

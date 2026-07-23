@@ -19,6 +19,10 @@ import com.github.laxika.magicalvibes.model.effect.MayEffect;
 import com.github.laxika.magicalvibes.model.effect.MayPayManaEffect;
 import com.github.laxika.magicalvibes.model.effect.MillOpponentOnLifeLossEffect;
 import com.github.laxika.magicalvibes.model.CounterType;
+import com.github.laxika.magicalvibes.model.effect.ForcedCostOrElseEffect;
+import com.github.laxika.magicalvibes.model.effect.PayManaCost;
+import com.github.laxika.magicalvibes.model.effect.DealDamageToPlayersEffect;
+import com.github.laxika.magicalvibes.model.effect.DamageRecipient;
 import com.github.laxika.magicalvibes.model.effect.PutCounterOnEnchantedCreatureEffect;
 import com.github.laxika.magicalvibes.model.effect.PutCountersOnSelfEffect;
 import com.github.laxika.magicalvibes.model.effect.PutCountersOnSourceEffect;
@@ -297,6 +301,37 @@ class MiscTriggerCollectorServiceTest {
                     EffectSlot.ON_ENCHANTED_PERMANENT_TAPPED, effect, ctx);
 
             verify(gameBroadcastService).logAndBroadcast(eq(gd), any(GameLogEntry.class));
+        }
+    }
+
+    // ===== ON_ENCHANTED_PERMANENT_TAPPED — ForcedCostOrElseEffect =====
+
+    @Nested
+    @DisplayName("ON_ENCHANTED_PERMANENT_TAPPED — ForcedCostOrElseEffect")
+    class EnchantedPermanentTapForcedCost {
+
+        @Test
+        @DisplayName("bakes tapped permanent's controller as targetId for pay-or-penalty")
+        void bakesControllerAsTargetId() {
+            Permanent aura = createPermanent("Seizures");
+            Permanent tappedPerm = createPermanent("Grizzly Bears");
+            var effect = ForcedCostOrElseEffect.enchantedControllerMayPay(
+                    new PayManaCost("{3}"),
+                    List.of(new DealDamageToPlayersEffect(3, DamageRecipient.ENCHANTED_PERMANENT_CONTROLLER)));
+            var ctx = new TriggerContext.EnchantedPermanentTap(tappedPerm, player2Id);
+
+            boolean result = registry.dispatch(
+                    match(aura, player1Id, effect),
+                    EffectSlot.ON_ENCHANTED_PERMANENT_TAPPED, effect, ctx);
+
+            assertThat(result).isTrue();
+            assertThat(gd.stack).hasSize(1);
+            var stackEntry = gd.stack.getLast();
+            assertThat(stackEntry.getEntryType()).isEqualTo(StackEntryType.TRIGGERED_ABILITY);
+            assertThat(stackEntry.getControllerId()).isEqualTo(player1Id);
+            assertThat(stackEntry.getTargetId()).isEqualTo(player2Id);
+            assertThat(stackEntry.getSourcePermanentId()).isEqualTo(aura.getId());
+            assertThat(stackEntry.getEffectsToResolve().getFirst()).isSameAs(effect);
         }
     }
 

@@ -14,6 +14,7 @@ import com.github.laxika.magicalvibes.model.filter.CardNotPredicate;
 import java.util.List;
 
 @CardRegistration(set = "5ED", collectorNumber = "96")
+@CardRegistration(set = "ICE", collectorNumber = "81")
 public class KrovikanSorcerer extends Card {
 
     public KrovikanSorcerer() {

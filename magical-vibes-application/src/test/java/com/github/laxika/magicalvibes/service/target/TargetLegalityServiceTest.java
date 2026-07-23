@@ -43,6 +43,7 @@ import com.github.laxika.magicalvibes.model.filter.StackEntryIsSingleTargetPredi
 import com.github.laxika.magicalvibes.model.filter.StackEntryManaValuePredicate;
 import com.github.laxika.magicalvibes.model.filter.StackEntryNotPredicate;
 import com.github.laxika.magicalvibes.model.filter.StackEntryPredicateTargetFilter;
+import com.github.laxika.magicalvibes.model.filter.StackEntryTargetsSourcePredicate;
 import com.github.laxika.magicalvibes.model.filter.StackEntryTargetsYouOrCreatureYouControlPredicate;
 import com.github.laxika.magicalvibes.model.filter.StackEntryTargetsYourPermanentPredicate;
 import com.github.laxika.magicalvibes.model.filter.StackEntryTypeInPredicate;
@@ -1941,6 +1942,46 @@ class TargetLegalityServiceTest {
 
             assertThat(sut.matchesStackEntryPredicate(gd, entry,
                     new StackEntryTargetsYouOrCreatureYouControlPredicate(), player1Id))
+                    .isFalse();
+        }
+
+        @Test
+        @DisplayName("matches StackEntryTargetsSourcePredicate when targeting the source permanent")
+        void matchesTargetsSourcePredicate() {
+            Permanent source = addPermanent(player1Id, createCreature("Mistfolk", CardColor.BLUE));
+            Card spell = createTargetingSpell("Bolt", CardColor.RED);
+            StackEntry entry = new StackEntry(StackEntryType.INSTANT_SPELL, spell, player2Id, "Bolt",
+                    spell.getEffects(EffectSlot.SPELL), 0, source.getId(), Map.of());
+
+            assertThat(sut.matchesStackEntryPredicate(gd, entry,
+                    new StackEntryTargetsSourcePredicate(), player1Id, source))
+                    .isTrue();
+        }
+
+        @Test
+        @DisplayName("rejects StackEntryTargetsSourcePredicate when targeting a different permanent")
+        void rejectsTargetsSourcePredicateWhenTargetingOther() {
+            Permanent source = addPermanent(player1Id, createCreature("Mistfolk", CardColor.BLUE));
+            Permanent other = addPermanent(player1Id, createCreature("Bear", CardColor.GREEN));
+            Card spell = createTargetingSpell("Bolt", CardColor.RED);
+            StackEntry entry = new StackEntry(StackEntryType.INSTANT_SPELL, spell, player2Id, "Bolt",
+                    spell.getEffects(EffectSlot.SPELL), 0, other.getId(), Map.of());
+
+            assertThat(sut.matchesStackEntryPredicate(gd, entry,
+                    new StackEntryTargetsSourcePredicate(), player1Id, source))
+                    .isFalse();
+        }
+
+        @Test
+        @DisplayName("rejects StackEntryTargetsSourcePredicate when source is null")
+        void rejectsTargetsSourcePredicateWithoutSource() {
+            Permanent creature = addPermanent(player1Id, createCreature("Mistfolk", CardColor.BLUE));
+            Card spell = createTargetingSpell("Bolt", CardColor.RED);
+            StackEntry entry = new StackEntry(StackEntryType.INSTANT_SPELL, spell, player2Id, "Bolt",
+                    spell.getEffects(EffectSlot.SPELL), 0, creature.getId(), Map.of());
+
+            assertThat(sut.matchesStackEntryPredicate(gd, entry,
+                    new StackEntryTargetsSourcePredicate(), player1Id))
                     .isFalse();
         }
 

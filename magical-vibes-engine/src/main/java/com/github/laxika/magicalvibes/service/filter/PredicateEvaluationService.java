@@ -49,12 +49,15 @@ import com.github.laxika.magicalvibes.model.filter.PermanentAttachedToSourceCont
 import com.github.laxika.magicalvibes.model.filter.PermanentAttackedOrBlockedThisTurnPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentBlockedOrWasBlockedBySubtypeThisTurnPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentColorInPredicate;
+import com.github.laxika.magicalvibes.model.filter.PermanentControlledByActivePlayerPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentControlledBySourceControllerPredicate;
+import com.github.laxika.magicalvibes.model.filter.PermanentControlledContinuouslySinceBeginningOfTurnPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentControllerControlsPermanentPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentDealtDamageThisTurnPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentDealtDamageToSourceControllerThisTurnPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentHasAnySubtypePredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentHasCountersPredicate;
+import com.github.laxika.magicalvibes.model.filter.PermanentHasCumulativeUpkeepPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentHasGreatestManaValueAmongAllCreaturesPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentHasGreatestPowerAmongControlledCreaturesPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentHasKeywordPredicate;
@@ -117,6 +120,7 @@ import com.github.laxika.magicalvibes.model.filter.StackEntryPredicate;
 import com.github.laxika.magicalvibes.model.filter.StackEntryPredicateTargetFilter;
 import com.github.laxika.magicalvibes.model.filter.StackEntrySharesChosenNameWithSourcePredicate;
 import com.github.laxika.magicalvibes.model.filter.StackEntryTargetsPermanentPredicate;
+import com.github.laxika.magicalvibes.model.filter.StackEntryTargetsSourcePredicate;
 import com.github.laxika.magicalvibes.model.filter.StackEntryTargetsYouOrCreatureYouControlPredicate;
 import com.github.laxika.magicalvibes.model.filter.StackEntryTargetsYouPredicate;
 import com.github.laxika.magicalvibes.model.filter.StackEntryTargetsYourPermanentPredicate;
@@ -546,6 +550,15 @@ public class PredicateEvaluationService {
                 List<Permanent> controllerBattlefield = gameData.playerBattlefields.get(sourceControllerId);
                 yield controllerBattlefield != null && controllerBattlefield.contains(permanent);
             }
+            case PermanentControlledByActivePlayerPredicate ignored -> {
+                if (gameData == null || gameData.activePlayerId == null) {
+                    yield false;
+                }
+                List<Permanent> activeBattlefield = gameData.playerBattlefields.get(gameData.activePlayerId);
+                yield activeBattlefield != null && activeBattlefield.contains(permanent);
+            }
+            case PermanentControlledContinuouslySinceBeginningOfTurnPredicate ignored ->
+                    !permanent.isSummoningSick();
             case PermanentOwnedBySourceControllerPredicate ignored -> {
                 if (sourceControllerId == null || gameData == null) {
                     yield false;
@@ -647,6 +660,8 @@ public class PredicateEvaluationService {
                         case AIM -> permanent.getCounterCount(CounterType.AIM) > 0;
                         case BRIBERY -> permanent.getCounterCount(CounterType.BRIBERY) > 0;
                         case FEATHER -> permanent.getCounterCount(CounterType.FEATHER) > 0;
+                        case MUSIC -> permanent.getCounterCount(CounterType.MUSIC) > 0;
+                        case PARALYZATION -> permanent.getCounterCount(CounterType.PARALYZATION) > 0;
                         case ANY -> permanent.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE) > 0
                                 || permanent.getCounterCount(CounterType.MINUS_ONE_MINUS_ONE) > 0
                                 || permanent.getCounterCount(CounterType.CHARGE) > 0
@@ -658,9 +673,12 @@ public class PredicateEvaluationService {
                                 || permanent.getCounterCount(CounterType.LORE) > 0
                                 || permanent.getCounterCount(CounterType.AIM) > 0
                                 || permanent.getCounterCount(CounterType.BRIBERY) > 0
-                                || permanent.getCounterCount(CounterType.FEATHER) > 0;
+                                || permanent.getCounterCount(CounterType.FEATHER) > 0
+                                || permanent.getCounterCount(CounterType.MUSIC) > 0
+                                || permanent.getCounterCount(CounterType.PARALYZATION) > 0;
                         default -> false;
                     };
+            case PermanentHasCumulativeUpkeepPredicate ignored -> permanent.hasCumulativeUpkeep();
             case PermanentDealtDamageThisTurnPredicate ignored ->
                     gameData != null && gameData.permanentsDealtDamageThisTurn.contains(permanent.getId());
             case PermanentDealtDamageToSourceControllerThisTurnPredicate ignored -> {
@@ -886,6 +904,7 @@ public class PredicateEvaluationService {
             case StackEntryManaValueAtMostControlledCountPredicate ignored -> false;
             case StackEntryControlledByPredicate ignored -> false;
             case StackEntryTargetsYourPermanentPredicate ignored -> false;
+            case StackEntryTargetsSourcePredicate ignored -> false;
             case StackEntryTargetsYouOrCreatureYouControlPredicate ignored -> false;
             case StackEntryTargetsYouPredicate ignored -> false;
             case StackEntryTargetsPermanentPredicate ignored -> false;

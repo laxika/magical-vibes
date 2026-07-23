@@ -20,6 +20,8 @@ import com.github.laxika.magicalvibes.model.Zone;
 import com.github.laxika.magicalvibes.model.ActivatedAbility;
 import com.github.laxika.magicalvibes.model.CardSubtype;
 import com.github.laxika.magicalvibes.model.CounterType;
+import com.github.laxika.magicalvibes.model.action.DelayedSacrificeSourceWhenTargetLeaves;
+import com.github.laxika.magicalvibes.model.action.DelayedSacrificeTargetWhenSourceLeaves;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
 import com.github.laxika.magicalvibes.model.effect.DamageRecipient;
 import com.github.laxika.magicalvibes.model.effect.DamageDamagedCreatureControllerAndSelfEffect;
@@ -35,6 +37,7 @@ import com.github.laxika.magicalvibes.model.effect.CopyControllerCastSpellEffect
 import com.github.laxika.magicalvibes.model.effect.CopyThisSpellIfConditionEffect;
 import com.github.laxika.magicalvibes.model.effect.MayEffect;
 import com.github.laxika.magicalvibes.model.effect.OncePerTurnTriggerEffect;
+import com.github.laxika.magicalvibes.model.effect.DyingCreatureCardAwareEffect;
 import com.github.laxika.magicalvibes.model.effect.StormCopyEffect;
 import com.github.laxika.magicalvibes.model.effect.StormEffect;
 import com.github.laxika.magicalvibes.model.effect.TriggeringCardConditionalEffect;
@@ -2188,6 +2191,12 @@ public class TriggerCollectionService {
                     ));
                     anyEffectFired = true;
                 } else {
+                    // Enduring Renewal / similar: bind the dying card id onto effects that need it
+                    // before the batched stack entry is created.
+                    if (resolvedEffect instanceof DyingCreatureCardAwareEffect aware
+                            && dyingCard != null) {
+                        resolvedEffect = aware.boundToDyingCard(dyingCard.getId());
+                    }
                     stackEffects.add(resolvedEffect);
                 }
             }
@@ -2502,6 +2511,71 @@ public class TriggerCollectionService {
         for (CardEffect effect : effects) {
             var match = new TriggerMatchContext(gameData, target, controllerId, effect);
             registry.dispatch(match, EffectSlot.ON_SELF_LEAVES_BATTLEFIELD, effect, ctx);
+        }
+    }
+
+    /**
+     * Fires delayed "when that creature leaves the battlefield this turn, sacrifice this creature"
+     * triggers (Kjeldoran Elite Guard). Drains matching {@link DelayedSacrificeSourceWhenTargetLeaves}
+     * entries and enqueues a {@link SacrificeSelfEffect} for each. Called from every leave path in
+     * {@link com.github.laxika.magicalvibes.service.battlefield.PermanentRemovalService}.
+     */
+    public void processDelayedSacrificeSourceWhenTargetLeaves(GameData gameData, Permanent leavingPermanent) {
+        if (!gameData.hasDelayedAction(DelayedSacrificeSourceWhenTargetLeaves.class)) {
+            return;
+        }
+        UUID leavingId = leavingPermanent.getId();
+        for (DelayedSacrificeSourceWhenTargetLeaves delayed : gameData.drainDelayedActions(
+                DelayedSacrificeSourceWhenTargetLeaves.class,
+                d -> leavingId.equals(d.watchedPermanentId()))) {
+            StackEntry se = new StackEntry(
+                    StackEntryType.TRIGGERED_ABILITY,
+                    delayed.sourceCard(),
+                    delayed.controllerId(),
+                    delayed.sourceCard().getName() + "'s delayed trigger",
+                    new ArrayList<>(List.of(new SacrificeSelfEffect())),
+                    null,
+                    delayed.sourcePermanentId());
+            se.setNonTargeting(true);
+            gameData.enqueueTrigger(se);
+            gameBroadcastService.logAndBroadcast(gameData,
+                    GameLog.text(delayed.sourceCard().getName() + "'s delayed trigger triggers."));
+            log.info("Game {} - {} delayed leave-trigger fires (watched {} left); sacrifice source {}",
+                    gameData.id, delayed.sourceCard().getName(), leavingPermanent.getCard().getName(),
+                    delayed.sourcePermanentId());
+        }
+    }
+
+    /**
+     * Fires delayed "when this creature leaves the battlefield this turn, sacrifice that creature"
+     * triggers (Phantasmal Mount). Drains matching {@link DelayedSacrificeTargetWhenSourceLeaves}
+     * entries and enqueues a {@link SacrificeSelfEffect} against the pumped target for each. Called
+     * from every leave path in
+     * {@link com.github.laxika.magicalvibes.service.battlefield.PermanentRemovalService}.
+     */
+    public void processDelayedSacrificeTargetWhenSourceLeaves(GameData gameData, Permanent leavingPermanent) {
+        if (!gameData.hasDelayedAction(DelayedSacrificeTargetWhenSourceLeaves.class)) {
+            return;
+        }
+        UUID leavingId = leavingPermanent.getId();
+        for (DelayedSacrificeTargetWhenSourceLeaves delayed : gameData.drainDelayedActions(
+                DelayedSacrificeTargetWhenSourceLeaves.class,
+                d -> leavingId.equals(d.watchedPermanentId()))) {
+            StackEntry se = new StackEntry(
+                    StackEntryType.TRIGGERED_ABILITY,
+                    delayed.sourceCard(),
+                    delayed.controllerId(),
+                    delayed.sourceCard().getName() + "'s delayed trigger",
+                    new ArrayList<>(List.of(new SacrificeSelfEffect())),
+                    null,
+                    delayed.targetPermanentId());
+            se.setNonTargeting(true);
+            gameData.enqueueTrigger(se);
+            gameBroadcastService.logAndBroadcast(gameData,
+                    GameLog.text(delayed.sourceCard().getName() + "'s delayed trigger triggers."));
+            log.info("Game {} - {} delayed leave-trigger fires (source {} left); sacrifice target {}",
+                    gameData.id, delayed.sourceCard().getName(), leavingPermanent.getCard().getName(),
+                    delayed.targetPermanentId());
         }
     }
 

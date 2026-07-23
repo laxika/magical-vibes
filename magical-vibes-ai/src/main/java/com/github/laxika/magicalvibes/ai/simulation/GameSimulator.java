@@ -911,8 +911,8 @@ public class GameSimulator {
         }
 
         boolean alreadyPaid;
-        if (cost.hasX() && card.getXColorRestriction() != null) {
-            alreadyPaid = cost.canPay(currentPool, xValue, card.getXColorRestriction(), 0);
+        if (cost.hasX() && card.hasXColorRestriction()) {
+            alreadyPaid = cost.canPay(currentPool, xValue, card.getXColorRestrictions(), 0);
         } else {
             alreadyPaid = cost.canPay(currentPool, xValue);
         }
@@ -927,8 +927,8 @@ public class GameSimulator {
             if (!tapOrActivateMana(gd, player, perm, i, cost, currentPool)) continue;
             currentPool = gd.playerManaPools.get(playerId);
             boolean canPayNow;
-            if (cost.hasX() && card.getXColorRestriction() != null) {
-                canPayNow = cost.canPay(currentPool, xValue, card.getXColorRestriction(), 0);
+            if (cost.hasX() && card.hasXColorRestriction()) {
+                canPayNow = cost.canPay(currentPool, xValue, card.getXColorRestrictions(), 0);
             } else {
                 canPayNow = cost.canPay(currentPool, xValue);
             }
@@ -1041,10 +1041,23 @@ public class GameSimulator {
         ManaCost cost = new ManaCost(card.getManaCost());
         int costModifier = castingCostService.getCastCostModifier(gd, gd.activePlayerId, card);
         int maxX;
-        if (card.getXColorRestriction() != null) {
-            maxX = cost.calculateMaxX(virtualPool, card.getXColorRestriction(), costModifier);
+        if (card.getXColorRestrictions() != null) {
+            maxX = cost.calculateMaxX(virtualPool, card.getXColorRestrictions(), costModifier);
         } else {
             maxX = Math.max(0, cost.calculateMaxX(virtualPool) - costModifier);
+        }
+        if (card.getXValueCap() != null) {
+            // Cap announced X (e.g. Winter's Chill: snow lands you control).
+            if (card.getXValueCap() instanceof com.github.laxika.magicalvibes.model.amount.PermanentCount pc
+                    && pc.scope() == com.github.laxika.magicalvibes.model.amount.CountScope.CONTROLLER) {
+                int cap = 0;
+                for (Permanent p : gd.playerBattlefields.getOrDefault(gd.activePlayerId, List.of())) {
+                    if (predicateEvaluationService.matchesPermanentPredicate(gd, p, pc.filter())) {
+                        cap++;
+                    }
+                }
+                maxX = Math.min(maxX, cap);
+            }
         }
         if (maxX <= 0) {
             return 0;

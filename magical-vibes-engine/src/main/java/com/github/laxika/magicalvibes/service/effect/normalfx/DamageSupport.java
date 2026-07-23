@@ -82,6 +82,13 @@ public class DamageSupport {
         // Defense in depth: a creature can never deal negative damage. Guards against any upstream
         // computation (e.g. future power-based effects) that might produce a negative value.
         rawDamage = Math.max(0, rawDamage);
+        // Energy Storm: prevent damage dealt by instant/sorcery spells themselves (not fight/bite
+        // damage from permanents that a spell merely caused to deal damage).
+        if (damageSource == null && gameQueryService.isDamageFromInstantOrSorcerySpellPrevented(gameData, entry)) {
+            gameBroadcastService.logAndBroadcast(gameData, GameLog.cardThen(entry.getEffectiveDamageSourceCard(),
+                    "'s damage is prevented."));
+            return;
+        }
         // Apply source-specific redirect shields (e.g. Harm's Way) before creature prevention
         UUID targetControllerId = gameQueryService.findPermanentController(gameData, target.getId());
         UUID sourcePermId = damageSource != null ? damageSource.getId() : entry.getSourcePermanentId();
@@ -344,6 +351,10 @@ public class DamageSupport {
             gameBroadcastService.logAndBroadcast(gameData, GameLog.cardThen(source, "'s damage is prevented."));
             return true;
         }
+        if (gameQueryService.isDamageFromInstantOrSorcerySpellPrevented(gameData, entry)) {
+            gameBroadcastService.logAndBroadcast(gameData, GameLog.cardThen(source, "'s damage is prevented."));
+            return true;
+        }
         return false;
     }
 
@@ -475,6 +486,12 @@ public class DamageSupport {
         String cardName = source.getName();
         // Curse of Bloodletting and similar: double damage dealt to the enchanted player (replacement effect)
         rawDamage *= gameQueryService.getEnchantedPlayerDamageMultiplier(gameData, playerId);
+        // Energy Storm: prevent all damage dealt by instant and sorcery spells.
+        if (gameQueryService.isDamageFromInstantOrSorcerySpellPrevented(gameData, entry)) {
+            gameBroadcastService.logAndBroadcast(gameData, GameLog.cardThen(source,
+                    "'s damage to " + gameData.playerIdToName.get(playerId) + " is prevented."));
+            return;
+        }
         if (damagePreventionService.isSourceDamagePreventedForPlayer(gameData, playerId, entry.getSourcePermanentId())
                 || damagePreventionService.isNoncombatDamageFromAttackerPreventedForPlayer(gameData, playerId, entry.getSourcePermanentId())
                 || isSourcePermanentPreventedFromDealingDamage(gameData, entry)) {

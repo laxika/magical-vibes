@@ -9,6 +9,7 @@ import com.github.laxika.magicalvibes.cards.CardRegistration;
 
 @CardRegistration(set = "9ED", collectorNumber = "8")
 @CardRegistration(set = "5ED", collectorNumber = "12")
+@CardRegistration(set = "ICE", collectorNumber = "8")
 public class BlinkingSpirit extends Card {
 
     public BlinkingSpirit() {

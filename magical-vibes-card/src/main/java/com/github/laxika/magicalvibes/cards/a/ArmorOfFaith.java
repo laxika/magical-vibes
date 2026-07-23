@@ -14,6 +14,7 @@ import com.github.laxika.magicalvibes.model.filter.PermanentPredicateTargetFilte
 import java.util.List;
 
 @CardRegistration(set = "5ED", collectorNumber = "8")
+@CardRegistration(set = "ICE", collectorNumber = "4")
 public class ArmorOfFaith extends Card {
 
     public ArmorOfFaith() {

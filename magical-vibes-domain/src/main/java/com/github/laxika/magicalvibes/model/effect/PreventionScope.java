@@ -12,6 +12,8 @@ public enum PreventionScope {
     NEXT_TO_CONTROLLER,
     /** "Prevent the next N damage that would be dealt to ~" — the source permanent's own shield (Ethereal Champion). */
     NEXT_TO_SELF,
+    /** "Prevent the next N damage that would be dealt to enchanted creature this turn" — shields the Aura's attached permanent (Fylgja). */
+    NEXT_TO_ENCHANTED,
     /** "Prevent the next N damage that would be dealt to any target" with a chosen target creature/player (Healing Salve). */
     NEXT_TO_TARGET,
     /** "Prevent all combat damage that would be dealt this turn" (Fog, Holy Day). */

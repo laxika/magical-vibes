@@ -1,5 +1,6 @@
 package com.github.laxika.magicalvibes.model;
 
+import com.github.laxika.magicalvibes.model.amount.DynamicAmount;
 import com.github.laxika.magicalvibes.model.condition.Condition;
 import com.github.laxika.magicalvibes.model.filter.TargetFilter;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
@@ -85,7 +86,16 @@ public class Card {
     private Integer loyalty;
     /** Printed defense for Battle permanents (enters with that many defense counters). */
     private Integer defense;
-    private ManaColor xColorRestriction;
+    /**
+     * When non-null/non-empty, mana spent on X must come only from these colors
+     * (e.g. Consume Spirit = {BLACK}; Soul Burn = {BLACK, RED}).
+     */
+    private Set<ManaColor> xColorRestrictions;
+    /**
+     * Optional cast-time ceiling on announced X ("X can't be greater than …"). Evaluated against
+     * the casting player when the spell is cast; null means mana alone caps X.
+     */
+    private DynamicAmount xValueCap;
     private String setCode;
     private String collectorNumber;
 
@@ -204,7 +214,10 @@ public class Card {
         this.keywords = source.keywords;
         this.loyalty = source.loyalty;
         this.defense = source.defense;
-        this.xColorRestriction = source.xColorRestriction;
+        this.xColorRestrictions = source.xColorRestrictions == null
+                ? null
+                : EnumSet.copyOf(source.xColorRestrictions);
+        this.xValueCap = source.xValueCap;
         this.setCode = source.setCode;
         this.collectorNumber = source.collectorNumber;
         this.token = source.token;
@@ -277,7 +290,34 @@ public class Card {
     public void setKeywords(Set<Keyword> keywords) { assertMutable(); this.keywords = keywords; }
     public void setLoyalty(Integer loyalty) { assertMutable(); this.loyalty = loyalty; }
     public void setDefense(Integer defense) { assertMutable(); this.defense = defense; }
-    public void setXColorRestriction(ManaColor xColorRestriction) { assertMutable(); this.xColorRestriction = xColorRestriction; }
+    /** Restrict X to a single color (Consume Spirit). */
+    public void setXColorRestriction(ManaColor xColorRestriction) {
+        assertMutable();
+        this.xColorRestrictions = xColorRestriction == null ? null : EnumSet.of(xColorRestriction);
+    }
+
+    /** Restrict X to one or more colors (Soul Burn: black and/or red). */
+    public void setXColorRestrictions(ManaColor first, ManaColor... rest) {
+        assertMutable();
+        EnumSet<ManaColor> colors = EnumSet.of(first);
+        if (rest != null) {
+            Collections.addAll(colors, rest);
+        }
+        this.xColorRestrictions = colors;
+    }
+
+    /** Copy/replace the full X-color restriction set (null clears). */
+    public void setXColorRestrictions(Set<ManaColor> xColorRestrictions) {
+        assertMutable();
+        this.xColorRestrictions = xColorRestrictions == null || xColorRestrictions.isEmpty()
+                ? null
+                : EnumSet.copyOf(xColorRestrictions);
+    }
+
+    public boolean hasXColorRestriction() {
+        return xColorRestrictions != null && !xColorRestrictions.isEmpty();
+    }
+    public void setXValueCap(DynamicAmount xValueCap) { assertMutable(); this.xValueCap = xValueCap; }
     public void setSetCode(String setCode) { assertMutable(); this.setCode = setCode; }
     public void setCollectorNumber(String collectorNumber) { assertMutable(); this.collectorNumber = collectorNumber; }
     public void setToken(boolean token) { assertMutable(); this.token = token; }

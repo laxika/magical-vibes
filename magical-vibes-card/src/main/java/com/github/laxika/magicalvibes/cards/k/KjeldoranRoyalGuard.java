@@ -11,6 +11,7 @@ import com.github.laxika.magicalvibes.cards.CardRegistration;
 @CardRegistration(set = "10E", collectorNumber = "25")
 @CardRegistration(set = "7ED", collectorNumber = "23")
 @CardRegistration(set = "6ED", collectorNumber = "28")
+@CardRegistration(set = "ICE", collectorNumber = "38")
 public class KjeldoranRoyalGuard extends Card {
 
     public KjeldoranRoyalGuard() {

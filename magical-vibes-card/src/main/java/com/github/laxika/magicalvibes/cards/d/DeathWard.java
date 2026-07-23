@@ -9,6 +9,7 @@ import com.github.laxika.magicalvibes.model.filter.PermanentPredicateTargetFilte
 
 @CardRegistration(set = "5ED", collectorNumber = "25")
 @CardRegistration(set = "4ED", collectorNumber = "21")
+@CardRegistration(set = "ICE", collectorNumber = "19")
 public class DeathWard extends Card {
 
     public DeathWard() {

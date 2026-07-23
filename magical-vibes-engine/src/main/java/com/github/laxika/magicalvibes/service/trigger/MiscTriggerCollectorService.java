@@ -20,6 +20,7 @@ import com.github.laxika.magicalvibes.model.effect.DrawCardEffect;
 import com.github.laxika.magicalvibes.model.effect.DrawCardsEqualToLifeGainedEffect;
 import com.github.laxika.magicalvibes.model.effect.ExileForEachLifeLostEffect;
 import com.github.laxika.magicalvibes.model.effect.ExileMilledCreatureAndCreateTokenEffect;
+import com.github.laxika.magicalvibes.model.effect.SacrificeOtherPermanentUnlessDiscardForEachLifeLostEffect;
 import com.github.laxika.magicalvibes.model.effect.GivePoisonCountersEffect;
 import com.github.laxika.magicalvibes.model.effect.PoisonRecipient;
 import com.github.laxika.magicalvibes.model.effect.MayEffect;
@@ -34,6 +35,7 @@ import com.github.laxika.magicalvibes.model.effect.DamageRecipient;
 import com.github.laxika.magicalvibes.model.effect.DealDamageOnSpellLifeGainEffect;
 import com.github.laxika.magicalvibes.model.effect.DealDamageToAnyTargetEffect;
 import com.github.laxika.magicalvibes.model.effect.DealDamageToPlayersEffect;
+import com.github.laxika.magicalvibes.model.effect.ForcedCostOrElseEffect;
 import com.github.laxika.magicalvibes.model.effect.LoseLifeEffect;
 import com.github.laxika.magicalvibes.model.effect.TriggeringPermanentConditionalEffect;
 import com.github.laxika.magicalvibes.service.DrawService;
@@ -245,6 +247,27 @@ public class MiscTriggerCollectorService {
         ));
         gameBroadcastService.logAndBroadcast(match.gameData(), GameLog.abilityTriggers(match.permanent().getCard()));
         log.info("Game {} - {} triggers to damage enchanted permanent's controller",
+                match.gameData().id, match.permanent().getCard().getName());
+        return true;
+    }
+
+    @CollectsTrigger(value = ForcedCostOrElseEffect.class, slot = EffectSlot.ON_ENCHANTED_PERMANENT_TAPPED)
+    private boolean handleEnchantedPermanentTapForcedCost(TriggerMatchContext match,
+            ForcedCostOrElseEffect e, TriggerContext ctx) {
+        TriggerContext.EnchantedPermanentTap ept = (TriggerContext.EnchantedPermanentTap) ctx;
+        // Seizures: enchanted controller may pay or take damage. Bake that player as targetId so
+        // payerIsEnchantedController and ENCHANTED_PERMANENT_CONTROLLER damage both see it.
+        match.gameData().enqueueTrigger(new StackEntry(
+                StackEntryType.TRIGGERED_ABILITY,
+                match.permanent().getCard(),
+                match.controllerId(),
+                match.permanent().getCard().getName() + "'s triggered ability",
+                new ArrayList<>(List.of(e)),
+                ept.tappedPermanentControllerId(),
+                match.permanent().getId()
+        ));
+        gameBroadcastService.logAndBroadcast(match.gameData(), GameLog.abilityTriggers(match.permanent().getCard()));
+        log.info("Game {} - {} triggers (pay-or-penalty) on enchanted permanent tap",
                 match.gameData().id, match.permanent().getCard().getName());
         return true;
     }
@@ -612,6 +635,34 @@ public class MiscTriggerCollectorService {
         for (int i = 0; i < amount; i++) {
             drawService.resolveDrawCard(gameData, controllerId);
         }
+        return true;
+    }
+
+    // ── ON_CONTROLLER_LOSES_LIFE (sacrifice/discard for each life lost) ─
+
+    @CollectsTrigger(value = SacrificeOtherPermanentUnlessDiscardForEachLifeLostEffect.class,
+            slot = EffectSlot.ON_CONTROLLER_LOSES_LIFE)
+    private boolean handleSacrificeOtherUnlessDiscardForEachLifeLost(TriggerMatchContext match,
+            SacrificeOtherPermanentUnlessDiscardForEachLifeLostEffect effect, TriggerContext ctx) {
+        TriggerContext.LifeLoss ll = (TriggerContext.LifeLoss) ctx;
+        var gameData = match.gameData();
+        String cardName = match.permanent().getCard().getName();
+        int amount = ll.lifeLostAmount();
+
+        StackEntry entry = new StackEntry(
+                StackEntryType.TRIGGERED_ABILITY,
+                match.permanent().getCard(),
+                match.controllerId(),
+                cardName + "'s ability",
+                new ArrayList<>(List.of(effect)),
+                null,
+                match.permanent().getId());
+        entry.setEventValue(amount);
+        gameData.enqueueTrigger(entry);
+
+        gameBroadcastService.logAndBroadcast(gameData, GameLog.abilityTriggers(match.permanent().getCard()));
+        log.info("Game {} - {} triggers on life loss ({} life) — sacrifice/discard per life lost",
+                gameData.id, cardName, amount);
         return true;
     }
 

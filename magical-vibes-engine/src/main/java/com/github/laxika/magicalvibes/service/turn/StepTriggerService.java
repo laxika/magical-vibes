@@ -16,6 +16,7 @@ import com.github.laxika.magicalvibes.model.action.DelayedPlusOneCounters;
 import com.github.laxika.magicalvibes.model.action.DelayedPlusZeroPlusOneCounters;
 import com.github.laxika.magicalvibes.model.action.DelayedPermanentActionKind;
 import com.github.laxika.magicalvibes.model.action.DestroyNonAttackersAtEndStep;
+import com.github.laxika.magicalvibes.model.action.DestroyPermanentIfDidNotAttackAtEndStep;
 import com.github.laxika.magicalvibes.model.action.LoseGameAtEndStep;
 import com.github.laxika.magicalvibes.model.action.ReturnExiledCardToHandAtEndStep;
 
@@ -59,6 +60,7 @@ import com.github.laxika.magicalvibes.model.condition.NoSpellsCastLastTurn;
 import com.github.laxika.magicalvibes.model.condition.NotKicked;
 import com.github.laxika.magicalvibes.model.condition.Raid;
 import com.github.laxika.magicalvibes.model.condition.SelfDealtDamageToOpponentThisTurn;
+import com.github.laxika.magicalvibes.model.condition.SourceDamagedCreatureDiedThisTurn;
 import com.github.laxika.magicalvibes.model.condition.TwoOrMoreSpellsCastLastTurn;
 import com.github.laxika.magicalvibes.model.effect.AllArtifactsUpkeepSacrificeUnlessPayEffect;
 import com.github.laxika.magicalvibes.model.effect.AwardManaEffect;
@@ -74,6 +76,7 @@ import com.github.laxika.magicalvibes.model.PendingMayAbility;
 import com.github.laxika.magicalvibes.model.effect.ConditionalEffect;
 import com.github.laxika.magicalvibes.service.effect.ConditionContext;
 import com.github.laxika.magicalvibes.service.effect.ConditionEvaluationService;
+import com.github.laxika.magicalvibes.service.effect.GrantedUpkeepEffectSupport;
 import com.github.laxika.magicalvibes.model.effect.DealDamageIfDidntCastSpellThisTurnEffect;
 import com.github.laxika.magicalvibes.model.effect.DealDamageIfFewCardsInHandEffect;
 import com.github.laxika.magicalvibes.model.effect.DestroyRandomOpponentPermanentWithCounterEffect;
@@ -154,6 +157,7 @@ public class StepTriggerService {
     private final ParadigmService paradigmService;
     private final ValidTargetService validTargetService;
     private final CreatureControlService creatureControlService;
+    private final GrantedUpkeepEffectSupport grantedUpkeepEffectSupport;
 
     public StepTriggerService(DrawService drawService,
                               GameQueryService gameQueryService,
@@ -169,7 +173,8 @@ public class StepTriggerService {
                               TriggerTargetCollector triggerTargetCollector,
                               @Lazy ParadigmService paradigmService,
                               ValidTargetService validTargetService,
-                              CreatureControlService creatureControlService) {
+                              CreatureControlService creatureControlService,
+                              GrantedUpkeepEffectSupport grantedUpkeepEffectSupport) {
         this.drawService = drawService;
         this.gameQueryService = gameQueryService;
         this.predicateEvaluationService = predicateEvaluationService;
@@ -185,6 +190,7 @@ public class StepTriggerService {
         this.paradigmService = paradigmService;
         this.validTargetService = validTargetService;
         this.creatureControlService = creatureControlService;
+        this.grantedUpkeepEffectSupport = grantedUpkeepEffectSupport;
     }
 
     /**
@@ -317,8 +323,12 @@ public class StepTriggerService {
         if (battlefield == null) return;
 
         for (Permanent perm : battlefield) {
-            List<CardEffect> upkeepEffects = perm.getCard().getEffects(EffectSlot.UPKEEP_TRIGGERED);
-            if (upkeepEffects == null || upkeepEffects.isEmpty()) continue;
+            List<CardEffect> upkeepEffects = new ArrayList<>(perm.getCard().getEffects(EffectSlot.UPKEEP_TRIGGERED));
+            upkeepEffects.addAll(perm.getTemporaryTriggeredEffects(EffectSlot.UPKEEP_TRIGGERED));
+            upkeepEffects.addAll(perm.getPersistentTriggeredEffects(EffectSlot.UPKEEP_TRIGGERED));
+            // Continuous grants (Breath of Dreams: green creatures have Cumulative upkeep {1})
+            grantedUpkeepEffectSupport.appendGrantedUpkeepEffects(gameData, perm, upkeepEffects);
+            if (upkeepEffects.isEmpty()) continue;
 
             // If any effect can target both a player and a permanent (i.e. "any target" —
             // creature/planeswalker/player, e.g. Form of the Dragon's "deals 5 damage to any target"),
@@ -1769,6 +1779,24 @@ public class StepTriggerService {
             }
         }
 
+        // Norritt: destroy the specific permanent if it didn't attack this turn.
+        if (gameData.hasDelayedAction(DestroyPermanentIfDidNotAttackAtEndStep.class)) {
+            List<DestroyPermanentIfDidNotAttackAtEndStep> pending =
+                    gameData.drainDelayedActions(DestroyPermanentIfDidNotAttackAtEndStep.class);
+            for (DestroyPermanentIfDidNotAttackAtEndStep action : pending) {
+                Permanent perm = gameQueryService.findPermanentById(gameData, action.permanentId());
+                if (perm == null || perm.isAttackedThisTurn()) {
+                    continue;
+                }
+                if (permanentRemovalService.tryDestroyPermanent(gameData, perm)) {
+                    gameBroadcastService.logAndBroadcast(gameData,
+                            GameLog.cardThen(perm.getCard(), " is destroyed for not attacking."));
+                    log.info("Game {} - {} destroyed for not attacking",
+                            gameData.id, perm.getCard().getName());
+                }
+            }
+        }
+
         // Perform the scheduled end-step returns to hand (e.g. Dragon Mask)
         permanentRemovalService.processDelayedPermanentActions(gameData,
                 DelayedPermanentActionKind.RETURN_TO_HAND_AT_END_STEP);
@@ -2209,6 +2237,29 @@ public class StepTriggerService {
                         gameBroadcastService.logAndBroadcast(gameData,
                                 GameLog.cardThen(perm.getCard(), "'s end step ability triggers."));
                         log.info("Game {} - {} end-step dealt-damage-to-opponent trigger pushed onto stack", gameData.id, perm.getCard().getName());
+                    } else if (effect instanceof ConditionalEffect conditional
+                            && conditional.condition() instanceof SourceDamagedCreatureDiedThisTurn) {
+                        // Intervening-if: a creature this permanent damaged this turn died (CR 603.4) —
+                        // Krovikan Vampire. Re-checked at resolution; returns still-in-graveyard cards.
+                        if (!conditionEvaluationService.isMet(gameData, conditional.condition(),
+                                ConditionContext.forPermanent(perm, playerId))) {
+                            log.info("Game {} - {} end-step trigger skipped (no damaged creature died this turn)",
+                                    gameData.id, perm.getCard().getName());
+                            continue;
+                        }
+                        gameData.stack.add(new StackEntry(
+                                StackEntryType.TRIGGERED_ABILITY,
+                                perm.getCard(),
+                                playerId,
+                                perm.getCard().getName() + "'s end step ability",
+                                new ArrayList<>(List.of(effect)),
+                                null,
+                                perm.getId()
+                        ));
+                        gameBroadcastService.logAndBroadcast(gameData,
+                                GameLog.cardThen(perm.getCard(), "'s end step ability triggers."));
+                        log.info("Game {} - {} end-step damaged-creature-died trigger pushed onto stack",
+                                gameData.id, perm.getCard().getName());
                     } else if (effect instanceof ConditionalEffect morbid
                             && morbid.condition() instanceof Morbid) {
                         // Intervening-if: only trigger if morbid condition is met (CR 603.4)

@@ -67,6 +67,22 @@ public sealed interface ManaRestriction {
     }
 
     /**
+     * Colorless mana spendable only to activate abilities of artifacts (Soldevi Machinist). Narrower than
+     * {@link ArtifactSpells}: cannot pay artifact spell costs.
+     */
+    record ArtifactAbilities() implements ManaRestriction {
+        @Override
+        public void applyTo(ManaPool pool, ManaColor color, int amount) {
+            pool.addArtifactAbilityOnlyColorless(amount);
+        }
+
+        @Override
+        public String description() {
+            return "artifact abilities only";
+        }
+    }
+
+    /**
      * Colorless mana spendable only to cast spells / activate abilities of the given creature subtype.
      * Only Myr exists in the pool today (routes to the myr-only bucket, e.g. Myr Reservoir); the
      * subtype is retained as the routing/logging key.
@@ -110,6 +126,26 @@ public sealed interface ManaRestriction {
         @Override
         public String description() {
             return "kicked spells only";
+        }
+    }
+
+    /**
+     * Mana spendable only to pay cumulative upkeep costs (Adarkar Unicorn, Snowfall). Colorless
+     * routes to the cumulative-upkeep-only colorless bucket; colored mana to the per-color bucket.
+     */
+    record CumulativeUpkeepCosts() implements ManaRestriction {
+        @Override
+        public void applyTo(ManaPool pool, ManaColor color, int amount) {
+            if (color == ManaColor.COLORLESS) {
+                pool.addCumulativeUpkeepOnlyColorless(amount);
+            } else {
+                pool.addCumulativeUpkeepOnlyColored(color, amount);
+            }
+        }
+
+        @Override
+        public String description() {
+            return "cumulative upkeep costs only";
         }
     }
 }

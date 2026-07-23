@@ -33,6 +33,7 @@ import com.github.laxika.magicalvibes.model.filter.PermanentHasSubtypePredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentHasSupertypePredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsArtifactPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsAttackingPredicate;
+import com.github.laxika.magicalvibes.model.filter.PermanentIsBlockingPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsCreaturePredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsEnchantedPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsEnchantmentPredicate;
@@ -426,6 +427,8 @@ public class StaticEffectSupport {
             return target.getCard().getSupertypes().contains(p.supertype());
         if (filter instanceof PermanentIsAttackingPredicate)
             return target.isAttacking();
+        if (filter instanceof PermanentIsBlockingPredicate)
+            return target.isBlocking();
         if (filter instanceof PermanentIsTappedPredicate)
             return target.isTapped();
         if (filter instanceof PermanentTruePredicate) return true;
@@ -450,6 +453,8 @@ public class StaticEffectSupport {
                 case LORE -> target.getCounterCount(CounterType.LORE) > 0;
                 case AIM -> target.getCounterCount(CounterType.AIM) > 0;
                 case FEATHER -> target.getCounterCount(CounterType.FEATHER) > 0;
+                case MUSIC -> target.getCounterCount(CounterType.MUSIC) > 0;
+                case PARALYZATION -> target.getCounterCount(CounterType.PARALYZATION) > 0;
                 case ANY -> target.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE) > 0
                         || target.getCounterCount(CounterType.MINUS_ONE_MINUS_ONE) > 0
                         || target.getCounterCount(CounterType.CHARGE) > 0
@@ -460,7 +465,9 @@ public class StaticEffectSupport {
                         || target.getCounterCount(CounterType.WISH) > 0
                         || target.getCounterCount(CounterType.LORE) > 0
                         || target.getCounterCount(CounterType.AIM) > 0
-                        || target.getCounterCount(CounterType.FEATHER) > 0;
+                        || target.getCounterCount(CounterType.FEATHER) > 0
+                        || target.getCounterCount(CounterType.MUSIC) > 0
+                        || target.getCounterCount(CounterType.PARALYZATION) > 0;
                 default -> false;
             };
         throw new IllegalArgumentException("Unsupported static filter predicate: " + filter.getClass().getSimpleName());

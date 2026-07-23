@@ -221,6 +221,10 @@ public class ChoiceHandlerService {
             handleNameCardMillGainLifeChoice(gameData, player, colorName, ctx);
             return;
         }
+        if (colorChoice.context() instanceof ChoiceContext.ChooseNameExileTopRevealUntilNamedChoice ctx) {
+            handleChooseNameExileTopRevealUntilNamedChoice(gameData, player, colorName, ctx);
+            return;
+        }
         if (colorChoice.context() instanceof ChoiceContext.TargetPlayerNameCardRevealTopChoice ctx) {
             handleTargetPlayerNameCardRevealTopChoice(gameData, player, colorName, ctx);
             return;
@@ -243,6 +247,14 @@ public class ChoiceHandlerService {
         }
         if (colorChoice.context() instanceof ChoiceContext.TormentPenaltyChoice ctx) {
             handleTormentPenaltyChoice(gameData, player, colorName, ctx);
+            return;
+        }
+        if (colorChoice.context() instanceof ChoiceContext.OathOfLimDulPenaltyChoice ctx) {
+            handleOathOfLimDulPenaltyChoice(gameData, player, colorName, ctx);
+            return;
+        }
+        if (colorChoice.context() instanceof ChoiceContext.WintersChillPaymentChoice ctx) {
+            handleWintersChillPaymentChoice(gameData, player, colorName, ctx);
             return;
         }
         CardColor color = CardColor.valueOf(colorName);
@@ -1059,7 +1071,7 @@ public class ChoiceHandlerService {
                 chosen.add(color);
                 if (chosen.size() < CardColor.values().length) {
                     playerInputService.beginBecomeChosenColorsChoice(gameData, player.getId(),
-                            ctx.targetId(), ctx.sourceCardName(), chosen);
+                            ctx.targetId(), ctx.sourceCardName(), chosen, ctx.duration());
                     gameBroadcastService.broadcastGameState(gameData);
                     return;
                 }
@@ -1080,22 +1092,27 @@ public class ChoiceHandlerService {
 
         Set<CardColor> colorSet = new LinkedHashSet<>(colors);
 
-        // CR 613 layer engine: "becomes [colors] until end of turn" is a floating layer-5
-        // color-setting effect with its own timestamp. The legacy transient fields are still written
-        // for direct Permanent.getEffectiveColor callers; the layered pass replays the setter.
+        // CR 613 layer engine: "becomes [colors]" is a floating layer-5 color-setting effect with
+        // its own timestamp. Duration is UNTIL_END_OF_TURN (Prismwake Merrow) or PERMANENT (Shyft).
+        // The legacy transient fields are still written for direct Permanent.getEffectiveColor
+        // callers; the layered pass replays the setter.
         target.getTransientColors().clear();
         target.getTransientColors().addAll(colorSet);
         target.setColorOverridden(true);
         gameData.addFloatingEffect(new FloatingContinuousEffect(UUID.randomUUID(),
                 ctx.sourceCardName(), null, controllerId,
                 new BecomeChosenColorsUntilEndOfTurnEffect(colorSet),
-                target.getId(), null, null, EffectDuration.UNTIL_END_OF_TURN, 0));
+                target.getId(), null, null, ctx.duration(), 0));
 
         String colorList = colorSet.stream()
                 .map(c -> c.name().charAt(0) + c.name().substring(1).toLowerCase())
                 .reduce((a, b) -> a + " and " + b).orElse("");
-        gameBroadcastService.logAndBroadcast(gameData, GameLog.cardThen(target.getCard(), " becomes " + colorList + " until end of turn."));
-        log.info("Game {} - {} becomes {} until end of turn", gameData.id, target.getCard().getName(), colorList);
+        String durationSuffix = ctx.duration() == EffectDuration.UNTIL_END_OF_TURN
+                ? " until end of turn." : ".";
+        gameBroadcastService.logAndBroadcast(gameData, GameLog.cardThen(target.getCard(),
+                " becomes " + colorList + durationSuffix));
+        log.info("Game {} - {} becomes {}{}", gameData.id, target.getCard().getName(), colorList,
+                durationSuffix);
     }
 
     /**
@@ -1118,6 +1135,53 @@ public class ChoiceHandlerService {
         gameBroadcastService.logAndBroadcast(gameData, GameLog.text(
                 player.getUsername() + " chooses \"" + chosen + "\" for " + ctx.sourceCardName() + "."));
         log.info("Game {} - {} chooses {} for {}", gameData.id, player.getUsername(), chosen, ctx.sourceCardName());
+
+        inputCompletionService.processMayAbilitiesThenAutoPass(gameData);
+    }
+
+    /**
+     * Oath of Lim-Dûl: the controller picked sacrifice-another-permanent or discard for one life
+     * point. Record the choice on {@link GameData#torment} and resume so the effect handler applies
+     * it and advances to the next life point.
+     */
+    private void handleOathOfLimDulPenaltyChoice(GameData gameData, Player player, String chosen,
+            ChoiceContext.OathOfLimDulPenaltyChoice ctx) {
+        PendingInteraction.ColorChoice active =
+                gameData.interaction.activeInteraction(PendingInteraction.ColorChoice.class);
+        if (active == null || !active.options().contains(chosen)) {
+            throw new IllegalArgumentException("Invalid Oath of Lim-Dûl choice: " + chosen);
+        }
+
+        gameData.interaction.clearAwaitingInput();
+        gameData.torment.chosenMode = chosen;
+
+        gameBroadcastService.logAndBroadcast(gameData, GameLog.text(
+                player.getUsername() + " chooses \"" + chosen + "\" for " + ctx.sourceCardName() + "."));
+        log.info("Game {} - {} chooses {} for {}", gameData.id, player.getUsername(), chosen, ctx.sourceCardName());
+
+        inputCompletionService.processMayAbilitiesThenAutoPass(gameData);
+    }
+
+    /**
+     * Winter's Chill: the creature's controller picked pay {2}, pay {1}, or pay nothing. Record the
+     * choice on {@link GameData#wintersChill} and resume so {@code WintersChillEffectHandler} applies
+     * it and advances to the next target.
+     */
+    private void handleWintersChillPaymentChoice(GameData gameData, Player player, String chosen,
+            ChoiceContext.WintersChillPaymentChoice ctx) {
+        PendingInteraction.ColorChoice active =
+                gameData.interaction.activeInteraction(PendingInteraction.ColorChoice.class);
+        if (active == null || !active.options().contains(chosen)) {
+            throw new IllegalArgumentException("Invalid Winter's Chill choice: " + chosen);
+        }
+
+        gameData.interaction.clearAwaitingInput();
+        gameData.wintersChill.chosenMode = chosen;
+
+        gameBroadcastService.logAndBroadcast(gameData, GameLog.text(
+                player.getUsername() + " chooses \"" + chosen + "\" for " + ctx.sourceCardName() + "."));
+        log.info("Game {} - {} chooses {} for Winter's Chill target {}",
+                gameData.id, player.getUsername(), chosen, ctx.targetPermanentId());
 
         inputCompletionService.processMayAbilitiesThenAutoPass(gameData);
     }
@@ -1291,10 +1355,21 @@ public class ChoiceHandlerService {
 
         Permanent perm = gameQueryService.findPermanentById(gameData, ctx.permanentId());
         if (perm != null) {
-            perm.setChosenSubtype(subtype);
+            if (ctx.isSecondChoice()) {
+                perm.setSecondChosenSubtype(subtype);
+            } else {
+                perm.setChosenSubtype(subtype);
+            }
 
             gameBroadcastService.logAndBroadcast(gameData, GameLog.textCardText(player.getUsername() + " chooses " + subtype.getDisplayName() + " for " , perm.getCard(), "."));
-            log.info("Game {} - {} chooses basic land type {} for {}", gameData.id, player.getUsername(), subtype, perm.getCard().getName());
+            log.info("Game {} - {} chooses basic land type {} for {} (second={})",
+                    gameData.id, player.getUsername(), subtype, perm.getCard().getName(), ctx.isSecondChoice());
+        }
+
+        if (!ctx.isSecondChoice() && ctx.chainSecondAfter()) {
+            playerInputService.beginBasicLandTypeChoice(gameData, player.getId(), ctx.permanentId(), true, false);
+            gameBroadcastService.broadcastGameState(gameData);
+            return;
         }
 
         inputCompletionService.processMayAbilitiesThenAutoPass(gameData);
@@ -1520,6 +1595,92 @@ public class ChoiceHandlerService {
                         topCard.getName(), controllerName, manaValue);
             }
         }
+
+        inputCompletionService.processMayAbilitiesThenAutoPass(gameData);
+    }
+
+    private void handleChooseNameExileTopRevealUntilNamedChoice(GameData gameData, Player player,
+                                                                String cardName,
+                                                                ChoiceContext.ChooseNameExileTopRevealUntilNamedChoice ctx) {
+        gameData.interaction.clearAwaitingInput();
+
+        UUID controllerId = ctx.controllerId();
+        String controllerName = gameData.playerIdToName.get(controllerId);
+
+        gameBroadcastService.logAndBroadcast(gameData, GameLog.text(
+                player.getUsername() + " chooses \"" + cardName + "\"."));
+        log.info("Game {} - {} chooses card name \"{}\" (exile-top/reveal-until-named)",
+                gameData.id, player.getUsername(), cardName);
+
+        List<Card> deck = gameData.playerDecks.get(controllerId);
+        if (deck == null) {
+            inputCompletionService.processMayAbilitiesThenAutoPass(gameData);
+            return;
+        }
+
+        // Exile the top N cards (or fewer if the library is smaller).
+        int toExile = Math.min(ctx.topExileCount(), deck.size());
+        List<Card> initialExile = new ArrayList<>(toExile);
+        for (int i = 0; i < toExile; i++) {
+            initialExile.add(deck.removeFirst());
+        }
+        for (Card card : initialExile) {
+            gameData.addToExile(controllerId, card);
+        }
+        if (toExile > 0) {
+            gameBroadcastService.logAndBroadcast(gameData, GameLog.text(
+                    controllerName + " exiles the top " + toExile + " card"
+                            + (toExile == 1 ? "" : "s") + " of their library."));
+        }
+
+        // Reveal until the named card (or the library empties).
+        List<Card> revealed = new ArrayList<>();
+        Card found = null;
+        while (!deck.isEmpty()) {
+            Card card = deck.removeFirst();
+            revealed.add(card);
+            if (card.getName().equals(cardName)) {
+                found = card;
+                break;
+            }
+        }
+
+        if (!revealed.isEmpty()) {
+            String revealedNames = revealed.stream().map(Card::getName)
+                    .reduce((a, b) -> a + ", " + b).orElse("");
+            gameBroadcastService.logAndBroadcast(gameData, GameLog.text(
+                    controllerName + " reveals " + revealedNames + "."));
+        }
+
+        if (found != null) {
+            revealed.remove(found);
+            gameData.addCardToHand(controllerId, found);
+            gameBroadcastService.logAndBroadcast(gameData, GameLog.textCardText(
+                    controllerName + " puts ", found, " into their hand."));
+            for (Card card : revealed) {
+                gameData.addToExile(controllerId, card);
+            }
+            if (!revealed.isEmpty()) {
+                gameBroadcastService.logAndBroadcast(gameData, GameLog.text(
+                        controllerName + " exiles the other revealed cards."));
+            }
+        } else {
+            for (Card card : revealed) {
+                gameData.addToExile(controllerId, card);
+            }
+            if (revealed.isEmpty() && initialExile.isEmpty()) {
+                gameBroadcastService.logAndBroadcast(gameData, GameLog.text(
+                        controllerName + "'s library is empty."));
+            } else {
+                gameBroadcastService.logAndBroadcast(gameData, GameLog.text(
+                        controllerName + " does not reveal a card named \"" + cardName
+                                + "\" — remaining revealed cards are exiled."));
+            }
+        }
+
+        log.info("Game {} - {} Demonic Consultation dig: initialExile={}, revealed={}, found={}",
+                gameData.id, controllerName, initialExile.size(), revealed.size(),
+                found != null ? found.getName() : "none");
 
         inputCompletionService.processMayAbilitiesThenAutoPass(gameData);
     }

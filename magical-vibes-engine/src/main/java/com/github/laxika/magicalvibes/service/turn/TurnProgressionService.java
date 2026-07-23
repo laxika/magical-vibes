@@ -2,6 +2,10 @@ package com.github.laxika.magicalvibes.service.turn;
 import com.github.laxika.magicalvibes.model.action.AddManaAtNextMainPhase;
 import com.github.laxika.magicalvibes.model.action.DelayedCombatDamageLoot;
 import com.github.laxika.magicalvibes.model.action.DelayedCombatDamageReflection;
+import com.github.laxika.magicalvibes.model.action.DelayedBlockerBoost;
+import com.github.laxika.magicalvibes.model.action.DelayedUnblockedAttackerPowerDamage;
+import com.github.laxika.magicalvibes.model.action.DelayedSacrificeSourceWhenTargetLeaves;
+import com.github.laxika.magicalvibes.model.action.DelayedSacrificeTargetWhenSourceLeaves;
 import com.github.laxika.magicalvibes.model.action.ExileAndReturnTransformedAtEndOfCombat;
 import com.github.laxika.magicalvibes.model.action.DestroyEquipmentAtEndOfCombat;
 import com.github.laxika.magicalvibes.model.action.DelayedPermanentAction;
@@ -260,6 +264,10 @@ public class TurnProgressionService {
         gameData.clearDelayedActions(DelayedCombatDamageReflection.class);
         // Conduit of Storms: "next main phase this turn" — drop any that never fired.
         gameData.clearDelayedActions(AddManaAtNextMainPhase.class, AddManaAtNextMainPhase::thisTurnOnly);
+        gameData.clearDelayedActions(DelayedBlockerBoost.class);
+        gameData.clearDelayedActions(DelayedUnblockedAttackerPowerDamage.class);
+        gameData.clearDelayedActions(DelayedSacrificeSourceWhenTargetLeaves.class);
+        gameData.clearDelayedActions(DelayedSacrificeTargetWhenSourceLeaves.class);
         gameData.combatDamageSourceSubtypesThisTurn.clear();
         gameData.combatDamageSourcesWithChangelingThisTurn.clear();
         gameData.combatDamageToPlayerControllerSubtypesThisTurn.clear();
@@ -273,6 +281,8 @@ public class TurnProgressionService {
         gameData.freeCastPermanentUsedThisTurn.clear();
         gameData.oncePerTurnTriggersFiredThisTurn.clear();
         gameData.creatureCardsDamagedThisTurnBySourcePermanent.clear();
+        gameData.sourcesWhoseDamagedCreaturesDiedThisTurn.clear();
+        gameData.creatureCardsDamagedBySourceThatDiedThisTurn.clear();
         gameData.creatureGivingControllerPoisonOnDeathThisTurn.clear();
         gameData.creaturesReturnedToBattlefieldOnDeathThisTurn.clear();
         gameData.creatureCreatingTokenOnDeathThisTurn.clear();

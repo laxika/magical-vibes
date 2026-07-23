@@ -111,9 +111,10 @@ public class CharacteristicState {
                 - permanent.getCounterCount(CounterType.MINUS_ONE_MINUS_ONE);
         // +1/+0 counters (e.g. Clockwork Beast) add power only.
         this.powerDelta = counterDelta + permanent.getCounterCount(CounterType.PLUS_ONE_PLUS_ZERO);
-        // +0/+1 counters (e.g. Sacred Boon) add toughness only; -0/-2 counters (Greater Werewolf)
-        // subtract 2 toughness each.
+        // +0/+1 counters (e.g. Sacred Boon) add toughness only; -0/-1 (Essence Flare) and
+        // -0/-2 (Greater Werewolf / Spirit Shackle) subtract toughness only.
         this.toughnessDelta = counterDelta + permanent.getCounterCount(CounterType.PLUS_ZERO_PLUS_ONE)
+                - permanent.getCounterCount(CounterType.MINUS_ZERO_MINUS_ONE)
                 - 2 * permanent.getCounterCount(CounterType.MINUS_ZERO_MINUS_TWO);
     }
 

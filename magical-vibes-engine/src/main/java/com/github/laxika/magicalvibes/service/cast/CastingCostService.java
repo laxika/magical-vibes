@@ -17,6 +17,7 @@ import com.github.laxika.magicalvibes.model.ReturnPermanentsCost;
 import com.github.laxika.magicalvibes.model.StackEntry;
 import com.github.laxika.magicalvibes.model.TapUntappedPermanentsCost;
 import com.github.laxika.magicalvibes.model.effect.ActivatedAbilityCostIncreasingEffect;
+import com.github.laxika.magicalvibes.model.effect.AdditionalSacrificePerManaSymbolTaxEffect;
 import com.github.laxika.magicalvibes.model.effect.AlternativeCostForSpellsEffect;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
 import com.github.laxika.magicalvibes.model.effect.GraveyardActivatedAbilityCostReducingEffect;
@@ -178,6 +179,85 @@ public class CastingCostService {
             }
         }
         return tax;
+    }
+
+    /**
+     * Extra sacrifice-of-matching-permanent requirement imposed by battlefield taxes such as
+     * Drought: one sacrifice per matching mana symbol in {@code cost}, summed across every
+     * {@link AdditionalSacrificePerManaSymbolTaxEffect} on any battlefield. Symmetric.
+     * {@code forSpell}/{@code forAbility} select which tax flags apply.
+     */
+    public ImposedSacrificeRequirement getImposedSacrificeRequirement(
+            GameData gameData, ManaCost cost, boolean forSpell, boolean forAbility) {
+        if (cost == null) {
+            return ImposedSacrificeRequirement.none();
+        }
+        int total = 0;
+        PermanentPredicate filter = null;
+        String description = null;
+        for (UUID pid : gameData.orderedPlayerIds) {
+            List<Permanent> bf = gameData.playerBattlefields.get(pid);
+            if (bf == null) continue;
+            for (Permanent perm : bf) {
+                for (CardEffect effect : perm.getCard().getEffects(EffectSlot.STATIC)) {
+                    if (!(effect instanceof AdditionalSacrificePerManaSymbolTaxEffect tax)) continue;
+                    if (forSpell && !tax.taxesSpells()) continue;
+                    if (forAbility && !tax.taxesActivatedAbilities()) continue;
+                    int symbols = cost.countColorSymbols(tax.color());
+                    if (symbols <= 0) continue;
+                    total += symbols;
+                    if (filter == null) {
+                        filter = tax.sacrificeFilter();
+                        description = tax.description();
+                    }
+                }
+            }
+        }
+        if (total <= 0 || filter == null) {
+            return ImposedSacrificeRequirement.none();
+        }
+        return new ImposedSacrificeRequirement(total, filter, description != null ? description : "a permanent");
+    }
+
+    /** Spell-cast convenience for {@link #getImposedSacrificeRequirement}. */
+    public ImposedSacrificeRequirement getImposedSacrificeRequirementForSpell(GameData gameData, Card spell) {
+        return getImposedSacrificeRequirement(gameData, spell.getParsedManaCost(), true, false);
+    }
+
+    /** Ability-activation convenience for {@link #getImposedSacrificeRequirement}. */
+    public ImposedSacrificeRequirement getImposedSacrificeRequirementForAbility(GameData gameData, String abilityManaCost) {
+        if (abilityManaCost == null || abilityManaCost.isBlank()) {
+            return ImposedSacrificeRequirement.none();
+        }
+        return getImposedSacrificeRequirement(gameData, new ManaCost(abilityManaCost), false, true);
+    }
+
+    /**
+     * True when the player controls enough permanents to pay every imposed per-symbol sacrifice
+     * tax for casting {@code card} (in addition to any SPELL-slot additional costs).
+     */
+    public boolean canPayImposedSacrificeTax(GameData gameData, UUID playerId, Card card) {
+        ImposedSacrificeRequirement req = getImposedSacrificeRequirementForSpell(gameData, card);
+        if (req.isEmpty()) return true;
+        List<Permanent> battlefield = gameData.playerBattlefields.getOrDefault(playerId, List.of());
+        long matching = battlefield.stream()
+                .filter(p -> predicateEvaluationService.matchesPermanentPredicate(gameData, p, req.filter()))
+                .count();
+        return matching >= req.count();
+    }
+
+    /**
+     * Battlefield-imposed additional sacrifice cost: sacrifice {@code count} permanents matching
+     * {@code filter} (e.g. Drought's "Sacrifice a Swamp" per black mana symbol).
+     */
+    public record ImposedSacrificeRequirement(int count, PermanentPredicate filter, String description) {
+        public static ImposedSacrificeRequirement none() {
+            return new ImposedSacrificeRequirement(0, null, null);
+        }
+
+        public boolean isEmpty() {
+            return count <= 0 || filter == null;
+        }
     }
 
     /**
@@ -510,7 +590,8 @@ public class CastingCostService {
      * can never disagree with cast-time validation. Pure query; never mutates state.
      */
     public boolean canPayAdditionalSpellCosts(GameData gameData, UUID playerId, Card card) {
-        return additionalSpellCostService.satisfiable(gameData, playerId, card);
+        return additionalSpellCostService.satisfiable(gameData, playerId, card)
+                && canPayImposedSacrificeTax(gameData, playerId, card);
     }
 
     /** @see AdditionalSpellCostService#validDiscardCostIndices */

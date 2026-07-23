@@ -119,6 +119,12 @@ import lombok.Builder;
  *                             card(s) in the controller's graveyard with the greatest power; a single
  *                             greatest-power card is returned without a real decision, ties let the
  *                             controller pick one and cannot be declined (e.g. Desecrator Hag)
+ * @param exileIfLeavesBattlefield {@code true} to set the permanent's exile-if-leaves-battlefield
+ *                             replacement (e.g. Dreams of the Dead — "If the creature would leave the
+ *                             battlefield, exile it instead of putting it anywhere else")
+ * @param grantCumulativeUpkeepCost when non-null, the returned permanent gains that cumulative upkeep
+ *                             cost as a persistent {@code UPKEEP_TRIGGERED} ability (e.g. Dreams of the
+ *                             Dead — "That creature gains Cumulative upkeep {2}.")
  */
 @Builder
 public record ReturnCardFromGraveyardEffect(
@@ -150,7 +156,9 @@ public record ReturnCardFromGraveyardEffect(
         boolean maxManaValueEqualsLifeGainedThisTurn,
         boolean enterWithMannequinCounter,
         CardSubtype grantSourceHasteIfSubtype,
-        boolean greatestPower
+        boolean greatestPower,
+        boolean exileIfLeavesBattlefield,
+        String grantCumulativeUpkeepCost
 ) implements CardEffect {
 
     /**

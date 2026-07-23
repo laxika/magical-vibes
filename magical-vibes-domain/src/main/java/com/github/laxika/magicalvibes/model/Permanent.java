@@ -5,6 +5,7 @@ import lombok.Setter;
 
 import com.github.laxika.magicalvibes.model.effect.CanBeBlockedOnlyByFilterEffect;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
+import com.github.laxika.magicalvibes.model.effect.CumulativeUpkeepEffect;
 
 import java.util.ArrayList;
 import java.util.EnumMap;
@@ -69,6 +70,9 @@ public class Permanent {
     @Setter private CardColor chosenColor;
     @Setter private String chosenName;
     @Setter private CardSubtype chosenSubtype;
+    /** Second basic land type chosen "as this enters" when the card chooses two types
+     *  (Illusionary Terrain: first type → {@link #chosenSubtype}, second → here). */
+    @Setter private CardSubtype secondChosenSubtype;
     /** The number last chosen for this permanent by a "choose a number between X and Y" effect
      *  (e.g. Shapeshifter). Read by {@link com.github.laxika.magicalvibes.model.amount.ChosenNumberOnSource}
      *  to drive a characteristic-defining P/T. Defaults to 0 until a number is chosen. */
@@ -108,6 +112,9 @@ public class Permanent {
      *  Keyed by EffectSlot so the trigger collection system can look up effects for the relevant slot.
      *  Cleared every turn by {@link #resetModifiers()}. */
     private final Map<EffectSlot, List<CardEffect>> temporaryTriggeredEffects = new EnumMap<>(EffectSlot.class);
+    /** Triggered effects granted indefinitely by one-shot effects (e.g. Balduvian Shaman granting
+     *  {@code UPKEEP_TRIGGERED} + {@code CumulativeUpkeepEffect}). Survives {@link #resetModifiers()}. */
+    private final Map<EffectSlot, List<CardEffect>> persistentTriggeredEffects = new EnumMap<>(EffectSlot.class);
     @Setter private boolean basePowerToughnessOverriddenUntilEndOfTurn;
     @Setter private int basePowerOverride;
     @Setter private int baseToughnessOverride;
@@ -367,6 +374,7 @@ public class Permanent {
         this.chosenColor = source.chosenColor;
         this.chosenName = source.chosenName;
         this.chosenSubtype = source.chosenSubtype;
+        this.secondChosenSubtype = source.secondChosenSubtype;
         this.chosenNumber = source.chosenNumber;
         this.chosenManaValueParity = source.chosenManaValueParity;
         this.chosenPermanentId = source.chosenPermanentId;
@@ -385,6 +393,8 @@ public class Permanent {
         this.hasDamageToOpponentCreatureBounce = source.hasDamageToOpponentCreatureBounce;
         source.temporaryTriggeredEffects.forEach((slot, effects) ->
                 this.temporaryTriggeredEffects.put(slot, new ArrayList<>(effects)));
+        source.persistentTriggeredEffects.forEach((slot, effects) ->
+                this.persistentTriggeredEffects.put(slot, new ArrayList<>(effects)));
         this.basePowerToughnessOverriddenUntilEndOfTurn = source.basePowerToughnessOverriddenUntilEndOfTurn;
         this.basePowerOverride = source.basePowerOverride;
         this.baseToughnessOverride = source.baseToughnessOverride;
@@ -613,7 +623,9 @@ public class Permanent {
      */
     public int getToughnessModifiers() {
         return toughnessModifier + getCounterCount(CounterType.PLUS_ONE_PLUS_ONE) - getCounterCount(CounterType.MINUS_ONE_MINUS_ONE)
-                + getCounterCount(CounterType.PLUS_ZERO_PLUS_ONE) - 2 * getCounterCount(CounterType.MINUS_ZERO_MINUS_TWO);
+                + getCounterCount(CounterType.PLUS_ZERO_PLUS_ONE)
+                - getCounterCount(CounterType.MINUS_ZERO_MINUS_ONE)
+                - 2 * getCounterCount(CounterType.MINUS_ZERO_MINUS_TWO);
     }
 
     /**
@@ -631,7 +643,9 @@ public class Permanent {
     /** The toughness counterpart of {@link #getEffectivePower()} — same pre-switch caveat. */
     public int getEffectiveToughness() {
         return getBaseToughness() + toughnessModifier + getCounterCount(CounterType.PLUS_ONE_PLUS_ONE) - getCounterCount(CounterType.MINUS_ONE_MINUS_ONE)
-                + getCounterCount(CounterType.PLUS_ZERO_PLUS_ONE) - 2 * getCounterCount(CounterType.MINUS_ZERO_MINUS_TWO);
+                + getCounterCount(CounterType.PLUS_ZERO_PLUS_ONE)
+                - getCounterCount(CounterType.MINUS_ZERO_MINUS_ONE)
+                - 2 * getCounterCount(CounterType.MINUS_ZERO_MINUS_TWO);
     }
 
     /**
@@ -743,6 +757,34 @@ public class Permanent {
 
     public List<CardEffect> getTemporaryTriggeredEffects(EffectSlot slot) {
         return temporaryTriggeredEffects.getOrDefault(slot, List.of());
+    }
+
+    public void addPersistentTriggeredEffect(EffectSlot slot, CardEffect effect) {
+        persistentTriggeredEffects.computeIfAbsent(slot, k -> new ArrayList<>()).add(effect);
+    }
+
+    public List<CardEffect> getPersistentTriggeredEffects(EffectSlot slot) {
+        return persistentTriggeredEffects.getOrDefault(slot, List.of());
+    }
+
+    /**
+     * Whether this permanent has cumulative upkeep — printed, temporarily granted, or persistently
+     * granted (Balduvian Shaman). Used for targeting restrictions like "that doesn't have
+     * cumulative upkeep".
+     */
+    public boolean hasCumulativeUpkeep() {
+        return hasCumulativeUpkeepIn(card.getEffects(EffectSlot.UPKEEP_TRIGGERED))
+                || hasCumulativeUpkeepIn(getPersistentTriggeredEffects(EffectSlot.UPKEEP_TRIGGERED))
+                || hasCumulativeUpkeepIn(getTemporaryTriggeredEffects(EffectSlot.UPKEEP_TRIGGERED));
+    }
+
+    private static boolean hasCumulativeUpkeepIn(List<CardEffect> effects) {
+        for (CardEffect effect : effects) {
+            if (effect instanceof CumulativeUpkeepEffect) {
+                return true;
+            }
+        }
+        return false;
     }
 
     public void resetModifiers() {

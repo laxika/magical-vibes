@@ -42,6 +42,7 @@ public class PreventDamageEffectHandler implements NormalEffectHandlerBean {
             case NEXT_TO_ANY -> nextToAny(gameData, entry, e);
             case NEXT_TO_CONTROLLER -> nextToController(gameData, entry, e);
             case NEXT_TO_SELF -> nextToSelf(gameData, entry, e);
+            case NEXT_TO_ENCHANTED -> nextToEnchanted(gameData, entry, e);
             case NEXT_TO_TARGET -> nextToTarget(gameData, entry, e);
             case ALL_COMBAT -> {
                 gameData.preventAllCombatDamage = true;
@@ -129,6 +130,25 @@ public class PreventDamageEffectHandler implements NormalEffectHandlerBean {
                 "The next " + amount + " damage that would be dealt to ", source.getCard(), " this turn is prevented."));
         log.info("Game {} - Self prevention shield {} added to permanent {}", gameData.id, amount,
                 source.getCard().getName());
+    }
+
+    private void nextToEnchanted(GameData gameData, StackEntry entry, PreventDamageEffect e) {
+        UUID sourceId = entry.getSourcePermanentId();
+        if (sourceId == null) return;
+
+        Permanent aura = gameQueryService.findPermanentById(gameData, sourceId);
+        if (aura == null || aura.getAttachedTo() == null) return;
+
+        Permanent enchanted = gameQueryService.findPermanentById(gameData, aura.getAttachedTo());
+        if (enchanted == null) return;
+        int amount = evaluate(gameData, entry, e);
+
+        enchanted.setDamagePreventionShield(enchanted.getDamagePreventionShield() + amount);
+
+        gameBroadcastService.logAndBroadcast(gameData, GameLog.textCardText(
+                "The next " + amount + " damage that would be dealt to ", enchanted.getCard(), " this turn is prevented."));
+        log.info("Game {} - Enchanted prevention shield {} added to permanent {}", gameData.id, amount,
+                enchanted.getCard().getName());
     }
 
     private void nextToTarget(GameData gameData, StackEntry entry, PreventDamageEffect e) {

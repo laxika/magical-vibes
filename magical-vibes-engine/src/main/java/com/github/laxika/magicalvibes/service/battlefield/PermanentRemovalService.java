@@ -113,6 +113,8 @@ public class PermanentRemovalService {
 
         triggerCollectionService.checkEnchantedPermanentLTBTriggers(gameData, target, controllerId);
         triggerCollectionService.checkSelfLeavesTriggered(gameData, target, controllerId);
+        triggerCollectionService.processDelayedSacrificeSourceWhenTargetLeaves(gameData, target);
+        triggerCollectionService.processDelayedSacrificeTargetWhenSourceLeaves(gameData, target);
         triggerCollectionService.checkAnotherCreatureLeavesBattlefieldTriggers(gameData, target, wasCreature);
         triggerCollectionService.checkAllyCreatureLeavesBattlefieldTriggers(gameData, target, wasCreature, controllerId);
         triggerCollectionService.checkAnotherArtifactLeavesBattlefieldTriggers(gameData, target, controllerId);
@@ -150,6 +152,8 @@ public class PermanentRemovalService {
 
         triggerCollectionService.checkEnchantedPermanentLTBTriggers(gameData, target, controllerId);
         triggerCollectionService.checkSelfLeavesTriggered(gameData, target, info.controllerId());
+        triggerCollectionService.processDelayedSacrificeSourceWhenTargetLeaves(gameData, target);
+        triggerCollectionService.processDelayedSacrificeTargetWhenSourceLeaves(gameData, target);
         triggerCollectionService.checkAnotherCreatureLeavesBattlefieldTriggers(gameData, target, wasCreature);
         triggerCollectionService.checkAllyCreatureLeavesBattlefieldTriggers(gameData, target, wasCreature, info.controllerId());
         triggerCollectionService.checkAnotherArtifactLeavesBattlefieldTriggers(gameData, target, info.controllerId());
@@ -182,6 +186,8 @@ public class PermanentRemovalService {
         UUID ownerId = removed.get().ownerId();
         triggerCollectionService.checkEnchantedPermanentLTBTriggers(gameData, target, controllerId);
         triggerCollectionService.checkSelfLeavesTriggered(gameData, target, controllerId);
+        triggerCollectionService.processDelayedSacrificeSourceWhenTargetLeaves(gameData, target);
+        triggerCollectionService.processDelayedSacrificeTargetWhenSourceLeaves(gameData, target);
         triggerCollectionService.checkAnotherCreatureLeavesBattlefieldTriggers(gameData, target, wasCreature);
         triggerCollectionService.checkAllyCreatureLeavesBattlefieldTriggers(gameData, target, wasCreature, controllerId);
         triggerCollectionService.checkAnotherArtifactLeavesBattlefieldTriggers(gameData, target, controllerId);
@@ -223,6 +229,8 @@ public class PermanentRemovalService {
         UUID ownerId = removed.get().ownerId();
         triggerCollectionService.checkEnchantedPermanentLTBTriggers(gameData, target, controllerId);
         triggerCollectionService.checkSelfLeavesTriggered(gameData, target, controllerId);
+        triggerCollectionService.processDelayedSacrificeSourceWhenTargetLeaves(gameData, target);
+        triggerCollectionService.processDelayedSacrificeTargetWhenSourceLeaves(gameData, target);
         triggerCollectionService.checkAnotherCreatureLeavesBattlefieldTriggers(gameData, target, wasCreature);
         triggerCollectionService.checkAllyCreatureLeavesBattlefieldTriggers(gameData, target, wasCreature, controllerId);
         triggerCollectionService.checkAnotherArtifactLeavesBattlefieldTriggers(gameData, target, controllerId);
@@ -258,6 +266,8 @@ public class PermanentRemovalService {
         UUID ownerId = removed.get().ownerId();
         triggerCollectionService.checkEnchantedPermanentLTBTriggers(gameData, target, controllerId);
         triggerCollectionService.checkSelfLeavesTriggered(gameData, target, controllerId);
+        triggerCollectionService.processDelayedSacrificeSourceWhenTargetLeaves(gameData, target);
+        triggerCollectionService.processDelayedSacrificeTargetWhenSourceLeaves(gameData, target);
         triggerCollectionService.checkAnotherCreatureLeavesBattlefieldTriggers(gameData, target, wasCreature);
         triggerCollectionService.checkAllyCreatureLeavesBattlefieldTriggers(gameData, target, wasCreature, controllerId);
         triggerCollectionService.checkAnotherArtifactLeavesBattlefieldTriggers(gameData, target, controllerId);
@@ -292,6 +302,8 @@ public class PermanentRemovalService {
         UUID ownerId = removed.get().ownerId();
         triggerCollectionService.checkEnchantedPermanentLTBTriggers(gameData, target, controllerId);
         triggerCollectionService.checkSelfLeavesTriggered(gameData, target, controllerId);
+        triggerCollectionService.processDelayedSacrificeSourceWhenTargetLeaves(gameData, target);
+        triggerCollectionService.processDelayedSacrificeTargetWhenSourceLeaves(gameData, target);
         triggerCollectionService.checkAnotherCreatureLeavesBattlefieldTriggers(gameData, target, wasCreature);
         triggerCollectionService.checkAllyCreatureLeavesBattlefieldTriggers(gameData, target, wasCreature, controllerId);
         triggerCollectionService.checkAnotherArtifactLeavesBattlefieldTriggers(gameData, target, controllerId);
@@ -329,6 +341,8 @@ public class PermanentRemovalService {
         UUID ownerId = removed.get().ownerId();
         triggerCollectionService.checkEnchantedPermanentLTBTriggers(gameData, target, controllerId);
         triggerCollectionService.checkSelfLeavesTriggered(gameData, target, controllerId);
+        triggerCollectionService.processDelayedSacrificeSourceWhenTargetLeaves(gameData, target);
+        triggerCollectionService.processDelayedSacrificeTargetWhenSourceLeaves(gameData, target);
         triggerCollectionService.checkAnotherCreatureLeavesBattlefieldTriggers(gameData, target, wasCreature);
         triggerCollectionService.checkAllyCreatureLeavesBattlefieldTriggers(gameData, target, wasCreature, controllerId);
         triggerCollectionService.checkAnotherArtifactLeavesBattlefieldTriggers(gameData, target, controllerId);
@@ -366,6 +380,8 @@ public class PermanentRemovalService {
         UUID ownerId = removed.get().ownerId();
         triggerCollectionService.checkEnchantedPermanentLTBTriggers(gameData, target, controllerId);
         triggerCollectionService.checkSelfLeavesTriggered(gameData, target, controllerId);
+        triggerCollectionService.processDelayedSacrificeSourceWhenTargetLeaves(gameData, target);
+        triggerCollectionService.processDelayedSacrificeTargetWhenSourceLeaves(gameData, target);
         triggerCollectionService.checkAnotherCreatureLeavesBattlefieldTriggers(gameData, target, wasCreature);
         triggerCollectionService.checkAllyCreatureLeavesBattlefieldTriggers(gameData, target, wasCreature, controllerId);
         triggerCollectionService.checkAnotherArtifactLeavesBattlefieldTriggers(gameData, target, controllerId);

@@ -17,6 +17,10 @@ import com.github.laxika.magicalvibes.model.TriggerMode;
 import com.github.laxika.magicalvibes.model.effect.BlockCostEffect;
 import com.github.laxika.magicalvibes.model.effect.BoostSelfEffect;
 import com.github.laxika.magicalvibes.model.effect.BoostSelfWhenBlockingKeywordEffect;
+import com.github.laxika.magicalvibes.model.action.DelayedBlockerBoost;
+import com.github.laxika.magicalvibes.model.action.DelayedUnblockedAttackerPowerDamage;
+import com.github.laxika.magicalvibes.model.amount.SourcePower;
+import com.github.laxika.magicalvibes.model.effect.AssignNoCombatDamageEffect;
 import com.github.laxika.magicalvibes.model.effect.CanBeBlockedByAtMostNCreaturesEffect;
 import com.github.laxika.magicalvibes.model.effect.CantBeBlockedByFewerThanNCreaturesEffect;
 import com.github.laxika.magicalvibes.model.effect.CantAttackOrBlockAloneEffect;
@@ -35,8 +39,10 @@ import com.github.laxika.magicalvibes.model.effect.GrantAdditionalBlockEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantAdditionalBlockPerEquipmentEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantKeywordEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantScope;
+import com.github.laxika.magicalvibes.model.effect.MayEffect;
 import com.github.laxika.magicalvibes.model.effect.PutCounterOnCombatOpponentAtEndOfCombatEffect;
 import com.github.laxika.magicalvibes.model.effect.MustBeBlockedByAllCreaturesEffect;
+import com.github.laxika.magicalvibes.model.effect.SequenceEffect;
 import com.github.laxika.magicalvibes.model.effect.MustBeBlockedIfAbleEffect;
 import com.github.laxika.magicalvibes.model.effect.SkipNextUntapEffect;
 import com.github.laxika.magicalvibes.model.effect.TapUntapScope;
@@ -173,6 +179,7 @@ public class CombatBlockService {
             }
             collectUnblockedAttackTriggers(gameData, activeId, defenderId);
             checkUnblockedAttackerTriggers(gameData, activeId, unblockedAttackers);
+            processDelayedUnblockedAttackerPowerDamageTriggers(gameData, activeId, unblockedAttackers);
             // CR 509.4: players still get priority during the declare blockers step even
             // when zero blocks were declared (e.g. the attacker may pump an unblocked
             // creature). AUTO_PASS_ONLY runs that priority round; when nobody can act,
@@ -547,6 +554,15 @@ public class CombatBlockService {
         }
         checkUnblockedAttackerTriggers(gameData, activeId, unblockedAttackers);
 
+        // "Whenever a creature you control attacks and isn't blocked, you may have it deal damage
+        // equal to its power to a target creature. If you do, it assigns no combat damage"
+        // (Gaze of Pain delayed trigger).
+        processDelayedUnblockedAttackerPowerDamageTriggers(gameData, activeId, unblockedAttackers);
+
+        // "Whenever a creature blocks this turn, it gets +X/+Y" delayed triggers (Battle Cry).
+        // Once per unique blocker, not once per attacker blocked.
+        processDelayedBlockerBoostTriggers(gameData, blockerAssignments, defenderBattlefield);
+
         // APNAP: active player's triggers on bottom, non-active player's on top (resolves first)
         combatTriggerService.reorderTriggersAPNAP(gameData, stackSizeBeforeBlockerTriggers, activeId);
 
@@ -568,6 +584,79 @@ public class CombatBlockService {
         }
 
         return CombatResult.AUTO_PASS_ONLY;
+    }
+
+    /**
+     * Fires delayed "whenever a creature you control attacks and isn't blocked, you may have it
+     * deal damage equal to its power to a target creature; if you do, it assigns no combat damage"
+     * triggers (Gaze of Pain). One may-trigger per unblocked attacker per registered delayed action
+     * whose controller is the attacking player.
+     */
+    private void processDelayedUnblockedAttackerPowerDamageTriggers(GameData gameData,
+                                                                    UUID activeId,
+                                                                    List<Permanent> unblockedAttackers) {
+        if (unblockedAttackers.isEmpty()
+                || !gameData.hasDelayedAction(DelayedUnblockedAttackerPowerDamage.class)) {
+            return;
+        }
+        for (DelayedUnblockedAttackerPowerDamage delayed
+                : gameData.getDelayedActions(DelayedUnblockedAttackerPowerDamage.class)) {
+            if (!delayed.controllerId().equals(activeId)) {
+                continue;
+            }
+            for (Permanent attacker : unblockedAttackers) {
+                MayEffect may = new MayEffect(
+                        SequenceEffect.of(
+                                new DealDamageToTargetCreatureEffect(new SourcePower()),
+                                new AssignNoCombatDamageEffect()),
+                        "have it deal damage equal to its power to a target creature?");
+                // CR 603.5: source permanent is the unblocked attacker ("it"); source card is Gaze
+                // of Pain (governs targeting via effect targetSpec → any creature).
+                gameData.queueMayAbility(delayed.sourceCard(), delayed.controllerId(), may,
+                        null, attacker.getId());
+                gameBroadcastService.logAndBroadcast(gameData, GameLog.cardTextCard(
+                        delayed.sourceCard(), " — ", attacker.getCard(),
+                        " attacks unblocked."));
+                log.info("Game {} - {} delayed unblocked-attacker power damage fires for {}",
+                        gameData.id, delayed.sourceCard().getName(), attacker.getCard().getName());
+            }
+        }
+    }
+
+    /**
+     * Fires delayed "whenever a creature blocks this turn, it gets +X/+Y" triggers (Battle Cry).
+     * One trigger per unique blocker per registered delayed action.
+     */
+    private void processDelayedBlockerBoostTriggers(GameData gameData,
+                                                    List<BlockerAssignment> blockerAssignments,
+                                                    List<Permanent> defenderBattlefield) {
+        if (blockerAssignments.isEmpty() || !gameData.hasDelayedAction(DelayedBlockerBoost.class)) {
+            return;
+        }
+        LinkedHashSet<Integer> uniqueBlockerIndices = new LinkedHashSet<>();
+        for (BlockerAssignment assignment : blockerAssignments) {
+            uniqueBlockerIndices.add(assignment.blockerIndex());
+        }
+        for (DelayedBlockerBoost boost : gameData.getDelayedActions(DelayedBlockerBoost.class)) {
+            for (int blockerIdx : uniqueBlockerIndices) {
+                Permanent blocker = defenderBattlefield.get(blockerIdx);
+                StackEntry se = new StackEntry(
+                        StackEntryType.TRIGGERED_ABILITY,
+                        boost.sourceCard(),
+                        boost.controllerId(),
+                        boost.sourceCard().getName() + "'s delayed trigger",
+                        List.of(new BoostSelfEffect(boost.power(), boost.toughness())),
+                        blocker.getId(),
+                        blocker.getId());
+                se.setNonTargeting(true);
+                gameData.stack.add(se);
+                gameBroadcastService.logAndBroadcast(gameData, GameLog.cardTextCard(
+                        boost.sourceCard(), " — ", blocker.getCard(),
+                        " gets +" + boost.power() + "/+" + boost.toughness() + " until end of turn."));
+                log.info("Game {} - {} delayed blocker boost fires for {}",
+                        gameData.id, boost.sourceCard().getName(), blocker.getCard().getName());
+            }
+        }
     }
 
     /**

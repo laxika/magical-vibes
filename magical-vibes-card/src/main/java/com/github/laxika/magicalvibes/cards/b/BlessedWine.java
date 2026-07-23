@@ -7,6 +7,7 @@ import com.github.laxika.magicalvibes.model.effect.GainLifeEffect;
 import com.github.laxika.magicalvibes.model.effect.RegisterDrawCardsAtNextUpkeepEffect;
 
 @CardRegistration(set = "5ED", collectorNumber = "11")
+@CardRegistration(set = "ICE", collectorNumber = "7")
 public class BlessedWine extends Card {
 
     public BlessedWine() {

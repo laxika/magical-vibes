@@ -43,6 +43,7 @@ import com.github.laxika.magicalvibes.model.amount.Fixed;
 import com.github.laxika.magicalvibes.model.amount.FixedIfControlMoreCreaturesThanEachOtherPlayer;
 import com.github.laxika.magicalvibes.model.amount.FixedIfControlledCreaturesTotalToughnessAtLeast;
 import com.github.laxika.magicalvibes.model.amount.FixedIfControlsAllNamed;
+import com.github.laxika.magicalvibes.model.amount.FixedIfTargetMatches;
 import com.github.laxika.magicalvibes.model.amount.GreatestPowerAmongControlled;
 import com.github.laxika.magicalvibes.model.amount.HalvedRoundedUp;
 import com.github.laxika.magicalvibes.model.amount.IfSourceAttacking;
@@ -107,6 +108,8 @@ public class AmountEvaluationService {
                     totalToughnessOfControlledCreatures(gameData, ctx) >= a.minTotalToughness() ? a.amount() : 0;
             case FixedIfControlsAllNamed a ->
                     controlsAllNamed(gameData, a, ctx) ? a.amount() : a.otherwise();
+            case FixedIfTargetMatches a ->
+                    targetMatches(gameData, a, ctx) ? a.amount() : a.otherwise();
             case XValue ignored ->
                     ctx.xValue();
             case ManaSpentToCast ignored ->
@@ -538,6 +541,13 @@ public class AmountEvaluationService {
             if (!found) return false;
         }
         return true;
+    }
+
+    private boolean targetMatches(GameData gameData, FixedIfTargetMatches amount, AmountContext ctx) {
+        if (ctx.targetPermanentId() == null) return false;
+        Permanent target = gameQueryService.findPermanentById(gameData, ctx.targetPermanentId());
+        return target != null
+                && predicateEvaluationService.matchesPermanentPredicate(gameData, target, amount.filter());
     }
 
     private boolean controlsMoreCreaturesThanEachOtherPlayer(GameData gameData, AmountContext ctx) {

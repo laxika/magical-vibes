@@ -50,6 +50,7 @@ import com.github.laxika.magicalvibes.model.filter.StackEntryNotPredicate;
 import com.github.laxika.magicalvibes.model.filter.StackEntryPredicate;
 import com.github.laxika.magicalvibes.model.filter.StackEntryPredicateTargetFilter;
 import com.github.laxika.magicalvibes.model.filter.StackEntryTargetsPermanentPredicate;
+import com.github.laxika.magicalvibes.model.filter.StackEntryTargetsSourcePredicate;
 import com.github.laxika.magicalvibes.model.filter.StackEntryTargetsYouOrCreatureYouControlPredicate;
 import com.github.laxika.magicalvibes.model.filter.StackEntryTargetsYouPredicate;
 import com.github.laxika.magicalvibes.model.filter.StackEntryTargetsYourPermanentPredicate;
@@ -1273,6 +1274,9 @@ public class TargetLegalityService {
         if (predicate instanceof StackEntryTargetsYouPredicate) {
             return targetsPlayer(stackEntry, controllerId);
         }
+        if (predicate instanceof StackEntryTargetsSourcePredicate) {
+            return source != null && targetsPermanent(stackEntry, source.getId());
+        }
         if (predicate instanceof StackEntryTargetsPermanentPredicate targetsPermanent) {
             return targetsAnyMatchingPermanent(gameData, stackEntry, targetsPermanent.filter(), controllerId);
         }
@@ -1377,6 +1381,20 @@ public class TargetLegalityService {
         if (stackEntry.getTargetIds() != null) {
             for (UUID targetId : stackEntry.getTargetIds()) {
                 if (controllerId.equals(targetId)) {
+                    return true;
+                }
+            }
+        }
+        return false;
+    }
+
+    private boolean targetsPermanent(StackEntry stackEntry, UUID permanentId) {
+        if (permanentId.equals(stackEntry.getTargetId())) {
+            return true;
+        }
+        if (stackEntry.getTargetIds() != null) {
+            for (UUID targetId : stackEntry.getTargetIds()) {
+                if (permanentId.equals(targetId)) {
                     return true;
                 }
             }

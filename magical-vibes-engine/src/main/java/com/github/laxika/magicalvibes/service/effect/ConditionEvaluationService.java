@@ -26,6 +26,7 @@ import com.github.laxika.magicalvibes.model.condition.CardsAboveSelfInGraveyard;
 import com.github.laxika.magicalvibes.model.condition.CardsLeftGraveyardThisTurn;
 import com.github.laxika.magicalvibes.model.condition.CastFromZone;
 import com.github.laxika.magicalvibes.model.condition.CastNotFromHand;
+import com.github.laxika.magicalvibes.model.condition.ChosenColorStrictlyMostCommonAmongOpponentNontokens;
 import com.github.laxika.magicalvibes.model.condition.Condition;
 import com.github.laxika.magicalvibes.model.condition.ControllerCastAnotherSpellThisTurn;
 import com.github.laxika.magicalvibes.model.condition.ControllerHandEmpty;
@@ -78,6 +79,7 @@ import com.github.laxika.magicalvibes.model.condition.PermanentEnteredThisTurn;
 import com.github.laxika.magicalvibes.model.condition.AttackedWithCreaturesThisTurn;
 import com.github.laxika.magicalvibes.model.condition.Raid;
 import com.github.laxika.magicalvibes.model.condition.SelfDealtDamageToOpponentThisTurn;
+import com.github.laxika.magicalvibes.model.condition.SourceDamagedCreatureDiedThisTurn;
 import com.github.laxika.magicalvibes.model.condition.SelfHasKeyword;
 import com.github.laxika.magicalvibes.model.condition.SourceCardInCommandZone;
 import com.github.laxika.magicalvibes.model.condition.SourceCanSoulbond;
@@ -260,6 +262,9 @@ public class ConditionEvaluationService {
                     wasAnyOpponentDealtDamageThisTurn(gameData, ctx.controllerId(), c.minimumAmount());
             case SelfDealtDamageToOpponentThisTurn ignored ->
                     sourceDealtDamageToOpponentThisTurn(gameData, ctx);
+            case SourceDamagedCreatureDiedThisTurn ignored ->
+                    ctx.sourcePermanentId() != null
+                            && gameData.sourcesWhoseDamagedCreaturesDiedThisTurn.contains(ctx.sourcePermanentId());
             case OpponentLostLifeThisTurn c ->
                     didAnyOpponentLoseLifeThisTurn(gameData, ctx.controllerId(), c.minimumAmount());
             case ActivationCount c ->
@@ -342,6 +347,12 @@ public class ConditionEvaluationService {
                     anyOpponentControlsAtLeastNMoreCreatures(gameData, ctx, c.minimumCreatureDifference());
             case OpponentControlsMoreLands ignored ->
                     gameQueryService.anyOpponentControlsMoreLands(gameData, ctx.controllerId());
+            case ChosenColorStrictlyMostCommonAmongOpponentNontokens ignored -> {
+                Permanent source = sourcePermanent(gameData, ctx);
+                yield source != null
+                        && ChosenColorStrictlyMostCommonAmongOpponentNontokens.isStrictlyMostCommon(
+                                gameData, source, ctx.controllerId());
+            }
             case CardsLeftGraveyardThisTurn ignored ->
                     ctx.controllerId() != null
                             && gameData.playersWhoseCardsLeftGraveyardThisTurn.contains(ctx.controllerId());

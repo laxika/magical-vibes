@@ -208,7 +208,7 @@ public class MediumAiDecisionEngine extends AiDecisionEngine {
                 targetId = chosen.getId();
                 xValue = chosen.getCard().getManaValue();
             } else {
-                int smartX = manaManager.calculateSmartX(gameData, card, targetId, virtualPool, costModifier);
+                int smartX = manaManager.calculateSmartX(gameData, aiPlayer.getId(), card, targetId, virtualPool, costModifier);
                 smartX = Math.min(smartX, getMaxXForGraveyardRequirements(gameData, card));
                 if (smartX <= 0) {
                     return false;
@@ -232,7 +232,7 @@ public class MediumAiDecisionEngine extends AiDecisionEngine {
         final List<UUID> finalMultiTargetIds = multiTargetIds;
         final Integer finalDiscardHandCardIndex = chooseDiscardCostIndex(gameData, card);
         send(() -> gameActions.handlePlayCard(selfConnection,
-                new PlayCardRequest(cardIndex, finalXValue, finalTargetId, finalDamageAssignments, finalMultiTargetIds, null, null, finalSacrificePermanentId, null, null, null, null, null, finalExileGraveyardCardIndices, null, null, null, finalDiscardHandCardIndex, null)));
+                new PlayCardRequest(cardIndex, finalXValue, finalTargetId, finalDamageAssignments, finalMultiTargetIds, null, null, finalSacrificePermanentId, null, null, null, null, null, finalExileGraveyardCardIndices, null, null, null, finalDiscardHandCardIndex, null, null)));
         // Verify the spell was actually cast — handlePlayCard silently
         // swallows errors, so we must confirm the state actually changed.
         // Identity check: hand size alone is unreliable because ETB/cast triggers
@@ -373,7 +373,7 @@ public class MediumAiDecisionEngine extends AiDecisionEngine {
                 targetId = chosen.getId();
                 xValue = chosen.getCard().getManaValue();
             } else {
-                int smartX = manaManager.calculateSmartX(gameData, card, targetId, virtualPool, instantCostModifier);
+                int smartX = manaManager.calculateSmartX(gameData, aiPlayer.getId(), card, targetId, virtualPool, instantCostModifier);
                 smartX = Math.min(smartX, getMaxXForGraveyardRequirements(gameData, card));
                 if (smartX <= 0) return false;
                 xValue = smartX;
@@ -394,7 +394,7 @@ public class MediumAiDecisionEngine extends AiDecisionEngine {
         final List<UUID> finalMultiTargetIds = multiTargetIds;
         final Integer finalDiscardHandCardIndex = chooseDiscardCostIndex(gameData, card);
         send(() -> gameActions.handlePlayCard(selfConnection,
-                new PlayCardRequest(cardIndex, finalXValue, finalTargetId, finalDamageAssignments, finalMultiTargetIds, null, null, finalSacrificePermanentId, null, null, null, null, null, finalExileGraveyardCardIndices, null, null, null, finalDiscardHandCardIndex, null)));
+                new PlayCardRequest(cardIndex, finalXValue, finalTargetId, finalDamageAssignments, finalMultiTargetIds, null, null, finalSacrificePermanentId, null, null, null, null, null, finalExileGraveyardCardIndices, null, null, null, finalDiscardHandCardIndex, null, null)));
         // Identity check: hand size alone is unreliable because ETB/cast triggers
         // can add cards back to hand (e.g. Explore), masking a successful cast.
         if (hand.contains(card)) {

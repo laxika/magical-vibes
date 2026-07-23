@@ -19,6 +19,7 @@ import com.github.laxika.magicalvibes.model.filter.PermanentPredicateTargetFilte
 import java.util.List;
 
 @CardRegistration(set = "5ED", collectorNumber = "114")
+@CardRegistration(set = "ICE", collectorNumber = "92")
 public class RayOfCommand extends Card {
 
     public RayOfCommand() {

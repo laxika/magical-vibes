@@ -232,9 +232,11 @@ public class PlayerInputService {
      * re-invokes this until the player is done (see {@code ChoiceHandlerService}).
      */
     public void beginBecomeChosenColorsChoice(GameData gameData, UUID playerId, UUID targetId,
-                                              String sourceCardName, List<CardColor> chosen) {
+                                              String sourceCardName, List<CardColor> chosen,
+                                              EffectDuration duration) {
         ChoiceContext.BecomeChosenColorsChoice ctx =
-                new ChoiceContext.BecomeChosenColorsChoice(targetId, sourceCardName, new ArrayList<>(chosen));
+                new ChoiceContext.BecomeChosenColorsChoice(targetId, sourceCardName, new ArrayList<>(chosen),
+                        duration);
 
         List<String> options = new ArrayList<>();
         for (CardColor color : List.of(CardColor.WHITE, CardColor.BLUE, CardColor.BLACK, CardColor.RED, CardColor.GREEN)) {
@@ -468,14 +470,27 @@ public class PlayerInputService {
     }
 
     public void beginBasicLandTypeChoice(GameData gameData, UUID playerId, UUID permanentId) {
-        ChoiceContext.BasicLandTypeChoice choiceContext = new ChoiceContext.BasicLandTypeChoice(permanentId);
+        beginBasicLandTypeChoice(gameData, playerId, permanentId, false, false);
+    }
+
+    /**
+     * @param isSecondChoice   true when this is the second of two "as enters" land-type picks
+     * @param chainSecondAfter true when answering the first pick should immediately begin the second
+     */
+    public void beginBasicLandTypeChoice(GameData gameData, UUID playerId, UUID permanentId,
+                                         boolean isSecondChoice, boolean chainSecondAfter) {
+        ChoiceContext.BasicLandTypeChoice choiceContext =
+                new ChoiceContext.BasicLandTypeChoice(permanentId, isSecondChoice, chainSecondAfter);
 
         List<String> basicLandTypes = List.of("PLAINS", "ISLAND", "SWAMP", "MOUNTAIN", "FOREST");
+        String prompt = isSecondChoice
+                ? "Choose the second basic land type."
+                : "Choose a basic land type.";
         interactionHandlerRegistry.begin(gameData, new PendingInteraction.ColorChoice(
-                playerId, null, null, choiceContext, basicLandTypes, "Choose a basic land type."));
+                playerId, null, null, choiceContext, basicLandTypes, prompt));
 
         String playerName = gameData.playerIdToName.get(playerId);
-        log.info("Game {} - Awaiting {} to choose a basic land type", gameData.id, playerName);
+        log.info("Game {} - Awaiting {} to choose a basic land type (second={})", gameData.id, playerName, isSecondChoice);
     }
 
     public void beginAddBasicLandTypeChoice(GameData gameData, UUID playerId, UUID targetLandId, EffectDuration duration) {

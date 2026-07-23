@@ -22,6 +22,7 @@ public sealed interface StackEntryPredicate permits
         StackEntryNotPredicate,
         StackEntrySharesChosenNameWithSourcePredicate,
         StackEntryTargetsPermanentPredicate,
+        StackEntryTargetsSourcePredicate,
         StackEntryTargetsYouOrCreatureYouControlPredicate,
         StackEntryTargetsYouPredicate,
         StackEntryTargetsYourPermanentPredicate,

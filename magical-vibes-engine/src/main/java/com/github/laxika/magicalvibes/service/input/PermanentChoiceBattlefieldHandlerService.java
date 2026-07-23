@@ -20,6 +20,7 @@ import com.github.laxika.magicalvibes.model.effect.CardEffect;
 import com.github.laxika.magicalvibes.model.effect.ControlEnchantedCreatureEffect;
 import com.github.laxika.magicalvibes.model.effect.EffectDuration;
 import com.github.laxika.magicalvibes.model.effect.CreateTokenEffect;
+import com.github.laxika.magicalvibes.model.effect.GainControlOfTargetEffect;
 import com.github.laxika.magicalvibes.service.GameBroadcastService;
 import com.github.laxika.magicalvibes.service.state.StateBasedActionService;
 import com.github.laxika.magicalvibes.service.trigger.TriggerCollectionService;
@@ -302,6 +303,27 @@ public class PermanentChoiceBattlefieldHandlerService {
 
         // Begun mid-resolution (opponent/target-player-chooses-creature-to-destroy effects) —
         // same parked-resolution resume requirement as handleSacrificeCreature above.
+        inputCompletionService.sbaProcessMayAbilitiesThenAutoPass(gameData);
+    }
+
+    public void handleOpponentMayGainControlOfCreatureYouControl(GameData gameData, UUID permanentId,
+            PermanentChoiceContext.OpponentMayGainControlOfCreatureYouControl context) {
+        Permanent target = gameQueryService.findPermanentById(gameData, permanentId);
+        if (target == null) {
+            throw new IllegalStateException("Target creature no longer exists");
+        }
+        Permanent source = gameQueryService.findPermanentById(gameData, context.sourcePermanentId());
+        if (source == null) {
+            gameBroadcastService.logAndBroadcast(gameData,
+                    GameLog.text(context.sourceCardName() + "'s ability has no effect (source left the battlefield)."));
+        } else {
+            var controlEffect = new GainControlOfTargetEffect(context.duration());
+            creatureControlService.applyControlEffect(gameData, context.choosingOpponentId(), target,
+                    controlEffect, context.duration().toEffectDuration(), context.sourcePermanentId(), context.sourceCardName());
+            log.info("Game {} - {} gains control of {} via {}", gameData.id,
+                    gameData.playerIdToName.get(context.choosingOpponentId()),
+                    target.getCard().getName(), context.sourceCardName());
+        }
         inputCompletionService.sbaProcessMayAbilitiesThenAutoPass(gameData);
     }
 

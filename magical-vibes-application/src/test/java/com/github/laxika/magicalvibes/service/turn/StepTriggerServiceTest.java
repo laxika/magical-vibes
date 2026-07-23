@@ -60,6 +60,7 @@ import com.github.laxika.magicalvibes.service.battlefield.GraveyardTargetingServ
 import com.github.laxika.magicalvibes.service.graveyard.GraveyardService;
 import com.github.laxika.magicalvibes.service.battlefield.GameQueryService;
 import com.github.laxika.magicalvibes.service.effect.ConditionEvaluationService;
+import com.github.laxika.magicalvibes.service.effect.GrantedUpkeepEffectSupport;
 import com.github.laxika.magicalvibes.service.effect.staticfx.StaticEffectSupport;
 import com.github.laxika.magicalvibes.service.battlefield.PermanentRemovalService;
 import com.github.laxika.magicalvibes.service.paradigm.ParadigmService;
@@ -154,7 +155,8 @@ class StepTriggerServiceTest {
                 triggerTargetCollector,
                 paradigmService,
                 validTargetService,
-                creatureControlService);
+                creatureControlService,
+                new GrantedUpkeepEffectSupport(gameQueryService));
 
         player1Id = UUID.randomUUID();
         player2Id = UUID.randomUUID();

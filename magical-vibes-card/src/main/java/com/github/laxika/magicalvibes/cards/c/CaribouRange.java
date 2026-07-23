@@ -22,6 +22,7 @@ import java.util.List;
 import java.util.Set;
 
 @CardRegistration(set = "5ED", collectorNumber = "14")
+@CardRegistration(set = "ICE", collectorNumber = "11")
 public class CaribouRange extends Card {
 
     public CaribouRange() {

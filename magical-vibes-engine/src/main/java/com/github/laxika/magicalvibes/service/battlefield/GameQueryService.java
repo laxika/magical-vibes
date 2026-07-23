@@ -64,6 +64,7 @@ import com.github.laxika.magicalvibes.model.effect.DamageDealtAsInfectBelowZeroL
 import com.github.laxika.magicalvibes.model.effect.LifeTotalCantChangeEffect;
 import com.github.laxika.magicalvibes.model.effect.PlayerHasProtectionFromChosenNameEffect;
 import com.github.laxika.magicalvibes.model.effect.PreventDamageFromChosenNameEffect;
+import com.github.laxika.magicalvibes.model.effect.PreventDamageFromInstantAndSorcerySpellsEffect;
 import com.github.laxika.magicalvibes.model.effect.ActivateCreatureAbilitiesAsThoughHasteEffect;
 import com.github.laxika.magicalvibes.model.effect.SpendWhiteManaAsRedEffect;
 import com.github.laxika.magicalvibes.model.effect.PlayersCantActivateAbilitiesOfGraveyardCardsEffect;
@@ -96,6 +97,8 @@ import com.github.laxika.magicalvibes.model.effect.GrantKeywordEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantScope;
 import com.github.laxika.magicalvibes.model.effect.ManaProducingEffect;
 import com.github.laxika.magicalvibes.model.effect.ManaReflectionEffect;
+import com.github.laxika.magicalvibes.model.effect.TwistBasicLandManaColorsEffect;
+import com.github.laxika.magicalvibes.model.effect.LandManaProducesFixedColorEffect;
 import com.github.laxika.magicalvibes.model.effect.PreventAllCombatDamageToAndByEnchantedCreatureEffect;
 import com.github.laxika.magicalvibes.model.effect.PreventAllDamageToAndByEnchantedCreatureEffect;
 import com.github.laxika.magicalvibes.model.effect.PreventColorDamageToEnchantedCreatureEffect;
@@ -598,6 +601,71 @@ public class GameQueryService {
             }
         }
         return 1 << reflections;
+    }
+
+    /**
+     * Returns {@code true} while any permanent has a {@link TwistBasicLandManaColorsEffect}
+     * (Reality Twist). Global — not controller-scoped.
+     */
+    public boolean isTwistBasicLandManaActive(GameData gameData) {
+        return gameData.anyPermanentMatches(p ->
+                p.getCard().getEffects(EffectSlot.STATIC).stream()
+                        .anyMatch(e -> e instanceof TwistBasicLandManaColorsEffect));
+    }
+
+    /**
+     * Fixed color lands produce under Infernal Darkness-style replacement
+     * ({@link LandManaProducesFixedColorEffect}). Null when inactive. Global — not
+     * controller-scoped. Amount is unchanged; only the type is replaced.
+     */
+    public ManaColor fixedLandManaColor(GameData gameData) {
+        for (UUID playerId : gameData.orderedPlayerIds) {
+            List<Permanent> battlefield = gameData.playerBattlefields.get(playerId);
+            if (battlefield == null) {
+                continue;
+            }
+            for (Permanent permanent : battlefield) {
+                for (var effect : permanent.getCard().getEffects(EffectSlot.STATIC)) {
+                    if (effect instanceof LandManaProducesFixedColorEffect fixed) {
+                        return fixed.color();
+                    }
+                }
+            }
+        }
+        return null;
+    }
+
+    /**
+     * Mana colors a land produces under Reality Twist based on its effective basic land types:
+     * Plains→{R}, Swamp→{G}, Mountain→{W}, Forest→{B}, Island→{U} (unchanged). Empty when twist
+     * is inactive or the permanent has no basic land types. When multiple types apply the
+     * controller chooses one color for all mana produced (Gatherer 2013-04-15).
+     */
+    public Set<ManaColor> twistedLandManaColors(GameData gameData, Permanent permanent) {
+        if (!isTwistBasicLandManaActive(gameData)) {
+            return Set.of();
+        }
+        Set<CardSubtype> types = effectiveBasicLandTypes(gameData, permanent);
+        if (types.isEmpty()) {
+            return Set.of();
+        }
+        Set<ManaColor> colors = EnumSet.noneOf(ManaColor.class);
+        if (types.contains(CardSubtype.PLAINS)) {
+            colors.add(ManaColor.RED);
+        }
+        if (types.contains(CardSubtype.SWAMP)) {
+            colors.add(ManaColor.GREEN);
+        }
+        if (types.contains(CardSubtype.MOUNTAIN)) {
+            colors.add(ManaColor.WHITE);
+        }
+        if (types.contains(CardSubtype.FOREST)) {
+            colors.add(ManaColor.BLACK);
+        }
+        if (types.contains(CardSubtype.ISLAND)) {
+            colors.add(ManaColor.BLUE);
+        }
+        return colors;
     }
 
     /**
@@ -2696,6 +2764,23 @@ public class GameQueryService {
     }
 
     /**
+     * Energy Storm: returns {@code true} when any permanent has
+     * {@link PreventDamageFromInstantAndSorcerySpellsEffect} and {@code entry} is an instant or
+     * sorcery spell dealing damage as itself (not via a permanent that fights/bites). Combat and
+     * ability damage are unaffected. Honours {@link #isDamagePreventable}.
+     */
+    public boolean isDamageFromInstantOrSorcerySpellPrevented(GameData gameData, StackEntry entry) {
+        if (!isDamagePreventable(gameData) || entry == null) {
+            return false;
+        }
+        StackEntryType type = entry.getEntryType();
+        if (type != StackEntryType.INSTANT_SPELL && type != StackEntryType.SORCERY_SPELL) {
+            return false;
+        }
+        return anyBattlefieldHasStaticEffect(gameData, PreventDamageFromInstantAndSorcerySpellsEffect.class);
+    }
+
+    /**
      * Returns {@code true} if the player controls a permanent with
      * {@link AllowExtraLoyaltyActivationEffect}, allowing planeswalker loyalty abilities
      * to be activated twice per turn instead of once (Oath of Teferi).
@@ -3147,13 +3232,32 @@ public class GameQueryService {
                 }
                 if (restriction.cantBeBlockedByCreaturesMatching() != null
                         && predicateEvaluationService.matchesPermanentPredicate(gameData, blocker, restriction.cantBeBlockedByCreaturesMatching())) {
-                    return BlockDenial.CANT_BE_BLOCKED_BY_MATCHING;
+                    PermanentPredicate onlyIfDefenderControls =
+                            restriction.cantBeBlockedByCreaturesMatchingOnlyIfDefenderControls();
+                    if (onlyIfDefenderControls == null
+                            || (context.defenderBattlefield != null && context.defenderBattlefield.stream()
+                                .anyMatch(p -> predicateEvaluationService.matchesPermanentPredicate(
+                                        gameData, p, onlyIfDefenderControls)))) {
+                        return BlockDenial.CANT_BE_BLOCKED_BY_MATCHING;
+                    }
                 }
             }
         }
-        for (CanBeBlockedOnlyByFilterEffect restriction : atk.auraGrantedRestrictions()) {
-            if (!predicateEvaluationService.matchesPermanentPredicate(gameData, blocker, restriction.blockerPredicate())) {
-                return new BlockDenial(BlockDenial.Reason.ATTACKER_LIMITED_TO_BLOCKERS, restriction.allowedBlockersDescription());
+        for (BlockabilityRestrictionEffect restriction : atk.auraGrantedRestrictions()) {
+            if (restriction.blockableOnlyBy() != null
+                    && !predicateEvaluationService.matchesPermanentPredicate(gameData, blocker, restriction.blockableOnlyBy())) {
+                return new BlockDenial(BlockDenial.Reason.ATTACKER_LIMITED_TO_BLOCKERS, restriction.blockableOnlyByDescription());
+            }
+            if (restriction.cantBeBlockedByCreaturesMatching() != null
+                    && predicateEvaluationService.matchesPermanentPredicate(gameData, blocker, restriction.cantBeBlockedByCreaturesMatching())) {
+                PermanentPredicate onlyIfDefenderControls =
+                        restriction.cantBeBlockedByCreaturesMatchingOnlyIfDefenderControls();
+                if (onlyIfDefenderControls == null
+                        || (context.defenderBattlefield != null && context.defenderBattlefield.stream()
+                            .anyMatch(p -> predicateEvaluationService.matchesPermanentPredicate(
+                                    gameData, p, onlyIfDefenderControls)))) {
+                    return BlockDenial.CANT_BE_BLOCKED_BY_MATCHING;
+                }
             }
         }
         for (CanBeBlockedOnlyByFilterEffect restriction : attacker.getBlockRestrictionsUntilEndOfTurn()) {
@@ -3323,14 +3427,16 @@ public class GameQueryService {
         };
     }
 
-    private List<CanBeBlockedOnlyByFilterEffect> getAuraGrantedBlockingRestrictions(GameData gameData, Permanent creature) {
-        List<CanBeBlockedOnlyByFilterEffect> restrictions = new ArrayList<>();
+    private List<BlockabilityRestrictionEffect> getAuraGrantedBlockingRestrictions(GameData gameData, Permanent creature) {
+        List<BlockabilityRestrictionEffect> restrictions = new ArrayList<>();
         gameData.forEachPermanent((playerId, aura) -> {
             if (!aura.isAttached() || !aura.getAttachedTo().equals(creature.getId())) {
                 return;
             }
             for (CardEffect effect : aura.getCard().getEffects(EffectSlot.STATIC)) {
-                if (effect instanceof CanBeBlockedOnlyByFilterEffect restriction) {
+                if (effect instanceof BlockabilityRestrictionEffect restriction
+                        && (restriction.blockableOnlyBy() != null
+                        || restriction.cantBeBlockedByCreaturesMatching() != null)) {
                     restrictions.add(restriction);
                 }
             }

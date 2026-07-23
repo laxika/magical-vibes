@@ -14,6 +14,7 @@ import com.github.laxika.magicalvibes.model.filter.PermanentPredicateTargetFilte
 import java.util.List;
 
 @CardRegistration(set = "5ED", collectorNumber = "179")
+@CardRegistration(set = "ICE", collectorNumber = "152")
 public class MoleWorms extends Card {
 
     public MoleWorms() {

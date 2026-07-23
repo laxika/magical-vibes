@@ -45,6 +45,18 @@ public sealed interface PermanentChoiceContext extends PendingInteraction {
         }
     }
 
+    /**
+     * Opponent accepted Infernal Denizen's upkeep may and is picking which creature of
+     * {@code victimControllerId}'s to gain control of for {@code duration}, keyed to {@code sourcePermanentId}.
+     */
+    record OpponentMayGainControlOfCreatureYouControl(
+            UUID choosingOpponentId,
+            UUID victimControllerId,
+            UUID sourcePermanentId,
+            String sourceCardName,
+            com.github.laxika.magicalvibes.model.effect.ControlDuration duration
+    ) implements PermanentChoiceContext {}
+
     record SacrificeCreatureThenSearchLibrary(UUID sacrificingPlayerId) implements PermanentChoiceContext {}
 
     record SacrificeCreatureOpponentsLoseLife(UUID sacrificingPlayerId, String sourceCardName) implements PermanentChoiceContext {}

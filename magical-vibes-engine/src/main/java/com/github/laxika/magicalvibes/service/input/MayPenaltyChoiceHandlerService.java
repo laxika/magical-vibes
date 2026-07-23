@@ -20,14 +20,17 @@ import com.github.laxika.magicalvibes.model.effect.DamageControllerUnlessDiscard
 import com.github.laxika.magicalvibes.model.effect.DamageRecipient;
 import com.github.laxika.magicalvibes.model.effect.DamageUnlessPaysEffect;
 import com.github.laxika.magicalvibes.model.effect.DealDamageToPlayersEffect;
+import com.github.laxika.magicalvibes.model.effect.EachPlayerTakesDamageUnlessPaysEffect;
 import com.github.laxika.magicalvibes.model.effect.DestroyEnchantedPermanentUnlessPaysManaOrLifeEffect;
 import com.github.laxika.magicalvibes.model.effect.DiscardHandUnlessPaysLifeEffect;
 import com.github.laxika.magicalvibes.model.effect.DiscardUnlessExileCardFromGraveyardEffect;
 import com.github.laxika.magicalvibes.model.effect.DiscardUnlessReturnLandToHandEffect;
+import com.github.laxika.magicalvibes.model.effect.DrawCardUnlessPaysEffect;
 import com.github.laxika.magicalvibes.model.effect.ForcedCostOrElseEffect;
 import com.github.laxika.magicalvibes.model.effect.LoseLifeUnlessDiscardEffect;
 import com.github.laxika.magicalvibes.model.effect.SacrificePermanentCost;
 import com.github.laxika.magicalvibes.model.effect.LoseLifeUnlessPaysEffect;
+import com.github.laxika.magicalvibes.service.effect.normalfx.DrawCardUnlessPaysEffectHandler;
 import com.github.laxika.magicalvibes.model.GraveyardChoiceDestination;
 import com.github.laxika.magicalvibes.model.PendingInteraction;
 import com.github.laxika.magicalvibes.model.filter.CardPredicateUtils;
@@ -80,6 +83,7 @@ public class MayPenaltyChoiceHandlerService {
     private final CounterSupport counterSupport;
     private final com.github.laxika.magicalvibes.service.effect.normalfx.PlayerInteractionSupport playerInteractionSupport;
     private final com.github.laxika.magicalvibes.service.effect.normalfx.DealDamageToPlayersEffectHandler dealDamageToPlayersEffectHandler;
+    private final com.github.laxika.magicalvibes.service.effect.normalfx.EachPlayerTakesDamageUnlessPaysEffectHandler eachPlayerTakesDamageUnlessPaysEffectHandler;
     private final com.github.laxika.magicalvibes.service.effect.normalfx.DamageControllerUnlessDiscardThenTapSourceEffectHandler damageControllerUnlessDiscardThenTapSourceEffectHandler;
     private final com.github.laxika.magicalvibes.service.interaction.InteractionHandlerRegistry interactionHandlerRegistry;
 
@@ -499,6 +503,102 @@ public class MayPenaltyChoiceHandlerService {
         inputCompletionService.sbaProcessMayAbilitiesThenAutoPass(gameData);
     }
 
+    /**
+     * Lim-Dûl's Hex: each player independently may pay {@code manaCost} or take damage. Accepting
+     * spends the mana; declining (or accepting without enough mana) damages that player. Either
+     * way, the next remaining player is then offered the same choice (APNAP).
+     */
+    public void handleEachPlayerTakesDamageUnlessPaysChoice(GameData gameData, Player player,
+            boolean accepted, PendingMayAbility ability) {
+        EachPlayerTakesDamageUnlessPaysEffect effect = ability.effects().stream()
+                .filter(e -> e instanceof EachPlayerTakesDamageUnlessPaysEffect)
+                .map(e -> (EachPlayerTakesDamageUnlessPaysEffect) e)
+                .findFirst().orElseThrow();
+
+        UUID targetPlayerId = ability.controllerId();
+        boolean paid = false;
+        if (accepted) {
+            ManaCost cost = new ManaCost(effect.manaCost());
+            ManaPool pool = gameData.playerManaPools.get(targetPlayerId);
+            if (cost.canPay(pool)) {
+                cost.pay(pool);
+                paid = true;
+                gameBroadcastService.logAndBroadcast(gameData, GameLog.textCardText(
+                        player.getUsername() + " pays " + effect.manaCost() + ". (", ability.sourceCard(), ")"));
+                log.info("Game {} - {} pays {} to avoid damage ({})", gameData.id, player.getUsername(),
+                        effect.manaCost(), ability.sourceCard().getName());
+            }
+        }
+
+        eachPlayerTakesDamageUnlessPaysEffectHandler.afterPlayerDecision(
+                gameData, ability, effect, targetPlayerId, paid);
+        inputCompletionService.sbaProcessMayAbilitiesThenAutoPass(gameData);
+    }
+
+    /**
+     * Mystic Remora / Rhystic Study two-step choice.
+     * <ul>
+     *   <li>{@code manaCost != null} — casting opponent's pay phase ({@code targetCardId} = drawing player)</li>
+     *   <li>{@code manaCost == null} — source controller's optional-draw confirm</li>
+     * </ul>
+     */
+    public void handleDrawCardUnlessPaysChoice(GameData gameData, Player player, boolean accepted, PendingMayAbility ability) {
+        DrawCardUnlessPaysEffect effect = ability.effects().stream()
+                .filter(e -> e instanceof DrawCardUnlessPaysEffect)
+                .map(e -> (DrawCardUnlessPaysEffect) e)
+                .findFirst().orElseThrow();
+
+        if (ability.manaCost() != null) {
+            // Pay phase — casting opponent decides.
+            UUID drawingPlayerId = ability.targetCardId();
+            if (accepted) {
+                ManaCost cost = new ManaCost(ability.manaCost());
+                ManaPool pool = gameData.playerManaPools.get(ability.controllerId());
+                if (cost.canPay(pool)) {
+                    cost.pay(pool);
+                    gameBroadcastService.logAndBroadcast(gameData, GameLog.textCardText(
+                            player.getUsername() + " pays " + ability.manaCost() + ". (", ability.sourceCard(), ")"));
+                    log.info("Game {} - {} pays {} to prevent draw ({})",
+                            gameData.id, player.getUsername(), ability.manaCost(), ability.sourceCard().getName());
+                    inputCompletionService.sbaProcessMayAbilitiesThenAutoPass(gameData);
+                    return;
+                }
+                // Accepted but can't pay — fall through to optional draw.
+            } else {
+                gameBroadcastService.logAndBroadcast(gameData, GameLog.textCardText(
+                        player.getUsername() + " declines to pay. (", ability.sourceCard(), ")"));
+                log.info("Game {} - {} declines to pay for {} draw prevention",
+                        gameData.id, player.getUsername(), ability.sourceCard().getName());
+            }
+            if (drawingPlayerId != null) {
+                DrawCardUnlessPaysEffectHandler.offerOptionalDraw(
+                        gameData, ability.sourceCard(), effect, drawingPlayerId, ability.sourcePermanentId());
+            }
+            inputCompletionService.sbaProcessMayAbilitiesThenAutoPass(gameData);
+            return;
+        }
+
+        // Draw-confirm phase — source controller decides.
+        if (accepted) {
+            UUID drawingPlayerId = ability.controllerId();
+            for (int i = 0; i < effect.drawCount(); i++) {
+                drawService.resolveDrawCard(gameData, drawingPlayerId);
+            }
+            String drawn = effect.drawCount() == 1 ? "a card" : effect.drawCount() + " cards";
+            gameBroadcastService.logAndBroadcast(gameData, GameLog.textCardText(
+                    player.getUsername() + " draws " + drawn + ". (", ability.sourceCard(), ")"));
+            log.info("Game {} - {} draws {} from {}", gameData.id, player.getUsername(),
+                    effect.drawCount(), ability.sourceCard().getName());
+        } else {
+            gameBroadcastService.logAndBroadcast(gameData, GameLog.textCardText(
+                    player.getUsername() + " declines to draw. (", ability.sourceCard(), ")"));
+            log.info("Game {} - {} declines draw from {}", gameData.id, player.getUsername(),
+                    ability.sourceCard().getName());
+        }
+
+        inputCompletionService.sbaProcessMayAbilitiesThenAutoPass(gameData);
+    }
+
     public void handleDamageControllerUnlessDiscardThenTapChoice(GameData gameData, Player player, boolean accepted, PendingMayAbility ability) {
         DamageControllerUnlessDiscardThenTapSourceEffect effect = ability.effects().stream()
                 .filter(e -> e instanceof DamageControllerUnlessDiscardThenTapSourceEffect)
@@ -838,33 +938,59 @@ public class MayPenaltyChoiceHandlerService {
                 .map(e -> (ForcedCostOrElseEffect) e)
                 .findFirst().orElseThrow();
 
-        UUID controllerId = ability.controllerId();
+        // For normal ForcedCostOrElse the deciding player is the source controller. For
+        // anyPlayerMayPay, ability.controllerId is whoever is currently being asked.
+        UUID decidingPlayerId = ability.controllerId();
+        UUID sourceControllerId = effect.anyPlayerMayPay() && gameData.forcedCostOrElseSourceControllerId != null
+                ? gameData.forcedCostOrElseSourceControllerId
+                : decidingPlayerId;
 
-        if (accepted && effect.forcedCost() instanceof com.github.laxika.magicalvibes.model.effect.PayManaCost) {
+        if (accepted && effect.forcedCost() instanceof com.github.laxika.magicalvibes.model.effect.PayManaCost payCost) {
             // Use the cost stored on the pending ability — it already reflects any dynamic
             // reduction (Draco's Domain) resolved when the prompt was created.
             String costString = ability.manaCost();
-            ManaCost cost = new ManaCost(costString);
-            ManaPool pool = gameData.playerManaPools.get(controllerId);
-            if (cost.canPay(pool)) {
+            ManaCost cost = new ManaCost(costString, payCost.forCumulativeUpkeep());
+            ManaPool pool = gameData.playerManaPools.get(decidingPlayerId);
+            int lifeAmount = payCost.lifeAmount();
+            boolean canPayLife = lifeAmount <= 0
+                    || (gameQueryService.canPlayerLifeChange(gameData, decidingPlayerId)
+                            && gameData.getLife(decidingPlayerId) >= lifeAmount);
+            if (cost.canPay(pool) && canPayLife) {
                 cost.pay(pool);
-                gameBroadcastService.logAndBroadcast(gameData, GameLog.textCardText(
-                        player.getUsername() + " pays " + costString + ". (", ability.sourceCard(), ")"));
-                log.info("Game {} - {} pays {} to avoid penalty ({})", gameData.id, player.getUsername(), costString, ability.sourceCard().getName());
+                if (lifeAmount > 0) {
+                    gameData.playerLifeTotals.put(
+                            decidingPlayerId, gameData.getLife(decidingPlayerId) - lifeAmount);
+                    gameBroadcastService.logAndBroadcast(gameData, GameLog.textCardText(
+                            player.getUsername() + " pays " + costString + " and " + lifeAmount
+                                    + " life. (", ability.sourceCard(), ")"));
+                    log.info("Game {} - {} pays {} and {} life to avoid penalty ({})",
+                            gameData.id, player.getUsername(), costString, lifeAmount,
+                            ability.sourceCard().getName());
+                } else {
+                    gameBroadcastService.logAndBroadcast(gameData, GameLog.textCardText(
+                            player.getUsername() + " pays " + costString + ". (", ability.sourceCard(), ")"));
+                    log.info("Game {} - {} pays {} to avoid penalty ({})", gameData.id, player.getUsername(),
+                            costString, ability.sourceCard().getName());
+                }
+                clearAnyPlayerPayState(gameData);
                 inputCompletionService.sbaProcessMayAbilitiesThenAutoPass(gameData);
                 return;
             }
-            // Accepted but can't actually pay — fall through to the penalty.
+            // Accepted but can't actually pay — for any-player, offer the next player; otherwise
+            // fall through to the penalty.
+            if (effect.anyPlayerMayPay() && offerNextAnyPlayerPay(gameData, ability, effect)) {
+                return;
+            }
         }
 
         if (accepted && effect.forcedCost() instanceof com.github.laxika.magicalvibes.model.effect.SacrificeMultiplePermanentsCost multiCost) {
-            List<UUID> matchingIds = destructionSupport.collectPermanentIds(gameData, controllerId,
+            List<UUID> matchingIds = destructionSupport.collectPermanentIds(gameData, sourceControllerId,
                     p -> predicateEvaluationService.matchesPermanentPredicate(gameData, p, multiCost.filter()));
             if (matchingIds.size() >= multiCost.count()) {
                 // sacrificePlayerMatchingPermanents sacrifices all when the count matches exactly, or
                 // begins a multi-select choice when the controller has more than needed. The choice's
                 // completion continues the game itself, so only auto-pass here when nothing is pending.
-                destructionSupport.sacrificePlayerMatchingPermanents(gameData, controllerId, multiCost.count(), multiCost.filter());
+                destructionSupport.sacrificePlayerMatchingPermanents(gameData, sourceControllerId, multiCost.count(), multiCost.filter());
                 if (matchingIds.size() == multiCost.count()) {
                     inputCompletionService.sbaProcessMayAbilitiesThenAutoPass(gameData);
                 }
@@ -875,35 +1001,61 @@ public class MayPenaltyChoiceHandlerService {
 
         if (accepted && effect.forcedCost() instanceof SacrificePermanentCost sacrificeCost) {
             UUID sourcePermanentId = ability.sourcePermanentId();
-            List<UUID> matchingIds = destructionSupport.collectPermanentIds(gameData, controllerId,
+            List<UUID> matchingIds = destructionSupport.collectPermanentIds(gameData, sourceControllerId,
                     p -> (!sacrificeCost.excludeSource() || !p.getId().equals(sourcePermanentId))
                             && predicateEvaluationService.matchesPermanentPredicate(gameData, p, sacrificeCost.filter()));
 
             if (matchingIds.size() == 1) {
                 Permanent perm = gameQueryService.findPermanentById(gameData, matchingIds.getFirst());
                 if (perm != null) {
-                    destructionSupport.sacrificeAndLog(gameData, perm, controllerId);
+                    destructionSupport.sacrificeAndLog(gameData, perm, sourceControllerId);
                     inputCompletionService.sbaProcessMayAbilitiesThenAutoPass(gameData);
                     return;
                 }
             } else if (matchingIds.size() > 1) {
                 gameData.interaction.setPermanentChoiceContext(
-                        new PermanentChoiceContext.ForcedCostOrElse(controllerId, ability.sourcePermanentId(),
+                        new PermanentChoiceContext.ForcedCostOrElse(sourceControllerId, ability.sourcePermanentId(),
                                 ability.sourceCard(), effect));
-                playerInputService.beginPermanentChoice(gameData, controllerId, matchingIds,
+                playerInputService.beginPermanentChoice(gameData, sourceControllerId, matchingIds,
                         "Choose a permanent to sacrifice (" + sacrificeCost.description() + ").");
                 return;
             }
             // Accepted but nothing left to sacrifice — fall through to the penalty.
         }
 
+        // Declined (or unable to pay) — for any-player, offer the next player before the penalty.
+        if (effect.anyPlayerMayPay() && offerNextAnyPlayerPay(gameData, ability, effect)) {
+            return;
+        }
+
         // Declined (or unable to pay) — resolve the fallback/penalty effects.
+        // Preserve targetCardId so ENCHANTED_PERMANENT_CONTROLLER damage / similar fallthroughs
+        // still see the enchanted permanent's controller (Mind Whip).
+        clearAnyPlayerPayState(gameData);
         StackEntry syntheticEntry = new StackEntry(
-                StackEntryType.TRIGGERED_ABILITY, ability.sourceCard(), controllerId,
+                StackEntryType.TRIGGERED_ABILITY, ability.sourceCard(), sourceControllerId,
                 ability.sourceCard().getName() + "'s ability", List.of(effect),
-                null, ability.sourcePermanentId());
+                ability.targetCardId(), ability.sourcePermanentId());
         destructionSupport.resolveForcedCostElseEffects(gameData, syntheticEntry, effect);
         inputCompletionService.sbaProcessMayAbilitiesThenAutoPass(gameData);
+    }
+
+    /** Queues the next APNAP player for an anyPlayerMayPay ForcedCostOrElse, or returns false if none remain. */
+    private boolean offerNextAnyPlayerPay(GameData gameData, PendingMayAbility ability, ForcedCostOrElseEffect effect) {
+        if (gameData.forcedCostOrElseRemainingPlayers.isEmpty()) {
+            return false;
+        }
+        UUID next = gameData.forcedCostOrElseRemainingPlayers.removeFirst();
+        gameData.pendingMayAbilities.addFirst(new PendingMayAbility(
+                ability.sourceCard(), next, List.of(effect), ability.description(),
+                null, ability.manaCost(), ability.sourcePermanentId()));
+        inputCompletionService.processMayAbilitiesThenAutoPass(gameData);
+        return true;
+    }
+
+    private void clearAnyPlayerPayState(GameData gameData) {
+        gameData.forcedCostOrElseRemainingPlayers.clear();
+        gameData.forcedCostOrElseSourceControllerId = null;
     }
 
     public void handleDiscardUnlessExileChoice(GameData gameData, Player player, boolean accepted, PendingMayAbility ability) {

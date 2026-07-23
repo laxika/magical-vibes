@@ -454,6 +454,13 @@ public class GameTestHarness {
         gameService.playCard(gameData, player, cardIndex, 0, null, null, List.of(), List.of(), false, sacrificePermanentId);
     }
 
+    /** Cast paying a battlefield-imposed sacrifice tax (e.g. Drought). */
+    public void castCreatureWithImposedSacrifice(Player player, int cardIndex, List<UUID> imposedSacrificePermanentIds) {
+        ensurePriority(player);
+        gameService.playCard(gameData, player, cardIndex, 0, null, null, List.of(), List.of(), false, null, null,
+                null, null, null, false, null, null, imposedSacrificePermanentIds);
+    }
+
     public void castSorceryWithDiscard(Player player, int cardIndex, int discardHandCardIndex) {
         ensurePriority(player);
         gameService.playCard(gameData, player, cardIndex, 0, null, null, List.of(), List.of(), false, null, null, List.of(), null, List.of(), false, discardHandCardIndex);
@@ -488,6 +495,12 @@ public class GameTestHarness {
     public void castInstant(Player player, int cardIndex, List<UUID> targetIds) {
         ensurePriority(player);
         gameService.playCard(gameData, player, cardIndex, 0, null, null, targetIds, List.of());
+    }
+
+    /** Cast an {@code {X}} instant with multiple permanent targets (e.g. Winter's Chill). */
+    public void castInstantForX(Player player, int cardIndex, int xValue, List<UUID> targetIds) {
+        ensurePriority(player);
+        gameService.playCard(gameData, player, cardIndex, xValue, null, null, targetIds, List.of());
     }
 
     /**

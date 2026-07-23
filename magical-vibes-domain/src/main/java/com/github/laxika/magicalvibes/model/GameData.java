@@ -85,6 +85,8 @@ public class GameData {
      * Populated during spell payment and consumed when the spell resolves (e.g. Repel Intruders).
      */
     public final Map<UUID, java.util.EnumSet<ManaColor>> spellCastColorsSpent = new ConcurrentHashMap<>();
+    /** Per-color mana removed specifically to pay X (not the rest of the cost). Cleared on resolution. */
+    public final Map<UUID, java.util.EnumMap<ManaColor, Integer>> spellCastManaSpentOnX = new ConcurrentHashMap<>();
     /** Tracks which permanent types each player has cast from graveyard this turn via Muldrotha-style effects. */
     public final Map<UUID, Set<CardType>> permanentTypesCastFromGraveyardThisTurn = new ConcurrentHashMap<>();
     /** Snapshot of per-player spell counts from the previous turn. Used by werewolf transform triggers. */
@@ -156,6 +158,16 @@ public class GameData {
     /** Counts all creature deaths (including tokens) from battlefield this turn, per controller. */
     public final Map<UUID, Integer> creatureDeathCountThisTurn = new ConcurrentHashMap<>();
     public final Map<UUID, Set<UUID>> creatureCardsDamagedThisTurnBySourcePermanent = new ConcurrentHashMap<>();
+    /**
+     * Source permanent ids that dealt damage to a creature which later died this turn (Krovikan Vampire
+     * intervening-if). Survives the card leaving the graveyard; cleared at turn cleanup.
+     */
+    public final Set<UUID> sourcesWhoseDamagedCreaturesDiedThisTurn = ConcurrentHashMap.newKeySet();
+    /**
+     * Source permanent id → creature card ids it damaged that died this turn and are still continuously
+     * in a graveyard (Krovikan Vampire return). Pruned when a card leaves any graveyard.
+     */
+    public final Map<UUID, Set<UUID>> creatureCardsDamagedBySourceThatDiedThisTurn = new ConcurrentHashMap<>();
     /** Delayed trigger: creature card ID → poison counters to give its controller when it dies this turn. */
     public final Map<UUID, Integer> creatureGivingControllerPoisonOnDeathThisTurn = new ConcurrentHashMap<>();
     /** Delayed trigger: creature card ID → whether it re-enters tapped, to return it to the battlefield under its owner's control if it dies this turn (Graceful Reprieve, Supernatural Stamina). */
@@ -192,6 +204,22 @@ public class GameData {
     public final List<PendingMayAbility> pendingMayAbilities = new ArrayList<>();
     /** Tariff: players (APNAP order) still to be processed after the one currently being resolved. */
     public final List<UUID> tariffRemainingPlayers = new ArrayList<>();
+    /**
+     * ForcedCostOrElse ({@code anyPlayerMayPay}): players still to be offered the pay prompt after
+     * the one currently deciding (APNAP remainder). Cleared when someone pays or the queue drains.
+     */
+    public final List<UUID> forcedCostOrElseRemainingPlayers = new ArrayList<>();
+    /**
+     * ForcedCostOrElse ({@code anyPlayerMayPay}): controller of the source permanent when the
+     * APNAP pay sequence began — used for the sacrifice/penalty synthetic entry after everyone
+     * declines (the pending ability's {@code controllerId} is the deciding player, not the source).
+     */
+    public UUID forcedCostOrElseSourceControllerId;
+    /**
+     * EachPlayerTakesDamageUnlessPays: players still to be offered the pay-or-take-damage prompt
+     * after the one currently deciding (APNAP remainder). Cleared when the queue drains.
+     */
+    public final List<UUID> eachPlayerDamageUnlessPaysRemaining = new ArrayList<>();
     public final GraveyardTargetOperationState graveyardTargetOperation = new GraveyardTargetOperationState();
     public final CloneOperationState cloneOperation = new CloneOperationState();
     public StackEntry pendingEffectResolutionEntry;
@@ -241,6 +269,8 @@ public class GameData {
     public final IllicitAuctionState illicitAuction = new IllicitAuctionState();
     /** Progress state for Torment of Hailfire's "repeat X times: each opponent loses life unless…" flow. */
     public final TormentState torment = new TormentState();
+    /** Progress state for Winter's Chill's per-target "may pay {1} or {2}" flow. */
+    public final WintersChillState wintersChill = new WintersChillState();
     /**
      * Unified queue of scheduled {@link DelayedAction}s ("do X later at timing point Y"). Replaces the
      * former per-mechanic ad-hoc fields (end-of-combat sacrifice/exile/equipment-destruction, end-step
@@ -816,6 +846,7 @@ public class GameData {
     public List<FloatingContinuousEffect> expireFloatingEffectsForDepartedSource(UUID sourcePermanentId) {
         return expireFloatingEffects(fe ->
                 (fe.duration() == EffectDuration.WHILE_SOURCE_ON_BATTLEFIELD
+                        || fe.duration() == EffectDuration.WHILE_SOURCE_REMAINS
                         || fe.duration() == EffectDuration.WHILE_SOURCE_TAPPED
                         || fe.duration() == EffectDuration.WHILE_ATTACHED)
                         && sourcePermanentId.equals(fe.sourcePermanentId()));
@@ -1284,6 +1315,19 @@ public class GameData {
         spellCastColorsSpent.remove(spellCardId);
     }
 
+    public void setSpellCastManaSpentOnX(UUID spellCardId, java.util.EnumMap<ManaColor, Integer> spentOnX) {
+        spellCastManaSpentOnX.put(spellCardId, spentOnX);
+    }
+
+    public int getSpellCastManaSpentOnX(UUID spellCardId, ManaColor color) {
+        java.util.EnumMap<ManaColor, Integer> spent = spellCastManaSpentOnX.get(spellCardId);
+        return spent == null ? 0 : spent.getOrDefault(color, 0);
+    }
+
+    public void clearSpellCastManaSpentOnX(UUID spellCardId) {
+        spellCastManaSpentOnX.remove(spellCardId);
+    }
+
     /**
      * Returns the number of spells the given player has cast this turn.
      */
@@ -1677,6 +1721,10 @@ public class GameData {
         copy.torment.remaining.addAll(this.torment.remaining);
         copy.torment.currentOpponentId = this.torment.currentOpponentId;
         copy.torment.chosenMode = this.torment.chosenMode;
+        copy.wintersChill.active = this.wintersChill.active;
+        copy.wintersChill.remainingTargetIds.addAll(this.wintersChill.remainingTargetIds);
+        copy.wintersChill.currentTargetId = this.wintersChill.currentTargetId;
+        copy.wintersChill.chosenMode = this.wintersChill.chosenMode;
         copy.pendingAbilityActivation = this.pendingAbilityActivation; // immutable record
         copy.pendingGraveyardAbilityActivation = this.pendingGraveyardAbilityActivation; // immutable record
         copy.endTurnRequested = this.endTurnRequested;
@@ -1819,6 +1867,9 @@ public class GameData {
         copy.creatureDeathCountThisTurn.putAll(this.creatureDeathCountThisTurn);
         this.creatureCardsDamagedThisTurnBySourcePermanent.forEach((k, v) ->
                 copy.creatureCardsDamagedThisTurnBySourcePermanent.put(k, new HashSet<>(v)));
+        copy.sourcesWhoseDamagedCreaturesDiedThisTurn.addAll(this.sourcesWhoseDamagedCreaturesDiedThisTurn);
+        this.creatureCardsDamagedBySourceThatDiedThisTurn.forEach((k, v) ->
+                copy.creatureCardsDamagedBySourceThatDiedThisTurn.put(k, new HashSet<>(v)));
         copy.creatureGivingControllerPoisonOnDeathThisTurn.putAll(this.creatureGivingControllerPoisonOnDeathThisTurn);
         copy.creaturesReturnedToBattlefieldOnDeathThisTurn.putAll(this.creaturesReturnedToBattlefieldOnDeathThisTurn);
         this.creatureCreatingTokenOnDeathThisTurn.forEach((k, v) ->
@@ -1836,6 +1887,9 @@ public class GameData {
         // --- PendingMayAbility list (records with shared Card refs) ---
         copy.pendingMayAbilities.addAll(this.pendingMayAbilities);
         copy.tariffRemainingPlayers.addAll(this.tariffRemainingPlayers);
+        copy.forcedCostOrElseRemainingPlayers.addAll(this.forcedCostOrElseRemainingPlayers);
+        copy.forcedCostOrElseSourceControllerId = this.forcedCostOrElseSourceControllerId;
+        copy.eachPlayerDamageUnlessPaysRemaining.addAll(this.eachPlayerDamageUnlessPaysRemaining);
 
         // --- Unified delayed-action queue (immutable records, shallow copy — shared Card refs, as the
         //     per-mechanic fields it replaced were copied) ---

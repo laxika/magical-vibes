@@ -35,6 +35,7 @@ import com.github.laxika.magicalvibes.model.PendingInteraction;
 import com.github.laxika.magicalvibes.service.interaction.InteractionHandlerRegistry;
 import com.github.laxika.magicalvibes.model.layer.FloatingContinuousEffect;
 import com.github.laxika.magicalvibes.model.effect.ControlDuration;
+import com.github.laxika.magicalvibes.model.effect.CumulativeUpkeepEffect;
 import com.github.laxika.magicalvibes.model.effect.EffectDuration;
 import com.github.laxika.magicalvibes.model.effect.GainControlOfTargetEffect;
 import com.github.laxika.magicalvibes.model.effect.ReturnCardFromGraveyardEffect;
@@ -167,21 +168,45 @@ public class GraveyardReturnSupport {
                     effect.grantColor(), effect.grantSubtype(), effect.enterTapped());
         }
 
-        if (effect.enterWithMannequinCounter()
-                && effect.destination() == GraveyardChoiceDestination.BATTLEFIELD) {
-            List<Permanent> battlefield = gameData.playerBattlefields.get(controllerId);
-            if (battlefield != null) {
-                for (Permanent p : battlefield) {
-                    if (p.getCard().getId().equals(targetCard.getId())) {
-                        p.setCounterCount(CounterType.MANNEQUIN, 1);
-                        break;
-                    }
-                }
-            }
+        if (effect.destination() == GraveyardChoiceDestination.BATTLEFIELD) {
+            applyBattlefieldReturnRiders(gameData, controllerId, targetCard, effect);
         }
 
         if (effect.gainLifeEqualToManaValue()) {
             applyLifeGainEqualToManaValue(gameData, controllerId, targetCard);
+        }
+    }
+
+    /**
+     * Applies optional battlefield-entry riders from a {@link ReturnCardFromGraveyardEffect}
+     * (mannequin counter, exile-if-leaves replacement, granted cumulative upkeep).
+     */
+    private void applyBattlefieldReturnRiders(GameData gameData, UUID controllerId, Card card,
+                                              ReturnCardFromGraveyardEffect effect) {
+        if (!effect.enterWithMannequinCounter()
+                && !effect.exileIfLeavesBattlefield()
+                && (effect.grantCumulativeUpkeepCost() == null || effect.grantCumulativeUpkeepCost().isBlank())) {
+            return;
+        }
+        List<Permanent> battlefield = gameData.playerBattlefields.get(controllerId);
+        if (battlefield == null) {
+            return;
+        }
+        for (Permanent p : battlefield) {
+            if (!p.getCard().getId().equals(card.getId())) {
+                continue;
+            }
+            if (effect.enterWithMannequinCounter()) {
+                p.setCounterCount(CounterType.MANNEQUIN, 1);
+            }
+            if (effect.exileIfLeavesBattlefield()) {
+                p.setExileIfLeavesBattlefield(true);
+            }
+            if (effect.grantCumulativeUpkeepCost() != null && !effect.grantCumulativeUpkeepCost().isBlank()) {
+                p.addPersistentTriggeredEffect(EffectSlot.UPKEEP_TRIGGERED,
+                        new CumulativeUpkeepEffect(effect.grantCumulativeUpkeepCost()));
+            }
+            break;
         }
     }
 
@@ -649,8 +674,16 @@ public class GraveyardReturnSupport {
      * Auras (Animate Dead) that must attach themselves to the returned creature.
      */
     public Permanent reanimateTargetedCard(GameData gameData, UUID controllerId, Card card) {
+        return reanimateTargetedCard(gameData, controllerId, card, false);
+    }
+
+    /**
+     * Same as {@link #reanimateTargetedCard(GameData, UUID, Card)}, but the returned permanent
+     * enters tapped when {@code enterTapped} is true (Dance of the Dead).
+     */
+    public Permanent reanimateTargetedCard(GameData gameData, UUID controllerId, Card card, boolean enterTapped) {
         permanentRemovalService.removeCardFromGraveyardById(gameData, card.getId());
-        return putCardOntoBattlefield(gameData, controllerId, card, null, null, false, false, null);
+        return putCardOntoBattlefield(gameData, controllerId, card, null, null, enterTapped, false, null);
     }
 
     /**

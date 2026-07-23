@@ -40,6 +40,7 @@ import com.github.laxika.magicalvibes.model.effect.EnterWithCountersEffect;
 import com.github.laxika.magicalvibes.model.Keyword;
 import com.github.laxika.magicalvibes.model.effect.PutPhylacteryCounterOnTargetPermanentEffect;
 import com.github.laxika.magicalvibes.model.effect.PutSelfOnBottomOfOwnersLibraryEffect;
+import com.github.laxika.magicalvibes.model.effect.ReturnCardFromGraveyardEffect;
 import com.github.laxika.magicalvibes.model.effect.ShuffleIntoLibraryEffect;
 import com.github.laxika.magicalvibes.service.library.LibraryShuffleHelper;
 import com.github.laxika.magicalvibes.model.effect.ExileSpellEffect;
@@ -345,7 +346,13 @@ public class StackResolutionService {
             return;
         }
 
-        Permanent creature = graveyardReturnSupport.reanimateTargetedCard(gameData, controllerId, graveyardCard);
+        // Dance of the Dead: "put … onto the battlefield tapped"; Animate Dead leaves this false.
+        boolean enterTapped = card.getEffects(EffectSlot.SPELL).stream()
+                .filter(ReturnCardFromGraveyardEffect.class::isInstance)
+                .map(ReturnCardFromGraveyardEffect.class::cast)
+                .anyMatch(ReturnCardFromGraveyardEffect::enterTapped);
+        Permanent creature = graveyardReturnSupport.reanimateTargetedCard(
+                gameData, controllerId, graveyardCard, enterTapped);
         if (creature == null) {
             // Blocked from entering (e.g. Grafdigger's Cage): the Aura has nothing to enchant.
             graveyardService.addCardToGraveyard(gameData, controllerId, card);
@@ -393,7 +400,8 @@ public class StackResolutionService {
             } else {
                 Permanent perm = createEnteringPermanent(entry, card, characteristics);
                 perm.setAttachedTo(targetPlayerId);
-                battlefieldEntryService.putPermanentOntoBattlefield(gameData, controllerId, perm);
+                battlefieldEntryService.putPermanentOntoBattlefield(gameData, controllerId, perm,
+                        entry.getXValue(), entry.isKicked());
 
                 String targetPlayerName = gameData.playerIdToName.get(targetPlayerId);
                 String playerName = gameData.playerIdToName.get(controllerId);
@@ -417,7 +425,8 @@ public class StackResolutionService {
             } else {
                 Permanent perm = createEnteringPermanent(entry, card, characteristics);
                 perm.setAttachedTo(entry.getTargetId());
-                battlefieldEntryService.putPermanentOntoBattlefield(gameData, controllerId, perm);
+                battlefieldEntryService.putPermanentOntoBattlefield(gameData, controllerId, perm,
+                        entry.getXValue(), entry.isKicked());
 
                 String playerName = gameData.playerIdToName.get(controllerId);
                 gameBroadcastService.logAndBroadcast(gameData, GameLog.builder()
@@ -439,13 +448,7 @@ public class StackResolutionService {
                 }
 
                 // Check if aura has "as enters" basic land type choice (e.g. Convincing Mirage)
-                boolean needsBasicLandTypeChoice = characteristics.getEffects(EffectSlot.ON_ENTER_BATTLEFIELD).stream()
-                        .anyMatch(e -> e instanceof ChooseBasicLandTypeOnEnterEffect);
-                if (needsBasicLandTypeChoice) {
-                    List<Permanent> bf = gameData.playerBattlefields.get(controllerId);
-                    Permanent justEntered = bf.get(bf.size() - 1);
-                    playerInputService.beginBasicLandTypeChoice(gameData, controllerId, justEntered.getId());
-                }
+                maybeBeginBasicLandTypeChoice(gameData, controllerId, characteristics);
 
                 // Check if aura has "as enters, choose a color" (e.g. Prismatic Ward)
                 boolean needsAuraColorChoice = characteristics.getEffects(EffectSlot.ON_ENTER_BATTLEFIELD).stream()
@@ -500,6 +503,9 @@ public class StackResolutionService {
                 Permanent justEntered = bf.get(bf.size() - 1);
                 playerInputService.beginColorChoice(gameData, controllerId, justEntered.getId(), null);
             }
+
+            // Check if enchantment has "as enters" basic land type choice (e.g. Illusionary Terrain)
+            maybeBeginBasicLandTypeChoice(gameData, controllerId, card);
 
             // Check if enchantment has "as enters" creature type choice (e.g. Xenograft)
             boolean needsSubtypeChoice = enteredCard.getEffects(EffectSlot.ON_ENTER_BATTLEFIELD).stream()
@@ -730,6 +736,7 @@ public class StackResolutionService {
         if (entry.getCard() != null && gameData.pendingEffectResolutionEntry == null) {
             gameData.clearSpellCastConvergeValue(entry.getCard().getId());
             gameData.clearSpellCastColorsSpent(entry.getCard().getId());
+            gameData.clearSpellCastManaSpentOnX(entry.getCard().getId());
         }
     }
 
@@ -901,6 +908,21 @@ public class StackResolutionService {
             gameBroadcastService.logAndBroadcast(gameData, GameLog.cardThen(card, "'s chapter " + chapterName + " ability triggers."));
             log.info("Game {} - {} chapter {} triggers", gameData.id, card.getName(), chapterName);
         }
+    }
+
+    private void maybeBeginBasicLandTypeChoice(GameData gameData, UUID controllerId, Card characteristics) {
+        ChooseBasicLandTypeOnEnterEffect choose = characteristics.getEffects(EffectSlot.ON_ENTER_BATTLEFIELD).stream()
+                .filter(e -> e instanceof ChooseBasicLandTypeOnEnterEffect)
+                .map(e -> (ChooseBasicLandTypeOnEnterEffect) e)
+                .findFirst()
+                .orElse(null);
+        if (choose == null) {
+            return;
+        }
+        List<Permanent> bf = gameData.playerBattlefields.get(controllerId);
+        Permanent justEntered = bf.get(bf.size() - 1);
+        playerInputService.beginBasicLandTypeChoice(
+                gameData, controllerId, justEntered.getId(), false, choose.choicesRequired() > 1);
     }
 
     private void checkLegendRuleIfIdle(GameData gameData, UUID controllerId) {

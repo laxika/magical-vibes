@@ -6,6 +6,7 @@ import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.effect.CantBlockHighPowerCreaturesUnlessPaysEffect;
 
 @CardRegistration(set = "5ED", collectorNumber = "34")
+@CardRegistration(set = "ICE", collectorNumber = "31")
 public class Hipparion extends Card {
 
     public Hipparion() {

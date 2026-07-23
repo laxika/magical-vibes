@@ -13,6 +13,7 @@ import com.github.laxika.magicalvibes.model.filter.PermanentPredicateTargetFilte
 import java.util.List;
 
 @CardRegistration(set = "5ED", collectorNumber = "151")
+@CardRegistration(set = "ICE", collectorNumber = "117")
 public class CloakOfConfusion extends Card {
 
     public CloakOfConfusion() {

@@ -15,6 +15,9 @@ package com.github.laxika.magicalvibes.model.effect;
  *   <li>{@code WHILE_SOURCE_ON_BATTLEFIELD} — the effect ends when the source permanent
  *       leaves the battlefield or its creator stops controlling it
  *       ({@code EffectDuration.WHILE_SOURCE_ON_BATTLEFIELD}).</li>
+ *   <li>{@code WHILE_SOURCE_REMAINS} — the effect ends only when the source permanent leaves
+ *       the battlefield ({@code EffectDuration.WHILE_SOURCE_REMAINS}); who controls the source
+ *       does not matter (Infernal Denizen).</li>
  *   <li>{@code WHILE_SOURCE_TAPPED} — like {@code WHILE_SOURCE_ON_BATTLEFIELD}, but the effect
  *       additionally ends the moment the source becomes untapped and does not resume if it is
  *       tapped again (Seasinger — {@code EffectDuration.WHILE_SOURCE_TAPPED}).</li>
@@ -24,6 +27,7 @@ public enum ControlDuration {
     PERMANENT,
     END_OF_TURN,
     WHILE_SOURCE_ON_BATTLEFIELD,
+    WHILE_SOURCE_REMAINS,
     WHILE_SOURCE_TAPPED;
 
     /** The {@link EffectDuration} of the floating control effect this duration creates. */
@@ -32,6 +36,7 @@ public enum ControlDuration {
             case PERMANENT -> EffectDuration.PERMANENT;
             case END_OF_TURN -> EffectDuration.UNTIL_END_OF_TURN;
             case WHILE_SOURCE_ON_BATTLEFIELD -> EffectDuration.WHILE_SOURCE_ON_BATTLEFIELD;
+            case WHILE_SOURCE_REMAINS -> EffectDuration.WHILE_SOURCE_REMAINS;
             case WHILE_SOURCE_TAPPED -> EffectDuration.WHILE_SOURCE_TAPPED;
         };
     }

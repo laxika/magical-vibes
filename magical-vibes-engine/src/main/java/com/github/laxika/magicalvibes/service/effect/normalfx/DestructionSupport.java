@@ -16,11 +16,14 @@ import com.github.laxika.magicalvibes.model.StackEntry;
 import com.github.laxika.magicalvibes.model.amount.Fixed;
 import com.github.laxika.magicalvibes.model.effect.CreateTokenEffect;
 import com.github.laxika.magicalvibes.model.effect.DamageRecipient;
+import com.github.laxika.magicalvibes.model.effect.DealDamageToControllerThenTapSourceIfDamageDealtEffect;
 import com.github.laxika.magicalvibes.model.effect.DealDamageToPlayersEffect;
 import com.github.laxika.magicalvibes.model.effect.DestroySourceAndDamageControllerIfDestroyedEffect;
+import com.github.laxika.magicalvibes.model.effect.DestroySourcePermanentEffect;
 import com.github.laxika.magicalvibes.model.effect.ForcedCostOrElseEffect;
 import com.github.laxika.magicalvibes.model.effect.LoseLifeEffect;
 import com.github.laxika.magicalvibes.model.effect.LoseLifeRecipient;
+import com.github.laxika.magicalvibes.model.effect.OpponentMayGainControlOfCreatureYouControlEffect;
 import com.github.laxika.magicalvibes.model.effect.SacrificeSelfEffect;
 import com.github.laxika.magicalvibes.model.effect.TapPermanentsEffect;
 import com.github.laxika.magicalvibes.model.effect.TapUntapScope;
@@ -67,6 +70,7 @@ public class DestructionSupport {
     private final TriggerCollectionService triggerCollectionService;
     private final com.github.laxika.magicalvibes.service.filter.PredicateEvaluationService predicateEvaluationService;
     private final LifeSupport lifeSupport;
+    private final OpponentMayGainControlOfCreatureYouControlEffectHandler opponentMayGainControlHandler;
 
     public void beginNextDestroyRestChoice(GameData gameData, List<PendingForcedSacrifice> choosers,
                                            List<UUID> protectedIds, String sourceName) {
@@ -422,12 +426,25 @@ public class DestructionSupport {
         for (var elseEffect : effect.elseEffects()) {
             if (elseEffect instanceof TapPermanentsEffect tap && tap.scope() == TapUntapScope.SELF) {
                 tapSourcePermanent(gameData, entry);
+            } else if (elseEffect instanceof TapPermanentsEffect tap && tap.scope() == TapUntapScope.ENCHANTED) {
+                // Mind Whip: "you tap that creature" — tap the permanent the source Aura enchants.
+                tapEnchantedPermanent(gameData, entry);
             } else if (elseEffect instanceof DealDamageToPlayersEffect damage
                     && damage.recipient() == DamageRecipient.CONTROLLER
                     && damage.amount() instanceof Fixed fixed) {
                 dealNoncombatDamageToPlayer(gameData, entry.getControllerId(), fixed.value(),
                         entry.getCard().getName(), entry.getCard().getColor());
                 gameOutcomeService.checkWinCondition(gameData);
+            } else if (elseEffect instanceof DealDamageToPlayersEffect damage
+                    && damage.recipient() == DamageRecipient.ENCHANTED_PERMANENT_CONTROLLER
+                    && damage.amount() instanceof Fixed fixed) {
+                // Mind Whip: damage the enchanted permanent's controller (baked as targetId).
+                UUID victim = entry.getTargetId();
+                if (victim != null) {
+                    dealNoncombatDamageToPlayer(gameData, victim, fixed.value(),
+                            entry.getCard().getName(), entry.getCard().getColor());
+                    gameOutcomeService.checkWinCondition(gameData);
+                }
             } else if (elseEffect instanceof SacrificeSelfEffect) {
                 sacrificeSource(gameData, entry);
             } else if (elseEffect instanceof LoseLifeEffect loseLife
@@ -439,11 +456,27 @@ public class DestructionSupport {
                 gameOutcomeService.checkWinCondition(gameData);
             } else if (elseEffect instanceof DestroySourceAndDamageControllerIfDestroyedEffect destroyDamage) {
                 destroySourceAndDamageControllerIfDestroyed(gameData, entry, destroyDamage.damage());
+            } else if (elseEffect instanceof DealDamageToControllerThenTapSourceIfDamageDealtEffect damageThenTap) {
+                dealDamageToControllerThenTapSourceIfDealt(gameData, entry, damageThenTap.damage());
+            } else if (elseEffect instanceof DestroySourcePermanentEffect destroySource) {
+                destroySource(gameData, entry, destroySource.cannotBeRegenerated());
+            } else if (elseEffect instanceof OpponentMayGainControlOfCreatureYouControlEffect steal) {
+                opponentMayGainControlHandler.offer(gameData, entry, steal);
+                // Interaction started — further else-effects would race the may-prompt.
+                return;
             } else {
                 log.warn("Game {} - Unsupported ForcedCostOrElse fallback effect: {}",
                         gameData.id, elseEffect.getClass().getSimpleName());
             }
         }
+    }
+
+    private void destroySource(GameData gameData, StackEntry entry, boolean cannotBeRegenerated) {
+        Permanent source = gameQueryService.findPermanentById(gameData, entry.getSourcePermanentId());
+        if (source == null) {
+            return;
+        }
+        tryDestroyAndLog(gameData, source, entry.getCard().getName(), cannotBeRegenerated);
     }
 
     private void destroySourceAndDamageControllerIfDestroyed(GameData gameData, StackEntry entry, int damage) {
@@ -456,6 +489,18 @@ public class DestructionSupport {
             dealNoncombatDamageToPlayer(gameData, entry.getControllerId(), damage,
                     entry.getCard().getName(), entry.getCard().getColor());
             gameOutcomeService.checkWinCondition(gameData);
+        }
+    }
+
+    private void dealDamageToControllerThenTapSourceIfDealt(GameData gameData, StackEntry entry, int damage) {
+        UUID controllerId = entry.getControllerId();
+        int lifeBefore = gameData.getLife(controllerId);
+        dealNoncombatDamageToPlayer(gameData, controllerId, damage,
+                entry.getCard().getName(), entry.getCard().getColor());
+        gameOutcomeService.checkWinCondition(gameData);
+        // "If this creature deals damage to you this way, tap it" — prevention/redirect leaves it untapped.
+        if (gameData.getLife(controllerId) < lifeBefore) {
+            tapSourcePermanent(gameData, entry);
         }
     }
 
@@ -482,6 +527,22 @@ public class DestructionSupport {
             log.info("Game {} - {} is tapped (no matching creature to sacrifice)",
                     gameData.id, sourcePermanent.getCard().getName());
         }
+    }
+
+    private void tapEnchantedPermanent(GameData gameData, StackEntry entry) {
+        Permanent aura = gameQueryService.findPermanentById(gameData, entry.getSourcePermanentId());
+        if (aura == null || !aura.isAttached()) {
+            return;
+        }
+        Permanent enchanted = gameQueryService.findPermanentById(gameData, aura.getAttachedTo());
+        if (enchanted == null) {
+            return;
+        }
+        enchanted.tap();
+        gameBroadcastService.logAndBroadcast(gameData,
+                GameLog.cardTextCard(entry.getCard(), " taps ", enchanted.getCard(), "."));
+        log.info("Game {} - {} taps enchanted permanent {}",
+                gameData.id, entry.getCard().getName(), enchanted.getCard().getName());
     }
 
     public void applyOpponentsLoseLife(GameData gameData, UUID controllerId, int amount, String sourceName) {

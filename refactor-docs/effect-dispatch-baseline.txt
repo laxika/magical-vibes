@@ -11,7 +11,7 @@ magical-vibes-ai/src/main/java/com/github/laxika/magicalvibes/ai/TargetPolarityC
 magical-vibes-ai/src/main/java/com/github/laxika/magicalvibes/ai/simulation/GameSimulator.java=2
 magical-vibes-engine/src/main/java/com/github/laxika/magicalvibes/service/DamagePreventionService.java=14
 magical-vibes-engine/src/main/java/com/github/laxika/magicalvibes/service/DrawService.java=10
-magical-vibes-engine/src/main/java/com/github/laxika/magicalvibes/service/GameBroadcastService.java=11
+magical-vibes-engine/src/main/java/com/github/laxika/magicalvibes/service/GameBroadcastService.java=10
 magical-vibes-engine/src/main/java/com/github/laxika/magicalvibes/service/GameService.java=1
 magical-vibes-engine/src/main/java/com/github/laxika/magicalvibes/service/MulliganService.java=1
 magical-vibes-engine/src/main/java/com/github/laxika/magicalvibes/service/StackResolutionService.java=15

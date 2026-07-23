@@ -533,6 +533,13 @@ public class GraveyardService {
                 continue;
             }
 
+            // Krovikan Vampire end-step intervening-if / return tracking (survives ON_DAMAGED_CREATURE_DIES
+            // cleanup below). Returnable card ids are pruned when the card leaves a graveyard.
+            gameData.sourcesWhoseDamagedCreaturesDiedThisTurn.add(sourcePermanentId);
+            gameData.creatureCardsDamagedBySourceThatDiedThisTurn
+                    .computeIfAbsent(sourcePermanentId, ignored -> ConcurrentHashMap.newKeySet())
+                    .add(dyingCreatureCardId);
+
             Permanent source = gameQueryService.findPermanentById(gameData, sourcePermanentId);
             if (source == null) {
                 continue;
@@ -665,11 +672,26 @@ public class GraveyardService {
         // Record that one or more cards left this player's graveyard this turn (regardless of
         // batching), for "if one or more cards left your graveyard this turn" effects.
         gameData.playersWhoseCardsLeftGraveyardThisTurn.add(ownerId);
+        // Krovikan Vampire: a card that leaves the graveyard is no longer returnable even if it
+        // re-enters the graveyard later this turn (loses track).
+        pruneDamagedCreatureDiedTrackingNotInGraveyard(gameData);
         if (gameData.graveyardLeaveNotificationDepth > 0) {
             gameData.graveyardLeaveNotificationPendingOwners.add(ownerId);
             return;
         }
         triggerCollectionService.checkControllerCardsLeaveGraveyardTriggers(gameData, ownerId);
+    }
+
+    /**
+     * Drops returnable "damaged by source and died" card ids that are no longer in any graveyard.
+     */
+    private void pruneDamagedCreatureDiedTrackingNotInGraveyard(GameData gameData) {
+        if (gameData.creatureCardsDamagedBySourceThatDiedThisTurn.isEmpty()) {
+            return;
+        }
+        for (Set<UUID> cardIds : gameData.creatureCardsDamagedBySourceThatDiedThisTurn.values()) {
+            cardIds.removeIf(id -> gameQueryService.findCardInGraveyardById(gameData, id) == null);
+        }
     }
 
     /**

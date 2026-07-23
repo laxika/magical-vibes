@@ -358,10 +358,21 @@ public class GameService {
     }
 
     public void playCard(GameData gameData, Player player, int cardIndex, Integer xValue, UUID targetId, Map<UUID, Integer> damageAssignments, List<UUID> targetIds, List<UUID> convokeCreatureIds, boolean fromGraveyard, UUID sacrificePermanentId, Integer phyrexianLifeCount, List<UUID> alternateCostSacrificePermanentIds, Integer exileGraveyardCardIndex, List<Integer> exileGraveyardCardIndices, boolean kicked, Integer discardHandCardIndex, List<Integer> discardHandCardIndices) {
+        playCard(gameData, player, cardIndex, xValue, targetId, damageAssignments, targetIds, convokeCreatureIds,
+                fromGraveyard, sacrificePermanentId, phyrexianLifeCount, alternateCostSacrificePermanentIds,
+                exileGraveyardCardIndex, exileGraveyardCardIndices, kicked, discardHandCardIndex,
+                discardHandCardIndices, null);
+    }
+
+    public void playCard(GameData gameData, Player player, int cardIndex, Integer xValue, UUID targetId, Map<UUID, Integer> damageAssignments, List<UUID> targetIds, List<UUID> convokeCreatureIds, boolean fromGraveyard, UUID sacrificePermanentId, Integer phyrexianLifeCount, List<UUID> alternateCostSacrificePermanentIds, Integer exileGraveyardCardIndex, List<Integer> exileGraveyardCardIndices, boolean kicked, Integer discardHandCardIndex, List<Integer> discardHandCardIndices, List<UUID> imposedSacrificePermanentIds) {
         synchronized (gameData) {
             player = resolveActingPlayer(gameData, player);
             requirePriority(gameData, player);
-            spellCastingService.playCard(gameData, player, cardIndex, xValue, targetId, damageAssignments, targetIds, convokeCreatureIds, fromGraveyard, sacrificePermanentId, phyrexianLifeCount, alternateCostSacrificePermanentIds, exileGraveyardCardIndex, exileGraveyardCardIndices, kicked, discardHandCardIndex, discardHandCardIndices);
+            spellCastingService.playCard(gameData, player, cardIndex, xValue, targetId, damageAssignments,
+                    targetIds, convokeCreatureIds, fromGraveyard, sacrificePermanentId, phyrexianLifeCount,
+                    alternateCostSacrificePermanentIds, exileGraveyardCardIndex, exileGraveyardCardIndices,
+                    kicked, discardHandCardIndex, discardHandCardIndices, null,
+                    imposedSacrificePermanentIds);
         }
     }
 

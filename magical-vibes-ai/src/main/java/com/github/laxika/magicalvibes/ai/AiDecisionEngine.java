@@ -366,7 +366,7 @@ public abstract class AiDecisionEngine {
                 log.info("AI: Playing land {} in game {}", card.getName(), gameId);
                 final int idx = i;
                 send(() -> gameActions.handlePlayCard(selfConnection,
-                        new PlayCardRequest(idx, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null)));
+                        new PlayCardRequest(idx, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null)));
                 // Verify the land was actually played — handlePlayCard silently
                 // swallows errors, so we must confirm the state actually changed.
                 // Identity check: hand size alone is unreliable because landfall/ETB

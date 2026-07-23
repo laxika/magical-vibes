@@ -6,6 +6,7 @@ import com.github.laxika.magicalvibes.model.effect.AllPermanentsGainChosenColorE
 import com.github.laxika.magicalvibes.model.effect.AllLandsAreCreaturesEffect;
 import com.github.laxika.magicalvibes.model.effect.AnimateNoncreatureArtifactsEffect;
 import com.github.laxika.magicalvibes.model.effect.AttachedBoostEffect;
+import com.github.laxika.magicalvibes.model.effect.BasicLandsOfChosenTypesBecomeTypeEffect;
 import com.github.laxika.magicalvibes.model.effect.BecomeCopyOfTargetCreatureEffect;
 import com.github.laxika.magicalvibes.model.effect.BecomeCopyOfTargetCreatureUntilEndOfTurnEffect;
 import com.github.laxika.magicalvibes.model.effect.BoostByOtherCreaturesWithSameNameEffect;
@@ -193,6 +194,7 @@ public final class LayerClassifier {
         map.put(AllLandsAreCreaturesEffect.class, fixed(Layer.L4_TYPE));
         map.put(NonbasicLandsBecomeTypeEffect.class, fixed(Layer.L4_TYPE));
         map.put(LandsOfSubtypeBecomeTypeEffect.class, fixed(Layer.L4_TYPE));
+        map.put(BasicLandsOfChosenTypesBecomeTypeEffect.class, fixed(Layer.L4_TYPE));
         // Gaea's Liege: lands it has recorded become Forests (CR 305.7 basic-land-type replacement).
         map.put(TrackedLandsBecomeForestEffect.class, fixed(Layer.L4_TYPE));
         map.put(LoseAllCreatureTypesEffect.class, fixed(Layer.L4_TYPE));

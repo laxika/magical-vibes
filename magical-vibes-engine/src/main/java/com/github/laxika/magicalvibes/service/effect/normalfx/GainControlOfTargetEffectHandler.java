@@ -39,7 +39,8 @@ public class GainControlOfTargetEffectHandler implements NormalEffectHandlerBean
         switch (e.duration()) {
             case PERMANENT -> resolvePermanent(gameData, entry, e);
             case END_OF_TURN -> resolveEndOfTurn(gameData, entry, e);
-            case WHILE_SOURCE_ON_BATTLEFIELD, WHILE_SOURCE_TAPPED -> resolveWhileSource(gameData, entry, e);
+            case WHILE_SOURCE_ON_BATTLEFIELD, WHILE_SOURCE_TAPPED -> resolveWhileSource(gameData, entry, e, true);
+            case WHILE_SOURCE_REMAINS -> resolveWhileSource(gameData, entry, e, false);
         }
     }
 
@@ -77,26 +78,27 @@ public class GainControlOfTargetEffectHandler implements NormalEffectHandlerBean
         }
     }
 
-    private void resolveWhileSource(GameData gameData, StackEntry entry, GainControlOfTargetEffect e) {
+    private void resolveWhileSource(GameData gameData, StackEntry entry, GainControlOfTargetEffect e,
+                                    boolean requireSourceController) {
         Permanent target = gameQueryService.findPermanentById(gameData, entry.getTargetId());
         if (target == null) return;
 
         UUID sourcePermanentId = entry.getSourcePermanentId();
         if (sourcePermanentId == null) return;
 
-        // Per ruling: if you lose control of the source permanent before this resolves,
-        // the ability resolves with no effect.
         Permanent source = gameQueryService.findPermanentById(gameData, sourcePermanentId);
         if (source == null) {
-            String logEntry = entry.getCard().getName() + "'s ability has no effect (source left the battlefield).";
-            gameBroadcastService.logAndBroadcast(gameData, GameLog.cardThen(entry.getCard(), "'s ability has no effect (source left the battlefield)."));
+            gameBroadcastService.logAndBroadcast(gameData, GameLog.cardThen(entry.getCard(),
+                    "'s ability has no effect (source left the battlefield)."));
             return;
         }
-        UUID sourceController = gameQueryService.findPermanentController(gameData, sourcePermanentId);
-        if (sourceController == null || !sourceController.equals(entry.getControllerId())) {
-            String logEntry = entry.getCard().getName() + "'s ability has no effect (controller no longer controls " + source.getCard().getName() + ").";
-            gameBroadcastService.logAndBroadcast(gameData, GameLog.cardThen(entry.getCard(), "'s ability has no effect (source left the battlefield)."));
-            return;
+        if (requireSourceController) {
+            UUID sourceController = gameQueryService.findPermanentController(gameData, sourcePermanentId);
+            if (sourceController == null || !sourceController.equals(entry.getControllerId())) {
+                gameBroadcastService.logAndBroadcast(gameData, GameLog.cardThen(entry.getCard(),
+                        "'s ability has no effect (controller no longer controls " + source.getCard().getName() + ")."));
+                return;
+            }
         }
 
         creatureControlService.applyControlEffect(gameData, entry.getControllerId(), target,

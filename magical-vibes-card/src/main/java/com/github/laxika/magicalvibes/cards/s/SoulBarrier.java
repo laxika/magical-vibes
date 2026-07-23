@@ -8,6 +8,7 @@ import com.github.laxika.magicalvibes.model.effect.DamageUnlessPaysEffect;
 import com.github.laxika.magicalvibes.model.filter.CardTypePredicate;
 
 @CardRegistration(set = "5ED", collectorNumber = "125")
+@CardRegistration(set = "ICE", collectorNumber = "103")
 public class SoulBarrier extends Card {
 
     public SoulBarrier() {

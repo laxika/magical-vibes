@@ -153,7 +153,18 @@ public sealed interface ChoiceContext {
     /** Choosing one of Primal Clay's three shapes "as this creature enters". */
     record PrimalClayFormChoice(UUID permanentId) implements ChoiceContext {}
 
-    record BasicLandTypeChoice(UUID permanentId) implements ChoiceContext {}
+    /**
+     * Choosing a basic land type "as ~ enters". When {@code chainSecondAfter} is true, answering
+     * the first pick immediately begins a second pick ({@code isSecondChoice=true}) for cards that
+     * choose two types (Illusionary Terrain). The second pick stores into
+     * {@code Permanent.secondChosenSubtype}.
+     */
+    record BasicLandTypeChoice(UUID permanentId, boolean isSecondChoice, boolean chainSecondAfter)
+            implements ChoiceContext {
+        public BasicLandTypeChoice(UUID permanentId) {
+            this(permanentId, false, false);
+        }
+    }
 
     /**
      * Choosing a basic land type for a target land: either added "in addition to its other types"
@@ -204,6 +215,14 @@ public sealed interface ChoiceContext {
      * milled card matches the chosen name, the controller gains life equal to its mana value.
      */
     record NameCardMillGainLifeChoice(UUID controllerId, UUID targetPlayerId) implements ChoiceContext {}
+
+    /**
+     * Demonic Consultation: the controller names a card, then exiles the top {@code topExileCount}
+     * cards of their library and reveals until finding the named card (to hand; rest of the dig
+     * exiled). If the named card is never revealed, the entire remaining library is exiled.
+     */
+    record ChooseNameExileTopRevealUntilNamedChoice(UUID controllerId, int topExileCount)
+            implements ChoiceContext {}
 
     /**
      * The target player names a card, then reveals the top card of their library. If it matches
@@ -271,16 +290,19 @@ public sealed interface ChoiceContext {
     record StorageMatrixUntapChoice(UUID playerId) implements ChoiceContext {}
 
     /**
-     * Prismwake Merrow: the controller chooses one or more colors for {@code targetId}, which then
-     * becomes those colors until end of turn. Colors are picked one at a time (with a "DONE" option
-     * once at least one is chosen); {@code chosen} accumulates the picks so far.
+     * Controller chooses one or more colors for {@code targetId}, which then becomes those colors
+     * for {@code duration} (until end of turn for Prismwake Merrow / Scuttlemutt; indefinitely for
+     * Shyft). Colors are picked one at a time (with a "DONE" option once at least one is chosen);
+     * {@code chosen} accumulates the picks so far.
      *
      * @param targetId       the permanent that becomes the chosen colors
      * @param sourceCardName name of the card whose ability created the effect (for display)
      * @param chosen         the colors picked so far
+     * @param duration       how long the color set lasts
      */
     record BecomeChosenColorsChoice(UUID targetId, String sourceCardName,
-                                    List<CardColor> chosen) implements ChoiceContext {}
+                                    List<CardColor> chosen,
+                                    EffectDuration duration) implements ChoiceContext {}
 
     /**
      * Relic Bind's "choose one" mode pick, made as the enchanted-artifact-tap triggered ability
@@ -347,5 +369,31 @@ public sealed interface ChoiceContext {
 
         public static final String SACRIFICE = "Sacrifice a nonland permanent";
         public static final String DISCARD = "Discard a card";
+    }
+
+    /**
+     * Oath of Lim-Dûl: for each 1 life lost, the controller chooses to sacrifice a permanent other
+     * than the source enchantment, or discard a card. Offered options are pruned to what they can
+     * do; if neither is possible the iteration is skipped (no prompt). Answered via
+     * {@code handleListChoice}.
+     */
+    record OathOfLimDulPenaltyChoice(UUID affectedPlayerId, String sourceCardName) implements ChoiceContext {
+
+        public static final String SACRIFICE = "Sacrifice a permanent other than this enchantment";
+        public static final String DISCARD = "Discard a card";
+    }
+
+    /**
+     * Winter's Chill: the controller of {@code targetPermanentId} chooses pay {2}, pay {1}, or pay
+     * nothing for that attacking creature. Offered options are pruned to what the player can
+     * afford from their mana pool; "Pay nothing" is always offered. Answered via
+     * {@code handleListChoice}.
+     */
+    record WintersChillPaymentChoice(UUID affectedPlayerId, UUID targetPermanentId, String sourceCardName)
+            implements ChoiceContext {
+
+        public static final String PAY_TWO = "Pay {2}";
+        public static final String PAY_ONE = "Pay {1}";
+        public static final String PAY_NOTHING = "Pay nothing";
     }
 }

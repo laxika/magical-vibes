@@ -76,6 +76,7 @@ public enum CardSubtype {
     CRAB("Crab"),
     COWARD("Coward"),
     DJINN("Djinn"),
+    DOG("Dog"),
     ROGUE("Rogue"),
     RAT("Rat"),
     ILLUSION("Illusion"),

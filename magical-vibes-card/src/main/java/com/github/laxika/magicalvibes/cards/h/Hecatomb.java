@@ -17,6 +17,7 @@ import java.util.List;
 
 @CardRegistration(set = "6ED", collectorNumber = "136")
 @CardRegistration(set = "5ED", collectorNumber = "167")
+@CardRegistration(set = "ICE", collectorNumber = "130")
 public class Hecatomb extends Card {
 
     public Hecatomb() {

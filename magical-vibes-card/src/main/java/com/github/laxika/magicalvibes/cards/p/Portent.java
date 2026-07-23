@@ -9,6 +9,7 @@ import com.github.laxika.magicalvibes.model.effect.ReorderTopCardsOfTargetLibrar
 import com.github.laxika.magicalvibes.model.effect.ShuffleLibraryEffect;
 
 @CardRegistration(set = "5ED", collectorNumber = "110")
+@CardRegistration(set = "ICE", collectorNumber = "90")
 public class Portent extends Card {
 
     public Portent() {

@@ -1,6 +1,7 @@
 package com.github.laxika.magicalvibes.model;
 
 public enum CounterType {
+    AGE,
     AIM,
     ANY,
     AWAKENING,
@@ -14,6 +15,7 @@ public enum CounterType {
     FEATHER,
     FLOOD,
     GROWTH,
+    HEALING,
     HATCHLING,
     HOOFPRINT,
     ICE,
@@ -22,9 +24,12 @@ public enum CounterType {
     LOYALTY,
     DEFENSE,
     MANNEQUIN,
+    MUSIC,
     MINUS_ONE_MINUS_ONE,
+    MINUS_ZERO_MINUS_ONE,
     MINUS_ZERO_MINUS_TWO,
     OMEN,
+    PARALYZATION,
     PHYLACTERY,
     PLUS_ONE_PLUS_ONE,
     PLUS_ONE_PLUS_ZERO,

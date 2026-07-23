@@ -431,6 +431,22 @@ class StackResolutionServiceTest {
         }
 
         @Test
+        @DisplayName("Enchantment spell forwards the X paid to battlefield entry")
+        void enchantmentSpellForwardsXValueToBattlefieldEntry() {
+            Card card = createEnchantment("Iceberg-like");
+            card.addEffect(EffectSlot.ON_ENTER_BATTLEFIELD,
+                    new EnterWithCountersEffect(CounterType.ICE, new XValue()));
+            StackEntry entry = new StackEntry(StackEntryType.ENCHANTMENT_SPELL, card,
+                    PLAYER1_ID, card.getName(), List.of(), 3);
+            gd.stack.addLast(entry);
+
+            svc.resolveTopOfStack(gd);
+
+            verify(battlefieldEntryService).putPermanentOntoBattlefield(
+                    eq(gd), eq(PLAYER1_ID), any(Permanent.class), eq(3), eq(false));
+        }
+
+        @Test
         @DisplayName("Aura attaches to its target permanent")
         void auraAttachesToTarget() {
             Card targetCard = createCreature("Target Creature");
@@ -447,7 +463,7 @@ class StackResolutionServiceTest {
             svc.resolveTopOfStack(gd);
 
             verify(battlefieldEntryService).putPermanentOntoBattlefield(
-                    eq(gd), eq(PLAYER1_ID), permanentCaptor.capture());
+                    eq(gd), eq(PLAYER1_ID), permanentCaptor.capture(), anyInt(), anyBoolean());
             assertThat(permanentCaptor.getValue().getAttachedTo()).isEqualTo(targetId);
         }
 
@@ -463,7 +479,8 @@ class StackResolutionServiceTest {
 
             svc.resolveTopOfStack(gd);
 
-            verify(battlefieldEntryService, never()).putPermanentOntoBattlefield(any(), any(), any());
+            verify(battlefieldEntryService, never()).putPermanentOntoBattlefield(
+                    any(), any(), any(), anyInt(), anyBoolean());
             verify(graveyardService).addCardToGraveyard(gd, PLAYER1_ID, aura);
         }
 
@@ -478,7 +495,7 @@ class StackResolutionServiceTest {
             svc.resolveTopOfStack(gd);
 
             verify(battlefieldEntryService).putPermanentOntoBattlefield(
-                    eq(gd), eq(PLAYER1_ID), permanentCaptor.capture());
+                    eq(gd), eq(PLAYER1_ID), permanentCaptor.capture(), anyInt(), anyBoolean());
             assertThat(permanentCaptor.getValue().getAttachedTo()).isEqualTo(PLAYER2_ID);
         }
 
@@ -493,7 +510,8 @@ class StackResolutionServiceTest {
 
             svc.resolveTopOfStack(gd);
 
-            verify(battlefieldEntryService, never()).putPermanentOntoBattlefield(any(), any(), any());
+            verify(battlefieldEntryService, never()).putPermanentOntoBattlefield(
+                    any(), any(), any(), anyInt(), anyBoolean());
             verify(graveyardService).addCardToGraveyard(gd, PLAYER1_ID, curse);
         }
 

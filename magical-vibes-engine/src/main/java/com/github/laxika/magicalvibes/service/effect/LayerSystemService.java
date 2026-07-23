@@ -14,6 +14,7 @@ import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.TextReplacement;
 import com.github.laxika.magicalvibes.model.effect.AllLandsAreCreaturesEffect;
 import com.github.laxika.magicalvibes.model.effect.AnimateNoncreatureArtifactsEffect;
+import com.github.laxika.magicalvibes.model.effect.BasicLandsOfChosenTypesBecomeTypeEffect;
 import com.github.laxika.magicalvibes.model.effect.BecomeChosenColorsUntilEndOfTurnEffect;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
 import com.github.laxika.magicalvibes.model.effect.ConditionalEffect;
@@ -473,6 +474,7 @@ public class LayerSystemService {
         h = mix(h, p.getPairedWithId() == null ? 0 : p.getPairedWithId().hashCode());
         h = mix(h, enumOrdinal(p.getChosenColor()));
         h = mix(h, enumOrdinal(p.getChosenSubtype()));
+        h = mix(h, enumOrdinal(p.getSecondChosenSubtype()));
         h = mix(h, enumOrdinal(p.getChosenManaValueParity()));
         h = mix(h, p.getChosenName() == null ? 0 : p.getChosenName().hashCode());
         h = mix(h, p.getChosenPermanentId() == null ? 0 : p.getChosenPermanentId().hashCode());
@@ -1115,6 +1117,23 @@ public class LayerSystemService {
                         setLandType(state, target.permanent().getId(), becomes.toSubtype(), landTypeOverrides);
                         record(board, instance, target, new L4Contribution(
                                 becomes.toSubtype(), true, true, null, null));
+                    }
+                }
+            }
+            case BasicLandsOfChosenTypesBecomeTypeEffect ignored -> {
+                manage(board, instance);
+                if (instance.source() == null) return;
+                CardSubtype from = instance.source().permanent().getChosenSubtype();
+                CardSubtype to = instance.source().permanent().getSecondChosenSubtype();
+                if (from == null || to == null) return;
+                for (PermanentSlot target : slots) {
+                    if (isSource(instance, target)) continue;
+                    CharacteristicState state = states.get(target.permanent().getId());
+                    if (state.hasCardType(CardType.LAND)
+                            && state.getSupertypes().contains(CardSupertype.BASIC)
+                            && state.hasSubtype(from)) {
+                        setLandType(state, target.permanent().getId(), to, landTypeOverrides);
+                        record(board, instance, target, new L4Contribution(to, true, true, null, null));
                     }
                 }
             }

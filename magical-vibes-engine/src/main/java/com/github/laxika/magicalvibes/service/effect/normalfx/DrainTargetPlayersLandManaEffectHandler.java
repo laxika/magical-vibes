@@ -24,6 +24,7 @@ import org.springframework.stereotype.Component;
 
 import java.util.ArrayList;
 import java.util.Map;
+import java.util.Set;
 import java.util.UUID;
 
 /**
@@ -105,6 +106,50 @@ public class DrainTargetPlayersLandManaEffectHandler implements NormalEffectHand
      * {@code AwardManaEffect} outputs are exact; any-color producers contribute colorless.
      */
     private boolean produceLandMana(GameData gameData, UUID playerId, ManaPool pool, Permanent perm, int multiplier) {
+        ManaColor fixedLandColor = gameQueryService.fixedLandManaColor(gameData);
+        if (fixedLandColor != null) {
+            int amount = 0;
+            ManaColor overridden = gameQueryService.getOverriddenLandManaColor(gameData, perm);
+            if (overridden != null) {
+                amount = multiplier;
+            } else if (PotentialManaService.hasOnTapManaEffects(perm.getCard())) {
+                for (CardEffect e : perm.getCard().getEffects(EffectSlot.ON_TAP)) {
+                    if (e instanceof AwardManaEffect award) {
+                        amount += amountEvaluationService.evaluate(gameData, award.amount(),
+                                AmountContext.forManaAbility(perm, playerId)) * multiplier;
+                    } else if (e instanceof AwardAnyColorManaEffect aace) {
+                        amount += aace.amount() * multiplier;
+                    }
+                }
+            } else {
+                for (ActivatedAbility ability : perm.getCard().getActivatedAbilities()) {
+                    if (!PotentialManaService.isFreeTapManaAbility(ability)) {
+                        continue;
+                    }
+                    for (CardEffect e : ability.getEffects()) {
+                        if (e instanceof AwardManaEffect award) {
+                            amount += amountEvaluationService.evaluate(gameData, award.amount(),
+                                    AmountContext.forManaAbility(perm, playerId)) * multiplier;
+                        } else if (e instanceof AwardAnyColorManaEffect aace) {
+                            amount += aace.amount() * multiplier;
+                        }
+                    }
+                    break;
+                }
+            }
+            if (amount > 0) {
+                pool.add(fixedLandColor, amount);
+                return true;
+            }
+            return false;
+        }
+        Set<ManaColor> twisted = gameQueryService.twistedLandManaColors(gameData, perm);
+        if (!twisted.isEmpty()) {
+            // Multi-type: pick one deterministically for this non-interactive drain path.
+            ManaColor color = twisted.iterator().next();
+            pool.add(color, multiplier);
+            return true;
+        }
         ManaColor overridden = gameQueryService.getOverriddenLandManaColor(gameData, perm);
         if (overridden != null) {
             pool.add(overridden, multiplier);

@@ -10,6 +10,7 @@ import com.github.laxika.magicalvibes.model.filter.PermanentIsCreaturePredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentPredicateTargetFilter;
 
 @CardRegistration(set = "5ED", collectorNumber = "172")
+@CardRegistration(set = "ICE", collectorNumber = "140")
 public class KrovikanFetish extends Card {
 
     public KrovikanFetish() {

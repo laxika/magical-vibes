@@ -11,6 +11,7 @@ import com.github.laxika.magicalvibes.model.filter.StackEntryPredicateTargetFilt
 @CardRegistration(set = "8ED", collectorNumber = "74")
 @CardRegistration(set = "7ED", collectorNumber = "69")
 @CardRegistration(set = "6ED", collectorNumber = "63")
+@CardRegistration(set = "ICE", collectorNumber = "65")
 public class Deflection extends Card {
 
     public Deflection() {
