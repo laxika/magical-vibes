@@ -60,7 +60,8 @@ public class DealDividedDamageEffectHandler implements NormalEffectHandlerBean {
                 dealToAssignments(gameData, entry, e, assignments);
             }
             case EVEN -> {
-                List<UUID> targets = entry.getTargetIds();
+                List<UUID> targets = entry.getDeclaredTargetIds();
+                boolean usesFlatTargets = !targets.isEmpty();
                 if (targets.isEmpty()) {
                     if (entry.getTargetId() != null) {
                         targets = List.of(entry.getTargetId());
@@ -70,17 +71,21 @@ public class DealDividedDamageEffectHandler implements NormalEffectHandlerBean {
                 }
                 int damagePerTarget = entry.getXValue() / targets.size();
                 Map<UUID, Integer> assignments = new LinkedHashMap<>();
-                for (UUID targetId : targets) {
-                    assignments.put(targetId, damagePerTarget);
+                for (int i = 0; i < targets.size(); i++) {
+                    if (!usesFlatTargets || entry.isTargetLegal(i)) {
+                        assignments.put(targets.get(i), damagePerTarget);
+                    }
                 }
                 dealToAssignments(gameData, entry, e, assignments);
             }
             case ORDERED -> {
-                List<UUID> targets = entry.getTargetIds();
+                List<UUID> targets = entry.getDeclaredTargetIds();
                 List<Integer> amounts = e.orderedAmounts();
                 Map<UUID, Integer> assignments = new LinkedHashMap<>();
                 for (int i = 0; i < Math.min(targets.size(), amounts.size()); i++) {
-                    assignments.put(targets.get(i), amounts.get(i));
+                    if (entry.isTargetLegal(i)) {
+                        assignments.put(targets.get(i), amounts.get(i));
+                    }
                 }
                 dealToAssignments(gameData, entry, e, assignments);
             }

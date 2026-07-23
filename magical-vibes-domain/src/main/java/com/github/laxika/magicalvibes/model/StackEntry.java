@@ -398,6 +398,17 @@ public class StackEntry {
     }
 
     /**
+     * Whether the target at its original flat-list position is still legal for resolution.
+     * Position-sensitive effects use this together with {@link #getDeclaredTargetIds()} so an
+     * illegal earlier target does not shift the meaning of later targets.
+     */
+    public boolean isTargetLegal(int targetIndex) {
+        return targetIndex >= 0
+                && targetIndex < targetIds.size()
+                && !illegalTargetIndices.contains(targetIndex);
+    }
+
+    /**
      * Returns the targets chosen for the given target group, resolved against this entry's
      * flat {@link #targetIds} list.
      *
@@ -466,7 +477,7 @@ public class StackEntry {
      * no effect/group mapping, preserving legacy positional slicing for ordinary multi-target
      * spells and abilities (where every declared group is always populated).
      */
-    private boolean isTargetGroupActive(int groupIndex) {
+    public boolean isTargetGroupActive(int groupIndex) {
         // The group-active concept only applies to entries that carry their surviving effects in
         // effectsToResolve (triggered abilities whose intervening-if may have gated some out). Spell
         // entries resolve from card.getEffects(...) and leave effectsToResolve empty — there every

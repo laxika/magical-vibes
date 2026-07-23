@@ -61,6 +61,7 @@ import com.github.laxika.magicalvibes.service.effect.TargetValidationService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 
+import java.util.ArrayList;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Optional;
@@ -590,6 +591,7 @@ public class TargetLegalityService {
         // without its handlers affecting the illegal targets or shifting later target groups.
         List<UUID> declaredTargetIds = entry.getDeclaredTargetIds();
         if (!declaredTargetIds.isEmpty()) {
+            List<TargetFilter> targetFilters = targetFiltersForDeclaredPositions(entry, declaredTargetIds.size());
             UUID primaryTargetId = entry.getTargetId();
             boolean hasPrimaryTarget = primaryTargetId != null;
             boolean primaryTargetLegal = hasPrimaryTarget
@@ -602,7 +604,7 @@ public class TargetLegalityService {
             boolean anySecondaryTargetLegal = false;
             for (int i = 0; i < declaredTargetIds.size(); i++) {
                 UUID targetId = declaredTargetIds.get(i);
-                TargetFilter targetFilter = targetFilterForPosition(entry, i);
+                TargetFilter targetFilter = targetFilters.get(i);
                 boolean legal = secondaryTargetsAreOnStack
                         ? checkSpellTargetOnStack(gameData, targetId, targetFilter, entry.getControllerId(),
                                 entry.getSourcePermanentSnapshot(), entry.getXValue()).isEmpty()
@@ -842,14 +844,39 @@ public class TargetLegalityService {
         return cardFilter;
     }
 
-    private TargetFilter targetFilterForPosition(StackEntry entry, int targetIndex) {
-        if (entry.getCard() != null) {
-            List<TargetFilter> filters = entry.getCard().getMultiTargetFilters();
-            if (targetIndex < filters.size()) {
-                return filters.get(targetIndex);
+    private List<TargetFilter> targetFiltersForDeclaredPositions(StackEntry entry, int targetCount) {
+        List<TargetFilter> filters = new ArrayList<>(targetCount);
+        if (entry.getTargetFilter() != null) {
+            for (int i = 0; i < targetCount; i++) {
+                filters.add(entry.getTargetFilter());
+            }
+            return filters;
+        }
+
+        Card card = entry.getCard();
+        if (card != null) {
+            int firstFlatGroup = card.isAura() && entry.getTargetId() != null ? 1 : 0;
+            int remaining = targetCount;
+            for (SpellTarget group : card.getSpellTargets()) {
+                if (group.getIndex() < firstFlatGroup || !entry.isTargetGroupActive(group.getIndex())) {
+                    continue;
+                }
+                int size = Math.min(Math.max(group.getMaxTargets(), 0), remaining);
+                for (int i = 0; i < size; i++) {
+                    filters.add(group.getFilter());
+                }
+                remaining -= size;
+                if (remaining == 0) {
+                    break;
+                }
             }
         }
-        return entry.getTargetFilter();
+
+        TargetFilter fallback = card != null ? card.getTargetFilter() : null;
+        while (filters.size() < targetCount) {
+            filters.add(fallback);
+        }
+        return filters;
     }
 
     /**

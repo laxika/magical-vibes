@@ -100,6 +100,28 @@ class DealDividedDamageEffectHandlerTest extends AbstractDamageHandlerTest {
             verify(triggerCollectionService).checkDamageDealtToControllerTriggers(gd, player2Id, null, false);
             verify(triggerCollectionService).checkNoncombatDamageToOpponentTriggers(gd, player2Id);
         }
+
+        @Test
+        @DisplayName("Keeps ordered damage amounts tied to original target positions")
+        void keepsAmountsTiedToOriginalTargetPositions() {
+            Card arcCard = createCard("Arc Trail");
+            UUID removedTargetId = UUID.randomUUID();
+            StackEntry entry = createMultiTargetEntry(
+                    arcCard, player1Id, List.of(removedTargetId, player2Id));
+            entry.markTargetIllegal(0);
+            DealDividedDamageEffect effect = DealDividedDamageEffect.ordered(List.of(2, 1));
+
+            stubDamagePreventable();
+            stubDamageFromSourceNotPrevented();
+            stubNoDamageMultiplier();
+            stubNoKeywordsOnSource(entry);
+            stubPlayerDamageCore(player2Id);
+
+            handler.resolve(gd, entry, effect);
+
+            assertThat(gd.playerLifeTotals.get(player2Id)).isEqualTo(19);
+            verify(triggerCollectionService).checkLifeLossTriggers(gd, player2Id, 1);
+        }
     }
 
     @Nested
@@ -129,6 +151,28 @@ class DealDividedDamageEffectHandlerTest extends AbstractDamageHandlerTest {
             // floor(7 / 2) = 3 to each
             assertThat(bears.getMarkedDamage()).isEqualTo(3);
             assertThat(elves.getMarkedDamage()).isEqualTo(3);
+        }
+
+        @Test
+        @DisplayName("Uses the declared target count when one target becomes illegal")
+        void usesDeclaredTargetCountWhenOneTargetBecomesIllegal() {
+            Card fireball = createCard("Fireball");
+            UUID removedTargetId = UUID.randomUUID();
+            StackEntry entry = evenEntry(
+                    fireball, player1Id, 7, List.of(removedTargetId, player2Id));
+            entry.markTargetIllegal(0);
+            DealDividedDamageEffect effect = DealDividedDamageEffect.xDividedEvenly();
+
+            stubDamagePreventable();
+            stubDamageFromSourceNotPrevented();
+            stubNoDamageMultiplier();
+            stubNoKeywordsOnSource(entry);
+            stubPlayerDamageCore(player2Id);
+
+            handler.resolve(gd, entry, effect);
+
+            assertThat(gd.playerLifeTotals.get(player2Id)).isEqualTo(17);
+            verify(triggerCollectionService).checkLifeLossTriggers(gd, player2Id, 3);
         }
     }
 

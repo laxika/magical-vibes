@@ -3,6 +3,7 @@ package com.github.laxika.magicalvibes.service.target;
 import com.github.laxika.magicalvibes.model.ActivatedAbility;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardColor;
+import com.github.laxika.magicalvibes.model.CardSubtype;
 import com.github.laxika.magicalvibes.model.CardType;
 import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.GameData;
@@ -71,6 +72,7 @@ import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.doThrow;
 import static org.mockito.Mockito.lenient;
+import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 import com.github.laxika.magicalvibes.service.filter.PredicateEvaluationService;
 
@@ -1593,6 +1595,66 @@ class TargetLegalityServiceTest {
                     spell.getEffects(EffectSlot.SPELL), 0, List.of(player2Id, UUID.randomUUID()));
 
             assertThat(sut.isTargetIllegalOnResolution(gd, entry)).isFalse();
+        }
+
+        @Test
+        @DisplayName("uses the later target group's filter for an Aura ETB target")
+        void usesLaterTargetGroupFilterForAuraEtbTarget() {
+            Permanent enchanted = addPermanent(player1Id, createCreature("Enchanted", CardColor.GREEN));
+            Permanent etbTarget = addPermanent(player2Id, createCreature("ETB target", CardColor.GREEN));
+            PermanentPredicateTargetFilter enchantFilter = new PermanentPredicateTargetFilter(
+                    new PermanentIsCreaturePredicate(), "Enchant creature");
+            PermanentPredicateTargetFilter etbFilter = new PermanentPredicateTargetFilter(
+                    new PermanentIsArtifactPredicate(), "ETB target");
+            CardEffect etbEffect = new DestroyTargetPermanentEffect();
+            Card aura = new Card();
+            aura.setName("Aura");
+            aura.setType(CardType.ENCHANTMENT);
+            aura.setSubtypes(List.of(CardSubtype.AURA));
+            aura.target(enchantFilter);
+            aura.target(etbFilter).addEffect(EffectSlot.ON_ENTER_BATTLEFIELD, etbEffect);
+            StackEntry entry = new StackEntry(
+                    StackEntryType.TRIGGERED_ABILITY,
+                    aura,
+                    player1Id,
+                    "Aura ETB",
+                    List.of(etbEffect),
+                    0,
+                    enchanted.getId(),
+                    UUID.randomUUID(),
+                    Map.of(),
+                    null,
+                    List.of(),
+                    List.of(etbTarget.getId()));
+
+            assertThat(sut.isTargetIllegalOnResolution(gd, entry)).isFalse();
+            verify(predicateEvaluationService).validateTargetFilter(eq(etbFilter), eq(etbTarget), any());
+        }
+
+        @Test
+        @DisplayName("skips a gated-out target group when validating later trigger targets")
+        void skipsGatedOutTargetGroupFilter() {
+            Permanent target = addPermanent(player2Id, createCreature("Target", CardColor.GREEN));
+            PermanentPredicateTargetFilter firstFilter = new PermanentPredicateTargetFilter(
+                    new PermanentIsArtifactPredicate(), "First target");
+            PermanentPredicateTargetFilter secondFilter = new PermanentPredicateTargetFilter(
+                    new PermanentIsCreaturePredicate(), "Second target");
+            CardEffect firstEffect = new DestroyTargetPermanentEffect();
+            CardEffect secondEffect = ReturnToHandEffect.target();
+            Card source = createCreature("Source", CardColor.RED);
+            source.target(firstFilter).addEffect(EffectSlot.ON_ENTER_BATTLEFIELD, firstEffect);
+            source.target(secondFilter).addEffect(EffectSlot.ON_ENTER_BATTLEFIELD, secondEffect);
+            StackEntry entry = new StackEntry(
+                    StackEntryType.TRIGGERED_ABILITY,
+                    source,
+                    player1Id,
+                    "Source ETB",
+                    List.of(secondEffect),
+                    UUID.randomUUID(),
+                    List.of(target.getId()));
+
+            assertThat(sut.isTargetIllegalOnResolution(gd, entry)).isFalse();
+            verify(predicateEvaluationService).validateTargetFilter(eq(secondFilter), eq(target), any());
         }
 
         // ----- Multi-target card IDs (graveyard) -----
