@@ -66,6 +66,7 @@ public class ChoiceHandlerService {
     private final BattlefieldEntryService battlefieldEntryService;
     private final GameBroadcastService gameBroadcastService;
     private final PlayerInputService playerInputService;
+    private final InputCompletionService inputCompletionService;
     private final TurnProgressionService turnProgressionService;
     private final com.github.laxika.magicalvibes.service.state.StateBasedActionService stateBasedActionService;
     private final LegendRuleService legendRuleService;
@@ -539,9 +540,7 @@ public class ChoiceHandlerService {
             log.info("Game {} - {} chooses {} for {}", gameData.id, player.getUsername(), keywordName, target.getCard().getName());
         }
 
-        gameData.priorityPassedBy.clear();
-        gameBroadcastService.broadcastGameState(gameData);
-        turnProgressionService.resolveAutoPass(gameData);
+        inputCompletionService.processMayAbilitiesThenAutoPass(gameData);
     }
 
     /**

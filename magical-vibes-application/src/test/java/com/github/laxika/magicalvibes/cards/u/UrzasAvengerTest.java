@@ -41,6 +41,8 @@ class UrzasAvengerTest extends BaseCardTest {
         assertThat(gqs.getEffectivePower(gd, avenger)).isEqualTo(power - 1);
         assertThat(gqs.getEffectiveToughness(gd, avenger)).isEqualTo(toughness - 1);
         assertThat(gqs.hasKeyword(gd, avenger, Keyword.FLYING)).isTrue();
+        assertThat(gd.pendingEffectResolutionEntry).isNull();
+        assertThat(gd.deferPlayerLossCheck).isFalse();
     }
 
     @Test
