@@ -101,6 +101,8 @@ public class DealDividedDamageEffectHandler implements NormalEffectHandlerBean {
 
         for (Map.Entry<UUID, Integer> assignment : assignments.entrySet()) {
             UUID targetId = assignment.getKey();
+            if (!entry.isAssignmentTargetLegal(targetId)) continue;
+
             int rawDamage = gameQueryService.applyDamageMultiplier(gameData, assignment.getValue(), entry);
 
             boolean targetIsPlayer = gameData.playerIds.contains(targetId);

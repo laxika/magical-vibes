@@ -39,6 +39,8 @@ public class PreventDividedDamageEffectHandler implements NormalEffectHandlerBea
 
         for (Map.Entry<UUID, Integer> assignment : assignments.entrySet()) {
             UUID targetId = assignment.getKey();
+            if (!entry.isAssignmentTargetLegal(targetId)) continue;
+
             int amount = assignment.getValue();
 
             Permanent target = gameQueryService.findPermanentById(gameData, targetId);

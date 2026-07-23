@@ -2,6 +2,7 @@ package com.github.laxika.magicalvibes.cards.p;
 
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.GameData;
+import com.github.laxika.magicalvibes.model.Keyword;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.Player;
@@ -85,6 +86,40 @@ class PyrotechnicsTest extends BaseCardTest {
         assertThat(gd.playerBattlefields.get(player2.getId()))
                 .noneMatch(p -> p.getId().equals(bears.getId()));
         assertThat(gd.getLife(player2.getId())).isEqualTo(lifeBefore - 2);
+    }
+
+    @Test
+    void skipsTargetThatGainsHexproofBeforeResolution() {
+        harness.forceActivePlayer(player1);
+        harness.setHand(player1, List.of(new Pyrotechnics()));
+        harness.addMana(player1, ManaColor.RED, 5);
+
+        Permanent protectedBears = addToBattlefield(player2, new GrizzlyBears());
+        Permanent giant = addToBattlefield(player2, new HillGiant());
+
+        harness.castSorcery(player1, 0, Map.of(protectedBears.getId(), 2, giant.getId(), 2));
+        protectedBears.getGrantedKeywords().add(Keyword.HEXPROOF);
+        harness.passBothPriorities();
+
+        assertThat(protectedBears.getMarkedDamage()).isZero();
+        assertThat(giant.getMarkedDamage()).isEqualTo(2);
+    }
+
+    @Test
+    void fizzlesWhenOnlyTargetGainsHexproofBeforeResolution() {
+        harness.forceActivePlayer(player1);
+        harness.setHand(player1, List.of(new Pyrotechnics()));
+        harness.addMana(player1, ManaColor.RED, 5);
+
+        Permanent giant = addToBattlefield(player2, new HillGiant());
+
+        harness.castSorcery(player1, 0, Map.of(giant.getId(), 4));
+        giant.getGrantedKeywords().add(Keyword.HEXPROOF);
+        harness.passBothPriorities();
+
+        assertThat(giant.getMarkedDamage()).isZero();
+        assertThat(gd.playerBattlefields.get(player2.getId()))
+                .anyMatch(p -> p.getId().equals(giant.getId()));
     }
 
     @Test

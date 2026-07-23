@@ -178,7 +178,7 @@ public class StackEntry {
         this.targetZone = null;
         this.targetCardIds = List.of();
         this.targetFilter = null;
-        this.targetIds = List.of();
+        this.targetIds = assignmentTargetIds(this.damageAssignments);
     }
 
     // Triggered ability with source permanent and xValue constructor (e.g. spell-cast self-boost by mana spent)
@@ -250,7 +250,9 @@ public class StackEntry {
         this.targetZone = targetZone;
         this.targetCardIds = targetCardIds != null ? targetCardIds : List.of();
         this.targetFilter = null;
-        this.targetIds = targetIds != null ? targetIds : List.of();
+        this.targetIds = targetIds != null && !targetIds.isEmpty()
+                ? targetIds
+                : assignmentTargetIds(this.damageAssignments);
     }
 
     // Multi-target triggered ability constructor (e.g. exile up to N cards from graveyards)
@@ -409,6 +411,16 @@ public class StackEntry {
     }
 
     /**
+     * Whether an amount-assignment target is still legal for resolution. Assignment maps have unique
+     * keys, so their target ids can be mapped back to the canonical flat target position without
+     * ambiguity.
+     */
+    public boolean isAssignmentTargetLegal(UUID targetId) {
+        int targetIndex = targetIds.indexOf(targetId);
+        return targetIndex >= 0 && isTargetLegal(targetIndex);
+    }
+
+    /**
      * Returns the targets chosen for the given target group, resolved against this entry's
      * flat {@link #targetIds} list.
      *
@@ -522,6 +534,12 @@ public class StackEntry {
             return targetId != null ? List.of(targetId) : List.of();
         }
         return targetsForGroup(group);
+    }
+
+    private static List<UUID> assignmentTargetIds(Map<UUID, Integer> assignments) {
+        return assignments == null || assignments.isEmpty()
+                ? List.of()
+                : List.copyOf(assignments.keySet());
     }
 
     public boolean isSingleTarget() {

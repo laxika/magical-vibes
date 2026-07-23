@@ -2,6 +2,7 @@ package com.github.laxika.magicalvibes.cards.i;
 
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.GameData;
+import com.github.laxika.magicalvibes.model.Keyword;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.Player;
@@ -97,6 +98,25 @@ class IgniteDisorderTest extends BaseCardTest {
         GameData gd = harness.getGameData();
         assertThat(gd.playerBattlefields.get(player2.getId()))
                 .noneMatch(p -> p.getId().equals(blue.getId()));
+    }
+
+    @Test
+    void skipsTargetThatGainsHexproofBeforeResolution() {
+        harness.forceActivePlayer(player1);
+        harness.setHand(player1, List.of(new IgniteDisorder()));
+        harness.addMana(player1, ManaColor.RED, 2);
+
+        Permanent protectedTarget = addToBattlefield(player2, new SamiteHealer());
+        Permanent legalTarget = addToBattlefield(player2, new SoulWarden());
+
+        harness.castInstant(player1, 0, Map.of(protectedTarget.getId(), 2, legalTarget.getId(), 1));
+        protectedTarget.getGrantedKeywords().add(Keyword.HEXPROOF);
+        harness.passBothPriorities();
+
+        assertThat(protectedTarget.getMarkedDamage()).isZero();
+        assertThat(gd.playerBattlefields.get(player2.getId()))
+                .anyMatch(p -> p.getId().equals(protectedTarget.getId()))
+                .noneMatch(p -> p.getId().equals(legalTarget.getId()));
     }
 
     @Test
