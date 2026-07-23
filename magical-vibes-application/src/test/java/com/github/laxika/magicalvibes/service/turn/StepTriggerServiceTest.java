@@ -127,6 +127,9 @@ class StepTriggerServiceTest {
     @Mock
     private CreatureControlService creatureControlService;
 
+    @Mock
+    private GrantedUpkeepEffectSupport grantedUpkeepEffectSupport;
+
     private StepTriggerService sut;
 
     private GameData gd;
@@ -156,7 +159,7 @@ class StepTriggerServiceTest {
                 paradigmService,
                 validTargetService,
                 creatureControlService,
-                new GrantedUpkeepEffectSupport(gameQueryService));
+                grantedUpkeepEffectSupport);
 
         player1Id = UUID.randomUUID();
         player2Id = UUID.randomUUID();
