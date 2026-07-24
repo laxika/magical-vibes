@@ -1,5 +1,6 @@
 package com.github.laxika.magicalvibes.cards.s;
 
+import com.github.laxika.magicalvibes.cards.h.HellsparkElemental;
 import com.github.laxika.magicalvibes.model.ActivatedAbility;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardColor;
@@ -112,6 +113,21 @@ class SmokebraiderTest extends BaseCardTest {
 
         assertThat(gd.stack).hasSize(1);
         assertThat(gd.stack.getFirst().getCard().getName()).isEqualTo("Test Elemental");
+    }
+
+    @Test
+    @DisplayName("Smokebraider mana can cast a real Elemental card")
+    void manaCanCastRealElementalCard() {
+        ManaPool pool = gd.playerManaPools.get(player1.getId());
+        pool.addSubtypeSpellOrAbilityMana(CardSubtype.ELEMENTAL, ManaColor.RED, 1);
+        pool.addSubtypeSpellOrAbilityMana(CardSubtype.ELEMENTAL, ManaColor.COLORLESS, 1);
+        harness.setHand(player1, List.of(new HellsparkElemental()));
+
+        harness.castCreature(player1, 0);
+
+        assertThat(gd.stack).hasSize(1);
+        assertThat(pool.getSubtypeSpellOrAbilityManaForColor(Set.of(CardSubtype.ELEMENTAL), ManaColor.RED)).isZero();
+        assertThat(pool.getSubtypeSpellOrAbilityManaForColor(Set.of(CardSubtype.ELEMENTAL), ManaColor.COLORLESS)).isZero();
     }
 
     // ===== Activating abilities of Elementals =====

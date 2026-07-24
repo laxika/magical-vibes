@@ -45,7 +45,9 @@ public class RemoveAndPutCounterOnAttackEffectHandler implements NormalEffectHan
             return;
         }
 
-        Permanent removeFrom = gameQueryService.findPermanentById(gameData, targets.get(0));
+        Permanent removeFrom = entry.isTargetLegal(0)
+                ? gameQueryService.findPermanentById(gameData, targets.get(0))
+                : null;
         if (removeFrom != null && removeFrom.getCounterCount(counterType) > 0) {
             removeFrom.setCounterCount(counterType, removeFrom.getCounterCount(counterType) - 1);
             gameBroadcastService.logAndBroadcast(gameData,
@@ -53,7 +55,7 @@ public class RemoveAndPutCounterOnAttackEffectHandler implements NormalEffectHan
             log.info("Game {} - {} counter removed from {}", gameData.id, counterType, removeFrom.getCard().getName());
         }
 
-        if (targets.size() > 1) {
+        if (targets.size() > 1 && entry.isTargetLegal(1)) {
             Permanent putOn = gameQueryService.findPermanentById(gameData, targets.get(1));
             if (putOn != null && canReceiveCounter(gameData, putOn, counterType)) {
                 permanentCounterSupport.placeCounterOnPermanent(gameData, entry, putOn, counterType, 1);

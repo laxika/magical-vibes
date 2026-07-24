@@ -18,6 +18,7 @@ import com.github.laxika.magicalvibes.model.TargetType;
 import com.github.laxika.magicalvibes.model.Zone;
 import com.github.laxika.magicalvibes.model.effect.TargetColorMode;
 import com.github.laxika.magicalvibes.model.effect.TargetingRestrictionEffect;
+import com.github.laxika.magicalvibes.model.effect.AttackCounterMoveEffect;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
 import com.github.laxika.magicalvibes.model.effect.ChooseOneEffect;
 import com.github.laxika.magicalvibes.model.effect.ExileCardsFromGraveyardEffect;
@@ -585,6 +586,19 @@ public class TargetLegalityService {
     public boolean isTargetIllegalOnResolution(GameData gameData, StackEntry entry) {
         if (entry.isNonTargeting()) {
             return false;
+        }
+
+        if (entry.getEffectsToResolve().stream().anyMatch(AttackCounterMoveEffect.class::isInstance)) {
+            List<UUID> targetIds = entry.getDeclaredTargetIds();
+            boolean anyLegalTarget = false;
+            for (int i = 0; i < targetIds.size(); i++) {
+                if (gameQueryService.findPermanentById(gameData, targetIds.get(i)) != null) {
+                    anyLegalTarget = true;
+                } else {
+                    entry.markTargetIllegal(i);
+                }
+            }
+            return !anyLegalTarget;
         }
 
         // CR 608.2b requires every target occurrence to be checked again. Keep illegal flat-list

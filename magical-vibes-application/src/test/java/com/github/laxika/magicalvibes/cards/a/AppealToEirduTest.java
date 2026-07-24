@@ -3,6 +3,7 @@ package com.github.laxika.magicalvibes.cards.a;
 import com.github.laxika.magicalvibes.model.GameLogEntry;
 
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
+import com.github.laxika.magicalvibes.cards.q.QasaliPridemage;
 import com.github.laxika.magicalvibes.model.GameData;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
@@ -121,6 +122,30 @@ class AppealToEirduTest extends BaseCardTest {
         assertThat(bf.get(1).getToughnessModifier()).isEqualTo(1);
 
         // Pool should have 0 mana left (3 red spent on {3})
+        assertThat(harness.getGameData().playerManaPools.get(player1.getId()).getTotal()).isEqualTo(0);
+    }
+
+    @Test
+    @DisplayName("Cast with convoke using multicolor creature to pay {W}")
+    void castWithConvokeMulticolorPayment() {
+        QasaliPridemage multicolorCreature = new QasaliPridemage();
+        GrizzlyBears targetBear = new GrizzlyBears();
+        harness.addToBattlefield(player1, multicolorCreature);
+        harness.addToBattlefield(player1, targetBear);
+        harness.setHand(player1, List.of(new AppealToEirdu()));
+        harness.addMana(player1, ManaColor.RED, 3);
+
+        List<Permanent> bf = harness.getGameData().playerBattlefields.get(player1.getId());
+        UUID convokeId = bf.get(0).getId();
+        UUID targetId = bf.get(1).getId();
+
+        harness.castInstantWithConvoke(player1, 0, List.of(targetId), List.of(convokeId));
+        harness.passBothPriorities();
+
+        bf = harness.getGameData().playerBattlefields.get(player1.getId());
+        assertThat(bf.get(0).isTapped()).isTrue();
+        assertThat(bf.get(1).getPowerModifier()).isEqualTo(2);
+        assertThat(bf.get(1).getToughnessModifier()).isEqualTo(1);
         assertThat(harness.getGameData().playerManaPools.get(player1.getId()).getTotal()).isEqualTo(0);
     }
 

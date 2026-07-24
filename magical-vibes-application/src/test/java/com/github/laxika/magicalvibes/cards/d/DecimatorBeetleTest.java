@@ -106,6 +106,43 @@ class DecimatorBeetleTest extends BaseCardTest {
     }
 
     @Test
+    @DisplayName("Attack still puts a counter when the remove target leaves before resolution")
+    void attackPutsCounterWhenRemoveTargetLeavesBeforeResolution() {
+        addBeetleReady(player1);
+        Permanent ownCreature = addReadyCreature(player1);
+        ownCreature.setCounterCount(CounterType.MINUS_ONE_MINUS_ONE, 1);
+        Permanent defender = addReadyCreature(player2);
+
+        declareAttackers(player1, List.of(0));
+
+        harness.handlePermanentChosen(player1, ownCreature.getId());
+        harness.handlePermanentChosen(player1, defender.getId());
+        gd.playerBattlefields.get(player1.getId()).remove(ownCreature);
+        harness.passBothPriorities();
+
+        assertThat(defender.getCounterCount(CounterType.MINUS_ONE_MINUS_ONE)).isEqualTo(1);
+    }
+
+    @Test
+    @DisplayName("Attack still removes a counter when the defender target leaves before resolution")
+    void attackRemovesCounterWhenDefenderTargetLeavesBeforeResolution() {
+        addBeetleReady(player1);
+        Permanent ownCreature = addReadyCreature(player1);
+        ownCreature.setCounterCount(CounterType.MINUS_ONE_MINUS_ONE, 1);
+        Permanent defender = addReadyCreature(player2);
+
+        declareAttackers(player1, List.of(0));
+
+        harness.handlePermanentChosen(player1, ownCreature.getId());
+        harness.handlePermanentChosen(player1, defender.getId());
+        gd.playerBattlefields.get(player2.getId()).remove(defender);
+        harness.passBothPriorities();
+
+        assertThat(ownCreature.getCounterCount(CounterType.MINUS_ONE_MINUS_ONE)).isZero();
+        assertThat(gd.playerBattlefields.get(player2.getId())).doesNotContain(defender);
+    }
+
+    @Test
     @DisplayName("Attack can decline the optional second target")
     void attackDeclinesSecondTarget() {
         addBeetleReady(player1);

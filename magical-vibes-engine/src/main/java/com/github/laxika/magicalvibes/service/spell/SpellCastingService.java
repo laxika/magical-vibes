@@ -367,12 +367,19 @@ public class SpellCastingService {
         boolean isMyr = gameQueryService.cardHasSubtype(card, CardSubtype.MYR, gameData, playerId);
         boolean hasRestrictedRedContext = isArtifact || card.hasType(CardType.CREATURE);
         boolean instantSorceryOnlyColorless = card.hasType(CardType.INSTANT) || card.hasType(CardType.SORCERY);
-        Set<CardSubtype> subtypeCreatureContext = card.hasType(CardType.CREATURE) ? gameQueryService.getCardSubtypes(card, gameData, playerId) : Set.of();
+        Set<CardSubtype> subtypeCreatureContext = card.hasType(CardType.CREATURE)
+                ? nullToEmpty(gameQueryService.getCardSubtypes(card, gameData, playerId))
+                : Set.of();
         // Spell-or-ability restricted mana (e.g. Smokebraider) can pay for any spell of the matching
         // subtype, so compute subtypes for every spell (Elemental spells are creatures in practice).
-        Set<CardSubtype> subtypeSpellOrAbilityContext = gameQueryService.getCardSubtypes(card, gameData, playerId);
+        Set<CardSubtype> subtypeSpellOrAbilityContext =
+                nullToEmpty(gameQueryService.getCardSubtypes(card, gameData, playerId));
         boolean creatureSpellOnly = card.hasType(CardType.CREATURE);
         return new ManaRestrictionFlags(isArtifact, isMyr, hasRestrictedRedContext, kicked, instantSorceryOnlyColorless, subtypeCreatureContext, subtypeSpellOrAbilityContext, creatureSpellOnly);
+    }
+
+    private static Set<CardSubtype> nullToEmpty(Set<CardSubtype> subtypes) {
+        return subtypes != null ? subtypes : Set.of();
     }
 
     private StackEntryType cardTypeToStackEntryType(CardType type) {
@@ -1073,8 +1080,19 @@ public class SpellCastingService {
                 if (creature.isTapped()) {
                     throw new IllegalStateException(creature.getCard().getName() + " is already tapped");
                 }
-                CardColor creatureColor = gameQueryService.getEffectiveColor(gameData, creature);
-                contributions.add(creatureColor != null ? ManaColor.fromCode(creatureColor.getCode()) : null);
+                Set<CardColor> creatureColors = gameQueryService.getEffectiveColors(gameData, creature);
+                ManaColor contribution = creatureColors == null || creatureColors.isEmpty()
+                        ? null
+                        : creatureColors.stream()
+                                .map(color -> ManaColor.fromCode(color.getCode()))
+                                .filter(java.util.Objects::nonNull)
+                                .findFirst()
+                                .orElse(null);
+                if (contribution == null) {
+                    CardColor creatureColor = gameQueryService.getEffectiveColor(gameData, creature);
+                    contribution = creatureColor != null ? ManaColor.fromCode(creatureColor.getCode()) : null;
+                }
+                contributions.add(contribution);
                 validatedCreatures.add(creature);
             }
             // Tap all convoke creatures (after validation to ensure atomic failure).
