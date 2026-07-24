@@ -55,7 +55,7 @@ class PlayCardRequestDispatchServiceTest {
 
         verify(gameService).playCard(eq(gameData), eq(player), eq(3), isNull(), isNull(), isNull(),
                 eq(List.of()), eq(List.of()), eq(false), isNull(), isNull(), isNull(),
-                isNull(), isNull(), eq(false), isNull(), isNull());
+                isNull(), isNull(), eq(false), isNull(), isNull(), isNull());
         verifyNoMoreInteractions(gameService);
     }
 
