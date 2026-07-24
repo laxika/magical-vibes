@@ -78,8 +78,7 @@ subprojects {
         }
 
         tasks.withType<JavaCompile> {
-            options.forkOptions.memoryMaximumSize =
-                providers.gradleProperty("javaCompile.maxHeapSize").get()
+            options.forkOptions.memoryMaximumSize = "2g"
         }
     }
 }
