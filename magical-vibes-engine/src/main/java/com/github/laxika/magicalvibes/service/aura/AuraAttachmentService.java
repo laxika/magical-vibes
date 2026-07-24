@@ -81,7 +81,7 @@ public class AuraAttachmentService {
                         it.remove();
                         gameData.expireFloatingEffectsForDepartedSource(p.getId());
                         boolean wentToGraveyard = graveyardService.addCardToGraveyard(gameData, playerId, p.getOriginalCard(), Zone.BATTLEFIELD);
-                        gameBroadcastService.logAndBroadcast(gameData, GameLog.cardThen(p.getCard(), " is put into the graveyard (enchanted creature left the battlefield)."));
+                        gameBroadcastService.logAndBroadcast(gameData, GameLog.cardThen(p.getCard(), " is put into the graveyard (enchanted permanent left the battlefield)."));
                         log.info("Game {} - {} removed (orphaned aura)", gameData.id, p.getCard().getName());
                         if (wentToGraveyard) {
                             removals.add(new OrphanedAuraRemoval(p.getCard(), playerId));
@@ -208,4 +208,3 @@ public class AuraAttachmentService {
         return null;
     }
 }
-

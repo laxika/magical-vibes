@@ -150,18 +150,18 @@ class AuraAttachmentServiceTest {
         }
 
         @Test
-        @DisplayName("Game log records aura going to graveyard when enchanted creature is destroyed")
+        @DisplayName("Game log describes a departed Aura host as an enchanted permanent")
         void gameLogRecordsAuraRemoval() {
-            UUID deadCreatureId = UUID.randomUUID();
-            Permanent aura = createAura("Holy Strength");
-            aura.setAttachedTo(deadCreatureId);
+            UUID departedLandId = UUID.randomUUID();
+            Permanent aura = createAura("Blight");
+            aura.setAttachedTo(departedLandId);
             gd.playerBattlefields.get(player1Id).add(aura);
 
-            when(gameQueryService.findPermanentById(gd, deadCreatureId)).thenReturn(null);
+            when(gameQueryService.findPermanentById(gd, departedLandId)).thenReturn(null);
 
             service.removeOrphanedAuras(gd);
 
-            verify(gameBroadcastService).logAndBroadcast(eq(gd), argThat((GameLogEntry e) -> e.plainText().equals("Holy Strength is put into the graveyard (enchanted creature left the battlefield).")));
+            verify(gameBroadcastService).logAndBroadcast(eq(gd), argThat((GameLogEntry e) -> e.plainText().equals("Blight is put into the graveyard (enchanted permanent left the battlefield).")));
         }
 
         @Test
