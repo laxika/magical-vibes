@@ -157,12 +157,13 @@ public class AbilityActivationService {
      *                               has summoning sickness (creatures without haste), or is blocked by Arrest
      */
     /**
-     * The mana quantity of an {@code ON_TAP} {@link AwardManaEffect}. Tap-for-mana is always a flat
-     * ({@link Fixed}) amount — basic lands and mana creatures — so there is no evaluation context to
-     * build here; a non-fixed amount (which never occurs in an {@code ON_TAP} slot) contributes 0.
+     * The mana quantity of a single-color {@code ON_TAP} producer modeled by
+     * {@link ManaProducingEffect}. Tap-for-mana is always a flat ({@link Fixed}) amount — basic
+     * lands and mana creatures — so there is no evaluation context to build here; a non-fixed
+     * amount (which never occurs in an {@code ON_TAP} slot) contributes 0.
      */
-    private static int onTapManaAmount(AwardManaEffect effect) {
-        return effect.amount() instanceof Fixed fixed ? fixed.value() : 0;
+    private static int onTapManaAmount(ManaProducingEffect effect) {
+        return effect.estimatedManaAmount() instanceof Fixed fixed ? fixed.value() : 0;
     }
 
     public void tapPermanent(GameData gameData, Player player, int permanentIndex) {
@@ -220,8 +221,9 @@ public class AbilityActivationService {
                 totalMana = manaMultiplier;
             } else {
                 for (CardEffect effect : permanent.getCard().getEffects(EffectSlot.ON_TAP)) {
-                    if (effect instanceof AwardManaEffect awardMana) {
-                        totalMana += onTapManaAmount(awardMana) * manaMultiplier;
+                    if (effect instanceof ManaProducingEffect manaEffect
+                            && manaEffect.estimatedManaColor() != null) {
+                        totalMana += onTapManaAmount(manaEffect) * manaMultiplier;
                     }
                 }
             }
@@ -237,8 +239,9 @@ public class AbilityActivationService {
                 totalMana = manaMultiplier;
             } else {
                 for (CardEffect effect : permanent.getCard().getEffects(EffectSlot.ON_TAP)) {
-                    if (effect instanceof AwardManaEffect awardMana) {
-                        totalMana += onTapManaAmount(awardMana) * manaMultiplier;
+                    if (effect instanceof ManaProducingEffect manaEffect
+                            && manaEffect.estimatedManaColor() != null) {
+                        totalMana += onTapManaAmount(manaEffect) * manaMultiplier;
                     }
                 }
             }
@@ -267,8 +270,9 @@ public class AbilityActivationService {
             if (permanent.getCard().hasType(CardType.LAND) && isDampingManaReplacementActiveOnTap(gameData)) {
                 int totalMana = 0;
                 for (CardEffect effect : permanent.getCard().getEffects(EffectSlot.ON_TAP)) {
-                    if (effect instanceof AwardManaEffect awardMana) {
-                        totalMana += onTapManaAmount(awardMana);
+                    if (effect instanceof ManaProducingEffect manaEffect
+                            && manaEffect.estimatedManaColor() != null) {
+                        totalMana += onTapManaAmount(manaEffect);
                     }
                 }
                 if (totalMana >= 2) {
@@ -466,8 +470,9 @@ public class AbilityActivationService {
                 totalMana = 1;
             } else {
                 for (CardEffect effect : permanent.getCard().getEffects(EffectSlot.ON_TAP)) {
-                    if (effect instanceof AwardManaEffect awardMana) {
-                        totalMana += onTapManaAmount(awardMana);
+                    if (effect instanceof ManaProducingEffect manaEffect
+                            && manaEffect.estimatedManaColor() != null) {
+                        totalMana += onTapManaAmount(manaEffect);
                     }
                 }
             }

@@ -73,6 +73,32 @@ class DreadWightTest extends BaseCardTest {
     }
 
     @Test
+    @DisplayName("Paralyzing a creature with a different removal ability still grants the required ability")
+    void grantsExactRemovalAbilityWhenDifferentAmountAlreadyExists() {
+        Permanent wight = addCreatureReady(player1, new DreadWight());
+        wight.setAttacking(true);
+        Permanent spider = addCreatureReady(player2, new GiantSpider());
+        spider.getPersistentGrantedActivatedAbilities().add(new ActivatedAbility(
+                false,
+                "{8}",
+                List.of(new RemoveCounterFromSourceEffect(CounterType.PARALYZATION, 2)),
+                "{8}: Remove two paralyzation counters from this creature."));
+
+        setupDeclareBlockers();
+        gs.declareBlockers(gd, player2, List.of(new BlockerAssignment(0, 0)));
+        harness.passBothPriorities();
+
+        leaveEndOfCombat();
+
+        assertThat(spider.getPersistentGrantedActivatedAbilities())
+                .flatExtracting(ActivatedAbility::getEffects)
+                .filteredOn(RemoveCounterFromSourceEffect.class::isInstance)
+                .containsExactlyInAnyOrder(
+                        new RemoveCounterFromSourceEffect(CounterType.PARALYZATION, 2),
+                        new RemoveCounterFromSourceEffect(CounterType.PARALYZATION, 1));
+    }
+
+    @Test
     @DisplayName("A creature with a paralyzation counter does not untap during its controller's untap step")
     void doesNotUntapWhileParalyzed() {
         Permanent spider = addCreatureReady(player2, new GiantSpider());

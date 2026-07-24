@@ -55,6 +55,9 @@ import java.util.UUID;
 @RequiredArgsConstructor
 public class CombatService {
 
+    private static final RemoveCounterFromSourceEffect REMOVE_PARALYZATION_COUNTER_EFFECT =
+            new RemoveCounterFromSourceEffect(CounterType.PARALYZATION, 1);
+
     private final CombatAttackService combatAttackService;
     private final CombatBlockService combatBlockService;
     private final CombatDamageService combatDamageService;
@@ -317,15 +320,14 @@ public class CombatService {
     private static void grantParalyzationRemoveAbility(Permanent perm) {
         boolean alreadyGranted = perm.getPersistentGrantedActivatedAbilities().stream()
                 .anyMatch(a -> a.getEffects().stream().anyMatch(e ->
-                        e instanceof RemoveCounterFromSourceEffect r
-                                && r.counterType() == CounterType.PARALYZATION));
+                        e.equals(REMOVE_PARALYZATION_COUNTER_EFFECT)));
         if (alreadyGranted) {
             return;
         }
         perm.getPersistentGrantedActivatedAbilities().add(new ActivatedAbility(
                 false,
                 "{4}",
-                List.of(new RemoveCounterFromSourceEffect(CounterType.PARALYZATION, 1)),
+                List.of(REMOVE_PARALYZATION_COUNTER_EFFECT),
                 "{4}: Remove a paralyzation counter from this creature."));
     }
 

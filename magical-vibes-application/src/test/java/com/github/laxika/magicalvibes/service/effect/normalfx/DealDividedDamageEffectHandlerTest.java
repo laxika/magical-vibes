@@ -205,5 +205,36 @@ class DealDividedDamageEffectHandlerTest extends AbstractDamageHandlerTest {
             assertThat(bears.isCantBlockThisTurn()).isTrue();
             assertThat(elves.isCantBlockThisTurn()).isTrue();
         }
+
+        @Test
+        @DisplayName("Deals an assigned amount to a primary target stored outside the flat target list")
+        void dealsChosenDamageToSeparatePrimaryTarget() {
+            Card card = createCard("Primary Target Damage");
+            StackEntry entry = new StackEntry(
+                    StackEntryType.SORCERY_SPELL,
+                    card,
+                    player1Id,
+                    card.getName(),
+                    List.of(),
+                    1,
+                    player2Id,
+                    null,
+                    Map.of(player2Id, 1),
+                    null,
+                    List.of(),
+                    List.of(UUID.randomUUID()));
+            DealDividedDamageEffect effect = DealDividedDamageEffect.xAmongTargetCreaturesCantBlock();
+
+            stubDamagePreventable();
+            stubDamageFromSourceNotPrevented();
+            stubNoDamageMultiplier();
+            stubNoKeywordsOnSource(entry);
+            stubPlayerDamageCore(player2Id);
+
+            handler.resolve(gd, entry, effect);
+
+            assertThat(gd.playerLifeTotals.get(player2Id)).isEqualTo(19);
+            verify(triggerCollectionService).checkLifeLossTriggers(gd, player2Id, 1);
+        }
     }
 }

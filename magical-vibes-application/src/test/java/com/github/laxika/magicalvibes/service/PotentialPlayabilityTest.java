@@ -1,11 +1,14 @@
 package com.github.laxika.magicalvibes.service;
 
 import com.github.laxika.magicalvibes.cards.f.Forest;
+import com.github.laxika.magicalvibes.cards.i.InfernalDarkness;
 import com.github.laxika.magicalvibes.cards.w.WanderwineHub;
+import com.github.laxika.magicalvibes.model.ActivatedAbility;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardColor;
 import com.github.laxika.magicalvibes.model.CardType;
 import com.github.laxika.magicalvibes.model.ManaColor;
+import com.github.laxika.magicalvibes.model.effect.AwardAnyColorChosenSubtypeCreatureManaEffect;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
@@ -90,5 +93,24 @@ class PotentialPlayabilityTest extends BaseCardTest {
         harness.ensurePriority(player1);
 
         assertThat(broadcast().getPotentialManaTotal(gd, player1.getId())).isEqualTo(2);
+    }
+
+    @Test
+    @DisplayName("Fixed-color land replacement preserves restricted activated mana quantity")
+    void fixedColorReplacementCountsRestrictedActivatedLandMana() {
+        Card land = new Card();
+        land.setName("Restricted Mana Land");
+        land.setType(CardType.LAND);
+        land.addActivatedAbility(new ActivatedAbility(
+                true,
+                null,
+                List.of(new AwardAnyColorChosenSubtypeCreatureManaEffect()),
+                "{T}: Add one mana of any color with a spending restriction."));
+
+        harness.addToBattlefield(player1, new InfernalDarkness());
+        harness.addToBattlefield(player1, land);
+        harness.ensurePriority(player1);
+
+        assertThat(broadcast().getPotentialManaTotal(gd, player1.getId())).isEqualTo(1);
     }
 }

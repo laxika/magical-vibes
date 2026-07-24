@@ -16,9 +16,12 @@ import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.VirtualManaPool;
 import com.github.laxika.magicalvibes.model.TurnStep;
 import com.github.laxika.magicalvibes.model.amount.CountersOnSource;
+import com.github.laxika.magicalvibes.model.amount.DynamicAmount;
+import com.github.laxika.magicalvibes.model.amount.Fixed;
 import com.github.laxika.magicalvibes.model.effect.AwardAnyColorChosenSubtypeCreatureManaEffect;
 import com.github.laxika.magicalvibes.model.effect.AwardAnyColorManaEffect;
 import com.github.laxika.magicalvibes.model.effect.AwardManaEffect;
+import com.github.laxika.magicalvibes.model.effect.DamageDealingEffect;
 import com.github.laxika.magicalvibes.model.effect.DamageRecipient;
 import com.github.laxika.magicalvibes.model.effect.DealDamageToPlayersEffect;
 import com.github.laxika.magicalvibes.model.effect.DestroyEnchantedPermanentEffect;
@@ -43,6 +46,7 @@ import java.util.UUID;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.eq;
+import static org.mockito.Mockito.inOrder;
 import static org.mockito.Mockito.lenient;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.never;
@@ -52,6 +56,24 @@ import com.github.laxika.magicalvibes.model.CounterType;
 
 @ExtendWith(MockitoExtension.class)
 class AiManaManagerTest {
+
+    private record ControllerDamageEffect(DynamicAmount damageAmount) implements DamageDealingEffect {
+
+        @Override
+        public boolean canDamageCreatures() {
+            return false;
+        }
+
+        @Override
+        public boolean canDamagePlayers() {
+            return true;
+        }
+
+        @Override
+        public boolean damagesController() {
+            return true;
+        }
+    }
 
     @Mock
     private GameQueryService gameQueryService;
@@ -1038,6 +1060,60 @@ class AiManaManagerTest {
             manager.tapLandsForCost(gd, player1Id, "{1}", 0, action);
 
             verify(action).tap(0, 0); // ability index 0 = colorless (no pain)
+        }
+
+        @Test
+        @DisplayName("controller-damage capability orders a painless source before concrete and custom pain sources")
+        void controllerDamageCapabilityDefersPainSource() {
+            Card concretePainLand = new Card();
+            concretePainLand.setName("Concrete Pain Land");
+            concretePainLand.setType(CardType.LAND);
+            concretePainLand.addActivatedAbility(new ActivatedAbility(
+                    true,
+                    null,
+                    List.of(
+                            new AwardManaEffect(ManaColor.COLORLESS),
+                            new DealDamageToPlayersEffect(1, DamageRecipient.CONTROLLER)),
+                    "{T}: Add {C}. This land deals 1 damage to you."));
+            Permanent concretePainPermanent = new Permanent(concretePainLand);
+            concretePainPermanent.setSummoningSick(false);
+            gd.playerBattlefields.get(player1Id).add(concretePainPermanent);
+
+            Card customPainLand = new Card();
+            customPainLand.setName("Capability Pain Land");
+            customPainLand.setType(CardType.LAND);
+            customPainLand.addActivatedAbility(new ActivatedAbility(
+                    true,
+                    null,
+                    List.of(
+                            new AwardManaEffect(ManaColor.COLORLESS),
+                            new ControllerDamageEffect(new Fixed(1))),
+                    "{T}: Add {C}. This land deals 1 damage to you."));
+            Permanent customPainPermanent = new Permanent(customPainLand);
+            customPainPermanent.setSummoningSick(false);
+            gd.playerBattlefields.get(player1Id).add(customPainPermanent);
+
+            Permanent painlessPermanent = addUntappedLand("Painless Land", ManaColor.COLORLESS);
+            lenient().when(gameQueryService.isCreature(gd, concretePainPermanent)).thenReturn(false);
+            lenient().when(gameQueryService.canActivateManaAbility(gd, concretePainPermanent)).thenReturn(true);
+            lenient().when(gameQueryService.isCreature(gd, customPainPermanent)).thenReturn(false);
+            lenient().when(gameQueryService.canActivateManaAbility(gd, customPainPermanent)).thenReturn(true);
+
+            AiManaManager.ManaTapAction action = mock(AiManaManager.ManaTapAction.class);
+            lenient().doAnswer(invocation -> {
+                gd.playerManaPools.get(player1Id).add(ManaColor.COLORLESS, 1);
+                return null;
+            }).when(action).tap(any(int.class), any());
+
+            manager.tapLandsForCost(gd, player1Id, "{3}", 0, action);
+
+            var ordered = inOrder(action);
+            ordered.verify(action).tap(
+                    gd.playerBattlefields.get(player1Id).indexOf(painlessPermanent), null);
+            ordered.verify(action).tap(
+                    gd.playerBattlefields.get(player1Id).indexOf(concretePainPermanent), 0);
+            ordered.verify(action).tap(
+                    gd.playerBattlefields.get(player1Id).indexOf(customPainPermanent), 0);
         }
 
         @Test

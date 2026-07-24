@@ -12,6 +12,7 @@ import com.github.laxika.magicalvibes.model.ManaPool;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.VirtualManaPool;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
+import com.github.laxika.magicalvibes.model.effect.DamageDealingEffect;
 import com.github.laxika.magicalvibes.model.effect.DamageRecipient;
 import com.github.laxika.magicalvibes.model.effect.DealDamageToPlayersEffect;
 import com.github.laxika.magicalvibes.model.effect.ManaProducingEffect;
@@ -607,7 +608,7 @@ public class AiManaManager {
 
     /**
      * Returns true if any free-tap mana ability on this card has a
-     * {@link DealDamageToPlayersEffect} CONTROLLER side effect (pain lands).
+     * controller-damage side effect (pain lands).
      */
     private static boolean hasManaAbilityWithDamageCost(Card card) {
         for (ActivatedAbility ability : card.getActivatedAbilities()) {
@@ -615,7 +616,7 @@ public class AiManaManager {
                 continue;
             }
             for (CardEffect effect : ability.getEffects()) {
-                if (effect instanceof DealDamageToPlayersEffect dmg && dmg.recipient() == DamageRecipient.CONTROLLER) {
+                if (effect instanceof DamageDealingEffect damage && damage.damagesController()) {
                     return true;
                 }
             }

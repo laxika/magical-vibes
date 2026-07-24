@@ -29,4 +29,12 @@ public interface DamageDealingEffect extends CardEffect {
 
     /** Whether this effect can deal its damage to players. */
     boolean canDamagePlayers();
+
+    /**
+     * Whether this effect deals damage to its own controller. Consumers use this descriptive fact
+     * for decisions such as preferring painless mana sources without naming a concrete effect.
+     */
+    default boolean damagesController() {
+        return false;
+    }
 }

@@ -509,12 +509,7 @@ public class MayPenaltyChoiceHandlerService {
      * way, the next remaining player is then offered the same choice (APNAP).
      */
     public void handleEachPlayerTakesDamageUnlessPaysChoice(GameData gameData, Player player,
-            boolean accepted, PendingMayAbility ability) {
-        EachPlayerTakesDamageUnlessPaysEffect effect = ability.effects().stream()
-                .filter(e -> e instanceof EachPlayerTakesDamageUnlessPaysEffect)
-                .map(e -> (EachPlayerTakesDamageUnlessPaysEffect) e)
-                .findFirst().orElseThrow();
-
+            boolean accepted, PendingMayAbility ability, EachPlayerTakesDamageUnlessPaysEffect effect) {
         UUID targetPlayerId = ability.controllerId();
         boolean paid = false;
         if (accepted) {
@@ -542,12 +537,8 @@ public class MayPenaltyChoiceHandlerService {
      *   <li>{@code manaCost == null} — source controller's optional-draw confirm</li>
      * </ul>
      */
-    public void handleDrawCardUnlessPaysChoice(GameData gameData, Player player, boolean accepted, PendingMayAbility ability) {
-        DrawCardUnlessPaysEffect effect = ability.effects().stream()
-                .filter(e -> e instanceof DrawCardUnlessPaysEffect)
-                .map(e -> (DrawCardUnlessPaysEffect) e)
-                .findFirst().orElseThrow();
-
+    public void handleDrawCardUnlessPaysChoice(GameData gameData, Player player, boolean accepted,
+                                                PendingMayAbility ability, DrawCardUnlessPaysEffect effect) {
         if (ability.manaCost() != null) {
             // Pay phase — casting opponent decides.
             UUID drawingPlayerId = ability.targetCardId();

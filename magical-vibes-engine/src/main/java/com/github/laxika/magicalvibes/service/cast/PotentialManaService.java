@@ -456,13 +456,7 @@ public class PotentialManaService {
         if (hasOnTapManaEffects(perm.getCard())) {
             int total = 0;
             for (CardEffect effect : perm.getCard().getEffects(EffectSlot.ON_TAP)) {
-                if (effect instanceof AwardManaEffect manaEffect) {
-                    total += estimateManaAmount(manaEffect.amount(), perm, gameData);
-                } else if (effect instanceof AwardAnyColorManaEffect aace) {
-                    total += aace.amount();
-                } else if (effect instanceof AwardAnyColorChosenSubtypeCreatureManaEffect) {
-                    total += 1;
-                }
+                total += estimateModeledManaAmount(effect, perm, gameData);
             }
             return total;
         }
@@ -472,15 +466,21 @@ public class PotentialManaService {
                 continue;
             }
             for (CardEffect effect : ability.getEffects()) {
-                if (effect instanceof AwardManaEffect manaEffect) {
-                    total += estimateManaAmount(manaEffect.amount(), perm, gameData);
-                } else if (effect instanceof AwardAnyColorManaEffect aace) {
-                    total += aace.amount();
-                }
+                total += estimateModeledManaAmount(effect, perm, gameData);
             }
             break; // one tap
         }
         return total;
+    }
+
+    private int estimateModeledManaAmount(CardEffect effect, Permanent permanent, GameData gameData) {
+        if (!(effect instanceof ManaProducingEffect manaEffect) || !manaEffect.modeledByManaEstimator()) {
+            return 0;
+        }
+        DynamicAmount amount = manaEffect.estimatedManaAmount();
+        return amount != null
+                ? estimateManaAmount(amount, permanent, gameData)
+                : manaEffect.estimatedWildcardMana();
     }
 
     /**

@@ -25,7 +25,12 @@ public class EachPlayerTakesDamageUnlessPaysHandler implements MayEffectHandlerB
 
     @Override
     public void handle(GameData gameData, Player player, boolean accepted, PendingMayAbility ability) {
+        EachPlayerTakesDamageUnlessPaysEffect effect = ability.effects().stream()
+                .filter(EachPlayerTakesDamageUnlessPaysEffect.class::isInstance)
+                .map(EachPlayerTakesDamageUnlessPaysEffect.class::cast)
+                .findFirst()
+                .orElseThrow();
         mayPenaltyChoiceHandlerService.handleEachPlayerTakesDamageUnlessPaysChoice(
-                gameData, player, accepted, ability);
+                gameData, player, accepted, ability, effect);
     }
 }

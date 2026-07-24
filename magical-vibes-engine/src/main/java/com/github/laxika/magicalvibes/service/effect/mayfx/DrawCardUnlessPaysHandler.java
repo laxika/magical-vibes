@@ -26,6 +26,12 @@ public class DrawCardUnlessPaysHandler implements MayEffectHandlerBean {
 
     @Override
     public void handle(GameData gameData, Player player, boolean accepted, PendingMayAbility ability) {
-        mayPenaltyChoiceHandlerService.handleDrawCardUnlessPaysChoice(gameData, player, accepted, ability);
+        DrawCardUnlessPaysEffect effect = ability.effects().stream()
+                .filter(DrawCardUnlessPaysEffect.class::isInstance)
+                .map(DrawCardUnlessPaysEffect.class::cast)
+                .findFirst()
+                .orElseThrow();
+        mayPenaltyChoiceHandlerService.handleDrawCardUnlessPaysChoice(
+                gameData, player, accepted, ability, effect);
     }
 }

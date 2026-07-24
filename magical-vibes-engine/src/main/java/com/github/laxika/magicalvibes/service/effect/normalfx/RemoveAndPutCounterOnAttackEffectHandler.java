@@ -40,7 +40,7 @@ public class RemoveAndPutCounterOnAttackEffectHandler implements NormalEffectHan
     @Override
     public void resolve(GameData gameData, StackEntry entry, CardEffect effect) {
         CounterType counterType = ((RemoveAndPutCounterOnAttackEffect) effect).counterType();
-        List<UUID> targets = entry.getTargetIds();
+        List<UUID> targets = entry.getDeclaredTargetIds();
         if (targets == null || targets.isEmpty()) {
             return;
         }

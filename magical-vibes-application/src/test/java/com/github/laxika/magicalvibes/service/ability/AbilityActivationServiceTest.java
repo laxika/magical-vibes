@@ -19,12 +19,15 @@ import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.Player;
 import com.github.laxika.magicalvibes.model.StackEntryType;
 import com.github.laxika.magicalvibes.model.TurnStep;
+import com.github.laxika.magicalvibes.model.amount.DynamicAmount;
+import com.github.laxika.magicalvibes.model.amount.Fixed;
 import com.github.laxika.magicalvibes.model.effect.ActivatedAbilitiesOfChosenNameCantBeActivatedEffect;
 import com.github.laxika.magicalvibes.model.effect.AwardManaEffect;
 import com.github.laxika.magicalvibes.model.effect.BoostSelfEffect;
 import com.github.laxika.magicalvibes.model.effect.DealDamageToAnyTargetEffect;
 import com.github.laxika.magicalvibes.model.effect.DestroyTargetPermanentEffect;
 import com.github.laxika.magicalvibes.model.effect.EnchantedCreatureCantActivateAbilitiesEffect;
+import com.github.laxika.magicalvibes.model.effect.ManaProducingEffect;
 import com.github.laxika.magicalvibes.model.CounterType;
 import com.github.laxika.magicalvibes.model.effect.PutCountersOnSelfEffect;
 import com.github.laxika.magicalvibes.model.effect.RemoveChargeCountersFromSourceCost;
@@ -70,6 +73,11 @@ class AbilityActivationServiceTest {
 
     private static final GameQueryService.StaticBonus EMPTY_BONUS = new GameQueryService.StaticBonus(
             0, 0, Set.of(), Set.of(), false, List.of(), List.of(), Set.of(), List.of(), Set.of(), Set.of(), false, false, false, false, Set.of(), false, 0, 0, false, false);
+
+    private record ModeledManaEffect(
+            ManaColor estimatedManaColor,
+            DynamicAmount estimatedManaAmount
+    ) implements ManaProducingEffect {}
 
     @Mock private GraveyardService graveyardService;
     @Mock private GameQueryService gameQueryService;
@@ -154,6 +162,30 @@ class AbilityActivationServiceTest {
             verify(triggerCollectionService).checkLandTapTriggers(gameData, player1Id, perm.getId());
             verify(triggerCollectionService).checkEnchantedPermanentTapTriggers(gameData, perm);
             verify(gameBroadcastService).broadcastGameState(gameData);
+        }
+
+        @Test
+        @DisplayName("Fixed-color land replacement preserves modeled mana quantity")
+        void fixedColorReplacementPreservesModeledManaQuantity() {
+            Card land = new Card();
+            land.setName("Modeled Mana Land");
+            land.setType(CardType.LAND);
+            land.addEffect(EffectSlot.ON_TAP,
+                    new ModeledManaEffect(ManaColor.RED, new Fixed(2)));
+            Permanent perm = addReadyPermanent(player1Id, land);
+
+            when(gameQueryService.computeStaticBonus(gameData, perm)).thenReturn(EMPTY_BONUS);
+            when(gameQueryService.isCreature(gameData, perm)).thenReturn(false);
+            when(gameQueryService.hasAuraWithEffect(
+                    eq(gameData), eq(perm), eq(EnchantedCreatureCantActivateAbilitiesEffect.class)))
+                    .thenReturn(false);
+            when(gameQueryService.fixedLandManaColor(gameData)).thenReturn(ManaColor.BLACK);
+
+            service.tapPermanent(gameData, player1, 0);
+
+            ManaPool pool = gameData.playerManaPools.get(player1Id);
+            assertThat(pool.get(ManaColor.BLACK)).isEqualTo(2);
+            assertThat(pool.get(ManaColor.RED)).isZero();
         }
 
         @Test

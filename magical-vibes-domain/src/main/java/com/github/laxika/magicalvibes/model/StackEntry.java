@@ -417,7 +417,10 @@ public class StackEntry {
      */
     public boolean isAssignmentTargetLegal(UUID targetId) {
         int targetIndex = targetIds.indexOf(targetId);
-        return targetIndex >= 0 && isTargetLegal(targetIndex);
+        if (targetIndex >= 0) {
+            return isTargetLegal(targetIndex);
+        }
+        return targetId != null && targetId.equals(this.targetId);
     }
 
     /**

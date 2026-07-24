@@ -67,6 +67,11 @@ public record DealDamageToPlayersEffect(DynamicAmount amount, DamageRecipient re
     }
 
     @Override
+    public boolean damagesController() {
+        return recipient == DamageRecipient.CONTROLLER;
+    }
+
+    @Override
     public TriggerContext combatDamageTriggerContext() {
         return recipient == DamageRecipient.TARGET_PLAYER ? TriggerContext.DAMAGED_PLAYER : null;
     }
