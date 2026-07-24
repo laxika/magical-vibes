@@ -21,6 +21,7 @@ import com.github.laxika.magicalvibes.model.effect.AwardAnyColorManaEffect;
 import com.github.laxika.magicalvibes.model.effect.AwardManaEffect;
 import com.github.laxika.magicalvibes.model.effect.DamageRecipient;
 import com.github.laxika.magicalvibes.model.effect.DealDamageToPlayersEffect;
+import com.github.laxika.magicalvibes.model.effect.DestroyEnchantedPermanentEffect;
 import com.github.laxika.magicalvibes.model.effect.RemoveChargeCountersFromSourceCost;
 import com.github.laxika.magicalvibes.model.effect.ReturnCardFromGraveyardEffect;
 import com.github.laxika.magicalvibes.model.effect.SacrificeSelfCost;
@@ -1329,6 +1330,42 @@ class AiManaManagerTest {
 
             verify(action).tap(1, null);
             verify(action, never()).tap(eq(0), any());
+        }
+
+        @Test
+        @DisplayName("chooses a complete payment plan that avoids an attached tap trigger")
+        void avoidsAttachedTapTriggerWhenOtherSourcesCanPay() {
+            Permanent plains = addUntappedLand("Plains", ManaColor.WHITE);
+            addUntappedLand("Forest", ManaColor.GREEN);
+            addUntappedLand("Island", ManaColor.BLUE);
+
+            UUID player2Id = UUID.randomUUID();
+            gd.orderedPlayerIds.add(player2Id);
+            gd.playerIds.add(player2Id);
+            gd.playerBattlefields.put(player2Id, Collections.synchronizedList(new ArrayList<>()));
+
+            Card auraCard = new Card();
+            auraCard.setName("Blight");
+            auraCard.setType(CardType.ENCHANTMENT);
+            auraCard.addEffect(EffectSlot.ON_ENCHANTED_PERMANENT_TAPPED,
+                    new DestroyEnchantedPermanentEffect());
+            Permanent aura = new Permanent(auraCard);
+            aura.setAttachedTo(plains.getId());
+            gd.playerBattlefields.get(player2Id).add(aura);
+
+            AiManaManager.ManaTapAction action = mock(AiManaManager.ManaTapAction.class);
+            lenient().doAnswer(invocation -> {
+                int index = invocation.getArgument(0);
+                ManaColor color = index == 1 ? ManaColor.GREEN : ManaColor.BLUE;
+                gd.playerManaPools.get(player1Id).add(color);
+                return null;
+            }).when(action).tap(any(int.class), eq(null));
+
+            manager.tapLandsForCost(gd, player1Id, "{1}{G}", 0, action);
+
+            verify(action, never()).tap(eq(0), any());
+            verify(action).tap(1, null);
+            verify(action).tap(2, null);
         }
     }
 

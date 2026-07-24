@@ -918,22 +918,30 @@ public class GameSimulator {
         }
         if (alreadyPaid) return;
 
-        List<Permanent> battlefield = gd.playerBattlefields.getOrDefault(playerId, List.of());
-        for (int i = 0; i < battlefield.size(); i++) {
-            Permanent perm = battlefield.get(i);
-            if (perm.isTapped()) continue;
-            if (gameQueryService.isCreature(gd, perm) && perm.isSummoningSick()
-                    && !gameQueryService.hasKeyword(gd, perm, Keyword.HASTE)) continue;
-            if (!tapOrActivateMana(gd, player, perm, i, cost, currentPool)) continue;
-            currentPool = gd.playerManaPools.get(playerId);
-            boolean canPayNow;
-            if (cost.hasX() && card.hasXColorRestriction()) {
-                canPayNow = cost.canPay(currentPool, xValue, card.getXColorRestrictions(), 0);
-            } else {
-                canPayNow = cost.canPay(currentPool, xValue);
+        if (cost.hasX() && card.hasXColorRestriction()) {
+            // Restricted-X payment needs the card-specific color constraint, which the
+            // general additional-generic planner cannot represent.
+            List<Permanent> battlefield = gd.playerBattlefields.getOrDefault(playerId, List.of());
+            for (int i = 0; i < battlefield.size(); i++) {
+                Permanent perm = battlefield.get(i);
+                if (perm.isTapped()) continue;
+                if (gameQueryService.isCreature(gd, perm) && perm.isSummoningSick()
+                        && !gameQueryService.hasKeyword(gd, perm, Keyword.HASTE)) continue;
+                if (!tapOrActivateMana(gd, player, perm, i, cost, currentPool)) continue;
+                currentPool = gd.playerManaPools.get(playerId);
+                if (cost.canPay(currentPool, xValue, card.getXColorRestrictions(), 0)) return;
             }
-            if (canPayNow) return;
+            return;
         }
+
+        manaManager.tapSourcesForCost(gd, playerId, card.getManaCost(), xValue,
+                (index, abilityIndex) -> {
+                    if (abilityIndex == null) {
+                        gameService.tapPermanent(gd, player, index);
+                    } else {
+                        gameService.activateAbility(gd, player, index, abilityIndex, null, null, null);
+                    }
+                });
     }
 
     /**

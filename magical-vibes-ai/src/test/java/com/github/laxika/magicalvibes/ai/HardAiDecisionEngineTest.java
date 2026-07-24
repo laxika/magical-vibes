@@ -9,6 +9,7 @@ import com.github.laxika.magicalvibes.cards.w.WhiteKnight;
 import com.github.laxika.magicalvibes.cards.a.AirElemental;
 import com.github.laxika.magicalvibes.cards.b.BairdStewardOfArgive;
 import com.github.laxika.magicalvibes.cards.b.BenalishKnight;
+import com.github.laxika.magicalvibes.cards.b.Blight;
 import com.github.laxika.magicalvibes.cards.b.BogWraith;
 import com.github.laxika.magicalvibes.cards.p.PhantomWarrior;
 import com.github.laxika.magicalvibes.cards.s.SeveredLegion;
@@ -200,6 +201,51 @@ class HardAiDecisionEngineTest {
                 harness.getGameService(), harness.getGameQueryService(), harness.getCombatAttackService(),
                 harness.getGameBroadcastService(), harness.getCastingCostService(), harness.getCastingPermissionService(), harness.getTargetValidationService(), harness.getTargetLegalityService());
         assertThat(engine).isNotNull();
+    }
+
+    @Test
+    @DisplayName("Hard AI avoids tapping a land enchanted by Blight when other lands can pay")
+    void avoidsTappingLandEnchantedByBlight() {
+        FakeConnection aiConn = new FakeConnection("ai-hard-blight-test");
+        harness.getSessionManager().registerPlayer(aiConn, player1.getId(), "Alice");
+        HardAiDecisionEngine ai = new HardAiDecisionEngine(
+                gd.id, player1, harness.getGameRegistry(),
+                harness.getGameService(), harness.getGameQueryService(), harness.getCombatAttackService(),
+                harness.getGameBroadcastService(), harness.getCastingCostService(),
+                harness.getCastingPermissionService(), harness.getTargetValidationService(),
+                harness.getTargetLegalityService());
+        ai.setSelfConnection(aiConn);
+
+        harness.forceActivePlayer(player1);
+        harness.forceStep(TurnStep.POSTCOMBAT_MAIN);
+        harness.clearPriorityPassed();
+        gd.status = GameStatus.RUNNING;
+        gd.interaction.clearAwaitingInput();
+        gd.stack.clear();
+
+        Permanent blightedPlains = new Permanent(new Plains());
+        Permanent forest = new Permanent(new Forest());
+        Permanent island = new Permanent(new Island());
+        blightedPlains.setSummoningSick(false);
+        forest.setSummoningSick(false);
+        island.setSummoningSick(false);
+        gd.playerBattlefields.get(player1.getId()).add(blightedPlains);
+        gd.playerBattlefields.get(player1.getId()).add(forest);
+        gd.playerBattlefields.get(player1.getId()).add(island);
+
+        Permanent blight = new Permanent(new Blight());
+        blight.setAttachedTo(blightedPlains.getId());
+        gd.playerBattlefields.get(player2.getId()).add(blight);
+
+        harness.setHand(player1, List.of(new GrizzlyBears()));
+
+        ai.handleMessage("GAME_STATE", "");
+
+        assertThat(gd.stack).hasSize(1);
+        assertThat(gd.stack.getFirst().getCard().getName()).isEqualTo("Grizzly Bears");
+        assertThat(blightedPlains.isTapped()).isFalse();
+        assertThat(forest.isTapped()).isTrue();
+        assertThat(island.isTapped()).isTrue();
     }
 
     // ===== Sacrifice cost checks =====

@@ -19,7 +19,9 @@ import com.github.laxika.magicalvibes.model.effect.ReturnCardFromGraveyardEffect
 import com.github.laxika.magicalvibes.service.battlefield.GameQueryService;
 import com.github.laxika.magicalvibes.service.cast.PotentialManaService;
 
+import java.util.ArrayList;
 import java.util.Collections;
+import java.util.EnumMap;
 import java.util.EnumSet;
 import java.util.IdentityHashMap;
 import java.util.List;
@@ -32,6 +34,11 @@ import java.util.UUID;
  * land tapping, and X-cost spell management.
  */
 public class AiManaManager {
+
+    private static final int MAX_PAYMENT_SEARCH_NODES = 100_000;
+    private static final int ACTIVATION_COST = 100;
+    private static final int PAIN_MANA_COST = 10_000;
+    private static final int ATTACHED_TAP_TRIGGER_COST = 1_000_000;
 
     private final GameQueryService gameQueryService;
     private final PotentialManaService potentialManaService;
@@ -49,6 +56,14 @@ public class AiManaManager {
     @FunctionalInterface
     public interface ManaTapAction {
         void tap(int permanentIndex, Integer abilityIndex);
+    }
+
+    private record ManaActivation(UUID permanentId, Integer abilityIndex) {}
+
+    private record ManaPaymentPlan(List<ManaActivation> activations) {
+        private ManaPaymentPlan {
+            activations = List.copyOf(activations);
+        }
     }
 
     public VirtualManaPool buildVirtualManaPool(GameData gameData, UUID aiPlayerId) {
@@ -77,6 +92,11 @@ public class AiManaManager {
         tapLandsForCost(gameData, aiPlayerId, manaCostStr, costModifier, action, false);
     }
 
+    public void tapSourcesForCost(GameData gameData, UUID playerId, String manaCost,
+                                  int additionalGenericCost, ManaTapAction action) {
+        tapLandsForCost(gameData, playerId, manaCost, additionalGenericCost, action);
+    }
+
     void tapLandsForCost(GameData gameData, UUID aiPlayerId, String manaCostStr, int costModifier, ManaTapAction action,
                          boolean skipChoiceSources) {
         tapLandsForCost(gameData, aiPlayerId, manaCostStr, costModifier, action, skipChoiceSources, null);
@@ -98,6 +118,13 @@ public class AiManaManager {
 
         List<Permanent> battlefield = gameData.playerBattlefields.get(aiPlayerId);
         if (battlefield == null) {
+            return;
+        }
+
+        ManaPaymentPlan paymentPlan = findPaymentPlan(gameData, aiPlayerId, cost, currentPool,
+                costModifier, skipChoiceSources, false, excludePermanentId);
+        if (paymentPlan != null) {
+            executePaymentPlan(gameData, aiPlayerId, battlefield, cost, costModifier, action, paymentPlan);
             return;
         }
 
@@ -132,6 +159,35 @@ public class AiManaManager {
                 return;
             }
         }
+    }
+
+    private void executePaymentPlan(GameData gameData, UUID playerId, List<Permanent> battlefield,
+                                    ManaCost cost, int additionalGenericCost, ManaTapAction action,
+                                    ManaPaymentPlan plan) {
+        Class<?> initialInteractionKind = interactionKind(gameData);
+        for (ManaActivation activation : plan.activations()) {
+            ManaPool pool = gameData.playerManaPools.get(playerId);
+            if (cost.canPay(pool, additionalGenericCost)) {
+                return;
+            }
+            int index = indexOfPermanent(battlefield, activation.permanentId());
+            if (index < 0 || battlefield.get(index).isTapped()) {
+                continue;
+            }
+            action.tap(index, activation.abilityIndex());
+            if (interactionKind(gameData) != initialInteractionKind) {
+                return;
+            }
+        }
+    }
+
+    private static int indexOfPermanent(List<Permanent> battlefield, UUID permanentId) {
+        for (int i = 0; i < battlefield.size(); i++) {
+            if (battlefield.get(i).getId().equals(permanentId)) {
+                return i;
+            }
+        }
+        return -1;
     }
 
     void tapCreaturesForCost(GameData gameData, UUID aiPlayerId, String manaCostStr, int costModifier, ManaTapAction action) {
@@ -211,6 +267,207 @@ public class AiManaManager {
             return cost.canPay(pool, xValue, card.getXColorRestrictions(), costModifier);
         }
         return cost.canPay(pool, xValue + costModifier);
+    }
+
+    private record ManaOption(ManaActivation activation, Map<ManaColor, Integer> output, int cost) {}
+
+    private record ManaSourceOptions(List<ManaOption> options) {}
+
+    private static final class PaymentSearch {
+        private ManaPaymentPlan bestPlan;
+        private int bestCost = Integer.MAX_VALUE;
+        private int visitedNodes;
+    }
+
+    private ManaPaymentPlan findPaymentPlan(GameData gameData, UUID playerId, ManaCost cost,
+                                            ManaPool currentPool, int additionalGenericCost,
+                                            boolean skipChoiceSources, boolean creaturesOnly,
+                                            UUID excludePermanentId) {
+        List<ManaSourceOptions> sources = collectManaSourceOptions(gameData, playerId,
+                skipChoiceSources, creaturesOnly, excludePermanentId);
+        if (sources.isEmpty()) {
+            return null;
+        }
+
+        PaymentSearch search = new PaymentSearch();
+        searchPaymentPlans(sources, 0, cost, additionalGenericCost, new ManaPool(currentPool),
+                new ArrayList<>(), 0, search);
+        return orderPaymentPlan(gameData, playerId, cost, currentPool, search.bestPlan);
+    }
+
+    private ManaPaymentPlan orderPaymentPlan(GameData gameData, UUID playerId, ManaCost cost,
+                                             ManaPool currentPool, ManaPaymentPlan plan) {
+        if (plan == null || plan.activations().size() < 2) {
+            return plan;
+        }
+        List<Permanent> battlefield = gameData.playerBattlefields.getOrDefault(playerId, List.of());
+        List<ManaActivation> ordered = new ArrayList<>(plan.activations());
+        ordered.sort((left, right) -> {
+            Permanent leftPermanent = findPermanent(battlefield, left.permanentId());
+            Permanent rightPermanent = findPermanent(battlefield, right.permanentId());
+            int leftScore = leftPermanent == null ? Integer.MIN_VALUE
+                    : scoreTapCandidate(leftPermanent.getCard(), cost, currentPool);
+            int rightScore = rightPermanent == null ? Integer.MIN_VALUE
+                    : scoreTapCandidate(rightPermanent.getCard(), cost, currentPool);
+            return Integer.compare(rightScore, leftScore);
+        });
+        return new ManaPaymentPlan(ordered);
+    }
+
+    private static Permanent findPermanent(List<Permanent> battlefield, UUID permanentId) {
+        for (Permanent permanent : battlefield) {
+            if (permanent.getId().equals(permanentId)) {
+                return permanent;
+            }
+        }
+        return null;
+    }
+
+    private void searchPaymentPlans(List<ManaSourceOptions> sources, int sourceIndex,
+                                    ManaCost cost, int additionalGenericCost, ManaPool pool,
+                                    List<ManaActivation> activations, int planCost,
+                                    PaymentSearch search) {
+        if (++search.visitedNodes > MAX_PAYMENT_SEARCH_NODES || planCost >= search.bestCost) {
+            return;
+        }
+        if (cost.canPay(pool, additionalGenericCost)) {
+            search.bestCost = planCost;
+            search.bestPlan = new ManaPaymentPlan(activations);
+            return;
+        }
+        if (sourceIndex >= sources.size()) {
+            return;
+        }
+
+        ManaSourceOptions source = sources.get(sourceIndex);
+        for (ManaOption option : source.options()) {
+            ManaPool nextPool = new ManaPool(pool);
+            option.output().forEach(nextPool::add);
+            activations.add(option.activation());
+            searchPaymentPlans(sources, sourceIndex + 1, cost, additionalGenericCost,
+                    nextPool, activations, planCost + option.cost(), search);
+            activations.removeLast();
+        }
+
+        searchPaymentPlans(sources, sourceIndex + 1, cost, additionalGenericCost,
+                pool, activations, planCost, search);
+    }
+
+    private List<ManaSourceOptions> collectManaSourceOptions(GameData gameData, UUID playerId,
+                                                              boolean skipChoiceSources,
+                                                              boolean creaturesOnly,
+                                                              UUID excludePermanentId) {
+        List<ManaSourceOptions> sources = new ArrayList<>();
+        List<Permanent> battlefield = gameData.playerBattlefields.getOrDefault(playerId, List.of());
+        for (Permanent permanent : battlefield) {
+            if (permanent.isTapped()
+                    || permanent.getId().equals(excludePermanentId)
+                    || !gameQueryService.canActivateManaAbility(gameData, permanent)) {
+                continue;
+            }
+            boolean creature = gameQueryService.isCreature(gameData, permanent);
+            if (creaturesOnly && !creature) {
+                continue;
+            }
+            if (creature && permanent.isSummoningSick()
+                    && !gameQueryService.hasKeyword(gameData, permanent, Keyword.HASTE)) {
+                continue;
+            }
+
+            List<ManaOption> options = manaOptionsForPermanent(
+                    gameData, playerId, permanent, skipChoiceSources);
+            if (!options.isEmpty()) {
+                sources.add(new ManaSourceOptions(options));
+            }
+        }
+        return sources;
+    }
+
+    private List<ManaOption> manaOptionsForPermanent(GameData gameData, UUID playerId,
+                                                      Permanent permanent,
+                                                      boolean skipChoiceSources) {
+        Card card = permanent.getCard();
+        int triggerCost = attachedTapTriggerCost(gameData, permanent);
+        int versatilityCost = Math.max(0, getProducedColors(card).size() - 1) * 5;
+        if (hasOnTapManaEffects(card)) {
+            return manaOptionsForEffects(permanent.getId(), null,
+                    card.getEffects(EffectSlot.ON_TAP), triggerCost, versatilityCost, false);
+        }
+        if (skipChoiceSources && wouldManaAbilityTriggerChoice(card)) {
+            return List.of();
+        }
+
+        List<ManaOption> options = new ArrayList<>();
+        List<ActivatedAbility> abilities = card.getActivatedAbilities();
+        for (int i = 0; i < abilities.size(); i++) {
+            ActivatedAbility ability = abilities.get(i);
+            if (!isFreeTapManaAbility(ability)
+                    || !PotentialManaService.canPayChargeCounterCost(ability, permanent)
+                    || !potentialManaService.canMeetTimingRestriction(
+                            ability, gameData, playerId, permanent)) {
+                continue;
+            }
+            boolean painful = ability.getEffects().stream()
+                    .anyMatch(e -> e instanceof DealDamageToPlayersEffect dmg
+                            && dmg.recipient() == DamageRecipient.CONTROLLER);
+            options.addAll(manaOptionsForEffects(permanent.getId(), i,
+                    ability.getEffects(), triggerCost, versatilityCost, painful));
+        }
+        return options;
+    }
+
+    private List<ManaOption> manaOptionsForEffects(UUID permanentId, Integer abilityIndex,
+                                                    List<CardEffect> effects, int triggerCost,
+                                                    int versatilityCost, boolean painful) {
+        Map<ManaColor, Integer> fixedOutput = new EnumMap<>(ManaColor.class);
+        int anyColorAmount = 0;
+        for (CardEffect effect : effects) {
+            if (!(effect instanceof ManaProducingEffect mana)) {
+                continue;
+            }
+            if (mana.estimatedManaColor() != null) {
+                int amount = Math.max(1, potentialManaService.estimateManaAmount(
+                        mana.estimatedManaAmount(), null, null));
+                fixedOutput.merge(mana.estimatedManaColor(), amount, Integer::sum);
+            } else if (mana.estimatedCountsAllColors()) {
+                anyColorAmount += Math.max(1, mana.estimatedWildcardMana());
+            } else if (mana.estimatedWildcardMana() > 0) {
+                fixedOutput.merge(ManaColor.COLORLESS, mana.estimatedWildcardMana(), Integer::sum);
+            }
+        }
+        if (fixedOutput.isEmpty() && anyColorAmount <= 0) {
+            return List.of();
+        }
+
+        int optionCost = ACTIVATION_COST + versatilityCost + triggerCost
+                + (painful ? PAIN_MANA_COST : 0);
+        ManaActivation activation = new ManaActivation(permanentId, abilityIndex);
+        if (anyColorAmount <= 0) {
+            return List.of(new ManaOption(activation, Map.copyOf(fixedOutput), optionCost));
+        }
+
+        List<ManaOption> options = new ArrayList<>(5);
+        for (ManaColor color : EnumSet.of(ManaColor.WHITE, ManaColor.BLUE, ManaColor.BLACK,
+                ManaColor.RED, ManaColor.GREEN)) {
+            Map<ManaColor, Integer> output = new EnumMap<>(ManaColor.class);
+            output.putAll(fixedOutput);
+            output.merge(color, anyColorAmount, Integer::sum);
+            options.add(new ManaOption(activation, Map.copyOf(output), optionCost));
+        }
+        return options;
+    }
+
+    private static int attachedTapTriggerCost(GameData gameData, Permanent permanent) {
+        int[] cost = {0};
+        gameData.forEachPermanent((controllerId, attachment) -> {
+            if (attachment.isAttached()
+                    && permanent.getId().equals(attachment.getAttachedTo())
+                    && !attachment.getCard()
+                            .getEffects(EffectSlot.ON_ENCHANTED_PERMANENT_TAPPED).isEmpty()) {
+                cost[0] = ATTACHED_TAP_TRIGGER_COST;
+            }
+        });
+        return cost[0];
     }
 
     /**
