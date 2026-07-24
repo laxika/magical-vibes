@@ -76,5 +76,10 @@ subprojects {
                 exceptionFormat = org.gradle.api.tasks.testing.logging.TestExceptionFormat.SHORT
             }
         }
+
+        tasks.withType<JavaCompile> {
+            options.forkOptions.memoryMaximumSize =
+                providers.gradleProperty("javaCompile.maxHeapSize").get()
+        }
     }
 }

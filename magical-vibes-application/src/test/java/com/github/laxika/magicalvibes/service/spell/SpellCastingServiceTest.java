@@ -26,6 +26,7 @@ import com.github.laxika.magicalvibes.model.effect.ReduceOwnCastCostIfTargetingS
 import com.github.laxika.magicalvibes.model.filter.PermanentHasSubtypePredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsTappedPredicate;
 import com.github.laxika.magicalvibes.service.GameBroadcastService;
+import com.github.laxika.magicalvibes.service.cast.CastingCostService;
 import com.github.laxika.magicalvibes.service.effect.AmountEvaluationService;
 import com.github.laxika.magicalvibes.service.effect.ConditionEvaluationService;
 import com.github.laxika.magicalvibes.service.effect.cost.AdditionalSpellCostService;
@@ -161,6 +162,9 @@ class SpellCastingServiceTest {
         lenient().when(gameQueryService.getEffectiveColors(any(GameData.class), any(Permanent.class)))
                 .thenAnswer(invocation -> new HashSet<>(
                         ((Permanent) invocation.getArgument(1)).getEffectiveColors()));
+        lenient().when(castingCostService.getImposedSacrificeRequirementForSpell(
+                        any(GameData.class), any(Card.class)))
+                .thenReturn(CastingCostService.ImposedSacrificeRequirement.none());
     }
 
     // =========================================================================
