@@ -5,6 +5,7 @@ import com.github.laxika.magicalvibes.ai.simulation.GameSimulator;
 import com.github.laxika.magicalvibes.ai.simulation.MCTSEngine;
 import com.github.laxika.magicalvibes.ai.simulation.SimulationAction;
 import com.github.laxika.magicalvibes.cards.t.TroveOfTemptation;
+import com.github.laxika.magicalvibes.cards.t.TragedyFeaster;
 import com.github.laxika.magicalvibes.cards.w.WhiteKnight;
 import com.github.laxika.magicalvibes.cards.a.AirElemental;
 import com.github.laxika.magicalvibes.cards.b.BairdStewardOfArgive;
@@ -30,6 +31,7 @@ import com.github.laxika.magicalvibes.cards.g.GoblinPiker;
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
 import com.github.laxika.magicalvibes.cards.l.LightningBolt;
 import com.github.laxika.magicalvibes.cards.r.RagingGoblin;
+import com.github.laxika.magicalvibes.cards.r.RodOfRuin;
 import com.github.laxika.magicalvibes.cards.s.Shock;
 import com.github.laxika.magicalvibes.cards.b.BogardanFirefiend;
 import com.github.laxika.magicalvibes.cards.c.CruelEdict;
@@ -786,6 +788,8 @@ class HardAiDecisionEngineTest {
             MCTSEngine failingMcts = Mockito.mock(MCTSEngine.class);
             Mockito.when(failingMcts.search(any(), any(), Mockito.anyInt()))
                     .thenThrow(new RuntimeException("MCTS disabled for test"));
+            Mockito.when(failingMcts.search(any(), any(), Mockito.anyInt(), Mockito.anyList()))
+                    .thenThrow(new RuntimeException("MCTS disabled for test"));
             engine.setMctsEngine(failingMcts);
 
             engine.handleMessage("GAME_STATE", "");
@@ -944,6 +948,8 @@ class HardAiDecisionEngineTest {
             MCTSEngine failingMcts = Mockito.mock(MCTSEngine.class);
             Mockito.when(failingMcts.search(any(), any(), Mockito.anyInt()))
                     .thenThrow(new RuntimeException("MCTS disabled for test"));
+            Mockito.when(failingMcts.search(any(), any(), Mockito.anyInt(), Mockito.anyList()))
+                    .thenThrow(new RuntimeException("MCTS disabled for test"));
             engine.setMctsEngine(failingMcts);
 
             engine.handleMessage("GAME_STATE", "");
@@ -1090,6 +1096,8 @@ class HardAiDecisionEngineTest {
         MCTSEngine failingMcts = Mockito.mock(MCTSEngine.class);
         Mockito.when(failingMcts.search(any(), any(), Mockito.anyInt()))
                 .thenThrow(new RuntimeException("MCTS disabled for test"));
+        Mockito.when(failingMcts.search(any(), any(), Mockito.anyInt(), Mockito.anyList()))
+                .thenThrow(new RuntimeException("MCTS disabled for test"));
         ai.setMctsEngine(failingMcts);
 
         harness.forceActivePlayer(player1);
@@ -1126,6 +1134,8 @@ class HardAiDecisionEngineTest {
         // setup is thin for MCTS under UUID map-ordering noise.
         MCTSEngine failingMcts = Mockito.mock(MCTSEngine.class);
         Mockito.when(failingMcts.search(any(), any(), Mockito.anyInt()))
+                .thenThrow(new RuntimeException("MCTS disabled for test"));
+        Mockito.when(failingMcts.search(any(), any(), Mockito.anyInt(), Mockito.anyList()))
                 .thenThrow(new RuntimeException("MCTS disabled for test"));
         ai.setMctsEngine(failingMcts);
 
@@ -1923,6 +1933,8 @@ class HardAiDecisionEngineTest {
         MCTSEngine failingMcts = Mockito.mock(MCTSEngine.class);
         Mockito.when(failingMcts.search(any(), any(), Mockito.anyInt()))
                 .thenThrow(new RuntimeException("MCTS disabled for test"));
+        Mockito.when(failingMcts.search(any(), any(), Mockito.anyInt(), Mockito.anyList()))
+                .thenThrow(new RuntimeException("MCTS disabled for test"));
         ai.setMctsEngine(failingMcts);
         giveAiPriority(player1);
 
@@ -2335,6 +2347,38 @@ class HardAiDecisionEngineTest {
         ai.handleMessage("GAME_STATE", "");
 
         assertThat(pyromancer.isTapped()).isTrue();
+        assertThat(gd.stack).hasSize(1);
+        assertThat(gd.stack.getFirst().getTargetId()).isEqualTo(player2.getId());
+    }
+
+    @Test
+    @DisplayName("Hard AI executes the exact Rod of Ruin target selected by ability MCTS")
+    void executesRodTargetSelectedByAbilityMcts() {
+        HardAiDecisionEngine ai = createHardAi(player1);
+
+        harness.forceActivePlayer(player2);
+        harness.forceStep(TurnStep.END_STEP);
+        harness.clearPriorityPassed();
+        gd.status = GameStatus.RUNNING;
+        gd.interaction.clearAwaitingInput();
+        gd.stack.clear();
+        gd.priorityPassedBy.add(player2.getId());
+
+        Permanent rod = new Permanent(new RodOfRuin());
+        gd.playerBattlefields.get(player1.getId()).add(rod);
+        gd.playerBattlefields.get(player2.getId()).add(new Permanent(new TragedyFeaster()));
+        harness.addMana(player1, ManaColor.COLORLESS, 3);
+        harness.setHand(player1, List.of());
+
+        MCTSEngine mcts = Mockito.mock(MCTSEngine.class);
+        Mockito.when(mcts.search(any(), any(), Mockito.anyInt(), Mockito.anyList()))
+                .thenReturn(new SimulationAction.ActivateAbility(
+                        rod.getId(), 0, player2.getId()));
+        ai.setMctsEngine(mcts);
+
+        ai.handleMessage("GAME_STATE", "");
+
+        assertThat(rod.isTapped()).isTrue();
         assertThat(gd.stack).hasSize(1);
         assertThat(gd.stack.getFirst().getTargetId()).isEqualTo(player2.getId());
     }

@@ -8,6 +8,7 @@ import com.github.laxika.magicalvibes.ai.SizeGatedRemovalPump;
 import com.github.laxika.magicalvibes.ai.SpellEvaluator;
 import com.github.laxika.magicalvibes.ai.TargetPolarity;
 import com.github.laxika.magicalvibes.ai.TargetPolarityClassifier;
+import com.github.laxika.magicalvibes.model.ActivatedAbility;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardType;
 import com.github.laxika.magicalvibes.model.EffectResolution;
@@ -31,6 +32,7 @@ import com.github.laxika.magicalvibes.model.effect.CantBlockThisTurnEffect;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
 import com.github.laxika.magicalvibes.model.effect.TargetCategory;
 import com.github.laxika.magicalvibes.model.effect.CostEffect;
+import com.github.laxika.magicalvibes.model.effect.DamageDealingEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantScope;
 import com.github.laxika.magicalvibes.model.effect.KeywordGrantingEffect;
 import com.github.laxika.magicalvibes.model.effect.ManaProducingEffect;
@@ -40,14 +42,18 @@ import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.filter.FilterContext;
 import com.github.laxika.magicalvibes.model.filter.PermanentPredicate;
 import com.github.laxika.magicalvibes.networking.message.BlockerAssignment;
+import com.github.laxika.magicalvibes.networking.message.ValidTargetsResponse;
 import com.github.laxika.magicalvibes.service.interaction.InteractionAnswer;
+import com.github.laxika.magicalvibes.service.ability.AbilityActivationService;
 import com.github.laxika.magicalvibes.service.combat.CombatAttackService;
 import com.github.laxika.magicalvibes.service.GameBroadcastService;
 import com.github.laxika.magicalvibes.service.battlefield.GameQueryService;
 import com.github.laxika.magicalvibes.service.effect.AmountEvaluationService;
+import com.github.laxika.magicalvibes.service.effect.AmountContext;
 import com.github.laxika.magicalvibes.service.filter.PredicateEvaluationService;
 import com.github.laxika.magicalvibes.service.GameRegistry;
 import com.github.laxika.magicalvibes.service.GameService;
+import com.github.laxika.magicalvibes.service.target.ValidTargetService;
 import lombok.extern.slf4j.Slf4j;
 
 import java.util.ArrayList;
@@ -116,6 +122,7 @@ public class GameSimulator {
     private final TargetPolarityClassifier polarityClassifier;
     private final AmountEvaluationService amountEvaluationService;
     private final SizeGatedRemovalPump sizeGatedRemovalPump;
+    private final ValidTargetService validTargetService;
 
     /**
      * Returns the cached headless simulator. {@link GameQueryService} instances from the same
@@ -131,7 +138,8 @@ public class GameSimulator {
                   GameBroadcastService gameBroadcastService,
                   com.github.laxika.magicalvibes.service.cast.CastingCostService castingCostService,
                   GameRegistry gameRegistry,
-                  CombatAttackService combatAttackService) {
+                  CombatAttackService combatAttackService,
+                  ValidTargetService validTargetService) {
         this.gameService = gameService;
         this.gameQueryService = gameQueryService;
         this.predicateEvaluationService = new PredicateEvaluationService(gameQueryService);
@@ -146,6 +154,7 @@ public class GameSimulator {
         this.amountEvaluationService = new AmountEvaluationService(predicateEvaluationService, gameQueryService);
         this.polarityClassifier = new TargetPolarityClassifier(amountEvaluationService);
         this.sizeGatedRemovalPump = new SizeGatedRemovalPump(gameQueryService, amountEvaluationService);
+        this.validTargetService = validTargetService;
     }
 
 
@@ -166,6 +175,7 @@ public class GameSimulator {
             if (isMainPhase && isActivePlayer && gd.stack.isEmpty()) {
                 actions.addAll(enumerateCastableSpells(gd, playerId));
             }
+            actions.addAll(enumerateActivatedAbilities(gd, playerId));
             // Always can pass priority
             actions.add(new SimulationAction.PassPriority());
             return actions;
@@ -342,8 +352,7 @@ public class GameSimulator {
                     case SimulationAction.MayAbilityChoice mac ->
                             gameService.handleInteractionAnswer(gd, player, new InteractionAnswer.MayAbilityChosen(mac.accept()));
                     case SimulationAction.ActivateAbility aa ->
-                            gameService.activateAbility(gd, player, findPermanentIndex(gd, playerId, aa.permanentId()),
-                                    aa.abilityIndex(), 0, aa.targetId(), null);
+                            executeActivatedAbility(gd, player, aa);
                 }
             }
         } catch (Exception e) {
@@ -372,7 +381,7 @@ public class GameSimulator {
      * 1.0 = AI wins, 0.0 = opponent wins, 0.5 = even.
      */
     public double evaluate(GameData gd, UUID aiPlayerId) {
-        double raw = boardEvaluator.evaluate(gd, aiPlayerId);
+        double raw = boardEvaluator.evaluateMctsHorizon(gd, aiPlayerId);
         // Normalize using sigmoid-like function: map (-inf, inf) to (0, 1)
         return 1.0 / (1.0 + Math.exp(-raw / 50.0));
     }
@@ -532,6 +541,163 @@ public class GameSimulator {
             castable.add(new SimulationAction.PlayCard(i, null, xValue));
         }
         return castable;
+    }
+
+    /**
+     * Enumerates non-mana activated abilities as complete MCTS actions. Each legal target is a
+     * separate action, so search evaluates the activation and target as one decision.
+     */
+    private List<SimulationAction.ActivateAbility> enumerateActivatedAbilities(GameData gd, UUID playerId) {
+        List<SimulationAction.ActivateAbility> actions = new ArrayList<>();
+        List<Permanent> battlefield = gd.playerBattlefields.getOrDefault(playerId, List.of());
+        ManaPool virtualPool = manaManager.buildVirtualManaPool(gd, playerId);
+
+        for (int permanentIndex = 0; permanentIndex < battlefield.size(); permanentIndex++) {
+            Permanent source = battlefield.get(permanentIndex);
+            List<ActivatedAbility> abilities = gameService.getEffectiveActivatedAbilities(gd, source);
+            for (int abilityIndex = 0; abilityIndex < abilities.size(); abilityIndex++) {
+                ActivatedAbility ability = abilities.get(abilityIndex);
+                if (AbilityActivationService.isManaAbility(ability)
+                        || ability.isVariableLoyaltyCost()
+                        || ability.isMultiTarget()
+                        || ability.isNeedsSpellTarget()) {
+                    continue;
+                }
+                if (!gameService.canActivateAbility(gd, playerId, source, abilityIndex, virtualPool)) {
+                    continue;
+                }
+
+                int life = gd.getLife(playerId);
+                boolean suicidalLifeCost = ability.getEffects().stream()
+                        .filter(CostEffect.class::isInstance)
+                        .map(CostEffect.class::cast)
+                        .anyMatch(cost -> cost.lifePaid(life) >= life);
+                if (suicidalLifeCost) {
+                    continue;
+                }
+
+                if (!ability.isNeedsTarget()) {
+                    actions.add(new SimulationAction.ActivateAbility(source.getId(), abilityIndex, null));
+                    continue;
+                }
+
+                ValidTargetsResponse validTargets = validTargetService.computeValidTargetsForAbility(
+                        gd, source.getCard(), ability, playerId, permanentIndex);
+                if (!validTargets.validGraveyardCardIds().isEmpty()) {
+                    continue;
+                }
+                if (validTargets.minTargets() == 0) {
+                    actions.add(new SimulationAction.ActivateAbility(source.getId(), abilityIndex, null));
+                }
+                int selectedAbilityIndex = abilityIndex;
+                rankAbilityTargets(gd, playerId, source, ability, validTargets).stream()
+                        .limit(MAX_TARGET_CANDIDATES)
+                        .map(targetId -> new SimulationAction.ActivateAbility(
+                                source.getId(), selectedAbilityIndex, targetId))
+                        .forEach(actions::add);
+            }
+        }
+        return actions;
+    }
+
+    /**
+     * Preserves a player target for "any target" abilities under the target cap. Harmful
+     * abilities prefer opposing targets; benign abilities prefer the controller's targets.
+     */
+    private List<UUID> rankAbilityTargets(GameData gd, UUID playerId, Permanent source,
+                                          ActivatedAbility ability,
+                                          ValidTargetsResponse validTargets) {
+        UUID opponentId = getOpponentId(gd, playerId);
+        boolean harmful = ability.getEffects().stream()
+                .anyMatch(effect -> effect.targetSpec().harmful());
+
+        List<UUID> playerTargets = new ArrayList<>(validTargets.validPlayerIds());
+        UUID preferredPlayer = harmful ? opponentId : playerId;
+        playerTargets.sort(Comparator.comparing(
+                (UUID id) -> preferredPlayer != null && id.equals(preferredPlayer)).reversed());
+
+        List<UUID> ranked = new ArrayList<>(validTargets.validPermanentIds());
+        if (!playerTargets.isEmpty()) {
+            ranked.add(playerTargets.getFirst());
+        }
+        ranked.sort(Comparator.comparingDouble((UUID targetId) ->
+                abilityTargetPriority(
+                        gd, targetId, playerId, opponentId, source, ability, harmful)).reversed());
+        return ranked;
+    }
+
+    private double abilityTargetPriority(GameData gd, UUID targetId, UUID playerId,
+                                         UUID opponentId, Permanent source,
+                                         ActivatedAbility ability, boolean harmful) {
+        AmountContext amountContext = new AmountContext(playerId, source, null, 0, 0, false);
+        int damage = ability.getEffects().stream()
+                .filter(DamageDealingEffect.class::isInstance)
+                .map(DamageDealingEffect.class::cast)
+                .mapToInt(effect -> amountEvaluationService.evaluate(
+                        gd, effect.damageAmount(), amountContext))
+                .sum();
+
+        if (gd.playerIds.contains(targetId)) {
+            boolean preferredPlayer = harmful ? targetId.equals(opponentId) : targetId.equals(playerId);
+            return (preferredPlayer ? 10_000 : 0) + (damage > 0 ? 5_000 + damage : 0);
+        }
+
+        Permanent target = gameQueryService.findPermanentById(gd, targetId);
+        if (target == null) {
+            return 0;
+        }
+        UUID controllerId = gameQueryService.findPermanentController(gd, targetId);
+        boolean preferredController = harmful
+                ? opponentId != null && opponentId.equals(controllerId)
+                : playerId.equals(controllerId);
+        double value = gameQueryService.isCreature(gd, target)
+                ? boardEvaluator.creatureThreatScore(
+                        gd, target, controllerId, getOpponentId(gd, controllerId))
+                : target.getCard().getManaValue();
+        if (damage > 0 && gameQueryService.isCreature(gd, target)) {
+            int remainingToughness = gameQueryService.getEffectiveToughness(gd, target)
+                    - target.getMarkedDamage();
+            if (!preferredController) {
+                return -10_000 + value;
+            }
+            return damage >= remainingToughness ? 20_000 + value : value;
+        }
+        return (preferredController ? 10_000 : 0) + value;
+    }
+
+    private void executeActivatedAbility(GameData gd, Player player,
+                                         SimulationAction.ActivateAbility action) {
+        int permanentIndex = findPermanentIndex(gd, player.getId(), action.permanentId());
+        if (permanentIndex < 0) {
+            return;
+        }
+        Permanent source = gd.playerBattlefields.get(player.getId()).get(permanentIndex);
+        List<ActivatedAbility> abilities = gameService.getEffectiveActivatedAbilities(gd, source);
+        if (action.abilityIndex() < 0 || action.abilityIndex() >= abilities.size()) {
+            return;
+        }
+        ActivatedAbility ability = abilities.get(action.abilityIndex());
+        if (ability.getManaCost() != null) {
+            manaManager.tapSourcesForAbilityCost(gd, player.getId(), ability.getManaCost(),
+                    (index, manaAbilityIndex) -> {
+                        if (manaAbilityIndex == null) {
+                            gameService.tapPermanent(gd, player, index);
+                        } else {
+                            gameService.activateAbility(
+                                    gd, player, index, manaAbilityIndex, null, null, null);
+                        }
+                    },
+                    ability.isRequiresTap() ? source.getId() : null);
+            if (gd.interaction.isAwaitingInput()) {
+                return;
+            }
+        }
+
+        permanentIndex = findPermanentIndex(gd, player.getId(), action.permanentId());
+        if (permanentIndex >= 0) {
+            gameService.activateAbility(gd, player, permanentIndex, action.abilityIndex(),
+                    0, action.targetId(), null);
+        }
     }
 
     /**

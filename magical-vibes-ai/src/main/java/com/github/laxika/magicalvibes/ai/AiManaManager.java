@@ -97,6 +97,15 @@ public class AiManaManager {
         tapLandsForCost(gameData, playerId, manaCost, additionalGenericCost, action);
     }
 
+    /**
+     * Taps mana sources for an activated ability while reserving its source permanent when
+     * paying the cost. A source with a {@code {T}} cost cannot also be tapped for mana.
+     */
+    public void tapSourcesForAbilityCost(GameData gameData, UUID playerId, String manaCost,
+                                         ManaTapAction action, UUID sourcePermanentId) {
+        tapLandsForCost(gameData, playerId, manaCost, 0, action, false, sourcePermanentId);
+    }
+
     void tapLandsForCost(GameData gameData, UUID aiPlayerId, String manaCostStr, int costModifier, ManaTapAction action,
                          boolean skipChoiceSources) {
         tapLandsForCost(gameData, aiPlayerId, manaCostStr, costModifier, action, skipChoiceSources, null);

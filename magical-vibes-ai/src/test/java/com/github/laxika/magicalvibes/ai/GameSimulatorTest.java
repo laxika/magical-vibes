@@ -11,8 +11,10 @@ import com.github.laxika.magicalvibes.cards.f.FitOfRage;
 import com.github.laxika.magicalvibes.cards.f.Forest;
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
 import com.github.laxika.magicalvibes.cards.p.Pacifism;
+import com.github.laxika.magicalvibes.cards.r.RodOfRuin;
 import com.github.laxika.magicalvibes.cards.s.SerraAngel;
 import com.github.laxika.magicalvibes.cards.s.SmiteTheMonstrous;
+import com.github.laxika.magicalvibes.cards.t.TragedyFeaster;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.GameData;
 import com.github.laxika.magicalvibes.model.ManaColor;
@@ -122,6 +124,48 @@ class GameSimulatorTest {
 
         assertThat(actions).hasSize(1);
         assertThat(actions.getFirst()).isInstanceOf(SimulationAction.PassPriority.class);
+    }
+
+    @Test
+    @DisplayName("Rod of Ruin enumerates creature and opponent targets as distinct ability actions")
+    void rodOfRuinEnumeratesCreatureAndOpponentTargets() {
+        Permanent rod = harness.addToBattlefieldAndReturn(player1, new RodOfRuin());
+        Permanent feaster = harness.addToBattlefieldAndReturn(player2, new TragedyFeaster());
+        harness.addMana(player1, ManaColor.COLORLESS, 3);
+        harness.forceStep(TurnStep.PRECOMBAT_MAIN);
+        harness.forceActivePlayer(player1);
+        gd.stack.clear();
+
+        List<SimulationAction.ActivateAbility> actions = simulator.getLegalActions(
+                        gd, player1.getId()).stream()
+                .filter(SimulationAction.ActivateAbility.class::isInstance)
+                .map(SimulationAction.ActivateAbility.class::cast)
+                .filter(action -> action.permanentId().equals(rod.getId()))
+                .toList();
+
+        assertThat(actions).extracting(SimulationAction.ActivateAbility::targetId)
+                .contains(feaster.getId(), player2.getId());
+    }
+
+    @Test
+    @DisplayName("Applying a Rod of Ruin ability action uses its exact target")
+    void applyRodOfRuinAbilityUsesExactTarget() {
+        Permanent rod = harness.addToBattlefieldAndReturn(player1, new RodOfRuin());
+        harness.addToBattlefield(player1, new Forest());
+        harness.addToBattlefield(player1, new Forest());
+        harness.addToBattlefield(player1, new Forest());
+        harness.forceStep(TurnStep.PRECOMBAT_MAIN);
+        harness.forceActivePlayer(player1);
+        gd.stack.clear();
+
+        simulator.applyAction(gd, player1.getId(),
+                new SimulationAction.ActivateAbility(rod.getId(), 0, player2.getId()));
+
+        assertThat(rod.isTapped()).isTrue();
+        assertThat(gd.playerBattlefields.get(player1.getId())).filteredOn(Permanent::isTapped)
+                .hasSize(4);
+        assertThat(gd.stack).isNotEmpty();
+        assertThat(gd.stack.getFirst().getTargetId()).isEqualTo(player2.getId());
     }
 
     @Test

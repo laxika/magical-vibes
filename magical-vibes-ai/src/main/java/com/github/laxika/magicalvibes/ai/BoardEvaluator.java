@@ -65,6 +65,18 @@ public class BoardEvaluator {
      * Returns a score where higher is better for the AI.
      */
     public double evaluate(GameData gameData, UUID aiPlayerId) {
+        return evaluate(gameData, aiPlayerId, true);
+    }
+
+    /**
+     * Evaluates an MCTS horizon as though marked damage has reached cleanup. Actual kills remain
+     * fully represented because the destroyed creature is absent from the battlefield.
+     */
+    public double evaluateMctsHorizon(GameData gameData, UUID aiPlayerId) {
+        return evaluate(gameData, aiPlayerId, false);
+    }
+
+    private double evaluate(GameData gameData, UUID aiPlayerId, boolean countMarkedDamage) {
         UUID opponentId = getOpponentId(gameData, aiPlayerId);
 
         int aiLife = gameData.getLife(aiPlayerId);
@@ -108,7 +120,8 @@ public class BoardEvaluator {
 
         for (Permanent perm : aiBattlefield) {
             if (gameQueryService.isCreature(gameData, perm)) {
-                aiCreatureQuality += creatureScore(gameData, perm, aiPlayerId, opponentId);
+                aiCreatureQuality += creatureScore(
+                        gameData, perm, aiPlayerId, opponentId, countMarkedDamage);
             }
             if (isManaSource(perm)) {
                 aiManaSourceCount++;
@@ -122,7 +135,8 @@ public class BoardEvaluator {
 
         for (Permanent perm : oppBattlefield) {
             if (gameQueryService.isCreature(gameData, perm)) {
-                oppCreatureQuality += creatureScore(gameData, perm, opponentId, aiPlayerId);
+                oppCreatureQuality += creatureScore(
+                        gameData, perm, opponentId, aiPlayerId, countMarkedDamage);
             }
             if (isManaSource(perm)) {
                 oppManaSourceCount++;
@@ -146,11 +160,17 @@ public class BoardEvaluator {
      * Accounts for marked damage, summoning sickness, and tapped status.
      */
     public double creatureScore(GameData gameData, Permanent perm, UUID controllerId, UUID opponentId) {
+        return creatureScore(gameData, perm, controllerId, opponentId, true);
+    }
+
+    private double creatureScore(GameData gameData, Permanent perm, UUID controllerId,
+                                 UUID opponentId, boolean countMarkedDamage) {
         int power = gameQueryService.getEffectivePower(gameData, perm);
         int toughness = gameQueryService.getEffectiveToughness(gameData, perm);
 
         // A 4/4 with 3 damage on it is barely a 4/1 — use remaining toughness for scoring
-        int effectiveToughness = Math.max(0, toughness - perm.getMarkedDamage());
+        int effectiveToughness = Math.max(
+                0, toughness - (countMarkedDamage ? perm.getMarkedDamage() : 0));
 
         double score = power * 3.0 + effectiveToughness * 1.5;
         score += keywordBonus(gameData, perm, controllerId, opponentId);

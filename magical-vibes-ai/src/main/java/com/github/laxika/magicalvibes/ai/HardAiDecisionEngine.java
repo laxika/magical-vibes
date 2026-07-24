@@ -83,6 +83,7 @@ public class HardAiDecisionEngine extends AiDecisionEngine {
     private final BoardEvaluator boardEvaluator;
     private final CombatSimulator combatSimulator;
     private MCTSEngine mctsEngine;
+    private final GameSimulator gameSimulator;
     private final RaceEvaluator raceEvaluator;
     private final AmountEvaluationService amountEvaluationService;
 
@@ -113,7 +114,8 @@ public class HardAiDecisionEngine extends AiDecisionEngine {
         this.boardEvaluator = new BoardEvaluator(gameQueryService);
         this.spellEvaluator = new SpellEvaluator(gameQueryService, boardEvaluator);
         this.combatSimulator = new CombatSimulator(gameQueryService, boardEvaluator);
-        this.mctsEngine = new MCTSEngine(GameSimulator.forQueryService(gameQueryService));
+        this.gameSimulator = GameSimulator.forQueryService(gameQueryService);
+        this.mctsEngine = new MCTSEngine(gameSimulator);
         this.raceEvaluator = new RaceEvaluator(gameQueryService);
         this.amountEvaluationService = new AmountEvaluationService(
                 new PredicateEvaluationService(gameQueryService), gameQueryService);
@@ -1361,7 +1363,13 @@ public class HardAiDecisionEngine extends AiDecisionEngine {
 
         // Use MCTS to decide
         try {
-            SimulationAction bestAction = mctsEngine.search(gameData, aiPlayer.getId(), MCTS_BUDGET);
+            List<SimulationAction> spellRootActions = gameSimulator.getLegalActions(
+                            gameData, aiPlayer.getId()).stream()
+                    .filter(action -> action instanceof SimulationAction.PlayCard
+                            || action instanceof SimulationAction.PassPriority)
+                    .toList();
+            SimulationAction bestAction = mctsEngine.search(
+                    gameData, aiPlayer.getId(), MCTS_BUDGET, spellRootActions);
 
             if (bestAction instanceof SimulationAction.PlayCard pc) {
                 SpellCastingPlan plan = buildSpellCastingPlan(gameData, pc.handIndex(), pc.targetId(), false);
@@ -1837,6 +1845,30 @@ public class HardAiDecisionEngine extends AiDecisionEngine {
         List<Permanent> battlefield = gameData.playerBattlefields.getOrDefault(aiPlayer.getId(), List.of());
         if (battlefield.isEmpty()) return false;
 
+        List<SimulationAction> abilityRootActions = gameSimulator.getLegalActions(
+                        gameData, aiPlayer.getId()).stream()
+                .filter(action -> action instanceof SimulationAction.ActivateAbility
+                        || action instanceof SimulationAction.PassPriority)
+                .toList();
+        boolean hasMctsAbility = abilityRootActions.stream()
+                .anyMatch(SimulationAction.ActivateAbility.class::isInstance);
+        if (hasMctsAbility) {
+            try {
+                SimulationAction bestAction = mctsEngine.search(
+                        gameData, aiPlayer.getId(), MCTS_BUDGET, abilityRootActions);
+                if (bestAction instanceof SimulationAction.ActivateAbility activateAbility) {
+                    return executeMctsAbility(gameData, activateAbility);
+                }
+                if (bestAction instanceof SimulationAction.PassPriority) {
+                    log.info("AI (Hard/MCTS): Passing instead of activating an ability in game {}", gameId);
+                    return false;
+                }
+            } catch (Exception e) {
+                log.warn("AI (Hard): Ability MCTS failed, falling back to evaluator logic in game {}",
+                        gameId, e);
+            }
+        }
+
         ManaPool virtualPool = manaManager.buildVirtualManaPool(gameData, aiPlayer.getId());
 
         record AbilityCandidate(int permanentIndex, int abilityIndex, ActivatedAbility ability,
@@ -1957,6 +1989,59 @@ public class HardAiDecisionEngine extends AiDecisionEngine {
         final UUID finalTargetId = best.targetId();
         send(() -> gameActions.handleActivateAbility(selfConnection,
                 new ActivateAbilityRequest(permIdx, abilIdx, null, finalTargetId, null, null, null)));
+        return true;
+    }
+
+    /**
+     * Executes the exact permanent, ability, and target selected by MCTS. Target selection is not
+     * repeated here: changing it after search would evaluate one action and perform another.
+     */
+    private boolean executeMctsAbility(GameData gameData,
+                                       SimulationAction.ActivateAbility action) {
+        List<Permanent> battlefield = gameData.playerBattlefields
+                .getOrDefault(aiPlayer.getId(), List.of());
+        int permanentIndex = -1;
+        for (int i = 0; i < battlefield.size(); i++) {
+            if (battlefield.get(i).getId().equals(action.permanentId())) {
+                permanentIndex = i;
+                break;
+            }
+        }
+        if (permanentIndex < 0) {
+            return false;
+        }
+
+        Permanent permanent = battlefield.get(permanentIndex);
+        List<ActivatedAbility> abilities = buildEffectiveAbilityList(gameData, permanent);
+        if (action.abilityIndex() < 0 || action.abilityIndex() >= abilities.size()) {
+            return false;
+        }
+        ActivatedAbility ability = abilities.get(action.abilityIndex());
+        ManaPool virtualPool = manaManager.buildVirtualManaPool(gameData, aiPlayer.getId());
+        if (!canActivateAbility(gameData, permanent, ability, action.abilityIndex(), virtualPool)) {
+            return false;
+        }
+
+        if (ability.getManaCost() != null) {
+            manaManager.tapLandsForCost(gameData, aiPlayer.getId(),
+                    ability.getManaCost(), 0, manaTapAction(), false,
+                    ability.isRequiresTap() ? permanent.getId() : null);
+            if (gameData.interaction.isAwaitingInput()) {
+                return true;
+            }
+        }
+
+        if (!canActivateAbility(gameData, permanent, ability, action.abilityIndex(),
+                gameData.playerManaPools.get(aiPlayer.getId()))) {
+            return false;
+        }
+
+        int selectedPermanentIndex = permanentIndex;
+        log.info("AI (Hard/MCTS): Activating ability {} on {} targeting {} in game {}",
+                action.abilityIndex(), permanent.getCard().getName(), action.targetId(), gameId);
+        send(() -> gameActions.handleActivateAbility(selfConnection,
+                new ActivateAbilityRequest(selectedPermanentIndex, action.abilityIndex(), null,
+                        action.targetId(), null, null, null)));
         return true;
     }
 

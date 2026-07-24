@@ -353,6 +353,20 @@ class BoardEvaluatorTest {
         }
 
         @Test
+        @DisplayName("MCTS horizon does not treat surviving marked damage as permanent value")
+        void mctsHorizonIgnoresSurvivingMarkedDamage() {
+            Permanent bears = new Permanent(new GrizzlyBears());
+            bears.setSummoningSick(false);
+            gd.playerBattlefields.get(player2.getId()).add(bears);
+
+            double undamaged = evaluator.evaluateMctsHorizon(gd, player1.getId());
+            bears.setMarkedDamage(1);
+            double damaged = evaluator.evaluateMctsHorizon(gd, player1.getId());
+
+            assertThat(damaged).isEqualTo(undamaged);
+        }
+
+        @Test
         @DisplayName("Heavily damaged creature scores much lower")
         void heavilyDamagedCreatureScoresLower() {
             // Simulate a 4/4 with 3 damage — barely alive

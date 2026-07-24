@@ -5,7 +5,10 @@ import com.github.laxika.magicalvibes.ai.simulation.MCTSEngine;
 import com.github.laxika.magicalvibes.ai.simulation.SimulationAction;
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
 import com.github.laxika.magicalvibes.cards.h.HillGiant;
+import com.github.laxika.magicalvibes.cards.l.LlanowarElves;
+import com.github.laxika.magicalvibes.cards.r.RodOfRuin;
 import com.github.laxika.magicalvibes.cards.s.SerraAngel;
+import com.github.laxika.magicalvibes.cards.t.TragedyFeaster;
 import com.github.laxika.magicalvibes.cards.e.Eviscerate;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.GameData;
@@ -108,6 +111,56 @@ class MCTSEngineTest {
         SimulationAction action = engine.search(gd, player1.getId(), 50);
 
         assertThat(action).isInstanceOf(SimulationAction.PassPriority.class);
+    }
+
+    @Test
+    @DisplayName("Ability MCTS sends Rod of Ruin damage to opponent instead of warded nonlethal creature")
+    void abilityMctsPrefersOpponentOverWardedNonlethalCreature() {
+        Permanent rod = harness.addToBattlefieldAndReturn(player1, new RodOfRuin());
+        harness.addToBattlefield(player2, new TragedyFeaster());
+        harness.addMana(player1, ManaColor.COLORLESS, 3);
+        harness.setHand(player1, List.of());
+        harness.forceStep(TurnStep.PRECOMBAT_MAIN);
+        harness.forceActivePlayer(player1);
+        gd.stack.clear();
+
+        List<SimulationAction> abilityActions = simulator.getLegalActions(
+                        gd, player1.getId()).stream()
+                .filter(action -> (action instanceof SimulationAction.ActivateAbility aa
+                        && aa.permanentId().equals(rod.getId()))
+                        || action instanceof SimulationAction.PassPriority)
+                .toList();
+
+        SimulationAction action = engine.search(gd, player1.getId(), 40, abilityActions);
+
+        assertThat(action).isInstanceOf(SimulationAction.ActivateAbility.class);
+        assertThat(((SimulationAction.ActivateAbility) action).targetId())
+                .isEqualTo(player2.getId());
+    }
+
+    @Test
+    @DisplayName("Ability MCTS uses Rod of Ruin to kill a creature when the damage is lethal")
+    void abilityMctsPrefersLethalCreatureTarget() {
+        Permanent rod = harness.addToBattlefieldAndReturn(player1, new RodOfRuin());
+        Permanent elves = harness.addToBattlefieldAndReturn(player2, new LlanowarElves());
+        harness.addMana(player1, ManaColor.COLORLESS, 3);
+        harness.setHand(player1, List.of());
+        harness.forceStep(TurnStep.PRECOMBAT_MAIN);
+        harness.forceActivePlayer(player1);
+        gd.stack.clear();
+
+        List<SimulationAction> abilityActions = simulator.getLegalActions(
+                        gd, player1.getId()).stream()
+                .filter(action -> (action instanceof SimulationAction.ActivateAbility aa
+                        && aa.permanentId().equals(rod.getId()))
+                        || action instanceof SimulationAction.PassPriority)
+                .toList();
+
+        SimulationAction action = engine.search(gd, player1.getId(), 40, abilityActions);
+
+        assertThat(action).isInstanceOf(SimulationAction.ActivateAbility.class);
+        assertThat(((SimulationAction.ActivateAbility) action).targetId())
+                .isEqualTo(elves.getId());
     }
 
     @Test

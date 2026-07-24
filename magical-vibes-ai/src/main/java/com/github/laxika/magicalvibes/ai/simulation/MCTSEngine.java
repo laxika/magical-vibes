@@ -217,23 +217,37 @@ public class MCTSEngine {
      * @return The best action to take
      */
     public SimulationAction search(GameData rootState, UUID aiPlayerId, int budget) {
+        return search(rootState, aiPlayerId, budget, null);
+    }
+
+    /**
+     * Runs IS-MCTS with an explicitly constrained root action set. Descendant nodes still use
+     * the simulator's complete legal-action enumeration. This lets the production decision loop
+     * preserve its timing policy (spell stage versus activated-ability stage) while allowing
+     * MCTS to own the complete action, including its chosen target.
+     */
+    public SimulationAction search(GameData rootState, UUID aiPlayerId, int budget,
+                                   List<SimulationAction> rootActions) {
         // Flag this thread as simulating so SimulationLogSuppressor mutes engine
         // logging for every rollout action (parallel workers flag themselves).
         SimulationLogSuppressor.enterSimulation();
         try {
-            return doSearch(rootState, aiPlayerId, budget);
+            return doSearch(rootState, aiPlayerId, budget, rootActions);
         } finally {
             SimulationLogSuppressor.exitSimulation();
         }
     }
 
-    private SimulationAction doSearch(GameData rootState, UUID aiPlayerId, int budget) {
+    private SimulationAction doSearch(GameData rootState, UUID aiPlayerId, int budget,
+                                      List<SimulationAction> constrainedRootActions) {
         lastSearchIterations = 0;
         lastSearchFailures = 0;
         lastSearchElapsedMs = 0;
         lastSearchEarlyStopped = false;
         lastSearchFailureCauses.clear();
-        List<SimulationAction> rootActions = simulator.getLegalActions(rootState, aiPlayerId);
+        List<SimulationAction> rootActions = constrainedRootActions == null
+                ? simulator.getLegalActions(rootState, aiPlayerId)
+                : List.copyOf(constrainedRootActions);
         if (rootActions.isEmpty()) {
             return new SimulationAction.PassPriority();
         }
