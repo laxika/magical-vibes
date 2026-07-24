@@ -665,6 +665,32 @@ class AiDecisionEngineTest {
                 .anyMatch(p -> p.getCard().getName().equals("Air Elemental"));
     }
 
+    @Test
+    @DisplayName("Easy AI honors a temporary all-creatures-must-block requirement")
+    void honorsTemporaryLureRequirement() {
+        setupBlockerPhase();
+
+        Permanent attacker = new Permanent(new GrizzlyBears());
+        attacker.setSummoningSick(false);
+        attacker.setAttacking(true);
+        attacker.setMustBeBlockedByAllThisTurn(true);
+        gd.playerBattlefields.get(human.getId()).add(attacker);
+
+        Permanent firstBlocker = new Permanent(new GrizzlyBears());
+        firstBlocker.setSummoningSick(false);
+        gd.playerBattlefields.get(aiPlayer.getId()).add(firstBlocker);
+
+        Permanent secondBlocker = new Permanent(new GrizzlyBears());
+        secondBlocker.setSummoningSick(false);
+        gd.playerBattlefields.get(aiPlayer.getId()).add(secondBlocker);
+
+        ai.handleMessage("AVAILABLE_BLOCKERS", "");
+
+        assertThat(gd.interaction.isAwaitingInput()).isFalse();
+        assertThat(firstBlocker.isBlocking()).isTrue();
+        assertThat(secondBlocker.isBlocking()).isTrue();
+    }
+
     // ===== Must-attack =====
 
     private void setupAttackerPhase() {

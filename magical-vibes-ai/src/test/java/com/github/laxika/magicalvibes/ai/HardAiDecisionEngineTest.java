@@ -3114,6 +3114,33 @@ class HardAiDecisionEngineTest {
         }
 
         @Test
+        @DisplayName("Hard AI keeps temporary mandatory blocks when winning the race")
+        void keepsTemporaryMandatoryBlocksWhenWinningRace() {
+            HardAiDecisionEngine ai = createHardAi(player2);
+
+            harness.forceActivePlayer(player1);
+            harness.forceStep(TurnStep.DECLARE_BLOCKERS);
+            harness.clearPriorityPassed();
+            gd.status = GameStatus.RUNNING;
+            harness.beginBlockerDeclarationInput();
+
+            Permanent attacker = new Permanent(new GrizzlyBears());
+            attacker.setSummoningSick(false);
+            attacker.setAttacking(true);
+            attacker.setMustBeBlockedByAllThisTurn(true);
+            gd.playerBattlefields.get(player1.getId()).add(attacker);
+
+            Permanent aiCreature = new Permanent(new AirElemental());
+            aiCreature.setSummoningSick(false);
+            gd.playerBattlefields.get(player2.getId()).add(aiCreature);
+
+            ai.handleMessage("AVAILABLE_BLOCKERS", "");
+
+            assertThat(gd.interaction.isAwaitingInput()).isFalse();
+            assertThat(aiCreature.isBlocking()).isTrue();
+        }
+
+        @Test
         @DisplayName("Hard AI still blocks when winning the race but damage would be lethal")
         void blocksWhenWinningRaceButDamageIsLethal() {
             HardAiDecisionEngine ai = createHardAi(player2);

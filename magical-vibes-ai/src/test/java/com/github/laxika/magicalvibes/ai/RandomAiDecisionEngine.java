@@ -867,7 +867,8 @@ class RandomAiDecisionEngine extends AiDecisionEngine {
         for (int i = 0; i < opponentBattlefield.size(); i++) {
             Permanent attacker = opponentBattlefield.get(i);
             if (!attacker.isAttacking()) continue;
-            boolean hasLure = attacker.getCard().getEffects(EffectSlot.STATIC).stream()
+            boolean hasLure = attacker.isMustBeBlockedByAllThisTurn()
+                    || attacker.getCard().getEffects(EffectSlot.STATIC).stream()
                     .anyMatch(MustBeBlockedByAllCreaturesEffect.class::isInstance)
                     || gameQueryService.hasAuraWithEffect(gameData, attacker, MustBeBlockedByAllCreaturesEffect.class);
             if (hasLure) {

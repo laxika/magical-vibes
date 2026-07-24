@@ -988,6 +988,35 @@ class CombatSimulatorTest {
     }
 
     @Test
+    @DisplayName("Exhaustive: temporary lure effect forces all blockers")
+    void exhaustiveTemporaryLureForcesBlocking() {
+        Permanent temporaryLureAttacker = new Permanent(new GrizzlyBears());
+        temporaryLureAttacker.setSummoningSick(false);
+        temporaryLureAttacker.setAttacking(true);
+        temporaryLureAttacker.setMustBeBlockedByAllThisTurn(true);
+        gd.playerBattlefields.get(player2.getId()).add(temporaryLureAttacker);
+
+        Permanent regularAttacker = new Permanent(new GrizzlyBears());
+        regularAttacker.setSummoningSick(false);
+        regularAttacker.setAttacking(true);
+        gd.playerBattlefields.get(player2.getId()).add(regularAttacker);
+
+        Permanent firstBlocker = new Permanent(new GrizzlyBears());
+        firstBlocker.setSummoningSick(false);
+        gd.playerBattlefields.get(player1.getId()).add(firstBlocker);
+
+        Permanent secondBlocker = new Permanent(new GrizzlyBears());
+        secondBlocker.setSummoningSick(false);
+        gd.playerBattlefields.get(player1.getId()).add(secondBlocker);
+
+        List<int[]> blockers = simulator.findBestBlockersExhaustive(
+                gd, player1.getId(), List.of(0, 1), List.of(0, 1));
+
+        assertThat(blockers).hasSize(2);
+        assertThat(blockers).allMatch(block -> block[1] == 0);
+    }
+
+    @Test
     @DisplayName("Exhaustive: must-block-if-able forces at least one blocker")
     void exhaustiveMustBlockIfAble() {
         // Opponent attacks with Gaea's Protector (4/2 must-block-if-able) and a 2/2

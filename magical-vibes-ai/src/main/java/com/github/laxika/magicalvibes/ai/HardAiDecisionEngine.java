@@ -2450,6 +2450,7 @@ public class HardAiDecisionEngine extends AiDecisionEngine {
      */
     private boolean hasMandatoryBlockRequirement(GameData gameData, Permanent attacker) {
         // Check for "must be blocked by all creatures" (Lure effects)
+        if (attacker.isMustBeBlockedByAllThisTurn()) return true;
         boolean hasLure = attacker.getCard().getEffects(EffectSlot.STATIC).stream()
                 .anyMatch(com.github.laxika.magicalvibes.model.effect.MustBeBlockedByAllCreaturesEffect.class::isInstance);
         if (hasLure) return true;

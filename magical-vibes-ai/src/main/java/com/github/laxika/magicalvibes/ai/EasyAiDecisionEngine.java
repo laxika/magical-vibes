@@ -621,6 +621,7 @@ public class EasyAiDecisionEngine extends AiDecisionEngine {
     }
 
     private boolean hasLureEffect(GameData gameData, Permanent attacker) {
+        if (attacker.isMustBeBlockedByAllThisTurn()) return true;
         boolean hasOnCard = attacker.getCard().getEffects(EffectSlot.STATIC).stream()
                 .anyMatch(MustBeBlockedByAllCreaturesEffect.class::isInstance);
         if (hasOnCard) return true;
