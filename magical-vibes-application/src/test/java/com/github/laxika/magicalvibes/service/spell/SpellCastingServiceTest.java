@@ -48,6 +48,7 @@ import org.mockito.junit.jupiter.MockitoExtension;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.EnumSet;
+import java.util.HashSet;
 import java.util.List;
 import java.util.UUID;
 
@@ -57,6 +58,7 @@ import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.anyBoolean;
 import static org.mockito.ArgumentMatchers.anyInt;
 import static org.mockito.ArgumentMatchers.eq;
+import static org.mockito.Mockito.lenient;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.verifyNoInteractions;
 import static org.mockito.Mockito.when;
@@ -150,6 +152,15 @@ class SpellCastingServiceTest {
         gd.status = GameStatus.RUNNING;
         gd.activePlayerId = player1Id;
         gd.currentStep = TurnStep.PRECOMBAT_MAIN;
+
+        // Preserve the characteristics declared on each test card instead of Mockito's null
+        // defaults. Individual tests can set colors/subtypes on their cards as needed.
+        lenient().when(gameQueryService.getCardSubtypes(any(Card.class), any(GameData.class), any(UUID.class)))
+                .thenAnswer(invocation -> new HashSet<>(
+                        ((Card) invocation.getArgument(0)).getSubtypes()));
+        lenient().when(gameQueryService.getEffectiveColors(any(GameData.class), any(Permanent.class)))
+                .thenAnswer(invocation -> new HashSet<>(
+                        ((Permanent) invocation.getArgument(1)).getEffectiveColors()));
     }
 
     // =========================================================================
