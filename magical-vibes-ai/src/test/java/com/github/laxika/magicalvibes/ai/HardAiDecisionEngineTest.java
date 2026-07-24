@@ -786,8 +786,6 @@ class HardAiDecisionEngineTest {
 
             HardAiDecisionEngine engine = createEngine();
             MCTSEngine failingMcts = Mockito.mock(MCTSEngine.class);
-            Mockito.when(failingMcts.search(any(), any(), Mockito.anyInt()))
-                    .thenThrow(new RuntimeException("MCTS disabled for test"));
             Mockito.when(failingMcts.search(any(), any(), Mockito.anyInt(), Mockito.anyList()))
                     .thenThrow(new RuntimeException("MCTS disabled for test"));
             engine.setMctsEngine(failingMcts);
@@ -946,8 +944,6 @@ class HardAiDecisionEngineTest {
             // Force MCTS to fail so the evaluator fallback (tryCastSpell) is exercised
             HardAiDecisionEngine engine = createEngine();
             MCTSEngine failingMcts = Mockito.mock(MCTSEngine.class);
-            Mockito.when(failingMcts.search(any(), any(), Mockito.anyInt()))
-                    .thenThrow(new RuntimeException("MCTS disabled for test"));
             Mockito.when(failingMcts.search(any(), any(), Mockito.anyInt(), Mockito.anyList()))
                     .thenThrow(new RuntimeException("MCTS disabled for test"));
             engine.setMctsEngine(failingMcts);
@@ -1094,8 +1090,6 @@ class HardAiDecisionEngineTest {
         // varies run-to-run with map ordering of the game's random UUIDs — so force the
         // evaluator fallback instead.
         MCTSEngine failingMcts = Mockito.mock(MCTSEngine.class);
-        Mockito.when(failingMcts.search(any(), any(), Mockito.anyInt()))
-                .thenThrow(new RuntimeException("MCTS disabled for test"));
         Mockito.when(failingMcts.search(any(), any(), Mockito.anyInt(), Mockito.anyList()))
                 .thenThrow(new RuntimeException("MCTS disabled for test"));
         ai.setMctsEngine(failingMcts);
@@ -1133,8 +1127,6 @@ class HardAiDecisionEngineTest {
         // Deterministic evaluator path — the cast-vs-pass margin for this two-spell
         // setup is thin for MCTS under UUID map-ordering noise.
         MCTSEngine failingMcts = Mockito.mock(MCTSEngine.class);
-        Mockito.when(failingMcts.search(any(), any(), Mockito.anyInt()))
-                .thenThrow(new RuntimeException("MCTS disabled for test"));
         Mockito.when(failingMcts.search(any(), any(), Mockito.anyInt(), Mockito.anyList()))
                 .thenThrow(new RuntimeException("MCTS disabled for test"));
         ai.setMctsEngine(failingMcts);
@@ -1931,8 +1923,6 @@ class HardAiDecisionEngineTest {
         // marginal for MCTS, whose seeded search still varies run-to-run with map ordering
         // of the game's random UUIDs — so force the evaluator fallback instead.
         MCTSEngine failingMcts = Mockito.mock(MCTSEngine.class);
-        Mockito.when(failingMcts.search(any(), any(), Mockito.anyInt()))
-                .thenThrow(new RuntimeException("MCTS disabled for test"));
         Mockito.when(failingMcts.search(any(), any(), Mockito.anyInt(), Mockito.anyList()))
                 .thenThrow(new RuntimeException("MCTS disabled for test"));
         ai.setMctsEngine(failingMcts);

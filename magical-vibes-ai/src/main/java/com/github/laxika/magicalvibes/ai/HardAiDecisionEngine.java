@@ -1847,8 +1847,9 @@ public class HardAiDecisionEngine extends AiDecisionEngine {
 
         List<SimulationAction> abilityRootActions = gameSimulator.getLegalActions(
                         gameData, aiPlayer.getId()).stream()
-                .filter(action -> action instanceof SimulationAction.ActivateAbility
-                        || action instanceof SimulationAction.PassPriority)
+                .filter(action -> action instanceof SimulationAction.PassPriority
+                        || action instanceof SimulationAction.ActivateAbility activateAbility
+                        && isMctsAbilityActionEligible(gameData, activateAbility))
                 .toList();
         boolean hasMctsAbility = abilityRootActions.stream()
                 .anyMatch(SimulationAction.ActivateAbility.class::isInstance);
@@ -1857,11 +1858,12 @@ public class HardAiDecisionEngine extends AiDecisionEngine {
                 SimulationAction bestAction = mctsEngine.search(
                         gameData, aiPlayer.getId(), MCTS_BUDGET, abilityRootActions);
                 if (bestAction instanceof SimulationAction.ActivateAbility activateAbility) {
-                    return executeMctsAbility(gameData, activateAbility);
+                    if (executeMctsAbility(gameData, activateAbility)) {
+                        return true;
+                    }
                 }
                 if (bestAction instanceof SimulationAction.PassPriority) {
-                    log.info("AI (Hard/MCTS): Passing instead of activating an ability in game {}", gameId);
-                    return false;
+                    log.info("AI (Hard/MCTS): Passing ability choice to evaluator logic in game {}", gameId);
                 }
             } catch (Exception e) {
                 log.warn("AI (Hard): Ability MCTS failed, falling back to evaluator logic in game {}",
@@ -1990,6 +1992,26 @@ public class HardAiDecisionEngine extends AiDecisionEngine {
         send(() -> gameActions.handleActivateAbility(selfConnection,
                 new ActivateAbilityRequest(permIdx, abilIdx, null, finalTargetId, null, null, null)));
         return true;
+    }
+
+    /**
+     * Keeps MCTS ability choices within the same strategic timing policy as the deterministic
+     * evaluator. The simulator owns rules legality; this gate prevents search from spending mana
+     * on context-sensitive abilities such as idle pumps or pumps that cannot answer stack damage.
+     */
+    private boolean isMctsAbilityActionEligible(GameData gameData,
+                                                SimulationAction.ActivateAbility action) {
+        Permanent permanent = findPermanent(gameData, action.permanentId());
+        if (permanent == null) {
+            return false;
+        }
+        List<ActivatedAbility> abilities = buildEffectiveAbilityList(gameData, permanent);
+        if (action.abilityIndex() < 0 || action.abilityIndex() >= abilities.size()) {
+            return false;
+        }
+        ActivatedAbility ability = abilities.get(action.abilityIndex());
+        return ability.getLoyaltyCost() != null
+                || isGoodTimingForAbility(gameData, ability, permanent, action.targetId());
     }
 
     /**

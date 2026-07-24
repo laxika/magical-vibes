@@ -6,6 +6,7 @@ import com.github.laxika.magicalvibes.ai.simulation.SimulationAction;
 import com.github.laxika.magicalvibes.cards.a.AirElemental;
 import com.github.laxika.magicalvibes.cards.a.ArmoredAscension;
 import com.github.laxika.magicalvibes.cards.b.BerserkersOfBloodRidge;
+import com.github.laxika.magicalvibes.cards.c.ChandraBoldPyromancer;
 import com.github.laxika.magicalvibes.cards.e.EliteVanguard;
 import com.github.laxika.magicalvibes.cards.f.FitOfRage;
 import com.github.laxika.magicalvibes.cards.f.Forest;
@@ -16,6 +17,7 @@ import com.github.laxika.magicalvibes.cards.s.SerraAngel;
 import com.github.laxika.magicalvibes.cards.s.SmiteTheMonstrous;
 import com.github.laxika.magicalvibes.cards.t.TragedyFeaster;
 import com.github.laxika.magicalvibes.model.Card;
+import com.github.laxika.magicalvibes.model.CounterType;
 import com.github.laxika.magicalvibes.model.GameData;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
@@ -145,6 +147,27 @@ class GameSimulatorTest {
 
         assertThat(actions).extracting(SimulationAction.ActivateAbility::targetId)
                 .contains(feaster.getId(), player2.getId());
+    }
+
+    @Test
+    @DisplayName("Player-damage ability prefers the opponent target")
+    void playerDamageAbilityPrefersOpponentTarget() {
+        Permanent chandra = harness.addToBattlefieldAndReturn(player1, new ChandraBoldPyromancer());
+        chandra.setCounterCount(CounterType.LOYALTY, 5);
+        harness.forceStep(TurnStep.PRECOMBAT_MAIN);
+        harness.forceActivePlayer(player1);
+        gd.stack.clear();
+
+        List<SimulationAction.ActivateAbility> actions = simulator.getLegalActions(
+                        gd, player1.getId()).stream()
+                .filter(SimulationAction.ActivateAbility.class::isInstance)
+                .map(SimulationAction.ActivateAbility.class::cast)
+                .filter(action -> action.permanentId().equals(chandra.getId()))
+                .filter(action -> action.abilityIndex() == 0)
+                .toList();
+
+        assertThat(actions).extracting(SimulationAction.ActivateAbility::targetId)
+                .containsExactly(player2.getId());
     }
 
     @Test

@@ -609,7 +609,8 @@ public class GameSimulator {
                                           ValidTargetsResponse validTargets) {
         UUID opponentId = getOpponentId(gd, playerId);
         boolean harmful = ability.getEffects().stream()
-                .anyMatch(effect -> effect.targetSpec().harmful());
+                .anyMatch(effect -> effect.targetSpec().harmful()
+                        || effect instanceof DamageDealingEffect);
 
         List<UUID> playerTargets = new ArrayList<>(validTargets.validPlayerIds());
         UUID preferredPlayer = harmful ? opponentId : playerId;
