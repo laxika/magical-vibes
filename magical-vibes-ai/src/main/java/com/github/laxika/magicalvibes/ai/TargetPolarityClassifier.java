@@ -249,6 +249,7 @@ public class TargetPolarityClassifier {
             // uses (Hazoret's Favor) are safe: their target filters restrict candidates anyway.
             entry("SacrificeTargetPermanentAtEndStepEffect", TargetPolarity.HARMFUL_REMOVAL),
             entry("ShuffleTargetPermanentIntoLibraryEffect", TargetPolarity.HARMFUL_REMOVAL),
+            entry("WintersChillEffect", TargetPolarity.HARMFUL_REMOVAL),
 
             // The target (or a permanent tied to it) takes damage.
             entry("DealDamageToAnyTargetEqualToChosenTypeCountEffect", TargetPolarity.HARMFUL_DAMAGE),
@@ -281,6 +282,7 @@ public class TargetPolarityClassifier {
             entry("MassFightTargetCreatureEffect", TargetPolarity.HARMFUL),
             entry("MustBlockSourceEffect", TargetPolarity.HARMFUL),
             entry("MustBlockTargetCreatureEffect", TargetPolarity.HARMFUL),
+            entry("PreventTargetCreatureRegenerationThisTurnEffect", TargetPolarity.HARMFUL),
             entry("RemoveKeywordEffect", TargetPolarity.HARMFUL),
             entry("RemoveTargetFromCombatEffect", TargetPolarity.HARMFUL),
             entry("TargetCreatureDealsPowerDamageToAnyTargetEffect", TargetPolarity.HARMFUL),
