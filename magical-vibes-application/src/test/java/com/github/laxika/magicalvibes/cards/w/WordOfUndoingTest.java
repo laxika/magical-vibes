@@ -98,9 +98,9 @@ class WordOfUndoingTest extends BaseCardTest {
         assertThat(gd.playerHands.get(player1.getId()))
                 .anyMatch(c -> c.getName().equals("Grizzly Bears"));
         assertThat(gd.playerHands.get(player2.getId()))
-                .noneMatch(c -> c.getName().equals("Pacifism"));
+                .doesNotContain(opponentAura.getOriginalCard());
         assertThat(gd.playerGraveyards.get(player2.getId()))
-                .anyMatch(c -> c.getName().equals("Pacifism"));
+                .contains(opponentAura.getOriginalCard());
     }
 
     @Test
