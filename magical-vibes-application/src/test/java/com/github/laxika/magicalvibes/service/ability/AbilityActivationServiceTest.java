@@ -120,6 +120,9 @@ class AbilityActivationServiceTest {
         // No Mana Reflection in these tests — every mana production is 1x.
         lenient().when(gameQueryService.manaProductionMultiplier(eq(gameData), any(UUID.class)))
                 .thenReturn(1);
+        lenient().when(castingCostService.getImposedSacrificeRequirementForAbility(
+                        eq(gameData), any()))
+                .thenReturn(CastingCostService.ImposedSacrificeRequirement.none());
     }
 
     // =========================================================================
