@@ -849,10 +849,19 @@ public abstract class AiDecisionEngine {
     // ===== Modal Spell Handling (ChooseOneEffect) =====
 
     /**
-     * Internal record for modal spell casting: holds the selected mode index
-     * (used as xValue in PlayCardRequest) and the target for that mode.
+     * Internal record for modal spell casting: holds the selected mode encoding
+     * (used as xValue in PlayCardRequest), the legacy single target, and any
+     * target-slot targets declared by multi-mode or variable-count modes.
      */
-    protected record ModalCastPlan(int modeIndex, UUID targetId) {}
+    protected record ModalCastPlan(int modeIndex, UUID targetId, List<UUID> targetIds) {
+        protected ModalCastPlan {
+            targetIds = targetIds == null ? List.of() : List.copyOf(targetIds);
+        }
+
+        protected ModalCastPlan(int modeIndex, UUID targetId) {
+            this(modeIndex, targetId, List.of());
+        }
+    }
 
     /**
      * Finds the ChooseOneEffect in the card's SPELL effects, if any.
@@ -893,15 +902,26 @@ public abstract class AiDecisionEngine {
 
         // Fixed choose-N (e.g. choose two): pick the first N valid modes.
         if (coe.choicesRequired() > 1 && coe.choicesRequired() == coe.choicesMax()) {
-            List<Integer> validModes = new java.util.ArrayList<>();
+            List<Integer> validModes = new ArrayList<>();
+            List<UUID> targetIds = new ArrayList<>();
+            UUID targetId = null;
             for (int i = 0; i < coe.options().size(); i++) {
                 ChooseOneEffect.ChooseOneOption option = coe.options().get(i);
                 if (isModalModeValid(gameData, card, option)) {
                     validModes.add(i);
+                    UUID modeTarget = findModalModeTarget(gameData, card, option);
+                    if (modeTarget != null) {
+                        if (option.targetFilter() != null || option.targetFilters() != null) {
+                            targetIds.add(modeTarget);
+                        } else {
+                            targetId = modeTarget;
+                        }
+                    }
                     if (validModes.size() == coe.choicesRequired()) {
                         int[] modeIndices = validModes.stream().mapToInt(Integer::intValue).toArray();
                         return new ModalCastPlan(
-                                ChooseOneEffect.encodeModeSelection(coe.choicesRequired(), modeIndices), null);
+                                ChooseOneEffect.encodeModeSelection(coe.choicesRequired(), modeIndices),
+                                targetId, targetIds);
                     }
                 }
             }
@@ -920,23 +940,49 @@ public abstract class AiDecisionEngine {
 
             if (effect.targetSpec().category().includesPermanents()) {
                 UUID target = findModalPermanentTarget(gameData, card, option);
-                if (target != null) return new ModalCastPlan(encoded, target);
+                if (target != null) {
+                    return coe.variableModeCount()
+                            ? new ModalCastPlan(encoded, null, List.of(target))
+                            : new ModalCastPlan(encoded, target);
+                }
                 continue;
             }
 
             if (effect.targetSpec().category().includesPlayers()) {
                 UUID opponentId = AiUtils.getOpponentId(gameData, aiPlayer.getId());
-                return new ModalCastPlan(encoded, opponentId);
+                return coe.variableModeCount()
+                        ? new ModalCastPlan(encoded, null, List.of(opponentId))
+                        : new ModalCastPlan(encoded, opponentId);
             }
 
             if (effect.targetSpec().category().isGraveyard()) {
                 List<Card> targets = targetSelector.findValidGraveyardTargets(gameData, card, aiPlayer.getId());
-                if (!targets.isEmpty()) return new ModalCastPlan(encoded, targets.getFirst().getId());
+                if (!targets.isEmpty()) {
+                    UUID target = targets.getFirst().getId();
+                    return coe.variableModeCount()
+                            ? new ModalCastPlan(encoded, null, List.of(target))
+                            : new ModalCastPlan(encoded, target);
+                }
                 continue;
             }
 
             // No targeting required — mode is always valid
             return new ModalCastPlan(encoded, null);
+        }
+        return null;
+    }
+
+    private UUID findModalModeTarget(GameData gameData, Card card, ChooseOneEffect.ChooseOneOption option) {
+        CardEffect effect = option.effect();
+        if (effect.targetSpec().category().includesPermanents()) {
+            return findModalPermanentTarget(gameData, card, option);
+        }
+        if (effect.targetSpec().category().includesPlayers()) {
+            return AiUtils.getOpponentId(gameData, aiPlayer.getId());
+        }
+        if (effect.targetSpec().category().isGraveyard()) {
+            List<Card> targets = targetSelector.findValidGraveyardTargets(gameData, card, aiPlayer.getId());
+            return targets.isEmpty() ? null : targets.getFirst().getId();
         }
         return null;
     }

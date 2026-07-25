@@ -1007,15 +1007,13 @@ public class HardAiDecisionEngine extends AiDecisionEngine {
         }
 
         // 3. Targeting
-        UUID targetId = initialTargetId;
-        List<UUID> multiTargetIds = null;
+        UUID targetId = modalPlan != null ? modalPlan.targetId() : initialTargetId;
+        List<UUID> multiTargetIds = modalPlan != null ? modalPlan.targetIds() : null;
         boolean isMultiTarget = targetSelector.needsMultiTargetSelection(card);
         if (isMultiTarget && modalPlan == null) {
             multiTargetIds = targetSelector.chooseMultiTargets(gameData, card, aiPlayer.getId());
             if (multiTargetIds == null) return null;
             targetId = null;
-        } else if (targetId == null && modalPlan != null) {
-            targetId = modalPlan.targetId();
         } else if (targetId == null && checkSpellTarget && modalPlan == null
                 && EffectResolution.needsSpellTarget(card)) {
             targetId = targetSelector.chooseSpellTarget(gameData, card, aiPlayer.getId());
@@ -1031,11 +1029,6 @@ public class HardAiDecisionEngine extends AiDecisionEngine {
         if (damageAssignments != null) {
             targetId = null;
         }
-        // Modal target overrides any pre-set target (e.g. from MCTS)
-        if (modalPlan != null && multiTargetIds == null && damageAssignments == null) {
-            targetId = modalPlan.targetId();
-        }
-
         // 4. Targeting tax
         int targetingTax = computeTargetingTax(gameData, targetId, multiTargetIds);
         if (targetingTax > 0 && !canAffordSpell(gameData, card, virtualPool, targetingTax)) {

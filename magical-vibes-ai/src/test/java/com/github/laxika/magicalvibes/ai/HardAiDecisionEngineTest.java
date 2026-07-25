@@ -16,6 +16,7 @@ import com.github.laxika.magicalvibes.cards.p.PhantomWarrior;
 import com.github.laxika.magicalvibes.cards.s.SeveredLegion;
 import com.github.laxika.magicalvibes.cards.b.BerserkersOfBloodRidge;
 import com.github.laxika.magicalvibes.cards.c.Cancel;
+import com.github.laxika.magicalvibes.cards.c.CrypticCommand;
 import com.github.laxika.magicalvibes.cards.d.Divination;
 import com.github.laxika.magicalvibes.cards.d.DoomBlade;
 import com.github.laxika.magicalvibes.cards.w.WrathOfGod;
@@ -961,6 +962,32 @@ class HardAiDecisionEngineTest {
     }
 
     // ===== Modal spell handling (ChooseOneEffect) =====
+
+    @Test
+    @DisplayName("Hard AI casts Cryptic Command with its choose-two target")
+    void castsCrypticCommandWithChooseTwoTarget() {
+        HardAiDecisionEngine ai = createHardAi(player1);
+
+        harness.forceActivePlayer(player2);
+        harness.forceStep(TurnStep.BEGINNING_OF_COMBAT);
+        harness.clearPriorityPassed();
+        gd.status = GameStatus.RUNNING;
+        gd.interaction.clearAwaitingInput();
+        gd.stack.clear();
+        gd.priorityPassedBy.add(player2.getId());
+        givePlayerIslands(player1, 4);
+
+        Permanent target = new Permanent(new AirElemental());
+        target.setSummoningSick(false);
+        gd.playerBattlefields.get(player2.getId()).add(target);
+        harness.setHand(player1, List.of(new CrypticCommand()));
+
+        ai.handleMessage("GAME_STATE", "");
+
+        assertThat(gd.stack).hasSize(1);
+        assertThat(gd.stack.getFirst().getCard().getName()).isEqualTo("Cryptic Command");
+        assertThat(gd.stack.getFirst().getTargetId()).isEqualTo(target.getId());
+    }
 
     @Test
     @DisplayName("Hard AI does not cast Steel Sabotage when no mode has valid targets")

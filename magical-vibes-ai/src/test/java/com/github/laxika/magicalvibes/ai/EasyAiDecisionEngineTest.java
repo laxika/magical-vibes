@@ -4,8 +4,11 @@ import com.github.laxika.magicalvibes.testutil.TestCards;
 import com.github.laxika.magicalvibes.model.PendingInteraction;
 import com.github.laxika.magicalvibes.cards.e.EliteVanguard;
 import com.github.laxika.magicalvibes.cards.e.EntrancingMelody;
+import com.github.laxika.magicalvibes.cards.b.BorrowedHostility;
+import com.github.laxika.magicalvibes.cards.c.CrypticCommand;
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
 import com.github.laxika.magicalvibes.cards.i.Island;
+import com.github.laxika.magicalvibes.cards.m.Mountain;
 import com.github.laxika.magicalvibes.cards.p.Plains;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardType;
@@ -116,6 +119,86 @@ class EasyAiDecisionEngineTest {
                         targetValidationService));
         engine.setSelfConnection(selfConnection);
         return engine;
+    }
+
+    @Nested
+    @DisplayName("Modal spell targets")
+    class ModalSpellTargetTests {
+
+        private GameTestHarness testHarness;
+        private Player human;
+        private Player aiTestPlayer;
+        private GameData testGd;
+        private EasyAiDecisionEngine easyAi;
+
+        @BeforeEach
+        void setUpHarness() {
+            testHarness = new GameTestHarness();
+            human = testHarness.getPlayer1();
+            aiTestPlayer = testHarness.getPlayer2();
+            testGd = testHarness.getGameData();
+            testHarness.skipMulligan();
+            testHarness.clearMessages();
+
+            FakeConnection aiConn = new FakeConnection("ai-easy-modal-test");
+            testHarness.getSessionManager().registerPlayer(aiConn, aiTestPlayer.getId(), "Bob");
+            easyAi = new EasyAiDecisionEngine(testGd.id, aiTestPlayer, testHarness.getGameRegistry(),
+                    testHarness.getGameService(), testHarness.getGameQueryService(),
+                    testHarness.getCombatAttackService(), testHarness.getGameBroadcastService(),
+                    testHarness.getCastingCostService(), testHarness.getCastingPermissionService(),
+                    testHarness.getTargetValidationService(), testHarness.getTargetLegalityService());
+            easyAi.setSelfConnection(aiConn);
+        }
+
+        private void giveAiPriority() {
+            testHarness.forceActivePlayer(aiTestPlayer);
+            testHarness.forceStep(TurnStep.PRECOMBAT_MAIN);
+            testHarness.clearPriorityPassed();
+            testGd.status = GameStatus.RUNNING;
+            testGd.interaction.clearAwaitingInput();
+            testGd.stack.clear();
+        }
+
+        private void giveManaSources(java.util.function.Supplier<? extends Card> landFactory, int count) {
+            for (int i = 0; i < count; i++) {
+                Permanent permanent = new Permanent(landFactory.get());
+                permanent.setSummoningSick(false);
+                testGd.playerBattlefields.get(aiTestPlayer.getId()).add(permanent);
+            }
+        }
+
+        @Test
+        @DisplayName("Easy AI casts Cryptic Command with its choose-two target")
+        void castsCrypticCommandWithChooseTwoTarget() {
+            giveAiPriority();
+            giveManaSources(Island::new, 4);
+            Permanent target = new Permanent(new GrizzlyBears());
+            testGd.playerBattlefields.get(human.getId()).add(target);
+            testHarness.setHand(aiTestPlayer, List.of(new CrypticCommand()));
+
+            easyAi.handleMessage("GAME_STATE", "");
+
+            assertThat(testGd.stack).hasSize(1);
+            assertThat(testGd.stack.getFirst().getCard().getName()).isEqualTo("Cryptic Command");
+            assertThat(testGd.stack.getFirst().getTargetId()).isEqualTo(target.getId());
+        }
+
+        @Test
+        @DisplayName("Easy AI sends variable-count modal targets through target slots")
+        void castsVariableCountModalSpellWithTargetSlot() {
+            giveAiPriority();
+            giveManaSources(Mountain::new, 1);
+            Permanent target = new Permanent(new GrizzlyBears());
+            testGd.playerBattlefields.get(human.getId()).add(target);
+            testHarness.setHand(aiTestPlayer, List.of(new BorrowedHostility()));
+
+            easyAi.handleMessage("GAME_STATE", "");
+
+            assertThat(testGd.stack).hasSize(1);
+            assertThat(testGd.stack.getFirst().getCard().getName()).isEqualTo("Borrowed Hostility");
+            assertThat(testGd.stack.getFirst().getTargetId()).isNull();
+            assertThat(testGd.stack.getFirst().getTargetIds()).containsExactly(target.getId());
+        }
     }
 
     // ===== Creature mana restriction =====

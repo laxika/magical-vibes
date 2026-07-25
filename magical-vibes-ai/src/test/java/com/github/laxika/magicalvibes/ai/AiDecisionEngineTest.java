@@ -10,7 +10,9 @@ import com.github.laxika.magicalvibes.cards.a.AvenCloudchaser;
 import com.github.laxika.magicalvibes.cards.b.BairdStewardOfArgive;
 import com.github.laxika.magicalvibes.cards.b.BirdsOfParadise;
 import com.github.laxika.magicalvibes.cards.b.Blaze;
+import com.github.laxika.magicalvibes.cards.b.BorrowedHostility;
 import com.github.laxika.magicalvibes.cards.b.BerserkersOfBloodRidge;
+import com.github.laxika.magicalvibes.cards.c.CrypticCommand;
 import com.github.laxika.magicalvibes.cards.g.GoblinPiker;
 import com.github.laxika.magicalvibes.cards.r.RootboundCrag;
 import com.github.laxika.magicalvibes.cards.s.SunpetalGrove;
@@ -1328,6 +1330,35 @@ class AiDecisionEngineTest {
         assertThat(plan).isNotNull();
         assertThat(plan.modeIndex()).isEqualTo(0);
         assertThat(plan.targetId()).isNull();
+    }
+
+    @Test
+    @DisplayName("prepareModalSpellCast retains the target for a fixed choose-two spell")
+    void prepareModalSpellCastRetainsChooseTwoTarget() {
+        Permanent target = new Permanent(new GrizzlyBears());
+        gd.playerBattlefields.get(human.getId()).add(target);
+
+        CrypticCommand crypticCommand = new CrypticCommand();
+        var plan = ai.prepareModalSpellCast(gd, crypticCommand);
+
+        assertThat(plan).isNotNull();
+        ChooseOneEffect chooseTwo = ai.findChooseOneEffect(crypticCommand);
+        assertThat(chooseTwo.decodeModeIndices(plan.modeIndex())).containsExactly(1, 2);
+        assertThat(plan.targetId()).isEqualTo(target.getId());
+        assertThat(plan.targetIds()).isEmpty();
+    }
+
+    @Test
+    @DisplayName("prepareModalSpellCast routes variable-count modal targets through target slots")
+    void prepareModalSpellCastRoutesVariableCountTargetThroughTargetSlot() {
+        Permanent target = new Permanent(new GrizzlyBears());
+        gd.playerBattlefields.get(human.getId()).add(target);
+
+        var plan = ai.prepareModalSpellCast(gd, new BorrowedHostility());
+
+        assertThat(plan).isNotNull();
+        assertThat(plan.targetId()).isNull();
+        assertThat(plan.targetIds()).containsExactly(target.getId());
     }
 
     @Test

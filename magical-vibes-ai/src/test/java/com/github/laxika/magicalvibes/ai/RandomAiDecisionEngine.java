@@ -355,7 +355,7 @@ class RandomAiDecisionEngine extends AiDecisionEngine {
 
             // Determine target if needed (skip for modal and damage distribution spells)
             UUID targetId = modalPlan != null ? modalPlan.targetId() : null;
-            List<UUID> multiTargetIds = null;
+            List<UUID> multiTargetIds = modalPlan != null ? modalPlan.targetIds() : null;
             boolean isMultiTarget = card.getSpellTargets().size() > 1;
             if (isMultiTarget && modalPlan == null) {
                 multiTargetIds = targetSelector.chooseMultiTargets(gameData, card, aiPlayer.getId());

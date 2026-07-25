@@ -156,7 +156,7 @@ public class MediumAiDecisionEngine extends AiDecisionEngine {
 
         // Determine target if needed (skip for modal and damage distribution spells)
         UUID targetId = modalPlan != null ? modalPlan.targetId() : null;
-        List<UUID> multiTargetIds = null;
+        List<UUID> multiTargetIds = modalPlan != null ? modalPlan.targetIds() : null;
         boolean isMultiTarget = targetSelector.needsMultiTargetSelection(card);
         if (isMultiTarget && modalPlan == null) {
             multiTargetIds = targetSelector.chooseMultiTargets(gameData, card, aiPlayer.getId());
@@ -332,7 +332,7 @@ public class MediumAiDecisionEngine extends AiDecisionEngine {
         }
 
         UUID targetId = modalPlan != null ? modalPlan.targetId() : null;
-        List<UUID> multiTargetIds = null;
+        List<UUID> multiTargetIds = modalPlan != null ? modalPlan.targetIds() : null;
         boolean isMultiTarget = targetSelector.needsMultiTargetSelection(card);
         if (isMultiTarget && modalPlan == null) {
             multiTargetIds = targetSelector.chooseMultiTargets(gameData, card, aiPlayer.getId());
