@@ -20,6 +20,7 @@ import com.github.laxika.magicalvibes.service.battlefield.GameQueryService;
 import com.github.laxika.magicalvibes.service.ability.AbilityActivationService;
 import com.github.laxika.magicalvibes.service.combat.CombatService;
 import com.github.laxika.magicalvibes.service.effect.normalfx.ExileSupport;
+import com.github.laxika.magicalvibes.service.event.GameMutationCoordinator;
 import com.github.laxika.magicalvibes.service.interaction.CombatDamageAssignmentInteractionHandler;
 import com.github.laxika.magicalvibes.service.interaction.InteractionAnswer;
 import com.github.laxika.magicalvibes.service.interaction.InteractionHandlerRegistry;
@@ -53,6 +54,15 @@ public class GameService {
     private final ReconnectionService reconnectionService;
     private final ExileSupport exileSupport;
     private final GameOutcomeService gameOutcomeService;
+    private final GameMutationCoordinator mutationCoordinator;
+
+    private boolean runAsActionIfNeeded(GameData gameData, Runnable action) {
+        if (mutationCoordinator.isInAction(gameData)) {
+            return false;
+        }
+        mutationCoordinator.mutate(gameData, action);
+        return true;
+    }
 
     /**
      * Validates that the game is running, no interaction is awaiting input, and the given player
@@ -142,6 +152,8 @@ public class GameService {
     }
 
     public void passPriority(GameData gameData, Player player) {
+        Player actionPlayer = player;
+        if (runAsActionIfNeeded(gameData, () -> passPriority(gameData, actionPlayer))) return;
         synchronized (gameData) {
             player = resolveActingPlayer(gameData, player);
             requirePriority(gameData, player);
@@ -178,6 +190,7 @@ public class GameService {
     }
 
     public void paySearchTax(GameData gameData, Player player) {
+        if (runAsActionIfNeeded(gameData, () -> paySearchTax(gameData, player))) return;
         synchronized (gameData) {
             requirePriority(gameData, player);
 
@@ -222,6 +235,7 @@ public class GameService {
     }
 
     public void surrender(GameData gameData, Player player) {
+        if (runAsActionIfNeeded(gameData, () -> surrender(gameData, player))) return;
         synchronized (gameData) {
             if (gameData.status == GameStatus.FINISHED) {
                 throw new IllegalStateException("Game is already finished");
@@ -234,16 +248,19 @@ public class GameService {
     }
 
     public void advanceStep(GameData gameData) {
+        if (runAsActionIfNeeded(gameData, () -> advanceStep(gameData))) return;
         turnProgressionService.advanceStep(gameData);
     }
 
     public void resendAwaitingInput(GameData gameData, UUID playerId) {
+        if (runAsActionIfNeeded(gameData, () -> resendAwaitingInput(gameData, playerId))) return;
         synchronized (gameData) {
             reconnectionService.resendAwaitingInput(gameData, playerId);
         }
     }
 
     public void keepHand(GameData gameData, Player player) {
+        if (runAsActionIfNeeded(gameData, () -> keepHand(gameData, player))) return;
         synchronized (gameData) {
             if (gameData.status != GameStatus.MULLIGAN) {
                 throw new IllegalStateException("Game is not in mulligan phase");
@@ -253,6 +270,7 @@ public class GameService {
     }
 
     public void bottomCards(GameData gameData, Player player, List<Integer> cardIndices) {
+        if (runAsActionIfNeeded(gameData, () -> bottomCards(gameData, player, cardIndices))) return;
         synchronized (gameData) {
             if (gameData.status != GameStatus.MULLIGAN) {
                 throw new IllegalStateException("Game is not in mulligan phase");
@@ -262,6 +280,7 @@ public class GameService {
     }
 
     public void mulligan(GameData gameData, Player player) {
+        if (runAsActionIfNeeded(gameData, () -> mulligan(gameData, player))) return;
         synchronized (gameData) {
             if (gameData.status != GameStatus.MULLIGAN) {
                 throw new IllegalStateException("Game is not in mulligan phase");
@@ -271,6 +290,9 @@ public class GameService {
     }
 
     public void playCard(GameData gameData, Player player, int cardIndex, Integer xValue, UUID targetId, Map<UUID, Integer> damageAssignments) {
+        Player actionPlayer = player;
+        if (runAsActionIfNeeded(gameData,
+                () -> playCard(gameData, actionPlayer, cardIndex, xValue, targetId, damageAssignments))) return;
         synchronized (gameData) {
             player = resolveActingPlayer(gameData, player);
             requirePriority(gameData, player);
@@ -283,6 +305,9 @@ public class GameService {
      * {@code modalXValue} carries the real X paid (e.g. Alabaster Potion).
      */
     public void playModalXCard(GameData gameData, Player player, int cardIndex, int modeIndex, int modalXValue, UUID targetId) {
+        Player actionPlayer = player;
+        if (runAsActionIfNeeded(gameData,
+                () -> playModalXCard(gameData, actionPlayer, cardIndex, modeIndex, modalXValue, targetId))) return;
         synchronized (gameData) {
             player = resolveActingPlayer(gameData, player);
             requirePriority(gameData, player);
@@ -292,6 +317,10 @@ public class GameService {
     }
 
     public void playCard(GameData gameData, Player player, int cardIndex, Integer xValue, UUID targetId, Map<UUID, Integer> damageAssignments, List<UUID> targetIds, List<UUID> convokeCreatureIds) {
+        Player actionPlayer = player;
+        if (runAsActionIfNeeded(gameData,
+                () -> playCard(gameData, actionPlayer, cardIndex, xValue, targetId, damageAssignments,
+                        targetIds, convokeCreatureIds))) return;
         synchronized (gameData) {
             player = resolveActingPlayer(gameData, player);
             requirePriority(gameData, player);
@@ -300,6 +329,10 @@ public class GameService {
     }
 
     public void playCard(GameData gameData, Player player, int cardIndex, Integer xValue, UUID targetId, Map<UUID, Integer> damageAssignments, List<UUID> targetIds, List<UUID> convokeCreatureIds, boolean fromGraveyard) {
+        Player actionPlayer = player;
+        if (runAsActionIfNeeded(gameData,
+                () -> playCard(gameData, actionPlayer, cardIndex, xValue, targetId, damageAssignments,
+                        targetIds, convokeCreatureIds, fromGraveyard))) return;
         synchronized (gameData) {
             player = resolveActingPlayer(gameData, player);
             requirePriority(gameData, player);
@@ -308,6 +341,10 @@ public class GameService {
     }
 
     public void playCard(GameData gameData, Player player, int cardIndex, Integer xValue, UUID targetId, Map<UUID, Integer> damageAssignments, List<UUID> targetIds, List<UUID> convokeCreatureIds, boolean fromGraveyard, UUID sacrificePermanentId) {
+        Player actionPlayer = player;
+        if (runAsActionIfNeeded(gameData,
+                () -> playCard(gameData, actionPlayer, cardIndex, xValue, targetId, damageAssignments,
+                        targetIds, convokeCreatureIds, fromGraveyard, sacrificePermanentId))) return;
         synchronized (gameData) {
             player = resolveActingPlayer(gameData, player);
             requirePriority(gameData, player);
@@ -316,6 +353,11 @@ public class GameService {
     }
 
     public void playCard(GameData gameData, Player player, int cardIndex, Integer xValue, UUID targetId, Map<UUID, Integer> damageAssignments, List<UUID> targetIds, List<UUID> convokeCreatureIds, boolean fromGraveyard, UUID sacrificePermanentId, Integer phyrexianLifeCount) {
+        Player actionPlayer = player;
+        if (runAsActionIfNeeded(gameData,
+                () -> playCard(gameData, actionPlayer, cardIndex, xValue, targetId, damageAssignments,
+                        targetIds, convokeCreatureIds, fromGraveyard, sacrificePermanentId,
+                        phyrexianLifeCount))) return;
         synchronized (gameData) {
             player = resolveActingPlayer(gameData, player);
             requirePriority(gameData, player);
@@ -324,6 +366,11 @@ public class GameService {
     }
 
     public void playCard(GameData gameData, Player player, int cardIndex, Integer xValue, UUID targetId, Map<UUID, Integer> damageAssignments, List<UUID> targetIds, List<UUID> convokeCreatureIds, boolean fromGraveyard, UUID sacrificePermanentId, Integer phyrexianLifeCount, List<UUID> alternateCostSacrificePermanentIds) {
+        Player actionPlayer = player;
+        if (runAsActionIfNeeded(gameData,
+                () -> playCard(gameData, actionPlayer, cardIndex, xValue, targetId, damageAssignments,
+                        targetIds, convokeCreatureIds, fromGraveyard, sacrificePermanentId,
+                        phyrexianLifeCount, alternateCostSacrificePermanentIds))) return;
         synchronized (gameData) {
             player = resolveActingPlayer(gameData, player);
             requirePriority(gameData, player);
@@ -332,6 +379,12 @@ public class GameService {
     }
 
     public void playCard(GameData gameData, Player player, int cardIndex, Integer xValue, UUID targetId, Map<UUID, Integer> damageAssignments, List<UUID> targetIds, List<UUID> convokeCreatureIds, boolean fromGraveyard, UUID sacrificePermanentId, Integer phyrexianLifeCount, List<UUID> alternateCostSacrificePermanentIds, Integer exileGraveyardCardIndex) {
+        Player actionPlayer = player;
+        if (runAsActionIfNeeded(gameData,
+                () -> playCard(gameData, actionPlayer, cardIndex, xValue, targetId, damageAssignments,
+                        targetIds, convokeCreatureIds, fromGraveyard, sacrificePermanentId,
+                        phyrexianLifeCount, alternateCostSacrificePermanentIds,
+                        exileGraveyardCardIndex))) return;
         synchronized (gameData) {
             player = resolveActingPlayer(gameData, player);
             requirePriority(gameData, player);
@@ -344,6 +397,12 @@ public class GameService {
     }
 
     public void playCard(GameData gameData, Player player, int cardIndex, Integer xValue, UUID targetId, Map<UUID, Integer> damageAssignments, List<UUID> targetIds, List<UUID> convokeCreatureIds, boolean fromGraveyard, UUID sacrificePermanentId, Integer phyrexianLifeCount, List<UUID> alternateCostSacrificePermanentIds, Integer exileGraveyardCardIndex, List<Integer> exileGraveyardCardIndices, boolean kicked) {
+        Player actionPlayer = player;
+        if (runAsActionIfNeeded(gameData,
+                () -> playCard(gameData, actionPlayer, cardIndex, xValue, targetId, damageAssignments,
+                        targetIds, convokeCreatureIds, fromGraveyard, sacrificePermanentId,
+                        phyrexianLifeCount, alternateCostSacrificePermanentIds,
+                        exileGraveyardCardIndex, exileGraveyardCardIndices, kicked))) return;
         synchronized (gameData) {
             player = resolveActingPlayer(gameData, player);
             requirePriority(gameData, player);
@@ -365,6 +424,14 @@ public class GameService {
     }
 
     public void playCard(GameData gameData, Player player, int cardIndex, Integer xValue, UUID targetId, Map<UUID, Integer> damageAssignments, List<UUID> targetIds, List<UUID> convokeCreatureIds, boolean fromGraveyard, UUID sacrificePermanentId, Integer phyrexianLifeCount, List<UUID> alternateCostSacrificePermanentIds, Integer exileGraveyardCardIndex, List<Integer> exileGraveyardCardIndices, boolean kicked, Integer discardHandCardIndex, List<Integer> discardHandCardIndices, List<UUID> imposedSacrificePermanentIds) {
+        Player actionPlayer = player;
+        if (runAsActionIfNeeded(gameData,
+                () -> playCard(gameData, actionPlayer, cardIndex, xValue, targetId, damageAssignments,
+                        targetIds, convokeCreatureIds, fromGraveyard, sacrificePermanentId,
+                        phyrexianLifeCount, alternateCostSacrificePermanentIds,
+                        exileGraveyardCardIndex, exileGraveyardCardIndices, kicked,
+                        discardHandCardIndex, discardHandCardIndices,
+                        imposedSacrificePermanentIds))) return;
         synchronized (gameData) {
             player = resolveActingPlayer(gameData, player);
             requirePriority(gameData, player);
@@ -409,6 +476,11 @@ public class GameService {
                                     UUID targetId, List<UUID> targetIds,
                                     List<Integer> exileGraveyardCardIndices, CardType chosenGraveyardType,
                                     List<UUID> tapPermanentIds, Integer retraceDiscardHandCardIndex) {
+        Player actionPlayer = player;
+        if (runAsActionIfNeeded(gameData,
+                () -> playFlashbackSpell(gameData, actionPlayer, graveyardCardIndex, xValue, targetId,
+                        targetIds, exileGraveyardCardIndices, chosenGraveyardType, tapPermanentIds,
+                        retraceDiscardHandCardIndex))) return;
         synchronized (gameData) {
             player = resolveActingPlayer(gameData, player);
             requirePriority(gameData, player);
@@ -420,6 +492,10 @@ public class GameService {
     public void playFlashbackSpell(GameData gameData, Player player, UUID graveyardCardId, Integer xValue,
                                     UUID targetId, List<UUID> targetIds,
                                     List<Integer> exileGraveyardCardIndices, CardType chosenGraveyardType) {
+        Player actionPlayer = player;
+        if (runAsActionIfNeeded(gameData,
+                () -> playFlashbackSpell(gameData, actionPlayer, graveyardCardId, xValue, targetId,
+                        targetIds, exileGraveyardCardIndices, chosenGraveyardType))) return;
         synchronized (gameData) {
             player = resolveActingPlayer(gameData, player);
             requirePriority(gameData, player);
@@ -429,6 +505,10 @@ public class GameService {
 
     public void playCardWithEvoke(GameData gameData, Player player, int cardIndex, Integer xValue, UUID targetId,
                                   Map<UUID, Integer> damageAssignments, List<UUID> targetIds) {
+        Player actionPlayer = player;
+        if (runAsActionIfNeeded(gameData,
+                () -> playCardWithEvoke(gameData, actionPlayer, cardIndex, xValue, targetId,
+                        damageAssignments, targetIds))) return;
         synchronized (gameData) {
             player = resolveActingPlayer(gameData, player);
             requirePriority(gameData, player);
@@ -439,6 +519,10 @@ public class GameService {
 
     public void playCardWithProwl(GameData gameData, Player player, int cardIndex, Integer xValue, UUID targetId,
                                   Map<UUID, Integer> damageAssignments, List<UUID> targetIds) {
+        Player actionPlayer = player;
+        if (runAsActionIfNeeded(gameData,
+                () -> playCardWithProwl(gameData, actionPlayer, cardIndex, xValue, targetId,
+                        damageAssignments, targetIds))) return;
         synchronized (gameData) {
             player = resolveActingPlayer(gameData, player);
             requirePriority(gameData, player);
@@ -449,6 +533,10 @@ public class GameService {
 
     public void playCardWithConspire(GameData gameData, Player player, int cardIndex, Integer xValue, UUID targetId,
                                      Map<UUID, Integer> damageAssignments, List<UUID> targetIds, List<UUID> conspireCreatureIds) {
+        Player actionPlayer = player;
+        if (runAsActionIfNeeded(gameData,
+                () -> playCardWithConspire(gameData, actionPlayer, cardIndex, xValue, targetId,
+                        damageAssignments, targetIds, conspireCreatureIds))) return;
         synchronized (gameData) {
             player = resolveActingPlayer(gameData, player);
             requirePriority(gameData, player);
@@ -460,6 +548,10 @@ public class GameService {
     public void playCardWithSplice(GameData gameData, Player player, int cardIndex, Integer xValue, UUID targetId,
                                    Map<UUID, Integer> damageAssignments, List<UUID> targetIds,
                                    List<Integer> spliceHandCardIndices) {
+        Player actionPlayer = player;
+        if (runAsActionIfNeeded(gameData,
+                () -> playCardWithSplice(gameData, actionPlayer, cardIndex, xValue, targetId,
+                        damageAssignments, targetIds, spliceHandCardIndices))) return;
         synchronized (gameData) {
             player = resolveActingPlayer(gameData, player);
             requirePriority(gameData, player);
@@ -470,6 +562,9 @@ public class GameService {
     }
 
     public void playCardFromExile(GameData gameData, Player player, UUID exileCardId, Integer xValue, UUID targetId) {
+        Player actionPlayer = player;
+        if (runAsActionIfNeeded(gameData,
+                () -> playCardFromExile(gameData, actionPlayer, exileCardId, xValue, targetId))) return;
         synchronized (gameData) {
             player = resolveActingPlayer(gameData, player);
             requirePriority(gameData, player);
@@ -478,6 +573,9 @@ public class GameService {
     }
 
     public void playCardFromLibraryTop(GameData gameData, Player player, Integer xValue, UUID targetId) {
+        Player actionPlayer = player;
+        if (runAsActionIfNeeded(gameData,
+                () -> playCardFromLibraryTop(gameData, actionPlayer, xValue, targetId))) return;
         synchronized (gameData) {
             player = resolveActingPlayer(gameData, player);
             requirePriority(gameData, player);
@@ -486,6 +584,9 @@ public class GameService {
     }
 
     public void tapPermanent(GameData gameData, Player player, int permanentIndex) {
+        Player actionPlayer = player;
+        if (runAsActionIfNeeded(gameData,
+                () -> tapPermanent(gameData, actionPlayer, permanentIndex))) return;
         synchronized (gameData) {
             player = resolveActingPlayer(gameData, player);
             if (!isAttackTaxManaPayment(gameData, player) && !isMayCostManaPayment(gameData, player)) {
@@ -504,6 +605,9 @@ public class GameService {
      * "may pay" prompt.
      */
     public void revertManaActivations(GameData gameData, Player player) {
+        Player actionPlayer = player;
+        if (runAsActionIfNeeded(gameData,
+                () -> revertManaActivations(gameData, actionPlayer))) return;
         synchronized (gameData) {
             player = resolveActingPlayer(gameData, player);
             if (!isAttackTaxManaPayment(gameData, player) && !isMayCostManaPayment(gameData, player)) {
@@ -514,6 +618,9 @@ public class GameService {
     }
 
     public void sacrificePermanent(GameData gameData, Player player, int permanentIndex, UUID targetId) {
+        Player actionPlayer = player;
+        if (runAsActionIfNeeded(gameData,
+                () -> sacrificePermanent(gameData, actionPlayer, permanentIndex, targetId))) return;
         synchronized (gameData) {
             player = resolveActingPlayer(gameData, player);
             requirePriority(gameData, player);
@@ -523,6 +630,9 @@ public class GameService {
     }
 
     public void tapForeignLandForMana(GameData gameData, Player player, UUID permanentId) {
+        Player actionPlayer = player;
+        if (runAsActionIfNeeded(gameData,
+                () -> tapForeignLandForMana(gameData, actionPlayer, permanentId))) return;
         synchronized (gameData) {
             player = resolveActingPlayer(gameData, player);
             requirePriority(gameData, player);
@@ -532,6 +642,9 @@ public class GameService {
     }
 
     public void payLifeForColorlessMana(GameData gameData, Player player) {
+        Player actionPlayer = player;
+        if (runAsActionIfNeeded(gameData,
+                () -> payLifeForColorlessMana(gameData, actionPlayer))) return;
         synchronized (gameData) {
             player = resolveActingPlayer(gameData, player);
             requirePriority(gameData, player);
@@ -548,6 +661,10 @@ public class GameService {
     }
 
     public void activateAbility(GameData gameData, Player player, int permanentIndex, Integer abilityIndex, Integer xValue, UUID targetId, Zone targetZone, List<UUID> targetIds, Map<UUID, Integer> damageAssignments) {
+        Player actionPlayer = player;
+        if (runAsActionIfNeeded(gameData,
+                () -> activateAbility(gameData, actionPlayer, permanentIndex, abilityIndex, xValue,
+                        targetId, targetZone, targetIds, damageAssignments))) return;
         synchronized (gameData) {
             player = resolveActingPlayer(gameData, player);
             if (isAttackTaxManaPayment(gameData, player)) {
@@ -572,6 +689,10 @@ public class GameService {
 
     public void activateGraveyardAbility(GameData gameData, Player player, int graveyardCardIndex, Integer abilityIndex,
                                          Integer xValue, UUID targetId) {
+        Player actionPlayer = player;
+        if (runAsActionIfNeeded(gameData,
+                () -> activateGraveyardAbility(gameData, actionPlayer, graveyardCardIndex, abilityIndex,
+                        xValue, targetId))) return;
         synchronized (gameData) {
             player = resolveActingPlayer(gameData, player);
             requirePriority(gameData, player);
@@ -586,6 +707,10 @@ public class GameService {
     }
 
     public void activateHandAbility(GameData gameData, Player player, int handCardIndex, Integer abilityIndex, UUID targetId, Integer xValue) {
+        Player actionPlayer = player;
+        if (runAsActionIfNeeded(gameData,
+                () -> activateHandAbility(gameData, actionPlayer, handCardIndex, abilityIndex, targetId,
+                        xValue))) return;
         synchronized (gameData) {
             player = resolveActingPlayer(gameData, player);
             requirePriority(gameData, player);
@@ -595,6 +720,10 @@ public class GameService {
     }
 
     public void activateHandAbilityWithGraveyardTargets(GameData gameData, Player player, int handCardIndex, Integer abilityIndex, List<UUID> graveyardCardIds) {
+        Player actionPlayer = player;
+        if (runAsActionIfNeeded(gameData,
+                () -> activateHandAbilityWithGraveyardTargets(gameData, actionPlayer, handCardIndex,
+                        abilityIndex, graveyardCardIds))) return;
         synchronized (gameData) {
             player = resolveActingPlayer(gameData, player);
             requirePriority(gameData, player);
@@ -627,6 +756,7 @@ public class GameService {
     }
 
     public void setAutoStops(GameData gameData, Player player, List<TurnStep> stops) {
+        if (runAsActionIfNeeded(gameData, () -> setAutoStops(gameData, player, stops))) return;
         if (gameData.status != GameStatus.RUNNING) {
             throw new IllegalStateException("Game is not running");
         }
@@ -648,6 +778,9 @@ public class GameService {
      * registry routes it to the active interaction's handler.
      */
     public void handleInteractionAnswer(GameData gameData, Player player, InteractionAnswer answer) {
+        Player actionPlayer = player;
+        if (runAsActionIfNeeded(gameData,
+                () -> handleInteractionAnswer(gameData, actionPlayer, answer))) return;
         synchronized (gameData) {
             player = resolveActingPlayer(gameData, player);
             if (!interactionHandlerRegistry.dispatchAnswer(gameData, player, answer)) {
@@ -668,6 +801,9 @@ public class GameService {
 
     public void declareAttackers(GameData gameData, Player player, List<Integer> attackerIndices,
                                  Map<Integer, UUID> attackTargets, List<List<Integer>> bands) {
+        Player actionPlayer = player;
+        if (runAsActionIfNeeded(gameData,
+                () -> declareAttackers(gameData, actionPlayer, attackerIndices, attackTargets, bands))) return;
         synchronized (gameData) {
             player = resolveActingPlayer(gameData, player);
             if (interactionHandlerRegistry.dispatchAnswer(gameData, player,
@@ -687,6 +823,9 @@ public class GameService {
     }
 
     public void declareBlockers(GameData gameData, Player player, List<BlockerAssignment> blockerAssignments) {
+        Player actionPlayer = player;
+        if (runAsActionIfNeeded(gameData,
+                () -> declareBlockers(gameData, actionPlayer, blockerAssignments))) return;
         synchronized (gameData) {
             player = resolveActingPlayer(gameData, player);
             if (interactionHandlerRegistry.dispatchAnswer(gameData, player,
@@ -700,6 +839,9 @@ public class GameService {
     }
 
     public void handleCombatDamageAssigned(GameData gameData, Player player, int attackerIndex, Map<UUID, Integer> assignments) {
+        Player actionPlayer = player;
+        if (runAsActionIfNeeded(gameData,
+                () -> handleCombatDamageAssigned(gameData, actionPlayer, attackerIndex, assignments))) return;
         synchronized (gameData) {
             player = resolveActingPlayer(gameData, player);
             if (!interactionHandlerRegistry.dispatchAnswer(gameData, player,

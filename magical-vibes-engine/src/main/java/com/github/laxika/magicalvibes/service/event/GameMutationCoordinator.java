@@ -8,11 +8,15 @@ import com.github.laxika.magicalvibes.model.event.GameEventFact;
 import org.springframework.stereotype.Component;
 
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Objects;
+import java.util.Set;
 import java.util.UUID;
+import java.util.WeakHashMap;
+import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.locks.ReentrantLock;
 import java.util.function.Supplier;
 
@@ -26,17 +30,43 @@ import java.util.function.Supplier;
 @Component
 public class GameMutationCoordinator {
 
-    private static final int DISPATCH_STRIPE_COUNT = 64;
-
     private final GameEventDispatcher dispatcher;
-    private final ThreadLocal<MutationContext> activeContext = new ThreadLocal<>();
-    private final ReentrantLock[] dispatchStripes = new ReentrantLock[DISPATCH_STRIPE_COUNT];
+    private final Map<GameData, ActionState> actionStates =
+            Collections.synchronizedMap(new WeakHashMap<>());
+    private final Set<ActionState> activeActions = ConcurrentHashMap.newKeySet();
 
     public GameMutationCoordinator(GameEventDispatcher dispatcher) {
         this.dispatcher = Objects.requireNonNull(dispatcher, "dispatcher");
-        for (int i = 0; i < dispatchStripes.length; i++) {
-            dispatchStripes[i] = new ReentrantLock();
+    }
+
+    /**
+     * Starts a new causal action with an engine-generated identity. Public runtime boundaries use
+     * this overload; tests and adapters that already own a command identity may use the explicit
+     * overload below.
+     */
+    public void mutate(GameData gameData, Runnable mutation) {
+        mutate(gameData, UUID.randomUUID(), mutation);
+    }
+
+    public <T> T mutate(GameData gameData, Supplier<T> mutation) {
+        return mutate(gameData, UUID.randomUUID(), mutation);
+    }
+
+    /**
+     * Returns whether the current call is already inside this game's protected causal action.
+     * Canonical facades use this to let public overloads and recursive engine continuations join
+     * the outer action without storing scope state on a thread.
+     */
+    public boolean isInAction(GameData gameData) {
+        Objects.requireNonNull(gameData, "gameData");
+        ActionState actionState;
+        synchronized (actionStates) {
+            actionState = actionStates.get(gameData);
         }
+        return actionState != null
+                && actionState.actionLock.isHeldByCurrentThread()
+                && actionState.context != null
+                && Thread.holdsLock(gameData);
     }
 
     public void mutate(GameData gameData, UUID causalActionId, Runnable mutation) {
@@ -51,24 +81,29 @@ public class GameMutationCoordinator {
         Objects.requireNonNull(causalActionId, "causalActionId");
         Objects.requireNonNull(mutation, "mutation");
 
-        MutationContext existing = activeContext.get();
-        if (existing != null) {
-            if (existing.gameData != gameData) {
-                throw new IllegalStateException("A mutation scope cannot span multiple GameData instances");
-            }
-            return mutation.get();
+        ActionState actionState = actionStateFor(gameData);
+        ActionState currentThreadAction = currentThreadAction();
+        if (currentThreadAction != null && currentThreadAction != actionState) {
+            throw new IllegalStateException("A mutation scope cannot span multiple GameData instances");
         }
-
         if (Thread.holdsLock(gameData)) {
+            if (actionState.actionLock.isHeldByCurrentThread() && actionState.context != null) {
+                return mutation.get();
+            }
             throw new IllegalStateException(
                     "Start the outermost GameMutationCoordinator scope before acquiring the GameData monitor");
         }
 
-        ReentrantLock dispatchStripe = stripeFor(gameData);
-        dispatchStripe.lock();
+        actionState.actionLock.lock();
+        boolean registeredActiveAction = activeActions.add(actionState);
         try {
+            if (actionState.dispatching) {
+                throw new IllegalStateException(
+                        "A subscriber cannot start a mutation while the previous action is still dispatching");
+            }
+
             MutationContext context = new MutationContext(gameData, causalActionId);
-            activeContext.set(context);
+            actionState.context = context;
 
             T result;
             GameEventBatch batch;
@@ -78,15 +113,23 @@ public class GameMutationCoordinator {
                     batch = completeBatch(context);
                 }
             } finally {
-                activeContext.remove();
+                actionState.context = null;
             }
 
-            // The per-game stripe remains held so a later action cannot overtake this batch, but
+            // The per-game action lock remains held so a later action cannot overtake this batch, but
             // the GameData monitor is no longer held. Subscriber failures are isolated below.
-            dispatcher.dispatch(batch);
+            actionState.dispatching = true;
+            try {
+                dispatcher.dispatch(batch);
+            } finally {
+                actionState.dispatching = false;
+            }
             return result;
         } finally {
-            dispatchStripe.unlock();
+            if (registeredActiveAction) {
+                activeActions.remove(actionState);
+            }
+            actionState.actionLock.unlock();
         }
     }
 
@@ -103,8 +146,10 @@ public class GameMutationCoordinator {
         Objects.requireNonNull(fact, "fact");
         Objects.requireNonNull(audience, "audience");
 
-        MutationContext context = activeContext.get();
-        if (context == null || context.gameData != gameData) {
+        ActionState actionState = actionStateFor(gameData);
+        MutationContext context = actionState.context;
+        if (context == null || context.gameData != gameData
+                || !actionState.actionLock.isHeldByCurrentThread()) {
             throw new IllegalStateException("Domain events may only be emitted inside their game's mutation scope");
         }
         if (!Thread.holdsLock(gameData)) {
@@ -142,9 +187,23 @@ public class GameMutationCoordinator {
         return new GameEventBatch(gameData.id, context.causalActionId, stateVersion, mode, envelopes);
     }
 
-    private ReentrantLock stripeFor(GameData gameData) {
-        int index = (System.identityHashCode(gameData) & Integer.MAX_VALUE) % dispatchStripes.length;
-        return dispatchStripes[index];
+    private ActionState actionStateFor(GameData gameData) {
+        synchronized (actionStates) {
+            return actionStates.computeIfAbsent(gameData, ignored -> new ActionState());
+        }
+    }
+
+    private ActionState currentThreadAction() {
+        return activeActions.stream()
+                .filter(state -> state.actionLock.isHeldByCurrentThread())
+                .findFirst()
+                .orElse(null);
+    }
+
+    private static final class ActionState {
+        private final ReentrantLock actionLock = new ReentrantLock();
+        private MutationContext context;
+        private boolean dispatching;
     }
 
     private static final class MutationContext {

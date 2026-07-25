@@ -330,30 +330,28 @@ public class GameSimulator {
         Player player = new Player(playerId, gd.playerIdToName.getOrDefault(playerId, "AI"));
 
         try {
-            synchronized (gd) {
-                switch (action) {
-                    case SimulationAction.PlayCard pc -> executePlayCard(gd, player, pc);
-                    case SimulationAction.PassPriority ignored ->
-                            gameService.passPriority(gd, player);
-                    case SimulationAction.DeclareAttackers da ->
-                            gameService.declareAttackers(gd, player, da.attackerIndices(), null);
-                    case SimulationAction.DeclareBlockers db -> {
-                        List<BlockerAssignment> assignments = db.blockerAssignments().stream()
-                                .map(a -> new BlockerAssignment(a[0], a[1]))
-                                .toList();
-                        gameService.declareBlockers(gd, player, assignments);
-                    }
-                    case SimulationAction.ChooseCard cc ->
-                            gameService.handleInteractionAnswer(gd, player, new InteractionAnswer.CardIndexChosen(cc.cardIndex()));
-                    case SimulationAction.ChoosePermanent cp ->
-                            gameService.handleInteractionAnswer(gd, player, new InteractionAnswer.PermanentChosen(cp.permanentId()));
-                    case SimulationAction.ChooseColor col ->
-                            gameService.handleInteractionAnswer(gd, player, new InteractionAnswer.ListChoiceMade(col.color()));
-                    case SimulationAction.MayAbilityChoice mac ->
-                            gameService.handleInteractionAnswer(gd, player, new InteractionAnswer.MayAbilityChosen(mac.accept()));
-                    case SimulationAction.ActivateAbility aa ->
-                            executeActivatedAbility(gd, player, aa);
+            switch (action) {
+                case SimulationAction.PlayCard pc -> executePlayCard(gd, player, pc);
+                case SimulationAction.PassPriority ignored ->
+                        gameService.passPriority(gd, player);
+                case SimulationAction.DeclareAttackers da ->
+                        gameService.declareAttackers(gd, player, da.attackerIndices(), null);
+                case SimulationAction.DeclareBlockers db -> {
+                    List<BlockerAssignment> assignments = db.blockerAssignments().stream()
+                            .map(a -> new BlockerAssignment(a[0], a[1]))
+                            .toList();
+                    gameService.declareBlockers(gd, player, assignments);
                 }
+                case SimulationAction.ChooseCard cc ->
+                        gameService.handleInteractionAnswer(gd, player, new InteractionAnswer.CardIndexChosen(cc.cardIndex()));
+                case SimulationAction.ChoosePermanent cp ->
+                        gameService.handleInteractionAnswer(gd, player, new InteractionAnswer.PermanentChosen(cp.permanentId()));
+                case SimulationAction.ChooseColor col ->
+                        gameService.handleInteractionAnswer(gd, player, new InteractionAnswer.ListChoiceMade(col.color()));
+                case SimulationAction.MayAbilityChoice mac ->
+                        gameService.handleInteractionAnswer(gd, player, new InteractionAnswer.MayAbilityChosen(mac.accept()));
+                case SimulationAction.ActivateAbility aa ->
+                        executeActivatedAbility(gd, player, aa);
             }
         } catch (Exception e) {
             // Simulation may hit edge cases — swallow and continue
@@ -438,9 +436,7 @@ public class GameSimulator {
                         }
                     }
                     try {
-                        synchronized (gd) {
-                            gameService.passPriority(gd, oppPlayer);
-                        }
+                        gameService.passPriority(gd, oppPlayer);
                     } catch (Exception e) {
                         return;
                     }
@@ -456,9 +452,7 @@ public class GameSimulator {
             Player resolvePlayer = new Player(interactionPlayer, gd.playerIdToName.getOrDefault(interactionPlayer, "AI"));
 
             try {
-                synchronized (gd) {
-                    resolveInteraction(gd, resolvePlayer, awaiting, mctsPlayerId);
-                }
+                resolveInteraction(gd, resolvePlayer, awaiting, mctsPlayerId);
             } catch (Exception e) {
                 log.trace("Auto-resolve failed: {}", e.getMessage());
                 return;
@@ -745,9 +739,7 @@ public class GameSimulator {
             for (int i = 0; i < hand.size(); i++) {
                 Card card = hand.get(i);
                 if (!card.hasType(CardType.LAND)) continue;
-                synchronized (gd) {
-                    gameService.playCard(gd, opponent, i, 0, null, null);
-                }
+                gameService.playCard(gd, opponent, i, 0, null, null);
                 return handNoLongerContains(gd, opponentId, card);
             }
         } catch (Exception e) {
@@ -792,9 +784,7 @@ public class GameSimulator {
                 }
             }
             if (bestCard == null) return false;
-            synchronized (gd) {
-                executePlayCard(gd, opponent, new SimulationAction.PlayCard(bestIndex, null, 0));
-            }
+            executePlayCard(gd, opponent, new SimulationAction.PlayCard(bestIndex, null, 0));
             return handNoLongerContains(gd, opponentId, bestCard);
         } catch (Exception e) {
             log.trace("Simulated opponent spell cast failed: {}", e.getMessage());

@@ -4,6 +4,7 @@ import com.github.laxika.magicalvibes.model.GameData;
 import com.github.laxika.magicalvibes.model.GameStatus;
 import com.github.laxika.magicalvibes.networking.Connection;
 import com.github.laxika.magicalvibes.networking.SessionManager;
+import com.github.laxika.magicalvibes.service.event.GameMutationCoordinator;
 import jakarta.annotation.PreDestroy;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -47,6 +48,7 @@ public class GameTimeoutService {
     private final GameRegistry gameRegistry;
     private final GameOutcomeService gameOutcomeService;
     private final SessionManager sessionManager;
+    private final GameMutationCoordinator mutationCoordinator;
     private final Duration bothDisconnectedTimeout;
     private final Duration singleDisconnectedTimeout;
     private final ScheduledExecutorService scheduler;
@@ -59,9 +61,11 @@ public class GameTimeoutService {
     public GameTimeoutService(GameRegistry gameRegistry,
                               @Lazy GameOutcomeService gameOutcomeService,
                               SessionManager sessionManager,
+                              GameMutationCoordinator mutationCoordinator,
                               @Value("${magicalvibes.game.timeout.both-disconnected:5m}") Duration bothDisconnectedTimeout,
                               @Value("${magicalvibes.game.timeout.single-disconnected:15m}") Duration singleDisconnectedTimeout) {
-        this(gameRegistry, gameOutcomeService, sessionManager, bothDisconnectedTimeout, singleDisconnectedTimeout,
+        this(gameRegistry, gameOutcomeService, sessionManager, mutationCoordinator,
+                bothDisconnectedTimeout, singleDisconnectedTimeout,
                 Executors.newSingleThreadScheduledExecutor(r -> {
                     Thread t = new Thread(r, "game-timeout-scheduler");
                     t.setDaemon(true);
@@ -72,12 +76,14 @@ public class GameTimeoutService {
     GameTimeoutService(GameRegistry gameRegistry,
                        GameOutcomeService gameOutcomeService,
                        SessionManager sessionManager,
+                       GameMutationCoordinator mutationCoordinator,
                        Duration bothDisconnectedTimeout,
                        Duration singleDisconnectedTimeout,
                        ScheduledExecutorService scheduler) {
         this.gameRegistry = gameRegistry;
         this.gameOutcomeService = gameOutcomeService;
         this.sessionManager = sessionManager;
+        this.mutationCoordinator = mutationCoordinator;
         this.bothDisconnectedTimeout = bothDisconnectedTimeout;
         this.singleDisconnectedTimeout = singleDisconnectedTimeout;
         this.scheduler = scheduler;
@@ -91,6 +97,10 @@ public class GameTimeoutService {
     public void onPlayerDisconnect(UUID playerId) {
         GameData gameData = gameRegistry.getGameForPlayer(playerId);
         if (!isActiveGame(gameData)) {
+            return;
+        }
+        if (!mutationCoordinator.isInAction(gameData)) {
+            mutationCoordinator.mutate(gameData, () -> onPlayerDisconnect(playerId));
             return;
         }
 
@@ -129,6 +139,10 @@ public class GameTimeoutService {
 
         GameData gameData = gameRegistry.getGameForPlayer(playerId);
         if (!isActiveGame(gameData)) {
+            return;
+        }
+        if (!mutationCoordinator.isInAction(gameData)) {
+            mutationCoordinator.mutate(gameData, () -> onPlayerReconnect(playerId));
             return;
         }
 
@@ -180,6 +194,10 @@ public class GameTimeoutService {
         if (!isActiveGame(gameData)) {
             return;
         }
+        if (!mutationCoordinator.isInAction(gameData)) {
+            mutationCoordinator.mutate(gameData, () -> singleGoneTimerFired(disconnectedPlayerId, gameId));
+            return;
+        }
         synchronized (gameData) {
             if (!isActiveGame(gameData)) {
                 return;
@@ -207,6 +225,10 @@ public class GameTimeoutService {
         bothGoneTimers.remove(gameId);
         GameData gameData = gameRegistry.get(gameId);
         if (!isActiveGame(gameData)) {
+            return;
+        }
+        if (!mutationCoordinator.isInAction(gameData)) {
+            mutationCoordinator.mutate(gameData, () -> bothGoneTimerFired(gameId));
             return;
         }
         synchronized (gameData) {

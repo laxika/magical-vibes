@@ -3,6 +3,8 @@ package com.github.laxika.magicalvibes.service;
 import com.github.laxika.magicalvibes.model.GameData;
 import com.github.laxika.magicalvibes.model.GameStatus;
 import com.github.laxika.magicalvibes.networking.Connection;
+import com.github.laxika.magicalvibes.service.event.GameEventDispatcher;
+import com.github.laxika.magicalvibes.service.event.GameMutationCoordinator;
 import com.github.laxika.magicalvibes.websocket.WebSocketSessionManager;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
@@ -51,6 +53,7 @@ class GameTimeoutServiceTest {
     void setUp() {
         svc = new GameTimeoutService(
                 gameRegistry, gameOutcomeService, sessionManager,
+                new GameMutationCoordinator(new GameEventDispatcher(java.util.List.of())),
                 Duration.ofMinutes(5), Duration.ofMinutes(15), scheduler);
 
         player1Id = UUID.randomUUID();

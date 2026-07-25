@@ -41,6 +41,7 @@ import com.github.laxika.magicalvibes.service.GameBroadcastService;
 import com.github.laxika.magicalvibes.service.GameRegistry;
 import com.github.laxika.magicalvibes.service.battlefield.GameQueryService;
 import com.github.laxika.magicalvibes.service.effect.TargetValidationService;
+import com.github.laxika.magicalvibes.service.event.GameMutationCoordinator;
 import com.github.laxika.magicalvibes.service.target.TargetLegalityService;
 import com.github.laxika.magicalvibes.carddata.scryfall.ScryfallOracleLoader;
 import com.github.laxika.magicalvibes.websocket.WebSocketSessionManager;
@@ -82,6 +83,7 @@ public class DraftService {
     private final CardViewFactory cardViewFactory;
     private final TargetValidationService targetValidationService;
     private final TargetLegalityService targetLegalityService;
+    private final GameMutationCoordinator mutationCoordinator;
     private final Random random = new Random();
     private final ScheduledExecutorService scheduler = Executors.newScheduledThreadPool(2);
     private final Map<UUID, AiDraftEngine> aiDraftEngines = new ConcurrentHashMap<>();
@@ -98,7 +100,8 @@ public class DraftService {
                         WebSocketSessionManager webSocketSessionManager,
                         CardViewFactory cardViewFactory,
                         TargetValidationService targetValidationService,
-                        TargetLegalityService targetLegalityService) {
+                        TargetLegalityService targetLegalityService,
+                        GameMutationCoordinator mutationCoordinator) {
         this.draftRegistry = draftRegistry;
         this.gameRegistry = gameRegistry;
         this.gameBroadcastService = gameBroadcastService;
@@ -112,6 +115,7 @@ public class DraftService {
         this.cardViewFactory = cardViewFactory;
         this.targetValidationService = targetValidationService;
         this.targetLegalityService = targetLegalityService;
+        this.mutationCoordinator = mutationCoordinator;
     }
 
     // ===== Draft Creation =====
@@ -558,8 +562,8 @@ public class DraftService {
         List<Card> deck1 = new ArrayList<>(draftData.builtDecks.get(player1Id));
         List<Card> deck2 = new ArrayList<>(draftData.builtDecks.get(player2Id));
 
-        GameData gameData = createDraftGame(gameName, player1Id, p1Name, player2Id, p2Name, deck1, deck2);
-        gameData.draftId = draftData.id;
+        GameData gameData = createDraftGame(
+                gameName, player1Id, p1Name, player2Id, p2Name, deck1, deck2, draftData.id);
 
         draftData.activeGameForPlayer.put(player1Id, gameData.id);
         draftData.activeGameForPlayer.put(player2Id, gameData.id);
@@ -611,41 +615,45 @@ public class DraftService {
 
     private GameData createDraftGame(String gameName, UUID p1Id, String p1Name,
                                       UUID p2Id, String p2Name,
-                                      List<Card> deck1, List<Card> deck2) {
+                                      List<Card> deck1, List<Card> deck2, UUID draftId) {
         UUID gameId = UUID.randomUUID();
         GameData gameData = new GameData(gameId, gameName, p1Id, p1Name);
 
-        // Add both players
-        gameData.playerIds.add(p1Id);
-        gameData.playerIds.add(p2Id);
-        gameData.orderedPlayerIds.add(p1Id);
-        gameData.orderedPlayerIds.add(p2Id);
-        gameData.playerNames.add(p1Name);
-        gameData.playerNames.add(p2Name);
-        gameData.playerIdToName.put(p1Id, p1Name);
-        gameData.playerIdToName.put(p2Id, p2Name);
+        mutationCoordinator.mutate(gameData, () -> {
+            gameData.draftId = draftId;
 
-        // Initialize decks
-        Collections.shuffle(deck1, random);
-        Collections.shuffle(deck2, random);
+            // Add both players
+            gameData.playerIds.add(p1Id);
+            gameData.playerIds.add(p2Id);
+            gameData.orderedPlayerIds.add(p1Id);
+            gameData.orderedPlayerIds.add(p2Id);
+            gameData.playerNames.add(p1Name);
+            gameData.playerNames.add(p2Name);
+            gameData.playerIdToName.put(p1Id, p1Name);
+            gameData.playerIdToName.put(p2Id, p2Name);
 
-        initializePlayerForDraftGame(gameData, p1Id, deck1);
-        initializePlayerForDraftGame(gameData, p2Id, deck2);
+            // Initialize decks
+            Collections.shuffle(deck1, random);
+            Collections.shuffle(deck2, random);
 
-        gameData.status = GameStatus.MULLIGAN;
+            initializePlayerForDraftGame(gameData, p1Id, deck1);
+            initializePlayerForDraftGame(gameData, p2Id, deck2);
 
-        gameData.gameLog.add(GameLogEntry.text("Tournament game started!"));
-        gameData.gameLog.add(GameLogEntry.text(p1Name + " vs " + p2Name));
+            gameData.status = GameStatus.MULLIGAN;
 
-        // Randomly pick starting player
-        UUID startingPlayerId = random.nextBoolean() ? p1Id : p2Id;
-        String startingPlayerName = gameData.playerIdToName.get(startingPlayerId);
-        gameData.startingPlayerId = startingPlayerId;
+            gameData.gameLog.add(GameLogEntry.text("Tournament game started!"));
+            gameData.gameLog.add(GameLogEntry.text(p1Name + " vs " + p2Name));
 
-        gameData.gameLog.add(GameLogEntry.text(startingPlayerName + " wins the coin toss and goes first!"));
-        gameData.gameLog.add(GameLogEntry.text("Mulligan phase — decide to keep or mulligan."));
+            // Randomly pick starting player
+            UUID startingPlayerId = random.nextBoolean() ? p1Id : p2Id;
+            String startingPlayerName = gameData.playerIdToName.get(startingPlayerId);
+            gameData.startingPlayerId = startingPlayerId;
 
-        gameRegistry.register(gameData);
+            gameData.gameLog.add(GameLogEntry.text(startingPlayerName + " wins the coin toss and goes first!"));
+            gameData.gameLog.add(GameLogEntry.text("Mulligan phase — decide to keep or mulligan."));
+
+            gameRegistry.register(gameData);
+        });
 
         log.info("Draft game {} created and registered", gameId);
         return gameData;

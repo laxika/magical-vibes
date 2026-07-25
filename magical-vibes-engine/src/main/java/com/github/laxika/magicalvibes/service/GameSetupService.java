@@ -9,6 +9,7 @@ import com.github.laxika.magicalvibes.model.GameStatus;
 import com.github.laxika.magicalvibes.model.ManaPool;
 import com.github.laxika.magicalvibes.model.Player;
 import com.github.laxika.magicalvibes.model.TurnStep;
+import com.github.laxika.magicalvibes.service.event.GameMutationCoordinator;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.ObjectProvider;
 import org.springframework.stereotype.Service;
@@ -38,11 +39,14 @@ public class GameSetupService {
 
     private final GameRegistry gameRegistry;
     private final ObjectProvider<CustomDeckSource> customDeckSourceProvider;
+    private final GameMutationCoordinator mutationCoordinator;
 
     public GameSetupService(GameRegistry gameRegistry,
-                            ObjectProvider<CustomDeckSource> customDeckSourceProvider) {
+                            ObjectProvider<CustomDeckSource> customDeckSourceProvider,
+                            GameMutationCoordinator mutationCoordinator) {
         this.gameRegistry = gameRegistry;
         this.customDeckSourceProvider = customDeckSourceProvider;
+        this.mutationCoordinator = mutationCoordinator;
     }
 
     /**
@@ -72,14 +76,17 @@ public class GameSetupService {
         }
 
         GameData gameData = new GameData(gameId, gameName, player.getId(), player.getUsername());
-        gameData.allRandom = allRandom;
-        gameData.randomSetCode = allRandom ? randomSetCode : null;
-        gameData.playerIds.add(player.getId());
-        gameData.orderedPlayerIds.add(player.getId());
-        gameData.playerNames.add(player.getUsername());
-        gameData.playerIdToName.put(player.getId(), player.getUsername());
-        gameData.playerDeckChoices.put(player.getId(), deckId);
-        gameRegistry.register(gameData);
+        String selectedDeckId = deckId;
+        mutationCoordinator.mutate(gameData, () -> {
+            gameData.allRandom = allRandom;
+            gameData.randomSetCode = allRandom ? randomSetCode : null;
+            gameData.playerIds.add(player.getId());
+            gameData.orderedPlayerIds.add(player.getId());
+            gameData.playerNames.add(player.getUsername());
+            gameData.playerIdToName.put(player.getId(), player.getUsername());
+            gameData.playerDeckChoices.put(player.getId(), selectedDeckId);
+            gameRegistry.register(gameData);
+        });
 
         log.info("Game created: id={}, name='{}', creator={}", gameId, gameName, player.getUsername());
         return gameData;
@@ -90,6 +97,11 @@ public class GameSetupService {
      * runs and the game advances to the mulligan phase.
      */
     public void joinGame(GameData gameData, Player player, String deckId) {
+        String requestedDeckId = deckId;
+        if (!mutationCoordinator.isInAction(gameData)) {
+            mutationCoordinator.mutate(gameData, () -> joinGame(gameData, player, requestedDeckId));
+            return;
+        }
         synchronized (gameData) {
             if (gameData.status != GameStatus.WAITING) {
                 throw new IllegalStateException("Game is not accepting players");

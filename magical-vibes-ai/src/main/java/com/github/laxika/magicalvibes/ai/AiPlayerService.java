@@ -11,6 +11,7 @@ import com.github.laxika.magicalvibes.service.cast.CastingCostService;
 import com.github.laxika.magicalvibes.service.cast.CastingPermissionService;
 import com.github.laxika.magicalvibes.service.combat.CombatAttackService;
 import com.github.laxika.magicalvibes.service.effect.TargetValidationService;
+import com.github.laxika.magicalvibes.service.event.GameMutationCoordinator;
 import com.github.laxika.magicalvibes.service.target.TargetLegalityService;
 import com.github.laxika.magicalvibes.service.GameRegistry;
 import com.github.laxika.magicalvibes.websocket.WebSocketSessionManager;
@@ -36,6 +37,7 @@ public class AiPlayerService {
     private final TargetValidationService targetValidationService;
     private final TargetLegalityService targetLegalityService;
     private final WebSocketSessionManager sessionManager;
+    private final GameMutationCoordinator mutationCoordinator;
     private final long mctsTimeBudgetMs;
     private final int mctsParallelism;
 
@@ -50,6 +52,7 @@ public class AiPlayerService {
                            TargetValidationService targetValidationService,
                            TargetLegalityService targetLegalityService,
                            WebSocketSessionManager sessionManager,
+                           GameMutationCoordinator mutationCoordinator,
                            @Value("${ai.mcts.time-budget-ms:" + MCTSEngine.DEFAULT_TIME_BUDGET_MS + "}") long mctsTimeBudgetMs,
                            @Value("${ai.mcts.parallelism:0}") int mctsParallelism) {
         this.gameRegistry = gameRegistry;
@@ -63,6 +66,7 @@ public class AiPlayerService {
         this.targetValidationService = targetValidationService;
         this.targetLegalityService = targetLegalityService;
         this.sessionManager = sessionManager;
+        this.mutationCoordinator = mutationCoordinator;
         this.mctsTimeBudgetMs = mctsTimeBudgetMs;
         this.mctsParallelism = mctsParallelism;
     }
@@ -101,12 +105,14 @@ public class AiPlayerService {
         sessionManager.registerPlayer(aiConnection, aiPlayerId, "AI Opponent");
         sessionManager.setInGame(connectionId);
 
-        // Mark this player as AI-controlled so auto-pass always hands it a priority window
-        // when it can act, instead of treating it like a human bound by auto-stop settings.
-        gameData.aiPlayerIds.add(aiPlayerId);
+        mutationCoordinator.mutate(gameData, () -> {
+            // Mark this player as AI-controlled so auto-pass always hands it a priority window
+            // when it can act, instead of treating it like a human bound by auto-stop settings.
+            gameData.aiPlayerIds.add(aiPlayerId);
 
-        // Join the game — this triggers initializeGame() which sets status to MULLIGAN
-        gameSetupService.joinGame(gameData, aiPlayer, aiDeckId);
+            // Join the game — this triggers initializeGame() and joins this outer setup action.
+            gameSetupService.joinGame(gameData, aiPlayer, aiDeckId);
+        });
 
         // Schedule the AI's initial mulligan decision
         aiConnection.scheduleInitialAction(engine::handleInitialMulligan);

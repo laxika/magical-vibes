@@ -52,7 +52,7 @@ Player visibility always requires an explicit audience. `DECISION_REQUESTED` and
 4. The successful outer scope increments state version once, coalesces compatible state
    invalidations, allocates sequences in list order, and freezes a `GameEventBatch`.
 5. The coordinator releases the `GameData` monitor and dispatches the completed batch.
-6. A per-instance dispatch stripe remains held through delivery so a later mutation of the same
+6. A per-instance action lock remains held through delivery so a later mutation of the same
    `GameData` cannot overtake the earlier batch.
 
 A scope started while its caller already holds `synchronized (gameData)` is rejected. This is
@@ -60,12 +60,28 @@ intentional: returning from such a scope could still leave a legacy caller holdi
 which would violate post-lock dispatch.
 
 If the mutation throws, its pending event batch is discarded and no completed-action metadata is
-allocated. This does not add transactional rollback to the existing mutable engine. If a
+allocated. This does not add transactional rollback to the existing mutable engine: mutations
+already applied before the exception remain in `GameData`, but their incomplete-action facts are
+not observable because the action never reached a stable post-mutation observation point. If a
 subscriber throws, `GameEventDispatcher` records the failure and continues to independent
 subscribers; the already-completed mutation, state version, and sequences remain committed.
 
 Every successful outer scope advances state version, including an empty event batch. Sequences
 advance only for emitted envelopes.
+
+The coordinator stores active context in weakly keyed per-`GameData` action state, never in a
+`ThreadLocal`. The context is installed only while the per-game action lock is held and is cleared
+in `finally`, so executor tasks and pooled threads cannot inherit scope state from an earlier game.
+Different games have different action locks and may mutate concurrently; same-game actions remain
+serialized through subscriber delivery.
+
+Canonical runtime mutation boundaries are `GameService` commands, `GameSetupService` create/join,
+AI seating, tournament-game creation, and `GameTimeoutService` disconnect/reconnect and timer
+callbacks. Interaction answers (including answers that resume a parked stack entry), surrender,
+and auto-pass recursion therefore join one outer command batch. A later answer to a parked
+interaction is a new causal action. Lower-level service tests that invoke handlers directly may
+establish the supported explicit boundary with `GameMutationCoordinator.mutate`; event emission
+without such a boundary is always rejected.
 
 ### Required invariants
 
