@@ -1,5 +1,6 @@
 package com.github.laxika.magicalvibes.ai;
 
+import com.github.laxika.magicalvibes.networking.model.MessageType;
 import com.github.laxika.magicalvibes.model.PendingInteraction;
 import com.github.laxika.magicalvibes.cards.a.AirElemental;
 import com.github.laxika.magicalvibes.cards.a.AuraOfSilence;
@@ -163,7 +164,7 @@ class AiDecisionEngineTest {
 
         harness.setHand(aiPlayer, List.of(new KuldothaRebirth()));
 
-        ai.handleMessage("GAME_STATE", "");
+        ai.handleEvent(MessageType.GAME_STATE);
 
         // AI should not cast — no artifact to sacrifice
         assertThat(gd.stack).isEmpty();
@@ -177,7 +178,7 @@ class AiDecisionEngineTest {
 
         harness.setHand(aiPlayer, List.of(new InfernalPlunge()));
 
-        ai.handleMessage("GAME_STATE", "");
+        ai.handleEvent(MessageType.GAME_STATE);
 
         // AI should not cast — no creature to sacrifice
         assertThat(gd.stack).isEmpty();
@@ -199,7 +200,7 @@ class AiDecisionEngineTest {
 
         harness.setHand(aiPlayer, List.of(new KuldothaRebirth(), new GrizzlyBears()));
 
-        ai.handleMessage("GAME_STATE", "");
+        ai.handleEvent(MessageType.GAME_STATE);
 
         // Should skip KuldothaRebirth (no artifact) and cast GrizzlyBears
         assertThat(gd.stack).hasSize(1);
@@ -264,7 +265,7 @@ class AiDecisionEngineTest {
 
         harness.setHand(aiPlayer, List.of(new Vivisection()));
 
-        ai.handleMessage("GAME_STATE", "");
+        ai.handleEvent(MessageType.GAME_STATE);
 
         // Vivisection should be on the stack
         assertThat(gd.stack).hasSize(1);
@@ -293,7 +294,7 @@ class AiDecisionEngineTest {
 
         harness.setHand(aiPlayer, List.of(new Pacifism()));
 
-        ai.handleMessage("GAME_STATE", "");
+        ai.handleEvent(MessageType.GAME_STATE);
 
         assertThat(gd.stack).hasSize(1);
         assertThat(gd.stack.getFirst().getCard().getName()).isEqualTo("Pacifism");
@@ -321,7 +322,7 @@ class AiDecisionEngineTest {
 
         harness.setHand(aiPlayer, List.of(new Pacifism()));
 
-        ai.handleMessage("GAME_STATE", "");
+        ai.handleEvent(MessageType.GAME_STATE);
 
         // AI should cast on the Grizzly Bears instead
         assertThat(gd.stack).hasSize(1);
@@ -346,7 +347,7 @@ class AiDecisionEngineTest {
 
         harness.setHand(aiPlayer, List.of(new Pacifism()));
 
-        ai.handleMessage("GAME_STATE", "");
+        ai.handleEvent(MessageType.GAME_STATE);
 
         // AI should not cast — no valid targets, so it passes priority instead
         assertThat(gd.stack).isEmpty();
@@ -377,7 +378,7 @@ class AiDecisionEngineTest {
 
         harness.setHand(aiPlayer, List.of(new Pacifism()));
 
-        ai.handleMessage("GAME_STATE", "");
+        ai.handleEvent(MessageType.GAME_STATE);
 
         // Should target one of the unpacified bears (both 2/2, either is valid)
         assertThat(gd.stack).hasSize(1);
@@ -403,7 +404,7 @@ class AiDecisionEngineTest {
 
         harness.setHand(aiPlayer, List.of(new HolyStrength()));
 
-        ai.handleMessage("GAME_STATE", "");
+        ai.handleEvent(MessageType.GAME_STATE);
 
         assertThat(gd.stack).hasSize(1);
         assertThat(gd.stack.getFirst().getCard().getName()).isEqualTo("Holy Strength");
@@ -421,7 +422,7 @@ class AiDecisionEngineTest {
         // Opponent has no creatures
         harness.setHand(aiPlayer, List.of(new Pacifism()));
 
-        ai.handleMessage("GAME_STATE", "");
+        ai.handleEvent(MessageType.GAME_STATE);
 
         assertThat(gd.stack).isEmpty();
     }
@@ -442,7 +443,7 @@ class AiDecisionEngineTest {
 
         harness.setHand(aiPlayer, List.of(new AwakenerDruid()));
 
-        ai.handleMessage("GAME_STATE", "");
+        ai.handleEvent(MessageType.GAME_STATE);
 
         assertThat(gd.stack).hasSize(1);
         assertThat(gd.stack.getFirst().getCard().getName()).isEqualTo("Awakener Druid");
@@ -470,7 +471,7 @@ class AiDecisionEngineTest {
 
         harness.setHand(aiPlayer, List.of(new AwakenerDruid()));
 
-        ai.handleMessage("GAME_STATE", "");
+        ai.handleEvent(MessageType.GAME_STATE);
 
         // No valid Forest target — AI should pass priority instead
         assertThat(gd.stack).isEmpty();
@@ -486,7 +487,7 @@ class AiDecisionEngineTest {
 
         harness.setHand(aiPlayer, List.of(new com.github.laxika.magicalvibes.cards.m.MyrSuperion()));
 
-        ai.handleMessage("GAME_STATE", "");
+        ai.handleEvent(MessageType.GAME_STATE);
 
         // Myr Superion should NOT be on the stack — only land mana is available
         assertThat(gd.stack).isEmpty();
@@ -508,7 +509,7 @@ class AiDecisionEngineTest {
 
         harness.setHand(aiPlayer, List.of(new com.github.laxika.magicalvibes.cards.m.MyrSuperion()));
 
-        ai.handleMessage("GAME_STATE", "");
+        ai.handleEvent(MessageType.GAME_STATE);
 
         // Myr Superion should be on the stack — creature mana from elves
         assertThat(gd.stack).hasSize(1);
@@ -531,7 +532,7 @@ class AiDecisionEngineTest {
                 new com.github.laxika.magicalvibes.cards.m.MyrSuperion(),
                 new GrizzlyBears()));
 
-        ai.handleMessage("GAME_STATE", "");
+        ai.handleEvent(MessageType.GAME_STATE);
 
         // Should skip Myr Superion and cast the GrizzlyBears instead
         assertThat(gd.stack).hasSize(1);
@@ -562,7 +563,7 @@ class AiDecisionEngineTest {
 
         harness.setHand(aiPlayer, List.of(new HolyStrength()));
 
-        ai.handleMessage("GAME_STATE", "");
+        ai.handleEvent(MessageType.GAME_STATE);
 
         // AI should successfully cast despite the tax — it taps 3 Plains
         assertThat(gd.stack).hasSize(1);
@@ -587,7 +588,7 @@ class AiDecisionEngineTest {
 
         harness.setHand(aiPlayer, List.of(new HolyStrength()));
 
-        ai.handleMessage("GAME_STATE", "");
+        ai.handleEvent(MessageType.GAME_STATE);
 
         // AI should not cast — can't afford {2}{W} with only 1 Plains
         assertThat(gd.stack).isEmpty();
@@ -623,7 +624,7 @@ class AiDecisionEngineTest {
         gd.playerBattlefields.get(aiPlayer.getId()).add(aiBears);
 
         // Should not throw — AI skips the unblockable attacker
-        ai.handleMessage("AVAILABLE_BLOCKERS", "");
+        ai.handleEvent(MessageType.AVAILABLE_BLOCKERS);
 
         // Bears should not be tapped (not assigned as blocker)
         assertThat(aiBears.isBlocking()).isFalse();
@@ -653,7 +654,7 @@ class AiDecisionEngineTest {
         // Set life low enough that lethal incoming triggers chump-block logic too
         gd.playerLifeTotals.put(aiPlayer.getId(), 3);
 
-        ai.handleMessage("AVAILABLE_BLOCKERS", "");
+        ai.handleEvent(MessageType.AVAILABLE_BLOCKERS);
         harness.passBothPriorities();
 
         // Combat fully resolves — assert on outcomes:
@@ -686,7 +687,7 @@ class AiDecisionEngineTest {
         secondBlocker.setSummoningSick(false);
         gd.playerBattlefields.get(aiPlayer.getId()).add(secondBlocker);
 
-        ai.handleMessage("AVAILABLE_BLOCKERS", "");
+        ai.handleEvent(MessageType.AVAILABLE_BLOCKERS);
 
         assertThat(gd.interaction.isAwaitingInput()).isFalse();
         assertThat(firstBlocker.isBlocking()).isTrue();
@@ -718,7 +719,7 @@ class AiDecisionEngineTest {
         airElemental.setSummoningSick(false);
         gd.playerBattlefields.get(human.getId()).add(airElemental);
 
-        ai.handleMessage("AVAILABLE_ATTACKERS", "");
+        ai.handleEvent(MessageType.AVAILABLE_ATTACKERS);
 
         // Berserkers must be attacking despite the unfavorable board
         assertThat(berserkers.isAttacking()).isTrue();
@@ -739,7 +740,7 @@ class AiDecisionEngineTest {
         bears.setSummoningSick(false);
         gd.playerBattlefields.get(aiPlayer.getId()).add(bears);
 
-        ai.handleMessage("AVAILABLE_ATTACKERS", "");
+        ai.handleEvent(MessageType.AVAILABLE_ATTACKERS);
 
         // Berserkers (4 power) must have attacked; combat fully resolves with no blockers
         assertThat(gd.playerLifeTotals.get(human.getId())).isLessThanOrEqualTo(16);
@@ -763,7 +764,7 @@ class AiDecisionEngineTest {
         aiElemental.setSummoningSick(false);
         gd.playerBattlefields.get(aiPlayer.getId()).add(aiElemental);
 
-        ai.handleMessage("AVAILABLE_BLOCKERS", "");
+        ai.handleEvent(MessageType.AVAILABLE_BLOCKERS);
 
         // The blocker declaration should have been accepted (no stuck state)
         assertThat(gd.interaction.isAwaitingInput()).isFalse();
@@ -784,7 +785,7 @@ class AiDecisionEngineTest {
 
         harness.setHand(aiPlayer, List.of(new AngelicBlessing()));
 
-        ai.handleMessage("GAME_STATE", "");
+        ai.handleEvent(MessageType.GAME_STATE);
 
         // AI should cast Angelic Blessing targeting the creature, not a Plains
         assertThat(gd.stack).hasSize(1);
@@ -801,7 +802,7 @@ class AiDecisionEngineTest {
         // Only lands on battlefield, no creatures
         harness.setHand(aiPlayer, List.of(new AngelicBlessing()));
 
-        ai.handleMessage("GAME_STATE", "");
+        ai.handleEvent(MessageType.GAME_STATE);
 
         // AI should not cast — no valid creature targets
         assertThat(gd.stack).isEmpty();
@@ -825,7 +826,7 @@ class AiDecisionEngineTest {
 
         harness.setHand(aiPlayer, List.of(new AvenCloudchaser()));
 
-        ai.handleMessage("GAME_STATE", "");
+        ai.handleEvent(MessageType.GAME_STATE);
 
         // AI should cast Aven Cloudchaser targeting the enchantment, not the creature
         assertThat(gd.stack).hasSize(1);
@@ -846,7 +847,7 @@ class AiDecisionEngineTest {
 
         harness.setHand(aiPlayer, List.of(new AvenCloudchaser()));
 
-        ai.handleMessage("GAME_STATE", "");
+        ai.handleEvent(MessageType.GAME_STATE);
 
         // AI should not cast — no valid enchantment targets
         assertThat(gd.stack).isEmpty();
@@ -880,7 +881,7 @@ class AiDecisionEngineTest {
 
         harness.setHand(aiPlayer, List.of(new UnburialRites()));
 
-        ai.handleMessage("GAME_STATE", "");
+        ai.handleEvent(MessageType.GAME_STATE);
 
         // AI should cast Unburial Rites targeting Air Elemental (highest MV)
         assertThat(gd.stack).hasSize(1);
@@ -901,7 +902,7 @@ class AiDecisionEngineTest {
 
         harness.setHand(aiPlayer, List.of(new UnburialRites()));
 
-        ai.handleMessage("GAME_STATE", "");
+        ai.handleEvent(MessageType.GAME_STATE);
 
         // AI should not cast — no valid creature target
         assertThat(gd.stack).isEmpty();
@@ -916,7 +917,7 @@ class AiDecisionEngineTest {
 
         harness.setHand(aiPlayer, List.of(new UnburialRites()));
 
-        ai.handleMessage("GAME_STATE", "");
+        ai.handleEvent(MessageType.GAME_STATE);
 
         // AI should not cast — no target in graveyard
         assertThat(gd.stack).isEmpty();
@@ -932,7 +933,7 @@ class AiDecisionEngineTest {
 
         harness.setHand(aiPlayer, List.of(new com.github.laxika.magicalvibes.cards.m.MidnightRitual()));
 
-        ai.handleMessage("GAME_STATE", "");
+        ai.handleEvent(MessageType.GAME_STATE);
 
         // AI should not cast — no creature cards in graveyard for X
         assertThat(gd.stack).isEmpty();
@@ -949,7 +950,7 @@ class AiDecisionEngineTest {
 
         harness.setHand(aiPlayer, List.of(new com.github.laxika.magicalvibes.cards.m.MidnightRitual()));
 
-        ai.handleMessage("GAME_STATE", "");
+        ai.handleEvent(MessageType.GAME_STATE);
 
         // AI should not cast — no creature cards in graveyard
         assertThat(gd.stack).isEmpty();
@@ -966,14 +967,14 @@ class AiDecisionEngineTest {
 
         harness.setHand(aiPlayer, List.of(new com.github.laxika.magicalvibes.cards.m.MidnightRitual()));
 
-        ai.handleMessage("GAME_STATE", "");
+        ai.handleEvent(MessageType.GAME_STATE);
 
         // AI cast the spell — card was removed from hand, game awaits graveyard selection
         assertThat(gd.playerHands.get(aiPlayer.getId())).isEmpty();
         assertThat(gd.interaction.isAwaitingInput()).isTrue();
 
         // AI responds to the graveyard choice, putting the spell on the stack
-        ai.handleMessage("INTERACTION_PROMPT", "");
+        ai.handleEvent(MessageType.INTERACTION_PROMPT);
         assertThat(gd.stack).hasSize(1);
         assertThat(gd.stack.getFirst().getCard().getName()).isEqualTo("Midnight Ritual");
     }
@@ -989,13 +990,13 @@ class AiDecisionEngineTest {
 
         harness.setHand(aiPlayer, List.of(new com.github.laxika.magicalvibes.cards.m.MidnightRitual()));
 
-        ai.handleMessage("GAME_STATE", "");
+        ai.handleEvent(MessageType.GAME_STATE);
 
         // AI cast the spell — card was removed from hand
         assertThat(gd.playerHands.get(aiPlayer.getId())).isEmpty();
 
         // AI responds to the graveyard choice
-        ai.handleMessage("INTERACTION_PROMPT", "");
+        ai.handleEvent(MessageType.INTERACTION_PROMPT);
 
         // AI should cast with X capped at 1 (graveyard creature count), not X=3 (max mana)
         assertThat(gd.stack).hasSize(1);
@@ -1028,7 +1029,7 @@ class AiDecisionEngineTest {
 
         harness.setHand(aiPlayer, List.of(new SkaabRuinator()));
 
-        ai.handleMessage("GAME_STATE", "");
+        ai.handleEvent(MessageType.GAME_STATE);
 
         // AI should not cast — not enough creature cards in graveyard
         assertThat(gd.stack).isEmpty();
@@ -1047,7 +1048,7 @@ class AiDecisionEngineTest {
 
         harness.setHand(aiPlayer, List.of(new SkaabRuinator()));
 
-        ai.handleMessage("GAME_STATE", "");
+        ai.handleEvent(MessageType.GAME_STATE);
 
         // AI should not cast — no creature cards in graveyard
         assertThat(gd.stack).isEmpty();
@@ -1061,7 +1062,7 @@ class AiDecisionEngineTest {
 
         harness.setHand(aiPlayer, List.of(new SkaabRuinator()));
 
-        ai.handleMessage("GAME_STATE", "");
+        ai.handleEvent(MessageType.GAME_STATE);
 
         // AI should not cast — empty graveyard
         assertThat(gd.stack).isEmpty();
@@ -1078,7 +1079,7 @@ class AiDecisionEngineTest {
 
         harness.setHand(aiPlayer, List.of(new MakeshiftMauler()));
 
-        ai.handleMessage("GAME_STATE", "");
+        ai.handleEvent(MessageType.GAME_STATE);
 
         // AI should not cast — no creature card in graveyard to exile
         assertThat(gd.stack).isEmpty();
@@ -1092,7 +1093,7 @@ class AiDecisionEngineTest {
 
         harness.setHand(aiPlayer, List.of(new MakeshiftMauler()));
 
-        ai.handleMessage("GAME_STATE", "");
+        ai.handleEvent(MessageType.GAME_STATE);
 
         // AI should not cast — empty graveyard
         assertThat(gd.stack).isEmpty();
@@ -1110,7 +1111,7 @@ class AiDecisionEngineTest {
 
         harness.setHand(aiPlayer, List.of(new SkaabRuinator()));
 
-        ai.handleMessage("GAME_STATE", "");
+        ai.handleEvent(MessageType.GAME_STATE);
 
         // AI should cast — 3 creature cards exiled from graveyard
         assertThat(gd.stack).hasSize(1);
@@ -1132,7 +1133,7 @@ class AiDecisionEngineTest {
 
         harness.setHand(aiPlayer, List.of(new SkaabRuinator()));
 
-        ai.handleMessage("GAME_STATE", "");
+        ai.handleEvent(MessageType.GAME_STATE);
 
         // AI should cast — exiles exactly 3 of the 4 creatures
         assertThat(gd.stack).hasSize(1);
@@ -1156,7 +1157,7 @@ class AiDecisionEngineTest {
 
         harness.setHand(aiPlayer, List.of(new SkaabRuinator()));
 
-        ai.handleMessage("GAME_STATE", "");
+        ai.handleEvent(MessageType.GAME_STATE);
 
         // AI should cast — it found 3 creature cards despite non-creatures mixed in
         assertThat(gd.stack).hasSize(1);
@@ -1369,7 +1370,7 @@ class AiDecisionEngineTest {
 
         harness.setHand(aiPlayer, List.of(new SteelSabotage()));
 
-        ai.handleMessage("GAME_STATE", "");
+        ai.handleEvent(MessageType.GAME_STATE);
 
         assertThat(gd.stack).isEmpty();
     }
@@ -1388,7 +1389,7 @@ class AiDecisionEngineTest {
 
         harness.setHand(aiPlayer, List.of(new SteelSabotage()));
 
-        ai.handleMessage("GAME_STATE", "");
+        ai.handleEvent(MessageType.GAME_STATE);
 
         assertThat(gd.stack).hasSize(1);
         assertThat(gd.stack.getFirst().getCard().getName()).isEqualTo("Steel Sabotage");
@@ -1405,7 +1406,7 @@ class AiDecisionEngineTest {
 
         harness.setHand(aiPlayer, List.of(new Slagstorm()));
 
-        ai.handleMessage("GAME_STATE", "");
+        ai.handleEvent(MessageType.GAME_STATE);
 
         assertThat(gd.stack).hasSize(1);
         assertThat(gd.stack.getFirst().getCard().getName()).isEqualTo("Slagstorm");
@@ -1428,7 +1429,7 @@ class AiDecisionEngineTest {
         // No artifacts on battlefield → Steel Sabotage has no valid mode
         harness.setHand(aiPlayer, List.of(new SteelSabotage(), new GrizzlyBears()));
 
-        ai.handleMessage("GAME_STATE", "");
+        ai.handleEvent(MessageType.GAME_STATE);
 
         // Should skip Steel Sabotage and cast Grizzly Bears
         assertThat(gd.stack).hasSize(1);
@@ -1459,7 +1460,7 @@ class AiDecisionEngineTest {
 
         harness.setHand(aiPlayer, List.of(new GrizzlyBears()));
 
-        ai.handleMessage("GAME_STATE", "");
+        ai.handleEvent(MessageType.GAME_STATE);
 
         // Grizzly Bears should be on the stack
         assertThat(gd.stack).hasSize(1);
@@ -1480,7 +1481,7 @@ class AiDecisionEngineTest {
 
         harness.setHand(aiPlayer, List.of(new GrizzlyBears()));
 
-        ai.handleMessage("GAME_STATE", "");
+        ai.handleEvent(MessageType.GAME_STATE);
 
         assertThat(gd.stack).hasSize(1);
         assertThat(gd.stack.getFirst().getCard().getName()).isEqualTo("Grizzly Bears");
@@ -1507,7 +1508,7 @@ class AiDecisionEngineTest {
 
         harness.setHand(aiPlayer, List.of(new GrizzlyBears()));
 
-        ai.handleMessage("GAME_STATE", "");
+        ai.handleEvent(MessageType.GAME_STATE);
 
         assertThat(gd.stack).hasSize(1);
 
@@ -1526,7 +1527,7 @@ class AiDecisionEngineTest {
 
         harness.setHand(aiPlayer, List.of(new Blaze()));
 
-        ai.handleMessage("GAME_STATE", "");
+        ai.handleEvent(MessageType.GAME_STATE);
 
         // Blaze should be on the stack (targeting opponent)
         assertThat(gd.stack).hasSize(1);
@@ -1555,7 +1556,7 @@ class AiDecisionEngineTest {
 
         harness.setHand(aiPlayer, List.of(new com.github.laxika.magicalvibes.cards.m.MyrSuperion()));
 
-        ai.handleMessage("GAME_STATE", "");
+        ai.handleEvent(MessageType.GAME_STATE);
 
         // Myr Superion should be on the stack
         assertThat(gd.stack).hasSize(1);
@@ -1578,7 +1579,7 @@ class AiDecisionEngineTest {
 
         harness.setHand(aiPlayer, List.of(new GrizzlyBears()));
 
-        ai.handleMessage("GAME_STATE", "");
+        ai.handleEvent(MessageType.GAME_STATE);
 
         assertThat(gd.stack).hasSize(1);
 
@@ -1601,7 +1602,7 @@ class AiDecisionEngineTest {
         // Only an instant in hand — Easy AI falls through to tryCastInstant
         harness.setHand(aiPlayer, List.of(new HolyDay()));
 
-        ai.handleMessage("GAME_STATE", "");
+        ai.handleEvent(MessageType.GAME_STATE);
 
         // Holy Day should be on the stack
         assertThat(gd.stack).hasSize(1);
@@ -1808,7 +1809,7 @@ class AiDecisionEngineTest {
         harness.clearPriorityPassed();
         gd.interaction.beginInteraction(new PendingInteraction.AttackerDeclaration(aiPlayer.getId()));
 
-        ai.handleMessage("AVAILABLE_ATTACKERS", "");
+        ai.handleEvent(MessageType.AVAILABLE_ATTACKERS);
 
         // At most 1 creature should be attacking (can only afford {1} tax)
         long attackingCount = gd.playerBattlefields.get(aiPlayer.getId()).stream()
@@ -2065,7 +2066,7 @@ class AiDecisionEngineTest {
             land.setType(CardType.LAND);
             mockGd.playerHands.get(mockAiPlayer.getId()).add(land);
 
-            createEngine().handleMessage("GAME_STATE", "");
+            createEngine().handleEvent(MessageType.GAME_STATE);
 
             verify(mockMessageHandler).handlePlayCard(any(), any());
             verify(mockMessageHandler).handlePassPriority(any(), any());
@@ -2084,7 +2085,7 @@ class AiDecisionEngineTest {
                 return null;
             }).when(mockMessageHandler).handlePlayCard(any(), any());
 
-            createEngine().handleMessage("GAME_STATE", "");
+            createEngine().handleEvent(MessageType.GAME_STATE);
 
             verify(mockMessageHandler).handlePlayCard(any(), any());
             verify(mockMessageHandler, never()).handlePassPriority(any(), any());
@@ -2127,7 +2128,7 @@ class AiDecisionEngineTest {
 
         harness.setHand(aiPlayer, List.of(new EntrancingMelody()));
 
-        ai.handleMessage("GAME_STATE", "");
+        ai.handleEvent(MessageType.GAME_STATE);
 
         // AI should cast with target = bears and X = 2
         assertThat(gd.stack).hasSize(1);
@@ -2150,7 +2151,7 @@ class AiDecisionEngineTest {
 
         harness.setHand(aiPlayer, List.of(new EntrancingMelody()));
 
-        ai.handleMessage("GAME_STATE", "");
+        ai.handleEvent(MessageType.GAME_STATE);
 
         // AI should not cast — can't afford X=2 for the bears
         assertThat(gd.stack).isEmpty();
@@ -2174,7 +2175,7 @@ class AiDecisionEngineTest {
 
         harness.setHand(aiPlayer, List.of(new EntrancingMelody()));
 
-        ai.handleMessage("GAME_STATE", "");
+        ai.handleEvent(MessageType.GAME_STATE);
 
         // AI should pick the highest affordable target (MV=2 bears over MV=1 vanguard)
         assertThat(gd.stack).hasSize(1);
@@ -2200,7 +2201,7 @@ class AiDecisionEngineTest {
 
         harness.setHand(aiPlayer, List.of(new EntrancingMelody()));
 
-        ai.handleMessage("GAME_STATE", "");
+        ai.handleEvent(MessageType.GAME_STATE);
 
         // Can only afford X=1, so should target EliteVanguard
         assertThat(gd.stack).hasSize(1);
@@ -2216,7 +2217,7 @@ class AiDecisionEngineTest {
 
         harness.setHand(aiPlayer, List.of(new EntrancingMelody()));
 
-        ai.handleMessage("GAME_STATE", "");
+        ai.handleEvent(MessageType.GAME_STATE);
 
         assertThat(gd.stack).isEmpty();
     }
@@ -2291,7 +2292,7 @@ class AiDecisionEngineTest {
 
         harness.setHand(aiPlayer, List.of(new GoblinPiker()));
 
-        ai.handleMessage("GAME_STATE", "");
+        ai.handleEvent(MessageType.GAME_STATE);
 
         assertThat(gd.stack).hasSize(1);
         assertThat(gd.stack.getFirst().getCard().getName()).isEqualTo("Goblin Piker");
@@ -2306,7 +2307,7 @@ class AiDecisionEngineTest {
 
         harness.setHand(aiPlayer, List.of(new GrizzlyBears()));
 
-        ai.handleMessage("GAME_STATE", "");
+        ai.handleEvent(MessageType.GAME_STATE);
 
         assertThat(gd.stack).hasSize(1);
         assertThat(gd.stack.getFirst().getCard().getName()).isEqualTo("Grizzly Bears");
@@ -2321,7 +2322,7 @@ class AiDecisionEngineTest {
 
         harness.setHand(aiPlayer, List.of(new GoblinPiker()));
 
-        ai.handleMessage("GAME_STATE", "");
+        ai.handleEvent(MessageType.GAME_STATE);
 
         assertThat(gd.stack).hasSize(1);
         assertThat(gd.stack.getFirst().getCard().getName()).isEqualTo("Goblin Piker");
@@ -2336,7 +2337,7 @@ class AiDecisionEngineTest {
 
         harness.setHand(aiPlayer, List.of(new GrizzlyBears()));
 
-        ai.handleMessage("GAME_STATE", "");
+        ai.handleEvent(MessageType.GAME_STATE);
 
         // AI should cast: Rootbound Crag produces {G}, Mountain produces {R} for generic
         assertThat(gd.stack).hasSize(1);
@@ -2353,7 +2354,7 @@ class AiDecisionEngineTest {
         // Awakener Druid costs {2}{G} = 3 mana, but we only have 2 lands
         harness.setHand(aiPlayer, List.of(new AwakenerDruid()));
 
-        ai.handleMessage("GAME_STATE", "");
+        ai.handleEvent(MessageType.GAME_STATE);
 
         assertThat(gd.stack).isEmpty();
     }
@@ -2366,7 +2367,7 @@ class AiDecisionEngineTest {
 
         harness.setHand(aiPlayer, List.of(new GoblinPiker())); // costs {1}{R} = 2 mana
 
-        ai.handleMessage("GAME_STATE", "");
+        ai.handleEvent(MessageType.GAME_STATE);
 
         // Only 1 land = 1 mana, can't cast {1}{R}
         assertThat(gd.stack).isEmpty();
@@ -2383,7 +2384,7 @@ class AiDecisionEngineTest {
 
         harness.setHand(aiPlayer, List.of(new GoblinPiker()));
 
-        ai.handleMessage("GAME_STATE", "");
+        ai.handleEvent(MessageType.GAME_STATE);
 
         assertThat(gd.stack).hasSize(1);
         assertThat(gd.stack.getFirst().getCard().getName()).isEqualTo("Goblin Piker");
@@ -2404,7 +2405,7 @@ class AiDecisionEngineTest {
 
         int lifeBefore = gd.playerLifeTotals.get(aiPlayer.getId());
 
-        ai.handleMessage("GAME_STATE", "");
+        ai.handleEvent(MessageType.GAME_STATE);
 
         assertThat(gd.stack).hasSize(1);
         assertThat(gd.stack.getFirst().getCard().getName()).isEqualTo("Grizzly Bears");
@@ -2424,7 +2425,7 @@ class AiDecisionEngineTest {
 
         int lifeBefore = gd.playerLifeTotals.get(aiPlayer.getId());
 
-        ai.handleMessage("GAME_STATE", "");
+        ai.handleEvent(MessageType.GAME_STATE);
 
         assertThat(gd.stack).hasSize(1);
         assertThat(gd.stack.getFirst().getCard().getName()).isEqualTo("Grizzly Bears");
@@ -2442,7 +2443,7 @@ class AiDecisionEngineTest {
 
         harness.setHand(aiPlayer, List.of(new GrizzlyBears()));
 
-        ai.handleMessage("GAME_STATE", "");
+        ai.handleEvent(MessageType.GAME_STATE);
 
         assertThat(gd.stack).hasSize(1);
         assertThat(gd.stack.getFirst().getCard().getName()).isEqualTo("Grizzly Bears");
@@ -2458,7 +2459,7 @@ class AiDecisionEngineTest {
 
         harness.setHand(aiPlayer, List.of(new GoblinPiker()));
 
-        ai.handleMessage("GAME_STATE", "");
+        ai.handleEvent(MessageType.GAME_STATE);
 
         assertThat(gd.stack).hasSize(1);
         assertThat(gd.stack.getFirst().getCard().getName()).isEqualTo("Goblin Piker");
@@ -2491,7 +2492,7 @@ class AiDecisionEngineTest {
         // With 3 lands we can't afford it
         harness.setHand(aiPlayer, List.of(new BerserkersOfBloodRidge()));
 
-        ai.handleMessage("GAME_STATE", "");
+        ai.handleEvent(MessageType.GAME_STATE);
 
         assertThat(gd.stack).isEmpty();
     }
@@ -2506,7 +2507,7 @@ class AiDecisionEngineTest {
 
         harness.setHand(aiPlayer, List.of(new BerserkersOfBloodRidge()));
 
-        ai.handleMessage("GAME_STATE", "");
+        ai.handleEvent(MessageType.GAME_STATE);
 
         assertThat(gd.stack).isEmpty();
     }
@@ -2521,7 +2522,7 @@ class AiDecisionEngineTest {
 
         harness.setHand(aiPlayer, List.of(new BerserkersOfBloodRidge()));
 
-        ai.handleMessage("GAME_STATE", "");
+        ai.handleEvent(MessageType.GAME_STATE);
 
         assertThat(gd.stack).hasSize(1);
         assertThat(gd.stack.getFirst().getCard().getName()).isEqualTo("Berserkers of Blood Ridge");

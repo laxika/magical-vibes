@@ -1,11 +1,15 @@
 package com.github.laxika.magicalvibes.testutil;
 
 import com.github.laxika.magicalvibes.networking.Connection;
+import com.github.laxika.magicalvibes.service.JacksonConfig;
+import tools.jackson.databind.ObjectMapper;
 
 import java.util.ArrayList;
 import java.util.List;
 
 public class FakeConnection implements Connection {
+
+    private static final ObjectMapper OBJECT_MAPPER = new JacksonConfig().objectMapper();
 
     private final String id;
     private boolean open = true;
@@ -26,8 +30,12 @@ public class FakeConnection implements Connection {
     }
 
     @Override
-    public void sendMessage(String message) {
-        sentMessages.add(message);
+    public void sendMessage(Object message) {
+        try {
+            sentMessages.add(OBJECT_MAPPER.writeValueAsString(message));
+        } catch (Exception e) {
+            throw new IllegalStateException("Failed to serialize test message", e);
+        }
     }
 
     @Override

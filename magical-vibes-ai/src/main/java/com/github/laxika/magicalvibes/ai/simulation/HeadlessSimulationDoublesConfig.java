@@ -7,7 +7,6 @@ import com.github.laxika.magicalvibes.service.GameTimeoutService;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Import;
 import org.springframework.context.annotation.Primary;
-import tools.jackson.databind.ObjectMapper;
 
 import java.time.Duration;
 
@@ -35,8 +34,8 @@ public class HeadlessSimulationDoublesConfig {
 
     @Bean
     @Primary
-    HeadlessWebSocketSessionManager webSocketSessionManager(ObjectMapper objectMapper) {
-        return new HeadlessWebSocketSessionManager(objectMapper);
+    HeadlessWebSocketSessionManager webSocketSessionManager() {
+        return new HeadlessWebSocketSessionManager();
     }
 
     /**

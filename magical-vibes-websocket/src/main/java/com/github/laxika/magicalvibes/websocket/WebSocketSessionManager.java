@@ -3,10 +3,8 @@ package com.github.laxika.magicalvibes.websocket;
 import com.github.laxika.magicalvibes.model.Player;
 import com.github.laxika.magicalvibes.networking.Connection;
 import com.github.laxika.magicalvibes.networking.SessionManager;
-import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
-import tools.jackson.databind.ObjectMapper;
 
 import java.util.Collection;
 import java.util.Map;
@@ -16,10 +14,7 @@ import java.util.concurrent.ConcurrentHashMap;
 
 @Service
 @Slf4j
-@RequiredArgsConstructor
 public class WebSocketSessionManager implements SessionManager {
-
-    private final ObjectMapper objectMapper;
 
     private final Map<String, Player> players = new ConcurrentHashMap<>();
     private final Map<String, Connection> connections = new ConcurrentHashMap<>();
@@ -74,17 +69,10 @@ public class WebSocketSessionManager implements SessionManager {
 
     @Override
     public void sendToPlayer(UUID playerId, Object message) {
-        String json;
-        try {
-            json = objectMapper.writeValueAsString(message);
-        } catch (Exception e) {
-            log.error("Error serializing message", e);
-            return;
-        }
         Connection connection = getConnectionByUserId(playerId);
         if (connection != null && connection.isOpen()) {
             try {
-                connection.sendMessage(json);
+                connection.sendMessage(message);
             } catch (Exception e) {
                 log.error("Error sending message to player {}", playerId, e);
             }
@@ -93,18 +81,11 @@ public class WebSocketSessionManager implements SessionManager {
 
     @Override
     public void sendToPlayers(Collection<UUID> playerIds, Object message) {
-        String json;
-        try {
-            json = objectMapper.writeValueAsString(message);
-        } catch (Exception e) {
-            log.error("Error serializing message", e);
-            return;
-        }
         for (UUID playerId : playerIds) {
             Connection connection = getConnectionByUserId(playerId);
             if (connection != null && connection.isOpen()) {
                 try {
-                    connection.sendMessage(json);
+                    connection.sendMessage(message);
                 } catch (Exception e) {
                     log.error("Error sending message to player {}", playerId, e);
                 }

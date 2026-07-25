@@ -1,7 +1,6 @@
 package com.github.laxika.magicalvibes.ai.simulation;
 
 import com.github.laxika.magicalvibes.websocket.WebSocketSessionManager;
-import tools.jackson.databind.ObjectMapper;
 
 import java.util.Collection;
 import java.util.UUID;
@@ -12,10 +11,6 @@ import java.util.UUID;
  * suppresses all outbound messages.
  */
 public class HeadlessWebSocketSessionManager extends WebSocketSessionManager {
-
-    public HeadlessWebSocketSessionManager(ObjectMapper objectMapper) {
-        super(objectMapper);
-    }
 
     @Override
     public void sendToPlayer(UUID playerId, Object message) {

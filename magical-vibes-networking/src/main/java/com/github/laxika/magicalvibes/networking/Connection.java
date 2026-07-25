@@ -6,5 +6,5 @@ public interface Connection extends AutoCloseable {
 
     boolean isOpen();
 
-    void sendMessage(String message);
+    void sendMessage(Object message);
 }

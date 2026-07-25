@@ -1,5 +1,6 @@
 package com.github.laxika.magicalvibes.ai;
 
+import com.github.laxika.magicalvibes.networking.model.MessageType;
 import com.github.laxika.magicalvibes.model.PendingInteraction;
 import com.github.laxika.magicalvibes.cards.t.TroveOfTemptation;
 import com.github.laxika.magicalvibes.cards.a.AirElemental;
@@ -140,7 +141,7 @@ class MediumAiDecisionEngineTest {
 
         harness.setHand(aiPlayer, List.of(new Pacifism()));
 
-        ai.handleMessage("GAME_STATE", "");
+        ai.handleEvent(MessageType.GAME_STATE);
 
         assertThat(gd.stack).hasSize(1);
         assertThat(gd.stack.getFirst().getCard().getName()).isEqualTo("Pacifism");
@@ -167,7 +168,7 @@ class MediumAiDecisionEngineTest {
         airElemental.setSummoningSick(false);
         gd.playerBattlefields.get(human.getId()).add(airElemental);
 
-        ai.handleMessage("AVAILABLE_ATTACKERS", "");
+        ai.handleEvent(MessageType.AVAILABLE_ATTACKERS);
 
         // AI should not have attacked — bears would die without killing AE
         // The attack step resolves, check that bears is still alive and untapped
@@ -194,7 +195,7 @@ class MediumAiDecisionEngineTest {
         bears2.setSummoningSick(false);
         gd.playerBattlefields.get(aiPlayer.getId()).add(bears2);
 
-        ai.handleMessage("AVAILABLE_ATTACKERS", "");
+        ai.handleEvent(MessageType.AVAILABLE_ATTACKERS);
 
         // Both should be attacking for lethal
         long attackingCount = gd.playerBattlefields.get(aiPlayer.getId()).stream()
@@ -217,7 +218,7 @@ class MediumAiDecisionEngineTest {
         // Hand has Bears (creature value) and Pacifism (high value due to target)
         harness.setHand(aiPlayer, List.of(new GrizzlyBears(), new Pacifism()));
 
-        ai.handleMessage("GAME_STATE", "");
+        ai.handleEvent(MessageType.GAME_STATE);
 
         // Should cast the spell with higher evaluated value
         assertThat(gd.stack).hasSize(1);
@@ -233,7 +234,7 @@ class MediumAiDecisionEngineTest {
 
         harness.setHand(aiPlayer, List.of(new com.github.laxika.magicalvibes.cards.m.MyrSuperion()));
 
-        ai.handleMessage("GAME_STATE", "");
+        ai.handleEvent(MessageType.GAME_STATE);
 
         // Myr Superion should NOT be on the stack — only land mana is available
         assertThat(gd.stack).isEmpty();
@@ -255,7 +256,7 @@ class MediumAiDecisionEngineTest {
 
         harness.setHand(aiPlayer, List.of(new com.github.laxika.magicalvibes.cards.m.MyrSuperion()));
 
-        ai.handleMessage("GAME_STATE", "");
+        ai.handleEvent(MessageType.GAME_STATE);
 
         // Myr Superion should be on the stack — creature mana is available from elves
         assertThat(gd.stack).hasSize(1);
@@ -275,7 +276,7 @@ class MediumAiDecisionEngineTest {
 
         harness.setHand(aiPlayer, List.of(new KuldothaRebirth()));
 
-        ai.handleMessage("GAME_STATE", "");
+        ai.handleEvent(MessageType.GAME_STATE);
 
         // AI should not cast — no artifact to sacrifice
         assertThat(gd.stack).isEmpty();
@@ -304,7 +305,7 @@ class MediumAiDecisionEngineTest {
 
         harness.setHand(aiPlayer, List.of(new Vivisection()));
 
-        ai.handleMessage("GAME_STATE", "");
+        ai.handleEvent(MessageType.GAME_STATE);
 
         assertThat(gd.stack).hasSize(1);
         assertThat(gd.stack.getFirst().getCard().getName()).isEqualTo("Vivisection");
@@ -333,7 +334,7 @@ class MediumAiDecisionEngineTest {
         airElemental.setSummoningSick(false);
         gd.playerBattlefields.get(human.getId()).add(airElemental);
 
-        ai.handleMessage("AVAILABLE_ATTACKERS", "");
+        ai.handleEvent(MessageType.AVAILABLE_ATTACKERS);
 
         // Berserkers must be attacking despite the unfavorable board
         assertThat(berserkers.isAttacking()).isTrue();
@@ -359,7 +360,7 @@ class MediumAiDecisionEngineTest {
         gd.playerBattlefields.get(aiPlayer.getId()).add(bears);
 
         // No blockers — both should attack, dealing at least 4 damage (must-attack Berserkers)
-        ai.handleMessage("AVAILABLE_ATTACKERS", "");
+        ai.handleEvent(MessageType.AVAILABLE_ATTACKERS);
 
         // Berserkers (4 power) must have attacked; combat fully resolves with no blockers
         assertThat(gd.playerLifeTotals.get(human.getId())).isLessThanOrEqualTo(16);
@@ -386,7 +387,7 @@ class MediumAiDecisionEngineTest {
 
         harness.setHand(aiPlayer, List.of(new GrizzlyBears()));
 
-        ai.handleMessage("GAME_STATE", "");
+        ai.handleEvent(MessageType.GAME_STATE);
 
         assertThat(gd.stack).hasSize(1);
         assertThat(gd.stack.getFirst().getCard().getName()).isEqualTo("Grizzly Bears");
@@ -478,7 +479,7 @@ class MediumAiDecisionEngineTest {
             pool.add(ManaColor.GREEN, 1);
             pool.add(ManaColor.COLORLESS, 1);
 
-            createEngine().handleMessage("GAME_STATE", "");
+            createEngine().handleEvent(MessageType.GAME_STATE);
 
             verify(mockMessageHandler).handlePlayCard(any(), any());
             verify(mockMessageHandler).handlePassPriority(any(), any());
@@ -504,7 +505,7 @@ class MediumAiDecisionEngineTest {
                 return null;
             }).when(mockMessageHandler).handlePlayCard(any(), any());
 
-            createEngine().handleMessage("GAME_STATE", "");
+            createEngine().handleEvent(MessageType.GAME_STATE);
 
             verify(mockMessageHandler).handlePlayCard(any(), any());
             verify(mockMessageHandler, never()).handlePassPriority(any(), any());
@@ -539,7 +540,7 @@ class MediumAiDecisionEngineTest {
                 return null;
             }).when(mockMessageHandler).handlePlayCard(any(), any());
 
-            createEngine().handleMessage("GAME_STATE", "");
+            createEngine().handleEvent(MessageType.GAME_STATE);
 
             verify(mockMessageHandler).handlePlayCard(any(), any());
             verify(mockMessageHandler, never()).handlePassPriority(any(), any());
@@ -565,7 +566,7 @@ class MediumAiDecisionEngineTest {
             pool.add(ManaColor.GREEN, 1);
             pool.add(ManaColor.COLORLESS, 1);
 
-            createEngine().handleMessage("GAME_STATE", "");
+            createEngine().handleEvent(MessageType.GAME_STATE);
 
             verify(mockMessageHandler).handlePlayCard(any(), any());
             verify(mockMessageHandler).handlePassPriority(any(), any());
@@ -596,7 +597,7 @@ class MediumAiDecisionEngineTest {
                 return null;
             }).when(mockMessageHandler).handlePlayCard(any(), any());
 
-            assertThatCode(() -> createEngine().handleMessage("GAME_STATE", ""))
+            assertThatCode(() -> createEngine().handleEvent(MessageType.GAME_STATE))
                     .doesNotThrowAnyException();
         }
 
@@ -633,7 +634,7 @@ class MediumAiDecisionEngineTest {
                 return null;
             }).when(mockMessageHandler).handlePlayCard(any(), any());
 
-            createEngine().handleMessage("GAME_STATE", "");
+            createEngine().handleEvent(MessageType.GAME_STATE);
 
             ArgumentCaptor<PlayCardRequest> captor = ArgumentCaptor.forClass(PlayCardRequest.class);
             verify(mockMessageHandler).handlePlayCard(eq(mockConnection), captor.capture());
@@ -668,7 +669,7 @@ class MediumAiDecisionEngineTest {
                 return null;
             }).when(mockMessageHandler).handleTapPermanent(any(), any());
 
-            createEngine().handleMessage("GAME_STATE", "");
+            createEngine().handleEvent(MessageType.GAME_STATE);
 
             // AI should have tapped but NOT cast the spell or passed priority
             verify(mockMessageHandler).handleTapPermanent(any(), any());
@@ -696,7 +697,7 @@ class MediumAiDecisionEngineTest {
         gd.playerBattlefields.get(human.getId()).add(target);
         harness.setHand(aiPlayer, List.of(new CrypticCommand()));
 
-        ai.handleMessage("GAME_STATE", "");
+        ai.handleEvent(MessageType.GAME_STATE);
 
         assertThat(gd.stack).hasSize(1);
         assertThat(gd.stack.getFirst().getCard().getName()).isEqualTo("Cryptic Command");
@@ -711,7 +712,7 @@ class MediumAiDecisionEngineTest {
 
         harness.setHand(aiPlayer, List.of(new SteelSabotage()));
 
-        ai.handleMessage("GAME_STATE", "");
+        ai.handleEvent(MessageType.GAME_STATE);
 
         assertThat(gd.stack).isEmpty();
     }
@@ -730,7 +731,7 @@ class MediumAiDecisionEngineTest {
         // Steel Sabotage has no valid mode (no artifacts), but Pacifism is castable
         harness.setHand(aiPlayer, List.of(new SteelSabotage(), new Pacifism()));
 
-        ai.handleMessage("GAME_STATE", "");
+        ai.handleEvent(MessageType.GAME_STATE);
 
         // Should skip Steel Sabotage and cast Pacifism
         assertThat(gd.stack).hasSize(1);
@@ -763,7 +764,7 @@ class MediumAiDecisionEngineTest {
 
         harness.setHand(aiPlayer, List.of(new SteelSabotage()));
 
-        ai.handleMessage("GAME_STATE", "");
+        ai.handleEvent(MessageType.GAME_STATE);
 
         assertThat(gd.stack).hasSize(1);
         assertThat(gd.stack.getFirst().getCard().getName()).isEqualTo("Steel Sabotage");
@@ -783,7 +784,7 @@ class MediumAiDecisionEngineTest {
 
         harness.setHand(aiPlayer, List.of(new Slagstorm()));
 
-        ai.handleMessage("GAME_STATE", "");
+        ai.handleEvent(MessageType.GAME_STATE);
 
         assertThat(gd.stack).hasSize(1);
         assertThat(gd.stack.getFirst().getCard().getName()).isEqualTo("Slagstorm");
@@ -813,7 +814,7 @@ class MediumAiDecisionEngineTest {
         gd.status = GameStatus.RUNNING;
         gd.interaction.beginInteraction(new PendingInteraction.AttackerDeclaration(aiPlayer.getId()));
 
-        ai.handleMessage("AVAILABLE_ATTACKERS", "");
+        ai.handleEvent(MessageType.AVAILABLE_ATTACKERS);
 
         // At most 1 creature should be attacking (can only afford {1} tax)
         long attackingCount = gd.playerBattlefields.get(aiPlayer.getId()).stream()
@@ -836,7 +837,7 @@ class MediumAiDecisionEngineTest {
 
         harness.setHand(aiPlayer, List.of(new com.github.laxika.magicalvibes.cards.s.SkaabRuinator()));
 
-        ai.handleMessage("GAME_STATE", "");
+        ai.handleEvent(MessageType.GAME_STATE);
 
         assertThat(gd.stack).hasSize(1);
         assertThat(gd.stack.getFirst().getCard().getName()).isEqualTo("Skaab Ruinator");
@@ -858,7 +859,7 @@ class MediumAiDecisionEngineTest {
 
         harness.setHand(aiPlayer, List.of(new com.github.laxika.magicalvibes.cards.s.SkaabRuinator()));
 
-        ai.handleMessage("GAME_STATE", "");
+        ai.handleEvent(MessageType.GAME_STATE);
 
         assertThat(gd.stack).hasSize(1);
         assertThat(gd.stack.getFirst().getCard().getName()).isEqualTo("Skaab Ruinator");
@@ -883,7 +884,7 @@ class MediumAiDecisionEngineTest {
 
         harness.setHand(aiPlayer, List.of(new EntrancingMelody()));
 
-        ai.handleMessage("GAME_STATE", "");
+        ai.handleEvent(MessageType.GAME_STATE);
 
         assertThat(gd.stack).hasSize(1);
         assertThat(gd.stack.getFirst().getCard().getName()).isEqualTo("Entrancing Melody");
@@ -907,7 +908,7 @@ class MediumAiDecisionEngineTest {
 
         harness.setHand(aiPlayer, List.of(new EntrancingMelody()));
 
-        ai.handleMessage("GAME_STATE", "");
+        ai.handleEvent(MessageType.GAME_STATE);
 
         assertThat(gd.stack).hasSize(1);
         assertThat(gd.stack.getFirst().getTargetId()).isEqualTo(bears.getId());
@@ -926,7 +927,7 @@ class MediumAiDecisionEngineTest {
 
         harness.setHand(aiPlayer, List.of(new EntrancingMelody()));
 
-        ai.handleMessage("GAME_STATE", "");
+        ai.handleEvent(MessageType.GAME_STATE);
 
         assertThat(gd.stack).isEmpty();
     }
@@ -951,7 +952,7 @@ class MediumAiDecisionEngineTest {
 
         harness.setHand(aiPlayer, List.of(new EntrancingMelody()));
 
-        ai.handleMessage("GAME_STATE", "");
+        ai.handleEvent(MessageType.GAME_STATE);
 
         // Without the fix, AI would compute maxX=2 (ignoring modifier) and try to steal Bears,
         // which would fail server-side validation. With the fix, AI sees maxX=1 and skips.
@@ -983,7 +984,7 @@ class MediumAiDecisionEngineTest {
         airElemental.setSummoningSick(false);
         gd.playerBattlefields.get(human.getId()).add(airElemental);
 
-        ai.handleMessage("AVAILABLE_ATTACKERS", "");
+        ai.handleEvent(MessageType.AVAILABLE_ATTACKERS);
 
         // AI must attack with at least one creature despite the unfavorable board
         long attackingCount = gd.playerBattlefields.get(aiPlayer.getId()).stream()
@@ -1006,7 +1007,7 @@ class MediumAiDecisionEngineTest {
 
         harness.setHand(aiPlayer, List.of(new Pacifism()));
 
-        ai.handleMessage("GAME_STATE", "");
+        ai.handleEvent(MessageType.GAME_STATE);
 
         // Should NOT cast — can't afford {1}{W} + {2} tax = 4 mana with only 2 Plains
         assertThat(gd.stack).isEmpty();
@@ -1024,7 +1025,7 @@ class MediumAiDecisionEngineTest {
 
         harness.setHand(aiPlayer, List.of(new Pacifism()));
 
-        ai.handleMessage("GAME_STATE", "");
+        ai.handleEvent(MessageType.GAME_STATE);
 
         assertThat(gd.stack).hasSize(1);
         assertThat(gd.stack.getFirst().getCard().getName()).isEqualTo("Pacifism");
@@ -1050,7 +1051,7 @@ class MediumAiDecisionEngineTest {
 
         harness.setHand(aiPlayer, List.of(new com.github.laxika.magicalvibes.cards.l.LightningBolt()));
 
-        ai.handleMessage("GAME_STATE", "");
+        ai.handleEvent(MessageType.GAME_STATE);
 
         // Should NOT cast — can't afford {R} + {2} tax = 3 mana with only 1 Mountain
         assertThat(gd.stack).isEmpty();

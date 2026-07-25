@@ -31,6 +31,7 @@ import com.github.laxika.magicalvibes.model.filter.TargetFilter;
 import com.github.laxika.magicalvibes.model.effect.CostEffect;
 import com.github.laxika.magicalvibes.model.filter.PermanentPredicate;
 import com.github.laxika.magicalvibes.networking.Connection;
+import com.github.laxika.magicalvibes.networking.model.MessageType;
 import com.github.laxika.magicalvibes.networking.message.DeclareBlockersRequest;
 import com.github.laxika.magicalvibes.networking.message.KeepHandRequest;
 import com.github.laxika.magicalvibes.networking.message.MulliganRequest;
@@ -137,21 +138,21 @@ public abstract class AiDecisionEngine {
 
     // ===== Message Dispatch =====
 
-    public void handleMessage(String type, String json) {
+    public void handleEvent(MessageType type) {
         GameData gameData = gameRegistry.get(gameId);
         if (gameData == null || gameData.status == GameStatus.FINISHED) {
             return;
         }
 
         switch (type) {
-            case "GAME_STATE" -> handleGameState(gameData);
-            case "MULLIGAN_RESOLVED" -> handleMulliganResolved(gameData);
-            case "SELECT_CARDS_TO_BOTTOM" -> choiceHandler.handleBottomCards(gameData);
-            case "AVAILABLE_ATTACKERS" -> handleAttackers(gameData);
-            case "AVAILABLE_BLOCKERS" -> handleBlockers(gameData);
-            case "INTERACTION_PROMPT" -> handleInteractionPrompt(gameData);
-            case "COMBAT_DAMAGE_ASSIGNMENT" -> choiceHandler.handleCombatDamageAssignment(gameData);
-            case "GAME_OVER" -> log.info("AI: Game {} is over", gameId);
+            case GAME_STATE -> handleGameState(gameData);
+            case MULLIGAN_RESOLVED -> handleMulliganResolved(gameData);
+            case SELECT_CARDS_TO_BOTTOM -> choiceHandler.handleBottomCards(gameData);
+            case AVAILABLE_ATTACKERS -> handleAttackers(gameData);
+            case AVAILABLE_BLOCKERS -> handleBlockers(gameData);
+            case INTERACTION_PROMPT -> handleInteractionPrompt(gameData);
+            case COMBAT_DAMAGE_ASSIGNMENT -> choiceHandler.handleCombatDamageAssignment(gameData);
+            case GAME_OVER -> log.info("AI: Game {} is over", gameId);
             default -> {
                 // Ignore informational messages (BATTLEFIELD_UPDATED, MANA_UPDATED, etc.)
             }

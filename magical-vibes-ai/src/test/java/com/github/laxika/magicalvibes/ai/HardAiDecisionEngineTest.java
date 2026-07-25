@@ -1,5 +1,6 @@
 package com.github.laxika.magicalvibes.ai;
 
+import com.github.laxika.magicalvibes.networking.model.MessageType;
 import com.github.laxika.magicalvibes.testutil.TestCards;
 import com.github.laxika.magicalvibes.ai.simulation.GameSimulator;
 import com.github.laxika.magicalvibes.ai.simulation.MCTSEngine;
@@ -242,7 +243,7 @@ class HardAiDecisionEngineTest {
 
         harness.setHand(player1, List.of(new GrizzlyBears()));
 
-        ai.handleMessage("GAME_STATE", "");
+        ai.handleEvent(MessageType.GAME_STATE);
 
         assertThat(gd.stack).hasSize(1);
         assertThat(gd.stack.getFirst().getCard().getName()).isEqualTo("Grizzly Bears");
@@ -277,7 +278,7 @@ class HardAiDecisionEngineTest {
 
         harness.setHand(player1, List.of(new KuldothaRebirth()));
 
-        ai.handleMessage("GAME_STATE", "");
+        ai.handleEvent(MessageType.GAME_STATE);
 
         // AI should not cast — no artifact to sacrifice
         assertThat(gd.stack).isEmpty();
@@ -320,7 +321,7 @@ class HardAiDecisionEngineTest {
 
         harness.setHand(player1, List.of(new Vivisection()));
 
-        ai.handleMessage("GAME_STATE", "");
+        ai.handleEvent(MessageType.GAME_STATE);
 
         assertThat(gd.stack).hasSize(1);
         assertThat(gd.stack.getFirst().getCard().getName()).isEqualTo("Vivisection");
@@ -357,7 +358,7 @@ class HardAiDecisionEngineTest {
 
         harness.setHand(player1, List.of(new com.github.laxika.magicalvibes.cards.m.MyrSuperion()));
 
-        ai.handleMessage("GAME_STATE", "");
+        ai.handleEvent(MessageType.GAME_STATE);
 
         // Myr Superion should NOT be on the stack — only land mana is available
         assertThat(gd.stack).isEmpty();
@@ -393,7 +394,7 @@ class HardAiDecisionEngineTest {
 
         harness.setHand(player1, List.of(new com.github.laxika.magicalvibes.cards.m.MyrSuperion()));
 
-        ai.handleMessage("GAME_STATE", "");
+        ai.handleEvent(MessageType.GAME_STATE);
 
         // Myr Superion should be on the stack — creature mana is available from elves
         assertThat(gd.stack).hasSize(1);
@@ -435,7 +436,7 @@ class HardAiDecisionEngineTest {
 
         harness.setHand(player1, List.of(new Nekrataal()));
 
-        ai.handleMessage("GAME_STATE", "");
+        ai.handleEvent(MessageType.GAME_STATE);
 
         assertThat(gd.stack).isEmpty();
         harness.assertOnBattlefield(player1, "Serra Angel");
@@ -476,7 +477,7 @@ class HardAiDecisionEngineTest {
 
         harness.setHand(player1, List.of(new Nekrataal()));
 
-        ai.handleMessage("GAME_STATE", "");
+        ai.handleEvent(MessageType.GAME_STATE);
 
         assertThat(gd.stack).hasSize(1);
         assertThat(gd.stack.getFirst().getCard().getName()).isEqualTo("Nekrataal");
@@ -511,7 +512,7 @@ class HardAiDecisionEngineTest {
         airElemental.setSummoningSick(false);
         gd.playerBattlefields.get(player2.getId()).add(airElemental);
 
-        ai.handleMessage("AVAILABLE_ATTACKERS", "");
+        ai.handleEvent(MessageType.AVAILABLE_ATTACKERS);
 
         assertThat(berserkers.isAttacking()).isTrue();
     }
@@ -544,7 +545,7 @@ class HardAiDecisionEngineTest {
         aiElemental.setSummoningSick(false);
         gd.playerBattlefields.get(player2.getId()).add(aiElemental);
 
-        ai.handleMessage("AVAILABLE_BLOCKERS", "");
+        ai.handleEvent(MessageType.AVAILABLE_BLOCKERS);
 
         // The blocker declaration should have been accepted
         assertThat(gd.interaction.isAwaitingInput()).isFalse();
@@ -630,7 +631,7 @@ class HardAiDecisionEngineTest {
             pool.add(ManaColor.GREEN, 1);
             pool.add(ManaColor.COLORLESS, 1);
 
-            createEngine().handleMessage("GAME_STATE", "");
+            createEngine().handleEvent(MessageType.GAME_STATE);
 
             verify(mockMessageHandler).handlePlayCard(any(), any());
             verify(mockMessageHandler).handlePassPriority(any(), any());
@@ -656,7 +657,7 @@ class HardAiDecisionEngineTest {
                 return null;
             }).when(mockMessageHandler).handlePlayCard(any(), any());
 
-            createEngine().handleMessage("GAME_STATE", "");
+            createEngine().handleEvent(MessageType.GAME_STATE);
 
             verify(mockMessageHandler).handlePlayCard(any(), any());
             verify(mockMessageHandler, never()).handlePassPriority(any(), any());
@@ -691,7 +692,7 @@ class HardAiDecisionEngineTest {
                 return null;
             }).when(mockMessageHandler).handlePlayCard(any(), any());
 
-            createEngine().handleMessage("GAME_STATE", "");
+            createEngine().handleEvent(MessageType.GAME_STATE);
 
             verify(mockMessageHandler).handlePlayCard(any(), any());
             verify(mockMessageHandler, never()).handlePassPriority(any(), any());
@@ -717,7 +718,7 @@ class HardAiDecisionEngineTest {
             pool.add(ManaColor.GREEN, 1);
             pool.add(ManaColor.COLORLESS, 1);
 
-            createEngine().handleMessage("GAME_STATE", "");
+            createEngine().handleEvent(MessageType.GAME_STATE);
 
             verify(mockMessageHandler).handlePlayCard(any(), any());
             verify(mockMessageHandler).handlePassPriority(any(), any());
@@ -748,7 +749,7 @@ class HardAiDecisionEngineTest {
                 return null;
             }).when(mockMessageHandler).handlePlayCard(any(), any());
 
-            assertThatCode(() -> createEngine().handleMessage("GAME_STATE", ""))
+            assertThatCode(() -> createEngine().handleEvent(MessageType.GAME_STATE))
                     .doesNotThrowAnyException();
         }
 
@@ -791,7 +792,7 @@ class HardAiDecisionEngineTest {
                     .thenThrow(new RuntimeException("MCTS disabled for test"));
             engine.setMctsEngine(failingMcts);
 
-            engine.handleMessage("GAME_STATE", "");
+            engine.handleEvent(MessageType.GAME_STATE);
 
             ArgumentCaptor<PlayCardRequest> captor = ArgumentCaptor.forClass(PlayCardRequest.class);
             verify(mockMessageHandler).handlePlayCard(eq(mockConnection), captor.capture());
@@ -826,7 +827,7 @@ class HardAiDecisionEngineTest {
                 return null;
             }).when(mockMessageHandler).handleTapPermanent(any(), any());
 
-            createEngine().handleMessage("GAME_STATE", "");
+            createEngine().handleEvent(MessageType.GAME_STATE);
 
             // AI should have tapped but NOT cast the spell or passed priority
             verify(mockMessageHandler).handleTapPermanent(any(), any());
@@ -949,7 +950,7 @@ class HardAiDecisionEngineTest {
                     .thenThrow(new RuntimeException("MCTS disabled for test"));
             engine.setMctsEngine(failingMcts);
 
-            engine.handleMessage("GAME_STATE", "");
+            engine.handleEvent(MessageType.GAME_STATE);
 
             ArgumentCaptor<PlayCardRequest> captor = ArgumentCaptor.forClass(PlayCardRequest.class);
             verify(mockMessageHandler).handlePlayCard(eq(mockConnection), captor.capture());
@@ -982,7 +983,7 @@ class HardAiDecisionEngineTest {
         gd.playerBattlefields.get(player2.getId()).add(target);
         harness.setHand(player1, List.of(new CrypticCommand()));
 
-        ai.handleMessage("GAME_STATE", "");
+        ai.handleEvent(MessageType.GAME_STATE);
 
         assertThat(gd.stack).hasSize(1);
         assertThat(gd.stack.getFirst().getCard().getName()).isEqualTo("Cryptic Command");
@@ -1013,7 +1014,7 @@ class HardAiDecisionEngineTest {
 
         harness.setHand(player1, List.of(new SteelSabotage()));
 
-        ai.handleMessage("GAME_STATE", "");
+        ai.handleEvent(MessageType.GAME_STATE);
 
         assertThat(gd.stack).isEmpty();
     }
@@ -1052,7 +1053,7 @@ class HardAiDecisionEngineTest {
         // Steel Sabotage has no valid mode (no artifacts), but Pacifism is castable
         harness.setHand(player1, List.of(new SteelSabotage(), new com.github.laxika.magicalvibes.cards.p.Pacifism()));
 
-        ai.handleMessage("GAME_STATE", "");
+        ai.handleEvent(MessageType.GAME_STATE);
 
         // Should skip Steel Sabotage and cast Pacifism
         assertThat(gd.stack).hasSize(1);
@@ -1095,7 +1096,7 @@ class HardAiDecisionEngineTest {
 
         harness.setHand(player1, List.of(new SteelSabotage()));
 
-        ai.handleMessage("GAME_STATE", "");
+        ai.handleEvent(MessageType.GAME_STATE);
 
         assertThat(gd.stack).hasSize(1);
         assertThat(gd.stack.getFirst().getCard().getName()).isEqualTo("Steel Sabotage");
@@ -1141,7 +1142,7 @@ class HardAiDecisionEngineTest {
 
         harness.setHand(player1, List.of(new Slagstorm()));
 
-        ai.handleMessage("GAME_STATE", "");
+        ai.handleEvent(MessageType.GAME_STATE);
 
         assertThat(gd.stack).hasSize(1);
         assertThat(gd.stack.getFirst().getCard().getName()).isEqualTo("Slagstorm");
@@ -1172,7 +1173,7 @@ class HardAiDecisionEngineTest {
         harness.addMana(player1, ManaColor.WHITE, 4);
         harness.setHand(player1, List.of(new FitOfRage(), new SmiteTheMonstrous()));
 
-        ai.handleMessage("GAME_STATE", "");
+        ai.handleEvent(MessageType.GAME_STATE);
 
         // The critical combo setup: pump the undersized threat so Smite becomes legal
         assertThat(gd.stack).hasSize(1);
@@ -1217,7 +1218,7 @@ class HardAiDecisionEngineTest {
         gd.status = GameStatus.RUNNING;
         gd.interaction.beginInteraction(new PendingInteraction.AttackerDeclaration(player1.getId()));
 
-        ai.handleMessage("AVAILABLE_ATTACKERS", "");
+        ai.handleEvent(MessageType.AVAILABLE_ATTACKERS);
 
         // At most 1 creature should be attacking (can only afford {1} tax)
         long attackingCount = gd.playerBattlefields.get(player1.getId()).stream()
@@ -1260,7 +1261,7 @@ class HardAiDecisionEngineTest {
 
         harness.setHand(player1, List.of(new com.github.laxika.magicalvibes.cards.s.SkaabRuinator()));
 
-        ai.handleMessage("GAME_STATE", "");
+        ai.handleEvent(MessageType.GAME_STATE);
 
         assertThat(gd.stack).hasSize(1);
         assertThat(gd.stack.getFirst().getCard().getName()).isEqualTo("Skaab Ruinator");
@@ -1301,7 +1302,7 @@ class HardAiDecisionEngineTest {
 
         harness.setHand(player1, List.of(new com.github.laxika.magicalvibes.cards.s.SkaabRuinator()));
 
-        ai.handleMessage("GAME_STATE", "");
+        ai.handleEvent(MessageType.GAME_STATE);
 
         assertThat(gd.stack).hasSize(1);
         assertThat(gd.stack.getFirst().getCard().getName()).isEqualTo("Skaab Ruinator");
@@ -1355,7 +1356,7 @@ class HardAiDecisionEngineTest {
 
         harness.setHand(player1, List.of(new EntrancingMelody()));
 
-        ai.handleMessage("GAME_STATE", "");
+        ai.handleEvent(MessageType.GAME_STATE);
 
         assertThat(gd.stack).hasSize(1);
         assertThat(gd.stack.getFirst().getCard().getName()).isEqualTo("Entrancing Melody");
@@ -1380,7 +1381,7 @@ class HardAiDecisionEngineTest {
 
         harness.setHand(player1, List.of(new EntrancingMelody()));
 
-        ai.handleMessage("GAME_STATE", "");
+        ai.handleEvent(MessageType.GAME_STATE);
 
         assertThat(gd.stack).hasSize(1);
         assertThat(gd.stack.getFirst().getTargetId()).isEqualTo(bears.getId());
@@ -1400,7 +1401,7 @@ class HardAiDecisionEngineTest {
 
         harness.setHand(player1, List.of(new EntrancingMelody()));
 
-        ai.handleMessage("GAME_STATE", "");
+        ai.handleEvent(MessageType.GAME_STATE);
 
         assertThat(gd.stack).isEmpty();
     }
@@ -1426,7 +1427,7 @@ class HardAiDecisionEngineTest {
 
         harness.setHand(player1, List.of(new EntrancingMelody()));
 
-        ai.handleMessage("GAME_STATE", "");
+        ai.handleEvent(MessageType.GAME_STATE);
 
         // Without the fix, AI would compute maxX=2 (ignoring modifier) and try to steal Bears,
         // which would fail server-side validation. With the fix, AI sees maxX=1 and skips.
@@ -1459,7 +1460,7 @@ class HardAiDecisionEngineTest {
         airElemental.setSummoningSick(false);
         gd.playerBattlefields.get(player2.getId()).add(airElemental);
 
-        ai.handleMessage("AVAILABLE_ATTACKERS", "");
+        ai.handleEvent(MessageType.AVAILABLE_ATTACKERS);
 
         // Must attack with at least one creature despite the unfavorable board
         long attackingCount = gd.playerBattlefields.get(player1.getId()).stream()
@@ -1489,7 +1490,7 @@ class HardAiDecisionEngineTest {
         harness.setHand(player1, List.of(forest, plains, bears));
 
         // First GAME_STATE: AI plays the best land
-        ai.handleMessage("GAME_STATE", "");
+        ai.handleEvent(MessageType.GAME_STATE);
 
         // Forest should be on the battlefield (not Plains)
         assertThat(gd.playerBattlefields.get(player1.getId()))
@@ -1499,7 +1500,7 @@ class HardAiDecisionEngineTest {
 
         // Second GAME_STATE: AI casts the now-enabled spell
         harness.clearPriorityPassed();
-        ai.handleMessage("GAME_STATE", "");
+        ai.handleEvent(MessageType.GAME_STATE);
 
         assertThat(gd.stack).hasSize(1);
         assertThat(gd.stack.getFirst().getCard().getName()).isEqualTo("Grizzly Bears");
@@ -1519,7 +1520,7 @@ class HardAiDecisionEngineTest {
         Card angel = new SerraAngel();
         harness.setHand(player1, List.of(forest, plains, angel));
 
-        ai.handleMessage("GAME_STATE", "");
+        ai.handleEvent(MessageType.GAME_STATE);
 
         // Neither land alone enables Serra Angel, so AI should choose based on coverage.
         // Plains matches Serra Angel's {W}{W} requirement, Forest matches nothing.
@@ -1561,7 +1562,7 @@ class HardAiDecisionEngineTest {
 
         harness.setHand(player1, List.of(new com.github.laxika.magicalvibes.cards.p.Pacifism()));
 
-        ai.handleMessage("GAME_STATE", "");
+        ai.handleEvent(MessageType.GAME_STATE);
 
         // Should NOT cast — can't afford {1}{W} + {2} tax = 4 mana with only 2 Plains
         assertThat(gd.stack).isEmpty();
@@ -1583,7 +1584,7 @@ class HardAiDecisionEngineTest {
 
         harness.setHand(player1, List.of(new com.github.laxika.magicalvibes.cards.p.Pacifism()));
 
-        ai.handleMessage("GAME_STATE", "");
+        ai.handleEvent(MessageType.GAME_STATE);
 
         assertThat(gd.stack).hasSize(1);
         assertThat(gd.stack.getFirst().getCard().getName()).isEqualTo("Pacifism");
@@ -1611,7 +1612,7 @@ class HardAiDecisionEngineTest {
 
         harness.setHand(player1, List.of(new com.github.laxika.magicalvibes.cards.l.LightningBolt()));
 
-        ai.handleMessage("GAME_STATE", "");
+        ai.handleEvent(MessageType.GAME_STATE);
 
         // Should NOT cast — can't afford {R} + {2} tax = 3 mana with only 1 Mountain
         assertThat(gd.stack).isEmpty();
@@ -1646,7 +1647,7 @@ class HardAiDecisionEngineTest {
         // Give the AI Cancel in hand
         harness.setHand(player1, List.of(new com.github.laxika.magicalvibes.cards.c.Cancel()));
 
-        ai.handleMessage("GAME_STATE", "");
+        ai.handleEvent(MessageType.GAME_STATE);
 
         // The AI should cast Cancel targeting the Serra Angel
         assertThat(gd.stack).hasSizeGreaterThanOrEqualTo(2);
@@ -1676,7 +1677,7 @@ class HardAiDecisionEngineTest {
         givePlayerIslands(player1, 3);
         harness.setHand(player1, List.of(new com.github.laxika.magicalvibes.cards.c.Cancel()));
 
-        ai.handleMessage("GAME_STATE", "");
+        ai.handleEvent(MessageType.GAME_STATE);
 
         // Stack should only have the original spell — Cancel should not have been cast
         assertThat(gd.stack).hasSize(1);
@@ -1706,7 +1707,7 @@ class HardAiDecisionEngineTest {
         givePlayerIslands(player1, 3);
         harness.setHand(player1, List.of(cancelCard));
 
-        ai.handleMessage("GAME_STATE", "");
+        ai.handleEvent(MessageType.GAME_STATE);
 
         // Should NOT waste a 3-mana counterspell on a 1/1 for 1 mana.
         // After the AI passes priority, both players have passed, stack resolves.
@@ -1746,7 +1747,7 @@ class HardAiDecisionEngineTest {
         givePlayerIslands(player1, 3);
         harness.setHand(player1, List.of(new Cancel()));
 
-        ai1.handleMessage("GAME_STATE", "");
+        ai1.handleEvent(MessageType.GAME_STATE);
 
         // AI should counter the board wipe — it threatens its entire board
         assertThat(gd.stack).hasSizeGreaterThanOrEqualTo(2);
@@ -1780,7 +1781,7 @@ class HardAiDecisionEngineTest {
         givePlayerIslands(player1, 3);
         harness.setHand(player1, List.of(new Cancel()));
 
-        ai.handleMessage("GAME_STATE", "");
+        ai.handleEvent(MessageType.GAME_STATE);
 
         // AI should counter the removal even though Doom Blade (MV=2) < Cancel (MV=3),
         // because it's targeting a Serra Angel (high creature value)
@@ -1816,7 +1817,7 @@ class HardAiDecisionEngineTest {
         givePlayerIslands(player1, 3);
         harness.setHand(player1, List.of(new Cancel()));
 
-        ai.handleMessage("GAME_STATE", "");
+        ai.handleEvent(MessageType.GAME_STATE);
 
         // AI should NOT counter a 2/2 when it already has 3 Serra Angels —
         // save the counterspell for something more threatening
@@ -1853,7 +1854,7 @@ class HardAiDecisionEngineTest {
         givePlayerIslands(player1, 3);
         harness.setHand(player1, List.of(new Cancel()));
 
-        ai.handleMessage("GAME_STATE", "");
+        ai.handleEvent(MessageType.GAME_STATE);
 
         // AI MUST counter the board wipe — it would destroy all 3 Serra Angels
         assertThat(gd.stack).hasSizeGreaterThanOrEqualTo(2);
@@ -1892,7 +1893,7 @@ class HardAiDecisionEngineTest {
         givePlayerIslands(player1, 3);
         harness.setHand(player1, List.of(new Cancel()));
 
-        ai.handleMessage("GAME_STATE", "");
+        ai.handleEvent(MessageType.GAME_STATE);
 
         // At low life, the reservation threshold is bypassed — counter everything
         assertThat(gd.stack).hasSizeGreaterThanOrEqualTo(2);
@@ -1934,7 +1935,7 @@ class HardAiDecisionEngineTest {
         harness.setHand(player1, List.of(new GrizzlyBears(), new GrizzlyBears(), new Shock()));
         harness.addMana(player1, ManaColor.RED, 1); // For Shock to be castable
 
-        ai.handleMessage("GAME_STATE", "");
+        ai.handleEvent(MessageType.GAME_STATE);
 
         // AI should cast a sorcery-speed creature (not hold all mana for Shock)
         assertThat(gd.stack).isNotEmpty();
@@ -1972,7 +1973,7 @@ class HardAiDecisionEngineTest {
         oppCreature.setSummoningSick(false);
         gd.playerBattlefields.get(player2.getId()).add(oppCreature);
 
-        ai.handleMessage("GAME_STATE", "");
+        ai.handleEvent(MessageType.GAME_STATE);
 
         // AI should cast the creature (it can still afford the instant later)
         assertThat(gd.stack).isNotEmpty();
@@ -2001,7 +2002,7 @@ class HardAiDecisionEngineTest {
         oppCreature.setSummoningSick(false);
         gd.playerBattlefields.get(player2.getId()).add(oppCreature);
 
-        ai.handleMessage("GAME_STATE", "");
+        ai.handleEvent(MessageType.GAME_STATE);
 
         // No sorcery should be cast (EliteVanguard needs white), and Lightning Bolt
         // should be held for opponent's turn
@@ -2032,7 +2033,7 @@ class HardAiDecisionEngineTest {
         oppCreature.setSummoningSick(false);
         gd.playerBattlefields.get(player2.getId()).add(oppCreature);
 
-        ai.handleMessage("GAME_STATE", "");
+        ai.handleEvent(MessageType.GAME_STATE);
 
         // AI should hold mana for both counterspells — stack stays empty
         assertThat(gd.stack).isEmpty();
@@ -2051,7 +2052,7 @@ class HardAiDecisionEngineTest {
         // All fit within 7 mana, so AI should cast the creature and still hold both instants.
         harness.setHand(player1, List.of(new GrizzlyBears(), new Cancel(), new Negate()));
 
-        ai.handleMessage("GAME_STATE", "");
+        ai.handleEvent(MessageType.GAME_STATE);
 
         // AI should cast the sorcery-speed creature (can hold both instants with remaining mana)
         assertThat(gd.stack).isNotEmpty();
@@ -2087,7 +2088,7 @@ class HardAiDecisionEngineTest {
         oppCreature.setSummoningSick(false);
         gd.playerBattlefields.get(player2.getId()).add(oppCreature);
 
-        ai.handleMessage("GAME_STATE", "");
+        ai.handleEvent(MessageType.GAME_STATE);
 
         // AI should hold mana for both counterspells in postcombat — stack stays empty
         assertThat(gd.stack).isEmpty();
@@ -2128,7 +2129,7 @@ class HardAiDecisionEngineTest {
         // Holding clearly wins.
         harness.setHand(player1, List.of(new Eviscerate(), new Cancel(), new Negate()));
 
-        ai.handleMessage("GAME_STATE", "");
+        ai.handleEvent(MessageType.GAME_STATE);
 
         // AI should hold mana for both counterspells instead of removing the blocker
         assertThat(gd.stack).isEmpty();
@@ -2301,7 +2302,7 @@ class HardAiDecisionEngineTest {
         // Empty hand so AI doesn't try casting spells
         harness.setHand(player1, List.of());
 
-        ai.handleMessage("GAME_STATE", "");
+        ai.handleEvent(MessageType.GAME_STATE);
 
         // Pyromancer should have been tapped and ability put on the stack
         assertThat(pyromancer.isTapped()).isTrue();
@@ -2333,7 +2334,7 @@ class HardAiDecisionEngineTest {
 
         harness.setHand(player1, List.of());
 
-        ai.handleMessage("GAME_STATE", "");
+        ai.handleEvent(MessageType.GAME_STATE);
 
         // Should not activate — creature is summoning sick
         assertThat(pyromancer.isTapped()).isFalse();
@@ -2361,7 +2362,7 @@ class HardAiDecisionEngineTest {
         // No opponent creatures — should target opponent face
         harness.setHand(player1, List.of());
 
-        ai.handleMessage("GAME_STATE", "");
+        ai.handleEvent(MessageType.GAME_STATE);
 
         assertThat(pyromancer.isTapped()).isTrue();
         assertThat(gd.stack).hasSize(1);
@@ -2393,7 +2394,7 @@ class HardAiDecisionEngineTest {
                         rod.getId(), 0, player2.getId()));
         ai.setMctsEngine(mcts);
 
-        ai.handleMessage("GAME_STATE", "");
+        ai.handleEvent(MessageType.GAME_STATE);
 
         assertThat(rod.isTapped()).isTrue();
         assertThat(gd.stack).hasSize(1);
@@ -2427,7 +2428,7 @@ class HardAiDecisionEngineTest {
 
         harness.setHand(player1, List.of());
 
-        ai.handleMessage("GAME_STATE", "");
+        ai.handleEvent(MessageType.GAME_STATE);
 
         // Should activate pump during combat
         assertThat(gd.stack).hasSize(1);
@@ -2456,7 +2457,7 @@ class HardAiDecisionEngineTest {
 
         harness.setHand(player1, List.of());
 
-        ai.handleMessage("GAME_STATE", "");
+        ai.handleEvent(MessageType.GAME_STATE);
 
         // Should NOT pump during main phase — waste of mana
         assertThat(gd.stack).isEmpty();
@@ -2491,7 +2492,7 @@ class HardAiDecisionEngineTest {
 
         harness.setHand(player1, List.of());
 
-        ai.handleMessage("GAME_STATE", "");
+        ai.handleEvent(MessageType.GAME_STATE);
 
         // Should activate regenerate during combat
         assertThat(gd.stack).hasSize(1);
@@ -2523,7 +2524,7 @@ class HardAiDecisionEngineTest {
 
         harness.setHand(player1, List.of());
 
-        ai.handleMessage("GAME_STATE", "");
+        ai.handleEvent(MessageType.GAME_STATE);
 
         // Should NOT activate regenerate during main — save mana for casting
         assertThat(gd.stack).isEmpty();
@@ -2548,7 +2549,7 @@ class HardAiDecisionEngineTest {
 
         harness.setHand(player1, List.of());
 
-        ai.handleMessage("GAME_STATE", "");
+        ai.handleEvent(MessageType.GAME_STATE);
 
         // Should not activate — can't afford {1}{G}
         assertThat(gd.stack).isEmpty();
@@ -2579,7 +2580,7 @@ class HardAiDecisionEngineTest {
 
         harness.setHand(player1, List.of());
 
-        ai.handleMessage("GAME_STATE", "");
+        ai.handleEvent(MessageType.GAME_STATE);
 
         // Cost of sacrificing the 1/1 should exceed value of dealing 1 to opponent face
         // or dealing 1 to a 4/4 creature (can't kill it)
@@ -2609,7 +2610,7 @@ class HardAiDecisionEngineTest {
 
         harness.setHand(player1, List.of());
 
-        ai.handleMessage("GAME_STATE", "");
+        ai.handleEvent(MessageType.GAME_STATE);
 
         // Should not activate — life cost check: life <= amount means can't pay
         assertThat(gd.stack).isEmpty();
@@ -2640,7 +2641,7 @@ class HardAiDecisionEngineTest {
 
         harness.setHand(player1, List.of());
 
-        ai.handleMessage("GAME_STATE", "");
+        ai.handleEvent(MessageType.GAME_STATE);
 
         // Should not activate — permanent is already tapped
         assertThat(gd.stack).isEmpty();
@@ -2671,7 +2672,7 @@ class HardAiDecisionEngineTest {
 
         harness.setHand(player1, List.of());
 
-        ai.handleMessage("GAME_STATE", "");
+        ai.handleEvent(MessageType.GAME_STATE);
 
         // Should target the 1/1 creature (killable) rather than opponent's face
         assertThat(gd.stack).hasSize(1);
@@ -2698,7 +2699,7 @@ class HardAiDecisionEngineTest {
 
         harness.setHand(player1, List.of());
 
-        ai.handleMessage("GAME_STATE", "");
+        ai.handleEvent(MessageType.GAME_STATE);
 
         // The mana ability should be skipped — nothing on the stack
         assertThat(gd.stack).isEmpty();
@@ -2726,7 +2727,7 @@ class HardAiDecisionEngineTest {
 
             harness.setHand(player1, List.of(new LightningBolt(), new Shock()));
 
-            ai.handleMessage("GAME_STATE", "");
+            ai.handleEvent(MessageType.GAME_STATE);
 
             // AI should cast a burn spell targeting opponent
             assertThat(gd.stack).hasSize(1);
@@ -2748,7 +2749,7 @@ class HardAiDecisionEngineTest {
 
             harness.setHand(player1, List.of(new Shock()));
 
-            ai.handleMessage("GAME_STATE", "");
+            ai.handleEvent(MessageType.GAME_STATE);
 
             // Should NOT have targeted opponent's face with burn for lethal
             // (may cast via normal evaluation, but not via burn-to-face-lethal path)
@@ -2774,7 +2775,7 @@ class HardAiDecisionEngineTest {
             // Hand has Shock first, then Lightning Bolt — AI should pick Bolt (higher damage)
             harness.setHand(player1, List.of(new Shock(), new LightningBolt()));
 
-            ai.handleMessage("GAME_STATE", "");
+            ai.handleEvent(MessageType.GAME_STATE);
 
             assertThat(gd.stack).hasSize(1);
             assertThat(gd.stack.getFirst().getCard().getName()).isEqualTo("Lightning Bolt");
@@ -2821,7 +2822,7 @@ class HardAiDecisionEngineTest {
 
             // Without alpha strike: AI might hold back a creature defensively.
             // With alpha strike + burn: 2 + 3 = 5 >= 5 life → lethal!
-            ai.handleMessage("AVAILABLE_ATTACKERS", "");
+            ai.handleEvent(MessageType.AVAILABLE_ATTACKERS);
 
             // Both creatures should attack (alpha strike)
             assertThat(aiBears.isAttacking()).isTrue();
@@ -2854,7 +2855,7 @@ class HardAiDecisionEngineTest {
             givePlayerMountains(player1, 1);
             harness.setHand(player1, List.of(new Shock())); // 2 damage, not enough
 
-            ai.handleMessage("AVAILABLE_ATTACKERS", "");
+            ai.handleEvent(MessageType.AVAILABLE_ATTACKERS);
 
             // Alpha strike + burn: ~0 combat through + 2 burn = 2, far from 20.
             // CombatSimulator/MCTS decides the normal attacks — we just verify
@@ -2890,7 +2891,7 @@ class HardAiDecisionEngineTest {
             // 2 combat damage (unblocked) + Lightning Bolt (3) = 5 = lethal
             harness.setHand(player1, List.of(new LightningBolt(), new Divination()));
 
-            ai.handleMessage("GAME_STATE", "");
+            ai.handleEvent(MessageType.GAME_STATE);
 
             // The AI should NOT cast Divination (which costs {2}{U} and can't be cast anyway
             // with mountains, but the key point is the AI enters the precombat alpha strike
@@ -2945,7 +2946,7 @@ class HardAiDecisionEngineTest {
             givePlayerMountains(player1, 3);
             harness.setHand(player1, List.of(new Shock(), new LightningBolt()));
 
-            ai.handleMessage("AVAILABLE_ATTACKERS", "");
+            ai.handleEvent(MessageType.AVAILABLE_ATTACKERS);
 
             // Phantom Warrior should always attack (unblockable damage is guaranteed)
             assertThat(phantom.isAttacking()).isTrue();
@@ -2981,7 +2982,7 @@ class HardAiDecisionEngineTest {
             // Even though 1 (elves) + 2 (bears) = 3 attack + 3 (bolt) = 6 >= 5,
             // the AI can't cast Bolt after attacking because the only mana source
             // (Llanowar Elves) will be tapped. Alpha strike check should fail.
-            ai.handleMessage("AVAILABLE_ATTACKERS", "");
+            ai.handleEvent(MessageType.AVAILABLE_ATTACKERS);
 
             // Verify: at least one creature should NOT be attacking (because the AI
             // can't execute the burn plan without land mana).
@@ -3023,7 +3024,7 @@ class HardAiDecisionEngineTest {
             oppCreature.setSummoningSick(false);
             gd.playerBattlefields.get(player2.getId()).add(oppCreature);
 
-            ai.handleMessage("AVAILABLE_ATTACKERS", "");
+            ai.handleEvent(MessageType.AVAILABLE_ATTACKERS);
 
             // When winning the race, AI should attack with all available creatures
             assertThat(aiCreature.isAttacking()).isTrue();
@@ -3058,7 +3059,7 @@ class HardAiDecisionEngineTest {
             oppCreature.setSummoningSick(false);
             gd.playerBattlefields.get(player2.getId()).add(oppCreature);
 
-            ai.handleMessage("AVAILABLE_ATTACKERS", "");
+            ai.handleEvent(MessageType.AVAILABLE_ATTACKERS);
 
             assertThat(aiCreature.isAttacking()).isTrue();
             assertThat(weakBears.isAttacking()).isFalse();
@@ -3092,7 +3093,7 @@ class HardAiDecisionEngineTest {
             TestCards.mutableCard(wall).setToughness(3);
             gd.playerBattlefields.get(player2.getId()).add(wall);
 
-            ai.handleMessage("AVAILABLE_ATTACKERS", "");
+            ai.handleEvent(MessageType.AVAILABLE_ATTACKERS);
 
             // The flyer connects, so it attacks; the 2/2 would just be given away, so it stays home.
             assertThat(flyer.isAttacking()).isTrue();
@@ -3122,7 +3123,7 @@ class HardAiDecisionEngineTest {
             Permanent oppBears = new Permanent(new GrizzlyBears());
             gd.playerBattlefields.get(player2.getId()).add(oppBears);
 
-            ai.handleMessage("AVAILABLE_ATTACKERS", "");
+            ai.handleEvent(MessageType.AVAILABLE_ATTACKERS);
 
             assertThat(bears.isAttacking())
                     .withFailMessage("AI held back a 2/2 from an even trade while winning the race")
@@ -3158,7 +3159,7 @@ class HardAiDecisionEngineTest {
             givePlayerForests(player1, 1);
             harness.setHand(player1, List.of(new GiantGrowth()));
 
-            ai.handleMessage("AVAILABLE_ATTACKERS", "");
+            ai.handleEvent(MessageType.AVAILABLE_ATTACKERS);
 
             // The pump line is lethal — the AI should send the -1/2 in.
             assertThat(weakBears.isAttacking())
@@ -3172,7 +3173,7 @@ class HardAiDecisionEngineTest {
             for (int i = 0; i < 30 && gd.status != GameStatus.FINISHED; i++) {
                 UUID priorityHolder = harness.getGameQueryService().getPriorityPlayerId(gd);
                 if (player1.getId().equals(priorityHolder)) {
-                    ai.handleMessage("GAME_STATE", "");
+                    ai.handleEvent(MessageType.GAME_STATE);
                 } else if (player2.getId().equals(priorityHolder)) {
                     harness.passPriority(player2);
                 } else {
@@ -3214,7 +3215,7 @@ class HardAiDecisionEngineTest {
             aiCreature.setSummoningSick(false);
             gd.playerBattlefields.get(player2.getId()).add(aiCreature);
 
-            ai.handleMessage("AVAILABLE_BLOCKERS", "");
+            ai.handleEvent(MessageType.AVAILABLE_BLOCKERS);
 
             // AI should NOT block — winning race, damage is non-lethal, preserve creature for attacking
             assertThat(aiCreature.isBlocking()).isFalse();
@@ -3241,7 +3242,7 @@ class HardAiDecisionEngineTest {
             aiCreature.setSummoningSick(false);
             gd.playerBattlefields.get(player2.getId()).add(aiCreature);
 
-            ai.handleMessage("AVAILABLE_BLOCKERS", "");
+            ai.handleEvent(MessageType.AVAILABLE_BLOCKERS);
 
             assertThat(gd.interaction.isAwaitingInput()).isFalse();
             assertThat(aiCreature.isBlocking()).isTrue();
@@ -3272,7 +3273,7 @@ class HardAiDecisionEngineTest {
             aiCreature.setSummoningSick(false);
             gd.playerBattlefields.get(player2.getId()).add(aiCreature);
 
-            ai.handleMessage("AVAILABLE_BLOCKERS", "");
+            ai.handleEvent(MessageType.AVAILABLE_BLOCKERS);
 
             // AI should block because the 2 incoming damage would kill it
             assertThat(aiCreature.isBlocking()).isTrue();
@@ -3305,7 +3306,7 @@ class HardAiDecisionEngineTest {
             aiCreature.setSummoningSick(false);
             gd.playerBattlefields.get(player2.getId()).add(aiCreature);
 
-            ai.handleMessage("AVAILABLE_BLOCKERS", "");
+            ai.handleEvent(MessageType.AVAILABLE_BLOCKERS);
 
             // The blocker declaration should have been processed
             assertThat(gd.interaction.isAwaitingInput()).isFalse();
@@ -3373,7 +3374,7 @@ class HardAiDecisionEngineTest {
                     new GrizzlyBears(), new GrizzlyBears(), new GrizzlyBears(),
                     new GrizzlyBears(), new GrizzlyBears(), new GrizzlyBears()));
 
-            ai.handleMessage("AVAILABLE_BLOCKERS", "");
+            ai.handleEvent(MessageType.AVAILABLE_BLOCKERS);
 
             // Block-time pessimism should make the AI decline the otherwise-profitable
             // block: a +3/+3 would flip the 5/5 vs 2/3 trade into losing our 5/5.
@@ -3395,7 +3396,7 @@ class HardAiDecisionEngineTest {
 
             harness.setHand(player1, List.of());
 
-            ai.handleMessage("AVAILABLE_BLOCKERS", "");
+            ai.handleEvent(MessageType.AVAILABLE_BLOCKERS);
 
             // With no trick threat, the block is unambiguously profitable.
             assertThat(gd.interaction.isAwaitingInput()).isFalse();
@@ -3411,7 +3412,7 @@ class HardAiDecisionEngineTest {
             // Opponent has cards in hand but no untapped lands — no mana for tricks.
             harness.setHand(player1, List.of(new GrizzlyBears(), new GrizzlyBears()));
 
-            ai.handleMessage("AVAILABLE_BLOCKERS", "");
+            ai.handleEvent(MessageType.AVAILABLE_BLOCKERS);
 
             // No threat possible → block as usual.
             assertThat(gd.interaction.isAwaitingInput()).isFalse();
@@ -3481,7 +3482,7 @@ class HardAiDecisionEngineTest {
             // AI has Eviscerate (sorcery: destroy target creature)
             harness.setHand(player1, List.of(new Eviscerate()));
 
-            ai.handleMessage("GAME_STATE", "");
+            ai.handleEvent(MessageType.GAME_STATE);
 
             // AI should cast Eviscerate precombat to clear the blocker
             assertThat(gd.stack).hasSize(1);
@@ -3515,7 +3516,7 @@ class HardAiDecisionEngineTest {
 
             harness.setHand(player1, List.of(new GoblinChieftain()));
 
-            ai.handleMessage("GAME_STATE", "");
+            ai.handleEvent(MessageType.GAME_STATE);
 
             // AI should cast Goblin Chieftain precombat to pump goblins
             assertThat(gd.stack).hasSize(1);
@@ -3544,7 +3545,7 @@ class HardAiDecisionEngineTest {
 
             harness.setHand(player1, List.of(new RagingGoblin()));
 
-            ai.handleMessage("GAME_STATE", "");
+            ai.handleEvent(MessageType.GAME_STATE);
 
             // AI should cast Raging Goblin precombat to attack with it
             assertThat(gd.stack).hasSize(1);
@@ -3580,7 +3581,7 @@ class HardAiDecisionEngineTest {
 
             harness.setHand(player1, List.of(new Eviscerate()));
 
-            ai.handleMessage("GAME_STATE", "");
+            ai.handleEvent(MessageType.GAME_STATE);
 
             // AI should cast Eviscerate precombat to clear the blocker for extra damage
             assertThat(gd.stack).hasSize(1);
@@ -3610,7 +3611,7 @@ class HardAiDecisionEngineTest {
             // AI has only Divination (sorcery: draw 2) — not combat-relevant
             harness.setHand(player1, List.of(new Divination()));
 
-            ai.handleMessage("GAME_STATE", "");
+            ai.handleEvent(MessageType.GAME_STATE);
 
             // AI should NOT cast Divination precombat — it should pass to combat
             assertThat(gd.stack).isEmpty();
@@ -3633,7 +3634,7 @@ class HardAiDecisionEngineTest {
             // AI has Divination (sorcery: draw 2)
             harness.setHand(player1, List.of(new Divination()));
 
-            ai.handleMessage("GAME_STATE", "");
+            ai.handleEvent(MessageType.GAME_STATE);
 
             // AI should cast Divination postcombat
             assertThat(gd.stack).hasSize(1);
@@ -3656,7 +3657,7 @@ class HardAiDecisionEngineTest {
             // Raging Goblin (1/1 haste) should be cast precombat to join the attack
             harness.setHand(player1, List.of(new RagingGoblin()));
 
-            ai.handleMessage("GAME_STATE", "");
+            ai.handleEvent(MessageType.GAME_STATE);
 
             assertThat(gd.stack).hasSize(1);
             assertThat(gd.stack.getFirst().getCard().getName()).isEqualTo("Raging Goblin");
@@ -3689,7 +3690,7 @@ class HardAiDecisionEngineTest {
 
             harness.setHand(player1, List.of(new GoblinChieftain()));
 
-            ai.handleMessage("GAME_STATE", "");
+            ai.handleEvent(MessageType.GAME_STATE);
 
             // AI should cast Goblin Chieftain precombat to pump attackers
             assertThat(gd.stack).hasSize(1);
@@ -3719,7 +3720,7 @@ class HardAiDecisionEngineTest {
             // Non-haste creature — can't attack this turn, no combat benefit
             harness.setHand(player1, List.of(new GrizzlyBears()));
 
-            ai.handleMessage("GAME_STATE", "");
+            ai.handleEvent(MessageType.GAME_STATE);
 
             // AI should NOT cast Grizzly Bears precombat — defer to postcombat
             assertThat(gd.stack).isEmpty();
@@ -3754,7 +3755,7 @@ class HardAiDecisionEngineTest {
 
             harness.setHand(player1, List.of(new Eviscerate()));
 
-            ai.handleMessage("GAME_STATE", "");
+            ai.handleEvent(MessageType.GAME_STATE);
 
             // AI should NOT cast Eviscerate — target has protection from black
             assertThat(gd.stack).isEmpty();
@@ -3816,7 +3817,7 @@ class HardAiDecisionEngineTest {
 
             harness.setHand(player1, List.of(new Eviscerate()));
 
-            ai.handleMessage("GAME_STATE", "");
+            ai.handleEvent(MessageType.GAME_STATE);
 
             // AI should NOT cast removal — unblockable attacker already provides lethal
             assertThat(gd.stack).isEmpty();
@@ -3848,7 +3849,7 @@ class HardAiDecisionEngineTest {
 
             harness.setHand(player1, List.of(new Eviscerate()));
 
-            ai.handleMessage("GAME_STATE", "");
+            ai.handleEvent(MessageType.GAME_STATE);
 
             // AI should NOT cast removal — flying attacker vs ground blocker is already lethal
             assertThat(gd.stack).isEmpty();
@@ -3881,7 +3882,7 @@ class HardAiDecisionEngineTest {
 
             harness.setHand(player1, List.of(new Eviscerate()));
 
-            ai.handleMessage("GAME_STATE", "");
+            ai.handleEvent(MessageType.GAME_STATE);
 
             // AI SHOULD cast removal to clear the flying blocker for lethal
             assertThat(gd.stack).hasSize(1);
@@ -3913,7 +3914,7 @@ class HardAiDecisionEngineTest {
 
             harness.setHand(player1, List.of(new Eviscerate()));
 
-            ai.handleMessage("GAME_STATE", "");
+            ai.handleEvent(MessageType.GAME_STATE);
 
             // AI should NOT waste removal — fear creature is unblockable vs green creature
             assertThat(gd.stack).isEmpty();
@@ -3947,7 +3948,7 @@ class HardAiDecisionEngineTest {
 
             harness.setHand(player1, List.of(new Eviscerate()));
 
-            ai.handleMessage("GAME_STATE", "");
+            ai.handleEvent(MessageType.GAME_STATE);
 
             // AI should NOT waste removal — swampwalk makes it unblockable
             assertThat(gd.stack).isEmpty();
@@ -3979,7 +3980,7 @@ class HardAiDecisionEngineTest {
 
         harness.setHand(player1, List.of(new BenalishKnight()));
 
-        ai.handleMessage("GAME_STATE", "");
+        ai.handleEvent(MessageType.GAME_STATE);
 
         // AI should cast the flash creature at end of opponent's turn
         assertThat(gd.stack).hasSize(1);
@@ -3998,7 +3999,7 @@ class HardAiDecisionEngineTest {
         // Only a flash creature in hand — should be held for opponent's end step
         harness.setHand(player1, List.of(new BenalishKnight()));
 
-        ai.handleMessage("GAME_STATE", "");
+        ai.handleEvent(MessageType.GAME_STATE);
 
         // AI should not cast — waiting for optimal timing on opponent's turn
         assertThat(gd.stack).isEmpty();
@@ -4018,7 +4019,7 @@ class HardAiDecisionEngineTest {
         // Benalish Knight's held value should exceed Bears value × 0.8 factor → hold mana
         harness.setHand(player1, List.of(new GrizzlyBears(), new BenalishKnight()));
 
-        ai.handleMessage("GAME_STATE", "");
+        ai.handleEvent(MessageType.GAME_STATE);
 
         // AI should hold mana for the flash creature — stack stays empty
         assertThat(gd.stack).isEmpty();
@@ -4040,7 +4041,7 @@ class HardAiDecisionEngineTest {
         // With 5 total mana, AI can cast Bears and still afford Knight later
         harness.setHand(player1, List.of(new GrizzlyBears(), new BenalishKnight()));
 
-        ai.handleMessage("GAME_STATE", "");
+        ai.handleEvent(MessageType.GAME_STATE);
 
         // AI should cast the sorcery-speed creature (can still flash in the Knight later)
         assertThat(gd.stack).isNotEmpty();
@@ -4152,7 +4153,7 @@ class HardAiDecisionEngineTest {
         givePlayerPlains(player1, 3);
         harness.setHand(player1, List.of(new BenalishKnight()));
 
-        ai.handleMessage("GAME_STATE", "");
+        ai.handleEvent(MessageType.GAME_STATE);
 
         // Should not cast — precombat main is bad timing for FLASH_CREATURE
         assertThat(gd.stack).isEmpty();
@@ -4178,7 +4179,7 @@ class HardAiDecisionEngineTest {
         Permanent jace = addPlaneswalkerToBattlefield(player1, new com.github.laxika.magicalvibes.cards.j.JaceBeleren(), 3);
         harness.setHand(player1, List.of());
 
-        ai.handleMessage("GAME_STATE", "");
+        ai.handleEvent(MessageType.GAME_STATE);
 
         // Should activate +2 ability — puts ability on stack and pays loyalty
         assertThat(gd.stack).hasSize(1);
@@ -4197,7 +4198,7 @@ class HardAiDecisionEngineTest {
                 new com.github.laxika.magicalvibes.cards.c.ChandraBoldPyromancer(), 5);
         harness.setHand(player1, List.of());
 
-        ai.handleMessage("GAME_STATE", "");
+        ai.handleEvent(MessageType.GAME_STATE);
 
         assertThat(gd.stack).hasSize(1);
         assertThat(gd.stack.getFirst().getEntryType()).isEqualTo(StackEntryType.ACTIVATED_ABILITY);
@@ -4217,7 +4218,7 @@ class HardAiDecisionEngineTest {
                 new com.github.laxika.magicalvibes.cards.g.GarrukWildspeaker(), 5);
         harness.setHand(player1, List.of());
 
-        ai.handleMessage("GAME_STATE", "");
+        ai.handleEvent(MessageType.GAME_STATE);
 
         // Should activate −1 (create 3/3 token) — good value
         assertThat(gd.stack).hasSize(1);
@@ -4241,7 +4242,7 @@ class HardAiDecisionEngineTest {
         addPlaneswalkerToBattlefield(player1, new com.github.laxika.magicalvibes.cards.j.JaceBeleren(), 3);
         harness.setHand(player1, List.of());
 
-        ai.handleMessage("GAME_STATE", "");
+        ai.handleEvent(MessageType.GAME_STATE);
 
         // Loyalty abilities require sorcery speed — can't activate on opponent's turn
         assertThat(gd.stack).isEmpty();
@@ -4262,7 +4263,7 @@ class HardAiDecisionEngineTest {
         addPlaneswalkerToBattlefield(player1, new com.github.laxika.magicalvibes.cards.j.JaceBeleren(), 3);
         harness.setHand(player1, List.of());
 
-        ai.handleMessage("GAME_STATE", "");
+        ai.handleEvent(MessageType.GAME_STATE);
 
         // Loyalty abilities require main phase — can't activate during combat
         assertThat(gd.stack).isEmpty();
@@ -4285,7 +4286,7 @@ class HardAiDecisionEngineTest {
         addPlaneswalkerToBattlefield(player1, new com.github.laxika.magicalvibes.cards.j.JaceBeleren(), 3);
         harness.setHand(player1, List.of());
 
-        ai.handleMessage("GAME_STATE", "");
+        ai.handleEvent(MessageType.GAME_STATE);
 
         // Loyalty abilities require empty stack — should not add another entry
         assertThat(gd.stack).hasSize(1);
@@ -4303,7 +4304,7 @@ class HardAiDecisionEngineTest {
         givePlayerForests(player1, 3);
         harness.setHand(player1, List.of());
 
-        ai.handleMessage("GAME_STATE", "");
+        ai.handleEvent(MessageType.GAME_STATE);
 
         assertThat(gd.stack).isEmpty();
         assertThat(gd.playerBattlefields.get(player1.getId()).stream()
@@ -4322,7 +4323,7 @@ class HardAiDecisionEngineTest {
         givePlayerForests(player1, 1);
         harness.setHand(player1, List.of());
 
-        ai.handleMessage("GAME_STATE", "");
+        ai.handleEvent(MessageType.GAME_STATE);
 
         assertThat(gd.stack).hasSize(1);
         assertThat(gd.stack.getFirst().getEntryType()).isEqualTo(StackEntryType.ACTIVATED_ABILITY);
@@ -4346,7 +4347,7 @@ class HardAiDecisionEngineTest {
         givePlayerForests(player1, 1);
         harness.setHand(player1, List.of());
 
-        ai.handleMessage("GAME_STATE", "");
+        ai.handleEvent(MessageType.GAME_STATE);
 
         assertThat(gd.stack).hasSize(1);
         assertThat(gd.stack.getFirst().getEntryType()).isEqualTo(StackEntryType.ACTIVATED_ABILITY);
@@ -4366,9 +4367,9 @@ class HardAiDecisionEngineTest {
         gd.stack.add(new StackEntry(StackEntryType.INSTANT_SPELL, shock, player2.getId(),
                 shock.getName(), shock.getEffects(EffectSlot.SPELL), 0, bees.getId(), null));
 
-        ai.handleMessage("GAME_STATE", "");
-        ai.handleMessage("GAME_STATE", "");
-        ai.handleMessage("GAME_STATE", "");
+        ai.handleEvent(MessageType.GAME_STATE);
+        ai.handleEvent(MessageType.GAME_STATE);
+        ai.handleEvent(MessageType.GAME_STATE);
 
         assertThat(gd.stack).hasSize(3);
         assertThat(gd.stack.stream()
@@ -4389,7 +4390,7 @@ class HardAiDecisionEngineTest {
         gd.stack.add(new StackEntry(StackEntryType.INSTANT_SPELL, doomBlade, player2.getId(),
                 doomBlade.getName(), doomBlade.getEffects(EffectSlot.SPELL), 0, bees.getId(), null));
 
-        ai.handleMessage("GAME_STATE", "");
+        ai.handleEvent(MessageType.GAME_STATE);
 
         assertThat(gd.stack).hasSize(1);
         assertThat(gd.stack.getFirst().getCard().getName()).isEqualTo("Doom Blade");
@@ -4423,7 +4424,7 @@ class HardAiDecisionEngineTest {
         jace.setLoyaltyActivationsThisTurn(1);
         harness.setHand(player1, List.of());
 
-        ai.handleMessage("GAME_STATE", "");
+        ai.handleEvent(MessageType.GAME_STATE);
 
         // Once-per-turn limit reached — should not activate
         assertThat(gd.stack).isEmpty();
@@ -4443,7 +4444,7 @@ class HardAiDecisionEngineTest {
                 new com.github.laxika.magicalvibes.cards.g.GarrukWildspeaker(), 0);
         harness.setHand(player1, List.of());
 
-        ai.handleMessage("GAME_STATE", "");
+        ai.handleEvent(MessageType.GAME_STATE);
 
         // Can't afford any negative loyalty cost with 0 counters
         assertThat(gd.stack).isEmpty();
@@ -4461,7 +4462,7 @@ class HardAiDecisionEngineTest {
                 new com.github.laxika.magicalvibes.cards.c.ChandraNalaar(), 2);
         harness.setHand(player1, List.of());
 
-        ai.handleMessage("GAME_STATE", "");
+        ai.handleEvent(MessageType.GAME_STATE);
 
         // Should activate +1 (not -X) — target opponent's face or a planeswalker
         assertThat(gd.stack).hasSize(1);
@@ -4495,7 +4496,7 @@ class HardAiDecisionEngineTest {
 
         harness.setHand(player1, List.of());
 
-        ai.handleMessage("GAME_STATE", "");
+        ai.handleEvent(MessageType.GAME_STATE);
 
         // The AI should sacrifice the Hatchling to counter the Serra Angel
         assertThat(gd.stack).hasSizeGreaterThanOrEqualTo(2);
@@ -4524,7 +4525,7 @@ class HardAiDecisionEngineTest {
 
         harness.setHand(player1, List.of());
 
-        ai.handleMessage("GAME_STATE", "");
+        ai.handleEvent(MessageType.GAME_STATE);
 
         // No spell to counter — should not sacrifice the Hatchling
         assertThat(gd.stack).isEmpty();
@@ -4561,7 +4562,7 @@ class HardAiDecisionEngineTest {
 
         harness.setHand(player1, List.of());
 
-        ai.handleMessage("GAME_STATE", "");
+        ai.handleEvent(MessageType.GAME_STATE);
 
         // Threat reservation: strong board + mediocre threat → AI passes priority instead
         // of sacrificing the Hatchling. Hatchling should still be on the battlefield.
@@ -4594,7 +4595,7 @@ class HardAiDecisionEngineTest {
 
         harness.setHand(player1, List.of());
 
-        ai.handleMessage("GAME_STATE", "");
+        ai.handleEvent(MessageType.GAME_STATE);
 
         // Should not sacrifice to counter own spell — Hatchling stays on battlefield
         List<Permanent> aiBattlefield = gd.playerBattlefields.get(player1.getId());
@@ -4630,9 +4631,9 @@ class HardAiDecisionEngineTest {
 
         harness.setHand(player1, List.of());
 
-        ai.handleMessage("GAME_STATE", "");
+        ai.handleEvent(MessageType.GAME_STATE);
         if (gd.interaction.isAwaitingInput()) {
-            ai.handleMessage("INTERACTION_PROMPT", "");
+            ai.handleEvent(MessageType.INTERACTION_PROMPT);
         }
 
         // Sac cost paid immediately — Ornithopter (cheapest non-outlet) should be gone
@@ -4669,7 +4670,7 @@ class HardAiDecisionEngineTest {
 
         harness.setHand(player1, List.of());
 
-        ai.handleMessage("GAME_STATE", "");
+        ai.handleEvent(MessageType.GAME_STATE);
 
         // Flying Ornithopter is worth more than Scry 1 when not doomed
         assertThat(gd.stack).isEmpty();
@@ -4701,7 +4702,7 @@ class HardAiDecisionEngineTest {
             gd.pendingMayAbilities.add(pending);
             gd.interaction.beginInteraction(new PendingInteraction.MayAbilityChoice(player1.getId(), pending.description(), pending.manaCost()));
 
-            ai.handleMessage("INTERACTION_PROMPT", "");
+            ai.handleEvent(MessageType.INTERACTION_PROMPT);
 
             // The may ability should have been accepted (pending list consumed)
             assertThat(gd.pendingMayAbilities).isEmpty();
@@ -4726,7 +4727,7 @@ class HardAiDecisionEngineTest {
             gd.pendingMayAbilities.add(pending);
             gd.interaction.beginInteraction(new PendingInteraction.MayAbilityChoice(player1.getId(), pending.description(), pending.manaCost()));
 
-            ai.handleMessage("INTERACTION_PROMPT", "");
+            ai.handleEvent(MessageType.INTERACTION_PROMPT);
 
             // The may ability should have been declined (pending list consumed but effect not applied)
             assertThat(gd.pendingMayAbilities).isEmpty();
@@ -4762,7 +4763,7 @@ class HardAiDecisionEngineTest {
             gd.interaction.beginInteraction(
                     new PendingInteraction.Scry(player1.getId(), List.of(landCard, spellCard)));
 
-            ai.handleMessage("INTERACTION_PROMPT", "");
+            ai.handleEvent(MessageType.INTERACTION_PROMPT);
 
             // Both cards should go on top (land is needed, spell is useful)
             assertThat(gd.interaction.isAwaitingInput()).isFalse();
@@ -4792,7 +4793,7 @@ class HardAiDecisionEngineTest {
             gd.interaction.beginInteraction(
                     new PendingInteraction.Scry(player1.getId(), List.of(landCard, spellCard)));
 
-            ai.handleMessage("INTERACTION_PROMPT", "");
+            ai.handleEvent(MessageType.INTERACTION_PROMPT);
 
             // Scry completed (land on bottom, spell on top)
             assertThat(gd.interaction.isAwaitingInput()).isFalse();
@@ -4826,7 +4827,7 @@ class HardAiDecisionEngineTest {
                             new com.github.laxika.magicalvibes.model.ChoiceContext.SubtypeChoice(null),
                             java.util.List.of(), "Choose a creature type."));
 
-            ai.handleMessage("INTERACTION_PROMPT", "");
+            ai.handleEvent(MessageType.INTERACTION_PROMPT);
 
             // The choice should be processed
             assertThat(gd.interaction.isAwaitingInput()).isFalse();
@@ -4861,7 +4862,7 @@ class HardAiDecisionEngineTest {
                             new com.github.laxika.magicalvibes.model.ChoiceContext.BasicLandTypeChoice(null),
                             java.util.List.of(), "Choose a basic land type."));
 
-            ai.handleMessage("INTERACTION_PROMPT", "");
+            ai.handleEvent(MessageType.INTERACTION_PROMPT);
 
             // The choice should be processed (AI should pick PLAINS for white mana demand)
             assertThat(gd.interaction.isAwaitingInput()).isFalse();
@@ -4900,7 +4901,7 @@ class HardAiDecisionEngineTest {
             int lifeBefore = gd.playerLifeTotals.get(player1.getId());
             fireIronStarTriggerFromOpponent();
 
-            ai.handleMessage("INTERACTION_PROMPT", "");
+            ai.handleEvent(MessageType.INTERACTION_PROMPT);
 
             assertThat(gd.playerLifeTotals.get(player1.getId())).isEqualTo(lifeBefore + 1);
             assertThat(mountain.isTapped()).isTrue();
@@ -4922,7 +4923,7 @@ class HardAiDecisionEngineTest {
             int lifeBefore = gd.playerLifeTotals.get(player1.getId());
             fireIronStarTriggerFromOpponent();
 
-            ai.handleMessage("INTERACTION_PROMPT", "");
+            ai.handleEvent(MessageType.INTERACTION_PROMPT);
 
             assertThat(gd.playerLifeTotals.get(player1.getId())).isEqualTo(lifeBefore);
             assertThat(mountain.isTapped()).isFalse();
@@ -4956,7 +4957,7 @@ class HardAiDecisionEngineTest {
             assertThat(gd.interaction.activeInteraction(PendingInteraction.MayAbilityChoice.class).playerId())
                     .isEqualTo(player1.getId());
 
-            ai.handleMessage("INTERACTION_PROMPT", "");
+            ai.handleEvent(MessageType.INTERACTION_PROMPT);
 
             assertThat(gd.playerLifeTotals.get(player1.getId())).isEqualTo(lifeBefore);
         }
@@ -4988,7 +4989,7 @@ class HardAiDecisionEngineTest {
             harness.passBothPriorities(); // trigger resolves -> X payment prompt
             assertThat(gd.interaction.activeInteraction(PendingInteraction.XValueChoice.class)).isNotNull();
 
-            ai.handleMessage("INTERACTION_PROMPT", "");
+            ai.handleEvent(MessageType.INTERACTION_PROMPT);
 
             assertThat(gd.playerLifeTotals.get(player1.getId())).isEqualTo(lifeBefore + 2);
         }

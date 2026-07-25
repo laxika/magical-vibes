@@ -1,11 +1,17 @@
 package com.github.laxika.magicalvibes.ai;
 
 import com.github.laxika.magicalvibes.networking.Connection;
+import com.github.laxika.magicalvibes.networking.message.AvailableAttackersMessage;
+import com.github.laxika.magicalvibes.networking.message.AvailableBlockersMessage;
+import com.github.laxika.magicalvibes.networking.message.CombatDamageAssignmentNotification;
+import com.github.laxika.magicalvibes.networking.message.GameOverMessage;
+import com.github.laxika.magicalvibes.networking.message.GameStateMessage;
+import com.github.laxika.magicalvibes.networking.message.InteractionPromptMessage;
+import com.github.laxika.magicalvibes.networking.message.MulliganResolvedMessage;
+import com.github.laxika.magicalvibes.networking.message.SelectCardsToBottomMessage;
+import com.github.laxika.magicalvibes.networking.model.MessageType;
 import lombok.extern.slf4j.Slf4j;
-import tools.jackson.databind.JsonNode;
-import tools.jackson.databind.ObjectMapper;
 
-import java.util.Set;
 import java.util.concurrent.RejectedExecutionException;
 import java.util.concurrent.ScheduledThreadPoolExecutor;
 import java.util.concurrent.TimeUnit;
@@ -17,20 +23,9 @@ public class AiConnection implements Connection {
 
     private static final long DEFAULT_DECISION_DELAY_MS = 800;
     private static final long SLOW_DISPATCH_THRESHOLD_MS = 1_000;
-    private static final String GAME_STATE = "GAME_STATE";
-    private static final Set<String> ACTIONABLE_MESSAGE_TYPES = Set.of(
-            GAME_STATE,
-            "MULLIGAN_RESOLVED",
-            "SELECT_CARDS_TO_BOTTOM",
-            "AVAILABLE_ATTACKERS",
-            "AVAILABLE_BLOCKERS",
-            "INTERACTION_PROMPT",
-            "COMBAT_DAMAGE_ASSIGNMENT"
-    );
 
     private final String connectionId;
     private final AiDecisionEngine engine;
-    private final ObjectMapper objectMapper;
     private final ScheduledThreadPoolExecutor executor;
     private final long decisionDelayMs;
     private final AtomicBoolean open = new AtomicBoolean(true);
@@ -41,17 +36,16 @@ public class AiConnection implements Connection {
     private final AtomicLong handledMessages = new AtomicLong();
     private boolean gameStateTaskScheduled;
     private boolean gameStateDirty;
-    private volatile String activeMessageType;
-    private volatile String lastHandledMessageType;
+    private volatile MessageType activeMessageType;
+    private volatile MessageType lastHandledMessageType;
 
-    public AiConnection(String connectionId, AiDecisionEngine engine, ObjectMapper objectMapper) {
-        this(connectionId, engine, objectMapper, DEFAULT_DECISION_DELAY_MS);
+    public AiConnection(String connectionId, AiDecisionEngine engine) {
+        this(connectionId, engine, DEFAULT_DECISION_DELAY_MS);
     }
 
-    public AiConnection(String connectionId, AiDecisionEngine engine, ObjectMapper objectMapper, long decisionDelayMs) {
+    public AiConnection(String connectionId, AiDecisionEngine engine, long decisionDelayMs) {
         this.connectionId = connectionId;
         this.engine = engine;
-        this.objectMapper = objectMapper;
         this.decisionDelayMs = decisionDelayMs;
 
         ScheduledThreadPoolExecutor pool = new ScheduledThreadPoolExecutor(1, r -> {
@@ -74,52 +68,69 @@ public class AiConnection implements Connection {
     }
 
     @Override
-    public void sendMessage(String message) {
+    public void sendMessage(Object message) {
         if (!open.get()) {
             return;
         }
 
         try {
             receivedMessages.incrementAndGet();
-            JsonNode node = objectMapper.readTree(message);
-            String type = node.has("type") ? node.get("type").asText() : null;
+            if (message instanceof GameOverMessage) {
+                close();
+                return;
+            }
+
+            MessageType type = actionableType(message);
             if (type == null) {
                 ignoredMessages.incrementAndGet();
                 return;
             }
 
-            if ("GAME_OVER".equals(type)) {
-                close();
-                return;
-            }
-
-            if (!ACTIONABLE_MESSAGE_TYPES.contains(type)) {
-                ignoredMessages.incrementAndGet();
-                return;
-            }
-
-            if (GAME_STATE.equals(type)) {
-                scheduleGameState(message);
+            if (type == MessageType.GAME_STATE) {
+                scheduleGameState();
             } else {
-                scheduleMessage(type, message);
+                scheduleMessage(type);
             }
         } catch (RejectedExecutionException e) {
             // close() may race with a final broadcast. A closed AI deliberately drops it.
             if (open.get()) {
                 log.error("AI executor rejected message", e);
             }
-        } catch (Exception e) {
-            log.error("AI failed to parse message", e);
         }
+    }
+
+    private MessageType actionableType(Object message) {
+        if (message instanceof GameStateMessage) {
+            return MessageType.GAME_STATE;
+        }
+        if (message instanceof MulliganResolvedMessage) {
+            return MessageType.MULLIGAN_RESOLVED;
+        }
+        if (message instanceof SelectCardsToBottomMessage) {
+            return MessageType.SELECT_CARDS_TO_BOTTOM;
+        }
+        if (message instanceof AvailableAttackersMessage) {
+            return MessageType.AVAILABLE_ATTACKERS;
+        }
+        if (message instanceof AvailableBlockersMessage) {
+            return MessageType.AVAILABLE_BLOCKERS;
+        }
+        if (message instanceof InteractionPromptMessage) {
+            return MessageType.INTERACTION_PROMPT;
+        }
+        if (message instanceof CombatDamageAssignmentNotification) {
+            return MessageType.COMBAT_DAMAGE_ASSIGNMENT;
+        }
+        return null;
     }
 
     /**
      * Coalesces repeated state broadcasts while preserving one follow-up decision when a
      * newer state arrives during the current decision. The decision engine reads live
-     * GameData, so retaining every serialized GAME_STATE snapshot is both unnecessary and
+     * GameData, so retaining every {@link GameStateMessage} is both unnecessary and
      * actively harmful: bursts of broadcasts otherwise delay the current priority action.
      */
-    private void scheduleGameState(String message) {
+    private void scheduleGameState() {
         synchronized (gameStateLock) {
             gameStateDirty = true;
             if (gameStateTaskScheduled) {
@@ -127,21 +138,21 @@ public class AiConnection implements Connection {
                 return;
             }
             gameStateTaskScheduled = true;
-            scheduleGameStateTask(message);
+            scheduleGameStateTask();
         }
     }
 
-    private void scheduleGameStateTask(String message) {
+    private void scheduleGameStateTask() {
         long scheduledAtNanos = System.nanoTime();
         executor.schedule(() -> {
             synchronized (gameStateLock) {
                 gameStateDirty = false;
             }
-            handleScheduledMessage(GAME_STATE, message, scheduledAtNanos);
+            handleScheduledEvent(MessageType.GAME_STATE, scheduledAtNanos);
 
             synchronized (gameStateLock) {
                 if (open.get() && gameStateDirty) {
-                    scheduleGameStateTask(message);
+                    scheduleGameStateTask();
                 } else {
                     gameStateTaskScheduled = false;
                     gameStateDirty = false;
@@ -150,13 +161,13 @@ public class AiConnection implements Connection {
         }, decisionDelayMs, TimeUnit.MILLISECONDS);
     }
 
-    private void scheduleMessage(String type, String message) {
+    private void scheduleMessage(MessageType type) {
         long scheduledAtNanos = System.nanoTime();
-        executor.schedule(() -> handleScheduledMessage(type, message, scheduledAtNanos),
+        executor.schedule(() -> handleScheduledEvent(type, scheduledAtNanos),
                 decisionDelayMs, TimeUnit.MILLISECONDS);
     }
 
-    private void handleScheduledMessage(String type, String message, long scheduledAtNanos) {
+    private void handleScheduledEvent(MessageType type, long scheduledAtNanos) {
         if (!open.get()) {
             return;
         }
@@ -170,7 +181,7 @@ public class AiConnection implements Connection {
 
         activeMessageType = type;
         try {
-            engine.handleMessage(type, message);
+            engine.handleEvent(type);
             handledMessages.incrementAndGet();
             lastHandledMessageType = type;
         } catch (Exception e) {

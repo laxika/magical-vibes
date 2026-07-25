@@ -18,7 +18,6 @@ import com.github.laxika.magicalvibes.ai.simulation.MCTSEngine;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
-import tools.jackson.databind.ObjectMapper;
 
 import java.util.UUID;
 
@@ -37,7 +36,6 @@ public class AiPlayerService {
     private final TargetValidationService targetValidationService;
     private final TargetLegalityService targetLegalityService;
     private final WebSocketSessionManager sessionManager;
-    private final ObjectMapper objectMapper;
     private final long mctsTimeBudgetMs;
     private final int mctsParallelism;
 
@@ -52,7 +50,6 @@ public class AiPlayerService {
                            TargetValidationService targetValidationService,
                            TargetLegalityService targetLegalityService,
                            WebSocketSessionManager sessionManager,
-                           ObjectMapper objectMapper,
                            @Value("${ai.mcts.time-budget-ms:" + MCTSEngine.DEFAULT_TIME_BUDGET_MS + "}") long mctsTimeBudgetMs,
                            @Value("${ai.mcts.parallelism:0}") int mctsParallelism) {
         this.gameRegistry = gameRegistry;
@@ -66,7 +63,6 @@ public class AiPlayerService {
         this.targetValidationService = targetValidationService;
         this.targetLegalityService = targetLegalityService;
         this.sessionManager = sessionManager;
-        this.objectMapper = objectMapper;
         this.mctsTimeBudgetMs = mctsTimeBudgetMs;
         this.mctsParallelism = mctsParallelism;
     }
@@ -98,7 +94,7 @@ public class AiPlayerService {
             case EASY -> new EasyAiDecisionEngine(gameData.id, aiPlayer, gameRegistry, gameService, gameQueryService, combatAttackService, gameBroadcastService, castingCostService, castingPermissionService, targetValidationService, targetLegalityService);
         };
         String connectionId = "ai-" + gameData.id;
-        AiConnection aiConnection = new AiConnection(connectionId, engine, objectMapper, aiDifficulty.getDecisionDelayMs());
+        AiConnection aiConnection = new AiConnection(connectionId, engine, aiDifficulty.getDecisionDelayMs());
         engine.setSelfConnection(aiConnection);
 
         // Register the AI connection in the session manager so it receives messages

@@ -3,7 +3,6 @@ package com.github.laxika.magicalvibes.testutil;
 import com.github.laxika.magicalvibes.networking.Connection;
 import com.github.laxika.magicalvibes.model.Player;
 import com.github.laxika.magicalvibes.websocket.WebSocketSessionManager;
-import tools.jackson.databind.ObjectMapper;
 
 import java.lang.invoke.MethodHandles;
 import java.lang.invoke.VarHandle;
@@ -28,10 +27,6 @@ public class TestWebSocketSessionManager extends WebSocketSessionManager {
         } catch (ReflectiveOperationException e) {
             throw new ExceptionInInitializerError(e);
         }
-    }
-
-    public TestWebSocketSessionManager(ObjectMapper objectMapper) {
-        super(objectMapper);
     }
 
     @SuppressWarnings("unchecked")

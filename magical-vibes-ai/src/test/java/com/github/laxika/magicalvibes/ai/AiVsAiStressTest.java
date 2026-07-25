@@ -2,7 +2,6 @@ package com.github.laxika.magicalvibes.ai;
 
 import com.github.laxika.magicalvibes.cards.CardPrinting;
 import com.github.laxika.magicalvibes.cards.CardSet;
-import com.github.laxika.magicalvibes.service.JacksonConfig;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardColor;
 import com.github.laxika.magicalvibes.model.CardType;
@@ -18,7 +17,6 @@ import com.github.laxika.magicalvibes.websocket.WebSocketSessionManager;
 import org.junit.jupiter.api.Tag;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.condition.EnabledIfSystemProperty;
-import tools.jackson.databind.ObjectMapper;
 
 import java.util.ArrayList;
 import java.util.Collections;
@@ -103,7 +101,6 @@ class AiVsAiStressTest {
         sessionManager.unregisterSession(harness.getConn1().getId());
         sessionManager.unregisterSession(harness.getConn2().getId());
 
-        ObjectMapper objectMapper = new JacksonConfig().objectMapper();
 
         HardAiDecisionEngine engine1 = new HardAiDecisionEngine(
                 gd.id, player1, gameRegistry, gameService, gqs, harness.getCombatAttackService(),
@@ -112,8 +109,8 @@ class AiVsAiStressTest {
                 gd.id, player2, gameRegistry, gameService, gqs, harness.getCombatAttackService(),
                 harness.getGameBroadcastService(), harness.getCastingCostService(), harness.getCastingPermissionService(), harness.getTargetValidationService(), harness.getTargetLegalityService());
 
-        AiConnection aiConn1 = new AiConnection("ai-stress-1", engine1, objectMapper, AI_DECISION_DELAY_MS);
-        AiConnection aiConn2 = new AiConnection("ai-stress-2", engine2, objectMapper, AI_DECISION_DELAY_MS);
+        AiConnection aiConn1 = new AiConnection("ai-stress-1", engine1, AI_DECISION_DELAY_MS);
+        AiConnection aiConn2 = new AiConnection("ai-stress-2", engine2, AI_DECISION_DELAY_MS);
         engine1.setSelfConnection(aiConn1);
         engine2.setSelfConnection(aiConn2);
 

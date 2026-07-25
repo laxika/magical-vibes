@@ -46,7 +46,6 @@ import com.github.laxika.magicalvibes.carddata.scryfall.ScryfallOracleLoader;
 import com.github.laxika.magicalvibes.websocket.WebSocketSessionManager;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
-import tools.jackson.databind.ObjectMapper;
 
 import java.util.ArrayList;
 import java.util.Collections;
@@ -83,7 +82,6 @@ public class DraftService {
     private final CardViewFactory cardViewFactory;
     private final TargetValidationService targetValidationService;
     private final TargetLegalityService targetLegalityService;
-    private final ObjectMapper objectMapper;
     private final Random random = new Random();
     private final ScheduledExecutorService scheduler = Executors.newScheduledThreadPool(2);
     private final Map<UUID, AiDraftEngine> aiDraftEngines = new ConcurrentHashMap<>();
@@ -100,8 +98,7 @@ public class DraftService {
                         WebSocketSessionManager webSocketSessionManager,
                         CardViewFactory cardViewFactory,
                         TargetValidationService targetValidationService,
-                        TargetLegalityService targetLegalityService,
-                        ObjectMapper objectMapper) {
+                        TargetLegalityService targetLegalityService) {
         this.draftRegistry = draftRegistry;
         this.gameRegistry = gameRegistry;
         this.gameBroadcastService = gameBroadcastService;
@@ -115,7 +112,6 @@ public class DraftService {
         this.cardViewFactory = cardViewFactory;
         this.targetValidationService = targetValidationService;
         this.targetLegalityService = targetLegalityService;
-        this.objectMapper = objectMapper;
     }
 
     // ===== Draft Creation =====
@@ -603,7 +599,7 @@ public class DraftService {
             case EASY -> new EasyAiDecisionEngine(gameData.id, aiPlayer, gameRegistry, gameService, gameQueryService, combatAttackService, gameBroadcastService, castingCostService, castingPermissionService, targetValidationService, targetLegalityService);
         };
         String connectionId = "ai-draft-" + gameData.id + "-" + aiPlayerId;
-        AiConnection aiConnection = new AiConnection(connectionId, engine, objectMapper, aiDifficulty.getDecisionDelayMs());
+        AiConnection aiConnection = new AiConnection(connectionId, engine, aiDifficulty.getDecisionDelayMs());
         engine.setSelfConnection(aiConnection);
 
         webSocketSessionManager.registerPlayer(aiConnection, aiPlayerId, aiName);

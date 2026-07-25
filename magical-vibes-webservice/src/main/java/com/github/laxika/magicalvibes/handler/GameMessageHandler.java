@@ -68,7 +68,6 @@ import com.github.laxika.magicalvibes.service.target.ValidTargetService;
 import com.github.laxika.magicalvibes.websocket.WebSocketSessionManager;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Component;
-import tools.jackson.databind.ObjectMapper;
 
 @Component
 @Slf4j
@@ -80,7 +79,6 @@ public class GameMessageHandler implements MessageHandler {
     private final LobbyService lobbyService;
     private final GameRegistry gameRegistry;
     private final WebSocketSessionManager sessionManager;
-    private final ObjectMapper objectMapper;
     private final AiPlayerService aiPlayerService;
     private final DraftService draftService;
     private final DraftRegistry draftRegistry;
@@ -96,7 +94,6 @@ public class GameMessageHandler implements MessageHandler {
             LobbyService lobbyService,
             GameRegistry gameRegistry,
             WebSocketSessionManager sessionManager,
-            ObjectMapper objectMapper,
             AiPlayerService aiPlayerService,
             DraftService draftService,
             DraftRegistry draftRegistry,
@@ -111,7 +108,6 @@ public class GameMessageHandler implements MessageHandler {
         this.lobbyService = lobbyService;
         this.gameRegistry = gameRegistry;
         this.sessionManager = sessionManager;
-        this.objectMapper = objectMapper;
         this.aiPlayerService = aiPlayerService;
         this.draftService = draftService;
         this.draftRegistry = draftRegistry;
@@ -127,7 +123,7 @@ public class GameMessageHandler implements MessageHandler {
         LoginResponse timeoutResponse = LoginResponse.timeout();
 
         try {
-            connection.sendMessage(objectMapper.writeValueAsString(timeoutResponse));
+            connection.sendMessage(timeoutResponse);
             connection.close();
         } catch (Exception e) {
             log.error("Error sending timeout message", e);
@@ -153,8 +149,7 @@ public class GameMessageHandler implements MessageHandler {
             }
         }
 
-        String jsonResponse = objectMapper.writeValueAsString(response);
-        connection.sendMessage(jsonResponse);
+        connection.sendMessage(response);
         log.info("Sent login response to connection {}: {}", connection.getId(), response.getType());
 
         if (response.getType() == MessageType.LOGIN_SUCCESS) {
@@ -186,7 +181,7 @@ public class GameMessageHandler implements MessageHandler {
     public void handleRegister(Connection connection, RegisterRequest request) throws Exception {
         RegisterResponse response = loginService.register(request);
 
-        connection.sendMessage(objectMapper.writeValueAsString(response));
+        connection.sendMessage(response);
         log.info("Sent register response to connection {}: {}", connection.getId(), response.getType());
 
         connection.close();
@@ -745,7 +740,7 @@ public class GameMessageHandler implements MessageHandler {
 
         var cards = cardBrowserService.getCardsForSet(request.setCode());
         CardListResponse response = new CardListResponse(request.setCode(), cards);
-        connection.sendMessage(objectMapper.writeValueAsString(response));
+        connection.sendMessage(response);
     }
 
     @Override
@@ -758,7 +753,7 @@ public class GameMessageHandler implements MessageHandler {
 
         try {
             SaveDeckResponse response = deckService.saveDeck(player.getId(), request);
-            connection.sendMessage(objectMapper.writeValueAsString(response));
+            connection.sendMessage(response);
         } catch (Exception e) {
             log.error("Error saving deck", e);
             handleError(connection, "Failed to save deck: " + e.getMessage());
@@ -816,7 +811,7 @@ public class GameMessageHandler implements MessageHandler {
                     return;
                 }
             }
-            connection.sendMessage(objectMapper.writeValueAsString(response));
+            connection.sendMessage(response);
         } catch (IllegalArgumentException | IllegalStateException e) {
             handleError(connection, e.getMessage());
         }
@@ -895,7 +890,7 @@ public class GameMessageHandler implements MessageHandler {
 
                 var games = lobbyService.listRunningGames();
                 var response = new com.github.laxika.magicalvibes.networking.message.LobbyGamesResponse(games);
-                connection.sendMessage(objectMapper.writeValueAsString(response));
+                connection.sendMessage(response);
                 return;
             }
         }
@@ -905,7 +900,7 @@ public class GameMessageHandler implements MessageHandler {
 
         var games = lobbyService.listRunningGames();
         var response = new com.github.laxika.magicalvibes.networking.message.LobbyGamesResponse(games);
-        connection.sendMessage(objectMapper.writeValueAsString(response));
+        connection.sendMessage(response);
     }
 
     @Override
@@ -936,7 +931,7 @@ public class GameMessageHandler implements MessageHandler {
 
         var games = lobbyService.listRunningGames();
         var response = new com.github.laxika.magicalvibes.networking.message.LobbyGamesResponse(games);
-        connection.sendMessage(objectMapper.writeValueAsString(response));
+        connection.sendMessage(response);
     }
 
     @Override
@@ -947,7 +942,7 @@ public class GameMessageHandler implements MessageHandler {
         }
         log.warn("Sending error to {}: {}", connection.getId(), message);
         ErrorMessage error = new ErrorMessage(message);
-        connection.sendMessage(objectMapper.writeValueAsString(error));
+        connection.sendMessage(error);
     }
 
     @Override
@@ -957,7 +952,7 @@ public class GameMessageHandler implements MessageHandler {
 
     private void sendJoinMessage(Connection connection, MessageType type, JoinGame game) throws Exception {
         JoinGameMessage message = new JoinGameMessage(type, game);
-        connection.sendMessage(objectMapper.writeValueAsString(message));
+        connection.sendMessage(message);
     }
 
     private void broadcastToLobby(MessageType type, LobbyGame game) {
@@ -969,8 +964,7 @@ public class GameMessageHandler implements MessageHandler {
             try {
                 Connection playerConnection = sessionManager.getConnectionByUserId(player.getId());
                 if (playerConnection != null && playerConnection.isOpen()) {
-                    String msg = objectMapper.writeValueAsString(notification);
-                    playerConnection.sendMessage(msg);
+                    playerConnection.sendMessage(notification);
                     sentCount++;
                 }
             } catch (Exception e) {

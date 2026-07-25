@@ -5,11 +5,13 @@ import lombok.RequiredArgsConstructor;
 import lombok.SneakyThrows;
 import org.springframework.web.socket.TextMessage;
 import org.springframework.web.socket.WebSocketSession;
+import tools.jackson.databind.ObjectMapper;
 
 @RequiredArgsConstructor
 public class WebSocketConnection implements Connection {
 
     private final WebSocketSession session;
+    private final ObjectMapper objectMapper;
 
     @Override
     public String getId() {
@@ -23,8 +25,8 @@ public class WebSocketConnection implements Connection {
 
     @Override
     @SneakyThrows
-    public void sendMessage(String message) {
-        session.sendMessage(new TextMessage(message));
+    public void sendMessage(Object message) {
+        session.sendMessage(new TextMessage(objectMapper.writeValueAsString(message)));
     }
 
     @Override

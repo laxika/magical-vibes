@@ -1,34 +1,33 @@
 package com.github.laxika.magicalvibes.ai;
 
-import com.github.laxika.magicalvibes.service.JacksonConfig;
+import com.github.laxika.magicalvibes.networking.message.ErrorMessage;
+import com.github.laxika.magicalvibes.networking.message.GameOverMessage;
+import com.github.laxika.magicalvibes.networking.message.GameStateMessage;
+import com.github.laxika.magicalvibes.networking.model.MessageType;
 import org.junit.jupiter.api.Test;
-import tools.jackson.databind.ObjectMapper;
 
 import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicInteger;
 
 import static org.assertj.core.api.Assertions.assertThat;
-import static org.mockito.ArgumentMatchers.anyString;
 import static org.mockito.Mockito.doAnswer;
 import static org.mockito.Mockito.mock;
-import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.timeout;
 import static org.mockito.Mockito.verify;
+import static org.mockito.Mockito.verifyNoInteractions;
 
 class AiConnectionTest {
-
-    private final ObjectMapper objectMapper = new JacksonConfig().objectMapper();
 
     @Test
     void ignoresInformationalMessagesBeforeSchedulingThem() throws Exception {
         AiDecisionEngine engine = mock(AiDecisionEngine.class);
-        AiConnection connection = new AiConnection("test", engine, objectMapper, 0);
+        AiConnection connection = new AiConnection("test", engine, 0);
 
-        connection.sendMessage("{\"type\":\"BATTLEFIELD_UPDATED\"}");
+        connection.sendMessage(new ErrorMessage("informational"));
 
         Thread.sleep(50);
-        verify(engine, never()).handleMessage(anyString(), anyString());
+        verifyNoInteractions(engine);
         assertThat(connection.diagnosticSummary())
                 .contains("queuedTasks=0")
                 .contains("handled=0")
@@ -48,19 +47,20 @@ class AiConnectionTest {
                 assertThat(releaseFirstDecision.await(2, TimeUnit.SECONDS)).isTrue();
             }
             return null;
-        }).when(engine).handleMessage("GAME_STATE", "{\"type\":\"GAME_STATE\"}");
+        }).when(engine).handleEvent(MessageType.GAME_STATE);
 
-        AiConnection connection = new AiConnection("test", engine, objectMapper, 0);
-        connection.sendMessage("{\"type\":\"GAME_STATE\"}");
+        AiConnection connection = new AiConnection("test", engine, 0);
+        GameStateMessage gameState = mock(GameStateMessage.class);
+        connection.sendMessage(gameState);
         assertThat(firstDecisionStarted.await(1, TimeUnit.SECONDS)).isTrue();
 
         for (int i = 0; i < 100; i++) {
-            connection.sendMessage("{\"type\":\"GAME_STATE\"}");
+            connection.sendMessage(gameState);
         }
         releaseFirstDecision.countDown();
 
         verify(engine, timeout(1_000).times(2))
-                .handleMessage("GAME_STATE", "{\"type\":\"GAME_STATE\"}");
+                .handleEvent(MessageType.GAME_STATE);
         Thread.sleep(50);
         assertThat(calls).hasValue(2);
         assertThat(connection.diagnosticSummary())
@@ -73,12 +73,23 @@ class AiConnectionTest {
     @Test
     void queuedDecisionDoesNotRunAfterClose() throws Exception {
         AiDecisionEngine engine = mock(AiDecisionEngine.class);
-        AiConnection connection = new AiConnection("test", engine, objectMapper, 100);
+        AiConnection connection = new AiConnection("test", engine, 100);
 
-        connection.sendMessage("{\"type\":\"GAME_STATE\"}");
+        connection.sendMessage(mock(GameStateMessage.class));
         connection.close();
 
         Thread.sleep(200);
-        verify(engine, never()).handleMessage(anyString(), anyString());
+        verifyNoInteractions(engine);
+    }
+
+    @Test
+    void gameOverClosesConnectionWithoutSchedulingDecision() throws Exception {
+        AiDecisionEngine engine = mock(AiDecisionEngine.class);
+        AiConnection connection = new AiConnection("test", engine, 0);
+
+        connection.sendMessage(new GameOverMessage(null, null));
+
+        assertThat(connection.isOpen()).isFalse();
+        verifyNoInteractions(engine);
     }
 }

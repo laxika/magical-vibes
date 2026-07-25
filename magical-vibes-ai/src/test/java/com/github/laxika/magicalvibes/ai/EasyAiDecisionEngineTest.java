@@ -1,5 +1,6 @@
 package com.github.laxika.magicalvibes.ai;
 
+import com.github.laxika.magicalvibes.networking.model.MessageType;
 import com.github.laxika.magicalvibes.testutil.TestCards;
 import com.github.laxika.magicalvibes.model.PendingInteraction;
 import com.github.laxika.magicalvibes.cards.e.EliteVanguard;
@@ -176,7 +177,7 @@ class EasyAiDecisionEngineTest {
             testGd.playerBattlefields.get(human.getId()).add(target);
             testHarness.setHand(aiTestPlayer, List.of(new CrypticCommand()));
 
-            easyAi.handleMessage("GAME_STATE", "");
+            easyAi.handleEvent(MessageType.GAME_STATE);
 
             assertThat(testGd.stack).hasSize(1);
             assertThat(testGd.stack.getFirst().getCard().getName()).isEqualTo("Cryptic Command");
@@ -192,7 +193,7 @@ class EasyAiDecisionEngineTest {
             testGd.playerBattlefields.get(human.getId()).add(target);
             testHarness.setHand(aiTestPlayer, List.of(new BorrowedHostility()));
 
-            easyAi.handleMessage("GAME_STATE", "");
+            easyAi.handleEvent(MessageType.GAME_STATE);
 
             assertThat(testGd.stack).hasSize(1);
             assertThat(testGd.stack.getFirst().getCard().getName()).isEqualTo("Borrowed Hostility");
@@ -219,7 +220,7 @@ class EasyAiDecisionEngineTest {
         ManaPool pool = gd.playerManaPools.get(aiPlayer.getId());
         pool.add(ManaColor.COLORLESS, 2);
 
-        createEngine().handleMessage("GAME_STATE", "");
+        createEngine().handleEvent(MessageType.GAME_STATE);
 
         // Should NOT attempt to cast — creature mana requirement not met
         verify(messageHandler, never()).handlePlayCard(any(), any());
@@ -243,7 +244,7 @@ class EasyAiDecisionEngineTest {
         pool.add(ManaColor.COLORLESS, 2);
         pool.addCreatureMana(ManaColor.COLORLESS, 2);
 
-        createEngine().handleMessage("GAME_STATE", "");
+        createEngine().handleEvent(MessageType.GAME_STATE);
 
         // Should attempt to cast — creature mana requirement met
         verify(messageHandler).handlePlayCard(any(), any());
@@ -264,7 +265,7 @@ class EasyAiDecisionEngineTest {
         ManaPool pool = gd.playerManaPools.get(aiPlayer.getId());
         pool.add(ManaColor.RED, 1);
 
-        createEngine().handleMessage("GAME_STATE", "");
+        createEngine().handleEvent(MessageType.GAME_STATE);
 
         // Should NOT attempt to cast — no artifact to sacrifice
         verify(messageHandler, never()).handlePlayCard(any(), any());
@@ -284,7 +285,7 @@ class EasyAiDecisionEngineTest {
         ManaPool pool = gd.playerManaPools.get(aiPlayer.getId());
         pool.add(ManaColor.RED, 1);
 
-        createEngine().handleMessage("GAME_STATE", "");
+        createEngine().handleEvent(MessageType.GAME_STATE);
 
         // Should NOT attempt to cast — no creature to sacrifice
         verify(messageHandler, never()).handlePlayCard(any(), any());
@@ -324,7 +325,7 @@ class EasyAiDecisionEngineTest {
             return null;
         }).when(messageHandler).handlePlayCard(any(), any());
 
-        createEngine().handleMessage("GAME_STATE", "");
+        createEngine().handleEvent(MessageType.GAME_STATE);
 
         ArgumentCaptor<PlayCardRequest> captor = ArgumentCaptor.forClass(PlayCardRequest.class);
         verify(messageHandler).handlePlayCard(eq(selfConnection), captor.capture());
@@ -353,7 +354,7 @@ class EasyAiDecisionEngineTest {
             return null;
         }).when(messageHandler).handlePlayCard(any(), any());
 
-        createEngine().handleMessage("GAME_STATE", "");
+        createEngine().handleEvent(MessageType.GAME_STATE);
 
         ArgumentCaptor<PlayCardRequest> captor = ArgumentCaptor.forClass(PlayCardRequest.class);
         verify(messageHandler).handlePlayCard(eq(selfConnection), captor.capture());
@@ -379,7 +380,7 @@ class EasyAiDecisionEngineTest {
         pool.add(ManaColor.GREEN, 1);
         pool.add(ManaColor.COLORLESS, 1);
 
-        createEngine().handleMessage("GAME_STATE", "");
+        createEngine().handleEvent(MessageType.GAME_STATE);
 
         verify(messageHandler).handlePlayCard(any(), any());
         verify(messageHandler).handlePassPriority(any(), any());
@@ -405,7 +406,7 @@ class EasyAiDecisionEngineTest {
             return null;
         }).when(messageHandler).handlePlayCard(any(), any());
 
-        createEngine().handleMessage("GAME_STATE", "");
+        createEngine().handleEvent(MessageType.GAME_STATE);
 
         verify(messageHandler).handlePlayCard(any(), any());
         verify(messageHandler, never()).handlePassPriority(any(), any());
@@ -442,7 +443,7 @@ class EasyAiDecisionEngineTest {
             return null;
         }).when(messageHandler).handlePlayCard(any(), any());
 
-        createEngine().handleMessage("GAME_STATE", "");
+        createEngine().handleEvent(MessageType.GAME_STATE);
 
         verify(messageHandler).handlePlayCard(any(), any());
         // Cast succeeded (creature is no longer in hand) — AI must NOT pass priority
@@ -472,7 +473,7 @@ class EasyAiDecisionEngineTest {
         pool.add(ManaColor.GREEN, 1);
         pool.add(ManaColor.COLORLESS, 1);
 
-        createEngine().handleMessage("GAME_STATE", "");
+        createEngine().handleEvent(MessageType.GAME_STATE);
 
         verify(messageHandler).handlePlayCard(any(), any());
         verify(messageHandler).handlePassPriority(any(), any());
@@ -505,7 +506,7 @@ class EasyAiDecisionEngineTest {
             return null;
         }).when(messageHandler).handlePlayCard(any(), any());
 
-        assertThatCode(() -> createEngine().handleMessage("GAME_STATE", ""))
+        assertThatCode(() -> createEngine().handleEvent(MessageType.GAME_STATE))
                 .doesNotThrowAnyException();
     }
 
@@ -538,7 +539,7 @@ class EasyAiDecisionEngineTest {
         // gameQueryService.canBlock returns false for the restricted creature
         when(gameQueryService.canBlock(gd, cantBlocker)).thenReturn(false);
 
-        createEngine().handleMessage("AVAILABLE_BLOCKERS", "");
+        createEngine().handleEvent(MessageType.AVAILABLE_BLOCKERS);
 
         // Should declare no blockers since the only creature can't block
         ArgumentCaptor<DeclareBlockersRequest> captor = ArgumentCaptor.forClass(DeclareBlockersRequest.class);
@@ -567,7 +568,7 @@ class EasyAiDecisionEngineTest {
         // Cost modifier adds 1 (e.g. opponent has Thalia) — now needs 3 total
         when(castingCostService.getCastCostModifier(any(), any(), any())).thenReturn(1);
 
-        createEngine().handleMessage("GAME_STATE", "");
+        createEngine().handleEvent(MessageType.GAME_STATE);
 
         // Should NOT attempt to cast — can't afford with cost increase
         verify(messageHandler, never()).handlePlayCard(any(), any());
@@ -593,7 +594,7 @@ class EasyAiDecisionEngineTest {
         // Cost reduction of 1 — now only needs 3 total
         when(castingCostService.getCastCostModifier(any(), any(), any())).thenReturn(-1);
 
-        createEngine().handleMessage("GAME_STATE", "");
+        createEngine().handleEvent(MessageType.GAME_STATE);
 
         // Should attempt to cast — affordable with cost reduction
         verify(messageHandler).handlePlayCard(any(), any());
@@ -627,7 +628,7 @@ class EasyAiDecisionEngineTest {
                         new com.github.laxika.magicalvibes.service.filter.PredicateEvaluationService(gameQueryService),
                         targetValidationService));
         engine.setSelfConnection(selfConnection);
-        engine.handleMessage("GAME_STATE", "");
+        engine.handleEvent(MessageType.GAME_STATE);
 
         // Should NOT attempt to cast — spell casting restricted
         verify(messageHandler, never()).handlePlayCard(any(), any());
@@ -669,7 +670,7 @@ class EasyAiDecisionEngineTest {
             return null;
         }).when(messageHandler).handlePlayCard(any(), any());
 
-        createEngine().handleMessage("GAME_STATE", "");
+        createEngine().handleEvent(MessageType.GAME_STATE);
 
         ArgumentCaptor<PlayCardRequest> captor = ArgumentCaptor.forClass(PlayCardRequest.class);
         verify(messageHandler).handlePlayCard(eq(selfConnection), captor.capture());
@@ -696,7 +697,7 @@ class EasyAiDecisionEngineTest {
 
         // No creatures on opponent's battlefield
 
-        createEngine().handleMessage("GAME_STATE", "");
+        createEngine().handleEvent(MessageType.GAME_STATE);
 
         verify(messageHandler, never()).handlePlayCard(any(), any());
         verify(messageHandler).handlePassPriority(any(), any());
@@ -747,7 +748,7 @@ class EasyAiDecisionEngineTest {
             return null;
         }).when(messageHandler).handlePlayCard(any(), any());
 
-        createEngine().handleMessage("GAME_STATE", "");
+        createEngine().handleEvent(MessageType.GAME_STATE);
 
         ArgumentCaptor<PlayCardRequest> captor = ArgumentCaptor.forClass(PlayCardRequest.class);
         verify(messageHandler).handlePlayCard(eq(selfConnection), captor.capture());
@@ -784,7 +785,7 @@ class EasyAiDecisionEngineTest {
             return null;
         }).when(messageHandler).handlePlayCard(any(), any());
 
-        createEngine().handleMessage("GAME_STATE", "");
+        createEngine().handleEvent(MessageType.GAME_STATE);
 
         ArgumentCaptor<PlayCardRequest> captor = ArgumentCaptor.forClass(PlayCardRequest.class);
         verify(messageHandler).handlePlayCard(eq(selfConnection), captor.capture());
@@ -811,7 +812,7 @@ class EasyAiDecisionEngineTest {
         // Cost modifier +2 — no X value is affordable
         when(castingCostService.getCastCostModifier(any(), any(), any())).thenReturn(2);
 
-        createEngine().handleMessage("GAME_STATE", "");
+        createEngine().handleEvent(MessageType.GAME_STATE);
 
         // Should NOT attempt to cast — maxX is 0
         verify(messageHandler, never()).handlePlayCard(any(), any());
@@ -840,7 +841,7 @@ class EasyAiDecisionEngineTest {
             return null;
         }).when(messageHandler).handlePlayCard(any(), any());
 
-        createEngine().handleMessage("GAME_STATE", "");
+        createEngine().handleEvent(MessageType.GAME_STATE);
 
         ArgumentCaptor<PlayCardRequest> captor = ArgumentCaptor.forClass(PlayCardRequest.class);
         verify(messageHandler).handlePlayCard(eq(selfConnection), captor.capture());
@@ -881,7 +882,7 @@ class EasyAiDecisionEngineTest {
         when(gameQueryService.getEffectivePower(eq(gd), any())).thenReturn(2);
         when(gameQueryService.getEffectiveToughness(eq(gd), any())).thenReturn(2);
 
-        createEngine().handleMessage("AVAILABLE_ATTACKERS", "");
+        createEngine().handleEvent(MessageType.AVAILABLE_ATTACKERS);
 
         ArgumentCaptor<DeclareAttackersRequest> captor = ArgumentCaptor.forClass(DeclareAttackersRequest.class);
         verify(messageHandler).handleDeclareAttackers(eq(selfConnection), captor.capture());
@@ -916,7 +917,7 @@ class EasyAiDecisionEngineTest {
         gd.playerManaPools.get(aiPlayer.getId()).add(ManaColor.BLUE, 2);
         gd.playerManaPools.get(aiPlayer.getId()).add(ManaColor.COLORLESS, 1);
 
-        createEngine().handleMessage("GAME_STATE", "");
+        createEngine().handleEvent(MessageType.GAME_STATE);
 
         ArgumentCaptor<PlayCardRequest> captor = ArgumentCaptor.forClass(PlayCardRequest.class);
         verify(messageHandler).handlePlayCard(eq(selfConnection), captor.capture());
@@ -969,7 +970,7 @@ class EasyAiDecisionEngineTest {
         gd.playerManaPools.get(aiPlayer.getId()).add(ManaColor.BLUE, 2);
         gd.playerManaPools.get(aiPlayer.getId()).add(ManaColor.COLORLESS, 1);
 
-        createEngine().handleMessage("GAME_STATE", "");
+        createEngine().handleEvent(MessageType.GAME_STATE);
 
         ArgumentCaptor<PlayCardRequest> captor = ArgumentCaptor.forClass(PlayCardRequest.class);
         verify(messageHandler).handlePlayCard(eq(selfConnection), captor.capture());
@@ -997,7 +998,7 @@ class EasyAiDecisionEngineTest {
         pool.add(ManaColor.RED, 1);
         pool.add(ManaColor.COLORLESS, 1);
 
-        createEngine().handleMessage("GAME_STATE", "");
+        createEngine().handleEvent(MessageType.GAME_STATE);
 
         verify(messageHandler, never()).handlePlayCard(any(), any());
         verify(messageHandler).handlePassPriority(any(), any());
@@ -1040,7 +1041,7 @@ class EasyAiDecisionEngineTest {
         pool.add(ManaColor.RED, 1);
         pool.add(ManaColor.COLORLESS, 1);
 
-        createEngine().handleMessage("GAME_STATE", "");
+        createEngine().handleEvent(MessageType.GAME_STATE);
 
         verify(messageHandler, never()).handlePlayCard(any(), any());
         verify(messageHandler).handlePassPriority(any(), any());
@@ -1078,7 +1079,7 @@ class EasyAiDecisionEngineTest {
             return null;
         }).when(messageHandler).handlePlayCard(any(), any());
 
-        createEngine().handleMessage("GAME_STATE", "");
+        createEngine().handleEvent(MessageType.GAME_STATE);
 
         verify(messageHandler).handlePlayCard(any(), any());
     }
@@ -1142,7 +1143,7 @@ class EasyAiDecisionEngineTest {
 
             testHarness.setHand(aiTestPlayer, List.of(new EntrancingMelody()));
 
-            easyAi.handleMessage("GAME_STATE", "");
+            easyAi.handleEvent(MessageType.GAME_STATE);
 
             assertThat(testGd.stack).hasSize(1);
             assertThat(testGd.stack.getFirst().getCard().getName()).isEqualTo("Entrancing Melody");
@@ -1166,7 +1167,7 @@ class EasyAiDecisionEngineTest {
 
             testHarness.setHand(aiTestPlayer, List.of(new EntrancingMelody()));
 
-            easyAi.handleMessage("GAME_STATE", "");
+            easyAi.handleEvent(MessageType.GAME_STATE);
 
             assertThat(testGd.stack).hasSize(1);
             assertThat(testGd.stack.getFirst().getTargetId()).isEqualTo(bears.getId());
@@ -1185,7 +1186,7 @@ class EasyAiDecisionEngineTest {
 
             testHarness.setHand(aiTestPlayer, List.of(new EntrancingMelody()));
 
-            easyAi.handleMessage("GAME_STATE", "");
+            easyAi.handleEvent(MessageType.GAME_STATE);
 
             assertThat(testGd.stack).isEmpty();
         }
@@ -1233,7 +1234,7 @@ class EasyAiDecisionEngineTest {
         when(gameQueryService.getEffectivePower(gd, blocker)).thenReturn(5);
         when(gameQueryService.getEffectiveToughness(gd, blocker)).thenReturn(5);
 
-        createEngine().handleMessage("AVAILABLE_ATTACKERS", "");
+        createEngine().handleEvent(MessageType.AVAILABLE_ATTACKERS);
 
         ArgumentCaptor<DeclareAttackersRequest> captor = ArgumentCaptor.forClass(DeclareAttackersRequest.class);
         verify(messageHandler).handleDeclareAttackers(eq(selfConnection), captor.capture());
@@ -1281,7 +1282,7 @@ class EasyAiDecisionEngineTest {
         when(gameQueryService.getEffectivePower(gd, blocker)).thenReturn(5);
         when(gameQueryService.getEffectiveToughness(gd, blocker)).thenReturn(5);
 
-        createEngine().handleMessage("AVAILABLE_ATTACKERS", "");
+        createEngine().handleEvent(MessageType.AVAILABLE_ATTACKERS);
 
         ArgumentCaptor<DeclareAttackersRequest> captor = ArgumentCaptor.forClass(DeclareAttackersRequest.class);
         verify(messageHandler).handleDeclareAttackers(eq(selfConnection), captor.capture());
@@ -1317,7 +1318,7 @@ class EasyAiDecisionEngineTest {
             return null;
         }).when(messageHandler).handleTapPermanent(any(), any());
 
-        createEngine().handleMessage("GAME_STATE", "");
+        createEngine().handleEvent(MessageType.GAME_STATE);
 
         // AI should have tapped the land but NOT cast the spell or passed priority
         verify(messageHandler).handleTapPermanent(any(), any());
@@ -1353,7 +1354,7 @@ class EasyAiDecisionEngineTest {
             return null;
         }).when(messageHandler).handleTapPermanent(any(), any());
 
-        createEngine().handleMessage("GAME_STATE", "");
+        createEngine().handleEvent(MessageType.GAME_STATE);
 
         verify(messageHandler).handleTapPermanent(any(), any());
         verify(messageHandler, never()).handlePlayCard(any(), any());
@@ -1427,7 +1428,7 @@ class EasyAiDecisionEngineTest {
 
             testHarness.setHand(aiTestPlayer, List.of(new com.github.laxika.magicalvibes.cards.p.Pacifism()));
 
-            easyAi.handleMessage("GAME_STATE", "");
+            easyAi.handleEvent(MessageType.GAME_STATE);
 
             // Should NOT cast — can't afford {1}{W} + {2} tax = 4 mana with only 2 Plains
             assertThat(testGd.stack).isEmpty();
@@ -1445,7 +1446,7 @@ class EasyAiDecisionEngineTest {
 
             testHarness.setHand(aiTestPlayer, List.of(new com.github.laxika.magicalvibes.cards.p.Pacifism()));
 
-            easyAi.handleMessage("GAME_STATE", "");
+            easyAi.handleEvent(MessageType.GAME_STATE);
 
             assertThat(testGd.stack).hasSize(1);
             assertThat(testGd.stack.getFirst().getCard().getName()).isEqualTo("Pacifism");
@@ -1470,7 +1471,7 @@ class EasyAiDecisionEngineTest {
 
             testHarness.setHand(aiTestPlayer, List.of(new com.github.laxika.magicalvibes.cards.l.LightningBolt()));
 
-            easyAi.handleMessage("GAME_STATE", "");
+            easyAi.handleEvent(MessageType.GAME_STATE);
 
             // Should NOT cast — can't afford {R} + {2} tax = 3 mana with only 1 Mountain
             assertThat(testGd.stack).isEmpty();
@@ -1532,7 +1533,7 @@ class EasyAiDecisionEngineTest {
             int lifeBefore = testGd.playerLifeTotals.get(aiTestPlayer.getId());
             fireIronStarTrigger();
 
-            easyAi.handleMessage("INTERACTION_PROMPT", "");
+            easyAi.handleEvent(MessageType.INTERACTION_PROMPT);
 
             assertThat(testGd.playerLifeTotals.get(aiTestPlayer.getId())).isEqualTo(lifeBefore + 1);
             assertThat(mountain.isTapped()).isTrue();
@@ -1546,7 +1547,7 @@ class EasyAiDecisionEngineTest {
             int lifeBefore = testGd.playerLifeTotals.get(aiTestPlayer.getId());
             fireIronStarTrigger();
 
-            easyAi.handleMessage("INTERACTION_PROMPT", "");
+            easyAi.handleEvent(MessageType.INTERACTION_PROMPT);
 
             assertThat(testGd.playerLifeTotals.get(aiTestPlayer.getId())).isEqualTo(lifeBefore);
             assertThat(testGd.interaction.activeInteraction(PendingInteraction.MayAbilityChoice.class)).isNull();

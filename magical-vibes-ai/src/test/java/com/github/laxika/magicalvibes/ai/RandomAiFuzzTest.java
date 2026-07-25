@@ -1,7 +1,6 @@
 package com.github.laxika.magicalvibes.ai;
 
 import com.github.laxika.magicalvibes.cards.RandomDeckGenerator;
-import com.github.laxika.magicalvibes.service.JacksonConfig;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.GameData;
 import com.github.laxika.magicalvibes.model.GameLogEntry;
@@ -16,7 +15,6 @@ import com.github.laxika.magicalvibes.websocket.WebSocketSessionManager;
 import org.junit.jupiter.api.Tag;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.condition.EnabledIfSystemProperty;
-import tools.jackson.databind.ObjectMapper;
 
 import java.util.ArrayList;
 import java.util.Collections;
@@ -137,7 +135,6 @@ class RandomAiFuzzTest {
         sessionManager.unregisterSession(fakeConn1.getId());
         sessionManager.unregisterSession(fakeConn2.getId());
 
-        ObjectMapper objectMapper = new JacksonConfig().objectMapper();
 
         // Each engine gets its own Random derived from the master seed for thread safety
         RandomAiDecisionEngine engine1 = new RandomAiDecisionEngine(
@@ -149,8 +146,8 @@ class RandomAiFuzzTest {
                 harness.getCombatAttackService(), harness.getGameBroadcastService(), harness.getCastingCostService(), harness.getCastingPermissionService(),
                 harness.getTargetValidationService(), harness.getTargetLegalityService(), new Random(rng.nextLong()), telemetry);
 
-        AiConnection aiConn1 = new AiConnection("ai-fuzz-1", engine1, objectMapper, AI_DECISION_DELAY_MS);
-        AiConnection aiConn2 = new AiConnection("ai-fuzz-2", engine2, objectMapper, AI_DECISION_DELAY_MS);
+        AiConnection aiConn1 = new AiConnection("ai-fuzz-1", engine1, AI_DECISION_DELAY_MS);
+        AiConnection aiConn2 = new AiConnection("ai-fuzz-2", engine2, AI_DECISION_DELAY_MS);
         engine1.setSelfConnection(aiConn1);
         engine2.setSelfConnection(aiConn2);
 

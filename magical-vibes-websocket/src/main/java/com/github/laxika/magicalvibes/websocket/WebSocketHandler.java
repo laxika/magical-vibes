@@ -58,7 +58,7 @@ public class WebSocketHandler extends TextWebSocketHandler {
     public void afterConnectionEstablished(WebSocketSession session) {
         log.info("WebSocket connection established: {}", session.getId());
 
-        Connection connection = new WebSocketConnection(session);
+        Connection connection = new WebSocketConnection(session, objectMapper);
 
         ScheduledFuture<?> timeoutTask = scheduler.schedule(() -> {
             try {
@@ -84,7 +84,7 @@ public class WebSocketHandler extends TextWebSocketHandler {
             timeoutTask.cancel(false);
         }
 
-        Connection connection = new WebSocketConnection(session);
+        Connection connection = new WebSocketConnection(session, objectMapper);
 
         try {
             JsonNode jsonNode = objectMapper.readTree(message.getPayload());
