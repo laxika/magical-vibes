@@ -83,11 +83,18 @@ class GameBroadcastServiceTest {
                         gameQueryService, predicateEvaluationService));
         CastingPermissionService castingPermissionService =
                 new CastingPermissionService(gameQueryService, predicateEvaluationService, conditionEvaluationService);
-        svc = new GameBroadcastService(sessionManager, cardViewFactory, gameLogViewFactory, permanentViewFactory,
+        GameViewProjectionFactory projectionFactory = new GameViewProjectionFactory(
+                cardViewFactory, gameLogViewFactory, permanentViewFactory,
                 stackEntryViewFactory, gameQueryService, validTargetService,
                 castingCostService, castingPermissionService,
                 new com.github.laxika.magicalvibes.service.cast.PotentialManaService(gameQueryService),
                 new GrantedAbilityViewFactory());
+        svc = new GameBroadcastService(
+                projectionFactory,
+                new PrivateInformationProjectionFactory(cardViewFactory),
+                new GameMessageTransport(sessionManager),
+                gameLogViewFactory,
+                gameQueryService);
 
         player1Id = UUID.randomUUID();
         player2Id = UUID.randomUUID();

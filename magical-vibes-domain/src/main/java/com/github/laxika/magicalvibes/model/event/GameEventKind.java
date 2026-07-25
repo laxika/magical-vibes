@@ -8,8 +8,29 @@ package com.github.laxika.magicalvibes.model.event;
  * the game.
  */
 public enum GameEventKind {
+    /**
+     * Authoritative game state changed and recipient-specific views must be rebuilt after the
+     * mutation completes.
+     */
     STATE_INVALIDATED,
+
+    /**
+     * A player must answer a new or replayed decision independently of state refresh coalescing.
+     */
     DECISION_REQUESTED,
+
+    /**
+     * Hidden card information was revealed to the event's explicit private audience.
+     */
     PRIVATE_REVEAL,
+
+    /**
+     * A player's mulligan or keep action completed and must use the existing public notification.
+     */
+    MULLIGAN_RESOLVED,
+
+    /**
+     * The game reached a terminal win or draw result.
+     */
     GAME_ENDED
 }

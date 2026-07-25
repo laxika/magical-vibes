@@ -46,7 +46,7 @@ class LegacyNotificationSurfaceRatchetTest {
                 "turn", 13));
 
         BASELINE.put(LegacySurface.SESSION_SEND, Map.of(
-                ROOT_FAMILY, 8,
+                ROOT_FAMILY, 7,
                 "ability", 2,
                 "effect/normalfx", 8,
                 "interaction", 33));

@@ -16,8 +16,9 @@ The stable fact families are:
 | Kind | Fact | Meaning | Coalescible in one action? |
 |---|---|---|---|
 | `STATE_INVALIDATED` | `GameEventFact.StateInvalidated` | Named sections of the authoritative state need a new audience-specific view. | Yes, but only with the exact same audience. |
-| `DECISION_REQUESTED` | `GameEventFact.DecisionRequested` | A stable decision identity and decision family need an answer. | No. |
+| `DECISION_REQUESTED` | `GameEventFact.DecisionRequested` | A stable decision identity and decision family need an answer; delivery distinguishes initial open from replay without creating a second logical decision. | No. |
 | `PRIVATE_REVEAL` | `GameEventFact.PrivateReveal` | An immutable card snapshot was revealed to a restricted audience. | No. |
+| `MULLIGAN_RESOLVED` | `GameEventFact.MulliganResolved` | The existing public mulligan-result notification must be reproduced. | No. |
 | `GAME_ENDED` | `GameEventFact.GameEnded` | The game ended in a win or draw. | No. |
 
 Domain facts and envelopes live in
@@ -71,15 +72,17 @@ advance only for emitted envelopes.
 - No `GameEventSubscriber` is invoked while `Thread.holdsLock(gameData)` is true.
 - The outermost mutation scope owns dispatch; nested scopes append to the same ordered batch.
 - State invalidations may coalesce only inside one completed action and only for an identical
-  audience. Decisions, interactions, private reveals, and game end are never coalesced.
+  audience. Decisions/interactions, mulligan notifications, private reveals, and game end are
+  never coalesced.
 - Sequences are deterministic, positive, strictly increasing, and game-local.
 - Audience omission means `INTERNAL`, never all players.
 - `GameData.simulation` produces a `SUPPRESSED_SIMULATION` batch. The simulation copy advances its
   own local version and sequence for deterministic engine behavior, but no external subscriber is
   invoked.
-- Events describe domain facts. A later transport subscriber resolves current state by game ID,
-  enforces the envelope audience, creates player-specific view DTOs, and only then sends WebSocket
-  messages.
+- Events describe domain facts. `GameEventProjectionSubscriber` resolves current state by game ID,
+  enforces the envelope audience, creates player-specific view DTOs through
+  `GameViewProjectionFactory`, and only then hands typed messages to `GameMessageTransport`.
+  `SessionManager` selects the connection and the connection alone serializes.
 - Reconnect replays an existing decision identity; it does not emit a second logical decision.
 - State invalidation means “build a post-action view,” not a request to observe an intermediate
   mutation state.
@@ -95,7 +98,7 @@ for every family is zero.
 | Legacy surface | Current total | Eventual target |
 |---|---:|---:|
 | `GameBroadcastService.broadcastGameState` | 118 | 0 |
-| engine `SessionManager.sendToPlayer/sendToPlayers` | 51 | 0 |
+| engine `SessionManager.sendToPlayer/sendToPlayers` | 50 | 0 |
 | `GameBroadcastService.logAndBroadcast` | 2,371 | 0 |
 
 ### `broadcastGameState` package-family classification
@@ -131,14 +134,14 @@ player-specific hidden-information rules in `GameBroadcastService`.
 
 | Package family | Count | Workflow classification |
 |---|---:|---|
-| service root | 8 | per-player game state 1, hand reveal 1, game end 3, mulligan notifications 3 |
+| service root | 7 | hand reveal 1, game end 3, mulligan notifications 3 |
 | `ability` | 2 | discard/exile additional-cost decisions |
 | `effect/normalfx` | 8 | game restart 1 and private hand/library reveal notifications 7 |
 | `interaction` | 33 | registry-managed interaction, attacker, blocker, and combat-damage prompts |
 
 Exhaustive files for these 51 calls:
 
-- Service root: `GameBroadcastService` 2, `GameOutcomeService` 3, `MulliganService` 3.
+- Service root: `GameBroadcastService` 1, `GameOutcomeService` 3, `MulliganService` 3.
 - Ability: `AbilityActivationService` 2.
 - Effects: `KarnRestartGameEffectHandler`,
   `LookAtHandEffectHandler`, `LookAtRandomCardInTargetPlayerHandEffectHandler`,
@@ -230,19 +233,20 @@ intentionally unchanged by this foundation prompt.
 | Workflow | Current path | Required event closure | Status |
 |---|---|---|---|
 | Foundation | domain event records → `GameMutationCoordinator` → `GameEventDispatcher` | immutable facts/envelopes, nested batching, ordering, audience safety, simulation suppression, failure isolation | **Complete** |
-| Public game-state refresh | 118 `broadcastGameState` calls → player-specific `GameStateMessage` | coalesced `STATE_INVALIDATED`; WebSocket subscriber constructs the same per-player wire DTO after unlock | Open |
+| Canonical projection subscriber | `GameEventProjectionSubscriber` → `GameViewProjectionFactory`/interaction registry → typed messages → `GameMessageTransport` | post-lock authoritative projection, explicit audience enforcement, no serialization, per-recipient transport failure isolation, human/AI typed-message parity | **Complete** |
+| Public game-state refresh | 118 `broadcastGameState` calls → player-specific `GameStateMessage` | coalesced `STATE_INVALIDATED`; canonical subscriber constructs the same per-player wire DTO after unlock | Projection complete; emission migration open |
 | Game log | 2,371 `logAndBroadcast` calls → `gameLog` → next state message | append under lock plus `GAME_LOG` invalidation; preserve structured segments and incremental wire behavior | Open |
-| Generic interactions | begin site → `InteractionHandlerRegistry.begin`/handler `prompt` → 30 generic prompt sends | stable decision ID plus non-coalescible `DECISION_REQUESTED(INTERACTION)` | Open |
+| Generic interactions | begin site → `InteractionHandlerRegistry.begin`/handler `prompt` → 30 generic prompt sends | stable decision ID plus non-coalescible `DECISION_REQUESTED(INTERACTION)`; canonical subscriber reuses the registry prompt projector for open/replay | Projection complete; emission migration open |
 | Attackers | `CombatAttackService` → `AttackerDeclarationInteractionHandler` → `AvailableAttackersMessage` | `DECISION_REQUESTED(ATTACKER_DECLARATION)` | Open |
 | Blockers | `CombatBlockService` → `BlockerDeclarationInteractionHandler` → `AvailableBlockersMessage` | `DECISION_REQUESTED(BLOCKER_DECLARATION)` | Open |
 | Combat damage assignment | `CombatDamageService` → `CombatDamageAssignmentInteractionHandler` → notification | `DECISION_REQUESTED(COMBAT_DAMAGE_ASSIGNMENT)` | Open |
 | Ability additional-cost choices | two `AbilityActivationService` direct prompts | registry interaction plus non-coalescible decision fact | Open |
-| Mulligan | `MulliganService` direct resolved/bottom sends | state observation plus `MULLIGAN`/`CARDS_TO_BOTTOM` decisions without changing message timing | Open |
-| Private hand/library reveals | `GameBroadcastService` plus seven normal-effect handlers | `PRIVATE_REVEAL`, explicit recipient, immutable snapshots; never public by default | Open |
-| Game over | three `GameOutcomeService` sends (loss, declared winner, draw) | one `GAME_ENDED` fact; adapters preserve `GameOverMessage`, draft callback, timer cleanup, and registry removal ordering | Open |
+| Mulligan | `MulliganService` direct resolved/bottom sends | `MULLIGAN_RESOLVED` plus state observation and `CARDS_TO_BOTTOM` decision without changing message timing | Projection complete; emission migration open |
+| Private hand/library reveals | `GameBroadcastService` plus seven normal-effect handlers | `PRIVATE_REVEAL`, explicit recipient, immutable snapshots; never public by default | Projection complete; emission migration open |
+| Game over | three `GameOutcomeService` sends (loss, declared winner, draw) | one `GAME_ENDED` fact; adapters preserve `GameOverMessage`, draft callback, timer cleanup, and registry removal ordering | Projection complete; emission/cleanup migration open |
 | Game restart | `KarnRestartGameEffectHandler` direct restart send | public state/observation event; not `GAME_ENDED` | Open |
-| Reconnect state | login builds `JoinGame` via `GameBroadcastService.getJoinGame` | preserve current reconnect snapshot and hidden player view | Open |
-| Reconnect decision replay | `GameMessageHandler` → `GameService.resendAwaitingInput` → `ReconnectionService` → `InteractionHandlerRegistry.replayPrompt` → same handler `prompt` | replay the existing decision ID only to the reconnecting authorized recipient; no duplicate logical decision or log | Open |
+| Reconnect state | login builds `JoinGame` via `GameBroadcastService.getJoinGame` | The application workflow already knows when join/reconnect needs a complete snapshot; preserve the exact login response envelope and build its hidden player view through the shared projection factory rather than a domain event | Shared projection complete; application delivery remains unchanged |
+| Reconnect decision replay | `GameMessageHandler` → `GameService.resendAwaitingInput` → `ReconnectionService` → `InteractionHandlerRegistry.replayPrompt` → same handler `prompt` | `DecisionDelivery.REPLAY_REQUESTED`; replay the existing decision ID only to the reconnecting authorized recipient; no duplicate logical decision or log | Projection complete; emission migration open |
 | Live AI wake-up | outbound DTO → `AiConnection.actionableType` → delayed executor → `AiDecisionEngine.handleEvent` | AI subscriber consumes domain state invalidation/decision/game-end facts; coalesce only invalidations, never decisions | Open |
 | AI initial mulligan | `AiPlayerService` → `AiConnection.scheduleInitialAction` | retain explicit initial wake-up or model it as the first mulligan decision | Open |
 | MCTS/headless | `GameData.simulationCopy`, `HeadlessWebSocketSessionManager`, `GameBroadcastService`/`GameOutcomeService` guards, `AutoPassService` simulation branches, `SimulationLogSuppressor` | coordinator produces `SUPPRESSED_SIMULATION`; no external subscriber, WebSocket, registry, timeout, draft, or live-AI side effect | Foundation complete; legacy guards remain open |
@@ -251,7 +255,8 @@ intentionally unchanged by this foundation prompt.
 
 Later prompts should migrate vertical workflows, not raw call counts:
 
-1. Add transport and AI subscribers with parity tests but keep them dormant.
+1. Add the canonical transport projection subscriber with human/AI typed-message parity tests but
+   keep production emission dormant. **Complete.**
 2. Wrap one public action family in `GameMutationCoordinator`, preserving validation inside the
    coordinator-owned monitor.
 3. Migrate generic interaction begin/replay once so all decision types share stable identity.

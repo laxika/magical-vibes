@@ -14,7 +14,8 @@ import java.util.UUID;
  * and {@code StackEntry} must never be added here.
  */
 public sealed interface GameEventFact permits GameEventFact.StateInvalidated,
-        GameEventFact.DecisionRequested, GameEventFact.PrivateReveal, GameEventFact.GameEnded {
+        GameEventFact.DecisionRequested,
+        GameEventFact.PrivateReveal, GameEventFact.MulliganResolved, GameEventFact.GameEnded {
 
     GameEventKind kind();
 
@@ -51,18 +52,47 @@ public sealed interface GameEventFact permits GameEventFact.StateInvalidated,
      * A player decision that must be delivered independently of state refresh coalescing.
      * {@code decisionId} is the stable identity used for replay and answer correlation.
      */
-    record DecisionRequested(UUID decisionId, UUID decidingPlayerId, DecisionKind decisionKind)
+    record DecisionRequested(
+            UUID decisionId,
+            UUID decidingPlayerId,
+            DecisionKind decisionKind,
+            DecisionDelivery delivery
+    )
             implements GameEventFact {
 
         public DecisionRequested {
             Objects.requireNonNull(decisionId, "decisionId");
             Objects.requireNonNull(decidingPlayerId, "decidingPlayerId");
             Objects.requireNonNull(decisionKind, "decisionKind");
+            Objects.requireNonNull(delivery, "delivery");
+        }
+
+        public DecisionRequested(UUID decisionId, UUID decidingPlayerId, DecisionKind decisionKind) {
+            this(decisionId, decidingPlayerId, decisionKind, DecisionDelivery.OPENED);
         }
 
         @Override
         public GameEventKind kind() {
             return GameEventKind.DECISION_REQUESTED;
+        }
+    }
+
+    /**
+     * Existing public notification that one player's mulligan action resolved.
+     */
+    record MulliganResolved(UUID playerId, boolean kept, int mulliganCount)
+            implements GameEventFact {
+
+        public MulliganResolved {
+            Objects.requireNonNull(playerId, "playerId");
+            if (mulliganCount < 0) {
+                throw new IllegalArgumentException("mulliganCount cannot be negative");
+            }
+        }
+
+        @Override
+        public GameEventKind kind() {
+            return GameEventKind.MULLIGAN_RESOLVED;
         }
     }
 
@@ -145,6 +175,11 @@ public sealed interface GameEventFact permits GameEventFact.StateInvalidated,
         COMBAT_DAMAGE_ASSIGNMENT,
         MULLIGAN,
         CARDS_TO_BOTTOM
+    }
+
+    enum DecisionDelivery {
+        OPENED,
+        REPLAY_REQUESTED
     }
 
     enum RevealZone {

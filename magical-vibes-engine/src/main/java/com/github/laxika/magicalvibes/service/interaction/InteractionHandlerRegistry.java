@@ -74,6 +74,25 @@ public class InteractionHandlerRegistry {
     }
 
     /**
+     * Projects and delivers the active prompt to one explicitly authorized event audience member.
+     *
+     * <p>This is the event-adapter entry point. The audience was already resolved when the event
+     * was emitted (including Mindslaver decision ownership), so it must not be redirected again.
+     */
+    public boolean promptActiveTo(GameData gameData, UUID recipientId) {
+        PendingInteraction active = gameData.interaction.activeInteraction();
+        if (active == null) {
+            return false;
+        }
+        InteractionHandler<PendingInteraction> handler = handlerFor(active);
+        if (handler == null) {
+            return false;
+        }
+        handler.prompt(gameData, active, recipientId);
+        return true;
+    }
+
+    /**
      * Routes a wire answer to the active interaction's handler. Returns {@code false} when no
      * registry-managed interaction is active or the answer shape does not match — the caller
      * then continues down the legacy dispatch path (which supplies the legacy error message).
