@@ -733,6 +733,44 @@ public class GameData {
      *  (broadcasting, session messages, registry mutations, logging). */
     public boolean simulation;
 
+    /**
+     * Monotonic metadata for transport-independent domain events. Both counters are advanced only
+     * by the engine's outermost mutation coordinator while holding this GameData's monitor.
+     */
+    private long domainEventSequence;
+    private long domainStateVersion;
+
+    /**
+     * Advances and returns the version of authoritative mutable state committed by an outermost
+     * domain-event mutation.
+     */
+    public long advanceDomainStateVersion() {
+        requireGameMonitor("advanceDomainStateVersion");
+        return ++domainStateVersion;
+    }
+
+    /**
+     * Advances and returns the next game-local event sequence.
+     */
+    public long nextDomainEventSequence() {
+        requireGameMonitor("nextDomainEventSequence");
+        return ++domainEventSequence;
+    }
+
+    public synchronized long domainEventSequence() {
+        return domainEventSequence;
+    }
+
+    public synchronized long domainStateVersion() {
+        return domainStateVersion;
+    }
+
+    private void requireGameMonitor(String operation) {
+        if (!Thread.holdsLock(this)) {
+            throw new IllegalStateException(operation + " requires holding the GameData monitor");
+        }
+    }
+
     /** Monotonic CR 613.7 timestamp source. Advanced via {@link #nextTimestamp()} whenever a
      *  permanent enters a battlefield, an Aura/Equipment becomes attached (CR 613.7e), or a
      *  resolving spell/ability creates a continuous effect. Never reset during a game. */
@@ -1737,6 +1775,8 @@ public class GameData {
         copy.draftId = this.draftId;
         copy.cleanupDiscardPending = this.cleanupDiscardPending;
         copy.simulation = true;
+        copy.domainEventSequence = this.domainEventSequence;
+        copy.domainStateVersion = this.domainStateVersion;
         copy.timestampCounter = this.timestampCounter;
         copy.combatDamageFirstStrikeStepComplete = this.combatDamageFirstStrikeStepComplete;
         copy.combatDamagePhase1Complete = this.combatDamagePhase1Complete;
