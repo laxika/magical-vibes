@@ -11,6 +11,9 @@ import com.github.laxika.magicalvibes.model.event.GameEventAudience;
 import com.github.laxika.magicalvibes.model.event.GameEventFact;
 import com.github.laxika.magicalvibes.service.battlefield.GameQueryService;
 import com.github.laxika.magicalvibes.service.event.GameMutationCoordinator;
+import com.github.laxika.magicalvibes.service.outcome.LossOutcome;
+import com.github.laxika.magicalvibes.service.outcome.LossReason;
+import com.github.laxika.magicalvibes.service.outcome.LossReplacer;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.context.annotation.Lazy;
 import org.springframework.stereotype.Component;
@@ -25,27 +28,68 @@ public class GameOutcomeService {
 
     private final GameQueryService gameQueryService;
     private final GameLogService gameLogService;
-    private final LichsMirrorResetService lichsMirrorResetService;
+    private final List<LossReplacer> lossReplacers;
     private final GameMutationCoordinator mutationCoordinator;
 
     public GameOutcomeService(GameQueryService gameQueryService,
                               GameLogService gameLogService,
-                              @Lazy LichsMirrorResetService lichsMirrorResetService,
+                              @Lazy List<LossReplacer> lossReplacers,
                               GameMutationCoordinator mutationCoordinator) {
         this.gameQueryService = gameQueryService;
         this.gameLogService = gameLogService;
-        this.lichsMirrorResetService = lichsMirrorResetService;
+        // @Lazy: a replacer reaches deep into the engine (removal, life, graveyard) and those
+        // paths lead back here, so the list resolves on first use rather than at construction.
+        this.lossReplacers = lossReplacers;
         this.mutationCoordinator = mutationCoordinator;
     }
 
     /**
-     * Lich's Mirror hook: if {@code losingPlayerId} controls a permanent that replaces their loss
-     * with a game reset, performs the reset and returns {@code true}. Callers about to finish the
-     * game because this player lost a rules-based loss (life/poison, empty library, a "you lose the
-     * game" effect) must consult this first and skip the loss when it returns {@code true}.
+     * The single gate every game loss goes through (CR 104.3).
+     *
+     * <p>Any code about to finish the game because a player lost must ask this first and act on
+     * the answer — only {@link LossOutcome#LOSES} means the loss actually happens. Running the
+     * chain in one place is the point: it applies the blanket "can't lose" effects, then the
+     * prevention that only {@code reason} allows, then every registered {@link LossReplacer}, in
+     * that order. Hand-rolling any part of it is how a call site ends up honoring Platinum Angel
+     * but silently ignoring Lich's Mirror.
+     *
+     * <p>This method never logs and never finishes the game. Callers word their own message
+     * (they each have a different one) and own the win/draw decision that follows.
      */
-    public boolean replaceLossWithGameReset(GameData gameData, UUID losingPlayerId) {
-        return lichsMirrorResetService.tryReplaceLoss(gameData, losingPlayerId);
+    public LossOutcome resolveLoss(GameData gameData, UUID losingPlayerId, LossReason reason) {
+        if (losingPlayerId == null || !gameData.playerIds.contains(losingPlayerId)) {
+            return LossOutcome.PREVENTED;
+        }
+        if (!gameQueryService.canPlayerLoseGame(gameData, losingPlayerId)) {
+            return LossOutcome.PREVENTED;
+        }
+        // Phyrexian Unlife stops only the 0-or-less-life loss; poison and everything else land.
+        if (reason == LossReason.LIFE && !gameQueryService.canPlayerLoseFromLife(gameData, losingPlayerId)) {
+            return LossOutcome.PREVENTED;
+        }
+        for (LossReplacer replacer : lossReplacers) {
+            if (replacer.tryReplace(gameData, losingPlayerId, reason)) {
+                return LossOutcome.REPLACED;
+            }
+        }
+        return LossOutcome.LOSES;
+    }
+
+    /**
+     * Whether {@code winnerId} may win outright from a "you win the game" effect.
+     *
+     * <p>Deliberately NOT routed through {@link #resolveLoss}: a win effect ends the game
+     * immediately instead of making the opponent lose, so there is no loss event for a
+     * {@link LossReplacer} to replace. Per the Lich's Mirror ruling, "Lich's Mirror has no effect
+     * if a spell or ability (such as the one from Helix Pinnacle) states that a player 'wins the
+     * game.' If a player wins the game, the game ends immediately."
+     *
+     * <p>The block itself is Platinum Angel's second clause ("your opponents can't win the game").
+     * This engine models both of that card's clauses with the single {@code CantLoseGameEffect} on
+     * the opponent, which is why the check reads off them.
+     */
+    public boolean canPlayerWinGame(GameData gameData, UUID winnerId) {
+        return gameQueryService.canPlayerLoseGame(gameData, gameQueryService.getOpponentId(gameData, winnerId));
     }
 
     public boolean checkWinCondition(GameData gameData) {
@@ -64,20 +108,10 @@ public class GameOutcomeService {
             int life = gameData.getLife(playerId);
             int poison = gameData.playerPoisonCounters.getOrDefault(playerId, 0);
             if (life <= 0 || poison >= 10) {
-                // Check if the player is protected from losing (e.g. Platinum Angel)
-                if (!gameQueryService.canPlayerLoseGame(gameData, playerId)) {
-                    continue;
-                }
-
-                // Check if ALL active loss conditions are individually prevented (e.g. Phyrexian Unlife)
-                boolean loseFromLife = life <= 0 && gameQueryService.canPlayerLoseFromLife(gameData, playerId);
-                boolean loseFromPoison = poison >= 10;
-                if (!loseFromLife && !loseFromPoison) {
-                    continue;
-                }
-
-                // Lich's Mirror: replace the loss with a full reset instead of finishing the game.
-                if (replaceLossWithGameReset(gameData, playerId)) {
+                // Poison is checked first: a player at 0 life AND 10 poison still loses even with
+                // Phyrexian Unlife, because that only prevents the life half (CR 704.5a/704.5c).
+                LossReason reason = poison >= 10 ? LossReason.POISON : LossReason.LIFE;
+                if (resolveLoss(gameData, playerId, reason) != LossOutcome.LOSES) {
                     continue;
                 }
 

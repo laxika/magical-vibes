@@ -248,8 +248,16 @@ public class GameTestHarness {
         return perm;
     }
 
+    /**
+     * Runs a state-based check the way the engine does — inside a mutation scope.
+     *
+     * <p>Production always reaches {@code performStateBasedActions} from within an outer action,
+     * so any state-based action that appends a game log (a player losing, a state trigger going on
+     * the stack) requires the scope. Calling the service bare made every such test throw
+     * "Game logs may only be appended inside their game's mutation scope".
+     */
     public void runStateBasedActions() {
-        stateBasedActionService.performStateBasedActions(gameData);
+        mutationCoordinator.mutate(gameData, () -> stateBasedActionService.performStateBasedActions(gameData));
     }
 
     public void setGraveyard(Player player, List<Card> cards) {

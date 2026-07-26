@@ -5,6 +5,8 @@ import com.github.laxika.magicalvibes.service.graveyard.GraveyardService;
 import com.github.laxika.magicalvibes.service.battlefield.GameQueryService;
 import com.github.laxika.magicalvibes.service.GameLogService;
 import com.github.laxika.magicalvibes.service.GameOutcomeService;
+import com.github.laxika.magicalvibes.service.outcome.LossOutcome;
+import com.github.laxika.magicalvibes.service.outcome.LossReason;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.GameData;
 import com.github.laxika.magicalvibes.model.GameLog;
@@ -288,7 +290,13 @@ public class StateBasedActionService {
         if (gameData.playersAttemptedDrawFromEmptyLibrary.isEmpty()) return;
 
         for (UUID playerId : List.copyOf(gameData.playersAttemptedDrawFromEmptyLibrary)) {
-            if (gameQueryService.canPlayerLoseGame(gameData, playerId)) {
+            // Consume the flag before resolving rather than clearing the whole set afterwards: a
+            // replacement can re-arm it during this very pass (Lich's Mirror running the library
+            // dry on its seven-card draw), and that fresh flag has to survive so the next check
+            // finishes the game.
+            gameData.playersAttemptedDrawFromEmptyLibrary.remove(playerId);
+
+            if (gameOutcomeService.resolveLoss(gameData, playerId, LossReason.EMPTY_LIBRARY) == LossOutcome.LOSES) {
                 UUID winnerId = gameQueryService.getOpponentId(gameData, playerId);
                 String logEntry = gameData.playerIdToName.get(playerId) + " attempted to draw from an empty library and loses the game.";
                 gameLogService.append(gameData, GameLog.text(logEntry));
@@ -296,6 +304,5 @@ public class StateBasedActionService {
                 gameOutcomeService.declareWinner(gameData, winnerId);
             }
         }
-        gameData.playersAttemptedDrawFromEmptyLibrary.clear();
     }
 }

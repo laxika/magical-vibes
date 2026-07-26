@@ -315,6 +315,26 @@ public class PermanentRemovalService {
     }
 
     /**
+     * Puts every permanent in {@code permanents} on the bottom of its owner's library, then runs
+     * the one mandatory {@link #removeOrphanedAuras} pass the whole sweep needs.
+     *
+     * <p>Collect the list before calling: this exists so bulk tucks (a filtered board sweep, a
+     * Lich's Mirror reset) don't each re-derive the loop and forget the aura cleanup at the end.
+     *
+     * @return the permanents that were actually on a battlefield and moved, in the given order
+     */
+    public List<Permanent> removeAllToLibraryBottom(GameData gameData, List<Permanent> permanents) {
+        List<Permanent> moved = new ArrayList<>();
+        for (Permanent perm : permanents) {
+            if (removePermanentToLibraryBottom(gameData, perm)) {
+                moved.add(perm);
+            }
+        }
+        removeOrphanedAuras(gameData);
+        return moved;
+    }
+
+    /**
      * Removes a permanent from the battlefield and puts its card at the specified position
      * from the top of the owner's library (0-indexed: 0 = top, 1 = second, 2 = third, etc.).
      * If the library has fewer cards than the position, the card is placed on the bottom.

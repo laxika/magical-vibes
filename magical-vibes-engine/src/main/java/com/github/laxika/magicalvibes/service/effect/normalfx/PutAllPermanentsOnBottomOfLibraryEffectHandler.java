@@ -46,14 +46,10 @@ public class PutAllPermanentsOnBottomOfLibraryEffectHandler implements NormalEff
             }
         });
 
-        for (Permanent perm : toBottom) {
-            if (permanentRemovalService.removePermanentToLibraryBottom(gameData, perm)) {
-                gameLogService.append(gameData, GameLog.cardThen(perm.getCard(), " is put on the bottom of its owner's library."));
-                log.info("Game {} - {} put on bottom of library by {}",
-                        gameData.id, perm.getCard().getName(), entry.getCard().getName());
-            }
+        for (Permanent perm : permanentRemovalService.removeAllToLibraryBottom(gameData, toBottom)) {
+            gameLogService.append(gameData, GameLog.cardThen(perm.getCard(), " is put on the bottom of its owner's library."));
+            log.info("Game {} - {} put on bottom of library by {}",
+                    gameData.id, perm.getCard().getName(), entry.getCard().getName());
         }
-
-        permanentRemovalService.removeOrphanedAuras(gameData);
     }
 }

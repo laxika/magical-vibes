@@ -24,6 +24,8 @@ import com.github.laxika.magicalvibes.service.battlefield.GameQueryService;
 import com.github.laxika.magicalvibes.service.battlefield.LegendRuleService;
 import com.github.laxika.magicalvibes.service.battlefield.PermanentRemovalService;
 import com.github.laxika.magicalvibes.service.graveyard.GraveyardService;
+import com.github.laxika.magicalvibes.service.outcome.LossOutcome;
+import com.github.laxika.magicalvibes.service.outcome.LossReason;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Nested;
@@ -763,7 +765,8 @@ class StateBasedActionServiceTest {
         @DisplayName("Player who drew from empty library loses the game")
         void playerLosesWhenDrawingFromEmptyLibrary() {
             gd.playersAttemptedDrawFromEmptyLibrary.add(player1Id);
-            when(gameQueryService.canPlayerLoseGame(gd, player1Id)).thenReturn(true);
+            when(gameOutcomeService.resolveLoss(gd, player1Id, LossReason.EMPTY_LIBRARY))
+                    .thenReturn(LossOutcome.LOSES);
             when(gameQueryService.getOpponentId(gd, player1Id)).thenReturn(player2Id);
 
             sut.performStateBasedActions(gd);
@@ -776,7 +779,8 @@ class StateBasedActionServiceTest {
         @DisplayName("playersAttemptedDrawFromEmptyLibrary is cleared after processing")
         void setIsClearedAfterProcessing() {
             gd.playersAttemptedDrawFromEmptyLibrary.add(player1Id);
-            when(gameQueryService.canPlayerLoseGame(gd, player1Id)).thenReturn(true);
+            when(gameOutcomeService.resolveLoss(gd, player1Id, LossReason.EMPTY_LIBRARY))
+                    .thenReturn(LossOutcome.LOSES);
             when(gameQueryService.getOpponentId(gd, player1Id)).thenReturn(player2Id);
 
             sut.performStateBasedActions(gd);
@@ -788,7 +792,8 @@ class StateBasedActionServiceTest {
         @DisplayName("Player with CantLoseGameEffect does not lose from empty library draw")
         void cantLosePlayerDoesNotLose() {
             gd.playersAttemptedDrawFromEmptyLibrary.add(player1Id);
-            when(gameQueryService.canPlayerLoseGame(gd, player1Id)).thenReturn(false);
+            when(gameOutcomeService.resolveLoss(gd, player1Id, LossReason.EMPTY_LIBRARY))
+                    .thenReturn(LossOutcome.PREVENTED);
 
             sut.performStateBasedActions(gd);
 
@@ -799,7 +804,8 @@ class StateBasedActionServiceTest {
         @DisplayName("Set is cleared even when player cannot lose")
         void setIsClearedEvenWhenPlayerCannotLose() {
             gd.playersAttemptedDrawFromEmptyLibrary.add(player1Id);
-            when(gameQueryService.canPlayerLoseGame(gd, player1Id)).thenReturn(false);
+            when(gameOutcomeService.resolveLoss(gd, player1Id, LossReason.EMPTY_LIBRARY))
+                    .thenReturn(LossOutcome.PREVENTED);
 
             sut.performStateBasedActions(gd);
 
@@ -819,8 +825,10 @@ class StateBasedActionServiceTest {
         void bothPlayersDrawFromEmptyLibrary() {
             gd.playersAttemptedDrawFromEmptyLibrary.add(player1Id);
             gd.playersAttemptedDrawFromEmptyLibrary.add(player2Id);
-            when(gameQueryService.canPlayerLoseGame(gd, player1Id)).thenReturn(true);
-            when(gameQueryService.canPlayerLoseGame(gd, player2Id)).thenReturn(true);
+            when(gameOutcomeService.resolveLoss(gd, player1Id, LossReason.EMPTY_LIBRARY))
+                    .thenReturn(LossOutcome.LOSES);
+            when(gameOutcomeService.resolveLoss(gd, player2Id, LossReason.EMPTY_LIBRARY))
+                    .thenReturn(LossOutcome.LOSES);
             when(gameQueryService.getOpponentId(gd, player1Id)).thenReturn(player2Id);
             when(gameQueryService.getOpponentId(gd, player2Id)).thenReturn(player1Id);
 
@@ -829,6 +837,37 @@ class StateBasedActionServiceTest {
             verify(gameOutcomeService).declareWinner(gd, player2Id);
             verify(gameOutcomeService).declareWinner(gd, player1Id);
             assertThat(gd.playersAttemptedDrawFromEmptyLibrary).isEmpty();
+        }
+
+        @Test
+        @DisplayName("A replaced loss does not finish the game")
+        void replacedLossDoesNotFinishTheGame() {
+            gd.playersAttemptedDrawFromEmptyLibrary.add(player1Id);
+            when(gameOutcomeService.resolveLoss(gd, player1Id, LossReason.EMPTY_LIBRARY))
+                    .thenReturn(LossOutcome.REPLACED);
+
+            sut.performStateBasedActions(gd);
+
+            // This site used to consult only the can't-lose effects, so a Lich's Mirror reset
+            // never got a say and the game ended anyway.
+            verify(gameOutcomeService, never()).declareWinner(any(), any());
+        }
+
+        @Test
+        @DisplayName("A replacement that re-arms the flag leaves it armed for the next check")
+        void reArmedFlagSurvivesTheCheckThatReplacedIt() {
+            gd.playersAttemptedDrawFromEmptyLibrary.add(player1Id);
+            // Lich's Mirror's seven-card draw can run the library dry again, re-arming the flag
+            // mid-check. Clearing the whole set afterwards would swallow that second loss.
+            doAnswer(invocation -> {
+                gd.playersAttemptedDrawFromEmptyLibrary.add(player1Id);
+                return LossOutcome.REPLACED;
+            }).when(gameOutcomeService).resolveLoss(gd, player1Id, LossReason.EMPTY_LIBRARY);
+
+            sut.performStateBasedActions(gd);
+
+            verify(gameOutcomeService, never()).declareWinner(any(), any());
+            assertThat(gd.playersAttemptedDrawFromEmptyLibrary).contains(player1Id);
         }
     }
 

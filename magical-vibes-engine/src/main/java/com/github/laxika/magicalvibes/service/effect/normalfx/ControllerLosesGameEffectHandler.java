@@ -8,6 +8,8 @@ import com.github.laxika.magicalvibes.model.effect.ControllerLosesGameEffect;
 import com.github.laxika.magicalvibes.service.GameLogService;
 import com.github.laxika.magicalvibes.service.GameOutcomeService;
 import com.github.laxika.magicalvibes.service.battlefield.GameQueryService;
+import com.github.laxika.magicalvibes.service.outcome.LossOutcome;
+import com.github.laxika.magicalvibes.service.outcome.LossReason;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Component;
@@ -35,17 +37,16 @@ public class ControllerLosesGameEffectHandler implements NormalEffectHandlerBean
             return;
         }
 
-        // Check if the player can't lose (e.g. Platinum Angel)
-        if (!gameQueryService.canPlayerLoseGame(gameData, losingPlayerId)) {
+        LossOutcome outcome = gameOutcomeService.resolveLoss(gameData, losingPlayerId, LossReason.EFFECT);
+        if (outcome == LossOutcome.PREVENTED) {
             String logEntry = gameData.playerIdToName.get(losingPlayerId) + " can't lose the game.";
             gameLogService.append(gameData, GameLog.text(logEntry));
             log.info("Game {} - {} can't lose the game (protected)", gameData.id,
                     gameData.playerIdToName.get(losingPlayerId));
             return;
         }
-
-        // Lich's Mirror: replace the loss with a full reset instead of finishing the game.
-        if (gameOutcomeService.replaceLossWithGameReset(gameData, losingPlayerId)) {
+        if (outcome == LossOutcome.REPLACED) {
+            // A replacer (Lich's Mirror) already logged and reset the game — nobody wins.
             return;
         }
 

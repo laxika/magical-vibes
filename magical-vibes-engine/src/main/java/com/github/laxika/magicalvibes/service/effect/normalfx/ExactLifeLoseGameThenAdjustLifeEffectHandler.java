@@ -9,6 +9,8 @@ import com.github.laxika.magicalvibes.model.effect.ExactLifeLoseGameThenAdjustLi
 import com.github.laxika.magicalvibes.service.GameLogService;
 import com.github.laxika.magicalvibes.service.GameOutcomeService;
 import com.github.laxika.magicalvibes.service.battlefield.GameQueryService;
+import com.github.laxika.magicalvibes.service.outcome.LossOutcome;
+import com.github.laxika.magicalvibes.service.outcome.LossReason;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Component;
@@ -51,13 +53,15 @@ public class ExactLifeLoseGameThenAdjustLifeEffectHandler implements NormalEffec
 
         List<UUID> losers = new ArrayList<>();
         for (UUID playerId : atExactLife) {
-            if (!gameQueryService.canPlayerLoseGame(gameData, playerId)) {
+            // A prevented or replaced loss (Platinum Angel, Lich's Mirror) means that player is not
+            // a "loser" for the draw/win check below.
+            LossOutcome outcome = gameOutcomeService.resolveLoss(gameData, playerId, LossReason.EFFECT);
+            if (outcome == LossOutcome.PREVENTED) {
                 gameLogService.append(gameData,
                         GameLog.text(gameData.playerIdToName.get(playerId) + " can't lose the game."));
                 continue;
             }
-            // Lich's Mirror replaces that player's loss; they are not a "loser" for the draw/win check.
-            if (gameOutcomeService.replaceLossWithGameReset(gameData, playerId)) {
+            if (outcome == LossOutcome.REPLACED) {
                 continue;
             }
             losers.add(playerId);

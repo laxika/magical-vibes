@@ -39,6 +39,8 @@ import com.github.laxika.magicalvibes.model.effect.SacrificeSelfThenDealDamageTo
 import com.github.laxika.magicalvibes.model.effect.WinGameOnEmptyLibraryDrawEffect;
 import com.github.laxika.magicalvibes.model.effect.ZursWeirdingDrawReplacementEffect;
 import com.github.laxika.magicalvibes.service.battlefield.GameQueryService;
+import com.github.laxika.magicalvibes.service.outcome.LossOutcome;
+import com.github.laxika.magicalvibes.service.outcome.LossReason;
 import com.github.laxika.magicalvibes.service.interaction.InteractionHandlerRegistry;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.context.annotation.Lazy;
@@ -101,8 +103,7 @@ public class DrawService {
             List<Card> graveyard = gameData.playerGraveyards.get(playerId);
             if (graveyard == null || graveyard.isEmpty()) {
                 // Can't return a card — the player loses the game (CR 104.3a, replacement wording).
-                if (gameQueryService.canPlayerLoseGame(gameData, playerId)
-                        && !gameOutcomeService.replaceLossWithGameReset(gameData, playerId)) {
+                if (gameOutcomeService.resolveLoss(gameData, playerId, LossReason.EFFECT) == LossOutcome.LOSES) {
                     UUID winnerId = gameQueryService.getOpponentId(gameData, playerId);
                     String lossLog = gameData.playerIdToName.get(playerId)
                             + " can't return a card from their graveyard and loses the game.";
@@ -514,7 +515,7 @@ public class DrawService {
             // Check for Laboratory Maniac-style replacement: win instead of lose
             if (hasWinOnEmptyLibraryDraw(gameData, playerId)) {
                 UUID opponentId = gameQueryService.getOpponentId(gameData, playerId);
-                if (gameQueryService.canPlayerLoseGame(gameData, opponentId)) {
+                if (gameOutcomeService.canPlayerWinGame(gameData, playerId)) {
                     String winLog = gameData.playerIdToName.get(playerId) + " wins the game (drew from an empty library with a replacement effect).";
                     gameLogService.append(gameData, GameLog.text(winLog));
                     log.info("Game {} - {} wins (empty library draw replacement)", gameData.id, gameData.playerIdToName.get(playerId));
@@ -529,8 +530,7 @@ public class DrawService {
             }
 
             // CR 704.5b — player who attempted to draw from an empty library loses the game
-            if (gameQueryService.canPlayerLoseGame(gameData, playerId)
-                    && !gameOutcomeService.replaceLossWithGameReset(gameData, playerId)) {
+            if (gameOutcomeService.resolveLoss(gameData, playerId, LossReason.EMPTY_LIBRARY) == LossOutcome.LOSES) {
                 UUID winnerId = gameQueryService.getOpponentId(gameData, playerId);
                 String lossLog = gameData.playerIdToName.get(playerId) + " attempted to draw from an empty library and loses the game.";
                 gameLogService.append(gameData, GameLog.text(lossLog));

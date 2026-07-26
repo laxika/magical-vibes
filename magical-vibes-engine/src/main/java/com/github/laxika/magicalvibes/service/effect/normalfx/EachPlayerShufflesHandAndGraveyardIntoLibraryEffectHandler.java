@@ -1,15 +1,13 @@
 package com.github.laxika.magicalvibes.service.effect.normalfx;
 
-import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.GameData;
 import com.github.laxika.magicalvibes.model.GameLog;
 import com.github.laxika.magicalvibes.model.StackEntry;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
 import com.github.laxika.magicalvibes.model.effect.EachPlayerShufflesHandAndGraveyardIntoLibraryEffect;
 import com.github.laxika.magicalvibes.service.GameLogService;
-import com.github.laxika.magicalvibes.service.graveyard.GraveyardService;
 import com.github.laxika.magicalvibes.service.library.LibraryShuffleHelper;
-import java.util.List;
+import com.github.laxika.magicalvibes.service.library.ZoneToLibraryService;
 import java.util.UUID;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -21,7 +19,7 @@ import org.springframework.stereotype.Component;
 public class EachPlayerShufflesHandAndGraveyardIntoLibraryEffectHandler implements NormalEffectHandlerBean {
 
     private final GameLogService gameLogService;
-    private final GraveyardService graveyardService;
+    private final ZoneToLibraryService zoneToLibraryService;
 
     @Override
     public Class<? extends CardEffect> handledEffect() {
@@ -33,32 +31,18 @@ public class EachPlayerShufflesHandAndGraveyardIntoLibraryEffectHandler implemen
         String cardName = entry.getCard().getName();
 
         for (UUID playerId : gameData.orderedPlayerIds) {
-            List<Card> hand = gameData.playerHands.get(playerId);
-            List<Card> graveyard = gameData.playerGraveyards.get(playerId);
-            List<Card> deck = gameData.playerDecks.get(playerId);
             String playerName = gameData.playerIdToName.get(playerId);
 
-            int handCount = (hand != null) ? hand.size() : 0;
-            int graveyardCount = (graveyard != null) ? graveyard.size() : 0;
-
-            if (hand != null && !hand.isEmpty()) {
-                deck.addAll(hand);
-                hand.clear();
-            }
-
-            if (graveyard != null && !graveyard.isEmpty()) {
-                deck.addAll(graveyard);
-                graveyard.clear();
-                graveyardService.notifyCardsLeftGraveyard(gameData, playerId);
-            }
+            ZoneToLibraryService.MovedCounts moved =
+                    zoneToLibraryService.moveHandAndGraveyardIntoLibrary(gameData, playerId);
 
             LibraryShuffleHelper.shuffleLibrary(gameData, playerId);
 
-            gameLogService.append(gameData, GameLog.text(playerName + " shuffles their hand (" + LibraryShuffleSupport.pluralCards(handCount)
-                            + ") and graveyard (" + LibraryShuffleSupport.pluralCards(graveyardCount)
+            gameLogService.append(gameData, GameLog.text(playerName + " shuffles their hand (" + LibraryShuffleSupport.pluralCards(moved.hand())
+                            + ") and graveyard (" + LibraryShuffleSupport.pluralCards(moved.graveyard())
                             + ") into their library (" + cardName + ")."));
             log.info("Game {} - {} shuffles hand ({}) and graveyard ({}) into library ({})",
-                    gameData.id, playerName, handCount, graveyardCount, cardName);
+                    gameData.id, playerName, moved.hand(), moved.graveyard(), cardName);
         }
     }
 }

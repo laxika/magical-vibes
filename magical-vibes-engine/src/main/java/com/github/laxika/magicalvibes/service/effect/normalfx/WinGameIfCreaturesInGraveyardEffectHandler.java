@@ -47,9 +47,11 @@ public class WinGameIfCreaturesInGraveyardEffectHandler implements NormalEffectH
         }
 
         if (creatureCount >= e.threshold()) {
-            // Check if the opponent can't lose (e.g. Platinum Angel)
+            // Platinum Angel's "your opponents can't win the game". Note this is NOT a loss event:
+            // a win effect ends the game immediately rather than making the opponent lose, so no
+            // loss replacer (Lich's Mirror) gets a say — see GameOutcomeService.canPlayerWinGame.
             UUID opponentId = gameQueryService.getOpponentId(gameData, controllerId);
-            if (!gameQueryService.canPlayerLoseGame(gameData, opponentId)) {
+            if (!gameOutcomeService.canPlayerWinGame(gameData, controllerId)) {
                 String logEntry = entry.getCard().getName() + "'s win condition is met but " +
                         gameData.playerIdToName.get(opponentId) + " can't lose the game.";
                 gameLogService.append(gameData, GameLog.builder().card(entry.getCard()).text("'s win condition is met but " + gameData.playerIdToName.get(opponentId) + " can't lose the game.").build());

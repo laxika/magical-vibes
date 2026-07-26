@@ -315,7 +315,7 @@ class GameTimeoutServiceTest {
         GameOutcomeService realOutcome = new GameOutcomeService(
                 query,
                 mock(GameLogService.class),
-                mock(LichsMirrorResetService.class),
+                List.of(),
                 eventCoordinator);
         GameTimeoutService eventService = new GameTimeoutService(
                 gameRegistry,

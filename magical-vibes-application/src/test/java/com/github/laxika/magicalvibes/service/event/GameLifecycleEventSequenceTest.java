@@ -16,7 +16,6 @@ import com.github.laxika.magicalvibes.service.GameLogService;
 import com.github.laxika.magicalvibes.service.GameOutcomeService;
 import com.github.laxika.magicalvibes.service.GameRegistry;
 import com.github.laxika.magicalvibes.service.GameService;
-import com.github.laxika.magicalvibes.service.LichsMirrorResetService;
 import com.github.laxika.magicalvibes.service.MulliganService;
 import com.github.laxika.magicalvibes.service.StackResolutionService;
 import com.github.laxika.magicalvibes.service.ability.AbilityActivationService;
@@ -76,7 +75,7 @@ class GameLifecycleEventSequenceTest {
         outcomeService = new GameOutcomeService(
                 gameQueryService,
                 gameLogs,
-                mock(LichsMirrorResetService.class),
+                List.of(),
                 coordinator);
     }
 
@@ -232,7 +231,7 @@ class GameLifecycleEventSequenceTest {
         GameOutcomeService drawOutcome = new GameOutcomeService(
                 mock(GameQueryService.class),
                 gameLogs,
-                mock(LichsMirrorResetService.class),
+                List.of(),
                 drawCoordinator);
 
         drawCoordinator.mutate(drawGame, () -> drawOutcome.declareDraw(drawGame));
