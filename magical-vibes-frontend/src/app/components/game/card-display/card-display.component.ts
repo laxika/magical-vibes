@@ -50,6 +50,10 @@ export class CardDisplayComponent implements OnInit, OnChanges, OnDestroy, After
   private static readonly PW_MIN_FONT_SIZE = 6;
   private static readonly FONT_STEP = 0.5;
   private static readonly FLAVOR_REDUCTION = 2;
+  /** The prepare spell's inset is a far narrower column than the rules text beside it,
+   *  so it fits separately and may go smaller than the rules text ever does. */
+  private static readonly PREPARE_FONT_RATIO = 0.94;
+  private static readonly PREPARE_MIN_FONT_SIZE = 4.5;
   private lastTextFingerprint = '';
 
   private scryfallImageService = inject(ScryfallImageService);
@@ -254,6 +258,13 @@ export class CardDisplayComponent implements OnInit, OnChanges, OnDestroy, After
     return this.permanent != null && this.permanent.markedDamage > 0;
   }
 
+  /** Tokens draw their own P/T over the art and have no info line to clear. */
+  @HostBinding('class.has-pt')
+  get hasPowerToughness(): boolean {
+    return !this.card.token
+      && ((this.card.power != null && this.card.toughness != null) || !!this.permanent?.animatedCreature);
+  }
+
   get displayPower(): number | null {
     if (this.permanent?.animatedCreature) return this.permanent.effectivePower;
     if (this.card.power == null) return null;
@@ -396,6 +407,29 @@ export class CardDisplayComponent implements OnInit, OnChanges, OnDestroy, After
 
       if (el.scrollHeight <= el.clientHeight) break;
       size -= CardDisplayComponent.FONT_STEP;
+    }
+
+    this.fitPrepareSpell(el, size);
+  }
+
+  /**
+   * Fits the prepare spell's inset within its own frame. Scaling the whole text box down
+   * far enough to get five mana symbols across a ~60px column would leave the creature's
+   * own rules text tiny for no reason, so the inset shrinks on its own instead — and would
+   * otherwise spill out over the P/T plate below it.
+   */
+  private fitPrepareSpell(box: HTMLElement, boxFontSize: number): void {
+    const panel = box.querySelector('.prepare-spell') as HTMLElement | null;
+    const text = panel?.querySelector('.prepare-spell-text') as HTMLElement | null;
+    if (!panel || !text) return;
+
+    let size = boxFontSize * CardDisplayComponent.PREPARE_FONT_RATIO;
+    panel.style.fontSize = size + 'px';
+
+    while (size > CardDisplayComponent.PREPARE_MIN_FONT_SIZE
+        && text.scrollHeight > text.clientHeight) {
+      size -= CardDisplayComponent.FONT_STEP;
+      panel.style.fontSize = size + 'px';
     }
   }
 

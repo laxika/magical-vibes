@@ -21,6 +21,12 @@ public record BrowseCardInfo(
         List<String> supertypes,
         List<String> subtypes,
         Integer loyalty,
-        BrowseCardInfo backFace
+        BrowseCardInfo backFace,
+        /**
+         * The spell printed inset on a prepare card's front face. Mutually exclusive with
+         * {@code backFace}: a prepare card's second face is drawn alongside the front, not
+         * flipped to, so it must not be offered as a back face.
+         */
+        BrowseCardInfo prepareSpell
 ) {
 }

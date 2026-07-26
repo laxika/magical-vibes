@@ -44,7 +44,6 @@ export function browseInfoToCard(info: BrowseCardInfo): Card {
     modalChoicesMax: 0,
     modalOptional: false,
     modalOptions: null,
-    // The browser flips between faces instead of drawing the prepare spell inset.
-    prepareSpell: null
+    prepareSpell: info.prepareSpell ? browseInfoToCard(info.prepareSpell) : null
   };
 }

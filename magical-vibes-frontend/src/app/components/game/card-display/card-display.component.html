@@ -37,8 +37,17 @@
     @if (watermarkUrl()) {
       <img class="watermark" [src]="watermarkUrl()" alt="" />
     }
-    @if (card.power != null && card.toughness != null || permanent?.animatedCreature) {
-      <div class="card-pt" [class.buffed]="isBuffed" [class.debuffed]="isDebuffed" [class.damaged]="isDamaged">{{ displayPower }}<span class="pt-slash">/</span>{{ displayToughness }}</div>
+    <!-- Floated so the creature's own rules text fills the column beside it, the way
+         the printed frame splits the front face. -->
+    @if (prepareSpell) {
+      <div class="prepare-spell" [class.prepare-spell-inactive]="prepareSpellInactive">
+        <div class="prepare-spell-title">
+          <span class="prepare-spell-name">{{ prepareSpell.name }}</span>
+          <span class="prepare-spell-cost" [innerHTML]="prepareSpellManaCost"></span>
+        </div>
+        <div class="prepare-spell-type">{{ prepareSpellTypeLine }}</div>
+        <div class="prepare-spell-text" [innerHTML]="prepareSpellText"></div>
+      </div>
     }
     @if (isPlaneswalker && planeswalkerAbilities.length > 0) {
       @for (ability of planeswalkerAbilities; track $index) {
@@ -58,21 +67,17 @@
     @for (ability of grantedAbilityTexts; track ability) {
       <div class="card-granted-ability">{{ ability }}</div>
     }
-    @if (prepareSpell) {
-      <div class="prepare-spell" [class.prepare-spell-inactive]="prepareSpellInactive">
-        <div class="prepare-spell-header">
-          <span class="prepare-spell-name">{{ prepareSpell.name }}</span>
-          <span class="prepare-spell-cost" [innerHTML]="prepareSpellManaCost"></span>
-        </div>
-        <div class="prepare-spell-type">{{ prepareSpellTypeLine }}</div>
-        <div class="prepare-spell-text" [innerHTML]="prepareSpellText"></div>
-      </div>
-    }
     @if (flavorText) {
       <div class="flavor-separator"></div>
       <div class="card-flavor-text">{{ flavorText }}</div>
     }
   </div>
+  <!-- Outside the text box, like the loyalty shield: the printed P/T plate overhangs the
+       bottom-right of the frame rather than sitting inside the rules text, and .text-box
+       clips its overflow. -->
+  @if (hasPowerToughness) {
+    <div class="card-pt" [class.buffed]="isBuffed" [class.debuffed]="isDebuffed" [class.damaged]="isDamaged">{{ displayPower }}<span class="pt-slash">/</span>{{ displayToughness }}</div>
+  }
   @if (displayLoyalty != null) {
     <div class="card-loyalty">{{ displayLoyalty }}</div>
   }

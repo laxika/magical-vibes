@@ -577,6 +577,8 @@ export interface BrowseCardInfo {
   subtypes: string[];
   loyalty: number | null;
   backFace: BrowseCardInfo | null;
+  /** The spell printed inset on a prepare card's front face; never set together with backFace. */
+  prepareSpell: BrowseCardInfo | null;
 }
 
 export interface CardListResponse {
