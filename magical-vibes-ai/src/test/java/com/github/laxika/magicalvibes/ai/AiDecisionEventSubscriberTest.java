@@ -20,7 +20,7 @@ import static org.mockito.Mockito.verify;
 class AiDecisionEventSubscriberTest {
 
     private final UUID gameId = UUID.randomUUID();
-    private final UUID actionId = UUID.randomUUID();
+    private final long actionId = 1L;
     private final UUID aiPlayerId = UUID.randomUUID();
     private final UUID otherPlayerId = UUID.randomUUID();
 

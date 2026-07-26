@@ -101,16 +101,4 @@ class LibrarySearchInteractionHandlerTest {
         verify(libraryChoiceHandlerService).handleLibraryCardChosen(gd, player, 0);
     }
 
-    @Test
-    @DisplayName("replayPrompt re-sends only to the decider")
-    void replayOnlyToDecider() {
-        projectionSupport.begin(
-                gd, search(List.of(createCard("Forest")), "Search.", false));
-
-        assertThat(registry.replayPrompt(gd, PLAYER2_ID)).isTrue();
-
-        assertThat(registry.replayPrompt(gd, PLAYER1_ID)).isTrue();
-        assertThat(projectionSupport.projectedPrompt(gd))
-                .isInstanceOf(InteractionPromptMessage.class);
-    }
 }

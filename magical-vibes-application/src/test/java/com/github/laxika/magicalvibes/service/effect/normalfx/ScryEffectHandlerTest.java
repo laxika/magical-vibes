@@ -86,7 +86,8 @@ class ScryEffectHandlerTest {
 
         libraryRevealSupport = new LibraryRevealSupport(gameLogService,
                 InteractionRegistryTestSupport.registryFor(sessionManager, cardViewFactory, gameLogService));
-        InteractionHandlerRegistry interactionHandlerRegistry = new InteractionHandlerRegistry();
+        InteractionHandlerRegistry interactionHandlerRegistry = new InteractionHandlerRegistry(
+                () -> mock(com.github.laxika.magicalvibes.service.event.GameMutationCoordinator.class));
         interactionHandlerRegistry.register(new ScryInteractionHandler(
                 gameLogService,
                 mock(PlayerInputService.class), mock(TurnProgressionService.class),

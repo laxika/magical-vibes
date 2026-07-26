@@ -81,7 +81,8 @@ class LookAtTopCardsHandTopBottomEffectHandlerTest {
 
         libraryRevealSupport = new LibraryRevealSupport(gameLogService,
                 InteractionRegistryTestSupport.registryFor(sessionManager, cardViewFactory, gameLogService));
-        InteractionHandlerRegistry interactionHandlerRegistry = new InteractionHandlerRegistry();
+        InteractionHandlerRegistry interactionHandlerRegistry = new InteractionHandlerRegistry(
+                () -> mock(com.github.laxika.magicalvibes.service.event.GameMutationCoordinator.class));
         interactionHandlerRegistry.register(new HandTopBottomChoiceInteractionHandler(
                 gameLogService, mock(TurnProgressionService.class)));
         lookAtTopCardsHandTopBottomEffectHandler = new LookAtTopCardsHandTopBottomEffectHandler(

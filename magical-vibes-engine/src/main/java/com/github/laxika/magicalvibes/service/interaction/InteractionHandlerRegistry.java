@@ -9,6 +9,7 @@ import com.github.laxika.magicalvibes.service.event.GameMutationCoordinator;
 
 import java.util.LinkedHashMap;
 import java.util.Map;
+import java.util.Objects;
 import java.util.UUID;
 import java.util.function.Supplier;
 
@@ -24,13 +25,9 @@ public class InteractionHandlerRegistry {
     private final Map<Class<? extends PendingInteraction>, InteractionHandler<?>> handlers = new LinkedHashMap<>();
     private final Supplier<GameMutationCoordinator> mutationCoordinatorSupplier;
 
-    /** Test-only state/answer-routing constructor. It deliberately performs no delivery. */
-    public InteractionHandlerRegistry() {
-        this.mutationCoordinatorSupplier = null;
-    }
-
     public InteractionHandlerRegistry(Supplier<GameMutationCoordinator> mutationCoordinatorSupplier) {
-        this.mutationCoordinatorSupplier = mutationCoordinatorSupplier;
+        this.mutationCoordinatorSupplier =
+                Objects.requireNonNull(mutationCoordinatorSupplier, "mutationCoordinatorSupplier");
     }
 
     public void register(InteractionHandler<?> handler) {
@@ -48,7 +45,7 @@ public class InteractionHandlerRegistry {
 
     /**
      * Marks the interaction as active and prompts the deciding player (with mind-control
-     * recipient redirection, matching the legacy {@code PlayerInputService} begin methods).
+     * recipient redirection shared with {@code PlayerInputService} begin methods).
      */
     public void begin(GameData gameData, PendingInteraction interaction) {
         InteractionHandler<PendingInteraction> handler = handlerFor(interaction);
@@ -104,9 +101,6 @@ public class InteractionHandlerRegistry {
         PendingInteraction active = gameData.interaction.activeInteraction();
         UUID decider = active.decidingPlayerId();
         UUID recipient = resolveMessageRecipient(gameData, decider);
-        if (mutationCoordinatorSupplier == null) {
-            return;
-        }
         mutationCoordinatorSupplier.get().emit(gameData,
                 new GameEventFact.DecisionRequested(
                         gameData.interaction.activeDecisionId(),
@@ -130,8 +124,8 @@ public class InteractionHandlerRegistry {
 
     /**
      * Routes a wire answer to the active interaction's handler. Returns {@code false} when no
-     * registry-managed interaction is active or the answer shape does not match — the caller
-     * then continues down the legacy dispatch path (which supplies the legacy error message).
+     * registered interaction is active or the answer shape does not match; the command boundary
+     * then supplies the protocol error.
      */
     public boolean dispatchAnswer(GameData gameData, Player player, InteractionAnswer answer) {
         PendingInteraction active = gameData.interaction.activeInteraction();
@@ -143,22 +137,6 @@ public class InteractionHandlerRegistry {
             return false;
         }
         handler.handleAnswer(gameData, player, active, answer);
-        return true;
-    }
-
-    /**
-     * Reports whether the active interaction is registry-managed so legacy replay dispatch can
-     * skip it. Reconnect prompt delivery is an explicit {@code DecisionRequested} replay fact.
-     */
-    public boolean replayPrompt(GameData gameData, UUID reconnectingPlayerId) {
-        PendingInteraction active = gameData.interaction.activeInteraction();
-        if (active == null) {
-            return false;
-        }
-        InteractionHandler<PendingInteraction> handler = handlerFor(active);
-        if (handler == null) {
-            return false;
-        }
         return true;
     }
 

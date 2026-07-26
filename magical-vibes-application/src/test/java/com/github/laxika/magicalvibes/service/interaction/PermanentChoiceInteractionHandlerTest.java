@@ -111,19 +111,4 @@ class PermanentChoiceInteractionHandlerTest {
         verify(permanentChoiceHandlerService).handlePermanentChosen(gd, player, permId);
     }
 
-    @Test
-    @DisplayName("replayPrompt re-sends only to the decider")
-    void replayOnlyToDecider() {
-        UUID permId = UUID.randomUUID();
-        projectionSupport.begin(
-                gd,
-                choice(
-                        List.of(permId), List.of(PLAYER2_ID), null, "Choose any target."));
-
-        assertThat(registry.replayPrompt(gd, PLAYER2_ID)).isTrue();
-
-        assertThat(registry.replayPrompt(gd, PLAYER1_ID)).isTrue();
-        assertThat(projectionSupport.projectedPrompt(gd))
-                .isInstanceOf(InteractionPromptMessage.class);
-    }
 }

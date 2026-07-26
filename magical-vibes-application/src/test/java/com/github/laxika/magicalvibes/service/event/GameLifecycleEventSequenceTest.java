@@ -18,7 +18,6 @@ import com.github.laxika.magicalvibes.service.GameRegistry;
 import com.github.laxika.magicalvibes.service.GameService;
 import com.github.laxika.magicalvibes.service.LichsMirrorResetService;
 import com.github.laxika.magicalvibes.service.MulliganService;
-import com.github.laxika.magicalvibes.service.ReconnectionService;
 import com.github.laxika.magicalvibes.service.StackResolutionService;
 import com.github.laxika.magicalvibes.service.ability.AbilityActivationService;
 import com.github.laxika.magicalvibes.service.battlefield.BattlefieldEntryService;
@@ -144,12 +143,11 @@ class GameLifecycleEventSequenceTest {
                 gameLogs,
                 mock(CombatService.class),
                 mock(TurnProgressionService.class),
-                new InteractionHandlerRegistry(),
+                new InteractionHandlerRegistry(() -> mock(GameMutationCoordinator.class)),
                 mock(SpellCastingService.class),
                 mock(StackResolutionService.class),
                 mock(AbilityActivationService.class),
                 mock(MulliganService.class),
-                mock(ReconnectionService.class),
                 mock(ExileSupport.class),
                 outcomeService,
                 coordinator);

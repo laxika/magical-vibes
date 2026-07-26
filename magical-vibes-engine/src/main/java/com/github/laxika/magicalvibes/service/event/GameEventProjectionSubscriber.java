@@ -57,9 +57,8 @@ public class GameEventProjectionSubscriber implements GameEventSubscriber {
             throw new IllegalStateException("Game event projection must run outside the game monitor");
         }
 
-        List<GameLogEntryView> newLogEntries = pendingLogEntries(gameData);
+        List<GameLogEntryView> newLogEntries = appendedLogEntries(gameData, batch);
         Set<UUID> logRecipients = new LinkedHashSet<>();
-        boolean stateProjected = false;
 
         for (GameEventEnvelope envelope : batch.events()) {
             Set<UUID> recipients = recipients(gameData, envelope.audience());
@@ -79,7 +78,6 @@ public class GameEventProjectionSubscriber implements GameEventSubscriber {
                 }
                 projectState(gameData, newLogEntries, recipientsWithLogs, logRecipients);
                 projectState(gameData, List.of(), recipientsWithoutLogs, logRecipients);
-                stateProjected = true;
             } else if (envelope.fact() instanceof GameEventFact.DecisionRequested decision) {
                 projectDecision(gameData, decision, recipients);
             } else if (envelope.fact() instanceof GameEventFact.PrivateReveal reveal) {
@@ -93,14 +91,6 @@ public class GameEventProjectionSubscriber implements GameEventSubscriber {
                 UUID winnerId = ended.winnerPlayerId();
                 String winnerName = winnerId == null ? null : gameData.playerIdToName.get(winnerId);
                 transport.sendToPlayers(recipients, new GameOverMessage(winnerId, winnerName));
-            }
-        }
-
-        if (stateProjected) {
-            // This delivery cursor remains on GameData only for legacy parity. Projection itself
-            // is complete before this brief synchronized bookkeeping update.
-            synchronized (gameData) {
-                gameData.lastBroadcastedLogSize = gameData.gameLog.size();
             }
         }
     }
@@ -194,13 +184,26 @@ public class GameEventProjectionSubscriber implements GameEventSubscriber {
         };
     }
 
-    private List<GameLogEntryView> pendingLogEntries(GameData gameData) {
-        int logSize = gameData.gameLog.size();
-        if (logSize <= gameData.lastBroadcastedLogSize) {
+    private List<GameLogEntryView> appendedLogEntries(
+            GameData gameData, GameEventBatch batch) {
+        List<Integer> indices = batch.events().stream()
+                .map(GameEventEnvelope::fact)
+                .filter(GameEventFact.GameLogAppended.class::isInstance)
+                .map(GameEventFact.GameLogAppended.class::cast)
+                .map(GameEventFact.GameLogAppended::logIndex)
+                .toList();
+        if (indices.isEmpty()) {
             return List.of();
         }
-        return gameLogViewFactory.createAll(
-                gameData.gameLog.subList(gameData.lastBroadcastedLogSize, logSize));
+        return gameLogViewFactory.createAll(indices.stream()
+                .map(index -> {
+                    if (index >= gameData.gameLog.size()) {
+                        throw new IllegalStateException(
+                                "Game log event index " + index + " is outside authoritative state");
+                    }
+                    return gameData.gameLog.get(index);
+                })
+                .toList());
     }
 
     private Set<UUID> recipients(GameData gameData, GameEventAudience audience) {

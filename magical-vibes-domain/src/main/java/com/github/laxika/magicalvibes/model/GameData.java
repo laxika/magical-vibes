@@ -337,7 +337,6 @@ public class GameData {
     /** How many combat phases have begun this turn (1 during the first combat phase). Reset at the
      *  start of each turn and incremented on entering BEGINNING_OF_COMBAT; read by FirstCombatPhase. */
     public int combatPhasesThisTurn;
-    public int lastBroadcastedLogSize = 0;
     public UUID draftId;
     public final Deque<LibraryBottomReorderRequest> pendingLibraryBottomReorders = new ArrayDeque<>();
     public final WarpWorldOperationState warpWorldOperation = new WarpWorldOperationState();
@@ -744,8 +743,17 @@ public class GameData {
      * Monotonic metadata for transport-independent domain events. Both counters are advanced only
      * by the engine's outermost mutation coordinator while holding this GameData's monitor.
      */
+    private long domainActionSequence;
     private long domainEventSequence;
     private long domainStateVersion;
+
+    /**
+     * Advances and returns the next completed game-local causal action identity.
+     */
+    public long nextDomainActionSequence() {
+        requireGameMonitor("nextDomainActionSequence");
+        return ++domainActionSequence;
+    }
 
     /**
      * Advances and returns the version of authoritative mutable state committed by an outermost
@@ -766,6 +774,10 @@ public class GameData {
 
     public synchronized long domainEventSequence() {
         return domainEventSequence;
+    }
+
+    public synchronized long domainActionSequence() {
+        return domainActionSequence;
     }
 
     public synchronized long domainStateVersion() {
@@ -1780,10 +1792,10 @@ public class GameData {
         copy.additionalCombatMainPhasePairs = this.additionalCombatMainPhasePairs;
         copy.additionalCombatPhasesOnly = this.additionalCombatPhasesOnly;
         copy.combatPhasesThisTurn = this.combatPhasesThisTurn;
-        copy.lastBroadcastedLogSize = this.lastBroadcastedLogSize;
         copy.draftId = this.draftId;
         copy.cleanupDiscardPending = this.cleanupDiscardPending;
         copy.simulation = true;
+        copy.domainActionSequence = this.domainActionSequence;
         copy.domainEventSequence = this.domainEventSequence;
         copy.domainStateVersion = this.domainStateVersion;
         copy.timestampCounter = this.timestampCounter;

@@ -104,18 +104,4 @@ class RevealedHandChoiceInteractionHandlerTest {
         verify(cardChoiceHandlerService).handleRevealedHandCardChosen(gd, player, 0);
     }
 
-    @Test
-    @DisplayName("replayPrompt re-sends only to the decider")
-    void replayOnlyToDecider() {
-        Card card = createCard("Bear");
-        gd.playerHands.get(PLAYER2_ID).add(card);
-        when(cardViewFactory.create(card)).thenReturn(mock(CardView.class));
-        projectionSupport.begin(gd, choice(List.of(0), "Pick one."));
-
-        assertThat(registry.replayPrompt(gd, PLAYER2_ID)).isTrue();
-
-        assertThat(registry.replayPrompt(gd, PLAYER1_ID)).isTrue();
-        assertThat(projectionSupport.projectedPrompt(gd))
-                .isInstanceOf(InteractionPromptMessage.class);
-    }
 }

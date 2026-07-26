@@ -138,21 +138,5 @@ class ExileChoiceInteractionHandlersTest {
             verify(exileSupport).handleMirrorOfFateChoice(gd, player, List.of(cardId));
         }
 
-        @Test
-        @DisplayName("replayPrompt re-sends only to the decider")
-        void replayOnlyToDecider() {
-            Card exiled = createCard("Lightning Bolt");
-            gd.addToExile(PLAYER1_ID, exiled);
-            projectionSupport.begin(
-                    gd,
-                    new PendingInteraction.MirrorOfFateChoice(
-                            PLAYER1_ID, List.of(exiled.getId()), 7));
-
-            assertThat(registry.replayPrompt(gd, PLAYER2_ID)).isTrue();
-
-            assertThat(registry.replayPrompt(gd, PLAYER1_ID)).isTrue();
-            assertThat(projectionSupport.projectedPrompt(gd))
-                    .isInstanceOf(InteractionPromptMessage.class);
-        }
     }
 }

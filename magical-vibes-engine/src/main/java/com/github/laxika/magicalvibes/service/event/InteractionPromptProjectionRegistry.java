@@ -108,7 +108,7 @@ public class InteractionPromptProjectionRegistry {
 
     /**
      * Builds the prompt for one exact interaction kind. An empty result is the explicit
-     * no-wire strategy used by legacy Karn Scion library-reveal choices whose prompt is null.
+     * no-wire strategy used by Karn Scion library-reveal choices whose prompt is null.
      */
     public Optional<Object> project(
             GameData gameData, PendingInteraction interaction) {

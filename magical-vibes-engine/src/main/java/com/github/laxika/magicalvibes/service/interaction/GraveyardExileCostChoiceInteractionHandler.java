@@ -14,7 +14,7 @@ import java.util.UUID;
  * activation itself lives in {@code GameData.pendingAbilityActivation}; the answer (cost
  * payment and ability activation) is applied by
  * {@link AbilityActivationService#handleActivatedAbilityGraveyardExileCostChosen}. Matching
- * the legacy begin site, no log line is emitted on prompt.
+ * the originating begin site, no log line is emitted on prompt.
  */
 @Component
 @RequiredArgsConstructor

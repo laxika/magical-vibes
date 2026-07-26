@@ -140,30 +140,4 @@ class MayAbilityChoiceInteractionHandlerTest {
         }
     }
 
-    @Nested
-    @DisplayName("replayPrompt")
-    class ReplayPrompt {
-
-        @Test
-        @DisplayName("Re-sends the prompt to the reconnecting decider")
-        void resendsToDecider() {
-            projectionSupport.begin(gd, choice());
-
-            boolean handled = registry.replayPrompt(gd, PLAYER1_ID);
-
-            assertThat(handled).isTrue();
-            assertThat(projectionSupport.projectedPrompt(gd))
-                    .isInstanceOf(InteractionPromptMessage.class);
-        }
-
-        @Test
-        @DisplayName("Does not re-send to a reconnecting non-decider but still reports handled")
-        void skipsNonDecider() {
-            projectionSupport.begin(gd, choice());
-
-            boolean handled = registry.replayPrompt(gd, PLAYER2_ID);
-
-            assertThat(handled).isTrue();
-        }
-    }
 }

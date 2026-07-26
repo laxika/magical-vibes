@@ -80,7 +80,7 @@ class LibraryRevealChoiceInteractionHandlerTest {
     }
 
     @Test
-    @DisplayName("A null prompt sends no message at begin or replay (Karn Scion flows)")
+    @DisplayName("A null prompt projects no message (Karn Scion flows)")
     void nullPromptSendsNothing() {
         Card card = createCard("Silver Card");
 
@@ -91,8 +91,6 @@ class LibraryRevealChoiceInteractionHandlerTest {
 
         assertThat(gd.interaction.activeInteraction()).isInstanceOf(PendingInteraction.LibraryRevealChoice.class);
         assertThat(prompt).isNull();
-
-        assertThat(registry.replayPrompt(gd, PLAYER1_ID)).isTrue();
     }
 
     @Test
@@ -111,17 +109,4 @@ class LibraryRevealChoiceInteractionHandlerTest {
         verify(libraryChoiceHandlerService).handleLibraryRevealChoice(gd, player, List.of(card.getId()));
     }
 
-    @Test
-    @DisplayName("replayPrompt re-sends only to the decider")
-    void replayOnlyToDecider() {
-        Card card = createCard("Grizzly Bears");
-        projectionSupport.begin(gd, new PendingInteraction.LibraryRevealChoice(
-                PLAYER1_ID, List.of(card), List.of(card.getId()),
-                false, true, false, false, false, 0, null, 1, "Choose."));
-        assertThat(registry.replayPrompt(gd, PLAYER2_ID)).isTrue();
-
-        assertThat(registry.replayPrompt(gd, PLAYER1_ID)).isTrue();
-        assertThat(projectionSupport.projectedPrompt(gd))
-                .isInstanceOf(InteractionPromptMessage.class);
-    }
 }

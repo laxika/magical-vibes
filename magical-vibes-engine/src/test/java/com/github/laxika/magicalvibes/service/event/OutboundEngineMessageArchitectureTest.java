@@ -54,7 +54,8 @@ class OutboundEngineMessageArchitectureTest {
             "GameResyncProjectionService",
             "GameViewProjectionFactory",
             "PrivateInformationProjectionFactory",
-            "InteractionPromptProjectionRegistry");
+            "InteractionPromptProjectionRegistry",
+            "ReconnectionService");
 
     private static final Map<String, Set<String>> MESSAGE_PROJECTORS = messageProjectors();
 

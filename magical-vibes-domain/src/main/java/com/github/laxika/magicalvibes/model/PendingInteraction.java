@@ -549,13 +549,13 @@ public sealed interface PendingInteraction permits PermanentChoiceContext,
     }
 
     /**
-     * A single-value "choose from a list" decision covering the whole legacy COLOR_CHOICE
+     * A single-value "choose from a list" decision covering the COLOR_CHOICE protocol
      * family (mana color, protection color, keyword/subtype/permanent-type/basic-land-type,
      * card name, text-change word, Abundance land/nonland, …). The specific variant is carried
      * in {@code context} (a {@link ChoiceContext}) and drives answer handling. {@code options}
      * and {@code prompt} are the exact begin-time list options and prompt text — they are
-     * carried so reconnect replay re-sends byte-identical content (the legacy replay re-derived
-     * them from {@code context} and diverged for several variants). {@code permanentId} /
+     * carried so reconnect projection sends byte-identical content without re-deriving it from
+     * {@code context}. {@code permanentId} /
      * {@code etbTargetId} carry the plain ETB color-choice permanent context.
      */
     record ColorChoice(UUID playerId, UUID permanentId, UUID etbTargetId, ChoiceContext context,
@@ -828,8 +828,7 @@ public sealed interface PendingInteraction permits PermanentChoiceContext,
     }
 
     /**
-     * Common surface of the six hand-card choice kinds (the legacy shared
-     * {@code InteractionContext.CardChoice} family): the deciding player, the selectable hand
+     * Common surface of the six hand-card choice kinds: the deciding player, the selectable hand
      * indices in begin-time order, and the exact begin-time prompt (also re-sent on
      * reconnect). Implemented by the records below so generic consumers (AI heuristics, the
      * simulator) can read them uniformly.

@@ -11,16 +11,15 @@ import org.springframework.stereotype.Component;
 import java.util.UUID;
 
 /**
- * Handles the legacy COLOR_CHOICE family of single-value "choose from a list" decisions
+ * Handles the COLOR_CHOICE protocol family of single-value "choose from a list" decisions
  * (mana color, protection color, keyword / creature-type / permanent-type / basic-land-type,
  * card name, text-change word, Abundance land/nonland, …). The specific variant lives in the
  * record's {@link PendingInteraction.ColorChoice#context()} and drives answer handling.
  *
  * <p>The prompt re-sends the exact begin-time {@code options} and {@code prompt} carried on the
- * record, so reconnect replay is byte-identical (the begin sites keep their own log lines, which
- * — matching the legacy replay — do not fire again on replay). The answer (the whole variant
- * dispatch) stays in {@link ChoiceHandlerService#handleListChoice}, which this handler delegates
- * to.
+ * record, so reconnect projection is byte-identical. Begin sites keep their own log lines, which
+ * do not fire again on reconnect. The whole answer-variant dispatch stays in
+ * {@link ChoiceHandlerService#handleListChoice}, which this handler delegates to.
  */
 @Slf4j
 @Component

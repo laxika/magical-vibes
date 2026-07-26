@@ -80,7 +80,7 @@ class GameEndLifecycleSubscriberTest {
     }
 
     private static GameEventBatch batch(GameData gameData, GameEventFact.GameEnded ended) {
-        UUID actionId = UUID.randomUUID();
+        long actionId = 1L;
         GameEventEnvelope envelope = new GameEventEnvelope(
                 gameData.id,
                 1,

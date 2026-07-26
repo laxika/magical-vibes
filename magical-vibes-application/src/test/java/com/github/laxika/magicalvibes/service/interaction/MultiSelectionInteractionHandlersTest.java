@@ -99,18 +99,6 @@ class MultiSelectionInteractionHandlersTest {
             verify(multiPermanentChoiceHandlerService).handleMultiplePermanentsChosen(gd, player, List.of(permId));
         }
 
-        @Test
-        @DisplayName("replayPrompt re-sends only to the decider")
-        void replayOnlyToDecider() {
-            UUID permId = UUID.randomUUID();
-            projectionSupport.begin(gd, new PendingInteraction.MultiPermanentChoice(
-                    PLAYER1_ID, List.of(permId), 1, null, "Pick one."));
-            assertThat(registry.replayPrompt(gd, PLAYER2_ID)).isTrue();
-
-            assertThat(registry.replayPrompt(gd, PLAYER1_ID)).isTrue();
-            assertThat(projectionSupport.projectedPrompt(gd))
-                    .isInstanceOf(InteractionPromptMessage.class);
-        }
     }
 
     @Nested
@@ -149,17 +137,5 @@ class MultiSelectionInteractionHandlersTest {
             verify(graveyardChoiceHandlerService).handleMultipleCardsChosen(gd, player, List.of(card.getId()));
         }
 
-        @Test
-        @DisplayName("replayPrompt re-sends only to the decider")
-        void replayOnlyToDecider() {
-            Card card = createCard("Grizzly Bears");
-            projectionSupport.begin(gd, new PendingInteraction.MultiGraveyardChoice(
-                    PLAYER1_ID, List.of(card), 1, "Choose."));
-            assertThat(registry.replayPrompt(gd, PLAYER2_ID)).isTrue();
-
-            assertThat(registry.replayPrompt(gd, PLAYER1_ID)).isTrue();
-            assertThat(projectionSupport.projectedPrompt(gd))
-                    .isInstanceOf(InteractionPromptMessage.class);
-        }
     }
 }

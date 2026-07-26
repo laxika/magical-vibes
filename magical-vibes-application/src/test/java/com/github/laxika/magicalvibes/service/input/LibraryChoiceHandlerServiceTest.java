@@ -76,7 +76,8 @@ class LibraryChoiceHandlerServiceTest {
     @BeforeEach
     void setUp() {
         com.github.laxika.magicalvibes.service.interaction.InteractionHandlerRegistry registry =
-                new com.github.laxika.magicalvibes.service.interaction.InteractionHandlerRegistry();
+                new com.github.laxika.magicalvibes.service.interaction.InteractionHandlerRegistry(
+                        () -> mock(com.github.laxika.magicalvibes.service.event.GameMutationCoordinator.class));
         registry.register(new com.github.laxika.magicalvibes.service.interaction.LibrarySearchInteractionHandler(
                 mock(LibraryChoiceHandlerService.class)));
         service = new LibraryChoiceHandlerService(gameQueryService,

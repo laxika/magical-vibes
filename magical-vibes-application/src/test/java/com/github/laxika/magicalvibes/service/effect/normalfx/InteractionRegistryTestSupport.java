@@ -32,7 +32,8 @@ final class InteractionRegistryTestSupport {
     static InteractionHandlerRegistry registryFor(SessionManager sessionManager,
                                                   CardViewFactory cardViewFactory,
                                                   GameLogService gameLogService) {
-        InteractionHandlerRegistry registry = new InteractionHandlerRegistry();
+        InteractionHandlerRegistry registry = new InteractionHandlerRegistry(
+                () -> mock(com.github.laxika.magicalvibes.service.event.GameMutationCoordinator.class));
         registry.register(new LibraryReorderInteractionHandler(
                 gameLogService,
                 mock(WarpWorldService.class), mock(PlayerInputService.class),

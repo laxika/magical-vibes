@@ -14,7 +14,6 @@ import java.util.List;
 import java.util.Map;
 import java.util.Objects;
 import java.util.Set;
-import java.util.UUID;
 import java.util.WeakHashMap;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.locks.ReentrantLock;
@@ -41,45 +40,18 @@ public class GameMutationCoordinator {
     }
 
     /**
-     * Starts a new causal action with an engine-generated identity. Public runtime boundaries use
-     * this overload; tests and adapters that already own a command identity may use the explicit
-     * overload below.
+     * Starts a new causal action. Its deterministic game-local identity is allocated only after
+     * the outer mutation completes successfully.
      */
     public void mutate(GameData gameData, Runnable mutation) {
-        mutate(gameData, UUID.randomUUID(), mutation);
-    }
-
-    public <T> T mutate(GameData gameData, Supplier<T> mutation) {
-        return mutate(gameData, UUID.randomUUID(), mutation);
-    }
-
-    /**
-     * Returns whether the current call is already inside this game's protected causal action.
-     * Canonical facades use this to let public overloads and recursive engine continuations join
-     * the outer action without storing scope state on a thread.
-     */
-    public boolean isInAction(GameData gameData) {
-        Objects.requireNonNull(gameData, "gameData");
-        ActionState actionState;
-        synchronized (actionStates) {
-            actionState = actionStates.get(gameData);
-        }
-        return actionState != null
-                && actionState.actionLock.isHeldByCurrentThread()
-                && actionState.context != null
-                && Thread.holdsLock(gameData);
-    }
-
-    public void mutate(GameData gameData, UUID causalActionId, Runnable mutation) {
-        mutate(gameData, causalActionId, () -> {
+        mutate(gameData, () -> {
             mutation.run();
             return null;
         });
     }
 
-    public <T> T mutate(GameData gameData, UUID causalActionId, Supplier<T> mutation) {
+    public <T> T mutate(GameData gameData, Supplier<T> mutation) {
         Objects.requireNonNull(gameData, "gameData");
-        Objects.requireNonNull(causalActionId, "causalActionId");
         Objects.requireNonNull(mutation, "mutation");
 
         ActionState actionState = actionStateFor(gameData);
@@ -103,7 +75,7 @@ public class GameMutationCoordinator {
                         "A subscriber cannot start a mutation while the previous action is still dispatching");
             }
 
-            MutationContext context = new MutationContext(gameData, causalActionId);
+            MutationContext context = new MutationContext(gameData);
             actionState.context = context;
 
             T result;
@@ -130,6 +102,52 @@ public class GameMutationCoordinator {
             if (registeredActiveAction) {
                 activeActions.remove(actionState);
             }
+            actionState.actionLock.unlock();
+        }
+    }
+
+    /**
+     * Returns whether the current call is already inside this game's protected causal action.
+     * Canonical facades use this to let public overloads and recursive engine continuations join
+     * the outer action without storing scope state on a thread.
+     */
+    public boolean isInAction(GameData gameData) {
+        Objects.requireNonNull(gameData, "gameData");
+        ActionState actionState;
+        synchronized (actionStates) {
+            actionState = actionStates.get(gameData);
+        }
+        return actionState != null
+                && actionState.actionLock.isHeldByCurrentThread()
+                && actionState.context != null
+                && Thread.holdsLock(gameData);
+    }
+
+    /**
+     * Produces a consistent read-only projection under the same per-game ordering lock used by
+     * mutations. No state version, event sequence, mutation context, or event batch is created.
+     */
+    public <T> T observe(GameData gameData, Supplier<T> projection) {
+        Objects.requireNonNull(gameData, "gameData");
+        Objects.requireNonNull(projection, "projection");
+        if (Thread.holdsLock(gameData)) {
+            throw new IllegalStateException(
+                    "Start a read-only observation before acquiring the GameData monitor");
+        }
+
+        ActionState actionState = actionStateFor(gameData);
+        ActionState currentThreadAction = currentThreadAction();
+        if (currentThreadAction != null) {
+            throw new IllegalStateException(
+                    "A read-only observation cannot begin inside a mutation action");
+        }
+
+        actionState.actionLock.lock();
+        try {
+            synchronized (gameData) {
+                return projection.get();
+            }
+        } finally {
             actionState.actionLock.unlock();
         }
     }
@@ -218,6 +236,7 @@ public class GameMutationCoordinator {
 
     private GameEventBatch completeBatch(MutationContext context) {
         GameData gameData = context.gameData;
+        long causalActionId = gameData.nextDomainActionSequence();
         long stateVersion = gameData.advanceDomainStateVersion();
         List<GameEventEnvelope> envelopes = new ArrayList<>(context.pendingEvents.size());
 
@@ -225,7 +244,7 @@ public class GameMutationCoordinator {
             envelopes.add(new GameEventEnvelope(
                     gameData.id,
                     gameData.nextDomainEventSequence(),
-                    context.causalActionId,
+                    causalActionId,
                     stateVersion,
                     pending.fact.kind(),
                     pending.fact,
@@ -235,7 +254,7 @@ public class GameMutationCoordinator {
         GameEventBatch.DispatchMode mode = gameData.simulation
                 ? GameEventBatch.DispatchMode.SUPPRESSED_SIMULATION
                 : GameEventBatch.DispatchMode.LIVE;
-        return new GameEventBatch(gameData.id, context.causalActionId, stateVersion, mode, envelopes);
+        return new GameEventBatch(gameData.id, causalActionId, stateVersion, mode, envelopes);
     }
 
     private ActionState actionStateFor(GameData gameData) {
@@ -259,13 +278,11 @@ public class GameMutationCoordinator {
 
     private static final class MutationContext {
         private final GameData gameData;
-        private final UUID causalActionId;
         private final List<PendingEvent> pendingEvents = new ArrayList<>();
         private final Map<GameEventAudience, Integer> invalidationIndexByAudience = new HashMap<>();
 
-        private MutationContext(GameData gameData, UUID causalActionId) {
+        private MutationContext(GameData gameData) {
             this.gameData = gameData;
-            this.causalActionId = causalActionId;
         }
 
         private void append(GameEventFact fact, GameEventAudience audience) {

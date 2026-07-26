@@ -55,6 +55,26 @@ class AiDecisionSchedulingArchitectureTest {
                 .isLessThan(tournamentSeating.indexOf("publishTournamentGameOpened(gameData)"));
     }
 
+    @Test
+    void headlessSimulationHasNoWebsocketDependencyAndFailsOnTransportAttempts()
+            throws IOException {
+        Path repoRoot = locateRepoRoot();
+        String build = Files.readString(
+                repoRoot.resolve("magical-vibes-ai/build.gradle.kts"),
+                StandardCharsets.UTF_8);
+        String sessionPort = Files.readString(
+                repoRoot.resolve(
+                        "magical-vibes-ai/src/main/java/com/github/laxika/magicalvibes/ai/"
+                                + "simulation/HeadlessSessionManager.java"),
+                StandardCharsets.UTF_8);
+
+        assertThat(build).doesNotContain("project(\":magical-vibes-websocket\")");
+        assertThat(sessionPort)
+                .doesNotContain("WebSocketSessionManager")
+                .contains("Headless simulation attempted transport output")
+                .contains("throw new IllegalStateException");
+    }
+
     private static Path locateRepoRoot() {
         Path directory = Path.of("").toAbsolutePath();
         for (Path candidate = directory; candidate != null; candidate = candidate.getParent()) {

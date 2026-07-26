@@ -41,7 +41,8 @@ class CombatDeclarationInteractionHandlersTest {
 
     @BeforeEach
     void setUp() {
-        registry = new InteractionHandlerRegistry();
+        registry = new InteractionHandlerRegistry(() -> org.mockito.Mockito.mock(
+                com.github.laxika.magicalvibes.service.event.GameMutationCoordinator.class));
         registry.register(new AttackerDeclarationInteractionHandler(
                 combatService, stateBasedActionService, turnProgressionService));
         registry.register(new BlockerDeclarationInteractionHandler(

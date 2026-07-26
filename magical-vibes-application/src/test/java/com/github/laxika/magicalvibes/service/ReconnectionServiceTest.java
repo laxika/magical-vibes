@@ -68,6 +68,7 @@ class ReconnectionServiceTest {
             InteractionShape expectedShape) {
         gameData.interaction.beginInteraction(interactionFactory.apply(player1Id));
         long sequenceBefore = gameData.domainEventSequence();
+        long actionBefore = gameData.domainActionSequence();
         long versionBefore = gameData.domainStateVersion();
 
         reconnectionService.resendAwaitingInput(gameData, player1Id);
@@ -82,6 +83,7 @@ class ReconnectionServiceTest {
                             prompt -> assertThat(prompt.shape()).isEqualTo(expectedShape));
         }
         assertThat(gameData.domainEventSequence()).isEqualTo(sequenceBefore);
+        assertThat(gameData.domainActionSequence()).isEqualTo(actionBefore);
         assertThat(gameData.domainStateVersion()).isEqualTo(versionBefore);
     }
 
@@ -221,6 +223,7 @@ class ReconnectionServiceTest {
                 "Choose a card.",
                 false));
         long sequenceBefore = gameData.domainEventSequence();
+        long actionBefore = gameData.domainActionSequence();
         long versionBefore = gameData.domainStateVersion();
         SessionManager privateSessions = mock(SessionManager.class);
         ReconnectionService privateReconnect = new ReconnectionService(
@@ -245,6 +248,7 @@ class ReconnectionServiceTest {
                             .containsExactly("Reconnect Secret");
                 });
         assertThat(gameData.domainEventSequence()).isEqualTo(sequenceBefore);
+        assertThat(gameData.domainActionSequence()).isEqualTo(actionBefore);
         assertThat(gameData.domainStateVersion()).isEqualTo(versionBefore);
     }
 
@@ -271,6 +275,7 @@ class ReconnectionServiceTest {
         UUID decisionId = UUID.randomUUID();
         gameData.playerBottomDecisionIds.put(player1Id, decisionId);
         long sequenceBefore = gameData.domainEventSequence();
+        long actionBefore = gameData.domainActionSequence();
         long versionBefore = gameData.domainStateVersion();
 
         reconnectionService.resendAwaitingInput(gameData, player1Id);
@@ -280,6 +285,7 @@ class ReconnectionServiceTest {
         reconnectionService.resendAwaitingInput(gameData, player1Id);
         verify(sessions).sendToPlayer(player1Id, new SelectCardsToBottomMessage(2));
         assertThat(gameData.domainEventSequence()).isEqualTo(sequenceBefore);
+        assertThat(gameData.domainActionSequence()).isEqualTo(actionBefore);
         assertThat(gameData.domainStateVersion()).isEqualTo(versionBefore);
     }
 }

@@ -95,7 +95,8 @@ class KnowledgePoolExileAndCastEffectHandlerTest {
         gd.playerGraveyards.put(player2Id, Collections.synchronizedList(new ArrayList<>()));
         gd.playerDecks.put(player1Id, Collections.synchronizedList(new ArrayList<>()));
         gd.playerDecks.put(player2Id, Collections.synchronizedList(new ArrayList<>()));
-        InteractionHandlerRegistry registry = new InteractionHandlerRegistry();
+        InteractionHandlerRegistry registry = new InteractionHandlerRegistry(
+                () -> mock(com.github.laxika.magicalvibes.service.event.GameMutationCoordinator.class));
         registry.register(new KnowledgePoolCastChoiceInteractionHandler(exileSupport));
         knowledgePoolExileAndCastHandler = new KnowledgePoolExileAndCastEffectHandler(gameQueryService, gameLogService, registry, exileService);
 

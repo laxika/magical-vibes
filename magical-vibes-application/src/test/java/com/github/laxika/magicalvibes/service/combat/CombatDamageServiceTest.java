@@ -85,7 +85,8 @@ class CombatDamageServiceTest {
     @BeforeEach
     void setUp() {
         com.github.laxika.magicalvibes.service.interaction.InteractionHandlerRegistry registry =
-                new com.github.laxika.magicalvibes.service.interaction.InteractionHandlerRegistry();
+                new com.github.laxika.magicalvibes.service.interaction.InteractionHandlerRegistry(
+                        () -> org.mockito.Mockito.mock(GameMutationCoordinator.class));
         registry.register(new com.github.laxika.magicalvibes.service.interaction.CombatDamageAssignmentInteractionHandler(
                 org.mockito.Mockito.mock(CombatService.class),
                 org.mockito.Mockito.mock(com.github.laxika.magicalvibes.service.turn.TurnProgressionService.class)));

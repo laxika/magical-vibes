@@ -8,11 +8,11 @@ import com.github.laxika.magicalvibes.service.input.CardChoiceHandlerService;
 import org.springframework.stereotype.Component;
 
 /**
- * The six hand-card choice handlers (the legacy shared {@code InteractionContext.CardChoice}
- * family). Each kind preserves its original decline policy and shares the same answer base.
+ * The six hand-card choice handlers share one answer base while preserving each kind's decline
+ * policy.
  * Prompt projection is centralized from the pending record. Answers all arrive as
- * {@link InteractionAnswer.CardIndexChosen} and delegate to the legacy per-kind answer
- * methods on {@link CardChoiceHandlerService} / {@link AbilityActivationService}.
+ * {@link InteractionAnswer.CardIndexChosen} and delegate to the per-kind answer methods on
+ * {@link CardChoiceHandlerService} / {@link AbilityActivationService}.
  */
 public final class HandCardChoiceInteractionHandlers {
 
@@ -147,7 +147,7 @@ public final class HandCardChoiceInteractionHandlers {
 
     /**
      * ACTIVATED_ABILITY_DISCARD_COST_CHOICE — discard a card as an activation cost. Matching
-     * the legacy begin site, no "Awaiting …" log line is emitted on prompt.
+     * the originating begin site, no "Awaiting …" log line is emitted on prompt.
      */
     @Component
     public static class DiscardCostChoiceInteractionHandler extends Base<PendingInteraction.DiscardCostChoice> {

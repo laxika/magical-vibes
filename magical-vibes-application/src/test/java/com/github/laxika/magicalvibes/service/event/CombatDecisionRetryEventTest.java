@@ -14,7 +14,6 @@ import com.github.laxika.magicalvibes.service.GameOutcomeService;
 import com.github.laxika.magicalvibes.service.GameRegistry;
 import com.github.laxika.magicalvibes.service.GameService;
 import com.github.laxika.magicalvibes.service.MulliganService;
-import com.github.laxika.magicalvibes.service.ReconnectionService;
 import com.github.laxika.magicalvibes.service.StackResolutionService;
 import com.github.laxika.magicalvibes.service.ability.AbilityActivationService;
 import com.github.laxika.magicalvibes.service.battlefield.GameQueryService;
@@ -92,7 +91,6 @@ class CombatDecisionRetryEventTest {
                 mock(StackResolutionService.class),
                 mock(AbilityActivationService.class),
                 mock(MulliganService.class),
-                mock(ReconnectionService.class),
                 mock(ExileSupport.class),
                 mock(GameOutcomeService.class),
                 coordinator);

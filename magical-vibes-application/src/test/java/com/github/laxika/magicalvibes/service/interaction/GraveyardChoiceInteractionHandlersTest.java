@@ -102,18 +102,6 @@ class GraveyardChoiceInteractionHandlersTest {
             verify(graveyardChoiceHandlerService).handleGraveyardCardChosen(gd, player, 0);
         }
 
-        @Test
-        @DisplayName("replayPrompt re-sends only to the decider")
-        void replayOnlyToDecider() {
-            projectionSupport.begin(gd, PendingInteraction.GraveyardChoice
-                    .builder(PLAYER1_ID, List.of(0), GraveyardChoiceDestination.HAND, "Choose.")
-                    .build());
-            assertThat(registry.replayPrompt(gd, PLAYER2_ID)).isTrue();
-
-            assertThat(registry.replayPrompt(gd, PLAYER1_ID)).isTrue();
-            assertThat(projectionSupport.projectedPrompt(gd))
-                    .isInstanceOf(InteractionPromptMessage.class);
-        }
     }
 
     @Nested
@@ -149,16 +137,5 @@ class GraveyardChoiceInteractionHandlersTest {
             verify(abilityActivationService).handleActivatedAbilityGraveyardExileCostChosen(gd, player, 0);
         }
 
-        @Test
-        @DisplayName("replayPrompt re-sends only to the decider")
-        void replayOnlyToDecider() {
-            projectionSupport.begin(gd, new PendingInteraction.GraveyardExileCostChoice(
-                    PLAYER1_ID, List.of(0), "Choose."));
-            assertThat(registry.replayPrompt(gd, PLAYER2_ID)).isTrue();
-
-            assertThat(registry.replayPrompt(gd, PLAYER1_ID)).isTrue();
-            assertThat(projectionSupport.projectedPrompt(gd))
-                    .isInstanceOf(InteractionPromptMessage.class);
-        }
     }
 }

@@ -19,8 +19,7 @@ import static org.assertj.core.api.Assertions.assertThat;
  * <p>The engine intentionally has many public helper methods for handler dispatch and focused
  * tests. The canonical runtime boundaries are narrower: GameService commands, setup/join, and
  * timeout callbacks. Lower-level tests that need event recording use
- * {@link GameMutationCoordinator#mutate(com.github.laxika.magicalvibes.model.GameData, Runnable)}
- * explicitly.
+ * {@link GameMutationCoordinator#mutate(com.github.laxika.magicalvibes.model.GameData, Runnable)}.
  */
 class GameMutationBoundaryRatchetTest {
 

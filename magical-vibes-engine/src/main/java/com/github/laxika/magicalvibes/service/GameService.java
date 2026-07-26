@@ -52,7 +52,6 @@ public class GameService {
     private final StackResolutionService stackResolutionService;
     private final AbilityActivationService abilityActivationService;
     private final MulliganService mulliganService;
-    private final ReconnectionService reconnectionService;
     private final ExileSupport exileSupport;
     private final GameOutcomeService gameOutcomeService;
     private final GameMutationCoordinator mutationCoordinator;
@@ -271,10 +270,6 @@ public class GameService {
     public void advanceStep(GameData gameData) {
         if (runAsActionIfNeeded(gameData, () -> advanceStep(gameData))) return;
         turnProgressionService.advanceStep(gameData);
-    }
-
-    public void resendAwaitingInput(GameData gameData, UUID playerId) {
-        reconnectionService.resendAwaitingInput(gameData, playerId);
     }
 
     public void keepHand(GameData gameData, Player player) {

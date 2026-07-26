@@ -186,15 +186,4 @@ class HandCardChoiceInteractionHandlersTest {
         }
     }
 
-    @Test
-    @DisplayName("replayPrompt re-sends only to the decider")
-    void replayOnlyToDecider() {
-        projectionSupport.begin(gd, new PendingInteraction.DiscardChoice(
-                PLAYER1_ID, List.of(0), 1, DiscardFollowUp.NONE, "Choose a card to discard."));
-        assertThat(registry.replayPrompt(gd, PLAYER2_ID)).isTrue();
-
-        assertThat(registry.replayPrompt(gd, PLAYER1_ID)).isTrue();
-        assertThat(projectionSupport.projectedPrompt(gd))
-                .isInstanceOf(InteractionPromptMessage.class);
-    }
 }

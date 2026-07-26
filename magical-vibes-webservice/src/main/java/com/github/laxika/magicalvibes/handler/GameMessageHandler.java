@@ -58,6 +58,7 @@ import com.github.laxika.magicalvibes.service.GameResyncProjectionService;
 import com.github.laxika.magicalvibes.service.GameService;
 import com.github.laxika.magicalvibes.service.GameTimeoutService;
 import com.github.laxika.magicalvibes.service.PlayCardRequestDispatchService;
+import com.github.laxika.magicalvibes.service.ReconnectionService;
 
 import java.util.HashMap;
 import java.util.Map;
@@ -76,6 +77,7 @@ public class GameMessageHandler implements MessageHandler {
     private final LoginService loginService;
     private final GameService gameService;
     private final GameResyncProjectionService gameResyncProjectionService;
+    private final ReconnectionService reconnectionService;
     private final LobbyService lobbyService;
     private final GameRegistry gameRegistry;
     private final WebSocketSessionManager sessionManager;
@@ -91,6 +93,7 @@ public class GameMessageHandler implements MessageHandler {
     public GameMessageHandler(LoginService loginService,
             GameService gameService,
             GameResyncProjectionService gameResyncProjectionService,
+            ReconnectionService reconnectionService,
             LobbyService lobbyService,
             GameRegistry gameRegistry,
             WebSocketSessionManager sessionManager,
@@ -105,6 +108,7 @@ public class GameMessageHandler implements MessageHandler {
         this.loginService = loginService;
         this.gameService = gameService;
         this.gameResyncProjectionService = gameResyncProjectionService;
+        this.reconnectionService = reconnectionService;
         this.lobbyService = lobbyService;
         this.gameRegistry = gameRegistry;
         this.sessionManager = sessionManager;
@@ -160,7 +164,7 @@ public class GameMessageHandler implements MessageHandler {
                 gameTimeoutService.onPlayerReconnect(response.getUserId());
                 log.info("Connection {} registered for user {} ({}) - rejoining active game {}", connection.getId(), response.getUserId(), response.getUsername(), response.getActiveGame().id());
                 if (activeGame != null) {
-                    gameService.resendAwaitingInput(activeGame, response.getUserId());
+                    reconnectionService.resendAwaitingInput(activeGame, response.getUserId());
                 }
             } else if (response.getActiveDraftId() != null) {
                 DraftData activeDraft = draftRegistry.getDraftForPlayer(response.getUserId());

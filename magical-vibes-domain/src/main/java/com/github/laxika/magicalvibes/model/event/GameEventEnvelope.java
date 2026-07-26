@@ -9,7 +9,7 @@ import java.util.UUID;
 public record GameEventEnvelope(
         UUID gameId,
         long sequence,
-        UUID causalActionId,
+        long causalActionId,
         long stateVersion,
         GameEventKind kind,
         GameEventFact fact,
@@ -18,12 +18,14 @@ public record GameEventEnvelope(
 
     public GameEventEnvelope {
         Objects.requireNonNull(gameId, "gameId");
-        Objects.requireNonNull(causalActionId, "causalActionId");
         Objects.requireNonNull(kind, "kind");
         Objects.requireNonNull(fact, "fact");
         Objects.requireNonNull(audience, "audience");
         if (sequence < 1) {
             throw new IllegalArgumentException("sequence must be positive");
+        }
+        if (causalActionId < 1) {
+            throw new IllegalArgumentException("causalActionId must be positive");
         }
         if (stateVersion < 1) {
             throw new IllegalArgumentException("stateVersion must be positive");

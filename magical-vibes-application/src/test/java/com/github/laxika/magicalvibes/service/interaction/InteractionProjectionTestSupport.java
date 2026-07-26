@@ -52,7 +52,7 @@ final class InteractionProjectionTestSupport {
 
     InteractionPromptMessage begin(GameData gameData, PendingInteraction interaction) {
         int previousBatchCount = batches.size();
-        coordinator.mutate(gameData, UUID.randomUUID(), () -> registry.begin(gameData, interaction));
+        coordinator.mutate(gameData, () -> registry.begin(gameData, interaction));
 
         assertThat(batches).hasSize(previousBatchCount + 1);
         GameEventBatch batch = batches.getLast();

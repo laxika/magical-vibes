@@ -73,6 +73,7 @@ class GameLogServiceTest {
 
         assertThat(gameData.gameLog).containsExactly(paidCost);
         assertThat(received).isEmpty();
+        assertThat(gameData.domainActionSequence()).isZero();
         assertThat(gameData.domainStateVersion()).isZero();
         assertThat(gameData.domainEventSequence()).isZero();
     }
@@ -89,6 +90,7 @@ class GameLogServiceTest {
         coordinator.mutate(gameData, () -> service.append(gameData, entry));
 
         assertThat(gameData.gameLog).containsExactly(entry);
+        assertThat(gameData.domainActionSequence()).isEqualTo(1);
         assertThat(gameData.domainStateVersion()).isEqualTo(1);
         assertThat(gameData.domainEventSequence()).isEqualTo(2);
         assertThat(received).isEmpty();

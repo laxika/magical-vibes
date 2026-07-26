@@ -19,7 +19,7 @@ public interface InteractionHandler<T extends PendingInteraction> {
     /** The interaction record class this handler owns. */
     Class<T> handledType();
 
-    /** The wire-payload shape this handler accepts; other shapes fall through to legacy dispatch. */
+    /** The answer-payload shape this handler accepts; other shapes reach command error handling. */
     Class<? extends InteractionAnswer> answerType();
 
     /** Validates and applies the player's answer, then advances the game (queue, stack, auto-pass). */

@@ -57,7 +57,8 @@ class PlayerInputServiceTest {
 
     @BeforeEach
     void setUp() {
-        InteractionHandlerRegistry registry = new InteractionHandlerRegistry();
+        InteractionHandlerRegistry registry = new InteractionHandlerRegistry(() -> mock(
+                com.github.laxika.magicalvibes.service.event.GameMutationCoordinator.class));
         registry.register(new MayAbilityChoiceInteractionHandler(
                 mock(MayAbilityHandlerService.class)));
         registry.register(new MultiZoneExileChoiceInteractionHandler(

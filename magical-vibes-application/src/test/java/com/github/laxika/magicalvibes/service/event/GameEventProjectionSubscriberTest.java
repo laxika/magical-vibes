@@ -111,7 +111,7 @@ class GameEventProjectionSubscriberTest {
         gameData.turnNumber = 17;
         GameMutationCoordinator coordinator = new GameMutationCoordinator(
                 new GameEventDispatcher(List.of(subscriber)));
-        coordinator.mutate(gameData, UUID.randomUUID(), () -> {
+        coordinator.mutate(gameData, () -> {
             gameData.turnNumber = 17;
             coordinator.emit(gameData,
                     new GameEventFact.StateInvalidated(
@@ -133,7 +133,7 @@ class GameEventProjectionSubscriberTest {
                 .thenReturn(Map.of(player1Id, player1Message));
 
         GameMutationCoordinator coordinator = coordinator();
-        coordinator.mutate(gameData, UUID.randomUUID(), () ->
+        coordinator.mutate(gameData, () ->
                 coordinator.emit(
                         gameData,
                         new GameEventFact.StateInvalidated(
@@ -153,7 +153,7 @@ class GameEventProjectionSubscriberTest {
                 .thenReturn(revealMessage);
 
         GameMutationCoordinator coordinator = coordinator();
-        coordinator.mutate(gameData, UUID.randomUUID(), () ->
+        coordinator.mutate(gameData, () ->
                 coordinator.emit(gameData, new GameEventFact.PrivateReveal(
                                 UUID.randomUUID(),
                                 player2Id,
@@ -191,7 +191,7 @@ class GameEventProjectionSubscriberTest {
                 player1Id, 7, "Choose X.", "Test Card"));
 
         GameMutationCoordinator coordinator = coordinator();
-        coordinator.mutate(gameData, UUID.randomUUID(), () ->
+        coordinator.mutate(gameData, () ->
                 coordinator.emit(gameData,
                         new GameEventFact.DecisionRequested(
                                 UUID.randomUUID(),
@@ -208,7 +208,7 @@ class GameEventProjectionSubscriberTest {
         GameMutationCoordinator coordinator = new GameMutationCoordinator(
                 new GameEventDispatcher(List.of(subscriber, recorded::add)));
 
-        coordinator.mutate(gameData, UUID.randomUUID(), () -> {
+        coordinator.mutate(gameData, () -> {
             gameData.interaction.beginInteraction(new PendingInteraction.XValueChoice(
                     player1Id, 3, "First prompt.", "First"));
             coordinator.emit(gameData,
@@ -347,7 +347,7 @@ class GameEventProjectionSubscriberTest {
         gameData.playerNeedsToBottom.put(player1Id, 2);
 
         GameMutationCoordinator coordinator = coordinator();
-        coordinator.mutate(gameData, UUID.randomUUID(), () -> {
+        coordinator.mutate(gameData, () -> {
             coordinator.emit(gameData,
                     new GameEventFact.MulliganResolved(player1Id, false, 1),
                     GameEventAudience.allPlayers());
@@ -388,7 +388,7 @@ class GameEventProjectionSubscriberTest {
                 new PendingInteraction.AttackerDeclaration(player2Id));
 
         GameMutationCoordinator coordinator = coordinator();
-        coordinator.mutate(gameData, UUID.randomUUID(), () ->
+        coordinator.mutate(gameData, () ->
                 coordinator.emit(gameData,
                         new GameEventFact.DecisionRequested(
                                 gameData.interaction.activeDecisionId(),
@@ -422,7 +422,7 @@ class GameEventProjectionSubscriberTest {
 
         GameMutationCoordinator coordinator = coordinator();
         GameLogService gameLogService = new GameLogService(coordinator);
-        coordinator.mutate(gameData, UUID.randomUUID(), () -> {
+        coordinator.mutate(gameData, () -> {
             gameLogService.append(
                     gameData,
                     com.github.laxika.magicalvibes.model.GameLog.text("One new log entry."));
@@ -461,7 +461,7 @@ class GameEventProjectionSubscriberTest {
 
         assertThatCode(() -> {
             GameMutationCoordinator coordinator = coordinator();
-            coordinator.mutate(gameData, UUID.randomUUID(), () ->
+            coordinator.mutate(gameData, () ->
                     coordinator.emit(gameData,
                             new GameEventFact.StateInvalidated(
                                     GameEventFact.StateSection.GAME_STATUS),
@@ -477,7 +477,7 @@ class GameEventProjectionSubscriberTest {
         gameData.simulation = true;
         GameMutationCoordinator coordinator = coordinator();
 
-        coordinator.mutate(gameData, UUID.randomUUID(), () -> {
+        coordinator.mutate(gameData, () -> {
             coordinator.emit(gameData,
                     new GameEventFact.MulliganResolved(player1Id, true, 0),
                     GameEventAudience.allPlayers());
@@ -498,7 +498,7 @@ class GameEventProjectionSubscriberTest {
             GameEventFact.DecisionKind decisionKind,
             GameEventAudience audience) {
         GameMutationCoordinator coordinator = coordinator();
-        coordinator.mutate(gameData, UUID.randomUUID(), () ->
+        coordinator.mutate(gameData, () ->
                 coordinator.emit(gameData,
                         new GameEventFact.DecisionRequested(
                                 gameData.interaction.activeDecisionId(),

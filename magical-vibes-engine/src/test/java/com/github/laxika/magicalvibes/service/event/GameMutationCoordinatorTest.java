@@ -28,8 +28,8 @@ class GameMutationCoordinatorTest {
     private static final UUID GAME_ID = UUID.fromString("00000000-0000-0000-0000-000000000001");
     private static final UUID PLAYER_1 = UUID.fromString("00000000-0000-0000-0000-000000000011");
     private static final UUID PLAYER_2 = UUID.fromString("00000000-0000-0000-0000-000000000012");
-    private static final UUID ACTION_1 = UUID.fromString("00000000-0000-0000-0000-000000000021");
-    private static final UUID ACTION_2 = UUID.fromString("00000000-0000-0000-0000-000000000022");
+    private static final long ACTION_1 = 1L;
+    private static final long ACTION_2 = 2L;
 
     @Test
     void outermostScopeOwnsOneOrderedBatchAndNestedScopesDoNotDoubleFlush() {
@@ -42,12 +42,12 @@ class GameMutationCoordinatorTest {
         GameEventFact.PrivateReveal firstReveal = privateReveal("First");
         GameEventFact.PrivateReveal secondReveal = privateReveal("Second");
 
-        coordinator.mutate(gameData, ACTION_1, () -> {
+        coordinator.mutate(gameData, () -> {
             coordinator.emit(gameData,
                     new GameEventFact.StateInvalidated(GameEventFact.StateSection.BATTLEFIELD),
                     GameEventAudience.allPlayers());
 
-            coordinator.mutate(gameData, ACTION_2, () -> {
+            coordinator.mutate(gameData, () -> {
                 coordinator.emit(gameData, decision, GameEventAudience.player(PLAYER_1));
                 coordinator.emit(gameData,
                         new GameEventFact.StateInvalidated(GameEventFact.StateSection.STACK),
@@ -93,7 +93,7 @@ class GameMutationCoordinatorTest {
         assertThat(batch.events().get(3).fact()).isSameAs(firstReveal);
         assertThat(batch.events().get(4).fact()).isSameAs(secondReveal);
 
-        coordinator.mutate(gameData, ACTION_2, () ->
+        coordinator.mutate(gameData, () ->
                 coordinator.emit(gameData, new GameEventFact.DecisionRequested(
                         UUID.randomUUID(), PLAYER_2, GameEventFact.DecisionKind.BLOCKER_DECLARATION),
                         GameEventAudience.player(PLAYER_2)));
@@ -126,7 +126,7 @@ class GameMutationCoordinatorTest {
         GameMutationCoordinator coordinator =
                 new GameMutationCoordinator(new GameEventDispatcher(List.of(failing, healthy)));
 
-        coordinator.mutate(gameData, ACTION_1, () -> {
+        coordinator.mutate(gameData, () -> {
             gameData.turnNumber = 7;
             coordinator.emit(gameData,
                     new GameEventFact.StateInvalidated(GameEventFact.StateSection.TURN_AND_PRIORITY),
@@ -147,7 +147,7 @@ class GameMutationCoordinatorTest {
         List<GameEventBatch> received = new ArrayList<>();
         GameMutationCoordinator coordinator = coordinator(received::add);
 
-        coordinator.mutate(gameData, ACTION_1, () ->
+        coordinator.mutate(gameData, () ->
                 coordinator.emit(gameData,
                         new GameEventFact.StateInvalidated(GameEventFact.StateSection.GAME_LOG)));
 
@@ -155,12 +155,12 @@ class GameMutationCoordinatorTest {
         assertThat(audience).isEqualTo(GameEventAudience.internalOnly());
         assertThat(audience.isVisibleTo(PLAYER_1)).isFalse();
 
-        assertThatThrownBy(() -> coordinator.mutate(gameData, ACTION_2, () ->
+        assertThatThrownBy(() -> coordinator.mutate(gameData, () ->
                 coordinator.emit(gameData, privateReveal("Secret"), GameEventAudience.allPlayers())))
                 .isInstanceOf(IllegalArgumentException.class)
                 .hasMessageContaining("private audience");
 
-        assertThatThrownBy(() -> coordinator.mutate(gameData, ACTION_2, () ->
+        assertThatThrownBy(() -> coordinator.mutate(gameData, () ->
                 coordinator.emit(gameData, new GameEventFact.DecisionRequested(
                                 UUID.randomUUID(), PLAYER_1, GameEventFact.DecisionKind.INTERACTION),
                         GameEventAudience.allPlayers())))
@@ -203,7 +203,7 @@ class GameMutationCoordinatorTest {
         GameMutationCoordinator coordinator = coordinator(received::add);
 
         GameData gameData = gameData();
-        coordinator.mutate(gameData, ACTION_2, () ->
+        coordinator.mutate(gameData, () ->
                 coordinator.emit(gameData, reveal, GameEventAudience.player(PLAYER_1)));
 
         String diagnostic = received.getLast().toString();
@@ -224,28 +224,47 @@ class GameMutationCoordinatorTest {
         AtomicInteger subscriberInvocations = new AtomicInteger();
         GameMutationCoordinator coordinator = coordinator(batch -> subscriberInvocations.incrementAndGet());
 
-        coordinator.mutate(gameData, ACTION_1, () ->
+        coordinator.mutate(gameData, () ->
                 coordinator.emit(gameData, new GameEventFact.DecisionRequested(
                                 UUID.randomUUID(), PLAYER_1, GameEventFact.DecisionKind.ATTACKER_DECLARATION),
                         GameEventAudience.player(PLAYER_1)));
 
         assertThat(subscriberInvocations).hasValue(0);
+        assertThat(gameData.domainActionSequence()).isEqualTo(1);
         assertThat(gameData.domainStateVersion()).isEqualTo(1);
         assertThat(gameData.domainEventSequence()).isEqualTo(1);
     }
 
     @Test
-    void outermostScopeMustBeginBeforeLegacyCodeAcquiresTheGameMonitor() {
+    void outermostScopeMustBeginBeforeCallerAcquiresTheGameMonitor() {
         GameData gameData = gameData();
         GameMutationCoordinator coordinator = coordinator(batch -> {
         });
 
         synchronized (gameData) {
-            assertThatThrownBy(() -> coordinator.mutate(gameData, ACTION_1, () -> {
+            assertThatThrownBy(() -> coordinator.mutate(gameData, () -> {
             }))
                     .isInstanceOf(IllegalStateException.class)
                     .hasMessageContaining("before acquiring the GameData monitor");
         }
+    }
+
+    @Test
+    void eventEmissionOutsideMutationScopeIsRejected() {
+        GameData gameData = gameData();
+        GameMutationCoordinator coordinator = coordinator(batch -> {
+        });
+
+        assertThatThrownBy(() -> coordinator.emit(
+                gameData,
+                new GameEventFact.StateInvalidated(GameEventFact.StateSection.BATTLEFIELD),
+                GameEventAudience.allPlayers()))
+                .isInstanceOf(IllegalStateException.class)
+                .hasMessageContaining("mutation scope");
+
+        assertThat(gameData.domainActionSequence()).isZero();
+        assertThat(gameData.domainStateVersion()).isZero();
+        assertThat(gameData.domainEventSequence()).isZero();
     }
 
     @Test
@@ -258,7 +277,7 @@ class GameMutationCoordinatorTest {
             received.add(batch);
         });
 
-        assertThatThrownBy(() -> coordinator.mutate(gameData, ACTION_1, () -> {
+        assertThatThrownBy(() -> coordinator.mutate(gameData, () -> {
             gameData.turnNumber = 9;
             coordinator.emit(gameData,
                     new GameEventFact.StateInvalidated(GameEventFact.StateSection.BATTLEFIELD),
@@ -270,17 +289,18 @@ class GameMutationCoordinatorTest {
         // from the incomplete action are discarded because there is no stable observation point.
         assertThat(gameData.turnNumber).isEqualTo(9);
         assertThat(subscriberInvocations).hasValue(0);
+        assertThat(gameData.domainActionSequence()).isZero();
         assertThat(gameData.domainStateVersion()).isZero();
         assertThat(gameData.domainEventSequence()).isZero();
 
-        coordinator.mutate(gameData, ACTION_2, () ->
+        coordinator.mutate(gameData, () ->
                 coordinator.emit(gameData,
                         new GameEventFact.StateInvalidated(GameEventFact.StateSection.GAME_LOG),
                         GameEventAudience.allPlayers()));
 
         assertThat(coordinator.isInAction(gameData)).isFalse();
         assertThat(received).singleElement().satisfies(batch -> {
-            assertThat(batch.causalActionId()).isEqualTo(ACTION_2);
+            assertThat(batch.causalActionId()).isEqualTo(ACTION_1);
             assertThat(batch.stateVersion()).isEqualTo(1);
             assertThat(batch.events()).singleElement()
                     .extracting(GameEventEnvelope::sequence).isEqualTo(1L);
@@ -299,11 +319,11 @@ class GameMutationCoordinatorTest {
         CountDownLatch release = new CountDownLatch(1);
 
         try (ExecutorService executor = Executors.newFixedThreadPool(2)) {
-            Future<?> first = executor.submit(() -> coordinator.mutate(firstGame, ACTION_1, () -> {
+            Future<?> first = executor.submit(() -> coordinator.mutate(firstGame, () -> {
                 bothEntered.countDown();
                 await(release);
             }));
-            Future<?> second = executor.submit(() -> coordinator.mutate(secondGame, ACTION_2, () -> {
+            Future<?> second = executor.submit(() -> coordinator.mutate(secondGame, () -> {
                 bothEntered.countDown();
                 await(release);
             }));
@@ -316,6 +336,8 @@ class GameMutationCoordinatorTest {
 
         assertThat(firstGame.domainStateVersion()).isEqualTo(1);
         assertThat(secondGame.domainStateVersion()).isEqualTo(1);
+        assertThat(firstGame.domainActionSequence()).isEqualTo(1);
+        assertThat(secondGame.domainActionSequence()).isEqualTo(1);
     }
 
     @Test
@@ -329,7 +351,7 @@ class GameMutationCoordinatorTest {
         CountDownLatch secondEntered = new CountDownLatch(1);
 
         try (ExecutorService executor = Executors.newFixedThreadPool(2)) {
-            Future<?> first = executor.submit(() -> coordinator.mutate(gameData, ACTION_1, () -> {
+            Future<?> first = executor.submit(() -> coordinator.mutate(gameData, () -> {
                 firstEntered.countDown();
                 await(releaseFirst);
                 coordinator.emit(gameData,
@@ -340,7 +362,7 @@ class GameMutationCoordinatorTest {
 
             Future<?> second = executor.submit(() -> {
                 secondAttempted.countDown();
-                coordinator.mutate(gameData, ACTION_2, () -> {
+                coordinator.mutate(gameData, () -> {
                     secondEntered.countDown();
                     coordinator.emit(gameData,
                             new GameEventFact.StateInvalidated(GameEventFact.StateSection.STACK),
@@ -373,8 +395,8 @@ class GameMutationCoordinatorTest {
         GameMutationCoordinator coordinator = coordinator(batch -> {
         });
 
-        assertThatThrownBy(() -> coordinator.mutate(firstGame, ACTION_1,
-                () -> coordinator.mutate(secondGame, ACTION_2, () -> {
+        assertThatThrownBy(() -> coordinator.mutate(firstGame,
+                () -> coordinator.mutate(secondGame, () -> {
                 })))
                 .isInstanceOf(IllegalStateException.class)
                 .hasMessageContaining("multiple GameData");
