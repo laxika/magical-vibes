@@ -3,8 +3,6 @@ package com.github.laxika.magicalvibes.service.interaction;
 import com.github.laxika.magicalvibes.model.GameData;
 import com.github.laxika.magicalvibes.model.PendingInteraction;
 import com.github.laxika.magicalvibes.model.Player;
-import com.github.laxika.magicalvibes.networking.SessionManager;
-import com.github.laxika.magicalvibes.networking.message.InteractionPromptMessage;
 import com.github.laxika.magicalvibes.service.input.MultiPermanentChoiceHandlerService;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -26,7 +24,6 @@ import java.util.UUID;
 public class MultiPermanentChoiceInteractionHandler
         implements InteractionHandler<PendingInteraction.MultiPermanentChoice> {
 
-    private final SessionManager sessionManager;
     private final MultiPermanentChoiceHandlerService multiPermanentChoiceHandlerService;
 
     @Override
@@ -37,16 +34,6 @@ public class MultiPermanentChoiceInteractionHandler
     @Override
     public Class<? extends InteractionAnswer> answerType() {
         return InteractionAnswer.PermanentsChosen.class;
-    }
-
-    @Override
-    public void prompt(GameData gameData, PendingInteraction.MultiPermanentChoice interaction, UUID recipientId) {
-        sessionManager.sendToPlayer(recipientId, InteractionPromptMessage.multiPermanentPick(
-                new ArrayList<>(interaction.validIds()), interaction.maxCount(), interaction.prompt()));
-
-        String playerName = gameData.playerIdToName.get(interaction.playerId());
-        log.info("Game {} - Awaiting {} to choose up to {} permanents",
-                gameData.id, playerName, interaction.maxCount());
     }
 
     @Override

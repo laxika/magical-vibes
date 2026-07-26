@@ -1,6 +1,7 @@
 package com.github.laxika.magicalvibes.service.interaction;
 
 import com.github.laxika.magicalvibes.model.GraveyardChoiceDestination;
+import com.github.laxika.magicalvibes.model.GameData;
 import com.github.laxika.magicalvibes.model.InteractionOptions;
 import com.github.laxika.magicalvibes.model.LibrarySearchParams;
 import com.github.laxika.magicalvibes.model.PendingCapriciousEfreetState;
@@ -13,15 +14,20 @@ import com.github.laxika.magicalvibes.model.PendingPileSeparation;
 import com.github.laxika.magicalvibes.model.PendingReturnExiledWithSourceCard;
 import com.github.laxika.magicalvibes.model.PendingSphinxAmbassadorChoice;
 import com.github.laxika.magicalvibes.model.PermanentChoiceContext;
+import com.github.laxika.magicalvibes.networking.service.CardViewFactory;
+import com.github.laxika.magicalvibes.service.event.InteractionPromptProjectionRegistry;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Nested;
 import org.junit.jupiter.api.Test;
 
+import java.util.Arrays;
 import java.util.List;
 import java.util.Set;
 import java.util.UUID;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.assertj.core.api.Assertions.assertThatThrownBy;
+import static org.mockito.Mockito.mock;
 
 /**
  * Guards the {@link PendingInteraction} record contract: every kind that can become the
@@ -43,6 +49,10 @@ class PendingInteractionContractTest {
             PendingKarnRestart.class,
             PendingKnowledgePoolCast.class,
             PendingPileSeparation.class);
+    private static final Set<Class<?>> DISTINCT_COMBAT_PROMPTS = Set.of(
+            PendingInteraction.AttackerDeclaration.class,
+            PendingInteraction.BlockerDeclaration.class,
+            PendingInteraction.CombatDamageAssignment.class);
 
     @Test
     @DisplayName("every promptable interaction kind overrides decidingPlayerId() and legalOptions()")
@@ -58,6 +68,37 @@ class PendingInteractionContractTest {
                     .as("%s must carry its legal options", kind.getSimpleName())
                     .isNotEqualTo(PendingInteraction.class);
         }
+    }
+
+    @Test
+    @DisplayName("every standard sealed interaction kind has exactly one explicit prompt projection")
+    void everyStandardKindHasOneExplicitProjection() {
+        Set<Class<? extends PendingInteraction>> standardKinds =
+                Arrays.stream(PendingInteraction.class.getPermittedSubclasses())
+                .filter(kind -> !QUEUE_ONLY_CARRIERS.contains(kind))
+                .filter(kind -> !DISTINCT_COMBAT_PROMPTS.contains(kind))
+                .map(kind -> kind.asSubclass(PendingInteraction.class))
+                .collect(java.util.stream.Collectors.toUnmodifiableSet());
+        InteractionPromptProjectionRegistry projections =
+                new InteractionPromptProjectionRegistry(mock(CardViewFactory.class));
+
+        assertThat(projections.registeredTypes())
+                .containsExactlyInAnyOrderElementsOf(standardKinds)
+                .hasSameSizeAs(standardKinds);
+    }
+
+    @Test
+    @DisplayName("prompt projection has no raw-state fallback for queue-only interaction carriers")
+    void promptProjectionRejectsUnregisteredCarrier() {
+        InteractionPromptProjectionRegistry projections =
+                new InteractionPromptProjectionRegistry(mock(CardViewFactory.class));
+        GameData gameData = new GameData(
+                UUID.randomUUID(), "projection-contract", UUID.randomUUID(), "Player");
+
+        assertThatThrownBy(() -> projections.project(
+                gameData, new PendingKarnRestart(List.of(), UUID.randomUUID())))
+                .isInstanceOf(IllegalArgumentException.class)
+                .hasMessageContaining("No interaction prompt projection registered");
     }
 
     @Nested

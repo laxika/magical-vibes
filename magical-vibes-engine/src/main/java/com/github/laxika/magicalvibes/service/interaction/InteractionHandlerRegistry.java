@@ -24,10 +24,7 @@ public class InteractionHandlerRegistry {
     private final Map<Class<? extends PendingInteraction>, InteractionHandler<?>> handlers = new LinkedHashMap<>();
     private final Supplier<GameMutationCoordinator> mutationCoordinatorSupplier;
 
-    /**
-     * Test-only legacy constructor. Production supplies a lazy coordinator lookup so constructing
-     * the interaction registry does not create a coordinator -> projection -> registry cycle.
-     */
+    /** Test-only state/answer-routing constructor. It deliberately performs no delivery. */
     public InteractionHandlerRegistry() {
         this.mutationCoordinatorSupplier = null;
     }
@@ -59,7 +56,7 @@ public class InteractionHandlerRegistry {
             throw new IllegalArgumentException("No interaction handler registered for " + interaction.getClass().getName());
         }
         gameData.interaction.beginInteraction(interaction);
-        requestActiveDecision(gameData, handler);
+        emitActiveDecision(gameData);
     }
 
     /**
@@ -85,7 +82,7 @@ public class InteractionHandlerRegistry {
         if (handler == null) {
             return;
         }
-        requestActiveDecision(gameData, handler);
+        emitActiveDecision(gameData);
     }
 
     /**
@@ -99,19 +96,15 @@ public class InteractionHandlerRegistry {
         }
         InteractionHandler<PendingInteraction> handler = handlerFor(active);
         if (handler != null) {
-            requestActiveDecision(gameData, handler);
+            emitActiveDecision(gameData);
         }
     }
 
-    private void requestActiveDecision(
-            GameData gameData, InteractionHandler<PendingInteraction> handler) {
+    private void emitActiveDecision(GameData gameData) {
         PendingInteraction active = gameData.interaction.activeInteraction();
         UUID decider = active.decidingPlayerId();
         UUID recipient = resolveMessageRecipient(gameData, decider);
         if (mutationCoordinatorSupplier == null) {
-            if (!isCombatInteraction(active)) {
-                handler.prompt(gameData, active, recipient);
-            }
             return;
         }
         mutationCoordinatorSupplier.get().emit(gameData,
@@ -136,25 +129,6 @@ public class InteractionHandlerRegistry {
     }
 
     /**
-     * Projects and delivers the active prompt to one explicitly authorized event audience member.
-     *
-     * <p>This is the event-adapter entry point. The audience was already resolved when the event
-     * was emitted (including Mindslaver decision ownership), so it must not be redirected again.
-     */
-    public boolean promptActiveTo(GameData gameData, UUID recipientId) {
-        PendingInteraction active = gameData.interaction.activeInteraction();
-        if (active == null) {
-            return false;
-        }
-        InteractionHandler<PendingInteraction> handler = handlerFor(active);
-        if (handler == null || isCombatInteraction(active)) {
-            return false;
-        }
-        handler.prompt(gameData, active, recipientId);
-        return true;
-    }
-
-    /**
      * Routes a wire answer to the active interaction's handler. Returns {@code false} when no
      * registry-managed interaction is active or the answer shape does not match — the caller
      * then continues down the legacy dispatch path (which supplies the legacy error message).
@@ -173,9 +147,8 @@ public class InteractionHandlerRegistry {
     }
 
     /**
-     * Re-sends the active interaction's prompt to a reconnecting player. Returns {@code true}
-     * when the active interaction is registry-managed (whether or not the reconnecting player
-     * is the decider), so the caller skips the legacy replay switch.
+     * Reports whether the active interaction is registry-managed so legacy replay dispatch can
+     * skip it. Reconnect prompt delivery is an explicit {@code DecisionRequested} replay fact.
      */
     public boolean replayPrompt(GameData gameData, UUID reconnectingPlayerId) {
         PendingInteraction active = gameData.interaction.activeInteraction();
@@ -185,10 +158,6 @@ public class InteractionHandlerRegistry {
         InteractionHandler<PendingInteraction> handler = handlerFor(active);
         if (handler == null) {
             return false;
-        }
-        if (reconnectingPlayerId.equals(active.decidingPlayerId())
-                && !isCombatInteraction(active)) {
-            handler.prompt(gameData, active, reconnectingPlayerId);
         }
         return true;
     }
@@ -215,9 +184,8 @@ public class InteractionHandlerRegistry {
         return playerId;
     }
 
-    private static boolean isCombatInteraction(PendingInteraction interaction) {
-        return interaction instanceof PendingInteraction.AttackerDeclaration
-                || interaction instanceof PendingInteraction.BlockerDeclaration
-                || interaction instanceof PendingInteraction.CombatDamageAssignment;
+    /** Exact interaction classes registered for answer handling. */
+    public java.util.Set<Class<? extends PendingInteraction>> registeredTypes() {
+        return java.util.Set.copyOf(handlers.keySet());
     }
 }

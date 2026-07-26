@@ -3,20 +3,14 @@ package com.github.laxika.magicalvibes.service.interaction;
 import com.github.laxika.magicalvibes.model.GameData;
 import com.github.laxika.magicalvibes.model.PendingInteraction;
 import com.github.laxika.magicalvibes.model.Player;
-import com.github.laxika.magicalvibes.networking.SessionManager;
-import com.github.laxika.magicalvibes.networking.message.InteractionPromptMessage;
 import com.github.laxika.magicalvibes.service.ability.AbilityActivationService;
 import com.github.laxika.magicalvibes.service.input.CardChoiceHandlerService;
-import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Component;
-
-import java.util.UUID;
 
 /**
  * The six hand-card choice handlers (the legacy shared {@code InteractionContext.CardChoice}
- * family). Each kind sends the same hand-pick {@code InteractionPromptMessage} with the record's
- * begin-time indices and prompt; only the decline flag and the
- * per-kind "Awaiting …" log line differ, so they share a base class. Answers all arrive as
+ * family). Each kind preserves its original decline policy and shares the same answer base.
+ * Prompt projection is centralized from the pending record. Answers all arrive as
  * {@link InteractionAnswer.CardIndexChosen} and delegate to the legacy per-kind answer
  * methods on {@link CardChoiceHandlerService} / {@link AbilityActivationService}.
  */
@@ -25,35 +19,12 @@ public final class HandCardChoiceInteractionHandlers {
     private HandCardChoiceInteractionHandlers() {
     }
 
-    @Slf4j
     private abstract static class Base<T extends PendingInteraction & PendingInteraction.HandChoice>
             implements InteractionHandler<T> {
-
-        private final SessionManager sessionManager;
-        private final boolean canDecline;
-        private final String awaitingLogSuffix;
-
-        private Base(SessionManager sessionManager, boolean canDecline,
-                     String awaitingLogSuffix) {
-            this.sessionManager = sessionManager;
-            this.canDecline = canDecline;
-            this.awaitingLogSuffix = awaitingLogSuffix;
-        }
 
         @Override
         public Class<? extends InteractionAnswer> answerType() {
             return InteractionAnswer.CardIndexChosen.class;
-        }
-
-        @Override
-        public void prompt(GameData gameData, T interaction, UUID recipientId) {
-            sessionManager.sendToPlayer(recipientId, InteractionPromptMessage.cardIndexPick(
-                    interaction.validIndices(), interaction.prompt(), canDecline));
-
-            if (awaitingLogSuffix != null) {
-                String playerName = gameData.playerIdToName.get(interaction.playerId());
-                log.info("Game {} - Awaiting {} {}", gameData.id, playerName, awaitingLogSuffix);
-            }
         }
 
         static int cardIndex(InteractionAnswer answer) {
@@ -67,9 +38,7 @@ public final class HandCardChoiceInteractionHandlers {
 
         private final CardChoiceHandlerService cardChoiceHandlerService;
 
-        public HandCardChoiceInteractionHandler(SessionManager sessionManager,
-                                                CardChoiceHandlerService cardChoiceHandlerService) {
-            super(sessionManager, true, "to choose a card from hand");
+        public HandCardChoiceInteractionHandler(CardChoiceHandlerService cardChoiceHandlerService) {
             this.cardChoiceHandlerService = cardChoiceHandlerService;
         }
 
@@ -91,9 +60,8 @@ public final class HandCardChoiceInteractionHandlers {
 
         private final CardChoiceHandlerService cardChoiceHandlerService;
 
-        public TargetedHandCardChoiceInteractionHandler(SessionManager sessionManager,
-                                                        CardChoiceHandlerService cardChoiceHandlerService) {
-            super(sessionManager, true, "to choose a card from hand (targeted)");
+        public TargetedHandCardChoiceInteractionHandler(
+                CardChoiceHandlerService cardChoiceHandlerService) {
             this.cardChoiceHandlerService = cardChoiceHandlerService;
         }
 
@@ -115,9 +83,7 @@ public final class HandCardChoiceInteractionHandlers {
 
         private final CardChoiceHandlerService cardChoiceHandlerService;
 
-        public DiscardChoiceInteractionHandler(SessionManager sessionManager,
-                                               CardChoiceHandlerService cardChoiceHandlerService) {
-            super(sessionManager, false, "to choose a card to discard");
+        public DiscardChoiceInteractionHandler(CardChoiceHandlerService cardChoiceHandlerService) {
             this.cardChoiceHandlerService = cardChoiceHandlerService;
         }
 
@@ -139,9 +105,8 @@ public final class HandCardChoiceInteractionHandlers {
 
         private final CardChoiceHandlerService cardChoiceHandlerService;
 
-        public ExileFromHandChoiceInteractionHandler(SessionManager sessionManager,
-                                                     CardChoiceHandlerService cardChoiceHandlerService) {
-            super(sessionManager, false, "to choose a card to exile from hand");
+        public ExileFromHandChoiceInteractionHandler(
+                CardChoiceHandlerService cardChoiceHandlerService) {
             this.cardChoiceHandlerService = cardChoiceHandlerService;
         }
 
@@ -163,9 +128,8 @@ public final class HandCardChoiceInteractionHandlers {
 
         private final CardChoiceHandlerService cardChoiceHandlerService;
 
-        public ImprintFromHandChoiceInteractionHandler(SessionManager sessionManager,
-                                                       CardChoiceHandlerService cardChoiceHandlerService) {
-            super(sessionManager, false, "to choose an artifact from hand to imprint");
+        public ImprintFromHandChoiceInteractionHandler(
+                CardChoiceHandlerService cardChoiceHandlerService) {
             this.cardChoiceHandlerService = cardChoiceHandlerService;
         }
 
@@ -190,9 +154,8 @@ public final class HandCardChoiceInteractionHandlers {
 
         private final AbilityActivationService abilityActivationService;
 
-        public DiscardCostChoiceInteractionHandler(SessionManager sessionManager,
-                                                   AbilityActivationService abilityActivationService) {
-            super(sessionManager, false, null);
+        public DiscardCostChoiceInteractionHandler(
+                AbilityActivationService abilityActivationService) {
             this.abilityActivationService = abilityActivationService;
         }
 

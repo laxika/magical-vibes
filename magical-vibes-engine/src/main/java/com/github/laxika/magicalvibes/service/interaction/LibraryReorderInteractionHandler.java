@@ -5,10 +5,6 @@ import com.github.laxika.magicalvibes.model.GameData;
 import com.github.laxika.magicalvibes.model.GameLog;
 import com.github.laxika.magicalvibes.model.PendingInteraction;
 import com.github.laxika.magicalvibes.model.Player;
-import com.github.laxika.magicalvibes.networking.SessionManager;
-import com.github.laxika.magicalvibes.networking.message.InteractionPromptMessage;
-import com.github.laxika.magicalvibes.networking.model.CardView;
-import com.github.laxika.magicalvibes.networking.service.CardViewFactory;
 import com.github.laxika.magicalvibes.service.GameBroadcastService;
 import com.github.laxika.magicalvibes.service.WarpWorldService;
 import com.github.laxika.magicalvibes.service.effect.EffectResolutionService;
@@ -33,8 +29,6 @@ import java.util.UUID;
 @RequiredArgsConstructor
 public class LibraryReorderInteractionHandler implements InteractionHandler<PendingInteraction.LibraryReorder> {
 
-    private final SessionManager sessionManager;
-    private final CardViewFactory cardViewFactory;
     private final GameBroadcastService gameBroadcastService;
     private final WarpWorldService warpWorldService;
     private final PlayerInputService playerInputService;
@@ -49,12 +43,6 @@ public class LibraryReorderInteractionHandler implements InteractionHandler<Pend
     @Override
     public Class<? extends InteractionAnswer> answerType() {
         return InteractionAnswer.CardOrder.class;
-    }
-
-    @Override
-    public void prompt(GameData gameData, PendingInteraction.LibraryReorder interaction, UUID recipientId) {
-        List<CardView> cardViews = interaction.cards().stream().map(cardViewFactory::create).toList();
-        sessionManager.sendToPlayer(recipientId, InteractionPromptMessage.cardOrder(cardViews, interaction.prompt()));
     }
 
     @Override

@@ -4,10 +4,6 @@ import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.GameData;
 import com.github.laxika.magicalvibes.model.PendingInteraction;
 import com.github.laxika.magicalvibes.model.Player;
-import com.github.laxika.magicalvibes.networking.SessionManager;
-import com.github.laxika.magicalvibes.networking.message.InteractionPromptMessage;
-import com.github.laxika.magicalvibes.networking.model.CardView;
-import com.github.laxika.magicalvibes.networking.service.CardViewFactory;
 import com.github.laxika.magicalvibes.service.input.CardChoiceHandlerService;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -21,8 +17,8 @@ import java.util.UUID;
  * Handles the two-stage Blackmail flow ({@link PendingInteraction.RevealCardsDiscardChoice}). In
  * the reveal stage the target player is shown their full hand and picks which cards to reveal; in
  * the discard stage the controller is shown only the revealed cards and picks one for the target to
- * discard. Both stages reuse the revealed-cards {@code InteractionPromptMessage}; the answer is applied by
- * {@link CardChoiceHandlerService#handleRevealCardsDiscardChosen}.
+ * discard. Both stages reuse the same pending-interaction family; prompt projection is centralized
+ * and the answer is applied by {@link CardChoiceHandlerService#handleRevealCardsDiscardChosen}.
  */
 @Slf4j
 @Component
@@ -30,8 +26,6 @@ import java.util.UUID;
 public class RevealCardsDiscardChoiceInteractionHandler
         implements InteractionHandler<PendingInteraction.RevealCardsDiscardChoice> {
 
-    private final SessionManager sessionManager;
-    private final CardViewFactory cardViewFactory;
     private final CardChoiceHandlerService cardChoiceHandlerService;
 
     @Override
@@ -42,28 +36,6 @@ public class RevealCardsDiscardChoiceInteractionHandler
     @Override
     public Class<? extends InteractionAnswer> answerType() {
         return InteractionAnswer.CardIndexChosen.class;
-    }
-
-    @Override
-    public void prompt(GameData gameData, PendingInteraction.RevealCardsDiscardChoice interaction, UUID recipientId) {
-        List<Card> targetHand = gameData.playerHands.get(interaction.targetPlayerId());
-        List<CardView> cardViews;
-        if (interaction.revealStage()) {
-            // The target player sees their whole hand to pick which cards to reveal.
-            cardViews = targetHand.stream().map(cardViewFactory::create).toList();
-        } else {
-            // The controller sees only the revealed cards.
-            cardViews = new ArrayList<>();
-            for (UUID cardId : interaction.revealedCardIds()) {
-                targetHand.stream().filter(c -> c.getId().equals(cardId)).findFirst()
-                        .ifPresent(c -> cardViews.add(cardViewFactory.create(c)));
-            }
-        }
-        sessionManager.sendToPlayer(recipientId, InteractionPromptMessage.cardIndexPick(
-                cardViews, interaction.validIndices(), interaction.prompt(), false));
-
-        log.info("Game {} - Awaiting {} to choose a card (reveal-and-discard)",
-                gameData.id, gameData.playerIdToName.get(interaction.decidingPlayerId()));
     }
 
     @Override

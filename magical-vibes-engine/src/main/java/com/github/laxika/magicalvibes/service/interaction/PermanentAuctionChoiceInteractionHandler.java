@@ -4,10 +4,6 @@ import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.GameData;
 import com.github.laxika.magicalvibes.model.PendingInteraction;
 import com.github.laxika.magicalvibes.model.Player;
-import com.github.laxika.magicalvibes.networking.SessionManager;
-import com.github.laxika.magicalvibes.networking.message.InteractionPromptMessage;
-import com.github.laxika.magicalvibes.networking.model.CardView;
-import com.github.laxika.magicalvibes.networking.service.CardViewFactory;
 import com.github.laxika.magicalvibes.service.PermanentAuctionService;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -17,8 +13,7 @@ import java.util.List;
 import java.util.UUID;
 
 /**
- * Prompts the current auction chooser to pick one card from the shared exiled pool
- * (a multi-card {@code InteractionPromptMessage} with {@code maxCount == 1}). The pick is applied by
+ * Applies the current auction chooser's pick from the shared exiled pool through
  * {@link PermanentAuctionService#applyPick}, which advances the auction to the next player.
  */
 @Slf4j
@@ -27,8 +22,6 @@ import java.util.UUID;
 public class PermanentAuctionChoiceInteractionHandler
         implements InteractionHandler<PendingInteraction.PermanentAuctionChoice> {
 
-    private final SessionManager sessionManager;
-    private final CardViewFactory cardViewFactory;
     private final PermanentAuctionService permanentAuctionService;
 
     @Override
@@ -39,21 +32,6 @@ public class PermanentAuctionChoiceInteractionHandler
     @Override
     public Class<? extends InteractionAnswer> answerType() {
         return InteractionAnswer.CardsChosen.class;
-    }
-
-    @Override
-    public void prompt(GameData gameData, PendingInteraction.PermanentAuctionChoice interaction, UUID recipientId) {
-        List<CardView> cardViews = interaction.pool().stream()
-                .map(cardViewFactory::create)
-                .toList();
-        List<UUID> validCardIds = interaction.pool().stream().map(Card::getId).toList();
-
-        sessionManager.sendToPlayer(recipientId,
-                InteractionPromptMessage.multiCardPick(validCardIds, cardViews, 1, interaction.prompt()));
-
-        String playerName = gameData.playerIdToName.get(interaction.choosingPlayerId());
-        log.info("Game {} - Awaiting {} to choose an auctioned card ({} remaining)",
-                gameData.id, playerName, interaction.pool().size());
     }
 
     @Override

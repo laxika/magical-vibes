@@ -1,7 +1,5 @@
 package com.github.laxika.magicalvibes.service.input;
 
-import com.github.laxika.magicalvibes.model.PendingInteraction;
-
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardType;
 import com.github.laxika.magicalvibes.model.ChoiceContext;
@@ -11,13 +9,14 @@ import com.github.laxika.magicalvibes.model.GraveyardChoiceDestination;
 import com.github.laxika.magicalvibes.model.Keyword;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.ManaPool;
+import com.github.laxika.magicalvibes.model.PendingInteraction;
 import com.github.laxika.magicalvibes.model.PendingMayAbility;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.StackEntry;
-import com.github.laxika.magicalvibes.networking.SessionManager;
 import com.github.laxika.magicalvibes.networking.message.InteractionPromptMessage;
 import com.github.laxika.magicalvibes.networking.model.CardView;
 import com.github.laxika.magicalvibes.networking.service.CardViewFactory;
+import com.github.laxika.magicalvibes.service.event.InteractionPromptProjectionRegistry;
 import com.github.laxika.magicalvibes.service.interaction.ColorChoiceInteractionHandler;
 import com.github.laxika.magicalvibes.service.interaction.HandCardChoiceInteractionHandlers;
 import com.github.laxika.magicalvibes.service.interaction.InteractionHandlerRegistry;
@@ -30,8 +29,6 @@ import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Nested;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
-import org.mockito.ArgumentCaptor;
-import org.mockito.Captor;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 
@@ -42,21 +39,16 @@ import java.util.UUID;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.mockito.ArgumentMatchers.any;
-import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.mock;
-import static org.mockito.Mockito.verify;
-import static org.mockito.Mockito.verifyNoInteractions;
 import static org.mockito.Mockito.when;
 
 @ExtendWith(MockitoExtension.class)
 class PlayerInputServiceTest {
 
-    @Mock private SessionManager sessionManager;
     @Mock private CardViewFactory cardViewFactory;
 
     private PlayerInputService svc;
-
-    @Captor private ArgumentCaptor<Object> messageCaptor;
+    private InteractionPromptProjectionRegistry promptProjections;
 
     private GameData gd;
 
@@ -67,29 +59,30 @@ class PlayerInputServiceTest {
     void setUp() {
         InteractionHandlerRegistry registry = new InteractionHandlerRegistry();
         registry.register(new MayAbilityChoiceInteractionHandler(
-                sessionManager, mock(MayAbilityHandlerService.class)));
+                mock(MayAbilityHandlerService.class)));
         registry.register(new MultiZoneExileChoiceInteractionHandler(
-                sessionManager, cardViewFactory, mock(ChoiceHandlerService.class)));
+                mock(ChoiceHandlerService.class)));
         registry.register(new MultiPermanentChoiceInteractionHandler(
-                sessionManager, mock(MultiPermanentChoiceHandlerService.class)));
+                mock(MultiPermanentChoiceHandlerService.class)));
         registry.register(new MultiGraveyardChoiceInteractionHandler(
-                sessionManager, cardViewFactory, mock(GraveyardChoiceHandlerService.class)));
+                mock(GraveyardChoiceHandlerService.class)));
         registry.register(new ColorChoiceInteractionHandler(
-                sessionManager, mock(ChoiceHandlerService.class)));
+                mock(ChoiceHandlerService.class)));
         CardChoiceHandlerService cardChoiceHandlerService = mock(CardChoiceHandlerService.class);
         registry.register(new HandCardChoiceInteractionHandlers.HandCardChoiceInteractionHandler(
-                sessionManager, cardChoiceHandlerService));
+                cardChoiceHandlerService));
         registry.register(new HandCardChoiceInteractionHandlers.TargetedHandCardChoiceInteractionHandler(
-                sessionManager, cardChoiceHandlerService));
+                cardChoiceHandlerService));
         registry.register(new HandCardChoiceInteractionHandlers.DiscardChoiceInteractionHandler(
-                sessionManager, cardChoiceHandlerService));
+                cardChoiceHandlerService));
         registry.register(new HandCardChoiceInteractionHandlers.ExileFromHandChoiceInteractionHandler(
-                sessionManager, cardChoiceHandlerService));
+                cardChoiceHandlerService));
         registry.register(new HandCardChoiceInteractionHandlers.ImprintFromHandChoiceInteractionHandler(
-                sessionManager, cardChoiceHandlerService));
+                cardChoiceHandlerService));
         registry.register(new com.github.laxika.magicalvibes.service.interaction.PermanentChoiceInteractionHandler(
-                sessionManager, mock(PermanentChoiceHandlerService.class)));
-        svc = new PlayerInputService(sessionManager, cardViewFactory, registry);
+                mock(PermanentChoiceHandlerService.class)));
+        svc = new PlayerInputService(registry);
+        promptProjections = new InteractionPromptProjectionRegistry(cardViewFactory);
 
         gd = new GameData(UUID.randomUUID(), "test-game", PLAYER1_ID, "Player1");
         gd.playerIds.addAll(List.of(PLAYER1_ID, PLAYER2_ID));
@@ -106,6 +99,10 @@ class PlayerInputServiceTest {
         gd.playerHands.put(PLAYER2_ID, new ArrayList<>());
         gd.playerManaPools.put(PLAYER1_ID, new ManaPool());
         gd.playerManaPools.put(PLAYER2_ID, new ManaPool());
+    }
+
+    private InteractionPromptMessage projectedPrompt() {
+        return promptProjections.project(gd, gd.interaction.activeInteraction()).orElseThrow();
     }
 
     private Card createCard(String name, CardType type) {
@@ -125,16 +122,16 @@ class PlayerInputServiceTest {
     }
 
     // ========================================================================
-    // Mind control redirection
+    // Decision ownership
     // ========================================================================
 
     @Nested
-    @DisplayName("Mind control message redirection")
-    class MindControlRedirection {
+    @DisplayName("Decision ownership")
+    class DecisionOwnership {
 
         @Test
-        @DisplayName("Sends to controller when player is mind-controlled")
-        void sendsToControllerWhenMindControlled() {
+        @DisplayName("Keeps the affected player as decision owner when mind-controlled")
+        void keepsAffectedPlayerAsDecisionOwnerWhenMindControlled() {
             UUID controllerId = UUID.randomUUID();
             gd.playerIdToName.put(controllerId, "Controller");
             gd.mindControlledPlayerId = PLAYER1_ID;
@@ -142,26 +139,27 @@ class PlayerInputServiceTest {
 
             svc.beginCardChoice(gd, PLAYER1_ID, List.of(0, 1), "Pick a card");
 
-            verify(sessionManager).sendToPlayer(eq(controllerId), any(InteractionPromptMessage.class));
+            assertThat(gd.interaction.activeInteraction().decidingPlayerId()).isEqualTo(PLAYER1_ID);
+            assertThat(projectedPrompt()).isNotNull();
         }
 
         @Test
-        @DisplayName("Sends to player directly when not mind-controlled")
-        void sendsDirectlyWhenNotMindControlled() {
+        @DisplayName("Stores the choosing player as decision owner")
+        void storesChoosingPlayerAsDecisionOwner() {
             svc.beginCardChoice(gd, PLAYER1_ID, List.of(0), "Pick a card");
 
-            verify(sessionManager).sendToPlayer(eq(PLAYER1_ID), any(InteractionPromptMessage.class));
+            assertThat(gd.interaction.activeInteraction().decidingPlayerId()).isEqualTo(PLAYER1_ID);
         }
 
         @Test
-        @DisplayName("Sends to player directly when different player is mind-controlled")
-        void sendsDirectlyWhenOtherPlayerMindControlled() {
+        @DisplayName("Another mind-controlled player does not change decision ownership")
+        void otherMindControlledPlayerDoesNotChangeDecisionOwnership() {
             gd.mindControlledPlayerId = PLAYER2_ID;
             gd.mindControllerPlayerId = UUID.randomUUID();
 
             svc.beginCardChoice(gd, PLAYER1_ID, List.of(0), "Pick a card");
 
-            verify(sessionManager).sendToPlayer(eq(PLAYER1_ID), any(InteractionPromptMessage.class));
+            assertThat(gd.interaction.activeInteraction().decidingPlayerId()).isEqualTo(PLAYER1_ID);
         }
     }
 
@@ -188,8 +186,7 @@ class PlayerInputServiceTest {
 
             svc.beginCardChoice(gd, PLAYER1_ID, indices, "Choose one");
 
-            verify(sessionManager).sendToPlayer(eq(PLAYER1_ID), messageCaptor.capture());
-            InteractionPromptMessage msg = (InteractionPromptMessage) messageCaptor.getValue();
+            InteractionPromptMessage msg = projectedPrompt();
             assertThat(msg.cardIndices()).containsExactly(0, 2, 4);
             assertThat(msg.prompt()).isEqualTo("Choose one");
             assertThat(msg.declinable()).isTrue();
@@ -215,13 +212,13 @@ class PlayerInputServiceTest {
         }
 
         @Test
-        @DisplayName("Sends message to correct player")
-        void sendsMessage() {
+        @DisplayName("Stores the correct decision owner")
+        void storesDecisionOwner() {
             UUID targetId = UUID.randomUUID();
 
             svc.beginTargetedCardChoice(gd, PLAYER2_ID, List.of(1, 3), "Choose card", targetId);
 
-            verify(sessionManager).sendToPlayer(eq(PLAYER2_ID), any(InteractionPromptMessage.class));
+            assertThat(gd.interaction.activeInteraction().decidingPlayerId()).isEqualTo(PLAYER2_ID);
         }
     }
 
@@ -251,8 +248,7 @@ class PlayerInputServiceTest {
 
             svc.beginPermanentChoice(gd, PLAYER1_ID, List.of(perm1, perm2), "Choose permanent");
 
-            verify(sessionManager).sendToPlayer(eq(PLAYER1_ID), messageCaptor.capture());
-            InteractionPromptMessage msg = (InteractionPromptMessage) messageCaptor.getValue();
+            InteractionPromptMessage msg = projectedPrompt();
             assertThat(msg.permanentIds()).containsExactly(perm1, perm2);
             assertThat(msg.prompt()).isEqualTo("Choose permanent");
         }
@@ -283,8 +279,7 @@ class PlayerInputServiceTest {
 
             svc.beginAnyTargetChoice(gd, PLAYER1_ID, List.of(permId), List.of(PLAYER2_ID), "Choose any");
 
-            verify(sessionManager).sendToPlayer(eq(PLAYER1_ID), messageCaptor.capture());
-            InteractionPromptMessage msg = (InteractionPromptMessage) messageCaptor.getValue();
+            InteractionPromptMessage msg = projectedPrompt();
             assertThat(msg.permanentIds()).containsExactly(permId);
             assertThat(msg.playerIds()).containsExactly(PLAYER2_ID);
         }
@@ -326,8 +321,7 @@ class PlayerInputServiceTest {
 
             svc.beginMultiPermanentChoice(gd, PLAYER1_ID, List.of(perm1, perm2), 2, "Pick");
 
-            verify(sessionManager).sendToPlayer(eq(PLAYER1_ID), messageCaptor.capture());
-            InteractionPromptMessage msg = (InteractionPromptMessage) messageCaptor.getValue();
+            InteractionPromptMessage msg = projectedPrompt();
             assertThat(msg.permanentIds()).containsExactly(perm1, perm2);
             assertThat(msg.maxCount()).isEqualTo(2);
         }
@@ -358,8 +352,7 @@ class PlayerInputServiceTest {
 
             svc.beginMultiGraveyardChoice(gd, PLAYER1_ID, List.of(card), 5, "Choose");
 
-            verify(sessionManager).sendToPlayer(eq(PLAYER1_ID), messageCaptor.capture());
-            InteractionPromptMessage msg = (InteractionPromptMessage) messageCaptor.getValue();
+            InteractionPromptMessage msg = projectedPrompt();
             assertThat(msg.cardIds()).containsExactly(card.getId());
             assertThat(msg.maxCount()).isEqualTo(5);
         }
@@ -388,8 +381,7 @@ class PlayerInputServiceTest {
         void sendsFiveColors() {
             svc.beginColorChoice(gd, PLAYER1_ID, UUID.randomUUID(), null);
 
-            verify(sessionManager).sendToPlayer(eq(PLAYER1_ID), messageCaptor.capture());
-            InteractionPromptMessage msg = (InteractionPromptMessage) messageCaptor.getValue();
+            InteractionPromptMessage msg = projectedPrompt();
             assertThat(msg.options()).containsExactly("WHITE", "BLUE", "BLACK", "RED", "GREEN");
             assertThat(msg.prompt()).isEqualTo("Choose a color.");
         }
@@ -410,8 +402,7 @@ class PlayerInputServiceTest {
 
             svc.beginProtectionColorChoice(gd, PLAYER1_ID, targetId, true);
 
-            verify(sessionManager).sendToPlayer(eq(PLAYER1_ID), messageCaptor.capture());
-            InteractionPromptMessage msg = (InteractionPromptMessage) messageCaptor.getValue();
+            InteractionPromptMessage msg = projectedPrompt();
             assertThat(msg.options()).containsExactly("ARTIFACT", "WHITE", "BLUE", "BLACK", "RED", "GREEN");
             assertThat(msg.prompt()).isEqualTo("Choose a color or artifacts.");
         }
@@ -423,8 +414,7 @@ class PlayerInputServiceTest {
 
             svc.beginProtectionColorChoice(gd, PLAYER1_ID, targetId, false);
 
-            verify(sessionManager).sendToPlayer(eq(PLAYER1_ID), messageCaptor.capture());
-            InteractionPromptMessage msg = (InteractionPromptMessage) messageCaptor.getValue();
+            InteractionPromptMessage msg = projectedPrompt();
             assertThat(msg.options()).containsExactly("WHITE", "BLUE", "BLACK", "RED", "GREEN");
             assertThat(msg.prompt()).isEqualTo("Choose a color.");
         }
@@ -459,8 +449,7 @@ class PlayerInputServiceTest {
 
             svc.beginKeywordChoice(gd, PLAYER1_ID, targetId, options);
 
-            verify(sessionManager).sendToPlayer(eq(PLAYER1_ID), messageCaptor.capture());
-            InteractionPromptMessage msg = (InteractionPromptMessage) messageCaptor.getValue();
+            InteractionPromptMessage msg = projectedPrompt();
             assertThat(msg.options()).containsExactly("FLYING", "TRAMPLE", "LIFELINK");
             assertThat(msg.prompt()).isEqualTo("Choose a keyword to grant.");
         }
@@ -495,8 +484,7 @@ class PlayerInputServiceTest {
 
             svc.beginSubtypeChoice(gd, PLAYER1_ID, permId);
 
-            verify(sessionManager).sendToPlayer(eq(PLAYER1_ID), messageCaptor.capture());
-            InteractionPromptMessage msg = (InteractionPromptMessage) messageCaptor.getValue();
+            InteractionPromptMessage msg = projectedPrompt();
             assertThat(msg.options()).doesNotContain("FOREST", "MOUNTAIN", "ISLAND", "PLAINS", "SWAMP", "AURA", "EQUIPMENT", "LOCUS");
             assertThat(msg.prompt()).isEqualTo("Choose a creature type.");
         }
@@ -527,8 +515,7 @@ class PlayerInputServiceTest {
         void sendsPermanentTypes() {
             svc.beginPermanentTypeChoice(gd, PLAYER1_ID, GraveyardChoiceDestination.BATTLEFIELD, "some desc");
 
-            verify(sessionManager).sendToPlayer(eq(PLAYER1_ID), messageCaptor.capture());
-            InteractionPromptMessage msg = (InteractionPromptMessage) messageCaptor.getValue();
+            InteractionPromptMessage msg = projectedPrompt();
             assertThat(msg.options()).containsExactly("ARTIFACT", "CREATURE", "ENCHANTMENT", "LAND", "PLANESWALKER");
             assertThat(msg.prompt()).isEqualTo("Choose a permanent type.");
         }
@@ -561,8 +548,7 @@ class PlayerInputServiceTest {
 
             svc.beginBasicLandTypeChoice(gd, PLAYER1_ID, permId);
 
-            verify(sessionManager).sendToPlayer(eq(PLAYER1_ID), messageCaptor.capture());
-            InteractionPromptMessage msg = (InteractionPromptMessage) messageCaptor.getValue();
+            InteractionPromptMessage msg = projectedPrompt();
             assertThat(msg.options()).containsExactly("PLAINS", "ISLAND", "SWAMP", "MOUNTAIN", "FOREST");
             assertThat(msg.prompt()).isEqualTo("Choose a basic land type.");
         }
@@ -606,8 +592,7 @@ class PlayerInputServiceTest {
 
             svc.beginCardNameChoice(gd, PLAYER1_ID, sourceCard, List.of());
 
-            verify(sessionManager).sendToPlayer(eq(PLAYER1_ID), messageCaptor.capture());
-            InteractionPromptMessage msg = (InteractionPromptMessage) messageCaptor.getValue();
+            InteractionPromptMessage msg = projectedPrompt();
             assertThat(msg.options()).contains("Alpha", "Bravo", "Charlie", "Delta", "Echo");
             assertThat(msg.prompt()).isEqualTo("Choose a card name.");
         }
@@ -621,8 +606,7 @@ class PlayerInputServiceTest {
 
             svc.beginCardNameChoice(gd, PLAYER1_ID, sourceCard, List.of());
 
-            verify(sessionManager).sendToPlayer(eq(PLAYER1_ID), messageCaptor.capture());
-            InteractionPromptMessage msg = (InteractionPromptMessage) messageCaptor.getValue();
+            InteractionPromptMessage msg = projectedPrompt();
             assertThat(msg.options()).contains("StackCreature");
         }
 
@@ -638,8 +622,7 @@ class PlayerInputServiceTest {
 
             svc.beginCardNameChoice(gd, PLAYER1_ID, sourceCard, List.of(CardType.LAND));
 
-            verify(sessionManager).sendToPlayer(eq(PLAYER1_ID), messageCaptor.capture());
-            InteractionPromptMessage msg = (InteractionPromptMessage) messageCaptor.getValue();
+            InteractionPromptMessage msg = projectedPrompt();
             assertThat(msg.options()).contains("Bear");
             assertThat(msg.options()).doesNotContain("Mountain");
             assertThat(msg.prompt()).isEqualTo("Choose a nonland card name.");
@@ -658,8 +641,7 @@ class PlayerInputServiceTest {
 
             svc.beginCardNameChoice(gd, PLAYER1_ID, sourceCard, List.of(CardType.ARTIFACT));
 
-            verify(sessionManager).sendToPlayer(eq(PLAYER1_ID), messageCaptor.capture());
-            InteractionPromptMessage msg = (InteractionPromptMessage) messageCaptor.getValue();
+            InteractionPromptMessage msg = projectedPrompt();
             assertThat(msg.options()).contains("Bear");
             assertThat(msg.options()).doesNotContain("Golem");
         }
@@ -678,8 +660,7 @@ class PlayerInputServiceTest {
 
             svc.beginCardNameChoice(gd, PLAYER1_ID, sourceCard, List.of());
 
-            verify(sessionManager).sendToPlayer(eq(PLAYER1_ID), messageCaptor.capture());
-            InteractionPromptMessage msg = (InteractionPromptMessage) messageCaptor.getValue();
+            InteractionPromptMessage msg = projectedPrompt();
             assertThat(msg.options()).doesNotHaveDuplicates();
             // Names should be sorted alphabetically (TreeSet)
             int alphaIdx = msg.options().indexOf("Alpha");
@@ -712,14 +693,14 @@ class PlayerInputServiceTest {
     class BeginSpellCardNameChoice {
 
         @Test
-        @DisplayName("Sends to choosingPlayerId via mind control redirect")
-        void sendsToChoosingPlayer() {
+        @DisplayName("Stores choosingPlayerId as the decision owner")
+        void storesChoosingPlayer() {
             Card card = createCreature("Bear");
             gd.playerHands.get(PLAYER2_ID).add(card);
 
             svc.beginSpellCardNameChoice(gd, PLAYER1_ID, PLAYER2_ID, List.of(CardType.LAND), null);
 
-            verify(sessionManager).sendToPlayer(eq(PLAYER1_ID), any(InteractionPromptMessage.class));
+            assertThat(gd.interaction.activeInteraction().decidingPlayerId()).isEqualTo(PLAYER1_ID);
         }
 
         @Test
@@ -743,8 +724,7 @@ class PlayerInputServiceTest {
 
             svc.beginSpellCardNameChoice(gd, PLAYER1_ID, PLAYER2_ID, List.of(), CardType.ARTIFACT);
 
-            verify(sessionManager).sendToPlayer(eq(PLAYER1_ID), messageCaptor.capture());
-            InteractionPromptMessage msg = (InteractionPromptMessage) messageCaptor.getValue();
+            InteractionPromptMessage msg = projectedPrompt();
             assertThat(msg.options()).contains("Sol Ring");
             assertThat(msg.options()).doesNotContain("Bear");
         }
@@ -759,15 +739,15 @@ class PlayerInputServiceTest {
     class BeginSphinxAmbassadorCardNameChoice {
 
         @Test
-        @DisplayName("Collects all card names and sends to naming player")
+        @DisplayName("Collects all card names for the naming player")
         void collectsAllNames() {
             Card card = createCreature("Sphinx");
             gd.playerHands.get(PLAYER2_ID).add(card);
 
             svc.beginSphinxAmbassadorCardNameChoice(gd, PLAYER2_ID, PLAYER1_ID);
 
-            verify(sessionManager).sendToPlayer(eq(PLAYER2_ID), messageCaptor.capture());
-            InteractionPromptMessage msg = (InteractionPromptMessage) messageCaptor.getValue();
+            assertThat(gd.interaction.activeInteraction().decidingPlayerId()).isEqualTo(PLAYER2_ID);
+            InteractionPromptMessage msg = projectedPrompt();
             assertThat(msg.options()).contains("Sphinx");
             assertThat(msg.prompt()).isEqualTo("Choose a card name.");
         }
@@ -797,8 +777,6 @@ class PlayerInputServiceTest {
         void setsInteractionState() {
             Card card = createCreature("Bear");
             gd.playerHands.get(PLAYER2_ID).add(card);
-            CardView cardView = mock(CardView.class);
-            when(cardViewFactory.create(card)).thenReturn(cardView);
 
             svc.beginMultiZoneExileChoice(gd, PLAYER1_ID, List.of(card), PLAYER2_ID, "Bear");
 
@@ -819,8 +797,7 @@ class PlayerInputServiceTest {
 
             svc.beginMultiZoneExileChoice(gd, PLAYER1_ID, List.of(card1, card2), PLAYER2_ID, "Bear");
 
-            verify(sessionManager).sendToPlayer(eq(PLAYER1_ID), messageCaptor.capture());
-            InteractionPromptMessage msg = (InteractionPromptMessage) messageCaptor.getValue();
+            InteractionPromptMessage msg = projectedPrompt();
             assertThat(msg.maxCount()).isEqualTo(2);
             assertThat(msg.cards()).containsExactly(view1, view2);
             assertThat(msg.prompt()).contains("Bear");
@@ -852,8 +829,7 @@ class PlayerInputServiceTest {
 
             svc.beginImprintFromHandChoice(gd, PLAYER1_ID, List.of(0, 2), "Choose to imprint", sourcePermId);
 
-            verify(sessionManager).sendToPlayer(eq(PLAYER1_ID), messageCaptor.capture());
-            InteractionPromptMessage msg = (InteractionPromptMessage) messageCaptor.getValue();
+            InteractionPromptMessage msg = projectedPrompt();
             assertThat(msg.cardIndices()).containsExactly(0, 2);
             assertThat(msg.prompt()).isEqualTo("Choose to imprint");
             assertThat(msg.declinable()).isFalse();
@@ -887,8 +863,7 @@ class PlayerInputServiceTest {
 
             svc.beginExileFromHandChoice(gd, PLAYER1_ID, sourcePermId, 1);
 
-            verify(sessionManager).sendToPlayer(eq(PLAYER1_ID), messageCaptor.capture());
-            InteractionPromptMessage msg = (InteractionPromptMessage) messageCaptor.getValue();
+            InteractionPromptMessage msg = projectedPrompt();
             assertThat(msg.cardIndices()).containsExactly(0, 1, 2);
             assertThat(msg.prompt()).isEqualTo("Choose a card to exile.");
         }
@@ -910,8 +885,7 @@ class PlayerInputServiceTest {
             svc.beginDiscardChoice(gd, PLAYER1_ID, 1);
 
             assertThat(gd.interaction.activeInteraction()).isInstanceOf(PendingInteraction.DiscardChoice.class);
-            verify(sessionManager).sendToPlayer(eq(PLAYER1_ID), messageCaptor.capture());
-            InteractionPromptMessage msg = (InteractionPromptMessage) messageCaptor.getValue();
+            InteractionPromptMessage msg = projectedPrompt();
             assertThat(msg.cardIndices()).containsExactly(0, 1);
             assertThat(msg.prompt()).isEqualTo("Choose a card to discard.");
         }
@@ -922,8 +896,7 @@ class PlayerInputServiceTest {
             svc.beginDiscardChoice(gd, PLAYER1_ID, List.of(1, 3), "Discard a land", 1);
 
             assertThat(gd.interaction.activeInteraction()).isInstanceOf(PendingInteraction.DiscardChoice.class);
-            verify(sessionManager).sendToPlayer(eq(PLAYER1_ID), messageCaptor.capture());
-            InteractionPromptMessage msg = (InteractionPromptMessage) messageCaptor.getValue();
+            InteractionPromptMessage msg = projectedPrompt();
             assertThat(msg.cardIndices()).containsExactly(1, 3);
             assertThat(msg.prompt()).isEqualTo("Discard a land");
         }
@@ -942,7 +915,6 @@ class PlayerInputServiceTest {
         void doesNothingWhenEmpty() {
             svc.processNextMayAbility(gd);
 
-            verifyNoInteractions(sessionManager);
             assertThat(gd.interaction.activeInteraction()).isNull();
         }
 
@@ -956,7 +928,7 @@ class PlayerInputServiceTest {
             svc.processNextMayAbility(gd);
 
             assertThat(gd.pendingMayAbilities).isEmpty();
-            verifyNoInteractions(sessionManager);
+            assertThat(gd.interaction.activeInteraction()).isNull();
         }
 
         @Test
@@ -968,8 +940,7 @@ class PlayerInputServiceTest {
             svc.processNextMayAbility(gd);
 
             assertThat(gd.interaction.activeInteraction()).isInstanceOf(PendingInteraction.MayAbilityChoice.class);
-            verify(sessionManager).sendToPlayer(eq(PLAYER1_ID), messageCaptor.capture());
-            InteractionPromptMessage msg = (InteractionPromptMessage) messageCaptor.getValue();
+            InteractionPromptMessage msg = projectedPrompt();
             assertThat(msg.prompt()).isEqualTo("May draw a card");
             assertThat(msg.canPay()).isTrue();
             assertThat(msg.manaCost()).isNull();
@@ -986,8 +957,7 @@ class PlayerInputServiceTest {
 
             svc.processNextMayAbility(gd);
 
-            verify(sessionManager).sendToPlayer(eq(PLAYER1_ID), messageCaptor.capture());
-            InteractionPromptMessage msg = (InteractionPromptMessage) messageCaptor.getValue();
+            InteractionPromptMessage msg = projectedPrompt();
             assertThat(msg.canPay()).isTrue();
             assertThat(msg.manaCost()).isEqualTo("{1}{U}");
         }
@@ -1001,8 +971,7 @@ class PlayerInputServiceTest {
 
             svc.processNextMayAbility(gd);
 
-            verify(sessionManager).sendToPlayer(eq(PLAYER1_ID), messageCaptor.capture());
-            InteractionPromptMessage msg = (InteractionPromptMessage) messageCaptor.getValue();
+            InteractionPromptMessage msg = projectedPrompt();
             assertThat(msg.canPay()).isFalse();
         }
 
@@ -1015,8 +984,7 @@ class PlayerInputServiceTest {
 
             svc.processNextMayAbility(gd);
 
-            verify(sessionManager).sendToPlayer(eq(PLAYER1_ID), messageCaptor.capture());
-            InteractionPromptMessage msg = (InteractionPromptMessage) messageCaptor.getValue();
+            InteractionPromptMessage msg = projectedPrompt();
             assertThat(msg.canPay()).isTrue();
         }
 
@@ -1028,14 +996,13 @@ class PlayerInputServiceTest {
 
             svc.processNextMayAbility(gd);
 
-            verify(sessionManager).sendToPlayer(eq(PLAYER1_ID), messageCaptor.capture());
-            InteractionPromptMessage msg = (InteractionPromptMessage) messageCaptor.getValue();
+            InteractionPromptMessage msg = projectedPrompt();
             assertThat(msg.canPay()).isFalse();
         }
 
         @Test
-        @DisplayName("Redirects to controller when player is mind-controlled")
-        void redirectsMindControlled() {
+        @DisplayName("Keeps the affected player as decision owner when mind-controlled")
+        void keepsAffectedPlayerAsDecisionOwnerWhenMindControlled() {
             UUID controllerId = UUID.randomUUID();
             gd.playerIdToName.put(controllerId, "Controller");
             gd.mindControlledPlayerId = PLAYER1_ID;
@@ -1046,7 +1013,8 @@ class PlayerInputServiceTest {
 
             svc.processNextMayAbility(gd);
 
-            verify(sessionManager).sendToPlayer(eq(controllerId), any(InteractionPromptMessage.class));
+            assertThat(gd.interaction.activeInteraction().decidingPlayerId()).isEqualTo(PLAYER1_ID);
+            assertThat(projectedPrompt()).isNotNull();
         }
     }
 }

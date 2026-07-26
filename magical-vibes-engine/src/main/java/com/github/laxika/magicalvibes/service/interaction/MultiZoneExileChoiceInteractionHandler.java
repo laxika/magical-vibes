@@ -4,10 +4,6 @@ import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.GameData;
 import com.github.laxika.magicalvibes.model.PendingInteraction;
 import com.github.laxika.magicalvibes.model.Player;
-import com.github.laxika.magicalvibes.networking.SessionManager;
-import com.github.laxika.magicalvibes.networking.message.InteractionPromptMessage;
-import com.github.laxika.magicalvibes.networking.model.CardView;
-import com.github.laxika.magicalvibes.networking.service.CardViewFactory;
 import com.github.laxika.magicalvibes.service.input.ChoiceHandlerService;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -29,8 +25,6 @@ import java.util.UUID;
 public class MultiZoneExileChoiceInteractionHandler
         implements InteractionHandler<PendingInteraction.MultiZoneExileChoice> {
 
-    private final SessionManager sessionManager;
-    private final CardViewFactory cardViewFactory;
     private final ChoiceHandlerService choiceHandlerService;
 
     @Override
@@ -41,35 +35,6 @@ public class MultiZoneExileChoiceInteractionHandler
     @Override
     public Class<? extends InteractionAnswer> answerType() {
         return InteractionAnswer.CardsChosen.class;
-    }
-
-    @Override
-    public void prompt(GameData gameData, PendingInteraction.MultiZoneExileChoice interaction, UUID recipientId) {
-        List<CardView> cardViews = new ArrayList<>();
-        UUID targetPid = interaction.targetPlayerId();
-        for (Card card : gameData.playerHands.getOrDefault(targetPid, List.of())) {
-            if (interaction.validCardIds().contains(card.getId())) {
-                cardViews.add(cardViewFactory.create(card));
-            }
-        }
-        for (Card card : gameData.playerGraveyards.getOrDefault(targetPid, List.of())) {
-            if (interaction.validCardIds().contains(card.getId())) {
-                cardViews.add(cardViewFactory.create(card));
-            }
-        }
-        for (Card card : gameData.playerDecks.getOrDefault(targetPid, List.of())) {
-            if (interaction.validCardIds().contains(card.getId())) {
-                cardViews.add(cardViewFactory.create(card));
-            }
-        }
-
-        sessionManager.sendToPlayer(recipientId, InteractionPromptMessage.multiCardPick(
-                new ArrayList<>(interaction.validCardIds()), cardViews, interaction.maxCount(),
-                "Choose any number of cards named \"" + interaction.cardName() + "\" to exile."));
-
-        String playerName = gameData.playerIdToName.get(interaction.playerId());
-        log.info("Game {} - Awaiting {} to choose cards to exile (up to {})",
-                gameData.id, playerName, interaction.maxCount());
     }
 
     @Override

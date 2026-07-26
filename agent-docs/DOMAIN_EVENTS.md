@@ -115,7 +115,7 @@ for every family is zero.
 | Legacy surface | Current total | Eventual target |
 |---|---:|---:|
 | `GameBroadcastService.broadcastGameState` | 19 | 0 |
-| engine `SessionManager.sendToPlayer/sendToPlayers` | 38 | 0 |
+| engine `SessionManager.sendToPlayer/sendToPlayers` | 8 | 0 |
 | `GameBroadcastService.logAndBroadcast` | 2,293 | 0 |
 
 The lifecycle migration ratchet additionally fixes the direct state/session count at zero for
@@ -152,9 +152,9 @@ player-specific hidden-information rules in `GameBroadcastService`.
 |---|---:|---|
 | service root | 1 | hand reveal |
 | `effect/normalfx` | 7 | private hand/library reveal notifications |
-| `interaction` | 30 | remaining registry-managed non-combat interaction prompts |
+| `interaction` | 0 | standard registry-managed prompts are event projections |
 
-Exhaustive files for these 38 calls:
+Exhaustive files for these 8 calls:
 
 - Service root: `GameBroadcastService` 1.
 - Effects: `LookAtHandEffectHandler`, `LookAtRandomCardInTargetPlayerHandEffectHandler`,
@@ -163,25 +163,11 @@ Exhaustive files for these 38 calls:
   `RevealRandomCardFromTargetPlayerHandLoseLifeEqualToManaValueEffectHandler`,
   `RevealRandomHandCardAndPlayEffectHandler`, and `TempestEfreetAnteExchangeEffectHandler`,
   one each.
-- Interaction prompts, one each:
-  `AdNauseamRepeatChoiceInteractionHandler`,
-  `BrilliantUltimatumPlayChoiceInteractionHandler`,
-  `ColorChoiceInteractionHandler`,
-  `DoomsdayChoiceInteractionHandler`, `GraveyardChoiceInteractionHandler`,
-  `GraveyardExileCostChoiceInteractionHandler`, `HandCardChoiceInteractionHandlers`,
-  `HandTopBottomChoiceInteractionHandler`, `IllicitAuctionBidChoiceInteractionHandler`,
-  `ImprovisationCapstoneCastChoiceInteractionHandler`,
-  `KeepCardsInHandChoiceInteractionHandler`, `KnowledgePoolCastChoiceInteractionHandler`,
-  `LibraryReorderInteractionHandler`, `LibraryRevealChoiceInteractionHandler`,
-  `LibrarySearchInteractionHandler`, `MayAbilityChoiceInteractionHandler`,
-  `MirrorOfFateChoiceInteractionHandler`, `MultiGraveyardChoiceInteractionHandler`,
-  `MultiPermanentChoiceInteractionHandler`, `MultiZoneExileChoiceInteractionHandler`,
-  `PermanentAuctionChoiceInteractionHandler`, `PermanentChoiceInteractionHandler`,
-  `PutCardsFromHandOnLibraryCardChoiceInteractionHandler`,
-  `PutCardsFromHandOnLibraryDestinationChoiceInteractionHandler`,
-  `RevealCardsDiscardChoiceInteractionHandler`, `RevealedHandChoiceInteractionHandler`,
-  `ScryInteractionHandler`, `SearchLibraryToTopChoiceInteractionHandler`,
-  `SylvanLibraryChoiceInteractionHandler`, and `XValueChoiceInteractionHandler`.
+- Standard interaction handlers: zero. The 30 formerly listed handler files now contain only
+  answer validation/mutation logic. `InteractionPromptProjectionRegistry` has one exact-class
+  projection strategy for every standard promptable `PendingInteraction` subtype and constructs
+  the unchanged `InteractionPromptMessage` only after the decision identity is matched against
+  the authoritative active interaction.
 
 Migration classification:
 
@@ -193,8 +179,9 @@ Migration classification:
   Attacker, blocker, and combat-damage assignment keep their distinct decision kinds and carry
   finalized immutable legality snapshots on their pending interactions. The canonical projection
   subscriber constructs `AvailableAttackersMessage`, `AvailableBlockersMessage`, and
-  `CombatDamageAssignmentNotification` directly. The 30 remaining interaction-handler sends are
-  projection-side prompt renderers, never mutation-side sends.
+  `CombatDamageAssignmentNotification` directly. Standard interaction facts are projected through
+  the exact-class `InteractionPromptProjectionRegistry`; handlers never send or construct
+  networking DTOs.
 - The seven effect reveal sends plus `GameBroadcastService.revealOpponentHandToPlayer` become
   `PRIVATE_REVEAL` with immutable `CardSnapshot` lists and explicit recipients.
 - `KarnRestartGameEffectHandler` now emits a public state invalidation/observation, not a
@@ -258,7 +245,7 @@ intentionally unchanged by this foundation prompt.
 | Canonical projection subscriber | `GameEventProjectionSubscriber` → `GameViewProjectionFactory`/interaction registry → typed messages → `GameMessageTransport` | post-lock authoritative projection, explicit audience enforcement, no serialization, per-recipient transport failure isolation, human/AI typed-message parity | **Complete** |
 | Public game-state refresh | 19 `broadcastGameState` calls → player-specific `GameStateMessage` | coalesced `STATE_INVALIDATED`; canonical subscriber constructs the same per-player wire DTO after unlock | Lifecycle, `GameService`, `turn`, combat, spell, ability, input-completion, and stack-resolution workflows complete; remaining emission migration open |
 | Game log | 2,293 `logAndBroadcast` calls → `gameLog` → next state message | append under lock plus `GAME_LOG` invalidation; preserve structured segments and incremental wire behavior | Combat package complete; remaining packages open |
-| Generic interactions | begin site → `InteractionHandlerRegistry.begin` → `DECISION_REQUESTED` → projection-side handler `prompt` | stable decision ID plus non-coalescible `DECISION_REQUESTED(INTERACTION)`; canonical subscriber reuses the registry prompt projector for open/replay | **Complete** |
+| Generic interactions | begin site → authoritative pending interaction + stable ID → `DECISION_REQUESTED` → `InteractionPromptProjectionRegistry` → typed prompt | one non-coalescible private fact per interaction; exact identity match before projection; every standard subtype has one explicit strategy and no raw-state fallback; handlers have no session/networking dependency | **Complete** |
 | Attackers | `CombatAttackService` finalizes an immutable legality snapshot → registry decision event → canonical subscriber → `AvailableAttackersMessage` | `DECISION_REQUESTED(ATTACKER_DECLARATION)` with stable retry/replay identity and Mindslaver audience | **Complete** |
 | Blockers | `CombatBlockService` finalizes legal pairs and requirements → registry decision event → canonical subscriber → `AvailableBlockersMessage` | `DECISION_REQUESTED(BLOCKER_DECLARATION)` with stable retry/replay identity | **Complete** |
 | Combat damage assignment | `CombatDamageService` snapshots targets/trample/deathtouch → registry decision event → canonical subscriber → notification | `DECISION_REQUESTED(COMBAT_DAMAGE_ASSIGNMENT)` with stable retry/replay identity | **Complete** |

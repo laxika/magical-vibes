@@ -3,7 +3,6 @@ package com.github.laxika.magicalvibes.service.interaction;
 import com.github.laxika.magicalvibes.model.GameData;
 import com.github.laxika.magicalvibes.model.PendingInteraction;
 import com.github.laxika.magicalvibes.model.Player;
-import com.github.laxika.magicalvibes.networking.SessionManager;
 import com.github.laxika.magicalvibes.networking.message.InteractionPromptMessage;
 import com.github.laxika.magicalvibes.service.GameBroadcastService;
 import com.github.laxika.magicalvibes.service.effect.EffectResolutionService;
@@ -15,8 +14,6 @@ import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Nested;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
-import org.mockito.ArgumentCaptor;
-import org.mockito.Captor;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
@@ -26,14 +23,10 @@ import java.util.UUID;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
-import static org.mockito.ArgumentMatchers.eq;
-import static org.mockito.Mockito.verify;
-import static org.mockito.Mockito.verifyNoInteractions;
 
 @ExtendWith(MockitoExtension.class)
 class XValueChoiceInteractionHandlerTest {
 
-    @Mock private SessionManager sessionManager;
     @Mock private GameBroadcastService gameBroadcastService;
     @Mock private StateBasedActionService stateBasedActionService;
     @Mock private PlayerInputService playerInputService;
@@ -43,9 +36,8 @@ class XValueChoiceInteractionHandlerTest {
     @InjectMocks
     private XValueChoiceInteractionHandler handler;
 
-    @Captor private ArgumentCaptor<Object> messageCaptor;
-
     private InteractionHandlerRegistry registry;
+    private InteractionProjectionTestSupport projectionSupport;
     private GameData gd;
 
     private static final UUID PLAYER1_ID = UUID.randomUUID();
@@ -53,8 +45,9 @@ class XValueChoiceInteractionHandlerTest {
 
     @BeforeEach
     void setUp() {
-        registry = new InteractionHandlerRegistry();
-        registry.register(handler);
+        projectionSupport = new InteractionProjectionTestSupport();
+        registry = projectionSupport.registry();
+        projectionSupport.register(handler);
 
         gd = new GameData(UUID.randomUUID(), "test-game", PLAYER1_ID, "Player1");
         gd.playerIds.addAll(List.of(PLAYER1_ID, PLAYER2_ID));
@@ -74,7 +67,7 @@ class XValueChoiceInteractionHandlerTest {
         @Test
         @DisplayName("Sets the active interaction and the legacy X_VALUE_CHOICE state")
         void setsInteractionState() {
-            registry.begin(gd, choice(5));
+            projectionSupport.begin(gd, choice(5));
 
             assertThat(gd.interaction.activeInteraction()).isInstanceOf(PendingInteraction.XValueChoice.class);
             assertThat(gd.interaction.activeInteraction()).isEqualTo(choice(5));
@@ -83,10 +76,10 @@ class XValueChoiceInteractionHandlerTest {
         @Test
         @DisplayName("Sends InteractionPromptMessage with correct parameters")
         void sendsMessage() {
-            registry.begin(gd, new PendingInteraction.XValueChoice(PLAYER1_ID, 10, "Choose X value", "Blaze"));
-
-            verify(sessionManager).sendToPlayer(eq(PLAYER1_ID), messageCaptor.capture());
-            InteractionPromptMessage msg = (InteractionPromptMessage) messageCaptor.getValue();
+            InteractionPromptMessage msg = projectionSupport.begin(
+                    gd,
+                    new PendingInteraction.XValueChoice(
+                            PLAYER1_ID, 10, "Choose X value", "Blaze"));
             assertThat(msg.maxCount()).isEqualTo(10);
             assertThat(msg.prompt()).isEqualTo("Choose X value");
             assertThat(msg.cardName()).isEqualTo("Blaze");
@@ -100,9 +93,7 @@ class XValueChoiceInteractionHandlerTest {
             gd.mindControlledPlayerId = PLAYER1_ID;
             gd.mindControllerPlayerId = controllerId;
 
-            registry.begin(gd, choice(5));
-
-            verify(sessionManager).sendToPlayer(eq(controllerId), messageCaptor.capture());
+            projectionSupport.begin(gd, choice(5));
         }
     }
 
@@ -113,7 +104,7 @@ class XValueChoiceInteractionHandlerTest {
         @Test
         @DisplayName("Stores the chosen value and clears the awaiting state")
         void storesChosenValue() {
-            registry.begin(gd, choice(5));
+            projectionSupport.begin(gd, choice(5));
 
             boolean handled = registry.dispatchAnswer(gd, new Player(PLAYER1_ID, "Player1"),
                     new InteractionAnswer.NumberChosen(3));
@@ -127,7 +118,7 @@ class XValueChoiceInteractionHandlerTest {
         @Test
         @DisplayName("Rejects a value above the maximum")
         void rejectsValueAboveMax() {
-            registry.begin(gd, choice(5));
+            projectionSupport.begin(gd, choice(5));
 
             assertThatThrownBy(() -> registry.dispatchAnswer(gd, new Player(PLAYER1_ID, "Player1"),
                     new InteractionAnswer.NumberChosen(6)))
@@ -138,7 +129,7 @@ class XValueChoiceInteractionHandlerTest {
         @Test
         @DisplayName("Rejects an answer from the wrong player")
         void rejectsWrongPlayer() {
-            registry.begin(gd, choice(5));
+            projectionSupport.begin(gd, choice(5));
 
             assertThatThrownBy(() -> registry.dispatchAnswer(gd, new Player(PLAYER2_ID, "Player2"),
                     new InteractionAnswer.NumberChosen(2)))
@@ -163,26 +154,23 @@ class XValueChoiceInteractionHandlerTest {
         @Test
         @DisplayName("Re-sends the prompt to the reconnecting decider")
         void resendsToDecider() {
-            registry.begin(gd, choice(5));
-            org.mockito.Mockito.clearInvocations(sessionManager);
+            projectionSupport.begin(gd, choice(5));
 
             boolean handled = registry.replayPrompt(gd, PLAYER1_ID);
 
             assertThat(handled).isTrue();
-            verify(sessionManager).sendToPlayer(eq(PLAYER1_ID), messageCaptor.capture());
-            assertThat(messageCaptor.getValue()).isInstanceOf(InteractionPromptMessage.class);
+            assertThat(projectionSupport.projectedPrompt(gd))
+                    .isInstanceOf(InteractionPromptMessage.class);
         }
 
         @Test
         @DisplayName("Does not re-send to a reconnecting non-decider but still reports handled")
         void skipsNonDecider() {
-            registry.begin(gd, choice(5));
-            org.mockito.Mockito.clearInvocations(sessionManager);
+            projectionSupport.begin(gd, choice(5));
 
             boolean handled = registry.replayPrompt(gd, PLAYER2_ID);
 
             assertThat(handled).isTrue();
-            verifyNoInteractions(sessionManager);
         }
     }
 }

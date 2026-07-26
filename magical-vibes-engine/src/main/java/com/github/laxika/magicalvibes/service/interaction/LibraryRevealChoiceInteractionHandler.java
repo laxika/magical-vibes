@@ -4,10 +4,6 @@ import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.GameData;
 import com.github.laxika.magicalvibes.model.PendingInteraction;
 import com.github.laxika.magicalvibes.model.Player;
-import com.github.laxika.magicalvibes.networking.SessionManager;
-import com.github.laxika.magicalvibes.networking.message.InteractionPromptMessage;
-import com.github.laxika.magicalvibes.networking.model.CardView;
-import com.github.laxika.magicalvibes.networking.service.CardViewFactory;
 import com.github.laxika.magicalvibes.service.input.LibraryChoiceHandlerService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Component;
@@ -31,8 +27,6 @@ import java.util.stream.Collectors;
 public class LibraryRevealChoiceInteractionHandler
         implements InteractionHandler<PendingInteraction.LibraryRevealChoice> {
 
-    private final SessionManager sessionManager;
-    private final CardViewFactory cardViewFactory;
     private final LibraryChoiceHandlerService libraryChoiceHandlerService;
 
     @Override
@@ -43,22 +37,6 @@ public class LibraryRevealChoiceInteractionHandler
     @Override
     public Class<? extends InteractionAnswer> answerType() {
         return InteractionAnswer.CardsChosen.class;
-    }
-
-    @Override
-    public void prompt(GameData gameData, PendingInteraction.LibraryRevealChoice interaction, UUID recipientId) {
-        if (interaction.prompt() == null) {
-            return;
-        }
-        Map<UUID, Card> cardsById = interaction.allCards().stream()
-                .collect(Collectors.toMap(Card::getId, Function.identity(), (a, b) -> a));
-        List<CardView> cardViews = interaction.validCardIds().stream()
-                .map(cardsById::get)
-                .map(cardViewFactory::create)
-                .toList();
-        sessionManager.sendToPlayer(recipientId, InteractionPromptMessage.multiCardPick(
-                new ArrayList<>(interaction.validCardIds()), cardViews, interaction.maxCount(),
-                interaction.prompt()));
     }
 
     @Override

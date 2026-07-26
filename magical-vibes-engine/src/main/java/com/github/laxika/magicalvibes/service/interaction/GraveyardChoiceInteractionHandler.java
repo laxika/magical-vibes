@@ -3,8 +3,6 @@ package com.github.laxika.magicalvibes.service.interaction;
 import com.github.laxika.magicalvibes.model.GameData;
 import com.github.laxika.magicalvibes.model.PendingInteraction;
 import com.github.laxika.magicalvibes.model.Player;
-import com.github.laxika.magicalvibes.networking.SessionManager;
-import com.github.laxika.magicalvibes.networking.message.InteractionPromptMessage;
 import com.github.laxika.magicalvibes.service.input.GraveyardChoiceHandlerService;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -25,7 +23,6 @@ import java.util.UUID;
 public class GraveyardChoiceInteractionHandler
         implements InteractionHandler<PendingInteraction.GraveyardChoice> {
 
-    private final SessionManager sessionManager;
     private final GraveyardChoiceHandlerService graveyardChoiceHandlerService;
 
     @Override
@@ -36,16 +33,6 @@ public class GraveyardChoiceInteractionHandler
     @Override
     public Class<? extends InteractionAnswer> answerType() {
         return InteractionAnswer.GraveyardCardChosen.class;
-    }
-
-    @Override
-    public void prompt(GameData gameData, PendingInteraction.GraveyardChoice interaction, UUID recipientId) {
-        boolean allGraveyards = interaction.cardPool() != null;
-        sessionManager.sendToPlayer(recipientId, InteractionPromptMessage.graveyardIndexPick(
-                interaction.validIndices(), interaction.prompt(), allGraveyards));
-
-        String playerName = gameData.playerIdToName.get(interaction.playerId());
-        log.info("Game {} - Awaiting {} to choose a card from graveyard", gameData.id, playerName);
     }
 
     @Override

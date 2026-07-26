@@ -34,20 +34,20 @@ final class InteractionRegistryTestSupport {
                                                   GameBroadcastService gameBroadcastService) {
         InteractionHandlerRegistry registry = new InteractionHandlerRegistry();
         registry.register(new LibraryReorderInteractionHandler(
-                sessionManager, cardViewFactory, gameBroadcastService,
+                gameBroadcastService,
                 mock(WarpWorldService.class), mock(PlayerInputService.class),
                 mock(TurnProgressionService.class), mock(EffectResolutionService.class)));
         registry.register(new HandTopBottomChoiceInteractionHandler(
-                sessionManager, cardViewFactory, gameBroadcastService, mock(TurnProgressionService.class)));
+                gameBroadcastService, mock(TurnProgressionService.class)));
         registry.register(new ScryInteractionHandler(
-                sessionManager, cardViewFactory, gameBroadcastService,
+                gameBroadcastService,
                 mock(PlayerInputService.class), mock(TurnProgressionService.class),
                 mock(EffectResolutionService.class)));
-        registry.register(new ColorChoiceInteractionHandler(sessionManager, mock(ChoiceHandlerService.class)));
+        registry.register(new ColorChoiceInteractionHandler(mock(ChoiceHandlerService.class)));
         registry.register(new LibraryRevealChoiceInteractionHandler(
-                sessionManager, cardViewFactory, mock(LibraryChoiceHandlerService.class)));
+                mock(LibraryChoiceHandlerService.class)));
         registry.register(new LibrarySearchInteractionHandler(
-                sessionManager, cardViewFactory, mock(LibraryChoiceHandlerService.class)));
+                mock(LibraryChoiceHandlerService.class)));
         return registry;
     }
 }

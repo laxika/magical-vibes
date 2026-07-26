@@ -5,8 +5,6 @@ import com.github.laxika.magicalvibes.model.GameData;
 import com.github.laxika.magicalvibes.model.GameLog;
 import com.github.laxika.magicalvibes.model.PendingInteraction;
 import com.github.laxika.magicalvibes.model.Player;
-import com.github.laxika.magicalvibes.networking.SessionManager;
-import com.github.laxika.magicalvibes.networking.message.InteractionPromptMessage;
 import com.github.laxika.magicalvibes.service.GameBroadcastService;
 import com.github.laxika.magicalvibes.service.turn.TurnProgressionService;
 import java.util.ArrayList;
@@ -30,7 +28,6 @@ public class PutCardsFromHandOnLibraryDestinationChoiceInteractionHandler
     // The option strings live on the record so its legalOptions() stays in sync with the prompt.
     private static final String TOP = PendingInteraction.PutCardsFromHandOnLibraryDestinationChoice.OPTIONS.get(0);
 
-    private final SessionManager sessionManager;
     private final GameBroadcastService gameBroadcastService;
     private final TurnProgressionService turnProgressionService;
 
@@ -42,14 +39,6 @@ public class PutCardsFromHandOnLibraryDestinationChoiceInteractionHandler
     @Override
     public Class<? extends InteractionAnswer> answerType() {
         return InteractionAnswer.ListChoiceMade.class;
-    }
-
-    @Override
-    public void prompt(GameData gameData, PendingInteraction.PutCardsFromHandOnLibraryDestinationChoice interaction,
-                       UUID recipientId) {
-        sessionManager.sendToPlayer(recipientId, InteractionPromptMessage.listPick(
-                PendingInteraction.PutCardsFromHandOnLibraryDestinationChoice.OPTIONS,
-                "Put the chosen cards on the top or bottom of your library?", false));
     }
 
     @Override

@@ -233,10 +233,6 @@ class SpellAbilityStackEventSequenceTest {
         }
 
         @Override
-        public void prompt(GameData gameData, T interaction, UUID recipientId) {
-        }
-
-        @Override
         public void handleAnswer(
                 GameData gameData, Player player, T interaction, InteractionAnswer answer) {
         }

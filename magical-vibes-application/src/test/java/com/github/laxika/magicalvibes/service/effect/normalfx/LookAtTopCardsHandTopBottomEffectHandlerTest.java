@@ -82,7 +82,7 @@ class LookAtTopCardsHandTopBottomEffectHandlerTest {
                 InteractionRegistryTestSupport.registryFor(sessionManager, cardViewFactory, gameBroadcastService));
         InteractionHandlerRegistry interactionHandlerRegistry = new InteractionHandlerRegistry();
         interactionHandlerRegistry.register(new HandTopBottomChoiceInteractionHandler(
-                sessionManager, cardViewFactory, gameBroadcastService, mock(TurnProgressionService.class)));
+                gameBroadcastService, mock(TurnProgressionService.class)));
         lookAtTopCardsHandTopBottomEffectHandler = new LookAtTopCardsHandTopBottomEffectHandler(
                 gameBroadcastService, interactionHandlerRegistry, libraryRevealSupport);
 

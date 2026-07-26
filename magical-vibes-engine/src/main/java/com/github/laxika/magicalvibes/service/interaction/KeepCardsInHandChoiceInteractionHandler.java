@@ -4,10 +4,6 @@ import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.GameData;
 import com.github.laxika.magicalvibes.model.PendingInteraction;
 import com.github.laxika.magicalvibes.model.Player;
-import com.github.laxika.magicalvibes.networking.SessionManager;
-import com.github.laxika.magicalvibes.networking.message.InteractionPromptMessage;
-import com.github.laxika.magicalvibes.networking.model.CardView;
-import com.github.laxika.magicalvibes.networking.service.CardViewFactory;
 import com.github.laxika.magicalvibes.service.GameBroadcastService;
 import com.github.laxika.magicalvibes.service.effect.normalfx.KeepCardsInHandSupport;
 import com.github.laxika.magicalvibes.service.input.InputCompletionService;
@@ -30,8 +26,6 @@ import org.springframework.stereotype.Component;
 public class KeepCardsInHandChoiceInteractionHandler
         implements InteractionHandler<PendingInteraction.KeepCardsInHandChoice> {
 
-    private final SessionManager sessionManager;
-    private final CardViewFactory cardViewFactory;
     private final KeepCardsInHandSupport keepCardsInHandSupport;
     private final GameBroadcastService gameBroadcastService;
     private final InputCompletionService inputCompletionService;
@@ -44,21 +38,6 @@ public class KeepCardsInHandChoiceInteractionHandler
     @Override
     public Class<? extends InteractionAnswer> answerType() {
         return InteractionAnswer.CardsChosen.class;
-    }
-
-    @Override
-    public void prompt(GameData gameData, PendingInteraction.KeepCardsInHandChoice interaction, UUID recipientId) {
-        List<Card> hand = gameData.playerHands.get(interaction.playerId());
-        List<CardView> cardViews = hand == null ? List.of()
-                : hand.stream()
-                        .filter(c -> interaction.validCardIds().contains(c.getId()))
-                        .map(cardViewFactory::create)
-                        .toList();
-
-        sessionManager.sendToPlayer(recipientId,
-                InteractionPromptMessage.multiCardPick(new ArrayList<>(interaction.validCardIds()), cardViews,
-                        interaction.maxCount(),
-                        "Choose up to seven cards in your hand to keep. Shuffle the rest into your library."));
     }
 
     @Override

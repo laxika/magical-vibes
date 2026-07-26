@@ -5,10 +5,6 @@ import com.github.laxika.magicalvibes.model.GameData;
 import com.github.laxika.magicalvibes.model.GameLog;
 import com.github.laxika.magicalvibes.model.PendingInteraction;
 import com.github.laxika.magicalvibes.model.Player;
-import com.github.laxika.magicalvibes.networking.SessionManager;
-import com.github.laxika.magicalvibes.networking.message.InteractionPromptMessage;
-import com.github.laxika.magicalvibes.networking.model.CardView;
-import com.github.laxika.magicalvibes.networking.service.CardViewFactory;
 import com.github.laxika.magicalvibes.service.GameBroadcastService;
 import com.github.laxika.magicalvibes.service.turn.TurnProgressionService;
 import lombok.RequiredArgsConstructor;
@@ -29,8 +25,6 @@ import java.util.UUID;
 public class HandTopBottomChoiceInteractionHandler
         implements InteractionHandler<PendingInteraction.HandTopBottomChoice> {
 
-    private final SessionManager sessionManager;
-    private final CardViewFactory cardViewFactory;
     private final GameBroadcastService gameBroadcastService;
     private final TurnProgressionService turnProgressionService;
 
@@ -42,15 +36,6 @@ public class HandTopBottomChoiceInteractionHandler
     @Override
     public Class<? extends InteractionAnswer> answerType() {
         return InteractionAnswer.HandTopBottom.class;
-    }
-
-    @Override
-    public void prompt(GameData gameData, PendingInteraction.HandTopBottomChoice interaction, UUID recipientId) {
-        List<CardView> cardViews = interaction.cards().stream().map(cardViewFactory::create).toList();
-        sessionManager.sendToPlayer(recipientId, InteractionPromptMessage.handTopBottom(
-                cardViews,
-                "Look at the top " + interaction.cards().size()
-                        + " cards of your library. Choose one to put into your hand."));
     }
 
     @Override

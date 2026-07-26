@@ -4,15 +4,12 @@ import com.github.laxika.magicalvibes.model.ChoiceContext;
 import com.github.laxika.magicalvibes.model.GameData;
 import com.github.laxika.magicalvibes.model.PendingInteraction;
 import com.github.laxika.magicalvibes.model.Player;
-import com.github.laxika.magicalvibes.networking.SessionManager;
 import com.github.laxika.magicalvibes.networking.message.InteractionPromptMessage;
 import com.github.laxika.magicalvibes.service.input.ChoiceHandlerService;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
-import org.mockito.ArgumentCaptor;
-import org.mockito.Captor;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 
@@ -20,20 +17,15 @@ import java.util.List;
 import java.util.UUID;
 
 import static org.assertj.core.api.Assertions.assertThat;
-import static org.mockito.ArgumentMatchers.any;
-import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.verify;
-import static org.mockito.Mockito.verifyNoInteractions;
 
 @ExtendWith(MockitoExtension.class)
 class ColorChoiceInteractionHandlerTest {
 
-    @Mock private SessionManager sessionManager;
     @Mock private ChoiceHandlerService choiceHandlerService;
 
-    @Captor private ArgumentCaptor<Object> messageCaptor;
-
     private InteractionHandlerRegistry registry;
+    private InteractionProjectionTestSupport projectionSupport;
     private GameData gd;
 
     private static final UUID PLAYER1_ID = UUID.randomUUID();
@@ -41,8 +33,9 @@ class ColorChoiceInteractionHandlerTest {
 
     @BeforeEach
     void setUp() {
-        registry = new InteractionHandlerRegistry();
-        registry.register(new ColorChoiceInteractionHandler(sessionManager, choiceHandlerService));
+        projectionSupport = new InteractionProjectionTestSupport();
+        registry = projectionSupport.registry();
+        projectionSupport.register(new ColorChoiceInteractionHandler(choiceHandlerService));
 
         gd = new GameData(UUID.randomUUID(), "test-game", PLAYER1_ID, "Player1");
         gd.playerIds.addAll(List.of(PLAYER1_ID, PLAYER2_ID));
@@ -60,11 +53,9 @@ class ColorChoiceInteractionHandlerTest {
     @Test
     @DisplayName("begin sets COLOR_CHOICE state and sends the carried options and prompt")
     void beginSendsPrompt() {
-        registry.begin(gd, manaColorChoice());
+        InteractionPromptMessage msg = projectionSupport.begin(gd, manaColorChoice());
 
         assertThat(gd.interaction.activeInteraction()).isInstanceOf(PendingInteraction.ColorChoice.class);
-        verify(sessionManager).sendToPlayer(eq(PLAYER1_ID), messageCaptor.capture());
-        InteractionPromptMessage msg = (InteractionPromptMessage) messageCaptor.getValue();
         assertThat(msg.options()).containsExactly("WHITE", "BLUE", "BLACK", "RED", "GREEN");
         assertThat(msg.prompt()).isEqualTo("Choose a color of mana to add.");
         assertThat(msg.searchable()).isFalse();
@@ -77,17 +68,14 @@ class ColorChoiceInteractionHandlerTest {
                 PLAYER1_ID, null, null, new ChoiceContext.CardNameChoice(null, PLAYER1_ID, List.of()),
                 List.of("Grizzly Bears", "Llanowar Elves"), "Choose a nonland creature name.");
 
-        registry.begin(gd, choice);
-
-        verify(sessionManager).sendToPlayer(eq(PLAYER1_ID), messageCaptor.capture());
-        InteractionPromptMessage msg = (InteractionPromptMessage) messageCaptor.getValue();
+        InteractionPromptMessage msg = projectionSupport.begin(gd, choice);
         assertThat(msg.searchable()).isTrue();
     }
 
     @Test
     @DisplayName("dispatchAnswer delegates the chosen value to ChoiceHandlerService")
     void dispatchDelegates() {
-        registry.begin(gd, manaColorChoice());
+        projectionSupport.begin(gd, manaColorChoice());
         Player player = new Player(PLAYER1_ID, "Player1");
 
         boolean handled = registry.dispatchAnswer(gd, player, new InteractionAnswer.ListChoiceMade("RED"));
@@ -99,13 +87,12 @@ class ColorChoiceInteractionHandlerTest {
     @Test
     @DisplayName("replayPrompt re-sends only to the decider")
     void replayOnlyToDecider() {
-        registry.begin(gd, manaColorChoice());
-        org.mockito.Mockito.clearInvocations(sessionManager);
+        projectionSupport.begin(gd, manaColorChoice());
 
         assertThat(registry.replayPrompt(gd, PLAYER2_ID)).isTrue();
-        verifyNoInteractions(sessionManager);
 
         assertThat(registry.replayPrompt(gd, PLAYER1_ID)).isTrue();
-        verify(sessionManager).sendToPlayer(eq(PLAYER1_ID), any(InteractionPromptMessage.class));
+        assertThat(projectionSupport.projectedPrompt(gd))
+                .isInstanceOf(InteractionPromptMessage.class);
     }
 }

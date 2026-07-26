@@ -3,8 +3,6 @@ package com.github.laxika.magicalvibes.service.interaction;
 import com.github.laxika.magicalvibes.model.GameData;
 import com.github.laxika.magicalvibes.model.PendingInteraction;
 import com.github.laxika.magicalvibes.model.Player;
-import com.github.laxika.magicalvibes.networking.SessionManager;
-import com.github.laxika.magicalvibes.networking.message.InteractionPromptMessage;
 import com.github.laxika.magicalvibes.service.GameBroadcastService;
 import com.github.laxika.magicalvibes.service.effect.EffectResolutionService;
 import com.github.laxika.magicalvibes.service.input.PlayerInputService;
@@ -30,7 +28,6 @@ import java.util.UUID;
 public class IllicitAuctionBidChoiceInteractionHandler
         implements InteractionHandler<PendingInteraction.IllicitAuctionBidChoice> {
 
-    private final SessionManager sessionManager;
     private final GameBroadcastService gameBroadcastService;
     private final StateBasedActionService stateBasedActionService;
     private final PlayerInputService playerInputService;
@@ -45,16 +42,6 @@ public class IllicitAuctionBidChoiceInteractionHandler
     @Override
     public Class<? extends InteractionAnswer> answerType() {
         return InteractionAnswer.NumberChosen.class;
-    }
-
-    @Override
-    public void prompt(GameData gameData, PendingInteraction.IllicitAuctionBidChoice interaction, UUID recipientId) {
-        sessionManager.sendToPlayer(recipientId,
-                InteractionPromptMessage.numberPick(interaction.prompt(), interaction.maxBid(), interaction.cardName()));
-
-        String playerName = gameData.playerIdToName.get(interaction.playerId());
-        log.info("Game {} - Awaiting {} to bid for {} (high bid {})",
-                gameData.id, playerName, interaction.cardName(), interaction.highBid());
     }
 
     @Override

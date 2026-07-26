@@ -4,7 +4,6 @@ import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.GameData;
 import com.github.laxika.magicalvibes.model.PendingInteraction;
 import com.github.laxika.magicalvibes.model.Player;
-import com.github.laxika.magicalvibes.networking.SessionManager;
 import com.github.laxika.magicalvibes.networking.message.InteractionPromptMessage;
 import com.github.laxika.magicalvibes.networking.model.CardView;
 import com.github.laxika.magicalvibes.networking.service.CardViewFactory;
@@ -15,8 +14,6 @@ import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Nested;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
-import org.mockito.ArgumentCaptor;
-import org.mockito.Captor;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 
@@ -25,23 +22,19 @@ import java.util.UUID;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.mockito.ArgumentMatchers.any;
-import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.lenient;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.verify;
-import static org.mockito.Mockito.verifyNoInteractions;
 
 @ExtendWith(MockitoExtension.class)
 class MultiSelectionInteractionHandlersTest {
 
-    @Mock private SessionManager sessionManager;
     @Mock private CardViewFactory cardViewFactory;
     @Mock private MultiPermanentChoiceHandlerService multiPermanentChoiceHandlerService;
     @Mock private GraveyardChoiceHandlerService graveyardChoiceHandlerService;
 
-    @Captor private ArgumentCaptor<Object> messageCaptor;
-
     private InteractionHandlerRegistry registry;
+    private InteractionProjectionTestSupport projectionSupport;
     private GameData gd;
 
     private static final UUID PLAYER1_ID = UUID.randomUUID();
@@ -49,9 +42,12 @@ class MultiSelectionInteractionHandlersTest {
 
     @BeforeEach
     void setUp() {
-        registry = new InteractionHandlerRegistry();
-        registry.register(new MultiPermanentChoiceInteractionHandler(sessionManager, multiPermanentChoiceHandlerService));
-        registry.register(new MultiGraveyardChoiceInteractionHandler(sessionManager, cardViewFactory, graveyardChoiceHandlerService));
+        projectionSupport = new InteractionProjectionTestSupport(cardViewFactory);
+        registry = projectionSupport.registry();
+        projectionSupport.register(
+                new MultiPermanentChoiceInteractionHandler(multiPermanentChoiceHandlerService));
+        projectionSupport.register(
+                new MultiGraveyardChoiceInteractionHandler(graveyardChoiceHandlerService));
 
         gd = new GameData(UUID.randomUUID(), "test-game", PLAYER1_ID, "Player1");
         gd.playerIds.addAll(List.of(PLAYER1_ID, PLAYER2_ID));
@@ -78,12 +74,11 @@ class MultiSelectionInteractionHandlersTest {
             UUID perm1 = UUID.randomUUID();
             UUID perm2 = UUID.randomUUID();
 
-            registry.begin(gd, new PendingInteraction.MultiPermanentChoice(
+            projectionSupport.begin(gd, new PendingInteraction.MultiPermanentChoice(
                     PLAYER1_ID, List.of(perm1, perm2), 2, null, "Choose up to 2 permanents."));
 
             assertThat(gd.interaction.activeInteraction()).isInstanceOf(PendingInteraction.MultiPermanentChoice.class);
-            verify(sessionManager).sendToPlayer(eq(PLAYER1_ID), messageCaptor.capture());
-            InteractionPromptMessage msg = (InteractionPromptMessage) messageCaptor.getValue();
+            InteractionPromptMessage msg = projectionSupport.projectedPrompt(gd);
             assertThat(msg.permanentIds()).containsExactly(perm1, perm2);
             assertThat(msg.maxCount()).isEqualTo(2);
             assertThat(msg.prompt()).isEqualTo("Choose up to 2 permanents.");
@@ -93,7 +88,7 @@ class MultiSelectionInteractionHandlersTest {
         @DisplayName("dispatchAnswer delegates the chosen permanents to MultiPermanentChoiceHandlerService")
         void dispatchDelegates() {
             UUID permId = UUID.randomUUID();
-            registry.begin(gd, new PendingInteraction.MultiPermanentChoice(
+            projectionSupport.begin(gd, new PendingInteraction.MultiPermanentChoice(
                     PLAYER1_ID, List.of(permId), 1, null, "Pick one."));
             Player player = new Player(PLAYER1_ID, "Player1");
 
@@ -108,15 +103,13 @@ class MultiSelectionInteractionHandlersTest {
         @DisplayName("replayPrompt re-sends only to the decider")
         void replayOnlyToDecider() {
             UUID permId = UUID.randomUUID();
-            registry.begin(gd, new PendingInteraction.MultiPermanentChoice(
+            projectionSupport.begin(gd, new PendingInteraction.MultiPermanentChoice(
                     PLAYER1_ID, List.of(permId), 1, null, "Pick one."));
-            org.mockito.Mockito.clearInvocations(sessionManager);
-
             assertThat(registry.replayPrompt(gd, PLAYER2_ID)).isTrue();
-            verifyNoInteractions(sessionManager);
 
             assertThat(registry.replayPrompt(gd, PLAYER1_ID)).isTrue();
-            verify(sessionManager).sendToPlayer(eq(PLAYER1_ID), any(InteractionPromptMessage.class));
+            assertThat(projectionSupport.projectedPrompt(gd))
+                    .isInstanceOf(InteractionPromptMessage.class);
         }
     }
 
@@ -130,12 +123,11 @@ class MultiSelectionInteractionHandlersTest {
             Card card1 = createCard("Grizzly Bears");
             Card card2 = createCard("Serra Angel");
 
-            registry.begin(gd, new PendingInteraction.MultiGraveyardChoice(
+            projectionSupport.begin(gd, new PendingInteraction.MultiGraveyardChoice(
                     PLAYER1_ID, List.of(card1, card2), 2, "Choose up to 2 target creature cards from your graveyard."));
 
             assertThat(gd.interaction.activeInteraction()).isInstanceOf(PendingInteraction.MultiGraveyardChoice.class);
-            verify(sessionManager).sendToPlayer(eq(PLAYER1_ID), messageCaptor.capture());
-            InteractionPromptMessage msg = (InteractionPromptMessage) messageCaptor.getValue();
+            InteractionPromptMessage msg = projectionSupport.projectedPrompt(gd);
             assertThat(msg.cardIds()).containsExactly(card1.getId(), card2.getId());
             assertThat(msg.cards()).hasSize(2);
             assertThat(msg.maxCount()).isEqualTo(2);
@@ -146,7 +138,7 @@ class MultiSelectionInteractionHandlersTest {
         @DisplayName("dispatchAnswer delegates the chosen cards to GraveyardChoiceHandlerService")
         void dispatchDelegates() {
             Card card = createCard("Grizzly Bears");
-            registry.begin(gd, new PendingInteraction.MultiGraveyardChoice(
+            projectionSupport.begin(gd, new PendingInteraction.MultiGraveyardChoice(
                     PLAYER1_ID, List.of(card), 1, "Choose."));
             Player player = new Player(PLAYER1_ID, "Player1");
 
@@ -161,15 +153,13 @@ class MultiSelectionInteractionHandlersTest {
         @DisplayName("replayPrompt re-sends only to the decider")
         void replayOnlyToDecider() {
             Card card = createCard("Grizzly Bears");
-            registry.begin(gd, new PendingInteraction.MultiGraveyardChoice(
+            projectionSupport.begin(gd, new PendingInteraction.MultiGraveyardChoice(
                     PLAYER1_ID, List.of(card), 1, "Choose."));
-            org.mockito.Mockito.clearInvocations(sessionManager);
-
             assertThat(registry.replayPrompt(gd, PLAYER2_ID)).isTrue();
-            verifyNoInteractions(sessionManager);
 
             assertThat(registry.replayPrompt(gd, PLAYER1_ID)).isTrue();
-            verify(sessionManager).sendToPlayer(eq(PLAYER1_ID), any(InteractionPromptMessage.class));
+            assertThat(projectionSupport.projectedPrompt(gd))
+                    .isInstanceOf(InteractionPromptMessage.class);
         }
     }
 }

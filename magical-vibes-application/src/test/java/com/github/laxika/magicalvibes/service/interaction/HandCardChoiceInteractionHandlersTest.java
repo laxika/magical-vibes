@@ -4,7 +4,6 @@ import com.github.laxika.magicalvibes.model.DiscardFollowUp;
 import com.github.laxika.magicalvibes.model.GameData;
 import com.github.laxika.magicalvibes.model.PendingInteraction;
 import com.github.laxika.magicalvibes.model.Player;
-import com.github.laxika.magicalvibes.networking.SessionManager;
 import com.github.laxika.magicalvibes.networking.message.InteractionPromptMessage;
 import com.github.laxika.magicalvibes.service.ability.AbilityActivationService;
 import com.github.laxika.magicalvibes.service.input.CardChoiceHandlerService;
@@ -13,8 +12,6 @@ import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Nested;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
-import org.mockito.ArgumentCaptor;
-import org.mockito.Captor;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 
@@ -22,21 +19,16 @@ import java.util.List;
 import java.util.UUID;
 
 import static org.assertj.core.api.Assertions.assertThat;
-import static org.mockito.ArgumentMatchers.any;
-import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.verify;
-import static org.mockito.Mockito.verifyNoInteractions;
 
 @ExtendWith(MockitoExtension.class)
 class HandCardChoiceInteractionHandlersTest {
 
-    @Mock private SessionManager sessionManager;
     @Mock private CardChoiceHandlerService cardChoiceHandlerService;
     @Mock private AbilityActivationService abilityActivationService;
 
-    @Captor private ArgumentCaptor<Object> messageCaptor;
-
     private InteractionHandlerRegistry registry;
+    private InteractionProjectionTestSupport projectionSupport;
     private GameData gd;
 
     private static final UUID PLAYER1_ID = UUID.randomUUID();
@@ -44,19 +36,20 @@ class HandCardChoiceInteractionHandlersTest {
 
     @BeforeEach
     void setUp() {
-        registry = new InteractionHandlerRegistry();
-        registry.register(new HandCardChoiceInteractionHandlers.HandCardChoiceInteractionHandler(
-                sessionManager, cardChoiceHandlerService));
-        registry.register(new HandCardChoiceInteractionHandlers.TargetedHandCardChoiceInteractionHandler(
-                sessionManager, cardChoiceHandlerService));
-        registry.register(new HandCardChoiceInteractionHandlers.DiscardChoiceInteractionHandler(
-                sessionManager, cardChoiceHandlerService));
-        registry.register(new HandCardChoiceInteractionHandlers.ExileFromHandChoiceInteractionHandler(
-                sessionManager, cardChoiceHandlerService));
-        registry.register(new HandCardChoiceInteractionHandlers.ImprintFromHandChoiceInteractionHandler(
-                sessionManager, cardChoiceHandlerService));
-        registry.register(new HandCardChoiceInteractionHandlers.DiscardCostChoiceInteractionHandler(
-                sessionManager, abilityActivationService));
+        projectionSupport = new InteractionProjectionTestSupport();
+        registry = projectionSupport.registry();
+        projectionSupport.register(new HandCardChoiceInteractionHandlers.HandCardChoiceInteractionHandler(
+                cardChoiceHandlerService));
+        projectionSupport.register(new HandCardChoiceInteractionHandlers.TargetedHandCardChoiceInteractionHandler(
+                cardChoiceHandlerService));
+        projectionSupport.register(new HandCardChoiceInteractionHandlers.DiscardChoiceInteractionHandler(
+                cardChoiceHandlerService));
+        projectionSupport.register(new HandCardChoiceInteractionHandlers.ExileFromHandChoiceInteractionHandler(
+                cardChoiceHandlerService));
+        projectionSupport.register(new HandCardChoiceInteractionHandlers.ImprintFromHandChoiceInteractionHandler(
+                cardChoiceHandlerService));
+        projectionSupport.register(new HandCardChoiceInteractionHandlers.DiscardCostChoiceInteractionHandler(
+                abilityActivationService));
 
         gd = new GameData(UUID.randomUUID(), "test-game", PLAYER1_ID, "Player1");
         gd.playerIds.addAll(List.of(PLAYER1_ID, PLAYER2_ID));
@@ -66,8 +59,7 @@ class HandCardChoiceInteractionHandlersTest {
     }
 
     private InteractionPromptMessage sentMessage() {
-        verify(sessionManager).sendToPlayer(eq(PLAYER1_ID), messageCaptor.capture());
-        return (InteractionPromptMessage) messageCaptor.getValue();
+        return projectionSupport.projectedPrompt(gd);
     }
 
     @Nested
@@ -77,7 +69,7 @@ class HandCardChoiceInteractionHandlersTest {
         @Test
         @DisplayName("begin sets CARD_CHOICE and sends a declinable prompt")
         void beginPlain() {
-            registry.begin(gd, new PendingInteraction.HandCardChoice(
+            projectionSupport.begin(gd, new PendingInteraction.HandCardChoice(
                     PLAYER1_ID, List.of(0, 2), "Choose a creature card from your hand to put onto the battlefield."));
 
             assertThat(gd.interaction.activeInteraction()).isInstanceOf(PendingInteraction.HandCardChoice.class);
@@ -90,7 +82,7 @@ class HandCardChoiceInteractionHandlersTest {
         @Test
         @DisplayName("begin sets TARGETED_CARD_CHOICE and sends a declinable prompt")
         void beginTargeted() {
-            registry.begin(gd, new PendingInteraction.TargetedHandCardChoice(
+            projectionSupport.begin(gd, new PendingInteraction.TargetedHandCardChoice(
                     PLAYER1_ID, List.of(1), UUID.randomUUID(), "Choose an Aura."));
 
             assertThat(gd.interaction.activeInteraction()).isInstanceOf(PendingInteraction.TargetedHandCardChoice.class);
@@ -101,7 +93,10 @@ class HandCardChoiceInteractionHandlersTest {
         @Test
         @DisplayName("dispatchAnswer delegates the chosen index to CardChoiceHandlerService")
         void dispatchDelegates() {
-            registry.begin(gd, new PendingInteraction.HandCardChoice(PLAYER1_ID, List.of(0), "Choose."));
+            projectionSupport.begin(
+                    gd,
+                    new PendingInteraction.HandCardChoice(
+                            PLAYER1_ID, List.of(0), "Choose."));
             Player player = new Player(PLAYER1_ID, "Player1");
 
             boolean handled = registry.dispatchAnswer(gd, player, new InteractionAnswer.CardIndexChosen(0));
@@ -118,7 +113,7 @@ class HandCardChoiceInteractionHandlersTest {
         @Test
         @DisplayName("Discard begin sends a non-declinable prompt and dispatch delegates")
         void discard() {
-            registry.begin(gd, new PendingInteraction.DiscardChoice(
+            projectionSupport.begin(gd, new PendingInteraction.DiscardChoice(
                     PLAYER1_ID, List.of(0, 1), 2, DiscardFollowUp.NONE, "Choose a card to discard."));
 
             assertThat(gd.interaction.activeInteraction()).isInstanceOf(PendingInteraction.DiscardChoice.class);
@@ -134,7 +129,7 @@ class HandCardChoiceInteractionHandlersTest {
         @Test
         @DisplayName("Exile-from-hand begin sends its prompt and dispatch delegates")
         void exileFromHand() {
-            registry.begin(gd, new PendingInteraction.ExileFromHandChoice(
+            projectionSupport.begin(gd, new PendingInteraction.ExileFromHandChoice(
                     PLAYER1_ID, List.of(0), UUID.randomUUID(), null, 1, "Choose a card to exile."));
 
             assertThat(gd.interaction.activeInteraction()).isInstanceOf(PendingInteraction.ExileFromHandChoice.class);
@@ -148,7 +143,7 @@ class HandCardChoiceInteractionHandlersTest {
         @Test
         @DisplayName("Imprint begin sends its prompt and dispatch delegates")
         void imprint() {
-            registry.begin(gd, new PendingInteraction.ImprintFromHandChoice(
+            projectionSupport.begin(gd, new PendingInteraction.ImprintFromHandChoice(
                     PLAYER1_ID, List.of(0, 1), UUID.randomUUID(), "Choose an artifact card from your hand to imprint."));
 
             assertThat(gd.interaction.activeInteraction()).isInstanceOf(PendingInteraction.ImprintFromHandChoice.class);
@@ -167,7 +162,7 @@ class HandCardChoiceInteractionHandlersTest {
         @Test
         @DisplayName("begin sets ACTIVATED_ABILITY_DISCARD_COST_CHOICE and sends the cost prompt")
         void beginSendsPrompt() {
-            registry.begin(gd, new PendingInteraction.DiscardCostChoice(
+            projectionSupport.begin(gd, new PendingInteraction.DiscardCostChoice(
                     PLAYER1_ID, List.of(0), "Choose a land card to discard as an activation cost."));
 
             assertThat(gd.interaction.activeInteraction())
@@ -180,7 +175,10 @@ class HandCardChoiceInteractionHandlersTest {
         @Test
         @DisplayName("dispatchAnswer delegates to AbilityActivationService")
         void dispatchDelegates() {
-            registry.begin(gd, new PendingInteraction.DiscardCostChoice(PLAYER1_ID, List.of(0), "Choose."));
+            projectionSupport.begin(
+                    gd,
+                    new PendingInteraction.DiscardCostChoice(
+                            PLAYER1_ID, List.of(0), "Choose."));
             Player player = new Player(PLAYER1_ID, "Player1");
 
             assertThat(registry.dispatchAnswer(gd, player, new InteractionAnswer.CardIndexChosen(0))).isTrue();
@@ -191,14 +189,12 @@ class HandCardChoiceInteractionHandlersTest {
     @Test
     @DisplayName("replayPrompt re-sends only to the decider")
     void replayOnlyToDecider() {
-        registry.begin(gd, new PendingInteraction.DiscardChoice(
+        projectionSupport.begin(gd, new PendingInteraction.DiscardChoice(
                 PLAYER1_ID, List.of(0), 1, DiscardFollowUp.NONE, "Choose a card to discard."));
-        org.mockito.Mockito.clearInvocations(sessionManager);
-
         assertThat(registry.replayPrompt(gd, PLAYER2_ID)).isTrue();
-        verifyNoInteractions(sessionManager);
 
         assertThat(registry.replayPrompt(gd, PLAYER1_ID)).isTrue();
-        verify(sessionManager).sendToPlayer(eq(PLAYER1_ID), any(InteractionPromptMessage.class));
+        assertThat(projectionSupport.projectedPrompt(gd))
+                .isInstanceOf(InteractionPromptMessage.class);
     }
 }

@@ -5,10 +5,6 @@ import com.github.laxika.magicalvibes.model.GameData;
 import com.github.laxika.magicalvibes.model.GameLog;
 import com.github.laxika.magicalvibes.model.PendingInteraction;
 import com.github.laxika.magicalvibes.model.Player;
-import com.github.laxika.magicalvibes.networking.SessionManager;
-import com.github.laxika.magicalvibes.networking.message.InteractionPromptMessage;
-import com.github.laxika.magicalvibes.networking.model.CardView;
-import com.github.laxika.magicalvibes.networking.service.CardViewFactory;
 import com.github.laxika.magicalvibes.service.GameBroadcastService;
 import com.github.laxika.magicalvibes.service.effect.EffectResolutionService;
 import com.github.laxika.magicalvibes.service.library.LibraryShuffleHelper;
@@ -34,8 +30,6 @@ import org.springframework.stereotype.Component;
 public class SearchLibraryToTopChoiceInteractionHandler
         implements InteractionHandler<PendingInteraction.SearchLibraryToTopChoice> {
 
-    private final SessionManager sessionManager;
-    private final CardViewFactory cardViewFactory;
     private final GameBroadcastService gameBroadcastService;
     private final InteractionHandlerRegistry interactionHandlerRegistry;
     private final TurnProgressionService turnProgressionService;
@@ -49,15 +43,6 @@ public class SearchLibraryToTopChoiceInteractionHandler
     @Override
     public Class<? extends InteractionAnswer> answerType() {
         return InteractionAnswer.CardsChosen.class;
-    }
-
-    @Override
-    public void prompt(GameData gameData, PendingInteraction.SearchLibraryToTopChoice interaction, UUID recipientId) {
-        List<CardView> cardViews = interaction.pool().stream().map(cardViewFactory::create).toList();
-        sessionManager.sendToPlayer(recipientId, InteractionPromptMessage.multiCardPick(
-                new ArrayList<>(interaction.validCardIds()), cardViews, interaction.pool().size(),
-                "Choose any number of " + interaction.subtypeLabel()
-                        + " cards to reveal and put on top of your library."));
     }
 
     @Override

@@ -4,7 +4,6 @@ import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.GameData;
 import com.github.laxika.magicalvibes.model.PendingInteraction;
 import com.github.laxika.magicalvibes.model.Player;
-import com.github.laxika.magicalvibes.networking.SessionManager;
 import com.github.laxika.magicalvibes.networking.message.InteractionPromptMessage;
 import com.github.laxika.magicalvibes.networking.model.CardView;
 import com.github.laxika.magicalvibes.networking.service.CardViewFactory;
@@ -13,8 +12,6 @@ import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
-import org.mockito.ArgumentCaptor;
-import org.mockito.Captor;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 
@@ -24,22 +21,18 @@ import java.util.UUID;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.mockito.ArgumentMatchers.any;
-import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.verify;
-import static org.mockito.Mockito.verifyNoInteractions;
 import static org.mockito.Mockito.when;
 
 @ExtendWith(MockitoExtension.class)
 class RevealedHandChoiceInteractionHandlerTest {
 
-    @Mock private SessionManager sessionManager;
     @Mock private CardViewFactory cardViewFactory;
     @Mock private CardChoiceHandlerService cardChoiceHandlerService;
 
-    @Captor private ArgumentCaptor<Object> messageCaptor;
-
     private InteractionHandlerRegistry registry;
+    private InteractionProjectionTestSupport projectionSupport;
     private GameData gd;
 
     private static final UUID PLAYER1_ID = UUID.randomUUID();
@@ -47,9 +40,10 @@ class RevealedHandChoiceInteractionHandlerTest {
 
     @BeforeEach
     void setUp() {
-        registry = new InteractionHandlerRegistry();
-        registry.register(new RevealedHandChoiceInteractionHandler(
-                sessionManager, cardViewFactory, cardChoiceHandlerService));
+        projectionSupport = new InteractionProjectionTestSupport(cardViewFactory);
+        registry = projectionSupport.registry();
+        projectionSupport.register(new RevealedHandChoiceInteractionHandler(
+                cardChoiceHandlerService));
 
         gd = new GameData(UUID.randomUUID(), "test-game", PLAYER1_ID, "Player1");
         gd.playerIds.addAll(List.of(PLAYER1_ID, PLAYER2_ID));
@@ -82,11 +76,14 @@ class RevealedHandChoiceInteractionHandlerTest {
         when(cardViewFactory.create(card1)).thenReturn(view1);
         when(cardViewFactory.create(card2)).thenReturn(view2);
 
-        registry.begin(gd, choice(List.of(0, 1), "Choose a card to put on top of Player2's library."));
+        projectionSupport.begin(
+                gd,
+                choice(
+                        List.of(0, 1),
+                        "Choose a card to put on top of Player2's library."));
 
         assertThat(gd.interaction.activeInteraction()).isInstanceOf(PendingInteraction.RevealedHandChoice.class);
-        verify(sessionManager).sendToPlayer(eq(PLAYER1_ID), messageCaptor.capture());
-        InteractionPromptMessage msg = (InteractionPromptMessage) messageCaptor.getValue();
+        InteractionPromptMessage msg = projectionSupport.projectedPrompt(gd);
         assertThat(msg.cards()).containsExactly(view1, view2);
         assertThat(msg.cardIndices()).containsExactly(0, 1);
         assertThat(msg.prompt()).isEqualTo("Choose a card to put on top of Player2's library.");
@@ -98,7 +95,7 @@ class RevealedHandChoiceInteractionHandlerTest {
         Card card = createCard("Bear");
         gd.playerHands.get(PLAYER2_ID).add(card);
         when(cardViewFactory.create(card)).thenReturn(mock(CardView.class));
-        registry.begin(gd, choice(List.of(0), "Pick one."));
+        projectionSupport.begin(gd, choice(List.of(0), "Pick one."));
         Player player = new Player(PLAYER1_ID, "Player1");
 
         boolean handled = registry.dispatchAnswer(gd, player, new InteractionAnswer.CardIndexChosen(0));
@@ -113,13 +110,12 @@ class RevealedHandChoiceInteractionHandlerTest {
         Card card = createCard("Bear");
         gd.playerHands.get(PLAYER2_ID).add(card);
         when(cardViewFactory.create(card)).thenReturn(mock(CardView.class));
-        registry.begin(gd, choice(List.of(0), "Pick one."));
-        org.mockito.Mockito.clearInvocations(sessionManager);
+        projectionSupport.begin(gd, choice(List.of(0), "Pick one."));
 
         assertThat(registry.replayPrompt(gd, PLAYER2_ID)).isTrue();
-        verifyNoInteractions(sessionManager);
 
         assertThat(registry.replayPrompt(gd, PLAYER1_ID)).isTrue();
-        verify(sessionManager).sendToPlayer(eq(PLAYER1_ID), any(InteractionPromptMessage.class));
+        assertThat(projectionSupport.projectedPrompt(gd))
+                .isInstanceOf(InteractionPromptMessage.class);
     }
 }

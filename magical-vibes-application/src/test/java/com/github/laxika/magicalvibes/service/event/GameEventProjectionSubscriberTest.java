@@ -9,11 +9,13 @@ import com.github.laxika.magicalvibes.model.PendingInteraction;
 import com.github.laxika.magicalvibes.model.Player;
 import com.github.laxika.magicalvibes.model.TurnStep;
 import com.github.laxika.magicalvibes.model.event.GameEventAudience;
+import com.github.laxika.magicalvibes.model.event.GameEventBatch;
 import com.github.laxika.magicalvibes.model.event.GameEventFact;
 import com.github.laxika.magicalvibes.networking.Connection;
 import com.github.laxika.magicalvibes.networking.SessionManager;
 import com.github.laxika.magicalvibes.networking.message.GameOverMessage;
 import com.github.laxika.magicalvibes.networking.message.GameStateMessage;
+import com.github.laxika.magicalvibes.networking.message.InteractionPromptMessage;
 import com.github.laxika.magicalvibes.networking.message.AvailableAttackersMessage;
 import com.github.laxika.magicalvibes.networking.message.AvailableBlockersMessage;
 import com.github.laxika.magicalvibes.networking.message.CombatDamageAssignmentNotification;
@@ -21,13 +23,13 @@ import com.github.laxika.magicalvibes.networking.message.MulliganResolvedMessage
 import com.github.laxika.magicalvibes.networking.message.RevealHandMessage;
 import com.github.laxika.magicalvibes.networking.message.SelectCardsToBottomMessage;
 import com.github.laxika.magicalvibes.networking.model.GameLogEntryView;
+import com.github.laxika.magicalvibes.networking.service.CardViewFactory;
 import com.github.laxika.magicalvibes.networking.service.GameLogViewFactory;
 import com.github.laxika.magicalvibes.service.GameBroadcastService;
 import com.github.laxika.magicalvibes.service.GameMessageTransport;
 import com.github.laxika.magicalvibes.service.GameRegistry;
 import com.github.laxika.magicalvibes.service.GameViewProjectionFactory;
 import com.github.laxika.magicalvibes.service.PrivateInformationProjectionFactory;
-import com.github.laxika.magicalvibes.service.interaction.InteractionHandlerRegistry;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 
@@ -56,7 +58,7 @@ class GameEventProjectionSubscriberTest {
     private GameViewProjectionFactory gameViewProjectionFactory;
     private PrivateInformationProjectionFactory privateInformationProjectionFactory;
     private GameLogViewFactory gameLogViewFactory;
-    private InteractionHandlerRegistry interactionHandlerRegistry;
+    private InteractionPromptProjectionRegistry interactionPromptProjectionRegistry;
     private GameMessageTransport transport;
     private GameEventProjectionSubscriber subscriber;
 
@@ -81,12 +83,13 @@ class GameEventProjectionSubscriberTest {
         gameViewProjectionFactory = mock(GameViewProjectionFactory.class);
         privateInformationProjectionFactory = mock(PrivateInformationProjectionFactory.class);
         gameLogViewFactory = mock(GameLogViewFactory.class);
-        interactionHandlerRegistry = new InteractionHandlerRegistry();
+        interactionPromptProjectionRegistry =
+                new InteractionPromptProjectionRegistry(mock(CardViewFactory.class));
         subscriber = new GameEventProjectionSubscriber(
                 gameRegistry,
                 gameViewProjectionFactory,
                 privateInformationProjectionFactory,
-                interactionHandlerRegistry,
+                interactionPromptProjectionRegistry,
                 gameLogViewFactory,
                 transport);
     }
@@ -149,6 +152,80 @@ class GameEventProjectionSubscriberTest {
                         GameEventAudience.player(player1Id)));
 
         assertThat(sessions.deliveries).containsExactly(new Delivery(player1Id, revealMessage));
+    }
+
+    @Test
+    void standardInteractionDecisionProjectsTheExistingPromptMessage() {
+        gameData.interaction.beginInteraction(new PendingInteraction.XValueChoice(
+                player1Id, 7, "Choose X.", "Test Card"));
+
+        emitActiveDecision(
+                player1Id,
+                GameEventFact.DecisionKind.INTERACTION,
+                GameEventAudience.player(player1Id));
+
+        assertThat(messagesFor(player1Id))
+                .singleElement()
+                .isInstanceOfSatisfying(InteractionPromptMessage.class, prompt -> {
+                    assertThat(prompt.prompt()).isEqualTo("Choose X.");
+                    assertThat(prompt.maxCount()).isEqualTo(7);
+                    assertThat(prompt.cardName()).isEqualTo("Test Card");
+                });
+        assertThat(messagesFor(player2Id)).isEmpty();
+    }
+
+    @Test
+    void staleInteractionIdentityCannotProjectAnAlreadyAnsweredPrompt() {
+        gameData.interaction.beginInteraction(new PendingInteraction.XValueChoice(
+                player1Id, 7, "Choose X.", "Test Card"));
+
+        GameMutationCoordinator coordinator = coordinator();
+        coordinator.mutate(gameData, UUID.randomUUID(), () ->
+                coordinator.emit(gameData,
+                        new GameEventFact.DecisionRequested(
+                                UUID.randomUUID(),
+                                player1Id,
+                                GameEventFact.DecisionKind.INTERACTION),
+                        GameEventAudience.player(player1Id)));
+
+        assertThat(sessions.deliveries).isEmpty();
+    }
+
+    @Test
+    void consecutiveInteractionsRemainDistinctFactsAndOnlyTheCurrentIdentityProjects() {
+        List<GameEventBatch> recorded = new ArrayList<>();
+        GameMutationCoordinator coordinator = new GameMutationCoordinator(
+                new GameEventDispatcher(List.of(subscriber, recorded::add)));
+
+        coordinator.mutate(gameData, UUID.randomUUID(), () -> {
+            gameData.interaction.beginInteraction(new PendingInteraction.XValueChoice(
+                    player1Id, 3, "First prompt.", "First"));
+            coordinator.emit(gameData,
+                    new GameEventFact.DecisionRequested(
+                            gameData.interaction.activeDecisionId(),
+                            player1Id,
+                            GameEventFact.DecisionKind.INTERACTION),
+                    GameEventAudience.player(player1Id));
+
+            gameData.interaction.beginInteraction(new PendingInteraction.ColorChoice(
+                    player1Id, null, null, null, List.of("WHITE", "BLUE"), "Second prompt."));
+            coordinator.emit(gameData,
+                    new GameEventFact.DecisionRequested(
+                            gameData.interaction.activeDecisionId(),
+                            player1Id,
+                            GameEventFact.DecisionKind.INTERACTION),
+                    GameEventAudience.player(player1Id));
+        });
+
+        assertThat(recorded).singleElement().satisfies(batch ->
+                assertThat(batch.events())
+                        .hasSize(2)
+                        .allSatisfy(event -> assertThat(event.fact())
+                                .isInstanceOf(GameEventFact.DecisionRequested.class)));
+        assertThat(messagesFor(player1Id))
+                .singleElement()
+                .isInstanceOfSatisfying(InteractionPromptMessage.class,
+                        prompt -> assertThat(prompt.prompt()).isEqualTo("Second prompt."));
     }
 
     @Test

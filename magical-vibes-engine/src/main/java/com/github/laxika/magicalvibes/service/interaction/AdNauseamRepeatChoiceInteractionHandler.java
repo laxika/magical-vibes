@@ -4,8 +4,6 @@ import com.github.laxika.magicalvibes.model.GameData;
 import com.github.laxika.magicalvibes.model.GameLog;
 import com.github.laxika.magicalvibes.model.PendingInteraction;
 import com.github.laxika.magicalvibes.model.Player;
-import com.github.laxika.magicalvibes.networking.SessionManager;
-import com.github.laxika.magicalvibes.networking.message.InteractionPromptMessage;
 import com.github.laxika.magicalvibes.service.GameBroadcastService;
 import com.github.laxika.magicalvibes.service.effect.EffectResolutionService;
 import com.github.laxika.magicalvibes.service.effect.normalfx.AdNauseamSupport;
@@ -27,7 +25,6 @@ import org.springframework.stereotype.Component;
 public class AdNauseamRepeatChoiceInteractionHandler
         implements InteractionHandler<PendingInteraction.AdNauseamRepeatChoice> {
 
-    private final SessionManager sessionManager;
     private final AdNauseamSupport adNauseamSupport;
     private final GameBroadcastService gameBroadcastService;
     private final EffectResolutionService effectResolutionService;
@@ -41,16 +38,6 @@ public class AdNauseamRepeatChoiceInteractionHandler
     @Override
     public Class<? extends InteractionAnswer> answerType() {
         return InteractionAnswer.MayAbilityChosen.class;
-    }
-
-    @Override
-    public void prompt(GameData gameData, PendingInteraction.AdNauseamRepeatChoice interaction, UUID recipientId) {
-        sessionManager.sendToPlayer(recipientId, InteractionPromptMessage.acceptDecline(
-                "Reveal the next card and lose life equal to its mana value? (" + interaction.sourceName() + ")",
-                true, null));
-
-        String playerName = gameData.playerIdToName.get(interaction.playerId());
-        log.info("Game {} - Awaiting {} to decide whether to repeat {}", gameData.id, playerName, interaction.sourceName());
     }
 
     @Override

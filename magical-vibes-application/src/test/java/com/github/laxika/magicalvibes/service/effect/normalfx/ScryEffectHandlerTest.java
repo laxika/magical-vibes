@@ -87,7 +87,7 @@ class ScryEffectHandlerTest {
                 InteractionRegistryTestSupport.registryFor(sessionManager, cardViewFactory, gameBroadcastService));
         InteractionHandlerRegistry interactionHandlerRegistry = new InteractionHandlerRegistry();
         interactionHandlerRegistry.register(new ScryInteractionHandler(
-                sessionManager, cardViewFactory, gameBroadcastService,
+                gameBroadcastService,
                 mock(PlayerInputService.class), mock(TurnProgressionService.class),
                 mock(EffectResolutionService.class)));
         scryEffectHandler = new ScryEffectHandler(

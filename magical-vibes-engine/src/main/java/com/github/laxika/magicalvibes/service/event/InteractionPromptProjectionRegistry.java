@@ -1,0 +1,483 @@
+package com.github.laxika.magicalvibes.service.event;
+
+import com.github.laxika.magicalvibes.model.Card;
+import com.github.laxika.magicalvibes.model.ChoiceContext;
+import com.github.laxika.magicalvibes.model.ExiledCardEntry;
+import com.github.laxika.magicalvibes.model.GameData;
+import com.github.laxika.magicalvibes.model.ManaCost;
+import com.github.laxika.magicalvibes.model.ManaPool;
+import com.github.laxika.magicalvibes.model.PendingInteraction;
+import com.github.laxika.magicalvibes.model.PendingKnowledgePoolCast;
+import com.github.laxika.magicalvibes.networking.message.InteractionPromptMessage;
+import com.github.laxika.magicalvibes.networking.model.CardView;
+import com.github.laxika.magicalvibes.networking.service.CardViewFactory;
+import org.springframework.stereotype.Component;
+
+import java.util.ArrayList;
+import java.util.LinkedHashMap;
+import java.util.List;
+import java.util.Map;
+import java.util.Optional;
+import java.util.Set;
+import java.util.UUID;
+import java.util.function.Function;
+import java.util.stream.Collectors;
+
+/**
+ * Canonical projection of standard pending interactions to the existing wire prompt.
+ *
+ * <p>Strategies are exact-class keyed. There is deliberately no generic fallback: adding a
+ * promptable {@link PendingInteraction} requires an explicit projection strategy, and duplicate
+ * registrations fail construction. The authoritative pending interaction remains on
+ * {@link GameData}; callers must verify its stable decision identity before projecting it.
+ */
+@Component
+public class InteractionPromptProjectionRegistry {
+
+    private final CardViewFactory cardViewFactory;
+    private final Map<Class<? extends PendingInteraction>, ProjectionStrategy<?>> strategies =
+            new LinkedHashMap<>();
+
+    public InteractionPromptProjectionRegistry(CardViewFactory cardViewFactory) {
+        this.cardViewFactory = cardViewFactory;
+
+        register(PendingInteraction.XValueChoice.class, this::projectXValueChoice);
+        register(PendingInteraction.Scry.class, this::projectScry);
+        register(PendingInteraction.HandTopBottomChoice.class, this::projectHandTopBottomChoice);
+        register(PendingInteraction.LibraryReorder.class, this::projectLibraryReorder);
+        register(PendingInteraction.MayAbilityChoice.class, this::projectMayAbilityChoice);
+        register(PendingInteraction.KnowledgePoolCastChoice.class, this::projectKnowledgePoolCastChoice);
+        register(PendingInteraction.ImprovisationCapstoneCastChoice.class,
+                this::projectImprovisationCapstoneCastChoice);
+        register(PendingInteraction.BrilliantUltimatumPlayChoice.class,
+                this::projectBrilliantUltimatumPlayChoice);
+        register(PendingInteraction.MirrorOfFateChoice.class, this::projectMirrorOfFateChoice);
+        register(PendingInteraction.KeepCardsInHandChoice.class, this::projectKeepCardsInHandChoice);
+        register(PendingInteraction.DoomsdayChoice.class, this::projectDoomsdayChoice);
+        register(PendingInteraction.SearchLibraryToTopChoice.class,
+                this::projectSearchLibraryToTopChoice);
+        register(PendingInteraction.PermanentAuctionChoice.class, this::projectPermanentAuctionChoice);
+        register(PendingInteraction.IllicitAuctionBidChoice.class, this::projectIllicitAuctionBidChoice);
+        register(PendingInteraction.MultiZoneExileChoice.class, this::projectMultiZoneExileChoice);
+        register(PendingInteraction.MultiPermanentChoice.class, this::projectMultiPermanentChoice);
+        register(PendingInteraction.MultiGraveyardChoice.class, this::projectMultiGraveyardChoice);
+        register(PendingInteraction.ColorChoice.class, this::projectColorChoice);
+        register(PendingInteraction.RevealedHandChoice.class, this::projectRevealedHandChoice);
+        register(PendingInteraction.RevealCardsDiscardChoice.class,
+                this::projectRevealCardsDiscardChoice);
+        register(PendingInteraction.GraveyardChoice.class, this::projectGraveyardChoice);
+        register(PendingInteraction.GraveyardExileCostChoice.class,
+                this::projectGraveyardExileCostChoice);
+        register(PendingInteraction.HandCardChoice.class,
+                (gameData, interaction) -> projectHandChoice(interaction, true));
+        register(PendingInteraction.TargetedHandCardChoice.class,
+                (gameData, interaction) -> projectHandChoice(interaction, true));
+        register(PendingInteraction.DiscardChoice.class,
+                (gameData, interaction) -> projectHandChoice(interaction, false));
+        register(PendingInteraction.ExileFromHandChoice.class,
+                (gameData, interaction) -> projectHandChoice(interaction, false));
+        register(PendingInteraction.ImprintFromHandChoice.class,
+                (gameData, interaction) -> projectHandChoice(interaction, false));
+        register(PendingInteraction.DiscardCostChoice.class,
+                (gameData, interaction) -> projectHandChoice(interaction, false));
+        register(PendingInteraction.PutCardsFromHandOnLibraryCardChoice.class,
+                this::projectPutCardsFromHandOnLibraryCardChoice);
+        register(PendingInteraction.PutCardsFromHandOnLibraryDestinationChoice.class,
+                this::projectPutCardsFromHandOnLibraryDestinationChoice);
+        register(PendingInteraction.SylvanLibraryChoice.class, this::projectSylvanLibraryChoice);
+        register(PendingInteraction.LibraryRevealChoice.class, this::projectLibraryRevealChoice);
+        register(PendingInteraction.LibrarySearch.class, this::projectLibrarySearch);
+        register(PendingInteraction.PermanentChoice.class, this::projectPermanentChoice);
+        register(PendingInteraction.AdNauseamRepeatChoice.class, this::projectAdNauseamRepeatChoice);
+    }
+
+    /**
+     * Builds the prompt for one exact standard interaction kind. An empty result is the explicit
+     * no-wire strategy used by legacy Karn Scion library-reveal choices whose prompt is null.
+     */
+    public Optional<InteractionPromptMessage> project(
+            GameData gameData, PendingInteraction interaction) {
+        ProjectionStrategy<PendingInteraction> strategy = strategyFor(interaction);
+        return Optional.ofNullable(strategy.project(gameData, interaction));
+    }
+
+    /** Exact interaction classes with one registered standard prompt strategy. */
+    public Set<Class<? extends PendingInteraction>> registeredTypes() {
+        return Set.copyOf(strategies.keySet());
+    }
+
+    private InteractionPromptMessage projectXValueChoice(
+            GameData gameData, PendingInteraction.XValueChoice interaction) {
+        return InteractionPromptMessage.numberPick(
+                interaction.prompt(), interaction.maxValue(), interaction.cardName());
+    }
+
+    private InteractionPromptMessage projectScry(
+            GameData gameData, PendingInteraction.Scry interaction) {
+        int count = interaction.cards().size();
+        String prompt;
+        if (interaction.toGraveyard()) {
+            prompt = count == 1
+                    ? "Surveil 1: Keep on top of your library or put into your graveyard."
+                    : "Surveil " + count
+                            + ": Put cards on top of your library or into your graveyard.";
+        } else {
+            prompt = count == 1
+                    ? "Scry 1: Keep on top or put on the bottom of your library."
+                    : "Scry " + count + ": Put cards on the top or bottom of your library.";
+        }
+        return InteractionPromptMessage.scryOrder(
+                cardViews(interaction.cards()), prompt, interaction.toGraveyard());
+    }
+
+    private InteractionPromptMessage projectHandTopBottomChoice(
+            GameData gameData, PendingInteraction.HandTopBottomChoice interaction) {
+        return InteractionPromptMessage.handTopBottom(
+                cardViews(interaction.cards()),
+                "Look at the top " + interaction.cards().size()
+                        + " cards of your library. Choose one to put into your hand.");
+    }
+
+    private InteractionPromptMessage projectLibraryReorder(
+            GameData gameData, PendingInteraction.LibraryReorder interaction) {
+        return InteractionPromptMessage.cardOrder(
+                cardViews(interaction.cards()), interaction.prompt());
+    }
+
+    private InteractionPromptMessage projectMayAbilityChoice(
+            GameData gameData, PendingInteraction.MayAbilityChoice interaction) {
+        boolean canPay = true;
+        if (interaction.manaCost() != null) {
+            ManaCost cost = new ManaCost(interaction.manaCost());
+            ManaPool pool = gameData.playerManaPools.get(interaction.playerId());
+            canPay = cost.hasX() ? cost.calculateMaxX(pool) > 0 : cost.canPay(pool);
+        }
+        return InteractionPromptMessage.acceptDecline(
+                interaction.description(), canPay, interaction.manaCost());
+    }
+
+    private InteractionPromptMessage projectKnowledgePoolCastChoice(
+            GameData gameData, PendingInteraction.KnowledgePoolCastChoice interaction) {
+        List<CardView> cardViews = new ArrayList<>();
+        PendingKnowledgePoolCast pendingCast =
+                gameData.peekPendingInteraction(PendingKnowledgePoolCast.class);
+        UUID sourcePermanentId = pendingCast != null ? pendingCast.sourcePermanentId() : null;
+        if (sourcePermanentId != null) {
+            for (Card card : gameData.getCardsExiledByPermanent(sourcePermanentId)) {
+                if (interaction.validCardIds().contains(card.getId())) {
+                    cardViews.add(cardViewFactory.create(card));
+                }
+            }
+        }
+        return InteractionPromptMessage.multiCardPick(
+                new ArrayList<>(interaction.validCardIds()), cardViews, interaction.maxCount(),
+                "Knowledge Pool — you may cast a nonland card without paying its mana cost.");
+    }
+
+    private InteractionPromptMessage projectImprovisationCapstoneCastChoice(
+            GameData gameData, PendingInteraction.ImprovisationCapstoneCastChoice interaction) {
+        return InteractionPromptMessage.multiCardPick(
+                new ArrayList<>(interaction.validCardIds()),
+                exiledCardViews(gameData, interaction.validCardIds()),
+                interaction.maxCount(),
+                "You may cast any number of spells from among the exiled cards without paying "
+                        + "their mana costs.");
+    }
+
+    private InteractionPromptMessage projectBrilliantUltimatumPlayChoice(
+            GameData gameData, PendingInteraction.BrilliantUltimatumPlayChoice interaction) {
+        return InteractionPromptMessage.multiCardPick(
+                new ArrayList<>(interaction.validCardIds()),
+                exiledCardViews(gameData, interaction.validCardIds()),
+                interaction.maxCount(),
+                "You may play lands and cast spells from this pile without paying their mana costs.");
+    }
+
+    private InteractionPromptMessage projectMirrorOfFateChoice(
+            GameData gameData, PendingInteraction.MirrorOfFateChoice interaction) {
+        List<CardView> cardViews = gameData.getPlayerExiledCards(interaction.playerId()).stream()
+                .filter(card -> interaction.validCardIds().contains(card.getId()))
+                .map(cardViewFactory::create)
+                .toList();
+        return InteractionPromptMessage.multiCardPick(
+                new ArrayList<>(interaction.validCardIds()), cardViews, interaction.maxCount(),
+                "Choose up to seven face-up exiled cards you own to put on top of your library.");
+    }
+
+    private InteractionPromptMessage projectKeepCardsInHandChoice(
+            GameData gameData, PendingInteraction.KeepCardsInHandChoice interaction) {
+        List<Card> hand = gameData.playerHands.get(interaction.playerId());
+        List<CardView> cardViews = hand == null ? List.of() : hand.stream()
+                .filter(card -> interaction.validCardIds().contains(card.getId()))
+                .map(cardViewFactory::create)
+                .toList();
+        return InteractionPromptMessage.multiCardPick(
+                new ArrayList<>(interaction.validCardIds()), cardViews, interaction.maxCount(),
+                "Choose up to seven cards in your hand to keep. Shuffle the rest into your library.");
+    }
+
+    private InteractionPromptMessage projectDoomsdayChoice(
+            GameData gameData, PendingInteraction.DoomsdayChoice interaction) {
+        return InteractionPromptMessage.multiCardPick(
+                new ArrayList<>(interaction.validCardIds()),
+                cardViews(interaction.pool()),
+                interaction.maxCount(),
+                "Choose up to five cards from your library and graveyard to put on top of your "
+                        + "library. The rest are exiled.");
+    }
+
+    private InteractionPromptMessage projectSearchLibraryToTopChoice(
+            GameData gameData, PendingInteraction.SearchLibraryToTopChoice interaction) {
+        return InteractionPromptMessage.multiCardPick(
+                new ArrayList<>(interaction.validCardIds()),
+                cardViews(interaction.pool()),
+                interaction.pool().size(),
+                "Choose any number of " + interaction.subtypeLabel()
+                        + " cards to reveal and put on top of your library.");
+    }
+
+    private InteractionPromptMessage projectPermanentAuctionChoice(
+            GameData gameData, PendingInteraction.PermanentAuctionChoice interaction) {
+        return InteractionPromptMessage.multiCardPick(
+                interaction.validCardIds(), cardViews(interaction.pool()), 1, interaction.prompt());
+    }
+
+    private InteractionPromptMessage projectIllicitAuctionBidChoice(
+            GameData gameData, PendingInteraction.IllicitAuctionBidChoice interaction) {
+        return InteractionPromptMessage.numberPick(
+                interaction.prompt(), interaction.maxBid(), interaction.cardName());
+    }
+
+    private InteractionPromptMessage projectMultiZoneExileChoice(
+            GameData gameData, PendingInteraction.MultiZoneExileChoice interaction) {
+        List<CardView> cardViews = new ArrayList<>();
+        UUID targetPlayerId = interaction.targetPlayerId();
+        addMatchingCardViews(
+                cardViews,
+                gameData.playerHands.getOrDefault(targetPlayerId, List.of()),
+                interaction.validCardIds());
+        addMatchingCardViews(
+                cardViews,
+                gameData.playerGraveyards.getOrDefault(targetPlayerId, List.of()),
+                interaction.validCardIds());
+        addMatchingCardViews(
+                cardViews,
+                gameData.playerDecks.getOrDefault(targetPlayerId, List.of()),
+                interaction.validCardIds());
+        return InteractionPromptMessage.multiCardPick(
+                new ArrayList<>(interaction.validCardIds()), cardViews, interaction.maxCount(),
+                "Choose any number of cards named \"" + interaction.cardName() + "\" to exile.");
+    }
+
+    private InteractionPromptMessage projectMultiPermanentChoice(
+            GameData gameData, PendingInteraction.MultiPermanentChoice interaction) {
+        return InteractionPromptMessage.multiPermanentPick(
+                new ArrayList<>(interaction.validIds()), interaction.maxCount(), interaction.prompt());
+    }
+
+    private InteractionPromptMessage projectMultiGraveyardChoice(
+            GameData gameData, PendingInteraction.MultiGraveyardChoice interaction) {
+        return InteractionPromptMessage.multiCardPick(
+                interaction.validCardIds(),
+                cardViews(interaction.cards()),
+                interaction.maxCount(),
+                interaction.prompt());
+    }
+
+    private InteractionPromptMessage projectColorChoice(
+            GameData gameData, PendingInteraction.ColorChoice interaction) {
+        return InteractionPromptMessage.listPick(
+                interaction.options(),
+                interaction.prompt(),
+                isCardNameChoice(interaction.context()));
+    }
+
+    private InteractionPromptMessage projectRevealedHandChoice(
+            GameData gameData, PendingInteraction.RevealedHandChoice interaction) {
+        List<CardView> cardViews =
+                cardViews(gameData.playerHands.getOrDefault(interaction.targetPlayerId(), List.of()));
+        return InteractionPromptMessage.cardIndexPick(
+                cardViews,
+                interaction.validIndices(),
+                interaction.prompt(),
+                interaction.optional());
+    }
+
+    private InteractionPromptMessage projectRevealCardsDiscardChoice(
+            GameData gameData, PendingInteraction.RevealCardsDiscardChoice interaction) {
+        List<Card> targetHand =
+                gameData.playerHands.getOrDefault(interaction.targetPlayerId(), List.of());
+        List<CardView> cardViews;
+        if (interaction.revealStage()) {
+            cardViews = cardViews(targetHand);
+        } else {
+            Map<UUID, Card> handById = targetHand.stream()
+                    .collect(Collectors.toMap(Card::getId, Function.identity(), (left, right) -> left));
+            cardViews = interaction.revealedCardIds().stream()
+                    .map(handById::get)
+                    .filter(java.util.Objects::nonNull)
+                    .map(cardViewFactory::create)
+                    .toList();
+        }
+        return InteractionPromptMessage.cardIndexPick(
+                cardViews, interaction.validIndices(), interaction.prompt(), false);
+    }
+
+    private InteractionPromptMessage projectGraveyardChoice(
+            GameData gameData, PendingInteraction.GraveyardChoice interaction) {
+        return InteractionPromptMessage.graveyardIndexPick(
+                interaction.validIndices(), interaction.prompt(), interaction.cardPool() != null);
+    }
+
+    private InteractionPromptMessage projectGraveyardExileCostChoice(
+            GameData gameData, PendingInteraction.GraveyardExileCostChoice interaction) {
+        return InteractionPromptMessage.graveyardIndexPick(
+                interaction.validIndices(), interaction.prompt(), false);
+    }
+
+    private InteractionPromptMessage projectHandChoice(
+            PendingInteraction.HandChoice interaction, boolean declinable) {
+        return InteractionPromptMessage.cardIndexPick(
+                interaction.validIndices(), interaction.prompt(), declinable);
+    }
+
+    private InteractionPromptMessage projectPutCardsFromHandOnLibraryCardChoice(
+            GameData gameData,
+            PendingInteraction.PutCardsFromHandOnLibraryCardChoice interaction) {
+        String destination = interaction.topOnly() ? "top of" : "top or bottom of";
+        return InteractionPromptMessage.multiCardPick(
+                new ArrayList<>(interaction.validCardIds()),
+                cardViews(interaction.cards()),
+                interaction.maxCount(),
+                "Choose " + interaction.maxCount() + " card(s) to put on " + destination
+                        + " your library.");
+    }
+
+    private InteractionPromptMessage projectPutCardsFromHandOnLibraryDestinationChoice(
+            GameData gameData,
+            PendingInteraction.PutCardsFromHandOnLibraryDestinationChoice interaction) {
+        return InteractionPromptMessage.listPick(
+                PendingInteraction.PutCardsFromHandOnLibraryDestinationChoice.OPTIONS,
+                "Put the chosen cards on the top or bottom of your library?",
+                false);
+    }
+
+    private InteractionPromptMessage projectSylvanLibraryChoice(
+            GameData gameData, PendingInteraction.SylvanLibraryChoice interaction) {
+        List<Card> hand = gameData.playerHands.getOrDefault(interaction.playerId(), List.of());
+        Map<UUID, Card> handById = hand.stream()
+                .collect(Collectors.toMap(Card::getId, Function.identity(), (left, right) -> left));
+        List<UUID> validIds = interaction.drawnThisTurnCardIds().stream()
+                .filter(handById::containsKey)
+                .toList();
+        List<CardView> cardViews = validIds.stream()
+                .map(handById::get)
+                .map(cardViewFactory::create)
+                .toList();
+        return InteractionPromptMessage.multiCardPick(
+                validIds,
+                cardViews,
+                interaction.resolveCount(),
+                "Choose up to " + interaction.resolveCount()
+                        + " card(s) drawn this turn to put on top of your library. You pay 4 life "
+                        + "for each of the " + interaction.resolveCount() + " you don't put back.");
+    }
+
+    private InteractionPromptMessage projectLibraryRevealChoice(
+            GameData gameData, PendingInteraction.LibraryRevealChoice interaction) {
+        if (interaction.prompt() == null) {
+            return null;
+        }
+        Map<UUID, Card> cardsById = interaction.allCards().stream()
+                .collect(Collectors.toMap(Card::getId, Function.identity(), (left, right) -> left));
+        List<CardView> cardViews = interaction.validCardIds().stream()
+                .map(cardsById::get)
+                .map(cardViewFactory::create)
+                .toList();
+        return InteractionPromptMessage.multiCardPick(
+                new ArrayList<>(interaction.validCardIds()),
+                cardViews,
+                interaction.maxCount(),
+                interaction.prompt());
+    }
+
+    private InteractionPromptMessage projectLibrarySearch(
+            GameData gameData, PendingInteraction.LibrarySearch interaction) {
+        return InteractionPromptMessage.libraryIndexPick(
+                cardViews(interaction.params().cards()),
+                interaction.messagePrompt(),
+                interaction.messageCanFailToFind());
+    }
+
+    private InteractionPromptMessage projectPermanentChoice(
+            GameData gameData, PendingInteraction.PermanentChoice interaction) {
+        return InteractionPromptMessage.permanentPick(
+                interaction.validPermanentIds(), interaction.validPlayerIds(), interaction.prompt());
+    }
+
+    private InteractionPromptMessage projectAdNauseamRepeatChoice(
+            GameData gameData, PendingInteraction.AdNauseamRepeatChoice interaction) {
+        return InteractionPromptMessage.acceptDecline(
+                "Reveal the next card and lose life equal to its mana value? ("
+                        + interaction.sourceName() + ")",
+                true,
+                null);
+    }
+
+    private List<CardView> exiledCardViews(GameData gameData, List<UUID> cardIds) {
+        List<CardView> views = new ArrayList<>();
+        for (UUID cardId : cardIds) {
+            ExiledCardEntry entry = gameData.findExiledCard(cardId);
+            if (entry != null) {
+                views.add(cardViewFactory.create(entry.card()));
+            }
+        }
+        return views;
+    }
+
+    private List<CardView> cardViews(List<Card> cards) {
+        return cards.stream().map(cardViewFactory::create).toList();
+    }
+
+    private void addMatchingCardViews(
+            List<CardView> target, List<Card> cards, List<UUID> validCardIds) {
+        cards.stream()
+                .filter(card -> validCardIds.contains(card.getId()))
+                .map(cardViewFactory::create)
+                .forEach(target::add);
+    }
+
+    private static boolean isCardNameChoice(ChoiceContext context) {
+        return context instanceof ChoiceContext.CardNameChoice
+                || context instanceof ChoiceContext.ExileByNameChoice
+                || context instanceof ChoiceContext.SphinxAmbassadorNameChoice
+                || context instanceof ChoiceContext.EachPlayerCardNameRevealChoice
+                || context instanceof ChoiceContext.NameCardMillGainLifeChoice
+                || context instanceof ChoiceContext.TargetPlayerNameCardRevealTopChoice;
+    }
+
+    private <T extends PendingInteraction> void register(
+            Class<T> interactionType, ProjectionStrategy<T> strategy) {
+        ProjectionStrategy<?> previous = strategies.putIfAbsent(interactionType, strategy);
+        if (previous != null) {
+            throw new IllegalStateException(
+                    "Duplicate interaction prompt projection for " + interactionType.getName());
+        }
+    }
+
+    @SuppressWarnings("unchecked")
+    private ProjectionStrategy<PendingInteraction> strategyFor(PendingInteraction interaction) {
+        ProjectionStrategy<?> strategy = strategies.get(interaction.getClass());
+        if (strategy == null) {
+            throw new IllegalArgumentException(
+                    "No interaction prompt projection registered for "
+                            + interaction.getClass().getName());
+        }
+        return (ProjectionStrategy<PendingInteraction>) strategy;
+    }
+
+    @FunctionalInterface
+    private interface ProjectionStrategy<T extends PendingInteraction> {
+        InteractionPromptMessage project(GameData gameData, T interaction);
+    }
+}

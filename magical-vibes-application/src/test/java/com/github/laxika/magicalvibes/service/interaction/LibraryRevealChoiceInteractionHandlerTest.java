@@ -4,7 +4,6 @@ import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.GameData;
 import com.github.laxika.magicalvibes.model.PendingInteraction;
 import com.github.laxika.magicalvibes.model.Player;
-import com.github.laxika.magicalvibes.networking.SessionManager;
 import com.github.laxika.magicalvibes.networking.message.InteractionPromptMessage;
 import com.github.laxika.magicalvibes.networking.model.CardView;
 import com.github.laxika.magicalvibes.networking.service.CardViewFactory;
@@ -13,8 +12,6 @@ import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
-import org.mockito.ArgumentCaptor;
-import org.mockito.Captor;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 
@@ -23,22 +20,18 @@ import java.util.UUID;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.mockito.ArgumentMatchers.any;
-import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.lenient;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.verify;
-import static org.mockito.Mockito.verifyNoInteractions;
 
 @ExtendWith(MockitoExtension.class)
 class LibraryRevealChoiceInteractionHandlerTest {
 
-    @Mock private SessionManager sessionManager;
     @Mock private CardViewFactory cardViewFactory;
     @Mock private LibraryChoiceHandlerService libraryChoiceHandlerService;
 
-    @Captor private ArgumentCaptor<Object> messageCaptor;
-
     private InteractionHandlerRegistry registry;
+    private InteractionProjectionTestSupport projectionSupport;
     private GameData gd;
 
     private static final UUID PLAYER1_ID = UUID.randomUUID();
@@ -46,9 +39,10 @@ class LibraryRevealChoiceInteractionHandlerTest {
 
     @BeforeEach
     void setUp() {
-        registry = new InteractionHandlerRegistry();
-        registry.register(new LibraryRevealChoiceInteractionHandler(
-                sessionManager, cardViewFactory, libraryChoiceHandlerService));
+        projectionSupport = new InteractionProjectionTestSupport(cardViewFactory);
+        registry = projectionSupport.registry();
+        projectionSupport.register(new LibraryRevealChoiceInteractionHandler(
+                libraryChoiceHandlerService));
 
         gd = new GameData(UUID.randomUUID(), "test-game", PLAYER1_ID, "Player1");
         gd.playerIds.addAll(List.of(PLAYER1_ID, PLAYER2_ID));
@@ -71,14 +65,13 @@ class LibraryRevealChoiceInteractionHandlerTest {
         Card eligible = createCard("Grizzly Bears");
         Card ineligible = createCard("Shock");
 
-        registry.begin(gd, new PendingInteraction.LibraryRevealChoice(
+        InteractionPromptMessage msg = projectionSupport.begin(
+                gd, new PendingInteraction.LibraryRevealChoice(
                 PLAYER1_ID, List.of(eligible, ineligible), List.of(eligible.getId()),
                 true, false, false, false, false, 0, null, 1,
                 "Choose any number of permanent cards with mana value 3 or less to put onto the battlefield."));
 
         assertThat(gd.interaction.activeInteraction()).isInstanceOf(PendingInteraction.LibraryRevealChoice.class);
-        verify(sessionManager).sendToPlayer(eq(PLAYER1_ID), messageCaptor.capture());
-        InteractionPromptMessage msg = (InteractionPromptMessage) messageCaptor.getValue();
         assertThat(msg.cardIds()).containsExactly(eligible.getId());
         assertThat(msg.cards()).hasSize(1);
         assertThat(msg.maxCount()).isEqualTo(1);
@@ -91,22 +84,22 @@ class LibraryRevealChoiceInteractionHandlerTest {
     void nullPromptSendsNothing() {
         Card card = createCard("Silver Card");
 
-        registry.begin(gd, new PendingInteraction.LibraryRevealChoice(
+        InteractionPromptMessage prompt = projectionSupport.begin(
+                gd, new PendingInteraction.LibraryRevealChoice(
                 PLAYER1_ID, List.of(card), List.of(card.getId()),
                 false, true, false, false, false, 0, null, 1, null));
 
         assertThat(gd.interaction.activeInteraction()).isInstanceOf(PendingInteraction.LibraryRevealChoice.class);
-        verifyNoInteractions(sessionManager);
+        assertThat(prompt).isNull();
 
         assertThat(registry.replayPrompt(gd, PLAYER1_ID)).isTrue();
-        verifyNoInteractions(sessionManager);
     }
 
     @Test
     @DisplayName("dispatchAnswer delegates the chosen IDs to LibraryChoiceHandlerService")
     void dispatchDelegates() {
         Card card = createCard("Grizzly Bears");
-        registry.begin(gd, new PendingInteraction.LibraryRevealChoice(
+        projectionSupport.begin(gd, new PendingInteraction.LibraryRevealChoice(
                 PLAYER1_ID, List.of(card), List.of(card.getId()),
                 false, true, false, false, false, 0, null, 1, "Choose."));
         Player player = new Player(PLAYER1_ID, "Player1");
@@ -122,15 +115,13 @@ class LibraryRevealChoiceInteractionHandlerTest {
     @DisplayName("replayPrompt re-sends only to the decider")
     void replayOnlyToDecider() {
         Card card = createCard("Grizzly Bears");
-        registry.begin(gd, new PendingInteraction.LibraryRevealChoice(
+        projectionSupport.begin(gd, new PendingInteraction.LibraryRevealChoice(
                 PLAYER1_ID, List.of(card), List.of(card.getId()),
                 false, true, false, false, false, 0, null, 1, "Choose."));
-        org.mockito.Mockito.clearInvocations(sessionManager);
-
         assertThat(registry.replayPrompt(gd, PLAYER2_ID)).isTrue();
-        verifyNoInteractions(sessionManager);
 
         assertThat(registry.replayPrompt(gd, PLAYER1_ID)).isTrue();
-        verify(sessionManager).sendToPlayer(eq(PLAYER1_ID), any(InteractionPromptMessage.class));
+        assertThat(projectionSupport.projectedPrompt(gd))
+                .isInstanceOf(InteractionPromptMessage.class);
     }
 }

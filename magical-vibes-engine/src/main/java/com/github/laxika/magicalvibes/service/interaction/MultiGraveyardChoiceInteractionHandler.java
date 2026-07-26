@@ -3,10 +3,6 @@ package com.github.laxika.magicalvibes.service.interaction;
 import com.github.laxika.magicalvibes.model.GameData;
 import com.github.laxika.magicalvibes.model.PendingInteraction;
 import com.github.laxika.magicalvibes.model.Player;
-import com.github.laxika.magicalvibes.networking.SessionManager;
-import com.github.laxika.magicalvibes.networking.message.InteractionPromptMessage;
-import com.github.laxika.magicalvibes.networking.model.CardView;
-import com.github.laxika.magicalvibes.networking.service.CardViewFactory;
 import com.github.laxika.magicalvibes.service.input.GraveyardChoiceHandlerService;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -27,8 +23,6 @@ import java.util.UUID;
 public class MultiGraveyardChoiceInteractionHandler
         implements InteractionHandler<PendingInteraction.MultiGraveyardChoice> {
 
-    private final SessionManager sessionManager;
-    private final CardViewFactory cardViewFactory;
     private final GraveyardChoiceHandlerService graveyardChoiceHandlerService;
 
     @Override
@@ -39,19 +33,6 @@ public class MultiGraveyardChoiceInteractionHandler
     @Override
     public Class<? extends InteractionAnswer> answerType() {
         return InteractionAnswer.CardsChosen.class;
-    }
-
-    @Override
-    public void prompt(GameData gameData, PendingInteraction.MultiGraveyardChoice interaction, UUID recipientId) {
-        List<UUID> validCardIds = interaction.validCardIds();
-        List<CardView> cardViews = interaction.cards().stream().map(cardViewFactory::create).toList();
-
-        sessionManager.sendToPlayer(recipientId, InteractionPromptMessage.multiCardPick(
-                validCardIds, cardViews, interaction.maxCount(), interaction.prompt()));
-
-        String playerName = gameData.playerIdToName.get(interaction.playerId());
-        log.info("Game {} - Awaiting {} to choose up to {} cards from graveyards",
-                gameData.id, playerName, interaction.maxCount());
     }
 
     @Override

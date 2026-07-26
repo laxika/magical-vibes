@@ -1,11 +1,8 @@
 package com.github.laxika.magicalvibes.service.interaction;
 
-import com.github.laxika.magicalvibes.model.ChoiceContext;
 import com.github.laxika.magicalvibes.model.GameData;
 import com.github.laxika.magicalvibes.model.PendingInteraction;
 import com.github.laxika.magicalvibes.model.Player;
-import com.github.laxika.magicalvibes.networking.SessionManager;
-import com.github.laxika.magicalvibes.networking.message.InteractionPromptMessage;
 import com.github.laxika.magicalvibes.service.input.ChoiceHandlerService;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -31,7 +28,6 @@ import java.util.UUID;
 public class ColorChoiceInteractionHandler
         implements InteractionHandler<PendingInteraction.ColorChoice> {
 
-    private final SessionManager sessionManager;
     private final ChoiceHandlerService choiceHandlerService;
 
     @Override
@@ -42,27 +38,6 @@ public class ColorChoiceInteractionHandler
     @Override
     public Class<? extends InteractionAnswer> answerType() {
         return InteractionAnswer.ListChoiceMade.class;
-    }
-
-    @Override
-    public void prompt(GameData gameData, PendingInteraction.ColorChoice interaction, UUID recipientId) {
-        sessionManager.sendToPlayer(recipientId,
-                InteractionPromptMessage.listPick(interaction.options(), interaction.prompt(), isCardNameChoice(interaction.context())));
-    }
-
-    /**
-     * Card-name choices offer a potentially large list of card names in the game (every card
-     * across all zones), so the client should render an autocomplete search box rather than a
-     * button per option. All other variants (mana color, keyword, subtype, land type, …) are a
-     * small fixed set best shown as buttons.
-     */
-    private boolean isCardNameChoice(ChoiceContext context) {
-        return context instanceof ChoiceContext.CardNameChoice
-                || context instanceof ChoiceContext.ExileByNameChoice
-                || context instanceof ChoiceContext.SphinxAmbassadorNameChoice
-                || context instanceof ChoiceContext.EachPlayerCardNameRevealChoice
-                || context instanceof ChoiceContext.NameCardMillGainLifeChoice
-                || context instanceof ChoiceContext.TargetPlayerNameCardRevealTopChoice;
     }
 
     @Override

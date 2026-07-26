@@ -4,10 +4,6 @@ import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.GameData;
 import com.github.laxika.magicalvibes.model.PendingInteraction;
 import com.github.laxika.magicalvibes.model.Player;
-import com.github.laxika.magicalvibes.networking.SessionManager;
-import com.github.laxika.magicalvibes.networking.message.InteractionPromptMessage;
-import com.github.laxika.magicalvibes.networking.model.CardView;
-import com.github.laxika.magicalvibes.networking.service.CardViewFactory;
 import com.github.laxika.magicalvibes.service.input.CardChoiceHandlerService;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -30,8 +26,6 @@ import java.util.UUID;
 public class RevealedHandChoiceInteractionHandler
         implements InteractionHandler<PendingInteraction.RevealedHandChoice> {
 
-    private final SessionManager sessionManager;
-    private final CardViewFactory cardViewFactory;
     private final CardChoiceHandlerService cardChoiceHandlerService;
 
     @Override
@@ -42,17 +36,6 @@ public class RevealedHandChoiceInteractionHandler
     @Override
     public Class<? extends InteractionAnswer> answerType() {
         return InteractionAnswer.CardIndexChosen.class;
-    }
-
-    @Override
-    public void prompt(GameData gameData, PendingInteraction.RevealedHandChoice interaction, UUID recipientId) {
-        List<Card> targetHand = gameData.playerHands.get(interaction.targetPlayerId());
-        List<CardView> cardViews = targetHand.stream().map(cardViewFactory::create).toList();
-        sessionManager.sendToPlayer(recipientId, InteractionPromptMessage.cardIndexPick(
-                cardViews, interaction.validIndices(), interaction.prompt(), interaction.optional()));
-
-        String playerName = gameData.playerIdToName.get(interaction.choosingPlayerId());
-        log.info("Game {} - Awaiting {} to choose a card from revealed hand", gameData.id, playerName);
     }
 
     @Override

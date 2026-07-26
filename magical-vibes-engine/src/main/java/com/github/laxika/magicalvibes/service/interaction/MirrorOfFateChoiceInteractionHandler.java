@@ -4,10 +4,6 @@ import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.GameData;
 import com.github.laxika.magicalvibes.model.PendingInteraction;
 import com.github.laxika.magicalvibes.model.Player;
-import com.github.laxika.magicalvibes.networking.SessionManager;
-import com.github.laxika.magicalvibes.networking.message.InteractionPromptMessage;
-import com.github.laxika.magicalvibes.networking.model.CardView;
-import com.github.laxika.magicalvibes.networking.service.CardViewFactory;
 import com.github.laxika.magicalvibes.service.effect.normalfx.ExileSupport;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -29,8 +25,6 @@ import java.util.UUID;
 public class MirrorOfFateChoiceInteractionHandler
         implements InteractionHandler<PendingInteraction.MirrorOfFateChoice> {
 
-    private final SessionManager sessionManager;
-    private final CardViewFactory cardViewFactory;
     private final ExileSupport exileSupport;
 
     @Override
@@ -41,24 +35,6 @@ public class MirrorOfFateChoiceInteractionHandler
     @Override
     public Class<? extends InteractionAnswer> answerType() {
         return InteractionAnswer.CardsChosen.class;
-    }
-
-    @Override
-    public void prompt(GameData gameData, PendingInteraction.MirrorOfFateChoice interaction, UUID recipientId) {
-        List<Card> exiledCards = gameData.getPlayerExiledCards(interaction.playerId());
-        List<CardView> cardViews = exiledCards.stream()
-                .filter(c -> interaction.validCardIds().contains(c.getId()))
-                .map(cardViewFactory::create)
-                .toList();
-
-        sessionManager.sendToPlayer(recipientId,
-                InteractionPromptMessage.multiCardPick(new ArrayList<>(interaction.validCardIds()), cardViews,
-                        interaction.maxCount(),
-                        "Choose up to seven face-up exiled cards you own to put on top of your library."));
-
-        String playerName = gameData.playerIdToName.get(interaction.playerId());
-        log.info("Game {} - Awaiting {} to choose exiled cards for Mirror of Fate (up to {})",
-                gameData.id, playerName, interaction.maxCount());
     }
 
     @Override

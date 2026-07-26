@@ -3,8 +3,6 @@ package com.github.laxika.magicalvibes.service.interaction;
 import com.github.laxika.magicalvibes.model.GameData;
 import com.github.laxika.magicalvibes.model.PendingInteraction;
 import com.github.laxika.magicalvibes.model.Player;
-import com.github.laxika.magicalvibes.networking.SessionManager;
-import com.github.laxika.magicalvibes.networking.message.InteractionPromptMessage;
 import com.github.laxika.magicalvibes.service.ability.AbilityActivationService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Component;
@@ -23,7 +21,6 @@ import java.util.UUID;
 public class GraveyardExileCostChoiceInteractionHandler
         implements InteractionHandler<PendingInteraction.GraveyardExileCostChoice> {
 
-    private final SessionManager sessionManager;
     private final AbilityActivationService abilityActivationService;
 
     @Override
@@ -34,12 +31,6 @@ public class GraveyardExileCostChoiceInteractionHandler
     @Override
     public Class<? extends InteractionAnswer> answerType() {
         return InteractionAnswer.GraveyardCardChosen.class;
-    }
-
-    @Override
-    public void prompt(GameData gameData, PendingInteraction.GraveyardExileCostChoice interaction, UUID recipientId) {
-        sessionManager.sendToPlayer(recipientId, InteractionPromptMessage.graveyardIndexPick(
-                interaction.validIndices(), interaction.prompt(), false));
     }
 
     @Override

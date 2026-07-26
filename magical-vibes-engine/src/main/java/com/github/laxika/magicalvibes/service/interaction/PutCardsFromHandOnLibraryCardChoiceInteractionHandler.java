@@ -5,10 +5,6 @@ import com.github.laxika.magicalvibes.model.GameData;
 import com.github.laxika.magicalvibes.model.GameLog;
 import com.github.laxika.magicalvibes.model.PendingInteraction;
 import com.github.laxika.magicalvibes.model.Player;
-import com.github.laxika.magicalvibes.networking.SessionManager;
-import com.github.laxika.magicalvibes.networking.message.InteractionPromptMessage;
-import com.github.laxika.magicalvibes.networking.model.CardView;
-import com.github.laxika.magicalvibes.networking.service.CardViewFactory;
 import com.github.laxika.magicalvibes.service.GameBroadcastService;
 import com.github.laxika.magicalvibes.service.turn.TurnProgressionService;
 import java.util.ArrayList;
@@ -29,8 +25,6 @@ import org.springframework.stereotype.Component;
 public class PutCardsFromHandOnLibraryCardChoiceInteractionHandler
         implements InteractionHandler<PendingInteraction.PutCardsFromHandOnLibraryCardChoice> {
 
-    private final SessionManager sessionManager;
-    private final CardViewFactory cardViewFactory;
     private final InteractionHandlerRegistry interactionHandlerRegistry;
     private final TurnProgressionService turnProgressionService;
     private final GameBroadcastService gameBroadcastService;
@@ -43,16 +37,6 @@ public class PutCardsFromHandOnLibraryCardChoiceInteractionHandler
     @Override
     public Class<? extends InteractionAnswer> answerType() {
         return InteractionAnswer.CardsChosen.class;
-    }
-
-    @Override
-    public void prompt(GameData gameData, PendingInteraction.PutCardsFromHandOnLibraryCardChoice interaction,
-                       UUID recipientId) {
-        List<CardView> cardViews = interaction.cards().stream().map(cardViewFactory::create).toList();
-        String destination = interaction.topOnly() ? "top of" : "top or bottom of";
-        sessionManager.sendToPlayer(recipientId, InteractionPromptMessage.multiCardPick(
-                new ArrayList<>(interaction.validCardIds()), cardViews, interaction.maxCount(),
-                "Choose " + interaction.maxCount() + " card(s) to put on " + destination + " your library."));
     }
 
     @Override

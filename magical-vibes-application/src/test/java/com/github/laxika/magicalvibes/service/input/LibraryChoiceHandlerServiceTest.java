@@ -79,7 +79,7 @@ class LibraryChoiceHandlerServiceTest {
         com.github.laxika.magicalvibes.service.interaction.InteractionHandlerRegistry registry =
                 new com.github.laxika.magicalvibes.service.interaction.InteractionHandlerRegistry();
         registry.register(new com.github.laxika.magicalvibes.service.interaction.LibrarySearchInteractionHandler(
-                sessionManager, cardViewFactory, mock(LibraryChoiceHandlerService.class)));
+                mock(LibraryChoiceHandlerService.class)));
         service = new LibraryChoiceHandlerService(gameQueryService,
                 mock(com.github.laxika.magicalvibes.service.filter.PredicateEvaluationService.class),
                 graveyardService, warpWorldService, battlefieldEntryService, legendRuleService,

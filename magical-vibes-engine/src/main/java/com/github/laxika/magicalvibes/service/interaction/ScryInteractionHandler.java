@@ -5,10 +5,6 @@ import com.github.laxika.magicalvibes.model.GameData;
 import com.github.laxika.magicalvibes.model.GameLog;
 import com.github.laxika.magicalvibes.model.PendingInteraction;
 import com.github.laxika.magicalvibes.model.Player;
-import com.github.laxika.magicalvibes.networking.SessionManager;
-import com.github.laxika.magicalvibes.networking.message.InteractionPromptMessage;
-import com.github.laxika.magicalvibes.networking.model.CardView;
-import com.github.laxika.magicalvibes.networking.service.CardViewFactory;
 import com.github.laxika.magicalvibes.service.GameBroadcastService;
 import com.github.laxika.magicalvibes.service.effect.EffectResolutionService;
 import com.github.laxika.magicalvibes.service.input.PlayerInputService;
@@ -31,8 +27,6 @@ import java.util.UUID;
 @RequiredArgsConstructor
 public class ScryInteractionHandler implements InteractionHandler<PendingInteraction.Scry> {
 
-    private final SessionManager sessionManager;
-    private final CardViewFactory cardViewFactory;
     private final GameBroadcastService gameBroadcastService;
     private final PlayerInputService playerInputService;
     private final TurnProgressionService turnProgressionService;
@@ -46,24 +40,6 @@ public class ScryInteractionHandler implements InteractionHandler<PendingInterac
     @Override
     public Class<? extends InteractionAnswer> answerType() {
         return InteractionAnswer.ScryOrder.class;
-    }
-
-    @Override
-    public void prompt(GameData gameData, PendingInteraction.Scry interaction, UUID recipientId) {
-        List<CardView> cardViews = interaction.cards().stream().map(cardViewFactory::create).toList();
-        int n = interaction.cards().size();
-        String prompt;
-        if (interaction.toGraveyard()) {
-            prompt = n == 1
-                    ? "Surveil 1: Keep on top of your library or put into your graveyard."
-                    : "Surveil " + n + ": Put cards on top of your library or into your graveyard.";
-        } else {
-            prompt = n == 1
-                    ? "Scry 1: Keep on top or put on the bottom of your library."
-                    : "Scry " + n + ": Put cards on the top or bottom of your library.";
-        }
-        sessionManager.sendToPlayer(recipientId,
-                InteractionPromptMessage.scryOrder(cardViews, prompt, interaction.toGraveyard()));
     }
 
     @Override

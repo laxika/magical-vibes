@@ -3,10 +3,6 @@ package com.github.laxika.magicalvibes.service.interaction;
 import com.github.laxika.magicalvibes.model.GameData;
 import com.github.laxika.magicalvibes.model.PendingInteraction;
 import com.github.laxika.magicalvibes.model.Player;
-import com.github.laxika.magicalvibes.networking.SessionManager;
-import com.github.laxika.magicalvibes.networking.message.InteractionPromptMessage;
-import com.github.laxika.magicalvibes.networking.model.CardView;
-import com.github.laxika.magicalvibes.networking.service.CardViewFactory;
 import com.github.laxika.magicalvibes.service.input.LibraryChoiceHandlerService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Component;
@@ -26,8 +22,6 @@ import java.util.UUID;
 public class LibrarySearchInteractionHandler
         implements InteractionHandler<PendingInteraction.LibrarySearch> {
 
-    private final SessionManager sessionManager;
-    private final CardViewFactory cardViewFactory;
     private final LibraryChoiceHandlerService libraryChoiceHandlerService;
 
     @Override
@@ -38,13 +32,6 @@ public class LibrarySearchInteractionHandler
     @Override
     public Class<? extends InteractionAnswer> answerType() {
         return InteractionAnswer.LibraryCardChosen.class;
-    }
-
-    @Override
-    public void prompt(GameData gameData, PendingInteraction.LibrarySearch interaction, UUID recipientId) {
-        List<CardView> cardViews = interaction.params().cards().stream().map(cardViewFactory::create).toList();
-        sessionManager.sendToPlayer(recipientId, InteractionPromptMessage.libraryIndexPick(
-                cardViews, interaction.messagePrompt(), interaction.messageCanFailToFind()));
     }
 
     @Override

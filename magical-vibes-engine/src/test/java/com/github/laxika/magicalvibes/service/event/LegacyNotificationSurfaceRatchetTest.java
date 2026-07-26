@@ -50,6 +50,37 @@ class LegacyNotificationSurfaceRatchetTest {
             "interaction/AttackerDeclarationInteractionHandler.java",
             "interaction/BlockerDeclarationInteractionHandler.java",
             "interaction/CombatDamageAssignmentInteractionHandler.java");
+    private static final Set<String> MIGRATED_STANDARD_INTERACTION_HANDLERS = Set.of(
+            "interaction/AdNauseamRepeatChoiceInteractionHandler.java",
+            "interaction/BrilliantUltimatumPlayChoiceInteractionHandler.java",
+            "interaction/ColorChoiceInteractionHandler.java",
+            "interaction/DoomsdayChoiceInteractionHandler.java",
+            "interaction/GraveyardChoiceInteractionHandler.java",
+            "interaction/GraveyardExileCostChoiceInteractionHandler.java",
+            "interaction/HandCardChoiceInteractionHandlers.java",
+            "interaction/HandTopBottomChoiceInteractionHandler.java",
+            "interaction/IllicitAuctionBidChoiceInteractionHandler.java",
+            "interaction/ImprovisationCapstoneCastChoiceInteractionHandler.java",
+            "interaction/KeepCardsInHandChoiceInteractionHandler.java",
+            "interaction/KnowledgePoolCastChoiceInteractionHandler.java",
+            "interaction/LibraryReorderInteractionHandler.java",
+            "interaction/LibraryRevealChoiceInteractionHandler.java",
+            "interaction/LibrarySearchInteractionHandler.java",
+            "interaction/MayAbilityChoiceInteractionHandler.java",
+            "interaction/MirrorOfFateChoiceInteractionHandler.java",
+            "interaction/MultiGraveyardChoiceInteractionHandler.java",
+            "interaction/MultiPermanentChoiceInteractionHandler.java",
+            "interaction/MultiZoneExileChoiceInteractionHandler.java",
+            "interaction/PermanentAuctionChoiceInteractionHandler.java",
+            "interaction/PermanentChoiceInteractionHandler.java",
+            "interaction/PutCardsFromHandOnLibraryCardChoiceInteractionHandler.java",
+            "interaction/PutCardsFromHandOnLibraryDestinationChoiceInteractionHandler.java",
+            "interaction/RevealCardsDiscardChoiceInteractionHandler.java",
+            "interaction/RevealedHandChoiceInteractionHandler.java",
+            "interaction/ScryInteractionHandler.java",
+            "interaction/SearchLibraryToTopChoiceInteractionHandler.java",
+            "interaction/SylvanLibraryChoiceInteractionHandler.java",
+            "interaction/XValueChoiceInteractionHandler.java");
 
     private static final Map<LegacySurface, Map<String, Integer>> BASELINE = new EnumMap<>(LegacySurface.class);
 
@@ -61,8 +92,7 @@ class LegacyNotificationSurfaceRatchetTest {
 
         BASELINE.put(LegacySurface.SESSION_SEND, Map.of(
                 ROOT_FAMILY, 1,
-                "effect/normalfx", 7,
-                "interaction", 30));
+                "effect/normalfx", 7));
 
         BASELINE.put(LegacySurface.LOG_AND_BROADCAST, Map.ofEntries(
                 Map.entry(ROOT_FAMILY, 111),
@@ -170,6 +200,29 @@ class LegacyNotificationSurfaceRatchetTest {
 
         assertThat(failures)
                 .withFailMessage(() -> "Combat notification migration regressed:\n  "
+                        + String.join("\n  ", failures))
+                .isEmpty();
+    }
+
+    @Test
+    void migratedStandardInteractionHandlersHaveNoSessionOrNetworkingProjectionDependency()
+            throws IOException {
+        Path serviceRoot = locateRepoRoot().resolve(SERVICE_ROOT);
+        List<String> failures = new ArrayList<>();
+
+        for (String relative : MIGRATED_STANDARD_INTERACTION_HANDLERS) {
+            String source = Files.readString(serviceRoot.resolve(relative), StandardCharsets.UTF_8);
+            int sessionSends = count(source, LegacySurface.SESSION_SEND.pattern);
+            if (sessionSends != 0) {
+                failures.add(relative + " retains " + sessionSends + " direct session send(s)");
+            }
+            if (source.contains("import com.github.laxika.magicalvibes.networking.")) {
+                failures.add(relative + " retains a networking projection dependency");
+            }
+        }
+
+        assertThat(failures)
+                .withFailMessage(() -> "Standard interaction prompt migration regressed:\n  "
                         + String.join("\n  ", failures))
                 .isEmpty();
     }

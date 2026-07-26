@@ -21,7 +21,6 @@ import com.github.laxika.magicalvibes.service.GameMessageTransport;
 import com.github.laxika.magicalvibes.service.GameRegistry;
 import com.github.laxika.magicalvibes.service.GameViewProjectionFactory;
 import com.github.laxika.magicalvibes.service.PrivateInformationProjectionFactory;
-import com.github.laxika.magicalvibes.service.interaction.InteractionHandlerRegistry;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Component;
@@ -48,7 +47,7 @@ public class GameEventProjectionSubscriber implements GameEventSubscriber {
     private final GameRegistry gameRegistry;
     private final GameViewProjectionFactory gameViewProjectionFactory;
     private final PrivateInformationProjectionFactory privateInformationProjectionFactory;
-    private final InteractionHandlerRegistry interactionHandlerRegistry;
+    private final InteractionPromptProjectionRegistry interactionPromptProjectionRegistry;
     private final GameLogViewFactory gameLogViewFactory;
     private final GameMessageTransport transport;
 
@@ -153,11 +152,10 @@ public class GameEventProjectionSubscriber implements GameEventSubscriber {
         if (projectCombatDecision(gameData, decision, authorizedRecipients)) {
             return;
         }
-        for (UUID recipient : authorizedRecipients) {
-            if (!interactionHandlerRegistry.promptActiveTo(gameData, recipient)) {
-                log.warn("Cannot project interaction decision {}: no active registered interaction",
-                        decision.decisionId());
-            }
+        PendingInteraction active = gameData.interaction.activeInteraction();
+        var prompt = interactionPromptProjectionRegistry.project(gameData, active);
+        if (prompt.isPresent()) {
+            transport.sendToPlayers(authorizedRecipients, prompt.get());
         }
     }
 

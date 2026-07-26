@@ -5,10 +5,6 @@ import com.github.laxika.magicalvibes.model.GameData;
 import com.github.laxika.magicalvibes.model.GameLog;
 import com.github.laxika.magicalvibes.model.PendingInteraction;
 import com.github.laxika.magicalvibes.model.Player;
-import com.github.laxika.magicalvibes.networking.SessionManager;
-import com.github.laxika.magicalvibes.networking.message.InteractionPromptMessage;
-import com.github.laxika.magicalvibes.networking.model.CardView;
-import com.github.laxika.magicalvibes.networking.service.CardViewFactory;
 import com.github.laxika.magicalvibes.service.GameBroadcastService;
 import com.github.laxika.magicalvibes.service.effect.EffectResolutionService;
 import com.github.laxika.magicalvibes.service.effect.normalfx.LifeSupport;
@@ -34,8 +30,6 @@ public class SylvanLibraryChoiceInteractionHandler
 
     private static final int LIFE_PER_CARD = 4;
 
-    private final SessionManager sessionManager;
-    private final CardViewFactory cardViewFactory;
     private final GameBroadcastService gameBroadcastService;
     private final LifeSupport lifeSupport;
     private final EffectResolutionService effectResolutionService;
@@ -49,26 +43,6 @@ public class SylvanLibraryChoiceInteractionHandler
     @Override
     public Class<? extends InteractionAnswer> answerType() {
         return InteractionAnswer.CardsChosen.class;
-    }
-
-    @Override
-    public void prompt(GameData gameData, PendingInteraction.SylvanLibraryChoice interaction, UUID recipientId) {
-        List<Card> hand = gameData.playerHands.getOrDefault(interaction.playerId(), List.of());
-        List<UUID> ids = new ArrayList<>();
-        List<CardView> cardViews = new ArrayList<>();
-        for (UUID id : interaction.drawnThisTurnCardIds()) {
-            Card card = hand.stream().filter(c -> c.getId().equals(id)).findFirst().orElse(null);
-            if (card != null) {
-                ids.add(id);
-                cardViews.add(cardViewFactory.create(card));
-            }
-        }
-
-        sessionManager.sendToPlayer(recipientId, InteractionPromptMessage.multiCardPick(ids, cardViews,
-                interaction.resolveCount(),
-                "Choose up to " + interaction.resolveCount() + " card(s) drawn this turn to put on top of your "
-                        + "library. You pay 4 life for each of the " + interaction.resolveCount()
-                        + " you don't put back."));
     }
 
     @Override

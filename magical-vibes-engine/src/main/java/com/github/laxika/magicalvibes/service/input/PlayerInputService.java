@@ -20,8 +20,6 @@ import com.github.laxika.magicalvibes.model.StackEntry;
 import com.github.laxika.magicalvibes.model.StackEntryType;
 import com.github.laxika.magicalvibes.service.interaction.InteractionHandlerRegistry;
 import com.github.laxika.magicalvibes.service.turn.UntapStepService;
-import com.github.laxika.magicalvibes.networking.SessionManager;
-import com.github.laxika.magicalvibes.networking.service.CardViewFactory;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Component;
@@ -34,22 +32,7 @@ import java.util.stream.IntStream;
 @RequiredArgsConstructor
 public class PlayerInputService {
 
-    private final SessionManager sessionManager;
-    private final CardViewFactory cardViewFactory;
     private final InteractionHandlerRegistry interactionHandlerRegistry;
-
-    /**
-     * When mind control is active, redirect messages intended for the controlled player
-     * to the controlling player instead, so they can make decisions on their behalf.
-     */
-    private UUID resolveMessageRecipient(GameData gameData, UUID playerId) {
-        if (gameData.mindControlledPlayerId != null
-                && gameData.mindControlledPlayerId.equals(playerId)
-                && gameData.mindControllerPlayerId != null) {
-            return gameData.mindControllerPlayerId;
-        }
-        return playerId;
-    }
 
     public void beginCardChoice(GameData gameData, UUID playerId, List<Integer> validIndices, String prompt) {
         beginCardChoice(gameData, playerId, validIndices, prompt, false);

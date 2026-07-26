@@ -94,7 +94,7 @@ class KnowledgePoolExileAndCastEffectHandlerTest {
         gd.playerDecks.put(player1Id, Collections.synchronizedList(new ArrayList<>()));
         gd.playerDecks.put(player2Id, Collections.synchronizedList(new ArrayList<>()));
         InteractionHandlerRegistry registry = new InteractionHandlerRegistry();
-        registry.register(new KnowledgePoolCastChoiceInteractionHandler(sessionManager, cardViewFactory, exileSupport));
+        registry.register(new KnowledgePoolCastChoiceInteractionHandler(exileSupport));
         knowledgePoolExileAndCastHandler = new KnowledgePoolExileAndCastEffectHandler(gameQueryService, gameBroadcastService, registry, exileService);
 
     }
