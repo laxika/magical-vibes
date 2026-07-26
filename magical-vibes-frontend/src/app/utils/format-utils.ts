@@ -19,6 +19,14 @@ export function distinctGrantedAbilityTexts(abilities: { text: string }[]): stri
 }
 
 /**
+ * True when the card carries the given type, whether as its main type or as one of
+ * its additional types (e.g. an Artifact Creature is both ARTIFACT and CREATURE).
+ */
+export function hasCardType(card: { type: string; additionalTypes?: string[] }, type: string): boolean {
+  return card.type === type || (card.additionalTypes ?? []).includes(type);
+}
+
+/**
  * Formats a card's full type line, e.g. "Legendary Creature — Elf Warrior".
  */
 export function formatTypeLine(card: { supertypes?: string[]; type: string; subtypes?: string[] }): string {

@@ -7,7 +7,7 @@ import { ScryfallCardDataService } from '../../../services/scryfall-card-data.se
 import { ManaSymbolService } from '../../../services/mana-symbol.service';
 import { SetSymbolService } from '../../../services/set-symbol.service';
 import { WatermarkService } from '../../../services/watermark.service';
-import { distinctGrantedAbilityTexts, formatEnumName, formatKeywords, formatTypeLine } from '../../../utils/format-utils';
+import { distinctGrantedAbilityTexts, formatEnumName, formatKeywords, formatTypeLine, hasCardType } from '../../../utils/format-utils';
 
 export interface PlaneswalkerAbilityLine {
   /** Display cost, e.g. "+1", "−2", "0"; null for static ability lines. */
@@ -228,6 +228,25 @@ export class CardDisplayComponent implements OnInit, OnChanges, OnDestroy, After
     return `linear-gradient(135deg, ${stops.join(', ')})`;
   }
 
+  /**
+   * Frame treatment for cards that have no CardColor at all — without it lands and
+   * colourless artifacts share the default frame and cannot be told apart on the
+   * battlefield. A *coloured* artifact keeps its colour frame, as it does in print,
+   * so this returns null once the card has any colour. Artifact lands take the land
+   * frame, which is also how they are printed.
+   */
+  @HostBinding('attr.data-frame')
+  get frameStyle(): 'land' | 'artifact' | null {
+    if (hasCardType(this.card, 'LAND')) return 'land';
+    if (hasCardType(this.card, 'ARTIFACT') && !this.cardColor) return 'artifact';
+    return null;
+  }
+
+  @HostBinding('class.legendary-card')
+  get isLegendary(): boolean {
+    return (this.card.supertypes ?? []).includes('LEGENDARY');
+  }
+
   @HostBinding('class.is-tapped')
   get isTapped(): boolean {
     return !this.preview && !!this.permanent?.tapped;
@@ -303,7 +322,7 @@ export class CardDisplayComponent implements OnInit, OnChanges, OnDestroy, After
 
   @HostBinding('class.planeswalker-card')
   get isPlaneswalker(): boolean {
-    return this.card.type === 'PLANESWALKER' || (this.card.additionalTypes ?? []).includes('PLANESWALKER');
+    return hasCardType(this.card, 'PLANESWALKER');
   }
 
   /** Printed planeswalker frames only enlarge the ability box (type line riding
@@ -436,6 +455,13 @@ export class CardDisplayComponent implements OnInit, OnChanges, OnDestroy, After
   get setSymbolUrl(): string | null {
     if (!this.card.setCode) return null;
     return this.setSymbolService.getSymbolUrl(this.card.setCode);
+  }
+
+  /** The symbol as a CSS url() token: it is painted as a mask over a flat rarity
+   *  colour rather than as an <img>, so it reaches CSS as a custom property. */
+  get setSymbolCssUrl(): string | null {
+    const url = this.setSymbolUrl;
+    return url ? `url("${url}")` : null;
   }
 
   get formattedManaCost(): SafeHtml {

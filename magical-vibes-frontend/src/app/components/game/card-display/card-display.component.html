@@ -20,17 +20,21 @@
       <span class="card-mana-cost" [innerHTML]="formattedManaCost"></span>
     }
   </div>
-  @if (artUrl()) {
-    <img class="card-art" [src]="artUrl()" [alt]="card.name + ' art'" />
-  } @else {
-    <div class="card-art"></div>
-  }
+  <!-- The window carries the frame and bevel; its own background stands in until
+       (or if) the art loads, so there is no separate placeholder element. -->
+  <div class="art-window">
+    @if (artUrl()) {
+      <img class="card-art" [src]="artUrl()" [alt]="card.name + ' art'" />
+    }
+  </div>
   <div class="type-line">
     <span class="card-type">{{ typeLine }}</span>
-    @if (setSymbolUrl) {
-      <img class="set-symbol" [src]="setSymbolUrl" [attr.data-rarity]="rarity" alt="set symbol" />
+    @if (setSymbolCssUrl) {
+      <!-- Decorative, and the info line already names the set: the symbol itself
+           is a mask over a rarity-coloured box, so it has no image to describe. -->
+      <span class="set-symbol" [style.--set-symbol-url]="setSymbolCssUrl" [attr.data-rarity]="rarity" aria-hidden="true"></span>
     } @else if (rarity) {
-      <span class="rarity-diamond" [attr.data-rarity]="rarity">&#9670;</span>
+      <span class="rarity-diamond" [attr.data-rarity]="rarity" aria-hidden="true">&#9670;</span>
     }
   </div>
   <div class="text-box" [class.pw-text-box]="isPlaneswalker" [class.pw-has-loyalty]="isPlaneswalker && displayLoyalty != null" #textBox>

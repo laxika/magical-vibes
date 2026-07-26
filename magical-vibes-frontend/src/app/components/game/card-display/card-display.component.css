@@ -67,6 +67,18 @@
    background rather than reused from it. */
 :host {
   --frame-accent: #4a3524;
+  /* Every stacked plate — name bar, art window, type line, rules box, info line —
+     shares one horizontal inset and one corner radius, so the frame's inner edge
+     reads as a single straight line down both sides the way a printed card's does.
+     Anything absolutely positioned against that edge (the P/T plate, the loyalty
+     shield) derives its offset from the same property. */
+  --frame-inset: 4px;
+  --plate-radius: 3px;
+  /* Rules-box ink. Solid colours rather than opacity over parchment: the text
+     fitter shrinks rules text to 7px, and translucency costs contrast exactly
+     where it is already tightest. */
+  --ink: #1a1410;
+  --ink-soft: #4a3c2c;
 }
 
 :host([data-card-color="GREEN"]) {
@@ -100,6 +112,50 @@
   --frame-accent: #8a6a1f;
 }
 
+/* Lands and colourless artifacts have no CardColor at all, so without these they
+   both fall through to the default frame and are indistinguishable at a glance on
+   a crowded battlefield. Printed frames give lands an earthy tan and artifacts
+   steel. A *coloured* artifact keeps its colour frame exactly as it does in print,
+   so data-frame only claims the colourless case (see frameStyle). */
+:host([data-frame="land"]) {
+  background: linear-gradient(180deg, #4a3a22 0%, #7d6544 100%);
+  --frame-accent: #4f3f28;
+}
+
+:host([data-frame="artifact"]) {
+  background: linear-gradient(180deg, #3f454d 0%, #6a7078 100%);
+  --frame-accent: #414750;
+}
+
+/* Frame depth: card stock grain and an edge vignette, so the frame reads as a
+   printed surface rather than a flat gradient. Both sit at z-index -1 — painted
+   over the host background but under every in-flow plate — and on pseudo-elements
+   rather than the host's own box-shadow, which the parent's targeting and combat
+   outlines (.card.attacking, .card.targetable, …) replace wholesale. Inset 0
+   resolves against the padding box, i.e. exactly inside the 4px black border, so
+   the radius is the host's 9px less that border. */
+:host::before,
+:host::after {
+  content: '';
+  position: absolute;
+  inset: 0;
+  z-index: -1;
+  border-radius: 5px;
+  pointer-events: none;
+}
+
+/* Tiled at a fixed small size so the browser rasterizes one 90px turbulence tile
+   and reuses it for every card on the table, rather than one per card box. */
+:host::before {
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='90' height='90'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.8' numOctaves='3' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='90' height='90' filter='url(%23n)'/%3E%3C/svg%3E");
+  background-size: 90px 90px;
+  opacity: 0.06;
+}
+
+:host::after {
+  background: radial-gradient(ellipse at 50% 45%, rgba(0, 0, 0, 0) 55%, rgba(0, 0, 0, 0.34) 100%);
+}
+
 /* Title bar — a light plate inset on the colored frame, like a real name bar */
 .title-bar {
   display: flex;
@@ -108,13 +164,24 @@
   height: 20px;
   box-sizing: border-box;
   padding: 0 5px;
-  margin: 3px 3px 2px;
+  margin: 3px var(--frame-inset) 2px;
   background: linear-gradient(180deg, #f7f0de 0%, #e7dab9 100%);
   border: 1px solid rgba(20, 15, 10, 0.55);
-  border-radius: 3px;
-  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.5);
-  color: #1a1410;
+  border-radius: var(--plate-radius);
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.5), 0 1px 2px rgba(0, 0, 0, 0.32);
+  color: var(--ink);
   flex-shrink: 0;
+}
+
+/* Legendary supertype, which the type line states but nothing signals at a glance.
+   A gold-tinted name plate rather than a modern-frame crown: the crown would need
+   to break out of the plate's rectangle and would collide with the badge corners. */
+:host(.legendary-card) .title-bar {
+  background: linear-gradient(180deg, #f6e8bd 0%, #dcc484 100%);
+  border-color: rgba(122, 92, 30, 0.75);
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.6),
+              inset 0 0 0 1px rgba(200, 169, 81, 0.45),
+              0 1px 2px rgba(0, 0, 0, 0.32);
 }
 
 .card-name {
@@ -135,20 +202,53 @@
   margin-left: 4px;
 }
 
-/* Art window — ~42% of card height like a real card, and close to the
-   ~1.4:1 aspect of Scryfall art crops so cover-cropping stays minimal. */
-.card-art {
+/* Art window — ~42% of card height like a real card. Content box is 147x94 (1.56).
+   Scryfall documents art_crop's size as "Varies", and it means it: the modern M15
+   frame is 626x457 (1.37, ~65% of cards), older frames run ~1.24-1.36, and Saga
+   and Class layouts are 312x752 — PORTRAIT, 0.41. object-fit: cover therefore
+   discards ~12% of a modern card's art height but ~74% of a Saga's, leaving a
+   horizontal slice of a tall vertical panel. Every Saga this engine implements
+   (DOM 21/90/18 and the rest) hits that case.
+   Widening the window cannot fix it. Matching 1.37 needs 107px of height, and
+   those 11px come out of the rules box, which only gets 69px and already drives
+   wordy cards to the text fitter's 7px floor — and no single aspect can serve
+   both 1.37 and 0.41 regardless. Legible rules text beats fully-framed art in a
+   client you play in, so the modern-card crop is accepted deliberately. The Saga
+   case is a known gap and wants its own treatment, not a different ratio here.
+   The frame and bevel live on this wrapper rather than on the image itself:
+   an inset box-shadow on an <img> paints with the background, so the image
+   content would cover it. */
+.art-window {
+  position: relative;
   height: 96px;
   box-sizing: border-box;
-  margin: 0 4px;
+  margin: 0 var(--frame-inset);
   background: rgba(0, 0, 0, 0.25);
   border: 1px solid rgba(20, 15, 10, 0.55);
+  border-radius: var(--plate-radius);
+  box-shadow: 0 1px 2px rgba(0, 0, 0, 0.3);
+  overflow: hidden;
   flex-shrink: 0;
+}
+
+/* Recessed lip over the art, so the window reads as cut into the frame. */
+.art-window::after {
+  content: '';
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+  box-shadow: inset 0 1px 3px rgba(0, 0, 0, 0.45),
+              inset 0 -1px 0 rgba(255, 255, 255, 0.1);
+}
+
+.card-art {
+  width: 100%;
+  height: 100%;
+  display: block;
 }
 
 img.card-art {
   object-fit: cover;
-  display: block;
 }
 
 /* Type line — matching light plate */
@@ -159,12 +259,12 @@ img.card-art {
   height: 16px;
   box-sizing: border-box;
   padding: 0 5px;
-  margin: 2px 3px;
+  margin: 2px var(--frame-inset);
   background: linear-gradient(180deg, #f7f0de 0%, #e7dab9 100%);
   border: 1px solid rgba(20, 15, 10, 0.55);
-  border-radius: 2px;
-  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.5);
-  color: #1a1410;
+  border-radius: var(--plate-radius);
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.5), 0 1px 2px rgba(0, 0, 0, 0.32);
+  color: var(--ink);
   flex-shrink: 0;
 }
 
@@ -177,27 +277,38 @@ img.card-art {
   min-width: 0;
 }
 
+/* Tinted by masking a flat rarity colour with the symbol, not by filtering it.
+   The source SVGs are solid black, and invert()/sepia()/hue-rotate() can only
+   approximate silver and gold from black — every rarity above common came out
+   muddy. mask-size: contain letterboxes symbols of any aspect inside a fixed
+   box, which the previous width: auto cannot do once the element is a masked
+   span rather than an img. */
 .set-symbol {
+  width: 16px;
   height: 12px;
-  width: auto;
   flex-shrink: 0;
   margin-left: 2px;
-}
-
-.set-symbol[data-rarity="COMMON"] {
-  opacity: 0.85;
+  background-color: #3a2e22;
+  -webkit-mask-image: var(--set-symbol-url);
+  mask-image: var(--set-symbol-url);
+  -webkit-mask-size: contain;
+  mask-size: contain;
+  -webkit-mask-position: center;
+  mask-position: center;
+  -webkit-mask-repeat: no-repeat;
+  mask-repeat: no-repeat;
 }
 
 .set-symbol[data-rarity="UNCOMMON"] {
-  filter: invert(55%);
+  background-color: #7d8489;
 }
 
 .set-symbol[data-rarity="RARE"] {
-  filter: invert(70%) sepia(100%) saturate(400%) hue-rotate(10deg);
+  background-color: #b8912f;
 }
 
 .set-symbol[data-rarity="MYTHIC"] {
-  filter: invert(40%) sepia(100%) saturate(2000%) hue-rotate(340deg);
+  background-color: #c9410d;
 }
 
 .rarity-diamond {
@@ -212,15 +323,15 @@ img.card-art {
 }
 
 .rarity-diamond[data-rarity="UNCOMMON"] {
-  color: #8a8a8a;
+  color: #7d8489;
 }
 
 .rarity-diamond[data-rarity="RARE"] {
-  color: #c8a951;
+  color: #b8912f;
 }
 
 .rarity-diamond[data-rarity="MYTHIC"] {
-  color: #e74c3c;
+  color: #c9410d;
 }
 
 /* Watermark */
@@ -239,12 +350,14 @@ img.card-art {
 /* Text box — parchment with dark serif text, like real rules text */
 .text-box {
   flex: 1;
-  margin: 0 5px 1px;
+  margin: 0 var(--frame-inset) 1px;
   padding: 3px 5px;
   background: linear-gradient(180deg, #f4ecd7 0%, #e9dcbb 100%);
   border: 1px solid rgba(20, 15, 10, 0.5);
-  border-radius: 1px;
-  color: #1a1410;
+  border-radius: var(--plate-radius);
+  box-shadow: inset 0 1px 2px rgba(60, 45, 25, 0.26),
+              inset 0 -1px 0 rgba(255, 255, 255, 0.35);
+  color: var(--ink);
   font-family: 'Crimson Text', Georgia, serif;
   overflow: hidden;
   position: relative;
@@ -277,7 +390,6 @@ img.card-art {
 }
 
 .text-box .card-text {
-  opacity: 0.9;
   line-height: 1.3;
   white-space: pre-line;
   font-size: inherit;
@@ -288,7 +400,6 @@ img.card-art {
 .text-box .card-keywords {
   font-weight: 600;
   font-style: italic;
-  opacity: 0.9;
   margin-top: 2px;
   font-size: inherit;
   position: relative;
@@ -298,7 +409,6 @@ img.card-art {
 .text-box .card-granted-ability {
   font-weight: 600;
   font-style: italic;
-  opacity: 0.9;
   margin-top: 2px;
   font-size: inherit;
   line-height: 1.2;
@@ -402,7 +512,7 @@ img.card-art {
 
 .text-box .card-flavor-text {
   font-style: italic;
-  opacity: 0.7;
+  color: var(--ink-soft);
   line-height: 1.3;
   white-space: pre-line;
   font-size: inherit;
@@ -416,7 +526,7 @@ img.card-art {
    above the info line, which indents to clear it. */
 .card-pt {
   position: absolute;
-  right: 5px;
+  right: var(--frame-inset);
   /* Straddles the text box's bottom edge (13px up), like the printed plate: most of it
      over the rules box, the rest over the frame. Raising it further eats column height,
      since the corner spacer below has to grow to match. */
@@ -428,7 +538,7 @@ img.card-art {
   font-weight: 700;
   font-family: 'Cinzel', Georgia, serif;
   background: linear-gradient(180deg, #f7f0de 0%, #e2d3ae 100%);
-  color: #1a1410;
+  color: var(--ink);
   padding: 0;
   border-radius: 5px / 8px;
   border: 1px solid rgba(20, 15, 10, 0.6);
@@ -468,7 +578,7 @@ img.card-art {
    between them. */
 :host(.pw-tall-box) .type-line {
   position: relative;
-  margin: -20px 3px 0;
+  margin: -20px var(--frame-inset) 0;
 }
 
 /* Ability bands span the full text box width, so padding lives on the rows.
@@ -505,7 +615,6 @@ img.card-art {
 
 .pw-ability-text {
   min-width: 0;
-  opacity: 0.9;
   font-size: inherit;
 }
 
@@ -560,7 +669,7 @@ img.card-art {
 .card-loyalty {
   position: absolute;
   bottom: 14px;
-  right: 7px;
+  right: calc(var(--frame-inset) + 3px);
   width: 24px;
   height: 21px;
   display: flex;
@@ -585,13 +694,14 @@ img.card-art {
   align-items: center;
   justify-content: space-between;
   height: 12px;
-  padding: 0 5px;
+  padding: 0 var(--frame-inset);
   flex-shrink: 0;
 }
 
-/* Clear the P/T plate overhanging the corner, so the artist and set id stay readable. */
+/* Clear the P/T plate overhanging the corner, so the artist and set id stay
+   readable: the plate's own inset, its 30px width, and a 2px gap. */
 :host(.has-pt) .info-line {
-  padding-right: 37px;
+  padding-right: calc(var(--frame-inset) + 32px);
 }
 
 .card-artist {

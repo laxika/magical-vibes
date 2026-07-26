@@ -1,4 +1,5 @@
 import { Permanent } from '../../services/websocket.service';
+import { hasCardType } from '../../utils/format-utils';
 
 export interface IndexedPermanent {
   perm: Permanent;
@@ -108,13 +109,13 @@ export function isLandStack(item: IndexedPermanent | LandStack): item is LandSta
 }
 
 export function isPermanentCreature(perm: Permanent): boolean {
-  return perm.card.type === 'CREATURE' || perm.card.additionalTypes?.includes('CREATURE') || perm.animatedCreature;
+  return hasCardType(perm.card, 'CREATURE') || perm.animatedCreature;
 }
 
 export function isPermanentArtifact(perm: Permanent): boolean {
-  return perm.card.type === 'ARTIFACT' || perm.card.additionalTypes?.includes('ARTIFACT');
+  return hasCardType(perm.card, 'ARTIFACT');
 }
 
 export function isPermanentLand(perm: Permanent): boolean {
-  return perm.card.type === 'LAND' || perm.card.additionalTypes?.includes('LAND');
+  return hasCardType(perm.card, 'LAND');
 }
