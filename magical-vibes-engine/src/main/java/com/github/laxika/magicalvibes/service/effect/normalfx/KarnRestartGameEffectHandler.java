@@ -18,9 +18,10 @@ import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.StackEntry;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
 import com.github.laxika.magicalvibes.model.effect.KarnRestartGameEffect;
-import com.github.laxika.magicalvibes.networking.SessionManager;
-import com.github.laxika.magicalvibes.networking.message.MulliganResolvedMessage;
+import com.github.laxika.magicalvibes.model.event.GameEventAudience;
+import com.github.laxika.magicalvibes.model.event.GameEventFact;
 import com.github.laxika.magicalvibes.service.GameBroadcastService;
+import com.github.laxika.magicalvibes.service.event.GameMutationCoordinator;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Component;
@@ -39,7 +40,7 @@ import java.util.concurrent.ConcurrentHashMap;
 public class KarnRestartGameEffectHandler implements NormalEffectHandlerBean {
 
     private final GameBroadcastService gameBroadcastService;
-    private final SessionManager sessionManager;
+    private final GameMutationCoordinator mutationCoordinator;
 
     @Override
     public Class<? extends CardEffect> handledEffect() {
@@ -285,17 +286,31 @@ public class KarnRestartGameEffectHandler implements NormalEffectHandlerBean {
 
         for (UUID playerId : gameData.orderedPlayerIds) {
             gameData.mulliganCounts.put(playerId, 0);
+            gameData.playerMulliganDecisionIds.put(playerId, UUID.randomUUID());
         }
         gameData.playerKeptHand.clear();
         gameData.playerNeedsToBottom.clear();
+        gameData.playerBottomDecisionIds.clear();
         gameData.status = GameStatus.MULLIGAN;
 
         gameBroadcastService.logAndBroadcast(gameData, GameLog.text("Mulligan phase — decide to keep or mulligan."));
-        gameBroadcastService.broadcastGameState(gameData);
+        mutationCoordinator.emit(gameData,
+                new GameEventFact.StateInvalidated(
+                        GameEventFact.StateSection.PRIVATE_PLAYER_VIEW),
+                GameEventAudience.allPlayers());
 
         // Kick off the new mulligan round for message-driven clients (AI players decide on
         // MULLIGAN_RESOLVED; without this the restarted game waits forever on their answer)
-        sessionManager.sendToPlayers(gameData.orderedPlayerIds,
-                new MulliganResolvedMessage(controllerName, false, 0));
+        mutationCoordinator.emit(gameData,
+                new GameEventFact.MulliganResolved(controllerId, false, 0),
+                GameEventAudience.allPlayers());
+        for (UUID playerId : gameData.orderedPlayerIds) {
+            mutationCoordinator.emit(gameData,
+                    new GameEventFact.DecisionRequested(
+                            gameData.playerMulliganDecisionIds.get(playerId),
+                            playerId,
+                            GameEventFact.DecisionKind.MULLIGAN),
+                    GameEventAudience.player(playerId));
+        }
     }
 }

@@ -2,9 +2,12 @@ package com.github.laxika.magicalvibes.service;
 
 import com.github.laxika.magicalvibes.model.GameData;
 import com.github.laxika.magicalvibes.model.GameStatus;
+import com.github.laxika.magicalvibes.model.event.GameEventBatch;
+import com.github.laxika.magicalvibes.model.event.GameEventFact;
 import com.github.laxika.magicalvibes.networking.Connection;
 import com.github.laxika.magicalvibes.service.event.GameEventDispatcher;
 import com.github.laxika.magicalvibes.service.event.GameMutationCoordinator;
+import com.github.laxika.magicalvibes.service.battlefield.GameQueryService;
 import com.github.laxika.magicalvibes.websocket.WebSocketSessionManager;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
@@ -16,6 +19,8 @@ import org.mockito.junit.jupiter.MockitoSettings;
 import org.mockito.quality.Strictness;
 
 import java.time.Duration;
+import java.util.ArrayList;
+import java.util.List;
 import java.util.UUID;
 import java.util.concurrent.ScheduledExecutorService;
 import java.util.concurrent.ScheduledFuture;
@@ -185,7 +190,7 @@ class GameTimeoutServiceTest {
     }
 
     @Test
-    void bothGoneTimerFiringRemovesCasualGameWithoutWinner() {
+    void bothGoneTimerFiringEndsCasualGameWithoutWinner() {
         when(gameRegistry.getGameForPlayer(player1Id)).thenReturn(gameData);
         when(gameRegistry.get(gameData.id)).thenReturn(gameData);
         givenBothDisconnected();
@@ -197,9 +202,8 @@ class GameTimeoutServiceTest {
 
         captor.getValue().run();
 
-        verify(gameRegistry).remove(gameData.id);
+        verify(gameOutcomeService).abandon(gameData);
         verify(gameOutcomeService, never()).declareWinner(any(), any());
-        assertThat(gameData.status).isEqualTo(GameStatus.FINISHED);
     }
 
     @Test
@@ -219,7 +223,7 @@ class GameTimeoutServiceTest {
         ArgumentCaptor<UUID> winnerCaptor = ArgumentCaptor.forClass(UUID.class);
         verify(gameOutcomeService).declareWinner(eq(gameData), winnerCaptor.capture());
         assertThat(winnerCaptor.getValue()).isIn(player1Id, player2Id);
-        verify(gameRegistry, never()).remove(gameData.id); // declareWinner does that itself
+        verify(gameRegistry, never()).remove(gameData.id); // event subscriber owns cleanup
     }
 
     @Test
@@ -232,10 +236,10 @@ class GameTimeoutServiceTest {
 
         svc.onPlayerDisconnect(player1Id);
 
-        verify(gameRegistry).remove(gameData.id);
-        verify(sessionManager).unregisterSession("ai-" + gameData.id);
+        verify(gameOutcomeService).abandon(gameData);
+        verify(gameRegistry, never()).remove(gameData.id);
+        verify(sessionManager, never()).unregisterSession(any());
         verifyNoInteractions(scheduler);
-        assertThat(gameData.status).isEqualTo(GameStatus.FINISHED);
     }
 
     @Test
@@ -301,5 +305,49 @@ class GameTimeoutServiceTest {
         svc.onPlayerDisconnect(player1Id);
 
         verify(scheduler, atLeastOnce()).schedule(any(Runnable.class), anyLong(), eq(TimeUnit.MILLISECONDS));
+    }
+
+    @Test
+    void singleGoneTimeoutEmitsCanonicalTerminalResult() {
+        List<GameEventBatch> batches = new ArrayList<>();
+        GameMutationCoordinator eventCoordinator = new GameMutationCoordinator(
+                new GameEventDispatcher(List.of(batches::add)));
+        GameQueryService query = mock(GameQueryService.class);
+        when(query.getOpponentId(gameData, player1Id)).thenReturn(player2Id);
+        when(query.getOpponentId(gameData, player2Id)).thenReturn(player1Id);
+        GameOutcomeService realOutcome = new GameOutcomeService(
+                query,
+                mock(GameBroadcastService.class),
+                mock(LichsMirrorResetService.class),
+                eventCoordinator);
+        GameTimeoutService eventService = new GameTimeoutService(
+                gameRegistry,
+                realOutcome,
+                sessionManager,
+                eventCoordinator,
+                Duration.ofMinutes(5),
+                Duration.ofMinutes(15),
+                scheduler);
+
+        when(gameRegistry.getGameForPlayer(player1Id)).thenReturn(gameData);
+        when(gameRegistry.get(gameData.id)).thenReturn(gameData);
+        givenOnlyPlayer2Connected();
+        ArgumentCaptor<Runnable> timer = ArgumentCaptor.forClass(Runnable.class);
+        stubScheduleReturnsFuture();
+
+        eventService.onPlayerDisconnect(player1Id);
+        verify(scheduler).schedule(
+                timer.capture(), eq(Duration.ofMinutes(15).toMillis()),
+                eq(TimeUnit.MILLISECONDS));
+        timer.getValue().run();
+
+        assertThat(gameData.gameResult).isEqualTo(GameEventFact.GameResult.WIN);
+        assertThat(gameData.winnerPlayerId).isEqualTo(player2Id);
+        assertThat(batches)
+                .flatExtracting(GameEventBatch::events)
+                .extracting(envelope -> envelope.fact())
+                .filteredOn(GameEventFact.GameEnded.class::isInstance)
+                .containsExactly(new GameEventFact.GameEnded(
+                        GameEventFact.GameResult.WIN, player2Id));
     }
 }

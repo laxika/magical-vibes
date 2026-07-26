@@ -17,10 +17,10 @@ import com.github.laxika.magicalvibes.model.effect.LeylineStartOnBattlefieldEffe
 import com.github.laxika.magicalvibes.model.PendingKarnRestart;
 import com.github.laxika.magicalvibes.model.PendingMayAbility;
 import com.github.laxika.magicalvibes.model.effect.MayEffect;
-import com.github.laxika.magicalvibes.networking.SessionManager;
-import com.github.laxika.magicalvibes.networking.message.MulliganResolvedMessage;
-import com.github.laxika.magicalvibes.networking.message.SelectCardsToBottomMessage;
+import com.github.laxika.magicalvibes.model.event.GameEventAudience;
+import com.github.laxika.magicalvibes.model.event.GameEventFact;
 import com.github.laxika.magicalvibes.service.battlefield.BattlefieldEntryService;
+import com.github.laxika.magicalvibes.service.event.GameMutationCoordinator;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
@@ -41,11 +41,11 @@ public class MulliganService {
 
     private final Random random = new Random();
 
-    private final SessionManager sessionManager;
     private final GameBroadcastService gameBroadcastService;
     private final TurnProgressionService turnProgressionService;
     private final BattlefieldEntryService battlefieldEntryService;
     private final PlayerInputService playerInputService;
+    private final GameMutationCoordinator mutationCoordinator;
 
     public void keepHand(GameData gameData, Player player) {
         if (gameData.playerKeptHand.contains(player.getId())) {
@@ -53,14 +53,19 @@ public class MulliganService {
         }
 
         gameData.playerKeptHand.add(player.getId());
+        gameData.playerMulliganDecisionIds.remove(player.getId());
         int mulliganCount = gameData.mulliganCounts.getOrDefault(player.getId(), 0);
         List<Card> hand = gameData.playerHands.get(player.getId());
 
-        sessionManager.sendToPlayers(gameData.orderedPlayerIds, new MulliganResolvedMessage(player.getUsername(), true, mulliganCount));
+        mutationCoordinator.emit(gameData,
+                new GameEventFact.MulliganResolved(player.getId(), true, mulliganCount),
+                GameEventAudience.allPlayers());
 
         if (mulliganCount > 0 && !hand.isEmpty()) {
             int cardsToBottom = Math.min(mulliganCount, hand.size());
             gameData.playerNeedsToBottom.put(player.getId(), cardsToBottom);
+            UUID decisionId = UUID.randomUUID();
+            gameData.playerBottomDecisionIds.put(player.getId(), decisionId);
 
             String logEntry = player.getUsername() + " keeps their hand and must put " + cardsToBottom +
                     " card" + (cardsToBottom > 1 ? "s" : "") + " on the bottom of their library.";
@@ -68,8 +73,13 @@ public class MulliganService {
 
             log.info("Game {} - {} kept hand, needs to bottom {} cards (mulligan count: {})", gameData.id, player.getUsername(), cardsToBottom, mulliganCount);
 
-            gameBroadcastService.broadcastGameState(gameData);
-            sessionManager.sendToPlayer(player.getId(), new SelectCardsToBottomMessage(cardsToBottom));
+            invalidateForAllPlayers(gameData);
+            mutationCoordinator.emit(gameData,
+                    new GameEventFact.DecisionRequested(
+                            decisionId,
+                            player.getId(),
+                            GameEventFact.DecisionKind.CARDS_TO_BOTTOM),
+                    GameEventAudience.player(player.getId()));
         } else {
             String logEntry = player.getUsername() + " keeps their hand.";
             gameBroadcastService.logAndBroadcast(gameData, GameLog.text(logEntry));
@@ -112,6 +122,7 @@ public class MulliganService {
         deck.addAll(bottomCards);
 
         gameData.playerNeedsToBottom.remove(player.getId());
+        gameData.playerBottomDecisionIds.remove(player.getId());
 
         String logEntry = player.getUsername() + " puts " + bottomCards.size() +
                 " card" + (bottomCards.size() > 1 ? "s" : "") + " on the bottom of their library (keeping " + hand.size() + " cards).";
@@ -119,7 +130,7 @@ public class MulliganService {
 
         log.info("Game {} - {} bottomed {} cards, hand size now {}", gameData.id, player.getUsername(), bottomCards.size(), hand.size());
 
-        gameBroadcastService.broadcastGameState(gameData);
+        invalidateForAllPlayers(gameData);
         checkStartGame(gameData);
     }
 
@@ -144,14 +155,24 @@ public class MulliganService {
 
         int newMulliganCount = currentMulliganCount + 1;
         gameData.mulliganCounts.put(player.getId(), newMulliganCount);
+        UUID decisionId = UUID.randomUUID();
+        gameData.playerMulliganDecisionIds.put(player.getId(), decisionId);
 
-        sessionManager.sendToPlayers(gameData.orderedPlayerIds, new MulliganResolvedMessage(player.getUsername(), false, newMulliganCount));
+        mutationCoordinator.emit(gameData,
+                new GameEventFact.MulliganResolved(player.getId(), false, newMulliganCount),
+                GameEventAudience.allPlayers());
 
         String logEntry = player.getUsername() + " takes a mulligan (mulligan #" + newMulliganCount + ").";
         gameBroadcastService.logAndBroadcast(gameData, GameLog.text(logEntry));
 
         log.info("Game {} - {} mulliganed (count: {})", gameData.id, player.getUsername(), newMulliganCount);
-        gameBroadcastService.broadcastGameState(gameData);
+        invalidateForAllPlayers(gameData);
+        mutationCoordinator.emit(gameData,
+                new GameEventFact.DecisionRequested(
+                        decisionId,
+                        player.getId(),
+                        GameEventFact.DecisionKind.MULLIGAN),
+                GameEventAudience.player(player.getId()));
     }
 
     private void checkStartGame(GameData gameData) {
@@ -183,7 +204,7 @@ public class MulliganService {
             }
         }
         if (!gameData.pendingMayAbilities.isEmpty()) {
-            gameBroadcastService.broadcastGameState(gameData);
+            invalidateForAllPlayers(gameData);
             playerInputService.processNextMayAbility(gameData);
             return;
         }
@@ -238,12 +259,18 @@ public class MulliganService {
         gameBroadcastService.logAndBroadcast(gameData, GameLog.text(logEntry1));
         gameBroadcastService.logAndBroadcast(gameData, GameLog.text(logEntry2));
 
-        gameBroadcastService.broadcastGameState(gameData);
+        invalidateForAllPlayers(gameData);
 
         log.info("Game {} - Game started! Turn 1 begins. Active player: {}", gameData.id, gameData.playerIdToName.get(gameData.activePlayerId));
 
         turnProgressionService.resolveAutoPass(gameData);
     }
 
-}
+    private void invalidateForAllPlayers(GameData gameData) {
+        mutationCoordinator.emit(gameData,
+                new GameEventFact.StateInvalidated(
+                        GameEventFact.StateSection.PRIVATE_PLAYER_VIEW),
+                GameEventAudience.allPlayers());
+    }
 
+}

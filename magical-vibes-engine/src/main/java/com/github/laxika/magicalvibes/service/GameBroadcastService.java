@@ -5,7 +5,6 @@ import com.github.laxika.magicalvibes.model.GameData;
 import com.github.laxika.magicalvibes.model.GameLog;
 import com.github.laxika.magicalvibes.model.GameLogEntry;
 import com.github.laxika.magicalvibes.model.ManaPool;
-import com.github.laxika.magicalvibes.networking.message.JoinGame;
 import com.github.laxika.magicalvibes.networking.model.GameLogEntryView;
 import com.github.laxika.magicalvibes.networking.model.PermanentView;
 import com.github.laxika.magicalvibes.networking.service.GameLogViewFactory;
@@ -81,10 +80,6 @@ public class GameBroadcastService {
 
     public List<Integer> getPlayableFlashbackIndices(GameData gameData, UUID playerId) {
         return projectionFactory.getPlayableFlashbackIndices(gameData, playerId);
-    }
-
-    public JoinGame getJoinGame(GameData gameData, UUID playerId) {
-        return projectionFactory.getJoinGame(gameData, playerId);
     }
 
     public void logAndBroadcast(GameData gameData, GameLogEntry logEntry) {

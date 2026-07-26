@@ -51,10 +51,10 @@ import com.github.laxika.magicalvibes.model.DraftStatus;
 import com.github.laxika.magicalvibes.service.interaction.InteractionAnswer;
 import com.github.laxika.magicalvibes.service.DraftRegistry;
 import com.github.laxika.magicalvibes.webservice.DraftService;
-import com.github.laxika.magicalvibes.service.GameBroadcastService;
 import com.github.laxika.magicalvibes.webservice.CardBrowserService;
 import com.github.laxika.magicalvibes.webservice.DeckService;
 import com.github.laxika.magicalvibes.service.GameRegistry;
+import com.github.laxika.magicalvibes.service.GameResyncProjectionService;
 import com.github.laxika.magicalvibes.service.GameService;
 import com.github.laxika.magicalvibes.service.GameTimeoutService;
 import com.github.laxika.magicalvibes.service.PlayCardRequestDispatchService;
@@ -75,7 +75,7 @@ public class GameMessageHandler implements MessageHandler {
 
     private final LoginService loginService;
     private final GameService gameService;
-    private final GameBroadcastService gameBroadcastService;
+    private final GameResyncProjectionService gameResyncProjectionService;
     private final LobbyService lobbyService;
     private final GameRegistry gameRegistry;
     private final WebSocketSessionManager sessionManager;
@@ -90,7 +90,7 @@ public class GameMessageHandler implements MessageHandler {
 
     public GameMessageHandler(LoginService loginService,
             GameService gameService,
-            GameBroadcastService gameBroadcastService,
+            GameResyncProjectionService gameResyncProjectionService,
             LobbyService lobbyService,
             GameRegistry gameRegistry,
             WebSocketSessionManager sessionManager,
@@ -104,7 +104,7 @@ public class GameMessageHandler implements MessageHandler {
             PlayCardRequestDispatchService playCardRequestDispatchService) {
         this.loginService = loginService;
         this.gameService = gameService;
-        this.gameBroadcastService = gameBroadcastService;
+        this.gameResyncProjectionService = gameResyncProjectionService;
         this.lobbyService = lobbyService;
         this.gameRegistry = gameRegistry;
         this.sessionManager = sessionManager;
@@ -138,7 +138,7 @@ public class GameMessageHandler implements MessageHandler {
             // Check if the player has an active game to rejoin
             GameData activeGame = gameRegistry.getGameForPlayer(response.getUserId());
             if (activeGame != null) {
-                JoinGame joinGame = gameBroadcastService.getJoinGame(activeGame, response.getUserId());
+                JoinGame joinGame = gameResyncProjectionService.currentState(activeGame, response.getUserId());
                 response.setActiveGame(joinGame);
             }
 
@@ -222,7 +222,7 @@ public class GameMessageHandler implements MessageHandler {
             aiPlayerService.joinAsAi(gameData, aiDeck, aiDifficulty);
 
             // Game is now in MULLIGAN — send full state to the creator
-            JoinGame joinGame = gameBroadcastService.getJoinGame(gameData, player.getId());
+            JoinGame joinGame = gameResyncProjectionService.currentState(gameData, player.getId());
             sendJoinMessage(connection, MessageType.GAME_JOINED, joinGame);
         } else {
             // Send GAME_JOINED to the creator
@@ -259,13 +259,14 @@ public class GameMessageHandler implements MessageHandler {
             sessionManager.setInGame(connection.getId());
 
             // Send GAME_JOINED to the joiner (with their own hand)
-            JoinGame joinerGame = gameBroadcastService.getJoinGame(gameData, player.getId());
+            JoinGame joinerGame = gameResyncProjectionService.currentState(gameData, player.getId());
             sendJoinMessage(connection, MessageType.GAME_JOINED, joinerGame);
 
             // Send OPPONENT_JOINED to the creator (with their own hand)
             Connection creatorConnection = sessionManager.getConnectionByUserId(gameData.createdByUserId);
             if (creatorConnection != null && creatorConnection.isOpen()) {
-                JoinGame creatorGame = gameBroadcastService.getJoinGame(gameData, gameData.createdByUserId);
+                JoinGame creatorGame = gameResyncProjectionService.currentState(
+                        gameData, gameData.createdByUserId);
                 sendJoinMessage(creatorConnection, MessageType.OPPONENT_JOINED, creatorGame);
             }
 

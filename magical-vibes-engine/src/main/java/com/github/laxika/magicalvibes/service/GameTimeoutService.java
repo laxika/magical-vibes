@@ -248,21 +248,14 @@ public class GameTimeoutService {
                 gameOutcomeService.declareWinner(gameData, winner);
             } else {
                 log.info("Both-disconnected timer fired for casual game {}: removing without a winner", gameId);
-                gameData.status = GameStatus.FINISHED;
-                gameRegistry.remove(gameId);
+                gameOutcomeService.abandon(gameData);
             }
         }
     }
 
     private void closeAiGame(GameData gameData) {
         log.info("Closing vs-AI game {} because the human player left or disconnected", gameData.id);
-        gameData.status = GameStatus.FINISHED;
-        sessionManager.unregisterSession(AI_CONNECTION_PREFIX + gameData.id);
-        gameRegistry.remove(gameData.id);
-        cancel(bothGoneTimers.remove(gameData.id));
-        for (UUID p : gameData.playerIds) {
-            cancel(singleGoneTimers.remove(p));
-        }
+        gameOutcomeService.abandon(gameData);
     }
 
     private boolean isActiveGame(GameData gameData) {

@@ -120,7 +120,7 @@ public sealed interface GameEventFact permits GameEventFact.StateInvalidated,
     }
 
     /**
-     * Terminal game result. A draw has no winner; a win must name one.
+     * Terminal runtime result. A win must name one winner; a draw or abandonment has none.
      */
     record GameEnded(GameResult result, UUID winnerPlayerId) implements GameEventFact {
 
@@ -129,8 +129,8 @@ public sealed interface GameEventFact permits GameEventFact.StateInvalidated,
             if (result == GameResult.WIN && winnerPlayerId == null) {
                 throw new IllegalArgumentException("A win must name the winning player");
             }
-            if (result == GameResult.DRAW && winnerPlayerId != null) {
-                throw new IllegalArgumentException("A draw cannot name a winning player");
+            if (result != GameResult.WIN && winnerPlayerId != null) {
+                throw new IllegalArgumentException(result + " cannot name a winning player");
             }
         }
 
@@ -189,6 +189,11 @@ public sealed interface GameEventFact permits GameEventFact.StateInvalidated,
 
     enum GameResult {
         WIN,
-        DRAW
+        DRAW,
+        /**
+         * The runtime game was closed without producing a rules result, for example when every
+         * player disconnected from a casual game or the human left a game against an AI.
+         */
+        ABANDONED
     }
 }

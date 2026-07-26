@@ -1,6 +1,5 @@
 package com.github.laxika.magicalvibes.service;
 
-import com.github.laxika.magicalvibes.model.DraftData;
 import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.GameData;
 import com.github.laxika.magicalvibes.model.GameLog;
@@ -8,11 +7,11 @@ import com.github.laxika.magicalvibes.model.GameStatus;
 import com.github.laxika.magicalvibes.model.StackEntry;
 import com.github.laxika.magicalvibes.model.StackEntryType;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
-import com.github.laxika.magicalvibes.networking.SessionManager;
-import com.github.laxika.magicalvibes.networking.message.GameOverMessage;
+import com.github.laxika.magicalvibes.model.event.GameEventAudience;
+import com.github.laxika.magicalvibes.model.event.GameEventFact;
 import com.github.laxika.magicalvibes.service.battlefield.GameQueryService;
+import com.github.laxika.magicalvibes.service.event.GameMutationCoordinator;
 import lombok.extern.slf4j.Slf4j;
-import org.springframework.beans.factory.ObjectProvider;
 import org.springframework.context.annotation.Lazy;
 import org.springframework.stereotype.Component;
 
@@ -26,29 +25,17 @@ public class GameOutcomeService {
 
     private final GameQueryService gameQueryService;
     private final GameBroadcastService gameBroadcastService;
-    private final SessionManager sessionManager;
-    private final GameRegistry gameRegistry;
-    private final DraftRegistry draftRegistry;
-    private final ObjectProvider<TournamentResultHandler> tournamentResultHandler;
-    private final GameTimeoutService gameTimeoutService;
     private final LichsMirrorResetService lichsMirrorResetService;
+    private final GameMutationCoordinator mutationCoordinator;
 
     public GameOutcomeService(GameQueryService gameQueryService,
                               GameBroadcastService gameBroadcastService,
-                              SessionManager sessionManager,
-                              GameRegistry gameRegistry,
-                              DraftRegistry draftRegistry,
-                              ObjectProvider<TournamentResultHandler> tournamentResultHandler,
-                              @Lazy GameTimeoutService gameTimeoutService,
-                              @Lazy LichsMirrorResetService lichsMirrorResetService) {
+                              @Lazy LichsMirrorResetService lichsMirrorResetService,
+                              GameMutationCoordinator mutationCoordinator) {
         this.gameQueryService = gameQueryService;
         this.gameBroadcastService = gameBroadcastService;
-        this.sessionManager = sessionManager;
-        this.gameRegistry = gameRegistry;
-        this.draftRegistry = draftRegistry;
-        this.tournamentResultHandler = tournamentResultHandler;
-        this.gameTimeoutService = gameTimeoutService;
         this.lichsMirrorResetService = lichsMirrorResetService;
+        this.mutationCoordinator = mutationCoordinator;
     }
 
     /**
@@ -62,6 +49,9 @@ public class GameOutcomeService {
     }
 
     public boolean checkWinCondition(GameData gameData) {
+        if (gameData.gameResult != null) {
+            return true;
+        }
         // CR 704.3 / 104.3b — state-based actions (including loss from life <= 0) are only checked
         // when a player would receive priority, i.e. after a spell or ability finishes resolving.
         // While a stack entry's effect list is mid-resolution, defer: a controller momentarily at
@@ -94,15 +84,14 @@ public class GameOutcomeService {
                 // "Whenever a player loses the game" triggers (e.g. Withengar Unbound).
                 firePlayerLosesGameTriggers(gameData, playerId);
 
-                gameData.status = GameStatus.FINISHED;
-
                 // During MCTS simulation, only set the status — skip all external side effects
-                if (gameData.simulation) {
-                    return true;
-                }
-
                 UUID winnerId = gameQueryService.getOpponentId(gameData, playerId);
                 String winnerName = gameData.playerIdToName.get(winnerId);
+                if (gameData.simulation) {
+                    finish(gameData, GameEventFact.GameResult.WIN, winnerId,
+                            GameEventAudience.allPlayers());
+                    return true;
+                }
 
                 String logEntry;
                 if (poison >= 10) {
@@ -112,12 +101,8 @@ public class GameOutcomeService {
                 }
                 gameBroadcastService.logAndBroadcast(gameData, GameLog.text(logEntry));
 
-                sessionManager.sendToPlayers(gameData.orderedPlayerIds, new GameOverMessage(winnerId, winnerName));
-
-                notifyDraftIfTournamentGame(gameData, winnerId);
-
-                gameTimeoutService.onGameFinished(gameData);
-                gameRegistry.remove(gameData.id);
+                finish(gameData, GameEventFact.GameResult.WIN, winnerId,
+                        GameEventAudience.allPlayers());
 
                 log.info("Game {} - {} wins! {} is at {} life, {} poison", gameData.id, winnerName,
                         gameData.playerIdToName.get(playerId), life, poison);
@@ -128,25 +113,25 @@ public class GameOutcomeService {
     }
 
     public void declareWinner(GameData gameData, UUID winnerId) {
+        if (gameData.gameResult != null) {
+            return;
+        }
         // "Whenever a player loses the game" triggers (e.g. Withengar Unbound).
         // In 2-player the loser is the winner's opponent.
         firePlayerLosesGameTriggers(gameData, gameQueryService.getOpponentId(gameData, winnerId));
-
-        gameData.status = GameStatus.FINISHED;
-
-        if (gameData.simulation) return;
+        if (gameData.simulation) {
+            finish(gameData, GameEventFact.GameResult.WIN, winnerId,
+                    GameEventAudience.allPlayers());
+            return;
+        }
 
         String winnerName = gameData.playerIdToName.get(winnerId);
 
         String logEntry = winnerName + " wins the game!";
         gameBroadcastService.logAndBroadcast(gameData, GameLog.text(logEntry));
 
-        sessionManager.sendToPlayers(gameData.orderedPlayerIds, new GameOverMessage(winnerId, winnerName));
-
-        notifyDraftIfTournamentGame(gameData, winnerId);
-
-        gameTimeoutService.onGameFinished(gameData);
-        gameRegistry.remove(gameData.id);
+        finish(gameData, GameEventFact.GameResult.WIN, winnerId,
+                GameEventAudience.allPlayers());
 
         log.info("Game {} - {} wins!", gameData.id, winnerName);
     }
@@ -156,15 +141,18 @@ public class GameOutcomeService {
      * player has exactly 13 life. Ends the game with no winner ({@code GameOverMessage} nulls).
      */
     public void declareDraw(GameData gameData) {
-        gameData.status = GameStatus.FINISHED;
-
-        if (gameData.simulation) return;
+        if (gameData.gameResult != null) {
+            return;
+        }
+        if (gameData.simulation) {
+            finish(gameData, GameEventFact.GameResult.DRAW, null,
+                    GameEventAudience.allPlayers());
+            return;
+        }
 
         gameBroadcastService.logAndBroadcast(gameData, GameLog.text("The game is a draw."));
-        sessionManager.sendToPlayers(gameData.orderedPlayerIds, new GameOverMessage(null, null));
-
-        gameTimeoutService.onGameFinished(gameData);
-        gameRegistry.remove(gameData.id);
+        finish(gameData, GameEventFact.GameResult.DRAW, null,
+                GameEventAudience.allPlayers());
 
         log.info("Game {} - draw", gameData.id);
     }
@@ -205,15 +193,30 @@ public class GameOutcomeService {
         });
     }
 
-    private void notifyDraftIfTournamentGame(GameData gameData, UUID winnerId) {
-        if (gameData.draftId != null) {
-            DraftData draftData = draftRegistry.get(gameData.draftId);
-            if (draftData != null) {
-                TournamentResultHandler handler = tournamentResultHandler.getIfAvailable();
-                if (handler != null) {
-                    handler.handleGameFinished(draftData, winnerId);
-                }
-            }
+    /**
+     * Closes a runtime game without a rules result or outbound game-over message.
+     */
+    public void abandon(GameData gameData) {
+        finish(gameData, GameEventFact.GameResult.ABANDONED, null,
+                GameEventAudience.internalOnly());
+    }
+
+    private void finish(
+            GameData gameData,
+            GameEventFact.GameResult result,
+            UUID winnerId,
+            GameEventAudience audience) {
+        if (gameData.gameResult != null) {
+            return;
+        }
+        gameData.gameResult = result;
+        gameData.winnerPlayerId = winnerId;
+        gameData.status = GameStatus.FINISHED;
+
+        if (!gameData.simulation) {
+            mutationCoordinator.emit(gameData,
+                    new GameEventFact.GameEnded(result, winnerId),
+                    audience);
         }
     }
 }

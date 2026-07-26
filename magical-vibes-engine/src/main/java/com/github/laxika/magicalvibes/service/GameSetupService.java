@@ -9,6 +9,8 @@ import com.github.laxika.magicalvibes.model.GameStatus;
 import com.github.laxika.magicalvibes.model.ManaPool;
 import com.github.laxika.magicalvibes.model.Player;
 import com.github.laxika.magicalvibes.model.TurnStep;
+import com.github.laxika.magicalvibes.model.event.GameEventAudience;
+import com.github.laxika.magicalvibes.model.event.GameEventFact;
 import com.github.laxika.magicalvibes.service.event.GameMutationCoordinator;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.ObjectProvider;
@@ -86,6 +88,9 @@ public class GameSetupService {
             gameData.playerIdToName.put(player.getId(), player.getUsername());
             gameData.playerDeckChoices.put(player.getId(), selectedDeckId);
             gameRegistry.register(gameData);
+            mutationCoordinator.emit(gameData,
+                    new GameEventFact.StateInvalidated(
+                            GameEventFact.StateSection.GAME_STATUS));
         });
 
         log.info("Game created: id={}, name='{}', creator={}", gameId, gameName, player.getUsername());
@@ -125,6 +130,12 @@ public class GameSetupService {
                 initializeGame(gameData);
             }
 
+            mutationCoordinator.emit(gameData,
+                    new GameEventFact.StateInvalidated(Set.of(
+                            GameEventFact.StateSection.GAME_STATUS,
+                            GameEventFact.StateSection.PRIVATE_PLAYER_VIEW,
+                            GameEventFact.StateSection.GAME_LOG)));
+
             log.info("User {} joined game {}, status={}", player.getUsername(), gameData.id, gameData.status);
         }
     }
@@ -155,6 +166,7 @@ public class GameSetupService {
             List<Card> hand = new ArrayList<>(deck.subList(0, 7));
             deck.subList(0, 7).clear();
             gameData.playerHands.put(playerId, hand);
+            gameData.playerMulliganDecisionIds.put(playerId, UUID.randomUUID());
 
             Set<TurnStep> defaultStops = ConcurrentHashMap.newKeySet();
             defaultStops.add(TurnStep.PRECOMBAT_MAIN);
@@ -186,6 +198,15 @@ public class GameSetupService {
 
         gameData.gameLog.add(GameLogEntry.text(startingPlayerName + " wins the coin toss and goes first!"));
         gameData.gameLog.add(GameLogEntry.text("Mulligan phase — decide to keep or mulligan."));
+
+        for (UUID playerId : gameData.orderedPlayerIds) {
+            mutationCoordinator.emit(gameData,
+                    new GameEventFact.DecisionRequested(
+                            gameData.playerMulliganDecisionIds.get(playerId),
+                            playerId,
+                            GameEventFact.DecisionKind.MULLIGAN),
+                    GameEventAudience.player(playerId));
+        }
 
         log.info("Game {} - Mulligan phase begins. Starting player: {}", gameData.id, startingPlayerName);
     }

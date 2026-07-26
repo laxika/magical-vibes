@@ -23,14 +23,14 @@ import com.github.laxika.magicalvibes.model.GameStatus;
 import com.github.laxika.magicalvibes.model.ManaPool;
 import com.github.laxika.magicalvibes.model.Player;
 import com.github.laxika.magicalvibes.model.TurnStep;
+import com.github.laxika.magicalvibes.model.event.GameEventAudience;
+import com.github.laxika.magicalvibes.model.event.GameEventFact;
 import com.github.laxika.magicalvibes.service.GameService;
 import com.github.laxika.magicalvibes.networking.SessionManager;
 import com.github.laxika.magicalvibes.networking.message.DeckBuildingStateMessage;
 import com.github.laxika.magicalvibes.networking.message.DraftFinishedMessage;
 import com.github.laxika.magicalvibes.networking.message.DraftJoinedMessage;
 import com.github.laxika.magicalvibes.networking.message.DraftPackUpdateMessage;
-import com.github.laxika.magicalvibes.networking.message.JoinGame;
-import com.github.laxika.magicalvibes.networking.message.JoinGameMessage;
 import com.github.laxika.magicalvibes.networking.message.TournamentGameReadyMessage;
 import com.github.laxika.magicalvibes.networking.message.TournamentUpdateMessage;
 import com.github.laxika.magicalvibes.networking.model.MessageType;
@@ -39,6 +39,7 @@ import com.github.laxika.magicalvibes.networking.service.CardViewFactory;
 import com.github.laxika.magicalvibes.service.DraftRegistry;
 import com.github.laxika.magicalvibes.service.GameBroadcastService;
 import com.github.laxika.magicalvibes.service.GameRegistry;
+import com.github.laxika.magicalvibes.service.GameResyncProjectionService;
 import com.github.laxika.magicalvibes.service.battlefield.GameQueryService;
 import com.github.laxika.magicalvibes.service.effect.TargetValidationService;
 import com.github.laxika.magicalvibes.service.event.GameMutationCoordinator;
@@ -73,6 +74,7 @@ public class DraftService {
     private final DraftRegistry draftRegistry;
     private final GameRegistry gameRegistry;
     private final GameBroadcastService gameBroadcastService;
+    private final GameResyncProjectionService gameResyncProjectionService;
     private final GameService gameService;
     private final GameQueryService gameQueryService;
     private final CombatAttackService combatAttackService;
@@ -91,6 +93,7 @@ public class DraftService {
     public DraftService(DraftRegistry draftRegistry,
                         GameRegistry gameRegistry,
                         GameBroadcastService gameBroadcastService,
+                        GameResyncProjectionService gameResyncProjectionService,
                         GameService gameService,
                         GameQueryService gameQueryService,
                         CombatAttackService combatAttackService,
@@ -105,6 +108,7 @@ public class DraftService {
         this.draftRegistry = draftRegistry;
         this.gameRegistry = gameRegistry;
         this.gameBroadcastService = gameBroadcastService;
+        this.gameResyncProjectionService = gameResyncProjectionService;
         this.gameService = gameService;
         this.gameQueryService = gameQueryService;
         this.combatAttackService = combatAttackService;
@@ -585,13 +589,13 @@ public class DraftService {
         // Send TOURNAMENT_GAME_READY + GAME_JOINED to human players
         if (!p1IsAi) {
             sessionManager.sendToPlayer(player1Id, new TournamentGameReadyMessage(gameData.id, p2Name));
-            JoinGame joinGame = gameBroadcastService.getJoinGame(gameData, player1Id);
-            sessionManager.sendToPlayer(player1Id, new JoinGameMessage(MessageType.GAME_JOINED, joinGame));
+            gameResyncProjectionService.sendCurrentState(
+                    gameData, player1Id, MessageType.GAME_JOINED);
         }
         if (!p2IsAi) {
             sessionManager.sendToPlayer(player2Id, new TournamentGameReadyMessage(gameData.id, p1Name));
-            JoinGame joinGame = gameBroadcastService.getJoinGame(gameData, player2Id);
-            sessionManager.sendToPlayer(player2Id, new JoinGameMessage(MessageType.GAME_JOINED, joinGame));
+            gameResyncProjectionService.sendCurrentState(
+                    gameData, player2Id, MessageType.GAME_JOINED);
         }
     }
 
@@ -653,6 +657,19 @@ public class DraftService {
             gameData.gameLog.add(GameLogEntry.text("Mulligan phase — decide to keep or mulligan."));
 
             gameRegistry.register(gameData);
+            mutationCoordinator.emit(gameData,
+                    new GameEventFact.StateInvalidated(Set.of(
+                            GameEventFact.StateSection.GAME_STATUS,
+                            GameEventFact.StateSection.PRIVATE_PLAYER_VIEW,
+                            GameEventFact.StateSection.GAME_LOG)));
+            for (UUID playerId : gameData.orderedPlayerIds) {
+                mutationCoordinator.emit(gameData,
+                        new GameEventFact.DecisionRequested(
+                                gameData.playerMulliganDecisionIds.get(playerId),
+                                playerId,
+                                GameEventFact.DecisionKind.MULLIGAN),
+                        GameEventAudience.player(playerId));
+            }
         });
 
         log.info("Draft game {} created and registered", gameId);
@@ -670,6 +687,7 @@ public class DraftService {
         List<Card> hand = new ArrayList<>(deck.subList(0, Math.min(7, deck.size())));
         deck.subList(0, Math.min(7, deck.size())).clear();
         gameData.playerHands.put(playerId, hand);
+        gameData.playerMulliganDecisionIds.put(playerId, UUID.randomUUID());
 
         Set<TurnStep> defaultStops = ConcurrentHashMap.newKeySet();
         defaultStops.add(TurnStep.PRECOMBAT_MAIN);
@@ -850,8 +868,8 @@ public class DraftService {
                         if (gameData != null && gameData.status != GameStatus.FINISHED) {
                             String opponentName = getOpponentName(draftData, playerId, activeGameId);
                             sessionManager.sendToPlayer(playerId, new TournamentGameReadyMessage(gameData.id, opponentName));
-                            JoinGame joinGame = gameBroadcastService.getJoinGame(gameData, playerId);
-                            sessionManager.sendToPlayer(playerId, new JoinGameMessage(MessageType.GAME_JOINED, joinGame));
+                            gameResyncProjectionService.sendCurrentState(
+                                    gameData, playerId, MessageType.GAME_JOINED);
                         }
                     }
                 }

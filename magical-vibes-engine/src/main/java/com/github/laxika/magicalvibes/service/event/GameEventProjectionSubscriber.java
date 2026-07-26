@@ -20,6 +20,7 @@ import com.github.laxika.magicalvibes.service.interaction.InteractionHandlerRegi
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Component;
+import org.springframework.core.annotation.Order;
 
 import java.util.LinkedHashSet;
 import java.util.List;
@@ -35,6 +36,7 @@ import java.util.UUID;
  */
 @Slf4j
 @Component
+@Order(0)
 @RequiredArgsConstructor
 public class GameEventProjectionSubscriber implements GameEventSubscriber {
 
@@ -153,7 +155,9 @@ public class GameEventProjectionSubscriber implements GameEventSubscriber {
     private boolean activeInteractionMatches(
             GameData gameData, GameEventFact.DecisionRequested decision) {
         var active = gameData.interaction.activeInteraction();
-        if (active == null || !active.decidingPlayerId().equals(decision.decidingPlayerId())) {
+        if (active == null
+                || !decision.decisionId().equals(gameData.interaction.activeDecisionId())
+                || !active.decidingPlayerId().equals(decision.decidingPlayerId())) {
             return false;
         }
         return switch (decision.decisionKind()) {

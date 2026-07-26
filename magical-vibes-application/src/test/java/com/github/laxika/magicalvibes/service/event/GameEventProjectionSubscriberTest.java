@@ -165,7 +165,7 @@ class GameEventProjectionSubscriberTest {
                     GameEventAudience.player(player1Id));
             coordinator.emit(gameData,
                     new GameEventFact.DecisionRequested(
-                            UUID.randomUUID(),
+                            gameData.interaction.activeDecisionId(),
                             player2Id,
                             GameEventFact.DecisionKind.ATTACKER_DECLARATION,
                             GameEventFact.DecisionDelivery.REPLAY_REQUESTED),
@@ -198,7 +198,7 @@ class GameEventProjectionSubscriberTest {
         coordinator.mutate(gameData, UUID.randomUUID(), () ->
                 coordinator.emit(gameData,
                         new GameEventFact.DecisionRequested(
-                                UUID.randomUUID(),
+                                gameData.interaction.activeDecisionId(),
                                 player2Id,
                                 GameEventFact.DecisionKind.ATTACKER_DECLARATION),
                         GameEventAudience.players(player1Id, player2Id)));

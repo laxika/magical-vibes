@@ -16,9 +16,12 @@ import com.github.laxika.magicalvibes.model.PendingMayAbility;
 import com.github.laxika.magicalvibes.model.StackEntry;
 import com.github.laxika.magicalvibes.model.StackEntryType;
 import com.github.laxika.magicalvibes.model.TurnStep;
+import com.github.laxika.magicalvibes.model.event.GameEventAudience;
+import com.github.laxika.magicalvibes.model.event.GameEventFact;
 import com.github.laxika.magicalvibes.service.combat.CombatResult;
 import com.github.laxika.magicalvibes.service.combat.CombatService;
 import com.github.laxika.magicalvibes.service.input.PlayerInputService;
+import com.github.laxika.magicalvibes.service.event.GameMutationCoordinator;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Nested;
@@ -55,6 +58,7 @@ class TurnProgressionServiceTest {
     @Mock private UntapStepService untapStepService;
     @Mock private StepTriggerService stepTriggerService;
     @Mock private AutoPassService autoPassService;
+    @Mock private GameMutationCoordinator mutationCoordinator;
 
     @InjectMocks
     private TurnProgressionService turnProgressionService;
@@ -233,7 +237,7 @@ class TurnProgressionServiceTest {
             turnProgressionService.advanceStep(gd);
 
             verify(gameBroadcastService).logAndBroadcast(eq(gd), eq(GameLog.text("Step: Draw")));
-            verify(gameBroadcastService).broadcastGameState(gd);
+            verifyStateInvalidated();
         }
 
         @Test
@@ -242,7 +246,9 @@ class TurnProgressionServiceTest {
             gd.currentStep = TurnStep.UPKEEP;
             // Simulate game ending during broadcast
             doAnswer(inv -> { gd.status = GameStatus.FINISHED; return null; })
-                    .when(gameBroadcastService).broadcastGameState(gd);
+                    .when(mutationCoordinator).emit(
+                            eq(gd), any(GameEventFact.StateInvalidated.class),
+                            eq(GameEventAudience.allPlayers()));
 
             turnProgressionService.advanceStep(gd);
 
@@ -814,7 +820,7 @@ class TurnProgressionServiceTest {
 
             turnProgressionService.completeTurnAdvance(gd);
 
-            verify(gameBroadcastService).broadcastGameState(gd);
+            verifyStateInvalidated();
         }
     }
 
@@ -1009,5 +1015,11 @@ class TurnProgressionServiceTest {
             assertThat(gd.currentStep).isEqualTo(TurnStep.UNTAP);
             assertThat(gd.turnNumber).isEqualTo(2);
         }
+    }
+
+    private void verifyStateInvalidated() {
+        verify(mutationCoordinator).emit(
+                eq(gd), any(GameEventFact.StateInvalidated.class),
+                eq(GameEventAudience.allPlayers()));
     }
 }

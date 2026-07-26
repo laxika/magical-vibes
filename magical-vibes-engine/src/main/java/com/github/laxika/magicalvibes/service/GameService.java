@@ -15,6 +15,8 @@ import com.github.laxika.magicalvibes.model.Zone;
 import com.github.laxika.magicalvibes.model.TurnStep;
 import com.github.laxika.magicalvibes.model.effect.CantSearchLibrariesEffect;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
+import com.github.laxika.magicalvibes.model.event.GameEventAudience;
+import com.github.laxika.magicalvibes.model.event.GameEventFact;
 import com.github.laxika.magicalvibes.networking.message.BlockerAssignment;
 import com.github.laxika.magicalvibes.service.battlefield.GameQueryService;
 import com.github.laxika.magicalvibes.service.ability.AbilityActivationService;
@@ -182,7 +184,7 @@ public class GameService {
                     turnProgressionService.advanceStep(gameData);
                 }
             } else {
-                gameBroadcastService.broadcastGameState(gameData);
+                invalidateForAllPlayers(gameData);
             }
 
             turnProgressionService.resolveAutoPass(gameData);
@@ -230,7 +232,7 @@ public class GameService {
             log.info("Game {} - {} pays {{}} for Leonin Arbiter search tax (special action)",
                     gameData.id, player.getUsername(), totalCost);
 
-            gameBroadcastService.broadcastGameState(gameData);
+            invalidateForAllPlayers(gameData);
         }
     }
 
@@ -757,17 +759,16 @@ public class GameService {
 
     public void setAutoStops(GameData gameData, Player player, List<TurnStep> stops) {
         if (runAsActionIfNeeded(gameData, () -> setAutoStops(gameData, player, stops))) return;
-        if (gameData.status != GameStatus.RUNNING) {
-            throw new IllegalStateException("Game is not running");
-        }
-
         synchronized (gameData) {
+            if (gameData.status != GameStatus.RUNNING) {
+                throw new IllegalStateException("Game is not running");
+            }
             Set<TurnStep> stopSet = ConcurrentHashMap.newKeySet();
             stopSet.addAll(stops);
             stopSet.add(TurnStep.PRECOMBAT_MAIN);
             stopSet.add(TurnStep.POSTCOMBAT_MAIN);
             gameData.playerAutoStopSteps.put(player.getId(), stopSet);
-            gameBroadcastService.broadcastGameState(gameData);
+            invalidateForAllPlayers(gameData);
         }
     }
 
@@ -853,6 +854,13 @@ public class GameService {
                         attackerIndex, assignments, combatService, turnProgressionService);
             }
         }
+    }
+
+    private void invalidateForAllPlayers(GameData gameData) {
+        mutationCoordinator.emit(gameData,
+                new GameEventFact.StateInvalidated(
+                        GameEventFact.StateSection.PRIVATE_PLAYER_VIEW),
+                GameEventAudience.allPlayers());
     }
 
 }

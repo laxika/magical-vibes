@@ -32,23 +32,32 @@ class LegacyNotificationSurfaceRatchetTest {
             "magical-vibes-engine/src/main/java/com/github/laxika/magicalvibes/service";
     private static final String ROOT_FAMILY = "(root)";
     private static final int EVENTUAL_TARGET_PER_FAMILY = 0;
+    private static final Set<String> MIGRATED_LIFECYCLE_FILES = Set.of(
+            "GameService.java",
+            "GameSetupService.java",
+            "MulliganService.java",
+            "GameOutcomeService.java",
+            "GameTimeoutService.java",
+            "ReconnectionService.java",
+            "turn/AutoPassService.java",
+            "turn/TurnProgressionService.java",
+            "effect/normalfx/KarnRestartGameEffectHandler.java");
 
     private static final Map<LegacySurface, Map<String, Integer>> BASELINE = new EnumMap<>(LegacySurface.class);
 
     static {
         BASELINE.put(LegacySurface.BROADCAST_GAME_STATE, Map.of(
-                ROOT_FAMILY, 11,
+                ROOT_FAMILY, 3,
                 "ability", 14,
-                "effect/normalfx", 16,
+                "effect/normalfx", 15,
                 "input", 58,
                 "interaction", 3,
-                "spell", 3,
-                "turn", 13));
+                "spell", 3));
 
         BASELINE.put(LegacySurface.SESSION_SEND, Map.of(
-                ROOT_FAMILY, 7,
+                ROOT_FAMILY, 1,
                 "ability", 2,
-                "effect/normalfx", 8,
+                "effect/normalfx", 7,
                 "interaction", 33));
 
         BASELINE.put(LegacySurface.LOG_AND_BROADCAST, Map.ofEntries(
@@ -104,6 +113,29 @@ class LegacyNotificationSurfaceRatchetTest {
 
         assertThat(failures)
                 .withFailMessage(() -> "Legacy notification ratchet failed:\n  "
+                        + String.join("\n  ", failures))
+                .isEmpty();
+    }
+
+    @Test
+    void migratedLifecycleFilesHaveZeroDirectStateOrSessionDelivery() throws IOException {
+        Path serviceRoot = locateRepoRoot().resolve(SERVICE_ROOT);
+        List<String> failures = new ArrayList<>();
+
+        for (String relative : MIGRATED_LIFECYCLE_FILES) {
+            String source = Files.readString(serviceRoot.resolve(relative), StandardCharsets.UTF_8);
+            for (LegacySurface surface : List.of(
+                    LegacySurface.BROADCAST_GAME_STATE,
+                    LegacySurface.SESSION_SEND)) {
+                int current = count(source, surface.pattern);
+                if (current != 0) {
+                    failures.add(relative + " retains " + current + " " + surface + " call(s)");
+                }
+            }
+        }
+
+        assertThat(failures)
+                .withFailMessage(() -> "Migrated lifecycle notification surface regressed:\n  "
                         + String.join("\n  ", failures))
                 .isEmpty();
     }

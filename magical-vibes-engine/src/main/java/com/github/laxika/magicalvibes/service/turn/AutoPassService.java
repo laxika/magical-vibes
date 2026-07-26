@@ -8,12 +8,15 @@ import com.github.laxika.magicalvibes.model.GameStatus;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.TurnStep;
 import com.github.laxika.magicalvibes.model.effect.ManaProducingEffect;
+import com.github.laxika.magicalvibes.model.event.GameEventAudience;
+import com.github.laxika.magicalvibes.model.event.GameEventFact;
 import com.github.laxika.magicalvibes.service.GameBroadcastService;
 import com.github.laxika.magicalvibes.service.StackResolutionService;
 import com.github.laxika.magicalvibes.service.cast.PotentialManaService;
 import com.github.laxika.magicalvibes.service.trigger.TriggerCollectionService;
 import com.github.laxika.magicalvibes.service.battlefield.GameQueryService;
 import com.github.laxika.magicalvibes.service.combat.CombatAttackService;
+import com.github.laxika.magicalvibes.service.event.GameMutationCoordinator;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
 
@@ -41,6 +44,7 @@ public class AutoPassService {
     private final StepTriggerService stepTriggerService;
     private final CombatAttackService combatAttackService;
     private final PotentialManaService potentialManaService;
+    private final GameMutationCoordinator mutationCoordinator;
 
     public AutoPassService(
             GameQueryService gameQueryService,
@@ -49,7 +53,8 @@ public class AutoPassService {
             StackResolutionService stackResolutionService,
             StepTriggerService stepTriggerService,
             CombatAttackService combatAttackService,
-            PotentialManaService potentialManaService) {
+            PotentialManaService potentialManaService,
+            GameMutationCoordinator mutationCoordinator) {
         this.gameQueryService = gameQueryService;
         this.gameBroadcastService = gameBroadcastService;
         this.triggerCollectionService = triggerCollectionService;
@@ -57,6 +62,7 @@ public class AutoPassService {
         this.stepTriggerService = stepTriggerService;
         this.combatAttackService = combatAttackService;
         this.potentialManaService = potentialManaService;
+        this.mutationCoordinator = mutationCoordinator;
     }
 
     /**
@@ -173,14 +179,14 @@ public class AutoPassService {
 
         for (int safety = 0; safety < 100; safety++) {
             if (gameData.interaction.isAwaitingInput()) {
-                gameBroadcastService.broadcastGameState(gameData);
+                invalidateForAllPlayers(gameData);
                 return;
             }
             if (gameData.status == GameStatus.FINISHED) return;
 
             // When stack is non-empty, never auto-pass — players must explicitly pass
             if (!gameData.stack.isEmpty()) {
-                gameBroadcastService.broadcastGameState(gameData);
+                invalidateForAllPlayers(gameData);
                 return;
             }
 
@@ -195,7 +201,7 @@ public class AutoPassService {
             List<Integer> playable = gameBroadcastService.getPlayableCardIndices(gameData, priorityHolder);
             if (!playable.isEmpty() && shouldStopForPlayableCards(gameData, priorityHolder)) {
                 // Priority holder can act — stop and let them decide
-                gameBroadcastService.broadcastGameState(gameData);
+                invalidateForAllPlayers(gameData);
                 return;
             }
 
@@ -209,7 +215,7 @@ public class AutoPassService {
             if (!gameData.simulation && gameData.aiPlayerIds.contains(priorityHolder)
                     && !gameBroadcastService.getPotentialPlayableCardIndices(
                             gameData, priorityHolder, List.of()).isEmpty()) {
-                gameBroadcastService.broadcastGameState(gameData);
+                invalidateForAllPlayers(gameData);
                 return;
             }
 
@@ -218,7 +224,7 @@ public class AutoPassService {
             if (gameData.currentStep == TurnStep.DECLARE_BLOCKERS
                     && priorityHolder.equals(gameData.activePlayerId)
                     && hasBlockingCreatures(gameData)) {
-                gameBroadcastService.broadcastGameState(gameData);
+                invalidateForAllPlayers(gameData);
                 return;
             }
 
@@ -230,14 +236,14 @@ public class AutoPassService {
                     && !hasAttackingCreatures(gameData, priorityHolder)
                     && combatAttackService.isOpponentForcedToAttack(gameData, priorityHolder)
                     && !combatAttackService.getAttackableCreatureIndices(gameData, priorityHolder).isEmpty()) {
-                gameBroadcastService.broadcastGameState(gameData);
+                invalidateForAllPlayers(gameData);
                 return;
             }
 
             // Check if current step is in the priority holder's auto-stop set
             java.util.Set<TurnStep> stopSteps = gameData.playerAutoStopSteps.get(priorityHolder);
             if (stopSteps != null && stopSteps.contains(gameData.currentStep)) {
-                gameBroadcastService.broadcastGameState(gameData);
+                invalidateForAllPlayers(gameData);
                 return;
             }
 
@@ -261,7 +267,7 @@ public class AutoPassService {
 
         // Safety: if we somehow looped 100 times, broadcast current state and stop
         log.warn("Game {} - resolveAutoPass hit safety limit", gameData.id);
-        gameBroadcastService.broadcastGameState(gameData);
+        invalidateForAllPlayers(gameData);
     }
 
     /**
@@ -295,7 +301,7 @@ public class AutoPassService {
 
             if (!playable.isEmpty() || hasActivatable) {
                 // Player can respond to the triggered ability — stop and let them
-                gameBroadcastService.broadcastGameState(gameData);
+                invalidateForAllPlayers(gameData);
                 return;
             }
 
@@ -406,5 +412,12 @@ public class AutoPassService {
             }
         }
         return false;
+    }
+
+    private void invalidateForAllPlayers(GameData gameData) {
+        mutationCoordinator.emit(gameData,
+                new GameEventFact.StateInvalidated(
+                        GameEventFact.StateSection.PRIVATE_PLAYER_VIEW),
+                GameEventAudience.allPlayers());
     }
 }

@@ -14,8 +14,12 @@ import com.github.laxika.magicalvibes.model.StackEntryType;
 import com.github.laxika.magicalvibes.model.TurnStep;
 import com.github.laxika.magicalvibes.model.effect.AwardAnyColorManaEffect;
 import com.github.laxika.magicalvibes.model.effect.DealDamageToAnyTargetEffect;
+import com.github.laxika.magicalvibes.model.event.GameEventAudience;
+import com.github.laxika.magicalvibes.model.event.GameEventFact;
 import com.github.laxika.magicalvibes.service.GameBroadcastService;
 import com.github.laxika.magicalvibes.service.StackResolutionService;
+import com.github.laxika.magicalvibes.service.cast.PotentialManaService;
+import com.github.laxika.magicalvibes.service.event.GameMutationCoordinator;
 import com.github.laxika.magicalvibes.service.trigger.TriggerCollectionService;
 import com.github.laxika.magicalvibes.service.battlefield.GameQueryService;
 import com.github.laxika.magicalvibes.service.combat.CombatAttackService;
@@ -34,6 +38,7 @@ import java.util.UUID;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
@@ -59,6 +64,12 @@ class AutoPassServiceTest {
 
     @Mock
     private CombatAttackService combatAttackService;
+
+    @Mock
+    private PotentialManaService potentialManaService;
+
+    @Mock
+    private GameMutationCoordinator mutationCoordinator;
 
     @InjectMocks
     private AutoPassService sut;
@@ -98,7 +109,7 @@ class AutoPassServiceTest {
             sut.resolveAutoPass(gd, ignored -> {});
 
             assertThat(gd.currentStep).isEqualTo(stepBefore);
-            verify(gameBroadcastService, never()).broadcastGameState(any());
+            verify(mutationCoordinator, never()).emit(any(), any(), any());
         }
 
         @Test
@@ -115,7 +126,7 @@ class AutoPassServiceTest {
             sut.resolveAutoPass(gd, ignored -> {});
 
             assertThat(gd.currentStep).isEqualTo(TurnStep.PRECOMBAT_MAIN);
-            verify(gameBroadcastService).broadcastGameState(gd);
+            verifyStateInvalidated();
         }
 
         @Test
@@ -128,7 +139,7 @@ class AutoPassServiceTest {
             sut.resolveAutoPass(gd, ignored -> {});
 
             assertThat(gd.currentStep).isEqualTo(TurnStep.PRECOMBAT_MAIN);
-            verify(gameBroadcastService).broadcastGameState(gd);
+            verifyStateInvalidated();
         }
 
         @Test
@@ -165,7 +176,7 @@ class AutoPassServiceTest {
 
             assertThat(gd.currentStep).isEqualTo(TurnStep.PRECOMBAT_MAIN);
             assertThat(gd.priorityPassedBy).doesNotContain(player1Id);
-            verify(gameBroadcastService).broadcastGameState(gd);
+            verifyStateInvalidated();
         }
 
         @Test
@@ -215,7 +226,7 @@ class AutoPassServiceTest {
 
             sut.resolveAutoPass(gd, ignored -> {});
 
-            verify(gameBroadcastService).broadcastGameState(gd);
+            verifyStateInvalidated();
         }
 
         @Test
@@ -228,7 +239,7 @@ class AutoPassServiceTest {
 
             sut.resolveAutoPass(gd, ignored -> {});
 
-            verify(gameBroadcastService).broadcastGameState(gd);
+            verifyStateInvalidated();
         }
 
         @Test
@@ -325,7 +336,7 @@ class AutoPassServiceTest {
 
             sut.resolveAutoPass(gd, ignored -> {});
 
-            verify(gameBroadcastService).broadcastGameState(gd);
+            verifyStateInvalidated();
         }
 
         @Test
@@ -347,7 +358,7 @@ class AutoPassServiceTest {
             sut.resolveAutoPass(gd, ignored -> {});
 
             // Should stop — active player must declare attackers
-            verify(gameBroadcastService).broadcastGameState(gd);
+            verifyStateInvalidated();
             assertThat(gd.priorityPassedBy).doesNotContain(player1Id);
         }
 
@@ -438,7 +449,7 @@ class AutoPassServiceTest {
             assertThat(gd.pendingManaAbilityTriggers).isEmpty();
             // Priority should be cleared so both players get a chance to respond
             assertThat(gd.priorityPassedBy).isEmpty();
-            verify(gameBroadcastService).broadcastGameState(gd);
+            verifyStateInvalidated();
         }
 
         @Test
@@ -469,7 +480,9 @@ class AutoPassServiceTest {
             // Player1 auto-passed, player2 was not auto-passed (has playable cards)
             assertThat(gd.priorityPassedBy).containsExactly(player1Id);
             // Single broadcast when player2 can act (no intermediate broadcast after player1's auto-pass)
-            verify(gameBroadcastService, times(1)).broadcastGameState(gd);
+            verify(mutationCoordinator, times(1)).emit(
+                    eq(gd), any(GameEventFact.StateInvalidated.class),
+                    eq(GameEventAudience.allPlayers()));
         }
     }
 
@@ -681,7 +694,7 @@ class AutoPassServiceTest {
 
             sut.resolveAutoPassCombatTriggers(gd);
 
-            verify(gameBroadcastService).broadcastGameState(gd);
+            verifyStateInvalidated();
             verify(stackResolutionService, never()).resolveTopOfStack(any());
         }
 
@@ -706,7 +719,7 @@ class AutoPassServiceTest {
 
             sut.resolveAutoPassCombatTriggers(gd);
 
-            verify(gameBroadcastService).broadcastGameState(gd);
+            verifyStateInvalidated();
             verify(stackResolutionService, never()).resolveTopOfStack(any());
         }
 
@@ -787,5 +800,11 @@ class AutoPassServiceTest {
         Card card = new Card();
         card.getActivatedAbilities().add(ability);
         return card;
+    }
+
+    private void verifyStateInvalidated() {
+        verify(mutationCoordinator).emit(
+                eq(gd), any(GameEventFact.StateInvalidated.class),
+                eq(GameEventAudience.allPlayers()));
     }
 }

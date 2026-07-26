@@ -27,6 +27,7 @@ import com.github.laxika.magicalvibes.model.effect.EachPlayerPlaysAdditionalLand
 import com.github.laxika.magicalvibes.model.effect.EffectDuration;
 import com.github.laxika.magicalvibes.model.effect.MayEffect;
 import com.github.laxika.magicalvibes.model.effect.MayPayManaEffect;
+import com.github.laxika.magicalvibes.model.event.GameEventFact;
 import com.github.laxika.magicalvibes.model.filter.PermanentPredicate;
 import com.github.laxika.magicalvibes.model.layer.FloatingContinuousEffect;
 
@@ -52,11 +53,17 @@ public class GameData {
     public final Map<UUID, Integer> mulliganCounts = new ConcurrentHashMap<>();
     public final Set<UUID> playerKeptHand = ConcurrentHashMap.newKeySet();
     public final Map<UUID, Integer> playerNeedsToBottom = new ConcurrentHashMap<>();
+    /** Stable identities for the currently open pregame decisions. */
+    public final Map<UUID, UUID> playerMulliganDecisionIds = new ConcurrentHashMap<>();
+    public final Map<UUID, UUID> playerBottomDecisionIds = new ConcurrentHashMap<>();
     public final List<GameLogEntry> gameLog = Collections.synchronizedList(new ArrayList<>());
     public UUID startingPlayerId;
     public TurnStep currentStep;
     public UUID activePlayerId;
     public int turnNumber;
+    /** Final authoritative runtime result; null until the game has ended. */
+    public GameEventFact.GameResult gameResult;
+    public UUID winnerPlayerId;
     public final Set<UUID> priorityPassedBy = ConcurrentHashMap.newKeySet();
     public final Map<UUID, Integer> landsPlayedThisTurn = new ConcurrentHashMap<>();
     /** Extra land plays granted this turn (e.g. Summer Bloom), on top of the normal one-per-turn. */
@@ -1713,6 +1720,8 @@ public class GameData {
         copy.currentStep = this.currentStep;
         copy.activePlayerId = this.activePlayerId;
         copy.turnNumber = this.turnNumber;
+        copy.gameResult = this.gameResult;
+        copy.winnerPlayerId = this.winnerPlayerId;
         copy.globalDamagePreventionShield = this.globalDamagePreventionShield;
         copy.preventAllCombatDamage = this.preventAllCombatDamage;
         copy.preventAllDamageToAllCreatures = this.preventAllDamageToAllCreatures;
@@ -1822,6 +1831,8 @@ public class GameData {
         copy.playerDeckChoices.putAll(this.playerDeckChoices);
         copy.mulliganCounts.putAll(this.mulliganCounts);
         copy.playerNeedsToBottom.putAll(this.playerNeedsToBottom);
+        copy.playerMulliganDecisionIds.putAll(this.playerMulliganDecisionIds);
+        copy.playerBottomDecisionIds.putAll(this.playerBottomDecisionIds);
         copy.landsPlayedThisTurn.putAll(this.landsPlayedThisTurn);
         copy.additionalLandsThisTurn.putAll(this.additionalLandsThisTurn);
         this.permanentsEnteredBattlefieldThisTurn.forEach((k, v) ->
@@ -2096,7 +2107,8 @@ public class GameData {
 
         // The active interaction record carries everything (immutable, shallow copy)
         if (source.activeInteraction() != null) {
-            target.interaction.beginInteraction(source.activeInteraction());
+            target.interaction.beginInteraction(
+                    source.activeInteraction(), source.activeDecisionId());
         }
     }
 }

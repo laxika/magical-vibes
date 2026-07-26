@@ -8,6 +8,8 @@ public class InteractionState {
     /** The currently active interaction — the registry handler owns prompting, answer
      *  handling, and reconnect replay. */
     private PendingInteraction activeInteraction;
+    /** Stable identity shared by the initial decision delivery and every reconnect replay. */
+    private UUID activeDecisionId;
 
     // --- Independent fields (lifecycle not tied to a single begin/clear cycle) ---
     private PermanentChoiceContext permanentChoiceContext;
@@ -22,6 +24,7 @@ public class InteractionState {
     public InteractionState deepCopy() {
         InteractionState copy = new InteractionState();
         copy.activeInteraction = this.activeInteraction;
+        copy.activeDecisionId = this.activeDecisionId;
         copy.permanentChoiceContext = this.permanentChoiceContext;
         copy.pendingAuraCard = this.pendingAuraCard;
         copy.pendingAuraOwnerId = this.pendingAuraOwnerId;
@@ -40,12 +43,22 @@ public class InteractionState {
 
     /** Marks the given registry-managed interaction as the currently active one. */
     public void beginInteraction(PendingInteraction interaction) {
+        beginInteraction(interaction, UUID.randomUUID());
+    }
+
+    /** Restores an interaction with an existing stable identity (used by simulation copies). */
+    public void beginInteraction(PendingInteraction interaction, UUID decisionId) {
         this.activeInteraction = interaction;
+        this.activeDecisionId = decisionId;
     }
 
     /** The active registry-managed interaction, or {@code null} when none is active. */
     public PendingInteraction activeInteraction() {
         return this.activeInteraction;
+    }
+
+    public UUID activeDecisionId() {
+        return this.activeDecisionId;
     }
 
     /** The active interaction if it is of the given kind, or {@code null} otherwise. */
@@ -55,6 +68,7 @@ public class InteractionState {
 
     public void clearAwaitingInput() {
         this.activeInteraction = null;
+        this.activeDecisionId = null;
     }
 
     // ========================================================================

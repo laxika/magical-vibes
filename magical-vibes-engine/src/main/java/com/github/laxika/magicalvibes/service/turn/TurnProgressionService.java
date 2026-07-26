@@ -24,11 +24,14 @@ import com.github.laxika.magicalvibes.model.GameStatus;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.TurnStep;
 import com.github.laxika.magicalvibes.model.effect.MakeTargetCopyOfTargetCreatureUntilNextTurnEffect;
+import com.github.laxika.magicalvibes.model.event.GameEventAudience;
+import com.github.laxika.magicalvibes.model.event.GameEventFact;
 import com.github.laxika.magicalvibes.model.layer.FloatingContinuousEffect;
 import com.github.laxika.magicalvibes.service.GameBroadcastService;
 import com.github.laxika.magicalvibes.service.combat.CombatResult;
 import com.github.laxika.magicalvibes.service.combat.CombatService;
 import com.github.laxika.magicalvibes.service.input.PlayerInputService;
+import com.github.laxika.magicalvibes.service.event.GameMutationCoordinator;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
@@ -49,6 +52,7 @@ public class TurnProgressionService {
     private final UntapStepService untapStepService;
     private final StepTriggerService stepTriggerService;
     private final AutoPassService autoPassService;
+    private final GameMutationCoordinator mutationCoordinator;
 
     public void advanceStep(GameData gameData) {
         // The mana pool drains at step boundaries, so nothing recorded before this point can
@@ -134,7 +138,7 @@ public class TurnProgressionService {
             String logEntry = "Step: " + next.getDisplayName();
             gameBroadcastService.logAndBroadcast(gameData, GameLog.text(logEntry));
             log.info("Game {} - Step advanced to {}", gameData.id, next);
-            gameBroadcastService.broadcastGameState(gameData);
+            invalidateForAllPlayers(gameData);
 
             if (gameData.status == GameStatus.FINISHED) return;
 
@@ -337,7 +341,7 @@ public class TurnProgressionService {
             // before untapping. The choice handler resumes via resumeStorageMatrixUntap.
             if (untapStepService.storageMatrixRestrictionApplies(gameData, nextActive)) {
                 playerInputService.beginStorageMatrixUntapChoice(gameData, nextActive);
-                gameBroadcastService.broadcastGameState(gameData);
+                invalidateForAllPlayers(gameData);
                 return;
             }
 
@@ -351,7 +355,7 @@ public class TurnProgressionService {
                 playerInputService.beginStaticOrbUntapChoice(gameData, nextActive,
                         untapStepService.staticOrbUntapCandidates(gameData, nextActive, effect),
                         effect.maxUntap(), effect.filter());
-                gameBroadcastService.broadcastGameState(gameData);
+                invalidateForAllPlayers(gameData);
                 return;
             }
 
@@ -426,7 +430,7 @@ public class TurnProgressionService {
         String logEntry = "Turn " + gameData.turnNumber + " begins. " + activeName + "'s turn.";
         gameBroadcastService.logAndBroadcast(gameData, GameLog.text(logEntry));
         log.info("Game {} - Turn {} begins. Active player: {}", gameData.id, gameData.turnNumber, activeName);
-        gameBroadcastService.broadcastGameState(gameData);
+        invalidateForAllPlayers(gameData);
     }
 
     public void handleCombatResult(CombatResult result, GameData gameData) {
@@ -495,5 +499,12 @@ public class TurnProgressionService {
 
     public void processNextBeginningOfCombatTriggerTarget(GameData gameData) {
         stepTriggerService.processNextBeginningOfCombatTriggerTarget(gameData);
+    }
+
+    private void invalidateForAllPlayers(GameData gameData) {
+        mutationCoordinator.emit(gameData,
+                new GameEventFact.StateInvalidated(
+                        GameEventFact.StateSection.TURN_AND_PRIORITY),
+                GameEventAudience.allPlayers());
     }
 }

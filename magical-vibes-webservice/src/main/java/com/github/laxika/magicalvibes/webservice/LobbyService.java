@@ -4,8 +4,8 @@ import com.github.laxika.magicalvibes.model.GameData;
 import com.github.laxika.magicalvibes.model.Player;
 import com.github.laxika.magicalvibes.networking.message.JoinGame;
 import com.github.laxika.magicalvibes.networking.message.LobbyGame;
-import com.github.laxika.magicalvibes.service.GameBroadcastService;
 import com.github.laxika.magicalvibes.service.GameRegistry;
+import com.github.laxika.magicalvibes.service.GameResyncProjectionService;
 import com.github.laxika.magicalvibes.service.GameSetupService;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -25,12 +25,12 @@ public class LobbyService {
     public record GameResult(JoinGame joinGame, LobbyGame lobbyGame) {}
 
     private final GameRegistry gameRegistry;
-    private final GameBroadcastService gameBroadcastService;
+    private final GameResyncProjectionService gameResyncProjectionService;
     private final GameSetupService gameSetupService;
 
     public GameResult createGame(String gameName, Player player, String deckId, boolean allRandom, String randomSetCode) {
         GameData gameData = gameSetupService.createGame(gameName, player, deckId, allRandom, randomSetCode);
-        return new GameResult(gameBroadcastService.getJoinGame(gameData, null), toLobbyGame(gameData));
+        return new GameResult(gameResyncProjectionService.currentState(gameData, null), toLobbyGame(gameData));
     }
 
     public List<LobbyGame> listRunningGames() {
