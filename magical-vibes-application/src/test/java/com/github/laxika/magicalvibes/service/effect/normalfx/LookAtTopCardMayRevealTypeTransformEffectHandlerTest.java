@@ -75,7 +75,7 @@ class LookAtTopCardMayRevealTypeTransformEffectHandlerTest {
         gd.playerDecks.put(player2Id, Collections.synchronizedList(new ArrayList<>()));
         gd.activePlayerId = player1Id;
 
-        libraryRevealSupport = new LibraryRevealSupport(gameBroadcastService, sessionManager, cardViewFactory,
+        libraryRevealSupport = new LibraryRevealSupport(gameBroadcastService,
                 InteractionRegistryTestSupport.registryFor(sessionManager, cardViewFactory, gameBroadcastService));
         lookAtTopCardMayRevealTypeTransformEffectHandler = new LookAtTopCardMayRevealTypeTransformEffectHandler(gameBroadcastService);
 

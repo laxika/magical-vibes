@@ -11,10 +11,8 @@ import com.github.laxika.magicalvibes.model.StackEntry;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
 import com.github.laxika.magicalvibes.model.effect.LookAtTopCardsOfTargetLibraryEffect;
 import com.github.laxika.magicalvibes.model.effect.ShuffleLibraryEffect;
-import com.github.laxika.magicalvibes.networking.SessionManager;
-import com.github.laxika.magicalvibes.networking.message.RevealLibraryTopMessage;
-import com.github.laxika.magicalvibes.networking.model.CardView;
-import com.github.laxika.magicalvibes.networking.service.CardViewFactory;
+import com.github.laxika.magicalvibes.model.event.GameEventFact;
+import com.github.laxika.magicalvibes.service.CardRevealService;
 import com.github.laxika.magicalvibes.service.GameBroadcastService;
 import com.github.laxika.magicalvibes.service.interaction.InteractionHandlerRegistry;
 import java.util.ArrayList;
@@ -34,7 +32,7 @@ import org.springframework.stereotype.Component;
  *   <li>{@code LOOK_ONLY} — single-card look is a blocking acknowledge via
  *       {@link PendingInteraction.LibrarySearch} that puts the card back on top (Dewdrop Spy);
  *       multi-card look leaves the library untouched and surfaces the cards with a non-blocking
- *       private {@link RevealLibraryTopMessage} (Orcish Spy — no reordering permitted).</li>
+ *       private library reveal message (Orcish Spy — no reordering permitted).</li>
  *   <li>{@code MAY_EXILE_ONE} — optional exile of one looked-at card, rest back on top
  *       (Psychic Surgery, Puresight Merrow).</li>
  *   <li>{@code MAY_SHUFFLE} — the looked-at names go into a may-ability prompt wrapping
@@ -50,8 +48,7 @@ public class LookAtTopCardsOfTargetLibraryEffectHandler implements NormalEffectH
 
     private final GameBroadcastService gameBroadcastService;
     private final InteractionHandlerRegistry interactionHandlerRegistry;
-    private final CardViewFactory cardViewFactory;
-    private final SessionManager sessionManager;
+    private final CardRevealService cardRevealService;
 
     @Override
     public Class<? extends CardEffect> handledEffect() {
@@ -70,6 +67,14 @@ public class LookAtTopCardsOfTargetLibraryEffectHandler implements NormalEffectH
         int actual = deck != null ? Math.min(e.count(), deck.size()) : 0;
         if (actual == 0) {
             gameBroadcastService.logAndBroadcast(gameData, GameLog.builder().card(entry.getCard()).text(": " + targetName + "'s library is empty.").build());
+            if (e.action() == com.github.laxika.magicalvibes.model.effect.TargetLibraryAction.LOOK_ONLY) {
+                cardRevealService.revealToPlayer(
+                        gameData,
+                        targetPlayerId,
+                        GameEventFact.RevealZone.LIBRARY,
+                        List.of(),
+                        controllerId);
+            }
             return;
         }
 
@@ -119,8 +124,12 @@ public class LookAtTopCardsOfTargetLibraryEffectHandler implements NormalEffectH
         List<Card> topCards = new ArrayList<>(deck.subList(0, actual));
         gameBroadcastService.logAndBroadcast(gameData, GameLog.text(controllerName + " looks at the top "
                 + LibraryRevealSupport.pluralCards(actual) + " of " + targetName + "'s library."));
-        List<CardView> cardViews = topCards.stream().map(cardViewFactory::create).toList();
-        sessionManager.sendToPlayer(controllerId, new RevealLibraryTopMessage(cardViews, targetName));
+        cardRevealService.revealToPlayer(
+                gameData,
+                targetPlayerId,
+                GameEventFact.RevealZone.LIBRARY,
+                topCards,
+                controllerId);
         log.info("Game {} - {} looks at the top {} cards of {}'s library",
                 gameData.id, controllerName, actual, targetName);
     }

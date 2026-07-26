@@ -76,7 +76,7 @@ class ImprintFromTopCardsEffectHandlerTest {
         gd.playerDecks.put(player2Id, Collections.synchronizedList(new ArrayList<>()));
         gd.activePlayerId = player1Id;
 
-        libraryRevealSupport = new LibraryRevealSupport(gameBroadcastService, sessionManager, cardViewFactory,
+        libraryRevealSupport = new LibraryRevealSupport(gameBroadcastService,
                 InteractionRegistryTestSupport.registryFor(sessionManager, cardViewFactory, gameBroadcastService));
         imprintFromTopCardsEffectHandler = new ImprintFromTopCardsEffectHandler(gameQueryService, gameBroadcastService, exileService, libraryRevealSupport,
                 InteractionRegistryTestSupport.registryFor(sessionManager, cardViewFactory, gameBroadcastService));
@@ -175,6 +175,6 @@ class ImprintFromTopCardsEffectHandlerTest {
 
                 assertThat(gd.interaction.activeInteraction()).isInstanceOf(PendingInteraction.LibrarySearch.class);
                 assertThat(gd.interaction.activeInteraction(PendingInteraction.LibrarySearch.class).params().playerId()).isEqualTo(player1Id);
-                verify(sessionManager).sendToPlayer(eq(player1Id), any());
+                verifyNoInteractions(sessionManager);
             }
 }

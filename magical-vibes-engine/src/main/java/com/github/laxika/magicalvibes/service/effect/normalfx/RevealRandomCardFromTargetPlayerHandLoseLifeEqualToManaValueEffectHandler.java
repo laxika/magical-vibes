@@ -6,10 +6,8 @@ import com.github.laxika.magicalvibes.model.GameLog;
 import com.github.laxika.magicalvibes.model.StackEntry;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
 import com.github.laxika.magicalvibes.model.effect.RevealRandomCardFromTargetPlayerHandLoseLifeEqualToManaValueEffect;
-import com.github.laxika.magicalvibes.networking.SessionManager;
-import com.github.laxika.magicalvibes.networking.message.RevealHandMessage;
-import com.github.laxika.magicalvibes.networking.model.CardView;
-import com.github.laxika.magicalvibes.networking.service.CardViewFactory;
+import com.github.laxika.magicalvibes.model.event.GameEventFact;
+import com.github.laxika.magicalvibes.service.CardRevealService;
 import com.github.laxika.magicalvibes.service.GameBroadcastService;
 import com.github.laxika.magicalvibes.service.GameOutcomeService;
 import java.util.List;
@@ -29,11 +27,10 @@ import org.springframework.stereotype.Component;
 public class RevealRandomCardFromTargetPlayerHandLoseLifeEqualToManaValueEffectHandler
         implements NormalEffectHandlerBean {
 
-    private final CardViewFactory cardViewFactory;
+    private final CardRevealService cardRevealService;
     private final GameBroadcastService gameBroadcastService;
     private final GameOutcomeService gameOutcomeService;
     private final LifeSupport lifeSupport;
-    private final SessionManager sessionManager;
 
     @Override
     public Class<? extends CardEffect> handledEffect() {
@@ -59,10 +56,11 @@ public class RevealRandomCardFromTargetPlayerHandLoseLifeEqualToManaValueEffectH
         gameBroadcastService.logAndBroadcast(gameData,
                 GameLog.textCardText(targetName + " reveals ", revealed, " at random."));
 
-        List<CardView> cardViews = List.of(cardViewFactory.create(revealed));
-        for (UUID playerId : gameData.orderedPlayerIds) {
-            sessionManager.sendToPlayer(playerId, new RevealHandMessage(cardViews, targetName));
-        }
+        cardRevealService.revealToAllPlayers(
+                gameData,
+                targetPlayerId,
+                GameEventFact.RevealZone.HAND,
+                List.of(revealed));
 
         int manaValue = revealed.getManaValue();
         log.info("Game {} - {} trigger: {} reveals {} (mana value {}) at random",

@@ -78,7 +78,7 @@ class LookAtTopCardsHandTopBottomEffectHandlerTest {
         gd.playerDecks.put(player2Id, Collections.synchronizedList(new ArrayList<>()));
         gd.activePlayerId = player1Id;
 
-        libraryRevealSupport = new LibraryRevealSupport(gameBroadcastService, sessionManager, cardViewFactory,
+        libraryRevealSupport = new LibraryRevealSupport(gameBroadcastService,
                 InteractionRegistryTestSupport.registryFor(sessionManager, cardViewFactory, gameBroadcastService));
         InteractionHandlerRegistry interactionHandlerRegistry = new InteractionHandlerRegistry();
         interactionHandlerRegistry.register(new HandTopBottomChoiceInteractionHandler(
@@ -163,6 +163,6 @@ class LookAtTopCardsHandTopBottomEffectHandlerTest {
                 assertThat(gd.interaction.activeInteraction()).isInstanceOf(PendingInteraction.HandTopBottomChoice.class);
                 assertThat(gd.interaction.activeInteraction(PendingInteraction.HandTopBottomChoice.class).playerId()).isEqualTo(player1Id);
                 assertThat(gd.interaction.activeInteraction(PendingInteraction.HandTopBottomChoice.class).cards()).hasSize(3);
-                verify(sessionManager).sendToPlayer(eq(player1Id), any());
+                verifyNoInteractions(sessionManager);
             }
 }

@@ -81,9 +81,9 @@ class LookAtTopXCardsPermanentsToBattlefieldRestToGraveyardEffectHandlerTest {
         gd.playerDecks.put(player2Id, Collections.synchronizedList(new ArrayList<>()));
         gd.activePlayerId = player1Id;
 
-        libraryRevealSupport = new LibraryRevealSupport(gameBroadcastService, sessionManager, cardViewFactory,
+        libraryRevealSupport = new LibraryRevealSupport(gameBroadcastService,
                 InteractionRegistryTestSupport.registryFor(sessionManager, cardViewFactory, gameBroadcastService));
-        lookAtTopXCardsPermanentsToBattlefieldRestToGraveyardEffectHandler = new LookAtTopXCardsPermanentsToBattlefieldRestToGraveyardEffectHandler(gameQueryService, predicateEvaluationService, gameBroadcastService, sessionManager, cardViewFactory,
+        lookAtTopXCardsPermanentsToBattlefieldRestToGraveyardEffectHandler = new LookAtTopXCardsPermanentsToBattlefieldRestToGraveyardEffectHandler(gameQueryService, predicateEvaluationService, gameBroadcastService,
                 InteractionRegistryTestSupport.registryFor(sessionManager, cardViewFactory, gameBroadcastService));
 
     }
@@ -193,7 +193,7 @@ class LookAtTopXCardsPermanentsToBattlefieldRestToGraveyardEffectHandlerTest {
                 assertThat(gd.interaction.activeInteraction(PendingInteraction.LibraryRevealChoice.class)).isNotNull();
                 assertThat(gd.interaction.activeInteraction(PendingInteraction.LibraryRevealChoice.class).randomRemainingToBottom()).isTrue();
                 assertThat(gd.interaction.activeInteraction(PendingInteraction.LibraryRevealChoice.class).validCardIds()).containsExactly(dino.getId());
-                verify(sessionManager).sendToPlayer(eq(player1Id), any());
+                verifyNoInteractions(sessionManager);
             }
 
             @Test

@@ -4,6 +4,7 @@ import com.github.laxika.magicalvibes.model.effect.CardEffect;
 import com.github.laxika.magicalvibes.networking.SessionManager;
 import com.github.laxika.magicalvibes.networking.service.CardViewFactory;
 import com.github.laxika.magicalvibes.service.DrawService;
+import com.github.laxika.magicalvibes.service.CardRevealService;
 import com.github.laxika.magicalvibes.service.GameBroadcastService;
 import com.github.laxika.magicalvibes.service.battlefield.BattlefieldEntryService;
 import com.github.laxika.magicalvibes.service.battlefield.GameQueryService;
@@ -31,6 +32,7 @@ final class PlayerInteractionHandlerTestSupport {
                                                  PlayerInteractionSupport support,
                                                  EffectHandlerRegistry registry,
                                                  GameBroadcastService gameBroadcastService,
+                                                 CardRevealService cardRevealService,
                                                  DrawService drawService,
                                                  SessionManager sessionManager,
                                                  CardViewFactory cardViewFactory,
@@ -49,6 +51,7 @@ final class PlayerInteractionHandlerTestSupport {
             deps.put(PlayerInteractionSupport.class, support);
             deps.put(EffectHandlerRegistry.class, registry);
             deps.put(GameBroadcastService.class, gameBroadcastService);
+            deps.put(CardRevealService.class, cardRevealService);
             deps.put(DrawService.class, drawService);
             deps.put(SessionManager.class, sessionManager);
             deps.put(CardViewFactory.class, cardViewFactory);

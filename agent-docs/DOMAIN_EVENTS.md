@@ -116,9 +116,9 @@ for every family is zero.
 
 | Legacy surface | Current total | Eventual target |
 |---|---:|---:|
-| `GameBroadcastService.broadcastGameState` | 19 | 0 |
-| engine `SessionManager.sendToPlayer/sendToPlayers` | 8 | 0 |
-| `GameBroadcastService.logAndBroadcast` | 2,293 | 0 |
+| `GameBroadcastService.broadcastGameState` | 4 | 0 |
+| engine `SessionManager.sendToPlayer/sendToPlayers` | 1 | 0 |
+| `GameBroadcastService.logAndBroadcast` | 2,290 | 0 |
 
 The lifecycle migration ratchet additionally fixes the direct state/session count at zero for
 `GameService`, `GameSetupService`, `MulliganService`, `GameOutcomeService`,
@@ -128,45 +128,42 @@ the direct state/session count at zero for `SpellCastingService`, `AbilityActiva
 `ActivatedAbilityExecutionService`, and `StackResolutionService`. The generic-input ratchet fixes
 the same surfaces at zero for every `service/input` class, including the multi-permanent and
 battlefield, spell, and trigger permanent-choice handlers.
+The recursive effect-package ratchet fixes both direct state/session calls and direct
+`SessionManager` dependencies at zero for every `service/effect` class.
 
 ### `broadcastGameState` package-family classification
 
 | Package family | Count | Workflow classification |
 |---|---:|---|
 | service root | 1 | auction refresh |
-| `effect/normalfx` | 15 | multi-stage exile/reveal effect refreshes |
 | `interaction` | 3 | auction, keep-cards, and X-value answer refreshes |
 
-Exhaustive files for these 19 calls:
+Exhaustive files for these 4 calls:
 
 | Family | Files and counts |
 |---|---|
 | service root | `PermanentAuctionService` 1 |
-| `effect/normalfx` | `BrilliantUltimatumSupport` 1; `ExileSupport` 8; `ImprovisationCapstoneCastSupport` 2; `KarnScionReturnSilverCounterCardEffectHandler` 1; `KarnScionRevealTwoOpponentChoosesEffectHandler` 1; `PutCardExiledWithSourceIntoHandEffectHandler` 1; `RevealTopCardsOpponentPaysLifeOrToHandEffectHandler` 1 |
 | `interaction` | `IllicitAuctionBidChoiceInteractionHandler` 1; `KeepCardsInHandChoiceInteractionHandler` 1; `XValueChoiceInteractionHandler` 1 |
 
 Migration classification: all become audience-appropriate `STATE_INVALIDATED` facts. A completed
 action normally needs one all-player invalidation plus, only where necessary, a private
 player-view invalidation. Transport-side state rendering must preserve the current
-player-specific hidden-information rules in `GameBroadcastService`.
+player-specific hidden-information rules in `GameBroadcastService`. Every effect-owned
+invalidation, including the exile/cast, ultimatum, Karn, source-linked exile, and punisher
+workflows formerly listed here, is complete.
 
 ### Engine `SessionManager` package-family classification
 
 | Package family | Count | Workflow classification |
 |---|---:|---|
-| service root | 1 | hand reveal |
-| `effect/normalfx` | 7 | private hand/library reveal notifications |
+| service root | 1 | canonical message transport |
 | `interaction` | 0 | standard registry-managed prompts are event projections |
 
-Exhaustive files for these 8 calls:
+Exhaustive files for this 1 call:
 
-- Service root: `GameBroadcastService` 1.
-- Effects: `LookAtHandEffectHandler`, `LookAtRandomCardInTargetPlayerHandEffectHandler`,
-  `LookAtTopCardsOfTargetLibraryEffectHandler`,
-  `RevealRandomCardFromTargetPlayerHandEffectHandler`,
-  `RevealRandomCardFromTargetPlayerHandLoseLifeEqualToManaValueEffectHandler`,
-  `RevealRandomHandCardAndPlayEffectHandler`, and `TempestEfreetAnteExchangeEffectHandler`,
-  one each.
+- Service root: `GameMessageTransport` 1.
+- Effects: zero. Hand/library looks and rules-public reveals emit audience-restricted facts through
+  `CardRevealService`; no effect handler constructs a reveal DTO or owns transport.
 - Interaction handlers: zero. Handler files contain only answer validation/mutation logic.
   `InteractionPromptProjectionRegistry` has one exact-class projection strategy for every
   promptable `PendingInteraction` subtype and constructs the unchanged typed wire message only
@@ -183,8 +180,11 @@ Migration classification:
   finalized immutable legality snapshots on their pending interactions. Attacker, blocker,
   combat-damage, and standard interaction facts are all projected through the exact-class
   `InteractionPromptProjectionRegistry`; handlers never send or construct networking DTOs.
-- The seven effect reveal sends plus `GameBroadcastService.revealOpponentHandToPlayer` become
-  `PRIVATE_REVEAL` with immutable `CardSnapshot` lists and explicit recipients.
+- Effect hand/library looks, rules-public hand reveals, random reveals, reveal-and-play, and ante
+  reveals emit `PRIVATE_REVEAL` with immutable `CardSnapshot` lists and explicit recipients.
+  Rules-public reveals explicitly name every seated player; private looks name only the viewer.
+  Both project to the existing reveal message shapes, while generic diagnostic rendering redacts
+  every card identity field.
 - `KarnRestartGameEffectHandler` now emits a public state invalidation/observation, not a
   game-end fact.
 - The three former `GameOutcomeService` sends are one non-coalescible `GAME_ENDED` fact per
@@ -194,13 +194,13 @@ Migration classification:
 ### `logAndBroadcast` package-family classification
 
 `logAndBroadcast` currently appends an immutable `GameLogEntry` to `GameData.gameLog`; actual
-delivery is coupled to the next `broadcastGameState`. Its 2,293 call sites are exhaustively
+delivery is coupled to the next state projection. Its 2,290 call sites are exhaustively
 classified by owning package family below. Card/effect-specific rows intentionally migrate to
 the same `GAME_LOG` state invalidation rather than new per-card event kinds.
 
 | Package family | Count | Workflow classification |
 |---|---:|---|
-| service root | 111 | draw, outcomes, mulligan, stack, triggered queue, reset/auction/warp observations |
+| service root | 112 | draw, outcomes, mulligan, stack, triggered queue, reveal, reset/auction/warp observations |
 | `ability` | 40 | activation and payment observations |
 | `ability/cost` | 8 | ability-cost payment observations |
 | `aura` | 4 | attachment legality observations |
@@ -208,7 +208,7 @@ the same `GAME_LOG` state invalidation rather than new per-card event kinds.
 | `battlefield` | 40 | entry, removal, clone, and control observations |
 | `effect` | 2 | shared effect-resolution observations |
 | `effect/mayfx` | 23 | accepted/declined may-effect observations |
-| `effect/normalfx` | 1,275 | normal card-effect resolution observations |
+| `effect/normalfx` | 1,271 | normal card-effect resolution observations |
 | `graveyard` | 17 | graveyard movement observations |
 | `input` | 468 | choice answers and resumed-resolution observations |
 | `interaction` | 16 | registry-managed choice-answer observations |
@@ -218,10 +218,10 @@ the same `GAME_LOG` state invalidation rather than new per-card event kinds.
 | `trigger` | 143 | trigger collection/queue observations |
 | `turn` | 99 | step, turn, cleanup, and auto-pass observations |
 
-The service-root 111 are: `DrawService` 27, `GameBroadcastService` 2,
+The service-root 112 are: `CardRevealService` 3, `DrawService` 27,
 `GameOutcomeService` 4, `GameService` 2, `LichsMirrorResetService` 2,
 `MulliganService` 7, `PermanentAuctionService` 3, `StackResolutionService` 29,
-`TriggeredAbilityQueueService` 33, and `WarpWorldService` 2. The remaining 2,182 calls are covered
+`TriggeredAbilityQueueService` 33, and `WarpWorldService` 2. The remaining 2,178 calls are covered
 by the package-family rows and ratchet; their handler class names identify the individual card or
 workflow, and no handler is exempt.
 
@@ -244,9 +244,9 @@ intentionally unchanged by this foundation prompt.
 |---|---|---|---|
 | Foundation | domain event records → `GameMutationCoordinator` → `GameEventDispatcher` | immutable facts/envelopes, nested batching, ordering, audience safety, simulation suppression, failure isolation | **Complete** |
 | Canonical projection subscriber | `GameEventProjectionSubscriber` → `GameViewProjectionFactory`/interaction registry → typed messages → `GameMessageTransport` | post-lock authoritative projection, explicit audience enforcement, no serialization, per-recipient transport failure isolation, human/AI typed-message parity | **Complete** |
-| Public game-state refresh | 19 `broadcastGameState` calls → player-specific `GameStateMessage` | coalesced `STATE_INVALIDATED`; canonical subscriber constructs the same per-player wire DTO after unlock | Lifecycle, `GameService`, `turn`, combat, spell, ability, generic input, and stack-resolution workflows complete; remaining emission migration open |
+| Public game-state refresh | 4 `broadcastGameState` calls → player-specific `GameStateMessage` | coalesced `STATE_INVALIDATED`; canonical subscriber constructs the same per-player wire DTO after unlock | Effect workflows complete; only auction/keep-cards/X-value legacy emission remains open |
 | Generic input completion | answer handler → required SBA/may processing → parked-resolution resume → auto-pass stable point → state observation | one coalesced all-player `STATE_INVALIDATED` per completed answer; a queued interaction keeps its non-coalescible `DECISION_REQUESTED` barrier; validation failure and game end do not leak an intermediate state observation | **Complete**, including permanent and multi-permanent selection |
-| Game log | 2,293 `logAndBroadcast` calls → `gameLog` → next state message | append under lock plus `GAME_LOG` invalidation; preserve structured segments and incremental wire behavior | Combat package complete; remaining packages open |
+| Game log | 2,290 `logAndBroadcast` calls → `gameLog` → next state message | append under lock plus `GAME_LOG` invalidation; preserve structured segments and incremental wire behavior | Combat package complete; remaining packages open |
 | Generic interactions | begin site → authoritative pending interaction + stable ID → `DECISION_REQUESTED` → `InteractionPromptProjectionRegistry` → typed prompt | one non-coalescible private fact per interaction; exact identity match before projection; every promptable subtype (including combat) has one explicit strategy and no raw-state fallback; handlers have no session/networking dependency | **Complete** |
 | Attackers | `CombatAttackService` finalizes an immutable legality snapshot → registry decision event → canonical subscriber → `AvailableAttackersMessage` | `DECISION_REQUESTED(ATTACKER_DECLARATION)` with stable retry/replay identity and Mindslaver audience | **Complete** |
 | Blockers | `CombatBlockService` finalizes legal pairs and requirements → registry decision event → canonical subscriber → `AvailableBlockersMessage` | `DECISION_REQUESTED(BLOCKER_DECLARATION)` with stable retry/replay identity | **Complete** |
@@ -254,7 +254,7 @@ intentionally unchanged by this foundation prompt.
 | Combat lifecycle | beginning of combat → declarations/taxes/requirements → first-strike and regular assignment/application → SBA/triggers → cleanup/later steps | ordered `STATE_INVALIDATED` barriers plus audience-restricted combat decisions; no combat-owned direct state/session/log notification | **Complete** |
 | Ability additional-cost choices | registry interaction plus non-coalescible decision fact | discard/exile/permanent cost choices preserve stable identity and validate before payment | **Complete** |
 | Mulligan | `MulliganService` emits resolved/state/decision facts with stable mulligan and bottom decision identities | `MULLIGAN_RESOLVED` plus state observation and `CARDS_TO_BOTTOM` decision without changing message timing | **Complete** |
-| Private hand/library reveals | `GameBroadcastService` plus seven normal-effect handlers | `PRIVATE_REVEAL`, explicit recipient, immutable snapshots; never public by default | Projection complete; emission migration open |
+| Private hand/library reveals | effect handlers → `CardRevealService` → audience-restricted fact → canonical subscriber → existing reveal DTO | `PRIVATE_REVEAL`, explicit recipients, immutable snapshots, diagnostic redaction; private look and rules-public reveal remain distinct | **Complete** |
 | Game over | `GameOutcomeService` finalizes authoritative result and emits one `GAME_ENDED`; ordered subscribers project `GameOverMessage`, close AI, notify tournaments, cancel timers, and remove the registry entry | one `GAME_ENDED` fact; adapters preserve `GameOverMessage`, draft callback, timer cleanup, and registry removal ordering | **Complete** |
 | Game restart | `KarnRestartGameEffectHandler` emits state, restart mulligan observation, and fresh stable mulligan decisions | public state/observation event; not `GAME_ENDED` | **Complete** |
 | Reconnect state | `GameResyncProjectionService.currentState` builds a monitor-protected current `JoinGame` projection | Preserve the exact login response envelope and build its hidden player view through the shared projection factory rather than a domain event | **Complete** |
@@ -272,8 +272,8 @@ Later prompts should migrate vertical workflows, not raw call counts:
 2. Wrap one public action family in `GameMutationCoordinator`, preserving validation inside the
    coordinator-owned monitor.
 3. Migrate generic interaction begin/replay once so all decision types share stable identity.
-4. Migrate private reveals and game end as non-coalescible facts.
-5. Replace public state refreshes package by package.
+4. Migrate private reveals and game end as non-coalescible facts. **Complete.**
+5. Replace public state refreshes package by package. **Effect package complete.**
 6. Convert log append sites package by package to `GAME_LOG` invalidation.
 7. Remove the dormant legacy surfaces and drive every ratchet family to zero.
 

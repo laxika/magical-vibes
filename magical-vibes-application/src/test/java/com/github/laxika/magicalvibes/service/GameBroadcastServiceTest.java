@@ -26,6 +26,7 @@ import com.github.laxika.magicalvibes.service.cast.CastingPermissionService;
 import com.github.laxika.magicalvibes.service.cast.CostModificationTestRegistry;
 import com.github.laxika.magicalvibes.service.cast.CostModificationSupport;
 import com.github.laxika.magicalvibes.service.effect.GrantedAbilityViewFactory;
+import com.github.laxika.magicalvibes.service.event.GameMutationCoordinator;
 import com.github.laxika.magicalvibes.service.target.ValidTargetService;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
@@ -65,6 +66,7 @@ class GameBroadcastServiceTest {
     @Mock private PredicateEvaluationService predicateEvaluationService;
     @Mock private ValidTargetService validTargetService;
     @Mock private com.github.laxika.magicalvibes.service.effect.ConditionEvaluationService conditionEvaluationService;
+    @Mock private GameMutationCoordinator mutationCoordinator;
 
     private GameBroadcastService svc;
     private GameData gd;
@@ -91,10 +93,9 @@ class GameBroadcastServiceTest {
                 new GrantedAbilityViewFactory());
         svc = new GameBroadcastService(
                 projectionFactory,
-                new PrivateInformationProjectionFactory(cardViewFactory),
                 new GameMessageTransport(sessionManager),
                 gameLogViewFactory,
-                gameQueryService);
+                mutationCoordinator);
 
         player1Id = UUID.randomUUID();
         player2Id = UUID.randomUUID();
@@ -114,6 +115,13 @@ class GameBroadcastServiceTest {
         gd.status = GameStatus.RUNNING;
         gd.activePlayerId = player1Id;
         gd.currentStep = TurnStep.PRECOMBAT_MAIN;
+    }
+
+    @Test
+    void effectCompatibilityFacadeRecordsCanonicalStateInvalidation() {
+        svc.invalidateAllPlayerViews(gd);
+
+        verify(mutationCoordinator).invalidateAllPlayerViews(gd);
     }
 
     @Nested

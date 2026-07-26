@@ -191,6 +191,33 @@ class GameMutationCoordinatorTest {
     }
 
     @Test
+    void privateRevealDiagnosticRenderingRedactsEveryCardIdentityField() {
+        UUID hiddenCardId = UUID.fromString("00000000-0000-0000-0000-000000000099");
+        GameEventFact.PrivateReveal reveal = new GameEventFact.PrivateReveal(
+                UUID.fromString("00000000-0000-0000-0000-000000000088"),
+                PLAYER_2,
+                GameEventFact.RevealZone.HAND,
+                List.of(new GameEventFact.CardSnapshot(
+                        hiddenCardId, "Diagnostic Secret", "SEC", "999")));
+        List<GameEventBatch> received = new ArrayList<>();
+        GameMutationCoordinator coordinator = coordinator(received::add);
+
+        GameData gameData = gameData();
+        coordinator.mutate(gameData, ACTION_2, () ->
+                coordinator.emit(gameData, reveal, GameEventAudience.player(PLAYER_1)));
+
+        String diagnostic = received.getLast().toString();
+        assertThat(diagnostic)
+                .contains("cardCount=1", "cards=<redacted>")
+                .doesNotContain(
+                        "Diagnostic Secret",
+                        "SEC",
+                        "999",
+                        hiddenCardId.toString());
+        assertThat(reveal.cards().getFirst().toString()).isEqualTo("CardSnapshot[<redacted>]");
+    }
+
+    @Test
     void simulationCommitsLocalOrderingButPerformsNoExternalDispatch() {
         GameData gameData = gameData();
         gameData.simulation = true;

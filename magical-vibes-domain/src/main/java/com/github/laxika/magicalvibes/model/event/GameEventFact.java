@@ -117,6 +117,19 @@ public sealed interface GameEventFact permits GameEventFact.StateInvalidated,
         public GameEventKind kind() {
             return GameEventKind.PRIVATE_REVEAL;
         }
+
+        /**
+         * Diagnostics must never render hidden card identity. Authorized projection code uses the
+         * record accessors; generic logging gets only metadata and a count.
+         */
+        @Override
+        public String toString() {
+            return "PrivateReveal[revealId=" + revealId
+                    + ", subjectPlayerId=" + subjectPlayerId
+                    + ", zone=" + zone
+                    + ", cardCount=" + cards.size()
+                    + ", cards=<redacted>]";
+        }
     }
 
     /**
@@ -153,6 +166,11 @@ public sealed interface GameEventFact permits GameEventFact.StateInvalidated,
         public CardSnapshot {
             Objects.requireNonNull(cardId, "cardId");
             Objects.requireNonNull(name, "name");
+        }
+
+        @Override
+        public String toString() {
+            return "CardSnapshot[<redacted>]";
         }
     }
 

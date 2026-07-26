@@ -9,11 +9,13 @@ import com.github.laxika.magicalvibes.model.StackEntry;
 import com.github.laxika.magicalvibes.model.StackEntryType;
 import com.github.laxika.magicalvibes.model.effect.LookAtTopCardsOfTargetLibraryEffect;
 import com.github.laxika.magicalvibes.model.effect.TargetLibraryAction;
+import com.github.laxika.magicalvibes.model.event.GameEventFact;
 import com.github.laxika.magicalvibes.networking.SessionManager;
 import com.github.laxika.magicalvibes.networking.message.RevealLibraryTopMessage;
 import com.github.laxika.magicalvibes.networking.model.CardView;
 import com.github.laxika.magicalvibes.networking.service.CardViewFactory;
 import com.github.laxika.magicalvibes.service.GameBroadcastService;
+import com.github.laxika.magicalvibes.service.CardRevealService;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Nested;
@@ -44,6 +46,7 @@ class LookAtTopCardsOfTargetLibraryEffectHandlerTest {
     @Mock private GameBroadcastService gameBroadcastService;
     @Mock private SessionManager sessionManager;
     @Mock private CardViewFactory cardViewFactory;
+    @Mock private CardRevealService cardRevealService;
 
     private LookAtTopCardsOfTargetLibraryEffectHandler handler;
     private GameData gd;
@@ -73,7 +76,7 @@ class LookAtTopCardsOfTargetLibraryEffectHandlerTest {
 
         handler = new LookAtTopCardsOfTargetLibraryEffectHandler(gameBroadcastService,
                 InteractionRegistryTestSupport.registryFor(sessionManager, cardViewFactory, gameBroadcastService),
-                cardViewFactory, sessionManager);
+                cardRevealService);
     }
 
     private static Card createCard(String name) {
@@ -137,7 +140,8 @@ class LookAtTopCardsOfTargetLibraryEffectHandlerTest {
 
             assertThat(gd.playerDecks.get(player2Id)).containsExactly(a, b);
             assertThat(gd.interaction.activeInteraction()).isNull();
-            verify(sessionManager).sendToPlayer(eq(player1Id), any(RevealLibraryTopMessage.class));
+            verify(cardRevealService).revealToPlayer(
+                    gd, player2Id, GameEventFact.RevealZone.LIBRARY, List.of(a, b), player1Id);
         }
     }
 
@@ -160,7 +164,6 @@ class LookAtTopCardsOfTargetLibraryEffectHandlerTest {
                     gd.interaction.activeInteraction(PendingInteraction.LibrarySearch.class);
             assertThat(search.params().destination()).isEqualTo(LibrarySearchDestination.EXILE);
             assertThat(search.params().canFailToFind()).isTrue();
-            verify(sessionManager).sendToPlayer(eq(player1Id), any());
             verify(gameBroadcastService).logAndBroadcast(eq(gd), argThat((GameLogEntry logEntry) ->
                     logEntry.plainText().contains("Player1") && logEntry.plainText().contains("Player2")));
         }

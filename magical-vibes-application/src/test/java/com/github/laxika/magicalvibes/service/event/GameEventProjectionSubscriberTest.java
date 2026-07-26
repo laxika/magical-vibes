@@ -110,10 +110,9 @@ class GameEventProjectionSubscriberTest {
 
         GameBroadcastService legacy = new GameBroadcastService(
                 gameViewProjectionFactory,
-                privateInformationProjectionFactory,
                 transport,
                 gameLogViewFactory,
-                mock(com.github.laxika.magicalvibes.service.battlefield.GameQueryService.class));
+                mock(GameMutationCoordinator.class));
         gameData.turnNumber = 17;
         legacy.broadcastGameState(gameData);
         List<Delivery> legacyDeliveries = List.copyOf(sessions.deliveries);

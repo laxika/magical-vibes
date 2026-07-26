@@ -73,7 +73,7 @@ class EachPlayerNameCardRevealTopEffectHandlerTest {
         gd.playerDecks.put(player2Id, Collections.synchronizedList(new ArrayList<>()));
         gd.activePlayerId = player1Id;
 
-        libraryRevealSupport = new LibraryRevealSupport(gameBroadcastService, sessionManager, cardViewFactory,
+        libraryRevealSupport = new LibraryRevealSupport(gameBroadcastService,
                 InteractionRegistryTestSupport.registryFor(sessionManager, cardViewFactory, gameBroadcastService));
         eachPlayerNameCardRevealTopEffectHandler = new EachPlayerNameCardRevealTopEffectHandler(
                 InteractionRegistryTestSupport.registryFor(sessionManager, cardViewFactory, gameBroadcastService),
@@ -120,6 +120,6 @@ class EachPlayerNameCardRevealTopEffectHandlerTest {
                 eachPlayerNameCardRevealTopEffectHandler.resolve(gd, entry, new EachPlayerNameCardRevealTopEffect());
 
                 assertThat(gd.interaction.activeInteraction()).isInstanceOf(PendingInteraction.ColorChoice.class);
-                verify(sessionManager).sendToPlayer(eq(player1Id), any());
+                verifyNoInteractions(sessionManager);
             }
 }

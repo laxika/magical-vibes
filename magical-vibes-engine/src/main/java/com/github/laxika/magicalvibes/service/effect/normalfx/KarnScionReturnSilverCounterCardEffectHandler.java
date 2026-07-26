@@ -66,7 +66,7 @@ public class KarnScionReturnSilverCounterCardEffectHandler implements NormalEffe
                 false, true, false, false, false, 0, null, 1,
                 "Choose a card with a silver counter to return to your hand."));
 
-        gameBroadcastService.broadcastGameState(gameData);
+        gameBroadcastService.invalidateAllPlayerViews(gameData);
 
         log.info("Game {} - {} must choose from {} silver counter cards for Karn Scion -1",
                 gameData.id, controllerName, silverCards.size());

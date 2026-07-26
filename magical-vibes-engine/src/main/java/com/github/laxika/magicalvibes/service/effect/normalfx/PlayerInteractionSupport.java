@@ -12,8 +12,8 @@ import com.github.laxika.magicalvibes.model.StackEntryType;
 import com.github.laxika.magicalvibes.model.effect.PutCardToBattlefieldEffect;
 import com.github.laxika.magicalvibes.model.filter.CardPredicate;
 import com.github.laxika.magicalvibes.model.filter.CardPredicateUtils;
-import com.github.laxika.magicalvibes.networking.SessionManager;
-import com.github.laxika.magicalvibes.networking.service.CardViewFactory;
+import com.github.laxika.magicalvibes.model.event.GameEventFact;
+import com.github.laxika.magicalvibes.service.CardRevealService;
 import com.github.laxika.magicalvibes.service.DrawService;
 import com.github.laxika.magicalvibes.service.GameBroadcastService;
 import com.github.laxika.magicalvibes.service.battlefield.BattlefieldEntryService;
@@ -50,8 +50,7 @@ public class PlayerInteractionSupport {
     private final PredicateEvaluationService predicateEvaluationService;
     private final GameBroadcastService gameBroadcastService;
     private final PlayerInputService playerInputService;
-    private final SessionManager sessionManager;
-    private final CardViewFactory cardViewFactory;
+    private final CardRevealService cardRevealService;
     private final PermanentRemovalService permanentRemovalService;
     private final BattlefieldEntryService battlefieldEntryService;
     private final TriggerCollectionService triggerCollectionService;
@@ -245,6 +244,8 @@ public class PlayerInteractionSupport {
         appendCardList(revealBuilder, hand);
         revealBuilder.text(".");
         gameBroadcastService.logAndBroadcast(gameData, revealBuilder.build());
+        cardRevealService.revealToAllPlayers(
+                gameData, playerId, GameEventFact.RevealZone.HAND, hand);
 
         List<Integer> matchingIndices = new ArrayList<>();
         for (int i = 0; i < hand.size(); i++) {
@@ -275,19 +276,7 @@ public class PlayerInteractionSupport {
      * log; nothing further happens (Thoughtcutter Agent).
      */
     public void resolveRevealHand(GameData gameData, UUID playerId) {
-
-        List<Card> hand = gameData.playerHands.get(playerId);
-        String playerName = gameData.playerIdToName.get(playerId);
-
-        if (hand == null || hand.isEmpty()) {
-            gameBroadcastService.logAndBroadcast(gameData, GameLog.text(playerName + " reveals their hand. It is empty."));
-            return;
-        }
-
-        GameLog.Builder revealBuilder = GameLog.builder().text(playerName + " reveals their hand: ");
-        appendCardList(revealBuilder, hand);
-        revealBuilder.text(".");
-        gameBroadcastService.logAndBroadcast(gameData, revealBuilder.build());
+        cardRevealService.revealHandToAllPlayers(gameData, playerId);
     }
 
     public void resolveHandRevealAndChoose(GameData gameData, StackEntry entry,

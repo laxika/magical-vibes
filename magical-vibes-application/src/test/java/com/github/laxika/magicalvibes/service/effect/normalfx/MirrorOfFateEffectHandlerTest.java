@@ -216,7 +216,7 @@ class MirrorOfFateEffectHandlerTest {
                 assertThat(gd.playerDecks.get(player1Id)).containsExactly(exiledCard);
                 assertThat(gd.getPlayerExiledCards(player1Id)).contains(libraryCard);
                 assertThat(gd.getPlayerExiledCards(player1Id)).doesNotContain(exiledCard);
-                verify(gameBroadcastService).broadcastGameState(gd);
+                verify(gameBroadcastService).invalidateAllPlayerViews(gd);
             }
 
             @Test

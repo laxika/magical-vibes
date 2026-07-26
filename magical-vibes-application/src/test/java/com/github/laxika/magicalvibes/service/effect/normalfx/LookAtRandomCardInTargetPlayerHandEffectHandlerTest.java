@@ -4,6 +4,7 @@ import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.GameLogEntry;
 import com.github.laxika.magicalvibes.model.StackEntry;
 import com.github.laxika.magicalvibes.model.effect.LookAtRandomCardInTargetPlayerHandEffect;
+import com.github.laxika.magicalvibes.model.event.GameEventFact;
 import com.github.laxika.magicalvibes.networking.message.RevealHandMessage;
 import com.github.laxika.magicalvibes.networking.model.CardView;
 import org.junit.jupiter.api.DisplayName;
@@ -25,14 +26,11 @@ class LookAtRandomCardInTargetPlayerHandEffectHandlerTest extends AbstractPlayer
         Card handCard = createCard("Mountain");
         gd.playerHands.get(player2Id).add(handCard);
 
-        CardView mockView = mock(CardView.class);
-        when(cardViewFactory.create(handCard)).thenReturn(mockView);
-
         resolveEffect(gd, entry, new LookAtRandomCardInTargetPlayerHandEffect());
 
         // Only the controller sees the card; the target does not.
-        verify(sessionManager).sendToPlayer(eq(player1Id), any(RevealHandMessage.class));
-        verify(sessionManager, never()).sendToPlayer(eq(player2Id), any());
+        verify(cardRevealService).revealToPlayer(
+                gd, player2Id, GameEventFact.RevealZone.HAND, List.of(handCard), player1Id);
         verify(gameBroadcastService).logAndBroadcast(eq(gd), argThat((GameLogEntry logEntry) ->
                 logEntry.plainText().contains("looks at a card at random")));
     }
@@ -46,7 +44,7 @@ class LookAtRandomCardInTargetPlayerHandEffectHandlerTest extends AbstractPlayer
 
         resolveEffect(gd, entry, new LookAtRandomCardInTargetPlayerHandEffect());
 
-        verify(sessionManager, never()).sendToPlayer(any(), any());
+        verifyNoInteractions(cardRevealService);
         verify(gameBroadcastService).logAndBroadcast(eq(gd), argThat((GameLogEntry logEntry) ->
                 logEntry.plainText().contains("It is empty")));
     }

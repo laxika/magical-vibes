@@ -6,10 +6,8 @@ import com.github.laxika.magicalvibes.model.GameLog;
 import com.github.laxika.magicalvibes.model.StackEntry;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
 import com.github.laxika.magicalvibes.model.effect.RevealRandomCardFromTargetPlayerHandEffect;
-import com.github.laxika.magicalvibes.networking.SessionManager;
-import com.github.laxika.magicalvibes.networking.message.RevealHandMessage;
-import com.github.laxika.magicalvibes.networking.model.CardView;
-import com.github.laxika.magicalvibes.networking.service.CardViewFactory;
+import com.github.laxika.magicalvibes.model.event.GameEventFact;
+import com.github.laxika.magicalvibes.service.CardRevealService;
 import com.github.laxika.magicalvibes.service.GameBroadcastService;
 import java.util.List;
 import java.util.UUID;
@@ -23,10 +21,8 @@ import org.springframework.stereotype.Component;
 @RequiredArgsConstructor
 public class RevealRandomCardFromTargetPlayerHandEffectHandler implements NormalEffectHandlerBean {
 
-    private final CardViewFactory cardViewFactory;
+    private final CardRevealService cardRevealService;
     private final GameBroadcastService gameBroadcastService;
-    private final PlayerInteractionSupport playerInteractionSupport;
-    private final SessionManager sessionManager;
 
     @Override
     public Class<? extends CardEffect> handledEffect() {
@@ -52,10 +48,11 @@ public class RevealRandomCardFromTargetPlayerHandEffectHandler implements Normal
         Card revealed = hand.get(randomIndex);
         gameBroadcastService.logAndBroadcast(gameData, GameLog.textCardText(targetName + " reveals " , revealed, " at random."));
 
-        List<CardView> cardViews = List.of(cardViewFactory.create(revealed));
-        for (UUID playerId : gameData.orderedPlayerIds) {
-            sessionManager.sendToPlayer(playerId, new RevealHandMessage(cardViews, targetName));
-        }
+        cardRevealService.revealToAllPlayers(
+                gameData,
+                targetPlayerId,
+                GameEventFact.RevealZone.HAND,
+                List.of(revealed));
 
         log.info("Game {} - {} trigger: {} reveals {} at random", gameData.id, sourceName, targetName, revealed.getName());
     

@@ -4,6 +4,7 @@ import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.ExiledCardEntry;
 import com.github.laxika.magicalvibes.model.GameData;
 import com.github.laxika.magicalvibes.model.Permanent;
+import com.github.laxika.magicalvibes.model.PermanentChoiceContext;
 import com.github.laxika.magicalvibes.model.StackEntry;
 import com.github.laxika.magicalvibes.model.event.GameEventFact;
 import com.github.laxika.magicalvibes.networking.message.RevealHandMessage;
@@ -26,10 +27,6 @@ public class PrivateInformationProjectionFactory {
 
     private final CardViewFactory cardViewFactory;
 
-    public RevealHandMessage createHandReveal(GameData gameData, UUID subjectPlayerId, List<Card> cards) {
-        return new RevealHandMessage(createCardViews(cards), gameData.playerIdToName.get(subjectPlayerId));
-    }
-
     public Object createReveal(GameData gameData, GameEventFact.PrivateReveal reveal) {
         List<CardView> cards = reveal.cards().stream()
                 .map(snapshot -> findCard(gameData, snapshot.cardId()))
@@ -40,10 +37,6 @@ public class PrivateInformationProjectionFactory {
             case HAND -> new RevealHandMessage(cards, playerName);
             case LIBRARY -> new RevealLibraryTopMessage(cards, playerName);
         };
-    }
-
-    private List<CardView> createCardViews(List<Card> cards) {
-        return cards.stream().map(cardViewFactory::create).toList();
     }
 
     private Card findCard(GameData gameData, UUID cardId) {
@@ -69,6 +62,17 @@ public class PrivateInformationProjectionFactory {
             if (entry.getCard().getId().equals(cardId)) {
                 return entry.getCard();
             }
+        }
+        PermanentChoiceContext choiceContext = gameData.interaction.permanentChoiceContext();
+        Card parkedCard = switch (choiceContext) {
+            case PermanentChoiceContext.HandCastSpellTarget context -> context.cardToCast();
+            case PermanentChoiceContext.LibraryCastSpellTarget context -> context.cardToCast();
+            case PermanentChoiceContext.ExileCastSpellTarget context -> context.cardToCast();
+            case PermanentChoiceContext.GraveyardCastSpellTarget context -> context.cardToCast();
+            case null, default -> null;
+        };
+        if (parkedCard != null && parkedCard.getId().equals(cardId)) {
+            return parkedCard;
         }
         throw new IllegalStateException("Revealed card " + cardId + " is absent from authoritative game state");
     }

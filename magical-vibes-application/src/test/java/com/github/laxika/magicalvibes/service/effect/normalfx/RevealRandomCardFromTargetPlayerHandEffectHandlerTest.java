@@ -4,6 +4,7 @@ import com.github.laxika.magicalvibes.model.GameLogEntry;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.StackEntry;
 import com.github.laxika.magicalvibes.model.effect.RevealRandomCardFromTargetPlayerHandEffect;
+import com.github.laxika.magicalvibes.model.event.GameEventFact;
 import com.github.laxika.magicalvibes.networking.message.RevealHandMessage;
 import com.github.laxika.magicalvibes.networking.model.CardView;
 import org.junit.jupiter.api.DisplayName;
@@ -26,14 +27,11 @@ class RevealRandomCardFromTargetPlayerHandEffectHandlerTest extends AbstractPlay
                 Card handCard = createCard("Mountain");
                 gd.playerHands.get(player2Id).add(handCard);
 
-                CardView mockView = mock(CardView.class);
-                when(cardViewFactory.create(handCard)).thenReturn(mockView);
-
                 resolveEffect(gd, entry, new RevealRandomCardFromTargetPlayerHandEffect());
 
                 // All players receive the reveal message
-                verify(sessionManager).sendToPlayer(eq(player1Id), any(RevealHandMessage.class));
-                verify(sessionManager).sendToPlayer(eq(player2Id), any(RevealHandMessage.class));
+                verify(cardRevealService).revealToAllPlayers(
+                        gd, player2Id, GameEventFact.RevealZone.HAND, List.of(handCard));
                 verify(gameBroadcastService).logAndBroadcast(eq(gd), argThat((GameLogEntry logEntry) ->
                         logEntry.plainText().contains("reveals") && logEntry.plainText().contains("at random")));
             }
@@ -47,7 +45,7 @@ class RevealRandomCardFromTargetPlayerHandEffectHandlerTest extends AbstractPlay
 
                 resolveEffect(gd, entry, new RevealRandomCardFromTargetPlayerHandEffect());
 
-                verify(sessionManager, never()).sendToPlayer(any(), any());
+                verifyNoInteractions(cardRevealService);
                 verify(gameBroadcastService).logAndBroadcast(eq(gd), argThat((GameLogEntry logEntry) ->
                         logEntry.plainText().contains("no cards to reveal")));
             }

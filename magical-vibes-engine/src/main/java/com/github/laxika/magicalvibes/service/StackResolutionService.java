@@ -77,6 +77,7 @@ public class StackResolutionService {
     private final ParadigmService paradigmService;
     private final GraveyardReturnSupport graveyardReturnSupport;
     private final GameMutationCoordinator mutationCoordinator;
+    private final CardRevealService cardRevealService;
 
     public StackResolutionService(BattlefieldEntryService battlefieldEntryService,
                                   CloneService cloneService,
@@ -94,6 +95,7 @@ public class StackResolutionService {
                                   ExileService exileService,
                                   GraveyardReturnSupport graveyardReturnSupport,
                                   GameMutationCoordinator mutationCoordinator,
+                                  CardRevealService cardRevealService,
                                   @Lazy ParadigmService paradigmService) {
         this.battlefieldEntryService = battlefieldEntryService;
         this.cloneService = cloneService;
@@ -111,6 +113,7 @@ public class StackResolutionService {
         this.exileService = exileService;
         this.graveyardReturnSupport = graveyardReturnSupport;
         this.mutationCoordinator = mutationCoordinator;
+        this.cardRevealService = cardRevealService;
         this.paradigmService = paradigmService;
     }
 
@@ -272,7 +275,7 @@ public class StackResolutionService {
                 .findFirst().orElse(null);
         if (chooseNameEffect != null) {
             if (chooseNameEffect.lookAtOpponentHand()) {
-                gameBroadcastService.revealOpponentHandToPlayer(gameData, controllerId);
+                cardRevealService.lookAtOpponentHand(gameData, controllerId);
             }
             playerInputService.beginCardNameChoice(gameData, controllerId, card, chooseNameEffect.excludedTypes());
             return;
@@ -479,7 +482,7 @@ public class StackResolutionService {
                     .findFirst().orElse(null);
             if (chooseNameEffect != null) {
                 if (chooseNameEffect.lookAtOpponentHand()) {
-                    gameBroadcastService.revealOpponentHandToPlayer(gameData, controllerId);
+                    cardRevealService.lookAtOpponentHand(gameData, controllerId);
                 }
                 playerInputService.beginCardNameChoice(gameData, controllerId, card, chooseNameEffect.excludedTypes());
                 return;
@@ -559,7 +562,7 @@ public class StackResolutionService {
                 .findFirst().orElse(null);
         if (chooseNameEffect != null) {
             if (chooseNameEffect.lookAtOpponentHand()) {
-                gameBroadcastService.revealOpponentHandToPlayer(gameData, controllerId);
+                cardRevealService.lookAtOpponentHand(gameData, controllerId);
             }
             playerInputService.beginCardNameChoice(gameData, controllerId, card, chooseNameEffect.excludedTypes());
             return;

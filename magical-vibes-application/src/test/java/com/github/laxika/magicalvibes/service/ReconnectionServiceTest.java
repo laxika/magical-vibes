@@ -1,5 +1,6 @@
 package com.github.laxika.magicalvibes.service;
 
+import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.GameData;
 import com.github.laxika.magicalvibes.model.LibrarySearchParams;
 import com.github.laxika.magicalvibes.model.PendingInteraction;
@@ -209,6 +210,42 @@ class ReconnectionServiceTest {
         reconnectionService.resendAwaitingInput(gameData, player2Id);
 
         verifyNoInteractions(sessions);
+    }
+
+    @Test
+    void reconnectDuringPrivateLibraryInteractionReplaysCardsOnlyToTheDecidingPlayer() {
+        Card hidden = new Card();
+        hidden.setName("Reconnect Secret");
+        gameData.interaction.beginInteraction(new PendingInteraction.LibrarySearch(
+                LibrarySearchParams.builder(player1Id, List.of(hidden)).build(),
+                "Choose a card.",
+                false));
+        long sequenceBefore = gameData.domainEventSequence();
+        long versionBefore = gameData.domainStateVersion();
+        SessionManager privateSessions = mock(SessionManager.class);
+        ReconnectionService privateReconnect = new ReconnectionService(
+                new GameMutationCoordinator(new GameEventDispatcher(List.of())),
+                new InteractionPromptProjectionRegistry(new CardViewFactory()),
+                new GameMessageTransport(privateSessions));
+
+        privateReconnect.resendAwaitingInput(gameData, player2Id);
+        verifyNoInteractions(privateSessions);
+
+        privateReconnect.resendAwaitingInput(gameData, player1Id);
+
+        ArgumentCaptor<Object> message = ArgumentCaptor.forClass(Object.class);
+        verify(privateSessions).sendToPlayer(
+                org.mockito.ArgumentMatchers.eq(player1Id), message.capture());
+        assertThat(message.getValue()).isInstanceOfSatisfying(
+                InteractionPromptMessage.class,
+                prompt -> {
+                    assertThat(prompt.shape()).isEqualTo(InteractionShape.LIBRARY_INDEX_PICK);
+                    assertThat(prompt.cards())
+                            .extracting(card -> card.name())
+                            .containsExactly("Reconnect Secret");
+                });
+        assertThat(gameData.domainEventSequence()).isEqualTo(sequenceBefore);
+        assertThat(gameData.domainStateVersion()).isEqualTo(versionBefore);
     }
 
     @Test

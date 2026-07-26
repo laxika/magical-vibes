@@ -146,7 +146,7 @@ public class BrilliantUltimatumSupport {
             return;
         }
 
-        gameBroadcastService.broadcastGameState(gameData);
+        gameBroadcastService.invalidateAllPlayerViews(gameData);
         inputCompletionService.processMayAbilitiesThenAutoPass(gameData);
     }
 

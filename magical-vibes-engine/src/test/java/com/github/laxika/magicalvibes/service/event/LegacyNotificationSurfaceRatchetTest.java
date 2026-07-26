@@ -86,15 +86,13 @@ class LegacyNotificationSurfaceRatchetTest {
     static {
         BASELINE.put(LegacySurface.BROADCAST_GAME_STATE, Map.of(
                 ROOT_FAMILY, 1,
-                "effect/normalfx", 15,
                 "interaction", 3));
 
         BASELINE.put(LegacySurface.SESSION_SEND, Map.of(
-                ROOT_FAMILY, 1,
-                "effect/normalfx", 7));
+                ROOT_FAMILY, 1));
 
         BASELINE.put(LegacySurface.LOG_AND_BROADCAST, Map.ofEntries(
-                Map.entry(ROOT_FAMILY, 111),
+                Map.entry(ROOT_FAMILY, 112),
                 Map.entry("ability", 40),
                 Map.entry("ability/cost", 8),
                 Map.entry("aura", 4),
@@ -102,7 +100,7 @@ class LegacyNotificationSurfaceRatchetTest {
                 Map.entry("battlefield", 40),
                 Map.entry("effect", 2),
                 Map.entry("effect/mayfx", 23),
-                Map.entry("effect/normalfx", 1275),
+                Map.entry("effect/normalfx", 1271),
                 Map.entry("graveyard", 17),
                 Map.entry("input", 468),
                 Map.entry("interaction", 16),
@@ -197,6 +195,40 @@ class LegacyNotificationSurfaceRatchetTest {
 
         assertThat(failures)
                 .withFailMessage(() -> "Input notification migration regressed:\n  "
+                        + String.join("\n  ", failures))
+                .isEmpty();
+    }
+
+    @Test
+    void allEffectFilesHaveZeroDirectStateOrSessionDeliveryAndNoSessionDependency()
+            throws IOException {
+        Path serviceRoot = locateRepoRoot().resolve(SERVICE_ROOT);
+        Path effectRoot = serviceRoot.resolve("effect");
+        List<String> failures = new ArrayList<>();
+
+        try (Stream<Path> paths = Files.walk(effectRoot)) {
+            for (Path path : (Iterable<Path>) paths.filter(Files::isRegularFile)
+                    .filter(file -> file.toString().endsWith(".java"))
+                    .sorted()::iterator) {
+                String source = Files.readString(path, StandardCharsets.UTF_8);
+                String relative = serviceRoot.relativize(path).toString().replace('\\', '/');
+                for (LegacySurface surface : List.of(
+                        LegacySurface.BROADCAST_GAME_STATE,
+                        LegacySurface.SESSION_SEND)) {
+                    int current = count(source, surface.pattern);
+                    if (current != 0) {
+                        failures.add(relative + " retains "
+                                + current + " " + surface + " call(s)");
+                    }
+                }
+                if (source.contains("SessionManager")) {
+                    failures.add(relative + " retains a direct SessionManager dependency");
+                }
+            }
+        }
+
+        assertThat(failures)
+                .withFailMessage(() -> "Effect notification migration regressed:\n  "
                         + String.join("\n  ", failures))
                 .isEmpty();
     }

@@ -297,7 +297,7 @@ class KnowledgePoolExileAndCastEffectHandlerTest {
                 exileSupport.handleKnowledgePoolCastChoice(gd, player, List.of());
 
                 verify(gameBroadcastService).logAndBroadcast(eq(gd), argThat((GameLogEntry e) -> e.plainText().equals("Player1 declines to cast a spell from Knowledge Pool.")));
-                verify(gameBroadcastService).broadcastGameState(gd);
+                verify(gameBroadcastService).invalidateAllPlayerViews(gd);
                 assertThat(gd.peekPendingInteraction(PendingKnowledgePoolCast.class)).isNull();
             }
 
@@ -321,7 +321,7 @@ class KnowledgePoolExileAndCastEffectHandlerTest {
                 assertThat(gd.stack).anyMatch(se -> se.getCard() == chosenCard);
                 assertThat(gd.getSpellsCastThisTurnCount(player1Id)).isEqualTo(1);
                 verify(triggerCollectionService).checkSpellCastTriggers(gd, chosenCard, player1Id, false);
-                verify(gameBroadcastService).broadcastGameState(gd);
+                verify(gameBroadcastService).invalidateAllPlayerViews(gd);
             }
 
             @Test
@@ -360,6 +360,6 @@ class KnowledgePoolExileAndCastEffectHandlerTest {
 
                 exileSupport.handleKnowledgePoolCastChoice(gd, player, List.of(UUID.randomUUID()));
 
-                verify(gameBroadcastService).broadcastGameState(gd);
+                verify(gameBroadcastService).invalidateAllPlayerViews(gd);
             }
 }

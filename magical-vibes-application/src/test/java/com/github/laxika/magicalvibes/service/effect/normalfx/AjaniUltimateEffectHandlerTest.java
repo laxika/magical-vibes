@@ -75,9 +75,9 @@ class AjaniUltimateEffectHandlerTest {
         gd.playerDecks.put(player2Id, Collections.synchronizedList(new ArrayList<>()));
         gd.activePlayerId = player1Id;
 
-        libraryRevealSupport = new LibraryRevealSupport(gameBroadcastService, sessionManager, cardViewFactory,
+        libraryRevealSupport = new LibraryRevealSupport(gameBroadcastService,
                 InteractionRegistryTestSupport.registryFor(sessionManager, cardViewFactory, gameBroadcastService));
-        ajaniUltimateEffectHandler = new AjaniUltimateEffectHandler(gameBroadcastService, sessionManager, cardViewFactory,
+        ajaniUltimateEffectHandler = new AjaniUltimateEffectHandler(gameBroadcastService,
                 InteractionRegistryTestSupport.registryFor(sessionManager, cardViewFactory, gameBroadcastService));
 
     }
@@ -153,6 +153,6 @@ class AjaniUltimateEffectHandlerTest {
                 ajaniUltimateEffectHandler.resolve(gd, entry, new AjaniUltimateEffect());
 
                 assertThat(gd.interaction.activeInteraction()).isInstanceOf(PendingInteraction.LibraryRevealChoice.class);
-                verify(sessionManager).sendToPlayer(eq(player1Id), any());
+                verifyNoInteractions(sessionManager);
             }
 }

@@ -7,10 +7,8 @@ import com.github.laxika.magicalvibes.model.PendingMayAbility;
 import com.github.laxika.magicalvibes.model.StackEntry;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
 import com.github.laxika.magicalvibes.model.effect.TempestEfreetAnteExchangeEffect;
-import com.github.laxika.magicalvibes.networking.SessionManager;
-import com.github.laxika.magicalvibes.networking.message.RevealHandMessage;
-import com.github.laxika.magicalvibes.networking.model.CardView;
-import com.github.laxika.magicalvibes.networking.service.CardViewFactory;
+import com.github.laxika.magicalvibes.model.event.GameEventFact;
+import com.github.laxika.magicalvibes.service.CardRevealService;
 import com.github.laxika.magicalvibes.service.GameBroadcastService;
 import com.github.laxika.magicalvibes.service.battlefield.GameQueryService;
 import java.util.List;
@@ -36,8 +34,7 @@ public class TempestEfreetAnteExchangeEffectHandler implements NormalEffectHandl
 
     private final GameQueryService gameQueryService;
     private final GameBroadcastService gameBroadcastService;
-    private final CardViewFactory cardViewFactory;
-    private final SessionManager sessionManager;
+    private final CardRevealService cardRevealService;
 
     @Override
     public Class<? extends CardEffect> handledEffect() {
@@ -88,10 +85,11 @@ public class TempestEfreetAnteExchangeEffectHandler implements NormalEffectHandl
         Card revealed = opponentHand.remove(randomIndex);
 
         // Reveal the card publicly.
-        List<CardView> cardViews = List.of(cardViewFactory.create(revealed));
-        for (UUID playerId : gameData.orderedPlayerIds) {
-            sessionManager.sendToPlayer(playerId, new RevealHandMessage(cardViews, opponentName));
-        }
+        cardRevealService.revealToAllPlayers(
+                gameData,
+                opponentId,
+                GameEventFact.RevealZone.HAND,
+                List.of(revealed));
 
         // Exchange the physical cards: revealed card to the controller's hand, Tempest Efreet from the
         // controller's graveyard to the opponent's graveyard.

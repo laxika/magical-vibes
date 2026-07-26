@@ -7,8 +7,6 @@ import com.github.laxika.magicalvibes.model.GameLog;
 import com.github.laxika.magicalvibes.model.StackEntry;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
 import com.github.laxika.magicalvibes.model.effect.RevealTopCardsOpponentPaysLifeOrToHandEffect;
-import com.github.laxika.magicalvibes.networking.SessionManager;
-import com.github.laxika.magicalvibes.networking.service.CardViewFactory;
 import com.github.laxika.magicalvibes.service.GameBroadcastService;
 import java.util.*;
 import lombok.extern.slf4j.Slf4j;
@@ -22,8 +20,6 @@ import org.springframework.stereotype.Component;
 public class RevealTopCardsOpponentPaysLifeOrToHandEffectHandler implements NormalEffectHandlerBean {
 
     private final GameBroadcastService gameBroadcastService;
-    private final SessionManager sessionManager;
-    private final CardViewFactory cardViewFactory;
     private final LibraryRevealSupport libraryRevealSupport;
     private final com.github.laxika.magicalvibes.service.interaction.InteractionHandlerRegistry interactionHandlerRegistry;
 
@@ -73,7 +69,7 @@ public class RevealTopCardsOpponentPaysLifeOrToHandEffectHandler implements Norm
                 false, true, false, false, false, e.lifeCost(), controllerId, topCards.size(),
                 "Choose cards to deny (you pay " + e.lifeCost() + " life for each). Unselected cards go to opponent's hand."));
 
-        gameBroadcastService.broadcastGameState(gameData);
+        gameBroadcastService.invalidateAllPlayerViews(gameData);
 
         interactionHandlerRegistry.promptActive(gameData);
 

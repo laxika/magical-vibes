@@ -6,6 +6,8 @@ import com.github.laxika.magicalvibes.networking.message.AvailableBlockersMessag
 import com.github.laxika.magicalvibes.networking.message.CombatDamageAssignmentNotification;
 import com.github.laxika.magicalvibes.networking.message.GameOverMessage;
 import com.github.laxika.magicalvibes.networking.message.GameStateMessage;
+import com.github.laxika.magicalvibes.networking.message.RevealHandMessage;
+import com.github.laxika.magicalvibes.networking.message.RevealLibraryTopMessage;
 import com.github.laxika.magicalvibes.networking.model.MessageType;
 import org.junit.jupiter.api.Test;
 
@@ -121,6 +123,23 @@ class AiConnectionTest {
                 MessageType.AVAILABLE_ATTACKERS,
                 MessageType.AVAILABLE_BLOCKERS,
                 MessageType.COMBAT_DAMAGE_ASSIGNMENT);
+        connection.close();
+    }
+
+    @Test
+    void restrictedRevealMessagesAreInformationalForAiRecipients() throws Exception {
+        AiDecisionEngine engine = mock(AiDecisionEngine.class);
+        AiConnection connection = new AiConnection("test", engine, 0);
+
+        connection.sendMessage(new RevealHandMessage(List.of(), "Opponent"));
+        connection.sendMessage(new RevealLibraryTopMessage(List.of(), "Opponent"));
+
+        Thread.sleep(50);
+        verifyNoInteractions(engine);
+        assertThat(connection.diagnosticSummary())
+                .contains("queuedTasks=0")
+                .contains("handled=0")
+                .contains("ignored=2");
         connection.close();
     }
 }

@@ -6,6 +6,7 @@ import com.github.laxika.magicalvibes.model.CardType;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.StackEntry;
 import com.github.laxika.magicalvibes.model.effect.RevealRandomHandCardAndPlayEffect;
+import com.github.laxika.magicalvibes.model.event.GameEventFact;
 import com.github.laxika.magicalvibes.networking.message.RevealHandMessage;
 import com.github.laxika.magicalvibes.networking.model.CardView;
 import org.junit.jupiter.api.DisplayName;
@@ -43,9 +44,6 @@ class RevealRandomHandCardAndPlayEffectHandlerTest extends AbstractPlayerInterac
                 Card landCard = createCard("Forest");
                 landCard.setType(CardType.LAND);
                 gd.playerHands.get(player2Id).add(landCard);
-                CardView mockView = mock(CardView.class);
-                when(cardViewFactory.create(landCard)).thenReturn(mockView);
-
                 resolveEffect(gd, entry, new RevealRandomHandCardAndPlayEffect());
 
                 verify(battlefieldEntryService).putPermanentOntoBattlefield(eq(gd), eq(player2Id), any(Permanent.class));
@@ -62,12 +60,9 @@ class RevealRandomHandCardAndPlayEffectHandlerTest extends AbstractPlayerInterac
                 Card revealedCard = createCard("Mountain");
                 revealedCard.setType(CardType.LAND);
                 gd.playerHands.get(player2Id).add(revealedCard);
-                CardView mockView = mock(CardView.class);
-                when(cardViewFactory.create(revealedCard)).thenReturn(mockView);
-
                 resolveEffect(gd, entry, new RevealRandomHandCardAndPlayEffect());
 
-                verify(sessionManager).sendToPlayer(eq(player1Id), any(RevealHandMessage.class));
-                verify(sessionManager).sendToPlayer(eq(player2Id), any(RevealHandMessage.class));
+                verify(cardRevealService).revealToAllPlayers(
+                        gd, player2Id, GameEventFact.RevealZone.HAND, List.of(revealedCard));
             }
 }

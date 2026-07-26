@@ -89,7 +89,7 @@ class LookAtTopCardsEffectHandlerTest {
             return a instanceof Fixed f ? f.value() : 0;
         });
 
-        libraryRevealSupport = new LibraryRevealSupport(gameBroadcastService, sessionManager, cardViewFactory,
+        libraryRevealSupport = new LibraryRevealSupport(gameBroadcastService,
                 InteractionRegistryTestSupport.registryFor(sessionManager, cardViewFactory, gameBroadcastService));
         InteractionHandlerRegistry interactionHandlerRegistry =
                 InteractionRegistryTestSupport.registryFor(sessionManager, cardViewFactory, gameBroadcastService);
@@ -156,7 +156,7 @@ class LookAtTopCardsEffectHandlerTest {
             assertThat(choice.reorderRemainingToBottom()).isTrue();
             assertThat(choice.remainingToGraveyard()).isFalse();
             assertThat(choice.maxCount()).isEqualTo(1);
-            verify(sessionManager).sendToPlayer(eq(player1Id), any());
+            verifyNoInteractions(sessionManager);
         }
 
         @Test
@@ -218,7 +218,7 @@ class LookAtTopCardsEffectHandlerTest {
             PendingInteraction.LibraryRevealChoice choice =
                     gd.interaction.activeInteraction(PendingInteraction.LibraryRevealChoice.class);
             assertThat(choice.remainingToGraveyard()).isTrue();
-            verify(sessionManager).sendToPlayer(eq(player1Id), any());
+            verifyNoInteractions(sessionManager);
         }
 
         @Test
@@ -343,7 +343,7 @@ class LookAtTopCardsEffectHandlerTest {
             PendingInteraction.LibrarySearch search =
                     gd.interaction.activeInteraction(PendingInteraction.LibrarySearch.class);
             assertThat(search.params().canFailToFind()).isTrue();
-            verify(sessionManager).sendToPlayer(eq(player1Id), any());
+            verifyNoInteractions(sessionManager);
         }
 
         @Test
@@ -365,7 +365,7 @@ class LookAtTopCardsEffectHandlerTest {
                     gd.interaction.activeInteraction(PendingInteraction.LibraryRevealChoice.class);
             assertThat(choice.maxCount()).isEqualTo(2);
             assertThat(choice.reorderRemainingToBottom()).isTrue();
-            verify(sessionManager).sendToPlayer(eq(player1Id), any());
+            verifyNoInteractions(sessionManager);
         }
 
         @Test
@@ -439,7 +439,7 @@ class LookAtTopCardsEffectHandlerTest {
             PendingInteraction.LibrarySearch search =
                     gd.interaction.activeInteraction(PendingInteraction.LibrarySearch.class);
             assertThat(search.params().destination()).isEqualTo(LibrarySearchDestination.BATTLEFIELD);
-            verify(sessionManager).sendToPlayer(eq(player1Id), any());
+            verifyNoInteractions(sessionManager);
         }
     }
 

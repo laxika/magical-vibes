@@ -2,17 +2,15 @@ package com.github.laxika.magicalvibes.service;
 
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.GameData;
-import com.github.laxika.magicalvibes.model.GameLog;
 import com.github.laxika.magicalvibes.model.GameLogEntry;
 import com.github.laxika.magicalvibes.model.ManaPool;
 import com.github.laxika.magicalvibes.networking.model.GameLogEntryView;
 import com.github.laxika.magicalvibes.networking.model.PermanentView;
 import com.github.laxika.magicalvibes.networking.service.GameLogViewFactory;
-import com.github.laxika.magicalvibes.service.battlefield.GameQueryService;
+import com.github.laxika.magicalvibes.service.event.GameMutationCoordinator;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Component;
 
-import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
 import java.util.UUID;
@@ -28,10 +26,9 @@ import java.util.UUID;
 public class GameBroadcastService {
 
     private final GameViewProjectionFactory projectionFactory;
-    private final PrivateInformationProjectionFactory privateInformationProjectionFactory;
     private final GameMessageTransport transport;
     private final GameLogViewFactory gameLogViewFactory;
-    private final GameQueryService gameQueryService;
+    private final GameMutationCoordinator mutationCoordinator;
 
     public void broadcastGameState(GameData gameData) {
         if (gameData.simulation) {
@@ -44,6 +41,13 @@ public class GameBroadcastService {
                 : List.of();
         gameData.lastBroadcastedLogSize = logSize;
         transport.sendPlayerMessages(projectionFactory.createGameStateMessages(gameData, newLogEntries));
+    }
+
+    /**
+     * Canonical event-backed replacement for effect-owned state broadcasts.
+     */
+    public void invalidateAllPlayerViews(GameData gameData) {
+        mutationCoordinator.invalidateAllPlayerViews(gameData);
     }
 
     public List<Integer> getPlayableCardIndices(GameData gameData, UUID playerId) {
@@ -84,32 +88,6 @@ public class GameBroadcastService {
 
     public void logAndBroadcast(GameData gameData, GameLogEntry logEntry) {
         gameData.gameLog.add(logEntry);
-    }
-
-    public void revealOpponentHandToPlayer(GameData gameData, UUID controllerId) {
-        UUID opponentId = gameQueryService.getOpponentId(gameData, controllerId);
-        List<Card> hand = gameData.playerHands.get(opponentId);
-        String controllerName = gameData.playerIdToName.get(controllerId);
-        String opponentName = gameData.playerIdToName.get(opponentId);
-
-        if (hand == null || hand.isEmpty()) {
-            logAndBroadcast(gameData, GameLog.builder()
-                    .text(controllerName + " looks at " + opponentName + "'s hand. It is empty.")
-                    .build());
-        } else {
-            GameLog.Builder logBuilder = GameLog.builder()
-                    .text(controllerName + " looks at " + opponentName + "'s hand: ");
-            for (int i = 0; i < hand.size(); i++) {
-                if (i > 0) {
-                    logBuilder.text(", ");
-                }
-                logBuilder.card(hand.get(i));
-            }
-            logAndBroadcast(gameData, logBuilder.text(".").build());
-        }
-
-        transport.sendToPlayer(controllerId, privateInformationProjectionFactory.createHandReveal(
-                gameData, opponentId, hand == null ? List.of() : hand));
     }
 
     record FaceDownReveal(UUID viewerId, List<com.github.laxika.magicalvibes.networking.model.CardView> cards) {

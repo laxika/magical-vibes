@@ -39,7 +39,7 @@ public class ImprovisationCapstoneCastSupport {
         if (cardIds == null || cardIds.isEmpty()) {
             String logEntry = player.getUsername() + " casts no spells from Improvisation Capstone.";
             gameBroadcastService.logAndBroadcast(gameData, GameLog.text(logEntry));
-            gameBroadcastService.broadcastGameState(gameData);
+            gameBroadcastService.invalidateAllPlayerViews(gameData);
             return;
         }
 
@@ -55,7 +55,7 @@ public class ImprovisationCapstoneCastSupport {
      */
     public void castNextFromQueue(GameData gameData, UUID playerId) {
         if (gameData.pendingImprovisationCapstoneCastQueue.isEmpty()) {
-            gameBroadcastService.broadcastGameState(gameData);
+            gameBroadcastService.invalidateAllPlayerViews(gameData);
             return;
         }
 

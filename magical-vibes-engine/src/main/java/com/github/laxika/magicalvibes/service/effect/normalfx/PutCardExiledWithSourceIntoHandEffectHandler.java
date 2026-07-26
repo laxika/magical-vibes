@@ -71,7 +71,7 @@ public class PutCardExiledWithSourceIntoHandEffectHandler implements NormalEffec
                 controllerId, new ArrayList<>(matching), validIds,
                 false, true, false, false, false, 0, null, 1,
                 "Choose a card exiled with " + sourceName + " to put into your hand."));
-        gameBroadcastService.broadcastGameState(gameData);
+        gameBroadcastService.invalidateAllPlayerViews(gameData);
 
         log.info("Game {} - {} chooses from {} cards exiled with {}",
                 gameData.id, controllerName, matching.size(), sourceName);

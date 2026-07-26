@@ -13,11 +13,9 @@ import com.github.laxika.magicalvibes.model.StackEntryType;
 import com.github.laxika.magicalvibes.model.TargetType;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
 import com.github.laxika.magicalvibes.model.effect.RevealRandomHandCardAndPlayEffect;
+import com.github.laxika.magicalvibes.model.event.GameEventFact;
 import com.github.laxika.magicalvibes.model.filter.PermanentPredicateTargetFilter;
-import com.github.laxika.magicalvibes.networking.SessionManager;
-import com.github.laxika.magicalvibes.networking.message.RevealHandMessage;
-import com.github.laxika.magicalvibes.networking.model.CardView;
-import com.github.laxika.magicalvibes.networking.service.CardViewFactory;
+import com.github.laxika.magicalvibes.service.CardRevealService;
 import com.github.laxika.magicalvibes.service.GameBroadcastService;
 import com.github.laxika.magicalvibes.service.battlefield.BattlefieldEntryService;
 import com.github.laxika.magicalvibes.service.battlefield.GameQueryService;
@@ -39,13 +37,12 @@ import org.springframework.stereotype.Component;
 public class RevealRandomHandCardAndPlayEffectHandler implements NormalEffectHandlerBean {
 
     private final BattlefieldEntryService battlefieldEntryService;
-    private final CardViewFactory cardViewFactory;
+    private final CardRevealService cardRevealService;
     private final GameBroadcastService gameBroadcastService;
     private final GameQueryService gameQueryService;
     private final PredicateEvaluationService predicateEvaluationService;
     private final PlayerInputService playerInputService;
     private final PlayerInteractionSupport playerInteractionSupport;
-    private final SessionManager sessionManager;
     private final TriggerCollectionService triggerCollectionService;
 
     @Override
@@ -75,10 +72,11 @@ public class RevealRandomHandCardAndPlayEffectHandler implements NormalEffectHan
         String revealLog = playerName + " reveals " + revealed.getName() + " at random (" + sourceName + ").";
         gameBroadcastService.logAndBroadcast(gameData, GameLog.builder().text(playerName + " reveals ").card(revealed).text(" at random (" + sourceName + ").").build());
 
-        List<CardView> cardViews = List.of(cardViewFactory.create(revealed));
-        for (UUID playerId : gameData.orderedPlayerIds) {
-            sessionManager.sendToPlayer(playerId, new RevealHandMessage(cardViews, playerName));
-        }
+        cardRevealService.revealToAllPlayers(
+                gameData,
+                targetPlayerId,
+                GameEventFact.RevealZone.HAND,
+                List.of(revealed));
 
         log.info("Game {} - {} trigger: {} reveals {}", gameData.id, sourceName, playerName, revealed.getName());
 

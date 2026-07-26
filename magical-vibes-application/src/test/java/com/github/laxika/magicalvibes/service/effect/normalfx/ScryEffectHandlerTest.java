@@ -83,7 +83,7 @@ class ScryEffectHandlerTest {
         gd.playerDecks.put(player2Id, Collections.synchronizedList(new ArrayList<>()));
         gd.activePlayerId = player1Id;
 
-        libraryRevealSupport = new LibraryRevealSupport(gameBroadcastService, sessionManager, cardViewFactory,
+        libraryRevealSupport = new LibraryRevealSupport(gameBroadcastService,
                 InteractionRegistryTestSupport.registryFor(sessionManager, cardViewFactory, gameBroadcastService));
         InteractionHandlerRegistry interactionHandlerRegistry = new InteractionHandlerRegistry();
         interactionHandlerRegistry.register(new ScryInteractionHandler(
@@ -162,7 +162,7 @@ class ScryEffectHandlerTest {
                 scryEffectHandler.resolve(gd, entry, effect);
 
                 assertThat(gd.interaction.activeInteraction()).isInstanceOf(PendingInteraction.Scry.class);
-                verify(sessionManager).sendToPlayer(eq(player1Id), any());
+                verifyNoInteractions(sessionManager);
                 verify(gameBroadcastService).logAndBroadcast(eq(gd), argThat((GameLogEntry logEntry) ->
                         logEntry.plainText().contains("scries 1")));
             }
@@ -182,7 +182,7 @@ class ScryEffectHandlerTest {
                 scryEffectHandler.resolve(gd, entry, effect);
 
                 assertThat(gd.interaction.activeInteraction()).isInstanceOf(PendingInteraction.Scry.class);
-                verify(sessionManager).sendToPlayer(eq(player1Id), any());
+                verifyNoInteractions(sessionManager);
                 verify(gameBroadcastService).logAndBroadcast(eq(gd), argThat((GameLogEntry logEntry) ->
                         logEntry.plainText().contains("scries 3")));
             }

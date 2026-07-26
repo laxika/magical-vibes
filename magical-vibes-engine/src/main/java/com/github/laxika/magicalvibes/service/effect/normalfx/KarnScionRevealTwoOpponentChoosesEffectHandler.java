@@ -72,7 +72,7 @@ public class KarnScionRevealTwoOpponentChoosesEffectHandler implements NormalEff
                 false, true, false, false, false, 0, null, 1,
                 "Choose a card to put into " + controllerName + "'s hand. The other will be exiled with a silver counter."));
 
-        gameBroadcastService.broadcastGameState(gameData);
+        gameBroadcastService.invalidateAllPlayerViews(gameData);
 
         log.info("Game {} - {} reveals {} and {} for Karn Scion +1, opponent must choose",
                 gameData.id, controllerName, card1.getName(), card2.getName());

@@ -5,7 +5,6 @@ import com.github.laxika.magicalvibes.model.GameData;
 import com.github.laxika.magicalvibes.model.StackEntry;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
 import com.github.laxika.magicalvibes.model.effect.RevealTargetHandDrawPerMatchingCardEffect;
-import com.github.laxika.magicalvibes.service.GameBroadcastService;
 import java.util.List;
 import java.util.UUID;
 import lombok.RequiredArgsConstructor;
@@ -23,7 +22,6 @@ import org.springframework.stereotype.Component;
 public class RevealTargetHandDrawPerMatchingCardEffectHandler implements NormalEffectHandlerBean {
 
     private final PlayerInteractionSupport playerInteractionSupport;
-    private final GameBroadcastService gameBroadcastService;
 
     @Override
     public Class<? extends CardEffect> handledEffect() {
@@ -37,8 +35,8 @@ public class RevealTargetHandDrawPerMatchingCardEffectHandler implements NormalE
         UUID targetPlayerId = entry.getTargetId();
         UUID casterId = entry.getControllerId();
 
-        // Reveal the opponent's hand to the caster (logs "looks at ... hand" + sends the reveal message).
-        gameBroadcastService.revealOpponentHandToPlayer(gameData, casterId);
+        // This is a rules-public reveal, not a private look.
+        playerInteractionSupport.resolveRevealHand(gameData, targetPlayerId);
 
         List<Card> hand = gameData.playerHands.getOrDefault(targetPlayerId, List.of());
         long matches = hand.stream()

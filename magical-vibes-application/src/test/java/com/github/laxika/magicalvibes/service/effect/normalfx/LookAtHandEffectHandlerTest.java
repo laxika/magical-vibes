@@ -26,14 +26,9 @@ class LookAtHandEffectHandlerTest extends AbstractPlayerInteractionHandlerTest {
                 Card handCard = createCard("Mountain");
                 gd.playerHands.get(player2Id).add(handCard);
 
-                CardView mockView = mock(CardView.class);
-                when(cardViewFactory.create(handCard)).thenReturn(mockView);
-
                 resolveEffect(gd, entry, new LookAtHandEffect());
 
-                verify(sessionManager).sendToPlayer(eq(player1Id), any(RevealHandMessage.class));
-                verify(gameBroadcastService).logAndBroadcast(eq(gd), argThat((GameLogEntry logEntry) ->
-                        logEntry.plainText().contains("looks at") && logEntry.plainText().contains("Player2") && logEntry.plainText().contains("Mountain")));
+                verify(cardRevealService).lookAtHand(gd, player1Id, player2Id);
             }
 
             @Test
@@ -45,7 +40,6 @@ class LookAtHandEffectHandlerTest extends AbstractPlayerInteractionHandlerTest {
 
                 resolveEffect(gd, entry, new LookAtHandEffect());
 
-                verify(gameBroadcastService).logAndBroadcast(eq(gd), argThat((GameLogEntry logEntry) ->
-                        logEntry.plainText().contains("looks at") && logEntry.plainText().contains("empty")));
+                verify(cardRevealService).lookAtHand(gd, player1Id, player2Id);
             }
 }

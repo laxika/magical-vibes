@@ -5,6 +5,7 @@ import com.github.laxika.magicalvibes.model.GameLog;
 import com.github.laxika.magicalvibes.model.StackEntry;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
 import com.github.laxika.magicalvibes.model.effect.SenTripletsUpkeepEffect;
+import com.github.laxika.magicalvibes.service.CardRevealService;
 import com.github.laxika.magicalvibes.service.GameBroadcastService;
 import java.util.UUID;
 import lombok.RequiredArgsConstructor;
@@ -21,6 +22,7 @@ import org.springframework.stereotype.Component;
 public class SenTripletsUpkeepEffectHandler implements NormalEffectHandlerBean {
 
     private final GameBroadcastService gameBroadcastService;
+    private final CardRevealService cardRevealService;
 
     @Override
     public Class<? extends CardEffect> handledEffect() {
@@ -41,6 +43,6 @@ public class SenTripletsUpkeepEffectHandler implements NormalEffectHandlerBean {
         String targetName = gameData.playerIdToName.get(targetId);
         gameBroadcastService.logAndBroadcast(gameData, GameLog.text(targetName
                 + " can't cast spells or activate abilities this turn and plays with their hand revealed."));
-        gameBroadcastService.revealOpponentHandToPlayer(gameData, controllerId);
+        cardRevealService.revealHandToAllPlayers(gameData, targetId);
     }
 }
