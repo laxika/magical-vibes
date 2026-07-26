@@ -64,6 +64,7 @@ class LibraryChoiceHandlerServiceTest {
     @Mock private PlayerInputService playerInputService;
     @Mock private EffectResolutionService effectResolutionService;
     @Mock private ExileService exileService;
+    @Mock private com.github.laxika.magicalvibes.service.event.GameMutationCoordinator mutationCoordinator;
 
     private LibraryChoiceHandlerService service;
 
@@ -82,7 +83,7 @@ class LibraryChoiceHandlerServiceTest {
         service = new LibraryChoiceHandlerService(gameQueryService,
                 mock(com.github.laxika.magicalvibes.service.filter.PredicateEvaluationService.class),
                 graveyardService, warpWorldService, battlefieldEntryService, legendRuleService,
-                stateBasedActionService, gameBroadcastService, turnProgressionService,
+                stateBasedActionService, gameBroadcastService, mutationCoordinator, turnProgressionService,
                 playerInputService, effectResolutionService, exileService, registry,
                 mock(com.github.laxika.magicalvibes.service.trigger.TriggerCollectionService.class),
                 mock(com.github.laxika.magicalvibes.service.effect.normalfx.LibrarySearchSupport.class),

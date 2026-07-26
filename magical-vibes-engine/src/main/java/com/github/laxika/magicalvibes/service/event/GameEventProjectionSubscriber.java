@@ -60,7 +60,9 @@ public class GameEventProjectionSubscriber implements GameEventSubscriber {
         }
 
         List<GameLogEntryView> newLogEntries = pendingLogEntries(gameData);
-        Map<UUID, GameStateMessage> stateMessages = null;
+        Map<UUID, GameStateMessage> stateMessagesWithLogs = null;
+        Map<UUID, GameStateMessage> stateMessagesWithoutLogs = null;
+        Set<UUID> logRecipients = new LinkedHashSet<>();
         boolean stateProjected = false;
 
         for (GameEventEnvelope envelope : batch.events()) {
@@ -70,14 +72,25 @@ public class GameEventProjectionSubscriber implements GameEventSubscriber {
             }
 
             if (envelope.fact() instanceof GameEventFact.StateInvalidated) {
-                if (stateMessages == null) {
-                    stateMessages = gameViewProjectionFactory.createGameStateMessages(
+                if (stateMessagesWithLogs == null) {
+                    stateMessagesWithLogs = gameViewProjectionFactory.createGameStateMessages(
                             gameData, newLogEntries);
                 }
                 for (UUID recipient : recipients) {
-                    GameStateMessage message = stateMessages.get(recipient);
+                    boolean includeLogs = newLogEntries.isEmpty() || !logRecipients.contains(recipient);
+                    Map<UUID, GameStateMessage> messages = stateMessagesWithLogs;
+                    if (!includeLogs) {
+                        if (stateMessagesWithoutLogs == null) {
+                            stateMessagesWithoutLogs =
+                                    gameViewProjectionFactory.createGameStateMessages(
+                                            gameData, List.of());
+                        }
+                        messages = stateMessagesWithoutLogs;
+                    }
+                    GameStateMessage message = messages.get(recipient);
                     if (message != null) {
                         transport.sendToPlayer(recipient, message);
+                        logRecipients.add(recipient);
                     }
                 }
                 stateProjected = true;

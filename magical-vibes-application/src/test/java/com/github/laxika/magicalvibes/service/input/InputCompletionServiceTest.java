@@ -7,8 +7,8 @@ import com.github.laxika.magicalvibes.model.PendingInteraction;
 import com.github.laxika.magicalvibes.model.PendingMayAbility;
 import com.github.laxika.magicalvibes.model.StackEntry;
 import com.github.laxika.magicalvibes.model.StackEntryType;
-import com.github.laxika.magicalvibes.service.GameBroadcastService;
 import com.github.laxika.magicalvibes.service.effect.EffectResolutionService;
+import com.github.laxika.magicalvibes.service.event.GameMutationCoordinator;
 import com.github.laxika.magicalvibes.service.state.StateBasedActionService;
 import com.github.laxika.magicalvibes.service.turn.TurnProgressionService;
 import org.junit.jupiter.api.BeforeEach;
@@ -35,7 +35,7 @@ import static org.mockito.Mockito.verifyNoInteractions;
 class InputCompletionServiceTest {
 
     @Mock private PlayerInputService playerInputService;
-    @Mock private GameBroadcastService gameBroadcastService;
+    @Mock private GameMutationCoordinator mutationCoordinator;
     @Mock private TurnProgressionService turnProgressionService;
     @Mock private StateBasedActionService stateBasedActionService;
     @Mock private EffectResolutionService effectResolutionService;
@@ -62,7 +62,7 @@ class InputCompletionServiceTest {
 
             service.processMayAbilitiesThenAutoPass(gameData);
 
-            verifyNoInteractions(playerInputService, gameBroadcastService,
+            verifyNoInteractions(playerInputService, mutationCoordinator,
                     turnProgressionService, stateBasedActionService, effectResolutionService);
         }
 
@@ -73,7 +73,7 @@ class InputCompletionServiceTest {
             service.processMayAbilitiesThenAutoPass(gameData);
 
             verify(playerInputService).processNextMayAbility(gameData);
-            verifyNoInteractions(gameBroadcastService, turnProgressionService, effectResolutionService);
+            verifyNoInteractions(mutationCoordinator, turnProgressionService, effectResolutionService);
         }
 
         @Test
@@ -84,10 +84,10 @@ class InputCompletionServiceTest {
             service.processMayAbilitiesThenAutoPass(gameData);
 
             InOrder order = inOrder(playerInputService, effectResolutionService,
-                    gameBroadcastService, turnProgressionService);
+                    mutationCoordinator, turnProgressionService);
             order.verify(playerInputService).processNextMayAbility(gameData);
             order.verify(effectResolutionService).resolveEffectsFrom(gameData, parked, 2);
-            order.verify(gameBroadcastService).broadcastGameState(gameData);
+            order.verify(mutationCoordinator).invalidateAllPlayerViews(gameData);
             order.verify(turnProgressionService).resolveAutoPass(gameData);
             assertThat(gameData.priorityPassedBy).isEmpty();
         }
@@ -103,7 +103,7 @@ class InputCompletionServiceTest {
             service.processMayAbilitiesThenAutoPass(gameData);
 
             verify(playerInputService, times(2)).processNextMayAbility(gameData);
-            verifyNoInteractions(gameBroadcastService, turnProgressionService);
+            verifyNoInteractions(mutationCoordinator, turnProgressionService);
         }
 
         @Test
@@ -117,7 +117,7 @@ class InputCompletionServiceTest {
             service.processMayAbilitiesThenAutoPass(gameData);
 
             verify(playerInputService).processNextMayAbility(gameData);
-            verifyNoInteractions(gameBroadcastService, turnProgressionService);
+            verifyNoInteractions(mutationCoordinator, turnProgressionService);
         }
     }
 
@@ -131,10 +131,10 @@ class InputCompletionServiceTest {
             service.sbaProcessMayAbilitiesThenAutoPass(gameData);
 
             InOrder order = inOrder(stateBasedActionService, playerInputService,
-                    gameBroadcastService, turnProgressionService);
+                    mutationCoordinator, turnProgressionService);
             order.verify(stateBasedActionService).performStateBasedActions(gameData);
             order.verify(playerInputService).processNextMayAbility(gameData);
-            order.verify(gameBroadcastService).broadcastGameState(gameData);
+            order.verify(mutationCoordinator).invalidateAllPlayerViews(gameData);
             order.verify(turnProgressionService).resolveAutoPass(gameData);
             assertThat(gameData.priorityPassedBy).isEmpty();
         }
@@ -149,7 +149,7 @@ class InputCompletionServiceTest {
             service.sbaProcessMayAbilitiesThenAutoPass(gameData);
 
             verify(stateBasedActionService).performStateBasedActions(gameData);
-            verifyNoInteractions(playerInputService, gameBroadcastService,
+            verifyNoInteractions(playerInputService, mutationCoordinator,
                     turnProgressionService, effectResolutionService);
         }
     }
@@ -167,7 +167,7 @@ class InputCompletionServiceTest {
             service.sbaMayAbilitiesThenBroadcastAutoPass(gameData);
 
             verify(stateBasedActionService).performStateBasedActions(gameData);
-            verifyNoInteractions(playerInputService, gameBroadcastService,
+            verifyNoInteractions(playerInputService, mutationCoordinator,
                     turnProgressionService, effectResolutionService);
         }
 
@@ -179,7 +179,7 @@ class InputCompletionServiceTest {
             service.sbaMayAbilitiesThenBroadcastAutoPass(gameData);
 
             verify(playerInputService).processNextMayAbility(gameData);
-            verifyNoInteractions(gameBroadcastService, turnProgressionService, effectResolutionService);
+            verifyNoInteractions(mutationCoordinator, turnProgressionService, effectResolutionService);
         }
 
         @Test
@@ -190,10 +190,10 @@ class InputCompletionServiceTest {
             service.sbaMayAbilitiesThenBroadcastAutoPass(gameData);
 
             InOrder order = inOrder(stateBasedActionService, effectResolutionService,
-                    gameBroadcastService, turnProgressionService);
+                    mutationCoordinator, turnProgressionService);
             order.verify(stateBasedActionService).performStateBasedActions(gameData);
             order.verify(effectResolutionService).resolveEffectsFrom(gameData, parked, 2);
-            order.verify(gameBroadcastService).broadcastGameState(gameData);
+            order.verify(mutationCoordinator).invalidateAllPlayerViews(gameData);
             order.verify(turnProgressionService).resolveAutoPass(gameData);
             assertThat(gameData.priorityPassedBy).containsExactly(playerId);
             verify(playerInputService, never()).processNextMayAbility(gameData);
@@ -210,7 +210,7 @@ class InputCompletionServiceTest {
             service.sbaMayAbilitiesThenBroadcastAutoPass(gameData);
 
             verify(playerInputService).processNextMayAbility(gameData);
-            verifyNoInteractions(gameBroadcastService, turnProgressionService);
+            verifyNoInteractions(mutationCoordinator, turnProgressionService);
         }
 
         @Test
@@ -224,7 +224,7 @@ class InputCompletionServiceTest {
             service.sbaMayAbilitiesThenBroadcastAutoPass(gameData);
 
             verify(playerInputService, never()).processNextMayAbility(gameData);
-            verifyNoInteractions(gameBroadcastService, turnProgressionService);
+            verifyNoInteractions(mutationCoordinator, turnProgressionService);
         }
     }
 

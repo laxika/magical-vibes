@@ -3,10 +3,14 @@ package com.github.laxika.magicalvibes.service.interaction;
 import com.github.laxika.magicalvibes.model.GameData;
 import com.github.laxika.magicalvibes.model.PendingInteraction;
 import com.github.laxika.magicalvibes.model.Player;
+import com.github.laxika.magicalvibes.model.event.GameEventAudience;
+import com.github.laxika.magicalvibes.model.event.GameEventFact;
+import com.github.laxika.magicalvibes.service.event.GameMutationCoordinator;
 
 import java.util.LinkedHashMap;
 import java.util.Map;
 import java.util.UUID;
+import java.util.function.Supplier;
 
 /**
  * Dispatches {@link PendingInteraction} kinds to their {@link InteractionHandler}s, keyed by
@@ -18,6 +22,19 @@ import java.util.UUID;
 public class InteractionHandlerRegistry {
 
     private final Map<Class<? extends PendingInteraction>, InteractionHandler<?>> handlers = new LinkedHashMap<>();
+    private final Supplier<GameMutationCoordinator> mutationCoordinatorSupplier;
+
+    /**
+     * Test-only legacy constructor. Production supplies a lazy coordinator lookup so constructing
+     * the interaction registry does not create a coordinator -> projection -> registry cycle.
+     */
+    public InteractionHandlerRegistry() {
+        this.mutationCoordinatorSupplier = null;
+    }
+
+    public InteractionHandlerRegistry(Supplier<GameMutationCoordinator> mutationCoordinatorSupplier) {
+        this.mutationCoordinatorSupplier = mutationCoordinatorSupplier;
+    }
 
     public void register(InteractionHandler<?> handler) {
         handlers.put(handler.handledType(), handler);
@@ -42,8 +59,7 @@ public class InteractionHandlerRegistry {
             throw new IllegalArgumentException("No interaction handler registered for " + interaction.getClass().getName());
         }
         gameData.interaction.beginInteraction(interaction);
-        UUID decider = interaction.decidingPlayerId();
-        handler.prompt(gameData, interaction, resolveMessageRecipient(gameData, decider));
+        requestActiveDecision(gameData, handler);
     }
 
     /**
@@ -69,8 +85,52 @@ public class InteractionHandlerRegistry {
         if (handler == null) {
             return;
         }
+        requestActiveDecision(gameData, handler);
+    }
+
+    /**
+     * Re-delivers the currently active logical decision after an invalid answer without allocating
+     * a new decision identity.
+     */
+    public void requestActiveDecision(GameData gameData) {
+        PendingInteraction active = gameData.interaction.activeInteraction();
+        if (active == null) {
+            return;
+        }
+        InteractionHandler<PendingInteraction> handler = handlerFor(active);
+        if (handler != null) {
+            requestActiveDecision(gameData, handler);
+        }
+    }
+
+    private void requestActiveDecision(
+            GameData gameData, InteractionHandler<PendingInteraction> handler) {
+        PendingInteraction active = gameData.interaction.activeInteraction();
         UUID decider = active.decidingPlayerId();
-        handler.prompt(gameData, active, resolveMessageRecipient(gameData, decider));
+        UUID recipient = resolveMessageRecipient(gameData, decider);
+        if (mutationCoordinatorSupplier == null) {
+            handler.prompt(gameData, active, recipient);
+            return;
+        }
+        mutationCoordinatorSupplier.get().emit(gameData,
+                new GameEventFact.DecisionRequested(
+                        gameData.interaction.activeDecisionId(),
+                        decider,
+                        decisionKind(active)),
+                GameEventAudience.player(recipient));
+    }
+
+    private static GameEventFact.DecisionKind decisionKind(PendingInteraction interaction) {
+        if (interaction instanceof PendingInteraction.AttackerDeclaration) {
+            return GameEventFact.DecisionKind.ATTACKER_DECLARATION;
+        }
+        if (interaction instanceof PendingInteraction.BlockerDeclaration) {
+            return GameEventFact.DecisionKind.BLOCKER_DECLARATION;
+        }
+        if (interaction instanceof PendingInteraction.CombatDamageAssignment) {
+            return GameEventFact.DecisionKind.COMBAT_DAMAGE_ASSIGNMENT;
+        }
+        return GameEventFact.DecisionKind.INTERACTION;
     }
 
     /**

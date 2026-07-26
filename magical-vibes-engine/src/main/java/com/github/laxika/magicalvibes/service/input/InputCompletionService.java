@@ -2,7 +2,7 @@ package com.github.laxika.magicalvibes.service.input;
 
 import com.github.laxika.magicalvibes.model.GameData;
 import com.github.laxika.magicalvibes.model.GameStatus;
-import com.github.laxika.magicalvibes.service.GameBroadcastService;
+import com.github.laxika.magicalvibes.service.event.GameMutationCoordinator;
 import com.github.laxika.magicalvibes.service.state.StateBasedActionService;
 import com.github.laxika.magicalvibes.service.turn.TurnProgressionService;
 import com.github.laxika.magicalvibes.service.effect.EffectResolutionService;
@@ -13,8 +13,8 @@ import org.springframework.stereotype.Service;
  * Shared completion logic for input handler services.
  *
  * <p>Most input handlers end with the same epilogue: process the next pending
- * may ability, check whether further input is needed, and if not, broadcast
- * game state and let the turn advance via auto-pass. This service extracts
+ * may ability, check whether further input is needed, and if not, record a
+ * state invalidation and let the turn advance via auto-pass. This service extracts
  * those repeated patterns into reusable methods.
  */
 @Service
@@ -22,14 +22,14 @@ import org.springframework.stereotype.Service;
 public class InputCompletionService {
 
     private final PlayerInputService playerInputService;
-    private final GameBroadcastService gameBroadcastService;
+    private final GameMutationCoordinator mutationCoordinator;
     private final TurnProgressionService turnProgressionService;
     private final StateBasedActionService stateBasedActionService;
     private final EffectResolutionService effectResolutionService;
 
     /**
      * Process the next pending may ability (if any). If the queue is drained and
-     * no further input is needed, clear priority passes, broadcast game state,
+     * no further input is needed, clear priority passes, invalidate player views,
      * and resolve auto-pass.
      *
      * <p>This is the most common completion pattern, used by may-ability handlers,
@@ -56,7 +56,7 @@ public class InputCompletionService {
             }
 
             gameData.priorityPassedBy.clear();
-            gameBroadcastService.broadcastGameState(gameData);
+            mutationCoordinator.invalidateAllPlayerViews(gameData);
             turnProgressionService.resolveAutoPass(gameData);
         }
     }
@@ -76,10 +76,10 @@ public class InputCompletionService {
     /**
      * Perform state-based actions. If may abilities are pending, process the next
      * one and stop. Otherwise, resume any effect resolution parked for the completed
-     * input, then broadcast game state and resolve auto-pass once resolution is idle.
+     * input, then invalidate player views and resolve auto-pass once resolution is idle.
      *
      * <p>Unlike {@link #sbaProcessMayAbilitiesThenAutoPass}, this variant does NOT
-     * clear priority passes before broadcasting. Used by multi-permanent and
+     * clear priority passes before publishing the invalidation. Used by multi-permanent and
      * battlefield handlers during mid-resolution processing.
      */
     public void sbaMayAbilitiesThenBroadcastAutoPass(GameData gameData) {
@@ -103,7 +103,7 @@ public class InputCompletionService {
             return;
         }
 
-        gameBroadcastService.broadcastGameState(gameData);
+        mutationCoordinator.invalidateAllPlayerViews(gameData);
         turnProgressionService.resolveAutoPass(gameData);
     }
 }

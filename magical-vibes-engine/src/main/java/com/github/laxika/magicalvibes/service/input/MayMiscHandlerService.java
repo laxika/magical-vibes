@@ -34,6 +34,7 @@ import com.github.laxika.magicalvibes.service.battlefield.BattlefieldEntryServic
 import com.github.laxika.magicalvibes.service.battlefield.CreatureControlService;
 import com.github.laxika.magicalvibes.service.battlefield.GameQueryService;
 import com.github.laxika.magicalvibes.service.effect.normalfx.LifeSupport;
+import com.github.laxika.magicalvibes.service.event.GameMutationCoordinator;
 import com.github.laxika.magicalvibes.service.library.LibraryShuffleHelper;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -62,6 +63,7 @@ public class MayMiscHandlerService {
     private final InteractionHandlerRegistry interactionHandlerRegistry;
     private final LifeSupport lifeSupport;
     private final CreatureControlService creatureControlService;
+    private final GameMutationCoordinator mutationCoordinator;
     // @Lazy to break circular dependency:
     // MayMiscHandlerService → TriggerCollectionService → TriggeredAbilityQueueService → PlayerInputService → MayAbilityHandlerService → MayMiscHandlerService
     @Autowired @Lazy
@@ -188,7 +190,7 @@ public class MayMiscHandlerService {
             playerInputService.processNextMayAbility(gameData);
             if (gameData.pendingMayAbilities.isEmpty() && !gameData.interaction.isAwaitingInput()) {
                 gameData.priorityPassedBy.clear();
-                gameBroadcastService.broadcastGameState(gameData);
+                mutationCoordinator.invalidateAllPlayerViews(gameData);
                 turnProgressionService.resolveAutoPass(gameData);
             }
             return;
@@ -220,7 +222,7 @@ public class MayMiscHandlerService {
             playerInputService.processNextMayAbility(gameData);
             if (gameData.pendingMayAbilities.isEmpty() && !gameData.interaction.isAwaitingInput()) {
                 gameData.priorityPassedBy.clear();
-                gameBroadcastService.broadcastGameState(gameData);
+                mutationCoordinator.invalidateAllPlayerViews(gameData);
                 turnProgressionService.resolveAutoPass(gameData);
             }
             return;
@@ -250,7 +252,7 @@ public class MayMiscHandlerService {
             playerInputService.processNextMayAbility(gameData);
             if (gameData.pendingMayAbilities.isEmpty() && !gameData.interaction.isAwaitingInput()) {
                 gameData.priorityPassedBy.clear();
-                gameBroadcastService.broadcastGameState(gameData);
+                mutationCoordinator.invalidateAllPlayerViews(gameData);
                 turnProgressionService.resolveAutoPass(gameData);
             }
             return;
@@ -282,7 +284,7 @@ public class MayMiscHandlerService {
                 playerInputService.processNextMayAbility(gameData);
                 if (gameData.pendingMayAbilities.isEmpty() && !gameData.interaction.isAwaitingInput()) {
                     gameData.priorityPassedBy.clear();
-                    gameBroadcastService.broadcastGameState(gameData);
+                    mutationCoordinator.invalidateAllPlayerViews(gameData);
                     turnProgressionService.resolveAutoPass(gameData);
                 }
                 return;
@@ -308,7 +310,7 @@ public class MayMiscHandlerService {
             playerInputService.processNextMayAbility(gameData);
             if (gameData.pendingMayAbilities.isEmpty() && !gameData.interaction.isAwaitingInput()) {
                 gameData.priorityPassedBy.clear();
-                gameBroadcastService.broadcastGameState(gameData);
+                mutationCoordinator.invalidateAllPlayerViews(gameData);
                 turnProgressionService.resolveAutoPass(gameData);
             }
         }

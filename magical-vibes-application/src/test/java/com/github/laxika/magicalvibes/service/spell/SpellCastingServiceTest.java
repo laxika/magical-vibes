@@ -30,6 +30,7 @@ import com.github.laxika.magicalvibes.service.cast.CastingCostService;
 import com.github.laxika.magicalvibes.service.effect.AmountEvaluationService;
 import com.github.laxika.magicalvibes.service.effect.ConditionEvaluationService;
 import com.github.laxika.magicalvibes.service.effect.cost.AdditionalSpellCostService;
+import com.github.laxika.magicalvibes.service.event.GameMutationCoordinator;
 import com.github.laxika.magicalvibes.service.graveyard.GraveyardService;
 import com.github.laxika.magicalvibes.service.trigger.TriggerCollectionService;
 import com.github.laxika.magicalvibes.service.turn.TurnProgressionService;
@@ -109,6 +110,9 @@ class SpellCastingServiceTest {
     @Mock
     private ConditionEvaluationService conditionEvaluationService;
 
+    @Mock
+    private GameMutationCoordinator mutationCoordinator;
+
     private SpellCastingService svc;
 
     private GameData gd;
@@ -126,7 +130,8 @@ class SpellCastingServiceTest {
                 castingCostService, castingPermissionService, turnProgressionService,
                 targetLegalityService, permanentRemovalService, triggerCollectionService,
                 graveyardService, amountEvaluationService, conditionEvaluationService,
-                new AdditionalSpellCostService(gameQueryService, predicateEvaluationService));
+                new AdditionalSpellCostService(gameQueryService, predicateEvaluationService),
+                mutationCoordinator);
         player1Id = UUID.randomUUID();
         player2Id = UUID.randomUUID();
         player1 = new Player(player1Id, "Player1");
@@ -340,7 +345,7 @@ class SpellCastingServiceTest {
             assertThat(gd.stack.getLast().getEntryType()).isEqualTo(StackEntryType.CREATURE_SPELL);
             assertThat(gd.stack.getLast().getCard().getName()).isEqualTo("Test Bear");
             verify(gameBroadcastService).logAndBroadcast(eq(gd), any(GameLogEntry.class));
-            verify(gameBroadcastService).broadcastGameState(gd);
+            verify(mutationCoordinator).invalidateAllPlayerViews(gd);
             verify(triggerCollectionService).checkSpellCastTriggers(eq(gd), eq(creature), eq(player1Id), anyBoolean());
             verify(triggerCollectionService).checkBecomesTargetOfSpellTriggers(gd);
             verify(turnProgressionService).resolveAutoPass(gd);
@@ -908,7 +913,7 @@ class SpellCastingServiceTest {
 
             assertThat(gd.getSpellsCastThisTurnCount(player1Id)).isEqualTo(before + 1);
             verify(gameBroadcastService).logAndBroadcast(eq(gd), any(GameLogEntry.class));
-            verify(gameBroadcastService).broadcastGameState(gd);
+            verify(mutationCoordinator).invalidateAllPlayerViews(gd);
             verify(triggerCollectionService).checkSpellCastTriggers(eq(gd), eq(dummy), eq(player1Id), anyBoolean());
             verify(triggerCollectionService).checkBecomesTargetOfSpellTriggers(gd);
             verify(turnProgressionService).resolveAutoPass(gd);
@@ -1049,7 +1054,7 @@ class SpellCastingServiceTest {
             assertThat(gd.exilePlayPermissions).doesNotContainKey(creature.getId());
             assertThat(gd.playerManaPools.get(player1Id).getTotal()).isEqualTo(0);
             verify(gameBroadcastService).logAndBroadcast(eq(gd), any(GameLogEntry.class));
-            verify(gameBroadcastService).broadcastGameState(gd);
+            verify(mutationCoordinator).invalidateAllPlayerViews(gd);
             verify(triggerCollectionService).checkSpellCastTriggers(eq(gd), eq(creature), eq(player1Id));
             verify(triggerCollectionService).checkBecomesTargetOfSpellTriggers(gd);
             verify(turnProgressionService).resolveAutoPass(gd);

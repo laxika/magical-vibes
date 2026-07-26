@@ -13,6 +13,7 @@ import com.github.laxika.magicalvibes.service.battlefield.CreatureControlService
 import com.github.laxika.magicalvibes.service.battlefield.GameQueryService;
 import com.github.laxika.magicalvibes.service.battlefield.LegendRuleService;
 import com.github.laxika.magicalvibes.service.effect.EffectResolutionService;
+import com.github.laxika.magicalvibes.service.event.GameMutationCoordinator;
 import com.github.laxika.magicalvibes.service.effect.normalfx.GraveyardReturnSupport;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardType;
@@ -75,6 +76,7 @@ public class StackResolutionService {
     private final ExileService exileService;
     private final ParadigmService paradigmService;
     private final GraveyardReturnSupport graveyardReturnSupport;
+    private final GameMutationCoordinator mutationCoordinator;
 
     public StackResolutionService(BattlefieldEntryService battlefieldEntryService,
                                   CloneService cloneService,
@@ -91,6 +93,7 @@ public class StackResolutionService {
                                   StateTriggerService stateTriggerService,
                                   ExileService exileService,
                                   GraveyardReturnSupport graveyardReturnSupport,
+                                  GameMutationCoordinator mutationCoordinator,
                                   @Lazy ParadigmService paradigmService) {
         this.battlefieldEntryService = battlefieldEntryService;
         this.cloneService = cloneService;
@@ -107,6 +110,7 @@ public class StackResolutionService {
         this.stateTriggerService = stateTriggerService;
         this.exileService = exileService;
         this.graveyardReturnSupport = graveyardReturnSupport;
+        this.mutationCoordinator = mutationCoordinator;
         this.paradigmService = paradigmService;
     }
 
@@ -214,7 +218,7 @@ public class StackResolutionService {
             return;
         }
 
-        gameBroadcastService.broadcastGameState(gameData);
+        mutationCoordinator.invalidateAllPlayerViews(gameData);
     }
 
     /** CR 702.146 / siege defeat: while cast transformed, the spell has back-face characteristics. */
@@ -722,7 +726,6 @@ public class StackResolutionService {
                 if (isNonCopySpell(entry)) {
                     exileService.exileCard(gameData, entry.getControllerId(), entry.getCard());
                 }
-                gameBroadcastService.broadcastGameState(gameData);
                 return;
             }
 

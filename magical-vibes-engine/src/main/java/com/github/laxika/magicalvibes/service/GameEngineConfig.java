@@ -66,7 +66,9 @@ public class GameEngineConfig implements SmartInitializingSingleton {
         this.staticEffectHandlerRegistry = new StaticEffectHandlerRegistry();
         this.targetValidatorRegistry = new TargetValidatorRegistry();
         this.triggerCollectorRegistry = new TriggerCollectorRegistry();
-        this.interactionHandlerRegistry = new InteractionHandlerRegistry();
+        this.interactionHandlerRegistry = new InteractionHandlerRegistry(
+                () -> applicationContext.getBean(
+                        com.github.laxika.magicalvibes.service.event.GameMutationCoordinator.class));
         this.costModificationHandlerRegistry = new CostModificationHandlerRegistry();
     }
 

@@ -69,25 +69,29 @@ class GameMutationCoordinatorTest {
         assertThat(batch.events()).extracting(GameEventEnvelope::kind).containsExactly(
                 GameEventKind.STATE_INVALIDATED,
                 GameEventKind.DECISION_REQUESTED,
+                GameEventKind.STATE_INVALIDATED,
                 GameEventKind.PRIVATE_REVEAL,
                 GameEventKind.PRIVATE_REVEAL,
                 GameEventKind.GAME_ENDED);
         assertThat(batch.events()).extracting(GameEventEnvelope::sequence)
-                .containsExactly(1L, 2L, 3L, 4L, 5L);
+                .containsExactly(1L, 2L, 3L, 4L, 5L, 6L);
         assertThat(batch.events()).allSatisfy(event -> {
             assertThat(event.gameId()).isEqualTo(GAME_ID);
             assertThat(event.causalActionId()).isEqualTo(ACTION_1);
             assertThat(event.stateVersion()).isEqualTo(1);
         });
 
-        GameEventFact.StateInvalidated invalidation =
+        GameEventFact.StateInvalidated firstInvalidation =
                 (GameEventFact.StateInvalidated) batch.events().getFirst().fact();
-        assertThat(invalidation.sections()).containsExactlyInAnyOrder(
-                GameEventFact.StateSection.BATTLEFIELD,
-                GameEventFact.StateSection.STACK);
+        assertThat(firstInvalidation.sections()).containsExactly(
+                GameEventFact.StateSection.BATTLEFIELD);
         assertThat(batch.events().get(1).fact()).isSameAs(decision);
-        assertThat(batch.events().get(2).fact()).isSameAs(firstReveal);
-        assertThat(batch.events().get(3).fact()).isSameAs(secondReveal);
+        GameEventFact.StateInvalidated secondInvalidation =
+                (GameEventFact.StateInvalidated) batch.events().get(2).fact();
+        assertThat(secondInvalidation.sections()).containsExactly(
+                GameEventFact.StateSection.STACK);
+        assertThat(batch.events().get(3).fact()).isSameAs(firstReveal);
+        assertThat(batch.events().get(4).fact()).isSameAs(secondReveal);
 
         coordinator.mutate(gameData, ACTION_2, () ->
                 coordinator.emit(gameData, new GameEventFact.DecisionRequested(
@@ -96,7 +100,7 @@ class GameMutationCoordinatorTest {
 
         assertThat(received).hasSize(2);
         assertThat(received.get(1).events()).singleElement()
-                .extracting(GameEventEnvelope::sequence).isEqualTo(6L);
+                .extracting(GameEventEnvelope::sequence).isEqualTo(7L);
         assertThat(received.get(1).stateVersion()).isEqualTo(2);
     }
 

@@ -19,6 +19,7 @@ import com.github.laxika.magicalvibes.model.PendingMayAbility;
 import com.github.laxika.magicalvibes.model.Zone;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
 import com.github.laxika.magicalvibes.service.GameBroadcastService;
+import com.github.laxika.magicalvibes.service.event.GameMutationCoordinator;
 import com.github.laxika.magicalvibes.service.battlefield.BattlefieldEntryService;
 import com.github.laxika.magicalvibes.service.battlefield.GameQueryService;
 import com.github.laxika.magicalvibes.service.battlefield.LegendRuleService;
@@ -49,6 +50,7 @@ public class GraveyardChoiceHandlerService {
     private final BattlefieldEntryService battlefieldEntryService;
     private final LegendRuleService legendRuleService;
     private final GameBroadcastService gameBroadcastService;
+    private final GameMutationCoordinator mutationCoordinator;
     private final TurnProgressionService turnProgressionService;
     private final PermanentRemovalService permanentRemovalService;
     private final TriggerCollectionService triggerCollectionService;
@@ -509,7 +511,7 @@ public class GraveyardChoiceHandlerService {
 
             triggerCollectionService.checkSpellCastTriggers(gameData, pendingCard, controllerId,
                     !pendingFlashback);
-            gameBroadcastService.broadcastGameState(gameData);
+            mutationCoordinator.invalidateAllPlayerViews(gameData);
         } else {
             // Triggered ability (ETB, spell-cast trigger, or saga chapter) — put on stack with targets
             String description;

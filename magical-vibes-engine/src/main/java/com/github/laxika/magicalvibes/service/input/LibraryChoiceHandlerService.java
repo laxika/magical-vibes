@@ -32,6 +32,7 @@ import com.github.laxika.magicalvibes.model.effect.OpponentMayReturnExiledCardOr
 import com.github.laxika.magicalvibes.model.filter.PermanentPredicateTargetFilter;
 import com.github.laxika.magicalvibes.service.DrawService;
 import com.github.laxika.magicalvibes.service.GameBroadcastService;
+import com.github.laxika.magicalvibes.service.event.GameMutationCoordinator;
 import com.github.laxika.magicalvibes.service.trigger.TriggerCollectionService;
 import com.github.laxika.magicalvibes.service.exile.ExileService;
 import com.github.laxika.magicalvibes.service.graveyard.GraveyardService;
@@ -70,6 +71,7 @@ public class LibraryChoiceHandlerService {
     private final LegendRuleService legendRuleService;
     private final StateBasedActionService stateBasedActionService;
     private final GameBroadcastService gameBroadcastService;
+    private final GameMutationCoordinator mutationCoordinator;
     private final TurnProgressionService turnProgressionService;
     private final PlayerInputService playerInputService;
     private final EffectResolutionService effectResolutionService;
@@ -1581,7 +1583,7 @@ public class LibraryChoiceHandlerService {
                 gameData.id, playerName, chosenCard.getName());
 
         triggerCollectionService.checkSpellCastTriggers(gameData, chosenCard, playerId, false);
-        gameBroadcastService.broadcastGameState(gameData);
+        mutationCoordinator.invalidateAllPlayerViews(gameData);
     }
 
     /** Appends {@code cards} as comma-separated card segments (each hoverable) to {@code builder}. */

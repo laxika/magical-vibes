@@ -87,9 +87,10 @@ without such a boundary is always rejected.
 
 - No `GameEventSubscriber` is invoked while `Thread.holdsLock(gameData)` is true.
 - The outermost mutation scope owns dispatch; nested scopes append to the same ordered batch.
-- State invalidations may coalesce only inside one completed action and only for an identical
-  audience. Decisions/interactions, mulligan notifications, private reveals, and game end are
-  never coalesced.
+- State invalidations may coalesce only inside one completed action, only for an identical
+  audience, and never across a decision event. A decision is an ordering barrier so an
+  invalidation before it and another after it remain two observations. Decisions/interactions,
+  mulligan notifications, private reveals, and game end are never coalesced.
 - Sequences are deterministic, positive, strictly increasing, and game-local.
 - Audience omission means `INTERNAL`, never all players.
 - `GameData.simulation` produces a `SUPPRESSED_SIMULATION` batch. The simulation copy advances its
@@ -113,36 +114,32 @@ for every family is zero.
 
 | Legacy surface | Current total | Eventual target |
 |---|---:|---:|
-| `GameBroadcastService.broadcastGameState` | 96 | 0 |
-| engine `SessionManager.sendToPlayer/sendToPlayers` | 43 | 0 |
+| `GameBroadcastService.broadcastGameState` | 19 | 0 |
+| engine `SessionManager.sendToPlayer/sendToPlayers` | 41 | 0 |
 | `GameBroadcastService.logAndBroadcast` | 2,371 | 0 |
 
 The lifecycle migration ratchet additionally fixes the direct state/session count at zero for
 `GameService`, `GameSetupService`, `MulliganService`, `GameOutcomeService`,
 `GameTimeoutService`, `ReconnectionService`, `AutoPassService`, `TurnProgressionService`, and
-`KarnRestartGameEffectHandler`.
+`KarnRestartGameEffectHandler`. The spell/ability/stack migration ratchet additionally fixes
+the direct state/session count at zero for `SpellCastingService`, `AbilityActivationService`,
+`ActivatedAbilityExecutionService`, and `StackResolutionService`.
 
 ### `broadcastGameState` package-family classification
 
 | Package family | Count | Workflow classification |
 |---|---:|---|
-| service root | 3 | auction and stack-resolution refreshes |
-| `ability` | 14 | ability activation, cost/payment completion, and activated-effect refreshes |
+| service root | 1 | auction refresh |
 | `effect/normalfx` | 15 | multi-stage exile/reveal effect refreshes |
-| `input` | 58 | legacy choice completion and parked-resolution refreshes |
 | `interaction` | 3 | auction, keep-cards, and X-value answer refreshes |
-| `spell` | 3 | spell-cast payment/target completion refreshes |
 
-Exhaustive files for these 96 calls:
+Exhaustive files for these 19 calls:
 
 | Family | Files and counts |
 |---|---|
-| service root | `PermanentAuctionService` 1; `StackResolutionService` 2 |
-| `ability` | `AbilityActivationService` 12; `ActivatedAbilityExecutionService` 2 |
+| service root | `PermanentAuctionService` 1 |
 | `effect/normalfx` | `BrilliantUltimatumSupport` 1; `ExileSupport` 8; `ImprovisationCapstoneCastSupport` 2; `KarnScionReturnSilverCounterCardEffectHandler` 1; `KarnScionRevealTwoOpponentChoosesEffectHandler` 1; `PutCardExiledWithSourceIntoHandEffectHandler` 1; `RevealTopCardsOpponentPaysLifeOrToHandEffectHandler` 1 |
-| `input` | `CardChoiceHandlerService` 3; `ChoiceHandlerService` 12; `GraveyardChoiceHandlerService` 1; `InputCompletionService` 2; `LibraryChoiceHandlerService` 1; `MayAbilityTapCostService` 2; `MayCopyHandlerService` 1; `MayMiscHandlerService` 5; `MultiPermanentChoiceHandlerService` 16; `PermanentChoiceBattlefieldHandlerService` 1; `PermanentChoiceSpellHandlerService` 4; `PermanentChoiceTriggerHandlerService` 10 |
 | `interaction` | `IllicitAuctionBidChoiceInteractionHandler` 1; `KeepCardsInHandChoiceInteractionHandler` 1; `XValueChoiceInteractionHandler` 1 |
-| `spell` | `SpellCastingService` 3 |
 
 Migration classification: all become audience-appropriate `STATE_INVALIDATED` facts. A completed
 action normally needs one all-player invalidation plus, only where necessary, a private
@@ -154,14 +151,12 @@ player-specific hidden-information rules in `GameBroadcastService`.
 | Package family | Count | Workflow classification |
 |---|---:|---|
 | service root | 1 | hand reveal |
-| `ability` | 2 | discard/exile additional-cost decisions |
 | `effect/normalfx` | 7 | private hand/library reveal notifications |
 | `interaction` | 33 | registry-managed interaction, attacker, blocker, and combat-damage prompts |
 
-Exhaustive files for these 43 calls:
+Exhaustive files for these 41 calls:
 
 - Service root: `GameBroadcastService` 1.
-- Ability: `AbilityActivationService` 2.
 - Effects: `LookAtHandEffectHandler`, `LookAtRandomCardInTargetPlayerHandEffectHandler`,
   `LookAtTopCardsOfTargetLibraryEffectHandler`,
   `RevealRandomCardFromTargetPlayerHandEffectHandler`,
@@ -193,9 +188,10 @@ Migration classification:
 - `GameStateMessage` creation becomes the WebSocket adapter for `STATE_INVALIDATED`.
 - Mulligan resolution is now a state observation; “select cards to bottom” is a non-coalescible
   `CARDS_TO_BOTTOM` decision with a stable replay identity.
-- The two `AbilityActivationService` prompts and all 33 interaction handlers become
-  non-coalescible `DECISION_REQUESTED` facts. Attacker, blocker, and combat-damage assignment keep
-  their distinct decision kinds.
+- Registry-managed interaction begin/retry sites, including the former two direct
+  `AbilityActivationService` prompts, now emit non-coalescible `DECISION_REQUESTED` facts.
+  Attacker, blocker, and combat-damage assignment keep their distinct decision kinds. The 33
+  interaction-handler sends remain projection-side prompt renderers, never mutation-side sends.
 - The seven effect reveal sends plus `GameBroadcastService.revealOpponentHandToPlayer` become
   `PRIVATE_REVEAL` with immutable `CardSnapshot` lists and explicit recipients.
 - `KarnRestartGameEffectHandler` now emits a public state invalidation/observation, not a
@@ -253,13 +249,13 @@ intentionally unchanged by this foundation prompt.
 |---|---|---|---|
 | Foundation | domain event records → `GameMutationCoordinator` → `GameEventDispatcher` | immutable facts/envelopes, nested batching, ordering, audience safety, simulation suppression, failure isolation | **Complete** |
 | Canonical projection subscriber | `GameEventProjectionSubscriber` → `GameViewProjectionFactory`/interaction registry → typed messages → `GameMessageTransport` | post-lock authoritative projection, explicit audience enforcement, no serialization, per-recipient transport failure isolation, human/AI typed-message parity | **Complete** |
-| Public game-state refresh | 96 `broadcastGameState` calls → player-specific `GameStateMessage` | coalesced `STATE_INVALIDATED`; canonical subscriber constructs the same per-player wire DTO after unlock | Lifecycle, `GameService`, and `turn` families complete; remaining emission migration open |
+| Public game-state refresh | 19 `broadcastGameState` calls → player-specific `GameStateMessage` | coalesced `STATE_INVALIDATED`; canonical subscriber constructs the same per-player wire DTO after unlock | Lifecycle, `GameService`, `turn`, spell, ability, input-completion, and stack-resolution workflows complete; remaining emission migration open |
 | Game log | 2,371 `logAndBroadcast` calls → `gameLog` → next state message | append under lock plus `GAME_LOG` invalidation; preserve structured segments and incremental wire behavior | Open |
-| Generic interactions | begin site → `InteractionHandlerRegistry.begin`/handler `prompt` → 30 generic prompt sends | stable decision ID plus non-coalescible `DECISION_REQUESTED(INTERACTION)`; canonical subscriber reuses the registry prompt projector for open/replay | Projection complete; emission migration open |
-| Attackers | `CombatAttackService` → `AttackerDeclarationInteractionHandler` → `AvailableAttackersMessage` | `DECISION_REQUESTED(ATTACKER_DECLARATION)` | Open |
-| Blockers | `CombatBlockService` → `BlockerDeclarationInteractionHandler` → `AvailableBlockersMessage` | `DECISION_REQUESTED(BLOCKER_DECLARATION)` | Open |
-| Combat damage assignment | `CombatDamageService` → `CombatDamageAssignmentInteractionHandler` → notification | `DECISION_REQUESTED(COMBAT_DAMAGE_ASSIGNMENT)` | Open |
-| Ability additional-cost choices | two `AbilityActivationService` direct prompts | registry interaction plus non-coalescible decision fact | Open |
+| Generic interactions | begin site → `InteractionHandlerRegistry.begin` → `DECISION_REQUESTED` → projection-side handler `prompt` | stable decision ID plus non-coalescible `DECISION_REQUESTED(INTERACTION)`; canonical subscriber reuses the registry prompt projector for open/replay | **Complete** |
+| Attackers | `CombatAttackService` → registry decision event → `AttackerDeclarationInteractionHandler` projection → `AvailableAttackersMessage` | `DECISION_REQUESTED(ATTACKER_DECLARATION)` | **Complete** |
+| Blockers | `CombatBlockService` → registry decision event → `BlockerDeclarationInteractionHandler` projection → `AvailableBlockersMessage` | `DECISION_REQUESTED(BLOCKER_DECLARATION)` | **Complete** |
+| Combat damage assignment | `CombatDamageService` → registry decision event → `CombatDamageAssignmentInteractionHandler` projection → notification | `DECISION_REQUESTED(COMBAT_DAMAGE_ASSIGNMENT)` | **Complete** |
+| Ability additional-cost choices | registry interaction plus non-coalescible decision fact | discard/exile/permanent cost choices preserve stable identity and validate before payment | **Complete** |
 | Mulligan | `MulliganService` emits resolved/state/decision facts with stable mulligan and bottom decision identities | `MULLIGAN_RESOLVED` plus state observation and `CARDS_TO_BOTTOM` decision without changing message timing | **Complete** |
 | Private hand/library reveals | `GameBroadcastService` plus seven normal-effect handlers | `PRIVATE_REVEAL`, explicit recipient, immutable snapshots; never public by default | Projection complete; emission migration open |
 | Game over | `GameOutcomeService` finalizes authoritative result and emits one `GAME_ENDED`; ordered subscribers project `GameOverMessage`, close AI, notify tournaments, cancel timers, and remove the registry entry | one `GAME_ENDED` fact; adapters preserve `GameOverMessage`, draft callback, timer cleanup, and registry removal ordering | **Complete** |

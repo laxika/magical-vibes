@@ -33,7 +33,6 @@ import com.github.laxika.magicalvibes.model.effect.PutCountersOnSelfEffect;
 import com.github.laxika.magicalvibes.model.effect.RemoveChargeCountersFromSourceCost;
 import com.github.laxika.magicalvibes.model.effect.RemoveCounterFromSourceCost;
 import com.github.laxika.magicalvibes.model.effect.SacrificeCreatureCost;
-import com.github.laxika.magicalvibes.networking.SessionManager;
 import com.github.laxika.magicalvibes.service.GameBroadcastService;
 import com.github.laxika.magicalvibes.service.input.PlayerInputService;
 import com.github.laxika.magicalvibes.service.trigger.TriggerCollectionService;
@@ -41,6 +40,7 @@ import com.github.laxika.magicalvibes.service.battlefield.GameQueryService;
 import com.github.laxika.magicalvibes.service.battlefield.PermanentRemovalService;
 import com.github.laxika.magicalvibes.service.cast.CastingCostService;
 import com.github.laxika.magicalvibes.service.exile.ExileService;
+import com.github.laxika.magicalvibes.service.event.GameMutationCoordinator;
 import com.github.laxika.magicalvibes.service.graveyard.GraveyardService;
 import com.github.laxika.magicalvibes.service.target.TargetLegalityService;
 import org.junit.jupiter.api.BeforeEach;
@@ -86,10 +86,10 @@ class AbilityActivationServiceTest {
     @Mock private TargetLegalityService targetLegalityService;
     @Mock private ActivatedAbilityExecutionService activatedAbilityExecutionService;
     @Mock private PlayerInputService playerInputService;
-    @Mock private SessionManager sessionManager;
     @Mock private PermanentRemovalService permanentRemovalService;
     @Mock private TriggerCollectionService triggerCollectionService;
     @Mock private ExileService exileService;
+    @Mock private GameMutationCoordinator mutationCoordinator;
 
     @InjectMocks
     private AbilityActivationService service;
@@ -161,7 +161,7 @@ class AbilityActivationServiceTest {
             assertThat(perm.isTapped()).isTrue();
             verify(triggerCollectionService).checkLandTapTriggers(gameData, player1Id, perm.getId());
             verify(triggerCollectionService).checkEnchantedPermanentTapTriggers(gameData, perm);
-            verify(gameBroadcastService).broadcastGameState(gameData);
+            verify(mutationCoordinator).invalidateAllPlayerViews(gameData);
         }
 
         @Test
@@ -1133,7 +1133,7 @@ class AbilityActivationServiceTest {
             service.activateAbility(gameData, player1, 0, null, null, null, null);
 
             verify(playerInputService).beginPermanentChoice(eq(gameData), eq(player1Id), any(), eq("Choose a creature to sacrifice."));
-            verify(gameBroadcastService).broadcastGameState(gameData);
+            verify(mutationCoordinator).invalidateAllPlayerViews(gameData);
         }
 
         @Test

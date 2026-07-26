@@ -65,6 +65,7 @@ import com.github.laxika.magicalvibes.service.GameBroadcastService;
 import com.github.laxika.magicalvibes.service.battlefield.GameQueryService;
 import com.github.laxika.magicalvibes.service.effect.AmountContext;
 import com.github.laxika.magicalvibes.service.effect.AmountEvaluationService;
+import com.github.laxika.magicalvibes.service.event.GameMutationCoordinator;
 import com.github.laxika.magicalvibes.service.filter.PredicateEvaluationService;
 import com.github.laxika.magicalvibes.service.battlefield.PermanentRemovalService;
 import com.github.laxika.magicalvibes.service.input.PlayerInputService;
@@ -99,6 +100,7 @@ public class ActivatedAbilityExecutionService {
     private final PlayerInputService playerInputService;
     private final com.github.laxika.magicalvibes.service.interaction.InteractionHandlerRegistry interactionHandlerRegistry;
     private final LifeSupport lifeSupport;
+    private final GameMutationCoordinator mutationCoordinator;
 
     /**
      * Completes an activated ability activation after all additional costs (mana, sacrifice creature,
@@ -114,7 +116,7 @@ public class ActivatedAbilityExecutionService {
      *       value survives sacrifice.</li>
      *   <li>Executes {@link com.github.laxika.magicalvibes.model.effect.SacrificeSelfCost} if present —
      *       removes the permanent from the battlefield, adds it to the graveyard, and collects death triggers.</li>
-     *   <li>Logs the activation and broadcasts to all players.</li>
+     *   <li>Logs the activation and records the canonical player-view invalidation.</li>
      *   <li>Snapshots the effect list — filters out cost effects and bakes runtime values into effects
      *       like {@code CantBlockSourceEffect} (source permanent ID) and
      *       {@code PreventNextColorDamageToControllerEffect} (chosen color).</li>
@@ -787,7 +789,7 @@ public class ActivatedAbilityExecutionService {
         if (!gameData.interaction.isAwaitingInput() && !gameData.pendingMayAbilities.isEmpty()) {
             playerInputService.processNextMayAbility(gameData);
         }
-        gameBroadcastService.broadcastGameState(gameData);
+        mutationCoordinator.invalidateAllPlayerViews(gameData);
     }
 
     /**
@@ -1023,7 +1025,7 @@ public class ActivatedAbilityExecutionService {
         if (!gameData.interaction.isAwaitingInput() && gameData.hasPendingInteraction(PermanentChoiceContext.SelfLeavesTriggerTarget.class)) {
             triggerCollectionService.processNextSelfLeavesTriggerTarget(gameData);
         }
-        gameBroadcastService.broadcastGameState(gameData);
+        mutationCoordinator.invalidateAllPlayerViews(gameData);
     }
 }
 

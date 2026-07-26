@@ -36,6 +36,7 @@ import com.github.laxika.magicalvibes.service.effect.normalfx.GraveyardReturnSup
 import com.github.laxika.magicalvibes.service.effect.normalfx.LifeSupport;
 import com.github.laxika.magicalvibes.service.effect.normalfx.PlayerInteractionSupport;
 import com.github.laxika.magicalvibes.service.GameBroadcastService;
+import com.github.laxika.magicalvibes.service.event.GameMutationCoordinator;
 import com.github.laxika.magicalvibes.service.exile.ExileService;
 import com.github.laxika.magicalvibes.service.graveyard.GraveyardService;
 import com.github.laxika.magicalvibes.service.battlefield.BattlefieldEntryService;
@@ -61,6 +62,7 @@ public class CardChoiceHandlerService {
     private final GraveyardService graveyardService;
     private final BattlefieldEntryService battlefieldEntryService;
     private final GameBroadcastService gameBroadcastService;
+    private final GameMutationCoordinator mutationCoordinator;
     private final PlayerInputService playerInputService;
     private final TriggerCollectionService triggerCollectionService;
     private final TurnProgressionService turnProgressionService;
@@ -227,7 +229,7 @@ public class CardChoiceHandlerService {
         int remainingDiscards = Math.max(discardChoice.remainingCount() - 1, 0);
 
         if (remainingDiscards > 0 && !hand.isEmpty()) {
-            gameBroadcastService.broadcastGameState(gameData);
+            mutationCoordinator.invalidateAllPlayerViews(gameData);
             playerInputService.beginDiscardChoice(gameData, playerId, remainingDiscards, discardChoice.followUp());
         } else {
             DiscardFollowUp followUp = discardChoice.followUp();
@@ -397,7 +399,7 @@ public class CardChoiceHandlerService {
         int remainingExiles = Math.max(exileChoice.remainingCount() - 1, 0);
 
         if (remainingExiles > 0 && !hand.isEmpty()) {
-            gameBroadcastService.broadcastGameState(gameData);
+            mutationCoordinator.invalidateAllPlayerViews(gameData);
             playerInputService.beginExileFromHandChoice(gameData, playerId, sourcePermanentId,
                     exileChoice.playPermissionControllerId(), remainingExiles,
                     exileChoice.remainingChoosers(), exileChoice.cardsPerPlayer());
@@ -407,7 +409,7 @@ public class CardChoiceHandlerService {
             List<UUID> rest = exileChoice.remainingChoosers().size() > 1
                     ? List.copyOf(exileChoice.remainingChoosers().subList(1, exileChoice.remainingChoosers().size()))
                     : List.of();
-            gameBroadcastService.broadcastGameState(gameData);
+            mutationCoordinator.invalidateAllPlayerViews(gameData);
             playerInputService.beginExileFromHandChoice(gameData, next, sourcePermanentId,
                     exileChoice.playPermissionControllerId(), exileChoice.cardsPerPlayer(), rest,
                     exileChoice.cardsPerPlayer());

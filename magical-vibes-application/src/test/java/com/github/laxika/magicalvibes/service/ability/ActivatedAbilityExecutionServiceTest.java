@@ -48,6 +48,7 @@ import com.github.laxika.magicalvibes.service.trigger.TriggerCollectionService;
 import com.github.laxika.magicalvibes.service.battlefield.GameQueryService;
 import com.github.laxika.magicalvibes.service.battlefield.PermanentRemovalService;
 import com.github.laxika.magicalvibes.service.effect.normalfx.LifeSupport;
+import com.github.laxika.magicalvibes.service.event.GameMutationCoordinator;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Nested;
@@ -88,6 +89,7 @@ class ActivatedAbilityExecutionServiceTest {
     @Mock private PlayerInputService playerInputService;
     @Mock private com.github.laxika.magicalvibes.service.interaction.InteractionHandlerRegistry interactionHandlerRegistry;
     @Mock private LifeSupport lifeSupport;
+    @Mock private GameMutationCoordinator mutationCoordinator;
 
     @InjectMocks
     private ActivatedAbilityExecutionService service;
@@ -161,7 +163,7 @@ class ActivatedAbilityExecutionServiceTest {
             assertThat(gameData.playerLifeTotals.get(player1Id)).isEqualTo(19);
             assertThat(gameData.stack).isEmpty();
             verify(stateBasedActionService).performStateBasedActions(gameData);
-            verify(gameBroadcastService).broadcastGameState(gameData);
+            verify(mutationCoordinator).invalidateAllPlayerViews(gameData);
         }
 
         @Test
@@ -468,7 +470,7 @@ class ActivatedAbilityExecutionServiceTest {
             assertThat(gameData.stack.getFirst().getEntryType()).isEqualTo(StackEntryType.ACTIVATED_ABILITY);
             verify(triggerCollectionService).checkBecomesTargetOfAbilityTriggers(gameData);
             verify(stateBasedActionService).performStateBasedActions(gameData);
-            verify(gameBroadcastService).broadcastGameState(gameData);
+            verify(mutationCoordinator).invalidateAllPlayerViews(gameData);
         }
 
         @Test

@@ -7,6 +7,7 @@ import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.PermanentChoiceContext;
 import com.github.laxika.magicalvibes.model.StackEntry;
 import com.github.laxika.magicalvibes.service.GameBroadcastService;
+import com.github.laxika.magicalvibes.service.event.GameMutationCoordinator;
 import com.github.laxika.magicalvibes.service.effect.normalfx.ExileCastTargetSupport;
 import com.github.laxika.magicalvibes.service.effect.normalfx.ImprovisationCapstoneCastSupport;
 import com.github.laxika.magicalvibes.service.trigger.TriggerCollectionService;
@@ -44,6 +45,7 @@ public class PermanentChoiceSpellHandlerService {
     private final ImprovisationCapstoneCastSupport improvisationCapstoneCastSupport;
     private final ExileCastTargetSupport exileCastTargetSupport;
     private final InputCompletionService inputCompletionService;
+    private final GameMutationCoordinator mutationCoordinator;
 
     public PermanentChoiceSpellHandlerService(GameQueryService gameQueryService,
                                               GraveyardService graveyardService,
@@ -53,7 +55,8 @@ public class PermanentChoiceSpellHandlerService {
                                               TurnProgressionService turnProgressionService,
                                               @Lazy ImprovisationCapstoneCastSupport improvisationCapstoneCastSupport,
                                               ExileCastTargetSupport exileCastTargetSupport,
-                                              @Lazy InputCompletionService inputCompletionService) {
+                                              @Lazy InputCompletionService inputCompletionService,
+                                              GameMutationCoordinator mutationCoordinator) {
         this.gameQueryService = gameQueryService;
         this.graveyardService = graveyardService;
         this.gameBroadcastService = gameBroadcastService;
@@ -63,6 +66,7 @@ public class PermanentChoiceSpellHandlerService {
         this.improvisationCapstoneCastSupport = improvisationCapstoneCastSupport;
         this.exileCastTargetSupport = exileCastTargetSupport;
         this.inputCompletionService = inputCompletionService;
+        this.mutationCoordinator = mutationCoordinator;
     }
 
     public void handleSpellRetarget(GameData gameData, UUID permanentId, PermanentChoiceContext.SpellRetarget retarget) {
@@ -142,7 +146,7 @@ public class PermanentChoiceSpellHandlerService {
         }
 
         gameData.priorityPassedBy.clear();
-        gameBroadcastService.broadcastGameState(gameData);
+        mutationCoordinator.invalidateAllPlayerViews(gameData);
         turnProgressionService.resolveAutoPass(gameData);
     }
 
@@ -268,7 +272,7 @@ public class PermanentChoiceSpellHandlerService {
         }
 
         gameData.priorityPassedBy.clear();
-        gameBroadcastService.broadcastGameState(gameData);
+        mutationCoordinator.invalidateAllPlayerViews(gameData);
         turnProgressionService.resolveAutoPass(gameData);
     }
 
@@ -313,7 +317,7 @@ public class PermanentChoiceSpellHandlerService {
         }
 
         gameData.priorityPassedBy.clear();
-        gameBroadcastService.broadcastGameState(gameData);
+        mutationCoordinator.invalidateAllPlayerViews(gameData);
         turnProgressionService.resolveAutoPass(gameData);
     }
 
@@ -353,7 +357,7 @@ public class PermanentChoiceSpellHandlerService {
         }
 
         gameData.priorityPassedBy.clear();
-        gameBroadcastService.broadcastGameState(gameData);
+        mutationCoordinator.invalidateAllPlayerViews(gameData);
         turnProgressionService.resolveAutoPass(gameData);
     }
 

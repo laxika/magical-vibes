@@ -141,6 +141,19 @@ public class GameMutationCoordinator {
         emit(gameData, fact, GameEventAudience.internalOnly());
     }
 
+    /**
+     * Records the canonical all-player observation used by migrated runtime workflows.
+     *
+     * <p>The projection subscriber still builds a complete player-specific view; the section
+     * identifies that hidden-information-aware player views may have changed.
+     */
+    public void invalidateAllPlayerViews(GameData gameData) {
+        emit(gameData,
+                new GameEventFact.StateInvalidated(
+                        GameEventFact.StateSection.PRIVATE_PLAYER_VIEW),
+                GameEventAudience.allPlayers());
+    }
+
     public void emit(GameData gameData, GameEventFact fact, GameEventAudience audience) {
         Objects.requireNonNull(gameData, "gameData");
         Objects.requireNonNull(fact, "fact");
@@ -228,6 +241,11 @@ public class GameMutationCoordinator {
                     return;
                 }
                 invalidationIndexByAudience.put(audience, pendingEvents.size());
+            } else if (fact instanceof GameEventFact.DecisionRequested) {
+                // A decision is an observable ordering barrier. State before and after it must
+                // remain distinct so coalescing cannot move the required prompt outside the two
+                // stable observation points.
+                invalidationIndexByAudience.clear();
             }
             pendingEvents.add(new PendingEvent(fact, audience));
         }

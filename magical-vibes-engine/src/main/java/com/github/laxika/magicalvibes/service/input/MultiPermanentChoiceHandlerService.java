@@ -22,6 +22,7 @@ import com.github.laxika.magicalvibes.model.effect.EffectDuration;
 import com.github.laxika.magicalvibes.model.effect.GainControlOfTargetEffect;
 import com.github.laxika.magicalvibes.model.effect.GlobalDamageMultiplyingEffect;
 import com.github.laxika.magicalvibes.service.GameBroadcastService;
+import com.github.laxika.magicalvibes.service.event.GameMutationCoordinator;
 import com.github.laxika.magicalvibes.service.state.StateBasedActionService;
 import com.github.laxika.magicalvibes.service.trigger.TriggerCollectionService;
 import com.github.laxika.magicalvibes.service.turn.TurnProgressionService;
@@ -60,6 +61,7 @@ public class MultiPermanentChoiceHandlerService {
     private final InputCompletionService inputCompletionService;
     private final GameQueryService gameQueryService;
     private final GameBroadcastService gameBroadcastService;
+    private final GameMutationCoordinator mutationCoordinator;
     private final PermanentRemovalService permanentRemovalService;
     private final PlayerInputService playerInputService;
     private final StateBasedActionService stateBasedActionService;
@@ -382,7 +384,7 @@ public class MultiPermanentChoiceHandlerService {
                     gameData.pendingEffectResolutionIndex);
         }
 
-        gameBroadcastService.broadcastGameState(gameData);
+        mutationCoordinator.invalidateAllPlayerViews(gameData);
         turnProgressionService.resolveAutoPass(gameData);
     }
 
@@ -416,7 +418,7 @@ public class MultiPermanentChoiceHandlerService {
                     gameData.pendingEffectResolutionIndex);
         }
 
-        gameBroadcastService.broadcastGameState(gameData);
+        mutationCoordinator.invalidateAllPlayerViews(gameData);
         turnProgressionService.resolveAutoPass(gameData);
     }
 
@@ -481,7 +483,7 @@ public class MultiPermanentChoiceHandlerService {
                     gameData.pendingEffectResolutionIndex);
         }
 
-        gameBroadcastService.broadcastGameState(gameData);
+        mutationCoordinator.invalidateAllPlayerViews(gameData);
         turnProgressionService.resolveAutoPass(gameData);
     }
 
@@ -510,7 +512,7 @@ public class MultiPermanentChoiceHandlerService {
                     gameData.pendingEffectResolutionIndex);
         }
 
-        gameBroadcastService.broadcastGameState(gameData);
+        mutationCoordinator.invalidateAllPlayerViews(gameData);
         turnProgressionService.resolveAutoPass(gameData);
     }
 
@@ -570,7 +572,7 @@ public class MultiPermanentChoiceHandlerService {
                     gameData.pendingEffectResolutionIndex);
         }
 
-        gameBroadcastService.broadcastGameState(gameData);
+        mutationCoordinator.invalidateAllPlayerViews(gameData);
         turnProgressionService.resolveAutoPass(gameData);
     }
 
@@ -606,7 +608,7 @@ public class MultiPermanentChoiceHandlerService {
                     gameData.pendingEffectResolutionIndex);
         }
 
-        gameBroadcastService.broadcastGameState(gameData);
+        mutationCoordinator.invalidateAllPlayerViews(gameData);
         turnProgressionService.resolveAutoPass(gameData);
     }
 
@@ -648,7 +650,7 @@ public class MultiPermanentChoiceHandlerService {
                     gameData.pendingEffectResolutionIndex);
         }
 
-        gameBroadcastService.broadcastGameState(gameData);
+        mutationCoordinator.invalidateAllPlayerViews(gameData);
         turnProgressionService.resolveAutoPass(gameData);
     }
 
@@ -677,7 +679,7 @@ public class MultiPermanentChoiceHandlerService {
                     gameData.pendingEffectResolutionIndex);
         }
 
-        gameBroadcastService.broadcastGameState(gameData);
+        mutationCoordinator.invalidateAllPlayerViews(gameData);
         turnProgressionService.resolveAutoPass(gameData);
     }
 
@@ -716,7 +718,7 @@ public class MultiPermanentChoiceHandlerService {
                     gameData.pendingEffectResolutionIndex);
         }
 
-        gameBroadcastService.broadcastGameState(gameData);
+        mutationCoordinator.invalidateAllPlayerViews(gameData);
         turnProgressionService.resolveAutoPass(gameData);
     }
 
@@ -813,7 +815,7 @@ public class MultiPermanentChoiceHandlerService {
                     gameData.pendingEffectResolutionIndex);
         }
 
-        gameBroadcastService.broadcastGameState(gameData);
+        mutationCoordinator.invalidateAllPlayerViews(gameData);
         turnProgressionService.resolveAutoPass(gameData);
     }
 
@@ -837,7 +839,7 @@ public class MultiPermanentChoiceHandlerService {
                     gameData.pendingEffectResolutionIndex);
         }
 
-        gameBroadcastService.broadcastGameState(gameData);
+        mutationCoordinator.invalidateAllPlayerViews(gameData);
         turnProgressionService.resolveAutoPass(gameData);
     }
 
@@ -931,7 +933,7 @@ public class MultiPermanentChoiceHandlerService {
                     gameData.pendingEffectResolutionIndex);
         }
 
-        gameBroadcastService.broadcastGameState(gameData);
+        mutationCoordinator.invalidateAllPlayerViews(gameData);
     }
 
     private void handleTapSubtypeBoost(GameData gameData, UUID playerId, List<UUID> permanentIds,
@@ -1074,7 +1076,7 @@ public class MultiPermanentChoiceHandlerService {
                     gameData.pendingEffectResolutionIndex);
         }
 
-        gameBroadcastService.broadcastGameState(gameData);
+        mutationCoordinator.invalidateAllPlayerViews(gameData);
         turnProgressionService.resolveAutoPass(gameData);
     }
 
@@ -1154,7 +1156,7 @@ public class MultiPermanentChoiceHandlerService {
                     gameData.pendingEffectResolutionIndex);
         }
 
-        gameBroadcastService.broadcastGameState(gameData);
+        mutationCoordinator.invalidateAllPlayerViews(gameData);
         turnProgressionService.resolveAutoPass(gameData);
     }
 
@@ -1218,7 +1220,7 @@ public class MultiPermanentChoiceHandlerService {
                     gameData.pendingEffectResolutionIndex);
         }
 
-        gameBroadcastService.broadcastGameState(gameData);
+        mutationCoordinator.invalidateAllPlayerViews(gameData);
         turnProgressionService.resolveAutoPass(gameData);
     }
 
@@ -1300,7 +1302,7 @@ public class MultiPermanentChoiceHandlerService {
         }
 
         gameData.priorityPassedBy.clear();
-        gameBroadcastService.broadcastGameState(gameData);
+        mutationCoordinator.invalidateAllPlayerViews(gameData);
         turnProgressionService.resolveAutoPass(gameData);
     }
 

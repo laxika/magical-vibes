@@ -15,6 +15,7 @@ import com.github.laxika.magicalvibes.model.effect.CardEffect;
 import com.github.laxika.magicalvibes.model.effect.DealDamageToTargetOpponentAndUpToCreaturesThatPlayerControlsEffect;
 import com.github.laxika.magicalvibes.model.effect.DestroyOneOfTargetsAtRandomEffect;
 import com.github.laxika.magicalvibes.service.GameBroadcastService;
+import com.github.laxika.magicalvibes.service.event.GameMutationCoordinator;
 import com.github.laxika.magicalvibes.service.trigger.TriggerCollectionService;
 import com.github.laxika.magicalvibes.service.turn.TurnProgressionService;
 import com.github.laxika.magicalvibes.service.battlefield.ETBTokenTargetService;
@@ -41,6 +42,7 @@ public class PermanentChoiceTriggerHandlerService {
 
     private final GameQueryService gameQueryService;
     private final GameBroadcastService gameBroadcastService;
+    private final GameMutationCoordinator mutationCoordinator;
     private final TriggerCollectionService triggerCollectionService;
     private final PlayerInputService playerInputService;
     private final TurnProgressionService turnProgressionService;
@@ -609,7 +611,7 @@ public class PermanentChoiceTriggerHandlerService {
         }
 
         gameData.priorityPassedBy.clear();
-        gameBroadcastService.broadcastGameState(gameData);
+        mutationCoordinator.invalidateAllPlayerViews(gameData);
         turnProgressionService.resolveAutoPass(gameData);
     }
 
@@ -793,7 +795,7 @@ public class PermanentChoiceTriggerHandlerService {
         }
 
         gameData.priorityPassedBy.clear();
-        gameBroadcastService.broadcastGameState(gameData);
+        mutationCoordinator.invalidateAllPlayerViews(gameData);
         turnProgressionService.resolveAutoPass(gameData);
     }
 
@@ -863,7 +865,7 @@ public class PermanentChoiceTriggerHandlerService {
         }
 
         gameData.priorityPassedBy.clear();
-        gameBroadcastService.broadcastGameState(gameData);
+        mutationCoordinator.invalidateAllPlayerViews(gameData);
         turnProgressionService.resolveAutoPass(gameData);
     }
 
@@ -911,7 +913,7 @@ public class PermanentChoiceTriggerHandlerService {
         }
 
         gameData.priorityPassedBy.clear();
-        gameBroadcastService.broadcastGameState(gameData);
+        mutationCoordinator.invalidateAllPlayerViews(gameData);
         turnProgressionService.resolveAutoPass(gameData);
     }
 
@@ -985,7 +987,7 @@ public class PermanentChoiceTriggerHandlerService {
         }
 
         gameData.priorityPassedBy.clear();
-        gameBroadcastService.broadcastGameState(gameData);
+        mutationCoordinator.invalidateAllPlayerViews(gameData);
         turnProgressionService.resolveAutoPass(gameData);
     }
 
@@ -1066,7 +1068,7 @@ public class PermanentChoiceTriggerHandlerService {
         }
 
         gameData.priorityPassedBy.clear();
-        gameBroadcastService.broadcastGameState(gameData);
+        mutationCoordinator.invalidateAllPlayerViews(gameData);
         turnProgressionService.resolveAutoPass(gameData);
     }
 
@@ -1366,7 +1368,7 @@ public class PermanentChoiceTriggerHandlerService {
         }
 
         gameData.priorityPassedBy.clear();
-        gameBroadcastService.broadcastGameState(gameData);
+        mutationCoordinator.invalidateAllPlayerViews(gameData);
         turnProgressionService.resolveAutoPass(gameData);
     }
 
@@ -1400,7 +1402,7 @@ public class PermanentChoiceTriggerHandlerService {
         }
 
         gameData.priorityPassedBy.clear();
-        gameBroadcastService.broadcastGameState(gameData);
+        mutationCoordinator.invalidateAllPlayerViews(gameData);
         turnProgressionService.resolveAutoPass(gameData);
     }
 
@@ -1459,7 +1461,7 @@ public class PermanentChoiceTriggerHandlerService {
         }
 
         gameData.priorityPassedBy.clear();
-        gameBroadcastService.broadcastGameState(gameData);
+        mutationCoordinator.invalidateAllPlayerViews(gameData);
         turnProgressionService.resolveAutoPass(gameData);
     }
 
@@ -1504,7 +1506,7 @@ public class PermanentChoiceTriggerHandlerService {
         }
 
         gameData.priorityPassedBy.clear();
-        gameBroadcastService.broadcastGameState(gameData);
+        mutationCoordinator.invalidateAllPlayerViews(gameData);
         turnProgressionService.resolveAutoPass(gameData);
     }
 

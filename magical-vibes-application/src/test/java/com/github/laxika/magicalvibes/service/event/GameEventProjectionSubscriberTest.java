@@ -1,6 +1,7 @@
 package com.github.laxika.magicalvibes.service.event;
 
 import com.github.laxika.magicalvibes.model.GameData;
+import com.github.laxika.magicalvibes.model.GameLog;
 import com.github.laxika.magicalvibes.model.GameStatus;
 import com.github.laxika.magicalvibes.model.PendingInteraction;
 import com.github.laxika.magicalvibes.model.Player;
@@ -15,6 +16,7 @@ import com.github.laxika.magicalvibes.networking.message.InteractionPromptMessag
 import com.github.laxika.magicalvibes.networking.message.MulliganResolvedMessage;
 import com.github.laxika.magicalvibes.networking.message.RevealHandMessage;
 import com.github.laxika.magicalvibes.networking.message.SelectCardsToBottomMessage;
+import com.github.laxika.magicalvibes.networking.model.GameLogEntryView;
 import com.github.laxika.magicalvibes.networking.service.GameLogViewFactory;
 import com.github.laxika.magicalvibes.service.GameBroadcastService;
 import com.github.laxika.magicalvibes.service.GameMessageTransport;
@@ -37,7 +39,9 @@ import java.util.UUID;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatCode;
 import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.ArgumentMatchers.argThat;
 import static org.mockito.Mockito.mock;
+import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
 class GameEventProjectionSubscriberTest {
@@ -209,6 +213,51 @@ class GameEventProjectionSubscriberTest {
                     assertThat(delivery.playerId()).isEqualTo(player1Id);
                     assertThat(delivery.message()).isInstanceOf(InteractionPromptMessage.class);
                 });
+    }
+
+    @Test
+    void decisionBarrierPreservesBothStateMessagesWithoutDuplicatingLogEntries() {
+        registerAttackerPromptHandler();
+        gameData.interaction.beginInteraction(
+                new PendingInteraction.AttackerDeclaration(player2Id));
+        gameData.gameLog.add(GameLog.text("One new log entry."));
+        GameLogEntryView logEntry = mock(GameLogEntryView.class);
+        when(gameLogViewFactory.createAll(any())).thenReturn(List.of(logEntry));
+
+        GameStateMessage withLogs = stateMessage(player2Id, List.of(1));
+        GameStateMessage withoutLogs = stateMessage(player2Id, List.of(2));
+        when(gameViewProjectionFactory.createGameStateMessages(
+                any(), argThat(entries -> entries != null && !entries.isEmpty())))
+                .thenReturn(Map.of(player1Id, withLogs, player2Id, withLogs));
+        when(gameViewProjectionFactory.createGameStateMessages(
+                any(), argThat(entries -> entries != null && entries.isEmpty())))
+                .thenReturn(Map.of(player1Id, withoutLogs, player2Id, withoutLogs));
+
+        GameMutationCoordinator coordinator = coordinator();
+        coordinator.mutate(gameData, UUID.randomUUID(), () -> {
+            coordinator.invalidateAllPlayerViews(gameData);
+            coordinator.emit(gameData,
+                    new GameEventFact.DecisionRequested(
+                            gameData.interaction.activeDecisionId(),
+                            player2Id,
+                            GameEventFact.DecisionKind.ATTACKER_DECLARATION),
+                    GameEventAudience.player(player2Id));
+            coordinator.invalidateAllPlayerViews(gameData);
+        });
+
+        assertThat(messagesFor(player2Id)).containsExactly(
+                withLogs,
+                sessions.deliveries.stream()
+                        .filter(delivery -> delivery.playerId().equals(player2Id))
+                        .map(Delivery::message)
+                        .filter(InteractionPromptMessage.class::isInstance)
+                        .findFirst()
+                        .orElseThrow(),
+                withoutLogs);
+        verify(gameViewProjectionFactory).createGameStateMessages(
+                gameData, List.of(logEntry));
+        verify(gameViewProjectionFactory).createGameStateMessages(
+                gameData, List.of());
     }
 
     private void registerAttackerPromptHandler() {

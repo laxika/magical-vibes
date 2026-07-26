@@ -8,6 +8,7 @@ import com.github.laxika.magicalvibes.service.graveyard.GraveyardService;
 import com.github.laxika.magicalvibes.service.battlefield.GameQueryService;
 import com.github.laxika.magicalvibes.service.effect.ConditionContext;
 import com.github.laxika.magicalvibes.service.effect.ConditionEvaluationService;
+import com.github.laxika.magicalvibes.service.event.GameMutationCoordinator;
 import com.github.laxika.magicalvibes.service.filter.PredicateEvaluationService;
 import com.github.laxika.magicalvibes.service.battlefield.PermanentRemovalService;
 import com.github.laxika.magicalvibes.service.input.PlayerInputService;
@@ -97,8 +98,6 @@ import com.github.laxika.magicalvibes.model.effect.UntapMultiplePermanentsCost;
 import com.github.laxika.magicalvibes.model.effect.TapXPermanentsCost;
 import com.github.laxika.magicalvibes.model.effect.TapTwoCreaturesSharingTypeCost;
 import com.github.laxika.magicalvibes.model.effect.CrewCost;
-import com.github.laxika.magicalvibes.networking.SessionManager;
-import com.github.laxika.magicalvibes.networking.message.InteractionPromptMessage;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
@@ -141,11 +140,11 @@ public class AbilityActivationService {
     private final TargetLegalityService targetLegalityService;
     private final ActivatedAbilityExecutionService activatedAbilityExecutionService;
     private final PlayerInputService playerInputService;
-    private final SessionManager sessionManager;
     private final PermanentRemovalService permanentRemovalService;
     private final TriggerCollectionService triggerCollectionService;
     private final ExileService exileService;
     private final com.github.laxika.magicalvibes.service.interaction.InteractionHandlerRegistry interactionHandlerRegistry;
+    private final GameMutationCoordinator mutationCoordinator;
 
     /**
      * Taps a permanent for its mana ability (ON_TAP effects), adding the produced mana to the player's pool.
@@ -317,7 +316,7 @@ public class AbilityActivationService {
 
         recordRevertableManaActivation(gameData, playerId, permanent, poolBefore, creatureManaBefore, deferred);
 
-        gameBroadcastService.broadcastGameState(gameData);
+        mutationCoordinator.invalidateAllPlayerViews(gameData);
     }
 
     /** Per-color snapshot of the plain pool, for computing what a mana activation added. */
@@ -410,7 +409,7 @@ public class AbilityActivationService {
             gameBroadcastService.logAndBroadcast(gameData, GameLog.text(logEntry));
             log.info("Game {} - {} reverts their mana ability activations", gameData.id, player.getUsername());
         }
-        gameBroadcastService.broadcastGameState(gameData);
+        mutationCoordinator.invalidateAllPlayerViews(gameData);
     }
 
     /**
@@ -532,7 +531,7 @@ public class AbilityActivationService {
             gameData.pendingManaAbilityTriggers.addAll(deferred);
         }
 
-        gameBroadcastService.broadcastGameState(gameData);
+        mutationCoordinator.invalidateAllPlayerViews(gameData);
     }
 
     /**
@@ -562,7 +561,7 @@ public class AbilityActivationService {
         gameBroadcastService.logAndBroadcast(gameData, GameLog.text(logEntry));
         log.info("Game {} - {} pays 1 life for colorless mana", gameData.id, player.getUsername());
 
-        gameBroadcastService.broadcastGameState(gameData);
+        mutationCoordinator.invalidateAllPlayerViews(gameData);
     }
 
     /**
@@ -647,7 +646,7 @@ public class AbilityActivationService {
         if (!gameData.pendingMayAbilities.isEmpty()) {
             playerInputService.processNextMayAbility(gameData);
         }
-        gameBroadcastService.broadcastGameState(gameData);
+        mutationCoordinator.invalidateAllPlayerViews(gameData);
     }
 
     /**
@@ -887,7 +886,7 @@ public class AbilityActivationService {
                 playerId, card, graveyardCardIndex, abilityIndex, handler.costEffect(), required));
         playerInputService.beginPermanentChoice(gameData, playerId, validIds,
                 handler.getPromptMessage(required));
-        gameBroadcastService.broadcastGameState(gameData);
+        mutationCoordinator.invalidateAllPlayerViews(gameData);
         return true;
     }
 
@@ -940,7 +939,7 @@ public class AbilityActivationService {
                         context.costEffect(), remaining));
                 playerInputService.beginPermanentChoice(gameData, playerId, validIds,
                         handler.getPromptMessage(remaining));
-                gameBroadcastService.broadcastGameState(gameData);
+                mutationCoordinator.invalidateAllPlayerViews(gameData);
                 return;
             }
         }
@@ -984,7 +983,7 @@ public class AbilityActivationService {
         }
 
         gameData.priorityPassedBy.clear();
-        gameBroadcastService.broadcastGameState(gameData);
+        mutationCoordinator.invalidateAllPlayerViews(gameData);
     }
 
     /**
@@ -1099,7 +1098,7 @@ public class AbilityActivationService {
         if (!gameData.pendingMayAbilities.isEmpty()) {
             playerInputService.processNextMayAbility(gameData);
         }
-        gameBroadcastService.broadcastGameState(gameData);
+        mutationCoordinator.invalidateAllPlayerViews(gameData);
     }
 
     /**
@@ -1213,7 +1212,7 @@ public class AbilityActivationService {
         if (!gameData.pendingMayAbilities.isEmpty()) {
             playerInputService.processNextMayAbility(gameData);
         }
-        gameBroadcastService.broadcastGameState(gameData);
+        mutationCoordinator.invalidateAllPlayerViews(gameData);
     }
 
     /**
@@ -1244,13 +1243,7 @@ public class AbilityActivationService {
         if (cardChoice.validIndices() == null || !cardChoice.validIndices().contains(cardIndex)) {
             // Invalid index — re-prompt the discard cost choice
             log.warn("Game {} - {} sent invalid discard cost card index {}, re-prompting", gameData.id, player.getUsername(), cardIndex);
-            PendingAbilityActivation pending = gameData.pendingAbilityActivation;
-            String costLabel = pending.discardCostLabel();
-            String labelText = costLabel != null ? costLabel + " " : "";
-            sessionManager.sendToPlayer(player.getId(), InteractionPromptMessage.cardIndexPick(
-                    new ArrayList<>(cardChoice.validIndices()),
-                    "Choose a " + labelText + "card to discard as an activation cost.", false
-            ));
+            interactionHandlerRegistry.requestActiveDecision(gameData);
             return;
         }
 
@@ -1334,13 +1327,7 @@ public class AbilityActivationService {
 
         if (cardChoice.validIndices() == null || !cardChoice.validIndices().contains(cardIndex)) {
             // Invalid index — re-prompt the discard cost choice.
-            String labelText = discardCost.label() != null ? discardCost.label() + " " : "";
-            String prompt = pending.remainingDiscards() > 1
-                    ? "Choose a " + labelText + "card to discard as an activation cost ("
-                    + pending.remainingDiscards() + " remaining)."
-                    : "Choose a " + labelText + "card to discard as an activation cost.";
-            sessionManager.sendToPlayer(player.getId(), InteractionPromptMessage.cardIndexPick(
-                    new ArrayList<>(cardChoice.validIndices()), prompt, false));
+            interactionHandlerRegistry.requestActiveDecision(gameData);
             return;
         }
 
@@ -1834,7 +1821,7 @@ public class AbilityActivationService {
                 handler.costEffect(), required));
         playerInputService.beginPermanentChoice(gameData, playerId, validIds,
                 handler.getPromptMessage(required));
-        gameBroadcastService.broadcastGameState(gameData);
+        mutationCoordinator.invalidateAllPlayerViews(gameData);
         return true;
     }
 
@@ -1923,7 +1910,7 @@ public class AbilityActivationService {
                         context.targetId(), context.targetZone(), context.costEffect(), remaining, chosenSoFar));
                 playerInputService.beginPermanentChoice(gameData, playerId, validIds,
                         handler.getPromptMessage(remaining));
-                gameBroadcastService.broadcastGameState(gameData);
+                mutationCoordinator.invalidateAllPlayerViews(gameData);
                 return;
             }
         }

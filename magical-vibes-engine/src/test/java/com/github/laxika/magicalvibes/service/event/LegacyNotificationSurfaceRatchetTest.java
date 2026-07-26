@@ -39,6 +39,10 @@ class LegacyNotificationSurfaceRatchetTest {
             "GameOutcomeService.java",
             "GameTimeoutService.java",
             "ReconnectionService.java",
+            "StackResolutionService.java",
+            "spell/SpellCastingService.java",
+            "ability/AbilityActivationService.java",
+            "ability/ActivatedAbilityExecutionService.java",
             "turn/AutoPassService.java",
             "turn/TurnProgressionService.java",
             "effect/normalfx/KarnRestartGameEffectHandler.java");
@@ -47,16 +51,12 @@ class LegacyNotificationSurfaceRatchetTest {
 
     static {
         BASELINE.put(LegacySurface.BROADCAST_GAME_STATE, Map.of(
-                ROOT_FAMILY, 3,
-                "ability", 14,
+                ROOT_FAMILY, 1,
                 "effect/normalfx", 15,
-                "input", 58,
-                "interaction", 3,
-                "spell", 3));
+                "interaction", 3));
 
         BASELINE.put(LegacySurface.SESSION_SEND, Map.of(
                 ROOT_FAMILY, 1,
-                "ability", 2,
                 "effect/normalfx", 7,
                 "interaction", 33));
 

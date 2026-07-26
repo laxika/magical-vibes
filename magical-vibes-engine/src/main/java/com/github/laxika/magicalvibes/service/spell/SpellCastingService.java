@@ -7,6 +7,7 @@ import com.github.laxika.magicalvibes.service.battlefield.GameQueryService;
 import com.github.laxika.magicalvibes.service.cast.CastingCostService;
 import com.github.laxika.magicalvibes.service.cast.CastingPermissionService;
 import com.github.laxika.magicalvibes.service.effect.cost.AdditionalSpellCostService;
+import com.github.laxika.magicalvibes.service.event.GameMutationCoordinator;
 import com.github.laxika.magicalvibes.service.filter.PredicateEvaluationService;
 import com.github.laxika.magicalvibes.service.GameBroadcastService;
 import com.github.laxika.magicalvibes.service.target.TargetLegalityService;
@@ -119,6 +120,7 @@ public class SpellCastingService {
     private final com.github.laxika.magicalvibes.service.effect.AmountEvaluationService amountEvaluationService;
     private final com.github.laxika.magicalvibes.service.effect.ConditionEvaluationService conditionEvaluationService;
     private final AdditionalSpellCostService additionalSpellCostService;
+    private final GameMutationCoordinator mutationCoordinator;
 
     // --- Helper records ---
 
@@ -2731,7 +2733,7 @@ public class SpellCastingService {
 
         triggerCollectionService.checkSpellCastTriggers(gameData, card, playerId);
         triggerCollectionService.checkBecomesTargetOfSpellTriggers(gameData);
-        gameBroadcastService.broadcastGameState(gameData);
+        mutationCoordinator.invalidateAllPlayerViews(gameData);
         turnProgressionService.resolveAutoPass(gameData);
     }
 
@@ -2828,7 +2830,7 @@ public class SpellCastingService {
 
         triggerCollectionService.checkSpellCastTriggers(gameData, card, playerId);
         triggerCollectionService.checkBecomesTargetOfSpellTriggers(gameData);
-        gameBroadcastService.broadcastGameState(gameData);
+        mutationCoordinator.invalidateAllPlayerViews(gameData);
         turnProgressionService.resolveAutoPass(gameData);
     }
 
@@ -3471,7 +3473,7 @@ public class SpellCastingService {
             gameData.stack.addAll(gameData.pendingManaAbilityTriggers);
             gameData.pendingManaAbilityTriggers.clear();
         }
-        gameBroadcastService.broadcastGameState(gameData);
+        mutationCoordinator.invalidateAllPlayerViews(gameData);
         turnProgressionService.resolveAutoPass(gameData);
     }
 
