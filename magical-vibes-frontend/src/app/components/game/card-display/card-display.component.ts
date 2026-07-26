@@ -407,6 +407,15 @@ export class CardDisplayComponent implements OnInit, OnChanges, OnDestroy, After
     return distinctGrantedAbilityTexts(this.permanent?.grantedAbilities ?? []);
   }
 
+  /** Whether the token frame has anything to print in its rules band. A token's own
+      keywords are written into cardText when the card is built (a token has no oracle
+      text), and granted keywords or abilities can be added on top of them. */
+  get hasTokenRulesText(): boolean {
+    return !!this.card.cardText
+      || this.effectiveKeywords.length > 0
+      || this.grantedAbilityTexts.length > 0;
+  }
+
   get isBuffed(): boolean {
     return this.permanent != null &&
       (this.permanent.powerModifier > 0 || this.permanent.toughnessModifier > 0);

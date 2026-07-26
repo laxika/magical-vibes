@@ -97,6 +97,19 @@
   top: -0.21em;
 }
 
+/* A symbol used as a standalone icon rather than set inline in a line of text.
+   Both corrections above exist to seat a symbol against surrounding prose: the lift
+   assumes there is a baseline and a cap height to align to, and the trailing margin
+   assumes a next character to stand off from. Put the same symbol alone in a box that
+   already centres its one child and neither assumption holds — the lift becomes a plain
+   offset upward (0.21em of the symbol's own em, which is 2.75px in the mana pool's 17px
+   sockets, plainly off-centre in a 25px circle) and the margin pushes it left of centre.
+   Zero both out and let the container do the centring it was going to do anyway. */
+.mana-sym-icon .mana-sym.ms-cost {
+  top: 0;
+  margin-right: 0;
+}
+
 /* The mana pips are drawn smaller inside their disc than the printed symbol is, and the
    difference is big enough to see: measuring painted ink against disc diameter, this font fills
    77% where the Scryfall SVGs this replaced fill 80% ({U}) to 96% ({W}). The digits are the

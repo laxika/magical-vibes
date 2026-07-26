@@ -1,4 +1,4 @@
-import { Component, Input, Output, EventEmitter, signal, inject, HostListener, ViewChild, ElementRef, OnChanges, SimpleChanges, AfterViewChecked } from '@angular/core';
+import { Component, Input, Output, EventEmitter, signal, inject, HostListener, ViewChild, ElementRef, OnChanges, OnDestroy, SimpleChanges, AfterViewChecked } from '@angular/core';
 import { DomSanitizer, SafeHtml } from '@angular/platform-browser';
 import { Card, GameLogEntry, Permanent, StackEntry } from '../../../services/websocket.service';
 import { GameChoiceService } from '../../../services/game-choice.service';
@@ -12,7 +12,7 @@ import { CardDisplayComponent } from '../card-display/card-display.component';
   templateUrl: './side-panel.component.html',
   styleUrl: './side-panel.component.css'
 })
-export class SidePanelComponent implements OnChanges, AfterViewChecked {
+export class SidePanelComponent implements OnChanges, OnDestroy, AfterViewChecked {
   readonly choice = inject(GameChoiceService);
   private sanitizer = inject(DomSanitizer);
 
@@ -101,7 +101,38 @@ export class SidePanelComponent implements OnChanges, AfterViewChecked {
   private shouldScrollLog = false;
   private seenLogCount = 0;
 
+  /* A life total changing is the most consequential thing that happens off the board, and
+     it used to happen silently — the number was simply different the next time you looked.
+     Both badges render from the same markup, so the pending deltas are keyed by player
+     index. The chip is absolutely positioned and purely additive: it never moves the row. */
+  private static readonly LIFE_DELTA_MS = 1200;
+  private readonly lifeDeltas = signal<Record<number, number | null>>({ 0: null, 1: null });
+  private readonly lifeDeltaTimers = new Map<number, ReturnType<typeof setTimeout>>();
+
+  get opponentBadgeLifeDelta(): number | null { return this.lifeDeltas()[this.opponentPlayerIndex]; }
+  get myBadgeLifeDelta(): number | null { return this.lifeDeltas()[this.myPlayerIndex]; }
+
+  private trackLifeChange(changes: SimpleChanges, input: string, playerIndex: number): void {
+    const change = changes[input];
+    if (!change || change.firstChange) return;
+    const delta = change.currentValue - change.previousValue;
+    if (!delta) return;
+    this.lifeDeltas.update(d => ({ ...d, [playerIndex]: delta }));
+    const running = this.lifeDeltaTimers.get(playerIndex);
+    if (running != null) clearTimeout(running);
+    this.lifeDeltaTimers.set(playerIndex, setTimeout(() => {
+      this.lifeDeltas.update(d => ({ ...d, [playerIndex]: null }));
+    }, SidePanelComponent.LIFE_DELTA_MS));
+  }
+
+  ngOnDestroy(): void {
+    this.lifeDeltaTimers.forEach(t => clearTimeout(t));
+    this.lifeDeltaTimers.clear();
+  }
+
   ngOnChanges(changes: SimpleChanges): void {
+    this.trackLifeChange(changes, 'lifeTotal0', 0);
+    this.trackLifeChange(changes, 'lifeTotal1', 1);
     if (changes['gameLog']) {
       if (this.activeTab() === 'log') {
         this.seenLogCount = this.gameLog.length;

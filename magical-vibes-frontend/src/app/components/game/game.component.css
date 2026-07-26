@@ -121,6 +121,13 @@
   box-shadow: 0 0 12px rgba(192, 64, 64, 0.5);
 }
 
+/* Three blue states that used to be one identical outline, and so said the same
+   thing about three different situations. They are now separated the way the red
+   attacker states already are — weight for how committed the block is, dashes for
+   a declaration-time annotation rather than a settled fact:
+     .blocking         committed block, combat is locked in       solid, 2px
+     .assigned-blocker our own pick during declaration            solid, 3px, brighter
+     .blocked-attacker note on the ENEMY card during declaration  dashed + inner ring */
 .card.blocking {
   outline: 2px solid #5878a0;
   box-shadow: 0 0 12px rgba(88, 120, 160, 0.5);
@@ -157,17 +164,20 @@
   cursor: pointer;
 }
 
+/* Our own declaration-time commitment: thicker and brighter than a committed block,
+   the same way .selected-attacker outweighs .attacking. */
 .card.assigned-blocker {
-  outline: 2px solid #5878a0;
-  box-shadow: 0 0 12px rgba(88, 120, 160, 0.5);
+  outline: 3px solid #7aa8d8;
+  box-shadow: 0 0 16px rgba(122, 168, 216, 0.7);
 }
 
-/* An attacker that already has a blocker assigned during declaration.
-   Declared before .block-target so the dashed "assign here" cue wins while a
-   blocker is being pointed. */
+/* An attacker that already has a blocker assigned during declaration. Dashed like the
+   other in-progress cues (nothing is committed yet), with an inner ring that reads as
+   the attacker being walled off. Declared before .block-target so the dashed red
+   "assign here" cue still wins while a blocker is being pointed. */
 .card.blocked-attacker {
-  outline: 2px solid #5878a0;
-  box-shadow: 0 0 12px rgba(88, 120, 160, 0.5);
+  outline: 2px dashed #5878a0;
+  box-shadow: 0 0 12px rgba(88, 120, 160, 0.45), inset 0 0 0 3px rgba(88, 120, 160, 0.35);
 }
 
 .card.block-target {
@@ -266,6 +276,23 @@
 
 .surrender-confirm-card h2 {
   color: var(--color-red-primary);
+}
+
+/* Amber rather than the game-over red: the game is not over, we just cannot see it. */
+.connection-lost-card {
+  border-color: var(--color-gold);
+  box-shadow: 0 0 30px rgba(200, 169, 81, 0.3), 0 20px 60px rgba(0, 0, 0, 0.5);
+}
+
+.connection-lost-card h2 {
+  color: #8a6d1f;
+}
+
+.connection-lost-hint {
+  margin: -16px auto 28px;
+  max-width: 34ch;
+  font-size: 15px;
+  color: var(--color-text-muted);
 }
 
 .surrender-confirm-buttons {
@@ -462,17 +489,33 @@
   cursor: pointer;
 }
 
+/* The two panels that float over the board (the ability picker anchored to a
+   permanent, and the combat damage assigner) share one treatment, taken from the
+   shortcuts popover on the phase rail: dark wood, a tan hairline, gold for the
+   heading. They previously ran on an indigo palette and a Tailwind slate palette
+   respectively, neither of which appears anywhere else in the app.
+   The accents below are the lighter variants the card-corner badges already use —
+   the parchment-panel red and gold are too dark to read on near-black. */
+.ability-popup,
+.combat-damage-popup {
+  --panel-border: var(--color-border-tan);
+  --panel-rule: rgba(196, 168, 130, 0.25);
+  --panel-text-muted: #b9a483;
+  --panel-accent-red: #d0452f;
+  background: var(--gradient-dark-wood);
+  border: 1px solid var(--panel-border);
+  color: var(--color-parchment);
+  box-shadow: 0 6px 20px rgba(0, 0, 0, 0.6);
+}
+
 .ability-popup {
   position: absolute;
   bottom: calc(100% + 6px);
   left: 50%;
   transform: translateX(-50%);
   z-index: 100;
-  background: linear-gradient(135deg, #4b0082, #2e0854);
-  border: 2px solid #6a3d9a;
-  border-radius: 6px;
+  border-radius: 4px;
   padding: 8px;
-  box-shadow: 0 6px 20px rgba(0, 0, 0, 0.6);
   display: flex;
   flex-direction: column;
   gap: 4px;
@@ -484,29 +527,30 @@
   font-size: 11px;
   font-weight: 700;
   font-family: var(--font-display);
-  color: #c9a84c;
+  color: var(--color-gold);
   letter-spacing: 0.5px;
   padding-bottom: 4px;
-  border-bottom: 1px solid rgba(255, 255, 255, 0.15);
+  border-bottom: 1px solid var(--panel-rule);
   margin-bottom: 2px;
 }
 
 .ability-popup-btn {
   padding: 5px 10px;
-  border: 1px solid rgba(255, 255, 255, 0.3);
-  border-radius: 4px;
+  border: 1px solid var(--panel-rule);
+  border-radius: 3px;
   font-size: 12px;
   font-weight: 600;
   font-family: var(--font-display);
   color: var(--color-parchment);
-  background: rgba(255, 255, 255, 0.08);
+  background: rgba(0, 0, 0, 0.3);
   cursor: pointer;
   text-align: left;
-  transition: background 0.15s;
+  transition: background 0.15s, border-color 0.15s;
 }
 
 .ability-popup-btn:hover:not(:disabled) {
-  background: rgba(255, 255, 255, 0.18);
+  background: rgba(0, 0, 0, 0.5);
+  border-color: var(--color-gold);
 }
 
 .ability-popup-btn:disabled {
@@ -516,9 +560,9 @@
 
 .ability-popup-cancel {
   margin-top: 2px;
-  border-top: 1px solid rgba(255, 255, 255, 0.15);
+  border-top: 1px solid var(--panel-rule);
   padding-top: 6px;
-  color: #d9a0a0;
+  color: var(--panel-accent-red);
 }
 
 /* Targeting styles */
@@ -604,10 +648,13 @@
   margin-bottom: 12px;
 }
 
+/* These render inside .reveal-hand-card, which is parchment with blue accents, so they
+   use the app's blue/red/brown rather than the flat-UI palette they arrived with. */
 .reorder-label {
   font-size: 12px;
   font-weight: 600;
-  color: #2c3e50;
+  font-family: var(--font-display);
+  color: var(--color-text-brown);
   text-transform: uppercase;
   letter-spacing: 1px;
   margin-bottom: 8px;
@@ -622,13 +669,13 @@
 
 .reorder-card.available {
   cursor: pointer;
-  outline: 2px dashed #2980b9;
-  box-shadow: 0 0 8px rgba(41, 128, 185, 0.4);
+  outline: 2px dashed var(--color-blue-primary);
+  box-shadow: 0 0 8px rgba(44, 94, 162, 0.4);
 }
 
 .reorder-card.available:hover {
-  outline: 2px solid #2980b9;
-  box-shadow: 0 0 16px rgba(41, 128, 185, 0.6);
+  outline: 2px solid var(--color-blue-primary);
+  box-shadow: 0 0 16px rgba(44, 94, 162, 0.6);
   transform: translateY(-4px);
 }
 
@@ -642,12 +689,15 @@
   left: -8px;
   width: 24px;
   height: 24px;
-  background: #2980b9;
-  color: white;
+  background: var(--color-blue-primary);
+  color: var(--color-parchment);
+  border: 1px solid var(--color-blue-dark);
+  box-sizing: border-box;
   border-radius: 50%;
   display: flex;
   align-items: center;
   justify-content: center;
+  font-family: var(--font-display);
   font-size: 12px;
   font-weight: 700;
   z-index: 2;
@@ -672,33 +722,37 @@
   margin-top: 4px;
 }
 
+/* On parchment, so they carry their own tinted border — the old translucent white
+   one was invisible against the panel. */
 .btn-scry-top, .btn-scry-bottom {
   padding: 4px 12px;
-  border: 1px solid rgba(255, 255, 255, 0.4);
+  border: 1px solid currentColor;
   border-radius: 3px;
+  font-family: var(--font-display);
   font-size: 11px;
   font-weight: 700;
+  letter-spacing: 0.5px;
   text-transform: uppercase;
   cursor: pointer;
   transition: background 0.15s;
 }
 
 .btn-scry-top {
-  background: rgba(41, 128, 185, 0.3);
-  color: #2980b9;
+  background: rgba(44, 94, 162, 0.16);
+  color: var(--color-blue-primary);
 }
 
 .btn-scry-top:hover {
-  background: rgba(41, 128, 185, 0.5);
+  background: rgba(44, 94, 162, 0.32);
 }
 
 .btn-scry-bottom {
-  background: rgba(192, 57, 43, 0.3);
-  color: #c0392b;
+  background: rgba(139, 26, 26, 0.16);
+  color: var(--color-red-primary);
 }
 
 .btn-scry-bottom:hover {
-  background: rgba(192, 57, 43, 0.5);
+  background: rgba(139, 26, 26, 0.32);
 }
 
 .graveyard-choice-card {
@@ -725,10 +779,8 @@
   flex-direction: column;
   gap: 10px;
   padding: 16px;
-  background: rgba(0, 0, 0, 0.9);
-  border: 2px solid rgba(255, 255, 255, 0.15);
-  border-radius: 8px;
-  position: absolute;
+  border-radius: 4px;
+  position: fixed;
   top: 50%;
   left: 50%;
   transform: translate(-50%, -50%);
@@ -742,7 +794,7 @@
   align-items: center;
   gap: 4px;
   padding-bottom: 8px;
-  border-bottom: 1px solid rgba(255, 255, 255, 0.15);
+  border-bottom: 1px solid var(--panel-rule);
 }
 
 .combat-damage-title {
@@ -754,7 +806,7 @@
 }
 
 .combat-damage-info {
-  color: #fbbf24;
+  color: var(--color-gold);
   font-size: 13px;
   font-weight: 600;
 }
@@ -770,33 +822,34 @@
   align-items: center;
   gap: 8px;
   padding: 8px 12px;
-  background: rgba(255, 255, 255, 0.1);
-  border-radius: 4px;
+  background: rgba(0, 0, 0, 0.3);
+  border: 1px solid var(--panel-rule);
+  border-radius: 3px;
 }
 
 .combat-damage-target.is-player {
-  border: 1px solid #f59e0b;
+  border-color: var(--color-gold);
 }
 
 .combat-damage-target.needs-more-damage {
-  border: 1px solid #ef4444;
-  background: rgba(239, 68, 68, 0.12);
+  border-color: var(--panel-accent-red);
+  background: rgba(208, 69, 47, 0.14);
 }
 
 .target-min-damage {
-  color: #ef4444;
+  color: var(--panel-accent-red);
   font-size: 0.85em;
   font-weight: 600;
 }
 
 .target-name {
   flex: 1;
-  color: #e2e8f0;
+  color: var(--color-parchment);
   font-weight: 500;
 }
 
 .target-toughness {
-  color: #94a3b8;
+  color: var(--panel-text-muted);
   font-size: 0.85em;
 }
 

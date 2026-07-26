@@ -304,172 +304,137 @@
       </div>
     </div>
 
+    <!-- One definition for every permanent on the board. The four call sites below
+         (opponent lands/creatures, then my creatures/lands) differed only in whose
+         battlefield the permanent sits on and whether it takes part in combat, so they
+         now pass `mine` and `creature` instead of repeating ~70 lines of markup each.
+         Rendered through <ng-container>, which emits no element of its own, so the DOM
+         stays exactly what the zoom fit model and updateCombatShifts() measure. -->
+    <ng-template #permanentStack let-ip let-mine="mine" let-creature="creature">
+      <div class="permanent-stack" [attr.data-combat-id]="creature ? ip.perm.id : null"
+        animate.enter="permanent-enter" animate.leave="permanent-leave">
+        @for (aura of getAttachedAuras(ip.perm.id); track aura.perm.id) {
+          <app-card-display
+            [card]="aura.perm.card"
+            [permanent]="aura.perm"
+            class="attached-aura"
+            [style.--card-shift-x]="creature ? combatShift(ip.perm.id) : null"
+            [class.targetable]="(choice.targeting.selectingTarget || choice.targeting.multiTargeting) && choice.targeting.isValidTarget(aura.perm)"
+            (click)="onAuraClick(aura)"
+            (mouseenter)="onCardHover(aura.perm.card, aura.perm, $event)"
+            (mouseleave)="onCardHoverEnd()" />
+        }
+        @for (ec of exiledWithCards(ip.perm); track ec.id) {
+          <app-card-display
+            [card]="ec"
+            class="attached-aura exiled-with-card"
+            [style.--card-shift-x]="creature ? combatShift(ip.perm.id) : null"
+            (mouseenter)="onCardHover(ec)"
+            (mouseleave)="onCardHoverEnd()" />
+        }
+        @for (fc of faceDownExiledCards(ip.perm); track fc.id) {
+          <app-card-display
+            [card]="fc"
+            class="attached-aura exiled-with-card face-down-visible"
+            [style.--card-shift-x]="creature ? combatShift(ip.perm.id) : null"
+            (mouseenter)="onCardHover(fc)"
+            (mouseleave)="onCardHoverEnd()" />
+        }
+        @for (slot of faceDownExiledSlots(ip.perm); track slot) {
+          <div class="card attached-aura face-down-exiled-card" [style.--card-shift-x]="creature ? combatShift(ip.perm.id) : null"></div>
+        }
+        <app-card-display
+          [card]="ip.perm.card"
+          [permanent]="ip.perm"
+          [class.tapped]="ip.perm.tapped"
+          [class.tappable]="mine && ((choice.targeting.canTapPermanent(ip.originalIndex) && !declaringAttackers() && !declaringBlockers()) || choice.canTapForMana(ip.perm) || (declaringAttackers() && attackTaxPerCreature() > 0 && !canAttack(ip.originalIndex) && canTapPermanentForMana(ip.perm)))"
+          [class.casting-pending]="mine && choice.targeting.payingForAbility && choice.targeting.pendingActivationPermanentId === ip.perm.id"
+          [class.summoning-sick]="creature && ip.perm.summoningSick"
+          [class.attacking]="creature && ip.perm.attacking"
+          [class.blocking]="creature && ip.perm.blocking"
+          [class.combat-nudge]="creature && (mine ? (isAttackingCreature(ip.originalIndex, true) || isBlockingCreature(ip.originalIndex, true)) : (ip.perm.attacking || ip.perm.blocking))"
+          [style.--card-shift-x]="creature ? combatShift(ip.perm.id) : null"
+          [class.can-attack]="mine && creature && canAttack(ip.originalIndex) && !isSelectedAttacker(ip.originalIndex)"
+          [class.selected-attacker]="mine && creature && declaringAttackers() && isSelectedAttacker(ip.originalIndex)"
+          [class.must-attack]="mine && creature && mustAttackIndices().has(ip.originalIndex)"
+          [class.can-block]="mine && creature && canBlock(ip.originalIndex) && !isAssignedBlocker(ip.originalIndex) && selectedBlockerIndex() !== ip.originalIndex"
+          [class.selected-blocker]="mine && creature && selectedBlockerIndex() === ip.originalIndex"
+          [class.assigned-blocker]="mine && creature && isAssignedBlocker(ip.originalIndex)"
+          [class.block-target]="!mine && creature && isBlockTarget(ip.originalIndex)"
+          [class.blocked-attacker]="!mine && creature && declaringBlockers() && isAttackerBlocked(ip.originalIndex)"
+          [class.targetable]="((choice.targeting.selectingTarget || choice.targeting.multiTargeting) && choice.targeting.isValidTarget(ip.perm)) || (creature && choice.damage.distributingDamage && ip.perm.attacking)"
+          [class.stack-targeted]="stackTargetId() === ip.perm.id"
+          [class.choosable-permanent]="(choice.choosingPermanent && choice.choosablePermanentIds().has(ip.perm.id)) || (choice.choosingMultiplePermanents && choice.multiPermanentChoiceIds().has(ip.perm.id))"
+          [class.selected-multi-permanent]="choice.choosingMultiplePermanents && choice.multiPermanentSelectedIds().has(ip.perm.id)"
+          [class.alternate-cost-selected]="choice.targeting.selectingAlternateCostCreatures && choice.targeting.isAlternateCostSelected(ip.perm.id)"
+          (click)="onPermanentClick(ip, mine, $event)"
+          (contextmenu)="onPermanentContextMenu($event, ip, creature)"
+          (mouseenter)="onCardHover(ip.perm.card, ip.perm, $event)"
+          (mouseleave)="onCardHoverEnd()">
+          @if (creature) {
+            @if (mine ? isAttackingCreature(ip.originalIndex, true) : ip.perm.attacking) {
+              <div badge-tl class="card-combat-badge attacking-badge">Attacking</div>
+            }
+            @if (mine && declaringAttackers() && isSelectedAttacker(ip.originalIndex) && availableAttackTargets().length > 1) {
+              <div badge-tl class="card-combat-badge attack-target-badge"
+                title="Click to change attack target"
+                (click)="$event.stopPropagation(); cycleAttackTarget(ip.originalIndex)">&#8594; {{ getAttackTargetName(ip.originalIndex) }}</div>
+            }
+            @if (mine && declaringAttackers() && isSelectedAttacker(ip.originalIndex) && canDeclareBand()) {
+              <div badge-tl class="card-combat-badge band-badge"
+                title="Banding (CR 702.22): click to group attackers into a band"
+                (click)="$event.stopPropagation(); cycleBand(ip.originalIndex)">{{ getBandLabel(ip.originalIndex) }}</div>
+            }
+            @if (mine ? isBlockingCreature(ip.originalIndex, true) : ip.perm.blocking) {
+              <div badge-tl class="card-combat-badge blocking-badge">{{ getBlockingBadgeText(ip.originalIndex, mine) }}</div>
+            }
+            @if (!mine && declaringBlockers() && isAttackerBlocked(ip.originalIndex)) {
+              <div badge-tr class="card-combat-badge blocked-badge">Blocked</div>
+            }
+            @if (!mine && declaringBlockers() && mustBeBlockedAttackerIndices().has(ip.originalIndex)) {
+              <div badge-bl class="card-combat-badge must-block-badge">Must Block</div>
+            }
+            @if (!mine && declaringBlockers() && menaceAttackerIndices().has(ip.originalIndex)) {
+              <div badge-br class="card-combat-badge menace-badge">Needs 2 Blockers</div>
+            }
+            @if (choice.damage.distributingDamage && choice.damage.getDamageAssigned(ip.perm.id) > 0) {
+              <div badge-br class="card-combat-badge damage-badge">{{ choice.damage.getDamageAssigned(ip.perm.id) }} dmg</div>
+            }
+          }
+        </app-card-display>
+        @if (mine && choice.targeting.choosingAbility && choice.targeting.abilityChoicePermanentIndex === ip.originalIndex) {
+          <div class="ability-popup" (click)="$event.stopPropagation()">
+            <div class="ability-popup-title">Choose an ability:</div>
+            @for (ch of choice.targeting.abilityChoices; track ch.index) {
+              <button class="ability-popup-btn" [disabled]="!ch.usable" (click)="choice.targeting.chooseAbility(ch)" [innerHTML]="formatAbilityDescription(ch.ability.description)"></button>
+            }
+            <button class="ability-popup-btn ability-popup-cancel" (click)="choice.targeting.cancelAbilityChoice()">Cancel</button>
+          </div>
+        }
+      </div>
+    </ng-template>
+
     <div class="battlefield-area" #battlefieldArea [style.--density-zoom]="battlefieldZoom">
-      <div class="battlefield-row" [style.--density-zoom]="opponentBattlefieldZoom">
+      <div class="battlefield-row" [style.--density-zoom]="opponentBattlefieldZoom"
+        [class.active-turn]="isActivePlayer(opponentPlayerIndex)">
         <div class="battlefield-sub-row lands-row">
           @for (item of opponentLandStacks; track landStackTrackKey(item)) {
             @if (isLandStack(item)) {
               <div class="land-stack" [attr.data-stack-size]="item.lands.length">
                 @for (ip of item.lands; track ip.perm.id) {
                   <div class="land-stack-item">
-                    <div class="permanent-stack">
-                      @for (aura of getAttachedAuras(ip.perm.id); track aura.perm.id) {
-                        <app-card-display
-                          [card]="aura.perm.card"
-                          [permanent]="aura.perm"
-                          class="attached-aura"
-                          [class.targetable]="(choice.targeting.selectingTarget || choice.targeting.multiTargeting) && choice.targeting.isValidTarget(aura.perm)"
-                          (click)="onAuraClick(aura)"
-                          (mouseenter)="onCardHover(aura.perm.card, aura.perm, $event)"
-                          (mouseleave)="onCardHoverEnd()" />
-                      }
-                      @for (ec of exiledWithCards(ip.perm); track ec.id) {
-                        <app-card-display
-                          [card]="ec"
-                          class="attached-aura exiled-with-card"
-                          (mouseenter)="onCardHover(ec)"
-                          (mouseleave)="onCardHoverEnd()" />
-                      }
-                      @for (fc of faceDownExiledCards(ip.perm); track fc.id) {
-                        <app-card-display
-                          [card]="fc"
-                          class="attached-aura exiled-with-card face-down-visible"
-                          (mouseenter)="onCardHover(fc)"
-                          (mouseleave)="onCardHoverEnd()" />
-                      }
-                      @for (slot of faceDownExiledSlots(ip.perm); track slot) {
-                        <div class="card attached-aura face-down-exiled-card"></div>
-                      }
-                      <app-card-display
-                        [card]="ip.perm.card"
-                        [permanent]="ip.perm"
-                        [class.tapped]="ip.perm.tapped"
-                        [class.targetable]="(choice.targeting.selectingTarget || choice.targeting.multiTargeting) && choice.targeting.isValidTarget(ip.perm)"
-                        [class.stack-targeted]="stackTargetId() === ip.perm.id"
-                        [class.choosable-permanent]="(choice.choosingPermanent && choice.choosablePermanentIds().has(ip.perm.id)) || (choice.choosingMultiplePermanents && choice.multiPermanentChoiceIds().has(ip.perm.id))"
-                        [class.selected-multi-permanent]="choice.choosingMultiplePermanents && choice.multiPermanentSelectedIds().has(ip.perm.id)"
-                        [class.alternate-cost-selected]="choice.targeting.selectingAlternateCostCreatures && choice.targeting.isAlternateCostSelected(ip.perm.id)"
-                        (click)="onOpponentBattlefieldCardClick(ip.originalIndex)"
-                        (mouseenter)="onCardHover(ip.perm.card, ip.perm, $event)"
-                        (mouseleave)="onCardHoverEnd()" />
-                    </div>
+                    <ng-container [ngTemplateOutlet]="permanentStack" [ngTemplateOutletContext]="stackCtx(ip, false, false)"></ng-container>
                   </div>
                 }
               </div>
             } @else {
-              <div class="permanent-stack">
-                @for (aura of getAttachedAuras(item.perm.id); track aura.perm.id) {
-                  <app-card-display
-                    [card]="aura.perm.card"
-                    [permanent]="aura.perm"
-                    class="attached-aura"
-                    [class.targetable]="(choice.targeting.selectingTarget || choice.targeting.multiTargeting) && choice.targeting.isValidTarget(aura.perm)"
-                    (click)="onAuraClick(aura)"
-                    (mouseenter)="onCardHover(aura.perm.card, aura.perm, $event)"
-                    (mouseleave)="onCardHoverEnd()" />
-                }
-                @for (ec of exiledWithCards(item.perm); track ec.id) {
-                  <app-card-display
-                    [card]="ec"
-                    class="attached-aura exiled-with-card"
-                    (mouseenter)="onCardHover(ec)"
-                    (mouseleave)="onCardHoverEnd()" />
-                }
-                @for (fc of faceDownExiledCards(item.perm); track fc.id) {
-                  <app-card-display
-                    [card]="fc"
-                    class="attached-aura exiled-with-card face-down-visible"
-                    (mouseenter)="onCardHover(fc)"
-                    (mouseleave)="onCardHoverEnd()" />
-                }
-                @for (slot of faceDownExiledSlots(item.perm); track slot) {
-                  <div class="card attached-aura face-down-exiled-card"></div>
-                }
-                <app-card-display
-                  [card]="item.perm.card"
-                  [permanent]="item.perm"
-                  [class.tapped]="item.perm.tapped"
-                  [class.targetable]="(choice.targeting.selectingTarget || choice.targeting.multiTargeting) && choice.targeting.isValidTarget(item.perm)"
-                  [class.stack-targeted]="stackTargetId() === item.perm.id"
-                  [class.choosable-permanent]="(choice.choosingPermanent && choice.choosablePermanentIds().has(item.perm.id)) || (choice.choosingMultiplePermanents && choice.multiPermanentChoiceIds().has(item.perm.id))"
-                  [class.selected-multi-permanent]="choice.choosingMultiplePermanents && choice.multiPermanentSelectedIds().has(item.perm.id)"
-                  [class.alternate-cost-selected]="choice.targeting.selectingAlternateCostCreatures && choice.targeting.isAlternateCostSelected(item.perm.id)"
-                  (click)="onOpponentBattlefieldCardClick(item.originalIndex)"
-                  (mouseenter)="onCardHover(item.perm.card, item.perm, $event)"
-                  (mouseleave)="onCardHoverEnd()" />
-              </div>
+              <ng-container [ngTemplateOutlet]="permanentStack" [ngTemplateOutletContext]="stackCtx(item, false, false)"></ng-container>
             }
           }
         </div>
         <div class="battlefield-sub-row creatures-row">
           @for (ip of opponentCreatures(); track ip.perm.id) {
-            <div class="permanent-stack" [attr.data-combat-id]="ip.perm.id">
-              @for (aura of getAttachedAuras(ip.perm.id); track aura.perm.id) {
-                <app-card-display
-                  [card]="aura.perm.card"
-                  [permanent]="aura.perm"
-                  class="attached-aura"
-                  [style.--card-shift-x]="combatShift(ip.perm.id)"
-                  [class.targetable]="(choice.targeting.selectingTarget || choice.targeting.multiTargeting) && choice.targeting.isValidTarget(aura.perm)"
-                  (click)="onAuraClick(aura)"
-                  (mouseenter)="onCardHover(aura.perm.card, aura.perm, $event)"
-                  (mouseleave)="onCardHoverEnd()" />
-              }
-              @for (ec of exiledWithCards(ip.perm); track ec.id) {
-                <app-card-display
-                  [card]="ec"
-                  class="attached-aura exiled-with-card"
-                  [style.--card-shift-x]="combatShift(ip.perm.id)"
-                  (mouseenter)="onCardHover(ec)"
-                  (mouseleave)="onCardHoverEnd()" />
-              }
-              @for (fc of faceDownExiledCards(ip.perm); track fc.id) {
-                <app-card-display
-                  [card]="fc"
-                  class="attached-aura exiled-with-card face-down-visible"
-                  [style.--card-shift-x]="combatShift(ip.perm.id)"
-                  (mouseenter)="onCardHover(fc)"
-                  (mouseleave)="onCardHoverEnd()" />
-              }
-              @for (slot of faceDownExiledSlots(ip.perm); track slot) {
-                <div class="card attached-aura face-down-exiled-card" [style.--card-shift-x]="combatShift(ip.perm.id)"></div>
-              }
-              <app-card-display
-                [card]="ip.perm.card"
-                [permanent]="ip.perm"
-                [class.tapped]="ip.perm.tapped"
-                [class.summoning-sick]="ip.perm.summoningSick"
-                [class.attacking]="ip.perm.attacking"
-                [class.blocking]="ip.perm.blocking"
-                [class.combat-nudge]="ip.perm.attacking || ip.perm.blocking"
-                [class.block-target]="isBlockTarget(ip.originalIndex)"
-                [class.blocked-attacker]="declaringBlockers() && isAttackerBlocked(ip.originalIndex)"
-                [style.--card-shift-x]="combatShift(ip.perm.id)"
-                [class.targetable]="((choice.targeting.selectingTarget || choice.targeting.multiTargeting) && choice.targeting.isValidTarget(ip.perm)) || (choice.damage.distributingDamage && ip.perm.attacking)"
-                [class.stack-targeted]="stackTargetId() === ip.perm.id"
-                [class.choosable-permanent]="(choice.choosingPermanent && choice.choosablePermanentIds().has(ip.perm.id)) || (choice.choosingMultiplePermanents && choice.multiPermanentChoiceIds().has(ip.perm.id))"
-                [class.selected-multi-permanent]="choice.choosingMultiplePermanents && choice.multiPermanentSelectedIds().has(ip.perm.id)"
-                [class.alternate-cost-selected]="choice.targeting.selectingAlternateCostCreatures && choice.targeting.isAlternateCostSelected(ip.perm.id)"
-                (click)="onOpponentBattlefieldCardClick(ip.originalIndex)"
-                (contextmenu)="$event.preventDefault(); choice.damage.unassignDamage(ip.perm.id)"
-                (mouseenter)="onCardHover(ip.perm.card, ip.perm, $event)"
-                (mouseleave)="onCardHoverEnd()">
-                @if (ip.perm.attacking) { <div badge-tl class="card-combat-badge attacking-badge">Attacking</div> }
-                @if (ip.perm.blocking) { <div badge-tl class="card-combat-badge blocking-badge">{{ getBlockingBadgeText(ip.originalIndex, false) }}</div> }
-                @if (declaringBlockers() && isAttackerBlocked(ip.originalIndex)) {
-                  <div badge-tr class="card-combat-badge blocked-badge">Blocked</div>
-                }
-                @if (declaringBlockers() && mustBeBlockedAttackerIndices().has(ip.originalIndex)) {
-                  <div badge-bl class="card-combat-badge must-block-badge">Must Block</div>
-                }
-                @if (declaringBlockers() && menaceAttackerIndices().has(ip.originalIndex)) {
-                  <div badge-br class="card-combat-badge menace-badge">Needs 2 Blockers</div>
-                }
-                @if (choice.damage.distributingDamage && choice.damage.getDamageAssigned(ip.perm.id) > 0) {
-                  <div badge-br class="card-combat-badge damage-badge">{{ choice.damage.getDamageAssigned(ip.perm.id) }} dmg</div>
-                }
-              </app-card-display>
-            </div>
+            <ng-container [ngTemplateOutlet]="permanentStack" [ngTemplateOutletContext]="stackCtx(ip, false, true)"></ng-container>
           }
         </div>
         @if (opponentBattlefield.length === 0) {
@@ -499,92 +464,11 @@
 
       <div class="battlefield-divider" [class.in-combat]="inCombat"></div>
 
-      <div class="battlefield-row" [style.--density-zoom]="myBattlefieldZoom">
+      <div class="battlefield-row" [style.--density-zoom]="myBattlefieldZoom"
+        [class.active-turn]="isActivePlayer(myPlayerIndex)">
         <div class="battlefield-sub-row creatures-row">
           @for (ip of myCreatures(); track ip.perm.id) {
-            <div class="permanent-stack" [attr.data-combat-id]="ip.perm.id">
-              @for (aura of getAttachedAuras(ip.perm.id); track aura.perm.id) {
-                <app-card-display
-                  [card]="aura.perm.card"
-                  [permanent]="aura.perm"
-                  class="attached-aura"
-                  [style.--card-shift-x]="combatShift(ip.perm.id)"
-                  [class.targetable]="(choice.targeting.selectingTarget || choice.targeting.multiTargeting) && choice.targeting.isValidTarget(aura.perm)"
-                  (click)="onAuraClick(aura)"
-                  (mouseenter)="onCardHover(aura.perm.card, aura.perm, $event)"
-                  (mouseleave)="onCardHoverEnd()" />
-              }
-              @for (ec of exiledWithCards(ip.perm); track ec.id) {
-                <app-card-display
-                  [card]="ec"
-                  class="attached-aura exiled-with-card"
-                  [style.--card-shift-x]="combatShift(ip.perm.id)"
-                  (mouseenter)="onCardHover(ec)"
-                  (mouseleave)="onCardHoverEnd()" />
-              }
-              @for (fc of faceDownExiledCards(ip.perm); track fc.id) {
-                <app-card-display
-                  [card]="fc"
-                  class="attached-aura exiled-with-card face-down-visible"
-                  [style.--card-shift-x]="combatShift(ip.perm.id)"
-                  (mouseenter)="onCardHover(fc)"
-                  (mouseleave)="onCardHoverEnd()" />
-              }
-              @for (slot of faceDownExiledSlots(ip.perm); track slot) {
-                <div class="card attached-aura face-down-exiled-card" [style.--card-shift-x]="combatShift(ip.perm.id)"></div>
-              }
-              <app-card-display
-                [card]="ip.perm.card"
-                [permanent]="ip.perm"
-                [class.tapped]="ip.perm.tapped"
-                [class.tappable]="(choice.targeting.canTapPermanent(ip.originalIndex) && !declaringAttackers() && !declaringBlockers()) || choice.canTapForMana(ip.perm) || (declaringAttackers() && attackTaxPerCreature() > 0 && !canAttack(ip.originalIndex) && canTapPermanentForMana(ip.perm))"
-                [class.casting-pending]="choice.targeting.payingForAbility && choice.targeting.pendingActivationPermanentId === ip.perm.id"
-                [class.summoning-sick]="ip.perm.summoningSick"
-                [class.attacking]="ip.perm.attacking"
-                [class.blocking]="ip.perm.blocking"
-                [class.combat-nudge]="isAttackingCreature(ip.originalIndex, true) || isBlockingCreature(ip.originalIndex, true)"
-                [style.--card-shift-x]="combatShift(ip.perm.id)"
-                [class.can-attack]="canAttack(ip.originalIndex) && !isSelectedAttacker(ip.originalIndex)"
-                [class.selected-attacker]="declaringAttackers() && isSelectedAttacker(ip.originalIndex)"
-                [class.must-attack]="mustAttackIndices().has(ip.originalIndex)"
-                [class.can-block]="canBlock(ip.originalIndex) && !isAssignedBlocker(ip.originalIndex) && selectedBlockerIndex() !== ip.originalIndex"
-                [class.selected-blocker]="selectedBlockerIndex() === ip.originalIndex"
-                [class.assigned-blocker]="isAssignedBlocker(ip.originalIndex)"
-                [class.targetable]="((choice.targeting.selectingTarget || choice.targeting.multiTargeting) && choice.targeting.isValidTarget(ip.perm)) || (choice.damage.distributingDamage && ip.perm.attacking)"
-                [class.stack-targeted]="stackTargetId() === ip.perm.id"
-                [class.choosable-permanent]="(choice.choosingPermanent && choice.choosablePermanentIds().has(ip.perm.id)) || (choice.choosingMultiplePermanents && choice.multiPermanentChoiceIds().has(ip.perm.id))"
-                [class.selected-multi-permanent]="choice.choosingMultiplePermanents && choice.multiPermanentSelectedIds().has(ip.perm.id)"
-                [class.alternate-cost-selected]="choice.targeting.selectingAlternateCostCreatures && choice.targeting.isAlternateCostSelected(ip.perm.id)"
-                (click)="onMyBattlefieldCardClick(ip.originalIndex, $event)"
-                (contextmenu)="$event.preventDefault(); choice.damage.unassignDamage(ip.perm.id)"
-                (mouseenter)="onCardHover(ip.perm.card, ip.perm, $event)"
-                (mouseleave)="onCardHoverEnd()">
-                @if (isAttackingCreature(ip.originalIndex, true)) { <div badge-tl class="card-combat-badge attacking-badge">Attacking</div> }
-                @if (declaringAttackers() && isSelectedAttacker(ip.originalIndex) && availableAttackTargets().length > 1) {
-                  <div badge-tl class="card-combat-badge attack-target-badge"
-                    title="Click to change attack target"
-                    (click)="$event.stopPropagation(); cycleAttackTarget(ip.originalIndex)">&#8594; {{ getAttackTargetName(ip.originalIndex) }}</div>
-                }
-                @if (declaringAttackers() && isSelectedAttacker(ip.originalIndex) && canDeclareBand()) {
-                  <div badge-tl class="card-combat-badge band-badge"
-                    title="Banding (CR 702.22): click to group attackers into a band"
-                    (click)="$event.stopPropagation(); cycleBand(ip.originalIndex)">{{ getBandLabel(ip.originalIndex) }}</div>
-                }
-                @if (isBlockingCreature(ip.originalIndex, true)) { <div badge-tl class="card-combat-badge blocking-badge">{{ getBlockingBadgeText(ip.originalIndex, true) }}</div> }
-                @if (choice.damage.distributingDamage && choice.damage.getDamageAssigned(ip.perm.id) > 0) {
-                  <div badge-br class="card-combat-badge damage-badge">{{ choice.damage.getDamageAssigned(ip.perm.id) }} dmg</div>
-                }
-              </app-card-display>
-              @if (choice.targeting.choosingAbility && choice.targeting.abilityChoicePermanentIndex === ip.originalIndex) {
-                <div class="ability-popup" (click)="$event.stopPropagation()">
-                  <div class="ability-popup-title">Choose an ability:</div>
-                  @for (ch of choice.targeting.abilityChoices; track ch.index) {
-                    <button class="ability-popup-btn" [disabled]="!ch.usable" (click)="choice.targeting.chooseAbility(ch)" [innerHTML]="formatAbilityDescription(ch.ability.description)"></button>
-                  }
-                  <button class="ability-popup-btn ability-popup-cancel" (click)="choice.targeting.cancelAbilityChoice()">Cancel</button>
-                </div>
-              }
-            </div>
+            <ng-container [ngTemplateOutlet]="permanentStack" [ngTemplateOutletContext]="stackCtx(ip, true, true)"></ng-container>
           }
         </div>
         <div class="battlefield-sub-row lands-row">
@@ -593,114 +477,12 @@
               <div class="land-stack" [attr.data-stack-size]="item.lands.length">
                 @for (ip of item.lands; track ip.perm.id) {
                   <div class="land-stack-item">
-                    <div class="permanent-stack">
-                      @for (aura of getAttachedAuras(ip.perm.id); track aura.perm.id) {
-                        <app-card-display
-                          [card]="aura.perm.card"
-                          [permanent]="aura.perm"
-                          class="attached-aura"
-                          [class.targetable]="(choice.targeting.selectingTarget || choice.targeting.multiTargeting) && choice.targeting.isValidTarget(aura.perm)"
-                          (click)="onAuraClick(aura)"
-                          (mouseenter)="onCardHover(aura.perm.card, aura.perm, $event)"
-                          (mouseleave)="onCardHoverEnd()" />
-                      }
-                      @for (ec of exiledWithCards(ip.perm); track ec.id) {
-                        <app-card-display
-                          [card]="ec"
-                          class="attached-aura exiled-with-card"
-                          (mouseenter)="onCardHover(ec)"
-                          (mouseleave)="onCardHoverEnd()" />
-                      }
-                      @for (fc of faceDownExiledCards(ip.perm); track fc.id) {
-                        <app-card-display
-                          [card]="fc"
-                          class="attached-aura exiled-with-card face-down-visible"
-                          (mouseenter)="onCardHover(fc)"
-                          (mouseleave)="onCardHoverEnd()" />
-                      }
-                      @for (slot of faceDownExiledSlots(ip.perm); track slot) {
-                        <div class="card attached-aura face-down-exiled-card"></div>
-                      }
-                      <app-card-display
-                        [card]="ip.perm.card"
-                        [permanent]="ip.perm"
-                        [class.tapped]="ip.perm.tapped"
-                        [class.tappable]="(choice.targeting.canTapPermanent(ip.originalIndex) && !declaringAttackers() && !declaringBlockers()) || choice.canTapForMana(ip.perm) || (declaringAttackers() && attackTaxPerCreature() > 0 && !canAttack(ip.originalIndex) && canTapPermanentForMana(ip.perm))"
-                        [class.casting-pending]="choice.targeting.payingForAbility && choice.targeting.pendingActivationPermanentId === ip.perm.id"
-                        [class.targetable]="(choice.targeting.selectingTarget || choice.targeting.multiTargeting) && choice.targeting.isValidTarget(ip.perm)"
-                        [class.stack-targeted]="stackTargetId() === ip.perm.id"
-                        [class.choosable-permanent]="(choice.choosingPermanent && choice.choosablePermanentIds().has(ip.perm.id)) || (choice.choosingMultiplePermanents && choice.multiPermanentChoiceIds().has(ip.perm.id))"
-                        [class.selected-multi-permanent]="choice.choosingMultiplePermanents && choice.multiPermanentSelectedIds().has(ip.perm.id)"
-                        [class.alternate-cost-selected]="choice.targeting.selectingAlternateCostCreatures && choice.targeting.isAlternateCostSelected(ip.perm.id)"
-                        (click)="onMyBattlefieldCardClick(ip.originalIndex, $event)"
-                        (mouseenter)="onCardHover(ip.perm.card, ip.perm, $event)"
-                        (mouseleave)="onCardHoverEnd()" />
-                      @if (choice.targeting.choosingAbility && choice.targeting.abilityChoicePermanentIndex === ip.originalIndex) {
-                        <div class="ability-popup" (click)="$event.stopPropagation()">
-                          <div class="ability-popup-title">Choose an ability:</div>
-                          @for (ch of choice.targeting.abilityChoices; track ch.index) {
-                            <button class="ability-popup-btn" [disabled]="!ch.usable" (click)="choice.targeting.chooseAbility(ch)" [innerHTML]="formatAbilityDescription(ch.ability.description)"></button>
-                          }
-                          <button class="ability-popup-btn ability-popup-cancel" (click)="choice.targeting.cancelAbilityChoice()">Cancel</button>
-                        </div>
-                      }
-                    </div>
+                    <ng-container [ngTemplateOutlet]="permanentStack" [ngTemplateOutletContext]="stackCtx(ip, true, false)"></ng-container>
                   </div>
                 }
               </div>
             } @else {
-              <div class="permanent-stack">
-                @for (aura of getAttachedAuras(item.perm.id); track aura.perm.id) {
-                  <app-card-display
-                    [card]="aura.perm.card"
-                    [permanent]="aura.perm"
-                    class="attached-aura"
-                    [class.targetable]="(choice.targeting.selectingTarget || choice.targeting.multiTargeting) && choice.targeting.isValidTarget(aura.perm)"
-                    (click)="onAuraClick(aura)"
-                    (mouseenter)="onCardHover(aura.perm.card, aura.perm, $event)"
-                    (mouseleave)="onCardHoverEnd()" />
-                }
-                @for (ec of exiledWithCards(item.perm); track ec.id) {
-                  <app-card-display
-                    [card]="ec"
-                    class="attached-aura exiled-with-card"
-                    (mouseenter)="onCardHover(ec)"
-                    (mouseleave)="onCardHoverEnd()" />
-                }
-                @for (fc of faceDownExiledCards(item.perm); track fc.id) {
-                  <app-card-display
-                    [card]="fc"
-                    class="attached-aura exiled-with-card face-down-visible"
-                    (mouseenter)="onCardHover(fc)"
-                    (mouseleave)="onCardHoverEnd()" />
-                }
-                @for (slot of faceDownExiledSlots(item.perm); track slot) {
-                  <div class="card attached-aura face-down-exiled-card"></div>
-                }
-                <app-card-display
-                  [card]="item.perm.card"
-                  [permanent]="item.perm"
-                  [class.tapped]="item.perm.tapped"
-                  [class.tappable]="(choice.targeting.canTapPermanent(item.originalIndex) && !declaringAttackers() && !declaringBlockers()) || choice.canTapForMana(item.perm) || (declaringAttackers() && attackTaxPerCreature() > 0 && !canAttack(item.originalIndex) && canTapPermanentForMana(item.perm))"
-                  [class.casting-pending]="choice.targeting.payingForAbility && choice.targeting.pendingActivationPermanentId === item.perm.id"
-                  [class.targetable]="(choice.targeting.selectingTarget || choice.targeting.multiTargeting) && choice.targeting.isValidTarget(item.perm)"
-                  [class.stack-targeted]="stackTargetId() === item.perm.id"
-                  [class.choosable-permanent]="(choice.choosingPermanent && choice.choosablePermanentIds().has(item.perm.id)) || (choice.choosingMultiplePermanents && choice.multiPermanentChoiceIds().has(item.perm.id))"
-                  [class.selected-multi-permanent]="choice.choosingMultiplePermanents && choice.multiPermanentSelectedIds().has(item.perm.id)"
-                  [class.alternate-cost-selected]="choice.targeting.selectingAlternateCostCreatures && choice.targeting.isAlternateCostSelected(item.perm.id)"
-                  (click)="onMyBattlefieldCardClick(item.originalIndex, $event)"
-                  (mouseenter)="onCardHover(item.perm.card, item.perm, $event)"
-                  (mouseleave)="onCardHoverEnd()" />
-              @if (choice.targeting.choosingAbility && choice.targeting.abilityChoicePermanentIndex === item.originalIndex) {
-                <div class="ability-popup" (click)="$event.stopPropagation()">
-                  <div class="ability-popup-title">Choose an ability:</div>
-                  @for (ch of choice.targeting.abilityChoices; track ch.index) {
-                    <button class="ability-popup-btn" [disabled]="!ch.usable" (click)="choice.targeting.chooseAbility(ch)" [innerHTML]="formatAbilityDescription(ch.ability.description)"></button>
-                  }
-                  <button class="ability-popup-btn ability-popup-cancel" (click)="choice.targeting.cancelAbilityChoice()">Cancel</button>
-                </div>
-              }
-              </div>
+              <ng-container [ngTemplateOutlet]="permanentStack" [ngTemplateOutletContext]="stackCtx(item, true, false)"></ng-container>
             }
           }
         </div>
@@ -759,7 +541,12 @@
     <div class="hand-area">
       <div class="hand-cards" [style.--density-zoom]="handZoom">
         @for (card of hand; track $index) {
+          <!-- Enter only. The hand is tracked by index, so playing a card from the middle
+               destroys the LAST view rather than that card's, and a leave animation would
+               play on the wrong card. Draws append, so enter always lands on the card that
+               was actually drawn. -->
           <app-card-display
+            animate.enter="hand-card-enter"
             [card]="card"
             [class.playable]="isCardPlayable($index)"
             [class.casting-pending]="choice.targeting.payingForCast && choice.targeting.pendingCastCardIndex === $index"
@@ -785,7 +572,22 @@
     </div>
   }
 
-  @if (gameOverActive()) {
+  <!-- Declared before the game-over notice so a socket drop during the final message
+       does not leave the player looking at a result we can no longer trust. -->
+  @if (connectionLost()) {
+    <div class="game-over-overlay">
+      <div class="game-over-card connection-lost-card">
+        <h2>Connection Lost</h2>
+        <p class="winner-text">The connection to the server dropped.</p>
+        <p class="connection-lost-hint">
+          Your game is still running — log back in to rejoin it where it left off.
+        </p>
+        <button class="btn-keep" (click)="returnToLogin()">Back to Login</button>
+      </div>
+    </div>
+  }
+
+  @if (gameOverActive() && !connectionLost()) {
     <div class="game-over-overlay">
       <div class="game-over-card">
         <h2>Game Over</h2>

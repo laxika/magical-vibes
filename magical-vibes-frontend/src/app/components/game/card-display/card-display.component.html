@@ -7,8 +7,25 @@
   <div class="token-name-bar">
     <span class="card-name">{{ card.name }}</span>
   </div>
-  <div class="token-type-line">
-    <span class="card-type">{{ typeLine }}</span>
+  <!-- A token's printed keywords arrive in cardText (a token has no oracle text of its
+       own), so without this band a 1/1 Soldier with vigilance printed nothing anywhere. -->
+  <div class="token-bottom">
+    @if (hasTokenRulesText) {
+      <div class="token-text-box">
+        @if (card.cardText) {
+          <div class="card-text" [innerHTML]="formattedCardText"></div>
+        }
+        @if (effectiveKeywords.length > 0) {
+          <div class="card-keywords">{{ formatKeywords(effectiveKeywords) }}</div>
+        }
+        @for (ability of grantedAbilityTexts; track ability) {
+          <div class="card-granted-ability">{{ ability }}</div>
+        }
+      </div>
+    }
+    <div class="token-type-line">
+      <span class="card-type">{{ typeLine }}</span>
+    </div>
   </div>
   @if (card.power != null && card.toughness != null || permanent?.animatedCreature) {
     <div class="token-pt" [class.buffed]="isBuffed" [class.debuffed]="isDebuffed" [class.damaged]="isDamaged">{{ displayPower }}<span class="pt-slash">/</span>{{ displayToughness }}</div>

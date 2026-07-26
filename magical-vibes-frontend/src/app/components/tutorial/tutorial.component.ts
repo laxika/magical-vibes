@@ -260,7 +260,7 @@ export class TutorialComponent implements AfterViewInit, OnDestroy {
   }
 
   landStackTrackKey(item: IndexedPermanent | LandStack): string {
-    return isLandStack(item) ? item.lands[0].perm.id : item.perm.id;
+    return isLandStack(item) ? `stack:${item.key}` : `land:${item.perm.id}`;
   }
 
   get manaEntries(): { color: string; count: number }[] {

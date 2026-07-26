@@ -52,7 +52,13 @@
   flex-direction: column;
   height: 41px;
   box-sizing: border-box;
-  padding: 3px 6px 6px;
+  /* Symmetric, so the sockets sit dead centre: 41px strip - 4px border - 8px padding
+     leaves a 29px content box, and an 18px socket centres with 5.5px clear above and
+     below. The count badge hangs 4px past the socket and still lands inside the strip.
+     This used to be an asymmetric 3/6 that sat everything high.
+     Height is fixed (border-box), so the strip never resizes and the panel never
+     shifts when mana appears. */
+  padding: 4px 6px;
   background: var(--gradient-dark-wood);
   border: 2px solid var(--color-dark-border);
   border-radius: 4px;
@@ -71,29 +77,54 @@
 
 /* One socket per mana color (W U B R G C), always present so the strip never
    reshuffles. Empty sockets read as carvings in the wood; floating mana lights
-   the socket up with a color-tinted halo. font-size drives the symbol <img>
-   (it renders at height: 1em). */
+   the socket up with a color-tinted halo.
+
+   font-size sets the symbol's size, and here it is literally the disc's diameter in px:
+   symbols.css normalises .ms-cost so the disc comes out at exactly 1em (0.77 font-size
+   x 1.3 disc width), which is what makes a symbol match the text it sits in. That
+   normalisation is about matching TEXT, though, and a socket is not text — a disc left at
+   the surrounding font's size filled only 68% of its socket and read as floating in the
+   hole rather than seated in it. Size the socket by setting font-size to the diameter the
+   pip should have, then the width/height to that over about 0.86.
+
+   Ratio and absolute size are separate decisions, and both were got wrong once:
+   - Ratio ~0.86 is the one to hold. Below about 0.8 the socket's rim shows as a ring of
+     empty well around the pip and the symbol reads as floating in the hole.
+   - Absolute size is bounded by the strip, not by the pip. The content box is 29px
+     (41px strip - 4px border - 8px padding), so a 25px socket left 2px of dark above and
+     below and the row read as bursting out of the bar no matter how well proportioned the
+     pip inside it was. 19px leaves 5px either side and the sockets sit in the wood.
+   Compared side by side at 25/22/20/18px before settling here. Move both numbers, and the
+   count badge below, together. */
 .mana-socket {
   position: relative;
-  width: 25px;
-  height: 25px;
-  font-size: 17px;
+  width: 19px;
+  height: 19px;
+  font-size: 16px;
   border-radius: 50%;
   display: flex;
   align-items: center;
   justify-content: center;
-  background: radial-gradient(circle at 50% 32%, #221511 0%, #100b08 100%);
+  /* Three stops, not two, so the well deepens gradually instead of banding partway down. */
+  background: radial-gradient(circle at 50% 36%, #241710 0%, #170f0a 58%, #0d0806 100%);
+  /* Softer and wider than it used to be: 0.85 alpha over a 4px blur put a hard dark band
+     across the top of a circle this small, which is what made the row look coarse. The
+     shade is now low-contrast, the lower inner wall catches a little light so the hollow
+     reads as round rather than as a flat dark disc, and the lip below it gets a blurred
+     bevel instead of a 1px hairline. */
   box-shadow:
-    inset 0 2px 4px rgba(0, 0, 0, 0.85),
-    inset 0 -1px 1px rgba(196, 168, 130, 0.14),
-    0 1px 0 rgba(196, 168, 130, 0.08);
+    inset 0 1.5px 3px rgba(0, 0, 0, 0.68),
+    inset 0 -1px 2px rgba(214, 186, 146, 0.14),
+    0 1px 1px rgba(214, 186, 146, 0.07);
 }
 
+/* No optical nudge: the symbol sits geometrically centred and should stay there.
+   Earlier revisions pushed it down to compensate for a hard top-edge inset shadow, but the
+   well is softer now and lights its lower inner wall, so there is nothing left to correct
+   for — and the socket only clears the symbol by 1.5px, so even a 1px nudge left a visible
+   dark crescent above the symbol and none below it. Compared 0 / 0.5 / 1px side by side. */
 .mana-socket-symbol {
   display: flex;
-  /* Optical correction: the top inset shadow makes a geometrically centered
-     symbol read high, so nudge it down half a pixel. */
-  transform: translateY(0.5px);
   filter: grayscale(1) brightness(1.3) opacity(0.16);
   transition: filter 0.25s ease-out;
 }
@@ -103,12 +134,28 @@
 }
 
 .mana-socket.filled {
-  background: radial-gradient(circle at 50% 30%, #3a2a1e 0%, #1a1210 100%);
+  background: radial-gradient(circle at 50% 34%, #3d2c1f 0%, #241a12 62%, #17100b 100%);
   box-shadow:
-    inset 0 1px 2px rgba(0, 0, 0, 0.6),
-    0 0 7px var(--socket-halo),
-    0 0 1px var(--socket-halo);
-  animation: socket-light 0.4s ease-out;
+    inset 0 1.5px 3px rgba(0, 0, 0, 0.5),
+    inset 0 -1px 2px rgba(214, 186, 146, 0.2),
+    0 1px 1px rgba(214, 186, 146, 0.07);
+}
+
+/* The halo is its own layer rather than two more shadows on the socket. Animating a
+   multi-layer box-shadow means every keyframe has to restate every layer in the same
+   order, and the whole thing jumps if one of them drifts — which it had. As a pseudo
+   element it just fades and swells. Outer shadows are clipped to outside the border box,
+   so this can never wash over the symbol; the count badge is lifted above it below. */
+.mana-socket.filled::after {
+  content: '';
+  position: absolute;
+  inset: 0;
+  border-radius: 50%;
+  pointer-events: none;
+  box-shadow:
+    0 0 4px var(--socket-halo),
+    0 0 10px -2px var(--socket-halo);
+  animation: socket-light 0.45s ease-out;
 }
 
 .mana-socket[data-color="W"] { --socket-halo: rgba(248, 231, 185, 0.6); }
@@ -118,22 +165,27 @@
 .mana-socket[data-color="G"] { --socket-halo: rgba(100, 205, 125, 0.6); }
 .mana-socket[data-color="C"] { --socket-halo: rgba(205, 195, 175, 0.5); }
 
+/* Sized against the socket, not fixed: at 13px on an 18px socket the badge swallowed most
+   of the pip it was counting. */
 .mana-socket-count {
   position: absolute;
   bottom: -4px;
   right: -6px;
-  min-width: 13px;
-  height: 13px;
+  /* Above the halo pseudo element, which is painted after it in DOM order and would
+     otherwise tint the badge. */
+  z-index: 1;
+  min-width: 11px;
+  height: 11px;
   padding: 0 2px;
   box-sizing: border-box;
-  border-radius: 7px;
+  border-radius: 6px;
   display: flex;
   align-items: center;
   justify-content: center;
   background: linear-gradient(180deg, #e2c98e 0%, #a8874a 100%);
   color: var(--color-dark-wood);
   font-family: var(--font-display);
-  font-size: 9px;
+  font-size: 8px;
   font-weight: 700;
   line-height: 1;
   box-shadow: 0 1px 2px rgba(0, 0, 0, 0.6);
@@ -141,23 +193,9 @@
 }
 
 @keyframes socket-light {
-  0% {
-    box-shadow:
-      inset 0 1px 2px rgba(0, 0, 0, 0.6),
-      0 0 0 var(--socket-halo);
-  }
-  50% {
-    box-shadow:
-      inset 0 1px 2px rgba(0, 0, 0, 0.6),
-      0 0 13px var(--socket-halo),
-      0 0 3px var(--socket-halo);
-  }
-  100% {
-    box-shadow:
-      inset 0 1px 2px rgba(0, 0, 0, 0.6),
-      0 0 7px var(--socket-halo),
-      0 0 1px var(--socket-halo);
-  }
+  0% { opacity: 0; transform: scale(0.85); }
+  55% { opacity: 1; transform: scale(1.08); }
+  100% { opacity: 1; transform: scale(1); }
 }
 
 @keyframes count-pop {
@@ -167,7 +205,7 @@
 }
 
 @media (prefers-reduced-motion: reduce) {
-  .mana-socket.filled,
+  .mana-socket.filled::after,
   .mana-socket-count {
     animation: none;
   }
@@ -450,6 +488,67 @@
 .badge-hand,
 .badge-deck {
   opacity: 0.8;
+}
+
+/* The life number pops when it changes; the amount floats up out of the badge and fades.
+   Both are drawn on top of the badge and take no layout, so the row never reflows —
+   the life total is the number the player reads most and it must not move. */
+.badge-life-value {
+  display: inline-block;
+  animation: life-pop 0.4s ease-out;
+}
+
+@keyframes life-pop {
+  0% { scale: 1.55; }
+  100% { scale: 1; }
+}
+
+.life-delta {
+  position: absolute;
+  top: -2px;
+  left: 50%;
+  z-index: 20;
+  pointer-events: none;
+  font-family: var(--font-display);
+  font-size: 16px;
+  font-weight: 700;
+  color: #e05555;
+  text-shadow: 0 1px 3px rgba(0, 0, 0, 0.7);
+  animation: life-delta-float 1.2s ease-out forwards;
+}
+
+.life-delta.life-delta-gain {
+  color: #6fc98a;
+}
+
+@keyframes life-delta-float {
+  0% { opacity: 0; translate: -50% 6px; }
+  18% { opacity: 1; translate: -50% 0; }
+  70% { opacity: 1; translate: -50% -10px; }
+  100% { opacity: 0; translate: -50% -20px; }
+}
+
+/* Cards land in the graveyard pile instead of appearing in it. */
+@keyframes grave-card-enter {
+  from { opacity: 0; translate: 0 -12px; }
+  to { opacity: 1; translate: 0 0; }
+}
+
+.graveyard-tab-cards .card.grave-card-enter {
+  animation: grave-card-enter 0.22s ease-out;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .badge-life-value,
+  .graveyard-tab-cards .card.grave-card-enter {
+    animation: none;
+  }
+
+  .life-delta {
+    /* Still shown, just held still and then removed by the same timer. */
+    animation: none;
+    translate: -50% -10px;
+  }
 }
 
 .player-badge-wrapper {

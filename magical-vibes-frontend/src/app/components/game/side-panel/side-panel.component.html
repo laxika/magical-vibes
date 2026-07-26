@@ -11,7 +11,7 @@
     <div class="mana-strip-pips">
       @for (color of manaColors; track color) {
         <div class="mana-socket" [class.filled]="manaCount(color) > 0" [attr.data-color]="color">
-          <span class="mana-socket-symbol" [innerHTML]="manaSymbol(color)"></span>
+          <span class="mana-socket-symbol mana-sym-icon" [innerHTML]="manaSymbol(color)"></span>
           <!-- keyed on the count so the badge is recreated on change, restarting its pop animation -->
           @for (count of [manaCount(color)]; track count) {
             @if (count > 0) {
@@ -29,7 +29,12 @@
         <span class="badge-name" [title]="opponentPlayerName">{{ opponentPlayerName }}</span>
         <span class="badge-stats">
           <span class="badge-stat badge-life" title="Life">
-            <svg viewBox="0 0 12 12"><path d="M6 10.6C3.1 8.2 1.2 6.4 1.2 4.4c0-1.5 1.2-2.7 2.6-2.7 1 0 1.7.5 2.2 1.2.5-.7 1.2-1.2 2.2-1.2 1.4 0 2.6 1.2 2.6 2.7 0 2-1.9 3.8-4.8 6.2z"/></svg>{{ opponentBadgeLifeTotal }}
+            <svg viewBox="0 0 12 12"><path d="M6 10.6C3.1 8.2 1.2 6.4 1.2 4.4c0-1.5 1.2-2.7 2.6-2.7 1 0 1.7.5 2.2 1.2.5-.7 1.2-1.2 2.2-1.2 1.4 0 2.6 1.2 2.6 2.7 0 2-1.9 3.8-4.8 6.2z"/></svg><!--
+            keyed on the total so the number is recreated on change, restarting its pop
+            (the same idiom the mana count badge uses)
+            -->@for (life of [opponentBadgeLifeTotal]; track life) {
+              <span class="badge-life-value">{{ life }}</span>
+            }
           </span>
           @if (opponentBadgePoisonCounters > 0) {
             <span class="badge-stat badge-poison" title="Poison">
@@ -44,6 +49,9 @@
           </span>
         </span>
       </div>
+      @if (opponentBadgeLifeDelta; as delta) {
+        <span class="life-delta" [class.life-delta-gain]="delta > 0">{{ delta > 0 ? '+' : '' }}{{ delta }}</span>
+      }
     </div>
     <div class="turn-center">
       <span class="turn-number">Turn {{ turnNumber }}</span>
@@ -54,7 +62,10 @@
         <span class="badge-name" [title]="myBadgeName">{{ myBadgeName }}</span>
         <span class="badge-stats">
           <span class="badge-stat badge-life" title="Life">
-            <svg viewBox="0 0 12 12"><path d="M6 10.6C3.1 8.2 1.2 6.4 1.2 4.4c0-1.5 1.2-2.7 2.6-2.7 1 0 1.7.5 2.2 1.2.5-.7 1.2-1.2 2.2-1.2 1.4 0 2.6 1.2 2.6 2.7 0 2-1.9 3.8-4.8 6.2z"/></svg>{{ myBadgeLifeTotal }}
+            <svg viewBox="0 0 12 12"><path d="M6 10.6C3.1 8.2 1.2 6.4 1.2 4.4c0-1.5 1.2-2.7 2.6-2.7 1 0 1.7.5 2.2 1.2.5-.7 1.2-1.2 2.2-1.2 1.4 0 2.6 1.2 2.6 2.7 0 2-1.9 3.8-4.8 6.2z"/></svg><!--
+            -->@for (life of [myBadgeLifeTotal]; track life) {
+              <span class="badge-life-value">{{ life }}</span>
+            }
           </span>
           @if (myBadgePoisonCounters > 0) {
             <span class="badge-stat badge-poison" title="Poison">
@@ -69,6 +80,9 @@
           </span>
         </span>
       </div>
+      @if (myBadgeLifeDelta; as delta) {
+        <span class="life-delta" [class.life-delta-gain]="delta > 0">{{ delta > 0 ? '+' : '' }}{{ delta }}</span>
+      }
       @if (showPlayerMenu()) {
         <div class="player-menu" (click)="$event.stopPropagation()">
           <button class="player-menu-btn player-menu-surrender" (click)="onSurrenderClick()">Surrender</button>
@@ -167,6 +181,7 @@
             <div class="graveyard-tab-cards">
               @for (card of opponentGraveyard; track $index) {
                 <app-card-display [card]="card" class="graveyard-card"
+                  animate.enter="grave-card-enter"
                   (mouseenter)="onCardHover(card)" (mouseleave)="onCardHoverEnd()" />
               }
             </div>
@@ -180,6 +195,7 @@
             <div class="graveyard-tab-cards">
               @for (card of myGraveyard; track $index) {
                 <app-card-display [card]="card" class="graveyard-card"
+                  animate.enter="grave-card-enter"
                   [class.playable]="isGraveyardLandPlayable($index) || isGraveyardAbilityActivatable($index) || isFlashbackPlayable($index)"
                   (click)="isFlashbackPlayable($index) ? flashbackPlay.emit($index) : isGraveyardAbilityActivatable($index) ? graveyardAbilityActivate.emit($index) : graveyardLandPlay.emit($index)"
                   (mouseenter)="onCardHover(card)" (mouseleave)="onCardHoverEnd()" />

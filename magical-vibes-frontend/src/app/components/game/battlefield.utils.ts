@@ -15,6 +15,9 @@ export interface AttachedAura {
 export interface LandStack {
   lands: IndexedPermanent[];
   name: string;
+  /** Identity for the @for track: the stack's SLOT, not any land in it, so a stack keeps
+   *  its DOM (and its neighbours keep theirs) as lands join and leave it. */
+  key: string;
 }
 
 /**
@@ -69,15 +72,21 @@ export function stackBasicLands(lands: IndexedPermanent[]): (IndexedPermanent | 
     }
   }
 
-  // Create stacks for basic lands (max 4 per stack)
-  for (const [, group] of basicGroups) {
+  /* Create stacks for basic lands (max 4 per stack). A group of ONE is still a stack.
+     It renders identically either way — a one-card fan has no overlap to draw — but a
+     bare land and a stack are different branches of the template, so emitting a bare
+     land for the first Forest and a stack for the second would destroy and rebuild BOTH
+     elements the moment the second one arrives. That is invisible while nothing moves
+     and very visible once anything does: the newly played land appeared beside the fan
+     and then jumped into it. Keeping the shape constant means playing a second Forest
+     simply appends one item to a stack that is already there. */
+  for (const [name, group] of basicGroups) {
     for (let i = 0; i < group.length; i += MAX_STACK) {
-      const chunk = group.slice(i, i + MAX_STACK);
-      if (chunk.length === 1) {
-        result.push(chunk[0]);
-      } else {
-        result.push({ lands: chunk, name: chunk[0].perm.card.name });
-      }
+      result.push({
+        lands: group.slice(i, i + MAX_STACK),
+        name,
+        key: `${name}#${i / MAX_STACK}`,
+      });
     }
   }
 

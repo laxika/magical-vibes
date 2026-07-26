@@ -14,6 +14,13 @@ import { Subscription } from 'rxjs';
 import { manaSymbolHtml } from '../../utils/mana-symbols';
 import { PermanentClickResolverService } from '../../services/permanent-click-resolver.service';
 
+/** Template context for the single #permanentStack definition in game.component.html. */
+export interface PermanentStackContext {
+  $implicit: IndexedPermanent;
+  mine: boolean;
+  creature: boolean;
+}
+
 @Component({
   selector: 'app-game',
   standalone: true,
@@ -111,6 +118,7 @@ export class GameComponent implements OnInit, OnDestroy {
     this.stackTargetId.set(null);
     this.combatShiftX.set(new Map());
     this.showShortcutsPopup.set(false);
+    this.connectionLost.set(false);
 
     this.choice.init(
       this.game,
@@ -142,9 +150,22 @@ export class GameComponent implements OnInit, OnDestroy {
 
     this.subscriptions.push(
       this.websocketService.onDisconnected().subscribe(() => {
-        this.router.navigate(['/']);
+        /* Losing the socket used to navigate straight to the login screen, which read
+           as the client crashing. Raise a blocking notice over the last known board
+           instead: the player can see where the game was, and is told the game itself
+           survives. Reconnecting silently is not an option — the socket carries the
+           session and the service drops the credentials on cleanup(), so getting back
+           in genuinely means logging in again. */
+        this.connectionLost.set(true);
       })
     );
+  }
+
+  /** The socket dropped mid-game. The board behind the notice is the last state we saw. */
+  connectionLost = signal(false);
+
+  returnToLogin(): void {
+    this.router.navigate(['/']);
   }
 
   ngOnDestroy() {
@@ -383,6 +404,13 @@ export class GameComponent implements OnInit, OnDestroy {
       const lines = C.packedLines(widths, C.ROW_GAP, rowWidth);
       return lines * (Math.ceil(lineHeight) + C.LINE_SLACK) + (lines - 1) * C.ROW_GAP + C.SUB_ROW_PADDING;
     };
+    /* Auras and cards exiled with a permanent peek out past their host, and a stack
+       holding any is that much bigger. Reserved for the stack as a whole rather than per
+       member: over-reserving keeps the fit conservative, and it makes a one-land stack
+       measure exactly like the bare land it replaced, which is what stackBasicLands now
+       emits for a single basic. */
+    const tuckedCount = (perm: Permanent): number =>
+      this.getAttachedAuras(perm.id).length + this.exiledWithCount(perm);
     const landItemWidth = (item: IndexedPermanent | LandStack, landZoom: number): number => {
       if (isLandStack(item)) {
         /* Each land after the first advances by its predecessor's visible
@@ -390,7 +418,8 @@ export class GameComponent implements OnInit, OnDestroy {
            land's (tap-dependent) width. Mirrors the land-stack CSS margins. */
         const last = item.lands[item.lands.length - 1].perm;
         const lastWidth = last.tapped ? C.TAPPED_CARD_WIDTH : C.CARD_WIDTH;
-        return ((item.lands.length - 1) * C.STACK_STRIP + lastWidth) * landZoom;
+        const tucked = item.lands.some(ip => tuckedCount(ip.perm) > 0) ? C.AURA_X_OFFSET : 0;
+        return ((item.lands.length - 1) * C.STACK_STRIP + lastWidth + tucked) * landZoom;
       }
       return this.stackWidth(item.perm) * landZoom;
     };
@@ -400,7 +429,8 @@ export class GameComponent implements OnInit, OnDestroy {
       if (isLandStack(item)) {
         /* Each land after the first steps down by LAND_STACK_Y_STEP, so the
            stack is one card plus the accumulated vertical fan. */
-        return C.CARD_HEIGHT + (item.lands.length - 1) * C.LAND_STACK_Y_STEP;
+        const tucked = Math.max(0, ...item.lands.map(ip => tuckedCount(ip.perm)));
+        return C.CARD_HEIGHT + (item.lands.length - 1) * C.LAND_STACK_Y_STEP + tucked * C.AURA_STRIP;
       }
       return this.stackHeight(item.perm);
     };
@@ -1134,8 +1164,11 @@ export class GameComponent implements OnInit, OnDestroy {
     return isLandStack(item);
   }
 
+  /** Prefixed so a stack's slot key can never collide with a land's permanent id. A stack
+      is keyed by its slot rather than by its first land: keying on a member meant losing
+      that member re-keyed the whole stack, rebuilding every card in it. */
   landStackTrackKey(item: IndexedPermanent | LandStack): string {
-    return isLandStack(item) ? item.lands[0].perm.id : item.perm.id;
+    return isLandStack(item) ? `stack:${item.key}` : `land:${item.perm.id}`;
   }
 
   isPermanentCreature(perm: Permanent): boolean {
@@ -1349,6 +1382,32 @@ export class GameComponent implements OnInit, OnDestroy {
       .map(t => enemy[t]?.card.name)
       .filter(n => n != null);
     return names.length > 0 ? `Blocks ${names.join(', ')}` : 'Blocking';
+  }
+
+  // ========== Permanent rendering ==========
+
+  /** Context for the #permanentStack template, which renders every permanent on the
+      board from one definition. `mine` picks our own click/tap/ability behaviour over
+      the opponent's; `creature` turns on the combat classes, badges and the
+      blocker-alignment shift that only creatures use. */
+  stackCtx(ip: IndexedPermanent, mine: boolean, creature: boolean): PermanentStackContext {
+    return { $implicit: ip, mine, creature };
+  }
+
+  onPermanentClick(ip: IndexedPermanent, mine: boolean, event: MouseEvent): void {
+    if (mine) {
+      this.onMyBattlefieldCardClick(ip.originalIndex, event);
+    } else {
+      this.onOpponentBattlefieldCardClick(ip.originalIndex);
+    }
+  }
+
+  /** Right-click clears a creature's assigned combat damage. Only creatures ever carry
+      an assignment, so lands keep the browser's own context menu. */
+  onPermanentContextMenu(event: MouseEvent, ip: IndexedPermanent, creature: boolean): void {
+    if (!creature) return;
+    event.preventDefault();
+    this.choice.damage.unassignDamage(ip.perm.id);
   }
 
   // ========== Click dispatch ==========
@@ -1584,6 +1643,7 @@ export class GameComponent implements OnInit, OnDestroy {
 
   @HostListener('document:keydown', ['$event'])
   onKeydown(event: KeyboardEvent): void {
+    if (this.connectionLost()) return;
     if (this.game()?.status !== GameStatus.RUNNING) return;
     const target = event.target as HTMLElement | null;
     if (target && (target.tagName === 'INPUT' || target.tagName === 'TEXTAREA' || target.tagName === 'SELECT' || target.isContentEditable)) return;

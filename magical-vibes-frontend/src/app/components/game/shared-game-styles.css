@@ -345,6 +345,17 @@
 }
 
 .battlefield-row {
+  /* Whose turn it is, drawn without spending a pixel of board height. The
+     "Your/opponent's Battlefield" labels that used to carry this were removed to give
+     the cards more room (SIDE_LABEL_HEIGHT is 0 in the fit model and must stay 0), so
+     the cue is an inset shadow instead: it paints on the row's own background layer,
+     underneath the cards, and costs no layout at all.
+     Red, taken from .player-badge.active in the side panel, so the board and the name
+     plate say "active player" in the same colour. Gold is deliberately NOT used here —
+     it already means priority, on .player-badge.has-priority, and the two are different
+     things that were briefly sharing one colour. */
+  border-radius: 4px;
+  transition: box-shadow 0.35s ease;
   /* Each player owns exactly half the area (zero-basis, equal grow) so the
      divider stays fixed at the center and never gets pushed around by whichever
      side has more cards. The zoom model shrinks cards so the taller side fits
@@ -363,6 +374,26 @@
      attackers advance to the red line instead of the combat zone opening in dead
      centre. Empty space collects at the outer edges next to the hand/life totals. */
   justify-content: flex-start;
+}
+
+/* Each half glows along its OUTER edge (top for the opponent, bottom for us), so the
+   mark sits away from the divider and never competes with the combat line. */
+.battlefield-row:first-child.active-turn {
+  box-shadow:
+    inset 0 3px 0 0 #8b3030,
+    inset 0 22px 26px -20px rgba(122, 34, 34, 0.45);
+}
+
+.battlefield-row:last-child.active-turn {
+  box-shadow:
+    inset 0 -3px 0 0 #8b3030,
+    inset 0 -22px 26px -20px rgba(122, 34, 34, 0.45);
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .battlefield-row {
+    transition: none;
+  }
 }
 
 .battlefield-cards {
@@ -395,10 +426,27 @@
   box-shadow: 0 0 6px rgba(139, 26, 26, 0.6);
 }
 
+/* An empty half still has to read as that player's side of the table, so it gets a
+   slot carved into the parchment rather than a bare line of italic text: an inset
+   panel that anchors the half and gives combat something to happen against. Only ever
+   rendered when the side has no permanents at all, and the halves are fixed at 50%
+   each, so its height can never crowd the zoom fit model. */
 .battlefield-empty {
-  font-size: 13px;
-  font-style: italic;
-  color: #7a6050;
+  align-self: center;
+  min-width: min(280px, 80%);
+  padding: 16px 32px;
+  margin: 6px 0;
+  text-align: center;
+  font-family: var(--font-display);
+  font-size: 11px;
+  font-weight: 600;
+  letter-spacing: 0.16em;
+  text-transform: uppercase;
+  color: #9a8168;
+  border: 2px dashed rgba(122, 96, 80, 0.3);
+  border-radius: 6px;
+  background: rgba(92, 58, 46, 0.04);
+  box-shadow: inset 0 2px 6px rgba(92, 58, 46, 0.1);
 }
 
 .battlefield-sub-row {
@@ -443,6 +491,79 @@
   display: inline-flex;
   flex-direction: column;
   align-items: center;
+}
+
+/* Permanents used to appear and vanish between two frames, which made a board wipe
+   read as a rendering glitch rather than as something happening. They now grow into
+   place and shrink out.
+
+   Animated on the .permanent-stack WRAPPER, not on the card: the card's own transform
+   is already carrying the tap rotation, the combat lift and the blocker alignment, and
+   an animation on it would replace all three. Scaling the wrapper touches none of that.
+
+   The leaving element keeps its layout slot until the animation ends (Angular holds it
+   in the DOM for animate.leave), so the row does not snap closed underneath it. The fit
+   model is unaffected: it reads myCreatures()/opponentCreatures() from game state, which
+   no longer lists a permanent that is on its way out.
+
+   Both rows animate arrivals, but only the creatures row animates departures, and that
+   split is load-bearing. The creatures row is a 1:1 map from game state to elements (@for
+   tracked by perm.id), so an element appearing or disappearing really does mean a
+   permanent entered or left the battlefield. The lands row is a derived grouping:
+   stackBasicLands() chunks basics into fans of four, so a land's element can be destroyed
+   by a REGROUP rather than by the land leaving — five Forests spill into a second fan, and
+   losing one shifts a card from the second fan back into the first. An exit animation
+   holds the element in the DOM while it plays, which would show that card in both fans at
+   once. Land removals are therefore immediate; only arrivals are animated.
+   (Arrivals are safe because the grouping is now stable: a lone basic is already a
+   LandStack keyed by slot, so playing a second Forest appends one item to the existing
+   fan instead of rebuilding it, and only the new card is created.) */
+@keyframes permanent-enter {
+  from { opacity: 0; scale: 0.8; }
+  to { opacity: 1; scale: 1; }
+}
+
+@keyframes permanent-leave {
+  from { opacity: 1; scale: 1; }
+  to { opacity: 0; scale: 0.85; }
+}
+
+.creatures-row .permanent-stack.permanent-enter,
+.lands-row .permanent-stack.permanent-enter {
+  animation: permanent-enter 0.24s ease-out;
+}
+
+/* Out of hit-testing while it fades, so a creature on its way out cannot still be
+   clicked. */
+.creatures-row .permanent-stack.permanent-leave {
+  animation: permanent-leave 0.2s ease-in forwards;
+  pointer-events: none;
+}
+
+/* Lands leave immediately — see above: a land's element can be destroyed by a regroup
+   rather than by the land leaving, and a lingering exit would double it. */
+.lands-row .permanent-stack.permanent-leave {
+  animation: none;
+}
+
+/* Drawn cards rise into the hand. `translate` is the standalone property, so it composes
+   with the card's own transform instead of overwriting it. */
+@keyframes hand-card-enter {
+  from { opacity: 0; translate: 0 14px; }
+  to { opacity: 1; translate: 0 0; }
+}
+
+.hand-cards .card.hand-card-enter {
+  animation: hand-card-enter 0.22s ease-out;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .creatures-row .permanent-stack.permanent-enter,
+  .creatures-row .permanent-stack.permanent-leave,
+  .lands-row .permanent-stack.permanent-enter,
+  .hand-cards .card.hand-card-enter {
+    animation: none;
+  }
 }
 
 .permanent-stack:has(.ability-popup) {
@@ -543,6 +664,22 @@
   margin-top: calc(var(--land-zoom, 0.9) * 96px);
 }
 
+/* The fan's front-to-back order, stated rather than inferred. It used to fall out of DOM
+   order: nothing in the chain created a stacking context, so every land's card competed
+   directly on `.permanent-stack > .card:last-child { z-index: 1 }` and the last sibling
+   won. Animating a land's arrival broke that — opacity and scale make `.permanent-stack`
+   a stacking context, which traps its card's z-index inside it and drops the whole card
+   to the auto/0 layer, underneath every other land still sitting at z-index 1. The new
+   land rendered at the BACK of the fan and snapped to the front when the animation ended
+   and the stacking context went away.
+   Declaring the order on the item makes it independent of whatever the cards inside do:
+   max stack size is 4 (see stackBasicLands), so four rules cover it. Must stay ahead of
+   the :hover rule below, which ties on specificity and wins on source order. */
+.land-stack .land-stack-item:nth-child(1) { z-index: 1; }
+.land-stack .land-stack-item:nth-child(2) { z-index: 2; }
+.land-stack .land-stack-item:nth-child(3) { z-index: 3; }
+.land-stack .land-stack-item:nth-child(4) { z-index: 4; }
+
 /* A tapped card's margin box is only 165px tall (the :host(.is-tapped)
    -33px margins), which would make it jump up against the stack's
    flex-start axis. Reserve the upright height and center the card so
@@ -554,6 +691,13 @@
 
 .land-stack .land-stack-item:hover {
   z-index: 10;
+}
+
+/* Now that each fan item is a stacking context, the popup's own z-index: 1000 only ranks
+   it INSIDE its item — a later land in the fan would still cover it. Lift the whole item.
+   Declared after the nth-child and :hover rules, which it ties with on specificity. */
+.land-stack .land-stack-item:has(.ability-popup) {
+  z-index: 1000;
 }
 
 /* The stack wrappers keep the upright 231px footprint so a tapped card
