@@ -28,7 +28,12 @@ dependencies {
 group = "com.magicalvibes"
 version = "1.0.0-SNAPSHOT"
 
-val copyFrontend = tasks.register<Copy>("copyFrontend") {
+// Sync, not Copy: Angular fingerprints its bundles, so every rebuild lands a new
+// main-<hash>.js beside the old one and Copy leaves the old one there forever. That had
+// accumulated 20 dead bundles and 3 dead stylesheets — 14 MB of unreachable files baked
+// into the jar. Sync clears whatever is no longer in dist/, which is safe because this
+// directory has no other contributor: the module ships no src/main/resources/static.
+val copyFrontend = tasks.register<Sync>("copyFrontend") {
     dependsOn(":magical-vibes-frontend:buildAngular")
     from(project(":magical-vibes-frontend").file("dist/magical-vibes-frontend/browser"))
     into(layout.buildDirectory.dir("resources/main/static"))
