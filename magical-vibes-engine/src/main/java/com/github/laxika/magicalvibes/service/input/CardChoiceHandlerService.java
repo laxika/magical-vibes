@@ -36,7 +36,6 @@ import com.github.laxika.magicalvibes.service.effect.normalfx.GraveyardReturnSup
 import com.github.laxika.magicalvibes.service.effect.normalfx.LifeSupport;
 import com.github.laxika.magicalvibes.service.effect.normalfx.PlayerInteractionSupport;
 import com.github.laxika.magicalvibes.service.GameBroadcastService;
-import com.github.laxika.magicalvibes.service.event.GameMutationCoordinator;
 import com.github.laxika.magicalvibes.service.exile.ExileService;
 import com.github.laxika.magicalvibes.service.graveyard.GraveyardService;
 import com.github.laxika.magicalvibes.service.battlefield.BattlefieldEntryService;
@@ -62,11 +61,11 @@ public class CardChoiceHandlerService {
     private final GraveyardService graveyardService;
     private final BattlefieldEntryService battlefieldEntryService;
     private final GameBroadcastService gameBroadcastService;
-    private final GameMutationCoordinator mutationCoordinator;
     private final PlayerInputService playerInputService;
     private final TriggerCollectionService triggerCollectionService;
     private final TurnProgressionService turnProgressionService;
     private final EffectResolutionService effectResolutionService;
+    private final InputCompletionService inputCompletionService;
     private final PlayerInteractionSupport playerInteractionSupport;
     private final LifeSupport lifeSupport;
     private final GraveyardReturnSupport graveyardReturnSupport;
@@ -171,7 +170,7 @@ public class CardChoiceHandlerService {
             return;
         }
 
-        turnProgressionService.resolveAutoPass(gameData);
+        inputCompletionService.processMayAbilitiesThenAutoPassPreservingPriority(gameData);
     }
 
     /** Answers DISCARD_CHOICE, including the multi-pick countdown carried on the record. */
@@ -229,7 +228,7 @@ public class CardChoiceHandlerService {
         int remainingDiscards = Math.max(discardChoice.remainingCount() - 1, 0);
 
         if (remainingDiscards > 0 && !hand.isEmpty()) {
-            mutationCoordinator.invalidateAllPlayerViews(gameData);
+            inputCompletionService.publishStateAfterInput(gameData);
             playerInputService.beginDiscardChoice(gameData, playerId, remainingDiscards, discardChoice.followUp());
         } else {
             DiscardFollowUp followUp = discardChoice.followUp();
@@ -353,7 +352,7 @@ public class CardChoiceHandlerService {
                 return;
             }
 
-            turnProgressionService.resolveAutoPass(gameData);
+            inputCompletionService.processMayAbilitiesThenAutoPassPreservingPriority(gameData);
         }
     }
 
@@ -399,7 +398,7 @@ public class CardChoiceHandlerService {
         int remainingExiles = Math.max(exileChoice.remainingCount() - 1, 0);
 
         if (remainingExiles > 0 && !hand.isEmpty()) {
-            mutationCoordinator.invalidateAllPlayerViews(gameData);
+            inputCompletionService.publishStateAfterInput(gameData);
             playerInputService.beginExileFromHandChoice(gameData, playerId, sourcePermanentId,
                     exileChoice.playPermissionControllerId(), remainingExiles,
                     exileChoice.remainingChoosers(), exileChoice.cardsPerPlayer());
@@ -409,7 +408,7 @@ public class CardChoiceHandlerService {
             List<UUID> rest = exileChoice.remainingChoosers().size() > 1
                     ? List.copyOf(exileChoice.remainingChoosers().subList(1, exileChoice.remainingChoosers().size()))
                     : List.of();
-            mutationCoordinator.invalidateAllPlayerViews(gameData);
+            inputCompletionService.publishStateAfterInput(gameData);
             playerInputService.beginExileFromHandChoice(gameData, next, sourcePermanentId,
                     exileChoice.playPermissionControllerId(), exileChoice.cardsPerPlayer(), rest,
                     exileChoice.cardsPerPlayer());
@@ -423,7 +422,7 @@ public class CardChoiceHandlerService {
                         gameData.pendingEffectResolutionIndex);
             }
 
-            turnProgressionService.resolveAutoPass(gameData);
+            inputCompletionService.processMayAbilitiesThenAutoPassPreservingPriority(gameData);
         }
     }
 
@@ -622,7 +621,7 @@ public class CardChoiceHandlerService {
                 return;
             }
 
-            turnProgressionService.resolveAutoPass(gameData);
+            inputCompletionService.processMayAbilitiesThenAutoPassPreservingPriority(gameData);
         }
     }
 
@@ -647,7 +646,7 @@ public class CardChoiceHandlerService {
             return;
         }
 
-        turnProgressionService.resolveAutoPass(gameData);
+        inputCompletionService.processMayAbilitiesThenAutoPassPreservingPriority(gameData);
     }
 
     /**
@@ -750,7 +749,7 @@ public class CardChoiceHandlerService {
                     gameData.pendingEffectResolutionIndex);
         }
 
-        turnProgressionService.resolveAutoPass(gameData);
+        inputCompletionService.processMayAbilitiesThenAutoPassPreservingPriority(gameData);
     }
 
     /** Appends {@code cards} as comma-separated card segments (each hoverable) to {@code builder}. */
@@ -805,7 +804,7 @@ public class CardChoiceHandlerService {
             log.info("Game {} - Source permanent left battlefield, {} exiled without imprinting", gameData.id, card.getName());
         }
 
-        turnProgressionService.resolveAutoPass(gameData);
+        inputCompletionService.processMayAbilitiesThenAutoPassPreservingPriority(gameData);
     }
 
     private void resolveTargetedCardChoice(GameData gameData, Player player, UUID playerId, List<Card> hand, Card card, UUID targetId) {

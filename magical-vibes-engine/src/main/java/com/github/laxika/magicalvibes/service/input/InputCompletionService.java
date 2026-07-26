@@ -13,9 +13,9 @@ import org.springframework.stereotype.Service;
  * Shared completion logic for input handler services.
  *
  * <p>Most input handlers end with the same epilogue: process the next pending
- * may ability, check whether further input is needed, and if not, record a
- * state invalidation and let the turn advance via auto-pass. This service extracts
- * those repeated patterns into reusable methods.
+ * may ability, check whether further input is needed, and if not, let auto-pass
+ * advance to its stable observation point before recording a state invalidation.
+ * This service extracts those repeated patterns into reusable methods.
  */
 @Service
 @RequiredArgsConstructor
@@ -29,13 +29,27 @@ public class InputCompletionService {
 
     /**
      * Process the next pending may ability (if any). If the queue is drained and
-     * no further input is needed, clear priority passes, invalidate player views,
-     * and resolve auto-pass.
+     * no further input is needed, clear priority passes, resolve auto-pass, and
+     * invalidate player views at the resulting stable point.
      *
      * <p>This is the most common completion pattern, used by may-ability handlers,
      * penalty-choice handlers, and misc input handlers.
      */
     public void processMayAbilitiesThenAutoPass(GameData gameData) {
+        processMayAbilitiesThenAutoPass(gameData, true);
+    }
+
+    /**
+     * The common completion epilogue without clearing existing priority passes.
+     *
+     * <p>This preserves the legacy semantics of handlers that previously resumed a
+     * parked resolution and called auto-pass directly.
+     */
+    public void processMayAbilitiesThenAutoPassPreservingPriority(GameData gameData) {
+        processMayAbilitiesThenAutoPass(gameData, false);
+    }
+
+    private void processMayAbilitiesThenAutoPass(GameData gameData, boolean clearPriorityPasses) {
         if (gameData.status == GameStatus.FINISHED) return;
         playerInputService.processNextMayAbility(gameData);
         if (gameData.pendingMayAbilities.isEmpty() && !gameData.interaction.isAwaitingInput()) {
@@ -55,9 +69,28 @@ public class InputCompletionService {
                 return;
             }
 
-            gameData.priorityPassedBy.clear();
-            mutationCoordinator.invalidateAllPlayerViews(gameData);
+            if (gameData.status == GameStatus.FINISHED) {
+                return;
+            }
+            if (clearPriorityPasses) {
+                gameData.priorityPassedBy.clear();
+            }
             turnProgressionService.resolveAutoPass(gameData);
+            publishStateAfterInput(gameData);
+        }
+    }
+
+    /**
+     * Records the post-answer state observation for a completed input branch.
+     *
+     * <p>Chained workflows call this at their legacy observation point around opening
+     * the next interaction. The non-coalescible decision event remains an ordering
+     * barrier on either side. Validation failures and finished games deliberately never
+     * reach this epilogue.
+     */
+    public void publishStateAfterInput(GameData gameData) {
+        if (gameData.status != GameStatus.FINISHED) {
+            mutationCoordinator.invalidateAllPlayerViews(gameData);
         }
     }
 
@@ -76,10 +109,10 @@ public class InputCompletionService {
     /**
      * Perform state-based actions. If may abilities are pending, process the next
      * one and stop. Otherwise, resume any effect resolution parked for the completed
-     * input, then invalidate player views and resolve auto-pass once resolution is idle.
+     * input, then resolve auto-pass and invalidate player views once resolution is idle.
      *
      * <p>Unlike {@link #sbaProcessMayAbilitiesThenAutoPass}, this variant does NOT
-     * clear priority passes before publishing the invalidation. Used by multi-permanent and
+     * clear priority passes before auto-pass. Used by multi-permanent and
      * battlefield handlers during mid-resolution processing.
      */
     public void sbaMayAbilitiesThenBroadcastAutoPass(GameData gameData) {
@@ -103,7 +136,10 @@ public class InputCompletionService {
             return;
         }
 
-        mutationCoordinator.invalidateAllPlayerViews(gameData);
+        if (gameData.status == GameStatus.FINISHED) {
+            return;
+        }
         turnProgressionService.resolveAutoPass(gameData);
+        publishStateAfterInput(gameData);
     }
 }

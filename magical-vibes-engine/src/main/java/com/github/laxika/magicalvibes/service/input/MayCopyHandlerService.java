@@ -20,11 +20,9 @@ import com.github.laxika.magicalvibes.service.target.ValidTargetService;
 import com.github.laxika.magicalvibes.service.state.StateBasedActionService;
 import com.github.laxika.magicalvibes.service.target.TargetLegalityService;
 import com.github.laxika.magicalvibes.service.trigger.TriggerCollectionService;
-import com.github.laxika.magicalvibes.service.turn.TurnProgressionService;
 import com.github.laxika.magicalvibes.service.battlefield.CloneService;
 import com.github.laxika.magicalvibes.service.battlefield.GameQueryService;
 import com.github.laxika.magicalvibes.service.filter.PredicateEvaluationService;
-import com.github.laxika.magicalvibes.service.event.GameMutationCoordinator;
 import com.github.laxika.magicalvibes.service.battlefield.PermanentCopierService;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -47,11 +45,9 @@ public class MayCopyHandlerService {
     private final StateBasedActionService stateBasedActionService;
     private final GameBroadcastService gameBroadcastService;
     private final PlayerInputService playerInputService;
-    private final TurnProgressionService turnProgressionService;
     private final TargetLegalityService targetLegalityService;
     private final TriggerCollectionService triggerCollectionService;
     private final ValidTargetService validTargetService;
-    private final GameMutationCoordinator mutationCoordinator;
 
     public void handleCopyPermanentOnEnterChoice(GameData gameData, Player player, boolean accepted,
                                                   PendingMayAbility ability, CopyPermanentOnEnterEffect copyEffect) {
@@ -100,7 +96,7 @@ public class MayCopyHandlerService {
                 return;
             }
 
-            turnProgressionService.resolveAutoPass(gameData);
+            inputCompletionService.processMayAbilitiesThenAutoPassPreservingPriority(gameData);
         }
     }
 
@@ -389,9 +385,7 @@ public class MayCopyHandlerService {
 
         playerInputService.processNextMayAbility(gameData);
         if (gameData.pendingMayAbilities.isEmpty() && !gameData.interaction.isAwaitingInput()) {
-            gameData.priorityPassedBy.clear();
-            mutationCoordinator.invalidateAllPlayerViews(gameData);
-            turnProgressionService.resolveAutoPass(gameData);
+            inputCompletionService.processMayAbilitiesThenAutoPass(gameData);
         }
     }
 }

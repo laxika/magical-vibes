@@ -35,7 +35,6 @@ import com.github.laxika.magicalvibes.service.effect.normalfx.GrantBasicLandType
 import java.util.Collections;
 import com.github.laxika.magicalvibes.model.TextReplacement;
 import com.github.laxika.magicalvibes.service.GameBroadcastService;
-import com.github.laxika.magicalvibes.service.event.GameMutationCoordinator;
 import com.github.laxika.magicalvibes.service.WarpWorldService;
 import com.github.laxika.magicalvibes.service.battlefield.BattlefieldEntryService;
 import com.github.laxika.magicalvibes.service.battlefield.GameQueryService;
@@ -66,7 +65,6 @@ public class ChoiceHandlerService {
     private final WarpWorldService warpWorldService;
     private final BattlefieldEntryService battlefieldEntryService;
     private final GameBroadcastService gameBroadcastService;
-    private final GameMutationCoordinator mutationCoordinator;
     private final PlayerInputService playerInputService;
     private final InputCompletionService inputCompletionService;
     private final TurnProgressionService turnProgressionService;
@@ -309,7 +307,7 @@ public class ChoiceHandlerService {
                 List<String> colors = List.of("WHITE", "BLUE", "BLACK", "RED", "GREEN");
                 interactionHandlerRegistry.begin(gameData, new PendingInteraction.ColorChoice(
                         ctx.playerId(), null, null, nextCtx, colors, "Choose a color of mana to add."));
-                mutationCoordinator.invalidateAllPlayerViews(gameData);
+                inputCompletionService.publishStateAfterInput(gameData);
                 return;
             }
         } else if (ctx.flashbackOnly()) {
@@ -327,7 +325,7 @@ public class ChoiceHandlerService {
                 List<String> colors = List.of("WHITE", "BLUE", "BLACK", "RED", "GREEN");
                 interactionHandlerRegistry.begin(gameData, new PendingInteraction.ColorChoice(
                         ctx.playerId(), null, null, nextCtx, colors, "Choose a color of mana to add (flashback only)."));
-                mutationCoordinator.invalidateAllPlayerViews(gameData);
+                inputCompletionService.publishStateAfterInput(gameData);
                 return;
             }
         } else if (ctx.fixedColorOptions() != null) {
@@ -349,7 +347,7 @@ public class ChoiceHandlerService {
                 List<String> colors = ctx.fixedColorOptions().stream().map(Enum::name).toList();
                 interactionHandlerRegistry.begin(gameData, new PendingInteraction.ColorChoice(
                         ctx.playerId(), null, null, nextCtx, colors, "Choose a color of mana to add."));
-                mutationCoordinator.invalidateAllPlayerViews(gameData);
+                inputCompletionService.publishStateAfterInput(gameData);
                 return;
             }
         } else if (ctx.restrictedToCreatureSubtype() != null) {
@@ -588,7 +586,7 @@ public class ChoiceHandlerService {
                 ctx.sourceCard().getName() + " — Choose target " + targetDescription + ".");
 
         gameBroadcastService.logAndBroadcast(gameData, GameLog.textCardText(player.getUsername() + " chooses \"" + chosen + "\" for " , ctx.sourceCard(), "."));
-        mutationCoordinator.invalidateAllPlayerViews(gameData);
+        inputCompletionService.publishStateAfterInput(gameData);
     }
 
     /**
@@ -645,7 +643,7 @@ public class ChoiceHandlerService {
             playerInputService.beginAnyTargetChoice(gameData, ctx.controllerId(),
                     validSpellCardIds, List.of(),
                     ctx.sourceCard().getName() + " — Choose target spell you don't control.");
-            mutationCoordinator.invalidateAllPlayerViews(gameData);
+            inputCompletionService.publishStateAfterInput(gameData);
             return;
         }
 
@@ -670,7 +668,7 @@ public class ChoiceHandlerService {
                 ctx.sourceCard(), ctx.controllerId(), List.of(ReturnToHandEffect.target())));
         playerInputService.beginPermanentChoice(gameData, ctx.controllerId(), validPermanents,
                 ctx.sourceCard().getName() + " — Choose target nonland permanent.");
-        mutationCoordinator.invalidateAllPlayerViews(gameData);
+        inputCompletionService.publishStateAfterInput(gameData);
     }
 
     /**
@@ -719,7 +717,7 @@ public class ChoiceHandlerService {
         if (target != null && !remaining.isEmpty()) {
             playerInputService.beginAdjustCounterKindChoice(gameData, ctx.controllerId(), ctx.targetId(),
                     ctx.sourceCardName(), remaining);
-            mutationCoordinator.invalidateAllPlayerViews(gameData);
+            inputCompletionService.publishStateAfterInput(gameData);
             return;
         }
 
@@ -825,7 +823,7 @@ public class ChoiceHandlerService {
 
     private void finalizeAfterDrawReplacementChoice(GameData gameData) {
         if (gameData.interaction.isAwaitingInput()) {
-            mutationCoordinator.invalidateAllPlayerViews(gameData);
+            inputCompletionService.publishStateAfterInput(gameData);
             return;
         }
         inputCompletionService.processMayAbilitiesThenAutoPass(gameData);
@@ -1074,7 +1072,7 @@ public class ChoiceHandlerService {
                 if (chosen.size() < CardColor.values().length) {
                     playerInputService.beginBecomeChosenColorsChoice(gameData, player.getId(),
                             ctx.targetId(), ctx.sourceCardName(), chosen, ctx.duration());
-                    mutationCoordinator.invalidateAllPlayerViews(gameData);
+                    inputCompletionService.publishStateAfterInput(gameData);
                     return;
                 }
             }
@@ -1370,7 +1368,7 @@ public class ChoiceHandlerService {
 
         if (!ctx.isSecondChoice() && ctx.chainSecondAfter()) {
             playerInputService.beginBasicLandTypeChoice(gameData, player.getId(), ctx.permanentId(), true, false);
-            mutationCoordinator.invalidateAllPlayerViews(gameData);
+            inputCompletionService.publishStateAfterInput(gameData);
             return;
         }
 
@@ -1530,7 +1528,7 @@ public class ChoiceHandlerService {
             String nextPlayerName = gameData.playerIdToName.get(nextPlayerId);
             log.info("Game {} - Awaiting {} to choose a card name (each player name/reveal)",
                     gameData.id, nextPlayerName);
-            mutationCoordinator.invalidateAllPlayerViews(gameData);
+            inputCompletionService.publishStateAfterInput(gameData);
             return;
         }
 
@@ -1808,7 +1806,7 @@ public class ChoiceHandlerService {
 
         // Present matching cards for "any number" selection
         playerInputService.beginMultiZoneExileChoice(gameData, controllerId, matchingCards, targetPlayerId, cardName);
-        mutationCoordinator.invalidateAllPlayerViews(gameData);
+        inputCompletionService.publishStateAfterInput(gameData);
     }
 
     /**

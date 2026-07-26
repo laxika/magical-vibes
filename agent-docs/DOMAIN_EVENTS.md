@@ -125,7 +125,10 @@ The lifecycle migration ratchet additionally fixes the direct state/session coun
 `GameTimeoutService`, `ReconnectionService`, `AutoPassService`, `TurnProgressionService`, and
 `KarnRestartGameEffectHandler`. The spell/ability/stack migration ratchet additionally fixes
 the direct state/session count at zero for `SpellCastingService`, `AbilityActivationService`,
-`ActivatedAbilityExecutionService`, and `StackResolutionService`.
+`ActivatedAbilityExecutionService`, and `StackResolutionService`. The generic-input ratchet fixes
+the same surfaces at zero for every `service/input` class except the explicitly deferred large
+permanent-selection services (`MultiPermanentChoiceHandlerService` and the battlefield, spell,
+and trigger permanent-choice handlers).
 
 ### `broadcastGameState` package-family classification
 
@@ -242,7 +245,8 @@ intentionally unchanged by this foundation prompt.
 |---|---|---|---|
 | Foundation | domain event records → `GameMutationCoordinator` → `GameEventDispatcher` | immutable facts/envelopes, nested batching, ordering, audience safety, simulation suppression, failure isolation | **Complete** |
 | Canonical projection subscriber | `GameEventProjectionSubscriber` → `GameViewProjectionFactory`/interaction registry → typed messages → `GameMessageTransport` | post-lock authoritative projection, explicit audience enforcement, no serialization, per-recipient transport failure isolation, human/AI typed-message parity | **Complete** |
-| Public game-state refresh | 19 `broadcastGameState` calls → player-specific `GameStateMessage` | coalesced `STATE_INVALIDATED`; canonical subscriber constructs the same per-player wire DTO after unlock | Lifecycle, `GameService`, `turn`, combat, spell, ability, input-completion, and stack-resolution workflows complete; remaining emission migration open |
+| Public game-state refresh | 19 `broadcastGameState` calls → player-specific `GameStateMessage` | coalesced `STATE_INVALIDATED`; canonical subscriber constructs the same per-player wire DTO after unlock | Lifecycle, `GameService`, `turn`, combat, spell, ability, generic input, and stack-resolution workflows complete; remaining emission migration open |
+| Generic input completion | answer handler → required SBA/may processing → parked-resolution resume → auto-pass stable point → state observation | one coalesced all-player `STATE_INVALIDATED` per completed answer; a queued interaction keeps its non-coalescible `DECISION_REQUESTED` barrier; validation failure and game end do not leak an intermediate state observation | **Complete**; large permanent-selection handlers intentionally deferred |
 | Game log | 2,293 `logAndBroadcast` calls → `gameLog` → next state message | append under lock plus `GAME_LOG` invalidation; preserve structured segments and incremental wire behavior | Combat package complete; remaining packages open |
 | Generic interactions | begin site → authoritative pending interaction + stable ID → `DECISION_REQUESTED` → `InteractionPromptProjectionRegistry` → typed prompt | one non-coalescible private fact per interaction; exact identity match before projection; every promptable subtype (including combat) has one explicit strategy and no raw-state fallback; handlers have no session/networking dependency | **Complete** |
 | Attackers | `CombatAttackService` finalizes an immutable legality snapshot → registry decision event → canonical subscriber → `AvailableAttackersMessage` | `DECISION_REQUESTED(ATTACKER_DECLARATION)` with stable retry/replay identity and Mindslaver audience | **Complete** |

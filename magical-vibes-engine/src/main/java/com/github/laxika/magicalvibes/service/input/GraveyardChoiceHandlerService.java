@@ -19,7 +19,6 @@ import com.github.laxika.magicalvibes.model.PendingMayAbility;
 import com.github.laxika.magicalvibes.model.Zone;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
 import com.github.laxika.magicalvibes.service.GameBroadcastService;
-import com.github.laxika.magicalvibes.service.event.GameMutationCoordinator;
 import com.github.laxika.magicalvibes.service.battlefield.BattlefieldEntryService;
 import com.github.laxika.magicalvibes.service.battlefield.GameQueryService;
 import com.github.laxika.magicalvibes.service.battlefield.LegendRuleService;
@@ -27,7 +26,6 @@ import com.github.laxika.magicalvibes.service.battlefield.PermanentRemovalServic
 import com.github.laxika.magicalvibes.service.exile.ExileService;
 import com.github.laxika.magicalvibes.service.trigger.TriggerCollectionService;
 import com.github.laxika.magicalvibes.service.effect.normalfx.GraveyardReturnSupport;
-import com.github.laxika.magicalvibes.service.turn.TurnProgressionService;
 import com.github.laxika.magicalvibes.service.effect.normalfx.LifeSupport;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -50,8 +48,6 @@ public class GraveyardChoiceHandlerService {
     private final BattlefieldEntryService battlefieldEntryService;
     private final LegendRuleService legendRuleService;
     private final GameBroadcastService gameBroadcastService;
-    private final GameMutationCoordinator mutationCoordinator;
-    private final TurnProgressionService turnProgressionService;
     private final PermanentRemovalService permanentRemovalService;
     private final TriggerCollectionService triggerCollectionService;
     private final PlayerInputService playerInputService;
@@ -332,7 +328,7 @@ public class GraveyardChoiceHandlerService {
             }
         }
 
-        turnProgressionService.resolveAutoPass(gameData);
+        inputCompletionService.processMayAbilitiesThenAutoPassPreservingPriority(gameData);
     }
 
     public void handleMultipleCardsChosen(GameData gameData, Player player, List<UUID> cardIds) {
@@ -511,7 +507,7 @@ public class GraveyardChoiceHandlerService {
 
             triggerCollectionService.checkSpellCastTriggers(gameData, pendingCard, controllerId,
                     !pendingFlashback);
-            mutationCoordinator.invalidateAllPlayerViews(gameData);
+            inputCompletionService.publishStateAfterInput(gameData);
         } else {
             // Triggered ability (ETB, spell-cast trigger, or saga chapter) — put on stack with targets
             String description;
@@ -572,7 +568,7 @@ public class GraveyardChoiceHandlerService {
             return;
         }
 
-        turnProgressionService.resolveAutoPass(gameData);
+        inputCompletionService.processMayAbilitiesThenAutoPassPreservingPriority(gameData);
     }
 }
 

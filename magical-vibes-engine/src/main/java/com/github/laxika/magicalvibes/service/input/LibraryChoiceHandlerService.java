@@ -32,7 +32,6 @@ import com.github.laxika.magicalvibes.model.effect.OpponentMayReturnExiledCardOr
 import com.github.laxika.magicalvibes.model.filter.PermanentPredicateTargetFilter;
 import com.github.laxika.magicalvibes.service.DrawService;
 import com.github.laxika.magicalvibes.service.GameBroadcastService;
-import com.github.laxika.magicalvibes.service.event.GameMutationCoordinator;
 import com.github.laxika.magicalvibes.service.trigger.TriggerCollectionService;
 import com.github.laxika.magicalvibes.service.exile.ExileService;
 import com.github.laxika.magicalvibes.service.graveyard.GraveyardService;
@@ -43,7 +42,6 @@ import com.github.laxika.magicalvibes.service.battlefield.GameQueryService;
 import com.github.laxika.magicalvibes.service.filter.PredicateEvaluationService;
 import com.github.laxika.magicalvibes.service.battlefield.LegendRuleService;
 import com.github.laxika.magicalvibes.service.state.StateBasedActionService;
-import com.github.laxika.magicalvibes.service.turn.TurnProgressionService;
 import com.github.laxika.magicalvibes.service.effect.EffectResolutionService;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -71,8 +69,7 @@ public class LibraryChoiceHandlerService {
     private final LegendRuleService legendRuleService;
     private final StateBasedActionService stateBasedActionService;
     private final GameBroadcastService gameBroadcastService;
-    private final GameMutationCoordinator mutationCoordinator;
-    private final TurnProgressionService turnProgressionService;
+    private final InputCompletionService inputCompletionService;
     private final PlayerInputService playerInputService;
     private final EffectResolutionService effectResolutionService;
     private final ExileService exileService;
@@ -808,7 +805,7 @@ public class LibraryChoiceHandlerService {
                 return;
             }
         }
-        turnProgressionService.resolveAutoPass(gameData);
+        inputCompletionService.processMayAbilitiesThenAutoPassPreservingPriority(gameData);
     }
     /**
      * Places multiple cards onto the battlefield simultaneously per CR 608.2f.
@@ -1583,7 +1580,7 @@ public class LibraryChoiceHandlerService {
                 gameData.id, playerName, chosenCard.getName());
 
         triggerCollectionService.checkSpellCastTriggers(gameData, chosenCard, playerId, false);
-        mutationCoordinator.invalidateAllPlayerViews(gameData);
+        inputCompletionService.publishStateAfterInput(gameData);
     }
 
     /** Appends {@code cards} as comma-separated card segments (each hoverable) to {@code builder}. */

@@ -41,8 +41,15 @@ class InputHandlerEpilogueRatchetTest {
 
     /** The one file allowed to call resolveAutoPass freely: it IS the shared epilogue. */
     private static final Set<String> SANCTIONED_FILES = Set.of("InputCompletionService.java");
+    private static final Set<String> DEFERRED_PERMANENT_INPUT_FILES = Set.of(
+            "MultiPermanentChoiceHandlerService.java",
+            "PermanentChoiceBattlefieldHandlerService.java",
+            "PermanentChoiceSpellHandlerService.java",
+            "PermanentChoiceTriggerHandlerService.java");
 
     private static final Pattern RESOLVE_AUTO_PASS_RE = Pattern.compile("\\bresolveAutoPass\\s*\\(");
+    private static final Pattern INVALIDATE_ALL_PLAYER_VIEWS_RE =
+            Pattern.compile("\\binvalidateAllPlayerViews\\s*\\(");
 
     /**
      * Direct resolveAutoPass call sites per file as of the 2026-07 epilogue unification.
@@ -50,11 +57,6 @@ class InputHandlerEpilogueRatchetTest {
      * lower the entry) — never up.
      */
     private static final Map<String, Integer> BASELINE = Map.of(
-            "CardChoiceHandlerService.java", 7,
-            "GraveyardChoiceHandlerService.java", 2,
-            "LibraryChoiceHandlerService.java", 1,
-            "MayCopyHandlerService.java", 2,
-            "MayMiscHandlerService.java", 6,
             "MultiPermanentChoiceHandlerService.java", 17,
             "PermanentChoiceBattlefieldHandlerService.java", 1,
             "PermanentChoiceSpellHandlerService.java", 5,
@@ -112,6 +114,34 @@ class InputHandlerEpilogueRatchetTest {
 
         assertThat(messages)
                 .withFailMessage(() -> "Input-handler epilogue ratchet failed:\n  " + String.join("\n  ", messages))
+                .isEmpty();
+    }
+
+    @Test
+    @DisplayName("Generic input handlers publish state only through InputCompletionService")
+    void genericInputInvalidationsUseTheSharedCompletionEpilogue() throws IOException {
+        Path inputPkg = locateRepoRoot().resolve(INPUT_PKG);
+        List<String> failures = new java.util.ArrayList<>();
+
+        try (Stream<Path> files = Files.list(inputPkg)) {
+            for (Path path : (Iterable<Path>) files.filter(Files::isRegularFile)
+                    .filter(file -> file.toString().endsWith(".java"))
+                    .filter(file -> !SANCTIONED_FILES.contains(file.getFileName().toString()))
+                    .filter(file -> !DEFERRED_PERMANENT_INPUT_FILES.contains(
+                            file.getFileName().toString()))
+                    .sorted()::iterator) {
+                String source = Files.readString(path, StandardCharsets.UTF_8);
+                Matcher matcher = INVALIDATE_ALL_PLAYER_VIEWS_RE.matcher(source);
+                if (matcher.find()) {
+                    failures.add(path.getFileName()
+                            + " records state directly instead of using InputCompletionService");
+                }
+            }
+        }
+
+        assertThat(failures)
+                .withFailMessage(() -> "Generic input completion ownership regressed:\n  "
+                        + String.join("\n  ", failures))
                 .isEmpty();
     }
 

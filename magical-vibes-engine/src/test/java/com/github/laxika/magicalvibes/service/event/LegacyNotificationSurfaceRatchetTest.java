@@ -81,6 +81,11 @@ class LegacyNotificationSurfaceRatchetTest {
             "interaction/SearchLibraryToTopChoiceInteractionHandler.java",
             "interaction/SylvanLibraryChoiceInteractionHandler.java",
             "interaction/XValueChoiceInteractionHandler.java");
+    private static final Set<String> DEFERRED_PERMANENT_INPUT_FILES = Set.of(
+            "MultiPermanentChoiceHandlerService.java",
+            "PermanentChoiceBattlefieldHandlerService.java",
+            "PermanentChoiceSpellHandlerService.java",
+            "PermanentChoiceTriggerHandlerService.java");
 
     private static final Map<LegacySurface, Map<String, Integer>> BASELINE = new EnumMap<>(LegacySurface.class);
 
@@ -169,6 +174,37 @@ class LegacyNotificationSurfaceRatchetTest {
 
         assertThat(failures)
                 .withFailMessage(() -> "Migrated lifecycle notification surface regressed:\n  "
+                        + String.join("\n  ", failures))
+                .isEmpty();
+    }
+
+    @Test
+    void nonPermanentInputFilesHaveZeroDirectStateOrSessionDelivery() throws IOException {
+        Path serviceRoot = locateRepoRoot().resolve(SERVICE_ROOT);
+        Path inputRoot = serviceRoot.resolve("input");
+        List<String> failures = new ArrayList<>();
+
+        try (Stream<Path> paths = Files.list(inputRoot)) {
+            for (Path path : (Iterable<Path>) paths.filter(Files::isRegularFile)
+                    .filter(file -> file.toString().endsWith(".java"))
+                    .filter(file -> !DEFERRED_PERMANENT_INPUT_FILES.contains(
+                            file.getFileName().toString()))
+                    .sorted()::iterator) {
+                String source = Files.readString(path, StandardCharsets.UTF_8);
+                for (LegacySurface surface : List.of(
+                        LegacySurface.BROADCAST_GAME_STATE,
+                        LegacySurface.SESSION_SEND)) {
+                    int current = count(source, surface.pattern);
+                    if (current != 0) {
+                        failures.add("input/" + path.getFileName() + " retains "
+                                + current + " " + surface + " call(s)");
+                    }
+                }
+            }
+        }
+
+        assertThat(failures)
+                .withFailMessage(() -> "Generic input notification migration regressed:\n  "
                         + String.join("\n  ", failures))
                 .isEmpty();
     }

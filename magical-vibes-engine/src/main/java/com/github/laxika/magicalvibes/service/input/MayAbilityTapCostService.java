@@ -12,7 +12,6 @@ import com.github.laxika.magicalvibes.service.ability.cost.PermanentChoiceCostHa
 import com.github.laxika.magicalvibes.service.battlefield.GameQueryService;
 import com.github.laxika.magicalvibes.service.filter.PredicateEvaluationService;
 import com.github.laxika.magicalvibes.service.effect.EffectResolutionService;
-import com.github.laxika.magicalvibes.service.event.GameMutationCoordinator;
 import com.github.laxika.magicalvibes.service.trigger.TriggerCollectionService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
@@ -35,7 +34,6 @@ public class MayAbilityTapCostService {
     private final PlayerInputService playerInputService;
     private final InputCompletionService inputCompletionService;
     private final EffectResolutionService effectResolutionService;
-    private final GameMutationCoordinator mutationCoordinator;
 
     /**
      * Begins interactive tap-cost payment after the player accepted a may ability with a tap cost.
@@ -76,7 +74,7 @@ public class MayAbilityTapCostService {
                 playerId, sourcePermanentId, tapCost, required));
         playerInputService.beginPermanentChoice(gameData, playerId, validIds,
                 handler.getPromptMessage(required));
-        mutationCoordinator.invalidateAllPlayerViews(gameData);
+        inputCompletionService.publishStateAfterInput(gameData);
         return true;
     }
 
@@ -118,7 +116,7 @@ public class MayAbilityTapCostService {
                         playerId, context.sourcePermanentId(), context.costEffect(), remaining));
                 playerInputService.beginPermanentChoice(gameData, playerId, validIds,
                         handler.getPromptMessage(remaining));
-                mutationCoordinator.invalidateAllPlayerViews(gameData);
+                inputCompletionService.publishStateAfterInput(gameData);
                 return;
             }
         }

@@ -27,7 +27,6 @@ import com.github.laxika.magicalvibes.service.battlefield.LegendRuleService;
 import com.github.laxika.magicalvibes.service.effect.EffectResolutionService;
 import com.github.laxika.magicalvibes.service.exile.ExileService;
 import com.github.laxika.magicalvibes.service.graveyard.GraveyardService;
-import com.github.laxika.magicalvibes.service.turn.TurnProgressionService;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Nested;
@@ -60,11 +59,10 @@ class LibraryChoiceHandlerServiceTest {
     @Mock private StateBasedActionService stateBasedActionService;
     @Mock private GameBroadcastService gameBroadcastService;
     @Mock private CardViewFactory cardViewFactory;
-    @Mock private TurnProgressionService turnProgressionService;
+    @Mock private InputCompletionService inputCompletionService;
     @Mock private PlayerInputService playerInputService;
     @Mock private EffectResolutionService effectResolutionService;
     @Mock private ExileService exileService;
-    @Mock private com.github.laxika.magicalvibes.service.event.GameMutationCoordinator mutationCoordinator;
 
     private LibraryChoiceHandlerService service;
 
@@ -83,7 +81,7 @@ class LibraryChoiceHandlerServiceTest {
         service = new LibraryChoiceHandlerService(gameQueryService,
                 mock(com.github.laxika.magicalvibes.service.filter.PredicateEvaluationService.class),
                 graveyardService, warpWorldService, battlefieldEntryService, legendRuleService,
-                stateBasedActionService, gameBroadcastService, mutationCoordinator, turnProgressionService,
+                stateBasedActionService, gameBroadcastService, inputCompletionService,
                 playerInputService, effectResolutionService, exileService, registry,
                 mock(com.github.laxika.magicalvibes.service.trigger.TriggerCollectionService.class),
                 mock(com.github.laxika.magicalvibes.service.effect.normalfx.LibrarySearchSupport.class),
@@ -220,7 +218,7 @@ class LibraryChoiceHandlerServiceTest {
             service.handleLibraryCardChosen(gd, player2, 0);
 
             // Should resolve auto-pass since no searcher remains
-            verify(turnProgressionService).resolveAutoPass(gd);
+            verify(inputCompletionService).processMayAbilitiesThenAutoPassPreservingPriority(gd);
         }
 
         @Test
@@ -241,7 +239,7 @@ class LibraryChoiceHandlerServiceTest {
             service.handleLibraryCardChosen(gd, player1, 0);
 
             // Player2 was skipped (no basic lands), auto-pass called
-            verify(turnProgressionService).resolveAutoPass(gd);
+            verify(inputCompletionService).processMayAbilitiesThenAutoPassPreservingPriority(gd);
             verify(gameBroadcastService).logAndBroadcast(eq(gd), argThat((GameLogEntry logEntry) ->
                     logEntry.plainText().contains("Player2") && logEntry.plainText().contains("finds no basic land cards")));
         }
@@ -263,7 +261,7 @@ class LibraryChoiceHandlerServiceTest {
             service.handleLibraryCardChosen(gd, player1, 0);
 
             // Player2 was skipped (empty library), auto-pass called
-            verify(turnProgressionService).resolveAutoPass(gd);
+            verify(inputCompletionService).processMayAbilitiesThenAutoPassPreservingPriority(gd);
             verify(gameBroadcastService).logAndBroadcast(eq(gd), argThat((GameLogEntry logEntry) ->
                     logEntry.plainText().contains("Player2") && logEntry.plainText().contains("it is empty")));
         }
@@ -280,7 +278,7 @@ class LibraryChoiceHandlerServiceTest {
             service.handleLibraryCardChosen(gd, player1, 0);
 
             // No further library search, just auto-pass
-            verify(turnProgressionService).resolveAutoPass(gd);
+            verify(inputCompletionService).processMayAbilitiesThenAutoPassPreservingPriority(gd);
         }
 
         @Test
@@ -342,7 +340,7 @@ class LibraryChoiceHandlerServiceTest {
             service.handleLibraryCardChosen(gd, player1, 0);
 
             verify(effectResolutionService).resolveEffectsFrom(gd, paused, 1);
-            verify(turnProgressionService).resolveAutoPass(gd);
+            verify(inputCompletionService).processMayAbilitiesThenAutoPassPreservingPriority(gd);
         }
 
         @Test
@@ -360,7 +358,7 @@ class LibraryChoiceHandlerServiceTest {
             service.handleLibraryCardChosen(gd, player1, -1);
 
             verify(effectResolutionService).resolveEffectsFrom(gd, paused, 1);
-            verify(turnProgressionService).resolveAutoPass(gd);
+            verify(inputCompletionService).processMayAbilitiesThenAutoPassPreservingPriority(gd);
         }
 
         @Test
@@ -374,7 +372,7 @@ class LibraryChoiceHandlerServiceTest {
             service.handleLibraryCardChosen(gd, player1, 0);
 
             verify(effectResolutionService, never()).resolveEffectsFrom(any(), any(), anyInt());
-            verify(turnProgressionService).resolveAutoPass(gd);
+            verify(inputCompletionService).processMayAbilitiesThenAutoPassPreservingPriority(gd);
         }
     }
 
@@ -470,7 +468,7 @@ class LibraryChoiceHandlerServiceTest {
             service.handleLibraryCardChosen(gd, player1, 0);
 
             verify(effectResolutionService).resolveEffectsFrom(gd, entry, 1);
-            verify(turnProgressionService).resolveAutoPass(gd);
+            verify(inputCompletionService).processMayAbilitiesThenAutoPassPreservingPriority(gd);
         }
 
         @Test
@@ -493,7 +491,7 @@ class LibraryChoiceHandlerServiceTest {
             service.handleLibraryCardChosen(gd, player1, 0);
 
             verify(effectResolutionService).resolveEffectsFrom(gd, entry, 2);
-            verify(turnProgressionService).resolveAutoPass(gd);
+            verify(inputCompletionService).processMayAbilitiesThenAutoPassPreservingPriority(gd);
         }
 
         @Test
@@ -516,7 +514,7 @@ class LibraryChoiceHandlerServiceTest {
             service.handleLibraryCardChosen(gd, player1, 0);
 
             verify(effectResolutionService).resolveEffectsFrom(gd, entry, 1);
-            verify(turnProgressionService).resolveAutoPass(gd);
+            verify(inputCompletionService).processMayAbilitiesThenAutoPassPreservingPriority(gd);
         }
     }
 }

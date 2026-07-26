@@ -7,27 +7,35 @@ import com.github.laxika.magicalvibes.model.PendingInteraction;
 import com.github.laxika.magicalvibes.model.PendingMayAbility;
 import com.github.laxika.magicalvibes.model.StackEntry;
 import com.github.laxika.magicalvibes.model.StackEntryType;
+import com.github.laxika.magicalvibes.model.event.GameEventAudience;
+import com.github.laxika.magicalvibes.model.event.GameEventBatch;
+import com.github.laxika.magicalvibes.model.event.GameEventFact;
+import com.github.laxika.magicalvibes.model.event.GameEventKind;
 import com.github.laxika.magicalvibes.service.effect.EffectResolutionService;
+import com.github.laxika.magicalvibes.service.event.GameEventDispatcher;
+import com.github.laxika.magicalvibes.service.event.GameEventSubscriber;
 import com.github.laxika.magicalvibes.service.event.GameMutationCoordinator;
+import com.github.laxika.magicalvibes.service.interaction.InteractionHandlerRegistry;
+import com.github.laxika.magicalvibes.service.interaction.MayAbilityChoiceInteractionHandler;
 import com.github.laxika.magicalvibes.service.state.StateBasedActionService;
 import com.github.laxika.magicalvibes.service.turn.TurnProgressionService;
 import org.junit.jupiter.api.BeforeEach;
-import org.junit.jupiter.api.Nested;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.InOrder;
-import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 
+import java.util.ArrayList;
 import java.util.List;
 import java.util.UUID;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.assertj.core.api.Assertions.assertThatThrownBy;
 import static org.mockito.Mockito.doAnswer;
 import static org.mockito.Mockito.inOrder;
+import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.never;
-import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.verifyNoInteractions;
 
@@ -35,14 +43,13 @@ import static org.mockito.Mockito.verifyNoInteractions;
 class InputCompletionServiceTest {
 
     @Mock private PlayerInputService playerInputService;
-    @Mock private GameMutationCoordinator mutationCoordinator;
     @Mock private TurnProgressionService turnProgressionService;
     @Mock private StateBasedActionService stateBasedActionService;
     @Mock private EffectResolutionService effectResolutionService;
 
-    @InjectMocks
     private InputCompletionService service;
-
+    private GameMutationCoordinator coordinator;
+    private RecordingSubscriber events;
     private GameData gameData;
     private UUID playerId;
 
@@ -51,181 +58,211 @@ class InputCompletionServiceTest {
         playerId = UUID.randomUUID();
         gameData = new GameData(UUID.randomUUID(), "test-game", playerId, "Alice");
         gameData.status = GameStatus.RUNNING;
+
+        events = new RecordingSubscriber();
+        coordinator = new GameMutationCoordinator(new GameEventDispatcher(List.of(events)));
+        service = new InputCompletionService(
+                playerInputService,
+                coordinator,
+                turnProgressionService,
+                stateBasedActionService,
+                effectResolutionService);
     }
 
-    @Nested
-    class ProcessMayAbilitiesThenAutoPass {
-
-        @Test
-        void finishedGameDoesNothing() {
-            gameData.status = GameStatus.FINISHED;
-
-            service.processMayAbilitiesThenAutoPass(gameData);
-
-            verifyNoInteractions(playerInputService, mutationCoordinator,
-                    turnProgressionService, stateBasedActionService, effectResolutionService);
-        }
-
-        @Test
-        void pendingMayAbilityIsProcessedAndCompletionStops() {
-            gameData.pendingMayAbilities.add(pendingMayAbility());
-
-            service.processMayAbilitiesThenAutoPass(gameData);
-
-            verify(playerInputService).processNextMayAbility(gameData);
-            verifyNoInteractions(mutationCoordinator, turnProgressionService, effectResolutionService);
-        }
-
-        @Test
-        void resumesParkedResolutionBeforeClearingPriorityAndAutoPassing() {
-            StackEntry parked = parkResolution();
-            gameData.priorityPassedBy.add(playerId);
-
-            service.processMayAbilitiesThenAutoPass(gameData);
-
-            InOrder order = inOrder(playerInputService, effectResolutionService,
-                    mutationCoordinator, turnProgressionService);
-            order.verify(playerInputService).processNextMayAbility(gameData);
-            order.verify(effectResolutionService).resolveEffectsFrom(gameData, parked, 2);
-            order.verify(mutationCoordinator).invalidateAllPlayerViews(gameData);
-            order.verify(turnProgressionService).resolveAutoPass(gameData);
+    @Test
+    void noFurtherInputPublishesOneStateObservationAfterAutoPass() {
+        gameData.priorityPassedBy.add(playerId);
+        doAnswer(invocation -> {
             assertThat(gameData.priorityPassedBy).isEmpty();
-        }
+            return null;
+        }).when(turnProgressionService).resolveAutoPass(gameData);
 
-        @Test
-        void processesMayAbilityQueuedByResumedResolutionAndDoesNotAutoPass() {
-            StackEntry parked = parkResolution();
-            doAnswer(invocation -> {
-                gameData.pendingMayAbilities.add(pendingMayAbility());
-                return null;
-            }).when(effectResolutionService).resolveEffectsFrom(gameData, parked, 2);
+        mutate(() -> service.processMayAbilitiesThenAutoPass(gameData));
 
-            service.processMayAbilitiesThenAutoPass(gameData);
-
-            verify(playerInputService, times(2)).processNextMayAbility(gameData);
-            verifyNoInteractions(mutationCoordinator, turnProgressionService);
-        }
-
-        @Test
-        void stopsWhenResumedResolutionOpensAnotherInteraction() {
-            StackEntry parked = parkResolution();
-            doAnswer(invocation -> {
-                gameData.interaction.beginInteraction(new PendingInteraction.Scry(playerId, List.of()));
-                return null;
-            }).when(effectResolutionService).resolveEffectsFrom(gameData, parked, 2);
-
-            service.processMayAbilitiesThenAutoPass(gameData);
-
-            verify(playerInputService).processNextMayAbility(gameData);
-            verifyNoInteractions(mutationCoordinator, turnProgressionService);
-        }
+        assertThat(lastKinds()).containsExactly(GameEventKind.STATE_INVALIDATED);
+        InOrder order = inOrder(playerInputService, turnProgressionService);
+        order.verify(playerInputService).processNextMayAbility(gameData);
+        order.verify(turnProgressionService).resolveAutoPass(gameData);
     }
 
-    @Nested
-    class SbaProcessMayAbilitiesThenAutoPass {
-
-        @Test
-        void performsStateBasedActionsThenRunsCommonCompletion() {
-            gameData.priorityPassedBy.add(playerId);
-
-            service.sbaProcessMayAbilitiesThenAutoPass(gameData);
-
-            InOrder order = inOrder(stateBasedActionService, playerInputService,
-                    mutationCoordinator, turnProgressionService);
-            order.verify(stateBasedActionService).performStateBasedActions(gameData);
-            order.verify(playerInputService).processNextMayAbility(gameData);
-            order.verify(mutationCoordinator).invalidateAllPlayerViews(gameData);
-            order.verify(turnProgressionService).resolveAutoPass(gameData);
-            assertThat(gameData.priorityPassedBy).isEmpty();
-        }
-
-        @Test
-        void stopsWhenStateBasedActionsFinishTheGame() {
-            doAnswer(invocation -> {
-                gameData.status = GameStatus.FINISHED;
-                return null;
-            }).when(stateBasedActionService).performStateBasedActions(gameData);
-
-            service.sbaProcessMayAbilitiesThenAutoPass(gameData);
-
-            verify(stateBasedActionService).performStateBasedActions(gameData);
-            verifyNoInteractions(playerInputService, mutationCoordinator,
-                    turnProgressionService, effectResolutionService);
-        }
-    }
-
-    @Nested
-    class SbaMayAbilitiesThenBroadcastAutoPass {
-
-        @Test
-        void stopsWhenStateBasedActionsFinishTheGame() {
-            doAnswer(invocation -> {
-                gameData.status = GameStatus.FINISHED;
-                return null;
-            }).when(stateBasedActionService).performStateBasedActions(gameData);
-
-            service.sbaMayAbilitiesThenBroadcastAutoPass(gameData);
-
-            verify(stateBasedActionService).performStateBasedActions(gameData);
-            verifyNoInteractions(playerInputService, mutationCoordinator,
-                    turnProgressionService, effectResolutionService);
-        }
-
-        @Test
-        void processesExistingMayAbilityWithoutResumingOrAutoPassing() {
-            gameData.pendingMayAbilities.add(pendingMayAbility());
-            parkResolution();
-
-            service.sbaMayAbilitiesThenBroadcastAutoPass(gameData);
-
-            verify(playerInputService).processNextMayAbility(gameData);
-            verifyNoInteractions(mutationCoordinator, turnProgressionService, effectResolutionService);
-        }
-
-        @Test
-        void resumesParkedResolutionBeforeBroadcastAndPreservesPriorityPasses() {
-            StackEntry parked = parkResolution();
-            gameData.priorityPassedBy.add(playerId);
-
-            service.sbaMayAbilitiesThenBroadcastAutoPass(gameData);
-
-            InOrder order = inOrder(stateBasedActionService, effectResolutionService,
-                    mutationCoordinator, turnProgressionService);
-            order.verify(stateBasedActionService).performStateBasedActions(gameData);
-            order.verify(effectResolutionService).resolveEffectsFrom(gameData, parked, 2);
-            order.verify(mutationCoordinator).invalidateAllPlayerViews(gameData);
-            order.verify(turnProgressionService).resolveAutoPass(gameData);
+    @Test
+    void preservingPriorityVariantPublishesAfterAutoPassWithoutClearingPasses() {
+        gameData.priorityPassedBy.add(playerId);
+        doAnswer(invocation -> {
             assertThat(gameData.priorityPassedBy).containsExactly(playerId);
-            verify(playerInputService, never()).processNextMayAbility(gameData);
-        }
+            return null;
+        }).when(turnProgressionService).resolveAutoPass(gameData);
 
-        @Test
-        void processesMayAbilityQueuedByResumedResolutionAndDoesNotAutoPass() {
-            StackEntry parked = parkResolution();
-            doAnswer(invocation -> {
-                gameData.pendingMayAbilities.add(pendingMayAbility());
-                return null;
-            }).when(effectResolutionService).resolveEffectsFrom(gameData, parked, 2);
+        mutate(() -> service.processMayAbilitiesThenAutoPassPreservingPriority(gameData));
 
-            service.sbaMayAbilitiesThenBroadcastAutoPass(gameData);
+        assertThat(lastKinds()).containsExactly(GameEventKind.STATE_INVALIDATED);
+        assertThat(gameData.priorityPassedBy).containsExactly(playerId);
+    }
 
-            verify(playerInputService).processNextMayAbility(gameData);
-            verifyNoInteractions(mutationCoordinator, turnProgressionService);
-        }
+    @Test
+    void pendingMayAbilityPublishesItsDecisionAndDoesNotPublishStateOrAutoPass() {
+        gameData.pendingMayAbilities.add(pendingMayAbility());
+        InteractionHandlerRegistry interactions = mayInteractionRegistry();
+        doAnswer(invocation -> {
+            PendingMayAbility pending = gameData.pendingMayAbilities.getFirst();
+            interactions.begin(gameData, new PendingInteraction.MayAbilityChoice(
+                    pending.controllerId(), pending.description(), pending.manaCost()));
+            return null;
+        }).when(playerInputService).processNextMayAbility(gameData);
 
-        @Test
-        void stopsWhenResumedResolutionOpensAnotherInteraction() {
-            StackEntry parked = parkResolution();
-            doAnswer(invocation -> {
-                gameData.interaction.beginInteraction(new PendingInteraction.Scry(playerId, List.of()));
-                return null;
-            }).when(effectResolutionService).resolveEffectsFrom(gameData, parked, 2);
+        mutate(() -> service.processMayAbilitiesThenAutoPass(gameData));
 
-            service.sbaMayAbilitiesThenBroadcastAutoPass(gameData);
+        assertThat(lastKinds()).containsExactly(GameEventKind.DECISION_REQUESTED);
+        assertThat(gameData.interaction.activeInteraction())
+                .isInstanceOf(PendingInteraction.MayAbilityChoice.class);
+        verifyNoInteractions(turnProgressionService, effectResolutionService);
+    }
 
-            verify(playerInputService, never()).processNextMayAbility(gameData);
-            verifyNoInteractions(mutationCoordinator, turnProgressionService);
-        }
+    @Test
+    void parkedResolutionResumesBeforeAutoPassAndPublishesOnlyAfterItIsDrained() {
+        StackEntry parked = parkResolution();
+        doAnswer(invocation -> {
+            gameData.pendingEffectResolutionEntry = null;
+            gameData.pendingEffectResolutionIndex = 0;
+            return null;
+        }).when(effectResolutionService).resolveEffectsFrom(gameData, parked, 2);
+        doAnswer(invocation -> {
+            assertThat(gameData.pendingEffectResolutionEntry).isNull();
+            return null;
+        }).when(turnProgressionService).resolveAutoPass(gameData);
+
+        mutate(() -> service.processMayAbilitiesThenAutoPass(gameData));
+
+        assertThat(lastKinds()).containsExactly(GameEventKind.STATE_INVALIDATED);
+        InOrder order = inOrder(effectResolutionService, turnProgressionService);
+        order.verify(effectResolutionService).resolveEffectsFrom(gameData, parked, 2);
+        order.verify(turnProgressionService).resolveAutoPass(gameData);
+    }
+
+    @Test
+    void interactionOpenedByParkedResolutionRemainsTheOnlyObservation() {
+        StackEntry parked = parkResolution();
+        InteractionHandlerRegistry interactions = mayInteractionRegistry();
+        doAnswer(invocation -> {
+            gameData.pendingEffectResolutionEntry = null;
+            interactions.begin(gameData, new PendingInteraction.MayAbilityChoice(
+                    playerId, "Choose the next mode", null));
+            return null;
+        }).when(effectResolutionService).resolveEffectsFrom(gameData, parked, 2);
+
+        mutate(() -> service.processMayAbilitiesThenAutoPass(gameData));
+
+        assertThat(lastKinds()).containsExactly(GameEventKind.DECISION_REQUESTED);
+        verify(turnProgressionService, never()).resolveAutoPass(gameData);
+    }
+
+    @Test
+    void chainedInputKeepsDecisionAsBarrierBeforePostAnswerState() {
+        InteractionHandlerRegistry interactions = mayInteractionRegistry();
+
+        mutate(() -> {
+            interactions.begin(gameData, new PendingInteraction.MayAbilityChoice(
+                    playerId, "Choose again", null));
+            service.publishStateAfterInput(gameData);
+        });
+
+        assertThat(lastKinds()).containsExactly(
+                GameEventKind.DECISION_REQUESTED,
+                GameEventKind.STATE_INVALIDATED);
+    }
+
+    @Test
+    void queuedInteractionDoesNotCoalesceAwayThePrePromptStateObservation() {
+        InteractionHandlerRegistry interactions = mayInteractionRegistry();
+
+        mutate(() -> {
+            service.publishStateAfterInput(gameData);
+            interactions.begin(gameData, new PendingInteraction.MayAbilityChoice(
+                    playerId, "Choose again", null));
+        });
+
+        assertThat(lastKinds()).containsExactly(
+                GameEventKind.STATE_INVALIDATED,
+                GameEventKind.DECISION_REQUESTED);
+    }
+
+    @Test
+    void autoPassAndCompletionInvalidationsCoalesceWithinOneAnswer() {
+        doAnswer(invocation -> {
+            coordinator.invalidateAllPlayerViews(gameData);
+            return null;
+        }).when(turnProgressionService).resolveAutoPass(gameData);
+
+        mutate(() -> service.processMayAbilitiesThenAutoPass(gameData));
+
+        assertThat(lastKinds()).containsExactly(GameEventKind.STATE_INVALIDATED);
+    }
+
+    @Test
+    void gameEndDuringAutoPassPublishesGameEndWithoutAStateInvalidation() {
+        doAnswer(invocation -> {
+            gameData.status = GameStatus.FINISHED;
+            coordinator.emit(
+                    gameData,
+                    new GameEventFact.GameEnded(GameEventFact.GameResult.DRAW, null),
+                    GameEventAudience.allPlayers());
+            return null;
+        }).when(turnProgressionService).resolveAutoPass(gameData);
+
+        mutate(() -> service.processMayAbilitiesThenAutoPass(gameData));
+
+        assertThat(lastKinds()).containsExactly(GameEventKind.GAME_ENDED);
+    }
+
+    @Test
+    void stateBasedActionsRunBeforeTheStableCompletionObservation() {
+        doAnswer(invocation -> {
+            gameData.playerLifeTotals.put(playerId, 7);
+            return null;
+        }).when(stateBasedActionService).performStateBasedActions(gameData);
+        doAnswer(invocation -> {
+            assertThat(gameData.playerLifeTotals.get(playerId)).isEqualTo(7);
+            return null;
+        }).when(turnProgressionService).resolveAutoPass(gameData);
+
+        mutate(() -> service.sbaProcessMayAbilitiesThenAutoPass(gameData));
+
+        assertThat(lastKinds()).containsExactly(GameEventKind.STATE_INVALIDATED);
+        InOrder order = inOrder(stateBasedActionService, turnProgressionService);
+        order.verify(stateBasedActionService).performStateBasedActions(gameData);
+        order.verify(turnProgressionService).resolveAutoPass(gameData);
+    }
+
+    @Test
+    void validationExceptionDiscardsAnIncompleteAnswersObservation() {
+        assertThatThrownBy(() -> mutate(() -> {
+            service.publishStateAfterInput(gameData);
+            throw new IllegalStateException("invalid answer");
+        }))
+                .isInstanceOf(IllegalStateException.class)
+                .hasMessage("invalid answer");
+
+        assertThat(events.batches).isEmpty();
+    }
+
+    @Test
+    void alreadyFinishedGameDoesNothing() {
+        gameData.status = GameStatus.FINISHED;
+
+        service.processMayAbilitiesThenAutoPass(gameData);
+
+        verifyNoInteractions(
+                playerInputService,
+                turnProgressionService,
+                stateBasedActionService,
+                effectResolutionService);
+        assertThat(events.batches).isEmpty();
+    }
+
+    private InteractionHandlerRegistry mayInteractionRegistry() {
+        InteractionHandlerRegistry registry = new InteractionHandlerRegistry(() -> coordinator);
+        registry.register(new MayAbilityChoiceInteractionHandler(mock(MayAbilityHandlerService.class)));
+        return registry;
     }
 
     private StackEntry parkResolution() {
@@ -242,9 +279,28 @@ class InputCompletionServiceTest {
         return new PendingMayAbility(card, playerId, List.of(), "Use optional ability?");
     }
 
-    private Card namedCard(String name) {
+    private static Card namedCard(String name) {
         Card card = new Card();
         card.setName(name);
         return card;
+    }
+
+    private void mutate(Runnable operation) {
+        coordinator.mutate(gameData, operation);
+    }
+
+    private List<GameEventKind> lastKinds() {
+        return events.batches.getLast().events().stream()
+                .map(event -> event.fact().kind())
+                .toList();
+    }
+
+    private static final class RecordingSubscriber implements GameEventSubscriber {
+        private final List<GameEventBatch> batches = new ArrayList<>();
+
+        @Override
+        public void onGameEvents(GameEventBatch batch) {
+            batches.add(batch);
+        }
     }
 }
