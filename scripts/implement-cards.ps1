@@ -2,6 +2,7 @@
 #   .\scripts\implement-cards.ps1 sos 1 5
 #   .\scripts\implement-cards.ps1 sos 1 5 -Runner claude
 #   .\scripts\implement-cards.ps1 sos 1 5 -Runner grok
+#   .\scripts\implement-cards.ps1 sos 1 5 -Effort xhigh
 
 param(
     # The set code to implement cards from, e.g. "sos".
@@ -21,9 +22,14 @@ param(
     [string] $Runner = "claude",
 
     # Model override. Defaults depend on -Runner:
-    #   claude -> claude-opus-4-8
+    #   claude -> claude-opus-5
     #   grok   -> cursor-grok-4.5-high
-    [string] $Model
+    [string] $Model,
+
+    # Reasoning effort for the claude runner. Ignored by -Runner grok, which
+    # encodes effort in the model name instead.
+    [ValidateSet("low", "medium", "high", "xhigh", "max")]
+    [string] $Effort = "medium"
 )
 
 $ErrorActionPreference = "Stop"
@@ -34,7 +40,11 @@ if ($From -gt $To) {
 }
 
 if (-not $PSBoundParameters.ContainsKey("Model") -or [string]::IsNullOrWhiteSpace($Model)) {
-    $Model = if ($Runner -eq "grok") { "cursor-grok-4.5-high" } else { "claude-opus-4-8" }
+    $Model = if ($Runner -eq "grok") { "cursor-grok-4.5-high" } else { "claude-opus-5" }
+}
+
+if ($Runner -eq "grok" -and $PSBoundParameters.ContainsKey("Effort")) {
+    Write-Warning "-Effort is only supported by the claude runner; ignoring it for grok."
 }
 
 $cliName = if ($Runner -eq "grok") { "agent" } else { "claude" }
@@ -48,7 +58,12 @@ $systemPrompt = "Do not ask clarifying questions, wait for confirmation, or pres
 $total = $To - $From + 1
 $index = 0
 
-Write-Host "Runner: $Runner  Model: $Model"
+if ($Runner -eq "grok") {
+    Write-Host "Runner: $Runner  Model: $Model"
+}
+else {
+    Write-Host "Runner: $Runner  Model: $Model  Effort: $Effort"
+}
 
 $cardInfoLauncher = Join-Path $PSScriptRoot "..\mcp\card-info\start.ps1"
 Write-Host "Warming Card Info cache for $($SetCode.ToUpperInvariant())..."
@@ -71,7 +86,7 @@ for ($cardId = $From; $cardId -le $To; $cardId++) {
         & agent -p --force --trust --model $Model "$prompt`n`n$systemPrompt"
     }
     else {
-        & claude --permission-mode auto --model $Model -p $prompt --append-system-prompt $systemPrompt
+        & claude --permission-mode auto --model $Model --effort $Effort -p $prompt --append-system-prompt $systemPrompt
     }
 
     if ($LASTEXITCODE -ne 0) {
