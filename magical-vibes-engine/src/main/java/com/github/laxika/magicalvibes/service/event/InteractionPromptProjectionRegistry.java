@@ -14,6 +14,7 @@ import com.github.laxika.magicalvibes.networking.message.AvailableAttackersMessa
 import com.github.laxika.magicalvibes.networking.message.AvailableBlockersMessage;
 import com.github.laxika.magicalvibes.networking.message.CombatDamageAssignmentNotification;
 import com.github.laxika.magicalvibes.networking.message.InteractionPromptMessage;
+import com.github.laxika.magicalvibes.networking.message.SelectCardsToBottomMessage;
 import com.github.laxika.magicalvibes.networking.model.CardView;
 import com.github.laxika.magicalvibes.networking.model.CombatDamageTargetView;
 import com.github.laxika.magicalvibes.networking.service.CardViewFactory;
@@ -113,6 +114,11 @@ public class InteractionPromptProjectionRegistry {
             GameData gameData, PendingInteraction interaction) {
         ProjectionStrategy<PendingInteraction> strategy = strategyFor(interaction);
         return Optional.ofNullable(strategy.project(gameData, interaction));
+    }
+
+    /** Projects the mulligan bottoming decision used by initial delivery and reconnect replay. */
+    public SelectCardsToBottomMessage projectCardsToBottom(int count) {
+        return new SelectCardsToBottomMessage(count);
     }
 
     /** Exact interaction classes with one registered prompt strategy. */

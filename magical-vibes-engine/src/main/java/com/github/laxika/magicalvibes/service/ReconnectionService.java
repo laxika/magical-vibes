@@ -2,7 +2,6 @@ package com.github.laxika.magicalvibes.service;
 
 import com.github.laxika.magicalvibes.model.GameData;
 import com.github.laxika.magicalvibes.model.PendingInteraction;
-import com.github.laxika.magicalvibes.networking.message.SelectCardsToBottomMessage;
 import com.github.laxika.magicalvibes.service.event.GameMutationCoordinator;
 import com.github.laxika.magicalvibes.service.event.InteractionPromptProjectionRegistry;
 import lombok.RequiredArgsConstructor;
@@ -57,7 +56,8 @@ public class ReconnectionService {
         Integer bottomCount = gameData.playerNeedsToBottom.get(reconnectingPlayerId);
         if (bottomDecisionId != null && bottomCount != null) {
             return new Replay(
-                    reconnectingPlayerId, new SelectCardsToBottomMessage(bottomCount));
+                    reconnectingPlayerId,
+                    interactionPromptProjectionRegistry.projectCardsToBottom(bottomCount));
         }
 
         return null;

@@ -20,11 +20,12 @@ import java.util.stream.Stream;
 import static org.assertj.core.api.Assertions.assertThat;
 
 /**
- * Shrinking allowlist for the three engine notification surfaces replaced by domain events.
+ * Ratchet for the engine notification surfaces replaced by domain events.
  *
- * <p>Every package family not listed here has an implicit baseline of zero. Every listed count
- * must eventually reach the explicit target of zero; until then counts may neither increase nor
- * silently decrease without updating this ledger and agent-docs/DOMAIN_EVENTS.md.
+ * <p>Direct state broadcasts and mutation-owned session sends have reached zero. The sole raw
+ * session send in {@code GameMessageTransport} is excluded as the canonical transport adapter.
+ * Remaining game-log counts may neither increase nor silently decrease without updating this
+ * ratchet and agent-docs/DOMAIN_EVENTS.md.
  */
 class LegacyNotificationSurfaceRatchetTest {
 
@@ -32,6 +33,8 @@ class LegacyNotificationSurfaceRatchetTest {
             "magical-vibes-engine/src/main/java/com/github/laxika/magicalvibes/service";
     private static final String ROOT_FAMILY = "(root)";
     private static final int EVENTUAL_TARGET_PER_FAMILY = 0;
+    private static final Set<String> TRANSPORT_ADAPTERS = Set.of(
+            "GameMessageTransport.java");
     private static final Set<String> MIGRATED_LIFECYCLE_FILES = Set.of(
             "GameService.java",
             "GameSetupService.java",
@@ -84,12 +87,9 @@ class LegacyNotificationSurfaceRatchetTest {
     private static final Map<LegacySurface, Map<String, Integer>> BASELINE = new EnumMap<>(LegacySurface.class);
 
     static {
-        BASELINE.put(LegacySurface.BROADCAST_GAME_STATE, Map.of(
-                ROOT_FAMILY, 1,
-                "interaction", 3));
+        BASELINE.put(LegacySurface.BROADCAST_GAME_STATE, Map.of());
 
-        BASELINE.put(LegacySurface.SESSION_SEND, Map.of(
-                ROOT_FAMILY, 1));
+        BASELINE.put(LegacySurface.SESSION_SEND, Map.of());
 
         BASELINE.put(LegacySurface.LOG_AND_BROADCAST, Map.ofEntries(
                 Map.entry(ROOT_FAMILY, 112),
@@ -302,6 +302,11 @@ class LegacyNotificationSurfaceRatchetTest {
 
                 for (LegacySurface surface : LegacySurface.values()) {
                     int count = count(source, surface.pattern);
+                    String relative = serviceRoot.relativize(path).toString().replace('\\', '/');
+                    if (surface == LegacySurface.SESSION_SEND
+                            && TRANSPORT_ADAPTERS.contains(relative)) {
+                        count = 0;
+                    }
                     if (path.getFileName().toString().equals("GameBroadcastService.java")
                             && surface.declarationInGameBroadcastService) {
                         count--;
@@ -343,7 +348,7 @@ class LegacyNotificationSurfaceRatchetTest {
     private enum LegacySurface {
         BROADCAST_GAME_STATE(
                 Pattern.compile("\\b(?:gameBroadcastService\\.)?broadcastGameState\\s*\\("),
-                true),
+                false),
         SESSION_SEND(
                 Pattern.compile("\\bsessionManager\\.sendToPlayers?\\s*\\("),
                 false),

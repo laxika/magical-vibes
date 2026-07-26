@@ -57,7 +57,7 @@ class GameTimeoutServiceTest {
     @BeforeEach
     void setUp() {
         svc = new GameTimeoutService(
-                gameRegistry, gameOutcomeService, sessionManager,
+                gameRegistry, gameOutcomeService, new GameSessionTransportAdapter(sessionManager),
                 new GameMutationCoordinator(new GameEventDispatcher(java.util.List.of())),
                 Duration.ofMinutes(5), Duration.ofMinutes(15), scheduler);
 
@@ -323,7 +323,7 @@ class GameTimeoutServiceTest {
         GameTimeoutService eventService = new GameTimeoutService(
                 gameRegistry,
                 realOutcome,
-                sessionManager,
+                new GameSessionTransportAdapter(sessionManager),
                 eventCoordinator,
                 Duration.ofMinutes(5),
                 Duration.ofMinutes(15),

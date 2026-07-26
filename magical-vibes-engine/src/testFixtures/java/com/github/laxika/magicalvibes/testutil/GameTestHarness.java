@@ -25,6 +25,7 @@ import com.github.laxika.magicalvibes.service.battlefield.PermanentRemovalServic
 import com.github.laxika.magicalvibes.service.combat.CombatAttackService;
 import com.github.laxika.magicalvibes.service.effect.TargetValidationService;
 import com.github.laxika.magicalvibes.service.effect.normalfx.LifeSupport;
+import com.github.laxika.magicalvibes.service.event.GameMutationCoordinator;
 import com.github.laxika.magicalvibes.service.input.PlayerInputService;
 import com.github.laxika.magicalvibes.service.spell.SpellCastingService;
 import com.github.laxika.magicalvibes.service.state.StateBasedActionService;
@@ -59,6 +60,7 @@ public class GameTestHarness {
     private static DrawService staticDrawService;
     private static PlayerInputService staticPlayerInputService;
     private static GameBroadcastService staticGameBroadcastService;
+    private static GameMutationCoordinator staticMutationCoordinator;
     private static com.github.laxika.magicalvibes.service.cast.CastingCostService staticCastingCostService;
     private static com.github.laxika.magicalvibes.service.cast.CastingPermissionService staticCastingPermissionService;
     private static BattlefieldEntryService staticBattlefieldEntryService;
@@ -88,6 +90,7 @@ public class GameTestHarness {
         staticDrawService = context.getBean(DrawService.class);
         staticPlayerInputService = context.getBean(PlayerInputService.class);
         staticGameBroadcastService = context.getBean(GameBroadcastService.class);
+        staticMutationCoordinator = context.getBean(GameMutationCoordinator.class);
         staticCastingCostService = context.getBean(com.github.laxika.magicalvibes.service.cast.CastingCostService.class);
         staticCastingPermissionService = context.getBean(com.github.laxika.magicalvibes.service.cast.CastingPermissionService.class);
         staticBattlefieldEntryService = context.getBean(BattlefieldEntryService.class);
@@ -119,6 +122,7 @@ public class GameTestHarness {
     private final DrawService drawService;
     private final PlayerInputService playerInputService;
     private final GameBroadcastService gameBroadcastService;
+    private final GameMutationCoordinator mutationCoordinator;
     private final com.github.laxika.magicalvibes.service.cast.CastingCostService castingCostService;
     private final com.github.laxika.magicalvibes.service.cast.CastingPermissionService castingPermissionService;
     private final BattlefieldEntryService battlefieldEntryService;
@@ -150,6 +154,7 @@ public class GameTestHarness {
         drawService = staticDrawService;
         playerInputService = staticPlayerInputService;
         gameBroadcastService = staticGameBroadcastService;
+        mutationCoordinator = staticMutationCoordinator;
         castingCostService = staticCastingCostService;
         castingPermissionService = staticCastingPermissionService;
         battlefieldEntryService = staticBattlefieldEntryService;
@@ -1058,6 +1063,12 @@ public class GameTestHarness {
 
     public GameBroadcastService getGameBroadcastService() {
         return gameBroadcastService;
+    }
+
+    /** Publishes the current authoritative state through the canonical event projector. */
+    public void publishState() {
+        mutationCoordinator.mutate(gameData, () ->
+                mutationCoordinator.invalidateAllPlayerViews(gameData));
     }
 
     public com.github.laxika.magicalvibes.service.cast.CastingCostService getCastingCostService() {

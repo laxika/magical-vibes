@@ -123,7 +123,7 @@ class FavorOfTheMightyTest extends BaseCardTest {
         addCreature(createCreature("Runt", 1, 1, CardColor.GREEN, "{1}"));
         harness.clearMessages();
 
-        harness.getGameBroadcastService().broadcastGameState(gd);
+        harness.publishState();
 
         assertThat(harness.getConn1().getMessagesContaining(
                 "\"text\":\"Protection from each color\",\"sourceName\":\"Favor of the Mighty\""))

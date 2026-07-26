@@ -40,7 +40,13 @@ class WorldpurgeTest extends BaseCardTest {
         // Active player (player1) chooses first.
         assertThat(gd.interaction.activeInteraction())
                 .isInstanceOf(PendingInteraction.KeepCardsInHandChoice.class);
+        harness.clearMessages();
         keepEntireHand(player1);
+        List<String> messages = harness.getConn2().getSentMessages();
+        int promptIndex = firstMessageContaining(messages, "\"type\":\"INTERACTION_PROMPT\"");
+        assertThat(promptIndex).isPositive();
+        assertThat(messages.subList(0, promptIndex))
+                .anyMatch(message -> message.contains("\"type\":\"GAME_STATE\""));
         keepEntireHand(player2);
 
         // Both creatures are back in their owners' hands; battlefields are empty.
@@ -115,5 +121,14 @@ class WorldpurgeTest extends BaseCardTest {
         // No player has cards to keep, so resolution runs straight through to the mana-loss step.
         assertThat(gd.playerManaPools.get(player1.getId()).getTotalAllMana()).isZero();
         assertThat(gd.playerManaPools.get(player2.getId()).getTotalAllMana()).isZero();
+    }
+
+    private static int firstMessageContaining(List<String> messages, String value) {
+        for (int i = 0; i < messages.size(); i++) {
+            if (messages.get(i).contains(value)) {
+                return i;
+            }
+        }
+        return -1;
     }
 }

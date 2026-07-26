@@ -2,8 +2,6 @@ package com.github.laxika.magicalvibes.service;
 
 import com.github.laxika.magicalvibes.model.GameData;
 import com.github.laxika.magicalvibes.model.GameStatus;
-import com.github.laxika.magicalvibes.networking.Connection;
-import com.github.laxika.magicalvibes.networking.SessionManager;
 import com.github.laxika.magicalvibes.service.event.GameMutationCoordinator;
 import jakarta.annotation.PreDestroy;
 import lombok.extern.slf4j.Slf4j;
@@ -43,11 +41,9 @@ import java.util.concurrent.TimeUnit;
 @Slf4j
 public class GameTimeoutService {
 
-    static final String AI_CONNECTION_PREFIX = "ai-";
-
     private final GameRegistry gameRegistry;
     private final GameOutcomeService gameOutcomeService;
-    private final SessionManager sessionManager;
+    private final GameSessionTransportAdapter sessionTransport;
     private final GameMutationCoordinator mutationCoordinator;
     private final Duration bothDisconnectedTimeout;
     private final Duration singleDisconnectedTimeout;
@@ -60,11 +56,11 @@ public class GameTimeoutService {
     @Autowired
     public GameTimeoutService(GameRegistry gameRegistry,
                               @Lazy GameOutcomeService gameOutcomeService,
-                              SessionManager sessionManager,
+                              GameSessionTransportAdapter sessionTransport,
                               GameMutationCoordinator mutationCoordinator,
                               @Value("${magicalvibes.game.timeout.both-disconnected:5m}") Duration bothDisconnectedTimeout,
                               @Value("${magicalvibes.game.timeout.single-disconnected:15m}") Duration singleDisconnectedTimeout) {
-        this(gameRegistry, gameOutcomeService, sessionManager, mutationCoordinator,
+        this(gameRegistry, gameOutcomeService, sessionTransport, mutationCoordinator,
                 bothDisconnectedTimeout, singleDisconnectedTimeout,
                 Executors.newSingleThreadScheduledExecutor(r -> {
                     Thread t = new Thread(r, "game-timeout-scheduler");
@@ -75,14 +71,14 @@ public class GameTimeoutService {
 
     GameTimeoutService(GameRegistry gameRegistry,
                        GameOutcomeService gameOutcomeService,
-                       SessionManager sessionManager,
+                       GameSessionTransportAdapter sessionTransport,
                        GameMutationCoordinator mutationCoordinator,
                        Duration bothDisconnectedTimeout,
                        Duration singleDisconnectedTimeout,
                        ScheduledExecutorService scheduler) {
         this.gameRegistry = gameRegistry;
         this.gameOutcomeService = gameOutcomeService;
-        this.sessionManager = sessionManager;
+        this.sessionTransport = sessionTransport;
         this.mutationCoordinator = mutationCoordinator;
         this.bothDisconnectedTimeout = bothDisconnectedTimeout;
         this.singleDisconnectedTimeout = singleDisconnectedTimeout;
@@ -267,8 +263,7 @@ public class GameTimeoutService {
 
     public boolean isVsAi(GameData gameData) {
         for (UUID playerId : gameData.playerIds) {
-            Connection conn = sessionManager.getConnectionByUserId(playerId);
-            if (conn != null && conn.getId().startsWith(AI_CONNECTION_PREFIX)) {
+            if (sessionTransport.isAiPlayer(playerId)) {
                 return true;
             }
         }
@@ -276,9 +271,7 @@ public class GameTimeoutService {
     }
 
     private boolean isPlayerConnected(UUID playerId) {
-        Connection conn = sessionManager.getConnectionByUserId(playerId);
-        if (conn == null) return false;
-        return sessionManager.isInGame(conn.getId());
+        return sessionTransport.isPlayerConnected(playerId);
     }
 
     private static void cancel(ScheduledFuture<?> future) {

@@ -4,11 +4,7 @@ import com.github.laxika.magicalvibes.model.GameData;
 import com.github.laxika.magicalvibes.model.PendingInteraction;
 import com.github.laxika.magicalvibes.model.Player;
 import com.github.laxika.magicalvibes.networking.message.InteractionPromptMessage;
-import com.github.laxika.magicalvibes.service.GameBroadcastService;
-import com.github.laxika.magicalvibes.service.effect.EffectResolutionService;
-import com.github.laxika.magicalvibes.service.input.PlayerInputService;
-import com.github.laxika.magicalvibes.service.state.StateBasedActionService;
-import com.github.laxika.magicalvibes.service.turn.TurnProgressionService;
+import com.github.laxika.magicalvibes.service.input.InputCompletionService;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Nested;
@@ -23,15 +19,12 @@ import java.util.UUID;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
+import static org.mockito.Mockito.verify;
 
 @ExtendWith(MockitoExtension.class)
 class XValueChoiceInteractionHandlerTest {
 
-    @Mock private GameBroadcastService gameBroadcastService;
-    @Mock private StateBasedActionService stateBasedActionService;
-    @Mock private PlayerInputService playerInputService;
-    @Mock private TurnProgressionService turnProgressionService;
-    @Mock private EffectResolutionService effectResolutionService;
+    @Mock private InputCompletionService inputCompletionService;
 
     @InjectMocks
     private XValueChoiceInteractionHandler handler;
@@ -113,6 +106,7 @@ class XValueChoiceInteractionHandlerTest {
             assertThat(gd.chosenXValue).isEqualTo(3);
             assertThat(gd.interaction.isAwaitingInput()).isFalse();
             assertThat(gd.interaction.activeInteraction()).isNull();
+            verify(inputCompletionService).sbaProcessMayAbilitiesThenAutoPass(gd);
         }
 
         @Test

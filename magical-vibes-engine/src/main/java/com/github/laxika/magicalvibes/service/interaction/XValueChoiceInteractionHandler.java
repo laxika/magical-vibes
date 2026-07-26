@@ -3,11 +3,7 @@ package com.github.laxika.magicalvibes.service.interaction;
 import com.github.laxika.magicalvibes.model.GameData;
 import com.github.laxika.magicalvibes.model.PendingInteraction;
 import com.github.laxika.magicalvibes.model.Player;
-import com.github.laxika.magicalvibes.service.GameBroadcastService;
-import com.github.laxika.magicalvibes.service.effect.EffectResolutionService;
-import com.github.laxika.magicalvibes.service.input.PlayerInputService;
-import com.github.laxika.magicalvibes.service.state.StateBasedActionService;
-import com.github.laxika.magicalvibes.service.turn.TurnProgressionService;
+import com.github.laxika.magicalvibes.service.input.InputCompletionService;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Component;
@@ -25,11 +21,7 @@ import java.util.UUID;
 @RequiredArgsConstructor
 public class XValueChoiceInteractionHandler implements InteractionHandler<PendingInteraction.XValueChoice> {
 
-    private final GameBroadcastService gameBroadcastService;
-    private final StateBasedActionService stateBasedActionService;
-    private final PlayerInputService playerInputService;
-    private final TurnProgressionService turnProgressionService;
-    private final EffectResolutionService effectResolutionService;
+    private final InputCompletionService inputCompletionService;
 
     @Override
     public Class<PendingInteraction.XValueChoice> handledType() {
@@ -58,24 +50,7 @@ public class XValueChoiceInteractionHandler implements InteractionHandler<Pendin
         gameData.chosenXValue = chosenValue;
         gameData.interaction.clearAwaitingInput();
 
-        // Resume effect resolution (the same effect re-runs and reads chosenXValue)
-        stateBasedActionService.performStateBasedActions(gameData);
-
-        if (!gameData.pendingMayAbilities.isEmpty()) {
-            playerInputService.processNextMayAbility(gameData);
-            return;
-        }
-
-        if (gameData.pendingEffectResolutionEntry != null) {
-            effectResolutionService.resolveEffectsFrom(gameData,
-                    gameData.pendingEffectResolutionEntry,
-                    gameData.pendingEffectResolutionIndex);
-        }
-
-        if (!gameData.interaction.isAwaitingInput()) {
-            gameData.priorityPassedBy.clear();
-            gameBroadcastService.broadcastGameState(gameData);
-            turnProgressionService.resolveAutoPass(gameData);
-        }
+        // Resume the parked effect and publish only after SBA/auto-pass reach a stable point.
+        inputCompletionService.sbaProcessMayAbilitiesThenAutoPass(gameData);
     }
 }

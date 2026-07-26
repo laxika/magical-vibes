@@ -25,7 +25,6 @@ import com.github.laxika.magicalvibes.networking.message.SelectCardsToBottomMess
 import com.github.laxika.magicalvibes.networking.model.GameLogEntryView;
 import com.github.laxika.magicalvibes.networking.service.CardViewFactory;
 import com.github.laxika.magicalvibes.networking.service.GameLogViewFactory;
-import com.github.laxika.magicalvibes.service.GameBroadcastService;
 import com.github.laxika.magicalvibes.service.GameMessageTransport;
 import com.github.laxika.magicalvibes.service.GameRegistry;
 import com.github.laxika.magicalvibes.service.GameViewProjectionFactory;
@@ -95,7 +94,7 @@ class GameEventProjectionSubscriberTest {
     }
 
     @Test
-    void stateEventProducesTheSamePlayerSpecificMessagesAsTheLegacyFacadeAfterMutationAndUnlock() {
+    void stateEventProducesPlayerSpecificMessagesAfterMutationAndUnlock() {
         GameStateMessage player1Message = stateMessage(player1Id, List.of(0));
         GameStateMessage player2Message = stateMessage(player2Id, List.of(1));
         Map<UUID, GameStateMessage> projected = new LinkedHashMap<>();
@@ -108,16 +107,7 @@ class GameEventProjectionSubscriberTest {
             return projected;
         });
 
-        GameBroadcastService legacy = new GameBroadcastService(
-                gameViewProjectionFactory,
-                transport,
-                gameLogViewFactory,
-                mock(GameMutationCoordinator.class));
         gameData.turnNumber = 17;
-        legacy.broadcastGameState(gameData);
-        List<Delivery> legacyDeliveries = List.copyOf(sessions.deliveries);
-
-        sessions.deliveries.clear();
         GameMutationCoordinator coordinator = new GameMutationCoordinator(
                 new GameEventDispatcher(List.of(subscriber)));
         coordinator.mutate(gameData, UUID.randomUUID(), () -> {
@@ -128,7 +118,6 @@ class GameEventProjectionSubscriberTest {
                     GameEventAudience.allPlayers());
         });
 
-        assertThat(sessions.deliveries).containsExactlyElementsOf(legacyDeliveries);
         assertThat(sessions.deliveries).containsExactly(
                 new Delivery(player1Id, player1Message),
                 new Delivery(player2Id, player2Message));

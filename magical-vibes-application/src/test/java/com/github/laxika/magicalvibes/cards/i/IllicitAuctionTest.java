@@ -37,6 +37,7 @@ class IllicitAuctionTest extends BaseCardTest {
 
         cast(player1, creature);
         // First (and only) bidder is the opponent; the caster opened as the high bidder at 0.
+        harness.clearMessages();
         harness.handleXValueChosen(player2, 0);
 
         assertThat(gd.interaction.isAwaitingInput()).isFalse();
@@ -44,6 +45,8 @@ class IllicitAuctionTest extends BaseCardTest {
         assertThat(controls(player2, creature)).isFalse();
         harness.assertLife(player1, 20);
         harness.assertLife(player2, 20);
+        assertThat(harness.getConn1().getMessagesContaining("\"type\":\"GAME_STATE\""))
+                .isNotEmpty();
     }
 
     @Test

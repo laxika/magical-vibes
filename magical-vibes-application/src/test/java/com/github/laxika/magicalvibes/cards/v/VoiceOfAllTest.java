@@ -130,7 +130,7 @@ class VoiceOfAllTest extends BaseCardTest {
         harness.handleListChoice(player1, "RED");
         harness.clearMessages();
 
-        harness.getGameBroadcastService().broadcastGameState(gd);
+        harness.publishState();
 
         assertThat(harness.getConn1().getMessagesContaining(
                 "\"grantedAbilities\":[{\"text\":\"Protection from red\",\"sourceName\":\"Voice of All\"}]"))

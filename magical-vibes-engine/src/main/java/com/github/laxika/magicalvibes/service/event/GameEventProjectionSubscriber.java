@@ -9,7 +9,6 @@ import com.github.laxika.magicalvibes.model.event.GameEventFact;
 import com.github.laxika.magicalvibes.networking.message.GameOverMessage;
 import com.github.laxika.magicalvibes.networking.message.GameStateMessage;
 import com.github.laxika.magicalvibes.networking.message.MulliganResolvedMessage;
-import com.github.laxika.magicalvibes.networking.message.SelectCardsToBottomMessage;
 import com.github.laxika.magicalvibes.networking.model.GameLogEntryView;
 import com.github.laxika.magicalvibes.networking.service.GameLogViewFactory;
 import com.github.laxika.magicalvibes.service.GameMessageTransport;
@@ -131,7 +130,9 @@ public class GameEventProjectionSubscriber implements GameEventSubscriber {
                         decision.decisionId(), decision.decidingPlayerId());
                 return;
             }
-            transport.sendToPlayers(authorizedRecipients, new SelectCardsToBottomMessage(count));
+            transport.sendToPlayers(
+                    authorizedRecipients,
+                    interactionPromptProjectionRegistry.projectCardsToBottom(count));
             return;
         }
 

@@ -1,6 +1,7 @@
 package com.github.laxika.magicalvibes.testutil;
 
 import com.github.laxika.magicalvibes.service.GameEngineConfig;
+import com.github.laxika.magicalvibes.service.GameSessionTransportAdapter;
 import com.github.laxika.magicalvibes.service.GameTimeoutService;
 import com.github.laxika.magicalvibes.service.event.GameMutationCoordinator;
 import org.springframework.context.annotation.Bean;
@@ -40,10 +41,10 @@ public class GameTestDoublesConfig {
     @Bean
     @Primary
     GameTimeoutService gameTimeoutService(TestGameRegistry gameRegistry,
-                                          TestWebSocketSessionManager webSocketSessionManager,
+                                          GameSessionTransportAdapter sessionTransport,
                                           GameMutationCoordinator mutationCoordinator) {
         return new GameTimeoutService(
-                gameRegistry, null, webSocketSessionManager, mutationCoordinator,
+                gameRegistry, null, sessionTransport, mutationCoordinator,
                 Duration.ofMinutes(5), Duration.ofMinutes(15));
     }
 }

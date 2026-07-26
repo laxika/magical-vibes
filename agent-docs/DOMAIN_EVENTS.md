@@ -109,15 +109,16 @@ without such a boundary is always rejected.
 ## Current legacy inventory and ratchet
 
 Inventory date: 2026-07-26. Counts are lexical production-source call sites under the engine
-`service` tree; the two `GameBroadcastService` method declarations are excluded. The focused
+`service` tree; `GameBroadcastService.logAndBroadcast`'s declaration and the documented transport
+adapters are excluded from the direct-mutation categories. The focused
 `LegacyNotificationSurfaceRatchetTest` contains the same package-family allowlist. A missing
 family has an implicit baseline of zero. Counts may only shrink, and the explicit eventual target
 for every family is zero.
 
 | Legacy surface | Current total | Eventual target |
 |---|---:|---:|
-| `GameBroadcastService.broadcastGameState` | 4 | 0 |
-| engine `SessionManager.sendToPlayer/sendToPlayers` | 1 | 0 |
+| direct runtime state broadcast | 0 | 0 |
+| direct engine session send outside transport adapters | 0 | 0 |
 | `GameBroadcastService.logAndBroadcast` | 2,290 | 0 |
 
 The lifecycle migration ratchet additionally fixes the direct state/session count at zero for
@@ -131,37 +132,42 @@ battlefield, spell, and trigger permanent-choice handlers.
 The recursive effect-package ratchet fixes both direct state/session calls and direct
 `SessionManager` dependencies at zero for every `service/effect` class.
 
-### `broadcastGameState` package-family classification
+### Direct runtime state-broadcast classification
 
 | Package family | Count | Workflow classification |
 |---|---:|---|
-| service root | 1 | auction refresh |
-| `interaction` | 3 | auction, keep-cards, and X-value answer refreshes |
+| service root | 0 | auction refresh migrated |
+| `interaction` | 0 | auction, keep-cards, and numeric-answer refreshes migrated |
 
-Exhaustive files for these 4 calls:
+There are no runtime call sites and the public `broadcastGameState` API has been removed.
+`PermanentAuctionService` now emits a state invalidation before each non-coalescible auction
+decision. Keep-cards publishes through the shared input-completion observation point before the
+next player's decision. X-value and Illicit Auction answers use the shared SBA/resume/auto-pass
+epilogue and publish only after it reaches a stable state.
 
-| Family | Files and counts |
-|---|---|
-| service root | `PermanentAuctionService` 1 |
-| `interaction` | `IllicitAuctionBidChoiceInteractionHandler` 1; `KeepCardsInHandChoiceInteractionHandler` 1; `XValueChoiceInteractionHandler` 1 |
+All state rendering now occurs in `GameViewProjectionFactory` after the mutation monitor is
+released, preserving player-specific hidden-information rules. Every effect-owned invalidation,
+including the exile/cast, ultimatum, Karn, source-linked exile, and punisher workflows formerly
+listed here, is complete.
 
-Migration classification: all become audience-appropriate `STATE_INVALIDATED` facts. A completed
-action normally needs one all-player invalidation plus, only where necessary, a private
-player-view invalidation. Transport-side state rendering must preserve the current
-player-specific hidden-information rules in `GameBroadcastService`. Every effect-owned
-invalidation, including the exile/cast, ultimatum, Karn, source-linked exile, and punisher
-workflows formerly listed here, is complete.
-
-### Engine `SessionManager` package-family classification
+### Engine session/transport classification
 
 | Package family | Count | Workflow classification |
 |---|---:|---|
-| service root | 1 | canonical message transport |
+| direct mutation/session send | 0 | all delivery is projected |
 | `interaction` | 0 | standard registry-managed prompts are event projections |
 
-Exhaustive files for this 1 call:
+The documented adapter allowlist is deliberately limited to:
 
-- Service root: `GameMessageTransport` 1.
+- `GameMessageTransport`: the one raw `SessionManager.sendToPlayer` call and per-recipient failure
+  isolation for typed outbound messages.
+- `GameSessionTransportAdapter`: connection-state reads plus AI connection close/unregister
+  lifecycle operations.
+
+Every other engine source has zero `SessionManager` dependencies. Reconnect state and decision
+replay use `GameResyncProjectionService`, `ReconnectionService`, the canonical prompt projector,
+and these transport adapters rather than raw sessions.
+
 - Effects: zero. Hand/library looks and rules-public reveals emit audience-restricted facts through
   `CardRevealService`; no effect handler constructs a reveal DTO or owns transport.
 - Interaction handlers: zero. Handler files contain only answer validation/mutation logic.
@@ -244,7 +250,7 @@ intentionally unchanged by this foundation prompt.
 |---|---|---|---|
 | Foundation | domain event records → `GameMutationCoordinator` → `GameEventDispatcher` | immutable facts/envelopes, nested batching, ordering, audience safety, simulation suppression, failure isolation | **Complete** |
 | Canonical projection subscriber | `GameEventProjectionSubscriber` → `GameViewProjectionFactory`/interaction registry → typed messages → `GameMessageTransport` | post-lock authoritative projection, explicit audience enforcement, no serialization, per-recipient transport failure isolation, human/AI typed-message parity | **Complete** |
-| Public game-state refresh | 4 `broadcastGameState` calls → player-specific `GameStateMessage` | coalesced `STATE_INVALIDATED`; canonical subscriber constructs the same per-player wire DTO after unlock | Effect workflows complete; only auction/keep-cards/X-value legacy emission remains open |
+| Public game-state refresh | `STATE_INVALIDATED` → player-specific `GameStateMessage` | coalesced `STATE_INVALIDATED`; canonical subscriber constructs the player-specific wire DTO after unlock | **Complete; zero direct runtime broadcasts and no public broadcast API** |
 | Generic input completion | answer handler → required SBA/may processing → parked-resolution resume → auto-pass stable point → state observation | one coalesced all-player `STATE_INVALIDATED` per completed answer; a queued interaction keeps its non-coalescible `DECISION_REQUESTED` barrier; validation failure and game end do not leak an intermediate state observation | **Complete**, including permanent and multi-permanent selection |
 | Game log | 2,290 `logAndBroadcast` calls → `gameLog` → next state message | append under lock plus `GAME_LOG` invalidation; preserve structured segments and incremental wire behavior | Combat package complete; remaining packages open |
 | Generic interactions | begin site → authoritative pending interaction + stable ID → `DECISION_REQUESTED` → `InteractionPromptProjectionRegistry` → typed prompt | one non-coalescible private fact per interaction; exact identity match before projection; every promptable subtype (including combat) has one explicit strategy and no raw-state fallback; handlers have no session/networking dependency | **Complete** |
@@ -273,9 +279,10 @@ Later prompts should migrate vertical workflows, not raw call counts:
    coordinator-owned monitor.
 3. Migrate generic interaction begin/replay once so all decision types share stable identity.
 4. Migrate private reveals and game end as non-coalescible facts. **Complete.**
-5. Replace public state refreshes package by package. **Effect package complete.**
+5. Replace public state refreshes package by package. **Complete.**
 6. Convert log append sites package by package to `GAME_LOG` invalidation.
-7. Remove the dormant legacy surfaces and drive every ratchet family to zero.
+7. Remove the dormant legacy surfaces and drive every ratchet family to zero. **State broadcast
+   and direct session-send categories complete; game-log migration remains open.**
 
 At every step, hidden-information parity, event audience checks, current WebSocket message shape
 and ordering, live-AI wake-up behavior, reconnect replay, and headless suppression require focused

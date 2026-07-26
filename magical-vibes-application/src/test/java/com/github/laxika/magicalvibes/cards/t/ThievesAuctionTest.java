@@ -46,6 +46,7 @@ class ThievesAuctionTest extends BaseCardTest {
         harness.addToBattlefield(player1, new RagingGoblin());
         harness.addToBattlefield(player1, new Plains());
         harness.addToBattlefield(player2, new RodOfRuin());
+        harness.clearMessages();
 
         cast(player1);
 
@@ -56,6 +57,11 @@ class ThievesAuctionTest extends BaseCardTest {
                 .containsExactlyInAnyOrder("Raging Goblin", "Plains", "Rod of Ruin");
         assertThat(gd.playerBattlefields.get(player1.getId())).isEmpty();
         assertThat(gd.playerBattlefields.get(player2.getId())).isEmpty();
+        List<String> messages = harness.getConn1().getSentMessages();
+        int promptIndex = firstMessageContaining(messages, "\"type\":\"INTERACTION_PROMPT\"");
+        assertThat(promptIndex).isPositive();
+        assertThat(messages.subList(0, promptIndex))
+                .anyMatch(message -> message.contains("\"type\":\"GAME_STATE\""));
     }
 
     @Test
@@ -158,5 +164,14 @@ class ThievesAuctionTest extends BaseCardTest {
         token.setToughness(1);
         token.setToken(true);
         return token;
+    }
+
+    private static int firstMessageContaining(List<String> messages, String value) {
+        for (int i = 0; i < messages.size(); i++) {
+            if (messages.get(i).contains(value)) {
+                return i;
+            }
+        }
+        return -1;
     }
 }

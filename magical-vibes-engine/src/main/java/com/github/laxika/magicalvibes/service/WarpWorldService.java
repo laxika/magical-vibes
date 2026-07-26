@@ -14,8 +14,6 @@ import com.github.laxika.magicalvibes.model.WarpWorldAuraChoiceRequest;
 import com.github.laxika.magicalvibes.model.WarpWorldEnchantmentPlacement;
 import com.github.laxika.magicalvibes.model.effect.ControlEnchantedCreatureEffect;
 import com.github.laxika.magicalvibes.model.effect.EffectDuration;
-import com.github.laxika.magicalvibes.networking.SessionManager;
-import com.github.laxika.magicalvibes.networking.service.CardViewFactory;
 import com.github.laxika.magicalvibes.service.battlefield.BattlefieldEntryService;
 import com.github.laxika.magicalvibes.service.battlefield.CreatureControlService;
 import com.github.laxika.magicalvibes.service.battlefield.GameQueryService;
@@ -39,8 +37,6 @@ public class WarpWorldService {
     private final BattlefieldEntryService battlefieldEntryService;
     private final LegendRuleService legendRuleService;
     private final CreatureControlService creatureControlService;
-    private final CardViewFactory cardViewFactory;
-    private final SessionManager sessionManager;
     private final com.github.laxika.magicalvibes.service.interaction.InteractionHandlerRegistry interactionHandlerRegistry;
 
     public void beginNextPendingLibraryBottomReorder(GameData gameData) {

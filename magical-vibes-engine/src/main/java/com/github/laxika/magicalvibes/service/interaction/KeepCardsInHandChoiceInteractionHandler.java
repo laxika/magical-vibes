@@ -4,7 +4,6 @@ import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.GameData;
 import com.github.laxika.magicalvibes.model.PendingInteraction;
 import com.github.laxika.magicalvibes.model.Player;
-import com.github.laxika.magicalvibes.service.GameBroadcastService;
 import com.github.laxika.magicalvibes.service.effect.normalfx.KeepCardsInHandSupport;
 import com.github.laxika.magicalvibes.service.input.InputCompletionService;
 import java.util.ArrayList;
@@ -27,7 +26,6 @@ public class KeepCardsInHandChoiceInteractionHandler
         implements InteractionHandler<PendingInteraction.KeepCardsInHandChoice> {
 
     private final KeepCardsInHandSupport keepCardsInHandSupport;
-    private final GameBroadcastService gameBroadcastService;
     private final InputCompletionService inputCompletionService;
 
     @Override
@@ -62,7 +60,7 @@ public class KeepCardsInHandChoiceInteractionHandler
 
         gameData.interaction.clearAwaitingInput();
         keepCardsInHandSupport.applyKeepChoice(gameData, player.getId(), keptCardIds, interaction.cardName());
-        gameBroadcastService.broadcastGameState(gameData);
+        inputCompletionService.publishStateAfterInput(gameData);
 
         boolean begunNext = keepCardsInHandSupport.beginNextChoice(gameData,
                 interaction.remainingPlayerIds(), interaction.keepCount(), interaction.cardName());

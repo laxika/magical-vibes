@@ -4,9 +4,7 @@ import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.GameData;
 import com.github.laxika.magicalvibes.model.GameLogEntry;
 import com.github.laxika.magicalvibes.model.ManaPool;
-import com.github.laxika.magicalvibes.networking.model.GameLogEntryView;
 import com.github.laxika.magicalvibes.networking.model.PermanentView;
-import com.github.laxika.magicalvibes.networking.service.GameLogViewFactory;
 import com.github.laxika.magicalvibes.service.event.GameMutationCoordinator;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Component;
@@ -16,32 +14,17 @@ import java.util.Map;
 import java.util.UUID;
 
 /**
- * Compatibility facade for workflows that have not migrated to domain events yet.
+ * Compatibility facade for game-log appends and shared projection queries.
  *
- * <p>View construction and delivery are delegated to the same canonical components used by the
- * event subscriber. Game-log append remains here until the dedicated log migration.
+ * <p>Runtime state delivery belongs exclusively to the event projection pipeline. Game-log append
+ * remains here until the dedicated log migration.
  */
 @Component
 @RequiredArgsConstructor
 public class GameBroadcastService {
 
     private final GameViewProjectionFactory projectionFactory;
-    private final GameMessageTransport transport;
-    private final GameLogViewFactory gameLogViewFactory;
     private final GameMutationCoordinator mutationCoordinator;
-
-    public void broadcastGameState(GameData gameData) {
-        if (gameData.simulation) {
-            return;
-        }
-        int logSize = gameData.gameLog.size();
-        List<GameLogEntryView> newLogEntries = logSize > gameData.lastBroadcastedLogSize
-                ? gameLogViewFactory.createAll(
-                        gameData.gameLog.subList(gameData.lastBroadcastedLogSize, logSize))
-                : List.of();
-        gameData.lastBroadcastedLogSize = logSize;
-        transport.sendPlayerMessages(projectionFactory.createGameStateMessages(gameData, newLogEntries));
-    }
 
     /**
      * Canonical event-backed replacement for effect-owned state broadcasts.

@@ -8,6 +8,7 @@ import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.Player;
 import com.github.laxika.magicalvibes.service.battlefield.BattlefieldEntryService;
 import com.github.laxika.magicalvibes.service.battlefield.PermanentRemovalService;
+import com.github.laxika.magicalvibes.service.event.GameMutationCoordinator;
 import com.github.laxika.magicalvibes.service.interaction.InteractionHandlerRegistry;
 import com.github.laxika.magicalvibes.service.turn.TurnProgressionService;
 import lombok.RequiredArgsConstructor;
@@ -33,6 +34,7 @@ public class PermanentAuctionService {
     private final PermanentRemovalService permanentRemovalService;
     private final BattlefieldEntryService battlefieldEntryService;
     private final GameBroadcastService gameBroadcastService;
+    private final GameMutationCoordinator mutationCoordinator;
     private final TurnProgressionService turnProgressionService;
     private final InteractionHandlerRegistry interactionHandlerRegistry;
 
@@ -124,7 +126,7 @@ public class PermanentAuctionService {
 
     private void beginPick(GameData gameData, UUID chooserId, List<Card> pool, List<UUID> playerOrder,
                            List<PendingInteraction.PermanentAuctionPlacement> placed) {
-        gameBroadcastService.broadcastGameState(gameData);
+        mutationCoordinator.invalidateAllPlayerViews(gameData);
         interactionHandlerRegistry.begin(gameData,
                 new PendingInteraction.PermanentAuctionChoice(chooserId, pool, playerOrder, placed));
     }

@@ -10,6 +10,7 @@ import com.github.laxika.magicalvibes.networking.Connection;
 import com.github.laxika.magicalvibes.networking.SessionManager;
 import com.github.laxika.magicalvibes.service.DraftRegistry;
 import com.github.laxika.magicalvibes.service.GameRegistry;
+import com.github.laxika.magicalvibes.service.GameSessionTransportAdapter;
 import com.github.laxika.magicalvibes.service.GameTimeoutService;
 import com.github.laxika.magicalvibes.service.TournamentResultHandler;
 import org.junit.jupiter.api.Test;
@@ -49,7 +50,8 @@ class GameEndLifecycleSubscriberTest {
         ObjectProvider<TournamentResultHandler> tournamentProvider = mock(ObjectProvider.class);
 
         GameEndLifecycleSubscriber subscriber = new GameEndLifecycleSubscriber(
-                games, drafts, tournamentProvider, timeoutProvider, sessions);
+                games, drafts, tournamentProvider, timeoutProvider,
+                new GameSessionTransportAdapter(sessions));
         subscriber.onGameEvents(batch(gameData,
                 new GameEventFact.GameEnded(GameEventFact.GameResult.WIN, winnerId)));
 
@@ -80,7 +82,8 @@ class GameEndLifecycleSubscriberTest {
         ObjectProvider<GameTimeoutService> timeoutProvider = mock(ObjectProvider.class);
 
         GameEndLifecycleSubscriber subscriber = new GameEndLifecycleSubscriber(
-                games, drafts, tournamentProvider, timeoutProvider, mock(SessionManager.class));
+                games, drafts, tournamentProvider, timeoutProvider,
+                new GameSessionTransportAdapter(mock(SessionManager.class)));
         subscriber.onGameEvents(batch(gameData,
                 new GameEventFact.GameEnded(GameEventFact.GameResult.WIN, winnerId)));
 

@@ -6,7 +6,6 @@ import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Component;
 
 import java.util.Collection;
-import java.util.Map;
 import java.util.UUID;
 
 /**
@@ -37,9 +36,5 @@ public class GameMessageTransport {
         for (UUID playerId : playerIds) {
             sendToPlayer(playerId, message);
         }
-    }
-
-    public void sendPlayerMessages(Map<UUID, ?> messages) {
-        messages.forEach(this::sendToPlayer);
     }
 }

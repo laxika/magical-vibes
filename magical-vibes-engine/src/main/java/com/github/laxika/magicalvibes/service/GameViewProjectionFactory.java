@@ -262,7 +262,7 @@ public class GameViewProjectionFactory {
 
     List<CardView> getRevealedOpponentHand(GameData gameData, UUID playerId) {
         // Mindslaver: controller always sees the controlled player's hand
-        // (handled separately in broadcastGameState — overrides opponentHand for controller)
+        // (handled separately while building each player-specific state projection)
 
         boolean allHandsRevealed = false;
         boolean opponentRevealsOwnHand = false;

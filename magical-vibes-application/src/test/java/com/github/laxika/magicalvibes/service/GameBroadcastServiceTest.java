@@ -11,7 +11,6 @@ import com.github.laxika.magicalvibes.model.TurnStep;
 import com.github.laxika.magicalvibes.model.effect.IncreaseOpponentCastCostEffect;
 import com.github.laxika.magicalvibes.model.amount.Fixed;
 import com.github.laxika.magicalvibes.model.effect.ReduceOwnCastCostForCardTypeEffect;
-import com.github.laxika.magicalvibes.networking.SessionManager;
 import com.github.laxika.magicalvibes.networking.model.CardView;
 import com.github.laxika.magicalvibes.networking.model.PermanentView;
 import com.github.laxika.magicalvibes.networking.service.CardViewFactory;
@@ -57,7 +56,6 @@ import com.github.laxika.magicalvibes.service.filter.PredicateEvaluationService;
 @ExtendWith(MockitoExtension.class)
 class GameBroadcastServiceTest {
 
-    @Mock private SessionManager sessionManager;
     @Mock private CardViewFactory cardViewFactory;
     @Mock private PermanentViewFactory permanentViewFactory;
     @Mock private StackEntryViewFactory stackEntryViewFactory;
@@ -91,11 +89,7 @@ class GameBroadcastServiceTest {
                 castingCostService, castingPermissionService,
                 new com.github.laxika.magicalvibes.service.cast.PotentialManaService(gameQueryService),
                 new GrantedAbilityViewFactory());
-        svc = new GameBroadcastService(
-                projectionFactory,
-                new GameMessageTransport(sessionManager),
-                gameLogViewFactory,
-                mutationCoordinator);
+        svc = new GameBroadcastService(projectionFactory, mutationCoordinator);
 
         player1Id = UUID.randomUUID();
         player2Id = UUID.randomUUID();
