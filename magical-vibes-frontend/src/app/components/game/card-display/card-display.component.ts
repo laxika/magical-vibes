@@ -4,10 +4,9 @@ import { Card, Permanent } from '../../../services/websocket.service';
 import { CardPreviewService } from '../../../services/card-preview.service';
 import { ScryfallImageService } from '../../../services/scryfall-image.service';
 import { ScryfallCardDataService } from '../../../services/scryfall-card-data.service';
-import { ManaSymbolService } from '../../../services/mana-symbol.service';
 import { SetSymbolService } from '../../../services/set-symbol.service';
-import { WatermarkService } from '../../../services/watermark.service';
 import { distinctGrantedAbilityTexts, formatEnumName, formatKeywords, formatTypeLine, hasCardType } from '../../../utils/format-utils';
+import { manaSymbolHtml, watermarkSymbolClasses } from '../../../utils/mana-symbols';
 import { largestFittingSize, renderedTextKey } from './card-text-fit';
 
 export interface PlaneswalkerAbilityLine {
@@ -41,7 +40,6 @@ export class CardDisplayComponent implements OnInit, OnChanges, OnDestroy, After
   formatKeywords = formatKeywords;
   formatEnumName = formatEnumName;
   artUrl = signal<string | null>(null);
-  watermarkUrl = signal<string | null>(null);
 
   @ViewChild('textBox') textBoxRef?: ElementRef<HTMLDivElement>;
   @ViewChild('nameText') nameTextRef?: ElementRef<HTMLElement>;
@@ -78,9 +76,7 @@ export class CardDisplayComponent implements OnInit, OnChanges, OnDestroy, After
 
   private scryfallImageService = inject(ScryfallImageService);
   private scryfallCardDataService = inject(ScryfallCardDataService);
-  private manaSymbolService = inject(ManaSymbolService);
   private setSymbolService = inject(SetSymbolService);
-  private watermarkService = inject(WatermarkService);
   private cardPreviewService = inject(CardPreviewService);
   private sanitizer = inject(DomSanitizer);
   private hostRef = inject<ElementRef<HTMLElement>>(ElementRef);
@@ -99,7 +95,6 @@ export class CardDisplayComponent implements OnInit, OnChanges, OnDestroy, After
 
   ngOnInit(): void {
     this.fetchCardArt();
-    this.fetchWatermark();
     CardDisplayComponent.whenFontsReady().then(() => this.refitAfterFontSwap());
   }
 
@@ -120,11 +115,16 @@ export class CardDisplayComponent implements OnInit, OnChanges, OnDestroy, After
    *
    * <p>The fitters used to run from ngAfterViewChecked alone, and in this app that hook fires
    * exactly once per card and then never again — it is zoneless (no zone.js, no
-   * provideZoneChangeDetection), so nothing re-checks a view just because a fetch resolved. Every
-   * piece of content a card waits on lands after that single check: flavour text from the set-wide
-   * fetch, and mana symbols that start life as literal `{W}` braces. The fit was therefore always
-   * computed against a box that had not finished filling, and the correction never ran. Three
-   * separate fixes landed in code that could not execute.
+   * provideZoneChangeDetection), so nothing re-checks a view just because a fetch resolved. The
+   * content a card still waits on lands after that single check: flavour text, artist and rarity
+   * all arrive together from the set-wide fetch. The fit was therefore computed against a box
+   * that had not finished filling, and the correction never ran. Three separate fixes landed in
+   * code that could not execute.
+   *
+   * <p>Mana symbols used to be in that list too — they were literal `{W}` braces until each
+   * symbol's SVG was fetched. They are font glyphs now and arrive with the first render, which
+   * takes one of the two late-content sources away but not the hook: the font behind them can
+   * still land late, and that is what whenFontsReady covers.
    *
    * <p>Attributes are deliberately not observed. The fitters work by writing style.fontSize and
    * style.display, both attribute mutations, so watching those would feed the observer its own
@@ -148,11 +148,20 @@ export class CardDisplayComponent implements OnInit, OnChanges, OnDestroy, After
     });
   }
 
-  /** The faces a card actually paints with, at the weights and styles it uses them at. */
-  private static readonly FITTED_FONTS = [
-    '700 12px Cinzel',
-    '400 11px "Crimson Text"',
-    'italic 400 11px "Crimson Text"',
+  /**
+   * The faces a card actually paints with, at the weights and styles it uses them at, each with
+   * a character it must have a glyph for.
+   *
+   * <p>The probe is not decoration. `document.fonts.load()` filters candidate faces by whether
+   * their unicode-range covers the text it is asked about, and it defaults to asking about a
+   * space — which is fine for the two text faces and meaningless for Mana, whose every glyph is
+   * a private-use codepoint. U+E600 is `{W}`, the first of them.
+   */
+  private static readonly FITTED_FONTS: ReadonlyArray<readonly [font: string, probe: string]> = [
+    ['700 12px Cinzel', 'M'],
+    ['400 11px "Crimson Text"', 'M'],
+    ['italic 400 11px "Crimson Text"', 'M'],
+    ['14px Mana', '\uE600'],
   ];
   private static fontsReady: Promise<unknown> | null = null;
 
@@ -166,12 +175,20 @@ export class CardDisplayComponent implements OnInit, OnChanges, OnDestroy, After
    * the two latin faces makes that window small enough to rarely be hit, but it cannot be
    * closed — a cold cache on a slow link still lands in it, and neither the italic nor the
    * latin-ext faces are preloaded at all. So this stays as the correction.
-   * `ready` is awaited first because `load()` only matches faces already declared, and the
+   *
+   * <p>Mana is here for a related reason rather than the same one. It is `font-display: block`,
+   * so a mana symbol is not painted in the wrong face before it arrives — it is not painted at
+   * all, and an unpainted symbol is a hole in the line the width of whatever the fallback made
+   * of a private-use codepoint. Either way the line measures at a width it will not keep, and
+   * either way the fix is to measure it again once the face is really there.
+   *
+   * <p>`ready` is awaited first because `load()` only matches faces already declared, and the
    * rules arrive with the stylesheet. One promise serves every card on the table.
    */
   private static whenFontsReady(): Promise<unknown> {
     CardDisplayComponent.fontsReady ??= document.fonts.ready
-      .then(() => Promise.all(CardDisplayComponent.FITTED_FONTS.map(f => document.fonts.load(f))))
+      .then(() => Promise.all(
+          CardDisplayComponent.FITTED_FONTS.map(([font, probe]) => document.fonts.load(font, probe))))
       .catch(() => undefined);
     return CardDisplayComponent.fontsReady;
   }
@@ -256,27 +273,21 @@ export class CardDisplayComponent implements OnInit, OnChanges, OnDestroy, After
       } else {
         this.artUrl.set(null);
       }
-
-      if (this.card.watermark) {
-        const cachedWm = this.watermarkService.getCachedWatermarkUrl(this.card.watermark);
-        if (cachedWm) {
-          this.watermarkUrl.set(cachedWm);
-        } else {
-          this.watermarkUrl.set(null);
-          this.fetchWatermark();
-        }
-      } else {
-        this.watermarkUrl.set(null);
-      }
     }
   }
 
-  private fetchWatermark(): void {
-    if (this.card.watermark) {
-      this.watermarkService.getWatermarkUrl(this.card.watermark)
-        .then(url => this.watermarkUrl.set(url))
-        .catch(() => { this.watermarkUrl.set(null); });
-    }
+  /**
+   * The frame's watermark, as the classes that draw it — `null` on the great majority of cards,
+   * which have none, and also on the ones whose watermark the Mana font has no glyph for.
+   *
+   * <p>A plain getter, and it used to be a signal fed by a fetch. The watermark was an SVG pulled
+   * off a GitHub raw URL and cached in IndexedDB, so it needed somewhere to land when it arrived
+   * and a branch in ngOnChanges to re-fetch when the card changed underneath it. Now it is a
+   * property of the card being rendered and nothing else.
+   */
+  get watermarkClasses(): string | null {
+    const classes = watermarkSymbolClasses(this.card.watermark);
+    return classes ? `watermark ${classes}` : null;
   }
 
   private fetchCardArt(): void {
@@ -455,7 +466,7 @@ export class CardDisplayComponent implements OnInit, OnChanges, OnDestroy, After
   }
 
   private toSymbolHtml(text: string): SafeHtml {
-    return this.sanitizer.bypassSecurityTrustHtml(this.manaSymbolService.replaceSymbols(text));
+    return this.sanitizer.bypassSecurityTrustHtml(manaSymbolHtml(text));
   }
 
   get scryfallData() {
@@ -493,13 +504,13 @@ export class CardDisplayComponent implements OnInit, OnChanges, OnDestroy, After
   get prepareSpellManaCost(): SafeHtml {
     const cost = this.prepareSpell?.manaCost;
     if (!cost) return '';
-    return this.sanitizer.bypassSecurityTrustHtml(this.manaSymbolService.replaceSymbols(cost));
+    return this.sanitizer.bypassSecurityTrustHtml(manaSymbolHtml(cost));
   }
 
   get prepareSpellText(): SafeHtml {
     const text = this.prepareSpell?.cardText;
     if (!text) return '';
-    return this.sanitizer.bypassSecurityTrustHtml(this.manaSymbolService.replaceSymbols(text));
+    return this.sanitizer.bypassSecurityTrustHtml(manaSymbolHtml(text));
   }
 
   ngAfterViewChecked(): void {
@@ -518,14 +529,14 @@ export class CardDisplayComponent implements OnInit, OnChanges, OnDestroy, After
     const el = this.nameTextRef?.nativeElement;
     if (!el) return;
 
-    /* Keyed on the rendered name plate, for the same reason the text box is: the name's available
-       width depends on the mana cost beside it, and that cost is literal `{4}{W}` text until its
-       symbols load and become images of a different width. A model-derived key could claim the
-       symbols had arrived while the plate still held braces. */
+    /* Keyed on the rendered name plate rather than on the name, because the width the name has to
+       fit into is what is left over after the mana cost beside it — so two cards with the same
+       name and different costs are not the same fitting problem, and the plate is where that
+       difference is visible. */
     const plate = el.parentElement;
     const fp = renderedTextKey({
       text: plate?.textContent ?? el.textContent ?? '',
-      imageCount: plate?.querySelectorAll('img').length ?? 0,
+      symbolCount: plate?.querySelectorAll('.mana-sym').length ?? 0,
     });
     if (fp === this.lastNameFingerprint) return;
     this.lastNameFingerprint = fp;
@@ -552,11 +563,11 @@ export class CardDisplayComponent implements OnInit, OnChanges, OnDestroy, After
        fit landing in that window used to store a key claiming flavour was present while measuring
        a box without it — after which the matching key suppressed the fit that would have corrected
        it, permanently. textContent covers rules text, keywords, granted abilities and the
-       prepare-spell inset alike, and a symbol turning from `{W}` into an image shows up as both a
-       text change and an image count change. */
+       prepare-spell inset alike; the symbols are counted beside it because they are glyphs drawn
+       by CSS and so appear in none of it. */
     const fp = renderedTextKey({
       text: el.textContent ?? '',
-      imageCount: el.querySelectorAll('img').length,
+      symbolCount: el.querySelectorAll('.mana-sym').length,
     });
     if (fp === this.lastTextFingerprint) return;
     this.lastTextFingerprint = fp;
@@ -650,16 +661,12 @@ export class CardDisplayComponent implements OnInit, OnChanges, OnDestroy, After
 
   get formattedManaCost(): SafeHtml {
     if (!this.card.manaCost) return '';
-    return this.sanitizer.bypassSecurityTrustHtml(
-      this.manaSymbolService.replaceSymbols(this.card.manaCost)
-    );
+    return this.sanitizer.bypassSecurityTrustHtml(manaSymbolHtml(this.card.manaCost));
   }
 
   get formattedCardText(): SafeHtml {
     if (!this.card.cardText) return '';
-    return this.sanitizer.bypassSecurityTrustHtml(
-      this.manaSymbolService.replaceSymbols(this.card.cardText)
-    );
+    return this.sanitizer.bypassSecurityTrustHtml(manaSymbolHtml(this.card.cardText));
   }
 
 }

@@ -8,9 +8,9 @@ import { card, fontSizeOf, mountCard, overflowOf } from './card-display.harness'
  * browser has laid it out.
  *
  * <p>Every fitting bug so far has been a late layout change — a web font swapping in after the
- * fit, a mana symbol claiming width only once its image decoded — and jsdom reports every box as
- * zero-sized, so none of them were observable from the default test target. These run in real
- * Chromium against the real component.
+ * fit, a mana symbol claiming its width only once the face that draws it arrived — and jsdom
+ * reports every box as zero-sized, so none of them were observable from the default test target.
+ * These run in real Chromium against the real component.
  */
 
 /** SOS 6. Text as the engine sends it; one mana symbol, mid-sentence. */
@@ -87,14 +87,22 @@ describe('CardDisplayComponent — rules text fitting in real Chromium', () => {
     // jsdom would report both of these as 0, and every overflow assertion would pass vacuously.
     expect(mounted.textBox.clientHeight).toBeGreaterThan(20);
     expect(mounted.host.getBoundingClientRect().height).toBeCloseTo(231, 0);
+
+    /* And the symbol font has to have actually arrived. A symbol is sized by CSS rather than by
+       its glyph, so a missing or misnamed mana.woff2 leaves every element the right size with
+       nothing drawn in it — the size assertions elsewhere in this file would all still pass and
+       every card would render its costs blank. U+E600 is {W}; asking about the default space
+       would not answer the question, since none of Mana's glyphs are outside the private use
+       area. */
+    expect(document.fonts.check('14px Mana', '\uE600'),
+        'the Mana font never loaded — symbols would render as empty discs').toBe(true);
   });
 
-  it.each(CASES)('does not clip %s once symbols and flavour arrive', async (_name, subject, flavor) => {
+  it.each(CASES)('does not clip %s once flavour arrives', async (_name, subject, flavor) => {
     const mounted = await mountCard(subject);
 
-    // Everything a real card waits on, in the order it arrives.
+    // The last thing a real card waits on. Symbols are already drawn; flavour is not.
     mounted.cardData.resolveCardData('SOS', subject.collectorNumber!, flavor);
-    mounted.symbols.resolveSymbols();
     await mounted.settle();
 
     expect(overflowOf(mounted.textBox),
@@ -102,44 +110,117 @@ describe('CardDisplayComponent — rules text fitting in real Chromium', () => {
   });
 
   it.each(CASES)('does not clip %s when nothing ever resolves', async (_name, subject) => {
-    // The other end of the same race: no flavour, symbols still literal braces.
+    // The other end of the same race: the set-wide fetch never lands, so no flavour ever comes.
     const mounted = await mountCard(subject);
     expect(overflowOf(mounted.textBox)).toBeLessThanOrEqual(0);
   });
 
-  it('gives a mana symbol width before it decodes, so the fit is measured against the real line', async () => {
-    /* The component fits text by measuring the box during change detection — the same
-       synchronous pass that inserts the symbol images, long before any of them has decoded. If a
-       symbol has no width until then, the line it sits on measures narrower than it will render,
-       the fit is made against the wrong line, and the text rewraps out of the frame once the
-       images paint. Nothing fires at that point, so nothing corrects it.
-
-       Asserting on the width rather than on a card overflowing, because whether a given card
-       overflows depends on where its wrap boundaries happen to fall; this is the property. */
+  it.each([
+    ['the name plate', '.card-mana-cost'],
+    ['rules text', '.card-text'],
+  ])('centres a mana symbol on the cap height of %s, not below it', async (_where, selector) => {
+    /* A mana symbol reads as a capital and belongs on the midpoint of the capitals beside it.
+       `vertical-align: middle` — which is what both this and the <img> before it use — instead
+       centres the box on the *x-height* midpoint, and every face this app sets text in has a much
+       taller cap than x, so an uncorrected symbol hangs low: 0.125em under the cap midpoint in
+       Cinzel, 0.164em in Crimson Text, which is a visible sag at the size a cost is printed.
+       mana.css lifts it back. The two contexts are checked separately because they are different
+       faces with different metrics, and one constant serves both. */
     const mounted = await mountCard(ANTIQUITIES);
-    mounted.symbols.resolveSymbols();
+    const host = mounted.host.querySelector(selector) as HTMLElement;
+    const symbol = host.querySelector('.mana-sym') as HTMLElement;
+    expect(symbol, `no symbol rendered in ${selector}`).not.toBeNull();
 
-    // Exactly one synchronous pass: symbols in the DOM, none of them decoded.
-    mounted.fixture.componentRef.changeDetectorRef.markForCheck();
-    mounted.fixture.detectChanges();
+    // The baseline, taken from the rendered line rather than from font metrics: a zero-sized
+    // inline-block aligned to the baseline reports exactly where it is.
+    const probe = document.createElement('span');
+    probe.style.cssText = 'display:inline-block;width:0;height:0;vertical-align:baseline';
+    host.appendChild(probe);
+    const baseline = probe.getBoundingClientRect().top;
+    probe.remove();
 
-    const symbols = Array.from(mounted.textBox.querySelectorAll('img.mana-sym')) as HTMLElement[];
-    expect(symbols.length, 'rules text should have rendered its symbols as images')
+    const style = getComputedStyle(host);
+    const fontSize = parseFloat(style.fontSize);
+    const ctx = document.createElement('canvas').getContext('2d')!;
+    ctx.font = `${style.fontWeight} ${style.fontSize} ${style.fontFamily}`;
+    ctx.textBaseline = 'alphabetic';
+    const capHeight = ctx.measureText('H').actualBoundingBoxAscent;
+
+    const rect = symbol.getBoundingClientRect();
+    const sagInEm = ((rect.top + rect.height / 2) - (baseline - capHeight / 2)) / fontSize;
+
+    expect(Math.abs(sagInEm),
+        `symbol centre is ${sagInEm.toFixed(3)}em off the cap-height midpoint`)
+        .toBeLessThan(0.05);
+  });
+
+  it('renders a mana symbol at the size of the text around it', async () => {
+    /* Two things at once, because they fail together. The symbol has to be a real glyph — Mana
+       is `font-display: block`, so if the face never arrives the element is there at zero width
+       and every line measures short — and it has to come out about as wide as the text is tall.
+       `.ms-cost` draws its disc at 1.3x the element's own font-size, so an unadjusted symbol is
+       a quarter oversized, which is enough to move where a line of rules text wraps. */
+    const mounted = await mountCard(ANTIQUITIES);
+
+    const symbols = Array.from(mounted.textBox.querySelectorAll('.mana-sym')) as HTMLElement[];
+    expect(symbols.length, 'rules text should have rendered its symbols as glyphs')
         .toBeGreaterThan(0);
 
-    const widthsBeforeDecode = symbols.map(s => s.getBoundingClientRect().width);
-    const wrapBeforeDecode = mounted.textBox.scrollHeight;
+    const boxFontSize = fontSizeOf(mounted.textBox);
+    for (const symbol of symbols) {
+      const { width, height } = symbol.getBoundingClientRect();
+      expect(width, 'a symbol had no width, so the line it sits on measures short')
+          .toBeGreaterThan(0);
+      expect(width / boxFontSize,
+          'symbol is not about as wide as the text is tall').toBeGreaterThan(0.85);
+      expect(width / boxFontSize).toBeLessThan(1.15);
+      expect(height / width, 'symbols are round; this one is not square').toBeCloseTo(1, 1);
+    }
+  });
 
-    expect(Math.min(...widthsBeforeDecode),
-        'a symbol had zero width before decoding, so the line was measured too narrow')
-        .toBeGreaterThan(0);
+  it('prints a watermark behind the rules text without displacing it', async () => {
+    /* The watermark is the one glyph the frame places itself rather than injecting, and it is
+       absolutely positioned — so the two ways it can go wrong are being absent (a name the font
+       has no glyph for, or a class binding that never resolved) and being in the flow, where a
+       40px mark inside a ~60px box would push every line of rules text off the bottom. */
+    const mounted = await mountCard(card({ ...ANTIQUITIES, watermark: 'boros' }));
+    const mark = mounted.textBox.querySelector('.watermark') as HTMLElement | null;
 
-    await Promise.all(Array.from(mounted.textBox.querySelectorAll('img'))
-        .map(img => (img as HTMLImageElement).decode().catch(() => undefined)));
+    expect(mark, 'no watermark rendered for a card that has one').not.toBeNull();
+    expect(mark!.className).toContain('ms-watermark-boros');
+    expect(mark!.getBoundingClientRect().width,
+        'the watermark glyph has no width, so the font never drew it').toBeGreaterThan(0);
+    expect(overflowOf(mounted.textBox),
+        'the watermark took space in the flow and pushed the rules text out').toBeLessThanOrEqual(0);
 
-    expect(mounted.textBox.scrollHeight,
-        'the text rewrapped once the symbols decoded, after the fit had already been made')
-        .toBe(wrapBeforeDecode);
+    // `set` means "use this set's own symbol", which Mana has no glyph for. It has to render
+    // nothing rather than an empty box — and it has to stop rendering when the card changes,
+    // which is the branch that used to be a fetch and a signal.
+    mounted.fixture.componentRef.setInput('card', card({ ...ANTIQUITIES, watermark: 'set' }));
+    await mounted.settle();
+    expect(mounted.textBox.querySelector('.watermark')).toBeNull();
+  });
+
+  it('refits when the only thing that changed about a card is its symbols', async () => {
+    /* A mana symbol is a glyph drawn by a ::before rule, so it appears in no element's
+       textContent: `{T}: Add {B}.` and `{T}: Add {B}{B}.` both render the string ": Add .".
+       The fit is guarded by a key built from what the box contains, and a key blind to the
+       symbols calls these two identical — so swapping one card for the other on a frame that
+       is already mounted (the preview pane does exactly this) keeps the size fitted for the
+       first and runs the second off the bottom. */
+    const mounted = await mountCard(card({
+      name: 'Small Ritual', type: 'INSTANT', manaCost: '{B}',
+      cardText: '{T}: Add {B}. '.repeat(12),
+    }));
+
+    mounted.fixture.componentRef.setInput('card', card({
+      name: 'Small Ritual', type: 'INSTANT', manaCost: '{B}',
+      cardText: '{T}: Add {B}{B}{B}{B}. '.repeat(12),
+    }));
+    await mounted.settle();
+
+    expect(overflowOf(mounted.textBox),
+        'the second card kept the size fitted for the first').toBeLessThanOrEqual(0);
   });
 
   it('refits when flavour text reaches the DOM, not when it reaches the model', async () => {
@@ -156,7 +237,6 @@ describe('CardDisplayComponent — rules text fitting in real Chromium', () => {
        Invoking the lifecycle hook directly is the point, not a shortcut: it is a fit that happens
        between the data arriving and the DOM catching up, which is precisely the real sequence. */
     const mounted = await mountCard(ANTIQUITIES);
-    mounted.symbols.resolveSymbols();
     await mounted.settle();
 
     mounted.cardData.resolveCardData('SOS', '7', ANTIQUITIES_FLAVOR);
@@ -210,7 +290,6 @@ describe('CardDisplayComponent — rules text fitting in real Chromium', () => {
   it('keeps rules text within its configured size range', async () => {
     const mounted = await mountCard(ANTIQUITIES);
     mounted.cardData.resolveCardData('SOS', '7', ANTIQUITIES_FLAVOR);
-    mounted.symbols.resolveSymbols();
     await mounted.settle();
 
     const size = fontSizeOf(mounted.textBox);
@@ -224,7 +303,6 @@ describe('CardDisplayComponent — rules text fitting in real Chromium', () => {
     // was left on the table.
     const mounted = await mountCard(GROUP_PROJECT);
     mounted.cardData.resolveCardData('SOS', '17', GROUP_PROJECT_FLAVOR);
-    mounted.symbols.resolveSymbols();
     await mounted.settle();
 
     const settled = fontSizeOf(mounted.textBox);
@@ -247,7 +325,6 @@ describe('CardDisplayComponent — rules text fitting in real Chromium', () => {
         'A quote so long that no legible size could ever hope to contain both it and the rules '
         + 'text above it, which is exactly the case printed cards resolve by leaving the flavour '
         + 'off the card altogether rather than running it off the bottom edge of the frame.');
-    mounted.symbols.resolveSymbols();
     await mounted.settle();
 
     expect(overflowOf(mounted.textBox)).toBeLessThanOrEqual(0);
@@ -262,7 +339,6 @@ describe('CardDisplayComponent — rules text fitting in real Chromium', () => {
       name: 'Antiquities on the Loose',
       manaCost: '{1}{W}{W}',
     }));
-    mounted.symbols.resolveSymbols();
     await mounted.settle();
 
     const nameEl = mounted.host.querySelector('.card-name') as HTMLElement;

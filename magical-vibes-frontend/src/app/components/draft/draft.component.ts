@@ -10,7 +10,7 @@ import {
 } from '../../services/websocket.service';
 import { CardDisplayComponent } from '../game/card-display/card-display.component';
 import { ScryfallImageService } from '../../services/scryfall-image.service';
-import { ManaSymbolService } from '../../services/mana-symbol.service';
+import { manaSymbolHtml } from '../../utils/mana-symbols';
 import { DomSanitizer, SafeHtml } from '@angular/platform-browser';
 import { Subscription } from 'rxjs';
 
@@ -56,7 +56,6 @@ export class DraftComponent implements OnInit, OnDestroy {
   poolArtUrls = signal<Map<string, string>>(new Map());
 
   private scryfallImageService = inject(ScryfallImageService);
-  private manaSymbolService = inject(ManaSymbolService);
   private sanitizer = inject(DomSanitizer);
   private subscriptions: Subscription[] = [];
   private timerInterval: ReturnType<typeof setInterval> | null = null;
@@ -462,10 +461,7 @@ export class DraftComponent implements OnInit, OnDestroy {
 
   getFormattedManaCost(card: Card): SafeHtml {
     if (!card.manaCost) return '';
-    this.manaSymbolService.symbolsVersion();
-    return this.sanitizer.bypassSecurityTrustHtml(
-      this.manaSymbolService.replaceSymbols(card.manaCost)
-    );
+    return this.sanitizer.bypassSecurityTrustHtml(manaSymbolHtml(card.manaCost));
   }
 
   getCardColorClass(card: Card): string {

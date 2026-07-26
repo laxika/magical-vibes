@@ -140,7 +140,7 @@ describe('renderedTextKey', () => {
 
   const box: RenderedTextBox = {
     text: 'Flashback Raising spirits is easier than taming them.',
-    imageCount: 3,
+    symbolCount: 3,
   };
 
   it('is stable for unchanged content, so a settled fit is not redone every check', () => {
@@ -161,30 +161,32 @@ describe('renderedTextKey', () => {
        present, and the render that followed then matched that key and skipped the fit. Every
        affected card in the running app showed flavour at exactly the box font size — the signature
        of a flavour element the fitter never touched — and overflowed by up to 56px. */
-    const withoutFlavor = renderedTextKey({ text: 'Destroy target creature.', imageCount: 0 });
+    const withoutFlavor = renderedTextKey({ text: 'Destroy target creature.', symbolCount: 0 });
     const withFlavor = renderedTextKey({
       text: 'Destroy target creature.Some flavour worth reading.',
-      imageCount: 0,
+      symbolCount: 0,
     });
     expect(withFlavor).not.toBe(withoutFlavor);
   });
 
-  it('changes when a mana symbol turns from text into an image', () => {
-    // `{W}` is literal text until its symbol loads and then becomes an inline image. Both halves
-    // of that show up here — text lost, image gained — so no separate version counter is needed.
-    const asText = renderedTextKey({ text: 'Flashback {4}{W}{W}', imageCount: 0 });
-    const asImages = renderedTextKey({ text: 'Flashback ', imageCount: 3 });
-    expect(asImages).not.toBe(asText);
+  it('tells two costs apart when the only difference is the symbols', () => {
+    /* The reason symbols are counted at all. They are Mana font glyphs drawn by a ::before rule,
+       so they are in no element's textContent — `{T}: Add {G}.` and `{T}: Add {G}{G}.` both
+       reduce to ": Add ." once rendered. They wrap differently and fit differently, and a key
+       that called them the same content would leave the second card at the size fitted for the
+       first. */
+    expect(renderedTextKey({ text: ': Add .', symbolCount: 2 }))
+        .not.toBe(renderedTextKey({ text: ': Add .', symbolCount: 3 }));
   });
 
-  it('changes when only the image count changes', () => {
+  it('changes when only the symbol count changes', () => {
     // Two symbols and three symbols wrap differently even with identical surrounding text.
-    expect(renderedTextKey({ ...box, imageCount: 2 })).not.toBe(renderedTextKey(box));
+    expect(renderedTextKey({ ...box, symbolCount: 2 })).not.toBe(renderedTextKey(box));
   });
 
   it('does not let a field boundary shift disguise a change', () => {
     // Naive concatenation of count and text would collide these two.
-    expect(renderedTextKey({ text: '1abc', imageCount: 2 }))
-        .not.toBe(renderedTextKey({ text: 'abc', imageCount: 21 }));
+    expect(renderedTextKey({ text: '1abc', symbolCount: 2 }))
+        .not.toBe(renderedTextKey({ text: 'abc', symbolCount: 21 }));
   });
 });

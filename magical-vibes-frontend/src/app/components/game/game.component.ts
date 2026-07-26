@@ -11,7 +11,7 @@ import { SidePanelComponent } from './side-panel/side-panel.component';
 import { ModifierTooltipComponent } from './modifier-tooltip/modifier-tooltip.component';
 import { IndexedPermanent, AttachedAura, LandStack, canFormAttackingBand, splitBattlefield, stackBasicLands, getAttachedAuras, isLandStack, isPermanentCreature, isPermanentArtifact, isPermanentLand } from './battlefield.utils';
 import { Subscription } from 'rxjs';
-import { ManaSymbolService } from '../../services/mana-symbol.service';
+import { manaSymbolHtml } from '../../utils/mana-symbols';
 import { PermanentClickResolverService } from '../../services/permanent-click-resolver.service';
 
 @Component({
@@ -57,7 +57,6 @@ export class GameComponent implements OnInit, OnDestroy {
   private cdr = inject(ChangeDetectorRef);
   readonly choice = inject(GameChoiceService);
   private clickResolver = inject(PermanentClickResolverService);
-  private manaSymbolService = inject(ManaSymbolService);
   private sanitizer = inject(DomSanitizer);
 
   // Bound function references for child component inputs
@@ -1658,9 +1657,7 @@ export class GameComponent implements OnInit, OnDestroy {
   // ========== Formatting ==========
 
   formatAbilityDescription(description: string): SafeHtml {
-    return this.sanitizer.bypassSecurityTrustHtml(
-      this.manaSymbolService.replaceSymbols(description)
-    );
+    return this.sanitizer.bypassSecurityTrustHtml(manaSymbolHtml(description));
   }
 
   readonly GameStatus = GameStatus;

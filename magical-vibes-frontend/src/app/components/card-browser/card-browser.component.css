@@ -338,9 +338,12 @@ h1 {
   line-height: 1;
 }
 
-.cell-cost ::ng-deep .mana-sym {
-  height: 14px !important;
-  vertical-align: middle !important;
+/* The cost column sets symbols larger than its 11px text, so a cost stays legible in a dense
+   table. A symbol's disc is 1.3x its own font-size, so 10.8px puts it at the 14px the SVGs
+   this replaced were forced to. Sized rather than heighted because these are glyphs now. */
+.cell-cost ::ng-deep .mana-sym.ms-cost {
+  font-size: 10.8px;
+  vertical-align: middle;
 }
 
 .cell-type {

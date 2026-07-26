@@ -3,9 +3,9 @@ import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { Router } from '@angular/router';
 import { WebsocketService, MessageType, BrowseCardInfo, CardListResponse, SetInfo, Card } from '../../services/websocket.service';
-import { ManaSymbolService } from '../../services/mana-symbol.service';
 import { CardDisplayComponent } from '../game/card-display/card-display.component';
 import { browseInfoToCard } from '../../utils/browse-card-utils';
+import { manaSymbolHtml } from '../../utils/mana-symbols';
 import { Subscription } from 'rxjs';
 
 @Component({
@@ -69,8 +69,7 @@ export class CardBrowserComponent implements OnInit, OnDestroy {
 
   constructor(
     private router: Router,
-    public websocketService: WebsocketService,
-    public manaSymbolService: ManaSymbolService
+    public websocketService: WebsocketService
   ) {}
 
   get availableSets(): SetInfo[] {
@@ -178,7 +177,7 @@ export class CardBrowserComponent implements OnInit, OnDestroy {
 
   renderManaCost(manaCost: string | null): string {
     if (!manaCost) return '';
-    return this.manaSymbolService.replaceSymbols(manaCost);
+    return manaSymbolHtml(manaCost);
   }
 
   capitalizeRarity(rarity: string): string {

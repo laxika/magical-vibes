@@ -2,7 +2,7 @@ import { Component, Input, Output, EventEmitter, signal, inject, HostListener, V
 import { DomSanitizer, SafeHtml } from '@angular/platform-browser';
 import { Card, GameLogEntry, Permanent, StackEntry } from '../../../services/websocket.service';
 import { GameChoiceService } from '../../../services/game-choice.service';
-import { ManaSymbolService } from '../../../services/mana-symbol.service';
+import { manaSymbolHtml } from '../../../utils/mana-symbols';
 import { CardDisplayComponent } from '../card-display/card-display.component';
 
 @Component({
@@ -14,7 +14,6 @@ import { CardDisplayComponent } from '../card-display/card-display.component';
 })
 export class SidePanelComponent implements OnChanges, AfterViewChecked {
   readonly choice = inject(GameChoiceService);
-  private manaSymbolService = inject(ManaSymbolService);
   private sanitizer = inject(DomSanitizer);
 
   @Input() hoveredCard: Card | null = null;
@@ -184,15 +183,11 @@ export class SidePanelComponent implements OnChanges, AfterViewChecked {
   }
 
   manaSymbol(color: string): SafeHtml {
-    return this.sanitizer.bypassSecurityTrustHtml(
-      this.manaSymbolService.replaceSymbols(`{${color}}`)
-    );
+    return this.sanitizer.bypassSecurityTrustHtml(manaSymbolHtml(`{${color}}`));
   }
 
   formatAbilityDescription(description: string): SafeHtml {
-    return this.sanitizer.bypassSecurityTrustHtml(
-      this.manaSymbolService.replaceSymbols(description)
-    );
+    return this.sanitizer.bypassSecurityTrustHtml(manaSymbolHtml(description));
   }
 
   @HostListener('document:click')

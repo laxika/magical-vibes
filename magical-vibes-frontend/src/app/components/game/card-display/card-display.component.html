@@ -38,8 +38,10 @@
     }
   </div>
   <div class="text-box" [class.pw-text-box]="isPlaneswalker" [class.pw-has-loyalty]="isPlaneswalker && displayLoyalty != null" #textBox>
-    @if (watermarkUrl()) {
-      <img class="watermark" [src]="watermarkUrl()" alt="" />
+    @if (watermarkClasses) {
+      <!-- Decorative: the guild or faction mark printed behind the rules text, and it says
+           nothing the card does not say elsewhere. -->
+      <i [class]="watermarkClasses" aria-hidden="true"></i>
     }
     <!-- Floated so the creature's own rules text fills the column beside it, the way
          the printed frame splits the front face. -->

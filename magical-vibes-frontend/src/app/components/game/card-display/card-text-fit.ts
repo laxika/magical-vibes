@@ -23,14 +23,21 @@
  *
  * <p>A key derived from what is actually in the box cannot disagree with what gets measured. It
  * also subsumes what were separate inputs before: rules text, keywords, granted abilities and the
- * prepare-spell inset are all text in the box, and a mana symbol turning from `{W}` into an image
- * both removes text and adds an image, so it needs no version counter of its own.
+ * prepare-spell inset are all text in the box, so none needs a signal of its own.
  */
 export interface RenderedTextBox {
   /** `textContent` of the box: every string it lays out, whatever produced it. */
   text: string;
-  /** Images it lays out. They take width but contribute no text, so they are counted separately. */
-  imageCount: number;
+  /**
+   * Mana symbols it lays out, counted separately because none of them is text.
+   *
+   * <p>A symbol is a font glyph drawn by a `::before` rule, so it takes a symbol's width and
+   * contributes nothing at all to `textContent` — which makes the count the only thing telling
+   * `{T}: Add {G}.` apart from `{T}: Add {G}{G}.`. Both are the string ": Add ." once the
+   * symbols are out of it, and they do not wrap the same. A key blind to this reports the two
+   * cards as identical content, and the second one keeps whatever size was fitted for the first.
+   */
+  symbolCount: number;
 }
 
 /**
@@ -41,7 +48,7 @@ export function renderedTextKey(box: RenderedTextBox): string {
   // JSON rather than joining on a separator: this is arbitrary card text and may contain whatever
   // separator gets picked, so a shift across the boundary would otherwise produce one key for two
   // different contents and suppress the re-fit that difference should force.
-  return JSON.stringify([box.imageCount, box.text]);
+  return JSON.stringify([box.symbolCount, box.text]);
 }
 
 /**

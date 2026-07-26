@@ -38,10 +38,9 @@
   pointer-events: none;
 }
 
-/* Mana symbols are injected as raw HTML by ManaSymbolService, so they carry no
-   encapsulation attribute and only ::ng-deep reaches them. The printed symbols are
-   embossed discs; flat SVGs sitting on the name plate read as stickers without a
-   shadow to lift them off it. */
+/* Mana symbols are injected as raw HTML by manaSymbolHtml, so they carry no encapsulation
+   attribute and only ::ng-deep reaches them. The printed symbols are embossed discs; a flat
+   glyph sitting on the name plate reads as a sticker without a shadow to lift it off. */
 :host ::ng-deep .mana-sym {
   filter: drop-shadow(0 1px 0 rgba(0, 0, 0, 0.4));
 }
@@ -372,14 +371,24 @@ img.card-art {
   color: #c9410d;
 }
 
-/* Watermark */
+/* Watermark — a Mana glyph rather than the SVG it used to be, so it is sized by font-size
+   and inked with color instead of by height and opacity alone.
+
+   40px is the height the old `height: 65%` resolved to on a standard text box, and it is a
+   fixed length for the same reason every other length on this frame is: the card scales with
+   `zoom`, which scales px, so a fixed size here tracks the card without a percentage that
+   font-size cannot express anyway. A planeswalker's taller box therefore gets a slightly
+   smaller mark relative to itself, which is closer to how they are actually printed.
+
+   The disc-drawing .ms-cost class is deliberately not applied — a watermark is the bare
+   pictograph, pressed into the parchment rather than sitting on it. */
 .watermark {
   position: absolute;
   top: 50%;
   left: 50%;
   transform: translate(-50%, -50%);
-  height: 65%;
-  width: auto;
+  font-size: 40px;
+  color: var(--ink);
   opacity: 0.13;
   pointer-events: none;
   z-index: 0;

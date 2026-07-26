@@ -1,7 +1,7 @@
 /* Self-hosted card faces — see public/fonts/ for the woff2 files and their OFL licences.
-   Both families are SIL Open Font License 1.1, which grants embedding and redistribution
+   All three families are SIL Open Font License 1.1, which grants embedding and redistribution
    outright; the only conditions are that the licence text ships with them (it does, beside
-   the fonts) and that the fonts are not sold on their own. Neither declares a Reserved Font
+   the fonts) and that the fonts are not sold on their own. None declares a Reserved Font
    Name, so the subsetting below does not force a rename.
 
    Self-hosted rather than fetched from fonts.gstatic.com so no visitor's IP reaches a third
@@ -15,9 +15,10 @@
    display: swap is deliberate over block — with the files same-origin and preloaded the
    fallback flash is brief, and swap can never leave a card's text invisible.
 
-   Generated from the Google Fonts css2 API; latin and latin-ext subsets only. The vietnamese
-   subset is dropped. Cinzel is one variable file per subset covering weights 400-900;
-   Crimson Text ships a static file per face. */
+   Cinzel and Crimson Text are generated from the Google Fonts css2 API; latin and latin-ext
+   subsets only, the vietnamese subset dropped. Cinzel is one variable file per subset covering
+   weights 400-900; Crimson Text ships a static file per face. Mana is taken whole from its
+   npm package — see mana.css, which carries the rest of it. */
 
 /* ── Cinzel ── */
 
@@ -183,4 +184,25 @@
   font-display: swap;
   src: url('/fonts/crimson-text-700-latin.woff2') format('woff2');
   unicode-range: U+0000-00FF, U+0131, U+0152-0153, U+02BB-02BC, U+02C6, U+02DA, U+02DC, U+0304, U+0308, U+0329, U+2000-206F, U+20AC, U+2122, U+2191, U+2193, U+2212, U+2215, U+FEFF, U+FFFD;
+}
+
+/* ── Mana ── */
+
+/* block, not swap, and it is the one place the two differ. Mana's glyphs live in the private
+   use area, where no fallback face has anything to show but a tofu box — so `swap` here does
+   not mean "the right shape in the wrong face for a moment", it means a row of empty rectangles
+   where a mana cost goes. `block` renders nothing at all for up to three seconds instead, and
+   with the file preloaded from index.html and served from this origin it effectively never
+   reaches the end of that window. Unlike the text faces there is nothing legible to lose:
+   invisible for a frame beats visibly wrong.
+
+   No unicode-range: the file is not subset (fontTools would have to be in the build to do it,
+   and the glyph set is only about eighty symbols to begin with), so declaring one would only
+   describe what the font already covers. */
+@font-face {
+  font-family: 'Mana';
+  font-style: normal;
+  font-weight: normal;
+  font-display: block;
+  src: url('/fonts/mana.woff2') format('woff2');
 }

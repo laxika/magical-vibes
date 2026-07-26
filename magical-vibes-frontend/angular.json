@@ -26,6 +26,7 @@
             ],
             "styles": [
               "src/fonts.css",
+              "src/mana.css",
               "src/styles.css"
             ]
           },

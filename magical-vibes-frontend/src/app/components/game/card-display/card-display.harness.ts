@@ -1,13 +1,9 @@
-import { signal } from '@angular/core';
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { Card } from '../../../services/websocket.service';
 import { CardPreviewService } from '../../../services/card-preview.service';
-import { ManaSymbolService } from '../../../services/mana-symbol.service';
 import { ScryfallCardDataService } from '../../../services/scryfall-card-data.service';
 import { ScryfallImageService } from '../../../services/scryfall-image.service';
 import { SetSymbolService } from '../../../services/set-symbol.service';
-import { WatermarkService } from '../../../services/watermark.service';
-import { manaSymbolImg } from '../../../services/mana-symbol-markup';
 import { CardDisplayComponent } from './card-display.component';
 
 /**
@@ -15,59 +11,15 @@ import { CardDisplayComponent } from './card-display.component';
  *
  * <p>The component sizes its own text by reading back what the browser laid out, which means
  * every bug it has had was a bug about layout arriving late — a web font swapping in after the
- * fit, a mana symbol taking width only once its image decoded. jsdom reports every box as zero,
- * so those are invisible to the default test target no matter how the assertions are written;
- * this harness exists so they are not.
+ * fit, a mana symbol taking its width only once the face that draws it arrived. jsdom reports
+ * every box as zero, so those are invisible to the default test target no matter how the
+ * assertions are written; this harness exists so they are not.
  *
- * <p>Its fakes are deliberately faithful on the one axis that matters: they hand over content in
- * the same two steps the real services do, unresolved first and resolved later, because the gap
- * between those two steps is where the bugs live.
+ * <p>Symbols are not faked. They are Mana font glyphs produced by a pure function, so there is
+ * no service to stand in for and nothing to resolve — what a test renders is what a card
+ * renders. Flavour text still arrives in two steps, and still has a fake, because that gap is
+ * real and is where the remaining bugs live.
  */
-
-/**
- * Stands in for ManaSymbolService with its real two-step behaviour: `{W}` stays literal text
- * until the symbol is available, then becomes an image and bumps the version signal. Uses the
- * production markup helper, so the img this renders is the img a card renders.
- */
-export class FakeManaSymbolService {
-  symbolsVersion = signal(0);
-  private loaded = false;
-
-  /**
-   * A blob URL, exactly as the real service produces from its IndexedDB cache — and it has to be
-   * both a blob and a fresh one per instance, for two separate reasons that each silently make
-   * this harness useless.
-   *
-   * <p>A `data:` URI of the same SVG gets its intrinsic size synchronously, so an `<img>`
-   * pointing at one has width on its very first layout and the load-order bug never happens.
-   *
-   * <p>And a URL shared between tests is served from the browser's image cache the second time
-   * it is requested, which is synchronous too — so with a static URL only the first test in the
-   * file measures an undecoded image, and even that one does not once another test has run
-   * before it. Both mistakes were made here, and both showed up as tests passing against
-   * markup already known to be broken.
-   */
-  readonly symbolUrl = URL.createObjectURL(new Blob(
-      ['<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 150 150">'
-       + '<circle cx="75" cy="75" r="75" fill="#cccccc"/></svg>'],
-      { type: 'image/svg+xml' }));
-
-  replaceSymbols(text: string): string {
-    this.symbolsVersion();
-    return text.replace(/\{([^}]+)\}/g, match =>
-        this.loaded ? manaSymbolImg(this.symbolUrl, match) : match);
-  }
-
-  getSymbolUrl(): string | null {
-    return this.loaded ? this.symbolUrl : null;
-  }
-
-  /** The moment the real service reaches when its fetches land. */
-  resolveSymbols(): void {
-    this.loaded = true;
-    this.symbolsVersion.update(v => v + 1);
-  }
-}
 
 /** Flavour text, artist and rarity arrive from a set-wide fetch, so they show up after mount. */
 export class FakeScryfallCardDataService {
@@ -93,11 +45,6 @@ export class FakeSetSymbolService {
   getSymbolUrl(): string | null { return null; }
 }
 
-export class FakeWatermarkService {
-  getCachedWatermarkUrl(): string | null { return null; }
-  getWatermarkUrl(): Promise<string> { return Promise.reject(new Error('no watermark in tests')); }
-}
-
 export class FakeCardPreviewService {
   isPhoneLayout(): boolean { return false; }
   show(): void { /* no preview in tests */ }
@@ -106,7 +53,6 @@ export class FakeCardPreviewService {
 
 export interface MountedCard {
   fixture: ComponentFixture<CardDisplayComponent>;
-  symbols: FakeManaSymbolService;
   cardData: FakeScryfallCardDataService;
   /** The rules text box, the element whose overflow is the whole question. */
   textBox: HTMLElement;
@@ -120,17 +66,14 @@ export interface MountedCard {
 }
 
 export async function mountCard(card: Card): Promise<MountedCard> {
-  const symbols = new FakeManaSymbolService();
   const cardData = new FakeScryfallCardDataService();
 
   TestBed.configureTestingModule({
     imports: [CardDisplayComponent],
     providers: [
-      { provide: ManaSymbolService, useValue: symbols },
       { provide: ScryfallCardDataService, useValue: cardData },
       { provide: ScryfallImageService, useClass: FakeScryfallImageService },
       { provide: SetSymbolService, useClass: FakeSetSymbolService },
-      { provide: WatermarkService, useClass: FakeWatermarkService },
       { provide: CardPreviewService, useClass: FakeCardPreviewService },
     ],
   });
@@ -153,10 +96,11 @@ export async function mountCard(card: Card): Promise<MountedCard> {
   };
 
   const settle = async () => {
-    // Both waits are the bugs this harness was built for: the font swap changes text metrics,
-    // and an image with no width until it decodes changes where a line wraps. The component
-    // refits on its own once fonts land, and that refit is a promise callback of its own, so
-    // the loop below gives it room to run rather than racing it.
+    // The font wait is the bug this harness was built for, and it now covers the symbols too:
+    // Cinzel and Crimson Text swapping in change the metrics of every line, and Mana arriving
+    // is the difference between a symbol occupying its width and occupying nothing. The
+    // component refits on its own once fonts land, and that refit is a promise callback of its
+    // own, so the loop below gives it room to run rather than racing it.
     await document.fonts.ready;
     sync();
     const images = Array.from(host.querySelectorAll('img'));
@@ -173,7 +117,6 @@ export async function mountCard(card: Card): Promise<MountedCard> {
 
   return {
     fixture,
-    symbols,
     cardData,
     get textBox() { return host.querySelector('.text-box') as HTMLElement; },
     host,
