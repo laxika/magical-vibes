@@ -11,15 +11,12 @@ An experimental online Magic game engine. The goal is to show that modern agents
 - 1v1 matches against AI (an easy, heuristic based one).
 - 8 player drafts against other humans or AI.
 
-**Next target:**
-- Finish 10E, start implementing ECL.
-
 **Architecture:**
 - Backend: Java + Spring Boot.
 - Frontend: Angular.
 - Networking: websocket (broadcasting whole board state at every update).
-- Most of the card data is downloaded from Scryfall at server startup (for legal reasons).
-- Card art is loaded from Scryfall by the client at startup (for legal reasons).
+- Card data is downloaded from Scryfall/MTGJson at server startup.
+- Card art is loaded from Scryfall by the client at startup.
 - Mana symbols, watermarks and set symbols are drawn with icon fonts (Mana and Keyrune), so none of them are fetched per card.
 
 **How to start the application:**
