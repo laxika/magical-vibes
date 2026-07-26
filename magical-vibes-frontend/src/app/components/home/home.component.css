@@ -1,20 +1,4 @@
-:host {
-  --color-gold: #c8a951;
-  --color-parchment: #f5e6c8;
-  --color-parchment-dark: #ecd9b0;
-  --color-dark-wood: #2b1b17;
-  --color-darkest-wood: #1a1210;
-  --color-border-tan: #c4a882;
-  --color-text-brown: #5c3a2e;
-  --color-text-muted: #8b7060;
-  --color-dark-border: #3b2314;
-  --color-red-primary: #8b1a1a;
-  --color-red-bright: #b22222;
-  --gradient-parchment: linear-gradient(180deg, #f5e6c8 0%, #ecd9b0 100%);
-  --gradient-dark-wood: linear-gradient(180deg, #2b1b17 0%, #1a1210 100%);
-  --font-display: 'Cinzel', Georgia, serif;
-  --font-body: 'Crimson Text', Georgia, serif;
-}
+/* Palette tokens are declared once on :root in src/styles.css. */
 
 .lobby {
   height: 100vh;

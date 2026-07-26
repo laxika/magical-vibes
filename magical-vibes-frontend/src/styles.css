@@ -1,6 +1,34 @@
 /* Cinzel and Crimson Text are self-hosted; their @font-face rules live in src/fonts.css,
    which angular.json lists ahead of this file. */
 
+/* The app's palette. These lived in six component :host blocks as byte-identical
+   copies, which meant a component could only use them by declaring its own copy
+   first — card-display hardcoded its colours for exactly that reason, and the
+   side panel, mulligan modal and modifier tooltip relied on inheriting them from
+   an ancestor host. Declared once on :root they simply inherit everywhere. */
+:root {
+  --color-gold: #c8a951;
+  --color-parchment: #f5e6c8;
+  --color-parchment-dark: #ecd9b0;
+  --color-dark-wood: #2b1b17;
+  --color-darkest-wood: #1a1210;
+  --color-border-tan: #c4a882;
+  --color-border-gold: #d4b87a;
+  --color-text-brown: #5c3a2e;
+  --color-text-muted: #8b7060;
+  --color-dark-border: #3b2314;
+  --color-red-primary: #8b1a1a;
+  --color-red-bright: #b22222;
+  --color-green-primary: #2d7a50;
+  --color-green-dark: #1e5a38;
+  --color-blue-primary: #2c5ea2;
+  --color-blue-dark: #1a3a5c;
+  --gradient-parchment: linear-gradient(180deg, #f5e6c8 0%, #ecd9b0 100%);
+  --gradient-dark-wood: linear-gradient(180deg, #2b1b17 0%, #1a1210 100%);
+  --font-display: 'Cinzel', Georgia, serif;
+  --font-body: 'Crimson Text', Georgia, serif;
+}
+
 html {
   overscroll-behavior: none;
 }
