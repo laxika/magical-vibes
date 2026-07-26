@@ -89,6 +89,7 @@ public class GameMessageHandler implements MessageHandler {
     private final DeckService deckService;
     private final GameTimeoutService gameTimeoutService;
     private final PlayCardRequestDispatchService playCardRequestDispatchService;
+    private final RandomDeckGenerator randomDeckGenerator;
 
     public GameMessageHandler(LoginService loginService,
             GameService gameService,
@@ -104,7 +105,8 @@ public class GameMessageHandler implements MessageHandler {
             ValidTargetService validTargetService,
             DeckService deckService,
             GameTimeoutService gameTimeoutService,
-            PlayCardRequestDispatchService playCardRequestDispatchService) {
+            PlayCardRequestDispatchService playCardRequestDispatchService,
+            RandomDeckGenerator randomDeckGenerator) {
         this.loginService = loginService;
         this.gameService = gameService;
         this.gameResyncProjectionService = gameResyncProjectionService;
@@ -120,6 +122,7 @@ public class GameMessageHandler implements MessageHandler {
         this.deckService = deckService;
         this.gameTimeoutService = gameTimeoutService;
         this.playCardRequestDispatchService = playCardRequestDispatchService;
+        this.randomDeckGenerator = randomDeckGenerator;
     }
 
     @Override
@@ -207,7 +210,7 @@ public class GameMessageHandler implements MessageHandler {
         boolean allRandom = Boolean.TRUE.equals(request.allRandom());
         // Blank means "All sets".
         String randomSet = (request.randomSet() != null && !request.randomSet().isBlank()) ? request.randomSet() : null;
-        if (allRandom && randomSet != null && !RandomDeckGenerator.hasDeckableCards(randomSet)) {
+        if (allRandom && randomSet != null && !randomDeckGenerator.hasDeckableCards(randomSet)) {
             handleError(connection, "The selected set has no cards available for random decks");
             return;
         }

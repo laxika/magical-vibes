@@ -3,10 +3,14 @@ package com.github.laxika.magicalvibes.cards;
 import lombok.Getter;
 import lombok.RequiredArgsConstructor;
 
-import java.util.List;
-import java.util.Map;
-import java.util.concurrent.ConcurrentHashMap;
-
+/**
+ * The card sets the game knows about, identified by their short set code.
+ *
+ * <p>Deliberately just an enum of codes. Which printings are implemented, the set's full name and
+ * its card total all live on {@link CardCatalog}, whose implementation has a lifecycle and can be
+ * injected — they used to be static maps here, which made every set's data JVM-wide mutable state
+ * that tests had to scrub between cases.
+ */
 @RequiredArgsConstructor
 public enum CardSet {
 
@@ -44,80 +48,16 @@ public enum CardSet {
     SET_PTK("PTK"),
     SET_DRB("DRB");
 
-    private static final Map<String, String> setNameRegistry = new ConcurrentHashMap<>();
-    private static final Map<String, Integer> setCardTotalRegistry = new ConcurrentHashMap<>();
-    private static volatile Map<CardSet, List<CardPrinting>> scannedPrintings;
-
     @Getter
     private final String code;
 
-    public static void registerSetName(String code, String name) {
-        setNameRegistry.put(code, name);
-    }
-
-    public static void clearSetNameRegistry() {
-        setNameRegistry.clear();
-    }
-
-    /**
-     * Records how many cards the set actually contains per the loaded oracle data source — the
-     * denominator for {@link #getImplementedFraction()}. Populated by the oracle loaders at startup.
-     */
-    public static void registerSetCardTotal(String code, int total) {
-        setCardTotalRegistry.put(code, total);
-    }
-
-    public static void clearSetCardTotalRegistry() {
-        setCardTotalRegistry.clear();
-    }
-
-    /** Total number of cards in this set per the loaded oracle data, or 0 if not yet loaded. */
-    public int getSetCardTotal() {
-        return setCardTotalRegistry.getOrDefault(code, 0);
-    }
-
-    /**
-     * Fraction (0..1) of this set's real card pool that is implemented: implemented printings over
-     * the set's total card count. Returns 0 when the total is unknown (oracle data not yet loaded).
-     */
-    public double getImplementedFraction() {
-        int total = getSetCardTotal();
-        if (total <= 0) {
-            return 0.0;
-        }
-        List<CardPrinting> printings = getPrintings();
-        int implemented = printings == null ? 0 : printings.size();
-        return Math.min(1.0, (double) implemented / total);
-    }
-
-    public List<CardPrinting> getPrintings() {
-        ensureScanned();
-        return scannedPrintings.get(this);
-    }
-
-    public String getName() {
-        return setNameRegistry.getOrDefault(code, code);
-    }
-
-    public CardPrinting findByCollectorNumber(String collectorNumber) {
-        return getPrintings().stream()
-                .filter(p -> p.collectorNumber().equals(collectorNumber))
-                .findFirst()
-                .orElseThrow(() -> new IllegalArgumentException(
-                        "No printing with collector number " + collectorNumber + " in set " + code));
-    }
-
-    static void clearPrintingsCache() {
-        scannedPrintings = null;
-    }
-
-    private static void ensureScanned() {
-        if (scannedPrintings == null) {
-            synchronized (CardSet.class) {
-                if (scannedPrintings == null) {
-                    scannedPrintings = CardScanner.scan();
-                }
+    /** The set with this code, or null when no set matches. */
+    public static CardSet findByCode(String code) {
+        for (CardSet set : values()) {
+            if (set.code.equals(code)) {
+                return set;
             }
         }
+        return null;
     }
 }

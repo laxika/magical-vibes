@@ -1,5 +1,6 @@
 package com.github.laxika.magicalvibes.webservice;
 
+import com.github.laxika.magicalvibes.cards.CardCatalog;
 import com.github.laxika.magicalvibes.cards.CardSet;
 import com.github.laxika.magicalvibes.cards.PrebuiltDeck;
 import com.github.laxika.magicalvibes.cards.RandomDeckGenerator;
@@ -39,6 +40,8 @@ public class LoginService {
     private final UserRepository userRepository;
     private final LobbyService lobbyService;
     private final DeckService deckService;
+    private final CardCatalog cardCatalog;
+    private final RandomDeckGenerator randomDeckGenerator;
 
     private final PasswordEncoder passwordEncoder = new BCryptPasswordEncoder();
 
@@ -68,7 +71,8 @@ public class LoginService {
 
             // Build available sets list, flagging those complete enough for set-restricted random decks
             List<SetInfo> sets = Arrays.stream(CardSet.values())
-                    .map(s -> new SetInfo(s.getCode(), s.getName(), RandomDeckGenerator.isSetRandomEligible(s)))
+                    .map(s -> new SetInfo(s.getCode(), cardCatalog.getName(s),
+                            randomDeckGenerator.isSetRandomEligible(s)))
                     .toList();
 
             return LoginResponse.success(user.getId(), user.getUsername(), games, decks, sets, null);

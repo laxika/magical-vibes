@@ -615,18 +615,22 @@ public enum PrebuiltDeck {
         this.sideboard = sideboard;
     }
 
-    public List<Card> buildDeck() {
-        return buildCards(entries);
+    /**
+     * @param catalog resolves each entry's printing. Passed in rather than injected: enum constants
+     *                are built in this class's static initializer, long before any container exists.
+     */
+    public List<Card> buildDeck(CardCatalog catalog) {
+        return buildCards(catalog, entries);
     }
 
-    public List<Card> buildSideboard() {
-        return buildCards(sideboard);
+    public List<Card> buildSideboard(CardCatalog catalog) {
+        return buildCards(catalog, sideboard);
     }
 
-    private List<Card> buildCards(List<DeckEntry> deckEntries) {
+    private List<Card> buildCards(CardCatalog catalog, List<DeckEntry> deckEntries) {
         List<Card> cards = new ArrayList<>();
         for (DeckEntry entry : deckEntries) {
-            CardPrinting printing = entry.cardSet().findByCollectorNumber(entry.collectorNumber());
+            CardPrinting printing = catalog.findByCollectorNumber(entry.cardSet(), entry.collectorNumber());
             for (int i = 0; i < entry.count(); i++) {
                 cards.add(printing.createCard());
             }

@@ -1,5 +1,6 @@
 package com.github.laxika.magicalvibes.service;
 
+import com.github.laxika.magicalvibes.cards.CardCatalog;
 import com.github.laxika.magicalvibes.cards.PrebuiltDeck;
 import com.github.laxika.magicalvibes.cards.RandomDeckGenerator;
 import com.github.laxika.magicalvibes.model.Card;
@@ -43,15 +44,21 @@ public class GameSetupService {
     private final ObjectProvider<CustomDeckSource> customDeckSourceProvider;
     private final GameMutationCoordinator mutationCoordinator;
     private final GameLogService gameLogService;
+    private final CardCatalog cardCatalog;
+    private final RandomDeckGenerator randomDeckGenerator;
 
     public GameSetupService(GameRegistry gameRegistry,
                             ObjectProvider<CustomDeckSource> customDeckSourceProvider,
                             GameMutationCoordinator mutationCoordinator,
-                            GameLogService gameLogService) {
+                            GameLogService gameLogService,
+                            CardCatalog cardCatalog,
+                            RandomDeckGenerator randomDeckGenerator) {
         this.gameRegistry = gameRegistry;
         this.customDeckSourceProvider = customDeckSourceProvider;
         this.mutationCoordinator = mutationCoordinator;
         this.gameLogService = gameLogService;
+        this.cardCatalog = cardCatalog;
+        this.randomDeckGenerator = randomDeckGenerator;
     }
 
     /**
@@ -227,12 +234,12 @@ public class GameSetupService {
 
     private List<Card> resolveDeck(String deckId, String randomSetCode) {
         if (RandomDeckGenerator.RANDOM_DECK_ID.equals(deckId)) {
-            return RandomDeckGenerator.generate(random, randomSetCode).cards();
+            return randomDeckGenerator.generate(random, randomSetCode).cards();
         }
         CustomDeckSource source = customDeckSourceProvider.getIfAvailable();
         if (source != null && source.isCustomDeck(deckId)) {
             return source.buildCustomDeck(deckId);
         }
-        return PrebuiltDeck.findById(deckId).buildDeck();
+        return PrebuiltDeck.findById(deckId).buildDeck(cardCatalog);
     }
 }

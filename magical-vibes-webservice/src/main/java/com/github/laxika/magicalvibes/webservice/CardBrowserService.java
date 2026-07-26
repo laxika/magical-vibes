@@ -1,8 +1,10 @@
 package com.github.laxika.magicalvibes.webservice;
 
+import com.github.laxika.magicalvibes.cards.CardCatalog;
 import com.github.laxika.magicalvibes.cards.CardPrinting;
 import com.github.laxika.magicalvibes.cards.CardSet;
 import com.github.laxika.magicalvibes.networking.message.BrowseCardInfo;
+import com.github.laxika.magicalvibes.carddata.CardDataSupport;
 import com.github.laxika.magicalvibes.carddata.CardPrintingRegistry;
 import com.github.laxika.magicalvibes.carddata.OracleTextNormalizer;
 import org.springframework.beans.factory.annotation.Value;
@@ -50,6 +52,12 @@ public class CardBrowserService {
 
     private final ConcurrentHashMap<String, List<BrowseCardInfo>> cache = new ConcurrentHashMap<>();
 
+    private final CardCatalog cardCatalog;
+
+    public CardBrowserService(CardCatalog cardCatalog) {
+        this.cardCatalog = cardCatalog;
+    }
+
     @Value("${card-data.cache-dir:./card-data-cache}")
     private String cacheDir;
 
@@ -75,7 +83,7 @@ public class CardBrowserService {
             CardSet cardSet = findCardSet(setCode);
             Set<String> implementedNumbers = Set.of();
             if (cardSet != null) {
-                implementedNumbers = cardSet.getPrintings().stream()
+                implementedNumbers = cardCatalog.getPrintings(cardSet).stream()
                         .map(CardPrinting::collectorNumber)
                         .collect(Collectors.toSet());
             }
@@ -179,7 +187,8 @@ public class CardBrowserService {
         String cardText = null;
         if (node.has("oracle_text") && !node.get("oracle_text").asText().isEmpty()) {
             cardText = OracleTextNormalizer.capitalizeKeywordLines(
-                    OracleTextNormalizer.cleanCardText(node.get("oracle_text").asText()), node);
+                    OracleTextNormalizer.cleanCardText(node.get("oracle_text").asText()),
+                    CardDataSupport.strings(node, "keywords"));
         }
 
         // Parse type line into components

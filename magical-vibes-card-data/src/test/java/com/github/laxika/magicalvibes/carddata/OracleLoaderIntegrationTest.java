@@ -2,6 +2,7 @@ package com.github.laxika.magicalvibes.carddata;
 
 import com.github.laxika.magicalvibes.carddata.mtgjson.MtgjsonOracleLoader;
 import com.github.laxika.magicalvibes.carddata.scryfall.ScryfallOracleLoader;
+import com.github.laxika.magicalvibes.cards.CardCatalog;
 import com.github.laxika.magicalvibes.cards.CardPrinting;
 import com.github.laxika.magicalvibes.cards.CardSet;
 import com.github.laxika.magicalvibes.cards.r.RavagerOfTheFells;
@@ -30,20 +31,30 @@ class OracleLoaderIntegrationTest {
     @Tag("scryfall-api")
     void scryfallLoadRegistersEveryPrintingAndSurvivesBackFaceCollision() {
         Card.clearOracleRegistry();
-        ScryfallOracleLoader.loadAll(CACHE_DIR);
 
-        assertLoadedRegistryInvariants();
+        assertLoadedRegistryInvariants(loadWith(new ScryfallOracleLoader(CACHE_DIR)));
     }
 
     @Test
     void mtgjsonLoadRegistersEveryPrintingAndSurvivesBackFaceCollision() {
         Card.clearOracleRegistry();
-        MtgjsonOracleLoader.loadAll(CACHE_DIR);
 
-        assertLoadedRegistryInvariants();
+        assertLoadedRegistryInvariants(loadWith(new MtgjsonOracleLoader(CACHE_DIR)));
     }
 
-    private void assertLoadedRegistryInvariants() {
+    /**
+     * Drives one loader through a registry of its own, the same way the {@code @PostConstruct} does
+     * in production. The conditional that picks a loader gates only <em>Spring</em> creation, so
+     * both can still be exercised in one JVM — which this test needs, since its whole point is that
+     * they produce identical registries.
+     */
+    private static CardRegistry loadWith(OracleLoader loader) {
+        CardRegistry registry = new CardRegistry(loader);
+        registry.load();
+        return registry;
+    }
+
+    private void assertLoadedRegistryInvariants(CardCatalog catalog) {
         // SOS 109 (Blazing Firesinger // Seething Song) reuses the SeethingSong class as its
         // back face; the 9ED printing's full oracle data must win over the face-node data,
         // which lacks colors in Scryfall's case
@@ -56,7 +67,7 @@ class OracleLoaderIntegrationTest {
 
         // Every implemented printing must resolve to oracle data
         for (CardSet set : CardSet.values()) {
-            for (CardPrinting printing : set.getPrintings()) {
+            for (CardPrinting printing : catalog.getPrintings(set)) {
                 Card card = printing.factory().get();
                 assertThat(card.getName())
                         .as("oracle data for %s #%s (%s)", set.getCode(), printing.collectorNumber(),

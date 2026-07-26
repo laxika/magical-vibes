@@ -47,14 +47,15 @@ class AuraEnchantTargetInvariantTest {
     @Test
     void everyEnchantRestrictedAuraDeclaresItsTargetRestriction() {
         Card.clearOracleRegistry();
-        MtgjsonOracleLoader.loadAll(CACHE_DIR);
+        CardRegistry registry = new CardRegistry(new MtgjsonOracleLoader(CACHE_DIR));
+        registry.load();
 
         List<String> violations = new ArrayList<>();
         Set<String> checkedClasses = new HashSet<>();
         int aurasChecked = 0;
 
         for (CardSet set : CardSet.values()) {
-            for (CardPrinting printing : set.getPrintings()) {
+            for (CardPrinting printing : registry.getPrintings(set)) {
                 Card card = printing.factory().get();
                 String className = card.getClass().getSimpleName();
                 if (!checkedClasses.add(className)) {

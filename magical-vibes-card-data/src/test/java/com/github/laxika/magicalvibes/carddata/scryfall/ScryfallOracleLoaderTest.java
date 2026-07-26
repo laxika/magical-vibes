@@ -1,5 +1,6 @@
 package com.github.laxika.magicalvibes.carddata.scryfall;
 
+import com.github.laxika.magicalvibes.model.CardColor;
 import com.github.laxika.magicalvibes.model.CardSubtype;
 import com.github.laxika.magicalvibes.model.CardSupertype;
 import com.github.laxika.magicalvibes.model.CardType;
@@ -143,5 +144,92 @@ class ScryfallOracleLoaderTest {
                 """));
 
         assertThat(data.cardText()).isEqualTo("Flying, Ward {2}, Protection from red");
+    }
+
+    /**
+     * Scryfall's keywords array is the union of both faces, so a back face must keep only what its
+     * own text states. Avacyn, the Purifier has flying but neither the front face's flash nor its
+     * vigilance; inheriting the whole list handed the back face keywords it does not have.
+     */
+    @Test
+    void backFaceKeepsOnlyTheKeywordsItsOwnTextStates() {
+        OracleData data = ScryfallOracleLoader.parseBackFaceOracleData(MAPPER.readTree("""
+                {
+                  "name": "Archangel Avacyn // Avacyn, the Purifier",
+                  "layout": "transform",
+                  "type_line": "Legendary Creature \\u2014 Angel // Legendary Creature \\u2014 Angel",
+                  "colors": ["W"],
+                  "color_identity": ["R", "W"],
+                  "keywords": ["Flying", "Vigilance", "Transform", "Flash"],
+                  "card_faces": [
+                    {
+                      "name": "Archangel Avacyn",
+                      "mana_cost": "{3}{W}{W}",
+                      "type_line": "Legendary Creature \\u2014 Angel",
+                      "colors": ["W"],
+                      "oracle_text": "Flash\\nFlying, vigilance\\nWhen Archangel Avacyn enters, creatures you control gain indestructible until end of turn.",
+                      "power": "4",
+                      "toughness": "4"
+                    },
+                    {
+                      "name": "Avacyn, the Purifier",
+                      "mana_cost": "",
+                      "type_line": "Legendary Creature \\u2014 Angel",
+                      "colors": ["R"],
+                      "oracle_text": "Flying\\nWhen this creature transforms into Avacyn, the Purifier, it deals 3 damage to each other creature and each opponent.",
+                      "power": "6",
+                      "toughness": "5"
+                    }
+                  ]
+                }
+                """));
+
+        assertThat(data.keywords()).containsExactly(Keyword.FLYING);
+    }
+
+    /** A prepare spell is a Sorcery — none of the creature front face's keywords belong to it. */
+    @Test
+    void backFaceOfPrepareCardInheritsNoKeywords() {
+        OracleData data = ScryfallOracleLoader.parseBackFaceOracleData(preparedCardNode());
+
+        assertThat(data.keywords()).isEmpty();
+    }
+
+    /**
+     * Lands take their color from the card's color identity, but Scryfall carries color_identity on
+     * the top-level card only. Reading it off the face node left every transformed land colorless
+     * while ordinary lands loaded through the same rule came out coloured.
+     */
+    @Test
+    void backFaceLandTakesColorFromTheCardsColorIdentity() {
+        OracleData data = ScryfallOracleLoader.parseBackFaceOracleData(MAPPER.readTree("""
+                {
+                  "name": "Search for Azcanta // Azcanta, the Sunken Ruin",
+                  "layout": "transform",
+                  "type_line": "Legendary Enchantment // Legendary Land",
+                  "colors": ["U"],
+                  "color_identity": ["U"],
+                  "keywords": ["Surveil", "Transform"],
+                  "card_faces": [
+                    {
+                      "name": "Search for Azcanta",
+                      "mana_cost": "{1}{U}",
+                      "type_line": "Legendary Enchantment",
+                      "colors": ["U"],
+                      "oracle_text": "At the beginning of your upkeep, surveil 1."
+                    },
+                    {
+                      "name": "Azcanta, the Sunken Ruin",
+                      "mana_cost": "",
+                      "type_line": "Legendary Land",
+                      "colors": [],
+                      "oracle_text": "{T}: Add {U}."
+                    }
+                  ]
+                }
+                """));
+
+        assertThat(data.color()).isEqualTo(CardColor.BLUE);
+        assertThat(data.colors()).containsExactly(CardColor.BLUE);
     }
 }

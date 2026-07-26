@@ -1,5 +1,6 @@
 package com.github.laxika.magicalvibes.ai;
 
+import com.github.laxika.magicalvibes.cards.CardCatalog;
 import com.github.laxika.magicalvibes.cards.CardPrinting;
 import com.github.laxika.magicalvibes.cards.CardSet;
 import com.github.laxika.magicalvibes.model.Card;
@@ -281,16 +282,18 @@ class AiVsAiStressTest {
             return;
         }
 
-        // Basic lands A?€�t using Scars of Mirrodin printings (confirmed present in all 5 colors)
-        BASIC_LAND_PRINTINGS.put(CardColor.WHITE, CardSet.SET_SOM.findByCollectorNumber("230"));
-        BASIC_LAND_PRINTINGS.put(CardColor.BLUE, CardSet.SET_SOM.findByCollectorNumber("234"));
-        BASIC_LAND_PRINTINGS.put(CardColor.BLACK, CardSet.SET_SOM.findByCollectorNumber("238"));
-        BASIC_LAND_PRINTINGS.put(CardColor.RED, CardSet.SET_SOM.findByCollectorNumber("242"));
-        BASIC_LAND_PRINTINGS.put(CardColor.GREEN, CardSet.SET_SOM.findByCollectorNumber("246"));
+        CardCatalog catalog = GameTestHarness.cardCatalog();
+
+        // Basic lands - using SOM printings (confirmed present in all 5 colors)
+        BASIC_LAND_PRINTINGS.put(CardColor.WHITE, catalog.findByCollectorNumber(CardSet.SET_SOM, "230"));
+        BASIC_LAND_PRINTINGS.put(CardColor.BLUE, catalog.findByCollectorNumber(CardSet.SET_SOM, "234"));
+        BASIC_LAND_PRINTINGS.put(CardColor.BLACK, catalog.findByCollectorNumber(CardSet.SET_SOM, "238"));
+        BASIC_LAND_PRINTINGS.put(CardColor.RED, catalog.findByCollectorNumber(CardSet.SET_SOM, "242"));
+        BASIC_LAND_PRINTINGS.put(CardColor.GREEN, catalog.findByCollectorNumber(CardSet.SET_SOM, "246"));
 
         allNonLandPrintings = new ArrayList<>();
         for (CardSet set : CardSet.values()) {
-            for (CardPrinting printing : set.getPrintings()) {
+            for (CardPrinting printing : catalog.getPrintings(set)) {
                 Card sample = printing.createCard();
                 if (!sample.hasType(CardType.LAND) && sample.getManaCost() != null) {
                     allNonLandPrintings.add(printing);

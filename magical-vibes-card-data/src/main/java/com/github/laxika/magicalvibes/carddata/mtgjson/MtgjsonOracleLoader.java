@@ -1,16 +1,18 @@
 package com.github.laxika.magicalvibes.carddata.mtgjson;
 
-import com.github.laxika.magicalvibes.cards.CardPrinting;
-import com.github.laxika.magicalvibes.cards.CardSet;
-import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardColor;
-import com.github.laxika.magicalvibes.model.Keyword;
 import com.github.laxika.magicalvibes.model.OracleData;
 import com.github.laxika.magicalvibes.carddata.CardDataSupport;
 import com.github.laxika.magicalvibes.carddata.CardPrintingRegistry;
 import com.github.laxika.magicalvibes.carddata.CardPrintingRegistry.TokenImageData;
-import com.github.laxika.magicalvibes.carddata.OracleTextNormalizer;
-import com.github.laxika.magicalvibes.carddata.TypeLineParser;
+import com.github.laxika.magicalvibes.carddata.FaceOracleMapper;
+import com.github.laxika.magicalvibes.carddata.OracleLoader;
+import com.github.laxika.magicalvibes.carddata.RawFace;
+import com.github.laxika.magicalvibes.carddata.SetJsonCache;
+import com.github.laxika.magicalvibes.carddata.SetOracleData;
+import org.springframework.beans.factory.annotation.Value;
+import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
+import org.springframework.stereotype.Service;
 import tools.jackson.databind.JsonNode;
 import tools.jackson.databind.ObjectMapper;
 import tools.jackson.databind.json.JsonMapper;
@@ -20,10 +22,7 @@ import java.net.URI;
 import java.net.http.HttpClient;
 import java.net.http.HttpRequest;
 import java.net.http.HttpResponse;
-import java.nio.file.Files;
-import java.nio.file.Path;
 import java.util.ArrayList;
-import java.util.EnumSet;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -34,9 +33,8 @@ import java.util.logging.Logger;
  * Loads the oracle registry from MTGJSON (https://mtgjson.com) set files instead of the Scryfall
  * API. Populates the exact same registries as the Scryfall loader (oracle data via
  * {@code Card.registerOracle}, set names, {@link CardPrintingRegistry}), so the two are
- * interchangeable at startup: MTGJSON is either
- * selected via the {@code oracle.data-provider} property or used as a fallback when Scryfall is
- * unreachable.
+ * interchangeable at startup: MTGJSON is selected by setting {@code oracle.data-provider=MTGJSON},
+ * which CI does, since it needs oracle data without depending on the Scryfall API being up.
  *
  * <p>Structural differences from Scryfall handled here:
  * <ul>
@@ -50,76 +48,64 @@ import java.util.logging.Logger;
  * still resolves to valid Scryfall image URLs.</li>
  * </ul>
  */
-public class MtgjsonOracleLoader {
+@Service
+@ConditionalOnProperty(name = "oracle.data-provider", havingValue = "MTGJSON")
+public class MtgjsonOracleLoader implements OracleLoader {
 
     private static final Logger LOG = Logger.getLogger(MtgjsonOracleLoader.class.getName());
     private static final ObjectMapper MAPPER = JsonMapper.builder().build();
 
-    // MTGJSON keyword casing can differ from Scryfall's, so match case-insensitively
-    private static final Map<String, Keyword> KEYWORD_MAP_LOWERCASE = new HashMap<>();
+    private final SetJsonCache cache;
 
-    static {
-        CardDataSupport.KEYWORD_MAP.forEach((name, keyword) ->
-                KEYWORD_MAP_LOWERCASE.put(name.toLowerCase(), keyword));
+    public MtgjsonOracleLoader(@Value("${card-data.cache-dir:./card-data-cache}") String cacheDir) {
+        this.cache = new SetJsonCache(cacheDir, "mtgjson-", "MTGJSON", MtgjsonOracleLoader::fetchFromMtgjson);
     }
 
-    public static void loadAll(String cacheDir) {
+    @Override
+    public SetOracleData loadSet(String setCode, Set<String> implementedCollectorNumbers) {
         try {
-            Path cachePath = Path.of(cacheDir);
-            Files.createDirectories(cachePath);
-
-            for (CardSet cardSet : CardSet.values()) {
-                JsonNode setData = loadSet(cachePath, cardSet.getCode());
-
-                if (setData.has("name")) {
-                    CardSet.registerSetName(cardSet.getCode(), setData.get("name").asText());
-                }
-
-                FaceIndex faces = indexFacesByCollectorNumber(setData.get("cards"));
-                Map<String, JsonNode> frontFaces = faces.frontFaces();
-                Map<String, JsonNode> backFaces = faces.backFaces();
-
-                // Total cards in the set (one entry per collector number, meld results included —
-                // the same count Scryfall yields) — the set-completeness denominator.
-                CardSet.registerSetCardTotal(cardSet.getCode(), frontFaces.size());
-
-                for (Map.Entry<String, JsonNode> entry : frontFaces.entrySet()) {
-                    JsonNode cardNode = entry.getValue();
-                    if (cardNode.has("rarity")) {
-                        CardPrintingRegistry.registerRarity(cardSet.getCode(), entry.getKey(),
-                                cardNode.get("rarity").asText());
-                    }
-                }
-
-                for (CardPrinting printing : cardSet.getPrintings()) {
-                    JsonNode front = frontFaces.get(printing.collectorNumber());
-                    if (front == null) {
-                        LOG.warning("No MTGJSON data for " + cardSet.getCode() + " #" + printing.collectorNumber());
-                        continue;
-                    }
-
-                    Card tempCard = printing.factory().get();
-                    String className = tempCard.getClass().getSimpleName();
-
-                    Card.registerOracle(className, parseOracleData(front, false));
-
-                    // If-absent for the same reason as the Scryfall loader: a back face may name
-                    // a standalone card class whose own printing's data must win
-                    String backFaceClassName = tempCard.getBackFaceClassName();
-                    if (backFaceClassName != null) {
-                        JsonNode back = backFaces.get(printing.collectorNumber());
-                        if (back != null) {
-                            Card.registerOracleIfAbsent(backFaceClassName, parseOracleData(back, true));
-                        }
-                    }
-                }
-
-                registerTokens(cardSet.getCode(), setData);
+            JsonNode setData = MAPPER.readTree(cache.get(setCode)).get("data");
+            if (setData == null) {
+                throw new IOException("MTGJSON file for set " + setCode + " has no data node");
             }
 
-            LOG.info("Oracle registry populated from MTGJSON for all card sets");
+            String setName = setData.has("name") ? setData.get("name").asText() : null;
+
+            FaceIndex faces = indexFacesByCollectorNumber(setData.get("cards"));
+            Map<String, JsonNode> frontFaceNodes = faces.frontFaces();
+            Map<String, JsonNode> backFaceNodes = faces.backFaces();
+
+            // Rarity covers every card in the set, implemented or not.
+            Map<String, String> rarities = new HashMap<>();
+            for (Map.Entry<String, JsonNode> entry : frontFaceNodes.entrySet()) {
+                JsonNode cardNode = entry.getValue();
+                if (cardNode.has("rarity")) {
+                    rarities.put(entry.getKey(), cardNode.get("rarity").asText());
+                }
+            }
+
+            // Oracle text is parsed only for printings the game implements.
+            Map<String, OracleData> frontFaces = new HashMap<>();
+            Map<String, OracleData> backFaces = new HashMap<>();
+            for (String collectorNumber : implementedCollectorNumbers) {
+                JsonNode front = frontFaceNodes.get(collectorNumber);
+                if (front == null) {
+                    continue;
+                }
+                frontFaces.put(collectorNumber, parseOracleData(front, false));
+
+                JsonNode back = backFaceNodes.get(collectorNumber);
+                if (back != null) {
+                    backFaces.put(collectorNumber, parseOracleData(back, true));
+                }
+            }
+
+            // Total cards in the set (one entry per collector number, meld results included —
+            // the same count Scryfall yields) — the set-completeness denominator.
+            return new SetOracleData(setName, frontFaceNodes.size(), rarities,
+                    frontFaces, backFaces, parseTokens(setCode, setData));
         } catch (Exception e) {
-            throw new RuntimeException("Failed to load MTGJSON oracle data", e);
+            throw new RuntimeException("Failed to load MTGJSON oracle data for set " + setCode, e);
         }
     }
 
@@ -152,27 +138,6 @@ public class MtgjsonOracleLoader {
         return new FaceIndex(frontFaces, backFaces);
     }
 
-    private static JsonNode loadSet(Path cachePath, String setCode) throws IOException, InterruptedException {
-        Path cacheFile = cachePath.resolve("mtgjson-" + setCode.toLowerCase() + ".json");
-        String json;
-
-        if (Files.exists(cacheFile)) {
-            LOG.info("Loading " + setCode + " from MTGJSON cache: " + cacheFile);
-            json = Files.readString(cacheFile);
-        } else {
-            LOG.info("Fetching " + setCode + " from MTGJSON...");
-            json = fetchFromMtgjson(setCode);
-            CardDataSupport.writeCacheFile(cacheFile, json);
-            LOG.info("Cached " + setCode + " to: " + cacheFile);
-        }
-
-        JsonNode data = MAPPER.readTree(json).get("data");
-        if (data == null) {
-            throw new IOException("MTGJSON file for set " + setCode + " has no data node");
-        }
-        return data;
-    }
-
     private static String fetchFromMtgjson(String setCode) throws IOException, InterruptedException {
         String url = "https://mtgjson.com/api/v5/" + setCode.toUpperCase() + ".json";
 
@@ -194,90 +159,63 @@ public class MtgjsonOracleLoader {
         }
     }
 
-    /**
-     * Parses one MTGJSON card entry (a single face) into OracleData. Mirrors
-     * the Scryfall loader's front/back face handling: back faces prefer the color
-     * indicator, drop the Transform keyword, and carry no loyalty or watermark.
-     */
     static OracleData parseOracleData(JsonNode face, boolean isBackFace) {
-        String name = face.has("faceName") ? face.get("faceName").asText() : face.get("name").asText();
-        if (name.contains(" // ")) {
-            name = name.substring(0, name.indexOf(" // "));
-        }
-
-        String manaCost = null;
-        if (face.has("manaCost") && !face.get("manaCost").asText().isEmpty()) {
-            manaCost = face.get("manaCost").asText();
-        }
-
-        String typeLine = face.has("type") ? face.get("type").asText() : "";
-        TypeLineParser.ParsedTypeLine parsed = TypeLineParser.parse(typeLine);
-
-        CardColor color;
-        List<CardColor> colors;
-        if (isBackFace && face.has("colorIndicator") && !face.get("colorIndicator").isEmpty()) {
-            colors = parseColorArray(face.get("colorIndicator"));
-        } else {
-            colors = parseColorArray(face.get("colors"));
-            // Lands have an empty colors array but derive color from colorIdentity (same rule
-            // as the Scryfall loader, which does this with color_identity for lands only)
-            if (colors.isEmpty() && typeLine.contains("Land") && face.has("colorIdentity")) {
-                colors = parseColorArray(face.get("colorIdentity"));
-            }
-        }
-        color = colors.isEmpty() ? null : colors.get(0);
-
-        // MTGJSON brackets loyalty ability costs ("[+1]:", "[−X]:"); Scryfall does not
-        String cardText = null;
-        if (face.has("text")) {
-            String normalized = face.get("text").asText()
-                    .replaceAll("(?m)^\\[([+\\u2212-]?[0-9X]+)\\]:", "$1:");
-            cardText = OracleTextNormalizer.capitalizeKeywordLines(
-                    OracleTextNormalizer.cleanCardText(normalized), face);
-        }
-
-        Integer power = CardDataSupport.parseIntField(face, "power");
-        Integer toughness = CardDataSupport.parseIntField(face, "toughness");
-        Integer loyalty = isBackFace ? null : CardDataSupport.parseIntField(face, "loyalty");
-        Integer defense = isBackFace ? null : CardDataSupport.parseIntField(face, "defense");
-
-        Set<Keyword> keywords = parseKeywords(face);
-        if (isBackFace) {
-            keywords.remove(Keyword.TRANSFORM);
-        }
-
-        String watermark = null;
-        if (!isBackFace && face.has("watermark") && !face.get("watermark").asText().isEmpty()) {
-            // MTGJSON suffixes some watermarks with the set code ("set (DOM)"); Scryfall does not
-            watermark = face.get("watermark").asText().replaceAll(" \\(.*\\)$", "");
-        }
-
-        return new OracleData(
-                name,
-                parsed.type(),
-                parsed.additionalTypes(),
-                manaCost,
-                color,
-                colors,
-                parsed.supertypes(),
-                parsed.subtypes(),
-                cardText,
-                power,
-                toughness,
-                keywords,
-                loyalty,
-                defense,
-                watermark
-        );
+        return FaceOracleMapper.toOracleData(toRawFace(face), isBackFace);
     }
 
     /**
-     * Registers creature-token image data from the set file's {@code tokens} array under the
-     * Scryfall token set code ("t" + set code), which is what the frontend image fetch expects.
+     * Flattens one MTGJSON card entry into a face. Close to a field rename — MTGJSON already splits
+     * faces upstream, so each entry is self-contained — plus this loader's two compensating quirks:
+     * the loyalty-bracket syntax and the watermark suffix.
      */
-    static void registerTokens(String setCode, JsonNode setData) {
+    private static RawFace toRawFace(JsonNode face) {
+        String text = CardDataSupport.text(face, "text");
+        if (text != null) {
+            // MTGJSON brackets loyalty ability costs ("[+1]:", "[−X]:"); Scryfall does not
+            text = text.replaceAll("(?m)^\\[([+\\u2212-]?[0-9X]+)\\]:", "$1:");
+        }
+
+        String watermark = CardDataSupport.text(face, "watermark");
+        if (watermark != null) {
+            // MTGJSON suffixes some watermarks with the set code ("set (DOM)"); Scryfall does not
+            watermark = watermark.replaceAll(" \\(.*\\)$", "");
+        }
+
+        return new RawFace(
+                face.has("faceName") ? face.get("faceName").asText() : CardDataSupport.text(face, "name"),
+                CardDataSupport.text(face, "manaCost"),
+                CardDataSupport.text(face, "type"),
+                text,
+                sortedSymbols(face, "colors"),
+                sortedSymbols(face, "colorIndicator"),
+                sortedSymbols(face, "colorIdentity"),
+                CardDataSupport.text(face, "power"),
+                CardDataSupport.text(face, "toughness"),
+                CardDataSupport.text(face, "loyalty"),
+                CardDataSupport.text(face, "defense"),
+                CardDataSupport.strings(face, "keywords"),
+                watermark);
+    }
+
+    /**
+     * Scryfall serializes colour arrays alphabetically (B,G,R,U,W) and MTGJSON's ordering varies,
+     * so sort here. Ordering is a provider quirk, and Scryfall is the default provider, so its
+     * ordering is the reference the other has to match.
+     */
+    private static List<String> sortedSymbols(JsonNode face, String field) {
+        List<String> symbols = new ArrayList<>(CardDataSupport.strings(face, field));
+        symbols.sort(null);
+        return symbols;
+    }
+
+    /**
+     * Creature-token image data from the set file's {@code tokens} array, keyed under the Scryfall
+     * token set code ("t" + set code), which is what the frontend image fetch expects. Unlike
+     * Scryfall, MTGJSON ships tokens inline in the set file, so this needs no second fetch.
+     */
+    static Map<String, TokenImageData> parseTokens(String setCode, JsonNode setData) {
         if (!setData.has("tokens") || setData.get("tokens").isEmpty()) {
-            return;
+            return Map.of();
         }
 
         String tokenSetCode = "t" + setCode.toLowerCase();
@@ -297,7 +235,7 @@ public class MtgjsonOracleLoader {
                     : tokenNode.get("name").asText();
             Integer power = CardDataSupport.parseIntField(tokenNode, "power");
             Integer toughness = CardDataSupport.parseIntField(tokenNode, "toughness");
-            List<CardColor> colors = parseColorArray(tokenNode.get("colors"));
+            List<CardColor> colors = FaceOracleMapper.mapColors(sortedSymbols(tokenNode, "colors"));
             CardColor color = colors.isEmpty() ? null : colors.get(0);
 
             String key = CardPrintingRegistry.buildTokenKey(name, power, toughness, color);
@@ -305,43 +243,9 @@ public class MtgjsonOracleLoader {
         }
 
         if (!tokenMap.isEmpty()) {
-            CardPrintingRegistry.registerTokenImages(setCode, tokenMap);
             LOG.info("Loaded " + tokenMap.size() + " token images for set " + setCode + " from MTGJSON");
         }
+        return tokenMap;
     }
 
-    private static List<CardColor> parseColorArray(JsonNode colorArray) {
-        if (colorArray == null || !colorArray.isArray()) {
-            return List.of();
-        }
-        // Scryfall serializes color arrays alphabetically (B,G,R,U,W); MTGJSON's ordering varies
-        List<String> symbols = new ArrayList<>();
-        for (JsonNode colorNode : colorArray) {
-            symbols.add(colorNode.asText());
-        }
-        symbols.sort(null);
-        List<CardColor> colors = new ArrayList<>();
-        for (String symbol : symbols) {
-            CardColor mapped = CardDataSupport.COLOR_MAP.get(symbol);
-            if (mapped != null) {
-                colors.add(mapped);
-            }
-        }
-        return List.copyOf(colors);
-    }
-
-    private static Set<Keyword> parseKeywords(JsonNode face) {
-        Set<Keyword> keywords = EnumSet.noneOf(Keyword.class);
-        if (face.has("keywords")) {
-            for (JsonNode kw : face.get("keywords")) {
-                Keyword keyword = KEYWORD_MAP_LOWERCASE.get(kw.asText().toLowerCase());
-                if (keyword != null) {
-                    keywords.add(keyword);
-                } else {
-                    LOG.fine("Unknown keyword from MTGJSON: " + kw.asText());
-                }
-            }
-        }
-        return keywords;
-    }
 }

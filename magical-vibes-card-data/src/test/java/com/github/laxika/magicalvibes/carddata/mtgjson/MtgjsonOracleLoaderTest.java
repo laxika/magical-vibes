@@ -12,6 +12,8 @@ import tools.jackson.databind.JsonNode;
 import tools.jackson.databind.ObjectMapper;
 import tools.jackson.databind.json.JsonMapper;
 
+import java.util.Map;
+
 import static org.assertj.core.api.Assertions.assertThat;
 
 class MtgjsonOracleLoaderTest {
@@ -175,7 +177,7 @@ class MtgjsonOracleLoaderTest {
     }
 
     @Test
-    void registersCreatureTokensUnderScryfallTokenSetCode() {
+    void parsesCreatureTokensUnderScryfallTokenSetCode() {
         JsonNode setData = MAPPER.readTree("""
                 {
                   "name": "Fake Set",
@@ -188,15 +190,16 @@ class MtgjsonOracleLoaderTest {
                 }
                 """);
 
-        MtgjsonOracleLoader.registerTokens("ZZZ", setData);
+        Map<String, CardPrintingRegistry.TokenImageData> tokens =
+                MtgjsonOracleLoader.parseTokens("ZZZ", setData);
 
         CardPrintingRegistry.TokenImageData wolf =
-                CardPrintingRegistry.getTokenImage("ZZZ", "Wolf", 2, 2, CardColor.GREEN);
+                tokens.get(CardPrintingRegistry.buildTokenKey("Wolf", 2, 2, CardColor.GREEN));
         assertThat(wolf).isNotNull();
         assertThat(wolf.setCode()).isEqualTo("tzzz");
         assertThat(wolf.collectorNumber()).isEqualTo("5");
 
-        // The emblem is not a creature and must not be registered
-        assertThat(CardPrintingRegistry.getTokenImage("ZZZ", "Sorin Emblem", null)).isNull();
+        // The emblem is not a creature and must not be included
+        assertThat(tokens).hasSize(1);
     }
 }

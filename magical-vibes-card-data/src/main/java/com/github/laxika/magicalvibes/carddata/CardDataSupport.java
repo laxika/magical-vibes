@@ -9,7 +9,10 @@ import java.nio.file.AtomicMoveNotSupportedException;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.StandardCopyOption;
+import java.util.ArrayList;
 import java.util.HashMap;
+import java.util.List;
+import java.util.Locale;
 import java.util.Map;
 
 /**
@@ -94,13 +97,56 @@ public final class CardDataSupport {
         KEYWORD_MAP.put("Prepared", Keyword.PREPARED);
     }
 
+    /** {@link #KEYWORD_MAP} keyed by lowercase spelling — upstream casing differs between sources. */
+    private static final Map<String, Keyword> KEYWORD_MAP_LOWERCASE = new HashMap<>();
+
+    static {
+        KEYWORD_MAP.forEach((name, keyword) ->
+                KEYWORD_MAP_LOWERCASE.put(name.toLowerCase(Locale.ROOT), keyword));
+    }
+
+    /**
+     * The keyword an upstream spelling names, or null when this game has no enum for it (which is
+     * normal — {@link #KEYWORD_MAP} covers only what the engine implements). Matching is
+     * case-insensitive: MTGJSON and Scryfall disagree on casing for some keywords.
+     */
+    public static Keyword keyword(String upstreamName) {
+        return upstreamName == null ? null : KEYWORD_MAP_LOWERCASE.get(upstreamName.toLowerCase(Locale.ROOT));
+    }
+
     public static Integer parseIntField(JsonNode node, String field) {
         if (!node.has(field)) return null;
+        return parseInt(node.get(field).asText());
+    }
+
+    /**
+     * @return null for an absent value, 0 for one that is present but not a number — power and
+     * toughness are printed as "*" on characteristic-defining creatures
+     */
+    public static Integer parseInt(String value) {
+        if (value == null) return null;
         try {
-            return Integer.parseInt(node.get(field).asText());
+            return Integer.parseInt(value);
         } catch (NumberFormatException e) {
             return 0;
         }
+    }
+
+    /** A string field's value, or null when the node does not carry it. */
+    public static String text(JsonNode node, String field) {
+        return node.has(field) ? node.get(field).asText() : null;
+    }
+
+    /** A string-array field's values, or an empty list when the node does not carry it. */
+    public static List<String> strings(JsonNode node, String field) {
+        if (!node.has(field) || !node.get(field).isArray()) {
+            return List.of();
+        }
+        List<String> values = new ArrayList<>();
+        for (JsonNode element : node.get(field)) {
+            values.add(element.asText());
+        }
+        return values;
     }
 
     /**

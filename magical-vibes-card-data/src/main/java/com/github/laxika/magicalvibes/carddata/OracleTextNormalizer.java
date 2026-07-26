@@ -1,9 +1,12 @@
 package com.github.laxika.magicalvibes.carddata;
 
-import tools.jackson.databind.JsonNode;
-
+import java.util.ArrayList;
+import java.util.Collection;
+import java.util.HashMap;
 import java.util.HashSet;
+import java.util.List;
 import java.util.Locale;
+import java.util.Map;
 import java.util.Set;
 
 /**
@@ -35,19 +38,19 @@ public final class OracleTextNormalizer {
      * is left alone. A segment may carry a parameter ("Ward {2}", "Protection from red"); matching
      * looks at the leading keyword only.
      *
-     * @param keywordSource the node carrying this card's {@code keywords} array
+     * @param cardKeywords this card's keywords in their raw upstream spelling. Not mapped
+     *                     {@code Keyword} values: matching has to recognise spellings the enum does
+     *                     not cover ("Ward {2}", "Protection from red"), which would otherwise stop
+     *                     being capitalised.
      */
-    public static String capitalizeKeywordLines(String cardText, JsonNode keywordSource) {
-        if (cardText == null || !keywordSource.has("keywords")) {
+    public static String capitalizeKeywordLines(String cardText, Collection<String> cardKeywords) {
+        if (cardText == null || cardKeywords.isEmpty()) {
             return cardText;
         }
 
         Set<String> keywords = new HashSet<>();
-        for (JsonNode keyword : keywordSource.get("keywords")) {
-            keywords.add(keyword.asText().toLowerCase(Locale.ROOT));
-        }
-        if (keywords.isEmpty()) {
-            return cardText;
+        for (String keyword : cardKeywords) {
+            keywords.add(keyword.toLowerCase(Locale.ROOT));
         }
 
         String[] lines = cardText.split("\n", -1);
@@ -60,23 +63,67 @@ public final class OracleTextNormalizer {
         return String.join("\n", lines);
     }
 
-    private static boolean allKeywords(String[] segments, Set<String> keywords) {
-        for (String segment : segments) {
-            String lower = segment.toLowerCase(Locale.ROOT);
-            boolean matched = false;
-            for (String keyword : keywords) {
-                // equals first, so the charAt below only runs when the segment is strictly longer
-                if (lower.equals(keyword)
-                        || (lower.startsWith(keyword) && lower.charAt(keyword.length()) == ' ')) {
-                    matched = true;
+    /**
+     * The subset of {@code candidates} that this text states as the card's own keywords.
+     *
+     * <p>Scryfall's {@code keywords} array on a double-faced card is the union of both faces, so a
+     * back face's own keywords have to be narrowed back out of that combined list. A candidate
+     * counts only when it heads a segment of a line whose every comma-separated segment is itself a
+     * keyword — the same rule {@link #capitalizeKeywordLines} uses — so a keyword the card merely
+     * mentions ("Enchanted creature gains trample") or grants to others ("Creatures you control
+     * have flying") is not counted as the card's own.
+     *
+     * <p>Returned values keep the spelling they had in {@code candidates}.
+     */
+    public static Set<String> keywordsStatedIn(String cardText, Collection<String> candidates) {
+        if (cardText == null || candidates.isEmpty()) {
+            return Set.of();
+        }
+
+        Map<String, String> bySpelling = new HashMap<>();
+        for (String candidate : candidates) {
+            bySpelling.put(candidate.toLowerCase(Locale.ROOT), candidate);
+        }
+
+        Set<String> stated = new HashSet<>();
+        for (String line : cardText.split("\n", -1)) {
+            String[] segments = line.split(", ", -1);
+            List<String> onThisLine = new ArrayList<>(segments.length);
+            for (String segment : segments) {
+                String keyword = matchingKeyword(segment, bySpelling.keySet());
+                if (keyword == null) {
+                    onThisLine = null;
                     break;
                 }
+                onThisLine.add(keyword);
             }
-            if (!matched) {
+            if (onThisLine != null) {
+                onThisLine.forEach(keyword -> stated.add(bySpelling.get(keyword)));
+            }
+        }
+        return stated;
+    }
+
+    private static boolean allKeywords(String[] segments, Set<String> keywords) {
+        for (String segment : segments) {
+            if (matchingKeyword(segment, keywords) == null) {
                 return false;
             }
         }
         return true;
+    }
+
+    /** The lowercased keyword heading this segment, or null when the segment is not a keyword. */
+    private static String matchingKeyword(String segment, Set<String> keywords) {
+        String lower = segment.toLowerCase(Locale.ROOT);
+        for (String keyword : keywords) {
+            // equals first, so the charAt below only runs when the segment is strictly longer
+            if (lower.equals(keyword)
+                    || (lower.startsWith(keyword) && lower.charAt(keyword.length()) == ' ')) {
+                return keyword;
+            }
+        }
+        return null;
     }
 
     private static String capitalizeEach(String[] segments) {

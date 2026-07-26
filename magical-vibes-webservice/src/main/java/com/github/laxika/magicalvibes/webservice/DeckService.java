@@ -1,5 +1,6 @@
 package com.github.laxika.magicalvibes.webservice;
 
+import com.github.laxika.magicalvibes.cards.CardCatalog;
 import com.github.laxika.magicalvibes.cards.CardPrinting;
 import com.github.laxika.magicalvibes.cards.CardSet;
 import com.github.laxika.magicalvibes.entity.Deck;
@@ -32,6 +33,15 @@ public class DeckService implements CustomDeckSource {
 
     private final DeckRepository deckRepository;
     private final ObjectMapper objectMapper;
+    private final CardCatalog cardCatalog;
+
+    private static CardSet requireSet(String setCode) {
+        CardSet cardSet = CardSet.findByCode(setCode);
+        if (cardSet == null) {
+            throw new IllegalArgumentException("Unknown set code: " + setCode);
+        }
+        return cardSet;
+    }
 
     @Transactional
     public SaveDeckResponse saveDeck(UUID userId, SaveDeckRequest request) {
@@ -55,11 +65,8 @@ public class DeckService implements CustomDeckSource {
     private void validateCardCounts(List<SaveDeckRequest.DeckEntryInfo> entries) {
         Map<String, Integer> countByName = new HashMap<>();
         for (SaveDeckRequest.DeckEntryInfo entry : entries) {
-            CardSet cardSet = Arrays.stream(CardSet.values())
-                    .filter(s -> s.getCode().equals(entry.setCode()))
-                    .findFirst()
-                    .orElseThrow(() -> new IllegalArgumentException("Unknown set code: " + entry.setCode()));
-            CardPrinting printing = cardSet.findByCollectorNumber(entry.collectorNumber());
+            CardSet cardSet = requireSet(entry.setCode());
+            CardPrinting printing = cardCatalog.findByCollectorNumber(cardSet, entry.collectorNumber());
             Card card = printing.createCard();
 
             // Basic lands are exempt from the 4-copy rule
@@ -101,11 +108,8 @@ public class DeckService implements CustomDeckSource {
 
             List<Card> cards = new ArrayList<>();
             for (SaveDeckRequest.DeckEntryInfo entry : entries) {
-                CardSet cardSet = Arrays.stream(CardSet.values())
-                        .filter(s -> s.getCode().equals(entry.setCode()))
-                        .findFirst()
-                        .orElseThrow(() -> new IllegalArgumentException("Unknown set code: " + entry.setCode()));
-                CardPrinting printing = cardSet.findByCollectorNumber(entry.collectorNumber());
+                CardSet cardSet = requireSet(entry.setCode());
+                CardPrinting printing = cardCatalog.findByCollectorNumber(cardSet, entry.collectorNumber());
                 for (int i = 0; i < entry.count(); i++) {
                     cards.add(printing.createCard());
                 }

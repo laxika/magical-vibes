@@ -104,8 +104,9 @@ class RandomAiFuzzTest {
         Player player2 = harness.getPlayer2();
 
         // 2-3. Generate random decks (colors + cards) and assign them
-        RandomDeckGenerator.GeneratedDeck gen1 = RandomDeckGenerator.generate(rng);
-        RandomDeckGenerator.GeneratedDeck gen2 = RandomDeckGenerator.generate(rng);
+        RandomDeckGenerator randomDeckGenerator = GameTestHarness.randomDeckGenerator();
+        RandomDeckGenerator.GeneratedDeck gen1 = randomDeckGenerator.generate(rng);
+        RandomDeckGenerator.GeneratedDeck gen2 = randomDeckGenerator.generate(rng);
 
         System.out.printf("  Player 1: %s  |  Player 2: %s%n", gen1.colors(), gen2.colors());
 

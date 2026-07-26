@@ -1,5 +1,6 @@
 package com.github.laxika.magicalvibes.ai;
 
+import com.github.laxika.magicalvibes.cards.CardCatalog;
 import com.github.laxika.magicalvibes.cards.CardPrinting;
 import com.github.laxika.magicalvibes.cards.CardSet;
 import com.github.laxika.magicalvibes.model.Card;
@@ -345,8 +346,9 @@ class SingleCardScenarioFuzzTest {
         List<CardPrinting> permanents = new ArrayList<>();
         List<CardPrinting> auras = new ArrayList<>();
         List<CardPrinting> spells = new ArrayList<>();
+        CardCatalog catalog = GameTestHarness.cardCatalog();
         for (CardSet set : CardSet.values()) {
-            for (CardPrinting printing : set.getPrintings()) {
+            for (CardPrinting printing : catalog.getPrintings(set)) {
                 Card sample = printing.createCard();
                 if (sample.hasType(CardType.LAND)) {
                     continue;
@@ -414,9 +416,10 @@ class SingleCardScenarioFuzzTest {
     // ------------------------------------------------------------------
 
     private List<CardPrinting> resolveTargetPrintings(String filter) {
+        CardCatalog catalog = GameTestHarness.cardCatalog();
         List<CardPrinting> all = new ArrayList<>();
         for (CardSet set : CardSet.values()) {
-            all.addAll(set.getPrintings());
+            all.addAll(catalog.getPrintings(set));
         }
         if (filter == null || filter.isBlank()) {
             return all;

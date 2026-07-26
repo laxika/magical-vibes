@@ -19,8 +19,10 @@ import java.util.Set;
  * distributed evenly across the deck's colors) from every implemented printing. Used by the
  * "All Random" game mode and the AI fuzz tests.
  *
- * <p>The card pool is scanned lazily on first use and cached for the lifetime of the JVM;
- * the Scryfall oracle registry must be loaded before the first call.
+ * <p>The card pool is built lazily on first use and cached for the lifetime of this instance. It
+ * was previously cached in statics for the lifetime of the JVM, which silently tied every caller to
+ * whichever {@link CardCatalog} happened to warm it first; the cache now lives and dies with the
+ * catalog it was derived from.
  */
 public final class RandomDeckGenerator {
 
@@ -38,16 +40,18 @@ public final class RandomDeckGenerator {
      */
     public static final double MIN_SET_IMPLEMENTED_FRACTION = 0.80;
 
-    private static final Map<CardColor, CardPrinting> BASIC_LAND_PRINTINGS = new EnumMap<>(CardColor.class);
-    private static List<CardPrinting> allNonLandPrintings;
+    private final Map<CardColor, CardPrinting> basicLandPrintings = new EnumMap<>(CardColor.class);
+    private final CardCatalog catalog;
+    private List<CardPrinting> allNonLandPrintings;
 
-    private RandomDeckGenerator() {
+    public RandomDeckGenerator(CardCatalog catalog) {
+        this.catalog = catalog;
     }
 
     public record GeneratedDeck(Set<CardColor> colors, List<Card> cards) {
     }
 
-    public static GeneratedDeck generate(Random rng) {
+    public GeneratedDeck generate(Random rng) {
         return generate(rng, null);
     }
 
@@ -60,7 +64,7 @@ public final class RandomDeckGenerator {
      *
      * @throws IllegalArgumentException if {@code setCode} names a set with no random-deckable card
      */
-    public static GeneratedDeck generate(Random rng, String setCode) {
+    public GeneratedDeck generate(Random rng, String setCode) {
         initializeCardPool();
         List<CardPrinting> pool = poolForSet(setCode);
         if (pool.isEmpty()) {
@@ -71,7 +75,7 @@ public final class RandomDeckGenerator {
     }
 
     /** Whether {@code setCode} has at least one card the random generator can build a deck from. */
-    public static boolean hasDeckableCards(String setCode) {
+    public boolean hasDeckableCards(String setCode) {
         initializeCardPool();
         return !poolForSet(setCode).isEmpty();
     }
@@ -80,11 +84,11 @@ public final class RandomDeckGenerator {
      * Whether the set is complete enough (≥ {@link #MIN_SET_IMPLEMENTED_FRACTION} of its card pool
      * implemented) to be offered as a source for set-restricted random decks.
      */
-    public static boolean isSetRandomEligible(CardSet set) {
-        return set.getImplementedFraction() >= MIN_SET_IMPLEMENTED_FRACTION;
+    public boolean isSetRandomEligible(CardSet set) {
+        return catalog.getImplementedFraction(set) >= MIN_SET_IMPLEMENTED_FRACTION;
     }
 
-    private static List<CardPrinting> poolForSet(String setCode) {
+    private List<CardPrinting> poolForSet(String setCode) {
         if (setCode == null) {
             return allNonLandPrintings;
         }
@@ -97,7 +101,7 @@ public final class RandomDeckGenerator {
         return filtered;
     }
 
-    private static Set<CardColor> pickDeckColors(Random rng) {
+    private Set<CardColor> pickDeckColors(Random rng) {
         // 20% mono-color, 60% two-color, 20% three-color
         int roll = rng.nextInt(10);
         int colorCount = roll < 2 ? 1 : roll < 8 ? 2 : 3;
@@ -106,7 +110,7 @@ public final class RandomDeckGenerator {
         return EnumSet.copyOf(all.subList(0, colorCount));
     }
 
-    private static List<Card> buildDeck(Set<CardColor> deckColors, List<CardPrinting> pool, Random rng) {
+    private List<Card> buildDeck(Set<CardColor> deckColors, List<CardPrinting> pool, Random rng) {
         List<CardPrinting> playable = new ArrayList<>();
         for (CardPrinting printing : pool) {
             Card sample = printing.createCard();
@@ -143,26 +147,26 @@ public final class RandomDeckGenerator {
         // Distribute lands as evenly as possible across the deck's colors
         List<CardColor> colors = new ArrayList<>(deckColors);
         for (int i = 0; i < LAND_COUNT; i++) {
-            deck.add(BASIC_LAND_PRINTINGS.get(colors.get(i % colors.size())).createCard());
+            deck.add(basicLandPrintings.get(colors.get(i % colors.size())).createCard());
         }
 
         return deck;
     }
 
-    private static synchronized void initializeCardPool() {
+    private synchronized void initializeCardPool() {
         if (allNonLandPrintings != null) {
             return;
         }
 
-        BASIC_LAND_PRINTINGS.put(CardColor.WHITE, CardSet.SET_SOM.findByCollectorNumber("230"));
-        BASIC_LAND_PRINTINGS.put(CardColor.BLUE, CardSet.SET_SOM.findByCollectorNumber("234"));
-        BASIC_LAND_PRINTINGS.put(CardColor.BLACK, CardSet.SET_SOM.findByCollectorNumber("238"));
-        BASIC_LAND_PRINTINGS.put(CardColor.RED, CardSet.SET_SOM.findByCollectorNumber("242"));
-        BASIC_LAND_PRINTINGS.put(CardColor.GREEN, CardSet.SET_SOM.findByCollectorNumber("246"));
+        basicLandPrintings.put(CardColor.WHITE, catalog.findByCollectorNumber(CardSet.SET_SOM, "230"));
+        basicLandPrintings.put(CardColor.BLUE, catalog.findByCollectorNumber(CardSet.SET_SOM, "234"));
+        basicLandPrintings.put(CardColor.BLACK, catalog.findByCollectorNumber(CardSet.SET_SOM, "238"));
+        basicLandPrintings.put(CardColor.RED, catalog.findByCollectorNumber(CardSet.SET_SOM, "242"));
+        basicLandPrintings.put(CardColor.GREEN, catalog.findByCollectorNumber(CardSet.SET_SOM, "246"));
 
         List<CardPrinting> printings = new ArrayList<>();
         for (CardSet set : CardSet.values()) {
-            for (CardPrinting printing : set.getPrintings()) {
+            for (CardPrinting printing : catalog.getPrintings(set)) {
                 Card sample = printing.createCard();
                 if (!sample.hasType(CardType.LAND) && sample.getManaCost() != null) {
                     printings.add(printing);

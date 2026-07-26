@@ -9,6 +9,7 @@ import com.github.laxika.magicalvibes.ai.AiDraftEngine;
 import com.github.laxika.magicalvibes.service.cast.CastingCostService;
 import com.github.laxika.magicalvibes.service.cast.CastingPermissionService;
 import com.github.laxika.magicalvibes.service.combat.CombatAttackService;
+import com.github.laxika.magicalvibes.cards.CardCatalog;
 import com.github.laxika.magicalvibes.cards.CardPrinting;
 import com.github.laxika.magicalvibes.cards.CardSet;
 import com.github.laxika.magicalvibes.model.AiDifficulty;
@@ -89,6 +90,7 @@ public class DraftService {
     private final TargetValidationService targetValidationService;
     private final TargetLegalityService targetLegalityService;
     private final GameMutationCoordinator mutationCoordinator;
+    private final CardCatalog cardCatalog;
     private final Random random = new Random();
     private final ScheduledExecutorService scheduler = Executors.newScheduledThreadPool(2);
     private final Map<UUID, AiDraftEngine> aiDraftEngines = new ConcurrentHashMap<>();
@@ -108,7 +110,8 @@ public class DraftService {
                         CardViewFactory cardViewFactory,
                         TargetValidationService targetValidationService,
                         TargetLegalityService targetLegalityService,
-                        GameMutationCoordinator mutationCoordinator) {
+                        GameMutationCoordinator mutationCoordinator,
+                        CardCatalog cardCatalog) {
         this.draftRegistry = draftRegistry;
         this.gameRegistry = gameRegistry;
         this.actionAvailabilityService = actionAvailabilityService;
@@ -125,6 +128,7 @@ public class DraftService {
         this.targetValidationService = targetValidationService;
         this.targetLegalityService = targetLegalityService;
         this.mutationCoordinator = mutationCoordinator;
+        this.cardCatalog = cardCatalog;
     }
 
     // ===== Draft Creation =====
@@ -169,7 +173,7 @@ public class DraftService {
         List<CardPrinting> mythics = new ArrayList<>();
         List<CardPrinting> basicLands = new ArrayList<>();
 
-        for (CardPrinting printing : cardSet.getPrintings()) {
+        for (CardPrinting printing : cardCatalog.getPrintings(cardSet)) {
             Card test = printing.createCard();
             if (test.getSupertypes().contains(CardSupertype.BASIC)) {
                 basicLands.add(printing);
@@ -510,7 +514,7 @@ public class DraftService {
             int count = entry.getValue();
             String collectorNumber = landCollectorNumbers.get(landName);
             if (collectorNumber != null && count > 0) {
-                CardPrinting printing = cardSet.findByCollectorNumber(collectorNumber);
+                CardPrinting printing = cardCatalog.findByCollectorNumber(cardSet, collectorNumber);
                 for (int i = 0; i < count; i++) {
                     deck.add(printing.createCard());
                 }
@@ -522,7 +526,7 @@ public class DraftService {
 
     private Map<String, String> getBasicLandCollectorNumbers(CardSet cardSet) {
         Map<String, String> result = new HashMap<>();
-        for (CardPrinting printing : cardSet.getPrintings()) {
+        for (CardPrinting printing : cardCatalog.getPrintings(cardSet)) {
             Card test = printing.createCard();
             if (test.getSupertypes().contains(CardSupertype.BASIC) && test.hasType(CardType.LAND)) {
                 // Use the first collector number found for each basic land name

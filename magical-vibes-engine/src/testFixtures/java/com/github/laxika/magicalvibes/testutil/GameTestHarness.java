@@ -1,5 +1,7 @@
 package com.github.laxika.magicalvibes.testutil;
 
+import com.github.laxika.magicalvibes.cards.CardCatalog;
+import com.github.laxika.magicalvibes.cards.RandomDeckGenerator;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.effect.ChooseOneEffect;
 import com.github.laxika.magicalvibes.model.CardType;
@@ -73,6 +75,8 @@ public class GameTestHarness {
     private static CombatAttackService staticCombatAttackService;
     private static StateBasedActionService staticStateBasedActionService;
     private static LifeSupport staticLifeSupport;
+    private static CardCatalog staticCardCatalog;
+    private static RandomDeckGenerator staticRandomDeckGenerator;
 
     private static synchronized void initServices() {
         if (staticGameRegistry != null) {
@@ -104,6 +108,23 @@ public class GameTestHarness {
         staticCombatAttackService = context.getBean(CombatAttackService.class);
         staticStateBasedActionService = context.getBean(StateBasedActionService.class);
         staticLifeSupport = context.getBean(LifeSupport.class);
+        staticCardCatalog = context.getBean(CardCatalog.class);
+        staticRandomDeckGenerator = context.getBean(RandomDeckGenerator.class);
+    }
+
+    /**
+     * The catalog of implemented printings, loaded once for the shared test context. Tests that
+     * build their own card pools go through this rather than reaching for static state on
+     * {@code CardSet}, which no longer holds any.
+     */
+    public static CardCatalog cardCatalog() {
+        initServices();
+        return staticCardCatalog;
+    }
+
+    public static RandomDeckGenerator randomDeckGenerator() {
+        initServices();
+        return staticRandomDeckGenerator;
     }
 
     // ---- Per-test instance state ----
