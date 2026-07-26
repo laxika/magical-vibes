@@ -193,63 +193,75 @@
 /* Combat badges. Each is projected into one of card-display's corner
    stacks (badge-tl/tr/bl/br marker attributes), which lay co-occurring
    badges out in a column so they never overlap. */
+/* Dark chip with a coloured rail, matching card-display's own badges — they share the
+   corner stacks, so they have to share the treatment or a card's corners read as half
+   restyled. Solid saturated fills put blocks of colour around a card that the eye
+   reached before the card itself; the rail keeps the colour coding at a fraction of
+   the area. */
 .card-combat-badge {
-  font-size: 10px;
+  --badge-accent: #cbb27a;
+  font-size: 9px;
   font-weight: 700;
-  padding: 2px 6px;
+  letter-spacing: 0.03em;
+  line-height: 1.45;
+  padding: 1px 5px;
+  background: rgba(16, 12, 9, 0.86);
+  color: var(--color-parchment);
+  border: 1px solid rgba(0, 0, 0, 0.55);
+  border-left: 2px solid var(--badge-accent);
   border-radius: 3px;
-  text-transform: uppercase;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.45);
   font-family: var(--font-display);
-  max-width: 150px;
+  max-width: 130px;
   overflow: hidden;
   text-overflow: ellipsis;
   white-space: nowrap;
 }
 
 .attacking-badge {
-  background: var(--color-red-bright);
-  color: var(--color-parchment);
+  --badge-accent: #d0452f;
 }
 
 /* Below the Attacking badge while declaring: which player/planeswalker this
    attacker is pointed at; clicking cycles through the available targets. */
 .attack-target-badge {
-  background: #b8860b;
-  color: var(--color-parchment);
+  --badge-accent: #e0ae2a;
   cursor: pointer;
 }
 
 /* Below the attack-target badge while declaring: which attacking band (CR 702.22) this
    creature belongs to; clicking cycles it through the available bands. */
 .band-badge {
-  background: #6b3fa0;
-  color: var(--color-parchment);
+  --badge-accent: #9b7fd4;
   cursor: pointer;
 }
 
+/* The two clickable badges are the only ones the player acts on, so they lighten on
+   hover — the quiet chip alone would not read as a control. */
+.attack-target-badge:hover,
+.band-badge:hover {
+  background: rgba(38, 30, 20, 0.94);
+  border-color: var(--badge-accent);
+}
+
 .blocking-badge {
-  background: var(--color-blue-primary);
-  color: var(--color-parchment);
+  --badge-accent: var(--color-blue-primary);
 }
 
 .blocked-badge {
-  background: var(--color-blue-primary);
-  color: var(--color-parchment);
+  --badge-accent: var(--color-blue-primary);
 }
 
 .damage-badge {
-  background: var(--color-red-bright);
-  color: var(--color-parchment);
+  --badge-accent: #d0452f;
 }
 
 .must-block-badge {
-  background: #d4a017;
-  color: #1a1a1a;
+  --badge-accent: #d4a017;
 }
 
 .menace-badge {
-  background: #8b2fc9;
-  color: var(--color-parchment);
+  --badge-accent: #a855e0;
 }
 
 .surrender-confirm-card h2 {

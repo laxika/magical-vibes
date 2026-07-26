@@ -1,5 +1,6 @@
 import { Injectable, inject, signal } from '@angular/core';
 import { ScryfallFetchQueue } from './scryfall-fetch-queue.service';
+import { manaSymbolImg } from './mana-symbol-markup';
 
 const DB_NAME = 'mana-symbols-cache';
 const STORE_NAME = 'symbols';
@@ -40,7 +41,7 @@ export class ManaSymbolService {
     return text.replace(/\{([^}]+)\}/g, (match, sym: string) => {
       const url = this.symbolUrls.get(sym);
       if (url) {
-        return `<img class="mana-sym" src="${url}" alt="${match}" style="height:1em;vertical-align:middle;margin:0 1px;">`;
+        return manaSymbolImg(url, match);
       }
       this.ensureLoaded(sym);
       return match;

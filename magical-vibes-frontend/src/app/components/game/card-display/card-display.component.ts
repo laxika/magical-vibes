@@ -1,4 +1,4 @@
-import { Component, Input, HostBinding, OnInit, OnChanges, OnDestroy, AfterViewChecked, SimpleChanges, ElementRef, ViewChild, inject, signal } from '@angular/core';
+import { Component, Input, HostBinding, OnInit, OnChanges, OnDestroy, AfterViewInit, AfterViewChecked, SimpleChanges, ElementRef, ViewChild, inject, signal } from '@angular/core';
 import { DomSanitizer, SafeHtml } from '@angular/platform-browser';
 import { Card, Permanent } from '../../../services/websocket.service';
 import { CardPreviewService } from '../../../services/card-preview.service';
@@ -8,6 +8,7 @@ import { ManaSymbolService } from '../../../services/mana-symbol.service';
 import { SetSymbolService } from '../../../services/set-symbol.service';
 import { WatermarkService } from '../../../services/watermark.service';
 import { distinctGrantedAbilityTexts, formatEnumName, formatKeywords, formatTypeLine, hasCardType } from '../../../utils/format-utils';
+import { largestFittingSize, renderedTextKey } from './card-text-fit';
 
 export interface PlaneswalkerAbilityLine {
   /** Display cost, e.g. "+1", "−2", "0"; null for static ability lines. */
@@ -30,7 +31,7 @@ export interface PlaneswalkerAbilityLine {
     '(contextmenu)': 'onContextMenu($event)',
   }
 })
-export class CardDisplayComponent implements OnInit, OnChanges, OnDestroy, AfterViewChecked {
+export class CardDisplayComponent implements OnInit, OnChanges, OnDestroy, AfterViewInit, AfterViewChecked {
   @Input({ required: true }) card!: Card;
   @Input() permanent: Permanent | null = null;
   @Input() preview = false;
@@ -43,18 +44,37 @@ export class CardDisplayComponent implements OnInit, OnChanges, OnDestroy, After
   watermarkUrl = signal<string | null>(null);
 
   @ViewChild('textBox') textBoxRef?: ElementRef<HTMLDivElement>;
+  @ViewChild('nameText') nameTextRef?: ElementRef<HTMLElement>;
 
   private static readonly MAX_FONT_SIZE = 11;
   private static readonly MIN_FONT_SIZE = 7;
+  /** Name plate range. A printed card sets a long name in a smaller face rather than
+   *  cutting it off, so the name shrinks before the ellipsis is ever reached. */
+  private static readonly MAX_NAME_FONT_SIZE = 12;
+  /** Lower than the rules text's floor, because an ellipsised name costs the player the one
+   *  thing they need in order to identify the card at all. "Antiquities on the Loose" beside a
+   *  three-symbol mana cost has about 91px to live in and needs roughly 6.2px to fit it; a 7px
+   *  floor left it truncated, which is worse than small. Matches the planeswalker text floor. */
+  private static readonly MIN_NAME_FONT_SIZE = 6;
   /** Planeswalker ability text may shrink further, like the denser print on real walker frames. */
   private static readonly PW_MIN_FONT_SIZE = 6;
   private static readonly FONT_STEP = 0.5;
-  private static readonly FLAVOR_REDUCTION = 2;
+  /** Flavour text is set as a fraction of the rules text, not a fixed step behind it. A flat
+   *  2px reduction is a tenth off 20px type but a quarter off the 8px this box routinely
+   *  lands on, which is where flavour stopped looking smaller and started looking broken. */
+  private static readonly FLAVOR_FONT_RATIO = 0.92;
+  /** Bisection target. A tenth of a pixel is finer than the eye resolves at these sizes, so
+   *  it is effectively "as large as fits" without paying for a search that never converges. */
+  private static readonly FONT_PRECISION = 0.1;
   /** The prepare spell's inset is a far narrower column than the rules text beside it,
    *  so it fits separately and may go smaller than the rules text ever does. */
   private static readonly PREPARE_FONT_RATIO = 0.94;
   private static readonly PREPARE_MIN_FONT_SIZE = 4.5;
   private lastTextFingerprint = '';
+  private lastNameFingerprint = '';
+  private destroyed = false;
+  private contentObserver: MutationObserver | null = null;
+  private pendingRefit = 0;
 
   private scryfallImageService = inject(ScryfallImageService);
   private scryfallCardDataService = inject(ScryfallCardDataService);
@@ -63,6 +83,7 @@ export class CardDisplayComponent implements OnInit, OnChanges, OnDestroy, After
   private watermarkService = inject(WatermarkService);
   private cardPreviewService = inject(CardPreviewService);
   private sanitizer = inject(DomSanitizer);
+  private hostRef = inject<ElementRef<HTMLElement>>(ElementRef);
 
   /* Long-press preview (phone layouts only): touch cards can't hover, so
      holding a finger on any card shows it in the fullscreen preview overlay
@@ -79,10 +100,91 @@ export class CardDisplayComponent implements OnInit, OnChanges, OnDestroy, After
   ngOnInit(): void {
     this.fetchCardArt();
     this.fetchWatermark();
+    CardDisplayComponent.whenFontsReady().then(() => this.refitAfterFontSwap());
+  }
+
+  ngAfterViewInit(): void {
+    this.observeRenderedContent();
   }
 
   ngOnDestroy(): void {
+    this.destroyed = true;
+    this.contentObserver?.disconnect();
+    if (this.pendingRefit) cancelAnimationFrame(this.pendingRefit);
     this.cancelLongPress();
+  }
+
+  /**
+   * Refits whenever the rendered content changes, which is the only signal that reliably
+   * corresponds to "the thing I measure is now different".
+   *
+   * <p>The fitters used to run from ngAfterViewChecked alone, and in this app that hook fires
+   * exactly once per card and then never again — it is zoneless (no zone.js, no
+   * provideZoneChangeDetection), so nothing re-checks a view just because a fetch resolved. Every
+   * piece of content a card waits on lands after that single check: flavour text from the set-wide
+   * fetch, and mana symbols that start life as literal `{W}` braces. The fit was therefore always
+   * computed against a box that had not finished filling, and the correction never ran. Three
+   * separate fixes landed in code that could not execute.
+   *
+   * <p>Attributes are deliberately not observed. The fitters work by writing style.fontSize and
+   * style.display, both attribute mutations, so watching those would feed the observer its own
+   * output forever. Node and text changes are the ones that alter layout, and the fitters never
+   * make them.
+   */
+  private observeRenderedContent(): void {
+    this.contentObserver = new MutationObserver(() => this.scheduleRefit());
+    this.contentObserver.observe(this.hostRef.nativeElement,
+        { childList: true, characterData: true, subtree: true });
+  }
+
+  /** Coalesces a burst of mutations into one fit, on the frame after they land. */
+  private scheduleRefit(): void {
+    if (this.pendingRefit || this.destroyed) return;
+    this.pendingRefit = requestAnimationFrame(() => {
+      this.pendingRefit = 0;
+      if (this.destroyed) return;
+      this.fitCardName();
+      this.fitTextToBox();
+    });
+  }
+
+  /** The faces a card actually paints with, at the weights and styles it uses them at. */
+  private static readonly FITTED_FONTS = [
+    '700 12px Cinzel',
+    '400 11px "Crimson Text"',
+    'italic 400 11px "Crimson Text"',
+  ];
+  private static fontsReady: Promise<unknown> | null = null;
+
+  /**
+   * Cinzel and Crimson Text are declared `font-display: swap` (src/fonts.css), so a paint
+   * that happens before they load uses the Georgia/Times fallbacks and the real faces swap
+   * in afterwards — at different metrics. Both fitters measure the rendered DOM, so whatever
+   * they size before that swap is sized against the wrong font, and their fingerprints then
+   * suppress the re-measure that would correct it: names ellipsised that had room to shrink,
+   * rules and flavour text fitted to a box they no longer fit. Self-hosting and preloading
+   * the two latin faces makes that window small enough to rarely be hit, but it cannot be
+   * closed — a cold cache on a slow link still lands in it, and neither the italic nor the
+   * latin-ext faces are preloaded at all. So this stays as the correction.
+   * `ready` is awaited first because `load()` only matches faces already declared, and the
+   * rules arrive with the stylesheet. One promise serves every card on the table.
+   */
+  private static whenFontsReady(): Promise<unknown> {
+    CardDisplayComponent.fontsReady ??= document.fonts.ready
+      .then(() => Promise.all(CardDisplayComponent.FITTED_FONTS.map(f => document.fonts.load(f))))
+      .catch(() => undefined);
+    return CardDisplayComponent.fontsReady;
+  }
+
+  /** Drops both fingerprints so the next measure actually re-runs, then re-runs it. */
+  private refitAfterFontSwap(): void {
+    if (this.destroyed) return;
+    this.lastNameFingerprint = '';
+    this.lastTextFingerprint = '';
+    // Still null when the faces were already cached and resolved before the view existed;
+    // the cleared fingerprints leave ngAfterViewChecked to do it with the right metrics.
+    this.fitCardName();
+    this.fitTextToBox();
   }
 
   onTouchStart(event: TouchEvent): void {
@@ -233,13 +335,15 @@ export class CardDisplayComponent implements OnInit, OnChanges, OnDestroy, After
    * colourless artifacts share the default frame and cannot be told apart on the
    * battlefield. A *coloured* artifact keeps its colour frame, as it does in print,
    * so this returns null once the card has any colour. Artifact lands take the land
-   * frame, which is also how they are printed.
+   * frame, which is also how they are printed. Everything else colourless — Eldrazi,
+   * devoid cards — takes the pale colourless frame it is printed with, rather than
+   * falling through to the default brown that also stands in for "no colour data".
    */
   @HostBinding('attr.data-frame')
-  get frameStyle(): 'land' | 'artifact' | null {
+  get frameStyle(): 'land' | 'artifact' | 'colorless' | null {
     if (hasCardType(this.card, 'LAND')) return 'land';
-    if (hasCardType(this.card, 'ARTIFACT') && !this.cardColor) return 'artifact';
-    return null;
+    if (this.cardColor) return null;
+    return hasCardType(this.card, 'ARTIFACT') ? 'artifact' : 'colorless';
   }
 
   @HostBinding('class.legendary-card')
@@ -399,36 +503,116 @@ export class CardDisplayComponent implements OnInit, OnChanges, OnDestroy, After
   }
 
   ngAfterViewChecked(): void {
+    this.fitCardName();
     this.fitTextToBox();
+  }
+
+  /**
+   * Shrinks an over-long name until it fits its plate, so it is set smaller rather than
+   * truncated ("Kozilek, the Great Distortion" instead of "Kozilek, the Great Dis…").
+   * Measured on the name span itself, which flex has already sized against the mana cost
+   * beside it — so the fingerprint tracks the symbol version too: the cost's width jumps
+   * when its {G} placeholders are replaced by loaded symbol images.
+   */
+  private fitCardName(): void {
+    const el = this.nameTextRef?.nativeElement;
+    if (!el) return;
+
+    /* Keyed on the rendered name plate, for the same reason the text box is: the name's available
+       width depends on the mana cost beside it, and that cost is literal `{4}{W}` text until its
+       symbols load and become images of a different width. A model-derived key could claim the
+       symbols had arrived while the plate still held braces. */
+    const plate = el.parentElement;
+    const fp = renderedTextKey({
+      text: plate?.textContent ?? el.textContent ?? '',
+      imageCount: plate?.querySelectorAll('img').length ?? 0,
+    });
+    if (fp === this.lastNameFingerprint) return;
+    this.lastNameFingerprint = fp;
+
+    // Same search as the rules text, measuring width instead of height. Bisection matters here
+    // too: a name has one line to fit in, so the sizes a fixed step skips over are the whole
+    // difference between "Antiquities on the Loose" and "Antiquities on the Lo…".
+    largestFittingSize(
+        CardDisplayComponent.MIN_NAME_FONT_SIZE,
+        CardDisplayComponent.MAX_NAME_FONT_SIZE,
+        CardDisplayComponent.FONT_PRECISION,
+        size => {
+          el.style.fontSize = size + 'px';
+          return el.scrollWidth <= el.clientWidth;
+        });
   }
 
   private fitTextToBox(): void {
     const el = this.textBoxRef?.nativeElement;
     if (!el) return;
 
-    const fp = (this.card.cardText ?? '') + '|' +
-      this.formatKeywords(this.effectiveKeywords) + '|' +
-      this.grantedAbilityTexts.join('|') + '|' +
-      (this.prepareSpell?.cardText ?? '') + '|' +
-      (this.flavorText ?? '');
+    /* Keyed on what the box actually contains, not on what the card model says it should.
+       Those two disagree for a whole change detection pass every time flavour text arrives, and a
+       fit landing in that window used to store a key claiming flavour was present while measuring
+       a box without it — after which the matching key suppressed the fit that would have corrected
+       it, permanently. textContent covers rules text, keywords, granted abilities and the
+       prepare-spell inset alike, and a symbol turning from `{W}` into an image shows up as both a
+       text change and an image count change. */
+    const fp = renderedTextKey({
+      text: el.textContent ?? '',
+      imageCount: el.querySelectorAll('img').length,
+    });
     if (fp === this.lastTextFingerprint) return;
     this.lastTextFingerprint = fp;
 
     const flavorEl = el.querySelector('.card-flavor-text') as HTMLElement | null;
+    const separatorEl = el.querySelector('.flavor-separator') as HTMLElement | null;
+
     const minSize = this.isPlaneswalker
       ? CardDisplayComponent.PW_MIN_FONT_SIZE
       : CardDisplayComponent.MIN_FONT_SIZE;
-    let size = CardDisplayComponent.MAX_FONT_SIZE;
 
-    while (size >= minSize) {
+    /* Rules text and flavour text share one size, the flavour a fixed fraction behind rather
+       than a flat 2px: two pixels is a tenth off 20px type but a quarter off the 8px this box
+       routinely lands on, which is where flavour stopped reading as smaller and started reading
+       as broken. If nothing in range holds both, the flavour goes rather than being clipped —
+       printed cards omit flavour text on wordy cards instead of setting rules text below
+       legibility, and clipping is the one outcome print never accepts. */
+    this.showFlavor(flavorEl, separatorEl, true);
+    const applySize = (size: number) => {
       el.style.fontSize = size + 'px';
-      if (flavorEl) flavorEl.style.fontSize = (size - CardDisplayComponent.FLAVOR_REDUCTION) + 'px';
+      if (flavorEl) {
+        flavorEl.style.fontSize = (size * CardDisplayComponent.FLAVOR_FONT_RATIO) + 'px';
+      }
+    };
+    let size = this.fitInto(el, minSize, applySize) ?? minSize;
 
-      if (el.scrollHeight <= el.clientHeight) break;
-      size -= CardDisplayComponent.FONT_STEP;
+    /* Flavour text is the first thing a printed card gives up: Wizards omits it outright on
+       text-heavy cards rather than set the rules text below its legibility floor, which is why
+       so many wordy commons have none. Shrinking to the floor and clipping whatever still hangs
+       over the edge is the one outcome print never accepts, so when even the floor cannot hold
+       both, the flavour goes and the rules text refits into the room it frees. */
+    if (flavorEl && !this.contentFits(el)) {
+      this.showFlavor(flavorEl, separatorEl, false);
+      size = this.fitInto(el, minSize, s => { el.style.fontSize = s + 'px'; }) ?? minSize;
     }
 
     this.fitPrepareSpell(el, size);
+  }
+
+  /** Toggling display rather than a bound flag: this runs inside ngAfterViewChecked, where
+   *  writing to a template binding would throw ExpressionChangedAfterItHasBeenChecked. */
+  private showFlavor(flavorEl: HTMLElement | null, separatorEl: HTMLElement | null, shown: boolean): void {
+    const display = shown ? '' : 'none';
+    if (flavorEl) flavorEl.style.display = display;
+    if (separatorEl) separatorEl.style.display = display;
+  }
+
+  private contentFits(el: HTMLElement): boolean {
+    return el.scrollHeight <= el.clientHeight;
+  }
+
+  /** Binds the pure size search to this box's height. Null when even the floor overflows. */
+  private fitInto(el: HTMLElement, minSize: number, apply: (size: number) => void): number | null {
+    return largestFittingSize(
+        minSize, CardDisplayComponent.MAX_FONT_SIZE, CardDisplayComponent.FONT_PRECISION,
+        size => { apply(size); return this.contentFits(el); });
   }
 
   /**

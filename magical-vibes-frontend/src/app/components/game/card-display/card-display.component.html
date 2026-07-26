@@ -15,7 +15,7 @@
   }
 } @else {
   <div class="title-bar">
-    <span class="card-name">{{ card.name }}</span>
+    <span class="card-name" #nameText>{{ card.name }}</span>
     @if (card.manaCost) {
       <span class="card-mana-cost" [innerHTML]="formattedManaCost"></span>
     }

@@ -66,7 +66,25 @@
           "defaultConfiguration": "development"
         },
         "test": {
-          "builder": "@angular/build:unit-test"
+          "builder": "@angular/build:unit-test",
+          "options": {
+            "exclude": [
+              "**/*.browser.spec.ts"
+            ]
+          }
+        },
+        "test-browser": {
+          "builder": "@angular/build:unit-test",
+          "options": {
+            "buildTarget": "::development",
+            "browsers": [
+              "chromium"
+            ],
+            "browserViewport": "1280x900",
+            "include": [
+              "**/*.browser.spec.ts"
+            ]
+          }
         }
       }
     }
