@@ -81,12 +81,6 @@ class LegacyNotificationSurfaceRatchetTest {
             "interaction/SearchLibraryToTopChoiceInteractionHandler.java",
             "interaction/SylvanLibraryChoiceInteractionHandler.java",
             "interaction/XValueChoiceInteractionHandler.java");
-    private static final Set<String> DEFERRED_PERMANENT_INPUT_FILES = Set.of(
-            "MultiPermanentChoiceHandlerService.java",
-            "PermanentChoiceBattlefieldHandlerService.java",
-            "PermanentChoiceSpellHandlerService.java",
-            "PermanentChoiceTriggerHandlerService.java");
-
     private static final Map<LegacySurface, Map<String, Integer>> BASELINE = new EnumMap<>(LegacySurface.class);
 
     static {
@@ -179,7 +173,7 @@ class LegacyNotificationSurfaceRatchetTest {
     }
 
     @Test
-    void nonPermanentInputFilesHaveZeroDirectStateOrSessionDelivery() throws IOException {
+    void allInputFilesHaveZeroDirectStateOrSessionDelivery() throws IOException {
         Path serviceRoot = locateRepoRoot().resolve(SERVICE_ROOT);
         Path inputRoot = serviceRoot.resolve("input");
         List<String> failures = new ArrayList<>();
@@ -187,8 +181,6 @@ class LegacyNotificationSurfaceRatchetTest {
         try (Stream<Path> paths = Files.list(inputRoot)) {
             for (Path path : (Iterable<Path>) paths.filter(Files::isRegularFile)
                     .filter(file -> file.toString().endsWith(".java"))
-                    .filter(file -> !DEFERRED_PERMANENT_INPUT_FILES.contains(
-                            file.getFileName().toString()))
                     .sorted()::iterator) {
                 String source = Files.readString(path, StandardCharsets.UTF_8);
                 for (LegacySurface surface : List.of(
@@ -204,7 +196,7 @@ class LegacyNotificationSurfaceRatchetTest {
         }
 
         assertThat(failures)
-                .withFailMessage(() -> "Generic input notification migration regressed:\n  "
+                .withFailMessage(() -> "Input notification migration regressed:\n  "
                         + String.join("\n  ", failures))
                 .isEmpty();
     }

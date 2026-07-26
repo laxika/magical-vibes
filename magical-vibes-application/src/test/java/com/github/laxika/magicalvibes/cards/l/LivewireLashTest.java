@@ -250,11 +250,16 @@ class LivewireLashTest extends BaseCardTest {
         assertThat(gd.interaction.activeInteraction()).isInstanceOf(PendingInteraction.PermanentChoice.class);
 
         // Player2 retargets Boomerang onto player1's equipped creature
+        harness.clearMessages();
         harness.handlePermanentChosen(player2, equippedCreature.getId());
 
         // Livewire Lash trigger should now fire - prompts player1 to choose any target
         assertThat(gd.interaction.activeInteraction()).isInstanceOf(PendingInteraction.PermanentChoice.class);
         assertThat(gd.interaction.activeInteraction(PendingInteraction.PermanentChoice.class).playerId()).isEqualTo(player1.getId());
+        assertThat(harness.getConn1().getMessagesContaining("\"type\":\"INTERACTION_PROMPT\""))
+                .hasSize(1);
+        assertThat(harness.getConn1().getMessagesContaining("\"type\":\"GAME_STATE\"")).isEmpty();
+        assertThat(harness.getConn2().getMessagesContaining("\"type\":\"GAME_STATE\"")).isEmpty();
 
         // Player1 targets player2 with the 2 damage
         harness.handlePermanentChosen(player1, player2.getId());

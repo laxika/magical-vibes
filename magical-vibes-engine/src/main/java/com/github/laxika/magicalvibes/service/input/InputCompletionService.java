@@ -51,6 +51,7 @@ public class InputCompletionService {
 
     private void processMayAbilitiesThenAutoPass(GameData gameData, boolean clearPriorityPasses) {
         if (gameData.status == GameStatus.FINISHED) return;
+        if (gameData.interaction.isAwaitingInput()) return;
         playerInputService.processNextMayAbility(gameData);
         if (gameData.pendingMayAbilities.isEmpty() && !gameData.interaction.isAwaitingInput()) {
             // Resume resolving remaining effects on the same spell/ability
@@ -115,30 +116,24 @@ public class InputCompletionService {
      * clear priority passes before auto-pass. Used by multi-permanent and
      * battlefield handlers during mid-resolution processing.
      */
-    public void sbaMayAbilitiesThenBroadcastAutoPass(GameData gameData) {
+    public void sbaProcessMayAbilitiesThenAutoPassPreservingPriority(GameData gameData) {
         stateBasedActionService.performStateBasedActions(gameData);
         if (gameData.status == GameStatus.FINISHED) return;
-        if (!gameData.pendingMayAbilities.isEmpty()) {
-            playerInputService.processNextMayAbility(gameData);
-            return;
-        }
+        processMayAbilitiesThenAutoPass(gameData, false);
+    }
 
-        if (gameData.pendingEffectResolutionEntry != null) {
-            effectResolutionService.resolveEffectsFrom(gameData,
-                    gameData.pendingEffectResolutionEntry,
-                    gameData.pendingEffectResolutionIndex);
-        }
-
-        if (!gameData.pendingMayAbilities.isEmpty() || gameData.interaction.isAwaitingInput()) {
-            if (!gameData.interaction.isAwaitingInput() && !gameData.pendingMayAbilities.isEmpty()) {
-                playerInputService.processNextMayAbility(gameData);
-            }
-            return;
-        }
-
-        if (gameData.status == GameStatus.FINISHED) {
-            return;
-        }
+    /**
+     * Complete a mana-ability recipient choice without resuming a parked effect resolution.
+     *
+     * <p>The choice is part of mana-ability activation and retains the legacy priority semantics.
+     * A concurrently parked entry belongs to the surrounding may-pay workflow, which resumes it
+     * itself. State is still observed only after SBA and auto-pass reach their stable point.
+     */
+    public void sbaThenAutoPassWithoutResumingParkedResolution(GameData gameData) {
+        stateBasedActionService.performStateBasedActions(gameData);
+        if (gameData.status == GameStatus.FINISHED) return;
+        if (gameData.interaction.isAwaitingInput()) return;
+        gameData.priorityPassedBy.clear();
         turnProgressionService.resolveAutoPass(gameData);
         publishStateAfterInput(gameData);
     }

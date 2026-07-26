@@ -143,12 +143,18 @@ class AuraGraftTest extends BaseCardTest {
         harness.castInstant(player1, 0, aura.getId());
         harness.passBothPriorities();
 
+        assertThat(gd.pendingEffectResolutionEntry).isNotNull();
+        harness.clearMessages();
+
         // Choose my creature to attach to
         harness.handlePermanentChosen(player1, myCreature.getId());
 
         assertThat(aura.getAttachedTo()).isEqualTo(myCreature.getId());
         assertThat(gd.interaction.permanentChoiceContext()).isNull();
         assertThat(gd.interaction.activeInteraction(PendingInteraction.PermanentChoice.class)).isNull();
+        assertThat(gd.pendingEffectResolutionEntry).isNull();
+        assertThat(harness.getConn1().getMessagesContaining("\"type\":\"GAME_STATE\"")).hasSize(1);
+        assertThat(harness.getConn2().getMessagesContaining("\"type\":\"GAME_STATE\"")).hasSize(1);
     }
 
     @Test

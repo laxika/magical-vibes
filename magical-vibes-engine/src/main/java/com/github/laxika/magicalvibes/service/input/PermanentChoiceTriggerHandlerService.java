@@ -15,7 +15,6 @@ import com.github.laxika.magicalvibes.model.effect.CardEffect;
 import com.github.laxika.magicalvibes.model.effect.DealDamageToTargetOpponentAndUpToCreaturesThatPlayerControlsEffect;
 import com.github.laxika.magicalvibes.model.effect.DestroyOneOfTargetsAtRandomEffect;
 import com.github.laxika.magicalvibes.service.GameBroadcastService;
-import com.github.laxika.magicalvibes.service.event.GameMutationCoordinator;
 import com.github.laxika.magicalvibes.service.trigger.TriggerCollectionService;
 import com.github.laxika.magicalvibes.service.turn.TurnProgressionService;
 import com.github.laxika.magicalvibes.service.battlefield.ETBTokenTargetService;
@@ -42,7 +41,6 @@ public class PermanentChoiceTriggerHandlerService {
 
     private final GameQueryService gameQueryService;
     private final GameBroadcastService gameBroadcastService;
-    private final GameMutationCoordinator mutationCoordinator;
     private final TriggerCollectionService triggerCollectionService;
     private final PlayerInputService playerInputService;
     private final TurnProgressionService turnProgressionService;
@@ -112,8 +110,7 @@ public class PermanentChoiceTriggerHandlerService {
             return;
         }
 
-        gameData.priorityPassedBy.clear();
-        turnProgressionService.resolveAutoPass(gameData);
+        inputCompletionService.processMayAbilitiesThenAutoPass(gameData);
     }
 
     public void handleDiscardTrigger(GameData gameData, UUID permanentId, PermanentChoiceContext.DiscardTriggerAnyTarget dtt) {
@@ -147,8 +144,7 @@ public class PermanentChoiceTriggerHandlerService {
             return;
         }
 
-        gameData.priorityPassedBy.clear();
-        turnProgressionService.resolveAutoPass(gameData);
+        inputCompletionService.processMayAbilitiesThenAutoPass(gameData);
     }
 
     public void handleDeathTrigger(GameData gameData, UUID permanentId, PermanentChoiceContext.DeathTriggerTarget dtt) {
@@ -177,8 +173,7 @@ public class PermanentChoiceTriggerHandlerService {
             return;
         }
 
-        gameData.priorityPassedBy.clear();
-        turnProgressionService.resolveAutoPass(gameData);
+        inputCompletionService.processMayAbilitiesThenAutoPass(gameData);
     }
 
     public void handleSelfLeavesTrigger(GameData gameData, UUID targetId, PermanentChoiceContext.SelfLeavesTriggerTarget slt) {
@@ -212,8 +207,7 @@ public class PermanentChoiceTriggerHandlerService {
             return;
         }
 
-        gameData.priorityPassedBy.clear();
-        turnProgressionService.resolveAutoPass(gameData);
+        inputCompletionService.processMayAbilitiesThenAutoPass(gameData);
     }
 
     public void handleExploreTrigger(GameData gameData, UUID permanentId, PermanentChoiceContext.ExploreTriggerTarget ett) {
@@ -243,8 +237,7 @@ public class PermanentChoiceTriggerHandlerService {
             return;
         }
 
-        gameData.priorityPassedBy.clear();
-        turnProgressionService.resolveAutoPass(gameData);
+        inputCompletionService.processMayAbilitiesThenAutoPass(gameData);
     }
 
     public void handleExploitTrigger(GameData gameData, UUID cardId, PermanentChoiceContext.ExploitTriggerTarget ett) {
@@ -310,8 +303,7 @@ public class PermanentChoiceTriggerHandlerService {
             return;
         }
 
-        gameData.priorityPassedBy.clear();
-        turnProgressionService.resolveAutoPass(gameData);
+        inputCompletionService.processMayAbilitiesThenAutoPass(gameData);
     }
 
     public void handleTransformOpponentTarget(GameData gameData, UUID opponentId,
@@ -439,8 +431,7 @@ public class PermanentChoiceTriggerHandlerService {
             return;
         }
 
-        gameData.priorityPassedBy.clear();
-        turnProgressionService.resolveAutoPass(gameData);
+        inputCompletionService.processMayAbilitiesThenAutoPass(gameData);
     }
 
     /**
@@ -518,8 +509,7 @@ public class PermanentChoiceTriggerHandlerService {
             return;
         }
 
-        gameData.priorityPassedBy.clear();
-        turnProgressionService.resolveAutoPass(gameData);
+        inputCompletionService.processMayAbilitiesThenAutoPass(gameData);
     }
 
     public void handleMayAbilityTrigger(GameData gameData, UUID permanentId, PermanentChoiceContext.MayAbilityTriggerTarget mat) {
@@ -610,9 +600,7 @@ public class PermanentChoiceTriggerHandlerService {
             return;
         }
 
-        gameData.priorityPassedBy.clear();
-        mutationCoordinator.invalidateAllPlayerViews(gameData);
-        turnProgressionService.resolveAutoPass(gameData);
+        inputCompletionService.processMayAbilitiesThenAutoPass(gameData);
     }
 
     public void handleAttackTrigger(GameData gameData, UUID permanentId, PermanentChoiceContext.AttackTriggerTarget att) {
@@ -645,8 +633,7 @@ public class PermanentChoiceTriggerHandlerService {
             return;
         }
 
-        gameData.priorityPassedBy.clear();
-        turnProgressionService.resolveAutoPass(gameData);
+        inputCompletionService.processMayAbilitiesThenAutoPass(gameData);
     }
 
     public void handleEntersTrigger(GameData gameData, UUID permanentId, PermanentChoiceContext.EntersTriggerTarget ett) {
@@ -679,8 +666,7 @@ public class PermanentChoiceTriggerHandlerService {
             return;
         }
 
-        gameData.priorityPassedBy.clear();
-        turnProgressionService.resolveAutoPass(gameData);
+        inputCompletionService.processMayAbilitiesThenAutoPass(gameData);
     }
 
     public void handleDiscardControllerTrigger(GameData gameData, UUID permanentId, PermanentChoiceContext.DiscardControllerTriggerTarget dct) {
@@ -712,8 +698,7 @@ public class PermanentChoiceTriggerHandlerService {
             return;
         }
 
-        gameData.priorityPassedBy.clear();
-        turnProgressionService.resolveAutoPass(gameData);
+        inputCompletionService.processMayAbilitiesThenAutoPass(gameData);
     }
 
     public void handleEmblemTrigger(GameData gameData, UUID permanentId, PermanentChoiceContext.EmblemTriggerTarget ett) {
@@ -748,8 +733,7 @@ public class PermanentChoiceTriggerHandlerService {
             return;
         }
 
-        gameData.priorityPassedBy.clear();
-        turnProgressionService.resolveAutoPass(gameData);
+        inputCompletionService.processMayAbilitiesThenAutoPass(gameData);
     }
 
     public void handleUpkeepPlayerTargetTrigger(GameData gameData, UUID playerId, PermanentChoiceContext.UpkeepPlayerTargetTrigger upt) {
@@ -794,9 +778,7 @@ public class PermanentChoiceTriggerHandlerService {
             return;
         }
 
-        gameData.priorityPassedBy.clear();
-        mutationCoordinator.invalidateAllPlayerViews(gameData);
-        turnProgressionService.resolveAutoPass(gameData);
+        inputCompletionService.processMayAbilitiesThenAutoPass(gameData);
     }
 
     public void handleUpkeepMultiPlayerFirstTarget(GameData gameData, UUID firstPlayerId,
@@ -864,9 +846,7 @@ public class PermanentChoiceTriggerHandlerService {
             return;
         }
 
-        gameData.priorityPassedBy.clear();
-        mutationCoordinator.invalidateAllPlayerViews(gameData);
-        turnProgressionService.resolveAutoPass(gameData);
+        inputCompletionService.processMayAbilitiesThenAutoPass(gameData);
     }
 
     public void handleUpkeepCopyTrigger(GameData gameData, UUID permanentId, PermanentChoiceContext.UpkeepCopyTriggerTarget uct) {
@@ -912,9 +892,7 @@ public class PermanentChoiceTriggerHandlerService {
             return;
         }
 
-        gameData.priorityPassedBy.clear();
-        mutationCoordinator.invalidateAllPlayerViews(gameData);
-        turnProgressionService.resolveAutoPass(gameData);
+        inputCompletionService.processMayAbilitiesThenAutoPass(gameData);
     }
 
     public void handleCapriciousEfreetOwnTarget(GameData gameData, UUID permanentId, PermanentChoiceContext.CapriciousEfreetOwnTarget ceo) {
@@ -986,9 +964,7 @@ public class PermanentChoiceTriggerHandlerService {
             return;
         }
 
-        gameData.priorityPassedBy.clear();
-        mutationCoordinator.invalidateAllPlayerViews(gameData);
-        turnProgressionService.resolveAutoPass(gameData);
+        inputCompletionService.processMayAbilitiesThenAutoPass(gameData);
     }
 
     public void handlePucasMischiefOwnTarget(GameData gameData, UUID permanentId,
@@ -1067,9 +1043,7 @@ public class PermanentChoiceTriggerHandlerService {
             return;
         }
 
-        gameData.priorityPassedBy.clear();
-        mutationCoordinator.invalidateAllPlayerViews(gameData);
-        turnProgressionService.resolveAutoPass(gameData);
+        inputCompletionService.processMayAbilitiesThenAutoPass(gameData);
     }
 
     public void handleLifeGainTrigger(GameData gameData, UUID targetId, PermanentChoiceContext.LifeGainTriggerAnyTarget lgt) {
@@ -1100,8 +1074,7 @@ public class PermanentChoiceTriggerHandlerService {
             return;
         }
 
-        gameData.priorityPassedBy.clear();
-        turnProgressionService.resolveAutoPass(gameData);
+        inputCompletionService.processMayAbilitiesThenAutoPass(gameData);
     }
 
     public void handleDrawTrigger(GameData gameData, UUID targetId, PermanentChoiceContext.DrawTriggerAnyTarget dt) {
@@ -1132,8 +1105,7 @@ public class PermanentChoiceTriggerHandlerService {
             return;
         }
 
-        gameData.priorityPassedBy.clear();
-        turnProgressionService.resolveAutoPass(gameData);
+        inputCompletionService.processMayAbilitiesThenAutoPass(gameData);
     }
 
     public void handleEntersFromGraveyardTrigger(GameData gameData, UUID targetId,
@@ -1164,8 +1136,7 @@ public class PermanentChoiceTriggerHandlerService {
             return;
         }
 
-        gameData.priorityPassedBy.clear();
-        turnProgressionService.resolveAutoPass(gameData);
+        inputCompletionService.processMayAbilitiesThenAutoPass(gameData);
     }
 
     public void handleETBSpellTargetTrigger(GameData gameData, UUID cardId, PermanentChoiceContext.ETBSpellTargetTrigger etbStt) {
@@ -1203,8 +1174,7 @@ public class PermanentChoiceTriggerHandlerService {
             return;
         }
 
-        gameData.priorityPassedBy.clear();
-        turnProgressionService.resolveAutoPass(gameData);
+        inputCompletionService.processMayAbilitiesThenAutoPass(gameData);
     }
 
     public void handleETBTokenMultiTargetTrigger(GameData gameData, UUID chosenId,
@@ -1269,8 +1239,7 @@ public class PermanentChoiceTriggerHandlerService {
             return;
         }
 
-        gameData.priorityPassedBy.clear();
-        turnProgressionService.resolveAutoPass(gameData);
+        inputCompletionService.processMayAbilitiesThenAutoPass(gameData);
     }
 
     public void handleETBTokenTargetTrigger(GameData gameData, UUID targetId, PermanentChoiceContext.ETBTokenTargetTrigger etbTtt) {
@@ -1313,8 +1282,7 @@ public class PermanentChoiceTriggerHandlerService {
             return;
         }
 
-        gameData.priorityPassedBy.clear();
-        turnProgressionService.resolveAutoPass(gameData);
+        inputCompletionService.processMayAbilitiesThenAutoPass(gameData);
     }
 
     public void handleChampionedTrigger(GameData gameData, UUID playerId,
@@ -1367,9 +1335,7 @@ public class PermanentChoiceTriggerHandlerService {
             return;
         }
 
-        gameData.priorityPassedBy.clear();
-        mutationCoordinator.invalidateAllPlayerViews(gameData);
-        turnProgressionService.resolveAutoPass(gameData);
+        inputCompletionService.processMayAbilitiesThenAutoPass(gameData);
     }
 
     public void handleUpkeepPermanentTargetTrigger(GameData gameData, UUID chosenId,
@@ -1401,9 +1367,7 @@ public class PermanentChoiceTriggerHandlerService {
             return;
         }
 
-        gameData.priorityPassedBy.clear();
-        mutationCoordinator.invalidateAllPlayerViews(gameData);
-        turnProgressionService.resolveAutoPass(gameData);
+        inputCompletionService.processMayAbilitiesThenAutoPass(gameData);
     }
 
     public void handleUpkeepAnyTargetTrigger(GameData gameData, UUID chosenId,
@@ -1460,9 +1424,7 @@ public class PermanentChoiceTriggerHandlerService {
             return;
         }
 
-        gameData.priorityPassedBy.clear();
-        mutationCoordinator.invalidateAllPlayerViews(gameData);
-        turnProgressionService.resolveAutoPass(gameData);
+        inputCompletionService.processMayAbilitiesThenAutoPass(gameData);
     }
 
     public void handleBeginningOfCombatTrigger(GameData gameData, UUID permanentId,
@@ -1505,9 +1467,7 @@ public class PermanentChoiceTriggerHandlerService {
             return;
         }
 
-        gameData.priorityPassedBy.clear();
-        mutationCoordinator.invalidateAllPlayerViews(gameData);
-        turnProgressionService.resolveAutoPass(gameData);
+        inputCompletionService.processMayAbilitiesThenAutoPass(gameData);
     }
 
     public void handleSagaChapterTarget(GameData gameData, UUID chosenId, PermanentChoiceContext.SagaChapterTarget sct) {
@@ -1568,8 +1528,7 @@ public class PermanentChoiceTriggerHandlerService {
             return;
         }
 
-        gameData.priorityPassedBy.clear();
-        turnProgressionService.resolveAutoPass(gameData);
+        inputCompletionService.processMayAbilitiesThenAutoPass(gameData);
     }
 
     private String getTargetDisplayName(GameData gameData, UUID targetId) {

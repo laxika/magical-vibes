@@ -41,12 +41,6 @@ class InputHandlerEpilogueRatchetTest {
 
     /** The one file allowed to call resolveAutoPass freely: it IS the shared epilogue. */
     private static final Set<String> SANCTIONED_FILES = Set.of("InputCompletionService.java");
-    private static final Set<String> DEFERRED_PERMANENT_INPUT_FILES = Set.of(
-            "MultiPermanentChoiceHandlerService.java",
-            "PermanentChoiceBattlefieldHandlerService.java",
-            "PermanentChoiceSpellHandlerService.java",
-            "PermanentChoiceTriggerHandlerService.java");
-
     private static final Pattern RESOLVE_AUTO_PASS_RE = Pattern.compile("\\bresolveAutoPass\\s*\\(");
     private static final Pattern INVALIDATE_ALL_PLAYER_VIEWS_RE =
             Pattern.compile("\\binvalidateAllPlayerViews\\s*\\(");
@@ -56,11 +50,7 @@ class InputHandlerEpilogueRatchetTest {
      * Counts may only go DOWN (convert the tail to an InputCompletionService epilogue and
      * lower the entry) — never up.
      */
-    private static final Map<String, Integer> BASELINE = Map.of(
-            "MultiPermanentChoiceHandlerService.java", 17,
-            "PermanentChoiceBattlefieldHandlerService.java", 1,
-            "PermanentChoiceSpellHandlerService.java", 5,
-            "PermanentChoiceTriggerHandlerService.java", 29);
+    private static final Map<String, Integer> BASELINE = Map.of();
 
     @Test
     @DisplayName("No input handler file gains a hand-rolled resolveAutoPass epilogue")
@@ -127,8 +117,6 @@ class InputHandlerEpilogueRatchetTest {
             for (Path path : (Iterable<Path>) files.filter(Files::isRegularFile)
                     .filter(file -> file.toString().endsWith(".java"))
                     .filter(file -> !SANCTIONED_FILES.contains(file.getFileName().toString()))
-                    .filter(file -> !DEFERRED_PERMANENT_INPUT_FILES.contains(
-                            file.getFileName().toString()))
                     .sorted()::iterator) {
                 String source = Files.readString(path, StandardCharsets.UTF_8);
                 Matcher matcher = INVALIDATE_ALL_PLAYER_VIEWS_RE.matcher(source);

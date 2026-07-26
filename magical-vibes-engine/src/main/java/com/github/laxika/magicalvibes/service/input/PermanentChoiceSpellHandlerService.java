@@ -7,11 +7,9 @@ import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.PermanentChoiceContext;
 import com.github.laxika.magicalvibes.model.StackEntry;
 import com.github.laxika.magicalvibes.service.GameBroadcastService;
-import com.github.laxika.magicalvibes.service.event.GameMutationCoordinator;
 import com.github.laxika.magicalvibes.service.effect.normalfx.ExileCastTargetSupport;
 import com.github.laxika.magicalvibes.service.effect.normalfx.ImprovisationCapstoneCastSupport;
 import com.github.laxika.magicalvibes.service.trigger.TriggerCollectionService;
-import com.github.laxika.magicalvibes.service.turn.TurnProgressionService;
 import com.github.laxika.magicalvibes.service.battlefield.GameQueryService;
 import com.github.laxika.magicalvibes.service.graveyard.GraveyardService;
 import lombok.extern.slf4j.Slf4j;
@@ -38,35 +36,29 @@ public class PermanentChoiceSpellHandlerService {
     private final GameBroadcastService gameBroadcastService;
     private final TriggerCollectionService triggerCollectionService;
     private final PlayerInputService playerInputService;
-    private final TurnProgressionService turnProgressionService;
     // @Lazy breaks the cycle: PermanentChoiceSpellHandlerService → ImprovisationCapstoneCastSupport →
     // PlayerInputService → InteractionHandlerRegistry → ImprovisationCapstoneCastChoiceInteractionHandler
     // → ImprovisationCapstoneCastSupport.
     private final ImprovisationCapstoneCastSupport improvisationCapstoneCastSupport;
     private final ExileCastTargetSupport exileCastTargetSupport;
     private final InputCompletionService inputCompletionService;
-    private final GameMutationCoordinator mutationCoordinator;
 
     public PermanentChoiceSpellHandlerService(GameQueryService gameQueryService,
                                               GraveyardService graveyardService,
                                               GameBroadcastService gameBroadcastService,
                                               TriggerCollectionService triggerCollectionService,
                                               PlayerInputService playerInputService,
-                                              TurnProgressionService turnProgressionService,
                                               @Lazy ImprovisationCapstoneCastSupport improvisationCapstoneCastSupport,
                                               ExileCastTargetSupport exileCastTargetSupport,
-                                              @Lazy InputCompletionService inputCompletionService,
-                                              GameMutationCoordinator mutationCoordinator) {
+                                              @Lazy InputCompletionService inputCompletionService) {
         this.gameQueryService = gameQueryService;
         this.graveyardService = graveyardService;
         this.gameBroadcastService = gameBroadcastService;
         this.triggerCollectionService = triggerCollectionService;
         this.playerInputService = playerInputService;
-        this.turnProgressionService = turnProgressionService;
         this.improvisationCapstoneCastSupport = improvisationCapstoneCastSupport;
         this.exileCastTargetSupport = exileCastTargetSupport;
         this.inputCompletionService = inputCompletionService;
-        this.mutationCoordinator = mutationCoordinator;
     }
 
     public void handleSpellRetarget(GameData gameData, UUID permanentId, PermanentChoiceContext.SpellRetarget retarget) {
@@ -97,12 +89,7 @@ public class PermanentChoiceSpellHandlerService {
         // Resume any remaining effects on the retargeting spell/ability that were paused for this
         // async retarget (e.g. Wild Ricochet's "Then copy that spell" after retargeting the original).
         // For flows with nothing left to resolve this is a no-op that falls through to auto-pass.
-        if (gameData.pendingEffectResolutionEntry != null) {
-            inputCompletionService.processMayAbilitiesThenAutoPass(gameData);
-            return;
-        }
-
-        turnProgressionService.resolveAutoPass(gameData);
+        inputCompletionService.processMayAbilitiesThenAutoPass(gameData);
     }
 
     public void handleLibraryCastSpellTarget(GameData gameData, UUID permanentId, PermanentChoiceContext.LibraryCastSpellTarget lct) {
@@ -140,14 +127,7 @@ public class PermanentChoiceSpellHandlerService {
             log.info("Game {} - {} cast-from-library target no longer exists", gameData.id, lct.cardToCast().getName());
         }
 
-        if (!gameData.pendingMayAbilities.isEmpty()) {
-            playerInputService.processNextMayAbility(gameData);
-            return;
-        }
-
-        gameData.priorityPassedBy.clear();
-        mutationCoordinator.invalidateAllPlayerViews(gameData);
-        turnProgressionService.resolveAutoPass(gameData);
+        inputCompletionService.processMayAbilitiesThenAutoPass(gameData);
     }
 
     public void handleExileCastSpellTarget(GameData gameData, UUID permanentId, PermanentChoiceContext.ExileCastSpellTarget ect) {
@@ -271,9 +251,7 @@ public class PermanentChoiceSpellHandlerService {
             return;
         }
 
-        gameData.priorityPassedBy.clear();
-        mutationCoordinator.invalidateAllPlayerViews(gameData);
-        turnProgressionService.resolveAutoPass(gameData);
+        inputCompletionService.processMayAbilitiesThenAutoPass(gameData);
     }
 
     public void handleGraveyardCastSpellTarget(GameData gameData, UUID permanentId, PermanentChoiceContext.GraveyardCastSpellTarget gct) {
@@ -311,14 +289,7 @@ public class PermanentChoiceSpellHandlerService {
             log.info("Game {} - {} cast-from-graveyard target no longer exists", gameData.id, gct.cardToCast().getName());
         }
 
-        if (!gameData.pendingMayAbilities.isEmpty()) {
-            playerInputService.processNextMayAbility(gameData);
-            return;
-        }
-
-        gameData.priorityPassedBy.clear();
-        mutationCoordinator.invalidateAllPlayerViews(gameData);
-        turnProgressionService.resolveAutoPass(gameData);
+        inputCompletionService.processMayAbilitiesThenAutoPass(gameData);
     }
 
     public void handleHandCastSpellTarget(GameData gameData, UUID permanentId, PermanentChoiceContext.HandCastSpellTarget hct) {
@@ -356,9 +327,7 @@ public class PermanentChoiceSpellHandlerService {
             log.info("Game {} - {} cast-from-hand target no longer exists", gameData.id, hct.cardToCast().getName());
         }
 
-        gameData.priorityPassedBy.clear();
-        mutationCoordinator.invalidateAllPlayerViews(gameData);
-        turnProgressionService.resolveAutoPass(gameData);
+        inputCompletionService.processMayAbilitiesThenAutoPass(gameData);
     }
 
     private String getTargetDisplayName(GameData gameData, UUID targetId) {

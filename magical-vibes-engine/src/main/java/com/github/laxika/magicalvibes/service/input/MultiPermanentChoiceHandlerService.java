@@ -22,8 +22,6 @@ import com.github.laxika.magicalvibes.model.effect.EffectDuration;
 import com.github.laxika.magicalvibes.model.effect.GainControlOfTargetEffect;
 import com.github.laxika.magicalvibes.model.effect.GlobalDamageMultiplyingEffect;
 import com.github.laxika.magicalvibes.service.GameBroadcastService;
-import com.github.laxika.magicalvibes.service.event.GameMutationCoordinator;
-import com.github.laxika.magicalvibes.service.state.StateBasedActionService;
 import com.github.laxika.magicalvibes.service.trigger.TriggerCollectionService;
 import com.github.laxika.magicalvibes.service.turn.TurnProgressionService;
 import com.github.laxika.magicalvibes.service.effect.normalfx.DestructionSupport;
@@ -34,7 +32,6 @@ import com.github.laxika.magicalvibes.service.battlefield.GameQueryService;
 import com.github.laxika.magicalvibes.service.battlefield.PermanentRemovalService;
 import com.github.laxika.magicalvibes.model.CounterType;
 import com.github.laxika.magicalvibes.service.effect.normalfx.AnimationSupport;
-import com.github.laxika.magicalvibes.service.effect.EffectResolutionService;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
@@ -61,13 +58,10 @@ public class MultiPermanentChoiceHandlerService {
     private final InputCompletionService inputCompletionService;
     private final GameQueryService gameQueryService;
     private final GameBroadcastService gameBroadcastService;
-    private final GameMutationCoordinator mutationCoordinator;
     private final PermanentRemovalService permanentRemovalService;
     private final PlayerInputService playerInputService;
-    private final StateBasedActionService stateBasedActionService;
     private final TriggerCollectionService triggerCollectionService;
     private final TurnProgressionService turnProgressionService;
-    private final EffectResolutionService effectResolutionService;
     private final com.github.laxika.magicalvibes.service.battlefield.BattlefieldEntryService battlefieldEntryService;
     private final DestructionSupport destructionSupport;
     private final CreatureControlService creatureControlService;
@@ -214,7 +208,7 @@ public class MultiPermanentChoiceHandlerService {
             }
         }
 
-        inputCompletionService.sbaMayAbilitiesThenBroadcastAutoPass(gameData);
+        inputCompletionService.sbaProcessMayAbilitiesThenAutoPassPreservingPriority(gameData);
     }
 
     private void handleGainControlOfLandAndAssignNoCombatDamage(GameData gameData, UUID playerId, List<UUID> permanentIds,
@@ -246,7 +240,7 @@ public class MultiPermanentChoiceHandlerService {
             }
         }
 
-        inputCompletionService.sbaMayAbilitiesThenBroadcastAutoPass(gameData);
+        inputCompletionService.sbaProcessMayAbilitiesThenAutoPassPreservingPriority(gameData);
     }
 
     private void handleTransformAndAttach(GameData gameData, UUID playerId, List<UUID> permanentIds,
@@ -261,7 +255,7 @@ public class MultiPermanentChoiceHandlerService {
                     gameData, playerId, sourcePermId, permanentIds.getFirst());
         }
 
-        inputCompletionService.sbaMayAbilitiesThenBroadcastAutoPass(gameData);
+        inputCompletionService.sbaProcessMayAbilitiesThenAutoPassPreservingPriority(gameData);
     }
 
     private void handleExileDamagedPlayerControlsPermanent(GameData gameData, UUID playerId, List<UUID> permanentIds) {
@@ -280,7 +274,7 @@ public class MultiPermanentChoiceHandlerService {
             }
         }
 
-        inputCompletionService.sbaMayAbilitiesThenBroadcastAutoPass(gameData);
+        inputCompletionService.sbaProcessMayAbilitiesThenAutoPassPreservingPriority(gameData);
     }
 
     private void handleDestroyDamagedPlayerControlsPermanent(GameData gameData, List<UUID> permanentIds,
@@ -293,7 +287,7 @@ public class MultiPermanentChoiceHandlerService {
             }
         }
 
-        inputCompletionService.sbaMayAbilitiesThenBroadcastAutoPass(gameData);
+        inputCompletionService.sbaProcessMayAbilitiesThenAutoPassPreservingPriority(gameData);
     }
 
     private void handleUntapChosenPermanent(GameData gameData, List<UUID> permanentIds,
@@ -308,7 +302,7 @@ public class MultiPermanentChoiceHandlerService {
             }
         }
 
-        inputCompletionService.sbaMayAbilitiesThenBroadcastAutoPass(gameData);
+        inputCompletionService.sbaProcessMayAbilitiesThenAutoPassPreservingPriority(gameData);
     }
 
     private void handleSacrificeDamagedPlayerControlsPermanent(GameData gameData, List<UUID> permanentIds,
@@ -329,7 +323,7 @@ public class MultiPermanentChoiceHandlerService {
             }
         }
 
-        inputCompletionService.sbaMayAbilitiesThenBroadcastAutoPass(gameData);
+        inputCompletionService.sbaProcessMayAbilitiesThenAutoPassPreservingPriority(gameData);
     }
 
     private void handleSacrificeAttackingCreature(GameData gameData, List<UUID> permanentIds) {
@@ -351,7 +345,7 @@ public class MultiPermanentChoiceHandlerService {
             }
         }
 
-        inputCompletionService.sbaMayAbilitiesThenBroadcastAutoPass(gameData);
+        inputCompletionService.sbaProcessMayAbilitiesThenAutoPassPreservingPriority(gameData);
     }
 
     private void handleExileAttackingCreatures(GameData gameData, UUID playerId, List<UUID> permanentIds) {
@@ -378,14 +372,7 @@ public class MultiPermanentChoiceHandlerService {
         }
 
         // Resume resolving remaining effects on the same ability (e.g. the cycling draw)
-        if (gameData.pendingEffectResolutionEntry != null) {
-            effectResolutionService.resolveEffectsFrom(gameData,
-                    gameData.pendingEffectResolutionEntry,
-                    gameData.pendingEffectResolutionIndex);
-        }
-
-        mutationCoordinator.invalidateAllPlayerViews(gameData);
-        turnProgressionService.resolveAutoPass(gameData);
+        inputCompletionService.processMayAbilitiesThenAutoPassPreservingPriority(gameData);
     }
 
     private void handleReturnTargetPermanentsToHand(GameData gameData, UUID playerId, List<UUID> permanentIds) {
@@ -412,14 +399,7 @@ public class MultiPermanentChoiceHandlerService {
         }
 
         // Resume resolving remaining effects on the same ability (e.g. the cycling draw)
-        if (gameData.pendingEffectResolutionEntry != null) {
-            effectResolutionService.resolveEffectsFrom(gameData,
-                    gameData.pendingEffectResolutionEntry,
-                    gameData.pendingEffectResolutionIndex);
-        }
-
-        mutationCoordinator.invalidateAllPlayerViews(gameData);
-        turnProgressionService.resolveAutoPass(gameData);
+        inputCompletionService.processMayAbilitiesThenAutoPassPreservingPriority(gameData);
     }
 
     private void handleForcedSacrifice(GameData gameData, List<UUID> permanentIds,
@@ -469,22 +449,7 @@ public class MultiPermanentChoiceHandlerService {
         permanentRemovalService.removeOrphanedAuras(gameData);
 
         // Follow the same pattern as proliferate completion: SBA → may abilities → resume effects
-        stateBasedActionService.performStateBasedActions(gameData);
-
-        if (!gameData.pendingMayAbilities.isEmpty()) {
-            playerInputService.processNextMayAbility(gameData);
-            return;
-        }
-
-        // Resume resolving remaining effects on the same spell/ability
-        if (gameData.pendingEffectResolutionEntry != null) {
-            effectResolutionService.resolveEffectsFrom(gameData,
-                    gameData.pendingEffectResolutionEntry,
-                    gameData.pendingEffectResolutionIndex);
-        }
-
-        mutationCoordinator.invalidateAllPlayerViews(gameData);
-        turnProgressionService.resolveAutoPass(gameData);
+        inputCompletionService.sbaProcessMayAbilitiesThenAutoPassPreservingPriority(gameData);
     }
 
     private void handleForcedDestroy(GameData gameData, List<UUID> permanentIds,
@@ -498,22 +463,7 @@ public class MultiPermanentChoiceHandlerService {
         }
 
         permanentRemovalService.removeOrphanedAuras(gameData);
-        stateBasedActionService.performStateBasedActions(gameData);
-
-        if (!gameData.pendingMayAbilities.isEmpty()) {
-            playerInputService.processNextMayAbility(gameData);
-            return;
-        }
-
-        // Resume resolving remaining effects on the same spell/ability
-        if (gameData.pendingEffectResolutionEntry != null) {
-            effectResolutionService.resolveEffectsFrom(gameData,
-                    gameData.pendingEffectResolutionEntry,
-                    gameData.pendingEffectResolutionIndex);
-        }
-
-        mutationCoordinator.invalidateAllPlayerViews(gameData);
-        turnProgressionService.resolveAutoPass(gameData);
+        inputCompletionService.sbaProcessMayAbilitiesThenAutoPassPreservingPriority(gameData);
     }
 
     private void handleSacrificeLandsSearchLandsToBattlefieldTapped(GameData gameData, UUID playerId,
@@ -558,22 +508,7 @@ public class MultiPermanentChoiceHandlerService {
         }
 
         // No search begun — follow standard completion: SBA → may abilities → resume effects
-        stateBasedActionService.performStateBasedActions(gameData);
-
-        if (!gameData.pendingMayAbilities.isEmpty()) {
-            playerInputService.processNextMayAbility(gameData);
-            return;
-        }
-
-        // Resume resolving remaining effects on the same spell/ability
-        if (gameData.pendingEffectResolutionEntry != null) {
-            effectResolutionService.resolveEffectsFrom(gameData,
-                    gameData.pendingEffectResolutionEntry,
-                    gameData.pendingEffectResolutionIndex);
-        }
-
-        mutationCoordinator.invalidateAllPlayerViews(gameData);
-        turnProgressionService.resolveAutoPass(gameData);
+        inputCompletionService.sbaProcessMayAbilitiesThenAutoPassPreservingPriority(gameData);
     }
 
     private void handleSacrificePermanentsDrawPerSacrificed(GameData gameData, UUID playerId,
@@ -595,21 +530,7 @@ public class MultiPermanentChoiceHandlerService {
         }
 
         // Standard completion: SBA → may abilities → resume effects
-        stateBasedActionService.performStateBasedActions(gameData);
-
-        if (!gameData.pendingMayAbilities.isEmpty()) {
-            playerInputService.processNextMayAbility(gameData);
-            return;
-        }
-
-        if (gameData.pendingEffectResolutionEntry != null) {
-            effectResolutionService.resolveEffectsFrom(gameData,
-                    gameData.pendingEffectResolutionEntry,
-                    gameData.pendingEffectResolutionIndex);
-        }
-
-        mutationCoordinator.invalidateAllPlayerViews(gameData);
-        turnProgressionService.resolveAutoPass(gameData);
+        inputCompletionService.sbaProcessMayAbilitiesThenAutoPassPreservingPriority(gameData);
     }
 
     private void handleChooseFivePermanentsSearchSameName(GameData gameData, UUID playerId,
@@ -637,21 +558,7 @@ public class MultiPermanentChoiceHandlerService {
         }
 
         // Standard completion: SBA → may abilities → resume effects
-        stateBasedActionService.performStateBasedActions(gameData);
-
-        if (!gameData.pendingMayAbilities.isEmpty()) {
-            playerInputService.processNextMayAbility(gameData);
-            return;
-        }
-
-        if (gameData.pendingEffectResolutionEntry != null) {
-            effectResolutionService.resolveEffectsFrom(gameData,
-                    gameData.pendingEffectResolutionEntry,
-                    gameData.pendingEffectResolutionIndex);
-        }
-
-        mutationCoordinator.invalidateAllPlayerViews(gameData);
-        turnProgressionService.resolveAutoPass(gameData);
+        inputCompletionService.sbaProcessMayAbilitiesThenAutoPassPreservingPriority(gameData);
     }
 
     private void handleDestroyRestChoice(GameData gameData, List<UUID> permanentIds,
@@ -665,22 +572,7 @@ public class MultiPermanentChoiceHandlerService {
 
         // Destruction is complete — follow standard completion: SBA → may abilities → resume effects
         permanentRemovalService.removeOrphanedAuras(gameData);
-        stateBasedActionService.performStateBasedActions(gameData);
-
-        if (!gameData.pendingMayAbilities.isEmpty()) {
-            playerInputService.processNextMayAbility(gameData);
-            return;
-        }
-
-        // Resume resolving remaining effects on the same spell/ability
-        if (gameData.pendingEffectResolutionEntry != null) {
-            effectResolutionService.resolveEffectsFrom(gameData,
-                    gameData.pendingEffectResolutionEntry,
-                    gameData.pendingEffectResolutionIndex);
-        }
-
-        mutationCoordinator.invalidateAllPlayerViews(gameData);
-        turnProgressionService.resolveAutoPass(gameData);
+        inputCompletionService.sbaProcessMayAbilitiesThenAutoPassPreservingPriority(gameData);
     }
 
     private void handleChooseCreatureRestCantBlock(GameData gameData, List<UUID> permanentIds,
@@ -705,21 +597,7 @@ public class MultiPermanentChoiceHandlerService {
         }
 
         // Standard completion: SBA → may abilities → resume effects
-        stateBasedActionService.performStateBasedActions(gameData);
-
-        if (!gameData.pendingMayAbilities.isEmpty()) {
-            playerInputService.processNextMayAbility(gameData);
-            return;
-        }
-
-        if (gameData.pendingEffectResolutionEntry != null) {
-            effectResolutionService.resolveEffectsFrom(gameData,
-                    gameData.pendingEffectResolutionEntry,
-                    gameData.pendingEffectResolutionIndex);
-        }
-
-        mutationCoordinator.invalidateAllPlayerViews(gameData);
-        turnProgressionService.resolveAutoPass(gameData);
+        inputCompletionService.sbaProcessMayAbilitiesThenAutoPassPreservingPriority(gameData);
     }
 
     private void handleCombatDamageBounce(GameData gameData, UUID playerId, List<UUID> permanentIds,
@@ -763,7 +641,7 @@ public class MultiPermanentChoiceHandlerService {
         }
 
         turnProgressionService.advanceStep(gameData);
-        turnProgressionService.resolveAutoPass(gameData);
+        inputCompletionService.processMayAbilitiesThenAutoPassPreservingPriority(gameData);
     }
 
     private void handleAwakeningCounterPlacement(GameData gameData, UUID playerId, List<UUID> permanentIds) {
@@ -799,7 +677,7 @@ public class MultiPermanentChoiceHandlerService {
         }
 
         turnProgressionService.advanceStep(gameData);
-        turnProgressionService.resolveAutoPass(gameData);
+        inputCompletionService.processMayAbilitiesThenAutoPassPreservingPriority(gameData);
     }
 
     private void handleAimCounterPlacement(GameData gameData, List<UUID> permanentIds) {
@@ -808,15 +686,7 @@ public class MultiPermanentChoiceHandlerService {
                     gameData.pendingEffectResolutionEntry, permanentIds, CounterType.AIM);
         }
 
-        // Resume resolving remaining effects on the same spell/ability
-        if (gameData.pendingEffectResolutionEntry != null) {
-            effectResolutionService.resolveEffectsFrom(gameData,
-                    gameData.pendingEffectResolutionEntry,
-                    gameData.pendingEffectResolutionIndex);
-        }
-
-        mutationCoordinator.invalidateAllPlayerViews(gameData);
-        turnProgressionService.resolveAutoPass(gameData);
+        inputCompletionService.processMayAbilitiesThenAutoPassPreservingPriority(gameData);
     }
 
     private void handleOwnPermanentCounterPlacement(GameData gameData, List<UUID> permanentIds,
@@ -832,15 +702,7 @@ public class MultiPermanentChoiceHandlerService {
             }
         }
 
-        // Resume resolving remaining effects on the same spell/ability
-        if (gameData.pendingEffectResolutionEntry != null) {
-            effectResolutionService.resolveEffectsFrom(gameData,
-                    gameData.pendingEffectResolutionEntry,
-                    gameData.pendingEffectResolutionIndex);
-        }
-
-        mutationCoordinator.invalidateAllPlayerViews(gameData);
-        turnProgressionService.resolveAutoPass(gameData);
+        inputCompletionService.processMayAbilitiesThenAutoPassPreservingPriority(gameData);
     }
 
     private void handleProliferate(GameData gameData, UUID playerId, List<UUID> permanentIds,
@@ -919,21 +781,7 @@ public class MultiPermanentChoiceHandlerService {
         }
 
         // All proliferates done — now check SBA
-        stateBasedActionService.performStateBasedActions(gameData);
-
-        if (!gameData.pendingMayAbilities.isEmpty()) {
-            playerInputService.processNextMayAbility(gameData);
-            return;
-        }
-
-        // Resume resolving remaining effects on the same spell/ability (e.g. "Proliferate. Draw a card.")
-        if (gameData.pendingEffectResolutionEntry != null) {
-            effectResolutionService.resolveEffectsFrom(gameData,
-                    gameData.pendingEffectResolutionEntry,
-                    gameData.pendingEffectResolutionIndex);
-        }
-
-        mutationCoordinator.invalidateAllPlayerViews(gameData);
+        inputCompletionService.sbaProcessMayAbilitiesThenAutoPassPreservingPriority(gameData);
     }
 
     private void handleTapSubtypeBoost(GameData gameData, UUID playerId, List<UUID> permanentIds,
@@ -1043,7 +891,7 @@ public class MultiPermanentChoiceHandlerService {
             }
         }
 
-        inputCompletionService.sbaMayAbilitiesThenBroadcastAutoPass(gameData);
+        inputCompletionService.sbaProcessMayAbilitiesThenAutoPassPreservingPriority(gameData);
     }
 
     private void handleTapCreaturesGainLife(GameData gameData, UUID playerId, List<UUID> permanentIds,
@@ -1069,15 +917,7 @@ public class MultiPermanentChoiceHandlerService {
             lifeSupport.applyGainLife(gameData, playerId, context.lifePerCreature() * tappedCount);
         }
 
-        // Resume resolving remaining effects on the same spell/ability
-        if (gameData.pendingEffectResolutionEntry != null) {
-            effectResolutionService.resolveEffectsFrom(gameData,
-                    gameData.pendingEffectResolutionEntry,
-                    gameData.pendingEffectResolutionIndex);
-        }
-
-        mutationCoordinator.invalidateAllPlayerViews(gameData);
-        turnProgressionService.resolveAutoPass(gameData);
+        inputCompletionService.processMayAbilitiesThenAutoPassPreservingPriority(gameData);
     }
 
     private void handleDevourSacrifice(GameData gameData, UUID playerId, List<UUID> permanentIds,
@@ -1113,7 +953,7 @@ public class MultiPermanentChoiceHandlerService {
                 context.targetId(), context.wasCastFromHand(), context.etbMode(), context.kicked());
 
         if (!gameData.interaction.isAwaitingInput()) {
-            inputCompletionService.sbaMayAbilitiesThenBroadcastAutoPass(gameData);
+            inputCompletionService.sbaProcessMayAbilitiesThenAutoPassPreservingPriority(gameData);
         }
     }
 
@@ -1149,15 +989,7 @@ public class MultiPermanentChoiceHandlerService {
             }
         }
 
-        // Resume resolving any remaining effects on the trigger, then continue the game.
-        if (gameData.pendingEffectResolutionEntry != null) {
-            effectResolutionService.resolveEffectsFrom(gameData,
-                    gameData.pendingEffectResolutionEntry,
-                    gameData.pendingEffectResolutionIndex);
-        }
-
-        mutationCoordinator.invalidateAllPlayerViews(gameData);
-        turnProgressionService.resolveAutoPass(gameData);
+        inputCompletionService.processMayAbilitiesThenAutoPassPreservingPriority(gameData);
     }
 
     private void handleKillingWaveKeep(GameData gameData, List<UUID> permanentIds,
@@ -1207,21 +1039,7 @@ public class MultiPermanentChoiceHandlerService {
         }
 
         // Standard completion: SBA → may abilities → resume effects
-        stateBasedActionService.performStateBasedActions(gameData);
-
-        if (!gameData.pendingMayAbilities.isEmpty()) {
-            playerInputService.processNextMayAbility(gameData);
-            return;
-        }
-
-        if (gameData.pendingEffectResolutionEntry != null) {
-            effectResolutionService.resolveEffectsFrom(gameData,
-                    gameData.pendingEffectResolutionEntry,
-                    gameData.pendingEffectResolutionIndex);
-        }
-
-        mutationCoordinator.invalidateAllPlayerViews(gameData);
-        turnProgressionService.resolveAutoPass(gameData);
+        inputCompletionService.sbaProcessMayAbilitiesThenAutoPassPreservingPriority(gameData);
     }
 
     private void handleStaticOrbUntap(GameData gameData, List<UUID> permanentIds,
@@ -1301,9 +1119,7 @@ public class MultiPermanentChoiceHandlerService {
             return;
         }
 
-        gameData.priorityPassedBy.clear();
-        mutationCoordinator.invalidateAllPlayerViews(gameData);
-        turnProgressionService.resolveAutoPass(gameData);
+        inputCompletionService.processMayAbilitiesThenAutoPass(gameData);
     }
 
     private void handlePileSeparation(GameData gameData, List<UUID> permanentIds) {

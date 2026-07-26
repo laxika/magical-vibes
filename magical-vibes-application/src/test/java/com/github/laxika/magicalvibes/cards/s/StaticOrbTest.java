@@ -29,11 +29,14 @@ class StaticOrbTest extends BaseCardTest {
         feather.tap();
 
         advanceToNextTurn(player2);
+        harness.clearMessages();
         harness.handleMultiplePermanentsChosen(player1, List.of(bears.getId(), forest.getId()));
 
         assertThat(bears.isTapped()).isFalse();
         assertThat(forest.isTapped()).isFalse();
         assertThat(feather.isTapped()).isTrue();
+        assertThat(harness.getConn1().getMessagesContaining("\"type\":\"GAME_STATE\"")).hasSize(1);
+        assertThat(harness.getConn2().getMessagesContaining("\"type\":\"GAME_STATE\"")).hasSize(1);
     }
 
     @Test

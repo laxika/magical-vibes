@@ -64,11 +64,16 @@ class CapriciousEfreetTest extends BaseCardTest {
         advanceToUpkeep(player1);
 
         // Step 1: choose own target
+        harness.clearMessages();
         harness.handlePermanentChosen(player1, bears.getId());
 
         // Step 2: multi-permanent choice for opponent targets
         assertThat(gd.interaction.activeInteraction())
                 .isInstanceOf(PendingInteraction.MultiPermanentChoice.class);
+        assertThat(harness.getConn1().getMessagesContaining("\"type\":\"INTERACTION_PROMPT\""))
+                .hasSize(1);
+        assertThat(harness.getConn1().getMessagesContaining("\"type\":\"GAME_STATE\"")).isEmpty();
+        assertThat(harness.getConn2().getMessagesContaining("\"type\":\"GAME_STATE\"")).isEmpty();
     }
 
     @Test
@@ -80,11 +85,14 @@ class CapriciousEfreetTest extends BaseCardTest {
 
         advanceToUpkeep(player1);
         harness.handlePermanentChosen(player1, bears.getId());
+        harness.clearMessages();
         harness.handleMultiplePermanentsChosen(player1, List.of()); // zero opponents
 
         assertThat(gd.stack).hasSize(1);
         assertThat(gd.stack.getFirst().getTargetIds())
                 .containsExactly(bears.getId());
+        assertThat(harness.getConn1().getMessagesContaining("\"type\":\"GAME_STATE\"")).hasSize(1);
+        assertThat(harness.getConn2().getMessagesContaining("\"type\":\"GAME_STATE\"")).hasSize(1);
     }
 
     @Test

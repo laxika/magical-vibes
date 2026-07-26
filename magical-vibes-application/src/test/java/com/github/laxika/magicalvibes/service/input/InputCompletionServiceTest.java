@@ -234,6 +234,44 @@ class InputCompletionServiceTest {
     }
 
     @Test
+    void interactionOpenedByStateBasedActionsDefersMayAbilitiesAndParkedResolution() {
+        StackEntry parked = parkResolution();
+        gameData.pendingMayAbilities.add(pendingMayAbility());
+        InteractionHandlerRegistry interactions = mayInteractionRegistry();
+        doAnswer(invocation -> {
+            interactions.begin(gameData, new PendingInteraction.MayAbilityChoice(
+                    playerId, "Choose a legendary permanent to keep", null));
+            return null;
+        }).when(stateBasedActionService).performStateBasedActions(gameData);
+
+        mutate(() -> service.sbaProcessMayAbilitiesThenAutoPassPreservingPriority(gameData));
+
+        assertThat(lastKinds()).containsExactly(GameEventKind.DECISION_REQUESTED);
+        assertThat(gameData.pendingEffectResolutionEntry).isSameAs(parked);
+        verify(playerInputService, never()).processNextMayAbility(gameData);
+        verify(effectResolutionService, never()).resolveEffectsFrom(gameData, parked, 2);
+        verify(turnProgressionService, never()).resolveAutoPass(gameData);
+    }
+
+    @Test
+    void manaAbilityCompletionPublishesAfterSbaAndAutoPassWithoutResumingAnUnrelatedPark() {
+        StackEntry parked = parkResolution();
+        doAnswer(invocation -> {
+            assertThat(gameData.pendingEffectResolutionEntry).isSameAs(parked);
+            return null;
+        }).when(turnProgressionService).resolveAutoPass(gameData);
+
+        mutate(() -> service.sbaThenAutoPassWithoutResumingParkedResolution(gameData));
+
+        assertThat(lastKinds()).containsExactly(GameEventKind.STATE_INVALIDATED);
+        assertThat(gameData.pendingEffectResolutionEntry).isSameAs(parked);
+        InOrder order = inOrder(stateBasedActionService, turnProgressionService);
+        order.verify(stateBasedActionService).performStateBasedActions(gameData);
+        order.verify(turnProgressionService).resolveAutoPass(gameData);
+        verifyNoInteractions(effectResolutionService);
+    }
+
+    @Test
     void validationExceptionDiscardsAnIncompleteAnswersObservation() {
         assertThatThrownBy(() -> mutate(() -> {
             service.publishStateAfterInput(gameData);

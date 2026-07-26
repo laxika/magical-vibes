@@ -22,7 +22,6 @@ import com.github.laxika.magicalvibes.model.effect.EffectDuration;
 import com.github.laxika.magicalvibes.model.effect.CreateTokenEffect;
 import com.github.laxika.magicalvibes.model.effect.GainControlOfTargetEffect;
 import com.github.laxika.magicalvibes.service.GameBroadcastService;
-import com.github.laxika.magicalvibes.service.event.GameMutationCoordinator;
 import com.github.laxika.magicalvibes.service.state.StateBasedActionService;
 import com.github.laxika.magicalvibes.service.trigger.TriggerCollectionService;
 import com.github.laxika.magicalvibes.service.trigger.TriggerTargetCollector;
@@ -68,7 +67,6 @@ public class PermanentChoiceBattlefieldHandlerService {
     private final CloneService cloneService;
     private final WarpWorldService warpWorldService;
     private final GameBroadcastService gameBroadcastService;
-    private final GameMutationCoordinator mutationCoordinator;
     private final AbilityActivationService abilityActivationService;
     private final PermanentRemovalService permanentRemovalService;
     private final PlayerInputService playerInputService;
@@ -105,10 +103,7 @@ public class PermanentChoiceBattlefieldHandlerService {
         gameBroadcastService.logAndBroadcast(gameData, GameLog.text(playerName + " adds " + context.amount() + " "
                 + context.color().getCode() + " from " + context.sourceCardName() + "."));
 
-        gameData.priorityPassedBy.clear();
-        stateBasedActionService.performStateBasedActions(gameData);
-        mutationCoordinator.invalidateAllPlayerViews(gameData);
-        turnProgressionService.resolveAutoPass(gameData);
+        inputCompletionService.sbaThenAutoPassWithoutResumingParkedResolution(gameData);
     }
 
     public void handleCloneCopy(GameData gameData, UUID permanentId) {

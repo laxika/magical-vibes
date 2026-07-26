@@ -157,12 +157,18 @@ class WildEvocationTest extends BaseCardTest {
         advanceToUpkeep(player1);
         harness.passBothPriorities(); // resolve trigger
 
+        assertThat(gd.pendingEffectResolutionEntry).isNotNull();
+        harness.clearMessages();
+
         // Choose the creature as target
         harness.handlePermanentChosen(player1, creature.getId());
 
         assertThat(gd.stack)
                 .anyMatch(se -> se.getCard().getName().equals("Lightning Bolt")
                         && se.getTargetId().equals(creature.getId()));
+        assertThat(gd.pendingEffectResolutionEntry).isNull();
+        assertThat(harness.getConn1().getMessagesContaining("\"type\":\"GAME_STATE\"")).hasSize(1);
+        assertThat(harness.getConn2().getMessagesContaining("\"type\":\"GAME_STATE\"")).hasSize(1);
     }
 
     @Test
