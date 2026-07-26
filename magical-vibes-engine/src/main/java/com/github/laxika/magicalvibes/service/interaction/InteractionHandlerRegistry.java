@@ -109,7 +109,9 @@ public class InteractionHandlerRegistry {
         UUID decider = active.decidingPlayerId();
         UUID recipient = resolveMessageRecipient(gameData, decider);
         if (mutationCoordinatorSupplier == null) {
-            handler.prompt(gameData, active, recipient);
+            if (!isCombatInteraction(active)) {
+                handler.prompt(gameData, active, recipient);
+            }
             return;
         }
         mutationCoordinatorSupplier.get().emit(gameData,
@@ -145,7 +147,7 @@ public class InteractionHandlerRegistry {
             return false;
         }
         InteractionHandler<PendingInteraction> handler = handlerFor(active);
-        if (handler == null) {
+        if (handler == null || isCombatInteraction(active)) {
             return false;
         }
         handler.prompt(gameData, active, recipientId);
@@ -184,7 +186,8 @@ public class InteractionHandlerRegistry {
         if (handler == null) {
             return false;
         }
-        if (reconnectingPlayerId.equals(active.decidingPlayerId())) {
+        if (reconnectingPlayerId.equals(active.decidingPlayerId())
+                && !isCombatInteraction(active)) {
             handler.prompt(gameData, active, reconnectingPlayerId);
         }
         return true;
@@ -210,5 +213,11 @@ public class InteractionHandlerRegistry {
             return gameData.mindControllerPlayerId;
         }
         return playerId;
+    }
+
+    private static boolean isCombatInteraction(PendingInteraction interaction) {
+        return interaction instanceof PendingInteraction.AttackerDeclaration
+                || interaction instanceof PendingInteraction.BlockerDeclaration
+                || interaction instanceof PendingInteraction.CombatDamageAssignment;
     }
 }

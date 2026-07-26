@@ -46,6 +46,10 @@ class LegacyNotificationSurfaceRatchetTest {
             "turn/AutoPassService.java",
             "turn/TurnProgressionService.java",
             "effect/normalfx/KarnRestartGameEffectHandler.java");
+    private static final Set<String> COMBAT_INTERACTION_HANDLERS = Set.of(
+            "interaction/AttackerDeclarationInteractionHandler.java",
+            "interaction/BlockerDeclarationInteractionHandler.java",
+            "interaction/CombatDamageAssignmentInteractionHandler.java");
 
     private static final Map<LegacySurface, Map<String, Integer>> BASELINE = new EnumMap<>(LegacySurface.class);
 
@@ -58,7 +62,7 @@ class LegacyNotificationSurfaceRatchetTest {
         BASELINE.put(LegacySurface.SESSION_SEND, Map.of(
                 ROOT_FAMILY, 1,
                 "effect/normalfx", 7,
-                "interaction", 33));
+                "interaction", 30));
 
         BASELINE.put(LegacySurface.LOG_AND_BROADCAST, Map.ofEntries(
                 Map.entry(ROOT_FAMILY, 111),
@@ -67,7 +71,6 @@ class LegacyNotificationSurfaceRatchetTest {
                 Map.entry("aura", 4),
                 Map.entry("battle", 4),
                 Map.entry("battlefield", 40),
-                Map.entry("combat", 78),
                 Map.entry("effect", 2),
                 Map.entry("effect/mayfx", 23),
                 Map.entry("effect/normalfx", 1275),
@@ -136,6 +139,37 @@ class LegacyNotificationSurfaceRatchetTest {
 
         assertThat(failures)
                 .withFailMessage(() -> "Migrated lifecycle notification surface regressed:\n  "
+                        + String.join("\n  ", failures))
+                .isEmpty();
+    }
+
+    @Test
+    void combatPackagesAndInteractionHandlersHaveNoLegacyNotificationSurface() throws IOException {
+        Path serviceRoot = locateRepoRoot().resolve(SERVICE_ROOT);
+        List<Path> sources = new ArrayList<>();
+        try (Stream<Path> paths = Files.walk(serviceRoot.resolve("combat"))) {
+            paths.filter(Files::isRegularFile)
+                    .filter(path -> path.toString().endsWith(".java"))
+                    .forEach(sources::add);
+        }
+        COMBAT_INTERACTION_HANDLERS.stream()
+                .map(serviceRoot::resolve)
+                .forEach(sources::add);
+
+        List<String> failures = new ArrayList<>();
+        for (Path path : sources) {
+            String source = Files.readString(path, StandardCharsets.UTF_8);
+            for (LegacySurface surface : LegacySurface.values()) {
+                int current = count(source, surface.pattern);
+                if (current != 0) {
+                    failures.add(serviceRoot.relativize(path) + " retains "
+                            + current + " " + surface + " call(s)");
+                }
+            }
+        }
+
+        assertThat(failures)
+                .withFailMessage(() -> "Combat notification migration regressed:\n  "
                         + String.join("\n  ", failures))
                 .isEmpty();
     }

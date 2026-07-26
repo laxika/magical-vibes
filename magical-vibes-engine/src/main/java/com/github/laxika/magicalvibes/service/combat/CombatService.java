@@ -11,6 +11,7 @@ import com.github.laxika.magicalvibes.model.action.SacrificeAtEndOfCombat;
 import com.github.laxika.magicalvibes.model.ActivatedAbility;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardSubtype;
+import com.github.laxika.magicalvibes.model.CombatAttackTarget;
 import com.github.laxika.magicalvibes.model.CounterType;
 import com.github.laxika.magicalvibes.model.GameData;
 import com.github.laxika.magicalvibes.model.GameLog;
@@ -22,16 +23,14 @@ import com.github.laxika.magicalvibes.model.effect.CardEffect;
 import com.github.laxika.magicalvibes.model.effect.ControlDuration;
 import com.github.laxika.magicalvibes.model.effect.GainControlOfTargetEffect;
 import com.github.laxika.magicalvibes.model.effect.RemoveCounterFromSourceEffect;
-import com.github.laxika.magicalvibes.networking.message.AttackTarget;
-import com.github.laxika.magicalvibes.networking.message.AvailableBlockersMessage;
 import com.github.laxika.magicalvibes.networking.message.BlockerAssignment;
-import com.github.laxika.magicalvibes.service.GameBroadcastService;
 import com.github.laxika.magicalvibes.service.battlefield.BattlefieldEntryService;
 import com.github.laxika.magicalvibes.service.battlefield.CreatureControlService;
 import com.github.laxika.magicalvibes.service.battlefield.GameQueryService;
 import com.github.laxika.magicalvibes.service.battlefield.PermanentRemovalService;
 import com.github.laxika.magicalvibes.service.effect.normalfx.DamageSupport;
 import com.github.laxika.magicalvibes.service.effect.normalfx.PermanentCounterSupport;
+import com.github.laxika.magicalvibes.service.event.GameMutationCoordinator;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
@@ -61,7 +60,7 @@ public class CombatService {
     private final CombatAttackService combatAttackService;
     private final CombatBlockService combatBlockService;
     private final CombatDamageService combatDamageService;
-    private final GameBroadcastService gameBroadcastService;
+    private final GameMutationCoordinator mutationCoordinator;
     private final PermanentRemovalService permanentRemovalService;
     private final BattlefieldEntryService battlefieldEntryService;
     private final GameQueryService gameQueryService;
@@ -82,7 +81,7 @@ public class CombatService {
         return combatAttackService.getMustAttackIndices(gameData, playerId, attackableIndices);
     }
 
-    public List<AttackTarget> buildAvailableTargets(GameData gameData, UUID activePlayerId) {
+    public List<CombatAttackTarget> buildAvailableTargets(GameData gameData, UUID activePlayerId) {
         return combatAttackService.buildAvailableTargets(gameData, activePlayerId);
     }
 
@@ -122,14 +121,6 @@ public class CombatService {
                                                               UUID defenderId,
                                                               UUID attackerId) {
         return combatBlockService.computeLegalBlockPairs(gameData, blockerIndices, attackerIndices, defenderId, attackerId);
-    }
-
-    public AvailableBlockersMessage buildAvailableBlockersMessage(GameData gameData,
-                                                                   List<Integer> blockable,
-                                                                   List<Integer> attackerIndices,
-                                                                   UUID defenderId,
-                                                                   UUID activeId) {
-        return combatBlockService.buildAvailableBlockersMessage(gameData, blockable, attackerIndices, defenderId, activeId);
     }
 
     public CombatResult handleDeclareBlockersStep(GameData gameData) {
@@ -188,7 +179,7 @@ public class CombatService {
             }
             if (perm != null) {
                 permanentRemovalService.removePermanentToGraveyard(gameData, perm);
-                gameBroadcastService.logAndBroadcast(gameData, GameLog.isSacrificed(perm.getCard()));
+                mutationCoordinator.appendPublicGameLog(gameData, GameLog.isSacrificed(perm.getCard()));
                 log.info("Game {} - {} sacrificed at end of combat", gameData.id, perm.getCard().getName());
             }
         }
@@ -225,7 +216,7 @@ public class CombatService {
 
             for (Permanent equipment : equipmentToDestroy) {
                 if (permanentRemovalService.tryDestroyPermanent(gameData, equipment)) {
-                    gameBroadcastService.logAndBroadcast(gameData, GameLog.isDestroyed(equipment.getCard()));
+                    mutationCoordinator.appendPublicGameLog(gameData, GameLog.isDestroyed(equipment.getCard()));
                     log.info("Game {} - {} destroyed at end of combat (equipment destruction)",
                             gameData.id, equipment.getCard().getName());
                 }
@@ -270,7 +261,7 @@ public class CombatService {
             }
             perm.setCounterCount(CounterType.MINUS_ONE_MINUS_ONE,
                     perm.getCounterCount(CounterType.MINUS_ONE_MINUS_ONE) + counters);
-            gameBroadcastService.logAndBroadcast(gameData, GameLog.cardThen(perm.getCard(),
+            mutationCoordinator.appendPublicGameLog(gameData, GameLog.cardThen(perm.getCard(),
                     " gets " + counters + " -1/-1 counter(s)."));
             log.info("Game {} - {} gets {} -1/-1 counter(s) at end of combat",
                     gameData.id, perm.getCard().getName(), counters);
@@ -308,7 +299,7 @@ public class CombatService {
                 grantParalyzationRemoveAbility(perm);
             }
             String tapText = action.alsoTap() ? " and becomes tapped" : "";
-            gameBroadcastService.logAndBroadcast(gameData, GameLog.cardThen(perm.getCard(),
+            mutationCoordinator.appendPublicGameLog(gameData, GameLog.cardThen(perm.getCard(),
                     " gets " + action.amount() + " counter(s)" + tapText + "."));
             log.info("Game {} - {} gets {} {} counter(s){} at end of combat",
                     gameData.id, perm.getCard().getName(), action.amount(), action.counterType(),
@@ -350,7 +341,7 @@ public class CombatService {
             }
             int removed = Math.min(action.amount(), current);
             perm.setCounterCount(action.counterType(), current - removed);
-            gameBroadcastService.logAndBroadcast(gameData, GameLog.cardThen(perm.getCard(),
+            mutationCoordinator.appendPublicGameLog(gameData, GameLog.cardThen(perm.getCard(),
                     " loses " + removed + " counter(s)."));
             log.info("Game {} - {} loses {} {} counter(s) at end of combat",
                     gameData.id, perm.getCard().getName(), removed, action.counterType());
@@ -426,7 +417,7 @@ public class CombatService {
 
             battlefieldEntryService.putPermanentOntoBattlefield(gameData, controllerId, newPerm);
 
-            gameBroadcastService.logAndBroadcast(gameData, GameLog.cardTextCard(originalCard,
+            mutationCoordinator.appendPublicGameLog(gameData, GameLog.cardTextCard(originalCard,
                     " is exiled and returns transformed as ", backFace, "."));
             log.info("Game {} - {} exiled and returned transformed as {}",
                     gameData.id, originalCard.getName(), backFace.getName());

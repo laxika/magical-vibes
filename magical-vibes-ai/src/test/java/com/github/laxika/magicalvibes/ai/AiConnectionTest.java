@@ -1,16 +1,23 @@
 package com.github.laxika.magicalvibes.ai;
 
 import com.github.laxika.magicalvibes.networking.message.ErrorMessage;
+import com.github.laxika.magicalvibes.networking.message.AvailableAttackersMessage;
+import com.github.laxika.magicalvibes.networking.message.AvailableBlockersMessage;
+import com.github.laxika.magicalvibes.networking.message.CombatDamageAssignmentNotification;
 import com.github.laxika.magicalvibes.networking.message.GameOverMessage;
 import com.github.laxika.magicalvibes.networking.message.GameStateMessage;
 import com.github.laxika.magicalvibes.networking.model.MessageType;
 import org.junit.jupiter.api.Test;
 
+import java.util.ArrayList;
+import java.util.Collections;
+import java.util.List;
 import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicInteger;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.doAnswer;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.timeout;
@@ -91,5 +98,29 @@ class AiConnectionTest {
 
         assertThat(connection.isOpen()).isFalse();
         verifyNoInteractions(engine);
+    }
+
+    @Test
+    void combatDecisionMessagesWakeTheAiIndependentlyAndInOrder() throws Exception {
+        AiDecisionEngine engine = mock(AiDecisionEngine.class);
+        CountDownLatch handled = new CountDownLatch(3);
+        List<MessageType> types = Collections.synchronizedList(new ArrayList<>());
+        doAnswer(invocation -> {
+            types.add(invocation.getArgument(0));
+            handled.countDown();
+            return null;
+        }).when(engine).handleEvent(any(MessageType.class));
+
+        AiConnection connection = new AiConnection("test", engine, 0);
+        connection.sendMessage(mock(AvailableAttackersMessage.class));
+        connection.sendMessage(mock(AvailableBlockersMessage.class));
+        connection.sendMessage(mock(CombatDamageAssignmentNotification.class));
+
+        assertThat(handled.await(1, TimeUnit.SECONDS)).isTrue();
+        assertThat(types).containsExactly(
+                MessageType.AVAILABLE_ATTACKERS,
+                MessageType.AVAILABLE_BLOCKERS,
+                MessageType.COMBAT_DAMAGE_ASSIGNMENT);
+        connection.close();
     }
 }

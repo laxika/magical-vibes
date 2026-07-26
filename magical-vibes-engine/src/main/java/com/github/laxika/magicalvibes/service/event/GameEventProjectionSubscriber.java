@@ -8,8 +8,13 @@ import com.github.laxika.magicalvibes.model.event.GameEventEnvelope;
 import com.github.laxika.magicalvibes.model.event.GameEventFact;
 import com.github.laxika.magicalvibes.networking.message.GameOverMessage;
 import com.github.laxika.magicalvibes.networking.message.GameStateMessage;
+import com.github.laxika.magicalvibes.networking.message.AttackTarget;
+import com.github.laxika.magicalvibes.networking.message.AvailableAttackersMessage;
+import com.github.laxika.magicalvibes.networking.message.AvailableBlockersMessage;
+import com.github.laxika.magicalvibes.networking.message.CombatDamageAssignmentNotification;
 import com.github.laxika.magicalvibes.networking.message.MulliganResolvedMessage;
 import com.github.laxika.magicalvibes.networking.message.SelectCardsToBottomMessage;
+import com.github.laxika.magicalvibes.networking.model.CombatDamageTargetView;
 import com.github.laxika.magicalvibes.networking.model.GameLogEntryView;
 import com.github.laxika.magicalvibes.networking.service.GameLogViewFactory;
 import com.github.laxika.magicalvibes.service.GameMessageTransport;
@@ -145,12 +150,69 @@ public class GameEventProjectionSubscriber implements GameEventSubscriber {
                     decision.decisionId(), decision.decisionKind());
             return;
         }
+        if (projectCombatDecision(gameData, decision, authorizedRecipients)) {
+            return;
+        }
         for (UUID recipient : authorizedRecipients) {
             if (!interactionHandlerRegistry.promptActiveTo(gameData, recipient)) {
                 log.warn("Cannot project interaction decision {}: no active registered interaction",
                         decision.decisionId());
             }
         }
+    }
+
+    private boolean projectCombatDecision(
+            GameData gameData,
+            GameEventFact.DecisionRequested decision,
+            Set<UUID> recipients) {
+        PendingInteraction active = gameData.interaction.activeInteraction();
+        if (decision.decisionKind() == GameEventFact.DecisionKind.ATTACKER_DECLARATION
+                && active instanceof PendingInteraction.AttackerDeclaration attackers) {
+            List<AttackTarget> targets = attackers.availableTargets().stream()
+                    .map(target -> new AttackTarget(
+                            target.id().toString(), target.name(), target.isPlayer()))
+                    .toList();
+            transport.sendToPlayers(recipients, new AvailableAttackersMessage(
+                    attackers.attackerIndices(),
+                    attackers.mustAttackIndices(),
+                    targets,
+                    attackers.taxPerCreature(),
+                    attackers.mustAttackWithAtLeastOne()));
+            return true;
+        }
+        if (decision.decisionKind() == GameEventFact.DecisionKind.BLOCKER_DECLARATION
+                && active instanceof PendingInteraction.BlockerDeclaration blockers) {
+            transport.sendToPlayers(recipients, new AvailableBlockersMessage(
+                    blockers.blockerIndices(),
+                    blockers.attackerIndices(),
+                    blockers.legalBlockPairs(),
+                    blockers.mustBeBlockedAttackerIndices(),
+                    blockers.menaceAttackerIndices(),
+                    blockers.mustBlockRequirements()));
+            return true;
+        }
+        if (decision.decisionKind() == GameEventFact.DecisionKind.COMBAT_DAMAGE_ASSIGNMENT
+                && active instanceof PendingInteraction.CombatDamageAssignment assignment) {
+            List<CombatDamageTargetView> targetViews = assignment.validTargets().stream()
+                    .map(target -> new CombatDamageTargetView(
+                            target.id().toString(),
+                            target.name(),
+                            target.effectiveToughness(),
+                            target.currentDamage(),
+                            target.isPlayer()))
+                    .toList();
+            transport.sendToPlayers(recipients, new CombatDamageAssignmentNotification(
+                    assignment.attackerIndex(),
+                    assignment.attackerPermanentId().toString(),
+                    assignment.attackerName(),
+                    assignment.totalDamage(),
+                    targetViews,
+                    assignment.isTrample(),
+                    assignment.isDeathtouch(),
+                    assignment.singleRecipient()));
+            return true;
+        }
+        return false;
     }
 
     private Set<UUID> decisionRecipients(

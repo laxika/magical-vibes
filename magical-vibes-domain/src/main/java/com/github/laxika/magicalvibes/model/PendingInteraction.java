@@ -1129,6 +1129,10 @@ public sealed interface PendingInteraction permits PermanentChoiceContext,
                                   boolean isTrample, boolean isDeathtouch, boolean singleRecipient)
             implements PendingInteraction {
 
+        public CombatDamageAssignment {
+            validTargets = java.util.List.copyOf(validTargets);
+        }
+
         @Override
         public UUID decidingPlayerId() {
             return playerId;
@@ -1141,11 +1145,27 @@ public sealed interface PendingInteraction permits PermanentChoiceContext,
     }
 
     /**
-     * The active player's attacker declaration. The available-attackers notification is
-     * re-derived from live combat state at prompt time (the legacy begin site and reconnect
-     * replay both did the same re-derivation), so the record carries only the decider.
+     * The active player's attacker declaration. All legality metadata is captured before the
+     * decision event is emitted so initial delivery, invalid-answer retry, and reconnect replay
+     * project the same finalized legal answer space.
      */
-    record AttackerDeclaration(UUID activePlayerId) implements PendingInteraction {
+    record AttackerDeclaration(UUID activePlayerId,
+                               java.util.List<Integer> attackerIndices,
+                               java.util.List<Integer> mustAttackIndices,
+                               java.util.List<CombatAttackTarget> availableTargets,
+                               int taxPerCreature,
+                               boolean mustAttackWithAtLeastOne) implements PendingInteraction {
+
+        public AttackerDeclaration {
+            attackerIndices = java.util.List.copyOf(attackerIndices);
+            mustAttackIndices = java.util.List.copyOf(mustAttackIndices);
+            availableTargets = java.util.List.copyOf(availableTargets);
+        }
+
+        public AttackerDeclaration(UUID activePlayerId) {
+            this(activePlayerId, java.util.List.of(), java.util.List.of(),
+                    java.util.List.of(), 0, false);
+        }
 
         @Override
         public UUID decidingPlayerId() {
@@ -1159,10 +1179,39 @@ public sealed interface PendingInteraction permits PermanentChoiceContext,
     }
 
     /**
-     * The defending player's blocker declaration. The available-blockers notification is
-     * re-derived from live combat state at prompt time, so the record carries only the decider.
+     * The defending player's blocker declaration. Legal pairs and requirement metadata are
+     * captured before the decision event is emitted so no later projection can observe a
+     * partially-computed or changed legal answer space.
      */
-    record BlockerDeclaration(UUID defenderId) implements PendingInteraction {
+    record BlockerDeclaration(UUID defenderId,
+                              java.util.List<Integer> blockerIndices,
+                              java.util.List<Integer> attackerIndices,
+                              java.util.Map<Integer, java.util.List<Integer>> legalBlockPairs,
+                              java.util.List<Integer> mustBeBlockedAttackerIndices,
+                              java.util.List<Integer> menaceAttackerIndices,
+                              java.util.Map<Integer, java.util.List<Integer>> mustBlockRequirements)
+            implements PendingInteraction {
+
+        public BlockerDeclaration {
+            blockerIndices = java.util.List.copyOf(blockerIndices);
+            attackerIndices = java.util.List.copyOf(attackerIndices);
+            legalBlockPairs = copyIndexMap(legalBlockPairs);
+            mustBeBlockedAttackerIndices = java.util.List.copyOf(mustBeBlockedAttackerIndices);
+            menaceAttackerIndices = java.util.List.copyOf(menaceAttackerIndices);
+            mustBlockRequirements = copyIndexMap(mustBlockRequirements);
+        }
+
+        public BlockerDeclaration(UUID defenderId) {
+            this(defenderId, java.util.List.of(), java.util.List.of(), java.util.Map.of(),
+                    java.util.List.of(), java.util.List.of(), java.util.Map.of());
+        }
+
+        private static java.util.Map<Integer, java.util.List<Integer>> copyIndexMap(
+                java.util.Map<Integer, java.util.List<Integer>> source) {
+            java.util.Map<Integer, java.util.List<Integer>> copy = new java.util.LinkedHashMap<>();
+            source.forEach((key, value) -> copy.put(key, java.util.List.copyOf(value)));
+            return java.util.Collections.unmodifiableMap(copy);
+        }
 
         @Override
         public UUID decidingPlayerId() {

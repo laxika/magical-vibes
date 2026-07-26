@@ -18,7 +18,6 @@ import com.github.laxika.magicalvibes.model.effect.MillEffect;
 import com.github.laxika.magicalvibes.model.effect.MillRecipient;
 import com.github.laxika.magicalvibes.model.effect.DiscardEffect;
 import com.github.laxika.magicalvibes.model.effect.DiscardRecipient;
-import com.github.laxika.magicalvibes.networking.SessionManager;
 import com.github.laxika.magicalvibes.service.DamagePreventionService;
 import com.github.laxika.magicalvibes.service.GameBroadcastService;
 import com.github.laxika.magicalvibes.service.GameOutcomeService;
@@ -27,6 +26,7 @@ import com.github.laxika.magicalvibes.service.trigger.TriggerCollectionService;
 import com.github.laxika.magicalvibes.service.battlefield.GameQueryService;
 import com.github.laxika.magicalvibes.service.battlefield.PermanentRemovalService;
 import com.github.laxika.magicalvibes.service.effect.normalfx.LifeSupport;
+import com.github.laxika.magicalvibes.service.event.GameMutationCoordinator;
 import com.github.laxika.magicalvibes.service.graveyard.GraveyardService;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
@@ -67,7 +67,7 @@ class CombatDamageServiceTest {
     @Mock private GraveyardService graveyardService;
     @Mock private PermanentRemovalService permanentRemovalService;
     @Mock private PlayerInputService playerInputService;
-    @Mock private SessionManager sessionManager;
+    @Mock private GameMutationCoordinator mutationCoordinator;
     @Mock private TriggerCollectionService triggerCollectionService;
     @Mock private LifeSupport lifeSupport;
     @Mock private CombatAttackService combatAttackService;
@@ -86,7 +86,6 @@ class CombatDamageServiceTest {
         com.github.laxika.magicalvibes.service.interaction.InteractionHandlerRegistry registry =
                 new com.github.laxika.magicalvibes.service.interaction.InteractionHandlerRegistry();
         registry.register(new com.github.laxika.magicalvibes.service.interaction.CombatDamageAssignmentInteractionHandler(
-                sessionManager,
                 org.mockito.Mockito.mock(CombatService.class),
                 org.mockito.Mockito.mock(com.github.laxika.magicalvibes.service.turn.TurnProgressionService.class)));
         // Real SBA service wired from the same mocks: combat deaths are decided by the
@@ -101,7 +100,7 @@ class CombatDamageServiceTest {
         combatDamageService = new CombatDamageService(gameQueryService,
                 org.mockito.Mockito.mock(com.github.laxika.magicalvibes.service.filter.PredicateEvaluationService.class),
                 org.mockito.Mockito.mock(com.github.laxika.magicalvibes.service.effect.ConditionEvaluationService.class),
-                gameBroadcastService, gameOutcomeService, damagePreventionService, graveyardService,
+                mutationCoordinator, gameOutcomeService, damagePreventionService, graveyardService,
                 permanentRemovalService, playerInputService, registry, triggerCollectionService,
                 lifeSupport, combatAttackService, combatTriggerService,
                 org.mockito.Mockito.mock(com.github.laxika.magicalvibes.service.effect.normalfx.DamageSupport.class),

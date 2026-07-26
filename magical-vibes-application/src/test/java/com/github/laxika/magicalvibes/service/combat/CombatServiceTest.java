@@ -8,15 +8,15 @@ import com.github.laxika.magicalvibes.model.CombatDamagePhase1State;
 import com.github.laxika.magicalvibes.model.GameData;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.Player;
-import com.github.laxika.magicalvibes.networking.message.AttackTarget;
+import com.github.laxika.magicalvibes.model.CombatAttackTarget;
 import com.github.laxika.magicalvibes.networking.message.BlockerAssignment;
-import com.github.laxika.magicalvibes.service.GameBroadcastService;
 import com.github.laxika.magicalvibes.service.battlefield.BattlefieldEntryService;
 import com.github.laxika.magicalvibes.service.battlefield.CreatureControlService;
 import com.github.laxika.magicalvibes.service.battlefield.GameQueryService;
 import com.github.laxika.magicalvibes.service.battlefield.PermanentRemovalService;
 import com.github.laxika.magicalvibes.service.effect.normalfx.DamageSupport;
 import com.github.laxika.magicalvibes.service.effect.normalfx.PermanentCounterSupport;
+import com.github.laxika.magicalvibes.service.event.GameMutationCoordinator;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Nested;
@@ -57,7 +57,7 @@ class CombatServiceTest {
     private CombatDamageService combatDamageService;
 
     @Mock
-    private GameBroadcastService gameBroadcastService;
+    private GameMutationCoordinator mutationCoordinator;
 
     @Mock
     private PermanentRemovalService permanentRemovalService;
@@ -209,10 +209,11 @@ class CombatServiceTest {
         @Test
         @DisplayName("buildAvailableTargets delegates to CombatAttackService")
         void buildAvailableTargetsDelegates() {
-            List<AttackTarget> expected = List.of(new AttackTarget(player2Id.toString(), "Player2", true));
+            List<CombatAttackTarget> expected =
+                    List.of(new CombatAttackTarget(player2Id, "Player2", true));
             when(combatAttackService.buildAvailableTargets(gd, player1Id)).thenReturn(expected);
 
-            List<AttackTarget> result = combatService.buildAvailableTargets(gd, player1Id);
+            List<CombatAttackTarget> result = combatService.buildAvailableTargets(gd, player1Id);
 
             assertThat(result).isEqualTo(expected);
             verify(combatAttackService).buildAvailableTargets(gd, player1Id);
@@ -418,8 +419,14 @@ class CombatServiceTest {
 
             combatService.processEndOfCombatSacrifices(gd);
 
-            verify(gameBroadcastService).logAndBroadcast(eq(gd), argThat((GameLogEntry logEntry) -> logEntry.plainText().contains("Grizzly Bears")));
-            verify(gameBroadcastService).logAndBroadcast(eq(gd), argThat((GameLogEntry logEntry) -> logEntry.plainText().contains("sacrificed")));
+            verify(mutationCoordinator).appendPublicGameLog(
+                    eq(gd),
+                    argThat((GameLogEntry logEntry) ->
+                            logEntry.plainText().contains("Grizzly Bears")));
+            verify(mutationCoordinator).appendPublicGameLog(
+                    eq(gd),
+                    argThat((GameLogEntry logEntry) ->
+                            logEntry.plainText().contains("sacrificed")));
         }
 
         @Test

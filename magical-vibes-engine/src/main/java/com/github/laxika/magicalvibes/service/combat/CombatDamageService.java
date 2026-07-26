@@ -56,8 +56,8 @@ import com.github.laxika.magicalvibes.model.PendingInteraction;
 import com.github.laxika.magicalvibes.service.interaction.InteractionHandlerRegistry;
 import com.github.laxika.magicalvibes.service.effect.normalfx.LifeSupport;
 import com.github.laxika.magicalvibes.service.DamagePreventionService;
-import com.github.laxika.magicalvibes.service.GameBroadcastService;
 import com.github.laxika.magicalvibes.service.GameOutcomeService;
+import com.github.laxika.magicalvibes.service.event.GameMutationCoordinator;
 import com.github.laxika.magicalvibes.service.input.PlayerInputService;
 import com.github.laxika.magicalvibes.service.trigger.TriggerCollectionService;
 import com.github.laxika.magicalvibes.service.battlefield.GameQueryService;
@@ -86,7 +86,7 @@ public class CombatDamageService {
     private final GameQueryService gameQueryService;
     private final PredicateEvaluationService predicateEvaluationService;
     private final ConditionEvaluationService conditionEvaluationService;
-    private final GameBroadcastService gameBroadcastService;
+    private final GameMutationCoordinator mutationCoordinator;
     private final GameOutcomeService gameOutcomeService;
     private final DamagePreventionService damagePreventionService;
     private final GraveyardService graveyardService;
@@ -107,7 +107,7 @@ public class CombatDamageService {
     public CombatResult resolveCombatDamage(GameData gameData) {
         if (gameData.preventAllCombatDamage) {
             String logEntry = "All combat damage is prevented.";
-            gameBroadcastService.logAndBroadcast(gameData, GameLog.text(logEntry));
+            mutationCoordinator.appendPublicGameLog(gameData, GameLog.text(logEntry));
             return CombatResult.ADVANCE_AND_AUTO_PASS;
         }
 
@@ -269,7 +269,7 @@ public class CombatDamageService {
                 logBuilder.text(playerPrefixBefore.get(id)).card(cardBefore.get(id));
             }
             logBuilder.text(" died in combat.");
-            gameBroadcastService.logAndBroadcast(gameData, logBuilder.build());
+            mutationCoordinator.appendPublicGameLog(gameData, logBuilder.build());
         }
 
         log.info("Game {} - Combat damage resolved: {} damage to defender, {} creatures died",
@@ -859,7 +859,7 @@ public class CombatDamageService {
             state.infectDamageRedirectedToGuard = damagePreventionService.applyCreaturePreventionShield(gameData, redirectTarget, state.infectDamageRedirectedToGuard, true);
             if (state.infectDamageRedirectedToGuard > 0 && !gameQueryService.cantHaveCounters(gameData, redirectTarget)) {
                 redirectTarget.setCounterCount(CounterType.MINUS_ONE_MINUS_ONE, redirectTarget.getCounterCount(CounterType.MINUS_ONE_MINUS_ONE) + state.infectDamageRedirectedToGuard);
-                gameBroadcastService.logAndBroadcast(gameData, GameLog.cardThen(redirectTarget.getCard(),
+                mutationCoordinator.appendPublicGameLog(gameData, GameLog.cardThen(redirectTarget.getCard(),
                         " gets " + state.infectDamageRedirectedToGuard + " -1/-1 counters from redirected infect damage."));
             }
         }
@@ -875,7 +875,7 @@ public class CombatDamageService {
                 if (state.deathtouchDamageRedirectedToGuard) {
                     redirectTarget.setDamagedByDeathtouch(true);
                 }
-                gameBroadcastService.logAndBroadcast(gameData, GameLog.cardThen(redirectTarget.getCard(),
+                mutationCoordinator.appendPublicGameLog(gameData, GameLog.cardThen(redirectTarget.getCard(),
                         " absorbs " + state.damageRedirectedToGuard + " redirected combat damage."));
             }
         }
@@ -1006,7 +1006,7 @@ public class CombatDamageService {
                             List.of(metalcraft), defenderId, creature.getId());
                     se.setNonTargeting(true);
                     gameData.stack.add(se);
-                    gameBroadcastService.logAndBroadcast(gameData, GameLog.cardThen(creature.getCard(), "'s metalcraft ability triggers:"));
+                    mutationCoordinator.appendPublicGameLog(gameData, GameLog.cardThen(creature.getCard(), "'s metalcraft ability triggers:"));
                     continue;
                 }
 
@@ -1014,7 +1014,7 @@ public class CombatDamageService {
                     gameData.stack.add(new StackEntry(StackEntryType.TRIGGERED_ABILITY, creature.getCard(), attackerId,
                             creature.getCard().getName() + "'s triggered ability",
                             List.of(new TargetPlayerLosesGameEffect(defenderId)), null, creature.getId()));
-                    gameBroadcastService.logAndBroadcast(gameData, GameLog.cardThen(creature.getCard(), "'s ability triggers \u2014 " + gameData.playerIdToName.get(defenderId) + " loses the game."));
+                    mutationCoordinator.appendPublicGameLog(gameData, GameLog.cardThen(creature.getCard(), "'s ability triggers \u2014 " + gameData.playerIdToName.get(defenderId) + " loses the game."));
                     continue;
                 }
 
@@ -1032,7 +1032,7 @@ public class CombatDamageService {
                             }
                         }
                         if (!hasCreatureTargets) {
-                            gameBroadcastService.logAndBroadcast(gameData, GameLog.cardThen(creature.getCard(),
+                            mutationCoordinator.appendPublicGameLog(gameData, GameLog.cardThen(creature.getCard(),
                                     "'s ability does not trigger — " + gameData.playerIdToName.get(defenderId) + " has no creatures."));
                             continue;
                         }
@@ -1050,7 +1050,7 @@ public class CombatDamageService {
                             }
                         }
                         if (!hasValidTargets) {
-                            gameBroadcastService.logAndBroadcast(gameData, GameLog.cardThen(creature.getCard(),
+                            mutationCoordinator.appendPublicGameLog(gameData, GameLog.cardThen(creature.getCard(),
                                     "'s ability does not trigger — " + gameData.playerIdToName.get(defenderId) + " has no valid targets."));
                             continue;
                         }
@@ -1066,13 +1066,13 @@ public class CombatDamageService {
                     UUID mayTargetId = may.wrapped().targetSpec().category().includesPermanents()
                             ? null : defenderId;
                     gameData.queueMayAbility(creature.getCard(), attackerId, may, mayTargetId, creature.getId(), mayEventValue);
-                    gameBroadcastService.logAndBroadcast(gameData, GameLog.cardThen(creature.getCard(), "'s combat damage trigger fires."));
+                    mutationCoordinator.appendPublicGameLog(gameData, GameLog.cardThen(creature.getCard(), "'s combat damage trigger fires."));
                     continue;
                 }
 
                 if (effect instanceof DestroyPermanentDamagedPlayerControlsEffect destroyEffect) {
                     if (damageDealt < destroyEffect.minimumDamage()) {
-                        gameBroadcastService.logAndBroadcast(gameData, GameLog.cardThen(creature.getCard(),
+                        mutationCoordinator.appendPublicGameLog(gameData, GameLog.cardThen(creature.getCard(),
                                 "'s ability does not trigger — less than " + destroyEffect.minimumDamage()
                                 + " damage dealt."));
                         continue;
@@ -1089,7 +1089,7 @@ public class CombatDamageService {
                         }
                     }
                     if (!hasValidTargets) {
-                        gameBroadcastService.logAndBroadcast(gameData, GameLog.cardThen(creature.getCard(),
+                        mutationCoordinator.appendPublicGameLog(gameData, GameLog.cardThen(creature.getCard(),
                                 "'s ability does not trigger — " + gameData.playerIdToName.get(defenderId)
                                 + " has no valid targets."));
                         continue;
@@ -1098,13 +1098,13 @@ public class CombatDamageService {
                             creature.getCard().getName() + "'s triggered ability", List.of(effect), defenderId, creature.getId());
                     destroySe.setNonTargeting(true);
                     gameData.stack.add(destroySe);
-                    gameBroadcastService.logAndBroadcast(gameData, GameLog.cardThen(creature.getCard(), "'s combat damage trigger goes on the stack."));
+                    mutationCoordinator.appendPublicGameLog(gameData, GameLog.cardThen(creature.getCard(), "'s combat damage trigger goes on the stack."));
                     continue;
                 }
 
                 if (effect instanceof SacrificePermanentDamagedPlayerControlsEffect sacrificeEffect) {
                     if (damageDealt < sacrificeEffect.minimumDamage()) {
-                        gameBroadcastService.logAndBroadcast(gameData, GameLog.cardThen(creature.getCard(),
+                        mutationCoordinator.appendPublicGameLog(gameData, GameLog.cardThen(creature.getCard(),
                                 "'s ability does not trigger — less than " + sacrificeEffect.minimumDamage()
                                 + " damage dealt."));
                         continue;
@@ -1121,7 +1121,7 @@ public class CombatDamageService {
                         }
                     }
                     if (!hasValidTargets) {
-                        gameBroadcastService.logAndBroadcast(gameData, GameLog.cardThen(creature.getCard(),
+                        mutationCoordinator.appendPublicGameLog(gameData, GameLog.cardThen(creature.getCard(),
                                 "'s ability does not trigger — " + gameData.playerIdToName.get(defenderId)
                                 + " has no valid targets."));
                         continue;
@@ -1130,7 +1130,7 @@ public class CombatDamageService {
                             creature.getCard().getName() + "'s triggered ability", List.of(effect), defenderId, creature.getId());
                     sacrificeSe.setNonTargeting(true);
                     gameData.stack.add(sacrificeSe);
-                    gameBroadcastService.logAndBroadcast(gameData, GameLog.cardThen(creature.getCard(), "'s combat damage trigger goes on the stack."));
+                    mutationCoordinator.appendPublicGameLog(gameData, GameLog.cardThen(creature.getCard(), "'s combat damage trigger goes on the stack."));
                     continue;
                 }
 
@@ -1142,7 +1142,7 @@ public class CombatDamageService {
                 if (effect.targetSpec().category().isGraveyard()) {
                     gameData.queueInteraction(new PermanentChoiceContext.SpellGraveyardTargetTrigger(
                             creature.getCard(), attackerId, new ArrayList<>(List.of(effect))));
-                    gameBroadcastService.logAndBroadcast(gameData, GameLog.text(creature.getCard().getName() + "'s combat damage trigger fires."));
+                    mutationCoordinator.appendPublicGameLog(gameData, GameLog.text(creature.getCard().getName() + "'s combat damage trigger fires."));
                     continue;
                 }
 
@@ -1177,7 +1177,7 @@ public class CombatDamageService {
                 }
                 se.setNonTargeting(true);
                 gameData.stack.add(se);
-                gameBroadcastService.logAndBroadcast(gameData, GameLog.cardThen(creature.getCard(), "'s combat damage trigger goes on the stack."));
+                mutationCoordinator.appendPublicGameLog(gameData, GameLog.cardThen(creature.getCard(), "'s combat damage trigger goes on the stack."));
             }
 
             if (creature.isHasDamageToOpponentCreatureBounce()) {
@@ -1186,7 +1186,7 @@ public class CombatDamageService {
                         desc, List.of(new ReturnPermanentsOnCombatDamageToPlayerEffect(new PermanentIsCreaturePredicate())), 1, defenderId, null);
                 bounceSe.setNonTargeting(true);
                 gameData.stack.add(bounceSe);
-                gameBroadcastService.logAndBroadcast(gameData, GameLog.cardThen(creature.getCard(), "'s damage-to-opponent bounce trigger goes on the stack."));
+                mutationCoordinator.appendPublicGameLog(gameData, GameLog.cardThen(creature.getCard(), "'s damage-to-opponent bounce trigger goes on the stack."));
             }
 
             checkAttachedCombatDamageToPlayerTriggers(gameData, creature, attackerId, defenderId);
@@ -1232,7 +1232,7 @@ public class CombatDamageService {
                     );
                     se.setNonTargeting(true);
                     gameData.stack.add(se);
-                    gameBroadcastService.logAndBroadcast(gameData, GameLog.cardThen(perm.getCard(), "'s combat damage trigger goes on the stack."));
+                    mutationCoordinator.appendPublicGameLog(gameData, GameLog.cardThen(perm.getCard(), "'s combat damage trigger goes on the stack."));
                 }
             }
         });
@@ -1261,7 +1261,7 @@ public class CombatDamageService {
                         );
                         se.setNonTargeting(true);
                         gameData.stack.add(se);
-                        gameBroadcastService.logAndBroadcast(gameData, GameLog.cardThen(perm.getCard(),
+                        mutationCoordinator.appendPublicGameLog(gameData, GameLog.cardThen(perm.getCard(),
                                 "'s combat damage trigger goes on the stack."));
                     }
                 }
@@ -1299,7 +1299,7 @@ public class CombatDamageService {
                     );
                     se.setNonTargeting(true);
                     gameData.stack.add(se);
-                    gameBroadcastService.logAndBroadcast(gameData, GameLog.cardThen(perm.getCard(),
+                    mutationCoordinator.appendPublicGameLog(gameData, GameLog.cardThen(perm.getCard(),
                             "'s triggered ability goes on the stack."));
                 }
             }
@@ -1327,7 +1327,7 @@ public class CombatDamageService {
                     );
                     se.setNonTargeting(true);
                     gameData.stack.add(se);
-                    gameBroadcastService.logAndBroadcast(gameData, GameLog.cardThen(card,
+                    mutationCoordinator.appendPublicGameLog(gameData, GameLog.cardThen(card,
                             "'s graveyard trigger goes on the stack."));
                 }
             }
@@ -1366,7 +1366,7 @@ public class CombatDamageService {
                 );
                 se.setNonTargeting(true);
                 gameData.stack.add(se);
-                gameBroadcastService.logAndBroadcast(gameData, GameLog.cardThen(loot.sourceCard(),
+                mutationCoordinator.appendPublicGameLog(gameData, GameLog.cardThen(loot.sourceCard(),
                         "'s delayed trigger fires — draw " + loot.drawAmount()
                                 + ", discard " + loot.discardAmount() + "."));
             }
@@ -1401,7 +1401,7 @@ public class CombatDamageService {
                         attacker.getId());
                 se.setNonTargeting(true);
                 gameData.stack.add(se);
-                gameBroadcastService.logAndBroadcast(gameData, GameLog.cardTextCard(reflection.sourceCard(),
+                mutationCoordinator.appendPublicGameLog(gameData, GameLog.cardTextCard(reflection.sourceCard(),
                         " reflects " + damage + " combat damage from ", attacker.getCard(),
                         " to " + gameData.playerIdToName.get(attackerId) + "."));
             }
@@ -1433,7 +1433,7 @@ public class CombatDamageService {
                     );
                     trigger.setNonTargeting(true);
                     gameData.stack.add(trigger);
-                    gameBroadcastService.logAndBroadcast(gameData, GameLog.abilityTriggers(source.getCard()));
+                    mutationCoordinator.appendPublicGameLog(gameData, GameLog.abilityTriggers(source.getCard()));
                 }
             }
         }
@@ -1547,7 +1547,7 @@ public class CombatDamageService {
                                 data.card(), data.controllerId(), new ArrayList<>(List.of(effectToAdd)), false, null
                         ));
                     }
-                    gameBroadcastService.logAndBroadcast(gameData, GameLog.abilityTriggers(data.card()));
+                    mutationCoordinator.appendPublicGameLog(gameData, GameLog.abilityTriggers(data.card()));
                     log.info("Game {} - {} ON_DEALT_DAMAGE combat trigger fires", gameData.id, data.card().getName());
                     continue;
                 } else if (effect instanceof DealDamageToAnyTargetEffect) {
@@ -1558,7 +1558,7 @@ public class CombatDamageService {
                                 data.card(), data.controllerId(), new ArrayList<>(List.of(effect)),
                                 false, null, data.damageDealt()));
                     }
-                    gameBroadcastService.logAndBroadcast(gameData, GameLog.abilityTriggers(data.card()));
+                    mutationCoordinator.appendPublicGameLog(gameData, GameLog.abilityTriggers(data.card()));
                     log.info("Game {} - {} ON_DEALT_DAMAGE combat trigger fires", gameData.id, data.card().getName());
                     continue;
                 }
@@ -1571,7 +1571,7 @@ public class CombatDamageService {
                         null,
                         data.permanentId()
                 ));
-                gameBroadcastService.logAndBroadcast(gameData, GameLog.abilityTriggers(data.card()));
+                mutationCoordinator.appendPublicGameLog(gameData, GameLog.abilityTriggers(data.card()));
                 log.info("Game {} - {} ON_DEALT_DAMAGE combat trigger fires", gameData.id, data.card().getName());
             }
         }
@@ -1666,12 +1666,12 @@ public class CombatDamageService {
                 gameData.playerLifeTotals.put(defenderId, newLife);
                 int lifeLost = currentLife - newLife;
                 String logEntry = gameData.playerIdToName.get(defenderId) + " takes " + state.damageToDefendingPlayer + " combat damage.";
-                gameBroadcastService.logAndBroadcast(gameData, GameLog.text(logEntry));
+                mutationCoordinator.appendPublicGameLog(gameData, GameLog.text(logEntry));
                 if (lifeLost > 0) {
                     triggerCollectionService.checkLifeLossTriggers(gameData, defenderId, lifeLost);
                 }
             } else {
-                gameBroadcastService.logAndBroadcast(gameData, GameLog.text(gameData.playerIdToName.get(defenderId) + "'s life total can't change."));
+                mutationCoordinator.appendPublicGameLog(gameData, GameLog.text(gameData.playerIdToName.get(defenderId) + "'s life total can't change."));
             }
         }
 
@@ -1684,7 +1684,7 @@ public class CombatDamageService {
             int currentPoison = gameData.playerPoisonCounters.getOrDefault(defenderId, 0);
             gameData.playerPoisonCounters.put(defenderId, currentPoison + state.poisonDamageToDefendingPlayer);
             String logEntry = gameData.playerIdToName.get(defenderId) + " gets " + state.poisonDamageToDefendingPlayer + " poison counters.";
-            gameBroadcastService.logAndBroadcast(gameData, GameLog.text(logEntry));
+            mutationCoordinator.appendPublicGameLog(gameData, GameLog.text(logEntry));
         }
 
         // Track that the defending player was dealt damage this turn (for Bloodcrazed Goblin etc.)
@@ -1710,8 +1710,8 @@ public class CombatDamageService {
             String targetName = gameData.playerIdToName.get(targetId);
             String protectedName = gameData.playerIdToName.get(redirect.protectedPlayerId());
 
-            gameBroadcastService.logAndBroadcast(gameData, GameLog.cardThen(redirect.sourceCard(), " prevents " + damage + " damage to " + protectedName + "."));
-            gameBroadcastService.logAndBroadcast(gameData, GameLog.cardThen(redirect.sourceCard(), " deals " + damage + " damage to " + targetName + "."));
+            mutationCoordinator.appendPublicGameLog(gameData, GameLog.cardThen(redirect.sourceCard(), " prevents " + damage + " damage to " + protectedName + "."));
+            mutationCoordinator.appendPublicGameLog(gameData, GameLog.cardThen(redirect.sourceCard(), " deals " + damage + " damage to " + targetName + "."));
 
             int redirectEffective = damagePreventionService.applyPlayerPreventionShield(gameData, targetId, damage);
             processPendingRedirectDamage(gameData);
@@ -1735,14 +1735,14 @@ public class CombatDamageService {
             if (pw == null) continue; // planeswalker/battle may have left battlefield
             if (pw.getCard().hasType(CardType.BATTLE)) {
                 pw.setCounterCount(CounterType.DEFENSE, pw.getCounterCount(CounterType.DEFENSE) - damage);
-                gameBroadcastService.logAndBroadcast(gameData, GameLog.cardThen(pw.getCard(), " takes " + damage + " combat damage ("
+                mutationCoordinator.appendPublicGameLog(gameData, GameLog.cardThen(pw.getCard(), " takes " + damage + " combat damage ("
                         + pw.getCounterCount(CounterType.DEFENSE) + " defense remaining)."));
                 battleDefeatSupport.checkAfterDefenseRemoved(gameData, pw);
                 continue;
             }
             // CR 306.8: Damage dealt to a planeswalker removes that many loyalty counters from it
             pw.setCounterCount(CounterType.LOYALTY, pw.getCounterCount(CounterType.LOYALTY) - damage);
-            gameBroadcastService.logAndBroadcast(gameData, GameLog.cardThen(pw.getCard(), " takes " + damage + " combat damage ("
+            mutationCoordinator.appendPublicGameLog(gameData, GameLog.cardThen(pw.getCard(), " takes " + damage + " combat damage ("
                     + pw.getCounterCount(CounterType.LOYALTY) + " loyalty remaining)."));
         }
     }
@@ -1764,7 +1764,7 @@ public class CombatDamageService {
 
             if (targetIsPlayer) {
                 String targetName = gameData.playerIdToName.get(targetId);
-                gameBroadcastService.logAndBroadcast(gameData, GameLog.text(damage + " damage is redirected to " + targetName + "."));
+                mutationCoordinator.appendPublicGameLog(gameData, GameLog.text(damage + " damage is redirected to " + targetName + "."));
 
                 int redirectEffective = damagePreventionService.applyPlayerPreventionShield(gameData, targetId, damage);
                 processPendingRedirectDamage(gameData);
@@ -1780,7 +1780,7 @@ public class CombatDamageService {
                 Permanent targetPerm = gameQueryService.findPermanentById(gameData, targetId);
                 if (targetPerm == null) continue;
 
-                gameBroadcastService.logAndBroadcast(gameData, GameLog.textCardText(damage + " damage is redirected to ", targetPerm.getCard(), "."));
+                mutationCoordinator.appendPublicGameLog(gameData, GameLog.textCardText(damage + " damage is redirected to ", targetPerm.getCard(), "."));
 
                 int effectiveDamage = damagePreventionService.applyCreaturePreventionShield(gameData, targetPerm, damage, true);
                 if (effectiveDamage > 0) {
@@ -1809,7 +1809,7 @@ public class CombatDamageService {
         for (var reflection : toProcess) {
             UUID targetId = reflection.targetPlayerId();
             String targetName = gameData.playerIdToName.get(targetId);
-            gameBroadcastService.logAndBroadcast(gameData, GameLog.cardThen(reflection.eyeCard(),
+            mutationCoordinator.appendPublicGameLog(gameData, GameLog.cardThen(reflection.eyeCard(),
                     " deals " + reflection.amount() + " damage to " + targetName + "."));
 
             int effective = damagePreventionService.applyPlayerPreventionShield(gameData, targetId, reflection.amount());
@@ -1856,7 +1856,7 @@ public class CombatDamageService {
         if (damage > 0 && redirectTarget == null) {
             UUID atkControllerId = gameQueryService.findPermanentController(gameData, atk.getId());
             if (atkControllerId != null && hasReplaceCombatDamageWithMill(gameData, atkControllerId, atk)) {
-                gameBroadcastService.logAndBroadcast(gameData, GameLog.cardThen(atk.getCard(),
+                mutationCoordinator.appendPublicGameLog(gameData, GameLog.cardThen(atk.getCard(),
                         "'s " + damage + " combat damage is replaced with milling."));
                 graveyardService.resolveMillPlayer(gameData, defenderId, damage);
                 return;
@@ -1908,14 +1908,14 @@ public class CombatDamageService {
                 int battletidePrevented = damagePreventionService.applyControllerPerClericDamagePrevention(gameData, defenderId, damage);
                 if (battletidePrevented > 0) {
                     damage -= battletidePrevented;
-                    gameBroadcastService.logAndBroadcast(gameData, GameLog.textCardText(battletidePrevented + " of ", atk.getCard(), "'s combat damage to "
+                    mutationCoordinator.appendPublicGameLog(gameData, GameLog.textCardText(battletidePrevented + " of ", atk.getCard(), "'s combat damage to "
                                     + gameData.playerIdToName.get(defenderId) + " is prevented."));
                 }
                 // Urza's Armor: the defending player prevents a fixed amount of this attacker's damage.
                 int fixedPrevented = damagePreventionService.applyControllerFixedPerSourceDamagePrevention(gameData, defenderId, damage);
                 if (fixedPrevented > 0) {
                     damage -= fixedPrevented;
-                    gameBroadcastService.logAndBroadcast(gameData, GameLog.textCardText(fixedPrevented + " of ", atk.getCard(), "'s combat damage to "
+                    mutationCoordinator.appendPublicGameLog(gameData, GameLog.textCardText(fixedPrevented + " of ", atk.getCard(), "'s combat damage to "
                                     + gameData.playerIdToName.get(defenderId) + " is prevented."));
                 }
                 if (atkHasInfect) {
@@ -1974,18 +1974,18 @@ public class CombatDamageService {
         // Swans of Bryn Argoll: prevent all combat damage to this creature; the source's controller draws that many cards.
         UUID swansSourceControllerId = gameQueryService.findPermanentController(gameData, source.getId());
         if (damagePreventionService.applySwansSourceControllerDraw(gameData, target, damage, swansSourceControllerId)) {
-            gameBroadcastService.logAndBroadcast(gameData, GameLog.textCardText("Combat damage to ", target.getCard(), " is prevented."));
+            mutationCoordinator.appendPublicGameLog(gameData, GameLog.textCardText("Combat damage to ", target.getCard(), " is prevented."));
             return;
         }
         // Prismatic Ward: prevent all combat damage to the enchanted creature from sources of the chosen colour.
         if (gameQueryService.isColorDamageToEnchantedCreaturePrevented(gameData, target, gameQueryService.getEffectiveColors(gameData, source))) {
-            gameBroadcastService.logAndBroadcast(gameData, GameLog.textCardText("Combat damage to ", target.getCard(), " is prevented."));
+            mutationCoordinator.appendPublicGameLog(gameData, GameLog.textCardText("Combat damage to ", target.getCard(), " is prevented."));
             return;
         }
         // Gideon's Intervention: prevent all combat damage to a creature you control from a source with the chosen name.
         if (gameQueryService.isDamagePreventable(gameData)
                 && gameQueryService.isDamageFromChosenNamePreventedForController(gameData, targetControllerId, source.getCard().getName())) {
-            gameBroadcastService.logAndBroadcast(gameData, GameLog.textCardText("Combat damage to ", target.getCard(), " is prevented."));
+            mutationCoordinator.appendPublicGameLog(gameData, GameLog.textCardText("Combat damage to ", target.getCard(), " is prevented."));
             return;
         }
         if (gameQueryService.dealsCounterDamageToCreatures(gameData, source)) {

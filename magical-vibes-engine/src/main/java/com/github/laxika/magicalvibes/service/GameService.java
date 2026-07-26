@@ -23,7 +23,6 @@ import com.github.laxika.magicalvibes.service.ability.AbilityActivationService;
 import com.github.laxika.magicalvibes.service.combat.CombatService;
 import com.github.laxika.magicalvibes.service.effect.normalfx.ExileSupport;
 import com.github.laxika.magicalvibes.service.event.GameMutationCoordinator;
-import com.github.laxika.magicalvibes.service.interaction.CombatDamageAssignmentInteractionHandler;
 import com.github.laxika.magicalvibes.service.interaction.InteractionAnswer;
 import com.github.laxika.magicalvibes.service.interaction.InteractionHandlerRegistry;
 import com.github.laxika.magicalvibes.service.spell.SpellCastingService;
@@ -63,6 +62,26 @@ public class GameService {
             return false;
         }
         mutationCoordinator.mutate(gameData, action);
+        return true;
+    }
+
+    /**
+     * Combat declaration/assignment validation failures preserve their public exception while
+     * re-opening the same logical decision in a fresh successful action. Facts recorded by the
+     * failed action are deliberately discarded by the coordinator, so retry delivery cannot be
+     * emitted from inside the failing mutation.
+     */
+    private boolean runAsCombatActionIfNeeded(GameData gameData, Runnable action) {
+        if (mutationCoordinator.isInAction(gameData)) {
+            return false;
+        }
+        try {
+            mutationCoordinator.mutate(gameData, action);
+        } catch (IllegalStateException | IllegalArgumentException failure) {
+            mutationCoordinator.mutate(
+                    gameData, () -> interactionHandlerRegistry.requestActiveDecision(gameData));
+            throw failure;
+        }
         return true;
     }
 
@@ -780,8 +799,11 @@ public class GameService {
      */
     public void handleInteractionAnswer(GameData gameData, Player player, InteractionAnswer answer) {
         Player actionPlayer = player;
-        if (runAsActionIfNeeded(gameData,
-                () -> handleInteractionAnswer(gameData, actionPlayer, answer))) return;
+        Runnable action = () -> handleInteractionAnswer(gameData, actionPlayer, answer);
+        boolean delegated = isCombatAnswer(answer)
+                ? runAsCombatActionIfNeeded(gameData, action)
+                : runAsActionIfNeeded(gameData, action);
+        if (delegated) return;
         synchronized (gameData) {
             player = resolveActingPlayer(gameData, player);
             if (!interactionHandlerRegistry.dispatchAnswer(gameData, player, answer)) {
@@ -803,7 +825,7 @@ public class GameService {
     public void declareAttackers(GameData gameData, Player player, List<Integer> attackerIndices,
                                  Map<Integer, UUID> attackTargets, List<List<Integer>> bands) {
         Player actionPlayer = player;
-        if (runAsActionIfNeeded(gameData,
+        if (runAsCombatActionIfNeeded(gameData,
                 () -> declareAttackers(gameData, actionPlayer, attackerIndices, attackTargets, bands))) return;
         synchronized (gameData) {
             player = resolveActingPlayer(gameData, player);
@@ -814,18 +836,20 @@ public class GameService {
             // No declaration is active — preserve the legacy stray-message path (the combat
             // flow rejects with "Not awaiting attacker declaration" and re-sends).
             try {
-                turnProgressionService.handleCombatResult(combatService.declareAttackers(gameData, player, attackerIndices, attackTargets, bands), gameData);
-            } catch (IllegalStateException | IllegalArgumentException e) {
-                // Re-send available attackers so the player (or AI) can retry
+                turnProgressionService.handleCombatResult(
+                        combatService.declareAttackers(
+                                gameData, player, attackerIndices, attackTargets, bands),
+                        gameData);
+            } catch (IllegalStateException failure) {
                 combatService.handleDeclareAttackersStep(gameData);
-                throw e;
+                throw failure;
             }
         }
     }
 
     public void declareBlockers(GameData gameData, Player player, List<BlockerAssignment> blockerAssignments) {
         Player actionPlayer = player;
-        if (runAsActionIfNeeded(gameData,
+        if (runAsCombatActionIfNeeded(gameData,
                 () -> declareBlockers(gameData, actionPlayer, blockerAssignments))) return;
         synchronized (gameData) {
             player = resolveActingPlayer(gameData, player);
@@ -841,7 +865,7 @@ public class GameService {
 
     public void handleCombatDamageAssigned(GameData gameData, Player player, int attackerIndex, Map<UUID, Integer> assignments) {
         Player actionPlayer = player;
-        if (runAsActionIfNeeded(gameData,
+        if (runAsCombatActionIfNeeded(gameData,
                 () -> handleCombatDamageAssigned(gameData, actionPlayer, attackerIndex, assignments))) return;
         synchronized (gameData) {
             player = resolveActingPlayer(gameData, player);
@@ -850,8 +874,15 @@ public class GameService {
                 // No assignment prompt is active — preserve the legacy stray-message path
                 // (the combat flow itself rejects with "Not in combat damage assignment
                 // phase" and re-sends; the legacy entry never consulted the interaction).
-                CombatDamageAssignmentInteractionHandler.applyAssignment(gameData, player,
-                        attackerIndex, assignments, combatService, turnProgressionService);
+                try {
+                    combatService.handleCombatDamageAssigned(
+                            gameData, player, attackerIndex, assignments);
+                } catch (IllegalStateException failure) {
+                    combatService.resolveCombatDamage(gameData);
+                    throw failure;
+                }
+                turnProgressionService.handleCombatResult(
+                        combatService.resolveCombatDamage(gameData), gameData);
             }
         }
     }
@@ -861,6 +892,12 @@ public class GameService {
                 new GameEventFact.StateInvalidated(
                         GameEventFact.StateSection.PRIVATE_PLAYER_VIEW),
                 GameEventAudience.allPlayers());
+    }
+
+    private static boolean isCombatAnswer(InteractionAnswer answer) {
+        return answer instanceof InteractionAnswer.AttackersDeclared
+                || answer instanceof InteractionAnswer.BlockersDeclared
+                || answer instanceof InteractionAnswer.CombatDamageAssigned;
     }
 
 }

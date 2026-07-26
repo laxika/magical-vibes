@@ -17,7 +17,7 @@ import com.github.laxika.magicalvibes.model.effect.DestroySubtypeCombatOpponentE
 import com.github.laxika.magicalvibes.model.effect.DestroyTargetPermanentEffect;
 import com.github.laxika.magicalvibes.model.effect.EnchantedCreatureControllerLosesLifeEffect;
 import com.github.laxika.magicalvibes.networking.message.BlockerAssignment;
-import com.github.laxika.magicalvibes.service.GameBroadcastService;
+import com.github.laxika.magicalvibes.service.event.GameMutationCoordinator;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
@@ -35,7 +35,7 @@ import java.util.UUID;
 @RequiredArgsConstructor
 public class CombatTriggerService {
 
-    private final GameBroadcastService gameBroadcastService;
+    private final GameMutationCoordinator mutationCoordinator;
 
     /**
      * Checks attached permanents (auras/equipment) for triggers in the given slot
@@ -111,7 +111,7 @@ public class CombatTriggerService {
                         // (e.g. equipment-granted Afflict) can resolve.
                         trigger.setAttackedTargetId(creature.getAttackTarget());
                         gameData.stack.add(trigger);
-                        gameBroadcastService.logAndBroadcast(gameData, GameLog.abilityTriggers(perm.getCard()));
+                        mutationCoordinator.appendPublicGameLog(gameData, GameLog.abilityTriggers(perm.getCard()));
                         log.info("Game {} - {} auto-targeted combat trigger pushed onto stack (attached to {})",
                                 gameData.id, perm.getCard().getName(), creature.getCard().getName());
                     } else {
@@ -122,7 +122,7 @@ public class CombatTriggerService {
                             gameData.queueInteraction(
                                     new PermanentChoiceContext.AttackTriggerTarget(
                                             perm.getCard(), auraOwnerId, effectsForStack, perm.getId()));
-                            gameBroadcastService.logAndBroadcast(gameData, GameLog.abilityTriggers(perm.getCard()));
+                            mutationCoordinator.appendPublicGameLog(gameData, GameLog.abilityTriggers(perm.getCard()));
                             log.info("Game {} - {} targeted attack trigger queued for target selection (attached to {})",
                                     gameData.id, perm.getCard().getName(), creature.getCard().getName());
                         } else {
@@ -139,7 +139,7 @@ public class CombatTriggerService {
                             // (e.g. equipment-granted Afflict) can resolve.
                             trigger.setAttackedTargetId(creature.getAttackTarget());
                             gameData.stack.add(trigger);
-                            gameBroadcastService.logAndBroadcast(gameData, GameLog.abilityTriggers(perm.getCard()));
+                            mutationCoordinator.appendPublicGameLog(gameData, GameLog.abilityTriggers(perm.getCard()));
                             log.info("Game {} - {} aura trigger pushed onto stack (enchanted creature {})",
                                     gameData.id, perm.getCard().getName(), creature.getCard().getName());
                         }
@@ -211,7 +211,7 @@ public class CombatTriggerService {
                             trigger.setNonTargeting(true);
                         }
                         gameData.stack.add(trigger);
-                        gameBroadcastService.logAndBroadcast(gameData, GameLog.abilityTriggers(perm.getCard()));
+                        mutationCoordinator.appendPublicGameLog(gameData, GameLog.abilityTriggers(perm.getCard()));
                         log.info("Game {} - {} per-blocker trigger pushed onto stack (attached to {})",
                                 gameData.id, perm.getCard().getName(), attacker.getCard().getName());
                     }

@@ -3,6 +3,8 @@ package com.github.laxika.magicalvibes.service.event;
 import com.github.laxika.magicalvibes.model.GameData;
 import com.github.laxika.magicalvibes.model.GameLog;
 import com.github.laxika.magicalvibes.model.GameStatus;
+import com.github.laxika.magicalvibes.model.CombatAttackTarget;
+import com.github.laxika.magicalvibes.model.CombatDamageTarget;
 import com.github.laxika.magicalvibes.model.PendingInteraction;
 import com.github.laxika.magicalvibes.model.Player;
 import com.github.laxika.magicalvibes.model.TurnStep;
@@ -12,7 +14,9 @@ import com.github.laxika.magicalvibes.networking.Connection;
 import com.github.laxika.magicalvibes.networking.SessionManager;
 import com.github.laxika.magicalvibes.networking.message.GameOverMessage;
 import com.github.laxika.magicalvibes.networking.message.GameStateMessage;
-import com.github.laxika.magicalvibes.networking.message.InteractionPromptMessage;
+import com.github.laxika.magicalvibes.networking.message.AvailableAttackersMessage;
+import com.github.laxika.magicalvibes.networking.message.AvailableBlockersMessage;
+import com.github.laxika.magicalvibes.networking.message.CombatDamageAssignmentNotification;
 import com.github.laxika.magicalvibes.networking.message.MulliganResolvedMessage;
 import com.github.laxika.magicalvibes.networking.message.RevealHandMessage;
 import com.github.laxika.magicalvibes.networking.message.SelectCardsToBottomMessage;
@@ -23,8 +27,6 @@ import com.github.laxika.magicalvibes.service.GameMessageTransport;
 import com.github.laxika.magicalvibes.service.GameRegistry;
 import com.github.laxika.magicalvibes.service.GameViewProjectionFactory;
 import com.github.laxika.magicalvibes.service.PrivateInformationProjectionFactory;
-import com.github.laxika.magicalvibes.service.interaction.InteractionAnswer;
-import com.github.laxika.magicalvibes.service.interaction.InteractionHandler;
 import com.github.laxika.magicalvibes.service.interaction.InteractionHandlerRegistry;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
@@ -150,8 +152,108 @@ class GameEventProjectionSubscriberTest {
     }
 
     @Test
+    void attackerDecisionProjectsFinalizedTargetsRequirementsAndTaxOnlyToItsAudience() {
+        UUID planeswalkerId = UUID.randomUUID();
+        gameData.interaction.beginInteraction(new PendingInteraction.AttackerDeclaration(
+                player2Id,
+                List.of(1, 3),
+                List.of(3),
+                List.of(
+                        new CombatAttackTarget(player1Id, "Player 1", true),
+                        new CombatAttackTarget(planeswalkerId, "Planeswalker", false)),
+                2,
+                true));
+
+        emitActiveDecision(
+                player2Id,
+                GameEventFact.DecisionKind.ATTACKER_DECLARATION,
+                GameEventAudience.players(player1Id, player2Id));
+
+        assertThat(sessions.deliveries)
+                .singleElement()
+                .satisfies(delivery -> {
+                    assertThat(delivery.playerId()).isEqualTo(player2Id);
+                    assertThat(delivery.message()).isInstanceOfSatisfying(
+                            AvailableAttackersMessage.class, message -> {
+                                assertThat(message.attackerIndices()).containsExactly(1, 3);
+                                assertThat(message.mustAttackIndices()).containsExactly(3);
+                                assertThat(message.availableTargets())
+                                        .extracting(target -> target.id())
+                                        .containsExactly(player1Id.toString(), planeswalkerId.toString());
+                                assertThat(message.taxPerCreature()).isEqualTo(2);
+                                assertThat(message.mustAttackWithAtLeastOne()).isTrue();
+                            });
+                });
+    }
+
+    @Test
+    void blockerDecisionProjectsFinalizedLegalPairsAndRequirements() {
+        gameData.interaction.beginInteraction(new PendingInteraction.BlockerDeclaration(
+                player2Id,
+                List.of(0, 2),
+                List.of(1, 3),
+                Map.of(0, List.of(1), 2, List.of(1, 3)),
+                List.of(3),
+                List.of(1),
+                Map.of(2, List.of(3))));
+
+        emitActiveDecision(
+                player2Id,
+                GameEventFact.DecisionKind.BLOCKER_DECLARATION,
+                GameEventAudience.player(player2Id));
+
+        assertThat(messagesFor(player2Id))
+                .singleElement()
+                .isInstanceOfSatisfying(AvailableBlockersMessage.class, message -> {
+                    assertThat(message.blockerIndices()).containsExactly(0, 2);
+                    assertThat(message.attackerIndices()).containsExactly(1, 3);
+                    assertThat(message.legalBlockPairs())
+                            .containsEntry(0, List.of(1))
+                            .containsEntry(2, List.of(1, 3));
+                    assertThat(message.mustBeBlockedAttackerIndices()).containsExactly(3);
+                    assertThat(message.menaceAttackerIndices()).containsExactly(1);
+                    assertThat(message.mustBlockRequirements()).containsEntry(2, List.of(3));
+                });
+    }
+
+    @Test
+    void combatDamageDecisionProjectsTrampleDeathtouchAndAssignmentTargets() {
+        UUID attackerId = UUID.randomUUID();
+        UUID blockerId = UUID.randomUUID();
+        gameData.interaction.beginInteraction(new PendingInteraction.CombatDamageAssignment(
+                player1Id,
+                4,
+                attackerId,
+                "Attacker",
+                6,
+                List.of(
+                        new CombatDamageTarget(blockerId, "Blocker", 5, 1, false),
+                        new CombatDamageTarget(player2Id, "Player 2", 0, 0, true)),
+                true,
+                true,
+                false));
+
+        emitActiveDecision(
+                player1Id,
+                GameEventFact.DecisionKind.COMBAT_DAMAGE_ASSIGNMENT,
+                GameEventAudience.player(player1Id));
+
+        assertThat(messagesFor(player1Id))
+                .singleElement()
+                .isInstanceOfSatisfying(CombatDamageAssignmentNotification.class, message -> {
+                    assertThat(message.attackerIndex()).isEqualTo(4);
+                    assertThat(message.attackerPermanentId()).isEqualTo(attackerId.toString());
+                    assertThat(message.totalDamage()).isEqualTo(6);
+                    assertThat(message.isTrample()).isTrue();
+                    assertThat(message.isDeathtouch()).isTrue();
+                    assertThat(message.validTargets())
+                            .extracting(target -> target.id())
+                            .containsExactly(blockerId.toString(), player2Id.toString());
+                });
+    }
+
+    @Test
     void gameEndMulliganBottomCardsAndInteractionEventsUseExistingWireMessages() {
-        registerAttackerPromptHandler();
         gameData.interaction.beginInteraction(
                 new PendingInteraction.AttackerDeclaration(player2Id));
         gameData.playerNeedsToBottom.put(player1Id, 2);
@@ -186,13 +288,12 @@ class GameEventProjectionSubscriberTest {
                         new GameOverMessage(player1Id, "Player 1")));
         assertThat(messagesFor(player2Id))
                 .anySatisfy(message -> assertThat(message).isInstanceOf(MulliganResolvedMessage.class))
-                .anySatisfy(message -> assertThat(message).isInstanceOf(InteractionPromptMessage.class))
+                .anySatisfy(message -> assertThat(message).isInstanceOf(AvailableAttackersMessage.class))
                 .anySatisfy(message -> assertThat(message).isInstanceOf(GameOverMessage.class));
     }
 
     @Test
     void mindslaverDecisionIsProjectedOnlyToTheAuthoritativeDecisionOwner() {
-        registerAttackerPromptHandler();
         gameData.mindControlledPlayerId = player2Id;
         gameData.mindControllerPlayerId = player1Id;
         gameData.interaction.beginInteraction(
@@ -211,13 +312,12 @@ class GameEventProjectionSubscriberTest {
                 .singleElement()
                 .satisfies(delivery -> {
                     assertThat(delivery.playerId()).isEqualTo(player1Id);
-                    assertThat(delivery.message()).isInstanceOf(InteractionPromptMessage.class);
+                    assertThat(delivery.message()).isInstanceOf(AvailableAttackersMessage.class);
                 });
     }
 
     @Test
     void decisionBarrierPreservesBothStateMessagesWithoutDuplicatingLogEntries() {
-        registerAttackerPromptHandler();
         gameData.interaction.beginInteraction(
                 new PendingInteraction.AttackerDeclaration(player2Id));
         gameData.gameLog.add(GameLog.text("One new log entry."));
@@ -250,7 +350,7 @@ class GameEventProjectionSubscriberTest {
                 sessions.deliveries.stream()
                         .filter(delivery -> delivery.playerId().equals(player2Id))
                         .map(Delivery::message)
-                        .filter(InteractionPromptMessage.class::isInstance)
+                        .filter(AvailableAttackersMessage.class::isInstance)
                         .findFirst()
                         .orElseThrow(),
                 withoutLogs);
@@ -258,37 +358,6 @@ class GameEventProjectionSubscriberTest {
                 gameData, List.of(logEntry));
         verify(gameViewProjectionFactory).createGameStateMessages(
                 gameData, List.of());
-    }
-
-    private void registerAttackerPromptHandler() {
-        interactionHandlerRegistry.register(new InteractionHandler<PendingInteraction.AttackerDeclaration>() {
-            @Override
-            public Class<PendingInteraction.AttackerDeclaration> handledType() {
-                return PendingInteraction.AttackerDeclaration.class;
-            }
-
-            @Override
-            public Class<? extends InteractionAnswer> answerType() {
-                return InteractionAnswer.AttackersDeclared.class;
-            }
-
-            @Override
-            public void prompt(
-                    GameData data,
-                    PendingInteraction.AttackerDeclaration interaction,
-                    UUID recipientId) {
-                sessions.sendToPlayer(recipientId,
-                        InteractionPromptMessage.listPick(List.of("Attack"), "Choose attackers", false));
-            }
-
-            @Override
-            public void handleAnswer(
-                    GameData data,
-                    Player player,
-                    PendingInteraction.AttackerDeclaration interaction,
-                    InteractionAnswer answer) {
-            }
-        });
     }
 
     @Test
@@ -331,6 +400,20 @@ class GameEventProjectionSubscriberTest {
 
     private GameMutationCoordinator coordinator() {
         return new GameMutationCoordinator(new GameEventDispatcher(List.of(subscriber)));
+    }
+
+    private void emitActiveDecision(
+            UUID decidingPlayerId,
+            GameEventFact.DecisionKind decisionKind,
+            GameEventAudience audience) {
+        GameMutationCoordinator coordinator = coordinator();
+        coordinator.mutate(gameData, UUID.randomUUID(), () ->
+                coordinator.emit(gameData,
+                        new GameEventFact.DecisionRequested(
+                                gameData.interaction.activeDecisionId(),
+                                decidingPlayerId,
+                                decisionKind),
+                        audience));
     }
 
     private List<Object> messagesFor(UUID playerId) {

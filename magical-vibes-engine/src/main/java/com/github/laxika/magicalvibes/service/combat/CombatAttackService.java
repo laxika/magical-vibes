@@ -1,6 +1,7 @@
 package com.github.laxika.magicalvibes.service.combat;
 
 import com.github.laxika.magicalvibes.model.CardType;
+import com.github.laxika.magicalvibes.model.CombatAttackTarget;
 import com.github.laxika.magicalvibes.model.CounterType;
 import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.GameData;
@@ -62,9 +63,8 @@ import com.github.laxika.magicalvibes.model.filter.PermanentIsAttackingPredicate
 import com.github.laxika.magicalvibes.model.filter.PermanentIsSourceCardPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentNotPredicate;
 import com.github.laxika.magicalvibes.model.GameLog;
-import com.github.laxika.magicalvibes.networking.message.AttackTarget;
-import com.github.laxika.magicalvibes.service.GameBroadcastService;
 import com.github.laxika.magicalvibes.service.cast.CastingCostService;
+import com.github.laxika.magicalvibes.service.event.GameMutationCoordinator;
 import com.github.laxika.magicalvibes.service.trigger.TriggerCollectionService;
 import com.github.laxika.magicalvibes.service.battlefield.GameQueryService;
 import com.github.laxika.magicalvibes.service.battlefield.GraveyardTargetingService;
@@ -90,7 +90,7 @@ public class CombatAttackService {
     private final PredicateEvaluationService predicateEvaluationService;
     private final ConditionEvaluationService conditionEvaluationService;
     private final AmountEvaluationService amountEvaluationService;
-    private final GameBroadcastService gameBroadcastService;
+    private final GameMutationCoordinator mutationCoordinator;
     private final CastingCostService castingCostService;
     private final TriggerCollectionService triggerCollectionService;
     private final CombatTriggerService combatTriggerService;
@@ -159,7 +159,13 @@ public class CombatAttackService {
             return;
         }
 
-        interactionHandlerRegistry.begin(gameData, new PendingInteraction.AttackerDeclaration(activeId));
+        List<Integer> mustAttack = getMustAttackIndices(gameData, activeId, attackable);
+        List<CombatAttackTarget> availableTargets = buildAvailableTargets(gameData, activeId);
+        int taxPerCreature = castingCostService.getAttackPaymentPerCreature(gameData, activeId);
+        boolean mustAttackWithAtLeastOne = isOpponentForcedToAttack(gameData, activeId);
+        interactionHandlerRegistry.begin(gameData, new PendingInteraction.AttackerDeclaration(
+                activeId, attackable, mustAttack, availableTargets,
+                taxPerCreature, mustAttackWithAtLeastOne));
     }
 
     /**
@@ -223,7 +229,7 @@ public class CombatAttackService {
         if (attackerIndices.isEmpty()) {
             gameData.interaction.clearAwaitingInput();
             log.info("Game {} - {} declares no attackers", gameData.id, player.getUsername());
-            gameBroadcastService.logAndBroadcast(gameData, GameLog.text(player.getUsername() + " declares no attackers."));
+            mutationCoordinator.appendPublicGameLog(gameData, GameLog.text(player.getUsername() + " declares no attackers."));
             return CombatResult.AUTO_PASS_ONLY;
         }
 
@@ -343,7 +349,7 @@ public class CombatAttackService {
 
         String logEntry = player.getUsername() + " declares " + attackerIndices.size() +
                 " attacker" + (attackerIndices.size() > 1 ? "s" : "") + ".";
-        gameBroadcastService.logAndBroadcast(gameData, GameLog.text(logEntry));
+        mutationCoordinator.appendPublicGameLog(gameData, GameLog.text(logEntry));
 
         // Collect all attack-step triggers, then reorder per APNAP (CR 603.3b)
         int stackSizeBeforeAttackTriggers = gameData.stack.size();
@@ -382,7 +388,7 @@ public class CombatAttackService {
                             gameData.queueMayAbility(attacker.getCard(), defendingPlayerId,
                                     new MayEffect(new DrawCardEffect(), "Draw a card?"));
                         }
-                        gameBroadcastService.logAndBroadcast(gameData,
+                        mutationCoordinator.appendPublicGameLog(gameData,
                                 GameLog.builder().card(attacker.getCard()).text("'s ability triggers.").build());
                     }
                 }
@@ -475,12 +481,12 @@ public class CombatAttackService {
                         }
 
                         if (!needsGraveyardTarget) {
-                            gameBroadcastService.logAndBroadcast(gameData,
+                            mutationCoordinator.appendPublicGameLog(gameData,
                                     GameLog.builder().card(attacker.getCard()).text("'s attack ability triggers.").build());
                             log.info("Game {} - {} attack trigger pushed onto stack", gameData.id, attacker.getCard().getName());
                         }
                     } else {
-                        gameBroadcastService.logAndBroadcast(gameData,
+                        mutationCoordinator.appendPublicGameLog(gameData,
                                 GameLog.builder().card(attacker.getCard()).text("'s attack ability triggers.").build());
                         log.info("Game {} - {} attack trigger pushed onto stack", gameData.id, attacker.getCard().getName());
                     }
@@ -510,7 +516,7 @@ public class CombatAttackService {
                         null,
                         attacker.getId()
                 ));
-                gameBroadcastService.logAndBroadcast(gameData,
+                mutationCoordinator.appendPublicGameLog(gameData,
                         GameLog.builder().card(attacker.getCard()).text("'s battle cry triggers.").build());
                 log.info("Game {} - {} battle cry trigger pushed onto stack", gameData.id, attacker.getCard().getName());
             }
@@ -547,7 +553,7 @@ public class CombatAttackService {
                     null,
                     attacker.getId()
             ));
-            gameBroadcastService.logAndBroadcast(gameData,
+            mutationCoordinator.appendPublicGameLog(gameData,
                     GameLog.builder().card(attacker.getCard()).text("'s training triggers.").build());
             log.info("Game {} - {} training trigger pushed onto stack", gameData.id, attacker.getCard().getName());
         }
@@ -590,7 +596,7 @@ public class CombatAttackService {
                     null,
                     null
             ));
-            gameBroadcastService.logAndBroadcast(gameData,
+            mutationCoordinator.appendPublicGameLog(gameData,
                     GameLog.builder().card(perm.getCard()).text("'s attack ability triggers.").build());
             log.info("Game {} - {} ON_ALLY_CREATURES_ATTACK trigger pushed onto stack (attacker count: {})",
                     gameData.id, perm.getCard().getName(), attackerIndices.size());
@@ -676,7 +682,7 @@ public class CombatAttackService {
                     gameData.stack.add(attackTrigger);
                 }
 
-                gameBroadcastService.logAndBroadcast(gameData,
+                mutationCoordinator.appendPublicGameLog(gameData,
                         GameLog.builder().card(perm.getCard()).text("'s ability triggers.").build());
                 log.info("Game {} - {} ON_ALLY_CREATURE_ATTACKS trigger for {} attacking",
                         gameData.id, perm.getCard().getName(), attacker.getCard().getName());
@@ -721,7 +727,7 @@ public class CombatAttackService {
                             null,
                             null
                     ));
-                    gameBroadcastService.logAndBroadcast(gameData,
+                    mutationCoordinator.appendPublicGameLog(gameData,
                             GameLog.builder().card(card).text("'s graveyard attack ability triggers.").build());
                     log.info("Game {} - {} GRAVEYARD_ON_ALLY_CREATURES_ATTACK trigger pushed onto stack (attacker count: {})",
                             gameData.id, card.getName(), attackerIndices.size());
@@ -767,7 +773,7 @@ public class CombatAttackService {
                 );
                 attackedTrigger.setNonTargeting(true);
                 gameData.stack.add(attackedTrigger);
-                gameBroadcastService.logAndBroadcast(gameData,
+                mutationCoordinator.appendPublicGameLog(gameData,
                         GameLog.builder().card(perm.getCard()).text("'s ability triggers.").build());
                 log.info("Game {} - {} ON_CREATURE_ATTACKS_YOU trigger for {} attacking",
                         gameData.id, perm.getCard().getName(), attacker.getCard().getName());
@@ -797,7 +803,7 @@ public class CombatAttackService {
                     );
                     anyAttackTrigger.setNonTargeting(true);
                     gameData.stack.add(anyAttackTrigger);
-                    gameBroadcastService.logAndBroadcast(gameData,
+                    mutationCoordinator.appendPublicGameLog(gameData,
                             GameLog.builder().card(perm.getCard()).text("'s ability triggers.").build());
                     log.info("Game {} - {} ON_ANY_CREATURE_ATTACKS trigger for {} attacking",
                             gameData.id, perm.getCard().getName(), attacker.getCard().getName());
@@ -1122,18 +1128,21 @@ public class CombatAttackService {
      * Builds the list of available attack targets: the defending player, their planeswalkers,
      * and battles the active player is allowed to attack (not the protector).
      */
-    public List<AttackTarget> buildAvailableTargets(GameData gameData, UUID activePlayerId) {
+    public List<CombatAttackTarget> buildAvailableTargets(GameData gameData, UUID activePlayerId) {
         UUID defenderId = gameQueryService.getOpponentId(gameData, activePlayerId);
-        List<AttackTarget> targets = new ArrayList<>();
-        targets.add(new AttackTarget(defenderId.toString(), gameData.playerIdToName.get(defenderId), true));
+        List<CombatAttackTarget> targets = new ArrayList<>();
+        targets.add(new CombatAttackTarget(
+                defenderId, gameData.playerIdToName.get(defenderId), true));
         List<Permanent> defBf = gameData.playerBattlefields.get(defenderId);
         if (defBf != null) {
             for (Permanent p : defBf) {
                 if (p.getCard().hasType(CardType.PLANESWALKER)) {
-                    targets.add(new AttackTarget(p.getId().toString(), p.getCard().getName(), false));
+                    targets.add(new CombatAttackTarget(
+                            p.getId(), p.getCard().getName(), false));
                 } else if (p.getCard().hasType(CardType.BATTLE)
                         && !activePlayerId.equals(p.getProtectorPlayerId())) {
-                    targets.add(new AttackTarget(p.getId().toString(), p.getCard().getName(), false));
+                    targets.add(new CombatAttackTarget(
+                            p.getId(), p.getCard().getName(), false));
                 }
             }
         }
@@ -1143,7 +1152,8 @@ public class CombatAttackService {
             for (Permanent p : ownBf) {
                 if (p.getCard().hasType(CardType.BATTLE)
                         && !activePlayerId.equals(p.getProtectorPlayerId())) {
-                    targets.add(new AttackTarget(p.getId().toString(), p.getCard().getName(), false));
+                    targets.add(new CombatAttackTarget(
+                            p.getId(), p.getCard().getName(), false));
                 }
             }
         }
