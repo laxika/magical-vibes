@@ -107,6 +107,13 @@ public class CardBrowserService {
                     }
                 }
 
+                // Like keywords, the watermark is only present at the top level: both faces of a
+                // double-faced card are printed with the same mark.
+                String watermark = null;
+                if (card.has("watermark") && !card.get("watermark").asText().isEmpty()) {
+                    watermark = card.get("watermark").asText();
+                }
+
                 boolean implemented = implementedNumbers.contains(collectorNumber);
 
                 // For multi-face cards the face-specific fields (mana cost, oracle
@@ -118,7 +125,7 @@ public class CardBrowserService {
                 BrowseCardInfo secondFace = null;
                 if (multiFaced) {
                     secondFace = buildFaceInfo(faces.get(1), collectorNumber, setCode,
-                            rarity, keywords, implemented, null, null);
+                            rarity, keywords, watermark, implemented, null, null);
                 }
                 // A prepare card's second face is the spell printed inset on its front, not a
                 // face you turn the card over to see. Handing it back as a back face is what
@@ -127,7 +134,7 @@ public class CardBrowserService {
                         && "prepare".equals(card.get("layout").asText());
                 JsonNode front = multiFaced ? faces.get(0) : card;
                 cards.add(buildFaceInfo(front, collectorNumber, setCode,
-                        rarity, keywords, implemented,
+                        rarity, keywords, watermark, implemented,
                         prepare ? null : secondFace, prepare ? secondFace : null));
             }
 
@@ -139,7 +146,8 @@ public class CardBrowserService {
 
     /** Builds card info from either a top-level card node or one entry of card_faces. */
     private BrowseCardInfo buildFaceInfo(JsonNode node, String collectorNumber, String setCode,
-                                         String rarity, List<String> keywords, boolean implemented,
+                                         String rarity, List<String> keywords, String watermark,
+                                         boolean implemented,
                                          BrowseCardInfo backFace, BrowseCardInfo prepareSpell) {
         String name = node.get("name").asText();
         if (name.contains(" // ")) {
@@ -196,7 +204,7 @@ public class CardBrowserService {
                 name, collectorNumber, setCode, manaCost, typeLine,
                 rarity, power, toughness, color, colors, implemented,
                 cardText, keywords, type, additionalTypes, supertypes, subtypes, loyalty,
-                backFace, prepareSpell
+                watermark, backFace, prepareSpell
         );
     }
 

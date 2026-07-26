@@ -21,6 +21,12 @@ public record BrowseCardInfo(
         List<String> supertypes,
         List<String> subtypes,
         Integer loyalty,
+        /**
+         * The guild or faction mark printed behind the rules text, as Scryfall spells it, or
+         * {@code null} on the great majority of cards, which have none. Read from the top-level
+         * card rather than a face: a double-faced card carries one watermark for both sides.
+         */
+        String watermark,
         BrowseCardInfo backFace,
         /**
          * The spell printed inset on a prepare card's front face. Mutually exclusive with

@@ -576,6 +576,8 @@ export interface BrowseCardInfo {
   supertypes: string[];
   subtypes: string[];
   loyalty: number | null;
+  /** The guild or faction mark printed behind the rules text; null on cards that have none. */
+  watermark: string | null;
   backFace: BrowseCardInfo | null;
   /** The spell printed inset on a prepare card's front face; never set together with backFace. */
   prepareSpell: BrowseCardInfo | null;
