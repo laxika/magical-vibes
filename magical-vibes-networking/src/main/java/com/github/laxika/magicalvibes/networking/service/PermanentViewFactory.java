@@ -146,30 +146,7 @@ public class PermanentViewFactory {
                 mergedSubtypes.add(subtype);
             }
         }
-        return new CardView(
-                cardView.id(), cardView.name(), cardView.type(), cardView.additionalTypes(), cardView.supertypes(), mergedSubtypes,
-                cardView.cardText(), cardView.manaCost(), cardView.power(), cardView.toughness(),
-                cardView.keywords(), cardView.hasTapAbility(), cardView.setCode(),
-                cardView.collectorNumber(), cardView.color(), cardView.colors(), cardView.needsTarget(),
-                cardView.needsSpellTarget(), cardView.activatedAbilities(), cardView.loyalty(),
-                cardView.hasConvoke(), cardView.hasPhyrexianMana(), cardView.phyrexianManaCount(),
-                cardView.token(),
-                cardView.watermark(),
-                cardView.hasAlternateCastingCost(),
-                cardView.alternateCostLifePayment(),
-                cardView.alternateCostSacrificeCount(),
-                cardView.alternateCostTapCount(),
-                cardView.alternateCostReturnCount(),
-                cardView.alternateCostManaCost(),
-                cardView.graveyardActivatedAbilities(),
-                cardView.handActivatedAbilities(),
-                cardView.transformable(),
-                cardView.kickerCost(),
-                cardView.modalChoicesRequired(),
-                cardView.modalChoicesMax(),
-                cardView.modalOptional(),
-                cardView.modalOptions()
-        );
+        return cardView.toBuilder().subtypes(mergedSubtypes).build();
     }
 
     private CardView applyAwakeningCounterSubtype(CardView cardView, Permanent p) {
@@ -180,30 +157,11 @@ public class PermanentViewFactory {
         if (!mergedSubtypes.contains(CardSubtype.ELEMENTAL)) {
             mergedSubtypes.add(CardSubtype.ELEMENTAL);
         }
-        return new CardView(
-                cardView.id(), cardView.name(), cardView.type(), cardView.additionalTypes(), cardView.supertypes(), mergedSubtypes,
-                cardView.cardText(), cardView.manaCost(), cardView.power(), cardView.toughness(),
-                cardView.keywords(), cardView.hasTapAbility(), cardView.setCode(),
-                cardView.collectorNumber(), CardColor.GREEN, List.of(CardColor.GREEN), cardView.needsTarget(),
-                cardView.needsSpellTarget(), cardView.activatedAbilities(), cardView.loyalty(),
-                cardView.hasConvoke(), cardView.hasPhyrexianMana(), cardView.phyrexianManaCount(),
-                cardView.token(),
-                cardView.watermark(),
-                cardView.hasAlternateCastingCost(),
-                cardView.alternateCostLifePayment(),
-                cardView.alternateCostSacrificeCount(),
-                cardView.alternateCostTapCount(),
-                cardView.alternateCostReturnCount(),
-                cardView.alternateCostManaCost(),
-                cardView.graveyardActivatedAbilities(),
-                cardView.handActivatedAbilities(),
-                cardView.transformable(),
-                cardView.kickerCost(),
-                cardView.modalChoicesRequired(),
-                cardView.modalChoicesMax(),
-                cardView.modalOptional(),
-                cardView.modalOptions()
-        );
+        return cardView.toBuilder()
+                .subtypes(mergedSubtypes)
+                .color(CardColor.GREEN)
+                .colors(List.of(CardColor.GREEN))
+                .build();
     }
 
     private CardView applyPermanentAnimation(CardView cardView, Permanent p) {
@@ -212,30 +170,7 @@ public class PermanentViewFactory {
         }
         Set<CardType> mergedTypes = new HashSet<>(cardView.additionalTypes());
         mergedTypes.add(CardType.CREATURE);
-        return new CardView(
-                cardView.id(), cardView.name(), cardView.type(), mergedTypes, cardView.supertypes(), cardView.subtypes(),
-                cardView.cardText(), cardView.manaCost(), cardView.power(), cardView.toughness(),
-                cardView.keywords(), cardView.hasTapAbility(), cardView.setCode(),
-                cardView.collectorNumber(), cardView.color(), cardView.colors(), cardView.needsTarget(),
-                cardView.needsSpellTarget(), cardView.activatedAbilities(), cardView.loyalty(),
-                cardView.hasConvoke(), cardView.hasPhyrexianMana(), cardView.phyrexianManaCount(),
-                cardView.token(),
-                cardView.watermark(),
-                cardView.hasAlternateCastingCost(),
-                cardView.alternateCostLifePayment(),
-                cardView.alternateCostSacrificeCount(),
-                cardView.alternateCostTapCount(),
-                cardView.alternateCostReturnCount(),
-                cardView.alternateCostManaCost(),
-                cardView.graveyardActivatedAbilities(),
-                cardView.handActivatedAbilities(),
-                cardView.transformable(),
-                cardView.kickerCost(),
-                cardView.modalChoicesRequired(),
-                cardView.modalChoicesMax(),
-                cardView.modalOptional(),
-                cardView.modalOptions()
-        );
+        return cardView.toBuilder().additionalTypes(mergedTypes).build();
     }
 
     private CardView applyGrantedCardTypes(CardView cardView, Permanent p) {
@@ -244,30 +179,7 @@ public class PermanentViewFactory {
         }
         Set<CardType> mergedTypes = new HashSet<>(cardView.additionalTypes());
         mergedTypes.addAll(p.getGrantedCardTypes());
-        return new CardView(
-                cardView.id(), cardView.name(), cardView.type(), mergedTypes, cardView.supertypes(), cardView.subtypes(),
-                cardView.cardText(), cardView.manaCost(), cardView.power(), cardView.toughness(),
-                cardView.keywords(), cardView.hasTapAbility(), cardView.setCode(),
-                cardView.collectorNumber(), cardView.color(), cardView.colors(), cardView.needsTarget(),
-                cardView.needsSpellTarget(), cardView.activatedAbilities(), cardView.loyalty(),
-                cardView.hasConvoke(), cardView.hasPhyrexianMana(), cardView.phyrexianManaCount(),
-                cardView.token(),
-                cardView.watermark(),
-                cardView.hasAlternateCastingCost(),
-                cardView.alternateCostLifePayment(),
-                cardView.alternateCostSacrificeCount(),
-                cardView.alternateCostTapCount(),
-                cardView.alternateCostReturnCount(),
-                cardView.alternateCostManaCost(),
-                cardView.graveyardActivatedAbilities(),
-                cardView.handActivatedAbilities(),
-                cardView.transformable(),
-                cardView.kickerCost(),
-                cardView.modalChoicesRequired(),
-                cardView.modalChoicesMax(),
-                cardView.modalOptional(),
-                cardView.modalOptions()
-        );
+        return cardView.toBuilder().additionalTypes(mergedTypes).build();
     }
 
     private CardView applyStaticGrantedCardTypes(CardView cardView, Set<CardType> staticGrantedCardTypes, boolean cardTypeOverriding) {
@@ -284,59 +196,14 @@ public class PermanentViewFactory {
                     additional.add(type);
                 }
             }
-            return new CardView(
-                    cardView.id(), cardView.name(), primary, additional, cardView.supertypes(), cardView.subtypes(),
-                    cardView.cardText(), cardView.manaCost(), cardView.power(), cardView.toughness(),
-                    cardView.keywords(), cardView.hasTapAbility(), cardView.setCode(),
-                    cardView.collectorNumber(), cardView.color(), cardView.colors(), cardView.needsTarget(),
-                    cardView.needsSpellTarget(), cardView.activatedAbilities(), cardView.loyalty(),
-                    cardView.hasConvoke(), cardView.hasPhyrexianMana(), cardView.phyrexianManaCount(),
-                    cardView.token(),
-                    cardView.watermark(),
-                    cardView.hasAlternateCastingCost(),
-                    cardView.alternateCostLifePayment(),
-                    cardView.alternateCostSacrificeCount(),
-                    cardView.alternateCostTapCount(),
-
-                    cardView.alternateCostReturnCount(),
-
-                    cardView.alternateCostManaCost(),
-                    cardView.graveyardActivatedAbilities(),
-                    cardView.handActivatedAbilities(),
-                    cardView.transformable(),
-                    cardView.kickerCost(),
-                    cardView.modalChoicesRequired(),
-                    cardView.modalChoicesMax(),
-                    cardView.modalOptional(),
-                    cardView.modalOptions()
-            );
+            return cardView.toBuilder()
+                    .type(primary)
+                    .additionalTypes(additional)
+                    .build();
         }
         Set<CardType> mergedTypes = new HashSet<>(cardView.additionalTypes());
         mergedTypes.addAll(staticGrantedCardTypes);
-        return new CardView(
-                cardView.id(), cardView.name(), cardView.type(), mergedTypes, cardView.supertypes(), cardView.subtypes(),
-                cardView.cardText(), cardView.manaCost(), cardView.power(), cardView.toughness(),
-                cardView.keywords(), cardView.hasTapAbility(), cardView.setCode(),
-                cardView.collectorNumber(), cardView.color(), cardView.colors(), cardView.needsTarget(),
-                cardView.needsSpellTarget(), cardView.activatedAbilities(), cardView.loyalty(),
-                cardView.hasConvoke(), cardView.hasPhyrexianMana(), cardView.phyrexianManaCount(),
-                cardView.token(),
-                cardView.watermark(),
-                cardView.hasAlternateCastingCost(),
-                cardView.alternateCostLifePayment(),
-                cardView.alternateCostSacrificeCount(),
-                cardView.alternateCostTapCount(),
-                cardView.alternateCostReturnCount(),
-                cardView.alternateCostManaCost(),
-                cardView.graveyardActivatedAbilities(),
-                cardView.handActivatedAbilities(),
-                cardView.transformable(),
-                cardView.kickerCost(),
-                cardView.modalChoicesRequired(),
-                cardView.modalChoicesMax(),
-                cardView.modalOptional(),
-                cardView.modalOptions()
-        );
+        return cardView.toBuilder().additionalTypes(mergedTypes).build();
     }
 
     private CardView applyStaticGrantedSupertypes(CardView cardView, Set<CardSupertype> staticGrantedSupertypes) {
@@ -348,30 +215,7 @@ public class PermanentViewFactory {
         if (mergedSupertypes.equals(cardView.supertypes())) {
             return cardView;
         }
-        return new CardView(
-                cardView.id(), cardView.name(), cardView.type(), cardView.additionalTypes(), mergedSupertypes, cardView.subtypes(),
-                cardView.cardText(), cardView.manaCost(), cardView.power(), cardView.toughness(),
-                cardView.keywords(), cardView.hasTapAbility(), cardView.setCode(),
-                cardView.collectorNumber(), cardView.color(), cardView.colors(), cardView.needsTarget(),
-                cardView.needsSpellTarget(), cardView.activatedAbilities(), cardView.loyalty(),
-                cardView.hasConvoke(), cardView.hasPhyrexianMana(), cardView.phyrexianManaCount(),
-                cardView.token(),
-                cardView.watermark(),
-                cardView.hasAlternateCastingCost(),
-                cardView.alternateCostLifePayment(),
-                cardView.alternateCostSacrificeCount(),
-                cardView.alternateCostTapCount(),
-                cardView.alternateCostReturnCount(),
-                cardView.alternateCostManaCost(),
-                cardView.graveyardActivatedAbilities(),
-                cardView.handActivatedAbilities(),
-                cardView.transformable(),
-                cardView.kickerCost(),
-                cardView.modalChoicesRequired(),
-                cardView.modalChoicesMax(),
-                cardView.modalOptional(),
-                cardView.modalOptions()
-        );
+        return cardView.toBuilder().supertypes(mergedSupertypes).build();
     }
 
     private CardView applyGrantedActivatedAbilities(CardView cardView, List<ActivatedAbility> grantedAbilities) {
@@ -382,30 +226,7 @@ public class PermanentViewFactory {
         for (ActivatedAbility ability : grantedAbilities) {
             mergedAbilities.add(cardViewFactory.createAbilityView(ability));
         }
-        return new CardView(
-                cardView.id(), cardView.name(), cardView.type(), cardView.additionalTypes(), cardView.supertypes(), cardView.subtypes(),
-                cardView.cardText(), cardView.manaCost(), cardView.power(), cardView.toughness(),
-                cardView.keywords(), cardView.hasTapAbility(), cardView.setCode(),
-                cardView.collectorNumber(), cardView.color(), cardView.colors(), cardView.needsTarget(),
-                cardView.needsSpellTarget(), mergedAbilities, cardView.loyalty(),
-                cardView.hasConvoke(), cardView.hasPhyrexianMana(), cardView.phyrexianManaCount(),
-                cardView.token(),
-                cardView.watermark(),
-                cardView.hasAlternateCastingCost(),
-                cardView.alternateCostLifePayment(),
-                cardView.alternateCostSacrificeCount(),
-                cardView.alternateCostTapCount(),
-                cardView.alternateCostReturnCount(),
-                cardView.alternateCostManaCost(),
-                cardView.graveyardActivatedAbilities(),
-                cardView.handActivatedAbilities(),
-                cardView.transformable(),
-                cardView.kickerCost(),
-                cardView.modalChoicesRequired(),
-                cardView.modalChoicesMax(),
-                cardView.modalOptional(),
-                cardView.modalOptions()
-        );
+        return cardView.toBuilder().activatedAbilities(mergedAbilities).build();
     }
 
     private CardView applyTextReplacements(CardView cardView, Permanent p) {
@@ -416,30 +237,7 @@ public class PermanentViewFactory {
         for (TextReplacement rep : p.getTextReplacements()) {
             modifiedText = modifiedText.replace(rep.fromWord(), rep.toWord());
         }
-        return new CardView(
-                cardView.id(), cardView.name(), cardView.type(), cardView.additionalTypes(), cardView.supertypes(), cardView.subtypes(),
-                modifiedText, cardView.manaCost(), cardView.power(), cardView.toughness(),
-                cardView.keywords(), cardView.hasTapAbility(), cardView.setCode(),
-                cardView.collectorNumber(), cardView.color(), cardView.colors(), cardView.needsTarget(),
-                cardView.needsSpellTarget(), cardView.activatedAbilities(), cardView.loyalty(),
-                cardView.hasConvoke(), cardView.hasPhyrexianMana(), cardView.phyrexianManaCount(),
-                cardView.token(),
-                cardView.watermark(),
-                cardView.hasAlternateCastingCost(),
-                cardView.alternateCostLifePayment(),
-                cardView.alternateCostSacrificeCount(),
-                cardView.alternateCostTapCount(),
-                cardView.alternateCostReturnCount(),
-                cardView.alternateCostManaCost(),
-                cardView.graveyardActivatedAbilities(),
-                cardView.handActivatedAbilities(),
-                cardView.transformable(),
-                cardView.kickerCost(),
-                cardView.modalChoicesRequired(),
-                cardView.modalChoicesMax(),
-                cardView.modalOptional(),
-                cardView.modalOptions()
-        );
+        return cardView.toBuilder().cardText(modifiedText).build();
     }
 
     private static final Set<CardSubtype> NON_CREATURE_SUBTYPES = EnumSet.of(
@@ -490,60 +288,14 @@ public class PermanentViewFactory {
                 mergedSubtypes.add(subtype);
             }
         }
-        return new CardView(
-                cardView.id(), cardView.name(), cardView.type(), cardView.additionalTypes(), cardView.supertypes(), mergedSubtypes,
-                cardView.cardText(), cardView.manaCost(), cardView.power(), cardView.toughness(),
-                cardView.keywords(), cardView.hasTapAbility(), cardView.setCode(),
-                cardView.collectorNumber(), cardView.color(), cardView.colors(), cardView.needsTarget(),
-                cardView.needsSpellTarget(), cardView.activatedAbilities(), cardView.loyalty(),
-                cardView.hasConvoke(), cardView.hasPhyrexianMana(), cardView.phyrexianManaCount(),
-                cardView.token(),
-                cardView.watermark(),
-                cardView.hasAlternateCastingCost(),
-                cardView.alternateCostLifePayment(),
-                cardView.alternateCostSacrificeCount(),
-                cardView.alternateCostTapCount(),
-                cardView.alternateCostReturnCount(),
-                cardView.alternateCostManaCost(),
-                cardView.graveyardActivatedAbilities(),
-                cardView.handActivatedAbilities(),
-                cardView.transformable(),
-                cardView.kickerCost(),
-                cardView.modalChoicesRequired(),
-                cardView.modalChoicesMax(),
-                cardView.modalOptional(),
-                cardView.modalOptions()
-        );
+        return cardView.toBuilder().subtypes(mergedSubtypes).build();
     }
 
     private CardView stripCardActivatedAbilities(CardView cardView) {
         if (cardView.activatedAbilities().isEmpty()) {
             return cardView;
         }
-        return new CardView(
-                cardView.id(), cardView.name(), cardView.type(), cardView.additionalTypes(), cardView.supertypes(), cardView.subtypes(),
-                cardView.cardText(), cardView.manaCost(), cardView.power(), cardView.toughness(),
-                cardView.keywords(), cardView.hasTapAbility(), cardView.setCode(),
-                cardView.collectorNumber(), cardView.color(), cardView.colors(), cardView.needsTarget(),
-                cardView.needsSpellTarget(), List.of(), cardView.loyalty(),
-                cardView.hasConvoke(), cardView.hasPhyrexianMana(), cardView.phyrexianManaCount(),
-                cardView.token(),
-                cardView.watermark(),
-                cardView.hasAlternateCastingCost(),
-                cardView.alternateCostLifePayment(),
-                cardView.alternateCostSacrificeCount(),
-                cardView.alternateCostTapCount(),
-                cardView.alternateCostReturnCount(),
-                cardView.alternateCostManaCost(),
-                cardView.graveyardActivatedAbilities(),
-                cardView.handActivatedAbilities(),
-                cardView.transformable(),
-                cardView.kickerCost(),
-                cardView.modalChoicesRequired(),
-                cardView.modalChoicesMax(),
-                cardView.modalOptional(),
-                cardView.modalOptions()
-        );
+        return cardView.toBuilder().activatedAbilities(List.of()).build();
     }
 
     private CardView applyStaticGrantedColors(CardView cardView, Permanent p, Set<CardColor> staticGrantedColors, boolean colorOverriding) {
@@ -582,61 +334,16 @@ public class PermanentViewFactory {
         if (effectiveColor == cardView.color() && effectiveColors.equals(cardView.colors())) {
             return cardView;
         }
-        return new CardView(
-                cardView.id(), cardView.name(), cardView.type(), cardView.additionalTypes(), cardView.supertypes(), cardView.subtypes(),
-                cardView.cardText(), cardView.manaCost(), cardView.power(), cardView.toughness(),
-                cardView.keywords(), cardView.hasTapAbility(), cardView.setCode(),
-                cardView.collectorNumber(), effectiveColor, List.copyOf(effectiveColors), cardView.needsTarget(),
-                cardView.needsSpellTarget(), cardView.activatedAbilities(), cardView.loyalty(),
-                cardView.hasConvoke(), cardView.hasPhyrexianMana(), cardView.phyrexianManaCount(),
-                cardView.token(),
-                cardView.watermark(),
-                cardView.hasAlternateCastingCost(),
-                cardView.alternateCostLifePayment(),
-                cardView.alternateCostSacrificeCount(),
-                cardView.alternateCostTapCount(),
-                cardView.alternateCostReturnCount(),
-                cardView.alternateCostManaCost(),
-                cardView.graveyardActivatedAbilities(),
-                cardView.handActivatedAbilities(),
-                cardView.transformable(),
-                cardView.kickerCost(),
-                cardView.modalChoicesRequired(),
-                cardView.modalChoicesMax(),
-                cardView.modalOptional(),
-                cardView.modalOptions()
-        );
+        return cardView.toBuilder()
+                .color(effectiveColor)
+                .colors(List.copyOf(effectiveColors))
+                .build();
     }
 
     private CardView clearHasTapAbility(CardView cardView) {
         if (!cardView.hasTapAbility()) {
             return cardView;
         }
-        return new CardView(
-                cardView.id(), cardView.name(), cardView.type(), cardView.additionalTypes(), cardView.supertypes(), cardView.subtypes(),
-                cardView.cardText(), cardView.manaCost(), cardView.power(), cardView.toughness(),
-                cardView.keywords(), false, cardView.setCode(),
-                cardView.collectorNumber(), cardView.color(), cardView.colors(), cardView.needsTarget(),
-                cardView.needsSpellTarget(), cardView.activatedAbilities(), cardView.loyalty(),
-                cardView.hasConvoke(), cardView.hasPhyrexianMana(), cardView.phyrexianManaCount(),
-                cardView.token(),
-                cardView.watermark(),
-                cardView.hasAlternateCastingCost(),
-                cardView.alternateCostLifePayment(),
-                cardView.alternateCostSacrificeCount(),
-                cardView.alternateCostTapCount(),
-
-                cardView.alternateCostReturnCount(),
-
-                cardView.alternateCostManaCost(),
-                cardView.graveyardActivatedAbilities(),
-                cardView.handActivatedAbilities(),
-                cardView.transformable(),
-                cardView.kickerCost(),
-                cardView.modalChoicesRequired(),
-                cardView.modalChoicesMax(),
-                cardView.modalOptional(),
-                cardView.modalOptions()
-        );
+        return cardView.toBuilder().hasTapAbility(false).build();
     }
 }

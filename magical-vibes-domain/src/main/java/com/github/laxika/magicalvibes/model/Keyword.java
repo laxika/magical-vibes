@@ -62,7 +62,8 @@ public enum Keyword {
     ESCALATE,
     DECAYED,
     SPLICE,
-    DELIRIUM;
+    DELIRIUM,
+    PREPARED;
 
     /**
      * Maps each landwalk keyword to the land subtype it walks over.

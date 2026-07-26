@@ -523,10 +523,19 @@ class GameBroadcastServiceTest {
         }
 
         private CardView cardViewNamed(String name) {
-            return new CardView(UUID.randomUUID(), name, null, Set.of(), Set.of(), List.of(), null, null,
-                    null, null, Set.of(), false, null, null, null, List.of(), false, false, List.of(), null,
-                    false, false, 0, false, null, false, 0, 0, 0, 0, null, List.of(), List.of(), false, null,
-                    0, 0, false, List.of());
+            return CardView.builder()
+                    .id(UUID.randomUUID())
+                    .name(name)
+                    .additionalTypes(Set.of())
+                    .supertypes(Set.of())
+                    .subtypes(List.of())
+                    .keywords(Set.of())
+                    .colors(List.of())
+                    .activatedAbilities(List.of())
+                    .graveyardActivatedAbilities(List.of())
+                    .handActivatedAbilities(List.of())
+                    .modalOptions(List.of())
+                    .build();
         }
 
         private PermanentView permanentView(UUID permId, int faceDownCount) {

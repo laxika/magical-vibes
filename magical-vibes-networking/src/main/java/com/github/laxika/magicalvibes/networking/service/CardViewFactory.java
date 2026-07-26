@@ -43,17 +43,7 @@ public class CardViewFactory {
         for (CardSubtype st : grantedSubtypes) {
             if (!merged.contains(st)) merged.add(st);
         }
-        return new CardView(
-                base.id(), base.name(), base.type(), base.additionalTypes(), base.supertypes(),
-                merged, base.cardText(), base.manaCost(), base.power(), base.toughness(),
-                base.keywords(), base.hasTapAbility(), base.setCode(), base.collectorNumber(),
-                base.color(), base.colors(), base.needsTarget(), base.needsSpellTarget(),
-                base.activatedAbilities(), base.loyalty(), base.hasConvoke(), base.hasPhyrexianMana(),
-                base.phyrexianManaCount(), base.token(), base.watermark(), base.hasAlternateCastingCost(),
-                base.alternateCostLifePayment(), base.alternateCostSacrificeCount(),
-                base.alternateCostTapCount(), base.alternateCostReturnCount(), base.alternateCostManaCost(),
-                base.graveyardActivatedAbilities(), base.handActivatedAbilities(), base.transformable(), base.kickerCost(),
-                base.modalChoicesRequired(), base.modalChoicesMax(), base.modalOptional(), base.modalOptions());
+        return base.toBuilder().subtypes(merged).build();
     }
 
     /**
@@ -69,17 +59,7 @@ public class CardViewFactory {
         for (ActivatedAbility ability : grantedGraveyardAbilities) {
             mergedGraveyard.add(createAbilityView(ability));
         }
-        return new CardView(
-                base.id(), base.name(), base.type(), base.additionalTypes(), base.supertypes(),
-                base.subtypes(), base.cardText(), base.manaCost(), base.power(), base.toughness(),
-                base.keywords(), base.hasTapAbility(), base.setCode(), base.collectorNumber(),
-                base.color(), base.colors(), base.needsTarget(), base.needsSpellTarget(),
-                base.activatedAbilities(), base.loyalty(), base.hasConvoke(), base.hasPhyrexianMana(),
-                base.phyrexianManaCount(), base.token(), base.watermark(), base.hasAlternateCastingCost(),
-                base.alternateCostLifePayment(), base.alternateCostSacrificeCount(),
-                base.alternateCostTapCount(), base.alternateCostReturnCount(), base.alternateCostManaCost(),
-                mergedGraveyard, base.handActivatedAbilities(), base.transformable(), base.kickerCost(),
-                base.modalChoicesRequired(), base.modalChoicesMax(), base.modalOptional(), base.modalOptions());
+        return base.toBuilder().graveyardActivatedAbilities(mergedGraveyard).build();
     }
 
     public CardView create(Card card) {
@@ -108,6 +88,13 @@ public class CardViewFactory {
         ChooseOneEffect modalEffect = findModalEffect(card);
         List<ModalOptionView> modalOptions = modalEffect == null ? null
                 : modalEffect.options().stream().map(this::createModalOptionView).toList();
+
+        // Prepare cards keep their front face on the battlefield and print the prepare spell inset,
+        // so the spell is projected as a nested view rather than as a face the client flips to.
+        // The prepare spell itself has no back face, so this recurses exactly one level.
+        CardView prepareSpellView = card.getKeywords().contains(Keyword.PREPARED) && card.getBackFaceCard() != null
+                ? create(card.getBackFaceCard())
+                : null;
 
         var altCastOpt = card.getCastingOption(AlternateHandCast.class);
         boolean hasAlternateCastingCost = altCastOpt.isPresent();
@@ -164,7 +151,8 @@ public class CardViewFactory {
                 modalEffect != null ? modalEffect.choicesRequired() : 0,
                 modalEffect != null ? modalEffect.choicesMax() : 0,
                 modalEffect != null && modalEffect.optional(),
-                modalOptions);
+                modalOptions,
+                prepareSpellView);
     }
 
     /**
@@ -177,17 +165,7 @@ public class CardViewFactory {
         if (base.needsTarget() || !disturbBackFaceNeedsTarget(card)) {
             return base;
         }
-        return new CardView(
-                base.id(), base.name(), base.type(), base.additionalTypes(), base.supertypes(),
-                base.subtypes(), base.cardText(), base.manaCost(), base.power(), base.toughness(),
-                base.keywords(), base.hasTapAbility(), base.setCode(), base.collectorNumber(),
-                base.color(), base.colors(), true, base.needsSpellTarget(),
-                base.activatedAbilities(), base.loyalty(), base.hasConvoke(), base.hasPhyrexianMana(),
-                base.phyrexianManaCount(), base.token(), base.watermark(), base.hasAlternateCastingCost(),
-                base.alternateCostLifePayment(), base.alternateCostSacrificeCount(),
-                base.alternateCostTapCount(), base.alternateCostReturnCount(), base.alternateCostManaCost(),
-                base.graveyardActivatedAbilities(), base.handActivatedAbilities(), base.transformable(),
-                base.kickerCost(), base.modalChoicesRequired(), base.modalChoicesMax(), base.modalOptional(), base.modalOptions());
+        return base.toBuilder().needsTarget(true).build();
     }
 
     private static boolean disturbBackFaceNeedsTarget(Card card) {

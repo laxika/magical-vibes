@@ -40,6 +40,7 @@ function makeCard(overrides: Partial<Card>): Card {
     modalChoicesMax: 0,
     modalOptional: false,
     modalOptions: null,
+    prepareSpell: null,
     ...overrides
   };
 }

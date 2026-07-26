@@ -58,6 +58,16 @@
     @for (ability of grantedAbilityTexts; track ability) {
       <div class="card-granted-ability">{{ ability }}</div>
     }
+    @if (prepareSpell) {
+      <div class="prepare-spell" [class.prepare-spell-inactive]="prepareSpellInactive">
+        <div class="prepare-spell-header">
+          <span class="prepare-spell-name">{{ prepareSpell.name }}</span>
+          <span class="prepare-spell-cost" [innerHTML]="prepareSpellManaCost"></span>
+        </div>
+        <div class="prepare-spell-type">{{ prepareSpellTypeLine }}</div>
+        <div class="prepare-spell-text" [innerHTML]="prepareSpellText"></div>
+      </div>
+    }
     @if (flavorText) {
       <div class="flavor-separator"></div>
       <div class="card-flavor-text">{{ flavorText }}</div>

@@ -108,6 +108,7 @@ public class ScryfallOracleLoader {
         KEYWORD_MAP.put("Decayed", Keyword.DECAYED);
         KEYWORD_MAP.put("Splice", Keyword.SPLICE);
         KEYWORD_MAP.put("Delirium", Keyword.DELIRIUM);
+        KEYWORD_MAP.put("Prepared", Keyword.PREPARED);
     }
 
     public static void loadAll(String cacheDir) {
@@ -370,7 +371,7 @@ public class ScryfallOracleLoader {
         return result;
     }
 
-    private static OracleData parseOracleData(JsonNode card) {
+    static OracleData parseOracleData(JsonNode card) {
         // For transform DFCs, face-specific fields (power, toughness, oracle_text) are in card_faces, not top-level
         JsonNode faceNode = getFrontFaceNode(card);
 
@@ -447,7 +448,7 @@ public class ScryfallOracleLoader {
      * Parses oracle data for the back face of a double-faced card.
      * Returns null if the card is not a DFC or has no back face.
      */
-    private static OracleData parseBackFaceOracleData(JsonNode card) {
+    static OracleData parseBackFaceOracleData(JsonNode card) {
         if (!card.has("card_faces") || !card.get("card_faces").isArray()
                 || card.get("card_faces").size() < 2) {
             return null;
@@ -493,6 +494,8 @@ public class ScryfallOracleLoader {
         // Scryfall keywords at top level cover both faces; we re-parse from top level
         Set<Keyword> keywords = parseKeywords(card);
         keywords.remove(Keyword.TRANSFORM);
+        // Prepared belongs to the front face that owns the prepare spell, never to the spell itself
+        keywords.remove(Keyword.PREPARED);
 
         return new OracleData(
                 name,
@@ -521,7 +524,8 @@ public class ScryfallOracleLoader {
         if (card.has("card_faces") && card.has("layout")) {
             String layout = card.get("layout").asText();
             if ("transform".equals(layout) || "split".equals(layout) || "flip".equals(layout)
-                    || "adventure".equals(layout) || "modal_dfc".equals(layout)) {
+                    || "adventure".equals(layout) || "modal_dfc".equals(layout)
+                    || "prepare".equals(layout)) {
                 return card.get("card_faces").get(0);
             }
         }

@@ -5,11 +5,25 @@ import com.github.laxika.magicalvibes.model.CardSubtype;
 import com.github.laxika.magicalvibes.model.CardSupertype;
 import com.github.laxika.magicalvibes.model.CardType;
 import com.github.laxika.magicalvibes.model.Keyword;
+import lombok.Builder;
 
 import java.util.List;
 import java.util.Set;
 import java.util.UUID;
 
+/**
+ * Immutable card projection sent to the client.
+ * <p>
+ * Layered effects are applied by deriving one view from another (see {@code PermanentViewFactory}),
+ * so every derivation MUST go through {@link #toBuilder()} rather than re-listing the components in
+ * a {@code new CardView(...)} call. Hand-copied constructor calls silently drop any component added
+ * later — the same drift hazard {@code agent-docs/ARCHITECTURE.md} calls out for cast dispatch.
+ *
+ * @param prepareSpell the spell printed inset on a "prepare" layout card's front face (SOS
+ *                     "Prepared"), projected from the card's back face; null for every other card.
+ *                     Not a transform: the front face stays visible and this is shown alongside it.
+ */
+@Builder(toBuilder = true)
 public record CardView(
         UUID id,
         String name,
@@ -49,6 +63,7 @@ public record CardView(
         int modalChoicesRequired,
         int modalChoicesMax,
         boolean modalOptional,
-        List<ModalOptionView> modalOptions
+        List<ModalOptionView> modalOptions,
+        CardView prepareSpell
 ) {
 }

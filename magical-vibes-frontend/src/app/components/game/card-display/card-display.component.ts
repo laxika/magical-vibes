@@ -341,6 +341,33 @@ export class CardDisplayComponent implements OnInit, OnChanges, OnDestroy, After
     return this.scryfallData?.rarity ?? null;
   }
 
+  /** The prepare spell printed inset on a prepare card's front face, as projected by the server. */
+  get prepareSpell(): Card | null {
+    return this.card.prepareSpell ?? null;
+  }
+
+  get prepareSpellTypeLine(): string {
+    return this.prepareSpell ? formatTypeLine(this.prepareSpell) : '';
+  }
+
+  /** Dimmed while the permanent is not currently prepared; on cards outside the battlefield
+   *  there is no prepared state to reflect, so the inset stays fully lit. */
+  get prepareSpellInactive(): boolean {
+    return this.permanent != null && !this.permanent.prepared;
+  }
+
+  get prepareSpellManaCost(): SafeHtml {
+    const cost = this.prepareSpell?.manaCost;
+    if (!cost) return '';
+    return this.sanitizer.bypassSecurityTrustHtml(this.manaSymbolService.replaceSymbols(cost));
+  }
+
+  get prepareSpellText(): SafeHtml {
+    const text = this.prepareSpell?.cardText;
+    if (!text) return '';
+    return this.sanitizer.bypassSecurityTrustHtml(this.manaSymbolService.replaceSymbols(text));
+  }
+
   ngAfterViewChecked(): void {
     this.fitTextToBox();
   }
@@ -352,6 +379,7 @@ export class CardDisplayComponent implements OnInit, OnChanges, OnDestroy, After
     const fp = (this.card.cardText ?? '') + '|' +
       this.formatKeywords(this.effectiveKeywords) + '|' +
       this.grantedAbilityTexts.join('|') + '|' +
+      (this.prepareSpell?.cardText ?? '') + '|' +
       (this.flavorText ?? '');
     if (fp === this.lastTextFingerprint) return;
     this.lastTextFingerprint = fp;
