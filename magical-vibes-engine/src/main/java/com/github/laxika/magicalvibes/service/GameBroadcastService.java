@@ -17,7 +17,7 @@ import java.util.UUID;
  * Compatibility facade for legacy log callers and shared projection queries.
  *
  * <p>Runtime state delivery belongs exclusively to the event projection pipeline. Log mutation
- * belongs to {@link GameLogService}; excluded legacy input/effect callers delegate there.
+ * belongs to {@link GameLogService}; excluded legacy effect callers delegate there.
  */
 @Component
 @RequiredArgsConstructor

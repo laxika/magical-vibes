@@ -31,7 +31,7 @@ import com.github.laxika.magicalvibes.model.effect.CardEffect;
 import com.github.laxika.magicalvibes.model.effect.OpponentMayReturnExiledCardOrDrawEffect;
 import com.github.laxika.magicalvibes.model.filter.PermanentPredicateTargetFilter;
 import com.github.laxika.magicalvibes.service.DrawService;
-import com.github.laxika.magicalvibes.service.GameBroadcastService;
+import com.github.laxika.magicalvibes.service.GameLogService;
 import com.github.laxika.magicalvibes.service.trigger.TriggerCollectionService;
 import com.github.laxika.magicalvibes.service.exile.ExileService;
 import com.github.laxika.magicalvibes.service.graveyard.GraveyardService;
@@ -68,7 +68,7 @@ public class LibraryChoiceHandlerService {
     private final BattlefieldEntryService battlefieldEntryService;
     private final LegendRuleService legendRuleService;
     private final StateBasedActionService stateBasedActionService;
-    private final GameBroadcastService gameBroadcastService;
+    private final GameLogService gameLogService;
     private final InputCompletionService inputCompletionService;
     private final PlayerInputService playerInputService;
     private final EffectResolutionService effectResolutionService;
@@ -207,9 +207,9 @@ public class LibraryChoiceHandlerService {
             // Log the result
             if (toBattlefield) {
                 if (chosenCard == null) {
-                    gameBroadcastService.logAndBroadcast(gameData, GameLog.text(player.getUsername() + " puts no card onto the battlefield."));
+                    gameLogService.append(gameData, GameLog.text(player.getUsername() + " puts no card onto the battlefield."));
                 } else {
-                    gameBroadcastService.logAndBroadcast(gameData,
+                    gameLogService.append(gameData,
                             GameLog.entersBattlefieldUnder(chosenCard, player.getUsername()));
                 }
             } else {
@@ -235,7 +235,7 @@ public class LibraryChoiceHandlerService {
                             ? GameLog.text(player.getUsername() + " does not reveal a card.")
                             : GameLog.textCardText(player.getUsername() + " reveals ", chosenCard, " and puts it into their hand.");
                 }
-                gameBroadcastService.logAndBroadcast(gameData, logEntry);
+                gameLogService.append(gameData, logEntry);
             }
 
             // If ETB or legend rule caused awaiting input, defer remaining card reorder
@@ -267,7 +267,7 @@ public class LibraryChoiceHandlerService {
                     for (Card card : new ArrayList<>(sourceCards)) {
                         graveyardService.addCardToGraveyard(gameData, deckOwnerId, card);
                     }
-                    gameBroadcastService.logAndBroadcast(gameData, graveyardLog.build());
+                    gameLogService.append(gameData, graveyardLog.build());
                 }
                 finishSearchAndResume(gameData);
                 return;
@@ -312,7 +312,7 @@ public class LibraryChoiceHandlerService {
             String logEntry = shuffleAfterSelection
                     ? player.getUsername() + " chooses not to take a card. Library is shuffled."
                     : player.getUsername() + " chooses not to take a card.";
-            gameBroadcastService.logAndBroadcast(gameData, GameLog.text(logEntry));
+            gameLogService.append(gameData, GameLog.text(logEntry));
             log.info("Game {} - {} declines to take a card from library", gameData.id, player.getUsername());
             // Per ruling: if you find only one basic land with Cultivate, it must go to
             // the battlefield tapped — skipping the battlefield pick means finding zero,
@@ -320,7 +320,7 @@ public class LibraryChoiceHandlerService {
             if (followUp.basicLandToHand()) {
                 LibraryShuffleHelper.shuffleLibrary(gameData, deckOwnerId);
                 String shuffleLog = player.getUsername() + "'s library is shuffled.";
-                gameBroadcastService.logAndBroadcast(gameData, GameLog.text(shuffleLog));
+                gameLogService.append(gameData, GameLog.text(shuffleLog));
             }
             if (startPendingEachPlayerBasicLandSearch(gameData, followUp.clearBasicLandToHand())) return;
             if (librarySearchSupport.startNextEachPlayerCreatureToHandSearch(gameData, followUp)) return;
@@ -359,7 +359,7 @@ public class LibraryChoiceHandlerService {
             // (not the searched library's owner), then that player shuffles.
             if (gameQueryService.isCardBlockedFromEnteringFromZone(gameData, chosenCard, Zone.LIBRARY)) {
                 deck.add(chosenCard);
-                gameBroadcastService.logAndBroadcast(gameData, GameLog.cardThen(chosenCard,
+                gameLogService.append(gameData, GameLog.cardThen(chosenCard,
                         " can't enter the battlefield from a library; it stays in the library."));
             } else {
                 Permanent perm = new Permanent(chosenCard);
@@ -370,7 +370,7 @@ public class LibraryChoiceHandlerService {
                 if (!gameData.interaction.isAwaitingInput()) {
                     legendRuleService.checkLegendRule(gameData, playerId);
                 }
-                gameBroadcastService.logAndBroadcast(gameData,
+                gameLogService.append(gameData,
                         GameLog.entersBattlefieldUnder(chosenCard, player.getUsername()));
             }
 
@@ -378,7 +378,7 @@ public class LibraryChoiceHandlerService {
                 LibraryShuffleHelper.shuffleLibrary(gameData, deckOwnerId);
                 if (targetPlayerId != null) {
                     String targetName = gameData.playerIdToName.get(targetPlayerId);
-                    gameBroadcastService.logAndBroadcast(gameData, GameLog.text(targetName + "'s library is shuffled."));
+                    gameLogService.append(gameData, GameLog.text(targetName + "'s library is shuffled."));
                 }
             }
             log.info("Game {} - {} puts {} onto the battlefield under their control from a library search",
@@ -396,7 +396,7 @@ public class LibraryChoiceHandlerService {
                 LibraryShuffleHelper.shuffleLibrary(gameData, deckOwnerId);
                 if (targetPlayerId != null) {
                     String targetName = gameData.playerIdToName.get(targetPlayerId);
-                    gameBroadcastService.logAndBroadcast(gameData, GameLog.text(targetName + "'s library is shuffled."));
+                    gameLogService.append(gameData, GameLog.text(targetName + "'s library is shuffled."));
                 }
             }
             castCardWithoutPaying(gameData, player, chosenCard);
@@ -416,7 +416,7 @@ public class LibraryChoiceHandlerService {
                     if (shuffleAfterSelection) {
                         LibraryShuffleHelper.shuffleLibrary(gameData, deckOwnerId);
                     }
-                    gameBroadcastService.logAndBroadcast(gameData, GameLog.text(player.getUsername() + " exiles a card face down. Library is shuffled."));
+                    gameLogService.append(gameData, GameLog.text(player.getUsername() + " exiles a card face down. Library is shuffled."));
                     finishSearchAndResume(gameData);
                     return;
                 }
@@ -432,7 +432,7 @@ public class LibraryChoiceHandlerService {
                                 .shuffleAfterSelection(shuffleAfterSelection)
                                 .build(),
                         exilePrompt, canFailToFind));
-                gameBroadcastService.logAndBroadcast(gameData, GameLog.text(player.getUsername() + " exiles a card face down."));
+                gameLogService.append(gameData, GameLog.text(player.getUsername() + " exiles a card face down."));
                 return;
             }
 
@@ -443,7 +443,7 @@ public class LibraryChoiceHandlerService {
             String logMsg = shuffleAfterSelection
                     ? player.getUsername() + " exiles a card face down. Library is shuffled."
                     : player.getUsername() + " exiles a card face down.";
-            gameBroadcastService.logAndBroadcast(gameData, GameLog.text(logMsg));
+            gameLogService.append(gameData, GameLog.text(logMsg));
             log.info("Game {} - {} exiles {} from library search", gameData.id, player.getUsername(), chosenCard.getName());
 
             if (followUp.opponentExileChoice() != null) {
@@ -477,7 +477,7 @@ public class LibraryChoiceHandlerService {
         if (destination == LibrarySearchDestination.EXILE_WITH_SOURCE) {
             UUID sourcePermanentId = librarySearch.sourcePermanentId();
             exileService.exileCard(gameData, deckOwnerId, chosenCard, sourcePermanentId);
-            gameBroadcastService.logAndBroadcast(gameData, GameLog.textCardText(
+            gameLogService.append(gameData, GameLog.textCardText(
                     player.getUsername() + " exiles ", chosenCard, "."));
             log.info("Game {} - {} exiles {} with source (any-number search)",
                     gameData.id, player.getUsername(), chosenCard.getName());
@@ -504,7 +504,7 @@ public class LibraryChoiceHandlerService {
 
             if (shuffleAfterSelection) {
                 LibraryShuffleHelper.shuffleLibrary(gameData, deckOwnerId);
-                gameBroadcastService.logAndBroadcast(gameData, GameLog.text(player.getUsername() + "'s library is shuffled."));
+                gameLogService.append(gameData, GameLog.text(player.getUsername() + "'s library is shuffled."));
             }
             finishSearchAndResume(gameData);
             return;
@@ -529,7 +529,7 @@ public class LibraryChoiceHandlerService {
             String logMsg = shuffleAfterSelection
                     ? player.getUsername() + " exiles a card face down. Library is shuffled."
                     : player.getUsername() + " exiles a card face down.";
-            gameBroadcastService.logAndBroadcast(gameData, GameLog.text(logMsg));
+            gameLogService.append(gameData, GameLog.text(logMsg));
             log.info("Game {} - {} exiles {} from library search (with play permission)", gameData.id, player.getUsername(), chosenCard.getName());
 
             finishSearchAndResume(gameData);
@@ -548,7 +548,7 @@ public class LibraryChoiceHandlerService {
             String opponentName = gameData.playerIdToName.get(opponentId);
 
             String logMsg = controllerName + " selects a card from " + opponentName + "'s library.";
-            gameBroadcastService.logAndBroadcast(gameData, GameLog.text(logMsg));
+            gameLogService.append(gameData, GameLog.text(logMsg));
             log.info("Game {} - {} selects {} from {}'s library for Sphinx Ambassador",
                     gameData.id, controllerName, chosenCard.getName(), opponentName);
 
@@ -568,12 +568,12 @@ public class LibraryChoiceHandlerService {
                 LibraryShuffleHelper.shuffleLibrary(gameData, deckOwnerId);
             }
             if (shuffleAfterSelection) {
-                gameBroadcastService.logAndBroadcast(gameData, GameLog.builder()
+                gameLogService.append(gameData, GameLog.builder()
                         .card(chosenCard)
                         .text(" enters the battlefield under " + player.getUsername() + "'s control. Library is shuffled.")
                         .build());
             } else {
-                gameBroadcastService.logAndBroadcast(gameData,
+                gameLogService.append(gameData,
                         GameLog.entersBattlefieldUnder(chosenCard, player.getUsername()));
             }
 
@@ -600,7 +600,7 @@ public class LibraryChoiceHandlerService {
                 LibraryShuffleHelper.shuffleLibrary(gameData, deckOwnerId);
             }
             deck.addFirst(chosenCard);
-            gameBroadcastService.logAndBroadcast(gameData, GameLog.textCardText(
+            gameLogService.append(gameData, GameLog.textCardText(
                     player.getUsername() + " reveals ", chosenCard,
                     " and puts it on top of their library. Library is shuffled."));
             log.info("Game {} - {} searches library and puts {} on top",
@@ -683,7 +683,7 @@ public class LibraryChoiceHandlerService {
                 } else {
                     logMsg = player.getUsername() + " finds no more matching cards. Library is shuffled.";
                 }
-                gameBroadcastService.logAndBroadcast(gameData, GameLog.text(logMsg));
+                gameLogService.append(gameData, GameLog.text(logMsg));
                 if (toBattlefield) {
                     stateBasedActionService.performStateBasedActions(gameData);
                 }
@@ -732,7 +732,7 @@ public class LibraryChoiceHandlerService {
         if (!accumulatedCards.isEmpty() && toBattlefield) {
             if (shuffleAfterSelection) {
                 String shuffleLog = player.getUsername() + "'s library is shuffled.";
-                gameBroadcastService.logAndBroadcast(gameData, GameLog.text(shuffleLog));
+                gameLogService.append(gameData, GameLog.text(shuffleLog));
             }
         } else {
             String destinationText = switch (destination) {
@@ -768,7 +768,7 @@ public class LibraryChoiceHandlerService {
                         ? player.getUsername() + " puts a card " + destinationText + ". Library is shuffled."
                         : player.getUsername() + " puts a card " + destinationText + ".");
             }
-            gameBroadcastService.logAndBroadcast(gameData, logEntry);
+            gameLogService.append(gameData, logEntry);
             log.info("Game {} - {} searches library and puts {} {}",
                     gameData.id, player.getUsername(), chosenCard.getName(), destinationText);
         }
@@ -829,7 +829,7 @@ public class LibraryChoiceHandlerService {
             if (gameQueryService.isCardBlockedFromEnteringFromZone(gameData, card, Zone.LIBRARY)) {
                 gameData.playerDecks.computeIfAbsent(ownerId, k -> new ArrayList<>()).add(card);
                 anyBlocked = true;
-                gameBroadcastService.logAndBroadcast(gameData, GameLog.cardThen(card,
+                gameLogService.append(gameData, GameLog.cardThen(card,
                         " can't enter the battlefield from a library; it stays in the library."));
                 continue;
             }
@@ -842,9 +842,9 @@ public class LibraryChoiceHandlerService {
             placedCards.add(card);
 
             if (tapped) {
-                gameBroadcastService.logAndBroadcast(gameData, GameLog.entersBattlefieldTappedUnder(card, ownerName));
+                gameLogService.append(gameData, GameLog.entersBattlefieldTappedUnder(card, ownerName));
             } else {
-                gameBroadcastService.logAndBroadcast(gameData, GameLog.entersBattlefieldUnder(card, ownerName));
+                gameLogService.append(gameData, GameLog.entersBattlefieldUnder(card, ownerName));
             }
         }
 
@@ -888,7 +888,7 @@ public class LibraryChoiceHandlerService {
         if (basicLands.isEmpty()) {
             LibraryShuffleHelper.shuffleLibrary(gameData, playerId);
             String logMsg = playerName + " finds no more basic land cards. Library is shuffled.";
-            gameBroadcastService.logAndBroadcast(gameData, GameLog.text(logMsg));
+            gameLogService.append(gameData, GameLog.text(logMsg));
             return false;
         }
 
@@ -944,7 +944,7 @@ public class LibraryChoiceHandlerService {
         if (deck.isEmpty()) {
             LibraryShuffleHelper.shuffleLibrary(gameData, playerId);
             String logMsg = playerName + " finds no more cards. Library is shuffled.";
-            gameBroadcastService.logAndBroadcast(gameData, GameLog.text(logMsg));
+            gameLogService.append(gameData, GameLog.text(logMsg));
             return false;
         }
 
@@ -984,7 +984,7 @@ public class LibraryChoiceHandlerService {
             List<Card> deck = gameData.playerDecks.get(nextPlayerId);
             if (deck == null || deck.isEmpty()) {
                 String logMsg = playerName + " searches their library but it is empty. Library is shuffled.";
-                gameBroadcastService.logAndBroadcast(gameData, GameLog.text(logMsg));
+                gameLogService.append(gameData, GameLog.text(logMsg));
                 continue;
             }
 
@@ -995,7 +995,7 @@ public class LibraryChoiceHandlerService {
             if (basicLands.isEmpty()) {
                 LibraryShuffleHelper.shuffleLibrary(gameData, nextPlayerId);
                 String logMsg = playerName + " searches their library but finds no basic land cards. Library is shuffled.";
-                gameBroadcastService.logAndBroadcast(gameData, GameLog.text(logMsg));
+                gameLogService.append(gameData, GameLog.text(logMsg));
                 continue;
             }
 
@@ -1009,7 +1009,7 @@ public class LibraryChoiceHandlerService {
             interactionHandlerRegistry.begin(gameData, new PendingInteraction.LibrarySearch(params, prompt, true));
 
             String logMsg = playerName + " searches their library.";
-            gameBroadcastService.logAndBroadcast(gameData, GameLog.text(logMsg));
+            gameLogService.append(gameData, GameLog.text(logMsg));
             return true;
         }
 
@@ -1097,7 +1097,7 @@ public class LibraryChoiceHandlerService {
             Permanent perm = new Permanent(card);
             battlefieldEntryService.putPermanentOntoBattlefield(gameData, controllerId, perm, enterTappedTypesSnapshot);
 
-            gameBroadcastService.logAndBroadcast(gameData, GameLog.entersBattlefieldUnder(card, playerName));
+            gameLogService.append(gameData, GameLog.entersBattlefieldUnder(card, playerName));
 
             if (card.hasType(CardType.CREATURE)) {
                 battlefieldEntryService.handleCreatureEnteredBattlefield(gameData, controllerId, card, null, false);
@@ -1119,9 +1119,9 @@ public class LibraryChoiceHandlerService {
 
             if (selectedCards.isEmpty()) {
                 String logEntry = playerName + " puts no cards onto the battlefield. The rest are put into their graveyard.";
-                gameBroadcastService.logAndBroadcast(gameData, GameLog.text(logEntry));
+                gameLogService.append(gameData, GameLog.text(logEntry));
             } else {
-                gameBroadcastService.logAndBroadcast(gameData,
+                gameLogService.append(gameData,
                         appendCards(GameLog.builder().text(playerName + " puts "), selectedCards)
                                 .text(" onto the battlefield. The rest are put into their graveyard.").build());
             }
@@ -1133,9 +1133,9 @@ public class LibraryChoiceHandlerService {
 
             if (selectedCards.isEmpty()) {
                 String logEntry = playerName + " puts no cards onto the battlefield. The rest are put on the bottom of their library in a random order.";
-                gameBroadcastService.logAndBroadcast(gameData, GameLog.text(logEntry));
+                gameLogService.append(gameData, GameLog.text(logEntry));
             } else {
-                gameBroadcastService.logAndBroadcast(gameData,
+                gameLogService.append(gameData,
                         appendCards(GameLog.builder().text(playerName + " puts "), selectedCards)
                                 .text(" onto the battlefield. The rest are put on the bottom of their library in a random order.").build());
             }
@@ -1146,9 +1146,9 @@ public class LibraryChoiceHandlerService {
 
             if (selectedCards.isEmpty()) {
                 String logEntry = playerName + " puts no cards onto the battlefield. Library is shuffled.";
-                gameBroadcastService.logAndBroadcast(gameData, GameLog.text(logEntry));
+                gameLogService.append(gameData, GameLog.text(logEntry));
             } else {
-                gameBroadcastService.logAndBroadcast(gameData,
+                gameLogService.append(gameData,
                         appendCards(GameLog.builder().text(playerName + " puts "), selectedCards)
                                 .text(" onto the battlefield. Library is shuffled.").build());
             }
@@ -1187,7 +1187,7 @@ public class LibraryChoiceHandlerService {
         // Rest exiled (Browse): one card to hand, the others exiled face up.
         if (remainingToExile) {
             if (!selectedCards.isEmpty()) {
-                gameBroadcastService.logAndBroadcast(gameData,
+                gameLogService.append(gameData,
                         appendCards(GameLog.builder().text(playerName + " puts "), selectedCards)
                                 .text(" into their hand.").build());
             }
@@ -1195,7 +1195,7 @@ public class LibraryChoiceHandlerService {
                 exileService.exileCard(gameData, controllerId, card);
             }
             if (!remainingCards.isEmpty()) {
-                gameBroadcastService.logAndBroadcast(gameData,
+                gameLogService.append(gameData,
                         appendCards(GameLog.builder().text(playerName + " exiles "), remainingCards)
                                 .text(".").build());
             }
@@ -1209,18 +1209,18 @@ public class LibraryChoiceHandlerService {
             if (!selectedCards.isEmpty()) {
                 String countWord = selectedCards.size() == 1 ? "one card" : selectedCards.size() + " cards";
                 String logEntry = playerName + " puts " + countWord + " into their hand and the rest into their graveyard.";
-                gameBroadcastService.logAndBroadcast(gameData, GameLog.text(logEntry));
+                gameLogService.append(gameData, GameLog.text(logEntry));
             }
         } else if (selectedCards.isEmpty()) {
             String logEntry = playerName + " does not reveal any creature cards.";
-            gameBroadcastService.logAndBroadcast(gameData, GameLog.text(logEntry));
+            gameLogService.append(gameData, GameLog.text(logEntry));
         } else if (randomRemainingToBottom) {
-            gameBroadcastService.logAndBroadcast(gameData,
+            gameLogService.append(gameData,
                     appendCards(GameLog.builder().text(playerName + " puts "), selectedCards)
                             .text(" into their hand. The rest are put on the bottom of their library in a random order.")
                             .build());
         } else {
-            gameBroadcastService.logAndBroadcast(gameData,
+            gameLogService.append(gameData,
                     appendCards(GameLog.builder().text(playerName + " reveals "), selectedCards)
                             .text(" and puts them into their hand.").build());
         }
@@ -1287,14 +1287,14 @@ public class LibraryChoiceHandlerService {
 
         if (toHand != null) {
             gameData.addCardToHand(controllerId, toHand);
-            gameBroadcastService.logAndBroadcast(gameData, GameLog.textCardText(
+            gameLogService.append(gameData, GameLog.textCardText(
                     controllerName + " puts ", toHand, " into their hand."));
         }
 
         if (toExile != null) {
             exileService.exileCard(gameData, controllerId, toExile);
             gameData.exiledCardsWithSilverCounters.add(toExile.getId());
-            gameBroadcastService.logAndBroadcast(gameData,
+            gameLogService.append(gameData,
                     GameLog.cardThen(toExile, " is exiled with a silver counter."));
         }
 
@@ -1321,7 +1321,7 @@ public class LibraryChoiceHandlerService {
                 gameData.exiledCardsWithSilverCounters.remove(card.getId());
                 gameData.addCardToHand(controllerId, card);
 
-                gameBroadcastService.logAndBroadcast(gameData, GameLog.textCardText(
+                gameLogService.append(gameData, GameLog.textCardText(
                         controllerName + " returns ", card, " from exile to their hand."));
                 log.info("Game {} - {} returns {} from exile (silver counter) to hand",
                         gameData.id, controllerName, card.getName());
@@ -1342,7 +1342,7 @@ public class LibraryChoiceHandlerService {
             if (selectedIds.contains(card.getId())) {
                 gameData.removeFromExile(card.getId());
                 gameData.addCardToHand(controllerId, card);
-                gameBroadcastService.logAndBroadcast(gameData, GameLog.textCardText(
+                gameLogService.append(gameData, GameLog.textCardText(
                         controllerName + " puts ", card, " from exile into their hand."));
                 log.info("Game {} - {} returns {} from exile to hand",
                         gameData.id, controllerName, card.getName());
@@ -1389,7 +1389,7 @@ public class LibraryChoiceHandlerService {
         // Opponent pays life for each denied card
         if (!toExile.isEmpty()) {
             gameData.playerLifeTotals.merge(opponentId, -totalLifeCost, Integer::sum);
-            gameBroadcastService.logAndBroadcast(gameData,
+            gameLogService.append(gameData,
                     appendCards(GameLog.builder().text(opponentName + " pays " + totalLifeCost + " life to deny "), toExile)
                             .text(".").build());
         }
@@ -1399,7 +1399,7 @@ public class LibraryChoiceHandlerService {
             gameData.addCardToHand(controllerId, card);
         }
         if (!toHand.isEmpty()) {
-            gameBroadcastService.logAndBroadcast(gameData,
+            gameLogService.append(gameData,
                     appendCards(GameLog.builder().text(controllerName + " puts "), toHand)
                             .text(" into their hand.").build());
         }
@@ -1409,7 +1409,7 @@ public class LibraryChoiceHandlerService {
             exileService.exileCard(gameData, controllerId, card);
         }
         if (!toExile.isEmpty()) {
-            gameBroadcastService.logAndBroadcast(gameData,
+            gameLogService.append(gameData,
                     appendCards(GameLog.builder().text(controllerName + " exiles "), toExile)
                             .text(".").build());
         }
@@ -1461,7 +1461,7 @@ public class LibraryChoiceHandlerService {
 
         if (chosenCard == null) {
             String logEntry = playerName + " declines to cast a spell.";
-            gameBroadcastService.logAndBroadcast(gameData, GameLog.text(logEntry));
+            gameLogService.append(gameData, GameLog.text(logEntry));
             log.info("Game {} - {} declines Sunbird's Invocation cast", gameData.id, playerName);
             finishSearchAndResume(gameData);
             return;
@@ -1494,7 +1494,7 @@ public class LibraryChoiceHandlerService {
         deck.addFirst(chosenCard);
 
         String playerName = gameData.playerIdToName.get(deckOwnerId);
-        gameBroadcastService.logAndBroadcast(gameData, GameLog.text(playerName + " puts " + bottomed
+        gameLogService.append(gameData, GameLog.text(playerName + " puts " + bottomed
                 + " card" + (bottomed != 1 ? "s" : "") + " on the bottom of their library in a random order."));
         log.info("Game {} - {} keeps a card and bottoms {} (Aladdin's Lamp)", gameData.id, playerName, bottomed);
 
@@ -1546,7 +1546,7 @@ public class LibraryChoiceHandlerService {
             if (validTargets.isEmpty()) {
                 // No valid targets — card goes to graveyard
                 graveyardService.addCardToGraveyard(gameData, playerId, chosenCard);
-                gameBroadcastService.logAndBroadcast(gameData, GameLog.cardThen(chosenCard,
+                gameLogService.append(gameData, GameLog.cardThen(chosenCard,
                         " has no valid targets and is put into the graveyard."));
                 log.info("Game {} - {} cast-without-paying has no valid targets", gameData.id, chosenCard.getName());
                 finishSearchAndResume(gameData);
@@ -1558,7 +1558,7 @@ public class LibraryChoiceHandlerService {
             playerInputService.beginPermanentChoice(gameData, playerId, validTargets,
                     "Choose a target for " + chosenCard.getName() + ".");
 
-            gameBroadcastService.logAndBroadcast(gameData, GameLog.textCardText(playerName + " casts ",
+            gameLogService.append(gameData, GameLog.textCardText(playerName + " casts ",
                     chosenCard, " without paying its mana cost — choosing target."));
             log.info("Game {} - {} casts {} (Sunbird's Invocation), choosing target",
                     gameData.id, playerName, chosenCard.getName());
@@ -1574,7 +1574,7 @@ public class LibraryChoiceHandlerService {
         gameData.recordSpellCast(playerId, chosenCard);
         gameData.priorityPassedBy.clear();
 
-        gameBroadcastService.logAndBroadcast(gameData, GameLog.textCardText(
+        gameLogService.append(gameData, GameLog.textCardText(
                 playerName + " casts ", chosenCard, " without paying its mana cost."));
         log.info("Game {} - {} casts {} (Sunbird's Invocation) without paying mana",
                 gameData.id, playerName, chosenCard.getName());

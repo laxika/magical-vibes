@@ -26,7 +26,7 @@ import com.github.laxika.magicalvibes.model.effect.ReplaceSingleDrawEffect;
 import com.github.laxika.magicalvibes.model.PendingInteraction;
 import com.github.laxika.magicalvibes.service.interaction.InteractionHandlerRegistry;
 import com.github.laxika.magicalvibes.service.DrawService;
-import com.github.laxika.magicalvibes.service.GameBroadcastService;
+import com.github.laxika.magicalvibes.service.GameLogService;
 import com.github.laxika.magicalvibes.service.MulliganService;
 import com.github.laxika.magicalvibes.service.trigger.TriggerCollectionService;
 import com.github.laxika.magicalvibes.service.turn.TurnProgressionService;
@@ -54,7 +54,7 @@ public class MayMiscHandlerService {
     private final InputCompletionService inputCompletionService;
     private final GameQueryService gameQueryService;
     private final DrawService drawService;
-    private final GameBroadcastService gameBroadcastService;
+    private final GameLogService gameLogService;
     private final MulliganService mulliganService;
     private final PlayerInputService playerInputService;
     private final TurnProgressionService turnProgressionService;
@@ -84,12 +84,12 @@ public class MayMiscHandlerService {
                 // CR 613.7e: an Equipment receives a new timestamp each time it becomes attached.
                 equipPerm.setTimestamp(gameData.nextTimestamp());
                 String attachLog = equipPerm.getCard().getName() + " is attached to " + targetPerm.getCard().getName() + ".";
-                gameBroadcastService.logAndBroadcast(gameData, GameLog.cardTextCard(equipPerm.getCard(), " is attached to ", targetPerm.getCard(), "."));
+                gameLogService.append(gameData, GameLog.cardTextCard(equipPerm.getCard(), " is attached to ", targetPerm.getCard(), "."));
                 log.info("Game {} - {} attached to {}", gameData.id, equipPerm.getCard().getName(), targetPerm.getCard().getName());
             }
         } else {
             String declineLog = player.getUsername() + " declines to attach the Equipment.";
-            gameBroadcastService.logAndBroadcast(gameData, GameLog.text(declineLog));
+            gameLogService.append(gameData, GameLog.text(declineLog));
             log.info("Game {} - {} declines equipment attachment", gameData.id, player.getUsername());
         }
 
@@ -117,10 +117,10 @@ public class MayMiscHandlerService {
             // A "for as long as this stays tapped" control effect (Seasinger) ends on untap.
             creatureControlService.onSourceUntapped(gameData, sourcePermanent);
             String logEntry = player.getUsername() + " untaps " + sourceCard.getName() + ".";
-            gameBroadcastService.logAndBroadcast(gameData, GameLog.textCardText(player.getUsername() + " untaps " , sourceCard, "."));
+            gameLogService.append(gameData, GameLog.textCardText(player.getUsername() + " untaps " , sourceCard, "."));
             log.info("Game {} - {} untaps {} (may-not-untap choice)", gameData.id, player.getUsername(), sourceCard.getName());
         } else {
-            gameBroadcastService.logAndBroadcast(gameData, GameLog.textCardText(player.getUsername() + " chooses not to untap " , sourceCard, "."));
+            gameLogService.append(gameData, GameLog.textCardText(player.getUsername() + " chooses not to untap " , sourceCard, "."));
             log.info("Game {} - {} keeps {} tapped (may-not-untap choice)", gameData.id, player.getUsername(), sourceCard.getName());
         }
 
@@ -142,12 +142,12 @@ public class MayMiscHandlerService {
             ));
 
             String logEntry = player.getUsername() + " reveals " + ability.sourceCard().getName() + " from their opening hand.";
-            gameBroadcastService.logAndBroadcast(gameData, GameLog.textCardText(player.getUsername() + " reveals " , ability.sourceCard(), " from their opening hand."));
+            gameLogService.append(gameData, GameLog.textCardText(player.getUsername() + " reveals " , ability.sourceCard(), " from their opening hand."));
             log.info("Game {} - {} reveals {} from opening hand (delayed counter trigger registered)",
                     gameData.id, player.getUsername(), ability.sourceCard().getName());
         } else {
             String logEntry = player.getUsername() + " declines to reveal " + ability.sourceCard().getName() + ".";
-            gameBroadcastService.logAndBroadcast(gameData, GameLog.textCardText(player.getUsername() + " declines to reveal " , ability.sourceCard(), "."));
+            gameLogService.append(gameData, GameLog.textCardText(player.getUsername() + " declines to reveal " , ability.sourceCard(), "."));
             log.info("Game {} - {} declines to reveal {}", gameData.id, player.getUsername(), ability.sourceCard().getName());
         }
 
@@ -163,12 +163,12 @@ public class MayMiscHandlerService {
             ));
 
             String logEntry = player.getUsername() + " reveals " + ability.sourceCard().getName() + " from their opening hand.";
-            gameBroadcastService.logAndBroadcast(gameData, GameLog.textCardText(player.getUsername() + " reveals " , ability.sourceCard(), " from their opening hand."));
+            gameLogService.append(gameData, GameLog.textCardText(player.getUsername() + " reveals " , ability.sourceCard(), " from their opening hand."));
             log.info("Game {} - {} reveals {} from opening hand (delayed mana trigger registered)",
                     gameData.id, player.getUsername(), ability.sourceCard().getName());
         } else {
             String logEntry = player.getUsername() + " declines to reveal " + ability.sourceCard().getName() + ".";
-            gameBroadcastService.logAndBroadcast(gameData, GameLog.textCardText(player.getUsername() + " declines to reveal " , ability.sourceCard(), "."));
+            gameLogService.append(gameData, GameLog.textCardText(player.getUsername() + " declines to reveal " , ability.sourceCard(), "."));
             log.info("Game {} - {} declines to reveal {}", gameData.id, player.getUsername(), ability.sourceCard().getName());
         }
 
@@ -183,7 +183,7 @@ public class MayMiscHandlerService {
 
         if (!accepted) {
             drawService.resolveDrawCardWithoutStaticReplacementCheck(gameData, drawingPlayerId);
-            gameBroadcastService.logAndBroadcast(gameData, GameLog.textCardText(player.getUsername() + " declines to use " , ability.sourceCard(), "."));
+            gameLogService.append(gameData, GameLog.textCardText(player.getUsername() + " declines to use " , ability.sourceCard(), "."));
 
             playerInputService.processNextMayAbility(gameData);
             if (gameData.pendingMayAbilities.isEmpty() && !gameData.interaction.isAwaitingInput()) {
@@ -210,7 +210,7 @@ public class MayMiscHandlerService {
             if (deck != null && !deck.isEmpty()) {
                 Card top = deck.removeFirst();
                 gameData.playerGraveyards.get(drawingPlayerId).add(top);
-                gameBroadcastService.logAndBroadcast(gameData, GameLog.textCardText(playerName + "'s ", top, " is put into their graveyard."));
+                gameLogService.append(gameData, GameLog.textCardText(playerName + "'s ", top, " is put into their graveyard."));
                 log.info("Game {} - {}'s revealed {} put into graveyard by {}",
                         gameData.id, playerName, top.getName(), ability.sourceCard().getName());
             }
@@ -240,7 +240,7 @@ public class MayMiscHandlerService {
                     EffectDuration.UNTIL_YOUR_NEXT_TURN,
                     0L));
 
-            gameBroadcastService.logAndBroadcast(gameData, GameLog.textCardText(playerName + " skips their draw with " , ability.sourceCard(), "."));
+            gameLogService.append(gameData, GameLog.textCardText(playerName + " skips their draw with " , ability.sourceCard(), "."));
             log.info("Game {} - {} skips draw for Island Sanctuary shield", gameData.id, playerName);
 
             playerInputService.processNextMayAbility(gameData);
@@ -269,7 +269,7 @@ public class MayMiscHandlerService {
 
             if (validArtifactIds.isEmpty()) {
                 String logEntry = player.getUsername() + " has no artifacts to sacrifice.";
-                gameBroadcastService.logAndBroadcast(gameData, GameLog.text(logEntry));
+                gameLogService.append(gameData, GameLog.text(logEntry));
                 log.info("Game {} - {} has no artifacts to sacrifice for {}", gameData.id, player.getUsername(), ability.sourceCard().getName());
 
                 gameData.pendingETBDamageAssignments = Map.of();
@@ -288,13 +288,13 @@ public class MayMiscHandlerService {
                     ability.sourceCard().getName() + " — Choose an artifact to sacrifice.");
 
             String logEntry = player.getUsername() + " accepts — choosing an artifact to sacrifice.";
-            gameBroadcastService.logAndBroadcast(gameData, GameLog.text(logEntry));
+            gameLogService.append(gameData, GameLog.text(logEntry));
             log.info("Game {} - {} accepts sacrifice for {}", gameData.id, player.getUsername(), ability.sourceCard().getName());
         } else {
             gameData.pendingETBDamageAssignments = Map.of();
 
             String logEntry = player.getUsername() + " declines to sacrifice an artifact for " + ability.sourceCard().getName() + ".";
-            gameBroadcastService.logAndBroadcast(gameData, GameLog.textCardText(player.getUsername() + " declines to sacrifice an artifact for " , ability.sourceCard(), "."));
+            gameLogService.append(gameData, GameLog.textCardText(player.getUsername() + " declines to sacrifice an artifact for " , ability.sourceCard(), "."));
             log.info("Game {} - {} declines sacrifice for {}", gameData.id, player.getUsername(), ability.sourceCard().getName());
 
             playerInputService.processNextMayAbility(gameData);
@@ -313,13 +313,13 @@ public class MayMiscHandlerService {
             gameData.playerGraveyards.get(controllerId).add(topCard);
             String logEntry = player.getUsername() + " puts " + topCard.getName()
                     + " into their graveyard (surveil).";
-            gameBroadcastService.logAndBroadcast(gameData, GameLog.textCardText(
+            gameLogService.append(gameData, GameLog.textCardText(
                     player.getUsername() + " puts ", topCard, " into their graveyard (surveil)."));
             log.info("Game {} - {} puts {} into graveyard (surveil)",
                     gameData.id, player.getUsername(), topCard.getName());
         } else {
             String logEntry = player.getUsername() + " leaves the card on top of their library (surveil).";
-            gameBroadcastService.logAndBroadcast(gameData, GameLog.text(logEntry));
+            gameLogService.append(gameData, GameLog.text(logEntry));
             log.info("Game {} - {} leaves card on top (surveil)", gameData.id, player.getUsername());
         }
 
@@ -341,15 +341,15 @@ public class MayMiscHandlerService {
             if (lifeCost > 0) {
                 int life = gameData.getLife(controllerId);
                 gameData.playerLifeTotals.put(controllerId, life - lifeCost);
-                gameBroadcastService.logAndBroadcast(gameData, GameLog.text(gameData.playerIdToName.get(controllerId) + " pays " + lifeCost + " life."));
+                gameLogService.append(gameData, GameLog.text(gameData.playerIdToName.get(controllerId) + " pays " + lifeCost + " life."));
             }
             Card topCard = deck.removeFirst();
             gameData.playerGraveyards.get(libraryOwnerId).add(topCard);
-            gameBroadcastService.logAndBroadcast(gameData, GameLog.builder().card(topCard).text(" is put into " + ownerName + "'s graveyard.").build());
+            gameLogService.append(gameData, GameLog.builder().card(topCard).text(" is put into " + ownerName + "'s graveyard.").build());
             log.info("Game {} - {} put into {}'s graveyard (Eye Spy)",
                     gameData.id, topCard.getName(), ownerName);
         } else {
-            gameBroadcastService.logAndBroadcast(gameData, GameLog.text("The card is left on top of " + ownerName + "'s library."));
+            gameLogService.append(gameData, GameLog.text("The card is left on top of " + ownerName + "'s library."));
             log.info("Game {} - card left on top of {}'s library (Eye Spy)", gameData.id, ownerName);
         }
 
@@ -365,12 +365,12 @@ public class MayMiscHandlerService {
             gameData.playerGraveyards.get(controllerId).add(topCard);
             String logEntry = player.getUsername() + " puts " + topCard.getName()
                     + " into their graveyard.";
-            gameBroadcastService.logAndBroadcast(gameData, GameLog.builder().text(player.getUsername() + " puts ").card(topCard).text(" into their graveyard.").build());
+            gameLogService.append(gameData, GameLog.builder().text(player.getUsername() + " puts ").card(topCard).text(" into their graveyard.").build());
             log.info("Game {} - {} puts {} into graveyard (explore)",
                     gameData.id, player.getUsername(), topCard.getName());
         } else {
             String logEntry = player.getUsername() + " leaves the revealed card on top of their library.";
-            gameBroadcastService.logAndBroadcast(gameData, GameLog.text(logEntry));
+            gameLogService.append(gameData, GameLog.text(logEntry));
             log.info("Game {} - {} leaves revealed card on top (explore)", gameData.id, player.getUsername());
         }
 
@@ -394,12 +394,12 @@ public class MayMiscHandlerService {
             deck.add(topCard);
             String logEntry = player.getUsername() + " puts " + topCard.getName()
                     + " on the bottom of their library.";
-            gameBroadcastService.logAndBroadcast(gameData, GameLog.builder().text(player.getUsername() + " puts ").card(topCard).text(" on the bottom of their library.").build());
+            gameLogService.append(gameData, GameLog.builder().text(player.getUsername() + " puts ").card(topCard).text(" on the bottom of their library.").build());
             log.info("Game {} - {} puts {} on the bottom of library",
                     gameData.id, player.getUsername(), topCard.getName());
         } else {
             String logEntry = player.getUsername() + " leaves the revealed card on top of their library.";
-            gameBroadcastService.logAndBroadcast(gameData, GameLog.text(logEntry));
+            gameLogService.append(gameData, GameLog.text(logEntry));
             log.info("Game {} - {} leaves revealed card on top", gameData.id, player.getUsername());
         }
 
@@ -422,12 +422,12 @@ public class MayMiscHandlerService {
             if (topCard.hasType(CardType.CREATURE)) {
                 battlefieldEntryService.handleCreatureEnteredBattlefield(gameData, controllerId, topCard, null, false);
             }
-            gameBroadcastService.logAndBroadcast(gameData, GameLog.textCardText(
+            gameLogService.append(gameData, GameLog.textCardText(
                     player.getUsername() + " puts ", topCard, " onto the battlefield."));
             log.info("Game {} - {} puts {} onto the battlefield (Nissa)",
                     gameData.id, player.getUsername(), topCard.getName());
         } else {
-            gameBroadcastService.logAndBroadcast(gameData, GameLog.text(
+            gameLogService.append(gameData, GameLog.text(
                     player.getUsername() + " leaves the top card on their library."));
         }
 
@@ -454,13 +454,13 @@ public class MayMiscHandlerService {
             if (topCard.hasType(CardType.CREATURE)) {
                 battlefieldEntryService.handleCreatureEnteredBattlefield(gameData, controllerId, topCard, null, false);
             }
-            gameBroadcastService.logAndBroadcast(gameData, GameLog.textCardText(
+            gameLogService.append(gameData, GameLog.textCardText(
                     player.getUsername() + " puts ", topCard, " onto the battlefield."));
             log.info("Game {} - {} puts {} onto the battlefield (Believe)",
                     gameData.id, player.getUsername(), topCard.getName());
         } else {
             gameData.playerHands.get(controllerId).add(topCard);
-            gameBroadcastService.logAndBroadcast(gameData, GameLog.text(
+            gameLogService.append(gameData, GameLog.text(
                     player.getUsername() + " puts the top card into their hand."));
             log.info("Game {} - {} puts {} into hand from library top (Believe)",
                     gameData.id, player.getUsername(), topCard.getName());
@@ -481,11 +481,11 @@ public class MayMiscHandlerService {
             battlefieldEntryService.putPermanentOntoBattlefield(gameData, controllerId, perm);
 
             String logEntry = player.getUsername() + " begins the game with " + card.getName() + " on the battlefield.";
-            gameBroadcastService.logAndBroadcast(gameData, GameLog.textCardText(player.getUsername() + " begins the game with " , card, " on the battlefield."));
+            gameLogService.append(gameData, GameLog.textCardText(player.getUsername() + " begins the game with " , card, " on the battlefield."));
             log.info("Game {} - {} starts with {} on the battlefield (leyline)",
                     gameData.id, player.getUsername(), card.getName());
         } else {
-            gameBroadcastService.logAndBroadcast(gameData, GameLog.textCardText(player.getUsername() + " declines to put " , ability.sourceCard(), " on the battlefield."));
+            gameLogService.append(gameData, GameLog.textCardText(player.getUsername() + " declines to put " , ability.sourceCard(), " on the battlefield."));
             log.info("Game {} - {} declines leyline placement for {}", gameData.id, player.getUsername(), ability.sourceCard().getName());
         }
 
@@ -517,7 +517,7 @@ public class MayMiscHandlerService {
 
             String logEntry = controllerName + " puts " + selectedCard.getName()
                     + " onto the battlefield under their control. " + targetName + "'s library is shuffled.";
-            gameBroadcastService.logAndBroadcast(gameData, GameLog.builder().text(controllerName + " puts ").card(selectedCard).text(" onto the battlefield under their control. " + targetName + "'s library is shuffled.").build());
+            gameLogService.append(gameData, GameLog.builder().text(controllerName + " puts ").card(selectedCard).text(" onto the battlefield under their control. " + targetName + "'s library is shuffled.").build());
             log.info("Game {} - {} puts {} onto battlefield from Sphinx Ambassador",
                     gameData.id, controllerName, selectedCard.getName());
         } else {
@@ -526,7 +526,7 @@ public class MayMiscHandlerService {
 
             String logEntry = controllerName + " declines to put the card onto the battlefield. "
                     + targetName + "'s library is shuffled.";
-            gameBroadcastService.logAndBroadcast(gameData, GameLog.text(logEntry));
+            gameLogService.append(gameData, GameLog.text(logEntry));
             log.info("Game {} - {} declines Sphinx Ambassador placement", gameData.id, controllerName);
         }
 

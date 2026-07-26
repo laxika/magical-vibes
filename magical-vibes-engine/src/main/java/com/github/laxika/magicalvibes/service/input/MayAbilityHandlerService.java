@@ -39,7 +39,7 @@ import com.github.laxika.magicalvibes.model.filter.CardPredicateUtils;
 import com.github.laxika.magicalvibes.model.filter.FilterContext;
 import com.github.laxika.magicalvibes.model.filter.PermanentPredicateTargetFilter;
 import com.github.laxika.magicalvibes.model.filter.TargetFilter;
-import com.github.laxika.magicalvibes.service.GameBroadcastService;
+import com.github.laxika.magicalvibes.service.GameLogService;
 import com.github.laxika.magicalvibes.service.effect.normalfx.DestructionSupport;
 import com.github.laxika.magicalvibes.service.battlefield.GameQueryService;
 import com.github.laxika.magicalvibes.service.filter.PredicateEvaluationService;
@@ -65,7 +65,7 @@ public class MayAbilityHandlerService {
     private final MayMiscHandlerService mayMiscHandlerService;
     private final GameQueryService gameQueryService;
     private final PredicateEvaluationService predicateEvaluationService;
-    private final GameBroadcastService gameBroadcastService;
+    private final GameLogService gameLogService;
     private final PlayerInputService playerInputService;
     private final TurnProgressionService turnProgressionService;
     private final EffectResolutionService effectResolutionService;
@@ -83,7 +83,7 @@ public class MayAbilityHandlerService {
                                     MayMiscHandlerService mayMiscHandlerService,
                                     GameQueryService gameQueryService,
                                     PredicateEvaluationService predicateEvaluationService,
-                                    GameBroadcastService gameBroadcastService,
+                                    GameLogService gameLogService,
                                     PlayerInputService playerInputService,
                                     TurnProgressionService turnProgressionService,
                                     EffectResolutionService effectResolutionService,
@@ -100,7 +100,7 @@ public class MayAbilityHandlerService {
         this.mayMiscHandlerService = mayMiscHandlerService;
         this.gameQueryService = gameQueryService;
         this.predicateEvaluationService = predicateEvaluationService;
-        this.gameBroadcastService = gameBroadcastService;
+        this.gameLogService = gameLogService;
         this.playerInputService = playerInputService;
         this.turnProgressionService = turnProgressionService;
         this.effectResolutionService = effectResolutionService;
@@ -186,7 +186,7 @@ public class MayAbilityHandlerService {
                 // X cost: pay all available mana as X
                 int maxX = cost.calculateMaxX(pool);
                 if (maxX <= 0) {
-                    gameBroadcastService.logAndBroadcast(gameData, GameLog.textCardText(
+                    gameLogService.append(gameData, GameLog.textCardText(
                             player.getUsername() + " has no mana to pay for ", ability.sourceCard(), "'s ability."));
                     log.info("Game {} - {} has no mana for X may ability", gameData.id, player.getUsername());
 
@@ -197,7 +197,7 @@ public class MayAbilityHandlerService {
                 cost.pay(pool, maxX);
             } else {
                 if (!cost.canPay(pool)) {
-                    gameBroadcastService.logAndBroadcast(gameData, GameLog.textCardText(
+                    gameLogService.append(gameData, GameLog.textCardText(
                             player.getUsername() + " cannot pay " + ability.manaCost() + " for ", ability.sourceCard(), "'s ability."));
                     log.info("Game {} - {} can't pay {} for may ability", gameData.id, player.getUsername(), ability.manaCost());
 
@@ -248,10 +248,10 @@ public class MayAbilityHandlerService {
 
                 if (isPreTargetedPlayer) {
                     String targetName = gameData.playerIdToName.get(ability.targetCardId());
-                    gameBroadcastService.logAndBroadcast(gameData, GameLog.textCardText(
+                    gameLogService.append(gameData, GameLog.textCardText(
                             player.getUsername() + " accepts — ", ability.sourceCard(), "'s ability targets " + targetName + "."));
                 } else {
-                    gameBroadcastService.logAndBroadcast(gameData, GameLog.builder()
+                    gameLogService.append(gameData, GameLog.builder()
                             .text(player.getUsername() + " accepts — ")
                             .card(ability.sourceCard())
                             .text("'s ability targets ")
@@ -262,7 +262,7 @@ public class MayAbilityHandlerService {
                 log.info("Game {} - {} accepts pre-targeted may ability from {}", gameData.id,
                         player.getUsername(), ability.sourceCard().getName());
             } else {
-                gameBroadcastService.logAndBroadcast(gameData,
+                gameLogService.append(gameData,
                         GameLog.cardThen(ability.sourceCard(), "'s ability fizzles — target no longer exists."));
                 log.info("Game {} - {} pre-targeted may ability target gone", gameData.id, ability.sourceCard().getName());
             }
@@ -335,11 +335,11 @@ public class MayAbilityHandlerService {
 
             gameData.stack.add(entry);
 
-            gameBroadcastService.logAndBroadcast(gameData, GameLog.textCardText(
+            gameLogService.append(gameData, GameLog.textCardText(
                     player.getUsername() + " accepts — ", ability.sourceCard(), "'s triggered ability goes on the stack."));
             log.info("Game {} - {} accepts may ability from {}", gameData.id, player.getUsername(), ability.sourceCard().getName());
         } else {
-            gameBroadcastService.logAndBroadcast(gameData, GameLog.builder()
+            gameLogService.append(gameData, GameLog.builder()
                     .text(player.getUsername() + " declines ")
                     .card(ability.sourceCard())
                     .text("'s triggered ability.")
@@ -384,7 +384,7 @@ public class MayAbilityHandlerService {
         }
 
         if (validTargets.isEmpty()) {
-            gameBroadcastService.logAndBroadcast(gameData,
+            gameLogService.append(gameData,
                     GameLog.cardThen(ability.sourceCard(), "'s ability has no valid targets."));
             log.info("Game {} - {} may ability has no valid targets", gameData.id, ability.sourceCard().getName());
 
@@ -408,7 +408,7 @@ public class MayAbilityHandlerService {
         playerInputService.beginPermanentChoice(gameData, ability.controllerId(), validTargets,
                 ability.sourceCard().getName() + "'s ability — Choose target " + targetDescription + ".");
 
-        gameBroadcastService.logAndBroadcast(gameData, GameLog.textCardText(
+        gameLogService.append(gameData, GameLog.textCardText(
                 player.getUsername() + " accepts — choosing a target for ", ability.sourceCard(), "'s ability."));
         log.info("Game {} - {} accepts targeted may ability from {}", gameData.id, player.getUsername(), ability.sourceCard().getName());
     }
@@ -460,7 +460,7 @@ public class MayAbilityHandlerService {
 
         if (matchingIndices.isEmpty()) {
             String filterLabel = CardPredicateUtils.describeFilter(filter);
-            gameBroadcastService.logAndBroadcast(gameData, GameLog.cardThen(
+            gameLogService.append(gameData, GameLog.cardThen(
                     ability.sourceCard(), "'s ability has no valid " + filterLabel + " targets in graveyard."));
             log.info("Game {} - {} may ability has no valid graveyard targets", gameData.id, ability.sourceCard().getName());
             inputCompletionService.processMayAbilitiesThenAutoPass(gameData);
@@ -483,7 +483,7 @@ public class MayAbilityHandlerService {
             );
             gameData.stack.add(entry);
 
-            gameBroadcastService.logAndBroadcast(gameData, GameLog.builder()
+            gameLogService.append(gameData, GameLog.builder()
                     .text(player.getUsername() + " accepts — ")
                     .card(ability.sourceCard())
                     .text("'s ability targets ")
@@ -506,7 +506,7 @@ public class MayAbilityHandlerService {
                         new ArrayList<>(ability.effects()), ability.sourcePermanentId())
                 .build());
 
-        gameBroadcastService.logAndBroadcast(gameData, GameLog.textCardText(
+        gameLogService.append(gameData, GameLog.textCardText(
                 player.getUsername() + " accepts — choosing a graveyard target for ", ability.sourceCard(), "'s ability."));
         log.info("Game {} - {} accepts graveyard-targeted may ability from {}", gameData.id,
                 player.getUsername(), ability.sourceCard().getName());
@@ -544,7 +544,7 @@ public class MayAbilityHandlerService {
                 ManaCost cost = new ManaCost(ability.manaCost());
                 ManaPool pool = gameData.playerManaPools.get(player.getId());
                 if (!cost.canPay(pool)) {
-                    gameBroadcastService.logAndBroadcast(gameData, GameLog.textCardText(
+                    gameLogService.append(gameData, GameLog.textCardText(
                             player.getUsername() + " cannot pay " + ability.manaCost() + " for ", ability.sourceCard(), "'s ability."));
                     gameData.resolvedMayAccepted = false;
                     if (gameData.pendingEffectResolutionEntry != null) { effectResolutionService.resolveEffectsFrom(gameData, gameData.pendingEffectResolutionEntry, gameData.pendingEffectResolutionIndex); }
@@ -554,7 +554,7 @@ public class MayAbilityHandlerService {
                 }
                 cost.pay(pool);
             }
-            gameBroadcastService.logAndBroadcast(gameData, GameLog.textCardText(
+            gameLogService.append(gameData, GameLog.textCardText(
                     player.getUsername() + " accepts — resolving ", ability.sourceCard(), "'s ability."));
             CardEffect innerEffect = extractInnerEffect(ability);
             StackEntry pendingEntry = gameData.pendingEffectResolutionEntry;
@@ -576,7 +576,7 @@ public class MayAbilityHandlerService {
             if (pendingEntry != null) { setUpSelfTargetIfNeeded(gameData, ability, pendingEntry, innerEffect); }
             gameData.resolvedMayAccepted = true;
         } else {
-            gameBroadcastService.logAndBroadcast(gameData,
+            gameLogService.append(gameData,
                     GameLog.playerDeclinesAbility(player.getUsername(), ability.sourceCard()));
             gameData.resolvedMayAccepted = false;
         }
@@ -670,7 +670,7 @@ public class MayAbilityHandlerService {
 
         if (matchingIndices.isEmpty()) {
             String filterLabel = CardPredicateUtils.describeFilter(filter);
-            gameBroadcastService.logAndBroadcast(gameData, GameLog.cardThen(
+            gameLogService.append(gameData, GameLog.cardThen(
                     ability.sourceCard(), "'s ability — no valid " + filterLabel + " targets in graveyard."));
             // Resume resolution with may declined (no valid target)
             gameData.resolvedMayAccepted = false;
@@ -689,7 +689,7 @@ public class MayAbilityHandlerService {
             Card targetCard = graveyard.get(matchingIndices.getFirst());
             pendingEntry.setTargetId(targetCard.getId());
 
-            gameBroadcastService.logAndBroadcast(gameData, GameLog.textCardText(
+            gameLogService.append(gameData, GameLog.textCardText(
                     player.getUsername() + " targets ", targetCard, " in graveyard."));
             effectResolutionService.resolveEffectsFrom(gameData, pendingEntry, gameData.pendingEffectResolutionIndex);
             if (!gameData.interaction.isAwaitingInput()) {
@@ -716,7 +716,7 @@ public class MayAbilityHandlerService {
         if (canTargetPermanent) { FilterContext ctx = FilterContext.of(gameData).withSourceCardId(sourceCard.getId()).withSourceControllerId(ability.controllerId()); for (UUID pid : gameData.orderedPlayerIds) { List<Permanent> battlefield = gameData.playerBattlefields.get(pid); if (battlefield == null) continue; for (Permanent p : battlefield) { if (targetFilter instanceof PermanentPredicateTargetFilter filter) { if (predicateEvaluationService.matchesPermanentPredicate(p, filter.predicate(), ctx)) { validTargets.add(p.getId()); } } else if (gameQueryService.isCreature(gameData, p)) { validTargets.add(p.getId()); } } } }
         if (canTargetPlayer) { validTargets.addAll(validTargetService.filterValidPlayerTargets(gameData, targetFilter, gameData.orderedPlayerIds, ability.controllerId())); }
         if (validTargets.isEmpty()) {
-            gameBroadcastService.logAndBroadcast(gameData,
+            gameLogService.append(gameData,
                     GameLog.cardThen(ability.sourceCard(), "'s ability has no valid targets."));
             gameData.resolvedMayAccepted = false;
             if (gameData.pendingEffectResolutionEntry != null) { effectResolutionService.resolveEffectsFrom(gameData, gameData.pendingEffectResolutionEntry, gameData.pendingEffectResolutionIndex); }
@@ -727,7 +727,7 @@ public class MayAbilityHandlerService {
         gameData.resolvedMayTargetingEntry = pendingEntry;
         gameData.interaction.setPermanentChoiceContext(new PermanentChoiceContext.MayAbilityTriggerTarget(ability.sourceCard(), ability.controllerId(), new ArrayList<>(ability.effects())));
         playerInputService.beginPermanentChoice(gameData, ability.controllerId(), validTargets, ability.sourceCard().getName() + "'s ability — Choose target.");
-        gameBroadcastService.logAndBroadcast(gameData, GameLog.textCardText(
+        gameLogService.append(gameData, GameLog.textCardText(
                 player.getUsername() + " accepts — choosing a target for ", ability.sourceCard(), "'s ability."));
     }
 }

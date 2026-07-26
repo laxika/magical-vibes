@@ -6,7 +6,6 @@ import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.PermanentChoiceContext;
 import com.github.laxika.magicalvibes.model.Player;
 import com.github.laxika.magicalvibes.model.effect.TapMultiplePermanentsCost;
-import com.github.laxika.magicalvibes.service.GameBroadcastService;
 import com.github.laxika.magicalvibes.service.GameLogService;
 import com.github.laxika.magicalvibes.service.ability.cost.MultiplePermanentTapCostHandler;
 import com.github.laxika.magicalvibes.service.ability.cost.PermanentChoiceCostHandler;
@@ -30,7 +29,6 @@ public class MayAbilityTapCostService {
 
     private final GameQueryService gameQueryService;
     private final PredicateEvaluationService predicateEvaluationService;
-    private final GameBroadcastService gameBroadcastService;
     private final GameLogService gameLogService;
     private final TriggerCollectionService triggerCollectionService;
     private final PlayerInputService playerInputService;
@@ -51,7 +49,7 @@ public class MayAbilityTapCostService {
         try {
             handler.validateCanPay(gameData, playerId);
         } catch (IllegalStateException e) {
-            gameBroadcastService.logAndBroadcast(gameData, GameLog.text(player.getUsername() + " cannot tap enough permanents to pay the cost."));
+            gameLogService.append(gameData, GameLog.text(player.getUsername() + " cannot tap enough permanents to pay the cost."));
             gameData.resolvedMayAccepted = false;
             resumeEffectResolution(gameData);
             return false;

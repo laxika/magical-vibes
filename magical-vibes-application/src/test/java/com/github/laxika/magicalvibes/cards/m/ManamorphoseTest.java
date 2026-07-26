@@ -27,7 +27,11 @@ class ManamorphoseTest extends BaseCardTest {
 
         // First any-color choice pauses resolution.
         assertThat(gd.interaction.activeInteraction()).isInstanceOf(PendingInteraction.ColorChoice.class);
+        harness.clearMessages();
         harness.handleListChoice(player1, "RED");
+        assertThat(harness.getConn1().getSentMessages()).hasSize(2);
+        assertThat(harness.getConn1().getSentMessages().get(0)).contains("\"type\":\"GAME_STATE\"");
+        assertThat(harness.getConn1().getSentMessages().get(1)).contains("\"type\":\"INTERACTION_PROMPT\"");
         // Second any-color choice is independent — a different color is allowed.
         harness.handleListChoice(player1, "WHITE");
 
@@ -38,6 +42,9 @@ class ManamorphoseTest extends BaseCardTest {
         assertThat(gd.playerHands.get(player1.getId()))
                 .anyMatch(c -> c.getName().equals("Grizzly Bears"));
         assertThat(gd.stack).isEmpty();
+        assertThat(gd.gameLog)
+                .extracting(entry -> entry.plainText())
+                .contains("Alice adds one red mana.", "Alice adds one white mana.");
     }
 
     @Test

@@ -2,6 +2,7 @@ package com.github.laxika.magicalvibes.service.input;
 
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.GameData;
+import com.github.laxika.magicalvibes.model.GameLog;
 import com.github.laxika.magicalvibes.model.GameStatus;
 import com.github.laxika.magicalvibes.model.PendingInteraction;
 import com.github.laxika.magicalvibes.model.PendingMayAbility;
@@ -11,6 +12,7 @@ import com.github.laxika.magicalvibes.model.event.GameEventAudience;
 import com.github.laxika.magicalvibes.model.event.GameEventBatch;
 import com.github.laxika.magicalvibes.model.event.GameEventFact;
 import com.github.laxika.magicalvibes.model.event.GameEventKind;
+import com.github.laxika.magicalvibes.service.GameLogService;
 import com.github.laxika.magicalvibes.service.effect.EffectResolutionService;
 import com.github.laxika.magicalvibes.service.event.GameEventDispatcher;
 import com.github.laxika.magicalvibes.service.event.GameEventSubscriber;
@@ -48,6 +50,7 @@ class InputCompletionServiceTest {
     @Mock private EffectResolutionService effectResolutionService;
 
     private InputCompletionService service;
+    private GameLogService gameLogService;
     private GameMutationCoordinator coordinator;
     private RecordingSubscriber events;
     private GameData gameData;
@@ -61,6 +64,7 @@ class InputCompletionServiceTest {
 
         events = new RecordingSubscriber();
         coordinator = new GameMutationCoordinator(new GameEventDispatcher(List.of(events)));
+        gameLogService = new GameLogService(coordinator);
         service = new InputCompletionService(
                 playerInputService,
                 coordinator,
@@ -83,6 +87,34 @@ class InputCompletionServiceTest {
         InOrder order = inOrder(playerInputService, turnProgressionService);
         order.verify(playerInputService).processNextMayAbility(gameData);
         order.verify(turnProgressionService).resolveAutoPass(gameData);
+    }
+
+    @Test
+    void inputLogJoinsTheOuterAnswerBatchBeforeTheStableStateObservation() {
+        doAnswer(invocation -> {
+            assertThat(gameData.gameLog)
+                    .extracting(entry -> entry.plainText())
+                    .containsExactly("Alice chooses red.");
+            return null;
+        }).when(turnProgressionService).resolveAutoPass(gameData);
+
+        mutate(() -> {
+            gameLogService.append(gameData, GameLog.text("Alice chooses red."));
+            service.processMayAbilitiesThenAutoPass(gameData);
+        });
+
+        assertThat(events.batches).singleElement().satisfies(batch -> {
+            assertThat(batch.events())
+                    .extracting(event -> event.fact().kind())
+                    .containsExactly(
+                            GameEventKind.GAME_LOG_APPENDED,
+                            GameEventKind.STATE_INVALIDATED);
+            assertThat(batch.events().getFirst().fact())
+                    .isEqualTo(new GameEventFact.GameLogAppended(0));
+            assertThat(batch.events())
+                    .allSatisfy(event -> assertThat(event.audience())
+                            .isEqualTo(GameEventAudience.allPlayers()));
+        });
     }
 
     @Test

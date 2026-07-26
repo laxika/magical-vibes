@@ -15,7 +15,7 @@ import com.github.laxika.magicalvibes.model.effect.BecomeCopyOfTargetCreatureEff
 import com.github.laxika.magicalvibes.model.effect.CopyActivatedAbilityRetargetEffect;
 import com.github.laxika.magicalvibes.model.effect.CopyPermanentOnEnterEffect;
 import com.github.laxika.magicalvibes.networking.message.ValidTargetsResponse;
-import com.github.laxika.magicalvibes.service.GameBroadcastService;
+import com.github.laxika.magicalvibes.service.GameLogService;
 import com.github.laxika.magicalvibes.service.target.ValidTargetService;
 import com.github.laxika.magicalvibes.service.state.StateBasedActionService;
 import com.github.laxika.magicalvibes.service.target.TargetLegalityService;
@@ -43,7 +43,7 @@ public class MayCopyHandlerService {
     private final CloneService cloneService;
     private final PermanentCopierService permanentCopierService;
     private final StateBasedActionService stateBasedActionService;
-    private final GameBroadcastService gameBroadcastService;
+    private final GameLogService gameLogService;
     private final PlayerInputService playerInputService;
     private final TargetLegalityService targetLegalityService;
     private final TriggerCollectionService triggerCollectionService;
@@ -67,11 +67,11 @@ public class MayCopyHandlerService {
             playerInputService.beginPermanentChoice(gameData, ability.controllerId(), validIds, "Choose a " + typeLabel + " to copy.");
 
             String logEntry = player.getUsername() + " accepts — choosing a " + typeLabel + " to copy.";
-            gameBroadcastService.logAndBroadcast(gameData, GameLog.text(logEntry));
+            gameLogService.append(gameData, GameLog.text(logEntry));
             log.info("Game {} - {} accepts copy {}", gameData.id, player.getUsername(), typeLabel);
         } else {
             gameData.interaction.clearPermanentChoiceContext();
-            gameBroadcastService.logAndBroadcast(gameData, GameLog.textCardText(player.getUsername() + " declines to copy a " + typeLabel + ". " , ability.sourceCard(), " enters without copying."));
+            gameLogService.append(gameData, GameLog.textCardText(player.getUsername() + " declines to copy a " + typeLabel + ". " , ability.sourceCard(), " enters without copying."));
             log.info("Game {} - {} declines copy {}", gameData.id, player.getUsername(), typeLabel);
 
             cloneService.completeCloneEntry(gameData, null);
@@ -103,7 +103,7 @@ public class MayCopyHandlerService {
     public void handleCopySpellRetargetChoice(GameData gameData, Player player, boolean accepted, PendingMayAbility ability) {
         if (!accepted) {
             String logEntry = player.getUsername() + " keeps the original targets for the copy.";
-            gameBroadcastService.logAndBroadcast(gameData, GameLog.text(logEntry));
+            gameLogService.append(gameData, GameLog.text(logEntry));
             log.info("Game {} - {} declines to retarget copy", gameData.id, player.getUsername());
 
             inputCompletionService.processMayAbilitiesThenAutoPass(gameData);
@@ -172,7 +172,7 @@ public class MayCopyHandlerService {
 
         if (validTargets.isEmpty()) {
             String logEntry = "No valid targets available for the copy.";
-            gameBroadcastService.logAndBroadcast(gameData, GameLog.text(logEntry));
+            gameLogService.append(gameData, GameLog.text(logEntry));
             log.info("Game {} - No valid targets for copy retarget", gameData.id);
 
             inputCompletionService.processMayAbilitiesThenAutoPass(gameData);
@@ -193,7 +193,7 @@ public class MayCopyHandlerService {
                                                          PendingMayAbility ability, CopyActivatedAbilityRetargetEffect retarget) {
         if (!accepted) {
             String logEntry = player.getUsername() + " keeps the original target for the copy.";
-            gameBroadcastService.logAndBroadcast(gameData, GameLog.text(logEntry));
+            gameLogService.append(gameData, GameLog.text(logEntry));
             log.info("Game {} - {} declines to retarget ability copy", gameData.id, player.getUsername());
 
             inputCompletionService.processMayAbilitiesThenAutoPass(gameData);
@@ -232,7 +232,7 @@ public class MayCopyHandlerService {
         validTargets.addAll(valid.validPlayerIds());
 
         if (validTargets.isEmpty()) {
-            gameBroadcastService.logAndBroadcast(gameData, GameLog.text("No valid new targets available for the copy."));
+            gameLogService.append(gameData, GameLog.text("No valid new targets available for the copy."));
             log.info("Game {} - No valid targets for ability copy retarget", gameData.id);
             inputCompletionService.processMayAbilitiesThenAutoPass(gameData);
             return;
@@ -258,7 +258,7 @@ public class MayCopyHandlerService {
 
         if (!accepted) {
             String logEntry = player.getUsername() + " declines to change targets for " + spellName + ".";
-            gameBroadcastService.logAndBroadcast(gameData, GameLog.text(logEntry));
+            gameLogService.append(gameData, GameLog.text(logEntry));
             log.info("Game {} - {} declines to redirect spell targets", gameData.id, player.getUsername());
 
             inputCompletionService.processMayAbilitiesThenAutoPass(gameData);
@@ -312,7 +312,7 @@ public class MayCopyHandlerService {
 
         if (validTargets.isEmpty()) {
             String logEntry = "No valid new targets for " + spellCard.getName() + ".";
-            gameBroadcastService.logAndBroadcast(gameData, GameLog.textCardText("No valid new targets for ", spellCard, "."));
+            gameLogService.append(gameData, GameLog.textCardText("No valid new targets for ", spellCard, "."));
             log.info("Game {} - No valid targets for redirect retarget", gameData.id);
 
             inputCompletionService.processMayAbilitiesThenAutoPass(gameData);
@@ -328,7 +328,7 @@ public class MayCopyHandlerService {
         Card sourceCard = ability.sourceCard();
 
         if (!accepted) {
-            gameBroadcastService.logAndBroadcast(gameData, GameLog.textCardText(player.getUsername() + " declines " , sourceCard, "'s copy ability."));
+            gameLogService.append(gameData, GameLog.textCardText(player.getUsername() + " declines " , sourceCard, "'s copy ability."));
             log.info("Game {} - {} declines become-copy ability from {}", gameData.id, player.getUsername(), sourceCard.getName());
 
             inputCompletionService.processMayAbilitiesThenAutoPass(gameData);
@@ -351,7 +351,7 @@ public class MayCopyHandlerService {
 
         if (sourcePermanent == null) {
             String logEntry = sourceCard.getName() + " is no longer on the battlefield.";
-            gameBroadcastService.logAndBroadcast(gameData, GameLog.cardThen(sourceCard, " is no longer on the battlefield."));
+            gameLogService.append(gameData, GameLog.cardThen(sourceCard, " is no longer on the battlefield."));
             log.info("Game {} - {} become-copy source no longer on battlefield", gameData.id, sourceCard.getName());
 
             inputCompletionService.processMayAbilitiesThenAutoPass(gameData);
@@ -363,7 +363,7 @@ public class MayCopyHandlerService {
         Permanent targetPerm = gameQueryService.findPermanentById(gameData, targetPermId);
         if (targetPerm == null) {
             String logEntry = sourceCard.getName() + "'s copy target is no longer on the battlefield.";
-            gameBroadcastService.logAndBroadcast(gameData, GameLog.cardThen(sourceCard, "'s copy target is no longer on the battlefield."));
+            gameLogService.append(gameData, GameLog.cardThen(sourceCard, "'s copy target is no longer on the battlefield."));
             log.info("Game {} - {} become-copy target no longer on battlefield", gameData.id, sourceCard.getName());
 
             inputCompletionService.processMayAbilitiesThenAutoPass(gameData);
@@ -380,7 +380,7 @@ public class MayCopyHandlerService {
 
         String targetName = targetPerm.getCard().getName();
         String logEntry = originalName + " becomes a copy of " + targetName + ".";
-        gameBroadcastService.logAndBroadcast(gameData, GameLog.cardThen(sourceCard, "'s copy target is no longer on the battlefield."));
+        gameLogService.append(gameData, GameLog.cardThen(sourceCard, "'s copy target is no longer on the battlefield."));
         log.info("Game {} - {} becomes a copy of {}", gameData.id, originalName, targetName);
 
         playerInputService.processNextMayAbility(gameData);

@@ -5,6 +5,7 @@ import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
 import com.github.laxika.magicalvibes.cards.h.HillGiant;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardType;
+import com.github.laxika.magicalvibes.model.GameLogEntry;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.Player;
 import com.github.laxika.magicalvibes.model.StackEntryType;
@@ -109,6 +110,9 @@ class CapriciousEfreetTest extends BaseCardTest {
         assertThat(gd.stack).hasSize(1);
         assertThat(gd.stack.getFirst().getTargetIds())
                 .containsExactly(bears.getId(), hillGiant.getId());
+        assertThat(gd.gameLog)
+                .extracting(GameLogEntry::plainText)
+                .contains("Capricious Efreet's ability targets Grizzly Bears, Hill Giant.");
     }
 
     @Test

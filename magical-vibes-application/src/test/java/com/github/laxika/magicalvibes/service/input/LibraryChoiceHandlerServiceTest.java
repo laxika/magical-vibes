@@ -18,7 +18,7 @@ import com.github.laxika.magicalvibes.model.effect.DrawCardEffect;
 import com.github.laxika.magicalvibes.networking.SessionManager;
 import com.github.laxika.magicalvibes.networking.model.CardView;
 import com.github.laxika.magicalvibes.networking.service.CardViewFactory;
-import com.github.laxika.magicalvibes.service.GameBroadcastService;
+import com.github.laxika.magicalvibes.service.GameLogService;
 import com.github.laxika.magicalvibes.service.state.StateBasedActionService;
 import com.github.laxika.magicalvibes.service.WarpWorldService;
 import com.github.laxika.magicalvibes.service.battlefield.BattlefieldEntryService;
@@ -32,6 +32,7 @@ import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Nested;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
+import org.mockito.InOrder;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 
@@ -57,7 +58,7 @@ class LibraryChoiceHandlerServiceTest {
     @Mock private BattlefieldEntryService battlefieldEntryService;
     @Mock private LegendRuleService legendRuleService;
     @Mock private StateBasedActionService stateBasedActionService;
-    @Mock private GameBroadcastService gameBroadcastService;
+    @Mock private GameLogService gameLogService;
     @Mock private CardViewFactory cardViewFactory;
     @Mock private InputCompletionService inputCompletionService;
     @Mock private PlayerInputService playerInputService;
@@ -81,7 +82,7 @@ class LibraryChoiceHandlerServiceTest {
         service = new LibraryChoiceHandlerService(gameQueryService,
                 mock(com.github.laxika.magicalvibes.service.filter.PredicateEvaluationService.class),
                 graveyardService, warpWorldService, battlefieldEntryService, legendRuleService,
-                stateBasedActionService, gameBroadcastService, inputCompletionService,
+                stateBasedActionService, gameLogService, inputCompletionService,
                 playerInputService, effectResolutionService, exileService, registry,
                 mock(com.github.laxika.magicalvibes.service.trigger.TriggerCollectionService.class),
                 mock(com.github.laxika.magicalvibes.service.effect.normalfx.LibrarySearchSupport.class),
@@ -239,9 +240,10 @@ class LibraryChoiceHandlerServiceTest {
             service.handleLibraryCardChosen(gd, player1, 0);
 
             // Player2 was skipped (no basic lands), auto-pass called
-            verify(inputCompletionService).processMayAbilitiesThenAutoPassPreservingPriority(gd);
-            verify(gameBroadcastService).logAndBroadcast(eq(gd), argThat((GameLogEntry logEntry) ->
+            InOrder order = inOrder(gameLogService, inputCompletionService);
+            order.verify(gameLogService).append(eq(gd), argThat((GameLogEntry logEntry) ->
                     logEntry.plainText().contains("Player2") && logEntry.plainText().contains("finds no basic land cards")));
+            order.verify(inputCompletionService).processMayAbilitiesThenAutoPassPreservingPriority(gd);
         }
 
         @Test
@@ -262,7 +264,7 @@ class LibraryChoiceHandlerServiceTest {
 
             // Player2 was skipped (empty library), auto-pass called
             verify(inputCompletionService).processMayAbilitiesThenAutoPassPreservingPriority(gd);
-            verify(gameBroadcastService).logAndBroadcast(eq(gd), argThat((GameLogEntry logEntry) ->
+            verify(gameLogService).append(eq(gd), argThat((GameLogEntry logEntry) ->
                     logEntry.plainText().contains("Player2") && logEntry.plainText().contains("it is empty")));
         }
 
@@ -430,7 +432,7 @@ class LibraryChoiceHandlerServiceTest {
             // All cards on bottom of library
             assertThat(gd.playerDecks.get(player1Id)).hasSize(2);
             verify(graveyardService, never()).addCardToGraveyard(any(), any(), any());
-            verify(gameBroadcastService).logAndBroadcast(eq(gd), argThat((GameLogEntry logEntry) ->
+            verify(gameLogService).append(eq(gd), argThat((GameLogEntry logEntry) ->
                     logEntry.plainText().contains("bottom of their library") && logEntry.plainText().contains("random order")));
         }
     }

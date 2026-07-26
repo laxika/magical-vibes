@@ -94,8 +94,7 @@ class LegacyNotificationSurfaceRatchetTest {
         BASELINE.put(LegacySurface.LOG_AND_BROADCAST, Map.ofEntries(
                 Map.entry("effect", 2),
                 Map.entry("effect/mayfx", 23),
-                Map.entry("effect/normalfx", 1271),
-                Map.entry("input", 468)));
+                Map.entry("effect/normalfx", 1271)));
     }
 
     @Test
@@ -158,7 +157,7 @@ class LegacyNotificationSurfaceRatchetTest {
     }
 
     @Test
-    void allInputFilesHaveZeroDirectStateOrSessionDelivery() throws IOException {
+    void allInputFilesHaveNoLegacyNotificationSurface() throws IOException {
         Path serviceRoot = locateRepoRoot().resolve(SERVICE_ROOT);
         Path inputRoot = serviceRoot.resolve("input");
         List<String> failures = new ArrayList<>();
@@ -168,9 +167,7 @@ class LegacyNotificationSurfaceRatchetTest {
                     .filter(file -> file.toString().endsWith(".java"))
                     .sorted()::iterator) {
                 String source = Files.readString(path, StandardCharsets.UTF_8);
-                for (LegacySurface surface : List.of(
-                        LegacySurface.BROADCAST_GAME_STATE,
-                        LegacySurface.SESSION_SEND)) {
+                for (LegacySurface surface : LegacySurface.values()) {
                     int current = count(source, surface.pattern);
                     if (current != 0) {
                         failures.add("input/" + path.getFileName() + " retains "

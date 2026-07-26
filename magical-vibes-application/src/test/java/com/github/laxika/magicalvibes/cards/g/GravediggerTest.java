@@ -142,6 +142,9 @@ class GravediggerTest extends BaseCardTest {
                 .anyMatch(c -> c.getName().equals("Grizzly Bears"));
         assertThat(gd.playerGraveyards.get(player1.getId()))
                 .noneMatch(c -> c.getName().equals("Grizzly Bears"));
+        assertThat(gd.gameLog)
+                .extracting(GameLogEntry::plainText)
+                .contains("Alice returns Grizzly Bears from graveyard to hand.");
     }
 
     @Test
@@ -216,9 +219,11 @@ class GravediggerTest extends BaseCardTest {
         castAndAcceptMay();
 
         // Index 0 is HolyDay (instant, not creature) — not a valid choice
+        int logSizeBefore = gd.gameLog.size();
         assertThatThrownBy(() -> harness.handleGraveyardCardChosen(player1, 0))
                 .isInstanceOf(IllegalStateException.class)
                 .hasMessageContaining("Invalid card index");
+        assertThat(gd.gameLog).hasSize(logSizeBefore);
     }
 
     @Test

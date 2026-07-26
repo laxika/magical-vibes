@@ -7,6 +7,8 @@ import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
 import com.github.laxika.magicalvibes.cards.l.LightningBolt;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardType;
+import com.github.laxika.magicalvibes.model.GameLogEntry;
+import com.github.laxika.magicalvibes.model.GameLogSegment;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.PermanentChoiceContext;
 import com.github.laxika.magicalvibes.model.Player;
@@ -169,6 +171,13 @@ class WildEvocationTest extends BaseCardTest {
         assertThat(gd.pendingEffectResolutionEntry).isNull();
         assertThat(harness.getConn1().getMessagesContaining("\"type\":\"GAME_STATE\"")).hasSize(1);
         assertThat(harness.getConn2().getMessagesContaining("\"type\":\"GAME_STATE\"")).hasSize(1);
+        GameLogEntry targetLog = gd.gameLog.stream()
+                .filter(entry -> entry.plainText()
+                        .equals("Lightning Bolt targets Grizzly Bears (Wild Evocation)."))
+                .findFirst()
+                .orElseThrow();
+        assertThat(targetLog.segments().getFirst())
+                .isInstanceOf(GameLogSegment.CardSegment.class);
     }
 
     @Test

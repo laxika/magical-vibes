@@ -21,7 +21,7 @@ import com.github.laxika.magicalvibes.model.effect.ControlEnchantedCreatureEffec
 import com.github.laxika.magicalvibes.model.effect.EffectDuration;
 import com.github.laxika.magicalvibes.model.effect.CreateTokenEffect;
 import com.github.laxika.magicalvibes.model.effect.GainControlOfTargetEffect;
-import com.github.laxika.magicalvibes.service.GameBroadcastService;
+import com.github.laxika.magicalvibes.service.GameLogService;
 import com.github.laxika.magicalvibes.service.state.StateBasedActionService;
 import com.github.laxika.magicalvibes.service.trigger.TriggerCollectionService;
 import com.github.laxika.magicalvibes.service.trigger.TriggerTargetCollector;
@@ -66,7 +66,7 @@ public class PermanentChoiceBattlefieldHandlerService {
     private final BattlefieldEntryService battlefieldEntryService;
     private final CloneService cloneService;
     private final WarpWorldService warpWorldService;
-    private final GameBroadcastService gameBroadcastService;
+    private final GameLogService gameLogService;
     private final AbilityActivationService abilityActivationService;
     private final PermanentRemovalService permanentRemovalService;
     private final PlayerInputService playerInputService;
@@ -100,7 +100,7 @@ public class PermanentChoiceBattlefieldHandlerService {
             }
         }
         String playerName = gameData.playerIdToName.get(chosenPlayerId);
-        gameBroadcastService.logAndBroadcast(gameData, GameLog.text(playerName + " adds " + context.amount() + " "
+        gameLogService.append(gameData, GameLog.text(playerName + " adds " + context.amount() + " "
                 + context.color().getCode() + " from " + context.sourceCardName() + "."));
 
         inputCompletionService.sbaThenAutoPassWithoutResumingParkedResolution(gameData);
@@ -146,7 +146,7 @@ public class PermanentChoiceBattlefieldHandlerService {
             equipment.setAttachedTo(creature.getId());
             // CR 613.7e: an Equipment receives a new timestamp each time it becomes attached.
             equipment.setTimestamp(gameData.nextTimestamp());
-            gameBroadcastService.logAndBroadcast(gameData, GameLog.cardTextCard(equipment.getCard(), " is now attached to ", creature.getCard(), "."));
+            gameLogService.append(gameData, GameLog.cardTextCard(equipment.getCard(), " is now attached to ", creature.getCard(), "."));
         }
         // Begun from a library-search resume (Stonehewer Giant) while the search's stack entry is
         // still parked — the canonical epilogue resumes it.
@@ -169,7 +169,7 @@ public class PermanentChoiceBattlefieldHandlerService {
         // CR 613.7e: an Aura receives a new timestamp each time it becomes attached.
         aura.setTimestamp(gameData.nextTimestamp());
 
-        gameBroadcastService.logAndBroadcast(gameData, GameLog.cardTextCard(aura.getCard(), " is now attached to ", newTarget.getCard(), "."));
+        gameLogService.append(gameData, GameLog.cardTextCard(aura.getCard(), " is now attached to ", newTarget.getCard(), "."));
         log.info("Game {} - {} reattached to {}", gameData.id, aura.getCard().getName(), newTarget.getCard().getName());
 
         // Begun mid-resolution (Aura Graft's own spell entry is parked) — canonical epilogue resumes it.
@@ -192,7 +192,7 @@ public class PermanentChoiceBattlefieldHandlerService {
             aura.setAttachedTo(permanentId);
             // CR 613.7e: an Aura receives a new timestamp each time it becomes attached.
             aura.setTimestamp(gameData.nextTimestamp());
-            gameBroadcastService.logAndBroadcast(gameData, GameLog.cardTextCard(aura.getCard(), " is now attached to ", newTarget.getCard(), "."));
+            gameLogService.append(gameData, GameLog.cardTextCard(aura.getCard(), " is now attached to ", newTarget.getCard(), "."));
         }
 
         // A moved control Aura (e.g. Control Magic) grants control of its new host to the Aura's controller.
@@ -219,14 +219,14 @@ public class PermanentChoiceBattlefieldHandlerService {
             UUID controllerId = gameQueryService.findPermanentController(gameData, ctx.permanentToSacrificeId());
             permanentRemovalService.removePermanentToGraveyard(gameData, toSacrifice);
             String playerName = gameData.playerIdToName.get(controllerId);
-            gameBroadcastService.logAndBroadcast(gameData, GameLog.textCardText(playerName + " sacrifices ", toSacrifice.getCard(), "."));
+            gameLogService.append(gameData, GameLog.textCardText(playerName + " sacrifices ", toSacrifice.getCard(), "."));
         }
 
         gameData.expireFloatingEffectsForUnattachedSource(aura.getId());
         aura.setAttachedTo(permanentId);
         // CR 613.7e: an Aura receives a new timestamp each time it becomes attached.
         aura.setTimestamp(gameData.nextTimestamp());
-        gameBroadcastService.logAndBroadcast(gameData, GameLog.cardTextCard(aura.getCard(), " is now attached to ", newTarget.getCard(), "."));
+        gameLogService.append(gameData, GameLog.cardTextCard(aura.getCard(), " is now attached to ", newTarget.getCard(), "."));
         log.info("Game {} - {} reattached to {} after sacrifice", gameData.id,
                 aura.getCard().getName(), newTarget.getCard().getName());
 
@@ -244,7 +244,7 @@ public class PermanentChoiceBattlefieldHandlerService {
         }
         for (Permanent perm : toRemove) {
             permanentRemovalService.removePermanentToGraveyard(gameData, perm);
-            gameBroadcastService.logAndBroadcast(gameData, GameLog.cardThen(perm.getCard(), " is put into the graveyard (legend rule)."));
+            gameLogService.append(gameData, GameLog.cardThen(perm.getCard(), " is put into the graveyard (legend rule)."));
             log.info("Game {} - {} sent to graveyard by legend rule", gameData.id, perm.getCard().getName());
         }
 
@@ -268,7 +268,7 @@ public class PermanentChoiceBattlefieldHandlerService {
         permanentRemovalService.removePermanentToGraveyard(gameData, target);
 
         String playerName = gameData.playerIdToName.get(sacrificingPlayerId);
-        gameBroadcastService.logAndBroadcast(gameData, GameLog.textCardText(playerName + " sacrifices " , sacrificedCard, "."));
+        gameLogService.append(gameData, GameLog.textCardText(playerName + " sacrifices " , sacrificedCard, "."));
         log.info("Game {} - {} sacrifices {}", gameData.id, playerName, sacrificedCard.getName());
 
         // Fire the "whenever a player sacrifices a creature" watchers (Thraximundar) — this
@@ -291,7 +291,7 @@ public class PermanentChoiceBattlefieldHandlerService {
         if (context.exile()) {
             Card exiledCard = target.getCard();
             permanentRemovalService.removePermanentToExile(gameData, target);
-            gameBroadcastService.logAndBroadcast(gameData, GameLog.cardThen(exiledCard, " is exiled."));
+            gameLogService.append(gameData, GameLog.cardThen(exiledCard, " is exiled."));
             log.info("Game {} - {} exiles {}", gameData.id, context.sourceCardName(), exiledCard.getName());
             permanentRemovalService.removeOrphanedAuras(gameData);
         } else {
@@ -311,7 +311,7 @@ public class PermanentChoiceBattlefieldHandlerService {
         }
         Permanent source = gameQueryService.findPermanentById(gameData, context.sourcePermanentId());
         if (source == null) {
-            gameBroadcastService.logAndBroadcast(gameData,
+            gameLogService.append(gameData,
                     GameLog.text(context.sourceCardName() + "'s ability has no effect (source left the battlefield)."));
         } else {
             var controlEffect = new GainControlOfTargetEffect(context.duration());
@@ -335,7 +335,7 @@ public class PermanentChoiceBattlefieldHandlerService {
         permanentRemovalService.removePermanentToGraveyard(gameData, target);
 
         String playerName = gameData.playerIdToName.get(sacrificingPlayerId);
-        gameBroadcastService.logAndBroadcast(gameData, GameLog.textCardText(playerName + " sacrifices " , target.getCard(), "."));
+        gameLogService.append(gameData, GameLog.textCardText(playerName + " sacrifices " , target.getCard(), "."));
         log.info("Game {} - {} sacrifices {}", gameData.id, playerName, target.getCard().getName());
 
         // "If you do" — sacrifice happened, now search library for a creature card
@@ -362,7 +362,7 @@ public class PermanentChoiceBattlefieldHandlerService {
         permanentRemovalService.removePermanentToGraveyard(gameData, target);
 
         String playerName = gameData.playerIdToName.get(sacrificingPlayerId);
-        gameBroadcastService.logAndBroadcast(gameData, GameLog.textCardText(playerName + " sacrifices " , target.getCard(), "."));
+        gameLogService.append(gameData, GameLog.textCardText(playerName + " sacrifices " , target.getCard(), "."));
         log.info("Game {} - {} sacrifices {}", gameData.id, playerName, target.getCard().getName());
 
         // Each opponent loses life equal to the sacrificed creature's power
@@ -393,7 +393,7 @@ public class PermanentChoiceBattlefieldHandlerService {
         permanentRemovalService.removePermanentToGraveyard(gameData, target);
 
         String playerName = gameData.playerIdToName.get(sacrificingPlayerId);
-        gameBroadcastService.logAndBroadcast(gameData, GameLog.textCardText(playerName + " sacrifices " , target.getCard(), "."));
+        gameLogService.append(gameData, GameLog.textCardText(playerName + " sacrifices " , target.getCard(), "."));
         log.info("Game {} - {} sacrifices {}", gameData.id, playerName, target.getCard().getName());
 
         // Controller gains life equal to the sacrificed creature's toughness
@@ -424,7 +424,7 @@ public class PermanentChoiceBattlefieldHandlerService {
         if (permanentRemovalService.removePermanentToHand(gameData, target)) {
             permanentRemovalService.removeOrphanedAuras(gameData);
 
-            gameBroadcastService.logAndBroadcast(gameData, GameLog.cardThen(target.getCard(), " is returned to its owner's hand."));
+            gameLogService.append(gameData, GameLog.cardThen(target.getCard(), " is returned to its owner's hand."));
             log.info("Game {} - {} returned to owner's hand by bounce effect", gameData.id, target.getCard().getName());
         }
 
@@ -440,7 +440,7 @@ public class PermanentChoiceBattlefieldHandlerService {
         if (permanentRemovalService.removePermanentToHand(gameData, target)) {
             permanentRemovalService.removeOrphanedAuras(gameData);
 
-            gameBroadcastService.logAndBroadcast(gameData, GameLog.cardThen(target.getCard(), " is returned to its owner's hand."));
+            gameLogService.append(gameData, GameLog.cardThen(target.getCard(), " is returned to its owner's hand."));
             log.info("Game {} - {} returned to owner's hand by bounce-or-sacrifice effect", gameData.id, target.getCard().getName());
         }
 
@@ -465,7 +465,7 @@ public class PermanentChoiceBattlefieldHandlerService {
 
         permanentRemovalService.removePermanentToExile(gameData, target);
 
-        gameBroadcastService.logAndBroadcast(gameData, GameLog.cardTextCard(card, " is exiled by ", source.getCard(), "."));
+        gameLogService.append(gameData, GameLog.cardTextCard(card, " is exiled by ", source.getCard(), "."));
         log.info("Game {} - {} champions {} (exiled until source leaves)",
                 gameData.id, source.getCard().getName(), card.getName());
 
@@ -491,7 +491,7 @@ public class PermanentChoiceBattlefieldHandlerService {
         }
 
         if (permanentRemovalService.removePermanentToLibraryTop(gameData, chosen)) {
-            gameBroadcastService.logAndBroadcast(gameData,
+            gameLogService.append(gameData,
                     GameLog.cardThen(chosen.getCard(), " is put on top of its owner's library."));
             log.info("Game {} - {} put on top of library (chosen)", gameData.id, chosen.getCard().getName());
         }
@@ -529,7 +529,7 @@ public class PermanentChoiceBattlefieldHandlerService {
                 source.getCard(), TriggerTargetCollector.Options.END_STEP);
 
         if (result.validTargets().isEmpty()) {
-            gameBroadcastService.logAndBroadcast(gameData, GameLog.cardThen(source.getCard(), "'s championed trigger has no valid targets."));
+            gameLogService.append(gameData, GameLog.cardThen(source.getCard(), "'s championed trigger has no valid targets."));
             log.info("Game {} - {} championed trigger skipped (no valid targets)",
                     gameData.id, source.getCard().getName());
             inputCompletionService.sbaProcessMayAbilitiesThenAutoPass(gameData);
@@ -542,7 +542,7 @@ public class PermanentChoiceBattlefieldHandlerService {
         playerInputService.beginPermanentChoice(gameData, controllerId, result.validTargets(),
                 source.getCard().getName() + "'s ability — Choose target player.");
 
-        gameBroadcastService.logAndBroadcast(gameData, GameLog.cardThen(source.getCard(), "'s championed trigger — choose target player."));
+        gameLogService.append(gameData, GameLog.cardThen(source.getCard(), "'s championed trigger — choose target player."));
         log.info("Game {} - {} championed trigger awaiting target selection", gameData.id, source.getCard().getName());
     }
 
@@ -560,11 +560,11 @@ public class PermanentChoiceBattlefieldHandlerService {
             gameData.playerSourceDamagePreventionIds
                     .computeIfAbsent(controllerId, k -> java.util.concurrent.ConcurrentHashMap.newKeySet())
                     .add(permanentId);
-            gameBroadcastService.logAndBroadcast(gameData, GameLog.textCardText("All damage ", chosenPermanent.getCard(),
+            gameLogService.append(gameData, GameLog.textCardText("All damage ", chosenPermanent.getCard(),
                     " would deal to " + playerName + " is prevented this turn."));
         } else {
             gameData.permanentsPreventedFromDealingDamage.add(permanentId);
-            gameBroadcastService.logAndBroadcast(gameData, GameLog.textCardText("All damage ", chosenPermanent.getCard(),
+            gameLogService.append(gameData, GameLog.textCardText("All damage ", chosenPermanent.getCard(),
                     " would deal this turn is prevented."));
         }
 
@@ -585,7 +585,7 @@ public class PermanentChoiceBattlefieldHandlerService {
                 controllerId, permanentId, redirectSource.amount(), redirectSource.redirectTargetId()));
 
         String playerName = gameData.playerIdToName.get(controllerId);
-        gameBroadcastService.logAndBroadcast(gameData, GameLog.textCardText("The next " + redirectSource.amount() + " damage ",
+        gameLogService.append(gameData, GameLog.textCardText("The next " + redirectSource.amount() + " damage ",
                 chosenPermanent.getCard(),
                 " would deal to " + playerName + " or permanents " + playerName + " controls is dealt to another target instead."));
         log.info("Game {} - {} chose {} as redirect damage source (up to {} damage redirected)",
@@ -620,7 +620,7 @@ public class PermanentChoiceBattlefieldHandlerService {
         String suffix = redirectSource.nextEventOnly()
                 ? " would deal damage to " + protectedName + " this turn, that damage is dealt to " + redirectName + " instead."
                 : " would deal to " + protectedName + " this turn is dealt to " + redirectName + " instead.";
-        gameBroadcastService.logAndBroadcast(gameData, GameLog.textCardText(prefix, chosenPermanent.getCard(), suffix));
+        gameLogService.append(gameData, GameLog.textCardText(prefix, chosenPermanent.getCard(), suffix));
         log.info("Game {} - {} chose {} as creature damage redirect source", gameData.id,
                 gameData.playerIdToName.get(redirectSource.controllerId()), chosenPermanent.getCard().getName());
 
@@ -646,7 +646,7 @@ public class PermanentChoiceBattlefieldHandlerService {
 
         String logEntry = "The next " + ctx.amount() + " damage " + chosenPermanent.getCard().getName()
                 + " would deal to " + targetName + " is prevented.";
-        gameBroadcastService.logAndBroadcast(gameData, GameLog.builder().text("The next " + ctx.amount() + " damage ").card(chosenPermanent.getCard()).text(" would deal to " + targetName + " is prevented.").build());
+        gameLogService.append(gameData, GameLog.builder().text("The next " + ctx.amount() + " damage ").card(chosenPermanent.getCard()).text(" would deal to " + targetName + " is prevented.").build());
         log.info("Game {} - Chose {} as damage source, preventing up to {} damage to {}",
                 gameData.id, chosenPermanent.getCard().getName(), ctx.amount(), targetName);
 
@@ -668,7 +668,7 @@ public class PermanentChoiceBattlefieldHandlerService {
         String sourceName = chosenPermanent.getCard().getName();
         String logEntry = "The next time " + sourceName + " would deal damage to " + playerName
                 + " this turn, it is prevented" + (gainLife ? " and " + playerName + " gains that much life." : ".");
-        gameBroadcastService.logAndBroadcast(gameData, GameLog.text(logEntry));
+        gameLogService.append(gameData, GameLog.text(logEntry));
         log.info("Game {} - {} chose {} as next-damage prevention source", gameData.id, playerName, sourceName);
 
         inputCompletionService.sbaProcessMayAbilitiesThenAutoPass(gameData);
@@ -689,7 +689,7 @@ public class PermanentChoiceBattlefieldHandlerService {
         String sourceName = chosenPermanent.getCard().getName();
         String logEntry = "The next time " + sourceName + " would deal damage to " + playerName
                 + " this turn, that much damage is also dealt to " + sourceName + "'s controller.";
-        gameBroadcastService.logAndBroadcast(gameData, GameLog.text(logEntry));
+        gameLogService.append(gameData, GameLog.text(logEntry));
         log.info("Game {} - {} chose {} as Eye for an Eye reflection source", gameData.id, playerName, sourceName);
 
         inputCompletionService.sbaProcessMayAbilitiesThenAutoPass(gameData);
@@ -706,7 +706,7 @@ public class PermanentChoiceBattlefieldHandlerService {
 
         String sourceName = chosenPermanent.getCard().getName();
         String logEntry = "The next time " + sourceName + " would deal damage to any target this turn, it is prevented.";
-        gameBroadcastService.logAndBroadcast(gameData, GameLog.text(logEntry));
+        gameLogService.append(gameData, GameLog.text(logEntry));
         log.info("Game {} - {} chose {} as Sanctum Guardian next-damage prevention source", gameData.id,
                 gameData.playerIdToName.get(ctx.controllerId()), sourceName);
 
@@ -722,7 +722,7 @@ public class PermanentChoiceBattlefieldHandlerService {
         permanentRemovalService.removePermanentToGraveyard(gameData, artifactToSacrifice);
 
         String playerName = gameData.playerIdToName.get(sadd.controllerId());
-        gameBroadcastService.logAndBroadcast(gameData, GameLog.textCardText(playerName + " sacrifices " , artifactToSacrifice.getCard(), "."));
+        gameLogService.append(gameData, GameLog.textCardText(playerName + " sacrifices " , artifactToSacrifice.getCard(), "."));
         log.info("Game {} - {} sacrifices {} for divided damage", gameData.id, playerName, artifactToSacrifice.getCard().getName());
 
         damageSupport.dealDividedDamageToAnyTargets(
@@ -747,7 +747,7 @@ public class PermanentChoiceBattlefieldHandlerService {
         permanentRemovalService.removePermanentToGraveyard(gameData, toSacrifice);
 
         String playerName = gameData.playerIdToName.get(ctx.controllerId());
-        gameBroadcastService.logAndBroadcast(gameData, GameLog.textCardText(playerName + " sacrifices ", toSacrifice.getCard(), "."));
+        gameLogService.append(gameData, GameLog.textCardText(playerName + " sacrifices ", toSacrifice.getCard(), "."));
         log.info("Game {} - {} sacrifices {} for {}", gameData.id, playerName,
                 toSacrifice.getCard().getName(), ctx.sourceCard().getName());
 
@@ -772,7 +772,7 @@ public class PermanentChoiceBattlefieldHandlerService {
         permanentRemovalService.removePermanentToGraveyard(gameData, toSacrifice);
 
         String playerName = gameData.playerIdToName.get(ctx.controllerId());
-        gameBroadcastService.logAndBroadcast(gameData,
+        gameLogService.append(gameData,
                 GameLog.textCardText(playerName + " sacrifices ", toSacrifice.getCard(), " for exploit."));
         log.info("Game {} - {} sacrifices {} for {} exploit", gameData.id, playerName,
                 toSacrifice.getCard().getName(), ctx.sourceCard().getName());
@@ -804,7 +804,7 @@ public class PermanentChoiceBattlefieldHandlerService {
         permanentRemovalService.removePermanentToGraveyard(gameData, toSacrifice);
 
         String playerName = gameData.playerIdToName.get(ctx.controllerId());
-        gameBroadcastService.logAndBroadcast(gameData, GameLog.textCardText(playerName + " sacrifices " , toSacrifice.getCard(), "."));
+        gameLogService.append(gameData, GameLog.textCardText(playerName + " sacrifices " , toSacrifice.getCard(), "."));
         log.info("Game {} - {} sacrifices {} for {}", gameData.id, playerName,
                 toSacrifice.getCard().getName(), ctx.sourceCard().getName());
 
@@ -837,7 +837,7 @@ public class PermanentChoiceBattlefieldHandlerService {
                         ? new ArrayList<>(gameData.orderedPlayerIds)
                         : List.of();
                 if (validPermanentTargets.isEmpty() && validPlayerTargets.isEmpty()) {
-                    gameBroadcastService.logAndBroadcast(gameData,
+                    gameLogService.append(gameData,
                             GameLog.cardThen(ctx.sourceCard(), "'s ability has no valid targets."));
                     log.info("Game {} - {} sacrifice-then rider skipped (no valid targets)",
                             gameData.id, ctx.sourceCard().getName());
@@ -848,7 +848,7 @@ public class PermanentChoiceBattlefieldHandlerService {
                     playerInputService.beginAnyTargetChoice(gameData, ctx.controllerId(),
                             validPermanentTargets, validPlayerTargets,
                             ctx.sourceCard().getName() + " — Choose any target.");
-                    gameBroadcastService.logAndBroadcast(gameData,
+                    gameLogService.append(gameData,
                             GameLog.cardThen(ctx.sourceCard(),
                                     " — choose a target for the reflexive trigger."));
                     log.info("Game {} - {} sacrifice-then rider awaiting any-target",
@@ -896,7 +896,7 @@ public class PermanentChoiceBattlefieldHandlerService {
         permanentRemovalService.removePermanentToGraveyard(gameData, target);
 
         String playerName = gameData.playerIdToName.get(ctx.controllerId());
-        gameBroadcastService.logAndBroadcast(gameData, GameLog.textCardText(playerName + " sacrifices " , target.getCard(), "."));
+        gameLogService.append(gameData, GameLog.textCardText(playerName + " sacrifices " , target.getCard(), "."));
         log.info("Game {} - {} sacrifices {} for {}", gameData.id, playerName,
                 target.getCard().getName(), ctx.sourceCard().getName());
 
@@ -928,7 +928,7 @@ public class PermanentChoiceBattlefieldHandlerService {
         permanentRemovalService.removePermanentToGraveyard(gameData, target);
 
         String playerName = gameData.playerIdToName.get(ctx.controllerId());
-        gameBroadcastService.logAndBroadcast(gameData, GameLog.textCardText(playerName + " sacrifices " , target.getCard(), "."));
+        gameLogService.append(gameData, GameLog.textCardText(playerName + " sacrifices " , target.getCard(), "."));
         log.info("Game {} - {} sacrifices {} for {}", gameData.id, playerName,
                 target.getCard().getName(), ctx.sourceCard().getName());
 
@@ -990,7 +990,7 @@ public class PermanentChoiceBattlefieldHandlerService {
         entering.setChosenPermanentId(chosenCreatureId);
 
         String logEntry = entering.getCard().getName() + " chooses " + chosen.getCard().getName() + ".";
-        gameBroadcastService.logAndBroadcast(gameData, GameLog.cardTextCard(entering.getCard(), " chooses ", chosen.getCard(), "."));
+        gameLogService.append(gameData, GameLog.cardTextCard(entering.getCard(), " chooses ", chosen.getCard(), "."));
         log.info("Game {} - {} chooses {} as protected creature", gameData.id,
                 entering.getCard().getName(), chosen.getCard().getName());
 
@@ -1046,7 +1046,7 @@ public class PermanentChoiceBattlefieldHandlerService {
 
             String playerName = gameData.playerIdToName.get(auraControllerId);
             String logEntry = auraCard.getName() + " enters the battlefield attached to " + enchantTarget.getCard().getName() + " under " + playerName + "'s control.";
-            gameBroadcastService.logAndBroadcast(gameData, GameLog.builder().card(auraCard).text(" enters the battlefield attached to ").card(enchantTarget.getCard()).text(" under " + playerName + "'s control.").build());
+            gameLogService.append(gameData, GameLog.builder().card(auraCard).text(" enters the battlefield attached to ").card(enchantTarget.getCard()).text(" under " + playerName + "'s control.").build());
             log.info("Game {} - {} puts {} onto battlefield attached to {}",
                     gameData.id, playerName, auraCard.getName(), enchantTarget.getCard().getName());
         }

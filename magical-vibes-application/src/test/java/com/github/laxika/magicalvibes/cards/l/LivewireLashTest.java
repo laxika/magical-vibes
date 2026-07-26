@@ -8,6 +8,7 @@ import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
 import com.github.laxika.magicalvibes.cards.s.Shock;
 import com.github.laxika.magicalvibes.cards.s.Shunt;
 import com.github.laxika.magicalvibes.model.ManaColor;
+import com.github.laxika.magicalvibes.model.GameLogEntry;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.Player;
 import com.github.laxika.magicalvibes.model.StackEntry;
@@ -213,6 +214,9 @@ class LivewireLashTest extends BaseCardTest {
         StackEntry trigger = gd.stack.getLast();
         assertThat(trigger.getEntryType()).isEqualTo(StackEntryType.TRIGGERED_ABILITY);
         assertThat(trigger.getTargetId()).isEqualTo(player2.getId());
+        assertThat(gd.gameLog)
+                .extracting(GameLogEntry::plainText)
+                .contains("Grizzly Bears's triggered ability targets Bob.");
     }
 
     // ===== Trigger fires when spell is retargeted onto equipped creature (Shunt) =====
@@ -256,10 +260,12 @@ class LivewireLashTest extends BaseCardTest {
         // Livewire Lash trigger should now fire - prompts player1 to choose any target
         assertThat(gd.interaction.activeInteraction()).isInstanceOf(PendingInteraction.PermanentChoice.class);
         assertThat(gd.interaction.activeInteraction(PendingInteraction.PermanentChoice.class).playerId()).isEqualTo(player1.getId());
-        assertThat(harness.getConn1().getMessagesContaining("\"type\":\"INTERACTION_PROMPT\""))
-                .hasSize(1);
-        assertThat(harness.getConn1().getMessagesContaining("\"type\":\"GAME_STATE\"")).isEmpty();
-        assertThat(harness.getConn2().getMessagesContaining("\"type\":\"GAME_STATE\"")).isEmpty();
+        assertThat(harness.getConn1().getSentMessages()).hasSize(3);
+        assertThat(harness.getConn1().getSentMessages().get(0)).contains("\"type\":\"GAME_STATE\"");
+        assertThat(harness.getConn1().getSentMessages().get(1)).contains("\"type\":\"INTERACTION_PROMPT\"");
+        assertThat(harness.getConn1().getSentMessages().get(2)).contains("\"type\":\"GAME_STATE\"");
+        assertThat(harness.getConn2().getMessagesContaining("\"type\":\"GAME_STATE\"")).hasSize(2);
+        assertThat(harness.getConn2().getMessagesContaining("\"type\":\"INTERACTION_PROMPT\"")).isEmpty();
 
         // Player1 targets player2 with the 2 damage
         harness.handlePermanentChosen(player1, player2.getId());

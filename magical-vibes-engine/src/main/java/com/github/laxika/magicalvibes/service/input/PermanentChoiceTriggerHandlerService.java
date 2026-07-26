@@ -14,7 +14,7 @@ import com.github.laxika.magicalvibes.model.effect.BecomeCopyOfTargetCreatureEff
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
 import com.github.laxika.magicalvibes.model.effect.DealDamageToTargetOpponentAndUpToCreaturesThatPlayerControlsEffect;
 import com.github.laxika.magicalvibes.model.effect.DestroyOneOfTargetsAtRandomEffect;
-import com.github.laxika.magicalvibes.service.GameBroadcastService;
+import com.github.laxika.magicalvibes.service.GameLogService;
 import com.github.laxika.magicalvibes.service.trigger.TriggerCollectionService;
 import com.github.laxika.magicalvibes.service.turn.TurnProgressionService;
 import com.github.laxika.magicalvibes.service.battlefield.ETBTokenTargetService;
@@ -40,7 +40,7 @@ import java.util.UUID;
 public class PermanentChoiceTriggerHandlerService {
 
     private final GameQueryService gameQueryService;
-    private final GameBroadcastService gameBroadcastService;
+    private final GameLogService gameLogService;
     private final TriggerCollectionService triggerCollectionService;
     private final PlayerInputService playerInputService;
     private final TurnProgressionService turnProgressionService;
@@ -92,7 +92,7 @@ public class PermanentChoiceTriggerHandlerService {
 
         String targetName = getTargetDisplayName(gameData, permanentId);
         String logEntry = stt.sourceCard().getName() + "'s triggered ability targets " + targetName + ".";
-        gameBroadcastService.logAndBroadcast(gameData, GameLog.builder().card(stt.sourceCard()).text("'s triggered ability targets " + targetName + ".").build());
+        gameLogService.append(gameData, GameLog.builder().card(stt.sourceCard()).text("'s triggered ability targets " + targetName + ".").build());
         log.info("Game {} - {} spell-target trigger targets {}", gameData.id, stt.sourceCard().getName(), targetName);
 
         if (gameData.hasPendingInteraction(PermanentChoiceContext.SpellTargetTriggerAnyTarget.class)) {
@@ -126,7 +126,7 @@ public class PermanentChoiceTriggerHandlerService {
 
         String targetName = getTargetDisplayName(gameData, permanentId);
         String logEntry = dtt.discardedCard().getName() + "'s discard trigger targets " + targetName + ".";
-        gameBroadcastService.logAndBroadcast(gameData, GameLog.builder().card(dtt.discardedCard()).text("'s discard trigger targets " + targetName + ".").build());
+        gameLogService.append(gameData, GameLog.builder().card(dtt.discardedCard()).text("'s discard trigger targets " + targetName + ".").build());
         log.info("Game {} - {} discard trigger targets {}", gameData.id, dtt.discardedCard().getName(), targetName);
 
         if (gameData.hasPendingInteraction(PermanentChoiceContext.DiscardTriggerAnyTarget.class)) {
@@ -160,7 +160,7 @@ public class PermanentChoiceTriggerHandlerService {
 
         String targetName = getTargetDisplayName(gameData, permanentId);
         String logEntry = dtt.dyingCard().getName() + "'s death trigger targets " + targetName + ".";
-        gameBroadcastService.logAndBroadcast(gameData, GameLog.builder().card(dtt.dyingCard()).text("'s death trigger targets " + targetName + ".").build());
+        gameLogService.append(gameData, GameLog.builder().card(dtt.dyingCard()).text("'s death trigger targets " + targetName + ".").build());
         log.info("Game {} - {} death trigger targets {}", gameData.id, dtt.dyingCard().getName(), targetName);
 
         if (gameData.hasPendingInteraction(PermanentChoiceContext.DeathTriggerTarget.class)) {
@@ -189,7 +189,7 @@ public class PermanentChoiceTriggerHandlerService {
 
         String targetName = getTargetDisplayName(gameData, targetId);
         String logEntry = slt.sourceCard().getName() + "'s leaves-the-battlefield trigger targets " + targetName + ".";
-        gameBroadcastService.logAndBroadcast(gameData, GameLog.builder().card(slt.sourceCard()).text("'s leaves-the-battlefield trigger targets " + targetName + ".").build());
+        gameLogService.append(gameData, GameLog.builder().card(slt.sourceCard()).text("'s leaves-the-battlefield trigger targets " + targetName + ".").build());
         log.info("Game {} - {} leaves-battlefield trigger targets {}", gameData.id, slt.sourceCard().getName(), targetName);
 
         if (gameData.hasPendingInteraction(PermanentChoiceContext.SelfLeavesTriggerTarget.class)) {
@@ -224,7 +224,7 @@ public class PermanentChoiceTriggerHandlerService {
 
         String targetName = getTargetDisplayName(gameData, permanentId);
         String logEntry = ett.sourceCard().getName() + "'s explore trigger targets " + targetName + ".";
-        gameBroadcastService.logAndBroadcast(gameData, GameLog.builder().card(ett.sourceCard()).text("'s explore trigger targets " + targetName + ".").build());
+        gameLogService.append(gameData, GameLog.builder().card(ett.sourceCard()).text("'s explore trigger targets " + targetName + ".").build());
         log.info("Game {} - {} explore trigger targets {}", gameData.id, ett.sourceCard().getName(), targetName);
 
         if (gameData.hasPendingInteraction(PermanentChoiceContext.ExploreTriggerTarget.class)) {
@@ -260,7 +260,7 @@ public class PermanentChoiceTriggerHandlerService {
         );
         gameData.stack.add(entry);
 
-        gameBroadcastService.logAndBroadcast(gameData,
+        gameLogService.append(gameData,
                 GameLog.builder().card(ett.sourceCard()).text("'s exploit ability targets " + targetName + ".").build());
         log.info("Game {} - {} exploit trigger targets {}", gameData.id, ett.sourceCard().getName(), targetName);
 
@@ -290,7 +290,7 @@ public class PermanentChoiceTriggerHandlerService {
 
         String targetName = getTargetDisplayName(gameData, permanentId);
         String logEntry = ctt.sourceCard().getName() + "'s clash trigger targets " + targetName + ".";
-        gameBroadcastService.logAndBroadcast(gameData, GameLog.builder().card(ctt.sourceCard()).text("'s clash trigger targets " + targetName + ".").build());
+        gameLogService.append(gameData, GameLog.builder().card(ctt.sourceCard()).text("'s clash trigger targets " + targetName + ".").build());
         log.info("Game {} - {} clash trigger targets {}", gameData.id, ctt.sourceCard().getName(), targetName);
 
         if (gameData.hasPendingInteraction(PermanentChoiceContext.ClashTriggerTarget.class)) {
@@ -384,7 +384,7 @@ public class PermanentChoiceTriggerHandlerService {
                     .toList();
             logEntry += " and " + String.join(", ", creatureNames);
         }
-        gameBroadcastService.logAndBroadcast(gameData, GameLog.text(logEntry + "."));
+        gameLogService.append(gameData, GameLog.text(logEntry + "."));
     }
 
     private boolean promptNextTransformCreatureTarget(GameData gameData,
@@ -460,7 +460,7 @@ public class PermanentChoiceTriggerHandlerService {
         playerInputService.beginAnyTargetChoice(gameData, ctx.controllerId(), validSecondTargets,
                 List.of(ctx.controllerId()), ctx.sourceCard().getName()
                         + "'s ability - Choose up to one target creature that player controls (choose yourself to decline).");
-        gameBroadcastService.logAndBroadcast(gameData, GameLog.cardThen(ctx.sourceCard(),
+        gameLogService.append(gameData, GameLog.cardThen(ctx.sourceCard(),
                 "'s attack trigger - choose up to one target creature the defending player controls."));
     }
 
@@ -499,7 +499,7 @@ public class PermanentChoiceTriggerHandlerService {
         if (secondTargetId != null) {
             logEntry += " and " + getTargetDisplayName(gameData, secondTargetId);
         }
-        gameBroadcastService.logAndBroadcast(gameData, GameLog.text(logEntry + "."));
+        gameLogService.append(gameData, GameLog.text(logEntry + "."));
         log.info("Game {} - {} attack counter-move trigger pushed onto stack", gameData.id, sourceCard.getName());
     }
 
@@ -525,9 +525,9 @@ public class PermanentChoiceTriggerHandlerService {
             boolean isPlayerTarget = gameData.playerIds.contains(permanentId);
             if (isPlayerTarget) {
                 String playerName = gameData.playerIdToName.get(permanentId);
-                gameBroadcastService.logAndBroadcast(gameData, GameLog.builder().card(mat.sourceCard()).text("'s ability targets " + playerName + ".").build());
+                gameLogService.append(gameData, GameLog.builder().card(mat.sourceCard()).text("'s ability targets " + playerName + ".").build());
             } else if (target != null) {
-                gameBroadcastService.logAndBroadcast(gameData, GameLog.cardTextCard(mat.sourceCard(), "'s ability targets ", target.getCard(), "."));
+                gameLogService.append(gameData, GameLog.cardTextCard(mat.sourceCard(), "'s ability targets ", target.getCard(), "."));
             }
 
             gameData.resolvedMayAccepted = true;
@@ -580,18 +580,18 @@ public class PermanentChoiceTriggerHandlerService {
             if (isPlayerTarget) {
                 String playerName = gameData.playerIdToName.get(permanentId);
                 String logEntry = mat.sourceCard().getName() + "'s ability targets " + playerName + ".";
-                gameBroadcastService.logAndBroadcast(gameData, GameLog.builder().card(mat.sourceCard()).text("'s ability targets " + playerName + ".").build());
+                gameLogService.append(gameData, GameLog.builder().card(mat.sourceCard()).text("'s ability targets " + playerName + ".").build());
                 log.info("Game {} - {} may-ability trigger targets player {}", gameData.id, mat.sourceCard().getName(), playerName);
             } else if (spellOnStack != null) {
-                gameBroadcastService.logAndBroadcast(gameData, GameLog.cardTextCard(mat.sourceCard(), "'s ability targets ", spellOnStack.getCard(), "."));
+                gameLogService.append(gameData, GameLog.cardTextCard(mat.sourceCard(), "'s ability targets ", spellOnStack.getCard(), "."));
                 log.info("Game {} - {} may-ability trigger targets spell {}", gameData.id, mat.sourceCard().getName(), spellOnStack.getCard().getName());
             } else {
                 String logEntry = mat.sourceCard().getName() + "'s ability targets " + target.getCard().getName() + ".";
-                gameBroadcastService.logAndBroadcast(gameData, GameLog.cardTextCard(mat.sourceCard(), "'s ability targets ", target.getCard(), "."));
+                gameLogService.append(gameData, GameLog.cardTextCard(mat.sourceCard(), "'s ability targets ", target.getCard(), "."));
                 log.info("Game {} - {} may-ability trigger targets {}", gameData.id, mat.sourceCard().getName(), target.getCard().getName());
             }
         } else {
-            gameBroadcastService.logAndBroadcast(gameData, GameLog.cardThen(mat.sourceCard(), "'s ability has no valid target."));
+            gameLogService.append(gameData, GameLog.cardThen(mat.sourceCard(), "'s ability has no valid target."));
             log.info("Game {} - {} may-ability trigger target no longer exists", gameData.id, mat.sourceCard().getName());
         }
 
@@ -621,10 +621,10 @@ public class PermanentChoiceTriggerHandlerService {
 
             String targetName = getTargetDisplayName(gameData, permanentId);
             String logEntry = att.sourceCard().getName() + "'s ability targets " + targetName + ".";
-            gameBroadcastService.logAndBroadcast(gameData, GameLog.builder().card(att.sourceCard()).text("'s ability targets " + targetName + ".").build());
+            gameLogService.append(gameData, GameLog.builder().card(att.sourceCard()).text("'s ability targets " + targetName + ".").build());
             log.info("Game {} - {} attack trigger targets {}", gameData.id, att.sourceCard().getName(), targetName);
         } else {
-            gameBroadcastService.logAndBroadcast(gameData, GameLog.cardThen(att.sourceCard(), "'s ability has no valid target."));
+            gameLogService.append(gameData, GameLog.cardThen(att.sourceCard(), "'s ability has no valid target."));
             log.info("Game {} - {} attack trigger target no longer exists", gameData.id, att.sourceCard().getName());
         }
 
@@ -654,10 +654,10 @@ public class PermanentChoiceTriggerHandlerService {
 
             String targetName = getTargetDisplayName(gameData, permanentId);
             String logEntry = ett.sourceCard().getName() + "'s ability targets " + targetName + ".";
-            gameBroadcastService.logAndBroadcast(gameData, GameLog.builder().card(ett.sourceCard()).text("'s ability targets " + targetName + ".").build());
+            gameLogService.append(gameData, GameLog.builder().card(ett.sourceCard()).text("'s ability targets " + targetName + ".").build());
             log.info("Game {} - {} enter trigger targets {}", gameData.id, ett.sourceCard().getName(), targetName);
         } else {
-            gameBroadcastService.logAndBroadcast(gameData, GameLog.cardThen(ett.sourceCard(), "'s ability has no valid target."));
+            gameLogService.append(gameData, GameLog.cardThen(ett.sourceCard(), "'s ability has no valid target."));
             log.info("Game {} - {} enter trigger target no longer exists", gameData.id, ett.sourceCard().getName());
         }
 
@@ -686,10 +686,10 @@ public class PermanentChoiceTriggerHandlerService {
             gameData.stack.add(entry);
 
             String targetName = getTargetDisplayName(gameData, permanentId);
-            gameBroadcastService.logAndBroadcast(gameData, GameLog.builder().card(dct.sourceCard()).text("'s ability targets " + targetName + ".").build());
+            gameLogService.append(gameData, GameLog.builder().card(dct.sourceCard()).text("'s ability targets " + targetName + ".").build());
             log.info("Game {} - {} discard trigger targets {}", gameData.id, dct.sourceCard().getName(), targetName);
         } else {
-            gameBroadcastService.logAndBroadcast(gameData, GameLog.cardThen(dct.sourceCard(), "'s ability has no valid target."));
+            gameLogService.append(gameData, GameLog.cardThen(dct.sourceCard(), "'s ability has no valid target."));
             log.info("Game {} - {} discard trigger target no longer exists", gameData.id, dct.sourceCard().getName());
         }
 
@@ -715,11 +715,11 @@ public class PermanentChoiceTriggerHandlerService {
             gameData.stack.add(entry);
 
             String logEntry = ett.emblemDescription() + "'s ability targets " + target.getCard().getName() + ".";
-            gameBroadcastService.logAndBroadcast(gameData, GameLog.textCardText(ett.emblemDescription() + "'s ability targets " , target.getCard(), "."));
+            gameLogService.append(gameData, GameLog.textCardText(ett.emblemDescription() + "'s ability targets " , target.getCard(), "."));
             log.info("Game {} - {} emblem trigger targets {}", gameData.id, ett.emblemDescription(), target.getCard().getName());
         } else {
             String logEntry = ett.emblemDescription() + "'s ability has no valid target.";
-            gameBroadcastService.logAndBroadcast(gameData, GameLog.textCardText(ett.emblemDescription() + "'s ability targets " , target.getCard(), "."));
+            gameLogService.append(gameData, GameLog.textCardText(ett.emblemDescription() + "'s ability targets " , target.getCard(), "."));
             log.info("Game {} - {} emblem trigger target no longer exists", gameData.id, ett.emblemDescription());
         }
 
@@ -750,7 +750,7 @@ public class PermanentChoiceTriggerHandlerService {
 
         String playerName = gameData.playerIdToName.get(playerId);
         String logEntry = upt.sourceCard().getName() + "'s ability targets " + playerName + ".";
-        gameBroadcastService.logAndBroadcast(gameData, GameLog.builder().card(upt.sourceCard()).text("'s ability targets " + playerName + ".").build());
+        gameLogService.append(gameData, GameLog.builder().card(upt.sourceCard()).text("'s ability targets " + playerName + ".").build());
         log.info("Game {} - {} upkeep player-target trigger targets {}", gameData.id, upt.sourceCard().getName(), playerName);
 
         if (gameData.hasPendingInteraction(PermanentChoiceContext.UpkeepPlayerTargetTrigger.class)) {
@@ -812,7 +812,7 @@ public class PermanentChoiceTriggerHandlerService {
         String firstName = gameData.playerIdToName.get(uspt.firstTargetPlayerId());
         String secondName = gameData.playerIdToName.get(secondPlayerId);
         String logEntry = uspt.sourceCard().getName() + "'s ability targets " + firstName + " and " + secondName + ".";
-        gameBroadcastService.logAndBroadcast(gameData, GameLog.builder().card(uspt.sourceCard()).text("'s ability targets " + firstName + " and " + secondName + ".").build());
+        gameLogService.append(gameData, GameLog.builder().card(uspt.sourceCard()).text("'s ability targets " + firstName + " and " + secondName + ".").build());
         log.info("Game {} - {} upkeep multi-player trigger targets {} and {}",
                 gameData.id, uspt.sourceCard().getName(), firstName, secondName);
 
@@ -865,10 +865,10 @@ public class PermanentChoiceTriggerHandlerService {
             gameData.stack.add(entry);
 
             String logEntry = uct.sourceCard().getName() + "'s ability targets " + target.getCard().getName() + ".";
-            gameBroadcastService.logAndBroadcast(gameData, GameLog.cardTextCard(uct.sourceCard(), "'s ability targets ", target.getCard(), "."));
+            gameLogService.append(gameData, GameLog.cardTextCard(uct.sourceCard(), "'s ability targets ", target.getCard(), "."));
             log.info("Game {} - {} upkeep copy trigger targets {}", gameData.id, uct.sourceCard().getName(), target.getCard().getName());
         } else {
-            gameBroadcastService.logAndBroadcast(gameData, GameLog.cardThen(uct.sourceCard(), "'s ability has no valid target."));
+            gameLogService.append(gameData, GameLog.cardThen(uct.sourceCard(), "'s ability has no valid target."));
             log.info("Game {} - {} upkeep copy trigger target no longer exists", gameData.id, uct.sourceCard().getName());
         }
 
@@ -927,7 +927,7 @@ public class PermanentChoiceTriggerHandlerService {
             Permanent ownTarget = gameQueryService.findPermanentById(gameData, permanentId);
             String ownName = ownTarget != null ? ownTarget.getCard().getName() : permanentId.toString();
             String logEntry = ceo.sourceCard().getName() + "'s ability targets " + ownName + ".";
-            gameBroadcastService.logAndBroadcast(gameData, GameLog.builder().card(ceo.sourceCard()).text("'s ability targets " + ownName + ".").build());
+            gameLogService.append(gameData, GameLog.builder().card(ceo.sourceCard()).text("'s ability targets " + ownName + ".").build());
             log.info("Game {} - {} upkeep trigger targets own {} (no opponent targets available)",
                     gameData.id, ceo.sourceCard().getName(), ownName);
 
@@ -1025,7 +1025,7 @@ public class PermanentChoiceTriggerHandlerService {
         String ownName = ownTarget != null ? ownTarget.getCard().getName() : pmot.ownTargetId().toString();
         String oppName = opponentTarget != null ? opponentTarget.getCard().getName() : permanentId.toString();
         String logEntry = pmot.sourceCard().getName() + "'s ability targets " + ownName + " and " + oppName + ".";
-        gameBroadcastService.logAndBroadcast(gameData, GameLog.builder().card(pmot.sourceCard()).text("'s ability targets " + ownName + " and " + oppName + ".").build());
+        gameLogService.append(gameData, GameLog.builder().card(pmot.sourceCard()).text("'s ability targets " + ownName + " and " + oppName + ".").build());
         log.info("Game {} - {} upkeep trigger targets {} and {}",
                 gameData.id, pmot.sourceCard().getName(), ownName, oppName);
 
@@ -1061,7 +1061,7 @@ public class PermanentChoiceTriggerHandlerService {
 
         String targetName = getTargetDisplayName(gameData, targetId);
         String logEntry = lgt.sourceCard().getName() + "'s triggered ability targets " + targetName + ".";
-        gameBroadcastService.logAndBroadcast(gameData, GameLog.builder().card(lgt.sourceCard()).text("'s triggered ability targets " + targetName + ".").build());
+        gameLogService.append(gameData, GameLog.builder().card(lgt.sourceCard()).text("'s triggered ability targets " + targetName + ".").build());
         log.info("Game {} - {} life gain trigger targets {}", gameData.id, lgt.sourceCard().getName(), targetName);
 
         if (gameData.hasPendingInteraction(PermanentChoiceContext.LifeGainTriggerAnyTarget.class)) {
@@ -1092,7 +1092,7 @@ public class PermanentChoiceTriggerHandlerService {
 
         String targetName = getTargetDisplayName(gameData, targetId);
         String logEntry = dt.sourceCard().getName() + "'s triggered ability targets " + targetName + ".";
-        gameBroadcastService.logAndBroadcast(gameData, GameLog.builder().card(dt.sourceCard()).text("'s triggered ability targets " + targetName + ".").build());
+        gameLogService.append(gameData, GameLog.builder().card(dt.sourceCard()).text("'s triggered ability targets " + targetName + ".").build());
         log.info("Game {} - {} draw trigger targets {}", gameData.id, dt.sourceCard().getName(), targetName);
 
         if (gameData.hasPendingInteraction(PermanentChoiceContext.DrawTriggerAnyTarget.class)) {
@@ -1123,7 +1123,7 @@ public class PermanentChoiceTriggerHandlerService {
 
         String targetName = getTargetDisplayName(gameData, targetId);
         String logEntry = efg.sourceCard().getName() + "'s triggered ability targets " + targetName + ".";
-        gameBroadcastService.logAndBroadcast(gameData, GameLog.builder().card(efg.sourceCard()).text("'s triggered ability targets " + targetName + ".").build());
+        gameLogService.append(gameData, GameLog.builder().card(efg.sourceCard()).text("'s triggered ability targets " + targetName + ".").build());
         log.info("Game {} - {} enters-from-graveyard trigger targets {}", gameData.id, efg.sourceCard().getName(), targetName);
 
         if (gameData.hasPendingInteraction(PermanentChoiceContext.EntersFromGraveyardTriggerTarget.class)) {
@@ -1161,7 +1161,7 @@ public class PermanentChoiceTriggerHandlerService {
         gameData.stack.add(entry);
 
         String logEntry = etbStt.sourceCard().getName() + "'s ETB ability targets " + targetName + ".";
-        gameBroadcastService.logAndBroadcast(gameData, GameLog.builder().card(etbStt.sourceCard()).text("'s ETB ability targets " + targetName + ".").build());
+        gameLogService.append(gameData, GameLog.builder().card(etbStt.sourceCard()).text("'s ETB ability targets " + targetName + ".").build());
         log.info("Game {} - {} ETB spell-target trigger targets {}", gameData.id, etbStt.sourceCard().getName(), targetName);
 
         if (gameData.hasPendingInteraction(PermanentChoiceContext.ETBSpellTargetTrigger.class)) {
@@ -1206,7 +1206,7 @@ public class PermanentChoiceTriggerHandlerService {
             String targetName = getTargetDisplayName(gameData, chosenId);
             String logEntry = etbMtt.sourceCard().getName() + "'s ETB ability — target "
                     + (groupIdx + 1) + ": " + targetName + ".";
-            gameBroadcastService.logAndBroadcast(gameData, GameLog.builder().card(etbMtt.sourceCard()).text("'s ETB ability — target " + (groupIdx + 1) + ": " + targetName + ".").build());
+            gameLogService.append(gameData, GameLog.builder().card(etbMtt.sourceCard()).text("'s ETB ability — target " + (groupIdx + 1) + ": " + targetName + ".").build());
             log.info("Game {} - {} ETB multi-target trigger chose {} (group {} slot {})",
                     gameData.id, etbMtt.sourceCard().getName(), targetName, groupIdx, chosenInGroup);
         }
@@ -1259,7 +1259,7 @@ public class PermanentChoiceTriggerHandlerService {
 
         String targetName = getTargetDisplayName(gameData, targetId);
         String logEntry = etbTtt.sourceCard().getName() + "'s ETB ability targets " + targetName + ".";
-        gameBroadcastService.logAndBroadcast(gameData, GameLog.builder().card(etbTtt.sourceCard()).text("'s ETB ability targets " + targetName + ".").build());
+        gameLogService.append(gameData, GameLog.builder().card(etbTtt.sourceCard()).text("'s ETB ability targets " + targetName + ".").build());
         log.info("Game {} - {} ETB token-target trigger targets {}", gameData.id, etbTtt.sourceCard().getName(), targetName);
 
         if (gameData.hasPendingInteraction(PermanentChoiceContext.ETBTokenTargetTrigger.class)) {
@@ -1300,7 +1300,7 @@ public class PermanentChoiceTriggerHandlerService {
 
         String playerName = gameData.playerIdToName.get(playerId);
         String logEntry = ctt.sourceCard().getName() + "'s ability targets " + playerName + ".";
-        gameBroadcastService.logAndBroadcast(gameData, GameLog.builder().card(ctt.sourceCard()).text("'s ability targets " + playerName + ".").build());
+        gameLogService.append(gameData, GameLog.builder().card(ctt.sourceCard()).text("'s ability targets " + playerName + ".").build());
         log.info("Game {} - {} championed trigger targets {}", gameData.id, ctt.sourceCard().getName(), playerName);
 
         // The championed trigger fired mid-resolution of the Champion ETB; continue the
@@ -1322,7 +1322,7 @@ public class PermanentChoiceTriggerHandlerService {
 
         String targetName = getTargetDisplayName(gameData, permanentId);
         String logEntry = est.sourceCard().getName() + "'s ability targets " + targetName + ".";
-        gameBroadcastService.logAndBroadcast(gameData, GameLog.builder().card(est.sourceCard()).text("'s ability targets " + targetName + ".").build());
+        gameLogService.append(gameData, GameLog.builder().card(est.sourceCard()).text("'s ability targets " + targetName + ".").build());
         log.info("Game {} - {} end-step trigger targets {}", gameData.id, est.sourceCard().getName(), targetName);
 
         if (gameData.hasPendingInteraction(PermanentChoiceContext.EndStepTriggerTarget.class)) {
@@ -1353,7 +1353,7 @@ public class PermanentChoiceTriggerHandlerService {
 
         String targetName = getTargetDisplayName(gameData, chosenId);
         String logEntry = uptt.sourceCard().getName() + "'s ability targets " + targetName + ".";
-        gameBroadcastService.logAndBroadcast(gameData, GameLog.builder().card(uptt.sourceCard()).text("'s ability targets " + targetName + ".").build());
+        gameLogService.append(gameData, GameLog.builder().card(uptt.sourceCard()).text("'s ability targets " + targetName + ".").build());
         log.info("Game {} - {} upkeep permanent-target trigger targets {}",
                 gameData.id, uptt.sourceCard().getName(), targetName);
 
@@ -1385,7 +1385,7 @@ public class PermanentChoiceTriggerHandlerService {
 
         String targetName = getTargetDisplayName(gameData, chosenId);
         String logEntry = uat.sourceCard().getName() + "'s ability targets " + targetName + ".";
-        gameBroadcastService.logAndBroadcast(gameData, GameLog.builder().card(uat.sourceCard()).text("'s ability targets " + targetName + ".").build());
+        gameLogService.append(gameData, GameLog.builder().card(uat.sourceCard()).text("'s ability targets " + targetName + ".").build());
         log.info("Game {} - {} upkeep any-target trigger targets {}",
                 gameData.id, uat.sourceCard().getName(), targetName);
 
@@ -1445,13 +1445,13 @@ public class PermanentChoiceTriggerHandlerService {
         gameData.stack.add(entry);
 
         if (skipped) {
-            gameBroadcastService.logAndBroadcast(gameData, GameLog.builder().card(boct.sourceCard())
+            gameLogService.append(gameData, GameLog.builder().card(boct.sourceCard())
                     .text("'s ability targets nothing.").build());
             log.info("Game {} - {} beginning-of-combat trigger declined targeting",
                     gameData.id, boct.sourceCard().getName());
         } else {
             String targetName = getTargetDisplayName(gameData, permanentId);
-            gameBroadcastService.logAndBroadcast(gameData, GameLog.builder().card(boct.sourceCard())
+            gameLogService.append(gameData, GameLog.builder().card(boct.sourceCard())
                     .text("'s ability targets " + targetName + ".").build());
             log.info("Game {} - {} beginning-of-combat trigger targets {}",
                     gameData.id, boct.sourceCard().getName(), targetName);
@@ -1487,7 +1487,7 @@ public class PermanentChoiceTriggerHandlerService {
                     sct.sourcePermanentId()
             ));
             String logEntry = sct.sourceCard().getName() + "'s chapter " + sct.chapterName() + " targets no creature.";
-            gameBroadcastService.logAndBroadcast(gameData, GameLog.builder().card(sct.sourceCard()).text("'s chapter " + sct.chapterName() + " targets no creature.").build());
+            gameLogService.append(gameData, GameLog.builder().card(sct.sourceCard()).text("'s chapter " + sct.chapterName() + " targets no creature.").build());
             log.info("Game {} - {} chapter {} skipped targeting", gameData.id, sct.sourceCard().getName(), sct.chapterName());
         } else {
             Permanent target = gameQueryService.findPermanentById(gameData, chosenId);
@@ -1505,7 +1505,7 @@ public class PermanentChoiceTriggerHandlerService {
 
                 String targetName = getTargetDisplayName(gameData, chosenId);
                 String logEntry = sct.sourceCard().getName() + "'s chapter " + sct.chapterName() + " targets " + targetName + ".";
-                gameBroadcastService.logAndBroadcast(gameData, GameLog.builder().card(sct.sourceCard()).text("'s chapter " + sct.chapterName() + " targets " + targetName + ".").build());
+                gameLogService.append(gameData, GameLog.builder().card(sct.sourceCard()).text("'s chapter " + sct.chapterName() + " targets " + targetName + ".").build());
                 log.info("Game {} - {} chapter {} targets {}", gameData.id, sct.sourceCard().getName(), sct.chapterName(), targetName);
             } else {
                 // Target no longer exists — push ability with no target
@@ -1519,7 +1519,7 @@ public class PermanentChoiceTriggerHandlerService {
                         sct.sourcePermanentId()
                 ));
                 String logEntry = sct.sourceCard().getName() + "'s chapter " + sct.chapterName() + " target no longer exists.";
-                gameBroadcastService.logAndBroadcast(gameData, GameLog.builder().card(sct.sourceCard()).text("'s chapter " + sct.chapterName() + " target no longer exists.").build());
+                gameLogService.append(gameData, GameLog.builder().card(sct.sourceCard()).text("'s chapter " + sct.chapterName() + " target no longer exists.").build());
             }
         }
 

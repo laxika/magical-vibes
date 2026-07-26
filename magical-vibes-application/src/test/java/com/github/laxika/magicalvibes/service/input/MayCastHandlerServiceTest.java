@@ -21,7 +21,7 @@ import com.github.laxika.magicalvibes.model.effect.MillEffect;
 import com.github.laxika.magicalvibes.model.effect.MillRecipient;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsArtifactPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentPredicateTargetFilter;
-import com.github.laxika.magicalvibes.service.GameBroadcastService;
+import com.github.laxika.magicalvibes.service.GameLogService;
 import com.github.laxika.magicalvibes.service.trigger.TriggerCollectionService;
 import com.github.laxika.magicalvibes.service.battlefield.BattlefieldEntryService;
 import com.github.laxika.magicalvibes.service.battlefield.GameQueryService;
@@ -34,6 +34,7 @@ import org.junit.jupiter.api.Nested;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.InjectMocks;
+import org.mockito.InOrder;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 
@@ -47,6 +48,7 @@ import static org.mockito.ArgumentMatchers.anyList;
 import static org.mockito.ArgumentMatchers.anyString;
 import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.never;
+import static org.mockito.Mockito.inOrder;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.verifyNoInteractions;
 import static org.mockito.Mockito.when;
@@ -59,7 +61,7 @@ class MayCastHandlerServiceTest {
     @Mock private GameQueryService gameQueryService;
     @Mock private PredicateEvaluationService predicateEvaluationService;
     @Mock private GraveyardService graveyardService;
-    @Mock private GameBroadcastService gameBroadcastService;
+    @Mock private GameLogService gameLogService;
     @Mock private PlayerInputService playerInputService;
     @Mock private PermanentRemovalService permanentRemovalService;
     @Mock private TriggerCollectionService triggerCollectionService;
@@ -293,8 +295,9 @@ class MayCastHandlerServiceTest {
 
             svc.handleCastFromLibraryChoice(gd, player1, false, ability);
 
-            verify(gameBroadcastService).logAndBroadcast(eq(gd), any(GameLogEntry.class));
-            verify(inputCompletionService).processMayAbilitiesThenAutoPass(gd);
+            InOrder order = inOrder(gameLogService, inputCompletionService);
+            order.verify(gameLogService).append(eq(gd), any(GameLogEntry.class));
+            order.verify(inputCompletionService).processMayAbilitiesThenAutoPass(gd);
         }
 
         @Test
@@ -559,7 +562,7 @@ class MayCastHandlerServiceTest {
 
             svc.handleCastFromGraveyardChoice(gd, player1, false, ability, opponentGraveyardFree());
 
-            verify(gameBroadcastService).logAndBroadcast(eq(gd), any(GameLogEntry.class));
+            verify(gameLogService).append(eq(gd), any(GameLogEntry.class));
             verify(inputCompletionService).processMayAbilitiesThenAutoPass(gd);
             verifyNoInteractions(permanentRemovalService);
         }

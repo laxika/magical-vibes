@@ -34,7 +34,7 @@ import com.github.laxika.magicalvibes.model.layer.FloatingContinuousEffect;
 import com.github.laxika.magicalvibes.service.effect.normalfx.GrantBasicLandTypeToTargetEffectHandler;
 import java.util.Collections;
 import com.github.laxika.magicalvibes.model.TextReplacement;
-import com.github.laxika.magicalvibes.service.GameBroadcastService;
+import com.github.laxika.magicalvibes.service.GameLogService;
 import com.github.laxika.magicalvibes.service.WarpWorldService;
 import com.github.laxika.magicalvibes.service.battlefield.BattlefieldEntryService;
 import com.github.laxika.magicalvibes.service.battlefield.GameQueryService;
@@ -64,7 +64,7 @@ public class ChoiceHandlerService {
     private final GameQueryService gameQueryService;
     private final WarpWorldService warpWorldService;
     private final BattlefieldEntryService battlefieldEntryService;
-    private final GameBroadcastService gameBroadcastService;
+    private final GameLogService gameLogService;
     private final PlayerInputService playerInputService;
     private final InputCompletionService inputCompletionService;
     private final TurnProgressionService turnProgressionService;
@@ -267,7 +267,7 @@ public class ChoiceHandlerService {
         if (perm != null) {
             perm.setChosenColor(color);
 
-            gameBroadcastService.logAndBroadcast(gameData, GameLog.textCardText(player.getUsername() + " chooses " + color.name().toLowerCase() + " for " , perm.getCard(), "."));
+            gameLogService.append(gameData, GameLog.textCardText(player.getUsername() + " chooses " + color.name().toLowerCase() + " for " , perm.getCard(), "."));
             log.info("Game {} - {} chooses {} for {}", gameData.id, player.getUsername(), color, perm.getCard().getName());
 
             if (gameQueryService.isCreature(gameData, perm)) {
@@ -296,7 +296,7 @@ public class ChoiceHandlerService {
             String subtypeLabel = ctx.restrictedToCreatureSubtype().getDisplayName();
             String logEntry = player.getUsername() + " adds one " + colorName.toLowerCase()
                     + " mana (" + subtypeLabel + " spells or abilities only).";
-            gameBroadcastService.logAndBroadcast(gameData, GameLog.text(logEntry));
+            gameLogService.append(gameData, GameLog.text(logEntry));
             log.info("Game {} - {} adds one {} {}-spell-or-ability mana", gameData.id, player.getUsername(), colorName.toLowerCase(), subtypeLabel);
 
             // If more mana to choose, prompt again for the next color
@@ -315,7 +315,7 @@ public class ChoiceHandlerService {
             manaPool.addFlashbackOnlyMana(manaColor, 1);
 
             String logEntry = player.getUsername() + " adds one " + colorName.toLowerCase() + " mana (flashback only).";
-            gameBroadcastService.logAndBroadcast(gameData, GameLog.text(logEntry));
+            gameLogService.append(gameData, GameLog.text(logEntry));
             log.info("Game {} - {} adds one {} flashback-only mana", gameData.id, player.getUsername(), colorName.toLowerCase());
 
             // If more mana to choose, prompt again for the next color
@@ -337,7 +337,7 @@ public class ChoiceHandlerService {
             }
 
             String logEntry = player.getUsername() + " adds one " + colorName.toLowerCase() + " mana.";
-            gameBroadcastService.logAndBroadcast(gameData, GameLog.text(logEntry));
+            gameLogService.append(gameData, GameLog.text(logEntry));
             log.info("Game {} - {} adds one {} mana (fixed color combination)", gameData.id, player.getUsername(), colorName.toLowerCase());
 
             int remaining = amount - 1;
@@ -357,7 +357,7 @@ public class ChoiceHandlerService {
 
             String logEntry = player.getUsername() + " adds " + (amount == 1 ? "one" : String.valueOf(amount))
                     + " " + colorName.toLowerCase() + " mana (creature spells only).";
-            gameBroadcastService.logAndBroadcast(gameData, GameLog.text(logEntry));
+            gameLogService.append(gameData, GameLog.text(logEntry));
             log.info("Game {} - {} adds {} {} creature-spell-only mana", gameData.id, player.getUsername(), amount, colorName.toLowerCase());
         } else if (ctx.instantSorceryOnly()) {
             manaPool.addInstantSorceryOnlyColored(manaColor, amount);
@@ -371,7 +371,7 @@ public class ChoiceHandlerService {
         if (!ctx.flashbackOnly() && !ctx.spellOrAbilitySubtype() && ctx.fixedColorOptions() == null && !ctx.creatureSpellOnly()) {
             String manaWord = amount == 1 ? "one" : String.valueOf(amount);
             String logEntry = player.getUsername() + " adds " + manaWord + " " + colorName.toLowerCase() + " mana.";
-            gameBroadcastService.logAndBroadcast(gameData, GameLog.text(logEntry));
+            gameLogService.append(gameData, GameLog.text(logEntry));
             log.info("Game {} - {} adds {} {} mana", gameData.id, player.getUsername(), manaWord, colorName.toLowerCase());
         }
 
@@ -390,7 +390,7 @@ public class ChoiceHandlerService {
         manaPool.addPersistentMana(manaColor, ctx.attackerCount());
 
         String logEntry = player.getUsername() + " adds " + ctx.attackerCount() + " " + colorName.toLowerCase() + " mana.";
-        gameBroadcastService.logAndBroadcast(gameData, GameLog.text(logEntry));
+        gameLogService.append(gameData, GameLog.text(logEntry));
         log.info("Game {} - {} adds {} {} mana (attacking creatures, persistent until end of turn)",
                 gameData.id, player.getUsername(), ctx.attackerCount(), colorName.toLowerCase());
 
@@ -457,7 +457,7 @@ public class ChoiceHandlerService {
                 }
             }
 
-            gameBroadcastService.logAndBroadcast(gameData, GameLog.textCardText(player.getUsername() + " changes all instances of " + fromText + " to " + toText + " on " , target.getCard(), "."));
+            gameLogService.append(gameData, GameLog.textCardText(player.getUsername() + " changes all instances of " + fromText + " to " + toText + " on " , target.getCard(), "."));
             log.info("Game {} - {} changes {} to {} on {}", gameData.id, player.getUsername(), fromText, toText, target.getCard().getName());
         } else {
             // Glamerdye may target a spell still on the stack; record the change so it carries onto the
@@ -467,7 +467,7 @@ public class ChoiceHandlerService {
                 gameData.spellTextReplacements
                         .computeIfAbsent(ctx.targetId(), k -> new ArrayList<>())
                         .add(new TextReplacement(fromText, toText));
-                gameBroadcastService.logAndBroadcast(gameData, GameLog.textCardText(player.getUsername() + " changes all instances of " + fromText + " to " + toText + " on " , targetSpell.getCard(), "."));
+                gameLogService.append(gameData, GameLog.textCardText(player.getUsername() + " changes all instances of " + fromText + " to " + toText + " on " , targetSpell.getCard(), "."));
                 log.info("Game {} - {} changes {} to {} on spell {}", gameData.id, player.getUsername(), fromText, toText, targetSpell.getCard().getName());
             }
         }
@@ -504,9 +504,9 @@ public class ChoiceHandlerService {
         String playerName = gameData.playerIdToName.get(controllerId);
         Card enteredCard = perm.getCard();
 
-        gameBroadcastService.logAndBroadcast(gameData,
+        gameLogService.append(gameData,
                 GameLog.playerChoosesForCard(player.getUsername(), cardName, enteredCard));
-        gameBroadcastService.logAndBroadcast(gameData, GameLog.entersBattlefieldUnder(enteredCard, playerName));
+        gameLogService.append(gameData, GameLog.entersBattlefieldUnder(enteredCard, playerName));
         log.info("Game {} - {} resolves, enters battlefield for {}", gameData.id, enteredCard.getName(), playerName);
         log.info("Game {} - {} chooses card name \"{}\" for {}", gameData.id, player.getUsername(), cardName, card.getName());
 
@@ -533,7 +533,7 @@ public class ChoiceHandlerService {
             target.getGrantedKeywords().add(keyword);
 
             String keywordName = keyword.name().charAt(0) + keyword.name().substring(1).toLowerCase().replace('_', ' ');
-            gameBroadcastService.logAndBroadcast(gameData, GameLog.cardThen(target.getCard(), " gains " + keywordName + " until end of turn."));
+            gameLogService.append(gameData, GameLog.cardThen(target.getCard(), " gains " + keywordName + " until end of turn."));
             log.info("Game {} - {} chooses {} for {}", gameData.id, player.getUsername(), keywordName, target.getCard().getName());
         }
 
@@ -585,7 +585,7 @@ public class ChoiceHandlerService {
         playerInputService.beginPermanentChoice(gameData, ctx.controllerId(), validTargets,
                 ctx.sourceCard().getName() + " — Choose target " + targetDescription + ".");
 
-        gameBroadcastService.logAndBroadcast(gameData, GameLog.textCardText(player.getUsername() + " chooses \"" + chosen + "\" for " , ctx.sourceCard(), "."));
+        gameLogService.append(gameData, GameLog.textCardText(player.getUsername() + " chooses \"" + chosen + "\" for " , ctx.sourceCard(), "."));
         inputCompletionService.publishStateAfterInput(gameData);
     }
 
@@ -614,7 +614,7 @@ public class ChoiceHandlerService {
                     gameData.pendingEffectResolutionEntry, gameData.pendingEffectResolutionIndex);
         }
 
-        gameBroadcastService.logAndBroadcast(gameData,
+        gameLogService.append(gameData,
                 GameLog.textCardText(player.getUsername() + " chooses \"" + chosen + "\" for ",
                         ctx.sourceCard(), "."));
 
@@ -705,7 +705,7 @@ public class ChoiceHandlerService {
                 if (current > 0) {
                     target.setCounterCount(kind, current - 1);
                     String label = kind.name().toLowerCase().replace('_', ' ');
-                    gameBroadcastService.logAndBroadcast(gameData, GameLog.textCardText(
+                    gameLogService.append(gameData, GameLog.textCardText(
                             ctx.sourceCardName() + " removes a " + label + " counter from ", target.getCard(), "."));
                     log.info("Game {} - {} removes a {} counter from {}", gameData.id,
                             ctx.sourceCardName(), kind, target.getCard().getName());
@@ -749,7 +749,7 @@ public class ChoiceHandlerService {
                     gameData.pendingEffectResolutionIndex, chosen.effects());
         }
 
-        gameBroadcastService.logAndBroadcast(gameData, GameLog.textCardText(
+        gameLogService.append(gameData, GameLog.textCardText(
                 player.getUsername() + " chooses \"" + chosenLabel + "\" for ", ctx.sourceCard(), "."));
         log.info("Game {} - {} chooses mode \"{}\" for {}", gameData.id, player.getUsername(),
                 chosenLabel, ctx.sourceCard().getName());
@@ -777,7 +777,7 @@ public class ChoiceHandlerService {
         gameData.interaction.clearAwaitingInput();
 
         if (deck == null || deck.isEmpty()) {
-            gameBroadcastService.logAndBroadcast(gameData, GameLog.text(playerName + " has no cards to reveal for Abundance."));
+            gameLogService.append(gameData, GameLog.text(playerName + " has no cards to reveal for Abundance."));
             finalizeAfterDrawReplacementChoice(gameData);
             return;
         }
@@ -794,7 +794,7 @@ public class ChoiceHandlerService {
             }
         }
 
-        gameBroadcastService.logAndBroadcast(gameData,
+        gameLogService.append(gameData,
                 appendCards(GameLog.builder().text(playerName + " reveals "), revealed)
                         .text(" for Abundance.")
                         .build());
@@ -803,10 +803,10 @@ public class ChoiceHandlerService {
         if (chosenCard != null) {
             gameData.addCardToHand(playerId, chosenCard);
             toBottom.remove(chosenCard);
-            gameBroadcastService.logAndBroadcast(gameData, GameLog.textCardText(playerName + " puts ", chosenCard, " into their hand."));
+            gameLogService.append(gameData, GameLog.textCardText(playerName + " puts ", chosenCard, " into their hand."));
         } else {
             String missingKind = chooseLand ? "land" : "nonland";
-            gameBroadcastService.logAndBroadcast(gameData, GameLog.text(playerName + " reveals no " + missingKind + " card for Abundance."));
+            gameLogService.append(gameData, GameLog.text(playerName + " reveals no " + missingKind + " card for Abundance."));
         }
 
         if (toBottom.size() == 1) {
@@ -836,13 +836,13 @@ public class ChoiceHandlerService {
         if (target != null) {
             if ("ARTIFACT".equals(chosenValue)) {
                 target.getProtectionFromCardTypes().add(CardType.ARTIFACT);
-                gameBroadcastService.logAndBroadcast(gameData, GameLog.cardThen(target.getCard(), " gains protection from artifacts until end of turn."));
+                gameLogService.append(gameData, GameLog.cardThen(target.getCard(), " gains protection from artifacts until end of turn."));
                 log.info("Game {} - {} gains protection from artifacts until end of turn", gameData.id, target.getCard().getName());
             } else {
                 CardColor color = CardColor.valueOf(chosenValue);
                 target.getProtectionFromColorsUntilEndOfTurn().add(color);
                 String colorName = color.name().charAt(0) + color.name().substring(1).toLowerCase();
-                gameBroadcastService.logAndBroadcast(gameData, GameLog.cardThen(target.getCard(), " gains protection from " + colorName.toLowerCase() + " until end of turn."));
+                gameLogService.append(gameData, GameLog.cardThen(target.getCard(), " gains protection from " + colorName.toLowerCase() + " until end of turn."));
                 log.info("Game {} - {} gains protection from {} until end of turn", gameData.id, target.getCard().getName(), colorName.toLowerCase());
             }
         }
@@ -876,7 +876,7 @@ public class ChoiceHandlerService {
         String playerName = gameData.playerIdToName.get(ctx.controllerId());
         String logEntry = playerName + " and each permanent they control gain protection from "
                 + colorName.toLowerCase() + " until end of turn.";
-        gameBroadcastService.logAndBroadcast(gameData, GameLog.text(logEntry));
+        gameLogService.append(gameData, GameLog.text(logEntry));
         log.info("Game {} - {} and their permanents gain protection from {} until end of turn",
                 gameData.id, playerName, colorName.toLowerCase());
 
@@ -908,7 +908,7 @@ public class ChoiceHandlerService {
                     com.github.laxika.magicalvibes.model.effect.EffectDuration.UNTIL_END_OF_TURN, 0));
 
             String colorName = color.name().charAt(0) + color.name().substring(1).toLowerCase();
-            gameBroadcastService.logAndBroadcast(gameData, GameLog.cardThen(target.getCard(), " becomes " + colorName + " until end of turn."));
+            gameLogService.append(gameData, GameLog.cardThen(target.getCard(), " becomes " + colorName + " until end of turn."));
             log.info("Game {} - {} becomes {} until end of turn", gameData.id, target.getCard().getName(), colorName);
         }
 
@@ -929,10 +929,10 @@ public class ChoiceHandlerService {
 
         List<Card> hand = gameData.playerHands.get(targetPlayerId);
         if (hand == null || hand.isEmpty()) {
-            gameBroadcastService.logAndBroadcast(gameData, GameLog.text(controllerName + " chooses " + colorLabel.toLowerCase()
+            gameLogService.append(gameData, GameLog.text(controllerName + " chooses " + colorLabel.toLowerCase()
                     + ". " + targetName + " reveals an empty hand."));
         } else {
-            gameBroadcastService.logAndBroadcast(gameData,
+            gameLogService.append(gameData,
                     appendCards(GameLog.builder().text(controllerName + " chooses " + colorLabel.toLowerCase()
                             + ". " + targetName + " reveals their hand: "), hand)
                             .text(".")
@@ -954,12 +954,12 @@ public class ChoiceHandlerService {
                 graveyardService.addCardToGraveyard(gameData, targetPlayerId, card);
                 triggerCollectionService.checkDiscardTriggers(gameData, targetPlayerId, card);
             }
-            gameBroadcastService.logAndBroadcast(gameData, GameLog.text(targetName + " discards " + toDiscard.size()
+            gameLogService.append(gameData, GameLog.text(targetName + " discards " + toDiscard.size()
                     + " " + colorLabel.toLowerCase() + " card" + (toDiscard.size() != 1 ? "s" : "") + "."));
             log.info("Game {} - {} discards {} {} card(s) to Persecute-style effect",
                     gameData.id, targetName, toDiscard.size(), colorLabel.toLowerCase());
         } else {
-            gameBroadcastService.logAndBroadcast(gameData, GameLog.text(targetName + " has no " + colorLabel.toLowerCase()
+            gameLogService.append(gameData, GameLog.text(targetName + " has no " + colorLabel.toLowerCase()
                     + " cards to discard."));
         }
 
@@ -996,7 +996,7 @@ public class ChoiceHandlerService {
             }
         }
 
-        gameBroadcastService.logAndBroadcast(gameData, GameLog.text(controllerName + " chooses " + colorLabel.toLowerCase()
+        gameLogService.append(gameData, GameLog.text(controllerName + " chooses " + colorLabel.toLowerCase()
                 + ". " + targetName + " exiles the top " + toExile + " card" + (toExile != 1 ? "s" : "")
                 + " of their library."));
         log.info("Game {} - Oona: {} exiles {} card(s); {} of chosen colour {}",
@@ -1004,7 +1004,7 @@ public class ChoiceHandlerService {
 
         if (matches > 0) {
             permanentControlSupport.applyCreateToken(gameData, controllerId, ctx.tokenTemplate(), matches, ctx.sourceSetCode());
-            gameBroadcastService.logAndBroadcast(gameData, GameLog.text(controllerName + " creates " + matches
+            gameLogService.append(gameData, GameLog.text(controllerName + " creates " + matches
                     + " Faerie Rogue token" + (matches != 1 ? "s" : "") + "."));
         }
 
@@ -1039,14 +1039,14 @@ public class ChoiceHandlerService {
         });
 
         int count = matches[0];
-        gameBroadcastService.logAndBroadcast(gameData, GameLog.text(controllerName + " chooses "
+        gameLogService.append(gameData, GameLog.text(controllerName + " chooses "
                 + colorLabel.toLowerCase() + "."));
         log.info("Game {} - Rith: chosen colour {}, {} matching permanent(s)",
                 gameData.id, colorLabel.toLowerCase(), count);
 
         if (count > 0) {
             permanentControlSupport.applyCreateToken(gameData, controllerId, ctx.tokenTemplate(), count, ctx.sourceSetCode());
-            gameBroadcastService.logAndBroadcast(gameData, GameLog.text(controllerName + " creates " + count
+            gameLogService.append(gameData, GameLog.text(controllerName + " creates " + count
                     + " Saproling token" + (count != 1 ? "s" : "") + "."));
         }
 
@@ -1109,7 +1109,7 @@ public class ChoiceHandlerService {
                 .reduce((a, b) -> a + " and " + b).orElse("");
         String durationSuffix = ctx.duration() == EffectDuration.UNTIL_END_OF_TURN
                 ? " until end of turn." : ".";
-        gameBroadcastService.logAndBroadcast(gameData, GameLog.cardThen(target.getCard(),
+        gameLogService.append(gameData, GameLog.cardThen(target.getCard(),
                 " becomes " + colorList + durationSuffix));
         log.info("Game {} - {} becomes {}{}", gameData.id, target.getCard().getName(), colorList,
                 durationSuffix);
@@ -1132,7 +1132,7 @@ public class ChoiceHandlerService {
         gameData.interaction.clearAwaitingInput();
         gameData.torment.chosenMode = chosen;
 
-        gameBroadcastService.logAndBroadcast(gameData, GameLog.text(
+        gameLogService.append(gameData, GameLog.text(
                 player.getUsername() + " chooses \"" + chosen + "\" for " + ctx.sourceCardName() + "."));
         log.info("Game {} - {} chooses {} for {}", gameData.id, player.getUsername(), chosen, ctx.sourceCardName());
 
@@ -1155,7 +1155,7 @@ public class ChoiceHandlerService {
         gameData.interaction.clearAwaitingInput();
         gameData.torment.chosenMode = chosen;
 
-        gameBroadcastService.logAndBroadcast(gameData, GameLog.text(
+        gameLogService.append(gameData, GameLog.text(
                 player.getUsername() + " chooses \"" + chosen + "\" for " + ctx.sourceCardName() + "."));
         log.info("Game {} - {} chooses {} for {}", gameData.id, player.getUsername(), chosen, ctx.sourceCardName());
 
@@ -1178,7 +1178,7 @@ public class ChoiceHandlerService {
         gameData.interaction.clearAwaitingInput();
         gameData.wintersChill.chosenMode = chosen;
 
-        gameBroadcastService.logAndBroadcast(gameData, GameLog.text(
+        gameLogService.append(gameData, GameLog.text(
                 player.getUsername() + " chooses \"" + chosen + "\" for " + ctx.sourceCardName() + "."));
         log.info("Game {} - {} chooses {} for Winter's Chill target {}",
                 gameData.id, player.getUsername(), chosen, ctx.targetPermanentId());
@@ -1195,7 +1195,7 @@ public class ChoiceHandlerService {
         if (perm != null) {
             perm.setChosenSubtype(subtype);
 
-            gameBroadcastService.logAndBroadcast(gameData, GameLog.textCardText(player.getUsername() + " chooses " + subtype.getDisplayName() + " for " , perm.getCard(), "."));
+            gameLogService.append(gameData, GameLog.textCardText(player.getUsername() + " chooses " + subtype.getDisplayName() + " for " , perm.getCard(), "."));
             log.info("Game {} - {} chooses creature type {} for {}", gameData.id, player.getUsername(), subtype, perm.getCard().getName());
 
             // The subtype choice deferred the permanent's ETB triggers (they were skipped while input
@@ -1214,7 +1214,7 @@ public class ChoiceHandlerService {
         gameData.interaction.clearAwaitingInput();
 
         String logEntry = player.getUsername() + " chooses " + subtype.getDisplayName() + ".";
-        gameBroadcastService.logAndBroadcast(gameData, GameLog.text(logEntry));
+        gameLogService.append(gameData, GameLog.text(logEntry));
         log.info("Game {} - {} chooses creature type {} for a spell", gameData.id, player.getUsername(), subtype);
 
         inputCompletionService.processMayAbilitiesThenAutoPass(gameData);
@@ -1230,7 +1230,7 @@ public class ChoiceHandlerService {
         if (perm != null) {
             perm.setChosenManaValueParity(parity);
 
-            gameBroadcastService.logAndBroadcast(gameData, GameLog.textCardText(player.getUsername() + " chooses " + parityName.toLowerCase() + " for " , perm.getCard(), "."));
+            gameLogService.append(gameData, GameLog.textCardText(player.getUsername() + " chooses " + parityName.toLowerCase() + " for " , perm.getCard(), "."));
             log.info("Game {} - {} chooses {} for {}", gameData.id, player.getUsername(), parityName.toLowerCase(), perm.getCard().getName());
         }
 
@@ -1246,7 +1246,7 @@ public class ChoiceHandlerService {
         if (perm != null) {
             perm.setChosenNumber(chosen);
 
-            gameBroadcastService.logAndBroadcast(gameData, GameLog.textCardText(player.getUsername() + " chooses " + chosen + " for " , perm.getCard(), "."));
+            gameLogService.append(gameData, GameLog.textCardText(player.getUsername() + " chooses " + chosen + " for " , perm.getCard(), "."));
             log.info("Game {} - {} chooses number {} for {}", gameData.id, player.getUsername(), chosen, perm.getCard().getName());
         }
 
@@ -1276,7 +1276,7 @@ public class ChoiceHandlerService {
                 pool.addCreatureMana(ctx.color(), mana);
             }
 
-            gameBroadcastService.logAndBroadcast(gameData, GameLog.textCardText(player.getUsername() + " removes " + removed + " "
+            gameLogService.append(gameData, GameLog.textCardText(player.getUsername() + " removes " + removed + " "
                     + ctx.counterType().name().toLowerCase() + " counter(s) from ", perm.getCard(),
                     " and adds " + mana + " " + ctx.color().getCode() + "."));
             log.info("Game {} - {} removes {} {} counters and adds {} {} mana", gameData.id,
@@ -1306,7 +1306,7 @@ public class ChoiceHandlerService {
                     .computeIfAbsent(ctx.permanentId(), k -> ConcurrentHashMap.<UUID>newKeySet())
                     .addAll(createdIds);
 
-            gameBroadcastService.logAndBroadcast(gameData, GameLog.textCardText(player.getUsername() + " removes " + removed + " +1/+1 counter"
+            gameLogService.append(gameData, GameLog.textCardText(player.getUsername() + " removes " + removed + " +1/+1 counter"
                     + (removed == 1 ? "" : "s") + " from ", source.getCard(),
                     " to create " + removed + " Tetravite token" + (removed == 1 ? "" : "s") + "."));
             log.info("Game {} - {} removes {} +1/+1 counters from {} to create {} Tetravite tokens",
@@ -1339,7 +1339,7 @@ public class ChoiceHandlerService {
                 perm.getGrantedSubtypes().add(form.subtype());
             }
 
-            gameBroadcastService.logAndBroadcast(gameData, GameLog.textCardText(player.getUsername() + " chooses a " + form.power() + "/" + form.toughness()
+            gameLogService.append(gameData, GameLog.textCardText(player.getUsername() + " chooses a " + form.power() + "/" + form.toughness()
                     + (form.keyword() != null ? " " + form.keyword().name().toLowerCase() : "")
                     + " shape for ", perm.getCard(), "."));
             log.info("Game {} - {} chooses shape {} for {}", gameData.id, player.getUsername(), form, perm.getCard().getName());
@@ -1361,7 +1361,7 @@ public class ChoiceHandlerService {
                 perm.setChosenSubtype(subtype);
             }
 
-            gameBroadcastService.logAndBroadcast(gameData, GameLog.textCardText(player.getUsername() + " chooses " + subtype.getDisplayName() + " for " , perm.getCard(), "."));
+            gameLogService.append(gameData, GameLog.textCardText(player.getUsername() + " chooses " + subtype.getDisplayName() + " for " , perm.getCard(), "."));
             log.info("Game {} - {} chooses basic land type {} for {} (second={})",
                     gameData.id, player.getUsername(), subtype, perm.getCard().getName(), ctx.isSecondChoice());
         }
@@ -1390,7 +1390,7 @@ public class ChoiceHandlerService {
                 default -> "";
             };
             String typeSuffix = ctx.replacing() ? "" : " in addition to its other types";
-            gameBroadcastService.logAndBroadcast(gameData, GameLog.cardThen(targetLand.getCard(),
+            gameLogService.append(gameData, GameLog.cardThen(targetLand.getCard(),
                     " becomes a " + subtype.getDisplayName() + typeSuffix + durationText + "."));
             log.info("Game {} - {} becomes a {} (replacing={})", gameData.id, targetLand.getCard().getName(), subtype, ctx.replacing());
         }
@@ -1416,7 +1416,7 @@ public class ChoiceHandlerService {
         String playerName = gameData.playerIdToName.get(ctx.controllerId());
         String logEntry = "Each land " + playerName + " controls becomes a "
                 + subtype.getDisplayName() + " until end of turn.";
-        gameBroadcastService.logAndBroadcast(gameData, GameLog.text(logEntry));
+        gameLogService.append(gameData, GameLog.text(logEntry));
         log.info("Game {} - Each land {} controls becomes a {} until end of turn", gameData.id, playerName, subtype);
 
         inputCompletionService.processMayAbilitiesThenAutoPass(gameData);
@@ -1458,7 +1458,7 @@ public class ChoiceHandlerService {
                 graveyardService.endGraveyardLeaveBatch(gameData);
             }
 
-            gameBroadcastService.logAndBroadcast(gameData,
+            gameLogService.append(gameData,
                     appendCards(GameLog.builder().text(playerName + " chooses " + chosenType.getDisplayName()
                             + " and returns "), toReturn)
                             .text(" to hand.")
@@ -1468,7 +1468,7 @@ public class ChoiceHandlerService {
         } else {
             String logEntry = playerName + " chooses " + chosenType.getDisplayName()
                     + " but has no " + chosenType.getDisplayName().toLowerCase() + " cards in graveyard.";
-            gameBroadcastService.logAndBroadcast(gameData, GameLog.text(logEntry));
+            gameLogService.append(gameData, GameLog.text(logEntry));
         }
 
         inputCompletionService.processMayAbilitiesThenAutoPass(gameData);
@@ -1488,7 +1488,7 @@ public class ChoiceHandlerService {
         String playerName = gameData.playerIdToName.get(ctx.playerId());
         String logEntry = playerName + " chooses " + typeName.toLowerCase() + " (Storage Matrix): only "
                 + typeName.toLowerCase() + " permanents untap this step.";
-        gameBroadcastService.logAndBroadcast(gameData, GameLog.text(logEntry));
+        gameLogService.append(gameData, GameLog.text(logEntry));
         log.info("Game {} - {} chooses {} for Storage Matrix untap", gameData.id, playerName, typeName);
 
         turnProgressionService.resumeStorageMatrixUntap(gameData, ctx.playerId(), restrict);
@@ -1501,7 +1501,7 @@ public class ChoiceHandlerService {
         updatedNames.put(player.getId(), cardName);
 
         String choiceLog = player.getUsername() + " chooses \"" + cardName + "\".";
-        gameBroadcastService.logAndBroadcast(gameData, GameLog.text(choiceLog));
+        gameLogService.append(gameData, GameLog.text(choiceLog));
         log.info("Game {} - {} chooses card name \"{}\" (each player name/reveal)",
                 gameData.id, player.getUsername(), cardName);
 
@@ -1542,20 +1542,20 @@ public class ChoiceHandlerService {
 
             if (deck == null || deck.isEmpty()) {
                 String logEntry = playerName + "'s library is empty.";
-                gameBroadcastService.logAndBroadcast(gameData, GameLog.text(logEntry));
+                gameLogService.append(gameData, GameLog.text(logEntry));
                 continue;
             }
 
             Card topCard = deck.removeFirst();
-            gameBroadcastService.logAndBroadcast(gameData, GameLog.textCardText(playerName + " reveals " , topCard, "."));
+            gameLogService.append(gameData, GameLog.textCardText(playerName + " reveals " , topCard, "."));
 
             if (topCard.getName().equals(chosenName)) {
                 gameData.addCardToHand(pid, topCard);
-                gameBroadcastService.logAndBroadcast(gameData, GameLog.textCardText(playerName + " puts " , topCard, " into their hand."));
+                gameLogService.append(gameData, GameLog.textCardText(playerName + " puts " , topCard, " into their hand."));
                 log.info("Game {} - {} guessed correctly, {} goes to hand", gameData.id, playerName, topCard.getName());
             } else {
                 deck.add(topCard);
-                gameBroadcastService.logAndBroadcast(gameData, GameLog.textCardText(playerName + " puts " , topCard, " on the bottom of their library."));
+                gameLogService.append(gameData, GameLog.textCardText(playerName + " puts " , topCard, " on the bottom of their library."));
                 log.info("Game {} - {} guessed wrong, {} goes to bottom", gameData.id, playerName, topCard.getName());
             }
         }
@@ -1568,7 +1568,7 @@ public class ChoiceHandlerService {
         gameData.interaction.clearAwaitingInput();
 
         String choiceLog = player.getUsername() + " chooses \"" + cardName + "\".";
-        gameBroadcastService.logAndBroadcast(gameData, GameLog.text(choiceLog));
+        gameLogService.append(gameData, GameLog.text(choiceLog));
         log.info("Game {} - {} chooses card name \"{}\" (name/mill/gain life)",
                 gameData.id, player.getUsername(), cardName);
 
@@ -1589,7 +1589,7 @@ public class ChoiceHandlerService {
                 lifeSupport.applyGainLife(gameData, ctx.controllerId(), manaValue);
                 String controllerName = gameData.playerIdToName.get(ctx.controllerId());
                 String lifeLog = controllerName + " gains " + manaValue + " life.";
-                gameBroadcastService.logAndBroadcast(gameData, GameLog.text(lifeLog));
+                gameLogService.append(gameData, GameLog.text(lifeLog));
                 log.info("Game {} - {} milled the named card {}, {} gains {} life",
                         gameData.id, gameData.playerIdToName.get(ctx.targetPlayerId()),
                         topCard.getName(), controllerName, manaValue);
@@ -1607,7 +1607,7 @@ public class ChoiceHandlerService {
         UUID controllerId = ctx.controllerId();
         String controllerName = gameData.playerIdToName.get(controllerId);
 
-        gameBroadcastService.logAndBroadcast(gameData, GameLog.text(
+        gameLogService.append(gameData, GameLog.text(
                 player.getUsername() + " chooses \"" + cardName + "\"."));
         log.info("Game {} - {} chooses card name \"{}\" (exile-top/reveal-until-named)",
                 gameData.id, player.getUsername(), cardName);
@@ -1628,7 +1628,7 @@ public class ChoiceHandlerService {
             gameData.addToExile(controllerId, card);
         }
         if (toExile > 0) {
-            gameBroadcastService.logAndBroadcast(gameData, GameLog.text(
+            gameLogService.append(gameData, GameLog.text(
                     controllerName + " exiles the top " + toExile + " card"
                             + (toExile == 1 ? "" : "s") + " of their library."));
         }
@@ -1648,20 +1648,20 @@ public class ChoiceHandlerService {
         if (!revealed.isEmpty()) {
             String revealedNames = revealed.stream().map(Card::getName)
                     .reduce((a, b) -> a + ", " + b).orElse("");
-            gameBroadcastService.logAndBroadcast(gameData, GameLog.text(
+            gameLogService.append(gameData, GameLog.text(
                     controllerName + " reveals " + revealedNames + "."));
         }
 
         if (found != null) {
             revealed.remove(found);
             gameData.addCardToHand(controllerId, found);
-            gameBroadcastService.logAndBroadcast(gameData, GameLog.textCardText(
+            gameLogService.append(gameData, GameLog.textCardText(
                     controllerName + " puts ", found, " into their hand."));
             for (Card card : revealed) {
                 gameData.addToExile(controllerId, card);
             }
             if (!revealed.isEmpty()) {
-                gameBroadcastService.logAndBroadcast(gameData, GameLog.text(
+                gameLogService.append(gameData, GameLog.text(
                         controllerName + " exiles the other revealed cards."));
             }
         } else {
@@ -1669,10 +1669,10 @@ public class ChoiceHandlerService {
                 gameData.addToExile(controllerId, card);
             }
             if (revealed.isEmpty() && initialExile.isEmpty()) {
-                gameBroadcastService.logAndBroadcast(gameData, GameLog.text(
+                gameLogService.append(gameData, GameLog.text(
                         controllerName + "'s library is empty."));
             } else {
-                gameBroadcastService.logAndBroadcast(gameData, GameLog.text(
+                gameLogService.append(gameData, GameLog.text(
                         controllerName + " does not reveal a card named \"" + cardName
                                 + "\" — remaining revealed cards are exiled."));
             }
@@ -1693,28 +1693,28 @@ public class ChoiceHandlerService {
         String targetName = gameData.playerIdToName.get(targetPlayerId);
 
         String choiceLog = player.getUsername() + " chooses \"" + cardName + "\".";
-        gameBroadcastService.logAndBroadcast(gameData, GameLog.text(choiceLog));
+        gameLogService.append(gameData, GameLog.text(choiceLog));
         log.info("Game {} - {} chooses card name \"{}\" (name-card-reveal-top)",
                 gameData.id, player.getUsername(), cardName);
 
         List<Card> deck = gameData.playerDecks.get(targetPlayerId);
         if (deck == null || deck.isEmpty()) {
-            gameBroadcastService.logAndBroadcast(gameData, GameLog.text(targetName + "'s library is empty."));
+            gameLogService.append(gameData, GameLog.text(targetName + "'s library is empty."));
             inputCompletionService.processMayAbilitiesThenAutoPass(gameData);
             return;
         }
 
         Card topCard = deck.getFirst();
-        gameBroadcastService.logAndBroadcast(gameData, GameLog.textCardText(targetName + " reveals ", topCard, "."));
+        gameLogService.append(gameData, GameLog.textCardText(targetName + " reveals ", topCard, "."));
 
         if (topCard.getName().equals(cardName)) {
             deck.removeFirst();
             gameData.addCardToHand(targetPlayerId, topCard);
-            gameBroadcastService.logAndBroadcast(gameData, GameLog.textCardText(targetName + " puts ", topCard, " into their hand."));
+            gameLogService.append(gameData, GameLog.textCardText(targetName + " puts ", topCard, " into their hand."));
             log.info("Game {} - {} named correctly, {} goes to hand", gameData.id, targetName, topCard.getName());
         } else {
             graveyardService.resolveMillPlayer(gameData, targetPlayerId, 1);
-            gameBroadcastService.logAndBroadcast(gameData, GameLog.textCardText(targetName + " puts ", topCard, " into their graveyard."));
+            gameLogService.append(gameData, GameLog.textCardText(targetName + " puts ", topCard, " into their graveyard."));
             dealRevealMissDamage(gameData, ctx, targetPlayerId);
             log.info("Game {} - {} named incorrectly, {} goes to graveyard", gameData.id, targetName, topCard.getName());
         }
@@ -1768,7 +1768,7 @@ public class ChoiceHandlerService {
         String targetName = gameData.playerIdToName.get(targetPlayerId);
 
         String choiceLog = controllerName + " chooses \"" + cardName + "\".";
-        gameBroadcastService.logAndBroadcast(gameData, GameLog.text(choiceLog));
+        gameLogService.append(gameData, GameLog.text(choiceLog));
         log.info("Game {} - {} chooses card name \"{}\" for exile from zones", gameData.id, controllerName, cardName);
 
         // Collect all matching cards across hand, graveyard, and library
@@ -1797,7 +1797,7 @@ public class ChoiceHandlerService {
 
             String exileLog = controllerName + " exiles 0 cards named \"" + cardName + "\" from " + targetName
                     + "'s hand, graveyard, and library. " + targetName + " shuffles their library.";
-            gameBroadcastService.logAndBroadcast(gameData, GameLog.text(exileLog));
+            gameLogService.append(gameData, GameLog.text(exileLog));
             log.info("Game {} - {} found 0 cards named \"{}\" in {}'s zones", gameData.id, controllerName, cardName, targetName);
 
             inputCompletionService.processMayAbilitiesThenAutoPass(gameData);
@@ -1823,15 +1823,15 @@ public class ChoiceHandlerService {
         String controllerName = gameData.playerIdToName.get(controllerId);
         String targetName = gameData.playerIdToName.get(targetPlayerId);
 
-        gameBroadcastService.logAndBroadcast(gameData, GameLog.text(controllerName + " chooses \"" + cardName + "\"."));
+        gameLogService.append(gameData, GameLog.text(controllerName + " chooses \"" + cardName + "\"."));
         log.info("Game {} - {} chooses card name \"{}\" (reveal hand, damage, exile)", gameData.id, controllerName, cardName);
 
         // Target player reveals their hand.
         List<Card> hand = gameData.playerHands.get(targetPlayerId);
         if (hand == null || hand.isEmpty()) {
-            gameBroadcastService.logAndBroadcast(gameData, GameLog.text(targetName + " reveals an empty hand."));
+            gameLogService.append(gameData, GameLog.text(targetName + " reveals an empty hand."));
         } else {
-            gameBroadcastService.logAndBroadcast(gameData,
+            gameLogService.append(gameData,
                     appendCards(GameLog.builder().text(targetName + " reveals their hand: "), hand).text(".").build());
         }
 
@@ -1878,7 +1878,7 @@ public class ChoiceHandlerService {
         String exileLog = controllerName + " exiles " + exiledCount + " card" + (exiledCount != 1 ? "s" : "")
                 + " named \"" + cardName + "\" from " + targetName + "'s hand, graveyard, and library. "
                 + targetName + " shuffles their library.";
-        gameBroadcastService.logAndBroadcast(gameData, GameLog.text(exileLog));
+        gameLogService.append(gameData, GameLog.text(exileLog));
         log.info("Game {} - {} exiled {} card(s) named \"{}\" from {}'s zones and dealt {} damage",
                 gameData.id, controllerName, exiledCount, cardName, targetName, damage);
 
@@ -1901,7 +1901,7 @@ public class ChoiceHandlerService {
         String targetName = gameData.playerIdToName.get(targetPlayerId);
 
         String choiceLog = targetName + " chooses \"" + cardName + "\".";
-        gameBroadcastService.logAndBroadcast(gameData, GameLog.text(choiceLog));
+        gameLogService.append(gameData, GameLog.text(choiceLog));
         log.info("Game {} - {} chooses card name \"{}\" for Sphinx Ambassador", gameData.id, targetName, cardName);
 
         boolean isCreature = selectedCard.hasType(CardType.CREATURE);
@@ -1919,7 +1919,7 @@ public class ChoiceHandlerService {
             playerInputService.processNextMayAbility(gameData);
         } else {
             // Conditions not met — card stays in library without being revealed (per ruling)
-            gameBroadcastService.logAndBroadcast(gameData, GameLog.textCardText("The conditions for ", pending.sourceCard(),
+            gameLogService.append(gameData, GameLog.textCardText("The conditions for ", pending.sourceCard(),
                     " are not met. " + targetName + "'s library is shuffled."));
             log.info("Game {} - Sphinx Ambassador: selected card does not match conditions (creature={}, nameMatch={})",
                     gameData.id, isCreature, !nameDoesNotMatch);
@@ -2005,7 +2005,7 @@ public class ChoiceHandlerService {
         String exileLog = controllerName + " exiles " + exiledCount + " card" + (exiledCount != 1 ? "s" : "")
                 + " named \"" + cardName + "\" from " + targetName + "'s hand, graveyard, and library. "
                 + targetName + " shuffles their library.";
-        gameBroadcastService.logAndBroadcast(gameData, GameLog.text(exileLog));
+        gameLogService.append(gameData, GameLog.text(exileLog));
         log.info("Game {} - {} exiled {} card(s) named \"{}\" from {}'s zones",
                 gameData.id, controllerName, exiledCount, cardName, targetName);
 
