@@ -6,22 +6,30 @@
   <base href="/">
   <meta name="viewport" content="width=device-width, initial-scale=1">
   <link rel="icon" type="image/x-icon" href="favicon.ico">
-  <!-- The three faces the card frame paints with before anything else: Cinzel for card names,
-       Crimson Text for rules text, Mana for every symbol in a cost or a line of rules text.
-       Preloaded so the fetch starts on this parse rather than waiting for src/fonts.css to
-       arrive and declare them — CardDisplayComponent measures rendered text to fit names and
-       rules text into the frame, and whatever it measures before the real faces land is fitted
-       against the Georgia/Times fallbacks, or in Mana's case against symbols not yet drawn at
-       all. It refits when they arrive, but this is what keeps that from being the normal path.
-       Only the latin subsets are preloaded; latin-ext, the italic and the heavier weights
-       load on demand, and none of them are needed for a card's first paint. Mana is not subset
-       and is the largest of the three by some way, which is the cost of it being one request
-       instead of one per symbol.
+  <!-- The symbol fonts are on jsDelivr (see src/symbols.css), and they are reached the long way
+       round: the stylesheet declaring them is itself an @import inside our bundled CSS, so the
+       browser cannot even learn the CDN exists until that bundle has arrived and parsed. The
+       preconnect collapses the DNS, TCP and TLS legs of that into the time we are already
+       spending on the bundle, which is most of what the extra hop would otherwise cost.
+       crossorigin because what eventually comes back over this connection is a font. -->
+  <link rel="preconnect" href="https://cdn.jsdelivr.net" crossorigin>
+  <!-- The two faces the card frame paints text with: Cinzel for card names, Crimson Text for
+       rules text. Preloaded so the fetch starts on this parse rather than waiting for
+       src/fonts.css to arrive and declare them — CardDisplayComponent measures rendered text to
+       fit names and rules text into the frame, and whatever it measures before the real faces
+       land is fitted against the Georgia/Times fallbacks. It refits when they arrive, but this
+       is what keeps that from being the normal path.
+       Only the latin subsets are preloaded; latin-ext, the italic and the heavier weights load
+       on demand, and none of them are needed for a card's first paint.
+       Neither symbol font is preloaded, and they could not be usefully: a preload has to name a
+       URL, and pinning the CDN's font path here would be a second place to remember on every
+       version bump. Nothing measures them either — a symbol sits in a box sized by CSS, which
+       reserves its space whether the glyph has arrived or not, so arriving late costs a blank
+       corner rather than a reflow.
        crossorigin is required even same-origin — fonts always fetch in CORS mode, and
        without it the preloaded file is fetched a second time rather than reused. -->
   <link rel="preload" as="font" type="font/woff2" href="/fonts/cinzel-latin.woff2" crossorigin>
   <link rel="preload" as="font" type="font/woff2" href="/fonts/crimson-text-400-latin.woff2" crossorigin>
-  <link rel="preload" as="font" type="font/woff2" href="/fonts/mana.woff2" crossorigin>
 </head>
 <body>
   <app-root></app-root>

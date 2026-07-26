@@ -3,7 +3,6 @@ import { Card } from '../../../services/websocket.service';
 import { CardPreviewService } from '../../../services/card-preview.service';
 import { ScryfallCardDataService } from '../../../services/scryfall-card-data.service';
 import { ScryfallImageService } from '../../../services/scryfall-image.service';
-import { SetSymbolService } from '../../../services/set-symbol.service';
 import { CardDisplayComponent } from './card-display.component';
 
 /**
@@ -41,10 +40,6 @@ export class FakeScryfallImageService {
   getArtCropUrl(): Promise<string> { return Promise.reject(new Error('no art in tests')); }
 }
 
-export class FakeSetSymbolService {
-  getSymbolUrl(): string | null { return null; }
-}
-
 export class FakeCardPreviewService {
   isPhoneLayout(): boolean { return false; }
   show(): void { /* no preview in tests */ }
@@ -73,7 +68,6 @@ export async function mountCard(card: Card): Promise<MountedCard> {
     providers: [
       { provide: ScryfallCardDataService, useValue: cardData },
       { provide: ScryfallImageService, useClass: FakeScryfallImageService },
-      { provide: SetSymbolService, useClass: FakeSetSymbolService },
       { provide: CardPreviewService, useClass: FakeCardPreviewService },
     ],
   });

@@ -29,12 +29,13 @@
   </div>
   <div class="type-line">
     <span class="card-type">{{ typeLine }}</span>
-    @if (setSymbolCssUrl) {
-      <!-- Decorative, and the info line already names the set: the symbol itself
-           is a mask over a rarity-coloured box, so it has no image to describe. -->
-      <span class="set-symbol" [style.--set-symbol-url]="setSymbolCssUrl" [attr.data-rarity]="rarity" aria-hidden="true"></span>
-    } @else if (rarity) {
-      <span class="rarity-diamond" [attr.data-rarity]="rarity" aria-hidden="true">&#9670;</span>
+    <!-- The set's symbol, drawn from Keyrune, or its code printed plainly for a set newer than
+         the pinned font. Decorative either way: the info line below already names the set, and
+         the glyph is a private-use codepoint with nothing in it to read. -->
+    @if (setSymbolGlyphClasses) {
+      <i [class]="'set-symbol set-symbol-glyph ' + setSymbolGlyphClasses" [attr.data-rarity]="rarity" aria-hidden="true"></i>
+    } @else if (card.setCode) {
+      <span class="set-symbol set-symbol-code" [attr.data-rarity]="rarity" aria-hidden="true">{{ card.setCode }}</span>
     }
   </div>
   <div class="text-box" [class.pw-text-box]="isPlaneswalker" [class.pw-has-loyalty]="isPlaneswalker && displayLoyalty != null" #textBox>

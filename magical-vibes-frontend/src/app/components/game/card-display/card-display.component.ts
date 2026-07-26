@@ -4,9 +4,9 @@ import { Card, Permanent } from '../../../services/websocket.service';
 import { CardPreviewService } from '../../../services/card-preview.service';
 import { ScryfallImageService } from '../../../services/scryfall-image.service';
 import { ScryfallCardDataService } from '../../../services/scryfall-card-data.service';
-import { SetSymbolService } from '../../../services/set-symbol.service';
 import { distinctGrantedAbilityTexts, formatEnumName, formatKeywords, formatTypeLine, hasCardType } from '../../../utils/format-utils';
 import { manaSymbolHtml, watermarkSymbolClasses } from '../../../utils/mana-symbols';
+import { setSymbolClasses } from '../../../utils/set-symbols';
 import { largestFittingSize, renderedTextKey } from './card-text-fit';
 
 export interface PlaneswalkerAbilityLine {
@@ -76,7 +76,6 @@ export class CardDisplayComponent implements OnInit, OnChanges, OnDestroy, After
 
   private scryfallImageService = inject(ScryfallImageService);
   private scryfallCardDataService = inject(ScryfallCardDataService);
-  private setSymbolService = inject(SetSymbolService);
   private cardPreviewService = inject(CardPreviewService);
   private sanitizer = inject(DomSanitizer);
   private hostRef = inject<ElementRef<HTMLElement>>(ElementRef);
@@ -278,14 +277,22 @@ export class CardDisplayComponent implements OnInit, OnChanges, OnDestroy, After
 
   /**
    * The frame's watermark, as the classes that draw it — `null` on the great majority of cards,
-   * which have none, and also on the ones whose watermark the Mana font has no glyph for.
+   * which have none, and also on the ones whose watermark neither font has a glyph for.
    *
    * <p>A plain getter, and it used to be a signal fed by a fetch. The watermark was an SVG pulled
    * off a GitHub raw URL and cached in IndexedDB, so it needed somewhere to land when it arrived
    * and a branch in ngOnChanges to re-fetch when the card changed underneath it. Now it is a
    * property of the card being rendered and nothing else.
+   *
+   * <p>`set` is the one watermark that is not a fixed mark: Scryfall uses it to say "this card is
+   * watermarked with its own expansion symbol", which is a different symbol per card and a
+   * different font. It went undrawn until Keyrune arrived to draw it.
    */
   get watermarkClasses(): string | null {
+    if (this.card.watermark?.trim().toLowerCase() === 'set') {
+      const glyph = setSymbolClasses(this.card.setCode);
+      return glyph ? `watermark ${glyph}` : null;
+    }
     const classes = watermarkSymbolClasses(this.card.watermark);
     return classes ? `watermark ${classes}` : null;
   }
@@ -669,16 +676,18 @@ export class CardDisplayComponent implements OnInit, OnChanges, OnDestroy, After
     }
   }
 
-  get setSymbolUrl(): string | null {
-    if (!this.card.setCode) return null;
-    return this.setSymbolService.getSymbolUrl(this.card.setCode);
-  }
-
-  /** The symbol as a CSS url() token: it is painted as a mask over a flat rarity
-   *  colour rather than as an <img>, so it reaches CSS as a custom property. */
-  get setSymbolCssUrl(): string | null {
-    const url = this.setSymbolUrl;
-    return url ? `url("${url}")` : null;
+  /**
+   * The set's expansion symbol as Keyrune classes, or null for a set that font predates — in
+   * which case the frame prints the set code itself.
+   *
+   * <p>Both branches are synchronous and neither touches the network. This replaced a fetch of
+   * the symbol as an SVG from Scryfall, cached in IndexedDB and painted as a mask, which meant
+   * a card's symbol arrived some time after the card and needed a placeholder to sit in until
+   * it did. Keyrune covers every set the engine implements, so the printed code is a genuine
+   * edge — a set newer than the pinned font — rather than something anyone sees today.
+   */
+  get setSymbolGlyphClasses(): string | null {
+    return setSymbolClasses(this.card.setCode);
   }
 
   get formattedManaCost(): SafeHtml {

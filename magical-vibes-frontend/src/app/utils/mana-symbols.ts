@@ -78,10 +78,11 @@ const SYMBOL_CLASSES: Readonly<Record<string, string>> = {
  * not here shows none, which is what the frame did before whenever the old fetch 404'd.
  *
  * <p>Deliberately short of what upstream draws. `set` — "use this set's own symbol" — is a
- * different font (Keyrune) and a different lookup, not a glyph Mana has. The rest of what is
- * left out is upstream's numbered and joke families (`herospath-1`…`-9`, the Un-set flavour
- * marks, the My Little Pony cutie marks), which are not spellings Scryfall's watermark field
- * ever takes.
+ * different font and a different lookup, not a glyph Mana has: it is drawn by setSymbolClasses
+ * from Keyrune, and the card frame routes it there before asking this. The rest of what is left
+ * out is upstream's numbered and joke families (`herospath-1`…`-9`, the Un-set flavour marks,
+ * the My Little Pony cutie marks), which are not spellings Scryfall's watermark field ever
+ * takes.
  */
 const WATERMARKS: ReadonlySet<string> = new Set([
   // Ravnica guilds

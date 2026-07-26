@@ -438,61 +438,56 @@ img.card-art {
   min-width: 0;
 }
 
-/* Tinted by masking a flat rarity colour with the symbol, not by filtering it.
-   The source SVGs are solid black, and invert()/sepia()/hue-rotate() can only
-   approximate silver and gold from black — every rarity above common came out
-   muddy. mask-size: contain letterboxes symbols of any aspect inside a fixed
-   box, which the previous width: auto cannot do once the element is a masked
-   span rather than an img. */
+/* The box a set symbol occupies, either way it is drawn. Fixed width rather than sized to its
+   content so the type line measures the same from the first frame: the glyph is a font glyph,
+   and a font arriving over the network can always be a moment late.
+
+   Rarity is inked here rather than on each variant below, because both of them take it the same
+   way — the Keyrune glyph is a ::before, which inherits colour, and the code is text. Common is
+   the unqualified value; the other three override it. */
 .set-symbol {
   width: 16px;
   height: 12px;
   flex-shrink: 0;
   margin-left: 2px;
-  background-color: #3a2e22;
-  -webkit-mask-image: var(--set-symbol-url);
-  mask-image: var(--set-symbol-url);
-  -webkit-mask-size: contain;
-  mask-size: contain;
-  -webkit-mask-position: center;
-  mask-position: center;
-  -webkit-mask-repeat: no-repeat;
-  mask-repeat: no-repeat;
-}
-
-.set-symbol[data-rarity="UNCOMMON"] {
-  background-color: #7d8489;
-}
-
-.set-symbol[data-rarity="RARE"] {
-  background-color: #b8912f;
-}
-
-.set-symbol[data-rarity="MYTHIC"] {
-  background-color: #c9410d;
-}
-
-.rarity-diamond {
-  font-size: 10px;
-  flex-shrink: 0;
-  margin-left: 2px;
-  line-height: 1;
-}
-
-.rarity-diamond[data-rarity="COMMON"] {
   color: #3a2e22;
 }
 
-.rarity-diamond[data-rarity="UNCOMMON"] {
+.set-symbol[data-rarity="UNCOMMON"] {
   color: #7d8489;
 }
 
-.rarity-diamond[data-rarity="RARE"] {
+.set-symbol[data-rarity="RARE"] {
   color: #b8912f;
 }
 
-.rarity-diamond[data-rarity="MYTHIC"] {
+.set-symbol[data-rarity="MYTHIC"] {
   color: #c9410d;
+}
+
+/* Drawn from Keyrune, which has a symbol for every set the engine implements. font-size, not
+   width, is what sizes a glyph; 12px fills the box, and the flex line centres it. */
+.set-symbol-glyph {
+  font-size: 12px;
+  line-height: 12px;
+  text-align: center;
+}
+
+/* The other way: a set newer than the pinned Keyrune, printed as its own code. Set in the
+   display face at the size of the badge on the info line, so it reads as a stamp rather than as
+   another word in the type line beside it.
+
+   width goes back to auto, and this is the one thing on this line allowed to size itself — 16px
+   is a symbol's width, and three or four capitals are wider than that at any size worth reading.
+   Nothing measures this line, so letting it grow costs only the space it takes. */
+.set-symbol-code {
+  width: auto;
+  font-family: 'Cinzel', Georgia, serif;
+  font-size: 7px;
+  font-weight: 600;
+  line-height: 12px;
+  letter-spacing: 0.02em;
+  white-space: nowrap;
 }
 
 /* Watermark — a Mana glyph rather than the SVG it used to be, so it is sized by font-size

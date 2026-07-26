@@ -1,0 +1,130 @@
+/* The two symbol fonts — Mana for everything in a cost or a line of rules text, Keyrune for
+   expansion symbols — pulled from jsDelivr rather than vendored.
+
+   Loaded from a CDN for licensing reasons, and this is the one place in the app that does it.
+   Keyrune's glyphs and stylesheet are GPL 3.0; Mana's stylesheet is MIT and its font OFL 1.1.
+   Checking either into this repo would mean redistributing them, and for Keyrune that drags a
+   copyleft question over a repo that has no other reason to answer one. Linking is not
+   redistribution: the browser fetches them from the publisher, and this project ships nothing
+   of theirs. The trade is a third-party request on first paint and a hard dependency on
+   jsDelivr being up — see fonts.css, where the text faces stay self-hosted for exactly the
+   reason this file gives up.
+
+   Versions are pinned. Both are icon fonts keyed by class name, so a floating major would
+   silently change which glyph a class draws — and Keyrune in particular reassigns private-use
+   codepoints between rebuilds. Upgrading is: bump the version in both the @import and the
+   @font-face below, then regenerate KEYRUNE_SETS in app/utils/set-symbols.ts from the new
+   keyrune.css, since a set missing from that list falls back to its bare set code. */
+
+@import url('https://cdn.jsdelivr.net/npm/mana-font@1.18.0/css/mana.css');
+@import url('https://cdn.jsdelivr.net/npm/keyrune@3.19.0/css/keyrune.css');
+
+/* Both imports declare an @font-face of their own, and these override them — same family, so
+   the later declaration wins, which is why they live here rather than in fonts.css with the
+   text faces (the styles array puts that file first).
+
+   Two reasons to override rather than take what upstream declares. Mana 1.18.0 ships a woff2
+   but does not reference it: its src list is eot, woff, ttf, svg, so upstream's own stylesheet
+   loads the woff and pays about a third again in bytes for a format every browser that matters
+   stopped needing years ago. And neither sets font-display, which leaves it at the browser's
+   default when what these want is block — the glyphs are private-use codepoints, so no fallback
+   face has anything to show for them but a tofu box. `block` renders nothing at all for up to
+   three seconds instead. There is nothing legible to lose: invisible for a moment beats visibly
+   wrong, and a card's cost is not text anyone can read in the wrong face. */
+@font-face {
+  font-family: 'Mana';
+  font-style: normal;
+  font-weight: normal;
+  font-display: block;
+  src: url('https://cdn.jsdelivr.net/npm/mana-font@1.18.0/fonts/mana.woff2') format('woff2');
+}
+
+@font-face {
+  font-family: 'Keyrune';
+  font-style: normal;
+  font-weight: normal;
+  font-display: block;
+  src: url('https://cdn.jsdelivr.net/npm/keyrune@3.19.0/fonts/keyrune.woff2') format('woff2');
+}
+
+/* ── Local integration ───────────────────────────────────────────────────────────────────
+   Everything above this line is upstream, or a declaration of where upstream lives. Everything
+   below is ours: the sizing and centring that make an upstream symbol sit correctly in this
+   app's card frame. It survived the move off a vendored mana.css unchanged. */
+
+/* Size. `.ms-cost` — the class that turns a bare pictograph into the printed disc — draws that
+   disc 1.3em across at a font-size of 0.95em, so an untouched symbol lands at 1.24em of the
+   text around it. The <img> this replaced was 1em, and the difference is not cosmetic: these
+   sit inline in rules text that the card frame fits by measuring where it wraps, so a symbol a
+   quarter too wide moves the wrap. 0.77 x 1.3 puts the disc back at 1em.
+
+   Two classes rather than one so this beats upstream's `.ms-cost` on specificity and not on
+   source order, which is decided by the `styles` array in angular.json and is not this file's
+   to rely on — all the more so now that upstream arrives through an @import.
+
+   margin-right alone, not a shorthand: `.ms-half` (half mana, {HW} and {HR}) positions itself
+   with a margin-left of its own, and a shorthand here would quietly clip it to nothing.
+
+   line-height decides where in that disc the glyph lands, because the disc is a fixed 1.3em box
+   and the glyph is a line of text inside it — half the leading above the baseline, half below.
+   Upstream's 1.35em leaves every symbol sitting 1.9% of the disc low, uniformly. 1.3em is the
+   value that centres it: measured by screenshotting each symbol and comparing the ink's midpoint
+   to the disc's, the residual across the whole set drops to under 1%.
+
+   And then the whole disc is lifted, because `vertical-align: middle` does not mean what a
+   symbol wants it to mean. It centres the box on the parent's *x-height* midpoint, which is
+   where a lowercase letter sits — but a mana symbol reads as a capital, and wants the cap-height
+   midpoint. Crimson Text's cap is two thirds again its x-height, so every symbol hung visibly
+   low: measured against the rendered baseline, 0.16em under the cap midpoint in both a card's
+   mana cost and its rules text. This predates the font — the <img> it replaced was
+   `vertical-align: middle` too, and hung in exactly the same place.
+
+   0.16em of the surrounding text, written in the symbol's own em, which is 1/0.77 of the text's,
+   hence 0.21. One constant covers every symbol in the app because they all sit in the body face:
+   Cinzel is used only for card names and headings, and no symbol is ever set in one. A symbol
+   that did land in Cinzel would ride about half a pixel high, which is why this is not worth a
+   per-face rule. card-display.browser.spec.ts measures the residual against the real frame.
+
+   `position: relative` rather than a margin so the lift is visual only: the line box keeps the
+   height it had, so nothing here can change where rules text wraps or what the card frame's
+   fitter measures. The hybrids already set `position: relative` for their two absolutely-placed
+   halves, and those halves move with the element rather than being left behind. */
+.mana-sym.ms-cost {
+  font-size: 0.77em;
+  line-height: 1.3em;
+  margin-right: 0.07em;
+  position: relative;
+  top: -0.21em;
+}
+
+/* The mana pips are drawn smaller inside their disc than the printed symbol is, and the
+   difference is big enough to see: measuring painted ink against disc diameter, this font fills
+   77% where the Scryfall SVGs this replaced fill 80% ({U}) to 96% ({W}). The digits are the
+   exception — the font sets those at 77% against Scryfall's 80%, near enough to leave alone.
+
+   So a cost read wrong. Every symbol was the same size as every other, which sounds right and
+   is not: on a printed card the coloured pip is noticeably larger than the number beside it, and
+   flattening the two made `{4}{W}` look like a big grey 4 next to a small pale sun. Scaling the
+   pips by 1.2 restores the relationship — 90% against the digits' 77%, back inside the range the
+   printed art uses.
+
+   scale() rather than a larger font-size because it grows the glyph about its own centre, so it
+   cannot undo the centring above; font-size would grow it upward from the baseline instead. It
+   is also upstream's own idiom — the Phyrexian symbols carry a scale(1.2) for the same reason —
+   and it needs the display:inline-block, since transforms do not apply to inline boxes.
+
+   Named one by one rather than by exclusion. The symbols left out are composites whose parts are
+   positioned against each other and would come apart if scaled independently: the hybrids and
+   Phyrexian pips (two glyphs at 0.55em, absolutely placed), and snow, whose ::before and ::after
+   are stacked to make one symbol. */
+.mana-sym.ms-cost.ms-w::before,
+.mana-sym.ms-cost.ms-u::before,
+.mana-sym.ms-cost.ms-b::before,
+.mana-sym.ms-cost.ms-r::before,
+.mana-sym.ms-cost.ms-g::before,
+.mana-sym.ms-cost.ms-c::before,
+.mana-sym.ms-cost.ms-tap::before,
+.mana-sym.ms-cost.ms-untap::before {
+  display: inline-block;
+  transform: scale(1.2);
+}

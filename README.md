@@ -19,8 +19,8 @@ An experimental online Magic game engine. The goal is to show that modern agents
 - Frontend: Angular.
 - Networking: websocket (broadcasting whole board state at every update).
 - Most of the card data is downloaded from Scryfall at server startup (for legal reasons).
-- Card art and set symbols are loaded from Scryfall by the client at startup (for legal reasons).
-- Mana symbols and watermarks are drawn with the self-hosted Mana font, so they need no fetching at all.
+- Card art is loaded from Scryfall by the client at startup (for legal reasons).
+- Mana symbols, watermarks and set symbols are drawn with icon fonts (Mana and Keyrune), so none of them are fetched per card.
 
 **How to start the application:**
 - Run `./gradlew clean build`
@@ -39,10 +39,18 @@ If you get stuck then ask Gemini. :) Or feel free to create an issue on GitHub.
 
 **Thanks:**
 
-Every card in this app is typeset with three open fonts, all self-hosted from `magical-vibes-frontend/public/fonts/` and all licensed under the SIL Open Font License 1.1 (the licence text ships beside each one):
+Every card in this app is typeset with four open fonts.
+
+The two text faces are self-hosted from `magical-vibes-frontend/public/fonts/`, both under the SIL Open Font License 1.1 (the licence text ships beside each one):
 
 - [Cinzel](https://github.com/NDISCOVER/Cinzel) — card names and headings.
 - [Crimson Text](https://github.com/googlefonts/Crimson) — rules text and flavour text.
-- [Mana](https://github.com/andrewgioia/mana) by Andrew Gioia — every mana, tap and watermark symbol on a card. Its stylesheet is MIT licensed and is vendored in `magical-vibes-frontend/src/mana.css`; the symbols the glyphs depict are copyright Wizards of the Coast.
 
-Card data, art and set symbols come from [Scryfall](https://scryfall.com/).
+The two symbol fonts, both by [Andrew Gioia](https://www.jsdelivr.com/?query=author%3A%20andrewgioia), are **not** checked into this repo. They are loaded at pinned versions from jsDelivr, declared in `magical-vibes-frontend/src/symbols.css`:
+
+- [Mana](https://github.com/andrewgioia/mana) — every mana, tap and watermark symbol on a card. Font under OFL 1.1, stylesheet MIT.
+- [Keyrune](https://github.com/andrewgioia/keyrune) — the expansion symbol of every set. Font under OFL 1.1, glyphs and stylesheet under GPL 3.0.
+
+They are linked rather than vendored so this project does not redistribute them — which for Keyrune in particular keeps a copyleft licence off a repo that has no other reason to carry one. The symbols the glyphs depict are trademarks of Wizards of the Coast, redrawn by their author and used here to identify sets. A set newer than the pinned Keyrune has no glyph and falls back to printing its set code.
+
+Card data and art come from [Scryfall](https://scryfall.com/).

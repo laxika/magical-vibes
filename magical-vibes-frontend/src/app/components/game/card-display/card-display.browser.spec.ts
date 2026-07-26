@@ -89,13 +89,28 @@ describe('CardDisplayComponent — rules text fitting in real Chromium', () => {
     expect(mounted.host.getBoundingClientRect().height).toBeCloseTo(231, 0);
 
     /* And the symbol font has to have actually arrived. A symbol is sized by CSS rather than by
-       its glyph, so a missing or misnamed mana.woff2 leaves every element the right size with
+       its glyph, so a Mana that never loaded leaves every element the right size with
        nothing drawn in it — the size assertions elsewhere in this file would all still pass and
        every card would render its costs blank. U+E600 is {W}; asking about the default space
        would not answer the question, since none of Mana's glyphs are outside the private use
        area. */
     expect(document.fonts.check('14px Mana', '\uE600'),
         'the Mana font never loaded — symbols would render as empty discs').toBe(true);
+
+    /* Same question of the set symbols, asked by measuring instead. document.fonts.check is no
+       use for Keyrune: symbols.css declares a face that overrides the one inside the stylesheet
+       it imports, and with two faces of one family check() answers for the unused upstream one
+       as readily as for ours — it reports false while the glyphs draw perfectly. Measuring is
+       the better question regardless. A bare `.ss` has no width of its own, so whatever this
+       measures is the glyph the font drew; with no face loaded there is nothing to draw. */
+    const probe = document.createElement('i');
+    probe.className = 'ss ss-som';
+    document.body.appendChild(probe);
+    const drawn = probe.getBoundingClientRect().width;
+    probe.remove();
+
+    expect(drawn, 'the Keyrune font never loaded — set symbols would render blank')
+        .toBeGreaterThan(5);
   });
 
   it.each(CASES)('does not clip %s once flavour arrives', async (_name, subject, flavor) => {
@@ -124,7 +139,7 @@ describe('CardDisplayComponent — rules text fitting in real Chromium', () => {
        centres the box on the *x-height* midpoint, and every face this app sets text in has a much
        taller cap than x, so an uncorrected symbol hangs low: 0.125em under the cap midpoint in
        Cinzel, 0.164em in Crimson Text, which is a visible sag at the size a cost is printed.
-       mana.css lifts it back. The two contexts are checked separately because they are different
+       symbols.css lifts it back. The two contexts are checked separately because they are different
        faces with different metrics, and one constant serves both. */
     const mounted = await mountCard(ANTIQUITIES);
     const host = mounted.host.querySelector(selector) as HTMLElement;
@@ -193,12 +208,58 @@ describe('CardDisplayComponent — rules text fitting in real Chromium', () => {
     expect(overflowOf(mounted.textBox),
         'the watermark took space in the flow and pushed the rules text out').toBeLessThanOrEqual(0);
 
-    // `set` means "use this set's own symbol", which Mana has no glyph for. It has to render
-    // nothing rather than an empty box — and it has to stop rendering when the card changes,
-    // which is the branch that used to be a fetch and a signal.
-    mounted.fixture.componentRef.setInput('card', card({ ...ANTIQUITIES, watermark: 'set' }));
+    /* A watermark neither font has a glyph for has to render nothing rather than an empty box —
+       and it has to stop rendering when the card changes underneath, which is the branch that
+       used to be a fetch and a signal. Kaladesh's `consulate` is one Scryfall emits and Mana
+       never drew. */
+    mounted.fixture.componentRef.setInput('card', card({ ...ANTIQUITIES, watermark: 'consulate' }));
     await mounted.settle();
     expect(mounted.textBox.querySelector('.watermark')).toBeNull();
+  });
+
+  it('watermarks a card with its own set symbol when that is the mark', async () => {
+    /* `set` is Scryfall's way of saying "this card is watermarked with its own expansion
+       symbol" — not a fixed mark like a guild's, but a different symbol per card, drawn from
+       Keyrune rather than Mana. It rendered nothing at all until that font arrived. */
+    const mounted = await mountCard(card({ ...ANTIQUITIES, setCode: 'SOM', watermark: 'set' }));
+    const mark = mounted.textBox.querySelector('.watermark') as HTMLElement | null;
+
+    expect(mark, 'no watermark rendered for a card marked with its own set symbol').not.toBeNull();
+    expect(mark!.className).toContain('ss-som');
+    expect(mark!.getBoundingClientRect().width,
+        'the set glyph has no width, so Keyrune never drew it').toBeGreaterThan(0);
+    expect(overflowOf(mounted.textBox),
+        'the watermark took space in the flow and pushed the rules text out').toBeLessThanOrEqual(0);
+  });
+
+  it('draws the expansion symbol from the font, not from the network', async () => {
+    /* Keyrune covers every set the engine implements, so this is the path essentially every
+       card takes. The failure it guards is the quiet one: `.ss` on its own draws the MTG logo,
+       so a symbol that resolved to the wrong classes still renders something symbol-shaped in
+       the right place. Asserting the set-specific class is what tells the two apart. */
+    const mounted = await mountCard(card({ ...ANTIQUITIES, setCode: 'SOM' }));
+    const symbol = mounted.host.querySelector('.set-symbol') as HTMLElement | null;
+
+    expect(symbol, 'no set symbol rendered at all').not.toBeNull();
+    expect(symbol!.className).toContain('ss-som');
+    expect(symbol!.getBoundingClientRect().width,
+        'the symbol box has no width').toBeGreaterThan(0);
+    expect(symbol!.textContent!.trim(),
+        'printed the set code beside a set that has a real symbol').toBe('');
+  });
+
+  it('prints the set code for a set printed after the font shipped', async () => {
+    /* The whole fallback, now that nothing is fetched: a code Keyrune has never heard of has to
+       read as itself rather than as the MTG logo that a bare `.ss` would draw. */
+    const mounted = await mountCard(card({ ...ANTIQUITIES, setCode: 'ZZZ' }));
+    const symbol = mounted.host.querySelector('.set-symbol') as HTMLElement | null;
+
+    expect(symbol, 'nothing at all rendered where the set symbol goes').not.toBeNull();
+    expect(symbol!.className,
+        'drew a Keyrune glyph for a set it has no symbol for').not.toContain('ss-');
+    expect(symbol!.textContent!.trim()).toBe('ZZZ');
+    expect(symbol!.getBoundingClientRect().width,
+        'the printed code has no width').toBeGreaterThan(0);
   });
 
   it('refits when the only thing that changed about a card is its symbols', async () => {

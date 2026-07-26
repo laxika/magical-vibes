@@ -76,12 +76,18 @@ describe('watermarkSymbolClasses', () => {
   });
 
   it('is nothing for a watermark the font has no glyph for', () => {
-    /* Scryfall's watermark field is an open enum that grows with every set that prints one, and
-       `set` — "use this set's own symbol" — is not a Mana glyph at all. Returning a class name
-       for either would paint an empty box in the middle of the rules text; the frame renders no
-       watermark instead, exactly as it did whenever the old fetch came back 404. */
-    expect(watermarkSymbolClasses('set')).toBeNull();
+    /* Scryfall's watermark field is an open enum that grows with every set that prints one.
+       Returning a class name for one Mana cannot draw would paint an empty box in the middle of
+       the rules text; the frame renders no watermark instead, exactly as it did whenever the old
+       fetch came back 404. */
     expect(watermarkSymbolClasses('some-set-printed-after-this-font')).toBeNull();
+  });
+
+  it('leaves `set` to the other font rather than claiming it', () => {
+    /* `set` means "use this card's own expansion symbol" — not a fixed mark, and not a Mana
+       glyph. It is null here and answered by setSymbolClasses instead, which is why this is a
+       separate case from the one above: the frame does draw it now, just not from this font. */
+    expect(watermarkSymbolClasses('set')).toBeNull();
   });
 
   it('accepts the spelling as it arrives rather than only in lower case', () => {
