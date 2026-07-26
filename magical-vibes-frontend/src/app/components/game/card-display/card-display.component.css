@@ -9,7 +9,12 @@
   width: 165px;
   height: 231px;
   box-sizing: border-box;
-  box-shadow: 0 3px 8px rgba(0, 0, 0, 0.4);
+  /* Two parts rather than one: a tight contact shadow pins the card to the table
+     and a soft ambient one gives it height. A single mid-blur shadow has to
+     stand in for both and reads as a card hovering a centimetre off the felt. */
+  box-shadow:
+    0 1px 2px rgba(0, 0, 0, 0.55),
+    0 8px 16px -6px rgba(0, 0, 0, 0.6);
   /* Composed from custom properties so tap rotation, hover/combat lift and
      the blocker alignment shift combine instead of overriding. --card-shift-x
      slides a blocker in front of the attacker it blocks without affecting
@@ -45,6 +50,32 @@
   filter: drop-shadow(0 1px 0 rgba(0, 0, 0, 0.4));
 }
 
+/* Size. Mana's own .ms-cost draws the disc at 1.3em of a 0.95em font-size, i.e. 1.235em
+   of the surrounding text — half again the height of the capitals it sits beside, which
+   crowds the line and makes a three-symbol cost dominate the name plate. 0.73em puts the
+   disc at 1.3 x 0.73 = 0.95em, just under the cap height, which is how the printed symbol
+   sits. Sized rather than scaled, so the glyph inside stays centred in its disc. */
+:host ::ng-deep .mana-sym.ms-cost {
+  font-size: 0.73em;
+}
+
+/* Position. .ms sets vertical-align: middle, which by definition centres the disc on the
+   parent's baseline + x-height/2 — around +0.215em — while the text beside it is centred
+   on baseline + cap-height/2, around +0.33em. The disc therefore sits ~0.115em low and
+   hangs well below the baseline, which is what reads as "off". Correcting by that 0.115em
+   of PARENT text: the element's own font-size is 0.73em, so 0.115 / 0.73 = 0.157em in its
+   own units.
+
+   Done as a relative offset rather than by changing vertical-align, for two reasons. An
+   inline-block's baseline is that of its last line box, so a length vertical-align would
+   depend on the Mana font's internal metrics and could not be derived. And a relative
+   offset leaves line boxes untouched, so it cannot perturb the scrollHeight the rules-text
+   fitter measures against. */
+:host ::ng-deep .mana-sym.ms-cost {
+  position: relative;
+  top: -0.16em;
+}
+
 /* Divide by the zoom so the lift is a whole 4 screen px regardless of card
    scale; a zoom-scaled fractional offset would leave the composited layer
    sitting between device pixels, i.e. permanently blurred while lifted. */
@@ -55,7 +86,9 @@
    win over this — a hovered attacker keeps its combat outline. */
 :host(:hover) {
   --card-lift: calc(-4px / var(--card-zoom, 1));
-  box-shadow: 0 8px 16px rgba(0, 0, 0, 0.55);
+  box-shadow:
+    0 2px 4px rgba(0, 0, 0, 0.5),
+    0 16px 26px -8px rgba(0, 0, 0, 0.65);
 }
 
 /* Reserve the rotated footprint: (231 - 165) / 2 = 33px on each axis, so a
@@ -101,29 +134,33 @@
   --plate-grain: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='90' height='90'%3E%3Cfilter id='p'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='3' stitchTiles='stitch'/%3E%3CfeColorMatrix type='saturate' values='0'/%3E%3C/filter%3E%3Crect width='90' height='90' filter='url(%23p)' opacity='0.055'/%3E%3C/svg%3E");
 }
 
+/* Three stops rather than two, brightest just off centre and darker at both
+   edges, tilted slightly off vertical. A straight two-stop ramp puts its
+   lightest point hard against one edge, which reads as a gradient fill; the
+   printed frame is a lit surface with its edges falling away. */
 :host([data-card-color="GREEN"]) {
-  background: linear-gradient(180deg, #2d5016 0%, #4a7c28 100%);
+  background: linear-gradient(170deg, #3f6b22 0%, #4d8129 42%, #25400f 100%);
   --frame-accent: #2f5518;
 }
 
 :host([data-card-color="WHITE"]) {
-  background: linear-gradient(180deg, #c4b060 0%, #f0e6b2 100%);
+  background: linear-gradient(170deg, #efe6bd 0%, #dfd096 45%, #a8945a 100%);
   color: #2c1810;
   --frame-accent: #9a8438;
 }
 
 :host([data-card-color="BLUE"]) {
-  background: linear-gradient(180deg, #1a3a5c 0%, #2c5ea2 100%);
+  background: linear-gradient(170deg, #2b5f9e 0%, #24507f 45%, #12293f 100%);
   --frame-accent: #1d4372;
 }
 
 :host([data-card-color="RED"]) {
-  background: linear-gradient(180deg, #6b1a1a 0%, #a03030 100%);
+  background: linear-gradient(170deg, #a63a2c 0%, #8c2a20 45%, #4d1310 100%);
   --frame-accent: #8a2424;
 }
 
 :host([data-card-color="BLACK"]) {
-  background: linear-gradient(180deg, #1a1a20 0%, #3a3a44 100%);
+  background: linear-gradient(170deg, #42424c 0%, #2a2a33 45%, #111116 100%);
   --frame-accent: #26262e;
 }
 
@@ -138,12 +175,12 @@
    steel. A *coloured* artifact keeps its colour frame exactly as it does in print,
    so data-frame only claims the colourless case (see frameStyle). */
 :host([data-frame="land"]) {
-  background: linear-gradient(180deg, #4a3a22 0%, #7d6544 100%);
+  background: linear-gradient(170deg, #a98459 0%, #8a6640 45%, #4a3320 100%);
   --frame-accent: #4f3f28;
 }
 
 :host([data-frame="artifact"]) {
-  background: linear-gradient(180deg, #3f454d 0%, #6a7078 100%);
+  background: linear-gradient(170deg, #9aa3ab 0%, #79838d 45%, #41484f 100%);
   --frame-accent: #414750;
 }
 
@@ -152,7 +189,8 @@
    so a Kozilek and a card whose colour never arrived look identical. Kept cooler and
    lighter than the artifact steel so the two stay distinguishable at battlefield zoom. */
 :host([data-frame="colorless"]) {
-  background: linear-gradient(180deg, #55565f 0%, #8e8f9a 100%);
+  background: linear-gradient(170deg, #b9b3a8 0%, #948e83 45%, #524d45 100%);
+  color: #211e19;
   --frame-accent: #4e4f58;
 }
 
@@ -185,10 +223,17 @@
    catches the light along that edge, and without it the border reads as a flat cut-out.
    It rides on this pseudo-element rather than the host's box-shadow for the same reason
    the grain does — the parent's combat outlines replace that shadow wholesale. */
+/* The vignette is softened from what it was, because the two directional shadows
+   below now darken the bottom edge on their own; at full strength the pair
+   compounded there into a smudge rather than a shaded edge. Directional beats
+   symmetric here — the light on a card held at the table comes from above, so a
+   sheen along the top and a deeper falloff at the bottom reads as a solid object
+   where an even vignette reads as a filter laid over one. */
 :host::after {
-  background: radial-gradient(ellipse at 50% 45%, rgba(0, 0, 0, 0) 55%, rgba(0, 0, 0, 0.34) 100%);
-  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.13),
-              inset 0 0 0 1px rgba(255, 255, 255, 0.055);
+  background: radial-gradient(ellipse at 50% 45%, rgba(0, 0, 0, 0) 58%, rgba(0, 0, 0, 0.2) 100%);
+  box-shadow: inset 0 0 0 1px rgba(255, 255, 255, 0.13),
+              inset 0 18px 20px -14px rgba(255, 255, 255, 0.16),
+              inset 0 -22px 26px -14px rgba(0, 0, 0, 0.42);
 }
 
 /* Title bar — a light plate inset on the colored frame, like a real name bar */
@@ -200,11 +245,13 @@
   box-sizing: border-box;
   padding: 0 5px;
   margin: 3px var(--frame-inset) 2px;
-  background-image: var(--plate-grain), linear-gradient(180deg, #f7f0de 0%, #e7dab9 100%);
+  background-image: var(--plate-grain), linear-gradient(180deg, #fbf5e6 0%, #f0e7cd 55%, #dfd0aa 100%);
   background-size: 90px 90px, auto;
   border: 1px solid rgba(20, 15, 10, 0.55);
   border-radius: var(--plate-radius);
-  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.5), 0 1px 2px rgba(0, 0, 0, 0.32);
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.85),
+              inset 0 -1px 0 rgba(90, 70, 40, 0.22),
+              0 1px 2px rgba(0, 0, 0, 0.4);
   color: var(--ink);
   flex-shrink: 0;
 }
@@ -220,9 +267,17 @@
               0 1px 2px rgba(0, 0, 0, 0.32);
 }
 
+/* 600 rather than 700: Cinzel is a display face with strong stroke contrast, and
+   at 12px its bold weight thickens the thin strokes until the counters close up.
+   The semibold keeps the letterforms open, and being narrower it also buys the
+   name fitter room before it has to start shrinking. The highlight is the
+   engraved look of printed nameplate type — light catching the top of the
+   stroke where it is pressed into the card stock. */
 .card-name {
   font-size: 12px;
-  font-weight: 700;
+  font-weight: 600;
+  letter-spacing: 0.005em;
+  text-shadow: 0 1px 0 rgba(255, 255, 255, 0.6);
   font-family: 'Cinzel', Georgia, serif;
   white-space: nowrap;
   overflow: hidden;
@@ -296,18 +351,25 @@ img.card-art {
   box-sizing: border-box;
   padding: 0 5px;
   margin: 2px var(--frame-inset);
-  background-image: var(--plate-grain), linear-gradient(180deg, #f7f0de 0%, #e7dab9 100%);
+  background-image: var(--plate-grain), linear-gradient(180deg, #fbf5e6 0%, #f0e7cd 55%, #dfd0aa 100%);
   background-size: 90px 90px, auto;
   border: 1px solid rgba(20, 15, 10, 0.55);
   border-radius: var(--plate-radius);
-  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.5), 0 1px 2px rgba(0, 0, 0, 0.32);
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.85),
+              inset 0 -1px 0 rgba(90, 70, 40, 0.22),
+              0 1px 2px rgba(0, 0, 0, 0.4);
   color: var(--ink);
   flex-shrink: 0;
 }
 
+/* Tracked out slightly: at 10px the type line is the densest text on the card,
+   and the extra space is what keeps "Legendary Creature — Human Wizard" legible
+   rather than a grey bar. Same engraved highlight as the name. */
 .card-type {
   font-size: 10px;
   font-weight: 600;
+  letter-spacing: 0.01em;
+  text-shadow: 0 1px 0 rgba(255, 255, 255, 0.5);
   white-space: nowrap;
   overflow: hidden;
   text-overflow: ellipsis;
@@ -505,7 +567,7 @@ img.card-art {
 .prepare-spell-title,
 .prepare-spell-type {
   padding: 0 2px;
-  background-image: var(--plate-grain), linear-gradient(180deg, #f7f0de 0%, #e7dab9 100%);
+  background-image: var(--plate-grain), linear-gradient(180deg, #fbf5e6 0%, #f0e7cd 55%, #dfd0aa 100%);
   background-size: 90px 90px, auto;
 }
 
@@ -587,13 +649,19 @@ img.card-art {
   font-size: 11px;
   font-weight: 700;
   font-family: 'Cinzel', Georgia, serif;
-  background: linear-gradient(180deg, #f7f0de 0%, #e2d3ae 100%);
+  background: linear-gradient(180deg, #fbf5e6 0%, #eee3c4 50%, #d8c79f 100%);
   color: var(--ink);
   padding: 0;
   border-radius: 5px / 8px;
-  border: 1px solid rgba(20, 15, 10, 0.6);
-  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.5), 0 1px 2px rgba(0, 0, 0, 0.25);
+  border: 1px solid rgba(20, 15, 10, 0.55);
+  /* Light top edge, dark bottom edge, cast shadow — the plate is applied on top
+     of the frame, so it needs two edges rather than one highlight. */
+  box-shadow:
+    inset 0 1px 0 rgba(255, 255, 255, 0.9),
+    inset 0 -1px 0 rgba(90, 70, 40, 0.25),
+    0 1px 3px rgba(0, 0, 0, 0.45);
   line-height: 1.5;
+  letter-spacing: 0.02em;
   text-align: center;
 }
 
@@ -754,9 +822,14 @@ img.card-art {
   padding-right: calc(var(--frame-inset) + 32px);
 }
 
+/* The credit line is the one thing on the card nobody reads on purpose, so it
+   steps back: italic for the artist as printed cards set it, and the set code in
+   small tracked-out caps so it reads as a stamp rather than as body text
+   competing with the rules box above it. */
 .card-artist {
   font-size: 9px;
-  opacity: 0.7;
+  font-style: italic;
+  opacity: 0.62;
   white-space: nowrap;
   overflow: hidden;
   text-overflow: ellipsis;
@@ -764,9 +837,11 @@ img.card-art {
 }
 
 .card-set-badge {
-  font-size: 9px;
+  font-size: 8px;
+  font-family: 'Cinzel', Georgia, serif;
   font-weight: 600;
-  opacity: 0.7;
+  letter-spacing: 0.06em;
+  opacity: 0.62;
   white-space: nowrap;
   flex-shrink: 0;
   margin-left: 2px;
