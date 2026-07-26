@@ -113,7 +113,11 @@ class ChoreographedSparksTest extends BaseCardTest {
                 .filter(p -> p.getCard().isToken())
                 .findFirst()
                 .orElseThrow();
-        assertThat(token.getCard().getKeywords()).contains(Keyword.HASTE);
+        // The copy *gains* haste, so it is granted rather than printed on the copied card — that
+        // distinction is what lets the UI show it as a granted keyword.
+        assertThat(token.hasKeyword(Keyword.HASTE)).isTrue();
+        assertThat(token.getGrantedKeywords()).contains(Keyword.HASTE);
+        assertThat(token.getCard().getKeywords()).doesNotContain(Keyword.HASTE);
         assertThat(gd.getDelayedActions(DelayedPermanentAction.class)).contains(new DelayedPermanentAction(token.getId(), DelayedPermanentActionKind.SACRIFICE_AT_END_STEP));
     }
 

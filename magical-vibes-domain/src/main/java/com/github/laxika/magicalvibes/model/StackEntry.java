@@ -7,6 +7,7 @@ import lombok.Getter;
 import lombok.Setter;
 
 import java.util.ArrayList;
+import java.util.EnumSet;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
@@ -94,6 +95,13 @@ public class StackEntry {
      */
     @Getter(AccessLevel.NONE)
     private final Set<Integer> illegalTargetIndices = new HashSet<>();
+    /**
+     * Keywords the resolving permanent enters with as a <em>granted</em> keyword rather than a
+     * printed one (Choreographed Sparks: "the copy gains haste"). Kept off the {@link Card} so the
+     * UI can tell granted keywords from printed ones; drained into the entering
+     * {@code Permanent.grantedKeywords} by {@code StackResolutionService}.
+     */
+    private final Set<Keyword> grantedKeywordsOnEntry = EnumSet.noneOf(Keyword.class);
     /**
      * Ids of permanents (tokens) created by effects earlier in <em>this</em> resolution. Populated
      * by the token-creation handlers and read back by a later effect on the same entry that acts on
@@ -310,6 +318,7 @@ public class StackEntry {
         this.triggeringCardId = source.triggeringCardId;
         this.targetIds = source.targetIds.isEmpty() ? List.of() : new ArrayList<>(source.targetIds);
         this.illegalTargetIndices.addAll(source.illegalTargetIndices);
+        this.grantedKeywordsOnEntry.addAll(source.grantedKeywordsOnEntry);
     }
 
     // Multi-target triggered ability with source permanent constructor (e.g. "two target players exchange life totals")

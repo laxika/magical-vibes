@@ -233,6 +233,8 @@ public class StackResolutionService {
     private Permanent createEnteringPermanent(StackEntry entry, Card card, Card characteristics) {
         Permanent perm = new Permanent(card);
         perm.setCastFromZone(entry.getSourceZone());
+        // Keywords the spell grants the permanent as it enters (Choreographed Sparks' hasty copy).
+        perm.getGrantedKeywords().addAll(entry.getGrantedKeywordsOnEntry());
         if ((entry.isCastWithDisturb() || entry.isCastTransformed()) && characteristics != card) {
             perm.setCard(characteristics);
             perm.setTransformed(true);

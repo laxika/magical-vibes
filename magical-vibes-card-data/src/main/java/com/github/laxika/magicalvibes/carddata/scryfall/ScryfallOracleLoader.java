@@ -1,5 +1,9 @@
 package com.github.laxika.magicalvibes.carddata.scryfall;
 
+import com.github.laxika.magicalvibes.carddata.CardDataSupport;
+import com.github.laxika.magicalvibes.carddata.CardPrintingRegistry;
+import com.github.laxika.magicalvibes.carddata.OracleTextNormalizer;
+import com.github.laxika.magicalvibes.carddata.TypeLineParser;
 import com.github.laxika.magicalvibes.cards.CardPrinting;
 import com.github.laxika.magicalvibes.cards.CardSet;
 import com.github.laxika.magicalvibes.model.Card;
@@ -15,101 +19,20 @@ import java.net.URI;
 import java.net.http.HttpClient;
 import java.net.http.HttpRequest;
 import java.net.http.HttpResponse;
-import java.nio.file.AtomicMoveNotSupportedException;
 import java.nio.file.Files;
 import java.nio.file.Path;
-import java.nio.file.StandardCopyOption;
 import java.util.ArrayList;
 import java.util.EnumSet;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
-import java.util.concurrent.ConcurrentHashMap;
 import java.util.logging.Logger;
 
 public class ScryfallOracleLoader {
 
     private static final Logger LOG = Logger.getLogger(ScryfallOracleLoader.class.getName());
     private static final ObjectMapper MAPPER = JsonMapper.builder().build();
-
-    // Rarity registry: "SET:collectorNumber" -> rarity (e.g. "common", "uncommon", "rare", "mythic")
-    private static final Map<String, String> rarityRegistry = new HashMap<>();
-
-    // Token image registry: regularSetCode -> (tokenCharKey -> TokenImageData)
-    private static final Map<String, Map<String, TokenImageData>> tokenImageRegistry = new ConcurrentHashMap<>();
-
-    public record TokenImageData(String setCode, String collectorNumber) {}
-
-    public static final Map<String, CardColor> COLOR_MAP = Map.of(
-            "W", CardColor.WHITE,
-            "U", CardColor.BLUE,
-            "B", CardColor.BLACK,
-            "R", CardColor.RED,
-            "G", CardColor.GREEN
-    );
-
-    public static final Map<String, Keyword> KEYWORD_MAP = new HashMap<>();
-
-    static {
-        KEYWORD_MAP.put("Flying", Keyword.FLYING);
-        KEYWORD_MAP.put("Banding", Keyword.BANDING);
-        KEYWORD_MAP.put("Reach", Keyword.REACH);
-        KEYWORD_MAP.put("Defender", Keyword.DEFENDER);
-        KEYWORD_MAP.put("Double strike", Keyword.DOUBLE_STRIKE);
-        KEYWORD_MAP.put("First strike", Keyword.FIRST_STRIKE);
-        KEYWORD_MAP.put("Flash", Keyword.FLASH);
-        KEYWORD_MAP.put("Vigilance", Keyword.VIGILANCE);
-        KEYWORD_MAP.put("Shroud", Keyword.SHROUD);
-        KEYWORD_MAP.put("Changeling", Keyword.CHANGELING);
-        KEYWORD_MAP.put("Fear", Keyword.FEAR);
-        KEYWORD_MAP.put("Menace", Keyword.MENACE);
-        KEYWORD_MAP.put("Indestructible", Keyword.INDESTRUCTIBLE);
-        KEYWORD_MAP.put("Convoke", Keyword.CONVOKE);
-        KEYWORD_MAP.put("Haste", Keyword.HASTE);
-        KEYWORD_MAP.put("Lifelink", Keyword.LIFELINK);
-        KEYWORD_MAP.put("Trample", Keyword.TRAMPLE);
-        KEYWORD_MAP.put("Forestwalk", Keyword.FORESTWALK);
-        KEYWORD_MAP.put("Mountainwalk", Keyword.MOUNTAINWALK);
-        KEYWORD_MAP.put("Islandwalk", Keyword.ISLANDWALK);
-        KEYWORD_MAP.put("Swampwalk", Keyword.SWAMPWALK);
-        KEYWORD_MAP.put("Plainswalk", Keyword.PLAINSWALK);
-        KEYWORD_MAP.put("Hexproof", Keyword.HEXPROOF);
-        KEYWORD_MAP.put("Infect", Keyword.INFECT);
-        KEYWORD_MAP.put("Wither", Keyword.WITHER);
-        KEYWORD_MAP.put("Intimidate", Keyword.INTIMIDATE);
-        KEYWORD_MAP.put("Battle Cry", Keyword.BATTLE_CRY);
-        KEYWORD_MAP.put("Living weapon", Keyword.LIVING_WEAPON);
-        KEYWORD_MAP.put("Deathtouch", Keyword.DEATHTOUCH);
-        KEYWORD_MAP.put("Transform", Keyword.TRANSFORM);
-        KEYWORD_MAP.put("Flashback", Keyword.FLASHBACK);
-        KEYWORD_MAP.put("Aftermath", Keyword.AFTERMATH);
-        KEYWORD_MAP.put("Kicker", Keyword.KICKER);
-        KEYWORD_MAP.put("Converge", Keyword.CONVERGE);
-        KEYWORD_MAP.put("Undying", Keyword.UNDYING);
-        KEYWORD_MAP.put("Persist", Keyword.PERSIST);
-        KEYWORD_MAP.put("Increment", Keyword.INCREMENT);
-        KEYWORD_MAP.put("Paradigm", Keyword.PARADIGM);
-        KEYWORD_MAP.put("Horsemanship", Keyword.HORSEMANSHIP);
-        KEYWORD_MAP.put("Conspire", Keyword.CONSPIRE);
-        KEYWORD_MAP.put("Retrace", Keyword.RETRACE);
-        KEYWORD_MAP.put("Emerge", Keyword.EMERGE);
-        KEYWORD_MAP.put("Coven", Keyword.COVEN);
-        KEYWORD_MAP.put("Meld", Keyword.MELD);
-        KEYWORD_MAP.put("Training", Keyword.TRAINING);
-        KEYWORD_MAP.put("Disturb", Keyword.DISTURB);
-        KEYWORD_MAP.put("Skulk", Keyword.SKULK);
-        KEYWORD_MAP.put("Soulbond", Keyword.SOULBOND);
-        KEYWORD_MAP.put("Flashback", Keyword.FLASHBACK);
-        KEYWORD_MAP.put("Exploit", Keyword.EXPLOIT);
-        KEYWORD_MAP.put("Miracle", Keyword.MIRACLE);
-        KEYWORD_MAP.put("Madness", Keyword.MADNESS);
-        KEYWORD_MAP.put("Escalate", Keyword.ESCALATE);
-        KEYWORD_MAP.put("Decayed", Keyword.DECAYED);
-        KEYWORD_MAP.put("Splice", Keyword.SPLICE);
-        KEYWORD_MAP.put("Delirium", Keyword.DELIRIUM);
-        KEYWORD_MAP.put("Prepared", Keyword.PREPARED);
-    }
 
     public static void loadAll(String cacheDir) {
         try {
@@ -134,8 +57,8 @@ public class ScryfallOracleLoader {
                 for (Map.Entry<String, JsonNode> entry : cardsByCollectorNumber.entrySet()) {
                     JsonNode cardNode = entry.getValue();
                     if (cardNode.has("rarity")) {
-                        String key = cardSet.getCode() + ":" + entry.getKey();
-                        rarityRegistry.put(key, cardNode.get("rarity").asText());
+                        CardPrintingRegistry.registerRarity(
+                                cardSet.getCode(), entry.getKey(), cardNode.get("rarity").asText());
                     }
                 }
 
@@ -176,59 +99,12 @@ public class ScryfallOracleLoader {
         }
     }
 
-    /**
-     * Returns the rarity for a card in a set, e.g. "common", "uncommon", "rare", "mythic".
-     */
-    public static String getRarity(String setCode, String collectorNumber) {
-        return rarityRegistry.get(setCode + ":" + collectorNumber);
-    }
-
-    /** Registration hook shared with {@code MtgjsonOracleLoader}, which populates the same registry. */
-    public static void registerRarity(String setCode, String collectorNumber, String rarity) {
-        rarityRegistry.put(setCode + ":" + collectorNumber, rarity);
-    }
-
-    /** Registration hook shared with {@code MtgjsonOracleLoader}, which populates the same registry. */
-    public static void registerTokenImages(String setCode, Map<String, TokenImageData> tokenMap) {
-        tokenImageRegistry.put(setCode, tokenMap);
-    }
-
-    /**
-     * Looks up the Scryfall token image data for a token created by a card from the given set.
-     * Falls back to stripping "Phyrexian " prefix if no exact match is found, since Scryfall
-     * token cards use the pre-errata names (e.g. "Golem" instead of "Phyrexian Golem").
-     * Returns null if no matching token image is found.
-     */
-    public static TokenImageData getTokenImage(String setCode, String tokenName, int power, int toughness, CardColor color) {
-        if (setCode == null) return null;
-        Map<String, TokenImageData> tokenMap = tokenImageRegistry.get(setCode);
-        if (tokenMap == null) return null;
-        String key = buildTokenKey(tokenName, power, toughness, color);
-        TokenImageData result = tokenMap.get(key);
-        if (result == null && tokenName.startsWith("Phyrexian ")) {
-            key = buildTokenKey(tokenName.substring("Phyrexian ".length()), power, toughness, color);
-            result = tokenMap.get(key);
-        }
-        return result;
-    }
-
-    /**
-     * Looks up the Scryfall token image data for a non-creature token (no power/toughness).
-     */
-    public static TokenImageData getTokenImage(String setCode, String tokenName, CardColor color) {
-        if (setCode == null) return null;
-        Map<String, TokenImageData> tokenMap = tokenImageRegistry.get(setCode);
-        if (tokenMap == null) return null;
-        String key = buildTokenKey(tokenName, null, null, color);
-        return tokenMap.get(key);
-    }
-
     private static void loadTokenSets(Path cachePath) {
         for (CardSet cardSet : CardSet.values()) {
             String tokenSetCode = "t" + cardSet.getCode().toLowerCase();
             try {
                 Map<String, JsonNode> tokens = loadSet(cachePath, tokenSetCode);
-                Map<String, TokenImageData> tokenMap = new HashMap<>();
+                Map<String, CardPrintingRegistry.TokenImageData> tokenMap = new HashMap<>();
 
                 for (Map.Entry<String, JsonNode> entry : tokens.entrySet()) {
                     JsonNode tokenNode = entry.getValue();
@@ -236,16 +112,16 @@ public class ScryfallOracleLoader {
                     if (!typeLine.contains("Creature")) continue;
 
                     String name = tokenNode.get("name").asText();
-                    Integer power = parseIntField(tokenNode, "power");
-                    Integer toughness = parseIntField(tokenNode, "toughness");
+                    Integer power = CardDataSupport.parseIntField(tokenNode, "power");
+                    Integer toughness = CardDataSupport.parseIntField(tokenNode, "toughness");
                     CardColor color = parseColor(tokenNode);
 
-                    String key = buildTokenKey(name, power, toughness, color);
-                    tokenMap.put(key, new TokenImageData(tokenSetCode, entry.getKey()));
+                    String key = CardPrintingRegistry.buildTokenKey(name, power, toughness, color);
+                    tokenMap.put(key, new CardPrintingRegistry.TokenImageData(tokenSetCode, entry.getKey()));
                 }
 
                 if (!tokenMap.isEmpty()) {
-                    tokenImageRegistry.put(cardSet.getCode(), tokenMap);
+                    CardPrintingRegistry.registerTokenImages(cardSet.getCode(), tokenMap);
                     LOG.info("Loaded " + tokenMap.size() + " token images for set " + cardSet.getCode());
                 }
             } catch (Exception e) {
@@ -253,46 +129,11 @@ public class ScryfallOracleLoader {
                 Path cacheFile = cachePath.resolve(tokenSetCode + ".json");
                 if (!Files.exists(cacheFile)) {
                     try {
-                        writeCacheFile(cacheFile, "[]");
+                        CardDataSupport.writeCacheFile(cacheFile, "[]");
                     } catch (IOException ignored) {}
                 }
                 LOG.warning("Could not load token set " + tokenSetCode + ": " + e.getMessage());
             }
-        }
-    }
-
-    public static String buildTokenKey(String name, Integer power, Integer toughness, CardColor color) {
-        String colorKey = color != null ? color.name() : "COLORLESS";
-        String p = power != null ? String.valueOf(power) : "*";
-        String t = toughness != null ? String.valueOf(toughness) : "*";
-        return name + ":" + p + ":" + t + ":" + colorKey;
-    }
-
-    public static Integer parseIntField(JsonNode node, String field) {
-        if (!node.has(field)) return null;
-        try {
-            return Integer.parseInt(node.get(field).asText());
-        } catch (NumberFormatException e) {
-            return 0;
-        }
-    }
-
-    /**
-     * Writes a cache file via temp file + atomic move, so concurrent loaders (parallel test JVMs
-     * sharing one cache directory) either see a complete file or no file — never a partial write.
-     * Shared with {@code MtgjsonOracleLoader}.
-     */
-    public static void writeCacheFile(Path cacheFile, String content) throws IOException {
-        Path tempFile = Files.createTempFile(cacheFile.getParent(), cacheFile.getFileName().toString(), ".tmp");
-        try {
-            Files.writeString(tempFile, content);
-            try {
-                Files.move(tempFile, cacheFile, StandardCopyOption.ATOMIC_MOVE, StandardCopyOption.REPLACE_EXISTING);
-            } catch (AtomicMoveNotSupportedException e) {
-                Files.move(tempFile, cacheFile, StandardCopyOption.REPLACE_EXISTING);
-            }
-        } finally {
-            Files.deleteIfExists(tempFile);
         }
     }
 
@@ -308,7 +149,7 @@ public class ScryfallOracleLoader {
             // Respect Scryfall rate limits: 50-100ms between requests
             Thread.sleep(100);
             json = fetchFromScryfall(setCode);
-            writeCacheFile(cacheFile, json);
+            CardDataSupport.writeCacheFile(cacheFile, json);
             LOG.info("Cached " + setCode + " to: " + cacheFile);
         }
 
@@ -395,7 +236,7 @@ public class ScryfallOracleLoader {
         // Type line — prefer face node for split/transform DFCs
         JsonNode typeLineSource = faceNode.has("type_line") ? faceNode : card;
         String typeLine = typeLineSource.get("type_line").asText();
-        ScryfallTypeLineParser.ParsedTypeLine parsed = ScryfallTypeLineParser.parse(typeLine);
+        TypeLineParser.ParsedTypeLine parsed = TypeLineParser.parse(typeLine);
 
         // Color — prefer face node for DFCs
         JsonNode colorSource = faceNode.has("colors") ? faceNode : card;
@@ -403,18 +244,20 @@ public class ScryfallOracleLoader {
         List<CardColor> colors = parseColors(colorSource);
 
         // Oracle text (strip reminder text in parentheses) — prefer face node for DFCs
-        String cardText = parseCardText(faceNode.has("oracle_text") ? faceNode : card);
+        // Keywords live at top level (combined for both faces), so they are the keyword source
+        // even when the text comes from a face node.
+        String cardText = parseCardText(faceNode.has("oracle_text") ? faceNode : card, card);
 
         // Power/toughness (creatures only) — prefer face node for DFCs
         JsonNode ptSource = faceNode.has("power") ? faceNode : card;
-        Integer power = parseIntField(ptSource, "power");
-        Integer toughness = parseIntField(ptSource, "toughness");
+        Integer power = CardDataSupport.parseIntField(ptSource, "power");
+        Integer toughness = CardDataSupport.parseIntField(ptSource, "toughness");
 
         // Loyalty (planeswalkers) / defense (battles) — prefer face node for DFCs
         JsonNode loyaltySource = faceNode.has("loyalty") ? faceNode : card;
-        Integer loyalty = parseIntField(loyaltySource, "loyalty");
+        Integer loyalty = CardDataSupport.parseIntField(loyaltySource, "loyalty");
         JsonNode defenseSource = faceNode.has("defense") ? faceNode : card;
-        Integer defense = parseIntField(defenseSource, "defense");
+        Integer defense = CardDataSupport.parseIntField(defenseSource, "defense");
 
         // Keywords — from top level (combined for both faces)
         Set<Keyword> keywords = parseKeywords(card);
@@ -465,7 +308,7 @@ public class ScryfallOracleLoader {
 
         // Parse type line from back face
         String typeLine = face.has("type_line") ? face.get("type_line").asText() : "";
-        ScryfallTypeLineParser.ParsedTypeLine parsed = ScryfallTypeLineParser.parse(typeLine);
+        TypeLineParser.ParsedTypeLine parsed = TypeLineParser.parse(typeLine);
 
         // Color — use color_indicator if present, otherwise colors
         CardColor color = null;
@@ -473,10 +316,10 @@ public class ScryfallOracleLoader {
         if (face.has("color_indicator") && face.get("color_indicator").isArray()
                 && !face.get("color_indicator").isEmpty()) {
             String firstColor = face.get("color_indicator").get(0).asText();
-            color = COLOR_MAP.get(firstColor);
+            color = CardDataSupport.COLOR_MAP.get(firstColor);
             List<CardColor> indicatorColors = new ArrayList<>();
             for (JsonNode colorNode : face.get("color_indicator")) {
-                CardColor mapped = COLOR_MAP.get(colorNode.asText());
+                CardColor mapped = CardDataSupport.COLOR_MAP.get(colorNode.asText());
                 if (mapped != null) indicatorColors.add(mapped);
             }
             colors = List.copyOf(indicatorColors);
@@ -485,10 +328,10 @@ public class ScryfallOracleLoader {
             colors = parseColors(face);
         }
 
-        String cardText = parseCardText(face);
+        String cardText = parseCardText(face, card);
 
-        Integer power = parseIntField(face, "power");
-        Integer toughness = parseIntField(face, "toughness");
+        Integer power = CardDataSupport.parseIntField(face, "power");
+        Integer toughness = CardDataSupport.parseIntField(face, "toughness");
 
         // Back faces use front face keywords minus Transform, plus their own abilities
         // Scryfall keywords at top level cover both faces; we re-parse from top level
@@ -532,27 +375,20 @@ public class ScryfallOracleLoader {
         return card;
     }
 
-    private static String parseCardText(JsonNode node) {
-        if (node.has("oracle_text") && !node.get("oracle_text").asText().isEmpty()) {
-            return cleanCardText(node.get("oracle_text").asText());
+    private static String parseCardText(JsonNode textSource, JsonNode keywordSource) {
+        if (textSource.has("oracle_text") && !textSource.get("oracle_text").asText().isEmpty()) {
+            String cleaned = OracleTextNormalizer.cleanCardText(textSource.get("oracle_text").asText());
+            return OracleTextNormalizer.capitalizeKeywordLines(cleaned, keywordSource);
         }
         return null;
     }
 
-    /** Strips reminder text in parentheses; returns null when nothing remains. */
-    public static String cleanCardText(String rawText) {
-        String cleaned = rawText
-                .replaceAll(" *\\([^)]*\\)", "")
-                .replaceAll(" +\n", "\n")
-                .strip();
-        return cleaned.isEmpty() ? null : cleaned;
-    }
 
     private static Set<Keyword> parseKeywords(JsonNode card) {
         Set<Keyword> keywords = EnumSet.noneOf(Keyword.class);
         if (card.has("keywords")) {
             for (JsonNode kw : card.get("keywords")) {
-                Keyword keyword = KEYWORD_MAP.get(kw.asText());
+                Keyword keyword = CardDataSupport.KEYWORD_MAP.get(kw.asText());
                 if (keyword != null) {
                     keywords.add(keyword);
                 } else {
@@ -567,7 +403,7 @@ public class ScryfallOracleLoader {
         // Use colors array first
         if (card.has("colors") && card.get("colors").isArray() && !card.get("colors").isEmpty()) {
             String firstColor = card.get("colors").get(0).asText();
-            return COLOR_MAP.get(firstColor);
+            return CardDataSupport.COLOR_MAP.get(firstColor);
         }
 
         // Lands have an empty colors array but can derive color from color_identity
@@ -577,7 +413,7 @@ public class ScryfallOracleLoader {
         if (typeLine.contains("Land")
                 && card.has("color_identity") && card.get("color_identity").isArray() && !card.get("color_identity").isEmpty()) {
             String firstColor = card.get("color_identity").get(0).asText();
-            return COLOR_MAP.get(firstColor);
+            return CardDataSupport.COLOR_MAP.get(firstColor);
         }
 
         return null;
@@ -587,7 +423,7 @@ public class ScryfallOracleLoader {
         List<CardColor> colors = new ArrayList<>();
         if (card.has("colors") && card.get("colors").isArray()) {
             for (JsonNode colorNode : card.get("colors")) {
-                CardColor mapped = COLOR_MAP.get(colorNode.asText());
+                CardColor mapped = CardDataSupport.COLOR_MAP.get(colorNode.asText());
                 if (mapped != null) {
                     colors.add(mapped);
                 }
@@ -599,7 +435,7 @@ public class ScryfallOracleLoader {
             if (typeLine.contains("Land")
                     && card.has("color_identity") && card.get("color_identity").isArray()) {
                 for (JsonNode colorNode : card.get("color_identity")) {
-                    CardColor mapped = COLOR_MAP.get(colorNode.asText());
+                    CardColor mapped = CardDataSupport.COLOR_MAP.get(colorNode.asText());
                     if (mapped != null) {
                         colors.add(mapped);
                     }

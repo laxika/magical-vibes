@@ -13,7 +13,7 @@ import com.github.laxika.magicalvibes.service.battlefield.BattlefieldEntryServic
 import com.github.laxika.magicalvibes.service.battlefield.GameQueryService;
 import com.github.laxika.magicalvibes.service.trigger.TriggerCollectionService;
 import java.util.UUID;
-import com.github.laxika.magicalvibes.carddata.scryfall.ScryfallOracleLoader;
+import com.github.laxika.magicalvibes.carddata.CardPrintingRegistry;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Component;
@@ -53,7 +53,7 @@ public class CreateTokenFromHalfLifeTotalAndDealDamageEffectHandler implements N
                 tokenCard.setToughness(x);
                 tokenCard.setSubtypes(e.subtypes());
 
-                ScryfallOracleLoader.TokenImageData imageData = ScryfallOracleLoader.getTokenImage(
+                CardPrintingRegistry.TokenImageData imageData = CardPrintingRegistry.getTokenImage(
                         entry.getCard().getSetCode(), e.tokenName(), x, x, e.color()
                 );
                 if (imageData != null) {

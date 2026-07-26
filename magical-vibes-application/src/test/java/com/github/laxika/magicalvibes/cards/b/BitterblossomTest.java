@@ -39,6 +39,22 @@ class BitterblossomTest extends BaseCardTest {
     }
 
     @Test
+    @DisplayName("Faerie Rogue token prints its keywords in its text box")
+    void tokenPrintsItsKeywords() {
+        harness.addToBattlefield(player1, new Bitterblossom());
+
+        advanceToUpkeep(player1);
+        harness.passBothPriorities(); // resolve life loss
+        harness.passBothPriorities(); // resolve token creation
+
+        // A token has no oracle text, so without this the flying would render nowhere
+        assertThat(gd.playerBattlefields.get(player1.getId()).stream()
+                .filter(p -> p.getCard().isToken())
+                .map(p -> p.getCard().getCardText()))
+                .containsExactly("Flying");
+    }
+
+    @Test
     @DisplayName("Does not trigger during opponent's upkeep")
     void doesNotTriggerDuringOpponentUpkeep() {
         harness.addToBattlefield(player1, new Bitterblossom());

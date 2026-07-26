@@ -4,6 +4,7 @@ import com.github.laxika.magicalvibes.model.GameLogEntry;
 
 import com.github.laxika.magicalvibes.cards.f.Forest;
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
+import com.github.laxika.magicalvibes.model.CardColor;
 import com.github.laxika.magicalvibes.model.CardSubtype;
 import com.github.laxika.magicalvibes.model.CardType;
 import com.github.laxika.magicalvibes.model.Keyword;
@@ -48,6 +49,28 @@ class HarshAnnotationTest extends BaseCardTest {
                         && p.getCard().getToughness() == 1
                         && p.getCard().getSubtypes().contains(CardSubtype.INKLING)
                         && p.getCard().getKeywords().contains(Keyword.FLYING));
+    }
+
+    @Test
+    @DisplayName("The Inkling token enters both white and black")
+    void inklingTokenKeepsBothColors() {
+        harness.addToBattlefield(player2, new GrizzlyBears());
+        UUID targetId = harness.getPermanentId(player2, "Grizzly Bears");
+
+        harness.setHand(player1, List.of(new HarshAnnotation()));
+        harness.addMana(player1, ManaColor.WHITE, 1);
+        harness.addMana(player1, ManaColor.COLORLESS, 1);
+
+        harness.castInstant(player1, 0, targetId);
+        harness.passBothPriorities();
+
+        assertThat(gd.playerBattlefields.get(player2.getId()).stream()
+                .filter(p -> p.getCard().getName().equals("Inkling"))
+                .findFirst()
+                .orElseThrow()
+                .getCard()
+                .getColors())
+                .containsExactlyInAnyOrder(CardColor.WHITE, CardColor.BLACK);
     }
 
     @Test

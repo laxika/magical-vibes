@@ -1,6 +1,6 @@
 package com.github.laxika.magicalvibes.carddata.mtgjson;
 
-import com.github.laxika.magicalvibes.carddata.scryfall.ScryfallOracleLoader;
+import com.github.laxika.magicalvibes.carddata.CardPrintingRegistry;
 import com.github.laxika.magicalvibes.model.CardColor;
 import com.github.laxika.magicalvibes.model.CardSubtype;
 import com.github.laxika.magicalvibes.model.CardSupertype;
@@ -190,13 +190,13 @@ class MtgjsonOracleLoaderTest {
 
         MtgjsonOracleLoader.registerTokens("ZZZ", setData);
 
-        ScryfallOracleLoader.TokenImageData wolf =
-                ScryfallOracleLoader.getTokenImage("ZZZ", "Wolf", 2, 2, CardColor.GREEN);
+        CardPrintingRegistry.TokenImageData wolf =
+                CardPrintingRegistry.getTokenImage("ZZZ", "Wolf", 2, 2, CardColor.GREEN);
         assertThat(wolf).isNotNull();
         assertThat(wolf.setCode()).isEqualTo("tzzz");
         assertThat(wolf.collectorNumber()).isEqualTo("5");
 
         // The emblem is not a creature and must not be registered
-        assertThat(ScryfallOracleLoader.getTokenImage("ZZZ", "Sorin Emblem", null)).isNull();
+        assertThat(CardPrintingRegistry.getTokenImage("ZZZ", "Sorin Emblem", null)).isNull();
     }
 }

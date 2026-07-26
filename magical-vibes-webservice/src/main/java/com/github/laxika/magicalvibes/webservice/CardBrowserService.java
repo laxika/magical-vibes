@@ -3,7 +3,8 @@ package com.github.laxika.magicalvibes.webservice;
 import com.github.laxika.magicalvibes.cards.CardPrinting;
 import com.github.laxika.magicalvibes.cards.CardSet;
 import com.github.laxika.magicalvibes.networking.message.BrowseCardInfo;
-import com.github.laxika.magicalvibes.carddata.scryfall.ScryfallOracleLoader;
+import com.github.laxika.magicalvibes.carddata.CardPrintingRegistry;
+import com.github.laxika.magicalvibes.carddata.OracleTextNormalizer;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
 import tools.jackson.databind.JsonNode;
@@ -93,7 +94,7 @@ public class CardBrowserService {
                     continue;
                 }
 
-                String rarity = ScryfallOracleLoader.getRarity(setCode, collectorNumber);
+                String rarity = CardPrintingRegistry.getRarity(setCode, collectorNumber);
                 if (rarity == null) {
                     rarity = card.has("rarity") ? card.get("rarity").asText() : "common";
                 }
@@ -165,16 +166,12 @@ public class CardBrowserService {
         String color = parseColor(node);
         List<String> colors = parseColors(node);
 
-        // Oracle text (strip reminder text)
+        // Oracle text (strip reminder text, capitalize keyword lists) — same treatment the
+        // in-game card face gets, so the browser and the battlefield read identically
         String cardText = null;
         if (node.has("oracle_text") && !node.get("oracle_text").asText().isEmpty()) {
-            String rawText = node.get("oracle_text").asText()
-                    .replaceAll(" *\\([^)]*\\)", "")
-                    .replaceAll(" +\n", "\n")
-                    .strip();
-            if (!rawText.isEmpty()) {
-                cardText = rawText;
-            }
+            cardText = OracleTextNormalizer.capitalizeKeywordLines(
+                    OracleTextNormalizer.cleanCardText(node.get("oracle_text").asText()), node);
         }
 
         // Parse type line into components

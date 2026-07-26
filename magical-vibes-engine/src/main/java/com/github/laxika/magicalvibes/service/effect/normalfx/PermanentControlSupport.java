@@ -2,21 +2,16 @@ package com.github.laxika.magicalvibes.service.effect.normalfx;
 
 import com.github.laxika.magicalvibes.model.action.DelayedPermanentAction;
 import com.github.laxika.magicalvibes.model.action.DelayedPermanentActionKind;
-import com.github.laxika.magicalvibes.model.ActivatedAbility;
 import com.github.laxika.magicalvibes.model.Card;
-import com.github.laxika.magicalvibes.model.CardSupertype;
 import com.github.laxika.magicalvibes.model.CardType;
 import com.github.laxika.magicalvibes.model.Keyword;
 import com.github.laxika.magicalvibes.model.CounterType;
-import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.GameData;
 import com.github.laxika.magicalvibes.model.GameLog;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.amount.DynamicAmount;
 import com.github.laxika.magicalvibes.model.amount.Fixed;
-import com.github.laxika.magicalvibes.model.effect.CardEffect;
 import com.github.laxika.magicalvibes.model.effect.CreateTokenEffect;
-import com.github.laxika.magicalvibes.carddata.scryfall.ScryfallOracleLoader;
 import com.github.laxika.magicalvibes.service.GameBroadcastService;
 import com.github.laxika.magicalvibes.service.battlefield.BattlefieldEntryService;
 import com.github.laxika.magicalvibes.service.battlefield.GameQueryService;
@@ -28,7 +23,6 @@ import org.springframework.stereotype.Component;
 import java.util.ArrayList;
 import java.util.EnumSet;
 import java.util.List;
-import java.util.Map;
 import java.util.Set;
 import java.util.UUID;
 
@@ -87,55 +81,7 @@ public class PermanentControlSupport {
         enterTappedTypesSnapshot.addAll(battlefieldEntryService.snapshotEnterTappedTypes(gameData));
         boolean isCreature = token.primaryType() == CardType.CREATURE;
         for (int i = 0; i < totalAmount; i++) {
-            Card tokenCard = new Card();
-            tokenCard.setName(token.tokenName());
-            tokenCard.setType(token.primaryType());
-            tokenCard.setManaCost("");
-            tokenCard.setToken(true);
-            tokenCard.setColor(token.color());
-            if (token.colors() != null && !token.colors().isEmpty()) {
-                tokenCard.setColors(token.colors().stream().toList());
-            }
-            if (isCreature) {
-                tokenCard.setPower(power);
-                tokenCard.setToughness(toughness);
-            }
-            tokenCard.setSubtypes(token.subtypes());
-            if (token.keywords() != null && !token.keywords().isEmpty()) {
-                tokenCard.setKeywords(token.keywords());
-            }
-            if (token.additionalTypes() != null && !token.additionalTypes().isEmpty()) {
-                tokenCard.setAdditionalTypes(token.additionalTypes());
-            }
-            if (token.legendary()) {
-                tokenCard.setSupertypes(Set.of(CardSupertype.LEGENDARY));
-            }
-            if (token.tokenEffects() != null) {
-                for (Map.Entry<EffectSlot, CardEffect> tokenEffect : token.tokenEffects().entrySet()) {
-                    tokenCard.addEffect(tokenEffect.getKey(), tokenEffect.getValue());
-                }
-            }
-            if (token.tokenAbilities() != null) {
-                for (ActivatedAbility ability : token.tokenAbilities()) {
-                    tokenCard.addActivatedAbility(ability);
-                }
-            }
-
-            // Look up token image from Scryfall token set
-            ScryfallOracleLoader.TokenImageData imageData;
-            if (isCreature) {
-                imageData = ScryfallOracleLoader.getTokenImage(
-                        sourceSetCode, token.tokenName(), power, toughness, token.color()
-                );
-            } else {
-                imageData = ScryfallOracleLoader.getTokenImage(
-                        sourceSetCode, token.tokenName(), token.color()
-                );
-            }
-            if (imageData != null) {
-                tokenCard.setSetCode(imageData.setCode());
-                tokenCard.setCollectorNumber(imageData.collectorNumber());
-            }
+            Card tokenCard = TokenCardFactory.create(token, power, toughness, sourceSetCode);
 
             Permanent tokenPermanent = new Permanent(tokenCard);
             if (token.initialPlusOnePlusOneCounters() > 0

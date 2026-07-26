@@ -555,30 +555,15 @@ public class DestructionSupport {
     }
 
     public void createTokenForPlayer(GameData gameData, UUID controllerId,
-                                      CreateTokenEffect token, String sourceName) {
+                                      CreateTokenEffect token, String sourceName, String sourceSetCode) {
         int tokenMultiplier = gameQueryService.getTokenMultiplier(gameData, controllerId);
         Set<CardType> enterTappedTypesSnapshot = EnumSet.noneOf(CardType.class);
         enterTappedTypesSnapshot.addAll(battlefieldEntryService.snapshotEnterTappedTypes(gameData));
         boolean isCreature = token.primaryType() == CardType.CREATURE;
 
         for (int copy = 0; copy < tokenMultiplier; copy++) {
-            Card tokenCard = new Card();
-            tokenCard.setName(token.tokenName());
-            tokenCard.setType(token.primaryType());
-            tokenCard.setManaCost("");
-            tokenCard.setToken(true);
-            tokenCard.setColor(token.color());
-            if (isCreature) {
-                tokenCard.setPower(token.tokenPower());
-                tokenCard.setToughness(token.tokenToughness());
-            }
-            tokenCard.setSubtypes(token.subtypes());
-            if (token.keywords() != null && !token.keywords().isEmpty()) {
-                tokenCard.setKeywords(token.keywords());
-            }
-            if (token.additionalTypes() != null && !token.additionalTypes().isEmpty()) {
-                tokenCard.setAdditionalTypes(token.additionalTypes());
-            }
+            Card tokenCard = TokenCardFactory.create(
+                    token, token.tokenPower(), token.tokenToughness(), sourceSetCode);
 
             Permanent tokenPermanent = new Permanent(tokenCard);
             battlefieldEntryService.putPermanentOntoBattlefield(gameData, controllerId, tokenPermanent, enterTappedTypesSnapshot);

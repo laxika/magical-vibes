@@ -6,9 +6,11 @@ import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardColor;
 import com.github.laxika.magicalvibes.model.Keyword;
 import com.github.laxika.magicalvibes.model.OracleData;
-import com.github.laxika.magicalvibes.carddata.scryfall.ScryfallOracleLoader;
-import com.github.laxika.magicalvibes.carddata.scryfall.ScryfallOracleLoader.TokenImageData;
-import com.github.laxika.magicalvibes.carddata.scryfall.ScryfallTypeLineParser;
+import com.github.laxika.magicalvibes.carddata.CardDataSupport;
+import com.github.laxika.magicalvibes.carddata.CardPrintingRegistry;
+import com.github.laxika.magicalvibes.carddata.CardPrintingRegistry.TokenImageData;
+import com.github.laxika.magicalvibes.carddata.OracleTextNormalizer;
+import com.github.laxika.magicalvibes.carddata.TypeLineParser;
 import tools.jackson.databind.JsonNode;
 import tools.jackson.databind.ObjectMapper;
 import tools.jackson.databind.json.JsonMapper;
@@ -30,8 +32,9 @@ import java.util.logging.Logger;
 
 /**
  * Loads the oracle registry from MTGJSON (https://mtgjson.com) set files instead of the Scryfall
- * API. Populates the exact same registries as {@link ScryfallOracleLoader} (oracle data, set
- * names, rarities, token images), so the two are interchangeable at startup: MTGJSON is either
+ * API. Populates the exact same registries as the Scryfall loader (oracle data via
+ * {@code Card.registerOracle}, set names, {@link CardPrintingRegistry}), so the two are
+ * interchangeable at startup: MTGJSON is either
  * selected via the {@code oracle.data-provider} property or used as a fallback when Scryfall is
  * unreachable.
  *
@@ -56,7 +59,7 @@ public class MtgjsonOracleLoader {
     private static final Map<String, Keyword> KEYWORD_MAP_LOWERCASE = new HashMap<>();
 
     static {
-        ScryfallOracleLoader.KEYWORD_MAP.forEach((name, keyword) ->
+        CardDataSupport.KEYWORD_MAP.forEach((name, keyword) ->
                 KEYWORD_MAP_LOWERCASE.put(name.toLowerCase(), keyword));
     }
 
@@ -83,7 +86,7 @@ public class MtgjsonOracleLoader {
                 for (Map.Entry<String, JsonNode> entry : frontFaces.entrySet()) {
                     JsonNode cardNode = entry.getValue();
                     if (cardNode.has("rarity")) {
-                        ScryfallOracleLoader.registerRarity(cardSet.getCode(), entry.getKey(),
+                        CardPrintingRegistry.registerRarity(cardSet.getCode(), entry.getKey(),
                                 cardNode.get("rarity").asText());
                     }
                 }
@@ -159,7 +162,7 @@ public class MtgjsonOracleLoader {
         } else {
             LOG.info("Fetching " + setCode + " from MTGJSON...");
             json = fetchFromMtgjson(setCode);
-            ScryfallOracleLoader.writeCacheFile(cacheFile, json);
+            CardDataSupport.writeCacheFile(cacheFile, json);
             LOG.info("Cached " + setCode + " to: " + cacheFile);
         }
 
@@ -193,7 +196,7 @@ public class MtgjsonOracleLoader {
 
     /**
      * Parses one MTGJSON card entry (a single face) into OracleData. Mirrors
-     * {@link ScryfallOracleLoader}'s front/back face handling: back faces prefer the color
+     * the Scryfall loader's front/back face handling: back faces prefer the color
      * indicator, drop the Transform keyword, and carry no loyalty or watermark.
      */
     static OracleData parseOracleData(JsonNode face, boolean isBackFace) {
@@ -208,7 +211,7 @@ public class MtgjsonOracleLoader {
         }
 
         String typeLine = face.has("type") ? face.get("type").asText() : "";
-        ScryfallTypeLineParser.ParsedTypeLine parsed = ScryfallTypeLineParser.parse(typeLine);
+        TypeLineParser.ParsedTypeLine parsed = TypeLineParser.parse(typeLine);
 
         CardColor color;
         List<CardColor> colors;
@@ -229,13 +232,14 @@ public class MtgjsonOracleLoader {
         if (face.has("text")) {
             String normalized = face.get("text").asText()
                     .replaceAll("(?m)^\\[([+\\u2212-]?[0-9X]+)\\]:", "$1:");
-            cardText = ScryfallOracleLoader.cleanCardText(normalized);
+            cardText = OracleTextNormalizer.capitalizeKeywordLines(
+                    OracleTextNormalizer.cleanCardText(normalized), face);
         }
 
-        Integer power = ScryfallOracleLoader.parseIntField(face, "power");
-        Integer toughness = ScryfallOracleLoader.parseIntField(face, "toughness");
-        Integer loyalty = isBackFace ? null : ScryfallOracleLoader.parseIntField(face, "loyalty");
-        Integer defense = isBackFace ? null : ScryfallOracleLoader.parseIntField(face, "defense");
+        Integer power = CardDataSupport.parseIntField(face, "power");
+        Integer toughness = CardDataSupport.parseIntField(face, "toughness");
+        Integer loyalty = isBackFace ? null : CardDataSupport.parseIntField(face, "loyalty");
+        Integer defense = isBackFace ? null : CardDataSupport.parseIntField(face, "defense");
 
         Set<Keyword> keywords = parseKeywords(face);
         if (isBackFace) {
@@ -291,17 +295,17 @@ public class MtgjsonOracleLoader {
             String name = tokenNode.has("faceName")
                     ? tokenNode.get("faceName").asText()
                     : tokenNode.get("name").asText();
-            Integer power = ScryfallOracleLoader.parseIntField(tokenNode, "power");
-            Integer toughness = ScryfallOracleLoader.parseIntField(tokenNode, "toughness");
+            Integer power = CardDataSupport.parseIntField(tokenNode, "power");
+            Integer toughness = CardDataSupport.parseIntField(tokenNode, "toughness");
             List<CardColor> colors = parseColorArray(tokenNode.get("colors"));
             CardColor color = colors.isEmpty() ? null : colors.get(0);
 
-            String key = ScryfallOracleLoader.buildTokenKey(name, power, toughness, color);
+            String key = CardPrintingRegistry.buildTokenKey(name, power, toughness, color);
             tokenMap.put(key, new TokenImageData(tokenSetCode, tokenNode.get("number").asText()));
         }
 
         if (!tokenMap.isEmpty()) {
-            ScryfallOracleLoader.registerTokenImages(setCode, tokenMap);
+            CardPrintingRegistry.registerTokenImages(setCode, tokenMap);
             LOG.info("Loaded " + tokenMap.size() + " token images for set " + setCode + " from MTGJSON");
         }
     }
@@ -318,7 +322,7 @@ public class MtgjsonOracleLoader {
         symbols.sort(null);
         List<CardColor> colors = new ArrayList<>();
         for (String symbol : symbols) {
-            CardColor mapped = ScryfallOracleLoader.COLOR_MAP.get(symbol);
+            CardColor mapped = CardDataSupport.COLOR_MAP.get(symbol);
             if (mapped != null) {
                 colors.add(mapped);
             }

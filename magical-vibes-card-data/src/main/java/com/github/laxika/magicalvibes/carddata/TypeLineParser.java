@@ -1,4 +1,4 @@
-package com.github.laxika.magicalvibes.carddata.scryfall;
+package com.github.laxika.magicalvibes.carddata;
 
 import com.github.laxika.magicalvibes.model.CardSubtype;
 import com.github.laxika.magicalvibes.model.CardSupertype;
@@ -11,9 +11,9 @@ import java.util.Map;
 import java.util.Set;
 import java.util.logging.Logger;
 
-public class ScryfallTypeLineParser {
+public class TypeLineParser {
 
-    private static final Logger LOG = Logger.getLogger(ScryfallTypeLineParser.class.getName());
+    private static final Logger LOG = Logger.getLogger(TypeLineParser.class.getName());
 
     private static final Map<String, CardSupertype> SUPERTYPE_MAP = Map.of(
             "Basic", CardSupertype.BASIC,

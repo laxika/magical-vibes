@@ -18,7 +18,7 @@ import java.util.EnumSet;
 import java.util.List;
 import java.util.Set;
 import java.util.UUID;
-import com.github.laxika.magicalvibes.carddata.scryfall.ScryfallOracleLoader;
+import com.github.laxika.magicalvibes.carddata.CardPrintingRegistry;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Component;
@@ -61,7 +61,7 @@ public class LivingWeaponEffectHandler implements NormalEffectHandlerBean {
 
                     // Look up token image from Scryfall token set
                     // Scryfall names this token "Germ" (subtypes are Phyrexian Germ)
-                    ScryfallOracleLoader.TokenImageData germImageData = ScryfallOracleLoader.getTokenImage(
+                    CardPrintingRegistry.TokenImageData germImageData = CardPrintingRegistry.getTokenImage(
                             entry.getCard().getSetCode(), "Germ", 0, 0, CardColor.BLACK
                     );
                     if (germImageData != null) {

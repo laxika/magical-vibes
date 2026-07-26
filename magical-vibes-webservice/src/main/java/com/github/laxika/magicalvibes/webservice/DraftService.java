@@ -44,7 +44,7 @@ import com.github.laxika.magicalvibes.service.battlefield.GameQueryService;
 import com.github.laxika.magicalvibes.service.effect.TargetValidationService;
 import com.github.laxika.magicalvibes.service.event.GameMutationCoordinator;
 import com.github.laxika.magicalvibes.service.target.TargetLegalityService;
-import com.github.laxika.magicalvibes.carddata.scryfall.ScryfallOracleLoader;
+import com.github.laxika.magicalvibes.carddata.CardPrintingRegistry;
 import com.github.laxika.magicalvibes.websocket.WebSocketSessionManager;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
@@ -171,7 +171,7 @@ public class DraftService {
                 continue;
             }
 
-            String rarity = ScryfallOracleLoader.getRarity(setCode, printing.collectorNumber());
+            String rarity = CardPrintingRegistry.getRarity(setCode, printing.collectorNumber());
             if (rarity == null) {
                 // Fallback: treat unknown rarity as common
                 commons.add(printing);

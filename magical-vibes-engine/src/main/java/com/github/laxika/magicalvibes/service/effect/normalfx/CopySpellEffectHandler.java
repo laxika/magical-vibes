@@ -9,9 +9,7 @@ import com.github.laxika.magicalvibes.model.StackEntry;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
 import com.github.laxika.magicalvibes.model.effect.CopySpellEffect;
 import com.github.laxika.magicalvibes.service.GameBroadcastService;
-import java.util.EnumSet;
 import java.util.List;
-import java.util.Set;
 import java.util.UUID;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -59,19 +57,19 @@ public class CopySpellEffectHandler implements NormalEffectHandlerBean {
         UUID copyControllerId = entry.getControllerId();
         Card copyCard = copySupport.createCopyCard(targetEntry.getCard());
         // Creature-copy mode (Choreographed Sparks): the copy is a token that gains haste and is
-        // sacrificed at the next end step. Haste rides on the token's own keywords; the sacrifice is
-        // registered when the token enters the battlefield (see BattlefieldEntryService).
+        // sacrificed at the next end step. The sacrifice is registered when the token enters the
+        // battlefield (see BattlefieldEntryService).
         if (copyEffect.tokenWithHaste()) {
             copyCard.setToken(true);
-            Set<Keyword> keywords = EnumSet.noneOf(Keyword.class);
-            if (copyCard.getKeywords() != null) {
-                keywords.addAll(copyCard.getKeywords());
-            }
-            keywords.add(Keyword.HASTE);
-            copyCard.setKeywords(keywords);
             copyCard.setSacrificeAtEndStep(copyEffect.sacrificeAtEndStep());
         }
         StackEntry copyEntry = copySupport.createCopyStackEntry(targetEntry, copyCard, copyControllerId, targetEntry.getTargetId());
+        if (copyEffect.tokenWithHaste()) {
+            // The copy *gains* haste — it is not printed on the copied card. Carrying it on the
+            // entry (drained into the permanent's granted keywords at resolution) keeps it out of
+            // the copied card's printed keywords, so the UI shows it as granted.
+            copyEntry.getGrantedKeywordsOnEntry().add(Keyword.HASTE);
+        }
 
         gameData.stack.add(copyEntry);
 

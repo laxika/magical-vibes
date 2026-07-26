@@ -78,4 +78,70 @@ class ScryfallOracleLoaderTest {
                 }
                 """);
     }
+
+    /**
+     * Scryfall capitalizes only the first keyword of a keyword list ("Trample, reach"); we
+     * capitalize all of them so the card face matches the granted-keyword line and the tooltip.
+     */
+    @Test
+    void capitalizesEveryKeywordInAKeywordList() {
+        OracleData data = ScryfallOracleLoader.parseOracleData(MAPPER.readTree("""
+                {
+                  "name": "Rancorous Archaic",
+                  "layout": "normal",
+                  "mana_cost": "{5}",
+                  "type_line": "Creature \\u2014 Avatar",
+                  "colors": [],
+                  "keywords": ["Trample", "Reach", "Converge"],
+                  "oracle_text": "Trample, reach\\nConverge \\u2014 This creature enters with a +1/+1 counter on it for each color of mana spent to cast it.",
+                  "power": "2",
+                  "toughness": "2"
+                }
+                """));
+
+        assertThat(data.cardText()).isEqualTo(
+                "Trample, Reach\nConverge — This creature enters with a +1/+1 counter on it for each color of mana spent to cast it.");
+    }
+
+    /** A keyword mentioned inside rules text is not part of a keyword list and stays lowercase. */
+    @Test
+    void leavesKeywordsMentionedInRulesTextAlone() {
+        OracleData data = ScryfallOracleLoader.parseOracleData(MAPPER.readTree("""
+                {
+                  "name": "Trample Granter",
+                  "layout": "normal",
+                  "mana_cost": "{1}{G}",
+                  "type_line": "Enchantment \\u2014 Aura",
+                  "colors": ["G"],
+                  "keywords": ["Enchant", "Trample", "Flying"],
+                  "oracle_text": "Enchant creature\\nFlying\\nEnchanted creature gets +2/+2 and has trample.\\nWhen this Aura is put into a graveyard, draw a card, then discard a card."
+                }
+                """));
+
+        assertThat(data.cardText()).isEqualTo("""
+                Enchant creature
+                Flying
+                Enchanted creature gets +2/+2 and has trample.
+                When this Aura is put into a graveyard, draw a card, then discard a card.""");
+    }
+
+    /** Keywords that carry a parameter are matched on their leading word. */
+    @Test
+    void capitalizesParameterizedKeywords() {
+        OracleData data = ScryfallOracleLoader.parseOracleData(MAPPER.readTree("""
+                {
+                  "name": "Warded Sentry",
+                  "layout": "normal",
+                  "mana_cost": "{2}{W}",
+                  "type_line": "Creature \\u2014 Soldier",
+                  "colors": ["W"],
+                  "keywords": ["Flying", "Ward", "Protection"],
+                  "oracle_text": "Flying, ward {2}, protection from red",
+                  "power": "2",
+                  "toughness": "3"
+                }
+                """));
+
+        assertThat(data.cardText()).isEqualTo("Flying, Ward {2}, Protection from red");
+    }
 }

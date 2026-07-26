@@ -60,7 +60,8 @@ public class ExileTargetPermanentEffectHandler implements NormalEffectHandlerBea
 
             // Create a token for the exiled permanent's controller if specified
             if (exile.tokenForController() != null && controllerId != null) {
-                destructionSupport.createTokenForPlayer(gameData, controllerId, exile.tokenForController(), entry.getCard().getName());
+                destructionSupport.createTokenForPlayer(gameData, controllerId, exile.tokenForController(),
+                        entry.getCard().getName(), entry.getCard().getSetCode());
             }
         }
 

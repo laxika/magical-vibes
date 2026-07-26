@@ -17,7 +17,7 @@ import com.github.laxika.magicalvibes.service.battlefield.GameQueryService;
 import java.util.EnumSet;
 import java.util.Set;
 import java.util.UUID;
-import com.github.laxika.magicalvibes.carddata.scryfall.ScryfallOracleLoader;
+import com.github.laxika.magicalvibes.carddata.CardPrintingRegistry;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Component;
@@ -60,7 +60,7 @@ public class CreateLifeTotalAvatarTokenEffectHandler implements NormalEffectHand
                     tokenCard.addEffect(EffectSlot.STATIC,
                             new SetPowerToughnessToAmountEffect(new ControllerLifeTotal(), new ControllerLifeTotal()));
 
-                    ScryfallOracleLoader.TokenImageData imageData = ScryfallOracleLoader.getTokenImage(
+                    CardPrintingRegistry.TokenImageData imageData = CardPrintingRegistry.getTokenImage(
                             entry.getCard().getSetCode(), e.tokenName(), 0, 0, e.color()
                     );
                     if (imageData != null) {

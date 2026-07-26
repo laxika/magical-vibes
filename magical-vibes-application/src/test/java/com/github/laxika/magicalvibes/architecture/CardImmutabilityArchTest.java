@@ -46,9 +46,8 @@ class CardImmutabilityArchTest {
             "CopySpellEffectHandler",  // decorates the fresh spell-copy card
             "MayCopyHandlerService",   // re-adds the copy ability on the fresh clone-copy card
             "BecomeCopyOfDyingCreatureEffectHandler", // "except it has this ability" on the fresh clone-copy card (Cemetery Puca)
-            "DestructionSupport",
+            "TokenCardFactory",        // assembles the fresh token card it just instantiated
             "GraveyardReturnSupport",
-            "PermanentControlSupport",
             "LivingWeaponEffectHandler",
             "ExileCreaturesFromGraveyardAndCreateTokensEffectHandler",
             "MeldWithNamedCreatureEffectHandler"); // stamps the set code on the fresh meld-result card it just instantiated

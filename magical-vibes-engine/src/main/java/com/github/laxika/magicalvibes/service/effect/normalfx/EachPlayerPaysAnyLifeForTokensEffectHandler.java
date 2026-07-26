@@ -112,7 +112,9 @@ public class EachPlayerPaysAnyLifeForTokensEffectHandler implements NormalEffect
         for (UUID playerId : state.order) {
             int count = state.lifePaid.getOrDefault(playerId, 0);
             for (int i = 0; i < count; i++) {
-                destructionSupport.createTokenForPlayer(gameData, playerId, effect.token(), cardName);
+                // Only the source card's name survives the pay-life interaction, not its set, so
+                // these tokens keep the artless fallback they have always had.
+                destructionSupport.createTokenForPlayer(gameData, playerId, effect.token(), cardName, null);
             }
         }
         state.reset();
