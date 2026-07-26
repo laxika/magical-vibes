@@ -169,14 +169,76 @@
   --frame-accent: #8a6a1f;
 }
 
-/* Lands and colourless artifacts have no CardColor at all, so without these they
-   both fall through to the default frame and are indistinguishable at a glance on
-   a crowded battlefield. Printed frames give lands an earthy tan and artifacts
-   steel. A *coloured* artifact keeps its colour frame exactly as it does in print,
-   so data-frame only claims the colourless case (see frameStyle). */
+/* Colourless lands and colourless artifacts would otherwise both fall through to the
+   default frame and be indistinguishable at a glance on a crowded battlefield. Printed
+   frames give lands an earthy tan and artifacts steel. A *coloured* artifact keeps its
+   colour frame exactly as it does in print, so data-frame only claims the colourless
+   case (see frameStyle). This tan is now specifically the *colourless* land — Wastes,
+   Ancient Tomb — because any land that makes coloured mana is caught by the tinted
+   rules below. */
 :host([data-frame="land"]) {
   background: linear-gradient(170deg, #a98459 0%, #8a6640 45%, #4a3320 100%);
   --frame-accent: #4f3f28;
+}
+
+/* A printed Mountain is not that tan: its frame is a warm red-brown, an Island's a
+   blue-grey, each tinted toward the mana it makes. The tint is available here because
+   the loaders already fill a land's `colors` from its colour identity (see
+   ScryfallOracleLoader#parseColors — Scryfall itself reports lands as colourless), so a
+   Mountain reaches the client as RED and sets data-card-color like any red card.
+
+   Muted rather than a copy of the spell ramps above. At battlefield zoom the frame is most
+   of what is visible, so handing a Mountain a red spell's exact gradient would spend the
+   land/spell read the tan was introduced to protect. Each ramp therefore sits at roughly
+   the spell colour's *hue* but well short of its saturation — a land is the duller of the
+   two, not merely a different one.
+
+   Matching the hue is the part that has to be deliberate. The tan above is itself an
+   orange-brown at about 32°, so a red-brown a few degrees off it is still legible as
+   "brown" and fixes nothing; these are pulled onto the spell hue (red ~11°, blue ~208°,
+   green ~90°, black's cool grey, white's gold) far enough to name the colour on sight.
+
+   Two attributes outrank both single-attribute rules, so these win on specificity and do
+   not depend on sitting after the colour ramps the way the tan above depends on it. */
+:host([data-frame="land"][data-card-color="RED"]) {
+  background: linear-gradient(170deg, #9c5140 0%, #7d3a2c 45%, #421a13 100%);
+  --frame-accent: #5a2a1e;
+}
+
+:host([data-frame="land"][data-card-color="BLUE"]) {
+  background: linear-gradient(170deg, #3f6280 0%, #2f4d67 45%, #16283a 100%);
+  --frame-accent: #24384a;
+}
+
+:host([data-frame="land"][data-card-color="GREEN"]) {
+  background: linear-gradient(170deg, #4d6b30 0%, #3b5424 45%, #1e2d11 100%);
+  --frame-accent: #2c3f1a;
+}
+
+/* Cool slate, not the brown-grey the tan would suggest, so a Swamp reads as black mana
+   next to the neutral land frame instead of as a dimmer Wastes. */
+:host([data-frame="land"][data-card-color="BLACK"]) {
+  background: linear-gradient(170deg, #46464e 0%, #31313a 45%, #16161c 100%);
+  --frame-accent: #2a2a32;
+}
+
+/* The one that has to fight the tan hardest: gold and sand share a hue, so this separates
+   itself on lightness instead, sitting clearly paler than the tan rather than beside it.
+   No `color` override though, unlike the white *spell* frame above — that frame is pale all
+   the way down, whereas this ramp ends dark, and the only text on the frame rather than on
+   a parchment plate is the credit line at the very bottom, where the default light ink
+   reads against it exactly as it does on the tan. */
+:host([data-frame="land"][data-card-color="WHITE"]) {
+  background: linear-gradient(170deg, #ddc894 0%, #bfa771 45%, #6b5c3c 100%);
+  --frame-accent: #6d5e3c;
+}
+
+/* Dual and tri lands. The gradient arrives as an inline style from multicolorBackground,
+   which beats anything declared here, so only the accent is left to set — and that getter
+   builds the gradient from the earthy palette above rather than the spell colours, so a
+   Sacred Foundry sits in the same value range as the Mountain beside it. */
+:host([data-frame="land"][data-card-color="MULTICOLOR"]) {
+  --frame-accent: #574526;
 }
 
 :host([data-frame="artifact"]) {

@@ -306,6 +306,20 @@ export class CardDisplayComponent implements OnInit, OnChanges, OnDestroy, After
     'WHITE': '#f0e6b2',
   };
 
+  /**
+   * The same five colours in the earthy value range the tinted land frames use (these are
+   * the midpoints of those ramps). A dual land is multicoloured by colour identity, so it
+   * reaches multicolorBackground like any gold card would; blending the saturated spell
+   * colours above would leave one shock land glowing beside a Mountain drawn in mud.
+   */
+  private static readonly LAND_COLOR_CSS_MAP: Record<string, string> = {
+    'BLACK': '#31313a',
+    'GREEN': '#3b5424',
+    'BLUE': '#2f4d67',
+    'RED': '#7d3a2c',
+    'WHITE': '#bfa771',
+  };
+
   @HostBinding('class.token-card')
   get isToken(): boolean {
     return this.card.token;
@@ -326,8 +340,11 @@ export class CardDisplayComponent implements OnInit, OnChanges, OnDestroy, After
     if (!colors || colors.length <= 1) {
       return null;
     }
+    const palette = hasCardType(this.card, 'LAND')
+      ? CardDisplayComponent.LAND_COLOR_CSS_MAP
+      : CardDisplayComponent.COLOR_CSS_MAP;
     const cssColors = colors
-      .map(c => CardDisplayComponent.COLOR_CSS_MAP[c])
+      .map(c => palette[c])
       .filter((c): c is string => c != null);
     if (cssColors.length < 2) {
       return null;
@@ -342,11 +359,16 @@ export class CardDisplayComponent implements OnInit, OnChanges, OnDestroy, After
   }
 
   /**
-   * Frame treatment for cards that have no CardColor at all — without it lands and
-   * colourless artifacts share the default frame and cannot be told apart on the
-   * battlefield. A *coloured* artifact keeps its colour frame, as it does in print,
-   * so this returns null once the card has any colour. Artifact lands take the land
-   * frame, which is also how they are printed. Everything else colourless — Eldrazi,
+   * Frame treatment beyond the plain colour ramps — without it lands and colourless
+   * artifacts share the default frame and cannot be told apart on the battlefield.
+   *
+   * Lands claim their frame before the colour check, and unconditionally: a land that
+   * makes coloured mana still wants a land frame, so the CSS pairs this attribute with
+   * data-card-color to *tint* the earthy frame rather than let the colour ramp replace
+   * it. Artifact lands take the land frame too, which is how they are printed.
+   *
+   * A *coloured* artifact keeps its colour frame, as it does in print, so this returns
+   * null once a non-land card has any colour. Everything else colourless — Eldrazi,
    * devoid cards — takes the pale colourless frame it is printed with, rather than
    * falling through to the default brown that also stands in for "no colour data".
    */
