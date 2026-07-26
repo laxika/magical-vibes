@@ -1,64 +1,66 @@
 package com.github.laxika.magicalvibes.service;
 
 import com.github.laxika.magicalvibes.model.GameData;
-import com.github.laxika.magicalvibes.model.GameStatus;
 import com.github.laxika.magicalvibes.model.PendingInteraction;
-import com.github.laxika.magicalvibes.model.event.GameEventAudience;
-import com.github.laxika.magicalvibes.model.event.GameEventFact;
+import com.github.laxika.magicalvibes.networking.message.SelectCardsToBottomMessage;
 import com.github.laxika.magicalvibes.service.event.GameMutationCoordinator;
+import com.github.laxika.magicalvibes.service.event.InteractionPromptProjectionRegistry;
 import lombok.RequiredArgsConstructor;
-import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
 
 import java.util.UUID;
 
-@Slf4j
+/**
+ * Replays only the currently authoritative decision to an authorized reconnecting player.
+ *
+ * <p>Reconnect is an observation, not a game mutation: it reuses the canonical interaction
+ * projection registry directly and never allocates an event, state version, sequence, or new
+ * decision identity.
+ */
 @Service
 @RequiredArgsConstructor
 public class ReconnectionService {
 
     private final GameMutationCoordinator mutationCoordinator;
+    private final InteractionPromptProjectionRegistry interactionPromptProjectionRegistry;
+    private final GameMessageTransport transport;
 
     public void resendAwaitingInput(GameData gameData, UUID playerId) {
+        mutationCoordinator.observe(
+                gameData,
+                () -> currentReplay(gameData, playerId),
+                replay -> {
+                    if (replay != null) {
+                        transport.sendToPlayer(replay.recipientId(), replay.message());
+                    }
+                });
+    }
+
+    private Replay currentReplay(GameData gameData, UUID reconnectingPlayerId) {
+        if (gameData.simulation) {
+            return null;
+        }
+
         PendingInteraction active = gameData.interaction.activeInteraction();
         if (active != null) {
             UUID recipientId = decisionRecipient(gameData, active.decidingPlayerId());
-            if (playerId.equals(recipientId)) {
-                mutationCoordinator.emit(gameData,
-                        new GameEventFact.DecisionRequested(
-                                gameData.interaction.activeDecisionId(),
-                                active.decidingPlayerId(),
-                                decisionKind(active),
-                                GameEventFact.DecisionDelivery.REPLAY_REQUESTED),
-                        GameEventAudience.player(recipientId));
+            if (!reconnectingPlayerId.equals(recipientId)
+                    || gameData.interaction.activeDecisionId() == null) {
+                return null;
             }
-            return;
+            return interactionPromptProjectionRegistry.project(gameData, active)
+                    .map(message -> new Replay(recipientId, message))
+                    .orElse(null);
         }
 
-        UUID bottomDecisionId = gameData.playerBottomDecisionIds.get(playerId);
-        if (bottomDecisionId != null && gameData.playerNeedsToBottom.containsKey(playerId)) {
-            mutationCoordinator.emit(gameData,
-                    new GameEventFact.DecisionRequested(
-                            bottomDecisionId,
-                            playerId,
-                            GameEventFact.DecisionKind.CARDS_TO_BOTTOM,
-                            GameEventFact.DecisionDelivery.REPLAY_REQUESTED),
-                    GameEventAudience.player(playerId));
-            return;
+        UUID bottomDecisionId = gameData.playerBottomDecisionIds.get(reconnectingPlayerId);
+        Integer bottomCount = gameData.playerNeedsToBottom.get(reconnectingPlayerId);
+        if (bottomDecisionId != null && bottomCount != null) {
+            return new Replay(
+                    reconnectingPlayerId, new SelectCardsToBottomMessage(bottomCount));
         }
 
-        UUID mulliganDecisionId = gameData.playerMulliganDecisionIds.get(playerId);
-        if (gameData.status == GameStatus.MULLIGAN
-                && mulliganDecisionId != null
-                && !gameData.playerKeptHand.contains(playerId)) {
-            mutationCoordinator.emit(gameData,
-                    new GameEventFact.DecisionRequested(
-                            mulliganDecisionId,
-                            playerId,
-                            GameEventFact.DecisionKind.MULLIGAN,
-                            GameEventFact.DecisionDelivery.REPLAY_REQUESTED),
-                    GameEventAudience.player(playerId));
-        }
+        return null;
     }
 
     private static UUID decisionRecipient(GameData gameData, UUID decidingPlayerId) {
@@ -69,16 +71,6 @@ public class ReconnectionService {
         return decidingPlayerId;
     }
 
-    private static GameEventFact.DecisionKind decisionKind(PendingInteraction interaction) {
-        if (interaction instanceof PendingInteraction.AttackerDeclaration) {
-            return GameEventFact.DecisionKind.ATTACKER_DECLARATION;
-        }
-        if (interaction instanceof PendingInteraction.BlockerDeclaration) {
-            return GameEventFact.DecisionKind.BLOCKER_DECLARATION;
-        }
-        if (interaction instanceof PendingInteraction.CombatDamageAssignment) {
-            return GameEventFact.DecisionKind.COMBAT_DAMAGE_ASSIGNMENT;
-        }
-        return GameEventFact.DecisionKind.INTERACTION;
+    private record Replay(UUID recipientId, Object message) {
     }
 }

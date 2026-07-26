@@ -4,7 +4,6 @@ import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.GameData;
 import com.github.laxika.magicalvibes.model.GameStatus;
 import com.github.laxika.magicalvibes.model.ManaPool;
-import com.github.laxika.magicalvibes.model.PendingInteraction;
 import com.github.laxika.magicalvibes.model.Player;
 import com.github.laxika.magicalvibes.model.StackEntry;
 import com.github.laxika.magicalvibes.model.StackEntryType;
@@ -280,63 +279,6 @@ class GameLifecycleEventSequenceTest {
                         com.github.laxika.magicalvibes.model.event.GameEventKind.MULLIGAN_RESOLVED,
                         com.github.laxika.magicalvibes.model.event.GameEventKind.DECISION_REQUESTED,
                         com.github.laxika.magicalvibes.model.event.GameEventKind.DECISION_REQUESTED);
-    }
-
-    @Test
-    void reconnectReplaysEveryPendingDecisionWithItsStableIdentity() {
-        ReconnectionService reconnect = new ReconnectionService(coordinator);
-        List<PendingInteraction> interactions = List.of(
-                new PendingInteraction.PermanentChoice(
-                        player1Id, List.of(), List.of(), null, "Choose."),
-                new PendingInteraction.AttackerDeclaration(player1Id),
-                new PendingInteraction.BlockerDeclaration(player1Id),
-                new PendingInteraction.CombatDamageAssignment(
-                        player1Id, 0, UUID.randomUUID(), "Attacker", 3,
-                        List.of(), false, false, false));
-        List<GameEventFact.DecisionKind> kinds = List.of(
-                GameEventFact.DecisionKind.INTERACTION,
-                GameEventFact.DecisionKind.ATTACKER_DECLARATION,
-                GameEventFact.DecisionKind.BLOCKER_DECLARATION,
-                GameEventFact.DecisionKind.COMBAT_DAMAGE_ASSIGNMENT);
-
-        for (int i = 0; i < interactions.size(); i++) {
-            gameData.interaction.beginInteraction(interactions.get(i));
-            UUID decisionId = gameData.interaction.activeDecisionId();
-            coordinator.mutate(gameData,
-                    () -> reconnect.resendAwaitingInput(gameData, player1Id));
-            assertReplay(lastFacts(), decisionId, kinds.get(i));
-            gameData.interaction.clearAwaitingInput();
-        }
-
-        UUID bottomId = UUID.randomUUID();
-        gameData.playerNeedsToBottom.put(player1Id, 2);
-        gameData.playerBottomDecisionIds.put(player1Id, bottomId);
-        coordinator.mutate(gameData,
-                () -> reconnect.resendAwaitingInput(gameData, player1Id));
-        assertReplay(lastFacts(), bottomId, GameEventFact.DecisionKind.CARDS_TO_BOTTOM);
-
-        gameData.playerNeedsToBottom.clear();
-        gameData.playerBottomDecisionIds.clear();
-        gameData.status = GameStatus.MULLIGAN;
-        UUID mulliganId = UUID.randomUUID();
-        gameData.playerMulliganDecisionIds.put(player1Id, mulliganId);
-        coordinator.mutate(gameData,
-                () -> reconnect.resendAwaitingInput(gameData, player1Id));
-        assertReplay(lastFacts(), mulliganId, GameEventFact.DecisionKind.MULLIGAN);
-    }
-
-    private void assertReplay(
-            List<GameEventFact> facts,
-            UUID decisionId,
-            GameEventFact.DecisionKind kind) {
-        assertThat(facts)
-                .singleElement()
-                .isInstanceOfSatisfying(GameEventFact.DecisionRequested.class, decision -> {
-                    assertThat(decision.decisionId()).isEqualTo(decisionId);
-                    assertThat(decision.decisionKind()).isEqualTo(kind);
-                    assertThat(decision.delivery())
-                            .isEqualTo(GameEventFact.DecisionDelivery.REPLAY_REQUESTED);
-                });
     }
 
     private List<GameEventFact> lastFacts() {

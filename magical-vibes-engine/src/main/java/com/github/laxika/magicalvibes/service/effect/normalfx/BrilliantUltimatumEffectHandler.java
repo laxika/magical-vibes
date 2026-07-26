@@ -4,12 +4,13 @@ import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardPileDisposition;
 import com.github.laxika.magicalvibes.model.GameData;
 import com.github.laxika.magicalvibes.model.GameLog;
+import com.github.laxika.magicalvibes.model.PendingInteraction;
 import com.github.laxika.magicalvibes.model.PendingPileSeparation;
 import com.github.laxika.magicalvibes.model.StackEntry;
 import com.github.laxika.magicalvibes.model.effect.BrilliantUltimatumEffect;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
 import com.github.laxika.magicalvibes.service.GameBroadcastService;
-import com.github.laxika.magicalvibes.service.input.PlayerInputService;
+import com.github.laxika.magicalvibes.service.interaction.InteractionHandlerRegistry;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
@@ -32,7 +33,7 @@ import org.springframework.stereotype.Component;
 public class BrilliantUltimatumEffectHandler implements NormalEffectHandlerBean {
 
     private final GameBroadcastService gameBroadcastService;
-    private final PlayerInputService playerInputService;
+    private final InteractionHandlerRegistry interactionHandlerRegistry;
 
     @Override
     public Class<? extends CardEffect> handledEffect() {
@@ -77,7 +78,9 @@ public class BrilliantUltimatumEffectHandler implements NormalEffectHandlerBean 
         gameData.queueInteraction(new PendingPileSeparation(controllerId, opponentId,
                 List.of(), exiledCards, cardOwners, List.of(), List.of(), CardPileDisposition.PLAY_FROM_EXILE));
 
-        playerInputService.beginMultiGraveyardChoice(gameData, opponentId, exiledCards, exiledCards.size(),
-                "Separate the exiled cards into two piles. Select cards for Pile 1 (unselected form Pile 2).");
+        interactionHandlerRegistry.begin(
+                gameData,
+                new PendingInteraction.BrilliantUltimatumPileSeparationChoice(
+                        opponentId, exiledCards.stream().map(Card::getId).toList()));
     }
 }

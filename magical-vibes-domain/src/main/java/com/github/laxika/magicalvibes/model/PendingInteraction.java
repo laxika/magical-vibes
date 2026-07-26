@@ -24,6 +24,8 @@ public sealed interface PendingInteraction permits PermanentChoiceContext,
         PendingInteraction.HandTopBottomChoice, PendingInteraction.LibraryReorder,
         PendingInteraction.MayAbilityChoice, PendingInteraction.KnowledgePoolCastChoice,
         PendingInteraction.ImprovisationCapstoneCastChoice,
+        PendingInteraction.BrilliantUltimatumPileSeparationChoice,
+        PendingInteraction.BrilliantUltimatumPileChoice,
         PendingInteraction.BrilliantUltimatumPlayChoice,
         PendingInteraction.MirrorOfFateChoice, PendingInteraction.KeepCardsInHandChoice,
         PendingInteraction.DoomsdayChoice,
@@ -186,6 +188,10 @@ public sealed interface PendingInteraction permits PermanentChoiceContext,
     record KnowledgePoolCastChoice(UUID playerId, java.util.List<UUID> validCardIds, int maxCount)
             implements PendingInteraction {
 
+        public KnowledgePoolCastChoice {
+            validCardIds = java.util.List.copyOf(validCardIds);
+        }
+
         @Override
         public UUID decidingPlayerId() {
             return playerId;
@@ -203,6 +209,10 @@ public sealed interface PendingInteraction permits PermanentChoiceContext,
     record ImprovisationCapstoneCastChoice(UUID playerId, java.util.List<UUID> validCardIds, int maxCount)
             implements PendingInteraction {
 
+        public ImprovisationCapstoneCastChoice {
+            validCardIds = java.util.List.copyOf(validCardIds);
+        }
+
         @Override
         public UUID decidingPlayerId() {
             return playerId;
@@ -215,6 +225,55 @@ public sealed interface PendingInteraction permits PermanentChoiceContext,
     }
 
     /**
+     * Brilliant Ultimatum: the opponent separates the exiled cards into two piles by choosing
+     * which cards belong to pile 1. Unselected cards form pile 2. Only stable card identities are
+     * retained; presentation is reconstructed by the interaction projection registry.
+     */
+    record BrilliantUltimatumPileSeparationChoice(
+            UUID playerId, java.util.List<UUID> validCardIds) implements PendingInteraction {
+
+        public BrilliantUltimatumPileSeparationChoice {
+            validCardIds = java.util.List.copyOf(validCardIds);
+        }
+
+        @Override
+        public UUID decidingPlayerId() {
+            return playerId;
+        }
+
+        @Override
+        public InteractionOptions legalOptions() {
+            return new InteractionOptions.MultiCardPick(validCardIds, 0, validCardIds.size());
+        }
+    }
+
+    /**
+     * Brilliant Ultimatum: after the opponent has made two piles, the controller chooses pile 1
+     * (accept) or pile 2 (decline). The immutable pile identities let initial delivery and
+     * reconnect replay use the same projection.
+     */
+    record BrilliantUltimatumPileChoice(
+            UUID playerId,
+            java.util.List<UUID> pile1CardIds,
+            java.util.List<UUID> pile2CardIds) implements PendingInteraction {
+
+        public BrilliantUltimatumPileChoice {
+            pile1CardIds = java.util.List.copyOf(pile1CardIds);
+            pile2CardIds = java.util.List.copyOf(pile2CardIds);
+        }
+
+        @Override
+        public UUID decidingPlayerId() {
+            return playerId;
+        }
+
+        @Override
+        public InteractionOptions legalOptions() {
+            return InteractionOptions.ACCEPT_DECLINE;
+        }
+    }
+
+    /**
      * Brilliant Ultimatum: after an opponent has separated the exiled cards into two piles and the
      * controller has chosen one, {@code playerId} chooses any number of the chosen pile's cards
      * ({@code validCardIds}, in pile order) to play — lands are put onto the battlefield (subject
@@ -223,6 +282,10 @@ public sealed interface PendingInteraction permits PermanentChoiceContext,
      */
     record BrilliantUltimatumPlayChoice(UUID playerId, java.util.List<UUID> validCardIds, int maxCount)
             implements PendingInteraction {
+
+        public BrilliantUltimatumPlayChoice {
+            validCardIds = java.util.List.copyOf(validCardIds);
+        }
 
         @Override
         public UUID decidingPlayerId() {
@@ -242,6 +305,10 @@ public sealed interface PendingInteraction permits PermanentChoiceContext,
      */
     record MirrorOfFateChoice(UUID playerId, java.util.List<UUID> validCardIds, int maxCount)
             implements PendingInteraction {
+
+        public MirrorOfFateChoice {
+            validCardIds = java.util.List.copyOf(validCardIds);
+        }
 
         @Override
         public UUID decidingPlayerId() {
@@ -265,6 +332,11 @@ public sealed interface PendingInteraction permits PermanentChoiceContext,
     record KeepCardsInHandChoice(UUID playerId, java.util.List<UUID> validCardIds, int keepCount,
                                  java.util.List<UUID> remainingPlayerIds, String cardName)
             implements PendingInteraction {
+
+        public KeepCardsInHandChoice {
+            validCardIds = java.util.List.copyOf(validCardIds);
+            remainingPlayerIds = java.util.List.copyOf(remainingPlayerIds);
+        }
 
         /** The maximum number of cards this player may keep (bounded by their hand size). */
         public int maxCount() {
@@ -290,6 +362,10 @@ public sealed interface PendingInteraction permits PermanentChoiceContext,
      */
     record DoomsdayChoice(UUID playerId, java.util.List<Card> pool, int maxCount)
             implements PendingInteraction {
+
+        public DoomsdayChoice {
+            pool = java.util.List.copyOf(pool);
+        }
 
         /** The selectable card IDs, in begin-time pool order. */
         public java.util.List<UUID> validCardIds() {
@@ -317,6 +393,10 @@ public sealed interface PendingInteraction permits PermanentChoiceContext,
     record SearchLibraryToTopChoice(UUID playerId, java.util.List<Card> pool, String subtypeLabel)
             implements PendingInteraction {
 
+        public SearchLibraryToTopChoice {
+            pool = java.util.List.copyOf(pool);
+        }
+
         /** The selectable card IDs, in begin-time pool order. */
         public java.util.List<UUID> validCardIds() {
             return pool.stream().map(Card::getId).toList();
@@ -343,8 +423,14 @@ public sealed interface PendingInteraction permits PermanentChoiceContext,
      */
     record PermanentAuctionChoice(UUID choosingPlayerId, java.util.List<Card> pool,
                                   java.util.List<UUID> playerOrder,
-                                  java.util.List<PermanentAuctionPlacement> placed, String prompt)
+                                  java.util.List<PermanentAuctionPlacement> placed)
             implements PendingInteraction {
+
+        public PermanentAuctionChoice {
+            pool = java.util.List.copyOf(pool);
+            playerOrder = java.util.List.copyOf(playerOrder);
+            placed = java.util.List.copyOf(placed);
+        }
 
         /** The selectable card IDs, in current pool order. */
         public java.util.List<UUID> validCardIds() {
@@ -371,11 +457,13 @@ public sealed interface PendingInteraction permits PermanentChoiceContext,
      * top the {@code highBid} for control of the target creature. A bid greater than {@code highBid}
      * (up to {@code maxBid}) tops it; any value {@code <= highBid} is a pass. The bid is a life loss,
      * so {@code maxBid} is a generous cap that lets a player bid more life than they have. The numeric
-     * prompt reuses the X-value-choice wire message ({@code prompt}/{@code cardName}); the answer
+     * prompt reuses the X-value-choice wire message; {@code targetPermanentId} and
+     * {@code highBidderId} are the immutable identities needed to reconstruct its text. The answer
      * ({@link com.github.laxika.magicalvibes.model.effect.CardEffect}-agnostic {@code NumberChosen})
      * re-runs the auction handler, which advances to the next bidder or finishes.
      */
-    record IllicitAuctionBidChoice(UUID playerId, int highBid, int maxBid, String cardName, String prompt)
+    record IllicitAuctionBidChoice(UUID playerId, int highBid, int maxBid, String cardName,
+                                   UUID targetPermanentId, UUID highBidderId)
             implements PendingInteraction {
 
         @Override
@@ -560,8 +648,13 @@ public sealed interface PendingInteraction permits PermanentChoiceContext,
     record RevealCardsDiscardChoice(UUID decidingPlayerId, UUID targetPlayerId, UUID controllerId,
                                     boolean revealStage, java.util.List<Integer> validIndices,
                                     int remainingCount, java.util.List<UUID> revealedCardIds,
-                                    String prompt, int discardCount) implements PendingInteraction {
+                                    int discardCount) implements PendingInteraction {
         // The decidingPlayerId component accessor doubles as the interface override.
+
+        public RevealCardsDiscardChoice {
+            validIndices = java.util.List.copyOf(validIndices);
+            revealedCardIds = java.util.List.copyOf(revealedCardIds);
+        }
 
         @Override
         public InteractionOptions legalOptions() {
@@ -862,6 +955,11 @@ public sealed interface PendingInteraction permits PermanentChoiceContext,
                                                java.util.List<Card> cards, int maxCount, boolean topOnly)
             implements PendingInteraction {
 
+        public PutCardsFromHandOnLibraryCardChoice {
+            validCardIds = java.util.List.copyOf(validCardIds);
+            cards = java.util.List.copyOf(cards);
+        }
+
         @Override
         public UUID decidingPlayerId() {
             return playerId;
@@ -883,6 +981,10 @@ public sealed interface PendingInteraction permits PermanentChoiceContext,
 
         /** The exact option strings the handler's prompt offers and its answer parser matches. */
         public static final java.util.List<String> OPTIONS = java.util.List.of("Top", "Bottom");
+
+        public PutCardsFromHandOnLibraryDestinationChoice {
+            chosenCardIds = java.util.List.copyOf(chosenCardIds);
+        }
 
         @Override
         public UUID decidingPlayerId() {
@@ -906,6 +1008,10 @@ public sealed interface PendingInteraction permits PermanentChoiceContext,
      */
     record SylvanLibraryChoice(UUID playerId, java.util.List<UUID> drawnThisTurnCardIds, int resolveCount)
             implements PendingInteraction {
+
+        public SylvanLibraryChoice {
+            drawnThisTurnCardIds = java.util.List.copyOf(drawnThisTurnCardIds);
+        }
 
         @Override
         public UUID decidingPlayerId() {

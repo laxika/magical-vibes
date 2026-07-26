@@ -21,9 +21,10 @@ import com.github.laxika.magicalvibes.model.StackEntryType;
 import com.github.laxika.magicalvibes.model.effect.ExileTargetPermanentEffect;
 import com.github.laxika.magicalvibes.model.effect.KnowledgePoolExileAndCastEffect;
 import com.github.laxika.magicalvibes.model.effect.MillHalfLibraryEffect;
-import com.github.laxika.magicalvibes.networking.SessionManager;
+import com.github.laxika.magicalvibes.networking.message.InteractionPromptMessage;
 import com.github.laxika.magicalvibes.networking.model.CardView;
 import com.github.laxika.magicalvibes.networking.service.CardViewFactory;
+import com.github.laxika.magicalvibes.service.event.InteractionPromptProjectionRegistry;
 import com.github.laxika.magicalvibes.service.interaction.InteractionHandlerRegistry;
 import com.github.laxika.magicalvibes.service.interaction.KnowledgePoolCastChoiceInteractionHandler;
 import com.github.laxika.magicalvibes.service.GameBroadcastService;
@@ -62,7 +63,6 @@ class KnowledgePoolExileAndCastEffectHandlerTest {
     @Mock private PermanentRemovalService permanentRemovalService;
     @Mock private PlayerInputService playerInputService;
     @Mock private CardViewFactory cardViewFactory;
-    @Mock private SessionManager sessionManager;
     @Mock private TriggerCollectionService triggerCollectionService;
     @Mock private BattlefieldEntryService battlefieldEntryService;
     @Mock private ExileService exileService;
@@ -276,7 +276,13 @@ class KnowledgePoolExileAndCastEffectHandlerTest {
                 assertThat(gd.interaction.activeInteraction()).isInstanceOf(PendingInteraction.KnowledgePoolCastChoice.class);
                 assertThat(gd.interaction.activeInteraction(PendingInteraction.KnowledgePoolCastChoice.class)
                         .validCardIds()).containsExactly(poolCard.getId());
-                verify(sessionManager).sendToPlayer(eq(player1Id), any());
+                InteractionPromptMessage prompt =
+                        (InteractionPromptMessage) new InteractionPromptProjectionRegistry(
+                                cardViewFactory)
+                                .project(gd, gd.interaction.activeInteraction())
+                                .orElseThrow();
+                assertThat(prompt.cardIds()).containsExactly(poolCard.getId());
+                assertThat(prompt.cards()).containsExactly(mockCardView);
             }
 
 

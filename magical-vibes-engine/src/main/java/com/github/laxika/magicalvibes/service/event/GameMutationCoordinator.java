@@ -19,6 +19,7 @@ import java.util.UUID;
 import java.util.WeakHashMap;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.locks.ReentrantLock;
+import java.util.function.Consumer;
 import java.util.function.Supplier;
 
 /**
@@ -130,6 +131,43 @@ public class GameMutationCoordinator {
             if (registeredActiveAction) {
                 activeActions.remove(actionState);
             }
+            actionState.actionLock.unlock();
+        }
+    }
+
+    /**
+     * Produces a consistent read-only projection under the same per-game ordering lock used by
+     * mutations, then consumes it after releasing the {@link GameData} monitor. No state version,
+     * event sequence, mutation context, or event batch is created.
+     *
+     * <p>This is the reconnect path: a later mutation cannot overtake projection delivery, while
+     * outbound transport still never runs under the mutable game-state monitor.
+     */
+    public <T> void observe(
+            GameData gameData, Supplier<T> projection, Consumer<T> afterProjection) {
+        Objects.requireNonNull(gameData, "gameData");
+        Objects.requireNonNull(projection, "projection");
+        Objects.requireNonNull(afterProjection, "afterProjection");
+        if (Thread.holdsLock(gameData)) {
+            throw new IllegalStateException(
+                    "Start a read-only observation before acquiring the GameData monitor");
+        }
+
+        ActionState actionState = actionStateFor(gameData);
+        ActionState currentThreadAction = currentThreadAction();
+        if (currentThreadAction != null) {
+            throw new IllegalStateException(
+                    "A read-only observation cannot begin inside a mutation action");
+        }
+
+        actionState.actionLock.lock();
+        try {
+            T projected;
+            synchronized (gameData) {
+                projected = projection.get();
+            }
+            afterProjection.accept(projected);
+        } finally {
             actionState.actionLock.unlock();
         }
     }

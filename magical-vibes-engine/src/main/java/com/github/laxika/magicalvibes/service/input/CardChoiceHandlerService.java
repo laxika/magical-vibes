@@ -683,7 +683,7 @@ public class CardChoiceHandlerService {
                 newValid.remove(Integer.valueOf(cardIndex));
                 interactionHandlerRegistry.begin(gameData, new PendingInteraction.RevealCardsDiscardChoice(
                         choice.decidingPlayerId(), targetPlayerId, choice.controllerId(), true,
-                        newValid, remaining, revealed, "Choose another card to reveal.", choice.discardCount()));
+                        newValid, remaining, revealed, choice.discardCount()));
             } else {
                 gameData.interaction.clearAwaitingInput();
                 playerInteractionSupport.beginRevealCardsDiscardStage(gameData, targetPlayerId,

@@ -102,7 +102,9 @@ class PlayerInputServiceTest {
     }
 
     private InteractionPromptMessage projectedPrompt() {
-        return promptProjections.project(gd, gd.interaction.activeInteraction()).orElseThrow();
+        return (InteractionPromptMessage) promptProjections
+                .project(gd, gd.interaction.activeInteraction())
+                .orElseThrow();
     }
 
     private Card createCard(String name, CardType type) {

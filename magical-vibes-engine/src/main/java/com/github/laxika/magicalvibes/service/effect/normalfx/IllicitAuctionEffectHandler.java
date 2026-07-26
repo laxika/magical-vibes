@@ -108,16 +108,15 @@ public class IllicitAuctionEffectHandler implements NormalEffectHandlerBean {
         }
         state.currentBidderId = next;
 
-        Permanent target = gameQueryService.findPermanentById(gameData, entry.getTargetId());
-        String targetName = target != null ? target.getCard().getName() : "the creature";
-        String highBidderName = gameData.playerIdToName.get(state.highBidderId);
-        String prompt = "Bid life for control of " + targetName + " (current high bid: " + state.highBid
-                + " by " + highBidderName + "). Enter more than " + state.highBid + " to bid, or "
-                + state.highBid + " or less to pass.";
-
         gameData.rerunCurrentEffectAfterInteraction = true;
         interactionHandlerRegistry.begin(gameData,
-                new PendingInteraction.IllicitAuctionBidChoice(next, state.highBid, MAX_BID, cardName, prompt));
+                new PendingInteraction.IllicitAuctionBidChoice(
+                        next,
+                        state.highBid,
+                        MAX_BID,
+                        cardName,
+                        entry.getTargetId(),
+                        state.highBidderId));
     }
 
     /**

@@ -25,8 +25,11 @@ public final class AiInteractionStrategies {
         register(new MayAbilityChoiceAiStrategy());
         register(new KnowledgePoolCastChoiceAiStrategy());
         register(new ImprovisationCapstoneCastChoiceAiStrategy());
+        register(new BrilliantUltimatumPileSeparationChoiceAiStrategy());
+        register(new BrilliantUltimatumPileChoiceAiStrategy());
         register(new BrilliantUltimatumPlayChoiceAiStrategy());
         register(new MirrorOfFateChoiceAiStrategy());
+        register(new KeepCardsInHandChoiceAiStrategy());
         register(new DoomsdayChoiceAiStrategy());
         register(new SearchLibraryToTopChoiceAiStrategy());
         register(new PermanentAuctionChoiceAiStrategy());
@@ -42,6 +45,8 @@ public final class AiInteractionStrategies {
         register(new LibraryRevealChoiceAiStrategy());
         register(new LibrarySearchAiStrategy());
         register(new PermanentChoiceAiStrategy());
+        register(new SylvanLibraryChoiceAiStrategy());
+        register(new AdNauseamRepeatChoiceAiStrategy());
         register(new CombatDamageAssignmentAiStrategy());
     }
 
@@ -49,12 +54,21 @@ public final class AiInteractionStrategies {
     }
 
     private static void register(AiInteractionStrategy<?> strategy) {
-        STRATEGIES.put(strategy.handledType(), strategy);
+        AiInteractionStrategy<?> previous = STRATEGIES.putIfAbsent(strategy.handledType(), strategy);
+        if (previous != null) {
+            throw new IllegalStateException(
+                    "Duplicate AI interaction strategy for " + strategy.handledType().getName());
+        }
     }
 
     /** The strategy for the given interaction, or {@code null} if its kind has none. */
     @SuppressWarnings("unchecked")
     public static AiInteractionStrategy<PendingInteraction> forInteraction(PendingInteraction interaction) {
         return (AiInteractionStrategy<PendingInteraction>) STRATEGIES.get(interaction.getClass());
+    }
+
+    /** Exact pending-interaction classes with a registry-managed AI answer strategy. */
+    public static java.util.Set<Class<? extends PendingInteraction>> registeredTypes() {
+        return java.util.Set.copyOf(STRATEGIES.keySet());
     }
 }

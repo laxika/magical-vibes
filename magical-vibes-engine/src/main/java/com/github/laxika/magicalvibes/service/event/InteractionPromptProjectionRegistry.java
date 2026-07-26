@@ -8,8 +8,14 @@ import com.github.laxika.magicalvibes.model.ManaCost;
 import com.github.laxika.magicalvibes.model.ManaPool;
 import com.github.laxika.magicalvibes.model.PendingInteraction;
 import com.github.laxika.magicalvibes.model.PendingKnowledgePoolCast;
+import com.github.laxika.magicalvibes.model.Permanent;
+import com.github.laxika.magicalvibes.networking.message.AttackTarget;
+import com.github.laxika.magicalvibes.networking.message.AvailableAttackersMessage;
+import com.github.laxika.magicalvibes.networking.message.AvailableBlockersMessage;
+import com.github.laxika.magicalvibes.networking.message.CombatDamageAssignmentNotification;
 import com.github.laxika.magicalvibes.networking.message.InteractionPromptMessage;
 import com.github.laxika.magicalvibes.networking.model.CardView;
+import com.github.laxika.magicalvibes.networking.model.CombatDamageTargetView;
 import com.github.laxika.magicalvibes.networking.service.CardViewFactory;
 import org.springframework.stereotype.Component;
 
@@ -24,7 +30,7 @@ import java.util.function.Function;
 import java.util.stream.Collectors;
 
 /**
- * Canonical projection of standard pending interactions to the existing wire prompt.
+ * Canonical projection of every promptable pending interaction to its existing wire message.
  *
  * <p>Strategies are exact-class keyed. There is deliberately no generic fallback: adding a
  * promptable {@link PendingInteraction} requires an explicit projection strategy, and duplicate
@@ -49,6 +55,10 @@ public class InteractionPromptProjectionRegistry {
         register(PendingInteraction.KnowledgePoolCastChoice.class, this::projectKnowledgePoolCastChoice);
         register(PendingInteraction.ImprovisationCapstoneCastChoice.class,
                 this::projectImprovisationCapstoneCastChoice);
+        register(PendingInteraction.BrilliantUltimatumPileSeparationChoice.class,
+                this::projectBrilliantUltimatumPileSeparationChoice);
+        register(PendingInteraction.BrilliantUltimatumPileChoice.class,
+                this::projectBrilliantUltimatumPileChoice);
         register(PendingInteraction.BrilliantUltimatumPlayChoice.class,
                 this::projectBrilliantUltimatumPlayChoice);
         register(PendingInteraction.MirrorOfFateChoice.class, this::projectMirrorOfFateChoice);
@@ -89,19 +99,23 @@ public class InteractionPromptProjectionRegistry {
         register(PendingInteraction.LibrarySearch.class, this::projectLibrarySearch);
         register(PendingInteraction.PermanentChoice.class, this::projectPermanentChoice);
         register(PendingInteraction.AdNauseamRepeatChoice.class, this::projectAdNauseamRepeatChoice);
+        register(PendingInteraction.AttackerDeclaration.class, this::projectAttackerDeclaration);
+        register(PendingInteraction.BlockerDeclaration.class, this::projectBlockerDeclaration);
+        register(PendingInteraction.CombatDamageAssignment.class,
+                this::projectCombatDamageAssignment);
     }
 
     /**
-     * Builds the prompt for one exact standard interaction kind. An empty result is the explicit
+     * Builds the prompt for one exact interaction kind. An empty result is the explicit
      * no-wire strategy used by legacy Karn Scion library-reveal choices whose prompt is null.
      */
-    public Optional<InteractionPromptMessage> project(
+    public Optional<Object> project(
             GameData gameData, PendingInteraction interaction) {
         ProjectionStrategy<PendingInteraction> strategy = strategyFor(interaction);
         return Optional.ofNullable(strategy.project(gameData, interaction));
     }
 
-    /** Exact interaction classes with one registered standard prompt strategy. */
+    /** Exact interaction classes with one registered prompt strategy. */
     public Set<Class<? extends PendingInteraction>> registeredTypes() {
         return Set.copyOf(strategies.keySet());
     }
@@ -184,6 +198,28 @@ public class InteractionPromptProjectionRegistry {
                         + "their mana costs.");
     }
 
+    private InteractionPromptMessage projectBrilliantUltimatumPileSeparationChoice(
+            GameData gameData,
+            PendingInteraction.BrilliantUltimatumPileSeparationChoice interaction) {
+        return InteractionPromptMessage.multiCardPick(
+                interaction.validCardIds(),
+                exiledCardViews(gameData, interaction.validCardIds()),
+                interaction.validCardIds().size(),
+                "Separate the exiled cards into two piles. Select cards for Pile 1 "
+                        + "(unselected form Pile 2).");
+    }
+
+    private InteractionPromptMessage projectBrilliantUltimatumPileChoice(
+            GameData gameData, PendingInteraction.BrilliantUltimatumPileChoice interaction) {
+        String pile1 = describeExiledPile(gameData, interaction.pile1CardIds());
+        String pile2 = describeExiledPile(gameData, interaction.pile2CardIds());
+        return InteractionPromptMessage.acceptDecline(
+                "Choose a pile to play lands and cast spells from. Yes = Pile 1 ("
+                        + pile1 + "), No = Pile 2 (" + pile2 + ").",
+                true,
+                null);
+    }
+
     private InteractionPromptMessage projectBrilliantUltimatumPlayChoice(
             GameData gameData, PendingInteraction.BrilliantUltimatumPlayChoice interaction) {
         return InteractionPromptMessage.multiCardPick(
@@ -239,13 +275,25 @@ public class InteractionPromptProjectionRegistry {
     private InteractionPromptMessage projectPermanentAuctionChoice(
             GameData gameData, PendingInteraction.PermanentAuctionChoice interaction) {
         return InteractionPromptMessage.multiCardPick(
-                interaction.validCardIds(), cardViews(interaction.pool()), 1, interaction.prompt());
+                interaction.validCardIds(),
+                cardViews(interaction.pool()),
+                1,
+                "Choose one of the auctioned cards to put onto the battlefield tapped under "
+                        + "your control.");
     }
 
     private InteractionPromptMessage projectIllicitAuctionBidChoice(
             GameData gameData, PendingInteraction.IllicitAuctionBidChoice interaction) {
+        Permanent target = findPermanent(gameData, interaction.targetPermanentId());
+        String targetName = target != null ? target.getCard().getName() : "the creature";
+        String highBidderName =
+                gameData.playerIdToName.getOrDefault(interaction.highBidderId(), "the high bidder");
+        String prompt = "Bid life for control of " + targetName + " (current high bid: "
+                + interaction.highBid() + " by " + highBidderName + "). Enter more than "
+                + interaction.highBid() + " to bid, or " + interaction.highBid()
+                + " or less to pass.";
         return InteractionPromptMessage.numberPick(
-                interaction.prompt(), interaction.maxBid(), interaction.cardName());
+                prompt, interaction.maxBid(), interaction.cardName());
     }
 
     private InteractionPromptMessage projectMultiZoneExileChoice(
@@ -320,7 +368,10 @@ public class InteractionPromptProjectionRegistry {
                     .toList();
         }
         return InteractionPromptMessage.cardIndexPick(
-                cardViews, interaction.validIndices(), interaction.prompt(), false);
+                cardViews,
+                interaction.validIndices(),
+                revealCardsDiscardPrompt(gameData, interaction),
+                false);
     }
 
     private InteractionPromptMessage projectGraveyardChoice(
@@ -424,6 +475,92 @@ public class InteractionPromptProjectionRegistry {
                 null);
     }
 
+    private AvailableAttackersMessage projectAttackerDeclaration(
+            GameData gameData, PendingInteraction.AttackerDeclaration interaction) {
+        List<AttackTarget> targets = interaction.availableTargets().stream()
+                .map(target -> new AttackTarget(
+                        target.id().toString(), target.name(), target.isPlayer()))
+                .toList();
+        return new AvailableAttackersMessage(
+                interaction.attackerIndices(),
+                interaction.mustAttackIndices(),
+                targets,
+                interaction.taxPerCreature(),
+                interaction.mustAttackWithAtLeastOne());
+    }
+
+    private AvailableBlockersMessage projectBlockerDeclaration(
+            GameData gameData, PendingInteraction.BlockerDeclaration interaction) {
+        return new AvailableBlockersMessage(
+                interaction.blockerIndices(),
+                interaction.attackerIndices(),
+                interaction.legalBlockPairs(),
+                interaction.mustBeBlockedAttackerIndices(),
+                interaction.menaceAttackerIndices(),
+                interaction.mustBlockRequirements());
+    }
+
+    private CombatDamageAssignmentNotification projectCombatDamageAssignment(
+            GameData gameData, PendingInteraction.CombatDamageAssignment interaction) {
+        List<CombatDamageTargetView> targetViews = interaction.validTargets().stream()
+                .map(target -> new CombatDamageTargetView(
+                        target.id().toString(),
+                        target.name(),
+                        target.effectiveToughness(),
+                        target.currentDamage(),
+                        target.isPlayer()))
+                .toList();
+        return new CombatDamageAssignmentNotification(
+                interaction.attackerIndex(),
+                interaction.attackerPermanentId().toString(),
+                interaction.attackerName(),
+                interaction.totalDamage(),
+                targetViews,
+                interaction.isTrample(),
+                interaction.isDeathtouch(),
+                interaction.singleRecipient());
+    }
+
+    private String revealCardsDiscardPrompt(
+            GameData gameData, PendingInteraction.RevealCardsDiscardChoice interaction) {
+        if (interaction.revealStage()) {
+            return interaction.revealedCardIds().isEmpty()
+                    ? "Choose " + interaction.remainingCount() + " cards to reveal."
+                    : "Choose another card to reveal.";
+        }
+        String targetName =
+                gameData.playerIdToName.getOrDefault(interaction.targetPlayerId(), "that player");
+        if (interaction.remainingCount() < interaction.discardCount()) {
+            return "Choose another card for " + targetName + " to discard.";
+        }
+        return interaction.remainingCount() > 1
+                ? "Choose " + interaction.remainingCount() + " cards for " + targetName
+                        + " to discard."
+                : "Choose a card for " + targetName + " to discard.";
+    }
+
+    private String describeExiledPile(GameData gameData, List<UUID> cardIds) {
+        if (cardIds.isEmpty()) {
+            return "empty";
+        }
+        return cardIds.stream()
+                .map(gameData::findExiledCard)
+                .filter(java.util.Objects::nonNull)
+                .map(entry -> entry.card().getName())
+                .collect(Collectors.joining(", "));
+    }
+
+    private Permanent findPermanent(GameData gameData, UUID permanentId) {
+        if (permanentId == null) {
+            return null;
+        }
+        return gameData.playerBattlefields.values().stream()
+                .flatMap(List::stream)
+                .filter(permanent -> permanentId.equals(permanent.getId()))
+                .findFirst()
+                .orElse(null);
+    }
+
     private List<CardView> exiledCardViews(GameData gameData, List<UUID> cardIds) {
         List<CardView> views = new ArrayList<>();
         for (UUID cardId : cardIds) {
@@ -478,6 +615,6 @@ public class InteractionPromptProjectionRegistry {
 
     @FunctionalInterface
     private interface ProjectionStrategy<T extends PendingInteraction> {
-        InteractionPromptMessage project(GameData gameData, T interaction);
+        Object project(GameData gameData, T interaction);
     }
 }

@@ -63,11 +63,15 @@ final class InteractionProjectionTestSupport {
             assertThat(envelope.audience().playerIds())
                     .containsExactly(expectedRecipient(gameData, interaction.decidingPlayerId()));
         });
-        return projections.project(gameData, gameData.interaction.activeInteraction()).orElse(null);
+        Object projected =
+                projections.project(gameData, gameData.interaction.activeInteraction()).orElse(null);
+        return projected == null ? null : (InteractionPromptMessage) projected;
     }
 
     InteractionPromptMessage projectedPrompt(GameData gameData) {
-        return projections.project(gameData, gameData.interaction.activeInteraction()).orElseThrow();
+        return (InteractionPromptMessage) projections
+                .project(gameData, gameData.interaction.activeInteraction())
+                .orElseThrow();
     }
 
     private static void assertDecisionInstalled(

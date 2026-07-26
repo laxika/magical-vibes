@@ -274,10 +274,7 @@ public class GameService {
     }
 
     public void resendAwaitingInput(GameData gameData, UUID playerId) {
-        if (runAsActionIfNeeded(gameData, () -> resendAwaitingInput(gameData, playerId))) return;
-        synchronized (gameData) {
-            reconnectionService.resendAwaitingInput(gameData, playerId);
-        }
+        reconnectionService.resendAwaitingInput(gameData, playerId);
     }
 
     public void keepHand(GameData gameData, Player player) {

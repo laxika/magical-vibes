@@ -30,9 +30,6 @@ import java.util.UUID;
 @RequiredArgsConstructor
 public class PermanentAuctionService {
 
-    private static final String PROMPT =
-            "Choose one of the auctioned cards to put onto the battlefield tapped under your control.";
-
     private final PermanentRemovalService permanentRemovalService;
     private final BattlefieldEntryService battlefieldEntryService;
     private final GameBroadcastService gameBroadcastService;
@@ -93,7 +90,7 @@ public class PermanentAuctionService {
             // Mandatory pick — an empty/invalid selection re-prompts the same player.
             log.warn("Game {} - {} sent an invalid auction pick, re-prompting", gameData.id, player.getUsername());
             interactionHandlerRegistry.begin(gameData, new PendingInteraction.PermanentAuctionChoice(
-                    choice.choosingPlayerId(), pool, choice.playerOrder(), choice.placed(), PROMPT));
+                    choice.choosingPlayerId(), pool, choice.playerOrder(), choice.placed()));
             return;
         }
 
@@ -129,7 +126,7 @@ public class PermanentAuctionService {
                            List<PendingInteraction.PermanentAuctionPlacement> placed) {
         gameBroadcastService.broadcastGameState(gameData);
         interactionHandlerRegistry.begin(gameData,
-                new PendingInteraction.PermanentAuctionChoice(chooserId, pool, playerOrder, placed, PROMPT));
+                new PendingInteraction.PermanentAuctionChoice(chooserId, pool, playerOrder, placed));
     }
 
     private void finishAuction(GameData gameData, List<PendingInteraction.PermanentAuctionPlacement> placed) {

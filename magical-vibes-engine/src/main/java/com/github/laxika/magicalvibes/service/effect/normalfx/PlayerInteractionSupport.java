@@ -522,7 +522,7 @@ public class PlayerInteractionSupport {
         // sibling — carried forward once the reveal picks complete (see the discard-stage begin).
         interactionHandlerRegistry.begin(gameData, new PendingInteraction.RevealCardsDiscardChoice(
                 targetPlayerId, targetPlayerId, controllerId, true, validIndices, revealCount,
-                new ArrayList<>(), "Choose " + revealCount + " cards to reveal.", discardCount));
+                new ArrayList<>(), discardCount));
 
         log.info("Game {} - {} choosing {} cards to reveal for reveal-and-discard",
                 gameData.id, targetName, revealCount);
@@ -554,12 +554,9 @@ public class PlayerInteractionSupport {
         }
 
         int toDiscard = Math.min(discardCount, revealedCardIds.size());
-        String prompt = toDiscard > 1
-                ? "Choose " + toDiscard + " cards for " + targetName + " to discard."
-                : "Choose a card for " + targetName + " to discard.";
         interactionHandlerRegistry.begin(gameData, new PendingInteraction.RevealCardsDiscardChoice(
                 controllerId, targetPlayerId, controllerId, false, validIndices, toDiscard,
-                new ArrayList<>(revealedCardIds), prompt, toDiscard));
+                new ArrayList<>(revealedCardIds), toDiscard));
     }
 
     /**
@@ -571,15 +568,13 @@ public class PlayerInteractionSupport {
                                                          UUID controllerId, List<UUID> revealedCardIds,
                                                          int remainingDiscards, int discardCount) {
 
-        String targetName = gameData.playerIdToName.get(targetPlayerId);
         List<Integer> validIndices = new ArrayList<>();
         for (int i = 0; i < revealedCardIds.size(); i++) {
             validIndices.add(i);
         }
         interactionHandlerRegistry.begin(gameData, new PendingInteraction.RevealCardsDiscardChoice(
                 controllerId, targetPlayerId, controllerId, false, validIndices, remainingDiscards,
-                new ArrayList<>(revealedCardIds), "Choose another card for " + targetName + " to discard.",
-                discardCount));
+                new ArrayList<>(revealedCardIds), discardCount));
     }
 
     public boolean sharesCardType(List<Card> cards) {

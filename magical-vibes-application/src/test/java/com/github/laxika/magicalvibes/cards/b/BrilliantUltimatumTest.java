@@ -48,8 +48,9 @@ class BrilliantUltimatumTest extends BaseCardTest {
 
         // Opponent (player2) is prompted to separate them into piles
         assertThat(gd.hasPendingInteraction(PendingPileSeparation.class)).isTrue();
-        PendingInteraction.MultiGraveyardChoice choice =
-                gd.interaction.activeInteraction(PendingInteraction.MultiGraveyardChoice.class);
+        PendingInteraction.BrilliantUltimatumPileSeparationChoice choice =
+                gd.interaction.activeInteraction(
+                        PendingInteraction.BrilliantUltimatumPileSeparationChoice.class);
         assertThat(choice).isNotNull();
         assertThat(choice.playerId()).isEqualTo(player2.getId());
         assertThat(choice.validCardIds()).hasSize(5);
@@ -74,7 +75,8 @@ class BrilliantUltimatumTest extends BaseCardTest {
         harness.handleMultipleCardsChosen(player2, List.of(forest.getId(), bears.getId()));
 
         // Controller chooses Pile 1
-        assertThat(gd.interaction.activeInteraction()).isInstanceOf(PendingInteraction.MayAbilityChoice.class);
+        assertThat(gd.interaction.activeInteraction())
+                .isInstanceOf(PendingInteraction.BrilliantUltimatumPileChoice.class);
         harness.handleMayAbilityChosen(player1, true);
 
         // Controller is offered the pile's cards to play

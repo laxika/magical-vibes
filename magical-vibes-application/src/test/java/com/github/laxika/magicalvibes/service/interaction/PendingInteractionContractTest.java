@@ -1,5 +1,6 @@
 package com.github.laxika.magicalvibes.service.interaction;
 
+import com.github.laxika.magicalvibes.ai.interaction.AiInteractionStrategies;
 import com.github.laxika.magicalvibes.model.GraveyardChoiceDestination;
 import com.github.laxika.magicalvibes.model.GameData;
 import com.github.laxika.magicalvibes.model.InteractionOptions;
@@ -20,7 +21,7 @@ import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Nested;
 import org.junit.jupiter.api.Test;
 
-import java.util.Arrays;
+import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Set;
 import java.util.UUID;
@@ -49,16 +50,21 @@ class PendingInteractionContractTest {
             PendingKarnRestart.class,
             PendingKnowledgePoolCast.class,
             PendingPileSeparation.class);
-    private static final Set<Class<?>> DISTINCT_COMBAT_PROMPTS = Set.of(
+    private static final Set<Class<?>> AI_DIRECT_PATHS = Set.of(
+            PendingInteraction.HandCardChoice.class,
+            PendingInteraction.TargetedHandCardChoice.class,
+            PendingInteraction.DiscardChoice.class,
+            PendingInteraction.ExileFromHandChoice.class,
+            PendingInteraction.ImprintFromHandChoice.class,
+            PendingInteraction.DiscardCostChoice.class,
             PendingInteraction.AttackerDeclaration.class,
-            PendingInteraction.BlockerDeclaration.class,
-            PendingInteraction.CombatDamageAssignment.class);
+            PendingInteraction.BlockerDeclaration.class);
 
     @Test
     @DisplayName("every promptable interaction kind overrides decidingPlayerId() and legalOptions()")
     void everyPromptableKindOverridesTheContractMethods() throws Exception {
-        for (Class<?> kind : PendingInteraction.class.getPermittedSubclasses()) {
-            if (QUEUE_ONLY_CARRIERS.contains(kind)) {
+        for (Class<?> kind : concretePendingInteractionKinds()) {
+            if (isQueueOnlyCarrier(kind)) {
                 continue;
             }
             assertThat(kind.getMethod("decidingPlayerId").getDeclaringClass())
@@ -71,20 +77,56 @@ class PendingInteractionContractTest {
     }
 
     @Test
-    @DisplayName("every standard sealed interaction kind has exactly one explicit prompt projection")
-    void everyStandardKindHasOneExplicitProjection() {
-        Set<Class<? extends PendingInteraction>> standardKinds =
-                Arrays.stream(PendingInteraction.class.getPermittedSubclasses())
-                .filter(kind -> !QUEUE_ONLY_CARRIERS.contains(kind))
-                .filter(kind -> !DISTINCT_COMBAT_PROMPTS.contains(kind))
-                .map(kind -> kind.asSubclass(PendingInteraction.class))
-                .collect(java.util.stream.Collectors.toUnmodifiableSet());
+    @DisplayName("every concrete promptable interaction kind has exactly one explicit projection")
+    void everyPromptableKindHasOneExplicitProjection() {
+        Set<Class<? extends PendingInteraction>> promptableKinds =
+                concretePendingInteractionKinds().stream()
+                        .filter(kind -> !isQueueOnlyCarrier(kind))
+                        .map(kind -> kind.asSubclass(PendingInteraction.class))
+                        .collect(java.util.stream.Collectors.toUnmodifiableSet());
         InteractionPromptProjectionRegistry projections =
                 new InteractionPromptProjectionRegistry(mock(CardViewFactory.class));
 
         assertThat(projections.registeredTypes())
-                .containsExactlyInAnyOrderElementsOf(standardKinds)
-                .hasSameSizeAs(standardKinds);
+                .containsExactlyInAnyOrderElementsOf(promptableKinds)
+                .hasSameSizeAs(promptableKinds);
+    }
+
+    @Test
+    @DisplayName("every promptable interaction that reaches the generic AI path has a strategy")
+    void everyRequiredInteractionHasAnAiStrategy() {
+        Set<Class<? extends PendingInteraction>> aiStrategyKinds =
+                concretePendingInteractionKinds().stream()
+                        .filter(kind -> !isQueueOnlyCarrier(kind))
+                        .filter(kind -> !AI_DIRECT_PATHS.contains(kind))
+                        .map(kind -> kind.asSubclass(PendingInteraction.class))
+                        .collect(java.util.stream.Collectors.toUnmodifiableSet());
+
+        assertThat(AiInteractionStrategies.registeredTypes())
+                .containsExactlyInAnyOrderElementsOf(aiStrategyKinds)
+                .hasSameSizeAs(aiStrategyKinds);
+    }
+
+    private static Set<Class<?>> concretePendingInteractionKinds() {
+        Set<Class<?>> concreteKinds = new LinkedHashSet<>();
+        collectConcretePermittedSubclasses(PendingInteraction.class, concreteKinds);
+        return Set.copyOf(concreteKinds);
+    }
+
+    private static void collectConcretePermittedSubclasses(
+            Class<?> sealedType, Set<Class<?>> concreteKinds) {
+        for (Class<?> permitted : sealedType.getPermittedSubclasses()) {
+            if (permitted.isSealed()) {
+                collectConcretePermittedSubclasses(permitted, concreteKinds);
+            } else {
+                concreteKinds.add(permitted);
+            }
+        }
+    }
+
+    private static boolean isQueueOnlyCarrier(Class<?> kind) {
+        return QUEUE_ONLY_CARRIERS.contains(kind)
+                || PermanentChoiceContext.class.isAssignableFrom(kind);
     }
 
     @Test
@@ -116,7 +158,7 @@ class PendingInteractionContractTest {
             assertThat(revealedHand.decidingPlayerId()).isEqualTo(chooser);
 
             PendingInteraction revealDiscard = new PendingInteraction.RevealCardsDiscardChoice(
-                    chooser, target, chooser, false, List.of(0), 1, List.of(), "p", 1);
+                    chooser, target, chooser, false, List.of(0), 1, List.of(), 1);
             assertThat(revealDiscard.decidingPlayerId()).isEqualTo(chooser);
 
             PendingInteraction attackers = new PendingInteraction.AttackerDeclaration(chooser);

@@ -76,7 +76,7 @@ Different games have different action locks and may mutate concurrently; same-ga
 serialized through subscriber delivery.
 
 Canonical runtime mutation boundaries are `GameService` commands, `GameSetupService` create/join,
-AI seating, tournament-game creation, and `GameTimeoutService` disconnect/reconnect and timer
+AI seating, tournament-game creation, and `GameTimeoutService` disconnect and timer
 callbacks. Interaction answers (including answers that resume a parked stack entry), surrender,
 and auto-pass recursion therefore join one outer command batch. A later answer to a parked
 interaction is a new causal action. Lower-level service tests that invoke handlers directly may
@@ -100,7 +100,9 @@ without such a boundary is always rejected.
   enforces the envelope audience, creates player-specific view DTOs through
   `GameViewProjectionFactory`, and only then hands typed messages to `GameMessageTransport`.
   `SessionManager` selects the connection and the connection alone serializes.
-- Reconnect replays an existing decision identity; it does not emit a second logical decision.
+- Reconnect is an ordered read-only observation: it projects the authoritative active interaction
+  through the same exact-class registry and does not allocate a mutation, state version, event
+  sequence, or second logical decision.
 - State invalidation means “build a post-action view,” not a request to observe an intermediate
   mutation state.
 
@@ -163,11 +165,10 @@ Exhaustive files for these 8 calls:
   `RevealRandomCardFromTargetPlayerHandLoseLifeEqualToManaValueEffectHandler`,
   `RevealRandomHandCardAndPlayEffectHandler`, and `TempestEfreetAnteExchangeEffectHandler`,
   one each.
-- Standard interaction handlers: zero. The 30 formerly listed handler files now contain only
-  answer validation/mutation logic. `InteractionPromptProjectionRegistry` has one exact-class
-  projection strategy for every standard promptable `PendingInteraction` subtype and constructs
-  the unchanged `InteractionPromptMessage` only after the decision identity is matched against
-  the authoritative active interaction.
+- Interaction handlers: zero. Handler files contain only answer validation/mutation logic.
+  `InteractionPromptProjectionRegistry` has one exact-class projection strategy for every
+  promptable `PendingInteraction` subtype and constructs the unchanged typed wire message only
+  after the decision identity is matched against the authoritative active interaction.
 
 Migration classification:
 
@@ -177,11 +178,9 @@ Migration classification:
 - Registry-managed interaction begin/retry sites, including the former two direct
   `AbilityActivationService` prompts, now emit non-coalescible `DECISION_REQUESTED` facts.
   Attacker, blocker, and combat-damage assignment keep their distinct decision kinds and carry
-  finalized immutable legality snapshots on their pending interactions. The canonical projection
-  subscriber constructs `AvailableAttackersMessage`, `AvailableBlockersMessage`, and
-  `CombatDamageAssignmentNotification` directly. Standard interaction facts are projected through
-  the exact-class `InteractionPromptProjectionRegistry`; handlers never send or construct
-  networking DTOs.
+  finalized immutable legality snapshots on their pending interactions. Attacker, blocker,
+  combat-damage, and standard interaction facts are all projected through the exact-class
+  `InteractionPromptProjectionRegistry`; handlers never send or construct networking DTOs.
 - The seven effect reveal sends plus `GameBroadcastService.revealOpponentHandToPlayer` become
   `PRIVATE_REVEAL` with immutable `CardSnapshot` lists and explicit recipients.
 - `KarnRestartGameEffectHandler` now emits a public state invalidation/observation, not a
@@ -245,7 +244,7 @@ intentionally unchanged by this foundation prompt.
 | Canonical projection subscriber | `GameEventProjectionSubscriber` → `GameViewProjectionFactory`/interaction registry → typed messages → `GameMessageTransport` | post-lock authoritative projection, explicit audience enforcement, no serialization, per-recipient transport failure isolation, human/AI typed-message parity | **Complete** |
 | Public game-state refresh | 19 `broadcastGameState` calls → player-specific `GameStateMessage` | coalesced `STATE_INVALIDATED`; canonical subscriber constructs the same per-player wire DTO after unlock | Lifecycle, `GameService`, `turn`, combat, spell, ability, input-completion, and stack-resolution workflows complete; remaining emission migration open |
 | Game log | 2,293 `logAndBroadcast` calls → `gameLog` → next state message | append under lock plus `GAME_LOG` invalidation; preserve structured segments and incremental wire behavior | Combat package complete; remaining packages open |
-| Generic interactions | begin site → authoritative pending interaction + stable ID → `DECISION_REQUESTED` → `InteractionPromptProjectionRegistry` → typed prompt | one non-coalescible private fact per interaction; exact identity match before projection; every standard subtype has one explicit strategy and no raw-state fallback; handlers have no session/networking dependency | **Complete** |
+| Generic interactions | begin site → authoritative pending interaction + stable ID → `DECISION_REQUESTED` → `InteractionPromptProjectionRegistry` → typed prompt | one non-coalescible private fact per interaction; exact identity match before projection; every promptable subtype (including combat) has one explicit strategy and no raw-state fallback; handlers have no session/networking dependency | **Complete** |
 | Attackers | `CombatAttackService` finalizes an immutable legality snapshot → registry decision event → canonical subscriber → `AvailableAttackersMessage` | `DECISION_REQUESTED(ATTACKER_DECLARATION)` with stable retry/replay identity and Mindslaver audience | **Complete** |
 | Blockers | `CombatBlockService` finalizes legal pairs and requirements → registry decision event → canonical subscriber → `AvailableBlockersMessage` | `DECISION_REQUESTED(BLOCKER_DECLARATION)` with stable retry/replay identity | **Complete** |
 | Combat damage assignment | `CombatDamageService` snapshots targets/trample/deathtouch → registry decision event → canonical subscriber → notification | `DECISION_REQUESTED(COMBAT_DAMAGE_ASSIGNMENT)` with stable retry/replay identity | **Complete** |
@@ -256,7 +255,7 @@ intentionally unchanged by this foundation prompt.
 | Game over | `GameOutcomeService` finalizes authoritative result and emits one `GAME_ENDED`; ordered subscribers project `GameOverMessage`, close AI, notify tournaments, cancel timers, and remove the registry entry | one `GAME_ENDED` fact; adapters preserve `GameOverMessage`, draft callback, timer cleanup, and registry removal ordering | **Complete** |
 | Game restart | `KarnRestartGameEffectHandler` emits state, restart mulligan observation, and fresh stable mulligan decisions | public state/observation event; not `GAME_ENDED` | **Complete** |
 | Reconnect state | `GameResyncProjectionService.currentState` builds a monitor-protected current `JoinGame` projection | Preserve the exact login response envelope and build its hidden player view through the shared projection factory rather than a domain event | **Complete** |
-| Reconnect decision replay | `GameMessageHandler` → `GameService.resendAwaitingInput` → `ReconnectionService` → `DECISION_REQUESTED(REPLAY_REQUESTED)` → canonical projection | replay the existing decision ID only to the reconnecting authorized recipient; no duplicate logical decision or log | **Complete** |
+| Reconnect decision replay | `GameMessageHandler` → `GameService.resendAwaitingInput` → `ReconnectionService` → ordered read-only observation → `InteractionPromptProjectionRegistry` → typed prompt | project only the current authoritative interaction to the reconnecting authorized recipient; no mutation, event/version/sequence allocation, stale historical choice, duplicate logical decision, or log | **Complete** |
 | Live AI wake-up | canonical subscriber combat DTO → `AiConnection.actionableType` → delayed executor → `AiDecisionEngine.handleEvent` | Combat attacker/blocker/damage decisions wake independently and in event order; broader direct domain-event AI consumption remains open | Combat decisions complete; broader migration open |
 | AI initial mulligan | `AiPlayerService` → `AiConnection.scheduleInitialAction` | retain explicit initial wake-up or model it as the first mulligan decision | Open |
 | MCTS/headless | `GameData.simulationCopy`, `HeadlessWebSocketSessionManager`, `GameBroadcastService`/`GameOutcomeService` guards, `AutoPassService` simulation branches, `SimulationLogSuppressor` | coordinator produces `SUPPRESSED_SIMULATION`; no external subscriber, WebSocket, registry, timeout, draft, or live-AI side effect | Foundation complete; legacy guards remain open |

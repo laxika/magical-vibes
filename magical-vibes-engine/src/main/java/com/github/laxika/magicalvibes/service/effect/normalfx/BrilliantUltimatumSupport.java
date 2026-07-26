@@ -7,14 +7,12 @@ import com.github.laxika.magicalvibes.model.ExiledCardEntry;
 import com.github.laxika.magicalvibes.model.GameData;
 import com.github.laxika.magicalvibes.model.GameLog;
 import com.github.laxika.magicalvibes.model.PendingInteraction;
-import com.github.laxika.magicalvibes.model.PendingMayAbility;
 import com.github.laxika.magicalvibes.model.PendingPileSeparation;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.Player;
 import com.github.laxika.magicalvibes.service.GameBroadcastService;
 import com.github.laxika.magicalvibes.service.battlefield.BattlefieldEntryService;
 import com.github.laxika.magicalvibes.service.input.InputCompletionService;
-import com.github.laxika.magicalvibes.service.input.PlayerInputService;
 import com.github.laxika.magicalvibes.service.interaction.InteractionHandlerRegistry;
 import java.util.ArrayList;
 import java.util.List;
@@ -38,7 +36,6 @@ public class BrilliantUltimatumSupport {
     private final GameBroadcastService gameBroadcastService;
     private final BattlefieldEntryService battlefieldEntryService;
     private final InteractionHandlerRegistry interactionHandlerRegistry;
-    private final PlayerInputService playerInputService;
     private final ImprovisationCapstoneCastSupport improvisationCapstoneCastSupport;
     private final InputCompletionService inputCompletionService;
 
@@ -46,13 +43,11 @@ public class BrilliantUltimatumSupport {
     public BrilliantUltimatumSupport(GameBroadcastService gameBroadcastService,
                                      BattlefieldEntryService battlefieldEntryService,
                                      InteractionHandlerRegistry interactionHandlerRegistry,
-                                     @Lazy PlayerInputService playerInputService,
                                      @Lazy ImprovisationCapstoneCastSupport improvisationCapstoneCastSupport,
                                      @Lazy InputCompletionService inputCompletionService) {
         this.gameBroadcastService = gameBroadcastService;
         this.battlefieldEntryService = battlefieldEntryService;
         this.interactionHandlerRegistry = interactionHandlerRegistry;
-        this.playerInputService = playerInputService;
         this.improvisationCapstoneCastSupport = improvisationCapstoneCastSupport;
         this.inputCompletionService = inputCompletionService;
     }
@@ -84,10 +79,10 @@ public class BrilliantUltimatumSupport {
         gameBroadcastService.logAndBroadcast(gameData, GameLog.text(opponentName
                 + " separates cards into two piles. Pile 1: " + pile1Desc + ". Pile 2: " + pile2Desc + "."));
 
-        String prompt = "Choose a pile to play lands and cast spells from. Yes = Pile 1 ("
-                + pile1Desc + "), No = Pile 2 (" + pile2Desc + ").";
-        gameData.pendingMayAbilities.addFirst(new PendingMayAbility(null, state.controllerId(), List.of(), prompt));
-        playerInputService.processNextMayAbility(gameData);
+        interactionHandlerRegistry.begin(
+                gameData,
+                new PendingInteraction.BrilliantUltimatumPileChoice(
+                        state.controllerId(), pile1, pile2));
     }
 
     /**
