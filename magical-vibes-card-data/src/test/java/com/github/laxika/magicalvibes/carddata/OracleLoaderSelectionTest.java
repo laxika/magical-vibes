@@ -6,6 +6,8 @@ import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.NoSuchBeanDefinitionException;
 import org.springframework.context.annotation.AnnotationConfigApplicationContext;
 import org.springframework.core.env.MapPropertySource;
+import org.springframework.core.env.MutablePropertySources;
+import org.springframework.core.env.StandardEnvironment;
 
 import java.util.Arrays;
 import java.util.Map;
@@ -90,11 +92,21 @@ class OracleLoaderSelectionTest {
         }
     }
 
+    /**
+     * Points the context at exactly the given provider value, or at none for {@code null}.
+     *
+     * <p>The ambient property sources have to go first. Gradle forwards {@code -Doracle.data-provider}
+     * into the test JVM and CI passes {@code MTGJSON}, so a {@code StandardEnvironment} sees that
+     * value as a system property. Absence cannot be simulated by adding a property source — a source
+     * that resolves the key to nothing is simply skipped, and the system properties underneath answer
+     * instead — so the only way to test the missing case is to take those sources away.
+     */
     private static void withProvider(AnnotationConfigApplicationContext context, String providerValue) {
-        if (providerValue == null) {
-            return;
+        MutablePropertySources sources = context.getEnvironment().getPropertySources();
+        sources.remove(StandardEnvironment.SYSTEM_PROPERTIES_PROPERTY_SOURCE_NAME);
+        sources.remove(StandardEnvironment.SYSTEM_ENVIRONMENT_PROPERTY_SOURCE_NAME);
+        if (providerValue != null) {
+            sources.addFirst(new MapPropertySource("test", Map.of("oracle.data-provider", providerValue)));
         }
-        context.getEnvironment().getPropertySources().addFirst(
-                new MapPropertySource("test", Map.of("oracle.data-provider", providerValue)));
     }
 }
