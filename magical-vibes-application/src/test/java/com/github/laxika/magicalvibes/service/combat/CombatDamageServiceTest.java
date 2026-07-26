@@ -20,6 +20,7 @@ import com.github.laxika.magicalvibes.model.effect.DiscardEffect;
 import com.github.laxika.magicalvibes.model.effect.DiscardRecipient;
 import com.github.laxika.magicalvibes.service.DamagePreventionService;
 import com.github.laxika.magicalvibes.service.GameBroadcastService;
+import com.github.laxika.magicalvibes.service.GameLogService;
 import com.github.laxika.magicalvibes.service.GameOutcomeService;
 import com.github.laxika.magicalvibes.service.input.PlayerInputService;
 import com.github.laxika.magicalvibes.service.trigger.TriggerCollectionService;
@@ -62,6 +63,7 @@ class CombatDamageServiceTest {
 
     @Mock private GameQueryService gameQueryService;
     @Mock private GameBroadcastService gameBroadcastService;
+    @Mock private GameLogService gameLogService;
     @Mock private GameOutcomeService gameOutcomeService;
     @Mock private DamagePreventionService damagePreventionService;
     @Mock private GraveyardService graveyardService;
@@ -92,15 +94,15 @@ class CombatDamageServiceTest {
         // state-based action check now, so the unit tests exercise the real lethality logic.
         com.github.laxika.magicalvibes.service.state.StateBasedActionService stateBasedActionService =
                 new com.github.laxika.magicalvibes.service.state.StateBasedActionService(
-                        gameOutcomeService, gameQueryService, gameBroadcastService,
+                        gameOutcomeService, gameQueryService, gameLogService,
                         permanentRemovalService, graveyardService,
-                        new com.github.laxika.magicalvibes.service.state.StateTriggerService(gameBroadcastService),
+                        new com.github.laxika.magicalvibes.service.state.StateTriggerService(gameLogService),
                         org.mockito.Mockito.mock(com.github.laxika.magicalvibes.service.battlefield.LegendRuleService.class),
                         org.mockito.Mockito.mock(com.github.laxika.magicalvibes.service.battle.BattleDefeatSupport.class));
         combatDamageService = new CombatDamageService(gameQueryService,
                 org.mockito.Mockito.mock(com.github.laxika.magicalvibes.service.filter.PredicateEvaluationService.class),
                 org.mockito.Mockito.mock(com.github.laxika.magicalvibes.service.effect.ConditionEvaluationService.class),
-                mutationCoordinator, gameOutcomeService, damagePreventionService, graveyardService,
+                gameLogService, gameOutcomeService, damagePreventionService, graveyardService,
                 permanentRemovalService, playerInputService, registry, triggerCollectionService,
                 lifeSupport, combatAttackService, combatTriggerService,
                 org.mockito.Mockito.mock(com.github.laxika.magicalvibes.service.effect.normalfx.DamageSupport.class),

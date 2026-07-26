@@ -1,7 +1,7 @@
 package com.github.laxika.magicalvibes.service.ability;
 
 import com.github.laxika.magicalvibes.model.PendingInteraction;
-import com.github.laxika.magicalvibes.service.GameBroadcastService;
+import com.github.laxika.magicalvibes.service.GameLogService;
 import com.github.laxika.magicalvibes.service.cast.CastingCostService;
 import com.github.laxika.magicalvibes.service.exile.ExileService;
 import com.github.laxika.magicalvibes.service.graveyard.GraveyardService;
@@ -135,7 +135,7 @@ public class AbilityActivationService {
     private final GameQueryService gameQueryService;
     private final PredicateEvaluationService predicateEvaluationService;
     private final ConditionEvaluationService conditionEvaluationService;
-    private final GameBroadcastService gameBroadcastService;
+    private final GameLogService gameLogService;
     private final CastingCostService castingCostService;
     private final TargetLegalityService targetLegalityService;
     private final ActivatedAbilityExecutionService activatedAbilityExecutionService;
@@ -292,7 +292,7 @@ public class AbilityActivationService {
             }
         }
 
-        gameBroadcastService.logAndBroadcast(gameData, GameLog.playerTaps(player.getUsername(), permanent.getCard()));
+        gameLogService.append(gameData, GameLog.playerTaps(player.getUsername(), permanent.getCard()));
 
         log.info("Game {} - {} taps {}", gameData.id, player.getUsername(), permanent.getCard().getName());
 
@@ -406,7 +406,7 @@ public class AbilityActivationService {
 
         if (revertedAny) {
             String logEntry = player.getUsername() + " cancels — mana abilities reverted.";
-            gameBroadcastService.logAndBroadcast(gameData, GameLog.text(logEntry));
+            gameLogService.append(gameData, GameLog.text(logEntry));
             log.info("Game {} - {} reverts their mana ability activations", gameData.id, player.getUsername());
         }
         mutationCoordinator.invalidateAllPlayerViews(gameData);
@@ -518,7 +518,7 @@ public class AbilityActivationService {
             }
         }
 
-        gameBroadcastService.logAndBroadcast(gameData,
+        gameLogService.append(gameData,
                 GameLog.playerTaps(player.getUsername(), permanent.getCard(), " for mana (Piracy)."));
         log.info("Game {} - {} taps foreign land {} for mana", gameData.id, player.getUsername(), permanent.getCard().getName());
 
@@ -558,7 +558,7 @@ public class AbilityActivationService {
         gameData.playerManaPools.get(playerId).add(ManaColor.COLORLESS, 1);
 
         String logEntry = player.getUsername() + " pays 1 life to add {C} (Channel).";
-        gameBroadcastService.logAndBroadcast(gameData, GameLog.text(logEntry));
+        gameLogService.append(gameData, GameLog.text(logEntry));
         log.info("Game {} - {} pays 1 life for colorless mana", gameData.id, player.getUsername());
 
         mutationCoordinator.invalidateAllPlayerViews(gameData);
@@ -627,7 +627,7 @@ public class AbilityActivationService {
         triggerCollectionService.checkAllyPermanentSacrificedTriggers(gameData, playerId, permanent.getCard());
         permanentRemovalService.removeOrphanedAuras(gameData);
 
-        gameBroadcastService.logAndBroadcast(gameData, GameLog.textCardText(player.getUsername() + " sacrifices " , permanent.getCard(), "."));
+        gameLogService.append(gameData, GameLog.textCardText(player.getUsername() + " sacrifices " , permanent.getCard(), "."));
         log.info("Game {} - {} sacrifices {}", gameData.id, player.getUsername(), permanent.getCard().getName());
 
         // Put activated ability on stack
@@ -820,7 +820,7 @@ public class AbilityActivationService {
             graveyard.remove(card);
             graveyardService.notifyCardsLeftGraveyard(gameData, playerId);
             exileService.exileCard(gameData, playerId, card);
-            gameBroadcastService.logAndBroadcast(gameData, GameLog.textCardText(
+            gameLogService.append(gameData, GameLog.textCardText(
                     player.getUsername() + " exiles ", card, " from the graveyard as an activation cost."));
         }
 
@@ -973,7 +973,7 @@ public class AbilityActivationService {
         stackEntry.setTargetFilter(ability.getTargetFilter());
         gameData.stack.add(stackEntry);
 
-        gameBroadcastService.logAndBroadcast(gameData, GameLog.textCardText(player.getUsername() + " activates " , card, "'s ability from the graveyard."));
+        gameLogService.append(gameData, GameLog.textCardText(player.getUsername() + " activates " , card, "'s ability from the graveyard."));
         log.info("Game {} - {} activates {}'s graveyard ability", gameData.id, player.getUsername(), card.getName());
 
         // "Whenever you activate an eternalize or embalm ability, draw a card" (Vizier of the
@@ -1091,7 +1091,7 @@ public class AbilityActivationService {
         // resolves first.
         triggerCollectionService.checkDiscardTriggers(gameData, playerId, card);
 
-        gameBroadcastService.logAndBroadcast(gameData, GameLog.textCardText(player.getUsername() + " activates " , card, "'s ability from their hand."));
+        gameLogService.append(gameData, GameLog.textCardText(player.getUsername() + " activates " , card, "'s ability from their hand."));
         log.info("Game {} - {} activates {}'s hand ability", gameData.id, player.getUsername(), card.getName());
 
         gameData.priorityPassedBy.clear();
@@ -1205,7 +1205,7 @@ public class AbilityActivationService {
                 List.of()
         ));
 
-        gameBroadcastService.logAndBroadcast(gameData, GameLog.textCardText(player.getUsername() + " activates " , card, "'s ability from their hand."));
+        gameLogService.append(gameData, GameLog.textCardText(player.getUsername() + " activates " , card, "'s ability from their hand."));
         log.info("Game {} - {} activates {}'s hand ability targeting graveyards", gameData.id, player.getUsername(), card.getName());
 
         gameData.priorityPassedBy.clear();
@@ -1662,7 +1662,7 @@ public class AbilityActivationService {
                 counterTypeLabel = ct.name().toLowerCase().replace('_', ' ');
             }
             String counterWord = count == 1 ? "a " + counterTypeLabel + " counter" : count + " " + counterTypeLabel + " counters";
-            gameBroadcastService.logAndBroadcast(gameData, GameLog.textCardText(
+            gameLogService.append(gameData, GameLog.textCardText(
                     player.getUsername() + " removes " + counterWord + " from ", permanent.getCard(), "."));
         }
 
@@ -1672,7 +1672,7 @@ public class AbilityActivationService {
             permanent.setCounterCount(CounterType.CHARGE, permanent.getCounterCount(CounterType.CHARGE) - required);
             String counterLog = player.getUsername() + " removes " + required + " charge counter(s) from " + permanent.getCard().getName()
                     + " (" + permanent.getCounterCount(CounterType.CHARGE) + " remaining).";
-            gameBroadcastService.logAndBroadcast(gameData, GameLog.builder()
+            gameLogService.append(gameData, GameLog.builder()
                     .text(player.getUsername() + " removes " + required + " charge counter(s) from ")
                     .card(permanent.getCard())
                     .text(" (" + permanent.getCounterCount(CounterType.CHARGE) + " remaining).")
@@ -1702,7 +1702,7 @@ public class AbilityActivationService {
             if (placed) {
                 String counterLabel = String.format("%+d/%+d", c.powerModifier(), c.toughnessModifier());
                 String counterWord = placedCount == 1 ? "a " + counterLabel + " counter" : placedCount + " " + counterLabel + " counters";
-                gameBroadcastService.logAndBroadcast(gameData, GameLog.textCardText(player.getUsername() + " puts " + counterWord + " on ", permanent.getCard(), "."));
+                gameLogService.append(gameData, GameLog.textCardText(player.getUsername() + " puts " + counterWord + " on ", permanent.getCard(), "."));
             }
         }
 
@@ -1725,7 +1725,7 @@ public class AbilityActivationService {
         if (abilityEffects.stream().anyMatch(e -> e instanceof RevealTwoCardsSharingColorCost)) {
             List<Card> pair = colorSharingPair(gameData.playerHands.get(playerId));
             if (pair != null) {
-                gameBroadcastService.logAndBroadcast(gameData, GameLog.builder()
+                gameLogService.append(gameData, GameLog.builder()
                         .text(player.getUsername() + " reveals ")
                         .card(pair.get(0))
                         .text(" and ")
@@ -1787,15 +1787,15 @@ public class AbilityActivationService {
         if (effect instanceof SacrificeMultiplePermanentsCost c) return new MultiplePermanentSacrificeCostHandler(c, predicateEvaluationService, sacAction);
         if (effect instanceof SacrificePermanentsSequenceCost c) return new SequencePermanentSacrificeCostHandler(c, predicateEvaluationService, sacAction, chosenSoFar);
         if (effect instanceof ReturnMultiplePermanentsToHandCost c) return new MultiplePermanentReturnToHandCostHandler(c, predicateEvaluationService, bounceAction);
-        if (effect instanceof TapCreatureCost c) return new TapCreatureCostHandler(c, gameQueryService, predicateEvaluationService, gameBroadcastService, triggerCollectionService, sourcePermanentId);
-        if (effect instanceof TapMultiplePermanentsCost c) return new MultiplePermanentTapCostHandler(c, predicateEvaluationService, gameBroadcastService, triggerCollectionService, sourcePermanentId);
-        if (effect instanceof UntapMultiplePermanentsCost c) return new MultiplePermanentUntapCostHandler(c, predicateEvaluationService, gameBroadcastService, sourcePermanentId);
-        if (effect instanceof TapXPermanentsCost c) return new TapXPermanentsCostHandler(c, xValue, predicateEvaluationService, gameBroadcastService, triggerCollectionService, sourcePermanentId);
+        if (effect instanceof TapCreatureCost c) return new TapCreatureCostHandler(c, gameQueryService, predicateEvaluationService, gameLogService, triggerCollectionService, sourcePermanentId);
+        if (effect instanceof TapMultiplePermanentsCost c) return new MultiplePermanentTapCostHandler(c, predicateEvaluationService, gameLogService, triggerCollectionService, sourcePermanentId);
+        if (effect instanceof UntapMultiplePermanentsCost c) return new MultiplePermanentUntapCostHandler(c, predicateEvaluationService, gameLogService, sourcePermanentId);
+        if (effect instanceof TapXPermanentsCost c) return new TapXPermanentsCostHandler(c, xValue, predicateEvaluationService, gameLogService, triggerCollectionService, sourcePermanentId);
         if (effect instanceof SacrificeXPermanentsCost c) return new SacrificeXPermanentsCostHandler(c, xValue, predicateEvaluationService, sacAction);
-        if (effect instanceof TapTwoCreaturesSharingTypeCost c) return new TapTwoSharingCreatureTypeCostHandler(c, gameQueryService, gameBroadcastService, triggerCollectionService, chosenSoFar);
-        if (effect instanceof CrewCost c) return new CrewCostHandler(c, gameQueryService, gameBroadcastService, triggerCollectionService, sourcePermanentId);
-        if (effect instanceof RemoveCounterFromControlledCreatureCost c) return new RemoveCounterFromCreatureCostHandler(c, gameQueryService, gameBroadcastService);
-        if (effect instanceof PutCounterOnControlledCreatureCost c) return new PutCounterOnCreatureCostHandler(c, gameQueryService, gameBroadcastService);
+        if (effect instanceof TapTwoCreaturesSharingTypeCost c) return new TapTwoSharingCreatureTypeCostHandler(c, gameQueryService, gameLogService, triggerCollectionService, chosenSoFar);
+        if (effect instanceof CrewCost c) return new CrewCostHandler(c, gameQueryService, gameLogService, triggerCollectionService, sourcePermanentId);
+        if (effect instanceof RemoveCounterFromControlledCreatureCost c) return new RemoveCounterFromCreatureCostHandler(c, gameQueryService, gameLogService);
+        if (effect instanceof PutCounterOnControlledCreatureCost c) return new PutCounterOnCreatureCostHandler(c, gameQueryService, gameLogService);
         return null;
     }
 
@@ -2301,7 +2301,7 @@ public class AbilityActivationService {
         }
         permanentRemovalService.removePermanentToGraveyard(gameData, sacTarget);
         triggerCollectionService.checkAllyPermanentSacrificedTriggers(gameData, playerId, sacTarget.getCard());
-        gameBroadcastService.logAndBroadcast(gameData, GameLog.textCardText(player.getUsername() + " sacrifices " , sacTarget.getCard(), "."));
+        gameLogService.append(gameData, GameLog.textCardText(player.getUsername() + " sacrifices " , sacTarget.getCard(), "."));
     }
 
     private void returnPermanentToHandAsCost(GameData gameData, Player player, Permanent target) {
@@ -2311,7 +2311,7 @@ public class AbilityActivationService {
             throw new IllegalStateException("Must return a permanent you control");
         }
         permanentRemovalService.removePermanentToHand(gameData, target);
-        gameBroadcastService.logAndBroadcast(gameData, GameLog.textCardText(player.getUsername() + " returns " , target.getCard(), " to hand."));
+        gameLogService.append(gameData, GameLog.textCardText(player.getUsername() + " returns " , target.getCard(), " to hand."));
     }
 
     private void validateTimingRestrictions(GameData gameData, UUID playerId, Permanent permanent, ActivatedAbility ability) {
@@ -2656,7 +2656,7 @@ public class AbilityActivationService {
             int currentLife = gameData.getLife(playerId);
             gameData.playerLifeTotals.put(playerId, currentLife - phyrexianLifeCost);
             String playerName = gameData.playerIdToName.get(playerId);
-            gameBroadcastService.logAndBroadcast(gameData, GameLog.text(playerName + " pays " + phyrexianLifeCost + " life for Phyrexian mana."));
+            gameLogService.append(gameData, GameLog.text(playerName + " pays " + phyrexianLifeCost + " life for Phyrexian mana."));
         }
     }
 
@@ -2751,7 +2751,7 @@ public class AbilityActivationService {
         triggerCollectionService.checkDiscardTriggers(gameData, player.getId(), discarded);
 
         String logEntry = player.getUsername() + " discards " + discarded.getName() + " as an activation cost.";
-        gameBroadcastService.logAndBroadcast(gameData, GameLog.textCardText(player.getUsername() + " discards " , discarded, " as an activation cost."));
+        gameLogService.append(gameData, GameLog.textCardText(player.getUsername() + " discards " , discarded, " as an activation cost."));
         log.info("Game {} - {} discards {} as activation cost", gameData.id, player.getUsername(), discarded.getName());
     }
 
@@ -2772,7 +2772,7 @@ public class AbilityActivationService {
 
         String logEntry = player.getUsername() + " discards their hand (" + discarded.size()
                 + " card" + (discarded.size() != 1 ? "s" : "") + ") as an activation cost.";
-        gameBroadcastService.logAndBroadcast(gameData, GameLog.text(logEntry));
+        gameLogService.append(gameData, GameLog.text(logEntry));
         log.info("Game {} - {} discards hand of {} cards as activation cost", gameData.id, player.getUsername(), discarded.size());
     }
 
@@ -2788,7 +2788,7 @@ public class AbilityActivationService {
         gameData.discardCausedByOpponent = false;
         triggerCollectionService.checkDiscardTriggers(gameData, playerId, discarded);
 
-        gameBroadcastService.logAndBroadcast(gameData, GameLog.textCardText(player.getUsername() + " discards " , discarded, " at random as an activation cost."));
+        gameLogService.append(gameData, GameLog.textCardText(player.getUsername() + " discards " , discarded, " at random as an activation cost."));
         log.info("Game {} - {} discards {} at random as activation cost", gameData.id, player.getUsername(), discarded.getName());
     }
 
@@ -2846,7 +2846,7 @@ public class AbilityActivationService {
         String typeName = graveyardExileFilterLabel(cost.requiredType(), null);
         String logEntry = player.getUsername() + " exiles " + toExile.size() + " " + typeName
                 + "card" + (toExile.size() != 1 ? "s" : "") + " from graveyard as an activation cost.";
-        gameBroadcastService.logAndBroadcast(gameData, GameLog.text(logEntry));
+        gameLogService.append(gameData, GameLog.text(logEntry));
         log.info("Game {} - {} exiles {} {}cards from graveyard as activation cost",
                 gameData.id, player.getUsername(), toExile.size(), typeName);
     }
@@ -2897,7 +2897,7 @@ public class AbilityActivationService {
         graveyardService.notifyCardsLeftGraveyard(gameData, playerId);
         exileService.exileCard(gameData, playerId, exiled);
 
-        gameBroadcastService.logAndBroadcast(gameData, GameLog.textCardText(player.getUsername() + " exiles " , exiled, " from graveyard as an activation cost."));
+        gameLogService.append(gameData, GameLog.textCardText(player.getUsername() + " exiles " , exiled, " from graveyard as an activation cost."));
         log.info("Game {} - {} exiles {} from graveyard as activation cost", gameData.id, player.getUsername(), exiled.getName());
     }
 

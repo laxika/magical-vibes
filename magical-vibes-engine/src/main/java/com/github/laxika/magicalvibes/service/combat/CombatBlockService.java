@@ -1,5 +1,7 @@
 package com.github.laxika.magicalvibes.service.combat;
 
+import com.github.laxika.magicalvibes.service.GameLogService;
+
 import com.github.laxika.magicalvibes.model.CardSubtype;
 import com.github.laxika.magicalvibes.model.CardType;
 import com.github.laxika.magicalvibes.model.EffectRegistration;
@@ -50,7 +52,6 @@ import com.github.laxika.magicalvibes.model.effect.TriggeringCardConditionalEffe
 import com.github.laxika.magicalvibes.model.PendingInteraction;
 import com.github.laxika.magicalvibes.model.PermanentChoiceContext;
 import com.github.laxika.magicalvibes.networking.message.BlockerAssignment;
-import com.github.laxika.magicalvibes.service.event.GameMutationCoordinator;
 import com.github.laxika.magicalvibes.service.battlefield.BlockLegalityContext;
 import com.github.laxika.magicalvibes.service.battlefield.GameQueryService;
 import com.github.laxika.magicalvibes.service.filter.PredicateEvaluationService;
@@ -73,7 +74,7 @@ public class CombatBlockService {
 
     private final GameQueryService gameQueryService;
     private final PredicateEvaluationService predicateEvaluationService;
-    private final GameMutationCoordinator mutationCoordinator;
+    private final GameLogService gameLogService;
     private final CombatAttackService combatAttackService;
     private final CombatTriggerService combatTriggerService;
     private final InteractionHandlerRegistry interactionHandlerRegistry;
@@ -342,7 +343,7 @@ public class CombatBlockService {
         if (!blockerAssignments.isEmpty()) {
             String logEntry = player.getUsername() + " declares " + blockerAssignments.size() +
                     " blocker" + (blockerAssignments.size() > 1 ? "s" : "") + ".";
-            mutationCoordinator.appendPublicGameLog(gameData, GameLog.text(logEntry));
+            gameLogService.append(gameData, GameLog.text(logEntry));
         }
 
         // Collect all blocker-step triggers, then reorder per APNAP (CR 603.3b)
@@ -381,7 +382,7 @@ public class CombatBlockService {
                 if (targetsChosenPermanent) {
                     gameData.queueInteraction(new PermanentChoiceContext.AttackTriggerTarget(
                             blocker.getCard(), defenderId, new ArrayList<>(blockEffects), blocker.getId()));
-                    mutationCoordinator.appendPublicGameLog(gameData, GameLog.cardThen(blocker.getCard(),
+                    gameLogService.append(gameData, GameLog.cardThen(blocker.getCard(),
                             "'s block ability triggers."));
                     log.info("Game {} - {} block trigger queued for target selection", gameData.id,
                             blocker.getCard().getName());
@@ -411,7 +412,7 @@ public class CombatBlockService {
                 // Block triggers reference "that creature" but don't target — they can't fizzle
                 blockTrigger.setNonTargeting(true);
                 gameData.stack.add(blockTrigger);
-                mutationCoordinator.appendPublicGameLog(gameData, GameLog.cardThen(blocker.getCard(),
+                gameLogService.append(gameData, GameLog.cardThen(blocker.getCard(),
                         "'s block ability triggers."));
                 log.info("Game {} - {} block trigger pushed onto stack", gameData.id, blocker.getCard().getName());
             }
@@ -447,7 +448,7 @@ public class CombatBlockService {
             );
             multiBlockTrigger.setNonTargeting(true);
             gameData.stack.add(multiBlockTrigger);
-            mutationCoordinator.appendPublicGameLog(gameData, GameLog.cardThen(blocker.getCard(),
+            gameLogService.append(gameData, GameLog.cardThen(blocker.getCard(),
                     "'s block ability triggers."));
             log.info("Game {} - {} multi-block trigger pushed onto stack", gameData.id, blocker.getCard().getName());
         }
@@ -486,7 +487,7 @@ public class CombatBlockService {
                     // player (e.g. Vedalken Ghoul's DEFENDING_PLAYER life loss) can read it.
                     becomesBlockedTrigger.setAttackedTargetId(attacker.getAttackTarget());
                     gameData.stack.add(becomesBlockedTrigger);
-                    mutationCoordinator.appendPublicGameLog(gameData, GameLog.cardThen(attacker.getCard(),
+                    gameLogService.append(gameData, GameLog.cardThen(attacker.getCard(),
                             "'s becomes-blocked ability triggers."));
                     log.info("Game {} - {} becomes-blocked trigger pushed onto stack", gameData.id, attacker.getCard().getName());
                 }
@@ -523,7 +524,7 @@ public class CombatBlockService {
                         // "That creature" wording references a blocker without targeting it.
                         trigger.setNonTargeting(true);
                         gameData.stack.add(trigger);
-                        mutationCoordinator.appendPublicGameLog(gameData, GameLog.cardThen(attacker.getCard(),
+                        gameLogService.append(gameData, GameLog.cardThen(attacker.getCard(),
                                 "'s becomes-blocked ability triggers."));
                         log.info("Game {} - {} becomes-blocked trigger pushed onto stack", gameData.id, attacker.getCard().getName());
                     }
@@ -614,7 +615,7 @@ public class CombatBlockService {
                 // of Pain (governs targeting via effect targetSpec → any creature).
                 gameData.queueMayAbility(delayed.sourceCard(), delayed.controllerId(), may,
                         null, attacker.getId());
-                mutationCoordinator.appendPublicGameLog(gameData, GameLog.cardTextCard(
+                gameLogService.append(gameData, GameLog.cardTextCard(
                         delayed.sourceCard(), " — ", attacker.getCard(),
                         " attacks unblocked."));
                 log.info("Game {} - {} delayed unblocked-attacker power damage fires for {}",
@@ -650,7 +651,7 @@ public class CombatBlockService {
                         blocker.getId());
                 se.setNonTargeting(true);
                 gameData.stack.add(se);
-                mutationCoordinator.appendPublicGameLog(gameData, GameLog.cardTextCard(
+                gameLogService.append(gameData, GameLog.cardTextCard(
                         boost.sourceCard(), " — ", blocker.getCard(),
                         " gets +" + boost.power() + "/+" + boost.toughness() + " until end of turn."));
                 log.info("Game {} - {} delayed blocker boost fires for {}",
@@ -753,7 +754,7 @@ public class CombatBlockService {
                 // "Defending player" is determined by the combat, not chosen — the trigger can't fizzle.
                 trigger.setNonTargeting(true);
                 gameData.stack.add(trigger);
-                mutationCoordinator.appendPublicGameLog(gameData, GameLog.cardThen(attacker.getCard(),
+                gameLogService.append(gameData, GameLog.cardThen(attacker.getCard(),
                         "'s unblocked-attack ability triggers."));
                 log.info("Game {} - {} unblocked-attack trigger pushed onto stack", gameData.id, attacker.getCard().getName());
                 pushed++;
@@ -792,7 +793,7 @@ public class CombatBlockService {
             // Enchanted attacker and defending player are determined by the combat — the trigger can't fizzle.
             trigger.setNonTargeting(true);
             gameData.stack.add(trigger);
-            mutationCoordinator.appendPublicGameLog(gameData, GameLog.abilityTriggers(perm.getCard()));
+            gameLogService.append(gameData, GameLog.abilityTriggers(perm.getCard()));
             log.info("Game {} - {} enchanted-creature unblocked-attack trigger pushed onto stack (enchanted {})",
                     gameData.id, perm.getCard().getName(), attacker.getCard().getName());
             pushed[0]++;
@@ -845,7 +846,7 @@ public class CombatBlockService {
                 trigger.setNonTargeting(true);
                 gameData.stack.add(trigger);
                 pushed++;
-                mutationCoordinator.appendPublicGameLog(gameData, GameLog.abilityTriggers(perm.getCard()));
+                gameLogService.append(gameData, GameLog.abilityTriggers(perm.getCard()));
                 log.info("Game {} - {} ON_ALLY_CREATURE_ATTACKS_UNBLOCKED trigger for {} unblocked",
                         gameData.id, perm.getCard().getName(), attacker.getCard().getName());
             }
@@ -978,7 +979,7 @@ public class CombatBlockService {
             // "It" references the blocked creature without targeting it — can't fizzle.
             trigger.setNonTargeting(true);
             gameData.stack.add(trigger);
-            mutationCoordinator.appendPublicGameLog(gameData, GameLog.abilityTriggers(perm.getCard()));
+            gameLogService.append(gameData, GameLog.abilityTriggers(perm.getCard()));
             log.info("Game {} - {} ON_ALLY_CREATURE_BECOMES_BLOCKED trigger for {} blocked",
                     gameData.id, perm.getCard().getName(), blockedAttacker.getCard().getName());
         }

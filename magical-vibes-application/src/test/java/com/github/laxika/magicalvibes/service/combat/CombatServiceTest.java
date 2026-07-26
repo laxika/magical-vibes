@@ -10,6 +10,7 @@ import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.Player;
 import com.github.laxika.magicalvibes.model.CombatAttackTarget;
 import com.github.laxika.magicalvibes.networking.message.BlockerAssignment;
+import com.github.laxika.magicalvibes.service.GameLogService;
 import com.github.laxika.magicalvibes.service.battlefield.BattlefieldEntryService;
 import com.github.laxika.magicalvibes.service.battlefield.CreatureControlService;
 import com.github.laxika.magicalvibes.service.battlefield.GameQueryService;
@@ -58,6 +59,9 @@ class CombatServiceTest {
 
     @Mock
     private GameMutationCoordinator mutationCoordinator;
+
+    @Mock
+    private GameLogService gameLogService;
 
     @Mock
     private PermanentRemovalService permanentRemovalService;
@@ -419,11 +423,11 @@ class CombatServiceTest {
 
             combatService.processEndOfCombatSacrifices(gd);
 
-            verify(mutationCoordinator).appendPublicGameLog(
+            verify(gameLogService).append(
                     eq(gd),
                     argThat((GameLogEntry logEntry) ->
                             logEntry.plainText().contains("Grizzly Bears")));
-            verify(mutationCoordinator).appendPublicGameLog(
+            verify(gameLogService).append(
                     eq(gd),
                     argThat((GameLogEntry logEntry) ->
                             logEntry.plainText().contains("sacrificed")));

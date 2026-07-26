@@ -26,7 +26,7 @@ import java.util.UUID;
 @RequiredArgsConstructor
 public class CardRevealService {
 
-    private final GameBroadcastService gameBroadcastService;
+    private final GameLogService gameLogService;
     private final GameQueryService gameQueryService;
     private final GameMutationCoordinator mutationCoordinator;
 
@@ -40,7 +40,7 @@ public class CardRevealService {
         String subjectName = gameData.playerIdToName.get(subjectPlayerId);
 
         String suffix = hand.isEmpty() ? " It is empty." : "";
-        gameBroadcastService.logAndBroadcast(gameData,
+        gameLogService.append(gameData,
                 GameLog.text(viewerName + " looks at " + subjectName + "'s hand." + suffix));
         revealToPlayer(
                 gameData, subjectPlayerId, GameEventFact.RevealZone.HAND, hand, viewerId);
@@ -51,12 +51,12 @@ public class CardRevealService {
         String subjectName = gameData.playerIdToName.get(subjectPlayerId);
 
         if (hand.isEmpty()) {
-            gameBroadcastService.logAndBroadcast(gameData,
+            gameLogService.append(gameData,
                     GameLog.text(subjectName + " reveals their hand. It is empty."));
         } else {
             GameLog.Builder reveal = GameLog.builder().text(subjectName + " reveals their hand: ");
             appendCards(reveal, hand);
-            gameBroadcastService.logAndBroadcast(gameData, reveal.text(".").build());
+            gameLogService.append(gameData, reveal.text(".").build());
         }
         revealToAllPlayers(
                 gameData, subjectPlayerId, GameEventFact.RevealZone.HAND, hand);

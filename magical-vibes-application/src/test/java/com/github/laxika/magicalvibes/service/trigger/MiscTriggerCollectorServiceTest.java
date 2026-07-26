@@ -33,7 +33,7 @@ import com.github.laxika.magicalvibes.model.filter.PermanentHasSubtypePredicate;
 import com.github.laxika.magicalvibes.model.amount.EventValue;
 import com.github.laxika.magicalvibes.model.effect.LoseLifeEffect;
 import com.github.laxika.magicalvibes.model.effect.LoseLifeRecipient;
-import com.github.laxika.magicalvibes.service.GameBroadcastService;
+import com.github.laxika.magicalvibes.service.GameLogService;
 import com.github.laxika.magicalvibes.service.battlefield.GameQueryService;
 import com.github.laxika.magicalvibes.service.effect.AmountEvaluationService;
 import com.github.laxika.magicalvibes.service.effect.normalfx.PermanentControlSupport;
@@ -61,7 +61,7 @@ import static org.mockito.Mockito.when;
 class MiscTriggerCollectorServiceTest {
 
     @Mock
-    private GameBroadcastService gameBroadcastService;
+    private GameLogService gameLogService;
 
     @Mock
     private GraveyardService graveyardService;
@@ -300,7 +300,7 @@ class MiscTriggerCollectorServiceTest {
                     match(aura, player1Id, effect),
                     EffectSlot.ON_ENCHANTED_PERMANENT_TAPPED, effect, ctx);
 
-            verify(gameBroadcastService).logAndBroadcast(eq(gd), any(GameLogEntry.class));
+            verify(gameLogService).append(eq(gd), any(GameLogEntry.class));
         }
     }
 
@@ -408,7 +408,7 @@ class MiscTriggerCollectorServiceTest {
                     match(aura, player1Id, effect),
                     EffectSlot.ON_ENCHANTED_PERMANENT_TAPPED, effect, ctx);
 
-            verify(gameBroadcastService).logAndBroadcast(eq(gd), any(GameLogEntry.class));
+            verify(gameLogService).append(eq(gd), any(GameLogEntry.class));
         }
     }
 
@@ -433,7 +433,7 @@ class MiscTriggerCollectorServiceTest {
 
             assertThat(result).isTrue();
             verify(graveyardService).resolveMillPlayer(gd, player2Id, 3);
-            verify(gameBroadcastService).logAndBroadcast(eq(gd), any(GameLogEntry.class));
+            verify(gameLogService).append(eq(gd), any(GameLogEntry.class));
         }
 
         @Test
@@ -465,7 +465,7 @@ class MiscTriggerCollectorServiceTest {
                     match(mindcrank, player1Id, effect),
                     EffectSlot.ON_OPPONENT_LOSES_LIFE, effect, ctx);
 
-            verify(gameBroadcastService).logAndBroadcast(eq(gd), argThat((GameLogEntry e) -> e.plainText().equals("Mindcrank triggers — Opponent mills 5 cards.")));
+            verify(gameLogService).append(eq(gd), argThat((GameLogEntry e) -> e.plainText().equals("Mindcrank triggers — Opponent mills 5 cards.")));
         }
     }
 
@@ -520,7 +520,7 @@ class MiscTriggerCollectorServiceTest {
                     match(perm, player1Id, effect),
                     EffectSlot.ON_CONTROLLER_GAINS_LIFE, effect, ctx);
 
-            verify(gameBroadcastService).logAndBroadcast(eq(gd), any(GameLogEntry.class));
+            verify(gameLogService).append(eq(gd), any(GameLogEntry.class));
         }
     }
 
@@ -647,7 +647,7 @@ class MiscTriggerCollectorServiceTest {
                     match(perm, player1Id, effect),
                     EffectSlot.ON_CONTROLLER_GAINS_LIFE, effect, ctx);
 
-            verify(gameBroadcastService).logAndBroadcast(eq(gd), any(GameLogEntry.class));
+            verify(gameLogService).append(eq(gd), any(GameLogEntry.class));
         }
     }
 
@@ -702,7 +702,7 @@ class MiscTriggerCollectorServiceTest {
                     match(perm, player1Id, effect),
                     EffectSlot.ON_OPPONENT_DEALT_NONCOMBAT_DAMAGE, effect, ctx);
 
-            verify(gameBroadcastService).logAndBroadcast(eq(gd), any(GameLogEntry.class));
+            verify(gameLogService).append(eq(gd), any(GameLogEntry.class));
         }
     }
 }

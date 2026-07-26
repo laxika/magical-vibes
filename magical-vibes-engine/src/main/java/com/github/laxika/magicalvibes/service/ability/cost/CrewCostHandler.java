@@ -6,7 +6,7 @@ import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.Player;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
 import com.github.laxika.magicalvibes.model.effect.CrewCost;
-import com.github.laxika.magicalvibes.service.GameBroadcastService;
+import com.github.laxika.magicalvibes.service.GameLogService;
 import com.github.laxika.magicalvibes.service.battlefield.GameQueryService;
 import com.github.laxika.magicalvibes.service.trigger.TriggerCollectionService;
 
@@ -25,18 +25,18 @@ public class CrewCostHandler implements PermanentChoiceCostHandler {
 
     private final CrewCost cost;
     private final GameQueryService gameQueryService;
-    private final GameBroadcastService gameBroadcastService;
+    private final GameLogService gameLogService;
     private final TriggerCollectionService triggerCollectionService;
     private final UUID sourcePermanentId;
     private int lastTappedCreaturePower = 1;
 
     public CrewCostHandler(CrewCost cost, GameQueryService gameQueryService,
-                           GameBroadcastService gameBroadcastService,
+                           GameLogService gameLogService,
                            TriggerCollectionService triggerCollectionService,
                            UUID sourcePermanentId) {
         this.cost = cost;
         this.gameQueryService = gameQueryService;
-        this.gameBroadcastService = gameBroadcastService;
+        this.gameLogService = gameLogService;
         this.triggerCollectionService = triggerCollectionService;
         this.sourcePermanentId = sourcePermanentId;
     }
@@ -89,7 +89,7 @@ public class CrewCostHandler implements PermanentChoiceCostHandler {
         triggerCollectionService.checkEnchantedPermanentTapTriggers(gameData, chosen);
         String tapLog = player.getUsername() + " taps " + chosen.getCard().getName()
                 + " (power " + lastTappedCreaturePower + ") to crew.";
-        gameBroadcastService.logAndBroadcast(gameData, GameLog.builder().text(player.getUsername() + " taps ").card(chosen.getCard()).text(" (power " + lastTappedCreaturePower + ") to crew.").build());
+        gameLogService.append(gameData, GameLog.builder().text(player.getUsername() + " taps ").card(chosen.getCard()).text(" (power " + lastTappedCreaturePower + ") to crew.").build());
     }
 
     @Override

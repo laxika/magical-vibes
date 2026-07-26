@@ -42,13 +42,16 @@ public class GameSetupService {
     private final GameRegistry gameRegistry;
     private final ObjectProvider<CustomDeckSource> customDeckSourceProvider;
     private final GameMutationCoordinator mutationCoordinator;
+    private final GameLogService gameLogService;
 
     public GameSetupService(GameRegistry gameRegistry,
                             ObjectProvider<CustomDeckSource> customDeckSourceProvider,
-                            GameMutationCoordinator mutationCoordinator) {
+                            GameMutationCoordinator mutationCoordinator,
+                            GameLogService gameLogService) {
         this.gameRegistry = gameRegistry;
         this.customDeckSourceProvider = customDeckSourceProvider;
         this.mutationCoordinator = mutationCoordinator;
+        this.gameLogService = gameLogService;
     }
 
     /**
@@ -176,7 +179,7 @@ public class GameSetupService {
 
         gameData.status = GameStatus.MULLIGAN;
 
-        gameData.gameLog.add(GameLogEntry.text("Game started!"));
+        gameLogService.append(gameData, GameLogEntry.text("Game started!"));
         for (UUID playerId : gameData.orderedPlayerIds) {
             String deckIdForLog = gameData.playerDeckChoices.get(playerId);
             String deckName;
@@ -188,7 +191,9 @@ public class GameSetupService {
                 deckName = PrebuiltDeck.findById(deckIdForLog).getDisplayName();
             }
             String playerName = gameData.playerIdToName.get(playerId);
-            gameData.gameLog.add(GameLogEntry.text(playerName + " is playing with " + deckName + "."));
+            gameLogService.append(
+                    gameData,
+                    GameLogEntry.text(playerName + " is playing with " + deckName + "."));
         }
 
         List<UUID> ids = new ArrayList<>(gameData.orderedPlayerIds);
@@ -196,8 +201,12 @@ public class GameSetupService {
         String startingPlayerName = gameData.playerIdToName.get(startingPlayerId);
         gameData.startingPlayerId = startingPlayerId;
 
-        gameData.gameLog.add(GameLogEntry.text(startingPlayerName + " wins the coin toss and goes first!"));
-        gameData.gameLog.add(GameLogEntry.text("Mulligan phase — decide to keep or mulligan."));
+        gameLogService.append(
+                gameData,
+                GameLogEntry.text(startingPlayerName + " wins the coin toss and goes first!"));
+        gameLogService.append(
+                gameData,
+                GameLogEntry.text("Mulligan phase — decide to keep or mulligan."));
 
         for (UUID playerId : gameData.orderedPlayerIds) {
             mutationCoordinator.emit(gameData,

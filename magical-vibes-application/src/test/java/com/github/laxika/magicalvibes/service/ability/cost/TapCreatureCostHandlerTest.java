@@ -9,7 +9,7 @@ import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.Player;
 import com.github.laxika.magicalvibes.model.effect.TapCreatureCost;
 import com.github.laxika.magicalvibes.model.filter.PermanentColorInPredicate;
-import com.github.laxika.magicalvibes.service.GameBroadcastService;
+import com.github.laxika.magicalvibes.service.GameLogService;
 import com.github.laxika.magicalvibes.service.trigger.TriggerCollectionService;
 import com.github.laxika.magicalvibes.service.battlefield.GameQueryService;
 import com.github.laxika.magicalvibes.service.filter.PredicateEvaluationService;
@@ -45,7 +45,7 @@ class TapCreatureCostHandlerTest {
     private PredicateEvaluationService predicateEvaluationService;
 
     @Mock
-    private GameBroadcastService gameBroadcastService;
+    private GameLogService gameLogService;
 
     @Mock
     private TriggerCollectionService triggerCollectionService;
@@ -60,7 +60,7 @@ class TapCreatureCostHandlerTest {
 
     @BeforeEach
     void setUp() {
-        handler = new TapCreatureCostHandler(cost, gameQueryService, predicateEvaluationService, gameBroadcastService,
+        handler = new TapCreatureCostHandler(cost, gameQueryService, predicateEvaluationService, gameLogService,
                 triggerCollectionService, null);
         playerId = UUID.randomUUID();
         player = new Player(playerId, "TestPlayer");
@@ -302,7 +302,7 @@ class TapCreatureCostHandlerTest {
 
         assertThat(blueCreature.isTapped()).isTrue();
         verify(triggerCollectionService).checkEnchantedPermanentTapTriggers(gameData, blueCreature);
-        verify(gameBroadcastService).logAndBroadcast(eq(gameData), argThat((GameLogEntry e) -> e.plainText().equals("TestPlayer taps Blue Wizard as a cost.")));
+        verify(gameLogService).append(eq(gameData), argThat((GameLogEntry e) -> e.plainText().equals("TestPlayer taps Blue Wizard as a cost.")));
     }
 
     // =========================================================================

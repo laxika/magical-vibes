@@ -19,7 +19,7 @@ import com.github.laxika.magicalvibes.model.effect.ReturnTargetCardsFromGraveyar
 import com.github.laxika.magicalvibes.model.effect.ShuffleTargetCardsFromControllerGraveyardIntoLibraryEffect;
 import com.github.laxika.magicalvibes.model.filter.CardPredicate;
 import com.github.laxika.magicalvibes.model.filter.CardPredicateUtils;
-import com.github.laxika.magicalvibes.service.GameBroadcastService;
+import com.github.laxika.magicalvibes.service.GameLogService;
 import com.github.laxika.magicalvibes.service.input.PlayerInputService;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -37,7 +37,7 @@ import com.github.laxika.magicalvibes.service.filter.PredicateEvaluationService;
 public class GraveyardTargetingService {
 
     private final PredicateEvaluationService predicateEvaluationService;
-    private final GameBroadcastService gameBroadcastService;
+    private final GameLogService gameLogService;
     private final PlayerInputService playerInputService;
 
     public void handleGraveyardExileETBTargeting(GameData gameData, UUID controllerId, Card card,
@@ -60,7 +60,7 @@ public class GraveyardTargetingService {
                     new ArrayList<>(allEffects),
                     List.of()
             ));
-            gameBroadcastService.logAndBroadcast(gameData, GameLog.cardThen(card, "'s enter-the-battlefield ability triggers."));
+            gameLogService.append(gameData, GameLog.cardThen(card, "'s enter-the-battlefield ability triggers."));
             log.info("Game {} - {} ETB ability pushed onto stack with 0 targets (no graveyard cards)", gameData.id, card.getName());
         } else {
             int maxTargets = Math.min(exile.maxTargets(), matchingCards.size());
@@ -109,7 +109,7 @@ public class GraveyardTargetingService {
                     new ArrayList<>(allEffects),
                     List.of()
             ));
-            gameBroadcastService.logAndBroadcast(gameData, GameLog.cardThen(card, "'s enter-the-battlefield ability triggers."));
+            gameLogService.append(gameData, GameLog.cardThen(card, "'s enter-the-battlefield ability triggers."));
             log.info("Game {} - {} ETB graveyard-exile pushed onto stack with 0 targets (no valid graveyard cards)",
                     gameData.id, card.getName());
             return;
@@ -173,7 +173,7 @@ public class GraveyardTargetingService {
                     new ArrayList<>(effects),
                     List.of()
             ));
-            gameBroadcastService.logAndBroadcast(gameData, GameLog.cardThen(card, "'s enter-the-battlefield ability triggers."));
+            gameLogService.append(gameData, GameLog.cardThen(card, "'s enter-the-battlefield ability triggers."));
             log.info("Game {} - {} ETB ability pushed onto stack with 0 targets (no matching graveyard cards)",
                     gameData.id, card.getName());
         } else {
@@ -221,7 +221,7 @@ public class GraveyardTargetingService {
         }
 
         if (matchingCards.isEmpty()) {
-            gameBroadcastService.logAndBroadcast(gameData, GameLog.cardThen(card,
+            gameLogService.append(gameData, GameLog.cardThen(card,
                     "'s attack trigger has no valid graveyard targets."));
             log.info("Game {} - {} attack graveyard trigger skipped (no valid targets)",
                     gameData.id, card.getName());
@@ -239,7 +239,7 @@ public class GraveyardTargetingService {
         playerInputService.beginMultiGraveyardChoice(gameData, controllerId, matchingCards, 1,
                 card.getName() + "'s ability — Choose target card from " + zoneLabel + " to exile.");
 
-        gameBroadcastService.logAndBroadcast(gameData, GameLog.cardThen(card,
+        gameLogService.append(gameData, GameLog.cardThen(card,
                 "'s attack trigger — choose a graveyard target."));
         log.info("Game {} - {} attack graveyard trigger awaiting target selection",
                 gameData.id, card.getName());
@@ -282,7 +282,7 @@ public class GraveyardTargetingService {
                     List.of()
             ));
             String logEntry = description + " triggers.";
-            gameBroadcastService.logAndBroadcast(gameData, GameLog.text(logEntry));
+            gameLogService.append(gameData, GameLog.text(logEntry));
             log.info("Game {} - {} beginning-of-combat trigger pushed onto stack with 0 graveyard targets",
                     gameData.id, card.getName());
             return;
@@ -296,7 +296,7 @@ public class GraveyardTargetingService {
                 "Choose up to one target card from a graveyard to exile.");
 
         String logEntry = description + " triggers — choose a graveyard target.";
-        gameBroadcastService.logAndBroadcast(gameData, GameLog.text(logEntry));
+        gameLogService.append(gameData, GameLog.text(logEntry));
         log.info("Game {} - {} beginning-of-combat trigger awaiting graveyard target selection",
                 gameData.id, card.getName());
     }
@@ -327,7 +327,7 @@ public class GraveyardTargetingService {
         }
 
         if (matchingCards.isEmpty()) {
-            gameBroadcastService.logAndBroadcast(gameData, GameLog.cardThen(card, "'s enter-the-battlefield ability has no valid targets."));
+            gameLogService.append(gameData, GameLog.cardThen(card, "'s enter-the-battlefield ability has no valid targets."));
             log.info("Game {} - {} ETB graveyard cast has no valid targets", gameData.id, card.getName());
         } else {
             gameData.graveyardTargetOperation.card = card;
@@ -361,7 +361,7 @@ public class GraveyardTargetingService {
         }
 
         if (matchingCards.isEmpty()) {
-            gameBroadcastService.logAndBroadcast(gameData, GameLog.cardThen(card, "'s enter-the-battlefield ability has no valid targets."));
+            gameLogService.append(gameData, GameLog.cardThen(card, "'s enter-the-battlefield ability has no valid targets."));
             log.info("Game {} - {} ETB graveyard may-play has no valid targets", gameData.id, card.getName());
         } else {
             gameData.graveyardTargetOperation.card = card;
@@ -387,7 +387,7 @@ public class GraveyardTargetingService {
         }
 
         if (matchingCards.isEmpty()) {
-            gameBroadcastService.logAndBroadcast(gameData, GameLog.cardThen(card, "'s enter-the-battlefield ability has no valid targets."));
+            gameLogService.append(gameData, GameLog.cardThen(card, "'s enter-the-battlefield ability has no valid targets."));
             log.info("Game {} - {} ETB opponent-graveyard steal has no valid targets", gameData.id, card.getName());
         } else {
             gameData.graveyardTargetOperation.card = card;
@@ -423,7 +423,7 @@ public class GraveyardTargetingService {
         }
 
         if (matchingCards.isEmpty()) {
-            gameBroadcastService.logAndBroadcast(gameData, GameLog.cardThen(card, "'s enter-the-battlefield ability has no valid targets."));
+            gameLogService.append(gameData, GameLog.cardThen(card, "'s enter-the-battlefield ability has no valid targets."));
             log.info("Game {} - {} ETB grant flashback has no valid targets", gameData.id, card.getName());
         } else {
             gameData.graveyardTargetOperation.card = card;

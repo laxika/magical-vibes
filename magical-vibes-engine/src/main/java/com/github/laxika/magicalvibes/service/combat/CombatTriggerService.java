@@ -1,5 +1,7 @@
 package com.github.laxika.magicalvibes.service.combat;
 
+import com.github.laxika.magicalvibes.service.GameLogService;
+
 import com.github.laxika.magicalvibes.model.CardSubtype;
 import com.github.laxika.magicalvibes.model.EffectRegistration;
 import com.github.laxika.magicalvibes.model.EffectSlot;
@@ -17,7 +19,6 @@ import com.github.laxika.magicalvibes.model.effect.DestroySubtypeCombatOpponentE
 import com.github.laxika.magicalvibes.model.effect.DestroyTargetPermanentEffect;
 import com.github.laxika.magicalvibes.model.effect.EnchantedCreatureControllerLosesLifeEffect;
 import com.github.laxika.magicalvibes.networking.message.BlockerAssignment;
-import com.github.laxika.magicalvibes.service.event.GameMutationCoordinator;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
@@ -35,7 +36,7 @@ import java.util.UUID;
 @RequiredArgsConstructor
 public class CombatTriggerService {
 
-    private final GameMutationCoordinator mutationCoordinator;
+    private final GameLogService gameLogService;
 
     /**
      * Checks attached permanents (auras/equipment) for triggers in the given slot
@@ -111,7 +112,7 @@ public class CombatTriggerService {
                         // (e.g. equipment-granted Afflict) can resolve.
                         trigger.setAttackedTargetId(creature.getAttackTarget());
                         gameData.stack.add(trigger);
-                        mutationCoordinator.appendPublicGameLog(gameData, GameLog.abilityTriggers(perm.getCard()));
+                        gameLogService.append(gameData, GameLog.abilityTriggers(perm.getCard()));
                         log.info("Game {} - {} auto-targeted combat trigger pushed onto stack (attached to {})",
                                 gameData.id, perm.getCard().getName(), creature.getCard().getName());
                     } else {
@@ -122,7 +123,7 @@ public class CombatTriggerService {
                             gameData.queueInteraction(
                                     new PermanentChoiceContext.AttackTriggerTarget(
                                             perm.getCard(), auraOwnerId, effectsForStack, perm.getId()));
-                            mutationCoordinator.appendPublicGameLog(gameData, GameLog.abilityTriggers(perm.getCard()));
+                            gameLogService.append(gameData, GameLog.abilityTriggers(perm.getCard()));
                             log.info("Game {} - {} targeted attack trigger queued for target selection (attached to {})",
                                     gameData.id, perm.getCard().getName(), creature.getCard().getName());
                         } else {
@@ -139,7 +140,7 @@ public class CombatTriggerService {
                             // (e.g. equipment-granted Afflict) can resolve.
                             trigger.setAttackedTargetId(creature.getAttackTarget());
                             gameData.stack.add(trigger);
-                            mutationCoordinator.appendPublicGameLog(gameData, GameLog.abilityTriggers(perm.getCard()));
+                            gameLogService.append(gameData, GameLog.abilityTriggers(perm.getCard()));
                             log.info("Game {} - {} aura trigger pushed onto stack (enchanted creature {})",
                                     gameData.id, perm.getCard().getName(), creature.getCard().getName());
                         }
@@ -211,7 +212,7 @@ public class CombatTriggerService {
                             trigger.setNonTargeting(true);
                         }
                         gameData.stack.add(trigger);
-                        mutationCoordinator.appendPublicGameLog(gameData, GameLog.abilityTriggers(perm.getCard()));
+                        gameLogService.append(gameData, GameLog.abilityTriggers(perm.getCard()));
                         log.info("Game {} - {} per-blocker trigger pushed onto stack (attached to {})",
                                 gameData.id, perm.getCard().getName(), attacker.getCard().getName());
                     }

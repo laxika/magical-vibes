@@ -5,7 +5,7 @@ import com.github.laxika.magicalvibes.model.GameData;
 import com.github.laxika.magicalvibes.model.GameLog;
 import com.github.laxika.magicalvibes.model.PendingInteraction;
 import com.github.laxika.magicalvibes.model.Player;
-import com.github.laxika.magicalvibes.service.GameBroadcastService;
+import com.github.laxika.magicalvibes.service.GameLogService;
 import com.github.laxika.magicalvibes.service.turn.TurnProgressionService;
 import java.util.ArrayList;
 import java.util.List;
@@ -28,7 +28,7 @@ public class PutCardsFromHandOnLibraryDestinationChoiceInteractionHandler
     // The option strings live on the record so its legalOptions() stays in sync with the prompt.
     private static final String TOP = PendingInteraction.PutCardsFromHandOnLibraryDestinationChoice.OPTIONS.get(0);
 
-    private final GameBroadcastService gameBroadcastService;
+    private final GameLogService gameLogService;
     private final TurnProgressionService turnProgressionService;
 
     @Override
@@ -74,7 +74,7 @@ public class PutCardsFromHandOnLibraryDestinationChoiceInteractionHandler
 
         gameData.interaction.clearAwaitingInput();
 
-        gameBroadcastService.logAndBroadcast(gameData, GameLog.text(player.getUsername() + " puts " + moving.size()
+        gameLogService.append(gameData, GameLog.text(player.getUsername() + " puts " + moving.size()
                 + " card(s) on the " + (onTop ? "top" : "bottom") + " of their library."));
         log.info("Game {} - {} put {} card(s) on {} of library", gameData.id, player.getUsername(),
                 moving.size(), onTop ? "top" : "bottom");

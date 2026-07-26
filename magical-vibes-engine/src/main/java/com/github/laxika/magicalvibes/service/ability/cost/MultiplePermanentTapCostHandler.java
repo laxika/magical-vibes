@@ -6,7 +6,7 @@ import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.Player;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
 import com.github.laxika.magicalvibes.model.effect.TapMultiplePermanentsCost;
-import com.github.laxika.magicalvibes.service.GameBroadcastService;
+import com.github.laxika.magicalvibes.service.GameLogService;
 import com.github.laxika.magicalvibes.service.filter.PredicateEvaluationService;
 import com.github.laxika.magicalvibes.service.trigger.TriggerCollectionService;
 
@@ -23,23 +23,23 @@ public class MultiplePermanentTapCostHandler implements PermanentChoiceCostHandl
 
     private final TapMultiplePermanentsCost cost;
     private final PredicateEvaluationService predicateEvaluationService;
-    private final GameBroadcastService gameBroadcastService;
+    private final GameLogService gameLogService;
     private final TriggerCollectionService triggerCollectionService;
     private final UUID sourcePermanentId;
 
     public MultiplePermanentTapCostHandler(TapMultiplePermanentsCost cost, PredicateEvaluationService predicateEvaluationService,
-                                           GameBroadcastService gameBroadcastService,
+                                           GameLogService gameLogService,
                                            TriggerCollectionService triggerCollectionService) {
-        this(cost, predicateEvaluationService, gameBroadcastService, triggerCollectionService, null);
+        this(cost, predicateEvaluationService, gameLogService, triggerCollectionService, null);
     }
 
     public MultiplePermanentTapCostHandler(TapMultiplePermanentsCost cost, PredicateEvaluationService predicateEvaluationService,
-                                           GameBroadcastService gameBroadcastService,
+                                           GameLogService gameLogService,
                                            TriggerCollectionService triggerCollectionService,
                                            UUID sourcePermanentId) {
         this.cost = cost;
         this.predicateEvaluationService = predicateEvaluationService;
-        this.gameBroadcastService = gameBroadcastService;
+        this.gameLogService = gameLogService;
         this.triggerCollectionService = triggerCollectionService;
         this.sourcePermanentId = sourcePermanentId;
     }
@@ -80,7 +80,7 @@ public class MultiplePermanentTapCostHandler implements PermanentChoiceCostHandl
         }
         chosen.tap();
         triggerCollectionService.checkEnchantedPermanentTapTriggers(gameData, chosen);
-        gameBroadcastService.logAndBroadcast(gameData, GameLog.textCardText(player.getUsername() + " taps " , chosen.getCard(), " as a cost."));
+        gameLogService.append(gameData, GameLog.textCardText(player.getUsername() + " taps " , chosen.getCard(), " as a cost."));
     }
 
     @Override

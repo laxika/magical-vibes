@@ -15,7 +15,7 @@ import com.github.laxika.magicalvibes.model.effect.ExileGraveyardCardsEffect;
 import com.github.laxika.magicalvibes.model.effect.GraveyardExileScope;
 import com.github.laxika.magicalvibes.model.effect.ReturnTargetCardsFromGraveyardToHandEffect;
 import com.github.laxika.magicalvibes.model.filter.CardTypePredicate;
-import com.github.laxika.magicalvibes.service.GameBroadcastService;
+import com.github.laxika.magicalvibes.service.GameLogService;
 import com.github.laxika.magicalvibes.service.input.PlayerInputService;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
@@ -42,7 +42,7 @@ class GraveyardTargetingServiceTest {
 
     @Mock private GameQueryService gameQueryService;
     @Mock private PredicateEvaluationService predicateEvaluationService;
-    @Mock private GameBroadcastService gameBroadcastService;
+    @Mock private GameLogService gameLogService;
     @Mock private PlayerInputService playerInputService;
 
     private GraveyardTargetingService service;
@@ -51,7 +51,7 @@ class GraveyardTargetingServiceTest {
 
     @BeforeEach
     void setUp() {
-        service = new GraveyardTargetingService(predicateEvaluationService, gameBroadcastService, playerInputService);
+        service = new GraveyardTargetingService(predicateEvaluationService, gameLogService, playerInputService);
 
         player1Id = UUID.randomUUID();
         gd = new GameData(UUID.randomUUID(), "test", player1Id, "Player1");
@@ -73,7 +73,7 @@ class GraveyardTargetingServiceTest {
         assertThat(gd.stack).hasSize(1);
         assertThat(gd.stack.getFirst().getEntryType()).isEqualTo(StackEntryType.TRIGGERED_ABILITY);
         assertThat(gd.stack.getFirst().getCard()).isSameAs(card);
-        verify(gameBroadcastService).logAndBroadcast(eq(gd), argThat((GameLogEntry e) -> e.plainText().equals("Agent of Treachery's enter-the-battlefield ability triggers.")));
+        verify(gameLogService).append(eq(gd), argThat((GameLogEntry e) -> e.plainText().equals("Agent of Treachery's enter-the-battlefield ability triggers.")));
     }
 
     @Test
@@ -89,7 +89,7 @@ class GraveyardTargetingServiceTest {
         assertThat(gd.stack).hasSize(1);
         assertThat(gd.stack.getFirst().getEntryType()).isEqualTo(StackEntryType.TRIGGERED_ABILITY);
         assertThat(gd.stack.getFirst().getTargetCardIds()).isEmpty();
-        verify(gameBroadcastService).logAndBroadcast(eq(gd), argThat((GameLogEntry e) -> e.plainText().equals("Tilling Treefolk's enter-the-battlefield ability triggers.")));
+        verify(gameLogService).append(eq(gd), argThat((GameLogEntry e) -> e.plainText().equals("Tilling Treefolk's enter-the-battlefield ability triggers.")));
     }
 
     @Test

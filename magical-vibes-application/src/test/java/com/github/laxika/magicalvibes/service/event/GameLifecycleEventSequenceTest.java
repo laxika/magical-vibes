@@ -12,6 +12,7 @@ import com.github.laxika.magicalvibes.model.event.GameEventBatch;
 import com.github.laxika.magicalvibes.model.event.GameEventFact;
 import com.github.laxika.magicalvibes.model.effect.KarnRestartGameEffect;
 import com.github.laxika.magicalvibes.service.GameBroadcastService;
+import com.github.laxika.magicalvibes.service.GameLogService;
 import com.github.laxika.magicalvibes.service.GameOutcomeService;
 import com.github.laxika.magicalvibes.service.GameRegistry;
 import com.github.laxika.magicalvibes.service.GameService;
@@ -57,6 +58,7 @@ class GameLifecycleEventSequenceTest {
     private RecordingSubscriber events;
     private GameMutationCoordinator coordinator;
     private GameBroadcastService broadcasts;
+    private GameLogService gameLogs;
     private GameQueryService gameQueryService;
     private GameOutcomeService outcomeService;
 
@@ -70,10 +72,11 @@ class GameLifecycleEventSequenceTest {
         events = new RecordingSubscriber();
         coordinator = new GameMutationCoordinator(new GameEventDispatcher(List.of(events)));
         broadcasts = mock(GameBroadcastService.class);
+        gameLogs = mock(GameLogService.class);
         gameQueryService = mock(GameQueryService.class);
         outcomeService = new GameOutcomeService(
                 gameQueryService,
-                broadcasts,
+                gameLogs,
                 mock(LichsMirrorResetService.class),
                 coordinator);
     }
@@ -87,7 +90,7 @@ class GameLifecycleEventSequenceTest {
 
         TurnProgressionService turns = mock(TurnProgressionService.class);
         MulliganService mulligans = new MulliganService(
-                broadcasts,
+                gameLogs,
                 turns,
                 mock(BattlefieldEntryService.class),
                 mock(PlayerInputService.class),
@@ -138,7 +141,7 @@ class GameLifecycleEventSequenceTest {
         GameService gameService = new GameService(
                 mock(GameRegistry.class),
                 gameQueryService,
-                broadcasts,
+                gameLogs,
                 mock(CombatService.class),
                 mock(TurnProgressionService.class),
                 new InteractionHandlerRegistry(),
@@ -186,7 +189,7 @@ class GameLifecycleEventSequenceTest {
                 coordinator);
         TurnProgressionService turns = new TurnProgressionService(
                 combat,
-                broadcasts,
+                gameLogs,
                 mock(PlayerInputService.class),
                 mock(TurnCleanupService.class),
                 mock(UntapStepService.class),
@@ -230,7 +233,7 @@ class GameLifecycleEventSequenceTest {
                 new GameMutationCoordinator(new GameEventDispatcher(List.of(drawEvents)));
         GameOutcomeService drawOutcome = new GameOutcomeService(
                 mock(GameQueryService.class),
-                broadcasts,
+                gameLogs,
                 mock(LichsMirrorResetService.class),
                 drawCoordinator);
 

@@ -16,6 +16,7 @@ The stable fact families are:
 | Kind | Fact | Meaning | Coalescible in one action? |
 |---|---|---|---|
 | `STATE_INVALIDATED` | `GameEventFact.StateInvalidated` | Named sections of the authoritative state need a new audience-specific view. | Yes, but only with the exact same audience. |
+| `GAME_LOG_APPENDED` | `GameEventFact.GameLogAppended` | One structured entry was appended to authoritative game-log state; the fact carries only its zero-based index. | No; append order is diagnostic action order. |
 | `DECISION_REQUESTED` | `GameEventFact.DecisionRequested` | A stable decision identity and decision family need an answer; delivery distinguishes initial open from replay without creating a second logical decision. | No. |
 | `PRIVATE_REVEAL` | `GameEventFact.PrivateReveal` | An immutable card snapshot was revealed to a restricted audience. | No. |
 | `MULLIGAN_RESOLVED` | `GameEventFact.MulliganResolved` | The existing public mulligan-result notification must be reproduced. | No. |
@@ -105,6 +106,11 @@ without such a boundary is always rejected.
   sequence, or second logical decision.
 - State invalidation means “build a post-action view,” not a request to observe an intermediate
   mutation state.
+- `GameLogService.append` is the only production mutation API for migrated logs. It requires the
+  current coordinator action, appends the existing immutable `GameLogEntry` exactly once, records
+  one public index-only `GAME_LOG_APPENDED` fact, and emits/merges the public `GAME_LOG`
+  invalidation. The fact never carries structured segments or card identity; projection reads
+  recipient-safe deltas from authoritative state after unlock.
 
 ## Current legacy inventory and ratchet
 
@@ -119,7 +125,7 @@ for every family is zero.
 |---|---:|---:|
 | direct runtime state broadcast | 0 | 0 |
 | direct engine session send outside transport adapters | 0 | 0 |
-| `GameBroadcastService.logAndBroadcast` | 2,290 | 0 |
+| `GameBroadcastService.logAndBroadcast` | 1,764 | 0 |
 
 The lifecycle migration ratchet additionally fixes the direct state/session count at zero for
 `GameService`, `GameSetupService`, `MulliganService`, `GameOutcomeService`,
@@ -199,47 +205,29 @@ Migration classification:
 
 ### `logAndBroadcast` package-family classification
 
-`logAndBroadcast` currently appends an immutable `GameLogEntry` to `GameData.gameLog`; actual
-delivery is coupled to the next state projection. Its 2,290 call sites are exhaustively
-classified by owning package family below. Card/effect-specific rows intentionally migrate to
-the same `GAME_LOG` state invalidation rather than new per-card event kinds.
+`logAndBroadcast` is now a delegating compatibility method for the explicitly excluded
+`service/input/**` and `service/effect/**` callers. The canonical `GameLogService` appends the
+immutable `GameLogEntry` to `GameData.gameLog`, records `GAME_LOG_APPENDED`, and retains delivery
+through the next coalesced `GAME_LOG` state projection. The remaining 1,764 compatibility calls
+are exhaustively classified below.
 
 | Package family | Count | Workflow classification |
 |---|---:|---|
-| service root | 112 | draw, outcomes, mulligan, stack, triggered queue, reveal, reset/auction/warp observations |
-| `ability` | 40 | activation and payment observations |
-| `ability/cost` | 8 | ability-cost payment observations |
-| `aura` | 4 | attachment legality observations |
-| `battle` | 4 | battle defeat/transform observations |
-| `battlefield` | 40 | entry, removal, clone, and control observations |
 | `effect` | 2 | shared effect-resolution observations |
 | `effect/mayfx` | 23 | accepted/declined may-effect observations |
 | `effect/normalfx` | 1,271 | normal card-effect resolution observations |
-| `graveyard` | 17 | graveyard movement observations |
 | `input` | 468 | choice answers and resumed-resolution observations |
-| `interaction` | 16 | registry-managed choice-answer observations |
-| `paradigm` | 8 | paradigm workflow observations |
-| `spell` | 27 | casting and spell-cost observations |
-| `state` | 8 | state-based action and state-trigger observations |
-| `trigger` | 143 | trigger collection/queue observations |
-| `turn` | 99 | step, turn, cleanup, and auto-pass observations |
 
-The service-root 112 are: `CardRevealService` 3, `DrawService` 27,
-`GameOutcomeService` 4, `GameService` 2, `LichsMirrorResetService` 2,
-`MulliganService` 7, `PermanentAuctionService` 3, `StackResolutionService` 29,
-`TriggeredAbilityQueueService` 33, and `WarpWorldService` 2. The remaining 2,178 calls are covered
-by the package-family rows and ratchet; their handler class names identify the individual card or
-workflow, and no handler is exempt.
+Service root, turn, combat, ability, spell, battlefield, trigger, graveyard, interaction, state,
+paradigm, aura, and battle now have zero legacy calls. Their prior 526 calls, the 78 combat calls
+already using the coordinator directly, and the four setup-time direct appends all use
+`GameLogService.append`. The package ratchet requires zero `logAndBroadcast` occurrences outside
+the two excluded trees.
 
-Migration classification: append the existing structured `GameLogEntry` to authoritative state,
-then emit/merge a `STATE_INVALIDATED(GAME_LOG)` fact for the appropriate audience. Do not put the
-entry itself into an event because its card segments hold `Card` references. The transport adapter
-continues to build immutable log views from authoritative state after the lock is released.
-
-All 78 former combat-package calls now append through
-`GameMutationCoordinator.appendPublicGameLog`, which records a coalescible public
-`STATE_INVALIDATED(GAME_LOG)` fact in the same mutation action. Combat packages therefore have
-zero legacy log calls as well as zero direct state broadcasts and session sends.
+Migration classification: append the existing structured `GameLogEntry` exactly once to
+authoritative state, record one immutable index-only `GAME_LOG_APPENDED` fact, and emit/merge a
+`STATE_INVALIDATED(GAME_LOG)` fact for the appropriate audience. The transport adapter continues
+to build immutable, recipient-safe log views from authoritative state after the lock is released.
 
 ## Named workflow ledger
 
@@ -252,7 +240,7 @@ intentionally unchanged by this foundation prompt.
 | Canonical projection subscriber | `GameEventProjectionSubscriber` → `GameViewProjectionFactory`/interaction registry → typed messages → `GameMessageTransport` | post-lock authoritative projection, explicit audience enforcement, no serialization, per-recipient transport failure isolation, human/AI typed-message parity | **Complete** |
 | Public game-state refresh | `STATE_INVALIDATED` → player-specific `GameStateMessage` | coalesced `STATE_INVALIDATED`; canonical subscriber constructs the player-specific wire DTO after unlock | **Complete; zero direct runtime broadcasts and no public broadcast API** |
 | Generic input completion | answer handler → required SBA/may processing → parked-resolution resume → auto-pass stable point → state observation | one coalesced all-player `STATE_INVALIDATED` per completed answer; a queued interaction keeps its non-coalescible `DECISION_REQUESTED` barrier; validation failure and game end do not leak an intermediate state observation | **Complete**, including permanent and multi-permanent selection |
-| Game log | 2,290 `logAndBroadcast` calls → `gameLog` → next state message | append under lock plus `GAME_LOG` invalidation; preserve structured segments and incremental wire behavior | Combat package complete; remaining packages open |
+| Game log | `GameLogService.append` → `gameLog` + `GAME_LOG_APPENDED` → coalesced next state message | append exactly once under lock; immutable index-only diagnostic fact; preserve structured segments and incremental wire behavior | Root/turn/combat/ability/spell/battlefield/trigger/graveyard/interaction/state/paradigm/aura/battle complete; input/effect compatibility callers remain |
 | Generic interactions | begin site → authoritative pending interaction + stable ID → `DECISION_REQUESTED` → `InteractionPromptProjectionRegistry` → typed prompt | one non-coalescible private fact per interaction; exact identity match before projection; every promptable subtype (including combat) has one explicit strategy and no raw-state fallback; handlers have no session/networking dependency | **Complete** |
 | Attackers | `CombatAttackService` finalizes an immutable legality snapshot → registry decision event → canonical subscriber → `AvailableAttackersMessage` | `DECISION_REQUESTED(ATTACKER_DECLARATION)` with stable retry/replay identity and Mindslaver audience | **Complete** |
 | Blockers | `CombatBlockService` finalizes legal pairs and requirements → registry decision event → canonical subscriber → `AvailableBlockersMessage` | `DECISION_REQUESTED(BLOCKER_DECLARATION)` with stable retry/replay identity | **Complete** |

@@ -13,7 +13,7 @@ import com.github.laxika.magicalvibes.model.effect.MayNotUntapDuringUntapStepEff
 import com.github.laxika.magicalvibes.model.effect.StorageMatrixEffect;
 import com.github.laxika.magicalvibes.model.effect.UntapAllPermanentsYouControlDuringEachOtherPlayersStepEffect;
 import com.github.laxika.magicalvibes.model.filter.PermanentPredicate;
-import com.github.laxika.magicalvibes.service.GameBroadcastService;
+import com.github.laxika.magicalvibes.service.GameLogService;
 import com.github.laxika.magicalvibes.service.battlefield.GameQueryService;
 import com.github.laxika.magicalvibes.service.effect.normalfx.TapUntapSupport;
 import com.github.laxika.magicalvibes.service.battlefield.CreatureControlService;
@@ -48,7 +48,7 @@ class UntapStepServiceTest {
     private PredicateEvaluationService predicateEvaluationService;
 
     @Mock
-    private GameBroadcastService gameBroadcastService;
+    private GameLogService gameLogService;
 
     // Real support so untapPermanent actually untaps; its trigger service is an inert mock.
     @Spy
@@ -107,7 +107,7 @@ class UntapStepServiceTest {
             sut.untapPermanents(gd, player1Id);
 
             assertThat(perm.isTapped()).isFalse();
-            verify(gameBroadcastService).logAndBroadcast(gd, GameLog.text("Player1 untaps their permanents."));
+            verify(gameLogService).append(gd, GameLog.text("Player1 untaps their permanents."));
         }
 
         @Test
@@ -300,7 +300,7 @@ class UntapStepServiceTest {
             sut.untapPermanents(gd, player1Id);
 
             assertThat(tappedPerm.isTapped()).isFalse();
-            verify(gameBroadcastService).logAndBroadcast(gd, GameLog.text("Player2 untaps their permanents due to Seedborn Muse."));
+            verify(gameLogService).append(gd, GameLog.text("Player2 untaps their permanents due to Seedborn Muse."));
         }
 
         @Test
@@ -328,7 +328,7 @@ class UntapStepServiceTest {
 
             assertThat(matchingPerm.isTapped()).isFalse();
             assertThat(nonMatchingPerm.isTapped()).isTrue();
-            verify(gameBroadcastService).logAndBroadcast(gd, GameLog.text("Player2 untaps some permanents during opponent's untap step."));
+            verify(gameLogService).append(gd, GameLog.text("Player2 untaps some permanents during opponent's untap step."));
         }
 
         @Test

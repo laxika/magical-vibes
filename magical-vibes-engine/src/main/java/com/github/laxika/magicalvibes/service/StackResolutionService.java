@@ -67,7 +67,7 @@ public class StackResolutionService {
     private final StateBasedActionService stateBasedActionService;
     private final GameQueryService gameQueryService;
     private final TargetLegalityService targetLegalityService;
-    private final GameBroadcastService gameBroadcastService;
+    private final GameLogService gameLogService;
     private final EffectResolutionService effectResolutionService;
     private final PlayerInputService playerInputService;
     private final TriggerCollectionService triggerCollectionService;
@@ -86,7 +86,7 @@ public class StackResolutionService {
                                   StateBasedActionService stateBasedActionService,
                                   GameQueryService gameQueryService,
                                   TargetLegalityService targetLegalityService,
-                                  GameBroadcastService gameBroadcastService,
+                                  GameLogService gameLogService,
                                   EffectResolutionService effectResolutionService,
                                   PlayerInputService playerInputService,
                                   TriggerCollectionService triggerCollectionService,
@@ -104,7 +104,7 @@ public class StackResolutionService {
         this.stateBasedActionService = stateBasedActionService;
         this.gameQueryService = gameQueryService;
         this.targetLegalityService = targetLegalityService;
-        this.gameBroadcastService = gameBroadcastService;
+        this.gameLogService = gameLogService;
         this.effectResolutionService = effectResolutionService;
         this.playerInputService = playerInputService;
         this.triggerCollectionService = triggerCollectionService;
@@ -307,10 +307,10 @@ public class StackResolutionService {
 
         String playerName = gameData.playerIdToName.get(controllerId);
         if (hasEnterWithCountersEffect(enteredCard, CounterType.PLUS_ONE_PLUS_ONE) && perm.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE) > 0) {
-            gameBroadcastService.logAndBroadcast(gameData, GameLog.entersBattlefieldWithUnder(
+            gameLogService.append(gameData, GameLog.entersBattlefieldWithUnder(
                     enteredCard, perm.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE) + " +1/+1 counters", playerName));
         } else if (perm.getCounterCount(CounterType.WISH) > 0) {
-            gameBroadcastService.logAndBroadcast(gameData, GameLog.entersBattlefieldWithUnder(
+            gameLogService.append(gameData, GameLog.entersBattlefieldWithUnder(
                     enteredCard, perm.getCounterCount(CounterType.WISH) + " wish counters", playerName));
         } else {
             logEnterBattlefield(gameData, enteredCard, controllerId);
@@ -346,7 +346,7 @@ public class StackResolutionService {
     private void resolveReanimationAura(GameData gameData, StackEntry entry, Card card, UUID controllerId) {
         Card graveyardCard = gameQueryService.findCardInGraveyardById(gameData, entry.getTargetId());
         if (graveyardCard == null || !graveyardCard.hasType(CardType.CREATURE)) {
-            gameBroadcastService.logAndBroadcast(gameData, GameLog.builder()
+            gameLogService.append(gameData, GameLog.builder()
                     .card(card)
                     .text(" fizzles (enchanted creature card no longer in a graveyard).")
                     .build());
@@ -374,7 +374,7 @@ public class StackResolutionService {
         battlefieldEntryService.putPermanentOntoBattlefield(gameData, controllerId, auraPerm);
 
         String playerName = gameData.playerIdToName.get(controllerId);
-        gameBroadcastService.logAndBroadcast(gameData, GameLog.builder()
+        gameLogService.append(gameData, GameLog.builder()
                 .card(card)
                 .text(" enters the battlefield attached to ")
                 .card(creature.getCard())
@@ -400,7 +400,7 @@ public class StackResolutionService {
         if (characteristics.isAura() && characteristics.isEnchantPlayer() && entry.getTargetId() != null) {
             UUID targetPlayerId = entry.getTargetId();
             if (!gameData.playerIds.contains(targetPlayerId)) {
-                gameBroadcastService.logAndBroadcast(gameData, GameLog.builder()
+                gameLogService.append(gameData, GameLog.builder()
                         .card(characteristics)
                         .text(" fizzles (enchanted player no longer in the game).")
                         .build());
@@ -414,7 +414,7 @@ public class StackResolutionService {
 
                 String targetPlayerName = gameData.playerIdToName.get(targetPlayerId);
                 String playerName = gameData.playerIdToName.get(controllerId);
-                gameBroadcastService.logAndBroadcast(gameData, GameLog.builder()
+                gameLogService.append(gameData, GameLog.builder()
                         .card(characteristics)
                         .text(" enters the battlefield attached to " + targetPlayerName + " under " + playerName + "'s control.")
                         .build());
@@ -424,7 +424,7 @@ public class StackResolutionService {
         } else if (characteristics.isAura() && entry.getTargetId() != null) {
             Permanent target = gameQueryService.findPermanentById(gameData, entry.getTargetId());
             if (target == null) {
-                gameBroadcastService.logAndBroadcast(gameData, GameLog.builder()
+                gameLogService.append(gameData, GameLog.builder()
                         .card(characteristics)
                         .text(" fizzles (enchanted creature no longer exists).")
                         .build());
@@ -438,7 +438,7 @@ public class StackResolutionService {
                         entry.getXValue(), entry.isKicked());
 
                 String playerName = gameData.playerIdToName.get(controllerId);
-                gameBroadcastService.logAndBroadcast(gameData, GameLog.builder()
+                gameLogService.append(gameData, GameLog.builder()
                         .card(characteristics)
                         .text(" enters the battlefield attached to ")
                         .card(target.getCard())
@@ -499,7 +499,7 @@ public class StackResolutionService {
             // Saga ETB: place first lore counter and trigger chapter I (MTG Rule 714.3a)
             if (enteredCard.isSaga()) {
                 enchPerm.setCounterCount(CounterType.LORE, 1);
-                gameBroadcastService.logAndBroadcast(gameData, GameLog.cardThen(enteredCard, " gets a lore counter (1)."));
+                gameLogService.append(gameData, GameLog.cardThen(enteredCard, " gets a lore counter (1)."));
                 log.info("Game {} - {} enters with lore counter 1", gameData.id, enteredCard.getName());
                 triggerSagaChapter(gameData, enchPerm, enteredCard, controllerId, 1);
             }
@@ -591,16 +591,16 @@ public class StackResolutionService {
 
         String playerName = gameData.playerIdToName.get(controllerId);
         if (perm.getCounterCount(CounterType.CHARGE) > 0) {
-            gameBroadcastService.logAndBroadcast(gameData, GameLog.entersBattlefieldWithUnder(
+            gameLogService.append(gameData, GameLog.entersBattlefieldWithUnder(
                     enteredCard, perm.getCounterCount(CounterType.CHARGE) + " charge counters", playerName));
         } else if (perm.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE) > 0) {
-            gameBroadcastService.logAndBroadcast(gameData, GameLog.entersBattlefieldWithUnder(
+            gameLogService.append(gameData, GameLog.entersBattlefieldWithUnder(
                     enteredCard, perm.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE) + " +1/+1 counters", playerName));
         } else if (perm.getCounterCount(CounterType.WISH) > 0) {
-            gameBroadcastService.logAndBroadcast(gameData, GameLog.entersBattlefieldWithUnder(
+            gameLogService.append(gameData, GameLog.entersBattlefieldWithUnder(
                     enteredCard, perm.getCounterCount(CounterType.WISH) + " wish counters", playerName));
         } else {
-            gameBroadcastService.logAndBroadcast(gameData, GameLog.entersBattlefieldUnder(enteredCard, playerName));
+            gameLogService.append(gameData, GameLog.entersBattlefieldUnder(enteredCard, playerName));
         }
 
         log.info("Game {} - {} resolves, enters battlefield for {}", gameData.id, enteredCard.getName(), playerName);
@@ -661,7 +661,7 @@ public class StackResolutionService {
         battlefieldEntryService.putPermanentOntoBattlefield(gameData, controllerId, perm);
 
         String playerName = gameData.playerIdToName.get(controllerId);
-        gameBroadcastService.logAndBroadcast(gameData, GameLog.entersBattlefieldWithUnder(
+        gameLogService.append(gameData, GameLog.entersBattlefieldWithUnder(
                 card, perm.getCounterCount(CounterType.LOYALTY) + " loyalty", playerName));
 
         log.info("Game {} - {} resolves, enters battlefield for {}", gameData.id, card.getName(), playerName);
@@ -682,7 +682,7 @@ public class StackResolutionService {
         battlefieldEntryService.putPermanentOntoBattlefield(gameData, controllerId, perm);
 
         String playerName = gameData.playerIdToName.get(controllerId);
-        gameBroadcastService.logAndBroadcast(gameData, GameLog.entersBattlefieldWithUnder(
+        gameLogService.append(gameData, GameLog.entersBattlefieldWithUnder(
                 card, perm.getCounterCount(CounterType.DEFENSE) + " defense", playerName));
 
         log.info("Game {} - {} resolves, enters battlefield for {}", gameData.id, card.getName(), playerName);
@@ -701,7 +701,7 @@ public class StackResolutionService {
         boolean targetFizzled = targetLegalityService.isTargetIllegalOnResolution(gameData, entry);
 
         if (targetFizzled) {
-            gameBroadcastService.logAndBroadcast(gameData, GameLog.builder()
+            gameLogService.append(gameData, GameLog.builder()
                     .card(entry.getCard())
                     .text(" fizzles (illegal target).")
                     .build());
@@ -713,13 +713,13 @@ public class StackResolutionService {
             if (isNonCopySpell(entry)) {
                 if (entry.isCastWithFlashback()) {
                     exileService.exileCard(gameData, entry.getControllerId(), entry.getCard());
-                    gameBroadcastService.logAndBroadcast(gameData, GameLog.cardThen(entry.getCard(), " is exiled (flashback)."));
+                    gameLogService.append(gameData, GameLog.cardThen(entry.getCard(), " is exiled (flashback)."));
                 } else {
                     graveyardService.addCardToGraveyard(gameData, entry.getControllerId(), entry.getCard());
                 }
             }
         } else {
-            gameBroadcastService.logAndBroadcast(gameData, GameLog.resolves(entry.getCard(), entry.getDescription()));
+            gameLogService.append(gameData, GameLog.resolves(entry.getCard(), entry.getDescription()));
             log.info("Game {} - {} resolves", gameData.id, entry.getDescription());
 
             countAbilityResolution(gameData, entry);
@@ -788,16 +788,16 @@ public class StackResolutionService {
         // return-to-hand, shuffle-into-library, and all other disposition effects.
         if (entry.isCastWithFlashback()) {
             gameData.addToExile(ownerId, entry.getCard());
-            gameBroadcastService.logAndBroadcast(gameData, GameLog.cardThen(entry.getCard(), " is exiled (flashback)."));
+            gameLogService.append(gameData, GameLog.cardThen(entry.getCard(), " is exiled (flashback)."));
         } else if (entry.isReturnToHandAfterResolving()) {
             gameData.addCardToHand(ownerId, entry.getCard());
-            gameBroadcastService.logAndBroadcast(gameData, GameLog.cardThen(entry.getCard(), " is returned to its owner's hand."));
+            gameLogService.append(gameData, GameLog.cardThen(entry.getCard(), " is returned to its owner's hand."));
         } else if (entry.getPutIntoLibraryPositionAfterResolving() != null) {
             // Approach of the Second Sun: the resolved spell goes into its owner's library N from the top.
             List<Card> deck = gameData.playerDecks.get(entry.getControllerId());
             int position = Math.min(entry.getPutIntoLibraryPositionAfterResolving(), deck.size());
             deck.add(position, entry.getCard());
-            gameBroadcastService.logAndBroadcast(gameData, GameLog.cardThen(entry.getCard(),
+            gameLogService.append(gameData, GameLog.cardThen(entry.getCard(),
                     " is put " + (position + 1) + " from the top of its owner's library."));
         } else if (gameData.pendingReturnToHandOnDiscardType != null) {
             // Spell disposition deferred — will be resolved after the async discard
@@ -806,7 +806,7 @@ public class StackResolutionService {
         } else if (entry.getEffectsToResolve().stream()
                 .anyMatch(e -> e instanceof ExileSpellEffect)) {
             gameData.addToExile(ownerId, entry.getCard());
-            gameBroadcastService.logAndBroadcast(gameData, GameLog.isExiled(entry.getCard()));
+            gameLogService.append(gameData, GameLog.isExiled(entry.getCard()));
         } else if (entry.getEffectsToResolve().stream()
                 .anyMatch(e -> e instanceof ShuffleIntoLibraryEffect)) {
             // Ensure the card is shuffled into library even when an earlier effect
@@ -816,13 +816,13 @@ public class StackResolutionService {
             if (!deck.contains(entry.getCard())) {
                 deck.add(entry.getCard());
                 LibraryShuffleHelper.shuffleLibrary(gameData, ownerId);
-                gameBroadcastService.logAndBroadcast(gameData, GameLog.cardThen(entry.getCard(), " is shuffled into its owner's library."));
+                gameLogService.append(gameData, GameLog.cardThen(entry.getCard(), " is shuffled into its owner's library."));
             }
         } else if (entry.getEffectsToResolve().stream()
                 .anyMatch(e -> e instanceof PutSelfOnBottomOfOwnersLibraryEffect)) {
             List<Card> deck = gameData.playerDecks.get(ownerId);
             deck.add(entry.getCard());
-            gameBroadcastService.logAndBroadcast(gameData, GameLog.cardThen(entry.getCard(), " is put on the bottom of its owner's library."));
+            gameLogService.append(gameData, GameLog.cardThen(entry.getCard(), " is put on the bottom of its owner's library."));
         } else if (entry.getCard().getKeywords().contains(Keyword.PARADIGM)) {
             paradigmService.onParadigmSpellResolved(gameData, entry);
         } else {
@@ -850,14 +850,14 @@ public class StackResolutionService {
         if (gameQueryService.cantHaveCounters(gameData, target)) return;
 
         target.setCounterCount(CounterType.PHYLACTERY, target.getCounterCount(CounterType.PHYLACTERY) + 1);
-        gameBroadcastService.logAndBroadcast(gameData,
+        gameLogService.append(gameData,
                 GameLog.cardTextCard(card, " puts a phylactery counter on ", target.getCard(), "."));
         log.info("Game {} - {} puts a phylactery counter on {}", gameData.id, card.getName(), target.getCard().getName());
     }
 
     private void logEnterBattlefield(GameData gameData, Card card, UUID controllerId) {
         String playerName = gameData.playerIdToName.get(controllerId);
-        gameBroadcastService.logAndBroadcast(gameData, GameLog.entersBattlefieldUnder(card, playerName));
+        gameLogService.append(gameData, GameLog.entersBattlefieldUnder(card, playerName));
         log.info("Game {} - {} resolves, enters battlefield for {}", gameData.id, card.getName(), playerName);
     }
 
@@ -892,14 +892,14 @@ public class StackResolutionService {
                     new PermanentChoiceContext.SagaChapterTarget(card, controllerId,
                             new ArrayList<>(chapterEffects), sagaPerm.getId(), chapterName,
                             card.getSagaChapterTargetFilters(chapterSlot)));
-            gameBroadcastService.logAndBroadcast(gameData, GameLog.cardThen(card, "'s chapter " + chapterName + " ability triggers."));
+            gameLogService.append(gameData, GameLog.cardThen(card, "'s chapter " + chapterName + " ability triggers."));
             log.info("Game {} - {} chapter {} triggers (awaiting target selection)", gameData.id, card.getName(), chapterName);
             triggerCollectionService.processNextSagaChapterTarget(gameData);
         } else if (needsGraveyardTarget) {
             gameData.queueInteraction(
                     new PermanentChoiceContext.SagaChapterGraveyardTarget(card, controllerId,
                             new ArrayList<>(chapterEffects), sagaPerm.getId(), chapterName));
-            gameBroadcastService.logAndBroadcast(gameData, GameLog.cardThen(card, "'s chapter " + chapterName + " ability triggers."));
+            gameLogService.append(gameData, GameLog.cardThen(card, "'s chapter " + chapterName + " ability triggers."));
             log.info("Game {} - {} chapter {} triggers (awaiting graveyard target selection)", gameData.id, card.getName(), chapterName);
             triggerCollectionService.processNextSagaChapterGraveyardTarget(gameData);
         } else {
@@ -913,7 +913,7 @@ public class StackResolutionService {
                     sagaPerm.getId()
             ));
 
-            gameBroadcastService.logAndBroadcast(gameData, GameLog.cardThen(card, "'s chapter " + chapterName + " ability triggers."));
+            gameLogService.append(gameData, GameLog.cardThen(card, "'s chapter " + chapterName + " ability triggers."));
             log.info("Game {} - {} chapter {} triggers", gameData.id, card.getName(), chapterName);
         }
     }

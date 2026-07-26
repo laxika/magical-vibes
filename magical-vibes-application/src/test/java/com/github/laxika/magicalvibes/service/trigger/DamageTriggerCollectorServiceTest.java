@@ -14,7 +14,7 @@ import com.github.laxika.magicalvibes.model.effect.PutCountersOnSelfEffect;
 import com.github.laxika.magicalvibes.model.effect.ReturnDamageSourcePermanentToHandEffect;
 import com.github.laxika.magicalvibes.model.CounterType;
 import com.github.laxika.magicalvibes.model.amount.EventValue;
-import com.github.laxika.magicalvibes.service.GameBroadcastService;
+import com.github.laxika.magicalvibes.service.GameLogService;
 import com.github.laxika.magicalvibes.service.battlefield.CreatureControlService;
 import com.github.laxika.magicalvibes.service.battlefield.GameQueryService;
 import com.github.laxika.magicalvibes.service.battlefield.PermanentRemovalService;
@@ -44,7 +44,7 @@ class DamageTriggerCollectorServiceTest {
     private GameQueryService gameQueryService;
 
     @Mock
-    private GameBroadcastService gameBroadcastService;
+    private GameLogService gameLogService;
 
     @Mock
     private PermanentRemovalService permanentRemovalService;
@@ -114,7 +114,7 @@ class DamageTriggerCollectorServiceTest {
             assertThat(result).isTrue();
             verify(permanentRemovalService).removePermanentToHand(gd, sourcePerm);
             verify(permanentRemovalService).removeOrphanedAuras(gd);
-            verify(gameBroadcastService).logAndBroadcast(eq(gd), any(GameLogEntry.class));
+            verify(gameLogService).append(eq(gd), any(GameLogEntry.class));
         }
 
         @Test
@@ -152,7 +152,7 @@ class DamageTriggerCollectorServiceTest {
 
             assertThat(result).isTrue();
             verify(permanentRemovalService, never()).removeOrphanedAuras(any());
-            verify(gameBroadcastService, never()).logAndBroadcast(any(), any(GameLogEntry.class));
+            verify(gameLogService, never()).append(any(), any(GameLogEntry.class));
         }
     }
 
@@ -395,7 +395,7 @@ class DamageTriggerCollectorServiceTest {
             assertThat(stackEntry.getSourcePermanentId()).isEqualTo(aura.getId());
             assertThat(stackEntry.getEventValue()).isEqualTo(3);
             assertThat(stackEntry.getEffectsToResolve()).containsExactly(effect);
-            verify(gameBroadcastService).logAndBroadcast(eq(gd), any(GameLogEntry.class));
+            verify(gameLogService).append(eq(gd), any(GameLogEntry.class));
         }
     }
 
@@ -440,7 +440,7 @@ class DamageTriggerCollectorServiceTest {
             assertThat(stackEntry.getEntryType()).isEqualTo(StackEntryType.TRIGGERED_ABILITY);
             assertThat(stackEntry.getControllerId()).isEqualTo(player1Id);
             assertThat(stackEntry.getEffectsToResolve()).containsExactly(effect);
-            verify(gameBroadcastService).logAndBroadcast(eq(gd), any(GameLogEntry.class));
+            verify(gameLogService).append(eq(gd), any(GameLogEntry.class));
         }
     }
 }

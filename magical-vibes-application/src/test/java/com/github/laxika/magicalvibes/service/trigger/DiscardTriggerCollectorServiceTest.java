@@ -28,7 +28,7 @@ import com.github.laxika.magicalvibes.model.filter.PermanentControlledBySourceCo
 import com.github.laxika.magicalvibes.model.filter.PermanentIsCreaturePredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentNotPredicate;
 import com.github.laxika.magicalvibes.service.DamagePreventionService;
-import com.github.laxika.magicalvibes.service.GameBroadcastService;
+import com.github.laxika.magicalvibes.service.GameLogService;
 import com.github.laxika.magicalvibes.service.battlefield.GameQueryService;
 import com.github.laxika.magicalvibes.service.battlefield.PermanentRemovalService;
 import org.junit.jupiter.api.BeforeEach;
@@ -54,7 +54,7 @@ import static org.mockito.Mockito.when;
 class DiscardTriggerCollectorServiceTest {
 
     @Mock
-    private GameBroadcastService gameBroadcastService;
+    private GameLogService gameLogService;
 
     @Mock
     private GameQueryService gameQueryService;
@@ -126,7 +126,7 @@ class DiscardTriggerCollectorServiceTest {
 
             assertThat(result).isTrue();
             assertThat(gd.getLife(player2Id)).isEqualTo(lifeBefore - 2);
-            verify(gameBroadcastService).logAndBroadcast(eq(gd), any(GameLogEntry.class));
+            verify(gameLogService).append(eq(gd), any(GameLogEntry.class));
         }
 
         @Test
@@ -333,7 +333,7 @@ class DiscardTriggerCollectorServiceTest {
 
             assertThat(result).isTrue();
             assertThat(gd.getLife(player2Id)).isEqualTo(lifeBefore - 2);
-            verify(gameBroadcastService).logAndBroadcast(eq(gd), any(GameLogEntry.class));
+            verify(gameLogService).append(eq(gd), any(GameLogEntry.class));
         }
 
         @Test
@@ -375,7 +375,7 @@ class DiscardTriggerCollectorServiceTest {
                     EffectSlot.ON_OPPONENT_DISCARDS, effect, ctx);
 
             assertThat(result).isTrue();
-            verify(gameBroadcastService).logAndBroadcast(eq(gd), any(GameLogEntry.class));
+            verify(gameLogService).append(eq(gd), any(GameLogEntry.class));
         }
     }
 

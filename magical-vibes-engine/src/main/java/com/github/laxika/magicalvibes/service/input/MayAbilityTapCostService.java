@@ -7,6 +7,7 @@ import com.github.laxika.magicalvibes.model.PermanentChoiceContext;
 import com.github.laxika.magicalvibes.model.Player;
 import com.github.laxika.magicalvibes.model.effect.TapMultiplePermanentsCost;
 import com.github.laxika.magicalvibes.service.GameBroadcastService;
+import com.github.laxika.magicalvibes.service.GameLogService;
 import com.github.laxika.magicalvibes.service.ability.cost.MultiplePermanentTapCostHandler;
 import com.github.laxika.magicalvibes.service.ability.cost.PermanentChoiceCostHandler;
 import com.github.laxika.magicalvibes.service.battlefield.GameQueryService;
@@ -30,6 +31,7 @@ public class MayAbilityTapCostService {
     private final GameQueryService gameQueryService;
     private final PredicateEvaluationService predicateEvaluationService;
     private final GameBroadcastService gameBroadcastService;
+    private final GameLogService gameLogService;
     private final TriggerCollectionService triggerCollectionService;
     private final PlayerInputService playerInputService;
     private final InputCompletionService inputCompletionService;
@@ -43,7 +45,7 @@ public class MayAbilityTapCostService {
     public boolean beginTapCostPayment(GameData gameData, Player player, TapMultiplePermanentsCost tapCost,
                                        UUID sourcePermanentId) {
         PermanentChoiceCostHandler handler = new MultiplePermanentTapCostHandler(
-                tapCost, predicateEvaluationService, gameBroadcastService, triggerCollectionService, sourcePermanentId);
+                tapCost, predicateEvaluationService, gameLogService, triggerCollectionService, sourcePermanentId);
         UUID playerId = player.getId();
 
         try {
@@ -83,7 +85,7 @@ public class MayAbilityTapCostService {
                                       UUID chosenPermanentId) {
         UUID playerId = player.getId();
         PermanentChoiceCostHandler handler = new MultiplePermanentTapCostHandler(
-                context.costEffect(), predicateEvaluationService, gameBroadcastService, triggerCollectionService,
+                context.costEffect(), predicateEvaluationService, gameLogService, triggerCollectionService,
                 context.sourcePermanentId());
 
         Permanent chosen = gameQueryService.findPermanentById(gameData, chosenPermanentId);

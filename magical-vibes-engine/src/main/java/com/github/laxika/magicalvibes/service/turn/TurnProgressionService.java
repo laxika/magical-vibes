@@ -27,7 +27,7 @@ import com.github.laxika.magicalvibes.model.effect.MakeTargetCopyOfTargetCreatur
 import com.github.laxika.magicalvibes.model.event.GameEventAudience;
 import com.github.laxika.magicalvibes.model.event.GameEventFact;
 import com.github.laxika.magicalvibes.model.layer.FloatingContinuousEffect;
-import com.github.laxika.magicalvibes.service.GameBroadcastService;
+import com.github.laxika.magicalvibes.service.GameLogService;
 import com.github.laxika.magicalvibes.service.combat.CombatResult;
 import com.github.laxika.magicalvibes.service.combat.CombatService;
 import com.github.laxika.magicalvibes.service.input.PlayerInputService;
@@ -46,7 +46,7 @@ import java.util.UUID;
 public class TurnProgressionService {
 
     private final CombatService combatService;
-    private final GameBroadcastService gameBroadcastService;
+    private final GameLogService gameLogService;
     private final PlayerInputService playerInputService;
     private final TurnCleanupService turnCleanupService;
     private final UntapStepService untapStepService;
@@ -128,7 +128,7 @@ public class TurnProgressionService {
                 gameData.skipNextCombatPhaseCount.remove(gameData.activePlayerId);
             }
             String skipLog = gameData.playerIdToName.get(gameData.activePlayerId) + " skips their combat phase.";
-            gameBroadcastService.logAndBroadcast(gameData, GameLog.text(skipLog));
+            gameLogService.append(gameData, GameLog.text(skipLog));
         }
 
         turnCleanupService.drainManaPools(gameData);
@@ -136,7 +136,7 @@ public class TurnProgressionService {
         if (next != null) {
             gameData.currentStep = next;
             String logEntry = "Step: " + next.getDisplayName();
-            gameBroadcastService.logAndBroadcast(gameData, GameLog.text(logEntry));
+            gameLogService.append(gameData, GameLog.text(logEntry));
             log.info("Game {} - Step advanced to {}", gameData.id, next);
             invalidateForAllPlayers(gameData);
 
@@ -214,7 +214,7 @@ public class TurnProgressionService {
             gameData.tauntedThisTurn.put(nextActive, taunter);
             String taunterName = gameData.playerIdToName.get(taunter);
             String tauntLog = "Creatures " + nextActiveName + " controls must attack " + taunterName + " this turn if able.";
-            gameBroadcastService.logAndBroadcast(gameData, GameLog.text(tauntLog));
+            gameLogService.append(gameData, GameLog.text(tauntLog));
             log.info("Game {} - {}'s creatures must attack {} this turn (Taunt)", gameData.id, nextActiveName, taunterName);
         }
 
@@ -226,14 +226,14 @@ public class TurnProgressionService {
             gameData.mindControllerPlayerId = pendingController;
             String controllerName = gameData.playerIdToName.get(pendingController);
             String controlLog = controllerName + " controls " + nextActiveName + " this turn (Mindslaver).";
-            gameBroadcastService.logAndBroadcast(gameData, GameLog.text(controlLog));
+            gameLogService.append(gameData, GameLog.text(controlLog));
             log.info("Game {} - {} controls {} this turn (Mindslaver)", gameData.id, controllerName, nextActiveName);
             // Emrakul: schedule the extra turn only once control actually activates (after that turn).
             if (grantExtraTurnAfter) {
                 gameData.extraTurns.addFirst(nextActive);
                 gameData.extraTurnSkipsUntap.addFirst(false);
                 String extraLog = nextActiveName + " takes an extra turn after this one.";
-                gameBroadcastService.logAndBroadcast(gameData, GameLog.text(extraLog));
+                gameLogService.append(gameData, GameLog.text(extraLog));
                 log.info("Game {} - {} granted an extra turn after the controlled turn",
                         gameData.id, nextActiveName);
             }
@@ -428,7 +428,7 @@ public class TurnProgressionService {
     public void completeTurnAdvance(GameData gameData) {
         String activeName = gameData.playerIdToName.get(gameData.activePlayerId);
         String logEntry = "Turn " + gameData.turnNumber + " begins. " + activeName + "'s turn.";
-        gameBroadcastService.logAndBroadcast(gameData, GameLog.text(logEntry));
+        gameLogService.append(gameData, GameLog.text(logEntry));
         log.info("Game {} - Turn {} begins. Active player: {}", gameData.id, gameData.turnNumber, activeName);
         invalidateForAllPlayers(gameData);
     }

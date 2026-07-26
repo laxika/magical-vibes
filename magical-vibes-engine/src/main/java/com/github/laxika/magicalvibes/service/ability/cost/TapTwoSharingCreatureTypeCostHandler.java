@@ -8,7 +8,7 @@ import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.Player;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
 import com.github.laxika.magicalvibes.model.effect.TapTwoCreaturesSharingTypeCost;
-import com.github.laxika.magicalvibes.service.GameBroadcastService;
+import com.github.laxika.magicalvibes.service.GameLogService;
 import com.github.laxika.magicalvibes.service.battlefield.GameQueryService;
 import com.github.laxika.magicalvibes.service.trigger.TriggerCollectionService;
 
@@ -32,18 +32,18 @@ public class TapTwoSharingCreatureTypeCostHandler implements PermanentChoiceCost
 
     private final TapTwoCreaturesSharingTypeCost cost;
     private final GameQueryService gameQueryService;
-    private final GameBroadcastService gameBroadcastService;
+    private final GameLogService gameLogService;
     private final TriggerCollectionService triggerCollectionService;
     private final List<UUID> alreadyChosen;
 
     public TapTwoSharingCreatureTypeCostHandler(TapTwoCreaturesSharingTypeCost cost,
                                                 GameQueryService gameQueryService,
-                                                GameBroadcastService gameBroadcastService,
+                                                GameLogService gameLogService,
                                                 TriggerCollectionService triggerCollectionService,
                                                 List<UUID> alreadyChosen) {
         this.cost = cost;
         this.gameQueryService = gameQueryService;
-        this.gameBroadcastService = gameBroadcastService;
+        this.gameLogService = gameLogService;
         this.triggerCollectionService = triggerCollectionService;
         this.alreadyChosen = new ArrayList<>(alreadyChosen == null ? List.of() : alreadyChosen);
     }
@@ -102,7 +102,7 @@ public class TapTwoSharingCreatureTypeCostHandler implements PermanentChoiceCost
         chosen.tap();
         triggerCollectionService.checkEnchantedPermanentTapTriggers(gameData, chosen);
         alreadyChosen.add(chosen.getId());
-        gameBroadcastService.logAndBroadcast(gameData, GameLog.textCardText(player.getUsername() + " taps " , chosen.getCard(), " as a cost."));
+        gameLogService.append(gameData, GameLog.textCardText(player.getUsername() + " taps " , chosen.getCard(), " as a cost."));
     }
 
     @Override

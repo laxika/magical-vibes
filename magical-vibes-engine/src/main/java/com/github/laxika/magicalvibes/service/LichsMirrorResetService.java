@@ -38,7 +38,7 @@ public class LichsMirrorResetService {
 
     private final GameQueryService gameQueryService;
     private final PermanentRemovalService permanentRemovalService;
-    private final GameBroadcastService gameBroadcastService;
+    private final GameLogService gameLogService;
 
     /**
      * If {@code losingPlayerId} controls a Lich's Mirror-style permanent, replaces their loss with
@@ -57,7 +57,7 @@ public class LichsMirrorResetService {
 
         String playerName = gameData.playerIdToName.get(losingPlayerId);
         String mirrorName = mirror.getCard().getName();
-        gameBroadcastService.logAndBroadcast(gameData, GameLog.text(
+        gameLogService.append(gameData, GameLog.text(
                 playerName + " would lose the game — " + mirrorName + " resets the game instead."));
         log.info("Game {} - {} loss replaced by {}", gameData.id, playerName, mirrorName);
 
@@ -80,7 +80,7 @@ public class LichsMirrorResetService {
         drawCards(gameData, losingPlayerId, library);
         gameData.playerLifeTotals.put(losingPlayerId, RESET_LIFE_TOTAL);
 
-        gameBroadcastService.logAndBroadcast(gameData, GameLog.text(
+        gameLogService.append(gameData, GameLog.text(
                 playerName + " draws " + RESET_HAND_SIZE + " cards and their life total becomes "
                         + RESET_LIFE_TOTAL + "."));
         return true;

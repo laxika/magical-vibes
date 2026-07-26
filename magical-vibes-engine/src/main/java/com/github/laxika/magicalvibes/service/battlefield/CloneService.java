@@ -14,7 +14,7 @@ import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.PermanentChoiceContext;
 import com.github.laxika.magicalvibes.model.amount.DynamicAmount;
 import com.github.laxika.magicalvibes.model.effect.CopyPermanentOnEnterEffect;
-import com.github.laxika.magicalvibes.service.GameBroadcastService;
+import com.github.laxika.magicalvibes.service.GameLogService;
 import com.github.laxika.magicalvibes.service.effect.AmountContext;
 import com.github.laxika.magicalvibes.service.effect.AmountEvaluationService;
 import com.github.laxika.magicalvibes.service.filter.PredicateEvaluationService;
@@ -35,7 +35,7 @@ public class CloneService {
 
     private final GameQueryService gameQueryService;
     private final PredicateEvaluationService predicateEvaluationService;
-    private final GameBroadcastService gameBroadcastService;
+    private final GameLogService gameLogService;
     private final PlayerInputService playerInputService;
     private final LegendRuleService legendRuleService;
     private final BattlefieldEntryService battlefieldEntryService;
@@ -148,7 +148,7 @@ public class CloneService {
         if (targetId != null) {
             Permanent targetPerm = gameQueryService.findPermanentById(gameData, targetId);
             if (targetPerm != null) {
-                gameBroadcastService.logAndBroadcast(gameData, GameLog.builder()
+                gameLogService.append(gameData, GameLog.builder()
                         .card(enteredCard)
                         .text(" enters the battlefield as a copy of ")
                         .card(targetPerm.getCard())
@@ -157,11 +157,11 @@ public class CloneService {
                 log.info("Game {} - {} enters as copy of {} for {}", gameData.id, enteredCard.getName(),
                         targetPerm.getCard().getName(), playerName);
             } else {
-                gameBroadcastService.logAndBroadcast(gameData, GameLog.entersBattlefieldUnder(enteredCard, playerName));
+                gameLogService.append(gameData, GameLog.entersBattlefieldUnder(enteredCard, playerName));
                 log.info("Game {} - {} enters battlefield without copying for {}", gameData.id, enteredCard.getName(), playerName);
             }
         } else {
-            gameBroadcastService.logAndBroadcast(gameData, GameLog.entersBattlefieldUnder(enteredCard, playerName));
+            gameLogService.append(gameData, GameLog.entersBattlefieldUnder(enteredCard, playerName));
             log.info("Game {} - {} enters battlefield without copying for {}", gameData.id, enteredCard.getName(), playerName);
         }
 

@@ -10,7 +10,7 @@ import com.github.laxika.magicalvibes.model.effect.ControlEnchantedCreatureEffec
 import com.github.laxika.magicalvibes.model.effect.EffectDuration;
 import com.github.laxika.magicalvibes.model.effect.GainControlOfEnchantedTargetEffect;
 import com.github.laxika.magicalvibes.model.layer.FloatingContinuousEffect;
-import com.github.laxika.magicalvibes.service.GameBroadcastService;
+import com.github.laxika.magicalvibes.service.GameLogService;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Component;
@@ -37,7 +37,7 @@ import java.util.UUID;
 @RequiredArgsConstructor
 public class CreatureControlService {
 
-    private final GameBroadcastService gameBroadcastService;
+    private final GameLogService gameLogService;
     private final GameQueryService gameQueryService;
 
     /**
@@ -127,18 +127,18 @@ public class CreatureControlService {
                 && permanent.getCard().getSubtypes().contains(CardSubtype.EQUIPMENT)) {
             permanent.setAttachedTo(null);
             gameData.expireFloatingEffectsForUnattachedSource(permanent.getId());
-            gameBroadcastService.logAndBroadcast(gameData, GameLog.cardThen(permanent.getCard(), " becomes unattached."));
+            gameLogService.append(gameData, GameLog.cardThen(permanent.getCard(), " becomes unattached."));
             log.info("Game {} - {} unattached on control change", gameData.id, permanent.getCard().getName());
         }
 
         String newControllerName = gameData.playerIdToName.get(derived);
         if (revertedToDefault) {
-            gameBroadcastService.logAndBroadcast(gameData, GameLog.builder()
+            gameLogService.append(gameData, GameLog.builder()
                     .card(permanent.getCard())
                     .text(" returns to " + newControllerName + "'s control.")
                     .build());
         } else {
-            gameBroadcastService.logAndBroadcast(gameData, GameLog.textCardText(
+            gameLogService.append(gameData, GameLog.textCardText(
                     newControllerName + " gains control of ", permanent.getCard(), "."));
         }
         log.info("Game {} - {} controls {}", gameData.id, newControllerName, permanent.getCard().getName());

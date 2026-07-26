@@ -5,7 +5,7 @@ import com.github.laxika.magicalvibes.model.GameData;
 import com.github.laxika.magicalvibes.model.GameLog;
 import com.github.laxika.magicalvibes.model.PendingInteraction;
 import com.github.laxika.magicalvibes.model.Player;
-import com.github.laxika.magicalvibes.service.GameBroadcastService;
+import com.github.laxika.magicalvibes.service.GameLogService;
 import com.github.laxika.magicalvibes.service.WarpWorldService;
 import com.github.laxika.magicalvibes.service.effect.EffectResolutionService;
 import com.github.laxika.magicalvibes.service.input.PlayerInputService;
@@ -29,7 +29,7 @@ import java.util.UUID;
 @RequiredArgsConstructor
 public class LibraryReorderInteractionHandler implements InteractionHandler<PendingInteraction.LibraryReorder> {
 
-    private final GameBroadcastService gameBroadcastService;
+    private final GameLogService gameLogService;
     private final WarpWorldService warpWorldService;
     private final PlayerInputService playerInputService;
     private final TurnProgressionService turnProgressionService;
@@ -92,7 +92,7 @@ public class LibraryReorderInteractionHandler implements InteractionHandler<Pend
         String logMsg = reorderedToBottom
                 ? player.getUsername() + " puts " + count + " cards on the bottom of their library."
                 : player.getUsername() + " puts " + count + " cards back on top of their library.";
-        gameBroadcastService.logAndBroadcast(gameData, GameLog.text(logMsg));
+        gameLogService.append(gameData, GameLog.text(logMsg));
         log.info("Game {} - {} reordered {} {} cards", gameData.id, player.getUsername(), count,
                 reorderedToBottom ? "bottom" : "top");
 

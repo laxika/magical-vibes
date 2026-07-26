@@ -2,7 +2,7 @@ package com.github.laxika.magicalvibes.service.battlefield;
 
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.service.DamagePreventionService;
-import com.github.laxika.magicalvibes.service.GameBroadcastService;
+import com.github.laxika.magicalvibes.service.GameLogService;
 import com.github.laxika.magicalvibes.service.trigger.TriggerCollectionService;
 import com.github.laxika.magicalvibes.service.exile.ExileService;
 import com.github.laxika.magicalvibes.service.graveyard.GraveyardService;
@@ -56,7 +56,7 @@ public class PermanentRemovalService {
     private final DamagePreventionService damagePreventionService;
     private final AuraAttachmentService auraAttachmentService;
     private final GameQueryService gameQueryService;
-    private final GameBroadcastService gameBroadcastService;
+    private final GameLogService gameLogService;
     private final ExileService exileService;
 
     public PermanentRemovalService(GraveyardService graveyardService,
@@ -65,7 +65,7 @@ public class PermanentRemovalService {
                                    DamagePreventionService damagePreventionService,
                                    AuraAttachmentService auraAttachmentService,
                                    GameQueryService gameQueryService,
-                                   GameBroadcastService gameBroadcastService,
+                                   GameLogService gameLogService,
                                    ExileService exileService) {
         this.graveyardService = graveyardService;
         this.battlefieldEntryService = battlefieldEntryService;
@@ -73,7 +73,7 @@ public class PermanentRemovalService {
         this.damagePreventionService = damagePreventionService;
         this.auraAttachmentService = auraAttachmentService;
         this.gameQueryService = gameQueryService;
-        this.gameBroadcastService = gameBroadcastService;
+        this.gameLogService = gameLogService;
         this.exileService = exileService;
     }
 
@@ -195,7 +195,7 @@ public class PermanentRemovalService {
         // event still happened, so the leave-the-battlefield triggers above and the
         // returned-to-hand triggers below fire normally.
         if (target.getOriginalCard().isToken()) {
-            gameBroadcastService.logAndBroadcast(gameData, GameLog.cardThen(target.getCard(), " ceases to exist."));
+            gameLogService.append(gameData, GameLog.cardThen(target.getCard(), " ceases to exist."));
             log.info("Game {} - token {} ceases to exist instead of returning to hand", gameData.id, target.getCard().getName());
         } else {
             for (Card leaving : target.cardsLeavingBattlefield()) {
@@ -444,7 +444,7 @@ public class PermanentRemovalService {
      */
     public boolean tryDestroyPermanent(GameData gameData, Permanent target, boolean cannotBeRegenerated) {
         if (gameQueryService.hasKeyword(gameData, target, Keyword.INDESTRUCTIBLE)) {
-            gameBroadcastService.logAndBroadcast(gameData, GameLog.isIndestructible(target.getCard()));
+            gameLogService.append(gameData, GameLog.isIndestructible(target.getCard()));
             log.info("Game {} - {} is indestructible, destroy prevented", gameData.id, target.getCard().getName());
             return false;
         }
@@ -488,7 +488,7 @@ public class PermanentRemovalService {
                     }
                 }
             }
-            gameBroadcastService.logAndBroadcast(gameData,
+            gameLogService.append(gameData,
                     GameLog.builder().card(perm.getCard()).text(kind.logSuffix()).build());
             log.info("Game {} - {}{}", gameData.id, perm.getCard().getName(), kind.logSuffix());
             if (kind.op() != DelayedPermanentActionKind.Op.DESTROY) {
@@ -547,12 +547,12 @@ public class PermanentRemovalService {
         if (target == null) return damage;
 
         int effectiveDamage = damagePreventionService.applyCreaturePreventionShield(gameData, target, damage, isCombatDamage);
-        gameBroadcastService.logAndBroadcast(gameData,
+        gameLogService.append(gameData,
                 GameLog.cardThen(target.getCard(), " absorbs " + effectiveDamage + " redirected " + sourceName + " damage."));
 
         if (effectiveDamage >= gameQueryService.getEffectiveToughness(gameData, target)) {
             if (tryDestroyPermanent(gameData, target)) {
-                gameBroadcastService.logAndBroadcast(gameData,
+                gameLogService.append(gameData,
                         GameLog.cardThen(target.getCard(), " is destroyed by redirected " + sourceName + " damage."));
             }
         }
@@ -574,7 +574,7 @@ public class PermanentRemovalService {
         }
         boolean exiled = removePermanentToExile(gameData, target);
         if (exiled) {
-            gameBroadcastService.logAndBroadcast(gameData,
+            gameLogService.append(gameData,
                     GameLog.cardThen(target.getCard(), " is exiled instead of " + destinationDescription + "."));
             removeOrphanedAuras(gameData);
         }
@@ -638,7 +638,7 @@ public class PermanentRemovalService {
         for (Card leaving : target.cardsLeavingBattlefield()) {
             if (exileInstead) {
                 exileService.exileCard(gameData, ownerId, leaving);
-                gameBroadcastService.logAndBroadcast(gameData,
+                gameLogService.append(gameData,
                         GameLog.cardThen(leaving, " is exiled instead of being put into a graveyard."));
             } else if (graveyardService.addCardToGraveyard(gameData, ownerId, leaving, Zone.BATTLEFIELD)) {
                 wentToGraveyard = true;
@@ -698,7 +698,7 @@ public class PermanentRemovalService {
                 dyingCard.getName() + "'s undying ability",
                 new ArrayList<>(List.of(new UndyingReturnEffect()))
         ));
-        gameBroadcastService.logAndBroadcast(gameData, GameLog.cardThen(dyingCard, "'s undying ability triggers."));
+        gameLogService.append(gameData, GameLog.cardThen(dyingCard, "'s undying ability triggers."));
         log.info("Game {} - {} undying triggers", gameData.id, dyingCard.getName());
     }
 
@@ -720,7 +720,7 @@ public class PermanentRemovalService {
                 dyingCard.getName() + "'s persist ability",
                 new ArrayList<>(List.of(new PersistReturnEffect()))
         ));
-        gameBroadcastService.logAndBroadcast(gameData, GameLog.cardThen(dyingCard, "'s persist ability triggers."));
+        gameLogService.append(gameData, GameLog.cardThen(dyingCard, "'s persist ability triggers."));
         log.info("Game {} - {} persist triggers", gameData.id, dyingCard.getName());
     }
 
@@ -744,7 +744,7 @@ public class PermanentRemovalService {
         if (creatureId == null) return;
         Permanent creature = gameQueryService.findPermanentById(gameData, creatureId);
         if (creature == null) return;
-        gameBroadcastService.logAndBroadcast(gameData, GameLog.builder()
+        gameLogService.append(gameData, GameLog.builder()
                 .card(creature.getCard())
                 .text(" is sacrificed (")
                 .card(removedEquipment.getCard())
@@ -776,7 +776,7 @@ public class PermanentRemovalService {
                     animatedTarget.getGrantedSubtypes().clear();
                     animatedTarget.getGrantedColors().clear();
 
-                    gameBroadcastService.logAndBroadcast(gameData,
+                    gameLogService.append(gameData,
                             GameLog.cardThen(animatedTarget.getCard(), " is no longer a creature."));
                     log.info("Game {} - {} reverts to non-creature (source {} left battlefield)",
                             gameData.id, animatedTarget.getCard().getName(), removedPermanent.getCard().getName());
@@ -829,7 +829,7 @@ public class PermanentRemovalService {
             if (pending.returnToHand()) {
                 // Return to owner's hand (e.g. Kitesail Freebooter — exiled from hand)
                 gameData.playerHands.get(ownerId).add(exiledCard);
-                gameBroadcastService.logAndBroadcast(gameData,
+                gameLogService.append(gameData,
                         GameLog.cardThen(exiledCard, " returns to " + playerName + "'s hand."));
                 log.info("Game {} - {} returns to hand from exile (source left battlefield)", gameData.id, exiledCard.getName());
             } else {
@@ -839,7 +839,7 @@ public class PermanentRemovalService {
                     perm.tap();
                 }
                 battlefieldEntryService.putPermanentOntoBattlefield(gameData, ownerId, perm);
-                gameBroadcastService.logAndBroadcast(gameData,
+                gameLogService.append(gameData,
                         GameLog.cardThen(exiledCard, " returns to the battlefield under " + playerName + "'s control."));
                 log.info("Game {} - {} returns from exile (source left battlefield)", gameData.id, exiledCard.getName());
                 battlefieldEntryService.handleCreatureEnteredBattlefield(gameData, ownerId, exiledCard, null, false);

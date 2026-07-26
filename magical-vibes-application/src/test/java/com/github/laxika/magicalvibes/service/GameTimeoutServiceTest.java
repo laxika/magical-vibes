@@ -317,7 +317,7 @@ class GameTimeoutServiceTest {
         when(query.getOpponentId(gameData, player2Id)).thenReturn(player1Id);
         GameOutcomeService realOutcome = new GameOutcomeService(
                 query,
-                mock(GameBroadcastService.class),
+                mock(GameLogService.class),
                 mock(LichsMirrorResetService.class),
                 eventCoordinator);
         GameTimeoutService eventService = new GameTimeoutService(

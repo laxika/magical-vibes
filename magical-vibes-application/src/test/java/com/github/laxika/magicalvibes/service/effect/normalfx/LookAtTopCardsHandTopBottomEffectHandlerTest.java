@@ -12,6 +12,7 @@ import com.github.laxika.magicalvibes.networking.SessionManager;
 import com.github.laxika.magicalvibes.networking.model.CardView;
 import com.github.laxika.magicalvibes.networking.service.CardViewFactory;
 import com.github.laxika.magicalvibes.service.GameBroadcastService;
+import com.github.laxika.magicalvibes.service.GameLogService;
 import com.github.laxika.magicalvibes.service.battlefield.BattlefieldEntryService;
 import com.github.laxika.magicalvibes.service.battlefield.GameQueryService;
 import com.github.laxika.magicalvibes.service.exile.ExileService;
@@ -42,6 +43,8 @@ class LookAtTopCardsHandTopBottomEffectHandlerTest {
     private GameQueryService gameQueryService;
     @Mock
     private GameBroadcastService gameBroadcastService;
+    @Mock
+    private GameLogService gameLogService;
     @Mock
     private SessionManager sessionManager;
     @Mock
@@ -82,7 +85,7 @@ class LookAtTopCardsHandTopBottomEffectHandlerTest {
                 InteractionRegistryTestSupport.registryFor(sessionManager, cardViewFactory, gameBroadcastService));
         InteractionHandlerRegistry interactionHandlerRegistry = new InteractionHandlerRegistry();
         interactionHandlerRegistry.register(new HandTopBottomChoiceInteractionHandler(
-                gameBroadcastService, mock(TurnProgressionService.class)));
+                gameLogService, mock(TurnProgressionService.class)));
         lookAtTopCardsHandTopBottomEffectHandler = new LookAtTopCardsHandTopBottomEffectHandler(
                 gameBroadcastService, interactionHandlerRegistry, libraryRevealSupport);
 

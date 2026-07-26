@@ -14,7 +14,7 @@ import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.Zone;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsCreaturePredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentPredicateTargetFilter;
-import com.github.laxika.magicalvibes.service.GameBroadcastService;
+import com.github.laxika.magicalvibes.service.GameLogService;
 import com.github.laxika.magicalvibes.service.battlefield.CreatureControlService;
 import com.github.laxika.magicalvibes.service.battlefield.GameQueryService;
 import com.github.laxika.magicalvibes.service.filter.PredicateEvaluationService;
@@ -46,7 +46,7 @@ import static org.mockito.Mockito.when;
 class AuraAttachmentServiceTest {
 
     @Mock private GameQueryService gameQueryService;
-    @Mock private GameBroadcastService gameBroadcastService;
+    @Mock private GameLogService gameLogService;
     @Mock private GraveyardService graveyardService;
     @Mock private CreatureControlService creatureControlService;
     @Mock private PredicateEvaluationService predicateEvaluationService;
@@ -161,7 +161,7 @@ class AuraAttachmentServiceTest {
 
             service.removeOrphanedAuras(gd);
 
-            verify(gameBroadcastService).logAndBroadcast(eq(gd), argThat((GameLogEntry e) -> e.plainText().equals("Blight is put into the graveyard (enchanted permanent left the battlefield).")));
+            verify(gameLogService).append(eq(gd), argThat((GameLogEntry e) -> e.plainText().equals("Blight is put into the graveyard (enchanted permanent left the battlefield).")));
         }
 
         @Test
@@ -215,7 +215,7 @@ class AuraAttachmentServiceTest {
 
             service.removeOrphanedAuras(gd);
 
-            verify(gameBroadcastService).logAndBroadcast(eq(gd), argThat((GameLogEntry e) -> e.plainText().equals("Darksteel Axe becomes unattached (equipped creature left the battlefield).")));
+            verify(gameLogService).append(eq(gd), argThat((GameLogEntry e) -> e.plainText().equals("Darksteel Axe becomes unattached (equipped creature left the battlefield).")));
         }
 
         @Test

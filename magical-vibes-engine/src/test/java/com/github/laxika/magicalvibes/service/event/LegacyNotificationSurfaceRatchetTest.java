@@ -92,23 +92,10 @@ class LegacyNotificationSurfaceRatchetTest {
         BASELINE.put(LegacySurface.SESSION_SEND, Map.of());
 
         BASELINE.put(LegacySurface.LOG_AND_BROADCAST, Map.ofEntries(
-                Map.entry(ROOT_FAMILY, 112),
-                Map.entry("ability", 40),
-                Map.entry("ability/cost", 8),
-                Map.entry("aura", 4),
-                Map.entry("battle", 4),
-                Map.entry("battlefield", 40),
                 Map.entry("effect", 2),
                 Map.entry("effect/mayfx", 23),
                 Map.entry("effect/normalfx", 1271),
-                Map.entry("graveyard", 17),
-                Map.entry("input", 468),
-                Map.entry("interaction", 16),
-                Map.entry("paradigm", 8),
-                Map.entry("spell", 27),
-                Map.entry("state", 8),
-                Map.entry("trigger", 143),
-                Map.entry("turn", 99)));
+                Map.entry("input", 468)));
     }
 
     @Test
@@ -229,6 +216,35 @@ class LegacyNotificationSurfaceRatchetTest {
 
         assertThat(failures)
                 .withFailMessage(() -> "Effect notification migration regressed:\n  "
+                        + String.join("\n  ", failures))
+                .isEmpty();
+    }
+
+    @Test
+    void allNonInputNonEffectFilesHaveZeroLegacyLogCalls() throws IOException {
+        Path serviceRoot = locateRepoRoot().resolve(SERVICE_ROOT);
+        List<String> failures = new ArrayList<>();
+
+        try (Stream<Path> paths = Files.walk(serviceRoot)) {
+            for (Path path : (Iterable<Path>) paths.filter(Files::isRegularFile)
+                    .filter(file -> file.toString().endsWith(".java"))
+                    .sorted()::iterator) {
+                String relative = serviceRoot.relativize(path).toString().replace('\\', '/');
+                if (relative.equals("GameBroadcastService.java")
+                        || relative.startsWith("input/")
+                        || relative.startsWith("effect/")) {
+                    continue;
+                }
+                String source = Files.readString(path, StandardCharsets.UTF_8);
+                int current = count(source, LegacySurface.LOG_AND_BROADCAST.pattern);
+                if (current != 0) {
+                    failures.add(relative + " retains " + current + " legacy log call(s)");
+                }
+            }
+        }
+
+        assertThat(failures)
+                .withFailMessage(() -> "Game-log package ratchet failed:\n  "
                         + String.join("\n  ", failures))
                 .isEmpty();
     }

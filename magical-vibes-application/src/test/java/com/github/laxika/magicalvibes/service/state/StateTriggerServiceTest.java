@@ -19,7 +19,7 @@ import com.github.laxika.magicalvibes.model.effect.CardEffect;
 import com.github.laxika.magicalvibes.model.effect.DealDamageToAnyTargetEffect;
 import com.github.laxika.magicalvibes.model.effect.GainLifeEffect;
 import com.github.laxika.magicalvibes.model.effect.StateTriggerEffect;
-import com.github.laxika.magicalvibes.service.GameBroadcastService;
+import com.github.laxika.magicalvibes.service.GameLogService;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Nested;
@@ -43,7 +43,7 @@ import static org.mockito.Mockito.verifyNoInteractions;
 class StateTriggerServiceTest {
 
     @Mock
-    private GameBroadcastService gameBroadcastService;
+    private GameLogService gameLogService;
 
     @InjectMocks
     private StateTriggerService sut;
@@ -108,7 +108,7 @@ class StateTriggerServiceTest {
             assertThat(entry.getSourcePermanentId()).isEqualTo(perm.getId());
             assertThat(entry.getStateTriggerEffectIndex()).isZero();
             assertThat(gd.stateTriggerOnStack).contains(new StateTriggerKey(perm.getId(), 0));
-            verify(gameBroadcastService).logAndBroadcast(eq(gd), argThat((GameLogEntry e) -> e.plainText().equals("Test trigger triggers.")));
+            verify(gameLogService).append(eq(gd), argThat((GameLogEntry e) -> e.plainText().equals("Test trigger triggers.")));
         }
 
         @Test
@@ -127,7 +127,7 @@ class StateTriggerServiceTest {
 
             assertThat(gd.stack).isEmpty();
             assertThat(gd.stateTriggerOnStack).doesNotContain(new StateTriggerKey(perm.getId(), 0));
-            verifyNoInteractions(gameBroadcastService);
+            verifyNoInteractions(gameLogService);
         }
 
         @Test
@@ -146,7 +146,7 @@ class StateTriggerServiceTest {
             sut.checkStateTriggers(gd);
 
             assertThat(gd.stack).isEmpty();
-            verifyNoInteractions(gameBroadcastService);
+            verifyNoInteractions(gameLogService);
         }
 
         @Test
@@ -220,7 +220,7 @@ class StateTriggerServiceTest {
 
             assertThat(gd.stack).isEmpty();
             assertThat(gd.stateTriggerOnStack).isEmpty();
-            verifyNoInteractions(gameBroadcastService);
+            verifyNoInteractions(gameLogService);
         }
 
         @Test

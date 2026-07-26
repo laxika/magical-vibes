@@ -65,6 +65,7 @@ class GameBroadcastServiceTest {
     @Mock private ValidTargetService validTargetService;
     @Mock private com.github.laxika.magicalvibes.service.effect.ConditionEvaluationService conditionEvaluationService;
     @Mock private GameMutationCoordinator mutationCoordinator;
+    @Mock private GameLogService gameLogService;
 
     private GameBroadcastService svc;
     private GameData gd;
@@ -89,7 +90,7 @@ class GameBroadcastServiceTest {
                 castingCostService, castingPermissionService,
                 new com.github.laxika.magicalvibes.service.cast.PotentialManaService(gameQueryService),
                 new GrantedAbilityViewFactory());
-        svc = new GameBroadcastService(projectionFactory, mutationCoordinator);
+        svc = new GameBroadcastService(projectionFactory, mutationCoordinator, gameLogService);
 
         player1Id = UUID.randomUUID();
         player2Id = UUID.randomUUID();
@@ -422,33 +423,33 @@ class GameBroadcastServiceTest {
     }
 
     @Nested
-    @DisplayName("logAndBroadcast — structured game log entries")
+    @DisplayName("logAndBroadcast — compatibility delegation")
     class LogAndBroadcastTests {
 
         @Test
-        @DisplayName("plain string logs as a single text segment")
+        @DisplayName("delegates a plain structured entry unchanged")
         void plainStringLog() {
-            svc.logAndBroadcast(gd, GameLogEntry.text("Game started!"));
+            GameLogEntry entry = GameLogEntry.text("Game started!");
 
-            assertThat(gd.gameLog).containsExactly(GameLogEntry.text("Game started!"));
-            assertThat(gd.gameLog.getFirst().segments()).hasSize(1);
+            svc.logAndBroadcast(gd, entry);
+
+            verify(gameLogService).append(gd, entry);
         }
 
         @Test
-        @DisplayName("structured entry preserves card segment")
+        @DisplayName("delegates card segments without rebuilding them")
         void structuredCardLog() {
             Card bolt = new Card();
             bolt.setName("Lightning Bolt");
-
-            svc.logAndBroadcast(gd, GameLog.builder()
+            GameLogEntry entry = GameLog.builder()
                     .text("Player1 casts ")
                     .card(bolt)
                     .text(".")
-                    .build());
+                    .build();
 
-            assertThat(gd.gameLog).hasSize(1);
-            assertThat(gd.gameLog.getFirst().plainText()).isEqualTo("Player1 casts Lightning Bolt.");
-            assertThat(gd.gameLog.getFirst().segments()).hasSize(3);
+            svc.logAndBroadcast(gd, entry);
+
+            verify(gameLogService).append(gd, entry);
         }
     }
 

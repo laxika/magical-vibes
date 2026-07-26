@@ -5,7 +5,7 @@ import com.github.laxika.magicalvibes.model.GameData;
 import com.github.laxika.magicalvibes.model.GameLog;
 import com.github.laxika.magicalvibes.model.PendingInteraction;
 import com.github.laxika.magicalvibes.model.Player;
-import com.github.laxika.magicalvibes.service.GameBroadcastService;
+import com.github.laxika.magicalvibes.service.GameLogService;
 import com.github.laxika.magicalvibes.service.effect.EffectResolutionService;
 import com.github.laxika.magicalvibes.service.library.LibraryShuffleHelper;
 import com.github.laxika.magicalvibes.service.turn.TurnProgressionService;
@@ -30,7 +30,7 @@ import org.springframework.stereotype.Component;
 public class SearchLibraryToTopChoiceInteractionHandler
         implements InteractionHandler<PendingInteraction.SearchLibraryToTopChoice> {
 
-    private final GameBroadcastService gameBroadcastService;
+    private final GameLogService gameLogService;
     private final InteractionHandlerRegistry interactionHandlerRegistry;
     private final TurnProgressionService turnProgressionService;
     private final EffectResolutionService effectResolutionService;
@@ -99,18 +99,18 @@ public class SearchLibraryToTopChoiceInteractionHandler
                 revealBuilder.card(chosen.get(i));
             }
             revealBuilder.text(" and shuffles their library.");
-            gameBroadcastService.logAndBroadcast(gameData, revealBuilder.build());
+            gameLogService.append(gameData, revealBuilder.build());
         }
 
         if (chosen.isEmpty()) {
-            gameBroadcastService.logAndBroadcast(gameData, GameLog.text(controllerName + " puts no cards on top of their library. Library is shuffled."));
+            gameLogService.append(gameData, GameLog.text(controllerName + " puts no cards on top of their library. Library is shuffled."));
             finishResolution(gameData);
         } else if (chosen.size() == 1) {
             deck.addFirst(chosen.getFirst());
-            gameBroadcastService.logAndBroadcast(gameData, GameLog.textCardText(controllerName + " puts ", chosen.getFirst(), " on top of their library."));
+            gameLogService.append(gameData, GameLog.textCardText(controllerName + " puts ", chosen.getFirst(), " on top of their library."));
             finishResolution(gameData);
         } else {
-            gameBroadcastService.logAndBroadcast(gameData, GameLog.text(controllerName + " puts " + chosen.size()
+            gameLogService.append(gameData, GameLog.text(controllerName + " puts " + chosen.size()
                     + " cards on top of their library — choosing order."));
             interactionHandlerRegistry.begin(gameData, new PendingInteraction.LibraryReorder(
                     controllerId, chosen, false, controllerId,

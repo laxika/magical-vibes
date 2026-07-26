@@ -41,7 +41,7 @@ public class MulliganService {
 
     private final Random random = new Random();
 
-    private final GameBroadcastService gameBroadcastService;
+    private final GameLogService gameLogService;
     private final TurnProgressionService turnProgressionService;
     private final BattlefieldEntryService battlefieldEntryService;
     private final PlayerInputService playerInputService;
@@ -69,7 +69,7 @@ public class MulliganService {
 
             String logEntry = player.getUsername() + " keeps their hand and must put " + cardsToBottom +
                     " card" + (cardsToBottom > 1 ? "s" : "") + " on the bottom of their library.";
-            gameBroadcastService.logAndBroadcast(gameData, GameLog.text(logEntry));
+            gameLogService.append(gameData, GameLog.text(logEntry));
 
             log.info("Game {} - {} kept hand, needs to bottom {} cards (mulligan count: {})", gameData.id, player.getUsername(), cardsToBottom, mulliganCount);
 
@@ -82,7 +82,7 @@ public class MulliganService {
                     GameEventAudience.player(player.getId()));
         } else {
             String logEntry = player.getUsername() + " keeps their hand.";
-            gameBroadcastService.logAndBroadcast(gameData, GameLog.text(logEntry));
+            gameLogService.append(gameData, GameLog.text(logEntry));
 
             log.info("Game {} - {} kept hand (no mulligans)", gameData.id, player.getUsername());
 
@@ -126,7 +126,7 @@ public class MulliganService {
 
         String logEntry = player.getUsername() + " puts " + bottomCards.size() +
                 " card" + (bottomCards.size() > 1 ? "s" : "") + " on the bottom of their library (keeping " + hand.size() + " cards).";
-        gameBroadcastService.logAndBroadcast(gameData, GameLog.text(logEntry));
+        gameLogService.append(gameData, GameLog.text(logEntry));
 
         log.info("Game {} - {} bottomed {} cards, hand size now {}", gameData.id, player.getUsername(), bottomCards.size(), hand.size());
 
@@ -163,7 +163,7 @@ public class MulliganService {
                 GameEventAudience.allPlayers());
 
         String logEntry = player.getUsername() + " takes a mulligan (mulligan #" + newMulliganCount + ").";
-        gameBroadcastService.logAndBroadcast(gameData, GameLog.text(logEntry));
+        gameLogService.append(gameData, GameLog.text(logEntry));
 
         log.info("Game {} - {} mulliganed (count: {})", gameData.id, player.getUsername(), newMulliganCount);
         invalidateForAllPlayers(gameData);
@@ -242,7 +242,7 @@ public class MulliganService {
                     battlefieldEntryService.handleCreatureEnteredBattlefield(gameData, controllerId, card, null, false);
                 }
 
-                gameBroadcastService.logAndBroadcast(gameData, GameLog.textCardText(controllerName + " puts " , card, " onto the battlefield (Karn Liberated)."));
+                gameLogService.append(gameData, GameLog.textCardText(controllerName + " puts " , card, " onto the battlefield (Karn Liberated)."));
                 log.info("Game {} - {} puts {} onto the battlefield from Karn's exile",
                         gameData.id, controllerName, card.getName());
             }
@@ -256,8 +256,8 @@ public class MulliganService {
 
         String logEntry1 = "Mulligan phase complete!";
         String logEntry2 = "Turn 1 begins. " + gameData.playerIdToName.get(gameData.activePlayerId) + "'s turn.";
-        gameBroadcastService.logAndBroadcast(gameData, GameLog.text(logEntry1));
-        gameBroadcastService.logAndBroadcast(gameData, GameLog.text(logEntry2));
+        gameLogService.append(gameData, GameLog.text(logEntry1));
+        gameLogService.append(gameData, GameLog.text(logEntry2));
 
         invalidateForAllPlayers(gameData);
 

@@ -1,7 +1,6 @@
 package com.github.laxika.magicalvibes.service.event;
 
 import com.github.laxika.magicalvibes.model.GameData;
-import com.github.laxika.magicalvibes.model.GameLog;
 import com.github.laxika.magicalvibes.model.GameStatus;
 import com.github.laxika.magicalvibes.model.CombatAttackTarget;
 import com.github.laxika.magicalvibes.model.CombatDamageTarget;
@@ -26,6 +25,7 @@ import com.github.laxika.magicalvibes.networking.model.GameLogEntryView;
 import com.github.laxika.magicalvibes.networking.service.CardViewFactory;
 import com.github.laxika.magicalvibes.networking.service.GameLogViewFactory;
 import com.github.laxika.magicalvibes.service.GameMessageTransport;
+import com.github.laxika.magicalvibes.service.GameLogService;
 import com.github.laxika.magicalvibes.service.GameRegistry;
 import com.github.laxika.magicalvibes.service.GameViewProjectionFactory;
 import com.github.laxika.magicalvibes.service.PrivateInformationProjectionFactory;
@@ -385,7 +385,6 @@ class GameEventProjectionSubscriberTest {
     void decisionBarrierPreservesBothStateMessagesWithoutDuplicatingLogEntries() {
         gameData.interaction.beginInteraction(
                 new PendingInteraction.AttackerDeclaration(player2Id));
-        gameData.gameLog.add(GameLog.text("One new log entry."));
         GameLogEntryView logEntry = mock(GameLogEntryView.class);
         when(gameLogViewFactory.createAll(any())).thenReturn(List.of(logEntry));
 
@@ -399,7 +398,11 @@ class GameEventProjectionSubscriberTest {
                 .thenReturn(Map.of(player1Id, withoutLogs, player2Id, withoutLogs));
 
         GameMutationCoordinator coordinator = coordinator();
+        GameLogService gameLogService = new GameLogService(coordinator);
         coordinator.mutate(gameData, UUID.randomUUID(), () -> {
+            gameLogService.append(
+                    gameData,
+                    com.github.laxika.magicalvibes.model.GameLog.text("One new log entry."));
             coordinator.invalidateAllPlayerViews(gameData);
             coordinator.emit(gameData,
                     new GameEventFact.DecisionRequested(

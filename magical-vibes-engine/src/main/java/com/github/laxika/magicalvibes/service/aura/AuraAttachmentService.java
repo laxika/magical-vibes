@@ -1,6 +1,6 @@
 package com.github.laxika.magicalvibes.service.aura;
 
-import com.github.laxika.magicalvibes.service.GameBroadcastService;
+import com.github.laxika.magicalvibes.service.GameLogService;
 import com.github.laxika.magicalvibes.service.battlefield.CreatureControlService;
 import com.github.laxika.magicalvibes.service.graveyard.GraveyardService;
 import com.github.laxika.magicalvibes.service.battlefield.GameQueryService;
@@ -39,7 +39,7 @@ import java.util.UUID;
 public class AuraAttachmentService {
 
     private final GameQueryService gameQueryService;
-    private final GameBroadcastService gameBroadcastService;
+    private final GameLogService gameLogService;
     private final GraveyardService graveyardService;
     private final CreatureControlService creatureControlService;
     private final PredicateEvaluationService predicateEvaluationService;
@@ -75,13 +75,13 @@ public class AuraAttachmentService {
                         p.setAttachedTo(null);
                         gameData.expireFloatingEffectsForUnattachedSource(p.getId());
                         String logEntry = p.getCard().getName() + " becomes unattached (equipped creature left the battlefield).";
-                        gameBroadcastService.logAndBroadcast(gameData, GameLog.cardThen(p.getCard(), " becomes unattached (equipped creature left the battlefield)."));
+                        gameLogService.append(gameData, GameLog.cardThen(p.getCard(), " becomes unattached (equipped creature left the battlefield)."));
                         log.info("Game {} - {} unattached (equipped creature left)", gameData.id, p.getCard().getName());
                     } else {
                         it.remove();
                         gameData.expireFloatingEffectsForDepartedSource(p.getId());
                         boolean wentToGraveyard = graveyardService.addCardToGraveyard(gameData, playerId, p.getOriginalCard(), Zone.BATTLEFIELD);
-                        gameBroadcastService.logAndBroadcast(gameData, GameLog.cardThen(p.getCard(), " is put into the graveyard (enchanted permanent left the battlefield)."));
+                        gameLogService.append(gameData, GameLog.cardThen(p.getCard(), " is put into the graveyard (enchanted permanent left the battlefield)."));
                         log.info("Game {} - {} removed (orphaned aura)", gameData.id, p.getCard().getName());
                         if (wentToGraveyard) {
                             removals.add(new OrphanedAuraRemoval(p.getCard(), playerId));
@@ -135,7 +135,7 @@ public class AuraAttachmentService {
                     gameData.expireFloatingEffectsForUnattachedSource(p.getId());
                     anyUnattached = true;
                     String logEntry = p.getCard().getName() + " becomes unattached (" + reason + ").";
-                    gameBroadcastService.logAndBroadcast(gameData, GameLog.builder().card(p.getCard()).text(" becomes unattached (" + reason + ").").build());
+                    gameLogService.append(gameData, GameLog.builder().card(p.getCard()).text(" becomes unattached (" + reason + ").").build());
                     log.info("Game {} - {} unattached ({})", gameData.id, p.getCard().getName(), reason);
                 } else {
                     // CR 704.5n — an illegally attached aura is put into its owner's graveyard
@@ -143,7 +143,7 @@ public class AuraAttachmentService {
                     gameData.expireFloatingEffectsForDepartedSource(p.getId());
                     boolean wentToGraveyard = graveyardService.addCardToGraveyard(gameData, playerId, p.getOriginalCard(), Zone.BATTLEFIELD);
                     String logEntry = p.getCard().getName() + " is put into the graveyard (" + reason + ").";
-                    gameBroadcastService.logAndBroadcast(gameData, GameLog.builder().card(p.getCard()).text(" is put into the graveyard (" + reason + ").").build());
+                    gameLogService.append(gameData, GameLog.builder().card(p.getCard()).text(" is put into the graveyard (" + reason + ").").build());
                     log.info("Game {} - {} removed (illegally attached: {})", gameData.id, p.getCard().getName(), reason);
                     if (wentToGraveyard) {
                         removals.add(new OrphanedAuraRemoval(p.getCard(), playerId));

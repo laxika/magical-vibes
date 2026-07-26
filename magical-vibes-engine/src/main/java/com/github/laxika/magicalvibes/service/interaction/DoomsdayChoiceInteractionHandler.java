@@ -5,7 +5,7 @@ import com.github.laxika.magicalvibes.model.GameData;
 import com.github.laxika.magicalvibes.model.GameLog;
 import com.github.laxika.magicalvibes.model.PendingInteraction;
 import com.github.laxika.magicalvibes.model.Player;
-import com.github.laxika.magicalvibes.service.GameBroadcastService;
+import com.github.laxika.magicalvibes.service.GameLogService;
 import com.github.laxika.magicalvibes.service.effect.EffectResolutionService;
 import com.github.laxika.magicalvibes.service.turn.TurnProgressionService;
 import lombok.RequiredArgsConstructor;
@@ -29,7 +29,7 @@ import java.util.UUID;
 public class DoomsdayChoiceInteractionHandler
         implements InteractionHandler<PendingInteraction.DoomsdayChoice> {
 
-    private final GameBroadcastService gameBroadcastService;
+    private final GameLogService gameLogService;
     private final InteractionHandlerRegistry interactionHandlerRegistry;
     private final TurnProgressionService turnProgressionService;
     private final EffectResolutionService effectResolutionService;
@@ -92,20 +92,20 @@ public class DoomsdayChoiceInteractionHandler
             gameData.addToExile(controllerId, card);
         }
         if (!rest.isEmpty()) {
-            gameBroadcastService.logAndBroadcast(gameData, GameLog.text(controllerName + " exiles " + rest.size()
+            gameLogService.append(gameData, GameLog.text(controllerName + " exiles " + rest.size()
                     + " card" + (rest.size() != 1 ? "s" : "") + " (Doomsday)."));
         }
 
         List<Card> deck = gameData.playerDecks.get(controllerId);
         if (chosen.isEmpty()) {
-            gameBroadcastService.logAndBroadcast(gameData, GameLog.text(controllerName + " puts no cards on top of their library (Doomsday)."));
+            gameLogService.append(gameData, GameLog.text(controllerName + " puts no cards on top of their library (Doomsday)."));
             finishResolution(gameData);
         } else if (chosen.size() == 1) {
             deck.addFirst(chosen.getFirst());
-            gameBroadcastService.logAndBroadcast(gameData, GameLog.textCardText(controllerName + " puts ", chosen.getFirst(), " on top of their library (Doomsday)."));
+            gameLogService.append(gameData, GameLog.textCardText(controllerName + " puts ", chosen.getFirst(), " on top of their library (Doomsday)."));
             finishResolution(gameData);
         } else {
-            gameBroadcastService.logAndBroadcast(gameData, GameLog.text(controllerName + " puts " + chosen.size()
+            gameLogService.append(gameData, GameLog.text(controllerName + " puts " + chosen.size()
                     + " cards on top of their library (Doomsday) — choosing order."));
             interactionHandlerRegistry.begin(gameData, new PendingInteraction.LibraryReorder(
                     controllerId, chosen, false, controllerId,

@@ -54,7 +54,7 @@ import com.github.laxika.magicalvibes.model.effect.RevealSubtypeOrEntersTappedEf
 import com.github.laxika.magicalvibes.model.PendingMayAbility;
 import com.github.laxika.magicalvibes.model.filter.StackEntryPredicate;
 import com.github.laxika.magicalvibes.model.filter.StackEntryPredicateTargetFilter;
-import com.github.laxika.magicalvibes.service.GameBroadcastService;
+import com.github.laxika.magicalvibes.service.GameLogService;
 import com.github.laxika.magicalvibes.service.battlefield.etb.EtbEffectContext;
 import com.github.laxika.magicalvibes.service.battlefield.etb.EtbEffectResolver;
 import com.github.laxika.magicalvibes.service.effect.AmountContext;
@@ -81,7 +81,7 @@ import java.util.UUID;
 public class BattlefieldEntryService {
 
     private final GameQueryService gameQueryService;
-    private final GameBroadcastService gameBroadcastService;
+    private final GameLogService gameLogService;
     private final PlayerInputService playerInputService;
     private final PermanentCopierService permanentCopierService;
     private final TriggerCollectionService triggerCollectionService;
@@ -97,7 +97,7 @@ public class BattlefieldEntryService {
     // BattlefieldEntryService → TriggerCollectionService/PermanentCounterSupport →
     // PlayerInputService/queue services → (effect handlers) → BattlefieldEntryService.
     public BattlefieldEntryService(GameQueryService gameQueryService,
-                                   GameBroadcastService gameBroadcastService,
+                                   GameLogService gameLogService,
                                    PlayerInputService playerInputService,
                                    PermanentCopierService permanentCopierService,
                                    @Lazy TriggerCollectionService triggerCollectionService,
@@ -109,7 +109,7 @@ public class BattlefieldEntryService {
                                    PredicateEvaluationService predicateEvaluationService,
                                    @Lazy com.github.laxika.magicalvibes.service.effect.normalfx.PermanentCounterSupport permanentCounterSupport) {
         this.gameQueryService = gameQueryService;
-        this.gameBroadcastService = gameBroadcastService;
+        this.gameLogService = gameLogService;
         this.playerInputService = playerInputService;
         this.permanentCopierService = permanentCopierService;
         this.triggerCollectionService = triggerCollectionService;
@@ -895,7 +895,7 @@ public class BattlefieldEntryService {
                         gameData.queueInteraction(new PermanentChoiceContext.ETBTokenMultiTargetTrigger(
                                 card, controllerId, new ArrayList<>(otherEffects), sourcePermanentId, List.of(), 0, 0));
                     }
-                    gameBroadcastService.logAndBroadcast(gameData,
+                    gameLogService.append(gameData,
                             GameLog.cardThen(card, "'s enter-the-battlefield ability triggers — choose targets."));
                     log.info("Game {} - {} ETB multi-target trigger queued (no target chosen at cast time)",
                             gameData.id, card.getName());
@@ -908,7 +908,7 @@ public class BattlefieldEntryService {
                         gameData.queueInteraction(new PermanentChoiceContext.ETBTokenTargetTrigger(
                                 card, controllerId, new ArrayList<>(otherEffects), sourcePermanentId, etbTargetFilter));
                     }
-                    gameBroadcastService.logAndBroadcast(gameData,
+                    gameLogService.append(gameData,
                             GameLog.cardThen(card, "'s enter-the-battlefield ability triggers — choose a target."));
                     log.info("Game {} - {} ETB trigger queued for target selection (no target chosen at cast time)",
                             gameData.id, card.getName());
@@ -938,7 +938,7 @@ public class BattlefieldEntryService {
                     etbEntry.setTargetFilter(modeTargetFilter);
                 }
                 gameData.stack.add(etbEntry);
-                gameBroadcastService.logAndBroadcast(gameData, GameLog.cardThen(card, "'s enter-the-battlefield ability triggers."));
+                gameLogService.append(gameData, GameLog.cardThen(card, "'s enter-the-battlefield ability triggers."));
                 log.info("Game {} - {} ETB ability pushed onto stack", gameData.id, card.getName());
                 // Naban: extra triggers for Wizard ETB
                 for (int i = 0; i < extraWizardTriggers; i++) {
@@ -960,7 +960,7 @@ public class BattlefieldEntryService {
                         extraEtbEntry.setTargetFilter(modeTargetFilter);
                     }
                     gameData.stack.add(extraEtbEntry);
-                    gameBroadcastService.logAndBroadcast(gameData, GameLog.cardThen(card, "'s enter-the-battlefield ability triggers."));
+                    gameLogService.append(gameData, GameLog.cardThen(card, "'s enter-the-battlefield ability triggers."));
                     log.info("Game {} - {} ETB ability pushed onto stack (Wizard ETB extra trigger)", gameData.id, card.getName());
                 }
             }

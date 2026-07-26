@@ -11,7 +11,7 @@ import com.github.laxika.magicalvibes.model.Player;
 import com.github.laxika.magicalvibes.model.StackEntry;
 import com.github.laxika.magicalvibes.model.StackEntryType;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
-import com.github.laxika.magicalvibes.service.GameBroadcastService;
+import com.github.laxika.magicalvibes.service.GameLogService;
 import com.github.laxika.magicalvibes.service.effect.normalfx.ExileCastTargetSupport;
 import com.github.laxika.magicalvibes.service.graveyard.GraveyardService;
 import com.github.laxika.magicalvibes.service.input.InputCompletionService;
@@ -32,7 +32,7 @@ import org.springframework.stereotype.Component;
 @Component
 public class ParadigmCastSupport {
 
-    private final GameBroadcastService gameBroadcastService;
+    private final GameLogService gameLogService;
     private final GraveyardService graveyardService;
     private final PlayerInputService playerInputService;
     private final TriggerCollectionService triggerCollectionService;
@@ -41,13 +41,13 @@ public class ParadigmCastSupport {
 
     // @Lazy breaks cycle: ParadigmCastSupport → InputCompletionService → TurnProgressionService →
     // StepTriggerService → ParadigmService → ParadigmCastSupport.
-    public ParadigmCastSupport(GameBroadcastService gameBroadcastService,
+    public ParadigmCastSupport(GameLogService gameLogService,
                                GraveyardService graveyardService,
                                PlayerInputService playerInputService,
                                @Lazy TriggerCollectionService triggerCollectionService,
                                @Lazy InputCompletionService inputCompletionService,
                                ExileCastTargetSupport exileCastTargetSupport) {
-        this.gameBroadcastService = gameBroadcastService;
+        this.gameLogService = gameLogService;
         this.graveyardService = graveyardService;
         this.playerInputService = playerInputService;
         this.triggerCollectionService = triggerCollectionService;
@@ -85,7 +85,7 @@ public class ParadigmCastSupport {
                     graveyardService.addCardToGraveyard(gameData, playerId, card);
                 }
                 String logEntry = card.getName() + " has no valid targets.";
-                gameBroadcastService.logAndBroadcast(gameData, GameLog.cardThen(card, " has no valid targets."));
+                gameLogService.append(gameData, GameLog.cardThen(card, " has no valid targets."));
                 log.info("Game {} - {} paradigm copy has no valid targets", gameData.id, card.getName());
                 inputCompletionService.processMayAbilitiesThenAutoPass(gameData);
                 return;
@@ -98,7 +98,7 @@ public class ParadigmCastSupport {
 
             String logEntry = playerName + " casts " + card.getName()
                     + " without paying its mana cost — choosing target.";
-            gameBroadcastService.logAndBroadcast(gameData, GameLog.cardThen(card, " has no valid targets."));
+            gameLogService.append(gameData, GameLog.cardThen(card, " has no valid targets."));
             return;
         }
 
@@ -113,7 +113,7 @@ public class ParadigmCastSupport {
         gameData.recordSpellCast(playerId, card);
         gameData.priorityPassedBy.clear();
 
-        gameBroadcastService.logAndBroadcast(gameData, GameLog.textCardText(playerName + " casts " , card, " without paying its mana cost."));
+        gameLogService.append(gameData, GameLog.textCardText(playerName + " casts " , card, " without paying its mana cost."));
         log.info("Game {} - {} casts {} paradigm copy without paying mana", gameData.id, playerName, card.getName());
 
         triggerCollectionService.checkSpellCastTriggers(gameData, card, playerId, false);

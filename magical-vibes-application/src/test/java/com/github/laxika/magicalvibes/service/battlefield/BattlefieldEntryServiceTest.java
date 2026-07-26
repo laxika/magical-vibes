@@ -24,6 +24,7 @@ import com.github.laxika.magicalvibes.model.effect.EnterWithCountersEffect;
 import com.github.laxika.magicalvibes.model.effect.EntersTappedEffect;
 import com.github.laxika.magicalvibes.model.filter.PermanentHasAnySubtypePredicate;
 import com.github.laxika.magicalvibes.service.GameBroadcastService;
+import com.github.laxika.magicalvibes.service.GameLogService;
 import com.github.laxika.magicalvibes.service.battlefield.etb.EtbEffectResolver;
 import com.github.laxika.magicalvibes.service.effect.AmountEvaluationService;
 import com.github.laxika.magicalvibes.service.effect.ConditionEvaluationService;
@@ -53,6 +54,7 @@ class BattlefieldEntryServiceTest {
 
     @Mock private GameQueryService gameQueryService;
     @Mock private GameBroadcastService gameBroadcastService;
+    @Mock private GameLogService gameLogService;
     @Mock private PlayerInputService playerInputService;
     @Mock private PermanentCopierService permanentCopierService;
     @Mock private TriggerCollectionService triggerCollectionService;
@@ -70,7 +72,7 @@ class BattlefieldEntryServiceTest {
                 gameQueryService, predicateEvaluationService,
                 new StaticEffectSupport(gameQueryService, predicateEvaluationService));
         service = new BattlefieldEntryService(
-                gameQueryService, gameBroadcastService, playerInputService,
+                gameQueryService, gameLogService, playerInputService,
                 permanentCopierService, triggerCollectionService,
                 graveyardTargetingService, etbTokenTargetService,
                 new EtbEffectResolver(conditionEvaluationService),

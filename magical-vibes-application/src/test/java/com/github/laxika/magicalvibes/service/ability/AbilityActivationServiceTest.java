@@ -33,7 +33,7 @@ import com.github.laxika.magicalvibes.model.effect.PutCountersOnSelfEffect;
 import com.github.laxika.magicalvibes.model.effect.RemoveChargeCountersFromSourceCost;
 import com.github.laxika.magicalvibes.model.effect.RemoveCounterFromSourceCost;
 import com.github.laxika.magicalvibes.model.effect.SacrificeCreatureCost;
-import com.github.laxika.magicalvibes.service.GameBroadcastService;
+import com.github.laxika.magicalvibes.service.GameLogService;
 import com.github.laxika.magicalvibes.service.input.PlayerInputService;
 import com.github.laxika.magicalvibes.service.trigger.TriggerCollectionService;
 import com.github.laxika.magicalvibes.service.battlefield.GameQueryService;
@@ -81,7 +81,7 @@ class AbilityActivationServiceTest {
 
     @Mock private GraveyardService graveyardService;
     @Mock private GameQueryService gameQueryService;
-    @Mock private GameBroadcastService gameBroadcastService;
+    @Mock private GameLogService gameLogService;
     @Mock private CastingCostService castingCostService;
     @Mock private TargetLegalityService targetLegalityService;
     @Mock private ActivatedAbilityExecutionService activatedAbilityExecutionService;
@@ -306,7 +306,7 @@ class AbilityActivationServiceTest {
 
             service.tapPermanent(gameData, player1, 0);
 
-            verify(gameBroadcastService).logAndBroadcast(eq(gameData), eq(GameLog.playerTaps("Player1", island)));
+            verify(gameLogService).append(eq(gameData), eq(GameLog.playerTaps("Player1", island)));
         }
     }
 
@@ -398,7 +398,7 @@ class AbilityActivationServiceTest {
 
             service.sacrificePermanent(gameData, player1, 0, targetId);
 
-            verify(gameBroadcastService).logAndBroadcast(eq(gameData), argThat((GameLogEntry e) -> e.plainText().equals("Player1 sacrifices Aura of Silence.")));
+            verify(gameLogService).append(eq(gameData), argThat((GameLogEntry e) -> e.plainText().equals("Player1 sacrifices Aura of Silence.")));
         }
     }
 
@@ -1107,7 +1107,7 @@ class AbilityActivationServiceTest {
 
             verify(permanentRemovalService).removePermanentToGraveyard(gameData, husk);
             verify(triggerCollectionService).checkAllyPermanentSacrificedTriggers(gameData, player1Id, husk.getCard());
-            verify(gameBroadcastService).logAndBroadcast(eq(gameData), argThat((GameLogEntry e) -> e.plainText().equals("Player1 sacrifices Nantuko Husk.")));
+            verify(gameLogService).append(eq(gameData), argThat((GameLogEntry e) -> e.plainText().equals("Player1 sacrifices Nantuko Husk.")));
         }
 
         @Test

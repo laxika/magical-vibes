@@ -61,7 +61,7 @@ import com.github.laxika.magicalvibes.model.effect.SacrificeSelfCost;
 import com.github.laxika.magicalvibes.model.effect.SacrificeSourceEquipmentCost;
 import com.github.laxika.magicalvibes.model.PendingInteraction;
 import com.github.laxika.magicalvibes.service.DamagePreventionService;
-import com.github.laxika.magicalvibes.service.GameBroadcastService;
+import com.github.laxika.magicalvibes.service.GameLogService;
 import com.github.laxika.magicalvibes.service.battlefield.GameQueryService;
 import com.github.laxika.magicalvibes.service.effect.AmountContext;
 import com.github.laxika.magicalvibes.service.effect.AmountEvaluationService;
@@ -96,7 +96,7 @@ public class ActivatedAbilityExecutionService {
     private final GameQueryService gameQueryService;
     private final PredicateEvaluationService predicateEvaluationService;
     private final AmountEvaluationService amountEvaluationService;
-    private final GameBroadcastService gameBroadcastService;
+    private final GameLogService gameLogService;
     private final PlayerInputService playerInputService;
     private final com.github.laxika.magicalvibes.service.interaction.InteractionHandlerRegistry interactionHandlerRegistry;
     private final LifeSupport lifeSupport;
@@ -281,7 +281,7 @@ public class ActivatedAbilityExecutionService {
             gameData.stack.subList(stackBeforeActivationTriggers, gameData.stack.size()).clear();
         }
 
-        gameBroadcastService.logAndBroadcast(gameData, GameLog.textCardText(player.getUsername() + " activates " , permanent.getCard(), "'s ability."));
+        gameLogService.append(gameData, GameLog.textCardText(player.getUsername() + " activates " , permanent.getCard(), "'s ability."));
         log.info("Game {} - {} activates {}'s ability", gameData.id, player.getUsername(), permanent.getCard().getName());
 
         List<CardEffect> snapshotEffects = snapshotEffects(abilityEffects, permanent);
@@ -415,7 +415,7 @@ public class ActivatedAbilityExecutionService {
                 gameData.playerManaPools.get(playerId).add(ManaColor.COLORLESS, 1);
                 String logEntry = player.getUsername() + " adds {C} from " + permanent.getCard().getName()
                         + " (Damping Sphere replaces " + totalMana + " mana).";
-                gameBroadcastService.logAndBroadcast(gameData, GameLog.builder().text(player.getUsername() + " adds {C} from ").card(permanent.getCard()).text(" (Damping Sphere replaces " + totalMana + " mana).").build());
+                gameLogService.append(gameData, GameLog.builder().text(player.getUsername() + " adds {C} from ").card(permanent.getCard()).text(" (Damping Sphere replaces " + totalMana + " mana).").build());
             }
         }
 
@@ -434,7 +434,7 @@ public class ActivatedAbilityExecutionService {
                     if (isCreatureSource) {
                         pool.addCreatureMana(fixedLandColor, totalMana);
                     }
-                    gameBroadcastService.logAndBroadcast(gameData, GameLog.builder()
+                    gameLogService.append(gameData, GameLog.builder()
                             .text(player.getUsername() + " adds " + totalMana + " " + fixedLandColor.getCode()
                                     + " from ").card(permanent.getCard())
                             .text(" (land mana type replaced).").build());
@@ -453,7 +453,7 @@ public class ActivatedAbilityExecutionService {
                             if (isCreatureSource) {
                                 pool.addCreatureMana(color, totalMana);
                             }
-                            gameBroadcastService.logAndBroadcast(gameData, GameLog.builder()
+                            gameLogService.append(gameData, GameLog.builder()
                                     .text(player.getUsername() + " adds " + totalMana + " " + color.getCode()
                                             + " from ").card(permanent.getCard())
                                     .text(" (Reality Twist).").build());
@@ -490,7 +490,7 @@ public class ActivatedAbilityExecutionService {
                     if (!(award.amount() instanceof com.github.laxika.magicalvibes.model.amount.Fixed)) {
                         String logEntry = player.getUsername() + " adds " + amount + " " + award.color().getCode()
                                 + " from " + permanent.getCard().getName() + ".";
-                        gameBroadcastService.logAndBroadcast(gameData, GameLog.builder().text(player.getUsername() + " adds " + amount + " " + award.color().getCode() + " from ").card(permanent.getCard()).text(".").build());
+                        gameLogService.append(gameData, GameLog.builder().text(player.getUsername() + " adds " + amount + " " + award.color().getCode() + " from ").card(permanent.getCard()).text(".").build());
                     }
                 }
             } else if (effect instanceof RemoveCountersForManaEffect rc) {
@@ -622,7 +622,7 @@ public class ActivatedAbilityExecutionService {
                     ManaColor manaColor = ManaColor.valueOf(onlyColor.name());
                     gameData.playerManaPools.get(playerId).add(manaColor);
                     String logEntry = player.getUsername() + " adds {" + onlyColor.getCode() + "} from " + permanent.getCard().getName() + ".";
-                    gameBroadcastService.logAndBroadcast(gameData, GameLog.textCardText(player.getUsername() + " adds {" + onlyColor.getCode() + "} from " , permanent.getCard(), "."));
+                    gameLogService.append(gameData, GameLog.textCardText(player.getUsername() + " adds {" + onlyColor.getCode() + "} from " , permanent.getCard(), "."));
                 } else if (availableColors.size() > 1) {
                     ChoiceContext.ManaColorChoice choiceContext = new ChoiceContext.ManaColorChoice(playerId, isCreatureSource);
                     List<String> colors = availableColors.stream()
@@ -635,7 +635,7 @@ public class ActivatedAbilityExecutionService {
                 } else {
                     String logEntry = player.getUsername() + " activates " + permanent.getCard().getName()
                             + " but produces no mana (no colors among legendary creatures and planeswalkers).";
-                    gameBroadcastService.logAndBroadcast(gameData, GameLog.builder()
+                    gameLogService.append(gameData, GameLog.builder()
                             .text(player.getUsername() + " activates ")
                             .card(permanent.getCard())
                             .text(" but produces no mana (no colors among legendary creatures and planeswalkers).")
@@ -657,12 +657,12 @@ public class ActivatedAbilityExecutionService {
                 if (availableColors.isEmpty()) {
                     String logEntry = player.getUsername() + " activates " + permanent.getCard().getName()
                             + " but produces no mana (no colors among permanents controlled).";
-                    gameBroadcastService.logAndBroadcast(gameData, GameLog.builder().text(player.getUsername() + " activates ").card(permanent.getCard()).text(" but produces no mana (no colors among permanents controlled).").build());
+                    gameLogService.append(gameData, GameLog.builder().text(player.getUsername() + " activates ").card(permanent.getCard()).text(" but produces no mana (no colors among permanents controlled).").build());
                 } else {
                     String logEntry = player.getUsername() + " adds " + availableColors.stream()
                             .sorted().map(c -> "{" + c.getCode() + "}").reduce("", String::concat)
                             + " from " + permanent.getCard().getName() + ".";
-                    gameBroadcastService.logAndBroadcast(gameData, GameLog.builder().text(player.getUsername() + " adds " + availableColors.stream() .sorted().map(c -> "{" + c.getCode() + "}").reduce("", String::concat) + " from ").card(permanent.getCard()).text(".").build());
+                    gameLogService.append(gameData, GameLog.builder().text(player.getUsername() + " adds " + availableColors.stream() .sorted().map(c -> "{" + c.getCode() + "}").reduce("", String::concat) + " from ").card(permanent.getCard()).text(".").build());
                 }
             } else if (effect instanceof AwardManaOfColorsLandsCouldProduceEffect landColors) {
                 Set<CardColor> availableColors = collectColorsLandsCouldProduce(gameData, playerId, landColors);
@@ -671,7 +671,7 @@ public class ActivatedAbilityExecutionService {
                     ManaColor manaColor = ManaColor.valueOf(onlyColor.name());
                     gameData.playerManaPools.get(playerId).add(manaColor);
                     String logEntry = player.getUsername() + " adds {" + onlyColor.getCode() + "} from " + permanent.getCard().getName() + ".";
-                    gameBroadcastService.logAndBroadcast(gameData, GameLog.textCardText(player.getUsername() + " adds {" + onlyColor.getCode() + "} from " , permanent.getCard(), "."));
+                    gameLogService.append(gameData, GameLog.textCardText(player.getUsername() + " adds {" + onlyColor.getCode() + "} from " , permanent.getCard(), "."));
                 } else if (availableColors.size() > 1) {
                     ChoiceContext.ManaColorChoice choiceContext = new ChoiceContext.ManaColorChoice(playerId, isCreatureSource);
                     List<String> colors = availableColors.stream()
@@ -684,7 +684,7 @@ public class ActivatedAbilityExecutionService {
                 } else {
                     String logEntry = player.getUsername() + " activates " + permanent.getCard().getName()
                             + " but produces no mana (no matching land could produce colored mana).";
-                    gameBroadcastService.logAndBroadcast(gameData, GameLog.builder()
+                    gameLogService.append(gameData, GameLog.builder()
                             .text(player.getUsername() + " activates ")
                             .card(permanent.getCard())
                             .text(" but produces no mana (no matching land could produce colored mana).")
@@ -718,16 +718,16 @@ public class ActivatedAbilityExecutionService {
                             int currentPoison = gameData.playerPoisonCounters.getOrDefault(playerId, 0);
                             gameData.playerPoisonCounters.put(playerId, currentPoison + effectiveDamage);
                             String logEntry = player.getUsername() + " gets " + effectiveDamage + " poison counters from " + cardName + ".";
-                            gameBroadcastService.logAndBroadcast(gameData, GameLog.text(logEntry));
+                            gameLogService.append(gameData, GameLog.text(logEntry));
                         }
                     } else if (effectiveDamage > 0 && !gameQueryService.canPlayerLifeChange(gameData, playerId)) {
-                        gameBroadcastService.logAndBroadcast(gameData, GameLog.text(player.getUsername() + "'s life total can't change."));
+                        gameLogService.append(gameData, GameLog.text(player.getUsername() + "'s life total can't change."));
                     } else {
                         int currentLife = gameData.getLife(playerId);
                         gameData.playerLifeTotals.put(playerId, currentLife - effectiveDamage);
                         if (effectiveDamage > 0) {
                             String logEntry = player.getUsername() + " takes " + effectiveDamage + " damage from " + cardName + ".";
-                            gameBroadcastService.logAndBroadcast(gameData, GameLog.text(logEntry));
+                            gameLogService.append(gameData, GameLog.text(logEntry));
                             log.info("Game {} - {} takes {} damage from {}", gameData.id, player.getUsername(), effectiveDamage, cardName);
                         }
                     }
@@ -764,7 +764,7 @@ public class ActivatedAbilityExecutionService {
                     String counterText = count == 1
                             ? "a " + counterName + " counter"
                             : count + " " + counterName + " counters";
-                    gameBroadcastService.logAndBroadcast(gameData, GameLog.textCardText(
+                    gameLogService.append(gameData, GameLog.textCardText(
                             player.getUsername() + " puts " + counterText + " on ", permanent.getCard(), "."));
                 }
             } else if (effect instanceof SkipNextUntapEffect skip
@@ -773,7 +773,7 @@ public class ActivatedAbilityExecutionService {
                 // SkipNextUntapEffect(SELF); on a mana ability it must apply inline here because
                 // mana abilities never hit the stack / NormalEffectHandlerBean path.
                 permanent.setSkipUntapCount(permanent.getSkipUntapCount() + 1);
-                gameBroadcastService.logAndBroadcast(gameData, GameLog.cardThen(
+                gameLogService.append(gameData, GameLog.cardThen(
                         permanent.getCard(), " won't untap during its controller's next untap step."));
             }
         }
@@ -819,15 +819,15 @@ public class ActivatedAbilityExecutionService {
                 if (gameQueryService.canPlayerGetPoisonCounters(gameData, playerId)) {
                     int currentPoison = gameData.playerPoisonCounters.getOrDefault(playerId, 0);
                     gameData.playerPoisonCounters.put(playerId, currentPoison + effectiveDamage);
-                    gameBroadcastService.logAndBroadcast(gameData, GameLog.text(playerName + " gets " + effectiveDamage + " poison counters from " + cardName + "."));
+                    gameLogService.append(gameData, GameLog.text(playerName + " gets " + effectiveDamage + " poison counters from " + cardName + "."));
                 }
             } else if (effectiveDamage > 0 && !gameQueryService.canPlayerLifeChange(gameData, playerId)) {
-                gameBroadcastService.logAndBroadcast(gameData, GameLog.text(playerName + "'s life total can't change."));
+                gameLogService.append(gameData, GameLog.text(playerName + "'s life total can't change."));
             } else {
                 int currentLife = gameData.getLife(playerId);
                 gameData.playerLifeTotals.put(playerId, currentLife - effectiveDamage);
                 if (effectiveDamage > 0) {
-                    gameBroadcastService.logAndBroadcast(gameData, GameLog.text(playerName + " takes " + effectiveDamage + " damage from " + cardName + "."));
+                    gameLogService.append(gameData, GameLog.text(playerName + " takes " + effectiveDamage + " damage from " + cardName + "."));
                     log.info("Game {} - {} takes {} damage from {}", gameData.id, playerName, effectiveDamage, cardName);
                 }
             }

@@ -42,7 +42,7 @@ import com.github.laxika.magicalvibes.model.effect.RevealTopCardCreatureToBattle
 import com.github.laxika.magicalvibes.model.effect.SpellCastTriggerEffect;
 import com.github.laxika.magicalvibes.model.filter.CardPredicate;
 import com.github.laxika.magicalvibes.model.filter.StackEntryTypeInPredicate;
-import com.github.laxika.magicalvibes.service.GameBroadcastService;
+import com.github.laxika.magicalvibes.service.GameLogService;
 import com.github.laxika.magicalvibes.service.battlefield.GameQueryService;
 import com.github.laxika.magicalvibes.service.effect.AmountEvaluationService;
 import org.junit.jupiter.api.BeforeEach;
@@ -76,7 +76,7 @@ class SpellCastTriggerCollectorServiceTest {
     private PredicateEvaluationService predicateEvaluationService;
 
     @Mock
-    private GameBroadcastService gameBroadcastService;
+    private GameLogService gameLogService;
 
     @Mock
     private AmountEvaluationService amountEvaluationService;
@@ -944,7 +944,7 @@ class SpellCastTriggerCollectorServiceTest {
                     match(perm, player1Id, effect),
                     EffectSlot.ON_CONTROLLER_CASTS_SPELL, effect, ctx);
 
-            verify(gameBroadcastService).logAndBroadcast(eq(gd), any(GameLogEntry.class));
+            verify(gameLogService).append(eq(gd), any(GameLogEntry.class));
         }
     }
 
@@ -1029,7 +1029,7 @@ class SpellCastTriggerCollectorServiceTest {
                     match(perm, player1Id, effect),
                     EffectSlot.ON_CONTROLLER_CASTS_SPELL, effect, ctx);
 
-            verify(gameBroadcastService).logAndBroadcast(eq(gd), argThat((GameLogEntry e) -> e.plainText().equals("Kaervek the Merciless's triggered ability triggers — choose a target for 2 damage.")));
+            verify(gameLogService).append(eq(gd), argThat((GameLogEntry e) -> e.plainText().equals("Kaervek the Merciless's triggered ability triggers — choose a target for 2 damage.")));
         }
     }
 
@@ -1107,7 +1107,7 @@ class SpellCastTriggerCollectorServiceTest {
                     match(perm, player1Id, effect),
                     EffectSlot.ON_CONTROLLER_CASTS_SPELL, effect, ctx);
 
-            verify(gameBroadcastService).logAndBroadcast(eq(gd), any(GameLogEntry.class));
+            verify(gameLogService).append(eq(gd), any(GameLogEntry.class));
         }
     }
 

@@ -27,7 +27,7 @@ import com.github.laxika.magicalvibes.model.CardType;
 import com.github.laxika.magicalvibes.model.GameData;
 import com.github.laxika.magicalvibes.model.GameLog;
 import com.github.laxika.magicalvibes.model.PermanentChoiceContext;
-import com.github.laxika.magicalvibes.service.GameBroadcastService;
+import com.github.laxika.magicalvibes.service.GameLogService;
 import com.github.laxika.magicalvibes.service.battlefield.CreatureControlService;
 import com.github.laxika.magicalvibes.service.battlefield.GameQueryService;
 import com.github.laxika.magicalvibes.service.filter.PredicateEvaluationService;
@@ -51,7 +51,7 @@ public class DamageTriggerCollectorService {
 
     private final GameQueryService gameQueryService;
     private final PredicateEvaluationService predicateEvaluationService;
-    private final GameBroadcastService gameBroadcastService;
+    private final GameLogService gameLogService;
     private final PermanentRemovalService permanentRemovalService;
     private final CreatureControlService creatureControlService;
 
@@ -70,7 +70,7 @@ public class DamageTriggerCollectorService {
         // Bounce the source to its owner's hand
         if (permanentRemovalService.removePermanentToHand(gameData, currentSource)) {
             permanentRemovalService.removeOrphanedAuras(gameData);
-            gameBroadcastService.logAndBroadcast(gameData, GameLog.cardTextCard(match.permanent().getCard(),
+            gameLogService.append(gameData, GameLog.cardTextCard(match.permanent().getCard(),
                     " triggers — ", currentSource.getCard(), " is returned to its owner's hand."));
             log.info("Game {} - {} triggers, bouncing {} to owner's hand",
                     gameData.id, match.permanent().getCard().getName(), currentSource.getCard().getName());
@@ -121,7 +121,7 @@ public class DamageTriggerCollectorService {
 
         boolean destroyed = permanentRemovalService.tryDestroyPermanent(gameData, currentSource);
         if (destroyed) {
-            gameBroadcastService.logAndBroadcast(gameData, GameLog.cardTextCard(match.permanent().getCard(),
+            gameLogService.append(gameData, GameLog.cardTextCard(match.permanent().getCard(),
                     " triggers - ", currentSource.getCard(), " is destroyed."));
         }
         log.info("Game {} - {} triggers, destroying damage source {}",
@@ -199,7 +199,7 @@ public class DamageTriggerCollectorService {
             ));
         }
 
-        gameBroadcastService.logAndBroadcast(gameData, GameLog.abilityTriggers(dc.damagedCreature().getCard()));
+        gameLogService.append(gameData, GameLog.abilityTriggers(dc.damagedCreature().getCard()));
         log.info("Game {} - {} ON_DEALT_DAMAGE target-opponent-or-planeswalker trigger fires",
                 gameData.id, dc.damagedCreature().getCard().getName());
         return true;
@@ -222,7 +222,7 @@ public class DamageTriggerCollectorService {
                 damagedCreature.getCard(), controllerId, new ArrayList<>(List.of(trigger)),
                 false, null, dc.damageDealt()));
 
-        gameBroadcastService.logAndBroadcast(gameData, GameLog.abilityTriggers(damagedCreature.getCard()));
+        gameLogService.append(gameData, GameLog.abilityTriggers(damagedCreature.getCard()));
         log.info("Game {} - {} ON_DEALT_DAMAGE deal-damage-to-any-target trigger fires",
                 gameData.id, damagedCreature.getCard().getName());
         return true;
@@ -261,7 +261,7 @@ public class DamageTriggerCollectorService {
         entry.setDamageSourceCard(enchantedCreature.getCard());
         gameData.stack.add(entry);
 
-        gameBroadcastService.logAndBroadcast(gameData, GameLog.abilityTriggers(aura.getCard()));
+        gameLogService.append(gameData, GameLog.abilityTriggers(aura.getCard()));
         log.info("Game {} - {} ON_ENCHANTED_CREATURE_DEALT_DAMAGE trigger fires",
                 gameData.id, aura.getCard().getName());
         return true;
@@ -289,7 +289,7 @@ public class DamageTriggerCollectorService {
         entry.setEventValue(dc.amount());
         gameData.enqueueTrigger(entry);
 
-        gameBroadcastService.logAndBroadcast(gameData, GameLog.abilityTriggers(perm.getCard()));
+        gameLogService.append(gameData, GameLog.abilityTriggers(perm.getCard()));
         log.info("Game {} - {} ON_CONTROLLER_DEALT_DAMAGE trigger fires ({} damage)",
                 gameData.id, perm.getCard().getName(), dc.amount());
         return true;
@@ -317,7 +317,7 @@ public class DamageTriggerCollectorService {
         entry.setEventValue(dc.amount());
         gameData.enqueueTrigger(entry);
 
-        gameBroadcastService.logAndBroadcast(gameData, GameLog.abilityTriggers(perm.getCard()));
+        gameLogService.append(gameData, GameLog.abilityTriggers(perm.getCard()));
         log.info("Game {} - {} ON_CONTROLLER_DEALT_DAMAGE_BY_OPPONENT trigger fires ({} damage)",
                 gameData.id, perm.getCard().getName(), dc.amount());
         return true;
@@ -350,7 +350,7 @@ public class DamageTriggerCollectorService {
         se.setNonTargeting(true);
         gameData.stack.add(se);
 
-        gameBroadcastService.logAndBroadcast(gameData, GameLog.cardThen(watcher.getCard(),
+        gameLogService.append(gameData, GameLog.cardThen(watcher.getCard(),
                 "'s ability triggers — it deals " + sd.totalDamage() + " damage to "
                         + gameData.playerIdToName.get(recipientId) + "."));
         log.info("Game {} - {} reflects {} damage to {}", gameData.id, watcher.getCard().getName(),
@@ -382,7 +382,7 @@ public class DamageTriggerCollectorService {
         entry.setEventValue(sd.totalDamage());
         gameData.enqueueTrigger(entry);
 
-        gameBroadcastService.logAndBroadcast(gameData, GameLog.abilityTriggers(sourceCard));
+        gameLogService.append(gameData, GameLog.abilityTriggers(sourceCard));
         log.info("Game {} - {} ON_SELF_DEALS_DAMAGE trigger fires ({} damage)",
                 gameData.id, sourceCard.getName(), sd.totalDamage());
         return true;
@@ -415,7 +415,7 @@ public class DamageTriggerCollectorService {
                 null,
                 damagedCreature.getId()
         ));
-        gameBroadcastService.logAndBroadcast(gameData, GameLog.abilityTriggers(damagedCreature.getCard()));
+        gameLogService.append(gameData, GameLog.abilityTriggers(damagedCreature.getCard()));
         log.info("Game {} - {} ON_DEALT_DAMAGE trigger fires", gameData.id, damagedCreature.getCard().getName());
     }
 }

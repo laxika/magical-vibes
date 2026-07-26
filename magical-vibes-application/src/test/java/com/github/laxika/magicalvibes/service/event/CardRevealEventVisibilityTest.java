@@ -17,7 +17,7 @@ import com.github.laxika.magicalvibes.networking.message.RevealLibraryTopMessage
 import com.github.laxika.magicalvibes.networking.service.CardViewFactory;
 import com.github.laxika.magicalvibes.networking.service.GameLogViewFactory;
 import com.github.laxika.magicalvibes.service.CardRevealService;
-import com.github.laxika.magicalvibes.service.GameBroadcastService;
+import com.github.laxika.magicalvibes.service.GameLogService;
 import com.github.laxika.magicalvibes.service.GameMessageTransport;
 import com.github.laxika.magicalvibes.service.GameRegistry;
 import com.github.laxika.magicalvibes.service.GameViewProjectionFactory;
@@ -45,7 +45,7 @@ class CardRevealEventVisibilityTest {
     private UUID spectatorId;
     private GameData gameData;
     private RecordingSessionManager sessions;
-    private GameBroadcastService gameBroadcastService;
+    private GameLogService gameLogService;
     private GameMutationCoordinator coordinator;
     private CardRevealService reveals;
     private List<GameEventBatch> batches;
@@ -76,9 +76,9 @@ class CardRevealEventVisibilityTest {
         batches = new ArrayList<>();
         coordinator = new GameMutationCoordinator(
                 new GameEventDispatcher(List.of(projection, batches::add)));
-        gameBroadcastService = mock(GameBroadcastService.class);
+        gameLogService = mock(GameLogService.class);
         reveals = new CardRevealService(
-                gameBroadcastService, mock(GameQueryService.class), coordinator);
+                gameLogService, mock(GameQueryService.class), coordinator);
     }
 
     @Test
@@ -105,7 +105,7 @@ class CardRevealEventVisibilityTest {
         assertPrivateRevealBatch(ownerId, controllerId, 1);
 
         ArgumentCaptor<GameLogEntry> logEntry = ArgumentCaptor.forClass(GameLogEntry.class);
-        verify(gameBroadcastService).logAndBroadcast(eq(gameData), logEntry.capture());
+        verify(gameLogService).append(eq(gameData), logEntry.capture());
         assertThat(logEntry.getValue().plainText())
                 .contains("Controller looks at Owner's hand")
                 .doesNotContain("Hidden hand card");

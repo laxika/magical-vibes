@@ -12,6 +12,7 @@ import com.github.laxika.magicalvibes.model.effect.ControlDuration;
 import com.github.laxika.magicalvibes.model.effect.EffectDuration;
 import com.github.laxika.magicalvibes.model.effect.GainControlOfTargetEffect;
 import com.github.laxika.magicalvibes.service.GameBroadcastService;
+import com.github.laxika.magicalvibes.service.GameLogService;
 import com.github.laxika.magicalvibes.service.effect.normalfx.AttachTargetToSourcePermanentEffectHandler;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
@@ -40,6 +41,7 @@ class PermanentTimestampTest {
 
     @Mock private GameQueryService gameQueryService;
     @Mock private GameBroadcastService gameBroadcastService;
+    @Mock private GameLogService gameLogService;
     @Mock private com.github.laxika.magicalvibes.service.input.PlayerInputService playerInputService;
     @Mock private PermanentCopierService permanentCopierService;
     @Mock private com.github.laxika.magicalvibes.service.trigger.TriggerCollectionService triggerCollectionService;
@@ -140,7 +142,7 @@ class PermanentTimestampTest {
         @DisplayName("Stealing a permanent moves it between battlefields without changing its timestamp")
         void stealKeepsTimestamp() {
             CreatureControlService controlService =
-                    new CreatureControlService(gameBroadcastService, gameQueryService);
+                    new CreatureControlService(gameLogService, gameQueryService);
             Permanent bears = createCreature("Grizzly Bears");
             battlefieldEntryService.putPermanentOntoBattlefield(gd, player2Id, bears);
             long entryStamp = bears.getTimestamp();

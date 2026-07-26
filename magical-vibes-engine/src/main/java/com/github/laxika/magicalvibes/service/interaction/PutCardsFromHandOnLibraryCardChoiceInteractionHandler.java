@@ -5,7 +5,7 @@ import com.github.laxika.magicalvibes.model.GameData;
 import com.github.laxika.magicalvibes.model.GameLog;
 import com.github.laxika.magicalvibes.model.PendingInteraction;
 import com.github.laxika.magicalvibes.model.Player;
-import com.github.laxika.magicalvibes.service.GameBroadcastService;
+import com.github.laxika.magicalvibes.service.GameLogService;
 import com.github.laxika.magicalvibes.service.turn.TurnProgressionService;
 import java.util.ArrayList;
 import java.util.List;
@@ -27,7 +27,7 @@ public class PutCardsFromHandOnLibraryCardChoiceInteractionHandler
 
     private final InteractionHandlerRegistry interactionHandlerRegistry;
     private final TurnProgressionService turnProgressionService;
-    private final GameBroadcastService gameBroadcastService;
+    private final GameLogService gameLogService;
 
     @Override
     public Class<PendingInteraction.PutCardsFromHandOnLibraryCardChoice> handledType() {
@@ -94,7 +94,7 @@ public class PutCardsFromHandOnLibraryCardChoiceInteractionHandler
             deck.add(0, moving.get(i));
         }
 
-        gameBroadcastService.logAndBroadcast(gameData, GameLog.text(player.getUsername() + " puts "
+        gameLogService.append(gameData, GameLog.text(player.getUsername() + " puts "
                 + moving.size() + " card(s) on top of their library."));
         log.info("Game {} - {} put {} card(s) on top of library", gameData.id, player.getUsername(), moving.size());
     }

@@ -6,7 +6,7 @@ import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.Player;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
 import com.github.laxika.magicalvibes.model.effect.TapCreatureCost;
-import com.github.laxika.magicalvibes.service.GameBroadcastService;
+import com.github.laxika.magicalvibes.service.GameLogService;
 import com.github.laxika.magicalvibes.service.battlefield.GameQueryService;
 import com.github.laxika.magicalvibes.service.filter.PredicateEvaluationService;
 import com.github.laxika.magicalvibes.service.trigger.TriggerCollectionService;
@@ -25,7 +25,7 @@ public class TapCreatureCostHandler implements PermanentChoiceCostHandler {
     private final TapCreatureCost cost;
     private final GameQueryService gameQueryService;
     private final PredicateEvaluationService predicateEvaluationService;
-    private final GameBroadcastService gameBroadcastService;
+    private final GameLogService gameLogService;
     private final TriggerCollectionService triggerCollectionService;
     private final UUID sourcePermanentId;
 
@@ -33,20 +33,20 @@ public class TapCreatureCostHandler implements PermanentChoiceCostHandler {
      * @param cost                       the cost effect record specifying the creature predicate
      * @param gameQueryService           used to check creature status
      * @param predicateEvaluationService used to evaluate the creature predicate
-     * @param gameBroadcastService       used to log and broadcast the tap action
+     * @param gameLogService       used to log and broadcast the tap action
      * @param triggerCollectionService   used to fire "enchanted permanent becomes tapped" triggers
      * @param sourcePermanentId          the ability's source, excluded when {@code cost.excludeSelf()}
      *                                   ("tap an untapped creature other than this creature")
      */
     public TapCreatureCostHandler(TapCreatureCost cost, GameQueryService gameQueryService,
                                   PredicateEvaluationService predicateEvaluationService,
-                                  GameBroadcastService gameBroadcastService,
+                                  GameLogService gameLogService,
                                   TriggerCollectionService triggerCollectionService,
                                   UUID sourcePermanentId) {
         this.cost = cost;
         this.gameQueryService = gameQueryService;
         this.predicateEvaluationService = predicateEvaluationService;
-        this.gameBroadcastService = gameBroadcastService;
+        this.gameLogService = gameLogService;
         this.triggerCollectionService = triggerCollectionService;
         this.sourcePermanentId = sourcePermanentId;
     }
@@ -90,7 +90,7 @@ public class TapCreatureCostHandler implements PermanentChoiceCostHandler {
         }
         chosen.tap();
         triggerCollectionService.checkEnchantedPermanentTapTriggers(gameData, chosen);
-        gameBroadcastService.logAndBroadcast(gameData, GameLog.textCardText(player.getUsername() + " taps " , chosen.getCard(), " as a cost."));
+        gameLogService.append(gameData, GameLog.textCardText(player.getUsername() + " taps " , chosen.getCard(), " as a cost."));
     }
 
     @Override

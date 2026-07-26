@@ -16,7 +16,7 @@ import com.github.laxika.magicalvibes.model.effect.StorageMatrixEffect;
 import com.github.laxika.magicalvibes.model.effect.TapUntapScope;
 import com.github.laxika.magicalvibes.model.effect.UntapAllPermanentsYouControlDuringEachOtherPlayersStepEffect;
 import com.github.laxika.magicalvibes.model.filter.PermanentPredicate;
-import com.github.laxika.magicalvibes.service.GameBroadcastService;
+import com.github.laxika.magicalvibes.service.GameLogService;
 import com.github.laxika.magicalvibes.service.battlefield.GameQueryService;
 import com.github.laxika.magicalvibes.service.effect.normalfx.TapUntapSupport;
 import com.github.laxika.magicalvibes.service.filter.PredicateEvaluationService;
@@ -45,7 +45,7 @@ public class UntapStepService {
 
     private final GameQueryService gameQueryService;
     private final PredicateEvaluationService predicateEvaluationService;
-    private final GameBroadcastService gameBroadcastService;
+    private final GameLogService gameLogService;
     private final TapUntapSupport tapUntapSupport;
 
     /**
@@ -130,7 +130,7 @@ public class UntapStepService {
                 });
             }
             String skipLog = activePlayerName + " skips their untap step.";
-            gameBroadcastService.logAndBroadcast(gameData, GameLog.text(skipLog));
+            gameLogService.append(gameData, GameLog.text(skipLog));
             log.info("Game {} - {} skips their untap step", gameData.id, activePlayerName);
             return;
         }
@@ -201,7 +201,7 @@ public class UntapStepService {
         }
 
         String untapLog = activePlayerName + " untaps their permanents.";
-        gameBroadcastService.logAndBroadcast(gameData, GameLog.text(untapLog));
+        gameLogService.append(gameData, GameLog.text(untapLog));
         log.info("Game {} - {} untaps their permanents", gameData.id, activePlayerName);
 
         // Queue may-not-untap choices for tapped permanents with MayNotUntapDuringUntapStepEffect
@@ -234,11 +234,11 @@ public class UntapStepService {
             String playerName = gameData.playerIdToName.get(playerId);
             if (hasUnfilteredEffect) {
                 String seedbornLog = playerName + " untaps their permanents due to Seedborn Muse.";
-                gameBroadcastService.logAndBroadcast(gameData, GameLog.text(seedbornLog));
+                gameLogService.append(gameData, GameLog.text(seedbornLog));
                 log.info("Game {} - {} untaps permanents due to Seedborn Muse", gameData.id, playerName);
             } else {
                 String filteredLog = playerName + " untaps some permanents during opponent's untap step.";
-                gameBroadcastService.logAndBroadcast(gameData, GameLog.text(filteredLog));
+                gameLogService.append(gameData, GameLog.text(filteredLog));
                 log.info("Game {} - {} untaps filtered permanents during opponent's untap step", gameData.id, playerName);
             }
         });

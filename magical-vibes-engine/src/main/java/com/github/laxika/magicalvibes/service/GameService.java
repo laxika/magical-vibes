@@ -44,7 +44,7 @@ public class GameService {
 
     private final GameRegistry gameRegistry;
     private final GameQueryService gameQueryService;
-    private final GameBroadcastService gameBroadcastService;
+    private final GameLogService gameLogService;
     private final CombatService combatService;
     private final TurnProgressionService turnProgressionService;
     private final InteractionHandlerRegistry interactionHandlerRegistry;
@@ -247,7 +247,7 @@ public class GameService {
             paidSet.addAll(unpaidArbiterIds);
 
             String logEntry = player.getUsername() + " pays {" + totalCost + "} for Leonin Arbiter search tax.";
-            gameBroadcastService.logAndBroadcast(gameData, GameLog.text(logEntry));
+            gameLogService.append(gameData, GameLog.text(logEntry));
             log.info("Game {} - {} pays {{}} for Leonin Arbiter search tax (special action)",
                     gameData.id, player.getUsername(), totalCost);
 
@@ -263,7 +263,7 @@ public class GameService {
             }
             UUID opponentId = gameQueryService.getOpponentId(gameData, player.getId());
             String logEntry = player.getUsername() + " surrenders!";
-            gameBroadcastService.logAndBroadcast(gameData, GameLog.text(logEntry));
+            gameLogService.append(gameData, GameLog.text(logEntry));
             gameOutcomeService.declareWinner(gameData, opponentId);
         }
     }

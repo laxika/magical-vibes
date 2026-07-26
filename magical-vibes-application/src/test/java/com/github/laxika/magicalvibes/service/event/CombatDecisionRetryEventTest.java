@@ -9,6 +9,7 @@ import com.github.laxika.magicalvibes.model.event.GameEventBatch;
 import com.github.laxika.magicalvibes.model.event.GameEventFact;
 import com.github.laxika.magicalvibes.networking.message.BlockerAssignment;
 import com.github.laxika.magicalvibes.service.GameBroadcastService;
+import com.github.laxika.magicalvibes.service.GameLogService;
 import com.github.laxika.magicalvibes.service.GameOutcomeService;
 import com.github.laxika.magicalvibes.service.GameRegistry;
 import com.github.laxika.magicalvibes.service.GameService;
@@ -83,7 +84,7 @@ class CombatDecisionRetryEventTest {
         gameService = new GameService(
                 mock(GameRegistry.class),
                 mock(GameQueryService.class),
-                mock(GameBroadcastService.class),
+                mock(GameLogService.class),
                 combatService,
                 turnProgression,
                 interactions,

@@ -52,7 +52,7 @@ import com.github.laxika.magicalvibes.model.PermanentChoiceContext;
 import com.github.laxika.magicalvibes.model.condition.TwoOrMoreSpellsCastLastTurn;
 import com.github.laxika.magicalvibes.model.effect.WinGameIfCreaturesInGraveyardEffect;
 import com.github.laxika.magicalvibes.service.DrawService;
-import com.github.laxika.magicalvibes.service.GameBroadcastService;
+import com.github.laxika.magicalvibes.service.GameLogService;
 import com.github.laxika.magicalvibes.service.input.PlayerInputService;
 import com.github.laxika.magicalvibes.service.battlefield.BattlefieldEntryService;
 import com.github.laxika.magicalvibes.service.battlefield.CreatureControlService;
@@ -101,7 +101,7 @@ class StepTriggerServiceTest {
     private PredicateEvaluationService predicateEvaluationService;
 
     @Mock
-    private GameBroadcastService gameBroadcastService;
+    private GameLogService gameLogService;
 
     @Mock
     private PlayerInputService playerInputService;
@@ -148,7 +148,7 @@ class StepTriggerServiceTest {
                 gameQueryService,
                 predicateEvaluationService,
                 new ConditionEvaluationService(gameQueryService, predicateEvaluationService, new StaticEffectSupport(gameQueryService, predicateEvaluationService)),
-                gameBroadcastService,
+                gameLogService,
                 playerInputService,
                 permanentRemovalService,
                 battlefieldEntryService,
@@ -193,7 +193,7 @@ class StepTriggerServiceTest {
             sut.handleDrawStep(gd);
 
             verify(drawService, never()).resolveDrawCard(gd, player1Id);
-            verify(gameBroadcastService).logAndBroadcast(gd, GameLog.text("Player1 skips the draw (first turn)."));
+            verify(gameLogService).append(gd, GameLog.text("Player1 skips the draw (first turn)."));
         }
 
         @Test
@@ -1546,8 +1546,8 @@ class StepTriggerServiceTest {
 
             sut.handlePrecombatMainTriggers(gd);
 
-            verify(gameBroadcastService).logAndBroadcast(eq(gd), argThat((GameLogEntry e) -> e.plainText().equals("Chainer's Torment gets a lore counter (2).")));
-            verify(gameBroadcastService).logAndBroadcast(eq(gd), argThat((GameLogEntry e) -> e.plainText().equals("Chainer's Torment's chapter II ability triggers.")));
+            verify(gameLogService).append(eq(gd), argThat((GameLogEntry e) -> e.plainText().equals("Chainer's Torment gets a lore counter (2).")));
+            verify(gameLogService).append(eq(gd), argThat((GameLogEntry e) -> e.plainText().equals("Chainer's Torment's chapter II ability triggers.")));
         }
     }
 

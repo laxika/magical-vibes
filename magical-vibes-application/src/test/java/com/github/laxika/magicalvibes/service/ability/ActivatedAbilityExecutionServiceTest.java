@@ -41,7 +41,7 @@ import com.github.laxika.magicalvibes.model.effect.RegenerateEffect;
 import com.github.laxika.magicalvibes.model.effect.ReturnToHandEffect;
 import com.github.laxika.magicalvibes.model.effect.SacrificeSelfCost;
 import com.github.laxika.magicalvibes.service.DamagePreventionService;
-import com.github.laxika.magicalvibes.service.GameBroadcastService;
+import com.github.laxika.magicalvibes.service.GameLogService;
 import com.github.laxika.magicalvibes.service.input.PlayerInputService;
 import com.github.laxika.magicalvibes.service.state.StateBasedActionService;
 import com.github.laxika.magicalvibes.service.trigger.TriggerCollectionService;
@@ -85,7 +85,7 @@ class ActivatedAbilityExecutionServiceTest {
     @Mock private StateBasedActionService stateBasedActionService;
     @Mock private GameQueryService gameQueryService;
     @Mock private com.github.laxika.magicalvibes.service.effect.AmountEvaluationService amountEvaluationService;
-    @Mock private GameBroadcastService gameBroadcastService;
+    @Mock private GameLogService gameLogService;
     @Mock private PlayerInputService playerInputService;
     @Mock private com.github.laxika.magicalvibes.service.interaction.InteractionHandlerRegistry interactionHandlerRegistry;
     @Mock private LifeSupport lifeSupport;
@@ -270,7 +270,7 @@ class ActivatedAbilityExecutionServiceTest {
 
             service.completeActivationAfterCosts(gameData, player1, perm, ability, effects, 0, null, null, false);
 
-            verify(gameBroadcastService, atLeastOnce()).logAndBroadcast(eq(gameData),
+            verify(gameLogService, atLeastOnce()).append(eq(gameData),
                     argThat((GameLogEntry logEntry) -> logEntry.plainText().contains("activates") && logEntry.plainText().contains("Test Mana Land")));
         }
 
@@ -551,7 +551,7 @@ class ActivatedAbilityExecutionServiceTest {
 
             service.completeActivationAfterCosts(gameData, player1, perm, ability, effects, 0, null, null, false);
 
-            verify(gameBroadcastService, atLeastOnce()).logAndBroadcast(eq(gameData),
+            verify(gameLogService, atLeastOnce()).append(eq(gameData),
                     argThat((GameLogEntry logEntry) -> logEntry.plainText().contains("activates") && logEntry.plainText().contains("Blight Mamba")));
         }
 

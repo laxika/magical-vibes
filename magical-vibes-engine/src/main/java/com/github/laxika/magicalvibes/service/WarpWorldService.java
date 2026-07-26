@@ -32,7 +32,7 @@ import java.util.UUID;
 public class WarpWorldService {
 
     private final GameQueryService gameQueryService;
-    private final GameBroadcastService gameBroadcastService;
+    private final GameLogService gameLogService;
     private final PlayerInputService playerInputService;
     private final BattlefieldEntryService battlefieldEntryService;
     private final LegendRuleService legendRuleService;
@@ -60,7 +60,7 @@ public class WarpWorldService {
                 "Put these cards on the bottom of your library in any order (first chosen will be closest to the top)."));
 
         String logMsg = gameData.playerIdToName.get(playerId) + " orders cards for the bottom of their library.";
-        gameBroadcastService.logAndBroadcast(gameData, GameLog.text(logMsg));
+        gameLogService.append(gameData, GameLog.text(logMsg));
     }
 
     public void beginNextPendingWarpWorldAuraChoice(GameData gameData) {
@@ -123,7 +123,7 @@ public class WarpWorldService {
             }
         }
 
-        gameBroadcastService.logAndBroadcast(gameData, GameLog.text(gameData.warpWorldOperation.sourceName + " shuffles all permanents into libraries and warps the world."));
+        gameLogService.append(gameData, GameLog.text(gameData.warpWorldOperation.sourceName + " shuffles all permanents into libraries and warps the world."));
 
         gameData.warpWorldOperation.pendingCreaturesByPlayer.clear();
         gameData.warpWorldOperation.pendingAuraChoices.clear();

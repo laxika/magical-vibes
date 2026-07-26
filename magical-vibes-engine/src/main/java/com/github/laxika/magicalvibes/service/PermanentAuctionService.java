@@ -33,7 +33,7 @@ public class PermanentAuctionService {
 
     private final PermanentRemovalService permanentRemovalService;
     private final BattlefieldEntryService battlefieldEntryService;
-    private final GameBroadcastService gameBroadcastService;
+    private final GameLogService gameLogService;
     private final GameMutationCoordinator mutationCoordinator;
     private final TurnProgressionService turnProgressionService;
     private final InteractionHandlerRegistry interactionHandlerRegistry;
@@ -54,12 +54,12 @@ public class PermanentAuctionService {
             Card card = perm.getOriginalCard();
             permanentRemovalService.removePermanentToExile(gameData, perm);
             pool.add(card);
-            gameBroadcastService.logAndBroadcast(gameData, GameLog.cardThen(card, " is exiled."));
+            gameLogService.append(gameData, GameLog.cardThen(card, " is exiled."));
         }
         permanentRemovalService.removeOrphanedAuras(gameData);
 
         if (pool.isEmpty()) {
-            gameBroadcastService.logAndBroadcast(gameData, GameLog.text(sourceName + " exiles no permanents."));
+            gameLogService.append(gameData, GameLog.text(sourceName + " exiles no permanents."));
             turnProgressionService.resolveAutoPass(gameData);
             return;
         }
@@ -105,7 +105,7 @@ public class PermanentAuctionService {
         permanent.tap();
         battlefieldEntryService.putPermanentOntoBattlefield(gameData, chooserId, permanent);
 
-        gameBroadcastService.logAndBroadcast(gameData, GameLog.textCardText(player.getUsername() + " puts ", chosen, " onto the battlefield tapped."));
+        gameLogService.append(gameData, GameLog.textCardText(player.getUsername() + " puts ", chosen, " onto the battlefield tapped."));
 
         List<PendingInteraction.PermanentAuctionPlacement> placed = new ArrayList<>(choice.placed());
         placed.add(new PendingInteraction.PermanentAuctionPlacement(chooserId, chosen));

@@ -18,7 +18,7 @@ import com.github.laxika.magicalvibes.model.effect.CardEffect;
 import com.github.laxika.magicalvibes.model.effect.DealDamageOnLandTapEffect;
 import com.github.laxika.magicalvibes.model.effect.OpponentTappedLandDoesntUntapEffect;
 import com.github.laxika.magicalvibes.service.DamagePreventionService;
-import com.github.laxika.magicalvibes.service.GameBroadcastService;
+import com.github.laxika.magicalvibes.service.GameLogService;
 import com.github.laxika.magicalvibes.service.battlefield.GameQueryService;
 import com.github.laxika.magicalvibes.service.battlefield.PermanentRemovalService;
 import com.github.laxika.magicalvibes.service.effect.AmountEvaluationService;
@@ -47,7 +47,7 @@ class LandTapTriggerCollectorServiceTest {
     private GameQueryService gameQueryService;
 
     @Mock
-    private GameBroadcastService gameBroadcastService;
+    private GameLogService gameLogService;
 
     @Mock
     private DamagePreventionService damagePreventionService;
@@ -143,7 +143,7 @@ class LandTapTriggerCollectorServiceTest {
 
             assertThat(result).isTrue();
             assertThat(gd.getLife(player2Id)).isEqualTo(lifeBefore - 1);
-            verify(gameBroadcastService).logAndBroadcast(eq(gd), any(GameLogEntry.class));
+            verify(gameLogService).append(eq(gd), any(GameLogEntry.class));
         }
 
         @Test
@@ -418,7 +418,7 @@ class LandTapTriggerCollectorServiceTest {
 
             assertThat(result).isTrue();
             assertThat(gd.playerManaPools.get(player1Id).get(ManaColor.GREEN)).isEqualTo(greenBefore + 2);
-            verify(gameBroadcastService).logAndBroadcast(eq(gd), any(GameLogEntry.class));
+            verify(gameLogService).append(eq(gd), any(GameLogEntry.class));
         }
 
         @Test
@@ -472,7 +472,7 @@ class LandTapTriggerCollectorServiceTest {
             assertThat(result).isTrue();
             verify(interactionHandlerRegistry).begin(eq(gd),
                     any(com.github.laxika.magicalvibes.model.PendingInteraction.ColorChoice.class));
-            verify(gameBroadcastService).logAndBroadcast(eq(gd), any(GameLogEntry.class));
+            verify(gameLogService).append(eq(gd), any(GameLogEntry.class));
         }
     }
 
@@ -501,7 +501,7 @@ class LandTapTriggerCollectorServiceTest {
 
             assertThat(result).isTrue();
             assertThat(gd.playerManaPools.get(player1Id).get(ManaColor.GREEN)).isEqualTo(greenBefore + 1);
-            verify(gameBroadcastService).logAndBroadcast(eq(gd), any(GameLogEntry.class));
+            verify(gameLogService).append(eq(gd), any(GameLogEntry.class));
         }
 
         @Test
@@ -597,7 +597,7 @@ class LandTapTriggerCollectorServiceTest {
 
             assertThat(result).isTrue();
             assertThat(gd.playerManaPools.get(player1Id).get(ManaColor.GREEN)).isEqualTo(greenBefore + 1);
-            verify(gameBroadcastService).logAndBroadcast(eq(gd), any(GameLogEntry.class));
+            verify(gameLogService).append(eq(gd), any(GameLogEntry.class));
         }
 
         @Test
@@ -694,7 +694,7 @@ class LandTapTriggerCollectorServiceTest {
 
             assertThat(result).isTrue();
             assertThat(forest.getSkipUntapCount()).isEqualTo(1);
-            verify(gameBroadcastService).logAndBroadcast(eq(gd), any(GameLogEntry.class));
+            verify(gameLogService).append(eq(gd), any(GameLogEntry.class));
         }
 
         @Test

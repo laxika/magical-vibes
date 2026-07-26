@@ -11,7 +11,7 @@ import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.StackEntry;
 import com.github.laxika.magicalvibes.model.StackEntryType;
 import com.github.laxika.magicalvibes.model.effect.BattleDefeatedExileAndCastTransformedEffect;
-import com.github.laxika.magicalvibes.service.GameBroadcastService;
+import com.github.laxika.magicalvibes.service.GameLogService;
 import com.github.laxika.magicalvibes.service.battlefield.GameQueryService;
 import com.github.laxika.magicalvibes.service.battlefield.PermanentRemovalService;
 import com.github.laxika.magicalvibes.service.trigger.TriggerCollectionService;
@@ -30,16 +30,16 @@ import org.springframework.stereotype.Component;
 public class BattleDefeatSupport {
 
     private final GameQueryService gameQueryService;
-    private final GameBroadcastService gameBroadcastService;
+    private final GameLogService gameLogService;
     private final PermanentRemovalService permanentRemovalService;
     private final TriggerCollectionService triggerCollectionService;
 
     public BattleDefeatSupport(GameQueryService gameQueryService,
-                               GameBroadcastService gameBroadcastService,
+                               GameLogService gameLogService,
                                PermanentRemovalService permanentRemovalService,
                                @Lazy TriggerCollectionService triggerCollectionService) {
         this.gameQueryService = gameQueryService;
-        this.gameBroadcastService = gameBroadcastService;
+        this.gameLogService = gameLogService;
         this.permanentRemovalService = permanentRemovalService;
         this.triggerCollectionService = triggerCollectionService;
     }
@@ -81,7 +81,7 @@ public class BattleDefeatSupport {
         gameData.stack.add(trigger);
         gameData.priorityPassedBy.clear();
 
-        gameBroadcastService.logAndBroadcast(gameData, GameLog.cardThen(card, " is defeated."));
+        gameLogService.append(gameData, GameLog.cardThen(card, " is defeated."));
         log.info("Game {} - Battle {} defeated; defeat trigger queued", gameData.id, card.getName());
     }
 
@@ -101,7 +101,7 @@ public class BattleDefeatSupport {
         UUID sourceId = entry.getSourcePermanentId();
         Permanent battle = sourceId != null ? gameQueryService.findPermanentById(gameData, sourceId) : null;
         if (battle == null) {
-            gameBroadcastService.logAndBroadcast(gameData, GameLog.text(entry.getDescription() + " fizzles (battle gone)."));
+            gameLogService.append(gameData, GameLog.text(entry.getDescription() + " fizzles (battle gone)."));
             return;
         }
 
@@ -111,7 +111,7 @@ public class BattleDefeatSupport {
         UUID ownerId = frontCard.getOwnerId() != null ? frontCard.getOwnerId() : controllerId;
 
         permanentRemovalService.removePermanentToExile(gameData, battle);
-        gameBroadcastService.logAndBroadcast(gameData, GameLog.cardThen(frontCard, " is exiled (defeated)."));
+        gameLogService.append(gameData, GameLog.cardThen(frontCard, " is exiled (defeated)."));
 
         ExiledCardEntry exiled = gameData.findExiledCard(frontCard.getId());
         if (exiled == null) {
@@ -136,7 +136,7 @@ public class BattleDefeatSupport {
 
         String playerName = gameData.playerIdToName.get(controllerId);
         Card announced = backFace != null ? backFace : frontCard;
-        gameBroadcastService.logAndBroadcast(gameData, GameLog.playerPlays(playerName, announced,
+        gameLogService.append(gameData, GameLog.playerPlays(playerName, announced,
                 " transformed without paying its mana cost."));
         log.info("Game {} - {} casts defeated battle {} transformed", gameData.id, playerName, frontCard.getName());
 

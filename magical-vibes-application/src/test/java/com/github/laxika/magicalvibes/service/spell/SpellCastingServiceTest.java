@@ -26,6 +26,7 @@ import com.github.laxika.magicalvibes.model.effect.ReduceOwnCastCostIfTargetingS
 import com.github.laxika.magicalvibes.model.filter.PermanentHasSubtypePredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsTappedPredicate;
 import com.github.laxika.magicalvibes.service.GameBroadcastService;
+import com.github.laxika.magicalvibes.service.GameLogService;
 import com.github.laxika.magicalvibes.service.cast.CastingCostService;
 import com.github.laxika.magicalvibes.service.effect.AmountEvaluationService;
 import com.github.laxika.magicalvibes.service.effect.ConditionEvaluationService;
@@ -81,6 +82,9 @@ class SpellCastingServiceTest {
     private GameBroadcastService gameBroadcastService;
 
     @Mock
+    private GameLogService gameLogService;
+
+    @Mock
     private com.github.laxika.magicalvibes.service.cast.CastingCostService castingCostService;
 
     @Mock
@@ -126,7 +130,7 @@ class SpellCastingServiceTest {
         // Real cost service (pure logic over two already-mocked collaborators), matching
         // GameBroadcastServiceTest — cast-time cost extraction/validation runs for real.
         svc = new SpellCastingService(battlefieldEntryService, graveyardTargetingService,
-                gameQueryService, predicateEvaluationService, gameBroadcastService,
+                gameQueryService, predicateEvaluationService, gameBroadcastService, gameLogService,
                 castingCostService, castingPermissionService, turnProgressionService,
                 targetLegalityService, permanentRemovalService, triggerCollectionService,
                 graveyardService, amountEvaluationService, conditionEvaluationService,
@@ -303,7 +307,7 @@ class SpellCastingServiceTest {
             assertThat(gd.playerHands.get(player1Id)).isEmpty();
             verify(battlefieldEntryService).putPermanentOntoBattlefield(eq(gd), eq(player1Id), any(Permanent.class));
             verify(battlefieldEntryService).processCreatureETBEffects(eq(gd), eq(player1Id), eq(land), any(), anyBoolean());
-            verify(gameBroadcastService).logAndBroadcast(eq(gd), any(GameLogEntry.class));
+            verify(gameLogService).append(eq(gd), any(GameLogEntry.class));
             verify(turnProgressionService).resolveAutoPass(gd);
         }
 
@@ -344,7 +348,7 @@ class SpellCastingServiceTest {
             assertThat(gd.stack).hasSize(1);
             assertThat(gd.stack.getLast().getEntryType()).isEqualTo(StackEntryType.CREATURE_SPELL);
             assertThat(gd.stack.getLast().getCard().getName()).isEqualTo("Test Bear");
-            verify(gameBroadcastService).logAndBroadcast(eq(gd), any(GameLogEntry.class));
+            verify(gameLogService).append(eq(gd), any(GameLogEntry.class));
             verify(mutationCoordinator).invalidateAllPlayerViews(gd);
             verify(triggerCollectionService).checkSpellCastTriggers(eq(gd), eq(creature), eq(player1Id), anyBoolean());
             verify(triggerCollectionService).checkBecomesTargetOfSpellTriggers(gd);
@@ -912,7 +916,7 @@ class SpellCastingServiceTest {
                     gd.playerHands.get(player1Id), dummy);
 
             assertThat(gd.getSpellsCastThisTurnCount(player1Id)).isEqualTo(before + 1);
-            verify(gameBroadcastService).logAndBroadcast(eq(gd), any(GameLogEntry.class));
+            verify(gameLogService).append(eq(gd), any(GameLogEntry.class));
             verify(mutationCoordinator).invalidateAllPlayerViews(gd);
             verify(triggerCollectionService).checkSpellCastTriggers(eq(gd), eq(dummy), eq(player1Id), anyBoolean());
             verify(triggerCollectionService).checkBecomesTargetOfSpellTriggers(gd);
@@ -1031,7 +1035,7 @@ class SpellCastingServiceTest {
             assertThat(gd.exilePlayPermissions).doesNotContainKey(land.getId());
             verify(battlefieldEntryService).putPermanentOntoBattlefield(eq(gd), eq(player1Id), any(Permanent.class));
             verify(battlefieldEntryService).processCreatureETBEffects(eq(gd), eq(player1Id), eq(land), any(), anyBoolean());
-            verify(gameBroadcastService).logAndBroadcast(eq(gd), any(GameLogEntry.class));
+            verify(gameLogService).append(eq(gd), any(GameLogEntry.class));
             verify(turnProgressionService).resolveAutoPass(gd);
             // Lands from exile don't trigger spell cast triggers
             verifyNoInteractions(triggerCollectionService);
@@ -1053,7 +1057,7 @@ class SpellCastingServiceTest {
             assertThat(gd.getPlayerExiledCards(player1Id)).isEmpty();
             assertThat(gd.exilePlayPermissions).doesNotContainKey(creature.getId());
             assertThat(gd.playerManaPools.get(player1Id).getTotal()).isEqualTo(0);
-            verify(gameBroadcastService).logAndBroadcast(eq(gd), any(GameLogEntry.class));
+            verify(gameLogService).append(eq(gd), any(GameLogEntry.class));
             verify(mutationCoordinator).invalidateAllPlayerViews(gd);
             verify(triggerCollectionService).checkSpellCastTriggers(eq(gd), eq(creature), eq(player1Id));
             verify(triggerCollectionService).checkBecomesTargetOfSpellTriggers(gd);

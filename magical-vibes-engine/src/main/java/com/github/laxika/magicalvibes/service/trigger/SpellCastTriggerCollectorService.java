@@ -64,7 +64,7 @@ import com.github.laxika.magicalvibes.model.filter.CardSubtypePredicate;
 import com.github.laxika.magicalvibes.model.filter.CardTypePredicate;
 import com.github.laxika.magicalvibes.model.effect.SunbirdsInvocationRevealAndCastEffect;
 import com.github.laxika.magicalvibes.model.effect.SunbirdsInvocationTriggerEffect;
-import com.github.laxika.magicalvibes.service.GameBroadcastService;
+import com.github.laxika.magicalvibes.service.GameLogService;
 import com.github.laxika.magicalvibes.service.battlefield.GameQueryService;
 import com.github.laxika.magicalvibes.service.effect.AmountEvaluationService;
 import com.github.laxika.magicalvibes.service.filter.PredicateEvaluationService;
@@ -89,7 +89,7 @@ public class SpellCastTriggerCollectorService {
 
     private final GameQueryService gameQueryService;
     private final PredicateEvaluationService predicateEvaluationService;
-    private final GameBroadcastService gameBroadcastService;
+    private final GameLogService gameLogService;
     private final TargetLegalityService targetLegalityService;
     private final AmountEvaluationService amountEvaluationService;
 
@@ -519,7 +519,7 @@ public class SpellCastTriggerCollectorService {
             match.gameData().queueInteraction(new PermanentChoiceContext.SpellTargetTriggerAnyTarget(
                     match.permanent().getCard(), match.controllerId(), new ArrayList<>(trigger.resolvedEffects())
             ));
-            gameBroadcastService.logAndBroadcast(match.gameData(), GameLog.cardThen(match.permanent().getCard(),
+            gameLogService.append(match.gameData(), GameLog.cardThen(match.permanent().getCard(),
                     "'s triggered ability triggers — choose a target."));
         } else {
             match.gameData().stack.add(new StackEntry(
@@ -568,7 +568,7 @@ public class SpellCastTriggerCollectorService {
         match.gameData().queueInteraction(new PermanentChoiceContext.SpellTargetTriggerAnyTarget(
                 match.permanent().getCard(), match.controllerId(), new ArrayList<>(resolvedEffects)
         ));
-        gameBroadcastService.logAndBroadcast(match.gameData(), GameLog.cardThen(match.permanent().getCard(),
+        gameLogService.append(match.gameData(), GameLog.cardThen(match.permanent().getCard(),
                 "'s triggered ability triggers — choose a target for " + manaValue + " damage."));
         log.info("Game {} - {} spell-cast mana-value trigger queued ({} damage)",
                 match.gameData().id, match.permanent().getCard().getName(), manaValue);
@@ -590,7 +590,7 @@ public class SpellCastTriggerCollectorService {
         match.gameData().queueInteraction(new PermanentChoiceContext.SpellTargetTriggerAnyTarget(
                 match.permanent().getCard(), match.controllerId(), new ArrayList<>(resolvedEffects)
         ));
-        gameBroadcastService.logAndBroadcast(match.gameData(), GameLog.cardThen(match.permanent().getCard(),
+        gameLogService.append(match.gameData(), GameLog.cardThen(match.permanent().getCard(),
                 "'s triggered ability triggers — choose a target for " + manaSpent + " damage."));
         log.info("Game {} - {} spell-cast mana-spent trigger queued ({} damage)",
                 match.gameData().id, match.permanent().getCard().getName(), manaSpent);
@@ -631,7 +631,7 @@ public class SpellCastTriggerCollectorService {
         match.gameData().queueInteraction(new PermanentChoiceContext.SpellTargetTriggerAnyTarget(
                 match.permanent().getCard(), match.controllerId(), new ArrayList<>(resolvedEffects), true
         ));
-        gameBroadcastService.logAndBroadcast(match.gameData(), GameLog.cardThen(match.permanent().getCard(),
+        gameLogService.append(match.gameData(), GameLog.cardThen(match.permanent().getCard(),
                 "'s triggered ability triggers — choose target player for poison counter."));
         log.info("Game {} - {} spell-cast poison trigger queued",
                 match.gameData().id, match.permanent().getCard().getName());
@@ -929,7 +929,7 @@ public class SpellCastTriggerCollectorService {
                     match.permanent().getCard(), match.controllerId(), resolved, playerTargetOnly, trigger.targetFilter(),
                     spellManaSpentX, match.permanent().getId()
             ));
-            gameBroadcastService.logAndBroadcast(match.gameData(), GameLog.cardThen(match.permanent().getCard(),
+            gameLogService.append(match.gameData(), GameLog.cardThen(match.permanent().getCard(),
                     "'s triggered ability triggers — choose a target."));
         } else {
             StackEntry entry;

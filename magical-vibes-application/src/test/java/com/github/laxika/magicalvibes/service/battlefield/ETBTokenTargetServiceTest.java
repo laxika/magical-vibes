@@ -11,7 +11,7 @@ import com.github.laxika.magicalvibes.model.GameData;
 import com.github.laxika.magicalvibes.model.PermanentChoiceContext;
 import com.github.laxika.magicalvibes.model.effect.DealDamageToTargetPlayerOrPlaneswalkerEffect;
 import com.github.laxika.magicalvibes.model.effect.GainLifeEffect;
-import com.github.laxika.magicalvibes.service.GameBroadcastService;
+import com.github.laxika.magicalvibes.service.GameLogService;
 import com.github.laxika.magicalvibes.service.input.PlayerInputService;
 import com.github.laxika.magicalvibes.service.target.TargetLegalityService;
 import com.github.laxika.magicalvibes.service.filter.PredicateEvaluationService;
@@ -37,7 +37,7 @@ import static org.mockito.Mockito.verify;
 class ETBTokenTargetServiceTest {
 
     @Mock private GameQueryService gameQueryService;
-    @Mock private GameBroadcastService gameBroadcastService;
+    @Mock private GameLogService gameLogService;
     @Mock private PlayerInputService playerInputService;
     @Mock private TargetLegalityService targetLegalityService;
 
@@ -48,7 +48,7 @@ class ETBTokenTargetServiceTest {
     @BeforeEach
     void setUp() {
         service = new ETBTokenTargetService(gameQueryService, new PredicateEvaluationService(gameQueryService),
-                gameBroadcastService, playerInputService, targetLegalityService);
+                gameLogService, playerInputService, targetLegalityService);
 
         player1Id = UUID.randomUUID();
         gd = new GameData(UUID.randomUUID(), "test", player1Id, "Player1");
@@ -108,7 +108,7 @@ class ETBTokenTargetServiceTest {
 
         assertThat(gd.hasPendingInteraction(PermanentChoiceContext.ETBSpellTargetTrigger.class)).isFalse();
         assertThat(gd.stack).isEmpty();
-        verify(gameBroadcastService).logAndBroadcast(eq(gd), argThat((GameLogEntry e) -> e.plainText().equals("Snapcaster Mage's enter-the-battlefield ability has no valid spell targets.")));
+        verify(gameLogService).append(eq(gd), argThat((GameLogEntry e) -> e.plainText().equals("Snapcaster Mage's enter-the-battlefield ability has no valid spell targets.")));
     }
 
     @Test

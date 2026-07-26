@@ -7,7 +7,7 @@ import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.Player;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
 import com.github.laxika.magicalvibes.model.effect.RemoveCounterFromControlledCreatureCost;
-import com.github.laxika.magicalvibes.service.GameBroadcastService;
+import com.github.laxika.magicalvibes.service.GameLogService;
 import com.github.laxika.magicalvibes.service.battlefield.GameQueryService;
 
 import java.util.List;
@@ -24,16 +24,16 @@ public class RemoveCounterFromCreatureCostHandler implements PermanentChoiceCost
 
     private final RemoveCounterFromControlledCreatureCost cost;
     private final GameQueryService gameQueryService;
-    private final GameBroadcastService gameBroadcastService;
+    private final GameLogService gameLogService;
     private int pendingBulkRemoval;
     private int lastRemoved = 1;
 
     public RemoveCounterFromCreatureCostHandler(RemoveCounterFromControlledCreatureCost cost,
                                                  GameQueryService gameQueryService,
-                                                 GameBroadcastService gameBroadcastService) {
+                                                 GameLogService gameLogService) {
         this.cost = cost;
         this.gameQueryService = gameQueryService;
-        this.gameBroadcastService = gameBroadcastService;
+        this.gameLogService = gameLogService;
     }
 
     @Override public CardEffect costEffect() { return cost; }
@@ -78,7 +78,7 @@ public class RemoveCounterFromCreatureCostHandler implements PermanentChoiceCost
         String counterWord = toRemove == 1
                 ? "a " + counterLabel() + " counter"
                 : toRemove + " " + counterLabel() + " counters";
-        gameBroadcastService.logAndBroadcast(gameData, GameLog.textCardText(player.getUsername() + " removes " + counterWord + " from " , chosen.getCard(), "."));
+        gameLogService.append(gameData, GameLog.textCardText(player.getUsername() + " removes " + counterWord + " from " , chosen.getCard(), "."));
     }
 
     @Override

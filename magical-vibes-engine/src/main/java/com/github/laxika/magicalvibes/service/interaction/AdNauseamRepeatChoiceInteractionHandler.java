@@ -4,7 +4,7 @@ import com.github.laxika.magicalvibes.model.GameData;
 import com.github.laxika.magicalvibes.model.GameLog;
 import com.github.laxika.magicalvibes.model.PendingInteraction;
 import com.github.laxika.magicalvibes.model.Player;
-import com.github.laxika.magicalvibes.service.GameBroadcastService;
+import com.github.laxika.magicalvibes.service.GameLogService;
 import com.github.laxika.magicalvibes.service.effect.EffectResolutionService;
 import com.github.laxika.magicalvibes.service.effect.normalfx.AdNauseamSupport;
 import com.github.laxika.magicalvibes.service.turn.TurnProgressionService;
@@ -26,7 +26,7 @@ public class AdNauseamRepeatChoiceInteractionHandler
         implements InteractionHandler<PendingInteraction.AdNauseamRepeatChoice> {
 
     private final AdNauseamSupport adNauseamSupport;
-    private final GameBroadcastService gameBroadcastService;
+    private final GameLogService gameLogService;
     private final EffectResolutionService effectResolutionService;
     private final TurnProgressionService turnProgressionService;
 
@@ -60,7 +60,7 @@ public class AdNauseamRepeatChoiceInteractionHandler
             }
         } else {
             String playerName = gameData.playerIdToName.get(controllerId);
-            gameBroadcastService.logAndBroadcast(gameData, GameLog.text(playerName + " stops revealing cards (" + sourceName + ")."));
+            gameLogService.append(gameData, GameLog.text(playerName + " stops revealing cards (" + sourceName + ")."));
         }
 
         finishResolution(gameData);

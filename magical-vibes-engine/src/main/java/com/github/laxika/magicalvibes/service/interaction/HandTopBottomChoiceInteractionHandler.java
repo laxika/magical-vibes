@@ -5,7 +5,7 @@ import com.github.laxika.magicalvibes.model.GameData;
 import com.github.laxika.magicalvibes.model.GameLog;
 import com.github.laxika.magicalvibes.model.PendingInteraction;
 import com.github.laxika.magicalvibes.model.Player;
-import com.github.laxika.magicalvibes.service.GameBroadcastService;
+import com.github.laxika.magicalvibes.service.GameLogService;
 import com.github.laxika.magicalvibes.service.turn.TurnProgressionService;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -25,7 +25,7 @@ import java.util.UUID;
 public class HandTopBottomChoiceInteractionHandler
         implements InteractionHandler<PendingInteraction.HandTopBottomChoice> {
 
-    private final GameBroadcastService gameBroadcastService;
+    private final GameLogService gameLogService;
     private final TurnProgressionService turnProgressionService;
 
     @Override
@@ -87,7 +87,7 @@ public class HandTopBottomChoiceInteractionHandler
         } else {
             logMsg = player.getUsername() + " puts one card into their hand, one on top of their library, and one on the bottom.";
         }
-        gameBroadcastService.logAndBroadcast(gameData, GameLog.text(logMsg));
+        gameLogService.append(gameData, GameLog.text(logMsg));
         log.info("Game {} - {} completed hand/top/bottom choice", gameData.id, player.getUsername());
 
         turnProgressionService.resolveAutoPass(gameData);

@@ -9,7 +9,7 @@ import com.github.laxika.magicalvibes.model.StackEntryType;
 import com.github.laxika.magicalvibes.model.StateTriggerKey;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
 import com.github.laxika.magicalvibes.model.effect.StateTriggerEffect;
-import com.github.laxika.magicalvibes.service.GameBroadcastService;
+import com.github.laxika.magicalvibes.service.GameLogService;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
@@ -32,7 +32,7 @@ import java.util.UUID;
 @RequiredArgsConstructor
 public class StateTriggerService {
 
-    private final GameBroadcastService gameBroadcastService;
+    private final GameLogService gameLogService;
 
     /**
      * Checks all permanents for state-triggered abilities whose conditions are met.
@@ -72,7 +72,7 @@ public class StateTriggerService {
                         entry.setStateTriggerEffectIndex(i);
                         gameData.stack.add(entry);
 
-                        gameBroadcastService.logAndBroadcast(gameData, GameLog.text(trigger.description() + " triggers."));
+                        gameLogService.append(gameData, GameLog.text(trigger.description() + " triggers."));
                         log.info("Game {} - State trigger fires for {} (permanent {})",
                                 gameData.id, perm.getCard().getName(), perm.getId());
                     }

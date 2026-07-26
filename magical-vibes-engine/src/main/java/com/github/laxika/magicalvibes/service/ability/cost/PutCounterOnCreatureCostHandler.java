@@ -7,7 +7,7 @@ import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.Player;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
 import com.github.laxika.magicalvibes.model.effect.PutCounterOnControlledCreatureCost;
-import com.github.laxika.magicalvibes.service.GameBroadcastService;
+import com.github.laxika.magicalvibes.service.GameLogService;
 import com.github.laxika.magicalvibes.service.battlefield.GameQueryService;
 
 import java.util.List;
@@ -23,14 +23,14 @@ public class PutCounterOnCreatureCostHandler implements PermanentChoiceCostHandl
 
     private final PutCounterOnControlledCreatureCost cost;
     private final GameQueryService gameQueryService;
-    private final GameBroadcastService gameBroadcastService;
+    private final GameLogService gameLogService;
 
     public PutCounterOnCreatureCostHandler(PutCounterOnControlledCreatureCost cost,
                                            GameQueryService gameQueryService,
-                                           GameBroadcastService gameBroadcastService) {
+                                           GameLogService gameLogService) {
         this.cost = cost;
         this.gameQueryService = gameQueryService;
-        this.gameBroadcastService = gameBroadcastService;
+        this.gameLogService = gameLogService;
     }
 
     @Override public CardEffect costEffect() { return cost; }
@@ -64,7 +64,7 @@ public class PutCounterOnCreatureCostHandler implements PermanentChoiceCostHandl
         String counterWord = cost.count() == 1
                 ? "a " + counterLabel() + " counter"
                 : cost.count() + " " + counterLabel() + " counters";
-        gameBroadcastService.logAndBroadcast(gameData, GameLog.textCardText(player.getUsername() + " puts " + counterWord + " on " , chosen.getCard(), "."));
+        gameLogService.append(gameData, GameLog.textCardText(player.getUsername() + " puts " + counterWord + " on " , chosen.getCard(), "."));
     }
 
     @Override

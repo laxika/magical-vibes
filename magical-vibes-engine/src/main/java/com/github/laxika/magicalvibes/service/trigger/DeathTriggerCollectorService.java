@@ -55,7 +55,7 @@ import com.github.laxika.magicalvibes.model.effect.UntapPermanentsEffect;
 import com.github.laxika.magicalvibes.model.effect.TargetPlayerLosesLifeEqualToPowerEffect;
 import com.github.laxika.magicalvibes.model.effect.LoseLifeEffect;
 import com.github.laxika.magicalvibes.model.effect.LoseLifeRecipient;
-import com.github.laxika.magicalvibes.service.GameBroadcastService;
+import com.github.laxika.magicalvibes.service.GameLogService;
 import com.github.laxika.magicalvibes.service.battlefield.GameQueryService;
 import com.github.laxika.magicalvibes.service.filter.PredicateEvaluationService;
 import lombok.RequiredArgsConstructor;
@@ -78,7 +78,7 @@ public class DeathTriggerCollectorService {
 
     private final GameQueryService gameQueryService;
     private final PredicateEvaluationService predicateEvaluationService;
-    private final GameBroadcastService gameBroadcastService;
+    private final GameLogService gameLogService;
 
     // ── ON_DEATH (dying card's own death triggers) ─────────────────────
 
@@ -381,7 +381,7 @@ public class DeathTriggerCollectorService {
                     new ArrayList<>(List.of(effect))
             ));
         }
-        gameBroadcastService.logAndBroadcast(gameData, GameLog.cardThen(match.permanent().getCard(),
+        gameLogService.append(gameData, GameLog.cardThen(match.permanent().getCard(),
                 "'s ability triggers (equipped creature died)."));
         log.info("Game {} - {} triggers (equipped creature died)", gameData.id, match.permanent().getCard().getName());
         return true;
@@ -468,7 +468,7 @@ public class DeathTriggerCollectorService {
                 epd.dyingPermanentControllerId(),
                 match.permanent().getId()
         ));
-        gameBroadcastService.logAndBroadcast(match.gameData(), GameLog.cardThen(match.permanent().getCard(),
+        gameLogService.append(match.gameData(), GameLog.cardThen(match.permanent().getCard(),
                 "'s ability triggers (enchanted permanent put into graveyard)."));
         log.info("Game {} - {} triggers (enchanted permanent put into graveyard)", match.gameData().id, match.permanent().getCard().getName());
         return true;
@@ -489,7 +489,7 @@ public class DeathTriggerCollectorService {
                 match.permanent().getCard().getName() + "'s ability",
                 new ArrayList<>(List.of(effect))
         ));
-        gameBroadcastService.logAndBroadcast(match.gameData(), GameLog.cardThen(match.permanent().getCard(),
+        gameLogService.append(match.gameData(), GameLog.cardThen(match.permanent().getCard(),
                 "'s ability triggers (enchanted permanent put into graveyard)."));
         log.info("Game {} - {} triggers (enchanted permanent put into graveyard)", match.gameData().id, match.permanent().getCard().getName());
     }
@@ -548,7 +548,7 @@ public class DeathTriggerCollectorService {
     }
 
     private void logEnchantedPermanentLTB(TriggerMatchContext match) {
-        gameBroadcastService.logAndBroadcast(match.gameData(), GameLog.cardThen(match.permanent().getCard(),
+        gameLogService.append(match.gameData(), GameLog.cardThen(match.permanent().getCard(),
                 "'s ability triggers (enchanted permanent left the battlefield)."));
         log.info("Game {} - {} triggers (enchanted permanent left the battlefield)", match.gameData().id, match.permanent().getCard().getName());
     }
@@ -597,7 +597,7 @@ public class DeathTriggerCollectorService {
     }
 
     private void logArtifactGraveyard(TriggerMatchContext match) {
-        gameBroadcastService.logAndBroadcast(match.gameData(), GameLog.abilityTriggers(match.permanent().getCard()));
+        gameLogService.append(match.gameData(), GameLog.abilityTriggers(match.permanent().getCard()));
         log.info("Game {} - {} triggers (artifact put into graveyard from battlefield)", match.gameData().id, match.permanent().getCard().getName());
     }
 
@@ -621,7 +621,7 @@ public class DeathTriggerCollectorService {
     }
 
     private void logLandGraveyard(TriggerMatchContext match) {
-        gameBroadcastService.logAndBroadcast(match.gameData(), GameLog.abilityTriggers(match.permanent().getCard()));
+        gameLogService.append(match.gameData(), GameLog.abilityTriggers(match.permanent().getCard()));
         log.info("Game {} - {} triggers (land put into graveyard from battlefield)", match.gameData().id, match.permanent().getCard().getName());
     }
 
@@ -652,7 +652,7 @@ public class DeathTriggerCollectorService {
     }
 
     private void logOpponentArtifactGraveyard(TriggerMatchContext match) {
-        gameBroadcastService.logAndBroadcast(match.gameData(), GameLog.abilityTriggers(match.permanent().getCard()));
+        gameLogService.append(match.gameData(), GameLog.abilityTriggers(match.permanent().getCard()));
         log.info("Game {} - {} triggers (opponent artifact put into graveyard from battlefield)", match.gameData().id, match.permanent().getCard().getName());
     }
 
@@ -683,7 +683,7 @@ public class DeathTriggerCollectorService {
     }
 
     private void logBlackCardOpponentGraveyard(TriggerMatchContext match) {
-        gameBroadcastService.logAndBroadcast(match.gameData(), GameLog.abilityTriggers(match.permanent().getCard()));
+        gameLogService.append(match.gameData(), GameLog.abilityTriggers(match.permanent().getCard()));
         log.info("Game {} - {} triggers (black card put into opponent's graveyard from anywhere)", match.gameData().id, match.permanent().getCard().getName());
     }
 
@@ -707,7 +707,7 @@ public class DeathTriggerCollectorService {
                 match.permanent().getId()
         ));
 
-        gameBroadcastService.logAndBroadcast(match.gameData(), GameLog.cardTextCard(match.permanent().getCard(),
+        gameLogService.append(match.gameData(), GameLog.cardTextCard(match.permanent().getCard(),
                 "'s ability triggers (", landCard, " was put into a graveyard from the battlefield by an opponent)."));
         log.info("Game {} - {} triggers (land {} put into graveyard by opponent)",
                 match.gameData().id, match.permanent().getCard().getName(), landCard.getName());
@@ -733,7 +733,7 @@ public class DeathTriggerCollectorService {
                 match.permanent().getCard().getName() + "'s ability",
                 new ArrayList<>(List.of(baked))
         ));
-        gameBroadcastService.logAndBroadcast(match.gameData(), GameLog.abilityTriggers(match.permanent().getCard()));
+        gameLogService.append(match.gameData(), GameLog.abilityTriggers(match.permanent().getCard()));
         log.info("Game {} - {} triggers (opponent permanent put into graveyard)",
                 match.gameData().id, match.permanent().getCard().getName());
         return true;
@@ -929,7 +929,7 @@ public class DeathTriggerCollectorService {
     }
 
     private void logAnyCreatureDeath(TriggerMatchContext match) {
-        gameBroadcastService.logAndBroadcast(match.gameData(), GameLog.abilityTriggers(match.permanent().getCard()));
+        gameLogService.append(match.gameData(), GameLog.abilityTriggers(match.permanent().getCard()));
         log.info("Game {} - {} triggers (any creature died)", match.gameData().id, match.permanent().getCard().getName());
     }
 
@@ -962,7 +962,7 @@ public class DeathTriggerCollectorService {
     }
 
     private void logAllyNontokenCreatureDeath(TriggerMatchContext match) {
-        gameBroadcastService.logAndBroadcast(match.gameData(), GameLog.abilityTriggers(match.permanent().getCard()));
+        gameLogService.append(match.gameData(), GameLog.abilityTriggers(match.permanent().getCard()));
         log.info("Game {} - {} triggers (ally nontoken creature died)", match.gameData().id, match.permanent().getCard().getName());
     }
 
@@ -980,7 +980,7 @@ public class DeathTriggerCollectorService {
                 List.of(imprintEffect),
                 match.permanent().getCard().getName() + " — " + rawMay.prompt()
         ));
-        gameBroadcastService.logAndBroadcast(match.gameData(), GameLog.cardThen(match.permanent().getCard(),
+        gameLogService.append(match.gameData(), GameLog.cardThen(match.permanent().getCard(),
                 "'s imprint ability triggers."));
         log.info("Game {} - {} imprint triggers (nontoken creature died)", match.gameData().id, match.permanent().getCard().getName());
         return true;
@@ -1005,7 +1005,7 @@ public class DeathTriggerCollectorService {
                 cd.dyingCard().getId(),
                 rawMayPay.manaCost()
         ));
-        gameBroadcastService.logAndBroadcast(gameData, GameLog.cardTextCard(match.permanent().getCard(),
+        gameLogService.append(gameData, GameLog.cardTextCard(match.permanent().getCard(),
                 "'s ability triggers (", cd.dyingCard(), " died)."));
         log.info("Game {} - {} return trigger fires (nontoken creature {} died)", gameData.id, match.permanent().getCard().getName(), cd.dyingCard().getName());
         return true;
@@ -1021,7 +1021,7 @@ public class DeathTriggerCollectorService {
                 match.permanent().getCard().getName() + "'s ability",
                 new ArrayList<>(List.of(effect))
         ));
-        gameBroadcastService.logAndBroadcast(match.gameData(), GameLog.abilityTriggers(match.permanent().getCard()));
+        gameLogService.append(match.gameData(), GameLog.abilityTriggers(match.permanent().getCard()));
         log.info("Game {} - {} triggers (any nontoken creature died)", match.gameData().id, match.permanent().getCard().getName());
         return true;
     }
@@ -1076,7 +1076,7 @@ public class DeathTriggerCollectorService {
     }
 
     private void logOpponentCreatureDeath(TriggerMatchContext match) {
-        gameBroadcastService.logAndBroadcast(match.gameData(), GameLog.abilityTriggers(match.permanent().getCard()));
+        gameLogService.append(match.gameData(), GameLog.abilityTriggers(match.permanent().getCard()));
         log.info("Game {} - {} triggers (opponent creature died)", match.gameData().id, match.permanent().getCard().getName());
     }
 
@@ -1167,7 +1167,7 @@ public class DeathTriggerCollectorService {
     }
 
     private void logSelfLeaves(TriggerMatchContext match) {
-        gameBroadcastService.logAndBroadcast(match.gameData(), GameLog.cardThen(match.permanent().getCard(),
+        gameLogService.append(match.gameData(), GameLog.cardThen(match.permanent().getCard(),
                 "'s ability triggers (left the battlefield)."));
         log.info("Game {} - {} triggers (left the battlefield)", match.gameData().id, match.permanent().getCard().getName());
     }
@@ -1185,7 +1185,7 @@ public class DeathTriggerCollectorService {
                 "Return " + dyingCard.getName() + " to its owner's hand at the beginning of the next end step?");
         match.gameData().queueMayAbility(match.permanent().getCard(), aaeg.controllerId(), may);
 
-        gameBroadcastService.logAndBroadcast(match.gameData(), GameLog.cardTextCard(match.permanent().getCard(),
+        gameLogService.append(match.gameData(), GameLog.cardTextCard(match.permanent().getCard(),
                 "'s ability triggers (", dyingCard, " was put into a graveyard from the battlefield)."));
         log.info("Game {} - {} triggers (ally Aura/Equipment {} put into graveyard from battlefield)",
                 match.gameData().id, match.permanent().getCard().getName(), dyingCard.getName());

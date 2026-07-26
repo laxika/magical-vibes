@@ -5,7 +5,7 @@ import com.github.laxika.magicalvibes.model.GameData;
 import com.github.laxika.magicalvibes.model.GameLog;
 import com.github.laxika.magicalvibes.model.PendingInteraction;
 import com.github.laxika.magicalvibes.model.Player;
-import com.github.laxika.magicalvibes.service.GameBroadcastService;
+import com.github.laxika.magicalvibes.service.GameLogService;
 import com.github.laxika.magicalvibes.service.effect.EffectResolutionService;
 import com.github.laxika.magicalvibes.service.input.PlayerInputService;
 import com.github.laxika.magicalvibes.service.turn.TurnProgressionService;
@@ -27,7 +27,7 @@ import java.util.UUID;
 @RequiredArgsConstructor
 public class ScryInteractionHandler implements InteractionHandler<PendingInteraction.Scry> {
 
-    private final GameBroadcastService gameBroadcastService;
+    private final GameLogService gameLogService;
     private final PlayerInputService playerInputService;
     private final TurnProgressionService turnProgressionService;
     private final EffectResolutionService effectResolutionService;
@@ -118,7 +118,7 @@ public class ScryInteractionHandler implements InteractionHandler<PendingInterac
             logMsg = player.getUsername() + " puts " + topCardOrder.size() + " card(s) on top and "
                     + bottomCardOrder.size() + " on the bottom of their library.";
         }
-        gameBroadcastService.logAndBroadcast(gameData, GameLog.text(logMsg));
+        gameLogService.append(gameData, GameLog.text(logMsg));
         log.info("Game {} - {} {} completed: {} top, {} reject", gameData.id, player.getUsername(),
                 interaction.toGraveyard() ? "surveil" : "scry", topCardOrder.size(), bottomCardOrder.size());
 

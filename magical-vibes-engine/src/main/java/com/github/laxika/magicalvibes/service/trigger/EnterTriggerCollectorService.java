@@ -32,7 +32,7 @@ import com.github.laxika.magicalvibes.model.effect.SacrificePermanentsEffect;
 import com.github.laxika.magicalvibes.model.effect.SoulbondPairWithEnteringEffect;
 import com.github.laxika.magicalvibes.model.effect.TransformEnteringCreatureEffect;
 import com.github.laxika.magicalvibes.model.effect.TransformTargetPermanentEffect;
-import com.github.laxika.magicalvibes.service.GameBroadcastService;
+import com.github.laxika.magicalvibes.service.GameLogService;
 import com.github.laxika.magicalvibes.service.effect.AmountContext;
 import com.github.laxika.magicalvibes.service.effect.AmountEvaluationService;
 import lombok.extern.slf4j.Slf4j;
@@ -54,12 +54,12 @@ import com.github.laxika.magicalvibes.model.GameLog;
 @Service
 public class EnterTriggerCollectorService {
 
-    private final GameBroadcastService gameBroadcastService;
+    private final GameLogService gameLogService;
     private final AmountEvaluationService amountEvaluationService;
 
-    public EnterTriggerCollectorService(GameBroadcastService gameBroadcastService,
+    public EnterTriggerCollectorService(GameLogService gameLogService,
                                         AmountEvaluationService amountEvaluationService) {
-        this.gameBroadcastService = gameBroadcastService;
+        this.gameLogService = gameLogService;
         this.amountEvaluationService = amountEvaluationService;
     }
 
@@ -168,7 +168,7 @@ public class EnterTriggerCollectorService {
         String cardName = sourceCard.getName();
         enqueue(match, new GainLifeEffect(amount), pe.defaultTargetPlayerId(), pe.perEffectTriggerCount());
         String controllerName = gameData.playerIdToName.get(match.controllerId());
-        gameBroadcastService.logAndBroadcast(gameData, GameLog.cardThen(sourceCard,
+        gameLogService.append(gameData, GameLog.cardThen(sourceCard,
                 " triggers — " + controllerName + " will gain " + amount + " life."));
         log.info("Game {} - {} triggers for {} entering (gain {} life)",
                 gameData.id, cardName, pe.enteringCard().getName(), amount);
@@ -189,7 +189,7 @@ public class EnterTriggerCollectorService {
         enqueue(match, new DealDamageToPlayersEffect(damageEffect.amount(), DamageRecipient.TARGET_PLAYER), targetPlayerId,
                 pe.perEffectTriggerCount());
         String targetName = gameData.playerIdToName.get(targetPlayerId);
-        gameBroadcastService.logAndBroadcast(gameData, GameLog.cardThen(sourceCard,
+        gameLogService.append(gameData, GameLog.cardThen(sourceCard,
                 " triggers — deals " + damageEffect.amount() + " damage to " + targetName + "."));
         log.info("Game {} - {} triggers for {} entering (deal {} damage to controller)",
                 gameData.id, cardName, pe.enteringCard().getName(), damageEffect.amount());
@@ -522,7 +522,7 @@ public class EnterTriggerCollectorService {
     }
 
     private void logTriggered(TriggerMatchContext match) {
-        gameBroadcastService.logAndBroadcast(match.gameData(), GameLog.abilityTriggers(match.permanent().getCard()));
+        gameLogService.append(match.gameData(), GameLog.abilityTriggers(match.permanent().getCard()));
     }
 
     private static boolean isTargeting(CardEffect effect) {

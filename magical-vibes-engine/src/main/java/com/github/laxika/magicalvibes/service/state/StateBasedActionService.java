@@ -3,7 +3,7 @@ import com.github.laxika.magicalvibes.service.battlefield.LegendRuleService;
 import com.github.laxika.magicalvibes.service.battlefield.PermanentRemovalService;
 import com.github.laxika.magicalvibes.service.graveyard.GraveyardService;
 import com.github.laxika.magicalvibes.service.battlefield.GameQueryService;
-import com.github.laxika.magicalvibes.service.GameBroadcastService;
+import com.github.laxika.magicalvibes.service.GameLogService;
 import com.github.laxika.magicalvibes.service.GameOutcomeService;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.GameData;
@@ -31,7 +31,7 @@ public class StateBasedActionService {
 
     private final GameOutcomeService gameOutcomeService;
     private final GameQueryService gameQueryService;
-    private final GameBroadcastService gameBroadcastService;
+    private final GameLogService gameLogService;
     private final PermanentRemovalService permanentRemovalService;
     private final GraveyardService graveyardService;
     private final StateTriggerService stateTriggerService;
@@ -153,19 +153,19 @@ public class StateBasedActionService {
                 String name = cardEntry.getName();
                 switch (entry.reason()) {
                     case ZERO_TOUGHNESS -> {
-                        gameBroadcastService.logAndBroadcast(gameData, GameLog.cardThen(cardEntry, " is put into the graveyard (0 toughness)."));
+                        gameLogService.append(gameData, GameLog.cardThen(cardEntry, " is put into the graveyard (0 toughness)."));
                         log.info("Game {} - {} dies to state-based actions (0 toughness)", gameData.id, name);
                     }
                     case LETHAL_DAMAGE -> {
-                        gameBroadcastService.logAndBroadcast(gameData, GameLog.cardThen(cardEntry, " is destroyed (lethal damage)."));
+                        gameLogService.append(gameData, GameLog.cardThen(cardEntry, " is destroyed (lethal damage)."));
                         log.info("Game {} - {} dies to state-based actions (lethal damage)", gameData.id, name);
                     }
                     case ZERO_LOYALTY -> {
-                        gameBroadcastService.logAndBroadcast(gameData, GameLog.cardThen(cardEntry, " has no loyalty counters and is put into the graveyard."));
+                        gameLogService.append(gameData, GameLog.cardThen(cardEntry, " has no loyalty counters and is put into the graveyard."));
                         log.info("Game {} - {} dies to state-based actions (0 loyalty)", gameData.id, name);
                     }
                     case ZERO_DEFENSE -> {
-                        gameBroadcastService.logAndBroadcast(gameData, GameLog.cardThen(cardEntry, " has no defense counters and is put into the graveyard."));
+                        gameLogService.append(gameData, GameLog.cardThen(cardEntry, " has no defense counters and is put into the graveyard."));
                         log.info("Game {} - {} dies to state-based actions (0 defense)", gameData.id, name);
                     }
                 }
@@ -202,7 +202,7 @@ public class StateBasedActionService {
         for (Permanent saga : sagasToSacrifice) {
             processedIds.add(saga.getId());
             permanentRemovalService.removePermanentToGraveyard(gameData, saga);
-            gameBroadcastService.logAndBroadcast(gameData, GameLog.cardThen(saga.getCard(), " is sacrificed (final chapter reached)."));
+            gameLogService.append(gameData, GameLog.cardThen(saga.getCard(), " is sacrificed (final chapter reached)."));
             log.info("Game {} - {} sacrificed (lore counters >= final chapter)", gameData.id, saga.getCard().getName());
         }
         return !sagasToSacrifice.isEmpty();
@@ -251,7 +251,7 @@ public class StateBasedActionService {
 
         for (Permanent creature : toSacrifice) {
             if (permanentRemovalService.removePermanentToGraveyard(gameData, creature)) {
-                gameBroadcastService.logAndBroadcast(gameData, GameLog.cardThen(creature.getCard(), " is sacrificed (its controller lost control of Seraph)."));
+                gameLogService.append(gameData, GameLog.cardThen(creature.getCard(), " is sacrificed (its controller lost control of Seraph)."));
                 log.info("Game {} - {} sacrificed (lost control of Seraph)", gameData.id, creature.getCard().getName());
             }
         }
@@ -291,7 +291,7 @@ public class StateBasedActionService {
             if (gameQueryService.canPlayerLoseGame(gameData, playerId)) {
                 UUID winnerId = gameQueryService.getOpponentId(gameData, playerId);
                 String logEntry = gameData.playerIdToName.get(playerId) + " attempted to draw from an empty library and loses the game.";
-                gameBroadcastService.logAndBroadcast(gameData, GameLog.text(logEntry));
+                gameLogService.append(gameData, GameLog.text(logEntry));
                 log.info("Game {} - {} loses (drew from empty library)", gameData.id, gameData.playerIdToName.get(playerId));
                 gameOutcomeService.declareWinner(gameData, winnerId);
             }

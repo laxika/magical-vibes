@@ -13,7 +13,7 @@ import com.github.laxika.magicalvibes.model.effect.CardEffect;
 import com.github.laxika.magicalvibes.model.filter.PlayerPredicate;
 import com.github.laxika.magicalvibes.model.filter.PlayerPredicateTargetFilter;
 import com.github.laxika.magicalvibes.model.filter.PlayerRelationPredicate;
-import com.github.laxika.magicalvibes.service.GameBroadcastService;
+import com.github.laxika.magicalvibes.service.GameLogService;
 import com.github.laxika.magicalvibes.service.input.PlayerInputService;
 import com.github.laxika.magicalvibes.service.target.TargetLegalityService;
 import lombok.RequiredArgsConstructor;
@@ -33,7 +33,7 @@ public class ETBTokenTargetService {
 
     private final GameQueryService gameQueryService;
     private final PredicateEvaluationService predicateEvaluationService;
-    private final GameBroadcastService gameBroadcastService;
+    private final GameLogService gameLogService;
     private final PlayerInputService playerInputService;
     private final TargetLegalityService targetLegalityService;
 
@@ -58,7 +58,7 @@ public class ETBTokenTargetService {
 
             if (validSpellCardIds.isEmpty()) {
                 gameData.pollPendingInteraction(PermanentChoiceContext.ETBSpellTargetTrigger.class);
-                gameBroadcastService.logAndBroadcast(gameData, GameLog.cardThen(pending.sourceCard(), "'s enter-the-battlefield ability has no valid spell targets."));
+                gameLogService.append(gameData, GameLog.cardThen(pending.sourceCard(), "'s enter-the-battlefield ability has no valid spell targets."));
                 log.info("Game {} - {} ETB spell-target trigger skipped (no valid targets)", gameData.id, pending.sourceCard().getName());
                 continue;
             }
@@ -69,7 +69,7 @@ public class ETBTokenTargetService {
                     validSpellCardIds, List.of(),
                     pending.sourceCard().getName() + "'s ability — Choose target spell.");
 
-            gameBroadcastService.logAndBroadcast(gameData, GameLog.cardThen(pending.sourceCard(), "'s ETB ability triggers — choose a target spell."));
+            gameLogService.append(gameData, GameLog.cardThen(pending.sourceCard(), "'s ETB ability triggers — choose a target spell."));
             log.info("Game {} - {} ETB spell-target trigger awaiting target selection", gameData.id, pending.sourceCard().getName());
             return;
         }
@@ -106,7 +106,7 @@ public class ETBTokenTargetService {
 
             if (validPlayerTargets.isEmpty() && validPermanentTargets.isEmpty()) {
                 gameData.pollPendingInteraction(PermanentChoiceContext.ETBTokenTargetTrigger.class);
-                gameBroadcastService.logAndBroadcast(gameData, GameLog.cardThen(pending.sourceCard(), "'s enter-the-battlefield ability has no valid targets."));
+                gameLogService.append(gameData, GameLog.cardThen(pending.sourceCard(), "'s enter-the-battlefield ability has no valid targets."));
                 log.info("Game {} - {} ETB token-target trigger skipped (no valid targets)",
                         gameData.id, pending.sourceCard().getName());
                 continue;
@@ -194,7 +194,7 @@ public class ETBTokenTargetService {
             if (noLegalTargets) {
                 if (chosenInGroup < group.getMinTargets()) {
                     gameData.pollPendingInteraction(PermanentChoiceContext.ETBTokenMultiTargetTrigger.class);
-                    gameBroadcastService.logAndBroadcast(gameData, GameLog.cardThen(card, "'s enter-the-battlefield ability has no valid targets."));
+                    gameLogService.append(gameData, GameLog.cardThen(card, "'s enter-the-battlefield ability has no valid targets."));
                     log.info("Game {} - {} ETB multi-target trigger skipped (no valid targets for mandatory group {} at slot {})",
                             gameData.id, card.getName(), idx, chosenInGroup);
                     continue;
@@ -248,10 +248,10 @@ public class ETBTokenTargetService {
         );
         gameData.stack.add(etbEntry);
         if (pending.sourcePermanentId() == null) {
-            gameBroadcastService.logAndBroadcast(gameData, GameLog.cardThen(card, "'s ability triggers."));
+            gameLogService.append(gameData, GameLog.cardThen(card, "'s ability triggers."));
             log.info("Game {} - {} cast multi-target ability pushed onto stack", gameData.id, card.getName());
         } else {
-            gameBroadcastService.logAndBroadcast(gameData, GameLog.cardThen(card, "'s enter-the-battlefield ability triggers."));
+            gameLogService.append(gameData, GameLog.cardThen(card, "'s enter-the-battlefield ability triggers."));
             log.info("Game {} - {} ETB multi-target ability pushed onto stack", gameData.id, card.getName());
         }
     }

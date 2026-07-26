@@ -6,7 +6,7 @@ import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.Player;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
 import com.github.laxika.magicalvibes.model.effect.UntapMultiplePermanentsCost;
-import com.github.laxika.magicalvibes.service.GameBroadcastService;
+import com.github.laxika.magicalvibes.service.GameLogService;
 import com.github.laxika.magicalvibes.service.filter.PredicateEvaluationService;
 
 import java.util.List;
@@ -22,14 +22,14 @@ public class MultiplePermanentUntapCostHandler implements PermanentChoiceCostHan
 
     private final UntapMultiplePermanentsCost cost;
     private final PredicateEvaluationService predicateEvaluationService;
-    private final GameBroadcastService gameBroadcastService;
+    private final GameLogService gameLogService;
     private final UUID sourcePermanentId;
 
     public MultiplePermanentUntapCostHandler(UntapMultiplePermanentsCost cost, PredicateEvaluationService predicateEvaluationService,
-                                             GameBroadcastService gameBroadcastService, UUID sourcePermanentId) {
+                                             GameLogService gameLogService, UUID sourcePermanentId) {
         this.cost = cost;
         this.predicateEvaluationService = predicateEvaluationService;
-        this.gameBroadcastService = gameBroadcastService;
+        this.gameLogService = gameLogService;
         this.sourcePermanentId = sourcePermanentId;
     }
 
@@ -68,7 +68,7 @@ public class MultiplePermanentUntapCostHandler implements PermanentChoiceCostHan
             throw new IllegalStateException("Permanent does not match the required predicate");
         }
         chosen.untap();
-        gameBroadcastService.logAndBroadcast(gameData, GameLog.textCardText(player.getUsername() + " untaps " , chosen.getCard(), " as a cost."));
+        gameLogService.append(gameData, GameLog.textCardText(player.getUsername() + " untaps " , chosen.getCard(), " as a cost."));
     }
 
     @Override

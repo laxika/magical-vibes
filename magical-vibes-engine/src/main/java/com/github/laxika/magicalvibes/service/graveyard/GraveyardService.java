@@ -27,7 +27,7 @@ import com.github.laxika.magicalvibes.model.effect.PutOnTopOfLibraryInsteadOfDyi
 import com.github.laxika.magicalvibes.model.effect.ShuffleGraveyardIntoLibraryEffect;
 import com.github.laxika.magicalvibes.model.effect.ExileInsteadOfGraveyardReplacementEffect;
 import com.github.laxika.magicalvibes.model.effect.ShuffleIntoLibraryReplacementEffect;
-import com.github.laxika.magicalvibes.service.GameBroadcastService;
+import com.github.laxika.magicalvibes.service.GameLogService;
 import com.github.laxika.magicalvibes.service.trigger.TriggerCollectionService;
 import com.github.laxika.magicalvibes.service.library.LibraryShuffleHelper;
 import com.github.laxika.magicalvibes.service.battlefield.GameQueryService;
@@ -48,7 +48,7 @@ import java.util.concurrent.ConcurrentHashMap;
 public class GraveyardService {
 
     private final GameQueryService gameQueryService;
-    private final GameBroadcastService gameBroadcastService;
+    private final GameLogService gameLogService;
     private final ExileService exileService;
     private final PredicateEvaluationService predicateEvaluationService;
     // @Lazy to break indirect circular dependency:
@@ -56,12 +56,12 @@ public class GraveyardService {
     private TriggerCollectionService triggerCollectionService;
 
     public GraveyardService(GameQueryService gameQueryService,
-                            GameBroadcastService gameBroadcastService,
+                            GameLogService gameLogService,
                             ExileService exileService,
                             PredicateEvaluationService predicateEvaluationService,
                             @Lazy TriggerCollectionService triggerCollectionService) {
         this.gameQueryService = gameQueryService;
-        this.gameBroadcastService = gameBroadcastService;
+        this.gameLogService = gameLogService;
         this.exileService = exileService;
         this.predicateEvaluationService = predicateEvaluationService;
         this.triggerCollectionService = triggerCollectionService;
@@ -90,7 +90,7 @@ public class GraveyardService {
         }
         String playerName = gameData.playerIdToName.get(targetPlayerId);
         String logEntry = playerName + " mills " + cardsToMill + " card" + (cardsToMill != 1 ? "s" : "") + ".";
-        gameBroadcastService.logAndBroadcast(gameData, GameLog.text(logEntry));
+        gameLogService.append(gameData, GameLog.text(logEntry));
         log.info("Game {} - {} mills {} cards", gameData.id, playerName, cardsToMill);
 
         // Fire creature-card-milled triggers (e.g. Undead Alchemist)
@@ -111,7 +111,7 @@ public class GraveyardService {
                         deck.addAll(graveyard);
                         clearGraveyard(gameData, targetPlayerId);
                         LibraryShuffleHelper.shuffleLibrary(gameData, targetPlayerId);
-                        gameBroadcastService.logAndBroadcast(gameData, GameLog.cardThen(card, " was milled — " + playerName
+                        gameLogService.append(gameData, GameLog.cardThen(card, " was milled — " + playerName
                                 + " shuffles their graveyard (" + graveyardCount
                                 + " card" + (graveyardCount != 1 ? "s" : "") + ") into their library."));
                         log.info("Game {} - {} self-mill trigger: {} shuffles graveyard ({} cards) into library",
@@ -142,7 +142,7 @@ public class GraveyardService {
     public boolean discardCard(GameData gameData, UUID ownerId, Card card) {
         if (!card.isToken() && ownerHasDiscardToLibraryReplacement(gameData, ownerId)) {
             gameData.playerDecks.get(ownerId).add(0, card);
-            gameBroadcastService.logAndBroadcast(gameData, GameLog.cardThen(card, " is put on top of its owner's library instead of into the graveyard."));
+            gameLogService.append(gameData, GameLog.cardThen(card, " is put on top of its owner's library instead of into the graveyard."));
             log.info("Game {} - {} discard replacement: put on top of library instead of graveyard", gameData.id, card.getName());
             return false;
         }
@@ -157,7 +157,7 @@ public class GraveyardService {
         }
         if (madnessCost != null) {
             exileService.exileCard(gameData, ownerId, card);
-            gameBroadcastService.logAndBroadcast(gameData, GameLog.cardThen(card,
+            gameLogService.append(gameData, GameLog.cardThen(card,
                     " is discarded into exile (madness)."));
             log.info("Game {} - {} discarded into exile for madness", gameData.id, card.getName());
             gameData.stack.add(new StackEntry(
@@ -196,7 +196,7 @@ public class GraveyardService {
             ExileWithEggCountersInsteadOfDyingEffect eggEffect = getExileWithEggCountersReplacementEffect(card);
             exileService.exileCard(gameData, ownerId, card);
             gameData.exiledCardEggCounters.put(card.getId(), eggEffect.count());
-            gameBroadcastService.logAndBroadcast(gameData, GameLog.cardThen(card,
+            gameLogService.append(gameData, GameLog.cardThen(card,
                     " is exiled with " + eggEffect.count() + " egg counters instead of dying."));
             log.info("Game {} - {} replacement effect: exiled with {} egg counters instead of dying",
                     gameData.id, card.getName(), eggEffect.count());
@@ -208,7 +208,7 @@ public class GraveyardService {
         if (sourceZone == Zone.BATTLEFIELD && hasPutOnTopOfLibraryInsteadOfDyingEffect(card)) {
             List<Card> deck = gameData.playerDecks.get(ownerId);
             deck.add(0, card);
-            gameBroadcastService.logAndBroadcast(gameData, GameLog.cardThen(card, " is put on top of its owner's library instead of dying."));
+            gameLogService.append(gameData, GameLog.cardThen(card, " is put on top of its owner's library instead of dying."));
             log.info("Game {} - {} replacement effect: put on top of library instead of dying", gameData.id, card.getName());
             return false;
         }
@@ -217,7 +217,7 @@ public class GraveyardService {
             List<Card> deck = gameData.playerDecks.get(ownerId);
             deck.add(card);
             LibraryShuffleHelper.shuffleLibrary(gameData, ownerId);
-            gameBroadcastService.logAndBroadcast(gameData, GameLog.cardThen(card, " is revealed and shuffled into its owner's library instead."));
+            gameLogService.append(gameData, GameLog.cardThen(card, " is revealed and shuffled into its owner's library instead."));
             log.info("Game {} - {} replacement effect: shuffled into library instead of graveyard", gameData.id, card.getName());
             updateThisTurnBattlefieldToGraveyardTracking(gameData, ownerId, card, null);
             return false;
@@ -225,7 +225,7 @@ public class GraveyardService {
 
         if (hasExileInsteadOfGraveyardReplacementEffect(card)) {
             exileService.exileCard(gameData, ownerId, card);
-            gameBroadcastService.logAndBroadcast(gameData, GameLog.cardThen(card, " is exiled instead of being put into a graveyard."));
+            gameLogService.append(gameData, GameLog.cardThen(card, " is exiled instead of being put into a graveyard."));
             log.info("Game {} - {} replacement effect: exiled instead of graveyard", gameData.id, card.getName());
             updateThisTurnBattlefieldToGraveyardTracking(gameData, ownerId, card, null);
             return false;
@@ -236,7 +236,7 @@ public class GraveyardService {
         // bottom of their library instead. Tokens are not cards, so they still hit the graveyard.
         if (!card.isToken() && enchantedPlayerHasBottomOfLibraryReplacement(gameData, ownerId)) {
             gameData.playerDecks.get(ownerId).add(card);
-            gameBroadcastService.logAndBroadcast(gameData, GameLog.cardThen(card, " is revealed and put on the bottom of its owner's library instead."));
+            gameLogService.append(gameData, GameLog.cardThen(card, " is revealed and put on the bottom of its owner's library instead."));
             log.info("Game {} - {} replacement effect: put on bottom of library instead of graveyard", gameData.id, card.getName());
             updateThisTurnBattlefieldToGraveyardTracking(gameData, ownerId, card, null);
             return false;
@@ -247,7 +247,7 @@ public class GraveyardService {
         if (gameData.exileInsteadOfGraveyard.remove(card.getId())) {
             exileService.exileCard(gameData, ownerId, card);
             String exileLog = card.getName() + " is exiled instead of being put into a graveyard.";
-            gameBroadcastService.logAndBroadcast(gameData, GameLog.cardThen(card, " is exiled instead of being put into a graveyard."));
+            gameLogService.append(gameData, GameLog.cardThen(card, " is exiled instead of being put into a graveyard."));
             log.info("Game {} - {} replacement effect: exiled instead of graveyard (cast permission)",
                     gameData.id, card.getName());
             return false;
@@ -258,7 +258,7 @@ public class GraveyardService {
         if (opponentHasExileReplacementEffect(gameData, ownerId)) {
             exileService.exileCard(gameData, ownerId, card);
             String exileLog = card.getName() + " is exiled instead of being put into a graveyard.";
-            gameBroadcastService.logAndBroadcast(gameData, GameLog.cardThen(card, " is exiled instead of being put into a graveyard."));
+            gameLogService.append(gameData, GameLog.cardThen(card, " is exiled instead of being put into a graveyard."));
             log.info("Game {} - {} replacement effect: exiled instead of graveyard", gameData.id, card.getName());
             return false;
         }
@@ -266,7 +266,7 @@ public class GraveyardService {
         // Forbidden Crypt / Abandoned Sarcophagus — controller's own cards matching a replacement
         if (shouldExileOwnCardInsteadOfGraveyard(gameData, ownerId, card)) {
             exileService.exileCard(gameData, ownerId, card);
-            gameBroadcastService.logAndBroadcast(gameData, GameLog.cardThen(card, " is exiled instead of being put into a graveyard."));
+            gameLogService.append(gameData, GameLog.cardThen(card, " is exiled instead of being put into a graveyard."));
             log.info("Game {} - {} replacement effect: exiled instead of graveyard (own)", gameData.id, card.getName());
             return false;
         }
@@ -308,7 +308,7 @@ public class GraveyardService {
         String playerName = gameData.playerIdToName.get(playerId);
         String logEntry = playerName + " exiles " + toExile + " card" + (toExile != 1 ? "s" : "")
                 + " from their graveyard.";
-        gameBroadcastService.logAndBroadcast(gameData, GameLog.text(logEntry));
+        gameLogService.append(gameData, GameLog.text(logEntry));
         log.info("Game {} - {} exiles {} cards from graveyard", gameData.id, playerName, toExile);
         return toExile;
     }
@@ -329,7 +329,7 @@ public class GraveyardService {
                     null,
                     (UUID) null
             ));
-            gameBroadcastService.logAndBroadcast(gameData, GameLog.abilityTriggers(card));
+            gameLogService.append(gameData, GameLog.abilityTriggers(card));
             log.info("Game {} - {} triggers (put into graveyard from anywhere)", gameData.id, card.getName());
         }
     }
@@ -351,7 +351,7 @@ public class GraveyardService {
                     null,
                     (UUID) null
             ));
-            gameBroadcastService.logAndBroadcast(gameData, GameLog.abilityTriggers(card));
+            gameLogService.append(gameData, GameLog.abilityTriggers(card));
             log.info("Game {} - {} triggers (put into graveyard from battlefield)", gameData.id, card.getName());
         }
     }
@@ -387,7 +387,7 @@ public class GraveyardService {
         perm.setMarkedDamage(0);
         perm.setDamagedByDeathtouch(false);
 
-        gameBroadcastService.logAndBroadcast(gameData, GameLog.cardThen(perm.getCard(), " regenerates."));
+        gameLogService.append(gameData, GameLog.cardThen(perm.getCard(), " regenerates."));
         log.info("Game {} - {} regenerates", gameData.id, perm.getCard().getName());
     }
 
@@ -603,7 +603,7 @@ public class GraveyardService {
             // (e.g. Seraph returns "that card" at the next end step).
             triggerEntry.setTriggeringCardId(dyingCreatureCardId);
             gameData.stack.add(triggerEntry);
-            gameBroadcastService.logAndBroadcast(gameData, GameLog.abilityTriggers(sourceCard));
+            gameLogService.append(gameData, GameLog.abilityTriggers(sourceCard));
             log.info("Game {} - {} triggers (damaged creature died this turn)", gameData.id, sourceCard.getName());
         }
     }

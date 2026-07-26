@@ -23,7 +23,7 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.UUID;
 import com.github.laxika.magicalvibes.service.DamagePreventionService;
-import com.github.laxika.magicalvibes.service.GameBroadcastService;
+import com.github.laxika.magicalvibes.service.GameLogService;
 import com.github.laxika.magicalvibes.service.battlefield.GameQueryService;
 import com.github.laxika.magicalvibes.service.battlefield.PermanentRemovalService;
 import lombok.RequiredArgsConstructor;
@@ -39,7 +39,7 @@ import com.github.laxika.magicalvibes.model.GameLog;
 @RequiredArgsConstructor
 public class DiscardTriggerCollectorService {
 
-    private final GameBroadcastService gameBroadcastService;
+    private final GameLogService gameLogService;
     private final GameQueryService gameQueryService;
     private final DamagePreventionService damagePreventionService;
     private final PermanentRemovalService permanentRemovalService;
@@ -47,7 +47,7 @@ public class DiscardTriggerCollectorService {
     @CollectsTrigger(value = MayEffect.class, slot = EffectSlot.ON_OPPONENT_DISCARDS)
     private boolean handleDiscardMay(TriggerMatchContext match, MayEffect may, TriggerContext ctx) {
         match.gameData().queueMayAbility(match.permanent().getCard(), match.controllerId(), may);
-        gameBroadcastService.logAndBroadcast(match.gameData(), GameLog.abilityTriggers(match.permanent().getCard()));
+        gameLogService.append(match.gameData(), GameLog.abilityTriggers(match.permanent().getCard()));
         log.info("Game {} - {} triggers on discard (may ability)", match.gameData().id, match.permanent().getCard().getName());
         return true;
     }
@@ -62,7 +62,7 @@ public class DiscardTriggerCollectorService {
         var gameData = match.gameData();
         var discardingPlayerId = dc.discardingPlayerId();
 
-        gameBroadcastService.logAndBroadcast(gameData, GameLog.cardThen(sourceCard,
+        gameLogService.append(gameData, GameLog.cardThen(sourceCard,
                 " triggers — deals " + damage + " damage to " + gameData.playerIdToName.get(discardingPlayerId) + "."));
         log.info("Game {} - {} triggers on discard, dealing {} damage to {}",
                 gameData.id, cardName, damage, gameData.playerIdToName.get(discardingPlayerId));
@@ -78,12 +78,12 @@ public class DiscardTriggerCollectorService {
                 if (gameQueryService.canPlayerGetPoisonCounters(gameData, discardingPlayerId)) {
                     int currentPoison = gameData.playerPoisonCounters.getOrDefault(discardingPlayerId, 0);
                     gameData.playerPoisonCounters.put(discardingPlayerId, currentPoison + effectiveDamage);
-                    gameBroadcastService.logAndBroadcast(gameData, GameLog.textCardText(
+                    gameLogService.append(gameData, GameLog.textCardText(
                             gameData.playerIdToName.get(discardingPlayerId) + " gets " + effectiveDamage + " poison counters from ",
                             sourceCard, "."));
                 }
             } else if (effectiveDamage > 0 && !gameQueryService.canPlayerLifeChange(gameData, discardingPlayerId)) {
-                gameBroadcastService.logAndBroadcast(gameData, GameLog.text(gameData.playerIdToName.get(discardingPlayerId) + "'s life total can't change."));
+                gameLogService.append(gameData, GameLog.text(gameData.playerIdToName.get(discardingPlayerId) + "'s life total can't change."));
             } else {
                 int currentLife = gameData.getLife(discardingPlayerId);
                 gameData.playerLifeTotals.put(discardingPlayerId, currentLife - effectiveDamage);
@@ -117,7 +117,7 @@ public class DiscardTriggerCollectorService {
 
         Card sourceCard = match.permanent().getCard();
         String cardName = sourceCard.getName();
-        gameBroadcastService.logAndBroadcast(gameData, GameLog.cardTextCard(sourceCard, " exiles ", discarded,
+        gameLogService.append(gameData, GameLog.cardTextCard(sourceCard, " exiles ", discarded,
                 " from " + gameData.playerIdToName.get(ownerId) + "'s graveyard."));
         log.info("Game {} - {} exiles discarded card {} from graveyard", gameData.id, cardName, discarded.getName());
         return true;
@@ -138,7 +138,7 @@ public class DiscardTriggerCollectorService {
                 new ArrayList<>(List.of(trigger)),
                 null,
                 match.permanent().getId()));
-        gameBroadcastService.logAndBroadcast(gameData, GameLog.abilityTriggers(sourceCard));
+        gameLogService.append(gameData, GameLog.abilityTriggers(sourceCard));
         log.info("Game {} - {} triggers on cycle/discard (scry {})", gameData.id, sourceCard.getName(), trigger.count());
         return true;
     }
@@ -159,7 +159,7 @@ public class DiscardTriggerCollectorService {
                 new ArrayList<>(List.of(trigger)),
                 null,
                 match.permanent().getId()));
-        gameBroadcastService.logAndBroadcast(gameData, GameLog.abilityTriggers(sourceCard));
+        gameLogService.append(gameData, GameLog.abilityTriggers(sourceCard));
         log.info("Game {} - {} triggers on cycle/discard (self-boost)", gameData.id, sourceCard.getName());
         return true;
     }
@@ -181,7 +181,7 @@ public class DiscardTriggerCollectorService {
                 new ArrayList<>(List.of(trigger)),
                 null,
                 match.permanent().getId()));
-        gameBroadcastService.logAndBroadcast(gameData, GameLog.abilityTriggers(sourceCard));
+        gameLogService.append(gameData, GameLog.abilityTriggers(sourceCard));
         log.info("Game {} - {} triggers on cycle/discard (sequence)", gameData.id, sourceCard.getName());
         return true;
     }
@@ -210,7 +210,7 @@ public class DiscardTriggerCollectorService {
                     null,
                     match.permanent().getId()));
         }
-        gameBroadcastService.logAndBroadcast(gameData, GameLog.abilityTriggers(sourceCard));
+        gameLogService.append(gameData, GameLog.abilityTriggers(sourceCard));
         log.info("Game {} - {} triggers on cycle/discard (grant keyword)", gameData.id, sourceCard.getName());
         return true;
     }
@@ -226,7 +226,7 @@ public class DiscardTriggerCollectorService {
         Card sourceCard = match.permanent().getCard();
         gameData.queueInteraction(new PermanentChoiceContext.DiscardControllerTriggerTarget(
                 sourceCard, match.controllerId(), new ArrayList<>(List.of(trigger)), match.permanent().getId()));
-        gameBroadcastService.logAndBroadcast(gameData, GameLog.abilityTriggers(sourceCard));
+        gameLogService.append(gameData, GameLog.abilityTriggers(sourceCard));
         log.info("Game {} - {} triggers on cycle/discard (boost target creature)", gameData.id, sourceCard.getName());
         return true;
     }
@@ -248,7 +248,7 @@ public class DiscardTriggerCollectorService {
                 new ArrayList<>(List.of(trigger)),
                 null,
                 match.permanent().getId()));
-        gameBroadcastService.logAndBroadcast(gameData, GameLog.abilityTriggers(sourceCard));
+        gameLogService.append(gameData, GameLog.abilityTriggers(sourceCard));
         log.info("Game {} - {} triggers on cycle/discard (put counters on matching permanents)", gameData.id, sourceCard.getName());
         return true;
     }
@@ -269,7 +269,7 @@ public class DiscardTriggerCollectorService {
                 new ArrayList<>(List.of(trigger)),
                 null,
                 match.permanent().getId()));
-        gameBroadcastService.logAndBroadcast(gameData, GameLog.abilityTriggers(sourceCard));
+        gameLogService.append(gameData, GameLog.abilityTriggers(sourceCard));
         log.info("Game {} - {} triggers on cycle/discard (may pay {})", gameData.id, sourceCard.getName(), trigger.manaCost());
         return true;
     }
@@ -285,13 +285,13 @@ public class DiscardTriggerCollectorService {
         var gameData = match.gameData();
         var discardingPlayerId = dc.discardingPlayerId();
 
-        gameBroadcastService.logAndBroadcast(gameData, GameLog.cardThen(sourceCard,
+        gameLogService.append(gameData, GameLog.cardThen(sourceCard,
                 " triggers — " + gameData.playerIdToName.get(discardingPlayerId) + " loses " + amount + " life."));
         log.info("Game {} - {} triggers on discard, {} loses {} life",
                 gameData.id, cardName, gameData.playerIdToName.get(discardingPlayerId), amount);
 
         if (!gameQueryService.canPlayerLifeChange(gameData, discardingPlayerId)) {
-            gameBroadcastService.logAndBroadcast(gameData, GameLog.text(gameData.playerIdToName.get(discardingPlayerId) + "'s life total can't change."));
+            gameLogService.append(gameData, GameLog.text(gameData.playerIdToName.get(discardingPlayerId) + "'s life total can't change."));
         } else {
             int currentLife = gameData.getLife(discardingPlayerId);
             gameData.playerLifeTotals.put(discardingPlayerId, currentLife - amount);

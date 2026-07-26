@@ -1,7 +1,6 @@
 package com.github.laxika.magicalvibes.service.event;
 
 import com.github.laxika.magicalvibes.model.GameData;
-import com.github.laxika.magicalvibes.model.GameLogEntry;
 import com.github.laxika.magicalvibes.model.event.GameEventAudience;
 import com.github.laxika.magicalvibes.model.event.GameEventBatch;
 import com.github.laxika.magicalvibes.model.event.GameEventEnvelope;
@@ -190,19 +189,6 @@ public class GameMutationCoordinator {
         emit(gameData,
                 new GameEventFact.StateInvalidated(
                         GameEventFact.StateSection.PRIVATE_PLAYER_VIEW),
-                GameEventAudience.allPlayers());
-    }
-
-    /**
-     * Appends a public structured log observation and records its canonical state invalidation.
-     * The log entry remains in authoritative state because its card segments may hold domain card
-     * references; the event carries only the stable section identity.
-     */
-    public void appendPublicGameLog(GameData gameData, GameLogEntry logEntry) {
-        Objects.requireNonNull(logEntry, "logEntry");
-        gameData.gameLog.add(logEntry);
-        emit(gameData,
-                new GameEventFact.StateInvalidated(GameEventFact.StateSection.GAME_LOG),
                 GameEventAudience.allPlayers());
     }
 

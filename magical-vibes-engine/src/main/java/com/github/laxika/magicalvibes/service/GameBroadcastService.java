@@ -14,10 +14,10 @@ import java.util.Map;
 import java.util.UUID;
 
 /**
- * Compatibility facade for game-log appends and shared projection queries.
+ * Compatibility facade for legacy log callers and shared projection queries.
  *
- * <p>Runtime state delivery belongs exclusively to the event projection pipeline. Game-log append
- * remains here until the dedicated log migration.
+ * <p>Runtime state delivery belongs exclusively to the event projection pipeline. Log mutation
+ * belongs to {@link GameLogService}; excluded legacy input/effect callers delegate there.
  */
 @Component
 @RequiredArgsConstructor
@@ -25,6 +25,7 @@ public class GameBroadcastService {
 
     private final GameViewProjectionFactory projectionFactory;
     private final GameMutationCoordinator mutationCoordinator;
+    private final GameLogService gameLogService;
 
     /**
      * Canonical event-backed replacement for effect-owned state broadcasts.
@@ -70,7 +71,7 @@ public class GameBroadcastService {
     }
 
     public void logAndBroadcast(GameData gameData, GameLogEntry logEntry) {
-        gameData.gameLog.add(logEntry);
+        gameLogService.append(gameData, logEntry);
     }
 
     record FaceDownReveal(UUID viewerId, List<com.github.laxika.magicalvibes.networking.model.CardView> cards) {

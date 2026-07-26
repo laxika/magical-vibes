@@ -39,7 +39,7 @@ import com.github.laxika.magicalvibes.model.effect.TargetPlayerLosesLifeEqualToP
 import com.github.laxika.magicalvibes.model.effect.LoseLifeEffect;
 import com.github.laxika.magicalvibes.model.effect.LoseLifeRecipient;
 import com.github.laxika.magicalvibes.model.filter.CardTypePredicate;
-import com.github.laxika.magicalvibes.service.GameBroadcastService;
+import com.github.laxika.magicalvibes.service.GameLogService;
 import com.github.laxika.magicalvibes.service.battlefield.GameQueryService;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
@@ -70,7 +70,7 @@ class DeathTriggerCollectorServiceTest {
     private PredicateEvaluationService predicateEvaluationService;
 
     @Mock
-    private GameBroadcastService gameBroadcastService;
+    private GameLogService gameLogService;
 
     @InjectMocks
     private DeathTriggerCollectorService svc;
@@ -457,7 +457,7 @@ class DeathTriggerCollectorServiceTest {
 
             svc.handleEquippedCreatureDeathDefault(match(perm, PLAYER1_ID, effect), effect, ctx);
 
-            verify(gameBroadcastService).logAndBroadcast(eq(gd), argThat((GameLogEntry logEntry) -> logEntry.plainText().contains("Trigger Blade") && logEntry.plainText().contains("equipped creature died")));
+            verify(gameLogService).append(eq(gd), argThat((GameLogEntry logEntry) -> logEntry.plainText().contains("Trigger Blade") && logEntry.plainText().contains("equipped creature died")));
         }
     }
 
@@ -546,7 +546,7 @@ class DeathTriggerCollectorServiceTest {
 
             assertThat(gd.stack).hasSize(1);
             assertThat(gd.stack.get(0).getCard()).isEqualTo(aura);
-            verify(gameBroadcastService).logAndBroadcast(eq(gd), argThat((GameLogEntry logEntry) -> logEntry.plainText().contains("enchanted permanent put into graveyard")));
+            verify(gameLogService).append(eq(gd), argThat((GameLogEntry logEntry) -> logEntry.plainText().contains("enchanted permanent put into graveyard")));
         }
     }
 
@@ -654,7 +654,7 @@ class DeathTriggerCollectorServiceTest {
             svc.handleEnchantedPermanentLeavesDefault(match(auraPerm, PLAYER1_ID, effect), effect, ctx);
 
             assertThat(gd.stack).hasSize(1);
-            verify(gameBroadcastService).logAndBroadcast(eq(gd), argThat((GameLogEntry logEntry) -> logEntry.plainText().contains("enchanted permanent left the battlefield")));
+            verify(gameLogService).append(eq(gd), argThat((GameLogEntry logEntry) -> logEntry.plainText().contains("enchanted permanent left the battlefield")));
         }
     }
 
@@ -1064,7 +1064,7 @@ class DeathTriggerCollectorServiceTest {
 
             svc.handleSelfLeavesDefault(match(perm, PLAYER1_ID, effect), effect, ctx);
 
-            verify(gameBroadcastService).logAndBroadcast(eq(gd), argThat((GameLogEntry logEntry) -> logEntry.plainText().contains("Logged Leaver") && logEntry.plainText().contains("left the battlefield")));
+            verify(gameLogService).append(eq(gd), argThat((GameLogEntry logEntry) -> logEntry.plainText().contains("Logged Leaver") && logEntry.plainText().contains("left the battlefield")));
         }
     }
 
@@ -1117,7 +1117,7 @@ class DeathTriggerCollectorServiceTest {
 
             svc.handleRegisterDelayedReturn(match(perm, PLAYER1_ID, effect), effect, ctx);
 
-            verify(gameBroadcastService).logAndBroadcast(eq(gd), argThat((GameLogEntry logEntry) -> logEntry.plainText().contains("Tiana Ship's Caretaker") && logEntry.plainText().contains("Fallen Aura")));
+            verify(gameLogService).append(eq(gd), argThat((GameLogEntry logEntry) -> logEntry.plainText().contains("Tiana Ship's Caretaker") && logEntry.plainText().contains("Fallen Aura")));
         }
     }
 }

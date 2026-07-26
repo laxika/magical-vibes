@@ -10,6 +10,7 @@ import com.github.laxika.magicalvibes.service.effect.cost.AdditionalSpellCostSer
 import com.github.laxika.magicalvibes.service.event.GameMutationCoordinator;
 import com.github.laxika.magicalvibes.service.filter.PredicateEvaluationService;
 import com.github.laxika.magicalvibes.service.GameBroadcastService;
+import com.github.laxika.magicalvibes.service.GameLogService;
 import com.github.laxika.magicalvibes.service.target.TargetLegalityService;
 import com.github.laxika.magicalvibes.service.trigger.TriggerCollectionService;
 import com.github.laxika.magicalvibes.service.turn.TurnProgressionService;
@@ -110,6 +111,7 @@ public class SpellCastingService {
     private final GameQueryService gameQueryService;
     private final PredicateEvaluationService predicateEvaluationService;
     private final GameBroadcastService gameBroadcastService;
+    private final GameLogService gameLogService;
     private final CastingCostService castingCostService;
     private final CastingPermissionService castingPermissionService;
     private final TurnProgressionService turnProgressionService;
@@ -167,7 +169,7 @@ public class SpellCastingService {
         creature.setCounterCount(type, creature.getCounterCount(type) + cost.count());
         String counterName = type == CounterType.MINUS_ONE_MINUS_ONE ? "-1/-1" : type.name().toLowerCase();
         String counterText = cost.count() == 1 ? "a " + counterName + " counter" : cost.count() + " " + counterName + " counters";
-        gameBroadcastService.logAndBroadcast(gameData, GameLog.builder()
+        gameLogService.append(gameData, GameLog.builder()
                 .text(player.getUsername() + " puts " + counterText + " on ")
                 .card(creature.getCard())
                 .text(" for ")
@@ -183,7 +185,7 @@ public class SpellCastingService {
     private void payReturnCreatureToHandCost(GameData gameData, Player player, Card card, UUID returnPermanentId) {
         Permanent toReturn = additionalSpellCostService.validateReturnCreatureToHandCost(gameData, player, card, returnPermanentId);
         permanentRemovalService.removePermanentToHand(gameData, toReturn);
-        gameBroadcastService.logAndBroadcast(gameData, GameLog.builder()
+        gameLogService.append(gameData, GameLog.builder()
                 .text(player.getUsername() + " returns ")
                 .card(toReturn.getCard())
                 .text(" to hand for ")
@@ -209,7 +211,7 @@ public class SpellCastingService {
         Card toDiscard = hand.get(effectiveIndex);
         hand.remove(effectiveIndex);
         graveyardService.addCardToGraveyard(gameData, playerId, toDiscard);
-        gameBroadcastService.logAndBroadcast(gameData, GameLog.builder()
+        gameLogService.append(gameData, GameLog.builder()
                 .text(player.getUsername() + " discards ")
                 .card(toDiscard)
                 .text(" to cast ")
@@ -236,7 +238,7 @@ public class SpellCastingService {
             Card toDiscard = hand.get(effectiveIndex);
             hand.remove(effectiveIndex);
             graveyardService.addCardToGraveyard(gameData, playerId, toDiscard);
-            gameBroadcastService.logAndBroadcast(gameData, GameLog.builder()
+            gameLogService.append(gameData, GameLog.builder()
                     .text(player.getUsername() + " discards ")
                     .card(toDiscard)
                     .text(" to escalate ")
@@ -647,7 +649,7 @@ public class SpellCastingService {
             battlefieldEntryService.putPermanentOntoBattlefield(gameData, playerId, new Permanent(graveyardCard));
             gameData.landsPlayedThisTurn.merge(playerId, 1, Integer::sum);
 
-            gameBroadcastService.logAndBroadcast(gameData,
+            gameLogService.append(gameData,
                     GameLog.playerPlays(player.getUsername(), graveyardCard, " from graveyard."));
 
             log.info("Game {} - {} plays {} from graveyard", gameData.id, player.getUsername(), graveyardCard.getName());
@@ -1185,7 +1187,7 @@ public class SpellCastingService {
             battlefieldEntryService.putPermanentOntoBattlefield(gameData, playerId, new Permanent(card));
             gameData.landsPlayedThisTurn.merge(playerId, 1, Integer::sum);
 
-            gameBroadcastService.logAndBroadcast(gameData, GameLog.playerPlays(player.getUsername(), card));
+            gameLogService.append(gameData, GameLog.playerPlays(player.getUsername(), card));
 
             log.info("Game {} - {} plays {}", gameData.id, player.getUsername(), card.getName());
 
@@ -1839,7 +1841,7 @@ public class SpellCastingService {
         int power = gameQueryService.getEffectivePower(gameData, toSacrifice);
         int toughness = gameQueryService.getEffectiveToughness(gameData, toSacrifice);
         if (permanentRemovalService.removePermanentToGraveyard(gameData, toSacrifice)) {
-            gameBroadcastService.logAndBroadcast(gameData, GameLog.builder()
+            gameLogService.append(gameData, GameLog.builder()
                     .text(player.getUsername() + " sacrifices ")
                     .card(toSacrifice.getCard())
                     .text(" for ")
@@ -1865,7 +1867,7 @@ public class SpellCastingService {
         }
         for (Permanent creature : creaturesToSacrifice) {
             if (permanentRemovalService.removePermanentToGraveyard(gameData, creature)) {
-                gameBroadcastService.logAndBroadcast(gameData, GameLog.builder()
+                gameLogService.append(gameData, GameLog.builder()
                         .text(player.getUsername() + " sacrifices ")
                         .card(creature.getCard())
                         .text(" for ")
@@ -1903,7 +1905,7 @@ public class SpellCastingService {
             }
             extra.pay(pool);
             gameData.addSpellCastManaSpent(card.getId(), before - pool.getTotalAllMana());
-            gameBroadcastService.logAndBroadcast(gameData, GameLog.builder()
+            gameLogService.append(gameData, GameLog.builder()
                     .text(player.getUsername() + " pays " + cost.manaCost() + " for ")
                     .card(card)
                     .text(".")
@@ -1941,7 +1943,7 @@ public class SpellCastingService {
             }
             extra.pay(pool);
             gameData.addSpellCastManaSpent(card.getId(), before - pool.getTotalAllMana());
-            gameBroadcastService.logAndBroadcast(gameData, GameLog.builder()
+            gameLogService.append(gameData, GameLog.builder()
                     .text(player.getUsername() + " pays " + cost.manaCost() + " for ")
                     .card(card)
                     .text(".")
@@ -1979,7 +1981,7 @@ public class SpellCastingService {
                 throw new IllegalStateException("Can only sacrifice creatures for cost reduction");
             }
             if (permanentRemovalService.removePermanentToGraveyard(gameData, toSacrifice)) {
-                gameBroadcastService.logAndBroadcast(gameData, GameLog.builder()
+                gameLogService.append(gameData, GameLog.builder()
                         .text(player.getUsername() + " sacrifices ")
                         .card(toSacrifice.getCard())
                         .text(" to reduce the cost of ")
@@ -2004,7 +2006,7 @@ public class SpellCastingService {
         graveyard.remove((int) exileGraveyardCardIndex);
         graveyardService.notifyCardsLeftGraveyard(gameData, playerId);
         gameData.addToExile(playerId, exiledCard);
-        gameBroadcastService.logAndBroadcast(gameData, GameLog.builder()
+        gameLogService.append(gameData, GameLog.builder()
                 .text(player.getUsername() + " exiles ")
                 .card(exiledCard)
                 .text(" from graveyard for ")
@@ -2038,7 +2040,7 @@ public class SpellCastingService {
         }
         for (Card exiledCard : exiledCards) {
             gameData.addToExile(playerId, exiledCard);
-            gameBroadcastService.logAndBroadcast(gameData, GameLog.builder()
+            gameLogService.append(gameData, GameLog.builder()
                     .text(player.getUsername() + " exiles ")
                     .card(exiledCard)
                     .text(" from graveyard for ")
@@ -2070,7 +2072,7 @@ public class SpellCastingService {
         }
         for (Card exiledCard : exiledCards) {
             gameData.addToExile(playerId, exiledCard);
-            gameBroadcastService.logAndBroadcast(gameData, GameLog.builder()
+            gameLogService.append(gameData, GameLog.builder()
                     .text(player.getUsername() + " exiles ")
                     .card(exiledCard)
                     .text(" from graveyard for ")
@@ -2598,7 +2600,7 @@ public class SpellCastingService {
             battlefieldEntryService.putPermanentOntoBattlefield(gameData, playerId, new Permanent(card));
             gameData.landsPlayedThisTurn.merge(playerId, 1, Integer::sum);
 
-            gameBroadcastService.logAndBroadcast(gameData,
+            gameLogService.append(gameData,
                     GameLog.playerPlays(player.getUsername(), card, " from exile."));
             log.info("Game {} - {} plays {} from exile", gameData.id, player.getUsername(), card.getName());
 
@@ -2728,7 +2730,7 @@ public class SpellCastingService {
         unprepareSourceOfCastSpell(gameData, exileCardId);
         gameData.priorityPassedBy.clear();
 
-        gameBroadcastService.logAndBroadcast(gameData, GameLog.textCardText(player.getUsername() + " casts " , card, " from exile."));
+        gameLogService.append(gameData, GameLog.textCardText(player.getUsername() + " casts " , card, " from exile."));
         log.info("Game {} - {} casts {} from exile", gameData.id, player.getUsername(), card.getName());
 
         triggerCollectionService.checkSpellCastTriggers(gameData, card, playerId);
@@ -2825,7 +2827,7 @@ public class SpellCastingService {
         gameData.recordSpellCast(playerId, card);
         gameData.priorityPassedBy.clear();
 
-        gameBroadcastService.logAndBroadcast(gameData, GameLog.textCardText(player.getUsername() + " casts " , card, " from the top of their library."));
+        gameLogService.append(gameData, GameLog.textCardText(player.getUsername() + " casts " , card, " from the top of their library."));
         log.info("Game {} - {} casts {} from library top", gameData.id, player.getUsername(), card.getName());
 
         triggerCollectionService.checkSpellCastTriggers(gameData, card, playerId);
@@ -2974,7 +2976,7 @@ public class SpellCastingService {
             int currentLife = gameData.getLife(playerId);
             gameData.playerLifeTotals.put(playerId, currentLife - phyrexianLifeCost);
             String playerName = gameData.playerIdToName.get(playerId);
-            gameBroadcastService.logAndBroadcast(gameData, GameLog.text(playerName + " pays " + phyrexianLifeCost + " life for Phyrexian mana."));
+            gameLogService.append(gameData, GameLog.text(playerName + " pays " + phyrexianLifeCost + " life for Phyrexian mana."));
         }
 
         int fromPool = before - pool.getTotalAllMana();
@@ -3036,7 +3038,7 @@ public class SpellCastingService {
             additionalSpellCostService.extractAndRemove(splicedEffects);
             filteredSpellEffects.addAll(splicedEffects);
             costs.add(splice);
-            gameBroadcastService.logAndBroadcast(gameData, GameLog.builder()
+            gameLogService.append(gameData, GameLog.builder()
                     .text(gameData.playerIdToName.get(playerId) + " splices ")
                     .card(spliceCard)
                     .text(" onto ")
@@ -3193,7 +3195,7 @@ public class SpellCastingService {
         Card toDiscard = hand.get(discardHandCardIndex);
         hand.remove((int) discardHandCardIndex);
         graveyardService.addCardToGraveyard(gameData, playerId, toDiscard);
-        gameBroadcastService.logAndBroadcast(gameData, GameLog.builder()
+        gameLogService.append(gameData, GameLog.builder()
                 .text(player.getUsername() + " discards ")
                 .card(toDiscard)
                 .text(" to retrace ")
@@ -3321,7 +3323,7 @@ public class SpellCastingService {
                         throw new IllegalStateException("Tap target does not match the required filter");
                     }
                     toTap.tap();
-                    gameBroadcastService.logAndBroadcast(gameData, GameLog.builder()
+                    gameLogService.append(gameData, GameLog.builder()
                             .text(player.getUsername() + " taps ")
                             .card(toTap.getCard())
                             .text(" for ")
@@ -3374,7 +3376,7 @@ public class SpellCastingService {
             for (UUID sacId : sacrificePermanentIds) {
                 Permanent toSacrifice = gameQueryService.findPermanentById(gameData, sacId);
                 if (toSacrifice != null && permanentRemovalService.removePermanentToGraveyard(gameData, toSacrifice)) {
-                    gameBroadcastService.logAndBroadcast(gameData, GameLog.builder()
+                    gameLogService.append(gameData, GameLog.builder()
                             .text(player.getUsername() + " sacrifices ")
                             .card(toSacrifice.getCard())
                             .text(" for ")
@@ -3390,7 +3392,7 @@ public class SpellCastingService {
         altCast.getCost(LifeCastingCost.class).ifPresent(lifeCost -> {
             int currentLife = gameData.getLife(playerId);
             gameData.playerLifeTotals.put(playerId, currentLife - lifeCost.amount());
-            gameBroadcastService.logAndBroadcast(gameData, GameLog.textCardText(
+            gameLogService.append(gameData, GameLog.textCardText(
                     player.getUsername() + " pays " + lifeCost.amount() + " life for ", card, "."));
         });
 
@@ -3403,7 +3405,7 @@ public class SpellCastingService {
                 Permanent toTap = gameQueryService.findPermanentById(gameData, tapId);
                 if (toTap != null) {
                     toTap.tap();
-                    gameBroadcastService.logAndBroadcast(gameData, GameLog.builder()
+                    gameLogService.append(gameData, GameLog.builder()
                             .text(player.getUsername() + " taps ")
                             .card(toTap.getCard())
                             .text(" for ")
@@ -3423,7 +3425,7 @@ public class SpellCastingService {
             for (UUID returnId : returnIds) {
                 Permanent toReturn = gameQueryService.findPermanentById(gameData, returnId);
                 if (toReturn != null && permanentRemovalService.removePermanentToHand(gameData, toReturn)) {
-                    gameBroadcastService.logAndBroadcast(gameData, GameLog.builder()
+                    gameLogService.append(gameData, GameLog.builder()
                             .text(player.getUsername() + " returns ")
                             .card(toReturn.getCard())
                             .text(" to hand for ")
@@ -3444,7 +3446,7 @@ public class SpellCastingService {
         ManaCost cost = new ManaCost(manaCostOpt.get().manaCost());
         cost.pay(pool, -emergeReduction);
         int manaSpent = before - pool.getTotalAllMana();
-        gameBroadcastService.logAndBroadcast(gameData, GameLog.textCardText(
+        gameLogService.append(gameData, GameLog.textCardText(
                 player.getUsername() + " pays " + manaCostOpt.get().manaCost() + " for ", card, "."));
         return manaSpent;
     }
@@ -3457,7 +3459,7 @@ public class SpellCastingService {
         gameData.recordSpellCast(playerId, card);
         gameData.priorityPassedBy.clear();
 
-        gameBroadcastService.logAndBroadcast(gameData, GameLog.builder()
+        gameLogService.append(gameData, GameLog.builder()
                 .text(player.getUsername() + " casts ")
                 .card(card)
                 .text(".")

@@ -14,6 +14,7 @@ import java.util.UUID;
  * and {@code StackEntry} must never be added here.
  */
 public sealed interface GameEventFact permits GameEventFact.StateInvalidated,
+        GameEventFact.GameLogAppended,
         GameEventFact.DecisionRequested,
         GameEventFact.PrivateReveal, GameEventFact.MulliganResolved, GameEventFact.GameEnded {
 
@@ -45,6 +46,26 @@ public sealed interface GameEventFact permits GameEventFact.StateInvalidated,
             EnumSet<StateSection> merged = EnumSet.copyOf(sections);
             merged.addAll(other.sections);
             return new StateInvalidated(merged);
+        }
+    }
+
+    /**
+     * One structured game-log entry was appended to authoritative state.
+     *
+     * <p>The entry remains in {@code GameData}; this fact carries only its stable zero-based index
+     * so diagnostics cannot expose card references or hidden card identity.
+     */
+    record GameLogAppended(int logIndex) implements GameEventFact {
+
+        public GameLogAppended {
+            if (logIndex < 0) {
+                throw new IllegalArgumentException("logIndex cannot be negative");
+            }
+        }
+
+        @Override
+        public GameEventKind kind() {
+            return GameEventKind.GAME_LOG_APPENDED;
         }
     }
 

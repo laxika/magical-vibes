@@ -79,7 +79,7 @@ class StackResolutionServiceTest {
     @Mock private StateBasedActionService stateBasedActionService;
     @Mock private GameQueryService gameQueryService;
     @Mock private TargetLegalityService targetLegalityService;
-    @Mock private GameBroadcastService gameBroadcastService;
+    @Mock private GameLogService gameLogService;
     @Mock private EffectResolutionService effectResolutionService;
     @Mock private PlayerInputService playerInputService;
     @Mock private TriggerCollectionService triggerCollectionService;
@@ -217,7 +217,7 @@ class StackResolutionServiceTest {
             verify(battlefieldEntryService, never()).putPermanentOntoBattlefield(any(), any(), any());
             verifyNoInteractions(graveyardService,
                     effectResolutionService, stateBasedActionService,
-                    gameBroadcastService, stateTriggerService);
+                    gameLogService, stateTriggerService);
         }
 
         @Test
@@ -603,8 +603,8 @@ class StackResolutionServiceTest {
 
             svc.resolveTopOfStack(gd);
 
-            verify(gameBroadcastService).logAndBroadcast(eq(gd), argThat((GameLogEntry e) -> e.plainText().equals("Chainer's Torment gets a lore counter (1).")));
-            verify(gameBroadcastService).logAndBroadcast(eq(gd), argThat((GameLogEntry e) -> e.plainText().equals("Chainer's Torment's chapter I ability triggers.")));
+            verify(gameLogService).append(eq(gd), argThat((GameLogEntry e) -> e.plainText().equals("Chainer's Torment gets a lore counter (1).")));
+            verify(gameLogService).append(eq(gd), argThat((GameLogEntry e) -> e.plainText().equals("Chainer's Torment's chapter I ability triggers.")));
         }
 
         @Test

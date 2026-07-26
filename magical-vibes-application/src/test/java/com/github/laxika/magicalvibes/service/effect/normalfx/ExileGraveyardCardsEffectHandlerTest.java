@@ -8,6 +8,7 @@ import com.github.laxika.magicalvibes.model.StackEntryType;
 import com.github.laxika.magicalvibes.model.effect.ExileGraveyardCardsEffect;
 import com.github.laxika.magicalvibes.model.effect.GraveyardExileScope;
 import com.github.laxika.magicalvibes.service.GameBroadcastService;
+import com.github.laxika.magicalvibes.service.GameLogService;
 import com.github.laxika.magicalvibes.service.battlefield.GameQueryService;
 import com.github.laxika.magicalvibes.service.battlefield.PermanentRemovalService;
 import com.github.laxika.magicalvibes.service.exile.ExileService;
@@ -51,6 +52,8 @@ class ExileGraveyardCardsEffectHandlerTest {
     @Mock
     private GameBroadcastService gameBroadcastService;
     @Mock
+    private GameLogService gameLogService;
+    @Mock
     private ExileService exileService;
     @Mock
     private PermanentRemovalService permanentRemovalService;
@@ -81,7 +84,7 @@ class ExileGraveyardCardsEffectHandlerTest {
         gd.playerGraveyards.put(player2Id, Collections.synchronizedList(new ArrayList<>()));
 
         GraveyardService graveyardService = new GraveyardService(
-                gameQueryService, gameBroadcastService, exileService, predicateEvaluationService, triggerCollectionService);
+                gameQueryService, gameLogService, exileService, predicateEvaluationService, triggerCollectionService);
         handler = new ExileGraveyardCardsEffectHandler(gameQueryService, gameBroadcastService, exileService,
                 permanentRemovalService, predicateEvaluationService, graveyardReturnSupport, graveyardService);
     }

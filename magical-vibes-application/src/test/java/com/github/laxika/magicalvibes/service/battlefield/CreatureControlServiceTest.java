@@ -14,7 +14,7 @@ import com.github.laxika.magicalvibes.model.effect.EffectDuration;
 import com.github.laxika.magicalvibes.model.effect.GainControlOfEnchantedTargetEffect;
 import com.github.laxika.magicalvibes.model.effect.GainControlOfTargetEffect;
 import com.github.laxika.magicalvibes.model.EffectSlot;
-import com.github.laxika.magicalvibes.service.GameBroadcastService;
+import com.github.laxika.magicalvibes.service.GameLogService;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Nested;
@@ -42,7 +42,7 @@ import static org.mockito.Mockito.verify;
 @MockitoSettings(strictness = Strictness.LENIENT)
 class CreatureControlServiceTest {
 
-    @Mock private GameBroadcastService gameBroadcastService;
+    @Mock private GameLogService gameLogService;
     @Mock private GameQueryService gameQueryService;
 
     @InjectMocks private CreatureControlService creatureControlService;
@@ -174,7 +174,7 @@ class CreatureControlServiceTest {
                     .anyMatch(p -> p.getId().equals(bear.getId()));
             assertThat(bear.isSummoningSick()).isFalse();
             assertThat(gd.stolenCreatures).isEmpty();
-            verify(gameBroadcastService, never()).logAndBroadcast(any(), any(GameLogEntry.class));
+            verify(gameLogService, never()).append(any(), any(GameLogEntry.class));
         }
 
         @Test
@@ -184,7 +184,7 @@ class CreatureControlServiceTest {
 
             applySteal(player2Id, bear, EffectDuration.UNTIL_END_OF_TURN, null);
 
-            verify(gameBroadcastService).logAndBroadcast(eq(gd), argThat((GameLogEntry e) -> e.plainText().equals("Player2 gains control of Grizzly Bears.")));
+            verify(gameLogService).append(eq(gd), argThat((GameLogEntry e) -> e.plainText().equals("Player2 gains control of Grizzly Bears.")));
         }
 
         @Test
@@ -216,7 +216,7 @@ class CreatureControlServiceTest {
 
             assertThat(gd.playerBattlefields.get(player2Id)).contains(bear);
             assertThat(gd.stolenCreatures).doesNotContainKey(bear.getId());
-            verify(gameBroadcastService).logAndBroadcast(eq(gd), argThat((GameLogEntry e) -> e.plainText().equals("Grizzly Bears returns to Player2's control.")));
+            verify(gameLogService).append(eq(gd), argThat((GameLogEntry e) -> e.plainText().equals("Grizzly Bears returns to Player2's control.")));
         }
 
         @Test

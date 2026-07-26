@@ -5,7 +5,7 @@ import com.github.laxika.magicalvibes.model.GameData;
 import com.github.laxika.magicalvibes.model.GameLog;
 import com.github.laxika.magicalvibes.model.PendingInteraction;
 import com.github.laxika.magicalvibes.model.Player;
-import com.github.laxika.magicalvibes.service.GameBroadcastService;
+import com.github.laxika.magicalvibes.service.GameLogService;
 import com.github.laxika.magicalvibes.service.effect.EffectResolutionService;
 import com.github.laxika.magicalvibes.service.effect.normalfx.LifeSupport;
 import com.github.laxika.magicalvibes.service.turn.TurnProgressionService;
@@ -30,7 +30,7 @@ public class SylvanLibraryChoiceInteractionHandler
 
     private static final int LIFE_PER_CARD = 4;
 
-    private final GameBroadcastService gameBroadcastService;
+    private final GameLogService gameLogService;
     private final LifeSupport lifeSupport;
     private final EffectResolutionService effectResolutionService;
     private final TurnProgressionService turnProgressionService;
@@ -89,7 +89,7 @@ public class SylvanLibraryChoiceInteractionHandler
             deck.addFirst(topped.get(i));
         }
         for (Card card : topped) {
-            gameBroadcastService.logAndBroadcast(gameData,
+            gameLogService.append(gameData,
                     GameLog.textCardText(playerName + " puts ", card, " on top of their library (Sylvan Library)."));
         }
 
@@ -103,7 +103,7 @@ public class SylvanLibraryChoiceInteractionHandler
                 Card forced = takeNextEligible(hand, interaction.drawnThisTurnCardIds());
                 if (forced != null) {
                     deck.addFirst(forced);
-                    gameBroadcastService.logAndBroadcast(gameData, GameLog.textCardText(playerName + " can't pay 4 life and puts ", forced, " on top of their library (Sylvan Library)."));
+                    gameLogService.append(gameData, GameLog.textCardText(playerName + " can't pay 4 life and puts ", forced, " on top of their library (Sylvan Library)."));
                 }
             }
         }

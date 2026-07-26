@@ -24,16 +24,16 @@ import java.util.UUID;
 public class GameOutcomeService {
 
     private final GameQueryService gameQueryService;
-    private final GameBroadcastService gameBroadcastService;
+    private final GameLogService gameLogService;
     private final LichsMirrorResetService lichsMirrorResetService;
     private final GameMutationCoordinator mutationCoordinator;
 
     public GameOutcomeService(GameQueryService gameQueryService,
-                              GameBroadcastService gameBroadcastService,
+                              GameLogService gameLogService,
                               @Lazy LichsMirrorResetService lichsMirrorResetService,
                               GameMutationCoordinator mutationCoordinator) {
         this.gameQueryService = gameQueryService;
-        this.gameBroadcastService = gameBroadcastService;
+        this.gameLogService = gameLogService;
         this.lichsMirrorResetService = lichsMirrorResetService;
         this.mutationCoordinator = mutationCoordinator;
     }
@@ -99,7 +99,7 @@ public class GameOutcomeService {
                 } else {
                     logEntry = gameData.playerIdToName.get(playerId) + " has been defeated! " + winnerName + " wins!";
                 }
-                gameBroadcastService.logAndBroadcast(gameData, GameLog.text(logEntry));
+                gameLogService.append(gameData, GameLog.text(logEntry));
 
                 finish(gameData, GameEventFact.GameResult.WIN, winnerId,
                         GameEventAudience.allPlayers());
@@ -128,7 +128,7 @@ public class GameOutcomeService {
         String winnerName = gameData.playerIdToName.get(winnerId);
 
         String logEntry = winnerName + " wins the game!";
-        gameBroadcastService.logAndBroadcast(gameData, GameLog.text(logEntry));
+        gameLogService.append(gameData, GameLog.text(logEntry));
 
         finish(gameData, GameEventFact.GameResult.WIN, winnerId,
                 GameEventAudience.allPlayers());
@@ -150,7 +150,7 @@ public class GameOutcomeService {
             return;
         }
 
-        gameBroadcastService.logAndBroadcast(gameData, GameLog.text("The game is a draw."));
+        gameLogService.append(gameData, GameLog.text("The game is a draw."));
         finish(gameData, GameEventFact.GameResult.DRAW, null,
                 GameEventAudience.allPlayers());
 
@@ -188,7 +188,7 @@ public class GameOutcomeService {
             se.setNonTargeting(true);
             gameData.stack.add(se);
 
-            gameBroadcastService.logAndBroadcast(gameData, GameLog.cardThen(perm.getCard(), "'s triggered ability goes on the stack ("
+            gameLogService.append(gameData, GameLog.cardThen(perm.getCard(), "'s triggered ability goes on the stack ("
                     + gameData.playerIdToName.get(losingPlayerId) + " loses the game)."));
         });
     }

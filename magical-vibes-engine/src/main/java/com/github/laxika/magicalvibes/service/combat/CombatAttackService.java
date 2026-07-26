@@ -1,5 +1,7 @@
 package com.github.laxika.magicalvibes.service.combat;
 
+import com.github.laxika.magicalvibes.service.GameLogService;
+
 import com.github.laxika.magicalvibes.model.CardType;
 import com.github.laxika.magicalvibes.model.CombatAttackTarget;
 import com.github.laxika.magicalvibes.model.CounterType;
@@ -64,7 +66,6 @@ import com.github.laxika.magicalvibes.model.filter.PermanentIsSourceCardPredicat
 import com.github.laxika.magicalvibes.model.filter.PermanentNotPredicate;
 import com.github.laxika.magicalvibes.model.GameLog;
 import com.github.laxika.magicalvibes.service.cast.CastingCostService;
-import com.github.laxika.magicalvibes.service.event.GameMutationCoordinator;
 import com.github.laxika.magicalvibes.service.trigger.TriggerCollectionService;
 import com.github.laxika.magicalvibes.service.battlefield.GameQueryService;
 import com.github.laxika.magicalvibes.service.battlefield.GraveyardTargetingService;
@@ -90,7 +91,7 @@ public class CombatAttackService {
     private final PredicateEvaluationService predicateEvaluationService;
     private final ConditionEvaluationService conditionEvaluationService;
     private final AmountEvaluationService amountEvaluationService;
-    private final GameMutationCoordinator mutationCoordinator;
+    private final GameLogService gameLogService;
     private final CastingCostService castingCostService;
     private final TriggerCollectionService triggerCollectionService;
     private final CombatTriggerService combatTriggerService;
@@ -229,7 +230,7 @@ public class CombatAttackService {
         if (attackerIndices.isEmpty()) {
             gameData.interaction.clearAwaitingInput();
             log.info("Game {} - {} declares no attackers", gameData.id, player.getUsername());
-            mutationCoordinator.appendPublicGameLog(gameData, GameLog.text(player.getUsername() + " declares no attackers."));
+            gameLogService.append(gameData, GameLog.text(player.getUsername() + " declares no attackers."));
             return CombatResult.AUTO_PASS_ONLY;
         }
 
@@ -349,7 +350,7 @@ public class CombatAttackService {
 
         String logEntry = player.getUsername() + " declares " + attackerIndices.size() +
                 " attacker" + (attackerIndices.size() > 1 ? "s" : "") + ".";
-        mutationCoordinator.appendPublicGameLog(gameData, GameLog.text(logEntry));
+        gameLogService.append(gameData, GameLog.text(logEntry));
 
         // Collect all attack-step triggers, then reorder per APNAP (CR 603.3b)
         int stackSizeBeforeAttackTriggers = gameData.stack.size();
@@ -388,7 +389,7 @@ public class CombatAttackService {
                             gameData.queueMayAbility(attacker.getCard(), defendingPlayerId,
                                     new MayEffect(new DrawCardEffect(), "Draw a card?"));
                         }
-                        mutationCoordinator.appendPublicGameLog(gameData,
+                        gameLogService.append(gameData,
                                 GameLog.builder().card(attacker.getCard()).text("'s ability triggers.").build());
                     }
                 }
@@ -481,12 +482,12 @@ public class CombatAttackService {
                         }
 
                         if (!needsGraveyardTarget) {
-                            mutationCoordinator.appendPublicGameLog(gameData,
+                            gameLogService.append(gameData,
                                     GameLog.builder().card(attacker.getCard()).text("'s attack ability triggers.").build());
                             log.info("Game {} - {} attack trigger pushed onto stack", gameData.id, attacker.getCard().getName());
                         }
                     } else {
-                        mutationCoordinator.appendPublicGameLog(gameData,
+                        gameLogService.append(gameData,
                                 GameLog.builder().card(attacker.getCard()).text("'s attack ability triggers.").build());
                         log.info("Game {} - {} attack trigger pushed onto stack", gameData.id, attacker.getCard().getName());
                     }
@@ -516,7 +517,7 @@ public class CombatAttackService {
                         null,
                         attacker.getId()
                 ));
-                mutationCoordinator.appendPublicGameLog(gameData,
+                gameLogService.append(gameData,
                         GameLog.builder().card(attacker.getCard()).text("'s battle cry triggers.").build());
                 log.info("Game {} - {} battle cry trigger pushed onto stack", gameData.id, attacker.getCard().getName());
             }
@@ -553,7 +554,7 @@ public class CombatAttackService {
                     null,
                     attacker.getId()
             ));
-            mutationCoordinator.appendPublicGameLog(gameData,
+            gameLogService.append(gameData,
                     GameLog.builder().card(attacker.getCard()).text("'s training triggers.").build());
             log.info("Game {} - {} training trigger pushed onto stack", gameData.id, attacker.getCard().getName());
         }
@@ -596,7 +597,7 @@ public class CombatAttackService {
                     null,
                     null
             ));
-            mutationCoordinator.appendPublicGameLog(gameData,
+            gameLogService.append(gameData,
                     GameLog.builder().card(perm.getCard()).text("'s attack ability triggers.").build());
             log.info("Game {} - {} ON_ALLY_CREATURES_ATTACK trigger pushed onto stack (attacker count: {})",
                     gameData.id, perm.getCard().getName(), attackerIndices.size());
@@ -682,7 +683,7 @@ public class CombatAttackService {
                     gameData.stack.add(attackTrigger);
                 }
 
-                mutationCoordinator.appendPublicGameLog(gameData,
+                gameLogService.append(gameData,
                         GameLog.builder().card(perm.getCard()).text("'s ability triggers.").build());
                 log.info("Game {} - {} ON_ALLY_CREATURE_ATTACKS trigger for {} attacking",
                         gameData.id, perm.getCard().getName(), attacker.getCard().getName());
@@ -727,7 +728,7 @@ public class CombatAttackService {
                             null,
                             null
                     ));
-                    mutationCoordinator.appendPublicGameLog(gameData,
+                    gameLogService.append(gameData,
                             GameLog.builder().card(card).text("'s graveyard attack ability triggers.").build());
                     log.info("Game {} - {} GRAVEYARD_ON_ALLY_CREATURES_ATTACK trigger pushed onto stack (attacker count: {})",
                             gameData.id, card.getName(), attackerIndices.size());
@@ -773,7 +774,7 @@ public class CombatAttackService {
                 );
                 attackedTrigger.setNonTargeting(true);
                 gameData.stack.add(attackedTrigger);
-                mutationCoordinator.appendPublicGameLog(gameData,
+                gameLogService.append(gameData,
                         GameLog.builder().card(perm.getCard()).text("'s ability triggers.").build());
                 log.info("Game {} - {} ON_CREATURE_ATTACKS_YOU trigger for {} attacking",
                         gameData.id, perm.getCard().getName(), attacker.getCard().getName());
@@ -803,7 +804,7 @@ public class CombatAttackService {
                     );
                     anyAttackTrigger.setNonTargeting(true);
                     gameData.stack.add(anyAttackTrigger);
-                    mutationCoordinator.appendPublicGameLog(gameData,
+                    gameLogService.append(gameData,
                             GameLog.builder().card(perm.getCard()).text("'s ability triggers.").build());
                     log.info("Game {} - {} ON_ANY_CREATURE_ATTACKS trigger for {} attacking",
                             gameData.id, perm.getCard().getName(), attacker.getCard().getName());

@@ -22,6 +22,7 @@ import com.github.laxika.magicalvibes.model.effect.TapUntapScope;
 import com.github.laxika.magicalvibes.model.CardSubtype;
 import com.github.laxika.magicalvibes.model.filter.CardSubtypePredicate;
 import com.github.laxika.magicalvibes.service.GameBroadcastService;
+import com.github.laxika.magicalvibes.service.GameLogService;
 import com.github.laxika.magicalvibes.service.GameOutcomeService;
 import com.github.laxika.magicalvibes.service.TriggeredAbilityQueueService;
 import com.github.laxika.magicalvibes.service.battlefield.ETBTokenTargetService;
@@ -61,6 +62,7 @@ class EnterTriggerCollectorServiceTest {
     @Mock private GameQueryService gameQueryService;
     @Mock private PredicateEvaluationService predicateEvaluationService;
     @Mock private GameBroadcastService gameBroadcastService;
+    @Mock private GameLogService gameLogService;
     @Mock private ETBTokenTargetService etbTokenTargetService;
 
     private TriggerCollectionService service;
@@ -70,13 +72,13 @@ class EnterTriggerCollectorServiceTest {
     @BeforeEach
     void setUp() {
         TriggerCollectorRegistry registry = new TriggerCollectorRegistry();
-        TriggerCollectorRegistry.scanBean(new EnterTriggerCollectorService(gameBroadcastService,
+        TriggerCollectorRegistry.scanBean(new EnterTriggerCollectorService(gameLogService,
                 new AmountEvaluationService(predicateEvaluationService, gameQueryService)), registry);
 
         service = new TriggerCollectionService(registry, gameOutcomeService, playerInputService,
                 triggeredAbilityQueueService, gameQueryService, predicateEvaluationService,
                 new ConditionEvaluationService(gameQueryService, predicateEvaluationService, new StaticEffectSupport(gameQueryService, predicateEvaluationService)),
-                gameBroadcastService, etbTokenTargetService);
+                gameLogService, etbTokenTargetService);
 
         player1Id = UUID.randomUUID();
         gd = new GameData(UUID.randomUUID(), "test", player1Id, "Player1");

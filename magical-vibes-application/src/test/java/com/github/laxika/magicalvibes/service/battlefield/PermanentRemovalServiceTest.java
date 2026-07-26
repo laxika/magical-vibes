@@ -17,7 +17,7 @@ import com.github.laxika.magicalvibes.model.effect.RedirectPlayerDamageToSelfEff
 import com.github.laxika.magicalvibes.model.effect.SacrificeOnUnattachEffect;
 import com.github.laxika.magicalvibes.service.DamagePreventionService;
 import com.github.laxika.magicalvibes.service.trigger.TriggerCollectionService;
-import com.github.laxika.magicalvibes.service.GameBroadcastService;
+import com.github.laxika.magicalvibes.service.GameLogService;
 import com.github.laxika.magicalvibes.service.aura.AuraAttachmentService;
 import com.github.laxika.magicalvibes.service.exile.ExileService;
 import com.github.laxika.magicalvibes.service.graveyard.GraveyardService;
@@ -63,7 +63,7 @@ class PermanentRemovalServiceTest {
     private GameQueryService gameQueryService;
 
     @Mock
-    private GameBroadcastService gameBroadcastService;
+    private GameLogService gameLogService;
 
     @Mock
     private ExileService exileService;
@@ -171,7 +171,7 @@ class PermanentRemovalServiceTest {
 
             assertThat(gd.playerBattlefields.get(player1Id)).doesNotContain(token);
             verify(exileService).exileCard(gd, player1Id, token.getOriginalCard());
-            verify(gameBroadcastService).logAndBroadcast(eq(gd),
+            verify(gameLogService).append(eq(gd),
                     argThat((GameLogEntry logEntry) -> logEntry.plainText().equals("Token token is exiled.")));
             assertThat(gd.getDelayedActions(DelayedPermanentAction.class)).containsExactly(otherKind);
         }
@@ -189,7 +189,7 @@ class PermanentRemovalServiceTest {
 
             assertThat(gd.playerBattlefields.get(player1Id)).doesNotContain(token);
             verify(graveyardService).addCardToGraveyard(eq(gd), eq(player1Id), eq(token.getOriginalCard()), eq(Zone.BATTLEFIELD));
-            verify(gameBroadcastService).logAndBroadcast(eq(gd),
+            verify(gameLogService).append(eq(gd),
                     argThat((GameLogEntry logEntry) -> logEntry.plainText().equals("Spark Token is sacrificed.")));
         }
 
@@ -205,7 +205,7 @@ class PermanentRemovalServiceTest {
 
             assertThat(gd.playerBattlefields.get(player1Id)).doesNotContain(perm);
             assertThat(gd.playerHands.get(player1Id)).contains(perm.getOriginalCard());
-            verify(gameBroadcastService).logAndBroadcast(eq(gd),
+            verify(gameLogService).append(eq(gd),
                     argThat((GameLogEntry logEntry) -> logEntry.plainText().equals("Bouncy Creature is returned to its owner's hand.")));
         }
 
@@ -221,7 +221,7 @@ class PermanentRemovalServiceTest {
             prs.processDelayedPermanentActions(gd, DelayedPermanentActionKind.DESTROY_AT_END_STEP);
 
             assertThat(gd.playerBattlefields.get(player1Id)).contains(perm);
-            verify(gameBroadcastService, never()).logAndBroadcast(eq(gd), any(GameLogEntry.class));
+            verify(gameLogService, never()).append(eq(gd), any(GameLogEntry.class));
             assertThat(gd.getDelayedActions(DelayedPermanentAction.class)).isEmpty();
         }
 
@@ -238,7 +238,7 @@ class PermanentRemovalServiceTest {
 
             assertThat(gd.playerBattlefields.get(player1Id)).doesNotContain(perm);
             verify(graveyardService, never()).tryRegenerate(any(), any());
-            verify(gameBroadcastService).logAndBroadcast(eq(gd),
+            verify(gameLogService).append(eq(gd),
                     argThat((GameLogEntry logEntry) -> logEntry.plainText().equals("Doomed Creature is destroyed.")));
         }
 
@@ -250,7 +250,7 @@ class PermanentRemovalServiceTest {
 
             prs.processDelayedPermanentActions(gd, DelayedPermanentActionKind.EXILE_AT_END_STEP);
 
-            verify(gameBroadcastService, never()).logAndBroadcast(eq(gd), any(GameLogEntry.class));
+            verify(gameLogService, never()).append(eq(gd), any(GameLogEntry.class));
             assertThat(gd.getDelayedActions(DelayedPermanentAction.class)).isEmpty();
         }
     }
@@ -300,7 +300,7 @@ class PermanentRemovalServiceTest {
             assertThat(gd.playerBattlefields.get(player1Id)).doesNotContain(bears);
             verify(exileService).exileCard(gd, player1Id, bears.getOriginalCard());
             verify(graveyardService, never()).addCardToGraveyard(any(), any(), any(Card.class), any());
-            verify(gameBroadcastService).logAndBroadcast(eq(gd), argThat((GameLogEntry logEntry) -> logEntry.plainText().contains("exiled instead of going to the graveyard")));
+            verify(gameLogService).append(eq(gd), argThat((GameLogEntry logEntry) -> logEntry.plainText().contains("exiled instead of going to the graveyard")));
         }
 
         @Test
@@ -546,7 +546,7 @@ class PermanentRemovalServiceTest {
             assertThat(gd.playerHands.get(player1Id))
                     .noneMatch(c -> c.getName().equals("Grizzly Bears"));
             verify(exileService).exileCard(gd, player1Id, bears.getOriginalCard());
-            verify(gameBroadcastService).logAndBroadcast(eq(gd), argThat((GameLogEntry logEntry) -> logEntry.plainText().contains("exiled instead of returning to hand")));
+            verify(gameLogService).append(eq(gd), argThat((GameLogEntry logEntry) -> logEntry.plainText().contains("exiled instead of returning to hand")));
         }
 
         @Test
@@ -607,7 +607,7 @@ class PermanentRemovalServiceTest {
             assertThat(result).isTrue();
             assertThat(gd.playerBattlefields.get(player1Id)).doesNotContain(token);
             assertThat(gd.playerHands.get(player1Id)).isEmpty();
-            verify(gameBroadcastService).logAndBroadcast(eq(gd), argThat((GameLogEntry logEntry) ->
+            verify(gameLogService).append(eq(gd), argThat((GameLogEntry logEntry) ->
                     logEntry.plainText().contains("Saproling") && logEntry.plainText().contains("ceases to exist")));
         }
 
@@ -753,7 +753,7 @@ class PermanentRemovalServiceTest {
 
             prs.tryDestroyPermanent(gd, golem);
 
-            verify(gameBroadcastService).logAndBroadcast(eq(gd), argThat((GameLogEntry logEntry) ->
+            verify(gameLogService).append(eq(gd), argThat((GameLogEntry logEntry) ->
                     logEntry.plainText().contains("Indestructible Golem") && logEntry.plainText().contains("indestructible")));
         }
 
@@ -887,7 +887,7 @@ class PermanentRemovalServiceTest {
             int result = prs.redirectPlayerDamageToEnchantedCreature(gd, player1Id, 3, "Lightning Bolt");
 
             assertThat(result).isEqualTo(0);
-            verify(gameBroadcastService).logAndBroadcast(eq(gd), argThat((GameLogEntry logEntry) ->
+            verify(gameLogService).append(eq(gd), argThat((GameLogEntry logEntry) ->
                     logEntry.plainText().contains("Serra Angel") && logEntry.plainText().contains("absorbs") && logEntry.plainText().contains("redirected")));
         }
 
@@ -908,7 +908,7 @@ class PermanentRemovalServiceTest {
             prs.redirectPlayerDamageToEnchantedCreature(gd, player1Id, 4, "Fireball");
 
             assertThat(gd.playerBattlefields.get(player1Id)).doesNotContain(creature);
-            verify(gameBroadcastService).logAndBroadcast(eq(gd), argThat((GameLogEntry logEntry) ->
+            verify(gameLogService).append(eq(gd), argThat((GameLogEntry logEntry) ->
                     logEntry.plainText().contains("Serra Angel") && logEntry.plainText().contains("destroyed")));
         }
 
@@ -926,7 +926,7 @@ class PermanentRemovalServiceTest {
 
             assertThat(result).isEqualTo(0);
             assertThat(gd.playerBattlefields.get(player1Id)).contains(creature);
-            verify(gameBroadcastService).logAndBroadcast(eq(gd), argThat((GameLogEntry logEntry) ->
+            verify(gameLogService).append(eq(gd), argThat((GameLogEntry logEntry) ->
                     logEntry.plainText().contains("indestructible")));
         }
 
@@ -944,7 +944,7 @@ class PermanentRemovalServiceTest {
             int result = prs.redirectPlayerDamageToEnchantedCreature(gd, player1Id, 3, "Lightning Bolt");
 
             assertThat(result).isEqualTo(0);
-            verify(gameBroadcastService).logAndBroadcast(eq(gd), argThat((GameLogEntry logEntry) ->
+            verify(gameLogService).append(eq(gd), argThat((GameLogEntry logEntry) ->
                     logEntry.plainText().contains("Empyrial Archangel") && logEntry.plainText().contains("absorbs")));
         }
     }

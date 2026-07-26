@@ -18,7 +18,7 @@ import com.github.laxika.magicalvibes.model.StackEntry;
 import com.github.laxika.magicalvibes.model.StackEntryType;
 import com.github.laxika.magicalvibes.model.effect.DelayedPlusOnePlusOneCounterRegrowthEffect;
 import com.github.laxika.magicalvibes.model.effect.DealDamageToAnyTargetEffect;
-import com.github.laxika.magicalvibes.service.GameBroadcastService;
+import com.github.laxika.magicalvibes.service.GameLogService;
 import com.github.laxika.magicalvibes.service.GameOutcomeService;
 import com.github.laxika.magicalvibes.service.battlefield.GameQueryService;
 import com.github.laxika.magicalvibes.service.battlefield.LegendRuleService;
@@ -55,7 +55,7 @@ class StateBasedActionServiceTest {
     @Mock
     private GameQueryService gameQueryService;
     @Mock
-    private GameBroadcastService gameBroadcastService;
+    private GameLogService gameLogService;
     @Mock
     private PermanentRemovalService permanentRemovalService;
     @Mock
@@ -199,7 +199,7 @@ class StateBasedActionServiceTest {
             sut.performStateBasedActions(gd);
 
             verify(permanentRemovalService).removePermanentToGraveyard(gd, perm);
-            verify(gameBroadcastService).logAndBroadcast(eq(gd), argThat((GameLogEntry e) -> e.plainText().equals("Scornful Egotist is put into the graveyard (0 toughness).")));
+            verify(gameLogService).append(eq(gd), argThat((GameLogEntry e) -> e.plainText().equals("Scornful Egotist is put into the graveyard (0 toughness).")));
         }
 
         @Test
@@ -238,7 +238,7 @@ class StateBasedActionServiceTest {
             sut.performStateBasedActions(gd);
 
             verify(permanentRemovalService).removePermanentToGraveyard(gd, perm);
-            verify(gameBroadcastService).logAndBroadcast(eq(gd), argThat((GameLogEntry e) -> e.plainText().equals("Grizzly Bears is destroyed (lethal damage).")));
+            verify(gameLogService).append(eq(gd), argThat((GameLogEntry e) -> e.plainText().equals("Grizzly Bears is destroyed (lethal damage).")));
         }
 
         @Test
@@ -324,7 +324,7 @@ class StateBasedActionServiceTest {
             sut.performStateBasedActions(gd);
 
             verify(permanentRemovalService).removePermanentToGraveyard(gd, perm);
-            verify(gameBroadcastService).logAndBroadcast(eq(gd), argThat((GameLogEntry e) -> e.plainText().equals("Enfeebled Creature is put into the graveyard (0 toughness).")));
+            verify(gameLogService).append(eq(gd), argThat((GameLogEntry e) -> e.plainText().equals("Enfeebled Creature is put into the graveyard (0 toughness).")));
         }
     }
 
@@ -346,7 +346,7 @@ class StateBasedActionServiceTest {
             sut.performStateBasedActions(gd);
 
             verify(permanentRemovalService).removePermanentToGraveyard(gd, perm);
-            verify(gameBroadcastService).logAndBroadcast(eq(gd), argThat((GameLogEntry e) -> e.plainText().equals("Jace Beleren has no loyalty counters and is put into the graveyard.")));
+            verify(gameLogService).append(eq(gd), argThat((GameLogEntry e) -> e.plainText().equals("Jace Beleren has no loyalty counters and is put into the graveyard.")));
         }
 
         @Test
@@ -385,7 +385,7 @@ class StateBasedActionServiceTest {
             verify(permanentRemovalService).removePermanentToGraveyard(gd, perm);
             // Death reason is captured at collection time: creature checks fail (healthy toughness,
             // no lethal damage), but planeswalker check succeeds (0 loyalty)
-            verify(gameBroadcastService).logAndBroadcast(eq(gd), argThat((GameLogEntry e) -> e.plainText().equals("Gideon Jura has no loyalty counters and is put into the graveyard.")));
+            verify(gameLogService).append(eq(gd), argThat((GameLogEntry e) -> e.plainText().equals("Gideon Jura has no loyalty counters and is put into the graveyard.")));
         }
 
         @Test
@@ -488,7 +488,7 @@ class StateBasedActionServiceTest {
             sut.performStateBasedActions(gd);
 
             verify(permanentRemovalService).removePermanentToGraveyard(gd, perm);
-            verify(gameBroadcastService).logAndBroadcast(eq(gd), argThat((GameLogEntry e) -> e.plainText().equals("The Eldest Reborn is sacrificed (final chapter reached).")));
+            verify(gameLogService).append(eq(gd), argThat((GameLogEntry e) -> e.plainText().equals("The Eldest Reborn is sacrificed (final chapter reached).")));
         }
 
         @Test
@@ -769,7 +769,7 @@ class StateBasedActionServiceTest {
             sut.performStateBasedActions(gd);
 
             verify(gameOutcomeService).declareWinner(gd, player2Id);
-            verify(gameBroadcastService).logAndBroadcast(eq(gd), eq(GameLog.text("Player1 attempted to draw from an empty library and loses the game.")));
+            verify(gameLogService).append(eq(gd), eq(GameLog.text("Player1 attempted to draw from an empty library and loses the game.")));
         }
 
         @Test

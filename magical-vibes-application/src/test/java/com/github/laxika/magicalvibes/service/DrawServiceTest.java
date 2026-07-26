@@ -42,7 +42,7 @@ class DrawServiceTest {
     private GameQueryService gameQueryService;
 
     @Mock
-    private GameBroadcastService gameBroadcastService;
+    private GameLogService gameLogService;
 
     @Mock
     private GameOutcomeService gameOutcomeService;
@@ -107,7 +107,7 @@ class DrawServiceTest {
             sut.checkControllerDrawTriggers(gd, player1Id);
 
             assertThat(gd.stack).isEmpty();
-            verify(gameBroadcastService, never()).logAndBroadcast(eq(gd), any());
+            verify(gameLogService, never()).append(eq(gd), any());
         }
 
         @Test
@@ -125,7 +125,7 @@ class DrawServiceTest {
             assertThat(gd.stack.getFirst().getSourcePermanentId()).isEqualTo(equipment.getId());
             assertThat(gd.stack.getFirst().getEffectsToResolve())
                     .containsExactly(new BoostEquippedCreatureAndGrantKeywordUntilEndOfTurnEffect(1, 1, Keyword.FLYING));
-            verify(gameBroadcastService).logAndBroadcast(eq(gd), argThat((GameLogEntry e) -> e.plainText().equals("Diviner's Wand's ability triggers.")));
+            verify(gameLogService).append(eq(gd), argThat((GameLogEntry e) -> e.plainText().equals("Diviner's Wand's ability triggers.")));
         }
 
         @Test
@@ -141,7 +141,7 @@ class DrawServiceTest {
 
             assertThat(gd.stack).hasSize(1);
             assertThat(gd.stack.getFirst().getSourcePermanentId()).isEqualTo(crawler.getId());
-            verify(gameBroadcastService).logAndBroadcast(eq(gd), argThat((GameLogEntry e) -> e.plainText().equals("Psychosis Crawler's ability triggers.")));
+            verify(gameLogService).append(eq(gd), argThat((GameLogEntry e) -> e.plainText().equals("Psychosis Crawler's ability triggers.")));
         }
     }
 }

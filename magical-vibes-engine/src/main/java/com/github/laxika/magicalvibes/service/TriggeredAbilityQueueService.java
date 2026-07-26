@@ -39,7 +39,7 @@ public class TriggeredAbilityQueueService {
 
     private final GameQueryService gameQueryService;
     private final PredicateEvaluationService predicateEvaluationService;
-    private final GameBroadcastService gameBroadcastService;
+    private final GameLogService gameLogService;
     private final PlayerInputService playerInputService;
     private final TriggerTargetCollector triggerTargetCollector;
     private final com.github.laxika.magicalvibes.service.target.TargetLegalityService targetLegalityService;
@@ -85,7 +85,7 @@ public class TriggeredAbilityQueueService {
             if (result.validTargets().isEmpty()) {
                 // No valid targets - trigger can't go on the stack, skip it
                 gameData.pollPendingInteraction(PermanentChoiceContext.DeathTriggerTarget.class);
-                gameBroadcastService.logAndBroadcast(gameData, GameLog.cardThen(pending.dyingCard(),
+                gameLogService.append(gameData, GameLog.cardThen(pending.dyingCard(),
                         "'s death trigger has no valid targets."));
                 log.info("Game {} - {} death trigger skipped (no valid creature targets)",
                         gameData.id, pending.dyingCard().getName());
@@ -102,7 +102,7 @@ public class TriggeredAbilityQueueService {
             playerInputService.beginPermanentChoice(gameData, pending.controllerId(), result.validTargets(),
                     pending.dyingCard().getName() + "'s ability - Choose " + targetDescription + ".");
 
-            gameBroadcastService.logAndBroadcast(gameData, GameLog.cardThen(pending.dyingCard(),
+            gameLogService.append(gameData, GameLog.cardThen(pending.dyingCard(),
                     "'s death trigger - choose " + targetDescription + "."));
             log.info("Game {} - {} death trigger awaiting target selection", gameData.id, pending.dyingCard().getName());
             return;
@@ -139,7 +139,7 @@ public class TriggeredAbilityQueueService {
         gameData.pollPendingInteraction(PermanentChoiceContext.DeathTriggerTarget.class);
 
         if (matchingCards.isEmpty()) {
-            gameBroadcastService.logAndBroadcast(gameData, GameLog.cardThen(pending.dyingCard(),
+            gameLogService.append(gameData, GameLog.cardThen(pending.dyingCard(),
                     "'s death trigger has no valid graveyard targets."));
             log.info("Game {} - {} death graveyard trigger skipped (no valid targets)",
                     gameData.id, pending.dyingCard().getName());
@@ -155,7 +155,7 @@ public class TriggeredAbilityQueueService {
         playerInputService.beginMultiGraveyardChoice(gameData, pending.controllerId(), matchingCards, 1,
                 pending.dyingCard().getName() + "'s ability — Choose target " + filterLabel + " from " + zoneLabel + " to exile.");
 
-        gameBroadcastService.logAndBroadcast(gameData, GameLog.cardThen(pending.dyingCard(),
+        gameLogService.append(gameData, GameLog.cardThen(pending.dyingCard(),
                 "'s death trigger — choose a graveyard target."));
         log.info("Game {} - {} death graveyard trigger awaiting target selection",
                 gameData.id, pending.dyingCard().getName());
@@ -189,7 +189,7 @@ public class TriggeredAbilityQueueService {
 
             if (result.validTargets().isEmpty()) {
                 gameData.pollPendingInteraction(PermanentChoiceContext.SelfLeavesTriggerTarget.class);
-                gameBroadcastService.logAndBroadcast(gameData, GameLog.cardThen(pending.sourceCard(),
+                gameLogService.append(gameData, GameLog.cardThen(pending.sourceCard(),
                         "'s leaves-the-battlefield trigger has no valid targets."));
                 log.info("Game {} - {} leaves-battlefield trigger skipped (no valid targets)",
                         gameData.id, pending.sourceCard().getName());
@@ -205,7 +205,7 @@ public class TriggeredAbilityQueueService {
             playerInputService.beginPermanentChoice(gameData, pending.controllerId(), result.validTargets(),
                     pending.sourceCard().getName() + "'s ability - Choose " + targetDescription + ".");
 
-            gameBroadcastService.logAndBroadcast(gameData, GameLog.cardThen(pending.sourceCard(),
+            gameLogService.append(gameData, GameLog.cardThen(pending.sourceCard(),
                     "'s leaves-the-battlefield trigger - choose " + targetDescription + "."));
             log.info("Game {} - {} leaves-battlefield trigger awaiting target selection", gameData.id, pending.sourceCard().getName());
             return;
@@ -238,7 +238,7 @@ public class TriggeredAbilityQueueService {
         gameData.pollPendingInteraction(PermanentChoiceContext.SelfLeavesTriggerTarget.class);
 
         if (matchingCards.isEmpty()) {
-            gameBroadcastService.logAndBroadcast(gameData, GameLog.cardThen(pending.sourceCard(),
+            gameLogService.append(gameData, GameLog.cardThen(pending.sourceCard(),
                     "'s leaves-the-battlefield trigger has no valid graveyard targets."));
             log.info("Game {} - {} leaves-battlefield graveyard trigger skipped (no valid targets)",
                     gameData.id, pending.sourceCard().getName());
@@ -253,7 +253,7 @@ public class TriggeredAbilityQueueService {
         playerInputService.beginMultiGraveyardChoice(gameData, pending.controllerId(), matchingCards, 1,
                 pending.sourceCard().getName() + "'s ability — Choose target " + filterLabel + " from a graveyard to exile.");
 
-        gameBroadcastService.logAndBroadcast(gameData, GameLog.cardThen(pending.sourceCard(),
+        gameLogService.append(gameData, GameLog.cardThen(pending.sourceCard(),
                 "'s leaves-the-battlefield trigger — choose a graveyard target."));
         log.info("Game {} - {} leaves-battlefield graveyard trigger awaiting target selection",
                 gameData.id, pending.sourceCard().getName());
@@ -274,7 +274,7 @@ public class TriggeredAbilityQueueService {
 
             if (result.validTargets().isEmpty()) {
                 gameData.pollPendingInteraction(PermanentChoiceContext.AttackTriggerTarget.class);
-                gameBroadcastService.logAndBroadcast(gameData, GameLog.cardThen(pending.sourceCard(),
+                gameLogService.append(gameData, GameLog.cardThen(pending.sourceCard(),
                         "'s attack trigger has no valid targets."));
                 log.info("Game {} - {} attack trigger skipped (no valid targets)",
                         gameData.id, pending.sourceCard().getName());
@@ -290,7 +290,7 @@ public class TriggeredAbilityQueueService {
             playerInputService.beginPermanentChoice(gameData, pending.controllerId(), result.validTargets(),
                     pending.sourceCard().getName() + "'s ability - Choose " + targetDescription + ".");
 
-            gameBroadcastService.logAndBroadcast(gameData, GameLog.cardThen(pending.sourceCard(),
+            gameLogService.append(gameData, GameLog.cardThen(pending.sourceCard(),
                     "'s attack trigger - choose " + targetDescription + "."));
             log.info("Game {} - {} attack trigger awaiting target selection", gameData.id, pending.sourceCard().getName());
             return;
@@ -311,7 +311,7 @@ public class TriggeredAbilityQueueService {
                     gameData, pending.controllerId(), pending.sourceCard(), pending.controllerId());
             if (validTargets.isEmpty()) {
                 gameData.pollPendingInteraction(PermanentChoiceContext.AttackCounterMoveFirstTarget.class);
-                gameBroadcastService.logAndBroadcast(gameData, GameLog.cardThen(pending.sourceCard(),
+                gameLogService.append(gameData, GameLog.cardThen(pending.sourceCard(),
                         "'s attack trigger has no valid targets."));
                 log.info("Game {} - {} attack trigger skipped (no valid targets)",
                         gameData.id, pending.sourceCard().getName());
@@ -323,7 +323,7 @@ public class TriggeredAbilityQueueService {
             playerInputService.beginPermanentChoice(gameData, pending.controllerId(), validTargets,
                     pending.sourceCard().getName() + "'s ability - Choose target creature you control.");
 
-            gameBroadcastService.logAndBroadcast(gameData, GameLog.cardThen(pending.sourceCard(),
+            gameLogService.append(gameData, GameLog.cardThen(pending.sourceCard(),
                     "'s attack trigger - choose target creature you control."));
             log.info("Game {} - {} attack trigger awaiting first target selection",
                     gameData.id, pending.sourceCard().getName());
@@ -367,7 +367,7 @@ public class TriggeredAbilityQueueService {
 
             if (result.validTargets().isEmpty()) {
                 gameData.pollPendingInteraction(PermanentChoiceContext.EntersTriggerTarget.class);
-                gameBroadcastService.logAndBroadcast(gameData, GameLog.cardThen(pending.sourceCard(),
+                gameLogService.append(gameData, GameLog.cardThen(pending.sourceCard(),
                         "'s enter trigger has no valid targets."));
                 log.info("Game {} - {} enter trigger skipped (no valid targets)",
                         gameData.id, pending.sourceCard().getName());
@@ -383,7 +383,7 @@ public class TriggeredAbilityQueueService {
             playerInputService.beginPermanentChoice(gameData, pending.controllerId(), result.validTargets(),
                     pending.sourceCard().getName() + "'s ability - Choose " + targetDescription + ".");
 
-            gameBroadcastService.logAndBroadcast(gameData, GameLog.cardThen(pending.sourceCard(),
+            gameLogService.append(gameData, GameLog.cardThen(pending.sourceCard(),
                     "'s enter trigger - choose " + targetDescription + "."));
             log.info("Game {} - {} enter trigger awaiting target selection", gameData.id, pending.sourceCard().getName());
             return;
@@ -405,7 +405,7 @@ public class TriggeredAbilityQueueService {
 
             if (result.validTargets().isEmpty()) {
                 gameData.pollPendingInteraction(PermanentChoiceContext.DiscardControllerTriggerTarget.class);
-                gameBroadcastService.logAndBroadcast(gameData, GameLog.cardThen(pending.sourceCard(),
+                gameLogService.append(gameData, GameLog.cardThen(pending.sourceCard(),
                         "'s discard trigger has no valid targets."));
                 log.info("Game {} - {} discard trigger skipped (no valid targets)",
                         gameData.id, pending.sourceCard().getName());
@@ -421,7 +421,7 @@ public class TriggeredAbilityQueueService {
             playerInputService.beginPermanentChoice(gameData, pending.controllerId(), result.validTargets(),
                     pending.sourceCard().getName() + "'s ability - Choose " + targetDescription + ".");
 
-            gameBroadcastService.logAndBroadcast(gameData, GameLog.cardThen(pending.sourceCard(),
+            gameLogService.append(gameData, GameLog.cardThen(pending.sourceCard(),
                     "'s discard trigger - choose " + targetDescription + "."));
             log.info("Game {} - {} discard trigger awaiting target selection", gameData.id, pending.sourceCard().getName());
             return;
@@ -454,7 +454,7 @@ public class TriggeredAbilityQueueService {
                     validPermanentTargets, validPlayerTargets,
                     pending.discardedCard().getName() + "'s ability - Choose any target.");
 
-            gameBroadcastService.logAndBroadcast(gameData, GameLog.cardThen(pending.discardedCard(),
+            gameLogService.append(gameData, GameLog.cardThen(pending.discardedCard(),
                     "'s discard trigger - choose a target."));
             log.info("Game {} - {} discard trigger awaiting target selection", gameData.id, pending.discardedCard().getName());
             return;
@@ -527,7 +527,7 @@ public class TriggeredAbilityQueueService {
             playerInputService.beginAnyTargetChoice(gameData, pending.controllerId(),
                     validPermanentTargets, validPlayerTargets, prompt);
 
-            gameBroadcastService.logAndBroadcast(gameData, GameLog.cardThen(pending.sourceCard(),
+            gameLogService.append(gameData, GameLog.cardThen(pending.sourceCard(),
                     "'s triggered ability - choose a target."));
             log.info("Game {} - {} spell-target trigger awaiting target selection", gameData.id, pending.sourceCard().getName());
             return;
@@ -573,7 +573,7 @@ public class TriggeredAbilityQueueService {
             playerInputService.beginAnyTargetChoice(gameData, pending.controllerId(),
                     validPermanentTargets, validPlayerTargets, prompt);
 
-            gameBroadcastService.logAndBroadcast(gameData, GameLog.cardThen(pending.sourceCard(),
+            gameLogService.append(gameData, GameLog.cardThen(pending.sourceCard(),
                     "'s life gain trigger - choose a target."));
             log.info("Game {} - {} life gain trigger awaiting target selection", gameData.id, pending.sourceCard().getName());
             return;
@@ -605,7 +605,7 @@ public class TriggeredAbilityQueueService {
                     validPermanentTargets, validPlayerTargets,
                     pending.sourceCard().getName() + "'s ability - Choose target creature or player.");
 
-            gameBroadcastService.logAndBroadcast(gameData, GameLog.cardThen(pending.sourceCard(),
+            gameLogService.append(gameData, GameLog.cardThen(pending.sourceCard(),
                     "'s draw trigger - choose a target."));
             log.info("Game {} - {} draw trigger awaiting target selection", gameData.id, pending.sourceCard().getName());
             return;
@@ -639,7 +639,7 @@ public class TriggeredAbilityQueueService {
                     validPermanentTargets, validPlayerTargets,
                     pending.sourceCard().getName() + "'s ability - Choose any target.");
 
-            gameBroadcastService.logAndBroadcast(gameData, GameLog.cardThen(pending.sourceCard(),
+            gameLogService.append(gameData, GameLog.cardThen(pending.sourceCard(),
                     "'s triggered ability - choose any target."));
             log.info("Game {} - {} enters-from-graveyard trigger awaiting target selection",
                     gameData.id, pending.sourceCard().getName());
@@ -665,7 +665,7 @@ public class TriggeredAbilityQueueService {
             if (validTargets.isEmpty()) {
                 gameData.pollPendingInteraction(PermanentChoiceContext.EmblemTriggerTarget.class);
                 String logEntry = pending.emblemDescription() + "'s trigger has no valid targets.";
-                gameBroadcastService.logAndBroadcast(gameData, GameLog.text(logEntry));
+                gameLogService.append(gameData, GameLog.text(logEntry));
                 log.info("Game {} - {} emblem trigger skipped (no valid permanent targets)",
                         gameData.id, pending.emblemDescription());
                 continue;
@@ -680,7 +680,7 @@ public class TriggeredAbilityQueueService {
                     pending.emblemDescription() + "'s ability - Choose " + targetDesc + ".");
 
             String logEntry = pending.emblemDescription() + "'s triggered ability - choose " + targetDesc + ".";
-            gameBroadcastService.logAndBroadcast(gameData, GameLog.text(logEntry));
+            gameLogService.append(gameData, GameLog.text(logEntry));
             log.info("Game {} - {} emblem trigger awaiting target selection", gameData.id, pending.emblemDescription());
             return;
         }
@@ -706,7 +706,7 @@ public class TriggeredAbilityQueueService {
                         null,
                         pending.sourcePermanentId()
                 ));
-                gameBroadcastService.logAndBroadcast(gameData, GameLog.cardThen(pending.sourceCard(),
+                gameLogService.append(gameData, GameLog.cardThen(pending.sourceCard(),
                         "'s chapter " + pending.chapterName() + " has no valid creature targets."));
                 log.info("Game {} - {} chapter {} no valid targets, pushed with null target",
                         gameData.id, pending.sourceCard().getName(), pending.chapterName());
@@ -722,7 +722,7 @@ public class TriggeredAbilityQueueService {
                     pending.sourceCard().getName() + "'s chapter " + pending.chapterName()
                             + " — Choose target creature, or yourself to skip.");
 
-            gameBroadcastService.logAndBroadcast(gameData, GameLog.cardThen(pending.sourceCard(),
+            gameLogService.append(gameData, GameLog.cardThen(pending.sourceCard(),
                     "'s chapter " + pending.chapterName() + " - choose target creature."));
             log.info("Game {} - {} chapter {} awaiting target selection", gameData.id, pending.sourceCard().getName(), pending.chapterName());
             return;
@@ -774,7 +774,7 @@ public class TriggeredAbilityQueueService {
                     pending.sourceCard().getName() + "'s chapter " + pending.chapterName()
                             + " — Choose target " + filterLabel + " from your graveyard.");
 
-            gameBroadcastService.logAndBroadcast(gameData, GameLog.cardThen(pending.sourceCard(),
+            gameLogService.append(gameData, GameLog.cardThen(pending.sourceCard(),
                     "'s chapter " + pending.chapterName() + " ability triggers — choose a graveyard target."));
             log.info("Game {} - {} chapter {} graveyard-target trigger awaiting target selection",
                     gameData.id, pending.sourceCard().getName(), pending.chapterName());
@@ -833,7 +833,7 @@ public class TriggeredAbilityQueueService {
             playerInputService.beginMultiGraveyardChoice(gameData, pending.controllerId(), matchingCards, 1,
                     pending.sourceCard().getName() + "'s ability — Choose target " + filterLabel + " from your graveyard.");
 
-            gameBroadcastService.logAndBroadcast(gameData, GameLog.cardThen(pending.sourceCard(),
+            gameLogService.append(gameData, GameLog.cardThen(pending.sourceCard(),
                     "'s triggered ability triggers — choose a graveyard target."));
             log.info("Game {} - {} spell-cast graveyard-target trigger awaiting target selection",
                     gameData.id, pending.sourceCard().getName());
@@ -859,7 +859,7 @@ public class TriggeredAbilityQueueService {
 
             if (validTargets.isEmpty()) {
                 gameData.pollPendingInteraction(PermanentChoiceContext.ExploreTriggerTarget.class);
-                gameBroadcastService.logAndBroadcast(gameData, GameLog.cardThen(pending.sourceCard(),
+                gameLogService.append(gameData, GameLog.cardThen(pending.sourceCard(),
                         "'s explore trigger has no valid targets."));
                 log.info("Game {} - {} explore trigger skipped (no valid creature targets)",
                         gameData.id, pending.sourceCard().getName());
@@ -871,7 +871,7 @@ public class TriggeredAbilityQueueService {
             playerInputService.beginPermanentChoice(gameData, pending.controllerId(), validTargets,
                     pending.sourceCard().getName() + "'s ability — Choose target creature an opponent controls.");
 
-            gameBroadcastService.logAndBroadcast(gameData, GameLog.cardThen(pending.sourceCard(),
+            gameLogService.append(gameData, GameLog.cardThen(pending.sourceCard(),
                     "'s explore trigger — choose target creature."));
             log.info("Game {} - {} explore trigger awaiting target selection", gameData.id, pending.sourceCard().getName());
             return;
@@ -904,7 +904,7 @@ public class TriggeredAbilityQueueService {
 
             if (validStackCardIds.isEmpty()) {
                 gameData.pollPendingInteraction(PermanentChoiceContext.ExploitTriggerTarget.class);
-                gameBroadcastService.logAndBroadcast(gameData, GameLog.cardThen(pending.sourceCard(),
+                gameLogService.append(gameData, GameLog.cardThen(pending.sourceCard(),
                         "'s exploit ability has no valid spell or ability targets."));
                 log.info("Game {} - {} exploit trigger skipped (no valid stack targets)",
                         gameData.id, pending.sourceCard().getName());
@@ -917,7 +917,7 @@ public class TriggeredAbilityQueueService {
                     validStackCardIds, List.of(),
                     pending.sourceCard().getName() + "'s ability — Choose target spell or ability.");
 
-            gameBroadcastService.logAndBroadcast(gameData, GameLog.cardThen(pending.sourceCard(),
+            gameLogService.append(gameData, GameLog.cardThen(pending.sourceCard(),
                     "'s exploit ability triggers — choose a target spell or ability."));
             log.info("Game {} - {} exploit trigger awaiting stack target selection",
                     gameData.id, pending.sourceCard().getName());
@@ -943,7 +943,7 @@ public class TriggeredAbilityQueueService {
 
             if (validTargets.isEmpty()) {
                 gameData.pollPendingInteraction(PermanentChoiceContext.ClashTriggerTarget.class);
-                gameBroadcastService.logAndBroadcast(gameData, GameLog.cardThen(pending.sourceCard(),
+                gameLogService.append(gameData, GameLog.cardThen(pending.sourceCard(),
                         "'s clash trigger has no valid targets."));
                 log.info("Game {} - {} clash trigger skipped (no valid creature targets)",
                         gameData.id, pending.sourceCard().getName());
@@ -955,7 +955,7 @@ public class TriggeredAbilityQueueService {
             playerInputService.beginPermanentChoice(gameData, pending.controllerId(), validTargets,
                     pending.sourceCard().getName() + "'s ability — Choose target creature an opponent controls.");
 
-            gameBroadcastService.logAndBroadcast(gameData, GameLog.cardThen(pending.sourceCard(),
+            gameLogService.append(gameData, GameLog.cardThen(pending.sourceCard(),
                     "'s clash trigger — choose target creature."));
             log.info("Game {} - {} clash trigger awaiting target selection", gameData.id, pending.sourceCard().getName());
             return;

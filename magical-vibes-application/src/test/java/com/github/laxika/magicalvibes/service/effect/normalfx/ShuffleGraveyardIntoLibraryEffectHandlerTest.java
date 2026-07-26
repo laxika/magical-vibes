@@ -7,6 +7,7 @@ import com.github.laxika.magicalvibes.model.StackEntry;
 import com.github.laxika.magicalvibes.model.StackEntryType;
 import com.github.laxika.magicalvibes.model.effect.ShuffleGraveyardIntoLibraryEffect;
 import com.github.laxika.magicalvibes.service.GameBroadcastService;
+import com.github.laxika.magicalvibes.service.GameLogService;
 import com.github.laxika.magicalvibes.service.battlefield.GameQueryService;
 import com.github.laxika.magicalvibes.service.battlefield.PermanentRemovalService;
 import com.github.laxika.magicalvibes.service.exile.ExileService;
@@ -34,6 +35,8 @@ class ShuffleGraveyardIntoLibraryEffectHandlerTest {
 
     @Mock
     private GameBroadcastService gameBroadcastService;
+    @Mock
+    private GameLogService gameLogService;
     @Mock
     private GameQueryService gameQueryService;
     @Mock
@@ -72,7 +75,7 @@ player1Id = UUID.randomUUID();
         gd.playerDecks.put(player2Id, Collections.synchronizedList(new ArrayList<>()));
         gd.activePlayerId = player1Id;
         GraveyardService graveyardService = new GraveyardService(
-                gameQueryService, gameBroadcastService, exileService, predicateEvaluationService, triggerCollectionService);
+                gameQueryService, gameLogService, exileService, predicateEvaluationService, triggerCollectionService);
         shuffleGraveyardIntoLibraryEffectHandler =
                 new ShuffleGraveyardIntoLibraryEffectHandler(gameBroadcastService, graveyardService);
 
