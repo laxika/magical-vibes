@@ -5,7 +5,7 @@ import com.github.laxika.magicalvibes.model.GameLog;
 import com.github.laxika.magicalvibes.model.StackEntry;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
 import com.github.laxika.magicalvibes.model.effect.DiscardCardUnlessAttackedThisTurnEffect;
-import com.github.laxika.magicalvibes.service.GameBroadcastService;
+import com.github.laxika.magicalvibes.service.GameLogService;
 import java.util.UUID;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -16,7 +16,7 @@ import org.springframework.stereotype.Component;
 @RequiredArgsConstructor
 public class DiscardCardUnlessAttackedThisTurnEffectHandler implements NormalEffectHandlerBean {
 
-    private final GameBroadcastService gameBroadcastService;
+    private final GameLogService gameLogService;
     private final PlayerInteractionSupport playerInteractionSupport;
 
     @Override
@@ -32,7 +32,7 @@ public class DiscardCardUnlessAttackedThisTurnEffectHandler implements NormalEff
         String cardName = entry.getCard().getName();
 
         if (gameData.playersDeclaredAttackersThisTurn.contains(controllerId)) {
-            gameBroadcastService.logAndBroadcast(gameData, GameLog.text(playerName + " attacked this turn — no discard required (" + cardName + ")."));
+            gameLogService.append(gameData, GameLog.text(playerName + " attacked this turn — no discard required (" + cardName + ")."));
             log.info("Game {} - {} attacked this turn, skipping discard for {}", gameData.id, playerName, cardName);
             return;
         }

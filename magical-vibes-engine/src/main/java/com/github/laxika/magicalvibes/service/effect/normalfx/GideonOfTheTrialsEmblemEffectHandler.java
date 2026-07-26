@@ -11,7 +11,7 @@ import com.github.laxika.magicalvibes.model.effect.CardEffect;
 import com.github.laxika.magicalvibes.model.effect.ConditionalEffect;
 import com.github.laxika.magicalvibes.model.effect.GideonOfTheTrialsEmblemEffect;
 import com.github.laxika.magicalvibes.model.filter.PermanentHasSubtypePredicate;
-import com.github.laxika.magicalvibes.service.GameBroadcastService;
+import com.github.laxika.magicalvibes.service.GameLogService;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Component;
@@ -24,7 +24,7 @@ import java.util.UUID;
 @RequiredArgsConstructor
 public class GideonOfTheTrialsEmblemEffectHandler implements NormalEffectHandlerBean {
 
-    private final GameBroadcastService gameBroadcastService;
+    private final GameLogService gameLogService;
 
     @Override
     public Class<? extends CardEffect> handledEffect() {
@@ -46,7 +46,7 @@ public class GideonOfTheTrialsEmblemEffectHandler implements NormalEffectHandler
 
         String logEntry = playerName + " gets an emblem with \"As long as you control a Gideon planeswalker, "
                 + "you can't lose the game and your opponents can't win the game.\".";
-        gameBroadcastService.logAndBroadcast(gameData, GameLog.text(logEntry));
+        gameLogService.append(gameData, GameLog.text(logEntry));
 
         log.info("Game {} - {} gets Gideon of the Trials emblem", gameData.id, playerName);
     }

@@ -5,7 +5,7 @@ import com.github.laxika.magicalvibes.model.GameLog;
 import com.github.laxika.magicalvibes.model.StackEntry;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
 import com.github.laxika.magicalvibes.model.effect.SkipNextCombatPhaseEffect;
-import com.github.laxika.magicalvibes.service.GameBroadcastService;
+import com.github.laxika.magicalvibes.service.GameLogService;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Component;
@@ -17,7 +17,7 @@ import java.util.UUID;
 @RequiredArgsConstructor
 public class SkipNextCombatPhaseEffectHandler implements NormalEffectHandlerBean {
 
-    private final GameBroadcastService gameBroadcastService;
+    private final GameLogService gameLogService;
 
     @Override
     public Class<? extends CardEffect> handledEffect() {
@@ -35,7 +35,7 @@ public class SkipNextCombatPhaseEffectHandler implements NormalEffectHandlerBean
 
         String affectedName = gameData.playerIdToName.get(affectedPlayerId);
         String logEntry = affectedName + " skips their next combat phase.";
-        gameBroadcastService.logAndBroadcast(gameData, GameLog.text(logEntry));
+        gameLogService.append(gameData, GameLog.text(logEntry));
         log.info("Game {} - {} will skip their next combat phase", gameData.id, affectedName);
     }
 }

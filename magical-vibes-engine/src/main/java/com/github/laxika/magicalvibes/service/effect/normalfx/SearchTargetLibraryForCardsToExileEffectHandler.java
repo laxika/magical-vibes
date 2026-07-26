@@ -15,7 +15,7 @@ import java.util.List;
 import java.util.UUID;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
-import com.github.laxika.magicalvibes.service.GameBroadcastService;
+import com.github.laxika.magicalvibes.service.GameLogService;
 import com.github.laxika.magicalvibes.service.library.LibraryShuffleHelper;
 import org.springframework.stereotype.Component;
 
@@ -30,7 +30,7 @@ import org.springframework.stereotype.Component;
 @Slf4j
 public class SearchTargetLibraryForCardsToExileEffectHandler implements NormalEffectHandlerBean {
 
-    private final GameBroadcastService gameBroadcastService;
+    private final GameLogService gameLogService;
     private final LibrarySearchSupport librarySearchSupport;
     private final AmountEvaluationService amountEvaluationService;
 
@@ -56,7 +56,7 @@ public class SearchTargetLibraryForCardsToExileEffectHandler implements NormalEf
 
         if (deck == null || deck.isEmpty()) {
             String logMsg = controllerName + " searches " + targetName + "'s library but it is empty. Library is shuffled.";
-            gameBroadcastService.logAndBroadcast(gameData, GameLog.text(logMsg));
+            gameLogService.append(gameData, GameLog.text(logMsg));
             return;
         }
 
@@ -65,7 +65,7 @@ public class SearchTargetLibraryForCardsToExileEffectHandler implements NormalEf
             // "up to X" with X == 0 (e.g. Nightmare Incursion with no Swamps): exile nothing,
             // but the targeted player still shuffles.
             LibraryShuffleHelper.shuffleLibrary(gameData, targetPlayerId);
-            gameBroadcastService.logAndBroadcast(gameData, GameLog.text(controllerName + " searches " + targetName + "'s library for no cards. Library is shuffled."));
+            gameLogService.append(gameData, GameLog.text(controllerName + " searches " + targetName + "'s library for no cards. Library is shuffled."));
             return;
         }
         String prompt = "Search " + targetName + "'s library for a card to exile (" + effectiveCount + " remaining).";

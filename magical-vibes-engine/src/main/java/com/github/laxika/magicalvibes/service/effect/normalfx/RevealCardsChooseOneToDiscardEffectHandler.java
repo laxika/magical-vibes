@@ -6,7 +6,7 @@ import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.StackEntry;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
 import com.github.laxika.magicalvibes.model.effect.RevealCardsChooseOneToDiscardEffect;
-import com.github.laxika.magicalvibes.service.GameBroadcastService;
+import com.github.laxika.magicalvibes.service.GameLogService;
 import com.github.laxika.magicalvibes.service.filter.PredicateEvaluationService;
 import java.util.List;
 import java.util.UUID;
@@ -31,7 +31,7 @@ import org.springframework.stereotype.Component;
 public class RevealCardsChooseOneToDiscardEffectHandler implements NormalEffectHandlerBean {
 
     private final PredicateEvaluationService predicateEvaluationService;
-    private final GameBroadcastService gameBroadcastService;
+    private final GameLogService gameLogService;
     private final PlayerInteractionSupport playerInteractionSupport;
 
     @Override
@@ -48,7 +48,7 @@ public class RevealCardsChooseOneToDiscardEffectHandler implements NormalEffectH
 
         int revealCount = countMatchingPermanents(gameData, casterId, e);
         if (revealCount <= 0) {
-            gameBroadcastService.logAndBroadcast(gameData, GameLog.text(
+            gameLogService.append(gameData, GameLog.text(
                     casterName + " controls no matching permanents — no cards are revealed."));
             log.info("Game {} - {} controls 0 matching permanents; nothing revealed", gameData.id, casterName);
             return;

@@ -62,7 +62,7 @@ class SunglassesOfUrzaTest extends BaseCardTest {
         Card shock = gd.playerHands.get(player1.getId()).getFirst();
         ManaPool pool = gd.playerManaPools.get(player1.getId());
 
-        assertThat(harness.getGameBroadcastService()
+        assertThat(harness.getGameActionAvailabilityService()
                 .isCardPlayable(gd, player1.getId(), shock, pool, 0)).isTrue();
     }
 
@@ -76,7 +76,7 @@ class SunglassesOfUrzaTest extends BaseCardTest {
         Card shock = gd.playerHands.get(player1.getId()).getFirst();
         ManaPool pool = gd.playerManaPools.get(player1.getId());
 
-        assertThat(harness.getGameBroadcastService()
+        assertThat(harness.getGameActionAvailabilityService()
                 .isCardPlayable(gd, player1.getId(), shock, pool, 0)).isFalse();
     }
 

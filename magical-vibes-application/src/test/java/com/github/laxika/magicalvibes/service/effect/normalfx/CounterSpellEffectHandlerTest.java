@@ -15,7 +15,7 @@ import com.github.laxika.magicalvibes.model.StackEntryType;
 import com.github.laxika.magicalvibes.model.effect.CounterSpellEffect;
 import com.github.laxika.magicalvibes.model.effect.CounterSpellIfControllerPoisonedEffect;
 import com.github.laxika.magicalvibes.model.effect.CounterUnlessPaysEffect;
-import com.github.laxika.magicalvibes.service.GameBroadcastService;
+import com.github.laxika.magicalvibes.service.GameLogService;
 import com.github.laxika.magicalvibes.service.state.StateTriggerService;
 import com.github.laxika.magicalvibes.service.exile.ExileService;
 import com.github.laxika.magicalvibes.service.graveyard.GraveyardService;
@@ -44,7 +44,7 @@ class CounterSpellEffectHandlerTest {
 
     @Mock private GraveyardService graveyardService;
     @Mock private ExileService exileService;
-    @Mock private GameBroadcastService gameBroadcastService;
+    @Mock private GameLogService gameLogService;
     @Mock private GameQueryService gameQueryService;
     @Mock private StateTriggerService stateTriggerService;
     @InjectMocks
@@ -165,7 +165,7 @@ class CounterSpellEffectHandlerTest {
                 counterSpellHandler.resolve(gd, cancelEntry, new CounterSpellEffect());
 
                 verify(graveyardService, never()).addCardToGraveyard(any(), any(), any());
-                verify(gameBroadcastService, never()).logAndBroadcast(any(), any(GameLogEntry.class));
+                verify(gameLogService, never()).append(any(), any(GameLogEntry.class));
             }
 
             @Test
@@ -198,7 +198,7 @@ class CounterSpellEffectHandlerTest {
 
                 counterSpellHandler.resolve(gd, cancelEntry, new CounterSpellEffect());
 
-                verify(gameBroadcastService).logAndBroadcast(eq(gd), argThat((GameLogEntry e) -> e.plainText().equals("Grizzly Bears is countered.")));
+                verify(gameLogService).append(eq(gd), argThat((GameLogEntry e) -> e.plainText().equals("Grizzly Bears is countered.")));
             }
 
             @Test
@@ -216,7 +216,7 @@ class CounterSpellEffectHandlerTest {
 
                 assertThat(gd.stack).noneMatch(se -> se.getCard().getName().equals("Grizzly Bears"));
                 verify(graveyardService, never()).addCardToGraveyard(any(), any(), any());
-                verify(gameBroadcastService).logAndBroadcast(eq(gd), argThat((GameLogEntry e) -> e.plainText().equals("Grizzly Bears is countered.")));
+                verify(gameLogService).append(eq(gd), argThat((GameLogEntry e) -> e.plainText().equals("Grizzly Bears is countered.")));
             }
 
             @Test
@@ -228,7 +228,7 @@ class CounterSpellEffectHandlerTest {
                 counterSpellHandler.resolve(gd, cancelEntry, new CounterSpellEffect());
 
                 verify(graveyardService, never()).addCardToGraveyard(any(), any(), any());
-                verify(gameBroadcastService, never()).logAndBroadcast(any(), any(GameLogEntry.class));
+                verify(gameLogService, never()).append(any(), any(GameLogEntry.class));
             }
 
             @Test
@@ -252,7 +252,7 @@ class CounterSpellEffectHandlerTest {
             }
 
             @Test
-            @DisplayName("Counters an activated ability â€” removes from stack without graveyard")
+            @DisplayName("Counters an activated ability A?€�t removes from stack without graveyard")
             void countersActivatedAbilityWithoutGraveyard() {
                 Card fumeSpitter = createCreatureCard("Fume Spitter");
                 StackEntry abilityEntry = new StackEntry(StackEntryType.ACTIVATED_ABILITY, fumeSpitter, player1Id,
@@ -267,11 +267,11 @@ class CounterSpellEffectHandlerTest {
 
                 assertThat(gd.stack).noneMatch(se -> se.getCard().getName().equals("Fume Spitter"));
                 verify(graveyardService, never()).addCardToGraveyard(any(), any(), any());
-                verify(gameBroadcastService).logAndBroadcast(eq(gd), argThat((GameLogEntry e) -> e.plainText().equals("Fume Spitter's ability is countered.")));
+                verify(gameLogService).append(eq(gd), argThat((GameLogEntry e) -> e.plainText().equals("Fume Spitter's ability is countered.")));
             }
 
             @Test
-            @DisplayName("Counters a triggered ability â€” removes from stack without graveyard")
+            @DisplayName("Counters a triggered ability A?€�t removes from stack without graveyard")
             void countersTriggeredAbilityWithoutGraveyard() {
                 Card source = createCreatureCard("Some Creature");
                 StackEntry abilityEntry = new StackEntry(StackEntryType.TRIGGERED_ABILITY, source, player1Id,
@@ -285,6 +285,6 @@ class CounterSpellEffectHandlerTest {
 
                 assertThat(gd.stack).noneMatch(se -> se.getCard().getName().equals("Some Creature"));
                 verify(graveyardService, never()).addCardToGraveyard(any(), any(), any());
-                verify(gameBroadcastService).logAndBroadcast(eq(gd), argThat((GameLogEntry e) -> e.plainText().equals("Some Creature's ability is countered.")));
+                verify(gameLogService).append(eq(gd), argThat((GameLogEntry e) -> e.plainText().equals("Some Creature's ability is countered.")));
             }
 }

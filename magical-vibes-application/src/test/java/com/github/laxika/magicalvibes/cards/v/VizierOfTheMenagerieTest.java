@@ -81,7 +81,7 @@ class VizierOfTheMenagerieTest extends BaseCardTest {
             harness.setHand(player1, List.of(bears));
             harness.addMana(player1, ManaColor.WHITE, 2);
 
-            assertThat(harness.getGameBroadcastService()
+            assertThat(harness.getGameActionAvailabilityService()
                     .isCardPlayable(gd, player1.getId(), bears, gd.playerManaPools.get(player1.getId()), 0))
                     .isTrue();
         }
@@ -93,7 +93,7 @@ class VizierOfTheMenagerieTest extends BaseCardTest {
             harness.setHand(player1, List.of(bears));
             harness.addMana(player1, ManaColor.WHITE, 2);
 
-            assertThat(harness.getGameBroadcastService()
+            assertThat(harness.getGameActionAvailabilityService()
                     .isCardPlayable(gd, player1.getId(), bears, gd.playerManaPools.get(player1.getId()), 0))
                     .isFalse();
         }
@@ -124,7 +124,7 @@ class VizierOfTheMenagerieTest extends BaseCardTest {
             harness.addMana(player1, ManaColor.WHITE, 1);
 
             // Shock costs {R}; with only white mana and a creature-only grant it stays unaffordable.
-            assertThat(harness.getGameBroadcastService()
+            assertThat(harness.getGameActionAvailabilityService()
                     .isCardPlayable(gd, player1.getId(), shock, gd.playerManaPools.get(player1.getId()), 0))
                     .isFalse();
         }

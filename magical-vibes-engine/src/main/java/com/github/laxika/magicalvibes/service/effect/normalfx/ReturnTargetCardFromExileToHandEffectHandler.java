@@ -8,7 +8,7 @@ import com.github.laxika.magicalvibes.model.Zone;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
 import com.github.laxika.magicalvibes.model.effect.ReturnTargetCardFromExileToHandEffect;
 import com.github.laxika.magicalvibes.model.filter.CardPredicateUtils;
-import com.github.laxika.magicalvibes.service.GameBroadcastService;
+import com.github.laxika.magicalvibes.service.GameLogService;
 import com.github.laxika.magicalvibes.service.battlefield.GameQueryService;
 import com.github.laxika.magicalvibes.service.filter.PredicateEvaluationService;
 import java.util.UUID;
@@ -21,7 +21,7 @@ public class ReturnTargetCardFromExileToHandEffectHandler implements NormalEffec
 
     private final GameQueryService gameQueryService;
     private final PredicateEvaluationService predicateEvaluationService;
-    private final GameBroadcastService gameBroadcastService;
+    private final GameLogService gameLogService;
 
     @Override
     public Class<? extends CardEffect> handledEffect() {
@@ -33,7 +33,7 @@ public class ReturnTargetCardFromExileToHandEffectHandler implements NormalEffec
         var e = (ReturnTargetCardFromExileToHandEffect) effect;
         if (entry.getTargetZone() != Zone.EXILE || entry.getTargetId() == null) {
             String fizzleLog = entry.getDescription() + " fizzles (no valid exile target).";
-            gameBroadcastService.logAndBroadcast(gameData, GameLog.text(fizzleLog));
+            gameLogService.append(gameData, GameLog.text(fizzleLog));
             return;
         }
 
@@ -42,13 +42,13 @@ public class ReturnTargetCardFromExileToHandEffectHandler implements NormalEffec
 
         if (targetCard == null) {
             String fizzleLog = entry.getDescription() + " fizzles (target " + filterLabel + " is no longer in exile).";
-            gameBroadcastService.logAndBroadcast(gameData, GameLog.text(fizzleLog));
+            gameLogService.append(gameData, GameLog.text(fizzleLog));
             return;
         }
 
         if (e.filter() != null && !predicateEvaluationService.matchesCardPredicate(targetCard, e.filter(), null)) {
             String fizzleLog = entry.getDescription() + " fizzles (target is not a " + filterLabel + ").";
-            gameBroadcastService.logAndBroadcast(gameData, GameLog.text(fizzleLog));
+            gameLogService.append(gameData, GameLog.text(fizzleLog));
             return;
         }
 
@@ -60,6 +60,6 @@ public class ReturnTargetCardFromExileToHandEffectHandler implements NormalEffec
         UUID controllerId = entry.getControllerId();
         gameData.playerHands.get(controllerId).add(targetCard);
 
-        gameBroadcastService.logAndBroadcast(gameData, GameLog.textCardText(entry.getDescription() + " returns " , targetCard, " from exile to hand."));
+        gameLogService.append(gameData, GameLog.textCardText(entry.getDescription() + " returns " , targetCard, " from exile to hand."));
     }
 }

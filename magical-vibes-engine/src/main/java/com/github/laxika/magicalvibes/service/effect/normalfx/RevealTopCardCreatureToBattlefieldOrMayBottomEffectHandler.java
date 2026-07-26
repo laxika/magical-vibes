@@ -9,7 +9,7 @@ import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.StackEntry;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
 import com.github.laxika.magicalvibes.model.effect.RevealTopCardCreatureToBattlefieldOrMayBottomEffect;
-import com.github.laxika.magicalvibes.service.GameBroadcastService;
+import com.github.laxika.magicalvibes.service.GameLogService;
 import com.github.laxika.magicalvibes.service.battlefield.BattlefieldEntryService;
 import java.util.*;
 import lombok.extern.slf4j.Slf4j;
@@ -22,7 +22,7 @@ import org.springframework.stereotype.Component;
 @RequiredArgsConstructor
 public class RevealTopCardCreatureToBattlefieldOrMayBottomEffectHandler implements NormalEffectHandlerBean {
 
-    private final GameBroadcastService gameBroadcastService;
+    private final GameLogService gameLogService;
     private final BattlefieldEntryService battlefieldEntryService;
 
     @Override
@@ -40,7 +40,7 @@ public class RevealTopCardCreatureToBattlefieldOrMayBottomEffectHandler implemen
 
         if (deck.isEmpty()) {
             String logEntry = playerName + "'s library is empty (" + sourceName + ").";
-            gameBroadcastService.logAndBroadcast(gameData, GameLog.text(logEntry));
+            gameLogService.append(gameData, GameLog.text(logEntry));
             return;
         }
 
@@ -49,7 +49,7 @@ public class RevealTopCardCreatureToBattlefieldOrMayBottomEffectHandler implemen
         // Reveal the card to all players
         String revealLog = playerName + " reveals " + topCard.getName()
                 + " from the top of their library (" + sourceName + ").";
-        gameBroadcastService.logAndBroadcast(gameData, GameLog.builder().text(playerName + " reveals ").card(topCard).text(" from the top of their library (" + sourceName + ").").build());
+        gameLogService.append(gameData, GameLog.builder().text(playerName + " reveals ").card(topCard).text(" from the top of their library (" + sourceName + ").").build());
 
         boolean isCreature = topCard.hasType(CardType.CREATURE);
 
@@ -58,7 +58,7 @@ public class RevealTopCardCreatureToBattlefieldOrMayBottomEffectHandler implemen
             Permanent perm = new Permanent(topCard);
             battlefieldEntryService.putPermanentOntoBattlefield(gameData, controllerId, perm);
 
-            gameBroadcastService.logAndBroadcast(gameData, GameLog.builder()
+            gameLogService.append(gameData, GameLog.builder()
                     .card(topCard)
                     .text(" enters the battlefield under " + playerName + "'s control (" + sourceName + ").")
                     .build());

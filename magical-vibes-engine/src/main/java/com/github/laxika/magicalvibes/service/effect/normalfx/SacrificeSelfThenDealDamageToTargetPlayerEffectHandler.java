@@ -6,7 +6,7 @@ import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.StackEntry;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
 import com.github.laxika.magicalvibes.model.effect.SacrificeSelfThenDealDamageToTargetPlayerEffect;
-import com.github.laxika.magicalvibes.service.GameBroadcastService;
+import com.github.laxika.magicalvibes.service.GameLogService;
 import com.github.laxika.magicalvibes.service.GameOutcomeService;
 import com.github.laxika.magicalvibes.service.battlefield.GameQueryService;
 import com.github.laxika.magicalvibes.service.battlefield.PermanentRemovalService;
@@ -24,7 +24,7 @@ import org.springframework.stereotype.Component;
 public class SacrificeSelfThenDealDamageToTargetPlayerEffectHandler implements NormalEffectHandlerBean {
 
     private final GameQueryService gameQueryService;
-    private final GameBroadcastService gameBroadcastService;
+    private final GameLogService gameLogService;
     private final GameOutcomeService gameOutcomeService;
     private final PermanentRemovalService permanentRemovalService;
     private final TriggerCollectionService triggerCollectionService;
@@ -49,7 +49,7 @@ public class SacrificeSelfThenDealDamageToTargetPlayerEffectHandler implements N
             return;
         }
         triggerCollectionService.checkAllyPermanentSacrificedTriggers(gameData, entry.getControllerId(), self.getCard());
-        gameBroadcastService.logAndBroadcast(gameData, GameLog.cardThen(self.getCard(), " is sacrificed."));
+        gameLogService.append(gameData, GameLog.cardThen(self.getCard(), " is sacrificed."));
         permanentRemovalService.removeOrphanedAuras(gameData);
 
         UUID targetId = entry.getTargetId();

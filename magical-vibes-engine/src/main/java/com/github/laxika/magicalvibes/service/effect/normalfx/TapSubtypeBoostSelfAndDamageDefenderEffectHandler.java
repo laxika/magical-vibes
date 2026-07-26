@@ -8,7 +8,7 @@ import com.github.laxika.magicalvibes.model.StackEntry;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
 import com.github.laxika.magicalvibes.model.effect.TapSubtypeBoostSelfAndDamageDefenderEffect;
 import com.github.laxika.magicalvibes.model.filter.PermanentHasSubtypePredicate;
-import com.github.laxika.magicalvibes.service.GameBroadcastService;
+import com.github.laxika.magicalvibes.service.GameLogService;
 import com.github.laxika.magicalvibes.service.battlefield.GameQueryService;
 import com.github.laxika.magicalvibes.service.filter.PredicateEvaluationService;
 import com.github.laxika.magicalvibes.service.input.PlayerInputService;
@@ -27,7 +27,7 @@ public class TapSubtypeBoostSelfAndDamageDefenderEffectHandler implements Normal
 
     private final GameQueryService gameQueryService;
     private final PredicateEvaluationService predicateEvaluationService;
-    private final GameBroadcastService gameBroadcastService;
+    private final GameLogService gameLogService;
     private final PlayerInputService playerInputService;
 
     @Override
@@ -57,7 +57,7 @@ public class TapSubtypeBoostSelfAndDamageDefenderEffectHandler implements Normal
 
         if (eligibleIds.isEmpty()) {
             String logEntry = entry.getCard().getName() + "'s attack ability finds no untapped " + e.subtype().getDisplayName() + " to tap.";
-            gameBroadcastService.logAndBroadcast(gameData, GameLog.builder().card(entry.getCard()).text("'s attack ability finds no untapped " + e.subtype().getDisplayName() + " to tap.").build());
+            gameLogService.append(gameData, GameLog.builder().card(entry.getCard()).text("'s attack ability finds no untapped " + e.subtype().getDisplayName() + " to tap.").build());
             log.info("Game {} - {} attack trigger: no eligible {} to tap", gameData.id, entry.getCard().getName(), e.subtype().getDisplayName());
             return;
         }

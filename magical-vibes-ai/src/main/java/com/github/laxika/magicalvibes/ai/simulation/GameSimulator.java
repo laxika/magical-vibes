@@ -46,7 +46,7 @@ import com.github.laxika.magicalvibes.networking.message.ValidTargetsResponse;
 import com.github.laxika.magicalvibes.service.interaction.InteractionAnswer;
 import com.github.laxika.magicalvibes.service.ability.AbilityActivationService;
 import com.github.laxika.magicalvibes.service.combat.CombatAttackService;
-import com.github.laxika.magicalvibes.service.GameBroadcastService;
+import com.github.laxika.magicalvibes.service.GameActionAvailabilityService;
 import com.github.laxika.magicalvibes.service.battlefield.GameQueryService;
 import com.github.laxika.magicalvibes.service.effect.AmountEvaluationService;
 import com.github.laxika.magicalvibes.service.effect.AmountContext;
@@ -111,7 +111,7 @@ public class GameSimulator {
     private final GameService gameService;
     private final GameQueryService gameQueryService;
     private final PredicateEvaluationService predicateEvaluationService;
-    private final GameBroadcastService gameBroadcastService;
+    private final GameActionAvailabilityService actionAvailabilityService;
     private final com.github.laxika.magicalvibes.service.cast.CastingCostService castingCostService;
     private final AiManaManager manaManager;
     private final GameRegistry gameRegistry;
@@ -135,7 +135,7 @@ public class GameSimulator {
 
     GameSimulator(GameService gameService,
                   GameQueryService gameQueryService,
-                  GameBroadcastService gameBroadcastService,
+                  GameActionAvailabilityService actionAvailabilityService,
                   com.github.laxika.magicalvibes.service.cast.CastingCostService castingCostService,
                   GameRegistry gameRegistry,
                   CombatAttackService combatAttackService,
@@ -143,7 +143,7 @@ public class GameSimulator {
         this.gameService = gameService;
         this.gameQueryService = gameQueryService;
         this.predicateEvaluationService = new PredicateEvaluationService(gameQueryService);
-        this.gameBroadcastService = gameBroadcastService;
+        this.actionAvailabilityService = actionAvailabilityService;
         this.castingCostService = castingCostService;
         this.gameRegistry = gameRegistry;
         this.combatAttackService = combatAttackService;
@@ -487,7 +487,7 @@ public class GameSimulator {
             // rules. X>=1 stays AI policy — passed as the extra generic requirement,
             // mirroring AiDecisionEngine.canAffordSpell.
             int minXPolicy = hasX ? 1 : 0;
-            if (!gameBroadcastService.isCardPlayable(gd, playerId, card, virtualPool, minXPolicy)) {
+            if (!actionAvailabilityService.isCardPlayable(gd, playerId, card, virtualPool, minXPolicy)) {
                 continue;
             }
             // Non-mana additional costs (sacrifice / graveyard-exile) must be payable.

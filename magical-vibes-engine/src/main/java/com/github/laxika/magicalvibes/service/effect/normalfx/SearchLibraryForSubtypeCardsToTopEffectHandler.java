@@ -8,7 +8,7 @@ import com.github.laxika.magicalvibes.model.StackEntry;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
 import com.github.laxika.magicalvibes.model.effect.SearchLibraryForSubtypeCardsToTopEffect;
 import com.github.laxika.magicalvibes.model.filter.CardSubtypePredicate;
-import com.github.laxika.magicalvibes.service.GameBroadcastService;
+import com.github.laxika.magicalvibes.service.GameLogService;
 import com.github.laxika.magicalvibes.service.filter.PredicateEvaluationService;
 import com.github.laxika.magicalvibes.service.interaction.InteractionHandlerRegistry;
 import com.github.laxika.magicalvibes.service.library.LibraryShuffleHelper;
@@ -33,7 +33,7 @@ import org.springframework.stereotype.Component;
 public class SearchLibraryForSubtypeCardsToTopEffectHandler implements NormalEffectHandlerBean {
 
     private final PredicateEvaluationService predicateEvaluationService;
-    private final GameBroadcastService gameBroadcastService;
+    private final GameLogService gameLogService;
     private final LibrarySearchSupport librarySearchSupport;
     private final InteractionHandlerRegistry interactionHandlerRegistry;
 
@@ -52,7 +52,7 @@ public class SearchLibraryForSubtypeCardsToTopEffectHandler implements NormalEff
 
         List<Card> deck = gameData.playerDecks.get(controllerId);
         if (deck == null || deck.isEmpty()) {
-            gameBroadcastService.logAndBroadcast(gameData, GameLog.text(playerName + " searches their library but it is empty. Library is shuffled."));
+            gameLogService.append(gameData, GameLog.text(playerName + " searches their library but it is empty. Library is shuffled."));
             return;
         }
 
@@ -64,7 +64,7 @@ public class SearchLibraryForSubtypeCardsToTopEffectHandler implements NormalEff
 
         if (matching.isEmpty()) {
             LibraryShuffleHelper.shuffleLibrary(gameData, controllerId);
-            gameBroadcastService.logAndBroadcast(gameData, GameLog.text(playerName + " searches their library but finds no " + label + " cards. Library is shuffled."));
+            gameLogService.append(gameData, GameLog.text(playerName + " searches their library but finds no " + label + " cards. Library is shuffled."));
             log.info("Game {} - {} searches library, no {} cards found", gameData.id, playerName, label);
             return;
         }

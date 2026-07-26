@@ -9,7 +9,7 @@ import com.github.laxika.magicalvibes.model.PendingInteraction;
 import com.github.laxika.magicalvibes.model.StackEntry;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
 import com.github.laxika.magicalvibes.model.effect.TargetPlayerExilesCardFromGraveyardEffect;
-import com.github.laxika.magicalvibes.service.GameBroadcastService;
+import com.github.laxika.magicalvibes.service.GameLogService;
 import com.github.laxika.magicalvibes.service.exile.ExileService;
 import com.github.laxika.magicalvibes.service.graveyard.GraveyardService;
 import com.github.laxika.magicalvibes.service.interaction.InteractionHandlerRegistry;
@@ -26,7 +26,7 @@ import org.springframework.stereotype.Component;
 @RequiredArgsConstructor
 public class TargetPlayerExilesCardFromGraveyardEffectHandler implements NormalEffectHandlerBean {
 
-    private final GameBroadcastService gameBroadcastService;
+    private final GameLogService gameLogService;
     private final InteractionHandlerRegistry interactionHandlerRegistry;
     private final LifeSupport lifeSupport;
     private final ExileService exileService;
@@ -48,7 +48,7 @@ public class TargetPlayerExilesCardFromGraveyardEffectHandler implements NormalE
 
         if (graveyard == null || graveyard.isEmpty()) {
             String logEntry = targetName + " has no cards in graveyard to exile.";
-            gameBroadcastService.logAndBroadcast(gameData, GameLog.text(logEntry));
+            gameLogService.append(gameData, GameLog.text(logEntry));
             log.info("Game {} - {} has no graveyard cards to exile", gameData.id, targetName);
             return;
         }
@@ -59,7 +59,7 @@ public class TargetPlayerExilesCardFromGraveyardEffectHandler implements NormalE
             graveyardService.notifyCardsLeftGraveyard(gameData, targetPlayerId);
             exileService.exileCard(gameData, targetPlayerId, card);
 
-            gameBroadcastService.logAndBroadcast(gameData, GameLog.textCardText(targetName + " exiles " , card, " from their graveyard."));
+            gameLogService.append(gameData, GameLog.textCardText(targetName + " exiles " , card, " from their graveyard."));
             log.info("Game {} - {} exiles {} from graveyard", gameData.id, targetName, card.getName());
 
             if (e.lifeGainIfCreature() > 0 && card.hasType(CardType.CREATURE)) {

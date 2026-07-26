@@ -129,7 +129,7 @@ class RandomAiFuzzTest {
         }
         FuzzInvariants invariants = new FuzzInvariants(gqs, initialCardNames);
 
-        // 4. Replace the harness's FakeConnections with Random AI connections
+        // 4. Remove human transport connections; Random AI observes canonical facts directly.
         FakeConnection fakeConn1 = harness.getConn1();
         FakeConnection fakeConn2 = harness.getConn2();
         sessionManager.unregisterSession(fakeConn1.getId());
@@ -139,28 +139,26 @@ class RandomAiFuzzTest {
         // Each engine gets its own Random derived from the master seed for thread safety
         RandomAiDecisionEngine engine1 = new RandomAiDecisionEngine(
                 gd.id, player1, gameRegistry, gameService, gqs,
-                harness.getCombatAttackService(), harness.getGameBroadcastService(), harness.getCastingCostService(), harness.getCastingPermissionService(),
+                harness.getCombatAttackService(), harness.getGameActionAvailabilityService(), harness.getCastingCostService(), harness.getCastingPermissionService(),
                 harness.getTargetValidationService(), harness.getTargetLegalityService(), new Random(rng.nextLong()), telemetry);
         RandomAiDecisionEngine engine2 = new RandomAiDecisionEngine(
                 gd.id, player2, gameRegistry, gameService, gqs,
-                harness.getCombatAttackService(), harness.getGameBroadcastService(), harness.getCastingCostService(), harness.getCastingPermissionService(),
+                harness.getCombatAttackService(), harness.getGameActionAvailabilityService(), harness.getCastingCostService(), harness.getCastingPermissionService(),
                 harness.getTargetValidationService(), harness.getTargetLegalityService(), new Random(rng.nextLong()), telemetry);
 
-        AiConnection aiConn1 = new AiConnection("ai-fuzz-1", engine1, AI_DECISION_DELAY_MS);
-        AiConnection aiConn2 = new AiConnection("ai-fuzz-2", engine2, AI_DECISION_DELAY_MS);
-        engine1.setSelfConnection(aiConn1);
-        engine2.setSelfConnection(aiConn2);
+        AiDecisionScheduler aiConn1 = new AiDecisionScheduler("ai-fuzz-1", engine1, AI_DECISION_DELAY_MS);
+        AiDecisionScheduler aiConn2 = new AiDecisionScheduler("ai-fuzz-2", engine2, AI_DECISION_DELAY_MS);
 
-        sessionManager.registerPlayer(aiConn1, player1.getId(), "Random AI 1");
-        sessionManager.registerPlayer(aiConn2, player2.getId(), "Random AI 2");
-        sessionManager.setInGame("ai-fuzz-1");
-        sessionManager.setInGame("ai-fuzz-2");
+        gd.aiPlayerIds.addAll(List.of(player1.getId(), player2.getId()));
+        AiDecisionEventSubscriber aiEvents = new AiDecisionEventSubscriber();
+        aiEvents.register(gd.id, player1.getId(), aiConn1);
+        aiEvents.register(gd.id, player2.getId(), aiConn2);
+        AutoCloseable eventSubscription = harness.subscribeToGameEvents(aiEvents);
 
-        // 5. Kick off the mulligan phase for both AIs (mirrors AiPlayerService).
-        // Each engine randomly keeps or mulligans, exercising the London mulligan
+        // 5. Replay the authoritative pending mulligan facts now that the AI subscriber is
+        // attached. Each engine randomly keeps or mulligans, exercising the London mulligan
         // and bottoming paths; the game transitions to RUNNING once both keep.
-        aiConn1.scheduleInitialAction(engine1::handleInitialMulligan);
-        aiConn2.scheduleInitialAction(engine2::handleInitialMulligan);
+        harness.replayPendingMulliganDecisions();
 
         // 6. Poll until the game finishes (or gets stuck)
         String lastFingerprint = "";
@@ -210,6 +208,7 @@ class RandomAiFuzzTest {
         // 7. Clean up executor threads
         aiConn1.close();
         aiConn2.close();
+        eventSubscription.close();
 
         // Catch failures logged between the last poll and game end (e.g. a crash
         // during the final combat that also happened to end the game).
@@ -221,7 +220,7 @@ class RandomAiFuzzTest {
     }
 
     private void failGame(String reason, int gameNumber, GameData gd, Player p1, Player p2,
-                          AiConnection conn1, AiConnection conn2) {
+                          AiDecisionScheduler conn1, AiDecisionScheduler conn2) {
         dumpGameState(gameNumber, gd, p1, p2, conn1, conn2);
         conn1.close();
         conn2.close();
@@ -263,7 +262,7 @@ class RandomAiFuzzTest {
     }
 
     private void dumpGameState(int gameNumber, GameData gd, Player p1, Player p2,
-                               AiConnection conn1, AiConnection conn2) {
+                               AiDecisionScheduler conn1, AiDecisionScheduler conn2) {
         synchronized (gd) {
             System.err.println("=== STUCK GAME STATE — Game #" + gameNumber + " ===");
             System.err.println("Turn:            " + gd.turnNumber);

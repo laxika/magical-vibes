@@ -8,7 +8,7 @@ import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.StackEntry;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
 import com.github.laxika.magicalvibes.model.effect.RevealTargetPlayerLibraryUntilCreatureStealRestToGraveyardEffect;
-import com.github.laxika.magicalvibes.service.GameBroadcastService;
+import com.github.laxika.magicalvibes.service.GameLogService;
 import com.github.laxika.magicalvibes.service.battlefield.BattlefieldEntryService;
 import com.github.laxika.magicalvibes.service.battlefield.LegendRuleService;
 import com.github.laxika.magicalvibes.service.graveyard.GraveyardService;
@@ -26,7 +26,7 @@ import java.util.stream.Collectors;
 @RequiredArgsConstructor
 public class RevealTargetPlayerLibraryUntilCreatureStealRestToGraveyardEffectHandler implements NormalEffectHandlerBean {
 
-    private final GameBroadcastService gameBroadcastService;
+    private final GameLogService gameLogService;
     private final BattlefieldEntryService battlefieldEntryService;
     private final GraveyardService graveyardService;
     private final LegendRuleService legendRuleService;
@@ -62,12 +62,12 @@ public class RevealTargetPlayerLibraryUntilCreatureStealRestToGraveyardEffectHan
         }
 
         if (revealedCards.isEmpty()) {
-            gameBroadcastService.logAndBroadcast(gameData, GameLog.text(targetName + "'s library is empty — no cards are revealed."));
+            gameLogService.append(gameData, GameLog.text(targetName + "'s library is empty — no cards are revealed."));
             return;
         }
 
         String revealedNames = revealedCards.stream().map(Card::getName).collect(Collectors.joining(", "));
-        gameBroadcastService.logAndBroadcast(gameData, GameLog.text(targetName + " reveals " + revealedNames + "."));
+        gameLogService.append(gameData, GameLog.text(targetName + " reveals " + revealedNames + "."));
 
         if (foundCreature != null) {
             // The creature card is stolen: it goes onto the caster's battlefield, not the graveyard.
@@ -75,10 +75,10 @@ public class RevealTargetPlayerLibraryUntilCreatureStealRestToGraveyardEffectHan
 
             Permanent perm = new Permanent(foundCreature);
             battlefieldEntryService.putPermanentOntoBattlefield(gameData, controllerId, perm);
-            gameBroadcastService.logAndBroadcast(gameData, GameLog.entersBattlefieldUnder(foundCreature, controllerName));
+            gameLogService.append(gameData, GameLog.entersBattlefieldUnder(foundCreature, controllerName));
             battlefieldEntryService.handleCreatureEnteredBattlefield(gameData, controllerId, foundCreature, null, false);
         } else {
-            gameBroadcastService.logAndBroadcast(gameData, GameLog.text(targetName + " reveals their entire library — no creature card was found."));
+            gameLogService.append(gameData, GameLog.text(targetName + " reveals their entire library — no creature card was found."));
         }
 
         // All revealed noncreature cards go to the target player's graveyard.

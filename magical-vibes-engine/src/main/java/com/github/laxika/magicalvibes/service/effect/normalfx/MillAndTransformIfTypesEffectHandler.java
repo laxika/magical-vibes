@@ -7,7 +7,7 @@ import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.StackEntry;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
 import com.github.laxika.magicalvibes.model.effect.MillAndTransformIfTypesEffect;
-import com.github.laxika.magicalvibes.service.GameBroadcastService;
+import com.github.laxika.magicalvibes.service.GameLogService;
 import com.github.laxika.magicalvibes.service.battlefield.GameQueryService;
 import com.github.laxika.magicalvibes.service.graveyard.GraveyardService;
 import java.util.List;
@@ -24,7 +24,7 @@ public class MillAndTransformIfTypesEffectHandler implements NormalEffectHandler
     private final GraveyardService graveyardService;
     private final GameQueryService gameQueryService;
     private final AnimationSupport animationSupport;
-    private final GameBroadcastService gameBroadcastService;
+    private final GameLogService gameLogService;
 
     @Override
     public Class<? extends CardEffect> handledEffect() {
@@ -40,7 +40,7 @@ public class MillAndTransformIfTypesEffectHandler implements NormalEffectHandler
         String sourceName = entry.getCard().getName();
 
         if (deck == null || deck.isEmpty()) {
-            gameBroadcastService.logAndBroadcast(gameData,
+            gameLogService.append(gameData,
                     GameLog.text(playerName + "'s library is empty (" + sourceName + ")."));
             return;
         }

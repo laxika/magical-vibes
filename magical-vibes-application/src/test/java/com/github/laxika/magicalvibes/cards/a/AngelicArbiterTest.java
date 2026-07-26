@@ -5,7 +5,7 @@ import com.github.laxika.magicalvibes.cards.s.Shock;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.TurnStep;
-import com.github.laxika.magicalvibes.service.GameBroadcastService;
+import com.github.laxika.magicalvibes.service.GameActionAvailabilityService;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
@@ -85,7 +85,7 @@ class AngelicArbiterTest extends BaseCardTest {
         harness.forceActivePlayer(player1);
         harness.forceStep(TurnStep.POSTCOMBAT_MAIN);
 
-        GameBroadcastService gbs = harness.getGameBroadcastService();
+        GameActionAvailabilityService gbs = harness.getGameActionAvailabilityService();
         List<Integer> playable = gbs.getPlayableCardIndices(gd, player1.getId());
 
         // Shock should NOT be playable because player attacked this turn
@@ -107,7 +107,7 @@ class AngelicArbiterTest extends BaseCardTest {
         harness.forceActivePlayer(player1);
         harness.forceStep(TurnStep.POSTCOMBAT_MAIN);
 
-        GameBroadcastService gbs = harness.getGameBroadcastService();
+        GameActionAvailabilityService gbs = harness.getGameActionAvailabilityService();
         List<Integer> playable = gbs.getPlayableCardIndices(gd, player1.getId());
 
         // Shock should be playable — no attack was declared
@@ -155,7 +155,7 @@ class AngelicArbiterTest extends BaseCardTest {
         harness.forceActivePlayer(player1);
         harness.forceStep(TurnStep.POSTCOMBAT_MAIN);
 
-        GameBroadcastService gbs = harness.getGameBroadcastService();
+        GameActionAvailabilityService gbs = harness.getGameActionAvailabilityService();
         List<Integer> playable = gbs.getPlayableCardIndices(gd, player1.getId());
 
         // Shock should be playable — the restriction only applies to opponents
@@ -178,7 +178,7 @@ class AngelicArbiterTest extends BaseCardTest {
         harness.forceActivePlayer(player1);
         harness.forceStep(TurnStep.POSTCOMBAT_MAIN);
 
-        GameBroadcastService gbs = harness.getGameBroadcastService();
+        GameActionAvailabilityService gbs = harness.getGameActionAvailabilityService();
         List<Integer> playable = gbs.getPlayableCardIndices(gd, player1.getId());
 
         // Land should still be playable

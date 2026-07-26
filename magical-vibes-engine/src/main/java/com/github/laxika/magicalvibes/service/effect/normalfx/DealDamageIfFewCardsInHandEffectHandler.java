@@ -5,7 +5,7 @@ import com.github.laxika.magicalvibes.model.GameLog;
 import com.github.laxika.magicalvibes.model.StackEntry;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
 import com.github.laxika.magicalvibes.model.effect.DealDamageIfFewCardsInHandEffect;
-import com.github.laxika.magicalvibes.service.GameBroadcastService;
+import com.github.laxika.magicalvibes.service.GameLogService;
 import com.github.laxika.magicalvibes.service.GameOutcomeService;
 import com.github.laxika.magicalvibes.service.battlefield.GameQueryService;
 import java.util.UUID;
@@ -20,7 +20,7 @@ public class DealDamageIfFewCardsInHandEffectHandler implements NormalEffectHand
 
     private final DamageSupport damageSupport;
     private final GameQueryService gameQueryService;
-    private final GameBroadcastService gameBroadcastService;
+    private final GameLogService gameLogService;
     private final GameOutcomeService gameOutcomeService;
 
     @Override
@@ -42,7 +42,7 @@ public class DealDamageIfFewCardsInHandEffectHandler implements NormalEffectHand
         int handSize = hand != null ? hand.size() : 0;
         if (handSize > e.maxCards()) {
             String playerName = gameData.playerIdToName.get(targetId);
-            gameBroadcastService.logAndBroadcast(gameData, GameLog.text(cardName + "'s ability does nothing — " + playerName + " has more than " + e.maxCards() + " cards in hand."));
+            gameLogService.append(gameData, GameLog.text(cardName + "'s ability does nothing — " + playerName + " has more than " + e.maxCards() + " cards in hand."));
             return;
         }
 

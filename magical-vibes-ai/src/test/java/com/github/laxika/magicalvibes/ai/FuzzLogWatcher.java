@@ -16,7 +16,7 @@ import java.util.concurrent.ConcurrentLinkedQueue;
  * Logback appender that turns swallowed engine/AI failures into fuzz-test failures.
  *
  * <p>Every exception thrown while an AI drives the engine is caught somewhere in the
- * loop ({@code AiDecisionEngine.send()}, {@code AiConnection}, the blocker fallbacks)
+ * loop ({@code AiDecisionEngine.send()}, {@code AiDecisionScheduler}, the blocker fallbacks)
  * and only logged — without this watcher a crash degrades into a "stuck game" report
  * or is masked entirely when the AI recovers by passing priority. The watcher records:
  * <ul>

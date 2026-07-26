@@ -8,7 +8,7 @@ import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.StackEntry;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
 import com.github.laxika.magicalvibes.model.effect.SacrificeTargetPermanentAtEndStepEffect;
-import com.github.laxika.magicalvibes.service.GameBroadcastService;
+import com.github.laxika.magicalvibes.service.GameLogService;
 import com.github.laxika.magicalvibes.service.battlefield.GameQueryService;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -19,7 +19,7 @@ import org.springframework.stereotype.Component;
 @Slf4j
 public class SacrificeTargetPermanentAtEndStepEffectHandler implements NormalEffectHandlerBean {
 
-    private final GameBroadcastService gameBroadcastService;
+    private final GameLogService gameLogService;
     private final GameQueryService gameQueryService;
 
     @Override
@@ -36,7 +36,7 @@ public class SacrificeTargetPermanentAtEndStepEffectHandler implements NormalEff
 
         gameData.queueDelayedAction(new DelayedPermanentAction(target.getId(), DelayedPermanentActionKind.SACRIFICE_AT_END_STEP));
 
-        gameBroadcastService.logAndBroadcast(gameData, GameLog.cardThen(target.getCard(), " will be sacrificed at the beginning of the next end step."));
+        gameLogService.append(gameData, GameLog.cardThen(target.getCard(), " will be sacrificed at the beginning of the next end step."));
         log.info("Game {} - {} scheduled for sacrifice at end step", gameData.id, target.getCard().getName());
     }
 }

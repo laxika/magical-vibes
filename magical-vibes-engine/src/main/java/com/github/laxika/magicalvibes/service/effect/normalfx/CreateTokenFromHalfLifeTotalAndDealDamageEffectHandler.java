@@ -8,7 +8,7 @@ import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.StackEntry;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
 import com.github.laxika.magicalvibes.model.effect.CreateTokenFromHalfLifeTotalAndDealDamageEffect;
-import com.github.laxika.magicalvibes.service.GameBroadcastService;
+import com.github.laxika.magicalvibes.service.GameLogService;
 import com.github.laxika.magicalvibes.service.battlefield.BattlefieldEntryService;
 import com.github.laxika.magicalvibes.service.battlefield.GameQueryService;
 import com.github.laxika.magicalvibes.service.trigger.TriggerCollectionService;
@@ -25,7 +25,7 @@ public class CreateTokenFromHalfLifeTotalAndDealDamageEffectHandler implements N
 
     private final BattlefieldEntryService battlefieldEntryService;
     private final GameQueryService gameQueryService;
-    private final GameBroadcastService gameBroadcastService;
+    private final GameLogService gameLogService;
     private final TriggerCollectionService triggerCollectionService;
 
     @Override
@@ -65,7 +65,7 @@ public class CreateTokenFromHalfLifeTotalAndDealDamageEffectHandler implements N
                 battlefieldEntryService.putPermanentOntoBattlefield(gameData, controllerId, tokenPerm);
 
                 String tokenLog = "A " + x + "/" + x + " black " + e.tokenName() + " creature token enters the battlefield.";
-                gameBroadcastService.logAndBroadcast(gameData, GameLog.text(tokenLog));
+                gameLogService.append(gameData, GameLog.text(tokenLog));
                 log.info("Game {} - {} {}/{} token created for {}", gameData.id, e.tokenName(), x, x, controllerId);
 
                 battlefieldEntryService.handleCreatureEnteredBattlefield(gameData, controllerId, tokenCard, null, false);
@@ -74,12 +74,12 @@ public class CreateTokenFromHalfLifeTotalAndDealDamageEffectHandler implements N
                 if (x > 0) {
                     if (!gameQueryService.canPlayerLifeChange(gameData, controllerId)) {
                         String playerName = gameData.playerIdToName.get(controllerId);
-                        gameBroadcastService.logAndBroadcast(gameData, GameLog.text(playerName + "'s life total can't change."));
+                        gameLogService.append(gameData, GameLog.text(playerName + "'s life total can't change."));
                     } else {
                         int life = gameData.getLife(controllerId);
                         gameData.playerLifeTotals.put(controllerId, life - x);
                         String dmgLog = e.tokenName() + " deals " + x + " damage to " + gameData.playerIdToName.get(controllerId) + ".";
-                        gameBroadcastService.logAndBroadcast(gameData, GameLog.text(dmgLog));
+                        gameLogService.append(gameData, GameLog.text(dmgLog));
                         log.info("Game {} - {} deals {} damage to controller {}", gameData.id, e.tokenName(), x, controllerId);
                         triggerCollectionService.checkLifeLossTriggers(gameData, controllerId, x);
                     }

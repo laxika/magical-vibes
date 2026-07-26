@@ -5,7 +5,7 @@ import com.github.laxika.magicalvibes.model.GameLog;
 import com.github.laxika.magicalvibes.model.StackEntry;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
 import com.github.laxika.magicalvibes.model.effect.MustAttackControllerNextTurnEffect;
-import com.github.laxika.magicalvibes.service.GameBroadcastService;
+import com.github.laxika.magicalvibes.service.GameLogService;
 import java.util.UUID;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -17,7 +17,7 @@ import org.springframework.stereotype.Component;
 public class MustAttackControllerNextTurnEffectHandler implements NormalEffectHandlerBean {
 
     private final TurnSupport turnSupport;
-    private final GameBroadcastService gameBroadcastService;
+    private final GameLogService gameLogService;
 
     @Override
     public Class<? extends CardEffect> handledEffect() {
@@ -38,7 +38,7 @@ public class MustAttackControllerNextTurnEffectHandler implements NormalEffectHa
         String targetName = gameData.playerIdToName.get(targetPlayerId);
         String logEntry = "Creatures " + targetName + " controls will attack " + controllerName
                 + " if able during their next turn.";
-        gameBroadcastService.logAndBroadcast(gameData, GameLog.text(logEntry));
+        gameLogService.append(gameData, GameLog.text(logEntry));
         log.info("Game {} - {} taunts {} (must attack next turn)", gameData.id, controllerName, targetName);
     }
 }

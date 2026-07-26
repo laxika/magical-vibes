@@ -9,7 +9,7 @@ import com.github.laxika.magicalvibes.model.effect.BoostTargetCreaturePerChosenT
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
 import com.github.laxika.magicalvibes.model.filter.FilterContext;
 import com.github.laxika.magicalvibes.model.filter.PermanentHasSubtypePredicate;
-import com.github.laxika.magicalvibes.service.GameBroadcastService;
+import com.github.laxika.magicalvibes.service.GameLogService;
 import com.github.laxika.magicalvibes.service.battlefield.GameQueryService;
 import com.github.laxika.magicalvibes.service.filter.PredicateEvaluationService;
 import com.github.laxika.magicalvibes.service.input.PlayerInputService;
@@ -38,7 +38,7 @@ public class BoostTargetCreaturePerChosenTypeCountEffectHandler implements Norma
     private final PlayerInputService playerInputService;
     private final PredicateEvaluationService predicateEvaluationService;
     private final GameQueryService gameQueryService;
-    private final GameBroadcastService gameBroadcastService;
+    private final GameLogService gameLogService;
 
     @Override
     public Class<? extends CardEffect> handledEffect() {
@@ -89,7 +89,7 @@ public class BoostTargetCreaturePerChosenTypeCountEffectHandler implements Norma
         target.setPowerModifier(target.getPowerModifier() + powerBoost);
         target.setToughnessModifier(target.getToughnessModifier() + toughnessBoost);
 
-        gameBroadcastService.logAndBroadcast(gameData, GameLog.builder()
+        gameLogService.append(gameData, GameLog.builder()
                 .card(target.getCard())
                 .text(String.format(" gets %+d/%+d until end of turn.", powerBoost, toughnessBoost))
                 .build());

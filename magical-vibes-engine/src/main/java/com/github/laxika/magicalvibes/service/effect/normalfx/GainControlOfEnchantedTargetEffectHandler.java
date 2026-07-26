@@ -7,7 +7,7 @@ import com.github.laxika.magicalvibes.model.StackEntry;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
 import com.github.laxika.magicalvibes.model.effect.EffectDuration;
 import com.github.laxika.magicalvibes.model.effect.GainControlOfEnchantedTargetEffect;
-import com.github.laxika.magicalvibes.service.GameBroadcastService;
+import com.github.laxika.magicalvibes.service.GameLogService;
 import com.github.laxika.magicalvibes.service.battlefield.CreatureControlService;
 import com.github.laxika.magicalvibes.service.battlefield.GameQueryService;
 import lombok.RequiredArgsConstructor;
@@ -18,7 +18,7 @@ import org.springframework.stereotype.Component;
 public class GainControlOfEnchantedTargetEffectHandler implements NormalEffectHandlerBean {
 
     private final GameQueryService gameQueryService;
-    private final GameBroadcastService gameBroadcastService;
+    private final GameLogService gameLogService;
     private final CreatureControlService creatureControlService;
 
     @Override
@@ -33,7 +33,7 @@ public class GainControlOfEnchantedTargetEffectHandler implements NormalEffectHa
 
         if (!gameQueryService.isEnchanted(gameData, target)) {
             String logEntry = entry.getCard().getName() + "'s ability has no effect (" + target.getCard().getName() + " is not enchanted).";
-            gameBroadcastService.logAndBroadcast(gameData, GameLog.cardTextCard(entry.getCard(), "'s ability has no effect (", target.getCard(), " is not enchanted)."));
+            gameLogService.append(gameData, GameLog.cardTextCard(entry.getCard(), "'s ability has no effect (", target.getCard(), " is not enchanted)."));
             return;
         }
 

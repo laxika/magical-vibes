@@ -72,7 +72,7 @@ class SummerBloomTest extends BaseCardTest {
         }
 
         // One Forest remains in hand (index 0) but the four-land limit is now reached.
-        assertThat(harness.getGameBroadcastService().getPlayableCardIndices(gd, player1.getId()))
+        assertThat(harness.getGameActionAvailabilityService().getPlayableCardIndices(gd, player1.getId()))
                 .doesNotContain(0);
     }
 }

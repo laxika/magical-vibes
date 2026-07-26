@@ -8,7 +8,7 @@ import com.github.laxika.magicalvibes.model.StackEntry;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
 import com.github.laxika.magicalvibes.model.effect.SylvanLibraryDrawEffect;
 import com.github.laxika.magicalvibes.service.DrawService;
-import com.github.laxika.magicalvibes.service.GameBroadcastService;
+import com.github.laxika.magicalvibes.service.GameLogService;
 import com.github.laxika.magicalvibes.service.interaction.InteractionHandlerRegistry;
 import java.util.ArrayList;
 import java.util.List;
@@ -28,7 +28,7 @@ import org.springframework.stereotype.Component;
 public class SylvanLibraryDrawEffectHandler implements NormalEffectHandlerBean {
 
     private final DrawService drawService;
-    private final GameBroadcastService gameBroadcastService;
+    private final GameLogService gameLogService;
     private final InteractionHandlerRegistry interactionHandlerRegistry;
 
     @Override
@@ -45,7 +45,7 @@ public class SylvanLibraryDrawEffectHandler implements NormalEffectHandlerBean {
         // Draw two additional cards.
         drawService.resolveDrawCard(gameData, controllerId);
         drawService.resolveDrawCard(gameData, controllerId);
-        gameBroadcastService.logAndBroadcast(gameData,
+        gameLogService.append(gameData,
                 GameLog.text(controllerName + " draws two additional cards (" + sourceName + ")."));
 
         // Determine which cards still in hand were drawn this turn (hand order preserved).

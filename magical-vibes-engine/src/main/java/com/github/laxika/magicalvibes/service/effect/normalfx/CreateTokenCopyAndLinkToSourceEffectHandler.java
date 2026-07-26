@@ -10,7 +10,7 @@ import com.github.laxika.magicalvibes.model.effect.CardEffect;
 import com.github.laxika.magicalvibes.model.effect.CreateTokenCopyAndLinkToSourceEffect;
 import com.github.laxika.magicalvibes.model.effect.CreateTokenCopyOfTargetPermanentEffect;
 import com.github.laxika.magicalvibes.model.effect.RemoveLinkedPermanentEffect;
-import com.github.laxika.magicalvibes.service.GameBroadcastService;
+import com.github.laxika.magicalvibes.service.GameLogService;
 import com.github.laxika.magicalvibes.service.battlefield.BattlefieldEntryService;
 import com.github.laxika.magicalvibes.service.battlefield.GameQueryService;
 import lombok.RequiredArgsConstructor;
@@ -28,7 +28,7 @@ public class CreateTokenCopyAndLinkToSourceEffectHandler implements NormalEffect
 
     private final BattlefieldEntryService battlefieldEntryService;
     private final GameQueryService gameQueryService;
-    private final GameBroadcastService gameBroadcastService;
+    private final GameLogService gameLogService;
 
     @Override
     public Class<? extends CardEffect> handledEffect() {
@@ -66,7 +66,7 @@ public class CreateTokenCopyAndLinkToSourceEffectHandler implements NormalEffect
         sourceEnchantment.setChosenPermanentId(tokenPermanent.getId());
         tokenPermanent.setChosenPermanentId(sourceEnchantment.getId());
 
-        gameBroadcastService.logAndBroadcast(gameData, GameLog.textCardText("A token copy of ", sourceCard, " is created."));
+        gameLogService.append(gameData, GameLog.textCardText("A token copy of ", sourceCard, " is created."));
         log.info("Game {} - Dance of Many creates a token copy of {}", gameData.id, sourceCard.getName());
 
         // The token wasn't cast; any targeted ETB ability of the copied creature chooses its target at

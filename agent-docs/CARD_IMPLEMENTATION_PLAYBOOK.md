@@ -37,8 +37,8 @@ public class ExampleCard extends Card {
 - **Power-based damage (fight, bite, Pack Hunt, Berserker, Arc-Lightning-style source damage, planeswalker power-to-loyalty):**
   - `GameQueryService` exposes three related but distinct queries. Pick the right one:
     - `getEffectivePower(gameData, creature)` — **raw signed stat.** Use for predicates, crew, X-cost, AI evaluation, display, and P/T math. Can be negative.
-    - `getEffectiveCombatDamage(gameData, creature)` — **combat only.** Clamped to ≥ 0 and honors Belligerent-Brontodon / Bark-of-Doran "assign combat damage equal to toughness" static effects. Used by `CombatDamageService`.
-    - `getPowerBasedDamage(gameData, creature)` — **non-combat "deals damage equal to its power" effects.** Clamped to ≥ 0 but ignores toughness-assign effects (they are combat-only). Used by `DamageSupport` / damage handlers in `normalfx`.
+    - `getEffectiveCombatDamage(gameData, creature)` — **combat only.** Clamped to �A 0 and honors Belligerent-Brontodon / Bark-of-Doran "assign combat damage equal to toughness" static effects. Used by `CombatDamageService`.
+    - `getPowerBasedDamage(gameData, creature)` — **non-combat "deals damage equal to its power" effects.** Clamped to �A 0 but ignores toughness-assign effects (they are combat-only). Used by `DamageSupport` / damage handlers in `normalfx`.
   - When implementing a new "deals damage equal to its power" effect, call `getPowerBasedDamage` and pass the result directly to `dealCreatureDamage` / `dealDamageToPlayer` — do **not** add a manual `if (power > 0)` guard; the helper already clamps, and the damage primitives gate triggers on `damage > 0`.
   - **Damage never kills inline.** `DamageSupport.dealCreatureDamage` (and the combat pipeline) only *record*: marked damage (CR 704.5g), the `Permanent.damagedByDeathtouch` flag (CR 704.5h), loyalty removal for planeswalkers (CR 120.3c), or -1/-1 counters for infect/wither. The destruction itself happens exclusively in `StateBasedActionService.performStateBasedActions`, which runs after every resolution and combat damage step. Never re-check lethality (`isLethalDamage`/indestructible/regeneration) in a damage handler.
   - Rationale: a single `getEffectivePower` call with a manual guard is the historical source of "stuck game" bugs (attacker with negative effective power sent a negative damage total to the engine). The three-way split makes "signed stat" vs. "damage amount" a compile-time-visible distinction.
@@ -164,7 +164,7 @@ public class ExampleCard extends Card {
   - Card goes to graveyard normally if it dies, allowing repeated graveyard casts
   - Can be combined with additional costs like `ExileNCardsFromGraveyardCost`
   - Example: `magical-vibes-card/src/main/java/com/github/laxika/magicalvibes/cards/s/SkaabRuinator.java`
-  - `new GraveyardCast("{cost}")` overrides the normal mana cost with an alternate one paid *rather than* the card's mana cost when cast from the graveyard ("by paying {W}{U}{B}{R}{G} rather than paying its mana cost"). Paid like a normal mana cost (no flashback mana restriction) in `SpellCastingService.payFlashbackOrGraveyardCastCost`; advertised via the same alternate string in `GameBroadcastService`.
+  - `new GraveyardCast("{cost}")` overrides the normal mana cost with an alternate one paid *rather than* the card's mana cost when cast from the graveyard ("by paying {W}{U}{B}{R}{G} rather than paying its mana cost"). Paid like a normal mana cost (no flashback mana restriction) in `SpellCastingService.payFlashbackOrGraveyardCastCost`; advertised via the same alternate string in `GameActionAvailabilityService`.
   - For "If you do, it enters with … counters" (i.e. only when cast from the graveyard), add `ON_ENTER_BATTLEFIELD ConditionalEffect(new CastFromZone(Zone.GRAVEYARD), new EnterWithCountersEffect(...))`. The entering permanent carries its cast-from zone (`Permanent.castFromZone`, stamped in `StackResolutionService.resolveCreatureSpell`) so the as-enters replacement `applyEnterWithCounters` can gate on it.
   - Example (alternate cost + graveyard-only ETB counters): `magical-vibes-card/src/main/java/com/github/laxika/magicalvibes/cards/w/WorldheartPhoenix.java`
 
@@ -266,7 +266,7 @@ Then do all of:
   ```
   Add the `@Component` handler in `service/effect/normalfx/`. Spring auto-discovers it via `GameEngineConfig`; card tests and MCTS simulation reuse the same graph through `GameTestEngineContext` / `HeadlessSimulationContext`.
 - For static/continuous effects, create a `@Component` implementing `StaticEffectHandlerBean` in `service/effect/staticfx/`. See **STATIC_EFFECT_HANDLERS.md** for naming, self vs non-self handlers, and registration details.
-- For cast-cost modifiers (cost reductions/taxes), create a `@Component` implementing `CostModificationHandlerBean` in `service/cast/costmod/`. See **COST_MODIFICATION_HANDLERS.md** for the `onSpellItself` (spell-carried) vs battlefield-permanent split, scoping via `CostModificationSource`, and registration. `CastingCostService` is the single source of truth — never re-add `instanceof` cost chains in `GameBroadcastService`/`SpellCastingService`.
+- For cast-cost modifiers (cost reductions/taxes), create a `@Component` implementing `CostModificationHandlerBean` in `service/cast/costmod/`. See **COST_MODIFICATION_HANDLERS.md** for the `onSpellItself` (spell-carried) vs battlefield-permanent split, scoping via `CostModificationSource`, and registration. `CastingCostService` is the single source of truth — never re-add `instanceof` cost chains in `GameActionAvailabilityService`/`SpellCastingService`.
 - Structural targeting (category + predicate) needs NO validator — the `targetSpec()` interpreter handles it. Add a `@ValidatesTarget`-annotated method under `service/validate/` (see `EFFECTS_INDEX.md` target validator map) ONLY as an escape hatch for a non-structural rule the spec cannot express (opponent-relation, controller/owner compare, chosen-source, null-target tolerance) — and still declare the structural `targetSpec()`:
   ```java
   @ValidatesTarget(YourNewEffect.class)
@@ -318,7 +318,7 @@ Records (effect classes, predicates, filters) use Java record accessors: `effect
 
 ## Resolution handler templates
 
-Normal stack-resolution handlers live in `service/effect/normalfx/` as `@Component` classes implementing `NormalEffectHandlerBean`. Inject `GameQueryService`, `GameBroadcastService`, and the relevant `*Support` class for the domain.
+Normal stack-resolution handlers live in `service/effect/normalfx/` as `@Component` classes implementing `NormalEffectHandlerBean`. Inject `GameQueryService`, `GameLogService`, and the relevant `*Support` class for the domain.
 
 When adding a new effect that operates on the enchanted creature (for aura abilities):
 
@@ -327,7 +327,7 @@ When adding a new effect that operates on the enchanted creature (for aura abili
 @RequiredArgsConstructor
 public class YourEnchantedCreatureEffectHandler implements NormalEffectHandlerBean {
     private final GameQueryService gameQueryService;
-    private final GameBroadcastService gameBroadcastService;
+    private final GameLogService gameLogService;
 
     @Override
     public Class<? extends CardEffect> handledEffect() {
@@ -355,7 +355,7 @@ public class YourEnchantedCreatureEffectHandler implements NormalEffectHandlerBe
 
         // 3. Apply effect to enchantedCreature
 
-        gameBroadcastService.logAndBroadcast(gameData, GameLog.builder()
+        gameLogService.append(gameData, GameLog.builder()
                 .card(entry.getCard())
                 .text(" affects ")
                 .card(enchantedCreature.getCard())
@@ -372,7 +372,7 @@ When adding a simple targeted effect:
 @RequiredArgsConstructor
 public class YourTargetEffectHandler implements NormalEffectHandlerBean {
     private final GameQueryService gameQueryService;
-    private final GameBroadcastService gameBroadcastService;
+    private final GameLogService gameLogService;
 
     @Override
     public Class<? extends CardEffect> handledEffect() {
@@ -388,7 +388,7 @@ public class YourTargetEffectHandler implements NormalEffectHandlerBean {
 
         // Apply effect to target
 
-        gameBroadcastService.logAndBroadcast(gameData, GameLog.builder()
+        gameLogService.append(gameData, GameLog.builder()
                 .card(entry.getCard())
                 .text(" affects ")
                 .card(target.getCard())

@@ -2,7 +2,6 @@ package com.github.laxika.magicalvibes.ai.interaction;
 
 import com.github.laxika.magicalvibes.ai.AiGameActions;
 import com.github.laxika.magicalvibes.model.GameData;
-import com.github.laxika.magicalvibes.networking.Connection;
 import com.github.laxika.magicalvibes.service.battlefield.GameQueryService;
 
 import java.util.UUID;
@@ -16,7 +15,6 @@ public record AiInteractionContext(
         UUID gameId,
         UUID aiPlayerId,
         GameQueryService gameQueryService,
-        AiGameActions gameActions,
-        Connection selfConnection
+        AiGameActions gameActions
 ) {
 }

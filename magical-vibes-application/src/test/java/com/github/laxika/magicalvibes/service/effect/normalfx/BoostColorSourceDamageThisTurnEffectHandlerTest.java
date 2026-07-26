@@ -22,7 +22,7 @@ class BoostColorSourceDamageThisTurnEffectHandlerTest extends AbstractDamageHand
 
     @Override
     protected void setUpHandler() {
-        boostColorSourceDamageThisTurnHandler = new BoostColorSourceDamageThisTurnEffectHandler(gameBroadcastService);
+        boostColorSourceDamageThisTurnHandler = new BoostColorSourceDamageThisTurnEffectHandler(gameLogService);
     }
 
     @Test

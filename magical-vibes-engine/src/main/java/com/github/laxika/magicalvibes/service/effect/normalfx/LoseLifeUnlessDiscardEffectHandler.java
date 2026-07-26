@@ -7,7 +7,7 @@ import com.github.laxika.magicalvibes.model.PendingMayAbility;
 import com.github.laxika.magicalvibes.model.StackEntry;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
 import com.github.laxika.magicalvibes.model.effect.LoseLifeUnlessDiscardEffect;
-import com.github.laxika.magicalvibes.service.GameBroadcastService;
+import com.github.laxika.magicalvibes.service.GameLogService;
 import com.github.laxika.magicalvibes.service.battlefield.GameQueryService;
 import java.util.List;
 import java.util.UUID;
@@ -20,7 +20,7 @@ import org.springframework.stereotype.Component;
 @RequiredArgsConstructor
 public class LoseLifeUnlessDiscardEffectHandler implements NormalEffectHandlerBean {
 
-    private final GameBroadcastService gameBroadcastService;
+    private final GameLogService gameLogService;
     private final GameQueryService gameQueryService;
     private final PlayerInteractionSupport playerInteractionSupport;
 
@@ -42,12 +42,12 @@ public class LoseLifeUnlessDiscardEffectHandler implements NormalEffectHandlerBe
         if (!hasCards) {
             // No cards to discard — auto-apply life loss
             if (!gameQueryService.canPlayerLifeChange(gameData, targetPlayerId)) {
-                gameBroadcastService.logAndBroadcast(gameData, GameLog.text(playerName + "'s life total can't change."));
+                gameLogService.append(gameData, GameLog.text(playerName + "'s life total can't change."));
             } else {
                 int currentLife = gameData.getLife(targetPlayerId);
                 gameData.playerLifeTotals.put(targetPlayerId, currentLife - e.lifeLoss());
                 String logEntry = playerName + " has no cards to discard. " + playerName + " loses " + e.lifeLoss() + " life.";
-                gameBroadcastService.logAndBroadcast(gameData, GameLog.text(logEntry));
+                gameLogService.append(gameData, GameLog.text(logEntry));
                 log.info("Game {} - {} loses {} life (no cards to discard, {})",
                         gameData.id, playerName, e.lifeLoss(), entry.getCard().getName());
             }

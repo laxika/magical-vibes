@@ -10,7 +10,7 @@ import com.github.laxika.magicalvibes.model.TurnStep;
 import com.github.laxika.magicalvibes.model.effect.ManaProducingEffect;
 import com.github.laxika.magicalvibes.model.event.GameEventAudience;
 import com.github.laxika.magicalvibes.model.event.GameEventFact;
-import com.github.laxika.magicalvibes.service.GameBroadcastService;
+import com.github.laxika.magicalvibes.service.GameActionAvailabilityService;
 import com.github.laxika.magicalvibes.service.StackResolutionService;
 import com.github.laxika.magicalvibes.service.cast.PotentialManaService;
 import com.github.laxika.magicalvibes.service.trigger.TriggerCollectionService;
@@ -38,7 +38,7 @@ import java.util.function.Consumer;
 public class AutoPassService {
 
     private final GameQueryService gameQueryService;
-    private final GameBroadcastService gameBroadcastService;
+    private final GameActionAvailabilityService actionAvailabilityService;
     private final TriggerCollectionService triggerCollectionService;
     private final StackResolutionService stackResolutionService;
     private final StepTriggerService stepTriggerService;
@@ -48,7 +48,7 @@ public class AutoPassService {
 
     public AutoPassService(
             GameQueryService gameQueryService,
-            GameBroadcastService gameBroadcastService,
+            GameActionAvailabilityService actionAvailabilityService,
             TriggerCollectionService triggerCollectionService,
             StackResolutionService stackResolutionService,
             StepTriggerService stepTriggerService,
@@ -56,7 +56,7 @@ public class AutoPassService {
             PotentialManaService potentialManaService,
             GameMutationCoordinator mutationCoordinator) {
         this.gameQueryService = gameQueryService;
-        this.gameBroadcastService = gameBroadcastService;
+        this.actionAvailabilityService = actionAvailabilityService;
         this.triggerCollectionService = triggerCollectionService;
         this.stackResolutionService = stackResolutionService;
         this.stepTriggerService = stepTriggerService;
@@ -198,7 +198,7 @@ public class AutoPassService {
                 continue;
             }
 
-            List<Integer> playable = gameBroadcastService.getPlayableCardIndices(gameData, priorityHolder);
+            List<Integer> playable = actionAvailabilityService.getPlayableCardIndices(gameData, priorityHolder);
             if (!playable.isEmpty() && shouldStopForPlayableCards(gameData, priorityHolder)) {
                 // Priority holder can act — stop and let them decide
                 invalidateForAllPlayers(gameData);
@@ -213,7 +213,7 @@ public class AutoPassService {
             // behavior: rollouts don't enumerate mid-combat casts, and the extra
             // potential-pool build per priority window would slow MCTS for nothing.
             if (!gameData.simulation && gameData.aiPlayerIds.contains(priorityHolder)
-                    && !gameBroadcastService.getPotentialPlayableCardIndices(
+                    && !actionAvailabilityService.getPotentialPlayableCardIndices(
                             gameData, priorityHolder, List.of()).isEmpty()) {
                 invalidateForAllPlayers(gameData);
                 return;
@@ -296,7 +296,7 @@ public class AutoPassService {
                 continue;
             }
 
-            List<Integer> playable = gameBroadcastService.getPlayableCardIndices(gameData, stackPriorityHolder);
+            List<Integer> playable = actionAvailabilityService.getPlayableCardIndices(gameData, stackPriorityHolder);
             boolean hasActivatable = hasInstantSpeedActivatedAbility(gameData, stackPriorityHolder);
 
             if (!playable.isEmpty() || hasActivatable) {

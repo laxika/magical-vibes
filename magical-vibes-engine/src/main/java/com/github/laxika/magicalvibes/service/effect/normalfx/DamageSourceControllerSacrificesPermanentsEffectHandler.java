@@ -7,7 +7,7 @@ import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.StackEntry;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
 import com.github.laxika.magicalvibes.model.effect.DamageSourceControllerSacrificesPermanentsEffect;
-import com.github.laxika.magicalvibes.service.GameBroadcastService;
+import com.github.laxika.magicalvibes.service.GameLogService;
 import com.github.laxika.magicalvibes.service.input.PlayerInputService;
 import java.util.ArrayList;
 import java.util.List;
@@ -22,7 +22,7 @@ import org.springframework.stereotype.Component;
 public class DamageSourceControllerSacrificesPermanentsEffectHandler implements NormalEffectHandlerBean {
 
     private final DestructionSupport destructionSupport;
-    private final GameBroadcastService gameBroadcastService;
+    private final GameLogService gameLogService;
     private final PlayerInputService playerInputService;
 
     @Override
@@ -44,7 +44,7 @@ public class DamageSourceControllerSacrificesPermanentsEffectHandler implements 
                 List<Permanent> battlefield = gameData.playerBattlefields.get(sacrificingPlayerId);
                 if (battlefield == null || battlefield.isEmpty()) {
                     String logEntry = playerName + " has no permanents to sacrifice.";
-                    gameBroadcastService.logAndBroadcast(gameData, GameLog.text(logEntry));
+                    gameLogService.append(gameData, GameLog.text(logEntry));
                     log.info("Game {} - {} has no permanents to sacrifice", gameData.id, playerName);
                     return;
                 }

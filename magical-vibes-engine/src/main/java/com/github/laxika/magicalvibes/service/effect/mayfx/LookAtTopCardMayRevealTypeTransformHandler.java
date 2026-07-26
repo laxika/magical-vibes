@@ -8,7 +8,7 @@ import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.Player;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
 import com.github.laxika.magicalvibes.model.effect.LookAtTopCardMayRevealTypeTransformEffect;
-import com.github.laxika.magicalvibes.service.GameBroadcastService;
+import com.github.laxika.magicalvibes.service.GameLogService;
 import com.github.laxika.magicalvibes.service.battlefield.GameQueryService;
 import com.github.laxika.magicalvibes.service.input.InputCompletionService;
 import java.util.List;
@@ -26,7 +26,7 @@ import org.springframework.stereotype.Component;
 @RequiredArgsConstructor
 public class LookAtTopCardMayRevealTypeTransformHandler implements MayEffectHandlerBean {
 
-    private final GameBroadcastService gameBroadcastService;
+    private final GameLogService gameLogService;
     private final GameQueryService gameQueryService;
     private final InputCompletionService inputCompletionService;
 
@@ -46,7 +46,7 @@ public class LookAtTopCardMayRevealTypeTransformHandler implements MayEffectHand
                 List<Card> deck = gameData.playerDecks.get(ability.controllerId());
                 if (!deck.isEmpty()) {
                     Card topCard = deck.getFirst();
-                    gameBroadcastService.logAndBroadcast(gameData, GameLog.textCardText(player.getUsername() + " reveals " , topCard, " from the top of their library."));
+                    gameLogService.append(gameData, GameLog.textCardText(player.getUsername() + " reveals " , topCard, " from the top of their library."));
 
                     // Transform only if the revealed card matches the required types
                     boolean matches = revealTypeTransform.cardTypes().contains(topCard.getType())
@@ -60,7 +60,7 @@ public class LookAtTopCardMayRevealTypeTransformHandler implements MayEffectHand
                                 String frontName = self.getCard().getName();
                                 self.setCard(backFace);
                                 self.setTransformed(true);
-                                gameBroadcastService.logAndBroadcast(gameData, GameLog.textCardText(frontName + " transforms into " , backFace, "."));
+                                gameLogService.append(gameData, GameLog.textCardText(frontName + " transforms into " , backFace, "."));
                                 log.info("Game {} - {} transforms into {} (revealed instant/sorcery)",
                                         gameData.id, frontName, backFace.getName());
                             }
@@ -72,7 +72,7 @@ public class LookAtTopCardMayRevealTypeTransformHandler implements MayEffectHand
                 }
             } else {
                 String logEntry = player.getUsername() + " chooses not to reveal.";
-                gameBroadcastService.logAndBroadcast(gameData, GameLog.text(logEntry));
+                gameLogService.append(gameData, GameLog.text(logEntry));
                 log.info("Game {} - {} declines to reveal top card ({})", gameData.id,
                         player.getUsername(), ability.sourceCard().getName());
             }

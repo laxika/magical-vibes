@@ -7,7 +7,7 @@ import com.github.laxika.magicalvibes.model.PermanentChoiceContext;
 import com.github.laxika.magicalvibes.model.StackEntry;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
 import com.github.laxika.magicalvibes.model.effect.SacrificeOtherCreatureOpponentsLoseLifeOrTapAndLoseLifeEffect;
-import com.github.laxika.magicalvibes.service.GameBroadcastService;
+import com.github.laxika.magicalvibes.service.GameLogService;
 import com.github.laxika.magicalvibes.service.GameOutcomeService;
 import com.github.laxika.magicalvibes.service.battlefield.GameQueryService;
 import com.github.laxika.magicalvibes.service.input.PlayerInputService;
@@ -23,7 +23,7 @@ import org.springframework.stereotype.Component;
 public class SacrificeOtherCreatureOpponentsLoseLifeOrTapAndLoseLifeEffectHandler implements NormalEffectHandlerBean {
 
     private final DestructionSupport destructionSupport;
-    private final GameBroadcastService gameBroadcastService;
+    private final GameLogService gameLogService;
     private final GameOutcomeService gameOutcomeService;
     private final GameQueryService gameQueryService;
     private final LifeSupport lifeSupport;
@@ -50,7 +50,7 @@ public class SacrificeOtherCreatureOpponentsLoseLifeOrTapAndLoseLifeEffectHandle
                     if (sourcePermanent != null) {
                         sourcePermanent.tap();
                         String tapLog = cardName + " is tapped.";
-                        gameBroadcastService.logAndBroadcast(gameData, GameLog.text(tapLog));
+                        gameLogService.append(gameData, GameLog.text(tapLog));
                         log.info("Game {} - {} is tapped (no creature to sacrifice)", gameData.id, cardName);
                     }
                     lifeSupport.applyLifeLoss(gameData, controllerId, e.lifeLoss(), cardName);

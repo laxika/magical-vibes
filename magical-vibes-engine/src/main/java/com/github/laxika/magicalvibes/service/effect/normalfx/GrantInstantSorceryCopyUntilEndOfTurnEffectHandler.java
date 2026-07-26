@@ -5,7 +5,7 @@ import com.github.laxika.magicalvibes.model.GameLog;
 import com.github.laxika.magicalvibes.model.StackEntry;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantInstantSorceryCopyUntilEndOfTurnEffect;
-import com.github.laxika.magicalvibes.service.GameBroadcastService;
+import com.github.laxika.magicalvibes.service.GameLogService;
 import java.util.UUID;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -16,7 +16,7 @@ import org.springframework.stereotype.Component;
 @RequiredArgsConstructor
 public class GrantInstantSorceryCopyUntilEndOfTurnEffectHandler implements NormalEffectHandlerBean {
 
-    private final GameBroadcastService gameBroadcastService;
+    private final GameLogService gameLogService;
 
     @Override
     public Class<? extends CardEffect> handledEffect() {
@@ -30,7 +30,7 @@ public class GrantInstantSorceryCopyUntilEndOfTurnEffectHandler implements Norma
 
         String logMsg = gameData.playerIdToName.get(controllerId)
                 + "'s instant and sorcery spells will be copied for the rest of the turn.";
-        gameBroadcastService.logAndBroadcast(gameData, GameLog.text(logMsg));
+        gameLogService.append(gameData, GameLog.text(logMsg));
         log.info("Game {} - {} granted spell copy until end of turn", gameData.id, controllerId);
     }
 }

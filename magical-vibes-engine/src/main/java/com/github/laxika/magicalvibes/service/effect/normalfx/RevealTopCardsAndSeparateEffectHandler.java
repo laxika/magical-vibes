@@ -8,7 +8,7 @@ import com.github.laxika.magicalvibes.model.PendingPileSeparation;
 import com.github.laxika.magicalvibes.model.StackEntry;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
 import com.github.laxika.magicalvibes.model.effect.RevealTopCardsAndSeparateEffect;
-import com.github.laxika.magicalvibes.service.GameBroadcastService;
+import com.github.laxika.magicalvibes.service.GameLogService;
 import com.github.laxika.magicalvibes.service.input.PlayerInputService;
 import java.util.ArrayList;
 import java.util.HashMap;
@@ -32,7 +32,7 @@ import org.springframework.stereotype.Component;
 @RequiredArgsConstructor
 public class RevealTopCardsAndSeparateEffectHandler implements NormalEffectHandlerBean {
 
-    private final GameBroadcastService gameBroadcastService;
+    private final GameLogService gameLogService;
     private final PlayerInputService playerInputService;
 
     @Override
@@ -57,12 +57,12 @@ public class RevealTopCardsAndSeparateEffectHandler implements NormalEffectHandl
         }
 
         if (revealedCards.isEmpty()) {
-            gameBroadcastService.logAndBroadcast(gameData, GameLog.text(playerName + "'s library is empty."));
+            gameLogService.append(gameData, GameLog.text(playerName + "'s library is empty."));
             return;
         }
 
         String revealedNames = revealedCards.stream().map(Card::getName).collect(Collectors.joining(", "));
-        gameBroadcastService.logAndBroadcast(gameData, GameLog.text(playerName + " reveals " + revealedNames + "."));
+        gameLogService.append(gameData, GameLog.text(playerName + " reveals " + revealedNames + "."));
 
         UUID opponentId = gameData.orderedPlayerIds.stream()
                 .filter(id -> !id.equals(controllerId))

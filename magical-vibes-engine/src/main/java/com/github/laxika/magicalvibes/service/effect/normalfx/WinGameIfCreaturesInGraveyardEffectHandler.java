@@ -7,7 +7,7 @@ import com.github.laxika.magicalvibes.model.GameLog;
 import com.github.laxika.magicalvibes.model.StackEntry;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
 import com.github.laxika.magicalvibes.model.effect.WinGameIfCreaturesInGraveyardEffect;
-import com.github.laxika.magicalvibes.service.GameBroadcastService;
+import com.github.laxika.magicalvibes.service.GameLogService;
 import com.github.laxika.magicalvibes.service.GameOutcomeService;
 import com.github.laxika.magicalvibes.service.battlefield.GameQueryService;
 import lombok.RequiredArgsConstructor;
@@ -23,7 +23,7 @@ import java.util.UUID;
 public class WinGameIfCreaturesInGraveyardEffectHandler implements NormalEffectHandlerBean {
 
     private final GameOutcomeService gameOutcomeService;
-    private final GameBroadcastService gameBroadcastService;
+    private final GameLogService gameLogService;
     private final GameQueryService gameQueryService;
 
     @Override
@@ -52,19 +52,19 @@ public class WinGameIfCreaturesInGraveyardEffectHandler implements NormalEffectH
             if (!gameQueryService.canPlayerLoseGame(gameData, opponentId)) {
                 String logEntry = entry.getCard().getName() + "'s win condition is met but " +
                         gameData.playerIdToName.get(opponentId) + " can't lose the game.";
-                gameBroadcastService.logAndBroadcast(gameData, GameLog.builder().card(entry.getCard()).text("'s win condition is met but " + gameData.playerIdToName.get(opponentId) + " can't lose the game.").build());
+                gameLogService.append(gameData, GameLog.builder().card(entry.getCard()).text("'s win condition is met but " + gameData.playerIdToName.get(opponentId) + " can't lose the game.").build());
                 log.info("Game {} - {} win prevented — opponent can't lose", gameData.id, entry.getCard().getName());
                 return;
             }
 
             String logEntry = playerName + " has " + creatureCount + " creature cards in their graveyard — " + entry.getCard().getName() + " wins the game!";
-            gameBroadcastService.logAndBroadcast(gameData, GameLog.textCardText(playerName + " has " + creatureCount + " creature cards in their graveyard — " , entry.getCard(), " wins the game!"));
+            gameLogService.append(gameData, GameLog.textCardText(playerName + " has " + creatureCount + " creature cards in their graveyard — " , entry.getCard(), " wins the game!"));
             log.info("Game {} - {} wins via {} ({} creatures in graveyard)",
                     gameData.id, playerName, entry.getCard().getName(), creatureCount);
 
             gameOutcomeService.declareWinner(gameData, controllerId);
         } else {
-            gameBroadcastService.logAndBroadcast(gameData, GameLog.cardThen(entry.getCard(),
+            gameLogService.append(gameData, GameLog.cardThen(entry.getCard(),
                     "'s ability resolves but condition is no longer met (" + creatureCount + " creature cards in graveyard)."));
             log.info("Game {} - {} intervening-if no longer met ({} creatures in graveyard, need {})",
                     gameData.id, entry.getCard().getName(), creatureCount, e.threshold());

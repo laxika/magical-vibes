@@ -7,7 +7,7 @@ import com.github.laxika.magicalvibes.model.StackEntry;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
 import com.github.laxika.magicalvibes.model.effect.ExileAllPermanentsEffect;
 import com.github.laxika.magicalvibes.model.filter.FilterContext;
-import com.github.laxika.magicalvibes.service.GameBroadcastService;
+import com.github.laxika.magicalvibes.service.GameLogService;
 import com.github.laxika.magicalvibes.service.battlefield.GameQueryService;
 import com.github.laxika.magicalvibes.service.filter.PredicateEvaluationService;
 import com.github.laxika.magicalvibes.service.battlefield.PermanentRemovalService;
@@ -24,7 +24,7 @@ public class ExileAllPermanentsEffectHandler implements NormalEffectHandlerBean 
 
     private final GameQueryService gameQueryService;
     private final PredicateEvaluationService predicateEvaluationService;
-    private final GameBroadcastService gameBroadcastService;
+    private final GameLogService gameLogService;
     private final PermanentRemovalService permanentRemovalService;
 
     @Override
@@ -50,7 +50,7 @@ public class ExileAllPermanentsEffectHandler implements NormalEffectHandlerBean 
 
         for (Permanent perm : toExile) {
             permanentRemovalService.removePermanentToExile(gameData, perm);
-            gameBroadcastService.logAndBroadcast(gameData, GameLog.cardThen(perm.getCard(), " is exiled."));
+            gameLogService.append(gameData, GameLog.cardThen(perm.getCard(), " is exiled."));
             log.info("Game {} - {} is exiled by {}",
                     gameData.id, perm.getCard().getName(), entry.getCard().getName());
         }

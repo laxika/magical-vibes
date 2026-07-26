@@ -41,6 +41,6 @@ class PutCardsFromHandOnLibraryCardChoiceAiStrategy
                 .toList();
 
         log.info("AI: Putting {} hand card(s) on the library in game {}", chosen.size(), ctx.gameId());
-        ctx.gameActions().answerInteraction(ctx.selfConnection(), new InteractionAnswer.CardsChosen(chosen));
+        ctx.gameActions().answerInteraction(new InteractionAnswer.CardsChosen(chosen));
     }
 }

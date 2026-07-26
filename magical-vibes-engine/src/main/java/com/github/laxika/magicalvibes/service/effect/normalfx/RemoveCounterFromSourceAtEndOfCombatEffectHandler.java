@@ -7,7 +7,7 @@ import com.github.laxika.magicalvibes.model.StackEntry;
 import com.github.laxika.magicalvibes.model.action.RemoveCounterFromSourceAtEndOfCombat;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
 import com.github.laxika.magicalvibes.model.effect.RemoveCounterFromSourceAtEndOfCombatEffect;
-import com.github.laxika.magicalvibes.service.GameBroadcastService;
+import com.github.laxika.magicalvibes.service.GameLogService;
 import com.github.laxika.magicalvibes.service.battlefield.GameQueryService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Component;
@@ -23,7 +23,7 @@ import org.springframework.stereotype.Component;
 public class RemoveCounterFromSourceAtEndOfCombatEffectHandler implements NormalEffectHandlerBean {
 
     private final GameQueryService gameQueryService;
-    private final GameBroadcastService gameBroadcastService;
+    private final GameLogService gameLogService;
 
     @Override
     public Class<? extends CardEffect> handledEffect() {
@@ -38,6 +38,6 @@ public class RemoveCounterFromSourceAtEndOfCombatEffectHandler implements Normal
             return;
         }
         gameData.queueDelayedAction(new RemoveCounterFromSourceAtEndOfCombat(self.getId(), e.counterType(), 1));
-        gameBroadcastService.logAndBroadcast(gameData, GameLog.cardThen(self.getCard(), " will have a counter removed at end of combat."));
+        gameLogService.append(gameData, GameLog.cardThen(self.getCard(), " will have a counter removed at end of combat."));
     }
 }

@@ -25,7 +25,7 @@ import com.github.laxika.magicalvibes.model.effect.ReduceOwnCastCostIfTargetingP
 import com.github.laxika.magicalvibes.model.effect.ReduceOwnCastCostIfTargetingStackEntryEffect;
 import com.github.laxika.magicalvibes.model.filter.PermanentHasSubtypePredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsTappedPredicate;
-import com.github.laxika.magicalvibes.service.GameBroadcastService;
+import com.github.laxika.magicalvibes.service.GameActionAvailabilityService;
 import com.github.laxika.magicalvibes.service.GameLogService;
 import com.github.laxika.magicalvibes.service.cast.CastingCostService;
 import com.github.laxika.magicalvibes.service.effect.AmountEvaluationService;
@@ -79,7 +79,7 @@ class SpellCastingServiceTest {
     private PredicateEvaluationService predicateEvaluationService;
 
     @Mock
-    private GameBroadcastService gameBroadcastService;
+    private GameActionAvailabilityService actionAvailabilityService;
 
     @Mock
     private GameLogService gameLogService;
@@ -128,9 +128,9 @@ class SpellCastingServiceTest {
     @BeforeEach
     void setUp() {
         // Real cost service (pure logic over two already-mocked collaborators), matching
-        // GameBroadcastServiceTest — cast-time cost extraction/validation runs for real.
+        // GameActionAvailabilityServiceTest — cast-time cost extraction/validation runs for real.
         svc = new SpellCastingService(battlefieldEntryService, graveyardTargetingService,
-                gameQueryService, predicateEvaluationService, gameBroadcastService, gameLogService,
+                gameQueryService, predicateEvaluationService, actionAvailabilityService, gameLogService,
                 castingCostService, castingPermissionService, turnProgressionService,
                 targetLegalityService, permanentRemovalService, triggerCollectionService,
                 graveyardService, amountEvaluationService, conditionEvaluationService,
@@ -264,7 +264,7 @@ class SpellCastingServiceTest {
         void throwsWhenCardNotPlayable() {
             Card creature = createCreature("Expensive Creature", "{4}{G}{G}");
             setHand(player1Id, List.of(creature));
-            when(gameBroadcastService.getPlayableCardIndices(gd, player1Id)).thenReturn(List.of());
+            when(actionAvailabilityService.getPlayableCardIndices(gd, player1Id)).thenReturn(List.of());
 
             assertThatThrownBy(() -> svc.playCard(gd, player1, 0, null, null, null, null, null, false, null))
                     .isInstanceOf(IllegalStateException.class)
@@ -278,7 +278,7 @@ class SpellCastingServiceTest {
         void throwsWhenGraveyardCardNotPlayable() {
             Card land = createLand("Test Land");
             gd.playerGraveyards.get(player1Id).add(land);
-            when(gameBroadcastService.getPlayableGraveyardLandIndices(gd, player1Id)).thenReturn(List.of());
+            when(actionAvailabilityService.getPlayableGraveyardLandIndices(gd, player1Id)).thenReturn(List.of());
 
             assertThatThrownBy(() -> svc.playCard(gd, player1, 0, null, null, null, null, null, true, null))
                     .isInstanceOf(IllegalStateException.class)
@@ -299,7 +299,7 @@ class SpellCastingServiceTest {
         void landBypassesStack() {
             Card land = createLand("Test Plains");
             setHand(player1Id, List.of(land));
-            when(gameBroadcastService.getPlayableCardIndices(gd, player1Id)).thenReturn(List.of(0));
+            when(actionAvailabilityService.getPlayableCardIndices(gd, player1Id)).thenReturn(List.of(0));
 
             svc.playCard(gd, player1, 0, null, null, null, null, null, false, null);
 
@@ -316,7 +316,7 @@ class SpellCastingServiceTest {
         void landIncrementsCounter() {
             Card land = createLand("Test Plains");
             setHand(player1Id, List.of(land));
-            when(gameBroadcastService.getPlayableCardIndices(gd, player1Id)).thenReturn(List.of(0));
+            when(actionAvailabilityService.getPlayableCardIndices(gd, player1Id)).thenReturn(List.of(0));
             int beforeCount = gd.landsPlayedThisTurn.getOrDefault(player1Id, 0);
 
             svc.playCard(gd, player1, 0, null, null, null, null, null, false, null);
@@ -341,7 +341,7 @@ class SpellCastingServiceTest {
             Card creature = createCreature("Test Bear", "{1}{G}");
             setHand(player1Id, List.of(creature));
             addMana(player1Id, ManaColor.GREEN, 2);
-            when(gameBroadcastService.getPlayableCardIndices(gd, player1Id)).thenReturn(List.of(0));
+            when(actionAvailabilityService.getPlayableCardIndices(gd, player1Id)).thenReturn(List.of(0));
 
             svc.playCard(gd, player1, 0, null, null, null, null, null, false, null);
 
@@ -361,7 +361,7 @@ class SpellCastingServiceTest {
             Card creature = createCreature("Test Bear", "{1}{G}");
             setHand(player1Id, List.of(creature));
             addMana(player1Id, ManaColor.GREEN, 2);
-            when(gameBroadcastService.getPlayableCardIndices(gd, player1Id)).thenReturn(List.of(0));
+            when(actionAvailabilityService.getPlayableCardIndices(gd, player1Id)).thenReturn(List.of(0));
 
             svc.playCard(gd, player1, 0, null, null, null, null, null, false, null);
 
@@ -374,7 +374,7 @@ class SpellCastingServiceTest {
             Card creature = createCreature("Test Bear", "{1}{G}");
             setHand(player1Id, List.of(creature));
             addMana(player1Id, ManaColor.GREEN, 2);
-            when(gameBroadcastService.getPlayableCardIndices(gd, player1Id)).thenReturn(List.of(0));
+            when(actionAvailabilityService.getPlayableCardIndices(gd, player1Id)).thenReturn(List.of(0));
 
             svc.playCard(gd, player1, 0, null, null, null, null, null, false, null);
 
@@ -388,7 +388,7 @@ class SpellCastingServiceTest {
             Card creature = createCreature("Test Bear", "{1}{G}");
             setHand(player1Id, List.of(creature));
             addMana(player1Id, ManaColor.GREEN, 2);
-            when(gameBroadcastService.getPlayableCardIndices(gd, player1Id)).thenReturn(List.of(0));
+            when(actionAvailabilityService.getPlayableCardIndices(gd, player1Id)).thenReturn(List.of(0));
             int beforeCount = gd.getSpellsCastThisTurnCount(player1Id);
 
             svc.playCard(gd, player1, 0, null, null, null, null, null, false, null);
@@ -412,7 +412,7 @@ class SpellCastingServiceTest {
             creature.addEffect(EffectSlot.ON_ENTER_BATTLEFIELD, new DealDamageToAnyTargetEffect(1));
             setHand(player1Id, List.of(creature));
             addMana(player1Id, ManaColor.RED, 2);
-            when(gameBroadcastService.getPlayableCardIndices(gd, player1Id)).thenReturn(List.of(0));
+            when(actionAvailabilityService.getPlayableCardIndices(gd, player1Id)).thenReturn(List.of(0));
 
             svc.playCard(gd, player1, 0, null, null, null, null, null, false, null);
 
@@ -428,7 +428,7 @@ class SpellCastingServiceTest {
             creature.addEffect(EffectSlot.ON_ENTER_BATTLEFIELD, new DealDamageToAnyTargetEffect(1));
             setHand(player1Id, List.of(creature));
             addMana(player1Id, ManaColor.RED, 2);
-            when(gameBroadcastService.getPlayableCardIndices(gd, player1Id)).thenReturn(List.of(0));
+            when(actionAvailabilityService.getPlayableCardIndices(gd, player1Id)).thenReturn(List.of(0));
 
             svc.playCard(gd, player1, 0, null, player2Id, null, null, null, false, null);
 
@@ -443,7 +443,7 @@ class SpellCastingServiceTest {
             creature.addEffect(EffectSlot.ON_ENTER_BATTLEFIELD, new DealDamageToAnyTargetEffect(1));
             setHand(player1Id, List.of(creature));
             addMana(player1Id, ManaColor.RED, 2);
-            when(gameBroadcastService.getPlayableCardIndices(gd, player1Id)).thenReturn(List.of(0));
+            when(actionAvailabilityService.getPlayableCardIndices(gd, player1Id)).thenReturn(List.of(0));
 
             // Cast targeting opponent — should succeed even though hexproof is not checked
             // (hexproof is checked at ETB resolution time instead)
@@ -462,7 +462,7 @@ class SpellCastingServiceTest {
             sorcery.addEffect(EffectSlot.SPELL, new DealDamageToAnyTargetEffect(3));
             setHand(player1Id, List.of(sorcery));
             addMana(player1Id, ManaColor.RED, 1);
-            when(gameBroadcastService.getPlayableCardIndices(gd, player1Id)).thenReturn(List.of(0));
+            when(actionAvailabilityService.getPlayableCardIndices(gd, player1Id)).thenReturn(List.of(0));
 
             svc.playCard(gd, player1, 0, null, player2Id, null, null, null, false, null);
 
@@ -479,7 +479,7 @@ class SpellCastingServiceTest {
             sorcery.addEffect(EffectSlot.STATIC, new ReduceOwnCastCostIfTargetingControlledPermanentEffect(predicate, 2));
             setHand(player1Id, List.of(sorcery));
             addMana(player1Id, ManaColor.GREEN, 1);
-            when(gameBroadcastService.getPlayableCardIndices(gd, player1Id)).thenReturn(List.of(0));
+            when(actionAvailabilityService.getPlayableCardIndices(gd, player1Id)).thenReturn(List.of(0));
 
             Permanent dinosaur = new Permanent(createCreature("Dinosaur", "{1}{G}"));
             Permanent opponentCreature = new Permanent(createCreature("Bear", "{1}{G}"));
@@ -505,7 +505,7 @@ class SpellCastingServiceTest {
             instant.addEffect(EffectSlot.STATIC, new ReduceOwnCastCostIfTargetingPermanentEffect(predicate, 3));
             setHand(player1Id, List.of(instant));
             addMana(player1Id, ManaColor.WHITE, 2);
-            when(gameBroadcastService.getPlayableCardIndices(gd, player1Id)).thenReturn(List.of(0));
+            when(actionAvailabilityService.getPlayableCardIndices(gd, player1Id)).thenReturn(List.of(0));
 
             Permanent tappedCreature = new Permanent(createCreature("Bear", "{1}{G}"));
             tappedCreature.tap();
@@ -531,7 +531,7 @@ class SpellCastingServiceTest {
             instant.addEffect(EffectSlot.STATIC, new ReduceOwnCastCostIfTargetingStackEntryEffect(predicate, 2));
             setHand(player1Id, List.of(instant));
             addMana(player1Id, ManaColor.BLUE, 2);
-            when(gameBroadcastService.getPlayableCardIndices(gd, player1Id)).thenReturn(List.of(0));
+            when(actionAvailabilityService.getPlayableCardIndices(gd, player1Id)).thenReturn(List.of(0));
 
             Card targetInstant = createInstant("Target Bolt", "{R}");
             StackEntry targetEntry = new StackEntry(
@@ -555,7 +555,7 @@ class SpellCastingServiceTest {
             instant.addEffect(EffectSlot.SPELL, new DealDamageToAnyTargetEffect(3));
             setHand(player1Id, List.of(instant));
             addMana(player1Id, ManaColor.RED, 1);
-            when(gameBroadcastService.getPlayableCardIndices(gd, player1Id)).thenReturn(List.of(0));
+            when(actionAvailabilityService.getPlayableCardIndices(gd, player1Id)).thenReturn(List.of(0));
 
             svc.playCard(gd, player1, 0, null, player2Id, null, null, null, false, null);
 
@@ -579,7 +579,7 @@ class SpellCastingServiceTest {
             instant.addEffect(EffectSlot.SPELL, new DealDamageToAnyTargetEffect(3));
             setHand(player1Id, List.of(instant));
             addMana(player1Id, ManaColor.RED, 1);
-            when(gameBroadcastService.getPlayableCardIndices(gd, player1Id)).thenReturn(List.of(0));
+            when(actionAvailabilityService.getPlayableCardIndices(gd, player1Id)).thenReturn(List.of(0));
 
             svc.playCard(gd, player1, 0, null, player2Id, null, null, null, false, null);
 
@@ -597,7 +597,7 @@ class SpellCastingServiceTest {
             instant.addEffect(EffectSlot.SPELL, new DealDamageToAnyTargetEffect(3));
             setHand(player1Id, List.of(instant));
             addMana(player1Id, ManaColor.RED, 1);
-            when(gameBroadcastService.getPlayableCardIndices(gd, player1Id)).thenReturn(List.of(0));
+            when(actionAvailabilityService.getPlayableCardIndices(gd, player1Id)).thenReturn(List.of(0));
 
             svc.playCard(gd, player1, 0, null, player2Id, null, null, null, false, null);
 
@@ -621,7 +621,7 @@ class SpellCastingServiceTest {
             sorcery.addEffect(EffectSlot.SPELL, new DrawCardEffect(2));
             setHand(player1Id, List.of(sorcery));
             addMana(player1Id, ManaColor.BLUE, 1);
-            when(gameBroadcastService.getPlayableCardIndices(gd, player1Id)).thenReturn(List.of(0));
+            when(actionAvailabilityService.getPlayableCardIndices(gd, player1Id)).thenReturn(List.of(0));
 
             svc.playCard(gd, player1, 0, null, null, null, null, null, false, null);
 
@@ -646,7 +646,7 @@ class SpellCastingServiceTest {
             Card enchantment = createEnchantment("Test Enchantment", "{1}{W}");
             setHand(player1Id, List.of(enchantment));
             addMana(player1Id, ManaColor.WHITE, 2);
-            when(gameBroadcastService.getPlayableCardIndices(gd, player1Id)).thenReturn(List.of(0));
+            when(actionAvailabilityService.getPlayableCardIndices(gd, player1Id)).thenReturn(List.of(0));
 
             svc.playCard(gd, player1, 0, null, null, null, null, null, false, null);
 
@@ -671,7 +671,7 @@ class SpellCastingServiceTest {
             Card artifact = createArtifact("Test Artifact", "{2}");
             setHand(player1Id, List.of(artifact));
             addMana(player1Id, ManaColor.COLORLESS, 2);
-            when(gameBroadcastService.getPlayableCardIndices(gd, player1Id)).thenReturn(List.of(0));
+            when(actionAvailabilityService.getPlayableCardIndices(gd, player1Id)).thenReturn(List.of(0));
 
             svc.playCard(gd, player1, 0, null, null, null, null, null, false, null);
 
@@ -697,7 +697,7 @@ class SpellCastingServiceTest {
             xSpell.addEffect(EffectSlot.SPELL, new DealDamageToAnyTargetEffect(0));
             setHand(player1Id, List.of(xSpell));
             addMana(player1Id, ManaColor.RED, 5);
-            when(gameBroadcastService.getPlayableCardIndices(gd, player1Id)).thenReturn(List.of(0));
+            when(actionAvailabilityService.getPlayableCardIndices(gd, player1Id)).thenReturn(List.of(0));
 
             assertThatThrownBy(() -> svc.playCard(gd, player1, 0, -1, player2Id, null, null, null, false, null))
                     .isInstanceOf(IllegalStateException.class)
@@ -711,7 +711,7 @@ class SpellCastingServiceTest {
             xSpell.addEffect(EffectSlot.SPELL, new DealDamageToAnyTargetEffect(0));
             setHand(player1Id, List.of(xSpell));
             addMana(player1Id, ManaColor.RED, 3);
-            when(gameBroadcastService.getPlayableCardIndices(gd, player1Id)).thenReturn(List.of(0));
+            when(actionAvailabilityService.getPlayableCardIndices(gd, player1Id)).thenReturn(List.of(0));
 
             // Have 3 red mana: 1R for base cost, leaves 2 for X. Asking for X=3 should fail
             assertThatThrownBy(() -> svc.playCard(gd, player1, 0, 3, player2Id, null, null, null, false, null))
@@ -738,7 +738,7 @@ class SpellCastingServiceTest {
             )));
             setHand(player1Id, List.of(modal));
             addMana(player1Id, ManaColor.BLUE, 1);
-            when(gameBroadcastService.getPlayableCardIndices(gd, player1Id)).thenReturn(List.of(0));
+            when(actionAvailabilityService.getPlayableCardIndices(gd, player1Id)).thenReturn(List.of(0));
 
             // Mode index 5 is out of bounds (0 and 1 are valid)
             assertThatThrownBy(() -> svc.playCard(gd, player1, 0, 5, null, null, null, null, false, null))
@@ -756,7 +756,7 @@ class SpellCastingServiceTest {
             )));
             setHand(player1Id, List.of(modal));
             addMana(player1Id, ManaColor.BLUE, 1);
-            when(gameBroadcastService.getPlayableCardIndices(gd, player1Id)).thenReturn(List.of(0));
+            when(actionAvailabilityService.getPlayableCardIndices(gd, player1Id)).thenReturn(List.of(0));
 
             // Choose mode 1 (second option)
             svc.playCard(gd, player1, 0, 1, null, null, null, null, false, null);
@@ -784,7 +784,7 @@ class SpellCastingServiceTest {
             creature.setKeywords(EnumSet.of(Keyword.CONVOKE));
             setHand(player1Id, List.of(creature));
             addMana(player1Id, ManaColor.GREEN, 4);
-            when(gameBroadcastService.getPlayableCardIndices(gd, player1Id)).thenReturn(List.of(0));
+            when(actionAvailabilityService.getPlayableCardIndices(gd, player1Id)).thenReturn(List.of(0));
 
             UUID fakeCreatureId = UUID.randomUUID();
 
@@ -805,7 +805,7 @@ class SpellCastingServiceTest {
 
             setHand(player1Id, List.of(convokeCard));
             addMana(player1Id, ManaColor.GREEN, 4);
-            when(gameBroadcastService.getPlayableCardIndices(gd, player1Id)).thenReturn(List.of(0));
+            when(actionAvailabilityService.getPlayableCardIndices(gd, player1Id)).thenReturn(List.of(0));
             when(gameQueryService.isCreature(eq(gd), any(Permanent.class))).thenReturn(true);
 
             assertThatThrownBy(() -> svc.playCard(gd, player1, 0, null, null, null, null, List.of(tapperPerm.getId()), false, null))
@@ -830,8 +830,8 @@ class SpellCastingServiceTest {
             // {3}{G} cost, 1 creature convokes for G, so we need 3 mana total (instead of 4)
             addMana(player1Id, ManaColor.GREEN, 3);
             // Card not playable without convoke, but playable with 1 convoke creature
-            when(gameBroadcastService.getPlayableCardIndices(gd, player1Id)).thenReturn(List.of());
-            when(gameBroadcastService.getPlayableCardIndices(gd, player1Id, 1)).thenReturn(List.of(0));
+            when(actionAvailabilityService.getPlayableCardIndices(gd, player1Id)).thenReturn(List.of());
+            when(actionAvailabilityService.getPlayableCardIndices(gd, player1Id, 1)).thenReturn(List.of(0));
             when(castingCostService.getCastCostModifier(gd, player1Id, convokeCard)).thenReturn(0);
             when(gameQueryService.isCreature(eq(gd), any(Permanent.class))).thenReturn(true);
 

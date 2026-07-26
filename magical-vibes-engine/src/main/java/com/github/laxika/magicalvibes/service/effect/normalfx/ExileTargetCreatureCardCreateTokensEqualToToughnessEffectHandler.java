@@ -6,7 +6,7 @@ import com.github.laxika.magicalvibes.model.GameLog;
 import com.github.laxika.magicalvibes.model.StackEntry;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
 import com.github.laxika.magicalvibes.model.effect.ExileTargetCreatureCardCreateTokensEqualToToughnessEffect;
-import com.github.laxika.magicalvibes.service.GameBroadcastService;
+import com.github.laxika.magicalvibes.service.GameLogService;
 import com.github.laxika.magicalvibes.service.battlefield.GameQueryService;
 import java.util.UUID;
 
@@ -26,7 +26,7 @@ import org.springframework.stereotype.Component;
 public class ExileTargetCreatureCardCreateTokensEqualToToughnessEffectHandler implements NormalEffectHandlerBean {
 
     private final GameQueryService gameQueryService;
-    private final GameBroadcastService gameBroadcastService;
+    private final GameLogService gameLogService;
     private final GraveyardReturnSupport graveyardReturnSupport;
     private final PermanentControlSupport permanentControlSupport;
 
@@ -43,7 +43,7 @@ public class ExileTargetCreatureCardCreateTokensEqualToToughnessEffectHandler im
         Card targetCard = targetCardId == null
                 ? null : gameQueryService.findCardInGraveyardById(gameData, targetCardId);
         if (targetCard == null) {
-            gameBroadcastService.logAndBroadcast(gameData,
+            gameLogService.append(gameData,
                     GameLog.text(entry.getDescription() + " fizzles (target no longer in a graveyard)."));
             return;
         }
@@ -55,7 +55,7 @@ public class ExileTargetCreatureCardCreateTokensEqualToToughnessEffectHandler im
         graveyardReturnSupport.exileCardFromAnyGraveyard(gameData, targetCardId, targetCard);
 
         String playerName = gameData.playerIdToName.get(entry.getControllerId());
-        gameBroadcastService.logAndBroadcast(gameData,
+        gameLogService.append(gameData,
                 GameLog.textCardText(playerName + " exiles ", targetCard, " from a graveyard."));
 
         if (toughness > 0) {

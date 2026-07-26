@@ -9,7 +9,7 @@ import com.github.laxika.magicalvibes.service.cast.CastingPermissionService;
 import com.github.laxika.magicalvibes.service.effect.cost.AdditionalSpellCostService;
 import com.github.laxika.magicalvibes.service.event.GameMutationCoordinator;
 import com.github.laxika.magicalvibes.service.filter.PredicateEvaluationService;
-import com.github.laxika.magicalvibes.service.GameBroadcastService;
+import com.github.laxika.magicalvibes.service.GameActionAvailabilityService;
 import com.github.laxika.magicalvibes.service.GameLogService;
 import com.github.laxika.magicalvibes.service.target.TargetLegalityService;
 import com.github.laxika.magicalvibes.service.trigger.TriggerCollectionService;
@@ -110,7 +110,7 @@ public class SpellCastingService {
     private final GraveyardTargetingService graveyardTargetingService;
     private final GameQueryService gameQueryService;
     private final PredicateEvaluationService predicateEvaluationService;
-    private final GameBroadcastService gameBroadcastService;
+    private final GameActionAvailabilityService actionAvailabilityService;
     private final GameLogService gameLogService;
     private final CastingCostService castingCostService;
     private final CastingPermissionService castingPermissionService;
@@ -634,7 +634,7 @@ public class SpellCastingService {
 
         // Handle playing a land from graveyard (e.g. via Crucible of Worlds)
         if (fromGraveyard) {
-            List<Integer> playableGraveyard = gameBroadcastService.getPlayableGraveyardLandIndices(gameData, playerId);
+            List<Integer> playableGraveyard = actionAvailabilityService.getPlayableGraveyardLandIndices(gameData, playerId);
             if (!playableGraveyard.contains(cardIndex)) {
                 throw new IllegalStateException("Card is not playable from graveyard");
             }
@@ -661,7 +661,7 @@ public class SpellCastingService {
             return;
         }
 
-        List<Integer> playable = gameBroadcastService.getPlayableCardIndices(gameData, playerId);
+        List<Integer> playable = actionAvailabilityService.getPlayableCardIndices(gameData, playerId);
         if (!playable.contains(cardIndex)) {
             // Re-check with convoke if card has convoke keyword
             List<Card> handCheck = gameData.playerHands.get(playerId);
@@ -670,7 +670,7 @@ public class SpellCastingService {
                 // Allow — alternate cost bypasses mana check; validated below
             } else if (cardCheck.getKeywords().contains(Keyword.CONVOKE) && !convokeCreatureIds.isEmpty()) {
                 // Allow convoke-assisted casting even if not in basic playable list
-                List<Integer> convokePlayable = gameBroadcastService.getPlayableCardIndices(gameData, playerId, convokeCreatureIds.size());
+                List<Integer> convokePlayable = actionAvailabilityService.getPlayableCardIndices(gameData, playerId, convokeCreatureIds.size());
                 if (!convokePlayable.contains(cardIndex)) {
                     throw new IllegalStateException("Card is not playable even with convoke");
                 }

@@ -5,7 +5,7 @@ import com.github.laxika.magicalvibes.model.GameLog;
 import com.github.laxika.magicalvibes.model.StackEntry;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
 import com.github.laxika.magicalvibes.model.effect.BoostColorSourceDamageThisTurnEffect;
-import com.github.laxika.magicalvibes.service.GameBroadcastService;
+import com.github.laxika.magicalvibes.service.GameLogService;
 import java.util.UUID;
 import java.util.concurrent.ConcurrentHashMap;
 import lombok.RequiredArgsConstructor;
@@ -17,7 +17,7 @@ import org.springframework.stereotype.Component;
 @RequiredArgsConstructor
 public class BoostColorSourceDamageThisTurnEffectHandler implements NormalEffectHandlerBean {
 
-    private final GameBroadcastService gameBroadcastService;
+    private final GameLogService gameLogService;
 
     @Override
     public Class<? extends CardEffect> handledEffect() {
@@ -36,7 +36,7 @@ public class BoostColorSourceDamageThisTurnEffectHandler implements NormalEffect
         String colorName = e.color().name().toLowerCase();
         String logEntry = playerName + "'s " + colorName + " sources deal +" + e.bonus()
                 + " damage this turn (" + entry.getCard().getName() + ").";
-        gameBroadcastService.logAndBroadcast(gameData, GameLog.builder().text(playerName + "'s " + colorName + " sources deal +" + e.bonus() + " damage this turn (").card(entry.getCard()).text(").").build());
+        gameLogService.append(gameData, GameLog.builder().text(playerName + "'s " + colorName + " sources deal +" + e.bonus() + " damage this turn (").card(entry.getCard()).text(").").build());
         log.info("Game {} - {} gains +{} {} source damage bonus this turn ({})",
                 gameData.id, playerName, e.bonus(), colorName, entry.getCard().getName());
     

@@ -14,7 +14,7 @@ import com.github.laxika.magicalvibes.networking.SessionManager;
 import com.github.laxika.magicalvibes.networking.message.RevealLibraryTopMessage;
 import com.github.laxika.magicalvibes.networking.model.CardView;
 import com.github.laxika.magicalvibes.networking.service.CardViewFactory;
-import com.github.laxika.magicalvibes.service.GameBroadcastService;
+import com.github.laxika.magicalvibes.service.GameLogService;
 import com.github.laxika.magicalvibes.service.CardRevealService;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
@@ -43,7 +43,7 @@ import static org.mockito.Mockito.*;
 @ExtendWith(MockitoExtension.class)
 class LookAtTopCardsOfTargetLibraryEffectHandlerTest {
 
-    @Mock private GameBroadcastService gameBroadcastService;
+    @Mock private GameLogService gameLogService;
     @Mock private SessionManager sessionManager;
     @Mock private CardViewFactory cardViewFactory;
     @Mock private CardRevealService cardRevealService;
@@ -74,8 +74,8 @@ class LookAtTopCardsOfTargetLibraryEffectHandlerTest {
         gd.playerDecks.put(player2Id, Collections.synchronizedList(new ArrayList<>()));
         gd.activePlayerId = player1Id;
 
-        handler = new LookAtTopCardsOfTargetLibraryEffectHandler(gameBroadcastService,
-                InteractionRegistryTestSupport.registryFor(sessionManager, cardViewFactory, gameBroadcastService),
+        handler = new LookAtTopCardsOfTargetLibraryEffectHandler(gameLogService,
+                InteractionRegistryTestSupport.registryFor(sessionManager, cardViewFactory, gameLogService),
                 cardRevealService);
     }
 
@@ -101,7 +101,7 @@ class LookAtTopCardsOfTargetLibraryEffectHandlerTest {
                 new LookAtTopCardsOfTargetLibraryEffect(2, TargetLibraryAction.MAY_EXILE_ONE);
         handler.resolve(gd, entryTargeting("Psychic Surgery", effect), effect);
 
-        verify(gameBroadcastService).logAndBroadcast(eq(gd), argThat((GameLogEntry logEntry) ->
+        verify(gameLogService).append(eq(gd), argThat((GameLogEntry logEntry) ->
                 logEntry.plainText().contains("library is empty")));
         assertThat(gd.interaction.activeInteraction()).isNull();
     }
@@ -164,7 +164,7 @@ class LookAtTopCardsOfTargetLibraryEffectHandlerTest {
                     gd.interaction.activeInteraction(PendingInteraction.LibrarySearch.class);
             assertThat(search.params().destination()).isEqualTo(LibrarySearchDestination.EXILE);
             assertThat(search.params().canFailToFind()).isTrue();
-            verify(gameBroadcastService).logAndBroadcast(eq(gd), argThat((GameLogEntry logEntry) ->
+            verify(gameLogService).append(eq(gd), argThat((GameLogEntry logEntry) ->
                     logEntry.plainText().contains("Player1") && logEntry.plainText().contains("Player2")));
         }
     }

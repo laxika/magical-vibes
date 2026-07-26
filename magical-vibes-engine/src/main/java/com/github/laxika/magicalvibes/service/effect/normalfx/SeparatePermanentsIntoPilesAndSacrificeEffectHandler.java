@@ -7,7 +7,7 @@ import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.StackEntry;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
 import com.github.laxika.magicalvibes.model.effect.SeparatePermanentsIntoPilesAndSacrificeEffect;
-import com.github.laxika.magicalvibes.service.GameBroadcastService;
+import com.github.laxika.magicalvibes.service.GameLogService;
 import com.github.laxika.magicalvibes.service.input.PlayerInputService;
 import java.util.List;
 import java.util.Map;
@@ -22,7 +22,7 @@ import org.springframework.stereotype.Component;
 public class SeparatePermanentsIntoPilesAndSacrificeEffectHandler implements NormalEffectHandlerBean {
 
     private final DestructionSupport destructionSupport;
-    private final GameBroadcastService gameBroadcastService;
+    private final GameLogService gameLogService;
     private final PlayerInputService playerInputService;
 
     @Override
@@ -41,7 +41,7 @@ public class SeparatePermanentsIntoPilesAndSacrificeEffectHandler implements Nor
                 List<Permanent> permanents = gameData.playerBattlefields.get(targetPlayerId);
                 if (permanents == null || permanents.isEmpty()) {
                     String playerName = gameData.playerIdToName.get(targetPlayerId);
-                    gameBroadcastService.logAndBroadcast(gameData, GameLog.text(playerName + " has no permanents to separate."));
+                    gameLogService.append(gameData, GameLog.text(playerName + " has no permanents to separate."));
                     log.info("Game {} - {} has no permanents to separate", gameData.id, playerName);
                     return;
                 }

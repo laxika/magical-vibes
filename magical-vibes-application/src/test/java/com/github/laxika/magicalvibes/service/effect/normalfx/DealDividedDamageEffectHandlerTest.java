@@ -32,7 +32,7 @@ class DealDividedDamageEffectHandlerTest extends AbstractDamageHandlerTest {
 
     @Override
     protected void setUpHandler() {
-        handler = new DealDividedDamageEffectHandler(damageSupport, gameQueryService, gameBroadcastService, gameOutcomeService);
+        handler = new DealDividedDamageEffectHandler(damageSupport, gameQueryService, gameLogService, gameOutcomeService);
     }
 
     private StackEntry chosenEntry(Card card, UUID controllerId, int xValue, Map<UUID, Integer> assignments) {

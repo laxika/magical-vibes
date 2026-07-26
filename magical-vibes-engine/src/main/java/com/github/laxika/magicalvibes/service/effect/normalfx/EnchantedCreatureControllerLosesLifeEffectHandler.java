@@ -5,7 +5,7 @@ import com.github.laxika.magicalvibes.model.GameLog;
 import com.github.laxika.magicalvibes.model.StackEntry;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
 import com.github.laxika.magicalvibes.model.effect.EnchantedCreatureControllerLosesLifeEffect;
-import com.github.laxika.magicalvibes.service.GameBroadcastService;
+import com.github.laxika.magicalvibes.service.GameLogService;
 import com.github.laxika.magicalvibes.service.battlefield.GameQueryService;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -19,7 +19,7 @@ import java.util.UUID;
 public class EnchantedCreatureControllerLosesLifeEffectHandler implements NormalEffectHandlerBean {
 
     private final GameQueryService gameQueryService;
-    private final GameBroadcastService gameBroadcastService;
+    private final GameLogService gameLogService;
 
     @Override
     public Class<? extends CardEffect> handledEffect() {
@@ -34,7 +34,7 @@ public class EnchantedCreatureControllerLosesLifeEffectHandler implements Normal
 
         if (!gameQueryService.canPlayerLifeChange(gameData, playerId)) {
             String playerName = gameData.playerIdToName.get(playerId);
-            gameBroadcastService.logAndBroadcast(gameData, GameLog.text(playerName + "'s life total can't change."));
+            gameLogService.append(gameData, GameLog.text(playerName + "'s life total can't change."));
             return;
         }
 
@@ -42,7 +42,7 @@ public class EnchantedCreatureControllerLosesLifeEffectHandler implements Normal
         gameData.playerLifeTotals.put(playerId, currentLife - e.amount());
 
         String playerName = gameData.playerIdToName.get(playerId);
-        gameBroadcastService.logAndBroadcast(gameData, GameLog.textCardText(playerName + " loses " + e.amount() + " life (" , entry.getCard(), ")."));
+        gameLogService.append(gameData, GameLog.textCardText(playerName + " loses " + e.amount() + " life (" , entry.getCard(), ")."));
 
         log.info("Game {} - {} loses {} life from {}", gameData.id, playerName, e.amount(), entry.getCard().getName());
     }

@@ -33,6 +33,6 @@ class SylvanLibraryChoiceAiStrategy
                 .limit(interaction.resolveCount())
                 .toList();
         ctx.gameActions().answerInteraction(
-                ctx.selfConnection(), new InteractionAnswer.CardsChosen(toTop));
+                new InteractionAnswer.CardsChosen(toTop));
     }
 }

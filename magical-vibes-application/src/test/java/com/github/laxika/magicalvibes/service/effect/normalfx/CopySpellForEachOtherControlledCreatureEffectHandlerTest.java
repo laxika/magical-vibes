@@ -8,7 +8,7 @@ import com.github.laxika.magicalvibes.model.StackEntry;
 import com.github.laxika.magicalvibes.model.StackEntryType;
 import com.github.laxika.magicalvibes.model.effect.CopySpellForEachOtherControlledCreatureEffect;
 import com.github.laxika.magicalvibes.model.effect.DealDamageToAnyTargetEffect;
-import com.github.laxika.magicalvibes.service.GameBroadcastService;
+import com.github.laxika.magicalvibes.service.GameLogService;
 import com.github.laxika.magicalvibes.service.battlefield.GameQueryService;
 import com.github.laxika.magicalvibes.service.target.ValidTargetService;
 import org.junit.jupiter.api.BeforeEach;
@@ -31,7 +31,7 @@ import static org.mockito.Mockito.when;
 @ExtendWith(MockitoExtension.class)
 class CopySpellForEachOtherControlledCreatureEffectHandlerTest {
 
-    @Mock private GameBroadcastService gameBroadcastService;
+    @Mock private GameLogService gameLogService;
     @Mock private GameQueryService gameQueryService;
     @Mock private ValidTargetService validTargetService;
     private final CopySupport copySupport = new CopySupport();
@@ -55,7 +55,7 @@ class CopySpellForEachOtherControlledCreatureEffectHandlerTest {
         gd.playerBattlefields.put(player1Id, Collections.synchronizedList(new ArrayList<>()));
         gd.playerBattlefields.put(player2Id, Collections.synchronizedList(new ArrayList<>()));
         handler = new CopySpellForEachOtherControlledCreatureEffectHandler(
-                gameBroadcastService, gameQueryService, validTargetService, copySupport);
+                gameLogService, gameQueryService, validTargetService, copySupport);
     }
 
     @Test

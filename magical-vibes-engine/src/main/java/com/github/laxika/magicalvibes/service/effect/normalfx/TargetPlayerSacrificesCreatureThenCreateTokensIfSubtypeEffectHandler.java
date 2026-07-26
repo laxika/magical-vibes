@@ -10,7 +10,7 @@ import com.github.laxika.magicalvibes.model.effect.CardEffect;
 import com.github.laxika.magicalvibes.model.effect.CreateTokenEffect;
 import com.github.laxika.magicalvibes.model.effect.TargetPlayerSacrificesCreatureThenCreateTokensIfSubtypeEffect;
 import com.github.laxika.magicalvibes.model.filter.PermanentHasSubtypePredicate;
-import com.github.laxika.magicalvibes.service.GameBroadcastService;
+import com.github.laxika.magicalvibes.service.GameLogService;
 import com.github.laxika.magicalvibes.service.battlefield.GameQueryService;
 import com.github.laxika.magicalvibes.service.battlefield.PermanentRemovalService;
 import com.github.laxika.magicalvibes.service.filter.PredicateEvaluationService;
@@ -38,7 +38,7 @@ import org.springframework.stereotype.Component;
 public class TargetPlayerSacrificesCreatureThenCreateTokensIfSubtypeEffectHandler implements NormalEffectHandlerBean {
 
     private final GameQueryService gameQueryService;
-    private final GameBroadcastService gameBroadcastService;
+    private final GameLogService gameLogService;
     private final PermanentRemovalService permanentRemovalService;
     private final PredicateEvaluationService predicateEvaluationService;
     private final PermanentControlSupport permanentControlSupport;
@@ -72,7 +72,7 @@ public class TargetPlayerSacrificesCreatureThenCreateTokensIfSubtypeEffectHandle
         String playerName = gameData.playerIdToName.get(targetPlayerId);
         if (creatureIds.isEmpty()) {
             String logEntry = playerName + " has no creatures to sacrifice.";
-            gameBroadcastService.logAndBroadcast(gameData, GameLog.text(logEntry));
+            gameLogService.append(gameData, GameLog.text(logEntry));
             log.info("Game {} - {} has no creatures to sacrifice for {}", gameData.id, playerName, entry.getCard().getName());
             return;
         }
@@ -107,7 +107,7 @@ public class TargetPlayerSacrificesCreatureThenCreateTokensIfSubtypeEffectHandle
         permanentRemovalService.removePermanentToGraveyard(gameData, creature);
 
         String playerName = gameData.playerIdToName.get(sacrificingPlayerId);
-        gameBroadcastService.logAndBroadcast(gameData, GameLog.textCardText(playerName + " sacrifices " , creature.getCard(), "."));
+        gameLogService.append(gameData, GameLog.textCardText(playerName + " sacrifices " , creature.getCard(), "."));
         log.info("Game {} - {} sacrifices {}", gameData.id, playerName, creature.getCard().getName());
 
         if (hadSubtype) {

@@ -10,7 +10,7 @@ import com.github.laxika.magicalvibes.model.StackEntry;
 import com.github.laxika.magicalvibes.model.StackEntryType;
 import com.github.laxika.magicalvibes.model.effect.CreateTokenEffect;
 import com.github.laxika.magicalvibes.model.effect.MillBottomOfTargetLibraryConditionalTokenEffect;
-import com.github.laxika.magicalvibes.service.GameBroadcastService;
+import com.github.laxika.magicalvibes.service.GameLogService;
 import com.github.laxika.magicalvibes.service.graveyard.GraveyardService;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
@@ -36,7 +36,7 @@ class MillBottomOfTargetLibraryConditionalTokenEffectHandlerTest {
     @Mock
     private GraveyardService graveyardService;
     @Mock
-    private GameBroadcastService gameBroadcastService;
+    private GameLogService gameLogService;
     @Mock
     private PermanentControlSupport permanentControlSupport;
     private GameData gd;
@@ -74,7 +74,7 @@ player1Id = UUID.randomUUID();
         gd.activePlayerId = player1Id;
         millBottomOfTargetLibraryConditionalTokenEffectHandler =
                 new MillBottomOfTargetLibraryConditionalTokenEffectHandler(
-                        graveyardService, gameBroadcastService, permanentControlSupport);
+                        graveyardService, gameLogService, permanentControlSupport);
 
     }
 
@@ -104,14 +104,14 @@ player1Id = UUID.randomUUID();
 
                 millBottomOfTargetLibraryConditionalTokenEffectHandler.resolve(gd, entry, effect);
 
-                verify(gameBroadcastService).logAndBroadcast(eq(gd), argThat((GameLogEntry logEntry) ->
+                verify(gameLogService).append(eq(gd), argThat((GameLogEntry logEntry) ->
                         logEntry.plainText().contains("library is empty")));
                 verifyNoInteractions(graveyardService);
                 verifyNoInteractions(permanentControlSupport);
             }
 
             @Test
-            @DisplayName("Bottom card is creature â€” mills and creates token")
+            @DisplayName("Bottom card is creature A?€�t mills and creates token")
             void creatureCardCreatesToken() {
                 Card creature = createCard("Grizzly Bears");
                 creature.setType(CardType.CREATURE);
@@ -132,7 +132,7 @@ player1Id = UUID.randomUUID();
             }
 
             @Test
-            @DisplayName("Bottom card is non-creature â€” mills but no token")
+            @DisplayName("Bottom card is non-creature A?€�t mills but no token")
             void nonCreatureCardNoToken() {
                 Card land = createCard("Forest");
                 land.setType(CardType.LAND);

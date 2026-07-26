@@ -6,7 +6,7 @@ import com.github.laxika.magicalvibes.model.GameLog;
 import com.github.laxika.magicalvibes.model.StackEntry;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
 import com.github.laxika.magicalvibes.model.effect.ExileTriggeringCreatureAndTrackWithSourceEffect;
-import com.github.laxika.magicalvibes.service.GameBroadcastService;
+import com.github.laxika.magicalvibes.service.GameLogService;
 import com.github.laxika.magicalvibes.service.exile.ExileService;
 import java.util.List;
 import java.util.Map;
@@ -26,7 +26,7 @@ import org.springframework.stereotype.Component;
 public class ExileTriggeringCreatureAndTrackWithSourceEffectHandler implements NormalEffectHandlerBean {
 
     private final ExileService exileService;
-    private final GameBroadcastService gameBroadcastService;
+    private final GameLogService gameLogService;
 
     @Override
     public Class<? extends CardEffect> handledEffect() {
@@ -51,7 +51,7 @@ public class ExileTriggeringCreatureAndTrackWithSourceEffectHandler implements N
                     graveyard.remove(card);
                     exileService.exileCard(gameData, ownerId, card, sourcePermanentId);
                     String logEntry = card.getName() + " is exiled with " + entry.getCard().getName() + ".";
-                    gameBroadcastService.logAndBroadcast(gameData, GameLog.cardTextCard(card, " is exiled with ", entry.getCard(), "."));
+                    gameLogService.append(gameData, GameLog.cardTextCard(card, " is exiled with ", entry.getCard(), "."));
                     log.info("Game {} - {} exiled with {} (creature put into graveyard from battlefield)",
                             gameData.id, card.getName(), entry.getCard().getName());
                     return;

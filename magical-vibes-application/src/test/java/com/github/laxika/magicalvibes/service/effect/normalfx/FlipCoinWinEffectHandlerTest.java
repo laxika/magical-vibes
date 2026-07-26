@@ -27,7 +27,7 @@ class FlipCoinWinEffectHandlerTest extends AbstractPlayerInteractionHandlerTest 
                 // Can't control ThreadLocalRandom, but we can verify the broadcast always happens
                 resolveEffect(gd, entry, effect);
 
-                verify(gameBroadcastService).logAndBroadcast(eq(gd), argThat((GameLogEntry logEntry) ->
+                verify(gameLogService).append(eq(gd), argThat((GameLogEntry logEntry) ->
                         logEntry.plainText().contains("coin flip") && logEntry.plainText().contains("Player1")));
             }
 

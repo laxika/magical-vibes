@@ -9,7 +9,7 @@ import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.StackEntry;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
 import com.github.laxika.magicalvibes.model.effect.SearchZonesForCardNamedToBattlefieldEffect;
-import com.github.laxika.magicalvibes.service.GameBroadcastService;
+import com.github.laxika.magicalvibes.service.GameLogService;
 import com.github.laxika.magicalvibes.service.battlefield.BattlefieldEntryService;
 import com.github.laxika.magicalvibes.service.graveyard.GraveyardService;
 import java.util.List;
@@ -25,7 +25,7 @@ import org.springframework.stereotype.Component;
 @Slf4j
 public class SearchZonesForCardNamedToBattlefieldEffectHandler implements NormalEffectHandlerBean {
 
-    private final GameBroadcastService gameBroadcastService;
+    private final GameLogService gameLogService;
     private final GraveyardService graveyardService;
     private final GraveyardReturnSupport graveyardReturnSupport;
     private final BattlefieldEntryService battlefieldEntryService;
@@ -75,7 +75,7 @@ public class SearchZonesForCardNamedToBattlefieldEffectHandler implements Normal
                 Set<CardType> enterTappedTypes = battlefieldEntryService.snapshotEnterTappedTypes(gameData);
                 Permanent permanent = new Permanent(found);
                 battlefieldEntryService.putPermanentOntoBattlefield(gameData, controllerId, permanent, enterTappedTypes);
-                gameBroadcastService.logAndBroadcast(gameData, GameLog.textCardText(
+                gameLogService.append(gameData, GameLog.textCardText(
                         playerName + " reveals ", found, " from their hand and puts it onto the battlefield."));
                 graveyardReturnSupport.handleCreatureEtbAndLegendRule(gameData, controllerId, permanent, found);
                 log.info("Game {} - {} finds {} in hand", gameData.id, playerName, cardName);

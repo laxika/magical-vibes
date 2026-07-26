@@ -7,7 +7,7 @@ import com.github.laxika.magicalvibes.model.StackEntry;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
 import com.github.laxika.magicalvibes.model.effect.ExileTargetCardFromGraveyardAndCreateTokenCopyEffect;
 import com.github.laxika.magicalvibes.model.filter.CardPredicateUtils;
-import com.github.laxika.magicalvibes.service.GameBroadcastService;
+import com.github.laxika.magicalvibes.service.GameLogService;
 import com.github.laxika.magicalvibes.service.battlefield.GameQueryService;
 import com.github.laxika.magicalvibes.service.filter.PredicateEvaluationService;
 import com.github.laxika.magicalvibes.service.battlefield.PermanentRemovalService;
@@ -24,7 +24,7 @@ public class ExileTargetCardFromGraveyardAndCreateTokenCopyEffectHandler impleme
     private final PermanentRemovalService permanentRemovalService;
     private final GameQueryService gameQueryService;
     private final PredicateEvaluationService predicateEvaluationService;
-    private final GameBroadcastService gameBroadcastService;
+    private final GameLogService gameLogService;
     private final ExileService exileService;
     private final GraveyardReturnSupport graveyardReturnSupport;
 
@@ -42,20 +42,20 @@ public class ExileTargetCardFromGraveyardAndCreateTokenCopyEffectHandler impleme
             targetCard = gameQueryService.findCardInGraveyardById(gameData, entry.getTargetCardIds().getFirst());
         }
         if (targetCard == null) {
-            gameBroadcastService.logAndBroadcast(gameData, GameLog.text(entry.getDescription() + " fizzles (target no longer in a graveyard)."));
+            gameLogService.append(gameData, GameLog.text(entry.getDescription() + " fizzles (target no longer in a graveyard)."));
             return;
         }
 
         if (e.filter() != null && !predicateEvaluationService.matchesCardPredicate(targetCard, e.filter(), null)) {
             String filterLabel = CardPredicateUtils.describeFilter(e.filter());
-            gameBroadcastService.logAndBroadcast(gameData, GameLog.text(entry.getDescription() + " fizzles (target is no longer a valid " + filterLabel + ")."));
+            gameLogService.append(gameData, GameLog.text(entry.getDescription() + " fizzles (target is no longer a valid " + filterLabel + ")."));
             return;
         }
 
         UUID graveyardOwnerId = gameQueryService.findGraveyardOwnerById(gameData, targetCard.getId());
         if (e.ownGraveyardOnly() && graveyardOwnerId != null
                 && !graveyardOwnerId.equals(entry.getControllerId())) {
-            gameBroadcastService.logAndBroadcast(gameData, GameLog.text(entry.getDescription() + " fizzles (target is not in your graveyard)."));
+            gameLogService.append(gameData, GameLog.text(entry.getDescription() + " fizzles (target is not in your graveyard)."));
             return;
         }
 
@@ -65,7 +65,7 @@ public class ExileTargetCardFromGraveyardAndCreateTokenCopyEffectHandler impleme
         }
 
         String playerName = gameData.playerIdToName.get(entry.getControllerId());
-        gameBroadcastService.logAndBroadcast(gameData, GameLog.textCardText(playerName + " exiles ", targetCard, " from a graveyard."));
+        gameLogService.append(gameData, GameLog.textCardText(playerName + " exiles ", targetCard, " from a graveyard."));
 
         graveyardReturnSupport.createTokenCopyFromCard(gameData, entry, targetCard, e.additionalSubtypes(),
                 e.grantHaste(), e.exileAtEndStep(), e.colorOverride(), e.powerOverride(), e.toughnessOverride());

@@ -7,7 +7,7 @@ import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.StackEntry;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
 import com.github.laxika.magicalvibes.model.effect.ReturnSourceFromGraveyardAttachedToTargetEffect;
-import com.github.laxika.magicalvibes.service.GameBroadcastService;
+import com.github.laxika.magicalvibes.service.GameLogService;
 import com.github.laxika.magicalvibes.service.battlefield.BattlefieldEntryService;
 import com.github.laxika.magicalvibes.service.battlefield.GameQueryService;
 import com.github.laxika.magicalvibes.service.battlefield.PermanentRemovalService;
@@ -25,7 +25,7 @@ public class ReturnSourceFromGraveyardAttachedToTargetEffectHandler implements N
     private final BattlefieldEntryService battlefieldEntryService;
     private final PermanentRemovalService permanentRemovalService;
     private final GameQueryService gameQueryService;
-    private final GameBroadcastService gameBroadcastService;
+    private final GameLogService gameLogService;
 
     @Override
     public Class<? extends CardEffect> handledEffect() {
@@ -40,7 +40,7 @@ public class ReturnSourceFromGraveyardAttachedToTargetEffectHandler implements N
 
         Permanent target = targetId != null ? gameQueryService.findPermanentById(gameData, targetId) : null;
         if (target == null || !gameQueryService.isCreature(gameData, target)) {
-            gameBroadcastService.logAndBroadcast(gameData, GameLog.cardThen(entry.getCard(),
+            gameLogService.append(gameData, GameLog.cardThen(entry.getCard(),
                     "'s ability fizzles (no legal creature to attach to)."));
             log.info("Game {} - {} fizzles, attach target missing or not a creature",
                     gameData.id, entry.getCard().getName());
@@ -49,7 +49,7 @@ public class ReturnSourceFromGraveyardAttachedToTargetEffectHandler implements N
 
         Card auraCard = gameQueryService.findCardInGraveyardById(gameData, auraCardId);
         if (auraCard == null) {
-            gameBroadcastService.logAndBroadcast(gameData, GameLog.cardThen(entry.getCard(),
+            gameLogService.append(gameData, GameLog.cardThen(entry.getCard(),
                     "'s ability fizzles (card not in graveyard)."));
             log.info("Game {} - {} not found in graveyard, ability fizzles",
                     gameData.id, entry.getCard().getName());
@@ -63,7 +63,7 @@ public class ReturnSourceFromGraveyardAttachedToTargetEffectHandler implements N
         battlefieldEntryService.putPermanentOntoBattlefield(gameData, auraOwnerId, auraPerm);
 
         String ownerName = gameData.playerIdToName.get(auraOwnerId);
-        gameBroadcastService.logAndBroadcast(gameData, GameLog.builder()
+        gameLogService.append(gameData, GameLog.builder()
                 .card(auraCard)
                 .text(" returns to the battlefield attached to ")
                 .card(target.getCard())

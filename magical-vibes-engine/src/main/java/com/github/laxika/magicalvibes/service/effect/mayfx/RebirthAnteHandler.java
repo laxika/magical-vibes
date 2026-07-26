@@ -7,7 +7,7 @@ import com.github.laxika.magicalvibes.model.PendingMayAbility;
 import com.github.laxika.magicalvibes.model.Player;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
 import com.github.laxika.magicalvibes.model.effect.RebirthAnteEffect;
-import com.github.laxika.magicalvibes.service.GameBroadcastService;
+import com.github.laxika.magicalvibes.service.GameLogService;
 import com.github.laxika.magicalvibes.service.effect.normalfx.LifeSupport;
 import com.github.laxika.magicalvibes.service.input.InputCompletionService;
 import java.util.List;
@@ -29,7 +29,7 @@ import org.springframework.stereotype.Component;
 public class RebirthAnteHandler implements MayEffectHandlerBean {
 
     private final LifeSupport lifeSupport;
-    private final GameBroadcastService gameBroadcastService;
+    private final GameLogService gameLogService;
     private final InputCompletionService inputCompletionService;
 
     @Override
@@ -45,16 +45,16 @@ public class RebirthAnteHandler implements MayEffectHandlerBean {
         if (accepted && library != null && !library.isEmpty()) {
             Card anted = library.removeFirst();
             gameData.addToExile(playerId, anted);
-            gameBroadcastService.logAndBroadcast(gameData, GameLog.builder().text(player.getUsername() + " antes ").card(anted).text(". (").card(ability.sourceCard()).text(")").build());
+            gameLogService.append(gameData, GameLog.builder().text(player.getUsername() + " antes ").card(anted).text(". (").card(ability.sourceCard()).text(")").build());
             log.info("Game {} - {} antes {} to {}", gameData.id, player.getUsername(), anted.getName(),
                     ability.sourceCard().getName());
 
             if (lifeSupport.applySetLifeTotal(gameData, playerId, 20)) {
-                gameBroadcastService.logAndBroadcast(gameData, GameLog.text(
+                gameLogService.append(gameData, GameLog.text(
                         player.getUsername() + "'s life total becomes 20."));
             }
         } else {
-            gameBroadcastService.logAndBroadcast(gameData, GameLog.textCardText(player.getUsername() + " declines to ante. (", ability.sourceCard(), ")"));
+            gameLogService.append(gameData, GameLog.textCardText(player.getUsername() + " declines to ante. (", ability.sourceCard(), ")"));
             log.info("Game {} - {} declines the {} ante", gameData.id, player.getUsername(),
                     ability.sourceCard().getName());
         }

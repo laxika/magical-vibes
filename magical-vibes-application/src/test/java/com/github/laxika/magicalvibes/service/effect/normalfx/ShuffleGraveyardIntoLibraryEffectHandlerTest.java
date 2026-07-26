@@ -6,7 +6,7 @@ import com.github.laxika.magicalvibes.model.GameData;
 import com.github.laxika.magicalvibes.model.StackEntry;
 import com.github.laxika.magicalvibes.model.StackEntryType;
 import com.github.laxika.magicalvibes.model.effect.ShuffleGraveyardIntoLibraryEffect;
-import com.github.laxika.magicalvibes.service.GameBroadcastService;
+import com.github.laxika.magicalvibes.service.GameLogService;
 import com.github.laxika.magicalvibes.service.GameLogService;
 import com.github.laxika.magicalvibes.service.battlefield.GameQueryService;
 import com.github.laxika.magicalvibes.service.battlefield.PermanentRemovalService;
@@ -33,8 +33,6 @@ import static org.mockito.Mockito.verify;
 @ExtendWith(MockitoExtension.class)
 class ShuffleGraveyardIntoLibraryEffectHandlerTest {
 
-    @Mock
-    private GameBroadcastService gameBroadcastService;
     @Mock
     private GameLogService gameLogService;
     @Mock
@@ -77,7 +75,7 @@ player1Id = UUID.randomUUID();
         GraveyardService graveyardService = new GraveyardService(
                 gameQueryService, gameLogService, exileService, predicateEvaluationService, triggerCollectionService);
         shuffleGraveyardIntoLibraryEffectHandler =
-                new ShuffleGraveyardIntoLibraryEffectHandler(gameBroadcastService, graveyardService);
+                new ShuffleGraveyardIntoLibraryEffectHandler(gameLogService, graveyardService);
 
     }
 
@@ -108,7 +106,7 @@ player1Id = UUID.randomUUID();
                 assertThat(gd.playerDecks.get(player1Id)).hasSize(deckSizeBefore + 2);
                 assertThat(gd.playerGraveyards.get(player1Id))
                         .noneMatch(c -> c.getName().equals("Grizzly Bears"));
-                verify(gameBroadcastService).logAndBroadcast(eq(gd), argThat((GameLogEntry logEntry) ->
+                verify(gameLogService).append(eq(gd), argThat((GameLogEntry logEntry) ->
                         logEntry.plainText().contains("shuffles their graveyard")));
             }
 
@@ -124,7 +122,7 @@ player1Id = UUID.randomUUID();
                 shuffleGraveyardIntoLibraryEffectHandler.resolve(gd, entry, effect);
 
                 assertThat(gd.playerDecks.get(player1Id)).hasSize(deckSizeBefore);
-                verify(gameBroadcastService).logAndBroadcast(eq(gd), argThat((GameLogEntry logEntry) ->
+                verify(gameLogService).append(eq(gd), argThat((GameLogEntry logEntry) ->
                         logEntry.plainText().contains("graveyard is empty")));
             }
 
@@ -145,7 +143,7 @@ player1Id = UUID.randomUUID();
 
                 assertThat(gd.playerDecks.get(player1Id)).hasSize(deckSizeBefore + 2);
                 assertThat(gd.playerGraveyards.get(player1Id)).isEmpty();
-                verify(gameBroadcastService).logAndBroadcast(eq(gd), argThat((GameLogEntry logEntry) ->
+                verify(gameLogService).append(eq(gd), argThat((GameLogEntry logEntry) ->
                         logEntry.plainText().contains("shuffles their graveyard")));
             }
 }

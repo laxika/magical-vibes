@@ -11,7 +11,7 @@ import com.github.laxika.magicalvibes.model.effect.RevealTopCardCreatureToBattle
 import com.github.laxika.magicalvibes.networking.SessionManager;
 import com.github.laxika.magicalvibes.networking.model.CardView;
 import com.github.laxika.magicalvibes.networking.service.CardViewFactory;
-import com.github.laxika.magicalvibes.service.GameBroadcastService;
+import com.github.laxika.magicalvibes.service.GameLogService;
 import com.github.laxika.magicalvibes.service.battlefield.BattlefieldEntryService;
 import com.github.laxika.magicalvibes.service.battlefield.GameQueryService;
 import com.github.laxika.magicalvibes.service.exile.ExileService;
@@ -38,7 +38,7 @@ class RevealTopCardCreatureToBattlefieldOrMayBottomEffectHandlerTest {
     @Mock
     private GameQueryService gameQueryService;
     @Mock
-    private GameBroadcastService gameBroadcastService;
+    private GameLogService gameLogService;
     @Mock
     private SessionManager sessionManager;
     @Mock
@@ -75,9 +75,9 @@ class RevealTopCardCreatureToBattlefieldOrMayBottomEffectHandlerTest {
         gd.playerDecks.put(player2Id, Collections.synchronizedList(new ArrayList<>()));
         gd.activePlayerId = player1Id;
 
-        libraryRevealSupport = new LibraryRevealSupport(gameBroadcastService,
-                InteractionRegistryTestSupport.registryFor(sessionManager, cardViewFactory, gameBroadcastService));
-        revealTopCardCreatureToBattlefieldOrMayBottomEffectHandler = new RevealTopCardCreatureToBattlefieldOrMayBottomEffectHandler(gameBroadcastService, battlefieldEntryService);
+        libraryRevealSupport = new LibraryRevealSupport(gameLogService,
+                InteractionRegistryTestSupport.registryFor(sessionManager, cardViewFactory, gameLogService));
+        revealTopCardCreatureToBattlefieldOrMayBottomEffectHandler = new RevealTopCardCreatureToBattlefieldOrMayBottomEffectHandler(gameLogService, battlefieldEntryService);
 
     }
 
@@ -117,7 +117,7 @@ class RevealTopCardCreatureToBattlefieldOrMayBottomEffectHandlerTest {
 
                 revealTopCardCreatureToBattlefieldOrMayBottomEffectHandler.resolve(gd, entry, new RevealTopCardCreatureToBattlefieldOrMayBottomEffect());
 
-                verify(gameBroadcastService).logAndBroadcast(eq(gd), argThat((GameLogEntry logEntry) ->
+                verify(gameLogService).append(eq(gd), argThat((GameLogEntry logEntry) ->
                         logEntry.plainText().contains("library is empty")));
             }
 
@@ -138,7 +138,7 @@ class RevealTopCardCreatureToBattlefieldOrMayBottomEffectHandlerTest {
                 verify(battlefieldEntryService).putPermanentOntoBattlefield(eq(gd), eq(player1Id), any(Permanent.class));
                 verify(battlefieldEntryService).handleCreatureEnteredBattlefield(
                         eq(gd), eq(player1Id), eq(creature), eq(null), eq(false));
-                verify(gameBroadcastService).logAndBroadcast(eq(gd), argThat((GameLogEntry logEntry) ->
+                verify(gameLogService).append(eq(gd), argThat((GameLogEntry logEntry) ->
                         logEntry.plainText().contains("enters the battlefield")));
             }
 

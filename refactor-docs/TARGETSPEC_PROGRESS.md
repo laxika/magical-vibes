@@ -1498,7 +1498,7 @@ interpreter for the structural cases; the gap is informational matrix output, no
   still empty — both ratchets green), `ValidTargetServiceTest`, `TargetLegalityServiceTest`,
   `TargetValidationServiceSpecTest`; rewritten-service unit tests — `SpellCastingServiceTest`,
   `StepTriggerServiceTest`, `AbilityActivationServiceTest`, `ETBTokenTargetServiceTest`,
-  `GameBroadcastServiceTest`, `MayCastHandlerServiceTest`, `TriggerTargetCollectorTest`,
+  `GameActionAvailabilityServiceTest`, `MayCastHandlerServiceTest`, `TriggerTargetCollectorTest`,
   `ReturnToHandEffectHandlerTest`, `CardEffectTargetingConsistencyTest` (still passes — it already accepted
   a `targetSpec()` override as declaring targeting since step 5; the vestigial `canTarget*` name list is
   now dead but harmless).

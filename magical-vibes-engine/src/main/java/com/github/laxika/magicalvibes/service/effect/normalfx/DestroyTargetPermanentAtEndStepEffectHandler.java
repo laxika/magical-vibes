@@ -8,7 +8,7 @@ import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.StackEntry;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
 import com.github.laxika.magicalvibes.model.effect.DestroyTargetPermanentAtEndStepEffect;
-import com.github.laxika.magicalvibes.service.GameBroadcastService;
+import com.github.laxika.magicalvibes.service.GameLogService;
 import com.github.laxika.magicalvibes.service.battlefield.GameQueryService;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -20,7 +20,7 @@ import org.springframework.stereotype.Component;
 public class DestroyTargetPermanentAtEndStepEffectHandler implements NormalEffectHandlerBean {
 
     private final DestructionSupport destructionSupport;
-    private final GameBroadcastService gameBroadcastService;
+    private final GameLogService gameLogService;
     private final GameQueryService gameQueryService;
 
     @Override
@@ -38,7 +38,7 @@ public class DestroyTargetPermanentAtEndStepEffectHandler implements NormalEffec
 
                 gameData.queueDelayedAction(new DelayedPermanentAction(target.getId(), DelayedPermanentActionKind.DESTROY_AT_END_STEP));
 
-                gameBroadcastService.logAndBroadcast(gameData, GameLog.cardThen(target.getCard(), " will be destroyed at the beginning of the next end step."));
+                gameLogService.append(gameData, GameLog.cardThen(target.getCard(), " will be destroyed at the beginning of the next end step."));
                 log.info("Game {} - {} scheduled for destruction at end step", gameData.id, target.getCard().getName());
     }
 }

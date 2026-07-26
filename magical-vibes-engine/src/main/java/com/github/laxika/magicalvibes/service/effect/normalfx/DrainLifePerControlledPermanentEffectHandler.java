@@ -6,7 +6,7 @@ import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.StackEntry;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
 import com.github.laxika.magicalvibes.model.effect.DrainLifePerControlledPermanentEffect;
-import com.github.laxika.magicalvibes.service.GameBroadcastService;
+import com.github.laxika.magicalvibes.service.GameLogService;
 import com.github.laxika.magicalvibes.service.battlefield.GameQueryService;
 import com.github.laxika.magicalvibes.service.filter.PredicateEvaluationService;
 import lombok.RequiredArgsConstructor;
@@ -24,7 +24,7 @@ public class DrainLifePerControlledPermanentEffectHandler implements NormalEffec
     private final LifeSupport lifeSupport;
     private final GameQueryService gameQueryService;
     private final PredicateEvaluationService predicateEvaluationService;
-    private final GameBroadcastService gameBroadcastService;
+    private final GameLogService gameLogService;
 
     @Override
     public Class<? extends CardEffect> handledEffect() {
@@ -45,19 +45,19 @@ public class DrainLifePerControlledPermanentEffectHandler implements NormalEffec
         int drainAmount = (int) count * e.multiplier();
 
         if (drainAmount <= 0) {
-            gameBroadcastService.logAndBroadcast(gameData, GameLog.cardThen(entry.getCard(), " drains 0 life (no matching permanents)."));
+            gameLogService.append(gameData, GameLog.cardThen(entry.getCard(), " drains 0 life (no matching permanents)."));
             return;
         }
 
         // Target loses life
         String targetName = gameData.playerIdToName.get(targetPlayerId);
         if (!gameQueryService.canPlayerLifeChange(gameData, targetPlayerId)) {
-            gameBroadcastService.logAndBroadcast(gameData, GameLog.text(targetName + "'s life total can't change."));
+            gameLogService.append(gameData, GameLog.text(targetName + "'s life total can't change."));
         } else {
             int targetCurrentLife = gameData.getLife(targetPlayerId);
             gameData.playerLifeTotals.put(targetPlayerId, targetCurrentLife - drainAmount);
 
-            gameBroadcastService.logAndBroadcast(gameData, GameLog.textCardText(targetName + " loses " + drainAmount + " life (" , entry.getCard(), ")."));
+            gameLogService.append(gameData, GameLog.textCardText(targetName + " loses " + drainAmount + " life (" , entry.getCard(), ")."));
             log.info("Game {} - {} loses {} life from {}", gameData.id, targetName, drainAmount, entry.getCard().getName());
         }
 

@@ -5,7 +5,7 @@ import com.github.laxika.magicalvibes.model.GameLog;
 import com.github.laxika.magicalvibes.model.StackEntry;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
 import com.github.laxika.magicalvibes.model.effect.DealDamageToEachOpponentEqualToCardsDrawnThisTurnEffect;
-import com.github.laxika.magicalvibes.service.GameBroadcastService;
+import com.github.laxika.magicalvibes.service.GameLogService;
 import com.github.laxika.magicalvibes.service.GameOutcomeService;
 import com.github.laxika.magicalvibes.service.battlefield.GameQueryService;
 import java.util.UUID;
@@ -20,7 +20,7 @@ public class DealDamageToEachOpponentEqualToCardsDrawnThisTurnEffectHandler impl
 
     private final DamageSupport damageSupport;
     private final GameQueryService gameQueryService;
-    private final GameBroadcastService gameBroadcastService;
+    private final GameLogService gameLogService;
     private final GameOutcomeService gameOutcomeService;
 
     @Override
@@ -40,7 +40,7 @@ public class DealDamageToEachOpponentEqualToCardsDrawnThisTurnEffectHandler impl
             int cardsDrawn = gameData.cardsDrawnThisTurn.getOrDefault(playerId, 0);
             if (cardsDrawn <= 0) {
                 String playerName = gameData.playerIdToName.get(playerId);
-                gameBroadcastService.logAndBroadcast(gameData, GameLog.text(playerName + " has drawn no cards this turn — no damage from " + cardName + "."));
+                gameLogService.append(gameData, GameLog.text(playerName + " has drawn no cards this turn — no damage from " + cardName + "."));
                 log.info("Game {} - {} drawn 0 cards this turn, no damage from {}",
                         gameData.id, playerName, cardName);
                 continue;
@@ -48,7 +48,7 @@ public class DealDamageToEachOpponentEqualToCardsDrawnThisTurnEffectHandler impl
 
             if (gameQueryService.isDamageFromSourcePrevented(gameData, entry.getCard().getColor())) {
                 String playerName = gameData.playerIdToName.get(playerId);
-                gameBroadcastService.logAndBroadcast(gameData, GameLog.text(cardName + "'s damage to " + playerName + " is prevented."));
+                gameLogService.append(gameData, GameLog.text(cardName + "'s damage to " + playerName + " is prevented."));
             } else {
                 int rawDamage = gameQueryService.applyDamageMultiplier(gameData, cardsDrawn, entry);
                 damageSupport.dealDamageToPlayer(gameData, entry, playerId, rawDamage);

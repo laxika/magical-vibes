@@ -7,7 +7,7 @@ import com.github.laxika.magicalvibes.model.PermanentChoiceContext;
 import com.github.laxika.magicalvibes.model.StackEntry;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
 import com.github.laxika.magicalvibes.model.effect.OpponentChoosesCreatureToDestroyEffect;
-import com.github.laxika.magicalvibes.service.GameBroadcastService;
+import com.github.laxika.magicalvibes.service.GameLogService;
 import com.github.laxika.magicalvibes.service.battlefield.GameQueryService;
 import com.github.laxika.magicalvibes.service.input.PlayerInputService;
 import java.util.ArrayList;
@@ -30,7 +30,7 @@ import org.springframework.stereotype.Component;
 public class OpponentChoosesCreatureToDestroyEffectHandler implements NormalEffectHandlerBean {
 
     private final DestructionSupport destructionSupport;
-    private final GameBroadcastService gameBroadcastService;
+    private final GameLogService gameLogService;
     private final GameQueryService gameQueryService;
     private final PlayerInputService playerInputService;
 
@@ -67,7 +67,7 @@ public class OpponentChoosesCreatureToDestroyEffectHandler implements NormalEffe
         }
 
         if (creatureIds.isEmpty()) {
-            gameBroadcastService.logAndBroadcast(gameData, GameLog.text(cardName + " resolves but there are no creatures to destroy."));
+            gameLogService.append(gameData, GameLog.text(cardName + " resolves but there are no creatures to destroy."));
             log.info("Game {} - {} resolves with no creatures to destroy", gameData.id, cardName);
             return;
         }

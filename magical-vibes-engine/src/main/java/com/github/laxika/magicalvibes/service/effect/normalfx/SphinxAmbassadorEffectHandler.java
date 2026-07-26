@@ -11,7 +11,7 @@ import com.github.laxika.magicalvibes.model.effect.SphinxAmbassadorEffect;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.UUID;
-import com.github.laxika.magicalvibes.service.GameBroadcastService;
+import com.github.laxika.magicalvibes.service.GameLogService;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Component;
@@ -21,7 +21,7 @@ import org.springframework.stereotype.Component;
 @Slf4j
 public class SphinxAmbassadorEffectHandler implements NormalEffectHandlerBean {
 
-    private final GameBroadcastService gameBroadcastService;
+    private final GameLogService gameLogService;
     private final LibrarySearchSupport librarySearchSupport;
 
     @Override
@@ -46,7 +46,7 @@ public class SphinxAmbassadorEffectHandler implements NormalEffectHandlerBean {
 
         if (deck == null || deck.isEmpty()) {
             String logMsg = controllerName + " searches " + targetName + "'s library but it is empty. Library is shuffled.";
-            gameBroadcastService.logAndBroadcast(gameData, GameLog.text(logMsg));
+            gameLogService.append(gameData, GameLog.text(logMsg));
             return;
         }
 

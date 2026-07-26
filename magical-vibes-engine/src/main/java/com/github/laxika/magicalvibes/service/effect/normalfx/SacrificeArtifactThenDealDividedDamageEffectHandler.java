@@ -7,7 +7,7 @@ import com.github.laxika.magicalvibes.model.PermanentChoiceContext;
 import com.github.laxika.magicalvibes.model.StackEntry;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
 import com.github.laxika.magicalvibes.model.effect.SacrificeArtifactThenDealDividedDamageEffect;
-import com.github.laxika.magicalvibes.service.GameBroadcastService;
+import com.github.laxika.magicalvibes.service.GameLogService;
 import com.github.laxika.magicalvibes.service.battlefield.GameQueryService;
 import com.github.laxika.magicalvibes.service.input.PlayerInputService;
 import java.util.ArrayList;
@@ -23,7 +23,7 @@ import org.springframework.stereotype.Component;
 @RequiredArgsConstructor
 public class SacrificeArtifactThenDealDividedDamageEffectHandler implements NormalEffectHandlerBean {
 
-    private final GameBroadcastService gameBroadcastService;
+    private final GameLogService gameLogService;
     private final GameQueryService gameQueryService;
     private final PlayerInputService playerInputService;
     private final PlayerInteractionSupport playerInteractionSupport;
@@ -52,7 +52,7 @@ public class SacrificeArtifactThenDealDividedDamageEffectHandler implements Norm
 
         if (validArtifactIds.isEmpty()) {
             String logEntry = playerName + " has no artifacts to sacrifice.";
-            gameBroadcastService.logAndBroadcast(gameData, GameLog.text(logEntry));
+            gameLogService.append(gameData, GameLog.text(logEntry));
             log.info("Game {} - {} has no artifacts to sacrifice for {}",
                     gameData.id, playerName, entry.getCard().getName());
             gameData.pendingETBDamageAssignments = Map.of();
@@ -67,7 +67,7 @@ public class SacrificeArtifactThenDealDividedDamageEffectHandler implements Norm
                 entry.getCard().getName() + " — Choose an artifact to sacrifice.");
 
         String logEntry = playerName + " is choosing an artifact to sacrifice.";
-        gameBroadcastService.logAndBroadcast(gameData, GameLog.text(logEntry));
+        gameLogService.append(gameData, GameLog.text(logEntry));
         log.info("Game {} - {} choosing artifact to sacrifice for divided damage",
                 gameData.id, playerName);
     

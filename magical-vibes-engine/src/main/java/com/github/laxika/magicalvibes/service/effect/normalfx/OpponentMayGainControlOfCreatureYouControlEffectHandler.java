@@ -9,7 +9,7 @@ import com.github.laxika.magicalvibes.model.StackEntry;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
 import com.github.laxika.magicalvibes.model.effect.OpponentMayGainControlOfCreatureYouControlEffect;
 import com.github.laxika.magicalvibes.model.effect.GainControlOfTargetEffect;
-import com.github.laxika.magicalvibes.service.GameBroadcastService;
+import com.github.laxika.magicalvibes.service.GameLogService;
 import com.github.laxika.magicalvibes.service.battlefield.CreatureControlService;
 import com.github.laxika.magicalvibes.service.battlefield.GameQueryService;
 import com.github.laxika.magicalvibes.service.input.PlayerInputService;
@@ -30,7 +30,7 @@ import org.springframework.stereotype.Component;
 public class OpponentMayGainControlOfCreatureYouControlEffectHandler implements NormalEffectHandlerBean {
 
     private final CreatureControlService creatureControlService;
-    private final GameBroadcastService gameBroadcastService;
+    private final GameLogService gameLogService;
     private final GameQueryService gameQueryService;
     private final PlayerInputService playerInputService;
 
@@ -56,7 +56,7 @@ public class OpponentMayGainControlOfCreatureYouControlEffectHandler implements 
 
         List<UUID> creatureIds = creatureIdsControlledBy(gameData, victimControllerId);
         if (creatureIds.isEmpty()) {
-            gameBroadcastService.logAndBroadcast(gameData,
+            gameLogService.append(gameData,
                     GameLog.text(entry.getCard().getName() + " — no creatures for the opponent to take."));
             log.info("Game {} - {} opponent may-steal skipped (no creatures)", gameData.id, entry.getCard().getName());
             return;
@@ -84,7 +84,7 @@ public class OpponentMayGainControlOfCreatureYouControlEffectHandler implements 
         }
         Permanent source = gameQueryService.findPermanentById(gameData, sourcePermanentId);
         if (source == null) {
-            gameBroadcastService.logAndBroadcast(gameData,
+            gameLogService.append(gameData,
                     GameLog.text(sourceCardName + "'s ability has no effect (source left the battlefield)."));
             return;
         }

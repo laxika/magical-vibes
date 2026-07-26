@@ -7,7 +7,7 @@ import com.github.laxika.magicalvibes.model.PendingInteraction;
 import com.github.laxika.magicalvibes.model.StackEntry;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
 import com.github.laxika.magicalvibes.model.effect.EachPlayerPaysAnyLifeForTokensEffect;
-import com.github.laxika.magicalvibes.service.GameBroadcastService;
+import com.github.laxika.magicalvibes.service.GameLogService;
 import com.github.laxika.magicalvibes.service.interaction.InteractionHandlerRegistry;
 import java.util.UUID;
 import lombok.RequiredArgsConstructor;
@@ -29,7 +29,7 @@ import org.springframework.stereotype.Component;
 @RequiredArgsConstructor
 public class EachPlayerPaysAnyLifeForTokensEffectHandler implements NormalEffectHandlerBean {
 
-    private final GameBroadcastService gameBroadcastService;
+    private final GameLogService gameLogService;
     private final InteractionHandlerRegistry interactionHandlerRegistry;
     private final LifeSupport lifeSupport;
     private final DestructionSupport destructionSupport;
@@ -73,7 +73,7 @@ public class EachPlayerPaysAnyLifeForTokensEffectHandler implements NormalEffect
                 state.lifePaid.merge(playerId, amount, Integer::sum);
                 state.consecutivePasses = 0;
             } else {
-                gameBroadcastService.logAndBroadcast(gameData, GameLog.text(playerName + " pays no life for " + cardName + "."));
+                gameLogService.append(gameData, GameLog.text(playerName + " pays no life for " + cardName + "."));
                 state.consecutivePasses++;
             }
             state.index = (state.index + 1) % state.order.size();

@@ -44,6 +44,6 @@ class LibraryReorderAiStrategy implements AiInteractionStrategy<PendingInteracti
         List<Integer> order = indexedCards.stream().map(a -> a[0]).toList();
 
         log.info("AI: Reordering {} library cards in game {}", order.size(), ctx.gameId());
-        ctx.gameActions().answerInteraction(ctx.selfConnection(), new InteractionAnswer.CardOrder(order));
+        ctx.gameActions().answerInteraction(new InteractionAnswer.CardOrder(order));
     }
 }

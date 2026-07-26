@@ -6,7 +6,7 @@ import com.github.laxika.magicalvibes.model.StackEntry;
 import com.github.laxika.magicalvibes.model.StackEntryType;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
 import com.github.laxika.magicalvibes.model.effect.ExileOtherSpellsAndCounterAbilitiesEffect;
-import com.github.laxika.magicalvibes.service.GameBroadcastService;
+import com.github.laxika.magicalvibes.service.GameLogService;
 import com.github.laxika.magicalvibes.service.battlefield.GameQueryService;
 import com.github.laxika.magicalvibes.service.exile.ExileService;
 import com.github.laxika.magicalvibes.service.state.StateTriggerService;
@@ -34,7 +34,7 @@ public class ExileOtherSpellsAndCounterAbilitiesEffectHandler implements NormalE
 
     private final CounterSupport counterSupport;
     private final ExileService exileService;
-    private final GameBroadcastService gameBroadcastService;
+    private final GameLogService gameLogService;
     private final GameQueryService gameQueryService;
     private final StateTriggerService stateTriggerService;
 
@@ -79,7 +79,7 @@ public class ExileOtherSpellsAndCounterAbilitiesEffectHandler implements NormalE
             if (!se.isCopy()) {
                 exileService.exileCard(gameData, se.getControllerId(), se.getCard());
             }
-            gameBroadcastService.logAndBroadcast(gameData, GameLog.cardThen(se.getCard(), " is exiled."));
+            gameLogService.append(gameData, GameLog.cardThen(se.getCard(), " is exiled."));
             log.info("Game {} - {} exiled from stack by {}",
                     gameData.id, se.getCard().getName(), entry.getCard().getName());
         }

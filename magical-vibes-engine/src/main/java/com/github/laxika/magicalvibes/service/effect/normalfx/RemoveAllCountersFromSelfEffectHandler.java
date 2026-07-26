@@ -6,7 +6,7 @@ import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.StackEntry;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
 import com.github.laxika.magicalvibes.model.effect.RemoveAllCountersFromSelfEffect;
-import com.github.laxika.magicalvibes.service.GameBroadcastService;
+import com.github.laxika.magicalvibes.service.GameLogService;
 import com.github.laxika.magicalvibes.service.battlefield.GameQueryService;
 import java.util.UUID;
 import lombok.RequiredArgsConstructor;
@@ -23,7 +23,7 @@ public class RemoveAllCountersFromSelfEffectHandler implements NormalEffectHandl
 
     private final GameQueryService gameQueryService;
     private final PermanentCounterSupport permanentCounterSupport;
-    private final GameBroadcastService gameBroadcastService;
+    private final GameLogService gameLogService;
 
     @Override
     public Class<? extends CardEffect> handledEffect() {
@@ -46,7 +46,7 @@ public class RemoveAllCountersFromSelfEffectHandler implements NormalEffectHandl
 
         if (removed > 0) {
             String counterName = permanentCounterSupport.counterTypeName(e.counterType());
-            gameBroadcastService.logAndBroadcast(gameData, GameLog.builder().card(self.getCard()).text(" removes all its " + counterName + " counters (" + removed + ").").build());
+            gameLogService.append(gameData, GameLog.builder().card(self.getCard()).text(" removes all its " + counterName + " counters (" + removed + ").").build());
         }
     }
 }

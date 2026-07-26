@@ -6,7 +6,7 @@ import com.github.laxika.magicalvibes.model.GameLog;
 import com.github.laxika.magicalvibes.model.StackEntry;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
 import com.github.laxika.magicalvibes.model.effect.CounterSpellAndExileAllWithSameNameEffect;
-import com.github.laxika.magicalvibes.service.GameBroadcastService;
+import com.github.laxika.magicalvibes.service.GameLogService;
 import com.github.laxika.magicalvibes.service.graveyard.GraveyardService;
 import java.util.ArrayList;
 import java.util.Collections;
@@ -23,7 +23,7 @@ public class CounterSpellAndExileAllWithSameNameEffectHandler implements NormalE
 
     private final CounterSupport counterSupport;
     private final GraveyardService graveyardService;
-    private final GameBroadcastService gameBroadcastService;
+    private final GameLogService gameLogService;
 
     @Override
     public Class<? extends CardEffect> handledEffect() {
@@ -80,7 +80,7 @@ public class CounterSpellAndExileAllWithSameNameEffectHandler implements NormalE
         String logEntry = "Counterbore counters " + spellName + " and exiles " + total
                 + " card" + (total != 1 ? "s" : "") + " named " + spellName + " from " + targetName
                 + "'s graveyard, hand, and library. " + targetName + " shuffles their library.";
-        gameBroadcastService.logAndBroadcast(gameData, GameLog.text(logEntry));
+        gameLogService.append(gameData, GameLog.text(logEntry));
         log.info("Game {} - Counterbore exiled {} cards named {} from {}'s zones",
                 gameData.id, total, spellName, targetName);
     }

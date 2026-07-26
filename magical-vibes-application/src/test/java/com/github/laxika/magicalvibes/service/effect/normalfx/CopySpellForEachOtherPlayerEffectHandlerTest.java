@@ -19,7 +19,7 @@ import com.github.laxika.magicalvibes.model.effect.CardEffect;
 import com.github.laxika.magicalvibes.model.effect.CopySpellEffect;
 import com.github.laxika.magicalvibes.model.effect.CopySpellForEachOtherPlayerEffect;
 import com.github.laxika.magicalvibes.model.effect.DealDamageToAnyTargetEffect;
-import com.github.laxika.magicalvibes.service.GameBroadcastService;
+import com.github.laxika.magicalvibes.service.GameLogService;
 import com.github.laxika.magicalvibes.service.target.ValidTargetService;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
@@ -42,7 +42,7 @@ import static org.mockito.Mockito.verify;
 @ExtendWith(MockitoExtension.class)
 class CopySpellForEachOtherPlayerEffectHandlerTest {
 
-    @Mock private GameBroadcastService gameBroadcastService;
+    @Mock private GameLogService gameLogService;
     @Mock private ValidTargetService validTargetService;
     @Mock private GameQueryService gameQueryService;
     @Mock private CloneService cloneService;
@@ -67,7 +67,7 @@ class CopySpellForEachOtherPlayerEffectHandlerTest {
         gd.playerBattlefields.put(player1Id, Collections.synchronizedList(new ArrayList<>()));
         gd.playerBattlefields.put(player2Id, Collections.synchronizedList(new ArrayList<>()));
         copySpellForEachOtherPlayerHandler = new CopySpellForEachOtherPlayerEffectHandler(
-                gameBroadcastService, copySupport);
+                gameLogService, copySupport);
 
     }
 
@@ -113,7 +113,7 @@ class CopySpellForEachOtherPlayerEffectHandlerTest {
         }
 
         // =========================================================================
-        // resolveCopySpell â€” CopySpellEffect
+        // resolveCopySpell A?€�t CopySpellEffect
         // =========================================================================
 
     @Test
@@ -171,7 +171,7 @@ class CopySpellForEachOtherPlayerEffectHandlerTest {
                 copySpellForEachOtherPlayerHandler.resolve(gd, triggerEntry, effect);
 
                 assertThat(gd.stack).isEmpty();
-                verify(gameBroadcastService, never()).logAndBroadcast(any(), any(GameLogEntry.class));
+                verify(gameLogService, never()).append(any(), any(GameLogEntry.class));
             }
 
             @Test
@@ -190,7 +190,7 @@ class CopySpellForEachOtherPlayerEffectHandlerTest {
 
                 copySpellForEachOtherPlayerHandler.resolve(gd, triggerEntry, effect);
 
-                verify(gameBroadcastService).logAndBroadcast(eq(gd), argThat((GameLogEntry e) -> e.plainText().equals("A copy of Syphon Mind is created for Player2.")));
+                verify(gameLogService).append(eq(gd), argThat((GameLogEntry e) -> e.plainText().equals("A copy of Syphon Mind is created for Player2.")));
             }
 
             @Test

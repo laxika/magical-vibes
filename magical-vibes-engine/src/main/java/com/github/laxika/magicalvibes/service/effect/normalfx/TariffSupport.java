@@ -10,7 +10,7 @@ import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.PermanentChoiceContext;
 import com.github.laxika.magicalvibes.model.Player;
 import com.github.laxika.magicalvibes.model.effect.EachPlayerSacrificesGreatestManaValueCreatureUnlessPaysEffect;
-import com.github.laxika.magicalvibes.service.GameBroadcastService;
+import com.github.laxika.magicalvibes.service.GameLogService;
 import com.github.laxika.magicalvibes.service.battlefield.GameQueryService;
 import com.github.laxika.magicalvibes.service.input.InputCompletionService;
 import com.github.laxika.magicalvibes.service.input.PlayerInputService;
@@ -35,7 +35,7 @@ import org.springframework.stereotype.Component;
 public class TariffSupport {
 
     private final GameQueryService gameQueryService;
-    private final GameBroadcastService gameBroadcastService;
+    private final GameLogService gameLogService;
     private final DestructionSupport destructionSupport;
     private final PlayerInputService playerInputService;
     private final InputCompletionService inputCompletionService;
@@ -142,7 +142,7 @@ public class TariffSupport {
             cost.pay(pool);
             String logEntry = player.getUsername() + " pays " + ability.manaCost() + " and keeps "
                     + creature.getCard().getName() + ". (" + sourceCard.getName() + ")";
-            gameBroadcastService.logAndBroadcast(gameData, GameLog.builder().text(player.getUsername() + " pays " + ability.manaCost() + " and keeps ").card(creature.getCard()).text(". (").card(sourceCard).text(")").build());
+            gameLogService.append(gameData, GameLog.builder().text(player.getUsername() + " pays " + ability.manaCost() + " and keeps ").card(creature.getCard()).text(". (").card(sourceCard).text(")").build());
             log.info("Game {} - {} pays {} to keep {} ({})", gameData.id, player.getUsername(),
                     ability.manaCost(), creature.getCard().getName(), sourceCard.getName());
         } else {

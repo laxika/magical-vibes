@@ -5,7 +5,7 @@ import com.github.laxika.magicalvibes.model.GameLog;
 import com.github.laxika.magicalvibes.model.StackEntry;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
 import com.github.laxika.magicalvibes.model.effect.SetEachPlayerLifeToHighestAmongPlayersEffect;
-import com.github.laxika.magicalvibes.service.GameBroadcastService;
+import com.github.laxika.magicalvibes.service.GameLogService;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Component;
@@ -18,7 +18,7 @@ import java.util.UUID;
 public class SetEachPlayerLifeToHighestAmongPlayersEffectHandler implements NormalEffectHandlerBean {
 
     private final LifeSupport lifeSupport;
-    private final GameBroadcastService gameBroadcastService;
+    private final GameLogService gameLogService;
 
     @Override
     public Class<? extends CardEffect> handledEffect() {
@@ -37,7 +37,7 @@ public class SetEachPlayerLifeToHighestAmongPlayersEffectHandler implements Norm
             if (lifeSupport.applySetLifeTotal(gameData, playerId, highestLife)) {
                 if (currentLife != highestLife) {
                     String playerName = gameData.playerIdToName.get(playerId);
-                    gameBroadcastService.logAndBroadcast(gameData, GameLog.text(playerName + "'s life total becomes " + highestLife + " (was " + currentLife + ")."));
+                    gameLogService.append(gameData, GameLog.text(playerName + "'s life total becomes " + highestLife + " (was " + currentLife + ")."));
                     log.info("Game {} - {}'s life set to {} (was {})",
                             gameData.id, playerName, highestLife, currentLife);
                 }

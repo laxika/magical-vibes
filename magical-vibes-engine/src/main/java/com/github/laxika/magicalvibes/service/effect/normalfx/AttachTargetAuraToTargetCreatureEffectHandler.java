@@ -6,7 +6,7 @@ import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.StackEntry;
 import com.github.laxika.magicalvibes.model.effect.AttachTargetAuraToTargetCreatureEffect;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
-import com.github.laxika.magicalvibes.service.GameBroadcastService;
+import com.github.laxika.magicalvibes.service.GameLogService;
 import com.github.laxika.magicalvibes.service.battlefield.GameQueryService;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -21,7 +21,7 @@ import java.util.UUID;
 public class AttachTargetAuraToTargetCreatureEffectHandler implements NormalEffectHandlerBean {
 
     private final GameQueryService gameQueryService;
-    private final GameBroadcastService gameBroadcastService;
+    private final GameLogService gameLogService;
 
     @Override
     public Class<? extends CardEffect> handledEffect() {
@@ -54,13 +54,13 @@ public class AttachTargetAuraToTargetCreatureEffectHandler implements NormalEffe
         aura.setTimestamp(gameData.nextTimestamp());
 
         String logEntry = aura.getCard().getName() + " is now attached to " + creature.getCard().getName() + ".";
-        gameBroadcastService.logAndBroadcast(gameData, GameLog.cardTextCard(aura.getCard(), " is now attached to ", creature.getCard(), "."));
+        gameLogService.append(gameData, GameLog.cardTextCard(aura.getCard(), " is now attached to ", creature.getCard(), "."));
         log.info("Game {} - {} attached to {} via {}", gameData.id, aura.getCard().getName(), creature.getCard().getName(), entry.getCard().getName());
     }
 
     private void fizzle(GameData gameData, StackEntry entry, String reason) {
         String logEntry = entry.getCard().getName() + "'s ability fizzles (" + reason + ").";
-        gameBroadcastService.logAndBroadcast(gameData, GameLog.builder().card(entry.getCard()).text("'s ability fizzles (" + reason + ").").build());
+        gameLogService.append(gameData, GameLog.builder().card(entry.getCard()).text("'s ability fizzles (" + reason + ").").build());
         log.info("Game {} - Crown of the Ages ability fizzles: {}", gameData.id, reason);
     }
 }

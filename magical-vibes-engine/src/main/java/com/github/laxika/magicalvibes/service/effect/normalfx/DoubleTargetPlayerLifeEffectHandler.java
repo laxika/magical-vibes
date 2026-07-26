@@ -5,7 +5,7 @@ import com.github.laxika.magicalvibes.model.GameLog;
 import com.github.laxika.magicalvibes.model.StackEntry;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
 import com.github.laxika.magicalvibes.model.effect.DoubleTargetPlayerLifeEffect;
-import com.github.laxika.magicalvibes.service.GameBroadcastService;
+import com.github.laxika.magicalvibes.service.GameLogService;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Component;
@@ -18,7 +18,7 @@ import java.util.UUID;
 public class DoubleTargetPlayerLifeEffectHandler implements NormalEffectHandlerBean {
 
     private final LifeSupport lifeSupport;
-    private final GameBroadcastService gameBroadcastService;
+    private final GameLogService gameLogService;
 
     @Override
     public Class<? extends CardEffect> handledEffect() {
@@ -33,7 +33,7 @@ public class DoubleTargetPlayerLifeEffectHandler implements NormalEffectHandlerB
 
         if (lifeSupport.applySetLifeTotal(gameData, targetPlayerId, newLife)) {
             String playerName = gameData.playerIdToName.get(targetPlayerId);
-            gameBroadcastService.logAndBroadcast(gameData, GameLog.text(playerName + "'s life total is doubled from " + currentLife + " to " + newLife + "."));
+            gameLogService.append(gameData, GameLog.text(playerName + "'s life total is doubled from " + currentLife + " to " + newLife + "."));
             log.info("Game {} - {}'s life doubled from {} to {}", gameData.id, playerName, currentLife, newLife);
         }
     }

@@ -7,7 +7,7 @@ import com.github.laxika.magicalvibes.model.StackEntry;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
 import com.github.laxika.magicalvibes.model.effect.ControlledCreaturesDealPowerDamageToTargetEffect;
 import com.github.laxika.magicalvibes.model.filter.FilterContext;
-import com.github.laxika.magicalvibes.service.GameBroadcastService;
+import com.github.laxika.magicalvibes.service.GameLogService;
 import com.github.laxika.magicalvibes.service.GameOutcomeService;
 import com.github.laxika.magicalvibes.service.battlefield.GameQueryService;
 import com.github.laxika.magicalvibes.service.filter.PredicateEvaluationService;
@@ -24,7 +24,7 @@ public class ControlledCreaturesDealPowerDamageToTargetEffectHandler implements 
     private final DamageSupport damageSupport;
     private final GameQueryService gameQueryService;
     private final PredicateEvaluationService predicateEvaluationService;
-    private final GameBroadcastService gameBroadcastService;
+    private final GameLogService gameLogService;
     private final GameOutcomeService gameOutcomeService;
 
     @Override
@@ -65,13 +65,13 @@ public class ControlledCreaturesDealPowerDamageToTargetEffectHandler implements 
         for (Permanent hunter : hunters) {
             if (gameQueryService.isDamagePreventable(gameData)
                     && gameQueryService.isPreventedFromDealingDamage(gameData, hunter)) {
-                gameBroadcastService.logAndBroadcast(gameData,
+                gameLogService.append(gameData,
                         GameLog.cardThen(hunter.getCard(), "'s damage is prevented."));
                 continue;
             }
             if (gameQueryService.isDamagePreventable(gameData)
                     && gameQueryService.hasProtectionFromSource(gameData, target, hunter)) {
-                gameBroadcastService.logAndBroadcast(gameData,
+                gameLogService.append(gameData,
                         GameLog.cardTextCard(hunter.getCard(), "'s damage to ", target.getCard(), " is prevented."));
                 continue;
             }

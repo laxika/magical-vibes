@@ -7,7 +7,7 @@ import com.github.laxika.magicalvibes.model.StackEntry;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
 import com.github.laxika.magicalvibes.model.effect.ExileTargetPermanentThenEffect;
 import com.github.laxika.magicalvibes.model.effect.ThenEffectRecipient;
-import com.github.laxika.magicalvibes.service.GameBroadcastService;
+import com.github.laxika.magicalvibes.service.GameLogService;
 import com.github.laxika.magicalvibes.service.GameOutcomeService;
 import com.github.laxika.magicalvibes.service.battlefield.GameQueryService;
 import com.github.laxika.magicalvibes.service.battlefield.PermanentRemovalService;
@@ -38,7 +38,7 @@ public class ExileTargetPermanentThenEffectHandler implements NormalEffectHandle
 
     private final GameQueryService gameQueryService;
     private final PermanentRemovalService permanentRemovalService;
-    private final GameBroadcastService gameBroadcastService;
+    private final GameLogService gameLogService;
     private final EffectHandlerRegistry effectHandlerRegistry;
     private final GameOutcomeService gameOutcomeService;
     private final PredicateEvaluationService predicateEvaluationService;
@@ -64,7 +64,7 @@ public class ExileTargetPermanentThenEffectHandler implements NormalEffectHandle
                 || predicateEvaluationService.matchesPermanentPredicate(gameData, target, e.thenCondition());
 
         permanentRemovalService.removePermanentToExile(gameData, target);
-        gameBroadcastService.logAndBroadcast(gameData, GameLog.text(target.getCard().getName() + " is exiled."));
+        gameLogService.append(gameData, GameLog.text(target.getCard().getName() + " is exiled."));
         log.info("Game {} - {} is exiled by {}",
                 gameData.id, target.getCard().getName(), entry.getCard().getName());
         permanentRemovalService.removeOrphanedAuras(gameData);

@@ -13,7 +13,7 @@ import com.github.laxika.magicalvibes.model.effect.CardEffect;
 import com.github.laxika.magicalvibes.model.effect.CreateTokenEffect;
 import com.github.laxika.magicalvibes.model.effect.PutSlimeCounterAndCreateOozeTokenEffect;
 import com.github.laxika.magicalvibes.model.effect.SetPowerToughnessToAmountEffect;
-import com.github.laxika.magicalvibes.service.GameBroadcastService;
+import com.github.laxika.magicalvibes.service.GameLogService;
 import com.github.laxika.magicalvibes.service.battlefield.GameQueryService;
 import java.util.List;
 import java.util.Map;
@@ -30,7 +30,7 @@ public class PutSlimeCounterAndCreateOozeTokenEffectHandler implements NormalEff
 
     private final PermanentControlSupport permanentControlSupport;
     private final GameQueryService gameQueryService;
-    private final GameBroadcastService gameBroadcastService;
+    private final GameLogService gameLogService;
 
     @Override
     public Class<? extends CardEffect> handledEffect() {
@@ -61,7 +61,7 @@ public class PutSlimeCounterAndCreateOozeTokenEffectHandler implements NormalEff
                 int slimeCount = source.getCounterCount(CounterType.SLIME);
 
                 String counterLog = source.getCard().getName() + " gets a slime counter (" + slimeCount + " total).";
-                gameBroadcastService.logAndBroadcast(gameData, GameLog.builder().card(source.getCard()).text(" gets a slime counter (" + slimeCount + " total).").build());
+                gameLogService.append(gameData, GameLog.builder().card(source.getCard()).text(" gets a slime counter (" + slimeCount + " total).").build());
                 log.info("Game {} - {} gets a slime counter ({} total)", gameData.id, source.getCard().getName(), slimeCount);
 
                 // Create a 0/0 green Ooze token with a CDA linking to this Gutter Grime

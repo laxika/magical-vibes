@@ -6,7 +6,7 @@ import com.github.laxika.magicalvibes.model.GameLog;
 import com.github.laxika.magicalvibes.model.StackEntry;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
 import com.github.laxika.magicalvibes.model.effect.RevealTopCardPutIntoHandAndChangeLifeEffect;
-import com.github.laxika.magicalvibes.service.GameBroadcastService;
+import com.github.laxika.magicalvibes.service.GameLogService;
 import java.util.*;
 import lombok.extern.slf4j.Slf4j;
 import lombok.RequiredArgsConstructor;
@@ -18,7 +18,7 @@ import org.springframework.stereotype.Component;
 public class RevealTopCardPutIntoHandAndChangeLifeEffectHandler implements NormalEffectHandlerBean {
 
     private final LifeSupport lifeSupport;
-    private final GameBroadcastService gameBroadcastService;
+    private final GameLogService gameLogService;
 
     @Override
     public Class<? extends CardEffect> handledEffect() {
@@ -36,7 +36,7 @@ public class RevealTopCardPutIntoHandAndChangeLifeEffectHandler implements Norma
         String sourceName = entry.getCard().getName();
 
         if (deck.isEmpty()) {
-            gameBroadcastService.logAndBroadcast(gameData, GameLog.text(playerName + "'s library is empty (" + sourceName + ")."));
+            gameLogService.append(gameData, GameLog.text(playerName + "'s library is empty (" + sourceName + ")."));
             return;
         }
 
@@ -44,7 +44,7 @@ public class RevealTopCardPutIntoHandAndChangeLifeEffectHandler implements Norma
         int manaValue = topCard.getManaValue();
 
         // Reveal the card and put it into hand.
-        gameBroadcastService.logAndBroadcast(gameData, GameLog.builder().text(playerName + " reveals ").card(topCard).text(" (mana value " + manaValue + ") from the top of their library.").build());
+        gameLogService.append(gameData, GameLog.builder().text(playerName + " reveals ").card(topCard).text(" (mana value " + manaValue + ") from the top of their library.").build());
         gameData.addCardToHand(controllerId, topCard);
 
         // Change life equal to the revealed card's mana value.
@@ -56,7 +56,7 @@ public class RevealTopCardPutIntoHandAndChangeLifeEffectHandler implements Norma
                 lifeSupport.applyLifeLoss(gameData, controllerId, manaValue, sourceName);
             }
         } else {
-            gameBroadcastService.logAndBroadcast(gameData, GameLog.builder().text(playerName + " puts ").card(topCard).text(" into their hand (" + sourceName + ").").build());
+            gameLogService.append(gameData, GameLog.builder().text(playerName + " puts ").card(topCard).text(" into their hand (" + sourceName + ").").build());
         }
 
         log.info("Game {} - {} reveals {} (MV {}) via {}", gameData.id, playerName, topCard.getName(), manaValue, sourceName);

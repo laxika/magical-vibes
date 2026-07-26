@@ -11,7 +11,7 @@ import com.github.laxika.magicalvibes.model.Player;
 import com.github.laxika.magicalvibes.model.StackEntry;
 import com.github.laxika.magicalvibes.model.StackEntryType;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
-import com.github.laxika.magicalvibes.service.GameBroadcastService;
+import com.github.laxika.magicalvibes.service.GameLogService;
 import com.github.laxika.magicalvibes.service.input.InputCompletionService;
 import com.github.laxika.magicalvibes.service.input.PlayerInputService;
 import com.github.laxika.magicalvibes.service.trigger.TriggerCollectionService;
@@ -32,19 +32,19 @@ import org.springframework.stereotype.Component;
 @Component
 public class ExileFreeCastSupport {
 
-    private final GameBroadcastService gameBroadcastService;
+    private final GameLogService gameLogService;
     private final PlayerInputService playerInputService;
     private final TriggerCollectionService triggerCollectionService;
     private final InputCompletionService inputCompletionService;
     private final ExileCastTargetSupport exileCastTargetSupport;
 
     // @Lazy mirrors ParadigmCastSupport: breaks cycles through InputCompletionService/PlayerInputService.
-    public ExileFreeCastSupport(GameBroadcastService gameBroadcastService,
+    public ExileFreeCastSupport(GameLogService gameLogService,
                                 @Lazy PlayerInputService playerInputService,
                                 @Lazy TriggerCollectionService triggerCollectionService,
                                 @Lazy InputCompletionService inputCompletionService,
                                 ExileCastTargetSupport exileCastTargetSupport) {
-        this.gameBroadcastService = gameBroadcastService;
+        this.gameLogService = gameLogService;
         this.playerInputService = playerInputService;
         this.triggerCollectionService = triggerCollectionService;
         this.inputCompletionService = inputCompletionService;
@@ -73,7 +73,7 @@ public class ExileFreeCastSupport {
 
             if (!hasLegalTargets) {
                 // Can't be legally cast — the card stays exiled (no second chance to play it).
-                gameBroadcastService.logAndBroadcast(gameData, GameLog.cardThen(card, " has no valid targets and stays exiled."));
+                gameLogService.append(gameData, GameLog.cardThen(card, " has no valid targets and stays exiled."));
                 log.info("Game {} - {} exile free-cast has no valid targets", gameData.id, card.getName());
                 inputCompletionService.processMayAbilitiesThenAutoPass(gameData);
                 return;
@@ -86,7 +86,7 @@ public class ExileFreeCastSupport {
             playerInputService.beginPermanentChoice(gameData, playerId, firstCandidates,
                     "Choose a target for " + card.getName() + ".");
 
-            gameBroadcastService.logAndBroadcast(gameData, GameLog.playerPlays(playerName, card,
+            gameLogService.append(gameData, GameLog.playerPlays(playerName, card,
                     " without paying its mana cost — choosing target."));
             return;
         }
@@ -100,7 +100,7 @@ public class ExileFreeCastSupport {
         gameData.recordSpellCast(playerId, card);
         gameData.priorityPassedBy.clear();
 
-        gameBroadcastService.logAndBroadcast(gameData,
+        gameLogService.append(gameData,
                 GameLog.playerPlays(playerName, card, " without paying its mana cost."));
         log.info("Game {} - {} plays {} from exile without paying mana", gameData.id, playerName, card.getName());
 

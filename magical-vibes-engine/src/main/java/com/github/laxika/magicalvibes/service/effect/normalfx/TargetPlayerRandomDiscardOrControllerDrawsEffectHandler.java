@@ -7,7 +7,7 @@ import com.github.laxika.magicalvibes.model.StackEntry;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
 import com.github.laxika.magicalvibes.model.effect.TargetPlayerRandomDiscardOrControllerDrawsEffect;
 import com.github.laxika.magicalvibes.service.DrawService;
-import com.github.laxika.magicalvibes.service.GameBroadcastService;
+import com.github.laxika.magicalvibes.service.GameLogService;
 import java.util.List;
 import java.util.UUID;
 import lombok.RequiredArgsConstructor;
@@ -18,7 +18,7 @@ import org.springframework.stereotype.Component;
 public class TargetPlayerRandomDiscardOrControllerDrawsEffectHandler implements NormalEffectHandlerBean {
 
     private final DrawService drawService;
-    private final GameBroadcastService gameBroadcastService;
+    private final GameLogService gameLogService;
     private final PlayerInteractionSupport playerInteractionSupport;
 
     @Override
@@ -36,7 +36,7 @@ public class TargetPlayerRandomDiscardOrControllerDrawsEffectHandler implements 
 
         if (hand == null || hand.isEmpty()) {
             String logEntry = targetName + " has no cards to discard. " + gameData.playerIdToName.get(controllerId) + " draws a card.";
-            gameBroadcastService.logAndBroadcast(gameData, GameLog.text(logEntry));
+            gameLogService.append(gameData, GameLog.text(logEntry));
             drawService.resolveDrawCard(gameData, controllerId);
         } else {
             gameData.discardCausedByOpponent = true;

@@ -6,7 +6,7 @@ import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.StackEntry;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
 import com.github.laxika.magicalvibes.model.effect.RedirectUnblockedCombatDamageToSelfEffect;
-import com.github.laxika.magicalvibes.service.GameBroadcastService;
+import com.github.laxika.magicalvibes.service.GameLogService;
 import java.util.List;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -17,7 +17,7 @@ import org.springframework.stereotype.Component;
 @RequiredArgsConstructor
 public class RedirectUnblockedCombatDamageToSelfEffectHandler implements NormalEffectHandlerBean {
 
-    private final GameBroadcastService gameBroadcastService;
+    private final GameLogService gameLogService;
 
     @Override
     public Class<? extends CardEffect> handledEffect() {
@@ -33,7 +33,7 @@ public class RedirectUnblockedCombatDamageToSelfEffectHandler implements NormalE
                     if (p.getCard() == entry.getCard()) {
                         gameData.combatDamageRedirectTarget = p.getId();
 
-                        gameBroadcastService.logAndBroadcast(gameData, GameLog.cardThen(p.getCard(), "'s ability resolves — unblocked combat damage will be redirected to it this turn."));
+                        gameLogService.append(gameData, GameLog.cardThen(p.getCard(), "'s ability resolves — unblocked combat damage will be redirected to it this turn."));
                         log.info("Game {} - Combat damage redirect set to {}", gameData.id, p.getCard().getName());
                         return;
                     }

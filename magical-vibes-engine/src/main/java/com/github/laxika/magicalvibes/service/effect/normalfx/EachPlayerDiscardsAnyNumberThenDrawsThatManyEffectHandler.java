@@ -9,7 +9,7 @@ import com.github.laxika.magicalvibes.model.PendingInteraction;
 import com.github.laxika.magicalvibes.model.StackEntry;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
 import com.github.laxika.magicalvibes.model.effect.EachPlayerDiscardsAnyNumberThenDrawsThatManyEffect;
-import com.github.laxika.magicalvibes.service.GameBroadcastService;
+import com.github.laxika.magicalvibes.service.GameLogService;
 import com.github.laxika.magicalvibes.service.interaction.InteractionHandlerRegistry;
 import java.util.List;
 import java.util.UUID;
@@ -34,7 +34,7 @@ import org.springframework.stereotype.Component;
 @RequiredArgsConstructor
 public class EachPlayerDiscardsAnyNumberThenDrawsThatManyEffectHandler implements NormalEffectHandlerBean {
 
-    private final GameBroadcastService gameBroadcastService;
+    private final GameLogService gameLogService;
     private final InteractionHandlerRegistry interactionHandlerRegistry;
     private final PlayerInteractionSupport playerInteractionSupport;
 
@@ -72,7 +72,7 @@ public class EachPlayerDiscardsAnyNumberThenDrawsThatManyEffectHandler implement
             String playerName = gameData.playerIdToName.get(playerId);
 
             if (chosenCount <= 0) {
-                gameBroadcastService.logAndBroadcast(gameData, GameLog.text(playerName + " discards 0 cards for " + cardName + "."));
+                gameLogService.append(gameData, GameLog.text(playerName + " discards 0 cards for " + cardName + "."));
                 beginNextPlayer(gameData, cardName);
                 return;
             }
@@ -91,7 +91,7 @@ public class EachPlayerDiscardsAnyNumberThenDrawsThatManyEffectHandler implement
         int drawCount = state.pendingDraw;
         state.pendingDraw = 0;
         playerInteractionSupport.applyDrawCards(gameData, playerId, drawCount);
-        gameBroadcastService.logAndBroadcast(gameData, GameLog.text(gameData.playerIdToName.get(playerId)
+        gameLogService.append(gameData, GameLog.text(gameData.playerIdToName.get(playerId)
                 + " draws " + drawCount + " card" + (drawCount != 1 ? "s" : "") + "."));
         beginNextPlayer(gameData, cardName);
     }
@@ -107,7 +107,7 @@ public class EachPlayerDiscardsAnyNumberThenDrawsThatManyEffectHandler implement
             UUID nextPlayerId = state.remaining.pollFirst();
             List<Card> hand = gameData.playerHands.get(nextPlayerId);
             if (hand == null || hand.isEmpty()) {
-                gameBroadcastService.logAndBroadcast(gameData, GameLog.text(gameData.playerIdToName.get(nextPlayerId) + " has no cards to discard for " + cardName + "."));
+                gameLogService.append(gameData, GameLog.text(gameData.playerIdToName.get(nextPlayerId) + " has no cards to discard for " + cardName + "."));
                 continue;
             }
             state.currentPlayerId = nextPlayerId;

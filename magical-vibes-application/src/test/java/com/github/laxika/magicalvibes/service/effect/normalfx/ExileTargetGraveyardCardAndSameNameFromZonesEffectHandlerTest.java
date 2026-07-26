@@ -70,7 +70,7 @@ class ExileTargetGraveyardCardAndSameNameFromZonesEffectHandlerTest extends Abst
 
                 resolveEffect(gd, entry, new ExileTargetGraveyardCardAndSameNameFromZonesEffect());
 
-                verify(gameBroadcastService).logAndBroadcast(eq(gd), argThat((GameLogEntry logEntry) ->
+                verify(gameLogService).append(eq(gd), argThat((GameLogEntry logEntry) ->
                         logEntry.plainText().contains("exiles 0 cards") && logEntry.plainText().contains("Unique Spell")));
             }
 }

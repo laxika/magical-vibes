@@ -9,7 +9,7 @@ import com.github.laxika.magicalvibes.model.effect.AttachAllAurasToAnotherPerman
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
 import com.github.laxika.magicalvibes.model.filter.FilterContext;
 import com.github.laxika.magicalvibes.model.filter.TargetFilter;
-import com.github.laxika.magicalvibes.service.GameBroadcastService;
+import com.github.laxika.magicalvibes.service.GameLogService;
 import com.github.laxika.magicalvibes.service.battlefield.GameQueryService;
 import com.github.laxika.magicalvibes.service.filter.PredicateEvaluationService;
 import com.github.laxika.magicalvibes.service.input.PlayerInputService;
@@ -33,7 +33,7 @@ public class AttachAllAurasToAnotherPermanentEffectHandler implements NormalEffe
 
     private final GameQueryService gameQueryService;
     private final PredicateEvaluationService predicateEvaluationService;
-    private final GameBroadcastService gameBroadcastService;
+    private final GameLogService gameLogService;
     private final PlayerInputService playerInputService;
 
     @Override
@@ -59,7 +59,7 @@ public class AttachAllAurasToAnotherPermanentEffectHandler implements NormalEffe
         });
 
         if (auras.isEmpty()) {
-            gameBroadcastService.logAndBroadcast(gameData, GameLog.cardThen(target.getCard(), " has no Auras to move."));
+            gameLogService.append(gameData, GameLog.cardThen(target.getCard(), " has no Auras to move."));
             return;
         }
 
@@ -77,7 +77,7 @@ public class AttachAllAurasToAnotherPermanentEffectHandler implements NormalEffe
         });
 
         if (validRecipientIds.isEmpty()) {
-            gameBroadcastService.logAndBroadcast(gameData, GameLog.textCardText("No permanent can receive the Auras enchanting ", target.getCard(), "; they stay attached."));
+            gameLogService.append(gameData, GameLog.textCardText("No permanent can receive the Auras enchanting ", target.getCard(), "; they stay attached."));
             return;
         }
 

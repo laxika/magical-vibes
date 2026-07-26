@@ -7,7 +7,7 @@ import com.github.laxika.magicalvibes.model.PermanentChoiceContext;
 import com.github.laxika.magicalvibes.model.StackEntry;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
 import com.github.laxika.magicalvibes.model.effect.SacrificeCreatureCreateSizedTokenEqualToPowerEffect;
-import com.github.laxika.magicalvibes.service.GameBroadcastService;
+import com.github.laxika.magicalvibes.service.GameLogService;
 import com.github.laxika.magicalvibes.service.battlefield.GameQueryService;
 import com.github.laxika.magicalvibes.service.filter.PredicateEvaluationService;
 import com.github.laxika.magicalvibes.service.input.PlayerInputService;
@@ -23,7 +23,7 @@ import org.springframework.stereotype.Component;
 @RequiredArgsConstructor
 public class SacrificeCreatureCreateSizedTokenEqualToPowerEffectHandler implements NormalEffectHandlerBean {
 
-    private final GameBroadcastService gameBroadcastService;
+    private final GameLogService gameLogService;
     private final GameQueryService gameQueryService;
     private final PredicateEvaluationService predicateEvaluationService;
     private final PlayerInputService playerInputService;
@@ -53,7 +53,7 @@ public class SacrificeCreatureCreateSizedTokenEqualToPowerEffectHandler implemen
 
         if (validIds.isEmpty()) {
             String logEntry = playerName + " has no creature to sacrifice for " + entry.getCard().getName() + ".";
-            gameBroadcastService.logAndBroadcast(gameData, GameLog.textCardText(playerName + " has no creature to sacrifice for " , entry.getCard(), "."));
+            gameLogService.append(gameData, GameLog.textCardText(playerName + " has no creature to sacrifice for " , entry.getCard(), "."));
             log.info("Game {} - {} has no creature to sacrifice for {}",
                     gameData.id, playerName, entry.getCard().getName());
             return;
@@ -65,7 +65,7 @@ public class SacrificeCreatureCreateSizedTokenEqualToPowerEffectHandler implemen
         playerInputService.beginPermanentChoice(gameData, controllerId, validIds,
                 entry.getCard().getName() + " — Choose a creature to sacrifice.");
 
-        gameBroadcastService.logAndBroadcast(gameData, GameLog.textCardText(playerName + " is choosing a creature to sacrifice for " , entry.getCard(), "."));
+        gameLogService.append(gameData, GameLog.textCardText(playerName + " is choosing a creature to sacrifice for " , entry.getCard(), "."));
         log.info("Game {} - {} choosing a creature to sacrifice for {}",
                 gameData.id, playerName, entry.getCard().getName());
     }

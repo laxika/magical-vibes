@@ -15,7 +15,7 @@ import com.github.laxika.magicalvibes.model.StackEntry;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
 import com.github.laxika.magicalvibes.model.effect.CopyPermanentOnEnterEffect;
 import com.github.laxika.magicalvibes.model.effect.CreateTokenCopyOfSourceEffect;
-import com.github.laxika.magicalvibes.service.GameBroadcastService;
+import com.github.laxika.magicalvibes.service.GameLogService;
 import com.github.laxika.magicalvibes.service.battlefield.BattlefieldEntryService;
 import com.github.laxika.magicalvibes.service.battlefield.CloneService;
 import com.github.laxika.magicalvibes.service.battlefield.GameQueryService;
@@ -33,7 +33,7 @@ public class CreateTokenCopyOfSourceEffectHandler implements NormalEffectHandler
 
     private final BattlefieldEntryService battlefieldEntryService;
     private final GameQueryService gameQueryService;
-    private final GameBroadcastService gameBroadcastService;
+    private final GameLogService gameLogService;
     private final CloneService cloneService;
 
     @Override
@@ -126,7 +126,7 @@ public class CreateTokenCopyOfSourceEffectHandler implements NormalEffectHandler
                     if (tokenCard.getEffects(EffectSlot.ON_ENTER_BATTLEFIELD).stream()
                             .anyMatch(eff -> eff instanceof CopyPermanentOnEnterEffect)
                             && cloneService.prepareCloneReplacementEffect(gameData, entry.getControllerId(), tokenCard, null)) {
-                        gameBroadcastService.logAndBroadcast(gameData, GameLog.textCardText(
+                        gameLogService.append(gameData, GameLog.textCardText(
                                 "A token copy of ", sourceCard, " is created."));
                         log.info("Game {} - Token clone copy of {} created via embalm", gameData.id, sourceCard.getName());
                         return;
@@ -143,10 +143,10 @@ public class CreateTokenCopyOfSourceEffectHandler implements NormalEffectHandler
                     battlefieldEntryService.putPermanentOntoBattlefield(gameData, entry.getControllerId(), tokenPermanent);
 
                     if (e.removeLegendary()) {
-                        gameBroadcastService.logAndBroadcast(gameData, GameLog.textCardText(
+                        gameLogService.append(gameData, GameLog.textCardText(
                                 "A non-legendary token copy of ", sourceCard, " is created."));
                     } else {
-                        gameBroadcastService.logAndBroadcast(gameData, GameLog.textCardText(
+                        gameLogService.append(gameData, GameLog.textCardText(
                                 "A token copy of ", sourceCard, " is created."));
                     }
                     log.info("Game {} - Token copy of {} created via {}", gameData.id, sourceCard.getName(), sourceCard.getName());

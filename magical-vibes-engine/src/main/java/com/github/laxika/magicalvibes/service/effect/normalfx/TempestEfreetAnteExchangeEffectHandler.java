@@ -9,7 +9,7 @@ import com.github.laxika.magicalvibes.model.effect.CardEffect;
 import com.github.laxika.magicalvibes.model.effect.TempestEfreetAnteExchangeEffect;
 import com.github.laxika.magicalvibes.model.event.GameEventFact;
 import com.github.laxika.magicalvibes.service.CardRevealService;
-import com.github.laxika.magicalvibes.service.GameBroadcastService;
+import com.github.laxika.magicalvibes.service.GameLogService;
 import com.github.laxika.magicalvibes.service.battlefield.GameQueryService;
 import java.util.List;
 import java.util.UUID;
@@ -33,7 +33,7 @@ import org.springframework.stereotype.Component;
 public class TempestEfreetAnteExchangeEffectHandler implements NormalEffectHandlerBean {
 
     private final GameQueryService gameQueryService;
-    private final GameBroadcastService gameBroadcastService;
+    private final GameLogService gameLogService;
     private final CardRevealService cardRevealService;
 
     @Override
@@ -76,7 +76,7 @@ public class TempestEfreetAnteExchangeEffectHandler implements NormalEffectHandl
         String controllerName = gameData.playerIdToName.get(controllerId);
 
         if (opponentHand == null || opponentHand.isEmpty()) {
-            gameBroadcastService.logAndBroadcast(gameData, GameLog.textCardText(opponentName + " has no cards to reveal — nothing is exchanged. (", efreetCard, ")"));
+            gameLogService.append(gameData, GameLog.textCardText(opponentName + " has no cards to reveal — nothing is exchanged. (", efreetCard, ")"));
             log.info("Game {} - {} has empty hand, no {} exchange", gameData.id, opponentName, efreetCard.getName());
             return;
         }
@@ -103,7 +103,7 @@ public class TempestEfreetAnteExchangeEffectHandler implements NormalEffectHandl
             opponentGraveyard.add(efreetCard);
         }
 
-        gameBroadcastService.logAndBroadcast(gameData, GameLog.builder().text(opponentName + " reveals ").card(revealed).text(" at random. " + controllerName + " takes it, and ").card(efreetCard).text(" goes to " + opponentName + "'s graveyard.").build());
+        gameLogService.append(gameData, GameLog.builder().text(opponentName + " reveals ").card(revealed).text(" at random. " + controllerName + " takes it, and ").card(efreetCard).text(" goes to " + opponentName + "'s graveyard.").build());
         log.info("Game {} - {} takes {} from {}; {} to {}'s graveyard", gameData.id, controllerName,
                 revealed.getName(), opponentName, efreetCard.getName(), opponentName);
     }

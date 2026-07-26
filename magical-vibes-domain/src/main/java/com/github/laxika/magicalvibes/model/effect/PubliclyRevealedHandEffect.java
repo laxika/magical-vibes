@@ -2,7 +2,7 @@ package com.github.laxika.magicalvibes.model.effect;
 
 /**
  * Static hand-reveal capability. While a permanent carrying this effect is on the battlefield,
- * some hand(s) are publicly visible via {@code GameBroadcastService.getRevealedOpponentHand}.
+ * some hand(s) are publicly visible via {@code GameViewProjectionFactory.getRevealedOpponentHand}.
  *
  * <ul>
  *   <li>{@code controllerOnly() == false} — every player's hand is revealed to everyone

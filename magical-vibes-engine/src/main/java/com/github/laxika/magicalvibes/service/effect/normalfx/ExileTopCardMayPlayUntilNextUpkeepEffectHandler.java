@@ -7,7 +7,7 @@ import com.github.laxika.magicalvibes.model.StackEntry;
 import com.github.laxika.magicalvibes.model.action.RevokeExilePlayPermissionAtNextUpkeep;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
 import com.github.laxika.magicalvibes.model.effect.ExileTopCardMayPlayUntilNextUpkeepEffect;
-import com.github.laxika.magicalvibes.service.GameBroadcastService;
+import com.github.laxika.magicalvibes.service.GameLogService;
 import com.github.laxika.magicalvibes.service.exile.ExileService;
 import java.util.List;
 import java.util.UUID;
@@ -21,7 +21,7 @@ import org.springframework.stereotype.Component;
 public class ExileTopCardMayPlayUntilNextUpkeepEffectHandler implements NormalEffectHandlerBean {
 
     private final ExileService exileService;
-    private final GameBroadcastService gameBroadcastService;
+    private final GameLogService gameLogService;
 
     @Override
     public Class<? extends CardEffect> handledEffect() {
@@ -36,7 +36,7 @@ public class ExileTopCardMayPlayUntilNextUpkeepEffectHandler implements NormalEf
 
         if (deck == null || deck.isEmpty()) {
             String logEntry = controllerName + "'s library is empty — nothing to exile.";
-            gameBroadcastService.logAndBroadcast(gameData, GameLog.text(logEntry));
+            gameLogService.append(gameData, GameLog.text(logEntry));
             return;
         }
 
@@ -48,7 +48,7 @@ public class ExileTopCardMayPlayUntilNextUpkeepEffectHandler implements NormalEf
 
         String logEntry = controllerName + " exiles " + topCard.getName()
                 + " from the top of their library (may play it until their next upkeep).";
-        gameBroadcastService.logAndBroadcast(gameData, GameLog.builder().text(controllerName + " exiles ").card(topCard).text(" from the top of their library (may play it until their next upkeep).").build());
+        gameLogService.append(gameData, GameLog.builder().text(controllerName + " exiles ").card(topCard).text(" from the top of their library (may play it until their next upkeep).").build());
         log.info("Game {} - {} exiles {} from library top (may play until next upkeep)",
                 gameData.id, controllerName, topCard.getName());
     }

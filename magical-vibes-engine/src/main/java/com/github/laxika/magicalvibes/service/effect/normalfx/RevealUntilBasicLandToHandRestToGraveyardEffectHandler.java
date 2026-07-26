@@ -8,7 +8,7 @@ import com.github.laxika.magicalvibes.model.GameLog;
 import com.github.laxika.magicalvibes.model.StackEntry;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
 import com.github.laxika.magicalvibes.model.effect.RevealUntilBasicLandToHandRestToGraveyardEffect;
-import com.github.laxika.magicalvibes.service.GameBroadcastService;
+import com.github.laxika.magicalvibes.service.GameLogService;
 import com.github.laxika.magicalvibes.service.graveyard.GraveyardService;
 import java.util.ArrayList;
 import java.util.List;
@@ -23,7 +23,7 @@ import org.springframework.stereotype.Component;
 @RequiredArgsConstructor
 public class RevealUntilBasicLandToHandRestToGraveyardEffectHandler implements NormalEffectHandlerBean {
 
-    private final GameBroadcastService gameBroadcastService;
+    private final GameLogService gameLogService;
     private final GraveyardService graveyardService;
 
     @Override
@@ -50,23 +50,23 @@ public class RevealUntilBasicLandToHandRestToGraveyardEffectHandler implements N
         }
 
         if (revealed.isEmpty()) {
-            gameBroadcastService.logAndBroadcast(gameData, GameLog.text(
+            gameLogService.append(gameData, GameLog.text(
                     playerName + "'s library is empty — no cards are revealed with " + cardName + "."));
             return;
         }
 
         String revealedNames = revealed.stream().map(Card::getName).collect(Collectors.joining(", "));
-        gameBroadcastService.logAndBroadcast(gameData, GameLog.text(
+        gameLogService.append(gameData, GameLog.text(
                 playerName + " reveals " + revealedNames + " from the top of their library with " + cardName + "."));
 
         List<Card> rest = new ArrayList<>(revealed);
         if (basicLand != null) {
             rest.remove(basicLand);
             gameData.playerHands.get(controllerId).add(basicLand);
-            gameBroadcastService.logAndBroadcast(gameData, GameLog.text(
+            gameLogService.append(gameData, GameLog.text(
                     playerName + " puts " + basicLand.getName() + " into their hand."));
         } else {
-            gameBroadcastService.logAndBroadcast(gameData, GameLog.text(
+            gameLogService.append(gameData, GameLog.text(
                     playerName + " reveals their entire library — no basic land found."));
         }
 

@@ -9,7 +9,7 @@ import com.github.laxika.magicalvibes.model.StackEntryType;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
 import com.github.laxika.magicalvibes.model.effect.MiracleMayCastEffect;
 import com.github.laxika.magicalvibes.model.effect.MiracleRevealEffect;
-import com.github.laxika.magicalvibes.service.GameBroadcastService;
+import com.github.laxika.magicalvibes.service.GameLogService;
 import com.github.laxika.magicalvibes.service.input.InputCompletionService;
 import java.util.ArrayList;
 import java.util.List;
@@ -26,7 +26,7 @@ import org.springframework.stereotype.Component;
 @RequiredArgsConstructor
 public class MiracleRevealHandler implements MayEffectHandlerBean {
 
-    private final GameBroadcastService gameBroadcastService;
+    private final GameLogService gameLogService;
     private final InputCompletionService inputCompletionService;
 
     @Override
@@ -40,14 +40,14 @@ public class MiracleRevealHandler implements MayEffectHandlerBean {
         String playerName = player.getUsername();
 
         if (!accepted) {
-            gameBroadcastService.logAndBroadcast(gameData,
+            gameLogService.append(gameData,
                     GameLog.textCardText(playerName + " declines to reveal ", card, " for miracle."));
             log.info("Game {} - {} declines miracle reveal for {}", gameData.id, playerName, card.getName());
             inputCompletionService.processMayAbilitiesThenAutoPass(gameData);
             return;
         }
 
-        gameBroadcastService.logAndBroadcast(gameData, GameLog.builder()
+        gameLogService.append(gameData, GameLog.builder()
                 .text(playerName + " reveals ")
                 .card(card)
                 .text(" for its miracle ability.")

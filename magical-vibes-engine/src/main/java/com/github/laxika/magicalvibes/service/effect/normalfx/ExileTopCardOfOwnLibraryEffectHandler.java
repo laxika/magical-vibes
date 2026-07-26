@@ -6,7 +6,7 @@ import com.github.laxika.magicalvibes.model.GameLog;
 import com.github.laxika.magicalvibes.model.StackEntry;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
 import com.github.laxika.magicalvibes.model.effect.ExileTopCardOfOwnLibraryEffect;
-import com.github.laxika.magicalvibes.service.GameBroadcastService;
+import com.github.laxika.magicalvibes.service.GameLogService;
 import com.github.laxika.magicalvibes.service.exile.ExileService;
 import java.util.List;
 import java.util.UUID;
@@ -20,7 +20,7 @@ import org.springframework.stereotype.Component;
 public class ExileTopCardOfOwnLibraryEffectHandler implements NormalEffectHandlerBean {
 
     private final ExileService exileService;
-    private final GameBroadcastService gameBroadcastService;
+    private final GameLogService gameLogService;
 
     @Override
     public Class<? extends CardEffect> handledEffect() {
@@ -36,7 +36,7 @@ public class ExileTopCardOfOwnLibraryEffectHandler implements NormalEffectHandle
 
         if (deck == null || deck.isEmpty()) {
             String logEntry = controllerName + "'s library is empty — nothing to exile.";
-            gameBroadcastService.logAndBroadcast(gameData, GameLog.text(logEntry));
+            gameLogService.append(gameData, GameLog.text(logEntry));
             return;
         }
 
@@ -53,7 +53,7 @@ public class ExileTopCardOfOwnLibraryEffectHandler implements NormalEffectHandle
             exileService.exileCard(gameData, controllerId, topCard);
         }
 
-        gameBroadcastService.logAndBroadcast(gameData, GameLog.textCardText(controllerName + " exiles " , topCard, " from the top of their library."));
+        gameLogService.append(gameData, GameLog.textCardText(controllerName + " exiles " , topCard, " from the top of their library."));
         log.info("Game {} - {} exiles {} from library top", gameData.id, controllerName, topCard.getName());
     }
 }

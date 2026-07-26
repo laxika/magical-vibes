@@ -7,7 +7,7 @@ import com.github.laxika.magicalvibes.model.PendingInteraction;
 import com.github.laxika.magicalvibes.model.StackEntry;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
 import com.github.laxika.magicalvibes.model.effect.ChooseCardsFromTargetHandEffect;
-import com.github.laxika.magicalvibes.service.GameBroadcastService;
+import com.github.laxika.magicalvibes.service.GameLogService;
 import com.github.laxika.magicalvibes.service.effect.AmountContext;
 import com.github.laxika.magicalvibes.service.effect.AmountEvaluationService;
 import com.github.laxika.magicalvibes.service.interaction.InteractionHandlerRegistry;
@@ -35,7 +35,7 @@ import org.springframework.stereotype.Component;
 public class ChooseCardsFromTargetHandEffectHandler implements NormalEffectHandlerBean {
 
     private final PlayerInteractionSupport playerInteractionSupport;
-    private final GameBroadcastService gameBroadcastService;
+    private final GameLogService gameLogService;
     private final InteractionHandlerRegistry interactionHandlerRegistry;
     private final AmountEvaluationService amountEvaluationService;
 
@@ -79,7 +79,7 @@ public class ChooseCardsFromTargetHandEffectHandler implements NormalEffectHandl
 
         if (hand == null || hand.isEmpty()) {
             String logEntry = casterName + " looks at " + targetName + "'s hand. It is empty.";
-            gameBroadcastService.logAndBroadcast(gameData, GameLog.text(logEntry));
+            gameLogService.append(gameData, GameLog.text(logEntry));
             log.info("Game {} - {} looks at {}'s empty hand", gameData.id, casterName, targetName);
             return;
         }
@@ -87,7 +87,7 @@ public class ChooseCardsFromTargetHandEffectHandler implements NormalEffectHandl
         // Log and reveal hand to caster
         String cardNames = String.join(", ", hand.stream().map(Card::getName).toList());
         String logEntry = casterName + " looks at " + targetName + "'s hand: " + cardNames + ".";
-        gameBroadcastService.logAndBroadcast(gameData, GameLog.text(logEntry));
+        gameLogService.append(gameData, GameLog.text(logEntry));
 
         int cardsToChoose = Math.min(count, hand.size());
 

@@ -49,7 +49,7 @@ import java.util.UUID;
  * (dispatched to {@link CostModificationHandlerBean}s via the {@link CostModificationHandlerRegistry}),
  * targeting taxes, target-based reductions, alternative costs, and attack payment requirements.
  *
- * <p>Both the view side (playable-card previews in {@code GameBroadcastService}) and the
+ * <p>Both the view side (playable-card previews in {@code GameActionAvailabilityService}) and the
  * validation/payment side ({@code SpellCastingService}) must go through this service so the UI
  * never advertises a different cost than the engine charges.
  */

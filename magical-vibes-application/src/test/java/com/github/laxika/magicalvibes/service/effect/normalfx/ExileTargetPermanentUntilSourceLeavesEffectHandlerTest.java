@@ -17,7 +17,7 @@ import com.github.laxika.magicalvibes.model.StackEntryType;
 import com.github.laxika.magicalvibes.model.effect.ExileTargetPermanentEffect;
 import com.github.laxika.magicalvibes.model.effect.ExileTargetPermanentUntilSourceLeavesEffect;
 import com.github.laxika.magicalvibes.networking.service.CardViewFactory;
-import com.github.laxika.magicalvibes.service.GameBroadcastService;
+import com.github.laxika.magicalvibes.service.GameLogService;
 import com.github.laxika.magicalvibes.service.exile.ExileService;
 import com.github.laxika.magicalvibes.service.graveyard.GraveyardService;
 import com.github.laxika.magicalvibes.service.input.PlayerInputService;
@@ -47,7 +47,7 @@ class ExileTargetPermanentUntilSourceLeavesEffectHandlerTest {
 
     @Mock private GraveyardService graveyardService;
     @Mock private GameQueryService gameQueryService;
-    @Mock private GameBroadcastService gameBroadcastService;
+    @Mock private GameLogService gameLogService;
     @Mock private PermanentRemovalService permanentRemovalService;
     @Mock private PlayerInputService playerInputService;
     @Mock private CardViewFactory cardViewFactory;
@@ -81,7 +81,7 @@ class ExileTargetPermanentUntilSourceLeavesEffectHandlerTest {
         gd.playerGraveyards.put(player2Id, Collections.synchronizedList(new ArrayList<>()));
         gd.playerDecks.put(player1Id, Collections.synchronizedList(new ArrayList<>()));
         gd.playerDecks.put(player2Id, Collections.synchronizedList(new ArrayList<>()));
-        exileTargetPermanentUntilSourceLeavesHandler = new ExileTargetPermanentUntilSourceLeavesEffectHandler(gameQueryService, gameBroadcastService, permanentRemovalService);
+        exileTargetPermanentUntilSourceLeavesHandler = new ExileTargetPermanentUntilSourceLeavesEffectHandler(gameQueryService, gameLogService, permanentRemovalService);
 
     }
 
@@ -264,6 +264,6 @@ class ExileTargetPermanentUntilSourceLeavesEffectHandlerTest {
 
                 exileTargetPermanentUntilSourceLeavesHandler.resolve(gd, entry, new ExileTargetPermanentUntilSourceLeavesEffect());
 
-                verify(gameBroadcastService).logAndBroadcast(eq(gd), argThat((GameLogEntry e) -> e.plainText().equals("Spellbook is exiled by Leonin Relic-Warder.")));
+                verify(gameLogService).append(eq(gd), argThat((GameLogEntry e) -> e.plainText().equals("Spellbook is exiled by Leonin Relic-Warder.")));
             }
 }

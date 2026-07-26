@@ -115,8 +115,8 @@ without such a boundary is always rejected.
 ## Current legacy inventory and ratchet
 
 Inventory date: 2026-07-26. Counts are lexical production-source call sites under the engine
-`service` tree; `GameBroadcastService.logAndBroadcast`'s declaration and the documented transport
-adapters are excluded from the direct-mutation categories. The focused
+`service` tree; the documented transport adapters are excluded from the direct-mutation
+categories. The focused
 `LegacyNotificationSurfaceRatchetTest` contains the same package-family allowlist. A missing
 family has an implicit baseline of zero. Counts may only shrink, and the explicit eventual target
 for every family is zero.
@@ -125,7 +125,7 @@ for every family is zero.
 |---|---:|---:|
 | direct runtime state broadcast | 0 | 0 |
 | direct engine session send outside transport adapters | 0 | 0 |
-| `GameBroadcastService.logAndBroadcast` | 1,296 | 0 |
+| legacy log-and-broadcast forwarding | 0 | 0 |
 
 The lifecycle migration ratchet additionally fixes the direct state/session count at zero for
 `GameService`, `GameSetupService`, `MulliganService`, `GameOutcomeService`,
@@ -167,8 +167,8 @@ The documented adapter allowlist is deliberately limited to:
 
 - `GameMessageTransport`: the one raw `SessionManager.sendToPlayer` call and per-recipient failure
   isolation for typed outbound messages.
-- `GameSessionTransportAdapter`: connection-state reads plus AI connection close/unregister
-  lifecycle operations.
+- `GameSessionTransportAdapter`: human transport connection-state reads behind the
+  `PlayerConnectionState` engine port.
 
 Every other engine source has zero `SessionManager` dependencies. Reconnect state and decision
 replay use `GameResyncProjectionService`, `ReconnectionService`, the canonical prompt projector,
@@ -200,29 +200,26 @@ Migration classification:
 - `KarnRestartGameEffectHandler` now emits a public state invalidation/observation, not a
   game-end fact.
 - The three former `GameOutcomeService` sends are one non-coalescible `GAME_ENDED` fact per
-  terminal action. Tournament notification, timeout cleanup, AI closure, and registry removal
-  are ordered subscriber concerns outside the `GameData` monitor.
+  terminal action. AI scheduler closure, tournament notification, timeout cleanup, and registry
+  removal are ordered subscriber concerns outside the `GameData` monitor.
 
-### `logAndBroadcast` package-family classification
+### Canonical game-log ownership
 
-`logAndBroadcast` is now a delegating compatibility method for the explicitly excluded
-`service/effect/**` callers. The canonical `GameLogService` appends the
-immutable `GameLogEntry` to `GameData.gameLog`, records `GAME_LOG_APPENDED`, and retains delivery
-through the next coalesced `GAME_LOG` state projection. The remaining 1,296 compatibility calls
-are exhaustively classified below.
+The compatibility forwarding surface has been removed. Every production caller now invokes
+`GameLogService.append` directly. It appends the immutable `GameLogEntry` to `GameData.gameLog`,
+records `GAME_LOG_APPENDED`, and retains delivery through the next coalesced `GAME_LOG` state
+projection.
 
 | Package family | Count | Workflow classification |
 |---|---:|---|
-| `effect` | 2 | shared effect-resolution observations |
-| `effect/mayfx` | 23 | accepted/declined may-effect observations |
-| `effect/normalfx` | 1,271 | normal card-effect resolution observations |
-| `input` | 0 | choice answers and resumed-resolution observations migrated |
+| `effect` | 0 | shared effect-resolution observations use `GameLogService` |
+| `effect/mayfx` | 0 | accepted/declined may-effect observations use `GameLogService` |
+| `effect/normalfx` | 0 | normal card-effect resolution observations use `GameLogService` |
+| `input` | 0 | choice answers and resumed-resolution observations use `GameLogService` |
 
-Service root, turn, combat, ability, spell, battlefield, trigger, graveyard, input, interaction,
-state, paradigm, aura, and battle now have zero legacy calls. Their prior 994 calls, the 78 combat calls
-already using the coordinator directly, and the four setup-time direct appends all use
-`GameLogService.append`. The package ratchet requires zero `logAndBroadcast` occurrences outside
-the excluded effect tree.
+Every package family now has zero compatibility calls. Setup, lifecycle, input, interaction,
+combat, spell/ability, and effect observations all use `GameLogService.append`; the package ratchet
+requires the legacy forwarding method to remain absent.
 
 Migration classification: append the existing structured `GameLogEntry` exactly once to
 authoritative state, record one immutable index-only `GAME_LOG_APPENDED` fact, and emit/merge a
@@ -237,10 +234,10 @@ intentionally unchanged by this foundation prompt.
 | Workflow | Current path | Required event closure | Status |
 |---|---|---|---|
 | Foundation | domain event records → `GameMutationCoordinator` → `GameEventDispatcher` | immutable facts/envelopes, nested batching, ordering, audience safety, simulation suppression, failure isolation | **Complete** |
-| Canonical projection subscriber | `GameEventProjectionSubscriber` → `GameViewProjectionFactory`/interaction registry → typed messages → `GameMessageTransport` | post-lock authoritative projection, explicit audience enforcement, no serialization, per-recipient transport failure isolation, human/AI typed-message parity | **Complete** |
+| Canonical human projection subscriber | `GameEventProjectionSubscriber` → `GameViewProjectionFactory`/interaction registry → typed messages → `GameMessageTransport` | post-lock authoritative projection, explicit audience enforcement, no serialization, per-recipient transport failure isolation, and no view construction for AI seats | **Complete** |
 | Public game-state refresh | `STATE_INVALIDATED` → player-specific `GameStateMessage` | coalesced `STATE_INVALIDATED`; canonical subscriber constructs the player-specific wire DTO after unlock | **Complete; zero direct runtime broadcasts and no public broadcast API** |
 | Generic input completion | answer handler → required SBA/may processing → parked-resolution resume → auto-pass stable point → state observation | one coalesced all-player `STATE_INVALIDATED` per completed answer; a queued interaction keeps its non-coalescible `DECISION_REQUESTED` barrier; validation failure and game end do not leak an intermediate state observation | **Complete**, including permanent and multi-permanent selection |
-| Game log | `GameLogService.append` → `gameLog` + `GAME_LOG_APPENDED` → coalesced next state message | append exactly once under lock; immutable index-only diagnostic fact; preserve structured segments and incremental wire behavior | Root/turn/combat/ability/spell/battlefield/trigger/graveyard/input/interaction/state/paradigm/aura/battle complete; effect compatibility callers remain |
+| Game log | `GameLogService.append` → `gameLog` + `GAME_LOG_APPENDED` → coalesced next state message | append exactly once under lock; immutable index-only diagnostic fact; preserve structured segments and incremental wire behavior | **Complete; compatibility facade removed** |
 | Generic interactions | begin site → authoritative pending interaction + stable ID → `DECISION_REQUESTED` → `InteractionPromptProjectionRegistry` → typed prompt | one non-coalescible private fact per interaction; exact identity match before projection; every promptable subtype (including combat) has one explicit strategy and no raw-state fallback; handlers have no session/networking dependency | **Complete** |
 | Attackers | `CombatAttackService` finalizes an immutable legality snapshot → registry decision event → canonical subscriber → `AvailableAttackersMessage` | `DECISION_REQUESTED(ATTACKER_DECLARATION)` with stable retry/replay identity and Mindslaver audience | **Complete** |
 | Blockers | `CombatBlockService` finalizes legal pairs and requirements → registry decision event → canonical subscriber → `AvailableBlockersMessage` | `DECISION_REQUESTED(BLOCKER_DECLARATION)` with stable retry/replay identity | **Complete** |
@@ -253,9 +250,9 @@ intentionally unchanged by this foundation prompt.
 | Game restart | `KarnRestartGameEffectHandler` emits state, restart mulligan observation, and fresh stable mulligan decisions | public state/observation event; not `GAME_ENDED` | **Complete** |
 | Reconnect state | `GameResyncProjectionService.currentState` builds a monitor-protected current `JoinGame` projection | Preserve the exact login response envelope and build its hidden player view through the shared projection factory rather than a domain event | **Complete** |
 | Reconnect decision replay | `GameMessageHandler` → `GameService.resendAwaitingInput` → `ReconnectionService` → ordered read-only observation → `InteractionPromptProjectionRegistry` → typed prompt | project only the current authoritative interaction to the reconnecting authorized recipient; no mutation, event/version/sequence allocation, stale historical choice, duplicate logical decision, or log | **Complete** |
-| Live AI wake-up | canonical subscriber combat DTO → `AiConnection.actionableType` → delayed executor → `AiDecisionEngine.handleEvent` | Combat attacker/blocker/damage decisions wake independently and in event order; broader direct domain-event AI consumption remains open | Combat decisions complete; broader migration open |
-| AI initial mulligan | `AiPlayerService` → `AiConnection.scheduleInitialAction` | retain explicit initial wake-up or model it as the first mulligan decision | Open |
-| MCTS/headless | `GameData.simulationCopy`, `HeadlessWebSocketSessionManager`, `GameBroadcastService`/`GameOutcomeService` guards, `AutoPassService` simulation branches, `SimulationLogSuppressor` | coordinator produces `SUPPRESSED_SIMULATION`; no external subscriber, WebSocket, registry, timeout, draft, or live-AI side effect | Foundation complete; legacy guards remain open |
+| Live AI wake-up | `AiDecisionEventSubscriber` → `AiDecisionKind` → `AiDecisionScheduler` delayed executor → `AiDecisionEngine.handleEvent` | state coalescing/follow-up, every interaction/combat decision shape, Mindslaver audience ownership, game-end close, and authoritative live-state reads without networking messages | **Complete** |
+| AI initial mulligan | initial `DECISION_REQUESTED(MULLIGAN)` after AI subscriber registration | the same canonical decision path used by later mulligans and restart mulligans | **Complete**, including tournament AI |
+| MCTS/headless | `GameData.simulationCopy` → coordinator `SUPPRESSED_SIMULATION` batch | no event subscriber, human projection, WebSocket, registry, timeout, draft, or live-AI side effect | **Complete for event/projection/AI scheduling** |
 
 ## Migration order
 
@@ -268,9 +265,8 @@ Later prompts should migrate vertical workflows, not raw call counts:
 3. Migrate generic interaction begin/replay once so all decision types share stable identity.
 4. Migrate private reveals and game end as non-coalescible facts. **Complete.**
 5. Replace public state refreshes package by package. **Complete.**
-6. Convert log append sites package by package to `GAME_LOG` invalidation.
-7. Remove the dormant legacy surfaces and drive every ratchet family to zero. **State broadcast
-   and direct session-send categories complete; game-log migration remains open.**
+6. Convert log append sites package by package to `GAME_LOG` invalidation. **Complete.**
+7. Remove the dormant legacy surfaces and drive every ratchet family to zero. **Complete.**
 
 At every step, hidden-information parity, event audience checks, current WebSocket message shape
 and ordering, live-AI wake-up behavior, reconnect replay, and headless suppression require focused

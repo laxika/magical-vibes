@@ -5,7 +5,7 @@ import com.github.laxika.magicalvibes.model.GameLog;
 import com.github.laxika.magicalvibes.model.StackEntry;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
 import com.github.laxika.magicalvibes.model.effect.SourceFightsTargetCreatureEffect;
-import com.github.laxika.magicalvibes.service.GameBroadcastService;
+import com.github.laxika.magicalvibes.service.GameLogService;
 import com.github.laxika.magicalvibes.service.GameOutcomeService;
 import com.github.laxika.magicalvibes.service.battlefield.GameQueryService;
 import java.util.UUID;
@@ -19,7 +19,7 @@ public class SourceFightsTargetCreatureEffectHandler implements NormalEffectHand
 
     private final DamageSupport damageSupport;
     private final GameQueryService gameQueryService;
-    private final GameBroadcastService gameBroadcastService;
+    private final GameLogService gameLogService;
     private final GameOutcomeService gameOutcomeService;
 
     @Override
@@ -55,9 +55,9 @@ public class SourceFightsTargetCreatureEffectHandler implements NormalEffectHand
         if (!(gameQueryService.isDamagePreventable(gameData) && gameQueryService.hasProtectionFromSource(gameData, target, entry.getCard()))) {
             int sourceDamage = gameQueryService.applyDamageMultiplier(gameData, sourcePower, entry);
             damageSupport.dealCreatureDamage(gameData, entry, target, sourceDamage);
-            gameBroadcastService.logAndBroadcast(gameData, GameLog.textCardText(cardName + " deals " + sourceDamage + " damage to ", target.getCard(), "."));
+            gameLogService.append(gameData, GameLog.textCardText(cardName + " deals " + sourceDamage + " damage to ", target.getCard(), "."));
         } else {
-            gameBroadcastService.logAndBroadcast(gameData, GameLog.textCardText(cardName + "'s damage to ", target.getCard(), " is prevented."));
+            gameLogService.append(gameData, GameLog.textCardText(cardName + "'s damage to ", target.getCard(), " is prevented."));
         }
 
         // Target deals damage equal to its power back to source (only if source is still on the battlefield)
@@ -66,9 +66,9 @@ public class SourceFightsTargetCreatureEffectHandler implements NormalEffectHand
             if (!(gameQueryService.isDamagePreventable(gameData) && gameQueryService.hasProtectionFromSource(gameData, source, target.getCard()))) {
                 int targetDamage = gameQueryService.applyDamageMultiplier(gameData, targetPower, entry);
                 damageSupport.dealCreatureDamage(gameData, entry, source, targetDamage, target);
-                gameBroadcastService.logAndBroadcast(gameData, GameLog.builder().card(target.getCard()).text(" deals " + targetDamage + " damage to " + cardName + ".").build());
+                gameLogService.append(gameData, GameLog.builder().card(target.getCard()).text(" deals " + targetDamage + " damage to " + cardName + ".").build());
             } else {
-                gameBroadcastService.logAndBroadcast(gameData, GameLog.builder().card(target.getCard()).text("'s damage to " + cardName + " is prevented.").build());
+                gameLogService.append(gameData, GameLog.builder().card(target.getCard()).text("'s damage to " + cardName + " is prevented.").build());
             }
         }
 

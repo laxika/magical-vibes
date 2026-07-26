@@ -57,7 +57,7 @@ class PermanentChoiceAiStrategy implements AiInteractionStrategy<PendingInteract
             if (fodder != null) {
                 log.info("AI: Choosing sacrifice fodder {} (preserving outlet {}) in game {}",
                         fodder, abilitySourceId, ctx.gameId());
-                ctx.gameActions().answerInteraction(ctx.selfConnection(),
+                ctx.gameActions().answerInteraction(
                         new InteractionAnswer.PermanentChosen(fodder));
                 return;
             }
@@ -88,7 +88,7 @@ class PermanentChoiceAiStrategy implements AiInteractionStrategy<PendingInteract
         }
 
         log.info("AI: Choosing permanent {} in game {}", best, ctx.gameId());
-        ctx.gameActions().answerInteraction(ctx.selfConnection(), new InteractionAnswer.PermanentChosen(best));
+        ctx.gameActions().answerInteraction(new InteractionAnswer.PermanentChosen(best));
     }
 
     /**

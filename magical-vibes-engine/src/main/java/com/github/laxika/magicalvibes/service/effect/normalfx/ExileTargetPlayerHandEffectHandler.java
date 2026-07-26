@@ -6,7 +6,7 @@ import com.github.laxika.magicalvibes.model.GameLog;
 import com.github.laxika.magicalvibes.model.StackEntry;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
 import com.github.laxika.magicalvibes.model.effect.ExileTargetPlayerHandEffect;
-import com.github.laxika.magicalvibes.service.GameBroadcastService;
+import com.github.laxika.magicalvibes.service.GameLogService;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.UUID;
@@ -24,7 +24,7 @@ import org.springframework.stereotype.Component;
 @RequiredArgsConstructor
 public class ExileTargetPlayerHandEffectHandler implements NormalEffectHandlerBean {
 
-    private final GameBroadcastService gameBroadcastService;
+    private final GameLogService gameLogService;
 
     @Override
     public Class<? extends CardEffect> handledEffect() {
@@ -38,7 +38,7 @@ public class ExileTargetPlayerHandEffectHandler implements NormalEffectHandlerBe
         List<Card> hand = gameData.playerHands.get(targetPlayerId);
 
         if (hand == null || hand.isEmpty()) {
-            gameBroadcastService.logAndBroadcast(gameData, GameLog.text(playerName + "'s hand is already empty."));
+            gameLogService.append(gameData, GameLog.text(playerName + "'s hand is already empty."));
             return;
         }
 
@@ -50,7 +50,7 @@ public class ExileTargetPlayerHandEffectHandler implements NormalEffectHandlerBe
         }
 
         String logEntry = playerName + "'s hand is exiled (" + count + " card" + (count != 1 ? "s" : "") + ").";
-        gameBroadcastService.logAndBroadcast(gameData, GameLog.text(logEntry));
+        gameLogService.append(gameData, GameLog.text(logEntry));
 
         log.info("Game {} - {}'s hand ({} cards) exiled", gameData.id, playerName, count);
     }

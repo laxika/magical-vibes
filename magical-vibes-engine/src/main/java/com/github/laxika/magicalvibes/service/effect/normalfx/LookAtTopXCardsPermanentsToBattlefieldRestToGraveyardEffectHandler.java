@@ -7,7 +7,7 @@ import com.github.laxika.magicalvibes.model.GameLog;
 import com.github.laxika.magicalvibes.model.StackEntry;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
 import com.github.laxika.magicalvibes.model.effect.LookAtTopXCardsPermanentsToBattlefieldRestToGraveyardEffect;
-import com.github.laxika.magicalvibes.service.GameBroadcastService;
+import com.github.laxika.magicalvibes.service.GameLogService;
 import com.github.laxika.magicalvibes.service.battlefield.GameQueryService;
 import com.github.laxika.magicalvibes.service.filter.PredicateEvaluationService;
 import java.util.*;
@@ -23,7 +23,7 @@ public class LookAtTopXCardsPermanentsToBattlefieldRestToGraveyardEffectHandler 
 
     private final GameQueryService gameQueryService;
     private final PredicateEvaluationService predicateEvaluationService;
-    private final GameBroadcastService gameBroadcastService;
+    private final GameLogService gameLogService;
     private final com.github.laxika.magicalvibes.service.interaction.InteractionHandlerRegistry interactionHandlerRegistry;
 
     @Override
@@ -46,7 +46,7 @@ public class LookAtTopXCardsPermanentsToBattlefieldRestToGraveyardEffectHandler 
             String logMsg = entry.getCard().getName() + ": " + playerName
                     + (deck.isEmpty() ? "'s library is empty."
                     : toBottomRandom ? " reveals 0 cards (0 damage dealt)." : " looks at 0 cards (X is 0).");
-            gameBroadcastService.logAndBroadcast(gameData, GameLog.builder().card(entry.getCard()).text(": " + playerName + (deck.isEmpty() ? "'s library is empty." : toBottomRandom ? " reveals 0 cards (0 damage dealt)." : " looks at 0 cards (X is 0).")).build());
+            gameLogService.append(gameData, GameLog.builder().card(entry.getCard()).text(": " + playerName + (deck.isEmpty() ? "'s library is empty." : toBottomRandom ? " reveals 0 cards (0 damage dealt)." : " looks at 0 cards (X is 0).")).build());
             return;
         }
 
@@ -55,7 +55,7 @@ public class LookAtTopXCardsPermanentsToBattlefieldRestToGraveyardEffectHandler 
         String logMsg = toBottomRandom
                 ? playerName + " reveals the top " + LibraryRevealSupport.pluralCards(count) + " of their library."
                 : playerName + " looks at the top " + LibraryRevealSupport.pluralCards(count) + " of their library.";
-        gameBroadcastService.logAndBroadcast(gameData, GameLog.text(logMsg));
+        gameLogService.append(gameData, GameLog.text(logMsg));
 
         // Filter eligible cards using predicates
         List<Card> eligibleCards = new ArrayList<>();
@@ -76,14 +76,14 @@ public class LookAtTopXCardsPermanentsToBattlefieldRestToGraveyardEffectHandler 
                 Collections.shuffle(revealedCards);
                 deck.addAll(revealedCards);
                 String noEligibleLog = playerName + " finds no eligible cards. All cards are put on the bottom of their library in a random order.";
-                gameBroadcastService.logAndBroadcast(gameData, GameLog.text(noEligibleLog));
+                gameLogService.append(gameData, GameLog.text(noEligibleLog));
             } else {
                 // No eligible cards — put all into graveyard
                 for (Card card : revealedCards) {
                     gameData.playerGraveyards.get(controllerId).add(card);
                 }
                 String noEligibleLog = playerName + " finds no eligible cards. All cards are put into their graveyard.";
-                gameBroadcastService.logAndBroadcast(gameData, GameLog.text(noEligibleLog));
+                gameLogService.append(gameData, GameLog.text(noEligibleLog));
             }
             return;
         }

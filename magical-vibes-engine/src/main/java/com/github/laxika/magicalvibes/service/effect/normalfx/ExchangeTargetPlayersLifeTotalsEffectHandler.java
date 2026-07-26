@@ -5,7 +5,7 @@ import com.github.laxika.magicalvibes.model.GameLog;
 import com.github.laxika.magicalvibes.model.StackEntry;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
 import com.github.laxika.magicalvibes.model.effect.ExchangeTargetPlayersLifeTotalsEffect;
-import com.github.laxika.magicalvibes.service.GameBroadcastService;
+import com.github.laxika.magicalvibes.service.GameLogService;
 import com.github.laxika.magicalvibes.service.battlefield.GameQueryService;
 import com.github.laxika.magicalvibes.service.trigger.TriggerCollectionService;
 import lombok.RequiredArgsConstructor;
@@ -21,7 +21,7 @@ import java.util.UUID;
 public class ExchangeTargetPlayersLifeTotalsEffectHandler implements NormalEffectHandlerBean {
 
     private final GameQueryService gameQueryService;
-    private final GameBroadcastService gameBroadcastService;
+    private final GameLogService gameLogService;
     private final TriggerCollectionService triggerCollectionService;
 
     @Override
@@ -40,12 +40,12 @@ public class ExchangeTargetPlayersLifeTotalsEffectHandler implements NormalEffec
         // CR 118.7: If either player's life total can't change, the exchange doesn't occur
         if (!gameQueryService.canPlayerLifeChange(gameData, playerA)) {
             String playerName = gameData.playerIdToName.get(playerA);
-            gameBroadcastService.logAndBroadcast(gameData, GameLog.text(playerName + "'s life total can't change. Exchange doesn't occur."));
+            gameLogService.append(gameData, GameLog.text(playerName + "'s life total can't change. Exchange doesn't occur."));
             return;
         }
         if (!gameQueryService.canPlayerLifeChange(gameData, playerB)) {
             String playerName = gameData.playerIdToName.get(playerB);
-            gameBroadcastService.logAndBroadcast(gameData, GameLog.text(playerName + "'s life total can't change. Exchange doesn't occur."));
+            gameLogService.append(gameData, GameLog.text(playerName + "'s life total can't change. Exchange doesn't occur."));
             return;
         }
 
@@ -55,7 +55,7 @@ public class ExchangeTargetPlayersLifeTotalsEffectHandler implements NormalEffec
         if (lifeA == lifeB) {
             String nameA = gameData.playerIdToName.get(playerA);
             String nameB = gameData.playerIdToName.get(playerB);
-            gameBroadcastService.logAndBroadcast(gameData, GameLog.text(nameA + " and " + nameB + " exchange life totals (both at " + lifeA + ")."));
+            gameLogService.append(gameData, GameLog.text(nameA + " and " + nameB + " exchange life totals (both at " + lifeA + ")."));
             return;
         }
 
@@ -69,7 +69,7 @@ public class ExchangeTargetPlayersLifeTotalsEffectHandler implements NormalEffec
         if (aCantGain && bCantGain) {
             String nameA = gameData.playerIdToName.get(playerA);
             String nameB = gameData.playerIdToName.get(playerB);
-            gameBroadcastService.logAndBroadcast(gameData, GameLog.text(nameA + " and " + nameB + " can't gain life. Exchange doesn't occur."));
+            gameLogService.append(gameData, GameLog.text(nameA + " and " + nameB + " can't gain life. Exchange doesn't occur."));
             return;
         }
 
@@ -80,13 +80,13 @@ public class ExchangeTargetPlayersLifeTotalsEffectHandler implements NormalEffec
         int newLifeB = bCantGain ? lifeB : lifeA;
 
         if (aCantGain) {
-            gameBroadcastService.logAndBroadcast(gameData, GameLog.text(nameA + " can't gain life."));
+            gameLogService.append(gameData, GameLog.text(nameA + " can't gain life."));
         }
         if (bCantGain) {
-            gameBroadcastService.logAndBroadcast(gameData, GameLog.text(nameB + " can't gain life."));
+            gameLogService.append(gameData, GameLog.text(nameB + " can't gain life."));
         }
 
-        gameBroadcastService.logAndBroadcast(gameData, GameLog.text(nameA + " and " + nameB + " exchange life totals (" + nameA + ": " + lifeA + " -> " + newLifeA
+        gameLogService.append(gameData, GameLog.text(nameA + " and " + nameB + " exchange life totals (" + nameA + ": " + lifeA + " -> " + newLifeA
                         + ", " + nameB + ": " + lifeB + " -> " + newLifeB + ")."));
 
         // Apply the new totals with triggers (bypass applySetLifeTotal since we already checked)

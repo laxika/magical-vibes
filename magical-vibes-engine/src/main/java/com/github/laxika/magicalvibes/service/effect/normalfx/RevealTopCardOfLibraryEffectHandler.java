@@ -6,7 +6,7 @@ import com.github.laxika.magicalvibes.model.GameLog;
 import com.github.laxika.magicalvibes.model.StackEntry;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
 import com.github.laxika.magicalvibes.model.effect.RevealTopCardOfLibraryEffect;
-import com.github.laxika.magicalvibes.service.GameBroadcastService;
+import com.github.laxika.magicalvibes.service.GameLogService;
 import java.util.*;
 import lombok.extern.slf4j.Slf4j;
 import lombok.RequiredArgsConstructor;
@@ -18,7 +18,7 @@ import org.springframework.stereotype.Component;
 @RequiredArgsConstructor
 public class RevealTopCardOfLibraryEffectHandler implements NormalEffectHandlerBean {
 
-    private final GameBroadcastService gameBroadcastService;
+    private final GameLogService gameLogService;
 
     @Override
     public Class<? extends CardEffect> handledEffect() {
@@ -34,10 +34,10 @@ public class RevealTopCardOfLibraryEffectHandler implements NormalEffectHandlerB
 
         if (deck.isEmpty()) {
             String logEntry = playerName + "'s library is empty.";
-            gameBroadcastService.logAndBroadcast(gameData, GameLog.text(logEntry));
+            gameLogService.append(gameData, GameLog.text(logEntry));
         } else {
             Card topCard = deck.getFirst();
-            gameBroadcastService.logAndBroadcast(gameData, GameLog.textCardText(playerName + " reveals " , topCard, " from the top of their library."));
+            gameLogService.append(gameData, GameLog.textCardText(playerName + " reveals " , topCard, " from the top of their library."));
         }
 
         log.info("Game {} - {} reveals top card of library", gameData.id, playerName);

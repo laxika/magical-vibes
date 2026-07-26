@@ -9,7 +9,7 @@ import com.github.laxika.magicalvibes.model.PermanentChoiceContext;
 import com.github.laxika.magicalvibes.model.StackEntry;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
 import com.github.laxika.magicalvibes.model.effect.ChampionCreatureEffect;
-import com.github.laxika.magicalvibes.service.GameBroadcastService;
+import com.github.laxika.magicalvibes.service.GameLogService;
 import com.github.laxika.magicalvibes.service.battlefield.GameQueryService;
 import com.github.laxika.magicalvibes.service.battlefield.PermanentRemovalService;
 import com.github.laxika.magicalvibes.service.input.PlayerInputService;
@@ -26,7 +26,7 @@ import org.springframework.stereotype.Component;
 public class ChampionCreatureEffectHandler implements NormalEffectHandlerBean {
 
     private final GameQueryService gameQueryService;
-    private final GameBroadcastService gameBroadcastService;
+    private final GameLogService gameLogService;
     private final PermanentRemovalService permanentRemovalService;
     private final PlayerInputService playerInputService;
 
@@ -52,7 +52,7 @@ public class ChampionCreatureEffectHandler implements NormalEffectHandlerBean {
                 String logEntry = playerName + " controls no other "
                         + championQualityLabel(e.championedSubtypes())
                         + ". " + sourceCard.getName() + " is sacrificed.";
-                gameBroadcastService.logAndBroadcast(gameData, GameLog.builder().text(playerName + " controls no other " + championQualityLabel(e.championedSubtypes()) + ". ").card(sourceCard).text(" is sacrificed.").build());
+                gameLogService.append(gameData, GameLog.builder().text(playerName + " controls no other " + championQualityLabel(e.championedSubtypes()) + ". ").card(sourceCard).text(" is sacrificed.").build());
                 log.info("Game {} - {} sacrificed (no creature to champion)", gameData.id, sourceCard.getName());
             }
             return;

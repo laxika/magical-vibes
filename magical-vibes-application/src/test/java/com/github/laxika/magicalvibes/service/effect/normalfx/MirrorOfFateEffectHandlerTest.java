@@ -16,7 +16,8 @@ import com.github.laxika.magicalvibes.model.StackEntryType;
 import com.github.laxika.magicalvibes.model.effect.ExileTargetPermanentEffect;
 import com.github.laxika.magicalvibes.model.effect.MirrorOfFateEffect;
 import com.github.laxika.magicalvibes.networking.service.CardViewFactory;
-import com.github.laxika.magicalvibes.service.GameBroadcastService;
+import com.github.laxika.magicalvibes.service.GameLogService;
+import com.github.laxika.magicalvibes.service.event.GameMutationCoordinator;
 import com.github.laxika.magicalvibes.service.exile.ExileService;
 import com.github.laxika.magicalvibes.service.graveyard.GraveyardService;
 import com.github.laxika.magicalvibes.service.input.PlayerInputService;
@@ -46,7 +47,8 @@ class MirrorOfFateEffectHandlerTest {
 
     @Mock private GraveyardService graveyardService;
     @Mock private GameQueryService gameQueryService;
-    @Mock private GameBroadcastService gameBroadcastService;
+    @Mock private GameLogService gameLogService;
+    @Mock private GameMutationCoordinator mutationCoordinator;
     @Mock private PermanentRemovalService permanentRemovalService;
     @Mock private PlayerInputService playerInputService;
     @Mock private CardViewFactory cardViewFactory;
@@ -172,7 +174,7 @@ class MirrorOfFateEffectHandlerTest {
                 // Library exiled
                 assertThat(gd.playerDecks.get(player1Id)).isEmpty();
                 assertThat(gd.getPlayerExiledCards(player1Id)).contains(libraryCard);
-                verify(gameBroadcastService).logAndBroadcast(eq(gd), argThat((GameLogEntry e) -> e.plainText().equals("Player1 exiles 1 card from their library (Mirror of Fate).")));
+                verify(gameLogService).append(eq(gd), argThat((GameLogEntry e) -> e.plainText().equals("Player1 exiles 1 card from their library (Mirror of Fate).")));
             }
 
             @Test
@@ -216,7 +218,7 @@ class MirrorOfFateEffectHandlerTest {
                 assertThat(gd.playerDecks.get(player1Id)).containsExactly(exiledCard);
                 assertThat(gd.getPlayerExiledCards(player1Id)).contains(libraryCard);
                 assertThat(gd.getPlayerExiledCards(player1Id)).doesNotContain(exiledCard);
-                verify(gameBroadcastService).invalidateAllPlayerViews(gd);
+                verify(mutationCoordinator).invalidateAllPlayerViews(gd);
             }
 
             @Test

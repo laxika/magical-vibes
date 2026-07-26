@@ -7,7 +7,7 @@ import com.github.laxika.magicalvibes.model.StackEntry;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantScope;
 import com.github.laxika.magicalvibes.model.effect.LoseAllCreatureTypesEffect;
-import com.github.laxika.magicalvibes.service.GameBroadcastService;
+import com.github.laxika.magicalvibes.service.GameLogService;
 import com.github.laxika.magicalvibes.service.battlefield.GameQueryService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Component;
@@ -20,7 +20,7 @@ import java.util.UUID;
 public class LoseAllCreatureTypesEffectHandler implements NormalEffectHandlerBean {
 
     private final GameQueryService gameQueryService;
-    private final GameBroadcastService gameBroadcastService;
+    private final GameLogService gameLogService;
 
     @Override
     public Class<? extends CardEffect> handledEffect() {
@@ -47,7 +47,7 @@ public class LoseAllCreatureTypesEffectHandler implements NormalEffectHandlerBea
                     count++;
                 }
             }
-            gameBroadcastService.logAndBroadcast(gameData, GameLog.builder().card(entry.getCard()).text(" makes " + count + " creature(s) lose all creature types until end of turn.").build());
+            gameLogService.append(gameData, GameLog.builder().card(entry.getCard()).text(" makes " + count + " creature(s) lose all creature types until end of turn.").build());
             return;
         }
 
@@ -56,6 +56,6 @@ public class LoseAllCreatureTypesEffectHandler implements NormalEffectHandlerBea
             return;
         }
         target.setLosesAllCreatureTypesUntilEndOfTurn(true);
-        gameBroadcastService.logAndBroadcast(gameData, GameLog.cardThen(target.getCard(), " loses all creature types until end of turn."));
+        gameLogService.append(gameData, GameLog.cardThen(target.getCard(), " loses all creature types until end of turn."));
     }
 }

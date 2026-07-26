@@ -2,7 +2,6 @@ package com.github.laxika.magicalvibes.service.effect.normalfx;
 
 import com.github.laxika.magicalvibes.networking.SessionManager;
 import com.github.laxika.magicalvibes.networking.service.CardViewFactory;
-import com.github.laxika.magicalvibes.service.GameBroadcastService;
 import com.github.laxika.magicalvibes.service.GameLogService;
 import com.github.laxika.magicalvibes.service.WarpWorldService;
 import com.github.laxika.magicalvibes.service.effect.EffectResolutionService;
@@ -32,8 +31,7 @@ final class InteractionRegistryTestSupport {
 
     static InteractionHandlerRegistry registryFor(SessionManager sessionManager,
                                                   CardViewFactory cardViewFactory,
-                                                  GameBroadcastService gameBroadcastService) {
-        GameLogService gameLogService = mock(GameLogService.class);
+                                                  GameLogService gameLogService) {
         InteractionHandlerRegistry registry = new InteractionHandlerRegistry();
         registry.register(new LibraryReorderInteractionHandler(
                 gameLogService,

@@ -8,7 +8,7 @@ import com.github.laxika.magicalvibes.model.PendingInteraction;
 import com.github.laxika.magicalvibes.model.StackEntry;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
 import com.github.laxika.magicalvibes.model.effect.HazoretsUndyingFuryEffect;
-import com.github.laxika.magicalvibes.service.GameBroadcastService;
+import com.github.laxika.magicalvibes.service.GameLogService;
 import com.github.laxika.magicalvibes.service.interaction.InteractionHandlerRegistry;
 import com.github.laxika.magicalvibes.service.library.LibraryShuffleHelper;
 import java.util.ArrayList;
@@ -23,7 +23,7 @@ import org.springframework.stereotype.Component;
 @RequiredArgsConstructor
 public class HazoretsUndyingFuryEffectHandler implements NormalEffectHandlerBean {
 
-    private final GameBroadcastService gameBroadcastService;
+    private final GameLogService gameLogService;
     private final InteractionHandlerRegistry interactionHandlerRegistry;
 
     @Override
@@ -40,14 +40,14 @@ public class HazoretsUndyingFuryEffectHandler implements NormalEffectHandlerBean
         String sourceName = entry.getCard().getName();
 
         LibraryShuffleHelper.shuffleLibrary(gameData, controllerId);
-        gameBroadcastService.logAndBroadcast(gameData, GameLog.text(playerName + " shuffles their library (" + sourceName + ")."));
+        gameLogService.append(gameData, GameLog.text(playerName + " shuffles their library (" + sourceName + ")."));
 
         List<UUID> exiledThisProcess = new ArrayList<>();
         for (int i = 0; i < e.exileCount() && !deck.isEmpty(); i++) {
             Card card = deck.removeFirst();
             gameData.addToExile(controllerId, card);
             exiledThisProcess.add(card.getId());
-            gameBroadcastService.logAndBroadcast(gameData, GameLog.builder().text(playerName + " exiles ").card(card).text(" (" + sourceName + ").").build());
+            gameLogService.append(gameData, GameLog.builder().text(playerName + " exiles ").card(card).text(" (" + sourceName + ").").build());
         }
 
         List<UUID> castableSpellIds = new ArrayList<>();

@@ -7,7 +7,7 @@ import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.StackEntry;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
 import com.github.laxika.magicalvibes.model.effect.EachPlayerExilesTopCardsToSourceEffect;
-import com.github.laxika.magicalvibes.service.GameBroadcastService;
+import com.github.laxika.magicalvibes.service.GameLogService;
 import com.github.laxika.magicalvibes.service.battlefield.GameQueryService;
 import com.github.laxika.magicalvibes.service.exile.ExileService;
 import java.util.ArrayList;
@@ -23,7 +23,7 @@ import org.springframework.stereotype.Component;
 public class EachPlayerExilesTopCardsToSourceEffectHandler implements NormalEffectHandlerBean {
 
     private final GameQueryService gameQueryService;
-    private final GameBroadcastService gameBroadcastService;
+    private final GameLogService gameLogService;
     private final ExileService exileService;
 
     @Override
@@ -75,7 +75,7 @@ public class EachPlayerExilesTopCardsToSourceEffectHandler implements NormalEffe
                 String playerName = gameData.playerIdToName.get(playerId);
                 String logEntry = playerName + " exiles " + String.join(", ", exiledNames)
                         + " from the top of their library (" + sourcePermanent.getCard().getName() + ").";
-                gameBroadcastService.logAndBroadcast(gameData, GameLog.builder().text(playerName + " exiles " + String.join(", ", exiledNames) + " from the top of their library (").card(sourcePermanent.getCard()).text(").").build());
+                gameLogService.append(gameData, GameLog.builder().text(playerName + " exiles " + String.join(", ", exiledNames) + " from the top of their library (").card(sourcePermanent.getCard()).text(").").build());
                 log.info("Game {} - {} exiles {} cards from library to {}",
                         gameData.id, playerName, toExile, sourcePermanent.getCard().getName());
             }

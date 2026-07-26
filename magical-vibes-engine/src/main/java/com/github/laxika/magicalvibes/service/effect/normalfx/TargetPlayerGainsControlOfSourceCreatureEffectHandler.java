@@ -9,7 +9,7 @@ import com.github.laxika.magicalvibes.model.effect.ControlDuration;
 import com.github.laxika.magicalvibes.model.effect.EffectDuration;
 import com.github.laxika.magicalvibes.model.effect.GainControlOfTargetEffect;
 import com.github.laxika.magicalvibes.model.effect.TargetPlayerGainsControlOfSourceCreatureEffect;
-import com.github.laxika.magicalvibes.service.GameBroadcastService;
+import com.github.laxika.magicalvibes.service.GameLogService;
 import com.github.laxika.magicalvibes.service.battlefield.CreatureControlService;
 import java.util.List;
 import java.util.UUID;
@@ -20,7 +20,7 @@ import org.springframework.stereotype.Component;
 @RequiredArgsConstructor
 public class TargetPlayerGainsControlOfSourceCreatureEffectHandler implements NormalEffectHandlerBean {
 
-    private final GameBroadcastService gameBroadcastService;
+    private final GameLogService gameLogService;
     private final CreatureControlService creatureControlService;
 
     @Override
@@ -52,7 +52,7 @@ public class TargetPlayerGainsControlOfSourceCreatureEffectHandler implements No
                 }
 
                 if (source == null) {
-                    gameBroadcastService.logAndBroadcast(gameData, GameLog.cardThen(entry.getCard(), "'s ability has no effect (it is no longer on the battlefield)."));
+                    gameLogService.append(gameData, GameLog.cardThen(entry.getCard(), "'s ability has no effect (it is no longer on the battlefield)."));
                     return;
                 }
 

@@ -8,7 +8,7 @@ import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.Player;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
 import com.github.laxika.magicalvibes.model.effect.RevealSubtypeOrEntersTappedEffect;
-import com.github.laxika.magicalvibes.service.GameBroadcastService;
+import com.github.laxika.magicalvibes.service.GameLogService;
 import com.github.laxika.magicalvibes.service.battlefield.GameQueryService;
 import com.github.laxika.magicalvibes.service.input.InputCompletionService;
 import java.util.List;
@@ -25,7 +25,7 @@ import org.springframework.stereotype.Component;
 @RequiredArgsConstructor
 public class RevealSubtypeOrEntersTappedHandler implements MayEffectHandlerBean {
 
-    private final GameBroadcastService gameBroadcastService;
+    private final GameLogService gameLogService;
     private final GameQueryService gameQueryService;
     private final InputCompletionService inputCompletionService;
 
@@ -47,7 +47,7 @@ public class RevealSubtypeOrEntersTappedHandler implements MayEffectHandlerBean 
                         .filter(c -> c.getSubtypes().contains(revealOrTapped.subtype()))
                         .findFirst().orElse(null);
                 String revealedName = revealed != null ? revealed.getName() : revealOrTapped.subtype().getDisplayName();
-                gameBroadcastService.logAndBroadcast(gameData, GameLog.textCardText(player.getUsername() + " reveals " + revealedName + " — ", ability.sourceCard(), " enters untapped."));
+                gameLogService.append(gameData, GameLog.textCardText(player.getUsername() + " reveals " + revealedName + " — ", ability.sourceCard(), " enters untapped."));
                 log.info("Game {} - {} reveals {} to keep {} untapped", gameData.id,
                         player.getUsername(), revealedName, ability.sourceCard().getName());
             } else {
@@ -56,7 +56,7 @@ public class RevealSubtypeOrEntersTappedHandler implements MayEffectHandlerBean 
                 if (source != null) {
                     source.tap();
                 }
-                gameBroadcastService.logAndBroadcast(gameData, GameLog.textCardText(player.getUsername() + " declines — ", ability.sourceCard(), " enters tapped."));
+                gameLogService.append(gameData, GameLog.textCardText(player.getUsername() + " declines — ", ability.sourceCard(), " enters tapped."));
                 log.info("Game {} - {} declines to reveal; {} enters tapped", gameData.id,
                         player.getUsername(), ability.sourceCard().getName());
             }

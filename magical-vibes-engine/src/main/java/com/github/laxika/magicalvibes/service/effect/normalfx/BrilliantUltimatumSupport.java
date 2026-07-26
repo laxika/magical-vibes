@@ -10,7 +10,7 @@ import com.github.laxika.magicalvibes.model.PendingInteraction;
 import com.github.laxika.magicalvibes.model.PendingPileSeparation;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.Player;
-import com.github.laxika.magicalvibes.service.GameBroadcastService;
+import com.github.laxika.magicalvibes.service.GameLogService;
 import com.github.laxika.magicalvibes.service.battlefield.BattlefieldEntryService;
 import com.github.laxika.magicalvibes.service.input.InputCompletionService;
 import com.github.laxika.magicalvibes.service.interaction.InteractionHandlerRegistry;
@@ -33,23 +33,26 @@ import org.springframework.stereotype.Component;
 @Component
 public class BrilliantUltimatumSupport {
 
-    private final GameBroadcastService gameBroadcastService;
+    private final GameLogService gameLogService;
     private final BattlefieldEntryService battlefieldEntryService;
     private final InteractionHandlerRegistry interactionHandlerRegistry;
     private final ImprovisationCapstoneCastSupport improvisationCapstoneCastSupport;
     private final InputCompletionService inputCompletionService;
+    private final com.github.laxika.magicalvibes.service.event.GameMutationCoordinator mutationCoordinator;
 
     // @Lazy mirrors ExileFreeCastSupport: breaks cycles through the interaction registry / input services.
-    public BrilliantUltimatumSupport(GameBroadcastService gameBroadcastService,
+    public BrilliantUltimatumSupport(GameLogService gameLogService,
                                      BattlefieldEntryService battlefieldEntryService,
                                      InteractionHandlerRegistry interactionHandlerRegistry,
                                      @Lazy ImprovisationCapstoneCastSupport improvisationCapstoneCastSupport,
-                                     @Lazy InputCompletionService inputCompletionService) {
-        this.gameBroadcastService = gameBroadcastService;
+                                     @Lazy InputCompletionService inputCompletionService,
+                                     com.github.laxika.magicalvibes.service.event.GameMutationCoordinator mutationCoordinator) {
+        this.gameLogService = gameLogService;
         this.battlefieldEntryService = battlefieldEntryService;
         this.interactionHandlerRegistry = interactionHandlerRegistry;
         this.improvisationCapstoneCastSupport = improvisationCapstoneCastSupport;
         this.inputCompletionService = inputCompletionService;
+        this.mutationCoordinator = mutationCoordinator;
     }
 
     /**
@@ -76,7 +79,7 @@ public class BrilliantUltimatumSupport {
         String pile2Desc = describePile(state.cards(), pile2);
 
         String opponentName = gameData.playerIdToName.get(state.targetPlayerId());
-        gameBroadcastService.logAndBroadcast(gameData, GameLog.text(opponentName
+        gameLogService.append(gameData, GameLog.text(opponentName
                 + " separates cards into two piles. Pile 1: " + pile1Desc + ". Pile 2: " + pile2Desc + "."));
 
         interactionHandlerRegistry.begin(
@@ -95,7 +98,7 @@ public class BrilliantUltimatumSupport {
         String chosenName = accepted ? "Pile 1" : "Pile 2";
 
         String controllerName = gameData.playerIdToName.get(state.controllerId());
-        gameBroadcastService.logAndBroadcast(gameData, GameLog.text(controllerName + " chooses " + chosenName + "."));
+        gameLogService.append(gameData, GameLog.text(controllerName + " chooses " + chosenName + "."));
 
         // Only the cards still in exile are playable (all of them at this point).
         List<UUID> playable = new ArrayList<>();
@@ -106,7 +109,7 @@ public class BrilliantUltimatumSupport {
         }
 
         if (playable.isEmpty()) {
-            gameBroadcastService.logAndBroadcast(gameData, GameLog.text(controllerName + " has no cards to play from " + chosenName + "."));
+            gameLogService.append(gameData, GameLog.text(controllerName + " has no cards to play from " + chosenName + "."));
             return;
         }
 
@@ -146,7 +149,7 @@ public class BrilliantUltimatumSupport {
             return;
         }
 
-        gameBroadcastService.invalidateAllPlayerViews(gameData);
+        mutationCoordinator.invalidateAllPlayerViews(gameData);
         inputCompletionService.processMayAbilitiesThenAutoPass(gameData);
     }
 
@@ -156,14 +159,14 @@ public class BrilliantUltimatumSupport {
         int landsPlayed = gameData.landsPlayedThisTurn.getOrDefault(playerId, 0);
         if (!isControllersTurn || landsPlayed >= gameData.getMaxLandsThisTurn(playerId)) {
             String reason = !isControllersTurn ? "not your turn" : "land already played this turn";
-            gameBroadcastService.logAndBroadcast(gameData, GameLog.builder().card(card).text(" can't be played (" + reason + ") and stays exiled.").build());
+            gameLogService.append(gameData, GameLog.builder().card(card).text(" can't be played (" + reason + ") and stays exiled.").build());
             return;
         }
 
         gameData.removeFromExile(card.getId());
         battlefieldEntryService.putPermanentOntoBattlefield(gameData, playerId, new Permanent(card));
         gameData.landsPlayedThisTurn.merge(playerId, 1, Integer::sum);
-        gameBroadcastService.logAndBroadcast(gameData, GameLog.playerPlays(playerName, card, " without paying its mana cost."));
+        gameLogService.append(gameData, GameLog.playerPlays(playerName, card, " without paying its mana cost."));
         log.info("Game {} - {} plays land {} from exile (Brilliant Ultimatum)", gameData.id, playerName, card.getName());
         battlefieldEntryService.processCreatureETBEffects(gameData, playerId, card, null, false);
     }

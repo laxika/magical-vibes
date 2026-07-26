@@ -49,7 +49,7 @@ class PutCardsFromHandOnLibraryAiStrategyTest {
 
     private AiInteractionContext context() {
         return new AiInteractionContext(gameData, gameData.id, aiPlayerId,
-                gameQueryService, gameActions, selfConnection);
+                gameQueryService, gameActions);
     }
 
     private static Card spell(String name, String manaCost) {
@@ -85,7 +85,7 @@ class PutCardsFromHandOnLibraryAiStrategyTest {
         void ignoresWrongPlayer() throws Exception {
             strategy.answer(choice(opponentId, List.of(spell("Bolt", "{R}")), 1), context());
 
-            verify(gameActions, never()).answerInteraction(eq(selfConnection), any());
+            verify(gameActions, never()).answerInteraction(any());
         }
 
         @Test
@@ -98,7 +98,7 @@ class PutCardsFromHandOnLibraryAiStrategyTest {
             strategy.answer(choice(aiPlayerId, List.of(cheap, expensive, mid), 2), context());
 
             ArgumentCaptor<InteractionAnswer> captor = ArgumentCaptor.forClass(InteractionAnswer.class);
-            verify(gameActions).answerInteraction(eq(selfConnection), captor.capture());
+            verify(gameActions).answerInteraction(captor.capture());
             assertThat(((InteractionAnswer.CardsChosen) captor.getValue()).cardIds())
                     .containsExactly(expensive.getId(), mid.getId());
         }
@@ -114,7 +114,7 @@ class PutCardsFromHandOnLibraryAiStrategyTest {
             strategy.answer(interaction, context());
 
             ArgumentCaptor<InteractionAnswer> captor = ArgumentCaptor.forClass(InteractionAnswer.class);
-            verify(gameActions).answerInteraction(eq(selfConnection), captor.capture());
+            verify(gameActions).answerInteraction(captor.capture());
             assertThat(((InteractionAnswer.CardsChosen) captor.getValue()).cardIds())
                     .containsExactly(valid.getId());
         }
@@ -125,7 +125,7 @@ class PutCardsFromHandOnLibraryAiStrategyTest {
             strategy.answer(choice(aiPlayerId, List.of(), 2), context());
 
             ArgumentCaptor<InteractionAnswer> captor = ArgumentCaptor.forClass(InteractionAnswer.class);
-            verify(gameActions).answerInteraction(eq(selfConnection), captor.capture());
+            verify(gameActions).answerInteraction(captor.capture());
             assertThat(((InteractionAnswer.CardsChosen) captor.getValue()).cardIds()).isEmpty();
         }
     }
@@ -152,7 +152,7 @@ class PutCardsFromHandOnLibraryAiStrategyTest {
             strategy.answer(new PendingInteraction.PutCardsFromHandOnLibraryDestinationChoice(
                     opponentId, List.of(UUID.randomUUID())), context());
 
-            verify(gameActions, never()).answerInteraction(eq(selfConnection), any());
+            verify(gameActions, never()).answerInteraction(any());
         }
 
         @Test
@@ -162,7 +162,7 @@ class PutCardsFromHandOnLibraryAiStrategyTest {
                     aiPlayerId, List.of(UUID.randomUUID())), context());
 
             ArgumentCaptor<InteractionAnswer> captor = ArgumentCaptor.forClass(InteractionAnswer.class);
-            verify(gameActions).answerInteraction(eq(selfConnection), captor.capture());
+            verify(gameActions).answerInteraction(captor.capture());
             assertThat(((InteractionAnswer.ListChoiceMade) captor.getValue()).choice()).isEqualTo("Bottom");
         }
     }

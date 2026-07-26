@@ -6,7 +6,7 @@ import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.StackEntry;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
 import com.github.laxika.magicalvibes.model.effect.ExchangeLifeTotalWithCreatureStatEffect;
-import com.github.laxika.magicalvibes.service.GameBroadcastService;
+import com.github.laxika.magicalvibes.service.GameLogService;
 import com.github.laxika.magicalvibes.service.battlefield.GameQueryService;
 import com.github.laxika.magicalvibes.service.trigger.TriggerCollectionService;
 import lombok.RequiredArgsConstructor;
@@ -21,7 +21,7 @@ import java.util.UUID;
 public class ExchangeLifeTotalWithCreatureStatEffectHandler implements NormalEffectHandlerBean {
 
     private final GameQueryService gameQueryService;
-    private final GameBroadcastService gameBroadcastService;
+    private final GameLogService gameLogService;
     private final TriggerCollectionService triggerCollectionService;
 
     @Override
@@ -40,13 +40,13 @@ public class ExchangeLifeTotalWithCreatureStatEffectHandler implements NormalEff
                 ? entry.getTargetId()
                 : entry.getControllerId();
         if (playerId == null) {
-            gameBroadcastService.logAndBroadcast(gameData, GameLog.text("No player to exchange with. Exchange doesn't occur."));
+            gameLogService.append(gameData, GameLog.text("No player to exchange with. Exchange doesn't occur."));
             return;
         }
 
         Permanent source = gameQueryService.findPermanentById(gameData, sourcePermanentId);
         if (source == null) {
-            gameBroadcastService.logAndBroadcast(gameData, GameLog.text("Source creature is no longer on the battlefield. Exchange doesn't occur."));
+            gameLogService.append(gameData, GameLog.text("Source creature is no longer on the battlefield. Exchange doesn't occur."));
             return;
         }
 
@@ -59,13 +59,13 @@ public class ExchangeLifeTotalWithCreatureStatEffectHandler implements NormalEff
         // CR 118.7: if the player's life total can't change, the exchange doesn't occur
         if (!gameQueryService.canPlayerLifeChange(gameData, playerId)) {
             String playerName = gameData.playerIdToName.get(playerId);
-            gameBroadcastService.logAndBroadcast(gameData, GameLog.text(playerName + "'s life total can't change. Exchange doesn't occur."));
+            gameLogService.append(gameData, GameLog.text(playerName + "'s life total can't change. Exchange doesn't occur."));
             return;
         }
 
         if (currentLife == currentStat) {
             String playerName = gameData.playerIdToName.get(playerId);
-            gameBroadcastService.logAndBroadcast(gameData, GameLog.builder().text(playerName + " exchanges life total with ").card(source.getCard()).text("'s " + statName + " (both at " + currentLife + ").").build());
+            gameLogService.append(gameData, GameLog.builder().text(playerName + " exchanges life total with ").card(source.getCard()).text("'s " + statName + " (both at " + currentLife + ").").build());
             return;
         }
 
@@ -73,12 +73,12 @@ public class ExchangeLifeTotalWithCreatureStatEffectHandler implements NormalEff
         boolean lifeWouldIncrease = currentStat > currentLife;
         if (lifeWouldIncrease && !gameQueryService.canPlayerGainLife(gameData, playerId)) {
             String playerName = gameData.playerIdToName.get(playerId);
-            gameBroadcastService.logAndBroadcast(gameData, GameLog.text(playerName + " can't gain life. Exchange doesn't occur."));
+            gameLogService.append(gameData, GameLog.text(playerName + " can't gain life. Exchange doesn't occur."));
             return;
         }
 
         String playerName = gameData.playerIdToName.get(playerId);
-        gameBroadcastService.logAndBroadcast(gameData, GameLog.builder().text(playerName + " exchanges life total with ").card(source.getCard()).text("'s " + statName + " (" + playerName + ": " + currentLife + " -> " + currentStat + ", ").card(source.getCard()).text(" " + statName + ": " + currentStat + " -> " + currentLife + ").").build());
+        gameLogService.append(gameData, GameLog.builder().text(playerName + " exchanges life total with ").card(source.getCard()).text("'s " + statName + " (" + playerName + ": " + currentLife + " -> " + currentStat + ", ").card(source.getCard()).text(" " + statName + ": " + currentStat + " -> " + currentLife + ").").build());
 
         // Set player's life total to the creature's stat
         gameData.playerLifeTotals.put(playerId, currentStat);

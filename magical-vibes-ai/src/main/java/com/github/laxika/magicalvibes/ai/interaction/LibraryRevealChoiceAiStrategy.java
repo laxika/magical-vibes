@@ -43,6 +43,6 @@ class LibraryRevealChoiceAiStrategy implements AiInteractionStrategy<PendingInte
             }
             log.info("AI: Choosing {} revealed cards in game {}", chosen.size(), ctx.gameId());
         }
-        ctx.gameActions().answerInteraction(ctx.selfConnection(), new InteractionAnswer.CardsChosen(chosen));
+        ctx.gameActions().answerInteraction(new InteractionAnswer.CardsChosen(chosen));
     }
 }

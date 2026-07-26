@@ -81,7 +81,7 @@ class PermanentChoiceAiStrategyTest {
     void ignoresWrongPlayer() throws Exception {
         strategy.answer(permanentChoice(opponentId, List.of(UUID.randomUUID()), null), context());
 
-        verify(gameActions, never()).answerInteraction(eq(selfConnection),
+        verify(gameActions, never()).answerInteraction(
                 org.mockito.ArgumentMatchers.any());
     }
 
@@ -90,7 +90,7 @@ class PermanentChoiceAiStrategyTest {
     void ignoresEmptyValidIds() throws Exception {
         strategy.answer(permanentChoice(aiPlayerId, List.of(), null), context());
 
-        verify(gameActions, never()).answerInteraction(eq(selfConnection),
+        verify(gameActions, never()).answerInteraction(
                 org.mockito.ArgumentMatchers.any());
     }
 
@@ -253,7 +253,7 @@ class PermanentChoiceAiStrategyTest {
 
     private void assertChosen(UUID expectedId) throws Exception {
         ArgumentCaptor<InteractionAnswer> captor = ArgumentCaptor.forClass(InteractionAnswer.class);
-        verify(gameActions).answerInteraction(eq(selfConnection), captor.capture());
+        verify(gameActions).answerInteraction(captor.capture());
         assertThat(captor.getValue()).isInstanceOf(InteractionAnswer.PermanentChosen.class);
         assertThat(((InteractionAnswer.PermanentChosen) captor.getValue()).permanentId())
                 .isEqualTo(expectedId);
@@ -261,7 +261,7 @@ class PermanentChoiceAiStrategyTest {
 
     private AiInteractionContext context() {
         return new AiInteractionContext(
-                gameData, gameData.id, aiPlayerId, gameQueryService, gameActions, selfConnection);
+                gameData, gameData.id, aiPlayerId, gameQueryService, gameActions);
     }
 
     private static PendingInteraction.PermanentChoice permanentChoice(

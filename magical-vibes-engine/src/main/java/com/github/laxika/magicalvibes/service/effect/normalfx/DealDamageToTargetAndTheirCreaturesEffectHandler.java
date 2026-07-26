@@ -5,7 +5,7 @@ import com.github.laxika.magicalvibes.model.GameLog;
 import com.github.laxika.magicalvibes.model.StackEntry;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
 import com.github.laxika.magicalvibes.model.effect.DealDamageToTargetAndTheirCreaturesEffect;
-import com.github.laxika.magicalvibes.service.GameBroadcastService;
+import com.github.laxika.magicalvibes.service.GameLogService;
 import com.github.laxika.magicalvibes.service.GameOutcomeService;
 import com.github.laxika.magicalvibes.service.battlefield.GameQueryService;
 import com.github.laxika.magicalvibes.service.effect.AmountContext;
@@ -23,7 +23,7 @@ public class DealDamageToTargetAndTheirCreaturesEffectHandler implements NormalE
 
     private final DamageSupport damageSupport;
     private final GameQueryService gameQueryService;
-    private final GameBroadcastService gameBroadcastService;
+    private final GameLogService gameLogService;
     private final GameOutcomeService gameOutcomeService;
     private final AmountEvaluationService amountEvaluationService;
 
@@ -60,7 +60,7 @@ public class DealDamageToTargetAndTheirCreaturesEffectHandler implements NormalE
             if (affectedPlayerId == null) return;
 
             if (gameQueryService.isDamagePreventable(gameData) && gameQueryService.hasProtectionFromSource(gameData, targetPw, entry.getCard())) {
-                gameBroadcastService.logAndBroadcast(gameData, GameLog.textCardText(cardName + "'s damage to ", targetPw.getCard(), " is prevented."));
+                gameLogService.append(gameData, GameLog.textCardText(cardName + "'s damage to ", targetPw.getCard(), " is prevented."));
             } else {
                 damageSupport.dealCreatureDamage(gameData, entry, targetPw, rawDamage);
             }
@@ -74,7 +74,7 @@ public class DealDamageToTargetAndTheirCreaturesEffectHandler implements NormalE
                 // Skip the planeswalker target (already dealt damage above)
                 if (!targetIsPlayer && creature.getId().equals(targetId)) continue;
                 if (gameQueryService.isDamagePreventable(gameData) && gameQueryService.hasProtectionFromSource(gameData, creature, entry.getCard())) {
-                    gameBroadcastService.logAndBroadcast(gameData, GameLog.textCardText(cardName + "'s damage to ", creature.getCard(), " is prevented."));
+                    gameLogService.append(gameData, GameLog.textCardText(cardName + "'s damage to ", creature.getCard(), " is prevented."));
                     continue;
                 }
                 damageSupport.dealCreatureDamage(gameData, entry, creature, rawDamage);

@@ -5,7 +5,7 @@ import com.github.laxika.magicalvibes.model.GameLog;
 import com.github.laxika.magicalvibes.model.StackEntry;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
 import com.github.laxika.magicalvibes.model.effect.RedirectDrawsEffect;
-import com.github.laxika.magicalvibes.service.GameBroadcastService;
+import com.github.laxika.magicalvibes.service.GameLogService;
 import java.util.UUID;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -16,7 +16,7 @@ import org.springframework.stereotype.Component;
 @RequiredArgsConstructor
 public class RedirectDrawsEffectHandler implements NormalEffectHandlerBean {
 
-    private final GameBroadcastService gameBroadcastService;
+    private final GameLogService gameLogService;
     private final PlayerInteractionSupport playerInteractionSupport;
 
     @Override
@@ -42,7 +42,7 @@ public class RedirectDrawsEffectHandler implements NormalEffectHandlerBean {
         String controllerName = gameData.playerIdToName.get(controllerId);
         String logEntry = cardName + " resolves targeting " + targetName
                 + ". Until end of turn, " + targetName + "'s draws are replaced.";
-        gameBroadcastService.logAndBroadcast(gameData, GameLog.text(logEntry));
+        gameLogService.append(gameData, GameLog.text(logEntry));
         log.info("Game {} - {}: {}'s draws replaced by {} until end of turn",
                 gameData.id, cardName, targetName, controllerName);
     

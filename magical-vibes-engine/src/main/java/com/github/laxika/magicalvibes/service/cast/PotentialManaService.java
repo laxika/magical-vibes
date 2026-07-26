@@ -37,7 +37,7 @@ import java.util.UUID;
 /**
  * Builds {@link VirtualManaPool}s describing the mana a player could produce right now:
  * the current pool plus every untapped mana source they control. Shared by the AI's
- * planning ({@code AiManaManager}) and by {@code GameBroadcastService}, which uses it to
+ * planning ({@code AiManaManager}) and by {@code GameActionAvailabilityService}, which uses it to
  * mark hand cards as "castable if you tap your lands" for the MTGO-style casting flow.
  */
 @Component

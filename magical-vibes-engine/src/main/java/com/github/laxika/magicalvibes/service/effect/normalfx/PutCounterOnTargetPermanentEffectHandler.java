@@ -7,7 +7,7 @@ import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.StackEntry;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
 import com.github.laxika.magicalvibes.model.effect.PutCounterOnTargetPermanentEffect;
-import com.github.laxika.magicalvibes.service.GameBroadcastService;
+import com.github.laxika.magicalvibes.service.GameLogService;
 import com.github.laxika.magicalvibes.service.battlefield.GameQueryService;
 import com.github.laxika.magicalvibes.service.effect.AmountContext;
 import com.github.laxika.magicalvibes.service.effect.AmountEvaluationService;
@@ -39,7 +39,7 @@ import org.springframework.stereotype.Component;
 public class PutCounterOnTargetPermanentEffectHandler implements NormalEffectHandlerBean {
 
     private final GameQueryService gameQueryService;
-    private final GameBroadcastService gameBroadcastService;
+    private final GameLogService gameLogService;
     private final PermanentCounterSupport permanentCounterSupport;
     private final AmountEvaluationService amountEvaluationService;
     private final PredicateEvaluationService predicateEvaluationService;
@@ -115,7 +115,7 @@ public class PutCounterOnTargetPermanentEffectHandler implements NormalEffectHan
             int effectiveToughness = gameQueryService.getEffectiveToughness(gameData, target);
             if (effectiveToughness >= 1) {
                 target.setRegenerationShield(target.getRegenerationShield() + 1);
-                gameBroadcastService.logAndBroadcast(gameData, GameLog.cardThen(target.getCard(), " gains a regeneration shield."));
+                gameLogService.append(gameData, GameLog.cardThen(target.getCard(), " gains a regeneration shield."));
                 log.info("Game {} - {} gains a regeneration shield (toughness {})",
                         gameData.id, target.getCard().getName(), effectiveToughness);
             }

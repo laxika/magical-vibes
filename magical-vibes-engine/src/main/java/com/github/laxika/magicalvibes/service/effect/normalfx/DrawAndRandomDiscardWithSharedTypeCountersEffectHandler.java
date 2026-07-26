@@ -10,7 +10,7 @@ import com.github.laxika.magicalvibes.model.StackEntry;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
 import com.github.laxika.magicalvibes.model.effect.DrawAndRandomDiscardWithSharedTypeCountersEffect;
 import com.github.laxika.magicalvibes.service.DrawService;
-import com.github.laxika.magicalvibes.service.GameBroadcastService;
+import com.github.laxika.magicalvibes.service.GameLogService;
 import com.github.laxika.magicalvibes.service.battlefield.GameQueryService;
 import com.github.laxika.magicalvibes.service.graveyard.GraveyardService;
 import com.github.laxika.magicalvibes.service.trigger.TriggerCollectionService;
@@ -28,7 +28,7 @@ import org.springframework.stereotype.Component;
 public class DrawAndRandomDiscardWithSharedTypeCountersEffectHandler implements NormalEffectHandlerBean {
 
     private final DrawService drawService;
-    private final GameBroadcastService gameBroadcastService;
+    private final GameLogService gameLogService;
     private final GameQueryService gameQueryService;
     private final GraveyardService graveyardService;
     private final PlayerInteractionSupport playerInteractionSupport;
@@ -62,7 +62,7 @@ public class DrawAndRandomDiscardWithSharedTypeCountersEffectHandler implements 
             discardedCards.add(discarded);
             graveyardService.discardCard(gameData, controllerId, discarded);
             String logEntry = playerName + " discards " + discarded.getName() + " at random.";
-            gameBroadcastService.logAndBroadcast(gameData, GameLog.textCardText(playerName + " discards " , discarded, " at random."));
+            gameLogService.append(gameData, GameLog.textCardText(playerName + " discards " , discarded, " at random."));
             log.info("Game {} - {} discards {} at random ({})", gameData.id, playerName, discarded.getName(), sourceName);
             triggerCollectionService.checkDiscardTriggers(gameData, controllerId, discarded);
         }
@@ -79,7 +79,7 @@ public class DrawAndRandomDiscardWithSharedTypeCountersEffectHandler implements 
                 Permanent source = gameQueryService.findPermanentById(gameData, sourcePermanentId);
                 if (source != null && !gameQueryService.cantHaveCounters(gameData, source)) {
                     source.setCounterCount(CounterType.PLUS_ONE_PLUS_ONE, source.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE) + e.counterAmount());
-                    gameBroadcastService.logAndBroadcast(gameData, GameLog.builder()
+                    gameLogService.append(gameData, GameLog.builder()
                             .card(source.getCard())
                             .text(" gets " + e.counterAmount()
                                     + " +1/+1 counter" + (e.counterAmount() != 1 ? "s" : "")
@@ -90,7 +90,7 @@ public class DrawAndRandomDiscardWithSharedTypeCountersEffectHandler implements 
             }
         } else if (discardedCards.size() >= 2) {
             String logEntry = sourceName + "'s discarded cards do not share a card type — no counters.";
-            gameBroadcastService.logAndBroadcast(gameData, GameLog.text(logEntry));
+            gameLogService.append(gameData, GameLog.text(logEntry));
             log.info("Game {} - {} discarded cards do not share a card type", gameData.id, sourceName);
         }
     

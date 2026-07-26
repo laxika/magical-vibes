@@ -1,6 +1,6 @@
 package com.github.laxika.magicalvibes.ai.simulation;
 
-import com.github.laxika.magicalvibes.service.GameBroadcastService;
+import com.github.laxika.magicalvibes.service.GameActionAvailabilityService;
 import com.github.laxika.magicalvibes.service.GameRegistry;
 import com.github.laxika.magicalvibes.service.GameService;
 import com.github.laxika.magicalvibes.service.battlefield.GameQueryService;
@@ -34,7 +34,7 @@ public final class HeadlessSimulationContext {
             existing = new GameSimulator(
                     ctx.getBean(GameService.class),
                     ctx.getBean(GameQueryService.class),
-                    ctx.getBean(GameBroadcastService.class),
+                    ctx.getBean(GameActionAvailabilityService.class),
                     ctx.getBean(com.github.laxika.magicalvibes.service.cast.CastingCostService.class),
                     ctx.getBean(GameRegistry.class),
                     ctx.getBean(CombatAttackService.class),

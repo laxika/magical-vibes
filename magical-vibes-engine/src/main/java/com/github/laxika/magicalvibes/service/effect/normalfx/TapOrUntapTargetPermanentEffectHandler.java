@@ -6,7 +6,7 @@ import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.StackEntry;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
 import com.github.laxika.magicalvibes.model.effect.TapOrUntapTargetPermanentEffect;
-import com.github.laxika.magicalvibes.service.GameBroadcastService;
+import com.github.laxika.magicalvibes.service.GameLogService;
 import com.github.laxika.magicalvibes.service.battlefield.GameQueryService;
 import com.github.laxika.magicalvibes.service.trigger.TriggerCollectionService;
 import lombok.RequiredArgsConstructor;
@@ -19,7 +19,7 @@ import org.springframework.stereotype.Component;
 public class TapOrUntapTargetPermanentEffectHandler implements NormalEffectHandlerBean {
 
     private final GameQueryService gameQueryService;
-    private final GameBroadcastService gameBroadcastService;
+    private final GameLogService gameLogService;
     private final TriggerCollectionService triggerCollectionService;
 
     @Override
@@ -38,13 +38,13 @@ public class TapOrUntapTargetPermanentEffectHandler implements NormalEffectHandl
             target.untap();
             triggerCollectionService.checkBecomesUntappedTriggers(gameData, target);
             String logEntry = entry.getCard().getName() + " untaps " + target.getCard().getName() + ".";
-            gameBroadcastService.logAndBroadcast(gameData, GameLog.cardTextCard(entry.getCard(), " untaps ", target.getCard(), "."));
+            gameLogService.append(gameData, GameLog.cardTextCard(entry.getCard(), " untaps ", target.getCard(), "."));
             log.info("Game {} - {} untaps {}", gameData.id, entry.getCard().getName(), target.getCard().getName());
         } else {
             target.tap();
             triggerCollectionService.checkEnchantedPermanentTapTriggers(gameData, target);
             String logEntry = entry.getCard().getName() + " taps " + target.getCard().getName() + ".";
-            gameBroadcastService.logAndBroadcast(gameData, GameLog.cardTextCard(entry.getCard(), " taps ", target.getCard(), "."));
+            gameLogService.append(gameData, GameLog.cardTextCard(entry.getCard(), " taps ", target.getCard(), "."));
             log.info("Game {} - {} taps {}", gameData.id, entry.getCard().getName(), target.getCard().getName());
         }
     }

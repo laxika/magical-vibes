@@ -5,7 +5,7 @@ import com.github.laxika.magicalvibes.networking.SessionManager;
 import com.github.laxika.magicalvibes.networking.service.CardViewFactory;
 import com.github.laxika.magicalvibes.service.DrawService;
 import com.github.laxika.magicalvibes.service.CardRevealService;
-import com.github.laxika.magicalvibes.service.GameBroadcastService;
+import com.github.laxika.magicalvibes.service.GameLogService;
 import com.github.laxika.magicalvibes.service.battlefield.BattlefieldEntryService;
 import com.github.laxika.magicalvibes.service.battlefield.GameQueryService;
 import com.github.laxika.magicalvibes.service.battlefield.PermanentRemovalService;
@@ -31,7 +31,7 @@ final class PlayerInteractionHandlerTestSupport {
     static NormalEffectHandlerBean createHandler(String handlerSimpleName,
                                                  PlayerInteractionSupport support,
                                                  EffectHandlerRegistry registry,
-                                                 GameBroadcastService gameBroadcastService,
+                                                 GameLogService gameLogService,
                                                  CardRevealService cardRevealService,
                                                  DrawService drawService,
                                                  SessionManager sessionManager,
@@ -50,7 +50,7 @@ final class PlayerInteractionHandlerTestSupport {
             Map<Class<?>, Object> deps = new HashMap<>();
             deps.put(PlayerInteractionSupport.class, support);
             deps.put(EffectHandlerRegistry.class, registry);
-            deps.put(GameBroadcastService.class, gameBroadcastService);
+            deps.put(GameLogService.class, gameLogService);
             deps.put(CardRevealService.class, cardRevealService);
             deps.put(DrawService.class, drawService);
             deps.put(SessionManager.class, sessionManager);

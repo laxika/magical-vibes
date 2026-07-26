@@ -28,7 +28,7 @@ class LoseLifeUnlessDiscardEffectHandlerTest extends AbstractPlayerInteractionHa
                 resolveEffect(gd, entry, effect);
 
                 assertThat(gd.playerLifeTotals.get(player2Id)).isEqualTo(17);
-                verify(gameBroadcastService).logAndBroadcast(eq(gd), argThat((GameLogEntry logEntry) ->
+                verify(gameLogService).append(eq(gd), argThat((GameLogEntry logEntry) ->
                         logEntry.plainText().contains("no cards to discard") && logEntry.plainText().contains("loses 3 life")));
             }
 

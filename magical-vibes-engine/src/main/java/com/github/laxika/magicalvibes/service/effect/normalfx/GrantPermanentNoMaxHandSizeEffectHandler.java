@@ -5,7 +5,7 @@ import com.github.laxika.magicalvibes.model.GameLog;
 import com.github.laxika.magicalvibes.model.StackEntry;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantPermanentNoMaxHandSizeEffect;
-import com.github.laxika.magicalvibes.service.GameBroadcastService;
+import com.github.laxika.magicalvibes.service.GameLogService;
 import java.util.UUID;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -16,7 +16,7 @@ import org.springframework.stereotype.Component;
 @RequiredArgsConstructor
 public class GrantPermanentNoMaxHandSizeEffectHandler implements NormalEffectHandlerBean {
 
-    private final GameBroadcastService gameBroadcastService;
+    private final GameLogService gameLogService;
     private final PlayerInteractionSupport playerInteractionSupport;
 
     @Override
@@ -30,7 +30,7 @@ public class GrantPermanentNoMaxHandSizeEffectHandler implements NormalEffectHan
         UUID controllerId = entry.getControllerId();
         gameData.playersWithNoMaximumHandSize.add(controllerId);
         String playerName = gameData.playerIdToName.get(controllerId);
-        gameBroadcastService.logAndBroadcast(gameData, GameLog.text(playerName + " has no maximum hand size for the rest of the game."));
+        gameLogService.append(gameData, GameLog.text(playerName + " has no maximum hand size for the rest of the game."));
         log.info("Game {} - {} granted permanent no maximum hand size", gameData.id, playerName);
     
     }

@@ -37,7 +37,7 @@ class ChooseCardsFromTargetHandEffectHandlerTest extends AbstractPlayerInteracti
             resolveEffect(gd, entry, effect);
 
             assertThat(gd.discardCausedByOpponent).isTrue();
-            verify(gameBroadcastService).logAndBroadcast(eq(gd), argThat((GameLogEntry logEntry) ->
+            verify(gameLogService).append(eq(gd), argThat((GameLogEntry logEntry) ->
                     logEntry.plainText().contains("reveals their hand")));
             verify(interactionHandlerRegistry).begin(eq(gd), argThat(i ->
                     i instanceof PendingInteraction.RevealedHandChoice rhc
@@ -55,7 +55,7 @@ class ChooseCardsFromTargetHandEffectHandlerTest extends AbstractPlayerInteracti
 
             resolveEffect(gd, entry, effect);
 
-            verify(gameBroadcastService).logAndBroadcast(eq(gd), argThat((GameLogEntry logEntry) ->
+            verify(gameLogService).append(eq(gd), argThat((GameLogEntry logEntry) ->
                     logEntry.plainText().contains("hand") && logEntry.plainText().contains("empty")));
         }
     }
@@ -77,7 +77,7 @@ class ChooseCardsFromTargetHandEffectHandlerTest extends AbstractPlayerInteracti
 
             resolveEffect(gd, entry, effect);
 
-            verify(gameBroadcastService).logAndBroadcast(eq(gd), argThat((GameLogEntry logEntry) ->
+            verify(gameLogService).append(eq(gd), argThat((GameLogEntry logEntry) ->
                     logEntry.plainText().contains("reveals their hand")));
             verify(interactionHandlerRegistry).begin(eq(gd), argThat(i ->
                     i instanceof PendingInteraction.RevealedHandChoice rhc
@@ -115,7 +115,7 @@ class ChooseCardsFromTargetHandEffectHandlerTest extends AbstractPlayerInteracti
 
             resolveEffect(gd, entry, effect);
 
-            verify(gameBroadcastService).logAndBroadcast(eq(gd), argThat((GameLogEntry logEntry) ->
+            verify(gameLogService).append(eq(gd), argThat((GameLogEntry logEntry) ->
                     logEntry.plainText().contains("hand") && logEntry.plainText().contains("empty")));
         }
     }
@@ -134,7 +134,7 @@ class ChooseCardsFromTargetHandEffectHandlerTest extends AbstractPlayerInteracti
 
             resolveEffect(gd, entry, effect);
 
-            verify(gameBroadcastService).logAndBroadcast(eq(gd), argThat((GameLogEntry logEntry) ->
+            verify(gameLogService).append(eq(gd), argThat((GameLogEntry logEntry) ->
                     logEntry.plainText().contains("looks at") && logEntry.plainText().contains("Player2")));
             verify(interactionHandlerRegistry).begin(eq(gd), argThat(i ->
                     i instanceof PendingInteraction.RevealedHandChoice rhc
@@ -154,7 +154,7 @@ class ChooseCardsFromTargetHandEffectHandlerTest extends AbstractPlayerInteracti
             resolveEffect(gd, entry, effect);
 
             verify(interactionHandlerRegistry, never()).begin(any(), any());
-            verify(gameBroadcastService).logAndBroadcast(eq(gd), argThat((GameLogEntry logEntry) ->
+            verify(gameLogService).append(eq(gd), argThat((GameLogEntry logEntry) ->
                     logEntry.plainText().contains("empty")));
         }
     }

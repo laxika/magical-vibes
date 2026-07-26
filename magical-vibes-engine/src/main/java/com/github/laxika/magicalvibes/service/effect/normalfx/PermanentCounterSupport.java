@@ -12,7 +12,7 @@ import com.github.laxika.magicalvibes.model.StackEntryType;
 import com.github.laxika.magicalvibes.model.CounterType;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
 import com.github.laxika.magicalvibes.model.effect.TargetCategory;
-import com.github.laxika.magicalvibes.service.GameBroadcastService;
+import com.github.laxika.magicalvibes.service.GameLogService;
 import com.github.laxika.magicalvibes.service.battlefield.GameQueryService;
 import com.github.laxika.magicalvibes.service.filter.PredicateEvaluationService;
 import com.github.laxika.magicalvibes.service.input.PlayerInputService;
@@ -43,7 +43,7 @@ public class PermanentCounterSupport {
 
     private final GameQueryService gameQueryService;
     private final PredicateEvaluationService predicateEvaluationService;
-    private final GameBroadcastService gameBroadcastService;
+    private final GameLogService gameLogService;
     private final PlayerInputService playerInputService;
 
     public void removeCountersAndTransform(GameData gameData, Permanent self, CounterType counterType, String counterName) {
@@ -60,7 +60,7 @@ public class PermanentCounterSupport {
             default -> throw new IllegalStateException("Unsupported counter type: " + counterType);
         }
 
-        gameBroadcastService.logAndBroadcast(gameData, GameLog.textCardText(
+        gameLogService.append(gameData, GameLog.textCardText(
                 "All " + counterName + " counters removed from ", self.getCard(), "."));
         log.info("Game {} - All {} counters removed from {}", gameData.id, counterName, self.getCard().getName());
 
@@ -73,7 +73,7 @@ public class PermanentCounterSupport {
                 String frontName = frontCard.getName();
                 self.setCard(backFace);
                 self.setTransformed(true);
-                gameBroadcastService.logAndBroadcast(gameData, GameLog.cardTextCard(frontCard, " transforms into ", backFace, "."));
+                gameLogService.append(gameData, GameLog.cardTextCard(frontCard, " transforms into ", backFace, "."));
                 log.info("Game {} - {} transforms into {}", gameData.id, frontName, backFace.getName());
             }
         } else {
@@ -81,7 +81,7 @@ public class PermanentCounterSupport {
             String backName = backCard.getName();
             self.setCard(originalCard);
             self.setTransformed(false);
-            gameBroadcastService.logAndBroadcast(gameData, GameLog.cardTextCard(backCard, " transforms into ", originalCard, "."));
+            gameLogService.append(gameData, GameLog.cardTextCard(backCard, " transforms into ", originalCard, "."));
             log.info("Game {} - {} transforms into {}", gameData.id, backName, originalCard.getName());
         }
     }
@@ -93,7 +93,7 @@ public class PermanentCounterSupport {
         target.setCounterCount(CounterType.PLUS_ONE_PLUS_ONE, target.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE) + counters);
 
         String counterText = counters == 1 ? "a +1/+1 counter" : counters + " +1/+1 counters";
-        gameBroadcastService.logAndBroadcast(gameData, GameLog.cardThen(target.getCard(), " gets " + counterText + "."));
+        gameLogService.append(gameData, GameLog.cardThen(target.getCard(), " gets " + counterText + "."));
         log.info("Game {} - {} gets {} +1/+1 counter(s)", gameData.id, target.getCard().getName(), counters);
 
         firePlusOnePlusOneCountersPutOnSelfTriggers(gameData, target);
@@ -125,7 +125,7 @@ public class PermanentCounterSupport {
                 builder.card(affectedCards.get(i));
             }
             builder.text(".");
-            gameBroadcastService.logAndBroadcast(gameData, builder.build());
+            gameLogService.append(gameData, builder.build());
             log.info("Game {} - {} places {} counters on {} permanents", gameData.id,
                     entry.getCard().getName(), counterName, affectedCards.size());
         }
@@ -149,7 +149,7 @@ public class PermanentCounterSupport {
         }
 
         if (eligibleIds.isEmpty()) {
-            gameBroadcastService.logAndBroadcast(gameData, GameLog.cardThen(entry.getCard(), ": no eligible permanent to put counters on."));
+            gameLogService.append(gameData, GameLog.cardThen(entry.getCard(), ": no eligible permanent to put counters on."));
             log.info("Game {} - {} no eligible permanent for counter placement", gameData.id, entry.getCard().getName());
             return;
         }
@@ -237,7 +237,7 @@ public class PermanentCounterSupport {
 
         Card card = target.getCard();
         String counterText = count == 1 ? "a " + counterName + " counter" : count + " " + counterName + " counters";
-        gameBroadcastService.logAndBroadcast(gameData, GameLog.cardTextCard(entry.getCard(), " puts " + counterText + " on ", card, "."));
+        gameLogService.append(gameData, GameLog.cardTextCard(entry.getCard(), " puts " + counterText + " on ", card, "."));
         log.info("Game {} - {} puts {} {} counter(s) on {}", gameData.id,
                 entry.getCard().getName(), count, counterName, card.getName());
 
@@ -304,7 +304,7 @@ public class PermanentCounterSupport {
                 saga.getId()
         ));
 
-        gameBroadcastService.logAndBroadcast(gameData, GameLog.cardThen(card, "'s chapter " + chapterName + " ability triggers."));
+        gameLogService.append(gameData, GameLog.cardThen(card, "'s chapter " + chapterName + " ability triggers."));
         log.info("Game {} - {} chapter {} triggers", gameData.id, card.getName(), chapterName);
     }
 
@@ -362,7 +362,7 @@ public class PermanentCounterSupport {
                                 null,
                                 source.getId()
                         ));
-                        gameBroadcastService.logAndBroadcast(gameData, GameLog.cardThen(card, "'s triggered ability triggers."));
+                        gameLogService.append(gameData, GameLog.cardThen(card, "'s triggered ability triggers."));
                     }
                     log.info("Game {} - {} -1/-1-counter watcher fires {} time(s)", gameData.id, card.getName(), count);
                 }
@@ -381,7 +381,7 @@ public class PermanentCounterSupport {
                             null,
                             source.getId()
                     ));
-                    gameBroadcastService.logAndBroadcast(gameData, GameLog.cardThen(card, "'s triggered ability triggers."));
+                    gameLogService.append(gameData, GameLog.cardThen(card, "'s triggered ability triggers."));
                     log.info("Game {} - {} once-per-creature -1/-1-counter watcher fires", gameData.id, card.getName());
                 }
             }
@@ -423,14 +423,14 @@ public class PermanentCounterSupport {
                     : null;
             gameData.queueInteraction(new PermanentChoiceContext.SpellTargetTriggerAnyTarget(
                     card, controllerId, new ArrayList<>(effects), false, targetFilter));
-            gameBroadcastService.logAndBroadcast(gameData,
+            gameLogService.append(gameData,
                     GameLog.cardThen(card, "'s triggered ability triggers — choose a target."));
         } else {
             gameData.stack.add(new StackEntry(
                     StackEntryType.TRIGGERED_ABILITY, card, controllerId,
                     card.getName() + "'s triggered ability",
                     new ArrayList<>(effects), null, creature.getId()));
-            gameBroadcastService.logAndBroadcast(gameData, GameLog.cardThen(card, "'s triggered ability triggers."));
+            gameLogService.append(gameData, GameLog.cardThen(card, "'s triggered ability triggers."));
         }
         log.info("Game {} - {} self -1/-1-counter trigger fires", gameData.id, card.getName());
     }
@@ -480,7 +480,7 @@ public class PermanentCounterSupport {
                 target.getId()
         ));
 
-        gameBroadcastService.logAndBroadcast(gameData, GameLog.cardThen(card, "'s triggered ability triggers."));
+        gameLogService.append(gameData, GameLog.cardThen(card, "'s triggered ability triggers."));
         log.info("Game {} - {} +1/+1 counter trigger fires", gameData.id, card.getName());
     }
 }

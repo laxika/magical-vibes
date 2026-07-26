@@ -9,14 +9,14 @@ import com.github.laxika.magicalvibes.model.effect.CardEffect;
 import com.github.laxika.magicalvibes.model.effect.PayManaAndSearchLibraryForCardNamedToBattlefieldEffect;
 import java.util.UUID;
 import lombok.RequiredArgsConstructor;
-import com.github.laxika.magicalvibes.service.GameBroadcastService;
+import com.github.laxika.magicalvibes.service.GameLogService;
 import org.springframework.stereotype.Component;
 
 @Component
 @RequiredArgsConstructor
 public class PayManaAndSearchLibraryForCardNamedToBattlefieldEffectHandler implements NormalEffectHandlerBean {
 
-    private final GameBroadcastService gameBroadcastService;
+    private final GameLogService gameLogService;
     private final LibrarySearchSupport librarySearchSupport;
 
     @Override
@@ -38,7 +38,7 @@ public class PayManaAndSearchLibraryForCardNamedToBattlefieldEffectHandler imple
         ManaCost cost = new ManaCost(effect.manaCost());
         if (!cost.canPay(gameData.playerManaPools.get(controllerId))) {
             String logMsg = playerName + " can't pay " + effect.manaCost() + ".";
-            gameBroadcastService.logAndBroadcast(gameData, GameLog.text(logMsg));
+            gameLogService.append(gameData, GameLog.text(logMsg));
             return;
         }
 

@@ -44,7 +44,7 @@ class DiscardUpToThenDrawThatManyEffectHandlerTest extends AbstractPlayerInterac
                 resolveEffect(gd, entry, effect);
 
                 verify(interactionHandlerRegistry, never()).begin(any(), any());
-                verify(gameBroadcastService).logAndBroadcast(eq(gd), argThat((GameLogEntry logEntry) ->
+                verify(gameLogService).append(eq(gd), argThat((GameLogEntry logEntry) ->
                         logEntry.plainText().contains("no cards to discard")));
             }
 

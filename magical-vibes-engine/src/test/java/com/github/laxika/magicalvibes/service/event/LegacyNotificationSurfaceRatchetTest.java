@@ -24,8 +24,7 @@ import static org.assertj.core.api.Assertions.assertThat;
  *
  * <p>Direct state broadcasts and mutation-owned session sends have reached zero. The sole raw
  * session send in {@code GameMessageTransport} is excluded as the canonical transport adapter.
- * Remaining game-log counts may neither increase nor silently decrease without updating this
- * ratchet and agent-docs/DOMAIN_EVENTS.md.
+ * All three legacy notification surfaces have reached zero and may not return.
  */
 class LegacyNotificationSurfaceRatchetTest {
 
@@ -91,10 +90,33 @@ class LegacyNotificationSurfaceRatchetTest {
 
         BASELINE.put(LegacySurface.SESSION_SEND, Map.of());
 
-        BASELINE.put(LegacySurface.LOG_AND_BROADCAST, Map.ofEntries(
-                Map.entry("effect", 2),
-                Map.entry("effect/mayfx", 23),
-                Map.entry("effect/normalfx", 1271)));
+        BASELINE.put(LegacySurface.LOG_AND_BROADCAST, Map.of());
+    }
+
+    @Test
+    void removedBroadcastFacadeCannotReturn() throws IOException {
+        Path repoRoot = locateRepoRoot();
+        String removedType = "Game" + "Broadcast" + "Service";
+        Path removedSource = repoRoot.resolve(SERVICE_ROOT).resolve(removedType + ".java");
+        List<String> references = new ArrayList<>();
+
+        try (Stream<Path> paths = Files.walk(repoRoot)) {
+            for (Path path : (Iterable<Path>) paths
+                    .filter(Files::isRegularFile)
+                    .filter(file -> file.toString().endsWith(".java"))
+                    .filter(file -> !file.toString().contains(
+                            java.io.File.separator + "build" + java.io.File.separator))
+                    .sorted()::iterator) {
+                if (Files.readString(path, StandardCharsets.UTF_8).contains(removedType)) {
+                    references.add(repoRoot.relativize(path).toString().replace('\\', '/'));
+                }
+            }
+        }
+
+        assertThat(removedSource).doesNotExist();
+        assertThat(references)
+                .as("the removed forwarding facade must not be reintroduced or referenced")
+                .isEmpty();
     }
 
     @Test
@@ -227,8 +249,7 @@ class LegacyNotificationSurfaceRatchetTest {
                     .filter(file -> file.toString().endsWith(".java"))
                     .sorted()::iterator) {
                 String relative = serviceRoot.relativize(path).toString().replace('\\', '/');
-                if (relative.equals("GameBroadcastService.java")
-                        || relative.startsWith("input/")
+                if (relative.startsWith("input/")
                         || relative.startsWith("effect/")) {
                     continue;
                 }
@@ -320,10 +341,6 @@ class LegacyNotificationSurfaceRatchetTest {
                             && TRANSPORT_ADAPTERS.contains(relative)) {
                         count = 0;
                     }
-                    if (path.getFileName().toString().equals("GameBroadcastService.java")
-                            && surface.declarationInGameBroadcastService) {
-                        count--;
-                    }
                     if (count > 0) {
                         counts.get(surface).merge(family, count, Integer::sum);
                     }
@@ -360,21 +377,16 @@ class LegacyNotificationSurfaceRatchetTest {
 
     private enum LegacySurface {
         BROADCAST_GAME_STATE(
-                Pattern.compile("\\b(?:gameBroadcastService\\.)?broadcastGameState\\s*\\("),
-                false),
+                Pattern.compile("\\b(?:gameLogService\\.)?broadcastGameState\\s*\\(")),
         SESSION_SEND(
-                Pattern.compile("\\bsessionManager\\.sendToPlayers?\\s*\\("),
-                false),
+                Pattern.compile("\\bsessionManager\\.sendToPlayers?\\s*\\(")),
         LOG_AND_BROADCAST(
-                Pattern.compile("\\b(?:gameBroadcastService\\.)?logAndBroadcast\\s*\\("),
-                true);
+                Pattern.compile("\\b(?:gameLogService\\.)?logAndBroadcast\\s*\\("));
 
         private final Pattern pattern;
-        private final boolean declarationInGameBroadcastService;
 
-        LegacySurface(Pattern pattern, boolean declarationInGameBroadcastService) {
+        LegacySurface(Pattern pattern) {
             this.pattern = pattern;
-            this.declarationInGameBroadcastService = declarationInGameBroadcastService;
         }
     }
 }

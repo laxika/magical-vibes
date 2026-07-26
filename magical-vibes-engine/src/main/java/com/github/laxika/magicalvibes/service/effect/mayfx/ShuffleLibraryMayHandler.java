@@ -6,7 +6,7 @@ import com.github.laxika.magicalvibes.model.PendingMayAbility;
 import com.github.laxika.magicalvibes.model.Player;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
 import com.github.laxika.magicalvibes.model.effect.ShuffleLibraryEffect;
-import com.github.laxika.magicalvibes.service.GameBroadcastService;
+import com.github.laxika.magicalvibes.service.GameLogService;
 import com.github.laxika.magicalvibes.service.input.InputCompletionService;
 import com.github.laxika.magicalvibes.service.library.LibraryShuffleHelper;
 import java.util.UUID;
@@ -24,7 +24,7 @@ import org.springframework.stereotype.Component;
 @RequiredArgsConstructor
 public class ShuffleLibraryMayHandler implements MayEffectHandlerBean {
 
-    private final GameBroadcastService gameBroadcastService;
+    private final GameLogService gameLogService;
     private final InputCompletionService inputCompletionService;
 
     @Override
@@ -46,12 +46,12 @@ public class ShuffleLibraryMayHandler implements MayEffectHandlerBean {
         if (accepted) {
             LibraryShuffleHelper.shuffleLibrary(gameData, shuffleTargetId);
             String logEntry = shuffleTargetName + " shuffles their library.";
-            gameBroadcastService.logAndBroadcast(gameData, GameLog.text(logEntry));
+            gameLogService.append(gameData, GameLog.text(logEntry));
             log.info("Game {} - {} shuffles their library ({})", gameData.id,
                     shuffleTargetName, ability.sourceCard().getName());
         } else {
             String logEntry = player.getUsername() + " chooses not to shuffle.";
-            gameBroadcastService.logAndBroadcast(gameData, GameLog.text(logEntry));
+            gameLogService.append(gameData, GameLog.text(logEntry));
             log.info("Game {} - {} declines shuffle ({})", gameData.id,
                     player.getUsername(), ability.sourceCard().getName());
         }

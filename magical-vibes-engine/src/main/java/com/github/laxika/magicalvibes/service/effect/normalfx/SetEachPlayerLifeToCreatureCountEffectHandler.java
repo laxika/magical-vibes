@@ -6,7 +6,7 @@ import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.StackEntry;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
 import com.github.laxika.magicalvibes.model.effect.SetEachPlayerLifeToCreatureCountEffect;
-import com.github.laxika.magicalvibes.service.GameBroadcastService;
+import com.github.laxika.magicalvibes.service.GameLogService;
 import com.github.laxika.magicalvibes.service.battlefield.GameQueryService;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -22,7 +22,7 @@ public class SetEachPlayerLifeToCreatureCountEffectHandler implements NormalEffe
 
     private final LifeSupport lifeSupport;
     private final GameQueryService gameQueryService;
-    private final GameBroadcastService gameBroadcastService;
+    private final GameLogService gameLogService;
 
     @Override
     public Class<? extends CardEffect> handledEffect() {
@@ -46,7 +46,7 @@ public class SetEachPlayerLifeToCreatureCountEffectHandler implements NormalEffe
             if (lifeSupport.applySetLifeTotal(gameData, playerId, creatureCount)) {
                 if (currentLife != creatureCount) {
                     String playerName = gameData.playerIdToName.get(playerId);
-                    gameBroadcastService.logAndBroadcast(gameData, GameLog.text(playerName + "'s life total becomes " + creatureCount + " (was " + currentLife + ")."));
+                    gameLogService.append(gameData, GameLog.text(playerName + "'s life total becomes " + creatureCount + " (was " + currentLife + ")."));
                     log.info("Game {} - {}'s life set to {} (was {})",
                             gameData.id, playerName, creatureCount, currentLife);
                 }

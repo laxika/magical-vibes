@@ -41,7 +41,7 @@ class DiscardAndDrawCardEffectHandlerTest extends AbstractPlayerInteractionHandl
 
                 resolveEffect(gd, entry, effect);
 
-                verify(gameBroadcastService).logAndBroadcast(eq(gd), argThat((GameLogEntry logEntry) ->
+                verify(gameLogService).append(eq(gd), argThat((GameLogEntry logEntry) ->
                         logEntry.plainText().contains("no cards to discard")));
                 verify(playerInputService, never()).beginDiscardChoice(any(), any(), anyInt(),
                         any(DiscardFollowUp.class));

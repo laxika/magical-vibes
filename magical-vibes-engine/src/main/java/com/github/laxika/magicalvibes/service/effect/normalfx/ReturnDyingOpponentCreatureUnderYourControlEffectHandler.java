@@ -6,7 +6,7 @@ import com.github.laxika.magicalvibes.model.GameLog;
 import com.github.laxika.magicalvibes.model.StackEntry;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
 import com.github.laxika.magicalvibes.model.effect.ReturnDyingOpponentCreatureUnderYourControlEffect;
-import com.github.laxika.magicalvibes.service.GameBroadcastService;
+import com.github.laxika.magicalvibes.service.GameLogService;
 import com.github.laxika.magicalvibes.service.battlefield.BattlefieldEntryService;
 import java.util.Set;
 import java.util.UUID;
@@ -25,7 +25,7 @@ import org.springframework.stereotype.Component;
 public class ReturnDyingOpponentCreatureUnderYourControlEffectHandler implements NormalEffectHandlerBean {
 
     private final BattlefieldEntryService battlefieldEntryService;
-    private final GameBroadcastService gameBroadcastService;
+    private final GameLogService gameLogService;
     private final GraveyardReturnSupport graveyardReturnSupport;
 
     @Override
@@ -52,7 +52,7 @@ public class ReturnDyingOpponentCreatureUnderYourControlEffectHandler implements
         graveyardReturnSupport.trackStolenCreature(gameData, result.permanent().getId(), controllerId, result.originalOwnerId());
 
         String playerName = gameData.playerIdToName.get(controllerId);
-        gameBroadcastService.logAndBroadcast(gameData, GameLog.textCardText(playerName + " returns ", result.card(), " to the battlefield under their control."));
+        gameLogService.append(gameData, GameLog.textCardText(playerName + " returns ", result.card(), " to the battlefield under their control."));
 
         graveyardReturnSupport.handleCreatureEtbAndLegendRule(gameData, controllerId, result.permanent(), result.card());
     }

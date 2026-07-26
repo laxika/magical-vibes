@@ -8,7 +8,7 @@ import com.github.laxika.magicalvibes.model.StackEntry;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
 import com.github.laxika.magicalvibes.model.effect.PutCounterOnEachControlledPermanentEffect;
 import com.github.laxika.magicalvibes.model.filter.FilterContext;
-import com.github.laxika.magicalvibes.service.GameBroadcastService;
+import com.github.laxika.magicalvibes.service.GameLogService;
 import com.github.laxika.magicalvibes.service.battlefield.GameQueryService;
 import com.github.laxika.magicalvibes.service.effect.AmountContext;
 import com.github.laxika.magicalvibes.service.effect.AmountEvaluationService;
@@ -26,7 +26,7 @@ public class PutCounterOnEachControlledPermanentEffectHandler implements NormalE
 
     private final GameQueryService gameQueryService;
     private final PredicateEvaluationService predicateEvaluationService;
-    private final GameBroadcastService gameBroadcastService;
+    private final GameLogService gameLogService;
     private final PermanentCounterSupport permanentCounterSupport;
     private final AmountEvaluationService amountEvaluationService;
 
@@ -78,7 +78,7 @@ public class PutCounterOnEachControlledPermanentEffectHandler implements NormalE
         String counterName = permanentCounterSupport.counterTypeName(e.counterType());
         String counterText = amount == 1 ? "a " + counterName + " counter" : amount + " " + counterName + " counters";
         String logEntry = entry.getCard().getName() + " puts " + counterText + " on " + count + " permanent(s) you control.";
-        gameBroadcastService.logAndBroadcast(gameData, GameLog.builder().card(entry.getCard()).text(" puts " + counterText + " on " + count + " permanent(s) you control.").build());
+        gameLogService.append(gameData, GameLog.builder().card(entry.getCard()).text(" puts " + counterText + " on " + count + " permanent(s) you control.").build());
         log.info("Game {} - {} puts {} {} counter(s) on {} controlled permanent(s)", gameData.id,
                 entry.getCard().getName(), amount, counterName, count);
 

@@ -73,7 +73,7 @@ class DiscardCardThenEffectHandlerTest extends AbstractPlayerInteractionHandlerT
 
         verify(playerInputService, never()).beginDiscardChoice(any(), any(), anyList(),
                 anyString(), anyInt(), any());
-        verify(gameBroadcastService).logAndBroadcast(eq(gd), argThat((GameLogEntry logEntry) ->
+        verify(gameLogService).append(eq(gd), argThat((GameLogEntry logEntry) ->
                 logEntry.plainText().contains("no a land card to discard")));
     }
 }

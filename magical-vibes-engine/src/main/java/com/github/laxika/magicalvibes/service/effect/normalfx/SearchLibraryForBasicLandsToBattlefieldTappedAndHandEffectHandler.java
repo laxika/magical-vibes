@@ -17,7 +17,7 @@ import java.util.List;
 import java.util.UUID;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
-import com.github.laxika.magicalvibes.service.GameBroadcastService;
+import com.github.laxika.magicalvibes.service.GameLogService;
 import org.springframework.stereotype.Component;
 
 @Component
@@ -25,7 +25,7 @@ import org.springframework.stereotype.Component;
 @Slf4j
 public class SearchLibraryForBasicLandsToBattlefieldTappedAndHandEffectHandler implements NormalEffectHandlerBean {
 
-    private final GameBroadcastService gameBroadcastService;
+    private final GameLogService gameLogService;
     private final LibrarySearchSupport librarySearchSupport;
 
     @Override
@@ -47,7 +47,7 @@ public class SearchLibraryForBasicLandsToBattlefieldTappedAndHandEffectHandler i
 
         if (deck == null || deck.isEmpty()) {
             String logMsg = playerName + " searches their library but it is empty. Library is shuffled.";
-            gameBroadcastService.logAndBroadcast(gameData, GameLog.text(logMsg));
+            gameLogService.append(gameData, GameLog.text(logMsg));
             return;
         }
 
@@ -58,7 +58,7 @@ public class SearchLibraryForBasicLandsToBattlefieldTappedAndHandEffectHandler i
         if (basicLands.isEmpty()) {
             LibraryShuffleHelper.shuffleLibrary(gameData, controllerId);
             String logMsg = playerName + " searches their library but finds no basic land cards. Library is shuffled.";
-            gameBroadcastService.logAndBroadcast(gameData, GameLog.text(logMsg));
+            gameLogService.append(gameData, GameLog.text(logMsg));
             return;
         }
 

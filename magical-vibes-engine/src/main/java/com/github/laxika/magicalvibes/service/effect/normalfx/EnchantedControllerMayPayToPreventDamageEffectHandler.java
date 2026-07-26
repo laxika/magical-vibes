@@ -8,7 +8,7 @@ import com.github.laxika.magicalvibes.model.PendingInteraction;
 import com.github.laxika.magicalvibes.model.StackEntry;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
 import com.github.laxika.magicalvibes.model.effect.EnchantedControllerMayPayToPreventDamageEffect;
-import com.github.laxika.magicalvibes.service.GameBroadcastService;
+import com.github.laxika.magicalvibes.service.GameLogService;
 import com.github.laxika.magicalvibes.service.GameOutcomeService;
 import com.github.laxika.magicalvibes.service.battlefield.GameQueryService;
 import com.github.laxika.magicalvibes.service.cast.PotentialManaService;
@@ -34,7 +34,7 @@ public class EnchantedControllerMayPayToPreventDamageEffectHandler implements No
     private final DamageSupport damageSupport;
     private final GameQueryService gameQueryService;
     private final GameOutcomeService gameOutcomeService;
-    private final GameBroadcastService gameBroadcastService;
+    private final GameLogService gameLogService;
     private final InteractionHandlerRegistry interactionHandlerRegistry;
     private final PotentialManaService potentialManaService;
 
@@ -62,7 +62,7 @@ public class EnchantedControllerMayPayToPreventDamageEffectHandler implements No
                 // prompt; re-check the actual pool before charging.
                 ManaPool pool = gameData.playerManaPools.get(playerId);
                 if (payableFromPool(pool) < paid) {
-                    gameBroadcastService.logAndBroadcast(gameData, GameLog.text(
+                    gameLogService.append(gameData, GameLog.text(
                             playerName + " can't pay {" + paid + "} for " + cardName
                                     + " (tap mana sources, then choose the amount again)."));
                     log.info("Game {} - {} cannot yet pay {} for {} — re-prompting",
@@ -71,7 +71,7 @@ public class EnchantedControllerMayPayToPreventDamageEffectHandler implements No
                     return;
                 }
                 new ManaCost("{0}").pay(pool, paid);
-                gameBroadcastService.logAndBroadcast(gameData, GameLog.text(
+                gameLogService.append(gameData, GameLog.text(
                         playerName + " pays {" + paid + "} to prevent " + paid + " damage from " + cardName + "."));
                 log.info("Game {} - {} pays {} to prevent damage from {}", gameData.id, playerName, paid, cardName);
             }

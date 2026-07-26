@@ -6,7 +6,7 @@ import com.github.laxika.magicalvibes.model.GameLog;
 import com.github.laxika.magicalvibes.model.StackEntry;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
 import com.github.laxika.magicalvibes.model.effect.ReturnEnchantedCreatureToOwnerHandOnDeathEffect;
-import com.github.laxika.magicalvibes.service.GameBroadcastService;
+import com.github.laxika.magicalvibes.service.GameLogService;
 import com.github.laxika.magicalvibes.service.battlefield.GameQueryService;
 import com.github.laxika.magicalvibes.service.battlefield.PermanentRemovalService;
 import java.util.UUID;
@@ -22,7 +22,7 @@ public class ReturnEnchantedCreatureToOwnerHandOnDeathEffectHandler implements N
 
     private final PermanentRemovalService permanentRemovalService;
     private final GameQueryService gameQueryService;
-    private final GameBroadcastService gameBroadcastService;
+    private final GameLogService gameLogService;
 
     @Override
     public Class<? extends CardEffect> handledEffect() {
@@ -42,7 +42,7 @@ public class ReturnEnchantedCreatureToOwnerHandOnDeathEffectHandler implements N
 
         Card creatureCard = gameQueryService.findCardInGraveyardById(gameData, dyingCreatureCardId);
         if (creatureCard == null) {
-            gameBroadcastService.logAndBroadcast(gameData, GameLog.cardThen(entry.getCard(), "'s ability fizzles (creature not in graveyard)."));
+            gameLogService.append(gameData, GameLog.cardThen(entry.getCard(), "'s ability fizzles (creature not in graveyard)."));
             log.info("Game {} - {} death trigger fizzles (creature card {} not in graveyard)",
                     gameData.id, entry.getCard().getName(), dyingCreatureCardId);
             return;
@@ -54,7 +54,7 @@ public class ReturnEnchantedCreatureToOwnerHandOnDeathEffectHandler implements N
 
         String ownerName = gameData.playerIdToName.get(ownerId);
         String logEntry = creatureCard.getName() + " returns from graveyard to " + ownerName + "'s hand.";
-        gameBroadcastService.logAndBroadcast(gameData, GameLog.builder().card(creatureCard).text(" returns from graveyard to " + ownerName + "'s hand.").build());
+        gameLogService.append(gameData, GameLog.builder().card(creatureCard).text(" returns from graveyard to " + ownerName + "'s hand.").build());
         log.info("Game {} - {} returns {} from graveyard to {}'s hand",
                 gameData.id, entry.getCard().getName(), creatureCard.getName(), ownerName);
     }

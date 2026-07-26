@@ -6,7 +6,7 @@ import com.github.laxika.magicalvibes.model.GameLog;
 import com.github.laxika.magicalvibes.model.StackEntry;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
 import com.github.laxika.magicalvibes.model.effect.ReturnEnchantedCreatureToBattlefieldUnderOwnersControlOnDeathEffect;
-import com.github.laxika.magicalvibes.service.GameBroadcastService;
+import com.github.laxika.magicalvibes.service.GameLogService;
 import com.github.laxika.magicalvibes.service.battlefield.GameQueryService;
 import com.github.laxika.magicalvibes.service.battlefield.PermanentRemovalService;
 import java.util.UUID;
@@ -22,7 +22,7 @@ public class ReturnEnchantedCreatureToBattlefieldUnderOwnersControlOnDeathEffect
 
     private final PermanentRemovalService permanentRemovalService;
     private final GameQueryService gameQueryService;
-    private final GameBroadcastService gameBroadcastService;
+    private final GameLogService gameLogService;
     private final GraveyardReturnSupport graveyardReturnSupport;
 
     @Override
@@ -43,7 +43,7 @@ public class ReturnEnchantedCreatureToBattlefieldUnderOwnersControlOnDeathEffect
 
         Card creatureCard = gameQueryService.findCardInGraveyardById(gameData, dyingCreatureCardId);
         if (creatureCard == null) {
-            gameBroadcastService.logAndBroadcast(gameData, GameLog.cardThen(entry.getCard(), "'s ability fizzles (creature not in graveyard)."));
+            gameLogService.append(gameData, GameLog.cardThen(entry.getCard(), "'s ability fizzles (creature not in graveyard)."));
             log.info("Game {} - {} death trigger fizzles (creature card {} not in graveyard)",
                     gameData.id, entry.getCard().getName(), dyingCreatureCardId);
             return;

@@ -8,7 +8,7 @@ import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.StackEntry;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
 import com.github.laxika.magicalvibes.model.effect.CounterSpellAndGainControlIfArtifactOrCreatureEffect;
-import com.github.laxika.magicalvibes.service.GameBroadcastService;
+import com.github.laxika.magicalvibes.service.GameLogService;
 import com.github.laxika.magicalvibes.service.battlefield.BattlefieldEntryService;
 import java.util.Set;
 import java.util.UUID;
@@ -22,7 +22,7 @@ public class CounterSpellAndGainControlIfArtifactOrCreatureEffectHandler impleme
     private final CounterSupport counterSupport;
     private final GraveyardReturnSupport graveyardReturnSupport;
     private final BattlefieldEntryService battlefieldEntryService;
-    private final GameBroadcastService gameBroadcastService;
+    private final GameLogService gameLogService;
 
     @Override
     public Class<? extends CardEffect> handledEffect() {
@@ -53,6 +53,6 @@ public class CounterSpellAndGainControlIfArtifactOrCreatureEffectHandler impleme
         }
         graveyardReturnSupport.handleCreatureEtbAndLegendRule(gameData, controllerId, permanent, gained);
 
-        gameBroadcastService.logAndBroadcast(gameData, GameLog.textCardText(gameData.playerIdToName.get(controllerId) + " puts ", gained, " onto the battlefield under their control."));
+        gameLogService.append(gameData, GameLog.textCardText(gameData.playerIdToName.get(controllerId) + " puts ", gained, " onto the battlefield under their control."));
     }
 }

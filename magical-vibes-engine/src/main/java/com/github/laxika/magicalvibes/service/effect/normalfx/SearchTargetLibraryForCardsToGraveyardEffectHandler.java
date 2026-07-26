@@ -13,14 +13,14 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.UUID;
 import lombok.RequiredArgsConstructor;
-import com.github.laxika.magicalvibes.service.GameBroadcastService;
+import com.github.laxika.magicalvibes.service.GameLogService;
 import org.springframework.stereotype.Component;
 
 @Component
 @RequiredArgsConstructor
 public class SearchTargetLibraryForCardsToGraveyardEffectHandler implements NormalEffectHandlerBean {
 
-    private final GameBroadcastService gameBroadcastService;
+    private final GameLogService gameLogService;
     private final LibrarySearchSupport librarySearchSupport;
 
     @Override
@@ -46,7 +46,7 @@ public class SearchTargetLibraryForCardsToGraveyardEffectHandler implements Norm
 
         if (deck == null || deck.isEmpty()) {
             String logMsg = controllerName + " searches " + targetName + "'s library but it is empty. Library is shuffled.";
-            gameBroadcastService.logAndBroadcast(gameData, GameLog.text(logMsg));
+            gameLogService.append(gameData, GameLog.text(logMsg));
             return;
         }
 
@@ -57,7 +57,7 @@ public class SearchTargetLibraryForCardsToGraveyardEffectHandler implements Norm
         if (matchingCards.isEmpty()) {
             LibraryShuffleHelper.shuffleLibrary(gameData, targetPlayerId);
             String logMsg = controllerName + " searches " + targetName + "'s library but finds no matching cards. Library is shuffled.";
-            gameBroadcastService.logAndBroadcast(gameData, GameLog.text(logMsg));
+            gameLogService.append(gameData, GameLog.text(logMsg));
             return;
         }
 

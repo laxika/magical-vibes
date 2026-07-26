@@ -371,7 +371,7 @@ the applicable rules.
 - `computeValidTargetsForSpell` ← `GameMessageHandler` (frontend "what can I target"),
   `ExileCastTargetSupport` (exile-cast per-slot enumeration).
 - `computeValidTargetsForAbility` ← `GameMessageHandler`, `MayCopyHandlerService`.
-- `hasValidTargetsForSpell` ← `GameBroadcastService` (CR 601.2c castability gate).
+- `hasValidTargetsForSpell` ← the former projection-query facade (CR 601.2c castability gate).
 - `isValidSpellPermanentTarget` / `isValidMultiTargetPermanent` ← AI `AiTargetSelector`.
 - `canPermanentBeTargetedBySpell` ← `CopySpellForEachOtherSubtypePermanentEffectHandler`
   (resolution-time copy retarget).
@@ -1931,7 +1931,7 @@ accept/decline method verbatim, a few re-extract their typed effect (mirroring t
 - 36 `CopyPermanentOnEnterEffect` → `CopyPermanentOnEnterChoiceHandler` (extracts effect)
 - 37 `SacrificeArtifactThenDealDividedDamageEffect` → `SacrificeArtifactForDividedDamageHandler`
 - 38 `SphinxAmbassadorPutOnBattlefieldEffect` → `SphinxAmbassadorPutOnBattlefieldChoiceHandler`
-- 39 `ShuffleLibraryEffect` → `ShuffleLibraryMayHandler` (**inline**: injects `GameBroadcastService` +
+- 39 `ShuffleLibraryEffect` → `ShuffleLibraryMayHandler` (**inline**: injects the legacy notification facade +
   `InputCompletionService`, calls `LibraryShuffleHelper.shuffleLibrary`, verbatim log/broadcast text)
 
 ### Documented survivors — stay in `MayAbilityHandlerService` (22 counted `instanceof`)
@@ -2238,7 +2238,7 @@ Site enumeration reconciles exactly with the ratchet baseline (`ActivatedAbility
 | 30–38 | PMS · `buildVirtualManaPool` / `buildLandOnlyVirtualManaPool` / `buildSafeVirtualManaPool` ON_TAP switch (×3) | `AwardManaEffect`, `AwardAnyColorManaEffect`, `AwardAnyColorChosenSubtypeCreatureManaEffect` | (a) | **LEAVE.** These are virtual-pool *estimation* — the exact use the step-7 facets were built for — and the `AwardMana`/`AwardAnyColor` branches map to `estimatedManaColor()`/`estimatedWildcardMana()` byte-identically. **But `AwardAnyColorChosenSubtype…` has a creature-mana asymmetry** (it alone does *not* call `addCreatureMana` even when the source is a creature). Collapsing the switch preserves this only via an awkward `estimatedCountsAllColors()`-gates-creature-mana coupling — a subtle mana-behavior wrinkle → the step's "ANY ambiguity → (b)/leave" rule applies. Migrating only the fixed-color branch leaves a hybrid switch mixing facets with `instanceof` in rules-adjacent code. |
 | 39–40 | PMS · `addActivatedManaAbilitiesToVirtualPool` | `AwardManaEffect`, `AwardAnyColorManaEffect` | (a) | **LEAVE.** Same estimation shape as #30–38; migrating only these two leaves the surrounding over-count bookkeeping and would be an isolated partial change with no net dispatch removal. |
 | 41 | PMS · `wouldManaAbilityTriggerChoice` | grouped `AwardAnyColorManaEffect` / `…ChosenSubtype…` / `…WithInstantSorceryCopy` / `AwardFlashbackOnlyAnyColor` | (b) | **Recognition-of-flow:** predicts whether resolution will open a color-choice interaction — a resolution-flow fact, not a production description. |
-| 42 | PMS · `hasOnTapManaEffects` | grouped `AwardManaEffect` / `AwardAnyColorManaEffect` / `…ChosenSubtype…` | (a) | **LEAVE (closest call).** This trio == exactly `modeledByManaEstimator()`, so `e instanceof ManaProducingEffect mp && mp.modeledByManaEstimator()` is byte-identical and self-contained. **But** step 7 explicitly considered *this exact check* and left it as engine mana logic; it feeds both AI planning and `GameBroadcastService`'s "castable" UI hints. Re-migrating one helper does not justify editing the highest-risk file, and it would route an AI-estimator facet through a shared engine/broadcast path. Left for consistency with step 7. |
+| 42 | PMS · `hasOnTapManaEffects` | grouped `AwardManaEffect` / `AwardAnyColorManaEffect` / `…ChosenSubtype…` | (a) | **LEAVE (closest call).** This trio == exactly `modeledByManaEstimator()`, so `e instanceof ManaProducingEffect mp && mp.modeledByManaEstimator()` is byte-identical and self-contained. **But** step 7 explicitly considered *this exact check* and left it as engine mana logic; it feeds both AI planning and the action-availability query's castable hints. Re-migrating one helper does not justify editing the highest-risk file, and it would route an AI-estimator facet through a shared rules-query path. Left for consistency with step 7. |
 | 43–44 | `LandTapTriggerCollectorService` · `handleAddExtraManaOfChosenColor` / `handleAddOneOfEachManaType` | `AwardManaEffect` (of the **tapped land**) | (b) | Each reads a **different permanent's** (the tapped land's) fixed-color production to drive a trigger rider ("does the land produce the chosen color" / "what is its first produced color") — flow support inside a per-type trigger handler, order-dependent, not the effect's own production. |
 
 *(Out of scope — non-mana `instanceof` the ratchet also counts in these files but which are not mana
@@ -2289,7 +2289,7 @@ Closing step of the effect-dispatch program. Every remaining violation file in
 and if so do those files answer the **same** question or do **different** flow work?"). The
 per-file cross/single split was computed mechanically from matrix section (ii); the FACT-vs-FLOW
 calls were verified by reading the actual dispatch sites. **Outcome: NO production change — zero
-clean cross-file FACT migrations exist.** The one real migration hotspot (`GameBroadcastService`,
+clean cross-file FACT migrations exist.** The one real migration hotspot (the former projection-query facade,
 the UI-recompute layer paired with every casting service) was read in full and yields nothing:
 its `instanceof` are display/visibility reads that already delegate the rules logic to the partner
 service (`getCastableTypesFromTopOfLibrary`, `getCastCostModifier`, `getMaxSpellsPerTurn`, …). This
@@ -2324,7 +2324,7 @@ record used as a bare marker (a one-implementor interface would remove no coupli
   `TapXPermanentsCost`, `RemoveChargeCountersFromSourceCost`, …). `AbilityActivationService`
   **pays** them, `MayPenaltyChoiceHandlerService` drives the **penalty choice**, the AI **values**
   them (via step-17 `CostEffect` facets / step-18). Three different flows on the same cost record.
-- **CAST-VIEW** — `GameBroadcastService` recomputes castability/cost/permission/visibility for the
+- **CAST-VIEW** — `GameActionAvailabilityService` computes castability/cost/permission for the
   client, reading `KickerEffect`, `AllowCastFromTopOfLibraryEffect`, `CantSearchLibrariesEffect`,
   `ReduceOwnCastCostIfTargeting{ControlledPermanent,Permanent,StackEntry}Effect` — but as
   **display/visibility** reads that mirror (and already delegate) the rules logic in
@@ -2388,7 +2388,7 @@ No file is a `candidate`.
 | `trigger/TriggerCollectionService` | 14 | SINGLE-OWNER + FLOW | Trigger-collection registry; 6 single-owner, 3 cross are TRIG-COND / MISC-PAIR. |
 | `DamagePreventionService` | 13 | SINGLE-OWNER + FLOW | Damage-prevention registry (12 single-owner `Prevent*` types); 1 cross is MISC-PAIR (`DelayedPlusOne…Regrowth`). |
 | `combat/CombatAttackService` | 13 | SINGLE-OWNER + FLOW | Attack-legality registry; 10 single-owner, 3 cross are TRIG-COND / MISC-PAIR (`MustBlockSource`). |
-| `GameBroadcastService` | 11 | CROSS-FILE FLOW | UI-recompute layer; all 6 cross are CAST-VIEW (display/visibility reads that already delegate rules logic); 5 single-owner reveal/tax markers. Read in full — the migration hotspot, nothing clean. |
+| Former projection-query facade | 11 | CROSS-FILE FLOW | UI-recompute layer; all 6 cross are CAST-VIEW (display/visibility reads that already delegate rules logic); 5 single-owner reveal/tax markers. Read in full — the migration hotspot, nothing clean. |
 | `ai/AiTargetSelector` | 10 | SETTLED (step 18) | GY-TARGET family left whole (leaky). |
 | `input/MayPenaltyChoiceHandlerService` | 10 | SETTLED (step 16) | Sibling may-service; 2 cross are COST-PAY. |
 | `DrawService` | 9 | SINGLE-OWNER | Sole registry for its 9 draw-replacement types. |
@@ -2452,4 +2452,3 @@ is not strictly required, but run it if you want the safety confirmation before 
 doc-only change. **This table closes the effect-dispatch refactor program:** every remaining
 `instanceof <ConcreteEffect>` violation is now a documented permanent survivor (SINGLE-OWNER registry
 or CROSS-FILE FLOW), so no future session should re-audit them.
-

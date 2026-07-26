@@ -6,7 +6,7 @@ import com.github.laxika.magicalvibes.model.ManaPool;
 import com.github.laxika.magicalvibes.model.StackEntry;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
 import com.github.laxika.magicalvibes.model.effect.TargetPlayerLosesAllUnspentManaEffect;
-import com.github.laxika.magicalvibes.service.GameBroadcastService;
+import com.github.laxika.magicalvibes.service.GameLogService;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Component;
@@ -18,7 +18,7 @@ import java.util.UUID;
 @RequiredArgsConstructor
 public class TargetPlayerLosesAllUnspentManaEffectHandler implements NormalEffectHandlerBean {
 
-    private final GameBroadcastService gameBroadcastService;
+    private final GameLogService gameLogService;
 
     @Override
     public Class<? extends CardEffect> handledEffect() {
@@ -40,7 +40,7 @@ public class TargetPlayerLosesAllUnspentManaEffectHandler implements NormalEffec
         manaPool.clear();
         manaPool.clearPersistentMana();
 
-        gameBroadcastService.logAndBroadcast(gameData, GameLog.cardThen(entry.getCard(), " empties the targeted player's mana pool."));
+        gameLogService.append(gameData, GameLog.cardThen(entry.getCard(), " empties the targeted player's mana pool."));
         log.info("Game {} - {} empties target player's mana pool", gameData.id, entry.getCard().getName());
     }
 }

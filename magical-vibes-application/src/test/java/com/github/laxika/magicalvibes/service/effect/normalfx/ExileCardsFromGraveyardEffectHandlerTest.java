@@ -6,7 +6,7 @@ import com.github.laxika.magicalvibes.model.GameData;
 import com.github.laxika.magicalvibes.model.StackEntry;
 import com.github.laxika.magicalvibes.model.StackEntryType;
 import com.github.laxika.magicalvibes.model.effect.ExileCardsFromGraveyardEffect;
-import com.github.laxika.magicalvibes.service.GameBroadcastService;
+import com.github.laxika.magicalvibes.service.GameLogService;
 import com.github.laxika.magicalvibes.service.input.PlayerInputService;
 import com.github.laxika.magicalvibes.service.battlefield.BattlefieldEntryService;
 import com.github.laxika.magicalvibes.service.battlefield.GameQueryService;
@@ -44,7 +44,7 @@ class ExileCardsFromGraveyardEffectHandlerTest {
     @Mock
     private GameQueryService gameQueryService;
     @Mock
-    private GameBroadcastService gameBroadcastService;
+    private GameLogService gameLogService;
     @Mock
     private PlayerInputService playerInputService;
     @Mock
@@ -81,7 +81,7 @@ class ExileCardsFromGraveyardEffectHandlerTest {
         gd.playerDecks.put(player1Id, Collections.synchronizedList(new ArrayList<>()));
         gd.playerDecks.put(player2Id, Collections.synchronizedList(new ArrayList<>()));
         exileCardsFromGraveyardHandler = new ExileCardsFromGraveyardEffectHandler(
-                gameQueryService, gameBroadcastService, lifeSupport, support);
+                gameQueryService, gameLogService, lifeSupport, support);
 
     }
 
@@ -92,7 +92,7 @@ class ExileCardsFromGraveyardEffectHandlerTest {
         }
 
         // =========================================================================
-        // describeFilter â€” static utility method
+        // describeFilter A?€�t static utility method
         // =========================================================================
 
     @Test
@@ -115,7 +115,7 @@ class ExileCardsFromGraveyardEffectHandlerTest {
 
                 verify(exileService).exileCard(gd, player1Id, creature);
                 verify(exileService).exileCard(gd, player2Id, artifact);
-                verify(gameBroadcastService).logAndBroadcast(eq(gd), argThat((GameLogEntry logEntry) ->
+                verify(gameLogService).append(eq(gd), argThat((GameLogEntry logEntry) ->
                         logEntry.plainText().contains("exiles") && logEntry.plainText().contains("Grizzly Bears")
                                 && logEntry.plainText().contains("Leonin Scimitar")));
             }
@@ -154,6 +154,6 @@ class ExileCardsFromGraveyardEffectHandlerTest {
                 exileCardsFromGraveyardHandler.resolve(gd, entry, effect);
 
                 verify(exileService, never()).exileCard(any(), any(), any());
-                verify(gameBroadcastService, never()).logAndBroadcast(any(), any(GameLogEntry.class));
+                verify(gameLogService, never()).append(any(), any(GameLogEntry.class));
             }
 }

@@ -6,7 +6,7 @@ import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.StackEntry;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
 import com.github.laxika.magicalvibes.model.effect.DoubleSelfPowerToughnessEffect;
-import com.github.laxika.magicalvibes.service.GameBroadcastService;
+import com.github.laxika.magicalvibes.service.GameLogService;
 import com.github.laxika.magicalvibes.service.battlefield.GameQueryService;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -20,7 +20,7 @@ import java.util.UUID;
 public class DoubleSelfPowerToughnessEffectHandler implements NormalEffectHandlerBean {
 
     private final GameQueryService gameQueryService;
-    private final GameBroadcastService gameBroadcastService;
+    private final GameLogService gameLogService;
 
     @Override
     public Class<? extends CardEffect> handledEffect() {
@@ -42,7 +42,7 @@ public class DoubleSelfPowerToughnessEffectHandler implements NormalEffectHandle
         self.setToughnessModifier(self.getToughnessModifier() + currentToughness);
 
         String logEntry = self.getCard().getName() + "'s power and toughness are doubled (+" + currentPower + "/+" + currentToughness + ").";
-        gameBroadcastService.logAndBroadcast(gameData, GameLog.builder().card(self.getCard()).text("'s power and toughness are doubled (+" + currentPower + "/+" + currentToughness + ").").build());
+        gameLogService.append(gameData, GameLog.builder().card(self.getCard()).text("'s power and toughness are doubled (+" + currentPower + "/+" + currentToughness + ").").build());
 
         log.info("Game {} - {} power/toughness doubled (+{}/+{})", gameData.id, self.getCard().getName(), currentPower, currentToughness);
     }

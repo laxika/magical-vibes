@@ -8,7 +8,7 @@ import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.StackEntry;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
 import com.github.laxika.magicalvibes.model.effect.SoulbrightFlamekinEffect;
-import com.github.laxika.magicalvibes.service.GameBroadcastService;
+import com.github.laxika.magicalvibes.service.GameLogService;
 import com.github.laxika.magicalvibes.service.battlefield.GameQueryService;
 import java.util.UUID;
 import lombok.RequiredArgsConstructor;
@@ -30,7 +30,7 @@ public class SoulbrightFlamekinEffectHandler implements NormalEffectHandlerBean 
     private static final int MANA_AMOUNT = 8;
 
     private final GameQueryService gameQueryService;
-    private final GameBroadcastService gameBroadcastService;
+    private final GameLogService gameLogService;
 
     @Override
     public Class<? extends CardEffect> handledEffect() {
@@ -57,6 +57,6 @@ public class SoulbrightFlamekinEffectHandler implements NormalEffectHandlerBean 
             pool.addCreatureMana(ManaColor.RED, MANA_AMOUNT);
         }
 
-        gameBroadcastService.logAndBroadcast(gameData, GameLog.builder().card(entry.getCard()).text(" adds " + MANA_AMOUNT + " " + ManaColor.RED.getCode() + ".").build());
+        gameLogService.append(gameData, GameLog.builder().card(entry.getCard()).text(" adds " + MANA_AMOUNT + " " + ManaColor.RED.getCode() + ".").build());
     }
 }

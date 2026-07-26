@@ -11,8 +11,10 @@ import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.Player;
 import com.github.laxika.magicalvibes.model.Zone;
 import com.github.laxika.magicalvibes.model.TurnStep;
+import com.github.laxika.magicalvibes.model.event.GameEventAudience;
+import com.github.laxika.magicalvibes.model.event.GameEventFact;
 import com.github.laxika.magicalvibes.service.DrawService;
-import com.github.laxika.magicalvibes.service.GameBroadcastService;
+import com.github.laxika.magicalvibes.service.GameActionAvailabilityService;
 import com.github.laxika.magicalvibes.service.GameRegistry;
 import com.github.laxika.magicalvibes.service.GameService;
 import com.github.laxika.magicalvibes.service.interaction.InteractionAnswer;
@@ -26,6 +28,7 @@ import com.github.laxika.magicalvibes.service.combat.CombatAttackService;
 import com.github.laxika.magicalvibes.service.effect.TargetValidationService;
 import com.github.laxika.magicalvibes.service.effect.normalfx.LifeSupport;
 import com.github.laxika.magicalvibes.service.event.GameMutationCoordinator;
+import com.github.laxika.magicalvibes.service.event.GameEventSubscriber;
 import com.github.laxika.magicalvibes.service.input.PlayerInputService;
 import com.github.laxika.magicalvibes.service.spell.SpellCastingService;
 import com.github.laxika.magicalvibes.service.state.StateBasedActionService;
@@ -59,8 +62,9 @@ public class GameTestHarness {
     private static StackResolutionService staticStackResolutionService;
     private static DrawService staticDrawService;
     private static PlayerInputService staticPlayerInputService;
-    private static GameBroadcastService staticGameBroadcastService;
+    private static GameActionAvailabilityService staticGameActionAvailabilityService;
     private static GameMutationCoordinator staticMutationCoordinator;
+    private static TestGameEventSubscriber staticTestGameEventSubscriber;
     private static com.github.laxika.magicalvibes.service.cast.CastingCostService staticCastingCostService;
     private static com.github.laxika.magicalvibes.service.cast.CastingPermissionService staticCastingPermissionService;
     private static BattlefieldEntryService staticBattlefieldEntryService;
@@ -89,8 +93,9 @@ public class GameTestHarness {
         staticStackResolutionService = context.getBean(StackResolutionService.class);
         staticDrawService = context.getBean(DrawService.class);
         staticPlayerInputService = context.getBean(PlayerInputService.class);
-        staticGameBroadcastService = context.getBean(GameBroadcastService.class);
+        staticGameActionAvailabilityService = context.getBean(GameActionAvailabilityService.class);
         staticMutationCoordinator = context.getBean(GameMutationCoordinator.class);
+        staticTestGameEventSubscriber = context.getBean(TestGameEventSubscriber.class);
         staticCastingCostService = context.getBean(com.github.laxika.magicalvibes.service.cast.CastingCostService.class);
         staticCastingPermissionService = context.getBean(com.github.laxika.magicalvibes.service.cast.CastingPermissionService.class);
         staticBattlefieldEntryService = context.getBean(BattlefieldEntryService.class);
@@ -121,7 +126,7 @@ public class GameTestHarness {
     private final StackResolutionService stackResolutionService;
     private final DrawService drawService;
     private final PlayerInputService playerInputService;
-    private final GameBroadcastService gameBroadcastService;
+    private final GameActionAvailabilityService actionAvailabilityService;
     private final GameMutationCoordinator mutationCoordinator;
     private final com.github.laxika.magicalvibes.service.cast.CastingCostService castingCostService;
     private final com.github.laxika.magicalvibes.service.cast.CastingPermissionService castingPermissionService;
@@ -138,6 +143,7 @@ public class GameTestHarness {
         // Reset shared mutable state
         staticGameRegistry.reset();
         staticSessionManager.reset();
+        staticTestGameEventSubscriber.reset();
 
         // Alias static services to instance fields (preserves existing API)
         gameRegistry = staticGameRegistry;
@@ -153,7 +159,7 @@ public class GameTestHarness {
         stackResolutionService = staticStackResolutionService;
         drawService = staticDrawService;
         playerInputService = staticPlayerInputService;
-        gameBroadcastService = staticGameBroadcastService;
+        actionAvailabilityService = staticGameActionAvailabilityService;
         mutationCoordinator = staticMutationCoordinator;
         castingCostService = staticCastingCostService;
         castingPermissionService = staticCastingPermissionService;
@@ -1061,14 +1067,43 @@ public class GameTestHarness {
         return playerInputService;
     }
 
-    public GameBroadcastService getGameBroadcastService() {
-        return gameBroadcastService;
+    public GameActionAvailabilityService getGameActionAvailabilityService() {
+        return actionAvailabilityService;
     }
 
     /** Publishes the current authoritative state through the canonical event projector. */
     public void publishState() {
         mutationCoordinator.mutate(gameData, () ->
                 mutationCoordinator.invalidateAllPlayerViews(gameData));
+    }
+
+    /**
+     * Attaches a downstream module's real event subscriber to this harness's canonical batches.
+     */
+    public AutoCloseable subscribeToGameEvents(GameEventSubscriber subscriber) {
+        return staticTestGameEventSubscriber.subscribe(subscriber);
+    }
+
+    /**
+     * Replays the authoritative pending mulligan decisions after a module-specific subscriber
+     * has attached to the already-created harness game.
+     */
+    public void replayPendingMulliganDecisions() {
+        mutationCoordinator.mutate(gameData, () -> {
+            for (UUID playerId : gameData.orderedPlayerIds) {
+                UUID decisionId = gameData.playerMulliganDecisionIds.get(playerId);
+                if (decisionId != null && !gameData.playerKeptHand.contains(playerId)) {
+                    mutationCoordinator.emit(
+                            gameData,
+                            new GameEventFact.DecisionRequested(
+                                    decisionId,
+                                    playerId,
+                                    GameEventFact.DecisionKind.MULLIGAN,
+                                    GameEventFact.DecisionDelivery.REPLAY_REQUESTED),
+                            GameEventAudience.player(playerId));
+                }
+            }
+        });
     }
 
     public com.github.laxika.magicalvibes.service.cast.CastingCostService getCastingCostService() {

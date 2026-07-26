@@ -5,7 +5,7 @@ import com.github.laxika.magicalvibes.model.GameLog;
 import com.github.laxika.magicalvibes.model.StackEntry;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
 import com.github.laxika.magicalvibes.model.effect.OtherCreaturesCantAttackThisTurnEffect;
-import com.github.laxika.magicalvibes.service.GameBroadcastService;
+import com.github.laxika.magicalvibes.service.GameLogService;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Component;
@@ -25,7 +25,7 @@ import java.util.UUID;
 @RequiredArgsConstructor
 public class OtherCreaturesCantAttackThisTurnEffectHandler implements NormalEffectHandlerBean {
 
-    private final GameBroadcastService gameBroadcastService;
+    private final GameLogService gameLogService;
 
     @Override
     public Class<? extends CardEffect> handledEffect() {
@@ -37,7 +37,7 @@ public class OtherCreaturesCantAttackThisTurnEffectHandler implements NormalEffe
         UUID exemptCreatureId = entry.getTargetId();
         gameData.otherCreaturesCantAttackExemptCreatureIds.add(exemptCreatureId);
 
-        gameBroadcastService.logAndBroadcast(gameData, GameLog.text("Other creatures can't attack this turn."));
+        gameLogService.append(gameData, GameLog.text("Other creatures can't attack this turn."));
         log.info("Game {} - other creatures (except {}) can't attack this turn", gameData.id, exemptCreatureId);
     }
 }

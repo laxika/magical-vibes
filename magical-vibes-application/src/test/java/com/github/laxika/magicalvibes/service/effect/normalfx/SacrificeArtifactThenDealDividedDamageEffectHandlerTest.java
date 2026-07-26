@@ -48,7 +48,7 @@ class SacrificeArtifactThenDealDividedDamageEffectHandlerTest extends AbstractPl
                 resolveEffect(gd, entry, effect);
 
                 verify(playerInputService, never()).beginPermanentChoice(any(), any(), any(), any());
-                verify(gameBroadcastService).logAndBroadcast(eq(gd), argThat((GameLogEntry logEntry) ->
+                verify(gameLogService).append(eq(gd), argThat((GameLogEntry logEntry) ->
                         logEntry.plainText().contains("no artifacts")));
                 assertThat(gd.pendingETBDamageAssignments).isEmpty();
             }

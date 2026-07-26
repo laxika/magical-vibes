@@ -5,7 +5,7 @@ import com.github.laxika.magicalvibes.model.GameLog;
 import com.github.laxika.magicalvibes.model.StackEntry;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
 import com.github.laxika.magicalvibes.model.effect.EndTurnEffect;
-import com.github.laxika.magicalvibes.service.GameBroadcastService;
+import com.github.laxika.magicalvibes.service.GameLogService;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Component;
@@ -16,7 +16,7 @@ import org.springframework.stereotype.Component;
 public class EndTurnEffectHandler implements NormalEffectHandlerBean {
 
     private final TurnSupport turnSupport;
-    private final GameBroadcastService gameBroadcastService;
+    private final GameLogService gameLogService;
 
     @Override
     public Class<? extends CardEffect> handledEffect() {
@@ -40,7 +40,7 @@ public class EndTurnEffectHandler implements NormalEffectHandlerBean {
         // Flag so resolveTopOfStack exiles the resolving card instead of graveyard (rule 723.1b)
         gameData.endTurnRequested = true;
 
-        gameBroadcastService.logAndBroadcast(gameData, GameLog.text("The turn ends."));
+        gameLogService.append(gameData, GameLog.text("The turn ends."));
         log.info("Game {} - End the turn effect resolved, skipping to cleanup", gameData.id);
     }
 }

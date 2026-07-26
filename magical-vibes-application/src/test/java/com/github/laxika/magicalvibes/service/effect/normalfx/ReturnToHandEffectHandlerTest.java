@@ -24,7 +24,7 @@ import com.github.laxika.magicalvibes.model.filter.PermanentIsArtifactPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsCreaturePredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsLandPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentNotPredicate;
-import com.github.laxika.magicalvibes.service.GameBroadcastService;
+import com.github.laxika.magicalvibes.service.GameLogService;
 import com.github.laxika.magicalvibes.service.GameOutcomeService;
 import com.github.laxika.magicalvibes.service.battlefield.GameQueryService;
 import com.github.laxika.magicalvibes.service.battlefield.PermanentRemovalService;
@@ -49,7 +49,7 @@ import org.mockito.junit.jupiter.MockitoExtension;
 class ReturnToHandEffectHandlerTest {
 
     @Mock private GameQueryService gameQueryService;
-    @Mock private GameBroadcastService gameBroadcastService;
+    @Mock private GameLogService gameLogService;
     @Mock private GameOutcomeService gameOutcomeService;
     @Mock private PermanentRemovalService permanentRemovalService;
     @Mock private PredicateEvaluationService predicateEvaluationService;
@@ -76,8 +76,8 @@ class ReturnToHandEffectHandlerTest {
         gd.playerBattlefields.put(player1Id, Collections.synchronizedList(new ArrayList<>()));
         gd.playerBattlefields.put(player2Id, Collections.synchronizedList(new ArrayList<>()));
 
-        bounceSupport = new BounceSupport(gameQueryService, gameBroadcastService, permanentRemovalService, stateTriggerService);
-        handler = new ReturnToHandEffectHandler(gameQueryService, gameBroadcastService, gameOutcomeService,
+        bounceSupport = new BounceSupport(gameQueryService, gameLogService, permanentRemovalService, stateTriggerService);
+        handler = new ReturnToHandEffectHandler(gameQueryService, gameLogService, gameOutcomeService,
                 permanentRemovalService, predicateEvaluationService, bounceSupport, playerInteractionSupport);
     }
 
@@ -144,7 +144,7 @@ class ReturnToHandEffectHandlerTest {
 
             verify(permanentRemovalService).removePermanentToHand(gd, target);
             verify(permanentRemovalService).removeOrphanedAuras(gd);
-            verify(gameBroadcastService).logAndBroadcast(eq(gd), argThat((GameLogEntry e) -> e.plainText().equals("Grizzly Bears is returned to its owner's hand.")));
+            verify(gameLogService).append(eq(gd), argThat((GameLogEntry e) -> e.plainText().equals("Grizzly Bears is returned to its owner's hand.")));
         }
 
         @Test
@@ -218,7 +218,7 @@ class ReturnToHandEffectHandlerTest {
             handler.resolve(gd, entry, effect);
 
             assertThat(gd.playerLifeTotals.get(player2Id)).isEqualTo(20);
-            verify(gameBroadcastService).logAndBroadcast(eq(gd), eq(GameLog.text("Player2's life total can't change.")));
+            verify(gameLogService).append(eq(gd), eq(GameLog.text("Player2's life total can't change.")));
         }
 
         @Test
@@ -261,7 +261,7 @@ class ReturnToHandEffectHandlerTest {
 
             verify(permanentRemovalService).removePermanentToHand(gd, permanent);
             verify(permanentRemovalService).removeOrphanedAuras(gd);
-            verify(gameBroadcastService).logAndBroadcast(eq(gd), argThat((GameLogEntry e) -> e.plainText().equals("Viashino Sandscout is returned to its owner's hand.")));
+            verify(gameLogService).append(eq(gd), argThat((GameLogEntry e) -> e.plainText().equals("Viashino Sandscout is returned to its owner's hand.")));
         }
 
         @Test
@@ -278,7 +278,7 @@ class ReturnToHandEffectHandlerTest {
             handler.resolve(gd, entry, effect);
 
             verify(permanentRemovalService, never()).removePermanentToHand(any(), any());
-            verify(gameBroadcastService).logAndBroadcast(eq(gd), argThat((GameLogEntry e) -> e.plainText().equals("Viashino Sandscout is no longer on the battlefield.")));
+            verify(gameLogService).append(eq(gd), argThat((GameLogEntry e) -> e.plainText().equals("Viashino Sandscout is no longer on the battlefield.")));
         }
     }
 

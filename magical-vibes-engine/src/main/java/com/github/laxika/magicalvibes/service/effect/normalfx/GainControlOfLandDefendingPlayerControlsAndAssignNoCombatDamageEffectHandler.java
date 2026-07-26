@@ -8,7 +8,7 @@ import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.StackEntry;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
 import com.github.laxika.magicalvibes.model.effect.GainControlOfLandDefendingPlayerControlsAndAssignNoCombatDamageEffect;
-import com.github.laxika.magicalvibes.service.GameBroadcastService;
+import com.github.laxika.magicalvibes.service.GameLogService;
 import com.github.laxika.magicalvibes.service.battlefield.GameQueryService;
 import com.github.laxika.magicalvibes.service.input.PlayerInputService;
 import java.util.ArrayList;
@@ -30,7 +30,7 @@ import org.springframework.stereotype.Component;
 public class GainControlOfLandDefendingPlayerControlsAndAssignNoCombatDamageEffectHandler
         implements NormalEffectHandlerBean {
 
-    private final GameBroadcastService gameBroadcastService;
+    private final GameLogService gameLogService;
     private final GameQueryService gameQueryService;
     private final PlayerInputService playerInputService;
 
@@ -52,7 +52,7 @@ public class GainControlOfLandDefendingPlayerControlsAndAssignNoCombatDamageEffe
         // Per ruling: if you no longer control the source when this resolves, it does nothing.
         Permanent source = gameQueryService.findPermanentById(gameData, sourcePermanentId);
         if (source == null) {
-            gameBroadcastService.logAndBroadcast(gameData, GameLog.cardThen(entry.getCard(), "'s ability has no effect (source left the battlefield)."));
+            gameLogService.append(gameData, GameLog.cardThen(entry.getCard(), "'s ability has no effect (source left the battlefield)."));
             return;
         }
 
@@ -67,7 +67,7 @@ public class GainControlOfLandDefendingPlayerControlsAndAssignNoCombatDamageEffe
         }
 
         if (validLandIds.isEmpty()) {
-            gameBroadcastService.logAndBroadcast(gameData, GameLog.builder().card(entry.getCard()).text("'s ability resolves, but " + gameData.playerIdToName.get(defenderId) + " controls no lands.").build());
+            gameLogService.append(gameData, GameLog.builder().card(entry.getCard()).text("'s ability resolves, but " + gameData.playerIdToName.get(defenderId) + " controls no lands.").build());
             return;
         }
 

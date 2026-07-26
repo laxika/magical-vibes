@@ -4,7 +4,7 @@ import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.GameData;
 import com.github.laxika.magicalvibes.model.GameLog;
 import com.github.laxika.magicalvibes.model.PendingInteraction;
-import com.github.laxika.magicalvibes.service.GameBroadcastService;
+import com.github.laxika.magicalvibes.service.GameLogService;
 import com.github.laxika.magicalvibes.service.interaction.InteractionHandlerRegistry;
 import java.util.List;
 import java.util.UUID;
@@ -23,7 +23,7 @@ import org.springframework.stereotype.Component;
 public class AdNauseamSupport {
 
     private final LifeSupport lifeSupport;
-    private final GameBroadcastService gameBroadcastService;
+    private final GameLogService gameLogService;
     private final InteractionHandlerRegistry interactionHandlerRegistry;
 
     /**
@@ -38,13 +38,13 @@ public class AdNauseamSupport {
         Card topCard = deck.removeFirst();
         int manaValue = topCard.getManaValue();
 
-        gameBroadcastService.logAndBroadcast(gameData, GameLog.builder().text(playerName + " reveals ").card(topCard).text(" (mana value " + manaValue + ") from the top of their library.").build());
+        gameLogService.append(gameData, GameLog.builder().text(playerName + " reveals ").card(topCard).text(" (mana value " + manaValue + ") from the top of their library.").build());
         gameData.addCardToHand(controllerId, topCard);
 
         if (manaValue > 0) {
             lifeSupport.applyLifeLoss(gameData, controllerId, manaValue, sourceName);
         } else {
-            gameBroadcastService.logAndBroadcast(gameData, GameLog.builder().text(playerName + " puts ").card(topCard).text(" into their hand (" + sourceName + ").").build());
+            gameLogService.append(gameData, GameLog.builder().text(playerName + " puts ").card(topCard).text(" into their hand (" + sourceName + ").").build());
         }
 
         log.info("Game {} - {} reveals {} (MV {}) via {}", gameData.id, playerName, topCard.getName(), manaValue, sourceName);

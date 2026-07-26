@@ -6,7 +6,7 @@ import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.StackEntry;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
 import com.github.laxika.magicalvibes.model.effect.MustBeBlockedByAllCreaturesThisTurnEffect;
-import com.github.laxika.magicalvibes.service.GameBroadcastService;
+import com.github.laxika.magicalvibes.service.GameLogService;
 import com.github.laxika.magicalvibes.service.battlefield.GameQueryService;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -18,7 +18,7 @@ import org.springframework.stereotype.Component;
 public class MustBeBlockedByAllCreaturesThisTurnEffectHandler implements NormalEffectHandlerBean {
 
     private final GameQueryService gameQueryService;
-    private final GameBroadcastService gameBroadcastService;
+    private final GameLogService gameLogService;
 
     @Override
     public Class<? extends CardEffect> handledEffect() {
@@ -34,7 +34,7 @@ public class MustBeBlockedByAllCreaturesThisTurnEffectHandler implements NormalE
 
         target.setMustBeBlockedByAllThisTurn(true);
 
-        gameBroadcastService.logAndBroadcast(gameData, GameLog.textCardText("All creatures able to block ", target.getCard(), " this turn do so."));
+        gameLogService.append(gameData, GameLog.textCardText("All creatures able to block ", target.getCard(), " this turn do so."));
         log.info("Game {} - all creatures able to block {} this turn do so", gameData.id, target.getCard().getName());
     }
 }

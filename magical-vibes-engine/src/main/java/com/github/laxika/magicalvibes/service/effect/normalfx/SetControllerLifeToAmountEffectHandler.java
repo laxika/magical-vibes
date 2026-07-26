@@ -6,7 +6,7 @@ import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.StackEntry;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
 import com.github.laxika.magicalvibes.model.effect.SetControllerLifeToAmountEffect;
-import com.github.laxika.magicalvibes.service.GameBroadcastService;
+import com.github.laxika.magicalvibes.service.GameLogService;
 import com.github.laxika.magicalvibes.service.battlefield.GameQueryService;
 import com.github.laxika.magicalvibes.service.effect.AmountContext;
 import com.github.laxika.magicalvibes.service.effect.AmountEvaluationService;
@@ -24,7 +24,7 @@ public class SetControllerLifeToAmountEffectHandler implements NormalEffectHandl
     private final LifeSupport lifeSupport;
     private final GameQueryService gameQueryService;
     private final AmountEvaluationService amountEvaluationService;
-    private final GameBroadcastService gameBroadcastService;
+    private final GameLogService gameLogService;
 
     @Override
     public Class<? extends CardEffect> handledEffect() {
@@ -51,7 +51,7 @@ public class SetControllerLifeToAmountEffectHandler implements NormalEffectHandl
 
         if (lifeSupport.applySetLifeTotal(gameData, controllerId, newLife)) {
             String playerName = gameData.playerIdToName.get(controllerId);
-            gameBroadcastService.logAndBroadcast(gameData, GameLog.text(playerName + "'s life total becomes " + newLife + " (was " + currentLife + ")."));
+            gameLogService.append(gameData, GameLog.text(playerName + "'s life total becomes " + newLife + " (was " + currentLife + ")."));
             log.info("Game {} - {}'s life set to {} (was {})", gameData.id, playerName, newLife, currentLife);
         }
     }

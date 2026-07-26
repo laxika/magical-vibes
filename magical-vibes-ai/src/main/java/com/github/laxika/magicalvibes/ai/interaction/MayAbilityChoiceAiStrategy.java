@@ -24,6 +24,6 @@ class MayAbilityChoiceAiStrategy implements AiInteractionStrategy<PendingInterac
         }
 
         log.info("AI: Accepting may ability in game {}", ctx.gameId());
-        ctx.gameActions().answerInteraction(ctx.selfConnection(), new InteractionAnswer.MayAbilityChosen(true));
+        ctx.gameActions().answerInteraction(new InteractionAnswer.MayAbilityChosen(true));
     }
 }

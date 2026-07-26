@@ -17,7 +17,7 @@ import com.github.laxika.magicalvibes.model.effect.ChangeTargetOfTargetSpellWith
 import com.github.laxika.magicalvibes.model.effect.CounterSpellEffect;
 import com.github.laxika.magicalvibes.model.effect.DealDamageToAnyTargetEffect;
 import com.github.laxika.magicalvibes.model.effect.ReturnCardFromGraveyardEffect;
-import com.github.laxika.magicalvibes.service.GameBroadcastService;
+import com.github.laxika.magicalvibes.service.GameLogService;
 import com.github.laxika.magicalvibes.service.battlefield.GameQueryService;
 import com.github.laxika.magicalvibes.service.input.PlayerInputService;
 import org.junit.jupiter.api.BeforeEach;
@@ -48,7 +48,7 @@ import static org.mockito.Mockito.when;
 class ChangeTargetOfTargetSpellToSourceEffectHandlerTest {
 
     @Mock private GameQueryService gameQueryService;
-    @Mock private GameBroadcastService gameBroadcastService;
+    @Mock private GameLogService gameLogService;
     @Mock private PlayerInputService playerInputService;
     @Mock private TargetLegalityService targetLegalityService;
     @InjectMocks private TargetRedirectionSupport targetRedirectionSupport;
@@ -82,7 +82,7 @@ class ChangeTargetOfTargetSpellToSourceEffectHandlerTest {
         lenient().when(targetLegalityService.checkSpellTargetOnStack(any(), any(), any(), any()))
                 .thenReturn(Optional.empty());
         changeTargetToSourceHandler = new ChangeTargetOfTargetSpellToSourceEffectHandler(
-                gameQueryService, gameBroadcastService, targetRedirectionSupport);
+                gameQueryService, gameLogService, targetRedirectionSupport);
 
     }
 
@@ -137,7 +137,7 @@ class ChangeTargetOfTargetSpellToSourceEffectHandlerTest {
 
         private String captureLogMessage() {
             ArgumentCaptor<GameLogEntry> captor = ArgumentCaptor.forClass(GameLogEntry.class);
-            verify(gameBroadcastService).logAndBroadcast(eq(gd), captor.capture());
+            verify(gameLogService).append(eq(gd), captor.capture());
             return captor.getValue().plainText();
         }
 
@@ -155,7 +155,7 @@ class ChangeTargetOfTargetSpellToSourceEffectHandlerTest {
 
                 changeTargetToSourceHandler.resolve(gd, entry, new ChangeTargetOfTargetSpellToSourceEffect());
 
-                verify(gameBroadcastService, never()).logAndBroadcast(any(), any(GameLogEntry.class));
+                verify(gameLogService, never()).append(any(), any(GameLogEntry.class));
             }
 
             @Test

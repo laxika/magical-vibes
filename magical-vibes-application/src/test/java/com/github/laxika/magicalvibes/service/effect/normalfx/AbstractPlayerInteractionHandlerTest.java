@@ -9,7 +9,7 @@ import com.github.laxika.magicalvibes.networking.SessionManager;
 import com.github.laxika.magicalvibes.networking.service.CardViewFactory;
 import com.github.laxika.magicalvibes.service.DrawService;
 import com.github.laxika.magicalvibes.service.CardRevealService;
-import com.github.laxika.magicalvibes.service.GameBroadcastService;
+import com.github.laxika.magicalvibes.service.GameLogService;
 import com.github.laxika.magicalvibes.service.battlefield.BattlefieldEntryService;
 import com.github.laxika.magicalvibes.service.battlefield.GameQueryService;
 import com.github.laxika.magicalvibes.service.filter.PredicateEvaluationService;
@@ -37,7 +37,7 @@ abstract class AbstractPlayerInteractionHandlerTest {
     @Mock protected GraveyardService graveyardService;
     @Mock protected GameQueryService gameQueryService;
     @Mock protected PredicateEvaluationService predicateEvaluationService;
-    @Mock protected GameBroadcastService gameBroadcastService;
+    @Mock protected GameLogService gameLogService;
     @Mock protected PlayerInputService playerInputService;
     @Mock protected SessionManager sessionManager;
     @Mock protected CardViewFactory cardViewFactory;
@@ -61,12 +61,12 @@ abstract class AbstractPlayerInteractionHandlerTest {
         gd = game.gameData();
 
         support = new PlayerInteractionSupport(drawService, graveyardService, gameQueryService, predicateEvaluationService,
-                gameBroadcastService, playerInputService, cardRevealService,
+                gameLogService, playerInputService, cardRevealService,
                 permanentRemovalService, battlefieldEntryService, triggerCollectionService, interactionHandlerRegistry);
         registry = new EffectHandlerRegistry();
         String handlerName = getClass().getSimpleName().replace("Test", "");
         NormalEffectHandlerBean handler = PlayerInteractionHandlerTestSupport.createHandler(
-                handlerName, support, registry, gameBroadcastService, cardRevealService, drawService, sessionManager, cardViewFactory,
+                handlerName, support, registry, gameLogService, cardRevealService, drawService, sessionManager, cardViewFactory,
                 gameQueryService, predicateEvaluationService, playerInputService, triggerCollectionService, battlefieldEntryService,
                 permanentRemovalService, graveyardService, interactionHandlerRegistry);
         PlayerInteractionHandlerTestSupport.registerHandler(registry, handler);

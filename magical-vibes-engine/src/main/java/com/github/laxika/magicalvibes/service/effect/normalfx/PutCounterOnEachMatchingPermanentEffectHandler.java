@@ -9,7 +9,7 @@ import com.github.laxika.magicalvibes.model.effect.CardEffect;
 import com.github.laxika.magicalvibes.model.effect.EachPermanentScope;
 import com.github.laxika.magicalvibes.model.effect.PutCounterOnEachMatchingPermanentEffect;
 import com.github.laxika.magicalvibes.model.filter.FilterContext;
-import com.github.laxika.magicalvibes.service.GameBroadcastService;
+import com.github.laxika.magicalvibes.service.GameLogService;
 import com.github.laxika.magicalvibes.service.battlefield.GameQueryService;
 import com.github.laxika.magicalvibes.service.effect.AmountContext;
 import com.github.laxika.magicalvibes.service.effect.AmountEvaluationService;
@@ -35,7 +35,7 @@ public class PutCounterOnEachMatchingPermanentEffectHandler implements NormalEff
 
     private final GameQueryService gameQueryService;
     private final PredicateEvaluationService predicateEvaluationService;
-    private final GameBroadcastService gameBroadcastService;
+    private final GameLogService gameLogService;
     private final PermanentCounterSupport permanentCounterSupport;
     private final AmountEvaluationService amountEvaluationService;
 
@@ -96,7 +96,7 @@ public class PutCounterOnEachMatchingPermanentEffectHandler implements NormalEff
 
         String counterName = permanentCounterSupport.counterTypeName(e.counterType());
         String counterText = amount == 1 ? "a " + counterName + " counter" : amount + " " + counterName + " counters";
-        gameBroadcastService.logAndBroadcast(gameData, GameLog.builder().card(entry.getCard()).text(" puts " + counterText + " on " + count + " creature(s).").build());
+        gameLogService.append(gameData, GameLog.builder().card(entry.getCard()).text(" puts " + counterText + " on " + count + " creature(s).").build());
         log.info("Game {} - {} puts {} {} counter(s) on {} matching permanent(s)", gameData.id,
                 entry.getCard().getName(), amount, counterName, count);
 

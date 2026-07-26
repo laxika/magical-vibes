@@ -7,7 +7,7 @@ import com.github.laxika.magicalvibes.model.GameData;
 import com.github.laxika.magicalvibes.model.StackEntry;
 import com.github.laxika.magicalvibes.model.StackEntryType;
 import com.github.laxika.magicalvibes.model.effect.RevealTopCardPutIntoHandAndChangeLifeEffect;
-import com.github.laxika.magicalvibes.service.GameBroadcastService;
+import com.github.laxika.magicalvibes.service.GameLogService;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
@@ -31,7 +31,7 @@ class RevealTopCardPutIntoHandAndChangeLifeEffectHandlerTest {
     @Mock
     private LifeSupport lifeSupport;
     @Mock
-    private GameBroadcastService gameBroadcastService;
+    private GameLogService gameLogService;
     private GameData gd;
     private UUID player1Id;
     private RevealTopCardPutIntoHandAndChangeLifeEffectHandler handler;
@@ -44,7 +44,7 @@ class RevealTopCardPutIntoHandAndChangeLifeEffectHandlerTest {
         gd.playerHands.put(player1Id, Collections.synchronizedList(new ArrayList<>()));
         gd.playerDecks.put(player1Id, Collections.synchronizedList(new ArrayList<>()));
 
-        handler = new RevealTopCardPutIntoHandAndChangeLifeEffectHandler(lifeSupport, gameBroadcastService);
+        handler = new RevealTopCardPutIntoHandAndChangeLifeEffectHandler(lifeSupport, gameLogService);
     }
 
     private static Card createCard(String name, String manaCost) {
@@ -67,7 +67,7 @@ class RevealTopCardPutIntoHandAndChangeLifeEffectHandlerTest {
         var effect = new RevealTopCardPutIntoHandAndChangeLifeEffect(true);
         handler.resolve(gd, entryFor(effect, "Augury Adept"), effect);
 
-        verify(gameBroadcastService).logAndBroadcast(eq(gd), argThat((GameLogEntry logEntry) -> logEntry.plainText().contains("library is empty")));
+        verify(gameLogService).append(eq(gd), argThat((GameLogEntry logEntry) -> logEntry.plainText().contains("library is empty")));
         verifyNoInteractions(lifeSupport);
     }
 

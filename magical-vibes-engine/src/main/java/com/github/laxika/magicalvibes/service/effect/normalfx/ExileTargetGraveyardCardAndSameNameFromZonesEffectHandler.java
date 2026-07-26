@@ -6,7 +6,7 @@ import com.github.laxika.magicalvibes.model.GameLog;
 import com.github.laxika.magicalvibes.model.StackEntry;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
 import com.github.laxika.magicalvibes.model.effect.ExileTargetGraveyardCardAndSameNameFromZonesEffect;
-import com.github.laxika.magicalvibes.service.GameBroadcastService;
+import com.github.laxika.magicalvibes.service.GameLogService;
 import com.github.laxika.magicalvibes.service.battlefield.GameQueryService;
 import com.github.laxika.magicalvibes.service.input.PlayerInputService;
 import java.util.ArrayList;
@@ -21,7 +21,7 @@ import org.springframework.stereotype.Component;
 @RequiredArgsConstructor
 public class ExileTargetGraveyardCardAndSameNameFromZonesEffectHandler implements NormalEffectHandlerBean {
 
-    private final GameBroadcastService gameBroadcastService;
+    private final GameLogService gameLogService;
     private final GameQueryService gameQueryService;
     private final PlayerInputService playerInputService;
     private final PlayerInteractionSupport playerInteractionSupport;
@@ -74,7 +74,7 @@ public class ExileTargetGraveyardCardAndSameNameFromZonesEffectHandler implement
 
             String exileLog = controllerName + " exiles 0 cards named \"" + cardName + "\" from " + targetName
                     + "'s hand, graveyard, and library. " + targetName + " shuffles their library.";
-            gameBroadcastService.logAndBroadcast(gameData, GameLog.text(exileLog));
+            gameLogService.append(gameData, GameLog.text(exileLog));
             log.info("Game {} - {} found 0 cards named \"{}\" in {}'s zones", gameData.id, controllerName, cardName, targetName);
             return;
         }

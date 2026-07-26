@@ -11,7 +11,7 @@ import com.github.laxika.magicalvibes.model.effect.AttachTargetToSourcePermanent
 import com.github.laxika.magicalvibes.model.effect.ControlDuration;
 import com.github.laxika.magicalvibes.model.effect.EffectDuration;
 import com.github.laxika.magicalvibes.model.effect.GainControlOfTargetEffect;
-import com.github.laxika.magicalvibes.service.GameBroadcastService;
+import com.github.laxika.magicalvibes.service.GameLogService;
 import com.github.laxika.magicalvibes.service.GameLogService;
 import com.github.laxika.magicalvibes.service.effect.normalfx.AttachTargetToSourcePermanentEffectHandler;
 import org.junit.jupiter.api.BeforeEach;
@@ -40,7 +40,6 @@ import static org.mockito.Mockito.when;
 class PermanentTimestampTest {
 
     @Mock private GameQueryService gameQueryService;
-    @Mock private GameBroadcastService gameBroadcastService;
     @Mock private GameLogService gameLogService;
     @Mock private com.github.laxika.magicalvibes.service.input.PlayerInputService playerInputService;
     @Mock private PermanentCopierService permanentCopierService;
@@ -113,7 +112,7 @@ class PermanentTimestampTest {
         @DisplayName("An attachment gets a fresh timestamp when it becomes attached")
         void attachRestampsTimestamp() {
             AttachTargetToSourcePermanentEffectHandler handler =
-                    new AttachTargetToSourcePermanentEffectHandler(gameQueryService, gameBroadcastService);
+                    new AttachTargetToSourcePermanentEffectHandler(gameQueryService, gameLogService);
             Permanent equipment = createEquipment("Darksteel Axe");
             Permanent creature = createCreature("Grizzly Bears");
             battlefieldEntryService.putPermanentOntoBattlefield(gd, player1Id, equipment);

@@ -9,7 +9,7 @@ import com.github.laxika.magicalvibes.model.effect.EffectDuration;
 import com.github.laxika.magicalvibes.model.effect.SetAllOwnCreaturesBasePowerToughnessEffect;
 import com.github.laxika.magicalvibes.model.effect.SetBasePowerToughnessEffect;
 import com.github.laxika.magicalvibes.model.layer.FloatingContinuousEffect;
-import com.github.laxika.magicalvibes.service.GameBroadcastService;
+import com.github.laxika.magicalvibes.service.GameLogService;
 import com.github.laxika.magicalvibes.service.battlefield.GameQueryService;
 import com.github.laxika.magicalvibes.service.effect.AmountContext;
 import com.github.laxika.magicalvibes.service.effect.AmountEvaluationService;
@@ -25,7 +25,7 @@ import java.util.List;
 public class SetAllOwnCreaturesBasePowerToughnessEffectHandler implements NormalEffectHandlerBean {
 
     private final GameQueryService gameQueryService;
-    private final GameBroadcastService gameBroadcastService;
+    private final GameLogService gameLogService;
     private final AmountEvaluationService amountEvaluationService;
 
     @Override
@@ -68,7 +68,7 @@ public class SetAllOwnCreaturesBasePowerToughnessEffectHandler implements Normal
 
         String logEntry = entry.getCard().getName() + " sets base power and toughness of " + count
                 + " creature(s) you control to " + power + "/" + toughness + " until end of turn.";
-        gameBroadcastService.logAndBroadcast(gameData, GameLog.builder().card(entry.getCard()).text(" sets base power and toughness of " + count + " creature(s) you control to " + power + "/" + toughness + " until end of turn.").build());
+        gameLogService.append(gameData, GameLog.builder().card(entry.getCard()).text(" sets base power and toughness of " + count + " creature(s) you control to " + power + "/" + toughness + " until end of turn.").build());
 
         log.info("Game {} - {} sets base P/T of {} own creature(s) to {}/{}",
                 gameData.id, entry.getCard().getName(), count, power, toughness);

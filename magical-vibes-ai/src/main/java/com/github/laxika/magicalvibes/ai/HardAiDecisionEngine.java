@@ -44,7 +44,7 @@ import com.github.laxika.magicalvibes.networking.message.DeclareAttackersRequest
 import com.github.laxika.magicalvibes.networking.message.DeclareBlockersRequest;
 import com.github.laxika.magicalvibes.networking.message.PassPriorityRequest;
 import com.github.laxika.magicalvibes.networking.message.PlayCardRequest;
-import com.github.laxika.magicalvibes.service.GameBroadcastService;
+import com.github.laxika.magicalvibes.service.GameActionAvailabilityService;
 import com.github.laxika.magicalvibes.service.cast.CastingCostService;
 import com.github.laxika.magicalvibes.service.cast.CastingPermissionService;
 import com.github.laxika.magicalvibes.service.battlefield.BlockLegalityContext;
@@ -90,14 +90,14 @@ public class HardAiDecisionEngine extends AiDecisionEngine {
     public HardAiDecisionEngine(UUID gameId, Player aiPlayer, GameRegistry gameRegistry,
                                 GameService gameService, GameQueryService gameQueryService,
                                 CombatAttackService combatAttackService,
-                                GameBroadcastService gameBroadcastService,
+                                GameActionAvailabilityService actionAvailabilityService,
                                 CastingCostService castingCostService,
                                 CastingPermissionService castingPermissionService,
                                 TargetValidationService targetValidationService,
                                 TargetLegalityService targetLegalityService) {
         this(gameId, aiPlayer, gameRegistry,
                 new AiGameActions(gameId, aiPlayer, gameService, gameRegistry),
-                gameQueryService, combatAttackService, gameBroadcastService,
+                gameQueryService, combatAttackService, actionAvailabilityService,
                 castingCostService, castingPermissionService,
                 targetValidationService, targetLegalityService);
     }
@@ -105,12 +105,12 @@ public class HardAiDecisionEngine extends AiDecisionEngine {
     public HardAiDecisionEngine(UUID gameId, Player aiPlayer, GameRegistry gameRegistry,
                                 AiGameActions gameActions, GameQueryService gameQueryService,
                                 CombatAttackService combatAttackService,
-                                GameBroadcastService gameBroadcastService,
+                                GameActionAvailabilityService actionAvailabilityService,
                                 CastingCostService castingCostService,
                                 CastingPermissionService castingPermissionService,
                                 TargetValidationService targetValidationService,
                                 TargetLegalityService targetLegalityService) {
-        super(gameId, aiPlayer, gameRegistry, gameActions, gameQueryService, combatAttackService, gameBroadcastService, castingCostService, castingPermissionService, targetValidationService, targetLegalityService);
+        super(gameId, aiPlayer, gameRegistry, gameActions, gameQueryService, combatAttackService, actionAvailabilityService, castingCostService, castingPermissionService, targetValidationService, targetLegalityService);
         this.boardEvaluator = new BoardEvaluator(gameQueryService);
         this.spellEvaluator = new SpellEvaluator(gameQueryService, boardEvaluator);
         this.combatSimulator = new CombatSimulator(gameQueryService, boardEvaluator);
@@ -218,7 +218,7 @@ public class HardAiDecisionEngine extends AiDecisionEngine {
                 landCard.getName(), landIndices.size(),
                 String.format("%.1f", bestSpellValue), bestColorCoverage, gameId);
         final int idx = bestLandIndex;
-        send(() -> gameActions.handlePlayCard(selfConnection,
+        send(() -> gameActions.handlePlayCard(
                 new PlayCardRequest(idx, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null)));
         // Identity check: hand size alone is unreliable because landfall/ETB triggers
         // can add cards to hand (e.g. "draw a card" effects), masking a successful play.
@@ -331,7 +331,7 @@ public class HardAiDecisionEngine extends AiDecisionEngine {
             return;
         }
 
-        send(() -> gameActions.handlePassPriority(selfConnection, new PassPriorityRequest()));
+        send(() -> gameActions.handlePassPriority(new PassPriorityRequest()));
     }
 
     // ===== Precombat vs Postcombat Timing =====
@@ -424,9 +424,9 @@ public class HardAiDecisionEngine extends AiDecisionEngine {
      * even when it does not enable lethal. This covers three categories:
      * <ul>
      *   <li><b>Removal</b> — clears a blocker if the damage gain is significant
-     *       (≥ 2 extra damage through)</li>
+     *       (�A 2 extra damage through)</li>
      *   <li><b>Pump</b> — lord/anthem creature that boosts existing attackers by
-     *       ≥ 2 total power</li>
+     *       �A 2 total power</li>
      *   <li><b>Haste creature</b> — any haste creature that can join the attack</li>
      * </ul>
      * Non-combat spells (card draw, non-haste creatures, enchantments) are skipped
@@ -723,7 +723,7 @@ public class HardAiDecisionEngine extends AiDecisionEngine {
 
             int power = card.getPower();
             // Haste creature's power adds to the attack (opponent may block it,
-            // but it frees up another attacker — net effect ≈ +power to face)
+            // but it frees up another attacker — net effect �? +power to face)
             int projectedDamage = currentUnblockable + power;
             if (projectedDamage >= opponentLife
                     || projectedDamage + burnInHand >= opponentLife) {
@@ -1098,7 +1098,7 @@ public class HardAiDecisionEngine extends AiDecisionEngine {
         final List<Integer> fExileIndices = plan.exileGraveyardCardIndices;
         final List<UUID> fMultiTargets = plan.multiTargetIds;
         final Integer fDiscardHandCardIndex = chooseDiscardCostIndex(gameData, plan.card);
-        send(() -> gameActions.handlePlayCard(selfConnection,
+        send(() -> gameActions.handlePlayCard(
                 new PlayCardRequest(idx, fXValue, fTargetId, fDamage,
                         fMultiTargets, null, null, fSacrifice,
                         null, null, null, null, null, fExileIndices, null, null, null,
@@ -1982,7 +1982,7 @@ public class HardAiDecisionEngine extends AiDecisionEngine {
         final int permIdx = best.permanentIndex();
         final int abilIdx = best.abilityIndex();
         final UUID finalTargetId = best.targetId();
-        send(() -> gameActions.handleActivateAbility(selfConnection,
+        send(() -> gameActions.handleActivateAbility(
                 new ActivateAbilityRequest(permIdx, abilIdx, null, finalTargetId, null, null, null)));
         return true;
     }
@@ -2054,7 +2054,7 @@ public class HardAiDecisionEngine extends AiDecisionEngine {
         int selectedPermanentIndex = permanentIndex;
         log.info("AI (Hard/MCTS): Activating ability {} on {} targeting {} in game {}",
                 action.abilityIndex(), permanent.getCard().getName(), action.targetId(), gameId);
-        send(() -> gameActions.handleActivateAbility(selfConnection,
+        send(() -> gameActions.handleActivateAbility(
                 new ActivateAbilityRequest(selectedPermanentIndex, action.abilityIndex(), null,
                         action.targetId(), null, null, null)));
         return true;
@@ -2279,19 +2279,20 @@ public class HardAiDecisionEngine extends AiDecisionEngine {
 
     @Override
     protected void handleAttackers(GameData gameData) {
-        List<Integer> availableIndices = combatAttackService.getAttackableCreatureIndices(gameData, aiPlayer.getId());
+        UUID actingPlayerId = activeDecisionPlayerId(gameData);
+        List<Integer> availableIndices = combatAttackService.getAttackableCreatureIndices(gameData, actingPlayerId);
         if (availableIndices.isEmpty()) {
-            send(() -> gameActions.handleDeclareAttackers(selfConnection,
+            send(() -> gameActions.handleDeclareAttackers(
                     new DeclareAttackersRequest(List.of(), null)));
             return;
         }
 
-        List<Integer> mustAttackIndices = combatAttackService.getMustAttackIndices(gameData, aiPlayer.getId(), availableIndices);
+        List<Integer> mustAttackIndices = combatAttackService.getMustAttackIndices(gameData, actingPlayerId, availableIndices);
 
         // "All-in" means every creature whose attack accomplishes something — a creature
         // with power <= 0 assigns no combat damage (CR 510.1a) and just dies to a free block.
         List<Integer> allInIndices = combatSimulator.filterZeroPowerAttackers(
-                gameData, aiPlayer.getId(), availableIndices, mustAttackIndices);
+                gameData, actingPlayerId, availableIndices, mustAttackIndices);
 
         // Alpha strike + burn lethal: if attacking with everything and then burning
         // the opponent's face with remaining mana would kill them, go all-in.
@@ -2302,7 +2303,7 @@ public class HardAiDecisionEngine extends AiDecisionEngine {
             log.info("AI (Hard): Alpha strike + burn is lethal! Declaring {} attackers in game {}",
                     attackerIndices.size(), gameId);
             final List<Integer> finalAttackerIndices = attackerIndices;
-            send(() -> gameActions.handleDeclareAttackers(selfConnection,
+            send(() -> gameActions.handleDeclareAttackers(
                     new DeclareAttackersRequest(finalAttackerIndices, null)));
             return;
         }
@@ -2318,7 +2319,7 @@ public class HardAiDecisionEngine extends AiDecisionEngine {
             log.info("AI (Hard): Attack + pump is lethal! Declaring {} attackers in game {}",
                     attackerIndices.size(), gameId);
             final List<Integer> finalAttackerIndices = attackerIndices;
-            send(() -> gameActions.handleDeclareAttackers(selfConnection,
+            send(() -> gameActions.handleDeclareAttackers(
                     new DeclareAttackersRequest(finalAttackerIndices, null)));
             return;
         }
@@ -2334,12 +2335,12 @@ public class HardAiDecisionEngine extends AiDecisionEngine {
             log.info("AI (Hard): Winning the race (AI clock={}, opp clock={}), attacking aggressively in game {}",
                     raceState.aiClock(), raceState.opponentClock(), gameId);
             List<Integer> attackerIndices = combatSimulator.filterFreeGiveawayAttackers(
-                    gameData, aiPlayer.getId(), allInIndices, mustAttackIndices);
+                    gameData, actingPlayerId, allInIndices, mustAttackIndices);
             attackerIndices = enforceMustAttackWithAtLeastOne(gameData, attackerIndices, availableIndices);
             attackerIndices = prepareAttackersForTax(gameData, attackerIndices);
             log.info("AI (Hard): Declaring {} aggressive attackers in game {}", attackerIndices.size(), gameId);
             final List<Integer> finalAttackerIndices = attackerIndices;
-            send(() -> gameActions.handleDeclareAttackers(selfConnection,
+            send(() -> gameActions.handleDeclareAttackers(
                     new DeclareAttackersRequest(finalAttackerIndices, null)));
             return;
         }
@@ -2352,7 +2353,7 @@ public class HardAiDecisionEngine extends AiDecisionEngine {
 
         // Use MCTS for attacker selection
         try {
-            SimulationAction bestAction = mctsEngine.search(gameData, aiPlayer.getId(), MCTS_BUDGET);
+            SimulationAction bestAction = mctsEngine.search(gameData, actingPlayerId, MCTS_BUDGET);
 
             if (bestAction instanceof SimulationAction.DeclareAttackers da) {
                 // Ensure must-attack creatures are included in the MCTS result
@@ -2363,7 +2364,7 @@ public class HardAiDecisionEngine extends AiDecisionEngine {
                 attackerIndices = prepareAttackersForTax(gameData, attackerIndices);
                 log.info("AI (Hard/MCTS): Declaring {} attackers in game {}", attackerIndices.size(), gameId);
                 final List<Integer> finalAttackerIndices = attackerIndices;
-                send(() -> gameActions.handleDeclareAttackers(selfConnection,
+                send(() -> gameActions.handleDeclareAttackers(
                         new DeclareAttackersRequest(finalAttackerIndices, null)));
                 return;
             }
@@ -2377,8 +2378,9 @@ public class HardAiDecisionEngine extends AiDecisionEngine {
 
     private void handleAttackersWithSimulator(GameData gameData, List<Integer> availableIndices,
                                               List<Integer> mustAttackIndices) {
+        UUID actingPlayerId = activeDecisionPlayerId(gameData);
         // Estimate opponent's combat trick threat from their open mana and hand size
-        UUID opponentId = AiUtils.getOpponentId(gameData, aiPlayer.getId());
+        UUID opponentId = AiUtils.getOpponentId(gameData, actingPlayerId);
         OpponentThreatEstimator.ThreatEstimate threatEstimate = OpponentThreatEstimator.ThreatEstimate.NONE;
         if (opponentId != null) {
             int oppHandSize = gameData.playerHands.getOrDefault(opponentId, List.of()).size();
@@ -2392,7 +2394,7 @@ public class HardAiDecisionEngine extends AiDecisionEngine {
         }
 
         List<Integer> attackerIndices = combatSimulator.findBestAttackers(
-                gameData, aiPlayer.getId(), availableIndices, mustAttackIndices, threatEstimate);
+                gameData, actingPlayerId, availableIndices, mustAttackIndices, threatEstimate);
 
         // Ensure at least one attacker when forced (e.g. Trove of Temptation)
         attackerIndices = enforceMustAttackWithAtLeastOne(gameData, attackerIndices, availableIndices);
@@ -2402,18 +2404,19 @@ public class HardAiDecisionEngine extends AiDecisionEngine {
 
         log.info("AI (Hard): Declaring {} attackers in game {}", attackerIndices.size(), gameId);
         final List<Integer> finalAttackerIndices = attackerIndices;
-        send(() -> gameActions.handleDeclareAttackers(selfConnection,
+        send(() -> gameActions.handleDeclareAttackers(
                 new DeclareAttackersRequest(finalAttackerIndices, null)));
     }
 
     @Override
     protected void handleBlockers(GameData gameData) {
-        List<Permanent> battlefield = gameData.playerBattlefields.get(aiPlayer.getId());
-        UUID opponentId = AiUtils.getOpponentId(gameData, aiPlayer.getId());
+        UUID actingPlayerId = activeDecisionPlayerId(gameData);
+        List<Permanent> battlefield = gameData.playerBattlefields.get(actingPlayerId);
+        UUID opponentId = AiUtils.getOpponentId(gameData, actingPlayerId);
         List<Permanent> opponentBattlefield = gameData.playerBattlefields.getOrDefault(opponentId, List.of());
 
         if (battlefield == null) {
-            send(() -> gameActions.handleDeclareBlockers(selfConnection,
+            send(() -> gameActions.handleDeclareBlockers(
                     new DeclareBlockersRequest(List.of())));
             return;
         }
@@ -2443,7 +2446,7 @@ public class HardAiDecisionEngine extends AiDecisionEngine {
             for (int idx : attackerIndices) {
                 totalIncoming += gameQueryService.getEffectivePower(gameData, opponentBattlefield.get(idx));
             }
-            int aiLife = gameData.getLife(aiPlayer.getId());
+            int aiLife = gameData.getLife(actingPlayerId);
 
             if (totalIncoming < aiLife) {
                 // Not lethal — skip blocking entirely to keep creatures alive for the race.
@@ -2452,7 +2455,7 @@ public class HardAiDecisionEngine extends AiDecisionEngine {
                         raceState.aiClock(), raceState.opponentClock(), totalIncoming, aiLife, gameId);
                 // Still run exhaustive search to handle mandatory block constraints
                 List<int[]> assignments = combatSimulator.findBestBlockersExhaustive(
-                        gameData, aiPlayer.getId(), attackerIndices, blockerIndices);
+                        gameData, actingPlayerId, attackerIndices, blockerIndices);
                 // Filter to only mandatory blocks (lure/must-block-if-able)
                 List<int[]> mandatoryOnly = filterToMandatoryBlocks(gameData, assignments, opponentBattlefield);
                 List<BlockerAssignment> blockerAssignments = mandatoryOnly.stream()
@@ -2480,7 +2483,7 @@ public class HardAiDecisionEngine extends AiDecisionEngine {
         // Use MCTS for blocker selection — it can "see" post-combat implications
         // (e.g. keeping a creature alive to cast next turn vs chump blocking now)
         try {
-            SimulationAction bestAction = mctsEngine.search(gameData, aiPlayer.getId(), MCTS_BUDGET);
+            SimulationAction bestAction = mctsEngine.search(gameData, actingPlayerId, MCTS_BUDGET);
 
             if (bestAction instanceof SimulationAction.DeclareBlockers db) {
                 List<BlockerAssignment> blockerAssignments = db.blockerAssignments().stream()
@@ -2500,10 +2503,11 @@ public class HardAiDecisionEngine extends AiDecisionEngine {
 
     private void handleBlockersWithSimulator(GameData gameData, List<Integer> attackerIndices,
                                               List<Integer> blockerIndices) {
+        UUID actingPlayerId = activeDecisionPlayerId(gameData);
         // Estimate opponent's combat trick threat from their open mana and hand size,
         // then let the exhaustive search "play around" pump spells the same way it
         // already does for attacker selection.
-        UUID opponentId = AiUtils.getOpponentId(gameData, aiPlayer.getId());
+        UUID opponentId = AiUtils.getOpponentId(gameData, actingPlayerId);
         OpponentThreatEstimator.ThreatEstimate threatEstimate = OpponentThreatEstimator.ThreatEstimate.NONE;
         if (opponentId != null) {
             int oppHandSize = gameData.playerHands.getOrDefault(opponentId, List.of()).size();
@@ -2517,7 +2521,7 @@ public class HardAiDecisionEngine extends AiDecisionEngine {
         }
 
         List<int[]> assignments = combatSimulator.findBestBlockersExhaustive(
-                gameData, aiPlayer.getId(), attackerIndices, blockerIndices, threatEstimate);
+                gameData, actingPlayerId, attackerIndices, blockerIndices, threatEstimate);
 
         List<BlockerAssignment> blockerAssignments = assignments.stream()
                 .map(a -> new BlockerAssignment(a[0], a[1]))
@@ -2590,7 +2594,7 @@ public class HardAiDecisionEngine extends AiDecisionEngine {
 
         log.info("AI (Hard): Discarding card at index {} ({}) in game {}",
                 bestIndex, hand.get(bestIndex).getName(), gameId);
-        send(() -> gameActions.answerInteraction(selfConnection, new InteractionAnswer.CardIndexChosen(bestIndex)));
+        send(() -> gameActions.answerInteraction(new InteractionAnswer.CardIndexChosen(bestIndex)));
     }
 
     // ===== Mulligan (scoring-based) =====
@@ -2786,7 +2790,7 @@ public class HardAiDecisionEngine extends AiDecisionEngine {
             }
             final int idx = cardIndex;
             final UUID targetId = opponentId;
-            send(() -> gameActions.handlePlayCard(selfConnection,
+            send(() -> gameActions.handlePlayCard(
                     new PlayCardRequest(idx, null, targetId, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null)));
             // Identity check: hand size alone is unreliable because ETB/cast triggers
             // can add cards back to hand, masking a successful cast.
@@ -2806,8 +2810,12 @@ public class HardAiDecisionEngine extends AiDecisionEngine {
      * Returns the current race state for use by combat decisions.
      */
     private RaceEvaluator.RaceState evaluateRace(GameData gameData) {
-        List<Card> hand = gameData.playerHands.getOrDefault(aiPlayer.getId(), List.of());
-        ManaPool virtualPool = manaManager.buildVirtualManaPool(gameData, aiPlayer.getId());
+        UUID actingPlayerId = activeDecisionPlayerId(gameData);
+        boolean evaluatingOwnChoices = actingPlayerId.equals(aiPlayer.getId());
+        List<Card> hand = evaluatingOwnChoices
+                ? gameData.playerHands.getOrDefault(actingPlayerId, List.of())
+                : List.of();
+        ManaPool virtualPool = manaManager.buildVirtualManaPool(gameData, actingPlayerId);
 
         List<Card> castableBurn = new ArrayList<>();
         for (Card card : hand) {
@@ -2818,7 +2826,7 @@ public class HardAiDecisionEngine extends AiDecisionEngine {
             }
         }
 
-        return raceEvaluator.evaluate(gameData, aiPlayer.getId(), castableBurn);
+        return raceEvaluator.evaluate(gameData, actingPlayerId, castableBurn);
     }
 
     /**
@@ -2882,13 +2890,15 @@ public class HardAiDecisionEngine extends AiDecisionEngine {
      * @return true if alpha strike + burn is lethal
      */
     private boolean isAlphaStrikePlusBurnLethal(GameData gameData, List<Integer> availableAttackerIndices) {
-        UUID opponentId = AiUtils.getOpponentId(gameData, aiPlayer.getId());
+        UUID actingPlayerId = activeDecisionPlayerId(gameData);
+        if (!actingPlayerId.equals(aiPlayer.getId())) return false;
+        UUID opponentId = AiUtils.getOpponentId(gameData, actingPlayerId);
         if (opponentId == null) return false;
         int opponentLife = gameData.getLife(opponentId);
         if (opponentLife <= 0) return false;
 
-        List<Permanent> aiBattlefield = gameData.playerBattlefields.getOrDefault(aiPlayer.getId(), List.of());
-        List<Card> hand = gameData.playerHands.getOrDefault(aiPlayer.getId(), List.of());
+        List<Permanent> aiBattlefield = gameData.playerBattlefields.getOrDefault(actingPlayerId, List.of());
+        List<Card> hand = gameData.playerHands.getOrDefault(actingPlayerId, List.of());
         if (hand.isEmpty()) return false;
 
         // Build the list of attacker permanents from indices
@@ -2920,7 +2930,7 @@ public class HardAiDecisionEngine extends AiDecisionEngine {
         // Calculate affordable burn damage from land-based mana only.
         // After the alpha strike, creature mana producers will be tapped, so we
         // build a virtual pool that excludes creature-based mana.
-        VirtualManaPool landOnlyPool = manaManager.buildLandOnlyVirtualManaPool(gameData, aiPlayer.getId());
+        VirtualManaPool landOnlyPool = manaManager.buildLandOnlyVirtualManaPool(gameData, actingPlayerId);
 
         // Greedily fit burn spells into the available mana, highest damage first
         int burnDamage = computeAffordableBurnDamage(gameData, hand, landOnlyPool);
@@ -3035,21 +3045,23 @@ public class HardAiDecisionEngine extends AiDecisionEngine {
      */
     private List<Integer> findPumpLethalAttackers(GameData gameData, List<Integer> availableIndices,
                                                   List<Integer> allInIndices) {
-        UUID opponentId = AiUtils.getOpponentId(gameData, aiPlayer.getId());
+        UUID actingPlayerId = activeDecisionPlayerId(gameData);
+        if (!actingPlayerId.equals(aiPlayer.getId())) return List.of();
+        UUID opponentId = AiUtils.getOpponentId(gameData, actingPlayerId);
         if (opponentId == null) return List.of();
         int opponentLife = gameData.getLife(opponentId);
         if (opponentLife <= 0) return List.of();
 
-        List<Card> hand = gameData.playerHands.getOrDefault(aiPlayer.getId(), List.of());
+        List<Card> hand = gameData.playerHands.getOrDefault(actingPlayerId, List.of());
         if (hand.isEmpty()) return List.of();
 
         // Like the burn check, only land mana counts — creature mana producers may be
         // tapped from attacking by the time the pump is cast.
-        VirtualManaPool landOnlyPool = manaManager.buildLandOnlyVirtualManaPool(gameData, aiPlayer.getId());
+        VirtualManaPool landOnlyPool = manaManager.buildLandOnlyVirtualManaPool(gameData, actingPlayerId);
         List<Integer> pumpBoosts = computeAffordablePumpBoosts(gameData, hand, landOnlyPool);
         if (pumpBoosts.isEmpty()) return List.of();
 
-        List<Permanent> aiBattlefield = gameData.playerBattlefields.getOrDefault(aiPlayer.getId(), List.of());
+        List<Permanent> aiBattlefield = gameData.playerBattlefields.getOrDefault(actingPlayerId, List.of());
         List<Permanent> attackers = new ArrayList<>();
         for (int idx : availableIndices) {
             if (idx < aiBattlefield.size()) {
@@ -3140,7 +3152,7 @@ public class HardAiDecisionEngine extends AiDecisionEngine {
         if (gameData.pendingMayAbilities.isEmpty()) {
             // No pending ability data — fall back to accepting
             log.info("AI (Hard): Accepting may ability (no pending data) in game {}", gameId);
-            send(() -> gameActions.answerInteraction(selfConnection,
+            send(() -> gameActions.answerInteraction(
                     new InteractionAnswer.MayAbilityChosen(true)));
             return;
         }
@@ -3157,7 +3169,7 @@ public class HardAiDecisionEngine extends AiDecisionEngine {
                 // Can't afford it — decline
                 log.info("AI (Hard): Declining may ability '{}' (can't afford mana cost {}) in game {}",
                         pending.description(), pending.manaCost(), gameId);
-                send(() -> gameActions.answerInteraction(selfConnection,
+                send(() -> gameActions.answerInteraction(
                         new InteractionAnswer.MayAbilityChosen(false)));
                 return;
             }
@@ -3178,7 +3190,7 @@ public class HardAiDecisionEngine extends AiDecisionEngine {
         log.info("AI (Hard): {} may ability '{}' (value={}) in game {}",
                 accept ? "Accepting" : "Declining", pending.description(),
                 String.format("%.1f", value), gameId);
-        send(() -> gameActions.answerInteraction(selfConnection,
+        send(() -> gameActions.answerInteraction(
                 new InteractionAnswer.MayAbilityChosen(finalAccept)));
     }
 
@@ -3238,7 +3250,7 @@ public class HardAiDecisionEngine extends AiDecisionEngine {
 
         log.info("AI (Hard): Scry {} — keeping {} on top (needsLand={}), {} on bottom in game {}",
                 cards.size(), topOrder.size(), needsLand, bottomOrder.size(), gameId);
-        send(() -> gameActions.answerInteraction(selfConnection,
+        send(() -> gameActions.answerInteraction(
                 new InteractionAnswer.ScryOrder(topOrder, bottomOrder)));
     }
 
@@ -3259,7 +3271,7 @@ public class HardAiDecisionEngine extends AiDecisionEngine {
             String bestSubtype = findMostCommonCreatureType(gameData);
             log.info("AI (Hard): Choosing creature type {} in game {}", bestSubtype, gameId);
             final String subtype = bestSubtype;
-            send(() -> gameActions.answerInteraction(selfConnection,
+            send(() -> gameActions.answerInteraction(
                     new InteractionAnswer.ListChoiceMade(subtype)));
             return;
         }
@@ -3270,7 +3282,7 @@ public class HardAiDecisionEngine extends AiDecisionEngine {
             String bestLandType = findMostNeededBasicLandType(gameData);
             log.info("AI (Hard): Choosing basic land type {} in game {}", bestLandType, gameId);
             final String landType = bestLandType;
-            send(() -> gameActions.answerInteraction(selfConnection,
+            send(() -> gameActions.answerInteraction(
                     new InteractionAnswer.ListChoiceMade(landType)));
             return;
         }

@@ -58,8 +58,6 @@ public class GameEventProjectionSubscriber implements GameEventSubscriber {
         }
 
         List<GameLogEntryView> newLogEntries = pendingLogEntries(gameData);
-        Map<UUID, GameStateMessage> stateMessagesWithLogs = null;
-        Map<UUID, GameStateMessage> stateMessagesWithoutLogs = null;
         Set<UUID> logRecipients = new LinkedHashSet<>();
         boolean stateProjected = false;
 
@@ -70,27 +68,17 @@ public class GameEventProjectionSubscriber implements GameEventSubscriber {
             }
 
             if (envelope.fact() instanceof GameEventFact.StateInvalidated) {
-                if (stateMessagesWithLogs == null) {
-                    stateMessagesWithLogs = gameViewProjectionFactory.createGameStateMessages(
-                            gameData, newLogEntries);
-                }
+                Set<UUID> recipientsWithLogs = new LinkedHashSet<>();
+                Set<UUID> recipientsWithoutLogs = new LinkedHashSet<>();
                 for (UUID recipient : recipients) {
-                    boolean includeLogs = newLogEntries.isEmpty() || !logRecipients.contains(recipient);
-                    Map<UUID, GameStateMessage> messages = stateMessagesWithLogs;
-                    if (!includeLogs) {
-                        if (stateMessagesWithoutLogs == null) {
-                            stateMessagesWithoutLogs =
-                                    gameViewProjectionFactory.createGameStateMessages(
-                                            gameData, List.of());
-                        }
-                        messages = stateMessagesWithoutLogs;
-                    }
-                    GameStateMessage message = messages.get(recipient);
-                    if (message != null) {
-                        transport.sendToPlayer(recipient, message);
-                        logRecipients.add(recipient);
+                    if (newLogEntries.isEmpty() || !logRecipients.contains(recipient)) {
+                        recipientsWithLogs.add(recipient);
+                    } else {
+                        recipientsWithoutLogs.add(recipient);
                     }
                 }
+                projectState(gameData, newLogEntries, recipientsWithLogs, logRecipients);
+                projectState(gameData, List.of(), recipientsWithoutLogs, logRecipients);
                 stateProjected = true;
             } else if (envelope.fact() instanceof GameEventFact.DecisionRequested decision) {
                 projectDecision(gameData, decision, recipients);
@@ -113,6 +101,26 @@ public class GameEventProjectionSubscriber implements GameEventSubscriber {
             // is complete before this brief synchronized bookkeeping update.
             synchronized (gameData) {
                 gameData.lastBroadcastedLogSize = gameData.gameLog.size();
+            }
+        }
+    }
+
+    private void projectState(
+            GameData gameData,
+            List<GameLogEntryView> logEntries,
+            Set<UUID> recipients,
+            Set<UUID> logRecipients) {
+        if (recipients.isEmpty()) {
+            return;
+        }
+        Map<UUID, GameStateMessage> messages =
+                gameViewProjectionFactory.createGameStateMessages(
+                        gameData, logEntries, recipients);
+        for (UUID recipient : recipients) {
+            GameStateMessage message = messages.get(recipient);
+            if (message != null) {
+                transport.sendToPlayer(recipient, message);
+                logRecipients.add(recipient);
             }
         }
     }
@@ -198,16 +206,24 @@ public class GameEventProjectionSubscriber implements GameEventSubscriber {
     private Set<UUID> recipients(GameData gameData, GameEventAudience audience) {
         return switch (audience.visibility()) {
             case INTERNAL -> Set.of();
-            case PUBLIC -> new LinkedHashSet<>(gameData.orderedPlayerIds);
+            case PUBLIC -> humanRecipients(gameData, gameData.orderedPlayerIds);
             case PRIVATE -> {
-                LinkedHashSet<UUID> recipients = new LinkedHashSet<>();
-                for (UUID playerId : gameData.orderedPlayerIds) {
-                    if (audience.playerIds().contains(playerId)) {
-                        recipients.add(playerId);
-                    }
-                }
-                yield recipients;
+                yield humanRecipients(gameData, audience.playerIds());
             }
         };
+    }
+
+    private Set<UUID> humanRecipients(GameData gameData, Set<UUID> audiencePlayerIds) {
+        LinkedHashSet<UUID> recipients = new LinkedHashSet<>();
+        for (UUID playerId : gameData.orderedPlayerIds) {
+            if (audiencePlayerIds.contains(playerId) && !gameData.aiPlayerIds.contains(playerId)) {
+                recipients.add(playerId);
+            }
+        }
+        return recipients;
+    }
+
+    private Set<UUID> humanRecipients(GameData gameData, List<UUID> audiencePlayerIds) {
+        return humanRecipients(gameData, new LinkedHashSet<>(audiencePlayerIds));
     }
 }

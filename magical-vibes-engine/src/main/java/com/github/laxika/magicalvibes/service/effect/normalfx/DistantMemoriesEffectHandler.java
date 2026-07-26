@@ -13,7 +13,7 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.UUID;
 import com.github.laxika.magicalvibes.service.DrawService;
-import com.github.laxika.magicalvibes.service.GameBroadcastService;
+import com.github.laxika.magicalvibes.service.GameLogService;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Component;
@@ -24,7 +24,7 @@ import org.springframework.stereotype.Component;
 public class DistantMemoriesEffectHandler implements NormalEffectHandlerBean {
 
     private final DrawService drawService;
-    private final GameBroadcastService gameBroadcastService;
+    private final GameLogService gameLogService;
     private final LibrarySearchSupport librarySearchSupport;
 
     @Override
@@ -47,7 +47,7 @@ public class DistantMemoriesEffectHandler implements NormalEffectHandlerBean {
         if (deck == null || deck.isEmpty()) {
             // Empty library: no card to exile, but the "if no player does" clause still triggers — draw 3
             String logMsg = playerName + " searches their library but it is empty. " + playerName + " draws three cards.";
-            gameBroadcastService.logAndBroadcast(gameData, GameLog.text(logMsg));
+            gameLogService.append(gameData, GameLog.text(logMsg));
             for (int i = 0; i < 3; i++) {
                 drawService.resolveDrawCard(gameData, controllerId);
             }

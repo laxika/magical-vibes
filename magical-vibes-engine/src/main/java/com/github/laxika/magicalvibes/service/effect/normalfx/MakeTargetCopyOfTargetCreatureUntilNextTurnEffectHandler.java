@@ -8,7 +8,7 @@ import com.github.laxika.magicalvibes.model.effect.CardEffect;
 import com.github.laxika.magicalvibes.model.effect.EffectDuration;
 import com.github.laxika.magicalvibes.model.effect.MakeTargetCopyOfTargetCreatureUntilNextTurnEffect;
 import com.github.laxika.magicalvibes.model.layer.FloatingContinuousEffect;
-import com.github.laxika.magicalvibes.service.GameBroadcastService;
+import com.github.laxika.magicalvibes.service.GameLogService;
 import com.github.laxika.magicalvibes.service.battlefield.GameQueryService;
 import com.github.laxika.magicalvibes.service.battlefield.PermanentCopierService;
 import java.util.List;
@@ -23,7 +23,7 @@ import org.springframework.stereotype.Component;
 public class MakeTargetCopyOfTargetCreatureUntilNextTurnEffectHandler implements NormalEffectHandlerBean {
 
     private final GameQueryService gameQueryService;
-    private final GameBroadcastService gameBroadcastService;
+    private final GameLogService gameLogService;
     private final PermanentCopierService permanentCopierService;
 
     @Override
@@ -63,7 +63,7 @@ public class MakeTargetCopyOfTargetCreatureUntilNextTurnEffectHandler implements
 
         String targetName = creature.getCard().getName();
         String logMsg = originalName + " becomes a copy of " + targetName + " until its controller's next turn.";
-        gameBroadcastService.logAndBroadcast(gameData, GameLog.text(logMsg));
+        gameLogService.append(gameData, GameLog.text(logMsg));
         log.info("Game {} - {} becomes a copy of {} until next turn", gameData.id, originalName, targetName);
     }
 }

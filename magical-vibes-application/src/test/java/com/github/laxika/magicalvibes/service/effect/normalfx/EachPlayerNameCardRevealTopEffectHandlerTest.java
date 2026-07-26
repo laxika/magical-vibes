@@ -10,7 +10,7 @@ import com.github.laxika.magicalvibes.model.effect.EachPlayerNameCardRevealTopEf
 import com.github.laxika.magicalvibes.networking.SessionManager;
 import com.github.laxika.magicalvibes.networking.model.CardView;
 import com.github.laxika.magicalvibes.networking.service.CardViewFactory;
-import com.github.laxika.magicalvibes.service.GameBroadcastService;
+import com.github.laxika.magicalvibes.service.GameLogService;
 import com.github.laxika.magicalvibes.service.battlefield.BattlefieldEntryService;
 import com.github.laxika.magicalvibes.service.battlefield.GameQueryService;
 import com.github.laxika.magicalvibes.service.exile.ExileService;
@@ -36,7 +36,7 @@ class EachPlayerNameCardRevealTopEffectHandlerTest {
     @Mock
     private GameQueryService gameQueryService;
     @Mock
-    private GameBroadcastService gameBroadcastService;
+    private GameLogService gameLogService;
     @Mock
     private SessionManager sessionManager;
     @Mock
@@ -73,10 +73,10 @@ class EachPlayerNameCardRevealTopEffectHandlerTest {
         gd.playerDecks.put(player2Id, Collections.synchronizedList(new ArrayList<>()));
         gd.activePlayerId = player1Id;
 
-        libraryRevealSupport = new LibraryRevealSupport(gameBroadcastService,
-                InteractionRegistryTestSupport.registryFor(sessionManager, cardViewFactory, gameBroadcastService));
+        libraryRevealSupport = new LibraryRevealSupport(gameLogService,
+                InteractionRegistryTestSupport.registryFor(sessionManager, cardViewFactory, gameLogService));
         eachPlayerNameCardRevealTopEffectHandler = new EachPlayerNameCardRevealTopEffectHandler(
-                InteractionRegistryTestSupport.registryFor(sessionManager, cardViewFactory, gameBroadcastService),
+                InteractionRegistryTestSupport.registryFor(sessionManager, cardViewFactory, gameLogService),
                 libraryRevealSupport);
 
     }

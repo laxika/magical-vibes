@@ -5,7 +5,7 @@ import com.github.laxika.magicalvibes.model.GameLog;
 import com.github.laxika.magicalvibes.model.StackEntry;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
 import com.github.laxika.magicalvibes.model.effect.FightTargetsEffect;
-import com.github.laxika.magicalvibes.service.GameBroadcastService;
+import com.github.laxika.magicalvibes.service.GameLogService;
 import com.github.laxika.magicalvibes.service.battlefield.GameQueryService;
 import java.util.List;
 import java.util.UUID;
@@ -19,7 +19,7 @@ public class FightTargetsEffectHandler implements NormalEffectHandlerBean {
 
     private final DamageSupport damageSupport;
     private final GameQueryService gameQueryService;
-    private final GameBroadcastService gameBroadcastService;
+    private final GameLogService gameLogService;
 
     @Override
     public Class<? extends CardEffect> handledEffect() {
@@ -45,9 +45,9 @@ public class FightTargetsEffectHandler implements NormalEffectHandlerBean {
         // First creature deals damage equal to its power to second creature
         int firstPower = gameQueryService.getPowerBasedDamage(gameData, first);
         if (gameQueryService.isDamagePreventable(gameData) && gameQueryService.isPreventedFromDealingDamage(gameData, first)) {
-            gameBroadcastService.logAndBroadcast(gameData, GameLog.cardThen(first.getCard(), "'s damage is prevented."));
+            gameLogService.append(gameData, GameLog.cardThen(first.getCard(), "'s damage is prevented."));
         } else if (gameQueryService.isDamagePreventable(gameData) && gameQueryService.hasProtectionFromSource(gameData, second, first)) {
-            gameBroadcastService.logAndBroadcast(gameData, GameLog.cardTextCard(second.getCard(), " has protection — damage from ", first.getCard(), " prevented."));
+            gameLogService.append(gameData, GameLog.cardTextCard(second.getCard(), " has protection — damage from ", first.getCard(), " prevented."));
         } else {
             int damage = gameQueryService.applyDamageMultiplier(gameData, firstPower, entry);
             damageSupport.dealCreatureDamage(gameData, entry, second, damage, first);
@@ -56,9 +56,9 @@ public class FightTargetsEffectHandler implements NormalEffectHandlerBean {
         // Second creature deals damage equal to its power to first creature
         int secondPower = gameQueryService.getPowerBasedDamage(gameData, second);
         if (gameQueryService.isDamagePreventable(gameData) && gameQueryService.isPreventedFromDealingDamage(gameData, second)) {
-            gameBroadcastService.logAndBroadcast(gameData, GameLog.cardThen(second.getCard(), "'s damage is prevented."));
+            gameLogService.append(gameData, GameLog.cardThen(second.getCard(), "'s damage is prevented."));
         } else if (gameQueryService.isDamagePreventable(gameData) && gameQueryService.hasProtectionFromSource(gameData, first, second)) {
-            gameBroadcastService.logAndBroadcast(gameData, GameLog.cardTextCard(first.getCard(), " has protection — damage from ", second.getCard(), " prevented."));
+            gameLogService.append(gameData, GameLog.cardTextCard(first.getCard(), " has protection — damage from ", second.getCard(), " prevented."));
         } else {
             int damage = gameQueryService.applyDamageMultiplier(gameData, secondPower, entry);
             damageSupport.dealCreatureDamage(gameData, entry, first, damage, second);

@@ -1,6 +1,5 @@
 package com.github.laxika.magicalvibes.ai;
 
-import com.github.laxika.magicalvibes.networking.model.MessageType;
 import com.github.laxika.magicalvibes.model.PendingInteraction;
 import com.github.laxika.magicalvibes.cards.t.TroveOfTemptation;
 import com.github.laxika.magicalvibes.cards.a.AirElemental;
@@ -34,7 +33,7 @@ import com.github.laxika.magicalvibes.model.TurnStep;
 import com.github.laxika.magicalvibes.model.effect.DealDividedDamageEffect;
 import com.github.laxika.magicalvibes.networking.Connection;
 import com.github.laxika.magicalvibes.networking.message.PlayCardRequest;
-import com.github.laxika.magicalvibes.service.GameBroadcastService;
+import com.github.laxika.magicalvibes.service.GameActionAvailabilityService;
 import com.github.laxika.magicalvibes.service.GameRegistry;
 import com.github.laxika.magicalvibes.service.battlefield.GameQueryService;
 import com.github.laxika.magicalvibes.service.combat.CombatAttackService;
@@ -88,8 +87,7 @@ class MediumAiDecisionEngineTest {
         harness.getSessionManager().registerPlayer(aiConn, aiPlayer.getId(), "Bob");
         ai = new MediumAiDecisionEngine(gd.id, aiPlayer, harness.getGameRegistry(),
                 harness.getGameService(), harness.getGameQueryService(), harness.getCombatAttackService(),
-                harness.getGameBroadcastService(), harness.getCastingCostService(), harness.getCastingPermissionService(), harness.getTargetValidationService(), harness.getTargetLegalityService());
-        ai.setSelfConnection(aiConn);
+                harness.getGameActionAvailabilityService(), harness.getCastingCostService(), harness.getCastingPermissionService(), harness.getTargetValidationService(), harness.getTargetLegalityService());
     }
 
     private void giveAiPriority() {
@@ -141,7 +139,7 @@ class MediumAiDecisionEngineTest {
 
         harness.setHand(aiPlayer, List.of(new Pacifism()));
 
-        ai.handleEvent(MessageType.GAME_STATE);
+        ai.handleEvent(AiDecisionKind.GAME_STATE);
 
         assertThat(gd.stack).hasSize(1);
         assertThat(gd.stack.getFirst().getCard().getName()).isEqualTo("Pacifism");
@@ -168,9 +166,9 @@ class MediumAiDecisionEngineTest {
         airElemental.setSummoningSick(false);
         gd.playerBattlefields.get(human.getId()).add(airElemental);
 
-        ai.handleEvent(MessageType.AVAILABLE_ATTACKERS);
+        ai.handleEvent(AiDecisionKind.ATTACKER_DECLARATION);
 
-        // AI should not have attacked — bears would die without killing AE
+        // AI should not have attacked A?€�t bears would die without killing AE
         // The attack step resolves, check that bears is still alive and untapped
         assertThat(aiBears.isAttacking()).isFalse();
     }
@@ -195,7 +193,7 @@ class MediumAiDecisionEngineTest {
         bears2.setSummoningSick(false);
         gd.playerBattlefields.get(aiPlayer.getId()).add(bears2);
 
-        ai.handleEvent(MessageType.AVAILABLE_ATTACKERS);
+        ai.handleEvent(AiDecisionKind.ATTACKER_DECLARATION);
 
         // Both should be attacking for lethal
         long attackingCount = gd.playerBattlefields.get(aiPlayer.getId()).stream()
@@ -218,7 +216,7 @@ class MediumAiDecisionEngineTest {
         // Hand has Bears (creature value) and Pacifism (high value due to target)
         harness.setHand(aiPlayer, List.of(new GrizzlyBears(), new Pacifism()));
 
-        ai.handleEvent(MessageType.GAME_STATE);
+        ai.handleEvent(AiDecisionKind.GAME_STATE);
 
         // Should cast the spell with higher evaluated value
         assertThat(gd.stack).hasSize(1);
@@ -234,9 +232,9 @@ class MediumAiDecisionEngineTest {
 
         harness.setHand(aiPlayer, List.of(new com.github.laxika.magicalvibes.cards.m.MyrSuperion()));
 
-        ai.handleEvent(MessageType.GAME_STATE);
+        ai.handleEvent(AiDecisionKind.GAME_STATE);
 
-        // Myr Superion should NOT be on the stack — only land mana is available
+        // Myr Superion should NOT be on the stack A?€�t only land mana is available
         assertThat(gd.stack).isEmpty();
     }
 
@@ -256,9 +254,9 @@ class MediumAiDecisionEngineTest {
 
         harness.setHand(aiPlayer, List.of(new com.github.laxika.magicalvibes.cards.m.MyrSuperion()));
 
-        ai.handleEvent(MessageType.GAME_STATE);
+        ai.handleEvent(AiDecisionKind.GAME_STATE);
 
-        // Myr Superion should be on the stack — creature mana is available from elves
+        // Myr Superion should be on the stack A?€�t creature mana is available from elves
         assertThat(gd.stack).hasSize(1);
         assertThat(gd.stack.getFirst().getCard().getName()).isEqualTo("Myr Superion");
     }
@@ -276,9 +274,9 @@ class MediumAiDecisionEngineTest {
 
         harness.setHand(aiPlayer, List.of(new KuldothaRebirth()));
 
-        ai.handleEvent(MessageType.GAME_STATE);
+        ai.handleEvent(AiDecisionKind.GAME_STATE);
 
-        // AI should not cast — no artifact to sacrifice
+        // AI should not cast A?€�t no artifact to sacrifice
         assertThat(gd.stack).isEmpty();
     }
 
@@ -295,17 +293,17 @@ class MediumAiDecisionEngineTest {
             gd.playerBattlefields.get(aiPlayer.getId()).add(island);
         }
 
-        Permanent elves = new Permanent(new LlanowarElves()); // 1/1 — should be sacrificed
+        Permanent elves = new Permanent(new LlanowarElves()); // 1/1 A?€�t should be sacrificed
         elves.setSummoningSick(false);
         gd.playerBattlefields.get(aiPlayer.getId()).add(elves);
 
-        Permanent angel = new Permanent(new SerraAngel()); // 4/4 — should survive
+        Permanent angel = new Permanent(new SerraAngel()); // 4/4 A?€�t should survive
         angel.setSummoningSick(false);
         gd.playerBattlefields.get(aiPlayer.getId()).add(angel);
 
         harness.setHand(aiPlayer, List.of(new Vivisection()));
 
-        ai.handleEvent(MessageType.GAME_STATE);
+        ai.handleEvent(AiDecisionKind.GAME_STATE);
 
         assertThat(gd.stack).hasSize(1);
         assertThat(gd.stack.getFirst().getCard().getName()).isEqualTo("Vivisection");
@@ -329,12 +327,12 @@ class MediumAiDecisionEngineTest {
         berserkers.setSummoningSick(false);
         gd.playerBattlefields.get(aiPlayer.getId()).add(berserkers);
 
-        // Opponent has Air Elemental (4/4 flying) — can block
+        // Opponent has Air Elemental (4/4 flying) A?€�t can block
         Permanent airElemental = new Permanent(new AirElemental());
         airElemental.setSummoningSick(false);
         gd.playerBattlefields.get(human.getId()).add(airElemental);
 
-        ai.handleEvent(MessageType.AVAILABLE_ATTACKERS);
+        ai.handleEvent(AiDecisionKind.ATTACKER_DECLARATION);
 
         // Berserkers must be attacking despite the unfavorable board
         assertThat(berserkers.isAttacking()).isTrue();
@@ -359,8 +357,8 @@ class MediumAiDecisionEngineTest {
         bears.setSummoningSick(false);
         gd.playerBattlefields.get(aiPlayer.getId()).add(bears);
 
-        // No blockers — both should attack, dealing at least 4 damage (must-attack Berserkers)
-        ai.handleEvent(MessageType.AVAILABLE_ATTACKERS);
+        // No blockers A?€�t both should attack, dealing at least 4 damage (must-attack Berserkers)
+        ai.handleEvent(AiDecisionKind.ATTACKER_DECLARATION);
 
         // Berserkers (4 power) must have attacked; combat fully resolves with no blockers
         assertThat(gd.playerLifeTotals.get(human.getId())).isLessThanOrEqualTo(16);
@@ -382,12 +380,12 @@ class MediumAiDecisionEngineTest {
         forest2.setSummoningSick(false);
         gd.playerBattlefields.get(aiPlayer.getId()).add(forest2);
 
-        // Mana pool is empty — AI must tap Forests
+        // Mana pool is empty A?€�t AI must tap Forests
         assertThat(gd.playerManaPools.get(aiPlayer.getId()).getTotal()).isZero();
 
         harness.setHand(aiPlayer, List.of(new GrizzlyBears()));
 
-        ai.handleEvent(MessageType.GAME_STATE);
+        ai.handleEvent(AiDecisionKind.GAME_STATE);
 
         assertThat(gd.stack).hasSize(1);
         assertThat(gd.stack.getFirst().getCard().getName()).isEqualTo("Grizzly Bears");
@@ -410,7 +408,7 @@ class MediumAiDecisionEngineTest {
         @Mock private GameQueryService mockGameQueryService;
         @Mock private CombatAttackService mockCombatAttackService;
         @Mock private Connection mockConnection;
-        @Mock private GameBroadcastService mockGameBroadcastService;
+        @Mock private GameActionAvailabilityService mockGameActionAvailabilityService;
         @Mock private com.github.laxika.magicalvibes.service.cast.CastingCostService mockCastingCostService;
         @Mock private com.github.laxika.magicalvibes.service.cast.CastingPermissionService mockCastingPermissionService;
         @Mock private com.github.laxika.magicalvibes.service.effect.TargetValidationService mockTargetValidationService;
@@ -451,16 +449,15 @@ class MediumAiDecisionEngineTest {
         }
 
         private MediumAiDecisionEngine createEngine() {
-            AiTestPlayabilityStub.install(mockGameBroadcastService, mockCastingCostService);
+            AiTestPlayabilityStub.install(mockGameActionAvailabilityService, mockCastingCostService);
             MediumAiDecisionEngine engine = new MediumAiDecisionEngine(
                     mockGd.id, mockAiPlayer, mockGameRegistry, mockMessageHandler,
-                    mockGameQueryService, mockCombatAttackService, mockGameBroadcastService,
+                    mockGameQueryService, mockCombatAttackService, mockGameActionAvailabilityService,
                     mockCastingCostService, mockCastingPermissionService,
                     mockTargetValidationService,
                     new com.github.laxika.magicalvibes.service.target.TargetLegalityService(mockGameQueryService,
                             new com.github.laxika.magicalvibes.service.filter.PredicateEvaluationService(mockGameQueryService),
                             mockTargetValidationService));
-            engine.setSelfConnection(mockConnection);
             return engine;
         }
 
@@ -479,10 +476,10 @@ class MediumAiDecisionEngineTest {
             pool.add(ManaColor.GREEN, 1);
             pool.add(ManaColor.COLORLESS, 1);
 
-            createEngine().handleEvent(MessageType.GAME_STATE);
+            createEngine().handleEvent(AiDecisionKind.GAME_STATE);
 
-            verify(mockMessageHandler).handlePlayCard(any(), any());
-            verify(mockMessageHandler).handlePassPriority(any(), any());
+            verify(mockMessageHandler).handlePlayCard(any());
+            verify(mockMessageHandler).handlePassPriority(any());
         }
 
         @Test
@@ -503,12 +500,12 @@ class MediumAiDecisionEngineTest {
             Mockito.doAnswer(inv -> {
                 mockGd.playerHands.get(mockAiPlayer.getId()).removeFirst();
                 return null;
-            }).when(mockMessageHandler).handlePlayCard(any(), any());
+            }).when(mockMessageHandler).handlePlayCard(any());
 
-            createEngine().handleEvent(MessageType.GAME_STATE);
+            createEngine().handleEvent(AiDecisionKind.GAME_STATE);
 
-            verify(mockMessageHandler).handlePlayCard(any(), any());
-            verify(mockMessageHandler, never()).handlePassPriority(any(), any());
+            verify(mockMessageHandler).handlePlayCard(any());
+            verify(mockMessageHandler, never()).handlePassPriority(any());
         }
 
         // ===== Identity-based cast detection (explore-refill regression) =====
@@ -538,12 +535,12 @@ class MediumAiDecisionEngineTest {
                 revealedLand.setType(CardType.LAND);
                 hand.add(revealedLand);
                 return null;
-            }).when(mockMessageHandler).handlePlayCard(any(), any());
+            }).when(mockMessageHandler).handlePlayCard(any());
 
-            createEngine().handleEvent(MessageType.GAME_STATE);
+            createEngine().handleEvent(AiDecisionKind.GAME_STATE);
 
-            verify(mockMessageHandler).handlePlayCard(any(), any());
-            verify(mockMessageHandler, never()).handlePassPriority(any(), any());
+            verify(mockMessageHandler).handlePlayCard(any());
+            verify(mockMessageHandler, never()).handlePassPriority(any());
         }
 
         @Test
@@ -566,10 +563,10 @@ class MediumAiDecisionEngineTest {
             pool.add(ManaColor.GREEN, 1);
             pool.add(ManaColor.COLORLESS, 1);
 
-            createEngine().handleEvent(MessageType.GAME_STATE);
+            createEngine().handleEvent(AiDecisionKind.GAME_STATE);
 
-            verify(mockMessageHandler).handlePlayCard(any(), any());
-            verify(mockMessageHandler).handlePassPriority(any(), any());
+            verify(mockMessageHandler).handlePlayCard(any());
+            verify(mockMessageHandler).handlePassPriority(any());
         }
 
         @Test
@@ -595,9 +592,9 @@ class MediumAiDecisionEngineTest {
                 revealedLand.setType(CardType.LAND);
                 hand.add(revealedLand);
                 return null;
-            }).when(mockMessageHandler).handlePlayCard(any(), any());
+            }).when(mockMessageHandler).handlePlayCard(any());
 
-            assertThatCode(() -> createEngine().handleEvent(MessageType.GAME_STATE))
+            assertThatCode(() -> createEngine().handleEvent(AiDecisionKind.GAME_STATE))
                     .doesNotThrowAnyException();
         }
 
@@ -632,12 +629,12 @@ class MediumAiDecisionEngineTest {
             Mockito.doAnswer(inv -> {
                 mockGd.playerHands.get(mockAiPlayer.getId()).removeFirst();
                 return null;
-            }).when(mockMessageHandler).handlePlayCard(any(), any());
+            }).when(mockMessageHandler).handlePlayCard(any());
 
-            createEngine().handleEvent(MessageType.GAME_STATE);
+            createEngine().handleEvent(AiDecisionKind.GAME_STATE);
 
             ArgumentCaptor<PlayCardRequest> captor = ArgumentCaptor.forClass(PlayCardRequest.class);
-            verify(mockMessageHandler).handlePlayCard(eq(mockConnection), captor.capture());
+            verify(mockMessageHandler).handlePlayCard(captor.capture());
 
             PlayCardRequest request = captor.getValue();
             assertThat(request.damageAssignments()).isNotNull();
@@ -667,14 +664,14 @@ class MediumAiDecisionEngineTest {
             Mockito.doAnswer(inv -> {
                 mockGd.interaction.beginInteraction(new PendingInteraction.ColorChoice(null, null, null, null, java.util.List.of(), "Choose a color."));
                 return null;
-            }).when(mockMessageHandler).handleTapPermanent(any(), any());
+            }).when(mockMessageHandler).handleTapPermanent(any());
 
-            createEngine().handleEvent(MessageType.GAME_STATE);
+            createEngine().handleEvent(AiDecisionKind.GAME_STATE);
 
             // AI should have tapped but NOT cast the spell or passed priority
-            verify(mockMessageHandler).handleTapPermanent(any(), any());
-            verify(mockMessageHandler, never()).handlePlayCard(any(), any());
-            verify(mockMessageHandler, never()).handlePassPriority(any(), any());
+            verify(mockMessageHandler).handleTapPermanent(any());
+            verify(mockMessageHandler, never()).handlePlayCard(any());
+            verify(mockMessageHandler, never()).handlePassPriority(any());
         }
     }
 
@@ -697,7 +694,7 @@ class MediumAiDecisionEngineTest {
         gd.playerBattlefields.get(human.getId()).add(target);
         harness.setHand(aiPlayer, List.of(new CrypticCommand()));
 
-        ai.handleEvent(MessageType.GAME_STATE);
+        ai.handleEvent(AiDecisionKind.GAME_STATE);
 
         assertThat(gd.stack).hasSize(1);
         assertThat(gd.stack.getFirst().getCard().getName()).isEqualTo("Cryptic Command");
@@ -712,7 +709,7 @@ class MediumAiDecisionEngineTest {
 
         harness.setHand(aiPlayer, List.of(new SteelSabotage()));
 
-        ai.handleEvent(MessageType.GAME_STATE);
+        ai.handleEvent(AiDecisionKind.GAME_STATE);
 
         assertThat(gd.stack).isEmpty();
     }
@@ -731,7 +728,7 @@ class MediumAiDecisionEngineTest {
         // Steel Sabotage has no valid mode (no artifacts), but Pacifism is castable
         harness.setHand(aiPlayer, List.of(new SteelSabotage(), new Pacifism()));
 
-        ai.handleEvent(MessageType.GAME_STATE);
+        ai.handleEvent(AiDecisionKind.GAME_STATE);
 
         // Should skip Steel Sabotage and cast Pacifism
         assertThat(gd.stack).hasSize(1);
@@ -741,7 +738,7 @@ class MediumAiDecisionEngineTest {
     @Test
     @DisplayName("Medium AI casts Steel Sabotage to bounce artifact creature on opponent's battlefield")
     void castsSteelSabotageToBounceArtifact() {
-        // Set up as opponent's turn, beginning of combat — good timing for REMOVAL instants
+        // Set up as opponent's turn, beginning of combat A?€�t good timing for REMOVAL instants
         harness.forceActivePlayer(human);
         harness.forceStep(TurnStep.BEGINNING_OF_COMBAT);
         harness.clearPriorityPassed();
@@ -764,7 +761,7 @@ class MediumAiDecisionEngineTest {
 
         harness.setHand(aiPlayer, List.of(new SteelSabotage()));
 
-        ai.handleEvent(MessageType.GAME_STATE);
+        ai.handleEvent(AiDecisionKind.GAME_STATE);
 
         assertThat(gd.stack).hasSize(1);
         assertThat(gd.stack.getFirst().getCard().getName()).isEqualTo("Steel Sabotage");
@@ -784,7 +781,7 @@ class MediumAiDecisionEngineTest {
 
         harness.setHand(aiPlayer, List.of(new Slagstorm()));
 
-        ai.handleEvent(MessageType.GAME_STATE);
+        ai.handleEvent(AiDecisionKind.GAME_STATE);
 
         assertThat(gd.stack).hasSize(1);
         assertThat(gd.stack.getFirst().getCard().getName()).isEqualTo("Slagstorm");
@@ -814,7 +811,7 @@ class MediumAiDecisionEngineTest {
         gd.status = GameStatus.RUNNING;
         gd.interaction.beginInteraction(new PendingInteraction.AttackerDeclaration(aiPlayer.getId()));
 
-        ai.handleEvent(MessageType.AVAILABLE_ATTACKERS);
+        ai.handleEvent(AiDecisionKind.ATTACKER_DECLARATION);
 
         // At most 1 creature should be attacking (can only afford {1} tax)
         long attackingCount = gd.playerBattlefields.get(aiPlayer.getId()).stream()
@@ -837,7 +834,7 @@ class MediumAiDecisionEngineTest {
 
         harness.setHand(aiPlayer, List.of(new com.github.laxika.magicalvibes.cards.s.SkaabRuinator()));
 
-        ai.handleEvent(MessageType.GAME_STATE);
+        ai.handleEvent(AiDecisionKind.GAME_STATE);
 
         assertThat(gd.stack).hasSize(1);
         assertThat(gd.stack.getFirst().getCard().getName()).isEqualTo("Skaab Ruinator");
@@ -859,12 +856,12 @@ class MediumAiDecisionEngineTest {
 
         harness.setHand(aiPlayer, List.of(new com.github.laxika.magicalvibes.cards.s.SkaabRuinator()));
 
-        ai.handleEvent(MessageType.GAME_STATE);
+        ai.handleEvent(AiDecisionKind.GAME_STATE);
 
         assertThat(gd.stack).hasSize(1);
         assertThat(gd.stack.getFirst().getCard().getName()).isEqualTo("Skaab Ruinator");
         assertThat(gd.getPlayerExiledCards(aiPlayer.getId())).hasSize(3);
-        // Only creatures exiled — 2 non-creatures remain
+        // Only creatures exiled A?€�t 2 non-creatures remain
         assertThat(gd.playerGraveyards.get(aiPlayer.getId())).hasSize(2);
         assertThat(gd.playerGraveyards.get(aiPlayer.getId()))
                 .allMatch(c -> c.getName().equals("Holy Day"));
@@ -884,7 +881,7 @@ class MediumAiDecisionEngineTest {
 
         harness.setHand(aiPlayer, List.of(new EntrancingMelody()));
 
-        ai.handleEvent(MessageType.GAME_STATE);
+        ai.handleEvent(AiDecisionKind.GAME_STATE);
 
         assertThat(gd.stack).hasSize(1);
         assertThat(gd.stack.getFirst().getCard().getName()).isEqualTo("Entrancing Melody");
@@ -908,7 +905,7 @@ class MediumAiDecisionEngineTest {
 
         harness.setHand(aiPlayer, List.of(new EntrancingMelody()));
 
-        ai.handleEvent(MessageType.GAME_STATE);
+        ai.handleEvent(AiDecisionKind.GAME_STATE);
 
         assertThat(gd.stack).hasSize(1);
         assertThat(gd.stack.getFirst().getTargetId()).isEqualTo(bears.getId());
@@ -927,7 +924,7 @@ class MediumAiDecisionEngineTest {
 
         harness.setHand(aiPlayer, List.of(new EntrancingMelody()));
 
-        ai.handleEvent(MessageType.GAME_STATE);
+        ai.handleEvent(AiDecisionKind.GAME_STATE);
 
         assertThat(gd.stack).isEmpty();
     }
@@ -938,21 +935,21 @@ class MediumAiDecisionEngineTest {
     @DisplayName("Medium AI skips Entrancing Melody when cost modifier makes only target unaffordable")
     void skipsEntrancingMelodyWhenCostModifierMakesTargetUnaffordable() {
         giveAiPriority();
-        giveAiIslands(4); // 4U total; Entrancing Melody {X}{U}{U} → without modifier maxX=2
+        giveAiIslands(4); // 4U total; Entrancing Melody {X}{U}{U} A?†’ without modifier maxX=2
 
-        // Thalia on opponent's battlefield: +1 cost → maxX=1
+        // Thalia on opponent's battlefield: +1 cost A?†’ maxX=1
         Permanent thalia = new Permanent(new com.github.laxika.magicalvibes.cards.t.ThaliaGuardianOfThraben());
         thalia.setSummoningSick(false);
         gd.playerBattlefields.get(human.getId()).add(thalia);
 
-        // MV=2 creature — needs X=2 but maxX=1 with Thalia → unaffordable
+        // MV=2 creature A?€�t needs X=2 but maxX=1 with Thalia A?†’ unaffordable
         Permanent bears = new Permanent(new GrizzlyBears()); // MV=2
         bears.setSummoningSick(false);
         gd.playerBattlefields.get(human.getId()).add(bears);
 
         harness.setHand(aiPlayer, List.of(new EntrancingMelody()));
 
-        ai.handleEvent(MessageType.GAME_STATE);
+        ai.handleEvent(AiDecisionKind.GAME_STATE);
 
         // Without the fix, AI would compute maxX=2 (ignoring modifier) and try to steal Bears,
         // which would fail server-side validation. With the fix, AI sees maxX=1 and skips.
@@ -975,7 +972,7 @@ class MediumAiDecisionEngineTest {
         trove.setSummoningSick(false);
         gd.playerBattlefields.get(human.getId()).add(trove);
 
-        // AI has a 2/2 creature and opponent has a 4/4 — simulator would normally skip attacking
+        // AI has a 2/2 creature and opponent has a 4/4 A?€�t simulator would normally skip attacking
         Permanent bears = new Permanent(new GrizzlyBears());
         bears.setSummoningSick(false);
         gd.playerBattlefields.get(aiPlayer.getId()).add(bears);
@@ -984,7 +981,7 @@ class MediumAiDecisionEngineTest {
         airElemental.setSummoningSick(false);
         gd.playerBattlefields.get(human.getId()).add(airElemental);
 
-        ai.handleEvent(MessageType.AVAILABLE_ATTACKERS);
+        ai.handleEvent(AiDecisionKind.ATTACKER_DECLARATION);
 
         // AI must attack with at least one creature despite the unfavorable board
         long attackingCount = gd.playerBattlefields.get(aiPlayer.getId()).stream()
@@ -999,7 +996,7 @@ class MediumAiDecisionEngineTest {
     @DisplayName("Medium AI does not cast Pacifism when targeting tax makes it unaffordable")
     void doesNotCastPacifismWhenTargetingTaxMakesUnaffordable() {
         giveAiPriority();
-        giveAiPlains(2); // Only 2 mana — Pacifism costs {1}{W} but Kopala adds {2}
+        giveAiPlains(2); // Only 2 mana A?€�t Pacifism costs {1}{W} but Kopala adds {2}
 
         Permanent kopala = new Permanent(new com.github.laxika.magicalvibes.cards.k.KopalaWardenOfWaves());
         kopala.setSummoningSick(false);
@@ -1007,9 +1004,9 @@ class MediumAiDecisionEngineTest {
 
         harness.setHand(aiPlayer, List.of(new Pacifism()));
 
-        ai.handleEvent(MessageType.GAME_STATE);
+        ai.handleEvent(AiDecisionKind.GAME_STATE);
 
-        // Should NOT cast — can't afford {1}{W} + {2} tax = 4 mana with only 2 Plains
+        // Should NOT cast A?€�t can't afford {1}{W} + {2} tax = 4 mana with only 2 Plains
         assertThat(gd.stack).isEmpty();
     }
 
@@ -1017,7 +1014,7 @@ class MediumAiDecisionEngineTest {
     @DisplayName("Medium AI casts Pacifism when it can afford targeting tax")
     void castsPacifismWhenCanAffordTargetingTax() {
         giveAiPriority();
-        giveAiPlains(4); // 4 mana — enough for {1}{W} + {2} tax
+        giveAiPlains(4); // 4 mana A?€�t enough for {1}{W} + {2} tax
 
         Permanent kopala = new Permanent(new com.github.laxika.magicalvibes.cards.k.KopalaWardenOfWaves());
         kopala.setSummoningSick(false);
@@ -1025,7 +1022,7 @@ class MediumAiDecisionEngineTest {
 
         harness.setHand(aiPlayer, List.of(new Pacifism()));
 
-        ai.handleEvent(MessageType.GAME_STATE);
+        ai.handleEvent(AiDecisionKind.GAME_STATE);
 
         assertThat(gd.stack).hasSize(1);
         assertThat(gd.stack.getFirst().getCard().getName()).isEqualTo("Pacifism");
@@ -1034,7 +1031,7 @@ class MediumAiDecisionEngineTest {
     @Test
     @DisplayName("Medium AI does not cast instant when targeting tax makes it unaffordable")
     void doesNotCastInstantWhenTargetingTaxMakesUnaffordable() {
-        // Set up as opponent's turn, beginning of combat — good timing for REMOVAL instants
+        // Set up as opponent's turn, beginning of combat A?€�t good timing for REMOVAL instants
         harness.forceActivePlayer(human);
         harness.forceStep(TurnStep.BEGINNING_OF_COMBAT);
         harness.clearPriorityPassed();
@@ -1043,7 +1040,7 @@ class MediumAiDecisionEngineTest {
         gd.stack.clear();
         gd.priorityPassedBy.add(human.getId());
 
-        giveAiMountains(1); // Only 1 mana — Lightning Bolt costs {R} but Kopala adds {2}
+        giveAiMountains(1); // Only 1 mana A?€�t Lightning Bolt costs {R} but Kopala adds {2}
 
         Permanent kopala = new Permanent(new com.github.laxika.magicalvibes.cards.k.KopalaWardenOfWaves());
         kopala.setSummoningSick(false);
@@ -1051,9 +1048,9 @@ class MediumAiDecisionEngineTest {
 
         harness.setHand(aiPlayer, List.of(new com.github.laxika.magicalvibes.cards.l.LightningBolt()));
 
-        ai.handleEvent(MessageType.GAME_STATE);
+        ai.handleEvent(AiDecisionKind.GAME_STATE);
 
-        // Should NOT cast — can't afford {R} + {2} tax = 3 mana with only 1 Mountain
+        // Should NOT cast A?€�t can't afford {R} + {2} tax = 3 mana with only 1 Mountain
         assertThat(gd.stack).isEmpty();
     }
 

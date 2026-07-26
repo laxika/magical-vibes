@@ -9,7 +9,7 @@ import com.github.laxika.magicalvibes.model.action.PendingExileReturn;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
 import com.github.laxika.magicalvibes.model.effect.ExileAllPermanentsUntilSourceLeavesEffect;
 import com.github.laxika.magicalvibes.model.filter.FilterContext;
-import com.github.laxika.magicalvibes.service.GameBroadcastService;
+import com.github.laxika.magicalvibes.service.GameLogService;
 import com.github.laxika.magicalvibes.service.battlefield.GameQueryService;
 import com.github.laxika.magicalvibes.service.battlefield.PermanentRemovalService;
 import com.github.laxika.magicalvibes.service.filter.PredicateEvaluationService;
@@ -32,7 +32,7 @@ public class ExileAllPermanentsUntilSourceLeavesEffectHandler implements NormalE
 
     private final GameQueryService gameQueryService;
     private final PredicateEvaluationService predicateEvaluationService;
-    private final GameBroadcastService gameBroadcastService;
+    private final GameLogService gameLogService;
     private final PermanentRemovalService permanentRemovalService;
 
     @Override
@@ -71,7 +71,7 @@ public class ExileAllPermanentsUntilSourceLeavesEffectHandler implements NormalE
             permanentRemovalService.removePermanentToExile(gameData, perm);
 
             String logEntry = card.getName() + " is exiled by " + entry.getCard().getName() + ".";
-            gameBroadcastService.logAndBroadcast(gameData, GameLog.cardTextCard(card, " is exiled by ", entry.getCard(), "."));
+            gameLogService.append(gameData, GameLog.cardTextCard(card, " is exiled by ", entry.getCard(), "."));
             log.info("Game {} - {} exiles {} until it leaves the battlefield",
                     gameData.id, entry.getCard().getName(), card.getName());
 

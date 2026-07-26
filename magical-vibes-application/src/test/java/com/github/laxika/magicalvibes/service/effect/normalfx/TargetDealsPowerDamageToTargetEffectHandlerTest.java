@@ -21,7 +21,7 @@ class TargetDealsPowerDamageToTargetEffectHandlerTest extends AbstractDamageHand
 
     @Override
     protected void setUpHandler() {
-        targetDealsPowerDamageToTargetHandler = new TargetDealsPowerDamageToTargetEffectHandler(damageSupport, gameQueryService, gameBroadcastService);
+        targetDealsPowerDamageToTargetHandler = new TargetDealsPowerDamageToTargetEffectHandler(damageSupport, gameQueryService, gameLogService);
     }
 
     @Test

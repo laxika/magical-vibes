@@ -36,7 +36,7 @@ import com.github.laxika.magicalvibes.networking.message.DeclareAttackersRequest
 import com.github.laxika.magicalvibes.networking.message.DeclareBlockersRequest;
 import com.github.laxika.magicalvibes.networking.message.PassPriorityRequest;
 import com.github.laxika.magicalvibes.networking.message.PlayCardRequest;
-import com.github.laxika.magicalvibes.service.GameBroadcastService;
+import com.github.laxika.magicalvibes.service.GameActionAvailabilityService;
 import com.github.laxika.magicalvibes.service.GameRegistry;
 import com.github.laxika.magicalvibes.service.battlefield.GameQueryService;
 import com.github.laxika.magicalvibes.service.combat.CombatAttackService;
@@ -78,12 +78,12 @@ class RandomAiDecisionEngine extends AiDecisionEngine {
     RandomAiDecisionEngine(UUID gameId, Player aiPlayer, GameRegistry gameRegistry,
                            GameService gameService, GameQueryService gameQueryService,
                            CombatAttackService combatAttackService,
-                           GameBroadcastService gameBroadcastService,
+                           GameActionAvailabilityService actionAvailabilityService,
                            com.github.laxika.magicalvibes.service.cast.CastingCostService castingCostService,
                            com.github.laxika.magicalvibes.service.cast.CastingPermissionService castingPermissionService,
                            TargetValidationService targetValidationService,
                            TargetLegalityService targetLegalityService, Random rng, FuzzTelemetry telemetry) {
-        super(gameId, aiPlayer, gameRegistry, gameService, gameQueryService, combatAttackService, gameBroadcastService, castingCostService, castingPermissionService, targetValidationService, targetLegalityService);
+        super(gameId, aiPlayer, gameRegistry, gameService, gameQueryService, combatAttackService, actionAvailabilityService, castingCostService, castingPermissionService, targetValidationService, targetLegalityService);
         this.rng = rng;
         this.telemetry = telemetry;
     }
@@ -152,7 +152,7 @@ class RandomAiDecisionEngine extends AiDecisionEngine {
             return;
         }
 
-        send(() -> gameActions.handlePassPriority(selfConnection, new PassPriorityRequest()));
+        send(() -> gameActions.handlePassPriority(new PassPriorityRequest()));
     }
 
     // ===== Random Ability Activation =====
@@ -264,7 +264,7 @@ class RandomAiDecisionEngine extends AiDecisionEngine {
             final UUID finalTargetId = targetId;
             int stackSizeBefore = gameData.stack.size();
             boolean tappedBefore = permanent.isTapped();
-            send(() -> gameActions.handleActivateAbility(selfConnection,
+            send(() -> gameActions.handleActivateAbility(
                     new ActivateAbilityRequest(finalPermIdx, abilIdx, null, finalTargetId, null, null, null)));
 
             // The engine rejects some invalid activations by returning silently. If the
@@ -484,7 +484,7 @@ class RandomAiDecisionEngine extends AiDecisionEngine {
             final Map<UUID, Integer> finalDamageAssignments = damageAssignments;
             final List<UUID> finalMultiTargetIds = multiTargetIds;
             final Integer finalDiscardHandCardIndex = discardHandCardIndex;
-            send(() -> gameActions.handlePlayCard(selfConnection,
+            send(() -> gameActions.handlePlayCard(
                     new PlayCardRequest(cardIndex, finalXValue, finalTargetId, finalDamageAssignments, finalMultiTargetIds, null, null, finalSacrificePermanentId, null, null, null, null, finalExileGraveyardCardIndex, finalExileGraveyardCardIndices, null, null, null, finalDiscardHandCardIndex, null, null)));
 
             // Game may have ended while paying costs (e.g. Manabarbs killing the caster
@@ -638,7 +638,7 @@ class RandomAiDecisionEngine extends AiDecisionEngine {
         List<Permanent> battlefield = gameData.playerBattlefields.get(aiPlayer.getId());
         List<Integer> availableIndices = combatAttackService.getAttackableCreatureIndices(gameData, aiPlayer.getId());
         if (battlefield == null || availableIndices.isEmpty()) {
-            send(() -> gameActions.handleDeclareAttackers(selfConnection, new DeclareAttackersRequest(List.of(), null)));
+            send(() -> gameActions.handleDeclareAttackers(new DeclareAttackersRequest(List.of(), null)));
             return;
         }
 
@@ -680,7 +680,7 @@ class RandomAiDecisionEngine extends AiDecisionEngine {
         log.info("Random AI: Declaring {} of {} attackers in game {}",
                 attackerIndices.size(), availableIndices.size(), gameId);
         final List<Integer> finalAttackerIndices = attackerIndices;
-        send(() -> gameActions.handleDeclareAttackers(selfConnection, new DeclareAttackersRequest(finalAttackerIndices, null)));
+        send(() -> gameActions.handleDeclareAttackers(new DeclareAttackersRequest(finalAttackerIndices, null)));
     }
 
     // ===== Combat: Random Blockers =====
@@ -917,7 +917,7 @@ class RandomAiDecisionEngine extends AiDecisionEngine {
         int chosen = indices.get(rng.nextInt(indices.size()));
 
         log.info("Random AI: Choosing card at index {} in game {}", chosen, gameId);
-        send(() -> gameActions.answerInteraction(selfConnection, new InteractionAnswer.CardIndexChosen(chosen)));
+        send(() -> gameActions.answerInteraction(new InteractionAnswer.CardIndexChosen(chosen)));
     }
 
     // ===== Mulligan: mostly keep, occasionally mulligan =====

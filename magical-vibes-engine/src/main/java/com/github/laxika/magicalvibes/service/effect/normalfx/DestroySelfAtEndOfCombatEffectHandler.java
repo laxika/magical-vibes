@@ -8,7 +8,7 @@ import com.github.laxika.magicalvibes.model.action.DelayedPermanentAction;
 import com.github.laxika.magicalvibes.model.action.DelayedPermanentActionKind;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
 import com.github.laxika.magicalvibes.model.effect.DestroySelfAtEndOfCombatEffect;
-import com.github.laxika.magicalvibes.service.GameBroadcastService;
+import com.github.laxika.magicalvibes.service.GameLogService;
 import com.github.laxika.magicalvibes.service.battlefield.GameQueryService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Component;
@@ -23,7 +23,7 @@ import org.springframework.stereotype.Component;
 public class DestroySelfAtEndOfCombatEffectHandler implements NormalEffectHandlerBean {
 
     private final GameQueryService gameQueryService;
-    private final GameBroadcastService gameBroadcastService;
+    private final GameLogService gameLogService;
 
     @Override
     public Class<? extends CardEffect> handledEffect() {
@@ -38,6 +38,6 @@ public class DestroySelfAtEndOfCombatEffectHandler implements NormalEffectHandle
         }
         gameData.queueDelayedAction(new DelayedPermanentAction(self.getId(),
                 DelayedPermanentActionKind.DESTROY_AT_END_OF_COMBAT));
-        gameBroadcastService.logAndBroadcast(gameData, GameLog.cardThen(self.getCard(), " will be destroyed at end of combat."));
+        gameLogService.append(gameData, GameLog.cardThen(self.getCard(), " will be destroyed at end of combat."));
     }
 }

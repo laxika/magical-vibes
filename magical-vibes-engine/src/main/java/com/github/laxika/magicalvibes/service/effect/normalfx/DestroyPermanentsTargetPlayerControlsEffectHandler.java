@@ -7,7 +7,7 @@ import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.StackEntry;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
 import com.github.laxika.magicalvibes.model.effect.DestroyPermanentsTargetPlayerControlsEffect;
-import com.github.laxika.magicalvibes.service.GameBroadcastService;
+import com.github.laxika.magicalvibes.service.GameLogService;
 import com.github.laxika.magicalvibes.service.battlefield.GameQueryService;
 import com.github.laxika.magicalvibes.service.battlefield.PermanentRemovalService;
 import com.github.laxika.magicalvibes.service.filter.PredicateEvaluationService;
@@ -31,7 +31,7 @@ import org.springframework.stereotype.Component;
 @Slf4j
 public class DestroyPermanentsTargetPlayerControlsEffectHandler implements NormalEffectHandlerBean {
 
-    private final GameBroadcastService gameBroadcastService;
+    private final GameLogService gameLogService;
     private final GameQueryService gameQueryService;
     private final GraveyardService graveyardService;
     private final PermanentRemovalService permanentRemovalService;
@@ -74,14 +74,14 @@ public class DestroyPermanentsTargetPlayerControlsEffectHandler implements Norma
         String sourceName = entry.getCard().getName();
         for (Permanent perm : toDestroy) {
             if (indestructible.contains(perm)) {
-                gameBroadcastService.logAndBroadcast(gameData, GameLog.cardThen(perm.getCard(), " is indestructible."));
+                gameLogService.append(gameData, GameLog.cardThen(perm.getCard(), " is indestructible."));
                 continue;
             }
             if (graveyardService.tryRegenerate(gameData, perm)) {
                 continue;
             }
             permanentRemovalService.removePermanentToGraveyard(gameData, perm);
-            gameBroadcastService.logAndBroadcast(gameData, GameLog.cardThen(perm.getCard(), " is destroyed."));
+            gameLogService.append(gameData, GameLog.cardThen(perm.getCard(), " is destroyed."));
             log.info("Game {} - {} is destroyed by {}", gameData.id, perm.getCard().getName(), sourceName);
         }
     }

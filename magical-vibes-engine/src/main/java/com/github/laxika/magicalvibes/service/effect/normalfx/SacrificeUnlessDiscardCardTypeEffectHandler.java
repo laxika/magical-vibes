@@ -8,7 +8,7 @@ import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.StackEntry;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
 import com.github.laxika.magicalvibes.model.effect.SacrificeUnlessDiscardCardTypeEffect;
-import com.github.laxika.magicalvibes.service.GameBroadcastService;
+import com.github.laxika.magicalvibes.service.GameLogService;
 import com.github.laxika.magicalvibes.service.battlefield.GameQueryService;
 import com.github.laxika.magicalvibes.service.battlefield.PermanentRemovalService;
 import java.util.List;
@@ -22,7 +22,7 @@ import org.springframework.stereotype.Component;
 @RequiredArgsConstructor
 public class SacrificeUnlessDiscardCardTypeEffectHandler implements NormalEffectHandlerBean {
 
-    private final GameBroadcastService gameBroadcastService;
+    private final GameLogService gameLogService;
     private final GameQueryService gameQueryService;
     private final PermanentRemovalService permanentRemovalService;
     private final PlayerInteractionSupport playerInteractionSupport;
@@ -72,7 +72,7 @@ public class SacrificeUnlessDiscardCardTypeEffectHandler implements NormalEffect
                 permanentRemovalService.removePermanentToGraveyard(gameData, sourcePermanent);
                 String logEntry = playerName + " has no " + typeName
                         + " to discard. " + sourceCard.getName() + " is sacrificed.";
-                gameBroadcastService.logAndBroadcast(gameData, GameLog.builder().text(playerName + " has no " + typeName + " to discard. ").card(sourceCard).text(" is sacrificed.").build());
+                gameLogService.append(gameData, GameLog.builder().text(playerName + " has no " + typeName + " to discard. ").card(sourceCard).text(" is sacrificed.").build());
                 log.info("Game {} - {} sacrificed (no {} to discard)", gameData.id, sourceCard.getName(), typeName);
             } else {
                 // Permanent already gone and no valid cards — nothing to do

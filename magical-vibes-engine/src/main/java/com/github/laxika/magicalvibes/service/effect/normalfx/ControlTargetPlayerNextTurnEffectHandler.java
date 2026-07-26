@@ -5,7 +5,7 @@ import com.github.laxika.magicalvibes.model.GameLog;
 import com.github.laxika.magicalvibes.model.StackEntry;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
 import com.github.laxika.magicalvibes.model.effect.ControlTargetPlayerNextTurnEffect;
-import com.github.laxika.magicalvibes.service.GameBroadcastService;
+import com.github.laxika.magicalvibes.service.GameLogService;
 import java.util.UUID;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -17,7 +17,7 @@ import org.springframework.stereotype.Component;
 public class ControlTargetPlayerNextTurnEffectHandler implements NormalEffectHandlerBean {
 
     private final TurnSupport turnSupport;
-    private final GameBroadcastService gameBroadcastService;
+    private final GameLogService gameLogService;
 
     @Override
     public Class<? extends CardEffect> handledEffect() {
@@ -47,7 +47,7 @@ public class ControlTargetPlayerNextTurnEffectHandler implements NormalEffectHan
         if (e.grantExtraTurnAfter()) {
             logEntry += " After that turn, " + targetName + " takes an extra turn.";
         }
-        gameBroadcastService.logAndBroadcast(gameData, GameLog.text(logEntry));
+        gameLogService.append(gameData, GameLog.text(logEntry));
         log.info("Game {} - {} will control {} during their next turn (grantExtraTurnAfter={})",
                 gameData.id, controllerName, targetName, e.grantExtraTurnAfter());
     }

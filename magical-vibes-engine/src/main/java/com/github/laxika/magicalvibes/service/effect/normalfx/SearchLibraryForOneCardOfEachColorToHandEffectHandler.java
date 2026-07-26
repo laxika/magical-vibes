@@ -12,7 +12,7 @@ import java.util.List;
 import java.util.UUID;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
-import com.github.laxika.magicalvibes.service.GameBroadcastService;
+import com.github.laxika.magicalvibes.service.GameLogService;
 import org.springframework.stereotype.Component;
 
 /**
@@ -29,7 +29,7 @@ public class SearchLibraryForOneCardOfEachColorToHandEffectHandler implements No
     private static final List<CardColor> COLORS =
             List.of(CardColor.WHITE, CardColor.BLUE, CardColor.BLACK, CardColor.RED, CardColor.GREEN);
 
-    private final GameBroadcastService gameBroadcastService;
+    private final GameLogService gameLogService;
     private final LibrarySearchSupport librarySearchSupport;
 
     @Override
@@ -46,7 +46,7 @@ public class SearchLibraryForOneCardOfEachColorToHandEffectHandler implements No
         String playerName = gameData.playerIdToName.get(controllerId);
 
         if (deck == null || deck.isEmpty()) {
-            gameBroadcastService.logAndBroadcast(gameData, GameLog.text(
+            gameLogService.append(gameData, GameLog.text(
                     playerName + " searches their library but it is empty. Library is shuffled."));
             return;
         }

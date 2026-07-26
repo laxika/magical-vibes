@@ -19,7 +19,7 @@ class DealDamageIfFewCardsInHandEffectHandlerTest extends AbstractDamageHandlerT
 
     @Override
     protected void setUpHandler() {
-        dealDamageIfFewCardsInHandHandler = new DealDamageIfFewCardsInHandEffectHandler(damageSupport, gameQueryService, gameBroadcastService, gameOutcomeService);
+        dealDamageIfFewCardsInHandHandler = new DealDamageIfFewCardsInHandEffectHandler(damageSupport, gameQueryService, gameLogService, gameOutcomeService);
     }
 
     @Test
@@ -83,7 +83,7 @@ class DealDamageIfFewCardsInHandEffectHandlerTest extends AbstractDamageHandlerT
                 dealDamageIfFewCardsInHandHandler.resolve(gd, entry, effect);
 
                 assertThat(gd.playerLifeTotals.get(player2Id)).isEqualTo(20);
-                verify(gameBroadcastService).logAndBroadcast(eq(gd), argThat((GameLogEntry logEntry) ->
+                verify(gameLogService).append(eq(gd), argThat((GameLogEntry logEntry) ->
                         logEntry.plainText().contains("does nothing")));
                 verifyNoInteractions(triggerCollectionService);
             }

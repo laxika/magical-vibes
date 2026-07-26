@@ -12,7 +12,7 @@ import com.github.laxika.magicalvibes.model.effect.GrantKeywordEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantScope;
 import com.github.laxika.magicalvibes.model.filter.FilterContext;
 import com.github.laxika.magicalvibes.model.layer.FloatingContinuousEffect;
-import com.github.laxika.magicalvibes.service.GameBroadcastService;
+import com.github.laxika.magicalvibes.service.GameLogService;
 import com.github.laxika.magicalvibes.service.battlefield.GameQueryService;
 import com.github.laxika.magicalvibes.service.filter.PredicateEvaluationService;
 import lombok.RequiredArgsConstructor;
@@ -30,7 +30,7 @@ public class GrantKeywordEffectHandler implements NormalEffectHandlerBean {
 
     private final GameQueryService gameQueryService;
     private final PredicateEvaluationService predicateEvaluationService;
-    private final GameBroadcastService gameBroadcastService;
+    private final GameLogService gameLogService;
 
     @Override
     public Class<? extends CardEffect> handledEffect() {
@@ -60,7 +60,7 @@ public class GrantKeywordEffectHandler implements NormalEffectHandlerBean {
 
             String keywordNames = formatKeywords(grant.keywords());
             String logEntry = entry.getCard().getName() + " gives " + keywordNames + " to " + count + " creature(s) " + durationLabel(grant.duration()) + ".";
-            gameBroadcastService.logAndBroadcast(gameData, GameLog.builder().card(entry.getCard()).text(" gives " + keywordNames + " to " + count + " creature(s) " + durationLabel(grant.duration()) + ".").build());
+            gameLogService.append(gameData, GameLog.builder().card(entry.getCard()).text(" gives " + keywordNames + " to " + count + " creature(s) " + durationLabel(grant.duration()) + ".").build());
             log.info("Game {} - {} grants {} to {} own creature(s)", gameData.id, entry.getCard().getName(), grant.keywords(), count);
             return;
         }
@@ -91,7 +91,7 @@ public class GrantKeywordEffectHandler implements NormalEffectHandlerBean {
 
             String keywordNames = formatKeywords(grant.keywords());
             String logEntry = entry.getCard().getName() + " gives " + keywordNames + " to " + count + " creature(s) " + durationLabel(grant.duration()) + ".";
-            gameBroadcastService.logAndBroadcast(gameData, GameLog.builder().card(entry.getCard()).text(" gives " + keywordNames + " to " + count + " creature(s) " + durationLabel(grant.duration()) + ".").build());
+            gameLogService.append(gameData, GameLog.builder().card(entry.getCard()).text(" gives " + keywordNames + " to " + count + " creature(s) " + durationLabel(grant.duration()) + ".").build());
             log.info("Game {} - {} grants {} to {} creature(s) target player controls", gameData.id, entry.getCard().getName(), grant.keywords(), count);
             return;
         }
@@ -115,7 +115,7 @@ public class GrantKeywordEffectHandler implements NormalEffectHandlerBean {
 
             String keywordNames = formatKeywords(grant.keywords());
             String logEntry = entry.getCard().getName() + " gives " + keywordNames + " to " + count[0] + " creature(s) " + durationLabel(grant.duration()) + ".";
-            gameBroadcastService.logAndBroadcast(gameData, GameLog.builder().card(entry.getCard()).text(" gives " + keywordNames + " to " + count[0] + " creature(s) " + durationLabel(grant.duration()) + ".").build());
+            gameLogService.append(gameData, GameLog.builder().card(entry.getCard()).text(" gives " + keywordNames + " to " + count[0] + " creature(s) " + durationLabel(grant.duration()) + ".").build());
             log.info("Game {} - {} grants {} to {} creature(s)", gameData.id, entry.getCard().getName(), grant.keywords(), count[0]);
             return;
         }
@@ -161,7 +161,7 @@ public class GrantKeywordEffectHandler implements NormalEffectHandlerBean {
                     target.getId(), null, null, floatingDurationFor(grant.duration()), 0));
             String keywordNames = formatKeywords(grant.keywords());
             String logEntry = target.getCard().getName() + " gains " + keywordNames + " " + durationLabel(grant.duration()) + ".";
-            gameBroadcastService.logAndBroadcast(gameData, GameLog.builder().card(target.getCard()).text(" gains " + keywordNames + " " + durationLabel(grant.duration()) + ".").build());
+            gameLogService.append(gameData, GameLog.builder().card(target.getCard()).text(" gains " + keywordNames + " " + durationLabel(grant.duration()) + ".").build());
             log.info("Game {} - {} gains {} ({})", gameData.id, target.getCard().getName(), grant.keywords(), grant.scope());
         }
     }

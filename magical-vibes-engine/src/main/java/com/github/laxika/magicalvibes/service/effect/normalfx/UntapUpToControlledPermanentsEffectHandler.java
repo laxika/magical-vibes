@@ -6,7 +6,7 @@ import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.StackEntry;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
 import com.github.laxika.magicalvibes.model.effect.UntapUpToControlledPermanentsEffect;
-import com.github.laxika.magicalvibes.service.GameBroadcastService;
+import com.github.laxika.magicalvibes.service.GameLogService;
 import com.github.laxika.magicalvibes.service.battlefield.GameQueryService;
 import com.github.laxika.magicalvibes.service.filter.PredicateEvaluationService;
 import lombok.RequiredArgsConstructor;
@@ -23,7 +23,7 @@ public class UntapUpToControlledPermanentsEffectHandler implements NormalEffectH
 
     private final GameQueryService gameQueryService;
     private final PredicateEvaluationService predicateEvaluationService;
-    private final GameBroadcastService gameBroadcastService;
+    private final GameLogService gameLogService;
     private final TapUntapSupport tapUntapSupport;
 
     @Override
@@ -53,7 +53,7 @@ public class UntapUpToControlledPermanentsEffectHandler implements NormalEffectH
 
         if (count > 0) {
             String logEntry = entry.getCard().getName() + " untaps " + count + " permanent(s).";
-            gameBroadcastService.logAndBroadcast(gameData, GameLog.builder().card(entry.getCard()).text(" untaps " + count + " permanent(s).").build());
+            gameLogService.append(gameData, GameLog.builder().card(entry.getCard()).text(" untaps " + count + " permanent(s).").build());
         }
         log.info("Game {} - {} untaps {} permanent(s) via delayed trigger", gameData.id, entry.getCard().getName(), count);
     }

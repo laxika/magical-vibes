@@ -7,7 +7,7 @@ import com.github.laxika.magicalvibes.model.StackEntry;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
 import com.github.laxika.magicalvibes.model.effect.RemoveCounterFromEachControlledPermanentEffect;
 import com.github.laxika.magicalvibes.model.filter.FilterContext;
-import com.github.laxika.magicalvibes.service.GameBroadcastService;
+import com.github.laxika.magicalvibes.service.GameLogService;
 import com.github.laxika.magicalvibes.service.filter.PredicateEvaluationService;
 import java.util.ArrayList;
 import java.util.List;
@@ -21,7 +21,7 @@ import org.springframework.stereotype.Component;
 public class RemoveCounterFromEachControlledPermanentEffectHandler implements NormalEffectHandlerBean {
 
     private final PredicateEvaluationService predicateEvaluationService;
-    private final GameBroadcastService gameBroadcastService;
+    private final GameLogService gameLogService;
     private final PermanentCounterSupport permanentCounterSupport;
 
     @Override
@@ -48,7 +48,7 @@ public class RemoveCounterFromEachControlledPermanentEffectHandler implements No
         String counterName = permanentCounterSupport.counterTypeName(e.counterType());
         String counterText = e.amount() == 1 ? "a " + counterName + " counter" : e.amount() + " " + counterName + " counters";
         String logEntry = entry.getCard().getName() + " removes " + counterText + " from " + count + " permanent(s) you control.";
-        gameBroadcastService.logAndBroadcast(gameData, GameLog.builder().card(entry.getCard()).text(" removes " + counterText + " from " + count + " permanent(s) you control.").build());
+        gameLogService.append(gameData, GameLog.builder().card(entry.getCard()).text(" removes " + counterText + " from " + count + " permanent(s) you control.").build());
         log.info("Game {} - {} removes {} {} counter(s) from {} controlled permanent(s)", gameData.id,
                 entry.getCard().getName(), e.amount(), counterName, count);
     }

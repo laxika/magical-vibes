@@ -10,7 +10,7 @@ import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.StackEntry;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
 import com.github.laxika.magicalvibes.model.effect.ExileCreaturesFromGraveyardAndCreateTokensEffect;
-import com.github.laxika.magicalvibes.service.GameBroadcastService;
+import com.github.laxika.magicalvibes.service.GameLogService;
 import com.github.laxika.magicalvibes.service.battlefield.BattlefieldEntryService;
 import com.github.laxika.magicalvibes.service.battlefield.GameQueryService;
 import java.util.ArrayList;
@@ -30,7 +30,7 @@ public class ExileCreaturesFromGraveyardAndCreateTokensEffectHandler implements 
 
     private final BattlefieldEntryService battlefieldEntryService;
     private final GameQueryService gameQueryService;
-    private final GameBroadcastService gameBroadcastService;
+    private final GameLogService gameLogService;
     private final GraveyardReturnSupport graveyardReturnSupport;
 
     @Override
@@ -65,7 +65,7 @@ public class ExileCreaturesFromGraveyardAndCreateTokensEffectHandler implements 
             Card card = gameQueryService.findCardInGraveyardById(gameData, cardId);
             if (card != null) {
                 graveyardReturnSupport.exileCardFromAnyGraveyard(gameData, cardId, card);
-                gameBroadcastService.logAndBroadcast(gameData, GameLog.textCardText(playerName + " exiles " , card, " from graveyard."));
+                gameLogService.append(gameData, GameLog.textCardText(playerName + " exiles " , card, " from graveyard."));
                 exiledCards.add(card);
             }
         }
@@ -98,7 +98,7 @@ public class ExileCreaturesFromGraveyardAndCreateTokensEffectHandler implements 
             battlefieldEntryService.putPermanentOntoBattlefield(gameData, controllerId, tokenPermanent, enterTappedTypesSnapshot);
 
             String tokenLog = "A 2/2 Zombie creature token enters the battlefield.";
-            gameBroadcastService.logAndBroadcast(gameData, GameLog.text(tokenLog));
+            gameLogService.append(gameData, GameLog.text(tokenLog));
 
             graveyardReturnSupport.handleCreatureEtbAndLegendRule(gameData, controllerId, tokenPermanent, tokenCard);
 

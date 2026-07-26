@@ -7,7 +7,7 @@ import com.github.laxika.magicalvibes.model.PendingInteraction;
 import com.github.laxika.magicalvibes.model.StackEntry;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
 import com.github.laxika.magicalvibes.model.effect.DoomsdayEffect;
-import com.github.laxika.magicalvibes.service.GameBroadcastService;
+import com.github.laxika.magicalvibes.service.GameLogService;
 import com.github.laxika.magicalvibes.service.interaction.InteractionHandlerRegistry;
 import java.util.ArrayList;
 import java.util.List;
@@ -28,7 +28,7 @@ import org.springframework.stereotype.Component;
 public class DoomsdayEffectHandler implements NormalEffectHandlerBean {
 
     private final LifeSupport lifeSupport;
-    private final GameBroadcastService gameBroadcastService;
+    private final GameLogService gameLogService;
     private final InteractionHandlerRegistry interactionHandlerRegistry;
 
     @Override
@@ -61,7 +61,7 @@ public class DoomsdayEffectHandler implements NormalEffectHandlerBean {
         lifeSupport.applyLifeLoss(gameData, controllerId, lifeLoss, cardName);
 
         if (pool.isEmpty()) {
-            gameBroadcastService.logAndBroadcast(gameData, GameLog.text(controllerName + " has no cards in their library or graveyard (" + cardName + ")."));
+            gameLogService.append(gameData, GameLog.text(controllerName + " has no cards in their library or graveyard (" + cardName + ")."));
             return;
         }
 

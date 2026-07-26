@@ -50,7 +50,7 @@ class RevealCardsDiscardChoiceAiStrategy
         }
 
         log.info("AI: Choosing card {} in reveal-and-discard in game {}", chosenIndex, ctx.gameId());
-        ctx.gameActions().answerInteraction(ctx.selfConnection(), new InteractionAnswer.CardIndexChosen(chosenIndex));
+        ctx.gameActions().answerInteraction(new InteractionAnswer.CardIndexChosen(chosenIndex));
     }
 
     private static int manaValueOf(List<Card> hand, UUID cardId) {

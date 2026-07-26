@@ -12,7 +12,7 @@ import com.github.laxika.magicalvibes.model.effect.MayEffect;
 import com.github.laxika.magicalvibes.model.effect.MayPayManaEffect;
 import com.github.laxika.magicalvibes.model.effect.MayPayTapPermanentsEffect;
 import com.github.laxika.magicalvibes.model.effect.SequenceEffect;
-import com.github.laxika.magicalvibes.service.GameBroadcastService;
+import com.github.laxika.magicalvibes.service.GameLogService;
 import com.github.laxika.magicalvibes.service.GameOutcomeService;
 import com.github.laxika.magicalvibes.service.battlefield.PermanentRemovalService;
 import com.github.laxika.magicalvibes.service.state.StateBasedActionService;
@@ -45,7 +45,7 @@ public class EffectResolutionService {
 
     private final ConditionEvaluationService conditionEvaluationService;
     private final EffectHandlerRegistry registry;
-    private final GameBroadcastService gameBroadcastService;
+    private final GameLogService gameLogService;
     private final PermanentRemovalService permanentRemovalService;
     private final com.github.laxika.magicalvibes.service.effect.normalfx.DamageSupport damageSupport;
     private final GameOutcomeService gameOutcomeService;
@@ -129,7 +129,7 @@ public class EffectResolutionService {
             if (effect instanceof ConditionalEffect conditional) {
                 if (!conditionEvaluationService.isMet(gameData, conditional.condition(),
                         conditionContext)) {
-                    gameBroadcastService.logAndBroadcast(gameData, GameLog.cardThen(entry.getCard(),
+                    gameLogService.append(gameData, GameLog.cardThen(entry.getCard(),
                             "'s " + conditional.conditionName() + " ability does nothing ("
                                     + conditional.conditionNotMetReason() + ")."));
                     log.info("Game {} - {} condition no longer met for {}", gameData.id,

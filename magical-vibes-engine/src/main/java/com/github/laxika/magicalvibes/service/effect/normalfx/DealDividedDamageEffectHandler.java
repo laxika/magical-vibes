@@ -7,7 +7,7 @@ import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.StackEntry;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
 import com.github.laxika.magicalvibes.model.effect.DealDividedDamageEffect;
-import com.github.laxika.magicalvibes.service.GameBroadcastService;
+import com.github.laxika.magicalvibes.service.GameLogService;
 import com.github.laxika.magicalvibes.service.GameOutcomeService;
 import com.github.laxika.magicalvibes.service.battlefield.GameQueryService;
 import java.util.ArrayList;
@@ -33,7 +33,7 @@ public class DealDividedDamageEffectHandler implements NormalEffectHandlerBean {
 
     private final DamageSupport damageSupport;
     private final GameQueryService gameQueryService;
-    private final GameBroadcastService gameBroadcastService;
+    private final GameLogService gameLogService;
     private final GameOutcomeService gameOutcomeService;
 
     @Override
@@ -123,12 +123,12 @@ public class DealDividedDamageEffectHandler implements NormalEffectHandlerBean {
                 damageSupport.dealDamageToPlayer(gameData, entry, targetId, rawDamage);
             } else if (gameQueryService.isDamagePreventable(gameData)
                     && gameQueryService.hasProtectionFromSource(gameData, targetPermanent, entry.getCard())) {
-                gameBroadcastService.logAndBroadcast(gameData, GameLog.textCardText(cardName + "'s damage to ", targetPermanent.getCard(), " is prevented."));
+                gameLogService.append(gameData, GameLog.textCardText(cardName + "'s damage to ", targetPermanent.getCard(), " is prevented."));
             } else {
                 damageSupport.dealCreatureDamage(gameData, entry, targetPermanent, rawDamage);
                 if (e.damagedCreaturesCantBlock() && rawDamage > 0) {
                     targetPermanent.setCantBlockThisTurn(true);
-                    gameBroadcastService.logAndBroadcast(gameData, GameLog.cardThen(targetPermanent.getCard(), " can't block this turn."));
+                    gameLogService.append(gameData, GameLog.cardThen(targetPermanent.getCard(), " can't block this turn."));
                 }
             }
         }

@@ -8,7 +8,7 @@ import com.github.laxika.magicalvibes.model.action.DelayedPermanentAction;
 import com.github.laxika.magicalvibes.model.action.DelayedPermanentActionKind;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
 import com.github.laxika.magicalvibes.model.effect.DestroyCombatOpponentAtEndOfCombatEffect;
-import com.github.laxika.magicalvibes.service.GameBroadcastService;
+import com.github.laxika.magicalvibes.service.GameLogService;
 import com.github.laxika.magicalvibes.service.battlefield.GameQueryService;
 import com.github.laxika.magicalvibes.service.filter.PredicateEvaluationService;
 import lombok.RequiredArgsConstructor;
@@ -28,7 +28,7 @@ public class DestroyCombatOpponentAtEndOfCombatEffectHandler implements NormalEf
 
     private final GameQueryService gameQueryService;
     private final PredicateEvaluationService predicateEvaluationService;
-    private final GameBroadcastService gameBroadcastService;
+    private final GameLogService gameLogService;
 
     @Override
     public Class<? extends CardEffect> handledEffect() {
@@ -53,6 +53,6 @@ public class DestroyCombatOpponentAtEndOfCombatEffectHandler implements NormalEf
 
         gameData.queueDelayedAction(new DelayedPermanentAction(targetId,
                 DelayedPermanentActionKind.DESTROY_AT_END_OF_COMBAT, destroyEffect.cannotBeRegenerated()));
-        gameBroadcastService.logAndBroadcast(gameData, GameLog.cardThen(target.getCard(), " will be destroyed at end of combat."));
+        gameLogService.append(gameData, GameLog.cardThen(target.getCard(), " will be destroyed at end of combat."));
     }
 }

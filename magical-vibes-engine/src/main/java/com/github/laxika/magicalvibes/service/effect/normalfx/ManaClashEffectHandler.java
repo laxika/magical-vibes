@@ -5,7 +5,7 @@ import com.github.laxika.magicalvibes.model.GameLog;
 import com.github.laxika.magicalvibes.model.StackEntry;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
 import com.github.laxika.magicalvibes.model.effect.ManaClashEffect;
-import com.github.laxika.magicalvibes.service.GameBroadcastService;
+import com.github.laxika.magicalvibes.service.GameLogService;
 import com.github.laxika.magicalvibes.service.GameOutcomeService;
 import com.github.laxika.magicalvibes.service.battlefield.GameQueryService;
 import java.util.UUID;
@@ -25,7 +25,7 @@ public class ManaClashEffectHandler implements NormalEffectHandlerBean {
 
     private final DamageSupport damageSupport;
     private final GameQueryService gameQueryService;
-    private final GameBroadcastService gameBroadcastService;
+    private final GameLogService gameLogService;
     private final GameOutcomeService gameOutcomeService;
 
     @Override
@@ -49,7 +49,7 @@ public class ManaClashEffectHandler implements NormalEffectHandlerBean {
             boolean controllerHeads = ThreadLocalRandom.current().nextBoolean();
             boolean opponentHeads = ThreadLocalRandom.current().nextBoolean();
 
-            gameBroadcastService.logAndBroadcast(gameData, GameLog.text(sourceName + ": "
+            gameLogService.append(gameData, GameLog.text(sourceName + ": "
                     + controllerName + " flips " + (controllerHeads ? "heads" : "tails") + ", "
                     + opponentName + " flips " + (opponentHeads ? "heads" : "tails") + "."));
 

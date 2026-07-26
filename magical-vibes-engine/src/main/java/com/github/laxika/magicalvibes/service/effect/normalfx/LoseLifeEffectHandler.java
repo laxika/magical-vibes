@@ -6,7 +6,7 @@ import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.StackEntry;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
 import com.github.laxika.magicalvibes.model.effect.LoseLifeEffect;
-import com.github.laxika.magicalvibes.service.GameBroadcastService;
+import com.github.laxika.magicalvibes.service.GameLogService;
 import com.github.laxika.magicalvibes.service.battlefield.GameQueryService;
 import com.github.laxika.magicalvibes.service.effect.AmountContext;
 import com.github.laxika.magicalvibes.service.effect.AmountEvaluationService;
@@ -33,7 +33,7 @@ public class LoseLifeEffectHandler implements NormalEffectHandlerBean {
 
     private final LifeSupport lifeSupport;
     private final GameQueryService gameQueryService;
-    private final GameBroadcastService gameBroadcastService;
+    private final GameLogService gameLogService;
     private final AmountEvaluationService amountEvaluationService;
 
     @Override
@@ -87,13 +87,13 @@ public class LoseLifeEffectHandler implements NormalEffectHandlerBean {
         UUID targetPlayerId = entry.getTargetId();
         String targetName = gameData.playerIdToName.get(targetPlayerId);
         if (!gameQueryService.canPlayerLifeChange(gameData, targetPlayerId)) {
-            gameBroadcastService.logAndBroadcast(gameData, GameLog.text(targetName + "'s life total can't change."));
+            gameLogService.append(gameData, GameLog.text(targetName + "'s life total can't change."));
         } else {
             int targetCurrentLife = gameData.getLife(targetPlayerId);
             gameData.playerLifeTotals.put(targetPlayerId, targetCurrentLife - amount);
 
             String lossLog = targetName + " loses " + amount + " life (" + sourceName + ").";
-            gameBroadcastService.logAndBroadcast(gameData, GameLog.text(lossLog));
+            gameLogService.append(gameData, GameLog.text(lossLog));
             log.info("Game {} - {} loses {} life from {}", gameData.id, targetName, amount, sourceName);
         }
     }

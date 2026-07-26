@@ -8,7 +8,7 @@ import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.StackEntry;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
 import com.github.laxika.magicalvibes.model.effect.ExileTargetCreatureAndSameNameFromHandIfGodEffect;
-import com.github.laxika.magicalvibes.service.GameBroadcastService;
+import com.github.laxika.magicalvibes.service.GameLogService;
 import com.github.laxika.magicalvibes.service.battlefield.GameQueryService;
 import com.github.laxika.magicalvibes.service.battlefield.PermanentRemovalService;
 import java.util.ArrayList;
@@ -24,7 +24,7 @@ import org.springframework.stereotype.Component;
 public class ExileTargetCreatureAndSameNameFromHandIfGodEffectHandler implements NormalEffectHandlerBean {
 
     private final GameQueryService gameQueryService;
-    private final GameBroadcastService gameBroadcastService;
+    private final GameLogService gameLogService;
     private final PermanentRemovalService permanentRemovalService;
     private final PlayerInteractionSupport playerInteractionSupport;
 
@@ -46,7 +46,7 @@ public class ExileTargetCreatureAndSameNameFromHandIfGodEffectHandler implements
         UUID controllerId = gameQueryService.findPermanentController(gameData, target.getId());
 
         permanentRemovalService.removePermanentToExile(gameData, target);
-        gameBroadcastService.logAndBroadcast(gameData, GameLog.cardThen(target.getCard(), " is exiled."));
+        gameLogService.append(gameData, GameLog.cardThen(target.getCard(), " is exiled."));
         log.info("Game {} - {} is exiled by {}",
                 gameData.id, targetName, entry.getCard().getName());
         permanentRemovalService.removeOrphanedAuras(gameData);
@@ -73,7 +73,7 @@ public class ExileTargetCreatureAndSameNameFromHandIfGodEffectHandler implements
         hand.removeAll(toExile);
         for (Card card : toExile) {
             gameData.addToExile(controllerId, card);
-            gameBroadcastService.logAndBroadcast(gameData, GameLog.cardThen(card, " is exiled from hand."));
+            gameLogService.append(gameData, GameLog.cardThen(card, " is exiled from hand."));
             log.info("Game {} - {} is exiled from hand by {}",
                     gameData.id, card.getName(), entry.getCard().getName());
         }

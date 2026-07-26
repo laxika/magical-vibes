@@ -6,7 +6,7 @@ import com.github.laxika.magicalvibes.model.GameData;
 import com.github.laxika.magicalvibes.model.StackEntry;
 import com.github.laxika.magicalvibes.model.StackEntryType;
 import com.github.laxika.magicalvibes.model.effect.CounterSpellAndExileAllWithSameNameEffect;
-import com.github.laxika.magicalvibes.service.GameBroadcastService;
+import com.github.laxika.magicalvibes.service.GameLogService;
 import com.github.laxika.magicalvibes.service.battlefield.GameQueryService;
 import com.github.laxika.magicalvibes.service.exile.ExileService;
 import com.github.laxika.magicalvibes.service.graveyard.GraveyardService;
@@ -32,7 +32,7 @@ class CounterSpellAndExileAllWithSameNameEffectHandlerTest {
 
     @Mock private GraveyardService graveyardService;
     @Mock private ExileService exileService;
-    @Mock private GameBroadcastService gameBroadcastService;
+    @Mock private GameLogService gameLogService;
     @Mock private GameQueryService gameQueryService;
     @Mock private StateTriggerService stateTriggerService;
     @InjectMocks private CounterSupport counterSupport;
@@ -59,7 +59,7 @@ class CounterSpellAndExileAllWithSameNameEffectHandlerTest {
         gd.playerHands.put(player1Id, new ArrayList<>());
         gd.playerDecks.put(player1Id, new ArrayList<>());
         handler = new CounterSpellAndExileAllWithSameNameEffectHandler(
-                counterSupport, graveyardService, gameBroadcastService);
+                counterSupport, graveyardService, gameLogService);
     }
 
     private Card creature(String name) {

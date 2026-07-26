@@ -11,7 +11,7 @@ import com.github.laxika.magicalvibes.model.Player;
 import com.github.laxika.magicalvibes.model.StackEntry;
 import com.github.laxika.magicalvibes.model.StackEntryType;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
-import com.github.laxika.magicalvibes.service.GameBroadcastService;
+import com.github.laxika.magicalvibes.service.GameLogService;
 import com.github.laxika.magicalvibes.service.graveyard.GraveyardService;
 import com.github.laxika.magicalvibes.service.input.PlayerInputService;
 import com.github.laxika.magicalvibes.service.trigger.TriggerCollectionService;
@@ -27,19 +27,20 @@ import org.springframework.stereotype.Component;
 @RequiredArgsConstructor
 public class ImprovisationCapstoneCastSupport {
 
-    private final GameBroadcastService gameBroadcastService;
+    private final GameLogService gameLogService;
     private final GraveyardService graveyardService;
     private final PlayerInputService playerInputService;
     private final TriggerCollectionService triggerCollectionService;
     private final ExileCastTargetSupport exileCastTargetSupport;
+    private final com.github.laxika.magicalvibes.service.event.GameMutationCoordinator mutationCoordinator;
 
     public void castChosenSpellsWithoutPaying(GameData gameData, Player player, List<UUID> cardIds) {
         gameData.interaction.clearAwaitingInput();
 
         if (cardIds == null || cardIds.isEmpty()) {
             String logEntry = player.getUsername() + " casts no spells from Improvisation Capstone.";
-            gameBroadcastService.logAndBroadcast(gameData, GameLog.text(logEntry));
-            gameBroadcastService.invalidateAllPlayerViews(gameData);
+            gameLogService.append(gameData, GameLog.text(logEntry));
+            mutationCoordinator.invalidateAllPlayerViews(gameData);
             return;
         }
 
@@ -55,7 +56,7 @@ public class ImprovisationCapstoneCastSupport {
      */
     public void castNextFromQueue(GameData gameData, UUID playerId) {
         if (gameData.pendingImprovisationCapstoneCastQueue.isEmpty()) {
-            gameBroadcastService.invalidateAllPlayerViews(gameData);
+            mutationCoordinator.invalidateAllPlayerViews(gameData);
             return;
         }
 
@@ -83,7 +84,7 @@ public class ImprovisationCapstoneCastSupport {
 
             if (!hasLegalTargets) {
                 graveyardService.addCardToGraveyard(gameData, playerId, card);
-                gameBroadcastService.logAndBroadcast(gameData, GameLog.cardThen(card, " has no valid targets."));
+                gameLogService.append(gameData, GameLog.cardThen(card, " has no valid targets."));
                 castNextFromQueue(gameData, playerId);
                 return;
             }
@@ -92,7 +93,7 @@ public class ImprovisationCapstoneCastSupport {
                     new PermanentChoiceContext.ExileCastSpellTarget(card, playerId, spellEffects, spellType));
             playerInputService.beginPermanentChoice(gameData, playerId, firstCandidates,
                     "Choose a target for " + card.getName() + ".");
-            gameBroadcastService.logAndBroadcast(gameData, GameLog.textCardText(playerName + " casts ", card, " without paying its mana cost — choosing target."));
+            gameLogService.append(gameData, GameLog.textCardText(playerName + " casts ", card, " without paying its mana cost — choosing target."));
             return;
         }
 
@@ -102,7 +103,7 @@ public class ImprovisationCapstoneCastSupport {
         ));
         gameData.recordSpellCast(playerId, card);
         gameData.priorityPassedBy.clear();
-        gameBroadcastService.logAndBroadcast(gameData, GameLog.textCardText(playerName + " casts ", card, " without paying its mana cost."));
+        gameLogService.append(gameData, GameLog.textCardText(playerName + " casts ", card, " without paying its mana cost."));
         triggerCollectionService.checkSpellCastTriggers(gameData, card, playerId, false);
         castNextFromQueue(gameData, playerId);
     }

@@ -9,7 +9,7 @@ import com.github.laxika.magicalvibes.model.StackEntry;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
 import com.github.laxika.magicalvibes.model.effect.EachPlayerReturnsCardsFromGraveyardToBattlefieldEffect;
 import com.github.laxika.magicalvibes.model.filter.CardPredicateUtils;
-import com.github.laxika.magicalvibes.service.GameBroadcastService;
+import com.github.laxika.magicalvibes.service.GameLogService;
 import com.github.laxika.magicalvibes.service.battlefield.GameQueryService;
 import com.github.laxika.magicalvibes.service.filter.PredicateEvaluationService;
 import com.github.laxika.magicalvibes.service.graveyard.GraveyardService;
@@ -26,7 +26,7 @@ public class EachPlayerReturnsCardsFromGraveyardToBattlefieldEffectHandler imple
 
     private final GameQueryService gameQueryService;
     private final PredicateEvaluationService predicateEvaluationService;
-    private final GameBroadcastService gameBroadcastService;
+    private final GameLogService gameLogService;
     private final GraveyardReturnSupport graveyardReturnSupport;
     private final GraveyardService graveyardService;
 
@@ -55,7 +55,7 @@ public class EachPlayerReturnsCardsFromGraveyardToBattlefieldEffectHandler imple
             if (matching.isEmpty()) {
                 String playerName = gameData.playerIdToName.get(playerId);
                 String filterLabel = CardPredicateUtils.describeFilter(e.filter());
-                gameBroadcastService.logAndBroadcast(gameData, GameLog.text(playerName + " has no " + filterLabel + "s in their graveyard."));
+                gameLogService.append(gameData, GameLog.text(playerName + " has no " + filterLabel + "s in their graveyard."));
                 continue;
             }
 
@@ -75,7 +75,7 @@ public class EachPlayerReturnsCardsFromGraveyardToBattlefieldEffectHandler imple
                     graveyardService.endGraveyardLeaveBatch(gameData);
                 }
                 String playerName = gameData.playerIdToName.get(playerId);
-                gameBroadcastService.logAndBroadcast(gameData, GameLog.text(playerName + " returns " + String.join(", ", returnedNames)
+                gameLogService.append(gameData, GameLog.text(playerName + " returns " + String.join(", ", returnedNames)
                                 + " from graveyard to the battlefield."));
             } else {
                 // Player must choose — add to queue

@@ -15,7 +15,7 @@ import com.github.laxika.magicalvibes.model.effect.CardEffect;
 import com.github.laxika.magicalvibes.model.effect.ControlDuration;
 import com.github.laxika.magicalvibes.model.effect.EffectDuration;
 import com.github.laxika.magicalvibes.model.effect.GainControlOfTargetEffect;
-import com.github.laxika.magicalvibes.service.GameBroadcastService;
+import com.github.laxika.magicalvibes.service.GameLogService;
 import com.github.laxika.magicalvibes.service.battlefield.CreatureControlService;
 import com.github.laxika.magicalvibes.service.battlefield.GameQueryService;
 import org.junit.jupiter.api.BeforeEach;
@@ -43,7 +43,7 @@ import static org.mockito.Mockito.when;
 class GainControlOfTargetEffectHandlerTest {
 
     @Mock private GameQueryService gameQueryService;
-    @Mock private GameBroadcastService gameBroadcastService;
+    @Mock private GameLogService gameLogService;
     @Mock private CreatureControlService creatureControlService;
     private GameData gd;
     private UUID player1Id;
@@ -63,7 +63,7 @@ class GainControlOfTargetEffectHandlerTest {
         gd.playerIdToName.put(player2Id, "Player2");
         gd.playerBattlefields.put(player1Id, Collections.synchronizedList(new ArrayList<>()));
         gd.playerBattlefields.put(player2Id, Collections.synchronizedList(new ArrayList<>()));
-        handler = new GainControlOfTargetEffectHandler(gameQueryService, gameBroadcastService, creatureControlService);
+        handler = new GainControlOfTargetEffectHandler(gameQueryService, gameLogService, creatureControlService);
     }
 
     // ===== Helper methods =====
@@ -154,7 +154,7 @@ class GainControlOfTargetEffectHandlerTest {
             verify(creatureControlService).applyControlEffect(gd, player1Id, target,
                     effect, EffectDuration.PERMANENT, null, "Captivating Vampire");
             assertThat(target.getGrantedSubtypes()).contains(CardSubtype.VAMPIRE);
-            verify(gameBroadcastService).logAndBroadcast(eq(gd), argThat((GameLogEntry e) -> e.plainText().equals("Grizzly Bears becomes a Vampire in addition to its other types.")));
+            verify(gameLogService).append(eq(gd), argThat((GameLogEntry e) -> e.plainText().equals("Grizzly Bears becomes a Vampire in addition to its other types.")));
         }
 
         @Test
@@ -266,7 +266,7 @@ class GainControlOfTargetEffectHandlerTest {
 
             assertThat(target1.getGrantedSubtypes()).contains(CardSubtype.VAMPIRE);
             assertThat(target2.getGrantedSubtypes()).contains(CardSubtype.VAMPIRE);
-            verify(gameBroadcastService, times(2)).logAndBroadcast(eq(gd), any(GameLogEntry.class));
+            verify(gameLogService, times(2)).append(eq(gd), any(GameLogEntry.class));
         }
     }
 

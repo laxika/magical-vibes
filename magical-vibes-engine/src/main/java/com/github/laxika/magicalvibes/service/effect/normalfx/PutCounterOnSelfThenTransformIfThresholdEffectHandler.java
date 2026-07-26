@@ -11,7 +11,7 @@ import com.github.laxika.magicalvibes.model.effect.PutCounterOnSelfThenTransform
 import com.github.laxika.magicalvibes.model.effect.RemoveAllCountersFromSelfEffect;
 import com.github.laxika.magicalvibes.model.effect.SequenceEffect;
 import com.github.laxika.magicalvibes.model.effect.TransformSelfEffect;
-import com.github.laxika.magicalvibes.service.GameBroadcastService;
+import com.github.laxika.magicalvibes.service.GameLogService;
 import com.github.laxika.magicalvibes.service.battlefield.GameQueryService;
 import java.util.UUID;
 import lombok.RequiredArgsConstructor;
@@ -24,7 +24,7 @@ import org.springframework.stereotype.Component;
 public class PutCounterOnSelfThenTransformIfThresholdEffectHandler implements NormalEffectHandlerBean {
 
     private final GameQueryService gameQueryService;
-    private final GameBroadcastService gameBroadcastService;
+    private final GameLogService gameLogService;
     private final PermanentCounterSupport permanentCounterSupport;
 
     @Override
@@ -65,7 +65,7 @@ public class PutCounterOnSelfThenTransformIfThresholdEffectHandler implements No
         if (counterName == null) return;
 
         String logEntry = self.getCard().getName() + " gets a " + counterName + " counter.";
-        gameBroadcastService.logAndBroadcast(gameData, GameLog.builder().card(self.getCard()).text(" gets a " + counterName + " counter.").build());
+        gameLogService.append(gameData, GameLog.builder().card(self.getCard()).text(" gets a " + counterName + " counter.").build());
         log.info("Game {} - {} gets a {} counter", gameData.id, self.getCard().getName(), counterName);
 
         if (e.counterType() == CounterType.MINUS_ONE_MINUS_ONE) {

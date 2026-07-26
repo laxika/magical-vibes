@@ -27,6 +27,6 @@ class MultiZoneExileChoiceAiStrategy implements AiInteractionStrategy<PendingInt
 
         List<UUID> chosen = new ArrayList<>(interaction.validCardIds());
         log.info("AI: Exiling {} cards named \"{}\" in game {}", chosen.size(), interaction.cardName(), ctx.gameId());
-        ctx.gameActions().answerInteraction(ctx.selfConnection(), new InteractionAnswer.CardsChosen(chosen));
+        ctx.gameActions().answerInteraction(new InteractionAnswer.CardsChosen(chosen));
     }
 }

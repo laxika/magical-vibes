@@ -13,7 +13,7 @@ import com.github.laxika.magicalvibes.model.action.DelayedPermanentAction;
 import com.github.laxika.magicalvibes.model.action.DelayedPermanentActionKind;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
 import com.github.laxika.magicalvibes.model.effect.WintersChillEffect;
-import com.github.laxika.magicalvibes.service.GameBroadcastService;
+import com.github.laxika.magicalvibes.service.GameLogService;
 import com.github.laxika.magicalvibes.service.battlefield.GameQueryService;
 import com.github.laxika.magicalvibes.service.interaction.InteractionHandlerRegistry;
 import java.util.ArrayList;
@@ -35,7 +35,7 @@ public class WintersChillEffectHandler implements NormalEffectHandlerBean {
 
     private final InteractionHandlerRegistry interactionHandlerRegistry;
     private final GameQueryService gameQueryService;
-    private final GameBroadcastService gameBroadcastService;
+    private final GameLogService gameLogService;
 
     @Override
     public Class<? extends CardEffect> handledEffect() {
@@ -120,7 +120,7 @@ public class WintersChillEffectHandler implements NormalEffectHandlerBean {
                 scheduleDestroy(gameData, target);
                 return;
             }
-            gameBroadcastService.logAndBroadcast(gameData, GameLog.textCardText(
+            gameLogService.append(gameData, GameLog.textCardText(
                     "Pays {2} for ", target.getCard(), " (" + sourceName + ")."));
             return;
         }
@@ -132,7 +132,7 @@ public class WintersChillEffectHandler implements NormalEffectHandlerBean {
             }
             gameData.creaturesWithCombatDamagePrevented.add(targetId);
             gameData.creaturesPreventedFromDealingCombatDamage.add(targetId);
-            gameBroadcastService.logAndBroadcast(gameData, GameLog.textCardText(
+            gameLogService.append(gameData, GameLog.textCardText(
                     "Pays {1} for ", target.getCard(),
                     " — all combat damage to and by it this combat is prevented (" + sourceName + ")."));
             return;
@@ -145,7 +145,7 @@ public class WintersChillEffectHandler implements NormalEffectHandlerBean {
     private void scheduleDestroy(GameData gameData, Permanent target) {
         gameData.queueDelayedAction(new DelayedPermanentAction(target.getId(),
                 DelayedPermanentActionKind.DESTROY_AT_END_OF_COMBAT, false));
-        gameBroadcastService.logAndBroadcast(gameData,
+        gameLogService.append(gameData,
                 GameLog.cardThen(target.getCard(), " will be destroyed at end of combat."));
     }
 

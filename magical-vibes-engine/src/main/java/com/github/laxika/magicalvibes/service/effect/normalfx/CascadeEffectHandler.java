@@ -10,7 +10,7 @@ import com.github.laxika.magicalvibes.model.PendingInteraction;
 import com.github.laxika.magicalvibes.model.StackEntry;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
 import com.github.laxika.magicalvibes.model.effect.CascadeEffect;
-import com.github.laxika.magicalvibes.service.GameBroadcastService;
+import com.github.laxika.magicalvibes.service.GameLogService;
 import com.github.laxika.magicalvibes.service.interaction.InteractionHandlerRegistry;
 import java.util.ArrayList;
 import java.util.Collections;
@@ -37,7 +37,7 @@ import org.springframework.stereotype.Component;
 @RequiredArgsConstructor
 public class CascadeEffectHandler implements NormalEffectHandlerBean {
 
-    private final GameBroadcastService gameBroadcastService;
+    private final GameLogService gameLogService;
     private final InteractionHandlerRegistry interactionHandlerRegistry;
 
     @Override
@@ -54,7 +54,7 @@ public class CascadeEffectHandler implements NormalEffectHandlerBean {
         int threshold = entry.getCard().getManaValue();
 
         if (deck.isEmpty()) {
-            gameBroadcastService.logAndBroadcast(gameData,
+            gameLogService.append(gameData,
                     GameLog.text(sourceName + " (Cascade): " + playerName + "'s library is empty."));
             return;
         }
@@ -79,13 +79,13 @@ public class CascadeEffectHandler implements NormalEffectHandlerBean {
             // Dug through the whole library without a qualifying card — bottom everything randomly.
             Collections.shuffle(exiled);
             deck.addAll(exiled);
-            gameBroadcastService.logAndBroadcast(gameData, GameLog.text(sourceName
+            gameLogService.append(gameData, GameLog.text(sourceName
                     + " (Cascade): no nonland card with lesser mana value found. Exiled cards go to the"
                     + " bottom of the library in a random order."));
             return;
         }
 
-        gameBroadcastService.logAndBroadcast(gameData, GameLog.builder()
+        gameLogService.append(gameData, GameLog.builder()
                 .text(playerName + " cascades into ").card(hit).text(" (" + sourceName + ").").build());
 
         // Reuse the shared cast-without-paying flow: cast the hit card for free (or decline), then put

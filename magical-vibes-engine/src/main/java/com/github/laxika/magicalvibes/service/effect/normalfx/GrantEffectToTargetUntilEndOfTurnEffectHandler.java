@@ -6,7 +6,7 @@ import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.StackEntry;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantEffectToTargetUntilEndOfTurnEffect;
-import com.github.laxika.magicalvibes.service.GameBroadcastService;
+import com.github.laxika.magicalvibes.service.GameLogService;
 import com.github.laxika.magicalvibes.service.battlefield.GameQueryService;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -20,7 +20,7 @@ import java.util.UUID;
 public class GrantEffectToTargetUntilEndOfTurnEffectHandler implements NormalEffectHandlerBean {
 
     private final GameQueryService gameQueryService;
-    private final GameBroadcastService gameBroadcastService;
+    private final GameLogService gameLogService;
 
     @Override
     public Class<? extends CardEffect> handledEffect() {
@@ -57,7 +57,7 @@ public class GrantEffectToTargetUntilEndOfTurnEffectHandler implements NormalEff
 
         String logEntry = entry.getCard().getName() + " grants a temporary " + e.slot().name()
                 + " ability to " + target.getCard().getName() + " until end of turn.";
-        gameBroadcastService.logAndBroadcast(gameData, GameLog.builder().card(entry.getCard()).text(" grants a temporary " + e.slot().name() + " ability to ").card(target.getCard()).text(" until end of turn.").build());
+        gameLogService.append(gameData, GameLog.builder().card(entry.getCard()).text(" grants a temporary " + e.slot().name() + " ability to ").card(target.getCard()).text(" until end of turn.").build());
         log.info("Game {} - {} grants temporary {} effect to {}", gameData.id,
                 entry.getCard().getName(), e.slot().name(), target.getCard().getName());
     }

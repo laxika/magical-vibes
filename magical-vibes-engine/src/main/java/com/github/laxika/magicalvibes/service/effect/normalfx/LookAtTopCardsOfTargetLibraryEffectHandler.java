@@ -13,7 +13,7 @@ import com.github.laxika.magicalvibes.model.effect.LookAtTopCardsOfTargetLibrary
 import com.github.laxika.magicalvibes.model.effect.ShuffleLibraryEffect;
 import com.github.laxika.magicalvibes.model.event.GameEventFact;
 import com.github.laxika.magicalvibes.service.CardRevealService;
-import com.github.laxika.magicalvibes.service.GameBroadcastService;
+import com.github.laxika.magicalvibes.service.GameLogService;
 import com.github.laxika.magicalvibes.service.interaction.InteractionHandlerRegistry;
 import java.util.ArrayList;
 import java.util.List;
@@ -46,7 +46,7 @@ import org.springframework.stereotype.Component;
 @RequiredArgsConstructor
 public class LookAtTopCardsOfTargetLibraryEffectHandler implements NormalEffectHandlerBean {
 
-    private final GameBroadcastService gameBroadcastService;
+    private final GameLogService gameLogService;
     private final InteractionHandlerRegistry interactionHandlerRegistry;
     private final CardRevealService cardRevealService;
 
@@ -66,7 +66,7 @@ public class LookAtTopCardsOfTargetLibraryEffectHandler implements NormalEffectH
 
         int actual = deck != null ? Math.min(e.count(), deck.size()) : 0;
         if (actual == 0) {
-            gameBroadcastService.logAndBroadcast(gameData, GameLog.builder().card(entry.getCard()).text(": " + targetName + "'s library is empty.").build());
+            gameLogService.append(gameData, GameLog.builder().card(entry.getCard()).text(": " + targetName + "'s library is empty.").build());
             if (e.action() == com.github.laxika.magicalvibes.model.effect.TargetLibraryAction.LOOK_ONLY) {
                 cardRevealService.revealToPlayer(
                         gameData,
@@ -101,7 +101,7 @@ public class LookAtTopCardsOfTargetLibraryEffectHandler implements NormalEffectH
             UUID controllerId, UUID targetPlayerId, List<Card> deck, int actual,
             String controllerName, String targetName) {
         if (e.count() == 1) {
-            gameBroadcastService.logAndBroadcast(gameData, GameLog.text(controllerName + " looks at the top card of " + targetName + "'s library."));
+            gameLogService.append(gameData, GameLog.text(controllerName + " looks at the top card of " + targetName + "'s library."));
             List<Card> topCards = LibraryRevealSupport.takeTopCards(deck, 1);
             String prompt = "The top card of " + targetName + "'s library. It will remain on top.";
             interactionHandlerRegistry.begin(gameData, new PendingInteraction.LibrarySearch(
@@ -122,7 +122,7 @@ public class LookAtTopCardsOfTargetLibraryEffectHandler implements NormalEffectH
         }
 
         List<Card> topCards = new ArrayList<>(deck.subList(0, actual));
-        gameBroadcastService.logAndBroadcast(gameData, GameLog.text(controllerName + " looks at the top "
+        gameLogService.append(gameData, GameLog.text(controllerName + " looks at the top "
                 + LibraryRevealSupport.pluralCards(actual) + " of " + targetName + "'s library."));
         cardRevealService.revealToPlayer(
                 gameData,
@@ -137,7 +137,7 @@ public class LookAtTopCardsOfTargetLibraryEffectHandler implements NormalEffectH
     private void resolveMayExileOne(GameData gameData, StackEntry entry, UUID controllerId,
             UUID targetPlayerId, List<Card> deck, int actual, String controllerName, String targetName) {
         List<Card> topCards = LibraryRevealSupport.takeTopCards(deck, actual);
-        gameBroadcastService.logAndBroadcast(gameData, GameLog.text(
+        gameLogService.append(gameData, GameLog.text(
                 controllerName + " looks at the top " + LibraryRevealSupport.pluralCards(actual) + " of " + targetName + "'s library."));
         List<Card> sourceCards = new ArrayList<>(topCards);
         interactionHandlerRegistry.begin(gameData, new PendingInteraction.LibrarySearch(
@@ -159,7 +159,7 @@ public class LookAtTopCardsOfTargetLibraryEffectHandler implements NormalEffectH
             UUID targetPlayerId, List<Card> deck, int actual, String controllerName, String targetName) {
         String sourceName = entry.getCard().getName();
         String names = deck.subList(0, actual).stream().map(Card::getName).collect(Collectors.joining(", "));
-        gameBroadcastService.logAndBroadcast(gameData, GameLog.text(
+        gameLogService.append(gameData, GameLog.text(
                 controllerName + " looks at the top " + LibraryRevealSupport.pluralCards(actual) + " of " + targetName + "'s library."));
         log.info("Game {} - {} looks at top {} of {}'s library ({})", gameData.id, controllerName, actual, targetName, sourceName);
         String prompt = sourceName + " — Top " + LibraryRevealSupport.pluralCards(actual) + " of " + targetName
@@ -175,7 +175,7 @@ public class LookAtTopCardsOfTargetLibraryEffectHandler implements NormalEffectH
     private void resolvePutOneIntoGraveyard(GameData gameData, StackEntry entry, UUID controllerId,
             UUID targetPlayerId, List<Card> deck, int actual, String controllerName, String targetName) {
         List<Card> topCards = LibraryRevealSupport.takeTopCards(deck, actual);
-        gameBroadcastService.logAndBroadcast(gameData, GameLog.text(
+        gameLogService.append(gameData, GameLog.text(
                 controllerName + " looks at the top " + LibraryRevealSupport.pluralCards(actual) + " of " + targetName + "'s library."));
         List<Card> sourceCards = new ArrayList<>(topCards);
         String prompt = "Put one of these cards into that player's graveyard. The rest will be put on top of the library in any order.";

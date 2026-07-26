@@ -40,7 +40,7 @@ class CombatDamageAssignmentAiStrategy implements AiInteractionStrategy<PendingI
 
         log.info("AI: Assigning combat damage for attacker {} in game {}: {}",
                 interaction.attackerIndex(), ctx.gameId(), assignments);
-        ctx.gameActions().handleCombatDamageAssigned(ctx.selfConnection(),
+        ctx.gameActions().handleCombatDamageAssigned(
                 new CombatDamageAssignedRequest(interaction.attackerIndex(), assignments));
     }
 }

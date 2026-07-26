@@ -19,7 +19,7 @@ import com.github.laxika.magicalvibes.model.StackEntryType;
 import com.github.laxika.magicalvibes.model.effect.CreateTokenEffect;
 import com.github.laxika.magicalvibes.model.effect.DestroyTargetPermanentEffect;
 import com.github.laxika.magicalvibes.service.DamagePreventionService;
-import com.github.laxika.magicalvibes.service.GameBroadcastService;
+import com.github.laxika.magicalvibes.service.GameLogService;
 import com.github.laxika.magicalvibes.service.GameOutcomeService;
 import com.github.laxika.magicalvibes.service.input.PlayerInputService;
 import com.github.laxika.magicalvibes.service.graveyard.GraveyardService;
@@ -51,7 +51,7 @@ class DestroyTargetPermanentEffectHandlerTest {
     @Mock private GameOutcomeService gameOutcomeService;
     @Mock private PermanentRemovalService permanentRemovalService;
     @Mock private GameQueryService gameQueryService;
-    @Mock private GameBroadcastService gameBroadcastService;
+    @Mock private GameLogService gameLogService;
     @Mock private PlayerInputService playerInputService;
     @Mock private LifeSupport lifeSupport;
     @InjectMocks private DestructionSupport destructionSupport;
@@ -157,7 +157,7 @@ class DestroyTargetPermanentEffectHandlerTest {
                 destroyTargetPermanentHandler.resolve(gd, entry, effect);
 
                 verify(permanentRemovalService).tryDestroyPermanent(gd, bears, false);
-                verify(gameBroadcastService).logAndBroadcast(gd, GameLog.isDestroyed(bears.getCard()));
+                verify(gameLogService).append(gd, GameLog.isDestroyed(bears.getCard()));
             }
 
             @Test
@@ -177,7 +177,7 @@ class DestroyTargetPermanentEffectHandlerTest {
                 destroyTargetPermanentHandler.resolve(gd, entry, effect);
 
                 verify(permanentRemovalService).tryDestroyPermanent(gd, spellbook, false);
-                verify(gameBroadcastService).logAndBroadcast(gd, GameLog.isDestroyed(spellbook.getCard()));
+                verify(gameLogService).append(gd, GameLog.isDestroyed(spellbook.getCard()));
             }
 
             @Test
@@ -212,7 +212,7 @@ class DestroyTargetPermanentEffectHandlerTest {
                 destroyTargetPermanentHandler.resolve(gd, entry, effect);
 
                 verify(permanentRemovalService).tryDestroyPermanent(gd, golem, false);
-                verify(gameBroadcastService, never()).logAndBroadcast(eq(gd), eq(GameLog.isDestroyed(golem.getCard())));
+                verify(gameLogService, never()).append(eq(gd), eq(GameLog.isDestroyed(golem.getCard())));
             }
 
             @Test
@@ -230,7 +230,7 @@ class DestroyTargetPermanentEffectHandlerTest {
 
                 destroyTargetPermanentHandler.resolve(gd, entry, effect);
 
-                verify(gameBroadcastService).logAndBroadcast(gd, GameLog.isDestroyed(bears.getCard()));
+                verify(gameLogService).append(gd, GameLog.isDestroyed(bears.getCard()));
             }
 
             @Test
@@ -256,6 +256,6 @@ class DestroyTargetPermanentEffectHandlerTest {
                 verify(permanentRemovalService).tryDestroyPermanent(gd, bears, false);
                 verify(battlefieldEntryService).putPermanentOntoBattlefield(eq(gd), eq(player2Id), any(Permanent.class), any());
                 verify(battlefieldEntryService).handleCreatureEnteredBattlefield(eq(gd), eq(player2Id), any(Card.class), eq(null), eq(false));
-                verify(gameBroadcastService).logAndBroadcast(eq(gd), argThat((GameLogEntry e) -> e.plainText().equals("Player2 creates a 3/3 green Beast creature token.")));
+                verify(gameLogService).append(eq(gd), argThat((GameLogEntry e) -> e.plainText().equals("Player2 creates a 3/3 green Beast creature token.")));
             }
 }

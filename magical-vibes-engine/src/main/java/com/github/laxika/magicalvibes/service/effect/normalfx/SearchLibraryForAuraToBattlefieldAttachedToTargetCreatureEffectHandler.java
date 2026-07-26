@@ -14,7 +14,7 @@ import com.github.laxika.magicalvibes.model.filter.FilterContext;
 import com.github.laxika.magicalvibes.model.filter.OwnedPermanentPredicateTargetFilter;
 import com.github.laxika.magicalvibes.model.filter.PermanentPredicateTargetFilter;
 import com.github.laxika.magicalvibes.model.filter.TargetFilter;
-import com.github.laxika.magicalvibes.service.GameBroadcastService;
+import com.github.laxika.magicalvibes.service.GameLogService;
 import com.github.laxika.magicalvibes.service.battlefield.GameQueryService;
 import com.github.laxika.magicalvibes.service.filter.PredicateEvaluationService;
 import com.github.laxika.magicalvibes.service.library.LibraryShuffleHelper;
@@ -31,7 +31,7 @@ import org.springframework.stereotype.Component;
 public class SearchLibraryForAuraToBattlefieldAttachedToTargetCreatureEffectHandler implements NormalEffectHandlerBean {
 
     private final GameQueryService gameQueryService;
-    private final GameBroadcastService gameBroadcastService;
+    private final GameLogService gameLogService;
     private final PredicateEvaluationService predicateEvaluationService;
     private final LibrarySearchSupport librarySearchSupport;
 
@@ -57,7 +57,7 @@ public class SearchLibraryForAuraToBattlefieldAttachedToTargetCreatureEffectHand
         String playerName = gameData.playerIdToName.get(controllerId);
 
         if (deck == null || deck.isEmpty()) {
-            gameBroadcastService.logAndBroadcast(gameData, GameLog.text(playerName + " searches their library but it is empty. Library is shuffled."));
+            gameLogService.append(gameData, GameLog.text(playerName + " searches their library but it is empty. Library is shuffled."));
             return;
         }
 
@@ -67,7 +67,7 @@ public class SearchLibraryForAuraToBattlefieldAttachedToTargetCreatureEffectHand
 
         if (matchingCards.isEmpty()) {
             LibraryShuffleHelper.shuffleLibrary(gameData, controllerId);
-            gameBroadcastService.logAndBroadcast(gameData, GameLog.text(playerName + " searches their library but finds no Aura that could enchant " + host.getCard().getName() + ". Library is shuffled."));
+            gameLogService.append(gameData, GameLog.text(playerName + " searches their library but finds no Aura that could enchant " + host.getCard().getName() + ". Library is shuffled."));
             log.info("Game {} - {} searches library, no eligible Aura cards found", gameData.id, playerName);
             return;
         }

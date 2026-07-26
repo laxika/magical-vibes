@@ -5,7 +5,7 @@ import com.github.laxika.magicalvibes.model.GameLog;
 import com.github.laxika.magicalvibes.model.StackEntry;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
 import com.github.laxika.magicalvibes.model.effect.MayTapLandsYouDontControlForSpellsUntilEndOfTurnEffect;
-import com.github.laxika.magicalvibes.service.GameBroadcastService;
+import com.github.laxika.magicalvibes.service.GameLogService;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Component;
@@ -17,7 +17,7 @@ import java.util.UUID;
 @RequiredArgsConstructor
 public class MayTapLandsYouDontControlForSpellsUntilEndOfTurnEffectHandler implements NormalEffectHandlerBean {
 
-    private final GameBroadcastService gameBroadcastService;
+    private final GameLogService gameLogService;
 
     @Override
     public Class<? extends CardEffect> handledEffect() {
@@ -31,7 +31,7 @@ public class MayTapLandsYouDontControlForSpellsUntilEndOfTurnEffectHandler imple
 
         String logEntry = entry.getCard().getName()
                 + ": you may tap lands you don't control for mana until end of turn (spend only to cast spells).";
-        gameBroadcastService.logAndBroadcast(gameData, GameLog.cardThen(entry.getCard(), ": you may tap lands you don't control for mana until end of turn (spend only to cast spells)."));
+        gameLogService.append(gameData, GameLog.cardThen(entry.getCard(), ": you may tap lands you don't control for mana until end of turn (spend only to cast spells)."));
         log.info("Game {} - {} may tap foreign lands for spells until end of turn", gameData.id, controllerId);
     }
 }

@@ -7,7 +7,7 @@ import com.github.laxika.magicalvibes.model.GameLog;
 import com.github.laxika.magicalvibes.model.StackEntry;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
 import com.github.laxika.magicalvibes.model.effect.RevealUntilLandsMillTargetPlayerEffect;
-import com.github.laxika.magicalvibes.service.GameBroadcastService;
+import com.github.laxika.magicalvibes.service.GameLogService;
 import com.github.laxika.magicalvibes.service.graveyard.GraveyardService;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -23,7 +23,7 @@ import java.util.stream.Collectors;
 @RequiredArgsConstructor
 public class RevealUntilLandsMillTargetPlayerEffectHandler implements NormalEffectHandlerBean {
 
-    private final GameBroadcastService gameBroadcastService;
+    private final GameLogService gameLogService;
     private final GraveyardService graveyardService;
 
     @Override
@@ -56,12 +56,12 @@ public class RevealUntilLandsMillTargetPlayerEffectHandler implements NormalEffe
         }
 
         if (revealedCards.isEmpty()) {
-            gameBroadcastService.logAndBroadcast(gameData, GameLog.text(targetName + "'s library is empty — no cards are revealed."));
+            gameLogService.append(gameData, GameLog.text(targetName + "'s library is empty — no cards are revealed."));
             return;
         }
 
         String revealedNames = revealedCards.stream().map(Card::getName).collect(Collectors.joining(", "));
-        gameBroadcastService.logAndBroadcast(gameData, GameLog.text(targetName + " reveals " + revealedNames + "."));
+        gameLogService.append(gameData, GameLog.text(targetName + " reveals " + revealedNames + "."));
 
         // All revealed cards go to the target player's graveyard.
         for (Card card : revealedCards) {

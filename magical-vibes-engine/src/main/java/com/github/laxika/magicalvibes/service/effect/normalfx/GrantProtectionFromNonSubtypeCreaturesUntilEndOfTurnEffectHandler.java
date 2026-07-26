@@ -6,7 +6,7 @@ import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.StackEntry;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantProtectionFromNonSubtypeCreaturesUntilEndOfTurnEffect;
-import com.github.laxika.magicalvibes.service.GameBroadcastService;
+import com.github.laxika.magicalvibes.service.GameLogService;
 import com.github.laxika.magicalvibes.service.battlefield.GameQueryService;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -20,7 +20,7 @@ import java.util.List;
 public class GrantProtectionFromNonSubtypeCreaturesUntilEndOfTurnEffectHandler implements NormalEffectHandlerBean {
 
     private final GameQueryService gameQueryService;
-    private final GameBroadcastService gameBroadcastService;
+    private final GameLogService gameLogService;
 
     @Override
     public Class<? extends CardEffect> handledEffect() {
@@ -44,7 +44,7 @@ public class GrantProtectionFromNonSubtypeCreaturesUntilEndOfTurnEffectHandler i
         String subtypeName = e.excludedSubtype().getDisplayName();
         String logEntry = entry.getCard().getName() + " grants protection from non-" + subtypeName
                 + " creatures to " + count + " creature(s) until end of turn.";
-        gameBroadcastService.logAndBroadcast(gameData, GameLog.builder().card(entry.getCard()).text(" grants protection from non-" + subtypeName + " creatures to " + count + " creature(s) until end of turn.").build());
+        gameLogService.append(gameData, GameLog.builder().card(entry.getCard()).text(" grants protection from non-" + subtypeName + " creatures to " + count + " creature(s) until end of turn.").build());
         log.info("Game {} - {} grants protection from non-{} creatures to {} creature(s)",
                 gameData.id, entry.getCard().getName(), subtypeName, count);
     }

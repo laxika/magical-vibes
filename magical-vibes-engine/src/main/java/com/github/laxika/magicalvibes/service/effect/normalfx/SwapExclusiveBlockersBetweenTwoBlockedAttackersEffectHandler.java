@@ -6,7 +6,7 @@ import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.StackEntry;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
 import com.github.laxika.magicalvibes.model.effect.SwapExclusiveBlockersBetweenTwoBlockedAttackersEffect;
-import com.github.laxika.magicalvibes.service.GameBroadcastService;
+import com.github.laxika.magicalvibes.service.GameLogService;
 import com.github.laxika.magicalvibes.service.battlefield.BlockLegalityContext;
 import com.github.laxika.magicalvibes.service.battlefield.GameQueryService;
 import java.util.ArrayList;
@@ -28,7 +28,7 @@ import org.springframework.stereotype.Component;
 public class SwapExclusiveBlockersBetweenTwoBlockedAttackersEffectHandler implements NormalEffectHandlerBean {
 
     private final GameQueryService gameQueryService;
-    private final GameBroadcastService gameBroadcastService;
+    private final GameLogService gameLogService;
 
     @Override
     public Class<? extends CardEffect> handledEffect() {
@@ -80,7 +80,7 @@ public class SwapExclusiveBlockersBetweenTwoBlockedAttackersEffectHandler implem
 
         String msg = entry.getCard().getName() + " switches blockers between "
                 + attackerA.getCard().getName() + " and " + attackerB.getCard().getName() + ".";
-        gameBroadcastService.logAndBroadcast(gameData, GameLog.builder()
+        gameLogService.append(gameData, GameLog.builder()
                 .card(entry.getCard())
                 .text(" switches blockers between ")
                 .card(attackerA.getCard())

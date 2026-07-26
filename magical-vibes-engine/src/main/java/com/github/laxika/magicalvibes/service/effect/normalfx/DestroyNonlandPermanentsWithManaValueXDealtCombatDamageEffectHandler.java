@@ -5,7 +5,7 @@ import com.github.laxika.magicalvibes.model.GameLog;
 import com.github.laxika.magicalvibes.model.StackEntry;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
 import com.github.laxika.magicalvibes.model.effect.DestroyNonlandPermanentsWithManaValueXDealtCombatDamageEffect;
-import com.github.laxika.magicalvibes.service.GameBroadcastService;
+import com.github.laxika.magicalvibes.service.GameLogService;
 import java.util.Set;
 import java.util.UUID;
 import lombok.RequiredArgsConstructor;
@@ -18,7 +18,7 @@ import org.springframework.stereotype.Component;
 public class DestroyNonlandPermanentsWithManaValueXDealtCombatDamageEffectHandler implements NormalEffectHandlerBean {
 
     private final DestructionSupport destructionSupport;
-    private final GameBroadcastService gameBroadcastService;
+    private final GameLogService gameLogService;
 
     @Override
     public Class<? extends CardEffect> handledEffect() {
@@ -33,7 +33,7 @@ public class DestroyNonlandPermanentsWithManaValueXDealtCombatDamageEffectHandle
                         .getOrDefault(entry.getSourcePermanentId(), Set.of());
                 if (damagedPlayerIds.isEmpty()) {
                     String logEntry = cardName + " resolves but " + cardName + " dealt no combat damage to any player this turn.";
-                    gameBroadcastService.logAndBroadcast(gameData, GameLog.text(logEntry));
+                    gameLogService.append(gameData, GameLog.text(logEntry));
                     log.info("Game {} - {} resolves but dealt no combat damage to any player this turn", gameData.id, cardName);
                     return;
                 }

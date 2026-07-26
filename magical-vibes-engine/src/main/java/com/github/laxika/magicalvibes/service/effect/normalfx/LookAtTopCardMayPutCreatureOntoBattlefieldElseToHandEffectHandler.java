@@ -8,7 +8,7 @@ import com.github.laxika.magicalvibes.model.PendingMayAbility;
 import com.github.laxika.magicalvibes.model.StackEntry;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
 import com.github.laxika.magicalvibes.model.effect.LookAtTopCardMayPutCreatureOntoBattlefieldElseToHandEffect;
-import com.github.laxika.magicalvibes.service.GameBroadcastService;
+import com.github.laxika.magicalvibes.service.GameLogService;
 import java.util.List;
 import java.util.UUID;
 import lombok.RequiredArgsConstructor;
@@ -24,7 +24,7 @@ import org.springframework.stereotype.Component;
 public class LookAtTopCardMayPutCreatureOntoBattlefieldElseToHandEffectHandler
         implements NormalEffectHandlerBean {
 
-    private final GameBroadcastService gameBroadcastService;
+    private final GameLogService gameLogService;
 
     @Override
     public Class<? extends CardEffect> handledEffect() {
@@ -39,13 +39,13 @@ public class LookAtTopCardMayPutCreatureOntoBattlefieldElseToHandEffectHandler
         String sourceName = entry.getCard().getName();
 
         if (deck.isEmpty()) {
-            gameBroadcastService.logAndBroadcast(gameData,
+            gameLogService.append(gameData,
                     GameLog.text(playerName + "'s library is empty (" + sourceName + ")."));
             return;
         }
 
         // "Look at" is private — do not broadcast the card's identity to opponents.
-        gameBroadcastService.logAndBroadcast(gameData,
+        gameLogService.append(gameData,
                 GameLog.text(playerName + " looks at the top card of their library (" + sourceName + ")."));
 
         Card topCard = deck.getFirst();
@@ -63,7 +63,7 @@ public class LookAtTopCardMayPutCreatureOntoBattlefieldElseToHandEffectHandler
         // Non-creature: put into hand (no choice).
         deck.removeFirst();
         gameData.playerHands.get(controllerId).add(topCard);
-        gameBroadcastService.logAndBroadcast(gameData,
+        gameLogService.append(gameData,
                 GameLog.text(playerName + " puts the top card into their hand (" + sourceName + ")."));
         log.info("Game {} - {} puts {} into hand from library top ({})",
                 gameData.id, playerName, topCard.getName(), sourceName);

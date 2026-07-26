@@ -6,7 +6,7 @@ import com.github.laxika.magicalvibes.model.GameLog;
 import com.github.laxika.magicalvibes.model.StackEntry;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
 import com.github.laxika.magicalvibes.model.effect.EachPlayerShufflesGraveyardIntoLibraryEffect;
-import com.github.laxika.magicalvibes.service.GameBroadcastService;
+import com.github.laxika.magicalvibes.service.GameLogService;
 import com.github.laxika.magicalvibes.service.graveyard.GraveyardService;
 import com.github.laxika.magicalvibes.service.library.LibraryShuffleHelper;
 import java.util.List;
@@ -20,7 +20,7 @@ import org.springframework.stereotype.Component;
 @RequiredArgsConstructor
 public class EachPlayerShufflesGraveyardIntoLibraryEffectHandler implements NormalEffectHandlerBean {
 
-    private final GameBroadcastService gameBroadcastService;
+    private final GameLogService gameLogService;
     private final GraveyardService graveyardService;
 
     @Override
@@ -36,7 +36,7 @@ public class EachPlayerShufflesGraveyardIntoLibraryEffectHandler implements Norm
             String playerName = gameData.playerIdToName.get(playerId);
 
             if (graveyard == null || graveyard.isEmpty()) {
-                gameBroadcastService.logAndBroadcast(gameData,
+                gameLogService.append(gameData,
                         GameLog.text(playerName + "'s graveyard is empty. Library is shuffled."));
                 LibraryShuffleHelper.shuffleLibrary(gameData, playerId);
                 continue;
@@ -48,7 +48,7 @@ public class EachPlayerShufflesGraveyardIntoLibraryEffectHandler implements Norm
             graveyardService.notifyCardsLeftGraveyard(gameData, playerId);
             LibraryShuffleHelper.shuffleLibrary(gameData, playerId);
 
-            gameBroadcastService.logAndBroadcast(gameData, GameLog.text(
+            gameLogService.append(gameData, GameLog.text(
                     playerName + " shuffles their graveyard ("
                             + LibraryShuffleSupport.pluralCards(count) + ") into their library."));
             log.info("Game {} - {} shuffles graveyard ({} cards) into library",

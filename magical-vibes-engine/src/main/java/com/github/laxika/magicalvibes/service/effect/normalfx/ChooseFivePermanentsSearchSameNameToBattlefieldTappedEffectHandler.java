@@ -7,7 +7,7 @@ import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.StackEntry;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
 import com.github.laxika.magicalvibes.model.effect.ChooseFivePermanentsSearchSameNameToBattlefieldTappedEffect;
-import com.github.laxika.magicalvibes.service.GameBroadcastService;
+import com.github.laxika.magicalvibes.service.GameLogService;
 import com.github.laxika.magicalvibes.service.input.PlayerInputService;
 import java.util.ArrayList;
 import java.util.List;
@@ -28,7 +28,7 @@ import org.springframework.stereotype.Component;
 public class ChooseFivePermanentsSearchSameNameToBattlefieldTappedEffectHandler
         implements NormalEffectHandlerBean {
 
-    private final GameBroadcastService gameBroadcastService;
+    private final GameLogService gameLogService;
     private final PlayerInputService playerInputService;
 
     @Override
@@ -50,7 +50,7 @@ public class ChooseFivePermanentsSearchSameNameToBattlefieldTappedEffectHandler
 
         if (permanentIds.isEmpty()) {
             String logEntry = gameData.playerIdToName.get(controllerId) + " controls no permanents to choose.";
-            gameBroadcastService.logAndBroadcast(gameData, GameLog.text(logEntry));
+            gameLogService.append(gameData, GameLog.text(logEntry));
             log.info("Game {} - {} has no permanents for {}",
                     gameData.id, gameData.playerIdToName.get(controllerId), entry.getCard().getName());
             return;

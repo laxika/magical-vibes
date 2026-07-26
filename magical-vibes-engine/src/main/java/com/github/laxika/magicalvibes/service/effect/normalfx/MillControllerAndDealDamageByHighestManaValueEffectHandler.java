@@ -5,7 +5,7 @@ import com.github.laxika.magicalvibes.model.GameLog;
 import com.github.laxika.magicalvibes.model.StackEntry;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
 import com.github.laxika.magicalvibes.model.effect.MillControllerAndDealDamageByHighestManaValueEffect;
-import com.github.laxika.magicalvibes.service.GameBroadcastService;
+import com.github.laxika.magicalvibes.service.GameLogService;
 import com.github.laxika.magicalvibes.service.GameOutcomeService;
 import com.github.laxika.magicalvibes.service.battlefield.GameQueryService;
 import com.github.laxika.magicalvibes.service.graveyard.GraveyardService;
@@ -22,7 +22,7 @@ public class MillControllerAndDealDamageByHighestManaValueEffectHandler implemen
 
     private final DamageSupport damageSupport;
     private final GameQueryService gameQueryService;
-    private final GameBroadcastService gameBroadcastService;
+    private final GameLogService gameLogService;
     private final GameOutcomeService gameOutcomeService;
     private final GraveyardService graveyardService;
 
@@ -47,7 +47,7 @@ public class MillControllerAndDealDamageByHighestManaValueEffectHandler implemen
 
         if (cardsToMill == 0) {
             String logEntry = controllerName + "'s library is empty — " + cardName + " deals no damage.";
-            gameBroadcastService.logAndBroadcast(gameData, GameLog.text(logEntry));
+            gameLogService.append(gameData, GameLog.text(logEntry));
             return;
         }
 
@@ -64,7 +64,7 @@ public class MillControllerAndDealDamageByHighestManaValueEffectHandler implemen
 
         if (highestManaValue == 0) {
             String logEntry = cardName + " deals 0 damage (greatest mana value among milled cards is 0).";
-            gameBroadcastService.logAndBroadcast(gameData, GameLog.text(logEntry));
+            gameLogService.append(gameData, GameLog.text(logEntry));
             return;
         }
 

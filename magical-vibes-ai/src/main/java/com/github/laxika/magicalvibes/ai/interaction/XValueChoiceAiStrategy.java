@@ -34,6 +34,6 @@ class XValueChoiceAiStrategy implements AiInteractionStrategy<PendingInteraction
             chosenValue = Math.min(chosenValue, payable);
         }
         log.info("AI: Choosing X={} for {} in game {}", chosenValue, interaction.cardName(), ctx.gameId());
-        ctx.gameActions().answerInteraction(ctx.selfConnection(), new InteractionAnswer.NumberChosen(chosenValue));
+        ctx.gameActions().answerInteraction(new InteractionAnswer.NumberChosen(chosenValue));
     }
 }

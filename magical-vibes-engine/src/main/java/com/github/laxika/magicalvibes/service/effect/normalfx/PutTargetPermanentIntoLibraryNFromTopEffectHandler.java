@@ -6,7 +6,7 @@ import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.StackEntry;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
 import com.github.laxika.magicalvibes.model.effect.PutTargetPermanentIntoLibraryNFromTopEffect;
-import com.github.laxika.magicalvibes.service.GameBroadcastService;
+import com.github.laxika.magicalvibes.service.GameLogService;
 import com.github.laxika.magicalvibes.service.battlefield.GameQueryService;
 import com.github.laxika.magicalvibes.service.battlefield.PermanentRemovalService;
 import lombok.RequiredArgsConstructor;
@@ -19,7 +19,7 @@ import org.springframework.stereotype.Component;
 public class PutTargetPermanentIntoLibraryNFromTopEffectHandler implements NormalEffectHandlerBean {
 
     private final GameQueryService gameQueryService;
-    private final GameBroadcastService gameBroadcastService;
+    private final GameLogService gameLogService;
     private final PermanentRemovalService permanentRemovalService;
 
     @Override
@@ -43,7 +43,7 @@ public class PutTargetPermanentIntoLibraryNFromTopEffectHandler implements Norma
                         default -> (position + 1) + "th from the top of";
                     };
                     String logEntry = target.getCard().getName() + " is put " + ordinal + " its owner's library.";
-                    gameBroadcastService.logAndBroadcast(gameData, GameLog.builder().card(target.getCard()).text(" is put " + ordinal + " its owner's library.").build());
+                    gameLogService.append(gameData, GameLog.builder().card(target.getCard()).text(" is put " + ordinal + " its owner's library.").build());
                     log.info("Game {} - {} put {} library (position {})", gameData.id, target.getCard().getName(), ordinal, position);
                 }
 

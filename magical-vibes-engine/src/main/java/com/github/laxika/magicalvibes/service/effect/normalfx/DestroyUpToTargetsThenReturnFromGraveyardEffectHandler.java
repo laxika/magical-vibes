@@ -10,7 +10,7 @@ import com.github.laxika.magicalvibes.model.StackEntry;
 import com.github.laxika.magicalvibes.model.Zone;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
 import com.github.laxika.magicalvibes.model.effect.DestroyUpToTargetsThenReturnFromGraveyardEffect;
-import com.github.laxika.magicalvibes.service.GameBroadcastService;
+import com.github.laxika.magicalvibes.service.GameLogService;
 import com.github.laxika.magicalvibes.service.battlefield.BattlefieldEntryService;
 import com.github.laxika.magicalvibes.service.battlefield.GameQueryService;
 import com.github.laxika.magicalvibes.service.battlefield.PermanentRemovalService;
@@ -31,7 +31,7 @@ public class DestroyUpToTargetsThenReturnFromGraveyardEffectHandler implements N
     private final BattlefieldEntryService battlefieldEntryService;
     private final PermanentRemovalService permanentRemovalService;
     private final GameQueryService gameQueryService;
-    private final GameBroadcastService gameBroadcastService;
+    private final GameLogService gameLogService;
     private final GraveyardReturnSupport graveyardReturnSupport;
 
     @Override
@@ -59,7 +59,7 @@ public class DestroyUpToTargetsThenReturnFromGraveyardEffectHandler implements N
 
             Card card = target.getCard();
             if (permanentRemovalService.tryDestroyPermanent(gameData, target, false)) {
-                gameBroadcastService.logAndBroadcast(gameData, GameLog.cardThen(card, " is destroyed."));
+                gameLogService.append(gameData, GameLog.cardThen(card, " is destroyed."));
                 log.info("Game {} - {} is destroyed by {}", gameData.id, card.getName(), sourceName);
                 cardsToReturn.add(card);
             }
@@ -77,7 +77,7 @@ public class DestroyUpToTargetsThenReturnFromGraveyardEffectHandler implements N
                 gameData.playerGraveyards.computeIfAbsent(graveyardOwnerId, k -> new ArrayList<>()).add(card);
                 String blockedLog = gameData.playerIdToName.get(controllerId) + " can't put " + card.getName()
                         + " onto the battlefield from a graveyard; it stays in the graveyard.";
-                gameBroadcastService.logAndBroadcast(gameData, GameLog.builder().text(gameData.playerIdToName.get(controllerId) + " can't put ").card(card).text(" onto the battlefield from a graveyard; it stays in the graveyard.").build());
+                gameLogService.append(gameData, GameLog.builder().text(gameData.playerIdToName.get(controllerId) + " can't put ").card(card).text(" onto the battlefield from a graveyard; it stays in the graveyard.").build());
                 log.info("Game {} - {} blocked from entering the battlefield from a graveyard",
                         gameData.id, card.getName());
                 continue;
@@ -92,7 +92,7 @@ public class DestroyUpToTargetsThenReturnFromGraveyardEffectHandler implements N
             battlefieldEntryService.putPermanentOntoBattlefield(gameData, controllerId, permanent, enterTappedTypes);
 
             String playerName = gameData.playerIdToName.get(controllerId);
-            gameBroadcastService.logAndBroadcast(gameData, GameLog.textCardText(playerName + " puts ", card, " onto the battlefield from a graveyard."));
+            gameLogService.append(gameData, GameLog.textCardText(playerName + " puts ", card, " onto the battlefield from a graveyard."));
             log.info("Game {} - {} returns {} to the battlefield under {}", gameData.id, playerName,
                     card.getName(), playerName);
 

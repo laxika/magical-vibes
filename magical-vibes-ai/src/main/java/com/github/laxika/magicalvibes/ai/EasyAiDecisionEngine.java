@@ -15,7 +15,7 @@ import com.github.laxika.magicalvibes.networking.message.DeclareAttackersRequest
 import com.github.laxika.magicalvibes.networking.message.DeclareBlockersRequest;
 import com.github.laxika.magicalvibes.networking.message.PassPriorityRequest;
 import com.github.laxika.magicalvibes.networking.message.PlayCardRequest;
-import com.github.laxika.magicalvibes.service.GameBroadcastService;
+import com.github.laxika.magicalvibes.service.GameActionAvailabilityService;
 import com.github.laxika.magicalvibes.service.cast.CastingCostService;
 import com.github.laxika.magicalvibes.service.cast.CastingPermissionService;
 import com.github.laxika.magicalvibes.model.EffectSlot;
@@ -48,23 +48,23 @@ public class EasyAiDecisionEngine extends AiDecisionEngine {
     public EasyAiDecisionEngine(UUID gameId, Player aiPlayer, GameRegistry gameRegistry,
                                 GameService gameService, GameQueryService gameQueryService,
                                 CombatAttackService combatAttackService,
-                                GameBroadcastService gameBroadcastService,
+                                GameActionAvailabilityService actionAvailabilityService,
                                 CastingCostService castingCostService,
                                 CastingPermissionService castingPermissionService,
                                 TargetValidationService targetValidationService,
                                 TargetLegalityService targetLegalityService) {
-        super(gameId, aiPlayer, gameRegistry, gameService, gameQueryService, combatAttackService, gameBroadcastService, castingCostService, castingPermissionService, targetValidationService, targetLegalityService);
+        super(gameId, aiPlayer, gameRegistry, gameService, gameQueryService, combatAttackService, actionAvailabilityService, castingCostService, castingPermissionService, targetValidationService, targetLegalityService);
     }
 
     public EasyAiDecisionEngine(UUID gameId, Player aiPlayer, GameRegistry gameRegistry,
                                 AiGameActions gameActions, GameQueryService gameQueryService,
                                 CombatAttackService combatAttackService,
-                                GameBroadcastService gameBroadcastService,
+                                GameActionAvailabilityService actionAvailabilityService,
                                 CastingCostService castingCostService,
                                 CastingPermissionService castingPermissionService,
                                 TargetValidationService targetValidationService,
                                 TargetLegalityService targetLegalityService) {
-        super(gameId, aiPlayer, gameRegistry, gameActions, gameQueryService, combatAttackService, gameBroadcastService, castingCostService, castingPermissionService, targetValidationService, targetLegalityService);
+        super(gameId, aiPlayer, gameRegistry, gameActions, gameQueryService, combatAttackService, actionAvailabilityService, castingCostService, castingPermissionService, targetValidationService, targetLegalityService);
     }
 
     // ===== Priority / Main Phase =====
@@ -95,7 +95,7 @@ public class EasyAiDecisionEngine extends AiDecisionEngine {
         }
 
         // Pass priority
-        send(() -> gameActions.handlePassPriority(selfConnection, new PassPriorityRequest()));
+        send(() -> gameActions.handlePassPriority(new PassPriorityRequest()));
     }
 
     protected boolean tryCastSpell(GameData gameData) {
@@ -230,7 +230,7 @@ public class EasyAiDecisionEngine extends AiDecisionEngine {
         final List<Integer> finalExileGraveyardCardIndices = exileGraveyardCardIndices;
         final List<UUID> finalMultiTargetIds = multiTargetIds;
         final Integer finalDiscardHandCardIndex = chooseDiscardCostIndex(gameData, card);
-        send(() -> gameActions.handlePlayCard(selfConnection,
+        send(() -> gameActions.handlePlayCard(
                 new PlayCardRequest(cardIndex, finalXValue, finalTargetId, finalDamageAssignments, finalMultiTargetIds, null, null, finalSacrificePermanentId, null, null, null, null, null, finalExileGraveyardCardIndices, null, null, null, finalDiscardHandCardIndex, null, null)));
         // Verify the spell was actually cast — handlePlayCard silently
         // swallows errors, so we must confirm the state actually changed.
@@ -354,7 +354,7 @@ public class EasyAiDecisionEngine extends AiDecisionEngine {
         final List<Integer> finalExileGraveyardCardIndices = exileGraveyardCardIndices;
         final List<UUID> finalMultiTargetIds = multiTargetIds;
         final Integer finalDiscardHandCardIndex = chooseDiscardCostIndex(gameData, card);
-        send(() -> gameActions.handlePlayCard(selfConnection,
+        send(() -> gameActions.handlePlayCard(
                 new PlayCardRequest(cardIndex, finalXValue, finalTargetId, finalDamageAssignments, finalMultiTargetIds, null, null, finalSacrificePermanentId, null, null, null, null, null, finalExileGraveyardCardIndices, null, null, null, finalDiscardHandCardIndex, null, null)));
         // Identity check: hand size alone is unreliable because ETB/cast triggers
         // can add cards back to hand (e.g. Explore), masking a successful cast.
@@ -429,14 +429,15 @@ public class EasyAiDecisionEngine extends AiDecisionEngine {
 
     @Override
     protected void handleAttackers(GameData gameData) {
-        List<Permanent> battlefield = gameData.playerBattlefields.get(aiPlayer.getId());
-        List<Integer> availableIndices = combatAttackService.getAttackableCreatureIndices(gameData, aiPlayer.getId());
+        UUID actingPlayerId = activeDecisionPlayerId(gameData);
+        List<Permanent> battlefield = gameData.playerBattlefields.get(actingPlayerId);
+        List<Integer> availableIndices = combatAttackService.getAttackableCreatureIndices(gameData, actingPlayerId);
         if (battlefield == null || availableIndices.isEmpty()) {
-            send(() -> gameActions.handleDeclareAttackers(selfConnection, new DeclareAttackersRequest(List.of(), null)));
+            send(() -> gameActions.handleDeclareAttackers(new DeclareAttackersRequest(List.of(), null)));
             return;
         }
 
-        UUID opponentId = AiUtils.getOpponentId(gameData, aiPlayer.getId());
+        UUID opponentId = AiUtils.getOpponentId(gameData, actingPlayerId);
         List<Permanent> opponentBattlefield = gameData.playerBattlefields.getOrDefault(opponentId, List.of());
 
         List<Integer> attackerIndices = new ArrayList<>();
@@ -483,7 +484,7 @@ public class EasyAiDecisionEngine extends AiDecisionEngine {
         }
 
         // Ensure creatures with "attacks each combat if able" are included
-        List<Integer> mustAttackIndices = combatAttackService.getMustAttackIndices(gameData, aiPlayer.getId(), availableIndices);
+        List<Integer> mustAttackIndices = combatAttackService.getMustAttackIndices(gameData, actingPlayerId, availableIndices);
         attackerIndices = enforceMustAttack(attackerIndices, mustAttackIndices);
 
         // Ensure at least one attacker when forced (e.g. Trove of Temptation)
@@ -494,17 +495,18 @@ public class EasyAiDecisionEngine extends AiDecisionEngine {
 
         log.info("AI: Declaring {} attackers in game {}", attackerIndices.size(), gameId);
         final List<Integer> finalAttackerIndices = attackerIndices;
-        send(() -> gameActions.handleDeclareAttackers(selfConnection, new DeclareAttackersRequest(finalAttackerIndices, null)));
+        send(() -> gameActions.handleDeclareAttackers(new DeclareAttackersRequest(finalAttackerIndices, null)));
     }
 
     @Override
     protected void handleBlockers(GameData gameData) {
-        List<Permanent> battlefield = gameData.playerBattlefields.get(aiPlayer.getId());
-        UUID opponentId = AiUtils.getOpponentId(gameData, aiPlayer.getId());
+        UUID actingPlayerId = activeDecisionPlayerId(gameData);
+        List<Permanent> battlefield = gameData.playerBattlefields.get(actingPlayerId);
+        UUID opponentId = AiUtils.getOpponentId(gameData, actingPlayerId);
         List<Permanent> opponentBattlefield = gameData.playerBattlefields.getOrDefault(opponentId, List.of());
 
         if (battlefield == null || opponentBattlefield == null) {
-            send(() -> gameActions.handleDeclareBlockers(selfConnection, new DeclareBlockersRequest(List.of())));
+            send(() -> gameActions.handleDeclareBlockers(new DeclareBlockersRequest(List.of())));
             return;
         }
 
@@ -541,7 +543,7 @@ public class EasyAiDecisionEngine extends AiDecisionEngine {
         boolean[] blockerUsed = new boolean[battlefield.size()];
 
         int totalIncomingDamage = attackers.stream().mapToInt(a -> a[1]).sum();
-        int myLife = gameData.getLife(aiPlayer.getId());
+        int myLife = gameData.getLife(actingPlayerId);
 
         for (int[] attacker : attackers) {
             int attackerIdx = attacker[0];

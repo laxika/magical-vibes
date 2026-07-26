@@ -9,7 +9,7 @@ import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.StackEntry;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
 import com.github.laxika.magicalvibes.model.effect.ExileAllCreaturesYouControlThenRevealCreaturesToBattlefieldEffect;
-import com.github.laxika.magicalvibes.service.GameBroadcastService;
+import com.github.laxika.magicalvibes.service.GameLogService;
 import com.github.laxika.magicalvibes.service.battlefield.BattlefieldEntryService;
 import com.github.laxika.magicalvibes.service.battlefield.LegendRuleService;
 import com.github.laxika.magicalvibes.service.battlefield.PermanentRemovalService;
@@ -30,7 +30,7 @@ import java.util.stream.Collectors;
 public class ExileAllCreaturesYouControlThenRevealCreaturesToBattlefieldEffectHandler implements NormalEffectHandlerBean {
 
     private final PermanentRemovalService permanentRemovalService;
-    private final GameBroadcastService gameBroadcastService;
+    private final GameLogService gameLogService;
     private final BattlefieldEntryService battlefieldEntryService;
     private final LegendRuleService legendRuleService;
     private final CardSpecificSupport cardSpecificSupport;
@@ -56,7 +56,7 @@ public class ExileAllCreaturesYouControlThenRevealCreaturesToBattlefieldEffectHa
 
         if (creatureCount == 0) {
             String noCreaturesLog = controllerName + " controls no creatures — no cards are exiled or revealed.";
-            gameBroadcastService.logAndBroadcast(gameData, GameLog.text(noCreaturesLog));
+            gameLogService.append(gameData, GameLog.text(noCreaturesLog));
             return;
         }
 
@@ -65,7 +65,7 @@ public class ExileAllCreaturesYouControlThenRevealCreaturesToBattlefieldEffectHa
             String creatureName = creature.getCard().getName();
             permanentRemovalService.removePermanentToExile(gameData, creature);
             String exileLog = controllerName + " exiles " + creatureName + ".";
-            gameBroadcastService.logAndBroadcast(gameData, GameLog.text(exileLog));
+            gameLogService.append(gameData, GameLog.text(exileLog));
         }
 
         // Step 3: Reveal cards from the top of the library until finding that many creature cards
@@ -83,20 +83,20 @@ public class ExileAllCreaturesYouControlThenRevealCreaturesToBattlefieldEffectHa
 
         if (revealedCards.isEmpty()) {
             String emptyLog = controllerName + "'s library is empty — no cards are revealed.";
-            gameBroadcastService.logAndBroadcast(gameData, GameLog.text(emptyLog));
+            gameLogService.append(gameData, GameLog.text(emptyLog));
             return;
         }
 
         String revealedNames = revealedCards.stream().map(Card::getName).collect(Collectors.joining(", "));
         String revealLog = controllerName + " reveals " + revealedNames + ".";
-        gameBroadcastService.logAndBroadcast(gameData, GameLog.text(revealLog));
+        gameLogService.append(gameData, GameLog.text(revealLog));
 
         if (foundCreatures.isEmpty()) {
             // No creature cards found — shuffle all revealed cards back into the library
             deck.addAll(revealedCards);
             LibraryShuffleHelper.shuffleLibrary(gameData, controllerId);
             String noMatchLog = controllerName + " reveals their entire library — no creature cards found. Library is shuffled.";
-            gameBroadcastService.logAndBroadcast(gameData, GameLog.text(noMatchLog));
+            gameLogService.append(gameData, GameLog.text(noMatchLog));
             return;
         }
 
@@ -105,7 +105,7 @@ public class ExileAllCreaturesYouControlThenRevealCreaturesToBattlefieldEffectHa
             Permanent perm = new Permanent(creatureCard);
             battlefieldEntryService.putPermanentOntoBattlefield(gameData, controllerId, perm);
 
-            gameBroadcastService.logAndBroadcast(gameData, GameLog.entersBattlefieldUnder(creatureCard, controllerName));
+            gameLogService.append(gameData, GameLog.entersBattlefieldUnder(creatureCard, controllerName));
 
             // Handle planeswalkers (e.g. artifact creatures that are also planeswalkers)
             if (creatureCard.hasType(CardType.PLANESWALKER) && creatureCard.getLoyalty() != null) {
@@ -126,7 +126,7 @@ public class ExileAllCreaturesYouControlThenRevealCreaturesToBattlefieldEffectHa
         LibraryShuffleHelper.shuffleLibrary(gameData, controllerId);
 
         String shuffleLog = controllerName + " shuffles their library.";
-        gameBroadcastService.logAndBroadcast(gameData, GameLog.text(shuffleLog));
+        gameLogService.append(gameData, GameLog.text(shuffleLog));
 
         // Step 6: Process ETB triggers after all creatures are on the battlefield and the
         // spell has finished resolving. All creatures enter at the same time, so triggers

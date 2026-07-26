@@ -6,7 +6,7 @@ import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.StackEntry;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
 import com.github.laxika.magicalvibes.model.effect.ReturnTargetPermanentToHandWithManaValueConditionalEffect;
-import com.github.laxika.magicalvibes.service.GameBroadcastService;
+import com.github.laxika.magicalvibes.service.GameLogService;
 import com.github.laxika.magicalvibes.service.battlefield.GameQueryService;
 import com.github.laxika.magicalvibes.service.battlefield.PermanentRemovalService;
 import com.github.laxika.magicalvibes.service.effect.EffectHandler;
@@ -21,7 +21,7 @@ import org.springframework.stereotype.Component;
 public class ReturnTargetPermanentToHandWithManaValueConditionalEffectHandler implements NormalEffectHandlerBean {
 
     private final GameQueryService gameQueryService;
-    private final GameBroadcastService gameBroadcastService;
+    private final GameLogService gameLogService;
     private final PermanentRemovalService permanentRemovalService;
     private final EffectHandlerRegistry effectHandlerRegistry;
 
@@ -41,7 +41,7 @@ public class ReturnTargetPermanentToHandWithManaValueConditionalEffectHandler im
         int manaValue = target.getCard().getManaValue();
 
         if (permanentRemovalService.removePermanentToHand(gameData, target)) {
-            gameBroadcastService.logAndBroadcast(gameData, GameLog.cardThen(target.getCard(), " is returned to its owner's hand."));
+            gameLogService.append(gameData, GameLog.cardThen(target.getCard(), " is returned to its owner's hand."));
             log.info("Game {} - {} returned to owner's hand by {}", gameData.id, target.getCard().getName(), entry.getCard().getName());
         }
 

@@ -6,7 +6,7 @@ import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.StackEntry;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
 import com.github.laxika.magicalvibes.model.effect.RemoveLinkedPermanentEffect;
-import com.github.laxika.magicalvibes.service.GameBroadcastService;
+import com.github.laxika.magicalvibes.service.GameLogService;
 import com.github.laxika.magicalvibes.service.battlefield.GameQueryService;
 import com.github.laxika.magicalvibes.service.battlefield.PermanentRemovalService;
 import lombok.RequiredArgsConstructor;
@@ -25,7 +25,7 @@ import org.springframework.stereotype.Component;
 public class RemoveLinkedPermanentEffectHandler implements NormalEffectHandlerBean {
 
     private final GameQueryService gameQueryService;
-    private final GameBroadcastService gameBroadcastService;
+    private final GameLogService gameLogService;
     private final PermanentRemovalService permanentRemovalService;
 
     @Override
@@ -51,11 +51,11 @@ public class RemoveLinkedPermanentEffectHandler implements NormalEffectHandlerBe
         switch (e.mode()) {
             case EXILE -> {
                 permanentRemovalService.removePermanentToExile(gameData, linked);
-                gameBroadcastService.logAndBroadcast(gameData, GameLog.text(name + " is exiled."));
+                gameLogService.append(gameData, GameLog.text(name + " is exiled."));
             }
             case SACRIFICE -> {
                 permanentRemovalService.removePermanentToGraveyard(gameData, linked);
-                gameBroadcastService.logAndBroadcast(gameData, GameLog.text(name + " is sacrificed."));
+                gameLogService.append(gameData, GameLog.text(name + " is sacrificed."));
             }
         }
         log.info("Game {} - {} removed ({}) via linked leaves-battlefield trigger",

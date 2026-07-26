@@ -6,7 +6,7 @@ import com.github.laxika.magicalvibes.model.GameData;
 import com.github.laxika.magicalvibes.model.GameLog;
 import com.github.laxika.magicalvibes.model.PendingInteraction;
 import com.github.laxika.magicalvibes.model.StackEntry;
-import com.github.laxika.magicalvibes.service.GameBroadcastService;
+import com.github.laxika.magicalvibes.service.GameLogService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Component;
 
@@ -26,7 +26,7 @@ import java.util.UUID;
 @RequiredArgsConstructor
 public class LibraryRevealSupport {
 
-    private final GameBroadcastService gameBroadcastService;
+    private final GameLogService gameLogService;
     private final com.github.laxika.magicalvibes.service.interaction.InteractionHandlerRegistry interactionHandlerRegistry;
 
     public record TopCardsResult(UUID controllerId, List<Card> topCards, String playerName) {}
@@ -43,7 +43,7 @@ public class LibraryRevealSupport {
         int actual = Math.min(count, deck.size());
         if (actual == 0) {
             String msg = entry.getCard().getName() + ": " + playerName + "'s library is empty.";
-            gameBroadcastService.logAndBroadcast(gameData, GameLog.builder().card(entry.getCard()).text(": " + playerName + "'s library is empty.").build());
+            gameLogService.append(gameData, GameLog.builder().card(entry.getCard()).text(": " + playerName + "'s library is empty.").build());
             return null;
         }
 
@@ -51,7 +51,7 @@ public class LibraryRevealSupport {
 
         if (broadcastLook) {
             String logMsg = playerName + " looks at the top " + pluralCards(actual) + " of their library.";
-            gameBroadcastService.logAndBroadcast(gameData, GameLog.text(logMsg));
+            gameLogService.append(gameData, GameLog.text(logMsg));
         }
 
         return new TopCardsResult(controllerId, topCards, playerName);

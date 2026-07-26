@@ -11,7 +11,7 @@ import com.github.laxika.magicalvibes.model.effect.ReorderTopCardsOfLibraryEffec
 import com.github.laxika.magicalvibes.networking.SessionManager;
 import com.github.laxika.magicalvibes.networking.model.CardView;
 import com.github.laxika.magicalvibes.networking.service.CardViewFactory;
-import com.github.laxika.magicalvibes.service.GameBroadcastService;
+import com.github.laxika.magicalvibes.service.GameLogService;
 import com.github.laxika.magicalvibes.service.battlefield.BattlefieldEntryService;
 import com.github.laxika.magicalvibes.service.battlefield.GameQueryService;
 import com.github.laxika.magicalvibes.service.exile.ExileService;
@@ -38,7 +38,7 @@ class ReorderTopCardsOfLibraryEffectHandlerTest {
     @Mock
     private GameQueryService gameQueryService;
     @Mock
-    private GameBroadcastService gameBroadcastService;
+    private GameLogService gameLogService;
     @Mock
     private SessionManager sessionManager;
     @Mock
@@ -75,10 +75,10 @@ class ReorderTopCardsOfLibraryEffectHandlerTest {
         gd.playerDecks.put(player2Id, Collections.synchronizedList(new ArrayList<>()));
         gd.activePlayerId = player1Id;
 
-        libraryRevealSupport = new LibraryRevealSupport(gameBroadcastService,
-                InteractionRegistryTestSupport.registryFor(sessionManager, cardViewFactory, gameBroadcastService));
-        reorderTopCardsOfLibraryEffectHandler = new ReorderTopCardsOfLibraryEffectHandler(gameBroadcastService,
-                InteractionRegistryTestSupport.registryFor(sessionManager, cardViewFactory, gameBroadcastService));
+        libraryRevealSupport = new LibraryRevealSupport(gameLogService,
+                InteractionRegistryTestSupport.registryFor(sessionManager, cardViewFactory, gameLogService));
+        reorderTopCardsOfLibraryEffectHandler = new ReorderTopCardsOfLibraryEffectHandler(gameLogService,
+                InteractionRegistryTestSupport.registryFor(sessionManager, cardViewFactory, gameLogService));
 
     }
 
@@ -117,7 +117,7 @@ class ReorderTopCardsOfLibraryEffectHandlerTest {
 
                 reorderTopCardsOfLibraryEffectHandler.resolve(gd, entry, effect);
 
-                verify(gameBroadcastService).logAndBroadcast(eq(gd), argThat((GameLogEntry logEntry) ->
+                verify(gameLogService).append(eq(gd), argThat((GameLogEntry logEntry) ->
                         logEntry.plainText().contains("library is empty")));
                 assertThat(gd.interaction.activeInteraction()).isNull();
             }
@@ -133,7 +133,7 @@ class ReorderTopCardsOfLibraryEffectHandlerTest {
 
                 reorderTopCardsOfLibraryEffectHandler.resolve(gd, entry, effect);
 
-                verify(gameBroadcastService).logAndBroadcast(eq(gd), argThat((GameLogEntry logEntry) ->
+                verify(gameLogService).append(eq(gd), argThat((GameLogEntry logEntry) ->
                         logEntry.plainText().contains("looks at the top card")));
                 assertThat(gd.interaction.activeInteraction()).isNull();
             }

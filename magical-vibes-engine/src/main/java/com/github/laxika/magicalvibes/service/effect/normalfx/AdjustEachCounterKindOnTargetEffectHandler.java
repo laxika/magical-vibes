@@ -7,7 +7,7 @@ import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.StackEntry;
 import com.github.laxika.magicalvibes.model.effect.AdjustEachCounterKindOnTargetEffect;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
-import com.github.laxika.magicalvibes.service.GameBroadcastService;
+import com.github.laxika.magicalvibes.service.GameLogService;
 import com.github.laxika.magicalvibes.service.battlefield.GameQueryService;
 import com.github.laxika.magicalvibes.service.input.PlayerInputService;
 import java.util.ArrayList;
@@ -30,7 +30,7 @@ import org.springframework.stereotype.Component;
 public class AdjustEachCounterKindOnTargetEffectHandler implements NormalEffectHandlerBean {
 
     private final GameQueryService gameQueryService;
-    private final GameBroadcastService gameBroadcastService;
+    private final GameLogService gameLogService;
     private final PlayerInputService playerInputService;
 
     @Override
@@ -66,7 +66,7 @@ public class AdjustEachCounterKindOnTargetEffectHandler implements NormalEffectH
         }
 
         if (kinds.isEmpty()) {
-            gameBroadcastService.logAndBroadcast(gameData,
+            gameLogService.append(gameData,
                     GameLog.cardTextCard(entry.getCard(), " finds no counters on ", target.getCard(), "."));
             log.info("Game {} - {}: target has no counters", gameData.id, entry.getCard().getName());
             return;

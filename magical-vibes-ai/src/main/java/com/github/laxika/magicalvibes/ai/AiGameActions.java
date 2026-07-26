@@ -6,7 +6,6 @@ import com.github.laxika.magicalvibes.model.GameStatus;
 import com.github.laxika.magicalvibes.model.ManaPool;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.Player;
-import com.github.laxika.magicalvibes.networking.Connection;
 import com.github.laxika.magicalvibes.networking.message.ActivateAbilityRequest;
 import com.github.laxika.magicalvibes.networking.message.BottomCardsRequest;
 import com.github.laxika.magicalvibes.networking.message.CombatDamageAssignedRequest;
@@ -39,8 +38,8 @@ import java.util.UUID;
  * both this adapter and the backend handler share {@link PlayCardRequestDispatchService}, so the
  * two can no longer drift apart field-by-field. Like the backend handler,
  * each method swallows {@link IllegalArgumentException}/{@link IllegalStateException} (an illegal
- * action is simply a no-op for the AI). The {@link Connection} parameter is accepted for call-site
- * symmetry with the broadcast pipeline but is unused here — the acting player is fixed.
+ * action is simply a no-op for the AI). The acting player is fixed; no transport connection is
+ * involved in an AI action.
  */
 @Slf4j
 public class AiGameActions {
@@ -68,7 +67,7 @@ public class AiGameActions {
         return gameData;
     }
 
-    public void handlePassPriority(Connection connection, PassPriorityRequest request) {
+    public void handlePassPriority(PassPriorityRequest request) {
         GameData gameData = game();
         if (gameData == null) return;
         try {
@@ -78,7 +77,7 @@ public class AiGameActions {
         }
     }
 
-    public void handleKeepHand(Connection connection, KeepHandRequest request) {
+    public void handleKeepHand(KeepHandRequest request) {
         GameData gameData = game();
         if (gameData == null) return;
         try {
@@ -88,7 +87,7 @@ public class AiGameActions {
         }
     }
 
-    public void handleMulligan(Connection connection, MulliganRequest request) {
+    public void handleMulligan(MulliganRequest request) {
         GameData gameData = game();
         if (gameData == null) return;
         try {
@@ -98,7 +97,7 @@ public class AiGameActions {
         }
     }
 
-    public void handleBottomCards(Connection connection, BottomCardsRequest request) {
+    public void handleBottomCards(BottomCardsRequest request) {
         GameData gameData = game();
         if (gameData == null) return;
         try {
@@ -108,7 +107,7 @@ public class AiGameActions {
         }
     }
 
-    public void handlePlayCard(Connection connection, PlayCardRequest request) {
+    public void handlePlayCard(PlayCardRequest request) {
         GameData gameData = game();
         if (gameData == null) return;
         try {
@@ -119,7 +118,7 @@ public class AiGameActions {
         }
     }
 
-    public void handleTapPermanent(Connection connection, TapPermanentRequest request) {
+    public void handleTapPermanent(TapPermanentRequest request) {
         GameData gameData = game();
         if (gameData == null) return;
         try {
@@ -145,7 +144,7 @@ public class AiGameActions {
         return gameService.getEffectiveActivatedAbilities(gameData, permanent);
     }
 
-    public void handleActivateAbility(Connection connection, ActivateAbilityRequest request) {
+    public void handleActivateAbility(ActivateAbilityRequest request) {
         GameData gameData = game();
         if (gameData == null) return;
         try {
@@ -157,7 +156,7 @@ public class AiGameActions {
         }
     }
 
-    public void handleDeclareAttackers(Connection connection, DeclareAttackersRequest request) {
+    public void handleDeclareAttackers(DeclareAttackersRequest request) {
         GameData gameData = game();
         if (gameData == null) return;
         try {
@@ -174,7 +173,7 @@ public class AiGameActions {
         }
     }
 
-    public void handleDeclareBlockers(Connection connection, DeclareBlockersRequest request) {
+    public void handleDeclareBlockers(DeclareBlockersRequest request) {
         GameData gameData = game();
         if (gameData == null) return;
         try {
@@ -189,7 +188,7 @@ public class AiGameActions {
      * backend's single interaction-answer route. The {@link InteractionAnswer} shape carries
      * the payload; the engine's registry routes it to the active interaction's handler.
      */
-    public void answerInteraction(Connection connection, InteractionAnswer answer) {
+    public void answerInteraction(InteractionAnswer answer) {
         GameData gameData = game();
         if (gameData == null) return;
         try {
@@ -200,7 +199,7 @@ public class AiGameActions {
         }
     }
 
-    public void handleCombatDamageAssigned(Connection connection, CombatDamageAssignedRequest request) {
+    public void handleCombatDamageAssigned(CombatDamageAssignedRequest request) {
         GameData gameData = game();
         if (gameData == null) return;
         try {

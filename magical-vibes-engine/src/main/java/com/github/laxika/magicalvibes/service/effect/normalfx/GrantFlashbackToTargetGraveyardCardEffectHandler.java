@@ -8,7 +8,7 @@ import com.github.laxika.magicalvibes.model.StackEntry;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
 import com.github.laxika.magicalvibes.model.Zone;
 import com.github.laxika.magicalvibes.model.effect.GrantFlashbackToTargetGraveyardCardEffect;
-import com.github.laxika.magicalvibes.service.GameBroadcastService;
+import com.github.laxika.magicalvibes.service.GameLogService;
 import com.github.laxika.magicalvibes.service.battlefield.GameQueryService;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -22,7 +22,7 @@ import java.util.UUID;
 public class GrantFlashbackToTargetGraveyardCardEffectHandler implements NormalEffectHandlerBean {
 
     private final GameQueryService gameQueryService;
-    private final GameBroadcastService gameBroadcastService;
+    private final GameLogService gameLogService;
 
     @Override
     public Class<? extends CardEffect> handledEffect() {
@@ -37,7 +37,7 @@ public class GrantFlashbackToTargetGraveyardCardEffectHandler implements NormalE
             if (entry.getTargetZone() == Zone.GRAVEYARD && entry.getTargetId() != null) {
                 targetCardId = entry.getTargetId();
             } else {
-                gameBroadcastService.logAndBroadcast(gameData, GameLog.text(entry.getDescription() + " — no target selected."));
+                gameLogService.append(gameData, GameLog.text(entry.getDescription() + " — no target selected."));
                 return;
             }
         } else {
@@ -46,7 +46,7 @@ public class GrantFlashbackToTargetGraveyardCardEffectHandler implements NormalE
 
         Card targetCard = gameQueryService.findCardInGraveyardById(gameData, targetCardId);
         if (targetCard == null) {
-            gameBroadcastService.logAndBroadcast(gameData, GameLog.text(entry.getDescription() + " fizzles (target no longer in graveyard)."));
+            gameLogService.append(gameData, GameLog.text(entry.getDescription() + " fizzles (target no longer in graveyard)."));
             return;
         }
 
@@ -59,14 +59,14 @@ public class GrantFlashbackToTargetGraveyardCardEffectHandler implements NormalE
             }
         }
         if (!matchesType) {
-            gameBroadcastService.logAndBroadcast(gameData, GameLog.text(entry.getDescription() + " fizzles (target is not a valid card type)."));
+            gameLogService.append(gameData, GameLog.text(entry.getDescription() + " fizzles (target is not a valid card type)."));
             return;
         }
 
         gameData.cardsGrantedFlashbackUntilEndOfTurn.add(targetCard.getId());
 
         String logEntry = entry.getCard().getName() + " grants flashback to " + targetCard.getName() + " until end of turn.";
-        gameBroadcastService.logAndBroadcast(gameData, GameLog.cardTextCard(entry.getCard(), " grants flashback to ", targetCard, " until end of turn."));
+        gameLogService.append(gameData, GameLog.cardTextCard(entry.getCard(), " grants flashback to ", targetCard, " until end of turn."));
         log.info("Game {} - {} grants flashback to {} until end of turn", gameData.id, entry.getCard().getName(), targetCard.getName());
     }
 }

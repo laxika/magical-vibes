@@ -18,7 +18,7 @@ import com.github.laxika.magicalvibes.model.StackEntryType;
 import com.github.laxika.magicalvibes.model.effect.ExileTargetPermanentEffect;
 import com.github.laxika.magicalvibes.model.effect.OmenMachineDrawStepEffect;
 import com.github.laxika.magicalvibes.networking.service.CardViewFactory;
-import com.github.laxika.magicalvibes.service.GameBroadcastService;
+import com.github.laxika.magicalvibes.service.GameLogService;
 import com.github.laxika.magicalvibes.service.exile.ExileService;
 import com.github.laxika.magicalvibes.service.graveyard.GraveyardService;
 import com.github.laxika.magicalvibes.service.input.PlayerInputService;
@@ -48,7 +48,7 @@ class OmenMachineDrawStepEffectHandlerTest {
     @Mock private GraveyardService graveyardService;
     @Mock private GameQueryService gameQueryService;
     @Mock private PredicateEvaluationService predicateEvaluationService;
-    @Mock private GameBroadcastService gameBroadcastService;
+    @Mock private GameLogService gameLogService;
     @Mock private PermanentRemovalService permanentRemovalService;
     @Mock private PlayerInputService playerInputService;
     @Mock private CardViewFactory cardViewFactory;
@@ -82,7 +82,7 @@ class OmenMachineDrawStepEffectHandlerTest {
         gd.playerGraveyards.put(player2Id, Collections.synchronizedList(new ArrayList<>()));
         gd.playerDecks.put(player1Id, Collections.synchronizedList(new ArrayList<>()));
         gd.playerDecks.put(player2Id, Collections.synchronizedList(new ArrayList<>()));
-        omenMachineDrawStepHandler = new OmenMachineDrawStepEffectHandler(exileSupport, gameQueryService, predicateEvaluationService, gameBroadcastService, battlefieldEntryService, exileService, playerInputService, triggerCollectionService);
+        omenMachineDrawStepHandler = new OmenMachineDrawStepEffectHandler(exileSupport, gameQueryService, predicateEvaluationService, gameLogService, battlefieldEntryService, exileService, playerInputService, triggerCollectionService);
 
     }
 
@@ -167,7 +167,7 @@ class OmenMachineDrawStepEffectHandlerTest {
 
                 omenMachineDrawStepHandler.resolve(gd, entry, entry.getEffectsToResolve().getFirst());
 
-                verify(gameBroadcastService).logAndBroadcast(eq(gd), argThat((GameLogEntry e) -> e.plainText().equals("Player1's library is empty (Omen Machine).")));
+                verify(gameLogService).append(eq(gd), argThat((GameLogEntry e) -> e.plainText().equals("Player1's library is empty (Omen Machine).")));
             }
 
             @Test
@@ -185,7 +185,7 @@ class OmenMachineDrawStepEffectHandlerTest {
                 omenMachineDrawStepHandler.resolve(gd, entry, entry.getEffectsToResolve().getFirst());
 
                 verify(battlefieldEntryService).putPermanentOntoBattlefield(eq(gd), eq(player1Id), any(Permanent.class));
-                verify(gameBroadcastService).logAndBroadcast(eq(gd), argThat((GameLogEntry e) -> e.plainText().equals("Player1 puts Forest onto the battlefield.")));
+                verify(gameLogService).append(eq(gd), argThat((GameLogEntry e) -> e.plainText().equals("Player1 puts Forest onto the battlefield.")));
                 assertThat(gd.playerDecks.get(player1Id)).isEmpty();
             }
 
@@ -223,6 +223,6 @@ class OmenMachineDrawStepEffectHandlerTest {
 
                 omenMachineDrawStepHandler.resolve(gd, entry, entry.getEffectsToResolve().getFirst());
 
-                verify(gameBroadcastService).logAndBroadcast(eq(gd), argThat((GameLogEntry e) -> e.plainText().equals("Doom Blade has no valid targets and remains in exile.")));
+                verify(gameLogService).append(eq(gd), argThat((GameLogEntry e) -> e.plainText().equals("Doom Blade has no valid targets and remains in exile.")));
             }
 }

@@ -6,7 +6,7 @@ import com.github.laxika.magicalvibes.model.PermanentChoiceContext;
 import com.github.laxika.magicalvibes.model.StackEntry;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
 import com.github.laxika.magicalvibes.model.effect.ChangeTargetOfTargetSpellWithSingleTargetEffect;
-import com.github.laxika.magicalvibes.service.GameBroadcastService;
+import com.github.laxika.magicalvibes.service.GameLogService;
 import com.github.laxika.magicalvibes.service.battlefield.GameQueryService;
 import com.github.laxika.magicalvibes.service.input.PlayerInputService;
 import java.util.List;
@@ -19,7 +19,7 @@ import org.springframework.stereotype.Component;
 public class ChangeTargetOfTargetSpellWithSingleTargetEffectHandler implements NormalEffectHandlerBean {
 
     private final GameQueryService gameQueryService;
-    private final GameBroadcastService gameBroadcastService;
+    private final GameLogService gameLogService;
     private final PlayerInputService playerInputService;
     private final TargetRedirectionSupport targetRedirectionSupport;
 
@@ -37,13 +37,13 @@ public class ChangeTargetOfTargetSpellWithSingleTargetEffectHandler implements N
 
         if (!targetSpell.isSingleTarget()) {
             String logEntry = entry.getCard().getName() + " has no effect (" + targetSpell.getCard().getName() + " no longer has a single target).";
-            gameBroadcastService.logAndBroadcast(gameData, GameLog.cardTextCard(entry.getCard(), " has no effect (", targetSpell.getCard(), " no longer has a single target)."));
+            gameLogService.append(gameData, GameLog.cardTextCard(entry.getCard(), " has no effect (", targetSpell.getCard(), " no longer has a single target)."));
             return;
         }
 
         List<UUID> validNewTargets = targetRedirectionSupport.collectValidNewTargets(gameData, targetSpell);
         if (validNewTargets.isEmpty()) {
-            gameBroadcastService.logAndBroadcast(gameData, GameLog.textCardText("No legal new target for ", targetSpell.getCard(), "."));
+            gameLogService.append(gameData, GameLog.textCardText("No legal new target for ", targetSpell.getCard(), "."));
             return;
         }
 

@@ -6,7 +6,7 @@ import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.StackEntry;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
 import com.github.laxika.magicalvibes.model.effect.UntapEquippedCreatureEffect;
-import com.github.laxika.magicalvibes.service.GameBroadcastService;
+import com.github.laxika.magicalvibes.service.GameLogService;
 import com.github.laxika.magicalvibes.service.battlefield.GameQueryService;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -18,7 +18,7 @@ import org.springframework.stereotype.Component;
 public class UntapEquippedCreatureEffectHandler implements NormalEffectHandlerBean {
 
     private final GameQueryService gameQueryService;
-    private final GameBroadcastService gameBroadcastService;
+    private final GameLogService gameLogService;
     private final TapUntapSupport tapUntapSupport;
 
     @Override
@@ -43,7 +43,7 @@ public class UntapEquippedCreatureEffectHandler implements NormalEffectHandlerBe
 
         tapUntapSupport.untapPermanent(gameData, equippedCreature);
 
-        gameBroadcastService.logAndBroadcast(gameData, GameLog.textCardText(sourceName + " untaps " , equippedCreature.getCard(), "."));
+        gameLogService.append(gameData, GameLog.textCardText(sourceName + " untaps " , equippedCreature.getCard(), "."));
         log.info("Game {} - {} untaps {}", gameData.id, sourceName, equippedCreature.getCard().getName());
     }
 }

@@ -7,7 +7,7 @@ import com.github.laxika.magicalvibes.model.StackEntry;
 import com.github.laxika.magicalvibes.model.action.ReturnExiledCardToHandAtEndStep;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
 import com.github.laxika.magicalvibes.model.effect.NecropotenceSetAsideTopCardEffect;
-import com.github.laxika.magicalvibes.service.GameBroadcastService;
+import com.github.laxika.magicalvibes.service.GameLogService;
 import java.util.List;
 import java.util.UUID;
 import lombok.RequiredArgsConstructor;
@@ -25,7 +25,7 @@ import org.springframework.stereotype.Component;
 @RequiredArgsConstructor
 public class NecropotenceSetAsideTopCardEffectHandler implements NormalEffectHandlerBean {
 
-    private final GameBroadcastService gameBroadcastService;
+    private final GameLogService gameLogService;
 
     @Override
     public Class<? extends CardEffect> handledEffect() {
@@ -39,7 +39,7 @@ public class NecropotenceSetAsideTopCardEffectHandler implements NormalEffectHan
         String controllerName = gameData.playerIdToName.get(controllerId);
 
         if (deck == null || deck.isEmpty()) {
-            gameBroadcastService.logAndBroadcast(gameData,
+            gameLogService.append(gameData,
                     GameLog.text(controllerName + "'s library is empty — nothing to exile."));
             return;
         }
@@ -48,7 +48,7 @@ public class NecropotenceSetAsideTopCardEffectHandler implements NormalEffectHan
         gameData.addToExile(controllerId, topCard, null, true);
         gameData.queueDelayedAction(new ReturnExiledCardToHandAtEndStep(topCard.getId(), controllerId));
 
-        gameBroadcastService.logAndBroadcast(gameData, GameLog.text(controllerName
+        gameLogService.append(gameData, GameLog.text(controllerName
                 + " exiles the top card of their library face down; it returns to their hand at the beginning of their next end step."));
         log.info("Game {} - {} set aside {} with Necropotence (returns at next end step)",
                 gameData.id, controllerName, topCard.getName());

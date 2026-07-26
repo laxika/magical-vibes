@@ -6,7 +6,7 @@ import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.StackEntry;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
 import com.github.laxika.magicalvibes.model.effect.MustBlockTargetCreatureEffect;
-import com.github.laxika.magicalvibes.service.GameBroadcastService;
+import com.github.laxika.magicalvibes.service.GameLogService;
 import com.github.laxika.magicalvibes.service.battlefield.GameQueryService;
 import java.util.List;
 import java.util.UUID;
@@ -20,7 +20,7 @@ import org.springframework.stereotype.Component;
 public class MustBlockTargetCreatureEffectHandler implements NormalEffectHandlerBean {
 
     private final GameQueryService gameQueryService;
-    private final GameBroadcastService gameBroadcastService;
+    private final GameLogService gameLogService;
 
     @Override
     public Class<? extends CardEffect> handledEffect() {
@@ -47,7 +47,7 @@ public class MustBlockTargetCreatureEffectHandler implements NormalEffectHandler
 
         String logEntry = blocker.getCard().getName() + " must block " + blocked.getCard().getName()
                 + " this turn if able.";
-        gameBroadcastService.logAndBroadcast(gameData, GameLog.cardTextCard(blocker.getCard(), " must block ", blocked.getCard(), " this turn if able."));
+        gameLogService.append(gameData, GameLog.cardTextCard(blocker.getCard(), " must block ", blocked.getCard(), " this turn if able."));
 
         log.info("Game {} - {} must block {} this turn if able", gameData.id,
                 blocker.getCard().getName(), blocked.getCard().getName());

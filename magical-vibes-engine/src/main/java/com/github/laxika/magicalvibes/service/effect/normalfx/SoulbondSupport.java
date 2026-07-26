@@ -3,7 +3,7 @@ package com.github.laxika.magicalvibes.service.effect.normalfx;
 import com.github.laxika.magicalvibes.model.GameData;
 import com.github.laxika.magicalvibes.model.GameLog;
 import com.github.laxika.magicalvibes.model.Permanent;
-import com.github.laxika.magicalvibes.service.GameBroadcastService;
+import com.github.laxika.magicalvibes.service.GameLogService;
 import com.github.laxika.magicalvibes.service.battlefield.GameQueryService;
 import java.util.List;
 import java.util.UUID;
@@ -21,7 +21,7 @@ import org.springframework.stereotype.Component;
 public class SoulbondSupport {
 
     private final GameQueryService gameQueryService;
-    private final GameBroadcastService gameBroadcastService;
+    private final GameLogService gameLogService;
 
     public void pair(GameData gameData, Permanent a, Permanent b) {
         if (a == null || b == null || a.getId().equals(b.getId())) {
@@ -31,7 +31,7 @@ public class SoulbondSupport {
         clearPairing(gameData, b);
         a.setPairedWithId(b.getId());
         b.setPairedWithId(a.getId());
-        gameBroadcastService.logAndBroadcast(gameData,
+        gameLogService.append(gameData,
                 GameLog.builder().card(a.getCard()).text(" becomes paired with ").card(b.getCard()).text(".").build());
         log.info("Game {} - {} paired with {}", gameData.id, a.getCard().getName(), b.getCard().getName());
     }

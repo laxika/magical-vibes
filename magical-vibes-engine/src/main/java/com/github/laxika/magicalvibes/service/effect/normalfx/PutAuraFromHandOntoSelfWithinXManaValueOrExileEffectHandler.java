@@ -7,7 +7,7 @@ import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.StackEntry;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
 import com.github.laxika.magicalvibes.model.effect.PutAuraFromHandOntoSelfWithinXManaValueOrExileEffect;
-import com.github.laxika.magicalvibes.service.GameBroadcastService;
+import com.github.laxika.magicalvibes.service.GameLogService;
 import com.github.laxika.magicalvibes.service.battlefield.PermanentRemovalService;
 import com.github.laxika.magicalvibes.service.input.PlayerInputService;
 import java.util.ArrayList;
@@ -27,7 +27,7 @@ import org.springframework.stereotype.Component;
 @RequiredArgsConstructor
 public class PutAuraFromHandOntoSelfWithinXManaValueOrExileEffectHandler implements NormalEffectHandlerBean {
 
-    private final GameBroadcastService gameBroadcastService;
+    private final GameLogService gameLogService;
     private final PlayerInputService playerInputService;
     private final PermanentRemovalService permanentRemovalService;
 
@@ -72,7 +72,7 @@ public class PutAuraFromHandOntoSelfWithinXManaValueOrExileEffectHandler impleme
         if (auraIndices.isEmpty()) {
             // No eligible Aura in hand — "If you don't, exile this creature."
             permanentRemovalService.removePermanentToExile(gameData, self);
-            gameBroadcastService.logAndBroadcast(gameData, GameLog.cardThen(self.getCard(), " is exiled."));
+            gameLogService.append(gameData, GameLog.cardThen(self.getCard(), " is exiled."));
             log.info("Game {} - {} exiled (no Aura with mana value {} or less in hand)",
                     gameData.id, entry.getCard().getName(), maxManaValue);
             return;

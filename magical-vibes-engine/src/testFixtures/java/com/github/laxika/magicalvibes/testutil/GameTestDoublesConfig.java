@@ -34,6 +34,11 @@ public class GameTestDoublesConfig {
         return new TestWebSocketSessionManager();
     }
 
+    @Bean
+    TestGameEventSubscriber testGameEventSubscriber() {
+        return new TestGameEventSubscriber();
+    }
+
     /**
      * Timers never fire in card tests; the outcome service is only used outside timer callbacks, so
      * a null outcome collaborator with explicit timeouts mirrors the production wiring closely enough.

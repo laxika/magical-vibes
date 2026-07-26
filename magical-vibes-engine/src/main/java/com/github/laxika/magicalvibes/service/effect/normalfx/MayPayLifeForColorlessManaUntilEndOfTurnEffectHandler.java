@@ -5,7 +5,7 @@ import com.github.laxika.magicalvibes.model.GameLog;
 import com.github.laxika.magicalvibes.model.StackEntry;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
 import com.github.laxika.magicalvibes.model.effect.MayPayLifeForColorlessManaUntilEndOfTurnEffect;
-import com.github.laxika.magicalvibes.service.GameBroadcastService;
+import com.github.laxika.magicalvibes.service.GameLogService;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Component;
@@ -17,7 +17,7 @@ import java.util.UUID;
 @RequiredArgsConstructor
 public class MayPayLifeForColorlessManaUntilEndOfTurnEffectHandler implements NormalEffectHandlerBean {
 
-    private final GameBroadcastService gameBroadcastService;
+    private final GameLogService gameLogService;
 
     @Override
     public Class<? extends CardEffect> handledEffect() {
@@ -31,7 +31,7 @@ public class MayPayLifeForColorlessManaUntilEndOfTurnEffectHandler implements No
 
         String logEntry = entry.getCard().getName()
                 + ": until end of turn, you may pay 1 life to add {C} any time you could activate a mana ability.";
-        gameBroadcastService.logAndBroadcast(gameData, GameLog.cardThen(entry.getCard(), ": until end of turn, you may pay 1 life to add {C} any time you could activate a mana ability."));
+        gameLogService.append(gameData, GameLog.cardThen(entry.getCard(), ": until end of turn, you may pay 1 life to add {C} any time you could activate a mana ability."));
         log.info("Game {} - {} may pay life for colorless mana until end of turn", gameData.id, controllerId);
     }
 }

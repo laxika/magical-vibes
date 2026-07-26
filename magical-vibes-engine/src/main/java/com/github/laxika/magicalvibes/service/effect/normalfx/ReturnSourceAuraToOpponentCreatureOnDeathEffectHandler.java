@@ -7,7 +7,7 @@ import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.StackEntry;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
 import com.github.laxika.magicalvibes.model.effect.ReturnSourceAuraToOpponentCreatureOnDeathEffect;
-import com.github.laxika.magicalvibes.service.GameBroadcastService;
+import com.github.laxika.magicalvibes.service.GameLogService;
 import com.github.laxika.magicalvibes.service.battlefield.BattlefieldEntryService;
 import com.github.laxika.magicalvibes.service.battlefield.GameQueryService;
 import com.github.laxika.magicalvibes.service.battlefield.PermanentRemovalService;
@@ -28,7 +28,7 @@ public class ReturnSourceAuraToOpponentCreatureOnDeathEffectHandler implements N
     private final BattlefieldEntryService battlefieldEntryService;
     private final PermanentRemovalService permanentRemovalService;
     private final GameQueryService gameQueryService;
-    private final GameBroadcastService gameBroadcastService;
+    private final GameLogService gameLogService;
     private final PlayerInputService playerInputService;
 
     @Override
@@ -53,7 +53,7 @@ public class ReturnSourceAuraToOpponentCreatureOnDeathEffectHandler implements N
         // Find the aura card in the graveyard
         Card auraCard = gameQueryService.findCardInGraveyardById(gameData, auraCardId);
         if (auraCard == null) {
-            gameBroadcastService.logAndBroadcast(gameData, GameLog.cardThen(entry.getCard(), "'s ability fizzles (card not in graveyard)."));
+            gameLogService.append(gameData, GameLog.cardThen(entry.getCard(), "'s ability fizzles (card not in graveyard)."));
             log.info("Game {} - {} not found in graveyard, death trigger fizzles",
                     gameData.id, entry.getCard().getName());
             return;
@@ -74,7 +74,7 @@ public class ReturnSourceAuraToOpponentCreatureOnDeathEffectHandler implements N
         }
 
         if (validTargetIds.isEmpty()) {
-            gameBroadcastService.logAndBroadcast(gameData, GameLog.cardThen(entry.getCard(), "'s ability fizzles (no opponent creatures to attach to)."));
+            gameLogService.append(gameData, GameLog.cardThen(entry.getCard(), "'s ability fizzles (no opponent creatures to attach to)."));
             log.info("Game {} - {} death trigger fizzles (no opponent creatures)",
                     gameData.id, entry.getCard().getName());
             return;
@@ -93,7 +93,7 @@ public class ReturnSourceAuraToOpponentCreatureOnDeathEffectHandler implements N
             String ownerName = gameData.playerIdToName.get(auraOwnerId);
             String logEntry = auraCard.getName() + " returns to the battlefield attached to "
                     + target.getCard().getName() + " under " + ownerName + "'s control.";
-            gameBroadcastService.logAndBroadcast(gameData, GameLog.builder().card(auraCard).text(" returns to the battlefield attached to ").card(target.getCard()).text(" under " + ownerName + "'s control.").build());
+            gameLogService.append(gameData, GameLog.builder().card(auraCard).text(" returns to the battlefield attached to ").card(target.getCard()).text(" under " + ownerName + "'s control.").build());
             log.info("Game {} - {} returns attached to {} (auto-selected)",
                     gameData.id, auraCard.getName(), target.getCard().getName());
         } else {

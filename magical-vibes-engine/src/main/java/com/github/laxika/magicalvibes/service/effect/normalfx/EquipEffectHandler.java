@@ -6,7 +6,7 @@ import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.StackEntry;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
 import com.github.laxika.magicalvibes.model.effect.EquipEffect;
-import com.github.laxika.magicalvibes.service.GameBroadcastService;
+import com.github.laxika.magicalvibes.service.GameLogService;
 import com.github.laxika.magicalvibes.service.battlefield.GameQueryService;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -20,7 +20,7 @@ import java.util.UUID;
 public class EquipEffectHandler implements NormalEffectHandlerBean {
 
     private final GameQueryService gameQueryService;
-    private final GameBroadcastService gameBroadcastService;
+    private final GameLogService gameLogService;
     private final EquipSupport equipSupport;
 
     @Override
@@ -33,7 +33,7 @@ public class EquipEffectHandler implements NormalEffectHandlerBean {
         Permanent target = gameQueryService.findPermanentById(gameData, entry.getTargetId());
         if (target == null) {
             String logEntry = entry.getCard().getName() + "'s equip ability fizzles (target creature no longer exists).";
-            gameBroadcastService.logAndBroadcast(gameData, GameLog.cardThen(entry.getCard(), "'s equip ability fizzles (target creature no longer exists)."));
+            gameLogService.append(gameData, GameLog.cardThen(entry.getCard(), "'s equip ability fizzles (target creature no longer exists)."));
             log.info("Game {} - Equip fizzles, target creature left battlefield", gameData.id);
             return;
         }
@@ -42,7 +42,7 @@ public class EquipEffectHandler implements NormalEffectHandlerBean {
 
         if (equipment == null) {
             String logEntry = entry.getCard().getName() + "'s equip ability fizzles (equipment no longer on the battlefield).";
-            gameBroadcastService.logAndBroadcast(gameData, GameLog.cardThen(entry.getCard(), "'s equip ability fizzles (equipment no longer on the battlefield)."));
+            gameLogService.append(gameData, GameLog.cardThen(entry.getCard(), "'s equip ability fizzles (equipment no longer on the battlefield)."));
             log.info("Game {} - Equip fizzles, equipment left battlefield", gameData.id);
             return;
         }
@@ -55,7 +55,7 @@ public class EquipEffectHandler implements NormalEffectHandlerBean {
         equipment.setTimestamp(gameData.nextTimestamp());
 
         String logEntry = entry.getCard().getName() + " is now attached to " + target.getCard().getName() + ".";
-        gameBroadcastService.logAndBroadcast(gameData, GameLog.cardThen(entry.getCard(), "'s equip ability fizzles (target creature no longer exists)."));
+        gameLogService.append(gameData, GameLog.cardThen(entry.getCard(), "'s equip ability fizzles (target creature no longer exists)."));
         log.info("Game {} - {} equipped to {}", gameData.id, entry.getCard().getName(), target.getCard().getName());
 
         equipSupport.applySacrificeOnUnattachIfNeeded(gameData, equipment, oldAttachedTo, target.getId());

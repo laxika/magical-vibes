@@ -8,7 +8,7 @@ import com.github.laxika.magicalvibes.model.LibrarySearchParams;
 import com.github.laxika.magicalvibes.model.StackEntry;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
 import com.github.laxika.magicalvibes.model.effect.ImprintFromTopCardsEffect;
-import com.github.laxika.magicalvibes.service.GameBroadcastService;
+import com.github.laxika.magicalvibes.service.GameLogService;
 import com.github.laxika.magicalvibes.service.battlefield.GameQueryService;
 import com.github.laxika.magicalvibes.service.exile.ExileService;
 import java.util.*;
@@ -23,7 +23,7 @@ import org.springframework.stereotype.Component;
 public class ImprintFromTopCardsEffectHandler implements NormalEffectHandlerBean {
 
     private final GameQueryService gameQueryService;
-    private final GameBroadcastService gameBroadcastService;
+    private final GameLogService gameLogService;
     private final ExileService exileService;
     private final LibraryRevealSupport libraryRevealSupport;
     private final com.github.laxika.magicalvibes.service.interaction.InteractionHandlerRegistry interactionHandlerRegistry;
@@ -50,7 +50,7 @@ public class ImprintFromTopCardsEffectHandler implements NormalEffectHandlerBean
             if (sourcePermanentId != null) {
                 gameQueryService.setImprintedCardOnPermanent(gameData, sourcePermanentId, topCards.getFirst());
             }
-            gameBroadcastService.logAndBroadcast(gameData, GameLog.textCardText(playerName + " exiles a card face down with " , entry.getCard(), "."));
+            gameLogService.append(gameData, GameLog.textCardText(playerName + " exiles a card face down with " , entry.getCard(), "."));
             return;
         }
 

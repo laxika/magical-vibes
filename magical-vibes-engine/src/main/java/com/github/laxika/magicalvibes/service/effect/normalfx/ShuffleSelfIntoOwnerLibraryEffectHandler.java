@@ -6,7 +6,7 @@ import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.StackEntry;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
 import com.github.laxika.magicalvibes.model.effect.ShuffleSelfIntoOwnerLibraryEffect;
-import com.github.laxika.magicalvibes.service.GameBroadcastService;
+import com.github.laxika.magicalvibes.service.GameLogService;
 import com.github.laxika.magicalvibes.service.battlefield.GameQueryService;
 import com.github.laxika.magicalvibes.service.battlefield.PermanentRemovalService;
 import lombok.RequiredArgsConstructor;
@@ -19,7 +19,7 @@ import org.springframework.stereotype.Component;
 public class ShuffleSelfIntoOwnerLibraryEffectHandler implements NormalEffectHandlerBean {
 
     private final GameQueryService gameQueryService;
-    private final GameBroadcastService gameBroadcastService;
+    private final GameLogService gameLogService;
     private final PermanentRemovalService permanentRemovalService;
 
     @Override
@@ -40,7 +40,7 @@ public class ShuffleSelfIntoOwnerLibraryEffectHandler implements NormalEffectHan
 
         String name = self.getCard().getName();
         if (permanentRemovalService.removePermanentToLibraryShuffled(gameData, self)) {
-            gameBroadcastService.logAndBroadcast(gameData, GameLog.text(name + " is shuffled into its owner's library."));
+            gameLogService.append(gameData, GameLog.text(name + " is shuffled into its owner's library."));
             log.info("Game {} - {} shuffled into owner's library", gameData.id, name);
         }
 

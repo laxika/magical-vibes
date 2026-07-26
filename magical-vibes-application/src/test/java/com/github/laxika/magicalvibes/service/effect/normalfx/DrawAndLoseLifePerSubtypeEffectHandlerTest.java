@@ -52,7 +52,7 @@ class DrawAndLoseLifePerSubtypeEffectHandlerTest extends AbstractPlayerInteracti
                 resolveEffect(gd, entry, effect);
 
                 verify(drawService, never()).resolveDrawCard(any(), any());
-                verify(gameBroadcastService).logAndBroadcast(eq(gd), argThat((GameLogEntry logEntry) ->
+                verify(gameLogService).append(eq(gd), argThat((GameLogEntry logEntry) ->
                         logEntry.plainText().contains("controls no") && logEntry.plainText().contains("Zombie")));
             }
 
@@ -74,7 +74,7 @@ class DrawAndLoseLifePerSubtypeEffectHandlerTest extends AbstractPlayerInteracti
 
                 verify(drawService, times(1)).resolveDrawCard(gd, player1Id);
                 assertThat(gd.playerLifeTotals.get(player1Id)).isEqualTo(20);
-                verify(gameBroadcastService).logAndBroadcast(eq(gd), argThat((GameLogEntry logEntry) ->
+                verify(gameLogService).append(eq(gd), argThat((GameLogEntry logEntry) ->
                         logEntry.plainText().contains("life total can't change")));
             }
 }

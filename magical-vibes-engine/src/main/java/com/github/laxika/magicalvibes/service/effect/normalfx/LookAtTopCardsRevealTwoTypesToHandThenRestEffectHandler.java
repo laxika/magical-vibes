@@ -12,7 +12,7 @@ import com.github.laxika.magicalvibes.model.StackEntry;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
 import com.github.laxika.magicalvibes.model.effect.LookAtTopCardsRevealTwoTypesToHandThenRestEffect;
 import com.github.laxika.magicalvibes.model.effect.LookDestination;
-import com.github.laxika.magicalvibes.service.GameBroadcastService;
+import com.github.laxika.magicalvibes.service.GameLogService;
 import com.github.laxika.magicalvibes.service.graveyard.GraveyardService;
 import com.github.laxika.magicalvibes.service.interaction.InteractionHandlerRegistry;
 import java.util.ArrayList;
@@ -37,7 +37,7 @@ public class LookAtTopCardsRevealTwoTypesToHandThenRestEffectHandler implements 
 
     private final LibraryRevealSupport libraryRevealSupport;
     private final GraveyardService graveyardService;
-    private final GameBroadcastService gameBroadcastService;
+    private final GameLogService gameLogService;
     private final InteractionHandlerRegistry interactionHandlerRegistry;
 
     @Override
@@ -63,9 +63,9 @@ public class LookAtTopCardsRevealTwoTypesToHandThenRestEffectHandler implements 
             GameLog.Builder builder = GameLog.builder().text(playerName + " reveals ");
             appendCardList(builder, topCards);
             builder.text(" from the top of their library with ").card(entry.getCard()).text(".");
-            gameBroadcastService.logAndBroadcast(gameData, builder.build());
+            gameLogService.append(gameData, builder.build());
         } else {
-            gameBroadcastService.logAndBroadcast(gameData, GameLog.text(playerName + " looks at the top "
+            gameLogService.append(gameData, GameLog.text(playerName + " looks at the top "
                     + LibraryRevealSupport.pluralCards(topCards.size()) + " of their library."));
         }
 
@@ -118,7 +118,7 @@ public class LookAtTopCardsRevealTwoTypesToHandThenRestEffectHandler implements 
         GameLog.Builder builder = GameLog.builder().text(playerName + " puts ");
         appendCardList(builder, cards);
         builder.text(" into their graveyard.");
-        gameBroadcastService.logAndBroadcast(gameData, builder.build());
+        gameLogService.append(gameData, builder.build());
     }
 
     private static String promptFor(CardType type) {

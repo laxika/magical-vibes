@@ -6,7 +6,7 @@ import com.github.laxika.magicalvibes.model.PendingMayAbility;
 import com.github.laxika.magicalvibes.model.Player;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
 import com.github.laxika.magicalvibes.model.effect.MayPlayExiledCounteredCardEffect;
-import com.github.laxika.magicalvibes.service.GameBroadcastService;
+import com.github.laxika.magicalvibes.service.GameLogService;
 import com.github.laxika.magicalvibes.service.effect.normalfx.ExileFreeCastSupport;
 import com.github.laxika.magicalvibes.service.input.InputCompletionService;
 import lombok.RequiredArgsConstructor;
@@ -22,7 +22,7 @@ import org.springframework.stereotype.Component;
 public class MayPlayExiledCounteredCardHandler implements MayEffectHandlerBean {
 
     private final ExileFreeCastSupport exileFreeCastSupport;
-    private final GameBroadcastService gameBroadcastService;
+    private final GameLogService gameLogService;
     private final InputCompletionService inputCompletionService;
 
     @Override
@@ -35,7 +35,7 @@ public class MayPlayExiledCounteredCardHandler implements MayEffectHandlerBean {
         if (accepted && ability.targetCardId() != null) {
             exileFreeCastSupport.castFromExileWithoutPaying(gameData, player, ability.targetCardId());
         } else {
-            gameBroadcastService.logAndBroadcast(gameData, GameLog.textCardText(player.getUsername() + " declines to play " , ability.sourceCard(), "."));
+            gameLogService.append(gameData, GameLog.textCardText(player.getUsername() + " declines to play " , ability.sourceCard(), "."));
             log.info("Game {} - {} declines to play exiled {} (Guile)", gameData.id,
                     player.getUsername(), ability.sourceCard().getName());
             inputCompletionService.processMayAbilitiesThenAutoPass(gameData);

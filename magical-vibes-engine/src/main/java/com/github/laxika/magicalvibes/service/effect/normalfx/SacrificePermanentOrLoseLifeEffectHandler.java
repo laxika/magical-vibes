@@ -7,7 +7,7 @@ import com.github.laxika.magicalvibes.model.PermanentChoiceContext;
 import com.github.laxika.magicalvibes.model.StackEntry;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
 import com.github.laxika.magicalvibes.model.effect.SacrificePermanentOrLoseLifeEffect;
-import com.github.laxika.magicalvibes.service.GameBroadcastService;
+import com.github.laxika.magicalvibes.service.GameLogService;
 import com.github.laxika.magicalvibes.service.GameOutcomeService;
 import com.github.laxika.magicalvibes.service.battlefield.GameQueryService;
 import com.github.laxika.magicalvibes.service.filter.PredicateEvaluationService;
@@ -33,7 +33,7 @@ import org.springframework.stereotype.Component;
 public class SacrificePermanentOrLoseLifeEffectHandler implements NormalEffectHandlerBean {
 
     private final DestructionSupport destructionSupport;
-    private final GameBroadcastService gameBroadcastService;
+    private final GameLogService gameLogService;
     private final GameOutcomeService gameOutcomeService;
     private final GameQueryService gameQueryService;
     private final LifeSupport lifeSupport;
@@ -75,7 +75,7 @@ public class SacrificePermanentOrLoseLifeEffectHandler implements NormalEffectHa
         playerInputService.beginPermanentChoice(gameData, playerId, matchingIds,
                 "Choose a permanent to sacrifice.");
         String playerName = gameData.playerIdToName.get(playerId);
-        gameBroadcastService.logAndBroadcast(gameData,
+        gameLogService.append(gameData,
                 GameLog.text(playerName + " must sacrifice a permanent to " + entry.getCard().getName() + "."));
     }
 }

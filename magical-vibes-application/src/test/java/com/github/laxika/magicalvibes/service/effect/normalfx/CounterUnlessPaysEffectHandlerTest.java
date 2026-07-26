@@ -17,7 +17,7 @@ import com.github.laxika.magicalvibes.model.StackEntryType;
 import com.github.laxika.magicalvibes.model.effect.CounterSpellEffect;
 import com.github.laxika.magicalvibes.model.effect.CounterSpellIfControllerPoisonedEffect;
 import com.github.laxika.magicalvibes.model.effect.CounterUnlessPaysEffect;
-import com.github.laxika.magicalvibes.service.GameBroadcastService;
+import com.github.laxika.magicalvibes.service.GameLogService;
 import com.github.laxika.magicalvibes.service.state.StateTriggerService;
 import com.github.laxika.magicalvibes.service.exile.ExileService;
 import com.github.laxika.magicalvibes.service.graveyard.GraveyardService;
@@ -45,7 +45,7 @@ class CounterUnlessPaysEffectHandlerTest {
 
     @Mock private GraveyardService graveyardService;
     @Mock private ExileService exileService;
-    @Mock private GameBroadcastService gameBroadcastService;
+    @Mock private GameLogService gameLogService;
     @Mock private GameQueryService gameQueryService;
     @Mock private StateTriggerService stateTriggerService;
     @Mock private com.github.laxika.magicalvibes.service.effect.AmountEvaluationService amountEvaluationService;
@@ -130,7 +130,7 @@ class CounterUnlessPaysEffectHandlerTest {
                 StackEntry elvesEntry = creatureSpellEntry(elves, player1Id);
                 gd.stack.add(elvesEntry);
 
-                // Player1 has 0 mana â€” cannot pay {1}
+                // Player1 has 0 mana A?€�t cannot pay {1}
                 gd.playerManaPools.put(player1Id, new ManaPool());
 
                 Card hatchling = createCard("Spiketail Hatchling");
@@ -140,7 +140,7 @@ class CounterUnlessPaysEffectHandlerTest {
 
                 assertThat(gd.stack).noneMatch(se -> se.getCard().getName().equals("Llanowar Elves"));
                 verify(graveyardService).addCardToGraveyard(gd, player1Id, elves);
-                verify(gameBroadcastService).logAndBroadcast(eq(gd), argThat((GameLogEntry e) -> e.plainText().equals("Llanowar Elves is countered.")));
+                verify(gameLogService).append(eq(gd), argThat((GameLogEntry e) -> e.plainText().equals("Llanowar Elves is countered.")));
             }
 
             @Test
@@ -150,7 +150,7 @@ class CounterUnlessPaysEffectHandlerTest {
                 StackEntry elvesEntry = creatureSpellEntry(elves, player1Id);
                 gd.stack.add(elvesEntry);
 
-                // Player1 has 1 mana â€” can pay {1}
+                // Player1 has 1 mana A?€�t can pay {1}
                 ManaPool pool = new ManaPool();
                 pool.add(ManaColor.GREEN, 1);
                 gd.playerManaPools.put(player1Id, pool);
@@ -160,7 +160,7 @@ class CounterUnlessPaysEffectHandlerTest {
 
                 counterUnlessPaysHandler.resolve(gd, counterEntry, new CounterUnlessPaysEffect(1));
 
-                // Elves still on stack â€” not countered yet
+                // Elves still on stack A?€�t not countered yet
                 assertThat(gd.stack).contains(elvesEntry);
                 assertThat(gd.pendingMayAbilities).hasSize(1);
 
@@ -233,7 +233,7 @@ class CounterUnlessPaysEffectHandlerTest {
                 elvesEntry.setCopy(true);
                 gd.stack.add(elvesEntry);
 
-                // Cannot pay â€” immediate counter
+                // Cannot pay A?€�t immediate counter
                 gd.playerManaPools.put(player1Id, new ManaPool());
 
                 Card hatchling = createCard("Spiketail Hatchling");

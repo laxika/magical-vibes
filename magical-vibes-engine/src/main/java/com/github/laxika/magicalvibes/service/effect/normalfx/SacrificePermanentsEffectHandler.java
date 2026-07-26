@@ -10,7 +10,7 @@ import com.github.laxika.magicalvibes.model.effect.CardEffect;
 import com.github.laxika.magicalvibes.model.effect.SacrificePermanentsEffect;
 import com.github.laxika.magicalvibes.model.filter.FilterContext;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsCreaturePredicate;
-import com.github.laxika.magicalvibes.service.GameBroadcastService;
+import com.github.laxika.magicalvibes.service.GameLogService;
 import com.github.laxika.magicalvibes.service.battlefield.GameQueryService;
 import com.github.laxika.magicalvibes.service.effect.AmountContext;
 import com.github.laxika.magicalvibes.service.effect.AmountEvaluationService;
@@ -46,7 +46,7 @@ import org.springframework.stereotype.Component;
 public class SacrificePermanentsEffectHandler implements NormalEffectHandlerBean {
 
     private final DestructionSupport destructionSupport;
-    private final GameBroadcastService gameBroadcastService;
+    private final GameLogService gameLogService;
     private final GameQueryService gameQueryService;
     private final PredicateEvaluationService predicateEvaluationService;
     private final PlayerInputService playerInputService;
@@ -118,7 +118,7 @@ public class SacrificePermanentsEffectHandler implements NormalEffectHandlerBean
         if (battlefield == null || battlefield.isEmpty()) {
             String playerName = gameData.playerIdToName.get(playerId);
             String logEntry = playerName + " has no permanents to sacrifice.";
-            gameBroadcastService.logAndBroadcast(gameData, GameLog.text(logEntry));
+            gameLogService.append(gameData, GameLog.text(logEntry));
             log.info("Game {} - {} has no permanents to sacrifice", gameData.id, playerName);
             return;
         }
@@ -131,7 +131,7 @@ public class SacrificePermanentsEffectHandler implements NormalEffectHandlerBean
         if (matching.isEmpty()) {
             String playerName = gameData.playerIdToName.get(playerId);
             String logEntry = playerName + " has no matching permanents to sacrifice.";
-            gameBroadcastService.logAndBroadcast(gameData, GameLog.text(logEntry));
+            gameLogService.append(gameData, GameLog.text(logEntry));
             log.info("Game {} - {} has no matching permanents to sacrifice", gameData.id, playerName);
             return;
         }
@@ -190,7 +190,7 @@ public class SacrificePermanentsEffectHandler implements NormalEffectHandlerBean
             if (matching.isEmpty()) {
                 String playerName = gameData.playerIdToName.get(playerId);
                 String logEntry = playerName + " has no matching permanents to sacrifice.";
-                gameBroadcastService.logAndBroadcast(gameData, GameLog.text(logEntry));
+                gameLogService.append(gameData, GameLog.text(logEntry));
                 log.info("Game {} - {} has no matching permanents to sacrifice", gameData.id, playerName);
                 continue;
             }

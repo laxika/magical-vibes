@@ -8,7 +8,7 @@ import com.github.laxika.magicalvibes.model.PendingMayAbility;
 import com.github.laxika.magicalvibes.model.StackEntry;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
 import com.github.laxika.magicalvibes.model.effect.RevealTopCardMayPlayFreeOrExileEffect;
-import com.github.laxika.magicalvibes.service.GameBroadcastService;
+import com.github.laxika.magicalvibes.service.GameLogService;
 import com.github.laxika.magicalvibes.service.exile.ExileService;
 import java.util.*;
 import lombok.extern.slf4j.Slf4j;
@@ -21,7 +21,7 @@ import org.springframework.stereotype.Component;
 @RequiredArgsConstructor
 public class RevealTopCardMayPlayFreeOrExileEffectHandler implements NormalEffectHandlerBean {
 
-    private final GameBroadcastService gameBroadcastService;
+    private final GameLogService gameLogService;
     private final ExileService exileService;
 
     @Override
@@ -40,14 +40,14 @@ public class RevealTopCardMayPlayFreeOrExileEffectHandler implements NormalEffec
 
         if (deck.isEmpty()) {
             String logEntry = playerName + "'s library is empty (" + sourceName + ").";
-            gameBroadcastService.logAndBroadcast(gameData, GameLog.text(logEntry));
+            gameLogService.append(gameData, GameLog.text(logEntry));
             return;
         }
 
         Card topCard = deck.getFirst();
 
         String revealLog = playerName + " reveals " + topCard.getName() + " from the top of their library (" + sourceName + ").";
-        gameBroadcastService.logAndBroadcast(gameData, GameLog.builder().text(playerName + " reveals ").card(topCard).text(" from the top of their library (" + sourceName + ").").build());
+        gameLogService.append(gameData, GameLog.builder().text(playerName + " reveals ").card(topCard).text(" from the top of their library (" + sourceName + ").").build());
         log.info("Game {} - {} reveals top card: {} ({})", gameData.id, playerName, topCard.getName(), sourceName);
 
         // Lands can only be played if it's the controller's turn and they haven't played a land this turn
@@ -60,11 +60,11 @@ public class RevealTopCardMayPlayFreeOrExileEffectHandler implements NormalEffec
                     // Can't play the land — exile it
                     deck.removeFirst();
                     exileService.exileCard(gameData, controllerId, topCard);
-                    gameBroadcastService.logAndBroadcast(gameData, GameLog.builder().card(topCard).text(" can't be played (" + reason + ") and is exiled.").build());
+                    gameLogService.append(gameData, GameLog.builder().card(topCard).text(" can't be played (" + reason + ") and is exiled.").build());
                     log.info("Game {} - {} exiled (can't play land: {})", gameData.id, topCard.getName(), reason);
                 } else {
                     // Can't play the land — it stays on top of the library
-                    gameBroadcastService.logAndBroadcast(gameData, GameLog.builder().card(topCard).text(" can't be played (" + reason + ") and stays on top of the library.").build());
+                    gameLogService.append(gameData, GameLog.builder().card(topCard).text(" can't be played (" + reason + ") and stays on top of the library.").build());
                     log.info("Game {} - {} stays on top (can't play land: {})", gameData.id, topCard.getName(), reason);
                 }
                 return;

@@ -5,7 +5,7 @@ import com.github.laxika.magicalvibes.model.GameLog;
 import com.github.laxika.magicalvibes.model.StackEntry;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
 import com.github.laxika.magicalvibes.model.effect.SacrificeSelfAndDealDamageToDamagedPlayerEffect;
-import com.github.laxika.magicalvibes.service.GameBroadcastService;
+import com.github.laxika.magicalvibes.service.GameLogService;
 import com.github.laxika.magicalvibes.service.GameOutcomeService;
 import com.github.laxika.magicalvibes.service.battlefield.GameQueryService;
 import com.github.laxika.magicalvibes.service.battlefield.PermanentRemovalService;
@@ -20,7 +20,7 @@ public class SacrificeSelfAndDealDamageToDamagedPlayerEffectHandler implements N
 
     private final DamageSupport damageSupport;
     private final GameQueryService gameQueryService;
-    private final GameBroadcastService gameBroadcastService;
+    private final GameLogService gameLogService;
     private final GameOutcomeService gameOutcomeService;
     private final PermanentRemovalService permanentRemovalService;
 
@@ -43,13 +43,13 @@ public class SacrificeSelfAndDealDamageToDamagedPlayerEffectHandler implements N
         // Check source creature is still on the battlefield
         Permanent source = gameQueryService.findPermanentById(gameData, sourcePermanentId);
         if (source == null) {
-            gameBroadcastService.logAndBroadcast(gameData, GameLog.cardThen(entry.getCard(), "'s ability fizzles — source no longer on the battlefield."));
+            gameLogService.append(gameData, GameLog.cardThen(entry.getCard(), "'s ability fizzles — source no longer on the battlefield."));
             return;
         }
 
         // Sacrifice the source creature
         permanentRemovalService.removePermanentToGraveyard(gameData, source);
-        gameBroadcastService.logAndBroadcast(gameData, GameLog.cardThen(entry.getCard(), " is sacrificed."));
+        gameLogService.append(gameData, GameLog.cardThen(entry.getCard(), " is sacrificed."));
 
         // Deal damage to the damaged player
         if (!gameData.playerIds.contains(defenderId)) {

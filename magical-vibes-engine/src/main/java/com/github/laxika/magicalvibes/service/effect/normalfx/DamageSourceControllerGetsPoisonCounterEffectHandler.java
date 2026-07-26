@@ -5,7 +5,7 @@ import com.github.laxika.magicalvibes.model.GameLog;
 import com.github.laxika.magicalvibes.model.StackEntry;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
 import com.github.laxika.magicalvibes.model.effect.DamageSourceControllerGetsPoisonCounterEffect;
-import com.github.laxika.magicalvibes.service.GameBroadcastService;
+import com.github.laxika.magicalvibes.service.GameLogService;
 import com.github.laxika.magicalvibes.service.battlefield.GameQueryService;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -19,7 +19,7 @@ import java.util.UUID;
 public class DamageSourceControllerGetsPoisonCounterEffectHandler implements NormalEffectHandlerBean {
 
     private final GameQueryService gameQueryService;
-    private final GameBroadcastService gameBroadcastService;
+    private final GameLogService gameLogService;
 
     @Override
     public Class<? extends CardEffect> handledEffect() {
@@ -37,7 +37,7 @@ public class DamageSourceControllerGetsPoisonCounterEffectHandler implements Nor
         gameData.playerPoisonCounters.put(playerId, currentPoison + 1);
 
         String playerName = gameData.playerIdToName.get(playerId);
-        gameBroadcastService.logAndBroadcast(gameData, GameLog.textCardText(playerName + " gets a poison counter (" , entry.getCard(), ")."));
+        gameLogService.append(gameData, GameLog.textCardText(playerName + " gets a poison counter (" , entry.getCard(), ")."));
 
         log.info("Game {} - {} gets a poison counter from {}", gameData.id, playerName, entry.getCard().getName());
     }

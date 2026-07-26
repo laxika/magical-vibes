@@ -7,7 +7,7 @@ import com.github.laxika.magicalvibes.model.ManaCost;
 import com.github.laxika.magicalvibes.model.StackEntry;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
 import com.github.laxika.magicalvibes.model.effect.RevealTopCardsMillTargetByColorSymbolsEffect;
-import com.github.laxika.magicalvibes.service.GameBroadcastService;
+import com.github.laxika.magicalvibes.service.GameLogService;
 import com.github.laxika.magicalvibes.service.graveyard.GraveyardService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Component;
@@ -16,7 +16,7 @@ import org.springframework.stereotype.Component;
 @RequiredArgsConstructor
 public class RevealTopCardsMillTargetByColorSymbolsEffectHandler implements NormalEffectHandlerBean {
 
-    private final GameBroadcastService gameBroadcastService;
+    private final GameLogService gameLogService;
     private final LibraryRevealSupport libraryRevealSupport;
     private final GraveyardService graveyardService;
 
@@ -38,7 +38,7 @@ public class RevealTopCardsMillTargetByColorSymbolsEffectHandler implements Norm
                 .map(Card::getName)
                 .reduce((a, b) -> a + ", " + b)
                 .orElse("");
-        gameBroadcastService.logAndBroadcast(gameData, GameLog.text(result.playerName() + " reveals " + revealedNames + " from the top of their library with " + cardName + "."));
+        gameLogService.append(gameData, GameLog.text(result.playerName() + " reveals " + revealedNames + " from the top of their library with " + cardName + "."));
 
         int symbols = 0;
         for (Card card : result.topCards()) {

@@ -6,7 +6,7 @@ import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.StackEntry;
 import com.github.laxika.magicalvibes.model.effect.BoostSelfWhenCombatOpponentMatchesEffect;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
-import com.github.laxika.magicalvibes.service.GameBroadcastService;
+import com.github.laxika.magicalvibes.service.GameLogService;
 import com.github.laxika.magicalvibes.service.battlefield.GameQueryService;
 import com.github.laxika.magicalvibes.service.filter.PredicateEvaluationService;
 import lombok.RequiredArgsConstructor;
@@ -29,7 +29,7 @@ import java.util.UUID;
 public class BoostSelfWhenCombatOpponentMatchesEffectHandler implements NormalEffectHandlerBean {
 
     private final GameQueryService gameQueryService;
-    private final GameBroadcastService gameBroadcastService;
+    private final GameLogService gameLogService;
     private final PredicateEvaluationService predicateEvaluationService;
 
     @Override
@@ -55,7 +55,7 @@ public class BoostSelfWhenCombatOpponentMatchesEffectHandler implements NormalEf
         self.setPowerModifier(self.getPowerModifier() + boost.powerBoost());
         self.setToughnessModifier(self.getToughnessModifier() + boost.toughnessBoost());
 
-        gameBroadcastService.logAndBroadcast(gameData, GameLog.builder()
+        gameLogService.append(gameData, GameLog.builder()
                 .card(self.getCard())
                 .text(String.format(" gets %+d/%+d until end of turn.", boost.powerBoost(), boost.toughnessBoost()))
                 .build());

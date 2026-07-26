@@ -30,15 +30,13 @@ import com.github.laxika.magicalvibes.service.interaction.InteractionAnswer;
 import com.github.laxika.magicalvibes.model.filter.TargetFilter;
 import com.github.laxika.magicalvibes.model.effect.CostEffect;
 import com.github.laxika.magicalvibes.model.filter.PermanentPredicate;
-import com.github.laxika.magicalvibes.networking.Connection;
-import com.github.laxika.magicalvibes.networking.model.MessageType;
 import com.github.laxika.magicalvibes.networking.message.DeclareBlockersRequest;
 import com.github.laxika.magicalvibes.networking.message.KeepHandRequest;
 import com.github.laxika.magicalvibes.networking.message.MulliganRequest;
 import com.github.laxika.magicalvibes.networking.message.ActivateAbilityRequest;
 import com.github.laxika.magicalvibes.networking.message.PlayCardRequest;
 import com.github.laxika.magicalvibes.networking.message.TapPermanentRequest;
-import com.github.laxika.magicalvibes.service.GameBroadcastService;
+import com.github.laxika.magicalvibes.service.GameActionAvailabilityService;
 import com.github.laxika.magicalvibes.service.ability.AbilityActivationService;
 import com.github.laxika.magicalvibes.service.cast.CastingCostService;
 import com.github.laxika.magicalvibes.service.cast.CastingPermissionService;
@@ -80,7 +78,7 @@ public abstract class AiDecisionEngine {
     protected final GameQueryService gameQueryService;
     protected final PredicateEvaluationService predicateEvaluationService;
     protected final CombatAttackService combatAttackService;
-    protected final GameBroadcastService gameBroadcastService;
+    protected final GameActionAvailabilityService actionAvailabilityService;
     protected final CastingCostService castingCostService;
     protected final CastingPermissionService castingPermissionService;
 
@@ -88,19 +86,17 @@ public abstract class AiDecisionEngine {
     protected final AiTargetSelector targetSelector;
     protected final AiChoiceHandler choiceHandler;
 
-    protected Connection selfConnection;
-
     public AiDecisionEngine(UUID gameId, Player aiPlayer, GameRegistry gameRegistry,
                             GameService gameService, GameQueryService gameQueryService,
                             CombatAttackService combatAttackService,
-                            GameBroadcastService gameBroadcastService,
+                            GameActionAvailabilityService actionAvailabilityService,
                             CastingCostService castingCostService,
                             CastingPermissionService castingPermissionService,
                             TargetValidationService targetValidationService,
                             TargetLegalityService targetLegalityService) {
         this(gameId, aiPlayer, gameRegistry,
                 new AiGameActions(gameId, aiPlayer, gameService, gameRegistry),
-                gameQueryService, combatAttackService, gameBroadcastService,
+                gameQueryService, combatAttackService, actionAvailabilityService,
                 castingCostService, castingPermissionService,
                 targetValidationService, targetLegalityService);
     }
@@ -108,7 +104,7 @@ public abstract class AiDecisionEngine {
     public AiDecisionEngine(UUID gameId, Player aiPlayer, GameRegistry gameRegistry,
                             AiGameActions gameActions, GameQueryService gameQueryService,
                             CombatAttackService combatAttackService,
-                            GameBroadcastService gameBroadcastService,
+                            GameActionAvailabilityService actionAvailabilityService,
                             CastingCostService castingCostService,
                             CastingPermissionService castingPermissionService,
                             TargetValidationService targetValidationService,
@@ -120,7 +116,7 @@ public abstract class AiDecisionEngine {
         this.gameQueryService = gameQueryService;
         this.predicateEvaluationService = new PredicateEvaluationService(gameQueryService);
         this.combatAttackService = combatAttackService;
-        this.gameBroadcastService = gameBroadcastService;
+        this.actionAvailabilityService = actionAvailabilityService;
         this.castingCostService = castingCostService;
         this.castingPermissionService = castingPermissionService;
 
@@ -131,31 +127,22 @@ public abstract class AiDecisionEngine {
         this.choiceHandler = new AiChoiceHandler(gameId, aiPlayer.getId(), gameQueryService, gameActions);
     }
 
-    public void setSelfConnection(Connection selfConnection) {
-        this.selfConnection = selfConnection;
-        this.choiceHandler.setSelfConnection(selfConnection);
-    }
+    // ===== Internal Decision Dispatch =====
 
-    // ===== Message Dispatch =====
-
-    public void handleEvent(MessageType type) {
+    public void handleEvent(AiDecisionKind kind) {
         GameData gameData = gameRegistry.get(gameId);
         if (gameData == null || gameData.status == GameStatus.FINISHED) {
             return;
         }
 
-        switch (type) {
+        switch (kind) {
             case GAME_STATE -> handleGameState(gameData);
-            case MULLIGAN_RESOLVED -> handleMulliganResolved(gameData);
-            case SELECT_CARDS_TO_BOTTOM -> choiceHandler.handleBottomCards(gameData);
-            case AVAILABLE_ATTACKERS -> handleAttackers(gameData);
-            case AVAILABLE_BLOCKERS -> handleBlockers(gameData);
-            case INTERACTION_PROMPT -> handleInteractionPrompt(gameData);
+            case MULLIGAN -> handleInitialMulligan();
+            case CARDS_TO_BOTTOM -> choiceHandler.handleBottomCards(gameData);
+            case ATTACKER_DECLARATION -> handleAttackers(gameData);
+            case BLOCKER_DECLARATION -> handleBlockers(gameData);
+            case INTERACTION -> handleInteractionPrompt(gameData);
             case COMBAT_DAMAGE_ASSIGNMENT -> choiceHandler.handleCombatDamageAssignment(gameData);
-            case GAME_OVER -> log.info("AI: Game {} is over", gameId);
-            default -> {
-                // Ignore informational messages (BATTLEFIELD_UPDATED, MANA_UPDATED, etc.)
-            }
         }
     }
 
@@ -167,6 +154,23 @@ public abstract class AiDecisionEngine {
 
     protected abstract void handleBlockers(GameData gameData);
 
+    /**
+     * The player whose current interaction this AI is authorized to answer.
+     *
+     * <p>Normally this is the AI seat itself. During a controlled turn, canonical decision facts
+     * are addressed to the controller while the interaction remains owned by the controlled
+     * player, so combat evaluation must inspect that player's board and legal choices.
+     */
+    protected UUID activeDecisionPlayerId(GameData gameData) {
+        PendingInteraction active = gameData.interaction.activeInteraction();
+        if (active != null
+                && AiUtils.isRespondingFor(
+                        gameData, aiPlayer.getId(), active.decidingPlayerId())) {
+            return active.decidingPlayerId();
+        }
+        return aiPlayer.getId();
+    }
+
     // ===== Overridable Choice Handlers =====
 
     protected void handleCardChoice(GameData gameData) {
@@ -177,7 +181,7 @@ public abstract class AiDecisionEngine {
         if (!floatManaForMayCost(gameData)) {
             // Accepting would fizzle on the payment — decline outright.
             log.info("AI: Declining may ability (cannot float its mana cost) in game {}", gameId);
-            send(() -> gameActions.answerInteraction(selfConnection,
+            send(() -> gameActions.answerInteraction(
                     new InteractionAnswer.MayAbilityChosen(false)));
             return;
         }
@@ -311,18 +315,11 @@ public abstract class AiDecisionEngine {
         if (gameData == null) return;
         if (shouldKeepHand(gameData)) {
             log.info("AI: Keeping hand in game {}", gameId);
-            send(() -> gameActions.handleKeepHand(selfConnection, new KeepHandRequest()));
+            send(() -> gameActions.handleKeepHand(new KeepHandRequest()));
         } else {
             log.info("AI: Taking mulligan in game {}", gameId);
-            send(() -> gameActions.handleMulligan(selfConnection, new MulliganRequest()));
+            send(() -> gameActions.handleMulligan(new MulliganRequest()));
         }
-    }
-
-    private void handleMulliganResolved(GameData gameData) {
-        if (gameData.playerKeptHand.contains(aiPlayer.getId())) {
-            return;
-        }
-        handleInitialMulligan();
     }
 
     protected boolean shouldKeepHand(GameData gameData) {
@@ -366,7 +363,7 @@ public abstract class AiDecisionEngine {
             if (card.hasType(CardType.LAND)) {
                 log.info("AI: Playing land {} in game {}", card.getName(), gameId);
                 final int idx = i;
-                send(() -> gameActions.handlePlayCard(selfConnection,
+                send(() -> gameActions.handlePlayCard(
                         new PlayCardRequest(idx, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null)));
                 // Verify the land was actually played — handlePlayCard silently
                 // swallows errors, so we must confirm the state actually changed.
@@ -431,7 +428,10 @@ public abstract class AiDecisionEngine {
     protected List<Integer> enforceMustAttackWithAtLeastOne(GameData gameData, List<Integer> attackerIndices,
                                                             List<Integer> availableIndices) {
         if (!attackerIndices.isEmpty() || availableIndices.isEmpty()) return attackerIndices;
-        if (!combatAttackService.isOpponentForcedToAttack(gameData, aiPlayer.getId())) return attackerIndices;
+        if (!combatAttackService.isOpponentForcedToAttack(
+                gameData, activeDecisionPlayerId(gameData))) {
+            return attackerIndices;
+        }
         List<Integer> forced = new ArrayList<>(attackerIndices);
         forced.add(availableIndices.getFirst());
         return forced;
@@ -445,18 +445,19 @@ public abstract class AiDecisionEngine {
      * if there is no attack tax.
      */
     protected int getMaxAffordableAttackers(GameData gameData) {
-        int taxPerCreature = castingCostService.getAttackPaymentPerCreature(gameData, aiPlayer.getId());
+        UUID actingPlayerId = activeDecisionPlayerId(gameData);
+        int taxPerCreature = castingCostService.getAttackPaymentPerCreature(gameData, actingPlayerId);
         List<ManaColor> phyrexianPayments = castingCostService.getPhyrexianAttackPaymentsPerCreature(
-                gameData, aiPlayer.getId());
+                gameData, actingPlayerId);
         if (taxPerCreature <= 0 && phyrexianPayments.isEmpty()) {
             return Integer.MAX_VALUE;
         }
         // Use safe pool that excludes mana sources requiring a color choice
         // (e.g. Birds of Paradise) to avoid overwriting the ATTACKER_DECLARATION state.
-        VirtualManaPool virtualPool = manaManager.buildSafeVirtualManaPool(gameData, aiPlayer.getId());
+        VirtualManaPool virtualPool = manaManager.buildSafeVirtualManaPool(gameData, actingPlayerId);
         int totalMana = virtualPool.getTotal();
-        int lifePaymentUnits = gameQueryService.canPlayerLifeChange(gameData, aiPlayer.getId())
-                ? Math.max(0, gameData.getLife(aiPlayer.getId()) - 1) / 2
+        int lifePaymentUnits = gameQueryService.canPlayerLifeChange(gameData, actingPlayerId)
+                ? Math.max(0, gameData.getLife(actingPlayerId) - 1) / 2
                 : 0;
 
         int upperBound = Integer.MAX_VALUE;
@@ -530,9 +531,10 @@ public abstract class AiDecisionEngine {
      * AIs that want to keep Jackal attacking should pair it before calling this.
      */
     protected List<Integer> prepareAttackersForTax(GameData gameData, List<Integer> attackerIndices) {
-        int taxPerCreature = castingCostService.getAttackPaymentPerCreature(gameData, aiPlayer.getId());
+        UUID actingPlayerId = activeDecisionPlayerId(gameData);
+        int taxPerCreature = castingCostService.getAttackPaymentPerCreature(gameData, actingPlayerId);
         List<ManaColor> phyrexianPayments = castingCostService.getPhyrexianAttackPaymentsPerCreature(
-                gameData, aiPlayer.getId());
+                gameData, actingPlayerId);
         if ((taxPerCreature <= 0 && phyrexianPayments.isEmpty()) || attackerIndices.isEmpty()) {
             return dropLoneCantAttackAlone(gameData, attackerIndices);
         }
@@ -561,10 +563,10 @@ public abstract class AiDecisionEngine {
             }
         }
         String taxCostStr = taxCost.toString();
-        manaManager.tapLandsForCost(gameData, aiPlayer.getId(), taxCostStr, 0, manaTapAction(), true);
+        manaManager.tapLandsForCost(gameData, actingPlayerId, taxCostStr, 0, manaTapAction(), true);
         // A mana source used to pay the tax may have been one of the selected attackers
         // (e.g. Leaden Myr tapped for mana). Remove any attackers that are now tapped.
-        List<Permanent> battlefield = gameData.playerBattlefields.get(aiPlayer.getId());
+        List<Permanent> battlefield = gameData.playerBattlefields.get(actingPlayerId);
         if (battlefield != null) {
             capped = capped.stream()
                     .filter(idx -> idx < battlefield.size() && !battlefield.get(idx).isTapped())
@@ -576,14 +578,15 @@ public abstract class AiDecisionEngine {
     private boolean isPhyrexianLifePaymentWorthwhile(GameData gameData, List<Integer> attackerIndices,
                                                       int genericTaxPerCreature,
                                                       List<ManaColor> phyrexianPayments) {
-        VirtualManaPool virtualPool = manaManager.buildSafeVirtualManaPool(gameData, aiPlayer.getId());
+        UUID actingPlayerId = activeDecisionPlayerId(gameData);
+        VirtualManaPool virtualPool = manaManager.buildSafeVirtualManaPool(gameData, actingPlayerId);
         long lifeCost = 2L * phyrexianLifePaymentUnits(attackerIndices.size(), genericTaxPerCreature,
                 phyrexianPayments, virtualPool, virtualPool.getTotal());
         if (lifeCost == 0) {
             return true;
         }
 
-        List<Permanent> battlefield = gameData.playerBattlefields.get(aiPlayer.getId());
+        List<Permanent> battlefield = gameData.playerBattlefields.get(actingPlayerId);
         if (battlefield == null) {
             return false;
         }
@@ -591,7 +594,7 @@ public abstract class AiDecisionEngine {
                 .filter(index -> index >= 0 && index < battlefield.size())
                 .mapToLong(index -> Math.max(0, gameQueryService.getEffectivePower(gameData, battlefield.get(index))))
                 .sum();
-        UUID opponentId = gameQueryService.getOpponentId(gameData, aiPlayer.getId());
+        UUID opponentId = gameQueryService.getOpponentId(gameData, actingPlayerId);
         boolean potentiallyLethal = totalPower >= gameData.getLife(opponentId);
         return potentiallyLethal || totalPower >= lifeCost;
     }
@@ -604,7 +607,7 @@ public abstract class AiDecisionEngine {
         if (attackerIndices.size() != 1) {
             return attackerIndices;
         }
-        List<Permanent> battlefield = gameData.playerBattlefields.get(aiPlayer.getId());
+        List<Permanent> battlefield = gameData.playerBattlefields.get(activeDecisionPlayerId(gameData));
         if (battlefield == null) {
             return attackerIndices;
         }
@@ -620,7 +623,7 @@ public abstract class AiDecisionEngine {
      */
     protected void sendBlockerDeclaration(GameData gameData, DeclareBlockersRequest request) {
         try {
-            gameActions.handleDeclareBlockers(selfConnection, request);
+            gameActions.handleDeclareBlockers(request);
         } catch (Exception e) {
             log.warn("AI: Blocker declaration threw in game {}: {}. Falling back to no blockers.", gameId, e.getMessage(), e);
             sendEmptyBlockerFallback();
@@ -640,7 +643,7 @@ public abstract class AiDecisionEngine {
 
     private void sendEmptyBlockerFallback() {
         try {
-            gameActions.handleDeclareBlockers(selfConnection, new DeclareBlockersRequest(List.of()));
+            gameActions.handleDeclareBlockers(new DeclareBlockersRequest(List.of()));
         } catch (Exception e) {
             log.error("AI: Empty blocker declaration also failed in game {}", gameId, e);
         }
@@ -648,7 +651,7 @@ public abstract class AiDecisionEngine {
 
     /**
      * Returns true if the card can be cast right now. Legality comes from the engine's own
-     * playability check ({@code GameBroadcastService.isCardPlayable}: timing, permissions,
+     * playability check ({@code GameActionAvailabilityService.isCardPlayable}: timing, permissions,
      * spell limits, affordability with every cost modifier and alternative-cost route, target
      * availability, legendary-sorcery rule) evaluated against the AI's virtual pool, so the
      * AI can never disagree with the server. On top of that, the AI plans ahead for cast-time
@@ -691,7 +694,7 @@ public abstract class AiDecisionEngine {
      */
     protected boolean canAffordSpell(GameData gameData, Card card, ManaPool virtualPool, int extraCost) {
         int minXPolicy = new ManaCost(card.getManaCost()).hasX() ? 1 : 0;
-        return gameBroadcastService.isCardPlayable(gameData, aiPlayer.getId(), card, virtualPool,
+        return actionAvailabilityService.isCardPlayable(gameData, aiPlayer.getId(), card, virtualPool,
                 extraCost + minXPolicy);
     }
 
@@ -1093,10 +1096,10 @@ public abstract class AiDecisionEngine {
     protected AiManaManager.ManaTapAction manaTapAction() {
         return (idx, abilityIndex) -> {
             if (abilityIndex != null) {
-                send(() -> gameActions.handleActivateAbility(selfConnection,
+                send(() -> gameActions.handleActivateAbility(
                         new ActivateAbilityRequest(idx, abilityIndex, null, null, null, null, null)));
             } else {
-                send(() -> gameActions.handleTapPermanent(selfConnection, new TapPermanentRequest(idx)));
+                send(() -> gameActions.handleTapPermanent(new TapPermanentRequest(idx)));
             }
         };
     }

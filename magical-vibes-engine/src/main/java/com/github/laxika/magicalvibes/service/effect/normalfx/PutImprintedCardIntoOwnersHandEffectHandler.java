@@ -7,7 +7,7 @@ import com.github.laxika.magicalvibes.model.GameLog;
 import com.github.laxika.magicalvibes.model.StackEntry;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
 import com.github.laxika.magicalvibes.model.effect.PutImprintedCardIntoOwnersHandEffect;
-import com.github.laxika.magicalvibes.service.GameBroadcastService;
+import com.github.laxika.magicalvibes.service.GameLogService;
 import java.util.UUID;
 
 import lombok.extern.slf4j.Slf4j;
@@ -19,7 +19,7 @@ import org.springframework.stereotype.Component;
 @RequiredArgsConstructor
 public class PutImprintedCardIntoOwnersHandEffectHandler implements NormalEffectHandlerBean {
 
-    private final GameBroadcastService gameBroadcastService;
+    private final GameLogService gameLogService;
 
     @Override
     public Class<? extends CardEffect> handledEffect() {
@@ -34,7 +34,7 @@ public class PutImprintedCardIntoOwnersHandEffectHandler implements NormalEffect
 
         if (imprintedCard == null) {
             String logMsg = cardName + "'s ability resolves but no card was exiled.";
-            gameBroadcastService.logAndBroadcast(gameData, GameLog.text(logMsg));
+            gameLogService.append(gameData, GameLog.text(logMsg));
             return;
         }
 
@@ -43,7 +43,7 @@ public class PutImprintedCardIntoOwnersHandEffectHandler implements NormalEffect
 
         if (exileEntry == null) {
             String logMsg = cardName + "'s ability resolves but the exiled card is no longer in exile.";
-            gameBroadcastService.logAndBroadcast(gameData, GameLog.text(logMsg));
+            gameLogService.append(gameData, GameLog.text(logMsg));
             return;
         }
 
@@ -57,7 +57,7 @@ public class PutImprintedCardIntoOwnersHandEffectHandler implements NormalEffect
 
         String ownerName = gameData.playerIdToName.get(ownerId);
         String logMsg = imprintedCard.getName() + " is returned to " + ownerName + "'s hand.";
-        gameBroadcastService.logAndBroadcast(gameData, GameLog.builder().card(imprintedCard).text(" is returned to " + ownerName + "'s hand.").build());
+        gameLogService.append(gameData, GameLog.builder().card(imprintedCard).text(" is returned to " + ownerName + "'s hand.").build());
 
         log.info("Game {} - {} puts imprinted card {} into {}'s hand",
                 gameData.id, cardName, imprintedCard.getName(), ownerName);

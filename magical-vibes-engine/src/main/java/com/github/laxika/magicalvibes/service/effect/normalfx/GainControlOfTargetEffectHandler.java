@@ -6,7 +6,7 @@ import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.StackEntry;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
 import com.github.laxika.magicalvibes.model.effect.GainControlOfTargetEffect;
-import com.github.laxika.magicalvibes.service.GameBroadcastService;
+import com.github.laxika.magicalvibes.service.GameLogService;
 import com.github.laxika.magicalvibes.service.battlefield.CreatureControlService;
 import com.github.laxika.magicalvibes.service.battlefield.GameQueryService;
 import java.util.List;
@@ -25,7 +25,7 @@ import org.springframework.stereotype.Component;
 public class GainControlOfTargetEffectHandler implements NormalEffectHandlerBean {
 
     private final GameQueryService gameQueryService;
-    private final GameBroadcastService gameBroadcastService;
+    private final GameLogService gameLogService;
     private final CreatureControlService creatureControlService;
 
     @Override
@@ -59,7 +59,7 @@ public class GainControlOfTargetEffectHandler implements NormalEffectHandlerBean
             if (e.grantedSubtype() != null && !target.getGrantedSubtypes().contains(e.grantedSubtype())) {
                 target.getGrantedSubtypes().add(e.grantedSubtype());
                 String subtypeLog = target.getCard().getName() + " becomes a " + e.grantedSubtype().getDisplayName() + " in addition to its other types.";
-                gameBroadcastService.logAndBroadcast(gameData, GameLog.builder().card(target.getCard()).text(" becomes a " + e.grantedSubtype().getDisplayName() + " in addition to its other types.").build());
+                gameLogService.append(gameData, GameLog.builder().card(target.getCard()).text(" becomes a " + e.grantedSubtype().getDisplayName() + " in addition to its other types.").build());
             }
         }
     }
@@ -88,14 +88,14 @@ public class GainControlOfTargetEffectHandler implements NormalEffectHandlerBean
 
         Permanent source = gameQueryService.findPermanentById(gameData, sourcePermanentId);
         if (source == null) {
-            gameBroadcastService.logAndBroadcast(gameData, GameLog.cardThen(entry.getCard(),
+            gameLogService.append(gameData, GameLog.cardThen(entry.getCard(),
                     "'s ability has no effect (source left the battlefield)."));
             return;
         }
         if (requireSourceController) {
             UUID sourceController = gameQueryService.findPermanentController(gameData, sourcePermanentId);
             if (sourceController == null || !sourceController.equals(entry.getControllerId())) {
-                gameBroadcastService.logAndBroadcast(gameData, GameLog.cardThen(entry.getCard(),
+                gameLogService.append(gameData, GameLog.cardThen(entry.getCard(),
                         "'s ability has no effect (controller no longer controls " + source.getCard().getName() + ")."));
                 return;
             }

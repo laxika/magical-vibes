@@ -13,7 +13,7 @@ import com.github.laxika.magicalvibes.model.StackEntry;
 import com.github.laxika.magicalvibes.model.StackEntryType;
 import com.github.laxika.magicalvibes.model.effect.DestroyAttachmentsOnTargetCreatureEffect;
 import com.github.laxika.magicalvibes.service.DamagePreventionService;
-import com.github.laxika.magicalvibes.service.GameBroadcastService;
+import com.github.laxika.magicalvibes.service.GameLogService;
 import com.github.laxika.magicalvibes.service.GameOutcomeService;
 import com.github.laxika.magicalvibes.service.input.PlayerInputService;
 import com.github.laxika.magicalvibes.service.graveyard.GraveyardService;
@@ -43,7 +43,7 @@ class DestroyAttachmentsOnTargetCreatureEffectHandlerTest {
     @Mock private GameOutcomeService gameOutcomeService;
     @Mock private PermanentRemovalService permanentRemovalService;
     @Mock private GameQueryService gameQueryService;
-    @Mock private GameBroadcastService gameBroadcastService;
+    @Mock private GameLogService gameLogService;
     @Mock private PlayerInputService playerInputService;
     @Mock private LifeSupport lifeSupport;
     @InjectMocks private DestructionSupport destructionSupport;
@@ -133,7 +133,7 @@ class DestroyAttachmentsOnTargetCreatureEffectHandlerTest {
             handler.resolve(gd, entry, new DestroyAttachmentsOnTargetCreatureEffect(false, true));
 
             verify(permanentRemovalService).tryDestroyPermanent(gd, scimitar, false);
-            verify(gameBroadcastService).logAndBroadcast(gd, GameLog.isDestroyed(scimitar.getCard()));
+            verify(gameLogService).append(gd, GameLog.isDestroyed(scimitar.getCard()));
         }
 
         @Test

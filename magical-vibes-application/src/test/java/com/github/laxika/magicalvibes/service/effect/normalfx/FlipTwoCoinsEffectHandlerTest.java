@@ -29,7 +29,7 @@ class FlipTwoCoinsEffectHandlerTest extends AbstractPlayerInteractionHandlerTest
 
                 resolveEffect(gd, entry, effect);
 
-                verify(gameBroadcastService).logAndBroadcast(eq(gd), argThat((GameLogEntry logEntry) ->
+                verify(gameLogService).append(eq(gd), argThat((GameLogEntry logEntry) ->
                         logEntry.plainText().contains("flips two coins") && logEntry.plainText().contains("Player1")));
             }
 }

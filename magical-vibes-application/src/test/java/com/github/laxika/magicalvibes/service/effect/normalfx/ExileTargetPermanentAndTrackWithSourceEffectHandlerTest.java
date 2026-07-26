@@ -17,7 +17,7 @@ import com.github.laxika.magicalvibes.model.StackEntryType;
 import com.github.laxika.magicalvibes.model.effect.ExileTargetPermanentAndTrackWithSourceEffect;
 import com.github.laxika.magicalvibes.model.effect.ExileTargetPermanentEffect;
 import com.github.laxika.magicalvibes.networking.service.CardViewFactory;
-import com.github.laxika.magicalvibes.service.GameBroadcastService;
+import com.github.laxika.magicalvibes.service.GameLogService;
 import com.github.laxika.magicalvibes.service.exile.ExileService;
 import com.github.laxika.magicalvibes.service.graveyard.GraveyardService;
 import com.github.laxika.magicalvibes.service.input.PlayerInputService;
@@ -47,7 +47,7 @@ class ExileTargetPermanentAndTrackWithSourceEffectHandlerTest {
 
     @Mock private GraveyardService graveyardService;
     @Mock private GameQueryService gameQueryService;
-    @Mock private GameBroadcastService gameBroadcastService;
+    @Mock private GameLogService gameLogService;
     @Mock private PermanentRemovalService permanentRemovalService;
     @Mock private PlayerInputService playerInputService;
     @Mock private CardViewFactory cardViewFactory;
@@ -81,7 +81,7 @@ class ExileTargetPermanentAndTrackWithSourceEffectHandlerTest {
         gd.playerGraveyards.put(player2Id, Collections.synchronizedList(new ArrayList<>()));
         gd.playerDecks.put(player1Id, Collections.synchronizedList(new ArrayList<>()));
         gd.playerDecks.put(player2Id, Collections.synchronizedList(new ArrayList<>()));
-        exileTargetPermanentAndTrackWithSourceHandler = new ExileTargetPermanentAndTrackWithSourceEffectHandler(gameQueryService, gameBroadcastService, permanentRemovalService);
+        exileTargetPermanentAndTrackWithSourceHandler = new ExileTargetPermanentAndTrackWithSourceEffectHandler(gameQueryService, gameLogService, permanentRemovalService);
 
     }
 
@@ -175,7 +175,7 @@ class ExileTargetPermanentAndTrackWithSourceEffectHandlerTest {
                 verify(permanentRemovalService).removePermanentToExile(gd, target);
                 assertThat(gd.getCardsExiledByPermanent(source.getId()))
                         .containsExactly(targetCard);
-                verify(gameBroadcastService).logAndBroadcast(eq(gd), argThat((GameLogEntry e) -> e.plainText().equals("Grizzly Bears is exiled by Karn Liberated.")));
+                verify(gameLogService).append(eq(gd), argThat((GameLogEntry e) -> e.plainText().equals("Grizzly Bears is exiled by Karn Liberated.")));
                 verify(permanentRemovalService).removeOrphanedAuras(gd);
             }
 

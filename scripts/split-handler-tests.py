@@ -387,7 +387,7 @@ COMMON_TYPE_IMPORTS = {
     "SessionManager": "com.github.laxika.magicalvibes.networking.SessionManager",
     "CardViewFactory": "com.github.laxika.magicalvibes.networking.service.CardViewFactory",
     "TriggerCollectionService": "com.github.laxika.magicalvibes.service.trigger.TriggerCollectionService",
-    "GameBroadcastService": "com.github.laxika.magicalvibes.service.GameBroadcastService",
+    "GameLogService": "com.github.laxika.magicalvibes.service.GameLogService",
     "GameOutcomeService": "com.github.laxika.magicalvibes.service.GameOutcomeService",
     "DamagePreventionService": "com.github.laxika.magicalvibes.service.DamagePreventionService",
     "AuraAttachmentService": "com.github.laxika.magicalvibes.service.aura.AuraAttachmentService",

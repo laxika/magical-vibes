@@ -43,7 +43,7 @@ class DiscardCardAndUntapSelfEffectHandlerTest extends AbstractPlayerInteraction
 
                 resolveEffect(gd, entry, effect);
 
-                verify(gameBroadcastService).logAndBroadcast(eq(gd), argThat((GameLogEntry logEntry) ->
+                verify(gameLogService).append(eq(gd), argThat((GameLogEntry logEntry) ->
                         logEntry.plainText().contains("no cards to discard")));
             }
 }

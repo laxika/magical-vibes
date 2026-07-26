@@ -5,7 +5,7 @@ import com.github.laxika.magicalvibes.model.GameLog;
 import com.github.laxika.magicalvibes.model.StackEntry;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
 import com.github.laxika.magicalvibes.model.effect.DealDamageToAllCreaturesAndPlaneswalkersTargetControlsEffect;
-import com.github.laxika.magicalvibes.service.GameBroadcastService;
+import com.github.laxika.magicalvibes.service.GameLogService;
 import com.github.laxika.magicalvibes.service.GameOutcomeService;
 import com.github.laxika.magicalvibes.service.battlefield.GameQueryService;
 import java.util.UUID;
@@ -22,7 +22,7 @@ public class DealDamageToAllCreaturesAndPlaneswalkersTargetControlsEffectHandler
 
     private final DamageSupport damageSupport;
     private final GameQueryService gameQueryService;
-    private final GameBroadcastService gameBroadcastService;
+    private final GameLogService gameLogService;
     private final GameOutcomeService gameOutcomeService;
 
     @Override
@@ -49,7 +49,7 @@ public class DealDamageToAllCreaturesAndPlaneswalkersTargetControlsEffectHandler
                 boolean isPlaneswalker = permanent.getCard().hasType(CardType.PLANESWALKER);
                 if (!isCreature && !isPlaneswalker) continue;
                 if (gameQueryService.isDamagePreventable(gameData) && gameQueryService.hasProtectionFromSource(gameData, permanent, entry.getCard())) {
-                    gameBroadcastService.logAndBroadcast(gameData, GameLog.textCardText(cardName + "'s damage to ", permanent.getCard(), " is prevented."));
+                    gameLogService.append(gameData, GameLog.textCardText(cardName + "'s damage to ", permanent.getCard(), " is prevented."));
                     continue;
                 }
                 damageSupport.dealCreatureDamage(gameData, entry, permanent, rawDamage);

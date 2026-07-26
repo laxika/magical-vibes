@@ -9,7 +9,7 @@ import com.github.laxika.magicalvibes.model.Player;
 import com.github.laxika.magicalvibes.model.Zone;
 import com.github.laxika.magicalvibes.model.effect.BronzeTabletAnteExchangeEffect;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
-import com.github.laxika.magicalvibes.service.GameBroadcastService;
+import com.github.laxika.magicalvibes.service.GameLogService;
 import com.github.laxika.magicalvibes.service.battlefield.GameQueryService;
 import com.github.laxika.magicalvibes.service.graveyard.GraveyardService;
 import com.github.laxika.magicalvibes.service.input.InputCompletionService;
@@ -30,7 +30,7 @@ import org.springframework.stereotype.Component;
 public class BronzeTabletAnteExchangeHandler implements MayEffectHandlerBean {
 
     private final GameQueryService gameQueryService;
-    private final GameBroadcastService gameBroadcastService;
+    private final GameLogService gameLogService;
     private final GraveyardService graveyardService;
     private final InputCompletionService inputCompletionService;
 
@@ -51,12 +51,12 @@ public class BronzeTabletAnteExchangeHandler implements MayEffectHandlerBean {
         if (accepted && canPay) {
             gameData.playerLifeTotals.put(opponentId, gameData.getLife(opponentId) - effect.lifeCost());
             moveTabletFromExileToOwnerGraveyard(gameData, tabletCard);
-            gameBroadcastService.logAndBroadcast(gameData, GameLog.textCardText(player.getUsername() + " pays " + effect.lifeCost() + " life. ", tabletCard, " is put into its owner's graveyard."));
+            gameLogService.append(gameData, GameLog.textCardText(player.getUsername() + " pays " + effect.lifeCost() + " life. ", tabletCard, " is put into its owner's graveyard."));
             log.info("Game {} - {} pays {} life to keep {}", gameData.id, player.getUsername(),
                     effect.lifeCost(), tabletCard.getName());
         } else {
             // Declined (or can no longer pay) — the ante swap resolves; both cards remain exiled.
-            gameBroadcastService.logAndBroadcast(gameData, GameLog.textCardText(player.getUsername() + " declines to pay — ownership of the exiled cards is exchanged. (", tabletCard, ")"));
+            gameLogService.append(gameData, GameLog.textCardText(player.getUsername() + " declines to pay — ownership of the exiled cards is exchanged. (", tabletCard, ")"));
             log.info("Game {} - {} declines the {} ante swap", gameData.id, player.getUsername(), tabletCard.getName());
         }
 

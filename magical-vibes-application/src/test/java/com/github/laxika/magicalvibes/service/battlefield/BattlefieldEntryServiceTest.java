@@ -23,7 +23,7 @@ import com.github.laxika.magicalvibes.model.effect.ConditionalReplacementEffect;
 import com.github.laxika.magicalvibes.model.effect.EnterWithCountersEffect;
 import com.github.laxika.magicalvibes.model.effect.EntersTappedEffect;
 import com.github.laxika.magicalvibes.model.filter.PermanentHasAnySubtypePredicate;
-import com.github.laxika.magicalvibes.service.GameBroadcastService;
+import com.github.laxika.magicalvibes.service.GameLogService;
 import com.github.laxika.magicalvibes.service.GameLogService;
 import com.github.laxika.magicalvibes.service.battlefield.etb.EtbEffectResolver;
 import com.github.laxika.magicalvibes.service.effect.AmountEvaluationService;
@@ -53,7 +53,6 @@ import static org.mockito.Mockito.when;
 class BattlefieldEntryServiceTest {
 
     @Mock private GameQueryService gameQueryService;
-    @Mock private GameBroadcastService gameBroadcastService;
     @Mock private GameLogService gameLogService;
     @Mock private PlayerInputService playerInputService;
     @Mock private PermanentCopierService permanentCopierService;
@@ -79,7 +78,7 @@ class BattlefieldEntryServiceTest {
                 new AmountEvaluationService(predicateEvaluationService, gameQueryService),
                 conditionEvaluationService, predicateEvaluationService,
                 new com.github.laxika.magicalvibes.service.effect.normalfx.PermanentCounterSupport(
-                        gameQueryService, predicateEvaluationService, gameBroadcastService, playerInputService));
+                        gameQueryService, predicateEvaluationService, gameLogService, playerInputService));
 
         player1Id = UUID.randomUUID();
         gd = new GameData(UUID.randomUUID(), "test", player1Id, "Player1");

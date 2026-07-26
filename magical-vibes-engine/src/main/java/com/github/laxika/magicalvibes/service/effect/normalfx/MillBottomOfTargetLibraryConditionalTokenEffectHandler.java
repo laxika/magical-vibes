@@ -7,7 +7,7 @@ import com.github.laxika.magicalvibes.model.StackEntry;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
 import com.github.laxika.magicalvibes.model.effect.CreateTokenEffect;
 import com.github.laxika.magicalvibes.model.effect.MillBottomOfTargetLibraryConditionalTokenEffect;
-import com.github.laxika.magicalvibes.service.GameBroadcastService;
+import com.github.laxika.magicalvibes.service.GameLogService;
 import com.github.laxika.magicalvibes.service.graveyard.GraveyardService;
 import java.util.List;
 import java.util.Set;
@@ -22,7 +22,7 @@ import org.springframework.stereotype.Component;
 public class MillBottomOfTargetLibraryConditionalTokenEffectHandler implements NormalEffectHandlerBean {
 
     private final GraveyardService graveyardService;
-    private final GameBroadcastService gameBroadcastService;
+    private final GameLogService gameLogService;
     private final PermanentControlSupport permanentControlSupport;
 
     @Override
@@ -40,7 +40,7 @@ public class MillBottomOfTargetLibraryConditionalTokenEffectHandler implements N
 
         if (deck.isEmpty()) {
             String logEntry = targetPlayerName + "'s library is empty — " + sourceName + "'s ability does nothing.";
-            gameBroadcastService.logAndBroadcast(gameData, GameLog.text(logEntry));
+            gameLogService.append(gameData, GameLog.text(logEntry));
             log.info("Game {} - {} ability: {}'s library is empty", gameData.id, sourceName, targetPlayerName);
             return;
         }
@@ -48,7 +48,7 @@ public class MillBottomOfTargetLibraryConditionalTokenEffectHandler implements N
         Card bottomCard = deck.removeLast();
         graveyardService.addCardToGraveyard(gameData, targetPlayerId, bottomCard);
 
-        gameBroadcastService.logAndBroadcast(gameData, GameLog.textCardText(targetPlayerName + " puts " , bottomCard, " from the bottom of their library into their graveyard."));
+        gameLogService.append(gameData, GameLog.textCardText(targetPlayerName + " puts " , bottomCard, " from the bottom of their library into their graveyard."));
         log.info("Game {} - {} ability: {} puts {} from bottom of library into graveyard",
                 gameData.id, sourceName, targetPlayerName, bottomCard.getName());
 

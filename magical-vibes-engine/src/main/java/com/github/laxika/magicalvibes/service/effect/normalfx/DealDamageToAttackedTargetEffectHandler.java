@@ -5,7 +5,7 @@ import com.github.laxika.magicalvibes.model.GameLog;
 import com.github.laxika.magicalvibes.model.StackEntry;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
 import com.github.laxika.magicalvibes.model.effect.DealDamageToAttackedTargetEffect;
-import com.github.laxika.magicalvibes.service.GameBroadcastService;
+import com.github.laxika.magicalvibes.service.GameLogService;
 import com.github.laxika.magicalvibes.service.GameOutcomeService;
 import com.github.laxika.magicalvibes.service.battlefield.GameQueryService;
 import java.util.UUID;
@@ -22,7 +22,7 @@ public class DealDamageToAttackedTargetEffectHandler implements NormalEffectHand
 
     private final DamageSupport damageSupport;
     private final GameQueryService gameQueryService;
-    private final GameBroadcastService gameBroadcastService;
+    private final GameLogService gameLogService;
     private final GameOutcomeService gameOutcomeService;
 
     @Override
@@ -52,13 +52,13 @@ public class DealDamageToAttackedTargetEffectHandler implements NormalEffectHand
         if (damageSupport.isDamageSourcePreventedWithLog(gameData, entry)
                 || damageSupport.isSourcePermanentPreventedFromDealingDamage(gameData, entry)
                 || gameQueryService.hasProtectionFromSource(gameData, target, source)) {
-            gameBroadcastService.logAndBroadcast(gameData, GameLog.cardThen(source, "'s damage is prevented."));
+            gameLogService.append(gameData, GameLog.cardThen(source, "'s damage is prevented."));
             return;
         }
 
         int newLoyalty = Math.max(0, target.getCounterCount(CounterType.LOYALTY) - rawDamage);
         target.setCounterCount(CounterType.LOYALTY, newLoyalty);
-        gameBroadcastService.logAndBroadcast(gameData, GameLog.builder().card(source).text(" deals " + rawDamage + " damage to ").card(target.getCard()).text(".").build());
+        gameLogService.append(gameData, GameLog.builder().card(source).text(" deals " + rawDamage + " damage to ").card(target.getCard()).text(".").build());
         gameOutcomeService.checkWinCondition(gameData);
     
     }

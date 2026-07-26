@@ -5,7 +5,7 @@ import com.github.laxika.magicalvibes.model.GameLog;
 import com.github.laxika.magicalvibes.model.StackEntry;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
 import com.github.laxika.magicalvibes.model.effect.RevealTopCardDealManaValueDamageEffect;
-import com.github.laxika.magicalvibes.service.GameBroadcastService;
+import com.github.laxika.magicalvibes.service.GameLogService;
 import com.github.laxika.magicalvibes.service.GameOutcomeService;
 import com.github.laxika.magicalvibes.service.battlefield.GameQueryService;
 import java.util.UUID;
@@ -23,7 +23,7 @@ public class RevealTopCardDealManaValueDamageEffectHandler implements NormalEffe
 
     private final DamageSupport damageSupport;
     private final GameQueryService gameQueryService;
-    private final GameBroadcastService gameBroadcastService;
+    private final GameLogService gameLogService;
     private final GameOutcomeService gameOutcomeService;
 
     @Override
@@ -43,13 +43,13 @@ public class RevealTopCardDealManaValueDamageEffectHandler implements NormalEffe
         List<Card> deck = gameData.playerDecks.get(targetPlayerId);
 
         if (deck.isEmpty()) {
-            gameBroadcastService.logAndBroadcast(gameData, GameLog.text(targetPlayerName + "'s library is empty."));
+            gameLogService.append(gameData, GameLog.text(targetPlayerName + "'s library is empty."));
             return;
         }
 
         Card topCard = deck.getFirst();
         int manaValue = topCard.getManaValue();
-        gameBroadcastService.logAndBroadcast(gameData, GameLog.builder().text(targetPlayerName + " reveals ").card(topCard).text(" (mana value " + manaValue + ") from the top of their library.").build());
+        gameLogService.append(gameData, GameLog.builder().text(targetPlayerName + " reveals ").card(topCard).text(" (mana value " + manaValue + ") from the top of their library.").build());
 
         if (manaValue > 0 && !gameQueryService.isDamageFromSourcePrevented(gameData, entry.getCard().getColor())) {
             int damage = gameQueryService.applyDamageMultiplier(gameData, manaValue, entry);
@@ -70,7 +70,7 @@ public class RevealTopCardDealManaValueDamageEffectHandler implements NormalEffe
         }
 
         if (e.returnToHandIfLand() && topCard.hasType(CardType.LAND)) {
-            gameBroadcastService.logAndBroadcast(gameData, GameLog.text("A land card was revealed — " + cardName + " is returned to its owner's hand."));
+            gameLogService.append(gameData, GameLog.text("A land card was revealed — " + cardName + " is returned to its owner's hand."));
             entry.setReturnToHandAfterResolving(true);
         }
     

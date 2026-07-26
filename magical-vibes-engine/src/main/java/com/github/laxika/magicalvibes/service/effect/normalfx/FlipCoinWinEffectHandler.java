@@ -6,7 +6,7 @@ import com.github.laxika.magicalvibes.model.StackEntry;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
 import com.github.laxika.magicalvibes.model.effect.FlipCoinWinEffect;
 import com.github.laxika.magicalvibes.model.effect.SequenceEffect;
-import com.github.laxika.magicalvibes.service.GameBroadcastService;
+import com.github.laxika.magicalvibes.service.GameLogService;
 import com.github.laxika.magicalvibes.service.effect.EffectHandler;
 import com.github.laxika.magicalvibes.service.effect.EffectHandlerRegistry;
 import java.util.UUID;
@@ -21,7 +21,7 @@ import org.springframework.stereotype.Component;
 public class FlipCoinWinEffectHandler implements NormalEffectHandlerBean {
 
     private final EffectHandlerRegistry effectHandlerRegistry;
-    private final GameBroadcastService gameBroadcastService;
+    private final GameLogService gameLogService;
     private final PlayerInteractionSupport playerInteractionSupport;
 
     @Override
@@ -40,7 +40,7 @@ public class FlipCoinWinEffectHandler implements NormalEffectHandlerBean {
         String flipLog = wonFlip
                 ? gameData.playerIdToName.get(controllerId) + " wins the coin flip for " + sourceName + "."
                 : gameData.playerIdToName.get(controllerId) + " loses the coin flip for " + sourceName + ".";
-        gameBroadcastService.logAndBroadcast(gameData, GameLog.text(flipLog));
+        gameLogService.append(gameData, GameLog.text(flipLog));
 
         CardEffect branch = wonFlip ? e.wrapped() : e.lost();
         if (branch == null) {

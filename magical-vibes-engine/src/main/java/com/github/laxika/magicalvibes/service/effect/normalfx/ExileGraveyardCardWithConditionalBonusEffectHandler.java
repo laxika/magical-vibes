@@ -8,7 +8,7 @@ import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.StackEntry;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
 import com.github.laxika.magicalvibes.model.effect.ExileGraveyardCardWithConditionalBonusEffect;
-import com.github.laxika.magicalvibes.service.GameBroadcastService;
+import com.github.laxika.magicalvibes.service.GameLogService;
 import com.github.laxika.magicalvibes.service.battlefield.GameQueryService;
 import com.github.laxika.magicalvibes.service.battlefield.PermanentRemovalService;
 import com.github.laxika.magicalvibes.service.exile.ExileService;
@@ -25,7 +25,7 @@ public class ExileGraveyardCardWithConditionalBonusEffectHandler implements Norm
 
     private final PermanentRemovalService permanentRemovalService;
     private final GameQueryService gameQueryService;
-    private final GameBroadcastService gameBroadcastService;
+    private final GameLogService gameLogService;
     private final LifeSupport lifeSupport;
     private final ExileService exileService;
 
@@ -40,7 +40,7 @@ public class ExileGraveyardCardWithConditionalBonusEffectHandler implements Norm
 
         Card targetCard = gameQueryService.findCardInGraveyardById(gameData, entry.getTargetId());
         if (targetCard == null) {
-            gameBroadcastService.logAndBroadcast(gameData, GameLog.text(entry.getDescription() + " fizzles (target no longer in a graveyard)."));
+            gameLogService.append(gameData, GameLog.text(entry.getDescription() + " fizzles (target no longer in a graveyard)."));
             return;
         }
 
@@ -53,7 +53,7 @@ public class ExileGraveyardCardWithConditionalBonusEffectHandler implements Norm
 
         UUID controllerId = entry.getControllerId();
         String playerName = gameData.playerIdToName.get(controllerId);
-        gameBroadcastService.logAndBroadcast(gameData, GameLog.textCardText(playerName + " exiles ", targetCard, " from a graveyard."));
+        gameLogService.append(gameData, GameLog.textCardText(playerName + " exiles ", targetCard, " from a graveyard."));
 
         boolean isCreatureCard = targetCard.hasType(CardType.CREATURE);
         if (isCreatureCard) {
@@ -72,7 +72,7 @@ public class ExileGraveyardCardWithConditionalBonusEffectHandler implements Norm
                     String boostLog = source.getCard().getName() + " gets +"
                             + e.noncreaturePowerBoost() + "/+" + e.noncreatureToughnessBoost()
                             + " until end of turn.";
-                    gameBroadcastService.logAndBroadcast(gameData, GameLog.builder().card(source.getCard()).text(" gets +" + e.noncreaturePowerBoost() + "/+" + e.noncreatureToughnessBoost() + " until end of turn.").build());
+                    gameLogService.append(gameData, GameLog.builder().card(source.getCard()).text(" gets +" + e.noncreaturePowerBoost() + "/+" + e.noncreatureToughnessBoost() + " until end of turn.").build());
                     log.info("Game {} - {} gets +{}/+{}", gameData.id, source.getCard().getName(),
                             e.noncreaturePowerBoost(), e.noncreatureToughnessBoost());
                 }

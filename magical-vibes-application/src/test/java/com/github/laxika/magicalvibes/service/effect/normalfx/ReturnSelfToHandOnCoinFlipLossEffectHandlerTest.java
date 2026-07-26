@@ -11,7 +11,7 @@ import com.github.laxika.magicalvibes.model.StackEntry;
 import com.github.laxika.magicalvibes.model.StackEntryType;
 import com.github.laxika.magicalvibes.model.effect.ReturnSelfToHandOnCoinFlipLossEffect;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
-import com.github.laxika.magicalvibes.service.GameBroadcastService;
+import com.github.laxika.magicalvibes.service.GameLogService;
 import com.github.laxika.magicalvibes.service.GameOutcomeService;
 import com.github.laxika.magicalvibes.service.input.PlayerInputService;
 import org.junit.jupiter.api.BeforeEach;
@@ -39,7 +39,7 @@ import static org.mockito.Mockito.verify;
 class ReturnSelfToHandOnCoinFlipLossEffectHandlerTest {
 
     @Mock private GameQueryService gameQueryService;
-    @Mock private GameBroadcastService gameBroadcastService;
+    @Mock private GameLogService gameLogService;
     @Mock private GameOutcomeService gameOutcomeService;
     @Mock private PlayerInputService playerInputService;
     @Mock private PermanentRemovalService permanentRemovalService;
@@ -65,7 +65,7 @@ class ReturnSelfToHandOnCoinFlipLossEffectHandlerTest {
         gd.playerBattlefields.put(player1Id, Collections.synchronizedList(new ArrayList<>()));
         gd.playerBattlefields.put(player2Id, Collections.synchronizedList(new ArrayList<>()));
         returnSelfToHandOnCoinFlipLossHandler = new ReturnSelfToHandOnCoinFlipLossEffectHandler(
-                gameBroadcastService, bounceSupport);
+                gameLogService, bounceSupport);
 
     }
 
@@ -133,7 +133,7 @@ class ReturnSelfToHandOnCoinFlipLossEffectHandlerTest {
 
                 // Verify coin flip was logged
                 ArgumentCaptor<GameLogEntry> logCaptor = ArgumentCaptor.forClass(GameLogEntry.class);
-                verify(gameBroadcastService, atLeastOnce()).logAndBroadcast(eq(gd), logCaptor.capture());
+                verify(gameLogService, atLeastOnce()).append(eq(gd), logCaptor.capture());
                 List<String> allLogs = logCaptor.getAllValues().stream().map(GameLogEntry::plainText).toList();
                 assertThat(allLogs).anyMatch(log -> log.contains("coin flip for Scoria Wurm"));
 

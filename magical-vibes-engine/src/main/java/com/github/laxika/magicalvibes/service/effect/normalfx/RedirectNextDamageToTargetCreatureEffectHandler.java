@@ -7,7 +7,7 @@ import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.StackEntry;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
 import com.github.laxika.magicalvibes.model.effect.RedirectNextDamageToTargetCreatureEffect;
-import com.github.laxika.magicalvibes.service.GameBroadcastService;
+import com.github.laxika.magicalvibes.service.GameLogService;
 import com.github.laxika.magicalvibes.service.battlefield.GameQueryService;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -21,7 +21,7 @@ import java.util.UUID;
 public class RedirectNextDamageToTargetCreatureEffectHandler implements NormalEffectHandlerBean {
 
     private final GameQueryService gameQueryService;
-    private final GameBroadcastService gameBroadcastService;
+    private final GameLogService gameLogService;
 
     @Override
     public Class<? extends CardEffect> handledEffect() {
@@ -46,7 +46,7 @@ public class RedirectNextDamageToTargetCreatureEffectHandler implements NormalEf
         String protectedName = protectedPerm != null ? protectedPerm.getCard().getName() : "the creature";
         String logEntry = "The next " + e.amount() + " damage that would be dealt to " + protectedName
                 + " this turn is dealt to " + redirectTarget.getCard().getName() + " instead.";
-        gameBroadcastService.logAndBroadcast(gameData, GameLog.builder().text("The next " + e.amount() + " damage that would be dealt to " + protectedName + " this turn is dealt to ").card(redirectTarget.getCard()).text(" instead.").build());
+        gameLogService.append(gameData, GameLog.builder().text("The next " + e.amount() + " damage that would be dealt to " + protectedName + " this turn is dealt to ").card(redirectTarget.getCard()).text(" instead.").build());
         log.info("Game {} - registered next-{}-damage redirect from {} to {}", gameData.id, e.amount(),
                 protectedName, redirectTarget.getCard().getName());
     }

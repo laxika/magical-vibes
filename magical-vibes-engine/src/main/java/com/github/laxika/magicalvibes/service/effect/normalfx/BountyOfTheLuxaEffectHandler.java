@@ -10,7 +10,7 @@ import com.github.laxika.magicalvibes.model.StackEntry;
 import com.github.laxika.magicalvibes.model.effect.BountyOfTheLuxaEffect;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
 import com.github.laxika.magicalvibes.service.DrawService;
-import com.github.laxika.magicalvibes.service.GameBroadcastService;
+import com.github.laxika.magicalvibes.service.GameLogService;
 import com.github.laxika.magicalvibes.service.battlefield.GameQueryService;
 import java.util.UUID;
 import lombok.RequiredArgsConstructor;
@@ -30,7 +30,7 @@ public class BountyOfTheLuxaEffectHandler implements NormalEffectHandlerBean {
 
     private final GameQueryService gameQueryService;
     private final DrawService drawService;
-    private final GameBroadcastService gameBroadcastService;
+    private final GameLogService gameLogService;
 
     @Override
     public Class<? extends CardEffect> handledEffect() {
@@ -56,7 +56,7 @@ public class BountyOfTheLuxaEffectHandler implements NormalEffectHandlerBean {
             // No counters removed: put a flood counter on the enchantment and draw a card.
             if (source != null && !gameQueryService.cantHaveCounters(gameData, source)) {
                 source.setCounterCount(CounterType.FLOOD, source.getCounterCount(CounterType.FLOOD) + 1);
-                gameBroadcastService.logAndBroadcast(gameData,
+                gameLogService.append(gameData,
                         GameLog.builder().card(source.getCard()).text(" gets a flood counter.").build());
             }
             drawService.resolveDrawCard(gameData, controllerId);
@@ -67,7 +67,7 @@ public class BountyOfTheLuxaEffectHandler implements NormalEffectHandlerBean {
             pool.add(ManaColor.GREEN, 1);
             pool.add(ManaColor.BLUE, 1);
             String playerName = gameData.playerIdToName.get(controllerId);
-            gameBroadcastService.logAndBroadcast(gameData, GameLog.text(playerName + " adds {C}{G}{U}."));
+            gameLogService.append(gameData, GameLog.text(playerName + " adds {C}{G}{U}."));
             log.info("Game {} - {} adds C/G/U from Bounty of the Luxa", gameData.id, playerName);
         }
     }

@@ -25,6 +25,6 @@ class BrilliantUltimatumPileSeparationChoiceAiStrategy
         int pileOneSize = interaction.validCardIds().size() / 2;
         List<UUID> pileOne = interaction.validCardIds().stream().limit(pileOneSize).toList();
         ctx.gameActions().answerInteraction(
-                ctx.selfConnection(), new InteractionAnswer.CardsChosen(pileOne));
+                new InteractionAnswer.CardsChosen(pileOne));
     }
 }

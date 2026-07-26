@@ -9,7 +9,7 @@ import com.github.laxika.magicalvibes.model.effect.EffectDuration;
 import com.github.laxika.magicalvibes.model.effect.SetAllUnblockedCreaturesBasePowerToughnessEffect;
 import com.github.laxika.magicalvibes.model.effect.SetBasePowerToughnessEffect;
 import com.github.laxika.magicalvibes.model.layer.FloatingContinuousEffect;
-import com.github.laxika.magicalvibes.service.GameBroadcastService;
+import com.github.laxika.magicalvibes.service.GameLogService;
 import com.github.laxika.magicalvibes.service.battlefield.GameQueryService;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -24,7 +24,7 @@ import java.util.UUID;
 public class SetAllUnblockedCreaturesBasePowerToughnessEffectHandler implements NormalEffectHandlerBean {
 
     private final GameQueryService gameQueryService;
-    private final GameBroadcastService gameBroadcastService;
+    private final GameLogService gameLogService;
 
     @Override
     public Class<? extends CardEffect> handledEffect() {
@@ -62,7 +62,7 @@ public class SetAllUnblockedCreaturesBasePowerToughnessEffectHandler implements 
 
         String logEntry = entry.getCard().getName() + " sets base power and toughness of " + count
                 + " unblocked creature(s) to " + power + "/" + toughness + " until end of turn.";
-        gameBroadcastService.logAndBroadcast(gameData, GameLog.builder().card(entry.getCard()).text(" sets base power and toughness of " + count + " unblocked creature(s) to " + power + "/" + toughness + " until end of turn.").build());
+        gameLogService.append(gameData, GameLog.builder().card(entry.getCard()).text(" sets base power and toughness of " + count + " unblocked creature(s) to " + power + "/" + toughness + " until end of turn.").build());
 
         log.info("Game {} - {} sets base P/T of {} unblocked creature(s) to {}/{}",
                 gameData.id, entry.getCard().getName(), count, power, toughness);

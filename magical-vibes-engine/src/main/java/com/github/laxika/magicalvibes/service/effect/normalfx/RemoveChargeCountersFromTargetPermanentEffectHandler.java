@@ -7,7 +7,7 @@ import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.StackEntry;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
 import com.github.laxika.magicalvibes.model.effect.RemoveChargeCountersFromTargetPermanentEffect;
-import com.github.laxika.magicalvibes.service.GameBroadcastService;
+import com.github.laxika.magicalvibes.service.GameLogService;
 import com.github.laxika.magicalvibes.service.battlefield.GameQueryService;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -19,7 +19,7 @@ import org.springframework.stereotype.Component;
 public class RemoveChargeCountersFromTargetPermanentEffectHandler implements NormalEffectHandlerBean {
 
     private final GameQueryService gameQueryService;
-    private final GameBroadcastService gameBroadcastService;
+    private final GameLogService gameLogService;
 
     @Override
     public Class<? extends CardEffect> handledEffect() {
@@ -38,7 +38,7 @@ public class RemoveChargeCountersFromTargetPermanentEffectHandler implements Nor
         if (toRemove > 0) {
             target.setCounterCount(CounterType.CHARGE, target.getCounterCount(CounterType.CHARGE) - toRemove);
             String logEntry = toRemove + " charge counter(s) removed from " + target.getCard().getName() + " (" + target.getCounterCount(CounterType.CHARGE) + " remaining).";
-            gameBroadcastService.logAndBroadcast(gameData, GameLog.builder().text(toRemove + " charge counter(s) removed from ").card(target.getCard()).text(" (" + target.getCounterCount(CounterType.CHARGE) + " remaining).").build());
+            gameLogService.append(gameData, GameLog.builder().text(toRemove + " charge counter(s) removed from ").card(target.getCard()).text(" (" + target.getCounterCount(CounterType.CHARGE) + " remaining).").build());
             log.info("Game {} - {} charge counter(s) removed from {} ({} remaining)", gameData.id, toRemove, target.getCard().getName(), target.getCounterCount(CounterType.CHARGE));
         }
     }

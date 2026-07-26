@@ -6,7 +6,7 @@ import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.StackEntry;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
 import com.github.laxika.magicalvibes.model.effect.RemoveTargetFromCombatEffect;
-import com.github.laxika.magicalvibes.service.GameBroadcastService;
+import com.github.laxika.magicalvibes.service.GameLogService;
 import com.github.laxika.magicalvibes.service.battlefield.GameQueryService;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -18,7 +18,7 @@ import org.springframework.stereotype.Component;
 public class RemoveTargetFromCombatEffectHandler implements NormalEffectHandlerBean {
 
     private final GameQueryService gameQueryService;
-    private final GameBroadcastService gameBroadcastService;
+    private final GameLogService gameLogService;
 
     @Override
     public Class<? extends CardEffect> handledEffect() {
@@ -43,7 +43,7 @@ public class RemoveTargetFromCombatEffectHandler implements NormalEffectHandlerB
         }
 
         String logEntry = entry.getCard().getName() + " removes " + target.getCard().getName() + " from combat.";
-        gameBroadcastService.logAndBroadcast(gameData, GameLog.cardTextCard(entry.getCard(), " removes ", target.getCard(), " from combat."));
+        gameLogService.append(gameData, GameLog.cardTextCard(entry.getCard(), " removes ", target.getCard(), " from combat."));
         log.info("Game {} - {} removes {} from combat", gameData.id, entry.getCard().getName(), target.getCard().getName());
     }
 }

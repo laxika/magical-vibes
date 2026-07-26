@@ -2,7 +2,7 @@ package com.github.laxika.magicalvibes.service.effect.normalfx;
 
 import com.github.laxika.magicalvibes.model.GameData;
 import com.github.laxika.magicalvibes.model.GameLog;
-import com.github.laxika.magicalvibes.service.GameBroadcastService;
+import com.github.laxika.magicalvibes.service.GameLogService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Component;
 
@@ -19,7 +19,7 @@ import java.util.UUID;
 @RequiredArgsConstructor
 public class PreventionSupport {
 
-    private final GameBroadcastService gameBroadcastService;
+    private final GameLogService gameLogService;
 
     public List<UUID> collectAllBattlefieldPermanentIds(GameData gameData) {
         List<UUID> validIds = new ArrayList<>();
@@ -29,6 +29,6 @@ public class PreventionSupport {
 
     public void broadcastNoPermanentsForDamageSourceChoice(GameData gameData) {
         String logEntry = "No permanents on the battlefield to choose as a damage source.";
-        gameBroadcastService.logAndBroadcast(gameData, GameLog.text(logEntry));
+        gameLogService.append(gameData, GameLog.text(logEntry));
     }
 }

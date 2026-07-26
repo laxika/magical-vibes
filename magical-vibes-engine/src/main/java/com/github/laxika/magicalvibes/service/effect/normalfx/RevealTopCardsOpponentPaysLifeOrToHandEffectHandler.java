@@ -7,7 +7,7 @@ import com.github.laxika.magicalvibes.model.GameLog;
 import com.github.laxika.magicalvibes.model.StackEntry;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
 import com.github.laxika.magicalvibes.model.effect.RevealTopCardsOpponentPaysLifeOrToHandEffect;
-import com.github.laxika.magicalvibes.service.GameBroadcastService;
+import com.github.laxika.magicalvibes.service.GameLogService;
 import java.util.*;
 import lombok.extern.slf4j.Slf4j;
 import lombok.RequiredArgsConstructor;
@@ -19,9 +19,10 @@ import org.springframework.stereotype.Component;
 @RequiredArgsConstructor
 public class RevealTopCardsOpponentPaysLifeOrToHandEffectHandler implements NormalEffectHandlerBean {
 
-    private final GameBroadcastService gameBroadcastService;
+    private final GameLogService gameLogService;
     private final LibraryRevealSupport libraryRevealSupport;
     private final com.github.laxika.magicalvibes.service.interaction.InteractionHandlerRegistry interactionHandlerRegistry;
+    private final com.github.laxika.magicalvibes.service.event.GameMutationCoordinator mutationCoordinator;
 
     @Override
     public Class<? extends CardEffect> handledEffect() {
@@ -41,7 +42,7 @@ public class RevealTopCardsOpponentPaysLifeOrToHandEffectHandler implements Norm
 
         // Broadcast the reveal with all card names
         String revealedNames = topCards.stream().map(Card::getName).reduce((a, b) -> a + ", " + b).orElse("");
-        gameBroadcastService.logAndBroadcast(gameData, GameLog.text(playerName + " reveals " + revealedNames + " from the top of their library with " + cardName + "."));
+        gameLogService.append(gameData, GameLog.text(playerName + " reveals " + revealedNames + " from the top of their library with " + cardName + "."));
 
         // If the opponent doesn't have enough life to pay for even one card, all go to hand
         UUID opponentId = gameData.orderedPlayerIds.stream()
@@ -56,7 +57,7 @@ public class RevealTopCardsOpponentPaysLifeOrToHandEffectHandler implements Norm
                 gameData.addCardToHand(controllerId, card);
             }
             String handNames = topCards.stream().map(Card::getName).reduce((a, b) -> a + ", " + b).orElse("");
-            gameBroadcastService.logAndBroadcast(gameData, GameLog.text(playerName + " puts " + handNames + " into their hand."));
+            gameLogService.append(gameData, GameLog.text(playerName + " puts " + handNames + " into their hand."));
             log.info("Game {} - {} resolving {} — all {} cards to hand (opponent can't afford to pay)",
                     gameData.id, playerName, cardName, topCards.size());
             return;
@@ -69,7 +70,7 @@ public class RevealTopCardsOpponentPaysLifeOrToHandEffectHandler implements Norm
                 false, true, false, false, false, e.lifeCost(), controllerId, topCards.size(),
                 "Choose cards to deny (you pay " + e.lifeCost() + " life for each). Unselected cards go to opponent's hand."));
 
-        gameBroadcastService.invalidateAllPlayerViews(gameData);
+        mutationCoordinator.invalidateAllPlayerViews(gameData);
 
         interactionHandlerRegistry.promptActive(gameData);
 

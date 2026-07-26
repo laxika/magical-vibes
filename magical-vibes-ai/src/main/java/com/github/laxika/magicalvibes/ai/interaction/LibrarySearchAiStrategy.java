@@ -44,6 +44,6 @@ class LibrarySearchAiStrategy implements AiInteractionStrategy<PendingInteractio
         }
 
         log.info("AI: Choosing card {} from library in game {}", searchCards.get(bestIndex).getName(), ctx.gameId());
-        ctx.gameActions().answerInteraction(ctx.selfConnection(), new InteractionAnswer.LibraryCardChosen(bestIndex));
+        ctx.gameActions().answerInteraction(new InteractionAnswer.LibraryCardChosen(bestIndex));
     }
 }

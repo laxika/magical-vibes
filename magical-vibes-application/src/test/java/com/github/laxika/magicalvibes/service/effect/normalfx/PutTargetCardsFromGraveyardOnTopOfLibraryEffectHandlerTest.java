@@ -8,7 +8,7 @@ import com.github.laxika.magicalvibes.model.StackEntry;
 import com.github.laxika.magicalvibes.model.StackEntryType;
 import com.github.laxika.magicalvibes.model.effect.PutTargetCardsFromGraveyardOnTopOfLibraryEffect;
 import com.github.laxika.magicalvibes.model.filter.CardTypePredicate;
-import com.github.laxika.magicalvibes.service.GameBroadcastService;
+import com.github.laxika.magicalvibes.service.GameLogService;
 import com.github.laxika.magicalvibes.service.input.PlayerInputService;
 import com.github.laxika.magicalvibes.service.battlefield.BattlefieldEntryService;
 import com.github.laxika.magicalvibes.service.battlefield.GameQueryService;
@@ -47,7 +47,7 @@ class PutTargetCardsFromGraveyardOnTopOfLibraryEffectHandlerTest {
     @Mock
     private GameQueryService gameQueryService;
     @Mock
-    private GameBroadcastService gameBroadcastService;
+    private GameLogService gameLogService;
     @Mock
     private PlayerInputService playerInputService;
     @Mock
@@ -94,7 +94,7 @@ class PutTargetCardsFromGraveyardOnTopOfLibraryEffectHandlerTest {
         }
 
         // =========================================================================
-        // describeFilter â€” static utility method
+        // describeFilter A?€�t static utility method
         // =========================================================================
 
     @Test
@@ -118,7 +118,7 @@ class PutTargetCardsFromGraveyardOnTopOfLibraryEffectHandlerTest {
                 assertThat(gd.playerGraveyards.get(player1Id)).isEmpty();
                 assertThat(gd.playerDecks.get(player1Id)).extracting(Card::getName)
                         .containsExactlyInAnyOrder("Leonin Scimitar", "Rod of Ruin");
-                verify(gameBroadcastService).logAndBroadcast(eq(gd), argThat((GameLogEntry logEntry) ->
+                verify(gameLogService).append(eq(gd), argThat((GameLogEntry logEntry) ->
                         logEntry.plainText().contains("on top of their library") && logEntry.plainText().contains("from graveyard")));
             }
 
@@ -139,6 +139,6 @@ class PutTargetCardsFromGraveyardOnTopOfLibraryEffectHandlerTest {
                 putCardsOnTopOfLibraryHandler.resolve(gd, entry, effect);
 
                 assertThat(gd.playerDecks.get(player1Id)).isEmpty();
-                verify(gameBroadcastService, never()).logAndBroadcast(any(), any(GameLogEntry.class));
+                verify(gameLogService, never()).append(any(), any(GameLogEntry.class));
             }
 }

@@ -8,7 +8,7 @@ import com.github.laxika.magicalvibes.model.StackEntry;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
 import com.github.laxika.magicalvibes.model.effect.CopyActivatedAbilityRetargetEffect;
 import com.github.laxika.magicalvibes.model.effect.CopyControllerActivatedAbilityEffect;
-import com.github.laxika.magicalvibes.service.GameBroadcastService;
+import com.github.laxika.magicalvibes.service.GameLogService;
 import java.util.List;
 import java.util.UUID;
 import lombok.RequiredArgsConstructor;
@@ -25,7 +25,7 @@ import org.springframework.stereotype.Component;
 @RequiredArgsConstructor
 public class CopyControllerActivatedAbilityEffectHandler implements NormalEffectHandlerBean {
 
-    private final GameBroadcastService gameBroadcastService;
+    private final GameLogService gameLogService;
     private final CopySupport copySupport;
 
     @Override
@@ -47,7 +47,7 @@ public class CopyControllerActivatedAbilityEffectHandler implements NormalEffect
 
         gameData.stack.add(copyEntry);
 
-        gameBroadcastService.logAndBroadcast(gameData, GameLog.textCardText("A copy of ", snapshot.getCard(), "'s ability is created."));
+        gameLogService.append(gameData, GameLog.textCardText("A copy of ", snapshot.getCard(), "'s ability is created."));
         log.info("Game {} - copy of {}'s ability created for controller", gameData.id, snapshot.getCard().getName());
 
         // "You may choose new targets for the copy." Only single-target abilities are retargetable here;

@@ -7,7 +7,7 @@ import com.github.laxika.magicalvibes.model.StackEntry;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.effect.ExileTopCardsMayPlayUntilNextTurnEffect;
-import com.github.laxika.magicalvibes.service.GameBroadcastService;
+import com.github.laxika.magicalvibes.service.GameLogService;
 import com.github.laxika.magicalvibes.service.battlefield.GameQueryService;
 import com.github.laxika.magicalvibes.service.effect.AmountContext;
 import com.github.laxika.magicalvibes.service.effect.AmountEvaluationService;
@@ -26,7 +26,7 @@ public class ExileTopCardsMayPlayUntilNextTurnEffectHandler implements NormalEff
 
     private final ExileService exileService;
     private final ExileSupport exileSupport;
-    private final GameBroadcastService gameBroadcastService;
+    private final GameLogService gameLogService;
     private final GameQueryService gameQueryService;
     private final AmountEvaluationService amountEvaluationService;
 
@@ -57,7 +57,7 @@ public class ExileTopCardsMayPlayUntilNextTurnEffectHandler implements NormalEff
         String controllerName = gameData.playerIdToName.get(controllerId);
         if (deck == null || deck.isEmpty()) {
             String logEntry = controllerName + "'s library is empty — nothing to exile.";
-            gameBroadcastService.logAndBroadcast(gameData, GameLog.text(logEntry));
+            gameLogService.append(gameData, GameLog.text(logEntry));
             return;
         }
 
@@ -72,7 +72,7 @@ public class ExileTopCardsMayPlayUntilNextTurnEffectHandler implements NormalEff
         String logEntry = controllerName + " exiles "
                 + String.join(", ", exiledNames)
                 + " from the top of their library (may play until end of next turn).";
-        gameBroadcastService.logAndBroadcast(gameData, GameLog.text(logEntry));
+        gameLogService.append(gameData, GameLog.text(logEntry));
         log.info("Game {} - {} exiles {} cards from library top (may play until end of next turn)",
                 gameData.id, controllerName, exiledNames.size());
     }

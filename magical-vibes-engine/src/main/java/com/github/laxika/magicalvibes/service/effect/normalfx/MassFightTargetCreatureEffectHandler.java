@@ -5,7 +5,7 @@ import com.github.laxika.magicalvibes.model.GameLog;
 import com.github.laxika.magicalvibes.model.StackEntry;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
 import com.github.laxika.magicalvibes.model.effect.MassFightTargetCreatureEffect;
-import com.github.laxika.magicalvibes.service.GameBroadcastService;
+import com.github.laxika.magicalvibes.service.GameLogService;
 import com.github.laxika.magicalvibes.service.GameOutcomeService;
 import com.github.laxika.magicalvibes.service.battlefield.GameQueryService;
 import java.util.UUID;
@@ -21,7 +21,7 @@ public class MassFightTargetCreatureEffectHandler implements NormalEffectHandler
 
     private final DamageSupport damageSupport;
     private final GameQueryService gameQueryService;
-    private final GameBroadcastService gameBroadcastService;
+    private final GameLogService gameLogService;
     private final GameOutcomeService gameOutcomeService;
 
     @Override
@@ -54,12 +54,12 @@ public class MassFightTargetCreatureEffectHandler implements NormalEffectHandler
         boolean targetPrevented = gameQueryService.isDamagePreventable(gameData)
                 && gameQueryService.isPreventedFromDealingDamage(gameData, target);
         if (targetPrevented) {
-            gameBroadcastService.logAndBroadcast(gameData, GameLog.cardThen(target.getCard(), "'s damage is prevented."));
+            gameLogService.append(gameData, GameLog.cardThen(target.getCard(), "'s damage is prevented."));
         } else {
             for (Permanent other : otherCreatures) {
                 if (gameQueryService.isDamagePreventable(gameData)
                         && gameQueryService.hasProtectionFromSource(gameData, other, target)) {
-                    gameBroadcastService.logAndBroadcast(gameData, GameLog.cardTextCard(other.getCard(), " has protection — damage from ", target.getCard(), " prevented."));
+                    gameLogService.append(gameData, GameLog.cardTextCard(other.getCard(), " has protection — damage from ", target.getCard(), " prevented."));
                     continue;
                 }
                 int damage = gameQueryService.applyDamageMultiplier(gameData, targetPower, entry);
@@ -73,12 +73,12 @@ public class MassFightTargetCreatureEffectHandler implements NormalEffectHandler
 
             if (gameQueryService.isDamagePreventable(gameData)
                     && gameQueryService.isPreventedFromDealingDamage(gameData, other)) {
-                gameBroadcastService.logAndBroadcast(gameData, GameLog.cardThen(other.getCard(), "'s damage is prevented."));
+                gameLogService.append(gameData, GameLog.cardThen(other.getCard(), "'s damage is prevented."));
                 continue;
             }
             if (gameQueryService.isDamagePreventable(gameData)
                     && gameQueryService.hasProtectionFromSource(gameData, target, other)) {
-                gameBroadcastService.logAndBroadcast(gameData, GameLog.cardTextCard(target.getCard(), " has protection — damage from ", other.getCard(), " prevented."));
+                gameLogService.append(gameData, GameLog.cardTextCard(target.getCard(), " has protection — damage from ", other.getCard(), " prevented."));
                 continue;
             }
             int damage = gameQueryService.applyDamageMultiplier(gameData, otherPower, entry);

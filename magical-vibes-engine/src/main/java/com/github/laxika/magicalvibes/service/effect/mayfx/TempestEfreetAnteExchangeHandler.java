@@ -6,7 +6,7 @@ import com.github.laxika.magicalvibes.model.PendingMayAbility;
 import com.github.laxika.magicalvibes.model.Player;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
 import com.github.laxika.magicalvibes.model.effect.TempestEfreetAnteExchangeEffect;
-import com.github.laxika.magicalvibes.service.GameBroadcastService;
+import com.github.laxika.magicalvibes.service.GameLogService;
 import com.github.laxika.magicalvibes.service.battlefield.GameQueryService;
 import com.github.laxika.magicalvibes.service.effect.normalfx.TempestEfreetAnteExchangeEffectHandler;
 import com.github.laxika.magicalvibes.service.input.InputCompletionService;
@@ -26,7 +26,7 @@ import org.springframework.stereotype.Component;
 public class TempestEfreetAnteExchangeHandler implements MayEffectHandlerBean {
 
     private final GameQueryService gameQueryService;
-    private final GameBroadcastService gameBroadcastService;
+    private final GameLogService gameLogService;
     private final InputCompletionService inputCompletionService;
     private final TempestEfreetAnteExchangeEffectHandler exchangeEffectHandler;
 
@@ -46,7 +46,7 @@ public class TempestEfreetAnteExchangeHandler implements MayEffectHandlerBean {
 
         if (accepted && canPay) {
             gameData.playerLifeTotals.put(opponentId, gameData.getLife(opponentId) - effect.lifeCost());
-            gameBroadcastService.logAndBroadcast(gameData, GameLog.textCardText(player.getUsername() + " pays " + effect.lifeCost() + " life. (", ability.sourceCard(), ")"));
+            gameLogService.append(gameData, GameLog.textCardText(player.getUsername() + " pays " + effect.lifeCost() + " life. (", ability.sourceCard(), ")"));
             log.info("Game {} - {} pays {} life to avoid the {} exchange", gameData.id,
                     player.getUsername(), effect.lifeCost(), ability.sourceCard().getName());
         } else {

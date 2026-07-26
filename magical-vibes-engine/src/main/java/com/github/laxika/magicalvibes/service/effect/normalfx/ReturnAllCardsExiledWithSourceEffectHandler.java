@@ -8,7 +8,7 @@ import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.StackEntry;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
 import com.github.laxika.magicalvibes.model.effect.ReturnAllCardsExiledWithSourceEffect;
-import com.github.laxika.magicalvibes.service.GameBroadcastService;
+import com.github.laxika.magicalvibes.service.GameLogService;
 import com.github.laxika.magicalvibes.service.battlefield.BattlefieldEntryService;
 import java.util.List;
 import java.util.UUID;
@@ -22,7 +22,7 @@ import org.springframework.stereotype.Component;
 public class ReturnAllCardsExiledWithSourceEffectHandler implements NormalEffectHandlerBean {
 
     private final BattlefieldEntryService battlefieldEntryService;
-    private final GameBroadcastService gameBroadcastService;
+    private final GameLogService gameLogService;
 
     @Override
     public Class<? extends CardEffect> handledEffect() {
@@ -51,7 +51,7 @@ public class ReturnAllCardsExiledWithSourceEffectHandler implements NormalEffect
             battlefieldEntryService.putPermanentOntoBattlefield(gameData, ownerId, perm);
             String logEntry = card.getName() + " returns to the battlefield under "
                     + gameData.playerIdToName.get(ownerId) + "'s control.";
-            gameBroadcastService.logAndBroadcast(gameData, GameLog.builder().card(card).text(" returns to the battlefield under " + gameData.playerIdToName.get(ownerId) + "'s control.").build());
+            gameLogService.append(gameData, GameLog.builder().card(card).text(" returns to the battlefield under " + gameData.playerIdToName.get(ownerId) + "'s control.").build());
             log.info("Game {} - {} returns from exile via {} (put into graveyard from battlefield)",
                     gameData.id, card.getName(), entry.getCard().getName());
             battlefieldEntryService.handleCreatureEnteredBattlefield(gameData, ownerId, card, null, false);

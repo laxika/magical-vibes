@@ -10,7 +10,7 @@ import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.StackEntry;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
 import com.github.laxika.magicalvibes.model.effect.LivingWeaponEffect;
-import com.github.laxika.magicalvibes.service.GameBroadcastService;
+import com.github.laxika.magicalvibes.service.GameLogService;
 import com.github.laxika.magicalvibes.service.battlefield.BattlefieldEntryService;
 import com.github.laxika.magicalvibes.service.battlefield.GameQueryService;
 import com.github.laxika.magicalvibes.service.battlefield.LegendRuleService;
@@ -31,7 +31,7 @@ public class LivingWeaponEffectHandler implements NormalEffectHandlerBean {
     private final BattlefieldEntryService battlefieldEntryService;
     private final LegendRuleService legendRuleService;
     private final GameQueryService gameQueryService;
-    private final GameBroadcastService gameBroadcastService;
+    private final GameLogService gameLogService;
 
     @Override
     public Class<? extends CardEffect> handledEffect() {
@@ -73,7 +73,7 @@ public class LivingWeaponEffectHandler implements NormalEffectHandlerBean {
                     battlefieldEntryService.putPermanentOntoBattlefield(gameData, controllerId, tokenPermanent, enterTappedTypesSnapshot);
 
                     String logEntry = "A 0/0 black Phyrexian Germ creature token enters the battlefield.";
-                    gameBroadcastService.logAndBroadcast(gameData, GameLog.text(logEntry));
+                    gameLogService.append(gameData, GameLog.text(logEntry));
 
                     battlefieldEntryService.handleCreatureEnteredBattlefield(gameData, controllerId, tokenCard, null, false);
                     if (!gameData.interaction.isAwaitingInput()) {
@@ -91,7 +91,7 @@ public class LivingWeaponEffectHandler implements NormalEffectHandlerBean {
                         equipment.setAttachedTo(lastTokenPermanent.getId());
                         // CR 613.7e: an Equipment receives a new timestamp each time it becomes attached.
                         equipment.setTimestamp(gameData.nextTimestamp());
-                        gameBroadcastService.logAndBroadcast(gameData, GameLog.cardThen(entry.getCard(), " is now attached to Phyrexian Germ."));
+                        gameLogService.append(gameData, GameLog.cardThen(entry.getCard(), " is now attached to Phyrexian Germ."));
                         log.info("Game {} - {} attached to Phyrexian Germ token via living weapon", gameData.id, entry.getCard().getName());
                     }
                 }

@@ -5,7 +5,7 @@ import com.github.laxika.magicalvibes.model.GameLog;
 import com.github.laxika.magicalvibes.model.StackEntry;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
 import com.github.laxika.magicalvibes.model.effect.PlaneswalkerDealDamageAndReceivePowerDamageEffect;
-import com.github.laxika.magicalvibes.service.GameBroadcastService;
+import com.github.laxika.magicalvibes.service.GameLogService;
 import com.github.laxika.magicalvibes.service.GameOutcomeService;
 import com.github.laxika.magicalvibes.service.battlefield.GameQueryService;
 import java.util.UUID;
@@ -22,7 +22,7 @@ public class PlaneswalkerDealDamageAndReceivePowerDamageEffectHandler implements
 
     private final DamageSupport damageSupport;
     private final GameQueryService gameQueryService;
-    private final GameBroadcastService gameBroadcastService;
+    private final GameLogService gameLogService;
     private final GameOutcomeService gameOutcomeService;
 
     @Override
@@ -48,9 +48,9 @@ public class PlaneswalkerDealDamageAndReceivePowerDamageEffectHandler implements
             if (!(gameQueryService.isDamagePreventable(gameData)
                     && gameQueryService.hasProtectionFromSource(gameData, target, entry.getCard()))) {
                 damageSupport.dealCreatureDamage(gameData, entry, target, rawDamage);
-                gameBroadcastService.logAndBroadcast(gameData, GameLog.textCardText(cardName + " deals " + rawDamage + " damage to ", target.getCard(), "."));
+                gameLogService.append(gameData, GameLog.textCardText(cardName + " deals " + rawDamage + " damage to ", target.getCard(), "."));
             } else {
-                gameBroadcastService.logAndBroadcast(gameData, GameLog.textCardText(cardName + "'s damage to ", target.getCard(), " is prevented."));
+                gameLogService.append(gameData, GameLog.textCardText(cardName + "'s damage to ", target.getCard(), " is prevented."));
             }
         }
 
@@ -64,7 +64,7 @@ public class PlaneswalkerDealDamageAndReceivePowerDamageEffectHandler implements
             int targetPower = gameQueryService.getPowerBasedDamage(gameData, target);
             int newLoyalty = Math.max(0, sourcePlaneswalker.getCounterCount(CounterType.LOYALTY) - targetPower);
             sourcePlaneswalker.setCounterCount(CounterType.LOYALTY, newLoyalty);
-            gameBroadcastService.logAndBroadcast(gameData, GameLog.builder().card(target.getCard()).text(" deals " + targetPower + " damage to " + cardName + ". (" + cardName + " now has " + newLoyalty + " loyalty.)").build());
+            gameLogService.append(gameData, GameLog.builder().card(target.getCard()).text(" deals " + targetPower + " damage to " + cardName + ". (" + cardName + " now has " + newLoyalty + " loyalty.)").build());
             log.info("Game {} - {} takes {} damage from {}, loyalty now {}",
                     gameData.id, cardName, targetPower, target.getCard().getName(), newLoyalty);
         }

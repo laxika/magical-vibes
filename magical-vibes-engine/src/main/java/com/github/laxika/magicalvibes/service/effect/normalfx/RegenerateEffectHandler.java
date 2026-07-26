@@ -6,7 +6,7 @@ import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.StackEntry;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
 import com.github.laxika.magicalvibes.model.effect.RegenerateEffect;
-import com.github.laxika.magicalvibes.service.GameBroadcastService;
+import com.github.laxika.magicalvibes.service.GameLogService;
 import com.github.laxika.magicalvibes.service.battlefield.GameQueryService;
 import java.util.UUID;
 import lombok.RequiredArgsConstructor;
@@ -19,7 +19,7 @@ import org.springframework.stereotype.Component;
 public class RegenerateEffectHandler implements NormalEffectHandlerBean {
 
     private final GameQueryService gameQueryService;
-    private final GameBroadcastService gameBroadcastService;
+    private final GameLogService gameLogService;
 
     @Override
     public Class<? extends CardEffect> handledEffect() {
@@ -43,7 +43,7 @@ public class RegenerateEffectHandler implements NormalEffectHandlerBean {
                 }
                 perm.setRegenerationShield(perm.getRegenerationShield() + 1);
 
-                gameBroadcastService.logAndBroadcast(gameData, GameLog.cardThen(perm.getCard(), " gains a regeneration shield."));
+                gameLogService.append(gameData, GameLog.cardThen(perm.getCard(), " gains a regeneration shield."));
                 log.info("Game {} - {} gains a regeneration shield", gameData.id, perm.getCard().getName());
     
     }

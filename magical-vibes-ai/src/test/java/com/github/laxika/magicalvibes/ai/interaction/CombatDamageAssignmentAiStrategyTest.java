@@ -58,7 +58,7 @@ class CombatDamageAssignmentAiStrategyTest {
 
         strategy.answer(interaction, context(aiPlayerId));
 
-        verify(gameActions, never()).handleCombatDamageAssigned(eq(selfConnection),
+        verify(gameActions, never()).handleCombatDamageAssigned(
                 org.mockito.ArgumentMatchers.any());
     }
 
@@ -90,7 +90,7 @@ class CombatDamageAssignmentAiStrategyTest {
 
         ArgumentCaptor<CombatDamageAssignedRequest> captor =
                 ArgumentCaptor.forClass(CombatDamageAssignedRequest.class);
-        verify(gameActions).handleCombatDamageAssigned(eq(selfConnection), captor.capture());
+        verify(gameActions).handleCombatDamageAssigned(captor.capture());
 
         CombatDamageAssignedRequest request = captor.getValue();
         assertThat(request.attackerIndex()).isEqualTo(7);
@@ -121,7 +121,7 @@ class CombatDamageAssignmentAiStrategyTest {
 
         ArgumentCaptor<CombatDamageAssignedRequest> captor =
                 ArgumentCaptor.forClass(CombatDamageAssignedRequest.class);
-        verify(gameActions).handleCombatDamageAssigned(eq(selfConnection), captor.capture());
+        verify(gameActions).handleCombatDamageAssigned(captor.capture());
 
         assertThat(captor.getValue().attackerIndex()).isEqualTo(3);
         assertThat(captor.getValue().damageAssignments()).containsExactlyInAnyOrderEntriesOf(Map.of(
@@ -142,7 +142,7 @@ class CombatDamageAssignmentAiStrategyTest {
 
     private AiInteractionContext context(UUID aiPlayerId) {
         return new AiInteractionContext(
-                gameData, UUID.randomUUID(), aiPlayerId, gameQueryService, gameActions, selfConnection);
+                gameData, UUID.randomUUID(), aiPlayerId, gameQueryService, gameActions);
     }
 
     private static CombatDamageTarget target(UUID id, String name, int toughness) {

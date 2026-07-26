@@ -6,7 +6,7 @@ import com.github.laxika.magicalvibes.model.GameLog;
 import com.github.laxika.magicalvibes.model.StackEntry;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
 import com.github.laxika.magicalvibes.model.effect.PreventXDamageToControllerAndRedirectToTargetPlayerEffect;
-import com.github.laxika.magicalvibes.service.GameBroadcastService;
+import com.github.laxika.magicalvibes.service.GameLogService;
 import java.util.UUID;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -17,7 +17,7 @@ import org.springframework.stereotype.Component;
 @RequiredArgsConstructor
 public class PreventXDamageToControllerAndRedirectToTargetPlayerEffectHandler implements NormalEffectHandlerBean {
 
-    private final GameBroadcastService gameBroadcastService;
+    private final GameLogService gameLogService;
 
     @Override
     public Class<? extends CardEffect> handledEffect() {
@@ -40,7 +40,7 @@ public class PreventXDamageToControllerAndRedirectToTargetPlayerEffectHandler im
         String logEntry = entry.getCard().getName() + " — the next " + xValue + " damage that would be dealt to "
                 + controllerName + " this turn is prevented. If prevented, " + entry.getCard().getName()
                 + " deals that much damage to " + targetName + ".";
-        gameBroadcastService.logAndBroadcast(gameData, GameLog.builder().card(entry.getCard()).text(" — the next " + xValue + " damage that would be dealt to " + controllerName + " this turn is prevented. If prevented, ").card(entry.getCard()).text(" deals that much damage to " + targetName + ".").build());
+        gameLogService.append(gameData, GameLog.builder().card(entry.getCard()).text(" — the next " + xValue + " damage that would be dealt to " + controllerName + " this turn is prevented. If prevented, ").card(entry.getCard()).text(" deals that much damage to " + targetName + ".").build());
         log.info("Game {} - Damage redirect shield {} added: protecting {} → redirecting to {}",
                 gameData.id, xValue, controllerName, targetName);
     }

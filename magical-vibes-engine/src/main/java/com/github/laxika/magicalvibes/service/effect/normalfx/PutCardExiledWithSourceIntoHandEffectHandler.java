@@ -8,7 +8,7 @@ import com.github.laxika.magicalvibes.model.PendingReturnExiledWithSourceCard;
 import com.github.laxika.magicalvibes.model.StackEntry;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
 import com.github.laxika.magicalvibes.model.effect.PutCardExiledWithSourceIntoHandEffect;
-import com.github.laxika.magicalvibes.service.GameBroadcastService;
+import com.github.laxika.magicalvibes.service.GameLogService;
 import com.github.laxika.magicalvibes.service.interaction.InteractionHandlerRegistry;
 import java.util.ArrayList;
 import java.util.List;
@@ -28,8 +28,9 @@ import org.springframework.stereotype.Component;
 @RequiredArgsConstructor
 public class PutCardExiledWithSourceIntoHandEffectHandler implements NormalEffectHandlerBean {
 
-    private final GameBroadcastService gameBroadcastService;
+    private final GameLogService gameLogService;
     private final InteractionHandlerRegistry interactionHandlerRegistry;
+    private final com.github.laxika.magicalvibes.service.event.GameMutationCoordinator mutationCoordinator;
 
     @Override
     public Class<? extends CardEffect> handledEffect() {
@@ -51,7 +52,7 @@ public class PutCardExiledWithSourceIntoHandEffectHandler implements NormalEffec
                 .toList();
 
         if (matching.isEmpty()) {
-            gameBroadcastService.logAndBroadcast(gameData, GameLog.text(controllerName + " has no cards exiled with " + sourceName + "."));
+            gameLogService.append(gameData, GameLog.text(controllerName + " has no cards exiled with " + sourceName + "."));
             return;
         }
 
@@ -59,7 +60,7 @@ public class PutCardExiledWithSourceIntoHandEffectHandler implements NormalEffec
             Card card = matching.getFirst();
             gameData.removeFromExile(card.getId());
             gameData.addCardToHand(controllerId, card);
-            gameBroadcastService.logAndBroadcast(gameData, GameLog.textCardText(controllerName + " puts ", card, " from exile into their hand."));
+            gameLogService.append(gameData, GameLog.textCardText(controllerName + " puts ", card, " from exile into their hand."));
             log.info("Game {} - {} returns {} from exile ({}) to hand",
                     gameData.id, controllerName, card.getName(), sourceName);
             return;
@@ -71,7 +72,7 @@ public class PutCardExiledWithSourceIntoHandEffectHandler implements NormalEffec
                 controllerId, new ArrayList<>(matching), validIds,
                 false, true, false, false, false, 0, null, 1,
                 "Choose a card exiled with " + sourceName + " to put into your hand."));
-        gameBroadcastService.invalidateAllPlayerViews(gameData);
+        mutationCoordinator.invalidateAllPlayerViews(gameData);
 
         log.info("Game {} - {} chooses from {} cards exiled with {}",
                 gameData.id, controllerName, matching.size(), sourceName);

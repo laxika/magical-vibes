@@ -7,7 +7,7 @@ import com.github.laxika.magicalvibes.model.StackEntry;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
 import com.github.laxika.magicalvibes.model.effect.PutOnTopOfLibraryScope;
 import com.github.laxika.magicalvibes.model.effect.PutTargetOnTopOfLibraryEffect;
-import com.github.laxika.magicalvibes.service.GameBroadcastService;
+import com.github.laxika.magicalvibes.service.GameLogService;
 import com.github.laxika.magicalvibes.service.battlefield.GameQueryService;
 import com.github.laxika.magicalvibes.service.battlefield.PermanentRemovalService;
 import lombok.RequiredArgsConstructor;
@@ -20,7 +20,7 @@ import org.springframework.stereotype.Component;
 public class PutTargetOnTopOfLibraryEffectHandler implements NormalEffectHandlerBean {
 
     private final GameQueryService gameQueryService;
-    private final GameBroadcastService gameBroadcastService;
+    private final GameLogService gameLogService;
     private final PermanentRemovalService permanentRemovalService;
 
     @Override
@@ -38,7 +38,7 @@ public class PutTargetOnTopOfLibraryEffectHandler implements NormalEffectHandler
                 if (target == null) return;
 
                 if (permanentRemovalService.removePermanentToLibraryTop(gameData, target)) {
-                    gameBroadcastService.logAndBroadcast(gameData, GameLog.cardThen(target.getCard(), " is put on top of its owner's library."));
+                    gameLogService.append(gameData, GameLog.cardThen(target.getCard(), " is put on top of its owner's library."));
                     log.info("Game {} - {} put on top of library", gameData.id, target.getCard().getName());
                 }
 

@@ -6,7 +6,7 @@ import com.github.laxika.magicalvibes.model.PendingMayAbility;
 import com.github.laxika.magicalvibes.model.Player;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
 import com.github.laxika.magicalvibes.model.effect.GameOfChaosFlipAgainEffect;
-import com.github.laxika.magicalvibes.service.GameBroadcastService;
+import com.github.laxika.magicalvibes.service.GameLogService;
 import com.github.laxika.magicalvibes.service.effect.normalfx.GameOfChaosSupport;
 import com.github.laxika.magicalvibes.service.input.InputCompletionService;
 import java.util.UUID;
@@ -23,7 +23,7 @@ import org.springframework.stereotype.Component;
 public class GameOfChaosFlipAgainHandler implements MayEffectHandlerBean {
 
     private final GameOfChaosSupport gameOfChaosSupport;
-    private final GameBroadcastService gameBroadcastService;
+    private final GameLogService gameLogService;
     private final InputCompletionService inputCompletionService;
 
     @Override
@@ -37,7 +37,7 @@ public class GameOfChaosFlipAgainHandler implements MayEffectHandlerBean {
         String sourceName = ability.sourceCard().getName();
 
         if (!accepted) {
-            gameBroadcastService.logAndBroadcast(gameData, GameLog.text(
+            gameLogService.append(gameData, GameLog.text(
                     player.getUsername() + " declines to flip again (" + sourceName + ")."));
             inputCompletionService.sbaProcessMayAbilitiesThenAutoPass(gameData);
             return;

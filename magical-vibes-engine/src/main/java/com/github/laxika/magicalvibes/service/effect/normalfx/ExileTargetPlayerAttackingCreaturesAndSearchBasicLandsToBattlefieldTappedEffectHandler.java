@@ -17,7 +17,7 @@ import java.util.List;
 import java.util.UUID;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
-import com.github.laxika.magicalvibes.service.GameBroadcastService;
+import com.github.laxika.magicalvibes.service.GameLogService;
 import com.github.laxika.magicalvibes.service.battlefield.PermanentRemovalService;
 import org.springframework.stereotype.Component;
 
@@ -27,7 +27,7 @@ import org.springframework.stereotype.Component;
 public class ExileTargetPlayerAttackingCreaturesAndSearchBasicLandsToBattlefieldTappedEffectHandler implements NormalEffectHandlerBean {
 
     private final PermanentRemovalService permanentRemovalService;
-    private final GameBroadcastService gameBroadcastService;
+    private final GameLogService gameLogService;
     private final LibrarySearchSupport librarySearchSupport;
 
     @Override
@@ -62,7 +62,7 @@ public class ExileTargetPlayerAttackingCreaturesAndSearchBasicLandsToBattlefield
         int exiledCount = 0;
         for (Permanent creature : attackingCreatures) {
             permanentRemovalService.removePermanentToExile(gameData, creature);
-            gameBroadcastService.logAndBroadcast(gameData, GameLog.cardThen(creature.getCard(), " is exiled."));
+            gameLogService.append(gameData, GameLog.cardThen(creature.getCard(), " is exiled."));
             log.info("Game {} - {} is exiled by {}",
                     gameData.id, creature.getCard().getName(), entry.getCard().getName());
             exiledCount++;
@@ -82,7 +82,7 @@ public class ExileTargetPlayerAttackingCreaturesAndSearchBasicLandsToBattlefield
 
         if (deck == null || deck.isEmpty()) {
             String logMsg = playerName + " searches their library but it is empty. Library is shuffled.";
-            gameBroadcastService.logAndBroadcast(gameData, GameLog.text(logMsg));
+            gameLogService.append(gameData, GameLog.text(logMsg));
             return;
         }
 
@@ -93,7 +93,7 @@ public class ExileTargetPlayerAttackingCreaturesAndSearchBasicLandsToBattlefield
         if (basicLands.isEmpty()) {
             LibraryShuffleHelper.shuffleLibrary(gameData, targetPlayerId);
             String logMsg = playerName + " searches their library but finds no basic land cards. Library is shuffled.";
-            gameBroadcastService.logAndBroadcast(gameData, GameLog.text(logMsg));
+            gameLogService.append(gameData, GameLog.text(logMsg));
             return;
         }
 

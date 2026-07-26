@@ -6,7 +6,7 @@ import com.github.laxika.magicalvibes.model.StackEntry;
 import com.github.laxika.magicalvibes.model.action.DamageAtNextUpkeepUnlessPays;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
 import com.github.laxika.magicalvibes.model.effect.RegisterDamageAtNextUpkeepUnlessPaysEffect;
-import com.github.laxika.magicalvibes.service.GameBroadcastService;
+import com.github.laxika.magicalvibes.service.GameLogService;
 import java.util.UUID;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -22,7 +22,7 @@ import org.springframework.stereotype.Component;
 @RequiredArgsConstructor
 public class RegisterDamageAtNextUpkeepUnlessPaysEffectHandler implements NormalEffectHandlerBean {
 
-    private final GameBroadcastService gameBroadcastService;
+    private final GameLogService gameLogService;
 
     @Override
     public Class<? extends CardEffect> handledEffect() {
@@ -39,7 +39,7 @@ public class RegisterDamageAtNextUpkeepUnlessPaysEffectHandler implements Normal
         gameData.queueDelayedAction(new DamageAtNextUpkeepUnlessPays(
                 spellControllerId, targetId, e.damage(), e.manaCost(), entry.getCard()));
 
-        gameBroadcastService.logAndBroadcast(gameData, GameLog.text(entry.getCard().getName()
+        gameLogService.append(gameData, GameLog.text(entry.getCard().getName()
                 + " will deal an additional " + e.damage() + " damage at the beginning of "
                 + gameData.playerIdToName.get(spellControllerId) + "'s next upkeep unless " + e.manaCost()
                 + " is paid first."));

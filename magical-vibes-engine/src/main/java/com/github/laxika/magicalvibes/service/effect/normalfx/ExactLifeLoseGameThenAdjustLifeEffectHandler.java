@@ -6,7 +6,7 @@ import com.github.laxika.magicalvibes.model.GameStatus;
 import com.github.laxika.magicalvibes.model.StackEntry;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
 import com.github.laxika.magicalvibes.model.effect.ExactLifeLoseGameThenAdjustLifeEffect;
-import com.github.laxika.magicalvibes.service.GameBroadcastService;
+import com.github.laxika.magicalvibes.service.GameLogService;
 import com.github.laxika.magicalvibes.service.GameOutcomeService;
 import com.github.laxika.magicalvibes.service.battlefield.GameQueryService;
 import lombok.RequiredArgsConstructor;
@@ -27,7 +27,7 @@ import java.util.UUID;
 public class ExactLifeLoseGameThenAdjustLifeEffectHandler implements NormalEffectHandlerBean {
 
     private final GameOutcomeService gameOutcomeService;
-    private final GameBroadcastService gameBroadcastService;
+    private final GameLogService gameLogService;
     private final GameQueryService gameQueryService;
     private final LifeSupport lifeSupport;
 
@@ -52,7 +52,7 @@ public class ExactLifeLoseGameThenAdjustLifeEffectHandler implements NormalEffec
         List<UUID> losers = new ArrayList<>();
         for (UUID playerId : atExactLife) {
             if (!gameQueryService.canPlayerLoseGame(gameData, playerId)) {
-                gameBroadcastService.logAndBroadcast(gameData,
+                gameLogService.append(gameData,
                         GameLog.text(gameData.playerIdToName.get(playerId) + " can't lose the game."));
                 continue;
             }
@@ -66,7 +66,7 @@ public class ExactLifeLoseGameThenAdjustLifeEffectHandler implements NormalEffec
         if (!losers.isEmpty()) {
             for (UUID loserId : losers) {
                 String loserName = gameData.playerIdToName.get(loserId);
-                gameBroadcastService.logAndBroadcast(gameData,
+                gameLogService.append(gameData,
                         GameLog.textCardText(loserName + " loses the game from ", entry.getCard(), "."));
                 log.info("Game {} - {} loses the game from {}", gameData.id, loserName, sourceName);
             }

@@ -4,7 +4,7 @@ import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.GameData;
 import com.github.laxika.magicalvibes.model.GameLog;
 import com.github.laxika.magicalvibes.model.PendingInteraction;
-import com.github.laxika.magicalvibes.service.GameBroadcastService;
+import com.github.laxika.magicalvibes.service.GameLogService;
 import com.github.laxika.magicalvibes.service.interaction.InteractionHandlerRegistry;
 import com.github.laxika.magicalvibes.service.library.LibraryShuffleHelper;
 import java.util.ArrayList;
@@ -28,7 +28,7 @@ import org.springframework.stereotype.Component;
 public class KeepCardsInHandSupport {
 
     private final InteractionHandlerRegistry interactionHandlerRegistry;
-    private final GameBroadcastService gameBroadcastService;
+    private final GameLogService gameLogService;
 
     /**
      * Begins the keep-choice for the first player in {@code orderedPlayerIds} who has a non-empty
@@ -75,7 +75,7 @@ public class KeepCardsInHandSupport {
         });
 
         if (toShuffle.isEmpty()) {
-            gameBroadcastService.logAndBroadcast(gameData, GameLog.text(playerName + " keeps their hand (" + LibraryShuffleSupport.pluralCards(hand.size())
+            gameLogService.append(gameData, GameLog.text(playerName + " keeps their hand (" + LibraryShuffleSupport.pluralCards(hand.size())
                             + ") — nothing shuffled into their library (" + cardName + ")."));
             return;
         }
@@ -84,7 +84,7 @@ public class KeepCardsInHandSupport {
         deck.addAll(toShuffle);
         LibraryShuffleHelper.shuffleLibrary(gameData, playerId);
 
-        gameBroadcastService.logAndBroadcast(gameData, GameLog.text(playerName + " keeps " + LibraryShuffleSupport.pluralCards(hand.size()) + " and shuffles "
+        gameLogService.append(gameData, GameLog.text(playerName + " keeps " + LibraryShuffleSupport.pluralCards(hand.size()) + " and shuffles "
                         + LibraryShuffleSupport.pluralCards(toShuffle.size()) + " into their library (" + cardName + ")."));
         log.info("Game {} - {} keeps {} and shuffles {} into library ({})",
                 gameData.id, playerName, hand.size(), toShuffle.size(), cardName);

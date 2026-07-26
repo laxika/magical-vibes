@@ -7,7 +7,7 @@ import com.github.laxika.magicalvibes.model.StackEntry;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
 import com.github.laxika.magicalvibes.model.effect.DiscardOwnHandThenDrawEqualToTargetPlayerHandSizeEffect;
 import com.github.laxika.magicalvibes.service.DrawService;
-import com.github.laxika.magicalvibes.service.GameBroadcastService;
+import com.github.laxika.magicalvibes.service.GameLogService;
 import com.github.laxika.magicalvibes.service.graveyard.GraveyardService;
 import com.github.laxika.magicalvibes.service.trigger.TriggerCollectionService;
 import java.util.ArrayList;
@@ -23,7 +23,7 @@ import org.springframework.stereotype.Component;
 public class DiscardOwnHandThenDrawEqualToTargetPlayerHandSizeEffectHandler implements NormalEffectHandlerBean {
 
     private final DrawService drawService;
-    private final GameBroadcastService gameBroadcastService;
+    private final GameLogService gameLogService;
     private final GraveyardService graveyardService;
     private final TriggerCollectionService triggerCollectionService;
 
@@ -57,7 +57,7 @@ public class DiscardOwnHandThenDrawEqualToTargetPlayerHandSizeEffectHandler impl
 
             String discardLog = playerName + " discards their hand (" + discardCount
                     + " card" + (discardCount != 1 ? "s" : "") + ") (" + cardName + ").";
-            gameBroadcastService.logAndBroadcast(gameData, GameLog.text(discardLog));
+            gameLogService.append(gameData, GameLog.text(discardLog));
             log.info("Game {} - {} discards hand of {} cards for {}", gameData.id, playerName, discardCount, cardName);
         }
 
@@ -68,7 +68,7 @@ public class DiscardOwnHandThenDrawEqualToTargetPlayerHandSizeEffectHandler impl
         }
         if (drawCount > 0) {
             String drawLog = playerName + " draws " + drawCount + " card" + (drawCount != 1 ? "s" : "") + ".";
-            gameBroadcastService.logAndBroadcast(gameData, GameLog.text(drawLog));
+            gameLogService.append(gameData, GameLog.text(drawLog));
             log.info("Game {} - {} draws {} cards for {}", gameData.id, playerName, drawCount, cardName);
         }
     }

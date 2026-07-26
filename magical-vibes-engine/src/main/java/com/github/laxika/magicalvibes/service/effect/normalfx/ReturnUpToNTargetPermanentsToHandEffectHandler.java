@@ -6,7 +6,7 @@ import com.github.laxika.magicalvibes.model.MultiPermanentChoiceContext;
 import com.github.laxika.magicalvibes.model.StackEntry;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
 import com.github.laxika.magicalvibes.model.effect.ReturnUpToNTargetPermanentsToHandEffect;
-import com.github.laxika.magicalvibes.service.GameBroadcastService;
+import com.github.laxika.magicalvibes.service.GameLogService;
 import com.github.laxika.magicalvibes.service.input.PlayerInputService;
 import java.util.ArrayList;
 import java.util.List;
@@ -23,7 +23,7 @@ import org.springframework.stereotype.Component;
 @RequiredArgsConstructor
 public class ReturnUpToNTargetPermanentsToHandEffectHandler implements NormalEffectHandlerBean {
 
-    private final GameBroadcastService gameBroadcastService;
+    private final GameLogService gameLogService;
     private final PlayerInputService playerInputService;
 
     @Override
@@ -40,7 +40,7 @@ public class ReturnUpToNTargetPermanentsToHandEffectHandler implements NormalEff
         gameData.forEachPermanent((pid, permanent) -> permanentIds.add(permanent.getId()));
 
         if (permanentIds.isEmpty()) {
-            gameBroadcastService.logAndBroadcast(gameData, GameLog.cardThen(entry.getCard(), " has no permanents to return."));
+            gameLogService.append(gameData, GameLog.cardThen(entry.getCard(), " has no permanents to return."));
             return;
         }
 

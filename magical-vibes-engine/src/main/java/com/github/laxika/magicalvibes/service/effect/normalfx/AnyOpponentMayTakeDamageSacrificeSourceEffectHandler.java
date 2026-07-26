@@ -12,7 +12,7 @@ import com.github.laxika.magicalvibes.model.effect.CardEffect;
 import com.github.laxika.magicalvibes.model.effect.DamageRecipient;
 import com.github.laxika.magicalvibes.model.effect.DealDamageToPlayersEffect;
 import com.github.laxika.magicalvibes.model.effect.SacrificeSelfEffect;
-import com.github.laxika.magicalvibes.service.GameBroadcastService;
+import com.github.laxika.magicalvibes.service.GameLogService;
 import com.github.laxika.magicalvibes.service.battlefield.GameQueryService;
 import java.util.ArrayList;
 import java.util.List;
@@ -33,7 +33,7 @@ import org.springframework.stereotype.Component;
 public class AnyOpponentMayTakeDamageSacrificeSourceEffectHandler implements NormalEffectHandlerBean {
 
     private final GameQueryService gameQueryService;
-    private final GameBroadcastService gameBroadcastService;
+    private final GameLogService gameLogService;
     private final DealDamageToPlayersEffectHandler dealDamageToPlayersEffectHandler;
     private final SacrificeSelfEffectHandler sacrificeSelfEffectHandler;
 
@@ -96,7 +96,7 @@ public class AnyOpponentMayTakeDamageSacrificeSourceEffectHandler implements Nor
                 opponentId,
                 effect.sourcePermanentId());
         dealDamageToPlayersEffectHandler.resolve(gameData, damageEntry, damage);
-        gameBroadcastService.logAndBroadcast(gameData, GameLog.textCardText(
+        gameLogService.append(gameData, GameLog.textCardText(
                 gameData.playerIdToName.get(opponentId) + " chooses to be dealt damage by ",
                 ability.sourceCard(), "."));
     }

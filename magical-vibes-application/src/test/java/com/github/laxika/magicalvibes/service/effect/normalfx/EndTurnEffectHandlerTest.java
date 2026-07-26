@@ -11,7 +11,7 @@ import com.github.laxika.magicalvibes.model.StackEntry;
 import com.github.laxika.magicalvibes.model.StackEntryType;
 import com.github.laxika.magicalvibes.model.TurnStep;
 import com.github.laxika.magicalvibes.model.effect.EndTurnEffect;
-import com.github.laxika.magicalvibes.service.GameBroadcastService;
+import com.github.laxika.magicalvibes.service.GameLogService;
 import com.github.laxika.magicalvibes.service.battlefield.CreatureControlService;
 import com.github.laxika.magicalvibes.service.combat.CombatService;
 import com.github.laxika.magicalvibes.service.exile.ExileService;
@@ -37,7 +37,7 @@ import static org.mockito.Mockito.verify;
 class EndTurnEffectHandlerTest {
 
     @Mock private CombatService combatService;
-    @Mock private GameBroadcastService gameBroadcastService;
+    @Mock private GameLogService gameLogService;
     @Mock private CreatureControlService creatureControlService;
     @Mock private TurnCleanupService turnCleanupService;
     @Mock private ExileService exileService;
@@ -68,7 +68,7 @@ class EndTurnEffectHandlerTest {
         gd.playerGraveyards.put(player2Id, Collections.synchronizedList(new ArrayList<>()));
         gd.playerDecks.put(player1Id, Collections.synchronizedList(new ArrayList<>()));
         gd.playerDecks.put(player2Id, Collections.synchronizedList(new ArrayList<>()));
-        endTurnEffectHandler = new EndTurnEffectHandler(turnSupport, gameBroadcastService);
+        endTurnEffectHandler = new EndTurnEffectHandler(turnSupport, gameLogService);
 
     }
 
@@ -252,7 +252,7 @@ class EndTurnEffectHandlerTest {
 
                 endTurnEffectHandler.resolve(gd, entry, new EndTurnEffect());
 
-                verify(gameBroadcastService).logAndBroadcast(eq(gd), eq(GameLog.text("The turn ends.")));
+                verify(gameLogService).append(eq(gd), eq(GameLog.text("The turn ends.")));
             }
 
             @Test

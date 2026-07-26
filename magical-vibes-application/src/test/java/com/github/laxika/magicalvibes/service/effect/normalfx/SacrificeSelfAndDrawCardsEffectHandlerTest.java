@@ -62,7 +62,7 @@ class SacrificeSelfAndDrawCardsEffectHandlerTest extends AbstractPlayerInteracti
 
                 verify(permanentRemovalService, never()).removePermanentToGraveyard(any(), any());
                 verify(drawService, never()).resolveDrawCard(any(), any());
-                verify(gameBroadcastService).logAndBroadcast(eq(gd), argThat((GameLogEntry logEntry) ->
+                verify(gameLogService).append(eq(gd), argThat((GameLogEntry logEntry) ->
                         logEntry.plainText().contains("fizzles")));
             }
 }

@@ -6,7 +6,7 @@ import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.StackEntry;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
 import com.github.laxika.magicalvibes.model.effect.SacrificeEnchantedCreatureAndCreateTokenEffect;
-import com.github.laxika.magicalvibes.service.GameBroadcastService;
+import com.github.laxika.magicalvibes.service.GameLogService;
 import com.github.laxika.magicalvibes.service.battlefield.GameQueryService;
 import com.github.laxika.magicalvibes.service.battlefield.PermanentRemovalService;
 import java.util.UUID;
@@ -21,7 +21,7 @@ public class SacrificeEnchantedCreatureAndCreateTokenEffectHandler implements No
 
     private final PermanentControlSupport permanentControlSupport;
     private final GameQueryService gameQueryService;
-    private final GameBroadcastService gameBroadcastService;
+    private final GameLogService gameLogService;
     private final PermanentRemovalService permanentRemovalService;
 
     @Override
@@ -59,7 +59,7 @@ public class SacrificeEnchantedCreatureAndCreateTokenEffectHandler implements No
                 // Sacrifice the enchanted creature (its controller sacrifices it)
                 String sacrificeLog = enchantedCreature.getCard().getName() + " is sacrificed ("
                         + entry.getCard().getName() + ").";
-                gameBroadcastService.logAndBroadcast(gameData, GameLog.cardTextCard(enchantedCreature.getCard(), " is sacrificed (", entry.getCard(), ")."));
+                gameLogService.append(gameData, GameLog.cardTextCard(enchantedCreature.getCard(), " is sacrificed (", entry.getCard(), ")."));
                 log.info("Game {} - {} sacrificed by {}", gameData.id,
                         enchantedCreature.getCard().getName(), entry.getCard().getName());
 

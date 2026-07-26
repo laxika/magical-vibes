@@ -8,7 +8,7 @@ import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.StackEntry;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
 import com.github.laxika.magicalvibes.model.effect.PayManaPerTappedCreatureToUntapEffect;
-import com.github.laxika.magicalvibes.service.GameBroadcastService;
+import com.github.laxika.magicalvibes.service.GameLogService;
 import com.github.laxika.magicalvibes.service.filter.PredicateEvaluationService;
 import com.github.laxika.magicalvibes.service.input.PlayerInputService;
 import java.util.ArrayList;
@@ -31,7 +31,7 @@ import org.springframework.stereotype.Component;
 public class PayManaPerTappedCreatureToUntapEffectHandler implements NormalEffectHandlerBean {
 
     private final PredicateEvaluationService predicateEvaluationService;
-    private final GameBroadcastService gameBroadcastService;
+    private final GameLogService gameLogService;
     private final PlayerInputService playerInputService;
 
     @Override
@@ -68,7 +68,7 @@ public class PayManaPerTappedCreatureToUntapEffectHandler implements NormalEffec
         int maxCount = Math.min(tappedMatchingIds.size(), affordable);
 
         if (maxCount <= 0) {
-            gameBroadcastService.logAndBroadcast(gameData, GameLog.builder().card(entry.getCard()).text(" triggers, but " + gameData.playerIdToName.get(actingPlayerId) + " can't pay to untap any creatures.").build());
+            gameLogService.append(gameData, GameLog.builder().card(entry.getCard()).text(" triggers, but " + gameData.playerIdToName.get(actingPlayerId) + " can't pay to untap any creatures.").build());
             return;
         }
 

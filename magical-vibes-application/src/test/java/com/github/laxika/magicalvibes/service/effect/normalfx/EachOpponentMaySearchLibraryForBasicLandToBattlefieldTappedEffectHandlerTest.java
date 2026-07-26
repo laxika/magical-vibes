@@ -17,7 +17,7 @@ import com.github.laxika.magicalvibes.networking.SessionManager;
 import com.github.laxika.magicalvibes.networking.model.CardView;
 import com.github.laxika.magicalvibes.networking.service.CardViewFactory;
 import com.github.laxika.magicalvibes.service.DrawService;
-import com.github.laxika.magicalvibes.service.GameBroadcastService;
+import com.github.laxika.magicalvibes.service.GameLogService;
 import com.github.laxika.magicalvibes.service.input.PlayerInputService;
 import com.github.laxika.magicalvibes.service.battlefield.GameQueryService;
 import com.github.laxika.magicalvibes.service.battlefield.PermanentRemovalService;
@@ -43,7 +43,7 @@ class EachOpponentMaySearchLibraryForBasicLandToBattlefieldTappedEffectHandlerTe
     @Mock
     private DrawService drawService;
     @Mock
-    private GameBroadcastService gameBroadcastService;
+    private GameLogService gameLogService;
     @Mock
     private SessionManager sessionManager;
     @Mock
@@ -62,8 +62,8 @@ class EachOpponentMaySearchLibraryForBasicLandToBattlefieldTappedEffectHandlerTe
 
     @BeforeEach
     void setUp() {
-        support = new LibrarySearchSupport(gameBroadcastService,
-                InteractionRegistryTestSupport.registryFor(sessionManager, cardViewFactory, gameBroadcastService));
+        support = new LibrarySearchSupport(gameLogService,
+                InteractionRegistryTestSupport.registryFor(sessionManager, cardViewFactory, gameLogService));
 
         player1Id = UUID.randomUUID();
         player2Id = UUID.randomUUID();

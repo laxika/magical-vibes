@@ -40,7 +40,7 @@ class MultiGraveyardChoiceAiStrategy implements AiInteractionStrategy<PendingInt
         List<UUID> chosen = validIds.stream().limit(interaction.maxCount()).toList();
 
         log.info("AI: Choosing {} graveyard cards in game {}", chosen.size(), ctx.gameId());
-        ctx.gameActions().answerInteraction(ctx.selfConnection(), new InteractionAnswer.CardsChosen(chosen));
+        ctx.gameActions().answerInteraction(new InteractionAnswer.CardsChosen(chosen));
     }
 
     /** Keep only the cards belonging to whichever graveyard holds the most selectable cards. */

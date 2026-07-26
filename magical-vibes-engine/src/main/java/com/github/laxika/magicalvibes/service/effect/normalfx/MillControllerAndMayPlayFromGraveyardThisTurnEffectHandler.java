@@ -6,7 +6,7 @@ import com.github.laxika.magicalvibes.model.GameLog;
 import com.github.laxika.magicalvibes.model.StackEntry;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
 import com.github.laxika.magicalvibes.model.effect.MillControllerAndMayPlayFromGraveyardThisTurnEffect;
-import com.github.laxika.magicalvibes.service.GameBroadcastService;
+import com.github.laxika.magicalvibes.service.GameLogService;
 import com.github.laxika.magicalvibes.service.graveyard.GraveyardService;
 import java.util.List;
 import java.util.UUID;
@@ -20,7 +20,7 @@ import org.springframework.stereotype.Component;
 public class MillControllerAndMayPlayFromGraveyardThisTurnEffectHandler implements NormalEffectHandlerBean {
 
     private final GraveyardService graveyardService;
-    private final GameBroadcastService gameBroadcastService;
+    private final GameLogService gameLogService;
 
     @Override
     public Class<? extends CardEffect> handledEffect() {
@@ -35,7 +35,7 @@ public class MillControllerAndMayPlayFromGraveyardThisTurnEffectHandler implemen
 
         if (deck == null || deck.isEmpty()) {
             String logEntry = controllerName + "'s library is empty — nothing to mill.";
-            gameBroadcastService.logAndBroadcast(gameData, GameLog.text(logEntry));
+            gameLogService.append(gameData, GameLog.text(logEntry));
             return;
         }
 
@@ -47,7 +47,7 @@ public class MillControllerAndMayPlayFromGraveyardThisTurnEffectHandler implemen
 
         String logEntry = controllerName + " mills " + milledCard.getName()
                 + " and may play it from their graveyard this turn.";
-        gameBroadcastService.logAndBroadcast(gameData, GameLog.builder().text(controllerName + " mills ").card(milledCard).text(" and may play it from their graveyard this turn.").build());
+        gameLogService.append(gameData, GameLog.builder().text(controllerName + " mills ").card(milledCard).text(" and may play it from their graveyard this turn.").build());
         log.info("Game {} - {} mills {} and may play it from graveyard this turn",
                 gameData.id, controllerName, milledCard.getName());
     }

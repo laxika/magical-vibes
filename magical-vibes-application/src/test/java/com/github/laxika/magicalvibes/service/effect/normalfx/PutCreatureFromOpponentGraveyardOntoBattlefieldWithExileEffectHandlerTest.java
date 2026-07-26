@@ -9,7 +9,7 @@ import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.StackEntry;
 import com.github.laxika.magicalvibes.model.StackEntryType;
 import com.github.laxika.magicalvibes.model.effect.PutCreatureFromOpponentGraveyardOntoBattlefieldWithExileEffect;
-import com.github.laxika.magicalvibes.service.GameBroadcastService;
+import com.github.laxika.magicalvibes.service.GameLogService;
 import com.github.laxika.magicalvibes.service.input.PlayerInputService;
 import com.github.laxika.magicalvibes.service.battlefield.BattlefieldEntryService;
 import com.github.laxika.magicalvibes.service.battlefield.GameQueryService;
@@ -48,7 +48,7 @@ class PutCreatureFromOpponentGraveyardOntoBattlefieldWithExileEffectHandlerTest 
     @Mock
     private GameQueryService gameQueryService;
     @Mock
-    private GameBroadcastService gameBroadcastService;
+    private GameLogService gameLogService;
     @Mock
     private PlayerInputService playerInputService;
     @Mock
@@ -85,7 +85,7 @@ class PutCreatureFromOpponentGraveyardOntoBattlefieldWithExileEffectHandlerTest 
         gd.playerDecks.put(player1Id, Collections.synchronizedList(new ArrayList<>()));
         gd.playerDecks.put(player2Id, Collections.synchronizedList(new ArrayList<>()));
         putCreatureFromOpponentGraveyardHandler = new PutCreatureFromOpponentGraveyardOntoBattlefieldWithExileEffectHandler(
-                battlefieldEntryService, gameBroadcastService, support);
+                battlefieldEntryService, gameLogService, support);
 
     }
 
@@ -96,7 +96,7 @@ class PutCreatureFromOpponentGraveyardOntoBattlefieldWithExileEffectHandlerTest 
         }
 
         // =========================================================================
-        // describeFilter â€” static utility method
+        // describeFilter A?€�t static utility method
         // =========================================================================
 
     @Test
@@ -142,7 +142,7 @@ class PutCreatureFromOpponentGraveyardOntoBattlefieldWithExileEffectHandlerTest 
 
                 putCreatureFromOpponentGraveyardHandler.resolve(gd, entry, effect);
 
-                verify(gameBroadcastService).logAndBroadcast(eq(gd), argThat((GameLogEntry logEntry) -> logEntry.plainText().contains("fizzles")));
+                verify(gameLogService).append(eq(gd), argThat((GameLogEntry logEntry) -> logEntry.plainText().contains("fizzles")));
                 verify(battlefieldEntryService, never()).putPermanentOntoBattlefield(
                         any(), any(), any(Permanent.class), any());
             }
@@ -163,7 +163,7 @@ class PutCreatureFromOpponentGraveyardOntoBattlefieldWithExileEffectHandlerTest 
 
                 putCreatureFromOpponentGraveyardHandler.resolve(gd, entry, effect);
 
-                verify(gameBroadcastService).logAndBroadcast(eq(gd),
+                verify(gameLogService).append(eq(gd),
                         argThat((GameLogEntry logEntry) -> logEntry.plainText().contains("fizzles") && logEntry.plainText().contains("not in opponent's graveyard")));
                 verify(battlefieldEntryService, never()).putPermanentOntoBattlefield(
                         any(), any(), any(Permanent.class), any());

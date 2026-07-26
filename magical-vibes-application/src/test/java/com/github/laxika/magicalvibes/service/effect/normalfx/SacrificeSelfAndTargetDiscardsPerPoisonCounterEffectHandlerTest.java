@@ -53,7 +53,7 @@ class SacrificeSelfAndTargetDiscardsPerPoisonCounterEffectHandlerTest extends Ab
 
                 verify(permanentRemovalService).removePermanentToGraveyard(gd, source);
                 verify(playerInputService, never()).beginDiscardChoice(any(), any(), anyInt());
-                verify(gameBroadcastService).logAndBroadcast(eq(gd), argThat((GameLogEntry logEntry) ->
+                verify(gameLogService).append(eq(gd), argThat((GameLogEntry logEntry) ->
                         logEntry.plainText().contains("no poison counters")));
             }
 
@@ -70,7 +70,7 @@ class SacrificeSelfAndTargetDiscardsPerPoisonCounterEffectHandlerTest extends Ab
                 resolveEffect(gd, entry, effect);
 
                 verify(permanentRemovalService, never()).removePermanentToGraveyard(any(), any());
-                verify(gameBroadcastService).logAndBroadcast(eq(gd), argThat((GameLogEntry logEntry) ->
+                verify(gameLogService).append(eq(gd), argThat((GameLogEntry logEntry) ->
                         logEntry.plainText().contains("fizzles")));
             }
 

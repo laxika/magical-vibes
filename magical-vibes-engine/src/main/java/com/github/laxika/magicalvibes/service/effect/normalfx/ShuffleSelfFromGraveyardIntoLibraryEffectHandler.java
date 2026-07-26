@@ -6,7 +6,7 @@ import com.github.laxika.magicalvibes.model.GameLog;
 import com.github.laxika.magicalvibes.model.StackEntry;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
 import com.github.laxika.magicalvibes.model.effect.ShuffleSelfFromGraveyardIntoLibraryEffect;
-import com.github.laxika.magicalvibes.service.GameBroadcastService;
+import com.github.laxika.magicalvibes.service.GameLogService;
 import com.github.laxika.magicalvibes.service.graveyard.GraveyardService;
 import com.github.laxika.magicalvibes.service.library.LibraryShuffleHelper;
 import java.util.List;
@@ -25,7 +25,7 @@ import org.springframework.stereotype.Component;
 @RequiredArgsConstructor
 public class ShuffleSelfFromGraveyardIntoLibraryEffectHandler implements NormalEffectHandlerBean {
 
-    private final GameBroadcastService gameBroadcastService;
+    private final GameLogService gameLogService;
     private final GraveyardService graveyardService;
 
     @Override
@@ -48,7 +48,7 @@ public class ShuffleSelfFromGraveyardIntoLibraryEffectHandler implements NormalE
         graveyardService.notifyCardsLeftGraveyard(gameData, ownerId);
 
         String playerName = gameData.playerIdToName.get(ownerId);
-        gameBroadcastService.logAndBroadcast(gameData, GameLog.textCardText(playerName + " shuffles ", sourceCard, " into their library."));
+        gameLogService.append(gameData, GameLog.textCardText(playerName + " shuffles ", sourceCard, " into their library."));
         log.info("Game {} - {} shuffled into {}'s library", gameData.id, sourceCard.getName(), playerName);
     }
 }

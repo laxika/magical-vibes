@@ -16,7 +16,7 @@ import com.github.laxika.magicalvibes.model.StackEntry;
 import com.github.laxika.magicalvibes.model.StackEntryType;
 import com.github.laxika.magicalvibes.model.effect.ExileTargetPermanentEffect;
 import com.github.laxika.magicalvibes.networking.service.CardViewFactory;
-import com.github.laxika.magicalvibes.service.GameBroadcastService;
+import com.github.laxika.magicalvibes.service.GameLogService;
 import com.github.laxika.magicalvibes.service.exile.ExileService;
 import com.github.laxika.magicalvibes.service.graveyard.GraveyardService;
 import com.github.laxika.magicalvibes.service.input.PlayerInputService;
@@ -46,7 +46,7 @@ class ExileTargetPermanentEffectHandlerTest {
 
     @Mock private GraveyardService graveyardService;
     @Mock private GameQueryService gameQueryService;
-    @Mock private GameBroadcastService gameBroadcastService;
+    @Mock private GameLogService gameLogService;
     @Mock private PermanentRemovalService permanentRemovalService;
     @Mock private PlayerInputService playerInputService;
     @Mock private CardViewFactory cardViewFactory;
@@ -81,7 +81,7 @@ class ExileTargetPermanentEffectHandlerTest {
         gd.playerGraveyards.put(player2Id, Collections.synchronizedList(new ArrayList<>()));
         gd.playerDecks.put(player1Id, Collections.synchronizedList(new ArrayList<>()));
         gd.playerDecks.put(player2Id, Collections.synchronizedList(new ArrayList<>()));
-        exileTargetPermanentHandler = new ExileTargetPermanentEffectHandler(gameQueryService, gameBroadcastService, permanentRemovalService, destructionSupport);
+        exileTargetPermanentHandler = new ExileTargetPermanentEffectHandler(gameQueryService, gameLogService, permanentRemovalService, destructionSupport);
 
     }
 
@@ -168,7 +168,7 @@ class ExileTargetPermanentEffectHandlerTest {
                 exileTargetPermanentHandler.resolve(gd, entry, entry.getEffectsToResolve().getFirst());
 
                 verify(permanentRemovalService).removePermanentToExile(gd, target);
-                verify(gameBroadcastService).logAndBroadcast(eq(gd), argThat((GameLogEntry e) -> e.plainText().equals("Spellbook is exiled.")));
+                verify(gameLogService).append(eq(gd), argThat((GameLogEntry e) -> e.plainText().equals("Spellbook is exiled.")));
                 verify(permanentRemovalService).removeOrphanedAuras(gd);
             }
 
@@ -208,7 +208,7 @@ class ExileTargetPermanentEffectHandlerTest {
 
                 verify(permanentRemovalService).removePermanentToExile(gd, target1);
                 verify(permanentRemovalService).removePermanentToExile(gd, target2);
-                verify(gameBroadcastService, times(2)).logAndBroadcast(eq(gd), argThat((GameLogEntry e) -> e.plainText().equals("Spellbook is exiled.")));
+                verify(gameLogService, times(2)).append(eq(gd), argThat((GameLogEntry e) -> e.plainText().equals("Spellbook is exiled.")));
                 verify(permanentRemovalService).removeOrphanedAuras(gd);
             }
 

@@ -34,7 +34,7 @@ import com.github.laxika.magicalvibes.model.effect.DealDamageToAnyTargetEffect;
 import com.github.laxika.magicalvibes.model.amount.Fixed;
 import com.github.laxika.magicalvibes.model.effect.ReturnToHandEffect;
 import com.github.laxika.magicalvibes.model.amount.Fixed;
-import com.github.laxika.magicalvibes.service.GameBroadcastService;
+import com.github.laxika.magicalvibes.service.GameLogService;
 import com.github.laxika.magicalvibes.model.amount.Fixed;
 import com.github.laxika.magicalvibes.model.amount.Fixed;
 import com.github.laxika.magicalvibes.model.amount.Fixed;
@@ -77,7 +77,7 @@ import com.github.laxika.magicalvibes.model.amount.Fixed;
 @ExtendWith(MockitoExtension.class)
 class CopySpellEffectHandlerTest {
 
-    @Mock private GameBroadcastService gameBroadcastService;
+    @Mock private GameLogService gameLogService;
     @Mock private ValidTargetService validTargetService;
     @Mock private GameQueryService gameQueryService;
     @Mock private CloneService cloneService;
@@ -101,7 +101,7 @@ class CopySpellEffectHandlerTest {
         gd.playerIdToName.put(player2Id, "Player2");
         gd.playerBattlefields.put(player1Id, Collections.synchronizedList(new ArrayList<>()));
         gd.playerBattlefields.put(player2Id, Collections.synchronizedList(new ArrayList<>()));
-        copySpellHandler = new CopySpellEffectHandler(gameBroadcastService, copySupport);
+        copySpellHandler = new CopySpellEffectHandler(gameLogService, copySupport);
 
     }
 
@@ -147,7 +147,7 @@ class CopySpellEffectHandlerTest {
         }
 
         // =========================================================================
-        // resolveCopySpell â€” CopySpellEffect
+        // resolveCopySpell A?€�t CopySpellEffect
         // =========================================================================
 
     @Test
@@ -229,7 +229,7 @@ class CopySpellEffectHandlerTest {
             }
 
             @Test
-            @DisplayName("Copy card has a new identity â€” different UUID from original")
+            @DisplayName("Copy card has a new identity A?€�t different UUID from original")
             void copyHasNewCardIdentity() {
                 Card counselCard = createSpellCard("Counsel of the Soratami", List.of());
                 StackEntry targetEntry = spellEntry(counselCard, player1Id, StackEntryType.SORCERY_SPELL,
@@ -308,7 +308,7 @@ class CopySpellEffectHandlerTest {
             @Test
             @DisplayName("No copy created when target spell was removed from stack")
             void noCopyWhenTargetSpellRemoved() {
-                // Stack is empty â€” target spell already removed
+                // Stack is empty A?€�t target spell already removed
                 Card twincastCard = createCard("Twincast");
                 UUID removedCardId = UUID.randomUUID();
                 StackEntry twincastEntry = copySpellTriggerEntry(twincastCard, player2Id, removedCardId);
@@ -316,7 +316,7 @@ class CopySpellEffectHandlerTest {
                 copySpellHandler.resolve(gd, twincastEntry, new CopySpellEffect());
 
                 assertThat(gd.stack).isEmpty();
-                verify(gameBroadcastService, never()).logAndBroadcast(any(), any(GameLogEntry.class));
+                verify(gameLogService, never()).append(any(), any(GameLogEntry.class));
             }
 
             @Test
@@ -332,7 +332,7 @@ class CopySpellEffectHandlerTest {
 
                 copySpellHandler.resolve(gd, twincastEntry, new CopySpellEffect());
 
-                verify(gameBroadcastService).logAndBroadcast(eq(gd), argThat((GameLogEntry e) -> e.plainText().equals("A copy of Counsel of the Soratami is created.")));
+                verify(gameLogService).append(eq(gd), argThat((GameLogEntry e) -> e.plainText().equals("A copy of Counsel of the Soratami is created.")));
             }
 
             @Test
@@ -346,7 +346,7 @@ class CopySpellEffectHandlerTest {
                 copySpellHandler.resolve(gd, twincastEntry, new CopySpellEffect());
 
                 assertThat(gd.stack).isEmpty();
-                verify(gameBroadcastService, never()).logAndBroadcast(any(), any(GameLogEntry.class));
+                verify(gameLogService, never()).append(any(), any(GameLogEntry.class));
             }
 
             @Test

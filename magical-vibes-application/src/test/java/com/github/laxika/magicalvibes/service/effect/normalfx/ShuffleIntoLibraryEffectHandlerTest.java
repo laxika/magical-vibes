@@ -6,7 +6,7 @@ import com.github.laxika.magicalvibes.model.GameData;
 import com.github.laxika.magicalvibes.model.StackEntry;
 import com.github.laxika.magicalvibes.model.StackEntryType;
 import com.github.laxika.magicalvibes.model.effect.ShuffleIntoLibraryEffect;
-import com.github.laxika.magicalvibes.service.GameBroadcastService;
+import com.github.laxika.magicalvibes.service.GameLogService;
 import com.github.laxika.magicalvibes.service.battlefield.GameQueryService;
 import com.github.laxika.magicalvibes.service.battlefield.PermanentRemovalService;
 import org.junit.jupiter.api.BeforeEach;
@@ -29,7 +29,7 @@ import static org.mockito.Mockito.verify;
 class ShuffleIntoLibraryEffectHandlerTest {
 
     @Mock
-    private GameBroadcastService gameBroadcastService;
+    private GameLogService gameLogService;
     @Mock
     private GameQueryService gameQueryService;
     @Mock
@@ -61,7 +61,7 @@ player1Id = UUID.randomUUID();
         gd.playerDecks.put(player1Id, Collections.synchronizedList(new ArrayList<>()));
         gd.playerDecks.put(player2Id, Collections.synchronizedList(new ArrayList<>()));
         gd.activePlayerId = player1Id;
-        shuffleIntoLibraryEffectHandler = new ShuffleIntoLibraryEffectHandler(gameBroadcastService);
+        shuffleIntoLibraryEffectHandler = new ShuffleIntoLibraryEffectHandler(gameLogService);
 
     }
 
@@ -101,7 +101,7 @@ player1Id = UUID.randomUUID();
 
                 shuffleIntoLibraryEffectHandler.resolve(gd, entry, effect);
 
-                verify(gameBroadcastService).logAndBroadcast(eq(gd), argThat((GameLogEntry logEntry) ->
+                verify(gameLogService).append(eq(gd), argThat((GameLogEntry logEntry) ->
                         logEntry.plainText().contains("shuffled into its owner's library")));
             }
 }

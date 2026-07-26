@@ -8,7 +8,7 @@ import com.github.laxika.magicalvibes.model.GameLog;
 import com.github.laxika.magicalvibes.model.StackEntry;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
 import com.github.laxika.magicalvibes.model.effect.GenesisWaveEffect;
-import com.github.laxika.magicalvibes.service.GameBroadcastService;
+import com.github.laxika.magicalvibes.service.GameLogService;
 import com.github.laxika.magicalvibes.service.graveyard.GraveyardService;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -24,7 +24,7 @@ import java.util.UUID;
 public class GenesisWaveEffectHandler implements NormalEffectHandlerBean {
 
     private final GraveyardService graveyardService;
-    private final GameBroadcastService gameBroadcastService;
+    private final GameLogService gameLogService;
     private final com.github.laxika.magicalvibes.service.interaction.InteractionHandlerRegistry interactionHandlerRegistry;
 
     @Override
@@ -41,7 +41,7 @@ public class GenesisWaveEffectHandler implements NormalEffectHandlerBean {
 
         if (xValue <= 0 || deck.isEmpty()) {
             String logMsg = playerName + " casts Genesis Wave with X=" + xValue + " — no cards revealed.";
-            gameBroadcastService.logAndBroadcast(gameData, GameLog.text(logMsg));
+            gameLogService.append(gameData, GameLog.text(logMsg));
             return;
         }
 
@@ -59,14 +59,14 @@ public class GenesisWaveEffectHandler implements NormalEffectHandlerBean {
         }
 
         String logMsg = playerName + " reveals the top " + count + " cards of their library.";
-        gameBroadcastService.logAndBroadcast(gameData, GameLog.text(logMsg));
+        gameLogService.append(gameData, GameLog.text(logMsg));
 
         if (eligibleCards.isEmpty()) {
             for (Card card : revealedCards) {
                 graveyardService.addCardToGraveyard(gameData, controllerId, card);
             }
             String graveyardLog = playerName + " finds no eligible permanent cards. All revealed cards are put into their graveyard.";
-            gameBroadcastService.logAndBroadcast(gameData, GameLog.text(graveyardLog));
+            gameLogService.append(gameData, GameLog.text(graveyardLog));
             return;
         }
 

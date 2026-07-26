@@ -6,7 +6,7 @@ import com.github.laxika.magicalvibes.model.GameLog;
 import com.github.laxika.magicalvibes.model.StackEntry;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
 import com.github.laxika.magicalvibes.model.effect.KarnScionRevealTwoOpponentChoosesEffect;
-import com.github.laxika.magicalvibes.service.GameBroadcastService;
+import com.github.laxika.magicalvibes.service.GameLogService;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Component;
@@ -20,8 +20,9 @@ import java.util.UUID;
 @RequiredArgsConstructor
 public class KarnScionRevealTwoOpponentChoosesEffectHandler implements NormalEffectHandlerBean {
 
-    private final GameBroadcastService gameBroadcastService;
+    private final GameLogService gameLogService;
     private final com.github.laxika.magicalvibes.service.interaction.InteractionHandlerRegistry interactionHandlerRegistry;
+    private final com.github.laxika.magicalvibes.service.event.GameMutationCoordinator mutationCoordinator;
 
     @Override
     public Class<? extends CardEffect> handledEffect() {
@@ -37,14 +38,14 @@ public class KarnScionRevealTwoOpponentChoosesEffectHandler implements NormalEff
         if (deck.size() < 2) {
             // If fewer than 2 cards, reveal what's available
             if (deck.isEmpty()) {
-                gameBroadcastService.logAndBroadcast(gameData, GameLog.text(controllerName + "'s library is empty — nothing to reveal."));
+                gameLogService.append(gameData, GameLog.text(controllerName + "'s library is empty — nothing to reveal."));
                 log.info("Game {} - {} has no cards to reveal for Karn Scion +1", gameData.id, controllerName);
                 return;
             }
             // Only 1 card: it goes to hand (no opponent choice needed), nothing to exile
             Card onlyCard = deck.removeFirst();
             gameData.addCardToHand(controllerId, onlyCard);
-            gameBroadcastService.logAndBroadcast(gameData, GameLog.textCardText(controllerName + " reveals ", onlyCard, " and puts it into their hand."));
+            gameLogService.append(gameData, GameLog.textCardText(controllerName + " reveals ", onlyCard, " and puts it into their hand."));
             log.info("Game {} - {} reveals single card {} for Karn Scion +1", gameData.id, controllerName, onlyCard.getName());
             return;
         }
@@ -53,7 +54,7 @@ public class KarnScionRevealTwoOpponentChoosesEffectHandler implements NormalEff
         Card card2 = deck.removeFirst();
         List<Card> revealedCards = List.of(card1, card2);
 
-        gameBroadcastService.logAndBroadcast(gameData, GameLog.builder().text(controllerName + " reveals ").card(card1).text(" and ").card(card2).text(".").build());
+        gameLogService.append(gameData, GameLog.builder().text(controllerName + " reveals ").card(card1).text(" and ").card(card2).text(".").build());
 
         // Determine opponent (in 2-player, the other player)
         UUID opponentId = gameData.orderedPlayerIds.stream()
@@ -72,7 +73,7 @@ public class KarnScionRevealTwoOpponentChoosesEffectHandler implements NormalEff
                 false, true, false, false, false, 0, null, 1,
                 "Choose a card to put into " + controllerName + "'s hand. The other will be exiled with a silver counter."));
 
-        gameBroadcastService.invalidateAllPlayerViews(gameData);
+        mutationCoordinator.invalidateAllPlayerViews(gameData);
 
         log.info("Game {} - {} reveals {} and {} for Karn Scion +1, opponent must choose",
                 gameData.id, controllerName, card1.getName(), card2.getName());

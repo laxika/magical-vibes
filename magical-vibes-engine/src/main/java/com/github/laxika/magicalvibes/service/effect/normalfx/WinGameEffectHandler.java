@@ -5,7 +5,7 @@ import com.github.laxika.magicalvibes.model.GameLog;
 import com.github.laxika.magicalvibes.model.StackEntry;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
 import com.github.laxika.magicalvibes.model.effect.WinGameEffect;
-import com.github.laxika.magicalvibes.service.GameBroadcastService;
+import com.github.laxika.magicalvibes.service.GameLogService;
 import com.github.laxika.magicalvibes.service.GameOutcomeService;
 import com.github.laxika.magicalvibes.service.battlefield.GameQueryService;
 import lombok.RequiredArgsConstructor;
@@ -20,7 +20,7 @@ import java.util.UUID;
 public class WinGameEffectHandler implements NormalEffectHandlerBean {
 
     private final GameOutcomeService gameOutcomeService;
-    private final GameBroadcastService gameBroadcastService;
+    private final GameLogService gameLogService;
     private final GameQueryService gameQueryService;
 
     @Override
@@ -38,12 +38,12 @@ public class WinGameEffectHandler implements NormalEffectHandlerBean {
         if (!gameQueryService.canPlayerLoseGame(gameData, opponentId)) {
             String logEntry = entry.getCard().getName() + "'s win condition is met but " +
                     gameData.playerIdToName.get(opponentId) + " can't lose the game.";
-            gameBroadcastService.logAndBroadcast(gameData, GameLog.builder().card(entry.getCard()).text("'s win condition is met but " + gameData.playerIdToName.get(opponentId) + " can't lose the game.").build());
+            gameLogService.append(gameData, GameLog.builder().card(entry.getCard()).text("'s win condition is met but " + gameData.playerIdToName.get(opponentId) + " can't lose the game.").build());
             log.info("Game {} - {} win prevented — opponent can't lose", gameData.id, entry.getCard().getName());
             return;
         }
 
-        gameBroadcastService.logAndBroadcast(gameData, GameLog.textCardText(playerName + " wins the game from " , entry.getCard(), "!"));
+        gameLogService.append(gameData, GameLog.textCardText(playerName + " wins the game from " , entry.getCard(), "!"));
         log.info("Game {} - {} wins via {}", gameData.id, playerName, entry.getCard().getName());
 
         gameOutcomeService.declareWinner(gameData, controllerId);

@@ -11,7 +11,7 @@ import com.github.laxika.magicalvibes.model.amount.ControllerLifeTotal;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
 import com.github.laxika.magicalvibes.model.effect.CreateLifeTotalAvatarTokenEffect;
 import com.github.laxika.magicalvibes.model.effect.SetPowerToughnessToAmountEffect;
-import com.github.laxika.magicalvibes.service.GameBroadcastService;
+import com.github.laxika.magicalvibes.service.GameLogService;
 import com.github.laxika.magicalvibes.service.battlefield.BattlefieldEntryService;
 import com.github.laxika.magicalvibes.service.battlefield.GameQueryService;
 import java.util.EnumSet;
@@ -29,7 +29,7 @@ public class CreateLifeTotalAvatarTokenEffectHandler implements NormalEffectHand
 
     private final BattlefieldEntryService battlefieldEntryService;
     private final GameQueryService gameQueryService;
-    private final GameBroadcastService gameBroadcastService;
+    private final GameLogService gameLogService;
 
     @Override
     public Class<? extends CardEffect> handledEffect() {
@@ -74,7 +74,7 @@ public class CreateLifeTotalAvatarTokenEffectHandler implements NormalEffectHand
                     int lifeTotal = gameData.playerLifeTotals.getOrDefault(controllerId, 0);
                     String logEntry = entry.getCard().getName() + " creates a " + lifeTotal + "/" + lifeTotal
                             + " white " + e.tokenName() + " creature token.";
-                    gameBroadcastService.logAndBroadcast(gameData, GameLog.builder().card(entry.getCard()).text(" creates a " + lifeTotal + "/" + lifeTotal + " white " + e.tokenName() + " creature token.").build());
+                    gameLogService.append(gameData, GameLog.builder().card(entry.getCard()).text(" creates a " + lifeTotal + "/" + lifeTotal + " white " + e.tokenName() + " creature token.").build());
                     log.info("Game {} - {} creates a {}/{} {} token", gameData.id, entry.getCard().getName(),
                             lifeTotal, lifeTotal, e.tokenName());
                 }

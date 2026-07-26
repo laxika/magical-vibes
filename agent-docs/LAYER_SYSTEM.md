@@ -156,7 +156,7 @@ A whole-battlefield, layer-by-layer pass replacing the per-permanent
    and dynamic counts evaluate against the `CharacteristicState`s **as of the layers already
    applied** — an Elf lord's "Elf" filter reads L4-resolved subtypes; Nightmare's 7a Swamp
    count sees Evil Presence's L4 land-type override. There is no recursion because layer N
-   never reads layer ≥N state. The null-`FilterContext` recursion guard
+   never reads layer �AN state. The null-`FilterContext` recursion guard
    (`AmountEvaluationService` static contexts) is only PARTIALLY replaced (audited step 12):
    subtype/color/keyword predicate leaves answer from the states while a pass is active, but
    the P/T predicate leaves and toughness-based amounts still rely on the null-context
@@ -241,7 +241,7 @@ whichever base won; `getEffectivePower(Permanent, StaticBonus)` trusts
 guard is gone. `Permanent.getRawPower/getRawToughness` split into public
 `getBasePower()/getBaseToughness()` + modifiers; the ladder **no longer decides layered
 precedence** — it is the fallback for direct `Permanent` readers (views' raw term — the view
-path is layered because `GameBroadcastService` passes `gqs.getEffectivePower(p,bonus) −
+path is layered because `GameViewProjectionFactory` passes `gqs.getEffectivePower(p,bonus) �?�
 p.getEffectivePower()` as the view bonus — plus last-known-information reads and the power/
 toughness predicate leaves). One-shot setters **dual-write** (step-5 pattern, deviation from
 this step's "migrate away from the fields" plan): `SetBasePowerToughnessEffectHandler` and
@@ -268,7 +268,7 @@ getEffectiveToughness()` callers that bypass the layered numbers** (the mana-spe
 checks in `TriggerCollectionService`/`IncrementTriggerEffectHandler` were migrated to the
 layered queries in step 7): the power/toughness predicate leaves (`PredicateEvaluationService`,
 `StaticEffectSupport.matchesStaticFilter` — both can run DURING a pass, where reading layered
-P/T would violate "layer N never reads layer ≥N"), `AmountEvaluationService` toughness-based
+P/T would violate "layer N never reads layer �AN"), `AmountEvaluationService` toughness-based
 amounts (the `staticEvaluation` branch is a deliberate recursion guard),
 `DeathTriggerCollectorService` last-known-information power (the permanent has left the
 battlefield, so the layered pass carries no state; since step 7 this LKI read also misses an
@@ -304,7 +304,7 @@ by Mind Bend's resolution (`ChoiceHandlerService`), surviving turns (`resetModif
 clear it, verified) and NOT copiable (Clone copies the `Card`, never the target's replacements —
 CR 707.2). Application lives in `TextChangeTransformer` (engine `service/effect/`, static
 identity-preserving visitor): given a `CardEffect` and the source's replacement list (applied in
-order — they compose, replacement N applies to the output of N−1), it rewrites color parameters
+order — they compose, replacement N applies to the output of N�?�1), it rewrites color parameters
 (`ProtectionFromColorsEffect` colors, `GrantColorEffect` color), basic-land-type parameters
 (`EnchantedPermanentBecomesTypeEffect`/`NonbasicLandsBecomeTypeEffect`/`GrantSubtypeEffect`
 subtypes), landwalk keywords inside `StaticBoostEffect`/`GrantKeywordEffect` keyword sets
@@ -601,7 +601,7 @@ authoritative per-step record; this section is the reconciled summary.
 - **Remnant audit** (step 12): no deletable `Permanent` fields remained (dual-write is
   intentional); private `getRawPower/getRawToughness` inlined; docs synced.
 - **Cross-query board memoization** (step 13): the step-4 perf follow-up — per-`GameData`
-  fingerprint-keyed cache, ~26-45× on layered-query throughput; AI simulation copies start cold.
+  fingerprint-keyed cache, ~26-45A� on layered-query throughput; AI simulation copies start cold.
 
 ### Known limitations
 
@@ -714,7 +714,7 @@ caches it too; trial boards get their own discarded map. The assembly side lives
 recorder that diffs the accumulator around each source's handlers (7c boosts, emblems,
 conditional wrappers, the 7a self-CDA base), appends the board lines, and merges one line per
 source name (base/switch lines keep their order — folding is order-sensitive). Only
-`GameBroadcastService` calls it (per broadcast, per permanent); rules code and the AI never
+`GameViewProjectionFactory` calls it (per broadcast, per permanent); rules code and the AI never
 pay the diffing cost, and `PermanentView.modifierLines` carries the result to the client.
 The layer-6 board also keeps engine-internal source attribution for non-keyword effects granted
 through `GrantEffectEffect` and for direct scoped protection grants from Auras/Equipment. View
@@ -746,8 +746,8 @@ layered queries per permanent (96 external queries/sweep), time-boxed. 2026-07-1
 
 | Scenario | before (cache off) | after (cache on) | speedup |
 |---|---|---|---|
-| steady state (no mutation between sweeps) | 6.2 sweeps/s ≈ 595 queries/s | 280.9 sweeps/s ≈ 26 970 queries/s | ~45× |
-| one tap-toggle per sweep (recompute every sweep) | 6.2 sweeps/s ≈ 593 queries/s | 163.3 sweeps/s ≈ 15 678 queries/s | ~26× |
+| steady state (no mutation between sweeps) | 6.2 sweeps/s �? 595 queries/s | 280.9 sweeps/s �? 26 970 queries/s | ~45A� |
+| one tap-toggle per sweep (recompute every sweep) | 6.2 sweeps/s �? 593 queries/s | 163.3 sweeps/s �? 15 678 queries/s | ~26A� |
 
 The mutating case still wins big because a sweep is 96 queries: before, every query recomputed
 the board; after, only the first query after the mutation does.
@@ -796,7 +796,7 @@ and any deviations from this document.
    `battlefield.remove(` sites are control-change moves or a lookahead that restores state);
    `expireFloatingEffectsForUnattachedSource(id)` (WHILE_ATTACHED) — called at every
    `setAttachedTo(null)` site (AuraAttachmentService equipment-orphan + control-change
-   unattach, AnimationSupport equipment-animation ×2 + transform-to-non-Equipment,
+   unattach, AnimationSupport equipment-animation A�2 + transform-to-non-Equipment,
    UnattachEquipmentFromTargetPermanentsEffectHandler) and, since reattaching ends the old
    attachment's effects, immediately before the attach at the same ten CR 613.7e re-stamp
    sites from step 1; `expireFloatingEffectsAtTurnStart(playerId)` (UNTIL_YOUR_NEXT_TURN) —
@@ -1213,7 +1213,7 @@ and any deviations from this document.
     gate, LKI, the base-P/T fallback ladder, white-box card tests);
     `losesAllAbilitiesUntilEndOfTurn` (dual-written by `LosesAllAbilitiesEffectHandler`; read
     by TriggerCollectionService, GameQueryService, AbilityActivationService,
-    GameBroadcastService, pass seeding); `transientColors`/`colorOverridden` (dual-written by
+    GameViewProjectionFactory, pass seeding); `transientColors`/`colorOverridden` (dual-written by
     `GrantColorUntilEndOfTurnEffectHandler`; read by `Permanent.getEffectiveColor`,
     PermanentViewFactory's legacy branch, predicate/staticfx null-GameData fallbacks,
     ActivatedAbilityExecutionService); `transientSubtypes` and `transientLandTypeOverride`
@@ -1252,7 +1252,7 @@ and any deviations from this document.
     The implement-card skill docs contain no accumulator references (grepped) — unchanged.
     SevenLayerTest's javadoc and this doc's header rewritten: the suite is the layer-system
     REGRESSION spec, 100/100 green, never to be weakened. Verification: full multi-module
-    compile; SevenLayerTest 100/100 green (10×10 groups), LayerDependencyTest 9/9,
+    compile; SevenLayerTest 100/100 green (10A�10 groups), LayerDependencyTest 9/9,
     FloatingEffectLifecycleTest 6/6; staticfx suite + TextChangeTransformerTest; the union of
     the card tests named in the step 4–10 log entries (steal/control batch, animation/exchange
     batch, setter/boost/CDA batch, text-change batch, copy batch) plus PermanentTimestampTest,
@@ -1281,9 +1281,9 @@ and any deviations from this document.
     `simulationCopy()` does not copy the slot — AI copies start cold (LayeredBoardCacheTest
     pins cold-start + no-leak both directions). Escape hatch: `-DdisableLayerBoardCache=true`.
     **Benchmark** (new `LayerPassBenchmarkTest`, `-DlayerBench=true`, time-boxed sweeps of 4
-    layered queries × 24 permanents on a static-heavy board; before measured from the same
-    build via the escape hatch): steady-state 595 → 26 970 queries/s (~45×); with one
-    tap-toggle mutation per sweep 593 → 15 678 queries/s (~26×) — numbers also in §10.
+    layered queries A� 24 permanents on a static-heavy board; before measured from the same
+    build via the escape hatch): steady-state 595 → 26 970 queries/s (~45A�); with one
+    tap-toggle mutation per sweep 593 → 15 678 queries/s (~26A�) — numbers also in §10.
     New tests: `layers/LayeredBoardCacheTest` (6: reuse of the cached entry, direct
     battlefield-list mutation, direct permanent-field mutation behind a lord filter, direct
     attachment mutation, floating-effect add/expiry, simulation-copy cold start + isolation).

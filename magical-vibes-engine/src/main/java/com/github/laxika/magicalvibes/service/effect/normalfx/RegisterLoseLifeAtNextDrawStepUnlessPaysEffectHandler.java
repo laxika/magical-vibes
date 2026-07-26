@@ -6,7 +6,7 @@ import com.github.laxika.magicalvibes.model.StackEntry;
 import com.github.laxika.magicalvibes.model.action.LoseLifeAtNextDrawStepUnlessPays;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
 import com.github.laxika.magicalvibes.model.effect.RegisterLoseLifeAtNextDrawStepUnlessPaysEffect;
-import com.github.laxika.magicalvibes.service.GameBroadcastService;
+import com.github.laxika.magicalvibes.service.GameLogService;
 import java.util.UUID;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -22,7 +22,7 @@ import org.springframework.stereotype.Component;
 @RequiredArgsConstructor
 public class RegisterLoseLifeAtNextDrawStepUnlessPaysEffectHandler implements NormalEffectHandlerBean {
 
-    private final GameBroadcastService gameBroadcastService;
+    private final GameLogService gameLogService;
 
     @Override
     public Class<? extends CardEffect> handledEffect() {
@@ -39,7 +39,7 @@ public class RegisterLoseLifeAtNextDrawStepUnlessPaysEffectHandler implements No
                 playerId, e.lifeLoss(), e.payAmount(), entry.getCard()));
 
         String playerName = gameData.playerIdToName.get(playerId);
-        gameBroadcastService.logAndBroadcast(gameData, GameLog.textCardText(playerName + " must pay {" + e.payAmount() + "} before their next draw step or lose " + e.lifeLoss() + " life. (", entry.getCard(), ")"));
+        gameLogService.append(gameData, GameLog.textCardText(playerName + " must pay {" + e.payAmount() + "} before their next draw step or lose " + e.lifeLoss() + " life. (", entry.getCard(), ")"));
         log.info("Game {} - {} scheduled a draw-step pay-or-lose-{}-life obligation on {}",
                 gameData.id, entry.getCard().getName(), e.lifeLoss(), playerName);
     }

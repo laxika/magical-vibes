@@ -17,7 +17,7 @@ import com.github.laxika.magicalvibes.model.filter.CardTypePredicate;
 import com.github.laxika.magicalvibes.networking.SessionManager;
 import com.github.laxika.magicalvibes.networking.model.CardView;
 import com.github.laxika.magicalvibes.networking.service.CardViewFactory;
-import com.github.laxika.magicalvibes.service.GameBroadcastService;
+import com.github.laxika.magicalvibes.service.GameLogService;
 import com.github.laxika.magicalvibes.service.battlefield.GameQueryService;
 import com.github.laxika.magicalvibes.service.effect.AmountEvaluationService;
 import com.github.laxika.magicalvibes.service.filter.PredicateEvaluationService;
@@ -49,7 +49,7 @@ import static org.mockito.Mockito.*;
 @ExtendWith(MockitoExtension.class)
 class LookAtTopCardsEffectHandlerTest {
 
-    @Mock private GameBroadcastService gameBroadcastService;
+    @Mock private GameLogService gameLogService;
     @Mock private SessionManager sessionManager;
     @Mock private CardViewFactory cardViewFactory;
     @Mock private GameQueryService gameQueryService;
@@ -89,11 +89,11 @@ class LookAtTopCardsEffectHandlerTest {
             return a instanceof Fixed f ? f.value() : 0;
         });
 
-        libraryRevealSupport = new LibraryRevealSupport(gameBroadcastService,
-                InteractionRegistryTestSupport.registryFor(sessionManager, cardViewFactory, gameBroadcastService));
+        libraryRevealSupport = new LibraryRevealSupport(gameLogService,
+                InteractionRegistryTestSupport.registryFor(sessionManager, cardViewFactory, gameLogService));
         InteractionHandlerRegistry interactionHandlerRegistry =
-                InteractionRegistryTestSupport.registryFor(sessionManager, cardViewFactory, gameBroadcastService);
-        handler = new LookAtTopCardsEffectHandler(gameBroadcastService, libraryRevealSupport, gameQueryService,
+                InteractionRegistryTestSupport.registryFor(sessionManager, cardViewFactory, gameLogService);
+        handler = new LookAtTopCardsEffectHandler(gameLogService, libraryRevealSupport, gameQueryService,
                 predicateEvaluationService, amountEvaluationService, interactionHandlerRegistry);
     }
 
@@ -124,7 +124,7 @@ class LookAtTopCardsEffectHandlerTest {
             LookAtTopCardsEffect effect = LookAtTopCardsEffect.chooseOneToHandRestOnBottom(new Fixed(2));
             handler.resolve(gd, entryFor("Stress Dream", effect), effect);
 
-            verify(gameBroadcastService).logAndBroadcast(eq(gd), argThat((GameLogEntry logEntry) -> logEntry.plainText().contains("library is empty")));
+            verify(gameLogService).append(eq(gd), argThat((GameLogEntry logEntry) -> logEntry.plainText().contains("library is empty")));
         }
 
         @Test
@@ -186,7 +186,7 @@ class LookAtTopCardsEffectHandlerTest {
             LookAtTopCardsEffect effect = LookAtTopCardsEffect.chooseNToHandRestToGraveyard(4, 1);
             handler.resolve(gd, entryFor("Forbidden Alchemy", effect), effect);
 
-            verify(gameBroadcastService).logAndBroadcast(eq(gd), argThat((GameLogEntry logEntry) -> logEntry.plainText().contains("library is empty")));
+            verify(gameLogService).append(eq(gd), argThat((GameLogEntry logEntry) -> logEntry.plainText().contains("library is empty")));
         }
 
         @Test
@@ -236,7 +236,7 @@ class LookAtTopCardsEffectHandlerTest {
 
             assertThat(gd.playerGraveyards.get(player1Id)).contains(a, b);
             assertThat(gd.playerHands.get(player1Id)).isEmpty();
-            verify(gameBroadcastService).logAndBroadcast(eq(gd), argThat((GameLogEntry logEntry) -> logEntry.plainText().contains("into their graveyard")));
+            verify(gameLogService).append(eq(gd), argThat((GameLogEntry logEntry) -> logEntry.plainText().contains("into their graveyard")));
         }
 
         @Test
@@ -251,7 +251,7 @@ class LookAtTopCardsEffectHandlerTest {
                     2, 1, new CardTypePredicate(CardType.CREATURE), true);
             handler.resolve(gd, entryFor("Tracker's Instincts", effect), effect);
 
-            verify(gameBroadcastService).logAndBroadcast(eq(gd), argThat((GameLogEntry logEntry) ->
+            verify(gameLogService).append(eq(gd), argThat((GameLogEntry logEntry) ->
                     logEntry.plainText().contains("reveals") && logEntry.plainText().contains("Tracker's Instincts")));
         }
 
@@ -292,7 +292,7 @@ class LookAtTopCardsEffectHandlerTest {
                     3, new CardTypePredicate(CardType.CREATURE));
             handler.resolve(gd, entryFor("Commune with Nature", effect), effect);
 
-            verify(gameBroadcastService).logAndBroadcast(eq(gd), argThat((GameLogEntry logEntry) ->
+            verify(gameLogService).append(eq(gd), argThat((GameLogEntry logEntry) ->
                     logEntry.plainText().contains("library is empty")));
         }
 
@@ -401,7 +401,7 @@ class LookAtTopCardsEffectHandlerTest {
                     7, new CardSharesNameWithAPermanentPredicate());
             handler.resolve(gd, entryFor("Mitotic Manipulation", effect), effect);
 
-            verify(gameBroadcastService).logAndBroadcast(eq(gd), argThat((GameLogEntry logEntry) ->
+            verify(gameLogService).append(eq(gd), argThat((GameLogEntry logEntry) ->
                     logEntry.plainText().contains("library is empty")));
         }
 
@@ -461,7 +461,7 @@ class LookAtTopCardsEffectHandlerTest {
 
             assertThat(gd.playerDecks.get(player1Id)).containsExactly(single);
             assertThat(gd.interaction.activeInteraction()).isNull();
-            verify(gameBroadcastService).logAndBroadcast(eq(gd), argThat((GameLogEntry logEntry) ->
+            verify(gameLogService).append(eq(gd), argThat((GameLogEntry logEntry) ->
                     logEntry.plainText().contains("on top of their library")));
         }
 

@@ -6,7 +6,7 @@ import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.StackEntry;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
 import com.github.laxika.magicalvibes.model.effect.ExileEnchantedCreatureEffect;
-import com.github.laxika.magicalvibes.service.GameBroadcastService;
+import com.github.laxika.magicalvibes.service.GameLogService;
 import com.github.laxika.magicalvibes.service.battlefield.GameQueryService;
 import com.github.laxika.magicalvibes.service.battlefield.PermanentRemovalService;
 import java.util.UUID;
@@ -20,7 +20,7 @@ import org.springframework.stereotype.Component;
 public class ExileEnchantedCreatureEffectHandler implements NormalEffectHandlerBean {
 
     private final GameQueryService gameQueryService;
-    private final GameBroadcastService gameBroadcastService;
+    private final GameLogService gameLogService;
     private final PermanentRemovalService permanentRemovalService;
 
     @Override
@@ -52,7 +52,7 @@ public class ExileEnchantedCreatureEffectHandler implements NormalEffectHandlerB
 
         String exileLog = enchantedCreature.getCard().getName() + " is exiled ("
                 + entry.getCard().getName() + ").";
-        gameBroadcastService.logAndBroadcast(gameData, GameLog.cardTextCard(enchantedCreature.getCard(), " is exiled (", entry.getCard(), ")."));
+        gameLogService.append(gameData, GameLog.cardTextCard(enchantedCreature.getCard(), " is exiled (", entry.getCard(), ")."));
         log.info("Game {} - {} exiled by {}", gameData.id,
                 enchantedCreature.getCard().getName(), entry.getCard().getName());
 

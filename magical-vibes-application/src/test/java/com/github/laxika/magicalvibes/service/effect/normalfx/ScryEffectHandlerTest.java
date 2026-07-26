@@ -11,7 +11,7 @@ import com.github.laxika.magicalvibes.model.effect.ScryEffect;
 import com.github.laxika.magicalvibes.networking.SessionManager;
 import com.github.laxika.magicalvibes.networking.model.CardView;
 import com.github.laxika.magicalvibes.networking.service.CardViewFactory;
-import com.github.laxika.magicalvibes.service.GameBroadcastService;
+import com.github.laxika.magicalvibes.service.GameLogService;
 import com.github.laxika.magicalvibes.service.GameLogService;
 import com.github.laxika.magicalvibes.service.battlefield.BattlefieldEntryService;
 import com.github.laxika.magicalvibes.service.battlefield.GameQueryService;
@@ -46,8 +46,6 @@ class ScryEffectHandlerTest {
 
     @Mock
     private GameQueryService gameQueryService;
-    @Mock
-    private GameBroadcastService gameBroadcastService;
     @Mock
     private GameLogService gameLogService;
     @Mock
@@ -86,15 +84,15 @@ class ScryEffectHandlerTest {
         gd.playerDecks.put(player2Id, Collections.synchronizedList(new ArrayList<>()));
         gd.activePlayerId = player1Id;
 
-        libraryRevealSupport = new LibraryRevealSupport(gameBroadcastService,
-                InteractionRegistryTestSupport.registryFor(sessionManager, cardViewFactory, gameBroadcastService));
+        libraryRevealSupport = new LibraryRevealSupport(gameLogService,
+                InteractionRegistryTestSupport.registryFor(sessionManager, cardViewFactory, gameLogService));
         InteractionHandlerRegistry interactionHandlerRegistry = new InteractionHandlerRegistry();
         interactionHandlerRegistry.register(new ScryInteractionHandler(
                 gameLogService,
                 mock(PlayerInputService.class), mock(TurnProgressionService.class),
                 mock(EffectResolutionService.class)));
         scryEffectHandler = new ScryEffectHandler(
-                gameBroadcastService,
+                gameLogService,
                 interactionHandlerRegistry,
                 new AmountEvaluationService(mock(PredicateEvaluationService.class), gameQueryService),
                 gameQueryService);
@@ -136,7 +134,7 @@ class ScryEffectHandlerTest {
 
                 scryEffectHandler.resolve(gd, entry, effect);
 
-                verify(gameBroadcastService, never()).logAndBroadcast(any(), any(GameLogEntry.class));
+                verify(gameLogService, never()).append(any(), any(GameLogEntry.class));
             }
 
             @Test
@@ -148,7 +146,7 @@ class ScryEffectHandlerTest {
 
                 scryEffectHandler.resolve(gd, entry, effect);
 
-                verify(gameBroadcastService).logAndBroadcast(eq(gd), argThat((GameLogEntry logEntry) ->
+                verify(gameLogService).append(eq(gd), argThat((GameLogEntry logEntry) ->
                         logEntry.plainText().contains("scries") && logEntry.plainText().contains("library is empty")));
             }
 
@@ -166,7 +164,7 @@ class ScryEffectHandlerTest {
 
                 assertThat(gd.interaction.activeInteraction()).isInstanceOf(PendingInteraction.Scry.class);
                 verifyNoInteractions(sessionManager);
-                verify(gameBroadcastService).logAndBroadcast(eq(gd), argThat((GameLogEntry logEntry) ->
+                verify(gameLogService).append(eq(gd), argThat((GameLogEntry logEntry) ->
                         logEntry.plainText().contains("scries 1")));
             }
 
@@ -186,7 +184,7 @@ class ScryEffectHandlerTest {
 
                 assertThat(gd.interaction.activeInteraction()).isInstanceOf(PendingInteraction.Scry.class);
                 verifyNoInteractions(sessionManager);
-                verify(gameBroadcastService).logAndBroadcast(eq(gd), argThat((GameLogEntry logEntry) ->
+                verify(gameLogService).append(eq(gd), argThat((GameLogEntry logEntry) ->
                         logEntry.plainText().contains("scries 3")));
             }
 }

@@ -15,7 +15,7 @@ import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.StackEntry;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
 import com.github.laxika.magicalvibes.model.effect.CreateTokenCopyOfTargetPermanentEffect;
-import com.github.laxika.magicalvibes.service.GameBroadcastService;
+import com.github.laxika.magicalvibes.service.GameLogService;
 import com.github.laxika.magicalvibes.service.battlefield.BattlefieldEntryService;
 import com.github.laxika.magicalvibes.service.battlefield.GameQueryService;
 import java.util.ArrayList;
@@ -33,7 +33,7 @@ public class CreateTokenCopyOfTargetPermanentEffectHandler implements NormalEffe
 
     private final BattlefieldEntryService battlefieldEntryService;
     private final GameQueryService gameQueryService;
-    private final GameBroadcastService gameBroadcastService;
+    private final GameLogService gameLogService;
     private final PermanentCounterSupport permanentCounterSupport;
 
     @Override
@@ -66,7 +66,7 @@ public class CreateTokenCopyOfTargetPermanentEffectHandler implements NormalEffe
                 gameData.queueDelayedAction(new DelayedPermanentAction(tokenPermanent.getId(), DelayedPermanentActionKind.SACRIFICE_AT_END_STEP));
             }
 
-            gameBroadcastService.logAndBroadcast(gameData, GameLog.textCardText("A token copy of ", sourceCard, " is created."));
+            gameLogService.append(gameData, GameLog.textCardText("A token copy of ", sourceCard, " is created."));
             log.info("Game {} - Token copy of {} created via {}", gameData.id, sourceCard.getName(),
                     entry.getCard().getName());
 

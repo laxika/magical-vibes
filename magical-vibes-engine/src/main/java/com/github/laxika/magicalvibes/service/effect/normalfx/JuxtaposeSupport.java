@@ -7,7 +7,7 @@ import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.PermanentChoiceContext;
 import com.github.laxika.magicalvibes.model.effect.ControlDuration;
 import com.github.laxika.magicalvibes.model.effect.GainControlOfTargetEffect;
-import com.github.laxika.magicalvibes.service.GameBroadcastService;
+import com.github.laxika.magicalvibes.service.GameLogService;
 import com.github.laxika.magicalvibes.service.battlefield.CreatureControlService;
 import com.github.laxika.magicalvibes.service.battlefield.GameQueryService;
 import com.github.laxika.magicalvibes.service.input.InputCompletionService;
@@ -36,7 +36,7 @@ public class JuxtaposeSupport {
 
     private final GameQueryService gameQueryService;
     private final CreatureControlService creatureControlService;
-    private final GameBroadcastService gameBroadcastService;
+    private final GameLogService gameLogService;
     private final PlayerInputService playerInputService;
     private final InputCompletionService inputCompletionService;
 
@@ -119,7 +119,7 @@ public class JuxtaposeSupport {
 
         String logEntry = sourceCard.getName() + ": " + controllerPerm.getCard().getName() + " and "
                 + targetPerm.getCard().getName() + " exchange controllers.";
-        gameBroadcastService.logAndBroadcast(gameData, GameLog.builder().card(sourceCard).text(": ").card(controllerPerm.getCard()).text(" and ").card(targetPerm.getCard()).text(" exchange controllers.").build());
+        gameLogService.append(gameData, GameLog.builder().card(sourceCard).text(": ").card(controllerPerm.getCard()).text(" and ").card(targetPerm.getCard()).text(" exchange controllers.").build());
         log.info("Game {} - {} exchanges control of {} and {}", gameData.id, sourceCard.getName(),
                 controllerPerm.getCard().getName(), targetPerm.getCard().getName());
     }

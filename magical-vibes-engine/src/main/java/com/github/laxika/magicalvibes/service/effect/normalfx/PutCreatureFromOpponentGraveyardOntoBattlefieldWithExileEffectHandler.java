@@ -9,7 +9,7 @@ import com.github.laxika.magicalvibes.model.Keyword;
 import com.github.laxika.magicalvibes.model.StackEntry;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
 import com.github.laxika.magicalvibes.model.effect.PutCreatureFromOpponentGraveyardOntoBattlefieldWithExileEffect;
-import com.github.laxika.magicalvibes.service.GameBroadcastService;
+import com.github.laxika.magicalvibes.service.GameLogService;
 import com.github.laxika.magicalvibes.service.battlefield.BattlefieldEntryService;
 import java.util.Set;
 import java.util.UUID;
@@ -22,7 +22,7 @@ import org.springframework.stereotype.Component;
 public class PutCreatureFromOpponentGraveyardOntoBattlefieldWithExileEffectHandler implements NormalEffectHandlerBean {
 
     private final BattlefieldEntryService battlefieldEntryService;
-    private final GameBroadcastService gameBroadcastService;
+    private final GameLogService gameLogService;
     private final GraveyardReturnSupport graveyardReturnSupport;
 
     @Override
@@ -47,7 +47,7 @@ public class PutCreatureFromOpponentGraveyardOntoBattlefieldWithExileEffectHandl
         gameData.queueDelayedAction(new DelayedPermanentAction(result.permanent().getId(), DelayedPermanentActionKind.EXILE_TOKEN_AT_END_STEP));
 
         String playerName = gameData.playerIdToName.get(controllerId);
-        gameBroadcastService.logAndBroadcast(gameData, GameLog.textCardText(playerName + " puts ", result.card(), " onto the battlefield under their control with haste."));
+        gameLogService.append(gameData, GameLog.textCardText(playerName + " puts ", result.card(), " onto the battlefield under their control with haste."));
 
         graveyardReturnSupport.handleCreatureEtbAndLegendRule(gameData, controllerId, result.permanent(), result.card());
     }

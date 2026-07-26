@@ -16,7 +16,7 @@ import com.github.laxika.magicalvibes.model.effect.AwardAnyColorManaEffect;
 import com.github.laxika.magicalvibes.model.effect.DealDamageToAnyTargetEffect;
 import com.github.laxika.magicalvibes.model.event.GameEventAudience;
 import com.github.laxika.magicalvibes.model.event.GameEventFact;
-import com.github.laxika.magicalvibes.service.GameBroadcastService;
+import com.github.laxika.magicalvibes.service.GameActionAvailabilityService;
 import com.github.laxika.magicalvibes.service.StackResolutionService;
 import com.github.laxika.magicalvibes.service.cast.PotentialManaService;
 import com.github.laxika.magicalvibes.service.event.GameMutationCoordinator;
@@ -51,7 +51,7 @@ class AutoPassServiceTest {
     private GameQueryService gameQueryService;
 
     @Mock
-    private GameBroadcastService gameBroadcastService;
+    private GameActionAvailabilityService actionAvailabilityService;
 
     @Mock
     private TriggerCollectionService triggerCollectionService;
@@ -134,7 +134,7 @@ class AutoPassServiceTest {
         void stopsWhenAiPriorityHolderHasPlayableCards() {
             gd.aiPlayerIds.add(player1Id);
             when(gameQueryService.getPriorityPlayerId(gd)).thenReturn(player1Id);
-            when(gameBroadcastService.getPlayableCardIndices(gd, player1Id)).thenReturn(List.of(0));
+            when(actionAvailabilityService.getPlayableCardIndices(gd, player1Id)).thenReturn(List.of(0));
 
             sut.resolveAutoPass(gd, ignored -> {});
 
@@ -151,8 +151,8 @@ class AutoPassServiceTest {
             gd.playerAutoStopSteps.put(player1Id,
                     java.util.Set.of(TurnStep.PRECOMBAT_MAIN, TurnStep.POSTCOMBAT_MAIN));
             when(gameQueryService.getPriorityPlayerId(gd)).thenReturn(player1Id, player2Id, (UUID) null);
-            when(gameBroadcastService.getPlayableCardIndices(gd, player1Id)).thenReturn(List.of(0));
-            when(gameBroadcastService.getPlayableCardIndices(gd, player2Id)).thenReturn(List.of());
+            when(actionAvailabilityService.getPlayableCardIndices(gd, player1Id)).thenReturn(List.of(0));
+            when(actionAvailabilityService.getPlayableCardIndices(gd, player2Id)).thenReturn(List.of());
 
             boolean[] advanceCalled = {false};
             sut.resolveAutoPass(gd, ignored -> {
@@ -170,7 +170,7 @@ class AutoPassServiceTest {
             gd.currentStep = TurnStep.PRECOMBAT_MAIN;
             gd.playerAutoStopSteps.put(player1Id, java.util.Set.of(TurnStep.PRECOMBAT_MAIN));
             when(gameQueryService.getPriorityPlayerId(gd)).thenReturn(player1Id);
-            when(gameBroadcastService.getPlayableCardIndices(gd, player1Id)).thenReturn(List.of(0));
+            when(actionAvailabilityService.getPlayableCardIndices(gd, player1Id)).thenReturn(List.of(0));
 
             sut.resolveAutoPass(gd, ignored -> {});
 
@@ -183,7 +183,7 @@ class AutoPassServiceTest {
         @DisplayName("Auto-passes when priority holder has no playable cards")
         void autoPassesWhenNothingToPlay() {
             when(gameQueryService.getPriorityPlayerId(gd)).thenReturn(player1Id, player2Id, (UUID) null);
-            when(gameBroadcastService.getPlayableCardIndices(any(), any())).thenReturn(List.of());
+            when(actionAvailabilityService.getPlayableCardIndices(any(), any())).thenReturn(List.of());
 
             boolean[] advanceCalled = {false};
             sut.resolveAutoPass(gd, ignored -> {
@@ -221,7 +221,7 @@ class AutoPassServiceTest {
             gd.playerBattlefields.get(player2Id).add(blocker);
 
             when(gameQueryService.getPriorityPlayerId(gd)).thenReturn(player1Id);
-            when(gameBroadcastService.getPlayableCardIndices(gd, player1Id)).thenReturn(List.of());
+            when(actionAvailabilityService.getPlayableCardIndices(gd, player1Id)).thenReturn(List.of());
             when(gameQueryService.getOpponentId(gd, player1Id)).thenReturn(player2Id);
 
             sut.resolveAutoPass(gd, ignored -> {});
@@ -235,7 +235,7 @@ class AutoPassServiceTest {
             gd.playerAutoStopSteps.put(player1Id, java.util.Set.of(TurnStep.PRECOMBAT_MAIN));
 
             when(gameQueryService.getPriorityPlayerId(gd)).thenReturn(player1Id);
-            when(gameBroadcastService.getPlayableCardIndices(gd, player1Id)).thenReturn(List.of());
+            when(actionAvailabilityService.getPlayableCardIndices(gd, player1Id)).thenReturn(List.of());
 
             sut.resolveAutoPass(gd, ignored -> {});
 
@@ -351,7 +351,7 @@ class AutoPassServiceTest {
             gd.playerBattlefields.get(player1Id).add(creature);
 
             when(gameQueryService.getPriorityPlayerId(gd)).thenReturn(player1Id);
-            when(gameBroadcastService.getPlayableCardIndices(gd, player1Id)).thenReturn(List.of());
+            when(actionAvailabilityService.getPlayableCardIndices(gd, player1Id)).thenReturn(List.of());
             when(combatAttackService.isOpponentForcedToAttack(gd, player1Id)).thenReturn(true);
             when(combatAttackService.getAttackableCreatureIndices(gd, player1Id)).thenReturn(List.of(0));
 
@@ -373,7 +373,7 @@ class AutoPassServiceTest {
             gd.playerBattlefields.get(player1Id).add(creature);
 
             when(gameQueryService.getPriorityPlayerId(gd)).thenReturn(player1Id, player2Id);
-            when(gameBroadcastService.getPlayableCardIndices(any(), any())).thenReturn(List.of());
+            when(actionAvailabilityService.getPlayableCardIndices(any(), any())).thenReturn(List.of());
             when(combatAttackService.isOpponentForcedToAttack(gd, player1Id)).thenReturn(false);
 
             boolean[] advanceCalled = {false};
@@ -398,7 +398,7 @@ class AutoPassServiceTest {
             gd.playerBattlefields.get(player1Id).add(creature);
 
             when(gameQueryService.getPriorityPlayerId(gd)).thenReturn(player1Id, player2Id);
-            when(gameBroadcastService.getPlayableCardIndices(any(), any())).thenReturn(List.of());
+            when(actionAvailabilityService.getPlayableCardIndices(any(), any())).thenReturn(List.of());
 
             boolean[] advanceCalled = {false};
             sut.resolveAutoPass(gd, ignored -> {
@@ -418,7 +418,7 @@ class AutoPassServiceTest {
 
             // No creatures on battlefield
             when(gameQueryService.getPriorityPlayerId(gd)).thenReturn(player1Id, player2Id);
-            when(gameBroadcastService.getPlayableCardIndices(any(), any())).thenReturn(List.of());
+            when(actionAvailabilityService.getPlayableCardIndices(any(), any())).thenReturn(List.of());
             when(combatAttackService.isOpponentForcedToAttack(gd, player1Id)).thenReturn(true);
             when(combatAttackService.getAttackableCreatureIndices(gd, player1Id)).thenReturn(List.of());
 
@@ -472,8 +472,8 @@ class AutoPassServiceTest {
             // Second call: player2 (AI) has priority, has playable cards → stop
             gd.aiPlayerIds.add(player2Id);
             when(gameQueryService.getPriorityPlayerId(gd)).thenReturn(player1Id, player2Id);
-            when(gameBroadcastService.getPlayableCardIndices(gd, player1Id)).thenReturn(List.of());
-            when(gameBroadcastService.getPlayableCardIndices(gd, player2Id)).thenReturn(List.of(0));
+            when(actionAvailabilityService.getPlayableCardIndices(gd, player1Id)).thenReturn(List.of());
+            when(actionAvailabilityService.getPlayableCardIndices(gd, player2Id)).thenReturn(List.of(0));
 
             sut.resolveAutoPass(gd, ignored -> {});
 
@@ -690,7 +690,7 @@ class AutoPassServiceTest {
             ));
 
             when(gameQueryService.getPriorityPlayerId(gd)).thenReturn(player1Id);
-            when(gameBroadcastService.getPlayableCardIndices(gd, player1Id)).thenReturn(List.of(0));
+            when(actionAvailabilityService.getPlayableCardIndices(gd, player1Id)).thenReturn(List.of(0));
 
             sut.resolveAutoPassCombatTriggers(gd);
 
@@ -715,7 +715,7 @@ class AutoPassServiceTest {
             gd.playerBattlefields.get(player1Id).add(new Permanent(card));
 
             when(gameQueryService.getPriorityPlayerId(gd)).thenReturn(player1Id);
-            when(gameBroadcastService.getPlayableCardIndices(gd, player1Id)).thenReturn(List.of());
+            when(actionAvailabilityService.getPlayableCardIndices(gd, player1Id)).thenReturn(List.of());
 
             sut.resolveAutoPassCombatTriggers(gd);
 

@@ -9,7 +9,7 @@ import com.github.laxika.magicalvibes.model.effect.CardEffect;
 import com.github.laxika.magicalvibes.model.effect.ControlDuration;
 import com.github.laxika.magicalvibes.model.effect.GainControlOfTargetEffect;
 import com.github.laxika.magicalvibes.model.effect.ReturnDamagedCreaturesThatDiedUnderControlEffect;
-import com.github.laxika.magicalvibes.service.GameBroadcastService;
+import com.github.laxika.magicalvibes.service.GameLogService;
 import com.github.laxika.magicalvibes.service.battlefield.BattlefieldEntryService;
 import com.github.laxika.magicalvibes.service.battlefield.CreatureControlService;
 import com.github.laxika.magicalvibes.service.battlefield.GameQueryService;
@@ -38,7 +38,7 @@ public class ReturnDamagedCreaturesThatDiedUnderControlEffectHandler implements 
     private final PermanentRemovalService permanentRemovalService;
     private final BattlefieldEntryService battlefieldEntryService;
     private final CreatureControlService creatureControlService;
-    private final GameBroadcastService gameBroadcastService;
+    private final GameLogService gameLogService;
 
     @Override
     public Class<? extends CardEffect> handledEffect() {
@@ -78,7 +78,7 @@ public class ReturnDamagedCreaturesThatDiedUnderControlEffectHandler implements 
             }
             if (gameQueryService.isCardBlockedFromEnteringFromZone(gameData, cardToReturn,
                     com.github.laxika.magicalvibes.model.Zone.GRAVEYARD)) {
-                gameBroadcastService.logAndBroadcast(gameData,
+                gameLogService.append(gameData,
                         GameLog.cardThen(cardToReturn, " can't return from the graveyard; it stays in the graveyard."));
                 continue;
             }
@@ -96,7 +96,7 @@ public class ReturnDamagedCreaturesThatDiedUnderControlEffectHandler implements 
             }
 
             String playerName = gameData.playerIdToName.get(entry.getControllerId());
-            gameBroadcastService.logAndBroadcast(gameData, GameLog.cardThen(cardToReturn,
+            gameLogService.append(gameData, GameLog.cardThen(cardToReturn,
                     " returns to the battlefield under " + playerName + "'s control."));
             log.info("Game {} - {} returns under {}'s control ({})",
                     gameData.id, cardToReturn.getName(), playerName, entry.getCard().getName());

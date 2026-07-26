@@ -13,7 +13,7 @@ import com.github.laxika.magicalvibes.model.StackEntryType;
 import com.github.laxika.magicalvibes.model.effect.EachPlayerExilesTopCardsToSourceEffect;
 import com.github.laxika.magicalvibes.model.effect.ExileTargetPermanentEffect;
 import com.github.laxika.magicalvibes.networking.service.CardViewFactory;
-import com.github.laxika.magicalvibes.service.GameBroadcastService;
+import com.github.laxika.magicalvibes.service.GameLogService;
 import com.github.laxika.magicalvibes.service.exile.ExileService;
 import com.github.laxika.magicalvibes.service.graveyard.GraveyardService;
 import com.github.laxika.magicalvibes.service.input.PlayerInputService;
@@ -44,7 +44,7 @@ class EachPlayerExilesTopCardsToSourceEffectHandlerTest {
 
     @Mock private GraveyardService graveyardService;
     @Mock private GameQueryService gameQueryService;
-    @Mock private GameBroadcastService gameBroadcastService;
+    @Mock private GameLogService gameLogService;
     @Mock private PermanentRemovalService permanentRemovalService;
     @Mock private PlayerInputService playerInputService;
     @Mock private CardViewFactory cardViewFactory;
@@ -78,7 +78,7 @@ class EachPlayerExilesTopCardsToSourceEffectHandlerTest {
         gd.playerGraveyards.put(player2Id, Collections.synchronizedList(new ArrayList<>()));
         gd.playerDecks.put(player1Id, Collections.synchronizedList(new ArrayList<>()));
         gd.playerDecks.put(player2Id, Collections.synchronizedList(new ArrayList<>()));
-        eachPlayerExilesTopCardsToSourceHandler = new EachPlayerExilesTopCardsToSourceEffectHandler(gameQueryService, gameBroadcastService, exileService);
+        eachPlayerExilesTopCardsToSourceHandler = new EachPlayerExilesTopCardsToSourceEffectHandler(gameQueryService, gameLogService, exileService);
 
     }
 
@@ -181,7 +181,7 @@ class EachPlayerExilesTopCardsToSourceEffectHandlerTest {
                 assertThat(gd.getCardsExiledByPermanent(source.getId())).hasSize(5);
                 assertThat(gd.playerDecks.get(player1Id)).isEmpty();
                 assertThat(gd.playerDecks.get(player2Id)).isEmpty();
-                verify(gameBroadcastService, times(2)).logAndBroadcast(eq(gd), any(GameLogEntry.class));
+                verify(gameLogService, times(2)).append(eq(gd), any(GameLogEntry.class));
             }
 
             @Test
@@ -226,6 +226,6 @@ class EachPlayerExilesTopCardsToSourceEffectHandlerTest {
 
                 assertThat(gd.getCardsExiledByPermanent(source.getId())).hasSize(1);
                 // Only one log message (player1 only)
-                verify(gameBroadcastService, times(1)).logAndBroadcast(eq(gd), any(GameLogEntry.class));
+                verify(gameLogService, times(1)).append(eq(gd), any(GameLogEntry.class));
             }
 }

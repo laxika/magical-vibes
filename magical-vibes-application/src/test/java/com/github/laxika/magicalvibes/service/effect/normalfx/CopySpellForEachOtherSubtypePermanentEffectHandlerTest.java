@@ -18,7 +18,7 @@ import com.github.laxika.magicalvibes.model.effect.CardEffect;
 import com.github.laxika.magicalvibes.model.effect.CopySpellEffect;
 import com.github.laxika.magicalvibes.model.effect.CopySpellForEachOtherSubtypePermanentEffect;
 import com.github.laxika.magicalvibes.model.effect.DealDamageToAnyTargetEffect;
-import com.github.laxika.magicalvibes.service.GameBroadcastService;
+import com.github.laxika.magicalvibes.service.GameLogService;
 import com.github.laxika.magicalvibes.service.target.ValidTargetService;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
@@ -43,7 +43,7 @@ import static org.mockito.Mockito.when;
 @ExtendWith(MockitoExtension.class)
 class CopySpellForEachOtherSubtypePermanentEffectHandlerTest {
 
-    @Mock private GameBroadcastService gameBroadcastService;
+    @Mock private GameLogService gameLogService;
     @Mock private ValidTargetService validTargetService;
     @Mock private GameQueryService gameQueryService;
     @Mock private CloneService cloneService;
@@ -68,7 +68,7 @@ class CopySpellForEachOtherSubtypePermanentEffectHandlerTest {
         gd.playerBattlefields.put(player1Id, Collections.synchronizedList(new ArrayList<>()));
         gd.playerBattlefields.put(player2Id, Collections.synchronizedList(new ArrayList<>()));
         copySpellForEachOtherSubtypeHandler = new CopySpellForEachOtherSubtypePermanentEffectHandler(
-                gameBroadcastService, validTargetService, copySupport);
+                gameLogService, validTargetService, copySupport);
 
     }
 
@@ -114,11 +114,11 @@ class CopySpellForEachOtherSubtypePermanentEffectHandlerTest {
         }
 
         // =========================================================================
-        // resolveCopySpell â€” CopySpellEffect
+        // resolveCopySpell A?€�t CopySpellEffect
         // =========================================================================
 
     @Test
-            @DisplayName("Creates copies for each other Golem â€” 2 copies for 3 Golems")
+            @DisplayName("Creates copies for each other Golem A?€�t 2 copies for 3 Golems")
             void createsCopiesForEachOtherGolem() {
                 // Set up 3 Golem permanents on player1's battlefield
                 Permanent golem1 = createCreaturePermanent("Precursor Golem", List.of(CardSubtype.GOLEM));
@@ -274,11 +274,11 @@ class CopySpellForEachOtherSubtypePermanentEffectHandlerTest {
 
                 copySpellForEachOtherSubtypeHandler.resolve(gd, triggerEntry, effect);
 
-                verify(gameBroadcastService, times(2)).logAndBroadcast(eq(gd), argThat((GameLogEntry e) -> e.plainText().equals("A copy of Shock is created targeting Golem.")));
+                verify(gameLogService, times(2)).append(eq(gd), argThat((GameLogEntry e) -> e.plainText().equals("A copy of Shock is created targeting Golem.")));
             }
 
             @Test
-            @DisplayName("Untargetable Golem is skipped â€” no copy targets it")
+            @DisplayName("Untargetable Golem is skipped A?€�t no copy targets it")
             void untargetableGolemIsSkipped() {
                 Permanent golem1 = createCreaturePermanent("Precursor Golem", List.of(CardSubtype.GOLEM));
                 Permanent golem2 = createCreaturePermanent("Golem", List.of(CardSubtype.GOLEM));
@@ -350,7 +350,7 @@ class CopySpellForEachOtherSubtypePermanentEffectHandlerTest {
                 copySpellForEachOtherSubtypeHandler.resolve(gd, triggerEntry, effect);
 
                 assertThat(gd.stack).isEmpty();
-                verify(gameBroadcastService, never()).logAndBroadcast(any(), any(GameLogEntry.class));
+                verify(gameLogService, never()).append(any(), any(GameLogEntry.class));
             }
 
             @Test

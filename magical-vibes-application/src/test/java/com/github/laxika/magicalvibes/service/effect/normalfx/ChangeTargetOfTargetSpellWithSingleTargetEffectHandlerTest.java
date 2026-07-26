@@ -18,7 +18,7 @@ import com.github.laxika.magicalvibes.model.effect.ChangeTargetOfTargetSpellWith
 import com.github.laxika.magicalvibes.model.effect.CounterSpellEffect;
 import com.github.laxika.magicalvibes.model.effect.DealDamageToAnyTargetEffect;
 import com.github.laxika.magicalvibes.model.effect.ReturnCardFromGraveyardEffect;
-import com.github.laxika.magicalvibes.service.GameBroadcastService;
+import com.github.laxika.magicalvibes.service.GameLogService;
 import com.github.laxika.magicalvibes.service.battlefield.GameQueryService;
 import com.github.laxika.magicalvibes.service.input.PlayerInputService;
 import org.junit.jupiter.api.BeforeEach;
@@ -49,7 +49,7 @@ import static org.mockito.Mockito.when;
 class ChangeTargetOfTargetSpellWithSingleTargetEffectHandlerTest {
 
     @Mock private GameQueryService gameQueryService;
-    @Mock private GameBroadcastService gameBroadcastService;
+    @Mock private GameLogService gameLogService;
     @Mock private PlayerInputService playerInputService;
     @Mock private TargetLegalityService targetLegalityService;
     @InjectMocks private TargetRedirectionSupport targetRedirectionSupport;
@@ -83,7 +83,7 @@ class ChangeTargetOfTargetSpellWithSingleTargetEffectHandlerTest {
         lenient().when(targetLegalityService.checkSpellTargetOnStack(any(), any(), any(), any()))
                 .thenReturn(Optional.empty());
         changeTargetWithSingleTargetHandler = new ChangeTargetOfTargetSpellWithSingleTargetEffectHandler(
-                gameQueryService, gameBroadcastService, playerInputService, targetRedirectionSupport);
+                gameQueryService, gameLogService, playerInputService, targetRedirectionSupport);
 
     }
 
@@ -138,7 +138,7 @@ class ChangeTargetOfTargetSpellWithSingleTargetEffectHandlerTest {
 
         private String captureLogMessage() {
             ArgumentCaptor<GameLogEntry> captor = ArgumentCaptor.forClass(GameLogEntry.class);
-            verify(gameBroadcastService).logAndBroadcast(eq(gd), captor.capture());
+            verify(gameLogService).append(eq(gd), captor.capture());
             return captor.getValue().plainText();
         }
 
@@ -156,7 +156,7 @@ class ChangeTargetOfTargetSpellWithSingleTargetEffectHandlerTest {
                 changeTargetWithSingleTargetHandler.resolve(gd, entry, new ChangeTargetOfTargetSpellWithSingleTargetEffect());
 
                 verify(playerInputService, never()).beginPermanentChoice(any(), any(), any(), any());
-                verify(gameBroadcastService, never()).logAndBroadcast(any(), any(GameLogEntry.class));
+                verify(gameLogService, never()).append(any(), any(GameLogEntry.class));
             }
 
             @Test
@@ -447,7 +447,7 @@ class ChangeTargetOfTargetSpellWithSingleTargetEffectHandlerTest {
                 Card currentTarget = createCard("Elvish Mystic");
                 currentTarget.setType(CardType.CREATURE);
 
-                // Controller is player2 â€” only player2's graveyard should be valid
+                // Controller is player2 A?€�t only player2's graveyard should be valid
                 gd.playerGraveyards.get(player2Id).add(cardInControllerGraveyard);
                 gd.playerGraveyards.get(player2Id).add(currentTarget);
                 gd.playerGraveyards.get(player1Id).add(cardInOpponentGraveyard);

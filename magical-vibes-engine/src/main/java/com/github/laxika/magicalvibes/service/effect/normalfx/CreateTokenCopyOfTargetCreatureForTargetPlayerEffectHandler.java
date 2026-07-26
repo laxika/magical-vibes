@@ -8,7 +8,7 @@ import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.StackEntry;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
 import com.github.laxika.magicalvibes.model.effect.CreateTokenCopyOfTargetCreatureForTargetPlayerEffect;
-import com.github.laxika.magicalvibes.service.GameBroadcastService;
+import com.github.laxika.magicalvibes.service.GameLogService;
 import com.github.laxika.magicalvibes.service.battlefield.BattlefieldEntryService;
 import com.github.laxika.magicalvibes.service.battlefield.GameQueryService;
 import java.util.ArrayList;
@@ -25,7 +25,7 @@ public class CreateTokenCopyOfTargetCreatureForTargetPlayerEffectHandler impleme
 
     private final BattlefieldEntryService battlefieldEntryService;
     private final GameQueryService gameQueryService;
-    private final GameBroadcastService gameBroadcastService;
+    private final GameLogService gameLogService;
     private final PermanentCounterSupport permanentCounterSupport;
 
     @Override
@@ -82,7 +82,7 @@ public class CreateTokenCopyOfTargetCreatureForTargetPlayerEffectHandler impleme
         battlefieldEntryService.putPermanentOntoBattlefield(gameData, tokenControllerId, tokenPermanent);
 
         String controllerName = gameData.playerIdToName.get(tokenControllerId);
-        gameBroadcastService.logAndBroadcast(gameData, GameLog.textCardText(controllerName + " creates a token copy of " , sourceCard, "."));
+        gameLogService.append(gameData, GameLog.textCardText(controllerName + " creates a token copy of " , sourceCard, "."));
         log.info("Game {} - {} creates token copy of {} for {}", gameData.id, controllerName,
                 sourceCard.getName(), tokenControllerId);
 

@@ -12,7 +12,7 @@ import java.util.List;
 import java.util.UUID;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
-import com.github.laxika.magicalvibes.service.GameBroadcastService;
+import com.github.laxika.magicalvibes.service.GameLogService;
 import com.github.laxika.magicalvibes.service.battlefield.GameQueryService;
 import com.github.laxika.magicalvibes.service.battlefield.PermanentRemovalService;
 import org.springframework.stereotype.Component;
@@ -24,7 +24,7 @@ public class DestroyTargetAndEachPlayerSearchesBasicLandToBattlefieldEffectHandl
 
     private final PermanentRemovalService permanentRemovalService;
     private final GameQueryService gameQueryService;
-    private final GameBroadcastService gameBroadcastService;
+    private final GameLogService gameLogService;
     private final LibrarySearchSupport librarySearchSupport;
 
     @Override
@@ -47,7 +47,7 @@ public class DestroyTargetAndEachPlayerSearchesBasicLandToBattlefieldEffectHandl
 
         // Attempt to destroy the permanent
         if (permanentRemovalService.tryDestroyPermanent(gameData, target, false)) {
-            gameBroadcastService.logAndBroadcast(gameData, GameLog.isDestroyed(target.getCard()));
+            gameLogService.append(gameData, GameLog.isDestroyed(target.getCard()));
             log.info("Game {} - {} is destroyed by {}", gameData.id, target.getCard().getName(), entry.getCard().getName());
         }
 

@@ -9,7 +9,7 @@ import com.github.laxika.magicalvibes.model.PendingInteraction;
 import com.github.laxika.magicalvibes.model.StackEntry;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
 import com.github.laxika.magicalvibes.model.effect.RevealHandChooseCreatureGainLifeDiscardEffect;
-import com.github.laxika.magicalvibes.service.GameBroadcastService;
+import com.github.laxika.magicalvibes.service.GameLogService;
 import com.github.laxika.magicalvibes.service.interaction.InteractionHandlerRegistry;
 import java.util.ArrayList;
 import java.util.List;
@@ -31,7 +31,7 @@ import org.springframework.stereotype.Component;
 @RequiredArgsConstructor
 public class RevealHandChooseCreatureGainLifeDiscardEffectHandler implements NormalEffectHandlerBean {
 
-    private final GameBroadcastService gameBroadcastService;
+    private final GameLogService gameLogService;
     private final InteractionHandlerRegistry interactionHandlerRegistry;
 
     @Override
@@ -50,13 +50,13 @@ public class RevealHandChooseCreatureGainLifeDiscardEffectHandler implements Nor
         String casterName = gameData.playerIdToName.get(casterId);
 
         if (hand == null || hand.isEmpty()) {
-            gameBroadcastService.logAndBroadcast(gameData, GameLog.text(targetName + " reveals their hand. It is empty."));
+            gameLogService.append(gameData, GameLog.text(targetName + " reveals their hand. It is empty."));
             log.info("Game {} - {}'s hand is empty for Talara's Bane", gameData.id, targetName);
             return;
         }
 
         String cardNames = String.join(", ", hand.stream().map(Card::getName).toList());
-        gameBroadcastService.logAndBroadcast(gameData, GameLog.text(targetName + " reveals their hand: " + cardNames + "."));
+        gameLogService.append(gameData, GameLog.text(targetName + " reveals their hand: " + cardNames + "."));
 
         List<CardColor> colors = e.colors();
         List<Integer> validIndices = new ArrayList<>();
@@ -72,7 +72,7 @@ public class RevealHandChooseCreatureGainLifeDiscardEffectHandler implements Nor
         }
 
         if (validIndices.isEmpty()) {
-            gameBroadcastService.logAndBroadcast(gameData, GameLog.text(casterName + " cannot choose a card (" + targetName + "'s hand has no matching creature card)."));
+            gameLogService.append(gameData, GameLog.text(casterName + " cannot choose a card (" + targetName + "'s hand has no matching creature card)."));
             log.info("Game {} - {}'s hand has no matching creature for {}", gameData.id, targetName, casterName);
             return;
         }

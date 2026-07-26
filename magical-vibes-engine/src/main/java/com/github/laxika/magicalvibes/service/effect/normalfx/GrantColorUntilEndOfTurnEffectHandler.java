@@ -8,7 +8,7 @@ import com.github.laxika.magicalvibes.model.effect.CardEffect;
 import com.github.laxika.magicalvibes.model.effect.EffectDuration;
 import com.github.laxika.magicalvibes.model.effect.GrantColorUntilEndOfTurnEffect;
 import com.github.laxika.magicalvibes.model.layer.FloatingContinuousEffect;
-import com.github.laxika.magicalvibes.service.GameBroadcastService;
+import com.github.laxika.magicalvibes.service.GameLogService;
 import com.github.laxika.magicalvibes.service.battlefield.GameQueryService;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -22,7 +22,7 @@ import java.util.UUID;
 public class GrantColorUntilEndOfTurnEffectHandler implements NormalEffectHandlerBean {
 
     private final GameQueryService gameQueryService;
-    private final GameBroadcastService gameBroadcastService;
+    private final GameLogService gameLogService;
 
     @Override
     public Class<? extends CardEffect> handledEffect() {
@@ -58,7 +58,7 @@ public class GrantColorUntilEndOfTurnEffectHandler implements NormalEffectHandle
         String colorName = e.color().name().charAt(0) + e.color().name().substring(1).toLowerCase();
         String suffix = e.additive() ? " in addition to its other colors until end of turn." : " until end of turn.";
         String logEntry = target.getCard().getName() + " becomes " + colorName + suffix;
-        gameBroadcastService.logAndBroadcast(gameData, GameLog.builder().card(target.getCard()).text(" becomes " + colorName + suffix).build());
+        gameLogService.append(gameData, GameLog.builder().card(target.getCard()).text(" becomes " + colorName + suffix).build());
 
         log.info("Game {} - {} becomes {} until end of turn", gameData.id, target.getCard().getName(), colorName);
     }

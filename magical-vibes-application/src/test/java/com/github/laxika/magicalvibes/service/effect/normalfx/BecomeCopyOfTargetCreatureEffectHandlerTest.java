@@ -13,7 +13,7 @@ import com.github.laxika.magicalvibes.model.StackEntryType;
 import com.github.laxika.magicalvibes.model.effect.BecomeCopyOfTargetCreatureEffect;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
 import com.github.laxika.magicalvibes.model.effect.CopySpellEffect;
-import com.github.laxika.magicalvibes.service.GameBroadcastService;
+import com.github.laxika.magicalvibes.service.GameLogService;
 import com.github.laxika.magicalvibes.service.target.ValidTargetService;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
@@ -32,7 +32,7 @@ import static org.mockito.Mockito.when;
 @ExtendWith(MockitoExtension.class)
 class BecomeCopyOfTargetCreatureEffectHandlerTest {
 
-    @Mock private GameBroadcastService gameBroadcastService;
+    @Mock private GameLogService gameLogService;
     @Mock private ValidTargetService validTargetService;
     @Mock private GameQueryService gameQueryService;
     @Mock private CloneService cloneService;
@@ -102,7 +102,7 @@ class BecomeCopyOfTargetCreatureEffectHandlerTest {
         }
 
         // =========================================================================
-        // resolveCopySpell â€” CopySpellEffect
+        // resolveCopySpell A?€�t CopySpellEffect
         // =========================================================================
 
     @Test

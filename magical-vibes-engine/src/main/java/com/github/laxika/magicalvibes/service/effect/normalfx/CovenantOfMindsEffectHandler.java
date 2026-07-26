@@ -7,7 +7,7 @@ import com.github.laxika.magicalvibes.model.PendingMayAbility;
 import com.github.laxika.magicalvibes.model.StackEntry;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
 import com.github.laxika.magicalvibes.model.effect.CovenantOfMindsEffect;
-import com.github.laxika.magicalvibes.service.GameBroadcastService;
+import com.github.laxika.magicalvibes.service.GameLogService;
 import com.github.laxika.magicalvibes.service.input.PlayerInputService;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -29,7 +29,7 @@ import java.util.stream.Collectors;
 @Slf4j
 public class CovenantOfMindsEffectHandler implements NormalEffectHandlerBean {
 
-    private final GameBroadcastService gameBroadcastService;
+    private final GameLogService gameLogService;
     private final PlayerInputService playerInputService;
 
     @Override
@@ -53,13 +53,13 @@ public class CovenantOfMindsEffectHandler implements NormalEffectHandlerBean {
 
         // Reveal the top cards (they stay on top of the library while the opponent decides).
         if (revealCount == 0) {
-            gameBroadcastService.logAndBroadcast(gameData, GameLog.text(
+            gameLogService.append(gameData, GameLog.text(
                     controllerName + "'s library is empty — no cards are revealed."));
         } else {
             String revealed = deck.subList(0, revealCount).stream()
                     .map(Card::getName)
                     .collect(Collectors.joining(", "));
-            gameBroadcastService.logAndBroadcast(gameData, GameLog.text(
+            gameLogService.append(gameData, GameLog.text(
                     controllerName + " reveals the top " + revealCount + " card(s) of their library: " + revealed + "."));
         }
 

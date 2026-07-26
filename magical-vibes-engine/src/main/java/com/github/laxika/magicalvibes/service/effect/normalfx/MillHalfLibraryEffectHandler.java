@@ -6,7 +6,7 @@ import com.github.laxika.magicalvibes.model.GameLog;
 import com.github.laxika.magicalvibes.model.StackEntry;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
 import com.github.laxika.magicalvibes.model.effect.MillHalfLibraryEffect;
-import com.github.laxika.magicalvibes.service.GameBroadcastService;
+import com.github.laxika.magicalvibes.service.GameLogService;
 import com.github.laxika.magicalvibes.service.graveyard.GraveyardService;
 import java.util.List;
 import java.util.UUID;
@@ -18,7 +18,7 @@ import org.springframework.stereotype.Component;
 public class MillHalfLibraryEffectHandler implements NormalEffectHandlerBean {
 
     private final GraveyardService graveyardService;
-    private final GameBroadcastService gameBroadcastService;
+    private final GameLogService gameLogService;
 
     @Override
     public Class<? extends CardEffect> handledEffect() {
@@ -35,7 +35,7 @@ public class MillHalfLibraryEffectHandler implements NormalEffectHandlerBean {
         int cardsToMill = e.roundUp() ? (deck.size() + 1) / 2 : deck.size() / 2;
         if (cardsToMill == 0) {
             String logEntry = playerName + "'s library has " + pluralCards(deck.size()) + " — mills nothing.";
-            gameBroadcastService.logAndBroadcast(gameData, GameLog.text(logEntry));
+            gameLogService.append(gameData, GameLog.text(logEntry));
             return;
         }
 

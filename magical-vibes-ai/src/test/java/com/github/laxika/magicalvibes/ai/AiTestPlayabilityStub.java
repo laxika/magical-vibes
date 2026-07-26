@@ -16,7 +16,7 @@ import com.github.laxika.magicalvibes.model.effect.ExileXCardsFromGraveyardCost;
 import com.github.laxika.magicalvibes.model.effect.SacrificeArtifactCost;
 import com.github.laxika.magicalvibes.model.effect.SacrificeCreatureCost;
 import com.github.laxika.magicalvibes.model.effect.SacrificeCreatureOrPayManaCost;
-import com.github.laxika.magicalvibes.service.GameBroadcastService;
+import com.github.laxika.magicalvibes.service.GameActionAvailabilityService;
 import com.github.laxika.magicalvibes.service.cast.CastingCostService;
 import org.mockito.Mockito;
 
@@ -31,7 +31,7 @@ import static org.mockito.ArgumentMatchers.anyInt;
  * castability check ({@code isSpellCastable}), so the mock-wired AI unit tests stay meaningful
  * without pulling in the full engine stack (harness-based tests use the real engine):
  * <ul>
- *   <li>{@link GameBroadcastService#isCardPlayable} — plain affordability against the passed pool
+ *   <li>{@link GameActionAvailabilityService#isCardPlayable} — plain affordability against the passed pool
  *       plus the test's stubbed cast-cost modifier, and the creature-mana requirement.</li>
  *   <li>{@link CastingCostService#canPayAdditionalSpellCosts} — non-mana additional-cost
  *       satisfiability (sacrifice / graveyard-exile) computed from the board, mirroring the real
@@ -43,7 +43,7 @@ final class AiTestPlayabilityStub {
     private AiTestPlayabilityStub() {
     }
 
-    static void install(GameBroadcastService gameBroadcastService, CastingCostService castingCostService) {
+    static void install(GameActionAvailabilityService actionAvailabilityService, CastingCostService castingCostService) {
         Mockito.lenient().when(castingCostService.canPayAdditionalSpellCosts(
                         any(GameData.class), any(UUID.class), any(Card.class)))
                 .thenAnswer(inv -> {
@@ -75,7 +75,7 @@ final class AiTestPlayabilityStub {
                     }
                     return indices;
                 });
-        Mockito.lenient().when(gameBroadcastService.isCardPlayable(
+        Mockito.lenient().when(actionAvailabilityService.isCardPlayable(
                         any(GameData.class), any(UUID.class), any(Card.class), any(ManaPool.class), anyInt()))
                 .thenAnswer(inv -> {
                     GameData gameData = inv.getArgument(0);

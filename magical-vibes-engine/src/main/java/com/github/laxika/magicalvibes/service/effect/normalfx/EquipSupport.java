@@ -5,7 +5,7 @@ import com.github.laxika.magicalvibes.model.GameData;
 import com.github.laxika.magicalvibes.model.GameLog;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.effect.SacrificeOnUnattachEffect;
-import com.github.laxika.magicalvibes.service.GameBroadcastService;
+import com.github.laxika.magicalvibes.service.GameLogService;
 import com.github.laxika.magicalvibes.service.battlefield.GameQueryService;
 import com.github.laxika.magicalvibes.service.battlefield.PermanentRemovalService;
 import lombok.RequiredArgsConstructor;
@@ -26,7 +26,7 @@ import java.util.UUID;
 public class EquipSupport {
 
     private final GameQueryService gameQueryService;
-    private final GameBroadcastService gameBroadcastService;
+    private final GameLogService gameLogService;
     private final PermanentRemovalService permanentRemovalService;
 
     public Permanent findEquipmentByCardId(GameData gameData, UUID cardId) {
@@ -51,7 +51,7 @@ public class EquipSupport {
             Permanent oldCreature = gameQueryService.findPermanentById(gameData, oldAttachedTo);
             if (oldCreature != null) {
                 String sacrificeLog = oldCreature.getCard().getName() + " is sacrificed (" + equipment.getCard().getName() + " became unattached).";
-                gameBroadcastService.logAndBroadcast(gameData, GameLog.cardTextCard(oldCreature.getCard(), " is sacrificed (", equipment.getCard(), " became unattached)."));
+                gameLogService.append(gameData, GameLog.cardTextCard(oldCreature.getCard(), " is sacrificed (", equipment.getCard(), " became unattached)."));
                 log.info("Game {} - {} sacrificed due to {} unattach", gameData.id, oldCreature.getCard().getName(), equipment.getCard().getName());
                 permanentRemovalService.removePermanentToGraveyard(gameData, oldCreature);
                 permanentRemovalService.removeOrphanedAuras(gameData);

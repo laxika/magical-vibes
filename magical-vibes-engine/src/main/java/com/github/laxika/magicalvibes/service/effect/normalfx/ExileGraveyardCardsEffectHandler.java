@@ -7,7 +7,7 @@ import com.github.laxika.magicalvibes.model.StackEntry;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
 import com.github.laxika.magicalvibes.model.effect.ExileGraveyardCardsEffect;
 import com.github.laxika.magicalvibes.model.filter.CardPredicateUtils;
-import com.github.laxika.magicalvibes.service.GameBroadcastService;
+import com.github.laxika.magicalvibes.service.GameLogService;
 import com.github.laxika.magicalvibes.service.battlefield.GameQueryService;
 import com.github.laxika.magicalvibes.service.battlefield.PermanentRemovalService;
 import com.github.laxika.magicalvibes.service.exile.ExileService;
@@ -32,7 +32,7 @@ import org.springframework.stereotype.Component;
 public class ExileGraveyardCardsEffectHandler implements NormalEffectHandlerBean {
 
     private final GameQueryService gameQueryService;
-    private final GameBroadcastService gameBroadcastService;
+    private final GameLogService gameLogService;
     private final ExileService exileService;
     private final PermanentRemovalService permanentRemovalService;
     private final PredicateEvaluationService predicateEvaluationService;
@@ -69,7 +69,7 @@ public class ExileGraveyardCardsEffectHandler implements NormalEffectHandlerBean
 
         if (graveyard == null || graveyard.isEmpty()) {
             String logEntry = playerName + " has no cards in graveyard to exile.";
-            gameBroadcastService.logAndBroadcast(gameData, GameLog.text(logEntry));
+            gameLogService.append(gameData, GameLog.text(logEntry));
             log.info("Game {} - {} has no graveyard cards to exile", gameData.id, playerName);
             return;
         }
@@ -85,7 +85,7 @@ public class ExileGraveyardCardsEffectHandler implements NormalEffectHandlerBean
             GameLog.Builder builder = GameLog.builder().text(playerName + " exiles ");
             appendCardList(builder, toExile);
             builder.text(" from their graveyard.");
-            gameBroadcastService.logAndBroadcast(gameData, builder.build());
+            gameLogService.append(gameData, builder.build());
             log.info("Game {} - {} auto-exiles {} cards from graveyard", gameData.id, playerName, toExile.size());
         } else {
             // Player must choose which cards to exile
@@ -111,7 +111,7 @@ public class ExileGraveyardCardsEffectHandler implements NormalEffectHandlerBean
             if (size <= keepCount) {
                 String logEntry = playerName + " keeps their graveyard (" + size + " card"
                         + (size != 1 ? "s" : "") + "); nothing is exiled.";
-                gameBroadcastService.logAndBroadcast(gameData, GameLog.text(logEntry));
+                gameLogService.append(gameData, GameLog.text(logEntry));
                 log.info("Game {} - {} keeps {} graveyard card(s); nothing exiled (each-opponent-keep)",
                         gameData.id, playerName, size);
                 continue;
@@ -132,12 +132,12 @@ public class ExileGraveyardCardsEffectHandler implements NormalEffectHandlerBean
 
         Card targetCard = gameQueryService.findCardInGraveyardById(gameData, targetCardId);
         if (targetCard == null) {
-            gameBroadcastService.logAndBroadcast(gameData, GameLog.text(entry.getDescription() + " fizzles (target no longer in a graveyard)."));
+            gameLogService.append(gameData, GameLog.text(entry.getDescription() + " fizzles (target no longer in a graveyard)."));
             return;
         }
 
         if (e.filter() != null && !predicateEvaluationService.matchesCardPredicate(targetCard, e.filter(), null)) {
-            gameBroadcastService.logAndBroadcast(gameData, GameLog.text(entry.getDescription() + " fizzles (target is no longer a valid "
+            gameLogService.append(gameData, GameLog.text(entry.getDescription() + " fizzles (target is no longer a valid "
                             + CardPredicateUtils.describeFilter(e.filter()) + ")."));
             return;
         }
@@ -152,7 +152,7 @@ public class ExileGraveyardCardsEffectHandler implements NormalEffectHandlerBean
         }
 
         String playerName = gameData.playerIdToName.get(entry.getControllerId());
-        gameBroadcastService.logAndBroadcast(gameData, GameLog.textCardText(playerName + " exiles ", targetCard, " from a graveyard."));
+        gameLogService.append(gameData, GameLog.textCardText(playerName + " exiles ", targetCard, " from a graveyard."));
     }
 
     private void resolveTargetOpponentCards(GameData gameData, StackEntry entry) {
@@ -160,7 +160,7 @@ public class ExileGraveyardCardsEffectHandler implements NormalEffectHandlerBean
         String playerName = gameData.playerIdToName.get(entry.getControllerId());
 
         if (targetCardIds == null || targetCardIds.isEmpty()) {
-            gameBroadcastService.logAndBroadcast(gameData, GameLog.text(entry.getDescription() + " fizzles (no targets)."));
+            gameLogService.append(gameData, GameLog.text(entry.getDescription() + " fizzles (no targets)."));
             return;
         }
 
@@ -177,7 +177,7 @@ public class ExileGraveyardCardsEffectHandler implements NormalEffectHandlerBean
             GameLog.Builder builder = GameLog.builder().text(playerName + " exiles ");
             appendCardList(builder, exiledCards);
             builder.text(" from an opponent's graveyard.");
-            gameBroadcastService.logAndBroadcast(gameData, builder.build());
+            gameLogService.append(gameData, builder.build());
             log.info("Game {} - {} exiled {} cards from opponent's graveyard",
                     gameData.id, playerName, exiledCards.size());
         }
@@ -190,7 +190,7 @@ public class ExileGraveyardCardsEffectHandler implements NormalEffectHandlerBean
 
         if (graveyard.isEmpty()) {
             String logEntry = playerName + "'s graveyard is already empty.";
-            gameBroadcastService.logAndBroadcast(gameData, GameLog.text(logEntry));
+            gameLogService.append(gameData, GameLog.text(logEntry));
             return;
         }
 
@@ -202,7 +202,7 @@ public class ExileGraveyardCardsEffectHandler implements NormalEffectHandlerBean
         graveyardService.notifyCardsLeftGraveyard(gameData, targetPlayerId);
 
         String logEntry = playerName + "'s graveyard is exiled (" + count + " card" + (count != 1 ? "s" : "") + ").";
-        gameBroadcastService.logAndBroadcast(gameData, GameLog.text(logEntry));
+        gameLogService.append(gameData, GameLog.text(logEntry));
 
         log.info("Game {} - {}'s graveyard ({} cards) exiled", gameData.id, playerName, count);
     }
@@ -223,12 +223,12 @@ public class ExileGraveyardCardsEffectHandler implements NormalEffectHandlerBean
         if (totalExiled > 0) {
             String logEntry = "All graveyards are exiled (" + totalExiled + " card"
                     + (totalExiled != 1 ? "s" : "") + ").";
-            gameBroadcastService.logAndBroadcast(gameData, GameLog.text(logEntry));
+            gameLogService.append(gameData, GameLog.text(logEntry));
             log.info("Game {} - All graveyards exiled ({} cards) by {}",
                     gameData.id, totalExiled, entry.getCard().getName());
         } else {
             String logEntry = "All graveyards are already empty.";
-            gameBroadcastService.logAndBroadcast(gameData, GameLog.text(logEntry));
+            gameLogService.append(gameData, GameLog.text(logEntry));
             log.info("Game {} - All graveyards already empty when {} resolved",
                     gameData.id, entry.getCard().getName());
         }
@@ -262,7 +262,7 @@ public class ExileGraveyardCardsEffectHandler implements NormalEffectHandlerBean
 
             String playerName = gameData.playerIdToName.get(playerId);
             String logEntry = playerName + "'s graveyard is exiled (" + count + " card" + (count != 1 ? "s" : "") + ").";
-            gameBroadcastService.logAndBroadcast(gameData, GameLog.text(logEntry));
+            gameLogService.append(gameData, GameLog.text(logEntry));
             log.info("Game {} - {}'s graveyard ({} cards) exiled by ExileGraveyardCardsEffect(ALL_OPPONENTS)",
                     gameData.id, playerName, count);
         }

@@ -7,7 +7,7 @@ import com.github.laxika.magicalvibes.model.PendingInteraction;
 import com.github.laxika.magicalvibes.model.StackEntry;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
 import com.github.laxika.magicalvibes.model.effect.ReorderTopCardsOfTargetLibraryEffect;
-import com.github.laxika.magicalvibes.service.GameBroadcastService;
+import com.github.laxika.magicalvibes.service.GameLogService;
 import java.util.*;
 import lombok.extern.slf4j.Slf4j;
 import lombok.RequiredArgsConstructor;
@@ -18,7 +18,7 @@ import org.springframework.stereotype.Component;
 @RequiredArgsConstructor
 public class ReorderTopCardsOfTargetLibraryEffectHandler implements NormalEffectHandlerBean {
 
-    private final GameBroadcastService gameBroadcastService;
+    private final GameLogService gameLogService;
     private final com.github.laxika.magicalvibes.service.interaction.InteractionHandlerRegistry interactionHandlerRegistry;
 
     @Override
@@ -40,13 +40,13 @@ public class ReorderTopCardsOfTargetLibraryEffectHandler implements NormalEffect
         int count = Math.min(reorder.count(), deck.size());
         if (count == 0) {
             String logMsg = entry.getCard().getName() + ": " + targetName + "'s library is empty, nothing to reorder.";
-            gameBroadcastService.logAndBroadcast(gameData, GameLog.builder().card(entry.getCard()).text(": " + targetName + "'s library is empty, nothing to reorder.").build());
+            gameLogService.append(gameData, GameLog.builder().card(entry.getCard()).text(": " + targetName + "'s library is empty, nothing to reorder.").build());
             return;
         }
 
         if (count == 1) {
             String logMsg = controllerName + " looks at the top card of " + targetName + "'s library.";
-            gameBroadcastService.logAndBroadcast(gameData, GameLog.text(logMsg));
+            gameLogService.append(gameData, GameLog.text(logMsg));
             return;
         }
 
@@ -58,7 +58,7 @@ public class ReorderTopCardsOfTargetLibraryEffectHandler implements NormalEffect
                 "Put these cards back on top of the library in any order (top to bottom)."));
 
         String logMsg = controllerName + " looks at the top " + count + " cards of " + targetName + "'s library.";
-        gameBroadcastService.logAndBroadcast(gameData, GameLog.text(logMsg));
+        gameLogService.append(gameData, GameLog.text(logMsg));
         log.info("Game {} - {} reordering top {} cards of {}'s library", gameData.id, controllerName, count, targetName);
     }
 }

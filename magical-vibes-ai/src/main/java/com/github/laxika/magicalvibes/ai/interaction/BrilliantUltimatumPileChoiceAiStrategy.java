@@ -26,7 +26,7 @@ class BrilliantUltimatumPileChoiceAiStrategy
         boolean choosePileOne =
                 pileValue(interaction.pile1CardIds(), ctx) >= pileValue(interaction.pile2CardIds(), ctx);
         ctx.gameActions().answerInteraction(
-                ctx.selfConnection(), new InteractionAnswer.MayAbilityChosen(choosePileOne));
+                new InteractionAnswer.MayAbilityChosen(choosePileOne));
     }
 
     private int pileValue(List<UUID> cardIds, AiInteractionContext ctx) {

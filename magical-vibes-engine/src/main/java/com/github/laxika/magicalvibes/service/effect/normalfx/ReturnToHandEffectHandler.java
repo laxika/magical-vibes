@@ -7,7 +7,7 @@ import com.github.laxika.magicalvibes.model.StackEntry;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
 import com.github.laxika.magicalvibes.model.effect.ReturnToHandEffect;
 import com.github.laxika.magicalvibes.model.filter.FilterContext;
-import com.github.laxika.magicalvibes.service.GameBroadcastService;
+import com.github.laxika.magicalvibes.service.GameLogService;
 import com.github.laxika.magicalvibes.service.GameOutcomeService;
 import com.github.laxika.magicalvibes.service.battlefield.GameQueryService;
 import com.github.laxika.magicalvibes.service.battlefield.PermanentRemovalService;
@@ -34,7 +34,7 @@ import org.springframework.stereotype.Component;
 public class ReturnToHandEffectHandler implements NormalEffectHandlerBean {
 
     private final GameQueryService gameQueryService;
-    private final GameBroadcastService gameBroadcastService;
+    private final GameLogService gameLogService;
     private final GameOutcomeService gameOutcomeService;
     private final PermanentRemovalService permanentRemovalService;
     private final PredicateEvaluationService predicateEvaluationService;
@@ -92,7 +92,7 @@ public class ReturnToHandEffectHandler implements NormalEffectHandlerBean {
                 : null;
 
         if (permanentRemovalService.removePermanentToHand(gameData, target)) {
-            gameBroadcastService.logAndBroadcast(gameData, GameLog.cardThen(target.getCard(), " is returned to its owner's hand."));
+            gameLogService.append(gameData, GameLog.cardThen(target.getCard(), " is returned to its owner's hand."));
             log.info("Game {} - {} returned to owner's hand by {}", gameData.id, target.getCard().getName(), entry.getCard().getName());
         }
 
@@ -102,13 +102,13 @@ public class ReturnToHandEffectHandler implements NormalEffectHandlerBean {
 
         if (controllerId != null && e.lifeLoss() > 0) {
             if (!gameQueryService.canPlayerLifeChange(gameData, controllerId)) {
-                gameBroadcastService.logAndBroadcast(gameData, GameLog.text(gameData.playerIdToName.get(controllerId) + "'s life total can't change."));
+                gameLogService.append(gameData, GameLog.text(gameData.playerIdToName.get(controllerId) + "'s life total can't change."));
             } else {
                 int currentLife = gameData.getLife(controllerId);
                 gameData.playerLifeTotals.put(controllerId, currentLife - e.lifeLoss());
 
                 String playerName = gameData.playerIdToName.get(controllerId);
-                gameBroadcastService.logAndBroadcast(gameData, GameLog.textCardText(playerName + " loses " + e.lifeLoss() + " life (" , entry.getCard(), ")."));
+                gameLogService.append(gameData, GameLog.textCardText(playerName + " loses " + e.lifeLoss() + " life (" , entry.getCard(), ")."));
                 log.info("Game {} - {} loses {} life from {}", gameData.id, playerName, e.lifeLoss(), entry.getCard().getName());
             }
         }
@@ -172,7 +172,7 @@ public class ReturnToHandEffectHandler implements NormalEffectHandlerBean {
         for (Permanent permanent : toReturn) {
             permanentRemovalService.removePermanentToHand(gameData, permanent);
 
-            gameBroadcastService.logAndBroadcast(gameData, GameLog.cardThen(permanent.getCard(), " is returned to its owner's hand."));
+            gameLogService.append(gameData, GameLog.cardThen(permanent.getCard(), " is returned to its owner's hand."));
             log.info("Game {} - {} returned to owner's hand by {}", gameData.id, permanent.getCard().getName(), entry.getCard().getName());
         }
 

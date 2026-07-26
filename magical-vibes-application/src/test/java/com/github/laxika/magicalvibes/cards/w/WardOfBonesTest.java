@@ -4,7 +4,7 @@ import com.github.laxika.magicalvibes.cards.f.Forest;
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.TurnStep;
-import com.github.laxika.magicalvibes.service.GameBroadcastService;
+import com.github.laxika.magicalvibes.service.GameActionAvailabilityService;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
@@ -30,7 +30,7 @@ class WardOfBonesTest extends BaseCardTest {
         harness.forceActivePlayer(player1);
         harness.forceStep(TurnStep.PRECOMBAT_MAIN);
 
-        GameBroadcastService gbs = harness.getGameBroadcastService();
+        GameActionAvailabilityService gbs = harness.getGameActionAvailabilityService();
         assertThat(gbs.getPlayableCardIndices(gd, player1.getId())).isEmpty();
     }
 
@@ -48,7 +48,7 @@ class WardOfBonesTest extends BaseCardTest {
         harness.forceActivePlayer(player1);
         harness.forceStep(TurnStep.PRECOMBAT_MAIN);
 
-        GameBroadcastService gbs = harness.getGameBroadcastService();
+        GameActionAvailabilityService gbs = harness.getGameActionAvailabilityService();
         assertThat(gbs.getPlayableCardIndices(gd, player1.getId())).contains(0);
     }
 
@@ -65,7 +65,7 @@ class WardOfBonesTest extends BaseCardTest {
         harness.forceActivePlayer(player2);
         harness.forceStep(TurnStep.PRECOMBAT_MAIN);
 
-        GameBroadcastService gbs = harness.getGameBroadcastService();
+        GameActionAvailabilityService gbs = harness.getGameActionAvailabilityService();
         assertThat(gbs.getPlayableCardIndices(gd, player2.getId())).contains(0);
     }
 
@@ -83,7 +83,7 @@ class WardOfBonesTest extends BaseCardTest {
         harness.forceActivePlayer(player1);
         harness.forceStep(TurnStep.PRECOMBAT_MAIN);
 
-        GameBroadcastService gbs = harness.getGameBroadcastService();
+        GameActionAvailabilityService gbs = harness.getGameActionAvailabilityService();
         assertThat(gbs.getPlayableCardIndices(gd, player1.getId())).isEmpty();
     }
 
@@ -100,7 +100,7 @@ class WardOfBonesTest extends BaseCardTest {
         harness.forceActivePlayer(player1);
         harness.forceStep(TurnStep.PRECOMBAT_MAIN);
 
-        GameBroadcastService gbs = harness.getGameBroadcastService();
+        GameActionAvailabilityService gbs = harness.getGameActionAvailabilityService();
         assertThat(gbs.getPlayableCardIndices(gd, player1.getId())).contains(0);
     }
 }

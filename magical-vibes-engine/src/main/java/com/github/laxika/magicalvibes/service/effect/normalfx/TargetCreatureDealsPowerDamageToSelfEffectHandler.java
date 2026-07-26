@@ -7,7 +7,7 @@ import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.StackEntry;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
 import com.github.laxika.magicalvibes.model.effect.TargetCreatureDealsPowerDamageToSelfEffect;
-import com.github.laxika.magicalvibes.service.GameBroadcastService;
+import com.github.laxika.magicalvibes.service.GameLogService;
 import com.github.laxika.magicalvibes.service.battlefield.GameQueryService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Component;
@@ -18,7 +18,7 @@ public class TargetCreatureDealsPowerDamageToSelfEffectHandler implements Normal
 
     private final DamageSupport damageSupport;
     private final GameQueryService gameQueryService;
-    private final GameBroadcastService gameBroadcastService;
+    private final GameLogService gameLogService;
 
     @Override
     public Class<? extends CardEffect> handledEffect() {
@@ -35,7 +35,7 @@ public class TargetCreatureDealsPowerDamageToSelfEffectHandler implements Normal
         if (gameQueryService.isDamagePreventable(gameData)
                 && gameQueryService.isPreventedFromDealingDamage(gameData, target)) {
             String logEntry = target.getCard().getName() + "'s damage is prevented.";
-            gameBroadcastService.logAndBroadcast(gameData, GameLog.cardThen(target.getCard(), "'s damage is prevented."));
+            gameLogService.append(gameData, GameLog.cardThen(target.getCard(), "'s damage is prevented."));
             return;
         }
 
@@ -45,7 +45,7 @@ public class TargetCreatureDealsPowerDamageToSelfEffectHandler implements Normal
             String logEntry = target.getCard().getName() + " has protection from "
                     + (targetColor != null ? targetColor.name().toLowerCase() : "source")
                     + " — damage prevented.";
-            gameBroadcastService.logAndBroadcast(gameData, GameLog.cardThen(target.getCard(), "'s damage is prevented."));
+            gameLogService.append(gameData, GameLog.cardThen(target.getCard(), "'s damage is prevented."));
             return;
         }
 

@@ -7,7 +7,7 @@ import com.github.laxika.magicalvibes.model.GameLog;
 import com.github.laxika.magicalvibes.model.StackEntry;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
 import com.github.laxika.magicalvibes.model.effect.ExileTopUntilNonlandOfTargetOpponentMayCastThisTurnEffect;
-import com.github.laxika.magicalvibes.service.GameBroadcastService;
+import com.github.laxika.magicalvibes.service.GameLogService;
 import com.github.laxika.magicalvibes.service.exile.ExileService;
 import java.util.List;
 import java.util.UUID;
@@ -25,7 +25,7 @@ import org.springframework.stereotype.Component;
 public class ExileTopUntilNonlandOfTargetOpponentMayCastThisTurnEffectHandler implements NormalEffectHandlerBean {
 
     private final ExileService exileService;
-    private final GameBroadcastService gameBroadcastService;
+    private final GameLogService gameLogService;
 
     @Override
     public Class<? extends CardEffect> handledEffect() {
@@ -45,7 +45,7 @@ public class ExileTopUntilNonlandOfTargetOpponentMayCastThisTurnEffectHandler im
         String controllerName = gameData.playerIdToName.get(controllerId);
 
         if (deck == null || deck.isEmpty()) {
-            gameBroadcastService.logAndBroadcast(gameData,
+            gameLogService.append(gameData,
                     GameLog.text(opponentName + "'s library is empty — nothing to exile."));
             return;
         }
@@ -63,7 +63,7 @@ public class ExileTopUntilNonlandOfTargetOpponentMayCastThisTurnEffectHandler im
         }
 
         if (nonland == null) {
-            gameBroadcastService.logAndBroadcast(gameData, GameLog.text(
+            gameLogService.append(gameData, GameLog.text(
                     opponentName + " exiles " + exiledCount + " card(s) from the top of their library"
                             + " — no nonland card found."));
             log.info("Game {} - {} dug entire library ({} cards) with no nonland for {}",
@@ -75,7 +75,7 @@ public class ExileTopUntilNonlandOfTargetOpponentMayCastThisTurnEffectHandler im
         gameData.exilePlayPermissionsExpireEndOfTurn.add(nonland.getId());
         gameData.exilePlayWithoutPayingManaCost.add(nonland.getId());
 
-        gameBroadcastService.logAndBroadcast(gameData, GameLog.builder()
+        gameLogService.append(gameData, GameLog.builder()
                 .text(opponentName + " exiles cards until ").card(nonland)
                 .text(" — " + controllerName + " may cast it without paying its mana cost this turn.")
                 .build());

@@ -6,7 +6,6 @@ import com.github.laxika.magicalvibes.model.event.GameEventBatch;
 import com.github.laxika.magicalvibes.model.event.GameEventFact;
 import com.github.laxika.magicalvibes.service.DraftRegistry;
 import com.github.laxika.magicalvibes.service.GameRegistry;
-import com.github.laxika.magicalvibes.service.GameSessionTransportAdapter;
 import com.github.laxika.magicalvibes.service.GameTimeoutService;
 import com.github.laxika.magicalvibes.service.TournamentResultHandler;
 import lombok.RequiredArgsConstructor;
@@ -18,7 +17,8 @@ import org.springframework.stereotype.Component;
  * Applies post-result runtime cleanup after the terminal result has been projected.
  *
  * <p>All work here runs after the mutation monitor is released. This keeps tournament
- * progression, timer cancellation, AI shutdown, and registry removal out of rules mutation.
+ * progression, timer cancellation, and registry removal out of rules mutation. AI schedulers
+ * close independently in the AI event subscriber.
  */
 @Component
 @Order(100)
@@ -29,7 +29,6 @@ public class GameEndLifecycleSubscriber implements GameEventSubscriber {
     private final DraftRegistry draftRegistry;
     private final ObjectProvider<TournamentResultHandler> tournamentResultHandler;
     private final ObjectProvider<GameTimeoutService> gameTimeoutService;
-    private final GameSessionTransportAdapter sessionTransport;
 
     @Override
     public void onGameEvents(GameEventBatch batch) {
@@ -50,8 +49,6 @@ public class GameEndLifecycleSubscriber implements GameEventSubscriber {
         if (Thread.holdsLock(gameData)) {
             throw new IllegalStateException("Game-end cleanup must run outside the game monitor");
         }
-
-        sessionTransport.closeAiConnections(gameData.orderedPlayerIds, gameData.id);
 
         if (ended.result() == GameEventFact.GameResult.WIN && gameData.draftId != null) {
             DraftData draftData = draftRegistry.get(gameData.draftId);

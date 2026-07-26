@@ -8,7 +8,7 @@ import com.github.laxika.magicalvibes.model.effect.CardEffect;
 import com.github.laxika.magicalvibes.model.effect.LookAtRandomCardInTargetPlayerHandEffect;
 import com.github.laxika.magicalvibes.model.event.GameEventFact;
 import com.github.laxika.magicalvibes.service.CardRevealService;
-import com.github.laxika.magicalvibes.service.GameBroadcastService;
+import com.github.laxika.magicalvibes.service.GameLogService;
 import java.util.List;
 import java.util.UUID;
 import java.util.concurrent.ThreadLocalRandom;
@@ -22,7 +22,7 @@ import org.springframework.stereotype.Component;
 public class LookAtRandomCardInTargetPlayerHandEffectHandler implements NormalEffectHandlerBean {
 
     private final CardRevealService cardRevealService;
-    private final GameBroadcastService gameBroadcastService;
+    private final GameLogService gameLogService;
 
     @Override
     public Class<? extends CardEffect> handledEffect() {
@@ -40,7 +40,7 @@ public class LookAtRandomCardInTargetPlayerHandEffectHandler implements NormalEf
 
         if (hand == null || hand.isEmpty()) {
             String logEntry = casterName + " looks at " + targetName + "'s hand at random. It is empty.";
-            gameBroadcastService.logAndBroadcast(gameData, GameLog.text(logEntry));
+            gameLogService.append(gameData, GameLog.text(logEntry));
             log.info("Game {} - {}: {} has no cards to look at", gameData.id, sourceName, targetName);
             return;
         }
@@ -50,7 +50,7 @@ public class LookAtRandomCardInTargetPlayerHandEffectHandler implements NormalEf
 
         // Public log reveals only that a look happened, not the card's identity.
         String logEntry = casterName + " looks at a card at random in " + targetName + "'s hand.";
-        gameBroadcastService.logAndBroadcast(gameData, GameLog.text(logEntry));
+        gameLogService.append(gameData, GameLog.text(logEntry));
 
         // The chosen card is shown only to the controller.
         cardRevealService.revealToPlayer(

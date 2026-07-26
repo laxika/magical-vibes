@@ -6,7 +6,7 @@ import com.github.laxika.magicalvibes.model.GameLog;
 import com.github.laxika.magicalvibes.model.StackEntry;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
 import com.github.laxika.magicalvibes.model.effect.ExileTopCardsRepeatOnDuplicateEffect;
-import com.github.laxika.magicalvibes.service.GameBroadcastService;
+import com.github.laxika.magicalvibes.service.GameLogService;
 import java.util.ArrayList;
 import java.util.HashSet;
 import java.util.List;
@@ -21,7 +21,7 @@ import org.springframework.stereotype.Component;
 @RequiredArgsConstructor
 public class ExileTopCardsRepeatOnDuplicateEffectHandler implements NormalEffectHandlerBean {
 
-    private final GameBroadcastService gameBroadcastService;
+    private final GameLogService gameLogService;
 
     @Override
     public Class<? extends CardEffect> handledEffect() {
@@ -37,7 +37,7 @@ public class ExileTopCardsRepeatOnDuplicateEffectHandler implements NormalEffect
         String creatureName = entry.getCard().getName();
 
         String triggerLog = creatureName + "'s ability triggers — " + playerName + " exiles cards from the top of their library.";
-        gameBroadcastService.logAndBroadcast(gameData, GameLog.text(triggerLog));
+        gameLogService.append(gameData, GameLog.text(triggerLog));
 
         boolean repeat = true;
         while (repeat) {
@@ -45,7 +45,7 @@ public class ExileTopCardsRepeatOnDuplicateEffectHandler implements NormalEffect
 
             if (deck.isEmpty()) {
                 String logEntry = playerName + "'s library is empty. No cards to exile.";
-                gameBroadcastService.logAndBroadcast(gameData, GameLog.text(logEntry));
+                gameLogService.append(gameData, GameLog.text(logEntry));
                 break;
             }
 
@@ -64,7 +64,7 @@ public class ExileTopCardsRepeatOnDuplicateEffectHandler implements NormalEffect
                 sb.append(exiledThisRound.get(i).getName());
             }
             sb.append(".");
-            gameBroadcastService.logAndBroadcast(gameData, GameLog.text(sb.toString()));
+            gameLogService.append(gameData, GameLog.text(sb.toString()));
 
             Set<String> seen = new HashSet<>();
             for (Card card : exiledThisRound) {
@@ -76,7 +76,7 @@ public class ExileTopCardsRepeatOnDuplicateEffectHandler implements NormalEffect
 
             if (repeat) {
                 String repeatLog = "Two or more exiled cards share the same name — repeating the process.";
-                gameBroadcastService.logAndBroadcast(gameData, GameLog.text(repeatLog));
+                gameLogService.append(gameData, GameLog.text(repeatLog));
             }
         }
 

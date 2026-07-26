@@ -7,7 +7,7 @@ import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.StackEntry;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
 import com.github.laxika.magicalvibes.model.effect.EachPlayerSacrificesFractionRoundedUpEffect;
-import com.github.laxika.magicalvibes.service.GameBroadcastService;
+import com.github.laxika.magicalvibes.service.GameLogService;
 import com.github.laxika.magicalvibes.service.filter.PredicateEvaluationService;
 import java.util.ArrayList;
 import java.util.List;
@@ -30,7 +30,7 @@ import org.springframework.stereotype.Component;
 public class EachPlayerSacrificesFractionRoundedUpEffectHandler implements NormalEffectHandlerBean {
 
     private final DestructionSupport destructionSupport;
-    private final GameBroadcastService gameBroadcastService;
+    private final GameLogService gameLogService;
     private final PredicateEvaluationService predicateEvaluationService;
 
     @Override
@@ -70,7 +70,7 @@ public class EachPlayerSacrificesFractionRoundedUpEffectHandler implements Norma
         }
 
         if (autoSacrificeIds.isEmpty() && choosers.isEmpty()) {
-            gameBroadcastService.logAndBroadcast(gameData,
+            gameLogService.append(gameData,
                     GameLog.textCardText("No permanents to sacrifice for ", entry.getCard(), "."));
             return;
         }

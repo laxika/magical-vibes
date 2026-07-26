@@ -20,7 +20,7 @@ class DealDamageToTargetControllerIfTargetHasKeywordEffectHandlerTest extends Ab
 
     @Override
     protected void setUpHandler() {
-        dealDamageToTargetControllerIfTargetHasKeywordHandler = new DealDamageToTargetControllerIfTargetHasKeywordEffectHandler(damageSupport, gameQueryService, gameBroadcastService, gameOutcomeService);
+        dealDamageToTargetControllerIfTargetHasKeywordHandler = new DealDamageToTargetControllerIfTargetHasKeywordEffectHandler(damageSupport, gameQueryService, gameLogService, gameOutcomeService);
     }
 
     @Test

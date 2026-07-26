@@ -28,7 +28,7 @@ class DiscardCardUnlessAttackedThisTurnEffectHandlerTest extends AbstractPlayerI
                 resolveEffect(gd, entry, new DiscardCardUnlessAttackedThisTurnEffect());
 
                 verify(playerInputService, never()).beginDiscardChoice(any(), any(), anyInt());
-                verify(gameBroadcastService).logAndBroadcast(eq(gd), argThat((GameLogEntry logEntry) ->
+                verify(gameLogService).append(eq(gd), argThat((GameLogEntry logEntry) ->
                         logEntry.plainText().contains("attacked this turn")));
             }
 

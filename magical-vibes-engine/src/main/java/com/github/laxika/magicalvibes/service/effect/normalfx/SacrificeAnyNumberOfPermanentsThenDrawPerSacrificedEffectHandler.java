@@ -7,7 +7,7 @@ import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.StackEntry;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
 import com.github.laxika.magicalvibes.model.effect.SacrificeAnyNumberOfPermanentsThenDrawPerSacrificedEffect;
-import com.github.laxika.magicalvibes.service.GameBroadcastService;
+import com.github.laxika.magicalvibes.service.GameLogService;
 import com.github.laxika.magicalvibes.service.filter.PredicateEvaluationService;
 import com.github.laxika.magicalvibes.service.input.PlayerInputService;
 import java.util.ArrayList;
@@ -29,7 +29,7 @@ import org.springframework.stereotype.Component;
 public class SacrificeAnyNumberOfPermanentsThenDrawPerSacrificedEffectHandler
         implements NormalEffectHandlerBean {
 
-    private final GameBroadcastService gameBroadcastService;
+    private final GameLogService gameLogService;
     private final PlayerInputService playerInputService;
     private final PredicateEvaluationService predicateEvaluationService;
 
@@ -56,7 +56,7 @@ public class SacrificeAnyNumberOfPermanentsThenDrawPerSacrificedEffectHandler
         if (eligibleIds.isEmpty()) {
             String logEntry = gameData.playerIdToName.get(controllerId)
                     + " has no permanents to sacrifice.";
-            gameBroadcastService.logAndBroadcast(gameData, GameLog.text(logEntry));
+            gameLogService.append(gameData, GameLog.text(logEntry));
             log.info("Game {} - {} has no permanents to sacrifice for {}",
                     gameData.id, gameData.playerIdToName.get(controllerId), entry.getCard().getName());
             return;

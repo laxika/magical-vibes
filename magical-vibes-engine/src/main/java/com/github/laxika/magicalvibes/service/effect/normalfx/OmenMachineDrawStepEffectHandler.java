@@ -14,7 +14,7 @@ import com.github.laxika.magicalvibes.model.TargetType;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
 import com.github.laxika.magicalvibes.model.effect.OmenMachineDrawStepEffect;
 import com.github.laxika.magicalvibes.model.filter.PermanentPredicateTargetFilter;
-import com.github.laxika.magicalvibes.service.GameBroadcastService;
+import com.github.laxika.magicalvibes.service.GameLogService;
 import com.github.laxika.magicalvibes.service.battlefield.BattlefieldEntryService;
 import com.github.laxika.magicalvibes.service.battlefield.GameQueryService;
 import com.github.laxika.magicalvibes.service.filter.PredicateEvaluationService;
@@ -37,7 +37,7 @@ public class OmenMachineDrawStepEffectHandler implements NormalEffectHandlerBean
     private final ExileSupport exileSupport;
     private final GameQueryService gameQueryService;
     private final PredicateEvaluationService predicateEvaluationService;
-    private final GameBroadcastService gameBroadcastService;
+    private final GameLogService gameLogService;
     private final BattlefieldEntryService battlefieldEntryService;
     private final ExileService exileService;
     private final PlayerInputService playerInputService;
@@ -57,7 +57,7 @@ public class OmenMachineDrawStepEffectHandler implements NormalEffectHandlerBean
 
         if (deck == null || deck.isEmpty()) {
             String logEntry = playerName + "'s library is empty (" + sourceName + ").";
-            gameBroadcastService.logAndBroadcast(gameData, GameLog.text(logEntry));
+            gameLogService.append(gameData, GameLog.text(logEntry));
             log.info("Game {} - {} library empty for Omen Machine trigger", gameData.id, playerName);
             return;
         }
@@ -67,7 +67,7 @@ public class OmenMachineDrawStepEffectHandler implements NormalEffectHandlerBean
         exileService.exileCard(gameData, targetPlayerId, topCard);
 
         String exileLog = playerName + " exiles " + topCard.getName() + " (" + sourceName + ").";
-        gameBroadcastService.logAndBroadcast(gameData, GameLog.builder().text(playerName + " exiles ").card(topCard).text(" (" + sourceName + ").").build());
+        gameLogService.append(gameData, GameLog.builder().text(playerName + " exiles ").card(topCard).text(" (" + sourceName + ").").build());
         log.info("Game {} - {} exiles {} (Omen Machine)", gameData.id, playerName, topCard.getName());
 
         if (topCard.hasType(CardType.LAND)) {
@@ -75,7 +75,7 @@ public class OmenMachineDrawStepEffectHandler implements NormalEffectHandlerBean
             gameData.removeFromExile(topCard.getId());
             battlefieldEntryService.putPermanentOntoBattlefield(gameData, targetPlayerId, new Permanent(topCard));
 
-            gameBroadcastService.logAndBroadcast(gameData, GameLog.textCardText(playerName + " puts " , topCard, " onto the battlefield."));
+            gameLogService.append(gameData, GameLog.textCardText(playerName + " puts " , topCard, " onto the battlefield."));
             log.info("Game {} - {} puts {} onto battlefield (Omen Machine)", gameData.id, playerName, topCard.getName());
 
             battlefieldEntryService.processCreatureETBEffects(gameData, targetPlayerId, topCard, null, false);
@@ -115,7 +115,7 @@ public class OmenMachineDrawStepEffectHandler implements NormalEffectHandlerBean
                 if (validTargets.isEmpty()) {
                     // Can't cast — card stays in exile
                     exileService.exileCard(gameData, targetPlayerId, topCard);
-                    gameBroadcastService.logAndBroadcast(gameData, GameLog.cardThen(topCard, " has no valid targets and remains in exile."));
+                    gameLogService.append(gameData, GameLog.cardThen(topCard, " has no valid targets and remains in exile."));
                     log.info("Game {} - {} can't be cast (no targets), stays in exile", gameData.id, topCard.getName());
                     return;
                 }
@@ -126,7 +126,7 @@ public class OmenMachineDrawStepEffectHandler implements NormalEffectHandlerBean
                         "Choose a target for " + topCard.getName() + ".");
 
                 String castLog = playerName + " casts " + topCard.getName() + " without paying its mana cost — choosing target.";
-                gameBroadcastService.logAndBroadcast(gameData, GameLog.textCardText(playerName + " casts " , topCard, " without paying its mana cost — choosing target."));
+                gameLogService.append(gameData, GameLog.textCardText(playerName + " casts " , topCard, " without paying its mana cost — choosing target."));
                 log.info("Game {} - {} casts {} (Omen Machine), choosing target", gameData.id, playerName, topCard.getName());
             } else {
                 // Non-targeted spell — put directly on stack
@@ -138,7 +138,7 @@ public class OmenMachineDrawStepEffectHandler implements NormalEffectHandlerBean
                 gameData.recordSpellCast(targetPlayerId, topCard);
                 gameData.priorityPassedBy.clear();
 
-                gameBroadcastService.logAndBroadcast(gameData, GameLog.textCardText(playerName + " casts " , topCard, " without paying its mana cost."));
+                gameLogService.append(gameData, GameLog.textCardText(playerName + " casts " , topCard, " without paying its mana cost."));
                 log.info("Game {} - {} casts {} (Omen Machine) without paying mana", gameData.id, playerName, topCard.getName());
 
                 triggerCollectionService.checkSpellCastTriggers(gameData, topCard, targetPlayerId, false);

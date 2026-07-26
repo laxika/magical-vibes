@@ -6,7 +6,7 @@ import com.github.laxika.magicalvibes.model.GameLog;
 import com.github.laxika.magicalvibes.model.StackEntry;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
 import com.github.laxika.magicalvibes.model.effect.RevealTopCardsBottomThenDamageIfCopyRevealedEffect;
-import com.github.laxika.magicalvibes.service.GameBroadcastService;
+import com.github.laxika.magicalvibes.service.GameLogService;
 import com.github.laxika.magicalvibes.service.GameOutcomeService;
 import java.util.UUID;
 import lombok.RequiredArgsConstructor;
@@ -16,7 +16,7 @@ import org.springframework.stereotype.Component;
 @RequiredArgsConstructor
 public class RevealTopCardsBottomThenDamageIfCopyRevealedEffectHandler implements NormalEffectHandlerBean {
 
-    private final GameBroadcastService gameBroadcastService;
+    private final GameLogService gameLogService;
     private final LibraryRevealSupport libraryRevealSupport;
     private final DamageSupport damageSupport;
     private final GameOutcomeService gameOutcomeService;
@@ -39,7 +39,7 @@ public class RevealTopCardsBottomThenDamageIfCopyRevealedEffectHandler implement
                 .map(Card::getName)
                 .reduce((a, b) -> a + ", " + b)
                 .orElse("");
-        gameBroadcastService.logAndBroadcast(gameData, GameLog.text(result.playerName() + " reveals " + revealedNames + " from the top of their library with " + cardName + "."));
+        gameLogService.append(gameData, GameLog.text(result.playerName() + " reveals " + revealedNames + " from the top of their library with " + cardName + "."));
 
         boolean copyRevealed = result.topCards().stream().anyMatch(c -> c.getName().equals(cardName));
 

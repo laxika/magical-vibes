@@ -7,7 +7,7 @@ import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.StackEntry;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
 import com.github.laxika.magicalvibes.model.effect.ExileTargetPermanentAndTrackWithSourceEffect;
-import com.github.laxika.magicalvibes.service.GameBroadcastService;
+import com.github.laxika.magicalvibes.service.GameLogService;
 import com.github.laxika.magicalvibes.service.battlefield.GameQueryService;
 import com.github.laxika.magicalvibes.service.battlefield.PermanentRemovalService;
 import java.util.List;
@@ -22,7 +22,7 @@ import org.springframework.stereotype.Component;
 public class ExileTargetPermanentAndTrackWithSourceEffectHandler implements NormalEffectHandlerBean {
 
     private final GameQueryService gameQueryService;
-    private final GameBroadcastService gameBroadcastService;
+    private final GameLogService gameLogService;
     private final PermanentRemovalService permanentRemovalService;
 
     @Override
@@ -64,7 +64,7 @@ public class ExileTargetPermanentAndTrackWithSourceEffectHandler implements Norm
         }
 
         String logEntry = exiledCard.getName() + " is exiled by " + entry.getCard().getName() + ".";
-        gameBroadcastService.logAndBroadcast(gameData, GameLog.cardTextCard(exiledCard, " is exiled by ", entry.getCard(), "."));
+        gameLogService.append(gameData, GameLog.cardTextCard(exiledCard, " is exiled by ", entry.getCard(), "."));
         log.info("Game {} - {} exiles {} (tracked with source)",
                 gameData.id, entry.getCard().getName(), exiledCard.getName());
 

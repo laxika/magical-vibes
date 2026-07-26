@@ -10,7 +10,7 @@ import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.StackEntry;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
 import com.github.laxika.magicalvibes.model.effect.RevealTopCardsChosenSubtypeToHandRestToBottomEffect;
-import com.github.laxika.magicalvibes.service.GameBroadcastService;
+import com.github.laxika.magicalvibes.service.GameLogService;
 import com.github.laxika.magicalvibes.service.battlefield.GameQueryService;
 import java.util.ArrayList;
 import java.util.List;
@@ -25,7 +25,7 @@ import org.springframework.stereotype.Component;
 @RequiredArgsConstructor
 public class RevealTopCardsChosenSubtypeToHandRestToBottomEffectHandler implements NormalEffectHandlerBean {
 
-    private final GameBroadcastService gameBroadcastService;
+    private final GameLogService gameLogService;
     private final GameQueryService gameQueryService;
     private final LibraryRevealSupport libraryRevealSupport;
 
@@ -52,7 +52,7 @@ public class RevealTopCardsChosenSubtypeToHandRestToBottomEffectHandler implemen
         String cardName = entry.getCard().getName();
 
         String revealedNames = topCards.stream().map(Card::getName).reduce((a, b) -> a + ", " + b).orElse("");
-        gameBroadcastService.logAndBroadcast(gameData, GameLog.text(playerName + " reveals " + revealedNames + " from the top of their library with " + cardName + "."));
+        gameLogService.append(gameData, GameLog.text(playerName + " reveals " + revealedNames + " from the top of their library with " + cardName + "."));
 
         List<Card> toHand = new ArrayList<>();
         List<Card> toBottom = new ArrayList<>();
@@ -69,7 +69,7 @@ public class RevealTopCardsChosenSubtypeToHandRestToBottomEffectHandler implemen
         }
         if (!toHand.isEmpty()) {
             String handNames = toHand.stream().map(Card::getName).reduce((a, b) -> a + ", " + b).orElse("");
-            gameBroadcastService.logAndBroadcast(gameData, GameLog.text(playerName + " puts " + handNames + " into their hand."));
+            gameLogService.append(gameData, GameLog.text(playerName + " puts " + handNames + " into their hand."));
         }
 
         log.info("Game {} - {} resolving {} — {} to hand, {} to bottom",

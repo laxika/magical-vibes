@@ -7,7 +7,7 @@ import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.StackEntry;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
 import com.github.laxika.magicalvibes.model.effect.ShuffleSelfAndGraveyardIntoLibraryEffect;
-import com.github.laxika.magicalvibes.service.GameBroadcastService;
+import com.github.laxika.magicalvibes.service.GameLogService;
 import com.github.laxika.magicalvibes.service.battlefield.GameQueryService;
 import com.github.laxika.magicalvibes.service.battlefield.PermanentRemovalService;
 import com.github.laxika.magicalvibes.service.graveyard.GraveyardService;
@@ -23,7 +23,7 @@ import org.springframework.stereotype.Component;
 @RequiredArgsConstructor
 public class ShuffleSelfAndGraveyardIntoLibraryEffectHandler implements NormalEffectHandlerBean {
 
-    private final GameBroadcastService gameBroadcastService;
+    private final GameLogService gameLogService;
     private final GameQueryService gameQueryService;
     private final PermanentRemovalService permanentRemovalService;
     private final GraveyardService graveyardService;
@@ -66,16 +66,16 @@ public class ShuffleSelfAndGraveyardIntoLibraryEffectHandler implements NormalEf
         if (selfShuffled && graveyardCount > 0) {
             String logEntry = playerName + " shuffles " + entry.getCard().getName()
                     + " and their graveyard (" + LibraryShuffleSupport.pluralCards(graveyardCount) + ") into their library.";
-            gameBroadcastService.logAndBroadcast(gameData, GameLog.builder().text(playerName + " shuffles ").card(entry.getCard()).text(" and their graveyard (" + LibraryShuffleSupport.pluralCards(graveyardCount) + ") into their library.").build());
+            gameLogService.append(gameData, GameLog.builder().text(playerName + " shuffles ").card(entry.getCard()).text(" and their graveyard (" + LibraryShuffleSupport.pluralCards(graveyardCount) + ") into their library.").build());
         } else if (selfShuffled) {
             String logEntry = playerName + " shuffles " + entry.getCard().getName() + " into their library.";
-            gameBroadcastService.logAndBroadcast(gameData, GameLog.textCardText(playerName + " shuffles " , entry.getCard(), " into their library."));
+            gameLogService.append(gameData, GameLog.textCardText(playerName + " shuffles " , entry.getCard(), " into their library."));
         } else if (graveyardCount > 0) {
-            gameBroadcastService.logAndBroadcast(gameData, GameLog.text(playerName + " shuffles their graveyard ("
+            gameLogService.append(gameData, GameLog.text(playerName + " shuffles their graveyard ("
                     + LibraryShuffleSupport.pluralCards(graveyardCount) + ") into their library."));
         } else {
             String logEntry = playerName + " shuffles their library.";
-            gameBroadcastService.logAndBroadcast(gameData, GameLog.text(logEntry));
+            gameLogService.append(gameData, GameLog.text(logEntry));
         }
 
         log.info("Game {} - {} shuffles self={} + graveyard ({} cards) into library",

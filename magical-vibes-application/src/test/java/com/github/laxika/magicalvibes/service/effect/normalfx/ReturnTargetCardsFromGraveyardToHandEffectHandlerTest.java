@@ -6,7 +6,7 @@ import com.github.laxika.magicalvibes.model.GameData;
 import com.github.laxika.magicalvibes.model.StackEntry;
 import com.github.laxika.magicalvibes.model.StackEntryType;
 import com.github.laxika.magicalvibes.model.effect.ReturnTargetCardsFromGraveyardToHandEffect;
-import com.github.laxika.magicalvibes.service.GameBroadcastService;
+import com.github.laxika.magicalvibes.service.GameLogService;
 import com.github.laxika.magicalvibes.service.input.PlayerInputService;
 import com.github.laxika.magicalvibes.service.battlefield.BattlefieldEntryService;
 import com.github.laxika.magicalvibes.service.battlefield.GameQueryService;
@@ -45,7 +45,7 @@ class ReturnTargetCardsFromGraveyardToHandEffectHandlerTest {
     @Mock
     private GameQueryService gameQueryService;
     @Mock
-    private GameBroadcastService gameBroadcastService;
+    private GameLogService gameLogService;
     @Mock
     private PlayerInputService playerInputService;
     @Mock
@@ -92,7 +92,7 @@ class ReturnTargetCardsFromGraveyardToHandEffectHandlerTest {
         }
 
         // =========================================================================
-        // describeFilter â€” static utility method
+        // describeFilter A?€�t static utility method
         // =========================================================================
 
     @Test
@@ -116,7 +116,7 @@ class ReturnTargetCardsFromGraveyardToHandEffectHandlerTest {
                 assertThat(gd.playerGraveyards.get(player1Id)).isEmpty();
                 assertThat(gd.playerHands.get(player1Id)).extracting(Card::getName)
                         .containsExactlyInAnyOrder("Grizzly Bears", "Llanowar Elves");
-                verify(gameBroadcastService).logAndBroadcast(eq(gd), argThat((GameLogEntry logEntry) ->
+                verify(gameLogService).append(eq(gd), argThat((GameLogEntry logEntry) ->
                         logEntry.plainText().contains("Grizzly Bears") && logEntry.plainText().contains("Llanowar Elves")
                                 && logEntry.plainText().contains("graveyard to hand")));
             }
@@ -132,7 +132,7 @@ class ReturnTargetCardsFromGraveyardToHandEffectHandlerTest {
 
                 returnTargetCardsToHandHandler.resolve(gd, entry, effect);
 
-                verify(gameBroadcastService, never()).logAndBroadcast(any(), any(GameLogEntry.class));
+                verify(gameLogService, never()).append(any(), any(GameLogEntry.class));
             }
 
             @Test

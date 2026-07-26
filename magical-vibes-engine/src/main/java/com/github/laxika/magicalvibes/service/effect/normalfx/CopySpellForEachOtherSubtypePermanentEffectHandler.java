@@ -8,7 +8,7 @@ import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.StackEntry;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
 import com.github.laxika.magicalvibes.model.effect.CopySpellForEachOtherSubtypePermanentEffect;
-import com.github.laxika.magicalvibes.service.GameBroadcastService;
+import com.github.laxika.magicalvibes.service.GameLogService;
 import com.github.laxika.magicalvibes.service.target.ValidTargetService;
 import java.util.ArrayList;
 import java.util.List;
@@ -22,7 +22,7 @@ import org.springframework.stereotype.Component;
 @RequiredArgsConstructor
 public class CopySpellForEachOtherSubtypePermanentEffectHandler implements NormalEffectHandlerBean {
 
-    private final GameBroadcastService gameBroadcastService;
+    private final GameLogService gameLogService;
     private final ValidTargetService validTargetService;
     private final CopySupport copySupport;
 
@@ -58,7 +58,7 @@ public class CopySpellForEachOtherSubtypePermanentEffectHandler implements Norma
             gameData.stack.add(copyEntry);
 
             String logMsg = "A copy of " + spellCard.getName() + " is created targeting " + target.getCard().getName() + ".";
-            gameBroadcastService.logAndBroadcast(gameData, GameLog.builder().text("A copy of ").card(spellCard).text(" is created targeting ").card(target.getCard()).text(".").build());
+            gameLogService.append(gameData, GameLog.builder().text("A copy of ").card(spellCard).text(" is created targeting ").card(target.getCard()).text(".").build());
         }
 
         log.info("Game {} - {} triggers, creating {} copies of {} for each other {}",

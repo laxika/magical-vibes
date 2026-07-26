@@ -10,7 +10,7 @@ import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.StackEntry;
 import com.github.laxika.magicalvibes.model.effect.AwardManaOfColorsEffect;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
-import com.github.laxika.magicalvibes.service.GameBroadcastService;
+import com.github.laxika.magicalvibes.service.GameLogService;
 import com.github.laxika.magicalvibes.service.battlefield.GameQueryService;
 import com.github.laxika.magicalvibes.service.effect.AmountContext;
 import com.github.laxika.magicalvibes.service.effect.AmountEvaluationService;
@@ -34,7 +34,7 @@ public class AwardManaOfColorsEffectHandler implements NormalEffectHandlerBean {
 
     private final GameQueryService gameQueryService;
     private final AmountEvaluationService amountEvaluationService;
-    private final GameBroadcastService gameBroadcastService;
+    private final GameLogService gameLogService;
     private final InteractionHandlerRegistry interactionHandlerRegistry;
 
     @Override
@@ -70,7 +70,7 @@ public class AwardManaOfColorsEffectHandler implements NormalEffectHandlerBean {
             }
             String playerName = gameData.playerIdToName.get(controllerId);
             String logEntry = playerName + " adds " + picks + " " + manaColor.getCode() + ".";
-            gameBroadcastService.logAndBroadcast(gameData, GameLog.text(logEntry));
+            gameLogService.append(gameData, GameLog.text(logEntry));
             log.info("Game {} - {} adds {} {}", gameData.id, playerName, picks, manaColor);
             return;
         }

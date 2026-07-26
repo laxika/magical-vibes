@@ -8,7 +8,7 @@ import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.StackEntry;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
 import com.github.laxika.magicalvibes.model.effect.RevealUntilLandToBattlefieldRestToBottomEffect;
-import com.github.laxika.magicalvibes.service.GameBroadcastService;
+import com.github.laxika.magicalvibes.service.GameLogService;
 import com.github.laxika.magicalvibes.service.battlefield.BattlefieldEntryService;
 import java.util.ArrayList;
 import java.util.List;
@@ -23,7 +23,7 @@ import org.springframework.stereotype.Component;
 @RequiredArgsConstructor
 public class RevealUntilLandToBattlefieldRestToBottomEffectHandler implements NormalEffectHandlerBean {
 
-    private final GameBroadcastService gameBroadcastService;
+    private final GameLogService gameLogService;
     private final LibraryRevealSupport libraryRevealSupport;
     private final BattlefieldEntryService battlefieldEntryService;
 
@@ -52,12 +52,12 @@ public class RevealUntilLandToBattlefieldRestToBottomEffectHandler implements No
         }
 
         if (revealed.isEmpty()) {
-            gameBroadcastService.logAndBroadcast(gameData, GameLog.text(playerName + "'s library is empty — no cards are revealed with " + cardName + "."));
+            gameLogService.append(gameData, GameLog.text(playerName + "'s library is empty — no cards are revealed with " + cardName + "."));
             return;
         }
 
         String revealedNames = revealed.stream().map(Card::getName).collect(Collectors.joining(", "));
-        gameBroadcastService.logAndBroadcast(gameData, GameLog.text(playerName + " reveals " + revealedNames + " from the top of their library with " + cardName + "."));
+        gameLogService.append(gameData, GameLog.text(playerName + " reveals " + revealedNames + " from the top of their library with " + cardName + "."));
 
         // The land (if any) enters the battlefield; the rest go on the bottom in any order.
         List<Card> rest = new ArrayList<>(revealed);
@@ -65,9 +65,9 @@ public class RevealUntilLandToBattlefieldRestToBottomEffectHandler implements No
             rest.remove(land);
             Permanent perm = new Permanent(land);
             battlefieldEntryService.putPermanentOntoBattlefield(gameData, controllerId, perm);
-            gameBroadcastService.logAndBroadcast(gameData, GameLog.entersBattlefieldUnder(land, playerName));
+            gameLogService.append(gameData, GameLog.entersBattlefieldUnder(land, playerName));
         } else {
-            gameBroadcastService.logAndBroadcast(gameData, GameLog.text(playerName + " reveals their entire library — no land found."));
+            gameLogService.append(gameData, GameLog.text(playerName + " reveals their entire library — no land found."));
         }
 
         log.info("Game {} - {} resolving {} — land={}, {} cards to bottom",

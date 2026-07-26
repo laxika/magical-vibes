@@ -6,7 +6,7 @@ import com.github.laxika.magicalvibes.model.GameLog;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.StackEntry;
 import com.github.laxika.magicalvibes.model.StackEntryType;
-import com.github.laxika.magicalvibes.service.GameBroadcastService;
+import com.github.laxika.magicalvibes.service.GameLogService;
 import com.github.laxika.magicalvibes.service.battlefield.GameQueryService;
 import com.github.laxika.magicalvibes.service.battlefield.PermanentRemovalService;
 import com.github.laxika.magicalvibes.service.state.StateTriggerService;
@@ -27,7 +27,7 @@ import java.util.UUID;
 public class BounceSupport {
 
     private final GameQueryService gameQueryService;
-    private final GameBroadcastService gameBroadcastService;
+    private final GameLogService gameLogService;
     private final PermanentRemovalService permanentRemovalService;
     private final StateTriggerService stateTriggerService;
 
@@ -36,14 +36,14 @@ public class BounceSupport {
 
         if (toReturn == null) {
             String logEntry = entry.getCard().getName() + " is no longer on the battlefield.";
-            gameBroadcastService.logAndBroadcast(gameData, GameLog.cardThen(entry.getCard(), " is no longer on the battlefield."));
+            gameLogService.append(gameData, GameLog.cardThen(entry.getCard(), " is no longer on the battlefield."));
             return;
         }
 
         permanentRemovalService.removePermanentToHand(gameData, toReturn);
         permanentRemovalService.removeOrphanedAuras(gameData);
 
-        gameBroadcastService.logAndBroadcast(gameData, GameLog.cardThen(entry.getCard(), " is returned to its owner's hand."));
+        gameLogService.append(gameData, GameLog.cardThen(entry.getCard(), " is returned to its owner's hand."));
         log.info("Game {} - {} returned to hand", gameData.id, entry.getCard().getName());
     }
 
@@ -80,7 +80,7 @@ public class BounceSupport {
             gameData.playerHands.computeIfAbsent(ownerId, id -> new java.util.ArrayList<>()).add(spell);
         }
 
-        gameBroadcastService.logAndBroadcast(gameData,
+        gameLogService.append(gameData,
                 GameLog.cardThen(target.getCard(), " is returned to its owner's hand."));
         log.info("Game {} - {} returned {} to owner's hand",
                 gameData.id, source.getCard().getName(), target.getCard().getName());

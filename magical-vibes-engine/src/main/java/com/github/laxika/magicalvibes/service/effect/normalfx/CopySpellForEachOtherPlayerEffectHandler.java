@@ -9,7 +9,7 @@ import com.github.laxika.magicalvibes.model.effect.CardEffect;
 import com.github.laxika.magicalvibes.model.effect.CopyControllerCastSpellEffect;
 import com.github.laxika.magicalvibes.model.effect.CopySpellEffect;
 import com.github.laxika.magicalvibes.model.effect.CopySpellForEachOtherPlayerEffect;
-import com.github.laxika.magicalvibes.service.GameBroadcastService;
+import com.github.laxika.magicalvibes.service.GameLogService;
 import java.util.List;
 import java.util.UUID;
 import lombok.RequiredArgsConstructor;
@@ -21,7 +21,7 @@ import org.springframework.stereotype.Component;
 @RequiredArgsConstructor
 public class CopySpellForEachOtherPlayerEffectHandler implements NormalEffectHandlerBean {
 
-    private final GameBroadcastService gameBroadcastService;
+    private final GameLogService gameLogService;
     private final CopySupport copySupport;
 
     @Override
@@ -65,7 +65,7 @@ public class CopySpellForEachOtherPlayerEffectHandler implements NormalEffectHan
 
             String logMsg = "A copy of " + spellCard.getName() + " is created for "
                     + gameData.playerIdToName.get(playerId) + ".";
-            gameBroadcastService.logAndBroadcast(gameData, GameLog.builder().text("A copy of ").card(spellCard).text(" is created for " + gameData.playerIdToName.get(playerId) + ".").build());
+            gameLogService.append(gameData, GameLog.builder().text("A copy of ").card(spellCard).text(" is created for " + gameData.playerIdToName.get(playerId) + ".").build());
 
             if (copyEntry.getTargetId() != null) {
                 PendingMayAbility retargetAbility = new PendingMayAbility(

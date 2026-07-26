@@ -10,7 +10,7 @@ import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.StackEntry;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
 import com.github.laxika.magicalvibes.model.effect.LookAtTopCardPutLandOrCreatureWithinLoyaltyEffect;
-import com.github.laxika.magicalvibes.service.GameBroadcastService;
+import com.github.laxika.magicalvibes.service.GameLogService;
 import com.github.laxika.magicalvibes.service.battlefield.GameQueryService;
 import java.util.List;
 import java.util.UUID;
@@ -28,7 +28,7 @@ import org.springframework.stereotype.Component;
 @RequiredArgsConstructor
 public class LookAtTopCardPutLandOrCreatureWithinLoyaltyEffectHandler implements NormalEffectHandlerBean {
 
-    private final GameBroadcastService gameBroadcastService;
+    private final GameLogService gameLogService;
     private final GameQueryService gameQueryService;
 
     @Override
@@ -44,13 +44,13 @@ public class LookAtTopCardPutLandOrCreatureWithinLoyaltyEffectHandler implements
         String sourceName = entry.getCard().getName();
 
         if (deck.isEmpty()) {
-            gameBroadcastService.logAndBroadcast(gameData,
+            gameLogService.append(gameData,
                     GameLog.text(playerName + "'s library is empty (" + sourceName + ")."));
             return;
         }
 
         // "Look at" is private, so the card's identity is not broadcast to opponents.
-        gameBroadcastService.logAndBroadcast(gameData,
+        gameLogService.append(gameData,
                 GameLog.text(playerName + " looks at the top card of their library (" + sourceName + ")."));
 
         Card topCard = deck.getFirst();
@@ -65,7 +65,7 @@ public class LookAtTopCardPutLandOrCreatureWithinLoyaltyEffectHandler implements
                 || (topCard.hasType(CardType.CREATURE) && topCard.getManaValue() <= loyalty);
 
         if (!eligible) {
-            gameBroadcastService.logAndBroadcast(gameData,
+            gameLogService.append(gameData,
                     GameLog.text(playerName + " leaves the top card on their library (" + sourceName + ")."));
             return;
         }

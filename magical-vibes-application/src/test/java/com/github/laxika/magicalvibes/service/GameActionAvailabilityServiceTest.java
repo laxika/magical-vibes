@@ -15,8 +15,6 @@ import com.github.laxika.magicalvibes.networking.model.CardView;
 import com.github.laxika.magicalvibes.networking.model.PermanentView;
 import com.github.laxika.magicalvibes.networking.service.CardViewFactory;
 import com.github.laxika.magicalvibes.networking.service.PermanentViewFactory;
-import com.github.laxika.magicalvibes.model.GameLog;
-import com.github.laxika.magicalvibes.model.GameLogEntry;
 import com.github.laxika.magicalvibes.networking.service.GameLogViewFactory;
 import com.github.laxika.magicalvibes.networking.service.StackEntryViewFactory;
 import com.github.laxika.magicalvibes.service.battlefield.GameQueryService;
@@ -25,7 +23,6 @@ import com.github.laxika.magicalvibes.service.cast.CastingPermissionService;
 import com.github.laxika.magicalvibes.service.cast.CostModificationTestRegistry;
 import com.github.laxika.magicalvibes.service.cast.CostModificationSupport;
 import com.github.laxika.magicalvibes.service.effect.GrantedAbilityViewFactory;
-import com.github.laxika.magicalvibes.service.event.GameMutationCoordinator;
 import com.github.laxika.magicalvibes.service.target.ValidTargetService;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
@@ -54,7 +51,7 @@ import static org.mockito.Mockito.when;
 import com.github.laxika.magicalvibes.service.filter.PredicateEvaluationService;
 
 @ExtendWith(MockitoExtension.class)
-class GameBroadcastServiceTest {
+class GameActionAvailabilityServiceTest {
 
     @Mock private CardViewFactory cardViewFactory;
     @Mock private PermanentViewFactory permanentViewFactory;
@@ -64,10 +61,9 @@ class GameBroadcastServiceTest {
     @Mock private PredicateEvaluationService predicateEvaluationService;
     @Mock private ValidTargetService validTargetService;
     @Mock private com.github.laxika.magicalvibes.service.effect.ConditionEvaluationService conditionEvaluationService;
-    @Mock private GameMutationCoordinator mutationCoordinator;
-    @Mock private GameLogService gameLogService;
 
-    private GameBroadcastService svc;
+    private GameActionAvailabilityService svc;
+    private GameViewProjectionFactory projectionFactory;
     private GameData gd;
     private UUID player1Id;
     private UUID player2Id;
@@ -84,13 +80,16 @@ class GameBroadcastServiceTest {
                         gameQueryService, predicateEvaluationService));
         CastingPermissionService castingPermissionService =
                 new CastingPermissionService(gameQueryService, predicateEvaluationService, conditionEvaluationService);
-        GameViewProjectionFactory projectionFactory = new GameViewProjectionFactory(
+        svc = new GameActionAvailabilityService(
+                gameQueryService, validTargetService, castingCostService,
+                castingPermissionService,
+                new com.github.laxika.magicalvibes.service.cast.PotentialManaService(
+                        gameQueryService));
+        projectionFactory = new GameViewProjectionFactory(
                 cardViewFactory, gameLogViewFactory, permanentViewFactory,
                 stackEntryViewFactory, gameQueryService, validTargetService,
                 castingCostService, castingPermissionService,
-                new com.github.laxika.magicalvibes.service.cast.PotentialManaService(gameQueryService),
-                new GrantedAbilityViewFactory());
-        svc = new GameBroadcastService(projectionFactory, mutationCoordinator, gameLogService);
+                new GrantedAbilityViewFactory(), svc);
 
         player1Id = UUID.randomUUID();
         player2Id = UUID.randomUUID();
@@ -110,13 +109,6 @@ class GameBroadcastServiceTest {
         gd.status = GameStatus.RUNNING;
         gd.activePlayerId = player1Id;
         gd.currentStep = TurnStep.PRECOMBAT_MAIN;
-    }
-
-    @Test
-    void effectCompatibilityFacadeRecordsCanonicalStateInvalidation() {
-        svc.invalidateAllPlayerViews(gd);
-
-        verify(mutationCoordinator).invalidateAllPlayerViews(gd);
     }
 
     @Nested
@@ -423,37 +415,6 @@ class GameBroadcastServiceTest {
     }
 
     @Nested
-    @DisplayName("logAndBroadcast — compatibility delegation")
-    class LogAndBroadcastTests {
-
-        @Test
-        @DisplayName("delegates a plain structured entry unchanged")
-        void plainStringLog() {
-            GameLogEntry entry = GameLogEntry.text("Game started!");
-
-            svc.logAndBroadcast(gd, entry);
-
-            verify(gameLogService).append(gd, entry);
-        }
-
-        @Test
-        @DisplayName("delegates card segments without rebuilding them")
-        void structuredCardLog() {
-            Card bolt = new Card();
-            bolt.setName("Lightning Bolt");
-            GameLogEntry entry = GameLog.builder()
-                    .text("Player1 casts ")
-                    .card(bolt)
-                    .text(".")
-                    .build();
-
-            svc.logAndBroadcast(gd, entry);
-
-            verify(gameLogService).append(gd, entry);
-        }
-    }
-
-    @Nested
     @DisplayName("getBattlefields — cards exiled with a permanent, shown tucked under it")
     class ExiledWithDisplayTests {
 
@@ -555,7 +516,7 @@ class GameBroadcastServiceTest {
             CardView hiddenView = cardViewNamed("Hidden Prize");
             when(cardViewFactory.create(hidden)).thenReturn(hiddenView);
 
-            var reveals = svc.collectFaceDownReveals(gd);
+            var reveals = projectionFactory.collectFaceDownReveals(gd);
 
             assertThat(reveals).containsOnlyKeys(sourcePermanent.getId());
             assertThat(reveals.get(sourcePermanent.getId()).viewerId()).isEqualTo(player1Id);
@@ -567,7 +528,7 @@ class GameBroadcastServiceTest {
         void faceUpExilesProduceNoReveal() {
             gd.addToExile(player1Id, artifact("Shown Card"), sourcePermanent.getId());
 
-            assertThat(svc.collectFaceDownReveals(gd)).isEmpty();
+            assertThat(projectionFactory.collectFaceDownReveals(gd)).isEmpty();
         }
 
         @Test
@@ -577,14 +538,16 @@ class GameBroadcastServiceTest {
             List<List<PermanentView>> battlefields = List.of(List.of(shared), List.of());
             CardView hiddenView = cardViewNamed("Hidden Prize");
             var reveals = java.util.Map.of(sourcePermanent.getId(),
-                    new GameBroadcastService.FaceDownReveal(player1Id, List.of(hiddenView)));
+                    new GameViewProjectionFactory.FaceDownReveal(player1Id, List.of(hiddenView)));
 
-            PermanentView controllerView = svc.applyFaceDownReveals(battlefields, reveals, player1Id)
+            PermanentView controllerView =
+                    projectionFactory.applyFaceDownReveals(battlefields, reveals, player1Id)
                     .getFirst().getFirst();
             assertThat(controllerView.faceDownExiledCards()).containsExactly(hiddenView);
             assertThat(controllerView.faceDownExiledCount()).isZero();
 
-            PermanentView opponentView = svc.applyFaceDownReveals(battlefields, reveals, player2Id)
+            PermanentView opponentView =
+                    projectionFactory.applyFaceDownReveals(battlefields, reveals, player2Id)
                     .getFirst().getFirst();
             assertThat(opponentView).isSameAs(shared);
             assertThat(opponentView.faceDownExiledCards()).isEmpty();
@@ -609,7 +572,7 @@ class GameBroadcastServiceTest {
                     anyBoolean(), any(), anyList(), anyList(), eq(1)))
                     .thenReturn(permanentView(sourcePermanent.getId(), 1));
 
-            svc.getBattlefields(gd);
+            projectionFactory.getBattlefields(gd);
 
             @SuppressWarnings("unchecked")
             ArgumentCaptor<List<Card>> faceUpCaptor = ArgumentCaptor.forClass(List.class);

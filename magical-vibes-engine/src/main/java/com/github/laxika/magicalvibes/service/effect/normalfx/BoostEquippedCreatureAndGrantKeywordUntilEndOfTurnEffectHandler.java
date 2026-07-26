@@ -6,7 +6,7 @@ import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.StackEntry;
 import com.github.laxika.magicalvibes.model.effect.BoostEquippedCreatureAndGrantKeywordUntilEndOfTurnEffect;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
-import com.github.laxika.magicalvibes.service.GameBroadcastService;
+import com.github.laxika.magicalvibes.service.GameLogService;
 import com.github.laxika.magicalvibes.service.battlefield.GameQueryService;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -18,7 +18,7 @@ import org.springframework.stereotype.Component;
 public class BoostEquippedCreatureAndGrantKeywordUntilEndOfTurnEffectHandler implements NormalEffectHandlerBean {
 
     private final GameQueryService gameQueryService;
-    private final GameBroadcastService gameBroadcastService;
+    private final GameLogService gameLogService;
 
     @Override
     public Class<? extends CardEffect> handledEffect() {
@@ -49,7 +49,7 @@ public class BoostEquippedCreatureAndGrantKeywordUntilEndOfTurnEffectHandler imp
                 + e.keyword().name().substring(1).toLowerCase().replace('_', ' ');
         String logEntry = equippedCreature.getCard().getName() + " gets +" + e.powerBoost() + "/+"
                 + e.toughnessBoost() + " and gains " + keywordName + " until end of turn.";
-        gameBroadcastService.logAndBroadcast(gameData, GameLog.builder().card(equippedCreature.getCard()).text(" gets +" + e.powerBoost() + "/+" + e.toughnessBoost() + " and gains " + keywordName + " until end of turn.").build());
+        gameLogService.append(gameData, GameLog.builder().card(equippedCreature.getCard()).text(" gets +" + e.powerBoost() + "/+" + e.toughnessBoost() + " and gains " + keywordName + " until end of turn.").build());
         log.info("Game {} - {} gets +{}/+{} and gains {} until end of turn", gameData.id,
                 equippedCreature.getCard().getName(), e.powerBoost(), e.toughnessBoost(), e.keyword());
     }

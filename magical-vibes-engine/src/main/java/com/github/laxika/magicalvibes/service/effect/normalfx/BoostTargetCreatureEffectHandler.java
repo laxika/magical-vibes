@@ -6,7 +6,7 @@ import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.StackEntry;
 import com.github.laxika.magicalvibes.model.effect.BoostTargetCreatureEffect;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
-import com.github.laxika.magicalvibes.service.GameBroadcastService;
+import com.github.laxika.magicalvibes.service.GameLogService;
 import com.github.laxika.magicalvibes.service.battlefield.GameQueryService;
 import com.github.laxika.magicalvibes.service.effect.AmountContext;
 import com.github.laxika.magicalvibes.service.effect.AmountEvaluationService;
@@ -23,7 +23,7 @@ import java.util.UUID;
 public class BoostTargetCreatureEffectHandler implements NormalEffectHandlerBean {
 
     private final GameQueryService gameQueryService;
-    private final GameBroadcastService gameBroadcastService;
+    private final GameLogService gameLogService;
     private final AmountEvaluationService amountEvaluationService;
 
     @Override
@@ -68,7 +68,7 @@ public class BoostTargetCreatureEffectHandler implements NormalEffectHandlerBean
         target.setPowerModifier(target.getPowerModifier() + powerBoost);
         target.setToughnessModifier(target.getToughnessModifier() + toughnessBoost);
 
-        gameBroadcastService.logAndBroadcast(gameData, GameLog.builder()
+        gameLogService.append(gameData, GameLog.builder()
                 .card(target.getCard())
                 .text(String.format(" gets %+d/%+d until end of turn.", powerBoost, toughnessBoost))
                 .build());

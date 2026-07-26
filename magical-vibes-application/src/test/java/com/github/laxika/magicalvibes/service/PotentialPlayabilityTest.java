@@ -18,14 +18,14 @@ import java.util.List;
 import static org.assertj.core.api.Assertions.assertThat;
 
 /**
- * {@code GameBroadcastService.getPotentialPlayableCardIndices}: hand cards the player could
+ * {@code GameActionAvailabilityService.getPotentialPlayableCardIndices}: hand cards the player could
  * cast if they also tapped their untapped mana sources (MTGO-style click-to-cast), plus
  * {@code getPotentialManaTotal} used by the frontend to cap X.
  */
 class PotentialPlayabilityTest extends BaseCardTest {
 
-    private GameBroadcastService broadcast() {
-        return harness.getGameBroadcastService();
+    private GameActionAvailabilityService broadcast() {
+        return harness.getGameActionAvailabilityService();
     }
 
     private static Card createCreature(String manaCost, CardColor color) {

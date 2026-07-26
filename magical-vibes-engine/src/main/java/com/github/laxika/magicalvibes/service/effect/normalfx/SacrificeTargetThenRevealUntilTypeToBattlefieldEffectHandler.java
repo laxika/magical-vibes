@@ -9,7 +9,7 @@ import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.StackEntry;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
 import com.github.laxika.magicalvibes.model.effect.SacrificeTargetThenRevealUntilTypeToBattlefieldEffect;
-import com.github.laxika.magicalvibes.service.GameBroadcastService;
+import com.github.laxika.magicalvibes.service.GameLogService;
 import com.github.laxika.magicalvibes.service.battlefield.BattlefieldEntryService;
 import com.github.laxika.magicalvibes.service.battlefield.GameQueryService;
 import com.github.laxika.magicalvibes.service.battlefield.LegendRuleService;
@@ -31,7 +31,7 @@ public class SacrificeTargetThenRevealUntilTypeToBattlefieldEffectHandler implem
 
     private final GameQueryService gameQueryService;
     private final PermanentRemovalService permanentRemovalService;
-    private final GameBroadcastService gameBroadcastService;
+    private final GameLogService gameLogService;
     private final BattlefieldEntryService battlefieldEntryService;
     private final LegendRuleService legendRuleService;
     private final CardSpecificSupport cardSpecificSupport;
@@ -60,7 +60,7 @@ public class SacrificeTargetThenRevealUntilTypeToBattlefieldEffectHandler implem
         // Sacrifice the targeted permanent
         permanentRemovalService.removePermanentToGraveyard(gameData, target);
         String sacrificeLog = targetControllerName + " sacrifices " + targetName + ".";
-        gameBroadcastService.logAndBroadcast(gameData, GameLog.text(sacrificeLog));
+        gameLogService.append(gameData, GameLog.text(sacrificeLog));
 
         // Reveal cards from the top of the controller's library until a matching card is found
         List<Card> deck = gameData.playerDecks.get(targetControllerId);
@@ -78,20 +78,20 @@ public class SacrificeTargetThenRevealUntilTypeToBattlefieldEffectHandler implem
 
         if (revealedCards.isEmpty()) {
             String emptyLog = targetControllerName + "'s library is empty — no cards are revealed.";
-            gameBroadcastService.logAndBroadcast(gameData, GameLog.text(emptyLog));
+            gameLogService.append(gameData, GameLog.text(emptyLog));
             return;
         }
 
         String revealedNames = revealedCards.stream().map(Card::getName).collect(Collectors.joining(", "));
         String revealLog = targetControllerName + " reveals " + revealedNames + ".";
-        gameBroadcastService.logAndBroadcast(gameData, GameLog.text(revealLog));
+        gameLogService.append(gameData, GameLog.text(revealLog));
 
         if (foundCard == null) {
             // No matching card found — shuffle all revealed cards back into the library
             deck.addAll(revealedCards);
             LibraryShuffleHelper.shuffleLibrary(gameData, targetControllerId);
             String noMatchLog = targetControllerName + " reveals their entire library — no matching card found. Library is shuffled.";
-            gameBroadcastService.logAndBroadcast(gameData, GameLog.text(noMatchLog));
+            gameLogService.append(gameData, GameLog.text(noMatchLog));
             return;
         }
 
@@ -99,7 +99,7 @@ public class SacrificeTargetThenRevealUntilTypeToBattlefieldEffectHandler implem
         Permanent perm = new Permanent(foundCard);
         battlefieldEntryService.putPermanentOntoBattlefield(gameData, targetControllerId, perm);
 
-        gameBroadcastService.logAndBroadcast(gameData, GameLog.entersBattlefieldUnder(foundCard, targetControllerName));
+        gameLogService.append(gameData, GameLog.entersBattlefieldUnder(foundCard, targetControllerName));
 
         // Handle ETB effects for creatures
         boolean isCreature = foundCard.hasType(CardType.CREATURE);
@@ -121,7 +121,7 @@ public class SacrificeTargetThenRevealUntilTypeToBattlefieldEffectHandler implem
         LibraryShuffleHelper.shuffleLibrary(gameData, targetControllerId);
 
         String shuffleLog = targetControllerName + " shuffles their library.";
-        gameBroadcastService.logAndBroadcast(gameData, GameLog.text(shuffleLog));
+        gameLogService.append(gameData, GameLog.text(shuffleLog));
 
         // Check legend rule
         if (!gameData.interaction.isAwaitingInput()) {

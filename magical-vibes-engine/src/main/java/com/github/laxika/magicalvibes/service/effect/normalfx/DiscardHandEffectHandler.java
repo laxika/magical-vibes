@@ -7,7 +7,7 @@ import com.github.laxika.magicalvibes.model.StackEntry;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
 import com.github.laxika.magicalvibes.model.effect.DiscardHandEffect;
 import com.github.laxika.magicalvibes.model.effect.DiscardRecipient;
-import com.github.laxika.magicalvibes.service.GameBroadcastService;
+import com.github.laxika.magicalvibes.service.GameLogService;
 import com.github.laxika.magicalvibes.service.graveyard.GraveyardService;
 import com.github.laxika.magicalvibes.service.trigger.TriggerCollectionService;
 import java.util.ArrayList;
@@ -28,7 +28,7 @@ import org.springframework.stereotype.Component;
 @RequiredArgsConstructor
 public class DiscardHandEffectHandler implements NormalEffectHandlerBean {
 
-    private final GameBroadcastService gameBroadcastService;
+    private final GameLogService gameLogService;
     private final GraveyardService graveyardService;
     private final TriggerCollectionService triggerCollectionService;
 
@@ -77,7 +77,7 @@ public class DiscardHandEffectHandler implements NormalEffectHandlerBean {
         List<Card> hand = gameData.playerHands.get(playerId);
 
         if (hand == null || hand.isEmpty()) {
-            gameBroadcastService.logAndBroadcast(gameData, GameLog.text(playerName + " has no cards to discard (" + cardName + ")."));
+            gameLogService.append(gameData, GameLog.text(playerName + " has no cards to discard (" + cardName + ")."));
             log.info("Game {} - {} has no cards to discard for {}", gameData.id, playerName, cardName);
             return;
         }
@@ -91,7 +91,7 @@ public class DiscardHandEffectHandler implements NormalEffectHandlerBean {
             triggerCollectionService.checkDiscardTriggers(gameData, playerId, card);
         }
 
-        gameBroadcastService.logAndBroadcast(gameData, GameLog.text(playerName + " discards their hand ("
+        gameLogService.append(gameData, GameLog.text(playerName + " discards their hand ("
                 + discarded.size() + " card" + (discarded.size() != 1 ? "s" : "") + ") (" + cardName + ")."));
         log.info("Game {} - {} discards hand of {} cards for {}", gameData.id, playerName, discarded.size(), cardName);
     }

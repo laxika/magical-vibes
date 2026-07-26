@@ -8,7 +8,7 @@ import com.github.laxika.magicalvibes.model.PendingMayAbility;
 import com.github.laxika.magicalvibes.model.StackEntry;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
 import com.github.laxika.magicalvibes.model.effect.CopySpellEffect;
-import com.github.laxika.magicalvibes.service.GameBroadcastService;
+import com.github.laxika.magicalvibes.service.GameLogService;
 import java.util.List;
 import java.util.UUID;
 import lombok.RequiredArgsConstructor;
@@ -20,7 +20,7 @@ import org.springframework.stereotype.Component;
 @RequiredArgsConstructor
 public class CopySpellEffectHandler implements NormalEffectHandlerBean {
 
-    private final GameBroadcastService gameBroadcastService;
+    private final GameLogService gameLogService;
     private final CopySupport copySupport;
 
     @Override
@@ -49,7 +49,7 @@ public class CopySpellEffectHandler implements NormalEffectHandlerBean {
 
         // CR 706.2 — "This spell can't be copied": the copy is simply not created.
         if (targetEntry.getCard().isCantBeCopied()) {
-            gameBroadcastService.logAndBroadcast(gameData, GameLog.cardThen(targetEntry.getCard(), " can't be copied."));
+            gameLogService.append(gameData, GameLog.cardThen(targetEntry.getCard(), " can't be copied."));
             log.info("Game {} - {} can't be copied", gameData.id, targetEntry.getCard().getName());
             return;
         }
@@ -73,7 +73,7 @@ public class CopySpellEffectHandler implements NormalEffectHandlerBean {
 
         gameData.stack.add(copyEntry);
 
-        gameBroadcastService.logAndBroadcast(gameData, GameLog.textCardText("A copy of ", targetEntry.getCard(), " is created."));
+        gameLogService.append(gameData, GameLog.textCardText("A copy of ", targetEntry.getCard(), " is created."));
         log.info("Game {} - {} copies {}", gameData.id, entry.getCard().getName(), targetEntry.getCard().getName());
 
         // Only the instant/sorcery-copy mode offers "you may choose new targets for the copy".

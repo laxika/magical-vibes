@@ -36,14 +36,12 @@ class SpecializedInteractionAiStrategiesTest {
         gameData.playerHands.put(aiPlayerId, new ArrayList<>());
         gameData.playerDecks.put(aiPlayerId, new ArrayList<>());
         actions = mock(AiGameActions.class);
-        connection = mock(Connection.class);
         context = new AiInteractionContext(
                 gameData,
                 gameData.id,
                 aiPlayerId,
                 mock(GameQueryService.class),
-                actions,
-                connection);
+                actions);
     }
 
     @Test
@@ -121,7 +119,7 @@ class SpecializedInteractionAiStrategiesTest {
 
     private InteractionAnswer capturedAnswer() throws Exception {
         ArgumentCaptor<InteractionAnswer> answer = ArgumentCaptor.forClass(InteractionAnswer.class);
-        verify(actions).answerInteraction(eq(connection), answer.capture());
+        verify(actions).answerInteraction(answer.capture());
         return answer.getValue();
     }
 

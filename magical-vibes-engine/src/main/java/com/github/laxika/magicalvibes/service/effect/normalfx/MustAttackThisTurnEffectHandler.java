@@ -6,7 +6,7 @@ import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.StackEntry;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
 import com.github.laxika.magicalvibes.model.effect.MustAttackThisTurnEffect;
-import com.github.laxika.magicalvibes.service.GameBroadcastService;
+import com.github.laxika.magicalvibes.service.GameLogService;
 import com.github.laxika.magicalvibes.service.battlefield.GameQueryService;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -18,7 +18,7 @@ import org.springframework.stereotype.Component;
 public class MustAttackThisTurnEffectHandler implements NormalEffectHandlerBean {
 
     private final GameQueryService gameQueryService;
-    private final GameBroadcastService gameBroadcastService;
+    private final GameLogService gameLogService;
 
     @Override
     public Class<? extends CardEffect> handledEffect() {
@@ -42,10 +42,10 @@ public class MustAttackThisTurnEffectHandler implements NormalEffectHandlerBean 
 
             String controllerName = gameData.playerIdToName.get(entry.getControllerId());
             String logEntry = target.getCard().getName() + " must attack " + controllerName + " this turn if able.";
-            gameBroadcastService.logAndBroadcast(gameData, GameLog.builder().card(target.getCard()).text(" must attack " + controllerName + " this turn if able.").build());
+            gameLogService.append(gameData, GameLog.builder().card(target.getCard()).text(" must attack " + controllerName + " this turn if able.").build());
             log.info("Game {} - {} must attack {} this turn if able", gameData.id, target.getCard().getName(), controllerName);
         } else {
-            gameBroadcastService.logAndBroadcast(gameData, GameLog.cardThen(target.getCard(), " must attack this turn if able."));
+            gameLogService.append(gameData, GameLog.cardThen(target.getCard(), " must attack this turn if able."));
             log.info("Game {} - {} must attack this turn if able", gameData.id, target.getCard().getName());
         }
     }

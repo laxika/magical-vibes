@@ -13,7 +13,7 @@ import com.github.laxika.magicalvibes.model.effect.AwardAnyColorManaEffect;
 import com.github.laxika.magicalvibes.model.effect.AwardManaEffect;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
 import com.github.laxika.magicalvibes.model.effect.DrainTargetPlayersLandManaEffect;
-import com.github.laxika.magicalvibes.service.GameBroadcastService;
+import com.github.laxika.magicalvibes.service.GameLogService;
 import com.github.laxika.magicalvibes.service.battlefield.GameQueryService;
 import com.github.laxika.magicalvibes.service.cast.PotentialManaService;
 import com.github.laxika.magicalvibes.service.effect.AmountContext;
@@ -44,7 +44,7 @@ public class DrainTargetPlayersLandManaEffectHandler implements NormalEffectHand
     private final GameQueryService gameQueryService;
     private final AmountEvaluationService amountEvaluationService;
     private final TapUntapSupport tapUntapSupport;
-    private final GameBroadcastService gameBroadcastService;
+    private final GameLogService gameLogService;
 
     @Override
     public Class<? extends CardEffect> handledEffect() {
@@ -96,7 +96,7 @@ public class DrainTargetPlayersLandManaEffectHandler implements NormalEffectHand
         targetPool.clearPersistentMana();
 
         String logMsg = entry.getCard().getName() + " drains " + totalTransferred + " mana.";
-        gameBroadcastService.logAndBroadcast(gameData, GameLog.builder().card(entry.getCard()).text(" drains " + totalTransferred + " mana.").build());
+        gameLogService.append(gameData, GameLog.builder().card(entry.getCard()).text(" drains " + totalTransferred + " mana.").build());
         log.info("Game {} - {} drains {} mana from target player", gameData.id, entry.getCard().getName(), totalTransferred);
     }
 

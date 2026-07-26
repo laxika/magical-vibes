@@ -8,7 +8,7 @@ import com.github.laxika.magicalvibes.model.effect.BecomeCopyOfTargetCreatureUnt
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
 import com.github.laxika.magicalvibes.model.effect.EffectDuration;
 import com.github.laxika.magicalvibes.model.layer.FloatingContinuousEffect;
-import com.github.laxika.magicalvibes.service.GameBroadcastService;
+import com.github.laxika.magicalvibes.service.GameLogService;
 import com.github.laxika.magicalvibes.service.battlefield.GameQueryService;
 import com.github.laxika.magicalvibes.service.battlefield.PermanentCopierService;
 import java.util.UUID;
@@ -22,7 +22,7 @@ import org.springframework.stereotype.Component;
 public class BecomeCopyOfTargetCreatureUntilEndOfTurnEffectHandler implements NormalEffectHandlerBean {
 
     private final GameQueryService gameQueryService;
-    private final GameBroadcastService gameBroadcastService;
+    private final GameLogService gameLogService;
     private final PermanentCopierService permanentCopierService;
 
     @Override
@@ -65,7 +65,7 @@ public class BecomeCopyOfTargetCreatureUntilEndOfTurnEffectHandler implements No
 
         String targetName = targetPerm.getCard().getName();
         String logMsg = originalName + " becomes a copy of " + targetName + " until end of turn.";
-        gameBroadcastService.logAndBroadcast(gameData, GameLog.text(logMsg));
+        gameLogService.append(gameData, GameLog.text(logMsg));
         log.info("Game {} - {} becomes a copy of {} until end of turn", gameData.id, originalName, targetName);
     }
 }

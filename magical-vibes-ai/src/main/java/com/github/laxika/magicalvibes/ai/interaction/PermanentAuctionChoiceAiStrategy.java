@@ -34,7 +34,7 @@ class PermanentAuctionChoiceAiStrategy implements AiInteractionStrategy<PendingI
         }
 
         log.info("AI: Picking {} in permanent auction in game {}", pick.getName(), ctx.gameId());
-        ctx.gameActions().answerInteraction(ctx.selfConnection(),
+        ctx.gameActions().answerInteraction(
                 new InteractionAnswer.CardsChosen(List.of(pick.getId())));
     }
 }

@@ -19,7 +19,7 @@ import com.github.laxika.magicalvibes.model.effect.DestroyAllPermanentsEffect;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsCreaturePredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentPredicate;
 import com.github.laxika.magicalvibes.service.DamagePreventionService;
-import com.github.laxika.magicalvibes.service.GameBroadcastService;
+import com.github.laxika.magicalvibes.service.GameLogService;
 import com.github.laxika.magicalvibes.service.GameOutcomeService;
 import com.github.laxika.magicalvibes.service.input.PlayerInputService;
 import com.github.laxika.magicalvibes.service.graveyard.GraveyardService;
@@ -59,7 +59,7 @@ class DestroyAllPermanentsEffectHandlerTest {
     @Mock private PermanentRemovalService permanentRemovalService;
     @Mock private GameQueryService gameQueryService;
     @Mock private PredicateEvaluationService predicateEvaluationService;
-    @Mock private GameBroadcastService gameBroadcastService;
+    @Mock private GameLogService gameLogService;
     @Mock private PlayerInputService playerInputService;
     @Mock private LifeSupport lifeSupport;
     @Mock private EffectHandlerRegistry effectHandlerRegistry;
@@ -170,8 +170,8 @@ class DestroyAllPermanentsEffectHandlerTest {
 
                 verify(permanentRemovalService).removePermanentToGraveyard(gd, bears);
                 verify(permanentRemovalService).removePermanentToGraveyard(gd, angel);
-                verify(gameBroadcastService).logAndBroadcast(gd, GameLog.isDestroyed(bears.getCard()));
-                verify(gameBroadcastService).logAndBroadcast(gd, GameLog.isDestroyed(angel.getCard()));
+                verify(gameLogService).append(gd, GameLog.isDestroyed(bears.getCard()));
+                verify(gameLogService).append(gd, GameLog.isDestroyed(angel.getCard()));
             }
 
             @Test
@@ -233,7 +233,7 @@ class DestroyAllPermanentsEffectHandlerTest {
 
                 destroyAllPermanentsHandler.resolve(gd, entry, effect);
 
-                verify(gameBroadcastService).logAndBroadcast(eq(gd), argThat((GameLogEntry e) -> e.plainText().equals("Indestructible Golem is indestructible.")));
+                verify(gameLogService).append(eq(gd), argThat((GameLogEntry e) -> e.plainText().equals("Indestructible Golem is indestructible.")));
             }
 
             @Test
@@ -319,8 +319,8 @@ class DestroyAllPermanentsEffectHandlerTest {
 
                 destroyAllPermanentsHandler.resolve(gd, entry, effect);
 
-                verify(gameBroadcastService).logAndBroadcast(gd, GameLog.isDestroyed(bears.getCard()));
-                verify(gameBroadcastService).logAndBroadcast(gd, GameLog.isDestroyed(elves.getCard()));
+                verify(gameLogService).append(gd, GameLog.isDestroyed(bears.getCard()));
+                verify(gameLogService).append(gd, GameLog.isDestroyed(elves.getCard()));
             }
 
             @Test

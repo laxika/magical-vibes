@@ -45,14 +45,14 @@ class ColorChoiceAiStrategy implements AiInteractionStrategy<PendingInteraction.
         if (context instanceof ChoiceContext.DrawReplacementChoice drc
                 && drc.kind() == DrawReplacementKind.ABUNDANCE) {
             log.info("AI: Choosing NONLAND for Abundance in game {}", gameId);
-            ctx.gameActions().answerInteraction(ctx.selfConnection(), new InteractionAnswer.ListChoiceMade("NONLAND"));
+            ctx.gameActions().answerInteraction(new InteractionAnswer.ListChoiceMade("NONLAND"));
             return;
         }
 
         if (context instanceof ChoiceContext.KeywordGrantChoice kgc) {
             String chosenKeyword = kgc.options().getFirst().name();
             log.info("AI: Choosing keyword {} in game {}", chosenKeyword, gameId);
-            ctx.gameActions().answerInteraction(ctx.selfConnection(), new InteractionAnswer.ListChoiceMade(chosenKeyword));
+            ctx.gameActions().answerInteraction(new InteractionAnswer.ListChoiceMade(chosenKeyword));
             return;
         }
 
@@ -60,7 +60,7 @@ class ColorChoiceAiStrategy implements AiInteractionStrategy<PendingInteraction.
             // Modal triggered ability (e.g. Etherwrought Page): take the first mode (always a legal label).
             String chosenMode = interaction.options().getFirst();
             log.info("AI: Choosing modal option \"{}\" in game {}", chosenMode, gameId);
-            ctx.gameActions().answerInteraction(ctx.selfConnection(), new InteractionAnswer.ListChoiceMade(chosenMode));
+            ctx.gameActions().answerInteraction(new InteractionAnswer.ListChoiceMade(chosenMode));
             return;
         }
 
@@ -73,7 +73,7 @@ class ColorChoiceAiStrategy implements AiInteractionStrategy<PendingInteraction.
                     .findFirst()
                     .orElse(opponentField.isEmpty() ? "Pithing Needle" : opponentField.getFirst().getCard().getName());
             log.info("AI: Choosing card name \"{}\" in game {}", chosenName, gameId);
-            ctx.gameActions().answerInteraction(ctx.selfConnection(), new InteractionAnswer.ListChoiceMade(chosenName));
+            ctx.gameActions().answerInteraction(new InteractionAnswer.ListChoiceMade(chosenName));
             return;
         }
 
@@ -83,7 +83,7 @@ class ColorChoiceAiStrategy implements AiInteractionStrategy<PendingInteraction.
             List<Card> aiDeck = gameData.playerDecks.getOrDefault(aiPlayerId, List.of());
             String chosenName = aiDeck.isEmpty() ? "Island" : aiDeck.getFirst().getName();
             log.info("AI: Choosing card name \"{}\" for reveal in game {}", chosenName, gameId);
-            ctx.gameActions().answerInteraction(ctx.selfConnection(), new InteractionAnswer.ListChoiceMade(chosenName));
+            ctx.gameActions().answerInteraction(new InteractionAnswer.ListChoiceMade(chosenName));
             return;
         }
 
@@ -96,14 +96,14 @@ class ColorChoiceAiStrategy implements AiInteractionStrategy<PendingInteraction.
                     : (aiDeck.isEmpty() ? "Island" : aiDeck.getLast().getName());
             log.info("AI: Choosing card name \"{}\" for exile-top/reveal-until dig in game {}",
                     chosenName, gameId);
-            ctx.gameActions().answerInteraction(ctx.selfConnection(), new InteractionAnswer.ListChoiceMade(chosenName));
+            ctx.gameActions().answerInteraction(new InteractionAnswer.ListChoiceMade(chosenName));
             return;
         }
 
         if (context instanceof ChoiceContext.SubtypeChoice) {
             String chosenSubtype = "HUMAN";
             log.info("AI: Choosing creature type {} in game {}", chosenSubtype, gameId);
-            ctx.gameActions().answerInteraction(ctx.selfConnection(), new InteractionAnswer.ListChoiceMade(chosenSubtype));
+            ctx.gameActions().answerInteraction(new InteractionAnswer.ListChoiceMade(chosenSubtype));
             return;
         }
 
@@ -113,7 +113,7 @@ class ColorChoiceAiStrategy implements AiInteractionStrategy<PendingInteraction.
             List<String> options = interaction.options();
             String chosenNumber = options.isEmpty() ? "0" : options.get(options.size() / 2);
             log.info("AI: Choosing number {} in game {}", chosenNumber, gameId);
-            ctx.gameActions().answerInteraction(ctx.selfConnection(), new InteractionAnswer.ListChoiceMade(chosenNumber));
+            ctx.gameActions().answerInteraction(new InteractionAnswer.ListChoiceMade(chosenNumber));
             return;
         }
 
@@ -122,7 +122,7 @@ class ColorChoiceAiStrategy implements AiInteractionStrategy<PendingInteraction.
             List<String> options = interaction.options();
             String chosenNumber = options.isEmpty() ? "0" : options.get(options.size() - 1);
             log.info("AI: Removing {} +1/+1 counters to create Tetravite tokens in game {}", chosenNumber, gameId);
-            ctx.gameActions().answerInteraction(ctx.selfConnection(), new InteractionAnswer.ListChoiceMade(chosenNumber));
+            ctx.gameActions().answerInteraction(new InteractionAnswer.ListChoiceMade(chosenNumber));
             return;
         }
 
@@ -132,35 +132,35 @@ class ColorChoiceAiStrategy implements AiInteractionStrategy<PendingInteraction.
             List<String> options = interaction.options();
             String chosenNumber = options.isEmpty() ? "0" : options.get(options.size() - 1);
             log.info("AI: Removing {} counters for mana in game {}", chosenNumber, gameId);
-            ctx.gameActions().answerInteraction(ctx.selfConnection(), new InteractionAnswer.ListChoiceMade(chosenNumber));
+            ctx.gameActions().answerInteraction(new InteractionAnswer.ListChoiceMade(chosenNumber));
             return;
         }
 
         if (context instanceof ChoiceContext.PrimalClayFormChoice) {
             String chosenForm = "THREE_THREE";
             log.info("AI: Choosing Primal Clay shape {} in game {}", chosenForm, gameId);
-            ctx.gameActions().answerInteraction(ctx.selfConnection(), new InteractionAnswer.ListChoiceMade(chosenForm));
+            ctx.gameActions().answerInteraction(new InteractionAnswer.ListChoiceMade(chosenForm));
             return;
         }
 
         if (context instanceof ChoiceContext.BasicLandTypeChoice) {
             String chosenType = "ISLAND";
             log.info("AI: Choosing basic land type {} in game {}", chosenType, gameId);
-            ctx.gameActions().answerInteraction(ctx.selfConnection(), new InteractionAnswer.ListChoiceMade(chosenType));
+            ctx.gameActions().answerInteraction(new InteractionAnswer.ListChoiceMade(chosenType));
             return;
         }
 
         if (context instanceof ChoiceContext.AddBasicLandTypeChoice) {
             String chosenType = "ISLAND";
             log.info("AI: Choosing basic land type to add {} in game {}", chosenType, gameId);
-            ctx.gameActions().answerInteraction(ctx.selfConnection(), new InteractionAnswer.ListChoiceMade(chosenType));
+            ctx.gameActions().answerInteraction(new InteractionAnswer.ListChoiceMade(chosenType));
             return;
         }
 
         if (context instanceof ChoiceContext.OwnLandsBecomeBasicTypeChoice) {
             String chosenType = "ISLAND";
             log.info("AI: Choosing basic land type for own lands {} in game {}", chosenType, gameId);
-            ctx.gameActions().answerInteraction(ctx.selfConnection(), new InteractionAnswer.ListChoiceMade(chosenType));
+            ctx.gameActions().answerInteraction(new InteractionAnswer.ListChoiceMade(chosenType));
             return;
         }
 
@@ -173,7 +173,7 @@ class ColorChoiceAiStrategy implements AiInteractionStrategy<PendingInteraction.
                     .map(Card::getName)
                     .orElse("Sphinx Ambassador");
             log.info("AI: Choosing card name \"{}\" for Sphinx Ambassador in game {}", chosenName, gameId);
-            ctx.gameActions().answerInteraction(ctx.selfConnection(), new InteractionAnswer.ListChoiceMade(chosenName));
+            ctx.gameActions().answerInteraction(new InteractionAnswer.ListChoiceMade(chosenName));
             return;
         }
 
@@ -189,7 +189,7 @@ class ColorChoiceAiStrategy implements AiInteractionStrategy<PendingInteraction.
                     .map(Map.Entry::getKey)
                     .orElse(CardType.CREATURE);
             log.info("AI: Choosing permanent type {} in game {}", bestType.name(), gameId);
-            ctx.gameActions().answerInteraction(ctx.selfConnection(), new InteractionAnswer.ListChoiceMade(bestType.name()));
+            ctx.gameActions().answerInteraction(new InteractionAnswer.ListChoiceMade(bestType.name()));
             return;
         }
 
@@ -209,7 +209,7 @@ class ColorChoiceAiStrategy implements AiInteractionStrategy<PendingInteraction.
                 chosenType = "ARTIFACT";
             }
             log.info("AI: Choosing {} for Storage Matrix untap in game {}", chosenType, gameId);
-            ctx.gameActions().answerInteraction(ctx.selfConnection(), new InteractionAnswer.ListChoiceMade(chosenType));
+            ctx.gameActions().answerInteraction(new InteractionAnswer.ListChoiceMade(chosenType));
             return;
         }
 
@@ -222,7 +222,7 @@ class ColorChoiceAiStrategy implements AiInteractionStrategy<PendingInteraction.
                     .findFirst()
                     .orElse("Lightning Bolt");
             log.info("AI: Choosing card name \"{}\" for exile in game {}", chosenName, gameId);
-            ctx.gameActions().answerInteraction(ctx.selfConnection(), new InteractionAnswer.ListChoiceMade(chosenName));
+            ctx.gameActions().answerInteraction(new InteractionAnswer.ListChoiceMade(chosenName));
             return;
         }
 
@@ -241,7 +241,7 @@ class ColorChoiceAiStrategy implements AiInteractionStrategy<PendingInteraction.
                     ? ChoiceContext.AdjustCounterKindChoice.ADD
                     : ChoiceContext.AdjustCounterKindChoice.REMOVE;
             log.info("AI: {} a {} counter in game {}", chosen, kind, gameId);
-            ctx.gameActions().answerInteraction(ctx.selfConnection(), new InteractionAnswer.ListChoiceMade(chosen));
+            ctx.gameActions().answerInteraction(new InteractionAnswer.ListChoiceMade(chosen));
             return;
         }
 
@@ -258,7 +258,7 @@ class ColorChoiceAiStrategy implements AiInteractionStrategy<PendingInteraction.
                     .map(Map.Entry::getKey)
                     .orElse("Lightning Bolt");
             log.info("AI: Choosing card name \"{}\" for reveal-damage-exile in game {}", chosenName, gameId);
-            ctx.gameActions().answerInteraction(ctx.selfConnection(), new InteractionAnswer.ListChoiceMade(chosenName));
+            ctx.gameActions().answerInteraction(new InteractionAnswer.ListChoiceMade(chosenName));
             return;
         }
 
@@ -283,7 +283,7 @@ class ColorChoiceAiStrategy implements AiInteractionStrategy<PendingInteraction.
                 chosen = loseLife;
             }
             log.info("AI: Choosing \"{}\" for Torment of Hailfire in game {}", chosen, gameId);
-            ctx.gameActions().answerInteraction(ctx.selfConnection(), new InteractionAnswer.ListChoiceMade(chosen));
+            ctx.gameActions().answerInteraction(new InteractionAnswer.ListChoiceMade(chosen));
             return;
         }
 
@@ -297,7 +297,7 @@ class ColorChoiceAiStrategy implements AiInteractionStrategy<PendingInteraction.
                 chosen = ChoiceContext.OathOfLimDulPenaltyChoice.SACRIFICE;
             }
             log.info("AI: Choosing \"{}\" for Oath of Lim-Dûl in game {}", chosen, gameId);
-            ctx.gameActions().answerInteraction(ctx.selfConnection(), new InteractionAnswer.ListChoiceMade(chosen));
+            ctx.gameActions().answerInteraction(new InteractionAnswer.ListChoiceMade(chosen));
             return;
         }
 
@@ -313,7 +313,7 @@ class ColorChoiceAiStrategy implements AiInteractionStrategy<PendingInteraction.
                 chosen = ChoiceContext.WintersChillPaymentChoice.PAY_NOTHING;
             }
             log.info("AI: Choosing \"{}\" for Winter's Chill in game {}", chosen, gameId);
-            ctx.gameActions().answerInteraction(ctx.selfConnection(), new InteractionAnswer.ListChoiceMade(chosen));
+            ctx.gameActions().answerInteraction(new InteractionAnswer.ListChoiceMade(chosen));
             return;
         }
 
@@ -339,7 +339,7 @@ class ColorChoiceAiStrategy implements AiInteractionStrategy<PendingInteraction.
         }
 
         log.info("AI: Choosing color {} in game {}", bestColor.name(), gameId);
-        ctx.gameActions().answerInteraction(ctx.selfConnection(), new InteractionAnswer.ListChoiceMade(bestColor.name()));
+        ctx.gameActions().answerInteraction(new InteractionAnswer.ListChoiceMade(bestColor.name()));
     }
 
     private static UUID getOpponentId(GameData gameData, UUID playerId) {

@@ -11,7 +11,7 @@ import com.github.laxika.magicalvibes.model.TurnStep;
 import com.github.laxika.magicalvibes.model.event.GameEventBatch;
 import com.github.laxika.magicalvibes.model.event.GameEventFact;
 import com.github.laxika.magicalvibes.model.effect.KarnRestartGameEffect;
-import com.github.laxika.magicalvibes.service.GameBroadcastService;
+import com.github.laxika.magicalvibes.service.GameActionAvailabilityService;
 import com.github.laxika.magicalvibes.service.GameLogService;
 import com.github.laxika.magicalvibes.service.GameOutcomeService;
 import com.github.laxika.magicalvibes.service.GameRegistry;
@@ -57,7 +57,7 @@ class GameLifecycleEventSequenceTest {
     private GameData gameData;
     private RecordingSubscriber events;
     private GameMutationCoordinator coordinator;
-    private GameBroadcastService broadcasts;
+    private GameActionAvailabilityService actionAvailability;
     private GameLogService gameLogs;
     private GameQueryService gameQueryService;
     private GameOutcomeService outcomeService;
@@ -71,7 +71,7 @@ class GameLifecycleEventSequenceTest {
         gameData = gameData();
         events = new RecordingSubscriber();
         coordinator = new GameMutationCoordinator(new GameEventDispatcher(List.of(events)));
-        broadcasts = mock(GameBroadcastService.class);
+        actionAvailability = mock(GameActionAvailabilityService.class);
         gameLogs = mock(GameLogService.class);
         gameQueryService = mock(GameQueryService.class);
         outcomeService = new GameOutcomeService(
@@ -174,13 +174,13 @@ class GameLifecycleEventSequenceTest {
         gameData.playerBattlefields.put(player1Id, gameData.newBattlefieldList());
         gameData.playerBattlefields.put(player2Id, gameData.newBattlefieldList());
         when(gameQueryService.getPriorityPlayerId(gameData)).thenReturn(player1Id);
-        when(broadcasts.getPlayableCardIndices(gameData, player1Id)).thenReturn(List.of());
+        when(actionAvailability.getPlayableCardIndices(gameData, player1Id)).thenReturn(List.of());
 
         StepTriggerService stepTriggers = mock(StepTriggerService.class);
         CombatService combat = mock(CombatService.class);
         AutoPassService autoPass = new AutoPassService(
                 gameQueryService,
-                broadcasts,
+                actionAvailability,
                 mock(TriggerCollectionService.class),
                 mock(StackResolutionService.class),
                 stepTriggers,
@@ -259,7 +259,7 @@ class GameLifecycleEventSequenceTest {
         gameData.playerBottomDecisionIds.put(player1Id, UUID.randomUUID());
 
         KarnRestartGameEffectHandler handler =
-                new KarnRestartGameEffectHandler(broadcasts, coordinator);
+                new KarnRestartGameEffectHandler(gameLogs, coordinator);
         StackEntry entry = new StackEntry(
                 StackEntryType.ACTIVATED_ABILITY,
                 new Card(),

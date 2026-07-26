@@ -8,7 +8,7 @@ import com.github.laxika.magicalvibes.model.GameData;
 import com.github.laxika.magicalvibes.model.StackEntry;
 import com.github.laxika.magicalvibes.model.StackEntryType;
 import com.github.laxika.magicalvibes.model.effect.ExtraTurnEffect;
-import com.github.laxika.magicalvibes.service.GameBroadcastService;
+import com.github.laxika.magicalvibes.service.GameLogService;
 import com.github.laxika.magicalvibes.service.aura.AuraAttachmentService;
 import com.github.laxika.magicalvibes.service.combat.CombatService;
 import com.github.laxika.magicalvibes.service.exile.ExileService;
@@ -35,7 +35,7 @@ import static org.mockito.Mockito.verify;
 class ExtraTurnEffectHandlerTest {
 
     @Mock private CombatService combatService;
-    @Mock private GameBroadcastService gameBroadcastService;
+    @Mock private GameLogService gameLogService;
     @Mock private AuraAttachmentService auraAttachmentService;
     @Mock private TurnCleanupService turnCleanupService;
     @Mock private ExileService exileService;
@@ -66,7 +66,7 @@ class ExtraTurnEffectHandlerTest {
         gd.playerGraveyards.put(player2Id, Collections.synchronizedList(new ArrayList<>()));
         gd.playerDecks.put(player1Id, Collections.synchronizedList(new ArrayList<>()));
         gd.playerDecks.put(player2Id, Collections.synchronizedList(new ArrayList<>()));
-        extraTurnEffectHandler = new ExtraTurnEffectHandler(turnSupport, gameBroadcastService);
+        extraTurnEffectHandler = new ExtraTurnEffectHandler(turnSupport, gameLogService);
 
     }
 
@@ -146,7 +146,7 @@ class ExtraTurnEffectHandlerTest {
                 extraTurnEffectHandler.resolve(gd, entry, effect);
 
                 assertThat(gd.extraTurns).isEmpty();
-                verify(gameBroadcastService, never()).logAndBroadcast(eq(gd), any(GameLogEntry.class));
+                verify(gameLogService, never()).append(eq(gd), any(GameLogEntry.class));
             }
 
             @Test
@@ -171,7 +171,7 @@ class ExtraTurnEffectHandlerTest {
 
                 extraTurnEffectHandler.resolve(gd, entry, effect);
 
-                verify(gameBroadcastService).logAndBroadcast(eq(gd), eq(GameLog.text("Player1 takes 1 extra turn after this one.")));
+                verify(gameLogService).append(eq(gd), eq(GameLog.text("Player1 takes 1 extra turn after this one.")));
             }
 
             @Test
@@ -183,6 +183,6 @@ class ExtraTurnEffectHandlerTest {
 
                 extraTurnEffectHandler.resolve(gd, entry, effect);
 
-                verify(gameBroadcastService).logAndBroadcast(eq(gd), eq(GameLog.text("Player2 takes 2 extra turns after this one.")));
+                verify(gameLogService).append(eq(gd), eq(GameLog.text("Player2 takes 2 extra turns after this one.")));
             }
 }

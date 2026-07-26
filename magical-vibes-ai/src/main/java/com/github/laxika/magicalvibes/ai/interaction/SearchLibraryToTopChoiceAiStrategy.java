@@ -27,6 +27,6 @@ class SearchLibraryToTopChoiceAiStrategy
 
         List<UUID> chosen = interaction.validCardIds();
         log.info("AI: Putting {} cards on top for Goblin Recruiter in game {}", chosen.size(), ctx.gameId());
-        ctx.gameActions().answerInteraction(ctx.selfConnection(), new InteractionAnswer.CardsChosen(chosen));
+        ctx.gameActions().answerInteraction(new InteractionAnswer.CardsChosen(chosen));
     }
 }

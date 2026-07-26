@@ -17,7 +17,7 @@ import com.github.laxika.magicalvibes.networking.SessionManager;
 import com.github.laxika.magicalvibes.networking.model.CardView;
 import com.github.laxika.magicalvibes.networking.service.CardViewFactory;
 import com.github.laxika.magicalvibes.service.DrawService;
-import com.github.laxika.magicalvibes.service.GameBroadcastService;
+import com.github.laxika.magicalvibes.service.GameLogService;
 import com.github.laxika.magicalvibes.service.input.PlayerInputService;
 import com.github.laxika.magicalvibes.service.battlefield.GameQueryService;
 import com.github.laxika.magicalvibes.service.battlefield.PermanentRemovalService;
@@ -45,7 +45,7 @@ class HeadGamesEffectHandlerTest {
     @Mock
     private DrawService drawService;
     @Mock
-    private GameBroadcastService gameBroadcastService;
+    private GameLogService gameLogService;
     @Mock
     private SessionManager sessionManager;
     @Mock
@@ -64,8 +64,8 @@ class HeadGamesEffectHandlerTest {
 
     @BeforeEach
     void setUp() {
-        support = new LibrarySearchSupport(gameBroadcastService,
-                InteractionRegistryTestSupport.registryFor(sessionManager, cardViewFactory, gameBroadcastService));
+        support = new LibrarySearchSupport(gameLogService,
+                InteractionRegistryTestSupport.registryFor(sessionManager, cardViewFactory, gameLogService));
 
         player1Id = UUID.randomUUID();
         player2Id = UUID.randomUUID();
@@ -85,7 +85,7 @@ class HeadGamesEffectHandlerTest {
         gd.playerDecks.put(player1Id, Collections.synchronizedList(new ArrayList<>()));
         gd.playerDecks.put(player2Id, Collections.synchronizedList(new ArrayList<>()));
         gd.activePlayerId = player1Id;
-        headGamesHandler = new HeadGamesEffectHandler(gameBroadcastService, support);
+        headGamesHandler = new HeadGamesEffectHandler(gameLogService, support);
 
     }
 
@@ -134,7 +134,7 @@ class HeadGamesEffectHandlerTest {
                 headGamesHandler.resolve(gd, entry, effect);
 
                 assertThat(gd.interaction.activeInteraction(PendingInteraction.LibrarySearch.class)).isNull();
-                verify(gameBroadcastService).logAndBroadcast(eq(gd), argThat((GameLogEntry logEntry) ->
+                verify(gameLogService).append(eq(gd), argThat((GameLogEntry logEntry) ->
                         logEntry.plainText().contains("has no cards in hand")));
             }
 
@@ -161,7 +161,7 @@ class HeadGamesEffectHandlerTest {
                 // Player1 should be searching player2's library
                 assertThat(gd.interaction.activeInteraction()).isInstanceOf(PendingInteraction.LibrarySearch.class);
                 assertThat(gd.interaction.activeInteraction(PendingInteraction.LibrarySearch.class).params().playerId()).isEqualTo(player1Id);
-                verify(gameBroadcastService).logAndBroadcast(eq(gd), argThat((GameLogEntry logEntry) ->
+                verify(gameLogService).append(eq(gd), argThat((GameLogEntry logEntry) ->
                         logEntry.plainText().contains("puts") && logEntry.plainText().contains("from their hand")));
             }
 
@@ -179,7 +179,7 @@ class HeadGamesEffectHandlerTest {
                 headGamesHandler.resolve(gd, entry, effect);
 
                 assertThat(gd.interaction.activeInteraction()).isInstanceOf(PendingInteraction.LibrarySearch.class);
-                verify(gameBroadcastService).logAndBroadcast(eq(gd), argThat((GameLogEntry logEntry) ->
+                verify(gameLogService).append(eq(gd), argThat((GameLogEntry logEntry) ->
                         logEntry.plainText().contains("3 cards")));
             }
 }

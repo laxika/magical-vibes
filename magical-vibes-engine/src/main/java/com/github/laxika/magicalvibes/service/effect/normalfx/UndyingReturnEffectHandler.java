@@ -10,7 +10,7 @@ import com.github.laxika.magicalvibes.model.StackEntry;
 import com.github.laxika.magicalvibes.model.Zone;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
 import com.github.laxika.magicalvibes.model.effect.UndyingReturnEffect;
-import com.github.laxika.magicalvibes.service.GameBroadcastService;
+import com.github.laxika.magicalvibes.service.GameLogService;
 import com.github.laxika.magicalvibes.service.battlefield.BattlefieldEntryService;
 import com.github.laxika.magicalvibes.service.battlefield.GameQueryService;
 import com.github.laxika.magicalvibes.service.battlefield.PermanentRemovalService;
@@ -29,7 +29,7 @@ public class UndyingReturnEffectHandler implements NormalEffectHandlerBean {
     private final BattlefieldEntryService battlefieldEntryService;
     private final PermanentRemovalService permanentRemovalService;
     private final GameQueryService gameQueryService;
-    private final GameBroadcastService gameBroadcastService;
+    private final GameLogService gameLogService;
     private final GraveyardReturnSupport graveyardReturnSupport;
 
     @Override
@@ -50,7 +50,7 @@ public class UndyingReturnEffectHandler implements NormalEffectHandlerBean {
         // Grafdigger's Cage etc.: creature cards in graveyards can't enter the battlefield, so the
         // undying return does nothing and the card stays in the graveyard.
         if (graveyardReturnSupport.isCardBlockedFromEnteringFromZone(gameData, card, Zone.GRAVEYARD)) {
-            gameBroadcastService.logAndBroadcast(gameData, GameLog.cardThen(card, " can't return from the graveyard (undying); it stays in the graveyard."));
+            gameLogService.append(gameData, GameLog.cardThen(card, " can't return from the graveyard (undying); it stays in the graveyard."));
             log.info("Game {} - {} undying return blocked (can't enter from a graveyard)", gameData.id, card.getName());
             return;
         }
@@ -64,7 +64,7 @@ public class UndyingReturnEffectHandler implements NormalEffectHandlerBean {
         battlefieldEntryService.putPermanentOntoBattlefield(gameData, ownerId, permanent, enterTappedTypes);
 
         String playerName = gameData.playerIdToName.get(ownerId);
-        gameBroadcastService.logAndBroadcast(gameData, GameLog.textCardText(playerName + " returns ", card, " to the battlefield with a +1/+1 counter (undying)."));
+        gameLogService.append(gameData, GameLog.textCardText(playerName + " returns ", card, " to the battlefield with a +1/+1 counter (undying)."));
         log.info("Game {} - {} returns via undying with a +1/+1 counter", gameData.id, card.getName());
 
         graveyardReturnSupport.handleCreatureEtbAndLegendRule(gameData, ownerId, permanent, card);

@@ -6,7 +6,7 @@ import com.github.laxika.magicalvibes.model.GameLog;
 import com.github.laxika.magicalvibes.model.StackEntry;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
 import com.github.laxika.magicalvibes.model.effect.ExileCardsFromGraveyardEffect;
-import com.github.laxika.magicalvibes.service.GameBroadcastService;
+import com.github.laxika.magicalvibes.service.GameLogService;
 import com.github.laxika.magicalvibes.service.battlefield.GameQueryService;
 import java.util.ArrayList;
 import java.util.List;
@@ -22,7 +22,7 @@ import org.springframework.stereotype.Component;
 public class ExileCardsFromGraveyardEffectHandler implements NormalEffectHandlerBean {
 
     private final GameQueryService gameQueryService;
-    private final GameBroadcastService gameBroadcastService;
+    private final GameLogService gameLogService;
     private final LifeSupport lifeSupport;
     private final GraveyardReturnSupport graveyardReturnSupport;
 
@@ -51,7 +51,7 @@ public class ExileCardsFromGraveyardEffectHandler implements NormalEffectHandler
             }
             if (!exiledNames.isEmpty()) {
                 String logEntry = playerName + " exiles " + String.join(", ", exiledNames) + " from graveyard.";
-                gameBroadcastService.logAndBroadcast(gameData, GameLog.text(logEntry));
+                gameLogService.append(gameData, GameLog.text(logEntry));
                 log.info("Game {} - {} exiled {} cards from graveyards", gameData.id, playerName, exiledNames.size());
             }
         }

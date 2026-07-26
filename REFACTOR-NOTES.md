@@ -599,7 +599,7 @@ Scaffolding is in place and the first kind (X value choice) is migrated end to e
   registry's `activeDecidingPlayerId` covers everything), `GameData.copyInteractionInto`'s
   legacy context switch, `GameSimulator`'s legacy decider fallback, and the whole legacy half
   of `ReconnectionService` (now a one-line `replayPrompt` delegate; it lost its
-  SessionManager/CombatService/GameQueryService/GameBroadcastService deps).
+  SessionManager/CombatService/GameQueryService/legacy projection-query deps).
   The records carry only the decider: both prompts are re-derived from live combat state
   at prompt time, exactly as the legacy begin sites AND legacy replay did (attackers:
   attackable/must-attack/targets/tax/forced-attack; blockers: blockable + the filtered
@@ -659,7 +659,8 @@ pre-seed/aura/equipment fields.
 ### ✅ Stage 4 — DONE: `AwaitingInput` enum teardown
 
 The enum is deleted. It never reached the wire (zero references in `magical-vibes-networking`
-and the frontend — `GameBroadcastService` only ever used the no-arg `isAwaitingInput()`), so
+and the frontend — the former projection-query facade only ever used the no-arg
+`isAwaitingInput()`), so
 the teardown was purely internal:
 
 - **`InteractionState`**: the `awaitingInput` field, `awaitingInputType()`, `setAwaitingInput`,
@@ -1045,13 +1046,13 @@ Goal: kill the last hand-rolled "can this spell be cast / is this cost payable" 
 `magical-vibes-ai/.../ai/simulation/GameSimulator.java` (the headless MCTS move generator).
 Two prior drift-kill passes already unified the ability validator
 (`AbilityActivationService.validateActivationLegality`) and the outer-AI spell query
-(`GameBroadcastService.isCardPlayable`, delegated to by
+(`GameActionAvailabilityService.isCardPlayable`, delegated to by
 `AiDecisionEngine.isSpellCastable/canAffordSpell`); GameSimulator was the remaining copy.
 
 **What delegated to what:**
 - **Mana affordability in move generation** (`getLegalActions`, the castable-spell loop): the
   hand-rolled `ManaCost.canPay` / `canPay(pool,1)` / `canPayCreatureOnly` checks are gone.
-  It now calls `gameBroadcastService.isCardPlayable(gd, playerId, card, virtualPool, minXPolicy)`
+  It now calls `actionAvailabilityService.isCardPlayable(gd, playerId, card, virtualPool, minXPolicy)`
   — the same engine query the outer AI uses (mana with every cost modifier / alternative-cost
   route, `requiresCreatureMana`, timing, spell limits, target availability, ExileN 601.2b and
   the legendary-sorcery rule). The virtual pool is still built by `AiManaManager
@@ -1113,7 +1114,7 @@ against the player's battlefield/graveyard), mirroring the real engine query the
 already mirrors `isCardPlayable`'s affordability. A blanket `true` was wrong: the Easy/Hard
 "skip the sacrifice-cost spell when there's no creature/artifact to sacrifice" tests must still
 see the AI decline. No GameSimulator constructor change was needed — it already held both
-`gameBroadcastService` and `castingCostService`.
+`actionAvailabilityService` and `castingCostService`.
 
 **Tests run green** (targeted; full suite left to the user): `CastingCostServiceTest` (incl. the
 8 new cases), `MCTSEngineTest` (minus the documented pre-existing "MCTS selects removal over

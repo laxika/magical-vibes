@@ -6,7 +6,7 @@ import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.StackEntry;
 import com.github.laxika.magicalvibes.model.effect.CantAttackNextTurnCombatOpponentEffect;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
-import com.github.laxika.magicalvibes.service.GameBroadcastService;
+import com.github.laxika.magicalvibes.service.GameLogService;
 import com.github.laxika.magicalvibes.service.battlefield.GameQueryService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Component;
@@ -24,7 +24,7 @@ import java.util.UUID;
 public class CantAttackNextTurnCombatOpponentEffectHandler implements NormalEffectHandlerBean {
 
     private final GameQueryService gameQueryService;
-    private final GameBroadcastService gameBroadcastService;
+    private final GameLogService gameLogService;
 
     @Override
     public Class<? extends CardEffect> handledEffect() {
@@ -43,6 +43,6 @@ public class CantAttackNextTurnCombatOpponentEffectHandler implements NormalEffe
         }
 
         target.setCantAttackNextTurn(true);
-        gameBroadcastService.logAndBroadcast(gameData, GameLog.cardThen(target.getCard(), " can't attack during its controller's next turn."));
+        gameLogService.append(gameData, GameLog.cardThen(target.getCard(), " can't attack during its controller's next turn."));
     }
 }

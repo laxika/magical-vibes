@@ -6,7 +6,7 @@ import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.StackEntry;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
 import com.github.laxika.magicalvibes.model.effect.MustBeBlockedIfAbleThisTurnEffect;
-import com.github.laxika.magicalvibes.service.GameBroadcastService;
+import com.github.laxika.magicalvibes.service.GameLogService;
 import com.github.laxika.magicalvibes.service.battlefield.GameQueryService;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -18,7 +18,7 @@ import org.springframework.stereotype.Component;
 public class MustBeBlockedIfAbleThisTurnEffectHandler implements NormalEffectHandlerBean {
 
     private final GameQueryService gameQueryService;
-    private final GameBroadcastService gameBroadcastService;
+    private final GameLogService gameLogService;
 
     @Override
     public Class<? extends CardEffect> handledEffect() {
@@ -34,7 +34,7 @@ public class MustBeBlockedIfAbleThisTurnEffectHandler implements NormalEffectHan
 
         target.setMustBeBlockedThisTurn(true);
 
-        gameBroadcastService.logAndBroadcast(gameData, GameLog.cardThen(target.getCard(), " must be blocked this turn if able."));
+        gameLogService.append(gameData, GameLog.cardThen(target.getCard(), " must be blocked this turn if able."));
         log.info("Game {} - {} must be blocked this turn if able", gameData.id, target.getCard().getName());
     }
 }

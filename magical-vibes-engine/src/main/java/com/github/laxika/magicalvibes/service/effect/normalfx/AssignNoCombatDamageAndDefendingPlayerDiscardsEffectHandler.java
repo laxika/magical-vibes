@@ -6,7 +6,7 @@ import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.StackEntry;
 import com.github.laxika.magicalvibes.model.effect.AssignNoCombatDamageAndDefendingPlayerDiscardsEffect;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
-import com.github.laxika.magicalvibes.service.GameBroadcastService;
+import com.github.laxika.magicalvibes.service.GameLogService;
 import com.github.laxika.magicalvibes.service.battlefield.GameQueryService;
 import java.util.UUID;
 import lombok.RequiredArgsConstructor;
@@ -26,7 +26,7 @@ import org.springframework.stereotype.Component;
 public class AssignNoCombatDamageAndDefendingPlayerDiscardsEffectHandler implements NormalEffectHandlerBean {
 
     private final GameQueryService gameQueryService;
-    private final GameBroadcastService gameBroadcastService;
+    private final GameLogService gameLogService;
     private final PlayerInteractionSupport playerInteractionSupport;
 
     @Override
@@ -45,7 +45,7 @@ public class AssignNoCombatDamageAndDefendingPlayerDiscardsEffectHandler impleme
         gameData.creaturesPreventedFromDealingCombatDamage.add(attackerId);
         Permanent attacker = gameQueryService.findPermanentById(gameData, attackerId);
         String attackerName = attacker != null ? attacker.getCard().getName() : "the attacking creature";
-        gameBroadcastService.logAndBroadcast(gameData,
+        gameLogService.append(gameData,
                 GameLog.text(attackerName + " assigns no combat damage this turn."));
 
         gameData.discardCausedByOpponent = true;

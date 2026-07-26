@@ -6,7 +6,7 @@ import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.StackEntry;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
 import com.github.laxika.magicalvibes.model.effect.DealDamageDividedEvenlyAmongCreaturesTargetControlsEffect;
-import com.github.laxika.magicalvibes.service.GameBroadcastService;
+import com.github.laxika.magicalvibes.service.GameLogService;
 import com.github.laxika.magicalvibes.service.GameOutcomeService;
 import com.github.laxika.magicalvibes.service.battlefield.GameQueryService;
 import com.github.laxika.magicalvibes.service.effect.AmountContext;
@@ -23,7 +23,7 @@ public class DealDamageDividedEvenlyAmongCreaturesTargetControlsEffectHandler im
 
     private final DamageSupport damageSupport;
     private final GameQueryService gameQueryService;
-    private final GameBroadcastService gameBroadcastService;
+    private final GameLogService gameLogService;
     private final GameOutcomeService gameOutcomeService;
     private final AmountEvaluationService amountEvaluationService;
 
@@ -61,7 +61,7 @@ public class DealDamageDividedEvenlyAmongCreaturesTargetControlsEffectHandler im
 
         for (Permanent creature : creatures) {
             if (gameQueryService.isDamagePreventable(gameData) && gameQueryService.hasProtectionFromSource(gameData, creature, entry.getCard())) {
-                gameBroadcastService.logAndBroadcast(gameData, GameLog.textCardText(cardName + "'s damage to ", creature.getCard(), " is prevented."));
+                gameLogService.append(gameData, GameLog.textCardText(cardName + "'s damage to ", creature.getCard(), " is prevented."));
                 continue;
             }
             damageSupport.dealCreatureDamage(gameData, entry, creature, rawDamage);

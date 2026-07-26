@@ -16,7 +16,7 @@ import java.util.Optional;
 import java.util.UUID;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
-import com.github.laxika.magicalvibes.service.GameBroadcastService;
+import com.github.laxika.magicalvibes.service.GameLogService;
 import org.springframework.stereotype.Component;
 
 @Component
@@ -24,7 +24,7 @@ import org.springframework.stereotype.Component;
 @Slf4j
 public class SearchLibraryAndOrGraveyardForNamedCardToHandEffectHandler implements NormalEffectHandlerBean {
 
-    private final GameBroadcastService gameBroadcastService;
+    private final GameLogService gameLogService;
     private final LibrarySearchSupport librarySearchSupport;
     private final GraveyardService graveyardService;
 
@@ -55,7 +55,7 @@ public class SearchLibraryAndOrGraveyardForNamedCardToHandEffectHandler implemen
                 graveyard.remove(found);
                 graveyardService.notifyCardsLeftGraveyard(gameData, controllerId);
                 gameData.playerHands.get(controllerId).add(found);
-                gameBroadcastService.logAndBroadcast(gameData, GameLog.textCardText(playerName + " searches their graveyard, reveals " , found, ", and puts it into their hand."));
+                gameLogService.append(gameData, GameLog.textCardText(playerName + " searches their graveyard, reveals " , found, ", and puts it into their hand."));
                 log.info("Game {} - {} finds {} in graveyard", gameData.id, playerName, effect.cardName());
                 return;
             }
@@ -67,7 +67,7 @@ public class SearchLibraryAndOrGraveyardForNamedCardToHandEffectHandler implemen
         List<Card> deck = gameData.playerDecks.get(controllerId);
         if (deck == null || deck.isEmpty()) {
             String logMsg = playerName + " searches their library but it is empty. Library is shuffled.";
-            gameBroadcastService.logAndBroadcast(gameData, GameLog.text(logMsg));
+            gameLogService.append(gameData, GameLog.text(logMsg));
             return;
         }
 
@@ -78,7 +78,7 @@ public class SearchLibraryAndOrGraveyardForNamedCardToHandEffectHandler implemen
         if (matchingCards.isEmpty()) {
             LibraryShuffleHelper.shuffleLibrary(gameData, controllerId);
             String logMsg = playerName + " searches their library but finds no cards named " + effect.cardName() + ". Library is shuffled.";
-            gameBroadcastService.logAndBroadcast(gameData, GameLog.text(logMsg));
+            gameLogService.append(gameData, GameLog.text(logMsg));
             return;
         }
 

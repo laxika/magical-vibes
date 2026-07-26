@@ -6,7 +6,7 @@ import com.github.laxika.magicalvibes.model.GameLog;
 import com.github.laxika.magicalvibes.model.StackEntry;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
 import com.github.laxika.magicalvibes.model.effect.ExileTopCardsMayCastMatchingThisTurnEffect;
-import com.github.laxika.magicalvibes.service.GameBroadcastService;
+import com.github.laxika.magicalvibes.service.GameLogService;
 import com.github.laxika.magicalvibes.service.exile.ExileService;
 import com.github.laxika.magicalvibes.service.filter.PredicateEvaluationService;
 import java.util.ArrayList;
@@ -22,7 +22,7 @@ import org.springframework.stereotype.Component;
 public class ExileTopCardsMayCastMatchingThisTurnEffectHandler implements NormalEffectHandlerBean {
 
     private final ExileService exileService;
-    private final GameBroadcastService gameBroadcastService;
+    private final GameLogService gameLogService;
     private final PredicateEvaluationService predicateEvaluationService;
 
     @Override
@@ -38,7 +38,7 @@ public class ExileTopCardsMayCastMatchingThisTurnEffectHandler implements Normal
         String controllerName = gameData.playerIdToName.get(controllerId);
 
         if (deck == null || deck.isEmpty() || e.count() <= 0) {
-            gameBroadcastService.logAndBroadcast(gameData,
+            gameLogService.append(gameData,
                     GameLog.text(controllerName + "'s library is empty — nothing to exile."));
             return;
         }
@@ -60,7 +60,7 @@ public class ExileTopCardsMayCastMatchingThisTurnEffectHandler implements Normal
         String castNote = castableNames.isEmpty()
                 ? ""
                 : " (may cast this turn: " + String.join(", ", castableNames) + ")";
-        gameBroadcastService.logAndBroadcast(gameData, GameLog.text(
+        gameLogService.append(gameData, GameLog.text(
                 controllerName + " exiles " + String.join(", ", allNames)
                         + " from the top of their library" + castNote + "."));
         log.info("Game {} - {} exiles {} cards from library top ({} castable this turn)",

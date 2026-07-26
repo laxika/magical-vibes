@@ -8,7 +8,7 @@ import com.github.laxika.magicalvibes.model.PendingInteraction;
 import com.github.laxika.magicalvibes.model.StackEntry;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
 import com.github.laxika.magicalvibes.model.effect.PayXManaGainXLifeEffect;
-import com.github.laxika.magicalvibes.service.GameBroadcastService;
+import com.github.laxika.magicalvibes.service.GameLogService;
 import com.github.laxika.magicalvibes.service.cast.PotentialManaService;
 import com.github.laxika.magicalvibes.service.interaction.InteractionHandlerRegistry;
 import lombok.RequiredArgsConstructor;
@@ -23,7 +23,7 @@ import java.util.UUID;
 public class PayXManaGainXLifeEffectHandler implements NormalEffectHandlerBean {
 
     private final LifeSupport lifeSupport;
-    private final GameBroadcastService gameBroadcastService;
+    private final GameLogService gameLogService;
     private final InteractionHandlerRegistry interactionHandlerRegistry;
     private final PotentialManaService potentialManaService;
 
@@ -45,7 +45,7 @@ public class PayXManaGainXLifeEffectHandler implements NormalEffectHandlerBean {
             gameData.chosenXValue = null;
 
             if (chosenValue == 0) {
-                gameBroadcastService.logAndBroadcast(gameData, GameLog.text(playerName + " chooses X=0 for " + cardName + "'s ability."));
+                gameLogService.append(gameData, GameLog.text(playerName + " chooses X=0 for " + cardName + "'s ability."));
                 log.info("Game {} - {} chooses X=0 for {}", gameData.id, playerName, cardName);
                 return;
             }
@@ -54,7 +54,7 @@ public class PayXManaGainXLifeEffectHandler implements NormalEffectHandlerBean {
             // prompt; re-check the actual pool before charging.
             ManaPool pool = gameData.playerManaPools.get(controllerId);
             if (payableFromPool(pool) < chosenValue) {
-                gameBroadcastService.logAndBroadcast(gameData, GameLog.text(
+                gameLogService.append(gameData, GameLog.text(
                         playerName + " can't pay {" + chosenValue + "} for " + cardName
                                 + " (tap mana sources, then choose X again)."));
                 log.info("Game {} - {} cannot yet pay X={} for {} — re-prompting",
@@ -64,7 +64,7 @@ public class PayXManaGainXLifeEffectHandler implements NormalEffectHandlerBean {
             }
             new ManaCost("{0}").pay(pool, chosenValue);
 
-            gameBroadcastService.logAndBroadcast(gameData, GameLog.text(playerName + " pays {" + chosenValue + "} for " + cardName + "."));
+            gameLogService.append(gameData, GameLog.text(playerName + " pays {" + chosenValue + "} for " + cardName + "."));
             log.info("Game {} - {} pays {} mana for {}", gameData.id, playerName, chosenValue, cardName);
             lifeSupport.applyGainLife(gameData, controllerId, chosenValue, cardName);
             return;
@@ -73,7 +73,7 @@ public class PayXManaGainXLifeEffectHandler implements NormalEffectHandlerBean {
         // First call: cap includes untapped mana sources so an empty pool with untapped
         // lands still opens the prompt (CR 605.3a — mana abilities during the payment).
         if (maxPotentialX(gameData, controllerId) <= 0) {
-            gameBroadcastService.logAndBroadcast(gameData, GameLog.textCardText(playerName + " has no mana to pay for ", entry.getCard(), "'s ability."));
+            gameLogService.append(gameData, GameLog.textCardText(playerName + " has no mana to pay for ", entry.getCard(), "'s ability."));
             log.info("Game {} - {} has no mana for {}'s pay-X ability", gameData.id, playerName, cardName);
             return;
         }

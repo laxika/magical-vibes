@@ -43,6 +43,6 @@ class RevealedHandChoiceAiStrategy implements AiInteractionStrategy<PendingInter
                 .orElse(validIndices.iterator().next());
 
         log.info("AI: Choosing card {} from revealed hand in game {}", bestIndex, ctx.gameId());
-        ctx.gameActions().answerInteraction(ctx.selfConnection(), new InteractionAnswer.CardIndexChosen(bestIndex));
+        ctx.gameActions().answerInteraction(new InteractionAnswer.CardIndexChosen(bestIndex));
     }
 }

@@ -6,7 +6,7 @@ import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.StackEntry;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
 import com.github.laxika.magicalvibes.model.effect.DealDamageToTriggeringAttackerEffect;
-import com.github.laxika.magicalvibes.service.GameBroadcastService;
+import com.github.laxika.magicalvibes.service.GameLogService;
 import com.github.laxika.magicalvibes.service.battlefield.GameQueryService;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -23,7 +23,7 @@ import org.springframework.stereotype.Component;
 public class DealDamageToTriggeringAttackerEffectHandler implements NormalEffectHandlerBean {
 
     private final GameQueryService gameQueryService;
-    private final GameBroadcastService gameBroadcastService;
+    private final GameLogService gameLogService;
     private final DamageSupport damageSupport;
 
     @Override
@@ -40,7 +40,7 @@ public class DealDamageToTriggeringAttackerEffectHandler implements NormalEffect
             return;
         }
 
-        gameBroadcastService.logAndBroadcast(gameData, GameLog.builder().card(entry.getCard()).text(" deals " + e.damage() + " damage to ").card(attacker.getCard()).text(".").build());
+        gameLogService.append(gameData, GameLog.builder().card(entry.getCard()).text(" deals " + e.damage() + " damage to ").card(attacker.getCard()).text(".").build());
         damageSupport.dealCreatureDamage(gameData, entry, attacker, e.damage());
     }
 }

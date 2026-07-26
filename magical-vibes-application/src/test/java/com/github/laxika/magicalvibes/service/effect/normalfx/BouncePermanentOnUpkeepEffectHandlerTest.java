@@ -11,7 +11,7 @@ import com.github.laxika.magicalvibes.model.StackEntry;
 import com.github.laxika.magicalvibes.model.StackEntryType;
 import com.github.laxika.magicalvibes.model.effect.BouncePermanentOnUpkeepEffect;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
-import com.github.laxika.magicalvibes.service.GameBroadcastService;
+import com.github.laxika.magicalvibes.service.GameLogService;
 import com.github.laxika.magicalvibes.service.input.PlayerInputService;
 import com.github.laxika.magicalvibes.service.filter.PredicateEvaluationService;
 import org.junit.jupiter.api.BeforeEach;
@@ -40,7 +40,7 @@ import static org.mockito.Mockito.when;
 class BouncePermanentOnUpkeepEffectHandlerTest {
 
     @Mock private PredicateEvaluationService predicateEvaluationService;
-    @Mock private GameBroadcastService gameBroadcastService;
+    @Mock private GameLogService gameLogService;
     @Mock private PlayerInputService playerInputService;
     private GameData gd;
     private UUID player1Id;
@@ -61,7 +61,7 @@ class BouncePermanentOnUpkeepEffectHandlerTest {
         gd.playerBattlefields.put(player1Id, Collections.synchronizedList(new ArrayList<>()));
         gd.playerBattlefields.put(player2Id, Collections.synchronizedList(new ArrayList<>()));
         handler = new BouncePermanentOnUpkeepEffectHandler(
-                predicateEvaluationService, gameBroadcastService, playerInputService);
+                predicateEvaluationService, gameLogService, playerInputService);
     }
 
     // ===== Helper methods =====
@@ -172,7 +172,7 @@ class BouncePermanentOnUpkeepEffectHandlerTest {
 
         handler.resolve(gd, entry, effect);
 
-        verify(gameBroadcastService).logAndBroadcast(eq(gd),
+        verify(gameLogService).append(eq(gd),
                 argThat((GameLogEntry logEntry) -> logEntry.plainText().contains("controls no valid permanents")));
         verify(playerInputService, never()).beginPermanentChoice(any(), any(), any(), any());
     }

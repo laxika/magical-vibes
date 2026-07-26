@@ -10,7 +10,7 @@ import com.github.laxika.magicalvibes.model.StackEntry;
 import com.github.laxika.magicalvibes.model.Zone;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
 import com.github.laxika.magicalvibes.model.effect.PersistReturnEffect;
-import com.github.laxika.magicalvibes.service.GameBroadcastService;
+import com.github.laxika.magicalvibes.service.GameLogService;
 import com.github.laxika.magicalvibes.service.battlefield.BattlefieldEntryService;
 import com.github.laxika.magicalvibes.service.battlefield.GameQueryService;
 import com.github.laxika.magicalvibes.service.battlefield.PermanentRemovalService;
@@ -29,7 +29,7 @@ public class PersistReturnEffectHandler implements NormalEffectHandlerBean {
     private final BattlefieldEntryService battlefieldEntryService;
     private final PermanentRemovalService permanentRemovalService;
     private final GameQueryService gameQueryService;
-    private final GameBroadcastService gameBroadcastService;
+    private final GameLogService gameLogService;
     private final GraveyardReturnSupport graveyardReturnSupport;
 
     @Override
@@ -50,7 +50,7 @@ public class PersistReturnEffectHandler implements NormalEffectHandlerBean {
         // Grafdigger's Cage etc.: creature cards in graveyards can't enter the battlefield, so the
         // persist return does nothing and the card stays in the graveyard.
         if (graveyardReturnSupport.isCardBlockedFromEnteringFromZone(gameData, card, Zone.GRAVEYARD)) {
-            gameBroadcastService.logAndBroadcast(gameData, GameLog.cardThen(card, " can't return from the graveyard (persist); it stays in the graveyard."));
+            gameLogService.append(gameData, GameLog.cardThen(card, " can't return from the graveyard (persist); it stays in the graveyard."));
             log.info("Game {} - {} persist return blocked (can't enter from a graveyard)", gameData.id, card.getName());
             return;
         }
@@ -68,7 +68,7 @@ public class PersistReturnEffectHandler implements NormalEffectHandlerBean {
 
         String playerName = gameData.playerIdToName.get(ownerId);
         String persistSuffix = persistCounters > 0 ? " to the battlefield with a -1/-1 counter (persist)." : " to the battlefield (persist).";
-        gameBroadcastService.logAndBroadcast(gameData, GameLog.textCardText(playerName + " returns ", card, persistSuffix));
+        gameLogService.append(gameData, GameLog.textCardText(playerName + " returns ", card, persistSuffix));
         log.info("Game {} - {} returns via persist with {} -1/-1 counter(s)", gameData.id, card.getName(), persistCounters);
 
         graveyardReturnSupport.handleCreatureEtbAndLegendRule(gameData, ownerId, permanent, card);

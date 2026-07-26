@@ -8,7 +8,7 @@ import com.github.laxika.magicalvibes.model.PendingInteraction;
 import com.github.laxika.magicalvibes.model.StackEntry;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
 import com.github.laxika.magicalvibes.model.effect.PayXManaDealXDamageToAnyTargetEffect;
-import com.github.laxika.magicalvibes.service.GameBroadcastService;
+import com.github.laxika.magicalvibes.service.GameLogService;
 import com.github.laxika.magicalvibes.service.GameOutcomeService;
 import com.github.laxika.magicalvibes.service.battlefield.GameQueryService;
 import com.github.laxika.magicalvibes.service.cast.PotentialManaService;
@@ -34,7 +34,7 @@ public class PayXManaDealXDamageToAnyTargetEffectHandler implements NormalEffect
     private final DamageSupport damageSupport;
     private final GameQueryService gameQueryService;
     private final GameOutcomeService gameOutcomeService;
-    private final GameBroadcastService gameBroadcastService;
+    private final GameLogService gameLogService;
     private final InteractionHandlerRegistry interactionHandlerRegistry;
     private final PotentialManaService potentialManaService;
 
@@ -61,7 +61,7 @@ public class PayXManaDealXDamageToAnyTargetEffectHandler implements NormalEffect
             gameData.chosenXValue = null;
 
             if (chosenValue == 0) {
-                gameBroadcastService.logAndBroadcast(gameData, GameLog.text(playerName + " declines to pay for " + cardName + "'s ability."));
+                gameLogService.append(gameData, GameLog.text(playerName + " declines to pay for " + cardName + "'s ability."));
                 log.info("Game {} - {} chooses X=0 for {}", gameData.id, playerName, cardName);
                 return;
             }
@@ -69,7 +69,7 @@ public class PayXManaDealXDamageToAnyTargetEffectHandler implements NormalEffect
             // Cap was based on potential mana so the player could tap lands during the prompt;
             // re-check the actual pool before charging.
             if (!cost.canPay(pool, chosenValue)) {
-                gameBroadcastService.logAndBroadcast(gameData, GameLog.text(
+                gameLogService.append(gameData, GameLog.text(
                         playerName + " can't pay " + e.manaCost().replace("{X}", "{" + chosenValue + "}")
                                 + " for " + cardName + " (tap mana sources, then choose X again)."));
                 log.info("Game {} - {} cannot yet pay X={} for {} — re-prompting",
@@ -79,7 +79,7 @@ public class PayXManaDealXDamageToAnyTargetEffectHandler implements NormalEffect
             }
 
             cost.pay(pool, chosenValue);
-            gameBroadcastService.logAndBroadcast(gameData, GameLog.text(playerName + " pays " + e.manaCost().replace("{X}", "{" + chosenValue + "}") + " for " + cardName + "."));
+            gameLogService.append(gameData, GameLog.text(playerName + " pays " + e.manaCost().replace("{X}", "{" + chosenValue + "}") + " for " + cardName + "."));
             log.info("Game {} - {} pays X={} for {}", gameData.id, playerName, chosenValue, cardName);
 
             int rawDamage = gameQueryService.applyDamageMultiplier(gameData, chosenValue, entry);
@@ -92,7 +92,7 @@ public class PayXManaDealXDamageToAnyTargetEffectHandler implements NormalEffect
         // untapped lands still opens the Pay / Don't Pay UI (CR 605.3 — mana abilities before cost).
         int maxX = cost.calculateMaxX(potentialManaService.buildVirtualManaPool(gameData, controllerId));
         if (maxX <= 0) {
-            gameBroadcastService.logAndBroadcast(gameData, GameLog.text(playerName + " can't pay for " + cardName + "'s ability."));
+            gameLogService.append(gameData, GameLog.text(playerName + " can't pay for " + cardName + "'s ability."));
             log.info("Game {} - {} can't pay {} for {}", gameData.id, playerName, e.manaCost(), cardName);
             return;
         }

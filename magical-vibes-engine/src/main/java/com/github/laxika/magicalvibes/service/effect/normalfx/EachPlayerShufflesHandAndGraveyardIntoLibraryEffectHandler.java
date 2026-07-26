@@ -6,7 +6,7 @@ import com.github.laxika.magicalvibes.model.GameLog;
 import com.github.laxika.magicalvibes.model.StackEntry;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
 import com.github.laxika.magicalvibes.model.effect.EachPlayerShufflesHandAndGraveyardIntoLibraryEffect;
-import com.github.laxika.magicalvibes.service.GameBroadcastService;
+import com.github.laxika.magicalvibes.service.GameLogService;
 import com.github.laxika.magicalvibes.service.graveyard.GraveyardService;
 import com.github.laxika.magicalvibes.service.library.LibraryShuffleHelper;
 import java.util.List;
@@ -20,7 +20,7 @@ import org.springframework.stereotype.Component;
 @RequiredArgsConstructor
 public class EachPlayerShufflesHandAndGraveyardIntoLibraryEffectHandler implements NormalEffectHandlerBean {
 
-    private final GameBroadcastService gameBroadcastService;
+    private final GameLogService gameLogService;
     private final GraveyardService graveyardService;
 
     @Override
@@ -54,7 +54,7 @@ public class EachPlayerShufflesHandAndGraveyardIntoLibraryEffectHandler implemen
 
             LibraryShuffleHelper.shuffleLibrary(gameData, playerId);
 
-            gameBroadcastService.logAndBroadcast(gameData, GameLog.text(playerName + " shuffles their hand (" + LibraryShuffleSupport.pluralCards(handCount)
+            gameLogService.append(gameData, GameLog.text(playerName + " shuffles their hand (" + LibraryShuffleSupport.pluralCards(handCount)
                             + ") and graveyard (" + LibraryShuffleSupport.pluralCards(graveyardCount)
                             + ") into their library (" + cardName + ")."));
             log.info("Game {} - {} shuffles hand ({}) and graveyard ({}) into library ({})",

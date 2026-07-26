@@ -7,7 +7,7 @@ import com.github.laxika.magicalvibes.model.StackEntry;
 import com.github.laxika.magicalvibes.model.effect.CanBeBlockedOnlyByFilterEffect;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
 import com.github.laxika.magicalvibes.model.effect.MakeCreatureBlockableOnlyByFilterThisTurnEffect;
-import com.github.laxika.magicalvibes.service.GameBroadcastService;
+import com.github.laxika.magicalvibes.service.GameLogService;
 import com.github.laxika.magicalvibes.service.battlefield.GameQueryService;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -21,7 +21,7 @@ import java.util.UUID;
 public class MakeCreatureBlockableOnlyByFilterThisTurnEffectHandler implements NormalEffectHandlerBean {
 
     private final GameQueryService gameQueryService;
-    private final GameBroadcastService gameBroadcastService;
+    private final GameLogService gameLogService;
 
     @Override
     public Class<? extends CardEffect> handledEffect() {
@@ -44,7 +44,7 @@ public class MakeCreatureBlockableOnlyByFilterThisTurnEffectHandler implements N
         target.getBlockRestrictionsUntilEndOfTurn().add(
                 new CanBeBlockedOnlyByFilterEffect(grant.blockerPredicate(), grant.allowedBlockersDescription()));
 
-        gameBroadcastService.logAndBroadcast(gameData, GameLog.builder().card(target.getCard()).text(" can't be blocked this turn except by " + grant.allowedBlockersDescription() + ".").build());
+        gameLogService.append(gameData, GameLog.builder().card(target.getCard()).text(" can't be blocked this turn except by " + grant.allowedBlockersDescription() + ".").build());
         log.info("Game {} - {} can't be blocked this turn except by {}",
                 gameData.id, target.getCard().getName(), grant.allowedBlockersDescription());
     }

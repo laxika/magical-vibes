@@ -9,7 +9,7 @@ import com.github.laxika.magicalvibes.model.StackEntry;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
 import com.github.laxika.magicalvibes.model.effect.KnowledgePoolExileAndCastEffect;
 import com.github.laxika.magicalvibes.model.PendingInteraction;
-import com.github.laxika.magicalvibes.service.GameBroadcastService;
+import com.github.laxika.magicalvibes.service.GameLogService;
 import com.github.laxika.magicalvibes.service.battlefield.GameQueryService;
 import com.github.laxika.magicalvibes.service.exile.ExileService;
 import com.github.laxika.magicalvibes.service.interaction.InteractionHandlerRegistry;
@@ -26,7 +26,7 @@ import org.springframework.stereotype.Component;
 public class KnowledgePoolExileAndCastEffectHandler implements NormalEffectHandlerBean {
 
     private final GameQueryService gameQueryService;
-    private final GameBroadcastService gameBroadcastService;
+    private final GameLogService gameLogService;
     private final InteractionHandlerRegistry interactionHandlerRegistry;
     private final ExileService exileService;
 
@@ -61,7 +61,7 @@ public class KnowledgePoolExileAndCastEffectHandler implements NormalEffectHandl
             // "If the player does" fails — original spell already gone (countered or exiled by another KP)
             log.info("Game {} - Original spell no longer on stack, Knowledge Pool 'if the player does' fails", gameData.id);
             String logEntry = "Knowledge Pool's ability — original spell is no longer on the stack.";
-            gameBroadcastService.logAndBroadcast(gameData, GameLog.text(logEntry));
+            gameLogService.append(gameData, GameLog.text(logEntry));
             return;
         }
 
@@ -74,7 +74,7 @@ public class KnowledgePoolExileAndCastEffectHandler implements NormalEffectHandl
         exileService.exileCard(gameData, castingPlayerId, originalCard, kpPermanentId);
 
         String playerName = gameData.playerIdToName.get(castingPlayerId);
-        gameBroadcastService.logAndBroadcast(gameData, GameLog.textCardText(playerName + " exiles " , originalCard, " (Knowledge Pool)."));
+        gameLogService.append(gameData, GameLog.textCardText(playerName + " exiles " , originalCard, " (Knowledge Pool)."));
         log.info("Game {} - {} exiles {} to Knowledge Pool", gameData.id, playerName, originalCard.getName());
 
         // Step 4: Collect eligible cards — nonland, not the just-exiled card, from KP's pool
@@ -85,7 +85,7 @@ public class KnowledgePoolExileAndCastEffectHandler implements NormalEffectHandl
 
         if (eligible.isEmpty()) {
             String noChoiceLog = "Knowledge Pool — no other nonland cards exiled. " + playerName + " cannot cast a spell.";
-            gameBroadcastService.logAndBroadcast(gameData, GameLog.text(noChoiceLog));
+            gameLogService.append(gameData, GameLog.text(noChoiceLog));
             log.info("Game {} - No eligible cards in Knowledge Pool for {}", gameData.id, playerName);
             return;
         }

@@ -7,7 +7,7 @@ import com.github.laxika.magicalvibes.model.PendingInteraction;
 import com.github.laxika.magicalvibes.model.StackEntry;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
 import com.github.laxika.magicalvibes.model.effect.ReorderTopCardsOfLibraryEffect;
-import com.github.laxika.magicalvibes.service.GameBroadcastService;
+import com.github.laxika.magicalvibes.service.GameLogService;
 import java.util.*;
 import lombok.extern.slf4j.Slf4j;
 import lombok.RequiredArgsConstructor;
@@ -19,7 +19,7 @@ import org.springframework.stereotype.Component;
 @RequiredArgsConstructor
 public class ReorderTopCardsOfLibraryEffectHandler implements NormalEffectHandlerBean {
 
-    private final GameBroadcastService gameBroadcastService;
+    private final GameLogService gameLogService;
     private final com.github.laxika.magicalvibes.service.interaction.InteractionHandlerRegistry interactionHandlerRegistry;
 
     @Override
@@ -36,12 +36,12 @@ public class ReorderTopCardsOfLibraryEffectHandler implements NormalEffectHandle
 
         int count = Math.min(reorder.count(), deck.size());
         if (count == 0) {
-            gameBroadcastService.logAndBroadcast(gameData, GameLog.cardThen(entry.getCard(), ": library is empty, nothing to reorder."));
+            gameLogService.append(gameData, GameLog.cardThen(entry.getCard(), ": library is empty, nothing to reorder."));
             return;
         }
 
         if (count == 1) {
-            gameBroadcastService.logAndBroadcast(gameData,
+            gameLogService.append(gameData,
                     GameLog.text(gameData.playerIdToName.get(controllerId) + " looks at the top card of their library."));
             return;
         }
@@ -54,7 +54,7 @@ public class ReorderTopCardsOfLibraryEffectHandler implements NormalEffectHandle
                 "Put these cards back on top of your library in any order (top to bottom)."));
 
         String logMsg = gameData.playerIdToName.get(controllerId) + " looks at the top " + count + " cards of their library.";
-        gameBroadcastService.logAndBroadcast(gameData, GameLog.text(logMsg));
+        gameLogService.append(gameData, GameLog.text(logMsg));
         log.info("Game {} - {} reordering top {} cards of library", gameData.id, gameData.playerIdToName.get(controllerId), count);
     
     }

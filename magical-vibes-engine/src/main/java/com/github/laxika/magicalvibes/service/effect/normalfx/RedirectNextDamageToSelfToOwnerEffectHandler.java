@@ -7,7 +7,7 @@ import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.StackEntry;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
 import com.github.laxika.magicalvibes.model.effect.RedirectNextDamageToSelfToOwnerEffect;
-import com.github.laxika.magicalvibes.service.GameBroadcastService;
+import com.github.laxika.magicalvibes.service.GameLogService;
 import com.github.laxika.magicalvibes.service.battlefield.GameQueryService;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -21,7 +21,7 @@ import java.util.UUID;
 public class RedirectNextDamageToSelfToOwnerEffectHandler implements NormalEffectHandlerBean {
 
     private final GameQueryService gameQueryService;
-    private final GameBroadcastService gameBroadcastService;
+    private final GameLogService gameLogService;
 
     @Override
     public Class<? extends CardEffect> handledEffect() {
@@ -48,7 +48,7 @@ public class RedirectNextDamageToSelfToOwnerEffectHandler implements NormalEffec
         String ownerName = gameData.playerIdToName.get(ownerId);
         String logEntry = "The next " + e.amount() + " damage that would be dealt to " + protectedName
                 + " this turn is dealt to " + ownerName + " instead.";
-        gameBroadcastService.logAndBroadcast(gameData, GameLog.text(logEntry));
+        gameLogService.append(gameData, GameLog.text(logEntry));
         log.info("Game {} - registered next-{}-damage redirect from {} to its owner {}", gameData.id,
                 e.amount(), protectedName, ownerName);
     }

@@ -8,7 +8,7 @@ import com.github.laxika.magicalvibes.model.action.DelayedPermanentAction;
 import com.github.laxika.magicalvibes.model.action.DelayedPermanentActionKind;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
 import com.github.laxika.magicalvibes.model.effect.SacrificeSelfAtEndStepEffect;
-import com.github.laxika.magicalvibes.service.GameBroadcastService;
+import com.github.laxika.magicalvibes.service.GameLogService;
 import com.github.laxika.magicalvibes.service.battlefield.GameQueryService;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -28,7 +28,7 @@ import java.util.UUID;
 @Slf4j
 public class SacrificeSelfAtEndStepEffectHandler implements NormalEffectHandlerBean {
 
-    private final GameBroadcastService gameBroadcastService;
+    private final GameLogService gameLogService;
     private final GameQueryService gameQueryService;
 
     @Override
@@ -51,7 +51,7 @@ public class SacrificeSelfAtEndStepEffectHandler implements NormalEffectHandlerB
         gameData.queueDelayedAction(new DelayedPermanentAction(sourceId, DelayedPermanentActionKind.SACRIFICE_AT_END_STEP));
 
         String logEntry = source.getCard().getName() + " will be sacrificed at the beginning of the next end step.";
-        gameBroadcastService.logAndBroadcast(gameData, GameLog.text(logEntry));
+        gameLogService.append(gameData, GameLog.text(logEntry));
         log.info("Game {} - {} scheduled for sacrifice at end step", gameData.id, source.getCard().getName());
     }
 }

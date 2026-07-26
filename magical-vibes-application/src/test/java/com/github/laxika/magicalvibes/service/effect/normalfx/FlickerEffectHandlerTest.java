@@ -21,7 +21,7 @@ import com.github.laxika.magicalvibes.model.StackEntry;
 import com.github.laxika.magicalvibes.model.StackEntryType;
 import com.github.laxika.magicalvibes.model.effect.FlickerEffect;
 import com.github.laxika.magicalvibes.service.DrawService;
-import com.github.laxika.magicalvibes.service.GameBroadcastService;
+import com.github.laxika.magicalvibes.service.GameLogService;
 import com.github.laxika.magicalvibes.service.battlefield.BattlefieldEntryService;
 import com.github.laxika.magicalvibes.service.battlefield.GameQueryService;
 import com.github.laxika.magicalvibes.service.battlefield.PermanentRemovalService;
@@ -53,7 +53,7 @@ class FlickerEffectHandlerTest {
 
     @Mock private GraveyardService graveyardService;
     @Mock private GameQueryService gameQueryService;
-    @Mock private GameBroadcastService gameBroadcastService;
+    @Mock private GameLogService gameLogService;
     @Mock private PermanentRemovalService permanentRemovalService;
     @Mock private PlayerInputService playerInputService;
     @Mock private TriggerCollectionService triggerCollectionService;
@@ -90,7 +90,7 @@ class FlickerEffectHandlerTest {
         gd.playerDecks.put(player1Id, Collections.synchronizedList(new ArrayList<>()));
         gd.playerDecks.put(player2Id, Collections.synchronizedList(new ArrayList<>()));
         handler = new FlickerEffectHandler(exileSupport, gameQueryService, predicateEvaluationService,
-                gameBroadcastService, permanentRemovalService, battlefieldEntryService,
+                gameLogService, permanentRemovalService, battlefieldEntryService,
                 drawService, amountEvaluationService, graveyardReturnSupport);
     }
 
@@ -184,7 +184,7 @@ class FlickerEffectHandlerTest {
 
             handler.resolve(gd, entry, entry.getEffectsToResolve().getFirst());
 
-            verify(gameBroadcastService).logAndBroadcast(eq(gd), argThat((GameLogEntry e) -> e.plainText().equals("Grizzly Bears is exiled. It will return at the beginning of the next end step.")));
+            verify(gameLogService).append(eq(gd), argThat((GameLogEntry e) -> e.plainText().equals("Grizzly Bears is exiled. It will return at the beginning of the next end step.")));
         }
     }
 
@@ -244,7 +244,7 @@ class FlickerEffectHandlerTest {
 
             handler.resolve(gd, entry, entry.getEffectsToResolve().getFirst());
 
-            verify(gameBroadcastService).logAndBroadcast(eq(gd), argThat((GameLogEntry e) -> e.plainText().equals("Argent Sphinx is exiled. It will return at the beginning of the next end step.")));
+            verify(gameLogService).append(eq(gd), argThat((GameLogEntry e) -> e.plainText().equals("Argent Sphinx is exiled. It will return at the beginning of the next end step.")));
         }
     }
 }

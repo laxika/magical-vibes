@@ -8,7 +8,7 @@ import com.github.laxika.magicalvibes.model.PermanentChoiceContext;
 import com.github.laxika.magicalvibes.model.StackEntry;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
 import com.github.laxika.magicalvibes.model.effect.DiscardRandomCardDealDiscardedPowerToTargetPlayerOrPlaneswalkerEffect;
-import com.github.laxika.magicalvibes.service.GameBroadcastService;
+import com.github.laxika.magicalvibes.service.GameLogService;
 import com.github.laxika.magicalvibes.service.GameOutcomeService;
 import com.github.laxika.magicalvibes.service.battlefield.GameQueryService;
 import com.github.laxika.magicalvibes.service.graveyard.GraveyardService;
@@ -31,7 +31,7 @@ public class DiscardRandomCardDealDiscardedPowerToTargetPlayerOrPlaneswalkerEffe
         implements NormalEffectHandlerBean {
 
     private final DamageSupport damageSupport;
-    private final GameBroadcastService gameBroadcastService;
+    private final GameLogService gameLogService;
     private final GameOutcomeService gameOutcomeService;
     private final GameQueryService gameQueryService;
     private final GraveyardService graveyardService;
@@ -50,7 +50,7 @@ public class DiscardRandomCardDealDiscardedPowerToTargetPlayerOrPlaneswalkerEffe
 
         List<Card> hand = gameData.playerHands.get(controllerId);
         if (hand == null || hand.isEmpty()) {
-            gameBroadcastService.logAndBroadcast(gameData, GameLog.text(playerName + " has no cards to discard."));
+            gameLogService.append(gameData, GameLog.text(playerName + " has no cards to discard."));
             return;
         }
 
@@ -59,7 +59,7 @@ public class DiscardRandomCardDealDiscardedPowerToTargetPlayerOrPlaneswalkerEffe
         int randomIndex = ThreadLocalRandom.current().nextInt(hand.size());
         Card discarded = hand.remove(randomIndex);
         graveyardService.discardCard(gameData, controllerId, discarded);
-        gameBroadcastService.logAndBroadcast(gameData, GameLog.textCardText(playerName + " discards ", discarded, " at random."));
+        gameLogService.append(gameData, GameLog.textCardText(playerName + " discards ", discarded, " at random."));
         log.info("Game {} - {} discards {} at random ({})", gameData.id, playerName, discarded.getName(), sourceName);
         triggerCollectionService.checkDiscardTriggers(gameData, controllerId, discarded);
 

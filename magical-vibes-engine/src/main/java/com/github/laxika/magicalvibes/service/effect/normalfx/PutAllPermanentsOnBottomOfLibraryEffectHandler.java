@@ -7,7 +7,7 @@ import com.github.laxika.magicalvibes.model.StackEntry;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
 import com.github.laxika.magicalvibes.model.effect.PutAllPermanentsOnBottomOfLibraryEffect;
 import com.github.laxika.magicalvibes.model.filter.FilterContext;
-import com.github.laxika.magicalvibes.service.GameBroadcastService;
+import com.github.laxika.magicalvibes.service.GameLogService;
 import com.github.laxika.magicalvibes.service.battlefield.PermanentRemovalService;
 import com.github.laxika.magicalvibes.service.filter.PredicateEvaluationService;
 import java.util.ArrayList;
@@ -22,7 +22,7 @@ import org.springframework.stereotype.Component;
 public class PutAllPermanentsOnBottomOfLibraryEffectHandler implements NormalEffectHandlerBean {
 
     private final PredicateEvaluationService predicateEvaluationService;
-    private final GameBroadcastService gameBroadcastService;
+    private final GameLogService gameLogService;
     private final PermanentRemovalService permanentRemovalService;
 
     @Override
@@ -48,7 +48,7 @@ public class PutAllPermanentsOnBottomOfLibraryEffectHandler implements NormalEff
 
         for (Permanent perm : toBottom) {
             if (permanentRemovalService.removePermanentToLibraryBottom(gameData, perm)) {
-                gameBroadcastService.logAndBroadcast(gameData, GameLog.cardThen(perm.getCard(), " is put on the bottom of its owner's library."));
+                gameLogService.append(gameData, GameLog.cardThen(perm.getCard(), " is put on the bottom of its owner's library."));
                 log.info("Game {} - {} put on bottom of library by {}",
                         gameData.id, perm.getCard().getName(), entry.getCard().getName());
             }

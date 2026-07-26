@@ -43,7 +43,7 @@ public class GameTimeoutService {
 
     private final GameRegistry gameRegistry;
     private final GameOutcomeService gameOutcomeService;
-    private final GameSessionTransportAdapter sessionTransport;
+    private final PlayerConnectionState connectionState;
     private final GameMutationCoordinator mutationCoordinator;
     private final Duration bothDisconnectedTimeout;
     private final Duration singleDisconnectedTimeout;
@@ -56,11 +56,11 @@ public class GameTimeoutService {
     @Autowired
     public GameTimeoutService(GameRegistry gameRegistry,
                               @Lazy GameOutcomeService gameOutcomeService,
-                              GameSessionTransportAdapter sessionTransport,
+                              PlayerConnectionState connectionState,
                               GameMutationCoordinator mutationCoordinator,
                               @Value("${magicalvibes.game.timeout.both-disconnected:5m}") Duration bothDisconnectedTimeout,
                               @Value("${magicalvibes.game.timeout.single-disconnected:15m}") Duration singleDisconnectedTimeout) {
-        this(gameRegistry, gameOutcomeService, sessionTransport, mutationCoordinator,
+        this(gameRegistry, gameOutcomeService, connectionState, mutationCoordinator,
                 bothDisconnectedTimeout, singleDisconnectedTimeout,
                 Executors.newSingleThreadScheduledExecutor(r -> {
                     Thread t = new Thread(r, "game-timeout-scheduler");
@@ -71,14 +71,14 @@ public class GameTimeoutService {
 
     GameTimeoutService(GameRegistry gameRegistry,
                        GameOutcomeService gameOutcomeService,
-                       GameSessionTransportAdapter sessionTransport,
+                       PlayerConnectionState connectionState,
                        GameMutationCoordinator mutationCoordinator,
                        Duration bothDisconnectedTimeout,
                        Duration singleDisconnectedTimeout,
                        ScheduledExecutorService scheduler) {
         this.gameRegistry = gameRegistry;
         this.gameOutcomeService = gameOutcomeService;
-        this.sessionTransport = sessionTransport;
+        this.connectionState = connectionState;
         this.mutationCoordinator = mutationCoordinator;
         this.bothDisconnectedTimeout = bothDisconnectedTimeout;
         this.singleDisconnectedTimeout = singleDisconnectedTimeout;
@@ -263,7 +263,7 @@ public class GameTimeoutService {
 
     public boolean isVsAi(GameData gameData) {
         for (UUID playerId : gameData.playerIds) {
-            if (sessionTransport.isAiPlayer(playerId)) {
+            if (gameData.aiPlayerIds.contains(playerId)) {
                 return true;
             }
         }
@@ -271,7 +271,7 @@ public class GameTimeoutService {
     }
 
     private boolean isPlayerConnected(UUID playerId) {
-        return sessionTransport.isPlayerConnected(playerId);
+        return connectionState.isPlayerConnected(playerId);
     }
 
     private static void cancel(ScheduledFuture<?> future) {

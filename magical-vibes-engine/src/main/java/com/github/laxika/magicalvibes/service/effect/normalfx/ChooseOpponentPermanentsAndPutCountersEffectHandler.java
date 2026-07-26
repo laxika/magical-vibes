@@ -8,7 +8,7 @@ import com.github.laxika.magicalvibes.model.StackEntry;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
 import com.github.laxika.magicalvibes.model.effect.ChooseOpponentPermanentsAndPutCountersEffect;
 import com.github.laxika.magicalvibes.model.filter.FilterContext;
-import com.github.laxika.magicalvibes.service.GameBroadcastService;
+import com.github.laxika.magicalvibes.service.GameLogService;
 import com.github.laxika.magicalvibes.service.battlefield.GameQueryService;
 import com.github.laxika.magicalvibes.service.filter.PredicateEvaluationService;
 import com.github.laxika.magicalvibes.service.input.PlayerInputService;
@@ -26,7 +26,7 @@ public class ChooseOpponentPermanentsAndPutCountersEffectHandler implements Norm
 
     private final GameQueryService gameQueryService;
     private final PredicateEvaluationService predicateEvaluationService;
-    private final GameBroadcastService gameBroadcastService;
+    private final GameLogService gameLogService;
     private final PlayerInputService playerInputService;
     private final PermanentCounterSupport permanentCounterSupport;
 
@@ -57,7 +57,7 @@ public class ChooseOpponentPermanentsAndPutCountersEffectHandler implements Norm
         }
 
         if (eligibleIds.isEmpty()) {
-            gameBroadcastService.logAndBroadcast(gameData, GameLog.cardThen(entry.getCard(), "'s ability finds no eligible permanents."));
+            gameLogService.append(gameData, GameLog.cardThen(entry.getCard(), "'s ability finds no eligible permanents."));
             log.info("Game {} - {} ETB: no eligible permanents for counter placement", gameData.id, entry.getCard().getName());
             return;
         }

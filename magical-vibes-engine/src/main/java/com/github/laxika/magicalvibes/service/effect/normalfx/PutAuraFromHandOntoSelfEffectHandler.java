@@ -7,7 +7,7 @@ import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.StackEntry;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
 import com.github.laxika.magicalvibes.model.effect.PutAuraFromHandOntoSelfEffect;
-import com.github.laxika.magicalvibes.service.GameBroadcastService;
+import com.github.laxika.magicalvibes.service.GameLogService;
 import com.github.laxika.magicalvibes.service.input.PlayerInputService;
 import java.util.ArrayList;
 import java.util.List;
@@ -21,7 +21,7 @@ import org.springframework.stereotype.Component;
 @RequiredArgsConstructor
 public class PutAuraFromHandOntoSelfEffectHandler implements NormalEffectHandlerBean {
 
-    private final GameBroadcastService gameBroadcastService;
+    private final GameLogService gameLogService;
     private final PlayerInputService playerInputService;
 
     @Override
@@ -46,7 +46,7 @@ public class PutAuraFromHandOntoSelfEffectHandler implements NormalEffectHandler
                 }
 
                 if (self == null) {
-                    gameBroadcastService.logAndBroadcast(gameData, GameLog.cardThen(entry.getCard(), "'s ability fizzles (no longer on the battlefield)."));
+                    gameLogService.append(gameData, GameLog.cardThen(entry.getCard(), "'s ability fizzles (no longer on the battlefield)."));
                     log.info("Game {} - {} ETB fizzles, creature left battlefield", gameData.id, entry.getCard().getName());
                     return;
                 }
@@ -64,7 +64,7 @@ public class PutAuraFromHandOntoSelfEffectHandler implements NormalEffectHandler
                 if (auraIndices.isEmpty()) {
                     String playerName = gameData.playerIdToName.get(controllerId);
                     String logEntry = playerName + " has no Aura cards in hand.";
-                    gameBroadcastService.logAndBroadcast(gameData, GameLog.text(logEntry));
+                    gameLogService.append(gameData, GameLog.text(logEntry));
                     log.info("Game {} - {} has no Auras in hand for {} ETB", gameData.id, playerName, entry.getCard().getName());
                     return;
                 }

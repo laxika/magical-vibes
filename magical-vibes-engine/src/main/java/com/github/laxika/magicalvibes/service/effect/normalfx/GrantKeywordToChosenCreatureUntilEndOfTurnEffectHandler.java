@@ -6,7 +6,7 @@ import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.StackEntry;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantKeywordToChosenCreatureUntilEndOfTurnEffect;
-import com.github.laxika.magicalvibes.service.GameBroadcastService;
+import com.github.laxika.magicalvibes.service.GameLogService;
 import com.github.laxika.magicalvibes.service.battlefield.GameQueryService;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -18,7 +18,7 @@ import org.springframework.stereotype.Component;
 public class GrantKeywordToChosenCreatureUntilEndOfTurnEffectHandler implements NormalEffectHandlerBean {
 
     private final GameQueryService gameQueryService;
-    private final GameBroadcastService gameBroadcastService;
+    private final GameLogService gameLogService;
 
     @Override
     public Class<? extends CardEffect> handledEffect() {
@@ -43,7 +43,7 @@ public class GrantKeywordToChosenCreatureUntilEndOfTurnEffectHandler implements 
         target.getGrantedKeywords().add(e.keyword());
         String keywordName = e.keyword().name().charAt(0) + e.keyword().name().substring(1).toLowerCase().replace('_', ' ');
         String logEntry = target.getCard().getName() + " gains " + keywordName + " until end of turn.";
-        gameBroadcastService.logAndBroadcast(gameData, GameLog.builder().card(target.getCard()).text(" gains " + keywordName + " until end of turn.").build());
+        gameLogService.append(gameData, GameLog.builder().card(target.getCard()).text(" gains " + keywordName + " until end of turn.").build());
         log.info("Game {} - {} gains {} (chosen creature)", gameData.id, target.getCard().getName(), e.keyword());
     }
 }

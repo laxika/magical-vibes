@@ -13,7 +13,7 @@ import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.StackEntry;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
 import com.github.laxika.magicalvibes.model.effect.CreateTokenCopyOfImprintedCardEffect;
-import com.github.laxika.magicalvibes.service.GameBroadcastService;
+import com.github.laxika.magicalvibes.service.GameLogService;
 import com.github.laxika.magicalvibes.service.battlefield.BattlefieldEntryService;
 import com.github.laxika.magicalvibes.service.battlefield.GameQueryService;
 import java.util.EnumSet;
@@ -29,7 +29,7 @@ public class CreateTokenCopyOfImprintedCardEffectHandler implements NormalEffect
 
     private final BattlefieldEntryService battlefieldEntryService;
     private final GameQueryService gameQueryService;
-    private final GameBroadcastService gameBroadcastService;
+    private final GameLogService gameLogService;
 
     @Override
     public Class<? extends CardEffect> handledEffect() {
@@ -101,10 +101,10 @@ public class CreateTokenCopyOfImprintedCardEffectHandler implements NormalEffect
                     }
 
                     if (e.grantHaste()) {
-                        gameBroadcastService.logAndBroadcast(gameData, GameLog.textCardText(
+                        gameLogService.append(gameData, GameLog.textCardText(
                                 "A token copy of ", imprintedCard, " is created with haste."));
                     } else {
-                        gameBroadcastService.logAndBroadcast(gameData, GameLog.textCardText(
+                        gameLogService.append(gameData, GameLog.textCardText(
                                 "A token copy of ", imprintedCard, " is created."));
                     }
                     log.info("Game {} - Token copy of {} created via {}", gameData.id, imprintedCard.getName(), sourcePermanent.getCard().getName());

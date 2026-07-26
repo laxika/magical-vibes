@@ -6,7 +6,7 @@ import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.StackEntry;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
 import com.github.laxika.magicalvibes.model.effect.ExileTargetPermanentEffect;
-import com.github.laxika.magicalvibes.service.GameBroadcastService;
+import com.github.laxika.magicalvibes.service.GameLogService;
 import com.github.laxika.magicalvibes.service.battlefield.GameQueryService;
 import com.github.laxika.magicalvibes.service.battlefield.PermanentRemovalService;
 import java.util.List;
@@ -21,7 +21,7 @@ import org.springframework.stereotype.Component;
 public class ExileTargetPermanentEffectHandler implements NormalEffectHandlerBean {
 
     private final GameQueryService gameQueryService;
-    private final GameBroadcastService gameBroadcastService;
+    private final GameLogService gameLogService;
     private final PermanentRemovalService permanentRemovalService;
     private final DestructionSupport destructionSupport;
 
@@ -54,7 +54,7 @@ public class ExileTargetPermanentEffectHandler implements NormalEffectHandlerBea
             UUID controllerId = gameQueryService.findPermanentController(gameData, target.getId());
 
             permanentRemovalService.removePermanentToExile(gameData, target);
-            gameBroadcastService.logAndBroadcast(gameData, GameLog.cardThen(target.getCard(), " is exiled."));
+            gameLogService.append(gameData, GameLog.cardThen(target.getCard(), " is exiled."));
             log.info("Game {} - {} is exiled by {}",
                     gameData.id, target.getCard().getName(), entry.getCard().getName());
 

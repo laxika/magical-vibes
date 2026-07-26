@@ -8,7 +8,7 @@ import com.github.laxika.magicalvibes.model.PendingInteraction;
 import com.github.laxika.magicalvibes.model.StackEntry;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
 import com.github.laxika.magicalvibes.model.effect.DiscardUpToThenDrawThatManyEffect;
-import com.github.laxika.magicalvibes.service.GameBroadcastService;
+import com.github.laxika.magicalvibes.service.GameLogService;
 import com.github.laxika.magicalvibes.service.interaction.InteractionHandlerRegistry;
 import java.util.List;
 import java.util.UUID;
@@ -21,7 +21,7 @@ import org.springframework.stereotype.Component;
 @RequiredArgsConstructor
 public class DiscardUpToThenDrawThatManyEffectHandler implements NormalEffectHandlerBean {
 
-    private final GameBroadcastService gameBroadcastService;
+    private final GameLogService gameLogService;
     private final InteractionHandlerRegistry interactionHandlerRegistry;
     private final PlayerInteractionSupport playerInteractionSupport;
 
@@ -44,11 +44,11 @@ public class DiscardUpToThenDrawThatManyEffectHandler implements NormalEffectHan
             gameData.chosenXValue = null;
 
             if (chosenCount == 0) {
-                gameBroadcastService.logAndBroadcast(gameData, GameLog.text(playerName + " chooses to discard 0 cards for " + cardName + "."));
+                gameLogService.append(gameData, GameLog.text(playerName + " chooses to discard 0 cards for " + cardName + "."));
                 log.info("Game {} - {} chooses to discard 0 for {}", gameData.id, playerName, cardName);
                 if (e.extraDraw() > 0) {
                     playerInteractionSupport.applyDrawCards(gameData, controllerId, e.extraDraw());
-                    gameBroadcastService.logAndBroadcast(gameData, GameLog.text(playerName + " draws " + e.extraDraw() + " card"
+                    gameLogService.append(gameData, GameLog.text(playerName + " draws " + e.extraDraw() + " card"
                                     + (e.extraDraw() != 1 ? "s" : "") + "."));
                 }
                 return;
@@ -64,14 +64,14 @@ public class DiscardUpToThenDrawThatManyEffectHandler implements NormalEffectHan
         List<Card> hand = gameData.playerHands.get(controllerId);
         if (hand == null || hand.isEmpty()) {
             if (e.extraDraw() > 0) {
-                gameBroadcastService.logAndBroadcast(gameData, GameLog.text(playerName + " chooses to discard 0 cards for " + cardName + "."));
+                gameLogService.append(gameData, GameLog.text(playerName + " chooses to discard 0 cards for " + cardName + "."));
                 playerInteractionSupport.applyDrawCards(gameData, controllerId, e.extraDraw());
-                gameBroadcastService.logAndBroadcast(gameData, GameLog.text(playerName + " draws " + e.extraDraw() + " card"
+                gameLogService.append(gameData, GameLog.text(playerName + " draws " + e.extraDraw() + " card"
                                 + (e.extraDraw() != 1 ? "s" : "") + "."));
                 log.info("Game {} - {} discards 0 and draws {} for {}",
                         gameData.id, playerName, e.extraDraw(), cardName);
             } else {
-                gameBroadcastService.logAndBroadcast(gameData, GameLog.text(playerName + " has no cards to discard for " + cardName + "."));
+                gameLogService.append(gameData, GameLog.text(playerName + " has no cards to discard for " + cardName + "."));
                 log.info("Game {} - {} has no cards to discard for {}", gameData.id, playerName, cardName);
             }
             return;

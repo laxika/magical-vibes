@@ -12,7 +12,7 @@ import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.StackEntry;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
 import com.github.laxika.magicalvibes.model.effect.CreateTokenCopyOfEquippedCreatureEffect;
-import com.github.laxika.magicalvibes.service.GameBroadcastService;
+import com.github.laxika.magicalvibes.service.GameLogService;
 import com.github.laxika.magicalvibes.service.battlefield.BattlefieldEntryService;
 import com.github.laxika.magicalvibes.service.battlefield.GameQueryService;
 import java.util.EnumSet;
@@ -28,7 +28,7 @@ public class CreateTokenCopyOfEquippedCreatureEffectHandler implements NormalEff
 
     private final BattlefieldEntryService battlefieldEntryService;
     private final GameQueryService gameQueryService;
-    private final GameBroadcastService gameBroadcastService;
+    private final GameLogService gameLogService;
 
     @Override
     public Class<? extends CardEffect> handledEffect() {
@@ -110,7 +110,7 @@ public class CreateTokenCopyOfEquippedCreatureEffectHandler implements NormalEff
                     Permanent tokenPermanent = new Permanent(tokenCard);
                     battlefieldEntryService.putPermanentOntoBattlefield(gameData, entry.getControllerId(), tokenPermanent);
 
-                    gameBroadcastService.logAndBroadcast(gameData, GameLog.textCardText("A token copy of ", sourceCard, " is created (non-legendary, with haste)."));
+                    gameLogService.append(gameData, GameLog.textCardText("A token copy of ", sourceCard, " is created (non-legendary, with haste)."));
                     log.info("Game {} - Token copy of {} created via Helm of the Host", gameData.id, sourceCard.getName());
 
                     // Pass null targetId: the token wasn't cast, so no target was chosen. Any targeted

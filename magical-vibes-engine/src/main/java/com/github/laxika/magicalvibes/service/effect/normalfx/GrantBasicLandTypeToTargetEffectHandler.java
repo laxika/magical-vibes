@@ -12,7 +12,7 @@ import com.github.laxika.magicalvibes.model.effect.CardEffect;
 import com.github.laxika.magicalvibes.model.effect.EffectDuration;
 import com.github.laxika.magicalvibes.model.effect.EnchantedPermanentBecomesTypeEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantBasicLandTypeToTargetEffect;
-import com.github.laxika.magicalvibes.service.GameBroadcastService;
+import com.github.laxika.magicalvibes.service.GameLogService;
 import com.github.laxika.magicalvibes.service.battlefield.GameQueryService;
 import com.github.laxika.magicalvibes.service.input.PlayerInputService;
 import lombok.RequiredArgsConstructor;
@@ -26,7 +26,7 @@ public class GrantBasicLandTypeToTargetEffectHandler implements NormalEffectHand
 
     private final GameQueryService gameQueryService;
     private final PlayerInputService playerInputService;
-    private final GameBroadcastService gameBroadcastService;
+    private final GameLogService gameLogService;
 
     @Override
     public Class<? extends CardEffect> handledEffect() {
@@ -47,7 +47,7 @@ public class GrantBasicLandTypeToTargetEffectHandler implements NormalEffectHand
         }
 
         applyBasicLandType(target, e.fixedSubtype(), e.duration(), e.replacing());
-        gameBroadcastService.logAndBroadcast(gameData, GameLog.text(describeBasicLandTypeChange(
+        gameLogService.append(gameData, GameLog.text(describeBasicLandTypeChange(
                 target, e.fixedSubtype(), e.duration(), e.replacing())));
     }
 

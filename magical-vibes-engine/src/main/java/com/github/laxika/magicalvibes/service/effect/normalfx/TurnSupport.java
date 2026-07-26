@@ -9,7 +9,7 @@ import com.github.laxika.magicalvibes.model.GameLog;
 import com.github.laxika.magicalvibes.model.StackEntry;
 import com.github.laxika.magicalvibes.model.StackEntryType;
 import com.github.laxika.magicalvibes.model.TurnStep;
-import com.github.laxika.magicalvibes.service.GameBroadcastService;
+import com.github.laxika.magicalvibes.service.GameLogService;
 import com.github.laxika.magicalvibes.service.battlefield.CreatureControlService;
 import com.github.laxika.magicalvibes.service.combat.CombatService;
 import com.github.laxika.magicalvibes.service.exile.ExileService;
@@ -34,7 +34,7 @@ import java.util.UUID;
 public class TurnSupport {
 
     private final CombatService combatService;
-    private final GameBroadcastService gameBroadcastService;
+    private final GameLogService gameLogService;
     private final CreatureControlService creatureControlService;
     private final TurnCleanupService turnCleanupService;
     private final ExileService exileService;
@@ -63,7 +63,7 @@ public class TurnSupport {
             if (spellTypes.contains(se.getEntryType())) {
                 Card card = se.getCard();
                 exileService.exileCard(gameData, se.getControllerId(), card);
-                gameBroadcastService.logAndBroadcast(gameData, GameLog.cardThen(card, " is exiled."));
+                gameLogService.append(gameData, GameLog.cardThen(card, " is exiled."));
                 log.info("Game {} - {} exiled from stack (end the turn)", gameData.id, card.getName());
             }
             // Triggered/activated abilities just cease to exist

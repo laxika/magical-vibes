@@ -7,7 +7,7 @@ import com.github.laxika.magicalvibes.model.StackEntry;
 import com.github.laxika.magicalvibes.model.StackEntryType;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
 import com.github.laxika.magicalvibes.model.effect.TargetCreatureDealsPowerDamageToAnyTargetEffect;
-import com.github.laxika.magicalvibes.service.GameBroadcastService;
+import com.github.laxika.magicalvibes.service.GameLogService;
 import com.github.laxika.magicalvibes.service.GameOutcomeService;
 import com.github.laxika.magicalvibes.service.battlefield.GameQueryService;
 import lombok.RequiredArgsConstructor;
@@ -23,7 +23,7 @@ public class TargetCreatureDealsPowerDamageToAnyTargetEffectHandler implements N
     private final DamageSupport damageSupport;
     private final GameQueryService gameQueryService;
     private final GameOutcomeService gameOutcomeService;
-    private final GameBroadcastService gameBroadcastService;
+    private final GameLogService gameLogService;
 
     @Override
     public Class<? extends CardEffect> handledEffect() {
@@ -55,7 +55,7 @@ public class TargetCreatureDealsPowerDamageToAnyTargetEffectHandler implements N
         // damage, nothing happens.
         if (gameQueryService.isDamagePreventable(gameData)
                 && gameQueryService.isPreventedFromDealingDamage(gameData, biter)) {
-            gameBroadcastService.logAndBroadcast(gameData, GameLog.cardThen(biter.getCard(), "'s damage is prevented."));
+            gameLogService.append(gameData, GameLog.cardThen(biter.getCard(), "'s damage is prevented."));
             return;
         }
 

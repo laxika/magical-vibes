@@ -6,7 +6,7 @@ import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.StackEntry;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
 import com.github.laxika.magicalvibes.model.effect.PutCappedCountersOnSourceEffect;
-import com.github.laxika.magicalvibes.service.GameBroadcastService;
+import com.github.laxika.magicalvibes.service.GameLogService;
 import com.github.laxika.magicalvibes.service.battlefield.GameQueryService;
 import com.github.laxika.magicalvibes.service.effect.AmountContext;
 import com.github.laxika.magicalvibes.service.effect.AmountEvaluationService;
@@ -26,7 +26,7 @@ import org.springframework.stereotype.Component;
 public class PutCappedCountersOnSourceEffectHandler implements NormalEffectHandlerBean {
 
     private final GameQueryService gameQueryService;
-    private final GameBroadcastService gameBroadcastService;
+    private final GameLogService gameLogService;
     private final AmountEvaluationService amountEvaluationService;
 
     @Override
@@ -55,7 +55,7 @@ public class PutCappedCountersOnSourceEffectHandler implements NormalEffectHandl
 
         source.setCounterCount(e.counterType(), current + toAdd);
         String logEntry = source.getCard().getName() + " gets " + toAdd + " counter(s).";
-        gameBroadcastService.logAndBroadcast(gameData, GameLog.builder().card(source.getCard()).text(" gets " + toAdd + " counter(s).").build());
+        gameLogService.append(gameData, GameLog.builder().card(source.getCard()).text(" gets " + toAdd + " counter(s).").build());
         log.info("Game {} - {} gets {} {} counter(s)", gameData.id,
                 source.getCard().getName(), toAdd, e.counterType());
     }

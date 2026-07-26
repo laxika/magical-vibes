@@ -53,7 +53,7 @@ import java.util.UUID;
  * type/name restrictions, silence-style prevention, timing (flash grants), and permissions to
  * cast/play from non-hand zones (graveyard, exile, top of library).
  *
- * <p>Both the view side ({@code GameBroadcastService} playable-card computation) and the
+ * <p>Both the view side ({@code GameActionAvailabilityService} playable-card computation) and the
  * validation side ({@code SpellCastingService}) must go through this service.
  */
 @Component

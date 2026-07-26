@@ -12,7 +12,7 @@ import java.util.List;
 import java.util.UUID;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
-import com.github.laxika.magicalvibes.service.GameBroadcastService;
+import com.github.laxika.magicalvibes.service.GameLogService;
 import com.github.laxika.magicalvibes.service.battlefield.GameQueryService;
 import com.github.laxika.magicalvibes.service.battlefield.PermanentRemovalService;
 import com.github.laxika.magicalvibes.service.input.PlayerInputService;
@@ -24,7 +24,7 @@ import org.springframework.stereotype.Component;
 public class SacrificeCreatureSearchLibraryForCreatureToHandEffectHandler implements NormalEffectHandlerBean {
 
     private final GameQueryService gameQueryService;
-    private final GameBroadcastService gameBroadcastService;
+    private final GameLogService gameLogService;
     private final PermanentRemovalService permanentRemovalService;
     private final PlayerInputService playerInputService;
     private final LibrarySearchSupport librarySearchSupport;
@@ -56,7 +56,7 @@ public class SacrificeCreatureSearchLibraryForCreatureToHandEffectHandler implem
 
         if (creatureIds.isEmpty()) {
             String logEntry = playerName + " controls no creatures to sacrifice.";
-            gameBroadcastService.logAndBroadcast(gameData, GameLog.text(logEntry));
+            gameLogService.append(gameData, GameLog.text(logEntry));
             log.info("Game {} - {} has no creatures for sacrifice-then-search", gameData.id, playerName);
             return;
         }
@@ -65,7 +65,7 @@ public class SacrificeCreatureSearchLibraryForCreatureToHandEffectHandler implem
             Permanent creature = gameQueryService.findPermanentById(gameData, creatureIds.getFirst());
             if (creature != null) {
                 permanentRemovalService.removePermanentToGraveyard(gameData, creature);
-                gameBroadcastService.logAndBroadcast(gameData, GameLog.textCardText(playerName + " sacrifices " , creature.getCard(), "."));
+                gameLogService.append(gameData, GameLog.textCardText(playerName + " sacrifices " , creature.getCard(), "."));
                 log.info("Game {} - {} sacrifices {}", gameData.id, playerName, creature.getCard().getName());
 
                 librarySearchSupport.searchLibraryForCreatureToHand(gameData, controllerId);

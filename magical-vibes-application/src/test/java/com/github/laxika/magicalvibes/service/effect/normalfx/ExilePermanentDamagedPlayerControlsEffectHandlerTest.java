@@ -15,7 +15,7 @@ import com.github.laxika.magicalvibes.model.effect.ExilePermanentDamagedPlayerCo
 import com.github.laxika.magicalvibes.model.effect.ExileTargetPermanentEffect;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsCreaturePredicate;
 import com.github.laxika.magicalvibes.networking.service.CardViewFactory;
-import com.github.laxika.magicalvibes.service.GameBroadcastService;
+import com.github.laxika.magicalvibes.service.GameLogService;
 import com.github.laxika.magicalvibes.service.exile.ExileService;
 import com.github.laxika.magicalvibes.service.graveyard.GraveyardService;
 import com.github.laxika.magicalvibes.service.input.PlayerInputService;
@@ -48,7 +48,7 @@ class ExilePermanentDamagedPlayerControlsEffectHandlerTest {
     @Mock private GraveyardService graveyardService;
     @Mock private GameQueryService gameQueryService;
     @Mock private PredicateEvaluationService predicateEvaluationService;
-    @Mock private GameBroadcastService gameBroadcastService;
+    @Mock private GameLogService gameLogService;
     @Mock private PermanentRemovalService permanentRemovalService;
     @Mock private PlayerInputService playerInputService;
     @Mock private CardViewFactory cardViewFactory;
@@ -82,7 +82,7 @@ class ExilePermanentDamagedPlayerControlsEffectHandlerTest {
         gd.playerGraveyards.put(player2Id, Collections.synchronizedList(new ArrayList<>()));
         gd.playerDecks.put(player1Id, Collections.synchronizedList(new ArrayList<>()));
         gd.playerDecks.put(player2Id, Collections.synchronizedList(new ArrayList<>()));
-        exilePermanentDamagedPlayerControlsHandler = new ExilePermanentDamagedPlayerControlsEffectHandler(gameQueryService, predicateEvaluationService, gameBroadcastService, playerInputService);
+        exilePermanentDamagedPlayerControlsHandler = new ExilePermanentDamagedPlayerControlsEffectHandler(gameQueryService, predicateEvaluationService, gameLogService, playerInputService);
 
     }
 
@@ -219,7 +219,7 @@ class ExilePermanentDamagedPlayerControlsEffectHandlerTest {
 
                 exilePermanentDamagedPlayerControlsHandler.resolve(gd, entry, effect);
 
-                verify(gameBroadcastService).logAndBroadcast(eq(gd), any(GameLogEntry.class));
+                verify(gameLogService).append(eq(gd), any(GameLogEntry.class));
                 verify(playerInputService, never()).beginMultiPermanentChoice(any(), any(), any(), anyInt(), any(), anyString());
             }
 
@@ -238,6 +238,6 @@ class ExilePermanentDamagedPlayerControlsEffectHandlerTest {
                 exilePermanentDamagedPlayerControlsHandler.resolve(gd, entry, effect);
 
                 verify(playerInputService, never()).beginMultiPermanentChoice(any(), any(), any(), anyInt(), any(), anyString());
-                verify(gameBroadcastService, never()).logAndBroadcast(any(), any(GameLogEntry.class));
+                verify(gameLogService, never()).append(any(), any(GameLogEntry.class));
             }
 }

@@ -164,7 +164,7 @@ class DealDamageToAnyTargetEffectHandlerTest extends AbstractDamageHandlerTest {
 
                 dealDamageToAnyTargetHandler.resolve(gd, entry, effect);
 
-                verify(gameBroadcastService, atLeastOnce()).logAndBroadcast(eq(gd), argThat((GameLogEntry logEntry) ->
+                verify(gameLogService, atLeastOnce()).append(eq(gd), argThat((GameLogEntry logEntry) ->
                         logEntry.plainText().contains("Shock") && logEntry.plainText().contains("2 damage") && logEntry.plainText().contains("Grizzly Bears")));
             }
 }

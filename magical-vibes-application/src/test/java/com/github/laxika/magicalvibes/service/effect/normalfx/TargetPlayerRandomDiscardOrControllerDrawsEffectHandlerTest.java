@@ -26,7 +26,7 @@ class TargetPlayerRandomDiscardOrControllerDrawsEffectHandlerTest extends Abstra
                 resolveEffect(gd, entry, new TargetPlayerRandomDiscardOrControllerDrawsEffect());
 
                 verify(drawService).resolveDrawCard(gd, player1Id);
-                verify(gameBroadcastService).logAndBroadcast(eq(gd), argThat((GameLogEntry logEntry) ->
+                verify(gameLogService).append(eq(gd), argThat((GameLogEntry logEntry) ->
                         logEntry.plainText().contains("no cards to discard") && logEntry.plainText().contains("draws a card")));
             }
 

@@ -10,7 +10,7 @@ import com.github.laxika.magicalvibes.model.effect.CardEffect;
 import com.github.laxika.magicalvibes.model.effect.DamageControllerUnlessDiscardThenTapSourceEffect;
 import com.github.laxika.magicalvibes.model.effect.DamageRecipient;
 import com.github.laxika.magicalvibes.model.effect.DealDamageToPlayersEffect;
-import com.github.laxika.magicalvibes.service.GameBroadcastService;
+import com.github.laxika.magicalvibes.service.GameLogService;
 import com.github.laxika.magicalvibes.service.battlefield.GameQueryService;
 import java.util.List;
 import java.util.UUID;
@@ -32,7 +32,7 @@ public class DamageControllerUnlessDiscardThenTapSourceEffectHandler implements 
     private final DealDamageToPlayersEffectHandler dealDamageToPlayersEffectHandler;
     private final GameQueryService gameQueryService;
     private final TapUntapSupport tapUntapSupport;
-    private final GameBroadcastService gameBroadcastService;
+    private final GameLogService gameLogService;
 
     @Override
     public Class<? extends CardEffect> handledEffect() {
@@ -77,7 +77,7 @@ public class DamageControllerUnlessDiscardThenTapSourceEffectHandler implements 
                     ? gameQueryService.findPermanentById(gameData, entry.getSourcePermanentId())
                     : null;
             if (source != null && tapUntapSupport.tapPermanent(gameData, source)) {
-                gameBroadcastService.logAndBroadcast(gameData, GameLog.cardThen(source.getCard(), " taps itself."));
+                gameLogService.append(gameData, GameLog.cardThen(source.getCard(), " taps itself."));
                 log.info("Game {} - {} taps itself after dealing damage to its controller", gameData.id, source.getCard().getName());
             }
         }

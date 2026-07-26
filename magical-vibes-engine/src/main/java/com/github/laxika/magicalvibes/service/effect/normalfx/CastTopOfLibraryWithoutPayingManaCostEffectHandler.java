@@ -7,7 +7,7 @@ import com.github.laxika.magicalvibes.model.PendingMayAbility;
 import com.github.laxika.magicalvibes.model.StackEntry;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
 import com.github.laxika.magicalvibes.model.effect.CastTopOfLibraryWithoutPayingManaCostEffect;
-import com.github.laxika.magicalvibes.service.GameBroadcastService;
+import com.github.laxika.magicalvibes.service.GameLogService;
 import java.util.*;
 import lombok.extern.slf4j.Slf4j;
 import lombok.RequiredArgsConstructor;
@@ -19,7 +19,7 @@ import org.springframework.stereotype.Component;
 @RequiredArgsConstructor
 public class CastTopOfLibraryWithoutPayingManaCostEffectHandler implements NormalEffectHandlerBean {
 
-    private final GameBroadcastService gameBroadcastService;
+    private final GameLogService gameLogService;
 
     @Override
     public Class<? extends CardEffect> handledEffect() {
@@ -37,20 +37,20 @@ public class CastTopOfLibraryWithoutPayingManaCostEffectHandler implements Norma
 
         if (deck.isEmpty()) {
             String logEntry = playerName + "'s library is empty (" + sourceName + ").";
-            gameBroadcastService.logAndBroadcast(gameData, GameLog.text(logEntry));
+            gameLogService.append(gameData, GameLog.text(logEntry));
             return;
         }
 
         Card topCard = deck.getFirst();
 
         String logEntry = playerName + " looks at the top card of their library (" + sourceName + ").";
-        gameBroadcastService.logAndBroadcast(gameData, GameLog.text(logEntry));
+        gameLogService.append(gameData, GameLog.text(logEntry));
         log.info("Game {} - {} looks at top card: {} ({})", gameData.id, playerName, topCard.getName(), sourceName);
 
         boolean matches = e.castableTypes().contains(topCard.getType());
         if (!matches) {
             String noMatch = "The top card is not a castable type.";
-            gameBroadcastService.logAndBroadcast(gameData, GameLog.text(noMatch));
+            gameLogService.append(gameData, GameLog.text(noMatch));
             log.info("Game {} - Top card {} doesn't match castable types", gameData.id, topCard.getName());
             return;
         }

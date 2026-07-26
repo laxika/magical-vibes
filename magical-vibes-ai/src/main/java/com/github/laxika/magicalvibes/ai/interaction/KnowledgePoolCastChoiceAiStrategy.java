@@ -26,6 +26,6 @@ class KnowledgePoolCastChoiceAiStrategy implements AiInteractionStrategy<Pending
 
         List<UUID> chosen = interaction.validCardIds().stream().limit(1).toList();
         log.info("AI: Choosing card from Knowledge Pool in game {}", ctx.gameId());
-        ctx.gameActions().answerInteraction(ctx.selfConnection(), new InteractionAnswer.CardsChosen(chosen));
+        ctx.gameActions().answerInteraction(new InteractionAnswer.CardsChosen(chosen));
     }
 }

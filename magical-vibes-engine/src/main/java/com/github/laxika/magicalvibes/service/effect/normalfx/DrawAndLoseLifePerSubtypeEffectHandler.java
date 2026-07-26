@@ -7,7 +7,7 @@ import com.github.laxika.magicalvibes.model.StackEntry;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
 import com.github.laxika.magicalvibes.model.effect.DrawAndLoseLifePerSubtypeEffect;
 import com.github.laxika.magicalvibes.service.DrawService;
-import com.github.laxika.magicalvibes.service.GameBroadcastService;
+import com.github.laxika.magicalvibes.service.GameLogService;
 import com.github.laxika.magicalvibes.service.battlefield.GameQueryService;
 import java.util.List;
 import java.util.UUID;
@@ -21,7 +21,7 @@ import org.springframework.stereotype.Component;
 public class DrawAndLoseLifePerSubtypeEffectHandler implements NormalEffectHandlerBean {
 
     private final DrawService drawService;
-    private final GameBroadcastService gameBroadcastService;
+    private final GameLogService gameLogService;
     private final GameQueryService gameQueryService;
     private final PlayerInteractionSupport playerInteractionSupport;
 
@@ -49,7 +49,7 @@ public class DrawAndLoseLifePerSubtypeEffectHandler implements NormalEffectHandl
 
         if (count == 0) {
             String logEntry = playerName + " controls no " + e.subtype().getDisplayName() + "s — draws nothing and loses no life.";
-            gameBroadcastService.logAndBroadcast(gameData, GameLog.text(logEntry));
+            gameLogService.append(gameData, GameLog.text(logEntry));
             log.info("Game {} - {} controls no {}s for draw/life loss", gameData.id, playerName, e.subtype().getDisplayName());
             return;
         }
@@ -61,14 +61,14 @@ public class DrawAndLoseLifePerSubtypeEffectHandler implements NormalEffectHandl
         if (!gameQueryService.canPlayerLifeChange(gameData, controllerId)) {
             String logEntry = playerName + " draws " + count + " card" + (count != 1 ? "s" : "")
                     + " (" + entry.getCard().getName() + "). " + playerName + "'s life total can't change.";
-            gameBroadcastService.logAndBroadcast(gameData, GameLog.builder().text(playerName + " draws " + count + " card" + (count != 1 ? "s" : "") + " (").card(entry.getCard()).text("). " + playerName + "'s life total can't change.").build());
+            gameLogService.append(gameData, GameLog.builder().text(playerName + " draws " + count + " card" + (count != 1 ? "s" : "") + " (").card(entry.getCard()).text("). " + playerName + "'s life total can't change.").build());
         } else {
             int currentLife = gameData.getLife(controllerId);
             gameData.playerLifeTotals.put(controllerId, currentLife - count);
 
             String logEntry = playerName + " draws " + count + " card" + (count != 1 ? "s" : "")
                     + " and loses " + count + " life (" + entry.getCard().getName() + ").";
-            gameBroadcastService.logAndBroadcast(gameData, GameLog.builder().text(playerName + " draws " + count + " card" + (count != 1 ? "s" : "") + " and loses " + count + " life (").card(entry.getCard()).text(").").build());
+            gameLogService.append(gameData, GameLog.builder().text(playerName + " draws " + count + " card" + (count != 1 ? "s" : "") + " and loses " + count + " life (").card(entry.getCard()).text(").").build());
             log.info("Game {} - {} draws {} and loses {} life from {}", gameData.id, playerName, count, count, entry.getCard().getName());
         }
     

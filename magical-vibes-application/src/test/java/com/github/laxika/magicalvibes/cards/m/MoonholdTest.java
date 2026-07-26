@@ -37,7 +37,7 @@ class MoonholdTest extends BaseCardTest {
         harness.addMana(player2, ManaColor.GREEN, 2);
         harness.clearPriorityPassed();
         harness.ensurePriority(player2);
-        return harness.getGameBroadcastService()
+        return harness.getGameActionAvailabilityService()
                 .getPlayableCardIndices(harness.getGameData(), player2.getId());
     }
 

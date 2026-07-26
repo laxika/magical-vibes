@@ -7,7 +7,7 @@ import com.github.laxika.magicalvibes.model.StackEntry;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
 import com.github.laxika.magicalvibes.model.effect.LockTargetPermanentEffect;
 import com.github.laxika.magicalvibes.model.layer.FloatingContinuousEffect;
-import com.github.laxika.magicalvibes.service.GameBroadcastService;
+import com.github.laxika.magicalvibes.service.GameLogService;
 import com.github.laxika.magicalvibes.service.battlefield.GameQueryService;
 import java.util.UUID;
 import lombok.RequiredArgsConstructor;
@@ -27,7 +27,7 @@ import org.springframework.stereotype.Component;
 public class LockTargetPermanentEffectHandler implements NormalEffectHandlerBean {
 
     private final GameQueryService gameQueryService;
-    private final GameBroadcastService gameBroadcastService;
+    private final GameLogService gameLogService;
 
     @Override
     public Class<? extends CardEffect> handledEffect() {
@@ -51,7 +51,7 @@ public class LockTargetPermanentEffectHandler implements NormalEffectHandlerBean
                 UUID.randomUUID(), entry.getCard().getName(), entry.getSourcePermanentId(),
                 entry.getControllerId(), lock, target.getId(), null, null, lock.duration(), 0));
 
-        gameBroadcastService.logAndBroadcast(gameData, GameLog.cardThen(target.getCard(), " " + describe(lock) + "."));
+        gameLogService.append(gameData, GameLog.cardThen(target.getCard(), " " + describe(lock) + "."));
         log.info("Game {} - {} locked ({})", gameData.id, target.getCard().getName(), describe(lock));
     }
 

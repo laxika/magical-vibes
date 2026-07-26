@@ -29,7 +29,7 @@ import com.github.laxika.magicalvibes.model.filter.PermanentPredicate;
 import com.github.laxika.magicalvibes.model.condition.TargetPermanentMatches;
 import com.github.laxika.magicalvibes.model.effect.CantBlockThisTurnEffect;
 import com.github.laxika.magicalvibes.model.effect.TapUntapScope;
-import com.github.laxika.magicalvibes.service.GameBroadcastService;
+import com.github.laxika.magicalvibes.service.GameLogService;
 import com.github.laxika.magicalvibes.service.battlefield.GameQueryService;
 import com.github.laxika.magicalvibes.service.effect.staticfx.StaticEffectSupport;
 import com.github.laxika.magicalvibes.service.battlefield.PermanentRemovalService;
@@ -66,7 +66,7 @@ class EffectResolutionServiceTest {
     private EffectHandlerRegistry registry;
 
     @Mock
-    private GameBroadcastService gameBroadcastService;
+    private GameLogService gameLogService;
 
     @Mock
     private PermanentRemovalService permanentRemovalService;
@@ -94,7 +94,7 @@ class EffectResolutionServiceTest {
         lenient().when(stateBasedActionServiceProvider.getObject()).thenReturn(stateBasedActionService);
         effectResolutionService = new EffectResolutionService(
                 new ConditionEvaluationService(gameQueryService, predicateEvaluationService, new StaticEffectSupport(gameQueryService, predicateEvaluationService)),
-                registry, gameBroadcastService, permanentRemovalService, damageSupport, gameOutcomeService,
+                registry, gameLogService, permanentRemovalService, damageSupport, gameOutcomeService,
                 stateBasedActionServiceProvider);
         player1Id = UUID.randomUUID();
         player2Id = UUID.randomUUID();
@@ -169,7 +169,7 @@ class EffectResolutionServiceTest {
 
             effectResolutionService.resolveEffects(gd, entry);
 
-            verify(gameBroadcastService).logAndBroadcast(eq(gd), argThat((GameLogEntry logEntry) ->
+            verify(gameLogService).append(eq(gd), argThat((GameLogEntry logEntry) ->
                     logEntry.plainText().contains("Concussive Bolt") && logEntry.plainText().contains("does nothing")
                             && logEntry.plainText().contains("fewer than three artifacts")));
         }
@@ -217,7 +217,7 @@ class EffectResolutionServiceTest {
 
             effectResolutionService.resolveEffects(gd, entry);
 
-            verify(gameBroadcastService).logAndBroadcast(eq(gd), argThat((GameLogEntry logEntry) ->
+            verify(gameLogService).append(eq(gd), argThat((GameLogEntry logEntry) ->
                     logEntry.plainText().contains("Concussive Bolt") && logEntry.plainText().contains("does nothing")
                             && logEntry.plainText().contains("fewer than three artifacts")));
         }
@@ -477,7 +477,7 @@ class EffectResolutionServiceTest {
 
             effectResolutionService.resolveEffects(gd, entry);
 
-            verify(gameBroadcastService).logAndBroadcast(eq(gd), argThat((GameLogEntry logEntry) ->
+            verify(gameLogService).append(eq(gd), argThat((GameLogEntry logEntry) ->
                     logEntry.plainText().contains("Temporal Machinations") && logEntry.plainText().contains("does nothing")));
         }
     }
@@ -833,7 +833,7 @@ class EffectResolutionServiceTest {
 
             effectResolutionService.resolveEffects(gd, entry);
 
-            verify(gameBroadcastService).logAndBroadcast(eq(gd), argThat((GameLogEntry logEntry) ->
+            verify(gameLogService).append(eq(gd), argThat((GameLogEntry logEntry) ->
                     logEntry.plainText().contains("Fathom Fleet Captain") && logEntry.plainText().contains("does nothing")
                             && logEntry.plainText().contains("matching permanent")));
         }

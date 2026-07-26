@@ -24,6 +24,6 @@ class IllicitAuctionBidChoiceAiStrategy implements AiInteractionStrategy<Pending
         }
 
         log.info("AI: Passing on Illicit Auction bid for {} in game {}", interaction.cardName(), ctx.gameId());
-        ctx.gameActions().answerInteraction(ctx.selfConnection(), new InteractionAnswer.NumberChosen(0));
+        ctx.gameActions().answerInteraction(new InteractionAnswer.NumberChosen(0));
     }
 }

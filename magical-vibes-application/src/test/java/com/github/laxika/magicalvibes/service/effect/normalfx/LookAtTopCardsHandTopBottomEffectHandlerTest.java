@@ -11,7 +11,7 @@ import com.github.laxika.magicalvibes.model.effect.LookAtTopCardsHandTopBottomEf
 import com.github.laxika.magicalvibes.networking.SessionManager;
 import com.github.laxika.magicalvibes.networking.model.CardView;
 import com.github.laxika.magicalvibes.networking.service.CardViewFactory;
-import com.github.laxika.magicalvibes.service.GameBroadcastService;
+import com.github.laxika.magicalvibes.service.GameLogService;
 import com.github.laxika.magicalvibes.service.GameLogService;
 import com.github.laxika.magicalvibes.service.battlefield.BattlefieldEntryService;
 import com.github.laxika.magicalvibes.service.battlefield.GameQueryService;
@@ -41,8 +41,6 @@ class LookAtTopCardsHandTopBottomEffectHandlerTest {
 
     @Mock
     private GameQueryService gameQueryService;
-    @Mock
-    private GameBroadcastService gameBroadcastService;
     @Mock
     private GameLogService gameLogService;
     @Mock
@@ -81,13 +79,13 @@ class LookAtTopCardsHandTopBottomEffectHandlerTest {
         gd.playerDecks.put(player2Id, Collections.synchronizedList(new ArrayList<>()));
         gd.activePlayerId = player1Id;
 
-        libraryRevealSupport = new LibraryRevealSupport(gameBroadcastService,
-                InteractionRegistryTestSupport.registryFor(sessionManager, cardViewFactory, gameBroadcastService));
+        libraryRevealSupport = new LibraryRevealSupport(gameLogService,
+                InteractionRegistryTestSupport.registryFor(sessionManager, cardViewFactory, gameLogService));
         InteractionHandlerRegistry interactionHandlerRegistry = new InteractionHandlerRegistry();
         interactionHandlerRegistry.register(new HandTopBottomChoiceInteractionHandler(
                 gameLogService, mock(TurnProgressionService.class)));
         lookAtTopCardsHandTopBottomEffectHandler = new LookAtTopCardsHandTopBottomEffectHandler(
-                gameBroadcastService, interactionHandlerRegistry, libraryRevealSupport);
+                gameLogService, interactionHandlerRegistry, libraryRevealSupport);
 
     }
 
@@ -128,7 +126,7 @@ class LookAtTopCardsHandTopBottomEffectHandlerTest {
 
                 assertThat(gd.interaction.activeInteraction()).isNull();
                 assertThat(gd.playerHands.get(player1Id)).isEmpty();
-                verify(gameBroadcastService).logAndBroadcast(eq(gd), argThat((GameLogEntry logEntry) ->
+                verify(gameLogService).append(eq(gd), argThat((GameLogEntry logEntry) ->
                         logEntry.plainText().contains("library is empty")));
             }
 

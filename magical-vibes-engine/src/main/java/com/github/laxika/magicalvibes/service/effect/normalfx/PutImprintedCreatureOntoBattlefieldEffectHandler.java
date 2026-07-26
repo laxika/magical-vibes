@@ -8,7 +8,7 @@ import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.StackEntry;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
 import com.github.laxika.magicalvibes.model.effect.PutImprintedCreatureOntoBattlefieldEffect;
-import com.github.laxika.magicalvibes.service.GameBroadcastService;
+import com.github.laxika.magicalvibes.service.GameLogService;
 import com.github.laxika.magicalvibes.service.battlefield.BattlefieldEntryService;
 import java.util.UUID;
 
@@ -22,7 +22,7 @@ import org.springframework.stereotype.Component;
 public class PutImprintedCreatureOntoBattlefieldEffectHandler implements NormalEffectHandlerBean {
 
     private final BattlefieldEntryService battlefieldEntryService;
-    private final GameBroadcastService gameBroadcastService;
+    private final GameLogService gameLogService;
     private final GraveyardReturnSupport graveyardReturnSupport;
 
     @Override
@@ -38,16 +38,16 @@ public class PutImprintedCreatureOntoBattlefieldEffectHandler implements NormalE
         String playerName = gameData.playerIdToName.get(controllerId);
 
         if (imprintedCard == null) {
-            gameBroadcastService.logAndBroadcast(gameData, GameLog.cardThen(entry.getCard(), "'s imprint ability resolves but no card was imprinted."));
+            gameLogService.append(gameData, GameLog.cardThen(entry.getCard(), "'s imprint ability resolves but no card was imprinted."));
             return;
         }
 
-        gameBroadcastService.logAndBroadcast(gameData, GameLog.textCardText(playerName + " turns the exiled card face up: " , imprintedCard, "."));
+        gameLogService.append(gameData, GameLog.textCardText(playerName + " turns the exiled card face up: " , imprintedCard, "."));
 
         boolean isCreature = imprintedCard.hasType(CardType.CREATURE);
 
         if (!isCreature) {
-            gameBroadcastService.logAndBroadcast(gameData, GameLog.cardThen(imprintedCard, " is not a creature card. It remains in exile."));
+            gameLogService.append(gameData, GameLog.cardThen(imprintedCard, " is not a creature card. It remains in exile."));
             return;
         }
 
@@ -58,7 +58,7 @@ public class PutImprintedCreatureOntoBattlefieldEffectHandler implements NormalE
         Permanent perm = new Permanent(imprintedCard);
         battlefieldEntryService.putPermanentOntoBattlefield(gameData, controllerId, perm);
 
-        gameBroadcastService.logAndBroadcast(gameData, GameLog.entersBattlefieldUnder(imprintedCard, playerName));
+        gameLogService.append(gameData, GameLog.entersBattlefieldUnder(imprintedCard, playerName));
 
         graveyardReturnSupport.handleCreatureEtbAndLegendRule(gameData, controllerId, perm, imprintedCard);
 

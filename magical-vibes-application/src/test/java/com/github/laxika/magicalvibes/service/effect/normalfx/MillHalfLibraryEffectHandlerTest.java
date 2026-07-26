@@ -6,7 +6,7 @@ import com.github.laxika.magicalvibes.model.GameData;
 import com.github.laxika.magicalvibes.model.StackEntry;
 import com.github.laxika.magicalvibes.model.StackEntryType;
 import com.github.laxika.magicalvibes.model.effect.MillHalfLibraryEffect;
-import com.github.laxika.magicalvibes.service.GameBroadcastService;
+import com.github.laxika.magicalvibes.service.GameLogService;
 import com.github.laxika.magicalvibes.service.graveyard.GraveyardService;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
@@ -30,7 +30,7 @@ class MillHalfLibraryEffectHandlerTest {
     @Mock
     private GraveyardService graveyardService;
     @Mock
-    private GameBroadcastService gameBroadcastService;
+    private GameLogService gameLogService;
     @Mock
     private PermanentControlSupport permanentControlSupport;
     private GameData gd;
@@ -66,7 +66,7 @@ player1Id = UUID.randomUUID();
         gd.playerDecks.put(player1Id, Collections.synchronizedList(new ArrayList<>()));
         gd.playerDecks.put(player2Id, Collections.synchronizedList(new ArrayList<>()));
         gd.activePlayerId = player1Id;
-        millHalfLibraryEffectHandler = new MillHalfLibraryEffectHandler(graveyardService, gameBroadcastService);
+        millHalfLibraryEffectHandler = new MillHalfLibraryEffectHandler(graveyardService, gameLogService);
 
     }
 
@@ -105,7 +105,7 @@ player1Id = UUID.randomUUID();
 
                 millHalfLibraryEffectHandler.resolve(gd, entry, effect);
 
-                verify(gameBroadcastService).logAndBroadcast(eq(gd), argThat((GameLogEntry logEntry) ->
+                verify(gameLogService).append(eq(gd), argThat((GameLogEntry logEntry) ->
                         logEntry.plainText().contains("mills nothing")));
                 verifyNoInteractions(graveyardService);
             }

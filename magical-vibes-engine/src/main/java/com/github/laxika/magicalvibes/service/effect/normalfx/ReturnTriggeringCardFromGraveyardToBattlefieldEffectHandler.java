@@ -6,7 +6,7 @@ import com.github.laxika.magicalvibes.model.GameLog;
 import com.github.laxika.magicalvibes.model.StackEntry;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
 import com.github.laxika.magicalvibes.model.effect.ReturnTriggeringCardFromGraveyardToBattlefieldEffect;
-import com.github.laxika.magicalvibes.service.GameBroadcastService;
+import com.github.laxika.magicalvibes.service.GameLogService;
 import com.github.laxika.magicalvibes.service.battlefield.GameQueryService;
 import com.github.laxika.magicalvibes.service.battlefield.PermanentRemovalService;
 import lombok.RequiredArgsConstructor;
@@ -25,7 +25,7 @@ public class ReturnTriggeringCardFromGraveyardToBattlefieldEffectHandler impleme
     private final GameQueryService gameQueryService;
     private final PermanentRemovalService permanentRemovalService;
     private final GraveyardReturnSupport graveyardReturnSupport;
-    private final GameBroadcastService gameBroadcastService;
+    private final GameLogService gameLogService;
 
     @Override
     public Class<? extends CardEffect> handledEffect() {
@@ -37,7 +37,7 @@ public class ReturnTriggeringCardFromGraveyardToBattlefieldEffectHandler impleme
         Card card = entry.getCard();
         UUID ownerId = gameQueryService.findGraveyardOwnerById(gameData, card.getId());
         if (ownerId == null) {
-            gameBroadcastService.logAndBroadcast(gameData, GameLog.text(entry.getDescription() + " does nothing (the card is no longer in a graveyard)."));
+            gameLogService.append(gameData, GameLog.text(entry.getDescription() + " does nothing (the card is no longer in a graveyard)."));
             return;
         }
 

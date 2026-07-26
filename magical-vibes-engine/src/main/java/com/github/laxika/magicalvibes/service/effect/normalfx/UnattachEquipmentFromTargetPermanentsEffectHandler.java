@@ -9,7 +9,7 @@ import com.github.laxika.magicalvibes.model.StackEntry;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
 import com.github.laxika.magicalvibes.model.effect.SacrificeOnUnattachEffect;
 import com.github.laxika.magicalvibes.model.effect.UnattachEquipmentFromTargetPermanentsEffect;
-import com.github.laxika.magicalvibes.service.GameBroadcastService;
+import com.github.laxika.magicalvibes.service.GameLogService;
 import com.github.laxika.magicalvibes.service.battlefield.GameQueryService;
 import com.github.laxika.magicalvibes.service.battlefield.PermanentRemovalService;
 import java.util.LinkedHashSet;
@@ -25,7 +25,7 @@ import org.springframework.stereotype.Component;
 public class UnattachEquipmentFromTargetPermanentsEffectHandler implements NormalEffectHandlerBean {
 
     private final GameQueryService gameQueryService;
-    private final GameBroadcastService gameBroadcastService;
+    private final GameLogService gameLogService;
     private final PermanentRemovalService permanentRemovalService;
 
     @Override
@@ -55,7 +55,7 @@ public class UnattachEquipmentFromTargetPermanentsEffectHandler implements Norma
                     gameData.expireFloatingEffectsForUnattachedSource(p.getId());
                     String unattachLog = entry.getCard().getName() + " unattaches " + p.getCard().getName()
                             + " from " + target.getCard().getName() + ".";
-                    gameBroadcastService.logAndBroadcast(gameData, GameLog.builder().card(entry.getCard()).text(" unattaches ").card(p.getCard()).text(" from ").card(target.getCard()).text(".").build());
+                    gameLogService.append(gameData, GameLog.builder().card(entry.getCard()).text(" unattaches ").card(p.getCard()).text(" from ").card(target.getCard()).text(".").build());
                     log.info("Game {} - {} unattaches {} from {}", gameData.id, entry.getCard().getName(),
                             p.getCard().getName(), target.getCard().getName());
 
@@ -72,7 +72,7 @@ public class UnattachEquipmentFromTargetPermanentsEffectHandler implements Norma
         for (UUID creatureId : sacrificeTargetIds) {
             Permanent creature = gameQueryService.findPermanentById(gameData, creatureId);
             if (creature != null) {
-                gameBroadcastService.logAndBroadcast(gameData, GameLog.cardThen(creature.getCard(), " is sacrificed (equipment with sacrifice-on-unattach became unattached)."));
+                gameLogService.append(gameData, GameLog.cardThen(creature.getCard(), " is sacrificed (equipment with sacrifice-on-unattach became unattached)."));
                 log.info("Game {} - {} sacrificed due to equipment unattach", gameData.id, creature.getCard().getName());
                 permanentRemovalService.removePermanentToGraveyard(gameData, creature);
                 permanentRemovalService.removeOrphanedAuras(gameData);

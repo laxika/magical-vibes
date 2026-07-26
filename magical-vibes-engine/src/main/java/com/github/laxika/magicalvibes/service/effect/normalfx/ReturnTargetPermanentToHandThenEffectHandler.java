@@ -7,7 +7,7 @@ import com.github.laxika.magicalvibes.model.StackEntry;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
 import com.github.laxika.magicalvibes.model.effect.ReturnTargetPermanentToHandThenEffect;
 import com.github.laxika.magicalvibes.model.effect.ThenEffectRecipient;
-import com.github.laxika.magicalvibes.service.GameBroadcastService;
+import com.github.laxika.magicalvibes.service.GameLogService;
 import com.github.laxika.magicalvibes.service.GameOutcomeService;
 import com.github.laxika.magicalvibes.service.battlefield.GameQueryService;
 import com.github.laxika.magicalvibes.service.battlefield.PermanentRemovalService;
@@ -34,7 +34,7 @@ public class ReturnTargetPermanentToHandThenEffectHandler implements NormalEffec
 
     private final GameQueryService gameQueryService;
     private final PermanentRemovalService permanentRemovalService;
-    private final GameBroadcastService gameBroadcastService;
+    private final GameLogService gameLogService;
     private final ConditionEvaluationService conditionEvaluationService;
     private final EffectResolutionService effectResolutionService;
     private final GameOutcomeService gameOutcomeService;
@@ -42,14 +42,14 @@ public class ReturnTargetPermanentToHandThenEffectHandler implements NormalEffec
     public ReturnTargetPermanentToHandThenEffectHandler(
             GameQueryService gameQueryService,
             PermanentRemovalService permanentRemovalService,
-            GameBroadcastService gameBroadcastService,
+            GameLogService gameLogService,
             ConditionEvaluationService conditionEvaluationService,
             // @Lazy breaks EffectResolutionService → registry → this → EffectResolutionService.
             @Lazy EffectResolutionService effectResolutionService,
             GameOutcomeService gameOutcomeService) {
         this.gameQueryService = gameQueryService;
         this.permanentRemovalService = permanentRemovalService;
-        this.gameBroadcastService = gameBroadcastService;
+        this.gameLogService = gameLogService;
         this.conditionEvaluationService = conditionEvaluationService;
         this.effectResolutionService = effectResolutionService;
         this.gameOutcomeService = gameOutcomeService;
@@ -72,7 +72,7 @@ public class ReturnTargetPermanentToHandThenEffectHandler implements NormalEffec
         UUID targetOwnerId = gameData.defaultControllerOf(target.getId());
 
         if (permanentRemovalService.removePermanentToHand(gameData, target)) {
-            gameBroadcastService.logAndBroadcast(gameData,
+            gameLogService.append(gameData,
                     GameLog.cardThen(target.getCard(), " is returned to its owner's hand."));
             log.info("Game {} - {} returned to owner's hand by {}",
                     gameData.id, target.getCard().getName(), entry.getCard().getName());
@@ -84,7 +84,7 @@ public class ReturnTargetPermanentToHandThenEffectHandler implements NormalEffec
         if (e.thenCondition() != null
                 && !conditionEvaluationService.isMet(gameData, e.thenCondition(),
                 ConditionContext.forStackEntry(entry))) {
-            gameBroadcastService.logAndBroadcast(gameData, GameLog.cardThen(entry.getCard(),
+            gameLogService.append(gameData, GameLog.cardThen(entry.getCard(),
                     "'s " + e.thenCondition().conditionName() + " ability does nothing ("
                             + e.thenCondition().conditionNotMetReason() + ")."));
             return;

@@ -30,7 +30,7 @@ class RevealRandomHandCardAndPlayEffectHandlerTest extends AbstractPlayerInterac
 
                 resolveEffect(gd, entry, new RevealRandomHandCardAndPlayEffect());
 
-                verify(gameBroadcastService).logAndBroadcast(eq(gd), argThat((GameLogEntry logEntry) ->
+                verify(gameLogService).append(eq(gd), argThat((GameLogEntry logEntry) ->
                         logEntry.plainText().contains("no cards in hand")));
             }
 

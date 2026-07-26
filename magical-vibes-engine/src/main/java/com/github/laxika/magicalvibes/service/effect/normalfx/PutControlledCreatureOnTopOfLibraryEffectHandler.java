@@ -7,7 +7,7 @@ import com.github.laxika.magicalvibes.model.PermanentChoiceContext;
 import com.github.laxika.magicalvibes.model.StackEntry;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
 import com.github.laxika.magicalvibes.model.effect.PutControlledCreatureOnTopOfLibraryEffect;
-import com.github.laxika.magicalvibes.service.GameBroadcastService;
+import com.github.laxika.magicalvibes.service.GameLogService;
 import com.github.laxika.magicalvibes.service.battlefield.GameQueryService;
 import com.github.laxika.magicalvibes.service.battlefield.PermanentRemovalService;
 import com.github.laxika.magicalvibes.service.input.PlayerInputService;
@@ -33,7 +33,7 @@ import java.util.UUID;
 public class PutControlledCreatureOnTopOfLibraryEffectHandler implements NormalEffectHandlerBean {
 
     private final GameQueryService gameQueryService;
-    private final GameBroadcastService gameBroadcastService;
+    private final GameLogService gameLogService;
     private final PermanentRemovalService permanentRemovalService;
     private final PlayerInputService playerInputService;
 
@@ -78,7 +78,7 @@ public class PutControlledCreatureOnTopOfLibraryEffectHandler implements NormalE
 
     private void putOnTopOfLibrary(GameData gameData, Permanent target) {
         if (permanentRemovalService.removePermanentToLibraryTop(gameData, target)) {
-            gameBroadcastService.logAndBroadcast(gameData,
+            gameLogService.append(gameData,
                     GameLog.cardThen(target.getCard(), " is put on top of its owner's library."));
             log.info("Game {} - {} put on top of library", gameData.id, target.getCard().getName());
         }

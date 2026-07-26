@@ -47,6 +47,6 @@ class ScryAiStrategy implements AiInteractionStrategy<PendingInteraction.Scry> {
 
         log.info("AI: Scry {} - keeping {} on top, {} on bottom in game {}",
                 cards.size(), topOrder.size(), bottomOrder.size(), ctx.gameId());
-        ctx.gameActions().answerInteraction(ctx.selfConnection(), new InteractionAnswer.ScryOrder(topOrder, bottomOrder));
+        ctx.gameActions().answerInteraction(new InteractionAnswer.ScryOrder(topOrder, bottomOrder));
     }
 }

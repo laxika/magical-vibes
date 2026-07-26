@@ -9,7 +9,7 @@ import com.github.laxika.magicalvibes.model.PendingPileSeparation;
 import com.github.laxika.magicalvibes.model.StackEntry;
 import com.github.laxika.magicalvibes.model.effect.BrilliantUltimatumEffect;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
-import com.github.laxika.magicalvibes.service.GameBroadcastService;
+import com.github.laxika.magicalvibes.service.GameLogService;
 import com.github.laxika.magicalvibes.service.interaction.InteractionHandlerRegistry;
 import java.util.ArrayList;
 import java.util.HashMap;
@@ -32,7 +32,7 @@ import org.springframework.stereotype.Component;
 @RequiredArgsConstructor
 public class BrilliantUltimatumEffectHandler implements NormalEffectHandlerBean {
 
-    private final GameBroadcastService gameBroadcastService;
+    private final GameLogService gameLogService;
     private final InteractionHandlerRegistry interactionHandlerRegistry;
 
     @Override
@@ -59,12 +59,12 @@ public class BrilliantUltimatumEffectHandler implements NormalEffectHandlerBean 
         }
 
         if (exiledCards.isEmpty()) {
-            gameBroadcastService.logAndBroadcast(gameData, GameLog.text(playerName + "'s library is empty (" + sourceName + ")."));
+            gameLogService.append(gameData, GameLog.text(playerName + "'s library is empty (" + sourceName + ")."));
             return;
         }
 
         String exiledNames = exiledCards.stream().map(Card::getName).collect(Collectors.joining(", "));
-        gameBroadcastService.logAndBroadcast(gameData, GameLog.text(playerName + " exiles " + exiledNames + " (" + sourceName + ")."));
+        gameLogService.append(gameData, GameLog.text(playerName + " exiles " + exiledNames + " (" + sourceName + ")."));
 
         UUID opponentId = gameData.orderedPlayerIds.stream()
                 .filter(id -> !id.equals(controllerId))

@@ -7,7 +7,7 @@ import com.github.laxika.magicalvibes.model.GameLog;
 import com.github.laxika.magicalvibes.model.StackEntry;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
 import com.github.laxika.magicalvibes.model.effect.PutCreatureFromHandThenSacrificeUnlessPayReducedEffect;
-import com.github.laxika.magicalvibes.service.GameBroadcastService;
+import com.github.laxika.magicalvibes.service.GameLogService;
 import com.github.laxika.magicalvibes.service.input.PlayerInputService;
 import java.util.ArrayList;
 import java.util.List;
@@ -26,7 +26,7 @@ import org.springframework.stereotype.Component;
 @RequiredArgsConstructor
 public class PutCreatureFromHandThenSacrificeUnlessPayReducedEffectHandler implements NormalEffectHandlerBean {
 
-    private final GameBroadcastService gameBroadcastService;
+    private final GameLogService gameLogService;
     private final PlayerInputService playerInputService;
 
     @Override
@@ -51,7 +51,7 @@ public class PutCreatureFromHandThenSacrificeUnlessPayReducedEffectHandler imple
 
         if (creatureIndices.isEmpty()) {
             String playerName = gameData.playerIdToName.get(playerId);
-            gameBroadcastService.logAndBroadcast(gameData, GameLog.text(playerName + " has no creature cards in hand."));
+            gameLogService.append(gameData, GameLog.text(playerName + " has no creature cards in hand."));
             log.info("Game {} - {} has no creatures in hand for {}", gameData.id, playerName, entry.getCard().getName());
             return;
         }

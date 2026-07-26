@@ -6,7 +6,7 @@ import com.github.laxika.magicalvibes.model.GameData;
 import com.github.laxika.magicalvibes.model.StackEntry;
 import com.github.laxika.magicalvibes.model.StackEntryType;
 import com.github.laxika.magicalvibes.model.effect.ExileTopCardsRepeatOnDuplicateEffect;
-import com.github.laxika.magicalvibes.service.GameBroadcastService;
+import com.github.laxika.magicalvibes.service.GameLogService;
 import com.github.laxika.magicalvibes.service.graveyard.GraveyardService;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
@@ -30,7 +30,7 @@ class ExileTopCardsRepeatOnDuplicateEffectHandlerTest {
     @Mock
     private GraveyardService graveyardService;
     @Mock
-    private GameBroadcastService gameBroadcastService;
+    private GameLogService gameLogService;
     @Mock
     private PermanentControlSupport permanentControlSupport;
     private GameData gd;
@@ -67,7 +67,7 @@ player1Id = UUID.randomUUID();
         gd.playerDecks.put(player2Id, Collections.synchronizedList(new ArrayList<>()));
         gd.activePlayerId = player1Id;
         exileTopCardsRepeatOnDuplicateEffectHandler =
-                new ExileTopCardsRepeatOnDuplicateEffectHandler(gameBroadcastService);
+                new ExileTopCardsRepeatOnDuplicateEffectHandler(gameLogService);
 
     }
 
@@ -110,11 +110,11 @@ player1Id = UUID.randomUUID();
 
                 exileTopCardsRepeatOnDuplicateEffectHandler.resolve(gd, entry, effect);
 
-                // First round exiles "Same", "Same" (duplicate â†’ repeat)
-                // Second round exiles "Unique1", "Unique2" (no duplicate â†’ stop)
+                // First round exiles "Same", "Same" (duplicate A?†’ repeat)
+                // Second round exiles "Unique1", "Unique2" (no duplicate A?†’ stop)
                 assertThat(gd.getPlayerExiledCards(player2Id)).hasSize(4);
                 assertThat(gd.playerDecks.get(player2Id)).isEmpty();
-                verify(gameBroadcastService).logAndBroadcast(eq(gd), argThat((GameLogEntry logEntry) ->
+                verify(gameLogService).append(eq(gd), argThat((GameLogEntry logEntry) ->
                         logEntry.plainText().contains("share the same name")));
             }
 
@@ -128,7 +128,7 @@ player1Id = UUID.randomUUID();
                 exileTopCardsRepeatOnDuplicateEffectHandler.resolve(gd, entry, effect);
 
                 assertThat(gd.getPlayerExiledCards(player2Id)).isEmpty();
-                verify(gameBroadcastService).logAndBroadcast(eq(gd), argThat((GameLogEntry logEntry) ->
+                verify(gameLogService).append(eq(gd), argThat((GameLogEntry logEntry) ->
                         logEntry.plainText().contains("library is empty")));
             }
 }

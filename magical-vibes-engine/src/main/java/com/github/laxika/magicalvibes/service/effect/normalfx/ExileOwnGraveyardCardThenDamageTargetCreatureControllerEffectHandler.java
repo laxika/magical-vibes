@@ -7,7 +7,7 @@ import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.StackEntry;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
 import com.github.laxika.magicalvibes.model.effect.ExileOwnGraveyardCardThenDamageTargetCreatureControllerEffect;
-import com.github.laxika.magicalvibes.service.GameBroadcastService;
+import com.github.laxika.magicalvibes.service.GameLogService;
 import com.github.laxika.magicalvibes.service.GameOutcomeService;
 import com.github.laxika.magicalvibes.service.battlefield.GameQueryService;
 import com.github.laxika.magicalvibes.service.exile.ExileService;
@@ -28,7 +28,7 @@ public class ExileOwnGraveyardCardThenDamageTargetCreatureControllerEffectHandle
     private final GraveyardService graveyardService;
     private final GraveyardReturnSupport graveyardReturnSupport;
     private final GameQueryService gameQueryService;
-    private final GameBroadcastService gameBroadcastService;
+    private final GameLogService gameLogService;
     private final GameOutcomeService gameOutcomeService;
 
     @Override
@@ -54,7 +54,7 @@ public class ExileOwnGraveyardCardThenDamageTargetCreatureControllerEffectHandle
 
         // "If you do" — with no card to exile, the exile can't happen, so no damage.
         if (candidates.isEmpty()) {
-            gameBroadcastService.logAndBroadcast(gameData, GameLog.text(playerName + " has no cards in graveyard to exile (" + sourceName + ")."));
+            gameLogService.append(gameData, GameLog.text(playerName + " has no cards in graveyard to exile (" + sourceName + ")."));
             return;
         }
 
@@ -65,7 +65,7 @@ public class ExileOwnGraveyardCardThenDamageTargetCreatureControllerEffectHandle
         if (target != null) {
             UUID targetControllerId = gameQueryService.findPermanentController(gameData, target.getId());
             if (gameQueryService.isDamageFromSourcePrevented(gameData, entry.getCard().getColor())) {
-                gameBroadcastService.logAndBroadcast(gameData, GameLog.text(sourceName + "'s damage to " + gameData.playerIdToName.get(targetControllerId) + " is prevented."));
+                gameLogService.append(gameData, GameLog.text(sourceName + "'s damage to " + gameData.playerIdToName.get(targetControllerId) + " is prevented."));
             } else {
                 int rawDamage = gameQueryService.applyDamageMultiplier(gameData, e.damage(), entry);
                 damageSupport.dealDamageToPlayer(gameData, entry, targetControllerId, rawDamage);
@@ -80,7 +80,7 @@ public class ExileOwnGraveyardCardThenDamageTargetCreatureControllerEffectHandle
             graveyard.remove(card);
             graveyardService.notifyCardsLeftGraveyard(gameData, controllerId);
             exileService.exileCard(gameData, controllerId, card);
-            gameBroadcastService.logAndBroadcast(gameData, GameLog.builder().text(playerName + " exiles ").card(card).text(" from their graveyard (" + sourceName + ").").build());
+            gameLogService.append(gameData, GameLog.builder().text(playerName + " exiles ").card(card).text(" from their graveyard (" + sourceName + ").").build());
         } else {
             graveyardReturnSupport.beginGraveyardExileChoice(gameData, controllerId, 1, sourceCard);
         }

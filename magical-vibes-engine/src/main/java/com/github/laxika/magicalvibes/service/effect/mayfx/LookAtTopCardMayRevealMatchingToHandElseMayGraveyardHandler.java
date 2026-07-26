@@ -8,7 +8,7 @@ import com.github.laxika.magicalvibes.model.Player;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
 import com.github.laxika.magicalvibes.model.effect.LookAtTopCardMayRevealMatchingToHandElseMayGraveyardEffect;
 import com.github.laxika.magicalvibes.model.effect.LookAtTopCardMayRevealMatchingToHandElseMayGraveyardEffect.Stage;
-import com.github.laxika.magicalvibes.service.GameBroadcastService;
+import com.github.laxika.magicalvibes.service.GameLogService;
 import com.github.laxika.magicalvibes.service.input.InputCompletionService;
 import java.util.List;
 import java.util.UUID;
@@ -26,7 +26,7 @@ import org.springframework.stereotype.Component;
 public class LookAtTopCardMayRevealMatchingToHandElseMayGraveyardHandler
         implements MayEffectHandlerBean {
 
-    private final GameBroadcastService gameBroadcastService;
+    private final GameLogService gameLogService;
     private final InputCompletionService inputCompletionService;
 
     @Override
@@ -51,7 +51,7 @@ public class LookAtTopCardMayRevealMatchingToHandElseMayGraveyardHandler
         if (effect.stage() == Stage.MAY_HAND) {
             if (accepted && deck != null && !deck.isEmpty()) {
                 Card topCard = deck.removeFirst();
-                gameBroadcastService.logAndBroadcast(gameData, GameLog.textCardText(
+                gameLogService.append(gameData, GameLog.textCardText(
                         player.getUsername() + " reveals ", topCard, " and puts it into their hand."));
                 gameData.addCardToHand(controllerId, topCard);
                 log.info("Game {} - {} reveals {} to hand (Archghoul-style)",
@@ -81,7 +81,7 @@ public class LookAtTopCardMayRevealMatchingToHandElseMayGraveyardHandler
             if (accepted && deck != null && !deck.isEmpty()) {
                 Card topCard = deck.removeFirst();
                 gameData.playerGraveyards.get(controllerId).add(topCard);
-                gameBroadcastService.logAndBroadcast(gameData, GameLog.builder()
+                gameLogService.append(gameData, GameLog.builder()
                         .text(player.getUsername() + " puts ")
                         .card(topCard)
                         .text(" into their graveyard.")
@@ -89,7 +89,7 @@ public class LookAtTopCardMayRevealMatchingToHandElseMayGraveyardHandler
                 log.info("Game {} - {} puts {} into graveyard (Archghoul-style)",
                         gameData.id, player.getUsername(), topCard.getName());
             } else {
-                gameBroadcastService.logAndBroadcast(gameData, GameLog.text(
+                gameLogService.append(gameData, GameLog.text(
                         player.getUsername() + " leaves the card on top of their library."));
                 log.info("Game {} - {} leaves top card on library (Archghoul-style)",
                         gameData.id, player.getUsername());

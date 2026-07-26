@@ -33,7 +33,7 @@ import static org.assertj.core.api.Assertions.fail;
 /**
  * Infinite soak test that pits two Hard AI players against each other with randomly
  * built 2-color decks. Detects game-engine deadlocks and stuck states by monitoring
- * the game state fingerprint â€” if the same fingerprint is observed {@value #MAX_SAME_STATE_COUNT}
+ * the game state fingerprint A?€�t if the same fingerprint is observed {@value #MAX_SAME_STATE_COUNT}
  * consecutive times the test fails, pointing at the stuck state for debugging.
  *
  * <p>Disabled by default; enable manually to run.</p>
@@ -97,29 +97,28 @@ class AiVsAiStressTest {
         assignDeck(gd, player1.getId(), deck1);
         assignDeck(gd, player2.getId(), deck2);
 
-        // 4. Replace the harness's FakeConnections with AI connections
+        // 4. Remove human transport connections; AI schedulers observe canonical facts directly.
         sessionManager.unregisterSession(harness.getConn1().getId());
         sessionManager.unregisterSession(harness.getConn2().getId());
 
 
         HardAiDecisionEngine engine1 = new HardAiDecisionEngine(
                 gd.id, player1, gameRegistry, gameService, gqs, harness.getCombatAttackService(),
-                harness.getGameBroadcastService(), harness.getCastingCostService(), harness.getCastingPermissionService(), harness.getTargetValidationService(), harness.getTargetLegalityService());
+                harness.getGameActionAvailabilityService(), harness.getCastingCostService(), harness.getCastingPermissionService(), harness.getTargetValidationService(), harness.getTargetLegalityService());
         HardAiDecisionEngine engine2 = new HardAiDecisionEngine(
                 gd.id, player2, gameRegistry, gameService, gqs, harness.getCombatAttackService(),
-                harness.getGameBroadcastService(), harness.getCastingCostService(), harness.getCastingPermissionService(), harness.getTargetValidationService(), harness.getTargetLegalityService());
+                harness.getGameActionAvailabilityService(), harness.getCastingCostService(), harness.getCastingPermissionService(), harness.getTargetValidationService(), harness.getTargetLegalityService());
 
-        AiConnection aiConn1 = new AiConnection("ai-stress-1", engine1, AI_DECISION_DELAY_MS);
-        AiConnection aiConn2 = new AiConnection("ai-stress-2", engine2, AI_DECISION_DELAY_MS);
-        engine1.setSelfConnection(aiConn1);
-        engine2.setSelfConnection(aiConn2);
+        AiDecisionScheduler aiConn1 = new AiDecisionScheduler("ai-stress-1", engine1, AI_DECISION_DELAY_MS);
+        AiDecisionScheduler aiConn2 = new AiDecisionScheduler("ai-stress-2", engine2, AI_DECISION_DELAY_MS);
 
-        sessionManager.registerPlayer(aiConn1, player1.getId(), "AI Player 1");
-        sessionManager.registerPlayer(aiConn2, player2.getId(), "AI Player 2");
-        sessionManager.setInGame("ai-stress-1");
-        sessionManager.setInGame("ai-stress-2");
+        gd.aiPlayerIds.addAll(List.of(player1.getId(), player2.getId()));
+        AiDecisionEventSubscriber aiEvents = new AiDecisionEventSubscriber();
+        aiEvents.register(gd.id, player1.getId(), aiConn1);
+        aiEvents.register(gd.id, player2.getId(), aiConn2);
+        AutoCloseable eventSubscription = harness.subscribeToGameEvents(aiEvents);
 
-        // 5. Both AIs keep their opening hand â€” transitions the game to RUNNING
+        // 5. Both AIs keep their opening hand A?€�t transitions the game to RUNNING
         harness.getGameService().keepHand(gd, player1);
         harness.getGameService().keepHand(gd, player2);
 
@@ -141,7 +140,7 @@ class AiVsAiStressTest {
                 sameCount++;
                 if (sameCount >= MAX_SAME_STATE_COUNT) {
                     dumpGameState(gameNumber, gd, player1, player2);
-                    fail("Game #" + gameNumber + " stuck â€” same state observed "
+                    fail("Game #" + gameNumber + " stuck A?€�t same state observed "
                             + MAX_SAME_STATE_COUNT + " consecutive times:\n" + fingerprint);
                 }
             } else {
@@ -153,6 +152,7 @@ class AiVsAiStressTest {
         // 7. Clean up executor threads
         aiConn1.close();
         aiConn2.close();
+        eventSubscription.close();
     }
 
     // ------------------------------------------------------------------
@@ -236,7 +236,7 @@ class AiVsAiStressTest {
 
     private void dumpGameState(int gameNumber, GameData gd, Player p1, Player p2) {
         synchronized (gd) {
-            System.err.println("=== STUCK GAME STATE â€” Game #" + gameNumber + " ===");
+            System.err.println("=== STUCK GAME STATE A?€�t Game #" + gameNumber + " ===");
             System.err.println("Turn:            " + gd.turnNumber);
             System.err.println("Step:            " + gd.currentStep);
             System.err.println("Active player:   " + gd.activePlayerId);
@@ -281,7 +281,7 @@ class AiVsAiStressTest {
             return;
         }
 
-        // Basic lands â€” using Scars of Mirrodin printings (confirmed present in all 5 colors)
+        // Basic lands A?€�t using Scars of Mirrodin printings (confirmed present in all 5 colors)
         BASIC_LAND_PRINTINGS.put(CardColor.WHITE, CardSet.SET_SOM.findByCollectorNumber("230"));
         BASIC_LAND_PRINTINGS.put(CardColor.BLUE, CardSet.SET_SOM.findByCollectorNumber("234"));
         BASIC_LAND_PRINTINGS.put(CardColor.BLACK, CardSet.SET_SOM.findByCollectorNumber("238"));

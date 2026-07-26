@@ -6,7 +6,7 @@ import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.StackEntry;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
 import com.github.laxika.magicalvibes.model.effect.SacrificeTargetCreatureThenCreateTokensEqualToPowerEffect;
-import com.github.laxika.magicalvibes.service.GameBroadcastService;
+import com.github.laxika.magicalvibes.service.GameLogService;
 import com.github.laxika.magicalvibes.service.battlefield.GameQueryService;
 import com.github.laxika.magicalvibes.service.battlefield.PermanentRemovalService;
 import java.util.UUID;
@@ -28,7 +28,7 @@ import org.springframework.stereotype.Component;
 public class SacrificeTargetCreatureThenCreateTokensEqualToPowerEffectHandler implements NormalEffectHandlerBean {
 
     private final GameQueryService gameQueryService;
-    private final GameBroadcastService gameBroadcastService;
+    private final GameLogService gameLogService;
     private final PermanentRemovalService permanentRemovalService;
     private final PermanentControlSupport permanentControlSupport;
 
@@ -54,7 +54,7 @@ public class SacrificeTargetCreatureThenCreateTokensEqualToPowerEffectHandler im
         permanentRemovalService.removePermanentToGraveyard(gameData, target);
 
         String playerName = gameData.playerIdToName.get(controllerId);
-        gameBroadcastService.logAndBroadcast(gameData, GameLog.textCardText(playerName + " sacrifices " , target.getCard(), "."));
+        gameLogService.append(gameData, GameLog.textCardText(playerName + " sacrifices " , target.getCard(), "."));
         log.info("Game {} - {} sacrifices {} for {}", gameData.id, playerName,
                 target.getCard().getName(), entry.getCard().getName());
 

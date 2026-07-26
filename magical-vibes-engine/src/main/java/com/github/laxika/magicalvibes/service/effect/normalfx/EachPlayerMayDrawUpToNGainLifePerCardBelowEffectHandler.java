@@ -6,7 +6,7 @@ import com.github.laxika.magicalvibes.model.PendingInteraction;
 import com.github.laxika.magicalvibes.model.StackEntry;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
 import com.github.laxika.magicalvibes.model.effect.EachPlayerMayDrawUpToNGainLifePerCardBelowEffect;
-import com.github.laxika.magicalvibes.service.GameBroadcastService;
+import com.github.laxika.magicalvibes.service.GameLogService;
 import com.github.laxika.magicalvibes.service.interaction.InteractionHandlerRegistry;
 import java.util.UUID;
 import lombok.RequiredArgsConstructor;
@@ -26,7 +26,7 @@ import org.springframework.stereotype.Component;
 @RequiredArgsConstructor
 public class EachPlayerMayDrawUpToNGainLifePerCardBelowEffectHandler implements NormalEffectHandlerBean {
 
-    private final GameBroadcastService gameBroadcastService;
+    private final GameLogService gameLogService;
     private final InteractionHandlerRegistry interactionHandlerRegistry;
     private final PlayerInteractionSupport playerInteractionSupport;
     private final LifeSupport lifeSupport;
@@ -81,13 +81,13 @@ public class EachPlayerMayDrawUpToNGainLifePerCardBelowEffectHandler implements 
         String playerName = gameData.playerIdToName.get(playerId);
         if (chosen > 0) {
             playerInteractionSupport.applyDrawCards(gameData, playerId, chosen);
-            gameBroadcastService.logAndBroadcast(gameData, GameLog.text(playerName + " draws " + chosen + " card" + (chosen != 1 ? "s" : "") + "."));
+            gameLogService.append(gameData, GameLog.text(playerName + " draws " + chosen + " card" + (chosen != 1 ? "s" : "") + "."));
         }
         int lifeGained = e.lifePerCardBelow() * (e.maxDraw() - chosen);
         if (lifeGained > 0) {
             lifeSupport.applyGainLife(gameData, playerId, lifeGained, null,
                     entry.getCard(), entry.getEntryType());
-            gameBroadcastService.logAndBroadcast(gameData, GameLog.text(playerName + " gains " + lifeGained + " life."));
+            gameLogService.append(gameData, GameLog.text(playerName + " gains " + lifeGained + " life."));
         }
     }
 }

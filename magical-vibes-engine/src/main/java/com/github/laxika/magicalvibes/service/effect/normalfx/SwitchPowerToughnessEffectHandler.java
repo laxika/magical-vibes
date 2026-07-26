@@ -8,7 +8,7 @@ import com.github.laxika.magicalvibes.model.effect.CardEffect;
 import com.github.laxika.magicalvibes.model.effect.EffectDuration;
 import com.github.laxika.magicalvibes.model.effect.SwitchPowerToughnessEffect;
 import com.github.laxika.magicalvibes.model.layer.FloatingContinuousEffect;
-import com.github.laxika.magicalvibes.service.GameBroadcastService;
+import com.github.laxika.magicalvibes.service.GameLogService;
 import com.github.laxika.magicalvibes.service.battlefield.GameQueryService;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -22,7 +22,7 @@ import java.util.UUID;
 public class SwitchPowerToughnessEffectHandler implements NormalEffectHandlerBean {
 
     private final GameQueryService gameQueryService;
-    private final GameBroadcastService gameBroadcastService;
+    private final GameLogService gameLogService;
 
     @Override
     public Class<? extends CardEffect> handledEffect() {
@@ -45,7 +45,7 @@ public class SwitchPowerToughnessEffectHandler implements NormalEffectHandlerBea
                 entry.getCard().getName(), entry.getSourcePermanentId(), entry.getControllerId(),
                 switchEffect, target.getId(), null, null, EffectDuration.UNTIL_END_OF_TURN, 0));
 
-        gameBroadcastService.logAndBroadcast(gameData, GameLog.cardThen(target.getCard(), "'s power and toughness are switched until end of turn."));
+        gameLogService.append(gameData, GameLog.cardThen(target.getCard(), "'s power and toughness are switched until end of turn."));
 
         log.info("Game {} - {}'s power and toughness switched", gameData.id, target.getCard().getName());
     }

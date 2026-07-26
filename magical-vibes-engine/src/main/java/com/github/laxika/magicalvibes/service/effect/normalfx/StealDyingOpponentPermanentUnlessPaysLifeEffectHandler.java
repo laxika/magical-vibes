@@ -9,7 +9,7 @@ import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.StackEntry;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
 import com.github.laxika.magicalvibes.model.effect.StealDyingOpponentPermanentUnlessPaysLifeEffect;
-import com.github.laxika.magicalvibes.service.GameBroadcastService;
+import com.github.laxika.magicalvibes.service.GameLogService;
 import com.github.laxika.magicalvibes.service.battlefield.BattlefieldEntryService;
 import com.github.laxika.magicalvibes.service.battlefield.GameQueryService;
 import com.github.laxika.magicalvibes.service.battlefield.PermanentRemovalService;
@@ -32,7 +32,7 @@ import org.springframework.stereotype.Component;
 public class StealDyingOpponentPermanentUnlessPaysLifeEffectHandler implements NormalEffectHandlerBean {
 
     private final GameQueryService gameQueryService;
-    private final GameBroadcastService gameBroadcastService;
+    private final GameLogService gameLogService;
     private final BattlefieldEntryService battlefieldEntryService;
     private final PermanentRemovalService permanentRemovalService;
     private final GraveyardReturnSupport graveyardReturnSupport;
@@ -74,7 +74,7 @@ public class StealDyingOpponentPermanentUnlessPaysLifeEffectHandler implements N
         UUID ownerId = gameQueryService.findGraveyardOwnerById(gameData, dyingCardId);
         Card card = gameQueryService.findCardInGraveyardById(gameData, dyingCardId);
         if (card == null || ownerId == null) {
-            gameBroadcastService.logAndBroadcast(gameData, GameLog.cardThen(sourceCard, "'s ability fizzles (the permanent is no longer in a graveyard)."));
+            gameLogService.append(gameData, GameLog.cardThen(sourceCard, "'s ability fizzles (the permanent is no longer in a graveyard)."));
             return;
         }
 
@@ -85,7 +85,7 @@ public class StealDyingOpponentPermanentUnlessPaysLifeEffectHandler implements N
         graveyardReturnSupport.trackStolenCreature(gameData, permanent.getId(), controllerId, ownerId);
 
         String playerName = gameData.playerIdToName.get(controllerId);
-        gameBroadcastService.logAndBroadcast(gameData, GameLog.textCardText(playerName + " puts ", card, " onto the battlefield under their control."));
+        gameLogService.append(gameData, GameLog.textCardText(playerName + " puts ", card, " onto the battlefield under their control."));
         log.info("Game {} - {} steals {} via {}", gameData.id, playerName, card.getName(), sourceCard.getName());
 
         graveyardReturnSupport.handleCreatureEtbAndLegendRule(gameData, controllerId, permanent, card);

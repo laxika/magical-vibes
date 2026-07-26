@@ -7,7 +7,7 @@ import com.github.laxika.magicalvibes.model.StackEntry;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
 import com.github.laxika.magicalvibes.model.effect.ReturnTargetAndAttachedMatchingToHandEffect;
 import com.github.laxika.magicalvibes.model.filter.FilterContext;
-import com.github.laxika.magicalvibes.service.GameBroadcastService;
+import com.github.laxika.magicalvibes.service.GameLogService;
 import com.github.laxika.magicalvibes.service.battlefield.GameQueryService;
 import com.github.laxika.magicalvibes.service.battlefield.PermanentRemovalService;
 import com.github.laxika.magicalvibes.service.filter.PredicateEvaluationService;
@@ -30,7 +30,7 @@ public class ReturnTargetAndAttachedMatchingToHandEffectHandler implements Norma
 
     private final GameQueryService gameQueryService;
     private final PermanentRemovalService permanentRemovalService;
-    private final GameBroadcastService gameBroadcastService;
+    private final GameLogService gameLogService;
     private final PredicateEvaluationService predicateEvaluationService;
 
     @Override
@@ -70,7 +70,7 @@ public class ReturnTargetAndAttachedMatchingToHandEffectHandler implements Norma
 
     private void bounceToHand(GameData gameData, StackEntry entry, Permanent permanent) {
         if (permanentRemovalService.removePermanentToHand(gameData, permanent)) {
-            gameBroadcastService.logAndBroadcast(gameData,
+            gameLogService.append(gameData,
                     GameLog.cardThen(permanent.getCard(), " is returned to its owner's hand."));
             log.info("Game {} - {} returned to owner's hand by {}",
                     gameData.id, permanent.getCard().getName(), entry.getCard().getName());

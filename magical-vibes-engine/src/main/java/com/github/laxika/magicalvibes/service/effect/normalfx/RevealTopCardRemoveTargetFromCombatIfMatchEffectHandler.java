@@ -7,7 +7,7 @@ import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.StackEntry;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
 import com.github.laxika.magicalvibes.model.effect.RevealTopCardRemoveTargetFromCombatIfMatchEffect;
-import com.github.laxika.magicalvibes.service.GameBroadcastService;
+import com.github.laxika.magicalvibes.service.GameLogService;
 import com.github.laxika.magicalvibes.service.battlefield.GameQueryService;
 import com.github.laxika.magicalvibes.service.filter.PredicateEvaluationService;
 import java.util.*;
@@ -23,7 +23,7 @@ public class RevealTopCardRemoveTargetFromCombatIfMatchEffectHandler implements 
 
     private final GameQueryService gameQueryService;
     private final PredicateEvaluationService predicateEvaluationService;
-    private final GameBroadcastService gameBroadcastService;
+    private final GameLogService gameLogService;
 
     @Override
     public Class<? extends CardEffect> handledEffect() {
@@ -41,25 +41,25 @@ public class RevealTopCardRemoveTargetFromCombatIfMatchEffectHandler implements 
 
         if (deck == null || deck.isEmpty()) {
             String logEntry = playerName + "'s library is empty (" + sourceName + ").";
-            gameBroadcastService.logAndBroadcast(gameData, GameLog.text(logEntry));
+            gameLogService.append(gameData, GameLog.text(logEntry));
             return;
         }
 
         Card topCard = deck.removeFirst();
-        gameBroadcastService.logAndBroadcast(gameData, GameLog.builder().text(playerName + " reveals ").card(topCard).text(" from the top of their library (" + sourceName + ").").build());
+        gameLogService.append(gameData, GameLog.builder().text(playerName + " reveals ").card(topCard).text(" from the top of their library (" + sourceName + ").").build());
 
         if (predicateEvaluationService.matchesCardPredicate(topCard, e.matchPredicate(), null, gameData, controllerId)) {
             Permanent attacker = gameQueryService.findPermanentById(gameData, entry.getTargetId());
             if (attacker != null && attacker.isAttacking()) {
                 attacker.setAttacking(false);
                 attacker.setAttackTarget(null);
-                gameBroadcastService.logAndBroadcast(gameData, GameLog.textCardText(sourceName + " removes ", attacker.getCard(), " from combat."));
+                gameLogService.append(gameData, GameLog.textCardText(sourceName + " removes ", attacker.getCard(), " from combat."));
                 log.info("Game {} - {} removes {} from combat", gameData.id, sourceName, attacker.getCard().getName());
             }
         }
 
         deck.add(topCard);
-        gameBroadcastService.logAndBroadcast(gameData, GameLog.textCardText(playerName + " puts ", topCard, " on the bottom of their library."));
+        gameLogService.append(gameData, GameLog.textCardText(playerName + " puts ", topCard, " on the bottom of their library."));
         log.info("Game {} - {} bottoms {} ({})", gameData.id, playerName, topCard.getName(), sourceName);
     
     }

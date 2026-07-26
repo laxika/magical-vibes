@@ -6,11 +6,8 @@ import com.github.laxika.magicalvibes.model.event.GameEventAudience;
 import com.github.laxika.magicalvibes.model.event.GameEventBatch;
 import com.github.laxika.magicalvibes.model.event.GameEventEnvelope;
 import com.github.laxika.magicalvibes.model.event.GameEventFact;
-import com.github.laxika.magicalvibes.networking.Connection;
-import com.github.laxika.magicalvibes.networking.SessionManager;
 import com.github.laxika.magicalvibes.service.DraftRegistry;
 import com.github.laxika.magicalvibes.service.GameRegistry;
-import com.github.laxika.magicalvibes.service.GameSessionTransportAdapter;
 import com.github.laxika.magicalvibes.service.GameTimeoutService;
 import com.github.laxika.magicalvibes.service.TournamentResultHandler;
 import org.junit.jupiter.api.Test;
@@ -26,7 +23,7 @@ import static org.mockito.Mockito.when;
 class GameEndLifecycleSubscriberTest {
 
     @Test
-    void gameEndFactClosesAndUnregistersAiThenCleansRuntimeGame() throws Exception {
+    void gameEndFactCleansRuntimeGameAfterAiSubscriberOwnsSchedulerClose() {
         UUID humanId = UUID.randomUUID();
         UUID aiId = UUID.randomUUID();
         UUID winnerId = humanId;
@@ -37,11 +34,6 @@ class GameEndLifecycleSubscriberTest {
         GameRegistry games = mock(GameRegistry.class);
         when(games.get(gameData.id)).thenReturn(gameData);
         DraftRegistry drafts = mock(DraftRegistry.class);
-        SessionManager sessions = mock(SessionManager.class);
-        Connection ai = mock(Connection.class);
-        when(ai.getId()).thenReturn("ai-" + gameData.id);
-        when(sessions.getConnectionByUserId(aiId)).thenReturn(ai);
-
         GameTimeoutService timeouts = mock(GameTimeoutService.class);
         @SuppressWarnings("unchecked")
         ObjectProvider<GameTimeoutService> timeoutProvider = mock(ObjectProvider.class);
@@ -50,13 +42,10 @@ class GameEndLifecycleSubscriberTest {
         ObjectProvider<TournamentResultHandler> tournamentProvider = mock(ObjectProvider.class);
 
         GameEndLifecycleSubscriber subscriber = new GameEndLifecycleSubscriber(
-                games, drafts, tournamentProvider, timeoutProvider,
-                new GameSessionTransportAdapter(sessions));
+                games, drafts, tournamentProvider, timeoutProvider);
         subscriber.onGameEvents(batch(gameData,
                 new GameEventFact.GameEnded(GameEventFact.GameResult.WIN, winnerId)));
 
-        verify(ai).close();
-        verify(sessions).unregisterSession(ai.getId());
         verify(timeouts).onGameFinished(gameData);
         verify(games).remove(gameData.id);
     }
@@ -82,8 +71,7 @@ class GameEndLifecycleSubscriberTest {
         ObjectProvider<GameTimeoutService> timeoutProvider = mock(ObjectProvider.class);
 
         GameEndLifecycleSubscriber subscriber = new GameEndLifecycleSubscriber(
-                games, drafts, tournamentProvider, timeoutProvider,
-                new GameSessionTransportAdapter(mock(SessionManager.class)));
+                games, drafts, tournamentProvider, timeoutProvider);
         subscriber.onGameEvents(batch(gameData,
                 new GameEventFact.GameEnded(GameEventFact.GameResult.WIN, winnerId)));
 

@@ -37,6 +37,7 @@ import java.util.Collection;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
 import java.util.UUID;
 
 import static org.assertj.core.api.Assertions.assertThat;
@@ -101,7 +102,7 @@ class GameEventProjectionSubscriberTest {
         projected.put(player1Id, player1Message);
         projected.put(player2Id, player2Message);
 
-        when(gameViewProjectionFactory.createGameStateMessages(any(), any())).thenAnswer(invocation -> {
+        when(gameViewProjectionFactory.createGameStateMessages(any(), any(), any())).thenAnswer(invocation -> {
             assertThat(Thread.holdsLock(gameData)).isFalse();
             assertThat(gameData.turnNumber).isEqualTo(17);
             return projected;
@@ -121,6 +122,28 @@ class GameEventProjectionSubscriberTest {
         assertThat(sessions.deliveries).containsExactly(
                 new Delivery(player1Id, player1Message),
                 new Delivery(player2Id, player2Message));
+    }
+
+    @Test
+    void publicStateProjectionBuildsViewsOnlyForHumanRecipients() {
+        gameData.aiPlayerIds.add(player2Id);
+        GameStateMessage player1Message = stateMessage(player1Id, List.of(0));
+        when(gameViewProjectionFactory.createGameStateMessages(
+                gameData, List.of(), Set.of(player1Id)))
+                .thenReturn(Map.of(player1Id, player1Message));
+
+        GameMutationCoordinator coordinator = coordinator();
+        coordinator.mutate(gameData, UUID.randomUUID(), () ->
+                coordinator.emit(
+                        gameData,
+                        new GameEventFact.StateInvalidated(
+                                GameEventFact.StateSection.PRIVATE_PLAYER_VIEW),
+                        GameEventAudience.allPlayers()));
+
+        assertThat(sessions.deliveries)
+                .containsExactly(new Delivery(player1Id, player1Message));
+        verify(gameViewProjectionFactory).createGameStateMessages(
+                gameData, List.of(), Set.of(player1Id));
     }
 
     @Test
@@ -391,10 +414,10 @@ class GameEventProjectionSubscriberTest {
         GameStateMessage withLogs = stateMessage(player2Id, List.of(1));
         GameStateMessage withoutLogs = stateMessage(player2Id, List.of(2));
         when(gameViewProjectionFactory.createGameStateMessages(
-                any(), argThat(entries -> entries != null && !entries.isEmpty())))
+                any(), argThat(entries -> entries != null && !entries.isEmpty()), any()))
                 .thenReturn(Map.of(player1Id, withLogs, player2Id, withLogs));
         when(gameViewProjectionFactory.createGameStateMessages(
-                any(), argThat(entries -> entries != null && entries.isEmpty())))
+                any(), argThat(entries -> entries != null && entries.isEmpty()), any()))
                 .thenReturn(Map.of(player1Id, withoutLogs, player2Id, withoutLogs));
 
         GameMutationCoordinator coordinator = coordinator();
@@ -423,16 +446,16 @@ class GameEventProjectionSubscriberTest {
                         .orElseThrow(),
                 withoutLogs);
         verify(gameViewProjectionFactory).createGameStateMessages(
-                gameData, List.of(logEntry));
+                gameData, List.of(logEntry), Set.of(player1Id, player2Id));
         verify(gameViewProjectionFactory).createGameStateMessages(
-                gameData, List.of());
+                gameData, List.of(), Set.of(player1Id, player2Id));
     }
 
     @Test
     void transportFailureForOnePlayerIsLoggedAndDoesNotBlockAnother() {
         GameStateMessage player1Message = stateMessage(player1Id, List.of(0));
         GameStateMessage player2Message = stateMessage(player2Id, List.of(1));
-        when(gameViewProjectionFactory.createGameStateMessages(any(), any()))
+        when(gameViewProjectionFactory.createGameStateMessages(any(), any(), any()))
                 .thenReturn(Map.of(player1Id, player1Message, player2Id, player2Message));
         sessions.failingPlayerId = player1Id;
 

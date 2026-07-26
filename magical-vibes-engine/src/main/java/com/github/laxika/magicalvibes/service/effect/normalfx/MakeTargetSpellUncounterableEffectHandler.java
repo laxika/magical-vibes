@@ -5,7 +5,7 @@ import com.github.laxika.magicalvibes.model.GameLog;
 import com.github.laxika.magicalvibes.model.StackEntry;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
 import com.github.laxika.magicalvibes.model.effect.MakeTargetSpellUncounterableEffect;
-import com.github.laxika.magicalvibes.service.GameBroadcastService;
+import com.github.laxika.magicalvibes.service.GameLogService;
 import com.github.laxika.magicalvibes.service.battlefield.GameQueryService;
 import java.util.UUID;
 import lombok.RequiredArgsConstructor;
@@ -16,7 +16,7 @@ import org.springframework.stereotype.Component;
 public class MakeTargetSpellUncounterableEffectHandler implements NormalEffectHandlerBean {
 
     private final GameQueryService gameQueryService;
-    private final GameBroadcastService gameBroadcastService;
+    private final GameLogService gameLogService;
 
     @Override
     public Class<? extends CardEffect> handledEffect() {
@@ -32,6 +32,6 @@ public class MakeTargetSpellUncounterableEffectHandler implements NormalEffectHa
         if (targetSpell == null) return;
 
         gameData.spellsMadeUncounterable.add(targetCardId);
-        gameBroadcastService.logAndBroadcast(gameData, GameLog.cardThen(targetSpell.getCard(), " can't be countered."));
+        gameLogService.append(gameData, GameLog.cardThen(targetSpell.getCard(), " can't be countered."));
     }
 }

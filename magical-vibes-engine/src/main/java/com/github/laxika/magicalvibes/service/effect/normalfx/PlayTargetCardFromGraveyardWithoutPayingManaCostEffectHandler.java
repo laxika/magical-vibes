@@ -7,7 +7,7 @@ import com.github.laxika.magicalvibes.model.PendingMayAbility;
 import com.github.laxika.magicalvibes.model.StackEntry;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
 import com.github.laxika.magicalvibes.model.effect.PlayTargetCardFromGraveyardWithoutPayingManaCostEffect;
-import com.github.laxika.magicalvibes.service.GameBroadcastService;
+import com.github.laxika.magicalvibes.service.GameLogService;
 import com.github.laxika.magicalvibes.service.battlefield.GameQueryService;
 import com.github.laxika.magicalvibes.service.filter.PredicateEvaluationService;
 import java.util.List;
@@ -21,7 +21,7 @@ import org.springframework.stereotype.Component;
 public class PlayTargetCardFromGraveyardWithoutPayingManaCostEffectHandler implements NormalEffectHandlerBean {
 
     private final GameQueryService gameQueryService;
-    private final GameBroadcastService gameBroadcastService;
+    private final GameLogService gameLogService;
     private final PredicateEvaluationService predicateEvaluationService;
 
     @Override
@@ -39,13 +39,13 @@ public class PlayTargetCardFromGraveyardWithoutPayingManaCostEffectHandler imple
             targetCardId = entry.getTargetCardIds().getFirst();
         }
         if (targetCardId == null) {
-            gameBroadcastService.logAndBroadcast(gameData, GameLog.text(entry.getDescription() + " — no target selected."));
+            gameLogService.append(gameData, GameLog.text(entry.getDescription() + " — no target selected."));
             return;
         }
 
         Card targetCard = gameQueryService.findCardInGraveyardById(gameData, targetCardId);
         if (targetCard == null) {
-            gameBroadcastService.logAndBroadcast(gameData, GameLog.text(entry.getDescription() + " fizzles (target no longer in graveyard)."));
+            gameLogService.append(gameData, GameLog.text(entry.getDescription() + " fizzles (target no longer in graveyard)."));
             return;
         }
 
@@ -53,7 +53,7 @@ public class PlayTargetCardFromGraveyardWithoutPayingManaCostEffectHandler imple
         UUID graveyardOwnerId = gameQueryService.findGraveyardOwnerById(gameData, targetCard.getId());
         if (graveyardOwnerId == null || !graveyardOwnerId.equals(controllerId)
                 || !predicateEvaluationService.matchesCardPredicate(targetCard, e.filter(), null)) {
-            gameBroadcastService.logAndBroadcast(gameData, GameLog.text(entry.getDescription() + " fizzles (illegal target)."));
+            gameLogService.append(gameData, GameLog.text(entry.getDescription() + " fizzles (illegal target)."));
             return;
         }
 

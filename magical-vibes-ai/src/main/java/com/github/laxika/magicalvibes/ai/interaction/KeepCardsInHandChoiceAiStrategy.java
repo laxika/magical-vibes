@@ -35,6 +35,6 @@ class KeepCardsInHandChoiceAiStrategy
                 .map(Card::getId)
                 .toList();
         ctx.gameActions().answerInteraction(
-                ctx.selfConnection(), new InteractionAnswer.CardsChosen(kept));
+                new InteractionAnswer.CardsChosen(kept));
     }
 }

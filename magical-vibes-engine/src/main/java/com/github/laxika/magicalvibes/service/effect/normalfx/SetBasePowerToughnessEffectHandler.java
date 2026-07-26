@@ -9,7 +9,7 @@ import com.github.laxika.magicalvibes.model.effect.EffectDuration;
 import com.github.laxika.magicalvibes.model.effect.GrantScope;
 import com.github.laxika.magicalvibes.model.effect.SetBasePowerToughnessEffect;
 import com.github.laxika.magicalvibes.model.layer.FloatingContinuousEffect;
-import com.github.laxika.magicalvibes.service.GameBroadcastService;
+import com.github.laxika.magicalvibes.service.GameLogService;
 import com.github.laxika.magicalvibes.service.battlefield.GameQueryService;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -23,7 +23,7 @@ import java.util.UUID;
 public class SetBasePowerToughnessEffectHandler implements NormalEffectHandlerBean {
 
     private final GameQueryService gameQueryService;
-    private final GameBroadcastService gameBroadcastService;
+    private final GameLogService gameLogService;
 
     @Override
     public Class<? extends CardEffect> handledEffect() {
@@ -54,7 +54,7 @@ public class SetBasePowerToughnessEffectHandler implements NormalEffectHandlerBe
                 e, target.getId(), null, null, EffectDuration.UNTIL_END_OF_TURN, 0));
 
         String logEntry = target.getCard().getName() + " has base power and toughness " + e.power() + "/" + e.toughness() + " until end of turn.";
-        gameBroadcastService.logAndBroadcast(gameData, GameLog.builder().card(target.getCard()).text(" has base power and toughness " + e.power() + "/" + e.toughness() + " until end of turn.").build());
+        gameLogService.append(gameData, GameLog.builder().card(target.getCard()).text(" has base power and toughness " + e.power() + "/" + e.toughness() + " until end of turn.").build());
 
         log.info("Game {} - {} base P/T set to {}/{}", gameData.id, target.getCard().getName(), e.power(), e.toughness());
     }

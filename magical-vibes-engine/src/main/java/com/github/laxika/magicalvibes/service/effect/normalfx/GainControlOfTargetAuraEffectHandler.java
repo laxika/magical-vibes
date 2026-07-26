@@ -9,7 +9,7 @@ import com.github.laxika.magicalvibes.model.filter.TargetFilter;
 import com.github.laxika.magicalvibes.model.filter.FilterContext;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
 import com.github.laxika.magicalvibes.model.effect.GainControlOfTargetAuraEffect;
-import com.github.laxika.magicalvibes.service.GameBroadcastService;
+import com.github.laxika.magicalvibes.service.GameLogService;
 import com.github.laxika.magicalvibes.service.battlefield.CreatureControlService;
 import com.github.laxika.magicalvibes.service.battlefield.GameQueryService;
 import com.github.laxika.magicalvibes.service.filter.PredicateEvaluationService;
@@ -29,7 +29,7 @@ public class GainControlOfTargetAuraEffectHandler implements NormalEffectHandler
     private final GameQueryService gameQueryService;
     private final CreatureControlService creatureControlService;
     private final PredicateEvaluationService predicateEvaluationService;
-    private final GameBroadcastService gameBroadcastService;
+    private final GameLogService gameLogService;
     private final PlayerInputService playerInputService;
 
     @Override
@@ -49,7 +49,7 @@ public class GainControlOfTargetAuraEffectHandler implements NormalEffectHandler
                     gameData.playerBattlefields.get(currentControllerId).remove(aura);
                     gameData.playerBattlefields.get(casterId).add(aura);
                     String casterName = gameData.playerIdToName.get(casterId);
-                    gameBroadcastService.logAndBroadcast(gameData, GameLog.textCardText(casterName + " gains control of " , aura.getCard(), "."));
+                    gameLogService.append(gameData, GameLog.textCardText(casterName + " gains control of " , aura.getCard(), "."));
                     log.info("Game {} - {} gains control of {}", gameData.id, casterName, aura.getCard().getName());
 
                     // A control Aura (e.g. In Bolas's Clutches) grants control to whoever controls
@@ -81,7 +81,7 @@ public class GainControlOfTargetAuraEffectHandler implements NormalEffectHandler
                     playerInputService.beginPermanentChoice(gameData, casterId, validTargetIds,
                             "Attach " + aura.getCard().getName() + " to another permanent it can enchant.");
                 } else {
-                    gameBroadcastService.logAndBroadcast(gameData, GameLog.cardThen(aura.getCard(), " stays attached to its current target (no other valid permanents)."));
+                    gameLogService.append(gameData, GameLog.cardThen(aura.getCard(), " stays attached to its current target (no other valid permanents)."));
                 }
     
     }

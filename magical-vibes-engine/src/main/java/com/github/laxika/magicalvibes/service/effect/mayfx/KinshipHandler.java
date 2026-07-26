@@ -10,7 +10,7 @@ import com.github.laxika.magicalvibes.model.StackEntry;
 import com.github.laxika.magicalvibes.model.StackEntryType;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
 import com.github.laxika.magicalvibes.model.effect.KinshipEffect;
-import com.github.laxika.magicalvibes.service.GameBroadcastService;
+import com.github.laxika.magicalvibes.service.GameLogService;
 import com.github.laxika.magicalvibes.service.battlefield.GameQueryService;
 import com.github.laxika.magicalvibes.service.effect.EffectResolutionService;
 import com.github.laxika.magicalvibes.service.input.InputCompletionService;
@@ -28,7 +28,7 @@ import org.springframework.stereotype.Component;
 @RequiredArgsConstructor
 public class KinshipHandler implements MayEffectHandlerBean {
 
-    private final GameBroadcastService gameBroadcastService;
+    private final GameLogService gameLogService;
     private final GameQueryService gameQueryService;
     private final EffectResolutionService effectResolutionService;
     private final InputCompletionService inputCompletionService;
@@ -48,7 +48,7 @@ public class KinshipHandler implements MayEffectHandlerBean {
             if (accepted) {
                 List<Card> deck = gameData.playerDecks.get(ability.controllerId());
                 if (deck != null && !deck.isEmpty()) {
-                    gameBroadcastService.logAndBroadcast(gameData, GameLog.textCardText(player.getUsername() + " reveals ", deck.getFirst(), " from the top of their library."));
+                    gameLogService.append(gameData, GameLog.textCardText(player.getUsername() + " reveals ", deck.getFirst(), " from the top of their library."));
                 }
                 Permanent self = ability.sourcePermanentId() != null
                         ? gameQueryService.findPermanentById(gameData, ability.sourcePermanentId()) : null;
@@ -60,7 +60,7 @@ public class KinshipHandler implements MayEffectHandlerBean {
                     effectResolutionService.resolveEffects(gameData, kinshipEntry);
                 }
             } else {
-                gameBroadcastService.logAndBroadcast(gameData, GameLog.text(player.getUsername() + " chooses not to reveal."));
+                gameLogService.append(gameData, GameLog.text(player.getUsername() + " chooses not to reveal."));
                 log.info("Game {} - {} declines to reveal top card ({})", gameData.id,
                         player.getUsername(), ability.sourceCard().getName());
             }

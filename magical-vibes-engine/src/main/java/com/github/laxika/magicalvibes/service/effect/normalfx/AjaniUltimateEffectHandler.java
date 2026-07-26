@@ -8,7 +8,7 @@ import com.github.laxika.magicalvibes.model.GameLog;
 import com.github.laxika.magicalvibes.model.StackEntry;
 import com.github.laxika.magicalvibes.model.effect.AjaniUltimateEffect;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
-import com.github.laxika.magicalvibes.service.GameBroadcastService;
+import com.github.laxika.magicalvibes.service.GameLogService;
 import com.github.laxika.magicalvibes.service.library.LibraryShuffleHelper;
 import java.util.*;
 import lombok.extern.slf4j.Slf4j;
@@ -21,7 +21,7 @@ import org.springframework.stereotype.Component;
 @RequiredArgsConstructor
 public class AjaniUltimateEffectHandler implements NormalEffectHandlerBean {
 
-    private final GameBroadcastService gameBroadcastService;
+    private final GameLogService gameLogService;
     private final com.github.laxika.magicalvibes.service.interaction.InteractionHandlerRegistry interactionHandlerRegistry;
 
     @Override
@@ -40,7 +40,7 @@ public class AjaniUltimateEffectHandler implements NormalEffectHandlerBean {
         int count = Math.min(lifeTotal, deck.size());
         if (count <= 0) {
             String logMsg = playerName + " looks at no cards (library is empty or life total is 0). Library is shuffled.";
-            gameBroadcastService.logAndBroadcast(gameData, GameLog.text(logMsg));
+            gameLogService.append(gameData, GameLog.text(logMsg));
             LibraryShuffleHelper.shuffleLibrary(gameData, controllerId);
             return;
         }
@@ -61,14 +61,14 @@ public class AjaniUltimateEffectHandler implements NormalEffectHandlerBean {
         }
 
         String logMsg = playerName + " looks at the top " + count + " cards of their library.";
-        gameBroadcastService.logAndBroadcast(gameData, GameLog.text(logMsg));
+        gameLogService.append(gameData, GameLog.text(logMsg));
 
         if (eligibleCards.isEmpty()) {
             // No eligible cards — put all back and shuffle
             deck.addAll(revealedCards);
             LibraryShuffleHelper.shuffleLibrary(gameData, controllerId);
             String shuffleLog = playerName + " finds no eligible cards. Library is shuffled.";
-            gameBroadcastService.logAndBroadcast(gameData, GameLog.text(shuffleLog));
+            gameLogService.append(gameData, GameLog.text(shuffleLog));
             return;
         }
 

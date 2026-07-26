@@ -11,7 +11,7 @@ import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
 import java.util.UUID;
-import com.github.laxika.magicalvibes.service.GameBroadcastService;
+import com.github.laxika.magicalvibes.service.GameLogService;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Component;
@@ -21,7 +21,7 @@ import org.springframework.stereotype.Component;
 @Slf4j
 public class HeadGamesEffectHandler implements NormalEffectHandlerBean {
 
-    private final GameBroadcastService gameBroadcastService;
+    private final GameLogService gameLogService;
     private final LibrarySearchSupport librarySearchSupport;
 
     @Override
@@ -49,7 +49,7 @@ public class HeadGamesEffectHandler implements NormalEffectHandlerBean {
             librarySearchSupport.putHandOnTopOfLibrary(gameData, targetHand, targetDeck, targetName);
             Collections.shuffle(targetDeck);
             String shuffleLog = targetName + "'s library is shuffled.";
-            gameBroadcastService.logAndBroadcast(gameData, GameLog.text(shuffleLog));
+            gameLogService.append(gameData, GameLog.text(shuffleLog));
             return;
         }
 
@@ -58,7 +58,7 @@ public class HeadGamesEffectHandler implements NormalEffectHandlerBean {
         // Step 1: Target opponent puts hand on top of library
         if (handSize == 0) {
             String logMsg = targetName + " has no cards in hand. " + targetName + "'s library is shuffled.";
-            gameBroadcastService.logAndBroadcast(gameData, GameLog.text(logMsg));
+            gameLogService.append(gameData, GameLog.text(logMsg));
             Collections.shuffle(targetDeck);
             return;
         }

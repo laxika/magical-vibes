@@ -5,7 +5,7 @@ import com.github.laxika.magicalvibes.model.GameLog;
 import com.github.laxika.magicalvibes.model.StackEntry;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
 import com.github.laxika.magicalvibes.model.effect.ExileUntilNonlandToHandRepeatIfHighMVEffect;
-import com.github.laxika.magicalvibes.service.GameBroadcastService;
+import com.github.laxika.magicalvibes.service.GameLogService;
 import com.github.laxika.magicalvibes.service.GameOutcomeService;
 import com.github.laxika.magicalvibes.service.battlefield.GameQueryService;
 import java.util.UUID;
@@ -23,7 +23,7 @@ public class ExileUntilNonlandToHandRepeatIfHighMVEffectHandler implements Norma
 
     private final DamageSupport damageSupport;
     private final GameQueryService gameQueryService;
-    private final GameBroadcastService gameBroadcastService;
+    private final GameLogService gameLogService;
     private final GameOutcomeService gameOutcomeService;
 
     @Override
@@ -47,7 +47,7 @@ public class ExileUntilNonlandToHandRepeatIfHighMVEffectHandler implements Norma
             repeat = false;
 
             if (deck.isEmpty()) {
-                gameBroadcastService.logAndBroadcast(gameData, GameLog.text(playerName + "'s library is empty (" + sourceName + ")."));
+                gameLogService.append(gameData, GameLog.text(playerName + "'s library is empty (" + sourceName + ")."));
                 break;
             }
 
@@ -58,16 +58,16 @@ public class ExileUntilNonlandToHandRepeatIfHighMVEffectHandler implements Norma
 
                 if (card.hasType(CardType.LAND)) {
                     gameData.addToExile(controllerId, card);
-                    gameBroadcastService.logAndBroadcast(gameData, GameLog.builder().text(playerName + " exiles ").card(card).text(" (land) (" + sourceName + ").").build());
+                    gameLogService.append(gameData, GameLog.builder().text(playerName + " exiles ").card(card).text(" (land) (" + sourceName + ").").build());
                 } else {
                     // Nonland card — put into hand
                     gameData.addCardToHand(controllerId, card);
                     cardsToHand++;
                     int manaValue = card.getManaValue();
-                    gameBroadcastService.logAndBroadcast(gameData, GameLog.builder().text(playerName + " exiles ").card(card).text(" (mana value " + manaValue + ") and puts it into their hand (" + sourceName + ").").build());
+                    gameLogService.append(gameData, GameLog.builder().text(playerName + " exiles ").card(card).text(" (mana value " + manaValue + ") and puts it into their hand (" + sourceName + ").").build());
 
                     if (manaValue >= e.manaValueThreshold()) {
-                        gameBroadcastService.logAndBroadcast(gameData, GameLog.builder().card(card).text(" has mana value " + manaValue + " or greater — repeating the process.").build());
+                        gameLogService.append(gameData, GameLog.builder().card(card).text(" has mana value " + manaValue + " or greater — repeating the process.").build());
                         repeat = true;
                     }
                     foundNonland = true;
@@ -76,7 +76,7 @@ public class ExileUntilNonlandToHandRepeatIfHighMVEffectHandler implements Norma
             }
 
             if (!foundNonland && deck.isEmpty()) {
-                gameBroadcastService.logAndBroadcast(gameData, GameLog.text(playerName + "'s library is empty — no nonland card found (" + sourceName + ")."));
+                gameLogService.append(gameData, GameLog.text(playerName + "'s library is empty — no nonland card found (" + sourceName + ")."));
             }
         }
 
@@ -84,11 +84,11 @@ public class ExileUntilNonlandToHandRepeatIfHighMVEffectHandler implements Norma
         if (cardsToHand > 0) {
             int totalDamage = cardsToHand * e.damagePerCard();
             if (gameQueryService.isDamageFromSourcePrevented(gameData, entry.getCard().getColor())) {
-                gameBroadcastService.logAndBroadcast(gameData, GameLog.text(sourceName + "'s damage to " + playerName + " is prevented."));
+                gameLogService.append(gameData, GameLog.text(sourceName + "'s damage to " + playerName + " is prevented."));
             } else {
                 int rawDamage = gameQueryService.applyDamageMultiplier(gameData, totalDamage, entry);
                 damageSupport.dealDamageToPlayer(gameData, entry, controllerId, rawDamage);
-                gameBroadcastService.logAndBroadcast(gameData, GameLog.text(sourceName + " deals " + rawDamage + " damage to " + playerName
+                gameLogService.append(gameData, GameLog.text(sourceName + " deals " + rawDamage + " damage to " + playerName
                                 + " (" + cardsToHand + " card" + (cardsToHand > 1 ? "s" : "") + " put into hand)."));
             }
 

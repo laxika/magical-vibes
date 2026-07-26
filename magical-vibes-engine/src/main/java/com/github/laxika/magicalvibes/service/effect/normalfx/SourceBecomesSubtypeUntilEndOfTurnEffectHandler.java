@@ -6,7 +6,7 @@ import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.StackEntry;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
 import com.github.laxika.magicalvibes.model.effect.SourceBecomesSubtypeUntilEndOfTurnEffect;
-import com.github.laxika.magicalvibes.service.GameBroadcastService;
+import com.github.laxika.magicalvibes.service.GameLogService;
 import com.github.laxika.magicalvibes.service.battlefield.GameQueryService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Component;
@@ -18,7 +18,7 @@ import java.util.UUID;
 public class SourceBecomesSubtypeUntilEndOfTurnEffectHandler implements NormalEffectHandlerBean {
 
     private final GameQueryService gameQueryService;
-    private final GameBroadcastService gameBroadcastService;
+    private final GameLogService gameLogService;
 
     @Override
     public Class<? extends CardEffect> handledEffect() {
@@ -34,7 +34,7 @@ public class SourceBecomesSubtypeUntilEndOfTurnEffectHandler implements NormalEf
             return;
         }
         self.setTransientCreatureTypeOverride(e.subtype());
-        gameBroadcastService.logAndBroadcast(gameData, GameLog.text(self.getCard().getName()
+        gameLogService.append(gameData, GameLog.text(self.getCard().getName()
                 + " becomes a " + e.subtype().getDisplayName() + " until end of turn."));
     }
 }

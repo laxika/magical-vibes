@@ -6,7 +6,7 @@ import com.github.laxika.magicalvibes.model.StackEntry;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
 import com.github.laxika.magicalvibes.model.effect.DrawTwoToTheXCardsForTargetPlayerEffect;
 import com.github.laxika.magicalvibes.service.DrawService;
-import com.github.laxika.magicalvibes.service.GameBroadcastService;
+import com.github.laxika.magicalvibes.service.GameLogService;
 import java.util.UUID;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -18,7 +18,7 @@ import org.springframework.stereotype.Component;
 public class DrawTwoToTheXCardsForTargetPlayerEffectHandler implements NormalEffectHandlerBean {
 
     private final DrawService drawService;
-    private final GameBroadcastService gameBroadcastService;
+    private final GameLogService gameLogService;
 
     @Override
     public Class<? extends CardEffect> handledEffect() {
@@ -39,7 +39,7 @@ public class DrawTwoToTheXCardsForTargetPlayerEffectHandler implements NormalEff
         String playerName = gameData.playerIdToName.get(targetPlayerId);
         String logEntry = playerName + " draws " + amount + " card" + (amount != 1 ? "s" : "")
                 + " (" + entry.getCard().getName() + ").";
-        gameBroadcastService.logAndBroadcast(gameData, GameLog.builder().text(playerName + " draws " + amount + " card" + (amount != 1 ? "s" : "") + " (").card(entry.getCard()).text(").").build());
+        gameLogService.append(gameData, GameLog.builder().text(playerName + " draws " + amount + " card" + (amount != 1 ? "s" : "") + " (").card(entry.getCard()).text(").").build());
         log.info("Game {} - {} draws {} from {}", gameData.id, playerName, amount, entry.getCard().getName());
     }
 }

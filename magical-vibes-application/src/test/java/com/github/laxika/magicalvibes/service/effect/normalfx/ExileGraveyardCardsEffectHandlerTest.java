@@ -7,7 +7,7 @@ import com.github.laxika.magicalvibes.model.StackEntry;
 import com.github.laxika.magicalvibes.model.StackEntryType;
 import com.github.laxika.magicalvibes.model.effect.ExileGraveyardCardsEffect;
 import com.github.laxika.magicalvibes.model.effect.GraveyardExileScope;
-import com.github.laxika.magicalvibes.service.GameBroadcastService;
+import com.github.laxika.magicalvibes.service.GameLogService;
 import com.github.laxika.magicalvibes.service.GameLogService;
 import com.github.laxika.magicalvibes.service.battlefield.GameQueryService;
 import com.github.laxika.magicalvibes.service.battlefield.PermanentRemovalService;
@@ -50,8 +50,6 @@ class ExileGraveyardCardsEffectHandlerTest {
     @Mock
     private GameQueryService gameQueryService;
     @Mock
-    private GameBroadcastService gameBroadcastService;
-    @Mock
     private GameLogService gameLogService;
     @Mock
     private ExileService exileService;
@@ -85,7 +83,7 @@ class ExileGraveyardCardsEffectHandlerTest {
 
         GraveyardService graveyardService = new GraveyardService(
                 gameQueryService, gameLogService, exileService, predicateEvaluationService, triggerCollectionService);
-        handler = new ExileGraveyardCardsEffectHandler(gameQueryService, gameBroadcastService, exileService,
+        handler = new ExileGraveyardCardsEffectHandler(gameQueryService, gameLogService, exileService,
                 permanentRemovalService, predicateEvaluationService, graveyardReturnSupport, graveyardService);
     }
 
@@ -117,7 +115,7 @@ class ExileGraveyardCardsEffectHandlerTest {
             assertThat(gd.getPlayerExiledCards(player2Id))
                     .extracting(Card::getName)
                     .containsExactlyInAnyOrder("Grizzly Bears", "Leonin Scimitar");
-            verify(gameBroadcastService).logAndBroadcast(eq(gd), argThat((GameLogEntry logEntry) ->
+            verify(gameLogService).append(eq(gd), argThat((GameLogEntry logEntry) ->
                     logEntry.plainText().contains("exiled") && logEntry.plainText().contains("2 cards")));
             // Two cards leaving the graveyard in one event fires a single leave-graveyard trigger
             verify(triggerCollectionService).checkControllerCardsLeaveGraveyardTriggers(gd, player2Id);
@@ -134,7 +132,7 @@ class ExileGraveyardCardsEffectHandlerTest {
             handler.resolve(gd, entry, effect);
 
             assertThat(gd.getPlayerExiledCards(player2Id)).isEmpty();
-            verify(gameBroadcastService).logAndBroadcast(eq(gd), argThat((GameLogEntry logEntry) ->
+            verify(gameLogService).append(eq(gd), argThat((GameLogEntry logEntry) ->
                     logEntry.plainText().contains("already empty")));
             // No cards left the graveyard, so no trigger fires
             verify(triggerCollectionService, never()).checkControllerCardsLeaveGraveyardTriggers(eq(gd), any());

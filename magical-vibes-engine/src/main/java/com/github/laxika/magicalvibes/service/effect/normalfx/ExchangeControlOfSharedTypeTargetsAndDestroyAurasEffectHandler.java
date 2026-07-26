@@ -8,7 +8,7 @@ import com.github.laxika.magicalvibes.model.effect.CardEffect;
 import com.github.laxika.magicalvibes.model.effect.ControlDuration;
 import com.github.laxika.magicalvibes.model.effect.ExchangeControlOfSharedTypeTargetsAndDestroyAurasEffect;
 import com.github.laxika.magicalvibes.model.effect.GainControlOfTargetEffect;
-import com.github.laxika.magicalvibes.service.GameBroadcastService;
+import com.github.laxika.magicalvibes.service.GameLogService;
 import com.github.laxika.magicalvibes.service.battlefield.CreatureControlService;
 import com.github.laxika.magicalvibes.service.battlefield.GameQueryService;
 import java.util.ArrayList;
@@ -35,7 +35,7 @@ public class ExchangeControlOfSharedTypeTargetsAndDestroyAurasEffectHandler impl
     private final GameQueryService gameQueryService;
     private final CreatureControlService creatureControlService;
     private final DestructionSupport destructionSupport;
-    private final GameBroadcastService gameBroadcastService;
+    private final GameLogService gameLogService;
 
     @Override
     public Class<? extends CardEffect> handledEffect() {
@@ -94,7 +94,7 @@ public class ExchangeControlOfSharedTypeTargetsAndDestroyAurasEffectHandler impl
 
         String logEntry = entry.getCard().getName() + ": " + ownTarget.getCard().getName() + " and "
                 + opponentTarget.getCard().getName() + " exchange controllers.";
-        gameBroadcastService.logAndBroadcast(gameData, GameLog.builder().card(entry.getCard()).text(": ").card(ownTarget.getCard()).text(" and ").card(opponentTarget.getCard()).text(" exchange controllers.").build());
+        gameLogService.append(gameData, GameLog.builder().card(entry.getCard()).text(": ").card(ownTarget.getCard()).text(" and ").card(opponentTarget.getCard()).text(" exchange controllers.").build());
         log.info("Game {} - {} exchanges control of {} and {}", gameData.id, entry.getCard().getName(),
                 ownTarget.getCard().getName(), opponentTarget.getCard().getName());
 
@@ -105,7 +105,7 @@ public class ExchangeControlOfSharedTypeTargetsAndDestroyAurasEffectHandler impl
     }
 
     private void logFizzle(GameData gameData, StackEntry entry) {
-        gameBroadcastService.logAndBroadcast(gameData, GameLog.cardThen(entry.getCard(), "'s exchange has no effect (a target is no longer legal)."));
+        gameLogService.append(gameData, GameLog.cardThen(entry.getCard(), "'s exchange has no effect (a target is no longer legal)."));
         log.info("Game {} - {} exchange fizzles (illegal target)", gameData.id, entry.getCard().getName());
     }
 }

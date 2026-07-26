@@ -7,7 +7,7 @@ import com.github.laxika.magicalvibes.model.GameLog;
 import com.github.laxika.magicalvibes.model.StackEntry;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
 import com.github.laxika.magicalvibes.model.effect.RevealTopCardPutLandsIntoGraveyardRepeatEffect;
-import com.github.laxika.magicalvibes.service.GameBroadcastService;
+import com.github.laxika.magicalvibes.service.GameLogService;
 import com.github.laxika.magicalvibes.service.graveyard.GraveyardService;
 import java.util.List;
 import java.util.UUID;
@@ -25,7 +25,7 @@ import org.springframework.stereotype.Component;
 @RequiredArgsConstructor
 public class RevealTopCardPutLandsIntoGraveyardRepeatEffectHandler implements NormalEffectHandlerBean {
 
-    private final GameBroadcastService gameBroadcastService;
+    private final GameLogService gameLogService;
     private final GraveyardService graveyardService;
 
     @Override
@@ -43,7 +43,7 @@ public class RevealTopCardPutLandsIntoGraveyardRepeatEffectHandler implements No
         int landsBinned = 0;
         while (deck != null && !deck.isEmpty()) {
             Card topCard = deck.getFirst();
-            gameBroadcastService.logAndBroadcast(gameData, GameLog.textCardText(playerName + " reveals ", topCard, " from the top of their library."));
+            gameLogService.append(gameData, GameLog.textCardText(playerName + " reveals ", topCard, " from the top of their library."));
 
             if (!topCard.hasType(CardType.LAND)) {
                 break;
@@ -51,7 +51,7 @@ public class RevealTopCardPutLandsIntoGraveyardRepeatEffectHandler implements No
 
             deck.removeFirst();
             graveyardService.addCardToGraveyard(gameData, controllerId, topCard);
-            gameBroadcastService.logAndBroadcast(gameData, GameLog.textCardText(playerName + " puts ", topCard, " into their graveyard."));
+            gameLogService.append(gameData, GameLog.textCardText(playerName + " puts ", topCard, " into their graveyard."));
             landsBinned++;
         }
 

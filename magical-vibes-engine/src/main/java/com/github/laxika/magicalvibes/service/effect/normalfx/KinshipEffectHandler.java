@@ -10,7 +10,7 @@ import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.StackEntry;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
 import com.github.laxika.magicalvibes.model.effect.KinshipEffect;
-import com.github.laxika.magicalvibes.service.GameBroadcastService;
+import com.github.laxika.magicalvibes.service.GameLogService;
 import com.github.laxika.magicalvibes.service.battlefield.GameQueryService;
 import java.util.ArrayList;
 import java.util.List;
@@ -25,7 +25,7 @@ import org.springframework.stereotype.Component;
 public class KinshipEffectHandler implements NormalEffectHandlerBean {
 
     private final GameQueryService gameQueryService;
-    private final GameBroadcastService gameBroadcastService;
+    private final GameLogService gameLogService;
 
     @Override
     public Class<? extends CardEffect> handledEffect() {
@@ -40,12 +40,12 @@ public class KinshipEffectHandler implements NormalEffectHandlerBean {
         String sourceName = entry.getCard().getName();
 
         if (deck == null || deck.isEmpty()) {
-            gameBroadcastService.logAndBroadcast(gameData, GameLog.text(playerName + "'s library is empty (" + sourceName + ")."));
+            gameLogService.append(gameData, GameLog.text(playerName + "'s library is empty (" + sourceName + ")."));
             return;
         }
 
         Card topCard = deck.getFirst();
-        gameBroadcastService.logAndBroadcast(gameData, GameLog.text(playerName + " looks at the top card of their library (" + sourceName + ")."));
+        gameLogService.append(gameData, GameLog.text(playerName + " looks at the top card of their library (" + sourceName + ")."));
         log.info("Game {} - {} looks at top card via Kinship: {} ({})", gameData.id, playerName, topCard.getName(), sourceName);
 
         Permanent source = entry.getSourcePermanentId() != null
@@ -55,7 +55,7 @@ public class KinshipEffectHandler implements NormalEffectHandlerBean {
         }
 
         if (!sharesCreatureType(source, topCard)) {
-            gameBroadcastService.logAndBroadcast(gameData, GameLog.text("The top card does not share a creature type with " + sourceName + "."));
+            gameLogService.append(gameData, GameLog.text("The top card does not share a creature type with " + sourceName + "."));
             log.info("Game {} - top card {} shares no creature type with {}", gameData.id, topCard.getName(), sourceName);
             return;
         }

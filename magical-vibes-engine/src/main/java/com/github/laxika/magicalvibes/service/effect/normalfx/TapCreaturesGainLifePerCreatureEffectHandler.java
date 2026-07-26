@@ -7,7 +7,7 @@ import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.StackEntry;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
 import com.github.laxika.magicalvibes.model.effect.TapCreaturesGainLifePerCreatureEffect;
-import com.github.laxika.magicalvibes.service.GameBroadcastService;
+import com.github.laxika.magicalvibes.service.GameLogService;
 import com.github.laxika.magicalvibes.service.battlefield.GameQueryService;
 import com.github.laxika.magicalvibes.service.input.PlayerInputService;
 import java.util.ArrayList;
@@ -29,7 +29,7 @@ import org.springframework.stereotype.Component;
 public class TapCreaturesGainLifePerCreatureEffectHandler implements NormalEffectHandlerBean {
 
     private final GameQueryService gameQueryService;
-    private final GameBroadcastService gameBroadcastService;
+    private final GameLogService gameLogService;
     private final PlayerInputService playerInputService;
 
     @Override
@@ -53,7 +53,7 @@ public class TapCreaturesGainLifePerCreatureEffectHandler implements NormalEffec
         }
 
         if (untappedCreatureIds.isEmpty()) {
-            gameBroadcastService.logAndBroadcast(gameData, GameLog.builder().card(entry.getCard()).text(" resolves, but " + gameData.playerIdToName.get(controllerId) + " controls no untapped creatures.").build());
+            gameLogService.append(gameData, GameLog.builder().card(entry.getCard()).text(" resolves, but " + gameData.playerIdToName.get(controllerId) + " controls no untapped creatures.").build());
             return;
         }
 

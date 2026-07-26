@@ -20,6 +20,6 @@ class AdNauseamRepeatChoiceAiStrategy
             return;
         }
         ctx.gameActions().answerInteraction(
-                ctx.selfConnection(), new InteractionAnswer.MayAbilityChosen(false));
+                new InteractionAnswer.MayAbilityChosen(false));
     }
 }

@@ -7,7 +7,7 @@ import com.github.laxika.magicalvibes.model.PlayerSourceNextDamageShield;
 import com.github.laxika.magicalvibes.model.StackEntry;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
 import com.github.laxika.magicalvibes.model.effect.PreventNextDamageFromSelfToYouEffect;
-import com.github.laxika.magicalvibes.service.GameBroadcastService;
+import com.github.laxika.magicalvibes.service.GameLogService;
 import com.github.laxika.magicalvibes.service.battlefield.GameQueryService;
 import java.util.UUID;
 import lombok.RequiredArgsConstructor;
@@ -23,7 +23,7 @@ import org.springframework.stereotype.Component;
 @RequiredArgsConstructor
 public class PreventNextDamageFromSelfToYouEffectHandler implements NormalEffectHandlerBean {
 
-    private final GameBroadcastService gameBroadcastService;
+    private final GameLogService gameLogService;
     private final GameQueryService gameQueryService;
 
     @Override
@@ -48,7 +48,7 @@ public class PreventNextDamageFromSelfToYouEffectHandler implements NormalEffect
 
         String playerName = gameData.playerIdToName.get(playerId);
         String sourceName = source.getCard().getName();
-        gameBroadcastService.logAndBroadcast(gameData, GameLog.text(
+        gameLogService.append(gameData, GameLog.text(
                 "The next time " + sourceName + " would deal damage to " + playerName
                         + " this turn, it is prevented."));
         log.info("Game {} - {} shielded from next damage by {}", gameData.id, playerName, sourceName);

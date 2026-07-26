@@ -6,7 +6,7 @@ import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.StackEntry;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
 import com.github.laxika.magicalvibes.model.effect.ReturnTargetPermanentToHandOrLibraryTopByPredicateEffect;
-import com.github.laxika.magicalvibes.service.GameBroadcastService;
+import com.github.laxika.magicalvibes.service.GameLogService;
 import com.github.laxika.magicalvibes.service.battlefield.GameQueryService;
 import com.github.laxika.magicalvibes.service.battlefield.PermanentRemovalService;
 import com.github.laxika.magicalvibes.service.filter.PredicateEvaluationService;
@@ -20,7 +20,7 @@ import org.springframework.stereotype.Component;
 public class ReturnTargetPermanentToHandOrLibraryTopByPredicateEffectHandler implements NormalEffectHandlerBean {
 
     private final GameQueryService gameQueryService;
-    private final GameBroadcastService gameBroadcastService;
+    private final GameLogService gameLogService;
     private final PermanentRemovalService permanentRemovalService;
     private final PredicateEvaluationService predicateEvaluationService;
 
@@ -42,12 +42,12 @@ public class ReturnTargetPermanentToHandOrLibraryTopByPredicateEffectHandler imp
         if (toLibraryTop) {
             if (permanentRemovalService.removePermanentToLibraryTop(gameData, target)) {
                 String logEntry = target.getCard().getName() + " is put on top of its owner's library.";
-                gameBroadcastService.logAndBroadcast(gameData, GameLog.cardThen(target.getCard(), " is put on top of its owner's library."));
+                gameLogService.append(gameData, GameLog.cardThen(target.getCard(), " is put on top of its owner's library."));
                 log.info("Game {} - {} put on top of library by {}", gameData.id, target.getCard().getName(), entry.getCard().getName());
             }
         } else {
             if (permanentRemovalService.removePermanentToHand(gameData, target)) {
-                gameBroadcastService.logAndBroadcast(gameData, GameLog.cardThen(target.getCard(), " is returned to its owner's hand."));
+                gameLogService.append(gameData, GameLog.cardThen(target.getCard(), " is returned to its owner's hand."));
                 log.info("Game {} - {} returned to owner's hand by {}", gameData.id, target.getCard().getName(), entry.getCard().getName());
             }
         }

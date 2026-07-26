@@ -99,7 +99,7 @@ class AshesOfTheAbhorrentTest extends BaseCardTest {
         harness.addMana(player2, ManaColor.COLORLESS, 2);
 
         setupPlayer2Active();
-        List<Integer> playable = harness.getGameBroadcastService()
+        List<Integer> playable = harness.getGameActionAvailabilityService()
                 .getPlayableFlashbackIndices(gd, player2.getId());
         assertThat(playable).isEmpty();
     }

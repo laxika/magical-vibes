@@ -6,7 +6,7 @@ import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.StackEntry;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
 import com.github.laxika.magicalvibes.model.effect.DestroyTargetWallDealManaValueDamageToControllerEffect;
-import com.github.laxika.magicalvibes.service.GameBroadcastService;
+import com.github.laxika.magicalvibes.service.GameLogService;
 import com.github.laxika.magicalvibes.service.GameOutcomeService;
 import com.github.laxika.magicalvibes.service.battlefield.GameQueryService;
 import java.util.UUID;
@@ -20,7 +20,7 @@ public class DestroyTargetWallDealManaValueDamageToControllerEffectHandler imple
     private final DestructionSupport destructionSupport;
     private final DamageSupport damageSupport;
     private final GameQueryService gameQueryService;
-    private final GameBroadcastService gameBroadcastService;
+    private final GameLogService gameLogService;
     private final GameOutcomeService gameOutcomeService;
 
     @Override
@@ -44,7 +44,7 @@ public class DestroyTargetWallDealManaValueDamageToControllerEffectHandler imple
         if (controllerId != null && manaValue > 0) {
             String cardName = entry.getCard().getName();
             if (gameQueryService.isDamageFromSourcePrevented(gameData, entry.getCard().getColor())) {
-                gameBroadcastService.logAndBroadcast(gameData, GameLog.text(cardName + "'s damage to " + gameData.playerIdToName.get(controllerId) + " is prevented."));
+                gameLogService.append(gameData, GameLog.text(cardName + "'s damage to " + gameData.playerIdToName.get(controllerId) + " is prevented."));
             } else {
                 int rawDamage = gameQueryService.applyDamageMultiplier(gameData, manaValue, entry);
                 damageSupport.dealDamageToPlayer(gameData, entry, controllerId, rawDamage);

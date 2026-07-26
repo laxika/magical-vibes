@@ -9,7 +9,7 @@ import com.github.laxika.magicalvibes.model.effect.CardEffect;
 import com.github.laxika.magicalvibes.model.effect.EachOtherCreatureBecomesCopyOfTargetCreatureUntilEndOfTurnEffect;
 import com.github.laxika.magicalvibes.model.effect.EffectDuration;
 import com.github.laxika.magicalvibes.model.layer.FloatingContinuousEffect;
-import com.github.laxika.magicalvibes.service.GameBroadcastService;
+import com.github.laxika.magicalvibes.service.GameLogService;
 import com.github.laxika.magicalvibes.service.battlefield.GameQueryService;
 import com.github.laxika.magicalvibes.service.battlefield.PermanentCopierService;
 import java.util.ArrayList;
@@ -25,7 +25,7 @@ import org.springframework.stereotype.Component;
 public class EachOtherCreatureBecomesCopyOfTargetCreatureUntilEndOfTurnEffectHandler implements NormalEffectHandlerBean {
 
     private final GameQueryService gameQueryService;
-    private final GameBroadcastService gameBroadcastService;
+    private final GameLogService gameLogService;
     private final PermanentCopierService permanentCopierService;
 
     @Override
@@ -73,7 +73,7 @@ public class EachOtherCreatureBecomesCopyOfTargetCreatureUntilEndOfTurnEffectHan
 
         String logMsg = entry.getCard().getName() + " makes " + count
                 + " other creature(s) a copy of " + targetName + " until end of turn.";
-        gameBroadcastService.logAndBroadcast(gameData, GameLog.builder().card(entry.getCard()).text(" makes " + count + " other creature(s) a copy of " + targetName + " until end of turn.").build());
+        gameLogService.append(gameData, GameLog.builder().card(entry.getCard()).text(" makes " + count + " other creature(s) a copy of " + targetName + " until end of turn.").build());
         log.info("Game {} - Mirrorweave copies {} onto {} creatures", gameData.id, targetName, count);
     }
 }

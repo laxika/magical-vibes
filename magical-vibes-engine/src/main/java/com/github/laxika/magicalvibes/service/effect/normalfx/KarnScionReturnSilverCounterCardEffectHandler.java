@@ -6,7 +6,7 @@ import com.github.laxika.magicalvibes.model.GameLog;
 import com.github.laxika.magicalvibes.model.StackEntry;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
 import com.github.laxika.magicalvibes.model.effect.KarnScionReturnSilverCounterCardEffect;
-import com.github.laxika.magicalvibes.service.GameBroadcastService;
+import com.github.laxika.magicalvibes.service.GameLogService;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Component;
@@ -20,8 +20,9 @@ import java.util.UUID;
 @RequiredArgsConstructor
 public class KarnScionReturnSilverCounterCardEffectHandler implements NormalEffectHandlerBean {
 
-    private final GameBroadcastService gameBroadcastService;
+    private final GameLogService gameLogService;
     private final com.github.laxika.magicalvibes.service.interaction.InteractionHandlerRegistry interactionHandlerRegistry;
+    private final com.github.laxika.magicalvibes.service.event.GameMutationCoordinator mutationCoordinator;
 
     @Override
     public Class<? extends CardEffect> handledEffect() {
@@ -40,7 +41,7 @@ public class KarnScionReturnSilverCounterCardEffectHandler implements NormalEffe
                 .toList();
 
         if (silverCards.isEmpty()) {
-            gameBroadcastService.logAndBroadcast(gameData, GameLog.text(controllerName + " has no exiled cards with silver counters."));
+            gameLogService.append(gameData, GameLog.text(controllerName + " has no exiled cards with silver counters."));
             log.info("Game {} - {} has no silver counter cards for Karn Scion -1", gameData.id, controllerName);
             return;
         }
@@ -52,7 +53,7 @@ public class KarnScionReturnSilverCounterCardEffectHandler implements NormalEffe
             gameData.exiledCardsWithSilverCounters.remove(card.getId());
             gameData.addCardToHand(controllerId, card);
 
-            gameBroadcastService.logAndBroadcast(gameData, GameLog.textCardText(controllerName + " returns ", card, " from exile to their hand."));
+            gameLogService.append(gameData, GameLog.textCardText(controllerName + " returns ", card, " from exile to their hand."));
             log.info("Game {} - {} returns {} from exile (silver counter) to hand",
                     gameData.id, controllerName, card.getName());
             return;
@@ -66,7 +67,7 @@ public class KarnScionReturnSilverCounterCardEffectHandler implements NormalEffe
                 false, true, false, false, false, 0, null, 1,
                 "Choose a card with a silver counter to return to your hand."));
 
-        gameBroadcastService.invalidateAllPlayerViews(gameData);
+        mutationCoordinator.invalidateAllPlayerViews(gameData);
 
         log.info("Game {} - {} must choose from {} silver counter cards for Karn Scion -1",
                 gameData.id, controllerName, silverCards.size());

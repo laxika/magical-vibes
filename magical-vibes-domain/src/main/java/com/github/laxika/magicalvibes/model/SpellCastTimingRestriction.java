@@ -3,7 +3,7 @@ package com.github.laxika.magicalvibes.model;
 /**
  * A card-specific restriction on <em>when</em> a spell may be cast, beyond the normal
  * instant/sorcery-speed timing rules. Enforced by {@code CastingPermissionService} and surfaced
- * through the playable-card computation in {@code GameBroadcastService}.
+ * through the playable-card computation in {@code GameActionAvailabilityService}.
  */
 public enum SpellCastTimingRestriction {
     /**

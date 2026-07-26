@@ -29,7 +29,7 @@ class DealDamageToPlayersEffectHandlerTest extends AbstractDamageHandlerTest {
     @Override
     protected void setUpHandler() {
         handler = new DealDamageToPlayersEffectHandler(
-                damageSupport, gameQueryService, gameBroadcastService, gameOutcomeService, amountEvaluationService);
+                damageSupport, gameQueryService, gameLogService, gameOutcomeService, amountEvaluationService);
     }
 
     @Nested

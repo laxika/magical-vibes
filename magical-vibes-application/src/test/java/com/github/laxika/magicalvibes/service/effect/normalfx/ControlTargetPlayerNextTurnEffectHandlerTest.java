@@ -8,7 +8,7 @@ import com.github.laxika.magicalvibes.model.GameData;
 import com.github.laxika.magicalvibes.model.StackEntry;
 import com.github.laxika.magicalvibes.model.StackEntryType;
 import com.github.laxika.magicalvibes.model.effect.ControlTargetPlayerNextTurnEffect;
-import com.github.laxika.magicalvibes.service.GameBroadcastService;
+import com.github.laxika.magicalvibes.service.GameLogService;
 import com.github.laxika.magicalvibes.service.aura.AuraAttachmentService;
 import com.github.laxika.magicalvibes.service.combat.CombatService;
 import com.github.laxika.magicalvibes.service.exile.ExileService;
@@ -35,7 +35,7 @@ import static org.mockito.Mockito.verify;
 class ControlTargetPlayerNextTurnEffectHandlerTest {
 
     @Mock private CombatService combatService;
-    @Mock private GameBroadcastService gameBroadcastService;
+    @Mock private GameLogService gameLogService;
     @Mock private AuraAttachmentService auraAttachmentService;
     @Mock private TurnCleanupService turnCleanupService;
     @Mock private ExileService exileService;
@@ -66,7 +66,7 @@ class ControlTargetPlayerNextTurnEffectHandlerTest {
         gd.playerGraveyards.put(player2Id, Collections.synchronizedList(new ArrayList<>()));
         gd.playerDecks.put(player1Id, Collections.synchronizedList(new ArrayList<>()));
         gd.playerDecks.put(player2Id, Collections.synchronizedList(new ArrayList<>()));
-        controlTargetPlayerNextTurnEffectHandler = new ControlTargetPlayerNextTurnEffectHandler(turnSupport, gameBroadcastService);
+        controlTargetPlayerNextTurnEffectHandler = new ControlTargetPlayerNextTurnEffectHandler(turnSupport, gameLogService);
 
     }
 
@@ -118,7 +118,7 @@ class ControlTargetPlayerNextTurnEffectHandlerTest {
 
                 controlTargetPlayerNextTurnEffectHandler.resolve(gd, entry, new ControlTargetPlayerNextTurnEffect());
 
-                verify(gameBroadcastService).logAndBroadcast(eq(gd), eq(GameLog.text("Player1 will control Player2 during their next turn.")));
+                verify(gameLogService).append(eq(gd), eq(GameLog.text("Player1 will control Player2 during their next turn.")));
             }
 
             @Test
@@ -131,7 +131,7 @@ class ControlTargetPlayerNextTurnEffectHandlerTest {
                 controlTargetPlayerNextTurnEffectHandler.resolve(gd, entry, new ControlTargetPlayerNextTurnEffect());
 
                 assertThat(gd.pendingTurnControl).isEmpty();
-                verify(gameBroadcastService, never()).logAndBroadcast(eq(gd), any(GameLogEntry.class));
+                verify(gameLogService, never()).append(eq(gd), any(GameLogEntry.class));
             }
 
             @Test
@@ -172,7 +172,7 @@ class ControlTargetPlayerNextTurnEffectHandlerTest {
 
                 assertThat(gd.pendingTurnControl).containsEntry(player2Id, player1Id);
                 assertThat(gd.pendingTurnControlExtraTurn).contains(player2Id);
-                verify(gameBroadcastService).logAndBroadcast(eq(gd), eq(GameLog.text(
+                verify(gameLogService).append(eq(gd), eq(GameLog.text(
                         "Player1 will control Player2 during their next turn. After that turn, Player2 takes an extra turn.")));
             }
 

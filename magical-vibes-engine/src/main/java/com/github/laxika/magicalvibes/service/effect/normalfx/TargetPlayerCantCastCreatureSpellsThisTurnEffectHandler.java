@@ -5,7 +5,7 @@ import com.github.laxika.magicalvibes.model.GameLog;
 import com.github.laxika.magicalvibes.model.StackEntry;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
 import com.github.laxika.magicalvibes.model.effect.TargetPlayerCantCastCreatureSpellsThisTurnEffect;
-import com.github.laxika.magicalvibes.service.GameBroadcastService;
+import com.github.laxika.magicalvibes.service.GameLogService;
 import java.util.UUID;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Component;
@@ -14,7 +14,7 @@ import org.springframework.stereotype.Component;
 @RequiredArgsConstructor
 public class TargetPlayerCantCastCreatureSpellsThisTurnEffectHandler implements NormalEffectHandlerBean {
 
-    private final GameBroadcastService gameBroadcastService;
+    private final GameLogService gameLogService;
 
     @Override
     public Class<? extends CardEffect> handledEffect() {
@@ -27,6 +27,6 @@ public class TargetPlayerCantCastCreatureSpellsThisTurnEffectHandler implements 
         if (playerId == null) return;
 
         gameData.playersCantCastCreatureSpellsThisTurn.add(playerId);
-        gameBroadcastService.logAndBroadcast(gameData, GameLog.text(gameData.playerIdToName.get(playerId) + " can't cast creature spells this turn."));
+        gameLogService.append(gameData, GameLog.text(gameData.playerIdToName.get(playerId) + " can't cast creature spells this turn."));
     }
 }

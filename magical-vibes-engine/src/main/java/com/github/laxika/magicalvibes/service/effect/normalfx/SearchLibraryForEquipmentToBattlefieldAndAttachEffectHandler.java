@@ -9,7 +9,7 @@ import com.github.laxika.magicalvibes.model.LibrarySearchParams;
 import com.github.laxika.magicalvibes.model.StackEntry;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
 import com.github.laxika.magicalvibes.model.effect.SearchLibraryForEquipmentToBattlefieldAndAttachEffect;
-import com.github.laxika.magicalvibes.service.GameBroadcastService;
+import com.github.laxika.magicalvibes.service.GameLogService;
 import com.github.laxika.magicalvibes.service.battlefield.GameQueryService;
 import com.github.laxika.magicalvibes.service.library.LibraryShuffleHelper;
 import java.util.ArrayList;
@@ -25,7 +25,7 @@ import org.springframework.stereotype.Component;
 public class SearchLibraryForEquipmentToBattlefieldAndAttachEffectHandler implements NormalEffectHandlerBean {
 
     private final GameQueryService gameQueryService;
-    private final GameBroadcastService gameBroadcastService;
+    private final GameLogService gameLogService;
     private final LibrarySearchSupport librarySearchSupport;
 
     @Override
@@ -43,7 +43,7 @@ public class SearchLibraryForEquipmentToBattlefieldAndAttachEffectHandler implem
         String playerName = gameData.playerIdToName.get(controllerId);
 
         if (deck == null || deck.isEmpty()) {
-            gameBroadcastService.logAndBroadcast(gameData, GameLog.text(playerName + " searches their library but it is empty. Library is shuffled."));
+            gameLogService.append(gameData, GameLog.text(playerName + " searches their library but it is empty. Library is shuffled."));
             return;
         }
 
@@ -53,7 +53,7 @@ public class SearchLibraryForEquipmentToBattlefieldAndAttachEffectHandler implem
 
         if (matchingCards.isEmpty()) {
             LibraryShuffleHelper.shuffleLibrary(gameData, controllerId);
-            gameBroadcastService.logAndBroadcast(gameData, GameLog.text(playerName + " searches their library but finds no Equipment cards. Library is shuffled."));
+            gameLogService.append(gameData, GameLog.text(playerName + " searches their library but finds no Equipment cards. Library is shuffled."));
             log.info("Game {} - {} searches library, no Equipment cards found", gameData.id, playerName);
             return;
         }

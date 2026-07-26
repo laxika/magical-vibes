@@ -28,6 +28,6 @@ class PutCardsFromHandOnLibraryDestinationChoiceAiStrategy
             return;
         }
         log.info("AI: Putting the chosen cards on the bottom of the library in game {}", ctx.gameId());
-        ctx.gameActions().answerInteraction(ctx.selfConnection(), new InteractionAnswer.ListChoiceMade(BOTTOM));
+        ctx.gameActions().answerInteraction(new InteractionAnswer.ListChoiceMade(BOTTOM));
     }
 }

@@ -12,7 +12,7 @@ import com.github.laxika.magicalvibes.model.StackEntryType;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
 import com.github.laxika.magicalvibes.model.effect.MayPlayExiledCounteredCardEffect;
 import com.github.laxika.magicalvibes.model.effect.ReplaceControlledCounterWithExileAndPlayEffect;
-import com.github.laxika.magicalvibes.service.GameBroadcastService;
+import com.github.laxika.magicalvibes.service.GameLogService;
 import com.github.laxika.magicalvibes.service.battlefield.GameQueryService;
 import com.github.laxika.magicalvibes.service.effect.EffectResolutionService;
 import com.github.laxika.magicalvibes.service.exile.ExileService;
@@ -38,7 +38,7 @@ public class CounterSupport {
 
     private final GraveyardService graveyardService;
     private final ExileService exileService;
-    private final GameBroadcastService gameBroadcastService;
+    private final GameLogService gameLogService;
     private final GameQueryService gameQueryService;
     private final StateTriggerService stateTriggerService;
     // @Lazy breaks the cycle: EffectResolutionService → EffectHandlerRegistry →
@@ -47,13 +47,13 @@ public class CounterSupport {
 
     public CounterSupport(GraveyardService graveyardService,
                           ExileService exileService,
-                          GameBroadcastService gameBroadcastService,
+                          GameLogService gameLogService,
                           GameQueryService gameQueryService,
                           StateTriggerService stateTriggerService,
                           @Lazy EffectResolutionService effectResolutionService) {
         this.graveyardService = graveyardService;
         this.exileService = exileService;
-        this.gameBroadcastService = gameBroadcastService;
+        this.gameLogService = gameLogService;
         this.gameQueryService = gameQueryService;
         this.stateTriggerService = stateTriggerService;
         this.effectResolutionService = effectResolutionService;
@@ -110,10 +110,10 @@ public class CounterSupport {
         }
 
         if (isAbility) {
-            gameBroadcastService.logAndBroadcast(gameData,
+            gameLogService.append(gameData,
                     GameLog.cardThen(target.getCard(), "'s ability is countered."));
         } else {
-            gameBroadcastService.logAndBroadcast(gameData,
+            gameLogService.append(gameData,
                     GameLog.cardThen(target.getCard(), " is countered."));
         }
         log.info("Game {} - {} countered {}", gameData.id, source.getCard().getName(), target.getCard().getName());
@@ -132,7 +132,7 @@ public class CounterSupport {
             gameData.playerDecks.get(target.getControllerId()).add(0, target.getCard());
         }
 
-        gameBroadcastService.logAndBroadcast(gameData, GameLog.cardThen(target.getCard(), " is countered and put on top of its owner's library."));
+        gameLogService.append(gameData, GameLog.cardThen(target.getCard(), " is countered and put on top of its owner's library."));
         log.info("Game {} - {} countered {} onto its owner's library", gameData.id,
                 source.getCard().getName(), target.getCard().getName());
     }
@@ -167,7 +167,7 @@ public class CounterSupport {
         }
 
         String logMsg = target.getCard().getName() + " is countered.";
-        gameBroadcastService.logAndBroadcast(gameData, GameLog.cardThen(target.getCard(), " is countered."));
+        gameLogService.append(gameData, GameLog.cardThen(target.getCard(), " is countered."));
         log.info("Game {} - {} countered {}", gameData.id, source.getCard().getName(), target.getCard().getName());
         return gained;
     }
@@ -185,7 +185,7 @@ public class CounterSupport {
             exileService.exileCard(gameData, target.getControllerId(), target.getCard());
         }
 
-        gameBroadcastService.logAndBroadcast(gameData, GameLog.cardThen(target.getCard(), " is countered and exiled."));
+        gameLogService.append(gameData, GameLog.cardThen(target.getCard(), " is countered and exiled."));
         log.info("Game {} - {} countered and exiled {}", gameData.id, source.getCard().getName(), target.getCard().getName());
     }
 
@@ -218,7 +218,7 @@ public class CounterSupport {
                 spell.getId()
         ));
 
-        gameBroadcastService.logAndBroadcast(gameData, GameLog.cardThen(spell, " is exiled instead of countered (Guile)."));
+        gameLogService.append(gameData, GameLog.cardThen(spell, " is exiled instead of countered (Guile)."));
         log.info("Game {} - {} exiled {} instead of countering (Guile)", gameData.id,
                 source.getCard().getName(), spell.getName());
         return true;

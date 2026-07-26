@@ -9,7 +9,7 @@ import com.github.laxika.magicalvibes.model.StackEntry;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
 import com.github.laxika.magicalvibes.model.effect.SearchTargetLibraryForCardToBattlefieldUnderControlEffect;
 import com.github.laxika.magicalvibes.model.filter.CardPredicate;
-import com.github.laxika.magicalvibes.service.GameBroadcastService;
+import com.github.laxika.magicalvibes.service.GameLogService;
 import com.github.laxika.magicalvibes.service.filter.PredicateEvaluationService;
 import com.github.laxika.magicalvibes.service.library.LibraryShuffleHelper;
 import lombok.RequiredArgsConstructor;
@@ -24,7 +24,7 @@ import java.util.UUID;
 @Slf4j
 public class SearchTargetLibraryForCardToBattlefieldUnderControlEffectHandler implements NormalEffectHandlerBean {
 
-    private final GameBroadcastService gameBroadcastService;
+    private final GameLogService gameLogService;
     private final LibrarySearchSupport librarySearchSupport;
     private final PredicateEvaluationService predicateEvaluationService;
 
@@ -48,13 +48,13 @@ public class SearchTargetLibraryForCardToBattlefieldUnderControlEffectHandler im
         // Search prevented (e.g. Leonin Arbiter): the target still shuffles per rules.
         if (!librarySearchSupport.checkSearchRestriction(gameData, controllerId)) {
             LibraryShuffleHelper.shuffleLibrary(gameData, targetPlayerId);
-            gameBroadcastService.logAndBroadcast(gameData, GameLog.text(targetName + "'s library is shuffled."));
+            gameLogService.append(gameData, GameLog.text(targetName + "'s library is shuffled."));
             return;
         }
 
         List<Card> deck = gameData.playerDecks.get(targetPlayerId);
         if (deck == null || deck.isEmpty()) {
-            gameBroadcastService.logAndBroadcast(gameData, GameLog.text(controllerName + " searches " + targetName + "'s library but it is empty. Library is shuffled."));
+            gameLogService.append(gameData, GameLog.text(controllerName + " searches " + targetName + "'s library but it is empty. Library is shuffled."));
             return;
         }
 
@@ -64,7 +64,7 @@ public class SearchTargetLibraryForCardToBattlefieldUnderControlEffectHandler im
 
         if (matching.isEmpty()) {
             LibraryShuffleHelper.shuffleLibrary(gameData, targetPlayerId);
-            gameBroadcastService.logAndBroadcast(gameData, GameLog.text(controllerName + " finds no matching card in " + targetName + "'s library. Library is shuffled."));
+            gameLogService.append(gameData, GameLog.text(controllerName + " finds no matching card in " + targetName + "'s library. Library is shuffled."));
             return;
         }
 

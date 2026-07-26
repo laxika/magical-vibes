@@ -27,7 +27,8 @@ import com.github.laxika.magicalvibes.networking.service.CardViewFactory;
 import com.github.laxika.magicalvibes.service.event.InteractionPromptProjectionRegistry;
 import com.github.laxika.magicalvibes.service.interaction.InteractionHandlerRegistry;
 import com.github.laxika.magicalvibes.service.interaction.KnowledgePoolCastChoiceInteractionHandler;
-import com.github.laxika.magicalvibes.service.GameBroadcastService;
+import com.github.laxika.magicalvibes.service.GameLogService;
+import com.github.laxika.magicalvibes.service.event.GameMutationCoordinator;
 import com.github.laxika.magicalvibes.service.exile.ExileService;
 import com.github.laxika.magicalvibes.service.graveyard.GraveyardService;
 import com.github.laxika.magicalvibes.service.input.PlayerInputService;
@@ -59,7 +60,8 @@ class KnowledgePoolExileAndCastEffectHandlerTest {
 
     @Mock private GraveyardService graveyardService;
     @Mock private GameQueryService gameQueryService;
-    @Mock private GameBroadcastService gameBroadcastService;
+    @Mock private GameLogService gameLogService;
+    @Mock private GameMutationCoordinator mutationCoordinator;
     @Mock private PermanentRemovalService permanentRemovalService;
     @Mock private PlayerInputService playerInputService;
     @Mock private CardViewFactory cardViewFactory;
@@ -95,7 +97,7 @@ class KnowledgePoolExileAndCastEffectHandlerTest {
         gd.playerDecks.put(player2Id, Collections.synchronizedList(new ArrayList<>()));
         InteractionHandlerRegistry registry = new InteractionHandlerRegistry();
         registry.register(new KnowledgePoolCastChoiceInteractionHandler(exileSupport));
-        knowledgePoolExileAndCastHandler = new KnowledgePoolExileAndCastEffectHandler(gameQueryService, gameBroadcastService, registry, exileService);
+        knowledgePoolExileAndCastHandler = new KnowledgePoolExileAndCastEffectHandler(gameQueryService, gameLogService, registry, exileService);
 
     }
 
@@ -185,7 +187,7 @@ class KnowledgePoolExileAndCastEffectHandlerTest {
 
                 knowledgePoolExileAndCastHandler.resolve(gd, entry, effect);
 
-                verify(gameBroadcastService, never()).logAndBroadcast(any(), any(GameLogEntry.class));
+                verify(gameLogService, never()).append(any(), any(GameLogEntry.class));
             }
 
             @Test
@@ -205,7 +207,7 @@ class KnowledgePoolExileAndCastEffectHandlerTest {
 
                 knowledgePoolExileAndCastHandler.resolve(gd, entry, effect);
 
-                verify(gameBroadcastService).logAndBroadcast(eq(gd), argThat((GameLogEntry e) -> e.plainText().equals("Knowledge Pool's ability — original spell is no longer on the stack.")));
+                verify(gameLogService).append(eq(gd), argThat((GameLogEntry e) -> e.plainText().equals("Knowledge Pool's ability — original spell is no longer on the stack.")));
             }
 
             @Test
@@ -238,8 +240,8 @@ class KnowledgePoolExileAndCastEffectHandlerTest {
                 // Original card added to pool and exile
                 assertThat(gd.getCardsExiledByPermanent(kp.getId())).contains(originalCard);
                 verify(exileService).exileCard(gd, player1Id, originalCard, kp.getId());
-                // No eligible cards â†’ log message
-                verify(gameBroadcastService).logAndBroadcast(eq(gd), argThat((GameLogEntry e) -> e.plainText().equals("Knowledge Pool — no other nonland cards exiled. Player1 cannot cast a spell.")));
+                // No eligible cards A?†’ log message
+                verify(gameLogService).append(eq(gd), argThat((GameLogEntry e) -> e.plainText().equals("Knowledge Pool — no other nonland cards exiled. Player1 cannot cast a spell.")));
             }
 
             @Test
@@ -296,8 +298,8 @@ class KnowledgePoolExileAndCastEffectHandlerTest {
 
                 exileSupport.handleKnowledgePoolCastChoice(gd, player, List.of());
 
-                verify(gameBroadcastService).logAndBroadcast(eq(gd), argThat((GameLogEntry e) -> e.plainText().equals("Player1 declines to cast a spell from Knowledge Pool.")));
-                verify(gameBroadcastService).invalidateAllPlayerViews(gd);
+                verify(gameLogService).append(eq(gd), argThat((GameLogEntry e) -> e.plainText().equals("Player1 declines to cast a spell from Knowledge Pool.")));
+                verify(mutationCoordinator).invalidateAllPlayerViews(gd);
                 assertThat(gd.peekPendingInteraction(PendingKnowledgePoolCast.class)).isNull();
             }
 
@@ -321,7 +323,7 @@ class KnowledgePoolExileAndCastEffectHandlerTest {
                 assertThat(gd.stack).anyMatch(se -> se.getCard() == chosenCard);
                 assertThat(gd.getSpellsCastThisTurnCount(player1Id)).isEqualTo(1);
                 verify(triggerCollectionService).checkSpellCastTriggers(gd, chosenCard, player1Id, false);
-                verify(gameBroadcastService).invalidateAllPlayerViews(gd);
+                verify(mutationCoordinator).invalidateAllPlayerViews(gd);
             }
 
             @Test
@@ -360,6 +362,6 @@ class KnowledgePoolExileAndCastEffectHandlerTest {
 
                 exileSupport.handleKnowledgePoolCastChoice(gd, player, List.of(UUID.randomUUID()));
 
-                verify(gameBroadcastService).invalidateAllPlayerViews(gd);
+                verify(mutationCoordinator).invalidateAllPlayerViews(gd);
             }
 }

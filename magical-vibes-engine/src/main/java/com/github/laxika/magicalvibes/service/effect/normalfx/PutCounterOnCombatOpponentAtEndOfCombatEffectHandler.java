@@ -7,7 +7,7 @@ import com.github.laxika.magicalvibes.model.StackEntry;
 import com.github.laxika.magicalvibes.model.action.PutCounterOnPermanentAtEndOfCombat;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
 import com.github.laxika.magicalvibes.model.effect.PutCounterOnCombatOpponentAtEndOfCombatEffect;
-import com.github.laxika.magicalvibes.service.GameBroadcastService;
+import com.github.laxika.magicalvibes.service.GameLogService;
 import com.github.laxika.magicalvibes.service.battlefield.GameQueryService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Component;
@@ -25,7 +25,7 @@ import java.util.UUID;
 public class PutCounterOnCombatOpponentAtEndOfCombatEffectHandler implements NormalEffectHandlerBean {
 
     private final GameQueryService gameQueryService;
-    private final GameBroadcastService gameBroadcastService;
+    private final GameLogService gameLogService;
 
     @Override
     public Class<? extends CardEffect> handledEffect() {
@@ -49,7 +49,7 @@ public class PutCounterOnCombatOpponentAtEndOfCombatEffectHandler implements Nor
         gameData.queueDelayedAction(new PutCounterOnPermanentAtEndOfCombat(
                 targetId, counterEffect.counterType(), counterEffect.amount(), counterEffect.alsoTap()));
         String tapSuffix = counterEffect.alsoTap() ? " and become tapped" : "";
-        gameBroadcastService.logAndBroadcast(gameData, GameLog.builder().card(target.getCard())
+        gameLogService.append(gameData, GameLog.builder().card(target.getCard())
                 .text(" will get " + counterEffect.amount() + " counter(s)" + tapSuffix + " at end of combat.")
                 .build());
     }

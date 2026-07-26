@@ -8,7 +8,7 @@ import com.github.laxika.magicalvibes.model.effect.CardEffect;
 import com.github.laxika.magicalvibes.model.effect.RevealRandomCardFromTargetPlayerHandEffect;
 import com.github.laxika.magicalvibes.model.event.GameEventFact;
 import com.github.laxika.magicalvibes.service.CardRevealService;
-import com.github.laxika.magicalvibes.service.GameBroadcastService;
+import com.github.laxika.magicalvibes.service.GameLogService;
 import java.util.List;
 import java.util.UUID;
 import java.util.concurrent.ThreadLocalRandom;
@@ -22,7 +22,7 @@ import org.springframework.stereotype.Component;
 public class RevealRandomCardFromTargetPlayerHandEffectHandler implements NormalEffectHandlerBean {
 
     private final CardRevealService cardRevealService;
-    private final GameBroadcastService gameBroadcastService;
+    private final GameLogService gameLogService;
 
     @Override
     public Class<? extends CardEffect> handledEffect() {
@@ -39,14 +39,14 @@ public class RevealRandomCardFromTargetPlayerHandEffectHandler implements Normal
 
         if (hand == null || hand.isEmpty()) {
             String logEntry = targetName + " has no cards to reveal.";
-            gameBroadcastService.logAndBroadcast(gameData, GameLog.text(logEntry));
+            gameLogService.append(gameData, GameLog.text(logEntry));
             log.info("Game {} - {} trigger: {} has no cards to reveal", gameData.id, sourceName, targetName);
             return;
         }
 
         int randomIndex = ThreadLocalRandom.current().nextInt(hand.size());
         Card revealed = hand.get(randomIndex);
-        gameBroadcastService.logAndBroadcast(gameData, GameLog.textCardText(targetName + " reveals " , revealed, " at random."));
+        gameLogService.append(gameData, GameLog.textCardText(targetName + " reveals " , revealed, " at random."));
 
         cardRevealService.revealToAllPlayers(
                 gameData,

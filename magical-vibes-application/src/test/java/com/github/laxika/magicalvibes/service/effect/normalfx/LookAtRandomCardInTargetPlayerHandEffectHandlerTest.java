@@ -31,7 +31,7 @@ class LookAtRandomCardInTargetPlayerHandEffectHandlerTest extends AbstractPlayer
         // Only the controller sees the card; the target does not.
         verify(cardRevealService).revealToPlayer(
                 gd, player2Id, GameEventFact.RevealZone.HAND, List.of(handCard), player1Id);
-        verify(gameBroadcastService).logAndBroadcast(eq(gd), argThat((GameLogEntry logEntry) ->
+        verify(gameLogService).append(eq(gd), argThat((GameLogEntry logEntry) ->
                 logEntry.plainText().contains("looks at a card at random")));
     }
 
@@ -45,7 +45,7 @@ class LookAtRandomCardInTargetPlayerHandEffectHandlerTest extends AbstractPlayer
         resolveEffect(gd, entry, new LookAtRandomCardInTargetPlayerHandEffect());
 
         verifyNoInteractions(cardRevealService);
-        verify(gameBroadcastService).logAndBroadcast(eq(gd), argThat((GameLogEntry logEntry) ->
+        verify(gameLogService).append(eq(gd), argThat((GameLogEntry logEntry) ->
                 logEntry.plainText().contains("It is empty")));
     }
 }

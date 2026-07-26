@@ -3,7 +3,7 @@ package com.github.laxika.magicalvibes.ai;
 import com.github.laxika.magicalvibes.model.AiDifficulty;
 import com.github.laxika.magicalvibes.model.GameData;
 import com.github.laxika.magicalvibes.model.Player;
-import com.github.laxika.magicalvibes.service.GameBroadcastService;
+import com.github.laxika.magicalvibes.service.GameActionAvailabilityService;
 import com.github.laxika.magicalvibes.service.GameService;
 import com.github.laxika.magicalvibes.service.GameSetupService;
 import com.github.laxika.magicalvibes.service.battlefield.GameQueryService;
@@ -14,7 +14,6 @@ import com.github.laxika.magicalvibes.service.effect.TargetValidationService;
 import com.github.laxika.magicalvibes.service.event.GameMutationCoordinator;
 import com.github.laxika.magicalvibes.service.target.TargetLegalityService;
 import com.github.laxika.magicalvibes.service.GameRegistry;
-import com.github.laxika.magicalvibes.websocket.WebSocketSessionManager;
 import com.github.laxika.magicalvibes.ai.simulation.MCTSEngine;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Value;
@@ -31,13 +30,13 @@ public class AiPlayerService {
     private final GameSetupService gameSetupService;
     private final GameQueryService gameQueryService;
     private final CombatAttackService combatAttackService;
-    private final GameBroadcastService gameBroadcastService;
+    private final GameActionAvailabilityService actionAvailabilityService;
     private final CastingCostService castingCostService;
     private final CastingPermissionService castingPermissionService;
     private final TargetValidationService targetValidationService;
     private final TargetLegalityService targetLegalityService;
-    private final WebSocketSessionManager sessionManager;
     private final GameMutationCoordinator mutationCoordinator;
+    private final AiDecisionEventSubscriber decisionEventSubscriber;
     private final long mctsTimeBudgetMs;
     private final int mctsParallelism;
 
@@ -46,13 +45,13 @@ public class AiPlayerService {
                            GameSetupService gameSetupService,
                            GameQueryService gameQueryService,
                            CombatAttackService combatAttackService,
-                           GameBroadcastService gameBroadcastService,
+                           GameActionAvailabilityService actionAvailabilityService,
                            CastingCostService castingCostService,
                            CastingPermissionService castingPermissionService,
                            TargetValidationService targetValidationService,
                            TargetLegalityService targetLegalityService,
-                           WebSocketSessionManager sessionManager,
                            GameMutationCoordinator mutationCoordinator,
+                           AiDecisionEventSubscriber decisionEventSubscriber,
                            @Value("${ai.mcts.time-budget-ms:" + MCTSEngine.DEFAULT_TIME_BUDGET_MS + "}") long mctsTimeBudgetMs,
                            @Value("${ai.mcts.parallelism:0}") int mctsParallelism) {
         this.gameRegistry = gameRegistry;
@@ -60,13 +59,13 @@ public class AiPlayerService {
         this.gameSetupService = gameSetupService;
         this.gameQueryService = gameQueryService;
         this.combatAttackService = combatAttackService;
-        this.gameBroadcastService = gameBroadcastService;
+        this.actionAvailabilityService = actionAvailabilityService;
         this.castingCostService = castingCostService;
         this.castingPermissionService = castingPermissionService;
         this.targetValidationService = targetValidationService;
         this.targetLegalityService = targetLegalityService;
-        this.sessionManager = sessionManager;
         this.mutationCoordinator = mutationCoordinator;
+        this.decisionEventSubscriber = decisionEventSubscriber;
         this.mctsTimeBudgetMs = mctsTimeBudgetMs;
         this.mctsParallelism = mctsParallelism;
     }
@@ -85,7 +84,7 @@ public class AiPlayerService {
 
         AiDecisionEngine engine = switch (aiDifficulty) {
             case HARD -> {
-                HardAiDecisionEngine hard = new HardAiDecisionEngine(gameData.id, aiPlayer, gameRegistry, gameService, gameQueryService, combatAttackService, gameBroadcastService, castingCostService, castingPermissionService, targetValidationService, targetLegalityService);
+                HardAiDecisionEngine hard = new HardAiDecisionEngine(gameData.id, aiPlayer, gameRegistry, gameService, gameQueryService, combatAttackService, actionAvailabilityService, castingCostService, castingPermissionService, targetValidationService, targetLegalityService);
                 hard.setMctsTimeBudgetMs(mctsTimeBudgetMs);
                 // 0 = auto-size from available cores; tests bypass this service and
                 // stay on the engine's single-threaded default
@@ -94,28 +93,28 @@ public class AiPlayerService {
                         : MCTSEngine.autoParallelism());
                 yield hard;
             }
-            case MEDIUM -> new MediumAiDecisionEngine(gameData.id, aiPlayer, gameRegistry, gameService, gameQueryService, combatAttackService, gameBroadcastService, castingCostService, castingPermissionService, targetValidationService, targetLegalityService);
-            case EASY -> new EasyAiDecisionEngine(gameData.id, aiPlayer, gameRegistry, gameService, gameQueryService, combatAttackService, gameBroadcastService, castingCostService, castingPermissionService, targetValidationService, targetLegalityService);
+            case MEDIUM -> new MediumAiDecisionEngine(gameData.id, aiPlayer, gameRegistry, gameService, gameQueryService, combatAttackService, actionAvailabilityService, castingCostService, castingPermissionService, targetValidationService, targetLegalityService);
+            case EASY -> new EasyAiDecisionEngine(gameData.id, aiPlayer, gameRegistry, gameService, gameQueryService, combatAttackService, actionAvailabilityService, castingCostService, castingPermissionService, targetValidationService, targetLegalityService);
         };
-        String connectionId = "ai-" + gameData.id;
-        AiConnection aiConnection = new AiConnection(connectionId, engine, aiDifficulty.getDecisionDelayMs());
-        engine.setSelfConnection(aiConnection);
+        String schedulerId = "ai-" + gameData.id + "-" + aiPlayerId;
+        AiDecisionScheduler aiDecisionScheduler = new AiDecisionScheduler(
+                schedulerId, engine, aiDifficulty.getDecisionDelayMs());
+        decisionEventSubscriber.register(gameData.id, aiPlayerId, aiDecisionScheduler);
 
-        // Register the AI connection in the session manager so it receives messages
-        sessionManager.registerPlayer(aiConnection, aiPlayerId, "AI Opponent");
-        sessionManager.setInGame(connectionId);
+        try {
+            mutationCoordinator.mutate(gameData, () -> {
+                // Mark this player as AI-controlled so auto-pass always hands it a priority window
+                // when it can act, instead of treating it like a human bound by auto-stop settings.
+                gameData.aiPlayerIds.add(aiPlayerId);
 
-        mutationCoordinator.mutate(gameData, () -> {
-            // Mark this player as AI-controlled so auto-pass always hands it a priority window
-            // when it can act, instead of treating it like a human bound by auto-stop settings.
-            gameData.aiPlayerIds.add(aiPlayerId);
-
-            // Join the game — this triggers initializeGame() and joins this outer setup action.
-            gameSetupService.joinGame(gameData, aiPlayer, aiDeckId);
-        });
-
-        // Schedule the AI's initial mulligan decision
-        aiConnection.scheduleInitialAction(engine::handleInitialMulligan);
+                // Join the game — this triggers initializeGame() and joins this outer setup action.
+                gameSetupService.joinGame(gameData, aiPlayer, aiDeckId);
+            });
+        } catch (RuntimeException e) {
+            decisionEventSubscriber.unregister(gameData.id, aiPlayerId);
+            aiDecisionScheduler.close();
+            throw e;
+        }
 
         log.info("AI opponent joined game {} with deck {}", gameData.id, aiDeckId);
     }

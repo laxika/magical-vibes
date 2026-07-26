@@ -8,7 +8,7 @@ import com.github.laxika.magicalvibes.model.StackEntry;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
 import com.github.laxika.magicalvibes.model.effect.ScryEffect;
-import com.github.laxika.magicalvibes.service.GameBroadcastService;
+import com.github.laxika.magicalvibes.service.GameLogService;
 import com.github.laxika.magicalvibes.service.battlefield.GameQueryService;
 import com.github.laxika.magicalvibes.service.effect.AmountContext;
 import com.github.laxika.magicalvibes.service.effect.AmountEvaluationService;
@@ -22,7 +22,7 @@ import org.springframework.stereotype.Component;
 @RequiredArgsConstructor
 public class ScryEffectHandler implements NormalEffectHandlerBean {
 
-    private final GameBroadcastService gameBroadcastService;
+    private final GameLogService gameLogService;
     private final com.github.laxika.magicalvibes.service.interaction.InteractionHandlerRegistry interactionHandlerRegistry;
     private final AmountEvaluationService amountEvaluationService;
     private final GameQueryService gameQueryService;
@@ -59,7 +59,7 @@ public class ScryEffectHandler implements NormalEffectHandlerBean {
         if (count == 0) {
             String logMsg = gameData.playerIdToName.get(controllerId) + " scries " + scryAmount
                     + " but their library is empty.";
-            gameBroadcastService.logAndBroadcast(gameData, GameLog.text(logMsg));
+            gameLogService.append(gameData, GameLog.text(logMsg));
             return;
         }
 
@@ -69,7 +69,7 @@ public class ScryEffectHandler implements NormalEffectHandlerBean {
         interactionHandlerRegistry.begin(gameData, new PendingInteraction.Scry(controllerId, topCards));
 
         String logMsg = gameData.playerIdToName.get(controllerId) + " scries " + count + ".";
-        gameBroadcastService.logAndBroadcast(gameData, GameLog.text(logMsg));
+        gameLogService.append(gameData, GameLog.text(logMsg));
         log.info("Game {} - {} scries {}", gameData.id, gameData.playerIdToName.get(controllerId), count);
     }
 }

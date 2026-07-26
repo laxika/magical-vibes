@@ -11,7 +11,7 @@ import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.StackEntry;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
 import com.github.laxika.magicalvibes.model.effect.RevealTopCardCreatureToBattlefieldElseGraveyardEffect;
-import com.github.laxika.magicalvibes.service.GameBroadcastService;
+import com.github.laxika.magicalvibes.service.GameLogService;
 import com.github.laxika.magicalvibes.service.battlefield.BattlefieldEntryService;
 import java.util.*;
 import lombok.extern.slf4j.Slf4j;
@@ -23,7 +23,7 @@ import org.springframework.stereotype.Component;
 @RequiredArgsConstructor
 public class RevealTopCardCreatureToBattlefieldElseGraveyardEffectHandler implements NormalEffectHandlerBean {
 
-    private final GameBroadcastService gameBroadcastService;
+    private final GameLogService gameLogService;
     private final BattlefieldEntryService battlefieldEntryService;
 
     @Override
@@ -40,13 +40,13 @@ public class RevealTopCardCreatureToBattlefieldElseGraveyardEffectHandler implem
         String sourceName = entry.getCard().getName();
 
         if (deck.isEmpty()) {
-            gameBroadcastService.logAndBroadcast(gameData, GameLog.text(playerName + "'s library is empty (" + sourceName + ")."));
+            gameLogService.append(gameData, GameLog.text(playerName + "'s library is empty (" + sourceName + ")."));
             return;
         }
 
         Card topCard = deck.removeFirst();
 
-        gameBroadcastService.logAndBroadcast(gameData, GameLog.builder().text(playerName + " reveals ").card(topCard).text(" from the top of their library (" + sourceName + ").").build());
+        gameLogService.append(gameData, GameLog.builder().text(playerName + " reveals ").card(topCard).text(" from the top of their library (" + sourceName + ").").build());
 
         if (topCard.hasType(CardType.CREATURE)) {
             RevealTopCardCreatureToBattlefieldElseGraveyardEffect fx =
@@ -57,7 +57,7 @@ public class RevealTopCardCreatureToBattlefieldElseGraveyardEffectHandler implem
             }
             battlefieldEntryService.putPermanentOntoBattlefield(gameData, controllerId, perm);
 
-            gameBroadcastService.logAndBroadcast(gameData, GameLog.builder()
+            gameLogService.append(gameData, GameLog.builder()
                     .card(topCard)
                     .text(" enters the battlefield under " + playerName + "'s control (" + sourceName + ").")
                     .build());
@@ -73,7 +73,7 @@ public class RevealTopCardCreatureToBattlefieldElseGraveyardEffectHandler implem
                     gameData.id, playerName, topCard.getName(), sourceName);
         } else {
             gameData.playerGraveyards.get(controllerId).add(topCard);
-            gameBroadcastService.logAndBroadcast(gameData, GameLog.builder().text(playerName + " puts ").card(topCard).text(" into their graveyard (" + sourceName + ").").build());
+            gameLogService.append(gameData, GameLog.builder().text(playerName + " puts ").card(topCard).text(" into their graveyard (" + sourceName + ").").build());
         }
     }
 }

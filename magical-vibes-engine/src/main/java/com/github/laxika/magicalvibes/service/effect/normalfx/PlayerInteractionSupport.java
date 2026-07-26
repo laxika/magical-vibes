@@ -15,7 +15,7 @@ import com.github.laxika.magicalvibes.model.filter.CardPredicateUtils;
 import com.github.laxika.magicalvibes.model.event.GameEventFact;
 import com.github.laxika.magicalvibes.service.CardRevealService;
 import com.github.laxika.magicalvibes.service.DrawService;
-import com.github.laxika.magicalvibes.service.GameBroadcastService;
+import com.github.laxika.magicalvibes.service.GameLogService;
 import com.github.laxika.magicalvibes.service.battlefield.BattlefieldEntryService;
 import com.github.laxika.magicalvibes.service.battlefield.GameQueryService;
 import com.github.laxika.magicalvibes.service.filter.PredicateEvaluationService;
@@ -48,7 +48,7 @@ public class PlayerInteractionSupport {
     private final GraveyardService graveyardService;
     private final GameQueryService gameQueryService;
     private final PredicateEvaluationService predicateEvaluationService;
-    private final GameBroadcastService gameBroadcastService;
+    private final GameLogService gameLogService;
     private final PlayerInputService playerInputService;
     private final CardRevealService cardRevealService;
     private final PermanentRemovalService permanentRemovalService;
@@ -88,7 +88,7 @@ public class PlayerInteractionSupport {
         if (validIndices.isEmpty()) {
             String playerName = gameData.playerIdToName.get(playerId);
             String logEntry = playerName + " has no " + effect.label() + " cards in hand.";
-            gameBroadcastService.logAndBroadcast(gameData, GameLog.text(logEntry));
+            gameLogService.append(gameData, GameLog.text(logEntry));
             log.info("Game {} - {} has no {} cards in hand for hand-to-battlefield effect", gameData.id, playerName, effect.label());
             return;
         }
@@ -128,7 +128,7 @@ public class PlayerInteractionSupport {
         if (creatureIndices.isEmpty()) {
             String playerName = gameData.playerIdToName.get(playerId);
             String logEntry = playerName + " has no creature cards in hand.";
-            gameBroadcastService.logAndBroadcast(gameData, GameLog.text(logEntry));
+            gameLogService.append(gameData, GameLog.text(logEntry));
             log.info("Game {} - {} has no creatures in hand for creature-choice effect", gameData.id, playerName);
             return;
         }
@@ -163,7 +163,7 @@ public class PlayerInteractionSupport {
 
         Card drawn = hand.get(hand.size() - 1);
         String playerName = gameData.playerIdToName.get(playerId);
-        gameBroadcastService.logAndBroadcast(gameData, GameLog.textCardText(playerName + " reveals ", drawn, "."));
+        gameLogService.append(gameData, GameLog.textCardText(playerName + " reveals ", drawn, "."));
 
         if (drawn.hasType(CardType.LAND)) {
             return;
@@ -172,7 +172,7 @@ public class PlayerInteractionSupport {
         hand.remove(hand.size() - 1);
         gameData.discardCausedByOpponent = false;
         graveyardService.discardCard(gameData, playerId, drawn);
-        gameBroadcastService.logAndBroadcast(gameData, GameLog.textCardText(playerName + " discards ", drawn, "."));
+        gameLogService.append(gameData, GameLog.textCardText(playerName + " discards ", drawn, "."));
         triggerCollectionService.checkDiscardTriggers(gameData, playerId, drawn);
 
         if (gameData.hasPendingInteraction(PermanentChoiceContext.DiscardTriggerAnyTarget.class)) {
@@ -189,7 +189,7 @@ public class PlayerInteractionSupport {
         List<Card> hand = gameData.playerHands.get(playerId);
         if (hand == null || hand.isEmpty()) {
             String logEntry = gameData.playerIdToName.get(playerId) + " has no cards to discard.";
-            gameBroadcastService.logAndBroadcast(gameData, GameLog.text(logEntry));
+            gameLogService.append(gameData, GameLog.text(logEntry));
             return;
         }
 
@@ -203,7 +203,7 @@ public class PlayerInteractionSupport {
 
         if (hand == null || hand.isEmpty()) {
             String logEntry = playerName + " has no cards to discard.";
-            gameBroadcastService.logAndBroadcast(gameData, GameLog.text(logEntry));
+            gameLogService.append(gameData, GameLog.text(logEntry));
             return;
         }
 
@@ -213,7 +213,7 @@ public class PlayerInteractionSupport {
             int randomIndex = ThreadLocalRandom.current().nextInt(currentHand.size());
             Card discarded = currentHand.remove(randomIndex);
             graveyardService.discardCard(gameData, playerId, discarded);
-            gameBroadcastService.logAndBroadcast(gameData, GameLog.textCardText(playerName + " discards " , discarded, " at random."));
+            gameLogService.append(gameData, GameLog.textCardText(playerName + " discards " , discarded, " at random."));
             log.info("Game {} - {} discards {} at random ({})", gameData.id, playerName, discarded.getName(), sourceName);
             triggerCollectionService.checkDiscardTriggers(gameData, playerId, discarded);
         }
@@ -236,14 +236,14 @@ public class PlayerInteractionSupport {
         String playerName = gameData.playerIdToName.get(playerId);
 
         if (hand == null || hand.isEmpty()) {
-            gameBroadcastService.logAndBroadcast(gameData, GameLog.text(playerName + " reveals their hand. It is empty."));
+            gameLogService.append(gameData, GameLog.text(playerName + " reveals their hand. It is empty."));
             return;
         }
 
         GameLog.Builder revealBuilder = GameLog.builder().text(playerName + " reveals their hand: ");
         appendCardList(revealBuilder, hand);
         revealBuilder.text(".");
-        gameBroadcastService.logAndBroadcast(gameData, revealBuilder.build());
+        gameLogService.append(gameData, revealBuilder.build());
         cardRevealService.revealToAllPlayers(
                 gameData, playerId, GameEventFact.RevealZone.HAND, hand);
 
@@ -255,14 +255,14 @@ public class PlayerInteractionSupport {
         }
 
         if (matchingIndices.isEmpty()) {
-            gameBroadcastService.logAndBroadcast(gameData, GameLog.text(playerName + " has no " + cardType.getDisplayName().toLowerCase() + " card to discard."));
+            gameLogService.append(gameData, GameLog.text(playerName + " has no " + cardType.getDisplayName().toLowerCase() + " card to discard."));
             return;
         }
 
         int chosen = matchingIndices.get(ThreadLocalRandom.current().nextInt(matchingIndices.size()));
         Card discarded = hand.remove(chosen);
         graveyardService.discardCard(gameData, playerId, discarded);
-        gameBroadcastService.logAndBroadcast(gameData, GameLog.textCardText(playerName + " discards ", discarded, " at random."));
+        gameLogService.append(gameData, GameLog.textCardText(playerName + " discards ", discarded, " at random."));
         log.info("Game {} - {} discards {} at random ({})", gameData.id, playerName, discarded.getName(), sourceName);
         triggerCollectionService.checkDiscardTriggers(gameData, playerId, discarded);
 
@@ -292,7 +292,7 @@ public class PlayerInteractionSupport {
 
         if (hand == null || hand.isEmpty()) {
             String logEntry = casterName + " looks at " + targetName + "'s hand. It is empty.";
-            gameBroadcastService.logAndBroadcast(gameData, GameLog.text(logEntry));
+            gameLogService.append(gameData, GameLog.text(logEntry));
             log.info("Game {} - {} looks at {}'s empty hand", gameData.id, casterName, targetName);
             return;
         }
@@ -301,7 +301,7 @@ public class PlayerInteractionSupport {
         GameLog.Builder revealBuilder = GameLog.builder().text(targetName + " reveals their hand: ");
         appendCardList(revealBuilder, hand);
         revealBuilder.text(".");
-        gameBroadcastService.logAndBroadcast(gameData, revealBuilder.build());
+        gameLogService.append(gameData, revealBuilder.build());
 
         // Build valid indices based on included or excluded types, then the optional predicate filter
         UUID sourceCardId = entry.getCard() != null ? entry.getCard().getId() : null;
@@ -324,7 +324,7 @@ public class PlayerInteractionSupport {
 
         if (validIndices.isEmpty()) {
             String noValidEntry = casterName + " cannot choose a card (" + targetName + "'s hand contains no valid choices).";
-            gameBroadcastService.logAndBroadcast(gameData, GameLog.text(noValidEntry));
+            gameLogService.append(gameData, GameLog.text(noValidEntry));
             log.info("Game {} - {}'s hand has no valid choices for {}", gameData.id, targetName, casterName);
             return;
         }
@@ -366,7 +366,7 @@ public class PlayerInteractionSupport {
         String casterName = gameData.playerIdToName.get(casterId);
 
         if (hand == null || hand.isEmpty()) {
-            gameBroadcastService.logAndBroadcast(gameData,
+            gameLogService.append(gameData,
                     GameLog.text(targetName + " reveals their hand. It is empty."));
             log.info("Game {} - {}'s hand is empty for dual-filter hand discard", gameData.id, targetName);
             return;
@@ -375,14 +375,14 @@ public class PlayerInteractionSupport {
         GameLog.Builder revealBuilder = GameLog.builder().text(targetName + " reveals their hand: ");
         appendCardList(revealBuilder, hand);
         revealBuilder.text(".");
-        gameBroadcastService.logAndBroadcast(gameData, revealBuilder.build());
+        gameLogService.append(gameData, revealBuilder.build());
 
         UUID sourceCardId = entry.getCard() != null ? entry.getCard().getId() : null;
         List<Integer> firstIndices = matchingHandIndices(hand, firstFilter, sourceCardId);
         List<Integer> secondIndices = matchingHandIndices(hand, secondFilter, sourceCardId);
 
         if (firstIndices.isEmpty() && secondIndices.isEmpty()) {
-            gameBroadcastService.logAndBroadcast(gameData, GameLog.text(
+            gameLogService.append(gameData, GameLog.text(
                     casterName + " cannot choose a card (" + targetName + "'s hand contains no valid choices)."));
             log.info("Game {} - {}'s hand has no dual-filter matches for {}", gameData.id, targetName, casterName);
             return;
@@ -440,7 +440,7 @@ public class PlayerInteractionSupport {
 
         if (hand == null || hand.isEmpty()) {
             String logEntry = casterName + " looks at " + targetName + "'s hand. It is empty.";
-            gameBroadcastService.logAndBroadcast(gameData, GameLog.text(logEntry));
+            gameLogService.append(gameData, GameLog.text(logEntry));
             log.info("Game {} - {} looks at {}'s empty hand", gameData.id, casterName, targetName);
             return;
         }
@@ -448,7 +448,7 @@ public class PlayerInteractionSupport {
         GameLog.Builder revealBuilder = GameLog.builder().text(casterName + " looks at " + targetName + "'s hand: ");
         appendCardList(revealBuilder, hand);
         revealBuilder.text(".");
-        gameBroadcastService.logAndBroadcast(gameData, revealBuilder.build());
+        gameLogService.append(gameData, revealBuilder.build());
 
         List<Integer> validIndices = new ArrayList<>();
         for (int i = 0; i < hand.size(); i++) {
@@ -459,7 +459,7 @@ public class PlayerInteractionSupport {
 
         if (validIndices.isEmpty()) {
             String noValidEntry = casterName + " chooses no card (" + targetName + " has no nonland cards).";
-            gameBroadcastService.logAndBroadcast(gameData, GameLog.text(noValidEntry));
+            gameLogService.append(gameData, GameLog.text(noValidEntry));
             log.info("Game {} - {}'s hand has no nonland cards for {}", gameData.id, targetName, casterName);
             return;
         }
@@ -487,7 +487,7 @@ public class PlayerInteractionSupport {
         String targetName = gameData.playerIdToName.get(targetPlayerId);
 
         if (hand == null || hand.isEmpty()) {
-            gameBroadcastService.logAndBroadcast(gameData, GameLog.text(targetName + " reveals their hand. It is empty."));
+            gameLogService.append(gameData, GameLog.text(targetName + " reveals their hand. It is empty."));
             log.info("Game {} - {}'s hand is empty for reveal-and-discard", gameData.id, targetName);
             return;
         }
@@ -535,7 +535,7 @@ public class PlayerInteractionSupport {
         GameLog.Builder revealBuilder = GameLog.builder().text(targetName + " reveals ");
         appendCardList(revealBuilder, revealedCards);
         revealBuilder.text(".");
-        gameBroadcastService.logAndBroadcast(gameData, revealBuilder.build());
+        gameLogService.append(gameData, revealBuilder.build());
 
         List<Integer> validIndices = new ArrayList<>();
         for (int i = 0; i < revealedCardIds.size(); i++) {
@@ -609,7 +609,7 @@ public class PlayerInteractionSupport {
             List<Card> hand = gameData.playerHands.get(nextPlayerId);
             if (hand == null || hand.isEmpty()) {
                 String logEntry = gameData.playerIdToName.get(nextPlayerId) + " has no cards to discard.";
-                gameBroadcastService.logAndBroadcast(gameData, GameLog.text(logEntry));
+                gameLogService.append(gameData, GameLog.text(logEntry));
                 continue;
             }
             playerInputService.beginDiscardChoice(gameData, nextPlayerId, amount,

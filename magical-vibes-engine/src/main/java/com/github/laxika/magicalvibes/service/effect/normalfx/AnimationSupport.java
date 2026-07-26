@@ -18,7 +18,7 @@ import com.github.laxika.magicalvibes.model.effect.EffectDuration;
 import com.github.laxika.magicalvibes.model.effect.MayEffect;
 import com.github.laxika.magicalvibes.model.effect.SetBasePowerToughnessEffect;
 import com.github.laxika.magicalvibes.model.layer.FloatingContinuousEffect;
-import com.github.laxika.magicalvibes.service.GameBroadcastService;
+import com.github.laxika.magicalvibes.service.GameLogService;
 import com.github.laxika.magicalvibes.service.battlefield.CreatureControlService;
 import com.github.laxika.magicalvibes.service.battlefield.GameQueryService;
 import com.github.laxika.magicalvibes.service.effect.AmountContext;
@@ -45,7 +45,7 @@ import java.util.UUID;
 public class AnimationSupport {
 
     private final GameQueryService gameQueryService;
-    private final GameBroadcastService gameBroadcastService;
+    private final GameLogService gameLogService;
     private final PlayerInputService playerInputService;
     private final CreatureControlService creatureControlService;
     private final AmountEvaluationService amountEvaluationService;
@@ -117,7 +117,7 @@ public class AnimationSupport {
         target.getUntilNextTurnKeywords().addAll(effect.grantedKeywords());
         addAnimationBasePtFloatingEffect(gameData, entry, target, power, toughness, EffectDuration.UNTIL_YOUR_NEXT_TURN);
 
-        gameBroadcastService.logAndBroadcast(gameData, GameLog.cardThen(target.getCard(),
+        gameLogService.append(gameData, GameLog.cardThen(target.getCard(),
                 " becomes a " + power + "/" + toughness + " creature until your next turn."));
 
         log.info("Game {} - {} becomes a {}/{} creature until next turn", gameData.id, target.getCard().getName(), power, toughness);
@@ -156,7 +156,7 @@ public class AnimationSupport {
         self.getGrantedCardTypes().addAll(effect.grantedCardTypes());
 
         String durationText = untilEndOfCombat ? "until end of combat" : "until end of turn";
-        gameBroadcastService.logAndBroadcast(gameData, GameLog.cardThen(self.getCard(),
+        gameLogService.append(gameData, GameLog.cardThen(self.getCard(),
                 " becomes a " + power + "/" + toughness + " creature " + durationText + "."));
 
         log.info("Game {} - {} becomes a {}/{} creature", gameData.id, self.getCard().getName(), power, toughness);
@@ -209,7 +209,7 @@ public class AnimationSupport {
         }
 
         String durationText = untilNextTurn ? "until your next turn" : "until end of turn";
-        gameBroadcastService.logAndBroadcast(gameData, GameLog.text("All lands you control become " + power + "/" + toughness
+        gameLogService.append(gameData, GameLog.text("All lands you control become " + power + "/" + toughness
                         + " Elemental creatures with reach, indestructible, and haste " + durationText + ". They're still lands."));
     }
 
@@ -241,7 +241,7 @@ public class AnimationSupport {
             }
         }
 
-        gameBroadcastService.logAndBroadcast(gameData, GameLog.text("All lands become " + power + "/" + toughness
+        gameLogService.append(gameData, GameLog.text("All lands become " + power + "/" + toughness
                         + " creatures until end of turn. They're still lands."));
     }
 
@@ -275,14 +275,14 @@ public class AnimationSupport {
                 if (permanent.isAttached() && permanent.getCard().getSubtypes().contains(CardSubtype.EQUIPMENT)) {
                     permanent.setAttachedTo(null);
                     gameData.expireFloatingEffectsForUnattachedSource(permanent.getId());
-                    gameBroadcastService.logAndBroadcast(gameData, GameLog.cardThen(permanent.getCard(), " becomes unattached."));
+                    gameLogService.append(gameData, GameLog.cardThen(permanent.getCard(), " becomes unattached."));
                 }
                 count++;
             }
         }
 
         String logEntry = count + " artifact(s) become " + power + "/" + toughness + " creature(s) until end of turn.";
-        gameBroadcastService.logAndBroadcast(gameData, GameLog.text(logEntry));
+        gameLogService.append(gameData, GameLog.text(logEntry));
 
         log.info("Game {} - {} artifacts animated as {}/{} creatures until end of turn",
                 gameData.id, count, power, toughness);
@@ -320,11 +320,11 @@ public class AnimationSupport {
         if (target.isAttached() && target.getCard().getSubtypes().contains(CardSubtype.EQUIPMENT)) {
             target.setAttachedTo(null);
             gameData.expireFloatingEffectsForUnattachedSource(target.getId());
-            gameBroadcastService.logAndBroadcast(gameData, GameLog.cardThen(target.getCard(), " becomes unattached."));
+            gameLogService.append(gameData, GameLog.cardThen(target.getCard(), " becomes unattached."));
             log.info("Game {} - {} unattached (equipment became creature)", gameData.id, target.getCard().getName());
         }
 
-        gameBroadcastService.logAndBroadcast(gameData, GameLog.cardThen(target.getCard(),
+        gameLogService.append(gameData, GameLog.cardThen(target.getCard(),
                 " becomes a " + power + "/" + toughness + " creature."));
 
         log.info("Game {} - {} becomes a {}/{} creature permanently", gameData.id, target.getCard().getName(), power, toughness);
@@ -344,7 +344,7 @@ public class AnimationSupport {
         // nothing happens to the targeted land.
         UUID sourcePermanentId = entry.getSourcePermanentId();
         if (sourcePermanentId == null || gameQueryService.findPermanentById(gameData, sourcePermanentId) == null) {
-            gameBroadcastService.logAndBroadcast(gameData, GameLog.cardThen(entry.getCard(),
+            gameLogService.append(gameData, GameLog.cardThen(entry.getCard(),
                     "'s ability has no effect (it is no longer on the battlefield)."));
             log.info("Game {} - {} ETB has no effect, source left battlefield", gameData.id, entry.getCard().getName());
             return;
@@ -372,7 +372,7 @@ public class AnimationSupport {
 
         gameData.sourceLinkedAnimations.put(target.getId(), sourcePermanentId);
 
-        gameBroadcastService.logAndBroadcast(gameData, GameLog.cardThen(target.getCard(),
+        gameLogService.append(gameData, GameLog.cardThen(target.getCard(),
                 " becomes a " + power + "/" + toughness + " green Treefolk creature. It's still a land."));
 
         log.info("Game {} - {} becomes a {}/{} creature while {} is on the battlefield",
@@ -388,11 +388,11 @@ public class AnimationSupport {
         Permanent target = gameQueryService.findPermanentById(gameData, targetPermId);
         if (source == null) {
             String logEntry = "Transform-and-attach fizzles — source no longer on the battlefield.";
-            gameBroadcastService.logAndBroadcast(gameData, GameLog.text(logEntry));
+            gameLogService.append(gameData, GameLog.text(logEntry));
             return;
         }
         if (target == null || !gameQueryService.isCreature(gameData, target)) {
-            gameBroadcastService.logAndBroadcast(gameData, GameLog.cardThen(source.getCard(),
+            gameLogService.append(gameData, GameLog.cardThen(source.getCard(),
                     "'s ability fizzles — target creature no longer exists."));
             return;
         }
@@ -405,7 +405,7 @@ public class AnimationSupport {
         source.setAttachedTo(target.getId());
         // CR 613.7e: an attachment receives a new timestamp each time it becomes attached.
         source.setTimestamp(gameData.nextTimestamp());
-        gameBroadcastService.logAndBroadcast(gameData, GameLog.cardTextCard(source.getCard(), " is attached to ", target.getCard(), "."));
+        gameLogService.append(gameData, GameLog.cardTextCard(source.getCard(), " is attached to ", target.getCard(), "."));
         log.info("Game {} - {} attached to {}", gameData.id, source.getCard().getName(), target.getCard().getName());
 
         boolean hasControlEffect = source.getCard().getEffects(EffectSlot.STATIC).stream()
@@ -435,13 +435,13 @@ public class AnimationSupport {
         if (self.isAttached() && !backFace.getSubtypes().contains(CardSubtype.EQUIPMENT)) {
             self.setAttachedTo(null);
             gameData.expireFloatingEffectsForUnattachedSource(self.getId());
-            gameBroadcastService.logAndBroadcast(gameData, GameLog.cardThen(frontCard, " becomes unattached."));
+            gameLogService.append(gameData, GameLog.cardThen(frontCard, " becomes unattached."));
             log.info("Game {} - {} unattached (transformed into non-Equipment)", gameData.id, frontName);
         }
 
         self.setCard(backFace);
         self.setTransformed(true);
-        gameBroadcastService.logAndBroadcast(gameData, GameLog.cardTextCard(frontCard, " transforms into ", backFace, "."));
+        gameLogService.append(gameData, GameLog.cardTextCard(frontCard, " transforms into ", backFace, "."));
         log.info("Game {} - {} transforms into {}", gameData.id, frontName, backFace.getName());
 
         fireTransformTriggers(gameData, self, backFace, EffectSlot.ON_TRANSFORM_TO_BACK_FACE);
@@ -454,7 +454,7 @@ public class AnimationSupport {
         String backName = backCard.getName();
         self.setCard(originalCard);
         self.setTransformed(false);
-        gameBroadcastService.logAndBroadcast(gameData, GameLog.cardTextCard(backCard, " transforms into ", originalCard, "."));
+        gameLogService.append(gameData, GameLog.cardTextCard(backCard, " transforms into ", originalCard, "."));
         log.info("Game {} - {} transforms into {}", gameData.id, backName, originalCard.getName());
 
         fireTransformTriggers(gameData, self, originalCard, EffectSlot.ON_TRANSFORM_TO_FRONT_FACE);
@@ -477,7 +477,7 @@ public class AnimationSupport {
         for (CardEffect e : effects) {
             if (e instanceof MayEffect may) {
                 gameData.queueMayAbility(triggerCard, controllerId, may, null, self.getId());
-                gameBroadcastService.logAndBroadcast(gameData, GameLog.cardThen(triggerCard, "'s transform ability triggers."));
+                gameLogService.append(gameData, GameLog.cardThen(triggerCard, "'s transform ability triggers."));
                 log.info("Game {} - {} transform trigger queued (may ability)", gameData.id, triggerCard.getName());
             } else if (e instanceof DealDamageToTargetOpponentAndUpToCreaturesThatPlayerControlsEffect) {
                 gameData.interaction.setPermanentChoiceContext(
@@ -488,7 +488,7 @@ public class AnimationSupport {
                         .toList();
                 playerInputService.beginAnyTargetChoice(gameData, controllerId, List.of(), opponents,
                         triggerCard.getName() + "'s ability - Choose target opponent.");
-                gameBroadcastService.logAndBroadcast(gameData, GameLog.cardThen(triggerCard,
+                gameLogService.append(gameData, GameLog.cardThen(triggerCard,
                         "'s transform ability triggers - choose target opponent."));
                 log.info("Game {} - {} transform trigger awaiting opponent target", gameData.id, triggerCard.getName());
                 return;
@@ -502,7 +502,7 @@ public class AnimationSupport {
                         null,
                         self.getId()
                 ));
-                gameBroadcastService.logAndBroadcast(gameData, GameLog.cardThen(triggerCard, "'s transform ability triggers."));
+                gameLogService.append(gameData, GameLog.cardThen(triggerCard, "'s transform ability triggers."));
                 log.info("Game {} - {} transform trigger pushed onto stack", gameData.id, triggerCard.getName());
                 return;
             }

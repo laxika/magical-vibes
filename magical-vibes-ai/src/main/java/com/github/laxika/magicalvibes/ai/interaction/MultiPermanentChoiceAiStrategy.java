@@ -48,6 +48,6 @@ class MultiPermanentChoiceAiStrategy implements AiInteractionStrategy<PendingInt
         }
 
         log.info("AI: Choosing {} permanents in game {}", chosen.size(), ctx.gameId());
-        ctx.gameActions().answerInteraction(ctx.selfConnection(), new InteractionAnswer.PermanentsChosen(chosen));
+        ctx.gameActions().answerInteraction(new InteractionAnswer.PermanentsChosen(chosen));
     }
 }

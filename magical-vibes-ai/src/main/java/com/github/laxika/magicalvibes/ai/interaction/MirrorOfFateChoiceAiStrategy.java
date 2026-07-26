@@ -26,6 +26,6 @@ class MirrorOfFateChoiceAiStrategy implements AiInteractionStrategy<PendingInter
 
         List<UUID> chosen = interaction.validCardIds().stream().limit(interaction.maxCount()).toList();
         log.info("AI: Choosing {} exiled cards for Mirror of Fate in game {}", chosen.size(), ctx.gameId());
-        ctx.gameActions().answerInteraction(ctx.selfConnection(), new InteractionAnswer.CardsChosen(chosen));
+        ctx.gameActions().answerInteraction(new InteractionAnswer.CardsChosen(chosen));
     }
 }

@@ -1,6 +1,6 @@
 package com.github.laxika.magicalvibes.webservice;
 
-import com.github.laxika.magicalvibes.ai.AiConnection;
+import com.github.laxika.magicalvibes.ai.AiDecisionScheduler;
 import com.github.laxika.magicalvibes.ai.AiDecisionEngine;
 import com.github.laxika.magicalvibes.ai.EasyAiDecisionEngine;
 import com.github.laxika.magicalvibes.ai.HardAiDecisionEngine;
@@ -37,7 +37,9 @@ import com.github.laxika.magicalvibes.networking.model.MessageType;
 import com.github.laxika.magicalvibes.networking.model.CardView;
 import com.github.laxika.magicalvibes.networking.service.CardViewFactory;
 import com.github.laxika.magicalvibes.service.DraftRegistry;
-import com.github.laxika.magicalvibes.service.GameBroadcastService;
+import com.github.laxika.magicalvibes.service.GameActionAvailabilityService;
+import com.github.laxika.magicalvibes.service.GameLogService;
+import com.github.laxika.magicalvibes.ai.AiDecisionEventSubscriber;
 import com.github.laxika.magicalvibes.service.GameRegistry;
 import com.github.laxika.magicalvibes.service.GameResyncProjectionService;
 import com.github.laxika.magicalvibes.service.battlefield.GameQueryService;
@@ -45,13 +47,13 @@ import com.github.laxika.magicalvibes.service.effect.TargetValidationService;
 import com.github.laxika.magicalvibes.service.event.GameMutationCoordinator;
 import com.github.laxika.magicalvibes.service.target.TargetLegalityService;
 import com.github.laxika.magicalvibes.carddata.CardPrintingRegistry;
-import com.github.laxika.magicalvibes.websocket.WebSocketSessionManager;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
 
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.HashMap;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Random;
@@ -73,7 +75,9 @@ public class DraftService {
 
     private final DraftRegistry draftRegistry;
     private final GameRegistry gameRegistry;
-    private final GameBroadcastService gameBroadcastService;
+    private final GameActionAvailabilityService actionAvailabilityService;
+    private final GameLogService gameLogService;
+    private final AiDecisionEventSubscriber aiDecisionEventSubscriber;
     private final GameResyncProjectionService gameResyncProjectionService;
     private final GameService gameService;
     private final GameQueryService gameQueryService;
@@ -81,7 +85,6 @@ public class DraftService {
     private final CastingCostService castingCostService;
     private final CastingPermissionService castingPermissionService;
     private final SessionManager sessionManager;
-    private final WebSocketSessionManager webSocketSessionManager;
     private final CardViewFactory cardViewFactory;
     private final TargetValidationService targetValidationService;
     private final TargetLegalityService targetLegalityService;
@@ -92,7 +95,9 @@ public class DraftService {
 
     public DraftService(DraftRegistry draftRegistry,
                         GameRegistry gameRegistry,
-                        GameBroadcastService gameBroadcastService,
+                        GameActionAvailabilityService actionAvailabilityService,
+                        GameLogService gameLogService,
+                        AiDecisionEventSubscriber aiDecisionEventSubscriber,
                         GameResyncProjectionService gameResyncProjectionService,
                         GameService gameService,
                         GameQueryService gameQueryService,
@@ -100,14 +105,15 @@ public class DraftService {
                         CastingCostService castingCostService,
                         CastingPermissionService castingPermissionService,
                         SessionManager sessionManager,
-                        WebSocketSessionManager webSocketSessionManager,
                         CardViewFactory cardViewFactory,
                         TargetValidationService targetValidationService,
                         TargetLegalityService targetLegalityService,
                         GameMutationCoordinator mutationCoordinator) {
         this.draftRegistry = draftRegistry;
         this.gameRegistry = gameRegistry;
-        this.gameBroadcastService = gameBroadcastService;
+        this.actionAvailabilityService = actionAvailabilityService;
+        this.gameLogService = gameLogService;
+        this.aiDecisionEventSubscriber = aiDecisionEventSubscriber;
         this.gameResyncProjectionService = gameResyncProjectionService;
         this.gameService = gameService;
         this.gameQueryService = gameQueryService;
@@ -115,7 +121,6 @@ public class DraftService {
         this.castingCostService = castingCostService;
         this.castingPermissionService = castingPermissionService;
         this.sessionManager = sessionManager;
-        this.webSocketSessionManager = webSocketSessionManager;
         this.cardViewFactory = cardViewFactory;
         this.targetValidationService = targetValidationService;
         this.targetLegalityService = targetLegalityService;
@@ -565,9 +570,19 @@ public class DraftService {
 
         List<Card> deck1 = new ArrayList<>(draftData.builtDecks.get(player1Id));
         List<Card> deck2 = new ArrayList<>(draftData.builtDecks.get(player2Id));
+        boolean p1IsAi = draftData.aiPlayerIds.contains(player1Id);
+        boolean p2IsAi = draftData.aiPlayerIds.contains(player2Id);
+        Set<UUID> aiPlayerIds = new HashSet<>();
+        if (p1IsAi) {
+            aiPlayerIds.add(player1Id);
+        }
+        if (p2IsAi) {
+            aiPlayerIds.add(player2Id);
+        }
 
         GameData gameData = createDraftGame(
-                gameName, player1Id, p1Name, player2Id, p2Name, deck1, deck2, draftData.id);
+                gameName, player1Id, p1Name, player2Id, p2Name, deck1, deck2,
+                draftData.id, aiPlayerIds);
 
         draftData.activeGameForPlayer.put(player1Id, gameData.id);
         draftData.activeGameForPlayer.put(player2Id, gameData.id);
@@ -575,16 +590,15 @@ public class DraftService {
 
         log.info("Draft {} - Tournament game {} created: {} vs {}", draftData.id, gameData.id, p1Name, p2Name);
 
-        // For AI players, register AiConnection + EasyAiDecisionEngine
-        boolean p1IsAi = draftData.aiPlayerIds.contains(player1Id);
-        boolean p2IsAi = draftData.aiPlayerIds.contains(player2Id);
-
+        // Register AI decision schedulers before publishing the initial mulligan facts.
         if (p1IsAi) {
             registerAiForTournamentGame(gameData, player1Id, p1Name, draftData.aiDifficulty);
         }
         if (p2IsAi) {
             registerAiForTournamentGame(gameData, player2Id, p2Name, draftData.aiDifficulty);
         }
+
+        publishTournamentGameOpened(gameData);
 
         // Send TOURNAMENT_GAME_READY + GAME_JOINED to human players
         if (!p1IsAi) {
@@ -602,29 +616,26 @@ public class DraftService {
     private void registerAiForTournamentGame(GameData gameData, UUID aiPlayerId, String aiName, AiDifficulty aiDifficulty) {
         Player aiPlayer = new Player(aiPlayerId, aiName);
         AiDecisionEngine engine = switch (aiDifficulty) {
-            case HARD -> new HardAiDecisionEngine(gameData.id, aiPlayer, gameRegistry, gameService, gameQueryService, combatAttackService, gameBroadcastService, castingCostService, castingPermissionService, targetValidationService, targetLegalityService);
-            case MEDIUM -> new MediumAiDecisionEngine(gameData.id, aiPlayer, gameRegistry, gameService, gameQueryService, combatAttackService, gameBroadcastService, castingCostService, castingPermissionService, targetValidationService, targetLegalityService);
-            case EASY -> new EasyAiDecisionEngine(gameData.id, aiPlayer, gameRegistry, gameService, gameQueryService, combatAttackService, gameBroadcastService, castingCostService, castingPermissionService, targetValidationService, targetLegalityService);
+            case HARD -> new HardAiDecisionEngine(gameData.id, aiPlayer, gameRegistry, gameService, gameQueryService, combatAttackService, actionAvailabilityService, castingCostService, castingPermissionService, targetValidationService, targetLegalityService);
+            case MEDIUM -> new MediumAiDecisionEngine(gameData.id, aiPlayer, gameRegistry, gameService, gameQueryService, combatAttackService, actionAvailabilityService, castingCostService, castingPermissionService, targetValidationService, targetLegalityService);
+            case EASY -> new EasyAiDecisionEngine(gameData.id, aiPlayer, gameRegistry, gameService, gameQueryService, combatAttackService, actionAvailabilityService, castingCostService, castingPermissionService, targetValidationService, targetLegalityService);
         };
-        String connectionId = "ai-draft-" + gameData.id + "-" + aiPlayerId;
-        AiConnection aiConnection = new AiConnection(connectionId, engine, aiDifficulty.getDecisionDelayMs());
-        engine.setSelfConnection(aiConnection);
-
-        webSocketSessionManager.registerPlayer(aiConnection, aiPlayerId, aiName);
-        webSocketSessionManager.setInGame(connectionId);
-
-        // Schedule the AI's initial mulligan decision
-        aiConnection.scheduleInitialAction(engine::handleInitialMulligan);
+        String schedulerId = "ai-draft-" + gameData.id + "-" + aiPlayerId;
+        AiDecisionScheduler aiDecisionScheduler = new AiDecisionScheduler(
+                schedulerId, engine, aiDifficulty.getDecisionDelayMs());
+        aiDecisionEventSubscriber.register(gameData.id, aiPlayerId, aiDecisionScheduler);
     }
 
     private GameData createDraftGame(String gameName, UUID p1Id, String p1Name,
                                       UUID p2Id, String p2Name,
-                                      List<Card> deck1, List<Card> deck2, UUID draftId) {
+                                      List<Card> deck1, List<Card> deck2, UUID draftId,
+                                      Set<UUID> aiPlayerIds) {
         UUID gameId = UUID.randomUUID();
         GameData gameData = new GameData(gameId, gameName, p1Id, p1Name);
 
         mutationCoordinator.mutate(gameData, () -> {
             gameData.draftId = draftId;
+            gameData.aiPlayerIds.addAll(aiPlayerIds);
 
             // Add both players
             gameData.playerIds.add(p1Id);
@@ -645,18 +656,34 @@ public class DraftService {
 
             gameData.status = GameStatus.MULLIGAN;
 
-            gameData.gameLog.add(GameLogEntry.text("Tournament game started!"));
-            gameData.gameLog.add(GameLogEntry.text(p1Name + " vs " + p2Name));
-
             // Randomly pick starting player
             UUID startingPlayerId = random.nextBoolean() ? p1Id : p2Id;
-            String startingPlayerName = gameData.playerIdToName.get(startingPlayerId);
             gameData.startingPlayerId = startingPlayerId;
 
-            gameData.gameLog.add(GameLogEntry.text(startingPlayerName + " wins the coin toss and goes first!"));
-            gameData.gameLog.add(GameLogEntry.text("Mulligan phase — decide to keep or mulligan."));
-
             gameRegistry.register(gameData);
+        });
+
+        log.info("Draft game {} created and registered", gameId);
+        return gameData;
+    }
+
+    private void publishTournamentGameOpened(GameData gameData) {
+        mutationCoordinator.mutate(gameData, () -> {
+            UUID player1Id = gameData.orderedPlayerIds.get(0);
+            UUID player2Id = gameData.orderedPlayerIds.get(1);
+            String player1Name = gameData.playerIdToName.get(player1Id);
+            String player2Name = gameData.playerIdToName.get(player2Id);
+            String startingPlayerName = gameData.playerIdToName.get(gameData.startingPlayerId);
+            gameLogService.append(gameData, GameLogEntry.text("Tournament game started!"));
+            gameLogService.append(
+                    gameData,
+                    GameLogEntry.text(player1Name + " vs " + player2Name));
+            gameLogService.append(
+                    gameData,
+                    GameLogEntry.text(startingPlayerName + " wins the coin toss and goes first!"));
+            gameLogService.append(
+                    gameData,
+                    GameLogEntry.text("Mulligan phase — decide to keep or mulligan."));
             mutationCoordinator.emit(gameData,
                     new GameEventFact.StateInvalidated(Set.of(
                             GameEventFact.StateSection.GAME_STATUS,
@@ -671,9 +698,6 @@ public class DraftService {
                         GameEventAudience.player(playerId));
             }
         });
-
-        log.info("Draft game {} created and registered", gameId);
-        return gameData;
     }
 
     private void initializePlayerForDraftGame(GameData gameData, UUID playerId, List<Card> deck) {

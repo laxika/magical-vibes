@@ -4,7 +4,7 @@ import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.GameData;
 import com.github.laxika.magicalvibes.model.GameLog;
 import com.github.laxika.magicalvibes.model.Permanent;
-import com.github.laxika.magicalvibes.service.GameBroadcastService;
+import com.github.laxika.magicalvibes.service.GameLogService;
 import com.github.laxika.magicalvibes.service.exile.ExileService;
 import java.util.UUID;
 import lombok.RequiredArgsConstructor;
@@ -21,7 +21,7 @@ public class PreparedSupport {
 
     private final CopySupport copySupport;
     private final ExileService exileService;
-    private final GameBroadcastService gameBroadcastService;
+    private final GameLogService gameLogService;
 
     /**
      * Marks {@code permanent} prepared: exiles a castable copy of its prepare spell for {@code controllerId}.
@@ -46,7 +46,7 @@ public class PreparedSupport {
         permanent.setPrepared(true);
         permanent.setPreparedSpellCardId(copy.getId());
 
-        gameBroadcastService.logAndBroadcast(gameData, GameLog.cardThen(permanent.getCard(), " becomes prepared."));
+        gameLogService.append(gameData, GameLog.cardThen(permanent.getCard(), " becomes prepared."));
         log.info("Game {} - {} becomes prepared (prepare spell {} exiled)",
                 gameData.id, permanent.getCard().getName(), copy.getName());
         return true;
@@ -70,7 +70,7 @@ public class PreparedSupport {
         permanent.setPrepared(false);
         permanent.setPreparedSpellCardId(null);
 
-        gameBroadcastService.logAndBroadcast(gameData, GameLog.cardThen(permanent.getCard(), " becomes unprepared."));
+        gameLogService.append(gameData, GameLog.cardThen(permanent.getCard(), " becomes unprepared."));
         log.info("Game {} - {} becomes unprepared", gameData.id, permanent.getCard().getName());
         return true;
     }

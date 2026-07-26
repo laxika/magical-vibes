@@ -6,7 +6,7 @@ import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.StackEntry;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
 import com.github.laxika.magicalvibes.model.effect.PreventDividedDamageEffect;
-import com.github.laxika.magicalvibes.service.GameBroadcastService;
+import com.github.laxika.magicalvibes.service.GameLogService;
 import com.github.laxika.magicalvibes.service.battlefield.GameQueryService;
 import java.util.Map;
 import java.util.UUID;
@@ -25,7 +25,7 @@ import org.springframework.stereotype.Component;
 public class PreventDividedDamageEffectHandler implements NormalEffectHandlerBean {
 
     private final GameQueryService gameQueryService;
-    private final GameBroadcastService gameBroadcastService;
+    private final GameLogService gameLogService;
 
     @Override
     public Class<? extends CardEffect> handledEffect() {
@@ -46,14 +46,14 @@ public class PreventDividedDamageEffectHandler implements NormalEffectHandlerBea
             Permanent target = gameQueryService.findPermanentById(gameData, targetId);
             if (target != null) {
                 target.setDamagePreventionShield(target.getDamagePreventionShield() + amount);
-                gameBroadcastService.logAndBroadcast(gameData, GameLog.textCardText("The next " + amount + " damage that would be dealt to ", target.getCard(), " is prevented."));
+                gameLogService.append(gameData, GameLog.textCardText("The next " + amount + " damage that would be dealt to ", target.getCard(), " is prevented."));
                 continue;
             }
 
             if (gameData.playerIds.contains(targetId)) {
                 int current = gameData.playerDamagePreventionShields.getOrDefault(targetId, 0);
                 gameData.playerDamagePreventionShields.put(targetId, current + amount);
-                gameBroadcastService.logAndBroadcast(gameData, GameLog.text("The next " + amount + " damage that would be dealt to "
+                gameLogService.append(gameData, GameLog.text("The next " + amount + " damage that would be dealt to "
                                 + gameData.playerIdToName.get(targetId) + " is prevented."));
             }
         }

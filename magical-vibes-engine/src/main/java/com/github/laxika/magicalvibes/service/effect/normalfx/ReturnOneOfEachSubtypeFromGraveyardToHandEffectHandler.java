@@ -10,7 +10,7 @@ import com.github.laxika.magicalvibes.model.StackEntry;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
 import com.github.laxika.magicalvibes.model.effect.ReturnOneOfEachSubtypeFromGraveyardToHandEffect;
 import com.github.laxika.magicalvibes.model.filter.CardSubtypePredicate;
-import com.github.laxika.magicalvibes.service.GameBroadcastService;
+import com.github.laxika.magicalvibes.service.GameLogService;
 import com.github.laxika.magicalvibes.service.battlefield.GameQueryService;
 import com.github.laxika.magicalvibes.service.filter.PredicateEvaluationService;
 import com.github.laxika.magicalvibes.service.graveyard.GraveyardService;
@@ -26,7 +26,7 @@ public class ReturnOneOfEachSubtypeFromGraveyardToHandEffectHandler implements N
 
     private final GameQueryService gameQueryService;
     private final PredicateEvaluationService predicateEvaluationService;
-    private final GameBroadcastService gameBroadcastService;
+    private final GameLogService gameLogService;
     private final GraveyardReturnSupport graveyardReturnSupport;
     private final GraveyardService graveyardService;
 
@@ -55,7 +55,7 @@ public class ReturnOneOfEachSubtypeFromGraveyardToHandEffectHandler implements N
 
             if (matching.isEmpty()) {
                 String playerName = gameData.playerIdToName.get(controllerId);
-                gameBroadcastService.logAndBroadcast(gameData, GameLog.text(playerName + " has no " + subtype.getDisplayName() + " cards in their graveyard."));
+                gameLogService.append(gameData, GameLog.text(playerName + " has no " + subtype.getDisplayName() + " cards in their graveyard."));
                 continue;
             }
 
@@ -67,7 +67,7 @@ public class ReturnOneOfEachSubtypeFromGraveyardToHandEffectHandler implements N
                 gameData.addCardToHand(controllerId, card);
 
                 String playerName = gameData.playerIdToName.get(controllerId);
-                gameBroadcastService.logAndBroadcast(gameData, GameLog.textCardText(playerName + " returns ", card, " from graveyard to hand."));
+                gameLogService.append(gameData, GameLog.textCardText(playerName + " returns ", card, " from graveyard to hand."));
             } else {
                 // Multiple matches — queue a choice prompt
                 gameData.pendingGraveyardReturnQueue.add(

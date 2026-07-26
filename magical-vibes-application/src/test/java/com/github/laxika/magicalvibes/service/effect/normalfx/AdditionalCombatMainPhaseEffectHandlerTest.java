@@ -11,7 +11,7 @@ import com.github.laxika.magicalvibes.model.GameData;
 import com.github.laxika.magicalvibes.model.StackEntry;
 import com.github.laxika.magicalvibes.model.StackEntryType;
 import com.github.laxika.magicalvibes.model.effect.AdditionalCombatMainPhaseEffect;
-import com.github.laxika.magicalvibes.service.GameBroadcastService;
+import com.github.laxika.magicalvibes.service.GameLogService;
 import com.github.laxika.magicalvibes.service.aura.AuraAttachmentService;
 import com.github.laxika.magicalvibes.service.combat.CombatService;
 import com.github.laxika.magicalvibes.service.exile.ExileService;
@@ -38,7 +38,7 @@ import static org.mockito.Mockito.verify;
 class AdditionalCombatMainPhaseEffectHandlerTest {
 
     @Mock private CombatService combatService;
-    @Mock private GameBroadcastService gameBroadcastService;
+    @Mock private GameLogService gameLogService;
     @Mock private AuraAttachmentService auraAttachmentService;
     @Mock private TurnCleanupService turnCleanupService;
     @Mock private ExileService exileService;
@@ -69,7 +69,7 @@ class AdditionalCombatMainPhaseEffectHandlerTest {
         gd.playerGraveyards.put(player2Id, Collections.synchronizedList(new ArrayList<>()));
         gd.playerDecks.put(player1Id, Collections.synchronizedList(new ArrayList<>()));
         gd.playerDecks.put(player2Id, Collections.synchronizedList(new ArrayList<>()));
-        additionalCombatMainPhaseEffectHandler = new AdditionalCombatMainPhaseEffectHandler(gameBroadcastService);
+        additionalCombatMainPhaseEffectHandler = new AdditionalCombatMainPhaseEffectHandler(gameLogService);
 
     }
 
@@ -148,7 +148,7 @@ class AdditionalCombatMainPhaseEffectHandlerTest {
                 additionalCombatMainPhaseEffectHandler.resolve(gd, entry, effect);
 
                 assertThat(gd.additionalCombatMainPhasePairs).isEqualTo(0);
-                verify(gameBroadcastService, never()).logAndBroadcast(eq(gd), any(GameLogEntry.class));
+                verify(gameLogService, never()).append(eq(gd), any(GameLogEntry.class));
             }
 
             @Test
@@ -172,7 +172,7 @@ class AdditionalCombatMainPhaseEffectHandlerTest {
 
                 additionalCombatMainPhaseEffectHandler.resolve(gd, entry, effect);
 
-                verify(gameBroadcastService).logAndBroadcast(eq(gd), argThat((GameLogEntry e) -> e.plainText().equals("After this main phase, there is an additional combat phase followed by an additional main phase.")));
+                verify(gameLogService).append(eq(gd), argThat((GameLogEntry e) -> e.plainText().equals("After this main phase, there is an additional combat phase followed by an additional main phase.")));
             }
 
             @Test
@@ -184,6 +184,6 @@ class AdditionalCombatMainPhaseEffectHandlerTest {
 
                 additionalCombatMainPhaseEffectHandler.resolve(gd, entry, effect);
 
-                verify(gameBroadcastService).logAndBroadcast(eq(gd), argThat((GameLogEntry e) -> e.plainText().equals("After this main phase, there are 3 additional combat phases followed by additional main phases.")));
+                verify(gameLogService).append(eq(gd), argThat((GameLogEntry e) -> e.plainText().equals("After this main phase, there are 3 additional combat phases followed by additional main phases.")));
             }
 }

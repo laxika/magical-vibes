@@ -6,7 +6,7 @@ import com.github.laxika.magicalvibes.model.GameLog;
 import com.github.laxika.magicalvibes.model.StackEntry;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
 import com.github.laxika.magicalvibes.model.effect.ShuffleTargetCardsFromGraveyardIntoLibraryEffect;
-import com.github.laxika.magicalvibes.service.GameBroadcastService;
+import com.github.laxika.magicalvibes.service.GameLogService;
 import com.github.laxika.magicalvibes.service.battlefield.GameQueryService;
 import com.github.laxika.magicalvibes.service.graveyard.GraveyardService;
 import com.github.laxika.magicalvibes.service.library.LibraryShuffleHelper;
@@ -22,7 +22,7 @@ import org.springframework.stereotype.Component;
 @RequiredArgsConstructor
 public class ShuffleTargetCardsFromGraveyardIntoLibraryEffectHandler implements NormalEffectHandlerBean {
 
-    private final GameBroadcastService gameBroadcastService;
+    private final GameLogService gameLogService;
     private final GameQueryService gameQueryService;
     private final GraveyardService graveyardService;
 
@@ -41,7 +41,7 @@ public class ShuffleTargetCardsFromGraveyardIntoLibraryEffectHandler implements 
             // No targets — just shuffle the target player's library if we have a target player
             if (targetPlayerId != null) {
                 LibraryShuffleHelper.shuffleLibrary(gameData, targetPlayerId);
-                gameBroadcastService.logAndBroadcast(gameData, GameLog.textCardText(playerName + " shuffles their library (", entry.getCard(), ")."));
+                gameLogService.append(gameData, GameLog.textCardText(playerName + " shuffles their library (", entry.getCard(), ")."));
             }
             return;
         }
@@ -69,11 +69,11 @@ public class ShuffleTargetCardsFromGraveyardIntoLibraryEffectHandler implements 
         if (!movedNames.isEmpty()) {
             String logEntry = playerName + " shuffles " + String.join(", ", movedNames)
                     + " from graveyard into their library.";
-            gameBroadcastService.logAndBroadcast(gameData, GameLog.text(logEntry));
+            gameLogService.append(gameData, GameLog.text(logEntry));
             log.info("Game {} - {} shuffles {} card(s) from graveyard into library",
                     gameData.id, playerName, movedNames.size());
         } else {
-            gameBroadcastService.logAndBroadcast(gameData, GameLog.textCardText(playerName + " shuffles their library (", entry.getCard(), ")."));
+            gameLogService.append(gameData, GameLog.textCardText(playerName + " shuffles their library (", entry.getCard(), ")."));
         }
     }
 }

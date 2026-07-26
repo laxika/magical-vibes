@@ -8,7 +8,7 @@ import com.github.laxika.magicalvibes.model.StackEntry;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
 import com.github.laxika.magicalvibes.model.effect.LookAtTopCardMayRevealMatchingToHandElseMayGraveyardEffect;
 import com.github.laxika.magicalvibes.model.effect.LookAtTopCardMayRevealMatchingToHandElseMayGraveyardEffect.Stage;
-import com.github.laxika.magicalvibes.service.GameBroadcastService;
+import com.github.laxika.magicalvibes.service.GameLogService;
 import com.github.laxika.magicalvibes.service.filter.PredicateEvaluationService;
 import java.util.List;
 import java.util.UUID;
@@ -26,7 +26,7 @@ import org.springframework.stereotype.Component;
 public class LookAtTopCardMayRevealMatchingToHandElseMayGraveyardEffectHandler
         implements NormalEffectHandlerBean {
 
-    private final GameBroadcastService gameBroadcastService;
+    private final GameLogService gameLogService;
     private final PredicateEvaluationService predicateEvaluationService;
 
     @Override
@@ -48,13 +48,13 @@ public class LookAtTopCardMayRevealMatchingToHandElseMayGraveyardEffectHandler
         String sourceName = entry.getCard().getName();
 
         if (deck == null || deck.isEmpty()) {
-            gameBroadcastService.logAndBroadcast(gameData,
+            gameLogService.append(gameData,
                     GameLog.text(playerName + "'s library is empty (" + sourceName + ")."));
             return;
         }
 
         // "Look at" is private — do not broadcast the card's identity.
-        gameBroadcastService.logAndBroadcast(gameData,
+        gameLogService.append(gameData,
                 GameLog.text(playerName + " looks at the top card of their library (" + sourceName + ")."));
 
         Card topCard = deck.getFirst();

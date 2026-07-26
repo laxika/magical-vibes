@@ -8,7 +8,7 @@ import com.github.laxika.magicalvibes.model.PendingMayAbility;
 import com.github.laxika.magicalvibes.model.StackEntry;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
 import com.github.laxika.magicalvibes.model.effect.LookAtTargetPlayerTopCardMayGraveyardEffect;
-import com.github.laxika.magicalvibes.service.GameBroadcastService;
+import com.github.laxika.magicalvibes.service.GameLogService;
 import java.util.List;
 import java.util.UUID;
 import lombok.RequiredArgsConstructor;
@@ -25,7 +25,7 @@ import org.springframework.stereotype.Component;
 @RequiredArgsConstructor
 public class LookAtTargetPlayerTopCardMayGraveyardEffectHandler implements NormalEffectHandlerBean {
 
-    private final GameBroadcastService gameBroadcastService;
+    private final GameLogService gameLogService;
 
     @Override
     public Class<? extends CardEffect> handledEffect() {
@@ -42,12 +42,12 @@ public class LookAtTargetPlayerTopCardMayGraveyardEffectHandler implements Norma
         String sourceName = entry.getCard().getName();
 
         if (deck == null || deck.isEmpty()) {
-            gameBroadcastService.logAndBroadcast(gameData, GameLog.text(targetName + "'s library is empty (" + sourceName + ")."));
+            gameLogService.append(gameData, GameLog.text(targetName + "'s library is empty (" + sourceName + ")."));
             return;
         }
 
         Card topCard = deck.getFirst();
-        gameBroadcastService.logAndBroadcast(gameData, GameLog.text(controllerName + " looks at the top card of " + targetName + "'s library (" + sourceName + ")."));
+        gameLogService.append(gameData, GameLog.text(controllerName + " looks at the top card of " + targetName + "'s library (" + sourceName + ")."));
         log.info("Game {} - {} looks at top of {}'s library: {} ({})",
                 gameData.id, controllerName, targetName, topCard.getName(), sourceName);
 
@@ -55,13 +55,13 @@ public class LookAtTargetPlayerTopCardMayGraveyardEffectHandler implements Norma
 
         // Wand of Denial only lets you bin the card if it's a nonland card.
         if (typed.nonlandOnly() && topCard.hasType(CardType.LAND)) {
-            gameBroadcastService.logAndBroadcast(gameData, GameLog.text("The top card is a land; it stays on top (" + sourceName + ")."));
+            gameLogService.append(gameData, GameLog.text("The top card is a land; it stays on top (" + sourceName + ")."));
             return;
         }
 
         // "you may pay N life" — only offer the choice if the controller can pay.
         if (typed.lifeCost() > 0 && gameData.getLife(controllerId) < typed.lifeCost()) {
-            gameBroadcastService.logAndBroadcast(gameData, GameLog.text(controllerName + " can't pay " + typed.lifeCost() + " life (" + sourceName + ")."));
+            gameLogService.append(gameData, GameLog.text(controllerName + " can't pay " + typed.lifeCost() + " life (" + sourceName + ")."));
             return;
         }
 

@@ -19,7 +19,7 @@ import com.github.laxika.magicalvibes.networking.SessionManager;
 import com.github.laxika.magicalvibes.networking.model.CardView;
 import com.github.laxika.magicalvibes.networking.service.CardViewFactory;
 import com.github.laxika.magicalvibes.service.DrawService;
-import com.github.laxika.magicalvibes.service.GameBroadcastService;
+import com.github.laxika.magicalvibes.service.GameLogService;
 import com.github.laxika.magicalvibes.service.input.PlayerInputService;
 import com.github.laxika.magicalvibes.service.battlefield.GameQueryService;
 import com.github.laxika.magicalvibes.service.battlefield.PermanentRemovalService;
@@ -47,7 +47,7 @@ class DestroyTargetAndEachPlayerSearchesBasicLandToBattlefieldEffectHandlerTest 
     @Mock
     private DrawService drawService;
     @Mock
-    private GameBroadcastService gameBroadcastService;
+    private GameLogService gameLogService;
     @Mock
     private SessionManager sessionManager;
     @Mock
@@ -66,8 +66,8 @@ class DestroyTargetAndEachPlayerSearchesBasicLandToBattlefieldEffectHandlerTest 
 
     @BeforeEach
     void setUp() {
-        support = new LibrarySearchSupport(gameBroadcastService,
-                InteractionRegistryTestSupport.registryFor(sessionManager, cardViewFactory, gameBroadcastService));
+        support = new LibrarySearchSupport(gameLogService,
+                InteractionRegistryTestSupport.registryFor(sessionManager, cardViewFactory, gameLogService));
 
         player1Id = UUID.randomUUID();
         player2Id = UUID.randomUUID();
@@ -87,7 +87,7 @@ class DestroyTargetAndEachPlayerSearchesBasicLandToBattlefieldEffectHandlerTest 
         gd.playerDecks.put(player1Id, Collections.synchronizedList(new ArrayList<>()));
         gd.playerDecks.put(player2Id, Collections.synchronizedList(new ArrayList<>()));
         gd.activePlayerId = player1Id;
-        destroyTargetAndEachPlayerSearchesBasicLandHandler = new DestroyTargetAndEachPlayerSearchesBasicLandToBattlefieldEffectHandler(permanentRemovalService, gameQueryService, gameBroadcastService, support);
+        destroyTargetAndEachPlayerSearchesBasicLandHandler = new DestroyTargetAndEachPlayerSearchesBasicLandToBattlefieldEffectHandler(permanentRemovalService, gameQueryService, gameLogService, support);
 
     }
 
@@ -164,7 +164,7 @@ class DestroyTargetAndEachPlayerSearchesBasicLandToBattlefieldEffectHandlerTest 
                 destroyTargetAndEachPlayerSearchesBasicLandHandler.resolve(gd, entry, effect);
 
                 verify(permanentRemovalService).tryDestroyPermanent(gd, target, false);
-                verify(gameBroadcastService).logAndBroadcast(eq(gd), eq(GameLog.isDestroyed(target.getCard())));
+                verify(gameLogService).append(eq(gd), eq(GameLog.isDestroyed(target.getCard())));
             }
 
             @Test

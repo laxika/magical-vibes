@@ -7,10 +7,10 @@ one self-contained handler class per effect type in
 `magical-vibes-application/src/test/.../service/cast/`).
 
 `CastingCostService` is the single source of truth for effective cast cost. Both the UI cost
-preview (`GameBroadcastService.getPlayableCardIndices`) and the actual cast-time payment
+preview (`GameActionAvailabilityService.getPlayableCardIndices`) and the actual cast-time payment
 (`SpellCastingService`) call the same `CastingCostService` methods, which dispatch through the
 handler registry — so a cost modifier applies identically in the preview and at resolution.
-Never re-add per-effect `instanceof` chains in `GameBroadcastService` or `SpellCastingService`.
+Never re-add per-effect `instanceof` chains in `GameActionAvailabilityService` or `SpellCastingService`.
 
 ## Pattern
 
@@ -108,7 +108,7 @@ not through the handler registry.
   payment amounts.
 - `cast/CastingPermissionService.java` — `@Component`, sibling service for casting *permissions*
   (timing/flash, graveyard/library/exile cast permission, spell limits, restrictions, forbidden
-  names). Not cost math, but the other half of what used to live in `GameBroadcastService`.
+  names). Not cost math, but the other half of what used to live in `GameActionAvailabilityService`.
 - `service/GameEngineConfig.java` — exposes the registry bean and registers all
   `@Component` cost handlers after singletons are created.
 - Tests build the registry via `CostModificationTestRegistry.build(...)`

@@ -26,6 +26,6 @@ class DoomsdayChoiceAiStrategy implements AiInteractionStrategy<PendingInteracti
 
         List<UUID> chosen = interaction.validCardIds().stream().limit(interaction.maxCount()).toList();
         log.info("AI: Choosing {} cards for Doomsday in game {}", chosen.size(), ctx.gameId());
-        ctx.gameActions().answerInteraction(ctx.selfConnection(), new InteractionAnswer.CardsChosen(chosen));
+        ctx.gameActions().answerInteraction(new InteractionAnswer.CardsChosen(chosen));
     }
 }

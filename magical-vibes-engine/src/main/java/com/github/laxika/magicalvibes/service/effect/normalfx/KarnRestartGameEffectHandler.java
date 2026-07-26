@@ -20,7 +20,7 @@ import com.github.laxika.magicalvibes.model.effect.CardEffect;
 import com.github.laxika.magicalvibes.model.effect.KarnRestartGameEffect;
 import com.github.laxika.magicalvibes.model.event.GameEventAudience;
 import com.github.laxika.magicalvibes.model.event.GameEventFact;
-import com.github.laxika.magicalvibes.service.GameBroadcastService;
+import com.github.laxika.magicalvibes.service.GameLogService;
 import com.github.laxika.magicalvibes.service.event.GameMutationCoordinator;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -39,7 +39,7 @@ import java.util.concurrent.ConcurrentHashMap;
 @RequiredArgsConstructor
 public class KarnRestartGameEffectHandler implements NormalEffectHandlerBean {
 
-    private final GameBroadcastService gameBroadcastService;
+    private final GameLogService gameLogService;
     private final GameMutationCoordinator mutationCoordinator;
 
     @Override
@@ -68,7 +68,7 @@ public class KarnRestartGameEffectHandler implements NormalEffectHandlerBean {
         }
 
         String logEntry = controllerName + " restarts the game with Karn Liberated!";
-        gameBroadcastService.logAndBroadcast(gameData, GameLog.text(logEntry));
+        gameLogService.append(gameData, GameLog.text(logEntry));
         log.info("Game {} - {} restarts the game with Karn Liberated ({} cards saved)",
                 gameData.id, controllerName, karnExiledCards.size());
 
@@ -274,7 +274,7 @@ public class KarnRestartGameEffectHandler implements NormalEffectHandlerBean {
                 gameData.addCardToHand(playerId, deck.removeFirst());
             }
             String drawLog = gameData.playerIdToName.get(playerId) + " draws 7 cards.";
-            gameBroadcastService.logAndBroadcast(gameData, GameLog.text(drawLog));
+            gameLogService.append(gameData, GameLog.text(drawLog));
         }
 
         // Step 5: Controller goes first (CR 726)
@@ -293,7 +293,7 @@ public class KarnRestartGameEffectHandler implements NormalEffectHandlerBean {
         gameData.playerBottomDecisionIds.clear();
         gameData.status = GameStatus.MULLIGAN;
 
-        gameBroadcastService.logAndBroadcast(gameData, GameLog.text("Mulligan phase — decide to keep or mulligan."));
+        gameLogService.append(gameData, GameLog.text("Mulligan phase — decide to keep or mulligan."));
         mutationCoordinator.emit(gameData,
                 new GameEventFact.StateInvalidated(
                         GameEventFact.StateSection.PRIVATE_PLAYER_VIEW),

@@ -6,7 +6,7 @@ import com.github.laxika.magicalvibes.model.GameLog;
 import com.github.laxika.magicalvibes.model.GameStatus;
 import com.github.laxika.magicalvibes.model.PendingMayAbility;
 import com.github.laxika.magicalvibes.model.effect.GameOfChaosFlipAgainEffect;
-import com.github.laxika.magicalvibes.service.GameBroadcastService;
+import com.github.laxika.magicalvibes.service.GameLogService;
 import com.github.laxika.magicalvibes.service.GameOutcomeService;
 import java.util.List;
 import java.util.UUID;
@@ -23,7 +23,7 @@ import org.springframework.stereotype.Component;
 public class GameOfChaosSupport {
 
     private final LifeSupport lifeSupport;
-    private final GameBroadcastService gameBroadcastService;
+    private final GameLogService gameLogService;
     private final GameOutcomeService gameOutcomeService;
 
     /**
@@ -37,7 +37,7 @@ public class GameOfChaosSupport {
         boolean controllerWins = ThreadLocalRandom.current().nextBoolean();
         String controllerName = gameData.playerIdToName.get(controllerId);
 
-        gameBroadcastService.logAndBroadcast(gameData, GameLog.text(sourceName + ": " + controllerName
+        gameLogService.append(gameData, GameLog.text(sourceName + ": " + controllerName
                 + (controllerWins ? " wins" : " loses") + " the flip (stakes " + stake + ")."));
 
         UUID decidingPlayer;

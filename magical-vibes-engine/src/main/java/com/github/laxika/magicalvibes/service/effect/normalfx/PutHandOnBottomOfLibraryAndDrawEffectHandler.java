@@ -7,7 +7,7 @@ import com.github.laxika.magicalvibes.model.StackEntry;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
 import com.github.laxika.magicalvibes.model.effect.PutHandOnBottomOfLibraryAndDrawEffect;
 import com.github.laxika.magicalvibes.service.DrawService;
-import com.github.laxika.magicalvibes.service.GameBroadcastService;
+import com.github.laxika.magicalvibes.service.GameLogService;
 import java.util.List;
 import java.util.UUID;
 import lombok.RequiredArgsConstructor;
@@ -20,7 +20,7 @@ import org.springframework.stereotype.Component;
 public class PutHandOnBottomOfLibraryAndDrawEffectHandler implements NormalEffectHandlerBean {
 
     private final DrawService drawService;
-    private final GameBroadcastService gameBroadcastService;
+    private final GameLogService gameLogService;
 
     @Override
     public Class<? extends CardEffect> handledEffect() {
@@ -35,7 +35,7 @@ public class PutHandOnBottomOfLibraryAndDrawEffectHandler implements NormalEffec
         String sourceName = entry.getCard().getName();
 
         if (hand == null || hand.isEmpty()) {
-            gameBroadcastService.logAndBroadcast(gameData, GameLog.text(playerName + " has no cards in hand (" + sourceName + ")."));
+            gameLogService.append(gameData, GameLog.text(playerName + " has no cards in hand (" + sourceName + ")."));
             log.info("Game {} - {} has no cards in hand for {}", gameData.id, playerName, sourceName);
             return;
         }
@@ -47,7 +47,7 @@ public class PutHandOnBottomOfLibraryAndDrawEffectHandler implements NormalEffec
         deck.addAll(hand);
         hand.clear();
 
-        gameBroadcastService.logAndBroadcast(gameData, GameLog.text(playerName + " puts " + handSize + " card" + (handSize != 1 ? "s" : "")
+        gameLogService.append(gameData, GameLog.text(playerName + " puts " + handSize + " card" + (handSize != 1 ? "s" : "")
                         + " from hand on the bottom of their library (" + sourceName + ")."));
         log.info("Game {} - {} puts {} cards from hand on bottom of library ({})",
                 gameData.id, playerName, handSize, sourceName);
@@ -57,7 +57,7 @@ public class PutHandOnBottomOfLibraryAndDrawEffectHandler implements NormalEffec
             drawService.resolveDrawCard(gameData, playerId);
         }
 
-        gameBroadcastService.logAndBroadcast(gameData, GameLog.text(playerName + " draws " + handSize + " card" + (handSize != 1 ? "s" : "") + "."));
+        gameLogService.append(gameData, GameLog.text(playerName + " draws " + handSize + " card" + (handSize != 1 ? "s" : "") + "."));
         log.info("Game {} - {} draws {} cards ({})", gameData.id, playerName, handSize, sourceName);
     }
 }

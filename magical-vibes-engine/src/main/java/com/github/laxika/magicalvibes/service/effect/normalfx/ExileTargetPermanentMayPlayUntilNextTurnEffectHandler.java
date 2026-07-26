@@ -7,7 +7,7 @@ import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.StackEntry;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
 import com.github.laxika.magicalvibes.model.effect.ExileTargetPermanentMayPlayUntilNextTurnEffect;
-import com.github.laxika.magicalvibes.service.GameBroadcastService;
+import com.github.laxika.magicalvibes.service.GameLogService;
 import com.github.laxika.magicalvibes.service.battlefield.GameQueryService;
 import com.github.laxika.magicalvibes.service.battlefield.PermanentRemovalService;
 import java.util.UUID;
@@ -21,7 +21,7 @@ import org.springframework.stereotype.Component;
 public class ExileTargetPermanentMayPlayUntilNextTurnEffectHandler implements NormalEffectHandlerBean {
 
     private final GameQueryService gameQueryService;
-    private final GameBroadcastService gameBroadcastService;
+    private final GameLogService gameLogService;
     private final PermanentRemovalService permanentRemovalService;
     private final ExileSupport exileSupport;
 
@@ -42,7 +42,7 @@ public class ExileTargetPermanentMayPlayUntilNextTurnEffectHandler implements No
 
         Permanent target = gameQueryService.findPermanentById(gameData, targetId);
         if (target == null) {
-            gameBroadcastService.logAndBroadcast(gameData, GameLog.cardThen(entry.getCard(), " fizzles (target no longer on the battlefield)."));
+            gameLogService.append(gameData, GameLog.cardThen(entry.getCard(), " fizzles (target no longer on the battlefield)."));
             return;
         }
 
@@ -55,9 +55,9 @@ public class ExileTargetPermanentMayPlayUntilNextTurnEffectHandler implements No
         if (ownerId != null) {
             exileSupport.grantPlayUntilOwnersNextTurn(gameData, exiledCard.getId(), ownerId);
             String ownerName = gameData.playerIdToName.get(ownerId);
-            gameBroadcastService.logAndBroadcast(gameData, GameLog.builder().card(exiledCard).text(" is exiled — " + ownerName + " may play it until the end of their next turn.").build());
+            gameLogService.append(gameData, GameLog.builder().card(exiledCard).text(" is exiled — " + ownerName + " may play it until the end of their next turn.").build());
         } else {
-            gameBroadcastService.logAndBroadcast(gameData, GameLog.cardThen(exiledCard, " is exiled."));
+            gameLogService.append(gameData, GameLog.cardThen(exiledCard, " is exiled."));
         }
         log.info("Game {} - {} exiled by {} (owner may play until next turn)",
                 gameData.id, exiledCard.getName(), entry.getCard().getName());

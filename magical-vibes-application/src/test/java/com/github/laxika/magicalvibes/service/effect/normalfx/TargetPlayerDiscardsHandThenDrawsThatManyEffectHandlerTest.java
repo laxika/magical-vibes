@@ -36,7 +36,7 @@ class TargetPlayerDiscardsHandThenDrawsThatManyEffectHandlerTest extends Abstrac
         verify(graveyardService).discardCard(gd, player2Id, handCard1);
         verify(graveyardService).discardCard(gd, player2Id, handCard2);
         verify(drawService, times(2)).resolveDrawCard(gd, player2Id);
-        verify(gameBroadcastService).logAndBroadcast(eq(gd), argThat((GameLogEntry logEntry) ->
+        verify(gameLogService).append(eq(gd), argThat((GameLogEntry logEntry) ->
                 logEntry.plainText().contains("draws 2 cards")));
     }
 
@@ -51,7 +51,7 @@ class TargetPlayerDiscardsHandThenDrawsThatManyEffectHandlerTest extends Abstrac
 
         verify(graveyardService, never()).discardCard(any(), any(), any());
         verify(drawService, never()).resolveDrawCard(any(), any());
-        verify(gameBroadcastService).logAndBroadcast(eq(gd), argThat((GameLogEntry logEntry) ->
+        verify(gameLogService).append(eq(gd), argThat((GameLogEntry logEntry) ->
                 logEntry.plainText().contains("no cards to discard")));
     }
 

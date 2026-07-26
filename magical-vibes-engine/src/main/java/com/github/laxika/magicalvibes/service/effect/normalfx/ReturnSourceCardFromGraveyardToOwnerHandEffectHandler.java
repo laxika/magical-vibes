@@ -6,7 +6,7 @@ import com.github.laxika.magicalvibes.model.GameLog;
 import com.github.laxika.magicalvibes.model.StackEntry;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
 import com.github.laxika.magicalvibes.model.effect.ReturnSourceCardFromGraveyardToOwnerHandEffect;
-import com.github.laxika.magicalvibes.service.GameBroadcastService;
+import com.github.laxika.magicalvibes.service.GameLogService;
 import com.github.laxika.magicalvibes.service.battlefield.GameQueryService;
 import com.github.laxika.magicalvibes.service.battlefield.PermanentRemovalService;
 import java.util.UUID;
@@ -22,7 +22,7 @@ public class ReturnSourceCardFromGraveyardToOwnerHandEffectHandler implements No
 
     private final PermanentRemovalService permanentRemovalService;
     private final GameQueryService gameQueryService;
-    private final GameBroadcastService gameBroadcastService;
+    private final GameLogService gameLogService;
 
     @Override
     public Class<? extends CardEffect> handledEffect() {
@@ -35,7 +35,7 @@ public class ReturnSourceCardFromGraveyardToOwnerHandEffectHandler implements No
         UUID cardId = entry.getCard().getId();
         Card sourceCard = gameQueryService.findCardInGraveyardById(gameData, cardId);
         if (sourceCard == null) {
-            gameBroadcastService.logAndBroadcast(gameData, GameLog.cardThen(entry.getCard(), "'s ability fizzles (card not in graveyard)."));
+            gameLogService.append(gameData, GameLog.cardThen(entry.getCard(), "'s ability fizzles (card not in graveyard)."));
             log.info("Game {} - {} return-to-hand trigger fizzles (card {} not in graveyard)",
                     gameData.id, entry.getCard().getName(), cardId);
             return;
@@ -47,7 +47,7 @@ public class ReturnSourceCardFromGraveyardToOwnerHandEffectHandler implements No
 
         String ownerName = gameData.playerIdToName.get(ownerId);
         String logEntry = sourceCard.getName() + " returns from graveyard to " + ownerName + "'s hand.";
-        gameBroadcastService.logAndBroadcast(gameData, GameLog.builder().card(sourceCard).text(" returns from graveyard to " + ownerName + "'s hand.").build());
+        gameLogService.append(gameData, GameLog.builder().card(sourceCard).text(" returns from graveyard to " + ownerName + "'s hand.").build());
         log.info("Game {} - {} returns from graveyard to {}'s hand", gameData.id, sourceCard.getName(), ownerName);
     }
 }

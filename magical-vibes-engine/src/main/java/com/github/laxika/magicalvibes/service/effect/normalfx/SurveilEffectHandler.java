@@ -8,7 +8,7 @@ import com.github.laxika.magicalvibes.model.PendingMayAbility;
 import com.github.laxika.magicalvibes.model.StackEntry;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
 import com.github.laxika.magicalvibes.model.effect.SurveilEffect;
-import com.github.laxika.magicalvibes.service.GameBroadcastService;
+import com.github.laxika.magicalvibes.service.GameLogService;
 import com.github.laxika.magicalvibes.service.interaction.InteractionHandlerRegistry;
 import java.util.*;
 import lombok.extern.slf4j.Slf4j;
@@ -21,7 +21,7 @@ import org.springframework.stereotype.Component;
 @RequiredArgsConstructor
 public class SurveilEffectHandler implements NormalEffectHandlerBean {
 
-    private final GameBroadcastService gameBroadcastService;
+    private final GameLogService gameLogService;
     private final InteractionHandlerRegistry interactionHandlerRegistry;
 
     @Override
@@ -45,7 +45,7 @@ public class SurveilEffectHandler implements NormalEffectHandlerBean {
 
         if (deck.isEmpty()) {
             String logEntry = playerName + "'s library is empty (" + sourceName + " surveil).";
-            gameBroadcastService.logAndBroadcast(gameData, GameLog.text(logEntry));
+            gameLogService.append(gameData, GameLog.text(logEntry));
             return;
         }
 
@@ -57,7 +57,7 @@ public class SurveilEffectHandler implements NormalEffectHandlerBean {
             deck.subList(0, count).clear();
 
             String logEntry = playerName + " surveils " + count + " (" + sourceName + ").";
-            gameBroadcastService.logAndBroadcast(gameData, GameLog.text(logEntry));
+            gameLogService.append(gameData, GameLog.text(logEntry));
             log.info("Game {} - {} surveils {} ({})", gameData.id, playerName, count, sourceName);
 
             interactionHandlerRegistry.begin(gameData,
@@ -68,7 +68,7 @@ public class SurveilEffectHandler implements NormalEffectHandlerBean {
         Card topCard = deck.getFirst();
 
         String logEntry = playerName + " surveils 1 (" + sourceName + ").";
-        gameBroadcastService.logAndBroadcast(gameData, GameLog.text(logEntry));
+        gameLogService.append(gameData, GameLog.text(logEntry));
         log.info("Game {} - {} surveils 1, top card: {} ({})", gameData.id, playerName, topCard.getName(), sourceName);
 
         gameData.pendingMayAbilities.addFirst(new PendingMayAbility(

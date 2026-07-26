@@ -7,7 +7,7 @@ import com.github.laxika.magicalvibes.model.StackEntry;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
 import com.github.laxika.magicalvibes.model.effect.TargetPlayerDiscardsHandThenDrawsThatManyEffect;
 import com.github.laxika.magicalvibes.service.DrawService;
-import com.github.laxika.magicalvibes.service.GameBroadcastService;
+import com.github.laxika.magicalvibes.service.GameLogService;
 import com.github.laxika.magicalvibes.service.graveyard.GraveyardService;
 import com.github.laxika.magicalvibes.service.trigger.TriggerCollectionService;
 import java.util.ArrayList;
@@ -28,7 +28,7 @@ import org.springframework.stereotype.Component;
 public class TargetPlayerDiscardsHandThenDrawsThatManyEffectHandler implements NormalEffectHandlerBean {
 
     private final DrawService drawService;
-    private final GameBroadcastService gameBroadcastService;
+    private final GameLogService gameLogService;
     private final GraveyardService graveyardService;
     private final TriggerCollectionService triggerCollectionService;
 
@@ -50,7 +50,7 @@ public class TargetPlayerDiscardsHandThenDrawsThatManyEffectHandler implements N
 
         if (hand == null || hand.isEmpty()) {
             String logEntry = playerName + " has no cards to discard (" + cardName + ").";
-            gameBroadcastService.logAndBroadcast(gameData, GameLog.text(logEntry));
+            gameLogService.append(gameData, GameLog.text(logEntry));
             log.info("Game {} - {} has no cards to discard for {}", gameData.id, playerName, cardName);
             return;
         }
@@ -67,14 +67,14 @@ public class TargetPlayerDiscardsHandThenDrawsThatManyEffectHandler implements N
 
         String discardLog = playerName + " discards their hand (" + discardCount
                 + " card" + (discardCount != 1 ? "s" : "") + ") (" + cardName + ").";
-        gameBroadcastService.logAndBroadcast(gameData, GameLog.text(discardLog));
+        gameLogService.append(gameData, GameLog.text(discardLog));
         log.info("Game {} - {} discards hand of {} cards for {}", gameData.id, playerName, discardCount, cardName);
 
         for (int i = 0; i < discardCount; i++) {
             drawService.resolveDrawCard(gameData, playerId);
         }
         String drawLog = playerName + " draws " + discardCount + " card" + (discardCount != 1 ? "s" : "") + ".";
-        gameBroadcastService.logAndBroadcast(gameData, GameLog.text(drawLog));
+        gameLogService.append(gameData, GameLog.text(drawLog));
         log.info("Game {} - {} draws {} cards for {}", gameData.id, playerName, discardCount, cardName);
     }
 }

@@ -7,7 +7,7 @@ import com.github.laxika.magicalvibes.model.StackEntry;
 import com.github.laxika.magicalvibes.model.action.GainControlOfPermanentAtEndOfCombat;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
 import com.github.laxika.magicalvibes.model.effect.GainControlOfCombatOpponentAtEndOfCombatEffect;
-import com.github.laxika.magicalvibes.service.GameBroadcastService;
+import com.github.laxika.magicalvibes.service.GameLogService;
 import com.github.laxika.magicalvibes.service.battlefield.GameQueryService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Component;
@@ -26,7 +26,7 @@ import java.util.UUID;
 public class GainControlOfCombatOpponentAtEndOfCombatEffectHandler implements NormalEffectHandlerBean {
 
     private final GameQueryService gameQueryService;
-    private final GameBroadcastService gameBroadcastService;
+    private final GameLogService gameLogService;
 
     @Override
     public Class<? extends CardEffect> handledEffect() {
@@ -49,6 +49,6 @@ public class GainControlOfCombatOpponentAtEndOfCombatEffectHandler implements No
                 targetId, entry.getControllerId(), sourceId, entry.getCard().getName()));
         String logEntry = entry.getCard().getName() + " will gain control of "
                 + target.getCard().getName() + " at end of combat.";
-        gameBroadcastService.logAndBroadcast(gameData, GameLog.cardTextCard(entry.getCard(), " will gain control of ", target.getCard(), " at end of combat."));
+        gameLogService.append(gameData, GameLog.cardTextCard(entry.getCard(), " will gain control of ", target.getCard(), " at end of combat."));
     }
 }

@@ -8,7 +8,7 @@ import com.github.laxika.magicalvibes.model.StackEntry;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
 import com.github.laxika.magicalvibes.model.effect.CopyControllerCastSpellEffect;
 import com.github.laxika.magicalvibes.model.effect.CopySpellEffect;
-import com.github.laxika.magicalvibes.service.GameBroadcastService;
+import com.github.laxika.magicalvibes.service.GameLogService;
 import java.util.List;
 import java.util.UUID;
 import lombok.RequiredArgsConstructor;
@@ -20,7 +20,7 @@ import org.springframework.stereotype.Component;
 @RequiredArgsConstructor
 public class CopyControllerCastSpellEffectHandler implements NormalEffectHandlerBean {
 
-    private final GameBroadcastService gameBroadcastService;
+    private final GameLogService gameLogService;
     private final CopySupport copySupport;
 
     @Override
@@ -48,7 +48,7 @@ public class CopyControllerCastSpellEffectHandler implements NormalEffectHandler
 
         gameData.stack.add(copyEntry);
 
-        gameBroadcastService.logAndBroadcast(gameData, GameLog.textCardText("A copy of ", spellCard, " is created."));
+        gameLogService.append(gameData, GameLog.textCardText("A copy of ", spellCard, " is created."));
         log.info("Game {} - copy of {} created for controller", gameData.id, spellCard.getName());
 
         if (copyEntry.getTargetId() != null) {

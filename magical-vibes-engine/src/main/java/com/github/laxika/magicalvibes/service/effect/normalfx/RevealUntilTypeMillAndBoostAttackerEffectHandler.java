@@ -7,7 +7,7 @@ import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.StackEntry;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
 import com.github.laxika.magicalvibes.model.effect.RevealUntilTypeMillAndBoostAttackerEffect;
-import com.github.laxika.magicalvibes.service.GameBroadcastService;
+import com.github.laxika.magicalvibes.service.GameLogService;
 import com.github.laxika.magicalvibes.service.battlefield.GameQueryService;
 import com.github.laxika.magicalvibes.service.graveyard.GraveyardService;
 import java.util.ArrayList;
@@ -24,7 +24,7 @@ import org.springframework.stereotype.Component;
 public class RevealUntilTypeMillAndBoostAttackerEffectHandler implements NormalEffectHandlerBean {
 
     private final GraveyardService graveyardService;
-    private final GameBroadcastService gameBroadcastService;
+    private final GameLogService gameLogService;
     private final GameQueryService gameQueryService;
 
     @Override
@@ -55,7 +55,7 @@ public class RevealUntilTypeMillAndBoostAttackerEffectHandler implements NormalE
         List<Card> deck = gameData.playerDecks.get(defenderId);
         if (deck.isEmpty()) {
             String logEntry = defenderName + "'s library is empty — " + sourceName + "'s ability does nothing.";
-            gameBroadcastService.logAndBroadcast(gameData, GameLog.text(logEntry));
+            gameLogService.append(gameData, GameLog.text(logEntry));
             return;
         }
 
@@ -72,7 +72,7 @@ public class RevealUntilTypeMillAndBoostAttackerEffectHandler implements NormalE
         // Log revealed cards
         String revealedNames = revealedCards.stream().map(Card::getName).collect(Collectors.joining(", "));
         String revealLog = defenderName + " reveals " + revealedNames + ".";
-        gameBroadcastService.logAndBroadcast(gameData, GameLog.text(revealLog));
+        gameLogService.append(gameData, GameLog.text(revealLog));
 
         // Boost the equipped creature
         int revealedCount = revealedCards.size();
@@ -85,7 +85,7 @@ public class RevealUntilTypeMillAndBoostAttackerEffectHandler implements NormalE
             String boostLog = equippedCreature.getCard().getName() + " gets +"
                     + powerBoost + "/+" + toughnessBoost + " until end of turn ("
                     + revealedCount + " " + (revealedCount != 1 ? "cards" : "card") + " revealed).";
-            gameBroadcastService.logAndBroadcast(gameData, GameLog.builder().card(equippedCreature.getCard()).text(" gets +" + powerBoost + "/+" + toughnessBoost + " until end of turn (" + revealedCount + " " + (revealedCount != 1 ? "cards" : "card") + " revealed).").build());
+            gameLogService.append(gameData, GameLog.builder().card(equippedCreature.getCard()).text(" gets +" + powerBoost + "/+" + toughnessBoost + " until end of turn (" + revealedCount + " " + (revealedCount != 1 ? "cards" : "card") + " revealed).").build());
         }
 
         // Put all revealed cards into the graveyard
@@ -95,7 +95,7 @@ public class RevealUntilTypeMillAndBoostAttackerEffectHandler implements NormalE
 
         String millLog = defenderName + " puts " + revealedCount + " revealed "
                 + (revealedCount != 1 ? "cards" : "card") + " into their graveyard.";
-        gameBroadcastService.logAndBroadcast(gameData, GameLog.text(millLog));
+        gameLogService.append(gameData, GameLog.text(millLog));
 
         log.info("Game {} - {} reveals {} cards from {}'s library, {} gets +{}/+{}",
                 gameData.id, sourceName, revealedCount, defenderName,

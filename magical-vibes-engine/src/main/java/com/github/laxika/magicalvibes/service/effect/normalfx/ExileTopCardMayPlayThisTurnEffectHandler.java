@@ -6,7 +6,7 @@ import com.github.laxika.magicalvibes.model.GameLog;
 import com.github.laxika.magicalvibes.model.StackEntry;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
 import com.github.laxika.magicalvibes.model.effect.ExileTopCardMayPlayThisTurnEffect;
-import com.github.laxika.magicalvibes.service.GameBroadcastService;
+import com.github.laxika.magicalvibes.service.GameLogService;
 import com.github.laxika.magicalvibes.service.exile.ExileService;
 import java.util.List;
 import java.util.UUID;
@@ -25,7 +25,7 @@ import org.springframework.stereotype.Component;
 public class ExileTopCardMayPlayThisTurnEffectHandler implements NormalEffectHandlerBean {
 
     private final ExileService exileService;
-    private final GameBroadcastService gameBroadcastService;
+    private final GameLogService gameLogService;
 
     @Override
     public Class<? extends CardEffect> handledEffect() {
@@ -40,7 +40,7 @@ public class ExileTopCardMayPlayThisTurnEffectHandler implements NormalEffectHan
         String controllerName = gameData.playerIdToName.get(controllerId);
 
         if (deck == null || deck.isEmpty()) {
-            gameBroadcastService.logAndBroadcast(gameData,
+            gameLogService.append(gameData,
                     GameLog.text(controllerName + "'s library is empty — nothing to exile."));
             return;
         }
@@ -58,7 +58,7 @@ public class ExileTopCardMayPlayThisTurnEffectHandler implements NormalEffectHan
         String playNote = withoutPaying
                 ? " (may play it without paying its mana cost this turn)"
                 : " (may play it this turn)";
-        gameBroadcastService.logAndBroadcast(gameData, GameLog.builder()
+        gameLogService.append(gameData, GameLog.builder()
                 .text(controllerName + " exiles ").card(topCard)
                 .text(" from the top of their library" + playNote + ".").build());
         log.info("Game {} - {} exiles {} from library top (withoutPaying={})",

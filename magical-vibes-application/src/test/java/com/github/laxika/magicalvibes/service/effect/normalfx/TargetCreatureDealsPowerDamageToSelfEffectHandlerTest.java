@@ -23,7 +23,7 @@ class TargetCreatureDealsPowerDamageToSelfEffectHandlerTest extends AbstractDama
     @Override
     protected void setUpHandler() {
         handler = new TargetCreatureDealsPowerDamageToSelfEffectHandler(
-                damageSupport, gameQueryService, gameBroadcastService);
+                damageSupport, gameQueryService, gameLogService);
     }
 
     @Test

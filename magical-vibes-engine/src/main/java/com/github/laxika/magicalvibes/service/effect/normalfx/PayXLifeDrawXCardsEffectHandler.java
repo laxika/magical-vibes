@@ -6,7 +6,7 @@ import com.github.laxika.magicalvibes.model.PendingInteraction;
 import com.github.laxika.magicalvibes.model.StackEntry;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
 import com.github.laxika.magicalvibes.model.effect.PayXLifeDrawXCardsEffect;
-import com.github.laxika.magicalvibes.service.GameBroadcastService;
+import com.github.laxika.magicalvibes.service.GameLogService;
 import com.github.laxika.magicalvibes.service.interaction.InteractionHandlerRegistry;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -25,7 +25,7 @@ public class PayXLifeDrawXCardsEffectHandler implements NormalEffectHandlerBean 
 
     private final LifeSupport lifeSupport;
     private final PlayerInteractionSupport playerInteractionSupport;
-    private final GameBroadcastService gameBroadcastService;
+    private final GameLogService gameLogService;
     private final InteractionHandlerRegistry interactionHandlerRegistry;
 
     @Override
@@ -45,13 +45,13 @@ public class PayXLifeDrawXCardsEffectHandler implements NormalEffectHandlerBean 
             gameData.chosenXValue = null;
 
             if (chosenValue == 0) {
-                gameBroadcastService.logAndBroadcast(gameData, GameLog.text(playerName + " pays 0 life for " + cardName + " and draws no cards."));
+                gameLogService.append(gameData, GameLog.text(playerName + " pays 0 life for " + cardName + " and draws no cards."));
                 log.info("Game {} - {} chooses X=0 for {}", gameData.id, playerName, cardName);
                 return;
             }
 
             lifeSupport.applyLifeLoss(gameData, controllerId, chosenValue, cardName);
-            gameBroadcastService.logAndBroadcast(gameData, GameLog.text(playerName + " pays " + chosenValue + " life for " + cardName + " and draws " + chosenValue + " cards."));
+            gameLogService.append(gameData, GameLog.text(playerName + " pays " + chosenValue + " life for " + cardName + " and draws " + chosenValue + " cards."));
             log.info("Game {} - {} pays {} life and draws {} for {}", gameData.id, playerName,
                     chosenValue, chosenValue, cardName);
             playerInteractionSupport.applyDrawCards(gameData, controllerId, chosenValue);

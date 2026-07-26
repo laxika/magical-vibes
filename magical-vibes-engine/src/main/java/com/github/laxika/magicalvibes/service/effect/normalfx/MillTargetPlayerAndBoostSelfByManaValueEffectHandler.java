@@ -7,7 +7,7 @@ import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.StackEntry;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
 import com.github.laxika.magicalvibes.model.effect.MillTargetPlayerAndBoostSelfByManaValueEffect;
-import com.github.laxika.magicalvibes.service.GameBroadcastService;
+import com.github.laxika.magicalvibes.service.GameLogService;
 import com.github.laxika.magicalvibes.service.battlefield.GameQueryService;
 import com.github.laxika.magicalvibes.service.graveyard.GraveyardService;
 import java.util.List;
@@ -22,7 +22,7 @@ import org.springframework.stereotype.Component;
 public class MillTargetPlayerAndBoostSelfByManaValueEffectHandler implements NormalEffectHandlerBean {
 
     private final GraveyardService graveyardService;
-    private final GameBroadcastService gameBroadcastService;
+    private final GameLogService gameLogService;
     private final GameQueryService gameQueryService;
 
     @Override
@@ -39,7 +39,7 @@ public class MillTargetPlayerAndBoostSelfByManaValueEffectHandler implements Nor
 
         if (deck.isEmpty()) {
             String logEntry = targetPlayerName + "'s library is empty — " + cardName + "'s ability does nothing.";
-            gameBroadcastService.logAndBroadcast(gameData, GameLog.text(logEntry));
+            gameLogService.append(gameData, GameLog.text(logEntry));
             return;
         }
 
@@ -63,7 +63,7 @@ public class MillTargetPlayerAndBoostSelfByManaValueEffectHandler implements Nor
 
         String logEntry = cardName + " gets +" + manaValue + "/+" + manaValue
                 + " until end of turn (milled " + topCard.getName() + ", mana value " + manaValue + ").";
-        gameBroadcastService.logAndBroadcast(gameData, GameLog.builder().text(cardName + " gets +" + manaValue + "/+" + manaValue + " until end of turn (milled ").card(topCard).text(", mana value " + manaValue + ").").build());
+        gameLogService.append(gameData, GameLog.builder().text(cardName + " gets +" + manaValue + "/+" + manaValue + " until end of turn (milled ").card(topCard).text(", mana value " + manaValue + ").").build());
         log.info("Game {} - {} gets +{}/+{} from milling {}", gameData.id, cardName, manaValue, manaValue, topCard.getName());
     }
 }

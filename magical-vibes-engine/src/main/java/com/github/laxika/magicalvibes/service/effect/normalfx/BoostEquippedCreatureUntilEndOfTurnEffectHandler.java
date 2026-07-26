@@ -6,7 +6,7 @@ import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.StackEntry;
 import com.github.laxika.magicalvibes.model.effect.BoostEquippedCreatureUntilEndOfTurnEffect;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
-import com.github.laxika.magicalvibes.service.GameBroadcastService;
+import com.github.laxika.magicalvibes.service.GameLogService;
 import com.github.laxika.magicalvibes.service.battlefield.GameQueryService;
 import com.github.laxika.magicalvibes.service.effect.AmountContext;
 import com.github.laxika.magicalvibes.service.effect.AmountEvaluationService;
@@ -20,7 +20,7 @@ import org.springframework.stereotype.Component;
 public class BoostEquippedCreatureUntilEndOfTurnEffectHandler implements NormalEffectHandlerBean {
 
     private final GameQueryService gameQueryService;
-    private final GameBroadcastService gameBroadcastService;
+    private final GameLogService gameLogService;
     private final AmountEvaluationService amountEvaluationService;
 
     @Override
@@ -51,7 +51,7 @@ public class BoostEquippedCreatureUntilEndOfTurnEffectHandler implements NormalE
         equippedCreature.setPowerModifier(equippedCreature.getPowerModifier() + powerBoost);
         equippedCreature.setToughnessModifier(equippedCreature.getToughnessModifier() + toughnessBoost);
 
-        gameBroadcastService.logAndBroadcast(gameData, GameLog.builder()
+        gameLogService.append(gameData, GameLog.builder()
                 .card(equippedCreature.getCard())
                 .text(String.format(" gets %+d/%+d until end of turn.", powerBoost, toughnessBoost))
                 .build());

@@ -32,7 +32,7 @@ class RevealRandomCardFromTargetPlayerHandEffectHandlerTest extends AbstractPlay
                 // All players receive the reveal message
                 verify(cardRevealService).revealToAllPlayers(
                         gd, player2Id, GameEventFact.RevealZone.HAND, List.of(handCard));
-                verify(gameBroadcastService).logAndBroadcast(eq(gd), argThat((GameLogEntry logEntry) ->
+                verify(gameLogService).append(eq(gd), argThat((GameLogEntry logEntry) ->
                         logEntry.plainText().contains("reveals") && logEntry.plainText().contains("at random")));
             }
 
@@ -46,7 +46,7 @@ class RevealRandomCardFromTargetPlayerHandEffectHandlerTest extends AbstractPlay
                 resolveEffect(gd, entry, new RevealRandomCardFromTargetPlayerHandEffect());
 
                 verifyNoInteractions(cardRevealService);
-                verify(gameBroadcastService).logAndBroadcast(eq(gd), argThat((GameLogEntry logEntry) ->
+                verify(gameLogService).append(eq(gd), argThat((GameLogEntry logEntry) ->
                         logEntry.plainText().contains("no cards to reveal")));
             }
 }

@@ -7,7 +7,7 @@ import com.github.laxika.magicalvibes.model.GameLog;
 import com.github.laxika.magicalvibes.model.StackEntry;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
 import com.github.laxika.magicalvibes.model.effect.PutCardFromOpponentGraveyardOntoBattlefieldEffect;
-import com.github.laxika.magicalvibes.service.GameBroadcastService;
+import com.github.laxika.magicalvibes.service.GameLogService;
 import com.github.laxika.magicalvibes.service.battlefield.BattlefieldEntryService;
 import java.util.ArrayList;
 import java.util.List;
@@ -22,7 +22,7 @@ import org.springframework.stereotype.Component;
 public class PutCardFromOpponentGraveyardOntoBattlefieldEffectHandler implements NormalEffectHandlerBean {
 
     private final BattlefieldEntryService battlefieldEntryService;
-    private final GameBroadcastService gameBroadcastService;
+    private final GameLogService gameLogService;
     private final GraveyardReturnSupport graveyardReturnSupport;
 
     @Override
@@ -50,7 +50,7 @@ public class PutCardFromOpponentGraveyardOntoBattlefieldEffectHandler implements
 
         String tappedText = e.tapped() ? " tapped" : "";
         String playerName = gameData.playerIdToName.get(controllerId);
-        gameBroadcastService.logAndBroadcast(gameData, GameLog.builder().text(playerName + " puts ").card(result.card()).text(" onto the battlefield" + tappedText + " under their control.").build());
+        gameLogService.append(gameData, GameLog.builder().text(playerName + " puts ").card(result.card()).text(" onto the battlefield" + tappedText + " under their control.").build());
 
         graveyardReturnSupport.handleCreatureEtbAndLegendRule(gameData, controllerId, result.permanent(), result.card());
 
@@ -66,7 +66,7 @@ public class PutCardFromOpponentGraveyardOntoBattlefieldEffectHandler implements
             }
             if (cardsToMill > 0) {
                 String opponentName = gameData.playerIdToName.get(result.originalOwnerId());
-                gameBroadcastService.logAndBroadcast(gameData, GameLog.text(opponentName + " mills " + cardsToMill + " cards (" + String.join(", ", milledNames) + ")."));
+                gameLogService.append(gameData, GameLog.text(opponentName + " mills " + cardsToMill + " cards (" + String.join(", ", milledNames) + ")."));
             }
         }
     }

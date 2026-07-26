@@ -6,7 +6,7 @@ import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.StackEntry;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
 import com.github.laxika.magicalvibes.model.effect.MustBlockSourceEffect;
-import com.github.laxika.magicalvibes.service.GameBroadcastService;
+import com.github.laxika.magicalvibes.service.GameLogService;
 import com.github.laxika.magicalvibes.service.battlefield.GameQueryService;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -20,7 +20,7 @@ import java.util.UUID;
 public class MustBlockSourceEffectHandler implements NormalEffectHandlerBean {
 
     private final GameQueryService gameQueryService;
-    private final GameBroadcastService gameBroadcastService;
+    private final GameLogService gameLogService;
 
     @Override
     public Class<? extends CardEffect> handledEffect() {
@@ -44,7 +44,7 @@ public class MustBlockSourceEffectHandler implements NormalEffectHandlerBean {
         target.getMustBlockIds().add(sourceId);
 
         String logEntry = target.getCard().getName() + " must block " + sourceName + " this turn if able.";
-        gameBroadcastService.logAndBroadcast(gameData, GameLog.builder().card(target.getCard()).text(" must block " + sourceName + " this turn if able.").build());
+        gameLogService.append(gameData, GameLog.builder().card(target.getCard()).text(" must block " + sourceName + " this turn if able.").build());
 
         log.info("Game {} - {} must block {} this turn if able", gameData.id, target.getCard().getName(), sourceName);
     }

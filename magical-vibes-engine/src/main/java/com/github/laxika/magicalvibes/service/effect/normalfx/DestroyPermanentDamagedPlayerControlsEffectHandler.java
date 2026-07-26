@@ -7,7 +7,7 @@ import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.StackEntry;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
 import com.github.laxika.magicalvibes.model.effect.DestroyPermanentDamagedPlayerControlsEffect;
-import com.github.laxika.magicalvibes.service.GameBroadcastService;
+import com.github.laxika.magicalvibes.service.GameLogService;
 import com.github.laxika.magicalvibes.service.filter.PredicateEvaluationService;
 import com.github.laxika.magicalvibes.service.input.PlayerInputService;
 import java.util.ArrayList;
@@ -21,7 +21,7 @@ import org.springframework.stereotype.Component;
 public class DestroyPermanentDamagedPlayerControlsEffectHandler implements NormalEffectHandlerBean {
 
     private final PredicateEvaluationService predicateEvaluationService;
-    private final GameBroadcastService gameBroadcastService;
+    private final GameLogService gameLogService;
     private final PlayerInputService playerInputService;
 
     @Override
@@ -52,7 +52,7 @@ public class DestroyPermanentDamagedPlayerControlsEffectHandler implements Norma
         if (validIds.isEmpty()) {
             String logEntry = entry.getCard().getName() + "'s ability resolves, but "
                     + gameData.playerIdToName.get(defenderId) + " has no valid targets.";
-            gameBroadcastService.logAndBroadcast(gameData, GameLog.builder().card(entry.getCard()).text("'s ability resolves, but " + gameData.playerIdToName.get(defenderId) + " has no valid targets.").build());
+            gameLogService.append(gameData, GameLog.builder().card(entry.getCard()).text("'s ability resolves, but " + gameData.playerIdToName.get(defenderId) + " has no valid targets.").build());
             return;
         }
 

@@ -6,7 +6,7 @@ import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.StackEntry;
 import com.github.laxika.magicalvibes.model.effect.BecomeCreatureTypeWithBasePowerToughnessEffect;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
-import com.github.laxika.magicalvibes.service.GameBroadcastService;
+import com.github.laxika.magicalvibes.service.GameLogService;
 import com.github.laxika.magicalvibes.service.battlefield.GameQueryService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Component;
@@ -16,7 +16,7 @@ import org.springframework.stereotype.Component;
 public class BecomeCreatureTypeWithBasePowerToughnessEffectHandler implements NormalEffectHandlerBean {
 
     private final GameQueryService gameQueryService;
-    private final GameBroadcastService gameBroadcastService;
+    private final GameLogService gameLogService;
 
     @Override
     public Class<? extends CardEffect> handledEffect() {
@@ -52,6 +52,6 @@ public class BecomeCreatureTypeWithBasePowerToughnessEffectHandler implements No
             source.getGrantedSubtypes().add(e.addedSubtype());
         }
 
-        gameBroadcastService.logAndBroadcast(gameData, GameLog.builder().card(source.getCard()).text(" becomes a " + e.addedSubtype().getDisplayName() + " with base power and toughness " + e.power() + "/" + e.toughness() + ".").build());
+        gameLogService.append(gameData, GameLog.builder().card(source.getCard()).text(" becomes a " + e.addedSubtype().getDisplayName() + " with base power and toughness " + e.power() + "/" + e.toughness() + ".").build());
     }
 }

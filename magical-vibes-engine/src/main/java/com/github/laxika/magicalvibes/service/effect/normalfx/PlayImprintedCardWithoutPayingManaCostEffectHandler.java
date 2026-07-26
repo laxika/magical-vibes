@@ -7,7 +7,7 @@ import com.github.laxika.magicalvibes.model.PendingMayAbility;
 import com.github.laxika.magicalvibes.model.StackEntry;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
 import com.github.laxika.magicalvibes.model.effect.PlayImprintedCardWithoutPayingManaCostEffect;
-import com.github.laxika.magicalvibes.service.GameBroadcastService;
+import com.github.laxika.magicalvibes.service.GameLogService;
 import java.util.List;
 import java.util.UUID;
 import lombok.RequiredArgsConstructor;
@@ -25,7 +25,7 @@ import org.springframework.stereotype.Component;
 @RequiredArgsConstructor
 public class PlayImprintedCardWithoutPayingManaCostEffectHandler implements NormalEffectHandlerBean {
 
-    private final GameBroadcastService gameBroadcastService;
+    private final GameLogService gameLogService;
 
     @Override
     public Class<? extends CardEffect> handledEffect() {
@@ -38,7 +38,7 @@ public class PlayImprintedCardWithoutPayingManaCostEffectHandler implements Norm
         Card imprintedCard = gameData.getImprintedCard(entry.getCard());
 
         if (imprintedCard == null || gameData.findExiledCard(imprintedCard.getId()) == null) {
-            gameBroadcastService.logAndBroadcast(gameData, GameLog.cardThen(entry.getCard(), " has no exiled card to play."));
+            gameLogService.append(gameData, GameLog.cardThen(entry.getCard(), " has no exiled card to play."));
             return;
         }
 

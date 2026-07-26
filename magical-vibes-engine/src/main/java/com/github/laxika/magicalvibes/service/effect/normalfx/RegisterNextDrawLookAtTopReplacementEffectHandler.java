@@ -5,7 +5,7 @@ import com.github.laxika.magicalvibes.model.GameLog;
 import com.github.laxika.magicalvibes.model.StackEntry;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
 import com.github.laxika.magicalvibes.model.effect.RegisterNextDrawLookAtTopReplacementEffect;
-import com.github.laxika.magicalvibes.service.GameBroadcastService;
+import com.github.laxika.magicalvibes.service.GameLogService;
 import java.util.UUID;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -23,7 +23,7 @@ import org.springframework.stereotype.Component;
 @RequiredArgsConstructor
 public class RegisterNextDrawLookAtTopReplacementEffectHandler implements NormalEffectHandlerBean {
 
-    private final GameBroadcastService gameBroadcastService;
+    private final GameLogService gameLogService;
 
     @Override
     public Class<? extends CardEffect> handledEffect() {
@@ -44,7 +44,7 @@ public class RegisterNextDrawLookAtTopReplacementEffectHandler implements Normal
         String playerName = gameData.playerIdToName.get(controllerId);
         String logEntry = "The next time " + playerName + " would draw a card this turn, they'll look at the top "
                 + x + " card" + (x != 1 ? "s" : "") + " of their library instead (" + entry.getCard().getName() + ").";
-        gameBroadcastService.logAndBroadcast(gameData, GameLog.builder().text("The next time " + playerName + " would draw a card this turn, they'll look at the top " + x + " card" + (x != 1 ? "s" : "") + " of their library instead (").card(entry.getCard()).text(").").build());
+        gameLogService.append(gameData, GameLog.builder().text("The next time " + playerName + " would draw a card this turn, they'll look at the top " + x + " card" + (x != 1 ? "s" : "") + " of their library instead (").card(entry.getCard()).text(").").build());
         log.info("Game {} - {} registers Aladdin's Lamp next-draw replacement (X={})", gameData.id, playerName, x);
     }
 }

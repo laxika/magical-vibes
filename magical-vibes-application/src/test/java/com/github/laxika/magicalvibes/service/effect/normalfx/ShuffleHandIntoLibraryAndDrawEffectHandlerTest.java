@@ -49,7 +49,7 @@ class ShuffleHandIntoLibraryAndDrawEffectHandlerTest extends AbstractPlayerInter
                 resolveEffect(gd, entry, new ShuffleHandIntoLibraryAndDrawEffect());
 
                 verify(drawService, never()).resolveDrawCard(any(), any());
-                verify(gameBroadcastService, times(2)).logAndBroadcast(eq(gd), argThat((GameLogEntry logEntry) ->
+                verify(gameLogService, times(2)).append(eq(gd), argThat((GameLogEntry logEntry) ->
                         logEntry.plainText().contains("no cards in hand")));
             }
 

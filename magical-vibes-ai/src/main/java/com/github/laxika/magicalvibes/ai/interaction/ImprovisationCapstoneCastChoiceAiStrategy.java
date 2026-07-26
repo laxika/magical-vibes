@@ -33,6 +33,6 @@ class ImprovisationCapstoneCastChoiceAiStrategy
             chosen = chosen.subList(0, interaction.maxCount());
         }
         log.info("AI: Casting {} exiled spells for Improvisation Capstone in game {}", chosen.size(), ctx.gameId());
-        ctx.gameActions().answerInteraction(ctx.selfConnection(), new InteractionAnswer.CardsChosen(chosen));
+        ctx.gameActions().answerInteraction(new InteractionAnswer.CardsChosen(chosen));
     }
 }

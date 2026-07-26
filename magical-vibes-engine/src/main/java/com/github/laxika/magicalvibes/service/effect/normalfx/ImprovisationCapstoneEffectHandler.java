@@ -8,7 +8,7 @@ import com.github.laxika.magicalvibes.model.PendingInteraction;
 import com.github.laxika.magicalvibes.model.StackEntry;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
 import com.github.laxika.magicalvibes.model.effect.ImprovisationCapstoneEffect;
-import com.github.laxika.magicalvibes.service.GameBroadcastService;
+import com.github.laxika.magicalvibes.service.GameLogService;
 import com.github.laxika.magicalvibes.service.interaction.InteractionHandlerRegistry;
 import java.util.ArrayList;
 import java.util.List;
@@ -22,7 +22,7 @@ import org.springframework.stereotype.Component;
 @RequiredArgsConstructor
 public class ImprovisationCapstoneEffectHandler implements NormalEffectHandlerBean {
 
-    private final GameBroadcastService gameBroadcastService;
+    private final GameLogService gameLogService;
     private final InteractionHandlerRegistry interactionHandlerRegistry;
 
     @Override
@@ -46,11 +46,11 @@ public class ImprovisationCapstoneEffectHandler implements NormalEffectHandlerBe
             gameData.addToExile(controllerId, card);
             exiledThisProcess.add(card.getId());
             totalManaValue += card.getManaValue();
-            gameBroadcastService.logAndBroadcast(gameData, GameLog.builder().text(playerName + " exiles ").card(card).text(" (mana value " + card.getManaValue() + ") (" + sourceName + ").").build());
+            gameLogService.append(gameData, GameLog.builder().text(playerName + " exiles ").card(card).text(" (mana value " + card.getManaValue() + ") (" + sourceName + ").").build());
         }
 
         if (deck.isEmpty() && totalManaValue < e.totalManaValueThreshold()) {
-            gameBroadcastService.logAndBroadcast(gameData, GameLog.text(playerName + "'s library ran out before reaching total mana value "
+            gameLogService.append(gameData, GameLog.text(playerName + "'s library ran out before reaching total mana value "
                             + e.totalManaValueThreshold() + " (" + sourceName + ")."));
         }
 

@@ -7,7 +7,7 @@ import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.StackEntryType;
 import com.github.laxika.magicalvibes.model.TurnStep;
-import com.github.laxika.magicalvibes.service.GameBroadcastService;
+import com.github.laxika.magicalvibes.service.GameActionAvailabilityService;
 import com.github.laxika.magicalvibes.service.turn.TurnCleanupService;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
 import org.junit.jupiter.api.DisplayName;
@@ -124,7 +124,7 @@ class SilenceTest extends BaseCardTest {
 
             harness.setHand(player2, List.of(new Forest()));
 
-            GameBroadcastService gbs = harness.getGameBroadcastService();
+            GameActionAvailabilityService gbs = harness.getGameActionAvailabilityService();
             List<Integer> playable = gbs.getPlayableCardIndices(gd, player2.getId());
 
             // Land should still be playable

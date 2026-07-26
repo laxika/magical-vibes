@@ -6,7 +6,7 @@ import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.StackEntry;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
 import com.github.laxika.magicalvibes.model.effect.RemoveCounterFromSourceAndGainLifeEffect;
-import com.github.laxika.magicalvibes.service.GameBroadcastService;
+import com.github.laxika.magicalvibes.service.GameLogService;
 import com.github.laxika.magicalvibes.service.battlefield.GameQueryService;
 import java.util.UUID;
 import lombok.RequiredArgsConstructor;
@@ -24,7 +24,7 @@ import org.springframework.stereotype.Component;
 public class RemoveCounterFromSourceAndGainLifeEffectHandler implements NormalEffectHandlerBean {
 
     private final GameQueryService gameQueryService;
-    private final GameBroadcastService gameBroadcastService;
+    private final GameLogService gameLogService;
     private final PermanentCounterSupport permanentCounterSupport;
     private final LifeSupport lifeSupport;
 
@@ -49,7 +49,7 @@ public class RemoveCounterFromSourceAndGainLifeEffectHandler implements NormalEf
 
         self.setCounterCount(e.counterType(), self.getCounterCount(e.counterType()) - 1);
         String counterName = permanentCounterSupport.counterTypeName(e.counterType());
-        gameBroadcastService.logAndBroadcast(gameData, GameLog.textCardText("A " + counterName + " counter removed from ", self.getCard(), "."));
+        gameLogService.append(gameData, GameLog.textCardText("A " + counterName + " counter removed from ", self.getCard(), "."));
         log.info("Game {} - {} counter removed from {}", gameData.id, e.counterType(), self.getCard().getName());
 
         lifeSupport.applyGainLife(gameData, entry.getControllerId(), e.lifeGain(), null,

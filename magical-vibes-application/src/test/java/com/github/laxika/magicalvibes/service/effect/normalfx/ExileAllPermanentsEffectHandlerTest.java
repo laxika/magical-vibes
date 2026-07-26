@@ -19,7 +19,7 @@ import com.github.laxika.magicalvibes.model.filter.PermanentPredicate;
 import com.github.laxika.magicalvibes.model.effect.ExileTargetPermanentEffect;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsCreaturePredicate;
 import com.github.laxika.magicalvibes.networking.service.CardViewFactory;
-import com.github.laxika.magicalvibes.service.GameBroadcastService;
+import com.github.laxika.magicalvibes.service.GameLogService;
 import com.github.laxika.magicalvibes.service.exile.ExileService;
 import com.github.laxika.magicalvibes.service.graveyard.GraveyardService;
 import com.github.laxika.magicalvibes.service.input.PlayerInputService;
@@ -50,7 +50,7 @@ class ExileAllPermanentsEffectHandlerTest {
     @Mock private GraveyardService graveyardService;
     @Mock private GameQueryService gameQueryService;
     @Mock private PredicateEvaluationService predicateEvaluationService;
-    @Mock private GameBroadcastService gameBroadcastService;
+    @Mock private GameLogService gameLogService;
     @Mock private PermanentRemovalService permanentRemovalService;
     @Mock private PlayerInputService playerInputService;
     @Mock private CardViewFactory cardViewFactory;
@@ -84,7 +84,7 @@ class ExileAllPermanentsEffectHandlerTest {
         gd.playerGraveyards.put(player2Id, Collections.synchronizedList(new ArrayList<>()));
         gd.playerDecks.put(player1Id, Collections.synchronizedList(new ArrayList<>()));
         gd.playerDecks.put(player2Id, Collections.synchronizedList(new ArrayList<>()));
-        exileAllPermanentsHandler = new ExileAllPermanentsEffectHandler(gameQueryService, predicateEvaluationService, gameBroadcastService, permanentRemovalService);
+        exileAllPermanentsHandler = new ExileAllPermanentsEffectHandler(gameQueryService, predicateEvaluationService, gameLogService, permanentRemovalService);
 
     }
 
@@ -180,8 +180,8 @@ class ExileAllPermanentsEffectHandlerTest {
 
                 verify(permanentRemovalService).removePermanentToExile(gd, creature1);
                 verify(permanentRemovalService).removePermanentToExile(gd, creature2);
-                verify(gameBroadcastService).logAndBroadcast(eq(gd), argThat((GameLogEntry e) -> e.plainText().equals("Bear is exiled.")));
-                verify(gameBroadcastService).logAndBroadcast(eq(gd), argThat((GameLogEntry e) -> e.plainText().equals("Elk is exiled.")));
+                verify(gameLogService).append(eq(gd), argThat((GameLogEntry e) -> e.plainText().equals("Bear is exiled.")));
+                verify(gameLogService).append(eq(gd), argThat((GameLogEntry e) -> e.plainText().equals("Elk is exiled.")));
                 verify(permanentRemovalService).removeOrphanedAuras(gd);
             }
 

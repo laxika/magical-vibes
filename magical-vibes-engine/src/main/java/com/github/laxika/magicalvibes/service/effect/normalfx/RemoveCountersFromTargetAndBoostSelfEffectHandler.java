@@ -7,7 +7,7 @@ import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.StackEntry;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
 import com.github.laxika.magicalvibes.model.effect.RemoveCountersFromTargetAndBoostSelfEffect;
-import com.github.laxika.magicalvibes.service.GameBroadcastService;
+import com.github.laxika.magicalvibes.service.GameLogService;
 import com.github.laxika.magicalvibes.service.battlefield.GameQueryService;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -19,7 +19,7 @@ import org.springframework.stereotype.Component;
 public class RemoveCountersFromTargetAndBoostSelfEffectHandler implements NormalEffectHandlerBean {
 
     private final GameQueryService gameQueryService;
-    private final GameBroadcastService gameBroadcastService;
+    private final GameLogService gameLogService;
 
     @Override
     public Class<? extends CardEffect> handledEffect() {
@@ -103,7 +103,7 @@ public class RemoveCountersFromTargetAndBoostSelfEffectHandler implements Normal
         }
 
         if (totalRemoved > 0) {
-            gameBroadcastService.logAndBroadcast(gameData, GameLog.textCardText(totalRemoved + " counter(s) removed from " , target.getCard(), "."));
+            gameLogService.append(gameData, GameLog.textCardText(totalRemoved + " counter(s) removed from " , target.getCard(), "."));
             log.info("Game {} - {} counter(s) removed from {}", gameData.id, totalRemoved, target.getCard().getName());
         }
 
@@ -113,7 +113,7 @@ public class RemoveCountersFromTargetAndBoostSelfEffectHandler implements Normal
             if (source != null) {
                 source.setPowerModifier(source.getPowerModifier() + totalRemoved);
                 String boostLog = source.getCard().getName() + " gets +" + totalRemoved + "/+0 until end of turn.";
-                gameBroadcastService.logAndBroadcast(gameData, GameLog.builder().card(source.getCard()).text(" gets +" + totalRemoved + "/+0 until end of turn.").build());
+                gameLogService.append(gameData, GameLog.builder().card(source.getCard()).text(" gets +" + totalRemoved + "/+0 until end of turn.").build());
                 log.info("Game {} - {} gets +{}/+0", gameData.id, source.getCard().getName(), totalRemoved);
             }
         }

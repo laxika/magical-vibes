@@ -17,7 +17,7 @@ import com.github.laxika.magicalvibes.model.TargetType;
 import com.github.laxika.magicalvibes.model.TurnStep;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
 import com.github.laxika.magicalvibes.model.filter.PermanentPredicateTargetFilter;
-import com.github.laxika.magicalvibes.service.GameBroadcastService;
+import com.github.laxika.magicalvibes.service.GameLogService;
 import com.github.laxika.magicalvibes.service.battlefield.GameQueryService;
 import com.github.laxika.magicalvibes.service.filter.PredicateEvaluationService;
 import com.github.laxika.magicalvibes.service.battlefield.PermanentRemovalService;
@@ -47,11 +47,12 @@ public class ExileSupport {
     private final GraveyardService graveyardService;
     private final GameQueryService gameQueryService;
     private final PredicateEvaluationService predicateEvaluationService;
-    private final GameBroadcastService gameBroadcastService;
+    private final GameLogService gameLogService;
     private final PermanentRemovalService permanentRemovalService;
     private final PlayerInputService playerInputService;
     private final TriggerCollectionService triggerCollectionService;
     private final com.github.laxika.magicalvibes.service.interaction.InteractionHandlerRegistry interactionHandlerRegistry;
+    private final com.github.laxika.magicalvibes.service.event.GameMutationCoordinator mutationCoordinator;
 
     /**
      * Exiles {@code permanent} outright (no return), logs it against {@code sourceCardName}, and
@@ -60,7 +61,7 @@ public class ExileSupport {
     public void exilePermanentAndLog(GameData gameData, Permanent permanent, String sourceCardName) {
         Card card = permanent.getCard();
         permanentRemovalService.removePermanentToExile(gameData, permanent);
-        gameBroadcastService.logAndBroadcast(gameData, GameLog.cardThen(card, " is exiled."));
+        gameLogService.append(gameData, GameLog.cardThen(card, " is exiled."));
         log.info("Game {} - {} exiles {}", gameData.id, sourceCardName, card.getName());
         permanentRemovalService.removeOrphanedAuras(gameData);
     }
@@ -76,7 +77,7 @@ public class ExileSupport {
         Card card = permanent.getOriginalCard();
         permanentRemovalService.removePermanentToExile(gameData, permanent);
 
-        gameBroadcastService.logAndBroadcast(gameData, GameLog.cardThen(card, " is exiled. It will return at the beginning of the next "
+        gameLogService.append(gameData, GameLog.cardThen(card, " is exiled. It will return at the beginning of the next "
                 + returnStep.getDisplayName().toLowerCase() + "."));
         log.info("Game {} - {} exiles {}; will return at next {}",
                 gameData.id, entry.getCard().getName(), card.getName(), returnStep);
@@ -129,9 +130,9 @@ public class ExileSupport {
             // Player declined
             String playerName = gameData.playerIdToName.get(playerId);
             String logEntry = playerName + " declines to cast a spell from Knowledge Pool.";
-            gameBroadcastService.logAndBroadcast(gameData, GameLog.text(logEntry));
+            gameLogService.append(gameData, GameLog.text(logEntry));
             log.info("Game {} - {} declines Knowledge Pool cast", gameData.id, playerName);
-            gameBroadcastService.invalidateAllPlayerViews(gameData);
+            mutationCoordinator.invalidateAllPlayerViews(gameData);
             return;
         }
 
@@ -141,7 +142,7 @@ public class ExileSupport {
         List<Card> pool = gameData.getCardsExiledByPermanent(kpPermanentId);
         if (pool.isEmpty()) {
             log.warn("Game {} - Knowledge Pool pool not found for permanent {}", gameData.id, kpPermanentId);
-            gameBroadcastService.invalidateAllPlayerViews(gameData);
+            mutationCoordinator.invalidateAllPlayerViews(gameData);
             return;
         }
 
@@ -155,7 +156,7 @@ public class ExileSupport {
 
         if (chosenCard == null) {
             log.warn("Game {} - Chosen card {} not found in Knowledge Pool", gameData.id, chosenCardId);
-            gameBroadcastService.invalidateAllPlayerViews(gameData);
+            mutationCoordinator.invalidateAllPlayerViews(gameData);
             return;
         }
 
@@ -197,10 +198,10 @@ public class ExileSupport {
             if (validTargets.isEmpty()) {
                 // No valid targets — card goes to graveyard
                 graveyardService.addCardToGraveyard(gameData, playerId, chosenCard);
-                gameBroadcastService.logAndBroadcast(gameData, GameLog.cardThen(chosenCard,
+                gameLogService.append(gameData, GameLog.cardThen(chosenCard,
                         " has no valid targets (Knowledge Pool). It is put into the graveyard."));
                 log.info("Game {} - {} Knowledge Pool cast has no valid targets", gameData.id, chosenCard.getName());
-                gameBroadcastService.invalidateAllPlayerViews(gameData);
+                mutationCoordinator.invalidateAllPlayerViews(gameData);
                 return;
             }
 
@@ -209,7 +210,7 @@ public class ExileSupport {
             playerInputService.beginPermanentChoice(gameData, playerId, validTargets,
                     "Choose a target for " + chosenCard.getName() + ".");
 
-            gameBroadcastService.logAndBroadcast(gameData, GameLog.textCardText(playerName + " casts ", chosenCard,
+            gameLogService.append(gameData, GameLog.textCardText(playerName + " casts ", chosenCard,
                     " without paying its mana cost (Knowledge Pool) — choosing target."));
             log.info("Game {} - {} casts {} from Knowledge Pool, choosing target", gameData.id, playerName, chosenCard.getName());
             return;
@@ -224,12 +225,12 @@ public class ExileSupport {
         gameData.recordSpellCast(playerId, chosenCard);
         gameData.priorityPassedBy.clear();
 
-        gameBroadcastService.logAndBroadcast(gameData, GameLog.textCardText(playerName + " casts ", chosenCard,
+        gameLogService.append(gameData, GameLog.textCardText(playerName + " casts ", chosenCard,
                 " without paying its mana cost (Knowledge Pool)."));
         log.info("Game {} - {} casts {} from Knowledge Pool without paying mana", gameData.id, playerName, chosenCard.getName());
 
         triggerCollectionService.checkSpellCastTriggers(gameData, chosenCard, playerId, false);
-        gameBroadcastService.invalidateAllPlayerViews(gameData);
+        mutationCoordinator.invalidateAllPlayerViews(gameData);
     }
 
     /**
@@ -287,7 +288,7 @@ public class ExileSupport {
             library.clear();
             String exileLog = controllerName + " exiles " + exiledCount + " card"
                     + (exiledCount != 1 ? "s" : "") + " from their library (Mirror of Fate).";
-            gameBroadcastService.logAndBroadcast(gameData, GameLog.text(exileLog));
+            gameLogService.append(gameData, GameLog.text(exileLog));
             log.info("Game {} - {} exiles {} cards from library (Mirror of Fate)",
                     gameData.id, controllerName, exiledCount);
         }
@@ -299,29 +300,29 @@ public class ExileSupport {
 
         if (chosenCards.isEmpty()) {
             String emptyLog = controllerName + "'s library is now empty (Mirror of Fate).";
-            gameBroadcastService.logAndBroadcast(gameData, GameLog.text(emptyLog));
+            gameLogService.append(gameData, GameLog.text(emptyLog));
             gameData.priorityPassedBy.clear();
-            gameBroadcastService.invalidateAllPlayerViews(gameData);
+        mutationCoordinator.invalidateAllPlayerViews(gameData);
         } else if (chosenCards.size() == 1) {
             // Single card: put directly on top, no ordering needed
             library.addFirst(chosenCards.getFirst());
-            gameBroadcastService.logAndBroadcast(gameData, GameLog.textCardText(controllerName + " puts ",
+            gameLogService.append(gameData, GameLog.textCardText(controllerName + " puts ",
                     chosenCards.getFirst(), " on top of their library (Mirror of Fate)."));
             log.info("Game {} - {} puts 1 exiled card on top of library (Mirror of Fate)",
                     gameData.id, controllerName);
             gameData.priorityPassedBy.clear();
-            gameBroadcastService.invalidateAllPlayerViews(gameData);
+            mutationCoordinator.invalidateAllPlayerViews(gameData);
         } else {
             // Multiple cards: player chooses the order via library reorder interaction
             String putLog = controllerName + " puts " + chosenCards.size()
                     + " cards on top of their library (Mirror of Fate) — choosing order.";
-            gameBroadcastService.logAndBroadcast(gameData, GameLog.text(putLog));
+            gameLogService.append(gameData, GameLog.text(putLog));
             log.info("Game {} - {} puts {} exiled cards on top of library, awaiting order (Mirror of Fate)",
                     gameData.id, controllerName, chosenCards.size());
             interactionHandlerRegistry.begin(gameData, new PendingInteraction.LibraryReorder(
                     controllerId, chosenCards, false, controllerId,
                     "Put these cards on top of your library in any order (top to bottom)."));
-            gameBroadcastService.invalidateAllPlayerViews(gameData);
+            mutationCoordinator.invalidateAllPlayerViews(gameData);
         }
     }
 }

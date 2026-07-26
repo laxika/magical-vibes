@@ -10,7 +10,7 @@ import com.github.laxika.magicalvibes.model.effect.CardEffect;
 import com.github.laxika.magicalvibes.model.effect.ControlDuration;
 import com.github.laxika.magicalvibes.model.effect.GainControlOfTargetEffect;
 import com.github.laxika.magicalvibes.model.effect.IllicitAuctionEffect;
-import com.github.laxika.magicalvibes.service.GameBroadcastService;
+import com.github.laxika.magicalvibes.service.GameLogService;
 import com.github.laxika.magicalvibes.service.battlefield.CreatureControlService;
 import com.github.laxika.magicalvibes.service.battlefield.GameQueryService;
 import com.github.laxika.magicalvibes.service.interaction.InteractionHandlerRegistry;
@@ -39,7 +39,7 @@ public class IllicitAuctionEffectHandler implements NormalEffectHandlerBean {
     /** Generous cap on a single bid; a life loss can exceed the bidder's life total (per ruling). */
     private static final int MAX_BID = 999;
 
-    private final GameBroadcastService gameBroadcastService;
+    private final GameLogService gameLogService;
     private final InteractionHandlerRegistry interactionHandlerRegistry;
     private final GameQueryService gameQueryService;
     private final CreatureControlService creatureControlService;
@@ -86,9 +86,9 @@ public class IllicitAuctionEffectHandler implements NormalEffectHandlerBean {
             if (bid > state.highBid) {
                 state.highBid = bid;
                 state.highBidderId = bidder;
-                gameBroadcastService.logAndBroadcast(gameData, GameLog.text(bidderName + " bids " + bid + " life for " + cardName + "."));
+                gameLogService.append(gameData, GameLog.text(bidderName + " bids " + bid + " life for " + cardName + "."));
             } else {
-                gameBroadcastService.logAndBroadcast(gameData, GameLog.text(bidderName + " passes on " + cardName + "."));
+                gameLogService.append(gameData, GameLog.text(bidderName + " passes on " + cardName + "."));
             }
             promptNextBidderOrFinish(gameData, entry, cardName);
         }
@@ -137,7 +137,7 @@ public class IllicitAuctionEffectHandler implements NormalEffectHandlerBean {
             creatureControlService.applyControlEffect(gameData, winnerId, target,
                     new GainControlOfTargetEffect(ControlDuration.PERMANENT),
                     ControlDuration.PERMANENT.toEffectDuration(), null, cardName);
-            gameBroadcastService.logAndBroadcast(gameData, GameLog.textCardText(gameData.playerIdToName.get(winnerId) + " gains control of ", target.getCard(), "."));
+            gameLogService.append(gameData, GameLog.textCardText(gameData.playerIdToName.get(winnerId) + " gains control of ", target.getCard(), "."));
         }
         state.reset();
     }

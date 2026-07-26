@@ -7,7 +7,7 @@ import com.github.laxika.magicalvibes.model.GameLog;
 import com.github.laxika.magicalvibes.model.StackEntry;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
 import com.github.laxika.magicalvibes.model.effect.RevealUntilNonlandCardsToHandRestToBottomEffect;
-import com.github.laxika.magicalvibes.service.GameBroadcastService;
+import com.github.laxika.magicalvibes.service.GameLogService;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.UUID;
@@ -20,7 +20,7 @@ import org.springframework.stereotype.Component;
 @RequiredArgsConstructor
 public class RevealUntilNonlandCardsToHandRestToBottomEffectHandler implements NormalEffectHandlerBean {
 
-    private final GameBroadcastService gameBroadcastService;
+    private final GameLogService gameLogService;
     private final LibraryRevealSupport libraryRevealSupport;
 
     @Override
@@ -53,19 +53,19 @@ public class RevealUntilNonlandCardsToHandRestToBottomEffectHandler implements N
         }
 
         if (revealed.isEmpty()) {
-            gameBroadcastService.logAndBroadcast(gameData, GameLog.text(playerName + "'s library is empty — no cards are revealed with " + cardName + "."));
+            gameLogService.append(gameData, GameLog.text(playerName + "'s library is empty — no cards are revealed with " + cardName + "."));
             return;
         }
 
         String revealedNames = revealed.stream().map(Card::getName).reduce((a, b) -> a + ", " + b).orElse("");
-        gameBroadcastService.logAndBroadcast(gameData, GameLog.text(playerName + " reveals " + revealedNames + " from the top of their library with " + cardName + "."));
+        gameLogService.append(gameData, GameLog.text(playerName + " reveals " + revealedNames + " from the top of their library with " + cardName + "."));
 
         for (Card card : toHand) {
             gameData.addCardToHand(controllerId, card);
         }
         if (!toHand.isEmpty()) {
             String handNames = toHand.stream().map(Card::getName).reduce((a, b) -> a + ", " + b).orElse("");
-            gameBroadcastService.logAndBroadcast(gameData, GameLog.text(playerName + " puts " + handNames + " into their hand."));
+            gameLogService.append(gameData, GameLog.text(playerName + " puts " + handNames + " into their hand."));
         }
 
         log.info("Game {} - {} resolving {} — {} nonland to hand, {} lands to bottom",

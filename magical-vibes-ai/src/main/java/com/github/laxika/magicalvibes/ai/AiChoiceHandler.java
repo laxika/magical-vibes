@@ -8,10 +8,8 @@ import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.PendingInteraction;
 import com.github.laxika.magicalvibes.model.CardType;
 import com.github.laxika.magicalvibes.model.GameData;
-import com.github.laxika.magicalvibes.networking.Connection;
 import com.github.laxika.magicalvibes.networking.message.BottomCardsRequest;
 import com.github.laxika.magicalvibes.service.battlefield.GameQueryService;
-import lombok.Setter;
 import lombok.extern.slf4j.Slf4j;
 
 import java.util.ArrayList;
@@ -30,9 +28,6 @@ class AiChoiceHandler {
     private final UUID aiPlayerId;
     private final GameQueryService gameQueryService;
     private final AiGameActions gameActions;
-
-    @Setter
-    private Connection selfConnection;
 
     AiChoiceHandler(UUID gameId, UUID aiPlayerId, GameQueryService gameQueryService, AiGameActions gameActions) {
         this.gameId = gameId;
@@ -65,7 +60,7 @@ class AiChoiceHandler {
                 .orElse(validIndices.iterator().next());
 
         log.info("AI: Choosing card at index {} in game {}", bestIndex, gameId);
-        send(() -> gameActions.answerInteraction(selfConnection, new InteractionAnswer.CardIndexChosen(bestIndex)));
+        send(() -> gameActions.answerInteraction(new InteractionAnswer.CardIndexChosen(bestIndex)));
     }
 
     // ===== Permanent Choice =====
@@ -128,7 +123,7 @@ class AiChoiceHandler {
     }
 
     private AiInteractionContext contextFor(GameData gameData, UUID actingPlayerId) {
-        return new AiInteractionContext(gameData, gameId, actingPlayerId, gameQueryService, gameActions, selfConnection);
+        return new AiInteractionContext(gameData, gameId, actingPlayerId, gameQueryService, gameActions);
     }
 
     // ===== Scry =====
@@ -204,7 +199,7 @@ class AiChoiceHandler {
         }
 
         log.info("AI: Bottoming {} cards in game {}", toBottom.size(), gameId);
-        send(() -> gameActions.handleBottomCards(selfConnection, new BottomCardsRequest(toBottom)));
+        send(() -> gameActions.handleBottomCards(new BottomCardsRequest(toBottom)));
     }
 
     // ===== Combat Damage Assignment =====

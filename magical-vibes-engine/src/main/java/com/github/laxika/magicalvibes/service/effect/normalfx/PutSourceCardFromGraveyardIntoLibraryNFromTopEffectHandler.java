@@ -6,7 +6,7 @@ import com.github.laxika.magicalvibes.model.GameLog;
 import com.github.laxika.magicalvibes.model.StackEntry;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
 import com.github.laxika.magicalvibes.model.effect.PutSourceCardFromGraveyardIntoLibraryNFromTopEffect;
-import com.github.laxika.magicalvibes.service.GameBroadcastService;
+import com.github.laxika.magicalvibes.service.GameLogService;
 import com.github.laxika.magicalvibes.service.battlefield.GameQueryService;
 import com.github.laxika.magicalvibes.service.battlefield.PermanentRemovalService;
 import java.util.List;
@@ -23,7 +23,7 @@ public class PutSourceCardFromGraveyardIntoLibraryNFromTopEffectHandler implemen
 
     private final PermanentRemovalService permanentRemovalService;
     private final GameQueryService gameQueryService;
-    private final GameBroadcastService gameBroadcastService;
+    private final GameLogService gameLogService;
 
     @Override
     public Class<? extends CardEffect> handledEffect() {
@@ -37,7 +37,7 @@ public class PutSourceCardFromGraveyardIntoLibraryNFromTopEffectHandler implemen
         UUID cardId = entry.getCard().getId();
         Card sourceCard = gameQueryService.findCardInGraveyardById(gameData, cardId);
         if (sourceCard == null) {
-            gameBroadcastService.logAndBroadcast(gameData, GameLog.cardThen(entry.getCard(), "'s ability fizzles (card not in graveyard)."));
+            gameLogService.append(gameData, GameLog.cardThen(entry.getCard(), "'s ability fizzles (card not in graveyard)."));
             log.info("Game {} - {} tuck-on-death trigger fizzles (card {} not in graveyard)",
                     gameData.id, entry.getCard().getName(), cardId);
             return;
@@ -56,7 +56,7 @@ public class PutSourceCardFromGraveyardIntoLibraryNFromTopEffectHandler implemen
             case 2 -> "third from the top of";
             default -> (position + 1) + "th from the top of";
         };
-        gameBroadcastService.logAndBroadcast(gameData, GameLog.builder().card(sourceCard).text(" is put " + ordinal + " " + ownerName + "'s library.").build());
+        gameLogService.append(gameData, GameLog.builder().card(sourceCard).text(" is put " + ordinal + " " + ownerName + "'s library.").build());
         log.info("Game {} - {} put {} {}'s library from graveyard (position {})", gameData.id, sourceCard.getName(), ordinal, ownerName, position);
     }
 }

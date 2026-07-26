@@ -11,7 +11,7 @@ import com.github.laxika.magicalvibes.model.effect.AjaniUltimateEffect;
 import com.github.laxika.magicalvibes.networking.SessionManager;
 import com.github.laxika.magicalvibes.networking.model.CardView;
 import com.github.laxika.magicalvibes.networking.service.CardViewFactory;
-import com.github.laxika.magicalvibes.service.GameBroadcastService;
+import com.github.laxika.magicalvibes.service.GameLogService;
 import com.github.laxika.magicalvibes.service.battlefield.BattlefieldEntryService;
 import com.github.laxika.magicalvibes.service.battlefield.GameQueryService;
 import com.github.laxika.magicalvibes.service.exile.ExileService;
@@ -38,7 +38,7 @@ class AjaniUltimateEffectHandlerTest {
     @Mock
     private GameQueryService gameQueryService;
     @Mock
-    private GameBroadcastService gameBroadcastService;
+    private GameLogService gameLogService;
     @Mock
     private SessionManager sessionManager;
     @Mock
@@ -75,10 +75,10 @@ class AjaniUltimateEffectHandlerTest {
         gd.playerDecks.put(player2Id, Collections.synchronizedList(new ArrayList<>()));
         gd.activePlayerId = player1Id;
 
-        libraryRevealSupport = new LibraryRevealSupport(gameBroadcastService,
-                InteractionRegistryTestSupport.registryFor(sessionManager, cardViewFactory, gameBroadcastService));
-        ajaniUltimateEffectHandler = new AjaniUltimateEffectHandler(gameBroadcastService,
-                InteractionRegistryTestSupport.registryFor(sessionManager, cardViewFactory, gameBroadcastService));
+        libraryRevealSupport = new LibraryRevealSupport(gameLogService,
+                InteractionRegistryTestSupport.registryFor(sessionManager, cardViewFactory, gameLogService));
+        ajaniUltimateEffectHandler = new AjaniUltimateEffectHandler(gameLogService,
+                InteractionRegistryTestSupport.registryFor(sessionManager, cardViewFactory, gameLogService));
 
     }
 
@@ -117,14 +117,14 @@ class AjaniUltimateEffectHandlerTest {
 
                 ajaniUltimateEffectHandler.resolve(gd, entry, new AjaniUltimateEffect());
 
-                verify(gameBroadcastService).logAndBroadcast(eq(gd), argThat((GameLogEntry logEntry) ->
+                verify(gameLogService).append(eq(gd), argThat((GameLogEntry logEntry) ->
                         logEntry.plainText().contains("library is empty") || logEntry.plainText().contains("no cards")));
             }
 
             @Test
             @DisplayName("No eligible cards puts all back and shuffles")
             void noEligibleCardsPutsAllBack() {
-                // Add only instants (not nonland permanents) â€” not eligible
+                // Add only instants (not nonland permanents) A?€�t not eligible
                 gd.playerDecks.get(player1Id).add(createCard("Lightning Bolt", CardType.INSTANT, "{R}"));
 
                 AjaniUltimateEffect effect = new AjaniUltimateEffect();
@@ -133,7 +133,7 @@ class AjaniUltimateEffectHandlerTest {
 
                 ajaniUltimateEffectHandler.resolve(gd, entry, new AjaniUltimateEffect());
 
-                verify(gameBroadcastService).logAndBroadcast(eq(gd), argThat((GameLogEntry logEntry) ->
+                verify(gameLogService).append(eq(gd), argThat((GameLogEntry logEntry) ->
                         logEntry.plainText().contains("no eligible cards")));
                 // Card should be put back into deck
                 assertThat(gd.playerDecks.get(player1Id)).hasSize(1);

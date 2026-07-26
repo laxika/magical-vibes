@@ -8,7 +8,7 @@ import com.github.laxika.magicalvibes.model.effect.CardEffect;
 import com.github.laxika.magicalvibes.model.effect.EffectDuration;
 import com.github.laxika.magicalvibes.model.effect.SetTargetColorEffect;
 import com.github.laxika.magicalvibes.model.layer.FloatingContinuousEffect;
-import com.github.laxika.magicalvibes.service.GameBroadcastService;
+import com.github.laxika.magicalvibes.service.GameLogService;
 import com.github.laxika.magicalvibes.service.battlefield.GameQueryService;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -22,7 +22,7 @@ import java.util.UUID;
 public class SetTargetColorEffectHandler implements NormalEffectHandlerBean {
 
     private final GameQueryService gameQueryService;
-    private final GameBroadcastService gameBroadcastService;
+    private final GameLogService gameLogService;
 
     @Override
     public Class<? extends CardEffect> handledEffect() {
@@ -50,7 +50,7 @@ public class SetTargetColorEffectHandler implements NormalEffectHandlerBean {
                     target.getId(), null, null, EffectDuration.PERMANENT, 0));
 
             String logEntry = target.getCard().getName() + " becomes " + colorName + ".";
-            gameBroadcastService.logAndBroadcast(gameData, GameLog.builder().card(target.getCard()).text(" becomes " + colorName + ".").build());
+            gameLogService.append(gameData, GameLog.builder().card(target.getCard()).text(" becomes " + colorName + ".").build());
             log.info("Game {} - {} becomes {}", gameData.id, target.getCard().getName(), colorName);
             return;
         }
@@ -61,7 +61,7 @@ public class SetTargetColorEffectHandler implements NormalEffectHandlerBean {
         if (targetSpell != null) {
             gameData.spellColorOverrides.put(targetId, e.color());
             String logEntry = targetSpell.getCard().getName() + " becomes " + colorName + ".";
-            gameBroadcastService.logAndBroadcast(gameData, GameLog.builder().card(targetSpell.getCard()).text(" becomes " + colorName + ".").build());
+            gameLogService.append(gameData, GameLog.builder().card(targetSpell.getCard()).text(" becomes " + colorName + ".").build());
             log.info("Game {} - spell {} becomes {}", gameData.id, targetSpell.getCard().getName(), colorName);
         }
     }

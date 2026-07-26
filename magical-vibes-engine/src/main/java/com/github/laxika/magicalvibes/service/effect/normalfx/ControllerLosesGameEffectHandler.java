@@ -5,7 +5,7 @@ import com.github.laxika.magicalvibes.model.GameLog;
 import com.github.laxika.magicalvibes.model.StackEntry;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
 import com.github.laxika.magicalvibes.model.effect.ControllerLosesGameEffect;
-import com.github.laxika.magicalvibes.service.GameBroadcastService;
+import com.github.laxika.magicalvibes.service.GameLogService;
 import com.github.laxika.magicalvibes.service.GameOutcomeService;
 import com.github.laxika.magicalvibes.service.battlefield.GameQueryService;
 import lombok.RequiredArgsConstructor;
@@ -20,7 +20,7 @@ import java.util.UUID;
 public class ControllerLosesGameEffectHandler implements NormalEffectHandlerBean {
 
     private final GameOutcomeService gameOutcomeService;
-    private final GameBroadcastService gameBroadcastService;
+    private final GameLogService gameLogService;
     private final GameQueryService gameQueryService;
 
     @Override
@@ -38,7 +38,7 @@ public class ControllerLosesGameEffectHandler implements NormalEffectHandlerBean
         // Check if the player can't lose (e.g. Platinum Angel)
         if (!gameQueryService.canPlayerLoseGame(gameData, losingPlayerId)) {
             String logEntry = gameData.playerIdToName.get(losingPlayerId) + " can't lose the game.";
-            gameBroadcastService.logAndBroadcast(gameData, GameLog.text(logEntry));
+            gameLogService.append(gameData, GameLog.text(logEntry));
             log.info("Game {} - {} can't lose the game (protected)", gameData.id,
                     gameData.playerIdToName.get(losingPlayerId));
             return;
@@ -52,7 +52,7 @@ public class ControllerLosesGameEffectHandler implements NormalEffectHandlerBean
         UUID winnerId = gameQueryService.getOpponentId(gameData, losingPlayerId);
         String loserName = gameData.playerIdToName.get(losingPlayerId);
 
-        gameBroadcastService.logAndBroadcast(gameData, GameLog.textCardText(loserName + " loses the game from " , entry.getCard(), "."));
+        gameLogService.append(gameData, GameLog.textCardText(loserName + " loses the game from " , entry.getCard(), "."));
         log.info("Game {} - {} loses the game from {}", gameData.id, loserName, entry.getCard().getName());
 
         gameOutcomeService.declareWinner(gameData, winnerId);

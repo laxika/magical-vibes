@@ -9,7 +9,7 @@ import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.StackEntry;
 import com.github.laxika.magicalvibes.model.effect.BecomeCopyOfDyingCreatureEffect;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
-import com.github.laxika.magicalvibes.service.GameBroadcastService;
+import com.github.laxika.magicalvibes.service.GameLogService;
 import com.github.laxika.magicalvibes.service.battlefield.GameQueryService;
 import com.github.laxika.magicalvibes.service.battlefield.PermanentCopierService;
 import java.util.Set;
@@ -25,7 +25,7 @@ public class BecomeCopyOfDyingCreatureEffectHandler implements NormalEffectHandl
 
     private final GameQueryService gameQueryService;
     private final PermanentCopierService permanentCopierService;
-    private final GameBroadcastService gameBroadcastService;
+    private final GameLogService gameLogService;
 
     @Override
     public Class<? extends CardEffect> handledEffect() {
@@ -47,7 +47,7 @@ public class BecomeCopyOfDyingCreatureEffectHandler implements NormalEffectHandl
         Card dyingCard = gameQueryService.findCardInGraveyardById(gameData, e.dyingCardId());
         if (dyingCard == null) {
             String logEntry = source.getCard().getName() + "'s ability fizzles (the creature that died is no longer available to copy).";
-            gameBroadcastService.logAndBroadcast(gameData, GameLog.cardThen(source.getCard(), "'s ability fizzles (the creature that died is no longer available to copy)."));
+            gameLogService.append(gameData, GameLog.cardThen(source.getCard(), "'s ability fizzles (the creature that died is no longer available to copy)."));
             log.info("Game {} - Become-copy-of-dying fizzles, dying card not found", gameData.id);
             return;
         }
@@ -61,7 +61,7 @@ public class BecomeCopyOfDyingCreatureEffectHandler implements NormalEffectHandl
             copiedCard.addEffect(EffectSlot.ON_ANY_CREATURE_DIES, reg.effect(), reg.triggerMode());
         }
 
-        gameBroadcastService.logAndBroadcast(gameData, GameLog.textCardText(originalName + " becomes a copy of " , dyingCard, "."));
+        gameLogService.append(gameData, GameLog.textCardText(originalName + " becomes a copy of " , dyingCard, "."));
         log.info("Game {} - {} becomes a copy of {}", gameData.id, originalName, dyingCard.getName());
     }
 }

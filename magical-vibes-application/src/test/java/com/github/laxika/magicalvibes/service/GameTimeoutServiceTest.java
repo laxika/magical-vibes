@@ -228,10 +228,7 @@ class GameTimeoutServiceTest {
 
     @Test
     void leavingVsAiGameClosesImmediatelyWithoutTimer() {
-        Connection aiConnection = mock(Connection.class);
-        when(aiConnection.getId()).thenReturn("ai-" + gameData.id);
-        when(sessionManager.getConnectionByUserId(player1Id)).thenReturn(player1Connection);
-        when(sessionManager.getConnectionByUserId(player2Id)).thenReturn(aiConnection);
+        gameData.aiPlayerIds.add(player2Id);
         when(gameRegistry.getGameForPlayer(player1Id)).thenReturn(gameData);
 
         svc.onPlayerDisconnect(player1Id);

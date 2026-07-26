@@ -6,7 +6,7 @@ import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.StackEntry;
 import com.github.laxika.magicalvibes.model.effect.CantBlockThisTurnEffect;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
-import com.github.laxika.magicalvibes.service.GameBroadcastService;
+import com.github.laxika.magicalvibes.service.GameLogService;
 import com.github.laxika.magicalvibes.service.battlefield.GameQueryService;
 import com.github.laxika.magicalvibes.service.filter.PredicateEvaluationService;
 import lombok.RequiredArgsConstructor;
@@ -23,7 +23,7 @@ public class CantBlockThisTurnEffectHandler implements NormalEffectHandlerBean {
 
     private final GameQueryService gameQueryService;
     private final PredicateEvaluationService predicateEvaluationService;
-    private final GameBroadcastService gameBroadcastService;
+    private final GameLogService gameLogService;
 
     @Override
     public Class<? extends CardEffect> handledEffect() {
@@ -50,7 +50,7 @@ public class CantBlockThisTurnEffectHandler implements NormalEffectHandlerBean {
                     continue;
                 }
                 target.setCantBlockThisTurn(true);
-                gameBroadcastService.logAndBroadcast(gameData, GameLog.cardThen(target.getCard(), " can't block this turn."));
+                gameLogService.append(gameData, GameLog.cardThen(target.getCard(), " can't block this turn."));
                 log.info("Game {} - {} can't block this turn", gameData.id, target.getCard().getName());
             }
             return;
@@ -64,7 +64,7 @@ public class CantBlockThisTurnEffectHandler implements NormalEffectHandlerBean {
 
         target.setCantBlockThisTurn(true);
 
-        gameBroadcastService.logAndBroadcast(gameData, GameLog.cardThen(target.getCard(), " can't block this turn."));
+        gameLogService.append(gameData, GameLog.cardThen(target.getCard(), " can't block this turn."));
         log.info("Game {} - {} can't block this turn", gameData.id, target.getCard().getName());
     }
 
@@ -98,7 +98,7 @@ public class CantBlockThisTurnEffectHandler implements NormalEffectHandlerBean {
 
         if (count > 0) {
             String logEntry = "Creatures controlled by " + playerName + " can't block this turn.";
-            gameBroadcastService.logAndBroadcast(gameData, GameLog.text(logEntry));
+            gameLogService.append(gameData, GameLog.text(logEntry));
             log.info("Game {} - {} creatures controlled by {} can't block this turn", gameData.id, count, playerName);
         }
     }
@@ -120,7 +120,7 @@ public class CantBlockThisTurnEffectHandler implements NormalEffectHandlerBean {
 
         if (count > 0) {
             String logEntry = "Some creatures can't block this turn.";
-            gameBroadcastService.logAndBroadcast(gameData, GameLog.text(logEntry));
+            gameLogService.append(gameData, GameLog.text(logEntry));
             log.info("Game {} - {} creatures can't block this turn", gameData.id, count);
         }
     }

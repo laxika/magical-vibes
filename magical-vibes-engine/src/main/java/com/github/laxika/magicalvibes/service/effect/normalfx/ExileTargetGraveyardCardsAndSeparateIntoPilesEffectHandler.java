@@ -7,7 +7,7 @@ import com.github.laxika.magicalvibes.model.PendingPileSeparation;
 import com.github.laxika.magicalvibes.model.StackEntry;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
 import com.github.laxika.magicalvibes.model.effect.ExileTargetGraveyardCardsAndSeparateIntoPilesEffect;
-import com.github.laxika.magicalvibes.service.GameBroadcastService;
+import com.github.laxika.magicalvibes.service.GameLogService;
 import com.github.laxika.magicalvibes.service.battlefield.GameQueryService;
 import com.github.laxika.magicalvibes.service.graveyard.GraveyardService;
 import com.github.laxika.magicalvibes.service.input.PlayerInputService;
@@ -25,7 +25,7 @@ import org.springframework.stereotype.Component;
 public class ExileTargetGraveyardCardsAndSeparateIntoPilesEffectHandler implements NormalEffectHandlerBean {
 
     private final GameQueryService gameQueryService;
-    private final GameBroadcastService gameBroadcastService;
+    private final GameLogService gameLogService;
     private final PlayerInputService playerInputService;
     private final GraveyardService graveyardService;
 
@@ -69,14 +69,14 @@ public class ExileTargetGraveyardCardsAndSeparateIntoPilesEffectHandler implemen
 
         if (exiledCards.isEmpty()) {
             String playerName = gameData.playerIdToName.get(controllerId);
-            gameBroadcastService.logAndBroadcast(gameData, GameLog.textCardText(playerName + "'s ", entry.getCard(), " fizzles — no valid targets."));
+            gameLogService.append(gameData, GameLog.textCardText(playerName + "'s ", entry.getCard(), " fizzles — no valid targets."));
             return;
         }
 
         // Log the exile
         String exiledNames = exiledCards.stream().map(Card::getName).collect(java.util.stream.Collectors.joining(", "));
         String playerName = gameData.playerIdToName.get(controllerId);
-        gameBroadcastService.logAndBroadcast(gameData, GameLog.text(playerName + " exiles " + exiledNames + " from graveyards."));
+        gameLogService.append(gameData, GameLog.text(playerName + " exiles " + exiledNames + " from graveyards."));
 
         // Determine opponent (in 2-player, it's the other player)
         UUID opponentId = gameData.orderedPlayerIds.stream()

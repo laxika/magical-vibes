@@ -10,7 +10,7 @@ import com.github.laxika.magicalvibes.model.effect.RevealTopCardMayPlayFreeOrExi
 import com.github.laxika.magicalvibes.networking.SessionManager;
 import com.github.laxika.magicalvibes.networking.model.CardView;
 import com.github.laxika.magicalvibes.networking.service.CardViewFactory;
-import com.github.laxika.magicalvibes.service.GameBroadcastService;
+import com.github.laxika.magicalvibes.service.GameLogService;
 import com.github.laxika.magicalvibes.service.battlefield.BattlefieldEntryService;
 import com.github.laxika.magicalvibes.service.battlefield.GameQueryService;
 import com.github.laxika.magicalvibes.service.exile.ExileService;
@@ -37,7 +37,7 @@ class RevealTopCardMayPlayFreeOrExileEffectHandlerTest {
     @Mock
     private GameQueryService gameQueryService;
     @Mock
-    private GameBroadcastService gameBroadcastService;
+    private GameLogService gameLogService;
     @Mock
     private SessionManager sessionManager;
     @Mock
@@ -74,9 +74,9 @@ class RevealTopCardMayPlayFreeOrExileEffectHandlerTest {
         gd.playerDecks.put(player2Id, Collections.synchronizedList(new ArrayList<>()));
         gd.activePlayerId = player1Id;
 
-        libraryRevealSupport = new LibraryRevealSupport(gameBroadcastService,
-                InteractionRegistryTestSupport.registryFor(sessionManager, cardViewFactory, gameBroadcastService));
-        revealTopCardMayPlayFreeOrExileEffectHandler = new RevealTopCardMayPlayFreeOrExileEffectHandler(gameBroadcastService, exileService);
+        libraryRevealSupport = new LibraryRevealSupport(gameLogService,
+                InteractionRegistryTestSupport.registryFor(sessionManager, cardViewFactory, gameLogService));
+        revealTopCardMayPlayFreeOrExileEffectHandler = new RevealTopCardMayPlayFreeOrExileEffectHandler(gameLogService, exileService);
 
     }
 
@@ -115,7 +115,7 @@ class RevealTopCardMayPlayFreeOrExileEffectHandlerTest {
 
                 revealTopCardMayPlayFreeOrExileEffectHandler.resolve(gd, entry, effect);
 
-                verify(gameBroadcastService).logAndBroadcast(eq(gd), argThat((GameLogEntry logEntry) ->
+                verify(gameLogService).append(eq(gd), argThat((GameLogEntry logEntry) ->
                         logEntry.plainText().contains("library is empty")));
                 assertThat(gd.pendingMayAbilities).isEmpty();
             }

@@ -7,7 +7,7 @@ import com.github.laxika.magicalvibes.model.StackEntry;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
 import com.github.laxika.magicalvibes.model.effect.DiscardOwnHandThenDrawEffect;
 import com.github.laxika.magicalvibes.service.DrawService;
-import com.github.laxika.magicalvibes.service.GameBroadcastService;
+import com.github.laxika.magicalvibes.service.GameLogService;
 import com.github.laxika.magicalvibes.service.effect.AmountContext;
 import com.github.laxika.magicalvibes.service.effect.AmountEvaluationService;
 import com.github.laxika.magicalvibes.service.graveyard.GraveyardService;
@@ -25,7 +25,7 @@ import org.springframework.stereotype.Component;
 public class DiscardOwnHandThenDrawEffectHandler implements NormalEffectHandlerBean {
 
     private final DrawService drawService;
-    private final GameBroadcastService gameBroadcastService;
+    private final GameLogService gameLogService;
     private final GraveyardService graveyardService;
     private final TriggerCollectionService triggerCollectionService;
     private final AmountEvaluationService amountEvaluationService;
@@ -57,7 +57,7 @@ public class DiscardOwnHandThenDrawEffectHandler implements NormalEffectHandlerB
 
             String discardLog = playerName + " discards their hand (" + discardCount
                     + " card" + (discardCount != 1 ? "s" : "") + ") (" + cardName + ").";
-            gameBroadcastService.logAndBroadcast(gameData, GameLog.text(discardLog));
+            gameLogService.append(gameData, GameLog.text(discardLog));
             log.info("Game {} - {} discards hand of {} cards for {}", gameData.id, playerName, discardCount, cardName);
         }
 
@@ -68,7 +68,7 @@ public class DiscardOwnHandThenDrawEffectHandler implements NormalEffectHandlerB
         }
         if (drawCount > 0) {
             String drawLog = playerName + " draws " + drawCount + " card" + (drawCount != 1 ? "s" : "") + ".";
-            gameBroadcastService.logAndBroadcast(gameData, GameLog.text(drawLog));
+            gameLogService.append(gameData, GameLog.text(drawLog));
             log.info("Game {} - {} draws {} cards for {}", gameData.id, playerName, drawCount, cardName);
         }
     }

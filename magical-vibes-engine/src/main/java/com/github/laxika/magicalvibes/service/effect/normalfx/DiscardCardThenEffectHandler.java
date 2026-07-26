@@ -7,7 +7,7 @@ import com.github.laxika.magicalvibes.model.GameLog;
 import com.github.laxika.magicalvibes.model.StackEntry;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
 import com.github.laxika.magicalvibes.model.effect.DiscardCardThenEffect;
-import com.github.laxika.magicalvibes.service.GameBroadcastService;
+import com.github.laxika.magicalvibes.service.GameLogService;
 import com.github.laxika.magicalvibes.service.filter.PredicateEvaluationService;
 import com.github.laxika.magicalvibes.service.input.PlayerInputService;
 import java.util.ArrayList;
@@ -22,7 +22,7 @@ import org.springframework.stereotype.Component;
 @RequiredArgsConstructor
 public class DiscardCardThenEffectHandler implements NormalEffectHandlerBean {
 
-    private final GameBroadcastService gameBroadcastService;
+    private final GameLogService gameLogService;
     private final PredicateEvaluationService predicateEvaluationService;
     private final PlayerInputService playerInputService;
 
@@ -51,7 +51,7 @@ public class DiscardCardThenEffectHandler implements NormalEffectHandlerBean {
 
         if (validIndices.isEmpty()) {
             String logEntry = playerName + " has no " + e.cardDescription() + " to discard.";
-            gameBroadcastService.logAndBroadcast(gameData, GameLog.text(logEntry));
+            gameLogService.append(gameData, GameLog.text(logEntry));
             log.info("Game {} - {} has no {} to discard for {}",
                     gameData.id, playerName, e.cardDescription(), entry.getCard().getName());
             return;
@@ -63,7 +63,7 @@ public class DiscardCardThenEffectHandler implements NormalEffectHandlerBean {
                 1, DiscardFollowUp.thenEffect(entry.getCard(), e.thenEffect()));
 
         String logEntry = playerName + " is choosing " + e.cardDescription() + " to discard.";
-        gameBroadcastService.logAndBroadcast(gameData, GameLog.text(logEntry));
+        gameLogService.append(gameData, GameLog.text(logEntry));
         log.info("Game {} - {} choosing {} to discard for {}",
                 gameData.id, playerName, e.cardDescription(), entry.getCard().getName());
     }

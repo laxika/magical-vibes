@@ -54,7 +54,7 @@ class HandTopBottomChoiceAiStrategy implements AiInteractionStrategy<PendingInte
         }
 
         log.info("AI: Choosing hand={} top={} in game {}", handCardIndex, topCardIndex, ctx.gameId());
-        ctx.gameActions().answerInteraction(ctx.selfConnection(),
+        ctx.gameActions().answerInteraction(
                 new InteractionAnswer.HandTopBottom(handCardIndex, topCardIndex));
     }
 }

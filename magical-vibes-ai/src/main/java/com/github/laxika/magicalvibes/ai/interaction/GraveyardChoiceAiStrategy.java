@@ -43,6 +43,6 @@ class GraveyardChoiceAiStrategy implements AiInteractionStrategy<PendingInteract
                 .orElse(validIndices.iterator().next());
 
         log.info("AI: Choosing graveyard card at index {} in game {}", bestIndex, ctx.gameId());
-        ctx.gameActions().answerInteraction(ctx.selfConnection(), new InteractionAnswer.GraveyardCardChosen(bestIndex));
+        ctx.gameActions().answerInteraction(new InteractionAnswer.GraveyardCardChosen(bestIndex));
     }
 }

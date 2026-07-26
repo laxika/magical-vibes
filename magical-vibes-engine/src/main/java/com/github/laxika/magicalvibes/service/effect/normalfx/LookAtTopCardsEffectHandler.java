@@ -13,7 +13,7 @@ import com.github.laxika.magicalvibes.model.effect.LookAtTopCardsEffect;
 import com.github.laxika.magicalvibes.model.effect.LookDestination;
 import com.github.laxika.magicalvibes.model.filter.CardPredicate;
 import com.github.laxika.magicalvibes.model.filter.CardPredicateUtils;
-import com.github.laxika.magicalvibes.service.GameBroadcastService;
+import com.github.laxika.magicalvibes.service.GameLogService;
 import com.github.laxika.magicalvibes.service.battlefield.GameQueryService;
 import com.github.laxika.magicalvibes.service.effect.AmountContext;
 import com.github.laxika.magicalvibes.service.effect.AmountEvaluationService;
@@ -41,7 +41,7 @@ import org.springframework.stereotype.Component;
 @RequiredArgsConstructor
 public class LookAtTopCardsEffectHandler implements NormalEffectHandlerBean {
 
-    private final GameBroadcastService gameBroadcastService;
+    private final GameLogService gameLogService;
     private final LibraryRevealSupport libraryRevealSupport;
     private final GameQueryService gameQueryService;
     private final PredicateEvaluationService predicateEvaluationService;
@@ -140,7 +140,7 @@ public class LookAtTopCardsEffectHandler implements NormalEffectHandlerBean {
         if (topCards.size() == 1) {
             // Only one card looked at — it goes back on top, nothing to put on the bottom.
             gameData.playerDecks.get(controllerId).addFirst(topCards.getFirst());
-            gameBroadcastService.logAndBroadcast(gameData, GameLog.text(playerName + " puts a card on top of their library."));
+            gameLogService.append(gameData, GameLog.text(playerName + " puts a card on top of their library."));
             return;
         }
 
@@ -222,7 +222,7 @@ public class LookAtTopCardsEffectHandler implements NormalEffectHandlerBean {
                 GameLog.Builder builder = GameLog.builder().text(playerName + " puts ");
                 appendCardList(builder, topCards);
                 builder.text(" into their hand.");
-                gameBroadcastService.logAndBroadcast(gameData, builder.build());
+                gameLogService.append(gameData, builder.build());
             }
             return;
         }
@@ -258,7 +258,7 @@ public class LookAtTopCardsEffectHandler implements NormalEffectHandlerBean {
                 GameLog.Builder builder = GameLog.builder().text(playerName + " puts ");
                 appendCardList(builder, topCards);
                 builder.text(" into their hand.");
-                gameBroadcastService.logAndBroadcast(gameData, builder.build());
+                gameLogService.append(gameData, builder.build());
             }
             return;
         }
@@ -293,7 +293,7 @@ public class LookAtTopCardsEffectHandler implements NormalEffectHandlerBean {
             GameLog.Builder revealBuilder = GameLog.builder().text(playerName + " reveals ");
             appendCardList(revealBuilder, topCards);
             revealBuilder.text(" from the top of their library with ").card(entry.getCard()).text(".");
-            gameBroadcastService.logAndBroadcast(gameData, revealBuilder.build());
+            gameLogService.append(gameData, revealBuilder.build());
         }
 
         if (handChoicePredicate == null) {
@@ -310,7 +310,7 @@ public class LookAtTopCardsEffectHandler implements NormalEffectHandlerBean {
             GameLog.Builder restBuilder = GameLog.builder().text(playerName + " puts ");
             appendCardList(restBuilder, topCards);
             restBuilder.text(" into their graveyard.");
-            gameBroadcastService.logAndBroadcast(gameData, restBuilder.build());
+            gameLogService.append(gameData, restBuilder.build());
             log.info("Game {} - {} resolving {} — 0 eligible, {} to graveyard",
                     gameData.id, playerName, cardName, topCards.size());
             return;
@@ -329,12 +329,12 @@ public class LookAtTopCardsEffectHandler implements NormalEffectHandlerBean {
             GameLog.Builder handBuilder = GameLog.builder().text(playerName + " puts ");
             appendCardList(handBuilder, eligibleCards);
             handBuilder.text(" into their hand.");
-            gameBroadcastService.logAndBroadcast(gameData, handBuilder.build());
+            gameLogService.append(gameData, handBuilder.build());
             if (!remainingCards.isEmpty()) {
                 GameLog.Builder restBuilder = GameLog.builder().text(playerName + " puts ");
                 appendCardList(restBuilder, remainingCards);
                 restBuilder.text(" into their graveyard.");
-                gameBroadcastService.logAndBroadcast(gameData, restBuilder.build());
+                gameLogService.append(gameData, restBuilder.build());
             }
             return;
         }
@@ -348,7 +348,7 @@ public class LookAtTopCardsEffectHandler implements NormalEffectHandlerBean {
                         + " into your hand. The rest are put into your graveyard."));
 
         if (!e.reveal()) {
-            gameBroadcastService.logAndBroadcast(gameData, GameLog.text(playerName + " looks at the top " + LibraryRevealSupport.pluralCards(count) + " of their library."));
+            gameLogService.append(gameData, GameLog.text(playerName + " looks at the top " + LibraryRevealSupport.pluralCards(count) + " of their library."));
         }
         log.info("Game {} - {} resolving {} with {} cards, {} eligible",
                 gameData.id, playerName, cardName, count, eligibleCards.size());
@@ -364,7 +364,7 @@ public class LookAtTopCardsEffectHandler implements NormalEffectHandlerBean {
                     ? playerName + " looks at the top card of their library and puts it into their hand."
                     : playerName + " looks at the top " + LibraryRevealSupport.pluralCards(count)
                             + " of their library and puts them into their hand.";
-            gameBroadcastService.logAndBroadcast(gameData, GameLog.text(logMsg));
+            gameLogService.append(gameData, GameLog.text(logMsg));
             return;
         }
 
@@ -375,7 +375,7 @@ public class LookAtTopCardsEffectHandler implements NormalEffectHandlerBean {
                 "Look at the top " + count + " cards of your library. Put " + handWord
                         + " into your hand. The rest are put into your graveyard."));
 
-        gameBroadcastService.logAndBroadcast(gameData, GameLog.text(playerName + " looks at the top " + LibraryRevealSupport.pluralCards(count) + " of their library."));
+        gameLogService.append(gameData, GameLog.text(playerName + " looks at the top " + LibraryRevealSupport.pluralCards(count) + " of their library."));
         log.info("Game {} - {} resolving {} with {} cards", gameData.id, playerName, entry.getCard().getName(), count);
     }
 

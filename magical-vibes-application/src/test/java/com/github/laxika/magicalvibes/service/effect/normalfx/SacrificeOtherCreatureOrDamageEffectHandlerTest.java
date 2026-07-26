@@ -17,7 +17,7 @@ import com.github.laxika.magicalvibes.model.StackEntry;
 import com.github.laxika.magicalvibes.model.StackEntryType;
 import com.github.laxika.magicalvibes.model.effect.SacrificeOtherCreatureOrDamageEffect;
 import com.github.laxika.magicalvibes.service.DamagePreventionService;
-import com.github.laxika.magicalvibes.service.GameBroadcastService;
+import com.github.laxika.magicalvibes.service.GameLogService;
 import com.github.laxika.magicalvibes.service.GameOutcomeService;
 import com.github.laxika.magicalvibes.service.input.PlayerInputService;
 import com.github.laxika.magicalvibes.service.graveyard.GraveyardService;
@@ -50,7 +50,7 @@ class SacrificeOtherCreatureOrDamageEffectHandlerTest {
     @Mock private GameOutcomeService gameOutcomeService;
     @Mock private PermanentRemovalService permanentRemovalService;
     @Mock private GameQueryService gameQueryService;
-    @Mock private GameBroadcastService gameBroadcastService;
+    @Mock private GameLogService gameLogService;
     @Mock private PlayerInputService playerInputService;
     @Mock private LifeSupport lifeSupport;
     @Mock private TriggerCollectionService triggerCollectionService;
@@ -186,7 +186,7 @@ class SacrificeOtherCreatureOrDamageEffectHandlerTest {
                 sacrificeOtherOrDamageHandler.resolve(gd, entry, effect);
 
                 verify(permanentRemovalService).removePermanentToGraveyard(gd, elves);
-                verify(gameBroadcastService).logAndBroadcast(eq(gd), argThat((GameLogEntry e) -> e.plainText().equals("Player1 sacrifices Llanowar Elves.")));
+                verify(gameLogService).append(eq(gd), argThat((GameLogEntry e) -> e.plainText().equals("Player1 sacrifices Llanowar Elves.")));
                 // No damage dealt
                 assertThat(gd.getLife(player1Id)).isEqualTo(20);
             }
@@ -233,6 +233,6 @@ class SacrificeOtherCreatureOrDamageEffectHandlerTest {
 
                 sacrificeOtherOrDamageHandler.resolve(gd, entry, effect);
 
-                verify(gameBroadcastService).logAndBroadcast(eq(gd), argThat((GameLogEntry e) -> e.plainText().equals("Lord of the Pit deals 7 damage to Player1.")));
+                verify(gameLogService).append(eq(gd), argThat((GameLogEntry e) -> e.plainText().equals("Lord of the Pit deals 7 damage to Player1.")));
             }
 }

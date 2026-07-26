@@ -7,7 +7,7 @@ import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.StackEntry;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
 import com.github.laxika.magicalvibes.model.effect.ExileTopCardsToSourceEffect;
-import com.github.laxika.magicalvibes.service.GameBroadcastService;
+import com.github.laxika.magicalvibes.service.GameLogService;
 import com.github.laxika.magicalvibes.service.battlefield.GameQueryService;
 import com.github.laxika.magicalvibes.service.exile.ExileService;
 import java.util.ArrayList;
@@ -27,7 +27,7 @@ import org.springframework.stereotype.Component;
 public class ExileTopCardsToSourceEffectHandler implements NormalEffectHandlerBean {
 
     private final GameQueryService gameQueryService;
-    private final GameBroadcastService gameBroadcastService;
+    private final GameLogService gameLogService;
     private final ExileService exileService;
 
     @Override
@@ -78,7 +78,7 @@ public class ExileTopCardsToSourceEffectHandler implements NormalEffectHandlerBe
             String logEntry = playerName + " exiles the top " + toExile + " card"
                     + (toExile != 1 ? "s" : "") + " of their library face down ("
                     + sourcePermanent.getCard().getName() + ").";
-            gameBroadcastService.logAndBroadcast(gameData, GameLog.builder().text(playerName + " exiles the top " + toExile + " card" + (toExile != 1 ? "s" : "") + " of their library face down (").card(sourcePermanent.getCard()).text(").").build());
+            gameLogService.append(gameData, GameLog.builder().text(playerName + " exiles the top " + toExile + " card" + (toExile != 1 ? "s" : "") + " of their library face down (").card(sourcePermanent.getCard()).text(").").build());
             log.info("Game {} - {} exiles {} cards from library to {}",
                     gameData.id, playerName, toExile, sourcePermanent.getCard().getName());
         }

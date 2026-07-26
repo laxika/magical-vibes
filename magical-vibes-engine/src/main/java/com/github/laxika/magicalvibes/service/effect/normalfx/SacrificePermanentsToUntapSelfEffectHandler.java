@@ -6,7 +6,7 @@ import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.StackEntry;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
 import com.github.laxika.magicalvibes.model.effect.SacrificePermanentsToUntapSelfEffect;
-import com.github.laxika.magicalvibes.service.GameBroadcastService;
+import com.github.laxika.magicalvibes.service.GameLogService;
 import com.github.laxika.magicalvibes.service.battlefield.GameQueryService;
 import com.github.laxika.magicalvibes.service.filter.PredicateEvaluationService;
 import java.util.ArrayList;
@@ -30,7 +30,7 @@ public class SacrificePermanentsToUntapSelfEffectHandler implements NormalEffect
     private final TapUntapSupport tapUntapSupport;
     private final GameQueryService gameQueryService;
     private final PredicateEvaluationService predicateEvaluationService;
-    private final GameBroadcastService gameBroadcastService;
+    private final GameLogService gameLogService;
 
     @Override
     public Class<? extends CardEffect> handledEffect() {
@@ -55,7 +55,7 @@ public class SacrificePermanentsToUntapSelfEffectHandler implements NormalEffect
 
         // "If you do" — the whole cost must be payable, otherwise nothing happens (no untap).
         if (matching.size() < e.count()) {
-            gameBroadcastService.logAndBroadcast(gameData,
+            gameLogService.append(gameData,
                     GameLog.text(playerName + " does not sacrifice " + e.description() + "."));
             log.info("Game {} - {} cannot sacrifice {} for {}", gameData.id, playerName,
                     e.description(), entry.getCard().getName());
@@ -77,7 +77,7 @@ public class SacrificePermanentsToUntapSelfEffectHandler implements NormalEffect
         }
         if (self != null) {
             tapUntapSupport.untapPermanent(gameData, self);
-            gameBroadcastService.logAndBroadcast(gameData,
+            gameLogService.append(gameData,
                     GameLog.cardThen(entry.getCard(), " untaps."));
             log.info("Game {} - {} untaps", gameData.id, entry.getCard().getName());
         }

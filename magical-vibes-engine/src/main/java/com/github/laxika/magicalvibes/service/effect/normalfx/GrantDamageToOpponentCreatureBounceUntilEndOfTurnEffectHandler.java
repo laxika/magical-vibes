@@ -6,7 +6,7 @@ import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.StackEntry;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantDamageToOpponentCreatureBounceUntilEndOfTurnEffect;
-import com.github.laxika.magicalvibes.service.GameBroadcastService;
+import com.github.laxika.magicalvibes.service.GameLogService;
 import com.github.laxika.magicalvibes.service.battlefield.GameQueryService;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -20,7 +20,7 @@ import java.util.List;
 public class GrantDamageToOpponentCreatureBounceUntilEndOfTurnEffectHandler implements NormalEffectHandlerBean {
 
     private final GameQueryService gameQueryService;
-    private final GameBroadcastService gameBroadcastService;
+    private final GameLogService gameLogService;
 
     @Override
     public Class<? extends CardEffect> handledEffect() {
@@ -41,7 +41,7 @@ public class GrantDamageToOpponentCreatureBounceUntilEndOfTurnEffectHandler impl
         }
 
         String logEntry = entry.getCard().getName() + " grants damage-to-opponent creature bounce to " + count + " creature(s) until end of turn.";
-        gameBroadcastService.logAndBroadcast(gameData, GameLog.builder().card(entry.getCard()).text(" grants damage-to-opponent creature bounce to " + count + " creature(s) until end of turn.").build());
+        gameLogService.append(gameData, GameLog.builder().card(entry.getCard()).text(" grants damage-to-opponent creature bounce to " + count + " creature(s) until end of turn.").build());
         log.info("Game {} - {} grants damage bounce to {} creature(s)", gameData.id, entry.getCard().getName(), count);
     }
 }

@@ -7,7 +7,7 @@ import com.github.laxika.magicalvibes.model.GameLog;
 import com.github.laxika.magicalvibes.model.StackEntry;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
 import com.github.laxika.magicalvibes.model.effect.DiscardThenReturnFromGraveyardToHandEffect;
-import com.github.laxika.magicalvibes.service.GameBroadcastService;
+import com.github.laxika.magicalvibes.service.GameLogService;
 import com.github.laxika.magicalvibes.service.effect.AmountContext;
 import com.github.laxika.magicalvibes.service.effect.AmountEvaluationService;
 import java.util.List;
@@ -27,7 +27,7 @@ import org.springframework.stereotype.Component;
 public class DiscardThenReturnFromGraveyardToHandEffectHandler implements NormalEffectHandlerBean {
 
     private final AmountEvaluationService amountEvaluationService;
-    private final GameBroadcastService gameBroadcastService;
+    private final GameLogService gameLogService;
     private final PlayerInteractionSupport playerInteractionSupport;
 
     @Override
@@ -46,7 +46,7 @@ public class DiscardThenReturnFromGraveyardToHandEffectHandler implements Normal
         List<Card> hand = gameData.playerHands.get(playerId);
         int returnCount = Math.min(amount, hand == null ? 0 : hand.size());
         if (returnCount <= 0) {
-            gameBroadcastService.logAndBroadcast(gameData, GameLog.text(gameData.playerIdToName.get(playerId) + " discards no cards."));
+            gameLogService.append(gameData, GameLog.text(gameData.playerIdToName.get(playerId) + " discards no cards."));
             return;
         }
 

@@ -21,7 +21,7 @@ import com.github.laxika.magicalvibes.networking.SessionManager;
 import com.github.laxika.magicalvibes.networking.model.CardView;
 import com.github.laxika.magicalvibes.networking.service.CardViewFactory;
 import com.github.laxika.magicalvibes.service.DrawService;
-import com.github.laxika.magicalvibes.service.GameBroadcastService;
+import com.github.laxika.magicalvibes.service.GameLogService;
 import com.github.laxika.magicalvibes.service.effect.AmountEvaluationService;
 import com.github.laxika.magicalvibes.service.input.PlayerInputService;
 import com.github.laxika.magicalvibes.service.battlefield.GameQueryService;
@@ -58,7 +58,7 @@ class SearchLibraryEffectHandlerTest {
     @Mock
     private DrawService drawService;
     @Mock
-    private GameBroadcastService gameBroadcastService;
+    private GameLogService gameLogService;
     @Mock
     private SessionManager sessionManager;
     @Mock
@@ -83,8 +83,8 @@ class SearchLibraryEffectHandlerTest {
 
     @BeforeEach
     void setUp() {
-        support = new LibrarySearchSupport(gameBroadcastService,
-                InteractionRegistryTestSupport.registryFor(sessionManager, cardViewFactory, gameBroadcastService));
+        support = new LibrarySearchSupport(gameLogService,
+                InteractionRegistryTestSupport.registryFor(sessionManager, cardViewFactory, gameLogService));
 
         player1Id = UUID.randomUUID();
         player2Id = UUID.randomUUID();
@@ -106,9 +106,9 @@ class SearchLibraryEffectHandlerTest {
         gd.activePlayerId = player1Id;
         lenient().when(amountEvaluationService.evaluate(any(GameData.class), any(), any())).thenReturn(1);
         searchLibraryHandler = new SearchLibraryEffectHandler(gameQueryService, predicateEvaluationService,
-                gameBroadcastService, support, amountEvaluationService);
-        distantMemoriesHandler = new DistantMemoriesEffectHandler(drawService, gameBroadcastService, support);
-        headGamesHandler = new HeadGamesEffectHandler(gameBroadcastService, support);
+                gameLogService, support, amountEvaluationService);
+        distantMemoriesHandler = new DistantMemoriesEffectHandler(drawService, gameLogService, support);
+        headGamesHandler = new HeadGamesEffectHandler(gameLogService, support);
     }
 
     private static Card createCard(String name) {
@@ -192,7 +192,7 @@ class SearchLibraryEffectHandlerTest {
         searchLibraryHandler.resolve(gd, entry, effect);
 
         assertThat(gd.interaction.activeInteraction(PendingInteraction.LibrarySearch.class)).isNull();
-        verify(gameBroadcastService).logAndBroadcast(eq(gd), argThat((GameLogEntry logEntry) ->
+        verify(gameLogService).append(eq(gd), argThat((GameLogEntry logEntry) ->
                 logEntry.plainText().contains("finds no") && logEntry.plainText().contains("Library is shuffled")));
     }
 
@@ -207,7 +207,7 @@ class SearchLibraryEffectHandlerTest {
         searchLibraryHandler.resolve(gd, entry, effect);
 
         assertThat(gd.interaction.activeInteraction(PendingInteraction.LibrarySearch.class)).isNull();
-        verify(gameBroadcastService).logAndBroadcast(eq(gd), argThat((GameLogEntry logEntry) ->
+        verify(gameLogService).append(eq(gd), argThat((GameLogEntry logEntry) ->
                 logEntry.plainText().contains("it is empty")));
     }
 
@@ -248,7 +248,7 @@ class SearchLibraryEffectHandlerTest {
         searchLibraryHandler.resolve(gd, entry, effect);
 
         assertThat(gd.interaction.activeInteraction(PendingInteraction.LibrarySearch.class)).isNull();
-        verify(gameBroadcastService).logAndBroadcast(eq(gd), argThat((GameLogEntry logEntry) ->
+        verify(gameLogService).append(eq(gd), argThat((GameLogEntry logEntry) ->
                 logEntry.plainText().contains("prevented by Leonin Arbiter")));
     }
 
@@ -313,7 +313,7 @@ class SearchLibraryEffectHandlerTest {
         searchLibraryHandler.resolve(gd, entry, effect);
 
         assertThat(gd.interaction.activeInteraction(PendingInteraction.LibrarySearch.class)).isNull();
-        verify(gameBroadcastService).logAndBroadcast(eq(gd), argThat((GameLogEntry logEntry) ->
+        verify(gameLogService).append(eq(gd), argThat((GameLogEntry logEntry) ->
                 logEntry.plainText().contains("prevented by Leonin Arbiter")));
         // Library should be same size (shuffled, not modified)
         assertThat(gd.playerDecks.get(player1Id)).hasSize(deckSize);
@@ -333,7 +333,7 @@ class SearchLibraryEffectHandlerTest {
         distantMemoriesHandler.resolve(gd, entry, new DistantMemoriesEffect());
 
         assertThat(gd.interaction.activeInteraction(PendingInteraction.LibrarySearch.class)).isNull();
-        verify(gameBroadcastService).logAndBroadcast(eq(gd), argThat((GameLogEntry logEntry) ->
+        verify(gameLogService).append(eq(gd), argThat((GameLogEntry logEntry) ->
                 logEntry.plainText().contains("prevented by Leonin Arbiter")));
     }
 
@@ -358,7 +358,7 @@ class SearchLibraryEffectHandlerTest {
         assertThat(gd.playerDecks.get(player2Id)).hasSize(deckSizeBefore + 1);
         // Search was prevented
         assertThat(gd.interaction.activeInteraction(PendingInteraction.LibrarySearch.class)).isNull();
-        verify(gameBroadcastService).logAndBroadcast(eq(gd), argThat((GameLogEntry logEntry) ->
+        verify(gameLogService).append(eq(gd), argThat((GameLogEntry logEntry) ->
                 logEntry.plainText().contains("prevented by Leonin Arbiter")));
     }
 }

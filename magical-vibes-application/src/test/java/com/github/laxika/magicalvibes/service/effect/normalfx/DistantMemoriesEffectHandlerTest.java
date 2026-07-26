@@ -17,7 +17,7 @@ import com.github.laxika.magicalvibes.networking.SessionManager;
 import com.github.laxika.magicalvibes.networking.model.CardView;
 import com.github.laxika.magicalvibes.networking.service.CardViewFactory;
 import com.github.laxika.magicalvibes.service.DrawService;
-import com.github.laxika.magicalvibes.service.GameBroadcastService;
+import com.github.laxika.magicalvibes.service.GameLogService;
 import com.github.laxika.magicalvibes.service.input.PlayerInputService;
 import com.github.laxika.magicalvibes.service.battlefield.GameQueryService;
 import com.github.laxika.magicalvibes.service.battlefield.PermanentRemovalService;
@@ -45,7 +45,7 @@ class DistantMemoriesEffectHandlerTest {
     @Mock
     private DrawService drawService;
     @Mock
-    private GameBroadcastService gameBroadcastService;
+    private GameLogService gameLogService;
     @Mock
     private SessionManager sessionManager;
     @Mock
@@ -64,8 +64,8 @@ class DistantMemoriesEffectHandlerTest {
 
     @BeforeEach
     void setUp() {
-        support = new LibrarySearchSupport(gameBroadcastService,
-                InteractionRegistryTestSupport.registryFor(sessionManager, cardViewFactory, gameBroadcastService));
+        support = new LibrarySearchSupport(gameLogService,
+                InteractionRegistryTestSupport.registryFor(sessionManager, cardViewFactory, gameLogService));
 
         player1Id = UUID.randomUUID();
         player2Id = UUID.randomUUID();
@@ -85,7 +85,7 @@ class DistantMemoriesEffectHandlerTest {
         gd.playerDecks.put(player1Id, Collections.synchronizedList(new ArrayList<>()));
         gd.playerDecks.put(player2Id, Collections.synchronizedList(new ArrayList<>()));
         gd.activePlayerId = player1Id;
-        distantMemoriesHandler = new DistantMemoriesEffectHandler(drawService, gameBroadcastService, support);
+        distantMemoriesHandler = new DistantMemoriesEffectHandler(drawService, gameLogService, support);
 
     }
 
@@ -154,7 +154,7 @@ class DistantMemoriesEffectHandlerTest {
                 distantMemoriesHandler.resolve(gd, entry, new DistantMemoriesEffect());
 
                 assertThat(gd.interaction.activeInteraction(PendingInteraction.LibrarySearch.class)).isNull();
-                verify(gameBroadcastService).logAndBroadcast(eq(gd), argThat((GameLogEntry logEntry) ->
+                verify(gameLogService).append(eq(gd), argThat((GameLogEntry logEntry) ->
                         logEntry.plainText().contains("it is empty")));
                 verify(drawService, times(3)).resolveDrawCard(gd, player1Id);
             }

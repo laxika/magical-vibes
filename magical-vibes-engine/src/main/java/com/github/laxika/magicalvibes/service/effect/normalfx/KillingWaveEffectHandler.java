@@ -7,7 +7,7 @@ import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.StackEntry;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
 import com.github.laxika.magicalvibes.model.effect.KillingWaveEffect;
-import com.github.laxika.magicalvibes.service.GameBroadcastService;
+import com.github.laxika.magicalvibes.service.GameLogService;
 import com.github.laxika.magicalvibes.service.battlefield.GameQueryService;
 import com.github.laxika.magicalvibes.service.input.PlayerInputService;
 import java.util.ArrayList;
@@ -33,7 +33,7 @@ import org.springframework.stereotype.Component;
 public class KillingWaveEffectHandler implements NormalEffectHandlerBean {
 
     private final GameQueryService gameQueryService;
-    private final GameBroadcastService gameBroadcastService;
+    private final GameLogService gameLogService;
     private final PlayerInputService playerInputService;
     private final DestructionSupport destructionSupport;
 
@@ -79,7 +79,7 @@ public class KillingWaveEffectHandler implements NormalEffectHandlerBean {
             if (maxKeep <= 0) {
                 // Can't pay for any — all will be sacrificed; no choice to make.
                 String playerName = gameData.playerIdToName.get(playerId);
-                gameBroadcastService.logAndBroadcast(gameData, GameLog.text(
+                gameLogService.append(gameData, GameLog.text(
                         playerName + " can't pay " + xValue + " life for any creature (" + sourceName + ")."));
                 log.info("Game {} - {} can't afford any Killing Wave payments", gameData.id, playerName);
                 continue;
@@ -104,10 +104,10 @@ public class KillingWaveEffectHandler implements NormalEffectHandlerBean {
 
         String playerName = gameData.playerIdToName.get(context.choosingPlayerId());
         if (chosenKeepIds.isEmpty()) {
-            gameBroadcastService.logAndBroadcast(gameData, GameLog.text(
+            gameLogService.append(gameData, GameLog.text(
                     playerName + " pays no life (" + context.sourceName() + ")."));
         } else {
-            gameBroadcastService.logAndBroadcast(gameData, GameLog.text(
+            gameLogService.append(gameData, GameLog.text(
                     playerName + " will pay " + (chosenKeepIds.size() * context.xValue())
                             + " life to keep " + chosenKeepIds.size() + " creature"
                             + (chosenKeepIds.size() == 1 ? "" : "s")
@@ -154,7 +154,7 @@ public class KillingWaveEffectHandler implements NormalEffectHandlerBean {
             int currentLife = gameData.getLife(playerId);
             gameData.playerLifeTotals.put(playerId, currentLife - lifeCost);
             String playerName = gameData.playerIdToName.get(playerId);
-            gameBroadcastService.logAndBroadcast(gameData, GameLog.text(
+            gameLogService.append(gameData, GameLog.text(
                     playerName + " pays " + lifeCost + " life (" + sourceName + ")."));
             log.info("Game {} - {} pays {} life for Killing Wave", gameData.id, playerName, lifeCost);
         }

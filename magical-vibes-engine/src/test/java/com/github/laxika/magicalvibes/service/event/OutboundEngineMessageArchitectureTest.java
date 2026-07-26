@@ -20,7 +20,7 @@ import static org.assertj.core.api.Assertions.assertThat;
  * Keeps engine output one-way: mutation services emit facts and projectors construct messages.
  *
  * <p>The session adapter allowlist is intentionally tiny. {@code GameMessageTransport} owns typed
- * delivery and {@code GameSessionTransportAdapter} owns connection-state/lifecycle operations.
+ * delivery and {@code GameSessionTransportAdapter} exposes read-only connection state.
  * Reconnect projections use those adapters and the canonical prompt projector, never raw sessions.
  */
 class OutboundEngineMessageArchitectureTest {
@@ -38,6 +38,23 @@ class OutboundEngineMessageArchitectureTest {
             "GameResyncProjectionService.java",
             "ReconnectionService.java",
             "event/GameEventProjectionSubscriber.java");
+    private static final Set<String> PROJECTION_AND_TRANSPORT_OWNERS = Set.of(
+            "GameMessageTransport.java",
+            "GameSessionTransportAdapter.java",
+            "GameResyncProjectionService.java",
+            "GameViewProjectionFactory.java",
+            "PrivateInformationProjectionFactory.java",
+            "ReconnectionService.java",
+            "event/GameEndLifecycleSubscriber.java",
+            "event/GameEventProjectionSubscriber.java",
+            "event/InteractionPromptProjectionRegistry.java");
+    private static final Set<String> PROJECTION_AND_TRANSPORT_TYPES = Set.of(
+            "GameMessageTransport",
+            "GameSessionTransportAdapter",
+            "GameResyncProjectionService",
+            "GameViewProjectionFactory",
+            "PrivateInformationProjectionFactory",
+            "InteractionPromptProjectionRegistry");
 
     private static final Map<String, Set<String>> MESSAGE_PROJECTORS = messageProjectors();
 
@@ -91,6 +108,32 @@ class OutboundEngineMessageArchitectureTest {
 
         assertThat(violations)
                 .as("typed delivery is restricted to event projections and reconnect boundaries")
+                .isEmpty();
+    }
+
+    @Test
+    void mutationAndRulesServicesCannotDependOnProjectionOrTransportServices()
+            throws IOException {
+        Path serviceRoot = locateRepoRoot().resolve(SERVICE_ROOT);
+        List<String> violations = new ArrayList<>();
+
+        for (Path path : javaSources(serviceRoot)) {
+            String relative = relative(serviceRoot, path);
+            if (PROJECTION_AND_TRANSPORT_OWNERS.contains(relative)) {
+                continue;
+            }
+            String source = Files.readString(path, StandardCharsets.UTF_8);
+            for (String forbiddenType : PROJECTION_AND_TRANSPORT_TYPES) {
+                if (Pattern.compile("\\b" + Pattern.quote(forbiddenType) + "\\b")
+                        .matcher(source)
+                        .find()) {
+                    violations.add(relative + " depends on " + forbiddenType);
+                }
+            }
+        }
+
+        assertThat(violations)
+                .as("mutation and rules services must stay independent of projection/transport")
                 .isEmpty();
     }
 

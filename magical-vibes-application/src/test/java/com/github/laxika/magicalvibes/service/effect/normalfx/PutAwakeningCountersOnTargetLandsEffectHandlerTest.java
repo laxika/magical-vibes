@@ -53,7 +53,7 @@ class PutAwakeningCountersOnTargetLandsEffectHandlerTest extends AbstractPlayerI
                 resolveEffect(gd, entry, new PutAwakeningCountersOnTargetLandsEffect());
 
                 verify(playerInputService, never()).beginMultiPermanentChoice(any(), any(), any(), any(int.class), any(), any());
-                verify(gameBroadcastService).logAndBroadcast(eq(gd), argThat((GameLogEntry logEntry) ->
+                verify(gameLogService).append(eq(gd), argThat((GameLogEntry logEntry) ->
                         logEntry.plainText().contains("no lands")));
             }
 }

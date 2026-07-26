@@ -8,7 +8,7 @@ import com.github.laxika.magicalvibes.model.effect.CanBeBlockedOnlyByFilterEffec
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantCanBeBlockedOnlyByFilterToOwnCreaturesEffect;
 import com.github.laxika.magicalvibes.model.filter.FilterContext;
-import com.github.laxika.magicalvibes.service.GameBroadcastService;
+import com.github.laxika.magicalvibes.service.GameLogService;
 import com.github.laxika.magicalvibes.service.battlefield.GameQueryService;
 import com.github.laxika.magicalvibes.service.filter.PredicateEvaluationService;
 import lombok.RequiredArgsConstructor;
@@ -24,7 +24,7 @@ public class GrantCanBeBlockedOnlyByFilterToOwnCreaturesEffectHandler implements
 
     private final GameQueryService gameQueryService;
     private final PredicateEvaluationService predicateEvaluationService;
-    private final GameBroadcastService gameBroadcastService;
+    private final GameLogService gameLogService;
 
     @Override
     public Class<? extends CardEffect> handledEffect() {
@@ -60,7 +60,7 @@ public class GrantCanBeBlockedOnlyByFilterToOwnCreaturesEffectHandler implements
 
         String logEntry = entry.getCard().getName() + " makes " + count + " creature(s) unblockable except by "
                 + grant.allowedBlockersDescription() + " this turn.";
-        gameBroadcastService.logAndBroadcast(gameData, GameLog.builder().card(entry.getCard()).text(" makes " + count + " creature(s) unblockable except by " + grant.allowedBlockersDescription() + " this turn.").build());
+        gameLogService.append(gameData, GameLog.builder().card(entry.getCard()).text(" makes " + count + " creature(s) unblockable except by " + grant.allowedBlockersDescription() + " this turn.").build());
         log.info("Game {} - {} restricts blockers of {} own creature(s) to {}",
                 gameData.id, entry.getCard().getName(), count, grant.allowedBlockersDescription());
     }

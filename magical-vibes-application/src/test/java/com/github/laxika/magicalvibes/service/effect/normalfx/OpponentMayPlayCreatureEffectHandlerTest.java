@@ -26,7 +26,7 @@ class OpponentMayPlayCreatureEffectHandlerTest extends AbstractPlayerInteraction
 
                 resolveEffect(gd, entry, new OpponentMayPlayCreatureEffect());
 
-                verify(gameBroadcastService).logAndBroadcast(eq(gd), argThat((GameLogEntry logEntry) ->
+                verify(gameLogService).append(eq(gd), argThat((GameLogEntry logEntry) ->
                         logEntry.plainText().contains("no creature cards in hand")));
             }
 

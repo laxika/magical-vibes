@@ -7,7 +7,7 @@ import com.github.laxika.magicalvibes.model.filter.FilterContext;
 import com.github.laxika.magicalvibes.model.StackEntry;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
 import com.github.laxika.magicalvibes.model.effect.RegenerateAllOwnCreaturesEffect;
-import com.github.laxika.magicalvibes.service.GameBroadcastService;
+import com.github.laxika.magicalvibes.service.GameLogService;
 import com.github.laxika.magicalvibes.service.battlefield.GameQueryService;
 import com.github.laxika.magicalvibes.service.filter.PredicateEvaluationService;
 import java.util.List;
@@ -22,7 +22,7 @@ public class RegenerateAllOwnCreaturesEffectHandler implements NormalEffectHandl
 
     private final GameQueryService gameQueryService;
     private final PredicateEvaluationService predicateEvaluationService;
-    private final GameBroadcastService gameBroadcastService;
+    private final GameLogService gameLogService;
 
     @Override
     public Class<? extends CardEffect> handledEffect() {
@@ -52,7 +52,7 @@ public class RegenerateAllOwnCreaturesEffectHandler implements NormalEffectHandl
 
                 if (count > 0) {
                     String logEntry = count + " creature(s) gain a regeneration shield.";
-                    gameBroadcastService.logAndBroadcast(gameData, GameLog.text(logEntry));
+                    gameLogService.append(gameData, GameLog.text(logEntry));
                     log.info("Game {} - {} creature(s) gain regeneration shields", gameData.id, count);
                 }
     
