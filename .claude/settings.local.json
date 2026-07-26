@@ -58,5 +58,8 @@
       "Bash(../gradlew compileTestJava)",
       "Bash(../gradlew :magical-vibes-backend:compileTestJava)"
     ]
-  }
+  },
+  "enabledMcpjsonServers": [
+    "scryfall"
+  ]
 }
