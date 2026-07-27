@@ -16,7 +16,9 @@ import com.github.laxika.magicalvibes.model.effect.AddManaOnEnchantedLandTapEffe
 import com.github.laxika.magicalvibes.model.effect.CreatureBoostEffect;
 import com.github.laxika.magicalvibes.model.effect.CostEffect;
 import com.github.laxika.magicalvibes.model.effect.DamageDealingEffect;
+import com.github.laxika.magicalvibes.model.CounterType;
 import com.github.laxika.magicalvibes.model.effect.DealDividedDamageEffect;
+import com.github.laxika.magicalvibes.model.effect.DistributeCountersAmongTargetsEffect;
 import com.github.laxika.magicalvibes.model.effect.DivisionMode;
 import com.github.laxika.magicalvibes.model.amount.Fixed;
 import com.github.laxika.magicalvibes.model.effect.ExtraTurnEffect;
@@ -699,12 +701,55 @@ class AiTargetSelector {
     }
 
     /**
+     * Builds the announced division for "distribute X counters among any number of target creatures"
+     * (Spoils of War), which rides on the same assignment map as divided damage. All X counters go on
+     * a single creature — the AI's biggest for a benign counter, the opponent's biggest for -1/-1.
+     * Returns {@code null} when the card has no such effect, or when X is 0 or no creature is legal
+     * (in which case the AI simply declines to cast).
+     */
+    private Map<UUID, Integer> buildCounterDistribution(GameData gameData, Card card, UUID aiPlayerId) {
+        DistributeCountersAmongTargetsEffect effect = card.getEffects(EffectSlot.SPELL).stream()
+                .filter(e -> e instanceof DistributeCountersAmongTargetsEffect d && d.mode() == DivisionMode.CHOSEN)
+                .map(DistributeCountersAmongTargetsEffect.class::cast)
+                .findFirst()
+                .orElse(null);
+        if (effect == null) {
+            return null;
+        }
+
+        int total = amountEvaluationService.evaluate(gameData, effect.total(), AmountContext.forCasting(aiPlayerId));
+        if (total <= 0) {
+            return null;
+        }
+
+        UUID ownerId = effect.counterType() == CounterType.MINUS_ONE_MINUS_ONE
+                ? AiUtils.getOpponentId(gameData, aiPlayerId)
+                : aiPlayerId;
+        Permanent best = null;
+        for (Permanent p : gameData.playerBattlefields.getOrDefault(ownerId, List.of())) {
+            if (!gameQueryService.isCreature(gameData, p) || !isValidPermanentTarget(gameData, card, p, aiPlayerId)) {
+                continue;
+            }
+            if (best == null || gameQueryService.getEffectivePower(gameData, p)
+                    > gameQueryService.getEffectivePower(gameData, best)) {
+                best = p;
+            }
+        }
+        return best == null ? null : Map.of(best.getId(), total);
+    }
+
+    /**
      * Builds a damage assignment map for divided damage spells (e.g. Ignite Disorder, Fight with Fire kicked).
      * Distributes damage to maximize creature kills on the opponent's battlefield.
      * For "any targets" effects, dumps remaining damage on the opponent player.
      * Returns null if no valid targets exist.
      */
     Map<UUID, Integer> buildDamageAssignments(GameData gameData, Card card, UUID aiPlayerId) {
+        Map<UUID, Integer> counterAssignments = buildCounterDistribution(gameData, card, aiPlayerId);
+        if (counterAssignments != null) {
+            return counterAssignments;
+        }
+
         // Ignite Disorder: fixed total divided among target creatures (no players).
         DealDividedDamageEffect creaturesEffect = card.getEffects(EffectSlot.SPELL).stream()
                 .filter(e -> e instanceof DealDividedDamageEffect d

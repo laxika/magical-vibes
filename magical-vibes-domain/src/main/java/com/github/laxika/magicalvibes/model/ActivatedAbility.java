@@ -1,5 +1,6 @@
 package com.github.laxika.magicalvibes.model;
 
+import com.github.laxika.magicalvibes.model.amount.DynamicAmount;
 import com.github.laxika.magicalvibes.model.condition.Condition;
 import com.github.laxika.magicalvibes.model.filter.CardPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentPredicate;
@@ -66,6 +67,15 @@ public class ActivatedAbility {
     private Condition activationCondition;
     /** Human-readable activation-condition failure message (full sentence shown to the player). */
     private String activationConditionDescription;
+    /**
+     * Per-turn activation cap that is recomputed from the game state at each activation, for
+     * "Activate no more times each turn than [count]" (e.g. Withering Wisps' "the number of snow
+     * Swamps you control"). Null = no dynamic cap; use {@link #maxActivationsPerTurn} for a fixed
+     * printed number. Set via {@link #withMaxActivationsPerTurn(DynamicAmount, String)}.
+     */
+    private DynamicAmount maxActivationsPerTurnAmount;
+    /** Human-readable description of the dynamic cap, used in the activation error message. */
+    private String maxActivationsPerTurnDescription;
 
     public ActivatedAbility(boolean requiresTap, String manaCost, List<CardEffect> effects, String description) {
         this(requiresTap, manaCost, effects, description, null, null, null, null, List.of(), 1, 1, false, null, null, 0);
@@ -176,7 +186,21 @@ public class ActivatedAbility {
         copy.requiredGraveyardCardDescription = this.requiredGraveyardCardDescription;
         copy.activationCondition = this.activationCondition;
         copy.activationConditionDescription = this.activationConditionDescription;
+        copy.maxActivationsPerTurnAmount = this.maxActivationsPerTurnAmount;
+        copy.maxActivationsPerTurnDescription = this.maxActivationsPerTurnDescription;
         return copy;
+    }
+
+    /**
+     * Fluent setter for a per-turn activation cap computed from the game state rather than printed
+     * as a fixed number ("Activate no more times each turn than the number of snow Swamps you
+     * control"). The amount is evaluated at each activation with the source permanent and its
+     * controller in context. Returns this ability for chaining in card constructors.
+     */
+    public ActivatedAbility withMaxActivationsPerTurn(DynamicAmount amount, String description) {
+        this.maxActivationsPerTurnAmount = amount;
+        this.maxActivationsPerTurnDescription = description;
+        return this;
     }
 
     /**

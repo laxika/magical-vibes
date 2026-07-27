@@ -148,6 +148,15 @@ public class DestructionSupport {
     /** @return the number of permanents actually destroyed (indestructible / regenerated don't count) */
     public int destroyBatch(GameData gameData, List<Permanent> toDestroy, String sourceName,
                               boolean cannotBeRegenerated) {
+        return destroyBatchCollecting(gameData, toDestroy, sourceName, cannotBeRegenerated).size();
+    }
+
+    /**
+     * Same batch destruction as {@link #destroyBatch}, but returns the permanents that actually died
+     * so a "for each permanent destroyed this way" rider can inspect them (e.g. their controllers).
+     */
+    public List<Permanent> destroyBatchCollecting(GameData gameData, List<Permanent> toDestroy, String sourceName,
+                              boolean cannotBeRegenerated) {
         Set<Permanent> indestructible = new HashSet<>();
         for (Permanent perm : toDestroy) {
             if (gameQueryService.hasKeyword(gameData, perm, Keyword.INDESTRUCTIBLE)) {
@@ -182,7 +191,7 @@ public class DestructionSupport {
         } finally {
             endSimultaneousCreatureDeaths(gameData);
         }
-        return actuallyDying.size();
+        return actuallyDying;
     }
 
     private void beginSimultaneousCreatureDeaths(GameData gameData, List<Permanent> dying) {

@@ -6,6 +6,8 @@ import com.github.laxika.magicalvibes.service.cast.CastingCostService;
 import com.github.laxika.magicalvibes.service.exile.ExileService;
 import com.github.laxika.magicalvibes.service.graveyard.GraveyardService;
 import com.github.laxika.magicalvibes.service.battlefield.GameQueryService;
+import com.github.laxika.magicalvibes.service.effect.AmountContext;
+import com.github.laxika.magicalvibes.service.effect.AmountEvaluationService;
 import com.github.laxika.magicalvibes.service.effect.ConditionContext;
 import com.github.laxika.magicalvibes.service.effect.ConditionEvaluationService;
 import com.github.laxika.magicalvibes.service.event.GameMutationCoordinator;
@@ -135,6 +137,7 @@ public class AbilityActivationService {
     private final GameQueryService gameQueryService;
     private final PredicateEvaluationService predicateEvaluationService;
     private final ConditionEvaluationService conditionEvaluationService;
+    private final AmountEvaluationService amountEvaluationService;
     private final GameLogService gameLogService;
     private final CastingCostService castingCostService;
     private final TargetLegalityService targetLegalityService;
@@ -2047,7 +2050,7 @@ public class AbilityActivationService {
 
         // Activation timing restrictions (e.g. "Activate only during your upkeep")
         validateTimingRestrictions(gameData, playerId, permanent, ability);
-        validateActivationLimitPerTurn(gameData, permanent, ability, abilityIndex);
+        validateActivationLimitPerTurn(gameData, playerId, permanent, ability, abilityIndex);
 
         // Loyalty ability restrictions (the cost itself is paid after target legality is confirmed)
         if (ability.getLoyaltyCost() != null) {
@@ -2906,15 +2909,28 @@ public class AbilityActivationService {
         gameData.interaction.clearAwaitingInput();
     }
 
-    private void validateActivationLimitPerTurn(GameData gameData, Permanent permanent, ActivatedAbility ability, int abilityIndex) {
+    private void validateActivationLimitPerTurn(GameData gameData, UUID playerId, Permanent permanent, ActivatedAbility ability, int abilityIndex) {
         Integer maxActivationsPerTurn = ability.getMaxActivationsPerTurn();
-        if (maxActivationsPerTurn == null) {
+        if (maxActivationsPerTurn == null && ability.getMaxActivationsPerTurnAmount() == null) {
             return;
         }
 
         Map<Integer, Integer> perAbilityCounts = gameData.activatedAbilityUsesThisTurn.get(permanent.getId());
         int currentCount = perAbilityCounts != null ? perAbilityCounts.getOrDefault(abilityIndex, 0) : 0;
-        if (currentCount >= maxActivationsPerTurn) {
+
+        if (ability.getMaxActivationsPerTurnAmount() != null) {
+            // Cap recomputed from the current board at every activation (Withering Wisps).
+            int dynamicCap = amountEvaluationService.evaluate(gameData, ability.getMaxActivationsPerTurnAmount(),
+                    new AmountContext(playerId, permanent, null, 0, 0, false));
+            if (currentCount >= dynamicCap) {
+                throw new IllegalStateException("This ability can be activated no more times each turn than "
+                        + (ability.getMaxActivationsPerTurnDescription() != null
+                                ? ability.getMaxActivationsPerTurnDescription()
+                                : "the current limit") + " (" + dynamicCap + ")");
+            }
+        }
+
+        if (maxActivationsPerTurn != null && currentCount >= maxActivationsPerTurn) {
             throw new IllegalStateException("This ability can be activated no more than " + maxActivationsPerTurn + " times each turn");
         }
     }

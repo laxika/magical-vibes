@@ -14,7 +14,8 @@ Quick reference for building `ActivatedAbility` instances. Covers all constructo
 | `targetFilter` | `TargetFilter` | Restricts valid targets (permanent filter or stack filter) |
 | `loyaltyCost` | `Integer` | Planeswalker loyalty cost (e.g. `+1`, `-2`, `-8`). `null` for non-planeswalker abilities. `0` when `variableLoyaltyCost` is `true` |
 | `variableLoyaltyCost` | `boolean` | `true` for -X loyalty abilities where X is chosen by the player. The chosen X is passed as xValue |
-| `maxActivationsPerTurn` | `Integer` | Maximum activations per turn. `null` for unlimited |
+| `maxActivationsPerTurn` | `Integer` | Maximum activations per turn (printed fixed number). `null` for unlimited |
+| `maxActivationsPerTurnAmount` | `DynamicAmount` | Board-derived per-turn cap for "Activate no more times each turn than [count]" (Withering Wisps). Re-evaluated at every activation. Set via `.withMaxActivationsPerTurn(amount, description)`; `null` for no dynamic cap |
 | `timingRestriction` | `ActivationTimingRestriction` | When the ability can be activated. `null` for default (instant speed) |
 | `requiredControlledSubtype` | `CardSubtype` | Subtype you must control N+ of to activate (e.g. `CardSubtype.VAMPIRE`). `null` for no restriction |
 | `requiredControlledSubtypeCount` | `int` | Minimum count of `requiredControlledSubtype` permanents you must control. `0` when unused |
@@ -332,6 +333,35 @@ Also used for graveyard activated abilities whose gate needs the source card its
 `validateGraveyardTimingRestrictions` via `ConditionContext.forCard`.
 
 Cards: `AshenGhoul`
+
+---
+
+### 8a-dynamic-limit. Per-turn activation cap computed from the board (`.withMaxActivationsPerTurn`)
+
+```java
+new ActivatedAbility(requiresTap, manaCost, effects, description)
+    .withMaxActivationsPerTurn(DynamicAmount amount, String description)
+```
+
+**Use when:** Ability text says "Activate no more times each turn than [some count]" — the cap is not a
+printed number, so the `Integer maxActivationsPerTurn` constructor parameter can't express it. The amount is
+re-evaluated from the current game state at **every** activation (`AmountEvaluationService` with the source
+permanent + its controller in context), so losing the counted permanents mid-turn lowers the cap immediately.
+`description` is spliced into the activation error message ("… no more times each turn than <description> (N)").
+A cap of 0 blocks activation entirely. Composes with the fixed `maxActivationsPerTurn` (both are enforced).
+
+```java
+// {B}: This enchantment deals 1 damage to each creature and each player.
+// Activate no more times each turn than the number of snow Swamps you control.
+new ActivatedAbility(false, "{B}", List.of(new MassDamageEffect(1, true)), "{B}: …")
+    .withMaxActivationsPerTurn(
+        new PermanentCount(new PermanentAllOfPredicate(List.of(
+                new PermanentHasSubtypePredicate(CardSubtype.SWAMP),
+                new PermanentHasSupertypePredicate(CardSupertype.SNOW))), CountScope.CONTROLLER),
+        "the number of snow Swamps you control")
+```
+
+Cards: `WitheringWisps`
 
 ---
 

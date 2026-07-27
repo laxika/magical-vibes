@@ -8,6 +8,7 @@ import com.github.laxika.magicalvibes.model.effect.ConditionalEffect;
 import com.github.laxika.magicalvibes.model.effect.CostEffect;
 import com.github.laxika.magicalvibes.model.effect.DealDividedDamageEffect;
 import com.github.laxika.magicalvibes.model.effect.DivisionMode;
+import com.github.laxika.magicalvibes.model.effect.DistributeCountersAmongTargetsEffect;
 import com.github.laxika.magicalvibes.model.effect.PreventDividedDamageEffect;
 import com.github.laxika.magicalvibes.model.condition.Kicked;
 import com.github.laxika.magicalvibes.model.effect.ConditionalReplacementEffect;
@@ -207,11 +208,13 @@ public final class EffectResolution {
     /**
      * An effect whose per-target integer amounts are announced by the controller (CR 601.2b) and
      * carried on {@code StackEntry.damageAssignments}: divided damage (CHOSEN mode reading the
-     * standard targeting buffer, not the ETB {@code pendingETBDamageAssignments} path) or divided
-     * prevention (Remedy).
+     * standard targeting buffer, not the ETB {@code pendingETBDamageAssignments} path), divided
+     * prevention (Remedy) or a chosen counter distribution (Spoils of War).
      */
     private static boolean needsAmountDistribution(CardEffect e) {
-        return isChosenDivision(e) || e instanceof PreventDividedDamageEffect;
+        return isChosenDivision(e)
+                || e instanceof PreventDividedDamageEffect
+                || (e instanceof DistributeCountersAmongTargetsEffect d && d.mode() == DivisionMode.CHOSEN);
     }
 
     private static boolean isChosenDivision(CardEffect e) {

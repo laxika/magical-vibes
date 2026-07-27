@@ -5,17 +5,25 @@ import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.StackEntry;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
 import com.github.laxika.magicalvibes.model.effect.DistributeCountersAmongTargetsEffect;
+import com.github.laxika.magicalvibes.model.effect.DivisionMode;
 import com.github.laxika.magicalvibes.service.battlefield.GameQueryService;
+import com.github.laxika.magicalvibes.service.effect.AmountContext;
+import com.github.laxika.magicalvibes.service.effect.AmountEvaluationService;
+import java.util.LinkedHashMap;
 import java.util.List;
+import java.util.Map;
 import java.util.UUID;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Component;
 
 /**
- * Resolves {@link DistributeCountersAmongTargetsEffect}: splits {@code total} counters evenly across
- * the effect's chosen target group and places {@code floor(total / targetCount)} counters on each
- * surviving target. Placement routes through {@link PermanentCounterSupport#placeCounterOnPermanent}
- * so counter-type-specific behaviour (-1/-1 prevention/reduction, +1/+1 triggers) is preserved.
+ * Resolves {@link DistributeCountersAmongTargetsEffect} for both division modes.
+ *
+ * <p>EVEN splits {@code total} evenly across the effect's chosen target group and places
+ * {@code floor(total / targetCount)} counters on each surviving target; CHOSEN reads the
+ * controller-announced per-target amounts from {@code StackEntry.damageAssignments}. Both route
+ * placement through {@link PermanentCounterSupport#placeCounterOnPermanent} so counter-type-specific
+ * behaviour (-1/-1 prevention/reduction, +1/+1 triggers) is preserved.
  */
 @Component
 @RequiredArgsConstructor
@@ -23,6 +31,7 @@ public class DistributeCountersAmongTargetsEffectHandler implements NormalEffect
 
     private final GameQueryService gameQueryService;
     private final PermanentCounterSupport permanentCounterSupport;
+    private final AmountEvaluationService amountEvaluationService;
 
     @Override
     public Class<? extends CardEffect> handledEffect() {
@@ -33,21 +42,55 @@ public class DistributeCountersAmongTargetsEffectHandler implements NormalEffect
     public void resolve(GameData gameData, StackEntry entry, CardEffect effect) {
         var e = (DistributeCountersAmongTargetsEffect) effect;
 
-        List<UUID> targetIds = entry.targetsForEffect(effect);
-        if (targetIds.isEmpty()) {
-            return;
-        }
-        int countPerTarget = e.total() / targetIds.size();
-        if (countPerTarget <= 0) {
-            return;
-        }
+        Map<UUID, Integer> assignments = e.mode() == DivisionMode.CHOSEN
+                ? chosenAssignments(entry)
+                : evenAssignments(gameData, entry, e);
 
-        for (UUID targetId : targetIds) {
-            Permanent target = gameQueryService.findPermanentById(gameData, targetId);
+        for (Map.Entry<UUID, Integer> assignment : assignments.entrySet()) {
+            Permanent target = gameQueryService.findPermanentById(gameData, assignment.getKey());
             if (target == null) {
                 continue; // Partially resolves — skip targets that left the battlefield.
             }
-            permanentCounterSupport.placeCounterOnPermanent(gameData, entry, target, e.counterType(), countPerTarget);
+            // An announced target that is no longer a creature at resolution is illegal and isn't
+            // affected (CR 608.2b) — never put the counters on an animated land that reverted.
+            if (!gameQueryService.isCreature(gameData, target)) {
+                continue;
+            }
+            permanentCounterSupport.placeCounterOnPermanent(
+                    gameData, entry, target, e.counterType(), assignment.getValue());
         }
+    }
+
+    private Map<UUID, Integer> chosenAssignments(StackEntry entry) {
+        Map<UUID, Integer> announced = entry.getDamageAssignments();
+        if (announced == null || announced.isEmpty()) {
+            return Map.of();
+        }
+        Map<UUID, Integer> assignments = new LinkedHashMap<>();
+        for (Map.Entry<UUID, Integer> assignment : announced.entrySet()) {
+            if (entry.isAssignmentTargetLegal(assignment.getKey())) {
+                assignments.put(assignment.getKey(), assignment.getValue());
+            }
+        }
+        return assignments;
+    }
+
+    private Map<UUID, Integer> evenAssignments(
+            GameData gameData, StackEntry entry, DistributeCountersAmongTargetsEffect e) {
+        List<UUID> targetIds = entry.targetsForEffect(e);
+        if (targetIds.isEmpty()) {
+            return Map.of();
+        }
+        int total = amountEvaluationService.evaluate(gameData, e.total(),
+                AmountContext.forStackEntry(entry, null));
+        int countPerTarget = total / targetIds.size();
+        if (countPerTarget <= 0) {
+            return Map.of();
+        }
+        Map<UUID, Integer> assignments = new LinkedHashMap<>();
+        for (UUID targetId : targetIds) {
+            assignments.put(targetId, countPerTarget);
+        }
+        return assignments;
     }
 }

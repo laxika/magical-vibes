@@ -47,6 +47,7 @@ import com.github.laxika.magicalvibes.model.condition.DefendingPlayerPoisoned;
 import com.github.laxika.magicalvibes.model.condition.Delirium;
 import com.github.laxika.magicalvibes.model.condition.DevouredCreature;
 import com.github.laxika.magicalvibes.model.condition.DidntAttack;
+import com.github.laxika.magicalvibes.model.condition.EnchantedCreatureDidntAttack;
 import com.github.laxika.magicalvibes.model.condition.DidntGainLifeThisTurn;
 import com.github.laxika.magicalvibes.model.condition.Enchanted;
 import com.github.laxika.magicalvibes.model.condition.EndStepPlayerDidntCastCreatureSpell;
@@ -236,6 +237,8 @@ public class ConditionEvaluationService {
                     ctx.sourceZone() != Zone.HAND;
             case DidntAttack ignored ->
                     sourceDidntAttackThisTurn(gameData, ctx);
+            case EnchantedCreatureDidntAttack ignored ->
+                    enchantedCreatureDidntAttackThisTurn(gameData, ctx);
             case AttacksAlone ignored ->
                     countAttackingCreatures(gameData, ctx.controllerId()) == 1;
             case FirstCombatPhase ignored ->
@@ -686,6 +689,18 @@ public class ConditionEvaluationService {
         Permanent source = sourcePermanent(gameData, ctx);
         if (source == null) return false;
         return !source.isAttackedThisTurn();
+    }
+
+    /**
+     * True if the creature the source Aura is attached to didn't attack this turn. Used by
+     * Aggression's end-step trigger, which checks the enchanted creature rather than the source.
+     */
+    private boolean enchantedCreatureDidntAttackThisTurn(GameData gameData, ConditionContext ctx) {
+        Permanent aura = sourcePermanent(gameData, ctx);
+        if (aura == null || !aura.isAttached()) return false;
+        Permanent enchanted = gameQueryService.findPermanentById(gameData, aura.getAttachedTo());
+        if (enchanted == null) return false;
+        return !enchanted.isAttackedThisTurn();
     }
 
     private long countAttackingCreatures(GameData gameData, UUID controllerId) {

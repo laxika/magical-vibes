@@ -17,6 +17,6 @@ public class SplendidAgony extends Card {
                 new PermanentIsCreaturePredicate(),
                 "Target must be a creature."
         ), 1, 2).addEffect(EffectSlot.SPELL,
-                new DistributeCountersAmongTargetsEffect(CounterType.MINUS_ONE_MINUS_ONE, 2));
+                DistributeCountersAmongTargetsEffect.evenlyAmongTargets(CounterType.MINUS_ONE_MINUS_ONE, 2));
     }
 }

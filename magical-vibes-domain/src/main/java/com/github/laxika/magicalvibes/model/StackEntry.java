@@ -77,6 +77,15 @@ public class StackEntry {
      */
     @Setter private int eventValue;
     /**
+     * The per-permanent player payload behind this entry — one entry per permanent involved in the
+     * event, holding that permanent's controller. Stamped by
+     * {@code DestroyAllPermanentsEffectHandler} onto a rider entry with the controller of every
+     * permanent actually destroyed, so "for each permanent destroyed this way, … that permanent's
+     * controller …" riders can act once per permanent rather than once per player (Stench of Evil).
+     * Duplicates are meaningful: a player who lost three lands appears three times.
+     */
+    @Setter private List<UUID> eventPlayerIds = List.of();
+    /**
      * Last-known snapshot of the source permanent, set at activation time. Used to evaluate
      * source-relative amounts (e.g. counters on the source) per CR 608.2h last-known
      * information when the source left the battlefield before resolution (sacrifice costs).
@@ -321,6 +330,7 @@ public class StackEntry {
         this.stateTriggerEffectIndex = source.stateTriggerEffectIndex;
         this.attackedTargetId = source.attackedTargetId;
         this.eventValue = source.eventValue;
+        this.eventPlayerIds = source.eventPlayerIds.isEmpty() ? List.of() : new ArrayList<>(source.eventPlayerIds);
         this.sourcePermanentSnapshot = source.sourcePermanentSnapshot;
         this.chosenPermanentId = source.chosenPermanentId;
         this.triggeringCardId = source.triggeringCardId;

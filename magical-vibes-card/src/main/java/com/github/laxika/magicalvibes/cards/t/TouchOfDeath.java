@@ -8,6 +8,7 @@ import com.github.laxika.magicalvibes.model.effect.GainLifeEffect;
 import com.github.laxika.magicalvibes.model.effect.RegisterDrawCardsAtNextUpkeepEffect;
 
 @CardRegistration(set = "5ED", collectorNumber = "200")
+@CardRegistration(set = "ICE", collectorNumber = "167")
 public class TouchOfDeath extends Card {
 
     public TouchOfDeath() {

@@ -63,6 +63,7 @@ import com.github.laxika.magicalvibes.model.effect.ExileTargetGraveyardCardsAndS
 import com.github.laxika.magicalvibes.model.effect.ReturnTargetCardsFromGraveyardToHandEffect;
 import com.github.laxika.magicalvibes.model.effect.ExileCardFromGraveyardCost;
 import com.github.laxika.magicalvibes.model.effect.DiscardCardOrPayManaCost;
+import com.github.laxika.magicalvibes.model.effect.DistributeCountersAmongTargetsEffect;
 import com.github.laxika.magicalvibes.model.effect.DiscardCardTypeCost;
 import com.github.laxika.magicalvibes.model.effect.EscalateDiscardCost;
 import com.github.laxika.magicalvibes.model.effect.ExileNCardsFromGraveyardCost;
@@ -1542,6 +1543,38 @@ public class SpellCastingService {
                         entryType, card, playerId, card.getName(),
                         filteredSpellEffects, resolvedXValue, null, damageAssignments
                 ));
+            } else if (findChosenCounterDistribution(filteredSpellEffects) != null) {
+                // "Distribute X counters among any number of target creatures" (Spoils of War).
+                // X is evaluated from game state as the spell is cast; each target needs at least one
+                // counter, so X is also the effective cap on the number of targets. X = 0 means no
+                // legal division exists, so the spell is cast with no targets and resolves doing
+                // nothing. Per-target amounts ride on damageAssignments, like divided damage.
+                DistributeCountersAmongTargetsEffect distributeCounters =
+                        findChosenCounterDistribution(filteredSpellEffects);
+                int expectedTotal = amountEvaluationService.evaluate(gameData, distributeCounters.total(),
+                        com.github.laxika.magicalvibes.service.effect.AmountContext.forCasting(playerId));
+                Map<UUID, Integer> counterAssignments =
+                        damageAssignments == null ? Map.of() : damageAssignments;
+                int assignedTotal = counterAssignments.values().stream().mapToInt(Integer::intValue).sum();
+                if (assignedTotal != expectedTotal) {
+                    throw new IllegalStateException("Counter assignments must sum to " + expectedTotal);
+                }
+                for (Map.Entry<UUID, Integer> assignment : counterAssignments.entrySet()) {
+                    Permanent target = gameQueryService.findPermanentById(gameData, assignment.getKey());
+                    if (target == null || !gameQueryService.isCreature(gameData, target)) {
+                        throw new IllegalStateException("All targets must be creatures");
+                    }
+                    if (card.getTargetFilter() != null) {
+                        predicateEvaluationService.validateTargetFilter(gameData, card.getTargetFilter(), target);
+                    }
+                    if (assignment.getValue() <= 0) {
+                        throw new IllegalStateException("Each counter assignment must be positive");
+                    }
+                }
+                gameData.stack.add(new StackEntry(
+                        entryType, card, playerId, card.getName(),
+                        filteredSpellEffects, resolvedXValue, null, counterAssignments
+                ));
             } else if (EffectResolution.needsDamageDistribution(card)) {
                 // Validate damage assignments for damage distribution spells
                 if (damageAssignments == null || damageAssignments.isEmpty()) {
@@ -2998,6 +3031,19 @@ public class SpellCastingService {
         int fromPool = before - pool.getTotalAllMana();
         int fromConvoke = convokeContributions != null ? convokeContributions.size() : 0;
         return fromPool + fromConvoke;
+    }
+
+    /**
+     * The spell's "distribute N counters among any number of target creatures" effect, whose
+     * per-target amounts the controller announces onto {@code StackEntry.damageAssignments}.
+     */
+    private DistributeCountersAmongTargetsEffect findChosenCounterDistribution(List<CardEffect> effects) {
+        for (CardEffect e : effects) {
+            if (e instanceof DistributeCountersAmongTargetsEffect d && d.mode() == DivisionMode.CHOSEN) {
+                return d;
+            }
+        }
+        return null;
     }
 
     private DealDividedDamageEffect findKickedDividedDamageEffect(List<CardEffect> effects) {

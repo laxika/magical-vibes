@@ -19,6 +19,10 @@ import org.springframework.stereotype.Component;
  * Resolves {@link EachPlayerTakesDamageUnlessPaysEffect}: each player in APNAP order may pay
  * {@code manaCost} or take {@code damage}. Sequencing uses
  * {@link GameData#eachPlayerDamageUnlessPaysRemaining}.
+ *
+ * <p>{@link #offerToPlayers} exposes the same pay-or-take-damage queue to other effects that derive
+ * a different payer list — including one with repeats, where a player is asked once per qualifying
+ * object rather than once overall (Stench of Evil, one prompt per land destroyed).
  */
 @Slf4j
 @Component
@@ -35,13 +39,23 @@ public class EachPlayerTakesDamageUnlessPaysEffectHandler implements NormalEffec
 
     @Override
     public void resolve(GameData gameData, StackEntry entry, CardEffect effect) {
-        EachPlayerTakesDamageUnlessPaysEffect e = (EachPlayerTakesDamageUnlessPaysEffect) effect;
-        List<UUID> order = apnapOrder(gameData);
+        offerToPlayers(gameData, entry, (EachPlayerTakesDamageUnlessPaysEffect) effect, apnapOrder(gameData));
+    }
+
+    /**
+     * Queues one pay-or-take-damage prompt per entry in {@code payers} (order preserved, duplicates
+     * meaningful) and offers the first. No-op when the list is empty.
+     */
+    public void offerToPlayers(GameData gameData, StackEntry entry,
+            EachPlayerTakesDamageUnlessPaysEffect effect, List<UUID> payers) {
         gameData.eachPlayerDamageUnlessPaysRemaining.clear();
-        if (order.size() > 1) {
-            gameData.eachPlayerDamageUnlessPaysRemaining.addAll(order.subList(1, order.size()));
+        if (payers.isEmpty()) {
+            return;
         }
-        offerPay(gameData, entry, e, order.getFirst());
+        if (payers.size() > 1) {
+            gameData.eachPlayerDamageUnlessPaysRemaining.addAll(payers.subList(1, payers.size()));
+        }
+        offerPay(gameData, entry, effect, payers.getFirst(), entry.getControllerId());
     }
 
     /**
@@ -62,24 +76,25 @@ public class EachPlayerTakesDamageUnlessPaysEffectHandler implements NormalEffec
             return;
         }
         UUID next = gameData.eachPlayerDamageUnlessPaysRemaining.removeFirst();
+        UUID sourceControllerId = sourceControllerId(gameData, ability);
         StackEntry synthetic = new StackEntry(
                 StackEntryType.TRIGGERED_ABILITY, ability.sourceCard(),
-                sourceControllerId(gameData, ability),
+                sourceControllerId,
                 ability.sourceCard().getName() + "'s ability",
                 new ArrayList<>(List.of(effect)),
                 next, ability.sourcePermanentId());
-        offerPay(gameData, synthetic, effect, next);
+        offerPay(gameData, synthetic, effect, next, sourceControllerId);
     }
 
     private void offerPay(GameData gameData, StackEntry entry,
-            EachPlayerTakesDamageUnlessPaysEffect effect, UUID playerId) {
+            EachPlayerTakesDamageUnlessPaysEffect effect, UUID playerId, UUID sourceControllerId) {
         // Always prompt — paying mana is a choice (same as ForcedCostOrElse / Force of Nature).
         // Accept-without-mana falls through to damage in the may-choice handler.
         String prompt = "Pay " + effect.manaCost() + "? If you don't, " + entry.getCard().getName()
                 + " deals " + effect.damage() + " damage to you.";
         gameData.pendingMayAbilities.addFirst(new PendingMayAbility(
                 entry.getCard(), playerId, List.of(effect), prompt,
-                null, effect.manaCost(), entry.getSourcePermanentId()));
+                sourceControllerId, effect.manaCost(), entry.getSourcePermanentId()));
     }
 
     private void dealDamageToPlayer(GameData gameData, PendingMayAbility ability,
@@ -94,7 +109,16 @@ public class EachPlayerTakesDamageUnlessPaysEffectHandler implements NormalEffec
         dealDamageToPlayersEffectHandler.resolve(gameData, damageEntry, damage);
     }
 
+    /**
+     * The damage source's controller: the id stamped onto the prompt when it was queued (a sorcery
+     * has no source permanent to look up, and its controller may well be the player being asked),
+     * falling back to the source permanent's controller and then to the other player.
+     */
     private UUID sourceControllerId(GameData gameData, PendingMayAbility ability) {
+        UUID stamped = ability.targetCardId();
+        if (stamped != null && gameData.playerIds.contains(stamped)) {
+            return stamped;
+        }
         UUID sourceControllerId = gameQueryService.findPermanentController(gameData, ability.sourcePermanentId());
         if (sourceControllerId != null) {
             return sourceControllerId;

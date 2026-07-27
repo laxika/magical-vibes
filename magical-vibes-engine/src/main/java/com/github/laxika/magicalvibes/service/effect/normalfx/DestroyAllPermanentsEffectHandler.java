@@ -13,7 +13,10 @@ import com.github.laxika.magicalvibes.service.effect.EffectHandler;
 import com.github.laxika.magicalvibes.service.effect.EffectHandlerRegistry;
 import com.github.laxika.magicalvibes.service.filter.PredicateEvaluationService;
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
+import java.util.Objects;
 import java.util.UUID;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -55,6 +58,9 @@ public class DestroyAllPermanentsEffectHandler implements NormalEffectHandlerBea
                 : List.of();
 
         List<Permanent> toDestroy = new ArrayList<>();
+        // Controllers are captured before destruction — afterwards the permanents are gone and their
+        // controller can no longer be looked up (needed by per-permanent-controller riders).
+        Map<UUID, UUID> controllerByPermanentId = new HashMap<>();
         if (e.scope() == EachPermanentScope.TARGET_PLAYER) {
             UUID targetPlayerId = entry.getTargetId();
             if (targetPlayerId == null || !gameData.playerIds.contains(targetPlayerId)) {
@@ -68,6 +74,7 @@ public class DestroyAllPermanentsEffectHandler implements NormalEffectHandlerBea
                 if (!sparedIds.contains(perm.getId())
                         && predicateEvaluationService.matchesPermanentPredicate(perm, e.filter(), filterContext)) {
                     toDestroy.add(perm);
+                    controllerByPermanentId.put(perm.getId(), targetPlayerId);
                 }
             }
         } else {
@@ -76,12 +83,14 @@ public class DestroyAllPermanentsEffectHandler implements NormalEffectHandlerBea
                     if (!sparedIds.contains(perm.getId())
                             && predicateEvaluationService.matchesPermanentPredicate(perm, e.filter(), filterContext)) {
                         toDestroy.add(perm);
+                        controllerByPermanentId.put(perm.getId(), playerId);
                     }
                 }
             });
         }
 
-        int destroyedCount = destructionSupport.destroyBatch(gameData, toDestroy, entry.getCard().getName(), e.cannotBeRegenerated());
+        List<Permanent> destroyed = destructionSupport.destroyBatchCollecting(
+                gameData, toDestroy, entry.getCard().getName(), e.cannotBeRegenerated());
 
         if (e.thenEffect() == null) {
             return;
@@ -89,7 +98,11 @@ public class DestroyAllPermanentsEffectHandler implements NormalEffectHandlerBea
 
         StackEntry thenEntry = new StackEntry(entry.getEntryType(), entry.getCard(), entry.getControllerId(),
                 entry.getDescription(), List.of(e.thenEffect()), entry.getTargetId(), entry.getSourcePermanentId());
-        thenEntry.setEventValue(destroyedCount);
+        thenEntry.setEventValue(destroyed.size());
+        thenEntry.setEventPlayerIds(destroyed.stream()
+                .map(perm -> controllerByPermanentId.get(perm.getId()))
+                .filter(Objects::nonNull)
+                .toList());
         thenEntry.setSourcePermanentSnapshot(entry.getSourcePermanentSnapshot());
 
         EffectHandler handler = effectHandlerRegistry.getHandler(e.thenEffect());
