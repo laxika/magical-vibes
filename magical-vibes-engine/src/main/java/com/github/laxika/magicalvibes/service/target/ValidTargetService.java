@@ -530,6 +530,19 @@ public class ValidTargetService {
             return false;
         }
 
+        // Per-effect declarative TargetSpec + @ValidatesTarget checks — the same validation
+        // activation runs (TargetLegalityService.validateActivatedAbilityTargeting). Running them
+        // here keeps UI/AI enumeration from offering a permanent that activation would reject:
+        // without it an "any target" ability (Rod of Ruin) enumerated every permanent, so the
+        // frontend highlighted artifacts and lands and the MCTS simulator searched an illegal
+        // activation. Scoped to the single-target case, mirroring the spell path; multi-target
+        // ability positions are governed by their per-position TargetFilter.
+        if (!ability.isMultiTarget()
+                && targetValidationService.checkEffectTargets(ability.getEffects(),
+                        new TargetValidationContext(gameData, perm.getId(), null, sourceCard)).isPresent()) {
+            return false;
+        }
+
         return true;
     }
 

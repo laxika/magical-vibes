@@ -4,6 +4,7 @@ import java.util.ArrayDeque;
 import java.util.ArrayList;
 import java.util.Deque;
 import java.util.List;
+import java.util.Map;
 
 /**
  * Node in the MCTS search tree.
@@ -17,6 +18,22 @@ class MCTSNode {
     final List<SimulationAction> untriedActions;  // actions not yet expanded
     int visits = 0;
     double totalReward = 0.0;
+
+    /**
+     * Reward-scale adjustment applied to this node's action at final selection, carrying what the
+     * AI knows about it that the search's own reward signal is too coarse to see (see
+     * {@link MCTSEngine#computeSelectionAdjustments}). Zero — the neutral value — whenever there
+     * is nothing to add.
+     */
+    double selectionAdjustment = 0.0;
+
+    /**
+     * Selection adjustments for this node's children, keyed by {@link MCTSEngine#canonicalString}.
+     * Set on the root only, before the search starts, and read-only afterwards — which is what
+     * lets parallel workers adjust a child they expand without extra synchronization beyond the
+     * tree lock.
+     */
+    Map<String, Double> childSelectionAdjustments;
 
     MCTSNode(SimulationAction action, MCTSNode parent, List<SimulationAction> legalActions) {
         this.action = action;
@@ -35,7 +52,10 @@ class MCTSNode {
     }
 
     /**
-     * Selects the child with the highest UCB1 value.
+     * Selects the child with the highest UCB1 value. Selection adjustments deliberately play no
+     * part here: steering the tree by them only starves the demoted action of the visits its own
+     * mean is estimated from, and final selection no longer reads visit counts anyway. Search
+     * samples the alternatives evenly; {@link #bestRewardChild} is where they are applied.
      */
     MCTSNode bestChild(double explorationParam) {
         MCTSNode best = null;
@@ -52,7 +72,8 @@ class MCTSNode {
     }
 
     /**
-     * Selects the child with the most visits (used for final move selection).
+     * Selects the child with the most visits. Used by the convergence check; final move
+     * selection goes through {@link #bestRewardChild} instead.
      */
     MCTSNode mostVisitedChild() {
         MCTSNode best = null;
@@ -61,6 +82,47 @@ class MCTSNode {
             MCTSNode child = children.get(i);
             if (child.visits > bestVisits) {
                 bestVisits = child.visits;
+                best = child;
+            }
+        }
+        return best;
+    }
+
+    /**
+     * Final move selection: the best mean reward, plus each child's selection adjustment, among
+     * children visited often enough for that mean to carry weight — at least
+     * {@code minVisitFraction} of the most-visited child.
+     * <p>
+     * Visit count alone does not survive this engine's reward scale. {@code evaluate} squashes a
+     * board through a sigmoid into a band roughly 0.03 wide, so UCB1's exploration term at
+     * {@code EXPLORATION_CONSTANT} dwarfs every reward difference and drives visit counts to
+     * near-equal no matter which action is better; the most-visited child is then whichever one
+     * happened to end a visit ahead. The means the search collected say more — and where even they
+     * are noise, {@link #selectionAdjustment} carries what the AI knows independently.
+     * <p>
+     * The visit floor keeps the robustness that "most visits" was there for: a child the search
+     * abandoned cannot win on a mean drawn from a handful of early rollouts.
+     */
+    MCTSNode bestRewardChild(double minVisitFraction) {
+        int maxVisits = 0;
+        for (int i = 0; i < children.size(); i++) {
+            maxVisits = Math.max(maxVisits, children.get(i).visits);
+        }
+        if (maxVisits == 0) {
+            return null;
+        }
+        int visitFloor = Math.max(1, (int) Math.ceil(maxVisits * minVisitFraction));
+
+        MCTSNode best = null;
+        double bestScore = Double.NEGATIVE_INFINITY;
+        for (int i = 0; i < children.size(); i++) {
+            MCTSNode child = children.get(i);
+            if (child.visits < visitFloor) {
+                continue;
+            }
+            double score = child.totalReward / child.visits + child.selectionAdjustment;
+            if (score > bestScore) {
+                bestScore = score;
                 best = child;
             }
         }

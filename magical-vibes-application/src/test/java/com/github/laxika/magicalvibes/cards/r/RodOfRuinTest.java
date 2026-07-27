@@ -4,6 +4,7 @@ import com.github.laxika.magicalvibes.model.GameLogEntry;
 
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
 import com.github.laxika.magicalvibes.cards.l.LlanowarElves;
+import com.github.laxika.magicalvibes.cards.p.Plains;
 import com.github.laxika.magicalvibes.model.GameData;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
@@ -217,6 +218,40 @@ class RodOfRuinTest extends BaseCardTest {
         harness.activateAbility(player1, 0, null, player2.getId());
 
         assertThat(rod.isTapped()).isTrue();
+    }
+
+    // ===== Target enumeration =====
+
+    @Test
+    @DisplayName("Target enumeration offers creatures and players but no other permanents")
+    void targetEnumerationExcludesNonCreaturePermanents() {
+        Permanent rod = addReadyRod(player1);
+        harness.addToBattlefield(player2, new GrizzlyBears());
+        harness.addToBattlefield(player2, new Plains());
+
+        GameData gd = harness.getGameData();
+        UUID bearId = harness.getPermanentId(player2, "Grizzly Bears");
+        UUID plainsId = harness.getPermanentId(player2, "Plains");
+
+        var response = harness.getValidTargetService().computeValidTargetsForAbility(
+                gd, rod.getCard(), rod.getCard().getActivatedAbilities().getFirst(),
+                player1.getId(), 0);
+
+        // "Any target" is a creature, planeswalker, or player — the land and the Rod itself
+        // are not legal, and activation would reject them.
+        assertThat(response.validPermanentIds()).contains(bearId).doesNotContain(plainsId, rod.getId());
+        assertThat(response.validPlayerIds()).contains(player1.getId(), player2.getId());
+    }
+
+    @Test
+    @DisplayName("Activating the ability targeting an artifact is rejected")
+    void cannotTargetArtifact() {
+        Permanent rod = addReadyRod(player1);
+        harness.addMana(player1, ManaColor.WHITE, 3);
+
+        assertThatThrownBy(() -> harness.activateAbility(player1, 0, null, rod.getId()))
+                .isInstanceOf(IllegalStateException.class)
+                .hasMessageContaining("creature, planeswalker, or player");
     }
 
     // ===== Fizzle =====

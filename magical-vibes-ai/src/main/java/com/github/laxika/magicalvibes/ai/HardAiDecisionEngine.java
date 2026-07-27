@@ -67,7 +67,6 @@ import java.util.List;
 import java.util.Map;
 import java.util.Set;
 import java.util.UUID;
-import com.github.laxika.magicalvibes.model.CounterType;
 
 /**
  * Hard difficulty AI that uses Information Set Monte Carlo Tree Search (IS-MCTS)
@@ -1902,7 +1901,8 @@ public class HardAiDecisionEngine extends AiDecisionEngine {
                     int abilityManaValue = ability.getManaCost() != null
                             ? new ManaCost(ability.getManaCost()).getManaValue() : 0;
                     double value = evaluateCounterspellValue(gameData, abilityManaValue, spellTargetId);
-                    value -= evaluateAbilityCosts(gameData, ability, permanent);
+                    value -= spellEvaluator.evaluateAbilityCosts(
+                            gameData, ability, permanent, aiPlayer.getId());
                     if (value <= 0) continue;
 
                     candidates.add(new AbilityCandidate(permIdx, abilIdx, ability,
@@ -1925,25 +1925,9 @@ public class HardAiDecisionEngine extends AiDecisionEngine {
                 if (ability.getLoyaltyCost() == null
                         && !isGoodTimingForAbility(gameData, ability, permanent, targetId)) continue;
 
-                // Evaluate value
-                double value = spellEvaluator.evaluateAbilityEffects(
-                        gameData, ability.getEffects(), aiPlayer.getId());
-                value -= evaluateAbilityCosts(gameData, ability, permanent);
-
-                // For loyalty abilities, add value for loyalty gain (protects planeswalker)
-                // and ensure even modest +N abilities are worth activating
-                if (ability.getLoyaltyCost() != null) {
-                    int loyaltyCost = ability.getLoyaltyCost();
-                    if (loyaltyCost > 0) {
-                        // Gaining loyalty is inherently valuable — protects the planeswalker
-                        value += loyaltyCost * 1.5;
-                    }
-                    // Planeswalker abilities should almost always be activated if legal,
-                    // so set a minimum value floor for uptick abilities
-                    if (loyaltyCost >= 0 && value < 1.0) {
-                        value = 1.0;
-                    }
-                }
+                // Evaluate value (effects less costs, with the loyalty adjustments)
+                double value = spellEvaluator.evaluateActivatedAbility(
+                        gameData, ability, permanent, aiPlayer.getId());
 
                 if (value <= 0) continue;
 
@@ -2058,56 +2042,6 @@ public class HardAiDecisionEngine extends AiDecisionEngine {
                 new ActivateAbilityRequest(selectedPermanentIndex, action.abilityIndex(), null,
                         action.targetId(), null, null, null)));
         return true;
-    }
-
-    /**
-     * Estimates the cost of an ability's additional costs as a score deduction.
-     * Higher cost means the ability needs higher effect value to be worth activating.
-     */
-    private double evaluateAbilityCosts(GameData gameData, ActivatedAbility ability,
-                                        Permanent permanent) {
-        double cost = 0;
-        UUID opponentId = AiUtils.getOpponentId(gameData, aiPlayer.getId());
-        BoardEvaluator boardEval = new BoardEvaluator(gameQueryService);
-
-        // Loyalty cost: losing counters makes the planeswalker more vulnerable
-        if (ability.getLoyaltyCost() != null && ability.getLoyaltyCost() < 0) {
-            int loyaltyLost = Math.abs(ability.getLoyaltyCost());
-            int loyaltyRemaining = permanent.getCounterCount(CounterType.LOYALTY) - loyaltyLost;
-            // Base cost: each loyalty counter lost is worth ~1.5
-            cost += loyaltyLost * 1.5;
-            // Extra penalty if the planeswalker would be left at very low loyalty
-            if (loyaltyRemaining <= 1) {
-                cost += 3.0;
-            }
-        }
-
-        for (CardEffect effect : ability.getEffects()) {
-            if (!(effect instanceof CostEffect costEffect)) {
-                continue;
-            }
-            if (costEffect.consumesSourcePermanent()) {
-                if (gameQueryService.isCreature(gameData, permanent)) {
-                    // Use sacrificeCost so doomed/dying creatures are near-free
-                    // (e.g. Mogg Fanatic pinging before Wrath resolves)
-                    cost += boardEval.sacrificeCost(gameData, permanent, aiPlayer.getId(), opponentId);
-                } else {
-                    cost += permanent.getCard().getManaValue() * 3.0;
-                }
-            } else if (costEffect.sacrificesChosenCreature()) {
-                // Deduct the value of the best sacrifice candidate (cheapest to lose)
-                List<Permanent> creatures = gameData.playerBattlefields
-                        .getOrDefault(aiPlayer.getId(), List.of()).stream()
-                        .filter(p -> gameQueryService.isCreature(gameData, p))
-                        .toList();
-                cost += boardEval.bestSacrificeCost(gameData, creatures, aiPlayer.getId(), opponentId);
-            } else {
-                // Scalar resources: life paid and/or charge counters removed from the source.
-                cost += costEffect.lifePaid(gameData.getLife(aiPlayer.getId())) * 1.5;
-                cost += costEffect.sourceCountersRemoved();
-            }
-        }
-        return cost;
     }
 
     /**

@@ -16,12 +16,15 @@ import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
 import com.github.laxika.magicalvibes.cards.h.HealingGrace;
 import com.github.laxika.magicalvibes.cards.h.Hibernation;
 import com.github.laxika.magicalvibes.cards.i.InspiringCleric;
+import com.github.laxika.magicalvibes.cards.l.LlanowarElves;
 import com.github.laxika.magicalvibes.cards.m.MidnightHaunting;
+import com.github.laxika.magicalvibes.cards.m.MoggFanatic;
 import com.github.laxika.magicalvibes.cards.n.Nekrataal;
 import com.github.laxika.magicalvibes.cards.p.Pacifism;
 import com.github.laxika.magicalvibes.cards.p.PanicAttack;
 import com.github.laxika.magicalvibes.cards.p.Pyroclasm;
 import com.github.laxika.magicalvibes.cards.r.RelentlessAssault;
+import com.github.laxika.magicalvibes.cards.r.RodOfRuin;
 import com.github.laxika.magicalvibes.cards.s.SerraAngel;
 import com.github.laxika.magicalvibes.cards.s.ShivanDragon;
 import com.github.laxika.magicalvibes.cards.s.Shock;
@@ -1470,5 +1473,45 @@ class SpellEvaluatorTest {
         double value = spellEvaluator.estimateSpellValue(gd, new DoomBlade(), player1.getId());
 
         assertThat(value).isLessThanOrEqualTo(0.0);
+    }
+
+    // ===== Activated ability valuation (effects less costs) =====
+
+    @Test
+    @DisplayName("Activation that costs nothing but mana is worth making when it can kill")
+    void activationWorthMakingWhenItKills() {
+        Permanent rod = new Permanent(new RodOfRuin());
+        rod.setSummoningSick(false);
+        gd.playerBattlefields.get(player1.getId()).add(rod);
+
+        Permanent elves = new Permanent(new LlanowarElves()); // 1/1 — 1 damage kills it
+        elves.setSummoningSick(false);
+        gd.playerBattlefields.get(player2.getId()).add(elves);
+
+        double value = spellEvaluator.evaluateActivatedAbility(
+                gd, rod.getCard().getActivatedAbilities().getFirst(), rod, player1.getId());
+
+        assertThat(value).isGreaterThan(0.0);
+    }
+
+    @Test
+    @DisplayName("Sacrificing a creature for 1 damage is not worth it against a creature it cannot kill")
+    void sacrificeNotWorthItAgainstBiggerCreature() {
+        Permanent fanatic = new Permanent(new MoggFanatic());
+        fanatic.setSummoningSick(false);
+        gd.playerBattlefields.get(player1.getId()).add(fanatic);
+
+        Permanent elemental = new Permanent(new AirElemental()); // 4/4 — survives 1 damage
+        elemental.setSummoningSick(false);
+        gd.playerBattlefields.get(player2.getId()).add(elemental);
+
+        double withSacrifice = spellEvaluator.evaluateActivatedAbility(
+                gd, fanatic.getCard().getActivatedAbilities().getFirst(), fanatic, player1.getId());
+        double effectsAlone = spellEvaluator.evaluateAbilityEffects(
+                gd, fanatic.getCard().getActivatedAbilities().getFirst().getEffects(), player1.getId());
+
+        // The sacrifice cost is what turns a mildly positive ping into a bad deal.
+        assertThat(withSacrifice).isLessThan(effectsAlone);
+        assertThat(withSacrifice).isLessThanOrEqualTo(0.0);
     }
 }

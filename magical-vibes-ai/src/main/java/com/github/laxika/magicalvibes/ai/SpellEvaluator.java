@@ -85,6 +85,86 @@ public class SpellEvaluator {
     }
 
     /**
+     * Net worth of activating an ability: what its effects are worth, less what its costs take
+     * away, with the planeswalker-loyalty adjustments applied. A value at or below zero means the
+     * activation costs more than it gains — sacrificing a healthy creature to deal 1 damage to
+     * something the damage cannot kill, say.
+     * <p>
+     * This is the one place that valuation lives. Both the deterministic evaluator and the MCTS
+     * search read it: the search's own reward signal cannot resolve a marginal activation (the
+     * board evaluation squashes a 1-life swing to a fraction of one rollout's standard deviation),
+     * so it needs the answer from here rather than from a second copy that could drift.
+     */
+    public double evaluateActivatedAbility(GameData gameData, ActivatedAbility ability,
+                                           Permanent permanent, UUID aiPlayerId) {
+        double value = evaluateAbilityEffects(gameData, ability.getEffects(), aiPlayerId)
+                - evaluateAbilityCosts(gameData, ability, permanent, aiPlayerId);
+
+        Integer loyaltyCost = ability.getLoyaltyCost();
+        if (loyaltyCost != null) {
+            if (loyaltyCost > 0) {
+                // Gaining loyalty is inherently valuable — it protects the planeswalker
+                value += loyaltyCost * 1.5;
+            }
+            // Planeswalker abilities should almost always be activated if legal, so uptick
+            // abilities get a value floor.
+            if (loyaltyCost >= 0 && value < 1.0) {
+                value = 1.0;
+            }
+        }
+        return value;
+    }
+
+    /**
+     * Estimates the cost of an ability's additional costs as a score deduction.
+     * Higher cost means the ability needs higher effect value to be worth activating.
+     */
+    public double evaluateAbilityCosts(GameData gameData, ActivatedAbility ability,
+                                       Permanent permanent, UUID aiPlayerId) {
+        double cost = 0;
+        UUID opponentId = getOpponentId(gameData, aiPlayerId);
+
+        // Loyalty cost: losing counters makes the planeswalker more vulnerable
+        if (ability.getLoyaltyCost() != null && ability.getLoyaltyCost() < 0) {
+            int loyaltyLost = Math.abs(ability.getLoyaltyCost());
+            int loyaltyRemaining = permanent.getCounterCount(CounterType.LOYALTY) - loyaltyLost;
+            // Base cost: each loyalty counter lost is worth ~1.5
+            cost += loyaltyLost * 1.5;
+            // Extra penalty if the planeswalker would be left at very low loyalty
+            if (loyaltyRemaining <= 1) {
+                cost += 3.0;
+            }
+        }
+
+        for (CardEffect effect : ability.getEffects()) {
+            if (!(effect instanceof CostEffect costEffect)) {
+                continue;
+            }
+            if (costEffect.consumesSourcePermanent()) {
+                if (gameQueryService.isCreature(gameData, permanent)) {
+                    // Use sacrificeCost so doomed/dying creatures are near-free
+                    // (e.g. Mogg Fanatic pinging before Wrath resolves)
+                    cost += boardEvaluator.sacrificeCost(gameData, permanent, aiPlayerId, opponentId);
+                } else {
+                    cost += permanent.getCard().getManaValue() * 3.0;
+                }
+            } else if (costEffect.sacrificesChosenCreature()) {
+                // Deduct the value of the best sacrifice candidate (cheapest to lose)
+                List<Permanent> creatures = gameData.playerBattlefields
+                        .getOrDefault(aiPlayerId, List.of()).stream()
+                        .filter(p -> gameQueryService.isCreature(gameData, p))
+                        .toList();
+                cost += boardEvaluator.bestSacrificeCost(gameData, creatures, aiPlayerId, opponentId);
+            } else {
+                // Scalar resources: life paid and/or charge counters removed from the source.
+                cost += costEffect.lifePaid(gameData.getLife(aiPlayerId)) * 1.5;
+                cost += costEffect.sourceCountersRemoved();
+            }
+        }
+        return cost;
+    }
+
+    /**
      * Evaluates the value of activating an ability by scoring its non-cost effects.
      * Uses the same evaluation logic as spell effects, plus ability-specific effects
      * like BoostSelfEffect and RegenerateEffect.

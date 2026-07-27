@@ -164,6 +164,34 @@ class MCTSEngineTest {
     }
 
     @Test
+    @DisplayName("Below a learnable budget, ability MCTS still returns the simulator's top-ranked target")
+    void abilityMctsFallsBackOnTargetRankingAtTinyBudget() {
+        Permanent rod = harness.addToBattlefieldAndReturn(player1, new RodOfRuin());
+        harness.addToBattlefield(player2, new TragedyFeaster());
+        harness.addMana(player1, ManaColor.COLORLESS, 3);
+        harness.setHand(player1, List.of());
+        harness.forceStep(TurnStep.PRECOMBAT_MAIN);
+        harness.forceActivePlayer(player1);
+        gd.stack.clear();
+
+        List<SimulationAction> abilityActions = simulator.getLegalActions(
+                        gd, player1.getId()).stream()
+                .filter(action -> (action instanceof SimulationAction.ActivateAbility aa
+                        && aa.permanentId().equals(rod.getId()))
+                        || action instanceof SimulationAction.PassPriority)
+                .toList();
+
+        // Six iterations over three root actions is three expansions plus three selections —
+        // far too few for the reward averages to carry any signal. The policy prior decides,
+        // and it ranks the opponent's face over a warded 4/6 that 1 damage cannot kill.
+        SimulationAction action = engine.search(gd, player1.getId(), 6, abilityActions);
+
+        assertThat(action).isInstanceOf(SimulationAction.ActivateAbility.class);
+        assertThat(((SimulationAction.ActivateAbility) action).targetId())
+                .isEqualTo(player2.getId());
+    }
+
+    @Test
     @DisplayName("MCTS prefers casting removal over passing when it clears a blocker for an attack")
     void mctsPrefersCastingRemovalOverPassingWhenItClearsBlocker() {
         // Scenario: AI has a 3/3 attacker, opponent has a 3/3 blocker.

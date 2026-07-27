@@ -1,12 +1,15 @@
 package com.github.laxika.magicalvibes.ai.simulation;
 
+import com.github.laxika.magicalvibes.model.ActivatedAbility;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.GameData;
+import com.github.laxika.magicalvibes.model.Permanent;
 import lombok.extern.slf4j.Slf4j;
 
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.Comparator;
+import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Random;
@@ -66,6 +69,44 @@ public class MCTSEngine {
      * softmax sampling. Ensures even unusual plays get some exploration.
      */
     private static final double EPSILON = 0.05;
+
+    /**
+     * Mean reward a root action must beat a better-ranked rival by, per rank step, to be chosen
+     * over it (see {@link MCTSNode#bestRewardChild}). Ranks come from the order
+     * {@link GameSimulator} hands over the actions that differ only in target, which is its own
+     * domain priority ranking — lethal damage over chip damage, the opponent's face over a
+     * creature the damage cannot kill — and which it otherwise discards.
+     * <p>
+     * The margin is set at roughly one rollout standard deviation (measured at 0.024 on this
+     * evaluation), because that is the scale at which the two means become indistinguishable:
+     * Rod of Ruin's 1 damage to the opponent scored 0.334 over 300 rollouts against 0.325 for a
+     * warded 4/6 it cannot kill. No budget resolves a gap that size — sampling it harder just
+     * re-rolls the noise. A rival that measures a genuinely better board, on the order of the
+     * 0.032 between activating and passing, still clears it.
+     */
+    private static final double SELECTION_RANK_MARGIN = 0.025;
+
+    /**
+     * Reward credited to an activation the AI's cost-aware valuation says is worth making (see
+     * {@link SpellEvaluator#evaluateActivatedAbility}), so it is chosen over passing unless the
+     * search measured passing genuinely better.
+     * <p>
+     * Set to the same order as {@link #SELECTION_RANK_MARGIN} and for the same reason: activating
+     * and passing come back all but tied on mean reward, because the board evaluation squashes
+     * the one life a Rod of Ruin ping takes down to a fraction of a rollout's standard deviation.
+     * The sign of the valuation is the only part used — its magnitude is on a different scale
+     * from reward and would not mean anything here.
+     */
+    private static final double ACTIVATION_VALUE_MARGIN = 0.025;
+
+    /**
+     * Share of the most-visited root child's visits a child needs before its mean reward is
+     * allowed to win final selection (see {@link MCTSNode#bestRewardChild}). At a half, a child
+     * the search deliberately abandoned cannot win on a mean drawn from a few early rollouts,
+     * while the near-equal visit counts UCB1 produces on a flat reward landscape all stay
+     * eligible — which is the case the reward comparison exists for.
+     */
+    private static final double MIN_SELECTION_VISIT_FRACTION = 0.5;
 
     /**
      * Early stopping: minimum total root visits (including warm-start prior visits)
@@ -272,6 +313,17 @@ public class MCTSEngine {
             cachedSignature = signature;
             cacheMisses++;
         }
+
+        // Publish the selection adjustments before any worker starts, and refresh those of
+        // children a warm start carried over — the action set is identical (same signature) but
+        // the board behind it has moved on, so they are recomputed against the current state.
+        Map<String, Double> adjustments = computeSelectionAdjustments(rootState, aiPlayerId, rootActions);
+        root.childSelectionAdjustments = adjustments;
+        for (MCTSNode child : root.children) {
+            child.selectionAdjustment = adjustments
+                    .getOrDefault(canonicalString(child.action), child.selectionAdjustment);
+        }
+
         long searchStart = System.currentTimeMillis();
         long deadline = timeBudgetEnabled ? searchStart + timeBudgetMs : Long.MAX_VALUE;
         int effectiveBudget = maxBudget > 0 ? Math.min(budget, maxBudget) : budget;
@@ -284,8 +336,8 @@ public class MCTSEngine {
         lastSearchElapsedMs = System.currentTimeMillis() - searchStart;
         logSearchOutcome();
 
-        // Return the most visited child's action
-        MCTSNode bestChild = root.mostVisitedChild();
+        // Return the best-scoring adequately-visited child's action
+        MCTSNode bestChild = root.bestRewardChild(MIN_SELECTION_VISIT_FRACTION);
         if (bestChild == null) {
             return rootActions.getFirst();
         }
@@ -445,7 +497,12 @@ public class MCTSEngine {
                         ? List.of()
                         : simulator.getLegalActions(simState, aiPlayerId);
                 synchronized (treeLock) {
-                    node = node.addExpandedChild(reserved, childActions);
+                    MCTSNode expandedFrom = node;
+                    node = expandedFrom.addExpandedChild(reserved, childActions);
+                    if (expandedFrom.childSelectionAdjustments != null) {
+                        node.selectionAdjustment = expandedFrom.childSelectionAdjustments
+                                .getOrDefault(canonicalString(reserved), 0.0);
+                    }
                 }
                 expanded = true;
             }
@@ -504,17 +561,18 @@ public class MCTSEngine {
     }
 
     /**
-     * Early-stopping convergence check. The final action is the most visited root child,
-     * so once no other root child (existing or yet to be expanded) can catch up to the
-     * leader within the iterations that can still possibly run, the search outcome is
-     * fixed and the remaining budget would be wasted.
+     * Early-stopping convergence check: the search has concentrated on one root child so heavily
+     * that no other can catch it within the iterations that can still possibly run, and that same
+     * child is the one selection would return, so the remaining budget would be wasted.
      * <p>
-     * The bound on remaining iterations is exact for the iteration budget and a
-     * conservative ({@link #EARLY_STOP_TIME_SAFETY_FACTOR}× overestimated) projection for
-     * the wall-clock budget, so this stops strictly after the decision is settled — it
-     * never changes which action {@link #search} returns. Warm-started trees carry their
-     * prior visit lead, which is what lets a repeat search at an already-converged
-     * decision point return almost immediately.
+     * The bound on remaining iterations is exact for the iteration budget and a conservative
+     * ({@link #EARLY_STOP_TIME_SAFETY_FACTOR}× overestimated) projection for the wall-clock
+     * budget. Requiring the visit leader to also be the current selection is what keeps this
+     * aligned with {@link MCTSNode#bestRewardChild}: a visit lead that large means the rivals sit
+     * below the selection visit floor, so the leader is the only eligible child and further
+     * iterations cannot hand the decision to a different action. Warm-started trees carry their
+     * prior visit lead, which is what lets a repeat search at an already-converged decision point
+     * return almost immediately.
      */
     private boolean isDecided(MCTSNode root, int iterationsDone, long searchStart,
                               long deadline, int effectiveBudget) {
@@ -545,7 +603,10 @@ public class MCTSEngine {
             remainingIterations = Math.min(remainingIterations, timeBasedEstimate);
         }
 
-        return bestVisits - secondVisits > remainingIterations;
+        if (bestVisits - secondVisits <= remainingIterations) {
+            return false;
+        }
+        return root.bestRewardChild(MIN_SELECTION_VISIT_FRACTION) == root.mostVisitedChild();
     }
 
     /**
@@ -651,6 +712,74 @@ public class MCTSEngine {
         }
         // ChooseCard, ChoosePermanent, ChooseColor — neutral
         return 1.0;
+    }
+
+    /**
+     * Maps each root action to its selection adjustment, keyed by {@link #canonicalString}. Both
+     * terms carry knowledge the AI already holds but the reward signal is too coarse to recover,
+     * and both are expressed on the reward scale so {@link MCTSNode#bestRewardChild} can simply
+     * add them to a measured mean.
+     * <p>
+     * The first is the action's rank inside its target-choice group — the order
+     * {@link GameSimulator} hands over actions that differ only in target, which is its own
+     * priority ranking and otherwise discarded. The second is the sign of
+     * {@link SpellEvaluator#evaluateActivatedAbility}: an activation that pays for itself is
+     * pushed above passing, one that does not is left alone, which is what keeps the AI from
+     * sacrificing a Mogg Fanatic to deal 1 damage to a 5/5. Nothing else is adjusted — which
+     * spell to cast, and whether to cast at all, stay the search's call.
+     */
+    private Map<String, Double> computeSelectionAdjustments(GameData rootState, UUID aiPlayerId,
+                                                            List<SimulationAction> rootActions) {
+        Map<String, Integer> groupRanks = new HashMap<>();
+        Map<String, Double> adjustments = new HashMap<>();
+        for (int i = 0; i < rootActions.size(); i++) {
+            SimulationAction action = rootActions.get(i);
+            int rank = groupRanks.merge(targetGroupKey(action, i), 1, Integer::sum) - 1;
+            double adjustment = -SELECTION_RANK_MARGIN * rank;
+            if (action instanceof SimulationAction.ActivateAbility activate
+                    && isWorthActivating(rootState, aiPlayerId, activate)) {
+                adjustment += ACTIVATION_VALUE_MARGIN;
+            }
+            adjustments.put(canonicalString(action), adjustment);
+        }
+        return adjustments;
+    }
+
+    /**
+     * Whether the AI's own cost-aware valuation says this activation gains more than it spends.
+     * Read through {@link SpellEvaluator} so the search and the deterministic evaluator cannot
+     * disagree about it. A board state the valuation cannot be computed against — the permanent
+     * or ability has gone — counts as not worth it, leaving the decision entirely to the search.
+     */
+    private boolean isWorthActivating(GameData rootState, UUID aiPlayerId,
+                                      SimulationAction.ActivateAbility action) {
+        Permanent permanent = simulator.getGameQueryService()
+                .findPermanentById(rootState, action.permanentId());
+        if (permanent == null) {
+            return false;
+        }
+        List<ActivatedAbility> abilities = simulator.getGameService()
+                .getEffectiveActivatedAbilities(rootState, permanent);
+        if (action.abilityIndex() < 0 || action.abilityIndex() >= abilities.size()) {
+            return false;
+        }
+        return simulator.getSpellEvaluator().evaluateActivatedAbility(
+                rootState, abilities.get(action.abilityIndex()), permanent, aiPlayerId) > 0;
+    }
+
+    /**
+     * Groups root actions that are the same decision except for the target chosen — the only
+     * place the enumeration order carries a ranking. Everything else gets a key unique to its
+     * position, so it ranks first in a group of one and takes no penalty.
+     */
+    private static String targetGroupKey(SimulationAction action, int index) {
+        if (action instanceof SimulationAction.ActivateAbility aa) {
+            return "AA:" + aa.permanentId() + ":" + aa.abilityIndex();
+        }
+        if (action instanceof SimulationAction.PlayCard pc) {
+            return "PC:" + pc.handIndex();
+        }
+        return "#" + index;
     }
 
     /**
@@ -792,7 +921,7 @@ public class MCTSEngine {
      * primitive arrays (notably {@link SimulationAction.DeclareBlockers}) cannot rely on
      * the default {@code toString} for stable comparison, so they get explicit handling.
      */
-    private static String canonicalString(SimulationAction action) {
+    static String canonicalString(SimulationAction action) {
         if (action instanceof SimulationAction.DeclareBlockers db) {
             List<int[]> sorted = new ArrayList<>(db.blockerAssignments());
             sorted.sort(Comparator.<int[]>comparingInt(a -> a[0]).thenComparingInt(a -> a[1]));
