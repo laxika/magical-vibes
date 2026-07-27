@@ -62,7 +62,6 @@
   },
   "enabledMcpjsonServers": [
     "scryfall",
-    "rules",
-    "codegraph"
+    "rules"
   ]
 }

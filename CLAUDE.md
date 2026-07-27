@@ -8,15 +8,6 @@
 - Never write banner/section comments — `// --- Aura & enchantment ---`, `// ===== Helpers =====`, `//////// Combat ////////` and any similar divider one-liner. They are not documentation. Javadoc on the type and its members is the only place to explain grouping.
 - Do not ever run the full test suite! Ask me and I'll run it for you.
 
-## CodeGraph
-
-In repositories indexed by CodeGraph (a `.codegraph/` directory exists at the repo root), reach for it BEFORE grep/find or reading files when you need to understand or locate code:
-
-- **MCP tool** (when available): `codegraph_explore` answers most code questions in one call — the relevant symbols' verbatim source plus the call paths between them, including dynamic-dispatch hops grep can't follow. Name a file or symbol in the query to read its current line-numbered source. If it's listed but deferred, load it by name via tool search.
-- **Shell** (always works): `codegraph explore "<symbol names or question>"` prints the same output.
-
-If there is no `.codegraph/` directory, skip CodeGraph entirely — indexing is the user's decision.
-
 ## Implementing cards
 
 Use the **`implement-card`** skill (`/implement-card <SET> <COLLECTOR_NUMBER>`). It owns the full workflow — reprint check, Scryfall lookup, mapping oracle text to effects via `agent-docs/` (grep, never read in full), writing the card class, and writing focused tests. Reprints just get a new `@CardRegistration` annotation and nothing else.
