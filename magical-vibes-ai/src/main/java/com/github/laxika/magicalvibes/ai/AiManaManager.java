@@ -89,6 +89,16 @@ public class AiManaManager {
         return PotentialManaService.isFreeTapManaAbility(ability);
     }
 
+    /**
+     * Returns true if {@code ability} is a mana ability the AI could tap {@code permanent} for right
+     * now — the shared gate behind both the virtual pool and every payment path, so planned mana is
+     * always mana the engine will actually let us produce.
+     */
+    public boolean canTapForManaNow(ActivatedAbility ability, Permanent permanent,
+                                    GameData gameData, UUID playerId) {
+        return potentialManaService.canTapForManaNow(ability, permanent, gameData, playerId);
+    }
+
     void tapLandsForCost(GameData gameData, UUID aiPlayerId, String manaCostStr, int costModifier, ManaTapAction action) {
         tapLandsForCost(gameData, aiPlayerId, manaCostStr, costModifier, action, false);
     }
@@ -411,10 +421,7 @@ public class AiManaManager {
         List<ActivatedAbility> abilities = card.getActivatedAbilities();
         for (int i = 0; i < abilities.size(); i++) {
             ActivatedAbility ability = abilities.get(i);
-            if (!isFreeTapManaAbility(ability)
-                    || !PotentialManaService.canPayChargeCounterCost(ability, permanent)
-                    || !potentialManaService.canMeetTimingRestriction(
-                            ability, gameData, playerId, permanent)) {
+            if (!potentialManaService.canTapForManaNow(ability, permanent, gameData, playerId)) {
                 continue;
             }
             boolean painful = ability.getEffects().stream()
@@ -801,13 +808,7 @@ public class AiManaManager {
 
         for (int j = 0; j < abilities.size(); j++) {
             ActivatedAbility ability = abilities.get(j);
-            if (!isFreeTapManaAbility(ability)) {
-                continue;
-            }
-            if (!PotentialManaService.canPayChargeCounterCost(ability, permanent)) {
-                continue;
-            }
-            if (!potentialManaService.canMeetTimingRestriction(ability, gameData, playerId, permanent)) {
+            if (!potentialManaService.canTapForManaNow(ability, permanent, gameData, playerId)) {
                 continue;
             }
 

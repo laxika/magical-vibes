@@ -299,13 +299,7 @@ public class PotentialManaService {
         int maxAbilityTotal = 0;
 
         for (ActivatedAbility ability : card.getActivatedAbilities()) {
-            if (!isFreeTapManaAbility(ability)) {
-                continue;
-            }
-            if (!canPayChargeCounterCost(ability, permanent)) {
-                continue;
-            }
-            if (!canMeetTimingRestriction(ability, gameData, playerId, permanent)) {
+            if (!canTapForManaNow(ability, permanent, gameData, playerId)) {
                 continue;
             }
 
@@ -358,6 +352,38 @@ public class PotentialManaService {
     }
 
     /**
+     * Returns true if {@code ability} is a mana ability the player could tap {@code permanent} for
+     * right now. This is the single predicate every mana-planning path shares — the virtual pool
+     * here and the AI's payment planning in {@code AiManaManager} — so a new activation gate is
+     * added once instead of in three hand-synced copies. The authority on activation legality
+     * remains {@code AbilityActivationService.validateActivationLegality}; anything it rejects and
+     * this predicate accepts becomes mana the AI counts on and can never actually produce.
+     *
+     * @param permanent the permanent on the battlefield, or null for hypothetical card evaluation
+     *                  (source-relative gates are then assumed satisfiable)
+     */
+    public boolean canTapForManaNow(ActivatedAbility ability, Permanent permanent,
+                                    GameData gameData, UUID playerId) {
+        return isFreeTapManaAbility(ability)
+                && canPayChargeCounterCost(ability, permanent)
+                && meetsRequiredSourceCounters(ability, permanent)
+                && canMeetTimingRestriction(ability, gameData, playerId, permanent);
+    }
+
+    /**
+     * Returns true if the source carries the counters its ability demands to be activated at all
+     * (Pyramid of the Pantheon's "activate only if there are three or more brick counters").
+     * If permanent is null (hypothetical card evaluation), assumes the counters can be there.
+     */
+    public static boolean meetsRequiredSourceCounters(ActivatedAbility ability, Permanent permanent) {
+        if (permanent == null || ability.getRequiredSourceCounterType() == null) {
+            return true;
+        }
+        return permanent.getCounterCount(ability.getRequiredSourceCounterType())
+                >= ability.getRequiredSourceCounterCount();
+    }
+
+    /**
      * Returns true if an activated ability is a free tap-based mana ability:
      * requires tap, has no mana cost, and produces mana.
      */
@@ -371,7 +397,7 @@ public class PotentialManaService {
      * Returns true if the ability's timing restriction is met. If gameData or permanent is null
      * (hypothetical card evaluation), assumes the restriction can be met.
      */
-    public boolean canMeetTimingRestriction(ActivatedAbility ability, GameData gameData, UUID playerId, Permanent permanent) {
+    private boolean canMeetTimingRestriction(ActivatedAbility ability, GameData gameData, UUID playerId, Permanent permanent) {
         if (ability.getTimingRestriction() == null || gameData == null) {
             return true;
         }
@@ -408,7 +434,7 @@ public class PotentialManaService {
      * Returns true if the permanent can pay any charge counter costs required by the ability.
      * If permanent is null (hypothetical card evaluation), assumes costs can be paid.
      */
-    public static boolean canPayChargeCounterCost(ActivatedAbility ability, Permanent permanent) {
+    private static boolean canPayChargeCounterCost(ActivatedAbility ability, Permanent permanent) {
         if (permanent == null) {
             return true;
         }

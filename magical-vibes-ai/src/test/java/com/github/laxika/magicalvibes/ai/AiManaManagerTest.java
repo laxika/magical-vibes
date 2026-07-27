@@ -25,6 +25,7 @@ import com.github.laxika.magicalvibes.model.effect.DamageDealingEffect;
 import com.github.laxika.magicalvibes.model.effect.DamageRecipient;
 import com.github.laxika.magicalvibes.model.effect.DealDamageToPlayersEffect;
 import com.github.laxika.magicalvibes.model.effect.DestroyEnchantedPermanentEffect;
+import com.github.laxika.magicalvibes.model.effect.PutCountersOnSelfEffect;
 import com.github.laxika.magicalvibes.model.effect.RemoveChargeCountersFromSourceCost;
 import com.github.laxika.magicalvibes.model.effect.ReturnCardFromGraveyardEffect;
 import com.github.laxika.magicalvibes.model.effect.SacrificeSelfCost;
@@ -236,6 +237,34 @@ class AiManaManagerTest {
         Permanent perm = new Permanent(card);
         perm.setSummoningSick(false);
         perm.setCounterCount(CounterType.CHARGE, chargeCounters);
+        gd.playerBattlefields.get(player1Id).add(perm);
+        lenient().when(gameQueryService.isCreature(gd, perm)).thenReturn(false);
+        lenient().when(gameQueryService.canActivateManaAbility(gd, perm)).thenReturn(true);
+        lenient().when(gameQueryService.getOverriddenLandManaColor(gd, perm)).thenReturn(null);
+        return perm;
+    }
+
+    private static Card createBrickCounterManaArtifact(String name) {
+        Card card = new Card();
+        card.setName(name);
+        card.setType(CardType.ARTIFACT);
+        // Pyramid of the Pantheon: the free-tap ability only works with three brick counters
+        card.addActivatedAbility(new ActivatedAbility(
+                true, "{2}",
+                List.of(new AwardAnyColorManaEffect(), new PutCountersOnSelfEffect(CounterType.BRICK)),
+                "{2}, {T}: Add one mana of any color. Put a brick counter on this artifact."));
+        card.addActivatedAbility(new ActivatedAbility(
+                true, null, List.of(new AwardAnyColorManaEffect(3)),
+                "{T}: Add three mana of any one color. Activate only if there are three or more brick counters.")
+                .withRequiredSourceCounters(CounterType.BRICK, 3));
+        return card;
+    }
+
+    private Permanent addUntappedBrickCounterArtifact(String name, int brickCounters) {
+        Card card = createBrickCounterManaArtifact(name);
+        Permanent perm = new Permanent(card);
+        perm.setSummoningSick(false);
+        perm.setCounterCount(CounterType.BRICK, brickCounters);
         gd.playerBattlefields.get(player1Id).add(perm);
         lenient().when(gameQueryService.isCreature(gd, perm)).thenReturn(false);
         lenient().when(gameQueryService.canActivateManaAbility(gd, perm)).thenReturn(true);
@@ -702,6 +731,24 @@ class AiManaManagerTest {
         }
 
         @Test
+        @DisplayName("excludes a counter-gated mana ability while the source lacks the counters")
+        void excludesCounterGatedAbilityWithoutCounters() {
+            addUntappedBrickCounterArtifact("Pyramid of the Pantheon", 0);
+
+            ManaPool pool = manager.buildVirtualManaPool(gd, player1Id);
+            assertThat(pool.getTotal()).isZero();
+        }
+
+        @Test
+        @DisplayName("includes a counter-gated mana ability once the source has the counters")
+        void includesCounterGatedAbilityWithCounters() {
+            addUntappedBrickCounterArtifact("Pyramid of the Pantheon", 3);
+
+            ManaPool pool = manager.buildVirtualManaPool(gd, player1Id);
+            assertThat(pool.get(ManaColor.COLORLESS)).isEqualTo(3);
+        }
+
+        @Test
         @DisplayName("includes colorless mana per charge counter ability with counters")
         void includesColorlessManaPerChargeCounterWithCounters() {
             addUntappedChargeCounterColorlessManaArtifact("Shrine of Boundless Growth", 3);
@@ -934,6 +981,31 @@ class AiManaManagerTest {
             manager.tapLandsForCost(gd, player1Id, "{1}{G}", 0, action);
 
             verify(action, never()).tap(any(int.class), any());
+        }
+
+        @Test
+        @DisplayName("never taps a source whose only free mana ability is gated behind counters it lacks")
+        void skipsCounterGatedManaSource() {
+            addUntappedLand("Swamp", ManaColor.BLACK);
+            addUntappedBrickCounterArtifact("Pyramid of the Pantheon", 0);
+
+            AiManaManager.ManaTapAction action = mock(AiManaManager.ManaTapAction.class);
+            manager.tapLandsForCost(gd, player1Id, "{4}{B}", 0, action);
+
+            verify(action).tap(0, null);
+            verify(action, never()).tap(eq(1), any());
+        }
+
+        @Test
+        @DisplayName("taps a counter-gated mana source once it has the counters")
+        void tapsCounterGatedManaSourceWithCounters() {
+            addUntappedLand("Swamp", ManaColor.BLACK);
+            addUntappedBrickCounterArtifact("Pyramid of the Pantheon", 3);
+
+            AiManaManager.ManaTapAction action = mock(AiManaManager.ManaTapAction.class);
+            manager.tapLandsForCost(gd, player1Id, "{4}{B}", 0, action);
+
+            verify(action).tap(1, 1);
         }
 
         @Test

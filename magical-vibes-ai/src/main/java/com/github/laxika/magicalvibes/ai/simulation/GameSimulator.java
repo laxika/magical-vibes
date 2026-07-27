@@ -1173,7 +1173,7 @@ public class GameSimulator {
         Integer bestIndex = null;
         int bestScore = -1;
         for (int j = 0; j < abilities.size(); j++) {
-            if (!AiManaManager.isFreeTapManaAbility(abilities.get(j))) continue;
+            if (!manaManager.canTapForManaNow(abilities.get(j), perm, gd, player.getId())) continue;
             int score = scoreAbilityForSim(abilities.get(j), cost, currentPool);
             if (score > bestScore) {
                 bestScore = score;

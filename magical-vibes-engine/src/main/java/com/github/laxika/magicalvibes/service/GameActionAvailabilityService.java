@@ -70,10 +70,10 @@ public class GameActionAvailabilityService {
      * Ability indices per battlefield permanent whose mana cost the player could cover after
      * tapping every untapped mana source — the activated-ability counterpart of
      * {@link #getPotentialPlayableCardIndices} for the MTGO-style payment flow. Only mana
-     * affordability is checked (the client already gates tap state, summoning sickness and
-     * loyalty); abilities without a mana cost are omitted, and X is priced at 0 like the
-     * card list does. For a {T}-cost ability the source's own mana production is excluded,
-     * since it can't be tapped both for mana and for the ability's tap cost.
+     * affordability and the source's own counter gate are checked (the client already gates tap
+     * state, summoning sickness and loyalty); abilities without a mana cost are omitted, and X is
+     * priced at 0 like the card list does. For a {T}-cost ability the source's own mana production
+     * is excluded, since it can't be tapped both for mana and for the ability's tap cost.
      */
     public Map<UUID, List<Integer>> getPotentialPayableAbilityIndices(GameData gameData, UUID playerId) {
         // Same gating as getPotentialPlayableCardIndices — skip the virtual-pool build for the
@@ -94,7 +94,8 @@ public class GameActionAvailabilityService {
             VirtualManaPool poolWithoutSource = null;
             for (int i = 0; i < abilities.size(); i++) {
                 ActivatedAbility ability = abilities.get(i);
-                if (ability.getManaCost() == null) {
+                if (ability.getManaCost() == null
+                        || !PotentialManaService.meetsRequiredSourceCounters(ability, perm)) {
                     continue;
                 }
                 ManaPool pool = fullPool;

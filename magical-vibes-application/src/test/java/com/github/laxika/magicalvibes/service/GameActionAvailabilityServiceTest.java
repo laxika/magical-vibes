@@ -370,6 +370,29 @@ class GameActionAvailabilityServiceTest {
         }
 
         @Test
+        @DisplayName("An ability gated behind counters the source lacks is omitted")
+        void counterGatedAbilityOmittedUntilSourceHasCounters() {
+            when(gameQueryService.getPriorityPlayerId(gd)).thenReturn(player1Id);
+            when(gameQueryService.canActivateManaAbility(same(gd), any())).thenReturn(true);
+
+            // Oracle's Vault: "{4}, {T}: exile the top card…" then "{T}: … only with three brick counters".
+            Permanent source = abilitySource("Oracle's Vault",
+                    new com.github.laxika.magicalvibes.model.ActivatedAbility(
+                            true, "{2}", List.of(), "exile the top card of your library")
+                            .withRequiredSourceCounters(
+                                    com.github.laxika.magicalvibes.model.CounterType.BRICK, 3));
+            gd.playerBattlefields.get(player1Id).add(source);
+            gd.playerBattlefields.get(player1Id).add(manaLand(com.github.laxika.magicalvibes.model.ManaColor.GREEN));
+            gd.playerBattlefields.get(player1Id).add(manaLand(com.github.laxika.magicalvibes.model.ManaColor.GREEN));
+
+            assertThat(svc.getPotentialPayableAbilityIndices(gd, player1Id)).isEmpty();
+
+            source.setCounterCount(com.github.laxika.magicalvibes.model.CounterType.BRICK, 3);
+            assertThat(svc.getPotentialPayableAbilityIndices(gd, player1Id))
+                    .containsExactly(java.util.Map.entry(source.getId(), List.of(0)));
+        }
+
+        @Test
         @DisplayName("Abilities without a mana cost are omitted")
         void abilitiesWithoutManaCostOmitted() {
             when(gameQueryService.getPriorityPlayerId(gd)).thenReturn(player1Id);
