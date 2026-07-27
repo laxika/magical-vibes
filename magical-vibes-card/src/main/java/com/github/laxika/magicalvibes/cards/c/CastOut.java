@@ -1,10 +1,8 @@
 package com.github.laxika.magicalvibes.cards.c;
 
 import com.github.laxika.magicalvibes.cards.CardRegistration;
-import com.github.laxika.magicalvibes.model.ActivatedAbility;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.EffectSlot;
-import com.github.laxika.magicalvibes.model.effect.DrawCardEffect;
 import com.github.laxika.magicalvibes.model.effect.ExileTargetPermanentUntilSourceLeavesEffect;
 import com.github.laxika.magicalvibes.model.filter.PermanentAllOfPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentControlledBySourceControllerPredicate;
@@ -33,8 +31,6 @@ public class CastOut extends Card {
                         new ExileTargetPermanentUntilSourceLeavesEffect());
 
         // Cycling {W} ({W}, Discard this card: Draw a card.) — discard cost is intrinsic.
-        addHandActivatedAbility(new ActivatedAbility(false, "{W}",
-                List.of(new DrawCardEffect(1)),
-                "Cycling {W} ({W}, Discard this card: Draw a card.)"));
+        addCycling("{W}");
     }
 }

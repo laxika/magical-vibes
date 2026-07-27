@@ -517,6 +517,34 @@ addHandActivatedAbility(new ActivatedAbility(false, "{X}{W}{W}",
 
 Cards: `BurrentonBombardier`
 
+#### Cycling
+
+Plain cycling is `addCycling("{2}")` — do not build it by hand. It registers the hand ability
+and derives the reminder text from the cost, which matters because
+`ActivatedAbility.isCyclingAbility()` decides what counts as cycling by reading the description
+(the name segment before the first `{` must end in "cycling"). A retyped or reworded string
+silently stops being cycling as far as the engine is concerned.
+
+```java
+addCycling("{1}{U}"); // Cycling {1}{U} ({1}{U}, Discard this card: Draw a card.)
+```
+
+Cycling that does something extra when activated is a *different* ability and keeps its explicit
+construction — list the extra effect ahead of the draw, and keep the "Cycling {cost} (…)"
+description so it is still recognised:
+
+```java
+// Renewed Faith: "Cycling {1}{W}. When you cycle this card, you may gain 2 life."
+addHandActivatedAbility(new ActivatedAbility(false, "{1}{W}",
+    List.of(new MayEffect(new GainLifeEffect(2), "Gain 2 life?"), new DrawCardEffect(1)),
+    "Cycling {1}{W} ({1}{W}, Discard this card: Draw a card.)"));
+```
+
+Typecycling and landcycling (`Islandcycling`, `Basic landcycling`) search rather than draw, so
+they are built explicitly too; `isCyclingAbility()` still recognises them by the name segment.
+
+Cards: `DesertCerodon` (plain), the Sojourners and Resounding cycles (with an extra effect)
+
 #### Hand ability targeting graveyard cards (Faerie Macabre)
 
 A "Discard this card: ..." hand ability whose effect targets cards in graveyards (not a battlefield

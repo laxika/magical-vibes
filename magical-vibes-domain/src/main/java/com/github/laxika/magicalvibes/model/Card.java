@@ -6,6 +6,7 @@ import com.github.laxika.magicalvibes.model.filter.TargetFilter;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
 import com.github.laxika.magicalvibes.model.effect.ConditionalEffect;
 import com.github.laxika.magicalvibes.model.effect.ConditionalReplacementEffect;
+import com.github.laxika.magicalvibes.model.effect.DrawCardEffect;
 import com.github.laxika.magicalvibes.model.effect.MayEffect;
 import com.github.laxika.magicalvibes.model.effect.MayPayManaEffect;
 import com.github.laxika.magicalvibes.model.effect.MayPayTapPermanentsEffect;
@@ -654,6 +655,25 @@ public class Card {
     public void addHandActivatedAbility(ActivatedAbility ability) {
         assertMutable();
         handActivatedAbilities.add(ability);
+    }
+
+    /**
+     * Adds plain cycling for {@code cost} — "{@code Cost, Discard this card: Draw a card.}"
+     *
+     * <p>Both halves of this matter to the engine, which is why it is one call: cycling is only
+     * activatable from hand, and {@link ActivatedAbility#isCyclingAbility()} recognises it by the
+     * description beginning with "Cycling", so the reminder text is built from the cost here
+     * rather than retyped per card.
+     *
+     * <p>Cycling that does something extra as it resolves (the Sojourners and Resounding cycles,
+     * Deem Worthy) is a different ability — build those with
+     * {@link #addHandActivatedAbility(ActivatedAbility)} and list the extra effect ahead of the
+     * draw. Typecycling and landcycling likewise search rather than draw.
+     */
+    public void addCycling(String cost) {
+        addHandActivatedAbility(new ActivatedAbility(false, cost,
+                List.of(new DrawCardEffect(1)),
+                "Cycling " + cost + " (" + cost + ", Discard this card: Draw a card.)"));
     }
 
     public String getBackFaceClassName() {

@@ -5,7 +5,6 @@ import com.github.laxika.magicalvibes.model.ActivatedAbility;
 import com.github.laxika.magicalvibes.model.ActivationTimingRestriction;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.GraveyardChoiceDestination;
-import com.github.laxika.magicalvibes.model.effect.DrawCardEffect;
 import com.github.laxika.magicalvibes.model.effect.ReturnCardFromGraveyardEffect;
 import com.github.laxika.magicalvibes.model.filter.CardIsSelfPredicate;
 
@@ -16,9 +15,7 @@ public class VisceraDragger extends Card {
 
     public VisceraDragger() {
         // Cycling {2} ({2}, Discard this card: Draw a card.) — discard cost is intrinsic.
-        addHandActivatedAbility(new ActivatedAbility(false, "{2}",
-                List.of(new DrawCardEffect(1)),
-                "Cycling {2} ({2}, Discard this card: Draw a card.)"));
+        addCycling("{2}");
 
         // Unearth {1}{B}: Return this card from your graveyard to the battlefield. It gains haste.
         // Exile it at the beginning of the next end step. Unearth only as a sorcery.
