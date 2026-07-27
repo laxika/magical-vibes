@@ -5,6 +5,32 @@ knowledge about a specific `CardEffect` type into ONE registered place, instead
 of scattering it across `instanceof` checks in many subsystems. Each step is
 run in a fresh session; this file is the hand-off between them. Read it first.
 
+> **2026-07-27 — the enforcement machinery has been removed.** `EffectDispatchRatchetTest`,
+> `scripts/effect-coupling-audit.py`, `effect-dispatch-baseline.txt` and
+> `EFFECT_COUPLING_MATRIX.md` no longer exist, so every reference to them below is
+> historical. The program closed at 464 violations (step 20, 2026-07-15); by the time the
+> ratchet was retired the count had drifted back to 523, almost entirely from card-set
+> commits that regenerated the baseline rather than adding a handler. Nothing enforces the
+> dispatch rule now. To start a new run, restore the apparatus from git — the last commit
+> that carried all four files is `8b3541af8`:
+>
+> ```
+> git checkout 8b3541af8 -- scripts/effect-coupling-audit.py \
+>     refactor-docs/effect-dispatch-baseline.txt \
+>     refactor-docs/EFFECT_COUPLING_MATRIX.md \
+>     magical-vibes-application/src/test/java/com/github/laxika/magicalvibes/architecture/EffectDispatchRatchetTest.java
+> python scripts/effect-coupling-audit.py
+> ```
+>
+> The counting rules lived in two places that had to stay in lockstep (the script and the
+> test), which is part of why the apparatus was expensive to keep honest.
+>
+> `TargetSpecRatchetTest`, `LossDispatchRatchetTest` and `InputHandlerEpilogueRatchetTest`
+> are deliberately kept. Despite the shared name they are not debt tallies: their baselines
+> are hardcoded and either empty (`Map.of()`) or a two-file allowlist, so they cannot drift
+> or be regenerated away, and they encode invariants rather than a migration scoreboard —
+> notably the `@ValidatesTarget`/`targetSpec()` rules-accuracy check from step 3.
+
 ## Program overview (8 steps)
 
 1. **Audit** — build the effect-coupling matrix and this progress file
