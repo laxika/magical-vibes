@@ -720,7 +720,7 @@ class RandomAiDecisionEngine extends AiDecisionEngine {
         List<Integer> availableBlockerIndices = new ArrayList<>();
         for (int j = 0; j < battlefield.size(); j++) {
             Permanent blocker = battlefield.get(j);
-            if (gameQueryService.canBlock(gameData, blocker)) {
+            if (blockLegalityService.canBlock(gameData, blocker)) {
                 availableBlockerIndices.add(j);
             }
         }
@@ -859,7 +859,7 @@ class RandomAiDecisionEngine extends AiDecisionEngine {
 
     private boolean canBlock(GameData gameData, Permanent blocker, Permanent attacker) {
         List<Permanent> defenderBattlefield = gameData.playerBattlefields.get(aiPlayer.getId());
-        return gameQueryService.canBlockAttacker(gameData, blocker, attacker, defenderBattlefield);
+        return blockLegalityService.canBlockAttacker(gameData, blocker, attacker, defenderBattlefield);
     }
 
     private Set<Integer> findLureAttackers(GameData gameData, List<Permanent> opponentBattlefield) {

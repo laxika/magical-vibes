@@ -62,7 +62,7 @@ class IronclawCurseTest extends BaseCardTest {
         Permanent hillGiant = new Permanent(new HillGiant()); // 3/3
         gd.playerBattlefields.get(player2.getId()).add(hillGiant);
 
-        assertThat(gqs.canBlockAttacker(gd, spider, hillGiant,
+        assertThat(bls.canBlockAttacker(gd, spider, hillGiant,
                 gd.playerBattlefields.get(player1.getId()))).isFalse();
     }
 
@@ -73,7 +73,7 @@ class IronclawCurseTest extends BaseCardTest {
         Permanent bears = new Permanent(new GrizzlyBears()); // 2/2
         gd.playerBattlefields.get(player2.getId()).add(bears);
 
-        assertThat(gqs.canBlockAttacker(gd, spider, bears,
+        assertThat(bls.canBlockAttacker(gd, spider, bears,
                 gd.playerBattlefields.get(player1.getId()))).isTrue();
     }
 
@@ -84,7 +84,7 @@ class IronclawCurseTest extends BaseCardTest {
         Permanent hillGiant = new Permanent(new HillGiant());
         gd.playerBattlefields.get(player2.getId()).add(hillGiant);
 
-        assertThat(gqs.canBlockAttacker(gd, spider, hillGiant,
+        assertThat(bls.canBlockAttacker(gd, spider, hillGiant,
                 gd.playerBattlefields.get(player1.getId()))).isFalse();
 
         Permanent aura = gd.playerBattlefields.get(player1.getId()).stream()
@@ -94,7 +94,7 @@ class IronclawCurseTest extends BaseCardTest {
 
         // Back to 2/4: power 3 < toughness 4, so blocking is legal again.
         assertThat(gqs.getEffectiveToughness(gd, spider)).isEqualTo(4);
-        assertThat(gqs.canBlockAttacker(gd, spider, hillGiant,
+        assertThat(bls.canBlockAttacker(gd, spider, hillGiant,
                 gd.playerBattlefields.get(player1.getId()))).isTrue();
     }
 

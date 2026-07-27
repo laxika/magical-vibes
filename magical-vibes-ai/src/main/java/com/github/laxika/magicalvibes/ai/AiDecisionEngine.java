@@ -40,6 +40,7 @@ import com.github.laxika.magicalvibes.service.GameActionAvailabilityService;
 import com.github.laxika.magicalvibes.service.ability.AbilityActivationService;
 import com.github.laxika.magicalvibes.service.cast.CastingCostService;
 import com.github.laxika.magicalvibes.service.cast.CastingPermissionService;
+import com.github.laxika.magicalvibes.service.battlefield.BlockLegalityService;
 import com.github.laxika.magicalvibes.service.battlefield.GameQueryService;
 import com.github.laxika.magicalvibes.service.filter.PredicateEvaluationService;
 import com.github.laxika.magicalvibes.service.combat.CombatAttackService;
@@ -76,6 +77,7 @@ public abstract class AiDecisionEngine {
     protected final GameRegistry gameRegistry;
     protected final AiGameActions gameActions;
     protected final GameQueryService gameQueryService;
+    protected final BlockLegalityService blockLegalityService;
     protected final PredicateEvaluationService predicateEvaluationService;
     protected final CombatAttackService combatAttackService;
     protected final GameActionAvailabilityService actionAvailabilityService;
@@ -109,11 +111,32 @@ public abstract class AiDecisionEngine {
                             CastingPermissionService castingPermissionService,
                             TargetValidationService targetValidationService,
                             TargetLegalityService targetLegalityService) {
+        this(gameId, aiPlayer, gameRegistry, gameActions, gameQueryService,
+                BlockLegalityService.forQueryService(gameQueryService),
+                combatAttackService, actionAvailabilityService, castingCostService,
+                castingPermissionService, targetValidationService, targetLegalityService);
+    }
+
+    /**
+     * Variant taking an explicit {@link BlockLegalityService} instead of deriving one from
+     * {@code gameQueryService}, so callers that drive block legality themselves (tests with a
+     * mocked query service) can supply their own.
+     */
+    public AiDecisionEngine(UUID gameId, Player aiPlayer, GameRegistry gameRegistry,
+                            AiGameActions gameActions, GameQueryService gameQueryService,
+                            BlockLegalityService blockLegalityService,
+                            CombatAttackService combatAttackService,
+                            GameActionAvailabilityService actionAvailabilityService,
+                            CastingCostService castingCostService,
+                            CastingPermissionService castingPermissionService,
+                            TargetValidationService targetValidationService,
+                            TargetLegalityService targetLegalityService) {
         this.gameId = gameId;
         this.aiPlayer = aiPlayer;
         this.gameRegistry = gameRegistry;
         this.gameActions = gameActions;
         this.gameQueryService = gameQueryService;
+        this.blockLegalityService = blockLegalityService;
         this.predicateEvaluationService = new PredicateEvaluationService(gameQueryService);
         this.combatAttackService = combatAttackService;
         this.actionAvailabilityService = actionAvailabilityService;

@@ -47,6 +47,7 @@ import com.github.laxika.magicalvibes.service.interaction.InteractionAnswer;
 import com.github.laxika.magicalvibes.service.ability.AbilityActivationService;
 import com.github.laxika.magicalvibes.service.combat.CombatAttackService;
 import com.github.laxika.magicalvibes.service.GameActionAvailabilityService;
+import com.github.laxika.magicalvibes.service.battlefield.BlockLegalityService;
 import com.github.laxika.magicalvibes.service.battlefield.GameQueryService;
 import com.github.laxika.magicalvibes.service.effect.AmountEvaluationService;
 import com.github.laxika.magicalvibes.service.effect.AmountContext;
@@ -110,6 +111,7 @@ public class GameSimulator {
 
     private final GameService gameService;
     private final GameQueryService gameQueryService;
+    private final BlockLegalityService blockLegalityService;
     private final PredicateEvaluationService predicateEvaluationService;
     private final GameActionAvailabilityService actionAvailabilityService;
     private final com.github.laxika.magicalvibes.service.cast.CastingCostService castingCostService;
@@ -142,6 +144,7 @@ public class GameSimulator {
                   ValidTargetService validTargetService) {
         this.gameService = gameService;
         this.gameQueryService = gameQueryService;
+        this.blockLegalityService = BlockLegalityService.forQueryService(gameQueryService);
         this.predicateEvaluationService = new PredicateEvaluationService(gameQueryService);
         this.actionAvailabilityService = actionAvailabilityService;
         this.castingCostService = castingCostService;
@@ -268,7 +271,7 @@ public class GameSimulator {
                 if (biggestAttackerIdx >= 0) {
                     List<Integer> availableBlockers = new ArrayList<>();
                     for (int bi = 0; bi < aiBf.size(); bi++) {
-                        if (gameQueryService.canBlock(gd, aiBf.get(bi))) availableBlockers.add(bi);
+                        if (blockLegalityService.canBlock(gd, aiBf.get(bi))) availableBlockers.add(bi);
                     }
 
                     // For each available blocker, offer "block only the biggest attacker"
@@ -1038,7 +1041,7 @@ public class GameSimulator {
         }
         List<Integer> blockerIndices = new ArrayList<>();
         for (int i = 0; i < battlefield.size(); i++) {
-            if (gameQueryService.canBlock(gd, battlefield.get(i))) {
+            if (blockLegalityService.canBlock(gd, battlefield.get(i))) {
                 blockerIndices.add(i);
             }
         }

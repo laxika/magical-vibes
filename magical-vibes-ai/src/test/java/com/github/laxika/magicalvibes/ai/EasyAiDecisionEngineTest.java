@@ -37,6 +37,7 @@ import com.github.laxika.magicalvibes.testutil.FakeConnection;
 import com.github.laxika.magicalvibes.testutil.GameTestHarness;
 import com.github.laxika.magicalvibes.service.GameActionAvailabilityService;
 import com.github.laxika.magicalvibes.service.GameRegistry;
+import com.github.laxika.magicalvibes.service.battlefield.BlockLegalityService;
 import com.github.laxika.magicalvibes.service.battlefield.GameQueryService;
 import com.github.laxika.magicalvibes.service.combat.CombatAttackService;
 import org.junit.jupiter.api.BeforeEach;
@@ -70,6 +71,7 @@ class EasyAiDecisionEngineTest {
 
     @Mock private AiGameActions messageHandler;
     @Mock private GameQueryService gameQueryService;
+    @Mock private BlockLegalityService blockLegalityService;
     @Mock private CombatAttackService combatAttackService;
     @Mock private GameActionAvailabilityService actionAvailabilityService;
     @Mock private com.github.laxika.magicalvibes.service.cast.CastingCostService castingCostService;
@@ -116,7 +118,7 @@ class EasyAiDecisionEngineTest {
         AiTestPlayabilityStub.install(actionAvailabilityService, castingCostService);
         EasyAiDecisionEngine engine = new EasyAiDecisionEngine(
                 gd.id, aiPlayer, gameRegistry, messageHandler,
-                gameQueryService, combatAttackService, actionAvailabilityService,
+                gameQueryService, blockLegalityService, combatAttackService, actionAvailabilityService,
                 castingCostService, castingPermissionService,
                 targetValidationService,
                 new com.github.laxika.magicalvibes.service.target.TargetLegalityService(gameQueryService,
@@ -539,7 +541,7 @@ class EasyAiDecisionEngineTest {
         gd.playerBattlefields.get(aiPlayer.getId()).add(cantBlocker);
 
         // gameQueryService.canBlock returns false for the restricted creature
-        when(gameQueryService.canBlock(gd, cantBlocker)).thenReturn(false);
+        when(blockLegalityService.canBlock(gd, cantBlocker)).thenReturn(false);
 
         createEngine().handleEvent(AiDecisionKind.BLOCKER_DECLARATION);
 
@@ -623,7 +625,7 @@ class EasyAiDecisionEngineTest {
 
         EasyAiDecisionEngine engine = new EasyAiDecisionEngine(
                 gd.id, aiPlayer, gameRegistry, messageHandler,
-                gameQueryService, combatAttackService, actionAvailabilityService,
+                gameQueryService, blockLegalityService, combatAttackService, actionAvailabilityService,
                 castingCostService, castingPermissionService,
                 targetValidationService,
                 new com.github.laxika.magicalvibes.service.target.TargetLegalityService(gameQueryService,
@@ -1284,8 +1286,8 @@ class EasyAiDecisionEngineTest {
                 .thenReturn(0);
         when(gameQueryService.getEffectivePower(eq(gd), any())).thenReturn(2);
         when(gameQueryService.getEffectiveToughness(eq(gd), any())).thenReturn(2);
-        when(gameQueryService.canBlock(gd, blocker)).thenReturn(true);
-        when(gameQueryService.canBlockAttacker(any(), eq(blocker), any())).thenReturn(true);
+        when(blockLegalityService.canBlock(gd, blocker)).thenReturn(true);
+        when(blockLegalityService.canBlockAttacker(any(), eq(blocker), any())).thenReturn(true);
         when(gameQueryService.getEffectivePower(gd, blocker)).thenReturn(5);
         when(gameQueryService.getEffectiveToughness(gd, blocker)).thenReturn(5);
 
@@ -1332,8 +1334,8 @@ class EasyAiDecisionEngineTest {
                 .thenReturn(0);
         when(gameQueryService.getEffectivePower(eq(gd), any())).thenReturn(2);
         when(gameQueryService.getEffectiveToughness(eq(gd), any())).thenReturn(2);
-        when(gameQueryService.canBlock(gd, blocker)).thenReturn(true);
-        when(gameQueryService.canBlockAttacker(any(), eq(blocker), any())).thenReturn(true);
+        when(blockLegalityService.canBlock(gd, blocker)).thenReturn(true);
+        when(blockLegalityService.canBlockAttacker(any(), eq(blocker), any())).thenReturn(true);
         when(gameQueryService.getEffectivePower(gd, blocker)).thenReturn(5);
         when(gameQueryService.getEffectiveToughness(gd, blocker)).thenReturn(5);
 

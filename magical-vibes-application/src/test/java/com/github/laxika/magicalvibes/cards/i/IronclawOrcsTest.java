@@ -25,7 +25,7 @@ class IronclawOrcsTest extends BaseCardTest {
         Permanent wizard = new Permanent(new FugitiveWizard()); // 1/1
         gd.playerBattlefields.get(player2.getId()).add(wizard);
 
-        assertThat(gqs.canBlockAttacker(gd, orcs, wizard,
+        assertThat(bls.canBlockAttacker(gd, orcs, wizard,
                 gd.playerBattlefields.get(player1.getId()))).isTrue();
     }
 
@@ -36,7 +36,7 @@ class IronclawOrcsTest extends BaseCardTest {
         Permanent bears = new Permanent(new GrizzlyBears()); // 2/2
         gd.playerBattlefields.get(player2.getId()).add(bears);
 
-        assertThat(gqs.canBlockAttacker(gd, orcs, bears,
+        assertThat(bls.canBlockAttacker(gd, orcs, bears,
                 gd.playerBattlefields.get(player1.getId()))).isFalse();
     }
 
@@ -47,7 +47,7 @@ class IronclawOrcsTest extends BaseCardTest {
         Permanent hillGiant = new Permanent(new HillGiant()); // 3/3
         gd.playerBattlefields.get(player2.getId()).add(hillGiant);
 
-        assertThat(gqs.canBlockAttacker(gd, orcs, hillGiant,
+        assertThat(bls.canBlockAttacker(gd, orcs, hillGiant,
                 gd.playerBattlefields.get(player1.getId()))).isFalse();
     }
 }

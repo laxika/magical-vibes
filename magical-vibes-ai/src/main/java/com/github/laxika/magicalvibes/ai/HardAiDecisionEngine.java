@@ -776,7 +776,7 @@ public class HardAiDecisionEngine extends AiDecisionEngine {
         // Get the full defender battlefield (needed for landwalk checks in canBlockAttacker)
         UUID opponentId = AiUtils.getOpponentId(gameData, aiPlayer.getId());
         List<Permanent> defenderBattlefield = gameData.playerBattlefields.getOrDefault(opponentId, List.of());
-        BlockLegalityContext blockContext = gameQueryService.createBlockLegalityContext(gameData, defenderBattlefield);
+        BlockLegalityContext blockContext = blockLegalityService.createBlockLegalityContext(gameData, defenderBattlefield);
 
         // Separate attackers into guaranteed damage vs blockable
         int guaranteedDamage = 0;
@@ -787,7 +787,7 @@ public class HardAiDecisionEngine extends AiDecisionEngine {
             // Count how many blockers can legally block this attacker
             int legalBlockerCount = 0;
             for (Permanent blocker : blockers) {
-                if (gameQueryService.canBlockAttacker(blockContext, blocker, attacker)) {
+                if (blockLegalityService.canBlockAttacker(blockContext, blocker, attacker)) {
                     legalBlockerCount++;
                 }
             }
@@ -812,7 +812,7 @@ public class HardAiDecisionEngine extends AiDecisionEngine {
         List<Permanent> relevantBlockers = new ArrayList<>();
         for (Permanent blocker : blockers) {
             for (Permanent attacker : blockableAttackers) {
-                if (gameQueryService.canBlockAttacker(blockContext, blocker, attacker)) {
+                if (blockLegalityService.canBlockAttacker(blockContext, blocker, attacker)) {
                     relevantBlockers.add(blocker);
                     break;
                 }
@@ -2366,7 +2366,7 @@ public class HardAiDecisionEngine extends AiDecisionEngine {
 
         List<Integer> blockerIndices = new ArrayList<>();
         for (int i = 0; i < battlefield.size(); i++) {
-            if (gameQueryService.canBlock(gameData, battlefield.get(i))) {
+            if (blockLegalityService.canBlock(gameData, battlefield.get(i))) {
                 blockerIndices.add(i);
             }
         }

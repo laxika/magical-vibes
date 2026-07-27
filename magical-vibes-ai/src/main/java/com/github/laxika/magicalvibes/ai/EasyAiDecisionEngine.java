@@ -25,6 +25,7 @@ import com.github.laxika.magicalvibes.model.effect.MassDamageEffect;
 import com.github.laxika.magicalvibes.model.effect.MustBeBlockedByAllCreaturesEffect;
 import com.github.laxika.magicalvibes.model.effect.MustBeBlockedIfAbleEffect;
 import com.github.laxika.magicalvibes.service.battlefield.BlockLegalityContext;
+import com.github.laxika.magicalvibes.service.battlefield.BlockLegalityService;
 import com.github.laxika.magicalvibes.service.battlefield.GameQueryService;
 import com.github.laxika.magicalvibes.service.combat.CombatAttackService;
 import com.github.laxika.magicalvibes.service.effect.TargetValidationService;
@@ -65,6 +66,19 @@ public class EasyAiDecisionEngine extends AiDecisionEngine {
                                 TargetValidationService targetValidationService,
                                 TargetLegalityService targetLegalityService) {
         super(gameId, aiPlayer, gameRegistry, gameActions, gameQueryService, combatAttackService, actionAvailabilityService, castingCostService, castingPermissionService, targetValidationService, targetLegalityService);
+    }
+
+    /** @see AiDecisionEngine#AiDecisionEngine(UUID, Player, GameRegistry, AiGameActions, GameQueryService, BlockLegalityService, CombatAttackService, GameActionAvailabilityService, CastingCostService, CastingPermissionService, TargetValidationService, TargetLegalityService) */
+    public EasyAiDecisionEngine(UUID gameId, Player aiPlayer, GameRegistry gameRegistry,
+                                AiGameActions gameActions, GameQueryService gameQueryService,
+                                BlockLegalityService blockLegalityService,
+                                CombatAttackService combatAttackService,
+                                GameActionAvailabilityService actionAvailabilityService,
+                                CastingCostService castingCostService,
+                                CastingPermissionService castingPermissionService,
+                                TargetValidationService targetValidationService,
+                                TargetLegalityService targetLegalityService) {
+        super(gameId, aiPlayer, gameRegistry, gameActions, gameQueryService, blockLegalityService, combatAttackService, actionAvailabilityService, castingCostService, castingPermissionService, targetValidationService, targetLegalityService);
     }
 
     // ===== Priority / Main Phase =====
@@ -646,10 +660,10 @@ public class EasyAiDecisionEngine extends AiDecisionEngine {
         Permanent best = null;
         int bestToughness = Integer.MAX_VALUE;
 
-        BlockLegalityContext blockContext = gameQueryService.createBlockLegalityContext(gameData, opponentField);
+        BlockLegalityContext blockContext = blockLegalityService.createBlockLegalityContext(gameData, opponentField);
         for (Permanent opp : opponentField) {
-            if (!gameQueryService.canBlock(gameData, opp)) continue;
-            if (!gameQueryService.canBlockAttacker(blockContext, opp, attacker)) continue;
+            if (!blockLegalityService.canBlock(gameData, opp)) continue;
+            if (!blockLegalityService.canBlockAttacker(blockContext, opp, attacker)) continue;
 
             int oppToughness = gameQueryService.getEffectiveToughness(gameData, opp);
             if (best == null || oppToughness < bestToughness) {
@@ -662,13 +676,13 @@ public class EasyAiDecisionEngine extends AiDecisionEngine {
 
     private List<Integer> getAvailableBlockersForAttacker(GameData gameData, List<Permanent> battlefield, boolean[] blockerUsed,
                                                           Permanent attackingPerm) {
-        BlockLegalityContext blockContext = gameQueryService.createBlockLegalityContext(gameData, battlefield);
+        BlockLegalityContext blockContext = blockLegalityService.createBlockLegalityContext(gameData, battlefield);
         List<Integer> available = new ArrayList<>();
         for (int j = 0; j < battlefield.size(); j++) {
             if (blockerUsed[j]) continue;
             Permanent blocker = battlefield.get(j);
-            if (!gameQueryService.canBlock(gameData, blocker)) continue;
-            if (!gameQueryService.canBlockAttacker(blockContext, blocker, attackingPerm)) continue;
+            if (!blockLegalityService.canBlock(gameData, blocker)) continue;
+            if (!blockLegalityService.canBlockAttacker(blockContext, blocker, attackingPerm)) continue;
             available.add(j);
         }
         return available;

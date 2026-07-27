@@ -101,7 +101,7 @@ class SpareFromEvilTest extends BaseCardTest {
         harness.passBothPriorities();
 
         // Blocker should not be able to block the protected attacker
-        assertThat(gqs.canBlockAttacker(gd, blocker, attacker, gd.playerBattlefields.get(player2.getId()))).isFalse();
+        assertThat(bls.canBlockAttacker(gd, blocker, attacker, gd.playerBattlefields.get(player2.getId()))).isFalse();
     }
 
     @Test
@@ -123,7 +123,7 @@ class SpareFromEvilTest extends BaseCardTest {
         harness.passBothPriorities();
 
         // Human blocker should be able to block the protected attacker
-        assertThat(gqs.canBlockAttacker(gd, blocker, attacker, gd.playerBattlefields.get(player2.getId()))).isTrue();
+        assertThat(bls.canBlockAttacker(gd, blocker, attacker, gd.playerBattlefields.get(player2.getId()))).isTrue();
     }
 
     // ===== Protection prevents combat damage from non-Human creatures =====

@@ -452,7 +452,7 @@ public class MediumAiDecisionEngine extends AiDecisionEngine {
         // Find available blocker indices
         List<Integer> blockerIndices = new ArrayList<>();
         for (int i = 0; i < battlefield.size(); i++) {
-            if (gameQueryService.canBlock(gameData, battlefield.get(i))) {
+            if (blockLegalityService.canBlock(gameData, battlefield.get(i))) {
                 blockerIndices.add(i);
             }
         }

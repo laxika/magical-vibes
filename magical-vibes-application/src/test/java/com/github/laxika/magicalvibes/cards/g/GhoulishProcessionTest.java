@@ -63,7 +63,7 @@ class GhoulishProcessionTest extends BaseCardTest {
                     .anyMatch(CantBlockEffect.class::isInstance);
             assertThat(zombie.getCard().getEffects(EffectSlot.ON_ATTACK))
                     .anyMatch(SacrificeAtEndOfCombatEffect.class::isInstance);
-            assertThat(gqs.canBlock(gd, zombie)).isFalse();
+            assertThat(bls.canBlock(gd, zombie)).isFalse();
         }
 
         @Test

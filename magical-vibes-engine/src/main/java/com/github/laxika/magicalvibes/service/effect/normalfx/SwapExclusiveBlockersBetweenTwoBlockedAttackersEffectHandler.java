@@ -8,6 +8,7 @@ import com.github.laxika.magicalvibes.model.effect.CardEffect;
 import com.github.laxika.magicalvibes.model.effect.SwapExclusiveBlockersBetweenTwoBlockedAttackersEffect;
 import com.github.laxika.magicalvibes.service.GameLogService;
 import com.github.laxika.magicalvibes.service.battlefield.BlockLegalityContext;
+import com.github.laxika.magicalvibes.service.battlefield.BlockLegalityService;
 import com.github.laxika.magicalvibes.service.battlefield.GameQueryService;
 import java.util.ArrayList;
 import java.util.List;
@@ -28,6 +29,7 @@ import org.springframework.stereotype.Component;
 public class SwapExclusiveBlockersBetweenTwoBlockedAttackersEffectHandler implements NormalEffectHandlerBean {
 
     private final GameQueryService gameQueryService;
+    private final BlockLegalityService blockLegalityService;
     private final GameLogService gameLogService;
 
     @Override
@@ -124,8 +126,8 @@ public class SwapExclusiveBlockersBetweenTwoBlockedAttackersEffectHandler implem
         List<Permanent> defenderBattlefield = controllerId == null
                 ? List.of()
                 : gameData.playerBattlefields.getOrDefault(controllerId, List.of());
-        BlockLegalityContext context = gameQueryService.createBlockLegalityContext(gameData, defenderBattlefield);
-        return gameQueryService.canBlockAttacker(context, blocker, attacker);
+        BlockLegalityContext context = blockLegalityService.createBlockLegalityContext(gameData, defenderBattlefield);
+        return blockLegalityService.canBlockAttacker(context, blocker, attacker);
     }
 
     private List<Permanent> exclusiveBlockers(List<Permanent> blockersOfOne, UUID otherAttackerId) {

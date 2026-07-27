@@ -68,7 +68,7 @@ class LoyalCatharUnhallowedCatharTest extends BaseCardTest {
         cathar.setTransformed(true);
         harness.addToBattlefield(player2, new GrizzlyBears());
 
-        assertThat(gqs.canBlockAttacker(gd, cathar, findPermanent(player2, "Grizzly Bears"),
+        assertThat(bls.canBlockAttacker(gd, cathar, findPermanent(player2, "Grizzly Bears"),
                 gd.playerBattlefields.get(player1.getId()))).isFalse();
     }
 

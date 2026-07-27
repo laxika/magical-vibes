@@ -40,7 +40,7 @@ class OrggTest extends BaseCardTest {
         Permanent bears = new Permanent(new GrizzlyBears()); // 2/2
         gd.playerBattlefields.get(player2.getId()).add(bears);
 
-        assertThat(gqs.canBlockAttacker(gd, orgg, bears,
+        assertThat(bls.canBlockAttacker(gd, orgg, bears,
                 gd.playerBattlefields.get(player1.getId()))).isTrue();
     }
 
@@ -52,7 +52,7 @@ class OrggTest extends BaseCardTest {
         Permanent hillGiant = new Permanent(new HillGiant()); // 3/3
         gd.playerBattlefields.get(player2.getId()).add(hillGiant);
 
-        assertThat(gqs.canBlockAttacker(gd, orgg, hillGiant,
+        assertThat(bls.canBlockAttacker(gd, orgg, hillGiant,
                 gd.playerBattlefields.get(player1.getId()))).isFalse();
     }
 

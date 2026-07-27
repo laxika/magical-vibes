@@ -53,7 +53,7 @@ class BlockLegalityContextTest extends BaseCardTest {
     }
 
     private Optional<String> reason(Permanent blocker, Permanent attacker) {
-        return gqs.getBlockingIllegalityReason(gd, blocker, attacker, defenderBattlefield());
+        return bls.getBlockingIllegalityReason(gd, blocker, attacker, defenderBattlefield());
     }
 
     // ===== Per-rule legality + exact message =====
@@ -205,22 +205,22 @@ class BlockLegalityContextTest extends BaseCardTest {
         blockers.get(1).getCantBlockIds().add(attackers.get(1).getId());
 
         List<Permanent> defenderBattlefield = defenderBattlefield();
-        BlockLegalityContext shared = gqs.createBlockLegalityContext(gd, defenderBattlefield);
+        BlockLegalityContext shared = bls.createBlockLegalityContext(gd, defenderBattlefield);
 
         int legalPairs = 0;
         int illegalPairs = 0;
         for (Permanent attacker : attackers) {
             for (Permanent blocker : blockers) {
-                Optional<String> fresh = gqs.getBlockingIllegalityReason(gd, blocker, attacker, defenderBattlefield);
+                Optional<String> fresh = bls.getBlockingIllegalityReason(gd, blocker, attacker, defenderBattlefield);
                 String pair = blocker.getCard().getName() + " blocking " + attacker.getCard().getName();
 
-                assertThat(gqs.canBlockAttacker(shared, blocker, attacker))
+                assertThat(bls.canBlockAttacker(shared, blocker, attacker))
                         .as("shared-context boolean vs fresh message path: %s", pair)
                         .isEqualTo(fresh.isEmpty());
-                assertThat(gqs.getBlockingIllegalityReason(shared, blocker, attacker))
+                assertThat(bls.getBlockingIllegalityReason(shared, blocker, attacker))
                         .as("shared-context message vs fresh message: %s", pair)
                         .isEqualTo(fresh);
-                assertThat(gqs.canBlockAttacker(gd, blocker, attacker, defenderBattlefield))
+                assertThat(bls.canBlockAttacker(gd, blocker, attacker, defenderBattlefield))
                         .as("legacy boolean form vs fresh message path: %s", pair)
                         .isEqualTo(fresh.isEmpty());
 
@@ -233,15 +233,15 @@ class BlockLegalityContextTest extends BaseCardTest {
 
         // A second shared context queried in reverse order must agree with the first —
         // guards the lazy per-creature caches against query-order dependence.
-        BlockLegalityContext reversed = gqs.createBlockLegalityContext(gd, defenderBattlefield);
+        BlockLegalityContext reversed = bls.createBlockLegalityContext(gd, defenderBattlefield);
         for (int a = attackers.size() - 1; a >= 0; a--) {
             for (int b = blockers.size() - 1; b >= 0; b--) {
                 Permanent attacker = attackers.get(a);
                 Permanent blocker = blockers.get(b);
-                assertThat(gqs.canBlockAttacker(reversed, blocker, attacker))
+                assertThat(bls.canBlockAttacker(reversed, blocker, attacker))
                         .as("reverse-order context: %s blocking %s",
                                 blocker.getCard().getName(), attacker.getCard().getName())
-                        .isEqualTo(gqs.canBlockAttacker(shared, blocker, attacker));
+                        .isEqualTo(bls.canBlockAttacker(shared, blocker, attacker));
             }
         }
     }

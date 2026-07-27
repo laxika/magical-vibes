@@ -54,13 +54,13 @@ class ManiacalRageTest extends BaseCardTest {
         bears.setSummoningSick(false);
         gd.playerBattlefields.get(player1.getId()).add(bears);
 
-        assertThat(gqs.canBlock(gd, bears)).isTrue();
+        assertThat(bls.canBlock(gd, bears)).isTrue();
 
         Permanent aura = new Permanent(new ManiacalRage());
         aura.setAttachedTo(bears.getId());
         gd.playerBattlefields.get(player1.getId()).add(aura);
 
-        assertThat(gqs.canBlock(gd, bears)).isFalse();
+        assertThat(bls.canBlock(gd, bears)).isFalse();
     }
 
     @Test
@@ -75,13 +75,13 @@ class ManiacalRageTest extends BaseCardTest {
         gd.playerBattlefields.get(player1.getId()).add(aura);
 
         assertThat(gqs.getEffectivePower(gd, bears)).isEqualTo(4);
-        assertThat(gqs.canBlock(gd, bears)).isFalse();
+        assertThat(bls.canBlock(gd, bears)).isFalse();
 
         gd.playerBattlefields.get(player1.getId()).remove(aura);
 
         assertThat(gqs.getEffectivePower(gd, bears)).isEqualTo(2);
         assertThat(gqs.getEffectiveToughness(gd, bears)).isEqualTo(2);
-        assertThat(gqs.canBlock(gd, bears)).isTrue();
+        assertThat(bls.canBlock(gd, bears)).isTrue();
     }
 
     @Test

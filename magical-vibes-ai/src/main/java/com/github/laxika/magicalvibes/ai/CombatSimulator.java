@@ -12,6 +12,7 @@ import com.github.laxika.magicalvibes.model.effect.MustBeBlockedByAllCreaturesEf
 import com.github.laxika.magicalvibes.model.effect.MustBeBlockedIfAbleEffect;
 import com.github.laxika.magicalvibes.model.filter.PermanentPredicate;
 import com.github.laxika.magicalvibes.service.battlefield.BlockLegalityContext;
+import com.github.laxika.magicalvibes.service.battlefield.BlockLegalityService;
 import com.github.laxika.magicalvibes.service.battlefield.GameQueryService;
 import com.github.laxika.magicalvibes.service.filter.PredicateEvaluationService;
 
@@ -48,12 +49,14 @@ public class CombatSimulator {
     private static final int DEFENSIVE_PENALTY_LIFE_THRESHOLD = 15;
 
     private final GameQueryService gameQueryService;
+    private final BlockLegalityService blockLegalityService;
     private final PredicateEvaluationService predicateEvaluationService;
     private final BoardEvaluator boardEvaluator;
 
     public CombatSimulator(GameQueryService gameQueryService, BoardEvaluator boardEvaluator) {
         this.predicateEvaluationService = new PredicateEvaluationService(gameQueryService);
         this.gameQueryService = gameQueryService;
+        this.blockLegalityService = BlockLegalityService.forQueryService(gameQueryService);
         this.boardEvaluator = boardEvaluator;
     }
 
@@ -425,7 +428,7 @@ public class CombatSimulator {
         List<Permanent> aiBattlefield = gameData.playerBattlefields.getOrDefault(aiPlayerId, List.of());
         List<Permanent> oppBattlefield = gameData.playerBattlefields.getOrDefault(opponentId, List.of());
         int aiLife = gameData.getLife(aiPlayerId);
-        BlockLegalityContext blockContext = gameQueryService.createBlockLegalityContext(gameData, aiBattlefield);
+        BlockLegalityContext blockContext = blockLegalityService.createBlockLegalityContext(gameData, aiBattlefield);
 
         List<CreatureInfo> attackerInfos = new ArrayList<>();
         for (int idx : attackerIndices) {
@@ -646,7 +649,7 @@ public class CombatSimulator {
         List<Permanent> oppBattlefield = gameData.playerBattlefields.getOrDefault(opponentId, List.of());
         int aiLife = gameData.getLife(aiPlayerId);
         int aiPoison = gameData.playerPoisonCounters.getOrDefault(aiPlayerId, 0);
-        BlockLegalityContext blockContext = gameQueryService.createBlockLegalityContext(gameData, aiBattlefield);
+        BlockLegalityContext blockContext = blockLegalityService.createBlockLegalityContext(gameData, aiBattlefield);
 
         List<CreatureInfo> attackerInfos = new ArrayList<>();
         for (int idx : attackerIndices) {
@@ -899,7 +902,7 @@ public class CombatSimulator {
 
     private boolean canBlock(BlockLegalityContext blockContext, CreatureInfo blocker, CreatureInfo attacker) {
         if (attacker.cantBeBlocked) return false;
-        return gameQueryService.canBlockAttacker(blockContext, blocker.perm, attacker.perm);
+        return blockLegalityService.canBlockAttacker(blockContext, blocker.perm, attacker.perm);
     }
 
     private List<Permanent> findBattlefieldFor(GameData gameData, Permanent perm) {
@@ -923,7 +926,7 @@ public class CombatSimulator {
         // All blockers belong to the single defending player, so one legality context (bound
         // to that player's battlefield) covers every pair.
         BlockLegalityContext blockContext = blockers.isEmpty() ? null
-                : gameQueryService.createBlockLegalityContext(gameData, findBattlefieldFor(gameData, blockers.getFirst().perm));
+                : blockLegalityService.createBlockLegalityContext(gameData, findBattlefieldFor(gameData, blockers.getFirst().perm));
         List<CombatMath.Attacker> result = new ArrayList<>(attackers.size());
         for (CreatureInfo info : attackers) {
             boolean[] canBeBlockedBy = new boolean[blockers.size()];

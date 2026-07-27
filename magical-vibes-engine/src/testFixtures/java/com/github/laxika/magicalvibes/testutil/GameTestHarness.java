@@ -23,6 +23,7 @@ import com.github.laxika.magicalvibes.service.interaction.InteractionAnswer;
 import com.github.laxika.magicalvibes.service.GameSetupService;
 import com.github.laxika.magicalvibes.service.StackResolutionService;
 import com.github.laxika.magicalvibes.service.battlefield.BattlefieldEntryService;
+import com.github.laxika.magicalvibes.service.battlefield.BlockLegalityService;
 import com.github.laxika.magicalvibes.service.battlefield.GameQueryService;
 import com.github.laxika.magicalvibes.service.battlefield.LegendRuleService;
 import com.github.laxika.magicalvibes.service.battlefield.PermanentRemovalService;
@@ -55,6 +56,7 @@ public class GameTestHarness {
     private static TestWebSocketSessionManager staticSessionManager;
     private static GameService staticGameService;
     private static GameQueryService staticGameQueryService;
+    private static BlockLegalityService staticBlockLegalityService;
     private static TargetValidationService staticTargetValidationService;
     private static TargetLegalityService staticTargetLegalityService;
     private static ValidTargetService staticValidTargetService;
@@ -88,6 +90,7 @@ public class GameTestHarness {
         staticSessionManager = context.getBean(TestWebSocketSessionManager.class);
         staticGameService = context.getBean(GameService.class);
         staticGameQueryService = context.getBean(GameQueryService.class);
+        staticBlockLegalityService = context.getBean(BlockLegalityService.class);
         staticTargetValidationService = context.getBean(TargetValidationService.class);
         staticTargetLegalityService = context.getBean(TargetLegalityService.class);
         staticValidTargetService = context.getBean(ValidTargetService.class);
@@ -133,6 +136,7 @@ public class GameTestHarness {
     private final WebSocketSessionManager sessionManager;
     private final GameService gameService;
     private final GameQueryService gameQueryService;
+    private final BlockLegalityService blockLegalityService;
     private final TargetValidationService targetValidationService;
     private final TargetLegalityService targetLegalityService;
     private final ValidTargetService validTargetService;
@@ -171,6 +175,7 @@ public class GameTestHarness {
         sessionManager = staticSessionManager;
         gameService = staticGameService;
         gameQueryService = staticGameQueryService;
+        blockLegalityService = staticBlockLegalityService;
         targetValidationService = staticTargetValidationService;
         targetLegalityService = staticTargetLegalityService;
         validTargetService = staticValidTargetService;
@@ -1066,6 +1071,10 @@ public class GameTestHarness {
 
     public GameQueryService getGameQueryService() {
         return gameQueryService;
+    }
+
+    public BlockLegalityService getBlockLegalityService() {
+        return blockLegalityService;
     }
 
     public TargetValidationService getTargetValidationService() {
