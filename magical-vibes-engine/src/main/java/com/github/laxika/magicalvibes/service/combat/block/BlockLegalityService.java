@@ -327,13 +327,12 @@ public class BlockLegalityService {
         if (gameQueryService.hasAuraWithEffect(gameData, creature, EnchantedCreatureCantAttackOrBlockEffect.class)) {
             return true;
         }
-        if (creature.getCard().getEffects(EffectSlot.STATIC).stream()
-                .anyMatch(CantAttackOrBlockUnlessEquippedEffect.class::isInstance)
-                && !gameQueryService.isEquipped(gameData, creature)) {
-            return true;
-        }
         UUID controllerId = null;
         for (CardEffect effect : creature.getCard().getEffects(EffectSlot.STATIC)) {
+            if (effect instanceof CantAttackOrBlockUnlessEquippedEffect
+                    && !gameQueryService.isEquipped(gameData, creature)) {
+                return true;
+            }
             Condition unless = null;
             if (effect instanceof AttackOrBlockRestrictionEffect restriction) {
                 unless = restriction.cantAttackOrBlockUnless();
