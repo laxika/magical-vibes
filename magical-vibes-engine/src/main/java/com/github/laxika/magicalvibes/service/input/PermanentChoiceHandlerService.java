@@ -34,12 +34,16 @@ public class PermanentChoiceHandlerService {
         UUID playerId = player.getId();
         Set<UUID> validIds = permanentChoice.validIds();
 
-        gameData.interaction.clearAwaitingInput();
-        gameData.interaction.clearPermanentChoiceContext();
-
+        // Validate before touching interaction state: a rejected answer must leave the prompt
+        // standing so the player can answer again. Clearing first and then throwing destroys the
+        // only thing that would resume the entry parked in pendingEffectResolutionEntry, wedging
+        // the game (and with it deferPlayerLossCheck) on nothing worse than a stale client answer.
         if (!validIds.contains(permanentId)) {
             throw new IllegalStateException("Invalid permanent: " + permanentId);
         }
+
+        gameData.interaction.clearAwaitingInput();
+        gameData.interaction.clearPermanentChoiceContext();
 
         PermanentChoiceContext context = permanentChoice.context();
 

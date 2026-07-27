@@ -3,13 +3,16 @@ package com.github.laxika.magicalvibes.testutil;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.GameData;
 import com.github.laxika.magicalvibes.model.GameLogEntry;
+import com.github.laxika.magicalvibes.model.GameStatus;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.Player;
+import com.github.laxika.magicalvibes.model.StackEntry;
 import com.github.laxika.magicalvibes.model.TurnStep;
 import com.github.laxika.magicalvibes.service.combat.attack.AttackLegalityService;
 import com.github.laxika.magicalvibes.service.combat.block.BlockLegalityService;
 import com.github.laxika.magicalvibes.service.battlefield.GameQueryService;
 import com.github.laxika.magicalvibes.service.GameService;
+import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Tag;
 
@@ -53,6 +56,37 @@ public abstract class BaseCardTest {
         // to one. Marking both players AI silently left conn1/conn2 empty, breaking every test that
         // asserts on sent messages. alwaysOfferPriorityWindows buys the priority behavior alone.
         gd.alwaysOfferPriorityWindows = true;
+    }
+
+    /**
+     * No test may end with a stack entry parked in {@code GameData.pendingEffectResolutionEntry}
+     * while nothing is left to resume it. Effect resolution parks the entry when a handler begins
+     * an interaction mid-resolution; the completing handler must resume it via
+     * {@code InputCompletionService}. A dangling park silently drops the spell's remaining effects
+     * and — because {@code deferPlayerLossCheck} only clears when a resolution unwinds unparked —
+     * permanently suppresses the 0-life state-based action, so no player can ever lose again.
+     *
+     * <p>Only the AI fuzzer caught this class of bug before, and only by chance: it took a game
+     * where every spell cast from Improvisation Capstone happened to need no target choice. This
+     * runs the same invariant deterministically on every card test. A test that legitimately ends
+     * at a prompt is skipped — the parked entry is exactly what answering it will resume.
+     */
+    @AfterEach
+    void assertNoDanglingEffectResolutionPark() {
+        if (gd == null || gd.status == GameStatus.FINISHED) {
+            return;
+        }
+        if (gd.interaction.isAwaitingInput() || !gd.pendingInteractions.isEmpty()) {
+            return;
+        }
+        StackEntry parked = gd.pendingEffectResolutionEntry;
+        if (parked != null) {
+            Card card = parked.getCard();
+            throw new AssertionError("Test ended with '" + (card != null ? card.getName() : "<no card>")
+                    + "' parked mid-resolution but no interaction is active or queued to resume it."
+                    + " End the completing handler through InputCompletionService"
+                    + " (processMayAbilitiesThenAutoPass / sbaProcessMayAbilitiesThenAutoPass).");
+        }
     }
 
     protected Permanent addCreatureReady(Player player, Card card) {
