@@ -457,8 +457,19 @@ Cards: `GryffsBoon`
 
 **Embalm / Eternalize** ("{cost}, Exile this card from your graveyard: Create a token that's a copy of it, except ... Activate only as a sorcery.") is a graveyard activated ability whose cost exiles the source card. Use `ExileSelfFromGraveyardCost()` (paid at activation, before the ability hits the stack, so it can't be activated twice off the same card) plus `CreateTokenCopyOfSourceEffect(false, 1, colorOverride, addedSubtype, removeManaCost)` for the transformed copy, and `ActivationTimingRestriction.SORCERY_SPEED` (now enforced for graveyard abilities by `validateGraveyardTimingRestrictions`).
 
+Plain embalm and eternalize are `addEmbalm` / `addEternalize` — pass the cost and the card's own
+creature types, which is the only part of the reminder text that varies between cards (the
+subtypes are loaded from Scryfall after the constructor runs, so they cannot be derived here):
+
 ```java
-// Embalm {5}{W}: white Zombie copy with no mana cost, keeps the source's P/T.
+addEmbalm("{5}{W}", "Angel");          // Angel of Sanctions   → white Zombie Angel token
+addEternalize("{3}{W}{W}", "Cat");     // Adorned Pouncer      → 4/4 black Zombie Cat token
+```
+
+Underneath, both build the shape below — reach for it directly only when the ability is not plain
+embalm/eternalize (an extra activation cost, a different token transformation):
+
+```java
 addGraveyardActivatedAbility(new ActivatedAbility(
     false, "{5}{W}",
     List.of(
@@ -467,9 +478,14 @@ addGraveyardActivatedAbility(new ActivatedAbility(
     "Embalm {5}{W} (...)",
     ActivationTimingRestriction.SORCERY_SPEED));
 
-// Eternalize {3}{W}{W}: same shape but a BLACK Zombie with a fixed 4/4 base P/T (last two args).
+// Eternalize: same shape but a BLACK Zombie with a fixed 4/4 base P/T (last two args).
 new CreateTokenCopyOfSourceEffect(false, 1, CardColor.BLACK, CardSubtype.ZOMBIE, true, 4, 4);
 ```
+
+**Unearth** is `addUnearth("{B}")` — returns the card itself from the graveyard with haste, exiled
+at the beginning of the next end step, sorcery speed only. It makes no token, so
+`isEmbalmOrEternalize()` is false for it. Sedris, the Traitor King grants unearth to *other*
+creatures and is unrelated to this helper.
 
 **Extra activation costs on Embalm/Eternalize** (e.g. Sunscourge Champion's "Eternalize—{2}{W}{W}, Discard a card"): just add the cost effect to the list alongside `ExileSelfFromGraveyardCost`. A `DiscardCardTypeCost(null, null)` in a graveyard ability is now honored — activation suspends on a `DiscardCostChoice` (unpayable/empty hand → activation is illegal), the source is exiled first, and the ability completes after the discard is chosen (`PendingGraveyardAbilityActivation` mirrors the battlefield `PendingAbilityActivation`). The token's own ETB triggers fire when it enters.
 

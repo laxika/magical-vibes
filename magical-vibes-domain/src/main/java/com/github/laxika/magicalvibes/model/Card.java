@@ -2,14 +2,18 @@ package com.github.laxika.magicalvibes.model;
 
 import com.github.laxika.magicalvibes.model.amount.DynamicAmount;
 import com.github.laxika.magicalvibes.model.condition.Condition;
+import com.github.laxika.magicalvibes.model.filter.CardIsSelfPredicate;
 import com.github.laxika.magicalvibes.model.filter.TargetFilter;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
 import com.github.laxika.magicalvibes.model.effect.ConditionalEffect;
 import com.github.laxika.magicalvibes.model.effect.ConditionalReplacementEffect;
+import com.github.laxika.magicalvibes.model.effect.CreateTokenCopyOfSourceEffect;
 import com.github.laxika.magicalvibes.model.effect.DrawCardEffect;
+import com.github.laxika.magicalvibes.model.effect.ExileSelfFromGraveyardCost;
 import com.github.laxika.magicalvibes.model.effect.MayEffect;
 import com.github.laxika.magicalvibes.model.effect.MayPayManaEffect;
 import com.github.laxika.magicalvibes.model.effect.MayPayTapPermanentsEffect;
+import com.github.laxika.magicalvibes.model.effect.ReturnCardFromGraveyardEffect;
 import com.github.laxika.magicalvibes.model.effect.TriggeringCardConditionalEffect;
 import com.github.laxika.magicalvibes.model.effect.TriggeringPermanentConditionalEffect;
 import com.github.laxika.magicalvibes.model.effect.StateTriggerEffect;
@@ -674,6 +678,60 @@ public class Card {
         addHandActivatedAbility(new ActivatedAbility(false, cost,
                 List.of(new DrawCardEffect(1)),
                 "Cycling " + cost + " (" + cost + ", Discard this card: Draw a card.)"));
+    }
+
+    /**
+     * Adds unearth for {@code cost}: return this card from the graveyard to the battlefield with
+     * haste, exiled at the beginning of the next end step, sorcery speed only.
+     *
+     * <p>Only for a card that has unearth itself. Sedris, the Traitor King grants unearth to
+     * <em>other</em> creatures and is a different effect entirely.
+     */
+    public void addUnearth(String cost) {
+        addGraveyardActivatedAbility(new ActivatedAbility(false, cost,
+                List.of(ReturnCardFromGraveyardEffect.builder()
+                        .destination(GraveyardChoiceDestination.BATTLEFIELD)
+                        .filter(new CardIsSelfPredicate())
+                        .returnAll(true)
+                        .grantHaste(true)
+                        .exileAtEndStep(true)
+                        .build()),
+                "Unearth " + cost,
+                ActivationTimingRestriction.SORCERY_SPEED));
+    }
+
+    /**
+     * Adds embalm for {@code cost}: exile this card from the graveyard to create a token copy that
+     * is a white Zombie with no mana cost, sorcery speed only.
+     *
+     * @param creatureTypes the card's own creature types as they read in the reminder text
+     *                      ("Human Cleric", "Bird Warrior"). They cannot be derived here — the
+     *                      subtypes are loaded from Scryfall after the constructor runs.
+     */
+    public void addEmbalm(String cost, String creatureTypes) {
+        addGraveyardActivatedAbility(new ActivatedAbility(false, cost,
+                List.of(new ExileSelfFromGraveyardCost(),
+                        new CreateTokenCopyOfSourceEffect(false, 1, CardColor.WHITE, CardSubtype.ZOMBIE, true)),
+                "Embalm " + cost + " (" + cost + ", Exile this card from your graveyard: Create a token "
+                        + "that's a copy of it, except it's a white Zombie " + creatureTypes
+                        + " with no mana cost. Embalm only as a sorcery.)",
+                ActivationTimingRestriction.SORCERY_SPEED));
+    }
+
+    /**
+     * Adds eternalize for {@code cost}: like {@link #addEmbalm}, except the token is a 4/4 black
+     * Zombie.
+     *
+     * @param creatureTypes the card's own creature types as they read in the reminder text
+     */
+    public void addEternalize(String cost, String creatureTypes) {
+        addGraveyardActivatedAbility(new ActivatedAbility(false, cost,
+                List.of(new ExileSelfFromGraveyardCost(),
+                        new CreateTokenCopyOfSourceEffect(false, 1, CardColor.BLACK, CardSubtype.ZOMBIE, true, 4, 4)),
+                "Eternalize " + cost + " (" + cost + ", Exile this card from your graveyard: Create a token "
+                        + "that's a copy of it, except it's a 4/4 black Zombie " + creatureTypes
+                        + " with no mana cost. Eternalize only as a sorcery.)",
+                ActivationTimingRestriction.SORCERY_SPEED));
     }
 
     public String getBackFaceClassName() {

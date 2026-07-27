@@ -1,18 +1,13 @@
 package com.github.laxika.magicalvibes.cards.k;
 
 import com.github.laxika.magicalvibes.cards.CardRegistration;
-import com.github.laxika.magicalvibes.model.ActivatedAbility;
-import com.github.laxika.magicalvibes.model.ActivationTimingRestriction;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardColor;
 import com.github.laxika.magicalvibes.model.CardSubtype;
 import com.github.laxika.magicalvibes.model.EffectSlot;
-import com.github.laxika.magicalvibes.model.GraveyardChoiceDestination;
 import com.github.laxika.magicalvibes.model.effect.CreateTokenEffect;
-import com.github.laxika.magicalvibes.model.effect.ReturnCardFromGraveyardEffect;
 import com.github.laxika.magicalvibes.model.effect.SacrificeSelfEffect;
 import com.github.laxika.magicalvibes.model.effect.SequenceEffect;
-import com.github.laxika.magicalvibes.model.filter.CardIsSelfPredicate;
 
 import java.util.List;
 import java.util.Set;
@@ -31,18 +26,6 @@ public class KathariBomber extends Card {
 
         // Unearth {3}{B}{R}: Return this card from your graveyard to the battlefield. It gains haste.
         // Exile it at the beginning of the next end step. Unearth only as a sorcery.
-        addGraveyardActivatedAbility(new ActivatedAbility(
-                false,
-                "{3}{B}{R}",
-                List.of(ReturnCardFromGraveyardEffect.builder()
-                        .destination(GraveyardChoiceDestination.BATTLEFIELD)
-                        .filter(new CardIsSelfPredicate())
-                        .returnAll(true)
-                        .grantHaste(true)
-                        .exileAtEndStep(true)
-                        .build()),
-                "Unearth {3}{B}{R}",
-                ActivationTimingRestriction.SORCERY_SPEED
-        ));
+        addUnearth("{3}{B}{R}");
     }
 }
