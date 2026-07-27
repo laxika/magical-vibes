@@ -12,27 +12,38 @@ import com.github.laxika.magicalvibes.model.StackEntry;
 import com.github.laxika.magicalvibes.model.StackEntryType;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
 import com.github.laxika.magicalvibes.service.GameLogService;
-import com.github.laxika.magicalvibes.service.graveyard.GraveyardService;
+import com.github.laxika.magicalvibes.service.input.InputCompletionService;
 import com.github.laxika.magicalvibes.service.input.PlayerInputService;
 import com.github.laxika.magicalvibes.service.trigger.TriggerCollectionService;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.UUID;
-import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.context.annotation.Lazy;
 import org.springframework.stereotype.Component;
 
 @Slf4j
 @Component
-@RequiredArgsConstructor
 public class ImprovisationCapstoneCastSupport {
 
     private final GameLogService gameLogService;
-    private final GraveyardService graveyardService;
     private final PlayerInputService playerInputService;
     private final TriggerCollectionService triggerCollectionService;
     private final ExileCastTargetSupport exileCastTargetSupport;
-    private final com.github.laxika.magicalvibes.service.event.GameMutationCoordinator mutationCoordinator;
+    private final InputCompletionService inputCompletionService;
+
+    // @Lazy mirrors ExileFreeCastSupport: breaks the cycle back through the input services.
+    public ImprovisationCapstoneCastSupport(GameLogService gameLogService,
+                                            PlayerInputService playerInputService,
+                                            TriggerCollectionService triggerCollectionService,
+                                            ExileCastTargetSupport exileCastTargetSupport,
+                                            @Lazy InputCompletionService inputCompletionService) {
+        this.gameLogService = gameLogService;
+        this.playerInputService = playerInputService;
+        this.triggerCollectionService = triggerCollectionService;
+        this.exileCastTargetSupport = exileCastTargetSupport;
+        this.inputCompletionService = inputCompletionService;
+    }
 
     public void castChosenSpellsWithoutPaying(GameData gameData, Player player, List<UUID> cardIds) {
         gameData.interaction.clearAwaitingInput();
@@ -40,7 +51,7 @@ public class ImprovisationCapstoneCastSupport {
         if (cardIds == null || cardIds.isEmpty()) {
             String logEntry = player.getUsername() + " casts no spells from Improvisation Capstone.";
             gameLogService.append(gameData, GameLog.text(logEntry));
-            mutationCoordinator.invalidateAllPlayerViews(gameData);
+            inputCompletionService.processMayAbilitiesThenAutoPass(gameData);
             return;
         }
 
@@ -53,10 +64,15 @@ public class ImprovisationCapstoneCastSupport {
      * Casts the next queued exiled spell. When a spell requires a target this pauses for a target
      * choice and returns; the shared target handler resumes the queue via {@link #castNextFromQueue}
      * once the target is chosen.
+     *
+     * <p>Once the queue drains this ends through the shared {@link InputCompletionService} epilogue,
+     * which resumes the stack entry parked in {@code GameData.pendingEffectResolutionEntry} when the
+     * cast choice was begun. Ending any other way leaves that entry dangling, which wedges
+     * {@code GameData.deferPlayerLossCheck} so no player can ever lose to a state-based action again.
      */
     public void castNextFromQueue(GameData gameData, UUID playerId) {
         if (gameData.pendingImprovisationCapstoneCastQueue.isEmpty()) {
-            mutationCoordinator.invalidateAllPlayerViews(gameData);
+            inputCompletionService.processMayAbilitiesThenAutoPass(gameData);
             return;
         }
 
@@ -68,8 +84,6 @@ public class ImprovisationCapstoneCastSupport {
         }
 
         Card card = exiledEntry.card();
-        gameData.removeFromExile(cardId);
-
         StackEntryType spellType = exileCastTargetSupport.mapCardTypeToSpellType(card);
         List<CardEffect> spellEffects = new ArrayList<>(card.getEffects(EffectSlot.SPELL));
         String playerName = gameData.playerIdToName.get(playerId);
@@ -83,12 +97,14 @@ public class ImprovisationCapstoneCastSupport {
                     : !firstCandidates.isEmpty();
 
             if (!hasLegalTargets) {
-                graveyardService.addCardToGraveyard(gameData, playerId, card);
-                gameLogService.append(gameData, GameLog.cardThen(card, " has no valid targets."));
+                // It was never cast, and nothing in the oracle text moves it elsewhere: it stays exiled.
+                gameLogService.append(gameData, GameLog.cardThen(card, " has no valid targets and stays exiled."));
                 castNextFromQueue(gameData, playerId);
                 return;
             }
 
+            // Remove from exile now that it will be cast; the ExileCastSpellTarget flow puts it on the stack.
+            gameData.removeFromExile(cardId);
             gameData.interaction.setPermanentChoiceContext(
                     new PermanentChoiceContext.ExileCastSpellTarget(card, playerId, spellEffects, spellType));
             playerInputService.beginPermanentChoice(gameData, playerId, firstCandidates,
@@ -97,6 +113,7 @@ public class ImprovisationCapstoneCastSupport {
             return;
         }
 
+        gameData.removeFromExile(cardId);
         gameData.stack.add(new StackEntry(
                 spellType, card, playerId, card.getName(),
                 spellEffects, 0, (UUID) null, null

@@ -1,6 +1,8 @@
 package com.github.laxika.magicalvibes.cards.i;
 
 import com.github.laxika.magicalvibes.cards.f.Forest;
+import com.github.laxika.magicalvibes.cards.g.GiantGrowth;
+import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
 import com.github.laxika.magicalvibes.cards.s.Shock;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.PendingInteraction;
@@ -79,5 +81,73 @@ class ImprovisationCapstoneTest extends BaseCardTest {
         assertThat(gd.stack.stream().anyMatch(e -> e.getCard().getName().equals("Shock"))).isTrue();
         assertThat(gd.stack.stream().filter(e -> e.getCard().getName().equals("Grizzly Bears")).count())
                 .isEqualTo(2);
+    }
+
+    @Test
+    @DisplayName("Casting only untargeted spells leaves no parked resolution behind")
+    void untargetedSpellsOnlyClearTheParkedResolution() {
+        GrizzlyBears bears1 = new GrizzlyBears();
+        GrizzlyBears bears2 = new GrizzlyBears();
+        harness.setLibrary(player1, List.of(bears1, bears2));
+        harness.setHand(player1, List.of(new ImprovisationCapstone()));
+        harness.addMana(player1, ManaColor.RED, 2);
+        harness.addMana(player1, ManaColor.COLORLESS, 5);
+
+        harness.castSorcery(player1, 0, 0);
+        harness.passBothPriorities();
+
+        // No spell in the queue asks for a target, so the queue drains without any further
+        // interaction — the flow itself must resume the Capstone resolution parked for the choice.
+        harness.handleMultipleCardsChosen(player1, List.of(bears1.getId(), bears2.getId()));
+
+        assertThat(gd.stack.stream().filter(e -> e.getCard().getName().equals("Grizzly Bears")).count())
+                .isEqualTo(2);
+        assertThat(gd.interaction.activeInteraction()).isNull();
+        assertThat(gd.pendingEffectResolutionEntry)
+                .withFailMessage("dangling pendingEffectResolutionEntry after the cast queue drained")
+                .isNull();
+    }
+
+    @Test
+    @DisplayName("Casting no spells at all leaves no parked resolution behind")
+    void decliningEveryCastClearsTheParkedResolution() {
+        harness.setLibrary(player1, List.of(new GrizzlyBears(), new GrizzlyBears()));
+        harness.setHand(player1, List.of(new ImprovisationCapstone()));
+        harness.addMana(player1, ManaColor.RED, 2);
+        harness.addMana(player1, ManaColor.COLORLESS, 5);
+
+        harness.castSorcery(player1, 0, 0);
+        harness.passBothPriorities();
+
+        harness.handleMultipleCardsChosen(player1, List.of());
+
+        assertThat(gd.interaction.activeInteraction()).isNull();
+        assertThat(gd.pendingEffectResolutionEntry)
+                .withFailMessage("dangling pendingEffectResolutionEntry after declining every cast")
+                .isNull();
+    }
+
+    @Test
+    @DisplayName("A chosen spell with no legal target stays exiled")
+    void chosenSpellWithoutLegalTargetsStaysExiled() {
+        GiantGrowth growth1 = new GiantGrowth();
+        GiantGrowth growth2 = new GiantGrowth();
+        // No creature is on the battlefield, so neither Giant Growth can be legally cast.
+        harness.setLibrary(player1, List.of(growth1, growth2, new GrizzlyBears()));
+        harness.setHand(player1, List.of(new ImprovisationCapstone()));
+        harness.addMana(player1, ManaColor.RED, 2);
+        harness.addMana(player1, ManaColor.COLORLESS, 5);
+
+        harness.castSorcery(player1, 0, 0);
+        harness.passBothPriorities();
+
+        harness.handleMultipleCardsChosen(player1, List.of(growth1.getId(), growth2.getId()));
+
+        assertThat(gd.exiledCards.stream().map(e -> e.card().getId()))
+                .contains(growth1.getId(), growth2.getId());
+        assertThat(gd.playerGraveyards.get(player1.getId()).stream().map(c -> c.getName()))
+                .doesNotContain("Giant Growth");
+        assertThat(gd.stack.stream().anyMatch(e -> e.getCard().getName().equals("Giant Growth"))).isFalse();
+        assertThat(gd.pendingEffectResolutionEntry).isNull();
     }
 }
