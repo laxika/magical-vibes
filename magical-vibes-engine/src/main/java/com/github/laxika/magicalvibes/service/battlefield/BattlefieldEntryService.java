@@ -876,8 +876,8 @@ public class BattlefieldEntryService {
         // Separate targeted graveyard-return effects (e.g. Bladewing the Risen: "return target Dragon
         // permanent card from your graveyard to the battlefield"): any remaining graveyard-target effect
         // not covered by the specialized paths above. Its target is chosen as the trigger goes on the
-        // stack via the shared SpellGraveyardTargetTrigger flow (identified by target category, not type,
-        // so the dispatch ratchet stays flat).
+        // stack via the shared SpellGraveyardTargetTrigger flow (identified by target category, not by
+        // concrete effect type, so a new graveyard-target effect needs no branch here).
         List<CardEffect> graveyardTargetReturnEffects = mandatoryEffects.stream()
                 .filter(e -> e.targetSpec().category().isGraveyard())
                 .filter(e -> !graveyardExileEffects.contains(e))

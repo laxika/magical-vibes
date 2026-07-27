@@ -45,8 +45,9 @@ Purpose: cut token usage when implementing cards by quickly mapping "card text i
 The descriptive interfaces above let the AI (and engine query layer) read a FACT about an effect
 instead of `instanceof`-ing the concrete type; implement the matching one when adding an effect to
 that family (see `EFFECTS_QUICK_REFERENCE.md`). `CostEffect` is both a marker (cost snapshotting /
-mana-ability exclusion) and a descriptive capability (its AI cost-valuation facets). `EffectDispatchRatchetTest` enforces that no new
-concrete-effect `instanceof` is added outside `service/effect/**` / `service/validate/**`.
+mana-ability exclusion) and a descriptive capability (its AI cost-valuation facets). Keep new
+concrete-effect `instanceof` out of files outside `service/effect/**` / `service/validate/**` — no
+build check enforces that any more, it is a convention the author has to honour.
 
 ### Target predicate — the `TargetSpec.predicate()` field
 
@@ -2028,7 +2029,7 @@ Add it **UNBOUND**, right after the `ReturnCardFromGraveyardEffect`. `EffectReso
 | `ChandraDressedToKillEmblemEffect` | `()` | Chandra, Dressed to Kill �?�7 emblem: stores `DealDamageEqualToManaSpentToCastToAnyTargetEffect(CardColorPredicate(RED))` |
 | `DealDamageEqualToManaSpentToCastToAnyTargetEffect` | `(CardPredicate spellFilter)` | whenever controller casts a matching spell, deal damage equal to mana spent to cast it to any target. Works in `ON_CONTROLLER_CASTS_SPELL` (CollectsTrigger) or as an emblem staticEffect |
 | `JaceUnravelerOfSecretsEmblemEffect` | `()` | Jace, Unraveler of Secrets' emblem: "Whenever an opponent casts their first spell each turn, counter that spell." Creates emblem with `CounterOpponentFirstSpellEachTurnEffect.Marker`. `TriggerCollectionService` queues `CounterSpellEffect` (target = spell card, `Zone.STACK`) when an opponent's `getSpellsCastThisTurnCount == 1` |
-| `CounterOpponentFirstSpellEachTurnEffect` | (capability interface; use `.Marker()`) | Emblem static-effect marker for Jace Unraveler's first-spell counter. Interface so recognition in `TriggerCollectionService` is capability-style (no effect-dispatch ratchet hit). Rulings: any turn, once per opponent per turn; a failed counter still consumes the "first spell" slot |
+| `CounterOpponentFirstSpellEachTurnEffect` | (capability interface; use `.Marker()`) | Emblem static-effect marker for Jace Unraveler's first-spell counter. Interface so recognition in `TriggerCollectionService` is capability-style rather than a concrete-effect `instanceof`. Rulings: any turn, once per opponent per turn; a failed counter still consumes the "first spell" slot |
 | `JayaBallardEmblemEffect` | `()` | Jaya Ballard's emblem: "You may cast instant and sorcery spells from your graveyard. If a spell cast this way would be put into your graveyard, exile it instead." Creates emblem with EmblemGrantsFlashbackEffect |
 | `TeferiHeroEmblemEffect` | `()` | Teferi, Hero of Dominaria's emblem: "Whenever you draw a card, exile target permanent an opponent controls." Creates emblem with ExileTargetOpponentPermanentOnDrawEffect |
 | `GideonOfTheTrialsEmblemEffect` | `()` | Gideon of the Trials' emblem: "As long as you control a Gideon planeswalker, you can't lose the game and your opponents can't win the game." Creates an emblem whose static effect is `ConditionalEffect(ControlsPermanent(PermanentHasSubtypePredicate(GIDEON)), CantLoseGameEffect())`. `GameQueryService.canPlayerLoseGame` reads bare + conditional `CantLoseGameEffect`s off emblems (evaluated with `ConditionContext.forCasting(playerId)`), so no separate win-side hook is needed |

@@ -38,7 +38,8 @@ DESCRIPTIVE interfaces in `model/effect/` that a family of effects implements so
 `GameSimulator`, `AiManaManager`) can read a FACT about the effect instead of `instanceof`-ing each
 concrete type. **When you add a new effect that fits one of these families, implement the interface**
 (return existing record components — the impl is purely additive) so the AI scores/targets it without
-a code change. Interfaces are auto-exempt from `EffectDispatchRatchetTest`.
+a code change. Branching on one of these interfaces is fine anywhere — it is the *concrete*-effect
+`instanceof` they exist to replace.
 
 - `CostEffect` — additional costs (sacrifice, discard, exile, counter removal, tap creature). AI
   cost-valuation facets describe the resource paying gives up (default to neutral; override only the

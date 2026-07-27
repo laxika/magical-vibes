@@ -10,8 +10,8 @@ package com.github.laxika.magicalvibes.model.effect;
  * flow instead. The chosen ids land on the stack entry's flat {@code targetIds} list
  * (position 0 = the controller's creature, position 1 = the optional defending-player creature).
  *
- * <p>Declared as an interface so branching on it in the (non-exempt) combat service does not add an
- * effect-instanceof to the dispatch ratchet.
+ * <p>Declared as an interface so the combat service branches on a capability rather than on a
+ * concrete effect type.
  */
 public interface AttackCounterMoveEffect extends CardEffect {
 }
