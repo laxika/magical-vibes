@@ -1227,6 +1227,15 @@ public class SpellCastingService {
                     || (additionalCosts.sacrificeCreatureOrPayManaCost() != null && sacrificePermanentId == null)
                     || (additionalCosts.discardCardOrPayManaCost() != null && discardHandCardIndex == null)
                     ? new ManaPool(gameData.playerManaPools.get(playerId)) : null;
+            // Converge on a permanent (Rancorous Archaic): snapshot the pool before payment so the
+            // number of distinct colors spent can be counted after it, then carry that count as the
+            // stack entry's X — which is what an ON_ENTER_BATTLEFIELD EnterWithCountersEffect(XValue)
+            // reads. Same guard as the instant/sorcery branch: a real {X} cost owns X instead.
+            boolean needsConvergeValue = EffectResolution.hasConvergeEffect(card)
+                    && (card.getManaCost() == null || !new ManaCost(card.getManaCost()).hasX());
+            java.util.EnumMap<ManaColor, Integer> convergeSnapshot = needsConvergeValue
+                    ? gameData.playerManaPools.get(playerId).getColoredManaTotals()
+                    : null;
             if (usingAlternateCost) {
                 payAlternateCastingCost(gameData, player, card, alternateCostSacrificePermanentIds);
                 payEscalateManaOnly(gameData, playerId, card, escalateManaSuffix, targetingTax);
@@ -1238,6 +1247,13 @@ public class SpellCastingService {
             }
             payAdditionalCosts(gameData, player, card, additionalCosts, costSelection, 0, preManaPaymentPool);
             payImposedSacrificeTax(gameData, player, card, imposedSacrificePermanentIds);
+            if (convergeSnapshot != null) {
+                ManaPool pool = gameData.playerManaPools.get(playerId);
+                int converge = ManaPool.countDistinctColoredManaSpent(
+                        convergeSnapshot, pool.getColoredManaTotals(), convokeContributions);
+                gameData.setSpellCastConvergeValue(card.getId(), converge);
+                stackX = converge;
+            }
             StackEntry entry;
             if (card.isAura() && needsSingleGraveyardTargeting) {
                 // Reanimation Aura (e.g. Animate Dead): the target is a creature card in a graveyard.
