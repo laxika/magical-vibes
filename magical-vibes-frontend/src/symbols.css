@@ -97,6 +97,27 @@
   top: -0.21em;
 }
 
+/* Undo one upstream declaration, which is a bug and not a style choice: Mana 1.18.0 ships
+   `.ms-2 { margin-left: inherit !important; }`. `inherit` on a margin takes the *parent
+   element's* computed margin, which for an inline symbol is an arbitrary number that has
+   nothing to do with symbols — so `{2}` alone, of all eighty-three, opens a gap in front of
+   itself the width of whatever box it happens to sit in. In the card frame that parent is
+   `.card-mana-cost`, whose 4px stands the cost off the name: `{X}{2}{R}{R}` came out as the
+   X, a 4.6px hole, then the 2 and both R's packed at the 0.07em this file sets. Every other
+   container it renders in gives it a different wrong number.
+
+   `!important` to match, since a normal declaration cannot beat one no matter how specific,
+   and `.mana-sym` alongside so this reads as ours rather than as a second upstream rule.
+
+   Scoped to `.ms-2` rather than zeroing margin-left on every symbol, because `.ms-half` —
+   half mana, {HW} and {HR} — positions itself with a real margin-left of 0.675em, the same
+   reason the rule above sets margin-right rather than a shorthand. No symbol carries both
+   classes, so nothing here reaches it. Note this is `{2}` the generic cost and not the
+   monocoloured hybrids, which are `.ms-2w` and friends and never matched the rule. */
+.mana-sym.ms-2 {
+  margin-left: 0 !important;
+}
+
 /* A symbol used as a standalone icon rather than set inline in a line of text.
    Both corrections above exist to seat a symbol against surrounding prose: the lift
    assumes there is a baseline and a cap height to align to, and the trailing margin

@@ -193,6 +193,35 @@ describe('CardDisplayComponent — rules text fitting in real Chromium', () => {
     }
   });
 
+  it('spaces every pip of a cost alike, including the one upstream singles out', async () => {
+    /* Mana 1.18.0 ships `.ms-2 { margin-left: inherit !important }`, and `inherit` on a margin
+       takes the parent element's — so `{2}` is the one symbol of the eighty-three whose leading
+       gap is decided by whatever box it happens to render in. In the name plate that box is
+       `.card-mana-cost` and the number is its 4px stand-off from the name, which on ICE 171's
+       {X}{2}{R}{R} opened a hole in front of the 2 seven times the spacing between the other
+       three. symbols.css zeroes it.
+
+       Asserted as "every gap is the same gap" rather than against the 0.07em that file sets,
+       so this keeps holding if that value is retuned and still catches any other symbol a
+       future Mana release decides to treat specially. */
+    const mounted = await mountCard(card({
+      name: 'Avalanche', type: 'SORCERY', manaCost: '{X}{2}{R}{R}',
+      cardText: 'Destroy X target snow lands.',
+    }));
+    await mounted.settle();
+
+    const pips = Array.from(
+        mounted.host.querySelectorAll('.card-mana-cost .mana-sym')) as HTMLElement[];
+    expect(pips.length, 'the cost should have rendered as four symbols').toBe(4);
+
+    const rects = pips.map(pip => pip.getBoundingClientRect());
+    const gaps = rects.slice(1).map((rect, i) => rect.left - rects[i].right);
+    const shown = gaps.map(gap => gap.toFixed(2)).join(', ');
+    for (const gap of gaps) {
+      expect(gap, `pips are unevenly spaced; gaps are ${shown}px`).toBeCloseTo(gaps[0], 1);
+    }
+  });
+
   it('prints a watermark behind the rules text without displacing it', async () => {
     /* The watermark is the one glyph the frame places itself rather than injecting, and it is
        absolutely positioned — so the two ways it can go wrong are being absent (a name the font
