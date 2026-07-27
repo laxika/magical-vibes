@@ -1,5 +1,3 @@
-READ CLAUDE.md FIRST!!!
-
 <!-- CODEGRAPH_START -->
 ## CodeGraph
 

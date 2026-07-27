@@ -19,6 +19,14 @@
         "-File",
         "mcp/rules-info/start.ps1"
       ]
+    },
+    "codegraph": {
+      "type": "stdio",
+      "command": "codegraph",
+      "args": [
+        "serve",
+        "--mcp"
+      ]
     }
   }
 }

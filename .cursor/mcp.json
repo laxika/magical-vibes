@@ -19,6 +19,16 @@
         "-File",
         "mcp/rules-info/start.ps1"
       ]
+    },
+    "codegraph": {
+      "type": "stdio",
+      "command": "codegraph",
+      "args": [
+        "serve",
+        "--mcp",
+        "--path",
+        "C:\\Users\\Laxika\\Development\\magical-vibes-2"
+      ]
     }
   }
 }
