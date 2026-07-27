@@ -248,7 +248,13 @@ public sealed interface PermanentChoiceContext extends PendingInteraction {
         }
     }
 
-    record GraveyardCastSpellTarget(Card cardToCast, UUID controllerId, List<CardEffect> spellEffects, StackEntryType spellType) implements PermanentChoiceContext {}
+    record GraveyardCastSpellTarget(Card cardToCast, UUID controllerId, List<CardEffect> spellEffects,
+                                    StackEntryType spellType, boolean exileInsteadOfGraveyard) implements PermanentChoiceContext {
+
+        public GraveyardCastSpellTarget(Card cardToCast, UUID controllerId, List<CardEffect> spellEffects, StackEntryType spellType) {
+            this(cardToCast, controllerId, spellEffects, spellType, false);
+        }
+    }
 
     record HandCastSpellTarget(Card cardToCast, UUID controllerId, List<CardEffect> spellEffects, StackEntryType spellType) implements PermanentChoiceContext {}
 

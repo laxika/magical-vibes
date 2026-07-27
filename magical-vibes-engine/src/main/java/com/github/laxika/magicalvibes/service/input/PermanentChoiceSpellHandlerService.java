@@ -269,6 +269,7 @@ public class PermanentChoiceSpellHandlerService {
                     permanentId,
                     null
             );
+            entry.setExileInsteadOfGraveyard(gct.exileInsteadOfGraveyard());
             gameData.stack.add(entry);
 
             gameData.recordSpellCast(gct.controllerId(), gct.cardToCast());

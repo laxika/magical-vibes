@@ -37,6 +37,13 @@ public class StackEntry {
      *  top instead of going to the graveyard (Approach of the Second Sun's "seventh from the top" = 6). */
     @Setter private Integer putIntoLibraryPositionAfterResolving;
     @Setter private boolean castWithFlashback;
+    /**
+     * Whether a replacement effect applies to this spell: "if that spell would be put into a graveyard,
+     * exile it instead" (The Dawning Archaic, Chancellor of the Spires). Unlike
+     * {@link #castWithFlashback} this only replaces the graveyard disposition, so return-to-hand /
+     * into-library dispositions still win.
+     */
+    @Setter private boolean exileInsteadOfGraveyard;
     /** Whether this spell was cast via Disturb (CR 702.146) — enters transformed; exile on leave-to-GY. */
     @Setter private boolean castWithDisturb;
     /**
@@ -302,6 +309,7 @@ public class StackEntry {
         this.returnToHandAfterResolving = source.returnToHandAfterResolving;
         this.putIntoLibraryPositionAfterResolving = source.putIntoLibraryPositionAfterResolving;
         this.castWithFlashback = source.castWithFlashback;
+        this.exileInsteadOfGraveyard = source.exileInsteadOfGraveyard;
         this.castWithDisturb = source.castWithDisturb;
         this.castTransformed = source.castTransformed;
         this.sourceZone = source.sourceZone;

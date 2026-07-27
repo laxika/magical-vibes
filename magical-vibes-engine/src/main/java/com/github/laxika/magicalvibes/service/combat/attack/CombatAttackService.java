@@ -37,6 +37,7 @@ import com.github.laxika.magicalvibes.model.effect.CantAttackOrBlockAloneEffect;
 import com.github.laxika.magicalvibes.model.effect.CantAttackOrBlockUnlessCountAlsoDoesEffect;
 import com.github.laxika.magicalvibes.model.effect.CantAttackOrBlockUnlessGreaterPowerAlsoDoesEffect;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
+import com.github.laxika.magicalvibes.model.effect.CastTargetInstantOrSorceryFromGraveyardEffect;
 import com.github.laxika.magicalvibes.model.effect.MustBlockSourceEffect;
 import com.github.laxika.magicalvibes.model.effect.DealDamageToTriggeringAttackerEffect;
 import com.github.laxika.magicalvibes.model.effect.EnchantedCreatureCanOnlyAttackAloneEffect;
@@ -445,9 +446,18 @@ public class CombatAttackService {
                             // "exile target card from defending player's graveyard" (Graven Abomination):
                             // choose as the trigger goes on the stack (same shape as ETB/death GY exile).
                             // Handler owns its own broadcast (including the no-legal-target skip).
-                            graveyardTargetingService.handleAttackGraveyardTargeting(
-                                    gameData, playerId, attacker.getCard(), otherEffects,
-                                    attacker.getId(), defendingPlayerId);
+                            boolean castsFromGraveyard = otherEffects.stream()
+                                    .anyMatch(e -> e instanceof CastTargetInstantOrSorceryFromGraveyardEffect);
+                            if (castsFromGraveyard) {
+                                // "cast target instant or sorcery card from your graveyard" (The Dawning
+                                // Archaic) — the scope comes from the effect, not the attacked player.
+                                graveyardTargetingService.handleAttackGraveyardCastTargeting(
+                                        gameData, playerId, attacker.getCard(), otherEffects, attacker.getId());
+                            } else {
+                                graveyardTargetingService.handleAttackGraveyardTargeting(
+                                        gameData, playerId, attacker.getCard(), otherEffects,
+                                        attacker.getId(), defendingPlayerId);
+                            }
                         } else if (needsTarget) {
                             gameData.queueInteraction(
                                     new PermanentChoiceContext.AttackTriggerTarget(

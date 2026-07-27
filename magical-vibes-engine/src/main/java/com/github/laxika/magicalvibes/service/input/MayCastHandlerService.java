@@ -334,7 +334,8 @@ public class MayCastHandlerService {
                             log.info("Game {} - {} cast-from-graveyard has no valid targets", gameData.id, cardToCast.getName());
                         } else {
                             gameData.interaction.setPermanentChoiceContext(
-                                    new PermanentChoiceContext.GraveyardCastSpellTarget(cardToCast, player.getId(), spellEffects, spellType));
+                                    new PermanentChoiceContext.GraveyardCastSpellTarget(cardToCast, player.getId(),
+                                            spellEffects, spellType, castEffect.exileInsteadOfGraveyard()));
                             playerInputService.beginPermanentChoice(gameData, player.getId(), validTargets,
                                     "Choose a target for " + cardToCast.getName() + ".");
 
@@ -345,10 +346,12 @@ public class MayCastHandlerService {
                         }
                     } else {
                         // Non-targeted spell — put directly on stack
-                        gameData.stack.add(new StackEntry(
+                        StackEntry freeCast = new StackEntry(
                                 spellType, cardToCast, player.getId(), cardToCast.getName(),
                                 spellEffects, 0, (UUID) null, null
-                        ));
+                        );
+                        freeCast.setExileInsteadOfGraveyard(castEffect.exileInsteadOfGraveyard());
+                        gameData.stack.add(freeCast);
 
                         gameData.recordSpellCast(player.getId(), cardToCast);
                         gameData.priorityPassedBy.clear();

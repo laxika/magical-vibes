@@ -251,7 +251,7 @@ public class StackResolutionService {
      */
     private void disposeFizzledPermanentSpell(GameData gameData, StackEntry entry, Card card) {
         UUID controllerId = entry.getControllerId();
-        if (entry.isCastWithFlashback() || entry.isCastWithDisturb()) {
+        if (entry.isCastWithFlashback() || entry.isCastWithDisturb() || entry.isExileInsteadOfGraveyard()) {
             exileService.exileCard(gameData, controllerId, card);
         } else {
             graveyardService.addCardToGraveyard(gameData, controllerId, card);
@@ -711,9 +711,9 @@ public class StackResolutionService {
             // Fizzled spells still go to graveyard (copies cease to exist per rule 707.10a)
             // Flashback spells are exiled instead (CR 702.33a)
             if (isNonCopySpell(entry)) {
-                if (entry.isCastWithFlashback()) {
+                if (entry.isCastWithFlashback() || entry.isExileInsteadOfGraveyard()) {
                     exileService.exileCard(gameData, entry.getControllerId(), entry.getCard());
-                    gameLogService.append(gameData, GameLog.cardThen(entry.getCard(), " is exiled (flashback)."));
+                    gameLogService.append(gameData, GameLog.isExiled(entry.getCard()));
                 } else {
                     graveyardService.addCardToGraveyard(gameData, entry.getControllerId(), entry.getCard());
                 }
@@ -825,6 +825,9 @@ public class StackResolutionService {
             gameLogService.append(gameData, GameLog.cardThen(entry.getCard(), " is put on the bottom of its owner's library."));
         } else if (entry.getCard().getKeywords().contains(Keyword.PARADIGM)) {
             paradigmService.onParadigmSpellResolved(gameData, entry);
+        } else if (entry.isExileInsteadOfGraveyard()) {
+            gameData.addToExile(ownerId, entry.getCard());
+            gameLogService.append(gameData, GameLog.isExiled(entry.getCard()));
         } else {
             graveyardService.addCardToGraveyard(gameData, ownerId, entry.getCard());
         }

@@ -102,7 +102,7 @@ public class CounterSupport {
             if (applyControlledCounterExileReplacement(gameData, source, target)) {
                 return;
             }
-            if (target.isCastWithFlashback() || target.isCastWithDisturb()) {
+            if (target.isCastWithFlashback() || target.isCastWithDisturb() || target.isExileInsteadOfGraveyard()) {
                 exileService.exileCard(gameData, target.getControllerId(), target.getCard());
             } else {
                 graveyardService.addCardToGraveyard(gameData, target.getControllerId(), target.getCard());

@@ -303,6 +303,45 @@ public class GraveyardTargetingService {
 
     public void handleGraveyardCastETBTargeting(GameData gameData, UUID controllerId, Card card,
                                                  List<CardEffect> effects) {
+        List<Card> matchingCards = collectCastableInstantsAndSorceries(gameData, controllerId, effects);
+
+        if (matchingCards.isEmpty()) {
+            gameLogService.append(gameData, GameLog.cardThen(card, "'s enter-the-battlefield ability has no valid targets."));
+            log.info("Game {} - {} ETB graveyard cast has no valid targets", gameData.id, card.getName());
+        } else {
+            gameData.graveyardTargetOperation.card = card;
+            gameData.graveyardTargetOperation.controllerId = controllerId;
+            gameData.graveyardTargetOperation.effects = new ArrayList<>(effects);
+            playerInputService.beginMultiGraveyardChoice(gameData, controllerId, matchingCards, 1,
+                    "Choose target instant or sorcery card from a graveyard to cast.");
+        }
+    }
+
+    /**
+     * Attack-trigger flavour of {@link #handleGraveyardCastETBTargeting} — "whenever this creature attacks,
+     * you may cast target instant or sorcery card from your graveyard" (The Dawning Archaic). The target is
+     * chosen as the trigger goes on the stack; with no legal target the trigger is skipped (CR 603.3c).
+     */
+    public void handleAttackGraveyardCastTargeting(GameData gameData, UUID controllerId, Card card,
+                                                   List<CardEffect> effects, UUID sourcePermanentId) {
+        List<Card> matchingCards = collectCastableInstantsAndSorceries(gameData, controllerId, effects);
+
+        if (matchingCards.isEmpty()) {
+            gameLogService.append(gameData, GameLog.cardThen(card, "'s attack trigger has no valid targets."));
+            log.info("Game {} - {} attack graveyard cast has no valid targets", gameData.id, card.getName());
+            return;
+        }
+
+        gameData.graveyardTargetOperation.card = card;
+        gameData.graveyardTargetOperation.controllerId = controllerId;
+        gameData.graveyardTargetOperation.effects = new ArrayList<>(effects);
+        gameData.graveyardTargetOperation.sourcePermanentId = sourcePermanentId;
+        playerInputService.beginMultiGraveyardChoice(gameData, controllerId, matchingCards, 1,
+                "Choose target instant or sorcery card from a graveyard to cast.");
+    }
+
+    private List<Card> collectCastableInstantsAndSorceries(GameData gameData, UUID controllerId,
+                                                           List<CardEffect> effects) {
         CastTargetInstantOrSorceryFromGraveyardEffect castEffect = effects.stream()
                 .filter(e -> e instanceof CastTargetInstantOrSorceryFromGraveyardEffect)
                 .map(e -> (CastTargetInstantOrSorceryFromGraveyardEffect) e)
@@ -325,17 +364,7 @@ public class GraveyardTargetingService {
                 }
             }
         }
-
-        if (matchingCards.isEmpty()) {
-            gameLogService.append(gameData, GameLog.cardThen(card, "'s enter-the-battlefield ability has no valid targets."));
-            log.info("Game {} - {} ETB graveyard cast has no valid targets", gameData.id, card.getName());
-        } else {
-            gameData.graveyardTargetOperation.card = card;
-            gameData.graveyardTargetOperation.controllerId = controllerId;
-            gameData.graveyardTargetOperation.effects = new ArrayList<>(effects);
-            playerInputService.beginMultiGraveyardChoice(gameData, controllerId, matchingCards, 1,
-                    "Choose target instant or sorcery card from a graveyard to cast.");
-        }
+        return matchingCards;
     }
 
     public void handleGraveyardMayPlayETBTargeting(GameData gameData, UUID controllerId, Card card,
