@@ -491,6 +491,21 @@ public class PlayerInputService {
         log.info("Game {} - Awaiting {} to choose a basic land type to add", gameData.id, playerName);
     }
 
+    /**
+     * Prompts for the land type of a snow landwalk grant (Barbarian Guides). Only the five basic
+     * land types are offered, matching every other land-type choice in the engine.
+     */
+    public void beginSnowLandwalkTypeChoice(GameData gameData, UUID playerId, UUID targetId) {
+        ChoiceContext.SnowLandwalkGrantChoice choiceContext = new ChoiceContext.SnowLandwalkGrantChoice(targetId);
+
+        List<String> basicLandTypes = List.of("PLAINS", "ISLAND", "SWAMP", "MOUNTAIN", "FOREST");
+        interactionHandlerRegistry.begin(gameData, new PendingInteraction.ColorChoice(
+                playerId, null, null, choiceContext, basicLandTypes, "Choose a land type for snow landwalk."));
+
+        String playerName = gameData.playerIdToName.get(playerId);
+        log.info("Game {} - Awaiting {} to choose a land type for snow landwalk", gameData.id, playerName);
+    }
+
     public void beginOwnLandsBecomeBasicTypeChoice(GameData gameData, UUID playerId) {
         ChoiceContext.OwnLandsBecomeBasicTypeChoice choiceContext = new ChoiceContext.OwnLandsBecomeBasicTypeChoice(playerId);
 

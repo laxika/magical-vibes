@@ -3,6 +3,8 @@ package com.github.laxika.magicalvibes.ai.interaction;
 import com.github.laxika.magicalvibes.service.interaction.InteractionAnswer;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardColor;
+import com.github.laxika.magicalvibes.model.CardSubtype;
+import com.github.laxika.magicalvibes.model.CardSupertype;
 import com.github.laxika.magicalvibes.model.CardType;
 import com.github.laxika.magicalvibes.model.ChoiceContext;
 import com.github.laxika.magicalvibes.model.CounterType;
@@ -153,6 +155,15 @@ class ColorChoiceAiStrategy implements AiInteractionStrategy<PendingInteraction.
         if (context instanceof ChoiceContext.AddBasicLandTypeChoice) {
             String chosenType = "ISLAND";
             log.info("AI: Choosing basic land type to add {} in game {}", chosenType, gameId);
+            ctx.gameActions().answerInteraction(new InteractionAnswer.ListChoiceMade(chosenType));
+            return;
+        }
+
+        if (context instanceof ChoiceContext.SnowLandwalkGrantChoice) {
+            // Snow landwalk only turns on if an opponent controls a snow land of the chosen type,
+            // so pick a type they actually have; otherwise the grant is worthless either way.
+            String chosenType = findOpponentSnowLandType(gameData, aiPlayerId, interaction.options());
+            log.info("AI: Choosing land type {} for snow landwalk in game {}", chosenType, gameId);
             ctx.gameActions().answerInteraction(new InteractionAnswer.ListChoiceMade(chosenType));
             return;
         }
@@ -340,6 +351,30 @@ class ColorChoiceAiStrategy implements AiInteractionStrategy<PendingInteraction.
 
         log.info("AI: Choosing color {} in game {}", bestColor.name(), gameId);
         ctx.gameActions().answerInteraction(new InteractionAnswer.ListChoiceMade(bestColor.name()));
+    }
+
+    /**
+     * Picks the offered land type that an opponent controls a snow land of, so the granted snow
+     * landwalk actually makes the creature unblockable. Falls back to the first option.
+     */
+    private static String findOpponentSnowLandType(GameData gameData, UUID aiPlayerId, List<String> options) {
+        for (Map.Entry<UUID, List<Permanent>> entry : gameData.playerBattlefields.entrySet()) {
+            if (entry.getKey().equals(aiPlayerId)) {
+                continue;
+            }
+            for (Permanent permanent : entry.getValue()) {
+                Card card = permanent.getCard();
+                if (!card.getSupertypes().contains(CardSupertype.SNOW)) {
+                    continue;
+                }
+                for (String option : options) {
+                    if (card.getSubtypes().contains(CardSubtype.valueOf(option))) {
+                        return option;
+                    }
+                }
+            }
+        }
+        return options.isEmpty() ? "ISLAND" : options.getFirst();
     }
 
     private static UUID getOpponentId(GameData gameData, UUID playerId) {

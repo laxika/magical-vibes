@@ -211,6 +211,21 @@ class TurnCleanupServiceTest {
         }
 
         @Test
+        @DisplayName("Clears until-end-of-turn defender-condition evasion grants on permanents")
+        void clearsUnblockableIfDefenderControlsUntilEndOfTurn() {
+            Card card = createCardWithName("Grizzly Bears");
+            Permanent perm = new Permanent(card);
+            perm.getUnblockableIfDefenderControlsUntilEndOfTurn().add(
+                    new com.github.laxika.magicalvibes.model.filter.PermanentHasSubtypePredicate(
+                            com.github.laxika.magicalvibes.model.CardSubtype.SWAMP));
+            gd.playerBattlefields.get(player1Id).add(perm);
+
+            sut.resetEndOfTurnModifiers(gd);
+
+            assertThat(perm.getUnblockableIfDefenderControlsUntilEndOfTurn()).isEmpty();
+        }
+
+        @Test
         @DisplayName("Clears animatedUntilEndOfTurn flag on permanents")
         void clearsAnimatedUntilEndOfTurn() {
             Card card = createCardWithName("Mutavault");

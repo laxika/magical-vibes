@@ -1043,6 +1043,13 @@ public class CombatSimulator {
                 }
             }
         }
+        // Until-end-of-turn defender-condition grants (Barbarian Guides' snow landwalk).
+        for (PermanentPredicate predicate : attacker.getUnblockableIfDefenderControlsUntilEndOfTurn()) {
+            if (defenderBattlefield.stream()
+                    .anyMatch(p -> predicateEvaluationService.matchesPermanentPredicate(gameData, p, predicate))) {
+                return true;
+            }
+        }
         return false;
     }
 

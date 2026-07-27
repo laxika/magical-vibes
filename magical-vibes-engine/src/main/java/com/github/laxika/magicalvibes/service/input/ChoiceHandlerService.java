@@ -3,6 +3,10 @@ package com.github.laxika.magicalvibes.service.input;
 import com.github.laxika.magicalvibes.model.CardColor;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardSubtype;
+import com.github.laxika.magicalvibes.model.CardSupertype;
+import com.github.laxika.magicalvibes.model.filter.PermanentAllOfPredicate;
+import com.github.laxika.magicalvibes.model.filter.PermanentHasSubtypePredicate;
+import com.github.laxika.magicalvibes.model.filter.PermanentHasSupertypePredicate;
 import com.github.laxika.magicalvibes.model.CardType;
 import com.github.laxika.magicalvibes.model.ChoiceContext;
 import com.github.laxika.magicalvibes.model.CounterType;
@@ -191,6 +195,10 @@ public class ChoiceHandlerService {
         }
         if (colorChoice.context() instanceof ChoiceContext.AddBasicLandTypeChoice ctx) {
             handleAddBasicLandTypeChoice(gameData, player, colorName, ctx);
+            return;
+        }
+        if (colorChoice.context() instanceof ChoiceContext.SnowLandwalkGrantChoice ctx) {
+            handleSnowLandwalkGrantChoice(gameData, player, colorName, ctx);
             return;
         }
         if (colorChoice.context() instanceof ChoiceContext.OwnLandsBecomeBasicTypeChoice ctx) {
@@ -1412,6 +1420,32 @@ public class ChoiceHandlerService {
             gameLogService.append(gameData, GameLog.cardThen(targetLand.getCard(),
                     " becomes a " + subtype.getDisplayName() + typeSuffix + durationText + "."));
             log.info("Game {} - {} becomes a {} (replacing={})", gameData.id, targetLand.getCard().getName(), subtype, ctx.replacing());
+        }
+
+        inputCompletionService.processMayAbilitiesThenAutoPass(gameData);
+    }
+
+    /**
+     * Gives the target creature snow landwalk of the chosen type until end of turn (Barbarian
+     * Guides): it can't be blocked while the defending player controls a land that is both snow
+     * and of that type (CR 702.14c).
+     */
+    private void handleSnowLandwalkGrantChoice(GameData gameData, Player player, String subtypeName,
+                                              ChoiceContext.SnowLandwalkGrantChoice ctx) {
+        CardSubtype subtype = CardSubtype.valueOf(subtypeName);
+
+        gameData.interaction.clearAwaitingInput();
+
+        Permanent target = gameQueryService.findPermanentById(gameData, ctx.targetId());
+        if (target != null) {
+            target.getUnblockableIfDefenderControlsUntilEndOfTurn().add(new PermanentAllOfPredicate(List.of(
+                    new PermanentHasSubtypePredicate(subtype),
+                    new PermanentHasSupertypePredicate(CardSupertype.SNOW))));
+
+            gameLogService.append(gameData, GameLog.cardThen(target.getCard(),
+                    " gains snow " + subtype.getDisplayName().toLowerCase() + "walk until end of turn."));
+            log.info("Game {} - {} gains snow {}walk until end of turn",
+                    gameData.id, target.getCard().getName(), subtype);
         }
 
         inputCompletionService.processMayAbilitiesThenAutoPass(gameData);

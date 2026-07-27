@@ -14,12 +14,20 @@ import com.github.laxika.magicalvibes.cards.w.WallOfAir;
 import com.github.laxika.magicalvibes.cards.w.WhiteKnight;
 import com.github.laxika.magicalvibes.cards.z.ZodiacMonkey;
 import com.github.laxika.magicalvibes.model.Card;
+import com.github.laxika.magicalvibes.model.CardSubtype;
+import com.github.laxika.magicalvibes.model.CardSupertype;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.Player;
+import com.github.laxika.magicalvibes.model.filter.PermanentAllOfPredicate;
+import com.github.laxika.magicalvibes.model.filter.PermanentHasSubtypePredicate;
+import com.github.laxika.magicalvibes.model.filter.PermanentHasSupertypePredicate;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
 import com.github.laxika.magicalvibes.testutil.GameTestEngineContext;
+import com.github.laxika.magicalvibes.testutil.TestCards;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
+
+import java.util.EnumSet;
 
 import java.util.List;
 import java.util.Map;
@@ -174,6 +182,28 @@ class BlockLegalityContextTest extends BaseCardTest {
         Permanent bears = addCreatureReady(player2, new GrizzlyBears());
 
         assertThat(reason(bears, zombies)).contains("Scathe Zombies can't be blocked");
+    }
+
+    @Test
+    @DisplayName("Until-end-of-turn defender-condition grant (snow landwalk): needs both the supertype and the subtype")
+    void untilEndOfTurnDefenderConditionGrant() {
+        Permanent zombies = attacking(player1, new ScatheZombies());
+        Permanent bears = addCreatureReady(player2, new GrizzlyBears());
+        zombies.getUnblockableIfDefenderControlsUntilEndOfTurn().add(new PermanentAllOfPredicate(List.of(
+                new PermanentHasSubtypePredicate(CardSubtype.FOREST),
+                new PermanentHasSupertypePredicate(CardSupertype.SNOW))));
+
+        // A plain Forest is the right subtype but not snow (CR 702.14c).
+        harness.addToBattlefield(player2, new Forest());
+        assertThat(reason(bears, zombies)).isEmpty();
+
+        Permanent snowForest = harness.addToBattlefieldAndReturn(player2, new Forest());
+        TestCards.mutableCard(snowForest).setSupertypes(EnumSet.of(CardSupertype.BASIC, CardSupertype.SNOW));
+        assertThat(reason(bears, zombies)).contains("Scathe Zombies can't be blocked");
+
+        // The grant is until end of turn only.
+        zombies.resetModifiers();
+        assertThat(reason(bears, zombies)).isEmpty();
     }
 
     // ===== Shared-context parity =====

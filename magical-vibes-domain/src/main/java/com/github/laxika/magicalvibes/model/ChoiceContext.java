@@ -183,6 +183,16 @@ public sealed interface ChoiceContext {
     }
 
     /**
+     * Choosing the land type for a snow landwalk grant: the target creature can't be blocked as
+     * long as the defending player controls a land that is both snow and of the chosen type
+     * (CR 702.14c), until end of turn. Barbarian Guides.
+     *
+     * @param targetId the target creature that gains snow landwalk of the chosen type
+     */
+    record SnowLandwalkGrantChoice(UUID targetId) implements ChoiceContext {
+    }
+
+    /**
      * The controller has chosen a basic land type; each land they control becomes that type
      * until end of turn, replacing its other land types/mana ability per rule 305.7
      * (Elsewhere Flask).

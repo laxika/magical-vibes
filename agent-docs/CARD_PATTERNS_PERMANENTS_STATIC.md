@@ -40,6 +40,8 @@ All paths relative to `cards/`.
 | Unblockable | `p/PhantomWarrior.java` | STATIC CantBeBlockedEffect |
 | Conditional unblockable | `s/ScrapdiverSerpent.java` | STATIC CantBeBlockedIfDefenderControlsMatchingPermanentEffect |
 | Conditional negative evasion (defender gate) | `a/ArcticFoxes.java` | STATIC CantBeBlockedByCreaturesMatchingPredicateEffect(power≥2, snow land) — restriction only while defender controls matching permanent |
+| Snow landwalk (printed, fixed type) | `l/LegionsOfLimDL.java` | STATIC CantBeBlockedIfDefenderControlsMatchingPermanentEffect(PermanentAllOf(HasSubtype(SWAMP), HasSupertype(SNOW))) — NOT a landwalk `Keyword`, which checks the subtype only |
+| Snow landwalk of a chosen type, until EOT + bounce | `b/BarbarianGuides.java` | `{2}{R}, {T}` ActivatedAbility(TargetFilters.creatureYouControl()) with GrantChosenSnowLandwalkToTargetEffect() + ReturnTargetPermanentToHandAtEndStepEffect() on the shared target — transient form of the row above, stored in `Permanent.unblockableIfDefenderControlsUntilEndOfTurn` |
 | Unblockable while attacking alone | `d/DreamProwler.java` | STATIC CantBeBlockedIfAttackingAloneEffect |
 | Grant unblockable to own creatures | `t/TetsukoUmezawaFugitive.java` | STATIC GrantEffectEffect(CantBeBlockedEffect, ALL_OWN_CREATURES, PermanentAnyOfPredicate(power/toughness filter)) |
 | Attack restriction (defender controls) | `s/SeaMonster.java` | STATIC CantAttackUnlessEffect(new DefendingPlayerControlsPermanent(predicate), desc) — can't attack unless defending player controls a matching permanent |

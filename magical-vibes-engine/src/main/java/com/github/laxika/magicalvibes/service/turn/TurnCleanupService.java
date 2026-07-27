@@ -112,7 +112,8 @@ public class TurnCleanupService {
                     || p.isColorOverridden() || !p.getTransientColors().isEmpty()
                     || !p.getProtectionFromColorsUntilEndOfTurn().isEmpty()
                     || !p.getProtectionFromNonSubtypeCreaturesUntilEndOfTurn().isEmpty()
-                    || !p.getBlockRestrictionsUntilEndOfTurn().isEmpty()) {
+                    || !p.getBlockRestrictionsUntilEndOfTurn().isEmpty()
+                    || !p.getUnblockableIfDefenderControlsUntilEndOfTurn().isEmpty()) {
                 p.resetModifiers();
                 p.setDamagePreventionShield(0);
                 p.setDamageToCounterPreventionShield(0);

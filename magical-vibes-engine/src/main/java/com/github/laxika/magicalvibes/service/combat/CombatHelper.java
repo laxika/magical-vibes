@@ -42,14 +42,26 @@ public final class CombatHelper {
                 if (defenderPredicate == null) {
                     continue;
                 }
-                boolean defenderMatches = defenderBattlefield != null && defenderBattlefield.stream()
-                        .anyMatch(p -> predicateEvaluationService.matchesPermanentPredicate(gameData, p, defenderPredicate));
-                if (defenderMatches) {
+                if (defenderControls(predicateEvaluationService, gameData, defenderBattlefield, defenderPredicate)) {
                     return true;
                 }
             }
         }
+        // Until-end-of-turn defender-condition grants (Barbarian Guides' snow landwalk).
+        for (PermanentPredicate predicate : attacker.getUnblockableIfDefenderControlsUntilEndOfTurn()) {
+            if (defenderControls(predicateEvaluationService, gameData, defenderBattlefield, predicate)) {
+                return true;
+            }
+        }
         return false;
+    }
+
+    private static boolean defenderControls(PredicateEvaluationService predicateEvaluationService,
+                                            GameData gameData,
+                                            List<Permanent> defenderBattlefield,
+                                            PermanentPredicate predicate) {
+        return defenderBattlefield != null && defenderBattlefield.stream()
+                .anyMatch(p -> predicateEvaluationService.matchesPermanentPredicate(gameData, p, predicate));
     }
 
     public static boolean isCantBeBlockedDueToHistoricCast(GameQueryService gameQueryService,

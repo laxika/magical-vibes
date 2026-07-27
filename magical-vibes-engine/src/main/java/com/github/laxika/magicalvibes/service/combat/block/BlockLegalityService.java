@@ -389,6 +389,15 @@ public class BlockLegalityService {
                 }
             }
         }
+        if (!unblockable) {
+            // Until-end-of-turn defender-condition grants (Barbarian Guides' snow landwalk).
+            for (PermanentPredicate predicate : attacker.getUnblockableIfDefenderControlsUntilEndOfTurn()) {
+                if (defenderControls(context, predicate)) {
+                    unblockable = true;
+                    break;
+                }
+            }
+        }
         addAuraGrantedBlockingRestrictions(context, attacker, pairRestrictions);
         GameQueryService.StaticBonus bonus = gameQueryService.computeStaticBonus(gameData, attacker);
         boolean intimidate = gameQueryService.hasKeyword(attacker, bonus, Keyword.INTIMIDATE);

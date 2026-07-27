@@ -4,6 +4,7 @@ import lombok.Getter;
 import lombok.Setter;
 
 import com.github.laxika.magicalvibes.model.effect.CanBeBlockedOnlyByFilterEffect;
+import com.github.laxika.magicalvibes.model.filter.PermanentPredicate;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
 import com.github.laxika.magicalvibes.model.effect.CumulativeUpkeepEffect;
 
@@ -193,6 +194,13 @@ public class Permanent {
      *  Each entry means this creature can be blocked only by blockers matching the restriction's
      *  filter. Consumed by {@code GameQueryService.getBlockRestriction}; cleared by {@link #resetModifiers()}. */
     private final List<CanBeBlockedOnlyByFilterEffect> blockRestrictionsUntilEndOfTurn = new ArrayList<>();
+    /** Defender-condition evasion granted until end of turn by one-shot effects (e.g. Barbarian
+     *  Guides granting snow landwalk of a chosen type). This creature can't be blocked as long as
+     *  the defending player controls a permanent matching any of these predicates — the transient
+     *  counterpart of a printed
+     *  {@link com.github.laxika.magicalvibes.model.effect.CantBeBlockedIfDefenderControlsMatchingPermanentEffect}.
+     *  Consumed by {@code BlockLegalityService}/{@code CombatHelper}; cleared by {@link #resetModifiers()}. */
+    private final List<PermanentPredicate> unblockableIfDefenderControlsUntilEndOfTurn = new ArrayList<>();
     private final Set<UUID> cantBlockIds = new HashSet<>();
     private final Set<UUID> mustBlockIds = new HashSet<>();
     /** If true, this permanent is exiled instead of going to any other zone when it leaves the battlefield (CR 614.6). */
@@ -424,6 +432,7 @@ public class Permanent {
         this.protectionFromColorsUntilEndOfTurn.addAll(source.protectionFromColorsUntilEndOfTurn);
         this.protectionFromNonSubtypeCreaturesUntilEndOfTurn.addAll(source.protectionFromNonSubtypeCreaturesUntilEndOfTurn);
         this.blockRestrictionsUntilEndOfTurn.addAll(source.blockRestrictionsUntilEndOfTurn);
+        this.unblockableIfDefenderControlsUntilEndOfTurn.addAll(source.unblockableIfDefenderControlsUntilEndOfTurn);
         this.exileIfLeavesBattlefield = source.exileIfLeavesBattlefield;
         this.cantBlockIds.addAll(source.cantBlockIds);
         this.mustBlockIds.addAll(source.mustBlockIds);
@@ -822,6 +831,7 @@ public class Permanent {
         this.protectionFromColorsUntilEndOfTurn.clear();
         this.protectionFromNonSubtypeCreaturesUntilEndOfTurn.clear();
         this.blockRestrictionsUntilEndOfTurn.clear();
+        this.unblockableIfDefenderControlsUntilEndOfTurn.clear();
         this.cantBlockIds.clear();
         this.mustBlockIds.clear();
         this.losesAllAbilitiesUntilEndOfTurn = false;

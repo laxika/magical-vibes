@@ -77,6 +77,7 @@ public class GameTestHarness {
     private static TriggerCollectionService staticTriggerCollectionService;
     private static SpellCastingService staticSpellCastingService;
     private static CombatAttackService staticCombatAttackService;
+    private static com.github.laxika.magicalvibes.service.combat.block.CombatBlockService staticCombatBlockService;
     private static StateBasedActionService staticStateBasedActionService;
     private static LifeSupport staticLifeSupport;
     private static CardCatalog staticCardCatalog;
@@ -112,6 +113,7 @@ public class GameTestHarness {
         staticTriggerCollectionService = context.getBean(TriggerCollectionService.class);
         staticSpellCastingService = context.getBean(SpellCastingService.class);
         staticCombatAttackService = context.getBean(CombatAttackService.class);
+        staticCombatBlockService = context.getBean(com.github.laxika.magicalvibes.service.combat.block.CombatBlockService.class);
         staticStateBasedActionService = context.getBean(StateBasedActionService.class);
         staticLifeSupport = context.getBean(LifeSupport.class);
         staticCardCatalog = context.getBean(CardCatalog.class);
@@ -163,6 +165,7 @@ public class GameTestHarness {
     private final TriggerCollectionService triggerCollectionService;
     private final SpellCastingService spellCastingService;
     private final CombatAttackService combatAttackService;
+    private final com.github.laxika.magicalvibes.service.combat.block.CombatBlockService combatBlockService;
     private final StateBasedActionService stateBasedActionService;
     private final LifeSupport lifeSupport;
 
@@ -198,6 +201,7 @@ public class GameTestHarness {
         triggerCollectionService = staticTriggerCollectionService;
         spellCastingService = staticSpellCastingService;
         combatAttackService = staticCombatAttackService;
+        combatBlockService = staticCombatBlockService;
         stateBasedActionService = staticStateBasedActionService;
         lifeSupport = staticLifeSupport;
 
@@ -1188,6 +1192,10 @@ public class GameTestHarness {
 
     public CombatAttackService getCombatAttackService() {
         return combatAttackService;
+    }
+
+    public com.github.laxika.magicalvibes.service.combat.block.CombatBlockService getCombatBlockService() {
+        return combatBlockService;
     }
 
     public void clearMessages() {
