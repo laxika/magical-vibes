@@ -212,7 +212,7 @@ public class AutoPassService {
             // potential pool for live AI players. Headless simulation keeps the strict
             // behavior: rollouts don't enumerate mid-combat casts, and the extra
             // potential-pool build per priority window would slow MCTS for nothing.
-            if (!gameData.simulation && gameData.aiPlayerIds.contains(priorityHolder)
+            if (!gameData.simulation && hasPolicyDrivenPriority(gameData, priorityHolder)
                     && !actionAvailabilityService.getPotentialPlayableCardIndices(
                             gameData, priorityHolder, List.of()).isEmpty()) {
                 invalidateForAllPlayers(gameData);
@@ -322,7 +322,16 @@ public class AutoPassService {
      * force the player to manually pass at every phase.
      */
     private boolean shouldStopForPlayableCards(GameData gameData, UUID priorityHolder) {
-        return gameData.simulation || gameData.aiPlayerIds.contains(priorityHolder);
+        return gameData.simulation || hasPolicyDrivenPriority(gameData, priorityHolder);
+    }
+
+    /**
+     * Whether this seat's priority windows are policy-driven rather than governed by a human's
+     * configured auto-stops — an AI opponent, or a deterministic test that opted every seat in via
+     * {@link GameData#alwaysOfferPriorityWindows} without claiming the seats are AI-controlled.
+     */
+    private boolean hasPolicyDrivenPriority(GameData gameData, UUID priorityHolder) {
+        return gameData.aiPlayerIds.contains(priorityHolder) || gameData.alwaysOfferPriorityWindows;
     }
 
     /**

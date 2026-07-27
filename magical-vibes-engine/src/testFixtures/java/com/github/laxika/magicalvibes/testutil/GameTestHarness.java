@@ -260,6 +260,19 @@ public class GameTestHarness {
         mutationCoordinator.mutate(gameData, () -> stateBasedActionService.performStateBasedActions(gameData));
     }
 
+    /**
+     * Runs a bare engine service call the way the engine does — inside a mutation scope.
+     *
+     * <p>Production only ever enters services such as {@code DrawService}, {@code LifeSupport} or
+     * {@code PermanentRemovalService} from within an outer action, so any branch of theirs that
+     * appends a game log, emits a domain event or opens an interaction requires the scope. A test
+     * that pokes such a service directly must wrap the call, or it throws "... may only be ...
+     * inside their game's mutation scope".
+     */
+    public void inMutationScope(Runnable serviceCall) {
+        mutationCoordinator.mutate(gameData, serviceCall);
+    }
+
     public void setGraveyard(Player player, List<Card> cards) {
         gameData.playerGraveyards.put(player.getId(), new ArrayList<>(cards));
     }

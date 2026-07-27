@@ -52,8 +52,7 @@ class LichsMasteryTest extends BaseCardTest {
         int deckSizeBefore = gd.playerDecks.get(player1.getId()).size();
 
         // Directly call the service to gain life
-        var lifeService = harness.getLifeSupport();
-        lifeService.applyGainLife(gd, player1.getId(), 3);
+        harness.inMutationScope(() -> harness.getLifeSupport().applyGainLife(gd, player1.getId(), 3));
 
         // Should have drawn 3 cards
         assertThat(gd.playerHands.get(player1.getId()).size()).isEqualTo(handSizeBefore + 3);
@@ -169,7 +168,8 @@ class LichsMasteryTest extends BaseCardTest {
                 .findFirst().orElseThrow();
 
         // Directly remove Lich's Mastery from the battlefield (simulating destruction)
-        harness.getPermanentRemovalService().removePermanentToGraveyard(gd, lichsMastery);
+        harness.inMutationScope(
+                () -> harness.getPermanentRemovalService().removePermanentToGraveyard(gd, lichsMastery));
 
         // The LTB trigger puts TargetPlayerLosesGameEffect on the stack
         // Pass priorities to resolve it
@@ -192,7 +192,8 @@ class LichsMasteryTest extends BaseCardTest {
                 .findFirst().orElseThrow();
 
         // Exile Lich's Mastery
-        harness.getPermanentRemovalService().removePermanentToExile(gd, lichsMastery);
+        harness.inMutationScope(
+                () -> harness.getPermanentRemovalService().removePermanentToExile(gd, lichsMastery));
 
         // Pass priorities to resolve the lose-game trigger
         harness.forceActivePlayer(player1);
@@ -214,7 +215,8 @@ class LichsMasteryTest extends BaseCardTest {
                 .findFirst().orElseThrow();
 
         // Bounce Lich's Mastery
-        harness.getPermanentRemovalService().removePermanentToHand(gd, lichsMastery);
+        harness.inMutationScope(
+                () -> harness.getPermanentRemovalService().removePermanentToHand(gd, lichsMastery));
 
         // Pass priorities to resolve the lose-game trigger
         harness.forceActivePlayer(player1);
@@ -238,7 +240,8 @@ class LichsMasteryTest extends BaseCardTest {
         Permanent lichsMastery = gd.playerBattlefields.get(player1.getId()).stream()
                 .filter(p -> p.getCard() instanceof LichsMastery)
                 .findFirst().orElseThrow();
-        harness.getPermanentRemovalService().removePermanentToGraveyard(gd, lichsMastery);
+        harness.inMutationScope(
+                () -> harness.getPermanentRemovalService().removePermanentToGraveyard(gd, lichsMastery));
 
         harness.forceActivePlayer(player1);
         harness.forceStep(TurnStep.PRECOMBAT_MAIN);

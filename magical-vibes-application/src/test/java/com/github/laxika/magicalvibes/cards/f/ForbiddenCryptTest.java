@@ -27,7 +27,7 @@ class ForbiddenCryptTest extends BaseCardTest {
         gd.playerDecks.put(player1.getId(), new ArrayList<>(List.of(new Island())));
         harness.setGraveyard(player1, List.of(new GrizzlyBears()));
 
-        harness.getDrawService().resolveDrawCard(gd, player1.getId());
+        harness.inMutationScope(() -> harness.getDrawService().resolveDrawCard(gd, player1.getId()));
 
         assertThat(gd.interaction.activeInteraction()).isInstanceOf(PendingInteraction.GraveyardChoice.class);
         harness.handleGraveyardCardChosen(player1, 0);
@@ -48,7 +48,7 @@ class ForbiddenCryptTest extends BaseCardTest {
         gd.playerDecks.put(player1.getId(), new ArrayList<>(List.of(new Island())));
         harness.setGraveyard(player1, List.of());
 
-        harness.getDrawService().resolveDrawCard(gd, player1.getId());
+        harness.inMutationScope(() -> harness.getDrawService().resolveDrawCard(gd, player1.getId()));
 
         // Can't return a card — player1 loses; no card was drawn from the library.
         assertThat(gd.status).isEqualTo(GameStatus.FINISHED);

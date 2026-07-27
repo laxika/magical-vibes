@@ -740,6 +740,15 @@ public class GameData {
     public boolean simulation;
 
     /**
+     * When true, auto-pass offers every seat a priority window whenever it can act, exactly as it
+     * does for {@link #aiPlayerIds}. Deterministic tests set this so passing priority leaves the
+     * opponent able to respond at instant speed, <em>without</em> marking the seats AI-controlled:
+     * AI seats are never registered as transport consumers, so marking them would silently suppress
+     * every human projection (see {@code GameEventProjectionSubscriber}).
+     */
+    public boolean alwaysOfferPriorityWindows;
+
+    /**
      * Monotonic metadata for transport-independent domain events. Both counters are advanced only
      * by the engine's outermost mutation coordinator while holding this GameData's monitor.
      */
@@ -1795,6 +1804,7 @@ public class GameData {
         copy.draftId = this.draftId;
         copy.cleanupDiscardPending = this.cleanupDiscardPending;
         copy.simulation = true;
+        copy.alwaysOfferPriorityWindows = this.alwaysOfferPriorityWindows;
         copy.domainActionSequence = this.domainActionSequence;
         copy.domainEventSequence = this.domainEventSequence;
         copy.domainStateVersion = this.domainStateVersion;
