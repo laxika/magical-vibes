@@ -40,8 +40,14 @@ class WuScoutTest extends BaseCardTest {
         harness.passBothPriorities(); // resolve creature spell
         harness.passBothPriorities(); // resolve ETB trigger
 
-        assertThat(gd.gameLog.stream().map(GameLogEntry::plainText)).anyMatch(log -> log.contains("looks at") && log.contains("hand"));
-        assertThat(gd.gameLog.stream().map(GameLogEntry::plainText)).anyMatch(log -> log.contains("Grizzly Bears"));
+        // Card identity is private: only the controller is told what is in the hand. The public log
+        // records that the look happened without naming anything (see CardRevealService#lookAtHand).
+        assertThat(harness.getConn1().getMessagesContaining("REVEAL_HAND"))
+                .anyMatch(message -> message.contains("Grizzly Bears"));
+        assertThat(harness.getConn2().getMessagesContaining("REVEAL_HAND")).isEmpty();
+        assertThat(gd.gameLog.stream().map(GameLogEntry::plainText))
+                .anyMatch(log -> log.contains("looks at") && log.contains("hand"))
+                .noneMatch(log -> log.contains("Grizzly Bears"));
     }
 
     @Test

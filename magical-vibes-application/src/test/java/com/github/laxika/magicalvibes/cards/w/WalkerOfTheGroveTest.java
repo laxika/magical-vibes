@@ -18,7 +18,7 @@ class WalkerOfTheGroveTest extends BaseCardTest {
     void leavesBattlefieldCreatesToken() {
         Permanent walker = harness.addToBattlefieldAndReturn(player1, new WalkerOfTheGrove());
 
-        harness.getPermanentRemovalService().removePermanentToGraveyard(gd, walker);
+        harness.inMutationScope(() -> harness.getPermanentRemovalService().removePermanentToGraveyard(gd, walker));
 
         harness.forceActivePlayer(player1);
         harness.forceStep(TurnStep.PRECOMBAT_MAIN);

@@ -125,7 +125,7 @@ class AwakenerDruidTest extends BaseCardTest {
         Permanent druid = gd.playerBattlefields.get(player1.getId()).stream()
                 .filter(p -> p.getCard().getName().equals("Awakener Druid"))
                 .findFirst().orElseThrow();
-        harness.getPermanentRemovalService().tryDestroyPermanent(gd, druid);
+        harness.inMutationScope(() -> harness.getPermanentRemovalService().tryDestroyPermanent(gd, druid));
 
         // Forest should revert
         Permanent forest = gd.playerBattlefields.get(player1.getId()).stream()
@@ -159,7 +159,7 @@ class AwakenerDruidTest extends BaseCardTest {
         Permanent druid = gd.playerBattlefields.get(player1.getId()).stream()
                 .filter(p -> p.getCard().getName().equals("Awakener Druid"))
                 .findFirst().orElseThrow();
-        harness.getPermanentRemovalService().removePermanentToHand(gd, druid);
+        harness.inMutationScope(() -> harness.getPermanentRemovalService().removePermanentToHand(gd, druid));
 
         // Forest should revert
         Permanent forest = gd.playerBattlefields.get(player1.getId()).stream()
@@ -216,7 +216,7 @@ class AwakenerDruidTest extends BaseCardTest {
         Permanent druid = gd.playerBattlefields.get(player1.getId()).stream()
                 .filter(p -> p.getCard().getName().equals("Awakener Druid"))
                 .findFirst().orElseThrow();
-        harness.getPermanentRemovalService().removePermanentToGraveyard(gd, druid);
+        harness.inMutationScope(() -> harness.getPermanentRemovalService().removePermanentToGraveyard(gd, druid));
 
         // Resolve ETB → no effect
         harness.passBothPriorities();
@@ -299,7 +299,8 @@ class AwakenerDruidTest extends BaseCardTest {
         List<Permanent> druids = gd.playerBattlefields.get(player1.getId()).stream()
                 .filter(p -> p.getCard().getName().equals("Awakener Druid"))
                 .toList();
-        harness.getPermanentRemovalService().tryDestroyPermanent(gd, druids.getFirst());
+        harness.inMutationScope(
+                () -> harness.getPermanentRemovalService().tryDestroyPermanent(gd, druids.getFirst()));
 
         // First Forest should revert, second should remain animated
         Permanent forest1 = gqs.findPermanentById(gd, forest1Id);

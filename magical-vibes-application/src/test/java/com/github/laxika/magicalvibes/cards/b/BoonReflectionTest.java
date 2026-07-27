@@ -12,7 +12,7 @@ class BoonReflectionTest extends BaseCardTest {
         harness.addToBattlefield(player1, new BoonReflection());
         harness.setLife(player1, 20);
 
-        harness.getLifeSupport().applyGainLife(gd, player1.getId(), 3);
+        harness.inMutationScope(() -> harness.getLifeSupport().applyGainLife(gd, player1.getId(), 3));
 
         harness.assertLife(player1, 26); // 3 doubled to 6
     }
@@ -23,7 +23,7 @@ class BoonReflectionTest extends BaseCardTest {
         harness.addToBattlefield(player1, new BoonReflection());
         harness.setLife(player2, 20);
 
-        harness.getLifeSupport().applyGainLife(gd, player2.getId(), 3);
+        harness.inMutationScope(() -> harness.getLifeSupport().applyGainLife(gd, player2.getId(), 3));
 
         harness.assertLife(player2, 23);
     }
@@ -35,7 +35,7 @@ class BoonReflectionTest extends BaseCardTest {
         harness.addToBattlefield(player1, new BoonReflection());
         harness.setLife(player1, 20);
 
-        harness.getLifeSupport().applyGainLife(gd, player1.getId(), 3);
+        harness.inMutationScope(() -> harness.getLifeSupport().applyGainLife(gd, player1.getId(), 3));
 
         harness.assertLife(player1, 32); // 3 * 4
     }
@@ -46,7 +46,7 @@ class BoonReflectionTest extends BaseCardTest {
         harness.addToBattlefield(player1, new BoonReflection());
         harness.setLife(player1, 20);
 
-        harness.getLifeSupport().applySetLifeTotal(gd, player1.getId(), 25);
+        harness.inMutationScope(() -> harness.getLifeSupport().applySetLifeTotal(gd, player1.getId(), 25));
 
         harness.assertLife(player1, 30); // gaining 5 doubled to 10
     }

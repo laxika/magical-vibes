@@ -47,7 +47,7 @@ class AladdinsLampTest extends BaseCardTest {
 
         activateLamp(3);
 
-        harness.getDrawService().resolveDrawCard(gd, player1.getId());
+        harness.inMutationScope(() -> harness.getDrawService().resolveDrawCard(gd, player1.getId()));
         // Look at the top 3 cards: [Llanowar Elves, Shock, Plains].
         assertThat(gd.interaction.activeInteraction()).isInstanceOf(PendingInteraction.LibrarySearch.class);
         assertThat(gd.interaction.activeInteraction(PendingInteraction.LibrarySearch.class).params().cards()).hasSize(3);
@@ -74,11 +74,11 @@ class AladdinsLampTest extends BaseCardTest {
 
         activateLamp(2);
 
-        harness.getDrawService().resolveDrawCard(gd, player1.getId());
+        harness.inMutationScope(() -> harness.getDrawService().resolveDrawCard(gd, player1.getId()));
         harness.getGameService().handleInteractionAnswer(gd, player1, new InteractionAnswer.LibraryCardChosen(0)); // keep Llanowar Elves
 
         // A second draw is ordinary — no look-at interaction is offered.
-        harness.getDrawService().resolveDrawCard(gd, player1.getId());
+        harness.inMutationScope(() -> harness.getDrawService().resolveDrawCard(gd, player1.getId()));
         assertThat(gd.interaction.activeInteraction()).isNull();
         assertThat(handNames()).containsExactly("Llanowar Elves", "Plains");
     }
@@ -92,7 +92,7 @@ class AladdinsLampTest extends BaseCardTest {
 
         activateLamp(1);
 
-        harness.getDrawService().resolveDrawCard(gd, player1.getId());
+        harness.inMutationScope(() -> harness.getDrawService().resolveDrawCard(gd, player1.getId()));
         assertThat(gd.interaction.activeInteraction()).isNull();
         assertThat(handNames()).containsExactly("Llanowar Elves");
     }
@@ -111,7 +111,7 @@ class AladdinsLampTest extends BaseCardTest {
         harness.clearPriorityPassed();
         harness.passBothPriorities();
 
-        harness.getDrawService().resolveDrawCard(gd, player1.getId());
+        harness.inMutationScope(() -> harness.getDrawService().resolveDrawCard(gd, player1.getId()));
         assertThat(gd.interaction.activeInteraction()).isNull();
         assertThat(handNames()).containsExactly("Llanowar Elves");
     }

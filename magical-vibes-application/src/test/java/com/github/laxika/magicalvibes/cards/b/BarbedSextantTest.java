@@ -51,7 +51,7 @@ class BarbedSextantTest extends BaseCardTest {
 
         StepTriggerService stepTriggerService = GameTestEngineContext.get().getBean(StepTriggerService.class);
         gd.activePlayerId = player2.getId();
-        stepTriggerService.handleUpkeepTriggers(gd);
+        harness.inMutationScope(() -> stepTriggerService.handleUpkeepTriggers(gd));
 
         assertThat(gd.playerHands.get(player1.getId())).hasSize(handBefore + 1);
         assertThat(gd.playerDecks.get(player1.getId())).hasSize(deckBefore - 1);
