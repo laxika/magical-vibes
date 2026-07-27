@@ -71,10 +71,4 @@ class CharnelhoardWurmTest extends BaseCardTest {
         gs.declareBlockers(gd, player2, List.of()); // no blockers — the 6/6 hits the player
         harness.passBothPriorities(); // advance to combat damage; the damage trigger fires
     }
-
-    private void resolveAllTriggers() {
-        while (!gd.stack.isEmpty()) {
-            harness.passBothPriorities();
-        }
-    }
 }

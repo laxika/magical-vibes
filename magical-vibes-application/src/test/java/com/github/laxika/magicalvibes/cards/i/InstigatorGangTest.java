@@ -147,7 +147,7 @@ class InstigatorGangTest extends BaseCardTest {
         Permanent gang = addCreatureReady(player1, new InstigatorGang());
         Permanent bears = addCreatureReady(player1, new GrizzlyBears()); // 2/2
 
-        declareAttackers(player1, List.of(0, 1));
+        markAttacking(player1, List.of(0, 1));
 
         // Instigator Gang (2/3) attacking gets +1/+0 from its own static effect = 3/3
         assertThat(gqs.getEffectivePower(gd, gang)).isEqualTo(3);
@@ -165,7 +165,7 @@ class InstigatorGangTest extends BaseCardTest {
         Permanent bears = addCreatureReady(player1, new GrizzlyBears()); // 2/2
 
         // Only attack with Instigator Gang (index 0), not bears
-        declareAttackers(player1, List.of(0));
+        markAttacking(player1, List.of(0));
 
         // Bears is not attacking, should remain 2/2
         assertThat(gqs.getEffectivePower(gd, bears)).isEqualTo(2);
@@ -178,7 +178,7 @@ class InstigatorGangTest extends BaseCardTest {
         addCreatureReady(player1, new InstigatorGang());
         Permanent oppBears = addCreatureReady(player2, new GrizzlyBears()); // 2/2
 
-        declareAttackers(player2, List.of(0));
+        markAttacking(player2, List.of(0));
 
         // Opponent's bears attacking should not get the +1/+0
         assertThat(gqs.getEffectivePower(gd, oppBears)).isEqualTo(2);
@@ -205,7 +205,7 @@ class InstigatorGangTest extends BaseCardTest {
 
         Permanent bears = addCreatureReady(player1, new GrizzlyBears()); // 2/2
 
-        declareAttackers(player1, List.of(0, 1));
+        markAttacking(player1, List.of(0, 1));
 
         // Wildblood Pack (5/5) attacking gets +3/+0 from its own static effect = 8/5
         assertThat(gqs.getEffectivePower(gd, gang)).isEqualTo(8);
@@ -218,7 +218,7 @@ class InstigatorGangTest extends BaseCardTest {
 
     // ===== Helper methods =====
 
-    private void declareAttackers(Player player, List<Integer> attackerIndices) {
+    private void markAttacking(Player player, List<Integer> attackerIndices) {
         List<Permanent> battlefield = gd.playerBattlefields.get(player.getId());
         for (int idx : attackerIndices) {
             battlefield.get(idx).setAttacking(true);

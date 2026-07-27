@@ -8,7 +8,6 @@ import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.PendingInteraction;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.Player;
-import com.github.laxika.magicalvibes.model.TurnStep;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
@@ -38,12 +37,9 @@ class HapatraVizierOfPoisonsTest extends BaseCardTest {
         return hapatra;
     }
 
-    private void resolveCombat() {
-        harness.forceActivePlayer(player1);
-        harness.forceStep(TurnStep.DECLARE_BLOCKERS);
-        harness.clearPriorityPassed();
-        harness.passBothPriorities();
-        harness.passBothPriorities();
+    private void resolveCombatAndTrigger() {
+        resolveCombat();
+        harness.passBothPriorities(); // resolve what combat damage triggered
     }
 
     @Test
@@ -53,7 +49,7 @@ class HapatraVizierOfPoisonsTest extends BaseCardTest {
         harness.addToBattlefield(player2, new GrizzlyBears());
         UUID bearsId = harness.getPermanentId(player2, "Grizzly Bears");
 
-        resolveCombat();
+        resolveCombatAndTrigger();
 
         // Resolution-time "you may" for the combat trigger.
         assertThat(gd.interaction.activeInteraction()).isInstanceOf(PendingInteraction.MayAbilityChoice.class);
@@ -77,7 +73,7 @@ class HapatraVizierOfPoisonsTest extends BaseCardTest {
         attackWithHapatra(player1);
         harness.addToBattlefield(player2, new GrizzlyBears());
 
-        resolveCombat();
+        resolveCombatAndTrigger();
 
         assertThat(gd.interaction.activeInteraction()).isInstanceOf(PendingInteraction.MayAbilityChoice.class);
         harness.handleMayAbilityChosen(player1, false);

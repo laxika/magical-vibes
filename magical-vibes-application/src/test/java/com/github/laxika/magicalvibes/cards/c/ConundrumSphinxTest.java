@@ -8,9 +8,7 @@ import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardColor;
 import com.github.laxika.magicalvibes.model.CardType;
 import com.github.laxika.magicalvibes.model.ChoiceContext;
-import com.github.laxika.magicalvibes.model.Player;
 import com.github.laxika.magicalvibes.model.StackEntryType;
-import com.github.laxika.magicalvibes.model.TurnStep;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
@@ -236,14 +234,6 @@ class ConundrumSphinxTest extends BaseCardTest {
     }
 
     // ===== Helpers =====
-
-    private void declareAttackers(Player player, List<Integer> attackerIndices) {
-        harness.forceActivePlayer(player);
-        harness.forceStep(TurnStep.DECLARE_ATTACKERS);
-        harness.clearPriorityPassed();
-        harness.beginAttackerDeclarationInput();
-        gs.declareAttackers(gd, player, attackerIndices);
-    }
 
     private static Card createNamedCard(String name) {
         Card card = new Card();

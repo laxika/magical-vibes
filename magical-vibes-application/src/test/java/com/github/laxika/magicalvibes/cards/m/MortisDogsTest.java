@@ -4,7 +4,6 @@ import com.github.laxika.magicalvibes.model.PendingInteraction;
 
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
 import com.github.laxika.magicalvibes.model.Permanent;
-import com.github.laxika.magicalvibes.model.Player;
 import com.github.laxika.magicalvibes.model.TurnStep;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
 import org.junit.jupiter.api.DisplayName;
@@ -119,20 +118,6 @@ class MortisDogsTest extends BaseCardTest {
     }
 
     // ===== Helpers =====
-
-    private void declareAttackers(Player player, List<Integer> attackerIndices) {
-        harness.forceActivePlayer(player);
-        harness.forceStep(TurnStep.DECLARE_ATTACKERS);
-        harness.clearPriorityPassed();
-        harness.beginAttackerDeclarationInput();
-        gs.declareAttackers(gd, player, attackerIndices);
-    }
-
-    private void resolveAllTriggers() {
-        while (!gd.stack.isEmpty()) {
-            harness.passBothPriorities();
-        }
-    }
 
     /**
      * Sets up combat where Mortis Dogs (player1, 2/2) attacks and is blocked by a 3/3 creature (player2).

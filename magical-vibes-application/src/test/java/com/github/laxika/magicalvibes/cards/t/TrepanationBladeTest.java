@@ -8,7 +8,6 @@ import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.Player;
 import com.github.laxika.magicalvibes.model.StackEntryType;
-import com.github.laxika.magicalvibes.model.TurnStep;
 import com.github.laxika.magicalvibes.model.effect.EquipEffect;
 import com.github.laxika.magicalvibes.model.filter.ControlledPermanentPredicateTargetFilter;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
@@ -254,13 +253,5 @@ class TrepanationBladeTest extends BaseCardTest {
             deck.add(new GrizzlyBears());
         }
         gd.playerDecks.put(player.getId(), deck);
-    }
-
-    private void declareAttackers(Player player, List<Integer> attackerIndices) {
-        harness.forceActivePlayer(player);
-        harness.forceStep(TurnStep.DECLARE_ATTACKERS);
-        harness.clearPriorityPassed();
-        harness.beginAttackerDeclarationInput();
-        gs.declareAttackers(gd, player, attackerIndices);
     }
 }

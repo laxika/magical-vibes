@@ -4,7 +4,6 @@ import com.github.laxika.magicalvibes.model.PendingInteraction;
 import com.github.laxika.magicalvibes.cards.s.SerraAngel;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.Permanent;
-import com.github.laxika.magicalvibes.model.TurnStep;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
@@ -18,13 +17,6 @@ class NeurokCommandoTest extends BaseCardTest {
         perm.setSummoningSick(false);
         gd.playerBattlefields.get(player1.getId()).add(perm);
         return perm;
-    }
-
-    private void resolveCombat() {
-        harness.forceActivePlayer(player1);
-        harness.forceStep(TurnStep.DECLARE_BLOCKERS);
-        harness.clearPriorityPassed();
-        harness.passBothPriorities();
     }
 
     // ===== Combat damage trigger: accept =====

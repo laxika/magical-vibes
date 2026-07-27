@@ -166,12 +166,4 @@ class ThraximundarTest extends BaseCardTest {
         harness.addMana(player1, ManaColor.BLACK, 2);
         harness.castSorcery(player1, 0, target.getId());
     }
-
-    private void declareAttackers(Player player, List<Integer> attackerIndices) {
-        harness.forceActivePlayer(player);
-        harness.forceStep(TurnStep.DECLARE_ATTACKERS);
-        harness.clearPriorityPassed();
-        harness.beginAttackerDeclarationInput();
-        gs.declareAttackers(gd, player, attackerIndices);
-    }
 }

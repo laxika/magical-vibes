@@ -7,7 +7,6 @@ import com.github.laxika.magicalvibes.cards.w.WallOfWood;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.Player;
 import com.github.laxika.magicalvibes.model.StackEntryType;
-import com.github.laxika.magicalvibes.model.TurnStep;
 import com.github.laxika.magicalvibes.networking.message.BlockerAssignment;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
 import org.junit.jupiter.api.DisplayName;
@@ -30,7 +29,7 @@ class VenomTest extends BaseCardTest {
         Permanent attacker = addReadySpider(player1); // green, non-Wall
         attacker.setAttacking(true);
 
-        setupDeclareBlockers();
+        prepareDeclareBlockers();
         gs.declareBlockers(gd, player2, List.of(new BlockerAssignment(0, 0)));
 
         // The block trigger references the blocked attacker (the "other creature"), sourced from Venom
@@ -56,7 +55,7 @@ class VenomTest extends BaseCardTest {
 
         Permanent blocker = addReadySpider(player2); // green, non-Wall
 
-        setupDeclareBlockers();
+        prepareDeclareBlockers();
         gs.declareBlockers(gd, player2, List.of(new BlockerAssignment(0, 0)));
 
         assertThat(gd.stack).anyMatch(se ->
@@ -79,7 +78,7 @@ class VenomTest extends BaseCardTest {
 
         addReadySpider(player2); // 2/4 survives Grizzly Bears' 2 combat damage
 
-        setupDeclareBlockers();
+        prepareDeclareBlockers();
         gs.declareBlockers(gd, player2, List.of(new BlockerAssignment(0, 0)));
 
         // Resolve the trigger, then advance through end of combat
@@ -103,7 +102,7 @@ class VenomTest extends BaseCardTest {
 
         addReadyWall(player2); // Wall — exempt from Venom's filter
 
-        setupDeclareBlockers();
+        prepareDeclareBlockers();
         gs.declareBlockers(gd, player2, List.of(new BlockerAssignment(0, 0)));
 
         // The trigger fires but the non-Wall filter fails at resolution
@@ -122,7 +121,7 @@ class VenomTest extends BaseCardTest {
         Permanent attacker = addReadySpider(player1);
         attacker.setAttacking(true);
 
-        setupDeclareBlockers();
+        prepareDeclareBlockers();
         gs.declareBlockers(gd, player2, List.of(new BlockerAssignment(0, 0)));
 
         long venomTriggers = gd.stack.stream()
@@ -165,12 +164,5 @@ class VenomTest extends BaseCardTest {
         perm.setSummoningSick(false);
         gd.playerBattlefields.get(player.getId()).add(perm);
         return perm;
-    }
-
-    private void setupDeclareBlockers() {
-        harness.forceActivePlayer(player1);
-        harness.forceStep(TurnStep.DECLARE_BLOCKERS);
-        harness.clearPriorityPassed();
-        harness.beginBlockerDeclarationInput();
     }
 }

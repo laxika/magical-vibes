@@ -16,13 +16,6 @@ import static org.assertj.core.api.Assertions.assertThat;
 
 class MinionOfTeveshSzatTest extends BaseCardTest {
 
-    private void advanceToUpkeep(Player activePlayer) {
-        harness.forceActivePlayer(activePlayer);
-        harness.forceStep(TurnStep.UNTAP);
-        harness.clearPriorityPassed();
-        harness.passBothPriorities();
-    }
-
     private Permanent addMinionReady(Player owner) {
         Permanent perm = harness.addToBattlefieldAndReturn(owner, new MinionOfTeveshSzat());
         perm.setSummoningSick(false);

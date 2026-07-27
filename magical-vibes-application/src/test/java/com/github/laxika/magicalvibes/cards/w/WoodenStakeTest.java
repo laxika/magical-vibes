@@ -5,7 +5,6 @@ import com.github.laxika.magicalvibes.cards.v.VampireAristocrat;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.Player;
 import com.github.laxika.magicalvibes.model.StackEntryType;
-import com.github.laxika.magicalvibes.model.TurnStep;
 import com.github.laxika.magicalvibes.networking.message.BlockerAssignment;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
 import org.junit.jupiter.api.DisplayName;
@@ -29,7 +28,7 @@ class WoodenStakeTest extends BaseCardTest {
         Permanent vampire = addReadyVampire(player1);
         vampire.setAttacking(true);
 
-        setupDeclareBlockers();
+        prepareDeclareBlockers();
         gs.declareBlockers(gd, player2, List.of(new BlockerAssignment(0, 0)));
 
         assertThat(gd.stack).anyMatch(se ->
@@ -49,7 +48,7 @@ class WoodenStakeTest extends BaseCardTest {
         Permanent vampire = addReadyVampire(player1);
         vampire.setAttacking(true);
 
-        setupDeclareBlockers();
+        prepareDeclareBlockers();
         gs.declareBlockers(gd, player2, List.of(new BlockerAssignment(0, 0)));
         harness.passBothPriorities();
 
@@ -74,7 +73,7 @@ class WoodenStakeTest extends BaseCardTest {
         Permanent attacker = addReadyCreature(player1);
         attacker.setAttacking(true);
 
-        setupDeclareBlockers();
+        prepareDeclareBlockers();
         gs.declareBlockers(gd, player2, List.of(new BlockerAssignment(0, 0)));
 
         long stakeTriggers = gd.stack.stream()
@@ -95,7 +94,7 @@ class WoodenStakeTest extends BaseCardTest {
 
         Permanent vampire = addReadyVampire(player2);
 
-        setupDeclareBlockers();
+        prepareDeclareBlockers();
         gs.declareBlockers(gd, player2, List.of(new BlockerAssignment(0, 0)));
 
         assertThat(gd.stack).anyMatch(se ->
@@ -115,7 +114,7 @@ class WoodenStakeTest extends BaseCardTest {
 
         Permanent vampire = addReadyVampire(player2);
 
-        setupDeclareBlockers();
+        prepareDeclareBlockers();
         gs.declareBlockers(gd, player2, List.of(new BlockerAssignment(0, 0)));
         harness.passBothPriorities();
 
@@ -136,7 +135,7 @@ class WoodenStakeTest extends BaseCardTest {
 
         addReadyCreature(player2);
 
-        setupDeclareBlockers();
+        prepareDeclareBlockers();
         gs.declareBlockers(gd, player2, List.of(new BlockerAssignment(0, 0)));
 
         long stakeTriggers = gd.stack.stream()
@@ -158,7 +157,7 @@ class WoodenStakeTest extends BaseCardTest {
         Permanent vampire = addReadyVampire(player2);
         addReadyCreature(player2);
 
-        setupDeclareBlockers();
+        prepareDeclareBlockers();
         gs.declareBlockers(gd, player2, List.of(
                 new BlockerAssignment(0, 0),
                 new BlockerAssignment(1, 0)
@@ -184,7 +183,7 @@ class WoodenStakeTest extends BaseCardTest {
         Permanent vampire = addReadyVampire(player1);
         vampire.setAttacking(true);
 
-        setupDeclareBlockers();
+        prepareDeclareBlockers();
         gs.declareBlockers(gd, player2, List.of(new BlockerAssignment(0, 0)));
 
         long stakeTriggers = gd.stack.stream()
@@ -217,12 +216,5 @@ class WoodenStakeTest extends BaseCardTest {
         perm.setSummoningSick(false);
         gd.playerBattlefields.get(player.getId()).add(perm);
         return perm;
-    }
-
-    private void setupDeclareBlockers() {
-        harness.forceActivePlayer(player1);
-        harness.forceStep(TurnStep.DECLARE_BLOCKERS);
-        harness.clearPriorityPassed();
-        harness.beginBlockerDeclarationInput();
     }
 }

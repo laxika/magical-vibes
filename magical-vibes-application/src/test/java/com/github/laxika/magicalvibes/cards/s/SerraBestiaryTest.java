@@ -109,13 +109,6 @@ class SerraBestiaryTest extends BaseCardTest {
 
     // ===== Upkeep sacrifice-unless-pay =====
 
-    private void advanceToUpkeep(Player activePlayer) {
-        harness.forceActivePlayer(activePlayer);
-        harness.forceStep(TurnStep.UNTAP);
-        harness.clearPriorityPassed();
-        harness.passBothPriorities(); // advances to UPKEEP, trigger fires
-    }
-
     @Test
     @DisplayName("Declining to pay {W}{W} sacrifices Serra Bestiary")
     void decliningPaymentSacrificesAura() {

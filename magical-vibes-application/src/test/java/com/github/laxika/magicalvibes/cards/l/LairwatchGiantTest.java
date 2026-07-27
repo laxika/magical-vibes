@@ -27,7 +27,7 @@ class LairwatchGiantTest extends BaseCardTest {
         attacker1.setAttacking(true);
         attacker2.setAttacking(true);
 
-        setupDeclareBlockers();
+        prepareDeclareBlockers();
         gs.declareBlockers(gd, player2, List.of(
                 new BlockerAssignment(0, 0),
                 new BlockerAssignment(0, 1)
@@ -57,7 +57,7 @@ class LairwatchGiantTest extends BaseCardTest {
         Permanent attacker = addReadyBears(player1);
         attacker.setAttacking(true);
 
-        setupDeclareBlockers();
+        prepareDeclareBlockers();
         gs.declareBlockers(gd, player2, List.of(new BlockerAssignment(0, 0)));
 
         assertThat(gd.stack)
@@ -74,7 +74,7 @@ class LairwatchGiantTest extends BaseCardTest {
         attacker1.setAttacking(true);
         attacker2.setAttacking(true);
 
-        setupDeclareBlockers();
+        prepareDeclareBlockers();
         gs.declareBlockers(gd, player2, List.of(
                 new BlockerAssignment(0, 0),
                 new BlockerAssignment(0, 1)
@@ -100,12 +100,5 @@ class LairwatchGiantTest extends BaseCardTest {
         perm.setSummoningSick(false);
         gd.playerBattlefields.get(player.getId()).add(perm);
         return perm;
-    }
-
-    private void setupDeclareBlockers() {
-        harness.forceActivePlayer(player1);
-        harness.forceStep(TurnStep.DECLARE_BLOCKERS);
-        harness.clearPriorityPassed();
-        harness.beginBlockerDeclarationInput();
     }
 }

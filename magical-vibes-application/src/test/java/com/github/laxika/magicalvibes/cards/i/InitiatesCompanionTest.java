@@ -34,13 +34,6 @@ class InitiatesCompanionTest extends BaseCardTest {
         return perm;
     }
 
-    private void resolveCombat() {
-        harness.forceActivePlayer(player1);
-        harness.forceStep(TurnStep.DECLARE_BLOCKERS);
-        harness.clearPriorityPassed();
-        harness.passBothPriorities();
-    }
-
     @Test
     @DisplayName("Combat damage to a player prompts a choice of any creature or land, excluding other permanents")
     void promptsToChooseCreatureOrLand() {

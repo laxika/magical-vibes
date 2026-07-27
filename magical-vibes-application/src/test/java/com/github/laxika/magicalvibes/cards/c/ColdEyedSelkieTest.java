@@ -2,12 +2,10 @@ package com.github.laxika.magicalvibes.cards.c;
 
 import com.github.laxika.magicalvibes.cards.f.Forest;
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
-import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CounterType;
 import com.github.laxika.magicalvibes.model.PendingInteraction;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.Player;
-import com.github.laxika.magicalvibes.model.TurnStep;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
@@ -28,7 +26,7 @@ class ColdEyedSelkieTest extends BaseCardTest {
         harness.setLibrary(player1, new ArrayList<>(List.of(new Forest(), new Forest(), new Forest(), new Forest())));
         harness.setHand(player1, new ArrayList<>());
 
-        resolveCombat();
+        resolveCombatAndTrigger();
 
         // The controller may draw that many cards; accept.
         assertThat(gd.interaction.activeInteraction()).isInstanceOf(PendingInteraction.MayAbilityChoice.class);
@@ -45,7 +43,7 @@ class ColdEyedSelkieTest extends BaseCardTest {
         harness.setLibrary(player1, new ArrayList<>(List.of(new Forest(), new Forest())));
         harness.setHand(player1, new ArrayList<>());
 
-        resolveCombat();
+        resolveCombatAndTrigger();
 
         assertThat(gd.interaction.activeInteraction()).isInstanceOf(PendingInteraction.MayAbilityChoice.class);
         harness.handleMayAbilityChosen(player1, false);
@@ -63,7 +61,7 @@ class ColdEyedSelkieTest extends BaseCardTest {
         blocker.addBlockingTarget(0);
         harness.setLibrary(player1, new ArrayList<>(List.of(new Forest())));
 
-        resolveCombat();
+        resolveCombatAndTrigger();
 
         assertThat(gd.interaction.activeInteraction(PendingInteraction.MayAbilityChoice.class)).isNull();
     }
@@ -76,11 +74,8 @@ class ColdEyedSelkieTest extends BaseCardTest {
         return selkie;
     }
 
-    private void resolveCombat() {
-        harness.forceActivePlayer(player1);
-        harness.forceStep(TurnStep.DECLARE_BLOCKERS);
-        harness.clearPriorityPassed();
-        harness.passBothPriorities();
-        harness.passBothPriorities();
+    private void resolveCombatAndTrigger() {
+        resolveCombat();
+        harness.passBothPriorities(); // resolve what combat damage triggered
     }
 }

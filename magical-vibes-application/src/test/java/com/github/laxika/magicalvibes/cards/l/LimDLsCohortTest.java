@@ -21,7 +21,7 @@ class LimDLsCohortTest extends BaseCardTest {
         attacker.setAttacking(true);
         addCreatureReady(player2, new LimDLsCohort());
 
-        setupDeclareBlockers();
+        prepareDeclareBlockers();
         gs.declareBlockers(gd, player2, List.of(new BlockerAssignment(0, 0)));
         resolveAllTriggers();
 
@@ -35,7 +35,7 @@ class LimDLsCohortTest extends BaseCardTest {
         cohort.setAttacking(true);
         Permanent blocker = addCreatureReady(player2, new GrizzlyBears());
 
-        setupDeclareBlockers();
+        prepareDeclareBlockers();
         gs.declareBlockers(gd, player2, List.of(new BlockerAssignment(0, 0)));
         resolveAllTriggers();
 
@@ -49,7 +49,7 @@ class LimDLsCohortTest extends BaseCardTest {
         attacker.setAttacking(true);
         addCreatureReady(player2, new LimDLsCohort());
 
-        setupDeclareBlockers();
+        prepareDeclareBlockers();
         gs.declareBlockers(gd, player2, List.of(new BlockerAssignment(0, 0)));
         resolveAllTriggers();
         assertThat(attacker.isCantRegenerateThisTurn()).isTrue();
@@ -59,18 +59,5 @@ class LimDLsCohortTest extends BaseCardTest {
         harness.passBothPriorities(); // advances END -> CLEANUP
 
         assertThat(attacker.isCantRegenerateThisTurn()).isFalse();
-    }
-
-    private void setupDeclareBlockers() {
-        harness.forceActivePlayer(player1);
-        harness.forceStep(TurnStep.DECLARE_BLOCKERS);
-        harness.clearPriorityPassed();
-        harness.beginBlockerDeclarationInput();
-    }
-
-    private void resolveAllTriggers() {
-        while (!gd.stack.isEmpty()) {
-            harness.passBothPriorities();
-        }
     }
 }

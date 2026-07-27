@@ -143,14 +143,6 @@ class SanctumSeekerTest extends BaseCardTest {
 
     // ===== Helpers =====
 
-    private void declareAttackers(List<Integer> attackerIndices) {
-        harness.forceActivePlayer(player1);
-        harness.forceStep(TurnStep.DECLARE_ATTACKERS);
-        harness.clearPriorityPassed();
-        harness.beginAttackerDeclarationInput();
-        gs.declareAttackers(gd, player1, attackerIndices);
-    }
-
     private Permanent addSanctumSeekerReady(Player player) {
         SanctumSeeker card = new SanctumSeeker();
         Permanent perm = new Permanent(card);

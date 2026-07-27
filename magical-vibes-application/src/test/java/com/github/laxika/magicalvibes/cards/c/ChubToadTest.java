@@ -22,7 +22,7 @@ class ChubToadTest extends BaseCardTest {
         toad.setAttacking(true);
         addReadyBears(player2);
 
-        setupDeclareBlockers();
+        prepareDeclareBlockers();
         gs.declareBlockers(gd, player2, List.of(new BlockerAssignment(0, 0)));
         harness.passBothPriorities();
 
@@ -37,7 +37,7 @@ class ChubToadTest extends BaseCardTest {
         attacker.setAttacking(true);
         Permanent toad = addReadyToad(player2);
 
-        setupDeclareBlockers();
+        prepareDeclareBlockers();
         gs.declareBlockers(gd, player2, List.of(new BlockerAssignment(0, 0)));
         harness.passBothPriorities();
 
@@ -51,7 +51,7 @@ class ChubToadTest extends BaseCardTest {
         Permanent toad = addReadyToad(player1);
         toad.setAttacking(true);
 
-        setupDeclareBlockers();
+        prepareDeclareBlockers();
         gs.declareBlockers(gd, player2, List.of());
 
         assertThat(gd.stack).isEmpty();
@@ -66,7 +66,7 @@ class ChubToadTest extends BaseCardTest {
         toad.setAttacking(true);
         addReadyBears(player2);
 
-        setupDeclareBlockers();
+        prepareDeclareBlockers();
         gs.declareBlockers(gd, player2, List.of(new BlockerAssignment(0, 0)));
         harness.passBothPriorities();
 
@@ -90,12 +90,5 @@ class ChubToadTest extends BaseCardTest {
         permanent.setSummoningSick(false);
         gd.playerBattlefields.get(player.getId()).add(permanent);
         return permanent;
-    }
-
-    private void setupDeclareBlockers() {
-        harness.forceActivePlayer(player1);
-        harness.forceStep(TurnStep.DECLARE_BLOCKERS);
-        harness.clearPriorityPassed();
-        harness.beginBlockerDeclarationInput();
     }
 }

@@ -133,11 +133,4 @@ class ArchangelAvacynTest extends BaseCardTest {
         harness.castInstant(caster, 0, targetId);
         harness.passBothPriorities();
     }
-
-    private void advanceToUpkeep(Player activePlayer) {
-        harness.forceActivePlayer(activePlayer);
-        harness.forceStep(TurnStep.UNTAP);
-        harness.clearPriorityPassed();
-        harness.passBothPriorities();
-    }
 }

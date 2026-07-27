@@ -249,11 +249,4 @@ class MagebaneArmorTest extends BaseCardTest {
         gd.playerBattlefields.get(player.getId()).add(perm);
         return perm;
     }
-
-    private void resolveCombat() {
-        harness.forceActivePlayer(player1);
-        harness.forceStep(TurnStep.DECLARE_BLOCKERS);
-        harness.clearPriorityPassed();
-        harness.passBothPriorities();
-    }
 }

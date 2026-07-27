@@ -224,13 +224,6 @@ class RevelInRichesTest extends BaseCardTest {
 
     // ===== Helpers =====
 
-    private void advanceToUpkeep(Player activePlayer) {
-        harness.forceActivePlayer(activePlayer);
-        harness.forceStep(TurnStep.UNTAP);
-        harness.clearPriorityPassed();
-        harness.passBothPriorities(); // advances to UPKEEP
-    }
-
     private void addTreasureTokens(Player player, int count) {
         for (int i = 0; i < count; i++) {
             Card treasureToken = new Card();

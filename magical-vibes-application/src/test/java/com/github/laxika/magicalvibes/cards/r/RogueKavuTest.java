@@ -2,7 +2,6 @@ package com.github.laxika.magicalvibes.cards.r;
 
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
 import com.github.laxika.magicalvibes.model.Permanent;
-import com.github.laxika.magicalvibes.model.Player;
 import com.github.laxika.magicalvibes.model.StackEntryType;
 import com.github.laxika.magicalvibes.model.TurnStep;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
@@ -67,13 +66,5 @@ class RogueKavuTest extends BaseCardTest {
         assertThat(gd.stack).noneMatch(e -> e.getCard().getName().equals("Rogue Kavu"));
         assertThat(gqs.getEffectivePower(gd, kavu)).isEqualTo(1);
         assertThat(gqs.getEffectiveToughness(gd, kavu)).isEqualTo(1);
-    }
-
-    private void declareAttackers(Player player, List<Integer> attackerIndices) {
-        harness.forceActivePlayer(player);
-        harness.forceStep(TurnStep.DECLARE_ATTACKERS);
-        harness.clearPriorityPassed();
-        harness.beginAttackerDeclarationInput();
-        gs.declareAttackers(gd, player, attackerIndices);
     }
 }

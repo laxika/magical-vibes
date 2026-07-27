@@ -150,11 +150,4 @@ class GideonOfTheTrialsTest extends BaseCardTest {
         harness.forceStep(TurnStep.PRECOMBAT_MAIN);
         return perm;
     }
-
-    private void resolveCombat(Player activePlayer) {
-        harness.forceActivePlayer(activePlayer);
-        harness.forceStep(TurnStep.DECLARE_BLOCKERS);
-        harness.clearPriorityPassed();
-        harness.passBothPriorities();
-    }
 }

@@ -1,8 +1,6 @@
 package com.github.laxika.magicalvibes.cards.t;
 
 import com.github.laxika.magicalvibes.model.GameStatus;
-import com.github.laxika.magicalvibes.model.Player;
-import com.github.laxika.magicalvibes.model.TurnStep;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
@@ -15,13 +13,6 @@ class TriskaidekaphobiaTest extends BaseCardTest {
             "Each player with exactly 13 life loses the game, then each player gains 1 life.";
     private static final String LOSE_MODE =
             "Each player with exactly 13 life loses the game, then each player loses 1 life.";
-
-    private void advanceToUpkeep(Player activePlayer) {
-        harness.forceActivePlayer(activePlayer);
-        harness.forceStep(TurnStep.UNTAP);
-        harness.clearPriorityPassed();
-        harness.passBothPriorities(); // advances to UPKEEP, trigger fires
-    }
 
     @Test
     @DisplayName("Gain mode: nobody at 13 — each player gains 1 life")

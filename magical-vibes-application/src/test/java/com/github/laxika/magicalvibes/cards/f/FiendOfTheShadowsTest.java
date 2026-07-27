@@ -32,7 +32,7 @@ class FiendOfTheShadowsTest extends BaseCardTest {
         addAttackingFiend(player1);
         harness.setHand(player2, new ArrayList<>(List.of(new GrizzlyBears(), createForest())));
 
-        resolveCombat();
+        resolveCombatAndTrigger();
 
         assertThat(gd.interaction.activeInteraction()).isInstanceOf(PendingInteraction.ExileFromHandChoice.class);
         assertThat(((PendingInteraction.HandChoice) gd.interaction.activeInteraction()).playerId()).isEqualTo(player2.getId());
@@ -44,7 +44,7 @@ class FiendOfTheShadowsTest extends BaseCardTest {
         addAttackingFiend(player1);
         harness.setHand(player2, new ArrayList<>(List.of(new GrizzlyBears(), createForest())));
 
-        resolveCombat();
+        resolveCombatAndTrigger();
         harness.handleCardChosen(player2, 0); // player2 chooses to exile Grizzly Bears
 
         assertThat(gd.playerHands.get(player2.getId())).hasSize(1);
@@ -60,7 +60,7 @@ class FiendOfTheShadowsTest extends BaseCardTest {
         addAttackingFiend(player1);
         harness.setHand(player2, new ArrayList<>(List.of(new GrizzlyBears())));
 
-        resolveCombat();
+        resolveCombatAndTrigger();
         harness.handleCardChosen(player2, 0);
 
         Card exiled = gd.getPlayerExiledCards(player2.getId()).stream()
@@ -76,7 +76,7 @@ class FiendOfTheShadowsTest extends BaseCardTest {
         addAttackingFiend(player1);
         harness.setHand(player2, new ArrayList<>(List.of(new GrizzlyBears())));
 
-        resolveCombat();
+        resolveCombatAndTrigger();
         harness.handleCardChosen(player2, 0);
 
         Card exiled = gd.getPlayerExiledCards(player2.getId()).stream()
@@ -95,7 +95,7 @@ class FiendOfTheShadowsTest extends BaseCardTest {
         addAttackingFiend(player1);
         harness.setHand(player2, new ArrayList<>(List.of(new GrizzlyBears())));
 
-        resolveCombat();
+        resolveCombatAndTrigger();
         harness.handleCardChosen(player2, 0);
 
         Card exiled = gd.getPlayerExiledCards(player2.getId()).stream()
@@ -121,7 +121,7 @@ class FiendOfTheShadowsTest extends BaseCardTest {
         addAttackingFiend(player1);
         harness.setHand(player2, new ArrayList<>());
 
-        resolveCombat();
+        resolveCombatAndTrigger();
 
         assertThat(gd.interaction.activeInteraction()).isNull();
         assertThat(gd.gameLog.stream().map(GameLogEntry::plainText)).anyMatch(log -> log.contains("no cards to exile"));
@@ -136,7 +136,7 @@ class FiendOfTheShadowsTest extends BaseCardTest {
         blocker.addBlockingTarget(0);
         harness.setHand(player2, new ArrayList<>(List.of(createForest())));
 
-        resolveCombat();
+        resolveCombatAndTrigger();
 
         assertThat(gd.interaction.activeInteraction(PendingInteraction.ExileFromHandChoice.class)).isNull();
         // Note: Fiend has flying so a non-flying/reach blocker is illegal, but this verifies that
@@ -176,13 +176,9 @@ class FiendOfTheShadowsTest extends BaseCardTest {
         return fiend;
     }
 
-    private void resolveCombat() {
-        harness.forceActivePlayer(player1);
-        harness.forceStep(TurnStep.DECLARE_BLOCKERS);
-        harness.clearPriorityPassed();
-        // Pass through combat damage and the resulting triggered ability resolution.
-        harness.passBothPriorities();
-        harness.passBothPriorities();
+    private void resolveCombatAndTrigger() {
+        resolveCombat();
+        harness.passBothPriorities(); // resolve what combat damage triggered
     }
 
     private Card createForest() {

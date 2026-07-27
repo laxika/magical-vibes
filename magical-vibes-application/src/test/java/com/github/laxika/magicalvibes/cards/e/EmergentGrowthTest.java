@@ -150,11 +150,4 @@ class EmergentGrowthTest extends BaseCardTest {
         permanent.setSummoningSick(false);
         return permanent;
     }
-
-    private void prepareDeclareBlockers() {
-        harness.forceActivePlayer(player1);
-        harness.forceStep(TurnStep.DECLARE_BLOCKERS);
-        harness.clearPriorityPassed();
-        harness.beginBlockerDeclarationInput();
-    }
 }

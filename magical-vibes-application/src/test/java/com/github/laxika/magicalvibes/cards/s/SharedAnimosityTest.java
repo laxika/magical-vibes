@@ -7,7 +7,6 @@ import com.github.laxika.magicalvibes.model.CardType;
 import com.github.laxika.magicalvibes.model.Keyword;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.Player;
-import com.github.laxika.magicalvibes.model.TurnStep;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
@@ -27,7 +26,7 @@ class SharedAnimosityTest extends BaseCardTest {
         Permanent goblin2 = addCreature(player1, List.of(CardSubtype.GOBLIN));
 
         declareAttackers(List.of(1, 2));
-        resolveAllTriggers();
+        resolveQueuedTriggers();
 
         // Two Goblins attack: each has exactly one other attacker sharing a type -> +1/+0.
         assertThat(goblin1.getPowerModifier()).isEqualTo(1);
@@ -44,7 +43,7 @@ class SharedAnimosityTest extends BaseCardTest {
         Permanent goblin3 = addCreature(player1, List.of(CardSubtype.GOBLIN));
 
         declareAttackers(List.of(1, 2, 3));
-        resolveAllTriggers();
+        resolveQueuedTriggers();
 
         // Each Goblin sees two other sharing attackers -> +2/+0.
         assertThat(goblin1.getPowerModifier()).isEqualTo(2);
@@ -60,7 +59,7 @@ class SharedAnimosityTest extends BaseCardTest {
         Permanent elf = addCreature(player1, List.of(CardSubtype.ELF));
 
         declareAttackers(List.of(1, 2));
-        resolveAllTriggers();
+        resolveQueuedTriggers();
 
         assertThat(goblin.getPowerModifier()).isEqualTo(0);
         assertThat(elf.getPowerModifier()).isEqualTo(0);
@@ -75,7 +74,7 @@ class SharedAnimosityTest extends BaseCardTest {
         Permanent elf = addCreature(player1, List.of(CardSubtype.ELF));
 
         declareAttackers(List.of(1, 2, 3));
-        resolveAllTriggers();
+        resolveQueuedTriggers();
 
         // Each Goblin sees one other Goblin (the Elf doesn't count) -> +1/+0.
         assertThat(goblin1.getPowerModifier()).isEqualTo(1);
@@ -92,7 +91,7 @@ class SharedAnimosityTest extends BaseCardTest {
         Permanent goblin = addCreature(player1, List.of(CardSubtype.GOBLIN));
 
         declareAttackers(List.of(1, 2));
-        resolveAllTriggers();
+        resolveQueuedTriggers();
 
         // Changeling has every creature type, so it shares with the Goblin and vice versa -> +1 each.
         assertThat(changeling.getPowerModifier()).isEqualTo(1);
@@ -101,16 +100,8 @@ class SharedAnimosityTest extends BaseCardTest {
 
     // ===== Helpers =====
 
-    private void declareAttackers(List<Integer> attackerIndices) {
-        harness.forceActivePlayer(player1);
-        harness.forceStep(TurnStep.DECLARE_ATTACKERS);
-        harness.clearPriorityPassed();
-        harness.beginAttackerDeclarationInput();
-        gs.declareAttackers(gd, player1, attackerIndices);
-    }
-
     /** Resolve every triggered ability currently on the stack (one Shared Animosity trigger per attacker). */
-    private void resolveAllTriggers() {
+    private void resolveQueuedTriggers() {
         int triggers = gd.stack.size();
         for (int i = 0; i < triggers; i++) {
             harness.passBothPriorities();

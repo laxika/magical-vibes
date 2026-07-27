@@ -26,13 +26,6 @@ class SnoopingPageTest extends BaseCardTest {
         return perm;
     }
 
-    private void resolveCombat() {
-        harness.forceActivePlayer(player1);
-        harness.forceStep(TurnStep.DECLARE_BLOCKERS);
-        harness.clearPriorityPassed();
-        harness.passBothPriorities();
-    }
-
     private void setDeck(Player player, List<Card> cards) {
         gd.playerDecks.get(player.getId()).clear();
         gd.playerDecks.get(player.getId()).addAll(cards);

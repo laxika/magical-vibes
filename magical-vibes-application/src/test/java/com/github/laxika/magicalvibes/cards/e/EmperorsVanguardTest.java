@@ -154,11 +154,4 @@ class EmperorsVanguardTest extends BaseCardTest {
         harness.passBothPriorities(); // combat damage dealt, explore trigger put on stack
         harness.passBothPriorities(); // resolve explore trigger
     }
-
-    private void resolveCombat() {
-        harness.forceActivePlayer(player1);
-        harness.forceStep(TurnStep.DECLARE_BLOCKERS);
-        harness.clearPriorityPassed();
-        harness.passBothPriorities();
-    }
 }

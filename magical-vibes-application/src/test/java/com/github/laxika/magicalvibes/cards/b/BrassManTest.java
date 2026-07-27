@@ -66,13 +66,6 @@ class BrassManTest extends BaseCardTest {
         return perm;
     }
 
-    private void advanceToUpkeep(Player activePlayer) {
-        harness.forceActivePlayer(activePlayer);
-        harness.forceStep(TurnStep.UNTAP);
-        harness.clearPriorityPassed();
-        harness.passBothPriorities(); // UNTAP -> UPKEEP
-    }
-
     private void advanceToNextTurn(Player currentActivePlayer) {
         harness.forceActivePlayer(currentActivePlayer);
         harness.setHand(player1, List.of());

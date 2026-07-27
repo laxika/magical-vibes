@@ -232,14 +232,6 @@ class FavorOfTheWoodsTest extends BaseCardTest {
         return aura;
     }
 
-    private void declareAttackers(Player player, List<Integer> attackerIndices) {
-        harness.forceActivePlayer(player);
-        harness.forceStep(TurnStep.DECLARE_ATTACKERS);
-        harness.clearPriorityPassed();
-        harness.beginAttackerDeclarationInput();
-        gs.declareAttackers(gd, player, attackerIndices);
-    }
-
     private void declareBlockers(Player player, List<BlockerAssignment> assignments) {
         harness.forceActivePlayer(player1);
         harness.forceStep(TurnStep.DECLARE_BLOCKERS);

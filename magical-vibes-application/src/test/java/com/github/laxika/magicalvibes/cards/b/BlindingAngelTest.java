@@ -19,13 +19,6 @@ class BlindingAngelTest extends BaseCardTest {
         return perm;
     }
 
-    private void resolveCombat() {
-        harness.forceActivePlayer(player1);
-        harness.forceStep(TurnStep.DECLARE_BLOCKERS);
-        harness.clearPriorityPassed();
-        harness.passBothPriorities();
-    }
-
     @Test
     @DisplayName("Dealing combat damage to a player flags them to skip their next combat phase")
     void flagsPlayerOnCombatDamage() {

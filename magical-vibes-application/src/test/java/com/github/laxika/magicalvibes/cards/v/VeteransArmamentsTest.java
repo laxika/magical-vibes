@@ -178,12 +178,4 @@ class VeteransArmamentsTest extends BaseCardTest {
                 .filter(p -> p.getCard().getName().equals("Veteran Armorsmith"))
                 .findFirst().orElseThrow();
     }
-
-    private void declareAttackers(Player player, List<Integer> attackerIndices) {
-        harness.forceActivePlayer(player);
-        harness.forceStep(TurnStep.DECLARE_ATTACKERS);
-        harness.clearPriorityPassed();
-        harness.beginAttackerDeclarationInput();
-        gs.declareAttackers(gd, player, attackerIndices);
-    }
 }

@@ -11,7 +11,6 @@ import com.github.laxika.magicalvibes.testutil.BaseCardTest;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
-import java.util.UUID;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
@@ -98,12 +97,5 @@ class WeedPrunerPoplarTest extends BaseCardTest {
         perm.setSummoningSick(false);
         gd.playerBattlefields.get(player.getId()).add(perm);
         return perm;
-    }
-
-    private void advanceToUpkeep(Player player) {
-        harness.forceActivePlayer(player);
-        harness.forceStep(TurnStep.UNTAP);
-        harness.clearPriorityPassed();
-        harness.passBothPriorities();
     }
 }

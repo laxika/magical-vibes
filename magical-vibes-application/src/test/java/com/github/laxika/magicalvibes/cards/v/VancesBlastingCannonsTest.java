@@ -280,13 +280,6 @@ class VancesBlastingCannonsTest extends BaseCardTest {
         deck.addFirst(card);
     }
 
-    private void advanceToUpkeep(Player activePlayer) {
-        harness.forceActivePlayer(activePlayer);
-        harness.forceStep(TurnStep.UNTAP);
-        harness.clearPriorityPassed();
-        harness.passBothPriorities(); // advances to UPKEEP
-    }
-
     private void castThreeSpells() {
         harness.setHand(player1, List.of(
                 new LightningBolt(), new LightningBolt(), new LightningBolt()));

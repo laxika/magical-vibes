@@ -119,11 +119,4 @@ class InquisitorsSnareTest extends BaseCardTest {
         attacker.setAttackTarget(player1.getId());
         return attacker;
     }
-
-    private void resolveCombat(Player activePlayer) {
-        harness.forceActivePlayer(activePlayer);
-        harness.forceStep(TurnStep.DECLARE_BLOCKERS);
-        harness.clearPriorityPassed();
-        harness.passBothPriorities();
-    }
 }

@@ -29,7 +29,7 @@ class StinkdrinkerBanditTest extends BaseCardTest {
         bandit.setAttacking(true);
         addReady(player2, new GrizzlyBears()); // a potential blocker that declines to block
 
-        setupDeclareBlockers();
+        prepareDeclareBlockers();
         gs.declareBlockers(gd, player2, List.of()); // no blocks — the Bandit is unblocked
         harness.passBothPriorities();
 
@@ -44,7 +44,7 @@ class StinkdrinkerBanditTest extends BaseCardTest {
         bandit.setAttacking(true);
         addReady(player2, new GrizzlyBears());
 
-        setupDeclareBlockers();
+        prepareDeclareBlockers();
         gs.declareBlockers(gd, player2, List.of(new BlockerAssignment(0, 0)));
         harness.passBothPriorities();
 
@@ -59,7 +59,7 @@ class StinkdrinkerBanditTest extends BaseCardTest {
         Permanent bears = addReady(player1, new GrizzlyBears());
         bears.setAttacking(true);
 
-        setupDeclareBlockers();
+        prepareDeclareBlockers();
         gs.declareBlockers(gd, player2, List.of());
         harness.passBothPriorities();
 
@@ -73,7 +73,7 @@ class StinkdrinkerBanditTest extends BaseCardTest {
         Permanent bandit = addReady(player1, new StinkdrinkerBandit());
         bandit.setAttacking(true);
 
-        setupDeclareBlockers();
+        prepareDeclareBlockers();
         gs.declareBlockers(gd, player2, List.of());
         harness.passBothPriorities();
 
@@ -127,12 +127,5 @@ class StinkdrinkerBanditTest extends BaseCardTest {
         perm.setSummoningSick(false);
         gd.playerBattlefields.get(player.getId()).add(perm);
         return perm;
-    }
-
-    private void setupDeclareBlockers() {
-        harness.forceActivePlayer(player1);
-        harness.forceStep(TurnStep.DECLARE_BLOCKERS);
-        harness.clearPriorityPassed();
-        harness.beginBlockerDeclarationInput();
     }
 }

@@ -80,13 +80,6 @@ class StasisTest extends BaseCardTest {
 
     // ===== Upkeep sacrifice-unless-pay {U} =====
 
-    private void advanceToUpkeep(Player activePlayer) {
-        harness.forceActivePlayer(activePlayer);
-        harness.forceStep(TurnStep.UNTAP);
-        harness.clearPriorityPassed();
-        harness.passBothPriorities(); // advances to UPKEEP, trigger fires
-    }
-
     @Test
     @DisplayName("Declining to pay {U} sacrifices Stasis")
     void decliningPaymentSacrificesStasis() {

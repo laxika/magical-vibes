@@ -18,13 +18,6 @@ import static org.assertj.core.api.Assertions.assertThat;
 
 class CharmbreakerDevilsTest extends BaseCardTest {
 
-    private void advanceToUpkeep(Player activePlayer) {
-        harness.forceActivePlayer(activePlayer);
-        harness.forceStep(TurnStep.UNTAP);
-        harness.clearPriorityPassed();
-        harness.passBothPriorities(); // advances to UPKEEP
-    }
-
     // ===== Upkeep trigger: return random instant or sorcery =====
 
     @Test

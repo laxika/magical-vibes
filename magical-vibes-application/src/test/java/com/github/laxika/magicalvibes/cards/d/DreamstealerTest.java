@@ -34,7 +34,7 @@ class DreamstealerTest extends BaseCardTest {
         dreamstealer.setCounterCount(CounterType.PLUS_ONE_PLUS_ONE, 2);
         harness.setHand(player2, new ArrayList<>(List.of(new GrizzlyBears(), new Forest(), new Forest())));
 
-        resolveCombat();
+        resolveCombatAndTrigger();
 
         // Damaged player must discard exactly three cards, one choice at a time.
         for (int i = 0; i < 3; i++) {
@@ -58,7 +58,7 @@ class DreamstealerTest extends BaseCardTest {
         blocker.addBlockingTarget(0);
         harness.setHand(player2, new ArrayList<>(List.of(new Forest())));
 
-        resolveCombat();
+        resolveCombatAndTrigger();
 
         // No combat damage reached the player, so no discard was prompted.
         assertThat(gd.interaction.activeInteraction(PendingInteraction.DiscardChoice.class)).isNull();
@@ -122,13 +122,9 @@ class DreamstealerTest extends BaseCardTest {
         return dreamstealer;
     }
 
-    private void resolveCombat() {
-        harness.forceActivePlayer(player1);
-        harness.forceStep(TurnStep.DECLARE_BLOCKERS);
-        harness.clearPriorityPassed();
-        // Pass through combat damage and the resulting triggered ability resolution.
-        harness.passBothPriorities();
-        harness.passBothPriorities();
+    private void resolveCombatAndTrigger() {
+        resolveCombat();
+        harness.passBothPriorities(); // resolve what combat damage triggered
     }
 
     private void addEternalizeMana() {

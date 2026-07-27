@@ -244,13 +244,6 @@ class ShrineOfLimitlessPowerTest extends BaseCardTest {
 
     // ===== Helper methods =====
 
-    private void advanceToUpkeep(Player activePlayer) {
-        harness.forceActivePlayer(activePlayer);
-        harness.forceStep(TurnStep.UNTAP);
-        harness.clearPriorityPassed();
-        harness.passBothPriorities();
-    }
-
     private Permanent addReadyShrine(Player player) {
         ShrineOfLimitlessPower card = new ShrineOfLimitlessPower();
         Permanent perm = new Permanent(card);

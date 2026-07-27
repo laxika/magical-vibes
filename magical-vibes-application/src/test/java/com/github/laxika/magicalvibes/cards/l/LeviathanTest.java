@@ -96,14 +96,6 @@ class LeviathanTest extends BaseCardTest {
         harness.handleMayAbilityChosen(player, accept);
     }
 
-    private void declareAttackers(Player player, List<Integer> attackerIndices) {
-        harness.forceActivePlayer(player);
-        harness.forceStep(TurnStep.DECLARE_ATTACKERS);
-        harness.clearPriorityPassed();
-        harness.beginAttackerDeclarationInput();
-        gs.declareAttackers(gd, player, attackerIndices);
-    }
-
     private int islandCount(Player player) {
         return (int) gd.playerBattlefields.get(player.getId()).stream()
                 .filter(p -> p.getCard().getName().equals("Island"))

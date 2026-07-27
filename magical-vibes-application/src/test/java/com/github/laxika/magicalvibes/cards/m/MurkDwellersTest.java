@@ -23,7 +23,7 @@ class MurkDwellersTest extends BaseCardTest {
         dwellers.setAttacking(true);
         addReady(player2, new GrizzlyBears()); // a potential blocker that declines to block
 
-        setupDeclareBlockers();
+        prepareDeclareBlockers();
         gs.declareBlockers(gd, player2, List.of()); // no blocks — Murk Dwellers is unblocked
         harness.passBothPriorities();
 
@@ -38,7 +38,7 @@ class MurkDwellersTest extends BaseCardTest {
         dwellers.setAttacking(true);
         addReady(player2, new GrizzlyBears());
 
-        setupDeclareBlockers();
+        prepareDeclareBlockers();
         gs.declareBlockers(gd, player2, List.of(new BlockerAssignment(0, 0)));
         harness.passBothPriorities();
 
@@ -52,7 +52,7 @@ class MurkDwellersTest extends BaseCardTest {
         Permanent dwellers = addReady(player1, new MurkDwellers());
         dwellers.setAttacking(true);
 
-        setupDeclareBlockers();
+        prepareDeclareBlockers();
         gs.declareBlockers(gd, player2, List.of());
         harness.passBothPriorities();
 
@@ -71,12 +71,5 @@ class MurkDwellersTest extends BaseCardTest {
         perm.setSummoningSick(false);
         gd.playerBattlefields.get(player.getId()).add(perm);
         return perm;
-    }
-
-    private void setupDeclareBlockers() {
-        harness.forceActivePlayer(player1);
-        harness.forceStep(TurnStep.DECLARE_BLOCKERS);
-        harness.clearPriorityPassed();
-        harness.beginBlockerDeclarationInput();
     }
 }

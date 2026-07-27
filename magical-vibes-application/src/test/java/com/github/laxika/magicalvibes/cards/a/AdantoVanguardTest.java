@@ -23,7 +23,7 @@ class AdantoVanguardTest extends BaseCardTest {
     void getsPlusTwoPlusZeroWhileAttacking() {
         Permanent vanguard = addCreatureReady(player1, new AdantoVanguard());
 
-        declareAttackers(player1, List.of(0));
+        markAttacking(player1, List.of(0));
 
         // 1/1 + 2/0 = 3/1 while attacking
         assertThat(gqs.getEffectivePower(gd, vanguard)).isEqualTo(3);
@@ -115,7 +115,7 @@ class AdantoVanguardTest extends BaseCardTest {
 
     // ===== Helper methods =====
 
-    private void declareAttackers(Player player, List<Integer> attackerIndices) {
+    private void markAttacking(Player player, List<Integer> attackerIndices) {
         List<Permanent> battlefield = gd.playerBattlefields.get(player.getId());
         for (int idx : attackerIndices) {
             battlefield.get(idx).setAttacking(true);

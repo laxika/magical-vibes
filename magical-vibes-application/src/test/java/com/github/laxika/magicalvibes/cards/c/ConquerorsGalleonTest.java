@@ -189,12 +189,4 @@ class ConquerorsGalleonTest extends BaseCardTest {
         gd.playerDecks.get(player.getId()).clear();
         gd.playerDecks.get(player.getId()).addAll(cards);
     }
-
-    private void declareAttackers(List<Integer> attackerIndices) {
-        harness.forceActivePlayer(player1);
-        harness.forceStep(TurnStep.DECLARE_ATTACKERS);
-        harness.clearPriorityPassed();
-        harness.beginAttackerDeclarationInput();
-        gs.declareAttackers(gd, player1, attackerIndices);
-    }
 }

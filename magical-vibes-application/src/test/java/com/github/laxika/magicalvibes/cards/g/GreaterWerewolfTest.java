@@ -2,7 +2,6 @@ package com.github.laxika.magicalvibes.cards.g;
 
 import com.github.laxika.magicalvibes.model.CounterType;
 import com.github.laxika.magicalvibes.model.Permanent;
-import com.github.laxika.magicalvibes.model.Player;
 import com.github.laxika.magicalvibes.model.TurnStep;
 import com.github.laxika.magicalvibes.model.action.PutCounterOnPermanentAtEndOfCombat;
 import com.github.laxika.magicalvibes.networking.message.BlockerAssignment;
@@ -23,7 +22,7 @@ class GreaterWerewolfTest extends BaseCardTest {
         werewolf.setAttacking(true);
         Permanent spider = addCreatureReady(player2, new GiantSpider()); // 2/4
 
-        setupDeclareBlockers();
+        prepareDeclareBlockers();
         gs.declareBlockers(gd, player2, List.of(new BlockerAssignment(0, 0)));
         harness.passBothPriorities(); // resolve the becomes-blocked trigger
 
@@ -39,7 +38,7 @@ class GreaterWerewolfTest extends BaseCardTest {
         werewolf.setAttacking(true);
         Permanent spider = addCreatureReady(player2, new GiantSpider()); // 2/4
 
-        setupDeclareBlockers();
+        prepareDeclareBlockers();
         gs.declareBlockers(gd, player2, List.of(new BlockerAssignment(0, 0)));
         harness.passBothPriorities(); // resolve the becomes-blocked trigger
 
@@ -59,7 +58,7 @@ class GreaterWerewolfTest extends BaseCardTest {
         attacker.setAttacking(true);
         addCreatureReady(player2, new GreaterWerewolf());
 
-        setupDeclareBlockers();
+        prepareDeclareBlockers();
         gs.declareBlockers(gd, player2, List.of(new BlockerAssignment(0, 0)));
         harness.passBothPriorities(); // resolve the block trigger
 
@@ -78,13 +77,6 @@ class GreaterWerewolfTest extends BaseCardTest {
 
         assertThat(gd.hasDelayedAction(PutCounterOnPermanentAtEndOfCombat.class)).isFalse();
         assertThat(spider.getCounterCount(CounterType.MINUS_ZERO_MINUS_TWO)).isZero();
-    }
-
-    private void setupDeclareBlockers() {
-        harness.forceActivePlayer(player1);
-        harness.forceStep(TurnStep.DECLARE_BLOCKERS);
-        harness.clearPriorityPassed();
-        harness.beginBlockerDeclarationInput();
     }
 
     private void leaveEndOfCombat() {

@@ -27,7 +27,7 @@ class DeeprootWarriorTest extends BaseCardTest {
 
         addReadyBears(player2);
 
-        setupDeclareBlockers();
+        prepareDeclareBlockers();
         gs.declareBlockers(gd, player2, List.of(new BlockerAssignment(0, 0)));
 
         assertThat(gd.stack).anyMatch(entry ->
@@ -44,7 +44,7 @@ class DeeprootWarriorTest extends BaseCardTest {
 
         addReadyBears(player2);
 
-        setupDeclareBlockers();
+        prepareDeclareBlockers();
         gs.declareBlockers(gd, player2, List.of(new BlockerAssignment(0, 0)));
         harness.passBothPriorities();
 
@@ -65,7 +65,7 @@ class DeeprootWarriorTest extends BaseCardTest {
         addReadyBears(player2);
         addReadyBears(player2);
 
-        setupDeclareBlockers();
+        prepareDeclareBlockers();
         gs.declareBlockers(gd, player2, List.of(
                 new BlockerAssignment(0, 0),
                 new BlockerAssignment(1, 0)
@@ -93,7 +93,7 @@ class DeeprootWarriorTest extends BaseCardTest {
 
         addReadyBears(player2);
 
-        setupDeclareBlockers();
+        prepareDeclareBlockers();
         gs.declareBlockers(gd, player2, List.of(new BlockerAssignment(0, 0)));
         harness.passBothPriorities();
 
@@ -121,12 +121,5 @@ class DeeprootWarriorTest extends BaseCardTest {
         perm.setSummoningSick(false);
         gd.playerBattlefields.get(player.getId()).add(perm);
         return perm;
-    }
-
-    private void setupDeclareBlockers() {
-        harness.forceActivePlayer(player1);
-        harness.forceStep(TurnStep.DECLARE_BLOCKERS);
-        harness.clearPriorityPassed();
-        harness.beginBlockerDeclarationInput();
     }
 }

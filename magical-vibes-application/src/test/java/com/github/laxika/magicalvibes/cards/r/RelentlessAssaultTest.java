@@ -46,7 +46,7 @@ class RelentlessAssaultTest extends BaseCardTest {
         List<Permanent> battlefield = harness.getGameData().playerBattlefields.get(player1.getId());
         battlefield.forEach(p -> p.setSummoningSick(false));
 
-        declareAttackers(player1, List.of(0));
+        markAttacking(player1, List.of(0));
         Permanent attackedBear = battlefield.get(0);
         Permanent nonAttackedBear = battlefield.get(1);
         nonAttackedBear.tap();
@@ -101,7 +101,7 @@ class RelentlessAssaultTest extends BaseCardTest {
         Permanent bear = harness.getGameData().playerBattlefields.get(player1.getId()).getFirst();
         bear.setSummoningSick(false);
 
-        declareAttackers(player1, List.of(0));
+        markAttacking(player1, List.of(0));
         assertThat(bear.isAttackedThisTurn()).isTrue();
 
         harness.forceStep(TurnStep.CLEANUP);
@@ -121,7 +121,7 @@ class RelentlessAssaultTest extends BaseCardTest {
         assertThat(bear.isTapped()).isTrue();
     }
 
-    private void declareAttackers(Player attacker, List<Integer> attackers) {
+    private void markAttacking(Player attacker, List<Integer> attackers) {
         GameData gd = harness.getGameData();
         harness.forceActivePlayer(attacker);
         harness.forceStep(TurnStep.DECLARE_ATTACKERS);

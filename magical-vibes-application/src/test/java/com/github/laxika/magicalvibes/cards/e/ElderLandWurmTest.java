@@ -31,7 +31,7 @@ class ElderLandWurmTest extends BaseCardTest {
         attacker.setAttacking(true);
         Permanent wurm = addReadyWurm(player2);
 
-        setupDeclareBlockers();
+        prepareDeclareBlockers();
         gs.declareBlockers(gd, player2, List.of(new BlockerAssignment(0, 0)));
 
         // Resolve the block trigger.
@@ -47,7 +47,7 @@ class ElderLandWurmTest extends BaseCardTest {
         attacker.setAttacking(true);
         Permanent wurm = addReadyWurm(player2);
 
-        setupDeclareBlockers();
+        prepareDeclareBlockers();
         gs.declareBlockers(gd, player2, List.of(new BlockerAssignment(0, 0)));
         harness.passBothPriorities();
 
@@ -68,7 +68,7 @@ class ElderLandWurmTest extends BaseCardTest {
         attacker.setAttacking(true);
         Permanent wurm = addReadyWurm(player2);
 
-        setupDeclareBlockers();
+        prepareDeclareBlockers();
         gs.declareBlockers(gd, player2, List.of()); // stays back
         harness.passBothPriorities();
 
@@ -89,12 +89,5 @@ class ElderLandWurmTest extends BaseCardTest {
         perm.setSummoningSick(false);
         gd.playerBattlefields.get(player.getId()).add(perm);
         return perm;
-    }
-
-    private void setupDeclareBlockers() {
-        harness.forceActivePlayer(player1);
-        harness.forceStep(TurnStep.DECLARE_BLOCKERS);
-        harness.clearPriorityPassed();
-        harness.beginBlockerDeclarationInput();
     }
 }

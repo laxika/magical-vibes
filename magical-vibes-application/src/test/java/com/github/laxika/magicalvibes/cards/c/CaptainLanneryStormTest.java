@@ -209,18 +209,4 @@ class CaptainLanneryStormTest extends BaseCardTest {
         treasure.setSummoningSick(false);
         gd.playerBattlefields.get(player.getId()).add(treasure);
     }
-
-    private void declareAttackers(Player player, List<Integer> attackerIndices) {
-        harness.forceActivePlayer(player);
-        harness.forceStep(TurnStep.DECLARE_ATTACKERS);
-        harness.clearPriorityPassed();
-        harness.beginAttackerDeclarationInput();
-        gs.declareAttackers(gd, player, attackerIndices);
-    }
-
-    private void resolveAllTriggers() {
-        while (!gd.stack.isEmpty()) {
-            harness.passBothPriorities();
-        }
-    }
 }

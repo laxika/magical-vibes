@@ -6,7 +6,6 @@ import com.github.laxika.magicalvibes.cards.v.VampireAristocrat;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.Player;
 import com.github.laxika.magicalvibes.model.StackEntryType;
-import com.github.laxika.magicalvibes.model.TurnStep;
 import com.github.laxika.magicalvibes.networking.message.BlockerAssignment;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
 import org.junit.jupiter.api.DisplayName;
@@ -27,7 +26,7 @@ class DeathgazerTest extends BaseCardTest {
         deathgazer.setAttacking(true);
         Permanent spider = addReadySpider(player2); // green, 2/4
 
-        setupDeclareBlockers();
+        prepareDeclareBlockers();
         gs.declareBlockers(gd, player2, List.of(new BlockerAssignment(0, 0)));
 
         // A becomes-blocked trigger referencing the blocker is created
@@ -52,7 +51,7 @@ class DeathgazerTest extends BaseCardTest {
         deathgazer.setAttacking(true);
         addReadySpider(player2); // 2/4 survives Deathgazer's 2 damage
 
-        setupDeclareBlockers();
+        prepareDeclareBlockers();
         gs.declareBlockers(gd, player2, List.of(new BlockerAssignment(0, 0)));
 
         // Resolve the trigger, then advance through end of combat
@@ -72,7 +71,7 @@ class DeathgazerTest extends BaseCardTest {
         deathgazer.setAttacking(true);
         addReadyVampire(player2); // black
 
-        setupDeclareBlockers();
+        prepareDeclareBlockers();
         gs.declareBlockers(gd, player2, List.of(new BlockerAssignment(0, 0)));
 
         // The trigger still fires but the nonblack filter fails at resolution
@@ -89,7 +88,7 @@ class DeathgazerTest extends BaseCardTest {
         attacker.setAttacking(true);
         addReadyDeathgazer(player2);
 
-        setupDeclareBlockers();
+        prepareDeclareBlockers();
         gs.declareBlockers(gd, player2, List.of(new BlockerAssignment(0, 0)));
 
         // The block trigger references the blocked attacker, not Deathgazer itself
@@ -110,7 +109,7 @@ class DeathgazerTest extends BaseCardTest {
         attacker.setAttacking(true);
         addReadyDeathgazer(player2);
 
-        setupDeclareBlockers();
+        prepareDeclareBlockers();
         gs.declareBlockers(gd, player2, List.of(new BlockerAssignment(0, 0)));
 
         harness.passBothPriorities();
@@ -138,12 +137,5 @@ class DeathgazerTest extends BaseCardTest {
         perm.setSummoningSick(false);
         gd.playerBattlefields.get(player.getId()).add(perm);
         return perm;
-    }
-
-    private void setupDeclareBlockers() {
-        harness.forceActivePlayer(player1);
-        harness.forceStep(TurnStep.DECLARE_BLOCKERS);
-        harness.clearPriorityPassed();
-        harness.beginBlockerDeclarationInput();
     }
 }

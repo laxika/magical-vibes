@@ -28,7 +28,7 @@ class SedraxisSpecterTest extends BaseCardTest {
         specter.setAttacking(true);
         harness.setHand(player2, new ArrayList<>(List.of(new GrizzlyBears(), new Forest())));
 
-        resolveCombat();
+        resolveCombatAndTrigger();
 
         assertThat(gd.interaction.activeInteraction()).isInstanceOf(PendingInteraction.DiscardChoice.class);
         assertThat(gd.interaction.activeInteraction(PendingInteraction.DiscardChoice.class).playerId())
@@ -50,7 +50,7 @@ class SedraxisSpecterTest extends BaseCardTest {
         blocker.addBlockingTarget(0);
         harness.setHand(player2, new ArrayList<>(List.of(new Forest())));
 
-        resolveCombat();
+        resolveCombatAndTrigger();
 
         assertThat(gd.interaction.activeInteraction(PendingInteraction.DiscardChoice.class)).isNull();
     }
@@ -104,11 +104,8 @@ class SedraxisSpecterTest extends BaseCardTest {
         return perm;
     }
 
-    private void resolveCombat() {
-        harness.forceActivePlayer(player1);
-        harness.forceStep(TurnStep.DECLARE_BLOCKERS);
-        harness.clearPriorityPassed();
-        harness.passBothPriorities();
-        harness.passBothPriorities();
+    private void resolveCombatAndTrigger() {
+        resolveCombat();
+        harness.passBothPriorities(); // resolve what combat damage triggered
     }
 }

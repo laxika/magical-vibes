@@ -181,14 +181,6 @@ class GrimgrinCorpseBornTest extends BaseCardTest {
         return perm;
     }
 
-    private void declareAttackers(Player player, List<Integer> attackerIndices) {
-        harness.forceActivePlayer(player);
-        harness.forceStep(TurnStep.DECLARE_ATTACKERS);
-        harness.clearPriorityPassed();
-        harness.beginAttackerDeclarationInput();
-        gs.declareAttackers(gd, player, attackerIndices);
-    }
-
     private void advanceToNextTurn(Player currentActivePlayer) {
         harness.forceActivePlayer(currentActivePlayer);
         harness.setHand(player1, List.of());

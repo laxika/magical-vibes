@@ -6,7 +6,6 @@ import com.github.laxika.magicalvibes.model.CardType;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.Player;
-import com.github.laxika.magicalvibes.model.TurnStep;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
@@ -182,13 +181,6 @@ class SearchForAzcantaTest extends BaseCardTest {
         perm.setTransformed(true);
         gd.playerBattlefields.get(player.getId()).add(perm);
         return perm;
-    }
-
-    private void advanceToUpkeep(Player player) {
-        harness.forceActivePlayer(player);
-        harness.forceStep(TurnStep.UNTAP);
-        harness.clearPriorityPassed();
-        harness.passBothPriorities(); // advance to upkeep, trigger fires
     }
 
     private void fillGraveyard(Player player, int count) {

@@ -90,10 +90,4 @@ class CeaselessSearbladesTest extends BaseCardTest {
 
         assertThat(searblades.getPowerModifier()).isEqualTo(0);
     }
-
-    private void resolveAllTriggers() {
-        while (!gd.stack.isEmpty()) {
-            harness.passBothPriorities();
-        }
-    }
 }

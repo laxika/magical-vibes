@@ -141,11 +141,4 @@ class StromkirkNobleTest extends BaseCardTest {
         card.setSubtypes(List.of(subtype));
         return card;
     }
-
-    private void prepareDeclareBlockers() {
-        harness.forceActivePlayer(player1);
-        harness.forceStep(TurnStep.DECLARE_BLOCKERS);
-        harness.clearPriorityPassed();
-        harness.beginBlockerDeclarationInput();
-    }
 }

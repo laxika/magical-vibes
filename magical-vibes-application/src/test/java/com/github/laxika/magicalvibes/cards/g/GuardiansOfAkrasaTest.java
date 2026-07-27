@@ -2,7 +2,6 @@ package com.github.laxika.magicalvibes.cards.g;
 
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
 import com.github.laxika.magicalvibes.model.Permanent;
-import com.github.laxika.magicalvibes.model.Player;
 import com.github.laxika.magicalvibes.model.TurnStep;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
 import org.junit.jupiter.api.DisplayName;
@@ -57,13 +56,5 @@ class GuardiansOfAkrasaTest extends BaseCardTest {
         assertThat(gd.stack).noneMatch(e -> e.getCard().getName().equals("Guardians of Akrasa"));
         assertThat(gqs.getEffectivePower(gd, bears1)).isEqualTo(2);
         assertThat(gqs.getEffectiveToughness(gd, bears1)).isEqualTo(2);
-    }
-
-    private void declareAttackers(Player player, List<Integer> attackerIndices) {
-        harness.forceActivePlayer(player);
-        harness.forceStep(TurnStep.DECLARE_ATTACKERS);
-        harness.clearPriorityPassed();
-        harness.beginAttackerDeclarationInput();
-        gs.declareAttackers(gd, player, attackerIndices);
     }
 }

@@ -16,13 +16,6 @@ import static org.assertj.core.api.Assertions.assertThat;
 
 class RazormaneMasticoreTest extends BaseCardTest {
 
-    private void advanceToUpkeep(Player activePlayer) {
-        harness.forceActivePlayer(activePlayer);
-        harness.forceStep(TurnStep.UNTAP);
-        harness.clearPriorityPassed();
-        harness.passBothPriorities(); // advances to UPKEEP
-    }
-
     private void advanceToDraw(Player activePlayer) {
         harness.forceActivePlayer(activePlayer);
         gd.turnNumber = 2; // avoid first-turn draw skip

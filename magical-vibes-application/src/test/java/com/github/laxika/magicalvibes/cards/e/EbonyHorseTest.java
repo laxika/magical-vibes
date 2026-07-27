@@ -150,11 +150,4 @@ class EbonyHorseTest extends BaseCardTest {
         gd.playerBattlefields.get(owner.getId()).add(perm);
         return perm;
     }
-
-    private void resolveCombat() {
-        harness.forceActivePlayer(player1);
-        harness.forceStep(TurnStep.DECLARE_BLOCKERS);
-        harness.clearPriorityPassed();
-        harness.passBothPriorities();
-    }
 }

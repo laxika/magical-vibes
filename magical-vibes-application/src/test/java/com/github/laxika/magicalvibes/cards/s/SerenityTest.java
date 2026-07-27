@@ -5,7 +5,6 @@ import com.github.laxika.magicalvibes.cards.p.PithingNeedle;
 import com.github.laxika.magicalvibes.cards.r.RuleOfLaw;
 import com.github.laxika.magicalvibes.model.GameData;
 import com.github.laxika.magicalvibes.model.Player;
-import com.github.laxika.magicalvibes.model.TurnStep;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
@@ -14,11 +13,8 @@ import static org.assertj.core.api.Assertions.assertThat;
 
 class SerenityTest extends BaseCardTest {
 
-    private void advanceToUpkeep(Player activePlayer) {
-        harness.forceActivePlayer(activePlayer);
-        harness.forceStep(TurnStep.UNTAP);
-        harness.clearPriorityPassed();
-        harness.passBothPriorities(); // advances to UPKEEP, trigger goes on stack
+    private void advanceToUpkeepAndResolveTrigger(Player activePlayer) {
+        advanceToUpkeep(activePlayer);
         harness.passBothPriorities(); // resolve the upkeep trigger
     }
 
@@ -29,7 +25,7 @@ class SerenityTest extends BaseCardTest {
         harness.addToBattlefield(player1, new PithingNeedle());
         harness.addToBattlefield(player2, new RuleOfLaw());
 
-        advanceToUpkeep(player1);
+        advanceToUpkeepAndResolveTrigger(player1);
 
         GameData gd = harness.getGameData();
         assertThat(gd.playerBattlefields.get(player1.getId()))
@@ -50,7 +46,7 @@ class SerenityTest extends BaseCardTest {
         harness.addToBattlefield(player1, new Serenity());
         harness.addToBattlefield(player1, new GrizzlyBears());
 
-        advanceToUpkeep(player1);
+        advanceToUpkeepAndResolveTrigger(player1);
 
         GameData gd = harness.getGameData();
         assertThat(gd.playerBattlefields.get(player1.getId()))
@@ -63,7 +59,7 @@ class SerenityTest extends BaseCardTest {
         harness.addToBattlefield(player1, new Serenity());
         harness.addToBattlefield(player2, new RuleOfLaw());
 
-        advanceToUpkeep(player2);
+        advanceToUpkeepAndResolveTrigger(player2);
 
         GameData gd = harness.getGameData();
         assertThat(gd.playerBattlefields.get(player2.getId()))

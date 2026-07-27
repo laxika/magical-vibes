@@ -17,14 +17,6 @@ import static org.assertj.core.api.Assertions.assertThat;
 
 class WarcryPhoenixTest extends BaseCardTest {
 
-    private void declareAttackers(List<Integer> attackerIndices) {
-        harness.forceActivePlayer(player1);
-        harness.forceStep(TurnStep.DECLARE_ATTACKERS);
-        harness.clearPriorityPassed();
-        harness.beginAttackerDeclarationInput();
-        gs.declareAttackers(gd, player1, attackerIndices);
-    }
-
     
 
     @Test

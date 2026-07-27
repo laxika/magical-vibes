@@ -81,14 +81,6 @@ class OketrasAvengerTest extends BaseCardTest {
 
     // ===== Helpers =====
 
-    private void declareAttackers(List<Integer> attackerIndices) {
-        harness.forceActivePlayer(player1);
-        harness.forceStep(TurnStep.DECLARE_ATTACKERS);
-        harness.clearPriorityPassed();
-        harness.beginAttackerDeclarationInput();
-        gs.declareAttackers(gd, player1, attackerIndices);
-    }
-
     private void blockAndResolveCombat(int blockerIndex, int attackerIndex) {
         harness.forceStep(TurnStep.DECLARE_BLOCKERS);
         harness.clearPriorityPassed();

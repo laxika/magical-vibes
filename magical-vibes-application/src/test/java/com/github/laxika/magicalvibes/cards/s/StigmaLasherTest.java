@@ -19,7 +19,7 @@ class StigmaLasherTest extends BaseCardTest {
     void damagedPlayerCantGainLife() {
         addAttackingLasher(player1);
 
-        resolveCombat();
+        resolveCombatAndTrigger();
         // 2/2 dealt 2 combat damage.
         harness.assertLife(player2, 18);
 
@@ -34,7 +34,7 @@ class StigmaLasherTest extends BaseCardTest {
     void preventionPersistsAfterLasherLeaves() {
         addAttackingLasher(player1);
 
-        resolveCombat();
+        resolveCombatAndTrigger();
         harness.assertLife(player2, 18);
 
         // Stigma Lasher leaves — the effect is a rest-of-game player state, not a static.
@@ -50,7 +50,7 @@ class StigmaLasherTest extends BaseCardTest {
     void undamagedPlayerCanStillGainLife() {
         addAttackingLasher(player1);
 
-        resolveCombat();
+        resolveCombatAndTrigger();
         harness.assertLife(player2, 18);
 
         // player1 was never damaged by Stigma Lasher, so their life gain is unaffected.
@@ -73,12 +73,9 @@ class StigmaLasherTest extends BaseCardTest {
         return perm;
     }
 
-    private void resolveCombat() {
-        harness.forceActivePlayer(player1);
-        harness.forceStep(TurnStep.DECLARE_BLOCKERS);
-        harness.clearPriorityPassed();
-        harness.passBothPriorities(); // combat damage
-        harness.passBothPriorities(); // resolve the damage trigger
+    private void resolveCombatAndTrigger() {
+        resolveCombat();
+        harness.passBothPriorities(); // resolve what combat damage triggered
     }
 
     private void castAngelOfMercy(Player player) {

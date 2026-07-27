@@ -5,12 +5,15 @@ import com.github.laxika.magicalvibes.model.GameData;
 import com.github.laxika.magicalvibes.model.GameLogEntry;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.Player;
+import com.github.laxika.magicalvibes.model.TurnStep;
 import com.github.laxika.magicalvibes.service.combat.attack.AttackLegalityService;
 import com.github.laxika.magicalvibes.service.combat.block.BlockLegalityService;
 import com.github.laxika.magicalvibes.service.battlefield.GameQueryService;
 import com.github.laxika.magicalvibes.service.GameService;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Tag;
+
+import java.util.List;
 
 @Tag("scryfall")
 public abstract class BaseCardTest {
@@ -63,6 +66,69 @@ public abstract class BaseCardTest {
         return gd.playerBattlefields.get(player.getId()).stream()
                 .filter(p -> p.getCard().getName().equals(name))
                 .findFirst().orElseThrow();
+    }
+
+    /**
+     * Forces {@code activePlayer} to be the active player and advances to their upkeep, resolving
+     * anything that triggers on the way. Starts from {@link TurnStep#UNTAP} because untap and upkeep
+     * are reached by a single priority round-trip.
+     */
+    protected void advanceToUpkeep(Player activePlayer) {
+        harness.forceActivePlayer(activePlayer);
+        harness.forceStep(TurnStep.UNTAP);
+        harness.clearPriorityPassed();
+        harness.passBothPriorities();
+    }
+
+    /**
+     * Declares the battlefield permanents at {@code attackerIndices} as attackers for {@code player},
+     * forcing the active player and combat step first so the declaration is legal.
+     */
+    protected void declareAttackers(Player player, List<Integer> attackerIndices) {
+        harness.forceActivePlayer(player);
+        harness.forceStep(TurnStep.DECLARE_ATTACKERS);
+        harness.clearPriorityPassed();
+        harness.beginAttackerDeclarationInput();
+        gs.declareAttackers(gd, player, attackerIndices);
+    }
+
+    /** Declares attackers for {@link #player1}, the usual attacker in card tests. */
+    protected void declareAttackers(List<Integer> attackerIndices) {
+        declareAttackers(player1, attackerIndices);
+    }
+
+    /**
+     * Advances from declare-blockers through combat damage with neither player responding. Note that
+     * this resolves the damage itself but not any ability it triggers — pass priority again for that.
+     */
+    protected void resolveCombat(Player activePlayer) {
+        harness.forceActivePlayer(activePlayer);
+        harness.forceStep(TurnStep.DECLARE_BLOCKERS);
+        harness.clearPriorityPassed();
+        harness.passBothPriorities();
+    }
+
+    /** Resolves combat with {@link #player1} attacking. */
+    protected void resolveCombat() {
+        resolveCombat(player1);
+    }
+
+    /**
+     * Puts the game in the declare-blockers step with blocker input open, so a test can call
+     * {@code gs.declareBlockers(...)} directly.
+     */
+    protected void prepareDeclareBlockers() {
+        harness.forceActivePlayer(player1);
+        harness.forceStep(TurnStep.DECLARE_BLOCKERS);
+        harness.clearPriorityPassed();
+        harness.beginBlockerDeclarationInput();
+    }
+
+    /** Passes priority until the stack is empty, resolving every waiting trigger. */
+    protected void resolveAllTriggers() {
+        while (!gd.stack.isEmpty()) {
+            harness.passBothPriorities();
+        }
     }
 
     protected boolean gameLogContains(String substring) {

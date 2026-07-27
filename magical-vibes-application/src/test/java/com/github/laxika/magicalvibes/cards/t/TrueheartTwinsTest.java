@@ -96,12 +96,4 @@ class TrueheartTwinsTest extends BaseCardTest {
     private Permanent addReadyTwins(Player player) {
         return addCreatureReady(player, new TrueheartTwins());
     }
-
-    private void declareAttackers(List<Integer> attackerIndices) {
-        harness.forceActivePlayer(player1);
-        harness.forceStep(TurnStep.DECLARE_ATTACKERS);
-        harness.clearPriorityPassed();
-        harness.beginAttackerDeclarationInput();
-        gs.declareAttackers(gd, player1, attackerIndices);
-    }
 }

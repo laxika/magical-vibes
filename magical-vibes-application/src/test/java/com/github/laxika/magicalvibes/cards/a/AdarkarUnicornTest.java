@@ -41,13 +41,6 @@ class AdarkarUnicornTest extends BaseCardTest {
         return permanent;
     }
 
-    private void advanceToUpkeep(Player activePlayer) {
-        harness.forceActivePlayer(activePlayer);
-        harness.forceStep(TurnStep.UNTAP);
-        harness.clearPriorityPassed();
-        harness.passBothPriorities();
-    }
-
     @Test
     @DisplayName("First mode adds one cumulative-upkeep-only blue")
     void firstModeAddsBlue() {

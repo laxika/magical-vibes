@@ -3,7 +3,6 @@ package com.github.laxika.magicalvibes.cards.c;
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
 import com.github.laxika.magicalvibes.model.PendingInteraction;
 import com.github.laxika.magicalvibes.model.Permanent;
-import com.github.laxika.magicalvibes.model.TurnStep;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
@@ -24,12 +23,9 @@ class CoastalPiracyTest extends BaseCardTest {
         return perm;
     }
 
-    private void resolveCombat() {
+    private void resolveCombatAndTrigger() {
         harness.setLife(player2, 20);
-        harness.forceActivePlayer(player1);
-        harness.forceStep(TurnStep.DECLARE_BLOCKERS);
-        harness.clearPriorityPassed();
-        harness.passBothPriorities(); // combat damage → trigger onto stack
+        resolveCombat();
         harness.passBothPriorities(); // resolve the ally-combat-damage trigger (MayEffect prompt)
     }
 
@@ -39,7 +35,7 @@ class CoastalPiracyTest extends BaseCardTest {
         addCoastalPiracy();
         addReadyAttacker();
 
-        resolveCombat();
+        resolveCombatAndTrigger();
 
         assertThat(gd.interaction.activeInteraction()).isInstanceOf(PendingInteraction.MayAbilityChoice.class);
     }
@@ -50,7 +46,7 @@ class CoastalPiracyTest extends BaseCardTest {
         addCoastalPiracy();
         addReadyAttacker();
 
-        resolveCombat();
+        resolveCombatAndTrigger();
 
         int handSizeBefore = gd.playerHands.get(player1.getId()).size();
         harness.handleMayAbilityChosen(player1, true);
@@ -64,7 +60,7 @@ class CoastalPiracyTest extends BaseCardTest {
         addCoastalPiracy();
         addReadyAttacker();
 
-        resolveCombat();
+        resolveCombatAndTrigger();
 
         int handSizeBefore = gd.playerHands.get(player1.getId()).size();
         harness.handleMayAbilityChosen(player1, false);
@@ -84,7 +80,7 @@ class CoastalPiracyTest extends BaseCardTest {
         blocker.addBlockingTarget(0);
         gd.playerBattlefields.get(player2.getId()).add(blocker);
 
-        resolveCombat();
+        resolveCombatAndTrigger();
 
         assertThat(gd.interaction.activeInteraction(PendingInteraction.MayAbilityChoice.class)).isNull();
     }

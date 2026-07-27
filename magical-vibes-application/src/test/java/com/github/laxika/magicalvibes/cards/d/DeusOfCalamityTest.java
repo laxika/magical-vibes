@@ -33,13 +33,6 @@ class DeusOfCalamityTest extends BaseCardTest {
         return perm;
     }
 
-    private void resolveCombat() {
-        harness.forceActivePlayer(player1);
-        harness.forceStep(TurnStep.DECLARE_BLOCKERS);
-        harness.clearPriorityPassed();
-        harness.passBothPriorities();
-    }
-
     @Test
     @DisplayName("Dealing 6 to an opponent prompts to destroy a land that player controls")
     void promptsToDestroyLand() {

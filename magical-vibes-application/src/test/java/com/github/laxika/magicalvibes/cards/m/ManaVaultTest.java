@@ -106,13 +106,6 @@ class ManaVaultTest extends BaseCardTest {
         return perm;
     }
 
-    private void advanceToUpkeep(Player activePlayer) {
-        harness.forceActivePlayer(activePlayer);
-        harness.forceStep(TurnStep.UNTAP);
-        harness.clearPriorityPassed();
-        harness.passBothPriorities(); // UNTAP -> UPKEEP
-    }
-
     private void advanceToDraw(Player activePlayer) {
         harness.forceActivePlayer(activePlayer);
         gd.turnNumber = 2; // avoid first-turn draw skip / empty-library loss

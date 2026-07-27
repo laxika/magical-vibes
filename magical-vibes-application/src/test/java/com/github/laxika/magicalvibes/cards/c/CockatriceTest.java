@@ -6,7 +6,6 @@ import com.github.laxika.magicalvibes.cards.w.WallOfAir;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.Player;
 import com.github.laxika.magicalvibes.model.StackEntryType;
-import com.github.laxika.magicalvibes.model.TurnStep;
 import com.github.laxika.magicalvibes.networking.message.BlockerAssignment;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
 import org.junit.jupiter.api.DisplayName;
@@ -27,7 +26,7 @@ class CockatriceTest extends BaseCardTest {
         cockatrice.setAttacking(true);
         Permanent spider = addReadySpider(player2); // 2/4, non-Wall
 
-        setupDeclareBlockers();
+        prepareDeclareBlockers();
         gs.declareBlockers(gd, player2, List.of(new BlockerAssignment(0, 0)));
 
         assertThat(gd.stack).anyMatch(se ->
@@ -50,7 +49,7 @@ class CockatriceTest extends BaseCardTest {
         cockatrice.setAttacking(true);
         addReadySpider(player2); // 2/4 survives Cockatrice's 2 damage
 
-        setupDeclareBlockers();
+        prepareDeclareBlockers();
         gs.declareBlockers(gd, player2, List.of(new BlockerAssignment(0, 0)));
 
         harness.passBothPriorities();
@@ -69,7 +68,7 @@ class CockatriceTest extends BaseCardTest {
         cockatrice.setAttacking(true);
         addReadyWall(player2);
 
-        setupDeclareBlockers();
+        prepareDeclareBlockers();
         gs.declareBlockers(gd, player2, List.of(new BlockerAssignment(0, 0)));
 
         // The trigger still fires but the non-Wall filter fails at resolution
@@ -86,7 +85,7 @@ class CockatriceTest extends BaseCardTest {
         attacker.setAttacking(true);
         addReadyCockatrice(player2);
 
-        setupDeclareBlockers();
+        prepareDeclareBlockers();
         gs.declareBlockers(gd, player2, List.of(new BlockerAssignment(0, 0)));
 
         assertThat(gd.stack).anyMatch(se ->
@@ -120,12 +119,5 @@ class CockatriceTest extends BaseCardTest {
         perm.setSummoningSick(false);
         gd.playerBattlefields.get(player.getId()).add(perm);
         return perm;
-    }
-
-    private void setupDeclareBlockers() {
-        harness.forceActivePlayer(player1);
-        harness.forceStep(TurnStep.DECLARE_BLOCKERS);
-        harness.clearPriorityPassed();
-        harness.beginBlockerDeclarationInput();
     }
 }

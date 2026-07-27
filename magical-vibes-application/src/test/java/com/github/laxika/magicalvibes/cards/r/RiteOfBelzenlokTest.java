@@ -232,13 +232,6 @@ class RiteOfBelzenlokTest extends BaseCardTest {
 
     // ===== Helpers =====
 
-    private void advanceToUpkeep(Player activePlayer) {
-        harness.forceActivePlayer(activePlayer);
-        harness.forceStep(TurnStep.UNTAP);
-        harness.clearPriorityPassed();
-        harness.passBothPriorities(); // advances to UPKEEP
-    }
-
     private Permanent addCreature(Player player, Card card) {
         Permanent perm = new Permanent(card);
         perm.setSummoningSick(false);

@@ -21,13 +21,6 @@ import static org.assertj.core.api.Assertions.assertThat;
 
 class EnergyStormTest extends BaseCardTest {
 
-    private void advanceToUpkeep(Player activePlayer) {
-        harness.forceActivePlayer(activePlayer);
-        harness.forceStep(TurnStep.UNTAP);
-        harness.clearPriorityPassed();
-        harness.passBothPriorities();
-    }
-
     private Permanent addReady(Player player, com.github.laxika.magicalvibes.model.Card card) {
         Permanent perm = new Permanent(card);
         perm.setSummoningSick(false);

@@ -128,11 +128,4 @@ class NoblePurposeTest extends BaseCardTest {
         Permanent enchantment = new Permanent(new NoblePurpose());
         harness.getGameData().playerBattlefields.get(controller.getId()).add(enchantment);
     }
-
-    private void resolveCombat() {
-        harness.forceActivePlayer(player1);
-        harness.forceStep(TurnStep.DECLARE_BLOCKERS);
-        harness.clearPriorityPassed();
-        harness.passBothPriorities();
-    }
 }

@@ -122,13 +122,6 @@ class OonasBlackguardTest extends BaseCardTest {
 
     // ===== Helpers =====
 
-    private void resolveCombat() {
-        harness.forceActivePlayer(player1);
-        harness.forceStep(TurnStep.DECLARE_BLOCKERS);
-        harness.clearPriorityPassed();
-        harness.passBothPriorities(); // combat damage
-    }
-
     private Permanent addReadyBlackguard(Player player) {
         return addReadyCreature(player, new OonasBlackguard());
     }

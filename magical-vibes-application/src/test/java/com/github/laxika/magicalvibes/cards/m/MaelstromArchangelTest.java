@@ -4,7 +4,6 @@ import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
 import com.github.laxika.magicalvibes.model.PendingInteraction;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.Player;
-import com.github.laxika.magicalvibes.model.TurnStep;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
@@ -24,7 +23,7 @@ class MaelstromArchangelTest extends BaseCardTest {
         harness.setHand(player1, new ArrayList<>(List.of(freeSpell)));
         // Deliberately add no mana — the spell must be castable without paying its cost.
 
-        resolveCombat();
+        resolveCombatAndTrigger();
 
         assertThat(gd.interaction.activeInteraction()).isInstanceOf(PendingInteraction.MayAbilityChoice.class);
         harness.handleMayAbilityChosen(player1, true);
@@ -42,7 +41,7 @@ class MaelstromArchangelTest extends BaseCardTest {
         GrizzlyBears handCard = new GrizzlyBears();
         harness.setHand(player1, new ArrayList<>(List.of(handCard)));
 
-        resolveCombat();
+        resolveCombatAndTrigger();
 
         assertThat(gd.interaction.activeInteraction()).isInstanceOf(PendingInteraction.MayAbilityChoice.class);
         harness.handleMayAbilityChosen(player1, false);
@@ -58,7 +57,7 @@ class MaelstromArchangelTest extends BaseCardTest {
         addAttackingArchangel(player1);
         harness.setHand(player1, new ArrayList<>());
 
-        resolveCombat();
+        resolveCombatAndTrigger();
 
         assertThat(gd.interaction.activeInteraction(PendingInteraction.MayAbilityChoice.class)).isNull();
         assertThat(gd.stack).isEmpty();
@@ -73,7 +72,7 @@ class MaelstromArchangelTest extends BaseCardTest {
         blocker.addBlockingTarget(0);
         harness.setHand(player1, new ArrayList<>(List.of(new GrizzlyBears())));
 
-        resolveCombat();
+        resolveCombatAndTrigger();
 
         assertThat(gd.interaction.activeInteraction(PendingInteraction.MayAbilityChoice.class)).isNull();
         assertThat(gd.stack).isEmpty();
@@ -87,11 +86,8 @@ class MaelstromArchangelTest extends BaseCardTest {
         return archangel;
     }
 
-    private void resolveCombat() {
-        harness.forceActivePlayer(player1);
-        harness.forceStep(TurnStep.DECLARE_BLOCKERS);
-        harness.clearPriorityPassed();
-        harness.passBothPriorities();
-        harness.passBothPriorities();
+    private void resolveCombatAndTrigger() {
+        resolveCombat();
+        harness.passBothPriorities(); // resolve what combat damage triggered
     }
 }

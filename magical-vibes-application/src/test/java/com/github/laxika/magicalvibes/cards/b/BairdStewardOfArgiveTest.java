@@ -351,14 +351,6 @@ class BairdStewardOfArgiveTest extends BaseCardTest {
 
     // ===== Helpers =====
 
-    private void declareAttackers(Player player, List<Integer> attackerIndices) {
-        harness.forceActivePlayer(player);
-        harness.forceStep(TurnStep.DECLARE_ATTACKERS);
-        harness.clearPriorityPassed();
-        harness.beginAttackerDeclarationInput();
-        gs.declareAttackers(gd, player, attackerIndices);
-    }
-
     private void addNonSickCreature(Player player, Card card) {
         Permanent p = new Permanent(card);
         p.setSummoningSick(false);

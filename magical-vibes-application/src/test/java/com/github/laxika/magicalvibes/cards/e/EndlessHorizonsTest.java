@@ -7,7 +7,6 @@ import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.PendingInteraction;
 import com.github.laxika.magicalvibes.model.Player;
-import com.github.laxika.magicalvibes.model.TurnStep;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
@@ -97,12 +96,9 @@ class EndlessHorizonsTest extends BaseCardTest {
         return permId;
     }
 
-    private void advanceToUpkeep(Player activePlayer) {
-        harness.forceActivePlayer(activePlayer);
+    private void advanceToSecondTurnUpkeep(Player activePlayer) {
         gd.turnNumber = 2;
-        harness.forceStep(TurnStep.UNTAP);
-        harness.clearPriorityPassed();
-        harness.passBothPriorities(); // advances to UPKEEP, fires upkeep triggers
+        advanceToUpkeep(activePlayer);
     }
 
     @Test
@@ -111,7 +107,7 @@ class EndlessHorizonsTest extends BaseCardTest {
         UUID permId = setupWithExiledPlains(1);
         UUID exiledId = gd.getCardsExiledByPermanent(permId).getFirst().getId();
 
-        advanceToUpkeep(player1);
+        advanceToSecondTurnUpkeep(player1);
         harness.passBothPriorities(); // resolve upkeep trigger → may prompt
         harness.handleMayAbilityChosen(player1, true);
 
@@ -126,7 +122,7 @@ class EndlessHorizonsTest extends BaseCardTest {
 
         UUID exiledId = gd.getCardsExiledByPermanent(permId).getFirst().getId();
 
-        advanceToUpkeep(player1);
+        advanceToSecondTurnUpkeep(player1);
         harness.passBothPriorities(); // resolve upkeep trigger → may prompt
         harness.handleMayAbilityChosen(player1, false);
 
@@ -142,7 +138,7 @@ class EndlessHorizonsTest extends BaseCardTest {
         UUID permId = setupWithExiledPlains(3);
         UUID chosen = gd.getCardsExiledByPermanent(permId).getFirst().getId();
 
-        advanceToUpkeep(player1);
+        advanceToSecondTurnUpkeep(player1);
         harness.passBothPriorities(); // resolve upkeep trigger → may prompt
         harness.handleMayAbilityChosen(player1, true);
 

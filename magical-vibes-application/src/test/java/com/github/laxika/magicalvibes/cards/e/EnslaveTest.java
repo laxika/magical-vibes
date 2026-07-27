@@ -156,13 +156,6 @@ class EnslaveTest extends BaseCardTest {
 
     // ===== Helper methods =====
 
-    private void advanceToUpkeep(Player activePlayer) {
-        harness.forceActivePlayer(activePlayer);
-        harness.forceStep(TurnStep.UNTAP);
-        harness.clearPriorityPassed();
-        harness.passBothPriorities();
-    }
-
     private Permanent addCreatureReady(Player player) {
         Permanent perm = new Permanent(new GrizzlyBears());
         perm.setSummoningSick(false);

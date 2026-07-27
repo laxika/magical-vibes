@@ -6,7 +6,6 @@ import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.PendingInteraction;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.Player;
-import com.github.laxika.magicalvibes.model.TurnStep;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
@@ -24,7 +23,7 @@ class AbyssalSpecterTest extends BaseCardTest {
         addAttackingSpecter(player1);
         harness.setHand(player2, new ArrayList<>(List.of(new GrizzlyBears(), new Forest())));
 
-        resolveCombat();
+        resolveCombatAndTrigger();
 
         assertThat(gd.interaction.activeInteraction()).isInstanceOf(PendingInteraction.DiscardChoice.class);
         assertThat(gd.interaction.activeInteraction(PendingInteraction.DiscardChoice.class).playerId())
@@ -46,7 +45,7 @@ class AbyssalSpecterTest extends BaseCardTest {
         blocker.addBlockingTarget(0);
         harness.setHand(player2, new ArrayList<>(List.of(new Forest())));
 
-        resolveCombat();
+        resolveCombatAndTrigger();
 
         // No combat damage reached the player, so no discard was prompted.
         assertThat(gd.interaction.activeInteraction(PendingInteraction.DiscardChoice.class)).isNull();
@@ -67,12 +66,8 @@ class AbyssalSpecterTest extends BaseCardTest {
         return specter;
     }
 
-    private void resolveCombat() {
-        harness.forceActivePlayer(player1);
-        harness.forceStep(TurnStep.DECLARE_BLOCKERS);
-        harness.clearPriorityPassed();
-        // Pass through combat damage and the resulting triggered ability resolution.
-        harness.passBothPriorities();
-        harness.passBothPriorities();
+    private void resolveCombatAndTrigger() {
+        resolveCombat();
+        harness.passBothPriorities(); // resolve what combat damage triggered
     }
 }

@@ -26,7 +26,7 @@ class WavesOfAggressionTest extends BaseCardTest {
         List<Permanent> battlefield = harness.getGameData().playerBattlefields.get(player1.getId());
         battlefield.forEach(p -> p.setSummoningSick(false));
 
-        declareAttackers(player1, List.of(0));
+        markAttacking(player1, List.of(0));
         Permanent attackedBear = battlefield.get(0);
         Permanent nonAttackedBear = battlefield.get(1);
         nonAttackedBear.tap();
@@ -98,7 +98,7 @@ class WavesOfAggressionTest extends BaseCardTest {
                 .anyMatch(c -> c.getName().equals("Plains"));
     }
 
-    private void declareAttackers(Player attacker, List<Integer> attackers) {
+    private void markAttacking(Player attacker, List<Integer> attackers) {
         GameData gd = harness.getGameData();
         harness.forceActivePlayer(attacker);
         harness.forceStep(TurnStep.DECLARE_ATTACKERS);

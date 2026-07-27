@@ -50,7 +50,7 @@ class GhastlordOfFugueTest extends BaseCardTest {
         addAttackingGhastlord(player1);
         harness.setHand(player2, new ArrayList<>(List.of(new com.github.laxika.magicalvibes.cards.g.GrizzlyBears())));
 
-        resolveCombat();
+        resolveCombatAndTrigger();
 
         assertThat(gd.interaction.activeInteraction()).isInstanceOf(PendingInteraction.RevealedHandChoice.class);
         PendingInteraction.RevealedHandChoice choice =
@@ -67,7 +67,7 @@ class GhastlordOfFugueTest extends BaseCardTest {
         // Only a creature in hand — with no type restriction it is still a valid choice.
         harness.setHand(player2, new ArrayList<>(List.of(new com.github.laxika.magicalvibes.cards.g.GrizzlyBears())));
 
-        resolveCombat();
+        resolveCombatAndTrigger();
 
         assertThat(gd.interaction.activeInteraction(PendingInteraction.RevealedHandChoice.class).validIndices())
                 .containsExactly(0);
@@ -79,7 +79,7 @@ class GhastlordOfFugueTest extends BaseCardTest {
         addAttackingGhastlord(player1);
         harness.setHand(player2, new ArrayList<>(List.of(new LightningBolt(), createForest())));
 
-        resolveCombat();
+        resolveCombatAndTrigger();
         harness.handleCardChosen(player1, 0); // player1 chooses Lightning Bolt
 
         assertThat(gd.getPlayerExiledCards(player2.getId()))
@@ -96,7 +96,7 @@ class GhastlordOfFugueTest extends BaseCardTest {
         addAttackingGhastlord(player1);
         harness.setHand(player2, new ArrayList<>());
 
-        resolveCombat();
+        resolveCombatAndTrigger();
 
         assertThat(gd.interaction.activeInteraction()).isNull();
     }
@@ -111,12 +111,9 @@ class GhastlordOfFugueTest extends BaseCardTest {
         return ghastlord;
     }
 
-    private void resolveCombat() {
-        harness.forceActivePlayer(player1);
-        harness.forceStep(TurnStep.DECLARE_BLOCKERS);
-        harness.clearPriorityPassed();
-        harness.passBothPriorities();
-        harness.passBothPriorities();
+    private void resolveCombatAndTrigger() {
+        resolveCombat();
+        harness.passBothPriorities(); // resolve what combat damage triggered
     }
 
     private Card createForest() {

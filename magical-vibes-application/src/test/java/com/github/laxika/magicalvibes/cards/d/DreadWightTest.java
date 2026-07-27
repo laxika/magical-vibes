@@ -27,7 +27,7 @@ class DreadWightTest extends BaseCardTest {
         wight.setAttacking(true);
         Permanent spider = addCreatureReady(player2, new GiantSpider());
 
-        setupDeclareBlockers();
+        prepareDeclareBlockers();
         gs.declareBlockers(gd, player2, List.of(new BlockerAssignment(0, 0)));
         harness.passBothPriorities();
 
@@ -44,7 +44,7 @@ class DreadWightTest extends BaseCardTest {
         wight.setAttacking(true);
         Permanent spider = addCreatureReady(player2, new GiantSpider());
 
-        setupDeclareBlockers();
+        prepareDeclareBlockers();
         gs.declareBlockers(gd, player2, List.of(new BlockerAssignment(0, 0)));
         harness.passBothPriorities();
 
@@ -62,7 +62,7 @@ class DreadWightTest extends BaseCardTest {
         attacker.setAttacking(true);
         addCreatureReady(player2, new DreadWight());
 
-        setupDeclareBlockers();
+        prepareDeclareBlockers();
         gs.declareBlockers(gd, player2, List.of(new BlockerAssignment(0, 0)));
         harness.passBothPriorities();
 
@@ -84,7 +84,7 @@ class DreadWightTest extends BaseCardTest {
                 List.of(new RemoveCounterFromSourceEffect(CounterType.PARALYZATION, 2)),
                 "{8}: Remove two paralyzation counters from this creature."));
 
-        setupDeclareBlockers();
+        prepareDeclareBlockers();
         gs.declareBlockers(gd, player2, List.of(new BlockerAssignment(0, 0)));
         harness.passBothPriorities();
 
@@ -149,13 +149,6 @@ class DreadWightTest extends BaseCardTest {
 
         assertThat(gd.hasDelayedAction(PutCounterOnPermanentAtEndOfCombat.class)).isFalse();
         assertThat(spider.getCounterCount(CounterType.PARALYZATION)).isZero();
-    }
-
-    private void setupDeclareBlockers() {
-        harness.forceActivePlayer(player1);
-        harness.forceStep(TurnStep.DECLARE_BLOCKERS);
-        harness.clearPriorityPassed();
-        harness.beginBlockerDeclarationInput();
     }
 
     private void leaveEndOfCombat() {

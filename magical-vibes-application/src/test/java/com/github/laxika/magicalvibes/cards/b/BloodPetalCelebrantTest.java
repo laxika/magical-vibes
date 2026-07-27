@@ -22,7 +22,7 @@ class BloodPetalCelebrantTest extends BaseCardTest {
     void hasFirstStrikeWhileAttacking() {
         Permanent celebrant = addCreatureReady(player1, new BloodPetalCelebrant());
 
-        declareAttackers(player1, List.of(0));
+        markAttacking(player1, List.of(0));
 
         assertThat(gqs.hasKeyword(gd, celebrant, Keyword.FIRST_STRIKE)).isTrue();
     }
@@ -60,7 +60,7 @@ class BloodPetalCelebrantTest extends BaseCardTest {
                 .anyMatch(c -> c.getName().equals("Blood Petal Celebrant"));
     }
 
-    private void declareAttackers(Player player, List<Integer> attackerIndices) {
+    private void markAttacking(Player player, List<Integer> attackerIndices) {
         List<Permanent> battlefield = gd.playerBattlefields.get(player.getId());
         for (int idx : attackerIndices) {
             battlefield.get(idx).setAttacking(true);

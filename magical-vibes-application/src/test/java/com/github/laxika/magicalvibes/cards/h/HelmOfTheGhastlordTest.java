@@ -8,7 +8,6 @@ import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.PendingInteraction;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.Player;
-import com.github.laxika.magicalvibes.model.TurnStep;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
@@ -32,7 +31,7 @@ class HelmOfTheGhastlordTest extends BaseCardTest {
 
         int handBefore = gd.playerHands.get(player1.getId()).size();
 
-        resolveCombat();
+        resolveCombatAndTrigger();
 
         assertThat(gd.playerHands.get(player1.getId())).hasSize(handBefore + 1);
         // Creature is not black, so the opponent does not discard.
@@ -47,7 +46,7 @@ class HelmOfTheGhastlordTest extends BaseCardTest {
         attachHelm(player1, creature);
         creature.setAttacking(true);
 
-        resolveCombat();
+        resolveCombatAndTrigger();
 
         // 1/1 boosted to 2/2 deals 2 combat damage.
         assertThat(gd.playerLifeTotals.get(player2.getId())).isEqualTo(18);
@@ -65,7 +64,7 @@ class HelmOfTheGhastlordTest extends BaseCardTest {
 
         int controllerHandBefore = gd.playerHands.get(player1.getId()).size();
 
-        resolveCombat();
+        resolveCombatAndTrigger();
 
         assertThat(gd.interaction.activeInteraction()).isInstanceOf(PendingInteraction.DiscardChoice.class);
         assertThat(gd.interaction.activeInteraction(PendingInteraction.DiscardChoice.class).playerId())
@@ -91,7 +90,7 @@ class HelmOfTheGhastlordTest extends BaseCardTest {
 
         int handBefore = gd.playerHands.get(player1.getId()).size();
 
-        resolveCombat();
+        resolveCombatAndTrigger();
 
         // No +1/+1: 2/2 deals exactly 2 damage.
         assertThat(gd.playerLifeTotals.get(player2.getId())).isEqualTo(18);
@@ -115,12 +114,8 @@ class HelmOfTheGhastlordTest extends BaseCardTest {
         gd.playerBattlefields.get(controller.getId()).add(helm);
     }
 
-    private void resolveCombat() {
-        harness.forceActivePlayer(player1);
-        harness.forceStep(TurnStep.DECLARE_BLOCKERS);
-        harness.clearPriorityPassed();
-        // Pass through combat damage and the resulting triggered ability resolution.
-        harness.passBothPriorities();
-        harness.passBothPriorities();
+    private void resolveCombatAndTrigger() {
+        resolveCombat();
+        harness.passBothPriorities(); // resolve what combat damage triggered
     }
 }

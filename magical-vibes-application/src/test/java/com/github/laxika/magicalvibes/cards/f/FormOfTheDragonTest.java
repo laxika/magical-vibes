@@ -16,13 +16,6 @@ import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
 class FormOfTheDragonTest extends BaseCardTest {
 
-    private void advanceToUpkeep(Player activePlayer) {
-        harness.forceActivePlayer(activePlayer);
-        harness.forceStep(TurnStep.UNTAP);
-        harness.clearPriorityPassed();
-        harness.passBothPriorities(); // advances to UPKEEP
-    }
-
     private void beginAttack(Player attacker) {
         harness.forceActivePlayer(attacker);
         harness.forceStep(TurnStep.DECLARE_ATTACKERS);

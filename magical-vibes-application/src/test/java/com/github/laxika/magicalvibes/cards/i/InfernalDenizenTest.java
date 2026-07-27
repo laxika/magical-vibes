@@ -19,13 +19,6 @@ import static org.assertj.core.api.Assertions.assertThat;
 
 class InfernalDenizenTest extends BaseCardTest {
 
-    private void advanceToUpkeep(Player activePlayer) {
-        harness.forceActivePlayer(activePlayer);
-        harness.forceStep(TurnStep.UNTAP);
-        harness.clearPriorityPassed();
-        harness.passBothPriorities(); // advances to UPKEEP, trigger fires
-    }
-
     private Permanent denizen(Player owner) {
         UUID id = harness.getPermanentId(owner, "Infernal Denizen");
         return gd.playerBattlefields.get(owner.getId()).stream()

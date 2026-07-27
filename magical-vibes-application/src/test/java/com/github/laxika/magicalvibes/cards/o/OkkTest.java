@@ -5,7 +5,6 @@ import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
 import com.github.laxika.magicalvibes.cards.h.HillGiant;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.Player;
-import com.github.laxika.magicalvibes.model.TurnStep;
 import com.github.laxika.magicalvibes.networking.message.BlockerAssignment;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
 import org.junit.jupiter.api.DisplayName;
@@ -57,7 +56,7 @@ class OkkTest extends BaseCardTest {
     void cannotBlockAlone() {
         Permanent attacker = addReadyAttacker(player1);
         addCreatureReady(player2, new Okk());
-        setupDeclareBlockers();
+        prepareDeclareBlockers();
 
         assertThatThrownBy(() -> gs.declareBlockers(gd, player2, List.of(new BlockerAssignment(0, 0))))
                 .isInstanceOf(IllegalStateException.class)
@@ -70,7 +69,7 @@ class OkkTest extends BaseCardTest {
         addReadyAttacker(player1);
         addCreatureReady(player2, new Okk());
         addCreatureReady(player2, new HillGiant()); // 3/3 < 4/4
-        setupDeclareBlockers();
+        prepareDeclareBlockers();
 
         assertThatThrownBy(() -> gs.declareBlockers(gd, player2,
                 List.of(new BlockerAssignment(0, 0), new BlockerAssignment(1, 0))))
@@ -84,7 +83,7 @@ class OkkTest extends BaseCardTest {
         addReadyAttacker(player1);
         addCreatureReady(player2, new Okk());
         addCreatureReady(player2, new AvatarOfMight()); // 8/8 > 4/4
-        setupDeclareBlockers();
+        prepareDeclareBlockers();
 
         assertThatCode(() -> gs.declareBlockers(gd, player2,
                 List.of(new BlockerAssignment(0, 0), new BlockerAssignment(1, 0))))
@@ -95,20 +94,5 @@ class OkkTest extends BaseCardTest {
         Permanent attacker = addCreatureReady(player, new GrizzlyBears());
         attacker.setAttacking(true);
         return attacker;
-    }
-
-    private void declareAttackers(Player player, List<Integer> attackerIndices) {
-        harness.forceActivePlayer(player);
-        harness.forceStep(TurnStep.DECLARE_ATTACKERS);
-        harness.clearPriorityPassed();
-        harness.beginAttackerDeclarationInput();
-        gs.declareAttackers(gd, player, attackerIndices);
-    }
-
-    private void setupDeclareBlockers() {
-        harness.forceActivePlayer(player1);
-        harness.forceStep(TurnStep.DECLARE_BLOCKERS);
-        harness.clearPriorityPassed();
-        harness.beginBlockerDeclarationInput();
     }
 }
