@@ -7,7 +7,6 @@ import com.github.laxika.magicalvibes.cards.p.Pacifism;
 import com.github.laxika.magicalvibes.model.Keyword;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
-import com.github.laxika.magicalvibes.model.Player;
 import com.github.laxika.magicalvibes.model.StackEntry;
 import com.github.laxika.magicalvibes.model.StackEntryType;
 import com.github.laxika.magicalvibes.model.TurnStep;
@@ -28,7 +27,7 @@ class ActOfTreasonTest extends BaseCardTest {
     @Test
     @DisplayName("Casting Act of Treason puts it on the stack with the target creature")
     void castingPutsOnStack() {
-        Permanent target = addReadyCreature(player2);
+        Permanent target = addCreatureReady(player2, new GrizzlyBears());
         harness.setHand(player1, List.of(new ActOfTreason()));
         harness.addMana(player1, ManaColor.RED, 1);
         harness.addMana(player1, ManaColor.WHITE, 2);
@@ -45,7 +44,7 @@ class ActOfTreasonTest extends BaseCardTest {
     @Test
     @DisplayName("Resolving Act of Treason untaps target, gains control, and grants haste")
     void resolvesUntapGainControlAndHaste() {
-        Permanent target = addReadyCreature(player2);
+        Permanent target = addCreatureReady(player2, new GrizzlyBears());
         target.tap();
         harness.setHand(player1, List.of(new ActOfTreason()));
         harness.addMana(player1, ManaColor.RED, 1);
@@ -64,7 +63,7 @@ class ActOfTreasonTest extends BaseCardTest {
     @Test
     @DisplayName("Stolen creature can attack this turn because Act of Treason grants haste")
     void stolenCreatureCanAttackDueToHaste() {
-        Permanent target = addReadyCreature(player2);
+        Permanent target = addCreatureReady(player2, new GrizzlyBears());
         target.setSummoningSick(false);
         harness.setHand(player1, List.of(new ActOfTreason()));
         harness.addMana(player1, ManaColor.RED, 1);
@@ -89,7 +88,7 @@ class ActOfTreasonTest extends BaseCardTest {
     @Test
     @DisplayName("Act of Treason control and haste expire at cleanup")
     void controlAndHasteExpireAtCleanup() {
-        Permanent target = addReadyCreature(player2);
+        Permanent target = addCreatureReady(player2, new GrizzlyBears());
         harness.setHand(player1, List.of(new ActOfTreason()));
         harness.addMana(player1, ManaColor.RED, 1);
         harness.addMana(player1, ManaColor.WHITE, 2);
@@ -110,7 +109,7 @@ class ActOfTreasonTest extends BaseCardTest {
     @Test
     @DisplayName("Can target own creature (control change is a no-op)")
     void canTargetOwnCreature() {
-        Permanent ownCreature = addReadyCreature(player1);
+        Permanent ownCreature = addCreatureReady(player1, new GrizzlyBears());
         ownCreature.tap();
         harness.setHand(player1, List.of(new ActOfTreason()));
         harness.addMana(player1, ManaColor.RED, 1);
@@ -127,7 +126,7 @@ class ActOfTreasonTest extends BaseCardTest {
     @Test
     @DisplayName("Cannot target a non-creature permanent")
     void cannotTargetNonCreature() {
-        addReadyCreature(player1); // valid target so spell is playable
+        addCreatureReady(player1, new GrizzlyBears()); // valid target so spell is playable
         Permanent enchantment = new Permanent(new Pacifism());
         gd.playerBattlefields.get(player2.getId()).add(enchantment);
         harness.setHand(player1, List.of(new ActOfTreason()));
@@ -142,7 +141,7 @@ class ActOfTreasonTest extends BaseCardTest {
     @Test
     @DisplayName("Act of Treason fizzles if target is removed before resolution")
     void fizzlesIfTargetRemoved() {
-        Permanent target = addReadyCreature(player2);
+        Permanent target = addCreatureReady(player2, new GrizzlyBears());
         harness.setHand(player1, List.of(new ActOfTreason()));
         harness.addMana(player1, ManaColor.RED, 1);
         harness.addMana(player1, ManaColor.WHITE, 2);
@@ -154,12 +153,5 @@ class ActOfTreasonTest extends BaseCardTest {
 
         assertThat(gd.stack).isEmpty();
         assertThat(gd.gameLog.stream().map(GameLogEntry::plainText)).anyMatch(log -> log.contains("fizzles"));
-    }
-
-    private Permanent addReadyCreature(Player player) {
-        Permanent perm = new Permanent(new GrizzlyBears());
-        perm.setSummoningSick(false);
-        gd.playerBattlefields.get(player.getId()).add(perm);
-        return perm;
     }
 }

@@ -24,7 +24,7 @@ class DivinersWandTest extends BaseCardTest {
     @Test
     @DisplayName("Equipped creature gets +1/+1 and flying whenever its controller draws")
     void drawTriggerBoostsAndGrantsFlying() {
-        Permanent creature = addReadyCreature(player1);
+        Permanent creature = addCreatureReady(player1, new GrizzlyBears());
         Permanent wand = addWandReady(player1);
         wand.setAttachedTo(creature.getId());
 
@@ -49,7 +49,7 @@ class DivinersWandTest extends BaseCardTest {
     @Test
     @DisplayName("Boost and flying wear off at end of turn")
     void boostWearsOffAtEndOfTurn() {
-        Permanent creature = addReadyCreature(player1);
+        Permanent creature = addCreatureReady(player1, new GrizzlyBears());
         Permanent wand = addWandReady(player1);
         wand.setAttachedTo(creature.getId());
 
@@ -78,7 +78,7 @@ class DivinersWandTest extends BaseCardTest {
     @Test
     @DisplayName("Draw trigger does not fire at all while the Wand is unattached")
     void unattachedDrawTriggerDoesNothing() {
-        Permanent creature = addReadyCreature(player1);
+        Permanent creature = addCreatureReady(player1, new GrizzlyBears());
         addWandReady(player1); // left unattached
 
         harness.forceActivePlayer(player1);
@@ -101,7 +101,7 @@ class DivinersWandTest extends BaseCardTest {
     @Test
     @DisplayName("Equipped creature can pay {4} to draw a card")
     void grantedActivatedAbilityDraws() {
-        Permanent creature = addReadyCreature(player1);
+        Permanent creature = addCreatureReady(player1, new GrizzlyBears());
         Permanent wand = addWandReady(player1);
         wand.setAttachedTo(creature.getId());
         gd.playerHands.get(player1.getId()).clear();
@@ -157,13 +157,6 @@ class DivinersWandTest extends BaseCardTest {
 
     private Permanent addWandReady(Player player) {
         Permanent perm = new Permanent(new DivinersWand());
-        perm.setSummoningSick(false);
-        gd.playerBattlefields.get(player.getId()).add(perm);
-        return perm;
-    }
-
-    private Permanent addReadyCreature(Player player) {
-        Permanent perm = new Permanent(new GrizzlyBears());
         perm.setSummoningSick(false);
         gd.playerBattlefields.get(player.getId()).add(perm);
         return perm;

@@ -66,7 +66,7 @@ class AccordersShieldTest extends BaseCardTest {
     @DisplayName("Resolving equip ability attaches Shield to target creature")
     void resolvingEquipAttachesToCreature() {
         Permanent shield = addShieldReady(player1);
-        Permanent creature = addReadyCreature(player1);
+        Permanent creature = addCreatureReady(player1, new GrizzlyBears());
         harness.addMana(player1, ManaColor.WHITE, 3);
 
         harness.activateAbility(player1, 0, null, creature.getId());
@@ -81,7 +81,7 @@ class AccordersShieldTest extends BaseCardTest {
     @Test
     @DisplayName("Equipped creature gets +0/+3")
     void equippedCreatureGetsBoost() {
-        Permanent creature = addReadyCreature(player1);
+        Permanent creature = addCreatureReady(player1, new GrizzlyBears());
         Permanent shield = addShieldReady(player1);
         shield.setAttachedTo(creature.getId());
 
@@ -92,7 +92,7 @@ class AccordersShieldTest extends BaseCardTest {
     @Test
     @DisplayName("Equipped creature loses boost when Shield is removed")
     void creatureLosesBoostWhenEquipmentRemoved() {
-        Permanent creature = addReadyCreature(player1);
+        Permanent creature = addCreatureReady(player1, new GrizzlyBears());
         Permanent shield = addShieldReady(player1);
         shield.setAttachedTo(creature.getId());
 
@@ -107,8 +107,8 @@ class AccordersShieldTest extends BaseCardTest {
     @Test
     @DisplayName("Shield does not affect unequipped creatures")
     void doesNotAffectOtherCreatures() {
-        Permanent creature = addReadyCreature(player1);
-        Permanent otherCreature = addReadyCreature(player1);
+        Permanent creature = addCreatureReady(player1, new GrizzlyBears());
+        Permanent otherCreature = addCreatureReady(player1, new GrizzlyBears());
         Permanent shield = addShieldReady(player1);
         shield.setAttachedTo(creature.getId());
 
@@ -121,7 +121,7 @@ class AccordersShieldTest extends BaseCardTest {
     @Test
     @DisplayName("Equipped creature has vigilance")
     void equippedCreatureHasVigilance() {
-        Permanent creature = addReadyCreature(player1);
+        Permanent creature = addCreatureReady(player1, new GrizzlyBears());
         Permanent shield = addShieldReady(player1);
         shield.setAttachedTo(creature.getId());
 
@@ -131,7 +131,7 @@ class AccordersShieldTest extends BaseCardTest {
     @Test
     @DisplayName("Creature loses vigilance when Shield is removed")
     void creatureLosesVigilanceWhenEquipmentRemoved() {
-        Permanent creature = addReadyCreature(player1);
+        Permanent creature = addCreatureReady(player1, new GrizzlyBears());
         Permanent shield = addShieldReady(player1);
         shield.setAttachedTo(creature.getId());
 
@@ -147,7 +147,7 @@ class AccordersShieldTest extends BaseCardTest {
     @Test
     @DisplayName("Equipped creature with vigilance does not tap when attacking")
     void equippedCreatureDoesNotTapWhenAttacking() {
-        Permanent creature = addReadyCreature(player1);
+        Permanent creature = addCreatureReady(player1, new GrizzlyBears());
         Permanent shield = addShieldReady(player1);
         shield.setAttachedTo(creature.getId());
 
@@ -167,8 +167,8 @@ class AccordersShieldTest extends BaseCardTest {
     @DisplayName("Shield can be moved to another creature")
     void canReEquipToAnotherCreature() {
         Permanent shield = addShieldReady(player1);
-        Permanent creature1 = addReadyCreature(player1);
-        Permanent creature2 = addReadyCreature(player1);
+        Permanent creature1 = addCreatureReady(player1, new GrizzlyBears());
+        Permanent creature2 = addCreatureReady(player1, new GrizzlyBears());
 
         shield.setAttachedTo(creature1.getId());
         assertThat(gqs.getEffectiveToughness(gd, creature1)).isEqualTo(5);
@@ -193,7 +193,7 @@ class AccordersShieldTest extends BaseCardTest {
     @DisplayName("Equip fizzles if target creature is removed before resolution")
     void equipFizzlesIfTargetRemoved() {
         Permanent shield = addShieldReady(player1);
-        Permanent creature = addReadyCreature(player1);
+        Permanent creature = addCreatureReady(player1, new GrizzlyBears());
         harness.addMana(player1, ManaColor.WHITE, 3);
 
         harness.activateAbility(player1, 0, null, creature.getId());
@@ -217,13 +217,6 @@ class AccordersShieldTest extends BaseCardTest {
 
     private Permanent addShieldReady(Player player) {
         Permanent perm = new Permanent(new AccordersShield());
-        perm.setSummoningSick(false);
-        gd.playerBattlefields.get(player.getId()).add(perm);
-        return perm;
-    }
-
-    private Permanent addReadyCreature(Player player) {
-        Permanent perm = new Permanent(new GrizzlyBears());
         perm.setSummoningSick(false);
         gd.playerBattlefields.get(player.getId()).add(perm);
         return perm;

@@ -23,7 +23,7 @@ class PegasusCourserTest extends BaseCardTest {
     @DisplayName("Attacking with Pegasus Courser queues target selection for another attacking creature")
     void attackTriggerQueuesForTargetSelection() {
         Permanent courser = addCourserReady(player1);
-        Permanent bears = addCreatureReady(player1);
+        Permanent bears = addCreatureReady(player1, new GrizzlyBears());
 
         declareAttackers(player1, List.of(0, 1));
 
@@ -36,7 +36,7 @@ class PegasusCourserTest extends BaseCardTest {
     @DisplayName("Targeted attacking creature gains flying until end of turn")
     void targetedCreatureGainsFlying() {
         Permanent courser = addCourserReady(player1);
-        Permanent bears = addCreatureReady(player1);
+        Permanent bears = addCreatureReady(player1, new GrizzlyBears());
 
         declareAttackers(player1, List.of(0, 1));
 
@@ -53,7 +53,7 @@ class PegasusCourserTest extends BaseCardTest {
     @DisplayName("Cannot target Pegasus Courser itself (another restriction)")
     void cannotTargetItself() {
         Permanent courser = addCourserReady(player1);
-        Permanent bears = addCreatureReady(player1);
+        Permanent bears = addCreatureReady(player1, new GrizzlyBears());
 
         declareAttackers(player1, List.of(0, 1));
 
@@ -78,8 +78,8 @@ class PegasusCourserTest extends BaseCardTest {
     @DisplayName("Cannot target a non-attacking creature")
     void cannotTargetNonAttackingCreature() {
         Permanent courser = addCourserReady(player1);
-        Permanent attacker = addCreatureReady(player1);
-        Permanent stayBack = addCreatureReady(player1);
+        Permanent attacker = addCreatureReady(player1, new GrizzlyBears());
+        Permanent stayBack = addCreatureReady(player1, new GrizzlyBears());
 
         // Only courser (index 0) and attacker (index 1) attack; stayBack (index 2) stays back
         declareAttackers(player1, List.of(0, 1));
@@ -94,7 +94,7 @@ class PegasusCourserTest extends BaseCardTest {
     @DisplayName("Attack trigger puts triggered ability on the stack")
     void attackPutsTriggeredAbilityOnStack() {
         Permanent courser = addCourserReady(player1);
-        Permanent bears = addCreatureReady(player1);
+        Permanent bears = addCreatureReady(player1, new GrizzlyBears());
 
         declareAttackers(player1, List.of(0, 1));
 
@@ -112,13 +112,6 @@ class PegasusCourserTest extends BaseCardTest {
 
     private Permanent addCourserReady(Player player) {
         Permanent perm = new Permanent(new PegasusCourser());
-        perm.setSummoningSick(false);
-        gd.playerBattlefields.get(player.getId()).add(perm);
-        return perm;
-    }
-
-    private Permanent addCreatureReady(Player player) {
-        Permanent perm = new Permanent(new GrizzlyBears());
         perm.setSummoningSick(false);
         gd.playerBattlefields.get(player.getId()).add(perm);
         return perm;

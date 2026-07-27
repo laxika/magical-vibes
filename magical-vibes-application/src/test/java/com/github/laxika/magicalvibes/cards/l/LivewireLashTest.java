@@ -29,7 +29,7 @@ class LivewireLashTest extends BaseCardTest {
     @DisplayName("Resolving equip ability attaches Livewire Lash to target creature")
     void resolvingEquipAttachesToCreature() {
         Permanent lash = addLashReady(player1);
-        Permanent creature = addReadyCreature(player1);
+        Permanent creature = addCreatureReady(player1, new GrizzlyBears());
         harness.addMana(player1, ManaColor.WHITE, 2);
 
         harness.activateAbility(player1, 0, null, creature.getId());
@@ -43,7 +43,7 @@ class LivewireLashTest extends BaseCardTest {
     @Test
     @DisplayName("Equipped creature gets +2/+0 from Livewire Lash")
     void equippedCreatureGetsBoost() {
-        Permanent creature = addReadyCreature(player1);
+        Permanent creature = addCreatureReady(player1, new GrizzlyBears());
         Permanent lash = addLashReady(player1);
         lash.setAttachedTo(creature.getId());
 
@@ -60,7 +60,7 @@ class LivewireLashTest extends BaseCardTest {
     @Test
     @DisplayName("Trigger fires when equipped creature is targeted by a spell, prompts for any target")
     void triggerFiresWhenEquippedCreatureTargetedBySpell() {
-        Permanent creature = addReadyCreature(player1);
+        Permanent creature = addCreatureReady(player1, new GrizzlyBears());
         Permanent lash = addLashReady(player1);
         lash.setAttachedTo(creature.getId());
 
@@ -79,7 +79,7 @@ class LivewireLashTest extends BaseCardTest {
     void triggerDeals2DamageToPlayer() {
         harness.setLife(player2, 20);
 
-        Permanent creature = addReadyCreature(player1);
+        Permanent creature = addCreatureReady(player1, new GrizzlyBears());
         Permanent lash = addLashReady(player1);
         lash.setAttachedTo(creature.getId());
 
@@ -101,11 +101,11 @@ class LivewireLashTest extends BaseCardTest {
     @Test
     @DisplayName("Trigger deals 2 damage to chosen creature target")
     void triggerDeals2DamageToCreature() {
-        Permanent creature = addReadyCreature(player1);
+        Permanent creature = addCreatureReady(player1, new GrizzlyBears());
         Permanent lash = addLashReady(player1);
         lash.setAttachedTo(creature.getId());
 
-        Permanent targetCreature = addReadyCreature(player2);
+        Permanent targetCreature = addCreatureReady(player2, new GrizzlyBears());
 
         harness.setHand(player1, List.of(new GiantGrowth()));
         harness.addMana(player1, ManaColor.GREEN, 1);
@@ -128,7 +128,7 @@ class LivewireLashTest extends BaseCardTest {
     @Test
     @DisplayName("Trigger does NOT fire when Livewire Lash is not attached to the targeted creature")
     void triggerDoesNotFireWhenNotAttached() {
-        Permanent creature = addReadyCreature(player1);
+        Permanent creature = addCreatureReady(player1, new GrizzlyBears());
         addLashReady(player1); // Not attached to any creature
 
         harness.setHand(player1, List.of(new GiantGrowth()));
@@ -147,7 +147,7 @@ class LivewireLashTest extends BaseCardTest {
     void triggerDoesNotFireWhenSpellTargetsPlayer() {
         harness.setLife(player2, 20);
 
-        Permanent creature = addReadyCreature(player1);
+        Permanent creature = addCreatureReady(player1, new GrizzlyBears());
         Permanent lash = addLashReady(player1);
         lash.setAttachedTo(creature.getId());
 
@@ -168,7 +168,7 @@ class LivewireLashTest extends BaseCardTest {
     void triggerFiresFromDamageSpell() {
         harness.setLife(player2, 20);
 
-        Permanent creature = addReadyCreature(player1);
+        Permanent creature = addCreatureReady(player1, new GrizzlyBears());
         Permanent lash = addLashReady(player1);
         lash.setAttachedTo(creature.getId());
 
@@ -197,7 +197,7 @@ class LivewireLashTest extends BaseCardTest {
     @Test
     @DisplayName("Triggered ability is put on the stack as TRIGGERED_ABILITY type")
     void triggeredAbilityOnStack() {
-        Permanent creature = addReadyCreature(player1);
+        Permanent creature = addCreatureReady(player1, new GrizzlyBears());
         Permanent lash = addLashReady(player1);
         lash.setAttachedTo(creature.getId());
 
@@ -227,11 +227,11 @@ class LivewireLashTest extends BaseCardTest {
         harness.setLife(player2, 20);
 
         // Player1 has a creature with Livewire Lash and another unequipped creature
-        Permanent equippedCreature = addReadyCreature(player1);
+        Permanent equippedCreature = addCreatureReady(player1, new GrizzlyBears());
         Permanent lash = addLashReady(player1);
         lash.setAttachedTo(equippedCreature.getId());
 
-        Permanent otherCreature = addReadyCreature(player2);
+        Permanent otherCreature = addCreatureReady(player2, new GrizzlyBears());
 
         // Player1 casts Boomerang targeting player2's creature
         Boomerang boomerang = new Boomerang();
@@ -279,13 +279,6 @@ class LivewireLashTest extends BaseCardTest {
 
     private Permanent addLashReady(Player player) {
         Permanent perm = new Permanent(new LivewireLash());
-        perm.setSummoningSick(false);
-        gd.playerBattlefields.get(player.getId()).add(perm);
-        return perm;
-    }
-
-    private Permanent addReadyCreature(Player player) {
-        Permanent perm = new Permanent(new GrizzlyBears());
         perm.setSummoningSick(false);
         gd.playerBattlefields.get(player.getId()).add(perm);
         return perm;

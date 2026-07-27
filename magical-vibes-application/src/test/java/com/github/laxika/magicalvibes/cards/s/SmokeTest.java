@@ -2,7 +2,6 @@ package com.github.laxika.magicalvibes.cards.s;
 
 import com.github.laxika.magicalvibes.cards.f.Forest;
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
-import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.Player;
 import com.github.laxika.magicalvibes.model.TurnStep;
@@ -19,10 +18,10 @@ class SmokeTest extends BaseCardTest {
     @Test
     @DisplayName("Only the one chosen creature untaps; other creatures stay tapped, non-creatures untap normally")
     void onlyOneCreatureUntaps() {
-        addReady(player1, new Smoke());
-        Permanent bearsA = addReady(player1, new GrizzlyBears());
-        Permanent bearsB = addReady(player1, new GrizzlyBears());
-        Permanent forest = addReady(player1, new Forest());
+        addCreatureReady(player1, new Smoke());
+        Permanent bearsA = addCreatureReady(player1, new GrizzlyBears());
+        Permanent bearsB = addCreatureReady(player1, new GrizzlyBears());
+        Permanent forest = addCreatureReady(player1, new Forest());
         bearsA.tap();
         bearsB.tap();
         forest.tap();
@@ -39,9 +38,9 @@ class SmokeTest extends BaseCardTest {
     @Test
     @DisplayName("One or fewer creatures untap normally without a choice")
     void oneCreatureUntapsNormally() {
-        addReady(player1, new Smoke());
-        Permanent bears = addReady(player1, new GrizzlyBears());
-        Permanent forest = addReady(player1, new Forest());
+        addCreatureReady(player1, new Smoke());
+        Permanent bears = addCreatureReady(player1, new GrizzlyBears());
+        Permanent forest = addCreatureReady(player1, new Forest());
         bears.tap();
         forest.tap();
 
@@ -54,9 +53,9 @@ class SmokeTest extends BaseCardTest {
     @Test
     @DisplayName("An opponent's Smoke restricts your untap step too")
     void opponentSmokeRestrictsYourUntap() {
-        addReady(player2, new Smoke());
-        Permanent bearsA = addReady(player1, new GrizzlyBears());
-        Permanent bearsB = addReady(player1, new GrizzlyBears());
+        addCreatureReady(player2, new Smoke());
+        Permanent bearsA = addCreatureReady(player1, new GrizzlyBears());
+        Permanent bearsB = addCreatureReady(player1, new GrizzlyBears());
         bearsA.tap();
         bearsB.tap();
 
@@ -65,13 +64,6 @@ class SmokeTest extends BaseCardTest {
 
         assertThat(bearsA.isTapped()).isTrue();
         assertThat(bearsB.isTapped()).isFalse();
-    }
-
-    private Permanent addReady(Player player, Card card) {
-        Permanent perm = new Permanent(card);
-        perm.setSummoningSick(false);
-        gd.playerBattlefields.get(player.getId()).add(perm);
-        return perm;
     }
 
     private void advanceToNextTurn(Player currentActivePlayer) {

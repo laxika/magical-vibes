@@ -2,7 +2,6 @@ package com.github.laxika.magicalvibes.cards.d;
 
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
 import com.github.laxika.magicalvibes.cards.l.LeoninScimitar;
-import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.Keyword;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.Player;
@@ -19,7 +18,7 @@ class DominusOfFealtyTest extends BaseCardTest {
     @DisplayName("Accepting the upkeep trigger gains control of, untaps, and hastes the target")
     void acceptGainsControlUntapsAndHastes() {
         addReadyDominus(player1);
-        Permanent target = addReadyCreature(player2, new GrizzlyBears());
+        Permanent target = addCreatureReady(player2, new GrizzlyBears());
         target.tap();
 
         triggerUpkeep(player1);
@@ -38,7 +37,7 @@ class DominusOfFealtyTest extends BaseCardTest {
     @DisplayName("Declining the upkeep trigger leaves the target untouched")
     void declineDoesNothing() {
         addReadyDominus(player1);
-        Permanent target = addReadyCreature(player2, new GrizzlyBears());
+        Permanent target = addCreatureReady(player2, new GrizzlyBears());
         target.tap();
 
         triggerUpkeep(player1);
@@ -54,7 +53,7 @@ class DominusOfFealtyTest extends BaseCardTest {
     @DisplayName("Control and haste revert at end of turn")
     void controlAndHasteExpireAtCleanup() {
         addReadyDominus(player1);
-        Permanent target = addReadyCreature(player2, new GrizzlyBears());
+        Permanent target = addCreatureReady(player2, new GrizzlyBears());
 
         triggerUpkeep(player1);
         harness.passBothPriorities();
@@ -75,7 +74,7 @@ class DominusOfFealtyTest extends BaseCardTest {
     @DisplayName("Can target a noncreature permanent")
     void canTargetNoncreaturePermanent() {
         addReadyDominus(player1);
-        Permanent artifact = addReadyCreature(player2, new LeoninScimitar());
+        Permanent artifact = addCreatureReady(player2, new LeoninScimitar());
         artifact.tap();
 
         triggerUpkeep(player1);
@@ -90,13 +89,6 @@ class DominusOfFealtyTest extends BaseCardTest {
 
     private Permanent addReadyDominus(Player player) {
         Permanent perm = new Permanent(new DominusOfFealty());
-        perm.setSummoningSick(false);
-        gd.playerBattlefields.get(player.getId()).add(perm);
-        return perm;
-    }
-
-    private Permanent addReadyCreature(Player player, Card card) {
-        Permanent perm = new Permanent(card);
         perm.setSummoningSick(false);
         gd.playerBattlefields.get(player.getId()).add(perm);
         return perm;

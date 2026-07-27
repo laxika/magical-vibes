@@ -8,7 +8,6 @@ import com.github.laxika.magicalvibes.cards.u.Unsummon;
 import com.github.laxika.magicalvibes.model.CardSubtype;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
-import com.github.laxika.magicalvibes.model.Player;
 import com.github.laxika.magicalvibes.model.TurnStep;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
 import org.junit.jupiter.api.DisplayName;
@@ -36,7 +35,7 @@ class OliviaVoldarenTest extends BaseCardTest {
             Permanent olivia = findPermanent(player1, "Olivia Voldaren");
             olivia.setSummoningSick(false);
 
-            Permanent target = addReadyCreature(player2);
+            Permanent target = addCreatureReady(player2, new GrizzlyBears());
 
             harness.addMana(player1, ManaColor.COLORLESS, 1);
             harness.addMana(player1, ManaColor.RED, 1);
@@ -82,8 +81,8 @@ class OliviaVoldarenTest extends BaseCardTest {
             olivia.setSummoningSick(false);
 
             // Add two creatures as targets
-            Permanent target1 = addReadyCreature(player2);
-            Permanent target2 = addReadyCreature(player2);
+            Permanent target1 = addCreatureReady(player2, new GrizzlyBears());
+            Permanent target2 = addCreatureReady(player2, new GrizzlyBears());
 
             // First activation
             harness.addMana(player1, ManaColor.COLORLESS, 1);
@@ -173,7 +172,7 @@ class OliviaVoldarenTest extends BaseCardTest {
             Permanent olivia = findPermanent(player1, "Olivia Voldaren");
             olivia.setSummoningSick(false);
 
-            Permanent bears = addReadyCreature(player2);
+            Permanent bears = addCreatureReady(player2, new GrizzlyBears());
 
             harness.addMana(player1, ManaColor.COLORLESS, 3);
             harness.addMana(player1, ManaColor.BLACK, 2);
@@ -192,7 +191,7 @@ class OliviaVoldarenTest extends BaseCardTest {
             Permanent olivia = findPermanent(player1, "Olivia Voldaren");
             olivia.setSummoningSick(false);
 
-            Permanent bears = addReadyCreature(player2);
+            Permanent bears = addCreatureReady(player2, new GrizzlyBears());
 
             // First: ping to make it a Vampire
             harness.addMana(player1, ManaColor.COLORLESS, 1);
@@ -291,12 +290,5 @@ class OliviaVoldarenTest extends BaseCardTest {
     }
 
     // ===== Helpers =====
-
-    private Permanent addReadyCreature(Player player) {
-        Permanent perm = new Permanent(new GrizzlyBears());
-        perm.setSummoningSick(false);
-        gd.playerBattlefields.get(player.getId()).add(perm);
-        return perm;
-    }
 
 }

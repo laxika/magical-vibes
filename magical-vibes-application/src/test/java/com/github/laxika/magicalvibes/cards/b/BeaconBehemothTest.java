@@ -2,11 +2,9 @@ package com.github.laxika.magicalvibes.cards.b;
 
 import com.github.laxika.magicalvibes.cards.a.AvatarOfMight;
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
-import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.Keyword;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
-import com.github.laxika.magicalvibes.model.Player;
 import com.github.laxika.magicalvibes.model.TurnStep;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
 import org.junit.jupiter.api.DisplayName;
@@ -22,8 +20,8 @@ class BeaconBehemothTest extends BaseCardTest {
     @Test
     @DisplayName("Activating grants vigilance to a target creature with power 5 or greater")
     void grantsVigilanceToBigCreature() {
-        addReady(player1, new BeaconBehemoth());
-        Permanent avatar = addReady(player1, new AvatarOfMight());
+        addCreatureReady(player1, new BeaconBehemoth());
+        Permanent avatar = addCreatureReady(player1, new AvatarOfMight());
         harness.addMana(player1, ManaColor.GREEN, 1);
 
         harness.activateAbility(player1, 0, null, avatar.getId());
@@ -37,8 +35,8 @@ class BeaconBehemothTest extends BaseCardTest {
     @Test
     @DisplayName("Vigilance wears off at end of turn")
     void wearsOffAtEndOfTurn() {
-        addReady(player1, new BeaconBehemoth());
-        Permanent avatar = addReady(player1, new AvatarOfMight());
+        addCreatureReady(player1, new BeaconBehemoth());
+        Permanent avatar = addCreatureReady(player1, new AvatarOfMight());
         harness.addMana(player1, ManaColor.GREEN, 1);
 
         harness.activateAbility(player1, 0, null, avatar.getId());
@@ -56,8 +54,8 @@ class BeaconBehemothTest extends BaseCardTest {
     @Test
     @DisplayName("Cannot target a creature with power less than 5")
     void cannotTargetSmallCreature() {
-        addReady(player1, new BeaconBehemoth());
-        Permanent bears = addReady(player1, new GrizzlyBears());
+        addCreatureReady(player1, new BeaconBehemoth());
+        Permanent bears = addCreatureReady(player1, new GrizzlyBears());
         harness.addMana(player1, ManaColor.GREEN, 1);
 
         assertThatThrownBy(() -> harness.activateAbility(player1, 0, null, bears.getId()))
@@ -68,11 +66,4 @@ class BeaconBehemothTest extends BaseCardTest {
     }
 
     // ===== Helpers =====
-
-    private Permanent addReady(Player player, Card card) {
-        Permanent perm = new Permanent(card);
-        perm.setSummoningSick(false);
-        gd.playerBattlefields.get(player.getId()).add(perm);
-        return perm;
-    }
 }

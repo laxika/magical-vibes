@@ -24,7 +24,7 @@ class ExecutionersCapsuleTest extends BaseCardTest {
     @DisplayName("Activating ability sacrifices Executioner's Capsule and puts ability on the stack")
     void activatingAbilitySacrificesAndPutsOnStack() {
         addReadyCapsule(player1);
-        Permanent target = addReadyCreature(player2);
+        Permanent target = addCreatureReady(player2, new GrizzlyBears());
         addCapsuleMana(player1);
 
         harness.activateAbility(player1, 0, null, target.getId());
@@ -47,7 +47,7 @@ class ExecutionersCapsuleTest extends BaseCardTest {
     @DisplayName("Resolving ability destroys target nonblack creature")
     void resolvingAbilityDestroysTargetCreature() {
         addReadyCapsule(player1);
-        Permanent target = addReadyCreature(player2);
+        Permanent target = addCreatureReady(player2, new GrizzlyBears());
         addCapsuleMana(player1);
 
         harness.activateAbility(player1, 0, null, target.getId());
@@ -65,7 +65,7 @@ class ExecutionersCapsuleTest extends BaseCardTest {
     @DisplayName("Cannot activate without enough mana")
     void cannotActivateWithoutEnoughMana() {
         addReadyCapsule(player1);
-        Permanent target = addReadyCreature(player2);
+        Permanent target = addCreatureReady(player2, new GrizzlyBears());
 
         assertThatThrownBy(() -> harness.activateAbility(player1, 0, null, target.getId()))
                 .isInstanceOf(IllegalStateException.class);
@@ -75,7 +75,7 @@ class ExecutionersCapsuleTest extends BaseCardTest {
     @DisplayName("Cannot activate with only colorless mana (needs black)")
     void cannotActivateWithOnlyColorlessMana() {
         addReadyCapsule(player1);
-        Permanent target = addReadyCreature(player2);
+        Permanent target = addCreatureReady(player2, new GrizzlyBears());
         harness.addMana(player1, ManaColor.COLORLESS, 2);
 
         assertThatThrownBy(() -> harness.activateAbility(player1, 0, null, target.getId()))
@@ -89,7 +89,7 @@ class ExecutionersCapsuleTest extends BaseCardTest {
     void cannotActivateWhenTapped() {
         Permanent capsule = addReadyCapsule(player1);
         capsule.tap();
-        Permanent target = addReadyCreature(player2);
+        Permanent target = addCreatureReady(player2, new GrizzlyBears());
         addCapsuleMana(player1);
 
         assertThatThrownBy(() -> harness.activateAbility(player1, 0, null, target.getId()))
@@ -103,7 +103,7 @@ class ExecutionersCapsuleTest extends BaseCardTest {
     void cannotTargetBlackCreature() {
         addReadyCapsule(player1);
         // Valid target so the ability is activatable at all
-        addReadyCreature(player1);
+        addCreatureReady(player1, new GrizzlyBears());
         Permanent blackCreature = new Permanent(new MassOfGhouls());
         gd.playerBattlefields.get(player2.getId()).add(blackCreature);
         addCapsuleMana(player1);
@@ -116,7 +116,7 @@ class ExecutionersCapsuleTest extends BaseCardTest {
     @DisplayName("Cannot target a land")
     void cannotTargetLand() {
         addReadyCapsule(player1);
-        addReadyCreature(player1);
+        addCreatureReady(player1, new GrizzlyBears());
         Permanent land = new Permanent(new Island());
         gd.playerBattlefields.get(player2.getId()).add(land);
         addCapsuleMana(player1);
@@ -131,7 +131,7 @@ class ExecutionersCapsuleTest extends BaseCardTest {
     @DisplayName("Ability fizzles if target is removed before resolution")
     void fizzlesIfTargetRemoved() {
         addReadyCapsule(player1);
-        Permanent target = addReadyCreature(player2);
+        Permanent target = addCreatureReady(player2, new GrizzlyBears());
         addCapsuleMana(player1);
 
         harness.activateAbility(player1, 0, null, target.getId());
@@ -154,14 +154,6 @@ class ExecutionersCapsuleTest extends BaseCardTest {
 
     private Permanent addReadyCapsule(Player player) {
         ExecutionersCapsule card = new ExecutionersCapsule();
-        Permanent perm = new Permanent(card);
-        perm.setSummoningSick(false);
-        gd.playerBattlefields.get(player.getId()).add(perm);
-        return perm;
-    }
-
-    private Permanent addReadyCreature(Player player) {
-        GrizzlyBears card = new GrizzlyBears();
         Permanent perm = new Permanent(card);
         perm.setSummoningSick(false);
         gd.playerBattlefields.get(player.getId()).add(perm);

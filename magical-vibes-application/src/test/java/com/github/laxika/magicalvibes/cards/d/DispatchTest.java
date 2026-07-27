@@ -21,7 +21,7 @@ class DispatchTest extends BaseCardTest {
     @Test
     @DisplayName("Taps target creature without metalcraft")
     void tapsTargetCreatureWithoutMetalcraft() {
-        Permanent creature = addReadyCreature(player2);
+        Permanent creature = addCreatureReady(player2, new GrizzlyBears());
 
         harness.setHand(player1, List.of(new Dispatch()));
         harness.addMana(player1, ManaColor.WHITE, 1);
@@ -35,7 +35,7 @@ class DispatchTest extends BaseCardTest {
     @Test
     @DisplayName("Does not exile target creature without metalcraft")
     void doesNotExileWithoutMetalcraft() {
-        Permanent creature = addReadyCreature(player2);
+        Permanent creature = addCreatureReady(player2, new GrizzlyBears());
 
         harness.setHand(player1, List.of(new Dispatch()));
         harness.addMana(player1, ManaColor.WHITE, 1);
@@ -52,7 +52,7 @@ class DispatchTest extends BaseCardTest {
     @Test
     @DisplayName("Taps and exiles target creature with metalcraft")
     void tapsAndExilesWithMetalcraft() {
-        Permanent creature = addReadyCreature(player2);
+        Permanent creature = addCreatureReady(player2, new GrizzlyBears());
 
         harness.setHand(player1, List.of(new Dispatch()));
         harness.addMana(player1, ManaColor.WHITE, 1);
@@ -70,7 +70,7 @@ class DispatchTest extends BaseCardTest {
     @Test
     @DisplayName("Only taps if metalcraft lost before resolution")
     void onlyTapsIfMetalcraftLostBeforeResolution() {
-        Permanent creature = addReadyCreature(player2);
+        Permanent creature = addCreatureReady(player2, new GrizzlyBears());
 
         harness.setHand(player1, List.of(new Dispatch()));
         harness.addMana(player1, ManaColor.WHITE, 1);
@@ -95,13 +95,5 @@ class DispatchTest extends BaseCardTest {
         harness.addToBattlefield(player, new Spellbook());
         harness.addToBattlefield(player, new LeoninScimitar());
         harness.addToBattlefield(player, new Spellbook());
-    }
-
-    private Permanent addReadyCreature(Player player) {
-        GrizzlyBears card = new GrizzlyBears();
-        Permanent perm = new Permanent(card);
-        perm.setSummoningSick(false);
-        gd.playerBattlefields.get(player.getId()).add(perm);
-        return perm;
     }
 }

@@ -21,7 +21,7 @@ class SorcerersWandTest extends BaseCardTest {
     @DisplayName("Resolving equip ability attaches Sorcerer's Wand to target creature")
     void resolvingEquipAttachesToCreature() {
         Permanent wand = addWandReady(player1);
-        Permanent creature = addReadyCreature(player1);
+        Permanent creature = addCreatureReady(player1, new GrizzlyBears());
         harness.addMana(player1, ManaColor.WHITE, 3);
 
         harness.activateAbility(player1, 0, null, creature.getId());
@@ -37,7 +37,7 @@ class SorcerersWandTest extends BaseCardTest {
     void nonWizardDeals1DamageToPlayer() {
         harness.setLife(player2, 20);
 
-        Permanent creature = addReadyCreature(player1);
+        Permanent creature = addCreatureReady(player1, new GrizzlyBears());
         Permanent wand = addWandReady(player1);
         wand.setAttachedTo(creature.getId());
 
@@ -71,11 +71,11 @@ class SorcerersWandTest extends BaseCardTest {
     @Test
     @DisplayName("Granted ability cannot target a creature")
     void cannotTargetCreature() {
-        Permanent creature = addReadyCreature(player1);
+        Permanent creature = addCreatureReady(player1, new GrizzlyBears());
         Permanent wand = addWandReady(player1);
         wand.setAttachedTo(creature.getId());
 
-        Permanent targetCreature = addReadyCreature(player2);
+        Permanent targetCreature = addCreatureReady(player2, new GrizzlyBears());
 
         assertThatThrownBy(() -> harness.activateAbility(player1, 0, null, targetCreature.getId()))
                 .isInstanceOf(IllegalStateException.class)
@@ -103,7 +103,7 @@ class SorcerersWandTest extends BaseCardTest {
     @Test
     @DisplayName("Already tapped creature cannot use granted tap ability")
     void tappedCreatureCannotUseGrantedAbility() {
-        Permanent creature = addReadyCreature(player1);
+        Permanent creature = addCreatureReady(player1, new GrizzlyBears());
         creature.tap();
 
         Permanent wand = addWandReady(player1);
@@ -119,7 +119,7 @@ class SorcerersWandTest extends BaseCardTest {
     @Test
     @DisplayName("Creature loses granted ability when Sorcerer's Wand is removed")
     void creatureLosesAbilityWhenRemoved() {
-        Permanent creature = addReadyCreature(player1);
+        Permanent creature = addCreatureReady(player1, new GrizzlyBears());
 
         Permanent wand = addWandReady(player1);
         wand.setAttachedTo(creature.getId());
@@ -139,7 +139,7 @@ class SorcerersWandTest extends BaseCardTest {
     void nonWizardDealsBaseDamage() {
         harness.setLife(player2, 20);
 
-        Permanent creature = addReadyCreature(player1);
+        Permanent creature = addCreatureReady(player1, new GrizzlyBears());
         Permanent wand = addWandReady(player1);
         wand.setAttachedTo(creature.getId());
 
@@ -154,13 +154,6 @@ class SorcerersWandTest extends BaseCardTest {
 
     private Permanent addWandReady(Player player) {
         Permanent perm = new Permanent(new SorcerersWand());
-        perm.setSummoningSick(false);
-        gd.playerBattlefields.get(player.getId()).add(perm);
-        return perm;
-    }
-
-    private Permanent addReadyCreature(Player player) {
-        Permanent perm = new Permanent(new GrizzlyBears());
         perm.setSummoningSick(false);
         gd.playerBattlefields.get(player.getId()).add(perm);
         return perm;

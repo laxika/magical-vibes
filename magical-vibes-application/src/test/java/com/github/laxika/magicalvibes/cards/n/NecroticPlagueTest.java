@@ -19,7 +19,7 @@ class NecroticPlagueTest extends BaseCardTest {
     @Test
     @DisplayName("Enchanted creature is sacrificed at the beginning of its controller's upkeep")
     void upkeepSacrificesEnchantedCreature() {
-        Permanent creature = addCreatureReady(player2);
+        Permanent creature = addCreatureReady(player2, new GrizzlyBears());
         castNecroticPlagueOn(player1, creature);
 
         // Advance to player2's upkeep (enchanted creature's controller)
@@ -38,7 +38,7 @@ class NecroticPlagueTest extends BaseCardTest {
     @Test
     @DisplayName("Sacrifice does NOT trigger during the aura controller's upkeep (only enchanted creature's)")
     void doesNotTriggerDuringAuraControllerUpkeep() {
-        Permanent creature = addCreatureReady(player2);
+        Permanent creature = addCreatureReady(player2, new GrizzlyBears());
         castNecroticPlagueOn(player1, creature);
 
         // Advance to player1's upkeep (aura controller, NOT enchanted creature's controller)
@@ -55,8 +55,8 @@ class NecroticPlagueTest extends BaseCardTest {
     @Test
     @DisplayName("When enchanted creature dies, Necrotic Plague returns attached to an opponent's creature")
     void deathTriggerReturnsToOpponentCreature() {
-        Permanent opponentCreature = addCreatureReady(player2);
-        Permanent myCreature = addCreatureReady(player1);
+        Permanent opponentCreature = addCreatureReady(player2, new GrizzlyBears());
+        Permanent myCreature = addCreatureReady(player1, new GrizzlyBears());
         castNecroticPlagueOn(player1, opponentCreature);
 
         // Advance to player2's upkeep — sacrifice trigger fires
@@ -83,7 +83,7 @@ class NecroticPlagueTest extends BaseCardTest {
     @Test
     @DisplayName("Death trigger fizzles when no opponent creatures exist")
     void deathTriggerFizzlesWithNoOpponentCreatures() {
-        Permanent opponentCreature = addCreatureReady(player2);
+        Permanent opponentCreature = addCreatureReady(player2, new GrizzlyBears());
         castNecroticPlagueOn(player1, opponentCreature);
         // Player1 has no creatures
 
@@ -107,8 +107,8 @@ class NecroticPlagueTest extends BaseCardTest {
     @Test
     @DisplayName("Necrotic Plague bounces between players as creatures die")
     void plagueBouncesBetweenPlayers() {
-        Permanent creature2 = addCreatureReady(player2);
-        Permanent creature1 = addCreatureReady(player1);
+        Permanent creature2 = addCreatureReady(player2, new GrizzlyBears());
+        Permanent creature1 = addCreatureReady(player1, new GrizzlyBears());
         castNecroticPlagueOn(player1, creature2);
 
         // ---- First cycle: player2's creature dies at player2's upkeep ----
@@ -123,7 +123,7 @@ class NecroticPlagueTest extends BaseCardTest {
         assertThat(auraOnCreature1.getAttachedTo()).isEqualTo(creature1.getId());
 
         // Add a new creature for player2 so plague has somewhere to go next
-        Permanent creature2b = addCreatureReady(player2);
+        Permanent creature2b = addCreatureReady(player2, new GrizzlyBears());
 
         // ---- Second cycle: player1's creature dies at player1's upkeep ----
         advanceToUpkeep(player1);
@@ -138,13 +138,6 @@ class NecroticPlagueTest extends BaseCardTest {
     }
 
     // ===== Helper methods =====
-
-    private Permanent addCreatureReady(Player player) {
-        Permanent perm = new Permanent(new GrizzlyBears());
-        perm.setSummoningSick(false);
-        gd.playerBattlefields.get(player.getId()).add(perm);
-        return perm;
-    }
 
     private void castNecroticPlagueOn(Player caster, Permanent target) {
         harness.setHand(caster, List.of(new NecroticPlague()));

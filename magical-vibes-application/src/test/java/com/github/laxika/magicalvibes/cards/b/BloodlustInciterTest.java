@@ -19,7 +19,7 @@ class BloodlustInciterTest extends BaseCardTest {
     @DisplayName("Resolving ability grants haste to target creature")
     void resolvingGrantsHaste() {
         addReadyInciter(player1);
-        Permanent target = addReadyCreature(player1);
+        Permanent target = addCreatureReady(player1, new GrizzlyBears());
 
         harness.activateAbility(player1, 0, null, target.getId());
         harness.passBothPriorities();
@@ -31,7 +31,7 @@ class BloodlustInciterTest extends BaseCardTest {
     @DisplayName("Can target opponent's creature")
     void canTargetOpponentCreature() {
         addReadyInciter(player1);
-        Permanent target = addReadyCreature(player2);
+        Permanent target = addCreatureReady(player2, new GrizzlyBears());
 
         harness.activateAbility(player1, 0, null, target.getId());
         harness.passBothPriorities();
@@ -43,7 +43,7 @@ class BloodlustInciterTest extends BaseCardTest {
     @DisplayName("Haste is removed at end of turn")
     void hasteRemovedAtEndOfTurn() {
         addReadyInciter(player1);
-        Permanent target = addReadyCreature(player1);
+        Permanent target = addCreatureReady(player1, new GrizzlyBears());
 
         harness.activateAbility(player1, 0, null, target.getId());
         harness.passBothPriorities();
@@ -69,14 +69,6 @@ class BloodlustInciterTest extends BaseCardTest {
 
     private Permanent addReadyInciter(Player player) {
         BloodlustInciter card = new BloodlustInciter();
-        Permanent perm = new Permanent(card);
-        perm.setSummoningSick(false);
-        harness.getGameData().playerBattlefields.get(player.getId()).add(perm);
-        return perm;
-    }
-
-    private Permanent addReadyCreature(Player player) {
-        GrizzlyBears card = new GrizzlyBears();
         Permanent perm = new Permanent(card);
         perm.setSummoningSick(false);
         harness.getGameData().playerBattlefields.get(player.getId()).add(perm);

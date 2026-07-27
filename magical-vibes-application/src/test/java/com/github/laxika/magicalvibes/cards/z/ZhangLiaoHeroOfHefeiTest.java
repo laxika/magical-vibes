@@ -2,7 +2,6 @@ package com.github.laxika.magicalvibes.cards.z;
 
 import com.github.laxika.magicalvibes.cards.f.Forest;
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
-import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.PendingInteraction;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.Player;
@@ -40,7 +39,7 @@ class ZhangLiaoHeroOfHefeiTest extends BaseCardTest {
     @DisplayName("No trigger when Zhang Liao is blocked and deals no combat damage to a player")
     void noTriggerWhenBlocked() {
         Permanent zhangLiao = addAttackingZhangLiao(player1);
-        Permanent blocker = addReadyCreature(player2, new GrizzlyBears());
+        Permanent blocker = addCreatureReady(player2, new GrizzlyBears());
         blocker.setBlocking(true);
         blocker.addBlockingTarget(0);
         harness.setHand(player2, new ArrayList<>(List.of(new Forest())));
@@ -53,15 +52,8 @@ class ZhangLiaoHeroOfHefeiTest extends BaseCardTest {
 
     // ===== Helpers =====
 
-    private Permanent addReadyCreature(Player player, Card card) {
-        Permanent perm = new Permanent(card);
-        perm.setSummoningSick(false);
-        gd.playerBattlefields.get(player.getId()).add(perm);
-        return perm;
-    }
-
     private Permanent addAttackingZhangLiao(Player player) {
-        Permanent zhangLiao = addReadyCreature(player, new ZhangLiaoHeroOfHefei());
+        Permanent zhangLiao = addCreatureReady(player, new ZhangLiaoHeroOfHefei());
         zhangLiao.setAttacking(true);
         return zhangLiao;
     }

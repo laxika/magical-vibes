@@ -1,5 +1,6 @@
 package com.github.laxika.magicalvibes.cards.g;
 
+import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
 import com.github.laxika.magicalvibes.cards.d.Demystify;
 import com.github.laxika.magicalvibes.model.Keyword;
 import com.github.laxika.magicalvibes.model.ManaColor;
@@ -22,7 +23,7 @@ class GlisteningOilTest extends BaseCardTest {
     @Test
     @DisplayName("Enchanted creature gains infect")
     void enchantedCreatureGainsInfect() {
-        Permanent creature = addCreatureReady(player1);
+        Permanent creature = addCreatureReady(player1, new GrizzlyBears());
 
         harness.setHand(player1, List.of(new GlisteningOil()));
         harness.addMana(player1, ManaColor.BLACK, 2);
@@ -36,7 +37,7 @@ class GlisteningOilTest extends BaseCardTest {
     @Test
     @DisplayName("Creature loses infect when Glistening Oil is removed")
     void creatureLosesInfectWhenOilRemoved() {
-        Permanent creature = addCreatureReady(player1);
+        Permanent creature = addCreatureReady(player1, new GrizzlyBears());
 
         harness.setHand(player1, List.of(new GlisteningOil()));
         harness.addMana(player1, ManaColor.BLACK, 2);
@@ -64,7 +65,7 @@ class GlisteningOilTest extends BaseCardTest {
     @Test
     @DisplayName("At controller's upkeep, enchanted creature gets a -1/-1 counter")
     void upkeepPutsMinusCounter() {
-        Permanent creature = addCreatureReady(player1);
+        Permanent creature = addCreatureReady(player1, new GrizzlyBears());
 
         harness.setHand(player1, List.of(new GlisteningOil()));
         harness.addMana(player1, ManaColor.BLACK, 2);
@@ -83,7 +84,7 @@ class GlisteningOilTest extends BaseCardTest {
     @Test
     @DisplayName("Upkeep trigger does not fire during opponent's upkeep")
     void doesNotTriggerDuringOpponentUpkeep() {
-        Permanent creature = addCreatureReady(player1);
+        Permanent creature = addCreatureReady(player1, new GrizzlyBears());
 
         harness.setHand(player1, List.of(new GlisteningOil()));
         harness.addMana(player1, ManaColor.BLACK, 2);
@@ -102,7 +103,7 @@ class GlisteningOilTest extends BaseCardTest {
     @Test
     @DisplayName("Counters accumulate over multiple upkeeps")
     void countersAccumulateOverUpkeeps() {
-        Permanent creature = addCreatureReady(player1);
+        Permanent creature = addCreatureReady(player1, new GrizzlyBears());
 
         harness.setHand(player1, List.of(new GlisteningOil()));
         harness.addMana(player1, ManaColor.BLACK, 2);
@@ -124,7 +125,7 @@ class GlisteningOilTest extends BaseCardTest {
     @Test
     @DisplayName("Glistening Oil returns to owner's hand when destroyed")
     void returnsToHandWhenDestroyed() {
-        Permanent creature = addCreatureReady(player1);
+        Permanent creature = addCreatureReady(player1, new GrizzlyBears());
 
         harness.setHand(player1, List.of(new GlisteningOil()));
         harness.addMana(player1, ManaColor.BLACK, 2);
@@ -154,13 +155,6 @@ class GlisteningOilTest extends BaseCardTest {
     }
 
     // ===== Helper methods =====
-
-    private Permanent addCreatureReady(Player player) {
-        Permanent perm = new Permanent(new GrizzlyBears());
-        perm.setSummoningSick(false);
-        gd.playerBattlefields.get(player.getId()).add(perm);
-        return perm;
-    }
 
     private Permanent findPermanentByName(Player player, String name) {
         return gd.playerBattlefields.get(player.getId()).stream()

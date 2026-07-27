@@ -4,7 +4,6 @@ import com.github.laxika.magicalvibes.cards.f.FugitiveWizard;
 import com.github.laxika.magicalvibes.cards.f.Forest;
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
 import com.github.laxika.magicalvibes.cards.s.ScatheZombies;
-import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.PendingInteraction;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.Player;
@@ -24,7 +23,7 @@ class HelmOfTheGhastlordTest extends BaseCardTest {
     @Test
     @DisplayName("Blue enchanted creature dealing combat damage draws a card for its controller")
     void blueCreatureDrawsOnCombatDamage() {
-        Permanent creature = addReadyCreature(player1, new FugitiveWizard());
+        Permanent creature = addCreatureReady(player1, new FugitiveWizard());
         attachHelm(player1, creature);
         creature.setAttacking(true);
         harness.setHand(player2, new ArrayList<>(List.of(new Forest())));
@@ -42,7 +41,7 @@ class HelmOfTheGhastlordTest extends BaseCardTest {
     @DisplayName("Blue enchanted creature gets +1/+1")
     void blueCreatureGetsBoost() {
         harness.setLife(player2, 20);
-        Permanent creature = addReadyCreature(player1, new FugitiveWizard()); // 1/1
+        Permanent creature = addCreatureReady(player1, new FugitiveWizard()); // 1/1
         attachHelm(player1, creature);
         creature.setAttacking(true);
 
@@ -57,7 +56,7 @@ class HelmOfTheGhastlordTest extends BaseCardTest {
     @Test
     @DisplayName("Black enchanted creature dealing combat damage makes the damaged player discard")
     void blackCreatureCausesDiscardOnCombatDamage() {
-        Permanent creature = addReadyCreature(player1, new ScatheZombies());
+        Permanent creature = addCreatureReady(player1, new ScatheZombies());
         attachHelm(player1, creature);
         creature.setAttacking(true);
         harness.setHand(player2, new ArrayList<>(List.of(new GrizzlyBears(), new Forest())));
@@ -83,7 +82,7 @@ class HelmOfTheGhastlordTest extends BaseCardTest {
     @DisplayName("Non-blue, non-black enchanted creature gets no boost and no triggered ability")
     void otherColorCreatureUnaffected() {
         harness.setLife(player2, 20);
-        Permanent creature = addReadyCreature(player1, new GrizzlyBears()); // 2/2 green
+        Permanent creature = addCreatureReady(player1, new GrizzlyBears()); // 2/2 green
         attachHelm(player1, creature);
         creature.setAttacking(true);
         harness.setHand(player2, new ArrayList<>(List.of(new Forest())));
@@ -100,13 +99,6 @@ class HelmOfTheGhastlordTest extends BaseCardTest {
     }
 
     // ===== Helpers =====
-
-    private Permanent addReadyCreature(Player player, Card card) {
-        Permanent perm = new Permanent(card);
-        perm.setSummoningSick(false);
-        gd.playerBattlefields.get(player.getId()).add(perm);
-        return perm;
-    }
 
     private void attachHelm(Player controller, Permanent creature) {
         Permanent helm = new Permanent(new HelmOfTheGhastlord());

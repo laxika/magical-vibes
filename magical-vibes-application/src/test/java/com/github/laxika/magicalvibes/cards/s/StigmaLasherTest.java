@@ -1,7 +1,6 @@
 package com.github.laxika.magicalvibes.cards.s;
 
 import com.github.laxika.magicalvibes.cards.a.AngelOfMercy;
-import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.Player;
@@ -62,15 +61,8 @@ class StigmaLasherTest extends BaseCardTest {
     // ===== Helpers =====
 
     private void addAttackingLasher(Player player) {
-        Permanent lasher = addReadyCreature(player, new StigmaLasher());
+        Permanent lasher = addCreatureReady(player, new StigmaLasher());
         lasher.setAttacking(true);
-    }
-
-    private Permanent addReadyCreature(Player player, Card card) {
-        Permanent perm = new Permanent(card);
-        perm.setSummoningSick(false);
-        gd.playerBattlefields.get(player.getId()).add(perm);
-        return perm;
     }
 
     private void resolveCombatAndTrigger() {

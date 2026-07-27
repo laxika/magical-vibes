@@ -50,7 +50,7 @@ class ForebearsBladeTest extends BaseCardTest {
     @Test
     @DisplayName("Equipped creature gets +3/+0")
     void equippedCreatureGetsBoost() {
-        Permanent creature = addReadyCreature(player1);
+        Permanent creature = addCreatureReady(player1, new GrizzlyBears());
         Permanent blade = addBladeReady(player1);
         blade.setAttachedTo(creature.getId());
 
@@ -61,7 +61,7 @@ class ForebearsBladeTest extends BaseCardTest {
     @Test
     @DisplayName("Equipped creature has vigilance")
     void equippedCreatureHasVigilance() {
-        Permanent creature = addReadyCreature(player1);
+        Permanent creature = addCreatureReady(player1, new GrizzlyBears());
         Permanent blade = addBladeReady(player1);
         blade.setAttachedTo(creature.getId());
 
@@ -71,7 +71,7 @@ class ForebearsBladeTest extends BaseCardTest {
     @Test
     @DisplayName("Equipped creature has trample")
     void equippedCreatureHasTrample() {
-        Permanent creature = addReadyCreature(player1);
+        Permanent creature = addCreatureReady(player1, new GrizzlyBears());
         Permanent blade = addBladeReady(player1);
         blade.setAttachedTo(creature.getId());
 
@@ -81,7 +81,7 @@ class ForebearsBladeTest extends BaseCardTest {
     @Test
     @DisplayName("Unequipped creature does not get boost or keywords")
     void unequippedCreatureNoBoost() {
-        Permanent creature = addReadyCreature(player1);
+        Permanent creature = addCreatureReady(player1, new GrizzlyBears());
         addBladeReady(player1);
 
         assertThat(gqs.getEffectivePower(gd, creature)).isEqualTo(2);
@@ -93,7 +93,7 @@ class ForebearsBladeTest extends BaseCardTest {
     @Test
     @DisplayName("Creature loses boost and keywords when blade is removed")
     void creatureLosesEffectsWhenBladeRemoved() {
-        Permanent creature = addReadyCreature(player1);
+        Permanent creature = addCreatureReady(player1, new GrizzlyBears());
         Permanent blade = addBladeReady(player1);
         blade.setAttachedTo(creature.getId());
 
@@ -113,8 +113,8 @@ class ForebearsBladeTest extends BaseCardTest {
     @Test
     @DisplayName("When equipped creature dies, blade attaches to target creature you control")
     void deathTriggerAttachesToAnotherCreature() {
-        Permanent creature1 = addReadyCreature(player1);
-        Permanent creature2 = addReadyCreature(player1);
+        Permanent creature1 = addCreatureReady(player1, new GrizzlyBears());
+        Permanent creature2 = addCreatureReady(player1, new GrizzlyBears());
         Permanent blade = addBladeReady(player1);
         blade.setAttachedTo(creature1.getId());
 
@@ -142,7 +142,7 @@ class ForebearsBladeTest extends BaseCardTest {
     @Test
     @DisplayName("Death trigger has no valid targets when no other creatures exist — blade stays unattached")
     void deathTriggerNoValidTargets() {
-        Permanent creature = addReadyCreature(player1);
+        Permanent creature = addCreatureReady(player1, new GrizzlyBears());
         Permanent blade = addBladeReady(player1);
         blade.setAttachedTo(creature.getId());
 
@@ -164,8 +164,8 @@ class ForebearsBladeTest extends BaseCardTest {
     @Test
     @DisplayName("Death trigger does not fire for a different creature dying")
     void triggerDoesNotFireForDifferentCreature() {
-        Permanent creature1 = addReadyCreature(player1);
-        Permanent creature2 = addReadyCreature(player1);
+        Permanent creature1 = addCreatureReady(player1, new GrizzlyBears());
+        Permanent creature2 = addCreatureReady(player1, new GrizzlyBears());
         Permanent blade = addBladeReady(player1);
         blade.setAttachedTo(creature1.getId());
 
@@ -185,8 +185,8 @@ class ForebearsBladeTest extends BaseCardTest {
     @Test
     @DisplayName("Blade stays on battlefield after equipped creature dies")
     void bladeStaysOnBattlefieldAfterCreatureDies() {
-        Permanent creature1 = addReadyCreature(player1);
-        Permanent creature2 = addReadyCreature(player1);
+        Permanent creature1 = addCreatureReady(player1, new GrizzlyBears());
+        Permanent creature2 = addCreatureReady(player1, new GrizzlyBears());
         Permanent blade = addBladeReady(player1);
         blade.setAttachedTo(creature1.getId());
 
@@ -216,7 +216,7 @@ class ForebearsBladeTest extends BaseCardTest {
     @DisplayName("Resolving equip ability attaches blade to target creature")
     void resolvingEquipAttachesToCreature() {
         Permanent blade = addBladeReady(player1);
-        Permanent creature = addReadyCreature(player1);
+        Permanent creature = addCreatureReady(player1, new GrizzlyBears());
         harness.addMana(player1, ManaColor.WHITE, 3);
 
         harness.activateAbility(player1, 0, null, creature.getId());
@@ -229,8 +229,8 @@ class ForebearsBladeTest extends BaseCardTest {
     @DisplayName("Blade can be moved to another creature via equip")
     void canReEquipToAnotherCreature() {
         Permanent blade = addBladeReady(player1);
-        Permanent creature1 = addReadyCreature(player1);
-        Permanent creature2 = addReadyCreature(player1);
+        Permanent creature1 = addCreatureReady(player1, new GrizzlyBears());
+        Permanent creature2 = addCreatureReady(player1, new GrizzlyBears());
 
         blade.setAttachedTo(creature1.getId());
         assertThat(gqs.getEffectivePower(gd, creature1)).isEqualTo(5);
@@ -248,13 +248,6 @@ class ForebearsBladeTest extends BaseCardTest {
 
     private Permanent addBladeReady(Player player) {
         Permanent perm = new Permanent(new ForebearsBlade());
-        perm.setSummoningSick(false);
-        gd.playerBattlefields.get(player.getId()).add(perm);
-        return perm;
-    }
-
-    private Permanent addReadyCreature(Player player) {
-        Permanent perm = new Permanent(new GrizzlyBears());
         perm.setSummoningSick(false);
         gd.playerBattlefields.get(player.getId()).add(perm);
         return perm;

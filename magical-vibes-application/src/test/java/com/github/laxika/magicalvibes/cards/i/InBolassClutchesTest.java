@@ -6,7 +6,6 @@ import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
 import com.github.laxika.magicalvibes.model.CardSupertype;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
-import com.github.laxika.magicalvibes.model.Player;
 import com.github.laxika.magicalvibes.model.TurnStep;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
 import org.junit.jupiter.api.DisplayName;
@@ -23,7 +22,7 @@ class InBolassClutchesTest extends BaseCardTest {
     @Test
     @DisplayName("Resolving In Bolas's Clutches steals opponent's creature")
     void stealsCreature() {
-        Permanent creature = addCreatureReady(player2);
+        Permanent creature = addCreatureReady(player2, new GrizzlyBears());
 
         harness.setHand(player1, List.of(new InBolassClutches()));
         harness.addMana(player1, ManaColor.BLUE, 6);
@@ -65,7 +64,7 @@ class InBolassClutchesTest extends BaseCardTest {
     @Test
     @DisplayName("Enchanted permanent gains legendary supertype via static bonus")
     void enchantedPermanentBecomesLegendary() {
-        Permanent creature = addCreatureReady(player2);
+        Permanent creature = addCreatureReady(player2, new GrizzlyBears());
 
         // Grizzly Bears is not legendary
         assertThat(creature.getCard().getSupertypes()).doesNotContain(CardSupertype.LEGENDARY);
@@ -86,7 +85,7 @@ class InBolassClutchesTest extends BaseCardTest {
     @Test
     @DisplayName("In Bolas's Clutches fizzles if target is no longer on the battlefield")
     void fizzlesIfTargetGone() {
-        Permanent creature = addCreatureReady(player2);
+        Permanent creature = addCreatureReady(player2, new GrizzlyBears());
 
         harness.setHand(player1, List.of(new InBolassClutches()));
         harness.addMana(player1, ManaColor.BLUE, 6);
@@ -108,7 +107,7 @@ class InBolassClutchesTest extends BaseCardTest {
     @Test
     @DisplayName("Creature returns to owner when In Bolas's Clutches is destroyed")
     void creatureReturnsWhenDestroyed() {
-        Permanent creature = addCreatureReady(player2);
+        Permanent creature = addCreatureReady(player2, new GrizzlyBears());
 
         harness.setHand(player1, List.of(new InBolassClutches()));
         harness.addMana(player1, ManaColor.BLUE, 6);
@@ -145,7 +144,7 @@ class InBolassClutchesTest extends BaseCardTest {
     @Test
     @DisplayName("Legendary supertype is removed when In Bolas's Clutches is destroyed")
     void legendaryRemovedWhenDestroyed() {
-        Permanent creature = addCreatureReady(player2);
+        Permanent creature = addCreatureReady(player2, new GrizzlyBears());
 
         harness.setHand(player1, List.of(new InBolassClutches()));
         harness.addMana(player1, ManaColor.BLUE, 6);
@@ -177,11 +176,4 @@ class InBolassClutchesTest extends BaseCardTest {
     }
 
     // ===== Helper methods =====
-
-    private Permanent addCreatureReady(Player player) {
-        Permanent perm = new Permanent(new GrizzlyBears());
-        perm.setSummoningSick(false);
-        gd.playerBattlefields.get(player.getId()).add(perm);
-        return perm;
-    }
 }

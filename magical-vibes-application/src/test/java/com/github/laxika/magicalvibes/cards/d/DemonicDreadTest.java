@@ -6,7 +6,6 @@ import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.PendingInteraction;
 import com.github.laxika.magicalvibes.model.Permanent;
-import com.github.laxika.magicalvibes.model.Player;
 import com.github.laxika.magicalvibes.model.TurnStep;
 import com.github.laxika.magicalvibes.networking.message.BlockerAssignment;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
@@ -26,7 +25,7 @@ class DemonicDreadTest extends BaseCardTest {
     @DisplayName("Target creature can't block this turn")
     void targetCreatureCantBlock() {
         prepareCaster();
-        Permanent blocker = addReadyCreature(player2);
+        Permanent blocker = addCreatureReady(player2, new GrizzlyBears());
 
         harness.castSorcery(player1, 0, List.of(blocker.getId()));
         harness.passBothPriorities(); // resolve cascade (empty library, no-op)
@@ -39,8 +38,8 @@ class DemonicDreadTest extends BaseCardTest {
     @DisplayName("Targeted creature actually cannot be declared as a blocker")
     void targetedCreatureCannotBlock() {
         prepareCaster();
-        Permanent attacker = addReadyCreature(player1);
-        Permanent blocker = addReadyCreature(player2);
+        Permanent attacker = addCreatureReady(player1, new GrizzlyBears());
+        Permanent blocker = addCreatureReady(player2, new GrizzlyBears());
 
         harness.castSorcery(player1, 0, List.of(blocker.getId()));
         harness.passBothPriorities(); // resolve cascade (empty library, no-op)
@@ -64,7 +63,7 @@ class DemonicDreadTest extends BaseCardTest {
     @DisplayName("Cascade digs past a land to the first lesser-mana-value nonland")
     void cascadeOffersLesserManaValueNonland() {
         prepareCaster();
-        Permanent blocker = addReadyCreature(player2);
+        Permanent blocker = addCreatureReady(player2, new GrizzlyBears());
 
         // Demonic Dread is {1}{B}{R} = mana value 3. Dig skips the Mountain and stops at
         // Grizzly Bears (MV 2 < 3).
@@ -86,7 +85,7 @@ class DemonicDreadTest extends BaseCardTest {
     @DisplayName("Cannot target a player")
     void cannotTargetPlayer() {
         prepareCaster();
-        addReadyCreature(player2); // valid target so the spell is playable
+        addCreatureReady(player2, new GrizzlyBears()); // valid target so the spell is playable
 
         assertThatThrownBy(() -> harness.castSorcery(player1, 0, player2.getId()))
                 .isInstanceOf(IllegalStateException.class);
@@ -103,13 +102,5 @@ class DemonicDreadTest extends BaseCardTest {
         harness.addMana(player1, ManaColor.COLORLESS, 1);
         harness.addMana(player1, ManaColor.BLACK, 1);
         harness.addMana(player1, ManaColor.RED, 1);
-    }
-
-    private Permanent addReadyCreature(Player player) {
-        GrizzlyBears card = new GrizzlyBears();
-        Permanent perm = new Permanent(card);
-        perm.setSummoningSick(false);
-        gd.playerBattlefields.get(player.getId()).add(perm);
-        return perm;
     }
 }

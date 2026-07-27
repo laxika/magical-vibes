@@ -90,7 +90,7 @@ class KamahlPitFighterTest extends BaseCardTest {
     @DisplayName("Activating ability targeting creature puts it on the stack")
     void activatingTargetingCreaturePutsOnStack() {
         addReadyKamahl(player1);
-        Permanent target = addReadyCreature(player2);
+        Permanent target = addCreatureReady(player2, new GrizzlyBears());
 
         harness.activateAbility(player1, 0, null, target.getId());
 
@@ -196,14 +196,6 @@ class KamahlPitFighterTest extends BaseCardTest {
 
     private Permanent addReadyKamahl(Player player) {
         KamahlPitFighter card = new KamahlPitFighter();
-        Permanent perm = new Permanent(card);
-        perm.setSummoningSick(false);
-        harness.getGameData().playerBattlefields.get(player.getId()).add(perm);
-        return perm;
-    }
-
-    private Permanent addReadyCreature(Player player) {
-        GrizzlyBears card = new GrizzlyBears();
         Permanent perm = new Permanent(card);
         perm.setSummoningSick(false);
         harness.getGameData().playerBattlefields.get(player.getId()).add(perm);

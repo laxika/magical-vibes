@@ -121,7 +121,7 @@ class KnightOfDuskTest extends BaseCardTest {
     void cannotTargetNonBlockingCreature() {
         Permanent knight = addReadyKnight(player1);
         knight.setAttacking(true);
-        Permanent nonBlocker = addReadyCreature(player2);
+        Permanent nonBlocker = addCreatureReady(player2, new GrizzlyBears());
         setupCombatStep();
         harness.addMana(player1, ManaColor.BLACK, 2);
 
@@ -136,7 +136,7 @@ class KnightOfDuskTest extends BaseCardTest {
         Permanent knight = addReadyKnight(player1);
         knight.setAttacking(true);
         // Add a second attacker at index 1
-        Permanent otherAttacker = addReadyCreature(player1);
+        Permanent otherAttacker = addCreatureReady(player1, new GrizzlyBears());
         otherAttacker.setAttacking(true);
         // Blocker is blocking the OTHER attacker (index 1), not the Knight (index 0)
         Permanent blocker = addBlocker(player2, 1);
@@ -224,14 +224,6 @@ class KnightOfDuskTest extends BaseCardTest {
 
     private Permanent addReadyKnight(Player player) {
         KnightOfDusk card = new KnightOfDusk();
-        Permanent perm = new Permanent(card);
-        perm.setSummoningSick(false);
-        harness.getGameData().playerBattlefields.get(player.getId()).add(perm);
-        return perm;
-    }
-
-    private Permanent addReadyCreature(Player player) {
-        GrizzlyBears card = new GrizzlyBears();
         Permanent perm = new Permanent(card);
         perm.setSummoningSick(false);
         harness.getGameData().playerBattlefields.get(player.getId()).add(perm);

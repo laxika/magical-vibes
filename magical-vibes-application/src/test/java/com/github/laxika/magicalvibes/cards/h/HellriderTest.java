@@ -27,8 +27,8 @@ class HellriderTest extends BaseCardTest {
     @DisplayName("Triggers once for each creature you control that attacks")
     void triggersForEachAttackingCreature() {
         harness.setLife(player2, 20);
-        Permanent hellrider = addReady(player1, new Hellrider());
-        Permanent bears = addReady(player1, new GrizzlyBears());
+        Permanent hellrider = addCreatureReady(player1, new Hellrider());
+        Permanent bears = addCreatureReady(player1, new GrizzlyBears());
 
         declareAttackers(player1, List.of(0, 1), null);
 
@@ -54,8 +54,8 @@ class HellriderTest extends BaseCardTest {
     @Test
     @DisplayName("Does not trigger for opponent's attacking creatures")
     void doesNotTriggerForOpponentCreatures() {
-        addReady(player1, new Hellrider());
-        addReady(player2, new GrizzlyBears());
+        addCreatureReady(player1, new Hellrider());
+        addCreatureReady(player2, new GrizzlyBears());
 
         declareAttackers(player2, List.of(0), null);
 
@@ -67,8 +67,8 @@ class HellriderTest extends BaseCardTest {
     @Test
     @DisplayName("Damages the planeswalker an attacking creature is attacking")
     void damagesAttackedPlaneswalker() {
-        addReady(player1, new Hellrider());
-        Permanent bears = addReady(player1, new GrizzlyBears());
+        addCreatureReady(player1, new Hellrider());
+        Permanent bears = addCreatureReady(player1, new GrizzlyBears());
         Permanent planeswalker = addPlaneswalker(player2, 4);
 
         declareAttackers(player1, List.of(1), Map.of(1, planeswalker.getId()));
@@ -91,13 +91,6 @@ class HellriderTest extends BaseCardTest {
         harness.clearPriorityPassed();
         harness.beginAttackerDeclarationInput();
         gs.declareAttackers(gd, player, attackerIndices, attackTargets);
-    }
-
-    private Permanent addReady(Player player, Card card) {
-        Permanent permanent = new Permanent(card);
-        permanent.setSummoningSick(false);
-        gd.playerBattlefields.get(player.getId()).add(permanent);
-        return permanent;
     }
 
     private Permanent addPlaneswalker(Player player, int loyalty) {

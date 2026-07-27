@@ -35,7 +35,7 @@ class DuctCrawlerTest extends BaseCardTest {
     @DisplayName("Activating ability puts it on the stack targeting an opponent's creature")
     void activatingAbilityPutsOnStack() {
         Permanent crawler = addReadyCrawler(player1);
-        Permanent target = addReadyCreature(player2);
+        Permanent target = addCreatureReady(player2, new GrizzlyBears());
         harness.addMana(player1, ManaColor.RED, 1);
         harness.addMana(player1, ManaColor.WHITE, 1);
 
@@ -52,7 +52,7 @@ class DuctCrawlerTest extends BaseCardTest {
     @DisplayName("Ability does not require tapping")
     void abilityDoesNotRequireTapping() {
         Permanent crawler = addReadyCrawler(player1);
-        Permanent target = addReadyCreature(player2);
+        Permanent target = addCreatureReady(player2, new GrizzlyBears());
         harness.addMana(player1, ManaColor.RED, 1);
         harness.addMana(player1, ManaColor.WHITE, 1);
 
@@ -65,7 +65,7 @@ class DuctCrawlerTest extends BaseCardTest {
     @DisplayName("Cannot activate ability without enough mana")
     void cannotActivateWithoutMana() {
         addReadyCrawler(player1);
-        Permanent target = addReadyCreature(player2);
+        Permanent target = addCreatureReady(player2, new GrizzlyBears());
 
         assertThatThrownBy(() -> harness.activateAbility(player1, 0, null, target.getId()))
                 .isInstanceOf(IllegalStateException.class)
@@ -76,7 +76,7 @@ class DuctCrawlerTest extends BaseCardTest {
     @DisplayName("Cannot activate ability with only 1 mana instead of {1}{R}")
     void cannotActivateWithInsufficientMana() {
         addReadyCrawler(player1);
-        Permanent target = addReadyCreature(player2);
+        Permanent target = addCreatureReady(player2, new GrizzlyBears());
         harness.addMana(player1, ManaColor.RED, 1);
 
         assertThatThrownBy(() -> harness.activateAbility(player1, 0, null, target.getId()))
@@ -90,7 +90,7 @@ class DuctCrawlerTest extends BaseCardTest {
     @DisplayName("Resolving ability adds source to target's cantBlockIds")
     void resolvingAbilityAddsCantBlockRestriction() {
         Permanent crawler = addReadyCrawler(player1);
-        Permanent target = addReadyCreature(player2);
+        Permanent target = addCreatureReady(player2, new GrizzlyBears());
         harness.addMana(player1, ManaColor.RED, 1);
         harness.addMana(player1, ManaColor.WHITE, 1);
 
@@ -104,7 +104,7 @@ class DuctCrawlerTest extends BaseCardTest {
     @DisplayName("Ability fizzles if target is removed before resolution")
     void abilityFizzlesIfTargetRemoved() {
         Permanent crawler = addReadyCrawler(player1);
-        Permanent target = addReadyCreature(player2);
+        Permanent target = addCreatureReady(player2, new GrizzlyBears());
         harness.addMana(player1, ManaColor.RED, 1);
         harness.addMana(player1, ManaColor.WHITE, 1);
 
@@ -126,7 +126,7 @@ class DuctCrawlerTest extends BaseCardTest {
     @DisplayName("Targeted creature cannot block Duct Crawler after ability resolves")
     void targetedCreatureCannotBlockDuctCrawler() {
         Permanent crawler = addReadyCrawler(player1);
-        Permanent blocker = addReadyCreature(player2);
+        Permanent blocker = addCreatureReady(player2, new GrizzlyBears());
         harness.addMana(player1, ManaColor.RED, 1);
         harness.addMana(player1, ManaColor.WHITE, 1);
 
@@ -151,8 +151,8 @@ class DuctCrawlerTest extends BaseCardTest {
     @DisplayName("Targeted creature can still block other creatures")
     void targetedCreatureCanBlockOtherCreatures() {
         Permanent crawler = addReadyCrawler(player1);
-        Permanent otherAttacker = addReadyCreature(player1);
-        Permanent blocker = addReadyCreature(player2);
+        Permanent otherAttacker = addCreatureReady(player1, new GrizzlyBears());
+        Permanent blocker = addCreatureReady(player2, new GrizzlyBears());
         harness.addMana(player1, ManaColor.RED, 1);
         harness.addMana(player1, ManaColor.WHITE, 1);
 
@@ -177,8 +177,8 @@ class DuctCrawlerTest extends BaseCardTest {
     @DisplayName("Non-targeted creature can still block Duct Crawler")
     void nonTargetedCreatureCanBlockDuctCrawler() {
         Permanent crawler = addReadyCrawler(player1);
-        Permanent targetedBlocker = addReadyCreature(player2);
-        Permanent otherBlocker = addReadyCreature(player2);
+        Permanent targetedBlocker = addCreatureReady(player2, new GrizzlyBears());
+        Permanent otherBlocker = addCreatureReady(player2, new GrizzlyBears());
         harness.addMana(player1, ManaColor.RED, 1);
         harness.addMana(player1, ManaColor.WHITE, 1);
 
@@ -204,8 +204,8 @@ class DuctCrawlerTest extends BaseCardTest {
     @DisplayName("Can activate ability multiple times on different creatures")
     void canActivateMultipleTimes() {
         Permanent crawler = addReadyCrawler(player1);
-        Permanent blocker1 = addReadyCreature(player2);
-        Permanent blocker2 = addReadyCreature(player2);
+        Permanent blocker1 = addCreatureReady(player2, new GrizzlyBears());
+        Permanent blocker2 = addCreatureReady(player2, new GrizzlyBears());
         harness.addMana(player1, ManaColor.RED, 2);
         harness.addMana(player1, ManaColor.WHITE, 2);
 
@@ -243,7 +243,7 @@ class DuctCrawlerTest extends BaseCardTest {
     @DisplayName("Blocking restriction resets at end of turn")
     void restrictionResetsAtEndOfTurn() {
         Permanent crawler = addReadyCrawler(player1);
-        Permanent blocker = addReadyCreature(player2);
+        Permanent blocker = addCreatureReady(player2, new GrizzlyBears());
         harness.addMana(player1, ManaColor.RED, 1);
         harness.addMana(player1, ManaColor.WHITE, 1);
 
@@ -265,7 +265,7 @@ class DuctCrawlerTest extends BaseCardTest {
     @DisplayName("Can activate ability targeting own creature")
     void canTargetOwnCreature() {
         Permanent crawler = addReadyCrawler(player1);
-        Permanent ownCreature = addReadyCreature(player1);
+        Permanent ownCreature = addCreatureReady(player1, new GrizzlyBears());
         harness.addMana(player1, ManaColor.RED, 1);
         harness.addMana(player1, ManaColor.WHITE, 1);
 
@@ -279,14 +279,6 @@ class DuctCrawlerTest extends BaseCardTest {
 
     private Permanent addReadyCrawler(Player player) {
         DuctCrawler card = new DuctCrawler();
-        Permanent perm = new Permanent(card);
-        perm.setSummoningSick(false);
-        gd.playerBattlefields.get(player.getId()).add(perm);
-        return perm;
-    }
-
-    private Permanent addReadyCreature(Player player) {
-        GrizzlyBears card = new GrizzlyBears();
         Permanent perm = new Permanent(card);
         perm.setSummoningSick(false);
         gd.playerBattlefields.get(player.getId()).add(perm);

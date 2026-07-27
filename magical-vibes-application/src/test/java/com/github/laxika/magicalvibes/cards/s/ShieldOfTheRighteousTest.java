@@ -21,7 +21,7 @@ class ShieldOfTheRighteousTest extends BaseCardTest {
     @Test
     @DisplayName("Equipped creature gets +0/+2")
     void equippedCreatureGetsBoost() {
-        Permanent creature = addReadyCreature(player1); // Grizzly Bears 2/2
+        Permanent creature = addCreatureReady(player1, new GrizzlyBears()); // Grizzly Bears 2/2
         Permanent shield = addShield(player1);
         shield.setAttachedTo(creature.getId());
 
@@ -32,7 +32,7 @@ class ShieldOfTheRighteousTest extends BaseCardTest {
     @Test
     @DisplayName("Equipped creature has vigilance")
     void equippedCreatureHasVigilance() {
-        Permanent creature = addReadyCreature(player1);
+        Permanent creature = addCreatureReady(player1, new GrizzlyBears());
         Permanent shield = addShield(player1);
         shield.setAttachedTo(creature.getId());
 
@@ -42,7 +42,7 @@ class ShieldOfTheRighteousTest extends BaseCardTest {
     @Test
     @DisplayName("Unequipped creature gets no boost or vigilance")
     void unequippedCreatureNoBoost() {
-        Permanent creature = addReadyCreature(player1);
+        Permanent creature = addCreatureReady(player1, new GrizzlyBears());
         addShield(player1); // not attached
 
         assertThat(gqs.getEffectiveToughness(gd, creature)).isEqualTo(2);
@@ -54,7 +54,7 @@ class ShieldOfTheRighteousTest extends BaseCardTest {
     @Test
     @DisplayName("When equipped creature blocks, a trigger auto-targeting the blocked attacker is created")
     void blockingCreatesTrigger() {
-        Permanent blocker = addReadyCreature(player2);
+        Permanent blocker = addCreatureReady(player2, new GrizzlyBears());
         Permanent shield = addShield(player2);
         shield.setAttachedTo(blocker.getId());
 
@@ -74,7 +74,7 @@ class ShieldOfTheRighteousTest extends BaseCardTest {
     @Test
     @DisplayName("Resolving the block trigger sets skipUntapCount on the blocked attacker")
     void resolvingSetsSkipUntapCount() {
-        Permanent blocker = addReadyCreature(player2);
+        Permanent blocker = addCreatureReady(player2, new GrizzlyBears());
         Permanent shield = addShield(player2);
         shield.setAttachedTo(blocker.getId());
 
@@ -90,7 +90,7 @@ class ShieldOfTheRighteousTest extends BaseCardTest {
     @Test
     @DisplayName("No trigger when the Shield is not attached to any creature")
     void noTriggerWhenNotEquipped() {
-        addReadyCreature(player2);
+        addCreatureReady(player2, new GrizzlyBears());
         addShield(player2); // on battlefield but unattached
 
         addReadyAttacker(player1);
@@ -106,13 +106,6 @@ class ShieldOfTheRighteousTest extends BaseCardTest {
 
     private Permanent addShield(Player player) {
         Permanent perm = new Permanent(new ShieldOfTheRighteous());
-        perm.setSummoningSick(false);
-        gd.playerBattlefields.get(player.getId()).add(perm);
-        return perm;
-    }
-
-    private Permanent addReadyCreature(Player player) {
-        Permanent perm = new Permanent(new GrizzlyBears());
         perm.setSummoningSick(false);
         gd.playerBattlefields.get(player.getId()).add(perm);
         return perm;

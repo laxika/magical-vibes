@@ -43,7 +43,7 @@ class OrderOfWhiteclayTest extends BaseCardTest {
     @Test
     @DisplayName("Cannot activate while the source is untapped ({Q} requires it to be tapped)")
     void cannotActivateWhileUntapped() {
-        addReady(player1, new OrderOfWhiteclay());
+        addCreatureReady(player1, new OrderOfWhiteclay());
         harness.addMana(player1, ManaColor.WHITE, 3);
 
         Card target = new LlanowarElves();
@@ -73,15 +73,8 @@ class OrderOfWhiteclayTest extends BaseCardTest {
                 .isInstanceOf(IllegalStateException.class);
     }
 
-    private Permanent addReady(Player player, Card card) {
-        Permanent perm = new Permanent(card);
-        perm.setSummoningSick(false);
-        gd.playerBattlefields.get(player.getId()).add(perm);
-        return perm;
-    }
-
     private Permanent addTapped(Player player, Card card) {
-        Permanent perm = addReady(player, card);
+        Permanent perm = addCreatureReady(player, card);
         perm.tap();
         return perm;
     }

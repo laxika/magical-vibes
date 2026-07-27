@@ -41,7 +41,7 @@ class OgreGeargrabberTest extends BaseCardTest {
         Permanent ogre = addReadyOgre(player1);
         Permanent ownEquipment = addEquipment(player1);
         Permanent opponentEquipment = addEquipment(player2);
-        Permanent opponentCreature = addReadyCreature(player2);
+        Permanent opponentCreature = addCreatureReady(player2, new GrizzlyBears());
 
         declareAttackers(player1, List.of(0));
 
@@ -58,7 +58,7 @@ class OgreGeargrabberTest extends BaseCardTest {
     @DisplayName("Attack trigger is skipped when opponent has no Equipment")
     void noTriggerWhenNoOpponentEquipment() {
         Permanent ogre = addReadyOgre(player1);
-        Permanent opponentCreature = addReadyCreature(player2);
+        Permanent opponentCreature = addCreatureReady(player2, new GrizzlyBears());
 
         declareAttackers(player1, List.of(0));
 
@@ -152,7 +152,7 @@ class OgreGeargrabberTest extends BaseCardTest {
         harness.setLife(player2, 20);
 
         Permanent ogre = addReadyOgre(player1);
-        Permanent opponentCreature = addReadyCreature(player2);
+        Permanent opponentCreature = addCreatureReady(player2, new GrizzlyBears());
         Permanent opponentEquipment = addEquipment(player2);
         opponentEquipment.setAttachedTo(opponentCreature.getId());
 
@@ -194,13 +194,6 @@ class OgreGeargrabberTest extends BaseCardTest {
 
     private Permanent addReadyOgre(Player player) {
         Permanent perm = new Permanent(new OgreGeargrabber());
-        perm.setSummoningSick(false);
-        gd.playerBattlefields.get(player.getId()).add(perm);
-        return perm;
-    }
-
-    private Permanent addReadyCreature(Player player) {
-        Permanent perm = new Permanent(new GrizzlyBears());
         perm.setSummoningSick(false);
         gd.playerBattlefields.get(player.getId()).add(perm);
         return perm;

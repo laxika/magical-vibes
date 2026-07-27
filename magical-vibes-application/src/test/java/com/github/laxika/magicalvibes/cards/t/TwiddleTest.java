@@ -23,7 +23,7 @@ class TwiddleTest extends BaseCardTest {
     @Test
     @DisplayName("Taps an untapped creature")
     void tapsUntappedCreature() {
-        Permanent target = addReadyCreature(player2);
+        Permanent target = addCreatureReady(player2, new GrizzlyBears());
         harness.setHand(player1, List.of(new Twiddle()));
         harness.addMana(player1, ManaColor.BLUE, 1);
 
@@ -84,7 +84,7 @@ class TwiddleTest extends BaseCardTest {
     @Test
     @DisplayName("Cannot target an enchantment")
     void cannotTargetEnchantment() {
-        addReadyCreature(player1); // valid target so spell is playable
+        addCreatureReady(player1, new GrizzlyBears()); // valid target so spell is playable
         Permanent enchantment = addReadyEnchantment(player2);
         harness.setHand(player1, List.of(new Twiddle()));
         harness.addMana(player1, ManaColor.BLUE, 1);
@@ -99,7 +99,7 @@ class TwiddleTest extends BaseCardTest {
     @Test
     @DisplayName("Twiddle goes to graveyard after resolving")
     void goesToGraveyardAfterResolving() {
-        Permanent target = addReadyCreature(player2);
+        Permanent target = addCreatureReady(player2, new GrizzlyBears());
         harness.setHand(player1, List.of(new Twiddle()));
         harness.addMana(player1, ManaColor.BLUE, 1);
 
@@ -116,7 +116,7 @@ class TwiddleTest extends BaseCardTest {
     @Test
     @DisplayName("Can untap own tapped creature")
     void canUntapOwnCreature() {
-        Permanent ownCreature = addReadyCreature(player1);
+        Permanent ownCreature = addCreatureReady(player1, new GrizzlyBears());
         ownCreature.tap();
         harness.setHand(player1, List.of(new Twiddle()));
         harness.addMana(player1, ManaColor.BLUE, 1);
@@ -128,14 +128,6 @@ class TwiddleTest extends BaseCardTest {
     }
 
     // ===== Helpers =====
-
-    private Permanent addReadyCreature(Player player) {
-        GrizzlyBears card = new GrizzlyBears();
-        Permanent perm = new Permanent(card);
-        perm.setSummoningSick(false);
-        gd.playerBattlefields.get(player.getId()).add(perm);
-        return perm;
-    }
 
     private Permanent addReadyLand(Player player) {
         Forest card = new Forest();

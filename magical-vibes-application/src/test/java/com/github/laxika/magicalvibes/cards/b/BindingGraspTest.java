@@ -22,7 +22,7 @@ class BindingGraspTest extends BaseCardTest {
     @Test
     @DisplayName("Resolving Binding Grasp steals the enchanted creature")
     void resolvingStealsCreature() {
-        Permanent creature = addReady(player2);
+        Permanent creature = addCreatureReady(player2, new GrizzlyBears());
 
         harness.setHand(player1, List.of(new BindingGrasp()));
         harness.addMana(player1, ManaColor.BLUE, 5);
@@ -41,7 +41,7 @@ class BindingGraspTest extends BaseCardTest {
     @Test
     @DisplayName("Enchanted creature gets +0/+1")
     void enchantedCreatureGetsPlusZeroPlusOne() {
-        Permanent creature = addReady(player1);
+        Permanent creature = addCreatureReady(player1, new GrizzlyBears());
         int basePower = gqs.getEffectivePower(gd, creature);
         int baseToughness = gqs.getEffectiveToughness(gd, creature);
 
@@ -56,7 +56,7 @@ class BindingGraspTest extends BaseCardTest {
     @Test
     @DisplayName("Declining to pay {1}{U} sacrifices Binding Grasp")
     void decliningPaymentSacrificesAura() {
-        Permanent creature = addReady(player1);
+        Permanent creature = addCreatureReady(player1, new GrizzlyBears());
         attach(player1, creature);
 
         advanceToUpkeep(player1);
@@ -74,7 +74,7 @@ class BindingGraspTest extends BaseCardTest {
     @Test
     @DisplayName("Paying {1}{U} keeps Binding Grasp on the battlefield")
     void payingKeepsAura() {
-        Permanent creature = addReady(player1);
+        Permanent creature = addCreatureReady(player1, new GrizzlyBears());
         attach(player1, creature);
 
         advanceToUpkeep(player1);
@@ -90,7 +90,7 @@ class BindingGraspTest extends BaseCardTest {
     @Test
     @DisplayName("Does not trigger during the opponent's upkeep")
     void doesNotTriggerDuringOpponentUpkeep() {
-        Permanent creature = addReady(player1);
+        Permanent creature = addCreatureReady(player1, new GrizzlyBears());
         attach(player1, creature);
 
         advanceToUpkeep(player2);
@@ -120,13 +120,6 @@ class BindingGraspTest extends BaseCardTest {
     }
 
     // ===== Helpers =====
-
-    private Permanent addReady(Player player) {
-        Permanent perm = new Permanent(new GrizzlyBears());
-        perm.setSummoningSick(false);
-        gd.playerBattlefields.get(player.getId()).add(perm);
-        return perm;
-    }
 
     private Permanent attach(Player controller, Permanent enchanted) {
         Permanent aura = new Permanent(new BindingGrasp());

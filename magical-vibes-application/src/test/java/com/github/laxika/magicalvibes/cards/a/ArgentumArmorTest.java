@@ -49,7 +49,7 @@ class ArgentumArmorTest extends BaseCardTest {
     @Test
     @DisplayName("Equipped creature gets +6/+6")
     void equippedCreatureGetsBoost() {
-        Permanent creature = addReadyCreature(player1);
+        Permanent creature = addCreatureReady(player1, new GrizzlyBears());
         Permanent armor = addArmorReady(player1);
         armor.setAttachedTo(creature.getId());
 
@@ -60,7 +60,7 @@ class ArgentumArmorTest extends BaseCardTest {
     @Test
     @DisplayName("Equipped creature loses boost when Argentum Armor is removed")
     void creatureLosesBoostWhenEquipmentRemoved() {
-        Permanent creature = addReadyCreature(player1);
+        Permanent creature = addCreatureReady(player1, new GrizzlyBears());
         Permanent armor = addArmorReady(player1);
         armor.setAttachedTo(creature.getId());
 
@@ -77,10 +77,10 @@ class ArgentumArmorTest extends BaseCardTest {
     @Test
     @DisplayName("Attacking with equipped creature queues targeted attack trigger for target selection")
     void attackTriggerQueuesForTargetSelection() {
-        Permanent creature = addReadyCreature(player1);
+        Permanent creature = addCreatureReady(player1, new GrizzlyBears());
         Permanent armor = addArmorReady(player1);
         armor.setAttachedTo(creature.getId());
-        Permanent opponentCreature = addReadyCreature(player2);
+        Permanent opponentCreature = addCreatureReady(player2, new GrizzlyBears());
 
         declareAttackers(player1, List.of(0));
 
@@ -93,10 +93,10 @@ class ArgentumArmorTest extends BaseCardTest {
     @Test
     @DisplayName("Choosing target puts triggered ability on the stack")
     void choosingTargetPutsAbilityOnStack() {
-        Permanent creature = addReadyCreature(player1);
+        Permanent creature = addCreatureReady(player1, new GrizzlyBears());
         Permanent armor = addArmorReady(player1);
         armor.setAttachedTo(creature.getId());
-        Permanent opponentCreature = addReadyCreature(player2);
+        Permanent opponentCreature = addCreatureReady(player2, new GrizzlyBears());
 
         declareAttackers(player1, List.of(0));
 
@@ -117,10 +117,10 @@ class ArgentumArmorTest extends BaseCardTest {
         harness.setLife(player1, 20);
         harness.setLife(player2, 20);
 
-        Permanent creature = addReadyCreature(player1);
+        Permanent creature = addCreatureReady(player1, new GrizzlyBears());
         Permanent armor = addArmorReady(player1);
         armor.setAttachedTo(creature.getId());
-        Permanent opponentCreature = addReadyCreature(player2);
+        Permanent opponentCreature = addCreatureReady(player2, new GrizzlyBears());
 
         declareAttackers(player1, List.of(0));
 
@@ -140,7 +140,7 @@ class ArgentumArmorTest extends BaseCardTest {
     @Test
     @DisplayName("Attack trigger can target a non-creature permanent (e.g. artifact)")
     void attackTriggerCanTargetAnyPermanent() {
-        Permanent creature = addReadyCreature(player1);
+        Permanent creature = addCreatureReady(player1, new GrizzlyBears());
         Permanent armor = addArmorReady(player1);
         armor.setAttachedTo(creature.getId());
 
@@ -163,7 +163,7 @@ class ArgentumArmorTest extends BaseCardTest {
     @Test
     @DisplayName("Trigger does not fire when an unequipped creature attacks")
     void noTriggerWhenUnequippedCreatureAttacks() {
-        Permanent creature = addReadyCreature(player1);
+        Permanent creature = addCreatureReady(player1, new GrizzlyBears());
         addArmorReady(player1); // Armor on battlefield but not attached
 
         declareAttackers(player1, List.of(0));
@@ -180,7 +180,7 @@ class ArgentumArmorTest extends BaseCardTest {
     @DisplayName("Resolving equip ability attaches Argentum Armor to target creature")
     void resolvingEquipAttachesToCreature() {
         Permanent armor = addArmorReady(player1);
-        Permanent creature = addReadyCreature(player1);
+        Permanent creature = addCreatureReady(player1, new GrizzlyBears());
         harness.addMana(player1, ManaColor.WHITE, 6);
 
         harness.activateAbility(player1, 0, null, creature.getId());
@@ -194,13 +194,6 @@ class ArgentumArmorTest extends BaseCardTest {
 
     private Permanent addArmorReady(Player player) {
         Permanent perm = new Permanent(new ArgentumArmor());
-        perm.setSummoningSick(false);
-        gd.playerBattlefields.get(player.getId()).add(perm);
-        return perm;
-    }
-
-    private Permanent addReadyCreature(Player player) {
-        Permanent perm = new Permanent(new GrizzlyBears());
         perm.setSummoningSick(false);
         gd.playerBattlefields.get(player.getId()).add(perm);
         return perm;

@@ -81,7 +81,7 @@ class WarlordsAxeTest extends BaseCardTest {
     @DisplayName("Activating equip ability puts it on the stack")
     void activatingEquipPutsOnStack() {
         Permanent axe = addAxeReady(player1);
-        Permanent creature = addReadyCreature(player1);
+        Permanent creature = addCreatureReady(player1, new GrizzlyBears());
         harness.addMana(player1, ManaColor.WHITE, 4);
 
         harness.activateAbility(player1, 0, null, creature.getId());
@@ -97,7 +97,7 @@ class WarlordsAxeTest extends BaseCardTest {
     @DisplayName("Mana is consumed when activating equip ability")
     void manaConsumedOnEquip() {
         addAxeReady(player1);
-        Permanent creature = addReadyCreature(player1);
+        Permanent creature = addCreatureReady(player1, new GrizzlyBears());
         harness.addMana(player1, ManaColor.WHITE, 5);
 
         harness.activateAbility(player1, 0, null, creature.getId());
@@ -111,7 +111,7 @@ class WarlordsAxeTest extends BaseCardTest {
     @DisplayName("Resolving equip ability attaches equipment to target creature")
     void resolvingEquipAttachesToCreature() {
         Permanent axe = addAxeReady(player1);
-        Permanent creature = addReadyCreature(player1);
+        Permanent creature = addCreatureReady(player1, new GrizzlyBears());
         harness.addMana(player1, ManaColor.WHITE, 4);
 
         harness.activateAbility(player1, 0, null, creature.getId());
@@ -124,7 +124,7 @@ class WarlordsAxeTest extends BaseCardTest {
     @Test
     @DisplayName("Equipped creature gets +3/+1")
     void equippedCreatureGetsBoost() {
-        Permanent creature = addReadyCreature(player1);
+        Permanent creature = addCreatureReady(player1, new GrizzlyBears());
         Permanent axe = addAxeReady(player1);
         axe.setAttachedTo(creature.getId());
 
@@ -135,7 +135,7 @@ class WarlordsAxeTest extends BaseCardTest {
     @Test
     @DisplayName("Equipped creature loses boost when equipment is removed")
     void creatureLosesBoostWhenEquipmentRemoved() {
-        Permanent creature = addReadyCreature(player1);
+        Permanent creature = addCreatureReady(player1, new GrizzlyBears());
         Permanent axe = addAxeReady(player1);
         axe.setAttachedTo(creature.getId());
 
@@ -151,8 +151,8 @@ class WarlordsAxeTest extends BaseCardTest {
     @Test
     @DisplayName("Equipment does not affect other creatures")
     void doesNotAffectOtherCreatures() {
-        Permanent creature = addReadyCreature(player1);
-        Permanent otherCreature = addReadyCreature(player1);
+        Permanent creature = addCreatureReady(player1, new GrizzlyBears());
+        Permanent otherCreature = addCreatureReady(player1, new GrizzlyBears());
         Permanent axe = addAxeReady(player1);
         axe.setAttachedTo(creature.getId());
 
@@ -166,8 +166,8 @@ class WarlordsAxeTest extends BaseCardTest {
     @DisplayName("Equipment can be moved to another creature by equipping again")
     void canReEquipToAnotherCreature() {
         Permanent axe = addAxeReady(player1);
-        Permanent creature1 = addReadyCreature(player1);
-        Permanent creature2 = addReadyCreature(player1);
+        Permanent creature1 = addCreatureReady(player1, new GrizzlyBears());
+        Permanent creature2 = addCreatureReady(player1, new GrizzlyBears());
 
         axe.setAttachedTo(creature1.getId());
         assertThat(gqs.getEffectivePower(gd, creature1)).isEqualTo(5);
@@ -186,7 +186,7 @@ class WarlordsAxeTest extends BaseCardTest {
     @Test
     @DisplayName("Equipment stays on battlefield unattached when equipped creature is destroyed")
     void equipmentStaysWhenCreatureDies() {
-        Permanent creature = addReadyCreature(player1);
+        Permanent creature = addCreatureReady(player1, new GrizzlyBears());
         Permanent axe = addAxeReady(player1);
         axe.setAttachedTo(creature.getId());
 
@@ -211,7 +211,7 @@ class WarlordsAxeTest extends BaseCardTest {
     @DisplayName("Cannot equip during opponent's turn")
     void cannotEquipDuringOpponentTurn() {
         addAxeReady(player1);
-        Permanent creature = addReadyCreature(player1);
+        Permanent creature = addCreatureReady(player1, new GrizzlyBears());
         harness.addMana(player1, ManaColor.WHITE, 4);
 
         harness.forceActivePlayer(player2);
@@ -227,7 +227,7 @@ class WarlordsAxeTest extends BaseCardTest {
     @DisplayName("Cannot equip without enough mana")
     void cannotEquipWithoutMana() {
         addAxeReady(player1);
-        Permanent creature = addReadyCreature(player1);
+        Permanent creature = addCreatureReady(player1, new GrizzlyBears());
 
         assertThatThrownBy(() -> harness.activateAbility(player1, 0, null, creature.getId()))
                 .isInstanceOf(IllegalStateException.class)
@@ -240,7 +240,7 @@ class WarlordsAxeTest extends BaseCardTest {
     @DisplayName("Equip fizzles if target creature is removed before resolution")
     void equipFizzlesIfTargetRemoved() {
         addAxeReady(player1);
-        Permanent creature = addReadyCreature(player1);
+        Permanent creature = addCreatureReady(player1, new GrizzlyBears());
         harness.addMana(player1, ManaColor.WHITE, 4);
 
         harness.activateAbility(player1, 0, null, creature.getId());
@@ -262,13 +262,6 @@ class WarlordsAxeTest extends BaseCardTest {
 
     private Permanent addAxeReady(Player player) {
         Permanent perm = new Permanent(new WarlordsAxe());
-        perm.setSummoningSick(false);
-        gd.playerBattlefields.get(player.getId()).add(perm);
-        return perm;
-    }
-
-    private Permanent addReadyCreature(Player player) {
-        Permanent perm = new Permanent(new GrizzlyBears());
         perm.setSummoningSick(false);
         gd.playerBattlefields.get(player.getId()).add(perm);
         return perm;

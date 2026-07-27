@@ -22,7 +22,7 @@ class CyclopsGladiatorTest extends BaseCardTest {
     @DisplayName("Attacking queues attack trigger for target selection")
     void attackTriggersTargetSelection() {
         addReadyCyclops(player1);
-        addReadyCreature(player2);
+        addCreatureReady(player2, new GrizzlyBears());
 
         declareAttackers(player1, List.of(0));
 
@@ -35,7 +35,7 @@ class CyclopsGladiatorTest extends BaseCardTest {
     @DisplayName("Choosing target puts MayEffect trigger on the stack")
     void choosingTargetPutsTriggerOnStack() {
         Permanent cyclops = addReadyCyclops(player1);
-        Permanent opponentCreature = addReadyCreature(player2);
+        Permanent opponentCreature = addCreatureReady(player2, new GrizzlyBears());
 
         declareAttackers(player1, List.of(0));
         harness.handlePermanentChosen(player1, opponentCreature.getId());
@@ -55,7 +55,7 @@ class CyclopsGladiatorTest extends BaseCardTest {
         harness.setLife(player1, 20);
         harness.setLife(player2, 20);
         addReadyCyclops(player1);
-        Permanent opponentCreature = addReadyCreature(player2);
+        Permanent opponentCreature = addCreatureReady(player2, new GrizzlyBears());
 
         declareAttackers(player1, List.of(0));
         harness.handlePermanentChosen(player1, opponentCreature.getId());
@@ -70,7 +70,7 @@ class CyclopsGladiatorTest extends BaseCardTest {
         harness.setLife(player1, 20);
         harness.setLife(player2, 20);
         Permanent cyclops = addReadyCyclops(player1);
-        Permanent opponentCreature = addReadyCreature(player2);
+        Permanent opponentCreature = addCreatureReady(player2, new GrizzlyBears());
 
         declareAttackers(player1, List.of(0));
         harness.handlePermanentChosen(player1, opponentCreature.getId());
@@ -92,7 +92,7 @@ class CyclopsGladiatorTest extends BaseCardTest {
         harness.setLife(player1, 20);
         harness.setLife(player2, 20);
         Permanent cyclops = addReadyCyclops(player1);
-        Permanent opponentCreature = addReadyCreature(player2);
+        Permanent opponentCreature = addCreatureReady(player2, new GrizzlyBears());
 
         declareAttackers(player1, List.of(0));
         harness.handlePermanentChosen(player1, opponentCreature.getId());
@@ -141,7 +141,7 @@ class CyclopsGladiatorTest extends BaseCardTest {
         harness.setLife(player1, 20);
         harness.setLife(player2, 20);
         Permanent cyclops = addReadyCyclops(player1);
-        Permanent opponentCreature = addReadyCreature(player2);
+        Permanent opponentCreature = addCreatureReady(player2, new GrizzlyBears());
 
         declareAttackers(player1, List.of(0));
         harness.handlePermanentChosen(player1, opponentCreature.getId());
@@ -194,8 +194,8 @@ class CyclopsGladiatorTest extends BaseCardTest {
     @DisplayName("Cannot target own creatures — only opponent's creatures are valid targets")
     void cannotTargetOwnCreatures() {
         Permanent cyclops = addReadyCyclops(player1);
-        Permanent ownCreature = addReadyCreature(player1);
-        Permanent opponentCreature = addReadyCreature(player2);
+        Permanent ownCreature = addCreatureReady(player1, new GrizzlyBears());
+        Permanent opponentCreature = addCreatureReady(player2, new GrizzlyBears());
 
         declareAttackers(player1, List.of(0));
 
@@ -225,13 +225,6 @@ class CyclopsGladiatorTest extends BaseCardTest {
 
     private Permanent addReadyCyclops(Player player) {
         Permanent perm = new Permanent(new CyclopsGladiator());
-        perm.setSummoningSick(false);
-        gd.playerBattlefields.get(player.getId()).add(perm);
-        return perm;
-    }
-
-    private Permanent addReadyCreature(Player player) {
-        Permanent perm = new Permanent(new GrizzlyBears());
         perm.setSummoningSick(false);
         gd.playerBattlefields.get(player.getId()).add(perm);
         return perm;

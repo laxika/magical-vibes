@@ -46,7 +46,7 @@ class HelmOfTheHostTest extends BaseCardTest {
     @DisplayName("Resolving equip ability attaches Helm to target creature")
     void resolvingEquipAttachesToCreature() {
         Permanent helm = addHelmReady(player1);
-        Permanent creature = addReadyCreature(player1);
+        Permanent creature = addCreatureReady(player1, new GrizzlyBears());
         harness.addMana(player1, ManaColor.COLORLESS, 5);
 
         harness.activateAbility(player1, 0, null, creature.getId());
@@ -60,7 +60,7 @@ class HelmOfTheHostTest extends BaseCardTest {
     @Test
     @DisplayName("At beginning of combat, creates a token copy of equipped creature")
     void createsTokenCopyAtBeginningOfCombat() {
-        Permanent creature = addReadyCreature(player1);
+        Permanent creature = addCreatureReady(player1, new GrizzlyBears());
         Permanent helm = addHelmReady(player1);
         helm.setAttachedTo(creature.getId());
 
@@ -81,7 +81,7 @@ class HelmOfTheHostTest extends BaseCardTest {
     @Test
     @DisplayName("Token copy has haste")
     void tokenCopyHasHaste() {
-        Permanent creature = addReadyCreature(player1);
+        Permanent creature = addCreatureReady(player1, new GrizzlyBears());
         Permanent helm = addHelmReady(player1);
         helm.setAttachedTo(creature.getId());
 
@@ -121,7 +121,7 @@ class HelmOfTheHostTest extends BaseCardTest {
     @Test
     @DisplayName("Token copy of non-legendary creature preserves supertypes")
     void tokenCopyPreservesNonLegendarySupertypes() {
-        Permanent creature = addReadyCreature(player1);
+        Permanent creature = addCreatureReady(player1, new GrizzlyBears());
         Permanent helm = addHelmReady(player1);
         helm.setAttachedTo(creature.getId());
 
@@ -142,7 +142,7 @@ class HelmOfTheHostTest extends BaseCardTest {
     @Test
     @DisplayName("Token copy has same power and toughness as equipped creature")
     void tokenCopySamePowerToughness() {
-        Permanent creature = addReadyCreature(player1);
+        Permanent creature = addCreatureReady(player1, new GrizzlyBears());
         Permanent helm = addHelmReady(player1);
         helm.setAttachedTo(creature.getId());
 
@@ -163,7 +163,7 @@ class HelmOfTheHostTest extends BaseCardTest {
     @Test
     @DisplayName("No token created when Helm is not attached to any creature")
     void noTokenWhenNotAttached() {
-        addReadyCreature(player1);
+        addCreatureReady(player1, new GrizzlyBears());
         addHelmReady(player1);
         // Helm is NOT attached
 
@@ -181,7 +181,7 @@ class HelmOfTheHostTest extends BaseCardTest {
     @Test
     @DisplayName("Trigger only fires on controller's turn")
     void triggerOnlyOnControllersTurn() {
-        Permanent creature = addReadyCreature(player1);
+        Permanent creature = addCreatureReady(player1, new GrizzlyBears());
         Permanent helm = addHelmReady(player1);
         helm.setAttachedTo(creature.getId());
 
@@ -200,7 +200,7 @@ class HelmOfTheHostTest extends BaseCardTest {
     @Test
     @DisplayName("Equipped creature leaving before resolution means no token")
     void equippedCreatureLeavesBeforeResolution() {
-        Permanent creature = addReadyCreature(player1);
+        Permanent creature = addCreatureReady(player1, new GrizzlyBears());
         Permanent helm = addHelmReady(player1);
         helm.setAttachedTo(creature.getId());
 
@@ -225,13 +225,6 @@ class HelmOfTheHostTest extends BaseCardTest {
 
     private Permanent addHelmReady(Player player) {
         Permanent perm = new Permanent(new HelmOfTheHost());
-        perm.setSummoningSick(false);
-        gd.playerBattlefields.get(player.getId()).add(perm);
-        return perm;
-    }
-
-    private Permanent addReadyCreature(Player player) {
-        Permanent perm = new Permanent(new GrizzlyBears());
         perm.setSummoningSick(false);
         gd.playerBattlefields.get(player.getId()).add(perm);
         return perm;

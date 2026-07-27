@@ -21,7 +21,7 @@ class PrimalCocoonTest extends BaseCardTest {
     @Test
     @DisplayName("At controller's upkeep, enchanted creature gets a +1/+1 counter")
     void upkeepPutsPlusCounter() {
-        Permanent creature = addCreatureReady(player1);
+        Permanent creature = addCreatureReady(player1, new GrizzlyBears());
 
         harness.setHand(player1, List.of(new PrimalCocoon()));
         harness.addMana(player1, ManaColor.GREEN, 1);
@@ -40,7 +40,7 @@ class PrimalCocoonTest extends BaseCardTest {
     @Test
     @DisplayName("Upkeep trigger does not fire during opponent's upkeep")
     void doesNotTriggerDuringOpponentUpkeep() {
-        Permanent creature = addCreatureReady(player1);
+        Permanent creature = addCreatureReady(player1, new GrizzlyBears());
 
         harness.setHand(player1, List.of(new PrimalCocoon()));
         harness.addMana(player1, ManaColor.GREEN, 1);
@@ -59,7 +59,7 @@ class PrimalCocoonTest extends BaseCardTest {
     @Test
     @DisplayName("Counters accumulate over multiple upkeeps")
     void countersAccumulateOverUpkeeps() {
-        Permanent creature = addCreatureReady(player1);
+        Permanent creature = addCreatureReady(player1, new GrizzlyBears());
 
         harness.setHand(player1, List.of(new PrimalCocoon()));
         harness.addMana(player1, ManaColor.GREEN, 1);
@@ -81,7 +81,7 @@ class PrimalCocoonTest extends BaseCardTest {
     @Test
     @DisplayName("Primal Cocoon is sacrificed when enchanted creature attacks")
     void sacrificedWhenEnchantedCreatureAttacks() {
-        Permanent creature = addCreatureReady(player1);
+        Permanent creature = addCreatureReady(player1, new GrizzlyBears());
 
         harness.setHand(player1, List.of(new PrimalCocoon()));
         harness.addMana(player1, ManaColor.GREEN, 1);
@@ -110,7 +110,7 @@ class PrimalCocoonTest extends BaseCardTest {
     @Test
     @DisplayName("Creature keeps +1/+1 counters after Primal Cocoon is sacrificed")
     void creatureKeepsCountersAfterSacrifice() {
-        Permanent creature = addCreatureReady(player1);
+        Permanent creature = addCreatureReady(player1, new GrizzlyBears());
 
         harness.setHand(player1, List.of(new PrimalCocoon()));
         harness.addMana(player1, ManaColor.GREEN, 1);
@@ -140,13 +140,6 @@ class PrimalCocoonTest extends BaseCardTest {
     }
 
     // ===== Helper methods =====
-
-    private Permanent addCreatureReady(Player player) {
-        Permanent perm = new Permanent(new GrizzlyBears());
-        perm.setSummoningSick(false);
-        gd.playerBattlefields.get(player.getId()).add(perm);
-        return perm;
-    }
 
     private Permanent findPermanentByName(Player player, String name) {
         return gd.playerBattlefields.get(player.getId()).stream()

@@ -59,7 +59,7 @@ class RootwaterMatriarchTest extends BaseCardTest {
     @DisplayName("Activating ability targeting enchanted creature puts it on the stack")
     void activatingTargetingEnchantedCreaturePutsOnStack() {
         Permanent matriarch = addReadyMatriarch(player1);
-        Permanent creature = addReadyCreature(player2);
+        Permanent creature = addCreatureReady(player2, new GrizzlyBears());
         attachAura(player1, creature, new Pacifism());
 
         harness.activateAbility(player1, 0, null, creature.getId());
@@ -75,7 +75,7 @@ class RootwaterMatriarchTest extends BaseCardTest {
     @DisplayName("Activating ability taps Rootwater Matriarch")
     void activatingTapsMatriarch() {
         Permanent matriarch = addReadyMatriarch(player1);
-        Permanent creature = addReadyCreature(player2);
+        Permanent creature = addCreatureReady(player2, new GrizzlyBears());
         attachAura(player1, creature, new Pacifism());
 
         harness.activateAbility(player1, 0, null, creature.getId());
@@ -87,7 +87,7 @@ class RootwaterMatriarchTest extends BaseCardTest {
     @DisplayName("Resolving ability steals enchanted creature")
     void resolvingStealsEnchantedCreature() {
         addReadyMatriarch(player1);
-        Permanent creature = addReadyCreature(player2);
+        Permanent creature = addCreatureReady(player2, new GrizzlyBears());
         attachAura(player1, creature, new Pacifism());
 
         harness.activateAbility(player1, 0, null, creature.getId());
@@ -113,7 +113,7 @@ class RootwaterMatriarchTest extends BaseCardTest {
     @DisplayName("Ability does nothing if target creature is not enchanted at resolution")
     void abilityDoesNothingIfNotEnchantedAtResolution() {
         addReadyMatriarch(player1);
-        Permanent creature = addReadyCreature(player2);
+        Permanent creature = addCreatureReady(player2, new GrizzlyBears());
         Permanent aura = attachAura(player1, creature, new Pacifism());
 
         harness.activateAbility(player1, 0, null, creature.getId());
@@ -134,7 +134,7 @@ class RootwaterMatriarchTest extends BaseCardTest {
     @DisplayName("Can target an unenchanted creature (but ability does nothing on resolution)")
     void canTargetUnenchantedCreature() {
         addReadyMatriarch(player1);
-        Permanent creature = addReadyCreature(player2);
+        Permanent creature = addCreatureReady(player2, new GrizzlyBears());
 
         // Targeting should succeed — "enchanted" is a duration, not a targeting restriction
         harness.activateAbility(player1, 0, null, creature.getId());
@@ -152,7 +152,7 @@ class RootwaterMatriarchTest extends BaseCardTest {
     @DisplayName("Creature returns to owner when aura is destroyed")
     void creatureReturnsWhenAuraDestroyed() {
         addReadyMatriarch(player1);
-        Permanent creature = addReadyCreature(player2);
+        Permanent creature = addCreatureReady(player2, new GrizzlyBears());
         attachAura(player1, creature, new Pacifism());
 
         // Steal the creature
@@ -192,7 +192,7 @@ class RootwaterMatriarchTest extends BaseCardTest {
     @DisplayName("Creature stays stolen if a second aura remains after first is destroyed")
     void creatureStaysStolenIfSecondAuraRemains() {
         addReadyMatriarch(player1);
-        Permanent creature = addReadyCreature(player2);
+        Permanent creature = addCreatureReady(player2, new GrizzlyBears());
         attachAura(player1, creature, new Pacifism());
 
         // Steal the creature
@@ -237,7 +237,7 @@ class RootwaterMatriarchTest extends BaseCardTest {
         matriarch.setSummoningSick(true);
         gd.playerBattlefields.get(player1.getId()).add(matriarch);
 
-        Permanent creature = addReadyCreature(player2);
+        Permanent creature = addCreatureReady(player2, new GrizzlyBears());
         attachAura(player1, creature, new Pacifism());
 
         assertThatThrownBy(() -> harness.activateAbility(player1, 0, null, creature.getId()))
@@ -252,7 +252,7 @@ class RootwaterMatriarchTest extends BaseCardTest {
     void cannotActivateWhenTapped() {
         Permanent matriarch = addReadyMatriarch(player1);
         matriarch.tap();
-        Permanent creature = addReadyCreature(player2);
+        Permanent creature = addCreatureReady(player2, new GrizzlyBears());
         attachAura(player1, creature, new Pacifism());
 
         assertThatThrownBy(() -> harness.activateAbility(player1, 0, null, creature.getId()))
@@ -280,7 +280,7 @@ class RootwaterMatriarchTest extends BaseCardTest {
     @DisplayName("Ability fizzles if target is removed before resolution")
     void fizzlesIfTargetRemoved() {
         addReadyMatriarch(player1);
-        Permanent creature = addReadyCreature(player2);
+        Permanent creature = addCreatureReady(player2, new GrizzlyBears());
         attachAura(player1, creature, new Pacifism());
 
         harness.activateAbility(player1, 0, null, creature.getId());
@@ -300,7 +300,7 @@ class RootwaterMatriarchTest extends BaseCardTest {
     @DisplayName("Stealing adds to game log")
     void stealingAddsToGameLog() {
         addReadyMatriarch(player1);
-        Permanent creature = addReadyCreature(player2);
+        Permanent creature = addCreatureReady(player2, new GrizzlyBears());
         attachAura(player1, creature, new Pacifism());
 
         harness.activateAbility(player1, 0, null, creature.getId());
@@ -314,14 +314,6 @@ class RootwaterMatriarchTest extends BaseCardTest {
 
     private Permanent addReadyMatriarch(Player player) {
         RootwaterMatriarch card = new RootwaterMatriarch();
-        Permanent perm = new Permanent(card);
-        perm.setSummoningSick(false);
-        gd.playerBattlefields.get(player.getId()).add(perm);
-        return perm;
-    }
-
-    private Permanent addReadyCreature(Player player) {
-        GrizzlyBears card = new GrizzlyBears();
         Permanent perm = new Permanent(card);
         perm.setSummoningSick(false);
         gd.playerBattlefields.get(player.getId()).add(perm);

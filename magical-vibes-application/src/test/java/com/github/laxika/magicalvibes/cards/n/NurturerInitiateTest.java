@@ -6,7 +6,6 @@ import com.github.laxika.magicalvibes.model.GameData;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.PendingInteraction;
 import com.github.laxika.magicalvibes.model.Permanent;
-import com.github.laxika.magicalvibes.model.Player;
 import com.github.laxika.magicalvibes.model.TurnStep;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
 import org.junit.jupiter.api.DisplayName;
@@ -45,7 +44,7 @@ class NurturerInitiateTest extends BaseCardTest {
     @DisplayName("Paying {1} gives the chosen target creature +1/+1 until end of turn")
     void payBoostsTargetCreature() {
         harness.addToBattlefield(player1, new NurturerInitiate());
-        Permanent target = addReadyCreature(player2);
+        Permanent target = addCreatureReady(player2, new GrizzlyBears());
 
         opponentCastsGreenSpell();
         harness.addMana(player1, ManaColor.COLORLESS, 1);
@@ -64,7 +63,7 @@ class NurturerInitiateTest extends BaseCardTest {
     @DisplayName("The +1/+1 boost wears off at end of turn")
     void boostWearsOffAtCleanup() {
         harness.addToBattlefield(player1, new NurturerInitiate());
-        Permanent target = addReadyCreature(player2);
+        Permanent target = addCreatureReady(player2, new GrizzlyBears());
 
         opponentCastsGreenSpell();
         harness.addMana(player1, ManaColor.COLORLESS, 1);
@@ -86,7 +85,7 @@ class NurturerInitiateTest extends BaseCardTest {
     @DisplayName("Declining leaves the target creature unboosted")
     void decliningDoesNothing() {
         harness.addToBattlefield(player1, new NurturerInitiate());
-        Permanent target = addReadyCreature(player2);
+        Permanent target = addCreatureReady(player2, new GrizzlyBears());
 
         opponentCastsGreenSpell();
 
@@ -112,12 +111,5 @@ class NurturerInitiateTest extends BaseCardTest {
         GameData gd = harness.getGameData();
         assertThat(gd.interaction.activeInteraction(PendingInteraction.MayAbilityChoice.class)).isNull();
         assertThat(gd.stack).hasSize(1);
-    }
-
-    private Permanent addReadyCreature(Player player) {
-        Permanent perm = new Permanent(new GrizzlyBears());
-        perm.setSummoningSick(false);
-        gd.playerBattlefields.get(player.getId()).add(perm);
-        return perm;
     }
 }

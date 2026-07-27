@@ -73,7 +73,7 @@ class IceFloeTest extends BaseCardTest {
     @DisplayName("Cannot target a creature that is not attacking you")
     void cannotTargetNonAttacker() {
         addReadyIceFloe(player1);
-        Permanent creature = addReadyCreature(player2, new GrizzlyBears());
+        Permanent creature = addCreatureReady(player2, new GrizzlyBears());
 
         assertThatThrownBy(() -> harness.activateAbility(player1, 0, null, creature.getId()))
                 .isInstanceOf(IllegalStateException.class);
@@ -148,13 +148,6 @@ class IceFloeTest extends BaseCardTest {
 
     private Permanent addReadyIceFloe(Player player) {
         Permanent perm = new Permanent(new IceFloe());
-        perm.setSummoningSick(false);
-        gd.playerBattlefields.get(player.getId()).add(perm);
-        return perm;
-    }
-
-    private Permanent addReadyCreature(Player player, Card card) {
-        Permanent perm = new Permanent(card);
         perm.setSummoningSick(false);
         gd.playerBattlefields.get(player.getId()).add(perm);
         return perm;

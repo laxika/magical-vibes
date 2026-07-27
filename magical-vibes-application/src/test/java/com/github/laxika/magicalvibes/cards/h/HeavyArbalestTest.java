@@ -22,7 +22,7 @@ class HeavyArbalestTest extends BaseCardTest {
     @DisplayName("Resolving equip ability attaches Heavy Arbalest to target creature")
     void resolvingEquipAttachesToCreature() {
         Permanent arbalest = addArbalestReady(player1);
-        Permanent creature = addReadyCreature(player1);
+        Permanent creature = addCreatureReady(player1, new GrizzlyBears());
         harness.addMana(player1, ManaColor.WHITE, 4);
 
         harness.activateAbility(player1, 0, null, creature.getId());
@@ -36,11 +36,11 @@ class HeavyArbalestTest extends BaseCardTest {
     @Test
     @DisplayName("Equipped creature can tap to deal 2 damage to target creature")
     void grantedAbilityDeals2DamageToCreature() {
-        Permanent creature = addReadyCreature(player1);
+        Permanent creature = addCreatureReady(player1, new GrizzlyBears());
         Permanent arbalest = addArbalestReady(player1);
         arbalest.setAttachedTo(creature.getId());
 
-        Permanent targetCreature = addReadyCreature(player2);
+        Permanent targetCreature = addCreatureReady(player2, new GrizzlyBears());
 
         harness.activateAbility(player1, 0, null, targetCreature.getId());
         harness.passBothPriorities();
@@ -59,7 +59,7 @@ class HeavyArbalestTest extends BaseCardTest {
     void grantedAbilityDeals2DamageToPlayer() {
         harness.setLife(player2, 20);
 
-        Permanent creature = addReadyCreature(player1);
+        Permanent creature = addCreatureReady(player1, new GrizzlyBears());
         Permanent arbalest = addArbalestReady(player1);
         arbalest.setAttachedTo(creature.getId());
 
@@ -92,7 +92,7 @@ class HeavyArbalestTest extends BaseCardTest {
     @Test
     @DisplayName("Already tapped creature cannot use granted tap ability")
     void tappedCreatureCannotUseGrantedAbility() {
-        Permanent creature = addReadyCreature(player1);
+        Permanent creature = addCreatureReady(player1, new GrizzlyBears());
         creature.tap();
 
         Permanent arbalest = addArbalestReady(player1);
@@ -108,7 +108,7 @@ class HeavyArbalestTest extends BaseCardTest {
     @Test
     @DisplayName("Equipped creature does not untap during controller's untap step")
     void equippedCreatureDoesNotUntap() {
-        Permanent creature = addReadyCreature(player2);
+        Permanent creature = addCreatureReady(player2, new GrizzlyBears());
         creature.tap();
 
         Permanent arbalest = addArbalestReady(player2);
@@ -124,7 +124,7 @@ class HeavyArbalestTest extends BaseCardTest {
     @Test
     @DisplayName("Untapped equipped creature remains untapped (doesn't tap it)")
     void untappedEquippedCreatureRemainsUntapped() {
-        Permanent creature = addReadyCreature(player2);
+        Permanent creature = addCreatureReady(player2, new GrizzlyBears());
 
         Permanent arbalest = addArbalestReady(player2);
         arbalest.setAttachedTo(creature.getId());
@@ -139,10 +139,10 @@ class HeavyArbalestTest extends BaseCardTest {
     @Test
     @DisplayName("Other permanents still untap normally when one creature has Heavy Arbalest")
     void otherPermanentsStillUntap() {
-        Permanent equippedCreature = addReadyCreature(player2);
+        Permanent equippedCreature = addCreatureReady(player2, new GrizzlyBears());
         equippedCreature.tap();
 
-        Permanent freeCreature = addReadyCreature(player2);
+        Permanent freeCreature = addCreatureReady(player2, new GrizzlyBears());
         freeCreature.tap();
 
         Permanent arbalest = addArbalestReady(player2);
@@ -159,7 +159,7 @@ class HeavyArbalestTest extends BaseCardTest {
     @Test
     @DisplayName("Creature can untap again after Heavy Arbalest is removed")
     void creatureUntapsAfterArbalestRemoved() {
-        Permanent creature = addReadyCreature(player2);
+        Permanent creature = addCreatureReady(player2, new GrizzlyBears());
         creature.tap();
 
         Permanent arbalest = addArbalestReady(player2);
@@ -180,7 +180,7 @@ class HeavyArbalestTest extends BaseCardTest {
     @Test
     @DisplayName("Creature loses granted ability when Heavy Arbalest is removed")
     void creatureLosesAbilityWhenRemoved() {
-        Permanent creature = addReadyCreature(player1);
+        Permanent creature = addCreatureReady(player1, new GrizzlyBears());
 
         Permanent arbalest = addArbalestReady(player1);
         arbalest.setAttachedTo(creature.getId());
@@ -212,13 +212,6 @@ class HeavyArbalestTest extends BaseCardTest {
 
     private Permanent addArbalestReady(Player player) {
         Permanent perm = new Permanent(new HeavyArbalest());
-        perm.setSummoningSick(false);
-        gd.playerBattlefields.get(player.getId()).add(perm);
-        return perm;
-    }
-
-    private Permanent addReadyCreature(Player player) {
-        Permanent perm = new Permanent(new GrizzlyBears());
         perm.setSummoningSick(false);
         gd.playerBattlefields.get(player.getId()).add(perm);
         return perm;

@@ -5,7 +5,6 @@ import com.github.laxika.magicalvibes.cards.f.FountainOfYouth;
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
-import com.github.laxika.magicalvibes.model.Player;
 import com.github.laxika.magicalvibes.model.TurnStep;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
 import org.junit.jupiter.api.DisplayName;
@@ -23,7 +22,7 @@ class ControlMagicTest extends BaseCardTest {
     @Test
     @DisplayName("Resolving Control Magic steals opponent's creature")
     void resolvingStealsCreature() {
-        Permanent creature = addCreatureReady(player2);
+        Permanent creature = addCreatureReady(player2, new GrizzlyBears());
 
         harness.setHand(player1, List.of(new ControlMagic()));
         harness.addMana(player1, ManaColor.BLUE, 5);
@@ -50,7 +49,7 @@ class ControlMagicTest extends BaseCardTest {
     @Test
     @DisplayName("Control Magic fizzles if target creature is no longer on the battlefield")
     void fizzlesIfTargetGone() {
-        Permanent creature = addCreatureReady(player2);
+        Permanent creature = addCreatureReady(player2, new GrizzlyBears());
 
         harness.setHand(player1, List.of(new ControlMagic()));
         harness.addMana(player1, ManaColor.BLUE, 5);
@@ -70,7 +69,7 @@ class ControlMagicTest extends BaseCardTest {
     @Test
     @DisplayName("Creature returns to owner when Control Magic is destroyed")
     void creatureReturnsWhenControlMagicDestroyed() {
-        Permanent creature = addCreatureReady(player2);
+        Permanent creature = addCreatureReady(player2, new GrizzlyBears());
 
         harness.setHand(player1, List.of(new ControlMagic()));
         harness.addMana(player1, ManaColor.BLUE, 5);
@@ -124,11 +123,4 @@ class ControlMagicTest extends BaseCardTest {
     }
 
     // ===== Helper methods =====
-
-    private Permanent addCreatureReady(Player player) {
-        Permanent perm = new Permanent(new GrizzlyBears());
-        perm.setSummoningSick(false);
-        gd.playerBattlefields.get(player.getId()).add(perm);
-        return perm;
-    }
 }

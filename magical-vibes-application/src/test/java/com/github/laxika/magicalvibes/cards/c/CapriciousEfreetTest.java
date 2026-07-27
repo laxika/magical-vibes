@@ -25,7 +25,7 @@ class CapriciousEfreetTest extends BaseCardTest {
     @DisplayName("Upkeep trigger presents own nonland permanent selection")
     void upkeepTriggerPresentsOwnTargetSelection() {
         addReadyEfreet(player1);
-        addReadyCreature(player1, new GrizzlyBears());
+        addCreatureReady(player1, new GrizzlyBears());
 
         advanceToUpkeep(player1);
 
@@ -58,8 +58,8 @@ class CapriciousEfreetTest extends BaseCardTest {
     @DisplayName("After own target, presents opponent nonland permanent selection")
     void afterOwnTargetPresentsOpponentSelection() {
         addReadyEfreet(player1);
-        Permanent bears = addReadyCreature(player1, new GrizzlyBears());
-        addReadyCreature(player2, new HillGiant());
+        Permanent bears = addCreatureReady(player1, new GrizzlyBears());
+        addCreatureReady(player2, new HillGiant());
 
         advanceToUpkeep(player1);
 
@@ -80,8 +80,8 @@ class CapriciousEfreetTest extends BaseCardTest {
     @DisplayName("Can choose zero opponent targets (skipping optional targets)")
     void canChooseZeroOpponentTargets() {
         addReadyEfreet(player1);
-        Permanent bears = addReadyCreature(player1, new GrizzlyBears());
-        addReadyCreature(player2, new HillGiant());
+        Permanent bears = addCreatureReady(player1, new GrizzlyBears());
+        addCreatureReady(player2, new HillGiant());
 
         advanceToUpkeep(player1);
         harness.handlePermanentChosen(player1, bears.getId());
@@ -99,8 +99,8 @@ class CapriciousEfreetTest extends BaseCardTest {
     @DisplayName("Can choose one opponent target")
     void canChooseOneOpponentTarget() {
         addReadyEfreet(player1);
-        Permanent bears = addReadyCreature(player1, new GrizzlyBears());
-        Permanent hillGiant = addReadyCreature(player2, new HillGiant());
+        Permanent bears = addCreatureReady(player1, new GrizzlyBears());
+        Permanent hillGiant = addCreatureReady(player2, new HillGiant());
 
         advanceToUpkeep(player1);
         harness.handlePermanentChosen(player1, bears.getId());
@@ -118,9 +118,9 @@ class CapriciousEfreetTest extends BaseCardTest {
     @DisplayName("Can choose two opponent targets")
     void canChooseTwoOpponentTargets() {
         addReadyEfreet(player1);
-        Permanent bears = addReadyCreature(player1, new GrizzlyBears());
-        Permanent hillGiant = addReadyCreature(player2, new HillGiant());
-        Permanent bears2 = addReadyCreature(player2, new GrizzlyBears());
+        Permanent bears = addCreatureReady(player1, new GrizzlyBears());
+        Permanent hillGiant = addCreatureReady(player2, new HillGiant());
+        Permanent bears2 = addCreatureReady(player2, new GrizzlyBears());
 
         advanceToUpkeep(player1);
         harness.handlePermanentChosen(player1, bears.getId());
@@ -155,8 +155,8 @@ class CapriciousEfreetTest extends BaseCardTest {
     @DisplayName("Resolving destroys exactly one permanent from the target pool")
     void resolvingDestroysExactlyOnePermanent() {
         addReadyEfreet(player1);
-        Permanent bears = addReadyCreature(player1, new GrizzlyBears());
-        Permanent hillGiant = addReadyCreature(player2, new HillGiant());
+        Permanent bears = addCreatureReady(player1, new GrizzlyBears());
+        Permanent hillGiant = addCreatureReady(player2, new HillGiant());
 
         advanceToUpkeep(player1);
         harness.handlePermanentChosen(player1, bears.getId());
@@ -178,7 +178,7 @@ class CapriciousEfreetTest extends BaseCardTest {
     @DisplayName("If all targets leave before resolution, ability fizzles")
     void abilityFizzlesIfAllTargetsLeave() {
         addReadyEfreet(player1);
-        Permanent bears = addReadyCreature(player1, new GrizzlyBears());
+        Permanent bears = addCreatureReady(player1, new GrizzlyBears());
 
         advanceToUpkeep(player1);
         harness.handlePermanentChosen(player1, bears.getId());
@@ -217,7 +217,7 @@ class CapriciousEfreetTest extends BaseCardTest {
     @DisplayName("Skips opponent target step when opponent has no nonland permanents")
     void skipsOpponentStepWhenNoOpponentNonlands() {
         Permanent efreet = addReadyEfreet(player1);
-        Permanent bears = addReadyCreature(player1, new GrizzlyBears());
+        Permanent bears = addCreatureReady(player1, new GrizzlyBears());
         addReadyLand(player2); // only a land — no valid opponent targets
 
         advanceToUpkeep(player1);
@@ -233,7 +233,7 @@ class CapriciousEfreetTest extends BaseCardTest {
     @DisplayName("Stack entry is a triggered ability")
     void stackEntryIsTriggeredAbility() {
         addReadyEfreet(player1);
-        Permanent bears = addReadyCreature(player1, new GrizzlyBears());
+        Permanent bears = addCreatureReady(player1, new GrizzlyBears());
 
         advanceToUpkeep(player1);
         harness.handlePermanentChosen(player1, bears.getId());
@@ -247,13 +247,6 @@ class CapriciousEfreetTest extends BaseCardTest {
 
     private Permanent addReadyEfreet(Player player) {
         CapriciousEfreet card = new CapriciousEfreet();
-        Permanent perm = new Permanent(card);
-        perm.setSummoningSick(false);
-        gd.playerBattlefields.get(player.getId()).add(perm);
-        return perm;
-    }
-
-    private Permanent addReadyCreature(Player player, Card card) {
         Permanent perm = new Permanent(card);
         perm.setSummoningSick(false);
         gd.playerBattlefields.get(player.getId()).add(perm);

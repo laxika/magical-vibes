@@ -62,7 +62,7 @@ class ExecutionersHoodTest extends BaseCardTest {
     @DisplayName("Resolving equip ability attaches Executioner's Hood to target creature")
     void resolvingEquipAttachesToCreature() {
         Permanent hood = addHoodReady(player1);
-        Permanent creature = addReadyCreature(player1);
+        Permanent creature = addCreatureReady(player1, new GrizzlyBears());
         harness.addMana(player1, ManaColor.BLACK, 2);
 
         harness.activateAbility(player1, 0, null, creature.getId());
@@ -77,7 +77,7 @@ class ExecutionersHoodTest extends BaseCardTest {
     @Test
     @DisplayName("Equipped creature has intimidate")
     void equippedCreatureHasIntimidate() {
-        Permanent creature = addReadyCreature(player1);
+        Permanent creature = addCreatureReady(player1, new GrizzlyBears());
         Permanent hood = addHoodReady(player1);
         hood.setAttachedTo(creature.getId());
 
@@ -87,7 +87,7 @@ class ExecutionersHoodTest extends BaseCardTest {
     @Test
     @DisplayName("Creature loses intimidate when Executioner's Hood is removed")
     void creatureLosesIntimidateWhenEquipmentRemoved() {
-        Permanent creature = addReadyCreature(player1);
+        Permanent creature = addCreatureReady(player1, new GrizzlyBears());
         Permanent hood = addHoodReady(player1);
         hood.setAttachedTo(creature.getId());
 
@@ -101,8 +101,8 @@ class ExecutionersHoodTest extends BaseCardTest {
     @Test
     @DisplayName("Executioner's Hood does not affect unequipped creatures")
     void doesNotAffectOtherCreatures() {
-        Permanent creature = addReadyCreature(player1);
-        Permanent otherCreature = addReadyCreature(player1);
+        Permanent creature = addCreatureReady(player1, new GrizzlyBears());
+        Permanent otherCreature = addCreatureReady(player1, new GrizzlyBears());
         Permanent hood = addHoodReady(player1);
         hood.setAttachedTo(creature.getId());
 
@@ -115,8 +115,8 @@ class ExecutionersHoodTest extends BaseCardTest {
     @DisplayName("Executioner's Hood can be moved to another creature")
     void canReEquipToAnotherCreature() {
         Permanent hood = addHoodReady(player1);
-        Permanent creature1 = addReadyCreature(player1);
-        Permanent creature2 = addReadyCreature(player1);
+        Permanent creature1 = addCreatureReady(player1, new GrizzlyBears());
+        Permanent creature2 = addCreatureReady(player1, new GrizzlyBears());
 
         hood.setAttachedTo(creature1.getId());
         assertThat(gqs.hasKeyword(gd, creature1, Keyword.INTIMIDATE)).isTrue();
@@ -134,13 +134,6 @@ class ExecutionersHoodTest extends BaseCardTest {
 
     private Permanent addHoodReady(Player player) {
         Permanent perm = new Permanent(new ExecutionersHood());
-        perm.setSummoningSick(false);
-        gd.playerBattlefields.get(player.getId()).add(perm);
-        return perm;
-    }
-
-    private Permanent addReadyCreature(Player player) {
-        Permanent perm = new Permanent(new GrizzlyBears());
         perm.setSummoningSick(false);
         gd.playerBattlefields.get(player.getId()).add(perm);
         return perm;

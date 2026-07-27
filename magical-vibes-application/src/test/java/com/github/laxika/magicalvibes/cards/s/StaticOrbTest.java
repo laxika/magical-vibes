@@ -3,7 +3,6 @@ package com.github.laxika.magicalvibes.cards.s;
 import com.github.laxika.magicalvibes.cards.a.AngelsFeather;
 import com.github.laxika.magicalvibes.cards.f.Forest;
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
-import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.Player;
 import com.github.laxika.magicalvibes.model.TurnStep;
@@ -20,10 +19,10 @@ class StaticOrbTest extends BaseCardTest {
     @Test
     @DisplayName("Only the two chosen permanents untap; the rest stay tapped")
     void picksTwoOfThreeToUntap() {
-        addReady(player1, new StaticOrb());
-        Permanent bears = addReady(player1, new GrizzlyBears());
-        Permanent forest = addReady(player1, new Forest());
-        Permanent feather = addReady(player1, new AngelsFeather());
+        addCreatureReady(player1, new StaticOrb());
+        Permanent bears = addCreatureReady(player1, new GrizzlyBears());
+        Permanent forest = addCreatureReady(player1, new Forest());
+        Permanent feather = addCreatureReady(player1, new AngelsFeather());
         bears.tap();
         forest.tap();
         feather.tap();
@@ -42,11 +41,11 @@ class StaticOrbTest extends BaseCardTest {
     @Test
     @DisplayName("A tapped Static Orb imposes no restriction — everything untaps normally")
     void tappedStaticOrbImposesNoRestriction() {
-        Permanent orb = addReady(player1, new StaticOrb());
+        Permanent orb = addCreatureReady(player1, new StaticOrb());
         orb.tap();
-        Permanent bears = addReady(player1, new GrizzlyBears());
-        Permanent forest = addReady(player1, new Forest());
-        Permanent feather = addReady(player1, new AngelsFeather());
+        Permanent bears = addCreatureReady(player1, new GrizzlyBears());
+        Permanent forest = addCreatureReady(player1, new Forest());
+        Permanent feather = addCreatureReady(player1, new AngelsFeather());
         bears.tap();
         forest.tap();
         feather.tap();
@@ -63,9 +62,9 @@ class StaticOrbTest extends BaseCardTest {
     @Test
     @DisplayName("Two or fewer permanents untap normally without a choice")
     void twoOrFewerUntapNormally() {
-        addReady(player1, new StaticOrb());
-        Permanent bears = addReady(player1, new GrizzlyBears());
-        Permanent forest = addReady(player1, new Forest());
+        addCreatureReady(player1, new StaticOrb());
+        Permanent bears = addCreatureReady(player1, new GrizzlyBears());
+        Permanent forest = addCreatureReady(player1, new Forest());
         bears.tap();
         forest.tap();
 
@@ -78,10 +77,10 @@ class StaticOrbTest extends BaseCardTest {
     @Test
     @DisplayName("An opponent's untapped Static Orb restricts your untap step too")
     void opponentStaticOrbRestrictsYourUntap() {
-        addReady(player2, new StaticOrb());
-        Permanent bears = addReady(player1, new GrizzlyBears());
-        Permanent forest = addReady(player1, new Forest());
-        Permanent feather = addReady(player1, new AngelsFeather());
+        addCreatureReady(player2, new StaticOrb());
+        Permanent bears = addCreatureReady(player1, new GrizzlyBears());
+        Permanent forest = addCreatureReady(player1, new Forest());
+        Permanent feather = addCreatureReady(player1, new AngelsFeather());
         bears.tap();
         forest.tap();
         feather.tap();
@@ -92,13 +91,6 @@ class StaticOrbTest extends BaseCardTest {
         assertThat(bears.isTapped()).isFalse();
         assertThat(forest.isTapped()).isTrue();
         assertThat(feather.isTapped()).isTrue();
-    }
-
-    private Permanent addReady(Player player, Card card) {
-        Permanent perm = new Permanent(card);
-        perm.setSummoningSick(false);
-        gd.playerBattlefields.get(player.getId()).add(perm);
-        return perm;
     }
 
     private void advanceToNextTurn(Player currentActivePlayer) {

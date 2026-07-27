@@ -4,7 +4,6 @@ import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
 import com.github.laxika.magicalvibes.model.GameLogEntry;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
-import com.github.laxika.magicalvibes.model.Player;
 import com.github.laxika.magicalvibes.model.StackEntry;
 import com.github.laxika.magicalvibes.model.StackEntryType;
 import com.github.laxika.magicalvibes.model.TurnStep;
@@ -24,7 +23,7 @@ class VoldarenDuelistTest extends BaseCardTest {
     @Test
     @DisplayName("ETB makes target creature unable to block this turn")
     void etbMakesTargetUnableToBlock() {
-        Permanent blocker = addReadyCreature(player2);
+        Permanent blocker = addCreatureReady(player2, new GrizzlyBears());
         harness.setHand(player1, List.of(new VoldarenDuelist()));
         harness.addMana(player1, ManaColor.RED, 4);
 
@@ -47,8 +46,8 @@ class VoldarenDuelistTest extends BaseCardTest {
     @Test
     @DisplayName("Target creature cannot declare as blocker after ETB resolves")
     void targetCannotDeclareAsBlocker() {
-        Permanent attacker = addReadyCreature(player1);
-        Permanent blocker = addReadyCreature(player2);
+        Permanent attacker = addCreatureReady(player1, new GrizzlyBears());
+        Permanent blocker = addCreatureReady(player2, new GrizzlyBears());
 
         harness.setHand(player1, List.of(new VoldarenDuelist()));
         harness.addMana(player1, ManaColor.RED, 4);
@@ -101,13 +100,5 @@ class VoldarenDuelistTest extends BaseCardTest {
 
         assertThat(gd.stack).isEmpty();
         assertThat(gd.gameLog.stream().map(GameLogEntry::plainText)).anyMatch(log -> log.contains("fizzles"));
-    }
-
-    private Permanent addReadyCreature(Player player) {
-        GrizzlyBears card = new GrizzlyBears();
-        Permanent perm = new Permanent(card);
-        perm.setSummoningSick(false);
-        gd.playerBattlefields.get(player.getId()).add(perm);
-        return perm;
     }
 }

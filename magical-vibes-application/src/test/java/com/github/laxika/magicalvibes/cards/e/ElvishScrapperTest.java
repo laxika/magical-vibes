@@ -77,7 +77,7 @@ class ElvishScrapperTest extends BaseCardTest {
     @DisplayName("Cannot target a creature")
     void cannotTargetCreature() {
         addReadyScrapper(player1);
-        Permanent creature = addReadyCreature(player2);
+        Permanent creature = addCreatureReady(player2, new GrizzlyBears());
         harness.addMana(player1, ManaColor.GREEN, 1);
 
         assertThatThrownBy(() -> harness.activateAbility(player1, 0, null, creature.getId()))
@@ -123,14 +123,6 @@ class ElvishScrapperTest extends BaseCardTest {
 
     private Permanent addReadyArtifact(Player player) {
         LeoninScimitar card = new LeoninScimitar();
-        Permanent perm = new Permanent(card);
-        perm.setSummoningSick(false);
-        gd.playerBattlefields.get(player.getId()).add(perm);
-        return perm;
-    }
-
-    private Permanent addReadyCreature(Player player) {
-        GrizzlyBears card = new GrizzlyBears();
         Permanent perm = new Permanent(card);
         perm.setSummoningSick(false);
         gd.playerBattlefields.get(player.getId()).add(perm);

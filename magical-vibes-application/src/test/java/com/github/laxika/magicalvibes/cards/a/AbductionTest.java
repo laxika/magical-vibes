@@ -23,7 +23,7 @@ class AbductionTest extends BaseCardTest {
     @Test
     @DisplayName("Resolving Abduction steals the enchanted creature")
     void stealsEnchantedCreature() {
-        Permanent creature = addCreatureReady(player2);
+        Permanent creature = addCreatureReady(player2, new GrizzlyBears());
 
         castAbduction(player1, creature);
 
@@ -39,7 +39,7 @@ class AbductionTest extends BaseCardTest {
     @Test
     @DisplayName("Abduction untaps the enchanted creature as it enters")
     void untapsEnchantedCreature() {
-        Permanent creature = addCreatureReady(player2);
+        Permanent creature = addCreatureReady(player2, new GrizzlyBears());
         creature.tap();
 
         castAbduction(player1, creature);
@@ -52,7 +52,7 @@ class AbductionTest extends BaseCardTest {
     @Test
     @DisplayName("When the enchanted creature dies, it returns to the battlefield under its owner's control")
     void returnsToOwnerBattlefieldOnDeath() {
-        Permanent creature = addCreatureReady(player2);
+        Permanent creature = addCreatureReady(player2, new GrizzlyBears());
         Card creatureCard = creature.getCard();
 
         // Player 1 steals the creature with Abduction
@@ -82,7 +82,7 @@ class AbductionTest extends BaseCardTest {
     @Test
     @DisplayName("Abduction itself goes to its owner's graveyard when the enchanted creature dies")
     void auraGoesToGraveyardOnDeath() {
-        Permanent creature = addCreatureReady(player2);
+        Permanent creature = addCreatureReady(player2, new GrizzlyBears());
 
         castAbduction(player1, creature);
 
@@ -126,12 +126,5 @@ class AbductionTest extends BaseCardTest {
         harness.castEnchantment(controller, 0, target.getId());
         harness.passBothPriorities(); // resolve the aura (attach + gain control)
         harness.passBothPriorities(); // resolve the ETB untap trigger
-    }
-
-    private Permanent addCreatureReady(Player player) {
-        Permanent perm = new Permanent(new GrizzlyBears());
-        perm.setSummoningSick(false);
-        gd.playerBattlefields.get(player.getId()).add(perm);
-        return perm;
     }
 }

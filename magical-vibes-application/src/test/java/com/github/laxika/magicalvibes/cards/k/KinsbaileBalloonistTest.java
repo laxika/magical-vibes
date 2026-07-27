@@ -20,7 +20,7 @@ class KinsbaileBalloonistTest extends BaseCardTest {
     @DisplayName("Attacking queues target selection for a creature")
     void attackTriggerQueuesForTargetSelection() {
         addBalloonistReady(player1);
-        addCreatureReady(player1);
+        addCreatureReady(player1, new GrizzlyBears());
 
         declareAttackers(player1, List.of(0));
 
@@ -32,7 +32,7 @@ class KinsbaileBalloonistTest extends BaseCardTest {
     @DisplayName("Accepting the may grants flying to the targeted creature until end of turn")
     void acceptingMayGrantsFlying() {
         addBalloonistReady(player1);
-        Permanent bears = addCreatureReady(player1);
+        Permanent bears = addCreatureReady(player1, new GrizzlyBears());
 
         declareAttackers(player1, List.of(0));
         harness.handlePermanentChosen(player1, bears.getId());
@@ -46,7 +46,7 @@ class KinsbaileBalloonistTest extends BaseCardTest {
     @DisplayName("Declining the may leaves the targeted creature without flying")
     void decliningMayLeavesNoFlying() {
         addBalloonistReady(player1);
-        Permanent bears = addCreatureReady(player1);
+        Permanent bears = addCreatureReady(player1, new GrizzlyBears());
 
         declareAttackers(player1, List.of(0));
         harness.handlePermanentChosen(player1, bears.getId());
@@ -60,7 +60,7 @@ class KinsbaileBalloonistTest extends BaseCardTest {
     @DisplayName("Granted flying wears off at end of turn")
     void flyingWearsOffAtEndOfTurn() {
         addBalloonistReady(player1);
-        Permanent bears = addCreatureReady(player1);
+        Permanent bears = addCreatureReady(player1, new GrizzlyBears());
 
         declareAttackers(player1, List.of(0));
         harness.handlePermanentChosen(player1, bears.getId());
@@ -79,13 +79,6 @@ class KinsbaileBalloonistTest extends BaseCardTest {
 
     private Permanent addBalloonistReady(Player player) {
         Permanent perm = new Permanent(new KinsbaileBalloonist());
-        perm.setSummoningSick(false);
-        gd.playerBattlefields.get(player.getId()).add(perm);
-        return perm;
-    }
-
-    private Permanent addCreatureReady(Player player) {
-        Permanent perm = new Permanent(new GrizzlyBears());
         perm.setSummoningSick(false);
         gd.playerBattlefields.get(player.getId()).add(perm);
         return perm;

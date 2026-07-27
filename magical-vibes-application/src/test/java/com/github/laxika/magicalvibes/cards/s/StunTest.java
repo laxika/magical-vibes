@@ -6,7 +6,6 @@ import com.github.laxika.magicalvibes.cards.f.FountainOfYouth;
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
-import com.github.laxika.magicalvibes.model.Player;
 import com.github.laxika.magicalvibes.model.StackEntry;
 import com.github.laxika.magicalvibes.model.StackEntryType;
 import com.github.laxika.magicalvibes.model.TurnStep;
@@ -73,8 +72,8 @@ class StunTest extends BaseCardTest {
     @Test
     @DisplayName("Resolving Stun makes target unable to block and draws a card")
     void resolvingSetsCantBlockAndDraws() {
-        Permanent attacker = addReadyCreature(player1);
-        Permanent blocker = addReadyCreature(player2);
+        Permanent attacker = addCreatureReady(player1, new GrizzlyBears());
+        Permanent blocker = addCreatureReady(player2, new GrizzlyBears());
 
         harness.setHand(player1, List.of(new Stun()));
         harness.addMana(player1, ManaColor.RED, 1);
@@ -129,14 +128,6 @@ class StunTest extends BaseCardTest {
 
         assertThat(gd.gameLog.stream().map(GameLogEntry::plainText)).anyMatch(log -> log.contains("fizzles"));
         assertThat(gd.playerHands.get(player1.getId())).isEmpty();
-    }
-
-    private Permanent addReadyCreature(Player player) {
-        GrizzlyBears card = new GrizzlyBears();
-        Permanent perm = new Permanent(card);
-        perm.setSummoningSick(false);
-        gd.playerBattlefields.get(player.getId()).add(perm);
-        return perm;
     }
 }
 

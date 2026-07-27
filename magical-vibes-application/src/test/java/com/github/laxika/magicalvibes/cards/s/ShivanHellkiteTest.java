@@ -75,7 +75,7 @@ class ShivanHellkiteTest extends BaseCardTest {
     @DisplayName("Activating ability targeting creature puts it on the stack")
     void activatingTargetingCreaturePutsOnStack() {
         addReadyHellkite(player1);
-        Permanent target = addReadyCreature(player2);
+        Permanent target = addCreatureReady(player2, new GrizzlyBears());
         harness.addMana(player1, ManaColor.RED, 2);
 
         harness.activateAbility(player1, 0, null, target.getId());
@@ -205,14 +205,6 @@ class ShivanHellkiteTest extends BaseCardTest {
 
     private Permanent addReadyHellkite(Player player) {
         ShivanHellkite card = new ShivanHellkite();
-        Permanent perm = new Permanent(card);
-        perm.setSummoningSick(false);
-        harness.getGameData().playerBattlefields.get(player.getId()).add(perm);
-        return perm;
-    }
-
-    private Permanent addReadyCreature(Player player) {
-        GrizzlyBears card = new GrizzlyBears();
         Permanent perm = new Permanent(card);
         perm.setSummoningSick(false);
         harness.getGameData().playerBattlefields.get(player.getId()).add(perm);

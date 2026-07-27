@@ -5,10 +5,8 @@ import com.github.laxika.magicalvibes.model.GameLogEntry;
 import com.github.laxika.magicalvibes.model.PendingInteraction;
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
 import com.github.laxika.magicalvibes.cards.l.LlanowarElves;
-import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
-import com.github.laxika.magicalvibes.model.Player;
 import com.github.laxika.magicalvibes.model.TurnStep;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
 import org.junit.jupiter.api.DisplayName;
@@ -19,13 +17,6 @@ import java.util.List;
 import static org.assertj.core.api.Assertions.assertThat;
 
 class ArmWithAetherTest extends BaseCardTest {
-
-    private Permanent addReadyCreature(Player player, Card card) {
-        Permanent perm = new Permanent(card);
-        perm.setSummoningSick(false);
-        gd.playerBattlefields.get(player.getId()).add(perm);
-        return perm;
-    }
 
     private void castAndResolveArmWithAether() {
         harness.setHand(player1, List.of(new ArmWithAether()));
@@ -41,8 +32,8 @@ class ArmWithAetherTest extends BaseCardTest {
     @Test
     @DisplayName("Casting Arm with Aether grants bounce ability to all controlled creatures")
     void grantsAbilityToControlledCreatures() {
-        Permanent bears = addReadyCreature(player1, new GrizzlyBears());
-        Permanent elves = addReadyCreature(player1, new LlanowarElves());
+        Permanent bears = addCreatureReady(player1, new GrizzlyBears());
+        Permanent elves = addCreatureReady(player1, new LlanowarElves());
 
         castAndResolveArmWithAether();
 
@@ -53,8 +44,8 @@ class ArmWithAetherTest extends BaseCardTest {
     @Test
     @DisplayName("Arm with Aether does not affect opponent's creatures")
     void doesNotAffectOpponentCreatures() {
-        addReadyCreature(player1, new GrizzlyBears());
-        Permanent opponentBears = addReadyCreature(player2, new GrizzlyBears());
+        addCreatureReady(player1, new GrizzlyBears());
+        Permanent opponentBears = addCreatureReady(player2, new GrizzlyBears());
 
         castAndResolveArmWithAether();
 
@@ -66,10 +57,10 @@ class ArmWithAetherTest extends BaseCardTest {
     @Test
     @DisplayName("Creature with granted ability triggers bounce on combat damage to player")
     void triggersBounceOnCombatDamage() {
-        Permanent attacker = addReadyCreature(player1, new GrizzlyBears());
+        Permanent attacker = addCreatureReady(player1, new GrizzlyBears());
         attacker.setHasDamageToOpponentCreatureBounce(true);
         attacker.setAttacking(true);
-        addReadyCreature(player2, new GrizzlyBears());
+        addCreatureReady(player2, new GrizzlyBears());
 
         resolveCombat();
 
@@ -82,10 +73,10 @@ class ArmWithAetherTest extends BaseCardTest {
     @Test
     @DisplayName("Selecting a creature to bounce returns it to owner's hand")
     void bouncesSelectedCreature() {
-        Permanent attacker = addReadyCreature(player1, new GrizzlyBears());
+        Permanent attacker = addCreatureReady(player1, new GrizzlyBears());
         attacker.setHasDamageToOpponentCreatureBounce(true);
         attacker.setAttacking(true);
-        Permanent target = addReadyCreature(player2, new GrizzlyBears());
+        Permanent target = addCreatureReady(player2, new GrizzlyBears());
 
         resolveCombat();
 
@@ -100,10 +91,10 @@ class ArmWithAetherTest extends BaseCardTest {
     @Test
     @DisplayName("Selecting zero creatures is allowed (may ability)")
     void mayDeclineBounce() {
-        Permanent attacker = addReadyCreature(player1, new GrizzlyBears());
+        Permanent attacker = addCreatureReady(player1, new GrizzlyBears());
         attacker.setHasDamageToOpponentCreatureBounce(true);
         attacker.setAttacking(true);
-        addReadyCreature(player2, new GrizzlyBears());
+        addCreatureReady(player2, new GrizzlyBears());
 
         resolveCombat();
 
@@ -116,7 +107,7 @@ class ArmWithAetherTest extends BaseCardTest {
     @Test
     @DisplayName("Bounce only targets creatures, not non-creature permanents")
     void onlyTargetsCreatures() {
-        Permanent attacker = addReadyCreature(player1, new GrizzlyBears());
+        Permanent attacker = addCreatureReady(player1, new GrizzlyBears());
         attacker.setHasDamageToOpponentCreatureBounce(true);
         attacker.setAttacking(true);
         // Add a non-creature permanent (land) to opponent's battlefield
@@ -133,10 +124,10 @@ class ArmWithAetherTest extends BaseCardTest {
     @Test
     @DisplayName("No trigger when attacker is blocked and deals no damage to player")
     void noTriggerWhenBlocked() {
-        Permanent attacker = addReadyCreature(player1, new GrizzlyBears());
+        Permanent attacker = addCreatureReady(player1, new GrizzlyBears());
         attacker.setHasDamageToOpponentCreatureBounce(true);
         attacker.setAttacking(true);
-        Permanent blocker = addReadyCreature(player2, new GrizzlyBears());
+        Permanent blocker = addCreatureReady(player2, new GrizzlyBears());
         blocker.setBlocking(true);
         blocker.addBlockingTarget(0);
 
@@ -148,10 +139,10 @@ class ArmWithAetherTest extends BaseCardTest {
     @Test
     @DisplayName("Creature without granted ability does not trigger bounce")
     void noTriggerWithoutGrantedAbility() {
-        Permanent attacker = addReadyCreature(player1, new GrizzlyBears());
+        Permanent attacker = addCreatureReady(player1, new GrizzlyBears());
         // NOT setting hasDamageToOpponentCreatureBounce
         attacker.setAttacking(true);
-        addReadyCreature(player2, new GrizzlyBears());
+        addCreatureReady(player2, new GrizzlyBears());
 
         resolveCombat();
 
@@ -163,8 +154,8 @@ class ArmWithAetherTest extends BaseCardTest {
     @Test
     @DisplayName("Full flow: cast Arm with Aether, attack, bounce opponent creature")
     void fullFlow() {
-        Permanent attacker = addReadyCreature(player1, new GrizzlyBears());
-        Permanent opponentCreature = addReadyCreature(player2, new GrizzlyBears());
+        Permanent attacker = addCreatureReady(player1, new GrizzlyBears());
+        Permanent opponentCreature = addCreatureReady(player2, new GrizzlyBears());
 
         castAndResolveArmWithAether();
 

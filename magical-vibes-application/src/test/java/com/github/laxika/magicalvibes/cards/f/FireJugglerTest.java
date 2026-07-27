@@ -18,8 +18,8 @@ class FireJugglerTest extends BaseCardTest {
     @DisplayName("Winning the clash deals 4 damage to each creature blocking Fire Juggler")
     void wonClashDamagesBlockers() {
         addAttackingJuggler(player1);
-        Permanent blocker1 = addReadyBears(player2);
-        Permanent blocker2 = addReadyBears(player2);
+        Permanent blocker1 = addCreatureReady(player2, new GrizzlyBears());
+        Permanent blocker2 = addCreatureReady(player2, new GrizzlyBears());
         // Higher mana value on top for player1 (Grizzly Bears MV 2 > Forest MV 0) → player1 wins.
         forcePlayer1ClashWin();
 
@@ -40,7 +40,7 @@ class FireJugglerTest extends BaseCardTest {
     @DisplayName("Losing the clash leaves the blockers unharmed")
     void lostClashSparesBlockers() {
         addAttackingJuggler(player1);
-        Permanent blocker = addReadyBears(player2);
+        Permanent blocker = addCreatureReady(player2, new GrizzlyBears());
         // Lower mana value on top for player1 (Forest MV 0 < Grizzly Bears MV 2) → player1 loses.
         gd.playerDecks.get(player1.getId()).addFirst(new Forest());
         gd.playerDecks.get(player2.getId()).addFirst(new GrizzlyBears());
@@ -63,13 +63,6 @@ class FireJugglerTest extends BaseCardTest {
         Permanent perm = new Permanent(new FireJuggler());
         perm.setSummoningSick(false);
         perm.setAttacking(true);
-        gd.playerBattlefields.get(player.getId()).add(perm);
-        return perm;
-    }
-
-    private Permanent addReadyBears(Player player) {
-        Permanent perm = new Permanent(new GrizzlyBears());
-        perm.setSummoningSick(false);
         gd.playerBattlefields.get(player.getId()).add(perm);
         return perm;
     }

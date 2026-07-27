@@ -19,7 +19,7 @@ class VeinDrinkerTest extends BaseCardTest {
     @DisplayName("Fight deals mutual power damage and gains a +1/+1 counter when the target dies")
     void fightKillsTargetAndGainsCounter() {
         Permanent drinker = addReadyDrinker(player1);
-        Permanent target = addReadyBears(player2);
+        Permanent target = addCreatureReady(player2, new GrizzlyBears());
         harness.addMana(player1, ManaColor.RED, 1);
 
         harness.activateAbility(player1, 0, null, target.getId());
@@ -74,13 +74,6 @@ class VeinDrinkerTest extends BaseCardTest {
 
     private Permanent addReadyDrinker(Player player) {
         Permanent perm = new Permanent(new VeinDrinker());
-        perm.setSummoningSick(false);
-        gd.playerBattlefields.get(player.getId()).add(perm);
-        return perm;
-    }
-
-    private Permanent addReadyBears(Player player) {
-        Permanent perm = new Permanent(new GrizzlyBears());
         perm.setSummoningSick(false);
         gd.playerBattlefields.get(player.getId()).add(perm);
         return perm;

@@ -24,7 +24,7 @@ class SylvanBasiliskTest extends BaseCardTest {
         Permanent basilisk = addReadyBasilisk(player1);
         basilisk.setAttacking(true);
 
-        Permanent blocker = addReadyBears(player2);
+        Permanent blocker = addCreatureReady(player2, new GrizzlyBears());
 
         prepareDeclareBlockers();
         gs.declareBlockers(gd, player2, List.of(new BlockerAssignment(0, 0)));
@@ -44,7 +44,7 @@ class SylvanBasiliskTest extends BaseCardTest {
         Permanent basilisk = addReadyBasilisk(player1);
         basilisk.setAttacking(true);
 
-        Permanent blocker = addReadyBears(player2);
+        Permanent blocker = addCreatureReady(player2, new GrizzlyBears());
 
         prepareDeclareBlockers();
         gs.declareBlockers(gd, player2, List.of(new BlockerAssignment(0, 0)));
@@ -63,8 +63,8 @@ class SylvanBasiliskTest extends BaseCardTest {
     void createsOneTriggerPerBlockingCreature() {
         addReadyBasilisk(player1).setAttacking(true);
 
-        addReadyBears(player2);
-        addReadyBears(player2);
+        addCreatureReady(player2, new GrizzlyBears());
+        addCreatureReady(player2, new GrizzlyBears());
 
         prepareDeclareBlockers();
         gs.declareBlockers(gd, player2, List.of(
@@ -89,13 +89,6 @@ class SylvanBasiliskTest extends BaseCardTest {
 
     private Permanent addReadyBasilisk(Player player) {
         Permanent perm = new Permanent(new SylvanBasilisk());
-        perm.setSummoningSick(false);
-        gd.playerBattlefields.get(player.getId()).add(perm);
-        return perm;
-    }
-
-    private Permanent addReadyBears(Player player) {
-        Permanent perm = new Permanent(new GrizzlyBears());
         perm.setSummoningSick(false);
         gd.playerBattlefields.get(player.getId()).add(perm);
         return perm;

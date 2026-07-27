@@ -19,7 +19,7 @@ class SilkbindFaerieTest extends BaseCardTest {
     @DisplayName("Paying {1}{W/U} and untapping taps target creature")
     void tapsTargetCreatureAndUntapsSource() {
         Permanent faerie = addTapped(player1, new SilkbindFaerie());
-        Permanent target = addReady(player2, new GrizzlyBears());
+        Permanent target = addCreatureReady(player2, new GrizzlyBears());
         harness.addMana(player1, ManaColor.COLORLESS, 1);
         harness.addMana(player1, ManaColor.WHITE, 1);
 
@@ -34,8 +34,8 @@ class SilkbindFaerieTest extends BaseCardTest {
     @Test
     @DisplayName("Cannot activate while the source is untapped ({Q} requires it to be tapped)")
     void cannotActivateWhileUntapped() {
-        addReady(player1, new SilkbindFaerie());
-        Permanent target = addReady(player2, new GrizzlyBears());
+        addCreatureReady(player1, new SilkbindFaerie());
+        Permanent target = addCreatureReady(player2, new GrizzlyBears());
         harness.addMana(player1, ManaColor.COLORLESS, 1);
         harness.addMana(player1, ManaColor.WHITE, 1);
 
@@ -48,7 +48,7 @@ class SilkbindFaerieTest extends BaseCardTest {
     @DisplayName("Cannot target a non-creature permanent")
     void cannotTargetNonCreature() {
         addTapped(player1, new SilkbindFaerie());
-        Permanent land = addReady(player2, new Forest());
+        Permanent land = addCreatureReady(player2, new Forest());
         harness.addMana(player1, ManaColor.COLORLESS, 1);
         harness.addMana(player1, ManaColor.WHITE, 1);
 
@@ -56,15 +56,8 @@ class SilkbindFaerieTest extends BaseCardTest {
                 .isInstanceOf(IllegalStateException.class);
     }
 
-    private Permanent addReady(Player player, Card card) {
-        Permanent perm = new Permanent(card);
-        perm.setSummoningSick(false);
-        gd.playerBattlefields.get(player.getId()).add(perm);
-        return perm;
-    }
-
     private Permanent addTapped(Player player, Card card) {
-        Permanent perm = addReady(player, card);
+        Permanent perm = addCreatureReady(player, card);
         perm.tap();
         return perm;
     }

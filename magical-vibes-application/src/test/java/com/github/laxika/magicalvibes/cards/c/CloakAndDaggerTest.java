@@ -23,7 +23,7 @@ class CloakAndDaggerTest extends BaseCardTest {
     @Test
     @DisplayName("Equipped creature gets +2/+0")
     void equippedCreatureGetsBoost() {
-        Permanent creature = addReadyCreature(player1);
+        Permanent creature = addCreatureReady(player1, new GrizzlyBears());
         Permanent cloak = addCloakReady(player1);
         cloak.setAttachedTo(creature.getId());
 
@@ -34,7 +34,7 @@ class CloakAndDaggerTest extends BaseCardTest {
     @Test
     @DisplayName("Equipped creature has shroud")
     void equippedCreatureHasShroud() {
-        Permanent creature = addReadyCreature(player1);
+        Permanent creature = addCreatureReady(player1, new GrizzlyBears());
         Permanent cloak = addCloakReady(player1);
         cloak.setAttachedTo(creature.getId());
 
@@ -44,7 +44,7 @@ class CloakAndDaggerTest extends BaseCardTest {
     @Test
     @DisplayName("Creature loses +2/+0 and shroud when Cloak is removed")
     void creatureLosesBonusesWhenCloakRemoved() {
-        Permanent creature = addReadyCreature(player1);
+        Permanent creature = addCreatureReady(player1, new GrizzlyBears());
         Permanent cloak = addCloakReady(player1);
         cloak.setAttachedTo(creature.getId());
 
@@ -63,7 +63,7 @@ class CloakAndDaggerTest extends BaseCardTest {
     @DisplayName("Resolving equip attaches Cloak to target creature")
     void resolvingEquipAttachesToCreature() {
         Permanent cloak = addCloakReady(player1);
-        Permanent creature = addReadyCreature(player1);
+        Permanent creature = addCreatureReady(player1, new GrizzlyBears());
         harness.addMana(player1, ManaColor.COLORLESS, 3);
 
         harness.activateAbility(player1, 0, null, creature.getId());
@@ -159,13 +159,6 @@ class CloakAndDaggerTest extends BaseCardTest {
 
     private Permanent addCloakReady(Player player) {
         Permanent perm = new Permanent(new CloakAndDagger());
-        perm.setSummoningSick(false);
-        gd.playerBattlefields.get(player.getId()).add(perm);
-        return perm;
-    }
-
-    private Permanent addReadyCreature(Player player) {
-        Permanent perm = new Permanent(new GrizzlyBears());
         perm.setSummoningSick(false);
         gd.playerBattlefields.get(player.getId()).add(perm);
         return perm;

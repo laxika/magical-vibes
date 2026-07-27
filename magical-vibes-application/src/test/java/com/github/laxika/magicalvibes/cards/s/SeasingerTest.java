@@ -24,7 +24,7 @@ class SeasingerTest extends BaseCardTest {
         Permanent seasinger = addReadySeasinger(player1);
 
         harness.addToBattlefield(player2, new Island());
-        Permanent bears = addReadyCreature(player2);
+        Permanent bears = addCreatureReady(player2, new GrizzlyBears());
 
         int idx = gd.playerBattlefields.get(player1.getId()).indexOf(seasinger);
         harness.activateAbility(player1, idx, null, bears.getId());
@@ -45,7 +45,7 @@ class SeasingerTest extends BaseCardTest {
         Permanent seasinger = addReadySeasinger(player1);
 
         // player2 controls the creature but no Island.
-        Permanent bears = addReadyCreature(player2);
+        Permanent bears = addCreatureReady(player2, new GrizzlyBears());
 
         int idx = gd.playerBattlefields.get(player1.getId()).indexOf(seasinger);
         assertThatThrownBy(() -> harness.activateAbility(player1, idx, null, bears.getId()))
@@ -60,7 +60,7 @@ class SeasingerTest extends BaseCardTest {
         Permanent seasinger = addReadySeasinger(player1);
 
         harness.addToBattlefield(player2, new Island());
-        Permanent bears = addReadyCreature(player2);
+        Permanent bears = addCreatureReady(player2, new GrizzlyBears());
 
         int idx = gd.playerBattlefields.get(player1.getId()).indexOf(seasinger);
         harness.activateAbility(player1, idx, null, bears.getId());
@@ -86,7 +86,7 @@ class SeasingerTest extends BaseCardTest {
         Permanent seasinger = addReadySeasinger(player1);
 
         harness.addToBattlefield(player2, new Island());
-        Permanent bears = addReadyCreature(player2);
+        Permanent bears = addCreatureReady(player2, new GrizzlyBears());
 
         int idx = gd.playerBattlefields.get(player1.getId()).indexOf(seasinger);
         harness.activateAbility(player1, idx, null, bears.getId());
@@ -107,7 +107,7 @@ class SeasingerTest extends BaseCardTest {
         Permanent seasinger = addReadySeasinger(player1);
 
         harness.addToBattlefield(player2, new Island());
-        Permanent bears = addReadyCreature(player2);
+        Permanent bears = addCreatureReady(player2, new GrizzlyBears());
 
         int idx = gd.playerBattlefields.get(player1.getId()).indexOf(seasinger);
         harness.activateAbility(player1, idx, null, bears.getId());
@@ -143,13 +143,6 @@ class SeasingerTest extends BaseCardTest {
 
     private Permanent addReadySeasinger(Player player) {
         Permanent perm = new Permanent(new Seasinger());
-        perm.setSummoningSick(false);
-        gd.playerBattlefields.get(player.getId()).add(perm);
-        return perm;
-    }
-
-    private Permanent addReadyCreature(Player player) {
-        Permanent perm = new Permanent(new GrizzlyBears());
         perm.setSummoningSick(false);
         gd.playerBattlefields.get(player.getId()).add(perm);
         return perm;

@@ -96,7 +96,7 @@ class MercenariesTest extends BaseCardTest {
     void otherCreatureStillDealsDamage() {
         harness.setLife(player2, 20);
         Permanent mercs = addReadyMercenaries(player1);
-        Permanent bears = addReadyBears(player1);
+        Permanent bears = addCreatureReady(player1, new GrizzlyBears());
         harness.addMana(player2, ManaColor.COLORLESS, 3);
 
         harness.activateAbility(player2, 0, null, null);
@@ -145,13 +145,6 @@ class MercenariesTest extends BaseCardTest {
 
     private Permanent addReadyMercenaries(Player player) {
         Permanent perm = new Permanent(new Mercenaries());
-        perm.setSummoningSick(false);
-        gd.playerBattlefields.get(player.getId()).add(perm);
-        return perm;
-    }
-
-    private Permanent addReadyBears(Player player) {
-        Permanent perm = new Permanent(new GrizzlyBears());
         perm.setSummoningSick(false);
         gd.playerBattlefields.get(player.getId()).add(perm);
         return perm;

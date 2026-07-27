@@ -23,7 +23,7 @@ class BrittleEffigyTest extends BaseCardTest {
     @DisplayName("Activating ability exiles Brittle Effigy as cost and puts ability on stack")
     void activatingExilesSelfAndPutsOnStack() {
         Permanent effigy = addReadyEffigy(player1);
-        Permanent target = addReadyCreature(player2);
+        Permanent target = addCreatureReady(player2, new GrizzlyBears());
         harness.addMana(player1, ManaColor.WHITE, 4);
 
         harness.activateAbility(player1, 0, null, target.getId());
@@ -45,7 +45,7 @@ class BrittleEffigyTest extends BaseCardTest {
     @DisplayName("Resolving ability exiles target creature")
     void resolvingExilesTargetCreature() {
         addReadyEffigy(player1);
-        Permanent target = addReadyCreature(player2);
+        Permanent target = addCreatureReady(player2, new GrizzlyBears());
         harness.addMana(player1, ManaColor.WHITE, 4);
 
         harness.activateAbility(player1, 0, null, target.getId());
@@ -66,7 +66,7 @@ class BrittleEffigyTest extends BaseCardTest {
     @DisplayName("Brittle Effigy goes to exile, not graveyard, as cost")
     void effigyGoesToExileNotGraveyard() {
         addReadyEffigy(player1);
-        Permanent target = addReadyCreature(player2);
+        Permanent target = addCreatureReady(player2, new GrizzlyBears());
         harness.addMana(player1, ManaColor.WHITE, 4);
 
         harness.activateAbility(player1, 0, null, target.getId());
@@ -84,7 +84,7 @@ class BrittleEffigyTest extends BaseCardTest {
     @DisplayName("Cannot activate without enough mana")
     void cannotActivateWithoutEnoughMana() {
         addReadyEffigy(player1);
-        Permanent target = addReadyCreature(player2);
+        Permanent target = addCreatureReady(player2, new GrizzlyBears());
         harness.addMana(player1, ManaColor.WHITE, 3);
 
         assertThatThrownBy(() -> harness.activateAbility(player1, 0, null, target.getId()))
@@ -96,7 +96,7 @@ class BrittleEffigyTest extends BaseCardTest {
     @DisplayName("Consumes 4 mana when activating")
     void consumesMana() {
         addReadyEffigy(player1);
-        Permanent target = addReadyCreature(player2);
+        Permanent target = addCreatureReady(player2, new GrizzlyBears());
         harness.addMana(player1, ManaColor.WHITE, 5);
 
         harness.activateAbility(player1, 0, null, target.getId());
@@ -112,7 +112,7 @@ class BrittleEffigyTest extends BaseCardTest {
     void cannotActivateWhenTapped() {
         Permanent effigy = addReadyEffigy(player1);
         effigy.tap();
-        Permanent target = addReadyCreature(player2);
+        Permanent target = addCreatureReady(player2, new GrizzlyBears());
         harness.addMana(player1, ManaColor.WHITE, 4);
 
         assertThatThrownBy(() -> harness.activateAbility(player1, 0, null, target.getId()))
@@ -123,7 +123,7 @@ class BrittleEffigyTest extends BaseCardTest {
     @DisplayName("Can activate the turn it enters (artifacts not affected by summoning sickness)")
     void canActivateTurnItEnters() {
         harness.addToBattlefield(player1, new BrittleEffigy());
-        Permanent target = addReadyCreature(player2);
+        Permanent target = addCreatureReady(player2, new GrizzlyBears());
         harness.addMana(player1, ManaColor.WHITE, 4);
 
         harness.activateAbility(player1, 0, null, target.getId());
@@ -138,7 +138,7 @@ class BrittleEffigyTest extends BaseCardTest {
     @DisplayName("Ability fizzles if target creature is removed before resolution")
     void fizzlesIfTargetRemoved() {
         addReadyEffigy(player1);
-        Permanent target = addReadyCreature(player2);
+        Permanent target = addCreatureReady(player2, new GrizzlyBears());
         harness.addMana(player1, ManaColor.WHITE, 4);
 
         harness.activateAbility(player1, 0, null, target.getId());
@@ -160,14 +160,6 @@ class BrittleEffigyTest extends BaseCardTest {
 
     private Permanent addReadyEffigy(Player player) {
         BrittleEffigy card = new BrittleEffigy();
-        Permanent perm = new Permanent(card);
-        perm.setSummoningSick(false);
-        harness.getGameData().playerBattlefields.get(player.getId()).add(perm);
-        return perm;
-    }
-
-    private Permanent addReadyCreature(Player player) {
-        GrizzlyBears card = new GrizzlyBears();
         Permanent perm = new Permanent(card);
         perm.setSummoningSick(false);
         harness.getGameData().playerBattlefields.get(player.getId()).add(perm);

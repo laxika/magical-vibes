@@ -29,7 +29,7 @@ class BoldwyrIntimidatorTest extends BaseCardTest {
         Permanent boldwyr = addReadyBoldwyr(player1);
         boldwyr.setAttacking(true); // Boldwyr is a Warrior
 
-        Permanent blocker = addReadyCreature(player2);
+        Permanent blocker = addCreatureReady(player2, new GrizzlyBears());
         blocker.setTransientCreatureTypeOverride(CardSubtype.COWARD);
 
         prepareDeclareBlockers();
@@ -45,7 +45,7 @@ class BoldwyrIntimidatorTest extends BaseCardTest {
         Permanent boldwyr = addReadyBoldwyr(player1);
         boldwyr.setAttacking(true);
 
-        addReadyCreature(player2);
+        addCreatureReady(player2, new GrizzlyBears());
 
         prepareDeclareBlockers();
         gs.declareBlockers(gd, player2, List.of(new BlockerAssignment(0, 0)));
@@ -59,7 +59,7 @@ class BoldwyrIntimidatorTest extends BaseCardTest {
     @DisplayName("{R} makes a target creature a Coward, which then can't block the Warrior Boldwyr")
     void cowardAbilityStopsBlock() {
         Permanent boldwyr = addReadyBoldwyr(player1);
-        Permanent blocker = addReadyCreature(player2);
+        Permanent blocker = addCreatureReady(player2, new GrizzlyBears());
         harness.addMana(player1, ManaColor.RED, 1);
 
         harness.activateAbility(player1, 0, 0, null, blocker.getId());
@@ -79,7 +79,7 @@ class BoldwyrIntimidatorTest extends BaseCardTest {
         Permanent boldwyr = addReadyBoldwyr(player1);
         boldwyr.setAttacking(true);
 
-        Permanent blocker = addReadyCreature(player2);
+        Permanent blocker = addCreatureReady(player2, new GrizzlyBears());
         blocker.setTransientCreatureTypeOverride(CardSubtype.COWARD);
 
         blocker.resetModifiers(); // end-of-turn cleanup
@@ -97,7 +97,7 @@ class BoldwyrIntimidatorTest extends BaseCardTest {
     void warriorAbilityBlocksCoward() {
         // Boldwyr (index 0) supplies the static; the attacker (index 1) is a made-Warrior bear.
         addReadyBoldwyr(player1);
-        Permanent attacker = addReadyCreature(player1);
+        Permanent attacker = addCreatureReady(player1, new GrizzlyBears());
         harness.addMana(player1, ManaColor.RED, 3);
 
         harness.activateAbility(player1, 0, 1, null, attacker.getId());
@@ -105,7 +105,7 @@ class BoldwyrIntimidatorTest extends BaseCardTest {
 
         attacker.setAttacking(true);
 
-        Permanent blocker = addReadyCreature(player2);
+        Permanent blocker = addCreatureReady(player2, new GrizzlyBears());
         blocker.setTransientCreatureTypeOverride(CardSubtype.COWARD);
 
         prepareDeclareBlockers();
@@ -135,13 +135,6 @@ class BoldwyrIntimidatorTest extends BaseCardTest {
 
     private Permanent addReadyBoldwyr(Player player) {
         Permanent perm = new Permanent(new BoldwyrIntimidator());
-        perm.setSummoningSick(false);
-        gd.playerBattlefields.get(player.getId()).add(perm);
-        return perm;
-    }
-
-    private Permanent addReadyCreature(Player player) {
-        Permanent perm = new Permanent(new GrizzlyBears());
         perm.setSummoningSick(false);
         gd.playerBattlefields.get(player.getId()).add(perm);
         return perm;

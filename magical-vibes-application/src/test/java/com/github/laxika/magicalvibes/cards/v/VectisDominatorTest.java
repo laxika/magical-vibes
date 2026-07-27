@@ -19,7 +19,7 @@ class VectisDominatorTest extends BaseCardTest {
     @DisplayName("Controller pays 2 life to keep the creature untapped")
     void controllerPaysLifeCreatureStaysUntapped() {
         addReadyDominator(player1);
-        Permanent target = addReadyBears(player2);
+        Permanent target = addCreatureReady(player2, new GrizzlyBears());
         harness.setLife(player2, 20);
 
         harness.activateAbility(player1, 0, null, target.getId());
@@ -36,7 +36,7 @@ class VectisDominatorTest extends BaseCardTest {
     @DisplayName("Controller declines and the creature is tapped")
     void controllerDeclinesCreatureTapped() {
         addReadyDominator(player1);
-        Permanent target = addReadyBears(player2);
+        Permanent target = addCreatureReady(player2, new GrizzlyBears());
         harness.setLife(player2, 20);
 
         harness.activateAbility(player1, 0, null, target.getId());
@@ -53,7 +53,7 @@ class VectisDominatorTest extends BaseCardTest {
     @DisplayName("A controller with too little life can't pay and the creature is tapped automatically")
     void cannotPayTapsAutomatically() {
         addReadyDominator(player1);
-        Permanent target = addReadyBears(player2);
+        Permanent target = addCreatureReady(player2, new GrizzlyBears());
         harness.setLife(player2, 1);
 
         harness.activateAbility(player1, 0, null, target.getId());
@@ -69,7 +69,7 @@ class VectisDominatorTest extends BaseCardTest {
     @DisplayName("Ability fizzles if the target leaves before resolution")
     void fizzlesIfTargetRemoved() {
         addReadyDominator(player1);
-        Permanent target = addReadyBears(player2);
+        Permanent target = addCreatureReady(player2, new GrizzlyBears());
 
         harness.activateAbility(player1, 0, null, target.getId());
         gd.playerBattlefields.get(player2.getId()).clear();
@@ -91,13 +91,6 @@ class VectisDominatorTest extends BaseCardTest {
 
     private Permanent addReadyDominator(Player player) {
         Permanent perm = new Permanent(new VectisDominator());
-        perm.setSummoningSick(false);
-        gd.playerBattlefields.get(player.getId()).add(perm);
-        return perm;
-    }
-
-    private Permanent addReadyBears(Player player) {
-        Permanent perm = new Permanent(new GrizzlyBears());
         perm.setSummoningSick(false);
         gd.playerBattlefields.get(player.getId()).add(perm);
         return perm;

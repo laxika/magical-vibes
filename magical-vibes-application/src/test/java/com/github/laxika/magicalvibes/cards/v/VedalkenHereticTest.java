@@ -1,10 +1,8 @@
 package com.github.laxika.magicalvibes.cards.v;
 
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
-import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.PendingInteraction;
 import com.github.laxika.magicalvibes.model.Permanent;
-import com.github.laxika.magicalvibes.model.Player;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
@@ -18,7 +16,7 @@ class VedalkenHereticTest extends BaseCardTest {
     @Test
     @DisplayName("Dealing combat damage to a player presents the may-draw choice")
     void combatDamagePresentsMayChoice() {
-        Permanent heretic = addReadyCreature(player1, new VedalkenHeretic());
+        Permanent heretic = addCreatureReady(player1, new VedalkenHeretic());
         heretic.setAttacking(true);
 
         resolveCombat();
@@ -29,7 +27,7 @@ class VedalkenHereticTest extends BaseCardTest {
     @Test
     @DisplayName("Accepting the may-draw draws a card")
     void acceptingMayDrawsCard() {
-        Permanent heretic = addReadyCreature(player1, new VedalkenHeretic());
+        Permanent heretic = addCreatureReady(player1, new VedalkenHeretic());
         heretic.setAttacking(true);
 
         resolveCombat();
@@ -44,7 +42,7 @@ class VedalkenHereticTest extends BaseCardTest {
     @Test
     @DisplayName("Declining the may-draw does not draw a card")
     void decliningMayDoesNotDraw() {
-        Permanent heretic = addReadyCreature(player1, new VedalkenHeretic());
+        Permanent heretic = addCreatureReady(player1, new VedalkenHeretic());
         heretic.setAttacking(true);
 
         resolveCombat();
@@ -59,10 +57,10 @@ class VedalkenHereticTest extends BaseCardTest {
     @Test
     @DisplayName("No trigger when blocked and no damage reaches the player")
     void noTriggerWhenBlocked() {
-        Permanent heretic = addReadyCreature(player1, new VedalkenHeretic());
+        Permanent heretic = addCreatureReady(player1, new VedalkenHeretic());
         heretic.setAttacking(true);
 
-        Permanent blocker = addReadyCreature(player2, new GrizzlyBears());
+        Permanent blocker = addCreatureReady(player2, new GrizzlyBears());
         blocker.setBlocking(true);
         blocker.addBlockingTarget(0);
 
@@ -75,7 +73,7 @@ class VedalkenHereticTest extends BaseCardTest {
     @DisplayName("Defender takes combat damage regardless of the may choice")
     void defenderTakesCombatDamage() {
         harness.setLife(player2, 20);
-        Permanent heretic = addReadyCreature(player1, new VedalkenHeretic());
+        Permanent heretic = addCreatureReady(player1, new VedalkenHeretic());
         heretic.setAttacking(true);
 
         resolveCombat();
@@ -87,11 +85,4 @@ class VedalkenHereticTest extends BaseCardTest {
     }
 
     // ===== Helpers =====
-
-    private Permanent addReadyCreature(Player player, Card card) {
-        Permanent perm = new Permanent(card);
-        perm.setSummoningSick(false);
-        gd.playerBattlefields.get(player.getId()).add(perm);
-        return perm;
-    }
 }

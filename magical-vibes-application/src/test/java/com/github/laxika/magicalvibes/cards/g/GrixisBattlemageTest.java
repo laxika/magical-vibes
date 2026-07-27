@@ -45,7 +45,7 @@ class GrixisBattlemageTest extends BaseCardTest {
     @DisplayName("Red ability makes target creature unable to block this turn")
     void redAbilityMakesTargetUnableToBlock() {
         addReadyBattlemage(player1);
-        Permanent target = addReadyCreature(player2);
+        Permanent target = addCreatureReady(player2, new GrizzlyBears());
         harness.addMana(player1, ManaColor.RED, 1);
 
         harness.activateAbility(player1, 0, 1, null, target.getId());
@@ -81,13 +81,6 @@ class GrixisBattlemageTest extends BaseCardTest {
         Permanent perm = new Permanent(new GrixisBattlemage());
         perm.setSummoningSick(false);
         harness.getGameData().playerBattlefields.get(player.getId()).add(perm);
-    }
-
-    private Permanent addReadyCreature(Player player) {
-        Permanent perm = new Permanent(new GrizzlyBears());
-        perm.setSummoningSick(false);
-        harness.getGameData().playerBattlefields.get(player.getId()).add(perm);
-        return perm;
     }
 
     private void setDeck(Player player, List<Card> cards) {

@@ -1,10 +1,8 @@
 package com.github.laxika.magicalvibes.cards.r;
 
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
-import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
-import com.github.laxika.magicalvibes.model.Player;
 import com.github.laxika.magicalvibes.model.TurnStep;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
 import org.junit.jupiter.api.DisplayName;
@@ -19,10 +17,10 @@ class RallyTest extends BaseCardTest {
     @Test
     @DisplayName("Rally boosts only blocking creatures with +1/+1")
     void boostsBlockingCreatures() {
-        Permanent blocker = addReadyCreature(player2, new GrizzlyBears());
+        Permanent blocker = addCreatureReady(player2, new GrizzlyBears());
         blocker.setBlocking(true);
-        Permanent nonBlocker = addReadyCreature(player2, new GrizzlyBears());
-        Permanent attacker = addReadyCreature(player1, new GrizzlyBears());
+        Permanent nonBlocker = addCreatureReady(player2, new GrizzlyBears());
+        Permanent attacker = addCreatureReady(player1, new GrizzlyBears());
         attacker.setAttacking(true);
 
         harness.setHand(player1, List.of(new Rally()));
@@ -44,7 +42,7 @@ class RallyTest extends BaseCardTest {
     @Test
     @DisplayName("Rally boost wears off at end of turn")
     void boostWearsOffAtEndOfTurn() {
-        Permanent blocker = addReadyCreature(player2, new GrizzlyBears());
+        Permanent blocker = addCreatureReady(player2, new GrizzlyBears());
         blocker.setBlocking(true);
 
         harness.setHand(player1, List.of(new Rally()));
@@ -63,12 +61,5 @@ class RallyTest extends BaseCardTest {
 
         assertThat(blocker.getEffectivePower()).isEqualTo(2);
         assertThat(blocker.getEffectiveToughness()).isEqualTo(2);
-    }
-
-    private Permanent addReadyCreature(Player player, Card card) {
-        Permanent permanent = new Permanent(card);
-        permanent.setSummoningSick(false);
-        gd.playerBattlefields.get(player.getId()).add(permanent);
-        return permanent;
     }
 }

@@ -23,7 +23,7 @@ class LarcenyTest extends BaseCardTest {
         harness.setHand(player2, List.of(new GrizzlyBears()));
         addToBattlefield(player1, new Larceny());
 
-        Permanent attacker = addReadyCreature(player1, new GrizzlyBears());
+        Permanent attacker = addCreatureReady(player1, new GrizzlyBears());
         attacker.setAttacking(true);
 
         resolveCombat();
@@ -45,7 +45,7 @@ class LarcenyTest extends BaseCardTest {
     void noTriggerWithoutLarceny() {
         harness.setHand(player2, List.of(new GrizzlyBears()));
 
-        Permanent attacker = addReadyCreature(player1, new GrizzlyBears());
+        Permanent attacker = addCreatureReady(player1, new GrizzlyBears());
         attacker.setAttacking(true);
 
         resolveCombat();
@@ -62,7 +62,7 @@ class LarcenyTest extends BaseCardTest {
         harness.setHand(player2, List.of());
         addToBattlefield(player1, new Larceny());
 
-        Permanent attacker = addReadyCreature(player1, new GrizzlyBears());
+        Permanent attacker = addCreatureReady(player1, new GrizzlyBears());
         attacker.setAttacking(true);
 
         resolveCombat();
@@ -74,12 +74,5 @@ class LarcenyTest extends BaseCardTest {
 
     private void addToBattlefield(Player player, Card card) {
         gd.playerBattlefields.get(player.getId()).add(new Permanent(card));
-    }
-
-    private Permanent addReadyCreature(Player player, Card card) {
-        Permanent perm = new Permanent(card);
-        perm.setSummoningSick(false);
-        gd.playerBattlefields.get(player.getId()).add(perm);
-        return perm;
     }
 }

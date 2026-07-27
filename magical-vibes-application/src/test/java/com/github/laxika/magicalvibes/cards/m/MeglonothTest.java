@@ -20,7 +20,7 @@ class MeglonothTest extends BaseCardTest {
     @DisplayName("Blocking deals damage equal to power to the blocked creature's controller, not the creature")
     void blockingDealsPowerDamageToAttackerController() {
         Permanent meglonoth = addReadyMeglonoth(player2);
-        Permanent attacker = addReadyBears(player1);
+        Permanent attacker = addCreatureReady(player1, new GrizzlyBears());
         attacker.setAttacking(true);
 
         int lifeBefore = gd.playerLifeTotals.get(player1.getId());
@@ -46,7 +46,7 @@ class MeglonothTest extends BaseCardTest {
     @DisplayName("Block trigger is non-targeting (cannot be fizzled)")
     void blockTriggerIsNonTargeting() {
         addReadyMeglonoth(player2);
-        Permanent attacker = addReadyBears(player1);
+        Permanent attacker = addCreatureReady(player1, new GrizzlyBears());
         attacker.setAttacking(true);
 
         prepareDeclareBlockers();
@@ -60,13 +60,6 @@ class MeglonothTest extends BaseCardTest {
 
     private Permanent addReadyMeglonoth(Player player) {
         Permanent perm = new Permanent(new Meglonoth());
-        perm.setSummoningSick(false);
-        gd.playerBattlefields.get(player.getId()).add(perm);
-        return perm;
-    }
-
-    private Permanent addReadyBears(Player player) {
-        Permanent perm = new Permanent(new GrizzlyBears());
         perm.setSummoningSick(false);
         gd.playerBattlefields.get(player.getId()).add(perm);
         return perm;

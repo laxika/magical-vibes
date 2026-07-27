@@ -22,8 +22,8 @@ class CrownOfTheAgesTest extends BaseCardTest {
     @DisplayName("Activating puts the ability on the stack with both targets")
     void activatingAbilityPutsOnStack() {
         Permanent crown = addReadyCrown(player1);
-        Permanent creature1 = addReadyCreature(player1);
-        Permanent creature2 = addReadyCreature(player1);
+        Permanent creature1 = addCreatureReady(player1, new GrizzlyBears());
+        Permanent creature2 = addCreatureReady(player1, new GrizzlyBears());
         Permanent aura = addAuraAttachedTo(player1, creature1);
         harness.addMana(player1, ManaColor.WHITE, 4);
 
@@ -40,8 +40,8 @@ class CrownOfTheAgesTest extends BaseCardTest {
     @DisplayName("Resolving moves the Aura from one creature to another")
     void resolvingMovesAura() {
         addReadyCrown(player1);
-        Permanent creature1 = addReadyCreature(player1);
-        Permanent creature2 = addReadyCreature(player1);
+        Permanent creature1 = addCreatureReady(player1, new GrizzlyBears());
+        Permanent creature2 = addCreatureReady(player1, new GrizzlyBears());
         Permanent aura = addAuraAttachedTo(player1, creature1);
         harness.addMana(player1, ManaColor.WHITE, 4);
 
@@ -56,8 +56,8 @@ class CrownOfTheAgesTest extends BaseCardTest {
     @DisplayName("Ability fizzles if the Aura leaves the battlefield before resolution")
     void fizzlesIfAuraLeaves() {
         addReadyCrown(player1);
-        Permanent creature1 = addReadyCreature(player1);
-        Permanent creature2 = addReadyCreature(player1);
+        Permanent creature1 = addCreatureReady(player1, new GrizzlyBears());
+        Permanent creature2 = addCreatureReady(player1, new GrizzlyBears());
         Permanent aura = addAuraAttachedTo(player1, creature1);
         harness.addMana(player1, ManaColor.WHITE, 4);
 
@@ -73,8 +73,8 @@ class CrownOfTheAgesTest extends BaseCardTest {
     @DisplayName("Ability fizzles if the destination creature leaves before resolution")
     void fizzlesIfCreatureLeaves() {
         addReadyCrown(player1);
-        Permanent creature1 = addReadyCreature(player1);
-        Permanent creature2 = addReadyCreature(player1);
+        Permanent creature1 = addCreatureReady(player1, new GrizzlyBears());
+        Permanent creature2 = addCreatureReady(player1, new GrizzlyBears());
         Permanent aura = addAuraAttachedTo(player1, creature1);
         harness.addMana(player1, ManaColor.WHITE, 4);
 
@@ -90,8 +90,8 @@ class CrownOfTheAgesTest extends BaseCardTest {
     @DisplayName("Cannot target a non-Aura permanent as the Aura to move")
     void cannotTargetNonAura() {
         addReadyCrown(player1);
-        Permanent creature1 = addReadyCreature(player1);
-        Permanent creature2 = addReadyCreature(player1);
+        Permanent creature1 = addCreatureReady(player1, new GrizzlyBears());
+        Permanent creature2 = addCreatureReady(player1, new GrizzlyBears());
         harness.addMana(player1, ManaColor.WHITE, 4);
 
         assertThatThrownBy(() ->
@@ -103,13 +103,6 @@ class CrownOfTheAgesTest extends BaseCardTest {
 
     private Permanent addReadyCrown(Player player) {
         Permanent perm = new Permanent(new CrownOfTheAges());
-        perm.setSummoningSick(false);
-        gd.playerBattlefields.get(player.getId()).add(perm);
-        return perm;
-    }
-
-    private Permanent addReadyCreature(Player player) {
-        Permanent perm = new Permanent(new GrizzlyBears());
         perm.setSummoningSick(false);
         gd.playerBattlefields.get(player.getId()).add(perm);
         return perm;

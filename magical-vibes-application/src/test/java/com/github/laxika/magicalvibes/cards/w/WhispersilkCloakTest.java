@@ -63,7 +63,7 @@ class WhispersilkCloakTest extends BaseCardTest {
     @DisplayName("Resolving equip ability attaches Cloak to target creature")
     void resolvingEquipAttachesToCreature() {
         Permanent cloak = addCloakReady(player1);
-        Permanent creature = addReadyCreature(player1);
+        Permanent creature = addCreatureReady(player1, new GrizzlyBears());
         harness.addMana(player1, ManaColor.WHITE, 2);
 
         harness.activateAbility(player1, 0, null, creature.getId());
@@ -77,7 +77,7 @@ class WhispersilkCloakTest extends BaseCardTest {
     @Test
     @DisplayName("Equipped creature has shroud")
     void equippedCreatureHasShroud() {
-        Permanent creature = addReadyCreature(player1);
+        Permanent creature = addCreatureReady(player1, new GrizzlyBears());
         Permanent cloak = addCloakReady(player1);
         cloak.setAttachedTo(creature.getId());
 
@@ -87,7 +87,7 @@ class WhispersilkCloakTest extends BaseCardTest {
     @Test
     @DisplayName("Creature loses shroud when Cloak is removed")
     void creatureLosesShroudWhenCloakRemoved() {
-        Permanent creature = addReadyCreature(player1);
+        Permanent creature = addCreatureReady(player1, new GrizzlyBears());
         Permanent cloak = addCloakReady(player1);
         cloak.setAttachedTo(creature.getId());
 
@@ -101,7 +101,7 @@ class WhispersilkCloakTest extends BaseCardTest {
     @Test
     @DisplayName("Unequipped creature does not have shroud from Cloak")
     void unequippedCreatureDoesNotHaveShroud() {
-        Permanent creature = addReadyCreature(player1);
+        Permanent creature = addCreatureReady(player1, new GrizzlyBears());
         addCloakReady(player1); // not attached
 
         assertThat(gqs.hasKeyword(gd, creature, Keyword.SHROUD)).isFalse();
@@ -112,7 +112,7 @@ class WhispersilkCloakTest extends BaseCardTest {
     @Test
     @DisplayName("Equipped creature can't be blocked")
     void equippedCreatureCantBeBlocked() {
-        Permanent creature = addReadyCreature(player1);
+        Permanent creature = addCreatureReady(player1, new GrizzlyBears());
         Permanent cloak = addCloakReady(player1);
         cloak.setAttachedTo(creature.getId());
 
@@ -122,7 +122,7 @@ class WhispersilkCloakTest extends BaseCardTest {
     @Test
     @DisplayName("Creature loses can't-be-blocked when Cloak is removed")
     void creatureLosesCantBeBlockedWhenCloakRemoved() {
-        Permanent creature = addReadyCreature(player1);
+        Permanent creature = addCreatureReady(player1, new GrizzlyBears());
         Permanent cloak = addCloakReady(player1);
         cloak.setAttachedTo(creature.getId());
 
@@ -136,7 +136,7 @@ class WhispersilkCloakTest extends BaseCardTest {
     @Test
     @DisplayName("Unequipped creature is not unblockable from Cloak")
     void unequippedCreatureIsNotUnblockable() {
-        Permanent creature = addReadyCreature(player1);
+        Permanent creature = addCreatureReady(player1, new GrizzlyBears());
         addCloakReady(player1); // not attached
 
         assertThat(gqs.hasCantBeBlocked(gd, creature)).isFalse();
@@ -150,13 +150,13 @@ class WhispersilkCloakTest extends BaseCardTest {
         harness.setLife(player1, 20);
         harness.setLife(player2, 20);
 
-        Permanent attacker = addReadyCreature(player1);
+        Permanent attacker = addCreatureReady(player1, new GrizzlyBears());
         Permanent cloak = addCloakReady(player1);
         cloak.setAttachedTo(attacker.getId());
         attacker.setAttacking(true);
 
         // Player2 has a creature that could block but won't be offered
-        addReadyCreature(player2);
+        addCreatureReady(player2, new GrizzlyBears());
 
         harness.forceActivePlayer(player1);
         harness.forceStep(TurnStep.DECLARE_BLOCKERS);
@@ -173,8 +173,8 @@ class WhispersilkCloakTest extends BaseCardTest {
     @DisplayName("Cloak can be moved to another creature")
     void canReEquipToAnotherCreature() {
         Permanent cloak = addCloakReady(player1);
-        Permanent creature1 = addReadyCreature(player1);
-        Permanent creature2 = addReadyCreature(player1);
+        Permanent creature1 = addCreatureReady(player1, new GrizzlyBears());
+        Permanent creature2 = addCreatureReady(player1, new GrizzlyBears());
 
         cloak.setAttachedTo(creature1.getId());
         assertThat(gqs.hasKeyword(gd, creature1, Keyword.SHROUD)).isTrue();
@@ -197,13 +197,6 @@ class WhispersilkCloakTest extends BaseCardTest {
 
     private Permanent addCloakReady(Player player) {
         Permanent perm = new Permanent(new WhispersilkCloak());
-        perm.setSummoningSick(false);
-        gd.playerBattlefields.get(player.getId()).add(perm);
-        return perm;
-    }
-
-    private Permanent addReadyCreature(Player player) {
-        Permanent perm = new Permanent(new GrizzlyBears());
         perm.setSummoningSick(false);
         gd.playerBattlefields.get(player.getId()).add(perm);
         return perm;

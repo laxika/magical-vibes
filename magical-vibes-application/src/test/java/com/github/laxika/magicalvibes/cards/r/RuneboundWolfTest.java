@@ -3,7 +3,6 @@ package com.github.laxika.magicalvibes.cards.r;
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
 import com.github.laxika.magicalvibes.cards.g.GreaterWerewolf;
 import com.github.laxika.magicalvibes.cards.w.WyluliWolf;
-import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.Player;
@@ -20,7 +19,7 @@ class RuneboundWolfTest extends BaseCardTest {
     @Test
     @DisplayName("Alone deals 1 damage to target opponent (counts itself)")
     void aloneDealsOne() {
-        Permanent wolf = addReady(player1, new RuneboundWolf());
+        Permanent wolf = addCreatureReady(player1, new RuneboundWolf());
         addAbilityMana(player1);
         enterMainWithPriority(player1);
 
@@ -34,7 +33,7 @@ class RuneboundWolfTest extends BaseCardTest {
     @Test
     @DisplayName("Counts another Wolf you control")
     void countsAnotherWolf() {
-        addReady(player1, new RuneboundWolf());
+        addCreatureReady(player1, new RuneboundWolf());
         harness.addToBattlefield(player1, new WyluliWolf());
         addAbilityMana(player1);
         enterMainWithPriority(player1);
@@ -48,7 +47,7 @@ class RuneboundWolfTest extends BaseCardTest {
     @Test
     @DisplayName("Counts a Werewolf you control")
     void countsWerewolf() {
-        addReady(player1, new RuneboundWolf());
+        addCreatureReady(player1, new RuneboundWolf());
         harness.addToBattlefield(player1, new GreaterWerewolf());
         addAbilityMana(player1);
         enterMainWithPriority(player1);
@@ -62,7 +61,7 @@ class RuneboundWolfTest extends BaseCardTest {
     @Test
     @DisplayName("Does not count a non-Wolf, non-Werewolf creature")
     void ignoresIrrelevantCreature() {
-        addReady(player1, new RuneboundWolf());
+        addCreatureReady(player1, new RuneboundWolf());
         harness.addToBattlefield(player1, new GrizzlyBears());
         addAbilityMana(player1);
         enterMainWithPriority(player1);
@@ -76,7 +75,7 @@ class RuneboundWolfTest extends BaseCardTest {
     @Test
     @DisplayName("Cannot target yourself")
     void cannotTargetSelf() {
-        addReady(player1, new RuneboundWolf());
+        addCreatureReady(player1, new RuneboundWolf());
         addAbilityMana(player1);
         enterMainWithPriority(player1);
 
@@ -96,13 +95,6 @@ class RuneboundWolfTest extends BaseCardTest {
 
         assertThatThrownBy(() -> harness.activateAbility(player1, 0, null, player2.getId()))
                 .isInstanceOf(IllegalStateException.class);
-    }
-
-    private Permanent addReady(Player player, Card card) {
-        Permanent perm = new Permanent(card);
-        perm.setSummoningSick(false);
-        gd.playerBattlefields.get(player.getId()).add(perm);
-        return perm;
     }
 
     private void addAbilityMana(Player player) {

@@ -2,7 +2,6 @@ package com.github.laxika.magicalvibes.cards.c;
 
 import com.github.laxika.magicalvibes.model.PendingInteraction;
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
-import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.Player;
@@ -21,7 +20,7 @@ class CuriosityTest extends BaseCardTest {
     @Test
     @DisplayName("Enchanted creature dealing combat damage presents may-draw choice")
     void combatDamageTriggerPresentsMayChoice() {
-        Permanent creature = addReadyCreature(player1, new GrizzlyBears());
+        Permanent creature = addCreatureReady(player1, new GrizzlyBears());
         attachCuriosity(player1, creature);
         creature.setAttacking(true);
 
@@ -33,7 +32,7 @@ class CuriosityTest extends BaseCardTest {
     @Test
     @DisplayName("Accepting may-draw after combat damage draws a card")
     void acceptingMayDrawsCard() {
-        Permanent creature = addReadyCreature(player1, new GrizzlyBears());
+        Permanent creature = addCreatureReady(player1, new GrizzlyBears());
         attachCuriosity(player1, creature);
         creature.setAttacking(true);
 
@@ -49,7 +48,7 @@ class CuriosityTest extends BaseCardTest {
     @Test
     @DisplayName("Declining may-draw after combat damage does not draw a card")
     void decliningMayDoesNotDraw() {
-        Permanent creature = addReadyCreature(player1, new GrizzlyBears());
+        Permanent creature = addCreatureReady(player1, new GrizzlyBears());
         attachCuriosity(player1, creature);
         creature.setAttacking(true);
 
@@ -65,11 +64,11 @@ class CuriosityTest extends BaseCardTest {
     @Test
     @DisplayName("No trigger when enchanted creature is blocked and deals no damage to player")
     void noTriggerWhenBlocked() {
-        Permanent creature = addReadyCreature(player1, new GrizzlyBears());
+        Permanent creature = addCreatureReady(player1, new GrizzlyBears());
         attachCuriosity(player1, creature);
         creature.setAttacking(true);
 
-        Permanent blocker = addReadyCreature(player2, new GrizzlyBears());
+        Permanent blocker = addCreatureReady(player2, new GrizzlyBears());
         blocker.setBlocking(true);
         blocker.addBlockingTarget(0);
 
@@ -82,7 +81,7 @@ class CuriosityTest extends BaseCardTest {
     @DisplayName("Defender still takes combat damage regardless of may choice")
     void defenderTakesCombatDamage() {
         harness.setLife(player2, 20);
-        Permanent creature = addReadyCreature(player1, new GrizzlyBears());
+        Permanent creature = addCreatureReady(player1, new GrizzlyBears());
         attachCuriosity(player1, creature);
         creature.setAttacking(true);
 
@@ -99,7 +98,7 @@ class CuriosityTest extends BaseCardTest {
     @Test
     @DisplayName("Casting Curiosity attaches it to the target creature")
     void castingAttachesToCreature() {
-        Permanent creature = addReadyCreature(player2, new GrizzlyBears());
+        Permanent creature = addCreatureReady(player2, new GrizzlyBears());
 
         harness.setHand(player1, List.of(new Curiosity()));
         harness.addMana(player1, ManaColor.BLUE, 1);
@@ -116,7 +115,7 @@ class CuriosityTest extends BaseCardTest {
     @Test
     @DisplayName("Curiosity fizzles if target creature is removed before resolution")
     void fizzlesIfTargetRemoved() {
-        Permanent creature = addReadyCreature(player2, new GrizzlyBears());
+        Permanent creature = addCreatureReady(player2, new GrizzlyBears());
 
         harness.setHand(player1, List.of(new Curiosity()));
         harness.addMana(player1, ManaColor.BLUE, 1);
@@ -135,13 +134,6 @@ class CuriosityTest extends BaseCardTest {
     }
 
     // ===== Helpers =====
-
-    private Permanent addReadyCreature(Player player, Card card) {
-        Permanent perm = new Permanent(card);
-        perm.setSummoningSick(false);
-        gd.playerBattlefields.get(player.getId()).add(perm);
-        return perm;
-    }
 
     private void attachCuriosity(Player controller, Permanent creature) {
         Permanent curiosityPerm = new Permanent(new Curiosity());

@@ -23,10 +23,10 @@ class UnstoppableAshTest extends BaseCardTest {
     @Test
     @DisplayName("When another creature you control becomes blocked, it gets +0/+5 until end of turn")
     void allyBecomesBlockedGetsBoost() {
-        Permanent bears = addReadyBears(player1);
+        Permanent bears = addCreatureReady(player1, new GrizzlyBears());
         bears.setAttacking(true);
         addReadyAsh(player1);
-        addReadyBears(player2);
+        addCreatureReady(player2, new GrizzlyBears());
 
         prepareDeclareBlockers();
         gs.declareBlockers(gd, player2, List.of(new BlockerAssignment(0, 0)));
@@ -50,7 +50,7 @@ class UnstoppableAshTest extends BaseCardTest {
     void selfBecomesBlockedGetsBoost() {
         Permanent ash = addReadyAsh(player1);
         ash.setAttacking(true);
-        addReadyBears(player2);
+        addCreatureReady(player2, new GrizzlyBears());
 
         prepareDeclareBlockers();
         gs.declareBlockers(gd, player2, List.of(new BlockerAssignment(0, 0)));
@@ -63,7 +63,7 @@ class UnstoppableAshTest extends BaseCardTest {
     @Test
     @DisplayName("No becomes-blocked trigger when the creature is unblocked")
     void unblockedCreatesNoTrigger() {
-        Permanent bears = addReadyBears(player1);
+        Permanent bears = addCreatureReady(player1, new GrizzlyBears());
         bears.setAttacking(true);
         addReadyAsh(player1);
 
@@ -113,13 +113,6 @@ class UnstoppableAshTest extends BaseCardTest {
 
     private Permanent addReadyAsh(Player player) {
         Permanent perm = new Permanent(new UnstoppableAsh());
-        perm.setSummoningSick(false);
-        gd.playerBattlefields.get(player.getId()).add(perm);
-        return perm;
-    }
-
-    private Permanent addReadyBears(Player player) {
-        Permanent perm = new Permanent(new GrizzlyBears());
         perm.setSummoningSick(false);
         gd.playerBattlefields.get(player.getId()).add(perm);
         return perm;

@@ -20,9 +20,9 @@ class BedlamTest extends BaseCardTest {
     @Test
     @DisplayName("No creature can block while Bedlam is on the battlefield")
     void creatureCannotBlockWithBedlam() {
-        Permanent attacker = addReadyCreature(player1);
+        Permanent attacker = addCreatureReady(player1, new GrizzlyBears());
         attacker.setAttacking(true);
-        addReadyCreature(player2);
+        addCreatureReady(player2, new GrizzlyBears());
         addBedlam(player1);
 
         prepareDeclareBlockers();
@@ -35,9 +35,9 @@ class BedlamTest extends BaseCardTest {
     @Test
     @DisplayName("Bedlam even stops its own controller's creatures from blocking")
     void controllerCreatureCannotBlockWithBedlam() {
-        Permanent attacker = addReadyCreature(player1);
+        Permanent attacker = addCreatureReady(player1, new GrizzlyBears());
         attacker.setAttacking(true);
-        addReadyCreature(player2);
+        addCreatureReady(player2, new GrizzlyBears());
         addBedlam(player2);
 
         prepareDeclareBlockers();
@@ -50,9 +50,9 @@ class BedlamTest extends BaseCardTest {
     @Test
     @DisplayName("Without Bedlam a creature blocks normally")
     void creatureBlocksWithoutBedlam() {
-        Permanent attacker = addReadyCreature(player1);
+        Permanent attacker = addCreatureReady(player1, new GrizzlyBears());
         attacker.setAttacking(true);
-        addReadyCreature(player2);
+        addCreatureReady(player2, new GrizzlyBears());
 
         prepareDeclareBlockers();
         gs.declareBlockers(gd, player2, List.of(new BlockerAssignment(0, 0)));
@@ -62,12 +62,5 @@ class BedlamTest extends BaseCardTest {
 
     private void addBedlam(Player player) {
         gd.playerBattlefields.get(player.getId()).add(new Permanent(new Bedlam()));
-    }
-
-    private Permanent addReadyCreature(Player player) {
-        Permanent perm = new Permanent(new GrizzlyBears());
-        perm.setSummoningSick(false);
-        gd.playerBattlefields.get(player.getId()).add(perm);
-        return perm;
     }
 }

@@ -56,7 +56,7 @@ class LeoninScimitarTest extends BaseCardTest {
     @DisplayName("Activating equip ability puts it on the stack")
     void activatingEquipPutsOnStack() {
         Permanent scimitar = addScimitarReady(player1);
-        Permanent creature = addReadyCreature(player1);
+        Permanent creature = addCreatureReady(player1, new GrizzlyBears());
         harness.addMana(player1, ManaColor.WHITE, 1);
 
         harness.activateAbility(player1, 0, null, creature.getId());
@@ -72,7 +72,7 @@ class LeoninScimitarTest extends BaseCardTest {
     @DisplayName("Mana is consumed when activating equip ability")
     void manaConsumedOnEquip() {
         addScimitarReady(player1);
-        Permanent creature = addReadyCreature(player1);
+        Permanent creature = addCreatureReady(player1, new GrizzlyBears());
         harness.addMana(player1, ManaColor.WHITE, 2);
 
         harness.activateAbility(player1, 0, null, creature.getId());
@@ -84,7 +84,7 @@ class LeoninScimitarTest extends BaseCardTest {
     @DisplayName("Equipment is not tapped when equip ability is activated")
     void equipDoesNotTapEquipment() {
         Permanent scimitar = addScimitarReady(player1);
-        Permanent creature = addReadyCreature(player1);
+        Permanent creature = addCreatureReady(player1, new GrizzlyBears());
         harness.addMana(player1, ManaColor.WHITE, 1);
 
         harness.activateAbility(player1, 0, null, creature.getId());
@@ -98,7 +98,7 @@ class LeoninScimitarTest extends BaseCardTest {
     @DisplayName("Resolving equip ability attaches equipment to target creature")
     void resolvingEquipAttachesToCreature() {
         Permanent scimitar = addScimitarReady(player1);
-        Permanent creature = addReadyCreature(player1);
+        Permanent creature = addCreatureReady(player1, new GrizzlyBears());
         harness.addMana(player1, ManaColor.WHITE, 1);
 
         harness.activateAbility(player1, 0, null, creature.getId());
@@ -111,7 +111,7 @@ class LeoninScimitarTest extends BaseCardTest {
     @Test
     @DisplayName("Equipped creature gets +1/+1")
     void equippedCreatureGetsBoost() {
-        Permanent creature = addReadyCreature(player1);
+        Permanent creature = addCreatureReady(player1, new GrizzlyBears());
         Permanent scimitar = addScimitarReady(player1);
         scimitar.setAttachedTo(creature.getId());
 
@@ -122,7 +122,7 @@ class LeoninScimitarTest extends BaseCardTest {
     @Test
     @DisplayName("Equipped creature loses boost when equipment is removed")
     void creatureLosesBoostWhenEquipmentRemoved() {
-        Permanent creature = addReadyCreature(player1);
+        Permanent creature = addCreatureReady(player1, new GrizzlyBears());
         Permanent scimitar = addScimitarReady(player1);
         scimitar.setAttachedTo(creature.getId());
 
@@ -141,8 +141,8 @@ class LeoninScimitarTest extends BaseCardTest {
     @Test
     @DisplayName("Equipment does not affect other creatures")
     void doesNotAffectOtherCreatures() {
-        Permanent creature = addReadyCreature(player1);
-        Permanent otherCreature = addReadyCreature(player1);
+        Permanent creature = addCreatureReady(player1, new GrizzlyBears());
+        Permanent otherCreature = addCreatureReady(player1, new GrizzlyBears());
         Permanent scimitar = addScimitarReady(player1);
         scimitar.setAttachedTo(creature.getId());
 
@@ -156,8 +156,8 @@ class LeoninScimitarTest extends BaseCardTest {
     @DisplayName("Equipment can be moved to another creature by equipping again")
     void canReEquipToAnotherCreature() {
         Permanent scimitar = addScimitarReady(player1);
-        Permanent creature1 = addReadyCreature(player1);
-        Permanent creature2 = addReadyCreature(player1);
+        Permanent creature1 = addCreatureReady(player1, new GrizzlyBears());
+        Permanent creature2 = addCreatureReady(player1, new GrizzlyBears());
 
         // Equip to creature1
         scimitar.setAttachedTo(creature1.getId());
@@ -178,7 +178,7 @@ class LeoninScimitarTest extends BaseCardTest {
     @Test
     @DisplayName("Equipment stays on battlefield unattached when equipped creature is destroyed")
     void equipmentStaysWhenCreatureDies() {
-        Permanent creature = addReadyCreature(player1);
+        Permanent creature = addCreatureReady(player1, new GrizzlyBears());
         Permanent scimitar = addScimitarReady(player1);
         scimitar.setAttachedTo(creature.getId());
 
@@ -206,7 +206,7 @@ class LeoninScimitarTest extends BaseCardTest {
     @DisplayName("Cannot equip during opponent's turn")
     void cannotEquipDuringOpponentTurn() {
         addScimitarReady(player1);
-        Permanent creature = addReadyCreature(player1);
+        Permanent creature = addCreatureReady(player1, new GrizzlyBears());
         harness.addMana(player1, ManaColor.WHITE, 1);
 
         harness.forceActivePlayer(player2);
@@ -222,7 +222,7 @@ class LeoninScimitarTest extends BaseCardTest {
     @DisplayName("Cannot equip during combat")
     void cannotEquipDuringCombat() {
         addScimitarReady(player1);
-        Permanent creature = addReadyCreature(player1);
+        Permanent creature = addCreatureReady(player1, new GrizzlyBears());
         harness.addMana(player1, ManaColor.WHITE, 1);
 
         harness.forceActivePlayer(player1);
@@ -238,7 +238,7 @@ class LeoninScimitarTest extends BaseCardTest {
     @DisplayName("Cannot equip during upkeep")
     void cannotEquipDuringUpkeep() {
         addScimitarReady(player1);
-        Permanent creature = addReadyCreature(player1);
+        Permanent creature = addCreatureReady(player1, new GrizzlyBears());
         harness.addMana(player1, ManaColor.WHITE, 1);
 
         harness.forceActivePlayer(player1);
@@ -254,7 +254,7 @@ class LeoninScimitarTest extends BaseCardTest {
     @DisplayName("Cannot equip when the stack is not empty")
     void cannotEquipWhenStackNotEmpty() {
         addScimitarReady(player1);
-        Permanent creature = addReadyCreature(player1);
+        Permanent creature = addCreatureReady(player1, new GrizzlyBears());
         harness.addMana(player1, ManaColor.WHITE, 1);
 
         // Put something on the stack
@@ -275,7 +275,7 @@ class LeoninScimitarTest extends BaseCardTest {
     @DisplayName("Cannot equip without enough mana")
     void cannotEquipWithoutMana() {
         addScimitarReady(player1);
-        Permanent creature = addReadyCreature(player1);
+        Permanent creature = addCreatureReady(player1, new GrizzlyBears());
 
         assertThatThrownBy(() -> harness.activateAbility(player1, 0, null, creature.getId()))
                 .isInstanceOf(IllegalStateException.class)
@@ -288,7 +288,7 @@ class LeoninScimitarTest extends BaseCardTest {
     @DisplayName("Equip fizzles if target creature is removed before resolution")
     void equipFizzlesIfTargetRemoved() {
         addScimitarReady(player1);
-        Permanent creature = addReadyCreature(player1);
+        Permanent creature = addCreatureReady(player1, new GrizzlyBears());
         harness.addMana(player1, ManaColor.WHITE, 1);
 
         harness.activateAbility(player1, 0, null, creature.getId());
@@ -312,13 +312,6 @@ class LeoninScimitarTest extends BaseCardTest {
 
     private Permanent addScimitarReady(Player player) {
         Permanent perm = new Permanent(new LeoninScimitar());
-        perm.setSummoningSick(false);
-        gd.playerBattlefields.get(player.getId()).add(perm);
-        return perm;
-    }
-
-    private Permanent addReadyCreature(Player player) {
-        Permanent perm = new Permanent(new GrizzlyBears());
         perm.setSummoningSick(false);
         gd.playerBattlefields.get(player.getId()).add(perm);
         return perm;

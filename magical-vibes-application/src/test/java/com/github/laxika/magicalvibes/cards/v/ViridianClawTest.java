@@ -66,7 +66,7 @@ class ViridianClawTest extends BaseCardTest {
     @DisplayName("Resolving equip ability attaches Claw to target creature")
     void resolvingEquipAttachesToCreature() {
         Permanent claw = addClawReady(player1);
-        Permanent creature = addReadyCreature(player1);
+        Permanent creature = addCreatureReady(player1, new GrizzlyBears());
         harness.addMana(player1, ManaColor.WHITE, 1);
 
         harness.activateAbility(player1, 0, null, creature.getId());
@@ -81,7 +81,7 @@ class ViridianClawTest extends BaseCardTest {
     @Test
     @DisplayName("Equipped creature gets +1/+0")
     void equippedCreatureGetsBoost() {
-        Permanent creature = addReadyCreature(player1);
+        Permanent creature = addCreatureReady(player1, new GrizzlyBears());
         Permanent claw = addClawReady(player1);
         claw.setAttachedTo(creature.getId());
 
@@ -92,7 +92,7 @@ class ViridianClawTest extends BaseCardTest {
     @Test
     @DisplayName("Equipped creature loses boost when Claw is removed")
     void creatureLosesBoostWhenEquipmentRemoved() {
-        Permanent creature = addReadyCreature(player1);
+        Permanent creature = addCreatureReady(player1, new GrizzlyBears());
         Permanent claw = addClawReady(player1);
         claw.setAttachedTo(creature.getId());
 
@@ -107,8 +107,8 @@ class ViridianClawTest extends BaseCardTest {
     @Test
     @DisplayName("Claw does not affect unequipped creatures")
     void doesNotAffectOtherCreatures() {
-        Permanent creature = addReadyCreature(player1);
-        Permanent otherCreature = addReadyCreature(player1);
+        Permanent creature = addCreatureReady(player1, new GrizzlyBears());
+        Permanent otherCreature = addCreatureReady(player1, new GrizzlyBears());
         Permanent claw = addClawReady(player1);
         claw.setAttachedTo(creature.getId());
 
@@ -121,7 +121,7 @@ class ViridianClawTest extends BaseCardTest {
     @Test
     @DisplayName("Equipped creature has first strike")
     void equippedCreatureHasFirstStrike() {
-        Permanent creature = addReadyCreature(player1);
+        Permanent creature = addCreatureReady(player1, new GrizzlyBears());
         Permanent claw = addClawReady(player1);
         claw.setAttachedTo(creature.getId());
 
@@ -131,7 +131,7 @@ class ViridianClawTest extends BaseCardTest {
     @Test
     @DisplayName("Creature loses first strike when Claw is removed")
     void creatureLosesFirstStrikeWhenEquipmentRemoved() {
-        Permanent creature = addReadyCreature(player1);
+        Permanent creature = addCreatureReady(player1, new GrizzlyBears());
         Permanent claw = addClawReady(player1);
         claw.setAttachedTo(creature.getId());
 
@@ -148,8 +148,8 @@ class ViridianClawTest extends BaseCardTest {
     @DisplayName("Claw can be moved to another creature")
     void canReEquipToAnotherCreature() {
         Permanent claw = addClawReady(player1);
-        Permanent creature1 = addReadyCreature(player1);
-        Permanent creature2 = addReadyCreature(player1);
+        Permanent creature1 = addCreatureReady(player1, new GrizzlyBears());
+        Permanent creature2 = addCreatureReady(player1, new GrizzlyBears());
 
         claw.setAttachedTo(creature1.getId());
         assertThat(gqs.getEffectivePower(gd, creature1)).isEqualTo(3);
@@ -174,7 +174,7 @@ class ViridianClawTest extends BaseCardTest {
     @DisplayName("Equip fizzles if target creature is removed before resolution")
     void equipFizzlesIfTargetRemoved() {
         Permanent claw = addClawReady(player1);
-        Permanent creature = addReadyCreature(player1);
+        Permanent creature = addCreatureReady(player1, new GrizzlyBears());
         harness.addMana(player1, ManaColor.WHITE, 1);
 
         harness.activateAbility(player1, 0, null, creature.getId());
@@ -198,13 +198,6 @@ class ViridianClawTest extends BaseCardTest {
 
     private Permanent addClawReady(Player player) {
         Permanent perm = new Permanent(new ViridianClaw());
-        perm.setSummoningSick(false);
-        gd.playerBattlefields.get(player.getId()).add(perm);
-        return perm;
-    }
-
-    private Permanent addReadyCreature(Player player) {
-        Permanent perm = new Permanent(new GrizzlyBears());
         perm.setSummoningSick(false);
         gd.playerBattlefields.get(player.getId()).add(perm);
         return perm;

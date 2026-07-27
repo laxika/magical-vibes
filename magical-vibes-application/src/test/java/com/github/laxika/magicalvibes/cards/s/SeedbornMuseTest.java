@@ -18,7 +18,7 @@ class SeedbornMuseTest extends BaseCardTest {
     @DisplayName("Seedborn Muse untaps all your permanents during opponent's untap step")
     void untapsAllYourPermanentsOnOpponentsUntapStep() {
         Permanent muse = addReadySeedbornMuse(player1);
-        Permanent bears = addReadyBears(player1);
+        Permanent bears = addCreatureReady(player1, new GrizzlyBears());
 
         muse.tap();
         bears.tap();
@@ -34,7 +34,7 @@ class SeedbornMuseTest extends BaseCardTest {
     @Test
     @DisplayName("Without Seedborn Muse, non-active player's tapped permanents stay tapped")
     void withoutSeedbornMusePermanentsStayTapped() {
-        Permanent bears = addReadyBears(player1);
+        Permanent bears = addCreatureReady(player1, new GrizzlyBears());
         bears.tap();
         assertThat(bears.isTapped()).isTrue();
 
@@ -47,8 +47,8 @@ class SeedbornMuseTest extends BaseCardTest {
     @DisplayName("Seedborn Muse only untaps permanents its controller controls")
     void onlyControllerPermanentsUntap() {
         Permanent p1Muse = addReadySeedbornMuse(player1);
-        Permanent p1Bears = addReadyBears(player1);
-        Permanent p2Bears = addReadyBears(player2);
+        Permanent p1Bears = addCreatureReady(player1, new GrizzlyBears());
+        Permanent p2Bears = addCreatureReady(player2, new GrizzlyBears());
 
         p1Muse.tap();
         p1Bears.tap();
@@ -63,13 +63,6 @@ class SeedbornMuseTest extends BaseCardTest {
 
     private Permanent addReadySeedbornMuse(Player player) {
         Permanent perm = new Permanent(new SeedbornMuse());
-        perm.setSummoningSick(false);
-        gd.playerBattlefields.get(player.getId()).add(perm);
-        return perm;
-    }
-
-    private Permanent addReadyBears(Player player) {
-        Permanent perm = new Permanent(new GrizzlyBears());
         perm.setSummoningSick(false);
         gd.playerBattlefields.get(player.getId()).add(perm);
         return perm;

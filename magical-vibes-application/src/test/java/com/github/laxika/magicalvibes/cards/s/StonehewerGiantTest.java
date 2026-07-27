@@ -19,7 +19,7 @@ class StonehewerGiantTest extends BaseCardTest {
     @DisplayName("Searches for an Equipment, puts it onto the battlefield, and attaches to chosen creature")
     void searchesAndAttaches() {
         addReadyGiant(player1);
-        Permanent bears = addReadyBears(player1);
+        Permanent bears = addCreatureReady(player1, new GrizzlyBears());
         harness.setLibrary(player1, List.of(new StriderHarness()));
         harness.addMana(player1, ManaColor.WHITE, 2);
 
@@ -73,13 +73,6 @@ class StonehewerGiantTest extends BaseCardTest {
 
     private Permanent addReadyGiant(Player player) {
         Permanent perm = new Permanent(new StonehewerGiant());
-        perm.setSummoningSick(false);
-        gd.playerBattlefields.get(player.getId()).add(perm);
-        return perm;
-    }
-
-    private Permanent addReadyBears(Player player) {
-        Permanent perm = new Permanent(new GrizzlyBears());
         perm.setSummoningSick(false);
         gd.playerBattlefields.get(player.getId()).add(perm);
         return perm;

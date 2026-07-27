@@ -17,7 +17,7 @@ class JandorsSaddlebagsTest extends BaseCardTest {
     @DisplayName("Untaps a tapped target creature")
     void untapsTappedCreature() {
         addReadySaddlebags(player1);
-        Permanent target = addReadyCreature(player2);
+        Permanent target = addCreatureReady(player2, new GrizzlyBears());
         target.tap();
         harness.addMana(player1, ManaColor.COLORLESS, 3);
 
@@ -31,7 +31,7 @@ class JandorsSaddlebagsTest extends BaseCardTest {
     @DisplayName("Activating taps the Saddlebags and puts the ability on the stack")
     void activatingTapsAndPutsOnStack() {
         Permanent saddlebags = addReadySaddlebags(player1);
-        Permanent target = addReadyCreature(player2);
+        Permanent target = addCreatureReady(player2, new GrizzlyBears());
         target.tap();
         harness.addMana(player1, ManaColor.COLORLESS, 3);
 
@@ -45,7 +45,7 @@ class JandorsSaddlebagsTest extends BaseCardTest {
     @DisplayName("Can target own creature")
     void canTargetOwnCreature() {
         addReadySaddlebags(player1);
-        Permanent own = addReadyCreature(player1);
+        Permanent own = addCreatureReady(player1, new GrizzlyBears());
         own.tap();
         harness.addMana(player1, ManaColor.COLORLESS, 3);
 
@@ -75,7 +75,7 @@ class JandorsSaddlebagsTest extends BaseCardTest {
     @DisplayName("Cannot activate without enough mana")
     void cannotActivateWithoutMana() {
         addReadySaddlebags(player1);
-        Permanent target = addReadyCreature(player2);
+        Permanent target = addCreatureReady(player2, new GrizzlyBears());
         harness.addMana(player1, ManaColor.COLORLESS, 2);
 
         assertThatThrownBy(() -> harness.activateAbility(player1, 0, null, target.getId()))
@@ -87,7 +87,7 @@ class JandorsSaddlebagsTest extends BaseCardTest {
     void cannotActivateWhenTapped() {
         Permanent saddlebags = addReadySaddlebags(player1);
         saddlebags.tap();
-        Permanent target = addReadyCreature(player2);
+        Permanent target = addCreatureReady(player2, new GrizzlyBears());
         harness.addMana(player1, ManaColor.COLORLESS, 3);
 
         assertThatThrownBy(() -> harness.activateAbility(player1, 0, null, target.getId()))
@@ -97,13 +97,6 @@ class JandorsSaddlebagsTest extends BaseCardTest {
 
     private Permanent addReadySaddlebags(Player player) {
         Permanent perm = new Permanent(new JandorsSaddlebags());
-        perm.setSummoningSick(false);
-        gd.playerBattlefields.get(player.getId()).add(perm);
-        return perm;
-    }
-
-    private Permanent addReadyCreature(Player player) {
-        Permanent perm = new Permanent(new GrizzlyBears());
         perm.setSummoningSick(false);
         gd.playerBattlefields.get(player.getId()).add(perm);
         return perm;

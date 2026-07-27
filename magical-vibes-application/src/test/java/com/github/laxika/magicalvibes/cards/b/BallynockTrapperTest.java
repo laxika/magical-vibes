@@ -34,18 +34,11 @@ class BallynockTrapperTest extends BaseCardTest {
         return perm;
     }
 
-    private Permanent addReadyBears(Player player) {
-        Permanent perm = new Permanent(new GrizzlyBears());
-        perm.setSummoningSick(false);
-        harness.getGameData().playerBattlefields.get(player.getId()).add(perm);
-        return perm;
-    }
-
     @Test
     @DisplayName("{T}: Tap target creature taps the chosen creature")
     void tapAbilityTapsTarget() {
         addReadyTrapper(player1);
-        Permanent target = addReadyBears(player2);
+        Permanent target = addCreatureReady(player2, new GrizzlyBears());
 
         harness.activateAbility(player1, 0, null, target.getId());
         harness.passBothPriorities();
@@ -57,7 +50,7 @@ class BallynockTrapperTest extends BaseCardTest {
     @DisplayName("Activating the tap ability taps the Trapper")
     void activatingTapsSelf() {
         Permanent trapper = addReadyTrapper(player1);
-        Permanent target = addReadyBears(player2);
+        Permanent target = addCreatureReady(player2, new GrizzlyBears());
 
         harness.activateAbility(player1, 0, null, target.getId());
 
@@ -68,7 +61,7 @@ class BallynockTrapperTest extends BaseCardTest {
     @DisplayName("Casting a white spell and accepting untaps the tapped Trapper")
     void whiteSpellUntapsTrapper() {
         Permanent trapper = addReadyTrapper(player1);
-        Permanent target = addReadyBears(player2);
+        Permanent target = addCreatureReady(player2, new GrizzlyBears());
 
         harness.activateAbility(player1, 0, null, target.getId());
         harness.passBothPriorities();
@@ -91,7 +84,7 @@ class BallynockTrapperTest extends BaseCardTest {
     @DisplayName("Declining the white-spell trigger leaves the Trapper tapped")
     void decliningLeavesTrapperTapped() {
         Permanent trapper = addReadyTrapper(player1);
-        Permanent target = addReadyBears(player2);
+        Permanent target = addCreatureReady(player2, new GrizzlyBears());
 
         harness.activateAbility(player1, 0, null, target.getId());
         harness.passBothPriorities();

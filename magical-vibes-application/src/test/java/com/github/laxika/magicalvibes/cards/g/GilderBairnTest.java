@@ -1,5 +1,6 @@
 package com.github.laxika.magicalvibes.cards.g;
 
+import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
 import com.github.laxika.magicalvibes.model.CounterType;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
@@ -18,7 +19,7 @@ class GilderBairnTest extends BaseCardTest {
     @DisplayName("Doubles +1/+1 counters on the target permanent (3 becomes 6) and untaps the source")
     void doublesPlusOnePlusOneCounters() {
         Permanent bairn = addReadyBairn(player1);
-        Permanent bears = addReadyCreature(player1);
+        Permanent bears = addCreatureReady(player1, new GrizzlyBears());
         bears.setCounterCount(CounterType.PLUS_ONE_PLUS_ONE, 3);
         prepareTurn();
 
@@ -37,7 +38,7 @@ class GilderBairnTest extends BaseCardTest {
     @DisplayName("Doubles every kind of counter present on the target")
     void doublesEachKindOfCounter() {
         addReadyBairn(player1);
-        Permanent bears = addReadyCreature(player1);
+        Permanent bears = addCreatureReady(player1, new GrizzlyBears());
         bears.setCounterCount(CounterType.PLUS_ONE_PLUS_ONE, 2);
         bears.setCounterCount(CounterType.CHARGE, 3);
         prepareTurn();
@@ -53,7 +54,7 @@ class GilderBairnTest extends BaseCardTest {
     @DisplayName("Does nothing when the target permanent has no counters")
     void noOpWhenTargetHasNoCounters() {
         addReadyBairn(player1);
-        Permanent bears = addReadyCreature(player1); // no counters
+        Permanent bears = addCreatureReady(player1, new GrizzlyBears()); // no counters
         prepareTurn();
 
         harness.activateAbility(player1, 0, null, bears.getId());
@@ -69,7 +70,7 @@ class GilderBairnTest extends BaseCardTest {
         Permanent bairn = new Permanent(new GilderBairn());
         bairn.setSummoningSick(false);
         gd.playerBattlefields.get(player1.getId()).add(bairn); // left untapped
-        Permanent bears = addReadyCreature(player1);
+        Permanent bears = addCreatureReady(player1, new GrizzlyBears());
         bears.setCounterCount(CounterType.PLUS_ONE_PLUS_ONE, 1);
         prepareTurn();
 
@@ -91,13 +92,6 @@ class GilderBairnTest extends BaseCardTest {
         Permanent perm = new Permanent(new GilderBairn());
         perm.setSummoningSick(false);
         perm.tap(); // {Q} requires the source to be tapped
-        gd.playerBattlefields.get(player.getId()).add(perm);
-        return perm;
-    }
-
-    private Permanent addReadyCreature(Player player) {
-        Permanent perm = new Permanent(new GrizzlyBears());
-        perm.setSummoningSick(false);
         gd.playerBattlefields.get(player.getId()).add(perm);
         return perm;
     }

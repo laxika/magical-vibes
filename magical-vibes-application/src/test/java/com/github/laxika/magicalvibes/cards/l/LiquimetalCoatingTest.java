@@ -60,7 +60,7 @@ class LiquimetalCoatingTest extends BaseCardTest {
     @DisplayName("Activating ability targets a creature and puts ability on the stack")
     void activatingTargetingCreaturePutsOnStack() {
         Permanent coating = addReadyCoating(player1);
-        Permanent target = addReadyCreature(player2);
+        Permanent target = addCreatureReady(player2, new GrizzlyBears());
 
         harness.activateAbility(player1, 0, null, target.getId());
 
@@ -74,7 +74,7 @@ class LiquimetalCoatingTest extends BaseCardTest {
     @DisplayName("Resolving ability makes target creature an artifact")
     void resolvingMakesCreatureAnArtifact() {
         addReadyCoating(player1);
-        Permanent target = addReadyCreature(player2);
+        Permanent target = addCreatureReady(player2, new GrizzlyBears());
 
         harness.activateAbility(player1, 0, null, target.getId());
         harness.passBothPriorities();
@@ -87,7 +87,7 @@ class LiquimetalCoatingTest extends BaseCardTest {
     @DisplayName("Target creature retains its creature type")
     void targetRetainsCreatureType() {
         addReadyCoating(player1);
-        Permanent target = addReadyCreature(player2);
+        Permanent target = addCreatureReady(player2, new GrizzlyBears());
 
         harness.activateAbility(player1, 0, null, target.getId());
         harness.passBothPriorities();
@@ -147,7 +147,7 @@ class LiquimetalCoatingTest extends BaseCardTest {
     @DisplayName("Artifact type wears off at end of turn")
     void artifactTypeWearsOffAtEndOfTurn() {
         addReadyCoating(player1);
-        Permanent target = addReadyCreature(player2);
+        Permanent target = addCreatureReady(player2, new GrizzlyBears());
 
         harness.activateAbility(player1, 0, null, target.getId());
         harness.passBothPriorities();
@@ -169,7 +169,7 @@ class LiquimetalCoatingTest extends BaseCardTest {
     @DisplayName("Activating taps Liquimetal Coating")
     void activatingTapsCoating() {
         Permanent coating = addReadyCoating(player1);
-        Permanent target = addReadyCreature(player2);
+        Permanent target = addCreatureReady(player2, new GrizzlyBears());
 
         harness.activateAbility(player1, 0, null, target.getId());
 
@@ -183,7 +183,7 @@ class LiquimetalCoatingTest extends BaseCardTest {
     void cannotActivateWhenTapped() {
         Permanent coating = addReadyCoating(player1);
         coating.tap();
-        Permanent target = addReadyCreature(player2);
+        Permanent target = addCreatureReady(player2, new GrizzlyBears());
 
         assertThatThrownBy(() -> harness.activateAbility(player1, 0, null, target.getId()))
                 .isInstanceOf(IllegalStateException.class)
@@ -196,7 +196,7 @@ class LiquimetalCoatingTest extends BaseCardTest {
     @DisplayName("Ability fizzles if target is removed before resolution")
     void fizzlesIfTargetRemoved() {
         addReadyCoating(player1);
-        Permanent target = addReadyCreature(player2);
+        Permanent target = addCreatureReady(player2, new GrizzlyBears());
 
         harness.activateAbility(player1, 0, null, target.getId());
 
@@ -214,7 +214,7 @@ class LiquimetalCoatingTest extends BaseCardTest {
     @DisplayName("Resolving ability logs the type change")
     void resolvingLogsTypeChange() {
         addReadyCoating(player1);
-        Permanent target = addReadyCreature(player2);
+        Permanent target = addCreatureReady(player2, new GrizzlyBears());
 
         harness.activateAbility(player1, 0, null, target.getId());
         harness.passBothPriorities();
@@ -227,14 +227,6 @@ class LiquimetalCoatingTest extends BaseCardTest {
 
     private Permanent addReadyCoating(Player player) {
         LiquimetalCoating card = new LiquimetalCoating();
-        Permanent perm = new Permanent(card);
-        perm.setSummoningSick(false);
-        gd.playerBattlefields.get(player.getId()).add(perm);
-        return perm;
-    }
-
-    private Permanent addReadyCreature(Player player) {
-        GrizzlyBears card = new GrizzlyBears();
         Permanent perm = new Permanent(card);
         perm.setSummoningSick(false);
         gd.playerBattlefields.get(player.getId()).add(perm);

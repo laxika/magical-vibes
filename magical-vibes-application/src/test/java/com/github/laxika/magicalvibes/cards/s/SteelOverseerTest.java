@@ -38,7 +38,7 @@ class SteelOverseerTest extends BaseCardTest {
     @DisplayName("Does not put counters on non-artifact creatures")
     void doesNotAffectNonArtifactCreatures() {
         addReadyOverseer(player1);
-        Permanent bear = addReadyCreature(player1);
+        Permanent bear = addCreatureReady(player1, new GrizzlyBears());
 
         harness.activateAbility(player1, 0, null, null);
         harness.passBothPriorities();
@@ -132,13 +132,6 @@ class SteelOverseerTest extends BaseCardTest {
 
     private Permanent addReadyArtifactCreature(Player player) {
         Permanent perm = new Permanent(new Ornithopter());
-        perm.setSummoningSick(false);
-        gd.playerBattlefields.get(player.getId()).add(perm);
-        return perm;
-    }
-
-    private Permanent addReadyCreature(Player player) {
-        Permanent perm = new Permanent(new GrizzlyBears());
         perm.setSummoningSick(false);
         gd.playerBattlefields.get(player.getId()).add(perm);
         return perm;

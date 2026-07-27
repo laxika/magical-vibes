@@ -35,7 +35,7 @@ class ContestedWarZoneTest extends BaseCardTest {
     @DisplayName("Unblocked attacker dealing combat damage to controller causes control change")
     void unblockedAttackerCausesControlChange() {
         addContestedWarZone(player2);
-        Permanent attacker = addReadyCreature(player1, new GrizzlyBears());
+        Permanent attacker = addCreatureReady(player1, new GrizzlyBears());
         attacker.setAttacking(true);
 
         resolveCombat(player1, player2);
@@ -51,9 +51,9 @@ class ContestedWarZoneTest extends BaseCardTest {
     @DisplayName("Multiple attackers dealing combat damage only transfer control once")
     void multipleAttackersOnlyTransferOnce() {
         addContestedWarZone(player2);
-        Permanent attacker1 = addReadyCreature(player1, new GrizzlyBears());
+        Permanent attacker1 = addCreatureReady(player1, new GrizzlyBears());
         attacker1.setAttacking(true);
-        Permanent attacker2 = addReadyCreature(player1, new GrizzlyBears());
+        Permanent attacker2 = addCreatureReady(player1, new GrizzlyBears());
         attacker2.setAttacking(true);
 
         resolveCombat(player1, player2);
@@ -71,7 +71,7 @@ class ContestedWarZoneTest extends BaseCardTest {
     void abilityDamageDoesNotTriggerControlChange() {
         addContestedWarZone(player2);
         harness.setLife(player2, 20);
-        Permanent artillery = addReadyCreature(player1, new OrcishArtillery());
+        Permanent artillery = addCreatureReady(player1, new OrcishArtillery());
 
         harness.activateAbility(player1, 0, null, player2.getId());
         harness.passBothPriorities();
@@ -92,14 +92,14 @@ class ContestedWarZoneTest extends BaseCardTest {
         GrizzlyBears smallAttacker = new GrizzlyBears();
         smallAttacker.setPower(1);
         smallAttacker.setToughness(1);
-        Permanent attacker = addReadyCreature(player1, smallAttacker);
+        Permanent attacker = addCreatureReady(player1, smallAttacker);
         attacker.setAttacking(true);
 
         // Big blocker that kills the attacker
         GrizzlyBears bigBlocker = new GrizzlyBears();
         bigBlocker.setPower(5);
         bigBlocker.setToughness(5);
-        Permanent blocker = addReadyCreature(player2, bigBlocker);
+        Permanent blocker = addCreatureReady(player2, bigBlocker);
         blocker.setBlocking(true);
         blocker.addBlockingTarget(0);
 
@@ -120,7 +120,7 @@ class ContestedWarZoneTest extends BaseCardTest {
         GrizzlyBears bearsCard = new GrizzlyBears();
         bearsCard.setPower(2);
         bearsCard.setToughness(2);
-        Permanent attacker = addReadyCreature(player1, bearsCard);
+        Permanent attacker = addCreatureReady(player1, bearsCard);
         attacker.setAttacking(true);
 
         harness.addMana(player1, ManaColor.COLORLESS, 1);
@@ -144,13 +144,13 @@ class ContestedWarZoneTest extends BaseCardTest {
         GrizzlyBears bearsCard = new GrizzlyBears();
         bearsCard.setPower(2);
         bearsCard.setToughness(2);
-        Permanent nonAttacker = addReadyCreature(player1, bearsCard);
+        Permanent nonAttacker = addCreatureReady(player1, bearsCard);
         // Not attacking
 
         GrizzlyBears attackerCard = new GrizzlyBears();
         attackerCard.setPower(2);
         attackerCard.setToughness(2);
-        Permanent attacker = addReadyCreature(player1, attackerCard);
+        Permanent attacker = addCreatureReady(player1, attackerCard);
         attacker.setAttacking(true);
 
         harness.addMana(player1, ManaColor.COLORLESS, 1);
@@ -170,13 +170,6 @@ class ContestedWarZoneTest extends BaseCardTest {
 
     private Permanent addContestedWarZone(Player player) {
         Permanent perm = new Permanent(new ContestedWarZone());
-        perm.setSummoningSick(false);
-        gd.playerBattlefields.get(player.getId()).add(perm);
-        return perm;
-    }
-
-    private Permanent addReadyCreature(Player player, Card card) {
-        Permanent perm = new Permanent(card);
         perm.setSummoningSick(false);
         gd.playerBattlefields.get(player.getId()).add(perm);
         return perm;

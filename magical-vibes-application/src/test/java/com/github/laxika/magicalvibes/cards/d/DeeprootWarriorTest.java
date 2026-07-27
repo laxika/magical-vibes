@@ -25,7 +25,7 @@ class DeeprootWarriorTest extends BaseCardTest {
         Permanent warriorPerm = addWarriorReady(player1);
         warriorPerm.setAttacking(true);
 
-        addReadyBears(player2);
+        addCreatureReady(player2, new GrizzlyBears());
 
         prepareDeclareBlockers();
         gs.declareBlockers(gd, player2, List.of(new BlockerAssignment(0, 0)));
@@ -42,7 +42,7 @@ class DeeprootWarriorTest extends BaseCardTest {
         Permanent warriorPerm = addWarriorReady(player1);
         warriorPerm.setAttacking(true);
 
-        addReadyBears(player2);
+        addCreatureReady(player2, new GrizzlyBears());
 
         prepareDeclareBlockers();
         gs.declareBlockers(gd, player2, List.of(new BlockerAssignment(0, 0)));
@@ -62,8 +62,8 @@ class DeeprootWarriorTest extends BaseCardTest {
         TestCards.mutableCard(warriorPerm).setToughness(4);
         warriorPerm.setAttacking(true);
 
-        addReadyBears(player2);
-        addReadyBears(player2);
+        addCreatureReady(player2, new GrizzlyBears());
+        addCreatureReady(player2, new GrizzlyBears());
 
         prepareDeclareBlockers();
         gs.declareBlockers(gd, player2, List.of(
@@ -91,7 +91,7 @@ class DeeprootWarriorTest extends BaseCardTest {
         TestCards.mutableCard(warriorPerm).setToughness(4);
         warriorPerm.setAttacking(true);
 
-        addReadyBears(player2);
+        addCreatureReady(player2, new GrizzlyBears());
 
         prepareDeclareBlockers();
         gs.declareBlockers(gd, player2, List.of(new BlockerAssignment(0, 0)));
@@ -111,13 +111,6 @@ class DeeprootWarriorTest extends BaseCardTest {
 
     private Permanent addWarriorReady(Player player) {
         Permanent perm = new Permanent(new DeeprootWarrior());
-        perm.setSummoningSick(false);
-        gd.playerBattlefields.get(player.getId()).add(perm);
-        return perm;
-    }
-
-    private Permanent addReadyBears(Player player) {
-        Permanent perm = new Permanent(new GrizzlyBears());
         perm.setSummoningSick(false);
         gd.playerBattlefields.get(player.getId()).add(perm);
         return perm;

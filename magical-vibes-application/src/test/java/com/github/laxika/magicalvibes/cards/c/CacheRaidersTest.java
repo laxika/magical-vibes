@@ -1,10 +1,8 @@
 package com.github.laxika.magicalvibes.cards.c;
 
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
-import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.PendingInteraction;
 import com.github.laxika.magicalvibes.model.Permanent;
-import com.github.laxika.magicalvibes.model.Player;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
@@ -16,7 +14,7 @@ class CacheRaidersTest extends BaseCardTest {
     @Test
     @DisplayName("Upkeep trigger presents a mandatory permanent choice")
     void upkeepTriggerPresentsChoice() {
-        addReady(player1, new CacheRaiders());
+        addCreatureReady(player1, new CacheRaiders());
 
         advanceToUpkeep(player1);
 
@@ -27,8 +25,8 @@ class CacheRaidersTest extends BaseCardTest {
     @Test
     @DisplayName("Chosen controlled creature is returned to its owner's hand")
     void returnsChosenControlledCreatureToHand() {
-        addReady(player1, new CacheRaiders());
-        Permanent bears = addReady(player1, new GrizzlyBears());
+        addCreatureReady(player1, new CacheRaiders());
+        Permanent bears = addCreatureReady(player1, new GrizzlyBears());
 
         advanceToUpkeep(player1);
         harness.handlePermanentChosen(player1, bears.getId());
@@ -45,7 +43,7 @@ class CacheRaidersTest extends BaseCardTest {
     @Test
     @DisplayName("Can be forced to return itself when it is the only permanent")
     void returnsItselfWhenOnlyPermanent() {
-        Permanent raiders = addReady(player1, new CacheRaiders());
+        Permanent raiders = addCreatureReady(player1, new CacheRaiders());
 
         advanceToUpkeep(player1);
         harness.handlePermanentChosen(player1, raiders.getId());
@@ -60,8 +58,8 @@ class CacheRaidersTest extends BaseCardTest {
     @Test
     @DisplayName("Only permanents the controller controls are legal choices")
     void onlyControlledPermanentsAreLegal() {
-        Permanent raiders = addReady(player1, new CacheRaiders());
-        Permanent opponentBears = addReady(player2, new GrizzlyBears());
+        Permanent raiders = addCreatureReady(player1, new CacheRaiders());
+        Permanent opponentBears = addCreatureReady(player2, new GrizzlyBears());
 
         advanceToUpkeep(player1);
 
@@ -70,12 +68,5 @@ class CacheRaidersTest extends BaseCardTest {
         assertThat(choice.validPermanentIds())
                 .contains(raiders.getId())
                 .doesNotContain(opponentBears.getId());
-    }
-
-    private Permanent addReady(Player player, Card card) {
-        Permanent perm = new Permanent(card);
-        perm.setSummoningSick(false);
-        gd.playerBattlefields.get(player.getId()).add(perm);
-        return perm;
     }
 }

@@ -20,7 +20,7 @@ class CastawaysDespairTest extends BaseCardTest {
     @Test
     @DisplayName("Resolving Castaway's Despair taps the enchanted creature")
     void resolvingTapsEnchantedCreature() {
-        Permanent creature = addCreatureReady(player2);
+        Permanent creature = addCreatureReady(player2, new GrizzlyBears());
         assertThat(creature.isTapped()).isFalse();
 
         harness.setHand(player1, List.of(new CastawaysDespair()));
@@ -42,7 +42,7 @@ class CastawaysDespairTest extends BaseCardTest {
     @Test
     @DisplayName("Resolving Castaway's Despair on already tapped creature keeps it tapped")
     void resolvingOnAlreadyTappedCreature() {
-        Permanent creature = addCreatureReady(player2);
+        Permanent creature = addCreatureReady(player2, new GrizzlyBears());
         creature.tap();
 
         harness.setHand(player1, List.of(new CastawaysDespair()));
@@ -60,7 +60,7 @@ class CastawaysDespairTest extends BaseCardTest {
     @Test
     @DisplayName("Enchanted creature does not untap during controller's untap step")
     void enchantedCreatureDoesNotUntap() {
-        Permanent creature = addCreatureReady(player2);
+        Permanent creature = addCreatureReady(player2, new GrizzlyBears());
         creature.tap();
 
         Permanent despairPerm = new Permanent(new CastawaysDespair());
@@ -75,10 +75,10 @@ class CastawaysDespairTest extends BaseCardTest {
     @Test
     @DisplayName("Other creatures still untap normally")
     void otherCreaturesStillUntap() {
-        Permanent enchantedCreature = addCreatureReady(player2);
+        Permanent enchantedCreature = addCreatureReady(player2, new GrizzlyBears());
         enchantedCreature.tap();
 
-        Permanent freeCreature = addCreatureReady(player2);
+        Permanent freeCreature = addCreatureReady(player2, new GrizzlyBears());
         freeCreature.tap();
 
         Permanent despairPerm = new Permanent(new CastawaysDespair());
@@ -96,7 +96,7 @@ class CastawaysDespairTest extends BaseCardTest {
     @Test
     @DisplayName("Creature can untap again after Castaway's Despair is removed")
     void creatureUntapsAfterRemoval() {
-        Permanent creature = addCreatureReady(player2);
+        Permanent creature = addCreatureReady(player2, new GrizzlyBears());
         creature.tap();
 
         Permanent despairPerm = new Permanent(new CastawaysDespair());
@@ -116,7 +116,7 @@ class CastawaysDespairTest extends BaseCardTest {
     @Test
     @DisplayName("Castaway's Despair fizzles if target creature is removed before resolution")
     void fizzlesIfTargetRemoved() {
-        Permanent creature = addCreatureReady(player2);
+        Permanent creature = addCreatureReady(player2, new GrizzlyBears());
 
         harness.setHand(player1, List.of(new CastawaysDespair()));
         harness.addMana(player1, ManaColor.BLUE, 4);
@@ -139,7 +139,7 @@ class CastawaysDespairTest extends BaseCardTest {
     @Test
     @DisplayName("Full integration: cast Castaway's Despair, creature gets tapped, stays tapped through untap step")
     void fullIntegration() {
-        Permanent creature = addCreatureReady(player2);
+        Permanent creature = addCreatureReady(player2, new GrizzlyBears());
 
         harness.setHand(player1, List.of(new CastawaysDespair()));
         harness.addMana(player1, ManaColor.BLUE, 4);
@@ -157,13 +157,6 @@ class CastawaysDespairTest extends BaseCardTest {
     }
 
     // ===== Helpers =====
-
-    private Permanent addCreatureReady(Player player) {
-        Permanent perm = new Permanent(new GrizzlyBears());
-        perm.setSummoningSick(false);
-        gd.playerBattlefields.get(player.getId()).add(perm);
-        return perm;
-    }
 
     private void advanceToNextTurn(Player currentActivePlayer) {
         harness.forceActivePlayer(currentActivePlayer);

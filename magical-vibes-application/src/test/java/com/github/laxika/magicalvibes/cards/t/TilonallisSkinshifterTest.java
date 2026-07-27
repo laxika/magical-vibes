@@ -3,7 +3,6 @@ package com.github.laxika.magicalvibes.cards.t;
 import com.github.laxika.magicalvibes.model.PendingInteraction;
 import com.github.laxika.magicalvibes.cards.g.GiantGrowth;
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
-import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.Permanent;
@@ -28,7 +27,7 @@ class TilonallisSkinshifterTest extends BaseCardTest {
     @DisplayName("Attacking alongside another creature queues target selection")
     void attackTriggersTargetSelection() {
         addReadySkinshifter(player1);
-        addReadyCreature(player1, new GrizzlyBears());
+        addCreatureReady(player1, new GrizzlyBears());
 
         declareAttackers(player1, List.of(0, 1));
 
@@ -41,7 +40,7 @@ class TilonallisSkinshifterTest extends BaseCardTest {
     @DisplayName("Choosing target puts copy trigger on the stack")
     void choosingTargetPutsTriggerOnStack() {
         Permanent skinshifter = addReadySkinshifter(player1);
-        Permanent bears = addReadyCreature(player1, new GrizzlyBears());
+        Permanent bears = addCreatureReady(player1, new GrizzlyBears());
 
         declareAttackers(player1, List.of(0, 1));
         harness.handlePermanentChosen(player1, bears.getId());
@@ -59,7 +58,7 @@ class TilonallisSkinshifterTest extends BaseCardTest {
     @DisplayName("Resolving trigger makes Skinshifter a copy of target creature")
     void becomeCopyOnResolution() {
         Permanent skinshifter = addReadySkinshifter(player1);
-        Permanent bears = addReadyCreature(player1, new GrizzlyBears());
+        Permanent bears = addCreatureReady(player1, new GrizzlyBears());
 
         declareAttackers(player1, List.of(0, 1));
         harness.handlePermanentChosen(player1, bears.getId());
@@ -74,7 +73,7 @@ class TilonallisSkinshifterTest extends BaseCardTest {
     @DisplayName("Copy gains target creature's abilities")
     void copyGainsTargetAbilities() {
         Permanent skinshifter = addReadySkinshifter(player1);
-        Permanent bears = addReadyCreature(player1, new GrizzlyBears());
+        Permanent bears = addCreatureReady(player1, new GrizzlyBears());
 
         declareAttackers(player1, List.of(0, 1));
         harness.handlePermanentChosen(player1, bears.getId());
@@ -90,7 +89,7 @@ class TilonallisSkinshifterTest extends BaseCardTest {
     @DisplayName("A pump resolved before becoming a copy continues to apply (CR 611.2c)")
     void pumpBeforeCopyPersistsOnTheCopy() {
         Permanent skinshifter = addReadySkinshifter(player1);
-        Permanent bears = addReadyCreature(player1, new GrizzlyBears());
+        Permanent bears = addCreatureReady(player1, new GrizzlyBears());
 
         // Giant Growth resolves on the Skinshifter before it becomes a copy.
         harness.setHand(player1, List.of(new GiantGrowth()));
@@ -114,7 +113,7 @@ class TilonallisSkinshifterTest extends BaseCardTest {
     @DisplayName("Copy reverts at end of turn")
     void copyRevertsAtEndOfTurn() {
         Permanent skinshifter = addReadySkinshifter(player1);
-        addReadyCreature(player1, new GrizzlyBears());
+        addCreatureReady(player1, new GrizzlyBears());
 
         declareAttackers(player1, List.of(0, 1));
         Permanent bears = gd.playerBattlefields.get(player1.getId()).get(1);
@@ -137,7 +136,7 @@ class TilonallisSkinshifterTest extends BaseCardTest {
     @DisplayName("Skinshifter retains its ON_ATTACK ability after revert")
     void retainsAbilityAfterRevert() {
         Permanent skinshifter = addReadySkinshifter(player1);
-        addReadyCreature(player1, new GrizzlyBears());
+        addCreatureReady(player1, new GrizzlyBears());
 
         declareAttackers(player1, List.of(0, 1));
         Permanent bears = gd.playerBattlefields.get(player1.getId()).get(1);
@@ -171,8 +170,8 @@ class TilonallisSkinshifterTest extends BaseCardTest {
     @DisplayName("Cannot target a non-attacking creature")
     void cannotTargetNonAttackingCreature() {
         addReadySkinshifter(player1);
-        addReadyCreature(player1, new GrizzlyBears()); // non-attacking
-        addReadyCreature(player2, new GrizzlyBears()); // on opponent's side, also non-attacking
+        addCreatureReady(player1, new GrizzlyBears()); // non-attacking
+        addCreatureReady(player2, new GrizzlyBears()); // on opponent's side, also non-attacking
 
         // Only Skinshifter attacks (index 0), Bears at index 1 does not attack
         declareAttackers(player1, List.of(0));
@@ -185,7 +184,7 @@ class TilonallisSkinshifterTest extends BaseCardTest {
     @DisplayName("Cannot target legendary attacking creature")
     void cannotTargetLegendaryCreature() {
         addReadySkinshifter(player1);
-        addReadyCreature(player1, new ThrunTheLastTroll());
+        addCreatureReady(player1, new ThrunTheLastTroll());
 
         declareAttackers(player1, List.of(0, 1));
 
@@ -199,7 +198,7 @@ class TilonallisSkinshifterTest extends BaseCardTest {
     @DisplayName("Copy fizzles if target creature is removed before resolution")
     void copyFizzlesIfTargetRemoved() {
         Permanent skinshifter = addReadySkinshifter(player1);
-        Permanent bears = addReadyCreature(player1, new GrizzlyBears());
+        Permanent bears = addCreatureReady(player1, new GrizzlyBears());
 
         declareAttackers(player1, List.of(0, 1));
         harness.handlePermanentChosen(player1, bears.getId());
@@ -217,7 +216,7 @@ class TilonallisSkinshifterTest extends BaseCardTest {
     @DisplayName("Skinshifter remains on battlefield after copy resolves")
     void skinshifterRemainsOnBattlefield() {
         Permanent skinshifter = addReadySkinshifter(player1);
-        Permanent bears = addReadyCreature(player1, new GrizzlyBears());
+        Permanent bears = addCreatureReady(player1, new GrizzlyBears());
 
         declareAttackers(player1, List.of(0, 1));
         harness.handlePermanentChosen(player1, bears.getId());
@@ -230,7 +229,7 @@ class TilonallisSkinshifterTest extends BaseCardTest {
     @DisplayName("Stack is empty after copy trigger resolves")
     void stackEmptyAfterResolution() {
         addReadySkinshifter(player1);
-        Permanent bears = addReadyCreature(player1, new GrizzlyBears());
+        Permanent bears = addCreatureReady(player1, new GrizzlyBears());
 
         declareAttackers(player1, List.of(0, 1));
         harness.handlePermanentChosen(player1, bears.getId());
@@ -243,13 +242,6 @@ class TilonallisSkinshifterTest extends BaseCardTest {
 
     private Permanent addReadySkinshifter(Player player) {
         Permanent perm = new Permanent(new TilonallisSkinshifter());
-        perm.setSummoningSick(false);
-        gd.playerBattlefields.get(player.getId()).add(perm);
-        return perm;
-    }
-
-    private Permanent addReadyCreature(Player player, Card card) {
-        Permanent perm = new Permanent(card);
         perm.setSummoningSick(false);
         gd.playerBattlefields.get(player.getId()).add(perm);
         return perm;

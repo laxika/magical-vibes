@@ -64,7 +64,7 @@ class NomadMythmakerTest extends BaseCardTest {
         Permanent mythmakerPerm = addMythmakerReady(player1);
         Card holyStrength = new HolyStrength();
         addToGraveyard(player2, holyStrength);
-        addCreatureReady(player1);
+        addCreatureReady(player1, new GrizzlyBears());
         harness.addMana(player1, ManaColor.WHITE, 1);
 
         harness.activateAbility(player1, 0, null, holyStrength.getId(), Zone.GRAVEYARD);
@@ -84,7 +84,7 @@ class NomadMythmakerTest extends BaseCardTest {
         Permanent mythmakerPerm = addMythmakerReady(player1);
         Card holyStrength = new HolyStrength();
         addToGraveyard(player1, holyStrength);
-        addCreatureReady(player1);
+        addCreatureReady(player1, new GrizzlyBears());
         harness.addMana(player1, ManaColor.WHITE, 1);
 
         harness.activateAbility(player1, 0, null, holyStrength.getId(), Zone.GRAVEYARD);
@@ -98,7 +98,7 @@ class NomadMythmakerTest extends BaseCardTest {
         addMythmakerReady(player1);
         Card holyStrength = new HolyStrength();
         addToGraveyard(player1, holyStrength);
-        addCreatureReady(player1);
+        addCreatureReady(player1, new GrizzlyBears());
         harness.addMana(player1, ManaColor.WHITE, 2);
 
         harness.activateAbility(player1, 0, null, holyStrength.getId(), Zone.GRAVEYARD);
@@ -115,7 +115,7 @@ class NomadMythmakerTest extends BaseCardTest {
         addMythmakerReady(player1);
         Card holyStrength = new HolyStrength();
         addToGraveyard(player2, holyStrength);
-        Permanent creature = addCreatureReady(player1);
+        Permanent creature = addCreatureReady(player1, new GrizzlyBears());
         harness.addMana(player1, ManaColor.WHITE, 1);
 
         harness.activateAbility(player1, 0, null, holyStrength.getId(), Zone.GRAVEYARD);
@@ -140,7 +140,7 @@ class NomadMythmakerTest extends BaseCardTest {
         addMythmakerReady(player1);
         Card holyStrength = new HolyStrength();
         addToGraveyard(player1, holyStrength);
-        Permanent creature = addCreatureReady(player1);
+        Permanent creature = addCreatureReady(player1, new GrizzlyBears());
         harness.addMana(player1, ManaColor.WHITE, 1);
 
         harness.activateAbility(player1, 0, null, holyStrength.getId(), Zone.GRAVEYARD);
@@ -169,7 +169,7 @@ class NomadMythmakerTest extends BaseCardTest {
         addMythmakerReady(player1);
         Card holyStrength = new HolyStrength();
         addToGraveyard(player1, holyStrength);
-        Permanent creature = addCreatureReady(player1); // GrizzlyBears 2/2
+        Permanent creature = addCreatureReady(player1, new GrizzlyBears()); // GrizzlyBears 2/2
         harness.addMana(player1, ManaColor.WHITE, 1);
 
         harness.activateAbility(player1, 0, null, holyStrength.getId(), Zone.GRAVEYARD);
@@ -189,7 +189,7 @@ class NomadMythmakerTest extends BaseCardTest {
         addMythmakerReady(player1);
         Card pacifism = new Pacifism();
         addToGraveyard(player2, pacifism);
-        Permanent creature = addCreatureReady(player1);
+        Permanent creature = addCreatureReady(player1, new GrizzlyBears());
         harness.addMana(player1, ManaColor.WHITE, 1);
 
         harness.activateAbility(player1, 0, null, pacifism.getId(), Zone.GRAVEYARD);
@@ -212,8 +212,8 @@ class NomadMythmakerTest extends BaseCardTest {
         addMythmakerReady(player1);
         Card holyStrength = new HolyStrength();
         addToGraveyard(player1, holyStrength);
-        Permanent creature1 = addCreatureReady(player1);
-        Permanent creature2 = addCreatureReady(player1);
+        Permanent creature1 = addCreatureReady(player1, new GrizzlyBears());
+        Permanent creature2 = addCreatureReady(player1, new GrizzlyBears());
         harness.addMana(player1, ManaColor.WHITE, 1);
 
         harness.activateAbility(player1, 0, null, holyStrength.getId(), Zone.GRAVEYARD);
@@ -232,7 +232,7 @@ class NomadMythmakerTest extends BaseCardTest {
         addMythmakerReady(player1);
         Card holyStrength = new HolyStrength();
         addToGraveyard(player1, holyStrength);
-        addCreatureReady(player1);
+        addCreatureReady(player1, new GrizzlyBears());
         harness.addMana(player1, ManaColor.WHITE, 1);
 
         harness.activateAbility(player1, 0, null, holyStrength.getId(), Zone.GRAVEYARD);
@@ -358,7 +358,7 @@ class NomadMythmakerTest extends BaseCardTest {
         addMythmakerReady(player1);
         Card holyStrength = new HolyStrength();
         addToGraveyard(player1, holyStrength);
-        addCreatureReady(player1);
+        addCreatureReady(player1, new GrizzlyBears());
         harness.addMana(player1, ManaColor.WHITE, 1);
 
         harness.activateAbility(player1, 0, null, holyStrength.getId(), Zone.GRAVEYARD);
@@ -376,7 +376,7 @@ class NomadMythmakerTest extends BaseCardTest {
         addMythmakerReady(player1);
         Card holyStrength = new HolyStrength();
         addToGraveyard(player1, holyStrength);
-        Permanent creature = addCreatureReady(player1);
+        Permanent creature = addCreatureReady(player1, new GrizzlyBears());
         harness.addMana(player1, ManaColor.WHITE, 1);
 
         harness.activateAbility(player1, 0, null, holyStrength.getId(), Zone.GRAVEYARD);
@@ -391,14 +391,6 @@ class NomadMythmakerTest extends BaseCardTest {
 
     private Permanent addMythmakerReady(Player player) {
         NomadMythmaker card = new NomadMythmaker();
-        Permanent perm = new Permanent(card);
-        perm.setSummoningSick(false);
-        harness.getGameData().playerBattlefields.get(player.getId()).add(perm);
-        return perm;
-    }
-
-    private Permanent addCreatureReady(Player player) {
-        GrizzlyBears card = new GrizzlyBears();
         Permanent perm = new Permanent(card);
         perm.setSummoningSick(false);
         harness.getGameData().playerBattlefields.get(player.getId()).add(perm);

@@ -22,7 +22,7 @@ class AshmouthHoundTest extends BaseCardTest {
     @DisplayName("Blocking creates a trigger that deals 1 damage to the attacker")
     void blockingDeals1DamageToAttacker() {
         Permanent hound = addReadyHound(player2);
-        Permanent attacker = addReadyBears(player1);
+        Permanent attacker = addCreatureReady(player1, new GrizzlyBears());
         attacker.setAttacking(true);
 
         prepareDeclareBlockers();
@@ -52,7 +52,7 @@ class AshmouthHoundTest extends BaseCardTest {
     void becomingBlockedDeals1DamageToBlocker() {
         Permanent hound = addReadyHound(player1);
         hound.setAttacking(true);
-        Permanent blocker = addReadyBears(player2);
+        Permanent blocker = addCreatureReady(player2, new GrizzlyBears());
 
         prepareDeclareBlockers();
         gs.declareBlockers(gd, player2, List.of(new BlockerAssignment(0, 0)));
@@ -78,8 +78,8 @@ class AshmouthHoundTest extends BaseCardTest {
     void becomingBlockedByMultipleCreaturesCreatesMultipleTriggers() {
         Permanent hound = addReadyHound(player1);
         hound.setAttacking(true);
-        addReadyBears(player2);
-        addReadyBears(player2);
+        addCreatureReady(player2, new GrizzlyBears());
+        addCreatureReady(player2, new GrizzlyBears());
 
         prepareDeclareBlockers();
         gs.declareBlockers(gd, player2, List.of(
@@ -110,7 +110,7 @@ class AshmouthHoundTest extends BaseCardTest {
     void blockTriggerIsNonTargeting() {
         Permanent hound = addReadyHound(player1);
         hound.setAttacking(true);
-        addReadyBears(player2);
+        addCreatureReady(player2, new GrizzlyBears());
 
         prepareDeclareBlockers();
         gs.declareBlockers(gd, player2, List.of(new BlockerAssignment(0, 0)));
@@ -123,13 +123,6 @@ class AshmouthHoundTest extends BaseCardTest {
 
     private Permanent addReadyHound(Player player) {
         Permanent perm = new Permanent(new AshmouthHound());
-        perm.setSummoningSick(false);
-        gd.playerBattlefields.get(player.getId()).add(perm);
-        return perm;
-    }
-
-    private Permanent addReadyBears(Player player) {
-        Permanent perm = new Permanent(new GrizzlyBears());
         perm.setSummoningSick(false);
         gd.playerBattlefields.get(player.getId()).add(perm);
         return perm;

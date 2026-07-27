@@ -16,6 +16,35 @@ protected GameQueryService gqs;
 protected GameData gd;
 ```
 
+`BaseCardTest` also provides these helpers. **Do not write a local copy** — a private
+method with one of these signatures is a compile error anyway (it would narrow the
+inherited method's access), and near-miss copies are how this duplication grew in the
+first place:
+
+```java
+Permanent addCreatureReady(Player player, Card card)   // battlefield, not summoning sick
+Permanent findPermanent(Player player, String name)
+boolean   gameLogContains(String substring)
+
+void advanceToUpkeep(Player activePlayer)              // forces active player, UNTAP -> upkeep
+void declareAttackers(Player player, List<Integer> attackerIndices)
+void declareAttackers(List<Integer> attackerIndices)   // player1 attacks
+void resolveCombat(Player activePlayer)                // declare blockers -> combat damage
+void resolveCombat()                                   // player1 attacks
+void prepareDeclareBlockers()                          // opens blocker input for gs.declareBlockers
+void resolveAllTriggers()                              // passes priority until the stack is empty
+```
+
+If you need a variant (an extra priority pass, a different step), delegate to the
+inherited helper rather than re-inlining its body:
+
+```java
+private void resolveCombatAndTrigger() {
+    resolveCombat();
+    harness.passBothPriorities(); // resolve what combat damage triggered
+}
+```
+
 Minimal test class — assert **behavior through the engine**, never a card's effect wiring:
 
 ```java
@@ -562,9 +591,7 @@ For auras like Call to the Kindred that have an upkeep "you may" trigger leading
 
 ```java
 private void setupAuraOnCreature() {
-    Permanent creature = new Permanent(new GrizzlyBears());
-    creature.setSummoningSick(false);
-    gd.playerBattlefields.get(player1.getId()).add(creature);
+    Permanent creature = addCreatureReady(player1, new GrizzlyBears());
 
     Permanent auraPerm = new Permanent(new YourAura());
     auraPerm.setAttachedTo(creature.getId());
@@ -576,14 +603,9 @@ private void setupLibraryTopCards(List<Card> cards) {
     deck.clear();
     deck.addAll(cards);
 }
-
-private void advanceToUpkeep(Player activePlayer) {
-    harness.forceActivePlayer(activePlayer);
-    harness.forceStep(TurnStep.UNTAP);
-    harness.clearPriorityPassed();
-    harness.passBothPriorities(); // advances to UPKEEP
-}
 ```
+
+`advanceToUpkeep(activePlayer)` is inherited from `BaseCardTest` — do not redeclare it.
 
 ### Test: upkeep prompts may ability
 

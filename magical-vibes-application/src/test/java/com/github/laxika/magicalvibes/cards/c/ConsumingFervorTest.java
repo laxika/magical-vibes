@@ -5,7 +5,6 @@ import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
 import com.github.laxika.magicalvibes.model.CounterType;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
-import com.github.laxika.magicalvibes.model.Player;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
@@ -56,7 +55,7 @@ class ConsumingFervorTest extends BaseCardTest {
     @Test
     @DisplayName("At controller's upkeep, enchanted creature gets a -1/-1 counter")
     void upkeepPutsMinusCounter() {
-        Permanent creature = addCreatureReady(player1);
+        Permanent creature = addCreatureReady(player1, new GrizzlyBears());
 
         harness.setHand(player1, List.of(new ConsumingFervor()));
         harness.addMana(player1, ManaColor.RED, 1);
@@ -78,7 +77,7 @@ class ConsumingFervorTest extends BaseCardTest {
     @Test
     @DisplayName("Upkeep trigger does not fire during opponent's upkeep")
     void doesNotTriggerDuringOpponentUpkeep() {
-        Permanent creature = addCreatureReady(player1);
+        Permanent creature = addCreatureReady(player1, new GrizzlyBears());
 
         harness.setHand(player1, List.of(new ConsumingFervor()));
         harness.addMana(player1, ManaColor.RED, 1);
@@ -114,11 +113,4 @@ class ConsumingFervorTest extends BaseCardTest {
     }
 
     // ===== Helper methods =====
-
-    private Permanent addCreatureReady(Player player) {
-        Permanent perm = new Permanent(new GrizzlyBears());
-        perm.setSummoningSick(false);
-        gd.playerBattlefields.get(player.getId()).add(perm);
-        return perm;
-    }
 }

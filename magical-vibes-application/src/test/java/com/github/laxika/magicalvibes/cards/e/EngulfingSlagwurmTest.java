@@ -23,7 +23,7 @@ class EngulfingSlagwurmTest extends BaseCardTest {
     void blockingDestroysAttackerAndGainsLife() {
         harness.setLife(player2, 20);
         Permanent slagwurm = addReadySlagwurm(player2);
-        Permanent attacker = addReadyBears(player1);
+        Permanent attacker = addCreatureReady(player1, new GrizzlyBears());
         attacker.setAttacking(true);
 
         prepareDeclareBlockers();
@@ -59,7 +59,7 @@ class EngulfingSlagwurmTest extends BaseCardTest {
         harness.setLife(player1, 20);
         Permanent slagwurm = addReadySlagwurm(player1);
         slagwurm.setAttacking(true);
-        Permanent blocker = addReadyBears(player2);
+        Permanent blocker = addCreatureReady(player2, new GrizzlyBears());
 
         prepareDeclareBlockers();
         gs.declareBlockers(gd, player2, List.of(new BlockerAssignment(0, 0)));
@@ -87,8 +87,8 @@ class EngulfingSlagwurmTest extends BaseCardTest {
         harness.setLife(player1, 20);
         Permanent slagwurm = addReadySlagwurm(player1);
         slagwurm.setAttacking(true);
-        addReadyBears(player2);
-        addReadyBears(player2);
+        addCreatureReady(player2, new GrizzlyBears());
+        addCreatureReady(player2, new GrizzlyBears());
 
         prepareDeclareBlockers();
         gs.declareBlockers(gd, player2, List.of(
@@ -124,7 +124,7 @@ class EngulfingSlagwurmTest extends BaseCardTest {
         Permanent slagwurm = addReadySlagwurm(player1);
         slagwurm.setAttacking(true);
 
-        Permanent blocker = addReadyBears(player2);
+        Permanent blocker = addCreatureReady(player2, new GrizzlyBears());
         blocker.getGrantedKeywords().add(com.github.laxika.magicalvibes.model.Keyword.INDESTRUCTIBLE);
 
         prepareDeclareBlockers();
@@ -147,7 +147,7 @@ class EngulfingSlagwurmTest extends BaseCardTest {
         harness.setLife(player1, 20);
         Permanent slagwurm = addReadySlagwurm(player1);
         slagwurm.setAttacking(true);
-        addReadyBears(player2);
+        addCreatureReady(player2, new GrizzlyBears());
 
         prepareDeclareBlockers();
         gs.declareBlockers(gd, player2, List.of(new BlockerAssignment(0, 0)));
@@ -165,13 +165,6 @@ class EngulfingSlagwurmTest extends BaseCardTest {
 
     private Permanent addReadySlagwurm(Player player) {
         Permanent perm = new Permanent(new EngulfingSlagwurm());
-        perm.setSummoningSick(false);
-        gd.playerBattlefields.get(player.getId()).add(perm);
-        return perm;
-    }
-
-    private Permanent addReadyBears(Player player) {
-        Permanent perm = new Permanent(new GrizzlyBears());
         perm.setSummoningSick(false);
         gd.playerBattlefields.get(player.getId()).add(perm);
         return perm;

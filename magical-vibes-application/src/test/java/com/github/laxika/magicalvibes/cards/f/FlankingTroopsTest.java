@@ -21,7 +21,7 @@ class FlankingTroopsTest extends BaseCardTest {
     @DisplayName("Attacking queues attack trigger for creature target selection")
     void attackingQueuesTargetSelection() {
         addReadyTroops(player1);
-        addReadyCreature(player2);
+        addCreatureReady(player2, new GrizzlyBears());
 
         declareAttackers(player1, List.of(0));
 
@@ -34,7 +34,7 @@ class FlankingTroopsTest extends BaseCardTest {
     @DisplayName("Accepting attack may taps target opponent creature")
     void acceptingMayTapsOpponentCreature() {
         addReadyTroops(player1);
-        Permanent bears = addReadyCreature(player2);
+        Permanent bears = addCreatureReady(player2, new GrizzlyBears());
 
         declareAttackers(player1, List.of(0));
         harness.handlePermanentChosen(player1, bears.getId());
@@ -48,7 +48,7 @@ class FlankingTroopsTest extends BaseCardTest {
     @DisplayName("Declining attack may leaves target creature untapped")
     void decliningMayLeavesTargetUntapped() {
         addReadyTroops(player1);
-        Permanent bears = addReadyCreature(player2);
+        Permanent bears = addCreatureReady(player2, new GrizzlyBears());
 
         declareAttackers(player1, List.of(0));
         harness.handlePermanentChosen(player1, bears.getId());
@@ -64,7 +64,7 @@ class FlankingTroopsTest extends BaseCardTest {
         addReadyTroops(player1);
         harness.addToBattlefield(player2, new Telepathy());
         Permanent telepathy = gd.playerBattlefields.get(player2.getId()).getFirst();
-        addReadyCreature(player2);
+        addCreatureReady(player2, new GrizzlyBears());
 
         declareAttackers(player1, List.of(0));
 
@@ -75,13 +75,6 @@ class FlankingTroopsTest extends BaseCardTest {
 
     private Permanent addReadyTroops(Player player) {
         Permanent perm = new Permanent(new FlankingTroops());
-        perm.setSummoningSick(false);
-        gd.playerBattlefields.get(player.getId()).add(perm);
-        return perm;
-    }
-
-    private Permanent addReadyCreature(Player player) {
-        Permanent perm = new Permanent(new GrizzlyBears());
         perm.setSummoningSick(false);
         gd.playerBattlefields.get(player.getId()).add(perm);
         return perm;

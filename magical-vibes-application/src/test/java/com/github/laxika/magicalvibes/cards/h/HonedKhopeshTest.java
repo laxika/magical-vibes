@@ -18,7 +18,7 @@ class HonedKhopeshTest extends BaseCardTest {
     @DisplayName("Resolving equip ability attaches equipment to target creature")
     void resolvingEquipAttachesToCreature() {
         Permanent khopesh = addKhopeshReady(player1);
-        Permanent creature = addReadyCreature(player1);
+        Permanent creature = addCreatureReady(player1, new GrizzlyBears());
         harness.addMana(player1, ManaColor.WHITE, 1);
 
         harness.activateAbility(player1, 0, null, creature.getId());
@@ -31,7 +31,7 @@ class HonedKhopeshTest extends BaseCardTest {
     @Test
     @DisplayName("Equipped creature gets +1/+1")
     void equippedCreatureGetsBoost() {
-        Permanent creature = addReadyCreature(player1);
+        Permanent creature = addCreatureReady(player1, new GrizzlyBears());
         Permanent khopesh = addKhopeshReady(player1);
         khopesh.setAttachedTo(creature.getId());
 
@@ -42,7 +42,7 @@ class HonedKhopeshTest extends BaseCardTest {
     @Test
     @DisplayName("Equipped creature loses boost when equipment is removed")
     void creatureLosesBoostWhenEquipmentRemoved() {
-        Permanent creature = addReadyCreature(player1);
+        Permanent creature = addCreatureReady(player1, new GrizzlyBears());
         Permanent khopesh = addKhopeshReady(player1);
         khopesh.setAttachedTo(creature.getId());
 
@@ -57,8 +57,8 @@ class HonedKhopeshTest extends BaseCardTest {
     @Test
     @DisplayName("Equipment does not affect other creatures")
     void doesNotAffectOtherCreatures() {
-        Permanent creature = addReadyCreature(player1);
-        Permanent otherCreature = addReadyCreature(player1);
+        Permanent creature = addCreatureReady(player1, new GrizzlyBears());
+        Permanent otherCreature = addCreatureReady(player1, new GrizzlyBears());
         Permanent khopesh = addKhopeshReady(player1);
         khopesh.setAttachedTo(creature.getId());
 
@@ -70,7 +70,7 @@ class HonedKhopeshTest extends BaseCardTest {
     @DisplayName("Cannot equip during opponent's turn")
     void cannotEquipDuringOpponentTurn() {
         addKhopeshReady(player1);
-        Permanent creature = addReadyCreature(player1);
+        Permanent creature = addCreatureReady(player1, new GrizzlyBears());
         harness.addMana(player1, ManaColor.WHITE, 1);
 
         harness.forceActivePlayer(player2);
@@ -84,13 +84,6 @@ class HonedKhopeshTest extends BaseCardTest {
 
     private Permanent addKhopeshReady(Player player) {
         Permanent perm = new Permanent(new HonedKhopesh());
-        perm.setSummoningSick(false);
-        gd.playerBattlefields.get(player.getId()).add(perm);
-        return perm;
-    }
-
-    private Permanent addReadyCreature(Player player) {
-        Permanent perm = new Permanent(new GrizzlyBears());
         perm.setSummoningSick(false);
         gd.playerBattlefields.get(player.getId()).add(perm);
         return perm;

@@ -20,7 +20,7 @@ class DaggerOfTheWorthyTest extends BaseCardTest {
     @Test
     @DisplayName("Equipped creature gets +2/+0")
     void equippedCreatureGetsBoost() {
-        Permanent creature = addReadyCreature(player1);
+        Permanent creature = addCreatureReady(player1, new GrizzlyBears());
         Permanent dagger = addDagger(player1);
         dagger.setAttachedTo(creature.getId());
 
@@ -32,7 +32,7 @@ class DaggerOfTheWorthyTest extends BaseCardTest {
     @DisplayName("Equip {2} attaches to target creature")
     void equipAttaches() {
         Permanent dagger = addDagger(player1);
-        Permanent creature = addReadyCreature(player1);
+        Permanent creature = addCreatureReady(player1, new GrizzlyBears());
         harness.addMana(player1, ManaColor.COLORLESS, 2);
 
         harness.activateAbility(player1, 0, null, creature.getId());
@@ -44,7 +44,7 @@ class DaggerOfTheWorthyTest extends BaseCardTest {
     @Test
     @DisplayName("Afflict 1: equipped creature becoming blocked makes defending player lose 1 life")
     void blockedAfflictsDefender() {
-        Permanent creature = addReadyCreature(player1);
+        Permanent creature = addCreatureReady(player1, new GrizzlyBears());
         Permanent dagger = addDagger(player1);
         dagger.setAttachedTo(creature.getId());
         creature.setAttacking(true);
@@ -73,7 +73,7 @@ class DaggerOfTheWorthyTest extends BaseCardTest {
     @Test
     @DisplayName("Afflict does not trigger when unequipped creature is blocked")
     void unequippedDoesNotAfflict() {
-        Permanent creature = addReadyCreature(player1);
+        Permanent creature = addCreatureReady(player1, new GrizzlyBears());
         addDagger(player1); // on battlefield but not attached
         creature.setAttacking(true);
         creature.setAttackTarget(player2.getId());
@@ -99,13 +99,6 @@ class DaggerOfTheWorthyTest extends BaseCardTest {
 
     private Permanent addDagger(Player player) {
         Permanent perm = new Permanent(new DaggerOfTheWorthy());
-        perm.setSummoningSick(false);
-        gd.playerBattlefields.get(player.getId()).add(perm);
-        return perm;
-    }
-
-    private Permanent addReadyCreature(Player player) {
-        Permanent perm = new Permanent(new GrizzlyBears());
         perm.setSummoningSick(false);
         gd.playerBattlefields.get(player.getId()).add(perm);
         return perm;

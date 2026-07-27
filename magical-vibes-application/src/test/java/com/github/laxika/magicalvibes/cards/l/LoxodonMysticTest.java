@@ -58,7 +58,7 @@ class LoxodonMysticTest extends BaseCardTest {
     @DisplayName("Activating ability puts it on the stack targeting a creature")
     void activatingPutsOnStack() {
         Permanent mystic = addReadyMystic(player1);
-        Permanent target = addReadyBears(player2);
+        Permanent target = addCreatureReady(player2, new GrizzlyBears());
         harness.addMana(player1, ManaColor.WHITE, 1);
 
         harness.activateAbility(player1, 0, null, target.getId());
@@ -75,7 +75,7 @@ class LoxodonMysticTest extends BaseCardTest {
     @DisplayName("Activating ability taps Loxodon Mystic")
     void activatingTapsMystic() {
         Permanent mystic = addReadyMystic(player1);
-        Permanent target = addReadyBears(player2);
+        Permanent target = addCreatureReady(player2, new GrizzlyBears());
         harness.addMana(player1, ManaColor.WHITE, 1);
 
         harness.activateAbility(player1, 0, null, target.getId());
@@ -87,7 +87,7 @@ class LoxodonMysticTest extends BaseCardTest {
     @DisplayName("Resolving ability taps target creature")
     void resolvingTapsTarget() {
         addReadyMystic(player1);
-        Permanent target = addReadyBears(player2);
+        Permanent target = addCreatureReady(player2, new GrizzlyBears());
         harness.addMana(player1, ManaColor.WHITE, 1);
 
         harness.activateAbility(player1, 0, null, target.getId());
@@ -100,7 +100,7 @@ class LoxodonMysticTest extends BaseCardTest {
     @DisplayName("Can tap own creature")
     void canTapOwnCreature() {
         addReadyMystic(player1);
-        Permanent ownBears = addReadyBears(player1);
+        Permanent ownBears = addCreatureReady(player1, new GrizzlyBears());
         harness.addMana(player1, ManaColor.WHITE, 1);
 
         harness.activateAbility(player1, 0, null, ownBears.getId());
@@ -113,7 +113,7 @@ class LoxodonMysticTest extends BaseCardTest {
     @DisplayName("Mana is consumed when activating ability")
     void manaIsConsumed() {
         addReadyMystic(player1);
-        Permanent target = addReadyBears(player2);
+        Permanent target = addCreatureReady(player2, new GrizzlyBears());
         harness.addMana(player1, ManaColor.WHITE, 2);
 
         harness.activateAbility(player1, 0, null, target.getId());
@@ -128,7 +128,7 @@ class LoxodonMysticTest extends BaseCardTest {
     @DisplayName("Cannot activate ability without enough mana")
     void cannotActivateWithoutMana() {
         addReadyMystic(player1);
-        Permanent target = addReadyBears(player2);
+        Permanent target = addCreatureReady(player2, new GrizzlyBears());
 
         assertThatThrownBy(() -> harness.activateAbility(player1, 0, null, target.getId()))
                 .isInstanceOf(IllegalStateException.class)
@@ -141,7 +141,7 @@ class LoxodonMysticTest extends BaseCardTest {
     @DisplayName("Ability fizzles if target is removed before resolution")
     void fizzlesIfTargetRemoved() {
         addReadyMystic(player1);
-        Permanent target = addReadyBears(player2);
+        Permanent target = addCreatureReady(player2, new GrizzlyBears());
         harness.addMana(player1, ManaColor.WHITE, 1);
 
         harness.activateAbility(player1, 0, null, target.getId());
@@ -160,14 +160,6 @@ class LoxodonMysticTest extends BaseCardTest {
 
     private Permanent addReadyMystic(Player player) {
         LoxodonMystic card = new LoxodonMystic();
-        Permanent perm = new Permanent(card);
-        perm.setSummoningSick(false);
-        harness.getGameData().playerBattlefields.get(player.getId()).add(perm);
-        return perm;
-    }
-
-    private Permanent addReadyBears(Player player) {
-        GrizzlyBears card = new GrizzlyBears();
         Permanent perm = new Permanent(card);
         perm.setSummoningSick(false);
         harness.getGameData().playerBattlefields.get(player.getId()).add(perm);

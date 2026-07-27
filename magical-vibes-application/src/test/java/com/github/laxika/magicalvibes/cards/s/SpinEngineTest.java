@@ -34,7 +34,7 @@ class SpinEngineTest extends BaseCardTest {
     @DisplayName("Activating ability puts it on the stack targeting an opponent's creature")
     void activatingAbilityPutsOnStack() {
         Permanent engine = addReadySpinEngine(player1);
-        Permanent target = addReadyCreature(player2);
+        Permanent target = addCreatureReady(player2, new GrizzlyBears());
         harness.addMana(player1, ManaColor.RED, 1);
 
         harness.activateAbility(player1, 0, null, target.getId());
@@ -50,7 +50,7 @@ class SpinEngineTest extends BaseCardTest {
     @DisplayName("Ability does not require tapping")
     void abilityDoesNotRequireTapping() {
         Permanent engine = addReadySpinEngine(player1);
-        Permanent target = addReadyCreature(player2);
+        Permanent target = addCreatureReady(player2, new GrizzlyBears());
         harness.addMana(player1, ManaColor.RED, 1);
 
         harness.activateAbility(player1, 0, null, target.getId());
@@ -62,7 +62,7 @@ class SpinEngineTest extends BaseCardTest {
     @DisplayName("Cannot activate ability without enough mana")
     void cannotActivateWithoutMana() {
         addReadySpinEngine(player1);
-        Permanent target = addReadyCreature(player2);
+        Permanent target = addCreatureReady(player2, new GrizzlyBears());
 
         assertThatThrownBy(() -> harness.activateAbility(player1, 0, null, target.getId()))
                 .isInstanceOf(IllegalStateException.class)
@@ -75,7 +75,7 @@ class SpinEngineTest extends BaseCardTest {
     @DisplayName("Resolving ability adds source to target's cantBlockIds")
     void resolvingAbilityAddsCantBlockRestriction() {
         Permanent engine = addReadySpinEngine(player1);
-        Permanent target = addReadyCreature(player2);
+        Permanent target = addCreatureReady(player2, new GrizzlyBears());
         harness.addMana(player1, ManaColor.RED, 1);
 
         harness.activateAbility(player1, 0, null, target.getId());
@@ -88,7 +88,7 @@ class SpinEngineTest extends BaseCardTest {
     @DisplayName("Ability fizzles if target is removed before resolution")
     void abilityFizzlesIfTargetRemoved() {
         Permanent engine = addReadySpinEngine(player1);
-        Permanent target = addReadyCreature(player2);
+        Permanent target = addCreatureReady(player2, new GrizzlyBears());
         harness.addMana(player1, ManaColor.RED, 1);
 
         harness.activateAbility(player1, 0, null, target.getId());
@@ -109,7 +109,7 @@ class SpinEngineTest extends BaseCardTest {
     @DisplayName("Targeted creature cannot block Spin Engine after ability resolves")
     void targetedCreatureCannotBlockSpinEngine() {
         Permanent engine = addReadySpinEngine(player1);
-        Permanent blocker = addReadyCreature(player2);
+        Permanent blocker = addCreatureReady(player2, new GrizzlyBears());
         harness.addMana(player1, ManaColor.RED, 1);
 
         // Activate and resolve the ability
@@ -133,8 +133,8 @@ class SpinEngineTest extends BaseCardTest {
     @DisplayName("Targeted creature can still block other creatures")
     void targetedCreatureCanBlockOtherCreatures() {
         Permanent engine = addReadySpinEngine(player1);
-        Permanent otherAttacker = addReadyCreature(player1);
-        Permanent blocker = addReadyCreature(player2);
+        Permanent otherAttacker = addCreatureReady(player1, new GrizzlyBears());
+        Permanent blocker = addCreatureReady(player2, new GrizzlyBears());
         harness.addMana(player1, ManaColor.RED, 1);
 
         // Activate and resolve the ability targeting the blocker
@@ -156,8 +156,8 @@ class SpinEngineTest extends BaseCardTest {
     @DisplayName("Non-targeted creature can still block Spin Engine")
     void nonTargetedCreatureCanBlockSpinEngine() {
         Permanent engine = addReadySpinEngine(player1);
-        Permanent targetedBlocker = addReadyCreature(player2);
-        Permanent otherBlocker = addReadyCreature(player2);
+        Permanent targetedBlocker = addCreatureReady(player2, new GrizzlyBears());
+        Permanent otherBlocker = addCreatureReady(player2, new GrizzlyBears());
         harness.addMana(player1, ManaColor.RED, 1);
 
         // Activate and resolve the ability targeting only the first blocker
@@ -181,8 +181,8 @@ class SpinEngineTest extends BaseCardTest {
     @DisplayName("Can activate ability multiple times on different creatures")
     void canActivateMultipleTimes() {
         Permanent engine = addReadySpinEngine(player1);
-        Permanent blocker1 = addReadyCreature(player2);
-        Permanent blocker2 = addReadyCreature(player2);
+        Permanent blocker1 = addCreatureReady(player2, new GrizzlyBears());
+        Permanent blocker2 = addCreatureReady(player2, new GrizzlyBears());
         harness.addMana(player1, ManaColor.RED, 2);
 
         // Activate on first blocker and resolve
@@ -203,7 +203,7 @@ class SpinEngineTest extends BaseCardTest {
     @DisplayName("Blocking restriction resets at end of turn")
     void restrictionResetsAtEndOfTurn() {
         Permanent engine = addReadySpinEngine(player1);
-        Permanent blocker = addReadyCreature(player2);
+        Permanent blocker = addCreatureReady(player2, new GrizzlyBears());
         harness.addMana(player1, ManaColor.RED, 1);
 
         // Activate and resolve the ability
@@ -222,14 +222,6 @@ class SpinEngineTest extends BaseCardTest {
 
     private Permanent addReadySpinEngine(Player player) {
         SpinEngine card = new SpinEngine();
-        Permanent perm = new Permanent(card);
-        perm.setSummoningSick(false);
-        gd.playerBattlefields.get(player.getId()).add(perm);
-        return perm;
-    }
-
-    private Permanent addReadyCreature(Player player) {
-        GrizzlyBears card = new GrizzlyBears();
         Permanent perm = new Permanent(card);
         perm.setSummoningSick(false);
         gd.playerBattlefields.get(player.getId()).add(perm);

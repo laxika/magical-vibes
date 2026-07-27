@@ -1,11 +1,9 @@
 package com.github.laxika.magicalvibes.cards.t;
 
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
-import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.Keyword;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
-import com.github.laxika.magicalvibes.model.Player;
 import com.github.laxika.magicalvibes.model.TurnStep;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
 import org.junit.jupiter.api.DisplayName;
@@ -18,11 +16,11 @@ class TattermungeWitchTest extends BaseCardTest {
     @Test
     @DisplayName("Only blocked creatures get +1/+0 and trample")
     void buffsOnlyBlockedCreatures() {
-        Permanent witch = addReadyCreature(player1, new TattermungeWitch());
-        Permanent blockedAttacker = addReadyCreature(player1, new GrizzlyBears());
+        Permanent witch = addCreatureReady(player1, new TattermungeWitch());
+        Permanent blockedAttacker = addCreatureReady(player1, new GrizzlyBears());
         blockedAttacker.setAttacking(true);
-        Permanent bystander = addReadyCreature(player1, new GrizzlyBears());
-        Permanent blocker = addReadyCreature(player2, new GrizzlyBears());
+        Permanent bystander = addCreatureReady(player1, new GrizzlyBears());
+        Permanent blocker = addCreatureReady(player2, new GrizzlyBears());
         blocker.setBlocking(true);
         blocker.addBlockingTargetId(blockedAttacker.getId());
 
@@ -45,8 +43,8 @@ class TattermungeWitchTest extends BaseCardTest {
     @Test
     @DisplayName("An unblocked attacker is not buffed")
     void unblockedAttackerNotBuffed() {
-        Permanent witch = addReadyCreature(player1, new TattermungeWitch());
-        Permanent unblockedAttacker = addReadyCreature(player1, new GrizzlyBears());
+        Permanent witch = addCreatureReady(player1, new TattermungeWitch());
+        Permanent unblockedAttacker = addCreatureReady(player1, new GrizzlyBears());
         unblockedAttacker.setAttacking(true);
 
         activateWitch(witch);
@@ -58,10 +56,10 @@ class TattermungeWitchTest extends BaseCardTest {
     @Test
     @DisplayName("The buff wears off at end of turn")
     void buffWearsOffAtEndOfTurn() {
-        Permanent witch = addReadyCreature(player1, new TattermungeWitch());
-        Permanent blockedAttacker = addReadyCreature(player1, new GrizzlyBears());
+        Permanent witch = addCreatureReady(player1, new TattermungeWitch());
+        Permanent blockedAttacker = addCreatureReady(player1, new GrizzlyBears());
         blockedAttacker.setAttacking(true);
-        Permanent blocker = addReadyCreature(player2, new GrizzlyBears());
+        Permanent blocker = addCreatureReady(player2, new GrizzlyBears());
         blocker.setBlocking(true);
         blocker.addBlockingTargetId(blockedAttacker.getId());
 
@@ -87,12 +85,5 @@ class TattermungeWitchTest extends BaseCardTest {
         int index = gd.playerBattlefields.get(player1.getId()).indexOf(witch);
         harness.activateAbility(player1, index, null, null);
         harness.passBothPriorities();
-    }
-
-    private Permanent addReadyCreature(Player player, Card card) {
-        Permanent permanent = new Permanent(card);
-        permanent.setSummoningSick(false);
-        gd.playerBattlefields.get(player.getId()).add(permanent);
-        return permanent;
     }
 }

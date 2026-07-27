@@ -28,7 +28,7 @@ class ActOfAggressionTest extends BaseCardTest {
     @Test
     @DisplayName("Casting Act of Aggression puts it on the stack with the target creature")
     void castingPutsOnStack() {
-        Permanent target = addReadyCreature(player2);
+        Permanent target = addCreatureReady(player2, new GrizzlyBears());
         harness.setHand(player1, List.of(new ActOfAggression()));
         harness.addMana(player1, ManaColor.RED, 5);
 
@@ -44,7 +44,7 @@ class ActOfAggressionTest extends BaseCardTest {
     @Test
     @DisplayName("Resolving Act of Aggression untaps target, gains control, and grants haste")
     void resolvesUntapGainControlAndHaste() {
-        Permanent target = addReadyCreature(player2);
+        Permanent target = addCreatureReady(player2, new GrizzlyBears());
         target.tap();
         harness.setHand(player1, List.of(new ActOfAggression()));
         harness.addMana(player1, ManaColor.RED, 5);
@@ -62,7 +62,7 @@ class ActOfAggressionTest extends BaseCardTest {
     @Test
     @DisplayName("Stolen creature can attack this turn because Act of Aggression grants haste")
     void stolenCreatureCanAttackDueToHaste() {
-        Permanent target = addReadyCreature(player2);
+        Permanent target = addCreatureReady(player2, new GrizzlyBears());
         target.setSummoningSick(false);
         harness.setHand(player1, List.of(new ActOfAggression()));
         harness.addMana(player1, ManaColor.RED, 5);
@@ -86,7 +86,7 @@ class ActOfAggressionTest extends BaseCardTest {
     @Test
     @DisplayName("Control and haste expire at cleanup")
     void controlAndHasteExpireAtCleanup() {
-        Permanent target = addReadyCreature(player2);
+        Permanent target = addCreatureReady(player2, new GrizzlyBears());
         harness.setHand(player1, List.of(new ActOfAggression()));
         harness.addMana(player1, ManaColor.RED, 5);
 
@@ -106,8 +106,8 @@ class ActOfAggressionTest extends BaseCardTest {
     @Test
     @DisplayName("Cannot target own creature")
     void cannotTargetOwnCreature() {
-        addReadyCreature(player2); // valid target so spell is playable
-        Permanent ownCreature = addReadyCreature(player1);
+        addCreatureReady(player2, new GrizzlyBears()); // valid target so spell is playable
+        Permanent ownCreature = addCreatureReady(player1, new GrizzlyBears());
         harness.setHand(player1, List.of(new ActOfAggression()));
         harness.addMana(player1, ManaColor.RED, 5);
 
@@ -119,7 +119,7 @@ class ActOfAggressionTest extends BaseCardTest {
     @Test
     @DisplayName("Cannot target a non-creature permanent")
     void cannotTargetNonCreature() {
-        addReadyCreature(player2); // valid target so spell is playable
+        addCreatureReady(player2, new GrizzlyBears()); // valid target so spell is playable
         Permanent enchantment = new Permanent(new Pacifism());
         gd.playerBattlefields.get(player2.getId()).add(enchantment);
         harness.setHand(player1, List.of(new ActOfAggression()));
@@ -133,7 +133,7 @@ class ActOfAggressionTest extends BaseCardTest {
     @Test
     @DisplayName("Can be cast with only generic mana by paying 4 life for Phyrexian mana")
     void canPayPhyrexianManaWithLife() {
-        Permanent target = addReadyCreature(player2);
+        Permanent target = addCreatureReady(player2, new GrizzlyBears());
         harness.setHand(player1, List.of(new ActOfAggression()));
         // Only 3 colorless mana — no red. Phyrexian {R/P}{R/P} must be paid with 4 life.
         harness.addMana(player1, ManaColor.WHITE, 3);
@@ -150,7 +150,7 @@ class ActOfAggressionTest extends BaseCardTest {
     @Test
     @DisplayName("Pays Phyrexian mana with red mana when available instead of life")
     void paysPhyrexianWithManaWhenAvailable() {
-        Permanent target = addReadyCreature(player2);
+        Permanent target = addCreatureReady(player2, new GrizzlyBears());
         harness.setHand(player1, List.of(new ActOfAggression()));
         // 3 colorless + 2 red — enough to pay entirely with mana
         harness.addMana(player1, ManaColor.WHITE, 3);
@@ -167,7 +167,7 @@ class ActOfAggressionTest extends BaseCardTest {
     @Test
     @DisplayName("Pays partial Phyrexian mana with red and the rest with life")
     void paysPartialPhyrexianWithManaAndLife() {
-        Permanent target = addReadyCreature(player2);
+        Permanent target = addCreatureReady(player2, new GrizzlyBears());
         harness.setHand(player1, List.of(new ActOfAggression()));
         // 3 colorless + 1 red — one Phyrexian paid with mana, one with 2 life
         harness.addMana(player1, ManaColor.WHITE, 3);
@@ -185,7 +185,7 @@ class ActOfAggressionTest extends BaseCardTest {
     @Test
     @DisplayName("Fizzles if target is removed before resolution")
     void fizzlesIfTargetRemoved() {
-        Permanent target = addReadyCreature(player2);
+        Permanent target = addCreatureReady(player2, new GrizzlyBears());
         harness.setHand(player1, List.of(new ActOfAggression()));
         harness.addMana(player1, ManaColor.RED, 5);
 
@@ -196,12 +196,5 @@ class ActOfAggressionTest extends BaseCardTest {
 
         assertThat(gd.stack).isEmpty();
         assertThat(gd.gameLog.stream().map(GameLogEntry::plainText)).anyMatch(log -> log.contains("fizzles"));
-    }
-
-    private Permanent addReadyCreature(Player player) {
-        Permanent perm = new Permanent(new GrizzlyBears());
-        perm.setSummoningSick(false);
-        gd.playerBattlefields.get(player.getId()).add(perm);
-        return perm;
     }
 }

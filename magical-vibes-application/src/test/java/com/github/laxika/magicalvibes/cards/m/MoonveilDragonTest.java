@@ -1,10 +1,8 @@
 package com.github.laxika.magicalvibes.cards.m;
 
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
-import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
-import com.github.laxika.magicalvibes.model.Player;
 import com.github.laxika.magicalvibes.model.StackEntryType;
 import com.github.laxika.magicalvibes.model.TurnStep;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
@@ -21,7 +19,7 @@ class MoonveilDragonTest extends BaseCardTest {
     @Test
     @DisplayName("Activating ability puts it on the stack")
     void activatingAbilityPutsOnStack() {
-        addReadyCreature(player1, new MoonveilDragon());
+        addCreatureReady(player1, new MoonveilDragon());
         harness.addMana(player1, ManaColor.RED, 1);
 
         harness.activateAbility(player1, 0, null, null);
@@ -35,9 +33,9 @@ class MoonveilDragonTest extends BaseCardTest {
     @Test
     @DisplayName("Resolving ability boosts each creature controlled by the activator")
     void resolvingBoostsEachOwnCreature() {
-        Permanent dragon = addReadyCreature(player1, new MoonveilDragon());
-        Permanent ownBears = addReadyCreature(player1, new GrizzlyBears());
-        Permanent opponentBears = addReadyCreature(player2, new GrizzlyBears());
+        Permanent dragon = addCreatureReady(player1, new MoonveilDragon());
+        Permanent ownBears = addCreatureReady(player1, new GrizzlyBears());
+        Permanent opponentBears = addCreatureReady(player2, new GrizzlyBears());
         harness.addMana(player1, ManaColor.RED, 1);
 
         harness.activateAbility(player1, 0, null, null);
@@ -54,8 +52,8 @@ class MoonveilDragonTest extends BaseCardTest {
     @Test
     @DisplayName("Ability can be activated multiple times")
     void abilityStacksWithMultipleActivations() {
-        Permanent dragon = addReadyCreature(player1, new MoonveilDragon());
-        Permanent ownBears = addReadyCreature(player1, new GrizzlyBears());
+        Permanent dragon = addCreatureReady(player1, new MoonveilDragon());
+        Permanent ownBears = addCreatureReady(player1, new GrizzlyBears());
         harness.addMana(player1, ManaColor.RED, 2);
 
         harness.activateAbility(player1, 0, null, null);
@@ -72,8 +70,8 @@ class MoonveilDragonTest extends BaseCardTest {
     @Test
     @DisplayName("Boost wears off at cleanup")
     void boostWearsOffAtCleanup() {
-        Permanent dragon = addReadyCreature(player1, new MoonveilDragon());
-        Permanent ownBears = addReadyCreature(player1, new GrizzlyBears());
+        Permanent dragon = addCreatureReady(player1, new MoonveilDragon());
+        Permanent ownBears = addCreatureReady(player1, new GrizzlyBears());
         harness.addMana(player1, ManaColor.RED, 1);
 
         harness.activateAbility(player1, 0, null, null);
@@ -95,17 +93,10 @@ class MoonveilDragonTest extends BaseCardTest {
     @Test
     @DisplayName("Cannot activate without red mana")
     void cannotActivateWithoutEnoughMana() {
-        addReadyCreature(player1, new MoonveilDragon());
+        addCreatureReady(player1, new MoonveilDragon());
 
         assertThatThrownBy(() -> harness.activateAbility(player1, 0, null, null))
                 .isInstanceOf(IllegalStateException.class)
                 .hasMessageContaining("Not enough mana");
-    }
-
-    private Permanent addReadyCreature(Player player, Card card) {
-        Permanent permanent = new Permanent(card);
-        permanent.setSummoningSick(false);
-        gd.playerBattlefields.get(player.getId()).add(permanent);
-        return permanent;
     }
 }

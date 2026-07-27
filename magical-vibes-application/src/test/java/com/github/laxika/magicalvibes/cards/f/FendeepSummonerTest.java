@@ -2,7 +2,6 @@ package com.github.laxika.magicalvibes.cards.f;
 
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
 import com.github.laxika.magicalvibes.cards.s.Swamp;
-import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardSubtype;
 import com.github.laxika.magicalvibes.model.CardType;
 import com.github.laxika.magicalvibes.model.Permanent;
@@ -73,7 +72,7 @@ class FendeepSummonerTest extends BaseCardTest {
     @DisplayName("Cannot target a permanent that is not a Swamp")
     void cannotTargetNonSwamp() {
         addReadySummoner(player1);
-        Permanent bear = addReadyCreature(player1, new GrizzlyBears());
+        Permanent bear = addCreatureReady(player1, new GrizzlyBears());
 
         assertThatThrownBy(() ->
                 harness.activateAbilityWithMultiTargets(player1, 0, 0, List.of(bear.getId())))
@@ -91,13 +90,6 @@ class FendeepSummonerTest extends BaseCardTest {
 
     private Permanent addSwamp(Player player) {
         Permanent perm = new Permanent(new Swamp());
-        gd.playerBattlefields.get(player.getId()).add(perm);
-        return perm;
-    }
-
-    private Permanent addReadyCreature(Player player, Card card) {
-        Permanent perm = new Permanent(card);
-        perm.setSummoningSick(false);
         gd.playerBattlefields.get(player.getId()).add(perm);
         return perm;
     }

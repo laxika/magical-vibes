@@ -4,7 +4,6 @@ import com.github.laxika.magicalvibes.model.GameLogEntry;
 
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
 import com.github.laxika.magicalvibes.cards.p.ProdigalPyromancer;
-import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.PendingInteraction;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.Player;
@@ -26,7 +25,7 @@ class SanctumGuardianTest extends BaseCardTest {
     @Test
     @DisplayName("Activating the ability sacrifices the Guardian and puts the ability on the stack")
     void activatingSacrificesAndPutsOnStack() {
-        Permanent guardian = addReady(player1, new SanctumGuardian());
+        Permanent guardian = addCreatureReady(player1, new SanctumGuardian());
 
         harness.activateAbility(player1, indexOf(player1, guardian), null, null);
 
@@ -41,7 +40,7 @@ class SanctumGuardianTest extends BaseCardTest {
     @Test
     @DisplayName("Resolving the ability prompts for a source choice")
     void resolvingPromptsForSourceChoice() {
-        Permanent guardian = addReady(player1, new SanctumGuardian());
+        Permanent guardian = addCreatureReady(player1, new SanctumGuardian());
         addReadyStats(player2, 2, 2);
 
         harness.activateAbility(player1, indexOf(player1, guardian), null, null);
@@ -53,7 +52,7 @@ class SanctumGuardianTest extends BaseCardTest {
     @Test
     @DisplayName("Choosing a source records a one-shot any-target prevention shield")
     void choosingSourceRecordsShield() {
-        Permanent guardian = addReady(player1, new SanctumGuardian());
+        Permanent guardian = addCreatureReady(player1, new SanctumGuardian());
         Permanent source = addReadyStats(player2, 2, 2);
 
         harness.activateAbility(player1, indexOf(player1, guardian), null, null);
@@ -68,8 +67,8 @@ class SanctumGuardianTest extends BaseCardTest {
     @Test
     @DisplayName("Prevents the next noncombat damage from the chosen source to a creature and is consumed")
     void preventsNoncombatDamageToCreature() {
-        Permanent guardian = addReady(player1, new SanctumGuardian());
-        Permanent pyromancer = addReady(player1, new ProdigalPyromancer());
+        Permanent guardian = addCreatureReady(player1, new SanctumGuardian());
+        Permanent pyromancer = addCreatureReady(player1, new ProdigalPyromancer());
         Permanent creature = addReadyStats(player2, 3, 3);
 
         harness.activateAbility(player1, indexOf(player1, guardian), null, null);
@@ -87,8 +86,8 @@ class SanctumGuardianTest extends BaseCardTest {
     @DisplayName("Prevents the next noncombat damage from the chosen source to a player")
     void preventsNoncombatDamageToPlayer() {
         harness.setLife(player2, 20);
-        Permanent guardian = addReady(player1, new SanctumGuardian());
-        Permanent pyromancer = addReady(player1, new ProdigalPyromancer());
+        Permanent guardian = addCreatureReady(player1, new SanctumGuardian());
+        Permanent pyromancer = addCreatureReady(player1, new ProdigalPyromancer());
 
         harness.activateAbility(player1, indexOf(player1, guardian), null, null);
         harness.passBothPriorities();
@@ -104,8 +103,8 @@ class SanctumGuardianTest extends BaseCardTest {
     @Test
     @DisplayName("Damage from a source other than the chosen one is not prevented")
     void doesNotAffectNonChosenSource() {
-        Permanent guardian = addReady(player1, new SanctumGuardian());
-        Permanent pyromancer = addReady(player1, new ProdigalPyromancer());
+        Permanent guardian = addCreatureReady(player1, new SanctumGuardian());
+        Permanent pyromancer = addCreatureReady(player1, new ProdigalPyromancer());
         Permanent decoy = addReadyStats(player1, 2, 2);
         Permanent creature = addReadyStats(player2, 3, 3);
 
@@ -126,7 +125,7 @@ class SanctumGuardianTest extends BaseCardTest {
     @DisplayName("Prevents combat damage from the chosen attacker to the defending player")
     void preventsCombatDamageToPlayer() {
         harness.setLife(player1, 20);
-        Permanent guardian = addReady(player1, new SanctumGuardian());
+        Permanent guardian = addCreatureReady(player1, new SanctumGuardian());
         Permanent attacker = addReadyStats(player2, 2, 2);
 
         harness.activateAbility(player1, indexOf(player1, guardian), null, null);
@@ -146,7 +145,7 @@ class SanctumGuardianTest extends BaseCardTest {
     @Test
     @DisplayName("Prevents combat damage from the chosen attacker to a blocking creature")
     void preventsCombatDamageToCreature() {
-        Permanent guardian = addReady(player1, new SanctumGuardian());
+        Permanent guardian = addCreatureReady(player1, new SanctumGuardian());
         Permanent blocker = addReadyStats(player1, 3, 3);
         Permanent attacker = addReadyStats(player2, 2, 2);
 
@@ -171,7 +170,7 @@ class SanctumGuardianTest extends BaseCardTest {
     @Test
     @DisplayName("Shield is cleared at end of turn")
     void shieldClearedAtEndOfTurn() {
-        Permanent guardian = addReady(player1, new SanctumGuardian());
+        Permanent guardian = addCreatureReady(player1, new SanctumGuardian());
         Permanent source = addReadyStats(player2, 2, 2);
 
         harness.activateAbility(player1, indexOf(player1, guardian), null, null);
@@ -191,7 +190,7 @@ class SanctumGuardianTest extends BaseCardTest {
     @Test
     @DisplayName("No permanents on the battlefield leaves no prompt and no shield")
     void noPermanentsNoShield() {
-        Permanent guardian = addReady(player1, new SanctumGuardian());
+        Permanent guardian = addCreatureReady(player1, new SanctumGuardian());
 
         harness.activateAbility(player1, indexOf(player1, guardian), null, null);
         harness.passBothPriorities();
@@ -204,7 +203,7 @@ class SanctumGuardianTest extends BaseCardTest {
     @Test
     @DisplayName("Answering the source choice resumes the parked resolution entry")
     void answeringSourceChoiceClearsParkedResolution() {
-        Permanent guardian = addReady(player1, new SanctumGuardian());
+        Permanent guardian = addCreatureReady(player1, new SanctumGuardian());
         Permanent source = addReadyStats(player2, 2, 2);
 
         harness.activateAbility(player1, indexOf(player1, guardian), null, null);
@@ -218,13 +217,6 @@ class SanctumGuardianTest extends BaseCardTest {
     }
 
     // ===== Helpers =====
-
-    private Permanent addReady(Player player, Card card) {
-        Permanent perm = new Permanent(card);
-        perm.setSummoningSick(false);
-        gd.playerBattlefields.get(player.getId()).add(perm);
-        return perm;
-    }
 
     private Permanent addReadyStats(Player player, int power, int toughness) {
         GrizzlyBears card = new GrizzlyBears();

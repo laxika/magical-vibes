@@ -69,7 +69,7 @@ class DungeonGeistsTest extends BaseCardTest {
         @DisplayName("Locked creature does not untap while Dungeon Geists is on the battlefield")
         void lockedCreatureStaysTapped() {
             Permanent geists = addGeists(player1);
-            Permanent bears = addReadyCreature(player2);
+            Permanent bears = addCreatureReady(player2, new GrizzlyBears());
 
             bears.tap();
             bears.getUntapPreventedWhileSourceOnBattlefieldIds().add(geists.getId());
@@ -83,7 +83,7 @@ class DungeonGeistsTest extends BaseCardTest {
         @DisplayName("Locked creature untaps once Dungeon Geists leaves the battlefield")
         void lockedCreatureUntapsWhenGeistsRemoved() {
             Permanent geists = addGeists(player1);
-            Permanent bears = addReadyCreature(player2);
+            Permanent bears = addCreatureReady(player2, new GrizzlyBears());
 
             bears.tap();
             bears.getUntapPreventedWhileSourceOnBattlefieldIds().add(geists.getId());
@@ -99,7 +99,7 @@ class DungeonGeistsTest extends BaseCardTest {
         @DisplayName("Lock persists across multiple turns while Dungeon Geists remains")
         void lockPersistsAcrossTurns() {
             Permanent geists = addGeists(player1);
-            Permanent bears = addReadyCreature(player2);
+            Permanent bears = addCreatureReady(player2, new GrizzlyBears());
 
             bears.tap();
             bears.getUntapPreventedWhileSourceOnBattlefieldIds().add(geists.getId());
@@ -146,13 +146,6 @@ class DungeonGeistsTest extends BaseCardTest {
         Permanent geists = new Permanent(new DungeonGeists());
         gd.playerBattlefields.get(player.getId()).add(geists);
         return geists;
-    }
-
-    private Permanent addReadyCreature(Player player) {
-        Permanent perm = new Permanent(new GrizzlyBears());
-        perm.setSummoningSick(false);
-        gd.playerBattlefields.get(player.getId()).add(perm);
-        return perm;
     }
 
     private void advanceToNextTurn(Player currentActivePlayer) {

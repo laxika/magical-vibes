@@ -2,9 +2,7 @@ package com.github.laxika.magicalvibes.cards.s;
 
 import com.github.laxika.magicalvibes.cards.a.AirElemental;
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
-import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.Permanent;
-import com.github.laxika.magicalvibes.model.Player;
 import com.github.laxika.magicalvibes.model.TurnStep;
 import com.github.laxika.magicalvibes.networking.message.BlockerAssignment;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
@@ -24,7 +22,7 @@ class SilverErneTest extends BaseCardTest {
     @DisplayName("Cannot be blocked by a creature without flying or reach")
     void cannotBeBlockedByGroundCreature() {
         attackingErne();
-        Permanent groundBlocker = addReady(player2, new GrizzlyBears());
+        Permanent groundBlocker = addCreatureReady(player2, new GrizzlyBears());
 
         harness.forceActivePlayer(player1);
         harness.forceStep(TurnStep.DECLARE_BLOCKERS);
@@ -41,7 +39,7 @@ class SilverErneTest extends BaseCardTest {
     @DisplayName("Can be blocked by a flying creature")
     void canBeBlockedByFlyer() {
         attackingErne();
-        Permanent flyingBlocker = addReady(player2, new AirElemental());
+        Permanent flyingBlocker = addCreatureReady(player2, new AirElemental());
 
         harness.forceActivePlayer(player1);
         harness.forceStep(TurnStep.DECLARE_BLOCKERS);
@@ -58,7 +56,7 @@ class SilverErneTest extends BaseCardTest {
     void trampleAssignsExcessDamageToDefender() {
         harness.setLife(player2, 20);
         attackingErne();
-        Permanent blocker = addReady(player2, new SuntailHawk());
+        Permanent blocker = addCreatureReady(player2, new SuntailHawk());
 
         harness.forceActivePlayer(player1);
         harness.forceStep(TurnStep.DECLARE_BLOCKERS);
@@ -84,12 +82,5 @@ class SilverErneTest extends BaseCardTest {
         erne.setAttacking(true);
         gd.playerBattlefields.get(player1.getId()).add(erne);
         return erne;
-    }
-
-    private Permanent addReady(Player player, Card card) {
-        Permanent perm = new Permanent(card);
-        perm.setSummoningSick(false);
-        gd.playerBattlefields.get(player.getId()).add(perm);
-        return perm;
     }
 }

@@ -38,7 +38,7 @@ class ConcussiveBoltTest extends BaseCardTest {
     @DisplayName("Does not prevent blocking without metalcraft")
     void doesNotPreventBlockingWithoutMetalcraft() {
         harness.setLife(player2, 20);
-        Permanent creature = addReadyCreature(player2);
+        Permanent creature = addCreatureReady(player2, new GrizzlyBears());
 
         harness.setHand(player1, List.of(new ConcussiveBolt()));
         harness.addMana(player1, ManaColor.RED, 5);
@@ -55,7 +55,7 @@ class ConcussiveBoltTest extends BaseCardTest {
     @DisplayName("Deals 4 damage and prevents blocking with metalcraft")
     void deals4DamageAndPreventsBlockingWithMetalcraft() {
         harness.setLife(player2, 20);
-        Permanent creature = addReadyCreature(player2);
+        Permanent creature = addCreatureReady(player2, new GrizzlyBears());
 
         harness.setHand(player1, List.of(new ConcussiveBolt()));
         harness.addMana(player1, ManaColor.RED, 5);
@@ -71,8 +71,8 @@ class ConcussiveBoltTest extends BaseCardTest {
     @Test
     @DisplayName("All creatures of target player can't block with metalcraft")
     void allCreaturesOfTargetPlayerCantBlockWithMetalcraft() {
-        Permanent creature1 = addReadyCreature(player2);
-        Permanent creature2 = addReadyCreature(player2);
+        Permanent creature1 = addCreatureReady(player2, new GrizzlyBears());
+        Permanent creature2 = addCreatureReady(player2, new GrizzlyBears());
 
         harness.setHand(player1, List.of(new ConcussiveBolt()));
         harness.addMana(player1, ManaColor.RED, 5);
@@ -88,8 +88,8 @@ class ConcussiveBoltTest extends BaseCardTest {
     @Test
     @DisplayName("Metalcraft can't-block prevents declaring blockers")
     void metalcraftCantBlockPreventsDeclaringBlockers() {
-        Permanent attacker = addReadyCreature(player1);
-        Permanent blocker = addReadyCreature(player2);
+        Permanent attacker = addCreatureReady(player1, new GrizzlyBears());
+        Permanent blocker = addCreatureReady(player2, new GrizzlyBears());
 
         harness.setHand(player1, List.of(new ConcussiveBolt()));
         harness.addMana(player1, ManaColor.RED, 5);
@@ -111,7 +111,7 @@ class ConcussiveBoltTest extends BaseCardTest {
     @Test
     @DisplayName("Controller's own creatures are not affected by metalcraft")
     void controllersOwnCreaturesNotAffected() {
-        Permanent ownCreature = addReadyCreature(player1);
+        Permanent ownCreature = addCreatureReady(player1, new GrizzlyBears());
 
         harness.setHand(player1, List.of(new ConcussiveBolt()));
         harness.addMana(player1, ManaColor.RED, 5);
@@ -129,7 +129,7 @@ class ConcussiveBoltTest extends BaseCardTest {
     @DisplayName("Does not prevent blocking if metalcraft lost before resolution")
     void doesNotPreventBlockingIfMetalcraftLostBeforeResolution() {
         harness.setLife(player2, 20);
-        Permanent creature = addReadyCreature(player2);
+        Permanent creature = addCreatureReady(player2, new GrizzlyBears());
 
         harness.setHand(player1, List.of(new ConcussiveBolt()));
         harness.addMana(player1, ManaColor.RED, 5);
@@ -155,13 +155,5 @@ class ConcussiveBoltTest extends BaseCardTest {
         harness.addToBattlefield(player, new Spellbook());
         harness.addToBattlefield(player, new LeoninScimitar());
         harness.addToBattlefield(player, new Spellbook());
-    }
-
-    private Permanent addReadyCreature(Player player) {
-        GrizzlyBears card = new GrizzlyBears();
-        Permanent perm = new Permanent(card);
-        perm.setSummoningSick(false);
-        gd.playerBattlefields.get(player.getId()).add(perm);
-        return perm;
     }
 }

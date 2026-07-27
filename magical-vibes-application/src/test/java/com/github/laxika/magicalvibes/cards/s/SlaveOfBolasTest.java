@@ -5,7 +5,6 @@ import com.github.laxika.magicalvibes.cards.p.Pacifism;
 import com.github.laxika.magicalvibes.model.Keyword;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
-import com.github.laxika.magicalvibes.model.Player;
 import com.github.laxika.magicalvibes.model.StackEntry;
 import com.github.laxika.magicalvibes.model.StackEntryType;
 import com.github.laxika.magicalvibes.model.TurnStep;
@@ -23,7 +22,7 @@ class SlaveOfBolasTest extends BaseCardTest {
     @Test
     @DisplayName("Casting Slave of Bolas puts it on the stack targeting the creature")
     void castingPutsOnStack() {
-        Permanent target = addReadyCreature(player2);
+        Permanent target = addCreatureReady(player2, new GrizzlyBears());
         castSlaveOfBolas(target.getId());
 
         assertThat(gd.stack).hasSize(1);
@@ -36,7 +35,7 @@ class SlaveOfBolasTest extends BaseCardTest {
     @Test
     @DisplayName("Resolving gains control of the target, untaps it, and grants haste")
     void resolvesGainControlUntapAndHaste() {
-        Permanent target = addReadyCreature(player2);
+        Permanent target = addCreatureReady(player2, new GrizzlyBears());
         target.tap();
         castSlaveOfBolas(target.getId());
 
@@ -55,7 +54,7 @@ class SlaveOfBolasTest extends BaseCardTest {
         harness.forceStep(TurnStep.POSTCOMBAT_MAIN);
         harness.clearPriorityPassed();
 
-        Permanent target = addReadyCreature(player2);
+        Permanent target = addCreatureReady(player2, new GrizzlyBears());
         castSlaveOfBolas(target.getId());
         harness.passBothPriorities();
 
@@ -73,7 +72,7 @@ class SlaveOfBolasTest extends BaseCardTest {
     @Test
     @DisplayName("Cannot target a non-creature permanent")
     void cannotTargetNonCreature() {
-        addReadyCreature(player1); // valid target so the spell is playable
+        addCreatureReady(player1, new GrizzlyBears()); // valid target so the spell is playable
         Permanent enchantment = new Permanent(new Pacifism());
         gd.playerBattlefields.get(player2.getId()).add(enchantment);
         setUpSlaveOfBolas();
@@ -93,12 +92,5 @@ class SlaveOfBolasTest extends BaseCardTest {
     private void castSlaveOfBolas(java.util.UUID targetId) {
         setUpSlaveOfBolas();
         harness.castSorcery(player1, 0, targetId);
-    }
-
-    private Permanent addReadyCreature(Player player) {
-        Permanent perm = new Permanent(new GrizzlyBears());
-        perm.setSummoningSick(false);
-        gd.playerBattlefields.get(player.getId()).add(perm);
-        return perm;
     }
 }

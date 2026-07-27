@@ -44,7 +44,7 @@ class ShieldOfTheRealmTest extends BaseCardTest {
     @DisplayName("Resolving equip attaches Shield of the Realm to target creature")
     void resolvingEquipAttaches() {
         Permanent shield = addShieldReady(player1);
-        Permanent creature = addReadyCreature(player1);
+        Permanent creature = addCreatureReady(player1, new GrizzlyBears());
         harness.addMana(player1, ManaColor.COLORLESS, 1);
 
         harness.activateAbility(player1, 0, null, creature.getId());
@@ -59,7 +59,7 @@ class ShieldOfTheRealmTest extends BaseCardTest {
     @Test
     @DisplayName("Prevents 2 of 3 noncombat damage to equipped creature")
     void prevents2Of3NoncombatDamage() {
-        Permanent creature = addReadyCreature(player1);
+        Permanent creature = addCreatureReady(player1, new GrizzlyBears());
         Permanent shield = addShieldReady(player1);
         shield.setAttachedTo(creature.getId());
 
@@ -79,7 +79,7 @@ class ShieldOfTheRealmTest extends BaseCardTest {
     @Test
     @DisplayName("Prevents all damage when source deals 2 or less")
     void preventsAllDamageWhenSourceDeals2OrLess() {
-        Permanent creature = addReadyCreature(player1);
+        Permanent creature = addCreatureReady(player1, new GrizzlyBears());
         Permanent shield = addShieldReady(player1);
         shield.setAttachedTo(creature.getId());
 
@@ -103,12 +103,12 @@ class ShieldOfTheRealmTest extends BaseCardTest {
         harness.setLife(player2, 20);
 
         // Player1 has a creature equipped with Shield of the Realm
-        Permanent defender = addReadyCreature(player1);
+        Permanent defender = addCreatureReady(player1, new GrizzlyBears());
         Permanent shield = addShieldReady(player1);
         shield.setAttachedTo(defender.getId());
 
         // Player2 attacks with a 2/2
-        Permanent attacker = addReadyCreature(player2);
+        Permanent attacker = addCreatureReady(player2, new GrizzlyBears());
         attacker.setAttacking(true);
 
         // Defender blocks
@@ -129,7 +129,7 @@ class ShieldOfTheRealmTest extends BaseCardTest {
     @Test
     @DisplayName("Does not prevent damage to unequipped creature")
     void doesNotPreventDamageToUnequippedCreature() {
-        Permanent creature = addReadyCreature(player1);
+        Permanent creature = addCreatureReady(player1, new GrizzlyBears());
         addShieldReady(player1); // Shield on battlefield but not attached
 
         harness.setHand(player2, List.of(new LightningBolt()));
@@ -150,7 +150,7 @@ class ShieldOfTheRealmTest extends BaseCardTest {
     @Test
     @DisplayName("Two Shields of the Realm prevent 4 damage total per source")
     void twoShieldsPrevent4Damage() {
-        Permanent creature = addReadyCreature(player1);
+        Permanent creature = addCreatureReady(player1, new GrizzlyBears());
         Permanent shield1 = addShieldReady(player1);
         Permanent shield2 = addShieldReady(player1);
         shield1.setAttachedTo(creature.getId());
@@ -173,8 +173,8 @@ class ShieldOfTheRealmTest extends BaseCardTest {
     @DisplayName("Moving Shield of the Realm transfers prevention to new creature")
     void reEquipTransfersPrevention() {
         Permanent shield = addShieldReady(player1);
-        Permanent creature1 = addReadyCreature(player1);
-        Permanent creature2 = addReadyCreature(player1);
+        Permanent creature1 = addCreatureReady(player1, new GrizzlyBears());
+        Permanent creature2 = addCreatureReady(player1, new GrizzlyBears());
         shield.setAttachedTo(creature1.getId());
 
         harness.addMana(player1, ManaColor.COLORLESS, 1);
@@ -198,13 +198,6 @@ class ShieldOfTheRealmTest extends BaseCardTest {
 
     private Permanent addShieldReady(Player player) {
         Permanent perm = new Permanent(new ShieldOfTheRealm());
-        perm.setSummoningSick(false);
-        gd.playerBattlefields.get(player.getId()).add(perm);
-        return perm;
-    }
-
-    private Permanent addReadyCreature(Player player) {
-        Permanent perm = new Permanent(new GrizzlyBears());
         perm.setSummoningSick(false);
         gd.playerBattlefields.get(player.getId()).add(perm);
         return perm;

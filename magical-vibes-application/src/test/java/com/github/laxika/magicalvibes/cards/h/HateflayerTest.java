@@ -38,7 +38,7 @@ class HateflayerTest extends BaseCardTest {
     @DisplayName("Wither: damage to a creature is dealt as -1/-1 counters, killing a 2/2")
     void witherDealsMinusCountersToCreature() {
         addTapped(player1, new Hateflayer()); // 5/5, wither
-        Permanent bears = addReady(player2, new GrizzlyBears()); // 2/2
+        Permanent bears = addCreatureReady(player2, new GrizzlyBears()); // 2/2
         harness.addMana(player1, ManaColor.RED, 3);
         enterMainWithPriority(player1);
 
@@ -54,7 +54,7 @@ class HateflayerTest extends BaseCardTest {
     @Test
     @DisplayName("Cannot activate while untapped ({Q} requires the source to be tapped)")
     void cannotActivateWhileUntapped() {
-        addReady(player1, new Hateflayer());
+        addCreatureReady(player1, new Hateflayer());
         harness.addMana(player1, ManaColor.RED, 3);
         enterMainWithPriority(player1);
 
@@ -62,15 +62,8 @@ class HateflayerTest extends BaseCardTest {
                 .isInstanceOf(IllegalStateException.class);
     }
 
-    private Permanent addReady(Player player, Card card) {
-        Permanent perm = new Permanent(card);
-        perm.setSummoningSick(false);
-        gd.playerBattlefields.get(player.getId()).add(perm);
-        return perm;
-    }
-
     private Permanent addTapped(Player player, Card card) {
-        Permanent perm = addReady(player, card);
+        Permanent perm = addCreatureReady(player, card);
         perm.tap();
         return perm;
     }

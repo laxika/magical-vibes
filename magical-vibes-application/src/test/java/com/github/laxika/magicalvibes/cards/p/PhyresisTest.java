@@ -6,7 +6,6 @@ import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
 import com.github.laxika.magicalvibes.model.Keyword;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
-import com.github.laxika.magicalvibes.model.Player;
 import com.github.laxika.magicalvibes.model.StackEntry;
 import com.github.laxika.magicalvibes.model.StackEntryType;
 import com.github.laxika.magicalvibes.model.TurnStep;
@@ -26,7 +25,7 @@ class PhyresisTest extends BaseCardTest {
     @Test
     @DisplayName("Casting Phyresis targeting a creature puts it on the stack")
     void castingPutsOnStack() {
-        Permanent creature = addCreatureReady(player1);
+        Permanent creature = addCreatureReady(player1, new GrizzlyBears());
 
         harness.setHand(player1, List.of(new Phyresis()));
         harness.addMana(player1, ManaColor.BLACK, 2);
@@ -45,7 +44,7 @@ class PhyresisTest extends BaseCardTest {
     @Test
     @DisplayName("Enchanted creature has infect")
     void enchantedCreatureHasInfect() {
-        Permanent creature = addCreatureReady(player1);
+        Permanent creature = addCreatureReady(player1, new GrizzlyBears());
 
         harness.setHand(player1, List.of(new Phyresis()));
         harness.addMana(player1, ManaColor.BLACK, 2);
@@ -59,7 +58,7 @@ class PhyresisTest extends BaseCardTest {
     @Test
     @DisplayName("Phyresis does not steal the creature")
     void doesNotStealCreature() {
-        Permanent creature = addCreatureReady(player2);
+        Permanent creature = addCreatureReady(player2, new GrizzlyBears());
 
         harness.setHand(player1, List.of(new Phyresis()));
         harness.addMana(player1, ManaColor.BLACK, 2);
@@ -82,7 +81,7 @@ class PhyresisTest extends BaseCardTest {
     @Test
     @DisplayName("Enchanted creature deals combat damage as poison counters to defending player")
     void infectDealsPoisonCountersToPlayer() {
-        Permanent creature = addCreatureReady(player1);
+        Permanent creature = addCreatureReady(player1, new GrizzlyBears());
 
         harness.setHand(player1, List.of(new Phyresis()));
         harness.addMana(player1, ManaColor.BLACK, 2);
@@ -105,7 +104,7 @@ class PhyresisTest extends BaseCardTest {
     @Test
     @DisplayName("Enchanted creature with infect deals combat damage as -1/-1 counters to blocking creature")
     void infectDealsMinusCountersToCreature() {
-        Permanent creature = addCreatureReady(player1);
+        Permanent creature = addCreatureReady(player1, new GrizzlyBears());
 
         harness.setHand(player1, List.of(new Phyresis()));
         harness.addMana(player1, ManaColor.BLACK, 2);
@@ -122,7 +121,7 @@ class PhyresisTest extends BaseCardTest {
         int attackerIndex = atkBf.indexOf(creature);
 
         // Player2 blocks with a creature
-        Permanent blocker = addCreatureReady(player2);
+        Permanent blocker = addCreatureReady(player2, new GrizzlyBears());
         blocker.setBlocking(true);
         blocker.addBlockingTarget(attackerIndex);
 
@@ -139,7 +138,7 @@ class PhyresisTest extends BaseCardTest {
     @Test
     @DisplayName("Phyresis fizzles if target creature is no longer on the battlefield")
     void fizzlesIfTargetGone() {
-        Permanent creature = addCreatureReady(player1);
+        Permanent creature = addCreatureReady(player1, new GrizzlyBears());
 
         harness.setHand(player1, List.of(new Phyresis()));
         harness.addMana(player1, ManaColor.BLACK, 2);
@@ -161,7 +160,7 @@ class PhyresisTest extends BaseCardTest {
     @Test
     @DisplayName("Creature loses infect when Phyresis is destroyed")
     void creatureLosesInfectWhenAuraDestroyed() {
-        Permanent creature = addCreatureReady(player1);
+        Permanent creature = addCreatureReady(player1, new GrizzlyBears());
 
         harness.setHand(player1, List.of(new Phyresis()));
         harness.addMana(player1, ManaColor.BLACK, 2);
@@ -215,11 +214,4 @@ class PhyresisTest extends BaseCardTest {
     }
 
     // ===== Helper methods =====
-
-    private Permanent addCreatureReady(Player player) {
-        Permanent perm = new Permanent(new GrizzlyBears());
-        perm.setSummoningSick(false);
-        gd.playerBattlefields.get(player.getId()).add(perm);
-        return perm;
-    }
 }

@@ -3,7 +3,6 @@ package com.github.laxika.magicalvibes.cards.t;
 import com.github.laxika.magicalvibes.cards.g.GiantSpider;
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
 import com.github.laxika.magicalvibes.cards.s.ScatheZombies;
-import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.Player;
@@ -24,9 +23,9 @@ class TimeToReflectTest extends BaseCardTest {
     @Test
     @DisplayName("Exiles a creature that blocked a Zombie this turn")
     void exilesCreatureThatBlockedAZombie() {
-        Permanent zombie = addReady(player1, new ScatheZombies());
+        Permanent zombie = addCreatureReady(player1, new ScatheZombies());
         zombie.setAttacking(true);
-        addReady(player2, new GrizzlyBears()); // non-Zombie blocker
+        addCreatureReady(player2, new GrizzlyBears()); // non-Zombie blocker
 
         declareBlock();
 
@@ -43,9 +42,9 @@ class TimeToReflectTest extends BaseCardTest {
     @Test
     @DisplayName("Exiles a creature that was blocked by a Zombie this turn")
     void exilesCreatureThatWasBlockedByAZombie() {
-        Permanent attacker = addReady(player1, new GrizzlyBears()); // non-Zombie attacker
+        Permanent attacker = addCreatureReady(player1, new GrizzlyBears()); // non-Zombie attacker
         attacker.setAttacking(true);
-        addReady(player2, new ScatheZombies()); // Zombie blocker
+        addCreatureReady(player2, new ScatheZombies()); // Zombie blocker
 
         declareBlock();
 
@@ -62,9 +61,9 @@ class TimeToReflectTest extends BaseCardTest {
     @Test
     @DisplayName("Cannot target a creature that only blocked a non-Zombie")
     void cannotTargetCreatureThatBlockedNonZombie() {
-        Permanent attacker = addReady(player1, new GrizzlyBears()); // non-Zombie attacker
+        Permanent attacker = addCreatureReady(player1, new GrizzlyBears()); // non-Zombie attacker
         attacker.setAttacking(true);
-        addReady(player2, new GiantSpider()); // non-Zombie blocker
+        addCreatureReady(player2, new GiantSpider()); // non-Zombie blocker
 
         declareBlock();
 
@@ -78,13 +77,6 @@ class TimeToReflectTest extends BaseCardTest {
     }
 
     // ===== Helpers =====
-
-    private Permanent addReady(Player player, Card card) {
-        Permanent perm = new Permanent(card);
-        perm.setSummoningSick(false);
-        gd.playerBattlefields.get(player.getId()).add(perm);
-        return perm;
-    }
 
     private void declareBlock() {
         harness.forceActivePlayer(player1);

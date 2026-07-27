@@ -46,7 +46,7 @@ class PaleWayfarerTest extends BaseCardTest {
     @DisplayName("When targeting an opponent's creature, that creature's controller chooses the color")
     void targetControllerChoosesColor() {
         addTapped(player1, new PaleWayfarer());
-        Permanent opponentCreature = addReady(player2, new GrizzlyBears());
+        Permanent opponentCreature = addCreatureReady(player2, new GrizzlyBears());
         harness.addMana(player1, ManaColor.WHITE, 4);
 
         enterMainWithPriority(player1);
@@ -64,7 +64,7 @@ class PaleWayfarerTest extends BaseCardTest {
     @Test
     @DisplayName("Cannot activate while the source is untapped ({Q} requires it to be tapped)")
     void cannotActivateWhileUntapped() {
-        addReady(player1, new PaleWayfarer());
+        addCreatureReady(player1, new PaleWayfarer());
         harness.addToBattlefield(player1, new GrizzlyBears());
         harness.addMana(player1, ManaColor.WHITE, 4);
 
@@ -101,15 +101,8 @@ class PaleWayfarerTest extends BaseCardTest {
         assertThat(bears.getProtectionFromColorsUntilEndOfTurn()).doesNotContain(CardColor.RED);
     }
 
-    private Permanent addReady(Player player, Card card) {
-        Permanent perm = new Permanent(card);
-        perm.setSummoningSick(false);
-        gd.playerBattlefields.get(player.getId()).add(perm);
-        return perm;
-    }
-
     private Permanent addTapped(Player player, Card card) {
-        Permanent perm = addReady(player, card);
+        Permanent perm = addCreatureReady(player, card);
         perm.tap();
         return perm;
     }

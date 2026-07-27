@@ -79,7 +79,7 @@ class MoggFanaticTest extends BaseCardTest {
     @DisplayName("Can activate ability targeting a creature")
     void activatingTargetingCreaturePutsOnStack() {
         addReadyMoggFanatic(player1);
-        Permanent target = addReadyCreature(player2);
+        Permanent target = addCreatureReady(player2, new GrizzlyBears());
 
         harness.activateAbility(player1, 0, null, target.getId());
 
@@ -225,14 +225,6 @@ class MoggFanaticTest extends BaseCardTest {
 
     private Permanent addReadyMoggFanatic(Player player) {
         MoggFanatic card = new MoggFanatic();
-        Permanent perm = new Permanent(card);
-        perm.setSummoningSick(false);
-        gd.playerBattlefields.get(player.getId()).add(perm);
-        return perm;
-    }
-
-    private Permanent addReadyCreature(Player player) {
-        GrizzlyBears card = new GrizzlyBears();
         Permanent perm = new Permanent(card);
         perm.setSummoningSick(false);
         gd.playerBattlefields.get(player.getId()).add(perm);

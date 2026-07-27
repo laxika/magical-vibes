@@ -1,7 +1,6 @@
 package com.github.laxika.magicalvibes.cards.v;
 
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
-import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.GameData;
 import com.github.laxika.magicalvibes.model.Keyword;
 import com.github.laxika.magicalvibes.model.ManaColor;
@@ -43,8 +42,8 @@ class VaultOfTheArchangelTest extends BaseCardTest {
     @DisplayName("Keyword ability grants deathtouch and lifelink to each creature you control")
     void keywordAbilityGrantsDeathtouchAndLifelinkToOwnCreatures() {
         harness.addToBattlefield(player1, new VaultOfTheArchangel());
-        Permanent bear1 = addReadyCreature(player1, new GrizzlyBears());
-        Permanent bear2 = addReadyCreature(player1, new GrizzlyBears());
+        Permanent bear1 = addCreatureReady(player1, new GrizzlyBears());
+        Permanent bear2 = addCreatureReady(player1, new GrizzlyBears());
         addAbilityMana(player1);
 
         harness.activateAbility(player1, 0, 1, null, null);
@@ -60,8 +59,8 @@ class VaultOfTheArchangelTest extends BaseCardTest {
     @DisplayName("Keyword ability does not affect opponent's creatures")
     void keywordAbilityDoesNotAffectOpponentCreatures() {
         harness.addToBattlefield(player1, new VaultOfTheArchangel());
-        Permanent ownBear = addReadyCreature(player1, new GrizzlyBears());
-        Permanent opponentBear = addReadyCreature(player2, new GrizzlyBears());
+        Permanent ownBear = addCreatureReady(player1, new GrizzlyBears());
+        Permanent opponentBear = addCreatureReady(player2, new GrizzlyBears());
         addAbilityMana(player1);
 
         harness.activateAbility(player1, 0, 1, null, null);
@@ -77,7 +76,7 @@ class VaultOfTheArchangelTest extends BaseCardTest {
     @DisplayName("Granted keywords wear off at end of turn")
     void keywordsWearOffAtEndOfTurn() {
         harness.addToBattlefield(player1, new VaultOfTheArchangel());
-        Permanent bear = addReadyCreature(player1, new GrizzlyBears());
+        Permanent bear = addCreatureReady(player1, new GrizzlyBears());
         addAbilityMana(player1);
 
         harness.activateAbility(player1, 0, 1, null, null);
@@ -92,13 +91,6 @@ class VaultOfTheArchangelTest extends BaseCardTest {
 
         assertThat(bear.hasKeyword(Keyword.DEATHTOUCH)).isFalse();
         assertThat(bear.hasKeyword(Keyword.LIFELINK)).isFalse();
-    }
-
-    private Permanent addReadyCreature(Player player, Card card) {
-        Permanent permanent = new Permanent(card);
-        permanent.setSummoningSick(false);
-        gd.playerBattlefields.get(player.getId()).add(permanent);
-        return permanent;
     }
 
     private void addAbilityMana(Player player) {

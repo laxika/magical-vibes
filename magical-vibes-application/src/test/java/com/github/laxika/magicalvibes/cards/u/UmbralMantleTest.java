@@ -22,7 +22,7 @@ class UmbralMantleTest extends BaseCardTest {
     @DisplayName("Resolving equip ability attaches Umbral Mantle to target creature")
     void resolvingEquipAttachesToCreature() {
         Permanent mantle = addMantleReady(player1);
-        Permanent creature = addReadyCreature(player1);
+        Permanent creature = addCreatureReady(player1, new GrizzlyBears());
 
         harness.activateAbility(player1, 0, null, creature.getId());
         harness.passBothPriorities();
@@ -35,7 +35,7 @@ class UmbralMantleTest extends BaseCardTest {
     @Test
     @DisplayName("Tapped equipped creature can untap and pay {3} to get +2/+2")
     void grantedAbilityGivesBoost() {
-        Permanent creature = addReadyCreature(player1);
+        Permanent creature = addCreatureReady(player1, new GrizzlyBears());
         creature.tap();
         Permanent mantle = addMantleReady(player1);
         mantle.setAttachedTo(creature.getId());
@@ -54,7 +54,7 @@ class UmbralMantleTest extends BaseCardTest {
     @Test
     @DisplayName("Boost wears off at end of turn")
     void boostWearsOffEndOfTurn() {
-        Permanent creature = addReadyCreature(player1);
+        Permanent creature = addCreatureReady(player1, new GrizzlyBears());
         creature.tap();
         Permanent mantle = addMantleReady(player1);
         mantle.setAttachedTo(creature.getId());
@@ -75,7 +75,7 @@ class UmbralMantleTest extends BaseCardTest {
     @Test
     @DisplayName("Untapped equipped creature cannot activate the granted ability")
     void cannotActivateWhenUntapped() {
-        Permanent creature = addReadyCreature(player1);
+        Permanent creature = addCreatureReady(player1, new GrizzlyBears());
         Permanent mantle = addMantleReady(player1);
         mantle.setAttachedTo(creature.getId());
         harness.addMana(player1, ManaColor.COLORLESS, 3);
@@ -90,7 +90,7 @@ class UmbralMantleTest extends BaseCardTest {
     @Test
     @DisplayName("Creature loses granted ability when Umbral Mantle is removed")
     void creatureLosesAbilityWhenRemoved() {
-        Permanent creature = addReadyCreature(player1);
+        Permanent creature = addCreatureReady(player1, new GrizzlyBears());
         creature.tap();
         Permanent mantle = addMantleReady(player1);
         mantle.setAttachedTo(creature.getId());
@@ -107,13 +107,6 @@ class UmbralMantleTest extends BaseCardTest {
 
     private Permanent addMantleReady(Player player) {
         Permanent perm = new Permanent(new UmbralMantle());
-        perm.setSummoningSick(false);
-        gd.playerBattlefields.get(player.getId()).add(perm);
-        return perm;
-    }
-
-    private Permanent addReadyCreature(Player player) {
-        Permanent perm = new Permanent(new GrizzlyBears());
         perm.setSummoningSick(false);
         gd.playerBattlefields.get(player.getId()).add(perm);
         return perm;

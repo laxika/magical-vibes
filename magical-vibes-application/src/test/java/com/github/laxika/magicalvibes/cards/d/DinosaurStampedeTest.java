@@ -1,11 +1,9 @@
 package com.github.laxika.magicalvibes.cards.d;
 
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
-import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.Keyword;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
-import com.github.laxika.magicalvibes.model.Player;
 import com.github.laxika.magicalvibes.model.TurnStep;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
 import org.junit.jupiter.api.DisplayName;
@@ -22,7 +20,7 @@ class DinosaurStampedeTest extends BaseCardTest {
     @Test
     @DisplayName("Attacking Dinosaur gets +2/+0 and trample")
     void attackingDinosaurGetsBothEffects() {
-        Permanent dino = addReadyCreature(player1, new DeathgorgeScavenger()); // 3/2 Dinosaur
+        Permanent dino = addCreatureReady(player1, new DeathgorgeScavenger()); // 3/2 Dinosaur
         dino.setAttacking(true);
 
         harness.setHand(player1, List.of(new DinosaurStampede()));
@@ -40,7 +38,7 @@ class DinosaurStampedeTest extends BaseCardTest {
     @Test
     @DisplayName("Attacking non-Dinosaur gets +2/+0 but not trample")
     void attackingNonDinosaurGetsBoostOnly() {
-        Permanent bear = addReadyCreature(player1, new GrizzlyBears()); // 2/2 Bear
+        Permanent bear = addCreatureReady(player1, new GrizzlyBears()); // 2/2 Bear
         bear.setAttacking(true);
 
         harness.setHand(player1, List.of(new DinosaurStampede()));
@@ -58,7 +56,7 @@ class DinosaurStampedeTest extends BaseCardTest {
     @Test
     @DisplayName("Non-attacking Dinosaur gets trample but not +2/+0")
     void nonAttackingDinosaurGetsTrampleOnly() {
-        Permanent dino = addReadyCreature(player1, new DeathgorgeScavenger()); // 3/2 Dinosaur
+        Permanent dino = addCreatureReady(player1, new DeathgorgeScavenger()); // 3/2 Dinosaur
 
         harness.setHand(player1, List.of(new DinosaurStampede()));
         harness.addMana(player1, ManaColor.RED, 3);
@@ -75,7 +73,7 @@ class DinosaurStampedeTest extends BaseCardTest {
     @Test
     @DisplayName("Non-attacking non-Dinosaur gets nothing")
     void nonAttackingNonDinosaurGetsNothing() {
-        Permanent bear = addReadyCreature(player1, new GrizzlyBears()); // 2/2 Bear
+        Permanent bear = addCreatureReady(player1, new GrizzlyBears()); // 2/2 Bear
 
         harness.setHand(player1, List.of(new DinosaurStampede()));
         harness.addMana(player1, ManaColor.RED, 3);
@@ -92,9 +90,9 @@ class DinosaurStampedeTest extends BaseCardTest {
     @Test
     @DisplayName("Opponent's Dinosaurs do not gain trample")
     void opponentDinosaursDoNotGainTrample() {
-        Permanent ownDino = addReadyCreature(player1, new DeathgorgeScavenger());
+        Permanent ownDino = addCreatureReady(player1, new DeathgorgeScavenger());
         ownDino.setAttacking(true);
-        Permanent opponentDino = addReadyCreature(player2, new DeathgorgeScavenger());
+        Permanent opponentDino = addCreatureReady(player2, new DeathgorgeScavenger());
 
         harness.setHand(player1, List.of(new DinosaurStampede()));
         harness.addMana(player1, ManaColor.RED, 3);
@@ -110,7 +108,7 @@ class DinosaurStampedeTest extends BaseCardTest {
     @Test
     @DisplayName("Effects wear off at end of turn")
     void effectsWearOffAtEndOfTurn() {
-        Permanent dino = addReadyCreature(player1, new DeathgorgeScavenger());
+        Permanent dino = addCreatureReady(player1, new DeathgorgeScavenger());
         dino.setAttacking(true);
 
         harness.setHand(player1, List.of(new DinosaurStampede()));
@@ -130,12 +128,5 @@ class DinosaurStampedeTest extends BaseCardTest {
         assertThat(dino.getEffectivePower()).isEqualTo(3);
         assertThat(dino.getEffectiveToughness()).isEqualTo(2);
         assertThat(dino.hasKeyword(Keyword.TRAMPLE)).isFalse();
-    }
-
-    private Permanent addReadyCreature(Player player, Card card) {
-        Permanent permanent = new Permanent(card);
-        permanent.setSummoningSick(false);
-        gd.playerBattlefields.get(player.getId()).add(permanent);
-        return permanent;
     }
 }

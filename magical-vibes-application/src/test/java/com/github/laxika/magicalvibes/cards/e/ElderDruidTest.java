@@ -27,7 +27,7 @@ class ElderDruidTest extends BaseCardTest {
     @DisplayName("Activating ability puts it on the stack targeting a creature")
     void activatingTargetingCreaturePutsOnStack() {
         addReadyDruid(player1);
-        Permanent target = addReadyCreature(player2);
+        Permanent target = addCreatureReady(player2, new GrizzlyBears());
         addDruidMana(player1);
 
         harness.activateAbility(player1, 0, null, target.getId());
@@ -43,7 +43,7 @@ class ElderDruidTest extends BaseCardTest {
     @DisplayName("Activating ability taps Elder Druid")
     void activatingTapsDruid() {
         Permanent druid = addReadyDruid(player1);
-        Permanent target = addReadyCreature(player2);
+        Permanent target = addCreatureReady(player2, new GrizzlyBears());
         addDruidMana(player1);
 
         harness.activateAbility(player1, 0, null, target.getId());
@@ -55,7 +55,7 @@ class ElderDruidTest extends BaseCardTest {
     @DisplayName("Resolving taps an untapped target creature")
     void resolvingTapsUntappedCreature() {
         addReadyDruid(player1);
-        Permanent target = addReadyCreature(player2);
+        Permanent target = addCreatureReady(player2, new GrizzlyBears());
         addDruidMana(player1);
 
         harness.activateAbility(player1, 0, null, target.getId());
@@ -70,7 +70,7 @@ class ElderDruidTest extends BaseCardTest {
     @DisplayName("Resolving untaps a tapped target creature")
     void resolvingUntapsTappedCreature() {
         addReadyDruid(player1);
-        Permanent target = addReadyCreature(player2);
+        Permanent target = addCreatureReady(player2, new GrizzlyBears());
         target.tap();
         addDruidMana(player1);
 
@@ -131,7 +131,7 @@ class ElderDruidTest extends BaseCardTest {
         druid.setSummoningSick(true);
         harness.getGameData().playerBattlefields.get(player1.getId()).add(druid);
 
-        Permanent target = addReadyCreature(player2);
+        Permanent target = addCreatureReady(player2, new GrizzlyBears());
         addDruidMana(player1);
 
         assertThatThrownBy(() -> harness.activateAbility(player1, 0, null, target.getId()))
@@ -144,7 +144,7 @@ class ElderDruidTest extends BaseCardTest {
     @DisplayName("Mana is consumed when activating ability")
     void manaIsConsumed() {
         addReadyDruid(player1);
-        Permanent target = addReadyCreature(player2);
+        Permanent target = addCreatureReady(player2, new GrizzlyBears());
         addDruidMana(player1);
 
         harness.activateAbility(player1, 0, null, target.getId());
@@ -159,7 +159,7 @@ class ElderDruidTest extends BaseCardTest {
     @DisplayName("Ability fizzles if target is removed before resolution")
     void fizzlesIfTargetRemoved() {
         addReadyDruid(player1);
-        Permanent target = addReadyCreature(player2);
+        Permanent target = addCreatureReady(player2, new GrizzlyBears());
         addDruidMana(player1);
 
         harness.activateAbility(player1, 0, null, target.getId());
@@ -180,14 +180,6 @@ class ElderDruidTest extends BaseCardTest {
 
     private Permanent addReadyDruid(Player player) {
         ElderDruid card = new ElderDruid();
-        Permanent perm = new Permanent(card);
-        perm.setSummoningSick(false);
-        harness.getGameData().playerBattlefields.get(player.getId()).add(perm);
-        return perm;
-    }
-
-    private Permanent addReadyCreature(Player player) {
-        GrizzlyBears card = new GrizzlyBears();
         Permanent perm = new Permanent(card);
         perm.setSummoningSick(false);
         harness.getGameData().playerBattlefields.get(player.getId()).add(perm);

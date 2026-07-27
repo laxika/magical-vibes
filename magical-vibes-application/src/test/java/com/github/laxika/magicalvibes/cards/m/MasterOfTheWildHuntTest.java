@@ -63,7 +63,7 @@ class MasterOfTheWildHuntTest extends BaseCardTest {
         Permanent wolf2 = addReadyWolf(player1);
 
         // Opponent has a 2/2
-        Permanent target = addReadyCreature(player2, new GrizzlyBears());
+        Permanent target = addCreatureReady(player2, new GrizzlyBears());
 
         harness.activateAbility(player1, 0, null, target.getId());
         harness.passBothPriorities(); // resolve ability
@@ -82,7 +82,7 @@ class MasterOfTheWildHuntTest extends BaseCardTest {
         Permanent wolf1 = addReadyWolf(player1);
         Permanent wolf2 = addReadyWolf(player1);
 
-        Permanent target = addReadyCreature(player2, new GrizzlyBears());
+        Permanent target = addCreatureReady(player2, new GrizzlyBears());
 
         harness.activateAbility(player1, 0, null, target.getId());
         harness.passBothPriorities();
@@ -97,7 +97,7 @@ class MasterOfTheWildHuntTest extends BaseCardTest {
         Permanent master = addReadyMaster(player1);
         addReadyWolf(player1);
 
-        Permanent target = addReadyCreature(player2, new GrizzlyBears());
+        Permanent target = addCreatureReady(player2, new GrizzlyBears());
 
         harness.activateAbility(player1, 0, null, target.getId());
 
@@ -112,7 +112,7 @@ class MasterOfTheWildHuntTest extends BaseCardTest {
         Permanent wolf2 = addReadyWolf(player1);
 
         // Opponent's 2/2 deals 2 damage divided among 2 wolves = 1 each
-        Permanent target = addReadyCreature(player2, new GrizzlyBears());
+        Permanent target = addCreatureReady(player2, new GrizzlyBears());
 
         harness.activateAbility(player1, 0, null, target.getId());
         harness.passBothPriorities();
@@ -174,7 +174,7 @@ class MasterOfTheWildHuntTest extends BaseCardTest {
         addReadyMaster(player1);
         // No wolves on the battlefield
 
-        Permanent target = addReadyCreature(player2, new GrizzlyBears());
+        Permanent target = addCreatureReady(player2, new GrizzlyBears());
 
         harness.activateAbility(player1, 0, null, target.getId());
         harness.passBothPriorities();
@@ -224,7 +224,7 @@ class MasterOfTheWildHuntTest extends BaseCardTest {
     void onlyWolvesTapped() {
         addReadyMaster(player1);
         Permanent wolf = addReadyWolf(player1);
-        Permanent nonWolf = addReadyCreature(player1, new GrizzlyBears()); // Bear, not Wolf
+        Permanent nonWolf = addCreatureReady(player1, new GrizzlyBears()); // Bear, not Wolf
 
         Permanent target = addReadyCreatureWithStats(player2, "Target", 1, 4);
 
@@ -266,13 +266,6 @@ class MasterOfTheWildHuntTest extends BaseCardTest {
 
     private Permanent addReadyWolf(Player player) {
         return addReadyCreatureWithSubtype(player, "Wolf", 2, 2, CardSubtype.WOLF);
-    }
-
-    private Permanent addReadyCreature(Player player, Card card) {
-        Permanent perm = new Permanent(card);
-        perm.setSummoningSick(false);
-        gd.playerBattlefields.get(player.getId()).add(perm);
-        return perm;
     }
 
     private Permanent addReadyCreatureWithStats(Player player, String name, int power, int toughness) {

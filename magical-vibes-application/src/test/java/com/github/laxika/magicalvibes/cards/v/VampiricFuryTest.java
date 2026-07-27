@@ -1,11 +1,9 @@
 package com.github.laxika.magicalvibes.cards.v;
 
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
-import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.Keyword;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
-import com.github.laxika.magicalvibes.model.Player;
 import com.github.laxika.magicalvibes.model.StackEntry;
 import com.github.laxika.magicalvibes.model.StackEntryType;
 import com.github.laxika.magicalvibes.model.TurnStep;
@@ -24,7 +22,7 @@ class VampiricFuryTest extends BaseCardTest {
     @Test
     @DisplayName("Vampiric Fury gives Vampire creatures +2/+0 and first strike")
     void buffsVampireCreatures() {
-        Permanent vampire = addReadyCreature(player1, new VampireAristocrat()); // 2/2 Vampire
+        Permanent vampire = addCreatureReady(player1, new VampireAristocrat()); // 2/2 Vampire
         harness.setHand(player1, List.of(new VampiricFury()));
         harness.addMana(player1, ManaColor.RED, 2);
 
@@ -39,7 +37,7 @@ class VampiricFuryTest extends BaseCardTest {
     @Test
     @DisplayName("Vampiric Fury does not affect non-Vampire creatures")
     void doesNotBuffNonVampires() {
-        Permanent bear = addReadyCreature(player1, new GrizzlyBears()); // 2/2 Bear
+        Permanent bear = addCreatureReady(player1, new GrizzlyBears()); // 2/2 Bear
         harness.setHand(player1, List.of(new VampiricFury()));
         harness.addMana(player1, ManaColor.RED, 2);
 
@@ -54,8 +52,8 @@ class VampiricFuryTest extends BaseCardTest {
     @Test
     @DisplayName("Vampiric Fury does not affect opponent's Vampires")
     void doesNotBuffOpponentVampires() {
-        Permanent ownVampire = addReadyCreature(player1, new VampireAristocrat());
-        Permanent opponentVampire = addReadyCreature(player2, new VampireAristocrat());
+        Permanent ownVampire = addCreatureReady(player1, new VampireAristocrat());
+        Permanent opponentVampire = addCreatureReady(player2, new VampireAristocrat());
         harness.setHand(player1, List.of(new VampiricFury()));
         harness.addMana(player1, ManaColor.RED, 2);
 
@@ -72,7 +70,7 @@ class VampiricFuryTest extends BaseCardTest {
     @Test
     @DisplayName("Vampiric Fury effects wear off at end of turn")
     void effectsWearOffAtEndOfTurn() {
-        Permanent vampire = addReadyCreature(player1, new VampireAristocrat());
+        Permanent vampire = addCreatureReady(player1, new VampireAristocrat());
         harness.setHand(player1, List.of(new VampiricFury()));
         harness.addMana(player1, ManaColor.RED, 2);
 
@@ -103,12 +101,5 @@ class VampiricFuryTest extends BaseCardTest {
         StackEntry entry = gd.stack.getFirst();
         assertThat(entry.getEntryType()).isEqualTo(StackEntryType.INSTANT_SPELL);
         assertThat(entry.getCard().getName()).isEqualTo("Vampiric Fury");
-    }
-
-    private Permanent addReadyCreature(Player player, Card card) {
-        Permanent permanent = new Permanent(card);
-        permanent.setSummoningSick(false);
-        gd.playerBattlefields.get(player.getId()).add(permanent);
-        return permanent;
     }
 }

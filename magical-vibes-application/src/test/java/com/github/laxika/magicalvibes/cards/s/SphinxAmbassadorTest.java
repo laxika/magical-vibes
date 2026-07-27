@@ -8,9 +8,7 @@ import com.github.laxika.magicalvibes.model.PendingInteraction;
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.PendingSphinxAmbassadorChoice;
-import com.github.laxika.magicalvibes.model.GameData;
 import com.github.laxika.magicalvibes.model.Permanent;
-import com.github.laxika.magicalvibes.model.Player;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
@@ -21,20 +19,12 @@ import static org.assertj.core.api.Assertions.assertThat;
 
 class SphinxAmbassadorTest extends BaseCardTest {
 
-    private Permanent addReadyCreature(Player player, Card card) {
-        GameData gd = harness.getGameData();
-        Permanent perm = new Permanent(card);
-        perm.setSummoningSick(false);
-        gd.playerBattlefields.get(player.getId()).add(perm);
-        return perm;
-    }
-
     // ===== Combat damage trigger =====
 
     @Test
     @DisplayName("Combat damage to player initiates library search of that player's library")
     void combatDamageTriggerInitiatesLibrarySearch() {
-        Permanent sphinx = addReadyCreature(player1, new SphinxAmbassador());
+        Permanent sphinx = addCreatureReady(player1, new SphinxAmbassador());
         sphinx.setAttacking(true);
 
         // Put known cards in opponent's library
@@ -56,7 +46,7 @@ class SphinxAmbassadorTest extends BaseCardTest {
     @Test
     @DisplayName("Selected creature with wrong name guess can be put onto battlefield under controller's control")
     void creatureWrongNamePutOntoBattlefield() {
-        Permanent sphinx = addReadyCreature(player1, new SphinxAmbassador());
+        Permanent sphinx = addCreatureReady(player1, new SphinxAmbassador());
         sphinx.setAttacking(true);
 
         Card bears = new GrizzlyBears();
@@ -97,7 +87,7 @@ class SphinxAmbassadorTest extends BaseCardTest {
     @Test
     @DisplayName("Selected creature with correct name guess returns card to library")
     void creatureCorrectNameReturnsToLibrary() {
-        Permanent sphinx = addReadyCreature(player1, new SphinxAmbassador());
+        Permanent sphinx = addCreatureReady(player1, new SphinxAmbassador());
         sphinx.setAttacking(true);
 
         Card bears = new GrizzlyBears();
@@ -131,7 +121,7 @@ class SphinxAmbassadorTest extends BaseCardTest {
     @Test
     @DisplayName("Selected non-creature card returns to library regardless of name guess")
     void nonCreatureReturnsToLibrary() {
-        Permanent sphinx = addReadyCreature(player1, new SphinxAmbassador());
+        Permanent sphinx = addCreatureReady(player1, new SphinxAmbassador());
         sphinx.setAttacking(true);
 
         Card shock = new Shock();
@@ -168,7 +158,7 @@ class SphinxAmbassadorTest extends BaseCardTest {
     @Test
     @DisplayName("Non-creature card name is not revealed in log when conditions not met")
     void nonCreatureCardNameNotRevealed() {
-        Permanent sphinx = addReadyCreature(player1, new SphinxAmbassador());
+        Permanent sphinx = addCreatureReady(player1, new SphinxAmbassador());
         sphinx.setAttacking(true);
 
         Card shock = new Shock();
@@ -189,7 +179,7 @@ class SphinxAmbassadorTest extends BaseCardTest {
     @Test
     @DisplayName("Controller declining may ability returns creature to library and shuffles")
     void declineMayAbilityReturnsCreatureToLibrary() {
-        Permanent sphinx = addReadyCreature(player1, new SphinxAmbassador());
+        Permanent sphinx = addCreatureReady(player1, new SphinxAmbassador());
         sphinx.setAttacking(true);
 
         Card bears = new GrizzlyBears();
@@ -222,7 +212,7 @@ class SphinxAmbassadorTest extends BaseCardTest {
     @Test
     @DisplayName("Opponent's library is shuffled after the interaction completes")
     void libraryIsShuffled() {
-        Permanent sphinx = addReadyCreature(player1, new SphinxAmbassador());
+        Permanent sphinx = addCreatureReady(player1, new SphinxAmbassador());
         sphinx.setAttacking(true);
 
         Card bears = new GrizzlyBears();
@@ -245,7 +235,7 @@ class SphinxAmbassadorTest extends BaseCardTest {
     @DisplayName("Sphinx Ambassador deals combat damage even during the search flow")
     void dealsCombatDamage() {
         harness.setLife(player2, 20);
-        Permanent sphinx = addReadyCreature(player1, new SphinxAmbassador());
+        Permanent sphinx = addCreatureReady(player1, new SphinxAmbassador());
         sphinx.setAttacking(true);
 
         gd.playerDecks.get(player2.getId()).clear();
@@ -262,7 +252,7 @@ class SphinxAmbassadorTest extends BaseCardTest {
     @Test
     @DisplayName("Empty opponent library skips search")
     void emptyLibrarySkipsSearch() {
-        Permanent sphinx = addReadyCreature(player1, new SphinxAmbassador());
+        Permanent sphinx = addCreatureReady(player1, new SphinxAmbassador());
         sphinx.setAttacking(true);
 
         gd.playerDecks.get(player2.getId()).clear();

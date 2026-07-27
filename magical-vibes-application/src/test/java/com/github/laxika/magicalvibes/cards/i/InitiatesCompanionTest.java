@@ -4,7 +4,6 @@ import com.github.laxika.magicalvibes.cards.f.Forest;
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
 import com.github.laxika.magicalvibes.cards.h.HowlingMine;
 import com.github.laxika.magicalvibes.model.Card;
-import com.github.laxika.magicalvibes.model.GameData;
 import com.github.laxika.magicalvibes.model.PendingInteraction;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.Player;
@@ -19,14 +18,6 @@ import static org.assertj.core.api.Assertions.assertThat;
 
 class InitiatesCompanionTest extends BaseCardTest {
 
-    private Permanent addReadyCreature(Player player, Card card) {
-        GameData gd = harness.getGameData();
-        Permanent perm = new Permanent(card);
-        perm.setSummoningSick(false);
-        gd.playerBattlefields.get(player.getId()).add(perm);
-        return perm;
-    }
-
     private Permanent addTappedPermanent(Player player, Card card) {
         Permanent perm = new Permanent(card);
         perm.tap();
@@ -37,10 +28,10 @@ class InitiatesCompanionTest extends BaseCardTest {
     @Test
     @DisplayName("Combat damage to a player prompts a choice of any creature or land, excluding other permanents")
     void promptsToChooseCreatureOrLand() {
-        Permanent companion = addReadyCreature(player1, new InitiatesCompanion());
+        Permanent companion = addCreatureReady(player1, new InitiatesCompanion());
         companion.setAttacking(true);
         Permanent ownLand = addTappedPermanent(player1, new Forest());
-        Permanent enemyCreature = addReadyCreature(player2, new GrizzlyBears());
+        Permanent enemyCreature = addCreatureReady(player2, new GrizzlyBears());
         Permanent enemyArtifact = addTappedPermanent(player2, new HowlingMine());
 
         resolveCombat();
@@ -55,9 +46,9 @@ class InitiatesCompanionTest extends BaseCardTest {
     @Test
     @DisplayName("The chosen creature is untapped and the game advances")
     void untapsChosenCreature() {
-        Permanent companion = addReadyCreature(player1, new InitiatesCompanion());
+        Permanent companion = addCreatureReady(player1, new InitiatesCompanion());
         companion.setAttacking(true);
-        Permanent tappedCreature = addReadyCreature(player1, new GrizzlyBears());
+        Permanent tappedCreature = addCreatureReady(player1, new GrizzlyBears());
         tappedCreature.tap();
 
         resolveCombat();
@@ -72,7 +63,7 @@ class InitiatesCompanionTest extends BaseCardTest {
     @Test
     @DisplayName("The chosen land is untapped")
     void untapsChosenLand() {
-        Permanent companion = addReadyCreature(player1, new InitiatesCompanion());
+        Permanent companion = addCreatureReady(player1, new InitiatesCompanion());
         companion.setAttacking(true);
         Permanent tappedLand = addTappedPermanent(player1, new Forest());
 

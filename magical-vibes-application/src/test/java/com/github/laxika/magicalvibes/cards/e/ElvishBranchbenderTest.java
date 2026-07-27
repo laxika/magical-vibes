@@ -3,7 +3,6 @@ package com.github.laxika.magicalvibes.cards.e;
 import com.github.laxika.magicalvibes.cards.f.Forest;
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
 import com.github.laxika.magicalvibes.cards.l.LlanowarElves;
-import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardSubtype;
 import com.github.laxika.magicalvibes.model.CardType;
 import com.github.laxika.magicalvibes.model.Permanent;
@@ -62,8 +61,8 @@ class ElvishBranchbenderTest extends BaseCardTest {
         // Branchbender + two Llanowar Elves = 3 Elves → 3/3.
         addReadyBranchbender(player1);
         Permanent forest = addForest(player1);
-        addReadyCreature(player1, new LlanowarElves());
-        addReadyCreature(player1, new LlanowarElves());
+        addCreatureReady(player1, new LlanowarElves());
+        addCreatureReady(player1, new LlanowarElves());
 
         harness.activateAbility(player1, 0, null, forest.getId());
         harness.passBothPriorities();
@@ -95,7 +94,7 @@ class ElvishBranchbenderTest extends BaseCardTest {
     @DisplayName("Cannot target a permanent that is not a Forest")
     void cannotTargetNonForest() {
         addReadyBranchbender(player1);
-        Permanent bear = addReadyCreature(player1, new GrizzlyBears());
+        Permanent bear = addCreatureReady(player1, new GrizzlyBears());
 
         assertThatThrownBy(() -> harness.activateAbility(player1, 0, null, bear.getId()))
                 .isInstanceOf(IllegalStateException.class);
@@ -112,13 +111,6 @@ class ElvishBranchbenderTest extends BaseCardTest {
 
     private Permanent addForest(Player player) {
         Permanent perm = new Permanent(new Forest());
-        gd.playerBattlefields.get(player.getId()).add(perm);
-        return perm;
-    }
-
-    private Permanent addReadyCreature(Player player, Card card) {
-        Permanent perm = new Permanent(card);
-        perm.setSummoningSick(false);
         gd.playerBattlefields.get(player.getId()).add(perm);
         return perm;
     }

@@ -90,7 +90,7 @@ class CircleOfProtectionBlueTest extends BaseCardTest {
     @DisplayName("Non-blue permanents are not valid source choices")
     void nonBlueSourceNotValid() {
         addReadyCircle(player1);
-        addReadyCreature(player2);
+        addCreatureReady(player2, new GrizzlyBears());
         harness.addMana(player1, ManaColor.WHITE, 1);
 
         harness.activateAbility(player1, 0, null, null);
@@ -131,13 +131,6 @@ class CircleOfProtectionBlueTest extends BaseCardTest {
 
     private Permanent addReadyBlueCreature(Player player) {
         Permanent perm = new Permanent(new FugitiveWizard());
-        perm.setSummoningSick(false);
-        gd.playerBattlefields.get(player.getId()).add(perm);
-        return perm;
-    }
-
-    private Permanent addReadyCreature(Player player) {
-        Permanent perm = new Permanent(new GrizzlyBears());
         perm.setSummoningSick(false);
         gd.playerBattlefields.get(player.getId()).add(perm);
         return perm;

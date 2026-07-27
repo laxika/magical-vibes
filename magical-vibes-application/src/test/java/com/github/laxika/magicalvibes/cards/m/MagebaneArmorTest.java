@@ -50,7 +50,7 @@ class MagebaneArmorTest extends BaseCardTest {
     @DisplayName("Resolving equip attaches Magebane Armor to target creature")
     void resolvingEquipAttaches() {
         Permanent armor = addArmorReady(player1);
-        Permanent creature = addReadyCreature(player1);
+        Permanent creature = addCreatureReady(player1, new GrizzlyBears());
         harness.addMana(player1, ManaColor.COLORLESS, 2);
 
         harness.activateAbility(player1, 0, null, creature.getId());
@@ -65,7 +65,7 @@ class MagebaneArmorTest extends BaseCardTest {
     @Test
     @DisplayName("Equipped creature gets +2/+4")
     void equippedCreatureGetsBoost() {
-        Permanent creature = addReadyCreature(player1);
+        Permanent creature = addCreatureReady(player1, new GrizzlyBears());
         Permanent armor = addArmorReady(player1);
         armor.setAttachedTo(creature.getId());
 
@@ -76,7 +76,7 @@ class MagebaneArmorTest extends BaseCardTest {
     @Test
     @DisplayName("Creature loses boost when Magebane Armor is removed")
     void creatureLosesBoostWhenArmorRemoved() {
-        Permanent creature = addReadyCreature(player1);
+        Permanent creature = addCreatureReady(player1, new GrizzlyBears());
         Permanent armor = addArmorReady(player1);
         armor.setAttachedTo(creature.getId());
 
@@ -119,7 +119,7 @@ class MagebaneArmorTest extends BaseCardTest {
     @Test
     @DisplayName("Equipped creature without flying is unaffected by loses flying")
     void equippedNonFlyingCreatureUnaffected() {
-        Permanent creature = addReadyCreature(player1);
+        Permanent creature = addCreatureReady(player1, new GrizzlyBears());
         Permanent armor = addArmorReady(player1);
         armor.setAttachedTo(creature.getId());
 
@@ -131,7 +131,7 @@ class MagebaneArmorTest extends BaseCardTest {
     @Test
     @DisplayName("Noncombat damage to equipped creature is prevented")
     void noncombatDamageToEquippedCreatureIsPrevented() {
-        Permanent creature = addReadyCreature(player1);
+        Permanent creature = addCreatureReady(player1, new GrizzlyBears());
         Permanent armor = addArmorReady(player1);
         armor.setAttachedTo(creature.getId());
 
@@ -155,13 +155,13 @@ class MagebaneArmorTest extends BaseCardTest {
         harness.setLife(player2, 20);
 
         // Player1 has a creature equipped with Magebane Armor
-        Permanent defender = addReadyCreature(player1);
+        Permanent defender = addCreatureReady(player1, new GrizzlyBears());
         Permanent armor = addArmorReady(player1);
         armor.setAttachedTo(defender.getId());
         // 2/2 creature becomes 4/6 with armor
 
         // Player2 attacks with a creature
-        Permanent attacker = addReadyCreature(player2);
+        Permanent attacker = addCreatureReady(player2, new GrizzlyBears());
         attacker.setAttacking(true);
 
         // Defender blocks
@@ -181,7 +181,7 @@ class MagebaneArmorTest extends BaseCardTest {
     @Test
     @DisplayName("Noncombat damage prevention does not apply to unequipped creature")
     void noncombatDamageNotPreventedOnUnequippedCreature() {
-        Permanent creature = addReadyCreature(player1);
+        Permanent creature = addCreatureReady(player1, new GrizzlyBears());
         addArmorReady(player1); // Armor on battlefield but not attached
 
         // Lightning Bolt targets the unequipped creature
@@ -205,7 +205,7 @@ class MagebaneArmorTest extends BaseCardTest {
     void reEquipTransfersEffects() {
         Permanent armor = addArmorReady(player1);
         Permanent creature1 = addReadyFlyingCreature(player1);
-        Permanent creature2 = addReadyCreature(player1);
+        Permanent creature2 = addCreatureReady(player1, new GrizzlyBears());
         armor.setAttachedTo(creature1.getId());
 
         // creature1 (Azure Drake 2/4) gets boost, loses flying
@@ -231,13 +231,6 @@ class MagebaneArmorTest extends BaseCardTest {
 
     private Permanent addArmorReady(Player player) {
         Permanent perm = new Permanent(new MagebaneArmor());
-        perm.setSummoningSick(false);
-        gd.playerBattlefields.get(player.getId()).add(perm);
-        return perm;
-    }
-
-    private Permanent addReadyCreature(Player player) {
-        Permanent perm = new Permanent(new GrizzlyBears());
         perm.setSummoningSick(false);
         gd.playerBattlefields.get(player.getId()).add(perm);
         return perm;

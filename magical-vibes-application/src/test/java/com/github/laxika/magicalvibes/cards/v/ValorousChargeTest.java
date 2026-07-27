@@ -2,10 +2,8 @@ package com.github.laxika.magicalvibes.cards.v;
 
 import com.github.laxika.magicalvibes.cards.e.EliteVanguard;
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
-import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
-import com.github.laxika.magicalvibes.model.Player;
 import com.github.laxika.magicalvibes.model.TurnStep;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
 import org.junit.jupiter.api.DisplayName;
@@ -20,8 +18,8 @@ class ValorousChargeTest extends BaseCardTest {
     @Test
     @DisplayName("White creatures get +2/+0, non-white creatures are unaffected")
     void boostsOnlyWhiteCreatures() {
-        Permanent whiteCreature = addReadyCreature(player1, new EliteVanguard()); // 2/1 White
-        Permanent greenCreature = addReadyCreature(player1, new GrizzlyBears());  // 2/2 Green
+        Permanent whiteCreature = addCreatureReady(player1, new EliteVanguard()); // 2/1 White
+        Permanent greenCreature = addCreatureReady(player1, new GrizzlyBears());  // 2/2 Green
 
         castValorousCharge();
 
@@ -35,8 +33,8 @@ class ValorousChargeTest extends BaseCardTest {
     @Test
     @DisplayName("Opponent's white creatures also get +2/+0")
     void boostsAllPlayersWhiteCreatures() {
-        Permanent ownWhite = addReadyCreature(player1, new EliteVanguard());
-        Permanent opponentWhite = addReadyCreature(player2, new EliteVanguard());
+        Permanent ownWhite = addCreatureReady(player1, new EliteVanguard());
+        Permanent opponentWhite = addCreatureReady(player2, new EliteVanguard());
 
         castValorousCharge();
 
@@ -47,7 +45,7 @@ class ValorousChargeTest extends BaseCardTest {
     @Test
     @DisplayName("Boost wears off at end of turn")
     void boostWearsOffAtEndOfTurn() {
-        Permanent whiteCreature = addReadyCreature(player1, new EliteVanguard());
+        Permanent whiteCreature = addCreatureReady(player1, new EliteVanguard());
 
         castValorousCharge();
 
@@ -67,12 +65,5 @@ class ValorousChargeTest extends BaseCardTest {
         harness.forceActivePlayer(player1);
         harness.forceStep(TurnStep.PRECOMBAT_MAIN);
         harness.castAndResolveInstant(player1, 0);
-    }
-
-    private Permanent addReadyCreature(Player player, Card card) {
-        Permanent permanent = new Permanent(card);
-        permanent.setSummoningSick(false);
-        gd.playerBattlefields.get(player.getId()).add(permanent);
-        return permanent;
     }
 }

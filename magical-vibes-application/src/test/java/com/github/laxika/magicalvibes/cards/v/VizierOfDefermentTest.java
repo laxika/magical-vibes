@@ -2,7 +2,6 @@ package com.github.laxika.magicalvibes.cards.v;
 
 import com.github.laxika.magicalvibes.cards.g.GiantSpider;
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
-import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.Player;
@@ -22,7 +21,7 @@ class VizierOfDefermentTest extends BaseCardTest {
     @Test
     @DisplayName("Exiles a creature that attacked this turn")
     void exilesCreatureThatAttackedThisTurn() {
-        Permanent attacker = addReady(player2, new GrizzlyBears());
+        Permanent attacker = addCreatureReady(player2, new GrizzlyBears());
         attacker.setAttacking(true); // attacked this turn
         UUID attackerId = attacker.getId();
 
@@ -39,9 +38,9 @@ class VizierOfDefermentTest extends BaseCardTest {
     @Test
     @DisplayName("Exiles a creature that blocked this turn — status survives into the postcombat main phase")
     void exilesCreatureThatBlockedThisTurn() {
-        Permanent attacker = addReady(player1, new GrizzlyBears());
+        Permanent attacker = addCreatureReady(player1, new GrizzlyBears());
         attacker.setAttacking(true);
-        addReady(player2, new GiantSpider()); // blocker
+        addCreatureReady(player2, new GiantSpider()); // blocker
         declareBlock();
 
         UUID blockerId = harness.getPermanentId(player2, "Giant Spider");
@@ -61,7 +60,7 @@ class VizierOfDefermentTest extends BaseCardTest {
     @Test
     @DisplayName("Exiled creature returns under its owner's control at the next end step")
     void exiledCreatureReturnsAtNextEndStep() {
-        Permanent attacker = addReady(player2, new GrizzlyBears());
+        Permanent attacker = addCreatureReady(player2, new GrizzlyBears());
         attacker.setAttacking(true);
         UUID attackerId = attacker.getId();
 
@@ -83,7 +82,7 @@ class VizierOfDefermentTest extends BaseCardTest {
     @Test
     @DisplayName("A creature that neither attacked nor blocked is not a legal target — ETB never triggers")
     void cannotTargetCreatureThatDidNotAttackOrBlock() {
-        addReady(player2, new GrizzlyBears()); // never attacked or blocked
+        addCreatureReady(player2, new GrizzlyBears()); // never attacked or blocked
 
         harness.setHand(player1, List.of(new VizierOfDeferment()));
         harness.addMana(player1, ManaColor.WHITE, 3);
@@ -100,7 +99,7 @@ class VizierOfDefermentTest extends BaseCardTest {
     @Test
     @DisplayName("Declining the may ability leaves the creature on the battlefield")
     void decliningMayDoesNotExile() {
-        Permanent attacker = addReady(player2, new GrizzlyBears());
+        Permanent attacker = addCreatureReady(player2, new GrizzlyBears());
         attacker.setAttacking(true);
 
         castVizierToMayPrompt(player1);
@@ -114,13 +113,6 @@ class VizierOfDefermentTest extends BaseCardTest {
     }
 
     // ===== Helpers =====
-
-    private Permanent addReady(Player player, Card card) {
-        Permanent perm = new Permanent(card);
-        perm.setSummoningSick(false);
-        gd.playerBattlefields.get(player.getId()).add(perm);
-        return perm;
-    }
 
     private void castVizierToMayPrompt(Player caster) {
         harness.setHand(caster, List.of(new VizierOfDeferment()));

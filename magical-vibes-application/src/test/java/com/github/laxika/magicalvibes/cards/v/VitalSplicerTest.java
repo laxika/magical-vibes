@@ -89,7 +89,7 @@ class VitalSplicerTest extends BaseCardTest {
     @DisplayName("Cannot target a non-Golem creature with regenerate ability")
     void cannotTargetNonGolem() {
         harness.addToBattlefield(player1, new VitalSplicer());
-        Permanent bears = addReadyCreature(player1, new GrizzlyBears());
+        Permanent bears = addCreatureReady(player1, new GrizzlyBears());
         harness.addMana(player1, ManaColor.COLORLESS, 1);
 
         assertThatThrownBy(() -> harness.activateAbility(player1, 0, null, bears.getId()))
@@ -151,13 +151,6 @@ class VitalSplicerTest extends BaseCardTest {
     }
 
     // ===== Helper methods =====
-
-    private Permanent addReadyCreature(Player player, Card card) {
-        Permanent permanent = new Permanent(card);
-        permanent.setSummoningSick(false);
-        gd.playerBattlefields.get(player.getId()).add(permanent);
-        return permanent;
-    }
 
     private Permanent addGolemToken(Player player) {
         Card golemCard = new Card();

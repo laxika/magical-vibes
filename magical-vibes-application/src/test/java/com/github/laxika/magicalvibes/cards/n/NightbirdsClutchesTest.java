@@ -5,7 +5,6 @@ import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
 import com.github.laxika.magicalvibes.model.GameData;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
-import com.github.laxika.magicalvibes.model.Player;
 import com.github.laxika.magicalvibes.model.TurnStep;
 import com.github.laxika.magicalvibes.networking.message.BlockerAssignment;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
@@ -23,8 +22,8 @@ class NightbirdsClutchesTest extends BaseCardTest {
     @Test
     @DisplayName("Up to two target creatures can't block this turn")
     void twoTargetsCantBlock() {
-        Permanent creature1 = addReadyCreature(player2);
-        Permanent creature2 = addReadyCreature(player2);
+        Permanent creature1 = addCreatureReady(player2, new GrizzlyBears());
+        Permanent creature2 = addCreatureReady(player2, new GrizzlyBears());
 
         harness.setHand(player1, List.of(new NightbirdsClutches()));
         harness.addMana(player1, ManaColor.RED, 1);
@@ -40,7 +39,7 @@ class NightbirdsClutchesTest extends BaseCardTest {
     @Test
     @DisplayName("Can target just one creature")
     void canTargetJustOne() {
-        Permanent creature = addReadyCreature(player2);
+        Permanent creature = addCreatureReady(player2, new GrizzlyBears());
 
         harness.setHand(player1, List.of(new NightbirdsClutches()));
         harness.addMana(player1, ManaColor.RED, 1);
@@ -55,9 +54,9 @@ class NightbirdsClutchesTest extends BaseCardTest {
     @Test
     @DisplayName("Cannot target more than two creatures")
     void cannotTargetMoreThanTwo() {
-        Permanent c1 = addReadyCreature(player2);
-        Permanent c2 = addReadyCreature(player2);
-        Permanent c3 = addReadyCreature(player2);
+        Permanent c1 = addCreatureReady(player2, new GrizzlyBears());
+        Permanent c2 = addCreatureReady(player2, new GrizzlyBears());
+        Permanent c3 = addCreatureReady(player2, new GrizzlyBears());
 
         harness.setHand(player1, List.of(new NightbirdsClutches()));
         harness.addMana(player1, ManaColor.RED, 1);
@@ -72,7 +71,7 @@ class NightbirdsClutchesTest extends BaseCardTest {
     @Test
     @DisplayName("Cannot target a noncreature permanent")
     void cannotTargetNonCreature() {
-        addReadyCreature(player2); // valid target so spell is playable
+        addCreatureReady(player2, new GrizzlyBears()); // valid target so spell is playable
         harness.addToBattlefield(player2, new FountainOfYouth());
         harness.setHand(player1, List.of(new NightbirdsClutches()));
         harness.addMana(player1, ManaColor.RED, 1);
@@ -88,8 +87,8 @@ class NightbirdsClutchesTest extends BaseCardTest {
     @Test
     @DisplayName("Targeted creature actually cannot block in combat")
     void targetedCreatureCannotBlock() {
-        Permanent attacker = addReadyCreature(player1);
-        Permanent blocker = addReadyCreature(player2);
+        Permanent attacker = addCreatureReady(player1, new GrizzlyBears());
+        Permanent blocker = addCreatureReady(player2, new GrizzlyBears());
 
         harness.setHand(player1, List.of(new NightbirdsClutches()));
         harness.addMana(player1, ManaColor.RED, 1);
@@ -113,8 +112,8 @@ class NightbirdsClutchesTest extends BaseCardTest {
     @Test
     @DisplayName("Skips targets that left the battlefield before resolution")
     void skipsRemovedTargets() {
-        Permanent creature1 = addReadyCreature(player2);
-        Permanent creature2 = addReadyCreature(player2);
+        Permanent creature1 = addCreatureReady(player2, new GrizzlyBears());
+        Permanent creature2 = addCreatureReady(player2, new GrizzlyBears());
 
         harness.setHand(player1, List.of(new NightbirdsClutches()));
         harness.addMana(player1, ManaColor.RED, 1);
@@ -134,7 +133,7 @@ class NightbirdsClutchesTest extends BaseCardTest {
     @Test
     @DisplayName("Goes to graveyard after resolving (normal cast)")
     void goesToGraveyardAfterResolving() {
-        Permanent creature = addReadyCreature(player2);
+        Permanent creature = addCreatureReady(player2, new GrizzlyBears());
         harness.setHand(player1, List.of(new NightbirdsClutches()));
         harness.addMana(player1, ManaColor.RED, 1);
         harness.addMana(player1, ManaColor.COLORLESS, 1);
@@ -149,8 +148,8 @@ class NightbirdsClutchesTest extends BaseCardTest {
     @Test
     @DisplayName("Flashback makes target creatures unable to block")
     void flashbackMakesCreaturesUnableToBlock() {
-        Permanent creature1 = addReadyCreature(player2);
-        Permanent creature2 = addReadyCreature(player2);
+        Permanent creature1 = addCreatureReady(player2, new GrizzlyBears());
+        Permanent creature2 = addCreatureReady(player2, new GrizzlyBears());
 
         harness.setGraveyard(player1, List.of(new NightbirdsClutches()));
         harness.addMana(player1, ManaColor.RED, 1);
@@ -166,7 +165,7 @@ class NightbirdsClutchesTest extends BaseCardTest {
     @Test
     @DisplayName("Flashback exiles the spell after resolving")
     void flashbackExilesAfterResolving() {
-        Permanent creature = addReadyCreature(player2);
+        Permanent creature = addCreatureReady(player2, new GrizzlyBears());
 
         harness.setGraveyard(player1, List.of(new NightbirdsClutches()));
         harness.addMana(player1, ManaColor.RED, 1);
@@ -185,7 +184,7 @@ class NightbirdsClutchesTest extends BaseCardTest {
     @Test
     @DisplayName("Flashback pays the flashback cost, not the mana cost")
     void flashbackPaysFlashbackCost() {
-        Permanent creature = addReadyCreature(player2);
+        Permanent creature = addCreatureReady(player2, new GrizzlyBears());
 
         harness.setGraveyard(player1, List.of(new NightbirdsClutches()));
         // Flashback cost is {3}{R}
@@ -201,7 +200,7 @@ class NightbirdsClutchesTest extends BaseCardTest {
     @Test
     @DisplayName("Cannot cast flashback without enough mana")
     void flashbackFailsWithoutMana() {
-        Permanent creature = addReadyCreature(player2);
+        Permanent creature = addCreatureReady(player2, new GrizzlyBears());
 
         harness.setGraveyard(player1, List.of(new NightbirdsClutches()));
         // No mana added
@@ -213,7 +212,7 @@ class NightbirdsClutchesTest extends BaseCardTest {
     @Test
     @DisplayName("Flashback removes card from graveyard when cast")
     void flashbackRemovesFromGraveyard() {
-        Permanent creature = addReadyCreature(player2);
+        Permanent creature = addCreatureReady(player2, new GrizzlyBears());
 
         harness.setGraveyard(player1, List.of(new NightbirdsClutches()));
         harness.addMana(player1, ManaColor.RED, 1);
@@ -224,13 +223,5 @@ class NightbirdsClutchesTest extends BaseCardTest {
         GameData gd = harness.getGameData();
         assertThat(gd.playerGraveyards.get(player1.getId()))
                 .noneMatch(c -> c.getName().equals("Nightbird's Clutches"));
-    }
-
-    private Permanent addReadyCreature(Player player) {
-        GrizzlyBears card = new GrizzlyBears();
-        Permanent perm = new Permanent(card);
-        perm.setSummoningSick(false);
-        gd.playerBattlefields.get(player.getId()).add(perm);
-        return perm;
     }
 }

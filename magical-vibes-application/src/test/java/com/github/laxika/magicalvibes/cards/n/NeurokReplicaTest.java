@@ -24,7 +24,7 @@ class NeurokReplicaTest extends BaseCardTest {
     @DisplayName("Activating ability sacrifices Neurok Replica and puts ability on the stack")
     void activatingAbilitySacrificesAndPutsOnStack() {
         addReadyReplica(player1);
-        Permanent target = addReadyCreature(player2);
+        Permanent target = addCreatureReady(player2, new GrizzlyBears());
         harness.addMana(player1, ManaColor.COLORLESS, 1);
         harness.addMana(player1, ManaColor.BLUE, 1);
 
@@ -50,7 +50,7 @@ class NeurokReplicaTest extends BaseCardTest {
     @DisplayName("Resolving ability returns target creature to its owner's hand")
     void resolvingAbilityReturnsCreatureToHand() {
         addReadyReplica(player1);
-        Permanent target = addReadyCreature(player2);
+        Permanent target = addCreatureReady(player2, new GrizzlyBears());
         harness.addMana(player1, ManaColor.COLORLESS, 1);
         harness.addMana(player1, ManaColor.BLUE, 1);
 
@@ -68,7 +68,7 @@ class NeurokReplicaTest extends BaseCardTest {
     @DisplayName("Bounced creature does not go to graveyard")
     void bouncedCreatureDoesNotGoToGraveyard() {
         addReadyReplica(player1);
-        Permanent target = addReadyCreature(player2);
+        Permanent target = addCreatureReady(player2, new GrizzlyBears());
         harness.addMana(player1, ManaColor.COLORLESS, 1);
         harness.addMana(player1, ManaColor.BLUE, 1);
 
@@ -83,7 +83,7 @@ class NeurokReplicaTest extends BaseCardTest {
     @DisplayName("Can target own creature")
     void canTargetOwnCreature() {
         addReadyReplica(player1);
-        Permanent target = addReadyCreature(player1);
+        Permanent target = addCreatureReady(player1, new GrizzlyBears());
         harness.addMana(player1, ManaColor.COLORLESS, 1);
         harness.addMana(player1, ManaColor.BLUE, 1);
 
@@ -102,7 +102,7 @@ class NeurokReplicaTest extends BaseCardTest {
     @DisplayName("Cannot activate without enough mana")
     void cannotActivateWithoutEnoughMana() {
         addReadyReplica(player1);
-        Permanent target = addReadyCreature(player2);
+        Permanent target = addCreatureReady(player2, new GrizzlyBears());
 
         assertThatThrownBy(() -> harness.activateAbility(player1, 0, null, target.getId()))
                 .isInstanceOf(IllegalStateException.class);
@@ -112,7 +112,7 @@ class NeurokReplicaTest extends BaseCardTest {
     @DisplayName("Cannot activate with only colorless mana (needs blue)")
     void cannotActivateWithOnlyColorlessMana() {
         addReadyReplica(player1);
-        Permanent target = addReadyCreature(player2);
+        Permanent target = addCreatureReady(player2, new GrizzlyBears());
         harness.addMana(player1, ManaColor.COLORLESS, 2);
 
         assertThatThrownBy(() -> harness.activateAbility(player1, 0, null, target.getId()))
@@ -126,7 +126,7 @@ class NeurokReplicaTest extends BaseCardTest {
     void canActivateWithSummoningSickness() {
         NeurokReplica card = new NeurokReplica();
         harness.addToBattlefield(player1, card);
-        Permanent target = addReadyCreature(player2);
+        Permanent target = addCreatureReady(player2, new GrizzlyBears());
         harness.addMana(player1, ManaColor.COLORLESS, 1);
         harness.addMana(player1, ManaColor.BLUE, 1);
 
@@ -155,7 +155,7 @@ class NeurokReplicaTest extends BaseCardTest {
     @DisplayName("Ability fizzles if target creature is removed before resolution")
     void fizzlesIfTargetRemoved() {
         addReadyReplica(player1);
-        Permanent target = addReadyCreature(player2);
+        Permanent target = addCreatureReady(player2, new GrizzlyBears());
         harness.addMana(player1, ManaColor.COLORLESS, 1);
         harness.addMana(player1, ManaColor.BLUE, 1);
 
@@ -175,14 +175,6 @@ class NeurokReplicaTest extends BaseCardTest {
 
     private Permanent addReadyReplica(Player player) {
         NeurokReplica card = new NeurokReplica();
-        Permanent perm = new Permanent(card);
-        perm.setSummoningSick(false);
-        gd.playerBattlefields.get(player.getId()).add(perm);
-        return perm;
-    }
-
-    private Permanent addReadyCreature(Player player) {
-        GrizzlyBears card = new GrizzlyBears();
         Permanent perm = new Permanent(card);
         perm.setSummoningSick(false);
         gd.playerBattlefields.get(player.getId()).add(perm);

@@ -26,7 +26,7 @@ class ThornbiteStaffTest extends BaseCardTest {
     void grantedAbilityDeals1DamageToPlayer() {
         harness.setLife(player2, 20);
 
-        Permanent creature = addReadyCreature(player1);
+        Permanent creature = addCreatureReady(player1, new GrizzlyBears());
         Permanent staff = addStaffReady(player1);
         staff.setAttachedTo(creature.getId());
 
@@ -41,7 +41,7 @@ class ThornbiteStaffTest extends BaseCardTest {
     @Test
     @DisplayName("Creature loses the granted ability when the Staff is removed")
     void creatureLosesAbilityWhenStaffRemoved() {
-        Permanent creature = addReadyCreature(player1);
+        Permanent creature = addCreatureReady(player1, new GrizzlyBears());
         Permanent staff = addStaffReady(player1);
         staff.setAttachedTo(creature.getId());
 
@@ -58,7 +58,7 @@ class ThornbiteStaffTest extends BaseCardTest {
     @Test
     @DisplayName("Equipped creature untaps whenever a creature dies")
     void untapsEquippedCreatureWhenCreatureDies() {
-        Permanent creature = addReadyCreature(player1);
+        Permanent creature = addCreatureReady(player1, new GrizzlyBears());
         creature.tap();
         Permanent staff = addStaffReady(player1);
         staff.setAttachedTo(creature.getId());
@@ -75,7 +75,7 @@ class ThornbiteStaffTest extends BaseCardTest {
     @Test
     @DisplayName("Untap trigger fizzles while the Staff is unattached")
     void untapTriggerFizzlesWhenUnattached() {
-        Permanent creature = addReadyCreature(player1);
+        Permanent creature = addCreatureReady(player1, new GrizzlyBears());
         creature.tap();
         addStaffReady(player1); // left unattached
 
@@ -138,13 +138,6 @@ class ThornbiteStaffTest extends BaseCardTest {
 
     private Permanent addStaffReady(Player player) {
         Permanent perm = new Permanent(new ThornbiteStaff());
-        perm.setSummoningSick(false);
-        gd.playerBattlefields.get(player.getId()).add(perm);
-        return perm;
-    }
-
-    private Permanent addReadyCreature(Player player) {
-        Permanent perm = new Permanent(new GrizzlyBears());
         perm.setSummoningSick(false);
         gd.playerBattlefields.get(player.getId()).add(perm);
         return perm;

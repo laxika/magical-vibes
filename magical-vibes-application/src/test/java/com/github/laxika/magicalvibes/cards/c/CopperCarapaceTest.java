@@ -66,7 +66,7 @@ class CopperCarapaceTest extends BaseCardTest {
     @DisplayName("Resolving equip ability attaches Copper Carapace to target creature")
     void resolvingEquipAttachesToCreature() {
         Permanent carapace = addCarapaceReady(player1);
-        Permanent creature = addReadyCreature(player1);
+        Permanent creature = addCreatureReady(player1, new GrizzlyBears());
         harness.addMana(player1, ManaColor.WHITE, 3);
 
         harness.activateAbility(player1, 0, null, creature.getId());
@@ -81,7 +81,7 @@ class CopperCarapaceTest extends BaseCardTest {
     @Test
     @DisplayName("Equipped creature gets +2/+2")
     void equippedCreatureGetsBoost() {
-        Permanent creature = addReadyCreature(player1);
+        Permanent creature = addCreatureReady(player1, new GrizzlyBears());
         Permanent carapace = addCarapaceReady(player1);
         carapace.setAttachedTo(creature.getId());
 
@@ -92,7 +92,7 @@ class CopperCarapaceTest extends BaseCardTest {
     @Test
     @DisplayName("Equipped creature loses boost when Copper Carapace is removed")
     void creatureLosesBoostWhenEquipmentRemoved() {
-        Permanent creature = addReadyCreature(player1);
+        Permanent creature = addCreatureReady(player1, new GrizzlyBears());
         Permanent carapace = addCarapaceReady(player1);
         carapace.setAttachedTo(creature.getId());
 
@@ -107,8 +107,8 @@ class CopperCarapaceTest extends BaseCardTest {
     @Test
     @DisplayName("Copper Carapace does not affect unequipped creatures")
     void doesNotAffectOtherCreatures() {
-        Permanent creature = addReadyCreature(player1);
-        Permanent otherCreature = addReadyCreature(player1);
+        Permanent creature = addCreatureReady(player1, new GrizzlyBears());
+        Permanent otherCreature = addCreatureReady(player1, new GrizzlyBears());
         Permanent carapace = addCarapaceReady(player1);
         carapace.setAttachedTo(creature.getId());
 
@@ -122,11 +122,11 @@ class CopperCarapaceTest extends BaseCardTest {
     @DisplayName("Equipped creature cannot be declared as a blocker")
     void equippedCreatureCannotBlock() {
         // Player1 attacks with a creature
-        Permanent attacker = addReadyCreature(player1);
+        Permanent attacker = addCreatureReady(player1, new GrizzlyBears());
         attacker.setAttacking(true);
 
         // Player2 has a creature equipped with Copper Carapace
-        Permanent blocker = addReadyCreature(player2);
+        Permanent blocker = addCreatureReady(player2, new GrizzlyBears());
         Permanent carapace = addCarapaceReady(player2);
         carapace.setAttachedTo(blocker.getId());
 
@@ -144,11 +144,11 @@ class CopperCarapaceTest extends BaseCardTest {
     @DisplayName("Creature can block again after Copper Carapace is removed")
     void creatureCanBlockAfterEquipmentRemoved() {
         // Player1 attacks with a creature
-        Permanent attacker = addReadyCreature(player1);
+        Permanent attacker = addCreatureReady(player1, new GrizzlyBears());
         attacker.setAttacking(true);
 
         // Player2 has a creature equipped with Copper Carapace
-        Permanent blocker = addReadyCreature(player2);
+        Permanent blocker = addCreatureReady(player2, new GrizzlyBears());
         Permanent carapace = addCarapaceReady(player2);
         carapace.setAttachedTo(blocker.getId());
 
@@ -170,12 +170,12 @@ class CopperCarapaceTest extends BaseCardTest {
     @DisplayName("Unequipped creatures can still block normally")
     void unequippedCreatureCanStillBlock() {
         // Player1 attacks with a creature
-        Permanent attacker = addReadyCreature(player1);
+        Permanent attacker = addCreatureReady(player1, new GrizzlyBears());
         attacker.setAttacking(true);
 
         // Player2 has Copper Carapace on battlefield (unattached) and a creature
         addCarapaceReady(player2);
-        Permanent blocker = addReadyCreature(player2);
+        Permanent blocker = addCreatureReady(player2, new GrizzlyBears());
 
         harness.forceActivePlayer(player1);
         harness.forceStep(TurnStep.DECLARE_BLOCKERS);
@@ -194,8 +194,8 @@ class CopperCarapaceTest extends BaseCardTest {
     @DisplayName("Copper Carapace can be moved to another creature")
     void canReEquipToAnotherCreature() {
         Permanent carapace = addCarapaceReady(player1);
-        Permanent creature1 = addReadyCreature(player1);
-        Permanent creature2 = addReadyCreature(player1);
+        Permanent creature1 = addCreatureReady(player1, new GrizzlyBears());
+        Permanent creature2 = addCreatureReady(player1, new GrizzlyBears());
 
         carapace.setAttachedTo(creature1.getId());
         assertThat(gqs.getEffectivePower(gd, creature1)).isEqualTo(4);
@@ -213,13 +213,6 @@ class CopperCarapaceTest extends BaseCardTest {
 
     private Permanent addCarapaceReady(Player player) {
         Permanent perm = new Permanent(new CopperCarapace());
-        perm.setSummoningSick(false);
-        gd.playerBattlefields.get(player.getId()).add(perm);
-        return perm;
-    }
-
-    private Permanent addReadyCreature(Player player) {
-        Permanent perm = new Permanent(new GrizzlyBears());
         perm.setSummoningSick(false);
         gd.playerBattlefields.get(player.getId()).add(perm);
         return perm;

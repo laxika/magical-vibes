@@ -67,7 +67,7 @@ class LoxodonWarhammerTest extends BaseCardTest {
     @DisplayName("Resolving equip ability attaches Warhammer to target creature")
     void resolvingEquipAttachesToCreature() {
         Permanent warhammer = addWarhammerReady(player1);
-        Permanent creature = addReadyCreature(player1);
+        Permanent creature = addCreatureReady(player1, new GrizzlyBears());
         harness.addMana(player1, ManaColor.WHITE, 3);
 
         harness.activateAbility(player1, 0, null, creature.getId());
@@ -82,7 +82,7 @@ class LoxodonWarhammerTest extends BaseCardTest {
     @Test
     @DisplayName("Equipped creature gets +3/+0")
     void equippedCreatureGetsBoost() {
-        Permanent creature = addReadyCreature(player1);
+        Permanent creature = addCreatureReady(player1, new GrizzlyBears());
         Permanent warhammer = addWarhammerReady(player1);
         warhammer.setAttachedTo(creature.getId());
 
@@ -93,7 +93,7 @@ class LoxodonWarhammerTest extends BaseCardTest {
     @Test
     @DisplayName("Equipped creature loses boost when Warhammer is removed")
     void creatureLosesBoostWhenEquipmentRemoved() {
-        Permanent creature = addReadyCreature(player1);
+        Permanent creature = addCreatureReady(player1, new GrizzlyBears());
         Permanent warhammer = addWarhammerReady(player1);
         warhammer.setAttachedTo(creature.getId());
 
@@ -108,8 +108,8 @@ class LoxodonWarhammerTest extends BaseCardTest {
     @Test
     @DisplayName("Warhammer does not affect unequipped creatures")
     void doesNotAffectOtherCreatures() {
-        Permanent creature = addReadyCreature(player1);
-        Permanent otherCreature = addReadyCreature(player1);
+        Permanent creature = addCreatureReady(player1, new GrizzlyBears());
+        Permanent otherCreature = addCreatureReady(player1, new GrizzlyBears());
         Permanent warhammer = addWarhammerReady(player1);
         warhammer.setAttachedTo(creature.getId());
 
@@ -122,7 +122,7 @@ class LoxodonWarhammerTest extends BaseCardTest {
     @Test
     @DisplayName("Equipped creature has trample")
     void equippedCreatureHasTrample() {
-        Permanent creature = addReadyCreature(player1);
+        Permanent creature = addCreatureReady(player1, new GrizzlyBears());
         Permanent warhammer = addWarhammerReady(player1);
         warhammer.setAttachedTo(creature.getId());
 
@@ -132,7 +132,7 @@ class LoxodonWarhammerTest extends BaseCardTest {
     @Test
     @DisplayName("Equipped creature has lifelink")
     void equippedCreatureHasLifelink() {
-        Permanent creature = addReadyCreature(player1);
+        Permanent creature = addCreatureReady(player1, new GrizzlyBears());
         Permanent warhammer = addWarhammerReady(player1);
         warhammer.setAttachedTo(creature.getId());
 
@@ -142,7 +142,7 @@ class LoxodonWarhammerTest extends BaseCardTest {
     @Test
     @DisplayName("Creature loses trample and lifelink when Warhammer is removed")
     void creatureLosesKeywordsWhenEquipmentRemoved() {
-        Permanent creature = addReadyCreature(player1);
+        Permanent creature = addCreatureReady(player1, new GrizzlyBears());
         Permanent warhammer = addWarhammerReady(player1);
         warhammer.setAttachedTo(creature.getId());
 
@@ -163,7 +163,7 @@ class LoxodonWarhammerTest extends BaseCardTest {
         harness.setLife(player1, 20);
         harness.setLife(player2, 20);
 
-        Permanent creature = addReadyCreature(player1);
+        Permanent creature = addCreatureReady(player1, new GrizzlyBears());
         Permanent warhammer = addWarhammerReady(player1);
         warhammer.setAttachedTo(creature.getId());
         creature.setAttacking(true);
@@ -185,12 +185,12 @@ class LoxodonWarhammerTest extends BaseCardTest {
         harness.setLife(player1, 20);
 
         // 2/2 with Warhammer (5/2) attacks, blocked by 2/2
-        Permanent attacker = addReadyCreature(player1);
+        Permanent attacker = addCreatureReady(player1, new GrizzlyBears());
         Permanent warhammer = addWarhammerReady(player1);
         warhammer.setAttachedTo(attacker.getId());
         attacker.setAttacking(true);
 
-        Permanent blocker = addReadyCreature(player2);
+        Permanent blocker = addCreatureReady(player2, new GrizzlyBears());
         blocker.setBlocking(true);
         blocker.addBlockingTarget(0);
 
@@ -216,12 +216,12 @@ class LoxodonWarhammerTest extends BaseCardTest {
         harness.setLife(player2, 20);
 
         // 2/2 with Warhammer (5/2, trample) attacks, blocked by 2/2
-        Permanent attacker = addReadyCreature(player1);
+        Permanent attacker = addCreatureReady(player1, new GrizzlyBears());
         Permanent warhammer = addWarhammerReady(player1);
         warhammer.setAttachedTo(attacker.getId());
         attacker.setAttacking(true);
 
-        Permanent blocker = addReadyCreature(player2);
+        Permanent blocker = addCreatureReady(player2, new GrizzlyBears());
         blocker.setBlocking(true);
         blocker.addBlockingTarget(0);
 
@@ -248,11 +248,11 @@ class LoxodonWarhammerTest extends BaseCardTest {
         harness.setLife(player2, 20);
 
         // Player1 attacks with 2/2
-        Permanent attacker = addReadyCreature(player1);
+        Permanent attacker = addCreatureReady(player1, new GrizzlyBears());
         attacker.setAttacking(true);
 
         // Player2 blocks with 2/2 equipped with Warhammer (5/2)
-        Permanent blocker = addReadyCreature(player2);
+        Permanent blocker = addCreatureReady(player2, new GrizzlyBears());
         Permanent warhammer = addWarhammerReady(player2);
         warhammer.setAttachedTo(blocker.getId());
         blocker.setBlocking(true);
@@ -272,12 +272,12 @@ class LoxodonWarhammerTest extends BaseCardTest {
         harness.setLife(player1, 20);
 
         // Creature with Warhammer does not attack
-        Permanent creature = addReadyCreature(player1);
+        Permanent creature = addCreatureReady(player1, new GrizzlyBears());
         Permanent warhammer = addWarhammerReady(player1);
         warhammer.setAttachedTo(creature.getId());
 
         // Another creature attacks unblocked
-        Permanent otherAttacker = addReadyCreature(player1);
+        Permanent otherAttacker = addCreatureReady(player1, new GrizzlyBears());
         otherAttacker.setAttacking(true);
 
         resolveCombat();
@@ -294,7 +294,7 @@ class LoxodonWarhammerTest extends BaseCardTest {
         harness.setLife(player1, 20);
         harness.setLife(player2, 20);
 
-        Permanent creature = addReadyCreature(player1);
+        Permanent creature = addCreatureReady(player1, new GrizzlyBears());
         Permanent warhammer = addWarhammerReady(player1);
         warhammer.setAttachedTo(creature.getId());
         creature.setAttacking(true);
@@ -313,7 +313,7 @@ class LoxodonWarhammerTest extends BaseCardTest {
         harness.setLife(player2, 20);
 
         // Creature with Warhammer (lifelink) AND Spirit Link aura
-        Permanent creature = addReadyCreature(player1);
+        Permanent creature = addCreatureReady(player1, new GrizzlyBears());
         Permanent warhammer = addWarhammerReady(player1);
         warhammer.setAttachedTo(creature.getId());
 
@@ -339,8 +339,8 @@ class LoxodonWarhammerTest extends BaseCardTest {
     @DisplayName("Warhammer can be moved to another creature")
     void canReEquipToAnotherCreature() {
         Permanent warhammer = addWarhammerReady(player1);
-        Permanent creature1 = addReadyCreature(player1);
-        Permanent creature2 = addReadyCreature(player1);
+        Permanent creature1 = addCreatureReady(player1, new GrizzlyBears());
+        Permanent creature2 = addCreatureReady(player1, new GrizzlyBears());
 
         warhammer.setAttachedTo(creature1.getId());
         assertThat(gqs.getEffectivePower(gd, creature1)).isEqualTo(5);
@@ -366,13 +366,6 @@ class LoxodonWarhammerTest extends BaseCardTest {
 
     private Permanent addWarhammerReady(Player player) {
         Permanent perm = new Permanent(new LoxodonWarhammer());
-        perm.setSummoningSick(false);
-        gd.playerBattlefields.get(player.getId()).add(perm);
-        return perm;
-    }
-
-    private Permanent addReadyCreature(Player player) {
-        Permanent perm = new Permanent(new GrizzlyBears());
         perm.setSummoningSick(false);
         gd.playerBattlefields.get(player.getId()).add(perm);
         return perm;

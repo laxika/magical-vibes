@@ -23,7 +23,7 @@ class AlluringSirenTest extends BaseCardTest {
     @DisplayName("Activating ability puts it on the stack targeting an opponent's creature")
     void activatingPutsOnStack() {
         addReadySiren(player1);
-        Permanent target = addReadyCreature(player2);
+        Permanent target = addCreatureReady(player2, new GrizzlyBears());
 
         harness.activateAbility(player1, 0, null, target.getId());
 
@@ -38,7 +38,7 @@ class AlluringSirenTest extends BaseCardTest {
     @DisplayName("Resolving ability marks target creature as must attack this turn")
     void resolvingMarksMustAttack() {
         addReadySiren(player1);
-        Permanent target = addReadyCreature(player2);
+        Permanent target = addCreatureReady(player2, new GrizzlyBears());
 
         harness.activateAbility(player1, 0, null, target.getId());
         harness.passBothPriorities();
@@ -50,7 +50,7 @@ class AlluringSirenTest extends BaseCardTest {
     @DisplayName("Cannot target own creature")
     void cannotTargetOwnCreature() {
         addReadySiren(player1);
-        Permanent ownCreature = addReadyCreature(player1);
+        Permanent ownCreature = addCreatureReady(player1, new GrizzlyBears());
 
         assertThatThrownBy(() -> harness.activateAbility(player1, 0, null, ownCreature.getId()))
                 .isInstanceOf(IllegalStateException.class);
@@ -60,8 +60,8 @@ class AlluringSirenTest extends BaseCardTest {
     @DisplayName("Requires tap so cannot activate twice")
     void requiresTapCannotActivateTwice() {
         addReadySiren(player1);
-        Permanent target1 = addReadyCreature(player2);
-        Permanent target2 = addReadyCreature(player2);
+        Permanent target1 = addCreatureReady(player2, new GrizzlyBears());
+        Permanent target2 = addCreatureReady(player2, new GrizzlyBears());
 
         harness.activateAbility(player1, 0, null, target1.getId());
         harness.passBothPriorities();
@@ -74,7 +74,7 @@ class AlluringSirenTest extends BaseCardTest {
     @DisplayName("Ability fizzles if target is removed before resolution")
     void fizzlesIfTargetRemoved() {
         addReadySiren(player1);
-        Permanent target = addReadyCreature(player2);
+        Permanent target = addCreatureReady(player2, new GrizzlyBears());
 
         harness.activateAbility(player1, 0, null, target.getId());
 
@@ -92,7 +92,7 @@ class AlluringSirenTest extends BaseCardTest {
     @DisplayName("Resolving ability sets mustAttackTargetId to the Siren controller")
     void resolvingSetsAttackTargetToController() {
         addReadySiren(player1);
-        Permanent target = addReadyCreature(player2);
+        Permanent target = addCreatureReady(player2, new GrizzlyBears());
 
         harness.activateAbility(player1, 0, null, target.getId());
         harness.passBothPriorities();
@@ -105,7 +105,7 @@ class AlluringSirenTest extends BaseCardTest {
     @DisplayName("Must attack flag and target are cleared by resetModifiers at end of turn")
     void mustAttackClearedAtEndOfTurn() {
         addReadySiren(player1);
-        Permanent target = addReadyCreature(player2);
+        Permanent target = addCreatureReady(player2, new GrizzlyBears());
 
         harness.activateAbility(player1, 0, null, target.getId());
         harness.passBothPriorities();
@@ -123,14 +123,6 @@ class AlluringSirenTest extends BaseCardTest {
 
     private Permanent addReadySiren(Player player) {
         AlluringSiren card = new AlluringSiren();
-        Permanent perm = new Permanent(card);
-        perm.setSummoningSick(false);
-        harness.getGameData().playerBattlefields.get(player.getId()).add(perm);
-        return perm;
-    }
-
-    private Permanent addReadyCreature(Player player) {
-        GrizzlyBears card = new GrizzlyBears();
         Permanent perm = new Permanent(card);
         perm.setSummoningSick(false);
         harness.getGameData().playerBattlefields.get(player.getId()).add(perm);

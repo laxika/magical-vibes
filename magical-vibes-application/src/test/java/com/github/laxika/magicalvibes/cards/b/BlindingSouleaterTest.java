@@ -25,7 +25,7 @@ class BlindingSouleaterTest extends BaseCardTest {
     @DisplayName("Resolving ability taps target creature when paying with white mana")
     void tapsTargetCreatureWithWhiteMana() {
         addReadySouleater(player1);
-        Permanent target = addReadyCreature(player2);
+        Permanent target = addCreatureReady(player2, new GrizzlyBears());
         harness.addMana(player1, ManaColor.WHITE, 1);
 
         harness.activateAbility(player1, 0, null, target.getId());
@@ -38,7 +38,7 @@ class BlindingSouleaterTest extends BaseCardTest {
     @DisplayName("White mana is consumed when activating ability")
     void whiteManaConsumed() {
         addReadySouleater(player1);
-        Permanent target = addReadyCreature(player2);
+        Permanent target = addCreatureReady(player2, new GrizzlyBears());
         harness.addMana(player1, ManaColor.WHITE, 2);
 
         harness.activateAbility(player1, 0, null, target.getId());
@@ -53,7 +53,7 @@ class BlindingSouleaterTest extends BaseCardTest {
     @DisplayName("Can pay Phyrexian mana with 2 life when no white mana available")
     void paysLifeWhenNoWhiteMana() {
         addReadySouleater(player1);
-        Permanent target = addReadyCreature(player2);
+        Permanent target = addCreatureReady(player2, new GrizzlyBears());
         harness.setLife(player1, 20);
         // No mana added — Phyrexian mana auto-pays with 2 life
 
@@ -68,7 +68,7 @@ class BlindingSouleaterTest extends BaseCardTest {
     @DisplayName("Prefers white mana over life payment when available")
     void prefersWhiteManaOverLife() {
         addReadySouleater(player1);
-        Permanent target = addReadyCreature(player2);
+        Permanent target = addCreatureReady(player2, new GrizzlyBears());
         harness.setLife(player1, 20);
         harness.addMana(player1, ManaColor.WHITE, 1);
 
@@ -110,7 +110,7 @@ class BlindingSouleaterTest extends BaseCardTest {
     @DisplayName("Can target own creature")
     void canTargetOwnCreature() {
         addReadySouleater(player1);
-        Permanent ownCreature = addReadyCreature(player1);
+        Permanent ownCreature = addCreatureReady(player1, new GrizzlyBears());
         harness.addMana(player1, ManaColor.WHITE, 1);
 
         harness.activateAbility(player1, 0, null, ownCreature.getId());
@@ -125,7 +125,7 @@ class BlindingSouleaterTest extends BaseCardTest {
     @DisplayName("Activating ability taps Blinding Souleater")
     void activatingTapsSouleater() {
         Permanent souleater = addReadySouleater(player1);
-        Permanent target = addReadyCreature(player2);
+        Permanent target = addCreatureReady(player2, new GrizzlyBears());
         harness.addMana(player1, ManaColor.WHITE, 1);
 
         harness.activateAbility(player1, 0, null, target.getId());
@@ -138,7 +138,7 @@ class BlindingSouleaterTest extends BaseCardTest {
     void cannotActivateWhenTapped() {
         Permanent souleater = addReadySouleater(player1);
         souleater.tap();
-        Permanent target = addReadyCreature(player2);
+        Permanent target = addCreatureReady(player2, new GrizzlyBears());
         harness.addMana(player1, ManaColor.WHITE, 1);
 
         assertThatThrownBy(() -> harness.activateAbility(player1, 0, null, target.getId()))
@@ -156,7 +156,7 @@ class BlindingSouleaterTest extends BaseCardTest {
         souleater.setSummoningSick(true);
         harness.getGameData().playerBattlefields.get(player1.getId()).add(souleater);
 
-        Permanent target = addReadyCreature(player2);
+        Permanent target = addCreatureReady(player2, new GrizzlyBears());
         harness.addMana(player1, ManaColor.WHITE, 1);
 
         assertThatThrownBy(() -> harness.activateAbility(player1, 0, null, target.getId()))
@@ -170,7 +170,7 @@ class BlindingSouleaterTest extends BaseCardTest {
     @DisplayName("Ability fizzles if target is removed before resolution")
     void fizzlesIfTargetRemoved() {
         addReadySouleater(player1);
-        Permanent target = addReadyCreature(player2);
+        Permanent target = addCreatureReady(player2, new GrizzlyBears());
         harness.addMana(player1, ManaColor.WHITE, 1);
 
         harness.activateAbility(player1, 0, null, target.getId());
@@ -189,14 +189,6 @@ class BlindingSouleaterTest extends BaseCardTest {
 
     private Permanent addReadySouleater(Player player) {
         BlindingSouleater card = new BlindingSouleater();
-        Permanent perm = new Permanent(card);
-        perm.setSummoningSick(false);
-        harness.getGameData().playerBattlefields.get(player.getId()).add(perm);
-        return perm;
-    }
-
-    private Permanent addReadyCreature(Player player) {
-        GrizzlyBears card = new GrizzlyBears();
         Permanent perm = new Permanent(card);
         perm.setSummoningSick(false);
         harness.getGameData().playerBattlefields.get(player.getId()).add(perm);

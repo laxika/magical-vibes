@@ -20,7 +20,7 @@ class ScepterOfDominanceTest extends BaseCardTest {
     @DisplayName("Resolving ability taps target creature")
     void resolvingTapsTargetCreature() {
         addReadyScepter(player1);
-        Permanent target = addReadyCreature(player2);
+        Permanent target = addCreatureReady(player2, new GrizzlyBears());
         harness.addMana(player1, ManaColor.WHITE, 1);
 
         harness.activateAbility(player1, 0, null, target.getId());
@@ -33,7 +33,7 @@ class ScepterOfDominanceTest extends BaseCardTest {
     @DisplayName("Activating ability taps Scepter of Dominance and consumes mana")
     void activatingTapsScepterAndConsumesMana() {
         Permanent scepter = addReadyScepter(player1);
-        Permanent target = addReadyCreature(player2);
+        Permanent target = addCreatureReady(player2, new GrizzlyBears());
         harness.addMana(player1, ManaColor.WHITE, 1);
 
         harness.activateAbility(player1, 0, null, target.getId());
@@ -73,7 +73,7 @@ class ScepterOfDominanceTest extends BaseCardTest {
     @DisplayName("Cannot activate ability without enough mana")
     void cannotActivateWithoutMana() {
         addReadyScepter(player1);
-        Permanent target = addReadyCreature(player2);
+        Permanent target = addCreatureReady(player2, new GrizzlyBears());
 
         assertThatThrownBy(() -> harness.activateAbility(player1, 0, null, target.getId()))
                 .isInstanceOf(IllegalStateException.class)
@@ -84,13 +84,6 @@ class ScepterOfDominanceTest extends BaseCardTest {
 
     private Permanent addReadyScepter(Player player) {
         Permanent perm = new Permanent(new ScepterOfDominance());
-        perm.setSummoningSick(false);
-        harness.getGameData().playerBattlefields.get(player.getId()).add(perm);
-        return perm;
-    }
-
-    private Permanent addReadyCreature(Player player) {
-        Permanent perm = new Permanent(new GrizzlyBears());
         perm.setSummoningSick(false);
         harness.getGameData().playerBattlefields.get(player.getId()).add(perm);
         return perm;

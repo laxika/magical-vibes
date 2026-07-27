@@ -19,7 +19,7 @@ class BehemothSledgeTest extends BaseCardTest {
     @DisplayName("Resolving equip ability attaches Sledge to target creature")
     void resolvingEquipAttachesToCreature() {
         Permanent sledge = addSledgeReady(player1);
-        Permanent creature = addReadyCreature(player1);
+        Permanent creature = addCreatureReady(player1, new GrizzlyBears());
         harness.addMana(player1, ManaColor.WHITE, 3);
 
         harness.activateAbility(player1, 0, null, creature.getId());
@@ -34,7 +34,7 @@ class BehemothSledgeTest extends BaseCardTest {
     @Test
     @DisplayName("Equipped creature gets +2/+2")
     void equippedCreatureGetsBoost() {
-        Permanent creature = addReadyCreature(player1);
+        Permanent creature = addCreatureReady(player1, new GrizzlyBears());
         Permanent sledge = addSledgeReady(player1);
         sledge.setAttachedTo(creature.getId());
 
@@ -45,7 +45,7 @@ class BehemothSledgeTest extends BaseCardTest {
     @Test
     @DisplayName("Equipped creature has trample and lifelink")
     void equippedCreatureHasKeywords() {
-        Permanent creature = addReadyCreature(player1);
+        Permanent creature = addCreatureReady(player1, new GrizzlyBears());
         Permanent sledge = addSledgeReady(player1);
         sledge.setAttachedTo(creature.getId());
 
@@ -56,7 +56,7 @@ class BehemothSledgeTest extends BaseCardTest {
     @Test
     @DisplayName("Creature loses all bonuses when Sledge is removed")
     void creatureLosesBonusesWhenEquipmentRemoved() {
-        Permanent creature = addReadyCreature(player1);
+        Permanent creature = addCreatureReady(player1, new GrizzlyBears());
         Permanent sledge = addSledgeReady(player1);
         sledge.setAttachedTo(creature.getId());
 
@@ -73,8 +73,8 @@ class BehemothSledgeTest extends BaseCardTest {
     @Test
     @DisplayName("Sledge does not affect unequipped creatures")
     void doesNotAffectOtherCreatures() {
-        Permanent creature = addReadyCreature(player1);
-        Permanent otherCreature = addReadyCreature(player1);
+        Permanent creature = addCreatureReady(player1, new GrizzlyBears());
+        Permanent otherCreature = addCreatureReady(player1, new GrizzlyBears());
         Permanent sledge = addSledgeReady(player1);
         sledge.setAttachedTo(creature.getId());
 
@@ -91,7 +91,7 @@ class BehemothSledgeTest extends BaseCardTest {
         harness.setLife(player1, 20);
         harness.setLife(player2, 20);
 
-        Permanent creature = addReadyCreature(player1);
+        Permanent creature = addCreatureReady(player1, new GrizzlyBears());
         Permanent sledge = addSledgeReady(player1);
         sledge.setAttachedTo(creature.getId());
         creature.setAttacking(true);
@@ -107,13 +107,6 @@ class BehemothSledgeTest extends BaseCardTest {
 
     private Permanent addSledgeReady(Player player) {
         Permanent perm = new Permanent(new BehemothSledge());
-        perm.setSummoningSick(false);
-        gd.playerBattlefields.get(player.getId()).add(perm);
-        return perm;
-    }
-
-    private Permanent addReadyCreature(Player player) {
-        Permanent perm = new Permanent(new GrizzlyBears());
         perm.setSummoningSick(false);
         gd.playerBattlefields.get(player.getId()).add(perm);
         return perm;

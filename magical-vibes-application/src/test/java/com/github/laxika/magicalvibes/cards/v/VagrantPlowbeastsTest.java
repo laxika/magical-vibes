@@ -2,10 +2,8 @@ package com.github.laxika.magicalvibes.cards.v;
 
 import com.github.laxika.magicalvibes.cards.a.AvatarOfMight;
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
-import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
-import com.github.laxika.magicalvibes.model.Player;
 import com.github.laxika.magicalvibes.model.StackEntryType;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
 import org.junit.jupiter.api.DisplayName;
@@ -20,7 +18,7 @@ class VagrantPlowbeastsTest extends BaseCardTest {
     @DisplayName("Activating targets a power-5-or-greater creature and puts ability on stack")
     void activatingTargetsBigCreature() {
         harness.addToBattlefield(player1, new VagrantPlowbeasts());
-        Permanent avatar = addReadyCreature(player1, new AvatarOfMight());
+        Permanent avatar = addCreatureReady(player1, new AvatarOfMight());
         harness.addMana(player1, ManaColor.GREEN, 1);
 
         harness.activateAbility(player1, 0, null, avatar.getId());
@@ -34,7 +32,7 @@ class VagrantPlowbeastsTest extends BaseCardTest {
     @DisplayName("Resolving grants a regeneration shield to the target creature")
     void resolvingGrantsShield() {
         harness.addToBattlefield(player1, new VagrantPlowbeasts());
-        Permanent avatar = addReadyCreature(player1, new AvatarOfMight());
+        Permanent avatar = addCreatureReady(player1, new AvatarOfMight());
         harness.addMana(player1, ManaColor.GREEN, 1);
 
         harness.activateAbility(player1, 0, null, avatar.getId());
@@ -47,7 +45,7 @@ class VagrantPlowbeastsTest extends BaseCardTest {
     @DisplayName("Can regenerate an opponent's power-5-or-greater creature")
     void canRegenerateOpponentBigCreature() {
         harness.addToBattlefield(player1, new VagrantPlowbeasts());
-        Permanent opponentAvatar = addReadyCreature(player2, new AvatarOfMight());
+        Permanent opponentAvatar = addCreatureReady(player2, new AvatarOfMight());
         harness.addMana(player1, ManaColor.GREEN, 1);
 
         harness.activateAbility(player1, 0, null, opponentAvatar.getId());
@@ -60,7 +58,7 @@ class VagrantPlowbeastsTest extends BaseCardTest {
     @DisplayName("Cannot target a creature with power less than 5")
     void cannotTargetSmallCreature() {
         harness.addToBattlefield(player1, new VagrantPlowbeasts());
-        Permanent bears = addReadyCreature(player1, new GrizzlyBears());
+        Permanent bears = addCreatureReady(player1, new GrizzlyBears());
         harness.addMana(player1, ManaColor.GREEN, 1);
 
         assertThatThrownBy(() -> harness.activateAbility(player1, 0, null, bears.getId()))
@@ -72,17 +70,10 @@ class VagrantPlowbeastsTest extends BaseCardTest {
     @DisplayName("Cannot activate without enough mana")
     void cannotActivateWithoutMana() {
         harness.addToBattlefield(player1, new VagrantPlowbeasts());
-        Permanent avatar = addReadyCreature(player1, new AvatarOfMight());
+        Permanent avatar = addCreatureReady(player1, new AvatarOfMight());
 
         assertThatThrownBy(() -> harness.activateAbility(player1, 0, null, avatar.getId()))
                 .isInstanceOf(IllegalStateException.class)
                 .hasMessageContaining("Not enough mana");
-    }
-
-    private Permanent addReadyCreature(Player player, Card card) {
-        Permanent permanent = new Permanent(card);
-        permanent.setSummoningSick(false);
-        gd.playerBattlefields.get(player.getId()).add(permanent);
-        return permanent;
     }
 }

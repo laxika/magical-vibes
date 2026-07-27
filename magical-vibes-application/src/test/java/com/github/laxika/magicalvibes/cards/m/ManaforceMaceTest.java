@@ -98,7 +98,7 @@ class ManaforceMaceTest extends BaseCardTest {
         harness.addToBattlefield(player1, new Forest());
         harness.addToBattlefield(player1, new Island());
 
-        Permanent creature = addReadyCreature(player1);
+        Permanent creature = addCreatureReady(player1, new GrizzlyBears());
         Permanent mace = addMaceReady(player1);
         harness.addMana(player1, ManaColor.COLORLESS, 3);
 
@@ -137,13 +137,6 @@ class ManaforceMaceTest extends BaseCardTest {
 
     private Permanent addMaceReady(Player player) {
         Permanent perm = new Permanent(new ManaforceMace());
-        perm.setSummoningSick(false);
-        gd.playerBattlefields.get(player.getId()).add(perm);
-        return perm;
-    }
-
-    private Permanent addReadyCreature(Player player) {
-        Permanent perm = new Permanent(new GrizzlyBears());
         perm.setSummoningSick(false);
         gd.playerBattlefields.get(player.getId()).add(perm);
         return perm;

@@ -40,7 +40,7 @@ class HeavyMattockTest extends BaseCardTest {
     @Test
     @DisplayName("Equipped non-Human creature gets +1/+1")
     void equippedNonHumanGetsBaseBoost() {
-        Permanent creature = addReadyCreature(player1);
+        Permanent creature = addCreatureReady(player1, new GrizzlyBears());
         Permanent mattock = addMattockReady(player1);
         mattock.setAttachedTo(creature.getId());
 
@@ -68,7 +68,7 @@ class HeavyMattockTest extends BaseCardTest {
     void movingFromHumanToNonHumanRemovesAdditionalBoost() {
         Permanent mattock = addMattockReady(player1);
         Permanent human = addReadyHuman(player1);
-        Permanent bear = addReadyCreature(player1);
+        Permanent bear = addCreatureReady(player1, new GrizzlyBears());
 
         mattock.setAttachedTo(human.getId());
         assertThat(gqs.getEffectivePower(gd, human)).isEqualTo(4);
@@ -141,13 +141,6 @@ class HeavyMattockTest extends BaseCardTest {
 
     private Permanent addMattockReady(Player player) {
         Permanent perm = new Permanent(new HeavyMattock());
-        perm.setSummoningSick(false);
-        gd.playerBattlefields.get(player.getId()).add(perm);
-        return perm;
-    }
-
-    private Permanent addReadyCreature(Player player) {
-        Permanent perm = new Permanent(new GrizzlyBears());
         perm.setSummoningSick(false);
         gd.playerBattlefields.get(player.getId()).add(perm);
         return perm;

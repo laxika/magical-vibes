@@ -3,9 +3,7 @@ package com.github.laxika.magicalvibes.cards.c;
 import com.github.laxika.magicalvibes.model.GameLogEntry;
 
 import com.github.laxika.magicalvibes.cards.m.MahamotiDjinn;
-import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.Permanent;
-import com.github.laxika.magicalvibes.model.Player;
 import com.github.laxika.magicalvibes.model.TurnStep;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
 import org.junit.jupiter.api.DisplayName;
@@ -15,21 +13,14 @@ import static org.assertj.core.api.Assertions.assertThat;
 
 class CreepyDollTest extends BaseCardTest {
 
-    private Permanent addReadyCreature(Player player, Card card) {
-        Permanent perm = new Permanent(card);
-        perm.setSummoningSick(false);
-        gd.playerBattlefields.get(player.getId()).add(perm);
-        return perm;
-    }
-
     
 
     @Test
     @DisplayName("Combat damage to creature triggers coin flip — blocker destroyed on win or survives on loss")
     void combatDamageToCreatureTriggersFlip() {
-        Permanent creepyDoll = addReadyCreature(player1, new CreepyDoll());
+        Permanent creepyDoll = addCreatureReady(player1, new CreepyDoll());
         creepyDoll.setAttacking(true);
-        Permanent blocker = addReadyCreature(player2, new MahamotiDjinn());
+        Permanent blocker = addCreatureReady(player2, new MahamotiDjinn());
         blocker.setBlocking(true);
         blocker.addBlockingTarget(0);
 
@@ -61,9 +52,9 @@ class CreepyDollTest extends BaseCardTest {
     @Test
     @DisplayName("Creepy Doll survives combat due to indestructible")
     void survivesCombarDueToIndestructible() {
-        Permanent creepyDoll = addReadyCreature(player1, new CreepyDoll());
+        Permanent creepyDoll = addCreatureReady(player1, new CreepyDoll());
         creepyDoll.setAttacking(true);
-        Permanent blocker = addReadyCreature(player2, new MahamotiDjinn());
+        Permanent blocker = addCreatureReady(player2, new MahamotiDjinn());
         blocker.setBlocking(true);
         blocker.addBlockingTarget(0);
 
@@ -83,7 +74,7 @@ class CreepyDollTest extends BaseCardTest {
     @Test
     @DisplayName("No trigger fires when Creepy Doll deals combat damage to a player")
     void noTriggerOnDamageToPlayer() {
-        Permanent creepyDoll = addReadyCreature(player1, new CreepyDoll());
+        Permanent creepyDoll = addCreatureReady(player1, new CreepyDoll());
         creepyDoll.setAttacking(true);
 
         harness.forceActivePlayer(player1);

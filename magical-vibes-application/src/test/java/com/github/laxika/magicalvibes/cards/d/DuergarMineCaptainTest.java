@@ -19,9 +19,9 @@ class DuergarMineCaptainTest extends BaseCardTest {
     @DisplayName("Untapping the captain gives all attacking creatures +1/+0, both sides")
     void boostsAllAttackingCreatures() {
         Permanent captain = addTapped(player1, new DuergarMineCaptain());
-        Permanent ownAttacker = addReady(player1, new GrizzlyBears());   // 2/2
+        Permanent ownAttacker = addCreatureReady(player1, new GrizzlyBears());   // 2/2
         ownAttacker.setAttacking(true);
-        Permanent opponentAttacker = addReady(player2, new GrizzlyBears()); // 2/2
+        Permanent opponentAttacker = addCreatureReady(player2, new GrizzlyBears()); // 2/2
         opponentAttacker.setAttacking(true);
 
         harness.addMana(player1, ManaColor.RED, 2);
@@ -41,7 +41,7 @@ class DuergarMineCaptainTest extends BaseCardTest {
     @DisplayName("Non-attacking creatures are unaffected")
     void nonAttackingUnaffected() {
         addTapped(player1, new DuergarMineCaptain());
-        Permanent bystander = addReady(player1, new GrizzlyBears()); // 2/2, not attacking
+        Permanent bystander = addCreatureReady(player1, new GrizzlyBears()); // 2/2, not attacking
 
         harness.addMana(player1, ManaColor.RED, 2);
         enterCombatWithPriority(player1);
@@ -56,7 +56,7 @@ class DuergarMineCaptainTest extends BaseCardTest {
     @DisplayName("The boost wears off at end of turn")
     void boostWearsOff() {
         addTapped(player1, new DuergarMineCaptain());
-        Permanent attacker = addReady(player1, new GrizzlyBears());
+        Permanent attacker = addCreatureReady(player1, new GrizzlyBears());
         attacker.setAttacking(true);
 
         harness.addMana(player1, ManaColor.RED, 2);
@@ -77,7 +77,7 @@ class DuergarMineCaptainTest extends BaseCardTest {
     @Test
     @DisplayName("Cannot activate while the captain is untapped ({Q} requires it to be tapped)")
     void cannotActivateWhileUntapped() {
-        addReady(player1, new DuergarMineCaptain());
+        addCreatureReady(player1, new DuergarMineCaptain());
         harness.addMana(player1, ManaColor.RED, 2);
         enterCombatWithPriority(player1);
 
@@ -86,15 +86,8 @@ class DuergarMineCaptainTest extends BaseCardTest {
                 .hasMessageContaining("not tapped");
     }
 
-    private Permanent addReady(Player player, Card card) {
-        Permanent perm = new Permanent(card);
-        perm.setSummoningSick(false);
-        gd.playerBattlefields.get(player.getId()).add(perm);
-        return perm;
-    }
-
     private Permanent addTapped(Player player, Card card) {
-        Permanent perm = addReady(player, card);
+        Permanent perm = addCreatureReady(player, card);
         perm.tap();
         return perm;
     }

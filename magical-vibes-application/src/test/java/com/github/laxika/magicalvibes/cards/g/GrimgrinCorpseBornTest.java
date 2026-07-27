@@ -1,5 +1,6 @@
 package com.github.laxika.magicalvibes.cards.g;
 
+import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
 import com.github.laxika.magicalvibes.model.PendingInteraction;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.PermanentChoiceContext;
@@ -36,7 +37,7 @@ class GrimgrinCorpseBornTest extends BaseCardTest {
     void sacrificeCreatureUntapsAndAddsCounter() {
         Permanent grimgrin = addGrimgrinReady(player1);
         grimgrin.tap();
-        Permanent bears = addReadyCreature(player1);
+        Permanent bears = addCreatureReady(player1, new GrizzlyBears());
 
         harness.activateAbility(player1, 0, null, null);
         harness.passBothPriorities();
@@ -71,7 +72,7 @@ class GrimgrinCorpseBornTest extends BaseCardTest {
     void multipleActivationsAccumulateCounters() {
         Permanent grimgrin = addGrimgrinReady(player1);
         grimgrin.tap();
-        addReadyCreature(player1);
+        addCreatureReady(player1, new GrizzlyBears());
         Permanent bears2 = new Permanent(new GrizzlyBears());
         bears2.setSummoningSick(false);
         gd.playerBattlefields.get(player1.getId()).add(bears2);
@@ -98,7 +99,7 @@ class GrimgrinCorpseBornTest extends BaseCardTest {
         Permanent grimgrin = addGrimgrinReady(player1);
         // Grimgrin starts untapped
         assertThat(grimgrin.isTapped()).isFalse();
-        addReadyCreature(player1);
+        addCreatureReady(player1, new GrizzlyBears());
 
         harness.activateAbility(player1, 0, null, null);
         harness.passBothPriorities();
@@ -113,7 +114,7 @@ class GrimgrinCorpseBornTest extends BaseCardTest {
     @DisplayName("Attacking with Grimgrin queues targeted attack trigger for target selection")
     void attackTriggerQueuesForTargetSelection() {
         addGrimgrinReady(player1);
-        addReadyCreature(player2);
+        addCreatureReady(player2, new GrizzlyBears());
 
         declareAttackers(player1, List.of(0));
 
@@ -129,7 +130,7 @@ class GrimgrinCorpseBornTest extends BaseCardTest {
         harness.setLife(player2, 20);
 
         Permanent grimgrin = addGrimgrinReady(player1);
-        Permanent opponentCreature = addReadyCreature(player2);
+        Permanent opponentCreature = addCreatureReady(player2, new GrizzlyBears());
 
         declareAttackers(player1, List.of(0));
 
@@ -154,8 +155,8 @@ class GrimgrinCorpseBornTest extends BaseCardTest {
         harness.setLife(player2, 20);
 
         addGrimgrinReady(player1);
-        Permanent ownCreature = addReadyCreature(player1);
-        addReadyCreature(player2);
+        Permanent ownCreature = addCreatureReady(player1, new GrizzlyBears());
+        addCreatureReady(player2, new GrizzlyBears());
 
         declareAttackers(player1, List.of(0));
 
@@ -169,13 +170,6 @@ class GrimgrinCorpseBornTest extends BaseCardTest {
 
     private Permanent addGrimgrinReady(Player player) {
         Permanent perm = new Permanent(new GrimgrinCorpseBorn());
-        perm.setSummoningSick(false);
-        gd.playerBattlefields.get(player.getId()).add(perm);
-        return perm;
-    }
-
-    private Permanent addReadyCreature(Player player) {
-        Permanent perm = new Permanent(new GrizzlyBears());
         perm.setSummoningSick(false);
         gd.playerBattlefields.get(player.getId()).add(perm);
         return perm;

@@ -20,7 +20,7 @@ class ChubToadTest extends BaseCardTest {
     void becomesBlockedGetsBoost() {
         Permanent toad = addReadyToad(player1);
         toad.setAttacking(true);
-        addReadyBears(player2);
+        addCreatureReady(player2, new GrizzlyBears());
 
         prepareDeclareBlockers();
         gs.declareBlockers(gd, player2, List.of(new BlockerAssignment(0, 0)));
@@ -33,7 +33,7 @@ class ChubToadTest extends BaseCardTest {
     @Test
     @DisplayName("When Chub Toad blocks, it gets +2/+2 until end of turn")
     void blocksGetsBoost() {
-        Permanent attacker = addReadyBears(player1);
+        Permanent attacker = addCreatureReady(player1, new GrizzlyBears());
         attacker.setAttacking(true);
         Permanent toad = addReadyToad(player2);
 
@@ -64,7 +64,7 @@ class ChubToadTest extends BaseCardTest {
     void boostWearsOff() {
         Permanent toad = addReadyToad(player1);
         toad.setAttacking(true);
-        addReadyBears(player2);
+        addCreatureReady(player2, new GrizzlyBears());
 
         prepareDeclareBlockers();
         gs.declareBlockers(gd, player2, List.of(new BlockerAssignment(0, 0)));
@@ -80,13 +80,6 @@ class ChubToadTest extends BaseCardTest {
 
     private Permanent addReadyToad(Player player) {
         Permanent permanent = new Permanent(new ChubToad());
-        permanent.setSummoningSick(false);
-        gd.playerBattlefields.get(player.getId()).add(permanent);
-        return permanent;
-    }
-
-    private Permanent addReadyBears(Player player) {
-        Permanent permanent = new Permanent(new GrizzlyBears());
         permanent.setSummoningSick(false);
         gd.playerBattlefields.get(player.getId()).add(permanent);
         return permanent;

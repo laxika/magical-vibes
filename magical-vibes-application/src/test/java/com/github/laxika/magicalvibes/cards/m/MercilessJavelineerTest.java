@@ -26,7 +26,7 @@ class MercilessJavelineerTest extends BaseCardTest {
         addReadyJavelineer(player1);
         harness.setHand(player1, List.of(new GrizzlyBears()));
         harness.addMana(player1, ManaColor.COLORLESS, 2);
-        Permanent target = addReadyCreature(player2);
+        Permanent target = addCreatureReady(player2, new GrizzlyBears());
 
         harness.activateAbility(player1, 0, 0, null, target.getId());
         harness.handleCardChosen(player1, 0); // pay the discard cost
@@ -48,7 +48,7 @@ class MercilessJavelineerTest extends BaseCardTest {
         addReadyJavelineer(player1);
         harness.setHand(player1, List.of(new GrizzlyBears()));
         harness.addMana(player1, ManaColor.COLORLESS, 2);
-        Permanent target = addReadyCreature(player2);
+        Permanent target = addCreatureReady(player2, new GrizzlyBears());
 
         harness.activateAbility(player1, 0, 0, null, target.getId());
         harness.handleCardChosen(player1, 0);
@@ -71,7 +71,7 @@ class MercilessJavelineerTest extends BaseCardTest {
         addReadyJavelineer(player1);
         harness.setHand(player1, List.of(new GrizzlyBears()));
         harness.addMana(player1, ManaColor.COLORLESS, 2);
-        Permanent target = addReadyCreature(player2);
+        Permanent target = addCreatureReady(player2, new GrizzlyBears());
 
         harness.activateAbility(player1, 0, 0, null, target.getId());
 
@@ -85,7 +85,7 @@ class MercilessJavelineerTest extends BaseCardTest {
         addReadyJavelineer(player1);
         harness.setHand(player1, List.of());
         harness.addMana(player1, ManaColor.COLORLESS, 2);
-        Permanent target = addReadyCreature(player2);
+        Permanent target = addCreatureReady(player2, new GrizzlyBears());
 
         assertThatThrownBy(() -> harness.activateAbility(player1, 0, 0, null, target.getId()))
                 .isInstanceOf(IllegalStateException.class);
@@ -109,12 +109,5 @@ class MercilessJavelineerTest extends BaseCardTest {
         Permanent perm = new Permanent(new MercilessJavelineer());
         perm.setSummoningSick(false);
         gd.playerBattlefields.get(player.getId()).add(perm);
-    }
-
-    private Permanent addReadyCreature(Player player) {
-        Permanent perm = new Permanent(new GrizzlyBears());
-        perm.setSummoningSick(false);
-        gd.playerBattlefields.get(player.getId()).add(perm);
-        return perm;
     }
 }

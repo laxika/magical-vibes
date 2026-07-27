@@ -62,7 +62,7 @@ class CobbledWingsTest extends BaseCardTest {
     @DisplayName("Resolving equip ability attaches Cobbled Wings to target creature")
     void resolvingEquipAttachesToCreature() {
         Permanent wings = addWingsReady(player1);
-        Permanent creature = addReadyCreature(player1);
+        Permanent creature = addCreatureReady(player1, new GrizzlyBears());
         harness.addMana(player1, ManaColor.WHITE, 1);
 
         harness.activateAbility(player1, 0, null, creature.getId());
@@ -77,7 +77,7 @@ class CobbledWingsTest extends BaseCardTest {
     @Test
     @DisplayName("Equipped creature has flying")
     void equippedCreatureHasFlying() {
-        Permanent creature = addReadyCreature(player1);
+        Permanent creature = addCreatureReady(player1, new GrizzlyBears());
         Permanent wings = addWingsReady(player1);
         wings.setAttachedTo(creature.getId());
 
@@ -87,7 +87,7 @@ class CobbledWingsTest extends BaseCardTest {
     @Test
     @DisplayName("Creature loses flying when Cobbled Wings is removed")
     void creatureLosesFlyingWhenEquipmentRemoved() {
-        Permanent creature = addReadyCreature(player1);
+        Permanent creature = addCreatureReady(player1, new GrizzlyBears());
         Permanent wings = addWingsReady(player1);
         wings.setAttachedTo(creature.getId());
 
@@ -101,8 +101,8 @@ class CobbledWingsTest extends BaseCardTest {
     @Test
     @DisplayName("Cobbled Wings does not affect unequipped creatures")
     void doesNotAffectOtherCreatures() {
-        Permanent creature = addReadyCreature(player1);
-        Permanent otherCreature = addReadyCreature(player1);
+        Permanent creature = addCreatureReady(player1, new GrizzlyBears());
+        Permanent otherCreature = addCreatureReady(player1, new GrizzlyBears());
         Permanent wings = addWingsReady(player1);
         wings.setAttachedTo(creature.getId());
 
@@ -115,8 +115,8 @@ class CobbledWingsTest extends BaseCardTest {
     @DisplayName("Cobbled Wings can be moved to another creature")
     void canReEquipToAnotherCreature() {
         Permanent wings = addWingsReady(player1);
-        Permanent creature1 = addReadyCreature(player1);
-        Permanent creature2 = addReadyCreature(player1);
+        Permanent creature1 = addCreatureReady(player1, new GrizzlyBears());
+        Permanent creature2 = addCreatureReady(player1, new GrizzlyBears());
 
         wings.setAttachedTo(creature1.getId());
         assertThat(gqs.hasKeyword(gd, creature1, Keyword.FLYING)).isTrue();
@@ -134,13 +134,6 @@ class CobbledWingsTest extends BaseCardTest {
 
     private Permanent addWingsReady(Player player) {
         Permanent perm = new Permanent(new CobbledWings());
-        perm.setSummoningSick(false);
-        gd.playerBattlefields.get(player.getId()).add(perm);
-        return perm;
-    }
-
-    private Permanent addReadyCreature(Player player) {
-        Permanent perm = new Permanent(new GrizzlyBears());
         perm.setSummoningSick(false);
         gd.playerBattlefields.get(player.getId()).add(perm);
         return perm;

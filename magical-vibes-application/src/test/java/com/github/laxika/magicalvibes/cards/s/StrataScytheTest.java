@@ -164,7 +164,7 @@ class StrataScytheTest extends BaseCardTest {
     @Test
     @DisplayName("Equipped creature gets +1/+1 for each matching land on the battlefield")
     void equippedCreatureGetsBoostPerMatchingLand() {
-        Permanent creature = addReadyCreature(player1); // 2/2
+        Permanent creature = addCreatureReady(player1, new GrizzlyBears()); // 2/2
         Permanent scythe = addReadyScythe(player1);
 
         // Imprint Plains
@@ -186,7 +186,7 @@ class StrataScytheTest extends BaseCardTest {
     @Test
     @DisplayName("Boost counts lands on all battlefields, not just controller's")
     void boostCountsLandsOnAllBattlefields() {
-        Permanent creature = addReadyCreature(player1); // 2/2
+        Permanent creature = addCreatureReady(player1, new GrizzlyBears()); // 2/2
         Permanent scythe = addReadyScythe(player1);
 
         // Imprint Plains
@@ -207,7 +207,7 @@ class StrataScytheTest extends BaseCardTest {
     @Test
     @DisplayName("No boost when no matching lands are on the battlefield")
     void noBoostWhenNoMatchingLands() {
-        Permanent creature = addReadyCreature(player1); // 2/2
+        Permanent creature = addCreatureReady(player1, new GrizzlyBears()); // 2/2
         Permanent scythe = addReadyScythe(player1);
 
         // Imprint Plains
@@ -225,7 +225,7 @@ class StrataScytheTest extends BaseCardTest {
     @Test
     @DisplayName("No boost when no card is imprinted")
     void noBoostWhenNoImprint() {
-        Permanent creature = addReadyCreature(player1); // 2/2
+        Permanent creature = addCreatureReady(player1, new GrizzlyBears()); // 2/2
         Permanent scythe = addReadyScythe(player1);
         scythe.setAttachedTo(creature.getId());
 
@@ -240,8 +240,8 @@ class StrataScytheTest extends BaseCardTest {
     @Test
     @DisplayName("Boost does not affect unequipped creatures")
     void boostDoesNotAffectUnequippedCreatures() {
-        Permanent creature1 = addReadyCreature(player1); // 2/2
-        Permanent creature2 = addReadyCreature(player1); // 2/2
+        Permanent creature1 = addCreatureReady(player1, new GrizzlyBears()); // 2/2
+        Permanent creature2 = addCreatureReady(player1, new GrizzlyBears()); // 2/2
         Permanent scythe = addReadyScythe(player1);
 
         gd.setImprintedCard(scythe.getCard(), new Plains());
@@ -256,8 +256,8 @@ class StrataScytheTest extends BaseCardTest {
     @Test
     @DisplayName("Boost moves when equipment is re-equipped to another creature")
     void boostMovesOnReEquip() {
-        Permanent creature1 = addReadyCreature(player1); // 2/2
-        Permanent creature2 = addReadyCreature(player1); // 2/2
+        Permanent creature1 = addCreatureReady(player1, new GrizzlyBears()); // 2/2
+        Permanent creature2 = addCreatureReady(player1, new GrizzlyBears()); // 2/2
         Permanent scythe = addReadyScythe(player1);
 
         gd.setImprintedCard(scythe.getCard(), new Plains());
@@ -276,13 +276,6 @@ class StrataScytheTest extends BaseCardTest {
     }
 
     // ===== Helpers =====
-
-    private Permanent addReadyCreature(Player player) {
-        Permanent perm = new Permanent(new GrizzlyBears());
-        perm.setSummoningSick(false);
-        gd.playerBattlefields.get(player.getId()).add(perm);
-        return perm;
-    }
 
     private Permanent addReadyScythe(Player player) {
         Permanent perm = new Permanent(new StrataScythe());

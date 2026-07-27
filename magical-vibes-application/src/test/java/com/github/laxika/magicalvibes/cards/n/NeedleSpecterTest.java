@@ -2,7 +2,6 @@ package com.github.laxika.magicalvibes.cards.n;
 
 import com.github.laxika.magicalvibes.cards.f.Forest;
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
-import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CounterType;
 import com.github.laxika.magicalvibes.model.PendingInteraction;
 import com.github.laxika.magicalvibes.model.Permanent;
@@ -62,7 +61,7 @@ class NeedleSpecterTest extends BaseCardTest {
     @DisplayName("No trigger when the Specter is blocked and deals no combat damage to a player")
     void noTriggerWhenBlocked() {
         addAttackingSpecter(player1);
-        Permanent blocker = addReadyCreature(player2, new GrizzlyBears());
+        Permanent blocker = addCreatureReady(player2, new GrizzlyBears());
         blocker.setBlocking(true);
         blocker.addBlockingTarget(0);
         harness.setHand(player2, new ArrayList<>(List.of(new Forest())));
@@ -75,15 +74,8 @@ class NeedleSpecterTest extends BaseCardTest {
 
     // ===== Helpers =====
 
-    private Permanent addReadyCreature(Player player, Card card) {
-        Permanent perm = new Permanent(card);
-        perm.setSummoningSick(false);
-        gd.playerBattlefields.get(player.getId()).add(perm);
-        return perm;
-    }
-
     private Permanent addAttackingSpecter(Player player) {
-        Permanent specter = addReadyCreature(player, new NeedleSpecter());
+        Permanent specter = addCreatureReady(player, new NeedleSpecter());
         specter.setAttacking(true);
         return specter;
     }

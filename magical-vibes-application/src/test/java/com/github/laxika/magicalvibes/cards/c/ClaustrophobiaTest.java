@@ -20,7 +20,7 @@ class ClaustrophobiaTest extends BaseCardTest {
     @Test
     @DisplayName("Resolving Claustrophobia taps the enchanted creature")
     void resolvingTapsEnchantedCreature() {
-        Permanent creature = addCreatureReady(player2);
+        Permanent creature = addCreatureReady(player2, new GrizzlyBears());
         assertThat(creature.isTapped()).isFalse();
 
         harness.setHand(player1, List.of(new Claustrophobia()));
@@ -42,7 +42,7 @@ class ClaustrophobiaTest extends BaseCardTest {
     @Test
     @DisplayName("Resolving Claustrophobia on already tapped creature keeps it tapped")
     void resolvingOnAlreadyTappedCreature() {
-        Permanent creature = addCreatureReady(player2);
+        Permanent creature = addCreatureReady(player2, new GrizzlyBears());
         creature.tap();
 
         harness.setHand(player1, List.of(new Claustrophobia()));
@@ -60,7 +60,7 @@ class ClaustrophobiaTest extends BaseCardTest {
     @Test
     @DisplayName("Enchanted creature does not untap during controller's untap step")
     void enchantedCreatureDoesNotUntap() {
-        Permanent creature = addCreatureReady(player2);
+        Permanent creature = addCreatureReady(player2, new GrizzlyBears());
         creature.tap();
 
         Permanent claustrophobiaPerm = new Permanent(new Claustrophobia());
@@ -75,10 +75,10 @@ class ClaustrophobiaTest extends BaseCardTest {
     @Test
     @DisplayName("Other creatures still untap normally")
     void otherCreaturesStillUntap() {
-        Permanent enchantedCreature = addCreatureReady(player2);
+        Permanent enchantedCreature = addCreatureReady(player2, new GrizzlyBears());
         enchantedCreature.tap();
 
-        Permanent freeCreature = addCreatureReady(player2);
+        Permanent freeCreature = addCreatureReady(player2, new GrizzlyBears());
         freeCreature.tap();
 
         Permanent claustrophobiaPerm = new Permanent(new Claustrophobia());
@@ -94,7 +94,7 @@ class ClaustrophobiaTest extends BaseCardTest {
     @Test
     @DisplayName("Creature stays tapped across multiple turns")
     void creatureStaysTappedAcrossMultipleTurns() {
-        Permanent creature = addCreatureReady(player2);
+        Permanent creature = addCreatureReady(player2, new GrizzlyBears());
         creature.tap();
 
         Permanent claustrophobiaPerm = new Permanent(new Claustrophobia());
@@ -116,7 +116,7 @@ class ClaustrophobiaTest extends BaseCardTest {
     @Test
     @DisplayName("Creature can untap again after Claustrophobia is removed")
     void creatureUntapsAfterRemoval() {
-        Permanent creature = addCreatureReady(player2);
+        Permanent creature = addCreatureReady(player2, new GrizzlyBears());
         creature.tap();
 
         Permanent claustrophobiaPerm = new Permanent(new Claustrophobia());
@@ -136,7 +136,7 @@ class ClaustrophobiaTest extends BaseCardTest {
     @Test
     @DisplayName("Claustrophobia fizzles if target creature is removed before resolution")
     void fizzlesIfTargetRemoved() {
-        Permanent creature = addCreatureReady(player2);
+        Permanent creature = addCreatureReady(player2, new GrizzlyBears());
 
         harness.setHand(player1, List.of(new Claustrophobia()));
         harness.addMana(player1, ManaColor.BLUE, 3);
@@ -159,7 +159,7 @@ class ClaustrophobiaTest extends BaseCardTest {
     @Test
     @DisplayName("Full integration: cast Claustrophobia, creature gets tapped, stays tapped through untap step")
     void fullIntegration() {
-        Permanent creature = addCreatureReady(player2);
+        Permanent creature = addCreatureReady(player2, new GrizzlyBears());
 
         harness.setHand(player1, List.of(new Claustrophobia()));
         harness.addMana(player1, ManaColor.BLUE, 3);
@@ -177,13 +177,6 @@ class ClaustrophobiaTest extends BaseCardTest {
     }
 
     // ===== Helpers =====
-
-    private Permanent addCreatureReady(Player player) {
-        Permanent perm = new Permanent(new GrizzlyBears());
-        perm.setSummoningSick(false);
-        gd.playerBattlefields.get(player.getId()).add(perm);
-        return perm;
-    }
 
     private void advanceToNextTurn(Player currentActivePlayer) {
         harness.forceActivePlayer(currentActivePlayer);

@@ -6,7 +6,6 @@ import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
 import com.github.laxika.magicalvibes.model.Keyword;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
-import com.github.laxika.magicalvibes.model.Player;
 import com.github.laxika.magicalvibes.model.StackEntry;
 import com.github.laxika.magicalvibes.model.StackEntryType;
 import com.github.laxika.magicalvibes.model.TurnStep;
@@ -26,7 +25,7 @@ class CorruptedConscienceTest extends BaseCardTest {
     @Test
     @DisplayName("Casting Corrupted Conscience targeting a creature puts it on the stack")
     void castingPutsOnStack() {
-        Permanent creature = addCreatureReady(player2);
+        Permanent creature = addCreatureReady(player2, new GrizzlyBears());
 
         harness.setHand(player1, List.of(new CorruptedConscience()));
         harness.addMana(player1, ManaColor.BLUE, 5);
@@ -45,7 +44,7 @@ class CorruptedConscienceTest extends BaseCardTest {
     @Test
     @DisplayName("Resolving Corrupted Conscience steals opponent's creature")
     void resolvingStealsCreature() {
-        Permanent creature = addCreatureReady(player2);
+        Permanent creature = addCreatureReady(player2, new GrizzlyBears());
 
         harness.setHand(player1, List.of(new CorruptedConscience()));
         harness.addMana(player1, ManaColor.BLUE, 5);
@@ -77,7 +76,7 @@ class CorruptedConscienceTest extends BaseCardTest {
     @Test
     @DisplayName("Enchanted creature has infect")
     void enchantedCreatureHasInfect() {
-        Permanent creature = addCreatureReady(player2);
+        Permanent creature = addCreatureReady(player2, new GrizzlyBears());
 
         harness.setHand(player1, List.of(new CorruptedConscience()));
         harness.addMana(player1, ManaColor.BLUE, 5);
@@ -93,7 +92,7 @@ class CorruptedConscienceTest extends BaseCardTest {
     @Test
     @DisplayName("Stolen creature deals combat damage as poison counters to defending player")
     void infectDealsPoisonCountersToPlayer() {
-        Permanent creature = addCreatureReady(player2);
+        Permanent creature = addCreatureReady(player2, new GrizzlyBears());
 
         harness.setHand(player1, List.of(new CorruptedConscience()));
         harness.addMana(player1, ManaColor.BLUE, 5);
@@ -116,7 +115,7 @@ class CorruptedConscienceTest extends BaseCardTest {
     @Test
     @DisplayName("Stolen creature with infect deals combat damage as -1/-1 counters to blocking creature")
     void infectDealsMinusCountersToCreature() {
-        Permanent creature = addCreatureReady(player2);
+        Permanent creature = addCreatureReady(player2, new GrizzlyBears());
 
         harness.setHand(player1, List.of(new CorruptedConscience()));
         harness.addMana(player1, ManaColor.BLUE, 5);
@@ -133,7 +132,7 @@ class CorruptedConscienceTest extends BaseCardTest {
         int attackerIndex = atkBf.indexOf(creature);
 
         // Player2 blocks with a creature
-        Permanent blocker = addCreatureReady(player2);
+        Permanent blocker = addCreatureReady(player2, new GrizzlyBears());
         blocker.setBlocking(true);
         blocker.addBlockingTarget(attackerIndex);
 
@@ -150,7 +149,7 @@ class CorruptedConscienceTest extends BaseCardTest {
     @Test
     @DisplayName("Corrupted Conscience fizzles if target creature is no longer on the battlefield")
     void fizzlesIfTargetGone() {
-        Permanent creature = addCreatureReady(player2);
+        Permanent creature = addCreatureReady(player2, new GrizzlyBears());
 
         harness.setHand(player1, List.of(new CorruptedConscience()));
         harness.addMana(player1, ManaColor.BLUE, 5);
@@ -172,7 +171,7 @@ class CorruptedConscienceTest extends BaseCardTest {
     @Test
     @DisplayName("Creature returns to owner and loses infect when Corrupted Conscience is destroyed")
     void creatureReturnsAndLosesInfectWhenDestroyed() {
-        Permanent creature = addCreatureReady(player2);
+        Permanent creature = addCreatureReady(player2, new GrizzlyBears());
 
         harness.setHand(player1, List.of(new CorruptedConscience()));
         harness.addMana(player1, ManaColor.BLUE, 5);
@@ -234,11 +233,4 @@ class CorruptedConscienceTest extends BaseCardTest {
     }
 
     // ===== Helper methods =====
-
-    private Permanent addCreatureReady(Player player) {
-        Permanent perm = new Permanent(new GrizzlyBears());
-        perm.setSummoningSick(false);
-        gd.playerBattlefields.get(player.getId()).add(perm);
-        return perm;
-    }
 }

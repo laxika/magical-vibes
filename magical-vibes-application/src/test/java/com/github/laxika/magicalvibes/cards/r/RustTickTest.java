@@ -65,7 +65,7 @@ class RustTickTest extends BaseCardTest {
     @DisplayName("Cannot target non-artifact permanents")
     void cannotTargetNonArtifact() {
         addReadyRustTick(player1);
-        Permanent creature = addReadyCreature(player2);
+        Permanent creature = addCreatureReady(player2, new GrizzlyBears());
         harness.addMana(player1, ManaColor.WHITE, 1);
 
         assertThatThrownBy(() -> harness.activateAbility(player1, 0, null, creature.getId()))
@@ -237,13 +237,6 @@ class RustTickTest extends BaseCardTest {
 
     private Permanent addReadyArtifact(Player player) {
         Permanent perm = new Permanent(new AngelsFeather());
-        perm.setSummoningSick(false);
-        gd.playerBattlefields.get(player.getId()).add(perm);
-        return perm;
-    }
-
-    private Permanent addReadyCreature(Player player) {
-        Permanent perm = new Permanent(new GrizzlyBears());
         perm.setSummoningSick(false);
         gd.playerBattlefields.get(player.getId()).add(perm);
         return perm;

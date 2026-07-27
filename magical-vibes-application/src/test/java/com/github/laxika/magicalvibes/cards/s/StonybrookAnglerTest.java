@@ -24,7 +24,7 @@ class StonybrookAnglerTest extends BaseCardTest {
     @DisplayName("Activating ability puts it on the stack targeting a creature")
     void activatingPutsOnStack() {
         addReadyAngler(player1);
-        Permanent target = addReadyCreature(player2);
+        Permanent target = addCreatureReady(player2, new GrizzlyBears());
         addAnglerMana(player1);
 
         harness.activateAbility(player1, 0, null, target.getId());
@@ -40,7 +40,7 @@ class StonybrookAnglerTest extends BaseCardTest {
     @DisplayName("Activating ability taps Stonybrook Angler")
     void activatingTapsAngler() {
         Permanent angler = addReadyAngler(player1);
-        Permanent target = addReadyCreature(player2);
+        Permanent target = addCreatureReady(player2, new GrizzlyBears());
         addAnglerMana(player1);
 
         harness.activateAbility(player1, 0, null, target.getId());
@@ -54,7 +54,7 @@ class StonybrookAnglerTest extends BaseCardTest {
     @DisplayName("Taps an untapped creature")
     void tapsUntappedCreature() {
         addReadyAngler(player1);
-        Permanent target = addReadyCreature(player2);
+        Permanent target = addCreatureReady(player2, new GrizzlyBears());
         addAnglerMana(player1);
 
         assertThat(target.isTapped()).isFalse();
@@ -71,7 +71,7 @@ class StonybrookAnglerTest extends BaseCardTest {
     @DisplayName("Untaps a tapped creature")
     void untapsTappedCreature() {
         addReadyAngler(player1);
-        Permanent target = addReadyCreature(player2);
+        Permanent target = addCreatureReady(player2, new GrizzlyBears());
         target.tap();
         addAnglerMana(player1);
 
@@ -89,7 +89,7 @@ class StonybrookAnglerTest extends BaseCardTest {
     @DisplayName("Can tap own untapped creature")
     void canTapOwnCreature() {
         addReadyAngler(player1);
-        Permanent ownCreature = addReadyCreature(player1);
+        Permanent ownCreature = addCreatureReady(player1, new GrizzlyBears());
         addAnglerMana(player1);
 
         harness.activateAbility(player1, 0, null, ownCreature.getId());
@@ -120,7 +120,7 @@ class StonybrookAnglerTest extends BaseCardTest {
     @DisplayName("Cannot activate ability without enough mana")
     void cannotActivateWithoutMana() {
         addReadyAngler(player1);
-        Permanent target = addReadyCreature(player2);
+        Permanent target = addCreatureReady(player2, new GrizzlyBears());
 
         assertThatThrownBy(() -> harness.activateAbility(player1, 0, null, target.getId()))
                 .isInstanceOf(IllegalStateException.class);
@@ -131,7 +131,7 @@ class StonybrookAnglerTest extends BaseCardTest {
     void cannotActivateWhenTapped() {
         Permanent angler = addReadyAngler(player1);
         angler.tap();
-        Permanent target = addReadyCreature(player2);
+        Permanent target = addCreatureReady(player2, new GrizzlyBears());
         addAnglerMana(player1);
 
         assertThatThrownBy(() -> harness.activateAbility(player1, 0, null, target.getId()))
@@ -146,7 +146,7 @@ class StonybrookAnglerTest extends BaseCardTest {
         Permanent angler = new Permanent(card);
         // summoningSick is true by default
         gd.playerBattlefields.get(player1.getId()).add(angler);
-        Permanent target = addReadyCreature(player2);
+        Permanent target = addCreatureReady(player2, new GrizzlyBears());
         addAnglerMana(player1);
 
         assertThatThrownBy(() -> harness.activateAbility(player1, 0, null, target.getId()))
@@ -160,7 +160,7 @@ class StonybrookAnglerTest extends BaseCardTest {
     @DisplayName("Fizzles if target creature is removed before resolution")
     void fizzlesIfTargetRemoved() {
         addReadyAngler(player1);
-        Permanent target = addReadyCreature(player2);
+        Permanent target = addCreatureReady(player2, new GrizzlyBears());
         addAnglerMana(player1);
 
         harness.activateAbility(player1, 0, null, target.getId());
@@ -178,14 +178,6 @@ class StonybrookAnglerTest extends BaseCardTest {
 
     private Permanent addReadyAngler(Player player) {
         StonybrookAngler card = new StonybrookAngler();
-        Permanent perm = new Permanent(card);
-        perm.setSummoningSick(false);
-        gd.playerBattlefields.get(player.getId()).add(perm);
-        return perm;
-    }
-
-    private Permanent addReadyCreature(Player player) {
-        GrizzlyBears card = new GrizzlyBears();
         Permanent perm = new Permanent(card);
         perm.setSummoningSick(false);
         gd.playerBattlefields.get(player.getId()).add(perm);

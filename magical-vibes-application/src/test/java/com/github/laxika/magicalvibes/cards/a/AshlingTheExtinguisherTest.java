@@ -4,7 +4,6 @@ import com.github.laxika.magicalvibes.cards.f.Forest;
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
 import com.github.laxika.magicalvibes.cards.m.Mountain;
 import com.github.laxika.magicalvibes.model.Card;
-import com.github.laxika.magicalvibes.model.GameData;
 import com.github.laxika.magicalvibes.model.PendingInteraction;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.Player;
@@ -19,14 +18,6 @@ import static org.assertj.core.api.Assertions.assertThat;
 
 class AshlingTheExtinguisherTest extends BaseCardTest {
 
-    private Permanent addReadyCreature(Player player, Card card) {
-        GameData gd = harness.getGameData();
-        Permanent perm = new Permanent(card);
-        perm.setSummoningSick(false);
-        gd.playerBattlefields.get(player.getId()).add(perm);
-        return perm;
-    }
-
     private Permanent addPermanent(Player player, Card card) {
         Permanent perm = new Permanent(card);
         harness.getGameData().playerBattlefields.get(player.getId()).add(perm);
@@ -36,9 +27,9 @@ class AshlingTheExtinguisherTest extends BaseCardTest {
     @Test
     @DisplayName("Combat damage to a player prompts to choose a creature that player controls")
     void promptsToChooseCreature() {
-        Permanent ashling = addReadyCreature(player1, new AshlingTheExtinguisher());
+        Permanent ashling = addCreatureReady(player1, new AshlingTheExtinguisher());
         ashling.setAttacking(true);
-        Permanent enemyCreature = addReadyCreature(player2, new GrizzlyBears());
+        Permanent enemyCreature = addCreatureReady(player2, new GrizzlyBears());
 
         resolveCombat();
         harness.passBothPriorities(); // resolve sacrifice trigger
@@ -51,9 +42,9 @@ class AshlingTheExtinguisherTest extends BaseCardTest {
     @Test
     @DisplayName("The chosen creature is sacrificed and the game advances")
     void sacrificesChosenCreature() {
-        Permanent ashling = addReadyCreature(player1, new AshlingTheExtinguisher());
+        Permanent ashling = addCreatureReady(player1, new AshlingTheExtinguisher());
         ashling.setAttacking(true);
-        Permanent enemyCreature = addReadyCreature(player2, new GrizzlyBears());
+        Permanent enemyCreature = addCreatureReady(player2, new GrizzlyBears());
 
         resolveCombat();
         harness.passBothPriorities();
@@ -69,10 +60,10 @@ class AshlingTheExtinguisherTest extends BaseCardTest {
     @Test
     @DisplayName("Only the damaged player's creatures are valid choices (not own creatures, not lands)")
     void onlyDamagedPlayersCreatures() {
-        Permanent ashling = addReadyCreature(player1, new AshlingTheExtinguisher());
+        Permanent ashling = addCreatureReady(player1, new AshlingTheExtinguisher());
         ashling.setAttacking(true);
-        Permanent ownCreature = addReadyCreature(player1, new GrizzlyBears());
-        Permanent enemyCreature = addReadyCreature(player2, new GrizzlyBears());
+        Permanent ownCreature = addCreatureReady(player1, new GrizzlyBears());
+        Permanent enemyCreature = addCreatureReady(player2, new GrizzlyBears());
         Permanent enemyLand = addPermanent(player2, new Mountain());
 
         resolveCombat();
@@ -87,7 +78,7 @@ class AshlingTheExtinguisherTest extends BaseCardTest {
     @Test
     @DisplayName("No trigger when the damaged player controls no creatures")
     void noTriggerWithoutCreatures() {
-        Permanent ashling = addReadyCreature(player1, new AshlingTheExtinguisher());
+        Permanent ashling = addCreatureReady(player1, new AshlingTheExtinguisher());
         ashling.setAttacking(true);
         addPermanent(player2, new Forest());
 

@@ -20,7 +20,7 @@ class ButchersCleaverTest extends BaseCardTest {
     @Test
     @DisplayName("Equipped creature gets +3/+0 regardless of creature type")
     void equippedCreatureGetsBoost() {
-        Permanent creature = addReadyCreature(player1);
+        Permanent creature = addCreatureReady(player1, new GrizzlyBears());
         Permanent cleaver = addCleaverReady(player1);
         cleaver.setAttachedTo(creature.getId());
 
@@ -54,7 +54,7 @@ class ButchersCleaverTest extends BaseCardTest {
     @Test
     @DisplayName("Equipped non-Human creature does not have lifelink")
     void equippedNonHumanDoesNotHaveLifelink() {
-        Permanent creature = addReadyCreature(player1);
+        Permanent creature = addCreatureReady(player1, new GrizzlyBears());
         Permanent cleaver = addCleaverReady(player1);
         cleaver.setAttachedTo(creature.getId());
 
@@ -88,7 +88,7 @@ class ButchersCleaverTest extends BaseCardTest {
         harness.setLife(player1, 20);
         harness.setLife(player2, 20);
 
-        Permanent creature = addReadyCreature(player1);
+        Permanent creature = addCreatureReady(player1, new GrizzlyBears());
         Permanent cleaver = addCleaverReady(player1);
         cleaver.setAttachedTo(creature.getId());
         creature.setAttacking(true);
@@ -108,7 +108,7 @@ class ButchersCleaverTest extends BaseCardTest {
     void movingFromHumanToNonHumanRemovesLifelink() {
         Permanent cleaver = addCleaverReady(player1);
         Permanent human = addReadyHuman(player1);
-        Permanent creature = addReadyCreature(player1);
+        Permanent creature = addCreatureReady(player1, new GrizzlyBears());
         cleaver.setAttachedTo(human.getId());
 
         assertThat(gqs.hasKeyword(gd, human, Keyword.LIFELINK)).isTrue();
@@ -127,7 +127,7 @@ class ButchersCleaverTest extends BaseCardTest {
     @DisplayName("Moving Cleaver from non-Human to Human grants lifelink")
     void movingFromNonHumanToHumanGrantsLifelink() {
         Permanent cleaver = addCleaverReady(player1);
-        Permanent creature = addReadyCreature(player1);
+        Permanent creature = addCreatureReady(player1, new GrizzlyBears());
         Permanent human = addReadyHuman(player1);
         cleaver.setAttachedTo(creature.getId());
 
@@ -146,13 +146,6 @@ class ButchersCleaverTest extends BaseCardTest {
 
     private Permanent addCleaverReady(Player player) {
         Permanent perm = new Permanent(new ButchersCleaver());
-        perm.setSummoningSick(false);
-        gd.playerBattlefields.get(player.getId()).add(perm);
-        return perm;
-    }
-
-    private Permanent addReadyCreature(Player player) {
-        Permanent perm = new Permanent(new GrizzlyBears());
         perm.setSummoningSick(false);
         gd.playerBattlefields.get(player.getId()).add(perm);
         return perm;

@@ -1,11 +1,9 @@
 package com.github.laxika.magicalvibes.cards.w;
 
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
-import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.Keyword;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
-import com.github.laxika.magicalvibes.model.Player;
 import com.github.laxika.magicalvibes.model.TurnStep;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
 import org.junit.jupiter.api.DisplayName;
@@ -22,8 +20,8 @@ class WarlordsFuryTest extends BaseCardTest {
     @Test
     @DisplayName("Warlord's Fury grants first strike to all controlled creatures and draws a card")
     void grantsFirstStrikeAndDrawsCard() {
-        Permanent bear1 = addReadyCreature(player1, new GrizzlyBears());
-        Permanent bear2 = addReadyCreature(player1, new GrizzlyBears());
+        Permanent bear1 = addCreatureReady(player1, new GrizzlyBears());
+        Permanent bear2 = addCreatureReady(player1, new GrizzlyBears());
         harness.setHand(player1, List.of(new WarlordsFury()));
         harness.addMana(player1, ManaColor.RED, 1);
 
@@ -39,8 +37,8 @@ class WarlordsFuryTest extends BaseCardTest {
     @Test
     @DisplayName("Warlord's Fury does not grant first strike to opponent's creatures")
     void doesNotAffectOpponentCreatures() {
-        Permanent ownBear = addReadyCreature(player1, new GrizzlyBears());
-        Permanent opponentBear = addReadyCreature(player2, new GrizzlyBears());
+        Permanent ownBear = addCreatureReady(player1, new GrizzlyBears());
+        Permanent opponentBear = addCreatureReady(player2, new GrizzlyBears());
         harness.setHand(player1, List.of(new WarlordsFury()));
         harness.addMana(player1, ManaColor.RED, 1);
 
@@ -54,7 +52,7 @@ class WarlordsFuryTest extends BaseCardTest {
     @Test
     @DisplayName("Warlord's Fury first strike wears off at end of turn")
     void firstStrikeWearsOffAtEndOfTurn() {
-        Permanent bear = addReadyCreature(player1, new GrizzlyBears());
+        Permanent bear = addCreatureReady(player1, new GrizzlyBears());
         harness.setHand(player1, List.of(new WarlordsFury()));
         harness.addMana(player1, ManaColor.RED, 1);
 
@@ -81,12 +79,5 @@ class WarlordsFuryTest extends BaseCardTest {
         harness.passBothPriorities();
 
         assertThat(gd.playerHands.get(player1.getId()).size()).isEqualTo(handSizeAfterCast + 1);
-    }
-
-    private Permanent addReadyCreature(Player player, Card card) {
-        Permanent permanent = new Permanent(card);
-        permanent.setSummoningSick(false);
-        gd.playerBattlefields.get(player.getId()).add(permanent);
-        return permanent;
     }
 }

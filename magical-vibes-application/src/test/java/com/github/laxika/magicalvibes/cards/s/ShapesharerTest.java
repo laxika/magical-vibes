@@ -1,10 +1,8 @@
 package com.github.laxika.magicalvibes.cards.s;
 
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
-import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
-import com.github.laxika.magicalvibes.model.Player;
 import com.github.laxika.magicalvibes.model.StackEntryType;
 import com.github.laxika.magicalvibes.model.TurnStep;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
@@ -23,8 +21,8 @@ class ShapesharerTest extends BaseCardTest {
     @Test
     @DisplayName("Activating ability puts it on the stack with both targets")
     void activatingAbilityPutsOnStack() {
-        Permanent shapesharer = addReady(player1, new Shapesharer());
-        Permanent bears = addReady(player1, new GrizzlyBears());
+        Permanent shapesharer = addCreatureReady(player1, new Shapesharer());
+        Permanent bears = addCreatureReady(player1, new GrizzlyBears());
         harness.addMana(player1, ManaColor.BLUE, 3);
 
         harness.activateAbilityWithMultiTargets(player1, 0, 0, List.of(shapesharer.getId(), bears.getId()));
@@ -39,8 +37,8 @@ class ShapesharerTest extends BaseCardTest {
     @Test
     @DisplayName("Resolving makes the target Shapeshifter a copy of the target creature")
     void becomesCopyOnResolution() {
-        Permanent shapesharer = addReady(player1, new Shapesharer());
-        Permanent bears = addReady(player1, new GrizzlyBears());
+        Permanent shapesharer = addCreatureReady(player1, new Shapesharer());
+        Permanent bears = addCreatureReady(player1, new GrizzlyBears());
         harness.addMana(player1, ManaColor.BLUE, 3);
 
         harness.activateAbilityWithMultiTargets(player1, 0, 0, List.of(shapesharer.getId(), bears.getId()));
@@ -56,8 +54,8 @@ class ShapesharerTest extends BaseCardTest {
     @Test
     @DisplayName("Copy survives the controller's own end-of-turn cleanup")
     void copySurvivesOwnEndOfTurn() {
-        Permanent shapesharer = addReady(player1, new Shapesharer());
-        Permanent bears = addReady(player1, new GrizzlyBears());
+        Permanent shapesharer = addCreatureReady(player1, new Shapesharer());
+        Permanent bears = addCreatureReady(player1, new GrizzlyBears());
         harness.addMana(player1, ManaColor.BLUE, 3);
 
         harness.activateAbilityWithMultiTargets(player1, 0, 0, List.of(shapesharer.getId(), bears.getId()));
@@ -76,8 +74,8 @@ class ShapesharerTest extends BaseCardTest {
     @Test
     @DisplayName("Copy reverts at the beginning of the controller's next turn")
     void copyRevertsAtControllersNextTurn() {
-        Permanent shapesharer = addReady(player1, new Shapesharer());
-        Permanent bears = addReady(player1, new GrizzlyBears());
+        Permanent shapesharer = addCreatureReady(player1, new Shapesharer());
+        Permanent bears = addCreatureReady(player1, new GrizzlyBears());
         harness.addMana(player1, ManaColor.BLUE, 3);
 
         harness.activateAbilityWithMultiTargets(player1, 0, 0, List.of(shapesharer.getId(), bears.getId()));
@@ -98,8 +96,8 @@ class ShapesharerTest extends BaseCardTest {
     @Test
     @DisplayName("Ability fizzles if the creature target leaves before resolution")
     void fizzlesIfCreatureLeaves() {
-        Permanent shapesharer = addReady(player1, new Shapesharer());
-        Permanent bears = addReady(player1, new GrizzlyBears());
+        Permanent shapesharer = addCreatureReady(player1, new Shapesharer());
+        Permanent bears = addCreatureReady(player1, new GrizzlyBears());
         harness.addMana(player1, ManaColor.BLUE, 3);
 
         harness.activateAbilityWithMultiTargets(player1, 0, 0, List.of(shapesharer.getId(), bears.getId()));
@@ -115,9 +113,9 @@ class ShapesharerTest extends BaseCardTest {
     @Test
     @DisplayName("First target must be a Shapeshifter")
     void firstTargetMustBeShapeshifter() {
-        addReady(player1, new Shapesharer());
-        Permanent bears = addReady(player1, new GrizzlyBears());
-        Permanent bears2 = addReady(player1, new GrizzlyBears());
+        addCreatureReady(player1, new Shapesharer());
+        Permanent bears = addCreatureReady(player1, new GrizzlyBears());
+        Permanent bears2 = addCreatureReady(player1, new GrizzlyBears());
         harness.addMana(player1, ManaColor.BLUE, 3);
 
         assertThatThrownBy(() ->
@@ -126,11 +124,4 @@ class ShapesharerTest extends BaseCardTest {
     }
 
     // ===== Helpers =====
-
-    private Permanent addReady(Player player, Card card) {
-        Permanent perm = new Permanent(card);
-        perm.setSummoningSick(false);
-        gd.playerBattlefields.get(player.getId()).add(perm);
-        return perm;
-    }
 }

@@ -55,7 +55,7 @@ class KithkinDaggerdareTest extends BaseCardTest {
     @DisplayName("Cannot target a non-attacking creature")
     void cannotTargetNonAttackingCreature() {
         addDaggerdareReady(player1);
-        Permanent nonAttacker = addReadyCreature(player1);
+        Permanent nonAttacker = addCreatureReady(player1, new GrizzlyBears());
         harness.addMana(player1, ManaColor.GREEN, 1);
 
         assertThatThrownBy(() -> harness.activateAbility(player1, 0, null, nonAttacker.getId()))
@@ -110,13 +110,6 @@ class KithkinDaggerdareTest extends BaseCardTest {
         Permanent perm = new Permanent(new GrizzlyBears());
         perm.setSummoningSick(false);
         perm.setAttacking(true);
-        gd.playerBattlefields.get(player.getId()).add(perm);
-        return perm;
-    }
-
-    private Permanent addReadyCreature(Player player) {
-        Permanent perm = new Permanent(new GrizzlyBears());
-        perm.setSummoningSick(false);
         gd.playerBattlefields.get(player.getId()).add(perm);
         return perm;
     }

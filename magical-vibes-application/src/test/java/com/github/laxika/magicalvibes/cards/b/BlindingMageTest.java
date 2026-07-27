@@ -25,7 +25,7 @@ class BlindingMageTest extends BaseCardTest {
     @DisplayName("Activating ability puts it on the stack targeting a creature")
     void activatingPutsOnStack() {
         Permanent mage = addReadyMage(player1);
-        Permanent target = addReadyBears(player2);
+        Permanent target = addCreatureReady(player2, new GrizzlyBears());
         harness.addMana(player1, ManaColor.WHITE, 1);
 
         harness.activateAbility(player1, 0, null, target.getId());
@@ -42,7 +42,7 @@ class BlindingMageTest extends BaseCardTest {
     @DisplayName("Activating ability taps Blinding Mage")
     void activatingTapsMage() {
         Permanent mage = addReadyMage(player1);
-        Permanent target = addReadyBears(player2);
+        Permanent target = addCreatureReady(player2, new GrizzlyBears());
         harness.addMana(player1, ManaColor.WHITE, 1);
 
         harness.activateAbility(player1, 0, null, target.getId());
@@ -54,7 +54,7 @@ class BlindingMageTest extends BaseCardTest {
     @DisplayName("Resolving ability taps target creature")
     void resolvingTapsTarget() {
         addReadyMage(player1);
-        Permanent target = addReadyBears(player2);
+        Permanent target = addCreatureReady(player2, new GrizzlyBears());
         harness.addMana(player1, ManaColor.WHITE, 1);
 
         harness.activateAbility(player1, 0, null, target.getId());
@@ -67,7 +67,7 @@ class BlindingMageTest extends BaseCardTest {
     @DisplayName("Can tap own creature")
     void canTapOwnCreature() {
         addReadyMage(player1);
-        Permanent ownBears = addReadyBears(player1);
+        Permanent ownBears = addCreatureReady(player1, new GrizzlyBears());
         harness.addMana(player1, ManaColor.WHITE, 1);
 
         harness.activateAbility(player1, 0, null, ownBears.getId());
@@ -80,7 +80,7 @@ class BlindingMageTest extends BaseCardTest {
     @DisplayName("Mana is consumed when activating ability")
     void manaIsConsumed() {
         addReadyMage(player1);
-        Permanent target = addReadyBears(player2);
+        Permanent target = addCreatureReady(player2, new GrizzlyBears());
         harness.addMana(player1, ManaColor.WHITE, 2);
 
         harness.activateAbility(player1, 0, null, target.getId());
@@ -95,7 +95,7 @@ class BlindingMageTest extends BaseCardTest {
     @DisplayName("Cannot activate ability without enough mana")
     void cannotActivateWithoutMana() {
         addReadyMage(player1);
-        Permanent target = addReadyBears(player2);
+        Permanent target = addCreatureReady(player2, new GrizzlyBears());
 
         assertThatThrownBy(() -> harness.activateAbility(player1, 0, null, target.getId()))
                 .isInstanceOf(IllegalStateException.class)
@@ -108,7 +108,7 @@ class BlindingMageTest extends BaseCardTest {
     @DisplayName("Ability fizzles if target is removed before resolution")
     void fizzlesIfTargetRemoved() {
         addReadyMage(player1);
-        Permanent target = addReadyBears(player2);
+        Permanent target = addCreatureReady(player2, new GrizzlyBears());
         harness.addMana(player1, ManaColor.WHITE, 1);
 
         harness.activateAbility(player1, 0, null, target.getId());
@@ -127,14 +127,6 @@ class BlindingMageTest extends BaseCardTest {
 
     private Permanent addReadyMage(Player player) {
         BlindingMage card = new BlindingMage();
-        Permanent perm = new Permanent(card);
-        perm.setSummoningSick(false);
-        harness.getGameData().playerBattlefields.get(player.getId()).add(perm);
-        return perm;
-    }
-
-    private Permanent addReadyBears(Player player) {
-        GrizzlyBears card = new GrizzlyBears();
         Permanent perm = new Permanent(card);
         perm.setSummoningSick(false);
         harness.getGameData().playerBattlefields.get(player.getId()).add(perm);

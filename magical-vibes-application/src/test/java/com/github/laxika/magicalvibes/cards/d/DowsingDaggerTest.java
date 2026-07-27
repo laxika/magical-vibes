@@ -58,7 +58,7 @@ class DowsingDaggerTest extends BaseCardTest {
     @Test
     @DisplayName("Equipped creature gets +2/+1")
     void equippedCreatureGetsBoost() {
-        Permanent creature = addReadyCreature(player1);
+        Permanent creature = addCreatureReady(player1, new GrizzlyBears());
         Permanent dagger = addDaggerReady(player1);
         dagger.setAttachedTo(creature.getId());
 
@@ -69,7 +69,7 @@ class DowsingDaggerTest extends BaseCardTest {
     @Test
     @DisplayName("Creature loses boost when Dagger is removed")
     void creatureLosesBoostWhenRemoved() {
-        Permanent creature = addReadyCreature(player1);
+        Permanent creature = addCreatureReady(player1, new GrizzlyBears());
         Permanent dagger = addDaggerReady(player1);
         dagger.setAttachedTo(creature.getId());
 
@@ -145,7 +145,7 @@ class DowsingDaggerTest extends BaseCardTest {
         @Test
         @DisplayName("Equipped creature dealing combat damage offers may-transform choice")
         void combatDamageOffersMayTransform() {
-            Permanent creature = addReadyCreature(player1);
+            Permanent creature = addCreatureReady(player1, new GrizzlyBears());
             Permanent dagger = addDaggerReady(player1);
             dagger.setAttachedTo(creature.getId());
             creature.setAttacking(true);
@@ -159,7 +159,7 @@ class DowsingDaggerTest extends BaseCardTest {
         @Test
         @DisplayName("Accepting transform turns Dowsing Dagger into Lost Vale")
         void acceptingTransformCreatesLostVale() {
-            Permanent creature = addReadyCreature(player1);
+            Permanent creature = addCreatureReady(player1, new GrizzlyBears());
             Permanent dagger = addDaggerReady(player1);
             dagger.setAttachedTo(creature.getId());
             creature.setAttacking(true);
@@ -179,7 +179,7 @@ class DowsingDaggerTest extends BaseCardTest {
         @Test
         @DisplayName("Declining transform keeps Dowsing Dagger unchanged")
         void decliningTransformKeepsDagger() {
-            Permanent creature = addReadyCreature(player1);
+            Permanent creature = addCreatureReady(player1, new GrizzlyBears());
             Permanent dagger = addDaggerReady(player1);
             dagger.setAttachedTo(creature.getId());
             creature.setAttacking(true);
@@ -197,13 +197,13 @@ class DowsingDaggerTest extends BaseCardTest {
         @Test
         @DisplayName("No trigger when equipped creature is blocked and deals no player damage")
         void noTriggerWhenBlocked() {
-            Permanent creature = addReadyCreature(player1);
+            Permanent creature = addCreatureReady(player1, new GrizzlyBears());
             Permanent dagger = addDaggerReady(player1);
             dagger.setAttachedTo(creature.getId());
             creature.setAttacking(true);
 
             // Add blocker with high toughness
-            Permanent blocker = addReadyCreature(player2);
+            Permanent blocker = addCreatureReady(player2, new GrizzlyBears());
             TestCards.mutableCard(blocker).setToughness(10);
             blocker.setBlocking(true);
             blocker.addBlockingTarget(0);
@@ -221,7 +221,7 @@ class DowsingDaggerTest extends BaseCardTest {
     @Test
     @DisplayName("After transform, Lost Vale is on the battlefield as a land")
     void lostValeOnBattlefieldAfterTransform() {
-        Permanent creature = addReadyCreature(player1);
+        Permanent creature = addCreatureReady(player1, new GrizzlyBears());
         Permanent dagger = addDaggerReady(player1);
         dagger.setAttachedTo(creature.getId());
         creature.setAttacking(true);
@@ -238,13 +238,6 @@ class DowsingDaggerTest extends BaseCardTest {
     }
 
     // ===== Helpers =====
-
-    private Permanent addReadyCreature(Player player) {
-        Permanent perm = new Permanent(new GrizzlyBears());
-        perm.setSummoningSick(false);
-        gd.playerBattlefields.get(player.getId()).add(perm);
-        return perm;
-    }
 
     private Permanent addDaggerReady(Player player) {
         Permanent perm = new Permanent(new DowsingDagger());

@@ -131,7 +131,7 @@ class FiendOfTheShadowsTest extends BaseCardTest {
     @DisplayName("No trigger when Fiend is blocked and deals no combat damage to a player")
     void noTriggerWhenBlocked() {
         Permanent fiend = addAttackingFiend(player1);
-        Permanent blocker = addReadyCreature(player2, new GrizzlyBears());
+        Permanent blocker = addCreatureReady(player2, new GrizzlyBears());
         blocker.setBlocking(true);
         blocker.addBlockingTarget(0);
         harness.setHand(player2, new ArrayList<>(List.of(createForest())));
@@ -148,7 +148,7 @@ class FiendOfTheShadowsTest extends BaseCardTest {
     @Test
     @DisplayName("Sacrificing a Human grants a regeneration shield to Fiend of the Shadows")
     void sacrificeHumanRegenerates() {
-        Permanent fiend = addReadyCreature(player1, new FiendOfTheShadows());
+        Permanent fiend = addCreatureReady(player1, new FiendOfTheShadows());
         harness.addToBattlefield(player1, createHumanToken());
         harness.forceActivePlayer(player1);
         harness.forceStep(TurnStep.PRECOMBAT_MAIN);
@@ -163,15 +163,8 @@ class FiendOfTheShadowsTest extends BaseCardTest {
 
     // ===== Helpers =====
 
-    private Permanent addReadyCreature(Player player, Card card) {
-        Permanent perm = new Permanent(card);
-        perm.setSummoningSick(false);
-        gd.playerBattlefields.get(player.getId()).add(perm);
-        return perm;
-    }
-
     private Permanent addAttackingFiend(Player player) {
-        Permanent fiend = addReadyCreature(player, new FiendOfTheShadows());
+        Permanent fiend = addCreatureReady(player, new FiendOfTheShadows());
         fiend.setAttacking(true);
         return fiend;
     }

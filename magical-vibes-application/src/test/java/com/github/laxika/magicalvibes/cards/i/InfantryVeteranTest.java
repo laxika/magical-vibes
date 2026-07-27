@@ -70,7 +70,7 @@ class InfantryVeteranTest extends BaseCardTest {
     @DisplayName("Cannot target a non-attacking creature")
     void cannotTargetNonAttackingCreature() {
         addReadyVeteran(player1);
-        Permanent nonAttacker = addReadyCreature(player1);
+        Permanent nonAttacker = addCreatureReady(player1, new GrizzlyBears());
 
         assertThatThrownBy(() -> harness.activateAbility(player1, 0, null, nonAttacker.getId()))
                 .isInstanceOf(IllegalStateException.class)
@@ -146,13 +146,6 @@ class InfantryVeteranTest extends BaseCardTest {
         Permanent perm = new Permanent(new GrizzlyBears());
         perm.setSummoningSick(false);
         perm.setAttacking(true);
-        gd.playerBattlefields.get(player.getId()).add(perm);
-        return perm;
-    }
-
-    private Permanent addReadyCreature(Player player) {
-        Permanent perm = new Permanent(new GrizzlyBears());
-        perm.setSummoningSick(false);
         gd.playerBattlefields.get(player.getId()).add(perm);
         return perm;
     }

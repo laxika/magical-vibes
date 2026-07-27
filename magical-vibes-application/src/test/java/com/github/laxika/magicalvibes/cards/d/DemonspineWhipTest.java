@@ -1,10 +1,8 @@
 package com.github.laxika.magicalvibes.cards.d;
 
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
-import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
-import com.github.laxika.magicalvibes.model.Player;
 import com.github.laxika.magicalvibes.model.TurnStep;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
 import org.junit.jupiter.api.DisplayName;
@@ -22,8 +20,8 @@ class DemonspineWhipTest extends BaseCardTest {
     @Test
     @DisplayName("Activating the pump ability gives the equipped creature +X/+0")
     void pumpBoostsEquippedCreature() {
-        Permanent whip = addReady(player1, new DemonspineWhip());
-        Permanent creature = addReady(player1, new GrizzlyBears());
+        Permanent whip = addCreatureReady(player1, new DemonspineWhip());
+        Permanent creature = addCreatureReady(player1, new GrizzlyBears());
         whip.setAttachedTo(creature.getId());
         harness.addMana(player1, ManaColor.RED, 3);
 
@@ -37,8 +35,8 @@ class DemonspineWhipTest extends BaseCardTest {
     @Test
     @DisplayName("The boost wears off at end of turn")
     void boostWearsOffAtEndOfTurn() {
-        Permanent whip = addReady(player1, new DemonspineWhip());
-        Permanent creature = addReady(player1, new GrizzlyBears());
+        Permanent whip = addCreatureReady(player1, new DemonspineWhip());
+        Permanent creature = addCreatureReady(player1, new GrizzlyBears());
         whip.setAttachedTo(creature.getId());
         harness.addMana(player1, ManaColor.RED, 2);
 
@@ -58,8 +56,8 @@ class DemonspineWhipTest extends BaseCardTest {
     @Test
     @DisplayName("The pump does nothing when the Equipment is not attached to a creature")
     void pumpDoesNothingWhenUnattached() {
-        addReady(player1, new DemonspineWhip()); // present but unattached
-        Permanent creature = addReady(player1, new GrizzlyBears());
+        addCreatureReady(player1, new DemonspineWhip()); // present but unattached
+        Permanent creature = addCreatureReady(player1, new GrizzlyBears());
         harness.addMana(player1, ManaColor.RED, 3);
 
         harness.activateAbility(player1, 0, 0, 3, null);
@@ -74,8 +72,8 @@ class DemonspineWhipTest extends BaseCardTest {
     @Test
     @DisplayName("Resolving equip attaches the Equipment to the target creature")
     void resolvingEquipAttaches() {
-        Permanent whip = addReady(player1, new DemonspineWhip());
-        Permanent creature = addReady(player1, new GrizzlyBears());
+        Permanent whip = addCreatureReady(player1, new DemonspineWhip());
+        Permanent creature = addCreatureReady(player1, new GrizzlyBears());
         harness.addMana(player1, ManaColor.COLORLESS, 1);
 
         harness.activateAbility(player1, 0, 1, null, creature.getId());
@@ -85,11 +83,4 @@ class DemonspineWhipTest extends BaseCardTest {
     }
 
     // ===== Helpers =====
-
-    private Permanent addReady(Player player, Card card) {
-        Permanent perm = new Permanent(card);
-        perm.setSummoningSick(false);
-        gd.playerBattlefields.get(player.getId()).add(perm);
-        return perm;
-    }
 }

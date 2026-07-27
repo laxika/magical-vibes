@@ -2,11 +2,9 @@ package com.github.laxika.magicalvibes.cards.o;
 
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
 import com.github.laxika.magicalvibes.cards.h.HillGiant;
-import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.Keyword;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
-import com.github.laxika.magicalvibes.model.Player;
 import com.github.laxika.magicalvibes.model.TurnStep;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
 import org.junit.jupiter.api.DisplayName;
@@ -24,8 +22,8 @@ class OverwhelmingStampedeTest extends BaseCardTest {
     @DisplayName("Boost is based on the greatest power among controlled creatures")
     void boostBasedOnGreatestPower() {
         // HillGiant is 3/3, GrizzlyBears is 2/2 — greatest power is 3
-        Permanent hillGiant = addReadyCreature(player1, new HillGiant());
-        Permanent bears = addReadyCreature(player1, new GrizzlyBears());
+        Permanent hillGiant = addCreatureReady(player1, new HillGiant());
+        Permanent bears = addCreatureReady(player1, new GrizzlyBears());
         harness.setHand(player1, List.of(new OverwhelmingStampede()));
         harness.addMana(player1, ManaColor.GREEN, 5);
 
@@ -45,8 +43,8 @@ class OverwhelmingStampedeTest extends BaseCardTest {
     @Test
     @DisplayName("Does not affect opponent's creatures")
     void doesNotAffectOpponentCreatures() {
-        addReadyCreature(player1, new GrizzlyBears());
-        Permanent opponentCreature = addReadyCreature(player2, new GrizzlyBears());
+        addCreatureReady(player1, new GrizzlyBears());
+        Permanent opponentCreature = addCreatureReady(player2, new GrizzlyBears());
         harness.setHand(player1, List.of(new OverwhelmingStampede()));
         harness.addMana(player1, ManaColor.GREEN, 5);
 
@@ -75,7 +73,7 @@ class OverwhelmingStampedeTest extends BaseCardTest {
     @Test
     @DisplayName("Effects wear off at end of turn")
     void effectsWearOffAtEndOfTurn() {
-        Permanent creature = addReadyCreature(player1, new GrizzlyBears());
+        Permanent creature = addCreatureReady(player1, new GrizzlyBears());
         harness.setHand(player1, List.of(new OverwhelmingStampede()));
         harness.addMana(player1, ManaColor.GREEN, 5);
 
@@ -93,12 +91,5 @@ class OverwhelmingStampedeTest extends BaseCardTest {
         assertThat(creature.getEffectivePower()).isEqualTo(2);
         assertThat(creature.getEffectiveToughness()).isEqualTo(2);
         assertThat(creature.hasKeyword(Keyword.TRAMPLE)).isFalse();
-    }
-
-    private Permanent addReadyCreature(Player player, Card card) {
-        Permanent permanent = new Permanent(card);
-        permanent.setSummoningSick(false);
-        gd.playerBattlefields.get(player.getId()).add(permanent);
-        return permanent;
     }
 }

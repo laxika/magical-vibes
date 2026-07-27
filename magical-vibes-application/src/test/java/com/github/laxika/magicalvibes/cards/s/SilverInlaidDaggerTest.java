@@ -19,7 +19,7 @@ class SilverInlaidDaggerTest extends BaseCardTest {
     @Test
     @DisplayName("Equipped non-Human creature gets +2/+0")
     void equippedNonHumanGetsBaseBoost() {
-        Permanent creature = addReadyCreature(player1);
+        Permanent creature = addCreatureReady(player1, new GrizzlyBears());
         Permanent dagger = addDaggerReady(player1);
         dagger.setAttachedTo(creature.getId());
 
@@ -60,7 +60,7 @@ class SilverInlaidDaggerTest extends BaseCardTest {
     void equippedNonHumanDealsCombatDamage() {
         harness.setLife(player2, 20);
 
-        Permanent creature = addReadyCreature(player1);
+        Permanent creature = addCreatureReady(player1, new GrizzlyBears());
         Permanent dagger = addDaggerReady(player1);
         dagger.setAttachedTo(creature.getId());
         creature.setAttacking(true);
@@ -77,7 +77,7 @@ class SilverInlaidDaggerTest extends BaseCardTest {
     void movingFromHumanToNonHumanRemovesBonus() {
         Permanent dagger = addDaggerReady(player1);
         Permanent human = addReadyHuman(player1);
-        Permanent creature = addReadyCreature(player1);
+        Permanent creature = addCreatureReady(player1, new GrizzlyBears());
         dagger.setAttachedTo(human.getId());
 
         assertThat(gqs.getEffectivePower(gd, human)).isEqualTo(5); // 2 + 2 + 1
@@ -95,7 +95,7 @@ class SilverInlaidDaggerTest extends BaseCardTest {
     @DisplayName("Moving Dagger from non-Human to Human grants the Human bonus")
     void movingFromNonHumanToHumanGrantsBonus() {
         Permanent dagger = addDaggerReady(player1);
-        Permanent creature = addReadyCreature(player1);
+        Permanent creature = addCreatureReady(player1, new GrizzlyBears());
         Permanent human = addReadyHuman(player1);
         dagger.setAttachedTo(creature.getId());
 
@@ -113,13 +113,6 @@ class SilverInlaidDaggerTest extends BaseCardTest {
 
     private Permanent addDaggerReady(Player player) {
         Permanent perm = new Permanent(new SilverInlaidDagger());
-        perm.setSummoningSick(false);
-        gd.playerBattlefields.get(player.getId()).add(perm);
-        return perm;
-    }
-
-    private Permanent addReadyCreature(Player player) {
-        Permanent perm = new Permanent(new GrizzlyBears());
         perm.setSummoningSick(false);
         gd.playerBattlefields.get(player.getId()).add(perm);
         return perm;

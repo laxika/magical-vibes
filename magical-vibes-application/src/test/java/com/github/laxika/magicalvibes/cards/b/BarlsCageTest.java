@@ -21,7 +21,7 @@ class BarlsCageTest extends BaseCardTest {
     @DisplayName("Activating ability puts it on the stack targeting a creature")
     void activatingTargetingCreaturePutsOnStack() {
         addReadyCage(player1);
-        Permanent target = addReadyCreature(player2);
+        Permanent target = addCreatureReady(player2, new GrizzlyBears());
         harness.addMana(player1, ManaColor.WHITE, 3);
 
         harness.activateAbility(player1, 0, null, target.getId());
@@ -37,7 +37,7 @@ class BarlsCageTest extends BaseCardTest {
     @DisplayName("Resolving makes target skip its next untap step")
     void resolvingSkipsNextUntap() {
         addReadyCage(player1);
-        Permanent target = addReadyCreature(player2);
+        Permanent target = addCreatureReady(player2, new GrizzlyBears());
         harness.addMana(player1, ManaColor.WHITE, 3);
 
         harness.activateAbility(player1, 0, null, target.getId());
@@ -50,7 +50,7 @@ class BarlsCageTest extends BaseCardTest {
     @DisplayName("Does not tap the target creature")
     void doesNotTapTarget() {
         addReadyCage(player1);
-        Permanent target = addReadyCreature(player2);
+        Permanent target = addCreatureReady(player2, new GrizzlyBears());
         harness.addMana(player1, ManaColor.WHITE, 3);
 
         harness.activateAbility(player1, 0, null, target.getId());
@@ -75,7 +75,7 @@ class BarlsCageTest extends BaseCardTest {
     @DisplayName("Cannot activate ability without enough mana")
     void cannotActivateWithoutMana() {
         addReadyCage(player1);
-        Permanent target = addReadyCreature(player2);
+        Permanent target = addCreatureReady(player2, new GrizzlyBears());
         harness.addMana(player1, ManaColor.WHITE, 2);
 
         assertThatThrownBy(() -> harness.activateAbility(player1, 0, null, target.getId()))
@@ -87,13 +87,6 @@ class BarlsCageTest extends BaseCardTest {
 
     private Permanent addReadyCage(Player player) {
         Permanent perm = new Permanent(new BarlsCage());
-        perm.setSummoningSick(false);
-        harness.getGameData().playerBattlefields.get(player.getId()).add(perm);
-        return perm;
-    }
-
-    private Permanent addReadyCreature(Player player) {
-        Permanent perm = new Permanent(new GrizzlyBears());
         perm.setSummoningSick(false);
         harness.getGameData().playerBattlefields.get(player.getId()).add(perm);
         return perm;

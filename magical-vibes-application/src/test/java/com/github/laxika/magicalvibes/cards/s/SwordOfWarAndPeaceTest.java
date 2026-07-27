@@ -50,7 +50,7 @@ class SwordOfWarAndPeaceTest extends BaseCardTest {
     @Test
     @DisplayName("Equipped creature gets +2/+2")
     void equippedCreatureGetsBoost() {
-        Permanent creature = addReadyCreature(player1);
+        Permanent creature = addCreatureReady(player1, new GrizzlyBears());
         Permanent sword = addSwordReady(player1);
         sword.setAttachedTo(creature.getId());
 
@@ -61,7 +61,7 @@ class SwordOfWarAndPeaceTest extends BaseCardTest {
     @Test
     @DisplayName("Equipped creature loses boost when Sword is removed")
     void creatureLosesBoostWhenEquipmentRemoved() {
-        Permanent creature = addReadyCreature(player1);
+        Permanent creature = addCreatureReady(player1, new GrizzlyBears());
         Permanent sword = addSwordReady(player1);
         sword.setAttachedTo(creature.getId());
 
@@ -78,7 +78,7 @@ class SwordOfWarAndPeaceTest extends BaseCardTest {
     @Test
     @DisplayName("Equipped creature has protection from red")
     void equippedCreatureHasProtectionFromRed() {
-        Permanent creature = addReadyCreature(player1);
+        Permanent creature = addCreatureReady(player1, new GrizzlyBears());
         Permanent sword = addSwordReady(player1);
         sword.setAttachedTo(creature.getId());
 
@@ -88,7 +88,7 @@ class SwordOfWarAndPeaceTest extends BaseCardTest {
     @Test
     @DisplayName("Equipped creature has protection from white")
     void equippedCreatureHasProtectionFromWhite() {
-        Permanent creature = addReadyCreature(player1);
+        Permanent creature = addCreatureReady(player1, new GrizzlyBears());
         Permanent sword = addSwordReady(player1);
         sword.setAttachedTo(creature.getId());
 
@@ -98,7 +98,7 @@ class SwordOfWarAndPeaceTest extends BaseCardTest {
     @Test
     @DisplayName("Equipped creature does NOT have protection from blue")
     void equippedCreatureNoProtectionFromBlue() {
-        Permanent creature = addReadyCreature(player1);
+        Permanent creature = addCreatureReady(player1, new GrizzlyBears());
         Permanent sword = addSwordReady(player1);
         sword.setAttachedTo(creature.getId());
 
@@ -108,7 +108,7 @@ class SwordOfWarAndPeaceTest extends BaseCardTest {
     @Test
     @DisplayName("Creature loses protection when Sword is removed")
     void creatureLosesProtectionWhenEquipmentRemoved() {
-        Permanent creature = addReadyCreature(player1);
+        Permanent creature = addCreatureReady(player1, new GrizzlyBears());
         Permanent sword = addSwordReady(player1);
         sword.setAttachedTo(creature.getId());
 
@@ -136,7 +136,7 @@ class SwordOfWarAndPeaceTest extends BaseCardTest {
     @DisplayName("Deals damage to damaged player equal to the number of cards in their hand")
     void dealsDamageEqualToOpponentHandSize() {
         harness.setLife(player2, 20);
-        Permanent creature = addReadyCreature(player1);
+        Permanent creature = addCreatureReady(player1, new GrizzlyBears());
         Permanent sword = addSwordReady(player1);
         sword.setAttachedTo(creature.getId());
         creature.setAttacking(true);
@@ -157,7 +157,7 @@ class SwordOfWarAndPeaceTest extends BaseCardTest {
     @DisplayName("Deals no extra damage when opponent's hand is empty")
     void noExtraDamageWhenOpponentHandEmpty() {
         harness.setLife(player2, 20);
-        Permanent creature = addReadyCreature(player1);
+        Permanent creature = addCreatureReady(player1, new GrizzlyBears());
         Permanent sword = addSwordReady(player1);
         sword.setAttachedTo(creature.getId());
         creature.setAttacking(true);
@@ -178,7 +178,7 @@ class SwordOfWarAndPeaceTest extends BaseCardTest {
     void gainsLifeEqualToControllerHandSize() {
         harness.setLife(player1, 20);
         harness.setLife(player2, 20);
-        Permanent creature = addReadyCreature(player1);
+        Permanent creature = addCreatureReady(player1, new GrizzlyBears());
         Permanent sword = addSwordReady(player1);
         sword.setAttachedTo(creature.getId());
         creature.setAttacking(true);
@@ -199,7 +199,7 @@ class SwordOfWarAndPeaceTest extends BaseCardTest {
     void noLifeGainWhenControllerHandEmpty() {
         harness.setLife(player1, 20);
         harness.setLife(player2, 20);
-        Permanent creature = addReadyCreature(player1);
+        Permanent creature = addCreatureReady(player1, new GrizzlyBears());
         Permanent sword = addSwordReady(player1);
         sword.setAttachedTo(creature.getId());
         creature.setAttacking(true);
@@ -220,7 +220,7 @@ class SwordOfWarAndPeaceTest extends BaseCardTest {
     void bothEffectsFireOnCombatDamage() {
         harness.setLife(player1, 20);
         harness.setLife(player2, 20);
-        Permanent creature = addReadyCreature(player1);
+        Permanent creature = addCreatureReady(player1, new GrizzlyBears());
         Permanent sword = addSwordReady(player1);
         sword.setAttachedTo(creature.getId());
         creature.setAttacking(true);
@@ -247,7 +247,7 @@ class SwordOfWarAndPeaceTest extends BaseCardTest {
     void noTriggerWhenBlocked() {
         harness.setLife(player1, 20);
         harness.setLife(player2, 20);
-        Permanent creature = addReadyCreature(player1);
+        Permanent creature = addCreatureReady(player1, new GrizzlyBears());
         Permanent sword = addSwordReady(player1);
         sword.setAttachedTo(creature.getId());
         creature.setAttacking(true);
@@ -277,8 +277,8 @@ class SwordOfWarAndPeaceTest extends BaseCardTest {
     @DisplayName("Sword can be moved to another creature")
     void canReEquipToAnotherCreature() {
         Permanent sword = addSwordReady(player1);
-        Permanent creature1 = addReadyCreature(player1);
-        Permanent creature2 = addReadyCreature(player1);
+        Permanent creature1 = addCreatureReady(player1, new GrizzlyBears());
+        Permanent creature2 = addCreatureReady(player1, new GrizzlyBears());
 
         sword.setAttachedTo(creature1.getId());
         assertThat(gqs.getEffectivePower(gd, creature1)).isEqualTo(4);
@@ -375,13 +375,6 @@ class SwordOfWarAndPeaceTest extends BaseCardTest {
 
     private Permanent addSwordReady(Player player) {
         Permanent perm = new Permanent(new SwordOfWarAndPeace());
-        perm.setSummoningSick(false);
-        gd.playerBattlefields.get(player.getId()).add(perm);
-        return perm;
-    }
-
-    private Permanent addReadyCreature(Player player) {
-        Permanent perm = new Permanent(new GrizzlyBears());
         perm.setSummoningSick(false);
         gd.playerBattlefields.get(player.getId()).add(perm);
         return perm;

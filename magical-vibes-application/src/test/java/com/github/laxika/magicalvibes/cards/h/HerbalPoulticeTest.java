@@ -18,7 +18,7 @@ class HerbalPoulticeTest extends BaseCardTest {
     @Test
     @DisplayName("Activating targets a creature and sacrifices the artifact as a cost")
     void activatingTargetsCreatureAndSacrifices() {
-        Permanent poultice = addReady(player1, new HerbalPoultice());
+        Permanent poultice = addCreatureReady(player1, new HerbalPoultice());
         Permanent bears = addReadyCreature(player1, new GrizzlyBears());
         harness.addMana(player1, ManaColor.COLORLESS, 3);
 
@@ -36,7 +36,7 @@ class HerbalPoulticeTest extends BaseCardTest {
     @Test
     @DisplayName("Resolving grants a regeneration shield to the target creature")
     void resolvingGrantsShield() {
-        addReady(player1, new HerbalPoultice());
+        addCreatureReady(player1, new HerbalPoultice());
         Permanent bears = addReadyCreature(player1, new GrizzlyBears());
         harness.addMana(player1, ManaColor.COLORLESS, 3);
 
@@ -49,8 +49,8 @@ class HerbalPoulticeTest extends BaseCardTest {
     @Test
     @DisplayName("Cannot target a non-creature permanent")
     void cannotTargetNonCreature() {
-        addReady(player1, new HerbalPoultice());
-        Permanent otherArtifact = addReady(player1, new HerbalPoultice());
+        addCreatureReady(player1, new HerbalPoultice());
+        Permanent otherArtifact = addCreatureReady(player1, new HerbalPoultice());
         harness.addMana(player1, ManaColor.COLORLESS, 3);
 
         assertThatThrownBy(() -> harness.activateAbility(player1, 0, null, otherArtifact.getId()))
@@ -61,7 +61,7 @@ class HerbalPoulticeTest extends BaseCardTest {
     @Test
     @DisplayName("Cannot activate without enough mana")
     void cannotActivateWithoutMana() {
-        addReady(player1, new HerbalPoultice());
+        addCreatureReady(player1, new HerbalPoultice());
         Permanent bears = addReadyCreature(player1, new GrizzlyBears());
 
         assertThatThrownBy(() -> harness.activateAbility(player1, 0, null, bears.getId()))
@@ -69,14 +69,7 @@ class HerbalPoulticeTest extends BaseCardTest {
                 .hasMessageContaining("Not enough mana");
     }
 
-    private Permanent addReady(Player player, Card card) {
-        Permanent permanent = new Permanent(card);
-        permanent.setSummoningSick(false);
-        gd.playerBattlefields.get(player.getId()).add(permanent);
-        return permanent;
-    }
-
     private Permanent addReadyCreature(Player player, Card card) {
-        return addReady(player, card);
+        return addCreatureReady(player, card);
     }
 }

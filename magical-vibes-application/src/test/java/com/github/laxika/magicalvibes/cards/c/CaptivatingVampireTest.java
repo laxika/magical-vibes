@@ -113,7 +113,7 @@ class CaptivatingVampireTest extends BaseCardTest {
         Permanent captivating = findPermanent(player1, "Captivating Vampire");
         captivating.setSummoningSick(false);
 
-        Permanent target = addReadyCreature(player2);
+        Permanent target = addCreatureReady(player2, new GrizzlyBears());
 
         int captivatingIdx = gd.playerBattlefields.get(player1.getId()).indexOf(captivating);
         harness.activateAbility(player1, captivatingIdx, null, target.getId());
@@ -153,7 +153,7 @@ class CaptivatingVampireTest extends BaseCardTest {
         Permanent captivating = findPermanent(player1, "Captivating Vampire");
         captivating.setSummoningSick(false);
 
-        Permanent target = addReadyCreature(player2);
+        Permanent target = addCreatureReady(player2, new GrizzlyBears());
 
         int captivatingIdx = gd.playerBattlefields.get(player1.getId()).indexOf(captivating);
 
@@ -187,7 +187,7 @@ class CaptivatingVampireTest extends BaseCardTest {
         Permanent captivating = findPermanent(player1, "Captivating Vampire");
         captivating.setSummoningSick(false);
 
-        Permanent target = addReadyCreature(player2);
+        Permanent target = addCreatureReady(player2, new GrizzlyBears());
 
         int captivatingIdx = gd.playerBattlefields.get(player1.getId()).indexOf(captivating);
         harness.activateAbility(player1, captivatingIdx, null, target.getId());
@@ -228,13 +228,6 @@ class CaptivatingVampireTest extends BaseCardTest {
             vamp.setSummoningSick(false);
             gd.playerBattlefields.get(player.getId()).add(vamp);
         }
-    }
-
-    private Permanent addReadyCreature(Player player) {
-        Permanent perm = new Permanent(new GrizzlyBears());
-        perm.setSummoningSick(false);
-        gd.playerBattlefields.get(player.getId()).add(perm);
-        return perm;
     }
 
 }

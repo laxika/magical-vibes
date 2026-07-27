@@ -22,7 +22,7 @@ class CorrosiveOozeTest extends BaseCardTest {
     @DisplayName("When Corrosive Ooze blocks an equipped creature, a trigger is created")
     void blockingEquippedCreatureCreatesTrigger() {
         Permanent ooze = addReadyOoze(player2);
-        Permanent attacker = addReadyCreature(player1);
+        Permanent attacker = addCreatureReady(player1, new GrizzlyBears());
         attacker.setAttacking(true);
         Permanent equipment = addEquipment(player1);
         equipment.setAttachedTo(attacker.getId());
@@ -43,7 +43,7 @@ class CorrosiveOozeTest extends BaseCardTest {
         harness.setLife(player2, 20);
 
         Permanent ooze = addReadyOoze(player2);
-        Permanent attacker = addReadyCreature(player1);
+        Permanent attacker = addCreatureReady(player1, new GrizzlyBears());
         attacker.setAttacking(true);
         Permanent equipment = addEquipment(player1);
         equipment.setAttachedTo(attacker.getId());
@@ -67,7 +67,7 @@ class CorrosiveOozeTest extends BaseCardTest {
     @DisplayName("When Corrosive Ooze blocks a non-equipped creature, no trigger is created")
     void blockingNonEquippedCreatureNoTrigger() {
         addReadyOoze(player2);
-        Permanent attacker = addReadyCreature(player1);
+        Permanent attacker = addCreatureReady(player1, new GrizzlyBears());
         attacker.setAttacking(true);
 
         prepareDeclareBlockers();
@@ -87,7 +87,7 @@ class CorrosiveOozeTest extends BaseCardTest {
         Permanent ooze = addReadyOoze(player1);
         ooze.setAttacking(true);
 
-        Permanent blocker = addReadyCreature(player2);
+        Permanent blocker = addCreatureReady(player2, new GrizzlyBears());
         Permanent equipment = addEquipment(player2);
         equipment.setAttachedTo(blocker.getId());
 
@@ -109,7 +109,7 @@ class CorrosiveOozeTest extends BaseCardTest {
         Permanent ooze = addReadyOoze(player1);
         ooze.setAttacking(true);
 
-        Permanent blocker = addReadyCreature(player2);
+        Permanent blocker = addCreatureReady(player2, new GrizzlyBears());
         Permanent equipment = addEquipment(player2);
         equipment.setAttachedTo(blocker.getId());
 
@@ -134,7 +134,7 @@ class CorrosiveOozeTest extends BaseCardTest {
         Permanent ooze = addReadyOoze(player1);
         ooze.setAttacking(true);
 
-        addReadyCreature(player2);
+        addCreatureReady(player2, new GrizzlyBears());
 
         prepareDeclareBlockers();
         gs.declareBlockers(gd, player2, List.of(new BlockerAssignment(0, 0)));
@@ -153,11 +153,11 @@ class CorrosiveOozeTest extends BaseCardTest {
         Permanent ooze = addReadyOoze(player1);
         ooze.setAttacking(true);
 
-        Permanent equippedBlocker = addReadyCreature(player2);
+        Permanent equippedBlocker = addCreatureReady(player2, new GrizzlyBears());
         Permanent equipment = addEquipment(player2);
         equipment.setAttachedTo(equippedBlocker.getId());
 
-        addReadyCreature(player2); // non-equipped blocker
+        addCreatureReady(player2, new GrizzlyBears()); // non-equipped blocker
 
         prepareDeclareBlockers();
         // equippedBlocker is index 0, equipment is index 1, non-equipped creature is index 2
@@ -183,7 +183,7 @@ class CorrosiveOozeTest extends BaseCardTest {
         harness.setLife(player2, 20);
 
         Permanent ooze = addReadyOoze(player2);
-        Permanent attacker = addReadyCreature(player1);
+        Permanent attacker = addCreatureReady(player1, new GrizzlyBears());
         attacker.setAttacking(true);
 
         Permanent equipment1 = addEquipment(player1);
@@ -214,13 +214,6 @@ class CorrosiveOozeTest extends BaseCardTest {
 
     private Permanent addReadyOoze(Player player) {
         Permanent perm = new Permanent(new CorrosiveOoze());
-        perm.setSummoningSick(false);
-        gd.playerBattlefields.get(player.getId()).add(perm);
-        return perm;
-    }
-
-    private Permanent addReadyCreature(Player player) {
-        Permanent perm = new Permanent(new GrizzlyBears());
         perm.setSummoningSick(false);
         gd.playerBattlefields.get(player.getId()).add(perm);
         return perm;

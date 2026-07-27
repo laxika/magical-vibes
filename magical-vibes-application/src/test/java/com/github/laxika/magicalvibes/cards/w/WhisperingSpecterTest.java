@@ -3,10 +3,8 @@ package com.github.laxika.magicalvibes.cards.w;
 import com.github.laxika.magicalvibes.model.GameLogEntry;
 
 import com.github.laxika.magicalvibes.model.PendingInteraction;
-import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.GameData;
 import com.github.laxika.magicalvibes.model.Permanent;
-import com.github.laxika.magicalvibes.model.Player;
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
 import org.junit.jupiter.api.DisplayName;
@@ -18,20 +16,12 @@ import static org.assertj.core.api.Assertions.assertThat;
 
 class WhisperingSpecterTest extends BaseCardTest {
 
-    private Permanent addReadyCreature(Player player, Card card) {
-        GameData gd = harness.getGameData();
-        Permanent perm = new Permanent(card);
-        perm.setSummoningSick(false);
-        gd.playerBattlefields.get(player.getId()).add(perm);
-        return perm;
-    }
-
     
 
     @Test
     @DisplayName("Combat damage trigger presents may ability choice")
     void combatDamageTriggerPresentsMayChoice() {
-        Permanent specter = addReadyCreature(player1, new WhisperingSpecter());
+        Permanent specter = addCreatureReady(player1, new WhisperingSpecter());
         specter.setAttacking(true);
 
         resolveCombat();
@@ -46,7 +36,7 @@ class WhisperingSpecterTest extends BaseCardTest {
         // Give opponent 3 poison counters before combat
         gd.playerPoisonCounters.put(player2.getId(), 3);
 
-        Permanent specter = addReadyCreature(player1, new WhisperingSpecter());
+        Permanent specter = addCreatureReady(player1, new WhisperingSpecter());
         specter.setAttacking(true);
 
         // Give player2 enough cards to discard
@@ -79,7 +69,7 @@ class WhisperingSpecterTest extends BaseCardTest {
     void declineSacrifice() {
         gd.playerPoisonCounters.put(player2.getId(), 2);
 
-        Permanent specter = addReadyCreature(player1, new WhisperingSpecter());
+        Permanent specter = addCreatureReady(player1, new WhisperingSpecter());
         specter.setAttacking(true);
 
         int handSizeBefore = gd.playerHands.get(player2.getId()).size();
@@ -101,9 +91,9 @@ class WhisperingSpecterTest extends BaseCardTest {
     @Test
     @DisplayName("No trigger when Whispering Specter is blocked and deals no damage to player")
     void noTriggerWhenBlocked() {
-        Permanent specter = addReadyCreature(player1, new WhisperingSpecter());
+        Permanent specter = addCreatureReady(player1, new WhisperingSpecter());
         specter.setAttacking(true);
-        Permanent blocker = addReadyCreature(player2, new GrizzlyBears());
+        Permanent blocker = addCreatureReady(player2, new GrizzlyBears());
         blocker.setBlocking(true);
         blocker.addBlockingTarget(0);
 
@@ -117,7 +107,7 @@ class WhisperingSpecterTest extends BaseCardTest {
     @DisplayName("Infect combat damage gives poison counter then discard based on total")
     void infectCombatDamageGivesPoisonThenDiscard() {
         // No prior poison counters — infect combat damage will give 1
-        Permanent specter = addReadyCreature(player1, new WhisperingSpecter());
+        Permanent specter = addCreatureReady(player1, new WhisperingSpecter());
         specter.setAttacking(true);
         harness.setHand(player2, List.of(new GrizzlyBears(), new GrizzlyBears()));
 
@@ -141,7 +131,7 @@ class WhisperingSpecterTest extends BaseCardTest {
         gd.playerPoisonCounters.put(player2.getId(), 3);
         harness.setHand(player2, List.of());
 
-        Permanent specter = addReadyCreature(player1, new WhisperingSpecter());
+        Permanent specter = addCreatureReady(player1, new WhisperingSpecter());
         specter.setAttacking(true);
 
         resolveCombat();

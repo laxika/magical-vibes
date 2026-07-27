@@ -19,7 +19,7 @@ class RunedStalactiteTest extends BaseCardTest {
     @DisplayName("Resolving equip attaches Runed Stalactite to target creature")
     void resolvingEquipAttachesToCreature() {
         Permanent stalactite = addStalactiteReady(player1);
-        Permanent creature = addReadyCreature(player1);
+        Permanent creature = addCreatureReady(player1, new GrizzlyBears());
         harness.addMana(player1, ManaColor.COLORLESS, 2);
 
         harness.activateAbility(player1, 0, null, creature.getId());
@@ -32,7 +32,7 @@ class RunedStalactiteTest extends BaseCardTest {
     @Test
     @DisplayName("Equipped creature gets +1/+1")
     void equippedCreatureGetsBoost() {
-        Permanent creature = addReadyCreature(player1);
+        Permanent creature = addCreatureReady(player1, new GrizzlyBears());
         Permanent stalactite = addStalactiteReady(player1);
         stalactite.setAttachedTo(creature.getId());
 
@@ -45,7 +45,7 @@ class RunedStalactiteTest extends BaseCardTest {
     void equippedCreatureIsEveryCreatureType() {
         // Grizzly Bears is a Bear, not a Soldier; Field Marshal boosts other Soldiers.
         harness.addToBattlefield(player1, new FieldMarshal());
-        Permanent bears = addReadyCreature(player1);
+        Permanent bears = addCreatureReady(player1, new GrizzlyBears());
         Permanent stalactite = addStalactiteReady(player1);
         stalactite.setAttachedTo(bears.getId());
 
@@ -59,7 +59,7 @@ class RunedStalactiteTest extends BaseCardTest {
     @DisplayName("Creature loses boost and creature types when Stalactite is removed")
     void creatureLosesBonusesWhenEquipmentRemoved() {
         harness.addToBattlefield(player1, new FieldMarshal());
-        Permanent bears = addReadyCreature(player1);
+        Permanent bears = addCreatureReady(player1, new GrizzlyBears());
         Permanent stalactite = addStalactiteReady(player1);
         stalactite.setAttachedTo(bears.getId());
 
@@ -77,8 +77,8 @@ class RunedStalactiteTest extends BaseCardTest {
     @Test
     @DisplayName("Stalactite does not affect unequipped creatures")
     void doesNotAffectOtherCreatures() {
-        Permanent creature = addReadyCreature(player1);
-        Permanent other = addReadyCreature(player1);
+        Permanent creature = addCreatureReady(player1, new GrizzlyBears());
+        Permanent other = addCreatureReady(player1, new GrizzlyBears());
         Permanent stalactite = addStalactiteReady(player1);
         stalactite.setAttachedTo(creature.getId());
 
@@ -88,13 +88,6 @@ class RunedStalactiteTest extends BaseCardTest {
 
     private Permanent addStalactiteReady(Player player) {
         Permanent perm = new Permanent(new RunedStalactite());
-        perm.setSummoningSick(false);
-        gd.playerBattlefields.get(player.getId()).add(perm);
-        return perm;
-    }
-
-    private Permanent addReadyCreature(Player player) {
-        Permanent perm = new Permanent(new GrizzlyBears());
         perm.setSummoningSick(false);
         gd.playerBattlefields.get(player.getId()).add(perm);
         return perm;

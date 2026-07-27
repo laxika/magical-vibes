@@ -76,7 +76,7 @@ class HunterOfEyeblightsTest extends BaseCardTest {
     @DisplayName("Ability cannot target a creature without a counter")
     void abilityCannotTargetCreatureWithoutCounter() {
         addReadyHunter(player1);
-        Permanent target = addReadyBears(player2);
+        Permanent target = addCreatureReady(player2, new GrizzlyBears());
         harness.addMana(player1, ManaColor.BLACK, 3);
 
         assertThatThrownBy(() -> harness.activateAbility(player1, 0, null, target.getId()))
@@ -90,15 +90,8 @@ class HunterOfEyeblightsTest extends BaseCardTest {
         return perm;
     }
 
-    private Permanent addReadyBears(Player player) {
-        Permanent perm = new Permanent(new GrizzlyBears());
-        perm.setSummoningSick(false);
-        harness.getGameData().playerBattlefields.get(player.getId()).add(perm);
-        return perm;
-    }
-
     private Permanent addBearsWithCounter(Player player) {
-        Permanent perm = addReadyBears(player);
+        Permanent perm = addCreatureReady(player, new GrizzlyBears());
         perm.setCounterCount(CounterType.PLUS_ONE_PLUS_ONE, 1);
         return perm;
     }

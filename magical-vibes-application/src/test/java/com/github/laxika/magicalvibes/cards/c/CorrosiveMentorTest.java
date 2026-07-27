@@ -2,11 +2,9 @@ package com.github.laxika.magicalvibes.cards.c;
 
 import com.github.laxika.magicalvibes.cards.a.AshenmoorCohort;
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
-import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CounterType;
 import com.github.laxika.magicalvibes.model.Keyword;
 import com.github.laxika.magicalvibes.model.Permanent;
-import com.github.laxika.magicalvibes.model.Player;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
@@ -20,7 +18,7 @@ class CorrosiveMentorTest extends BaseCardTest {
     @Test
     @DisplayName("Corrosive Mentor grants itself wither (it is black)")
     void grantsSelfWither() {
-        Permanent mentor = addReady(player1, new CorrosiveMentor());
+        Permanent mentor = addCreatureReady(player1, new CorrosiveMentor());
 
         assertThat(gqs.hasKeyword(gd, mentor, Keyword.WITHER)).isTrue();
     }
@@ -28,8 +26,8 @@ class CorrosiveMentorTest extends BaseCardTest {
     @Test
     @DisplayName("Grants wither to another black creature you control, and revokes it when it leaves")
     void grantsWitherToOtherBlackCreature() {
-        Permanent mentor = addReady(player1, new CorrosiveMentor());
-        Permanent blackCreature = addReady(player1, new AshenmoorCohort());
+        Permanent mentor = addCreatureReady(player1, new CorrosiveMentor());
+        Permanent blackCreature = addCreatureReady(player1, new AshenmoorCohort());
 
         assertThat(gqs.hasKeyword(gd, blackCreature, Keyword.WITHER)).isTrue();
 
@@ -41,8 +39,8 @@ class CorrosiveMentorTest extends BaseCardTest {
     @Test
     @DisplayName("Does not grant wither to a non-black creature")
     void doesNotGrantToNonBlackCreature() {
-        addReady(player1, new CorrosiveMentor());
-        Permanent greenCreature = addReady(player1, new GrizzlyBears());
+        addCreatureReady(player1, new CorrosiveMentor());
+        Permanent greenCreature = addCreatureReady(player1, new GrizzlyBears());
 
         assertThat(gqs.hasKeyword(gd, greenCreature, Keyword.WITHER)).isFalse();
     }
@@ -50,8 +48,8 @@ class CorrosiveMentorTest extends BaseCardTest {
     @Test
     @DisplayName("Does not grant wither to an opponent's black creature")
     void doesNotGrantToOpponentBlackCreature() {
-        addReady(player1, new CorrosiveMentor());
-        Permanent opponentBlack = addReady(player2, new AshenmoorCohort());
+        addCreatureReady(player1, new CorrosiveMentor());
+        Permanent opponentBlack = addCreatureReady(player2, new AshenmoorCohort());
 
         assertThat(gqs.hasKeyword(gd, opponentBlack, Keyword.WITHER)).isFalse();
     }
@@ -61,10 +59,10 @@ class CorrosiveMentorTest extends BaseCardTest {
     @Test
     @DisplayName("A wither creature deals combat damage to a blocker as -1/-1 counters")
     void witherDealsMinusCountersToBlocker() {
-        Permanent mentor = addReady(player1, new CorrosiveMentor()); // 1/3, black → has wither
+        Permanent mentor = addCreatureReady(player1, new CorrosiveMentor()); // 1/3, black → has wither
         mentor.setAttacking(true);
 
-        Permanent blocker = addReady(player2, new GrizzlyBears()); // 2/2
+        Permanent blocker = addCreatureReady(player2, new GrizzlyBears()); // 2/2
         blocker.setBlocking(true);
         blocker.addBlockingTarget(0);
 
@@ -81,7 +79,7 @@ class CorrosiveMentorTest extends BaseCardTest {
     void witherDoesNotPoisonPlayer() {
         harness.setLife(player2, 20);
 
-        Permanent mentor = addReady(player1, new CorrosiveMentor()); // 1/3, black → has wither
+        Permanent mentor = addCreatureReady(player1, new CorrosiveMentor()); // 1/3, black → has wither
         mentor.setAttacking(true);
 
         resolveCombat();
@@ -91,11 +89,4 @@ class CorrosiveMentorTest extends BaseCardTest {
     }
 
     // ===== Helpers =====
-
-    private Permanent addReady(Player player, Card card) {
-        Permanent perm = new Permanent(card);
-        perm.setSummoningSick(false);
-        gd.playerBattlefields.get(player.getId()).add(perm);
-        return perm;
-    }
 }

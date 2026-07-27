@@ -67,7 +67,7 @@ class AirServantTest extends BaseCardTest {
     @DisplayName("Cannot target creature without flying")
     void cannotTargetNonFlyer() {
         addReadyServant(player1);
-        Permanent bears = addReadyBears(player2);
+        Permanent bears = addCreatureReady(player2, new GrizzlyBears());
         harness.addMana(player1, ManaColor.BLUE, 3);
 
         assertThatThrownBy(() -> harness.activateAbility(player1, 0, null, bears.getId()))
@@ -133,14 +133,6 @@ class AirServantTest extends BaseCardTest {
 
     private Permanent addReadyFlyer(Player player) {
         AirElemental card = new AirElemental();
-        Permanent perm = new Permanent(card);
-        perm.setSummoningSick(false);
-        harness.getGameData().playerBattlefields.get(player.getId()).add(perm);
-        return perm;
-    }
-
-    private Permanent addReadyBears(Player player) {
-        GrizzlyBears card = new GrizzlyBears();
         Permanent perm = new Permanent(card);
         perm.setSummoningSick(false);
         harness.getGameData().playerBattlefields.get(player.getId()).add(perm);

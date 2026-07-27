@@ -2,7 +2,6 @@ package com.github.laxika.magicalvibes.cards.d;
 
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
 import com.github.laxika.magicalvibes.cards.o.OrcishArtillery;
-import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.Player;
 import com.github.laxika.magicalvibes.model.TurnStep;
@@ -20,7 +19,7 @@ class DissipationFieldTest extends BaseCardTest {
     @DisplayName("Unblocked attacker dealing combat damage to controller is bounced to owner's hand")
     void unblockedAttackerIsBounced() {
         addDissipationField(player2);
-        Permanent attacker = addReadyCreature(player1, new GrizzlyBears());
+        Permanent attacker = addCreatureReady(player1, new GrizzlyBears());
         attacker.setAttacking(true);
 
         int defenderHandBefore = gd.playerHands.get(player1.getId()).size();
@@ -41,9 +40,9 @@ class DissipationFieldTest extends BaseCardTest {
     @DisplayName("Multiple unblocked attackers each trigger a separate bounce")
     void multipleAttackersEachBounced() {
         addDissipationField(player2);
-        Permanent attacker1 = addReadyCreature(player1, new GrizzlyBears());
+        Permanent attacker1 = addCreatureReady(player1, new GrizzlyBears());
         attacker1.setAttacking(true);
-        Permanent attacker2 = addReadyCreature(player1, new GrizzlyBears());
+        Permanent attacker2 = addCreatureReady(player1, new GrizzlyBears());
         attacker2.setAttacking(true);
 
         resolveCombat(player1, player2);
@@ -65,14 +64,14 @@ class DissipationFieldTest extends BaseCardTest {
         GrizzlyBears smallAttacker = new GrizzlyBears();
         smallAttacker.setPower(1);
         smallAttacker.setToughness(1);
-        Permanent attacker = addReadyCreature(player1, smallAttacker);
+        Permanent attacker = addCreatureReady(player1, smallAttacker);
         attacker.setAttacking(true);
 
         // Big blocker that kills the attacker
         GrizzlyBears bigBlocker = new GrizzlyBears();
         bigBlocker.setPower(5);
         bigBlocker.setToughness(5);
-        Permanent blocker = addReadyCreature(player2, bigBlocker);
+        Permanent blocker = addCreatureReady(player2, bigBlocker);
         blocker.setBlocking(true);
         blocker.addBlockingTarget(0);
 
@@ -92,7 +91,7 @@ class DissipationFieldTest extends BaseCardTest {
     void abilityDamageTriggerssBounce() {
         addDissipationField(player2);
         harness.setLife(player2, 20);
-        Permanent artillery = addReadyCreature(player1, new OrcishArtillery());
+        Permanent artillery = addCreatureReady(player1, new OrcishArtillery());
 
         harness.activateAbility(player1, 0, null, player2.getId());
         harness.passBothPriorities();
@@ -109,7 +108,7 @@ class DissipationFieldTest extends BaseCardTest {
     @Test
     @DisplayName("Without Dissipation Field, attacker is not bounced")
     void noBounceWithoutDissipationField() {
-        Permanent attacker = addReadyCreature(player1, new GrizzlyBears());
+        Permanent attacker = addCreatureReady(player1, new GrizzlyBears());
         attacker.setAttacking(true);
 
         resolveCombat(player1, player2);
@@ -125,7 +124,7 @@ class DissipationFieldTest extends BaseCardTest {
     @DisplayName("Dissipation Field itself is not bounced (it's an enchantment, not the damage source)")
     void dissipationFieldNotBounced() {
         addDissipationField(player2);
-        Permanent attacker = addReadyCreature(player1, new GrizzlyBears());
+        Permanent attacker = addCreatureReady(player1, new GrizzlyBears());
         attacker.setAttacking(true);
 
         resolveCombat(player1, player2);
@@ -141,13 +140,6 @@ class DissipationFieldTest extends BaseCardTest {
         Permanent perm = new Permanent(new DissipationField());
         perm.setSummoningSick(false);
         gd.playerBattlefields.get(player.getId()).add(perm);
-    }
-
-    private Permanent addReadyCreature(Player player, Card card) {
-        Permanent perm = new Permanent(card);
-        perm.setSummoningSick(false);
-        gd.playerBattlefields.get(player.getId()).add(perm);
-        return perm;
     }
 
     private void resolveCombat(Player attacker, Player defender) {

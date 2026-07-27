@@ -21,7 +21,7 @@ class SylvokLifestaffTest extends BaseCardTest {
     @Test
     @DisplayName("Equipped creature gets +1/+0")
     void equippedCreatureGetsBoost() {
-        Permanent creature = addReadyCreature(player1);
+        Permanent creature = addCreatureReady(player1, new GrizzlyBears());
         Permanent lifestaff = addLifestaffReady(player1);
         lifestaff.setAttachedTo(creature.getId());
 
@@ -32,7 +32,7 @@ class SylvokLifestaffTest extends BaseCardTest {
     @Test
     @DisplayName("Unequipped creature does not get boost")
     void unequippedCreatureNoBoost() {
-        Permanent creature = addReadyCreature(player1);
+        Permanent creature = addCreatureReady(player1, new GrizzlyBears());
         addLifestaffReady(player1);
 
         assertThat(gqs.getEffectivePower(gd, creature)).isEqualTo(2);
@@ -44,7 +44,7 @@ class SylvokLifestaffTest extends BaseCardTest {
     @Test
     @DisplayName("Controller gains 3 life when equipped creature dies")
     void gainsLifeWhenEquippedCreatureDies() {
-        Permanent creature = addReadyCreature(player1);
+        Permanent creature = addCreatureReady(player1, new GrizzlyBears());
         Permanent lifestaff = addLifestaffReady(player1);
         lifestaff.setAttachedTo(creature.getId());
 
@@ -66,7 +66,7 @@ class SylvokLifestaffTest extends BaseCardTest {
     @Test
     @DisplayName("No life gained when unequipped creature dies")
     void noLifeWhenUnequippedCreatureDies() {
-        Permanent creature = addReadyCreature(player1);
+        Permanent creature = addCreatureReady(player1, new GrizzlyBears());
         addLifestaffReady(player1); // not attached
 
         int lifeBefore = gd.playerLifeTotals.get(player1.getId());
@@ -86,7 +86,7 @@ class SylvokLifestaffTest extends BaseCardTest {
     @Test
     @DisplayName("Equipment stays on battlefield unattached after equipped creature dies")
     void equipmentStaysOnBattlefieldAfterCreatureDies() {
-        Permanent creature = addReadyCreature(player1);
+        Permanent creature = addCreatureReady(player1, new GrizzlyBears());
         Permanent lifestaff = addLifestaffReady(player1);
         lifestaff.setAttachedTo(creature.getId());
 
@@ -112,8 +112,8 @@ class SylvokLifestaffTest extends BaseCardTest {
     @Test
     @DisplayName("Trigger does not fire for a different creature dying")
     void triggerDoesNotFireForDifferentCreature() {
-        Permanent creature1 = addReadyCreature(player1);
-        Permanent creature2 = addReadyCreature(player1);
+        Permanent creature1 = addCreatureReady(player1, new GrizzlyBears());
+        Permanent creature2 = addCreatureReady(player1, new GrizzlyBears());
         Permanent lifestaff = addLifestaffReady(player1);
         lifestaff.setAttachedTo(creature1.getId());
 
@@ -138,13 +138,6 @@ class SylvokLifestaffTest extends BaseCardTest {
 
     private Permanent addLifestaffReady(Player player) {
         Permanent perm = new Permanent(new SylvokLifestaff());
-        perm.setSummoningSick(false);
-        gd.playerBattlefields.get(player.getId()).add(perm);
-        return perm;
-    }
-
-    private Permanent addReadyCreature(Player player) {
-        Permanent perm = new Permanent(new GrizzlyBears());
         perm.setSummoningSick(false);
         gd.playerBattlefields.get(player.getId()).add(perm);
         return perm;

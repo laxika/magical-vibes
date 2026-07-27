@@ -5,7 +5,6 @@ import com.github.laxika.magicalvibes.cards.b.Blaze;
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
 import com.github.laxika.magicalvibes.cards.s.SerraAngel;
 import com.github.laxika.magicalvibes.cards.s.SkyhunterSkirmisher;
-import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.Keyword;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
@@ -189,7 +188,7 @@ class FurnaceOfRathTest extends BaseCardTest {
     void doublesFirstStrikeDamageToPlayer() {
         harness.setLife(player2, 20);
         harness.addToBattlefield(player1, new FurnaceOfRath());
-        addReadyCreature(player1, new BenalishKnight()); // 2/2 first strike
+        addCreatureReady(player1, new BenalishKnight()); // 2/2 first strike
 
         declareAttackers(player1, List.of(1)); // Furnace at 0, knight at 1
 
@@ -275,7 +274,7 @@ class FurnaceOfRathTest extends BaseCardTest {
     void doublesBothPhasesOfDoubleStrikeDamageToPlayer() {
         harness.setLife(player2, 20);
         harness.addToBattlefield(player1, new FurnaceOfRath());
-        addReadyCreature(player1, new SkyhunterSkirmisher()); // 1/1 double strike flying
+        addCreatureReady(player1, new SkyhunterSkirmisher()); // 1/1 double strike flying
 
         declareAttackers(player1, List.of(1)); // Furnace at 0, skirmisher at 1
 
@@ -476,13 +475,6 @@ class FurnaceOfRathTest extends BaseCardTest {
 
     private Permanent addReadyInvoker(Player player) {
         FlamewaveInvoker card = new FlamewaveInvoker();
-        Permanent perm = new Permanent(card);
-        perm.setSummoningSick(false);
-        gd.playerBattlefields.get(player.getId()).add(perm);
-        return perm;
-    }
-
-    private Permanent addReadyCreature(Player player, Card card) {
         Permanent perm = new Permanent(card);
         perm.setSummoningSick(false);
         gd.playerBattlefields.get(player.getId()).add(perm);

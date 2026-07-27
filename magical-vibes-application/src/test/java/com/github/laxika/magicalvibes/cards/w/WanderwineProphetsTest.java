@@ -1,9 +1,7 @@
 package com.github.laxika.magicalvibes.cards.w;
 
-import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.PendingInteraction;
 import com.github.laxika.magicalvibes.model.Permanent;
-import com.github.laxika.magicalvibes.model.Player;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
@@ -12,17 +10,10 @@ import static org.assertj.core.api.Assertions.assertThat;
 
 class WanderwineProphetsTest extends BaseCardTest {
 
-    private Permanent addReadyCreature(Player player, Card card) {
-        Permanent perm = new Permanent(card);
-        perm.setSummoningSick(false);
-        gd.playerBattlefields.get(player.getId()).add(perm);
-        return perm;
-    }
-
     @Test
     @DisplayName("Combat damage trigger presents the may ability choice")
     void combatDamagePresentsMayChoice() {
-        Permanent prophets = addReadyCreature(player1, new WanderwineProphets());
+        Permanent prophets = addCreatureReady(player1, new WanderwineProphets());
         prophets.setAttacking(true);
 
         resolveCombat();
@@ -33,7 +24,7 @@ class WanderwineProphetsTest extends BaseCardTest {
     @Test
     @DisplayName("Accepting and sacrificing a Merfolk grants an extra turn")
     void sacrificeMerfolkGrantsExtraTurn() {
-        Permanent prophets = addReadyCreature(player1, new WanderwineProphets());
+        Permanent prophets = addCreatureReady(player1, new WanderwineProphets());
         prophets.setAttacking(true);
 
         resolveCombat();
@@ -53,7 +44,7 @@ class WanderwineProphetsTest extends BaseCardTest {
     @Test
     @DisplayName("Declining the may ability grants no extra turn and sacrifices nothing")
     void decliningGrantsNoExtraTurn() {
-        Permanent prophets = addReadyCreature(player1, new WanderwineProphets());
+        Permanent prophets = addCreatureReady(player1, new WanderwineProphets());
         prophets.setAttacking(true);
 
         resolveCombat();

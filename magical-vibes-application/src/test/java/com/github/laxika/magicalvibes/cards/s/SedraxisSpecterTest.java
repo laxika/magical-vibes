@@ -2,12 +2,10 @@ package com.github.laxika.magicalvibes.cards.s;
 
 import com.github.laxika.magicalvibes.cards.f.Forest;
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
-import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.Keyword;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.PendingInteraction;
 import com.github.laxika.magicalvibes.model.Permanent;
-import com.github.laxika.magicalvibes.model.Player;
 import com.github.laxika.magicalvibes.model.TurnStep;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
 import org.junit.jupiter.api.DisplayName;
@@ -24,7 +22,7 @@ class SedraxisSpecterTest extends BaseCardTest {
     @Test
     @DisplayName("Combat damage to a player makes that player discard a card")
     void combatDamageMakesDamagedPlayerDiscard() {
-        Permanent specter = addReadyCreature(player1, new SedraxisSpecter());
+        Permanent specter = addCreatureReady(player1, new SedraxisSpecter());
         specter.setAttacking(true);
         harness.setHand(player2, new ArrayList<>(List.of(new GrizzlyBears(), new Forest())));
 
@@ -43,9 +41,9 @@ class SedraxisSpecterTest extends BaseCardTest {
     @Test
     @DisplayName("No discard when the Specter is blocked and deals no combat damage to a player")
     void noTriggerWhenBlocked() {
-        Permanent specter = addReadyCreature(player1, new SedraxisSpecter());
+        Permanent specter = addCreatureReady(player1, new SedraxisSpecter());
         specter.setAttacking(true);
-        Permanent blocker = addReadyCreature(player2, new GrizzlyBears());
+        Permanent blocker = addCreatureReady(player2, new GrizzlyBears());
         blocker.setBlocking(true);
         blocker.addBlockingTarget(0);
         harness.setHand(player2, new ArrayList<>(List.of(new Forest())));
@@ -96,13 +94,6 @@ class SedraxisSpecterTest extends BaseCardTest {
     }
 
     // ===== Helpers =====
-
-    private Permanent addReadyCreature(Player player, Card card) {
-        Permanent perm = new Permanent(card);
-        perm.setSummoningSick(false);
-        gd.playerBattlefields.get(player.getId()).add(perm);
-        return perm;
-    }
 
     private void resolveCombatAndTrigger() {
         resolveCombat();

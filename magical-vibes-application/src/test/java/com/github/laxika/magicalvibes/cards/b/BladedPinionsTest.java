@@ -62,7 +62,7 @@ class BladedPinionsTest extends BaseCardTest {
     @DisplayName("Resolving equip ability attaches Bladed Pinions to target creature")
     void resolvingEquipAttachesToCreature() {
         Permanent pinions = addPinionsReady(player1);
-        Permanent creature = addReadyCreature(player1);
+        Permanent creature = addCreatureReady(player1, new GrizzlyBears());
         harness.addMana(player1, ManaColor.WHITE, 2);
 
         harness.activateAbility(player1, 0, null, creature.getId());
@@ -77,7 +77,7 @@ class BladedPinionsTest extends BaseCardTest {
     @Test
     @DisplayName("Equipped creature has flying")
     void equippedCreatureHasFlying() {
-        Permanent creature = addReadyCreature(player1);
+        Permanent creature = addCreatureReady(player1, new GrizzlyBears());
         Permanent pinions = addPinionsReady(player1);
         pinions.setAttachedTo(creature.getId());
 
@@ -87,7 +87,7 @@ class BladedPinionsTest extends BaseCardTest {
     @Test
     @DisplayName("Equipped creature has first strike")
     void equippedCreatureHasFirstStrike() {
-        Permanent creature = addReadyCreature(player1);
+        Permanent creature = addCreatureReady(player1, new GrizzlyBears());
         Permanent pinions = addPinionsReady(player1);
         pinions.setAttachedTo(creature.getId());
 
@@ -97,7 +97,7 @@ class BladedPinionsTest extends BaseCardTest {
     @Test
     @DisplayName("Creature loses flying and first strike when Bladed Pinions is removed")
     void creatureLosesKeywordsWhenEquipmentRemoved() {
-        Permanent creature = addReadyCreature(player1);
+        Permanent creature = addCreatureReady(player1, new GrizzlyBears());
         Permanent pinions = addPinionsReady(player1);
         pinions.setAttachedTo(creature.getId());
 
@@ -113,8 +113,8 @@ class BladedPinionsTest extends BaseCardTest {
     @Test
     @DisplayName("Bladed Pinions does not affect unequipped creatures")
     void doesNotAffectOtherCreatures() {
-        Permanent creature = addReadyCreature(player1);
-        Permanent otherCreature = addReadyCreature(player1);
+        Permanent creature = addCreatureReady(player1, new GrizzlyBears());
+        Permanent otherCreature = addCreatureReady(player1, new GrizzlyBears());
         Permanent pinions = addPinionsReady(player1);
         pinions.setAttachedTo(creature.getId());
 
@@ -128,8 +128,8 @@ class BladedPinionsTest extends BaseCardTest {
     @DisplayName("Bladed Pinions can be moved to another creature")
     void canReEquipToAnotherCreature() {
         Permanent pinions = addPinionsReady(player1);
-        Permanent creature1 = addReadyCreature(player1);
-        Permanent creature2 = addReadyCreature(player1);
+        Permanent creature1 = addCreatureReady(player1, new GrizzlyBears());
+        Permanent creature2 = addCreatureReady(player1, new GrizzlyBears());
 
         pinions.setAttachedTo(creature1.getId());
         assertThat(gqs.hasKeyword(gd, creature1, Keyword.FLYING)).isTrue();
@@ -157,13 +157,13 @@ class BladedPinionsTest extends BaseCardTest {
         harness.setLife(player2, 20);
 
         // 2/2 with Bladed Pinions (flying, first strike) attacks
-        Permanent attacker = addReadyCreature(player1);
+        Permanent attacker = addCreatureReady(player1, new GrizzlyBears());
         Permanent pinions = addPinionsReady(player1);
         pinions.setAttachedTo(attacker.getId());
         attacker.setAttacking(true);
 
         // Blocked by 2/2 (no first strike)
-        Permanent blocker = addReadyCreature(player2);
+        Permanent blocker = addCreatureReady(player2, new GrizzlyBears());
         blocker.setBlocking(true);
         blocker.addBlockingTarget(0);
 
@@ -182,13 +182,6 @@ class BladedPinionsTest extends BaseCardTest {
 
     private Permanent addPinionsReady(Player player) {
         Permanent perm = new Permanent(new BladedPinions());
-        perm.setSummoningSick(false);
-        gd.playerBattlefields.get(player.getId()).add(perm);
-        return perm;
-    }
-
-    private Permanent addReadyCreature(Player player) {
-        Permanent perm = new Permanent(new GrizzlyBears());
         perm.setSummoningSick(false);
         gd.playerBattlefields.get(player.getId()).add(perm);
         return perm;

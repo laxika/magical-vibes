@@ -27,7 +27,7 @@ class SarkhanVolTest extends BaseCardTest {
     @DisplayName("+1 gives controlled creatures +1/+1 and haste until end of turn")
     void plusOneBoostsAndGrantsHaste() {
         Permanent sarkhan = addReadySarkhan(player1);
-        Permanent bear = addReadyCreature(player1);
+        Permanent bear = addCreatureReady(player1, new GrizzlyBears());
 
         harness.activateAbility(player1, 0, 0, null, null);
         harness.passBothPriorities();
@@ -42,7 +42,7 @@ class SarkhanVolTest extends BaseCardTest {
     @DisplayName("+1 does not affect opponent's creatures")
     void plusOneDoesNotAffectOpponentCreatures() {
         addReadySarkhan(player1);
-        Permanent oppBear = addReadyCreature(player2);
+        Permanent oppBear = addCreatureReady(player2, new GrizzlyBears());
 
         harness.activateAbility(player1, 0, 0, null, null);
         harness.passBothPriorities();
@@ -55,7 +55,7 @@ class SarkhanVolTest extends BaseCardTest {
     @DisplayName("+1 boost and haste wear off at end of turn")
     void plusOneWearsOff() {
         addReadySarkhan(player1);
-        Permanent bear = addReadyCreature(player1);
+        Permanent bear = addCreatureReady(player1, new GrizzlyBears());
 
         harness.activateAbility(player1, 0, 0, null, null);
         harness.passBothPriorities();
@@ -74,7 +74,7 @@ class SarkhanVolTest extends BaseCardTest {
     @DisplayName("-2 steals target creature, untaps it, and grants haste")
     void minusTwoStealsUntapsAndGrantsHaste() {
         Permanent sarkhan = addReadySarkhan(player1);
-        Permanent target = addReadyCreature(player2);
+        Permanent target = addCreatureReady(player2, new GrizzlyBears());
         target.tap();
 
         harness.activateAbility(player1, 0, 1, null, target.getId());
@@ -91,7 +91,7 @@ class SarkhanVolTest extends BaseCardTest {
     @DisplayName("-2 control and haste expire at end of turn")
     void minusTwoExpiresAtEndOfTurn() {
         addReadySarkhan(player1);
-        Permanent target = addReadyCreature(player2);
+        Permanent target = addCreatureReady(player2, new GrizzlyBears());
 
         harness.activateAbility(player1, 0, 1, null, target.getId());
         harness.passBothPriorities();
@@ -109,7 +109,7 @@ class SarkhanVolTest extends BaseCardTest {
     @DisplayName("-2 cannot target a non-creature permanent")
     void minusTwoCannotTargetNonCreature() {
         addReadySarkhan(player1);
-        addReadyCreature(player2); // valid target exists
+        addCreatureReady(player2, new GrizzlyBears()); // valid target exists
         Permanent enchantment = new Permanent(new Pacifism());
         gd.playerBattlefields.get(player2.getId()).add(enchantment);
 
@@ -167,13 +167,6 @@ class SarkhanVolTest extends BaseCardTest {
         harness.getGameData().playerBattlefields.get(player.getId()).add(perm);
         harness.forceActivePlayer(player);
         harness.forceStep(TurnStep.PRECOMBAT_MAIN);
-        return perm;
-    }
-
-    private Permanent addReadyCreature(Player player) {
-        Permanent perm = new Permanent(new GrizzlyBears());
-        perm.setSummoningSick(false);
-        gd.playerBattlefields.get(player.getId()).add(perm);
         return perm;
     }
 }

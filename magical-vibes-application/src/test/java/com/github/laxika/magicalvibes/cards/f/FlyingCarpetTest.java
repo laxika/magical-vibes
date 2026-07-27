@@ -20,7 +20,7 @@ class FlyingCarpetTest extends BaseCardTest {
     @DisplayName("Activating ability taps Flying Carpet and consumes mana")
     void activatingTapsAndConsumesMana() {
         Permanent carpet = addReadyCarpet(player1);
-        Permanent target = addReadyCreature(player1);
+        Permanent target = addCreatureReady(player1, new GrizzlyBears());
         harness.addMana(player1, ManaColor.WHITE, 3);
 
         harness.activateAbility(player1, 0, null, target.getId());
@@ -34,7 +34,7 @@ class FlyingCarpetTest extends BaseCardTest {
     @DisplayName("Resolving ability grants flying to target creature")
     void resolvingGrantsFlying() {
         addReadyCarpet(player1);
-        Permanent target = addReadyCreature(player1);
+        Permanent target = addCreatureReady(player1, new GrizzlyBears());
         harness.addMana(player1, ManaColor.WHITE, 2);
 
         harness.activateAbility(player1, 0, null, target.getId());
@@ -49,7 +49,7 @@ class FlyingCarpetTest extends BaseCardTest {
     @DisplayName("Can target an opponent's creature")
     void canTargetOpponentCreature() {
         addReadyCarpet(player1);
-        Permanent target = addReadyCreature(player2);
+        Permanent target = addCreatureReady(player2, new GrizzlyBears());
         harness.addMana(player1, ManaColor.WHITE, 2);
 
         harness.activateAbility(player1, 0, null, target.getId());
@@ -62,7 +62,7 @@ class FlyingCarpetTest extends BaseCardTest {
     @DisplayName("Flying is removed at end of turn")
     void flyingRemovedAtEndOfTurn() {
         addReadyCarpet(player1);
-        Permanent target = addReadyCreature(player1);
+        Permanent target = addCreatureReady(player1, new GrizzlyBears());
         harness.addMana(player1, ManaColor.WHITE, 2);
 
         harness.activateAbility(player1, 0, null, target.getId());
@@ -80,7 +80,7 @@ class FlyingCarpetTest extends BaseCardTest {
     @DisplayName("Cannot activate ability without enough mana")
     void cannotActivateWithoutEnoughMana() {
         addReadyCarpet(player1);
-        Permanent target = addReadyCreature(player1);
+        Permanent target = addCreatureReady(player1, new GrizzlyBears());
         harness.addMana(player1, ManaColor.WHITE, 1);
 
         assertThatThrownBy(() -> harness.activateAbility(player1, 0, null, target.getId()))
@@ -90,14 +90,6 @@ class FlyingCarpetTest extends BaseCardTest {
 
     private Permanent addReadyCarpet(Player player) {
         FlyingCarpet card = new FlyingCarpet();
-        Permanent perm = new Permanent(card);
-        perm.setSummoningSick(false);
-        harness.getGameData().playerBattlefields.get(player.getId()).add(perm);
-        return perm;
-    }
-
-    private Permanent addReadyCreature(Player player) {
-        GrizzlyBears card = new GrizzlyBears();
         Permanent perm = new Permanent(card);
         perm.setSummoningSick(false);
         harness.getGameData().playerBattlefields.get(player.getId()).add(perm);

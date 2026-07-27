@@ -102,7 +102,7 @@ class ShrewdHatchlingTest extends BaseCardTest {
     @DisplayName("Targeted creature can't block Shrewd Hatchling this turn")
     void targetCantBlockHatchling() {
         Permanent hatchling = addReadyHatchling(player1);
-        Permanent blocker = addReadyCreature(player2);
+        Permanent blocker = addCreatureReady(player2, new GrizzlyBears());
         harness.addMana(player1, ManaColor.BLUE, 1);
 
         harness.activateAbility(player1, 0, null, blocker.getId());
@@ -128,14 +128,6 @@ class ShrewdHatchlingTest extends BaseCardTest {
         Permanent perm = new Permanent(card);
         perm.setSummoningSick(false);
         perm.setCounterCount(CounterType.MINUS_ONE_MINUS_ONE, 4);
-        gd.playerBattlefields.get(player.getId()).add(perm);
-        return perm;
-    }
-
-    private Permanent addReadyCreature(Player player) {
-        GrizzlyBears card = new GrizzlyBears();
-        Permanent perm = new Permanent(card);
-        perm.setSummoningSick(false);
         gd.playerBattlefields.get(player.getId()).add(perm);
         return perm;
     }

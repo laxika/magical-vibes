@@ -26,7 +26,7 @@ class AvacynianPriestTest extends BaseCardTest {
     @DisplayName("Resolving ability taps target non-Human creature")
     void resolvingTapsNonHumanCreature() {
         addReadyPriest(player1);
-        Permanent target = addReadyBears(player2);
+        Permanent target = addCreatureReady(player2, new GrizzlyBears());
         harness.addMana(player1, ManaColor.COLORLESS, 1);
 
         harness.activateAbility(player1, 0, null, target.getId());
@@ -39,7 +39,7 @@ class AvacynianPriestTest extends BaseCardTest {
     @DisplayName("Activating ability puts it on the stack")
     void activatingPutsOnStack() {
         addReadyPriest(player1);
-        Permanent target = addReadyBears(player2);
+        Permanent target = addCreatureReady(player2, new GrizzlyBears());
         harness.addMana(player1, ManaColor.COLORLESS, 1);
 
         harness.activateAbility(player1, 0, null, target.getId());
@@ -55,7 +55,7 @@ class AvacynianPriestTest extends BaseCardTest {
     @DisplayName("Activating ability taps the priest")
     void activatingTapsPriest() {
         Permanent priest = addReadyPriest(player1);
-        Permanent target = addReadyBears(player2);
+        Permanent target = addCreatureReady(player2, new GrizzlyBears());
         harness.addMana(player1, ManaColor.COLORLESS, 1);
 
         harness.activateAbility(player1, 0, null, target.getId());
@@ -67,7 +67,7 @@ class AvacynianPriestTest extends BaseCardTest {
     @DisplayName("Can tap own non-Human creature")
     void canTapOwnNonHumanCreature() {
         addReadyPriest(player1);
-        Permanent ownBears = addReadyBears(player1);
+        Permanent ownBears = addCreatureReady(player1, new GrizzlyBears());
         harness.addMana(player1, ManaColor.COLORLESS, 1);
 
         harness.activateAbility(player1, 0, null, ownBears.getId());
@@ -95,7 +95,7 @@ class AvacynianPriestTest extends BaseCardTest {
     @DisplayName("Cannot activate without enough mana")
     void cannotActivateWithoutMana() {
         addReadyPriest(player1);
-        Permanent target = addReadyBears(player2);
+        Permanent target = addCreatureReady(player2, new GrizzlyBears());
 
         assertThatThrownBy(() -> harness.activateAbility(player1, 0, null, target.getId()))
                 .isInstanceOf(IllegalStateException.class)
@@ -108,7 +108,7 @@ class AvacynianPriestTest extends BaseCardTest {
     @DisplayName("Ability fizzles if target is removed before resolution")
     void fizzlesIfTargetRemoved() {
         addReadyPriest(player1);
-        Permanent target = addReadyBears(player2);
+        Permanent target = addCreatureReady(player2, new GrizzlyBears());
         harness.addMana(player1, ManaColor.COLORLESS, 1);
 
         harness.activateAbility(player1, 0, null, target.getId());
@@ -127,14 +127,6 @@ class AvacynianPriestTest extends BaseCardTest {
 
     private Permanent addReadyPriest(Player player) {
         AvacynianPriest card = new AvacynianPriest();
-        Permanent perm = new Permanent(card);
-        perm.setSummoningSick(false);
-        harness.getGameData().playerBattlefields.get(player.getId()).add(perm);
-        return perm;
-    }
-
-    private Permanent addReadyBears(Player player) {
-        GrizzlyBears card = new GrizzlyBears();
         Permanent perm = new Permanent(card);
         perm.setSummoningSick(false);
         harness.getGameData().playerBattlefields.get(player.getId()).add(perm);

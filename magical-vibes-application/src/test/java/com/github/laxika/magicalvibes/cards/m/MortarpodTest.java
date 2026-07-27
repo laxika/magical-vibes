@@ -107,12 +107,12 @@ class MortarpodTest extends BaseCardTest {
     @Test
     @DisplayName("Equipped creature can sacrifice itself to deal 1 damage to target creature")
     void grantedAbilityDeals1DamageToCreature() {
-        Permanent creature = addReadyCreature(player1);
+        Permanent creature = addCreatureReady(player1, new GrizzlyBears());
         Permanent mortarpod = addMortarpodReady(player1);
         mortarpod.setAttachedTo(creature.getId());
 
         // Target creature on opponent's side (Grizzly Bears: 2/2)
-        Permanent targetCreature = addReadyCreature(player2);
+        Permanent targetCreature = addCreatureReady(player2, new GrizzlyBears());
 
         // Activate the granted sacrifice ability (ability index 0 on the creature)
         harness.activateAbility(player1, 0, null, targetCreature.getId());
@@ -134,7 +134,7 @@ class MortarpodTest extends BaseCardTest {
     void grantedAbilityDeals1DamageToPlayer() {
         harness.setLife(player2, 20);
 
-        Permanent creature = addReadyCreature(player1);
+        Permanent creature = addCreatureReady(player1, new GrizzlyBears());
         Permanent mortarpod = addMortarpodReady(player1);
         mortarpod.setAttachedTo(creature.getId());
 
@@ -249,7 +249,7 @@ class MortarpodTest extends BaseCardTest {
     @Test
     @DisplayName("Mortarpod stays on battlefield after equipped creature is sacrificed")
     void equipmentStaysWhenCreatureSacrificed() {
-        Permanent creature = addReadyCreature(player1);
+        Permanent creature = addCreatureReady(player1, new GrizzlyBears());
         Permanent mortarpod = addMortarpodReady(player1);
         mortarpod.setAttachedTo(creature.getId());
 
@@ -268,13 +268,6 @@ class MortarpodTest extends BaseCardTest {
 
     private Permanent addMortarpodReady(Player player) {
         Permanent perm = new Permanent(new Mortarpod());
-        perm.setSummoningSick(false);
-        gd.playerBattlefields.get(player.getId()).add(perm);
-        return perm;
-    }
-
-    private Permanent addReadyCreature(Player player) {
-        Permanent perm = new Permanent(new GrizzlyBears());
         perm.setSummoningSick(false);
         gd.playerBattlefields.get(player.getId()).add(perm);
         return perm;

@@ -21,7 +21,7 @@ class EliteJavelineerTest extends BaseCardTest {
     @DisplayName("Blocking queues a target selection for an attacking creature")
     void blockingQueuesTargetSelection() {
         addReadyJavelineer(player2);
-        Permanent attacker = addReadyBears(player1);
+        Permanent attacker = addCreatureReady(player1, new GrizzlyBears());
         attacker.setAttacking(true);
 
         prepareDeclareBlockers();
@@ -36,7 +36,7 @@ class EliteJavelineerTest extends BaseCardTest {
     @DisplayName("Deals 1 damage to the chosen attacking creature")
     void deals1DamageToChosenAttacker() {
         addReadyJavelineer(player2);
-        Permanent attacker = addReadyBears(player1);
+        Permanent attacker = addCreatureReady(player1, new GrizzlyBears());
         attacker.setAttacking(true);
 
         prepareDeclareBlockers();
@@ -52,8 +52,8 @@ class EliteJavelineerTest extends BaseCardTest {
     @DisplayName("Can target an attacking creature it isn't blocking")
     void canTargetUnblockedAttacker() {
         addReadyJavelineer(player2);
-        Permanent blockedAttacker = addReadyBears(player1);
-        Permanent otherAttacker = addReadyBears(player1);
+        Permanent blockedAttacker = addCreatureReady(player1, new GrizzlyBears());
+        Permanent otherAttacker = addCreatureReady(player1, new GrizzlyBears());
         blockedAttacker.setAttacking(true);
         otherAttacker.setAttacking(true);
 
@@ -72,9 +72,9 @@ class EliteJavelineerTest extends BaseCardTest {
     @DisplayName("Cannot target a creature that isn't attacking")
     void cannotTargetNonAttackingCreature() {
         addReadyJavelineer(player2);
-        Permanent attacker = addReadyBears(player1);
+        Permanent attacker = addCreatureReady(player1, new GrizzlyBears());
         attacker.setAttacking(true);
-        Permanent bystander = addReadyBears(player2); // not attacking
+        Permanent bystander = addCreatureReady(player2, new GrizzlyBears()); // not attacking
 
         prepareDeclareBlockers();
         gs.declareBlockers(gd, player2, List.of(new BlockerAssignment(0, 0)));
@@ -88,13 +88,6 @@ class EliteJavelineerTest extends BaseCardTest {
 
     private Permanent addReadyJavelineer(Player player) {
         Permanent perm = new Permanent(new EliteJavelineer());
-        perm.setSummoningSick(false);
-        gd.playerBattlefields.get(player.getId()).add(perm);
-        return perm;
-    }
-
-    private Permanent addReadyBears(Player player) {
-        Permanent perm = new Permanent(new GrizzlyBears());
         perm.setSummoningSick(false);
         gd.playerBattlefields.get(player.getId()).add(perm);
         return perm;

@@ -24,7 +24,7 @@ class UnquenchableThirstTest extends BaseCardTest {
     void etbTapsWithDesertOnBattlefield() {
         gd.playerBattlefields.get(player1.getId()).add(new Permanent(new SunscorchedDesert()));
 
-        Permanent bears = addCreatureReady(player2);
+        Permanent bears = addCreatureReady(player2, new GrizzlyBears());
 
         harness.setHand(player1, List.of(new UnquenchableThirst()));
         harness.addMana(player1, ManaColor.BLUE, 2);
@@ -41,7 +41,7 @@ class UnquenchableThirstTest extends BaseCardTest {
     void etbTapsWithDesertInGraveyard() {
         harness.setGraveyard(player1, List.of(new SunscorchedDesert()));
 
-        Permanent bears = addCreatureReady(player2);
+        Permanent bears = addCreatureReady(player2, new GrizzlyBears());
 
         harness.setHand(player1, List.of(new UnquenchableThirst()));
         harness.addMana(player1, ManaColor.BLUE, 2);
@@ -56,7 +56,7 @@ class UnquenchableThirstTest extends BaseCardTest {
     @Test
     @DisplayName("ETB does not tap without any Desert, but Aura still attaches")
     void etbNoTapWithoutDesert() {
-        Permanent bears = addCreatureReady(player2);
+        Permanent bears = addCreatureReady(player2, new GrizzlyBears());
 
         harness.setHand(player1, List.of(new UnquenchableThirst()));
         harness.addMana(player1, ManaColor.BLUE, 2);
@@ -75,7 +75,7 @@ class UnquenchableThirstTest extends BaseCardTest {
     @Test
     @DisplayName("Tapped enchanted creature does not untap during its controller's untap step")
     void enchantedCreatureDoesNotUntap() {
-        Permanent creature = addCreatureReady(player2);
+        Permanent creature = addCreatureReady(player2, new GrizzlyBears());
         creature.tap();
 
         Permanent aura = new Permanent(new UnquenchableThirst());
@@ -90,7 +90,7 @@ class UnquenchableThirstTest extends BaseCardTest {
     @Test
     @DisplayName("Creature untaps again after Unquenchable Thirst is removed")
     void creatureUntapsAfterRemoval() {
-        Permanent creature = addCreatureReady(player2);
+        Permanent creature = addCreatureReady(player2, new GrizzlyBears());
         creature.tap();
 
         Permanent aura = new Permanent(new UnquenchableThirst());
@@ -133,12 +133,5 @@ class UnquenchableThirstTest extends BaseCardTest {
         harness.passBothPriorities(); // END_STEP -> CLEANUP
         harness.clearPriorityPassed();
         harness.passBothPriorities(); // CLEANUP -> next turn
-    }
-
-    private Permanent addCreatureReady(Player player) {
-        Permanent perm = new Permanent(new GrizzlyBears());
-        perm.setSummoningSick(false);
-        gd.playerBattlefields.get(player.getId()).add(perm);
-        return perm;
     }
 }

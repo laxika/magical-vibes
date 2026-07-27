@@ -21,7 +21,7 @@ class ShortSwordTest extends BaseCardTest {
     @DisplayName("Resolving equip ability attaches Short Sword to target creature")
     void resolvingEquipAttachesToCreature() {
         Permanent sword = addSwordReady(player1);
-        Permanent creature = addReadyCreature(player1);
+        Permanent creature = addCreatureReady(player1, new GrizzlyBears());
         harness.addMana(player1, ManaColor.WHITE, 1);
 
         harness.activateAbility(player1, 0, null, creature.getId());
@@ -34,7 +34,7 @@ class ShortSwordTest extends BaseCardTest {
     @Test
     @DisplayName("Equipped creature gets +1/+1")
     void equippedCreatureGetsBoost() {
-        Permanent creature = addReadyCreature(player1);
+        Permanent creature = addCreatureReady(player1, new GrizzlyBears());
         Permanent sword = addSwordReady(player1);
         sword.setAttachedTo(creature.getId());
 
@@ -45,7 +45,7 @@ class ShortSwordTest extends BaseCardTest {
     @Test
     @DisplayName("Equipped creature loses boost when equipment is removed")
     void creatureLosesBoostWhenEquipmentRemoved() {
-        Permanent creature = addReadyCreature(player1);
+        Permanent creature = addCreatureReady(player1, new GrizzlyBears());
         Permanent sword = addSwordReady(player1);
         sword.setAttachedTo(creature.getId());
 
@@ -61,8 +61,8 @@ class ShortSwordTest extends BaseCardTest {
     @DisplayName("Short Sword can be moved to another creature by equipping again")
     void canReEquipToAnotherCreature() {
         Permanent sword = addSwordReady(player1);
-        Permanent creature1 = addReadyCreature(player1);
-        Permanent creature2 = addReadyCreature(player1);
+        Permanent creature1 = addCreatureReady(player1, new GrizzlyBears());
+        Permanent creature2 = addCreatureReady(player1, new GrizzlyBears());
 
         sword.setAttachedTo(creature1.getId());
         assertThat(gqs.getEffectivePower(gd, creature1)).isEqualTo(3);
@@ -82,7 +82,7 @@ class ShortSwordTest extends BaseCardTest {
     @DisplayName("Cannot equip during opponent's turn")
     void cannotEquipDuringOpponentTurn() {
         addSwordReady(player1);
-        Permanent creature = addReadyCreature(player1);
+        Permanent creature = addCreatureReady(player1, new GrizzlyBears());
         harness.addMana(player1, ManaColor.WHITE, 1);
 
         harness.forceActivePlayer(player2);
@@ -98,7 +98,7 @@ class ShortSwordTest extends BaseCardTest {
     @DisplayName("Cannot equip without enough mana")
     void cannotEquipWithoutMana() {
         addSwordReady(player1);
-        Permanent creature = addReadyCreature(player1);
+        Permanent creature = addCreatureReady(player1, new GrizzlyBears());
 
         assertThatThrownBy(() -> harness.activateAbility(player1, 0, null, creature.getId()))
                 .isInstanceOf(IllegalStateException.class)
@@ -109,13 +109,6 @@ class ShortSwordTest extends BaseCardTest {
 
     private Permanent addSwordReady(Player player) {
         Permanent perm = new Permanent(new ShortSword());
-        perm.setSummoningSick(false);
-        gd.playerBattlefields.get(player.getId()).add(perm);
-        return perm;
-    }
-
-    private Permanent addReadyCreature(Player player) {
-        Permanent perm = new Permanent(new GrizzlyBears());
         perm.setSummoningSick(false);
         gd.playerBattlefields.get(player.getId()).add(perm);
         return perm;

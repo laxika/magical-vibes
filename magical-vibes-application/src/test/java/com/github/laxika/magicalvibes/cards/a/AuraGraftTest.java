@@ -32,7 +32,7 @@ class AuraGraftTest extends BaseCardTest {
     @Test
     @DisplayName("Casting Aura Graft targeting an aura puts it on the stack")
     void castingPutsOnStack() {
-        Permanent creature = addCreatureReady(player2);
+        Permanent creature = addCreatureReady(player2, new GrizzlyBears());
         Permanent aura = addAuraAttachedTo(player2, new HolyStrength(), creature);
 
         harness.setHand(player1, List.of(new AuraGraft()));
@@ -52,7 +52,7 @@ class AuraGraftTest extends BaseCardTest {
     @Test
     @DisplayName("Cannot target a creature with Aura Graft")
     void cannotTargetCreature() {
-        Permanent creature = addCreatureReady(player2);
+        Permanent creature = addCreatureReady(player2, new GrizzlyBears());
         // A legal target (an aura attached to a permanent) must exist so the spell is castable
         // (CR 601.2c); targeting the creature is then rejected by the aura target filter.
         addAuraAttachedTo(player2, new HolyStrength(), creature);
@@ -74,7 +74,7 @@ class AuraGraftTest extends BaseCardTest {
         gd.playerBattlefields.get(player2.getId()).add(anthemPerm);
         // A legal target (an aura attached to a permanent) must exist so the spell is castable
         // (CR 601.2c); targeting the non-aura enchantment is then rejected by the aura target filter.
-        Permanent creature = addCreatureReady(player2);
+        Permanent creature = addCreatureReady(player2, new GrizzlyBears());
         addAuraAttachedTo(player2, new HolyStrength(), creature);
 
         harness.setHand(player1, List.of(new AuraGraft()));
@@ -93,7 +93,7 @@ class AuraGraftTest extends BaseCardTest {
         gd.playerBattlefields.get(player2.getId()).add(aura);
         // A legal target (an aura attached to a permanent) must exist so the spell is castable
         // (CR 601.2c); targeting the unattached aura is then rejected by the aura target filter.
-        Permanent creature = addCreatureReady(player2);
+        Permanent creature = addCreatureReady(player2, new GrizzlyBears());
         addAuraAttachedTo(player2, new HolyStrength(), creature);
 
         harness.setHand(player1, List.of(new AuraGraft()));
@@ -109,9 +109,9 @@ class AuraGraftTest extends BaseCardTest {
     @Test
     @DisplayName("Resolving gains control of opponent's aura and prompts reattachment")
     void resolvingGainsControlAndPromptsReattachment() {
-        Permanent opponentCreature = addCreatureReady(player2);
+        Permanent opponentCreature = addCreatureReady(player2, new GrizzlyBears());
         Permanent aura = addAuraAttachedTo(player2, new HolyStrength(), opponentCreature);
-        Permanent myCreature = addCreatureReady(player1);
+        Permanent myCreature = addCreatureReady(player1, new GrizzlyBears());
 
         harness.setHand(player1, List.of(new AuraGraft()));
         harness.addMana(player1, ManaColor.BLUE, 2);
@@ -133,9 +133,9 @@ class AuraGraftTest extends BaseCardTest {
     @Test
     @DisplayName("Choosing a creature reattaches the aura")
     void choosingCreatureReattachesAura() {
-        Permanent opponentCreature = addCreatureReady(player2);
+        Permanent opponentCreature = addCreatureReady(player2, new GrizzlyBears());
         Permanent aura = addAuraAttachedTo(player2, new HolyStrength(), opponentCreature);
-        Permanent myCreature = addCreatureReady(player1);
+        Permanent myCreature = addCreatureReady(player1, new GrizzlyBears());
 
         harness.setHand(player1, List.of(new AuraGraft()));
         harness.addMana(player1, ManaColor.BLUE, 2);
@@ -160,8 +160,8 @@ class AuraGraftTest extends BaseCardTest {
     @Test
     @DisplayName("Can reattach aura to opponent's creature")
     void canReattachToOpponentCreature() {
-        Permanent opponentCreature1 = addCreatureReady(player2);
-        Permanent opponentCreature2 = addCreatureReady(player2);
+        Permanent opponentCreature1 = addCreatureReady(player2, new GrizzlyBears());
+        Permanent opponentCreature2 = addCreatureReady(player2, new GrizzlyBears());
         Permanent aura = addAuraAttachedTo(player2, new Pacifism(), opponentCreature1);
 
         harness.setHand(player1, List.of(new AuraGraft()));
@@ -179,9 +179,9 @@ class AuraGraftTest extends BaseCardTest {
     @Test
     @DisplayName("Valid choices exclude the creature the aura is currently attached to")
     void validChoicesExcludeCurrentTarget() {
-        Permanent opponentCreature = addCreatureReady(player2);
+        Permanent opponentCreature = addCreatureReady(player2, new GrizzlyBears());
         Permanent aura = addAuraAttachedTo(player2, new HolyStrength(), opponentCreature);
-        Permanent myCreature = addCreatureReady(player1);
+        Permanent myCreature = addCreatureReady(player1, new GrizzlyBears());
 
         harness.setHand(player1, List.of(new AuraGraft()));
         harness.addMana(player1, ManaColor.BLUE, 2);
@@ -198,9 +198,9 @@ class AuraGraftTest extends BaseCardTest {
     @Test
     @DisplayName("Static effects transfer to new creature after reattachment")
     void staticEffectsTransferAfterReattachment() {
-        Permanent opponentCreature = addCreatureReady(player2);
+        Permanent opponentCreature = addCreatureReady(player2, new GrizzlyBears());
         Permanent aura = addAuraAttachedTo(player2, new HolyStrength(), opponentCreature);
-        Permanent myCreature = addCreatureReady(player1); // GrizzlyBears 2/2
+        Permanent myCreature = addCreatureReady(player1, new GrizzlyBears()); // GrizzlyBears 2/2
 
         harness.setHand(player1, List.of(new AuraGraft()));
         harness.addMana(player1, ManaColor.BLUE, 2);
@@ -225,7 +225,7 @@ class AuraGraftTest extends BaseCardTest {
     void landAuraOnlyReattachesToLand() {
         Permanent sourceLand = addLand(player2, new Island());
         Permanent aura = addAuraAttachedTo(player2, new EvilPresence(), sourceLand);
-        Permanent creature = addCreatureReady(player2);
+        Permanent creature = addCreatureReady(player2, new GrizzlyBears());
         Permanent otherLand = addLand(player1, new Island());
 
         harness.setHand(player1, List.of(new AuraGraft()));
@@ -246,8 +246,8 @@ class AuraGraftTest extends BaseCardTest {
     @Test
     @DisplayName("Can target own aura and reattach to different creature")
     void canTargetOwnAura() {
-        Permanent myCreature1 = addCreatureReady(player1);
-        Permanent myCreature2 = addCreatureReady(player1);
+        Permanent myCreature1 = addCreatureReady(player1, new GrizzlyBears());
+        Permanent myCreature2 = addCreatureReady(player1, new GrizzlyBears());
         Permanent aura = addAuraAttachedTo(player1, new HolyStrength(), myCreature1);
 
         harness.setHand(player1, List.of(new AuraGraft()));
@@ -272,7 +272,7 @@ class AuraGraftTest extends BaseCardTest {
     @Test
     @DisplayName("When only one creature exists, aura stays attached (no reattachment prompt)")
     void auraStaysWhenNoOtherCreatures() {
-        Permanent opponentCreature = addCreatureReady(player2);
+        Permanent opponentCreature = addCreatureReady(player2, new GrizzlyBears());
         Permanent aura = addAuraAttachedTo(player2, new HolyStrength(), opponentCreature);
 
         harness.setHand(player1, List.of(new AuraGraft()));
@@ -300,7 +300,7 @@ class AuraGraftTest extends BaseCardTest {
     @Test
     @DisplayName("Aura Graft fizzles if target aura is removed before resolution")
     void fizzlesIfAuraRemoved() {
-        Permanent opponentCreature = addCreatureReady(player2);
+        Permanent opponentCreature = addCreatureReady(player2, new GrizzlyBears());
         Permanent aura = addAuraAttachedTo(player2, new HolyStrength(), opponentCreature);
 
         harness.setHand(player1, List.of(new AuraGraft()));
@@ -323,9 +323,9 @@ class AuraGraftTest extends BaseCardTest {
     @Test
     @DisplayName("Aura Graft goes to caster's graveyard after resolving")
     void goesToGraveyardAfterResolving() {
-        Permanent opponentCreature = addCreatureReady(player2);
+        Permanent opponentCreature = addCreatureReady(player2, new GrizzlyBears());
         Permanent aura = addAuraAttachedTo(player2, new HolyStrength(), opponentCreature);
-        Permanent myCreature = addCreatureReady(player1);
+        Permanent myCreature = addCreatureReady(player1, new GrizzlyBears());
 
         harness.setHand(player1, List.of(new AuraGraft()));
         harness.addMana(player1, ManaColor.BLUE, 2);
@@ -343,9 +343,9 @@ class AuraGraftTest extends BaseCardTest {
     @Test
     @DisplayName("Cannot choose invalid permanent during reattachment")
     void cannotChooseInvalidPermanent() {
-        Permanent opponentCreature = addCreatureReady(player2);
+        Permanent opponentCreature = addCreatureReady(player2, new GrizzlyBears());
         Permanent aura = addAuraAttachedTo(player2, new HolyStrength(), opponentCreature);
-        Permanent myCreature = addCreatureReady(player1);
+        Permanent myCreature = addCreatureReady(player1, new GrizzlyBears());
 
         harness.setHand(player1, List.of(new AuraGraft()));
         harness.addMana(player1, ManaColor.BLUE, 2);
@@ -361,9 +361,9 @@ class AuraGraftTest extends BaseCardTest {
     @Test
     @DisplayName("Wrong player cannot choose permanent during reattachment")
     void wrongPlayerCannotChoosePermanent() {
-        Permanent opponentCreature = addCreatureReady(player2);
+        Permanent opponentCreature = addCreatureReady(player2, new GrizzlyBears());
         Permanent aura = addAuraAttachedTo(player2, new HolyStrength(), opponentCreature);
-        Permanent myCreature = addCreatureReady(player1);
+        Permanent myCreature = addCreatureReady(player1, new GrizzlyBears());
 
         harness.setHand(player1, List.of(new AuraGraft()));
         harness.addMana(player1, ManaColor.BLUE, 2);
@@ -379,11 +379,11 @@ class AuraGraftTest extends BaseCardTest {
     @Test
     @DisplayName("Multiple creatures on both sides are all valid choices except current target")
     void multipleCreaturesAllValid() {
-        Permanent opponentCreature1 = addCreatureReady(player2);
-        Permanent opponentCreature2 = addCreatureReady(player2);
+        Permanent opponentCreature1 = addCreatureReady(player2, new GrizzlyBears());
+        Permanent opponentCreature2 = addCreatureReady(player2, new GrizzlyBears());
         Permanent aura = addAuraAttachedTo(player2, new HolyStrength(), opponentCreature1);
-        Permanent myCreature1 = addCreatureReady(player1);
-        Permanent myCreature2 = addCreatureReady(player1);
+        Permanent myCreature1 = addCreatureReady(player1, new GrizzlyBears());
+        Permanent myCreature2 = addCreatureReady(player1, new GrizzlyBears());
 
         harness.setHand(player1, List.of(new AuraGraft()));
         harness.addMana(player1, ManaColor.BLUE, 2);
@@ -401,9 +401,9 @@ class AuraGraftTest extends BaseCardTest {
     @Test
     @DisplayName("Game log records control change and reattachment")
     void gameLogRecordsActions() {
-        Permanent opponentCreature = addCreatureReady(player2);
+        Permanent opponentCreature = addCreatureReady(player2, new GrizzlyBears());
         Permanent aura = addAuraAttachedTo(player2, new HolyStrength(), opponentCreature);
-        Permanent myCreature = addCreatureReady(player1);
+        Permanent myCreature = addCreatureReady(player1, new GrizzlyBears());
 
         harness.setHand(player1, List.of(new AuraGraft()));
         harness.addMana(player1, ManaColor.BLUE, 2);
@@ -421,13 +421,6 @@ class AuraGraftTest extends BaseCardTest {
     }
 
     // ===== Helper methods =====
-
-    private Permanent addCreatureReady(Player player) {
-        Permanent perm = new Permanent(new GrizzlyBears());
-        perm.setSummoningSick(false);
-        gd.playerBattlefields.get(player.getId()).add(perm);
-        return perm;
-    }
 
     private Permanent addAuraAttachedTo(Player owner, com.github.laxika.magicalvibes.model.Card auraCard, Permanent target) {
         Permanent auraPerm = new Permanent(auraCard);

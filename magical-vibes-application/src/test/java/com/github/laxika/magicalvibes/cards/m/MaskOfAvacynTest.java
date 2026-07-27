@@ -66,7 +66,7 @@ class MaskOfAvacynTest extends BaseCardTest {
     @DisplayName("Resolving equip ability attaches Mask to target creature")
     void resolvingEquipAttachesToCreature() {
         Permanent mask = addMaskReady(player1);
-        Permanent creature = addReadyCreature(player1);
+        Permanent creature = addCreatureReady(player1, new GrizzlyBears());
         harness.addMana(player1, ManaColor.WHITE, 3);
 
         harness.activateAbility(player1, 0, null, creature.getId());
@@ -81,7 +81,7 @@ class MaskOfAvacynTest extends BaseCardTest {
     @Test
     @DisplayName("Equipped creature gets +1/+2")
     void equippedCreatureGetsBoost() {
-        Permanent creature = addReadyCreature(player1);
+        Permanent creature = addCreatureReady(player1, new GrizzlyBears());
         Permanent mask = addMaskReady(player1);
         mask.setAttachedTo(creature.getId());
 
@@ -92,7 +92,7 @@ class MaskOfAvacynTest extends BaseCardTest {
     @Test
     @DisplayName("Equipped creature loses boost when Mask is removed")
     void creatureLosesBoostWhenEquipmentRemoved() {
-        Permanent creature = addReadyCreature(player1);
+        Permanent creature = addCreatureReady(player1, new GrizzlyBears());
         Permanent mask = addMaskReady(player1);
         mask.setAttachedTo(creature.getId());
 
@@ -107,8 +107,8 @@ class MaskOfAvacynTest extends BaseCardTest {
     @Test
     @DisplayName("Mask does not affect unequipped creatures")
     void doesNotAffectOtherCreatures() {
-        Permanent creature = addReadyCreature(player1);
-        Permanent otherCreature = addReadyCreature(player1);
+        Permanent creature = addCreatureReady(player1, new GrizzlyBears());
+        Permanent otherCreature = addCreatureReady(player1, new GrizzlyBears());
         Permanent mask = addMaskReady(player1);
         mask.setAttachedTo(creature.getId());
 
@@ -121,7 +121,7 @@ class MaskOfAvacynTest extends BaseCardTest {
     @Test
     @DisplayName("Equipped creature has hexproof")
     void equippedCreatureHasHexproof() {
-        Permanent creature = addReadyCreature(player1);
+        Permanent creature = addCreatureReady(player1, new GrizzlyBears());
         Permanent mask = addMaskReady(player1);
         mask.setAttachedTo(creature.getId());
 
@@ -131,7 +131,7 @@ class MaskOfAvacynTest extends BaseCardTest {
     @Test
     @DisplayName("Creature loses hexproof when Mask is removed")
     void creatureLosesHexproofWhenEquipmentRemoved() {
-        Permanent creature = addReadyCreature(player1);
+        Permanent creature = addCreatureReady(player1, new GrizzlyBears());
         Permanent mask = addMaskReady(player1);
         mask.setAttachedTo(creature.getId());
 
@@ -148,8 +148,8 @@ class MaskOfAvacynTest extends BaseCardTest {
     @DisplayName("Mask can be moved to another creature")
     void canReEquipToAnotherCreature() {
         Permanent mask = addMaskReady(player1);
-        Permanent creature1 = addReadyCreature(player1);
-        Permanent creature2 = addReadyCreature(player1);
+        Permanent creature1 = addCreatureReady(player1, new GrizzlyBears());
+        Permanent creature2 = addCreatureReady(player1, new GrizzlyBears());
 
         mask.setAttachedTo(creature1.getId());
         assertThat(gqs.getEffectivePower(gd, creature1)).isEqualTo(3);
@@ -177,7 +177,7 @@ class MaskOfAvacynTest extends BaseCardTest {
     @DisplayName("Equip fizzles if target creature is removed before resolution")
     void equipFizzlesIfTargetRemoved() {
         Permanent mask = addMaskReady(player1);
-        Permanent creature = addReadyCreature(player1);
+        Permanent creature = addCreatureReady(player1, new GrizzlyBears());
         harness.addMana(player1, ManaColor.WHITE, 3);
 
         harness.activateAbility(player1, 0, null, creature.getId());
@@ -201,13 +201,6 @@ class MaskOfAvacynTest extends BaseCardTest {
 
     private Permanent addMaskReady(Player player) {
         Permanent perm = new Permanent(new MaskOfAvacyn());
-        perm.setSummoningSick(false);
-        gd.playerBattlefields.get(player.getId()).add(perm);
-        return perm;
-    }
-
-    private Permanent addReadyCreature(Player player) {
-        Permanent perm = new Permanent(new GrizzlyBears());
         perm.setSummoningSick(false);
         gd.playerBattlefields.get(player.getId()).add(perm);
         return perm;

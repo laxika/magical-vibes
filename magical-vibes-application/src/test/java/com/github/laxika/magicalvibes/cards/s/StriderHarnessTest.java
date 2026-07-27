@@ -64,7 +64,7 @@ class StriderHarnessTest extends BaseCardTest {
     @DisplayName("Resolving equip ability attaches Strider Harness to target creature")
     void resolvingEquipAttachesToCreature() {
         Permanent harnessPerm = addHarnessReady(player1);
-        Permanent creature = addReadyCreature(player1);
+        Permanent creature = addCreatureReady(player1, new GrizzlyBears());
         harness.addMana(player1, ManaColor.WHITE, 1);
 
         harness.activateAbility(player1, 0, null, creature.getId());
@@ -79,7 +79,7 @@ class StriderHarnessTest extends BaseCardTest {
     @Test
     @DisplayName("Equipped creature gets +1/+1")
     void equippedCreatureGetsBoost() {
-        Permanent creature = addReadyCreature(player1);
+        Permanent creature = addCreatureReady(player1, new GrizzlyBears());
         Permanent harnessPerm = addHarnessReady(player1);
         harnessPerm.setAttachedTo(creature.getId());
 
@@ -90,7 +90,7 @@ class StriderHarnessTest extends BaseCardTest {
     @Test
     @DisplayName("Equipped creature loses boost when Strider Harness is removed")
     void creatureLosesBoostWhenEquipmentRemoved() {
-        Permanent creature = addReadyCreature(player1);
+        Permanent creature = addCreatureReady(player1, new GrizzlyBears());
         Permanent harnessPerm = addHarnessReady(player1);
         harnessPerm.setAttachedTo(creature.getId());
 
@@ -105,8 +105,8 @@ class StriderHarnessTest extends BaseCardTest {
     @Test
     @DisplayName("Strider Harness does not affect unequipped creatures")
     void doesNotAffectOtherCreatures() {
-        Permanent creature = addReadyCreature(player1);
-        Permanent otherCreature = addReadyCreature(player1);
+        Permanent creature = addCreatureReady(player1, new GrizzlyBears());
+        Permanent otherCreature = addCreatureReady(player1, new GrizzlyBears());
         Permanent harnessPerm = addHarnessReady(player1);
         harnessPerm.setAttachedTo(creature.getId());
 
@@ -119,7 +119,7 @@ class StriderHarnessTest extends BaseCardTest {
     @Test
     @DisplayName("Equipped creature has haste")
     void equippedCreatureHasHaste() {
-        Permanent creature = addReadyCreature(player1);
+        Permanent creature = addCreatureReady(player1, new GrizzlyBears());
         Permanent harnessPerm = addHarnessReady(player1);
         harnessPerm.setAttachedTo(creature.getId());
 
@@ -129,7 +129,7 @@ class StriderHarnessTest extends BaseCardTest {
     @Test
     @DisplayName("Creature loses haste when Strider Harness is removed")
     void creatureLosesHasteWhenEquipmentRemoved() {
-        Permanent creature = addReadyCreature(player1);
+        Permanent creature = addCreatureReady(player1, new GrizzlyBears());
         Permanent harnessPerm = addHarnessReady(player1);
         harnessPerm.setAttachedTo(creature.getId());
 
@@ -164,8 +164,8 @@ class StriderHarnessTest extends BaseCardTest {
     @DisplayName("Strider Harness can be moved to another creature")
     void canReEquipToAnotherCreature() {
         Permanent harnessPerm = addHarnessReady(player1);
-        Permanent creature1 = addReadyCreature(player1);
-        Permanent creature2 = addReadyCreature(player1);
+        Permanent creature1 = addCreatureReady(player1, new GrizzlyBears());
+        Permanent creature2 = addCreatureReady(player1, new GrizzlyBears());
 
         harnessPerm.setAttachedTo(creature1.getId());
         assertThat(gqs.getEffectivePower(gd, creature1)).isEqualTo(3);
@@ -188,13 +188,6 @@ class StriderHarnessTest extends BaseCardTest {
 
     private Permanent addHarnessReady(Player player) {
         Permanent perm = new Permanent(new StriderHarness());
-        perm.setSummoningSick(false);
-        gd.playerBattlefields.get(player.getId()).add(perm);
-        return perm;
-    }
-
-    private Permanent addReadyCreature(Player player) {
-        Permanent perm = new Permanent(new GrizzlyBears());
         perm.setSummoningSick(false);
         gd.playerBattlefields.get(player.getId()).add(perm);
         return perm;

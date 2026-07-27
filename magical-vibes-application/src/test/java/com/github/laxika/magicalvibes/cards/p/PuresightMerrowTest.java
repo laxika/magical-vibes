@@ -72,7 +72,7 @@ class PuresightMerrowTest extends BaseCardTest {
     @Test
     @DisplayName("Cannot activate while the source is untapped ({Q} requires it to be tapped)")
     void cannotActivateWhileUntapped() {
-        addReady(player1, new PuresightMerrow());
+        addCreatureReady(player1, new PuresightMerrow());
         harness.addMana(player1, ManaColor.BLUE, 1);
         harness.setLibrary(player1, List.of(new GrizzlyBears()));
 
@@ -83,15 +83,8 @@ class PuresightMerrowTest extends BaseCardTest {
                 .hasMessageContaining("not tapped");
     }
 
-    private Permanent addReady(Player player, Card card) {
-        Permanent perm = new Permanent(card);
-        perm.setSummoningSick(false);
-        gd.playerBattlefields.get(player.getId()).add(perm);
-        return perm;
-    }
-
     private Permanent addTapped(Player player, Card card) {
-        Permanent perm = addReady(player, card);
+        Permanent perm = addCreatureReady(player, card);
         perm.tap();
         return perm;
     }

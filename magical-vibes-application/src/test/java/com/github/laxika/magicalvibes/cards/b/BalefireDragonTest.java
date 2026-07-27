@@ -24,8 +24,8 @@ class BalefireDragonTest extends BaseCardTest {
         dragon.setAttacking(true);
 
         // Opponent has two 2/2 creatures on the battlefield (not blocking)
-        Permanent bear1 = addReadyCreature(player2);
-        Permanent bear2 = addReadyCreature(player2);
+        Permanent bear1 = addCreatureReady(player2, new GrizzlyBears());
+        Permanent bear2 = addCreatureReady(player2, new GrizzlyBears());
 
         harness.setHand(player1, new ArrayList<>());
         harness.setHand(player2, new ArrayList<>());
@@ -76,7 +76,7 @@ class BalefireDragonTest extends BaseCardTest {
         blocker.addBlockingTarget(0);
 
         // Another creature that should NOT be damaged
-        Permanent bear = addReadyCreature(player2);
+        Permanent bear = addCreatureReady(player2, new GrizzlyBears());
 
         harness.setHand(player1, new ArrayList<>());
         harness.setHand(player2, new ArrayList<>());
@@ -98,10 +98,10 @@ class BalefireDragonTest extends BaseCardTest {
         dragon.setAttacking(true);
 
         // Attacker's own creature should not be affected
-        Permanent ownBear = addReadyCreature(player1);
+        Permanent ownBear = addCreatureReady(player1, new GrizzlyBears());
 
         // Opponent has a creature
-        Permanent oppBear = addReadyCreature(player2);
+        Permanent oppBear = addCreatureReady(player2, new GrizzlyBears());
 
         harness.setHand(player1, new ArrayList<>());
         harness.setHand(player2, new ArrayList<>());
@@ -136,13 +136,6 @@ class BalefireDragonTest extends BaseCardTest {
 
     private Permanent addBalefireDragonReady(Player player) {
         Permanent perm = new Permanent(new BalefireDragon());
-        perm.setSummoningSick(false);
-        gd.playerBattlefields.get(player.getId()).add(perm);
-        return perm;
-    }
-
-    private Permanent addReadyCreature(Player player) {
-        Permanent perm = new Permanent(new GrizzlyBears());
         perm.setSummoningSick(false);
         gd.playerBattlefields.get(player.getId()).add(perm);
         return perm;

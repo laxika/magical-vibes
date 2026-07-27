@@ -21,7 +21,7 @@ class SoulBleedTest extends BaseCardTest {
     @Test
     @DisplayName("Can target a creature with Soul Bleed")
     void canTargetCreature() {
-        Permanent creature = addCreatureReady(player2);
+        Permanent creature = addCreatureReady(player2, new GrizzlyBears());
 
         harness.setHand(player1, List.of(new SoulBleed()));
         harness.addMana(player1, ManaColor.BLACK, 3);
@@ -51,7 +51,7 @@ class SoulBleedTest extends BaseCardTest {
     @Test
     @DisplayName("Resolving Soul Bleed attaches it to target creature")
     void resolvingAttachesToCreature() {
-        Permanent creature = addCreatureReady(player2);
+        Permanent creature = addCreatureReady(player2, new GrizzlyBears());
 
         harness.setHand(player1, List.of(new SoulBleed()));
         harness.addMana(player1, ManaColor.BLACK, 3);
@@ -70,7 +70,7 @@ class SoulBleedTest extends BaseCardTest {
     @Test
     @DisplayName("Enchanted creature's controller loses 1 life at their upkeep")
     void enchantedCreatureControllerLosesLifeAtUpkeep() {
-        Permanent creature = addCreatureReady(player2);
+        Permanent creature = addCreatureReady(player2, new GrizzlyBears());
 
         Permanent auraPerm = new Permanent(new SoulBleed());
         auraPerm.setAttachedTo(creature.getId());
@@ -87,7 +87,7 @@ class SoulBleedTest extends BaseCardTest {
     @Test
     @DisplayName("Life loss trigger does NOT fire during aura controller's upkeep")
     void lifeLossDoesNotFireDuringAuraControllerUpkeep() {
-        Permanent creature = addCreatureReady(player2);
+        Permanent creature = addCreatureReady(player2, new GrizzlyBears());
 
         Permanent auraPerm = new Permanent(new SoulBleed());
         auraPerm.setAttachedTo(creature.getId());
@@ -105,7 +105,7 @@ class SoulBleedTest extends BaseCardTest {
     @Test
     @DisplayName("Life loss accumulates over multiple upkeeps")
     void lifeLossAccumulatesOverUpkeeps() {
-        Permanent creature = addCreatureReady(player2);
+        Permanent creature = addCreatureReady(player2, new GrizzlyBears());
 
         Permanent auraPerm = new Permanent(new SoulBleed());
         auraPerm.setAttachedTo(creature.getId());
@@ -127,7 +127,7 @@ class SoulBleedTest extends BaseCardTest {
     @Test
     @DisplayName("No life loss after Soul Bleed is removed")
     void noLifeLossAfterRemoval() {
-        Permanent creature = addCreatureReady(player2);
+        Permanent creature = addCreatureReady(player2, new GrizzlyBears());
 
         Permanent auraPerm = new Permanent(new SoulBleed());
         auraPerm.setAttachedTo(creature.getId());
@@ -145,13 +145,6 @@ class SoulBleedTest extends BaseCardTest {
     }
 
     // ===== Helpers =====
-
-    private Permanent addCreatureReady(Player player) {
-        Permanent perm = new Permanent(new GrizzlyBears());
-        perm.setSummoningSick(false);
-        gd.playerBattlefields.get(player.getId()).add(perm);
-        return perm;
-    }
 
     private Permanent findPermanentByName(Player player, String name) {
         return gd.playerBattlefields.get(player.getId()).stream()

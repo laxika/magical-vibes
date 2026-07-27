@@ -21,7 +21,7 @@ class ComaVeilTest extends BaseCardTest {
     @Test
     @DisplayName("Can target a creature with Coma Veil")
     void canTargetCreature() {
-        Permanent creature = addCreatureReady(player2);
+        Permanent creature = addCreatureReady(player2, new GrizzlyBears());
 
         harness.setHand(player1, List.of(new ComaVeil()));
         harness.addMana(player1, ManaColor.BLUE, 5);
@@ -50,7 +50,7 @@ class ComaVeilTest extends BaseCardTest {
     @Test
     @DisplayName("Resolving Coma Veil attaches it to target creature")
     void resolvingAttachesToCreature() {
-        Permanent creature = addCreatureReady(player2);
+        Permanent creature = addCreatureReady(player2, new GrizzlyBears());
 
         harness.setHand(player1, List.of(new ComaVeil()));
         harness.addMana(player1, ManaColor.BLUE, 5);
@@ -69,7 +69,7 @@ class ComaVeilTest extends BaseCardTest {
     @Test
     @DisplayName("Tapped creature with Coma Veil does not untap during controller's untap step")
     void enchantedCreatureDoesNotUntap() {
-        Permanent creature = addCreatureReady(player2);
+        Permanent creature = addCreatureReady(player2, new GrizzlyBears());
         creature.tap();
 
         Permanent veilPerm = new Permanent(new ComaVeil());
@@ -102,7 +102,7 @@ class ComaVeilTest extends BaseCardTest {
     @Test
     @DisplayName("Creature can untap again after Coma Veil is removed")
     void creatureUntapsAfterVeilRemoved() {
-        Permanent creature = addCreatureReady(player2);
+        Permanent creature = addCreatureReady(player2, new GrizzlyBears());
         creature.tap();
 
         Permanent veilPerm = new Permanent(new ComaVeil());
@@ -127,13 +127,6 @@ class ComaVeilTest extends BaseCardTest {
         harness.passBothPriorities(); // END_STEP -> CLEANUP
         harness.clearPriorityPassed();
         harness.passBothPriorities(); // CLEANUP -> next turn
-    }
-
-    private Permanent addCreatureReady(Player player) {
-        Permanent perm = new Permanent(new GrizzlyBears());
-        perm.setSummoningSick(false);
-        gd.playerBattlefields.get(player.getId()).add(perm);
-        return perm;
     }
 
     private Permanent findPermanentByName(Player player, String name) {

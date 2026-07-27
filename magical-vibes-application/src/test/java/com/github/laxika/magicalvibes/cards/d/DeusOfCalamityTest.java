@@ -4,7 +4,6 @@ import com.github.laxika.magicalvibes.cards.f.Forest;
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
 import com.github.laxika.magicalvibes.cards.m.Mountain;
 import com.github.laxika.magicalvibes.model.Card;
-import com.github.laxika.magicalvibes.model.GameData;
 import com.github.laxika.magicalvibes.model.PendingInteraction;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.Player;
@@ -19,14 +18,6 @@ import static org.assertj.core.api.Assertions.assertThat;
 
 class DeusOfCalamityTest extends BaseCardTest {
 
-    private Permanent addReadyCreature(Player player, Card card) {
-        GameData gd = harness.getGameData();
-        Permanent perm = new Permanent(card);
-        perm.setSummoningSick(false);
-        gd.playerBattlefields.get(player.getId()).add(perm);
-        return perm;
-    }
-
     private Permanent addPermanent(Player player, Card card) {
         Permanent perm = new Permanent(card);
         harness.getGameData().playerBattlefields.get(player.getId()).add(perm);
@@ -36,7 +27,7 @@ class DeusOfCalamityTest extends BaseCardTest {
     @Test
     @DisplayName("Dealing 6 to an opponent prompts to destroy a land that player controls")
     void promptsToDestroyLand() {
-        Permanent deus = addReadyCreature(player1, new DeusOfCalamity());
+        Permanent deus = addCreatureReady(player1, new DeusOfCalamity());
         deus.setAttacking(true);
         Permanent mountain = addPermanent(player2, new Mountain());
 
@@ -51,7 +42,7 @@ class DeusOfCalamityTest extends BaseCardTest {
     @Test
     @DisplayName("The chosen land is destroyed and the game advances")
     void destroysChosenLand() {
-        Permanent deus = addReadyCreature(player1, new DeusOfCalamity());
+        Permanent deus = addCreatureReady(player1, new DeusOfCalamity());
         deus.setAttacking(true);
         Permanent mountain = addPermanent(player2, new Mountain());
 
@@ -69,10 +60,10 @@ class DeusOfCalamityTest extends BaseCardTest {
     @Test
     @DisplayName("Only the damaged player's lands are valid targets (not own lands, not creatures)")
     void onlyDamagedPlayersLands() {
-        Permanent deus = addReadyCreature(player1, new DeusOfCalamity());
+        Permanent deus = addCreatureReady(player1, new DeusOfCalamity());
         deus.setAttacking(true);
         Permanent ownLand = addPermanent(player1, new Forest());
-        Permanent enemyCreature = addReadyCreature(player2, new GrizzlyBears());
+        Permanent enemyCreature = addCreatureReady(player2, new GrizzlyBears());
         Permanent enemyLand = addPermanent(player2, new Mountain());
 
         resolveCombat();
@@ -87,9 +78,9 @@ class DeusOfCalamityTest extends BaseCardTest {
     @Test
     @DisplayName("No trigger when the damaged player controls no lands")
     void noTriggerWithoutLands() {
-        Permanent deus = addReadyCreature(player1, new DeusOfCalamity());
+        Permanent deus = addCreatureReady(player1, new DeusOfCalamity());
         deus.setAttacking(true);
-        addReadyCreature(player2, new GrizzlyBears());
+        addCreatureReady(player2, new GrizzlyBears());
 
         resolveCombat();
         harness.passBothPriorities();
@@ -102,7 +93,7 @@ class DeusOfCalamityTest extends BaseCardTest {
     void noTriggerBelowThreshold() {
         DeusOfCalamity card = new DeusOfCalamity();
         card.setPower(5);
-        Permanent deus = addReadyCreature(player1, card);
+        Permanent deus = addCreatureReady(player1, card);
         deus.setAttacking(true);
         addPermanent(player2, new Mountain());
 

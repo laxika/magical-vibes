@@ -23,7 +23,7 @@ class IcatianPriestTest extends BaseCardTest {
     @DisplayName("Activating ability puts it on the stack with target")
     void activatingPutsOnStackWithTarget() {
         addReadyPriest(player1);
-        Permanent target = addReadyBears(player1);
+        Permanent target = addCreatureReady(player1, new GrizzlyBears());
         harness.addMana(player1, ManaColor.WHITE, 3);
 
         harness.activateAbility(player1, 0, null, target.getId());
@@ -40,7 +40,7 @@ class IcatianPriestTest extends BaseCardTest {
     @DisplayName("Activating ability does not tap Icatian Priest")
     void activatingDoesNotTap() {
         Permanent priest = addReadyPriest(player1);
-        addReadyBears(player1);
+        addCreatureReady(player1, new GrizzlyBears());
         harness.addMana(player1, ManaColor.WHITE, 3);
 
         harness.activateAbility(player1, 0, null, priest.getId());
@@ -52,7 +52,7 @@ class IcatianPriestTest extends BaseCardTest {
     @DisplayName("Mana is consumed when activating ability")
     void manaIsConsumedWhenActivating() {
         addReadyPriest(player1);
-        Permanent target = addReadyBears(player1);
+        Permanent target = addCreatureReady(player1, new GrizzlyBears());
         harness.addMana(player1, ManaColor.WHITE, 4);
 
         harness.activateAbility(player1, 0, null, target.getId());
@@ -67,7 +67,7 @@ class IcatianPriestTest extends BaseCardTest {
     @DisplayName("Resolving ability gives target creature +1/+1")
     void resolvingBoostsTarget() {
         addReadyPriest(player1);
-        Permanent target = addReadyBears(player1);
+        Permanent target = addCreatureReady(player1, new GrizzlyBears());
         harness.addMana(player1, ManaColor.WHITE, 3);
 
         harness.activateAbility(player1, 0, null, target.getId());
@@ -85,7 +85,7 @@ class IcatianPriestTest extends BaseCardTest {
     @DisplayName("Can activate ability multiple times on same target")
     void canActivateMultipleTimes() {
         addReadyPriest(player1);
-        Permanent target = addReadyBears(player1);
+        Permanent target = addCreatureReady(player1, new GrizzlyBears());
         harness.addMana(player1, ManaColor.WHITE, 9);
 
         harness.activateAbility(player1, 0, null, target.getId());
@@ -107,7 +107,7 @@ class IcatianPriestTest extends BaseCardTest {
     @DisplayName("Boost resets at end of turn")
     void boostResetsAtEndOfTurn() {
         addReadyPriest(player1);
-        Permanent target = addReadyBears(player1);
+        Permanent target = addCreatureReady(player1, new GrizzlyBears());
         harness.addMana(player1, ManaColor.WHITE, 6);
 
         harness.activateAbility(player1, 0, null, target.getId());
@@ -134,7 +134,7 @@ class IcatianPriestTest extends BaseCardTest {
     @DisplayName("Cannot activate ability without enough mana")
     void cannotActivateWithoutEnoughMana() {
         addReadyPriest(player1);
-        Permanent target = addReadyBears(player1);
+        Permanent target = addCreatureReady(player1, new GrizzlyBears());
         harness.addMana(player1, ManaColor.WHITE, 2);
 
         assertThatThrownBy(() -> harness.activateAbility(player1, 0, null, target.getId()))
@@ -148,7 +148,7 @@ class IcatianPriestTest extends BaseCardTest {
     @DisplayName("Can target opponent's creature")
     void canTargetOpponentCreature() {
         addReadyPriest(player1);
-        Permanent opponentBears = addReadyBears(player2);
+        Permanent opponentBears = addCreatureReady(player2, new GrizzlyBears());
         harness.addMana(player1, ManaColor.WHITE, 3);
 
         harness.activateAbility(player1, 0, null, opponentBears.getId());
@@ -162,14 +162,6 @@ class IcatianPriestTest extends BaseCardTest {
 
     private Permanent addReadyPriest(Player player) {
         IcatianPriest card = new IcatianPriest();
-        Permanent perm = new Permanent(card);
-        perm.setSummoningSick(false);
-        harness.getGameData().playerBattlefields.get(player.getId()).add(perm);
-        return perm;
-    }
-
-    private Permanent addReadyBears(Player player) {
-        GrizzlyBears card = new GrizzlyBears();
         Permanent perm = new Permanent(card);
         perm.setSummoningSick(false);
         harness.getGameData().playerBattlefields.get(player.getId()).add(perm);

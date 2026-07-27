@@ -39,7 +39,7 @@ class ElbrusTest extends BaseCardTest {
     @Test
     @DisplayName("Equipped creature gets +1/+0")
     void equippedCreatureGetsBoost() {
-        Permanent creature = addReadyCreature(player1);
+        Permanent creature = addCreatureReady(player1, new GrizzlyBears());
         Permanent elbrus = addElbrusReady(player1);
         elbrus.setAttachedTo(creature.getId());
 
@@ -56,7 +56,7 @@ class ElbrusTest extends BaseCardTest {
         @Test
         @DisplayName("Equipped creature dealing combat damage transforms Elbrus into Withengar Unbound")
         void combatDamageTransformsIntoWithengar() {
-            Permanent creature = addReadyCreature(player1);
+            Permanent creature = addCreatureReady(player1, new GrizzlyBears());
             Permanent elbrus = addElbrusReady(player1);
             elbrus.setAttachedTo(creature.getId());
             creature.setAttacking(true);
@@ -72,7 +72,7 @@ class ElbrusTest extends BaseCardTest {
         @Test
         @DisplayName("Transforming unattaches Elbrus from the creature")
         void transformUnattachesElbrus() {
-            Permanent creature = addReadyCreature(player1);
+            Permanent creature = addCreatureReady(player1, new GrizzlyBears());
             Permanent elbrus = addElbrusReady(player1);
             elbrus.setAttachedTo(creature.getId());
             creature.setAttacking(true);
@@ -89,13 +89,13 @@ class ElbrusTest extends BaseCardTest {
         @Test
         @DisplayName("No transform when equipped creature is blocked and deals no player damage")
         void noTransformWhenBlocked() {
-            Permanent creature = addReadyCreature(player1);
+            Permanent creature = addCreatureReady(player1, new GrizzlyBears());
             TestCards.mutableCard(creature).setToughness(10); // survives the blocker so the test isolates the "blocked" case
             Permanent elbrus = addElbrusReady(player1);
             elbrus.setAttachedTo(creature.getId());
             creature.setAttacking(true);
 
-            Permanent blocker = addReadyCreature(player2);
+            Permanent blocker = addCreatureReady(player2, new GrizzlyBears());
             TestCards.mutableCard(blocker).setToughness(10);
             blocker.setBlocking(true);
             blocker.addBlockingTarget(0);
@@ -109,13 +109,6 @@ class ElbrusTest extends BaseCardTest {
     }
 
     // ===== Helpers =====
-
-    private Permanent addReadyCreature(Player player) {
-        Permanent perm = new Permanent(new GrizzlyBears());
-        perm.setSummoningSick(false);
-        gd.playerBattlefields.get(player.getId()).add(perm);
-        return perm;
-    }
 
     private Permanent addElbrusReady(Player player) {
         Permanent perm = new Permanent(new Elbrus());

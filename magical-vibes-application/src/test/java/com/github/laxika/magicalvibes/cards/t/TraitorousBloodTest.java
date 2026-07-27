@@ -7,7 +7,6 @@ import com.github.laxika.magicalvibes.cards.p.Pacifism;
 import com.github.laxika.magicalvibes.model.Keyword;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
-import com.github.laxika.magicalvibes.model.Player;
 import com.github.laxika.magicalvibes.model.TurnStep;
 import com.github.laxika.magicalvibes.service.GameService;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
@@ -26,7 +25,7 @@ class TraitorousBloodTest extends BaseCardTest {
     @Test
     @DisplayName("Resolving Traitorous Blood untaps target, gains control, and grants trample and haste")
     void resolvesUntapGainControlTrampleAndHaste() {
-        Permanent target = addReadyCreature(player2);
+        Permanent target = addCreatureReady(player2, new GrizzlyBears());
         target.tap();
         harness.setHand(player1, List.of(new TraitorousBlood()));
         harness.addMana(player1, ManaColor.RED, 2);
@@ -46,7 +45,7 @@ class TraitorousBloodTest extends BaseCardTest {
     @Test
     @DisplayName("Control, trample, and haste expire at cleanup")
     void controlTrampleAndHasteExpireAtCleanup() {
-        Permanent target = addReadyCreature(player2);
+        Permanent target = addCreatureReady(player2, new GrizzlyBears());
         harness.setHand(player1, List.of(new TraitorousBlood()));
         harness.addMana(player1, ManaColor.RED, 2);
         harness.addMana(player1, ManaColor.WHITE, 1);
@@ -68,7 +67,7 @@ class TraitorousBloodTest extends BaseCardTest {
     @Test
     @DisplayName("Stolen creature can attack this turn because Traitorous Blood grants haste")
     void stolenCreatureCanAttackDueToHaste() {
-        Permanent target = addReadyCreature(player2);
+        Permanent target = addCreatureReady(player2, new GrizzlyBears());
         target.setSummoningSick(false);
         harness.setHand(player1, List.of(new TraitorousBlood()));
         harness.addMana(player1, ManaColor.RED, 2);
@@ -93,7 +92,7 @@ class TraitorousBloodTest extends BaseCardTest {
     @Test
     @DisplayName("Cannot target a non-creature permanent")
     void cannotTargetNonCreature() {
-        addReadyCreature(player1);
+        addCreatureReady(player1, new GrizzlyBears());
         Permanent enchantment = new Permanent(new Pacifism());
         gd.playerBattlefields.get(player2.getId()).add(enchantment);
         harness.setHand(player1, List.of(new TraitorousBlood()));
@@ -108,7 +107,7 @@ class TraitorousBloodTest extends BaseCardTest {
     @Test
     @DisplayName("Traitorous Blood fizzles if target is removed before resolution")
     void fizzlesIfTargetRemoved() {
-        Permanent target = addReadyCreature(player2);
+        Permanent target = addCreatureReady(player2, new GrizzlyBears());
         harness.setHand(player1, List.of(new TraitorousBlood()));
         harness.addMana(player1, ManaColor.RED, 2);
         harness.addMana(player1, ManaColor.WHITE, 1);
@@ -120,12 +119,5 @@ class TraitorousBloodTest extends BaseCardTest {
 
         assertThat(gd.stack).isEmpty();
         assertThat(gd.gameLog.stream().map(GameLogEntry::plainText)).anyMatch(log -> log.contains("fizzles"));
-    }
-
-    private Permanent addReadyCreature(Player player) {
-        Permanent perm = new Permanent(new GrizzlyBears());
-        perm.setSummoningSick(false);
-        gd.playerBattlefields.get(player.getId()).add(perm);
-        return perm;
     }
 }

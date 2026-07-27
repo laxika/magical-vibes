@@ -22,8 +22,8 @@ class HellsCaretakerTest extends BaseCardTest {
     @Test
     @DisplayName("Sacrificing a creature during upkeep returns target creature card from graveyard to the battlefield")
     void reanimatesTargetCreatureDuringUpkeep() {
-        addReady(player1, new HellsCaretaker());
-        Permanent fodder = addReady(player1, new GrizzlyBears());
+        addCreatureReady(player1, new HellsCaretaker());
+        Permanent fodder = addCreatureReady(player1, new GrizzlyBears());
 
         Card target = new LlanowarElves();
         harness.setGraveyard(player1, List.of(target));
@@ -46,8 +46,8 @@ class HellsCaretakerTest extends BaseCardTest {
     @Test
     @DisplayName("Cannot activate outside the controller's upkeep")
     void cannotActivateOutsideUpkeep() {
-        addReady(player1, new HellsCaretaker());
-        addReady(player1, new GrizzlyBears());
+        addCreatureReady(player1, new HellsCaretaker());
+        addCreatureReady(player1, new GrizzlyBears());
 
         Card target = new LlanowarElves();
         harness.setGraveyard(player1, List.of(target));
@@ -65,8 +65,8 @@ class HellsCaretakerTest extends BaseCardTest {
     @Test
     @DisplayName("Cannot target a non-creature card in the graveyard")
     void cannotTargetNonCreatureCard() {
-        addReady(player1, new HellsCaretaker());
-        addReady(player1, new GrizzlyBears());
+        addCreatureReady(player1, new HellsCaretaker());
+        addCreatureReady(player1, new GrizzlyBears());
 
         Card target = new Shock();
         harness.setGraveyard(player1, List.of(target));
@@ -76,13 +76,6 @@ class HellsCaretakerTest extends BaseCardTest {
         assertThatThrownBy(() ->
                 harness.activateAbility(player1, 0, 0, null, target.getId(), Zone.GRAVEYARD))
                 .isInstanceOf(IllegalStateException.class);
-    }
-
-    private Permanent addReady(Player player, Card card) {
-        Permanent perm = new Permanent(card);
-        perm.setSummoningSick(false);
-        gd.playerBattlefields.get(player.getId()).add(perm);
-        return perm;
     }
 
     private void enterUpkeep(Player player) {

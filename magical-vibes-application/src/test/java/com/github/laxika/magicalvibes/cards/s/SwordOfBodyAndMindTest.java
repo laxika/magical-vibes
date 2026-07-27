@@ -52,7 +52,7 @@ class SwordOfBodyAndMindTest extends BaseCardTest {
     @Test
     @DisplayName("Equipped creature gets +2/+2")
     void equippedCreatureGetsBoost() {
-        Permanent creature = addReadyCreature(player1);
+        Permanent creature = addCreatureReady(player1, new GrizzlyBears());
         Permanent sword = addSwordReady(player1);
         sword.setAttachedTo(creature.getId());
 
@@ -63,7 +63,7 @@ class SwordOfBodyAndMindTest extends BaseCardTest {
     @Test
     @DisplayName("Equipped creature loses boost when Sword is removed")
     void creatureLosesBoostWhenEquipmentRemoved() {
-        Permanent creature = addReadyCreature(player1);
+        Permanent creature = addCreatureReady(player1, new GrizzlyBears());
         Permanent sword = addSwordReady(player1);
         sword.setAttachedTo(creature.getId());
 
@@ -80,7 +80,7 @@ class SwordOfBodyAndMindTest extends BaseCardTest {
     @Test
     @DisplayName("Equipped creature has protection from green")
     void equippedCreatureHasProtectionFromGreen() {
-        Permanent creature = addReadyCreature(player1);
+        Permanent creature = addCreatureReady(player1, new GrizzlyBears());
         Permanent sword = addSwordReady(player1);
         sword.setAttachedTo(creature.getId());
 
@@ -90,7 +90,7 @@ class SwordOfBodyAndMindTest extends BaseCardTest {
     @Test
     @DisplayName("Equipped creature has protection from blue")
     void equippedCreatureHasProtectionFromBlue() {
-        Permanent creature = addReadyCreature(player1);
+        Permanent creature = addCreatureReady(player1, new GrizzlyBears());
         Permanent sword = addSwordReady(player1);
         sword.setAttachedTo(creature.getId());
 
@@ -100,7 +100,7 @@ class SwordOfBodyAndMindTest extends BaseCardTest {
     @Test
     @DisplayName("Equipped creature does NOT have protection from red")
     void equippedCreatureNoProtectionFromRed() {
-        Permanent creature = addReadyCreature(player1);
+        Permanent creature = addCreatureReady(player1, new GrizzlyBears());
         Permanent sword = addSwordReady(player1);
         sword.setAttachedTo(creature.getId());
 
@@ -110,7 +110,7 @@ class SwordOfBodyAndMindTest extends BaseCardTest {
     @Test
     @DisplayName("Creature loses protection when Sword is removed")
     void creatureLosesProtectionWhenEquipmentRemoved() {
-        Permanent creature = addReadyCreature(player1);
+        Permanent creature = addCreatureReady(player1, new GrizzlyBears());
         Permanent sword = addSwordReady(player1);
         sword.setAttachedTo(creature.getId());
 
@@ -128,7 +128,7 @@ class SwordOfBodyAndMindTest extends BaseCardTest {
     @Test
     @DisplayName("Creates a 2/2 green Wolf token when equipped creature deals combat damage to a player")
     void createsWolfTokenOnCombatDamage() {
-        Permanent creature = addReadyCreature(player1);
+        Permanent creature = addCreatureReady(player1, new GrizzlyBears());
         Permanent sword = addSwordReady(player1);
         sword.setAttachedTo(creature.getId());
         creature.setAttacking(true);
@@ -153,7 +153,7 @@ class SwordOfBodyAndMindTest extends BaseCardTest {
     @Test
     @DisplayName("Damaged player mills 10 cards when equipped creature deals combat damage")
     void millsTenCardsOnCombatDamage() {
-        Permanent creature = addReadyCreature(player1);
+        Permanent creature = addCreatureReady(player1, new GrizzlyBears());
         Permanent sword = addSwordReady(player1);
         sword.setAttachedTo(creature.getId());
         creature.setAttacking(true);
@@ -170,7 +170,7 @@ class SwordOfBodyAndMindTest extends BaseCardTest {
     @DisplayName("Both token and mill trigger when equipped creature deals combat damage")
     void bothEffectsFireOnCombatDamage() {
         harness.setLife(player2, 20);
-        Permanent creature = addReadyCreature(player1);
+        Permanent creature = addCreatureReady(player1, new GrizzlyBears());
         Permanent sword = addSwordReady(player1);
         sword.setAttachedTo(creature.getId());
         creature.setAttacking(true);
@@ -195,7 +195,7 @@ class SwordOfBodyAndMindTest extends BaseCardTest {
     @Test
     @DisplayName("Handles library with fewer than 10 cards gracefully")
     void partialLibraryMill() {
-        Permanent creature = addReadyCreature(player1);
+        Permanent creature = addCreatureReady(player1, new GrizzlyBears());
         Permanent sword = addSwordReady(player1);
         sword.setAttachedTo(creature.getId());
         creature.setAttacking(true);
@@ -213,7 +213,7 @@ class SwordOfBodyAndMindTest extends BaseCardTest {
     @Test
     @DisplayName("No trigger when equipped creature is blocked and deals no player damage")
     void noTriggerWhenBlocked() {
-        Permanent creature = addReadyCreature(player1);
+        Permanent creature = addCreatureReady(player1, new GrizzlyBears());
         Permanent sword = addSwordReady(player1);
         sword.setAttachedTo(creature.getId());
         creature.setAttacking(true);
@@ -245,8 +245,8 @@ class SwordOfBodyAndMindTest extends BaseCardTest {
     @DisplayName("Sword can be moved to another creature")
     void canReEquipToAnotherCreature() {
         Permanent sword = addSwordReady(player1);
-        Permanent creature1 = addReadyCreature(player1);
-        Permanent creature2 = addReadyCreature(player1);
+        Permanent creature1 = addCreatureReady(player1, new GrizzlyBears());
+        Permanent creature2 = addCreatureReady(player1, new GrizzlyBears());
 
         sword.setAttachedTo(creature1.getId());
         assertThat(gqs.getEffectivePower(gd, creature1)).isEqualTo(4);
@@ -341,13 +341,6 @@ class SwordOfBodyAndMindTest extends BaseCardTest {
 
     private Permanent addSwordReady(Player player) {
         Permanent perm = new Permanent(new SwordOfBodyAndMind());
-        perm.setSummoningSick(false);
-        gd.playerBattlefields.get(player.getId()).add(perm);
-        return perm;
-    }
-
-    private Permanent addReadyCreature(Player player) {
-        Permanent perm = new Permanent(new GrizzlyBears());
         perm.setSummoningSick(false);
         gd.playerBattlefields.get(player.getId()).add(perm);
         return perm;

@@ -38,7 +38,7 @@ class HealingGraceTest extends BaseCardTest {
     @Test
     @DisplayName("Casting Healing Grace targeting a creature puts it on the stack")
     void castTargetingCreaturePutsOnStack() {
-        Permanent bear = addReadyCreature(player2);
+        Permanent bear = addCreatureReady(player2, new GrizzlyBears());
         harness.setHand(player1, List.of(new HealingGrace()));
         harness.addMana(player1, ManaColor.WHITE, 1);
 
@@ -53,7 +53,7 @@ class HealingGraceTest extends BaseCardTest {
     @Test
     @DisplayName("Resolving Healing Grace prompts for source choice")
     void resolvingPromptsForSourceChoice() {
-        Permanent opponentCreature = addReadyCreature(player2);
+        Permanent opponentCreature = addCreatureReady(player2, new GrizzlyBears());
         harness.setHand(player1, List.of(new HealingGrace()));
         harness.addMana(player1, ManaColor.WHITE, 1);
 
@@ -66,7 +66,7 @@ class HealingGraceTest extends BaseCardTest {
     @Test
     @DisplayName("Choosing a source creates a target-source prevention shield")
     void choosingSourceCreatesShield() {
-        Permanent opponentCreature = addReadyCreature(player2);
+        Permanent opponentCreature = addCreatureReady(player2, new GrizzlyBears());
         harness.setHand(player1, List.of(new HealingGrace()));
         harness.addMana(player1, ManaColor.WHITE, 1);
 
@@ -83,7 +83,7 @@ class HealingGraceTest extends BaseCardTest {
     @Test
     @DisplayName("Resolving Healing Grace gains 3 life for the caster")
     void resolvingGains3Life() {
-        Permanent opponentCreature = addReadyCreature(player2);
+        Permanent opponentCreature = addCreatureReady(player2, new GrizzlyBears());
         harness.setLife(player1, 17);
         harness.setHand(player1, List.of(new HealingGrace()));
         harness.addMana(player1, ManaColor.WHITE, 1);
@@ -101,7 +101,7 @@ class HealingGraceTest extends BaseCardTest {
     @DisplayName("Shield prevents combat damage from chosen source to target player")
     void preventsCombatDamageToPlayer() {
         harness.setLife(player1, 20);
-        Permanent opponentCreature = addReadyCreature(player2);
+        Permanent opponentCreature = addCreatureReady(player2, new GrizzlyBears());
 
         // Cast Healing Grace targeting player1, choose opponent's creature as source
         harness.setHand(player1, List.of(new HealingGrace()));
@@ -151,7 +151,7 @@ class HealingGraceTest extends BaseCardTest {
     @Test
     @DisplayName("Shield prevents combat damage from chosen source to target creature")
     void preventsCombatDamageToCreature() {
-        Permanent myCreature = addReadyCreature(player1);
+        Permanent myCreature = addCreatureReady(player1, new GrizzlyBears());
         Permanent opponentCreature = addReadyCreatureWithStats(player2, 3, 3);
 
         // Cast Healing Grace targeting my creature, choose opponent's 3/3 as source
@@ -181,7 +181,7 @@ class HealingGraceTest extends BaseCardTest {
     @DisplayName("Shield does not prevent damage from non-matching source")
     void doesNotPreventFromNonMatchingSource() {
         harness.setLife(player1, 20);
-        Permanent creature1 = addReadyCreature(player2);
+        Permanent creature1 = addCreatureReady(player2, new GrizzlyBears());
         Permanent creature2 = addReadyCreatureWithStats(player2, 3, 3);
 
         // Cast Healing Grace targeting player1, choose creature1 as source
@@ -210,7 +210,7 @@ class HealingGraceTest extends BaseCardTest {
     @Test
     @DisplayName("Target-source prevention shield is cleared at end of turn")
     void shieldClearedAtEndOfTurn() {
-        Permanent opponentCreature = addReadyCreature(player2);
+        Permanent opponentCreature = addCreatureReady(player2, new GrizzlyBears());
         harness.setHand(player1, List.of(new HealingGrace()));
         harness.addMana(player1, ManaColor.WHITE, 1);
 
@@ -232,7 +232,7 @@ class HealingGraceTest extends BaseCardTest {
     @Test
     @DisplayName("Healing Grace goes to graveyard after resolving")
     void goesToGraveyardAfterResolving() {
-        Permanent opponentCreature = addReadyCreature(player2);
+        Permanent opponentCreature = addCreatureReady(player2, new GrizzlyBears());
         harness.setHand(player1, List.of(new HealingGrace()));
         harness.addMana(player1, ManaColor.WHITE, 1);
 
@@ -245,14 +245,6 @@ class HealingGraceTest extends BaseCardTest {
     }
 
     // ===== Helpers =====
-
-    private Permanent addReadyCreature(Player player) {
-        GrizzlyBears card = new GrizzlyBears();
-        Permanent perm = new Permanent(card);
-        perm.setSummoningSick(false);
-        gd.playerBattlefields.get(player.getId()).add(perm);
-        return perm;
-    }
 
     private Permanent addReadyCreatureWithStats(Player player, int power, int toughness) {
         GrizzlyBears card = new GrizzlyBears();

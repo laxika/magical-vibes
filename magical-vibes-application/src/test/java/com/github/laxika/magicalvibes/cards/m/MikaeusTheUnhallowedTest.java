@@ -5,7 +5,6 @@ import com.github.laxika.magicalvibes.cards.e.EliteVanguard;
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
 import com.github.laxika.magicalvibes.cards.l.LightningBolt;
 import com.github.laxika.magicalvibes.cards.w.WalkingCorpse;
-import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CounterType;
 import com.github.laxika.magicalvibes.model.Keyword;
 import com.github.laxika.magicalvibes.model.ManaColor;
@@ -69,7 +68,7 @@ class MikaeusTheUnhallowedTest extends BaseCardTest {
     @DisplayName("Human that deals combat damage to Mikaeus's controller is destroyed")
     void humanDamageSourceIsDestroyed() {
         harness.addToBattlefield(player2, new MikaeusTheUnhallowed());
-        Permanent attacker = addReadyCreature(player1, new EliteVanguard());
+        Permanent attacker = addCreatureReady(player1, new EliteVanguard());
         attacker.setAttacking(true);
 
         resolveCombat(player1);
@@ -85,7 +84,7 @@ class MikaeusTheUnhallowedTest extends BaseCardTest {
     @DisplayName("Non-Human that deals combat damage to Mikaeus's controller is not destroyed")
     void nonHumanDamageSourceIsNotDestroyed() {
         harness.addToBattlefield(player2, new MikaeusTheUnhallowed());
-        Permanent attacker = addReadyCreature(player1, new GrizzlyBears());
+        Permanent attacker = addCreatureReady(player1, new GrizzlyBears());
         attacker.setAttacking(true);
 
         resolveCombat(player1);
@@ -107,12 +106,5 @@ class MikaeusTheUnhallowedTest extends BaseCardTest {
                 .filter(p -> p.getCard().getName().equals(name))
                 .findFirst()
                 .orElse(null);
-    }
-
-    private Permanent addReadyCreature(Player player, Card card) {
-        Permanent perm = new Permanent(card);
-        perm.setSummoningSick(false);
-        gd.playerBattlefields.get(player.getId()).add(perm);
-        return perm;
     }
 }

@@ -75,7 +75,7 @@ class MagusOfTheUnseenTest extends BaseCardTest {
     @DisplayName("Cannot target a non-artifact permanent")
     void cannotTargetNonArtifact() {
         addReadyMagus(player1);
-        Permanent creature = addReadyBears(player2);
+        Permanent creature = addCreatureReady(player2, new GrizzlyBears());
         harness.addMana(player1, ManaColor.BLUE, 2);
 
         assertThatThrownBy(() -> harness.activateAbility(player1, 0, null, creature.getId()))
@@ -94,13 +94,6 @@ class MagusOfTheUnseenTest extends BaseCardTest {
 
     private Permanent addArtifact(Player player) {
         Permanent perm = new Permanent(new LeoninScimitar());
-        gd.playerBattlefields.get(player.getId()).add(perm);
-        return perm;
-    }
-
-    private Permanent addReadyBears(Player player) {
-        Permanent perm = new Permanent(new GrizzlyBears());
-        perm.setSummoningSick(false);
         gd.playerBattlefields.get(player.getId()).add(perm);
         return perm;
     }

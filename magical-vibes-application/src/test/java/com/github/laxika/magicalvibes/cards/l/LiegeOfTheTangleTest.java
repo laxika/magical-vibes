@@ -23,13 +23,6 @@ import com.github.laxika.magicalvibes.model.CounterType;
 
 class LiegeOfTheTangleTest extends BaseCardTest {
 
-    private Permanent addReadyCreature(Player player, Card card) {
-        Permanent perm = new Permanent(card);
-        perm.setSummoningSick(false);
-        gd.playerBattlefields.get(player.getId()).add(perm);
-        return perm;
-    }
-
     private Permanent addLand(Player player, Card card) {
         Permanent perm = new Permanent(card);
         perm.setSummoningSick(false);
@@ -42,7 +35,7 @@ class LiegeOfTheTangleTest extends BaseCardTest {
     @Test
     @DisplayName("Dealing combat damage triggers multi-permanent choice for controller's lands")
     void combatDamageTriggersLandChoice() {
-        Permanent liege = addReadyCreature(player1, new LiegeOfTheTangle());
+        Permanent liege = addCreatureReady(player1, new LiegeOfTheTangle());
         liege.setAttacking(true);
         addLand(player1, new Forest());
         addLand(player1, new Forest());
@@ -60,7 +53,7 @@ class LiegeOfTheTangleTest extends BaseCardTest {
     @Test
     @DisplayName("Choosing lands puts awakening counters on them")
     void choosingLandsPutsAwakeningCounters() {
-        Permanent liege = addReadyCreature(player1, new LiegeOfTheTangle());
+        Permanent liege = addCreatureReady(player1, new LiegeOfTheTangle());
         liege.setAttacking(true);
         Permanent forest1 = addLand(player1, new Forest());
         Permanent forest2 = addLand(player1, new Forest());
@@ -76,7 +69,7 @@ class LiegeOfTheTangleTest extends BaseCardTest {
     @Test
     @DisplayName("Awakened lands are 8/8 creatures")
     void awakenedLandsAre8_8Creatures() {
-        Permanent liege = addReadyCreature(player1, new LiegeOfTheTangle());
+        Permanent liege = addCreatureReady(player1, new LiegeOfTheTangle());
         liege.setAttacking(true);
         Permanent forest = addLand(player1, new Forest());
 
@@ -92,7 +85,7 @@ class LiegeOfTheTangleTest extends BaseCardTest {
     @Test
     @DisplayName("Awakened lands are still lands")
     void awakenedLandsAreStillLands() {
-        Permanent liege = addReadyCreature(player1, new LiegeOfTheTangle());
+        Permanent liege = addCreatureReady(player1, new LiegeOfTheTangle());
         liege.setAttacking(true);
         Permanent forest = addLand(player1, new Forest());
 
@@ -105,7 +98,7 @@ class LiegeOfTheTangleTest extends BaseCardTest {
     @Test
     @DisplayName("Awakening counters persist across turns (not cleared by end of turn)")
     void awakeningCountersPersistAcrossTurns() {
-        Permanent liege = addReadyCreature(player1, new LiegeOfTheTangle());
+        Permanent liege = addCreatureReady(player1, new LiegeOfTheTangle());
         liege.setAttacking(true);
         Permanent forest = addLand(player1, new Forest());
 
@@ -124,7 +117,7 @@ class LiegeOfTheTangleTest extends BaseCardTest {
     @Test
     @DisplayName("Choosing no lands is allowed")
     void choosingNoLandsIsAllowed() {
-        Permanent liege = addReadyCreature(player1, new LiegeOfTheTangle());
+        Permanent liege = addCreatureReady(player1, new LiegeOfTheTangle());
         liege.setAttacking(true);
         Permanent forest = addLand(player1, new Forest());
 
@@ -140,12 +133,12 @@ class LiegeOfTheTangleTest extends BaseCardTest {
     @Test
     @DisplayName("No trigger when Liege is blocked and deals no damage to player")
     void noTriggerWhenBlocked() {
-        Permanent liege = addReadyCreature(player1, new LiegeOfTheTangle());
+        Permanent liege = addCreatureReady(player1, new LiegeOfTheTangle());
         liege.setAttacking(true);
         addLand(player1, new Forest());
 
         // Add blocker that can survive (8/8 needed to fully block, but any creature blocks)
-        Permanent blocker = addReadyCreature(player2, new GrizzlyBears());
+        Permanent blocker = addCreatureReady(player2, new GrizzlyBears());
         blocker.setBlocking(true);
         blocker.addBlockingTarget(0);
 
@@ -157,7 +150,7 @@ class LiegeOfTheTangleTest extends BaseCardTest {
     @Test
     @DisplayName("No trigger when controller has no lands")
     void noTriggerWhenNoLands() {
-        Permanent liege = addReadyCreature(player1, new LiegeOfTheTangle());
+        Permanent liege = addCreatureReady(player1, new LiegeOfTheTangle());
         liege.setAttacking(true);
         // player1 has no lands
 
@@ -170,7 +163,7 @@ class LiegeOfTheTangleTest extends BaseCardTest {
     @Test
     @DisplayName("Can choose only some lands, not all")
     void canChooseSubsetOfLands() {
-        Permanent liege = addReadyCreature(player1, new LiegeOfTheTangle());
+        Permanent liege = addCreatureReady(player1, new LiegeOfTheTangle());
         liege.setAttacking(true);
         Permanent forest1 = addLand(player1, new Forest());
         Permanent forest2 = addLand(player1, new Forest());
@@ -189,7 +182,7 @@ class LiegeOfTheTangleTest extends BaseCardTest {
     @DisplayName("Defender takes combat damage from Liege")
     void defenderTakesCombatDamage() {
         harness.setLife(player2, 20);
-        Permanent liege = addReadyCreature(player1, new LiegeOfTheTangle());
+        Permanent liege = addCreatureReady(player1, new LiegeOfTheTangle());
         liege.setAttacking(true);
         addLand(player1, new Forest());
 
@@ -203,7 +196,7 @@ class LiegeOfTheTangleTest extends BaseCardTest {
     @Test
     @DisplayName("Game advances to postcombat main after choice")
     void gameAdvancesAfterChoice() {
-        Permanent liege = addReadyCreature(player1, new LiegeOfTheTangle());
+        Permanent liege = addCreatureReady(player1, new LiegeOfTheTangle());
         liege.setAttacking(true);
         Permanent forest = addLand(player1, new Forest());
 
@@ -218,7 +211,7 @@ class LiegeOfTheTangleTest extends BaseCardTest {
     @Test
     @DisplayName("Awakened lands from different types all become 8/8")
     void differentLandTypesAllBecome8_8() {
-        Permanent liege = addReadyCreature(player1, new LiegeOfTheTangle());
+        Permanent liege = addCreatureReady(player1, new LiegeOfTheTangle());
         liege.setAttacking(true);
         Permanent forest = addLand(player1, new Forest());
         Permanent mountain = addLand(player1, new Mountain());

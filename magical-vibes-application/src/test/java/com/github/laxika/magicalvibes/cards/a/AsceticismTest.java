@@ -2,10 +2,8 @@ package com.github.laxika.magicalvibes.cards.a;
 
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
 import com.github.laxika.magicalvibes.cards.s.Shock;
-import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
-import com.github.laxika.magicalvibes.model.Player;
 import com.github.laxika.magicalvibes.model.StackEntryType;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
 import org.junit.jupiter.api.DisplayName;
@@ -39,7 +37,7 @@ class AsceticismTest extends BaseCardTest {
     @Test
     @DisplayName("Creatures you control gain can't-be-targeted effect")
     void ownCreaturesGainCantBeTargeted() {
-        Permanent bears = addReadyCreature(player1, new GrizzlyBears());
+        Permanent bears = addCreatureReady(player1, new GrizzlyBears());
         harness.addToBattlefield(player1, new Asceticism());
 
         assertThat(gqs.cantBeTargetedBySpellsOrAbilities(gd, bears)).isTrue();
@@ -48,7 +46,7 @@ class AsceticismTest extends BaseCardTest {
     @Test
     @DisplayName("Opponent creatures do not gain can't-be-targeted effect")
     void opponentCreaturesDoNotGainEffect() {
-        Permanent opponentBears = addReadyCreature(player2, new GrizzlyBears());
+        Permanent opponentBears = addCreatureReady(player2, new GrizzlyBears());
         harness.addToBattlefield(player1, new Asceticism());
 
         assertThat(gqs.cantBeTargetedBySpellsOrAbilities(gd, opponentBears)).isFalse();
@@ -57,7 +55,7 @@ class AsceticismTest extends BaseCardTest {
     @Test
     @DisplayName("Can't-be-targeted effect is removed when Asceticism leaves the battlefield")
     void effectRemovedWhenSourceLeaves() {
-        Permanent bears = addReadyCreature(player1, new GrizzlyBears());
+        Permanent bears = addCreatureReady(player1, new GrizzlyBears());
         harness.addToBattlefield(player1, new Asceticism());
         assertThat(gqs.cantBeTargetedBySpellsOrAbilities(gd, bears)).isTrue();
 
@@ -72,7 +70,7 @@ class AsceticismTest extends BaseCardTest {
     @Test
     @DisplayName("Opponent cannot target your creature with spells while Asceticism is on battlefield")
     void opponentCannotTargetYourCreature() {
-        Permanent bears = addReadyCreature(player1, new GrizzlyBears());
+        Permanent bears = addCreatureReady(player1, new GrizzlyBears());
         harness.addToBattlefield(player1, new Asceticism());
 
         harness.setHand(player1, List.of());
@@ -90,7 +88,7 @@ class AsceticismTest extends BaseCardTest {
     @Test
     @DisplayName("Controller can target own creatures despite Asceticism's effect")
     void controllerCanTargetOwnCreatures() {
-        Permanent bears = addReadyCreature(player1, new GrizzlyBears());
+        Permanent bears = addCreatureReady(player1, new GrizzlyBears());
         harness.addToBattlefield(player1, new Asceticism());
 
         harness.setHand(player1, List.of(new Shock()));
@@ -108,7 +106,7 @@ class AsceticismTest extends BaseCardTest {
     @DisplayName("Activating regeneration targets a creature and puts ability on stack")
     void activatingRegenTargetsCreature() {
         harness.addToBattlefield(player1, new Asceticism());
-        Permanent bears = addReadyCreature(player1, new GrizzlyBears());
+        Permanent bears = addCreatureReady(player1, new GrizzlyBears());
         harness.addMana(player1, ManaColor.GREEN, 2);
 
         harness.activateAbility(player1, 0, null, bears.getId());
@@ -123,7 +121,7 @@ class AsceticismTest extends BaseCardTest {
     @DisplayName("Resolving regeneration grants a regeneration shield to target creature")
     void resolvingRegenGrantsShield() {
         harness.addToBattlefield(player1, new Asceticism());
-        Permanent bears = addReadyCreature(player1, new GrizzlyBears());
+        Permanent bears = addCreatureReady(player1, new GrizzlyBears());
         harness.addMana(player1, ManaColor.GREEN, 2);
 
         harness.activateAbility(player1, 0, null, bears.getId());
@@ -136,7 +134,7 @@ class AsceticismTest extends BaseCardTest {
     @DisplayName("Can regenerate opponent's creature")
     void canRegenerateOpponentCreature() {
         harness.addToBattlefield(player1, new Asceticism());
-        Permanent opponentBears = addReadyCreature(player2, new GrizzlyBears());
+        Permanent opponentBears = addCreatureReady(player2, new GrizzlyBears());
         harness.addMana(player1, ManaColor.GREEN, 2);
 
         harness.activateAbility(player1, 0, null, opponentBears.getId());
@@ -149,7 +147,7 @@ class AsceticismTest extends BaseCardTest {
     @DisplayName("Cannot activate regeneration without enough mana")
     void cannotActivateRegenWithoutMana() {
         harness.addToBattlefield(player1, new Asceticism());
-        Permanent bears = addReadyCreature(player1, new GrizzlyBears());
+        Permanent bears = addCreatureReady(player1, new GrizzlyBears());
 
         assertThatThrownBy(() -> harness.activateAbility(player1, 0, null, bears.getId()))
                 .isInstanceOf(IllegalStateException.class)
@@ -173,7 +171,7 @@ class AsceticismTest extends BaseCardTest {
     @DisplayName("Mana is consumed when activating regeneration ability")
     void manaConsumedOnRegenActivation() {
         harness.addToBattlefield(player1, new Asceticism());
-        Permanent bears = addReadyCreature(player1, new GrizzlyBears());
+        Permanent bears = addCreatureReady(player1, new GrizzlyBears());
         harness.addMana(player1, ManaColor.GREEN, 3);
 
         harness.activateAbility(player1, 0, null, bears.getId());
@@ -185,7 +183,7 @@ class AsceticismTest extends BaseCardTest {
     @DisplayName("Regeneration fizzles if target creature is removed before resolution")
     void regenFizzlesIfTargetRemoved() {
         harness.addToBattlefield(player1, new Asceticism());
-        Permanent bears = addReadyCreature(player1, new GrizzlyBears());
+        Permanent bears = addCreatureReady(player1, new GrizzlyBears());
         harness.addMana(player1, ManaColor.GREEN, 2);
 
         harness.activateAbility(player1, 0, null, bears.getId());
@@ -202,7 +200,7 @@ class AsceticismTest extends BaseCardTest {
     @DisplayName("Can activate regeneration multiple times on the same creature")
     void canStackMultipleRegenerationShields() {
         harness.addToBattlefield(player1, new Asceticism());
-        Permanent bears = addReadyCreature(player1, new GrizzlyBears());
+        Permanent bears = addCreatureReady(player1, new GrizzlyBears());
         harness.addMana(player1, ManaColor.GREEN, 4);
 
         harness.activateAbility(player1, 0, null, bears.getId());
@@ -214,11 +212,4 @@ class AsceticismTest extends BaseCardTest {
     }
 
     // ===== Helper methods =====
-
-    private Permanent addReadyCreature(Player player, Card card) {
-        Permanent permanent = new Permanent(card);
-        permanent.setSummoningSick(false);
-        gd.playerBattlefields.get(player.getId()).add(permanent);
-        return permanent;
-    }
 }

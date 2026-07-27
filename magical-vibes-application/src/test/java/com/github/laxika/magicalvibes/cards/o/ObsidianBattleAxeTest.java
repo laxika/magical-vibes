@@ -23,7 +23,7 @@ class ObsidianBattleAxeTest extends BaseCardTest {
     @Test
     @DisplayName("Equipped creature gets +2/+1 and haste")
     void equippedCreatureGetsBoostAndHaste() {
-        Permanent creature = addReadyCreature(player1);
+        Permanent creature = addCreatureReady(player1, new GrizzlyBears());
         Permanent axe = addAxeReady(player1);
         axe.setAttachedTo(creature.getId());
 
@@ -35,7 +35,7 @@ class ObsidianBattleAxeTest extends BaseCardTest {
     @Test
     @DisplayName("Creature loses the bonuses when the Axe is removed")
     void creatureLosesBonusesWhenAxeRemoved() {
-        Permanent creature = addReadyCreature(player1);
+        Permanent creature = addCreatureReady(player1, new GrizzlyBears());
         Permanent axe = addAxeReady(player1);
         axe.setAttachedTo(creature.getId());
 
@@ -54,7 +54,7 @@ class ObsidianBattleAxeTest extends BaseCardTest {
     @DisplayName("Resolving equip attaches the Axe to target creature")
     void resolvingEquipAttachesToCreature() {
         Permanent axe = addAxeReady(player1);
-        Permanent creature = addReadyCreature(player1);
+        Permanent creature = addCreatureReady(player1, new GrizzlyBears());
         harness.addMana(player1, ManaColor.COLORLESS, 3);
 
         harness.activateAbility(player1, 0, null, creature.getId());
@@ -151,13 +151,6 @@ class ObsidianBattleAxeTest extends BaseCardTest {
 
     private Permanent addAxeReady(Player player) {
         Permanent perm = new Permanent(new ObsidianBattleAxe());
-        perm.setSummoningSick(false);
-        gd.playerBattlefields.get(player.getId()).add(perm);
-        return perm;
-    }
-
-    private Permanent addReadyCreature(Player player) {
-        Permanent perm = new Permanent(new GrizzlyBears());
         perm.setSummoningSick(false);
         gd.playerBattlefields.get(player.getId()).add(perm);
         return perm;

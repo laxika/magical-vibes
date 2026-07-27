@@ -39,7 +39,7 @@ class DarksteelAxeTest extends BaseCardTest {
     @Test
     @DisplayName("Equipped creature gets +2/+0")
     void equippedCreatureGetsBoost() {
-        Permanent creature = addReadyCreature(player1);
+        Permanent creature = addCreatureReady(player1, new GrizzlyBears());
         Permanent axe = addReadyAxe(player1);
         axe.setAttachedTo(creature.getId());
 
@@ -51,7 +51,7 @@ class DarksteelAxeTest extends BaseCardTest {
     @DisplayName("Resolving equip attaches Darksteel Axe to target creature")
     void resolvingEquipAttaches() {
         Permanent axe = addReadyAxe(player1);
-        Permanent creature = addReadyCreature(player1);
+        Permanent creature = addCreatureReady(player1, new GrizzlyBears());
         harness.addMana(player1, ManaColor.COLORLESS, 2);
 
         harness.activateAbility(player1, 0, null, creature.getId());
@@ -65,8 +65,8 @@ class DarksteelAxeTest extends BaseCardTest {
     @DisplayName("Creature loses boost when Darksteel Axe is moved to another creature")
     void creatureLosesBoostWhenReEquipped() {
         Permanent axe = addReadyAxe(player1);        // index 0
-        Permanent creature1 = addReadyCreature(player1); // index 1
-        Permanent creature2 = addReadyCreature(player1); // index 2
+        Permanent creature1 = addCreatureReady(player1, new GrizzlyBears()); // index 1
+        Permanent creature2 = addCreatureReady(player1, new GrizzlyBears()); // index 2
         axe.setAttachedTo(creature1.getId());
 
         assertThat(gqs.getEffectivePower(gd, creature1)).isEqualTo(4);
@@ -84,8 +84,8 @@ class DarksteelAxeTest extends BaseCardTest {
     @Test
     @DisplayName("Boost does not affect unequipped creatures")
     void doesNotAffectUnequippedCreatures() {
-        Permanent creature1 = addReadyCreature(player1);
-        Permanent creature2 = addReadyCreature(player1);
+        Permanent creature1 = addCreatureReady(player1, new GrizzlyBears());
+        Permanent creature2 = addCreatureReady(player1, new GrizzlyBears());
         Permanent axe = addReadyAxe(player1);
         axe.setAttachedTo(creature1.getId());
 
@@ -97,13 +97,6 @@ class DarksteelAxeTest extends BaseCardTest {
 
     private Permanent addReadyAxe(Player player) {
         Permanent perm = new Permanent(new DarksteelAxe());
-        perm.setSummoningSick(false);
-        gd.playerBattlefields.get(player.getId()).add(perm);
-        return perm;
-    }
-
-    private Permanent addReadyCreature(Player player) {
-        Permanent perm = new Permanent(new GrizzlyBears());
         perm.setSummoningSick(false);
         gd.playerBattlefields.get(player.getId()).add(perm);
         return perm;

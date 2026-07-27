@@ -18,7 +18,7 @@ class VedalkenGhoulTest extends BaseCardTest {
     @DisplayName("Becoming blocked makes the defending player lose 4 life")
     void blockedDrainsDefendingPlayer() {
         addAttackingGhoul(player1, player2);
-        addReadyBears(player2);
+        addCreatureReady(player2, new GrizzlyBears());
         int startingLife = gd.getLife(player2.getId());
 
         prepareDeclareBlockers();
@@ -48,13 +48,6 @@ class VedalkenGhoulTest extends BaseCardTest {
         perm.setAttacking(true);
         perm.setAttackTarget(defender.getId());
         gd.playerBattlefields.get(attacker.getId()).add(perm);
-        return perm;
-    }
-
-    private Permanent addReadyBears(Player player) {
-        Permanent perm = new Permanent(new GrizzlyBears());
-        perm.setSummoningSick(false);
-        gd.playerBattlefields.get(player.getId()).add(perm);
         return perm;
     }
 }

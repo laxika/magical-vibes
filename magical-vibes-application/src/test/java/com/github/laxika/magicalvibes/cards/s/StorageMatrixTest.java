@@ -3,7 +3,6 @@ package com.github.laxika.magicalvibes.cards.s;
 import com.github.laxika.magicalvibes.cards.a.AngelsFeather;
 import com.github.laxika.magicalvibes.cards.f.Forest;
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
-import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.Player;
 import com.github.laxika.magicalvibes.model.TurnStep;
@@ -20,10 +19,10 @@ class StorageMatrixTest extends BaseCardTest {
     @Test
     @DisplayName("Choosing creature untaps only creatures")
     void chooseCreatureUntapsOnlyCreatures() {
-        addReady(player1, new StorageMatrix());
-        Permanent bears = addReady(player1, new GrizzlyBears());
-        Permanent forest = addReady(player1, new Forest());
-        Permanent feather = addReady(player1, new AngelsFeather());
+        addCreatureReady(player1, new StorageMatrix());
+        Permanent bears = addCreatureReady(player1, new GrizzlyBears());
+        Permanent forest = addCreatureReady(player1, new Forest());
+        Permanent feather = addCreatureReady(player1, new AngelsFeather());
         bears.tap();
         forest.tap();
         feather.tap();
@@ -39,10 +38,10 @@ class StorageMatrixTest extends BaseCardTest {
     @Test
     @DisplayName("Choosing land untaps only lands")
     void chooseLandUntapsOnlyLands() {
-        addReady(player1, new StorageMatrix());
-        Permanent bears = addReady(player1, new GrizzlyBears());
-        Permanent forest = addReady(player1, new Forest());
-        Permanent feather = addReady(player1, new AngelsFeather());
+        addCreatureReady(player1, new StorageMatrix());
+        Permanent bears = addCreatureReady(player1, new GrizzlyBears());
+        Permanent forest = addCreatureReady(player1, new Forest());
+        Permanent feather = addCreatureReady(player1, new AngelsFeather());
         bears.tap();
         forest.tap();
         feather.tap();
@@ -58,10 +57,10 @@ class StorageMatrixTest extends BaseCardTest {
     @Test
     @DisplayName("Choosing artifact untaps only artifacts")
     void chooseArtifactUntapsOnlyArtifacts() {
-        addReady(player1, new StorageMatrix());
-        Permanent bears = addReady(player1, new GrizzlyBears());
-        Permanent forest = addReady(player1, new Forest());
-        Permanent feather = addReady(player1, new AngelsFeather());
+        addCreatureReady(player1, new StorageMatrix());
+        Permanent bears = addCreatureReady(player1, new GrizzlyBears());
+        Permanent forest = addCreatureReady(player1, new Forest());
+        Permanent feather = addCreatureReady(player1, new AngelsFeather());
         bears.tap();
         forest.tap();
         feather.tap();
@@ -77,10 +76,10 @@ class StorageMatrixTest extends BaseCardTest {
     @Test
     @DisplayName("A tapped Storage Matrix imposes no restriction — everything untaps normally")
     void tappedStorageMatrixImposesNoRestriction() {
-        Permanent matrix = addReady(player1, new StorageMatrix());
+        Permanent matrix = addCreatureReady(player1, new StorageMatrix());
         matrix.tap();
-        Permanent bears = addReady(player1, new GrizzlyBears());
-        Permanent forest = addReady(player1, new Forest());
+        Permanent bears = addCreatureReady(player1, new GrizzlyBears());
+        Permanent forest = addCreatureReady(player1, new Forest());
         bears.tap();
         forest.tap();
 
@@ -95,9 +94,9 @@ class StorageMatrixTest extends BaseCardTest {
     @Test
     @DisplayName("An opponent's untapped Storage Matrix restricts your untap step too")
     void opponentStorageMatrixRestrictsYourUntap() {
-        addReady(player2, new StorageMatrix());
-        Permanent bears = addReady(player1, new GrizzlyBears());
-        Permanent forest = addReady(player1, new Forest());
+        addCreatureReady(player2, new StorageMatrix());
+        Permanent bears = addCreatureReady(player1, new GrizzlyBears());
+        Permanent forest = addCreatureReady(player1, new Forest());
         bears.tap();
         forest.tap();
 
@@ -106,13 +105,6 @@ class StorageMatrixTest extends BaseCardTest {
 
         assertThat(bears.isTapped()).isFalse();
         assertThat(forest.isTapped()).isTrue();
-    }
-
-    private Permanent addReady(Player player, Card card) {
-        Permanent perm = new Permanent(card);
-        perm.setSummoningSick(false);
-        gd.playerBattlefields.get(player.getId()).add(perm);
-        return perm;
     }
 
     private void advanceToNextTurn(Player currentActivePlayer) {

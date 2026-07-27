@@ -1,11 +1,9 @@
 package com.github.laxika.magicalvibes.cards.l;
 
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
-import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.Keyword;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
-import com.github.laxika.magicalvibes.model.Player;
 import com.github.laxika.magicalvibes.model.StackEntry;
 import com.github.laxika.magicalvibes.model.StackEntryType;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
@@ -37,7 +35,7 @@ class LevitationTest extends BaseCardTest {
     @Test
     @DisplayName("Creatures you control gain flying")
     void ownCreaturesGainFlying() {
-        Permanent bears = addReadyCreature(player1, new GrizzlyBears());
+        Permanent bears = addCreatureReady(player1, new GrizzlyBears());
         harness.addToBattlefield(player1, new Levitation());
 
         assertThat(gqs.hasKeyword(gd, bears, Keyword.FLYING)).isTrue();
@@ -46,7 +44,7 @@ class LevitationTest extends BaseCardTest {
     @Test
     @DisplayName("Opponent creatures do not gain flying")
     void opponentCreaturesDoNotGainFlying() {
-        Permanent opponentBears = addReadyCreature(player2, new GrizzlyBears());
+        Permanent opponentBears = addCreatureReady(player2, new GrizzlyBears());
         harness.addToBattlefield(player1, new Levitation());
 
         assertThat(gqs.hasKeyword(gd, opponentBears, Keyword.FLYING)).isFalse();
@@ -55,7 +53,7 @@ class LevitationTest extends BaseCardTest {
     @Test
     @DisplayName("Flying bonus is removed when Levitation leaves the battlefield")
     void bonusRemovedWhenSourceLeaves() {
-        Permanent bears = addReadyCreature(player1, new GrizzlyBears());
+        Permanent bears = addCreatureReady(player1, new GrizzlyBears());
         harness.addToBattlefield(player1, new Levitation());
         assertThat(gqs.hasKeyword(gd, bears, Keyword.FLYING)).isTrue();
 
@@ -63,12 +61,5 @@ class LevitationTest extends BaseCardTest {
                 .removeIf(p -> p.getCard().getName().equals("Levitation"));
 
         assertThat(gqs.hasKeyword(gd, bears, Keyword.FLYING)).isFalse();
-    }
-
-    private Permanent addReadyCreature(Player player, Card card) {
-        Permanent permanent = new Permanent(card);
-        permanent.setSummoningSick(false);
-        gd.playerBattlefields.get(player.getId()).add(permanent);
-        return permanent;
     }
 }

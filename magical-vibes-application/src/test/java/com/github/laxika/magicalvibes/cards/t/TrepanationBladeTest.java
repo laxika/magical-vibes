@@ -48,7 +48,7 @@ class TrepanationBladeTest extends BaseCardTest {
     @Test
     @DisplayName("Reveals cards until a land is found, mills them all, and boosts equipped creature")
     void revealsUntilLandAndBoosts() {
-        Permanent creature = addReadyCreature(player1);
+        Permanent creature = addCreatureReady(player1, new GrizzlyBears());
         Permanent blade = addBladeReady(player1);
         blade.setAttachedTo(creature.getId());
 
@@ -76,7 +76,7 @@ class TrepanationBladeTest extends BaseCardTest {
     @Test
     @DisplayName("Only reveals one card when the top card is a land")
     void topCardIsLand() {
-        Permanent creature = addReadyCreature(player1);
+        Permanent creature = addCreatureReady(player1, new GrizzlyBears());
         Permanent blade = addBladeReady(player1);
         blade.setAttachedTo(creature.getId());
 
@@ -97,7 +97,7 @@ class TrepanationBladeTest extends BaseCardTest {
     @Test
     @DisplayName("Reveals entire library when no lands are present, all go to graveyard")
     void noLandsInLibrary() {
-        Permanent creature = addReadyCreature(player1);
+        Permanent creature = addCreatureReady(player1, new GrizzlyBears());
         Permanent blade = addBladeReady(player1);
         blade.setAttachedTo(creature.getId());
 
@@ -119,7 +119,7 @@ class TrepanationBladeTest extends BaseCardTest {
     @Test
     @DisplayName("Does nothing when defending player's library is empty")
     void emptyLibrary() {
-        Permanent creature = addReadyCreature(player1);
+        Permanent creature = addCreatureReady(player1, new GrizzlyBears());
         Permanent blade = addBladeReady(player1);
         blade.setAttachedTo(creature.getId());
 
@@ -140,7 +140,7 @@ class TrepanationBladeTest extends BaseCardTest {
     @Test
     @DisplayName("Toughness is not boosted (only +1/+0 per card)")
     void toughnessNotBoosted() {
-        Permanent creature = addReadyCreature(player1);
+        Permanent creature = addCreatureReady(player1, new GrizzlyBears());
         Permanent blade = addBladeReady(player1);
         blade.setAttachedTo(creature.getId());
 
@@ -158,7 +158,7 @@ class TrepanationBladeTest extends BaseCardTest {
     @Test
     @DisplayName("Remaining library is preserved after revealing until land")
     void remainingLibraryPreserved() {
-        Permanent creature = addReadyCreature(player1);
+        Permanent creature = addCreatureReady(player1, new GrizzlyBears());
         Permanent blade = addBladeReady(player1);
         blade.setAttachedTo(creature.getId());
 
@@ -186,7 +186,7 @@ class TrepanationBladeTest extends BaseCardTest {
     @Test
     @DisplayName("Trigger does not fire when Blade is not attached to the attacker")
     void noTriggerWhenUnattached() {
-        Permanent creature = addReadyCreature(player1);
+        Permanent creature = addCreatureReady(player1, new GrizzlyBears());
         addBladeReady(player1); // Blade on battlefield but not attached
 
         setDeckWithLandAtPosition(player2, 3);
@@ -204,8 +204,8 @@ class TrepanationBladeTest extends BaseCardTest {
     @DisplayName("Blade can be moved to another creature via equip")
     void canReEquipToAnotherCreature() {
         Permanent blade = addBladeReady(player1);
-        Permanent creature1 = addReadyCreature(player1);
-        Permanent creature2 = addReadyCreature(player1);
+        Permanent creature1 = addCreatureReady(player1, new GrizzlyBears());
+        Permanent creature2 = addCreatureReady(player1, new GrizzlyBears());
 
         blade.setAttachedTo(creature1.getId());
 
@@ -220,13 +220,6 @@ class TrepanationBladeTest extends BaseCardTest {
 
     private Permanent addBladeReady(Player player) {
         Permanent perm = new Permanent(new TrepanationBlade());
-        perm.setSummoningSick(false);
-        gd.playerBattlefields.get(player.getId()).add(perm);
-        return perm;
-    }
-
-    private Permanent addReadyCreature(Player player) {
-        Permanent perm = new Permanent(new GrizzlyBears());
         perm.setSummoningSick(false);
         gd.playerBattlefields.get(player.getId()).add(perm);
         return perm;

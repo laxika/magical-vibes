@@ -139,7 +139,7 @@ class DispellersCapsuleTest extends BaseCardTest {
     @DisplayName("Cannot target creature")
     void cannotTargetCreature() {
         addReadyCapsule(player1);
-        Permanent creature = addReadyCreature(player2);
+        Permanent creature = addCreatureReady(player2, new GrizzlyBears());
         addCapsuleMana(player1);
 
         assertThatThrownBy(() -> harness.activateAbility(player1, 0, null, creature.getId()))
@@ -212,14 +212,6 @@ class DispellersCapsuleTest extends BaseCardTest {
     private Permanent addReadyEnchantment(Player player) {
         GloriousAnthem card = new GloriousAnthem();
         Permanent perm = new Permanent(card);
-        gd.playerBattlefields.get(player.getId()).add(perm);
-        return perm;
-    }
-
-    private Permanent addReadyCreature(Player player) {
-        GrizzlyBears card = new GrizzlyBears();
-        Permanent perm = new Permanent(card);
-        perm.setSummoningSick(false);
         gd.playerBattlefields.get(player.getId()).add(perm);
         return perm;
     }

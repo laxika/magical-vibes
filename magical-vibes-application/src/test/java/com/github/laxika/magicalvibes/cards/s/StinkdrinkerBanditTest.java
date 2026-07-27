@@ -1,11 +1,9 @@
 package com.github.laxika.magicalvibes.cards.s;
 
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
-import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardSubtype;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
-import com.github.laxika.magicalvibes.model.Player;
 import com.github.laxika.magicalvibes.model.TurnStep;
 import com.github.laxika.magicalvibes.networking.message.BlockerAssignment;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
@@ -25,9 +23,9 @@ class StinkdrinkerBanditTest extends BaseCardTest {
     @Test
     @DisplayName("Unblocked Rogue gets +2/+1 until end of turn")
     void unblockedRogueGetsBoost() {
-        Permanent bandit = addReady(player1, new StinkdrinkerBandit());
+        Permanent bandit = addCreatureReady(player1, new StinkdrinkerBandit());
         bandit.setAttacking(true);
-        addReady(player2, new GrizzlyBears()); // a potential blocker that declines to block
+        addCreatureReady(player2, new GrizzlyBears()); // a potential blocker that declines to block
 
         prepareDeclareBlockers();
         gs.declareBlockers(gd, player2, List.of()); // no blocks — the Bandit is unblocked
@@ -40,9 +38,9 @@ class StinkdrinkerBanditTest extends BaseCardTest {
     @Test
     @DisplayName("A blocked Rogue does not get the boost")
     void blockedRogueGetsNoBoost() {
-        Permanent bandit = addReady(player1, new StinkdrinkerBandit());
+        Permanent bandit = addCreatureReady(player1, new StinkdrinkerBandit());
         bandit.setAttacking(true);
-        addReady(player2, new GrizzlyBears());
+        addCreatureReady(player2, new GrizzlyBears());
 
         prepareDeclareBlockers();
         gs.declareBlockers(gd, player2, List.of(new BlockerAssignment(0, 0)));
@@ -55,8 +53,8 @@ class StinkdrinkerBanditTest extends BaseCardTest {
     @Test
     @DisplayName("A non-Rogue attacking unblocked is not boosted")
     void nonRogueUnblockedNotBoosted() {
-        addReady(player1, new StinkdrinkerBandit()); // source, not attacking
-        Permanent bears = addReady(player1, new GrizzlyBears());
+        addCreatureReady(player1, new StinkdrinkerBandit()); // source, not attacking
+        Permanent bears = addCreatureReady(player1, new GrizzlyBears());
         bears.setAttacking(true);
 
         prepareDeclareBlockers();
@@ -70,7 +68,7 @@ class StinkdrinkerBanditTest extends BaseCardTest {
     @Test
     @DisplayName("The +2/+1 wears off at end of turn")
     void boostWearsOffAtEndOfTurn() {
-        Permanent bandit = addReady(player1, new StinkdrinkerBandit());
+        Permanent bandit = addCreatureReady(player1, new StinkdrinkerBandit());
         bandit.setAttacking(true);
 
         prepareDeclareBlockers();
@@ -121,11 +119,4 @@ class StinkdrinkerBanditTest extends BaseCardTest {
     }
 
     // ===== Helpers =====
-
-    private Permanent addReady(Player player, Card card) {
-        Permanent perm = new Permanent(card);
-        perm.setSummoningSick(false);
-        gd.playerBattlefields.get(player.getId()).add(perm);
-        return perm;
-    }
 }

@@ -18,7 +18,7 @@ class JoustingLanceTest extends BaseCardTest {
     @Test
     @DisplayName("Equipped creature gets +2/+0")
     void equippedCreatureGetsBoost() {
-        Permanent creature = addReadyCreature(player1);
+        Permanent creature = addCreatureReady(player1, new GrizzlyBears());
         Permanent lance = addLanceReady(player1);
         lance.setAttachedTo(creature.getId());
 
@@ -29,7 +29,7 @@ class JoustingLanceTest extends BaseCardTest {
     @Test
     @DisplayName("Creature loses +2/+0 when lance is removed")
     void creatureLosesBoostWhenLanceRemoved() {
-        Permanent creature = addReadyCreature(player1);
+        Permanent creature = addCreatureReady(player1, new GrizzlyBears());
         Permanent lance = addLanceReady(player1);
         lance.setAttachedTo(creature.getId());
 
@@ -45,7 +45,7 @@ class JoustingLanceTest extends BaseCardTest {
     @Test
     @DisplayName("Equipped creature has first strike during controller's turn")
     void equippedCreatureHasFirstStrikeDuringYourTurn() {
-        Permanent creature = addReadyCreature(player1);
+        Permanent creature = addCreatureReady(player1, new GrizzlyBears());
         Permanent lance = addLanceReady(player1);
         lance.setAttachedTo(creature.getId());
 
@@ -57,7 +57,7 @@ class JoustingLanceTest extends BaseCardTest {
     @Test
     @DisplayName("Equipped creature does NOT have first strike during opponent's turn")
     void equippedCreatureNoFirstStrikeDuringOpponentTurn() {
-        Permanent creature = addReadyCreature(player1);
+        Permanent creature = addCreatureReady(player1, new GrizzlyBears());
         Permanent lance = addLanceReady(player1);
         lance.setAttachedTo(creature.getId());
 
@@ -69,7 +69,7 @@ class JoustingLanceTest extends BaseCardTest {
     @Test
     @DisplayName("First strike toggles when active player changes")
     void firstStrikeTogglesWithActivePlayer() {
-        Permanent creature = addReadyCreature(player1);
+        Permanent creature = addCreatureReady(player1, new GrizzlyBears());
         Permanent lance = addLanceReady(player1);
         lance.setAttachedTo(creature.getId());
 
@@ -88,7 +88,7 @@ class JoustingLanceTest extends BaseCardTest {
     @Test
     @DisplayName("+2/+0 boost applies during opponent's turn too")
     void boostAppliesDuringOpponentTurn() {
-        Permanent creature = addReadyCreature(player1);
+        Permanent creature = addCreatureReady(player1, new GrizzlyBears());
         Permanent lance = addLanceReady(player1);
         lance.setAttachedTo(creature.getId());
 
@@ -104,8 +104,8 @@ class JoustingLanceTest extends BaseCardTest {
     @DisplayName("Moving lance transfers +2/+0 and conditional first strike to new creature")
     void movingLanceTransfersEffects() {
         Permanent lance = addLanceReady(player1);
-        Permanent creature1 = addReadyCreature(player1);
-        Permanent creature2 = addReadyCreature(player1);
+        Permanent creature1 = addCreatureReady(player1, new GrizzlyBears());
+        Permanent creature2 = addCreatureReady(player1, new GrizzlyBears());
         lance.setAttachedTo(creature1.getId());
 
         harness.forceActivePlayer(player1);
@@ -132,7 +132,7 @@ class JoustingLanceTest extends BaseCardTest {
         harness.setLife(player1, 20);
         harness.setLife(player2, 20);
 
-        Permanent creature = addReadyCreature(player1);
+        Permanent creature = addCreatureReady(player1, new GrizzlyBears());
         Permanent lance = addLanceReady(player1);
         lance.setAttachedTo(creature.getId());
         creature.setAttacking(true);
@@ -147,13 +147,6 @@ class JoustingLanceTest extends BaseCardTest {
 
     private Permanent addLanceReady(Player player) {
         Permanent perm = new Permanent(new JoustingLance());
-        perm.setSummoningSick(false);
-        gd.playerBattlefields.get(player.getId()).add(perm);
-        return perm;
-    }
-
-    private Permanent addReadyCreature(Player player) {
-        Permanent perm = new Permanent(new GrizzlyBears());
         perm.setSummoningSick(false);
         gd.playerBattlefields.get(player.getId()).add(perm);
         return perm;

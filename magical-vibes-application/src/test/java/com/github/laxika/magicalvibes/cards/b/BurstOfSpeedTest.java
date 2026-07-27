@@ -1,11 +1,9 @@
 package com.github.laxika.magicalvibes.cards.b;
 
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
-import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.Keyword;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
-import com.github.laxika.magicalvibes.model.Player;
 import com.github.laxika.magicalvibes.model.StackEntry;
 import com.github.laxika.magicalvibes.model.StackEntryType;
 import com.github.laxika.magicalvibes.model.TurnStep;
@@ -24,9 +22,9 @@ class BurstOfSpeedTest extends BaseCardTest {
     @Test
     @DisplayName("Resolving Burst of Speed gives own creatures haste")
     void resolvesAndGrantsHaste() {
-        Permanent p1a = addReadyCreature(player1, new GrizzlyBears());
-        Permanent p1b = addReadyCreature(player1, new GrizzlyBears());
-        Permanent p2 = addReadyCreature(player2, new GrizzlyBears());
+        Permanent p1a = addCreatureReady(player1, new GrizzlyBears());
+        Permanent p1b = addCreatureReady(player1, new GrizzlyBears());
+        Permanent p2 = addCreatureReady(player2, new GrizzlyBears());
         harness.setHand(player1, List.of(new BurstOfSpeed()));
         harness.addMana(player1, ManaColor.RED, 1);
 
@@ -41,7 +39,7 @@ class BurstOfSpeedTest extends BaseCardTest {
     @Test
     @DisplayName("Burst of Speed haste wears off at end of turn")
     void effectsWearOffAtEndOfTurn() {
-        Permanent creature = addReadyCreature(player1, new GrizzlyBears());
+        Permanent creature = addCreatureReady(player1, new GrizzlyBears());
         harness.setHand(player1, List.of(new BurstOfSpeed()));
         harness.addMana(player1, ManaColor.RED, 1);
 
@@ -69,12 +67,5 @@ class BurstOfSpeedTest extends BaseCardTest {
         StackEntry entry = gd.stack.getFirst();
         assertThat(entry.getEntryType()).isEqualTo(StackEntryType.SORCERY_SPELL);
         assertThat(entry.getCard().getName()).isEqualTo("Burst of Speed");
-    }
-
-    private Permanent addReadyCreature(Player player, Card card) {
-        Permanent permanent = new Permanent(card);
-        permanent.setSummoningSick(false);
-        gd.playerBattlefields.get(player.getId()).add(permanent);
-        return permanent;
     }
 }

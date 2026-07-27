@@ -1,10 +1,8 @@
 package com.github.laxika.magicalvibes.cards.j;
 
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
-import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CounterType;
 import com.github.laxika.magicalvibes.model.Permanent;
-import com.github.laxika.magicalvibes.model.Player;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
@@ -18,10 +16,10 @@ class JuvenileGloomwidowTest extends BaseCardTest {
     @Test
     @DisplayName("Deals combat damage to a blocker as -1/-1 counters, not marked damage")
     void witherDealsMinusCountersToBlocker() {
-        Permanent widow = addReady(player1, new JuvenileGloomwidow()); // 1/3, wither
+        Permanent widow = addCreatureReady(player1, new JuvenileGloomwidow()); // 1/3, wither
         widow.setAttacking(true);
 
-        Permanent blocker = addReady(player2, new GrizzlyBears()); // 2/2
+        Permanent blocker = addCreatureReady(player2, new GrizzlyBears()); // 2/2
         blocker.setBlocking(true);
         blocker.addBlockingTarget(0);
 
@@ -38,7 +36,7 @@ class JuvenileGloomwidowTest extends BaseCardTest {
     void witherDoesNotPoisonPlayer() {
         harness.setLife(player2, 20);
 
-        Permanent widow = addReady(player1, new JuvenileGloomwidow()); // 1/3, wither
+        Permanent widow = addCreatureReady(player1, new JuvenileGloomwidow()); // 1/3, wither
         widow.setAttacking(true);
 
         resolveCombat();
@@ -48,11 +46,4 @@ class JuvenileGloomwidowTest extends BaseCardTest {
     }
 
     // ===== Helpers =====
-
-    private Permanent addReady(Player player, Card card) {
-        Permanent perm = new Permanent(card);
-        perm.setSummoningSick(false);
-        gd.playerBattlefields.get(player.getId()).add(perm);
-        return perm;
-    }
 }

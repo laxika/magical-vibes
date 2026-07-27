@@ -3,9 +3,7 @@ package com.github.laxika.magicalvibes.cards.g;
 import com.github.laxika.magicalvibes.cards.s.SavannahLions;
 import com.github.laxika.magicalvibes.model.Keyword;
 import com.github.laxika.magicalvibes.model.Permanent;
-import com.github.laxika.magicalvibes.model.Player;
 import com.github.laxika.magicalvibes.model.TurnStep;
-import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
@@ -20,11 +18,11 @@ class GeneralJarkeldTest extends BaseCardTest {
     @Test
     @DisplayName("Swaps exclusive blockers between two blocked attackers")
     void swapsExclusiveBlockers() {
-        Permanent jarkeld = addReady(player1, new GeneralJarkeld());
-        Permanent attackerA = addReady(player1, new SavannahLions());
-        Permanent attackerB = addReady(player1, new SavannahLions());
-        Permanent blockerA = addReady(player2, new SavannahLions());
-        Permanent blockerB = addReady(player2, new SavannahLions());
+        Permanent jarkeld = addCreatureReady(player1, new GeneralJarkeld());
+        Permanent attackerA = addCreatureReady(player1, new SavannahLions());
+        Permanent attackerB = addCreatureReady(player1, new SavannahLions());
+        Permanent blockerA = addCreatureReady(player2, new SavannahLions());
+        Permanent blockerB = addCreatureReady(player2, new SavannahLions());
 
         setupTwoBlockedAttackers(attackerA, attackerB, blockerA, blockerB);
 
@@ -45,12 +43,12 @@ class GeneralJarkeldTest extends BaseCardTest {
     @Test
     @DisplayName("Shared blockers stay put; only exclusive blockers swap")
     void sharedBlockersRemain() {
-        Permanent jarkeld = addReady(player1, new GeneralJarkeld());
-        Permanent attackerA = addReady(player1, new SavannahLions());
-        Permanent attackerB = addReady(player1, new SavannahLions());
-        Permanent exclusiveA = addReady(player2, new SavannahLions());
-        Permanent exclusiveB = addReady(player2, new SavannahLions());
-        Permanent shared = addReady(player2, new SavannahLions());
+        Permanent jarkeld = addCreatureReady(player1, new GeneralJarkeld());
+        Permanent attackerA = addCreatureReady(player1, new SavannahLions());
+        Permanent attackerB = addCreatureReady(player1, new SavannahLions());
+        Permanent exclusiveA = addCreatureReady(player2, new SavannahLions());
+        Permanent exclusiveB = addCreatureReady(player2, new SavannahLions());
+        Permanent shared = addCreatureReady(player2, new SavannahLions());
 
         int aIdx = gd.playerBattlefields.get(player1.getId()).indexOf(attackerA);
         int bIdx = gd.playerBattlefields.get(player1.getId()).indexOf(attackerB);
@@ -85,13 +83,13 @@ class GeneralJarkeldTest extends BaseCardTest {
     @Test
     @DisplayName("Does nothing when mutual block legality fails (flying)")
     void noSwapWhenLegalityFails() {
-        Permanent jarkeld = addReady(player1, new GeneralJarkeld());
-        Permanent groundAttacker = addReady(player1, new SavannahLions());
-        Permanent flyingAttacker = addReady(player1, new SavannahLions());
+        Permanent jarkeld = addCreatureReady(player1, new GeneralJarkeld());
+        Permanent groundAttacker = addCreatureReady(player1, new SavannahLions());
+        Permanent flyingAttacker = addCreatureReady(player1, new SavannahLions());
         flyingAttacker.getGrantedKeywords().add(Keyword.FLYING);
 
-        Permanent groundBlocker = addReady(player2, new SavannahLions());
-        Permanent flyerBlocker = addReady(player2, new SavannahLions());
+        Permanent groundBlocker = addCreatureReady(player2, new SavannahLions());
+        Permanent flyerBlocker = addCreatureReady(player2, new SavannahLions());
         flyerBlocker.getGrantedKeywords().add(Keyword.FLYING);
 
         int gAtk = gd.playerBattlefields.get(player1.getId()).indexOf(groundAttacker);
@@ -120,11 +118,11 @@ class GeneralJarkeldTest extends BaseCardTest {
     @Test
     @DisplayName("Cannot activate outside declare blockers step")
     void cannotActivateOutsideDeclareBlockers() {
-        Permanent jarkeld = addReady(player1, new GeneralJarkeld());
-        Permanent attackerA = addReady(player1, new SavannahLions());
-        Permanent attackerB = addReady(player1, new SavannahLions());
-        Permanent blockerA = addReady(player2, new SavannahLions());
-        Permanent blockerB = addReady(player2, new SavannahLions());
+        Permanent jarkeld = addCreatureReady(player1, new GeneralJarkeld());
+        Permanent attackerA = addCreatureReady(player1, new SavannahLions());
+        Permanent attackerB = addCreatureReady(player1, new SavannahLions());
+        Permanent blockerA = addCreatureReady(player2, new SavannahLions());
+        Permanent blockerB = addCreatureReady(player2, new SavannahLions());
 
         setupTwoBlockedAttackers(attackerA, attackerB, blockerA, blockerB);
 
@@ -160,12 +158,5 @@ class GeneralJarkeldTest extends BaseCardTest {
         blocker.setBlocking(true);
         blocker.addBlockingTarget(attackerIndex);
         blocker.addBlockingTargetId(attacker.getId());
-    }
-
-    private Permanent addReady(Player player, Card card) {
-        Permanent perm = new Permanent(card);
-        perm.setSummoningSick(false);
-        gd.playerBattlefields.get(player.getId()).add(perm);
-        return perm;
     }
 }

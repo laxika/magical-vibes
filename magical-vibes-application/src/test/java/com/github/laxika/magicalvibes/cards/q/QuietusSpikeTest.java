@@ -17,7 +17,7 @@ class QuietusSpikeTest extends BaseCardTest {
     @Test
     @DisplayName("Equipped creature has deathtouch")
     void equippedCreatureHasDeathtouch() {
-        Permanent creature = addReadyCreature(player1);
+        Permanent creature = addCreatureReady(player1, new GrizzlyBears());
         Permanent spike = addSpikeReady(player1);
         spike.setAttachedTo(creature.getId());
 
@@ -27,7 +27,7 @@ class QuietusSpikeTest extends BaseCardTest {
     @Test
     @DisplayName("Creature loses deathtouch when Quietus Spike is removed")
     void creatureLosesDeathtouchWhenRemoved() {
-        Permanent creature = addReadyCreature(player1);
+        Permanent creature = addCreatureReady(player1, new GrizzlyBears());
         Permanent spike = addSpikeReady(player1);
         spike.setAttachedTo(creature.getId());
 
@@ -44,7 +44,7 @@ class QuietusSpikeTest extends BaseCardTest {
     @DisplayName("Damaged player loses half their life (even total after combat damage)")
     void damagedPlayerLosesHalfLifeEven() {
         harness.setLife(player2, 22);
-        Permanent creature = addReadyCreature(player1);
+        Permanent creature = addCreatureReady(player1, new GrizzlyBears());
         Permanent spike = addSpikeReady(player1);
         spike.setAttachedTo(creature.getId());
         creature.setAttacking(true);
@@ -60,7 +60,7 @@ class QuietusSpikeTest extends BaseCardTest {
     @DisplayName("Half life is rounded up (odd total after combat damage)")
     void halfLifeRoundedUp() {
         harness.setLife(player2, 23);
-        Permanent creature = addReadyCreature(player1);
+        Permanent creature = addCreatureReady(player1, new GrizzlyBears());
         Permanent spike = addSpikeReady(player1);
         spike.setAttachedTo(creature.getId());
         creature.setAttacking(true);
@@ -77,12 +77,12 @@ class QuietusSpikeTest extends BaseCardTest {
     @DisplayName("No life loss when equipped creature is blocked and deals no player damage")
     void noLifeLossWhenBlocked() {
         harness.setLife(player2, 22);
-        Permanent creature = addReadyCreature(player1);
+        Permanent creature = addCreatureReady(player1, new GrizzlyBears());
         Permanent spike = addSpikeReady(player1);
         spike.setAttachedTo(creature.getId());
         creature.setAttacking(true);
 
-        Permanent blocker = addReadyCreature(player2);
+        Permanent blocker = addCreatureReady(player2, new GrizzlyBears());
         blocker.setBlocking(true);
         blocker.addBlockingTarget(0);
 
@@ -96,13 +96,6 @@ class QuietusSpikeTest extends BaseCardTest {
 
     private Permanent addSpikeReady(Player player) {
         Permanent perm = new Permanent(new QuietusSpike());
-        perm.setSummoningSick(false);
-        gd.playerBattlefields.get(player.getId()).add(perm);
-        return perm;
-    }
-
-    private Permanent addReadyCreature(Player player) {
-        Permanent perm = new Permanent(new GrizzlyBears());
         perm.setSummoningSick(false);
         gd.playerBattlefields.get(player.getId()).add(perm);
         return perm;

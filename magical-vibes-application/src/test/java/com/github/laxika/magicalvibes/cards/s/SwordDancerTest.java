@@ -37,7 +37,7 @@ class SwordDancerTest extends BaseCardTest {
     @DisplayName("Cannot target a non-attacking creature")
     void cannotTargetNonAttackingCreature() {
         addReadyDancer(player1);
-        Permanent nonAttacker = addReadyCreature(player2);
+        Permanent nonAttacker = addCreatureReady(player2, new GrizzlyBears());
         harness.addMana(player1, ManaColor.WHITE, 2);
 
         assertThatThrownBy(() -> harness.activateAbility(player1, 0, null, nonAttacker.getId()))
@@ -76,13 +76,6 @@ class SwordDancerTest extends BaseCardTest {
         Permanent perm = new Permanent(new GrizzlyBears());
         perm.setSummoningSick(false);
         perm.setAttacking(true);
-        gd.playerBattlefields.get(player.getId()).add(perm);
-        return perm;
-    }
-
-    private Permanent addReadyCreature(Player player) {
-        Permanent perm = new Permanent(new GrizzlyBears());
-        perm.setSummoningSick(false);
         gd.playerBattlefields.get(player.getId()).add(perm);
         return perm;
     }

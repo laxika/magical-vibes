@@ -53,7 +53,7 @@ class VedalkenAnatomistTest extends BaseCardTest {
     @DisplayName("Activating ability puts it on the stack targeting a creature")
     void activatingPutsOnStack() {
         Permanent anatomist = addReadyAnatomist(player1);
-        Permanent target = addReadyCreature(player2);
+        Permanent target = addCreatureReady(player2, new GrizzlyBears());
         addAnatomistMana(player1);
 
         harness.activateAbility(player1, 0, null, target.getId());
@@ -69,7 +69,7 @@ class VedalkenAnatomistTest extends BaseCardTest {
     @DisplayName("Activating ability taps Vedalken Anatomist")
     void activatingTapsAnatomist() {
         Permanent anatomist = addReadyAnatomist(player1);
-        Permanent target = addReadyCreature(player2);
+        Permanent target = addCreatureReady(player2, new GrizzlyBears());
         addAnatomistMana(player1);
 
         harness.activateAbility(player1, 0, null, target.getId());
@@ -83,7 +83,7 @@ class VedalkenAnatomistTest extends BaseCardTest {
     @DisplayName("Puts a -1/-1 counter on target creature and prompts may choice")
     void putsCounterAndPromptsMayChoice() {
         addReadyAnatomist(player1);
-        Permanent target = addReadyCreature(player2);
+        Permanent target = addCreatureReady(player2, new GrizzlyBears());
         addAnatomistMana(player1);
 
         harness.activateAbility(player1, 0, null, target.getId());
@@ -104,7 +104,7 @@ class VedalkenAnatomistTest extends BaseCardTest {
     @DisplayName("Accepting may choice taps an untapped target creature")
     void acceptingMayTapsUntappedCreature() {
         addReadyAnatomist(player1);
-        Permanent target = addReadyCreature(player2);
+        Permanent target = addCreatureReady(player2, new GrizzlyBears());
         addAnatomistMana(player1);
 
         assertThat(target.isTapped()).isFalse();
@@ -123,7 +123,7 @@ class VedalkenAnatomistTest extends BaseCardTest {
     @DisplayName("Accepting may choice untaps a tapped target creature")
     void acceptingMayUntapsTappedCreature() {
         addReadyAnatomist(player1);
-        Permanent target = addReadyCreature(player2);
+        Permanent target = addCreatureReady(player2, new GrizzlyBears());
         target.tap();
         addAnatomistMana(player1);
 
@@ -143,7 +143,7 @@ class VedalkenAnatomistTest extends BaseCardTest {
     @DisplayName("Declining may choice leaves untapped creature untapped")
     void decliningMayLeavesCreatureUntapped() {
         addReadyAnatomist(player1);
-        Permanent target = addReadyCreature(player2);
+        Permanent target = addCreatureReady(player2, new GrizzlyBears());
         addAnatomistMana(player1);
 
         assertThat(target.isTapped()).isFalse();
@@ -162,7 +162,7 @@ class VedalkenAnatomistTest extends BaseCardTest {
     @DisplayName("Declining may choice leaves tapped creature tapped")
     void decliningMayLeavesCreatureTapped() {
         addReadyAnatomist(player1);
-        Permanent target = addReadyCreature(player2);
+        Permanent target = addCreatureReady(player2, new GrizzlyBears());
         target.tap();
         addAnatomistMana(player1);
 
@@ -200,7 +200,7 @@ class VedalkenAnatomistTest extends BaseCardTest {
     @DisplayName("Can target own creature")
     void canTargetOwnCreature() {
         addReadyAnatomist(player1);
-        Permanent ownCreature = addReadyCreature(player1);
+        Permanent ownCreature = addCreatureReady(player1, new GrizzlyBears());
         addAnatomistMana(player1);
 
         harness.activateAbility(player1, 0, null, ownCreature.getId());
@@ -231,7 +231,7 @@ class VedalkenAnatomistTest extends BaseCardTest {
     @DisplayName("Cannot activate ability without enough mana")
     void cannotActivateWithoutMana() {
         addReadyAnatomist(player1);
-        Permanent target = addReadyCreature(player2);
+        Permanent target = addCreatureReady(player2, new GrizzlyBears());
 
         assertThatThrownBy(() -> harness.activateAbility(player1, 0, null, target.getId()))
                 .isInstanceOf(IllegalStateException.class);
@@ -242,7 +242,7 @@ class VedalkenAnatomistTest extends BaseCardTest {
     void cannotActivateWhenTapped() {
         Permanent anatomist = addReadyAnatomist(player1);
         anatomist.tap();
-        Permanent target = addReadyCreature(player2);
+        Permanent target = addCreatureReady(player2, new GrizzlyBears());
         addAnatomistMana(player1);
 
         assertThatThrownBy(() -> harness.activateAbility(player1, 0, null, target.getId()))
@@ -257,7 +257,7 @@ class VedalkenAnatomistTest extends BaseCardTest {
         Permanent anatomist = new Permanent(card);
         // summoningSick is true by default
         gd.playerBattlefields.get(player1.getId()).add(anatomist);
-        Permanent target = addReadyCreature(player2);
+        Permanent target = addCreatureReady(player2, new GrizzlyBears());
         addAnatomistMana(player1);
 
         assertThatThrownBy(() -> harness.activateAbility(player1, 0, null, target.getId()))
@@ -271,7 +271,7 @@ class VedalkenAnatomistTest extends BaseCardTest {
     @DisplayName("Fizzles if target creature is removed before resolution")
     void fizzlesIfTargetRemoved() {
         addReadyAnatomist(player1);
-        Permanent target = addReadyCreature(player2);
+        Permanent target = addCreatureReady(player2, new GrizzlyBears());
         addAnatomistMana(player1);
 
         harness.activateAbility(player1, 0, null, target.getId());
@@ -289,14 +289,6 @@ class VedalkenAnatomistTest extends BaseCardTest {
 
     private Permanent addReadyAnatomist(Player player) {
         VedalkenAnatomist card = new VedalkenAnatomist();
-        Permanent perm = new Permanent(card);
-        perm.setSummoningSick(false);
-        gd.playerBattlefields.get(player.getId()).add(perm);
-        return perm;
-    }
-
-    private Permanent addReadyCreature(Player player) {
-        GrizzlyBears card = new GrizzlyBears();
         Permanent perm = new Permanent(card);
         perm.setSummoningSick(false);
         gd.playerBattlefields.get(player.getId()).add(perm);

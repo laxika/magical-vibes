@@ -5,7 +5,6 @@ import com.github.laxika.magicalvibes.cards.f.FountainOfYouth;
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
-import com.github.laxika.magicalvibes.model.Player;
 import com.github.laxika.magicalvibes.model.TurnStep;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
 import org.junit.jupiter.api.DisplayName;
@@ -23,7 +22,7 @@ class EnslaveTest extends BaseCardTest {
     @Test
     @DisplayName("Resolving Enslave steals opponent's creature")
     void resolvingStealsCreature() {
-        Permanent creature = addCreatureReady(player2);
+        Permanent creature = addCreatureReady(player2, new GrizzlyBears());
 
         harness.setHand(player1, List.of(new Enslave()));
         harness.addMana(player1, ManaColor.BLACK, 6);
@@ -43,7 +42,7 @@ class EnslaveTest extends BaseCardTest {
     @Test
     @DisplayName("At controller's upkeep, enchanted creature deals 1 damage to its owner")
     void upkeepDealsDamageToOwner() {
-        Permanent creature = addCreatureReady(player2);
+        Permanent creature = addCreatureReady(player2, new GrizzlyBears());
 
         harness.setHand(player1, List.of(new Enslave()));
         harness.addMana(player1, ManaColor.BLACK, 6);
@@ -64,7 +63,7 @@ class EnslaveTest extends BaseCardTest {
     @Test
     @DisplayName("Upkeep trigger does not fire during opponent's upkeep")
     void doesNotTriggerDuringOpponentUpkeep() {
-        Permanent creature = addCreatureReady(player2);
+        Permanent creature = addCreatureReady(player2, new GrizzlyBears());
 
         harness.setHand(player1, List.of(new Enslave()));
         harness.addMana(player1, ManaColor.BLACK, 6);
@@ -83,7 +82,7 @@ class EnslaveTest extends BaseCardTest {
     @Test
     @DisplayName("Damage accumulates over multiple upkeeps")
     void damageAccumulatesOverUpkeeps() {
-        Permanent creature = addCreatureReady(player2);
+        Permanent creature = addCreatureReady(player2, new GrizzlyBears());
 
         harness.setHand(player1, List.of(new Enslave()));
         harness.addMana(player1, ManaColor.BLACK, 6);
@@ -107,7 +106,7 @@ class EnslaveTest extends BaseCardTest {
     @Test
     @DisplayName("Creature returns to owner when Enslave is destroyed")
     void creatureReturnsWhenEnslaveDestroyed() {
-        Permanent creature = addCreatureReady(player2);
+        Permanent creature = addCreatureReady(player2, new GrizzlyBears());
 
         harness.setHand(player1, List.of(new Enslave()));
         harness.addMana(player1, ManaColor.BLACK, 6);
@@ -155,11 +154,4 @@ class EnslaveTest extends BaseCardTest {
     }
 
     // ===== Helper methods =====
-
-    private Permanent addCreatureReady(Player player) {
-        Permanent perm = new Permanent(new GrizzlyBears());
-        perm.setSummoningSick(false);
-        gd.playerBattlefields.get(player.getId()).add(perm);
-        return perm;
-    }
 }

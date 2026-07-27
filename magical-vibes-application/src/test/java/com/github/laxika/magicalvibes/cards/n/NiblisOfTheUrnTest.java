@@ -23,7 +23,7 @@ class NiblisOfTheUrnTest extends BaseCardTest {
     @DisplayName("Attacking queues attack trigger for creature target selection")
     void attackingQueuesTargetSelection() {
         addReadyNiblis(player1);
-        addReadyCreature(player2);
+        addCreatureReady(player2, new GrizzlyBears());
 
         declareAttackers(player1, List.of(0));
 
@@ -36,7 +36,7 @@ class NiblisOfTheUrnTest extends BaseCardTest {
     @DisplayName("Resolving attack trigger presents may ability choice")
     void resolvingAttackTriggerPresentsMayChoice() {
         addReadyNiblis(player1);
-        Permanent bears = addReadyCreature(player2);
+        Permanent bears = addCreatureReady(player2, new GrizzlyBears());
 
         declareAttackers(player1, List.of(0));
         harness.handlePermanentChosen(player1, bears.getId());
@@ -49,7 +49,7 @@ class NiblisOfTheUrnTest extends BaseCardTest {
     @DisplayName("Accepting attack may taps target opponent creature")
     void acceptingMayTapsOpponentCreature() {
         addReadyNiblis(player1);
-        Permanent bears = addReadyCreature(player2);
+        Permanent bears = addCreatureReady(player2, new GrizzlyBears());
 
         attackChooseTargetAndAccept(bears);
 
@@ -60,7 +60,7 @@ class NiblisOfTheUrnTest extends BaseCardTest {
     @DisplayName("Accepting attack may can tap own creature")
     void acceptingMayCanTapOwnCreature() {
         addReadyNiblis(player1);
-        Permanent bears = addReadyCreature(player1);
+        Permanent bears = addCreatureReady(player1, new GrizzlyBears());
 
         attackChooseTargetAndAccept(bears);
 
@@ -71,7 +71,7 @@ class NiblisOfTheUrnTest extends BaseCardTest {
     @DisplayName("Declining attack may leaves target creature untapped")
     void decliningMayLeavesTargetUntapped() {
         addReadyNiblis(player1);
-        Permanent bears = addReadyCreature(player2);
+        Permanent bears = addCreatureReady(player2, new GrizzlyBears());
 
         declareAttackers(player1, List.of(0));
         harness.handlePermanentChosen(player1, bears.getId());
@@ -87,7 +87,7 @@ class NiblisOfTheUrnTest extends BaseCardTest {
         addReadyNiblis(player1);
         harness.addToBattlefield(player2, new Telepathy());
         Permanent telepathy = gd.playerBattlefields.get(player2.getId()).getFirst();
-        addReadyCreature(player2);
+        addCreatureReady(player2, new GrizzlyBears());
 
         declareAttackers(player1, List.of(0));
 
@@ -105,13 +105,6 @@ class NiblisOfTheUrnTest extends BaseCardTest {
 
     private Permanent addReadyNiblis(Player player) {
         Permanent perm = new Permanent(new NiblisOfTheUrn());
-        perm.setSummoningSick(false);
-        gd.playerBattlefields.get(player.getId()).add(perm);
-        return perm;
-    }
-
-    private Permanent addReadyCreature(Player player) {
-        Permanent perm = new Permanent(new GrizzlyBears());
         perm.setSummoningSick(false);
         gd.playerBattlefields.get(player.getId()).add(perm);
         return perm;

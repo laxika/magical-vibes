@@ -4,10 +4,8 @@ import com.github.laxika.magicalvibes.service.interaction.InteractionAnswer;
 import com.github.laxika.magicalvibes.cards.f.Forest;
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
 import com.github.laxika.magicalvibes.model.Card;
-import com.github.laxika.magicalvibes.model.GameData;
 import com.github.laxika.magicalvibes.model.PendingInteraction;
 import com.github.laxika.magicalvibes.model.Permanent;
-import com.github.laxika.magicalvibes.model.Player;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
@@ -17,14 +15,6 @@ import java.util.List;
 import static org.assertj.core.api.Assertions.assertThat;
 
 class HuntingCheetahTest extends BaseCardTest {
-
-    private Permanent addReadyCreature(Player player, Card card) {
-        GameData gd = harness.getGameData();
-        Permanent perm = new Permanent(card);
-        perm.setSummoningSick(false);
-        gd.playerBattlefields.get(player.getId()).add(perm);
-        return perm;
-    }
 
     private void setupLibrary(int forests) {
         List<Card> deck = gd.playerDecks.get(player1.getId());
@@ -39,7 +29,7 @@ class HuntingCheetahTest extends BaseCardTest {
     @Test
     @DisplayName("Dealing combat damage to a player presents the may prompt")
     void combatDamagePresentsMayChoice() {
-        Permanent cheetah = addReadyCreature(player1, new HuntingCheetah());
+        Permanent cheetah = addCreatureReady(player1, new HuntingCheetah());
         cheetah.setAttacking(true);
 
         resolveCombat();
@@ -50,7 +40,7 @@ class HuntingCheetahTest extends BaseCardTest {
     @Test
     @DisplayName("Accepting the may prompt searches the library for Forest cards only")
     void acceptingInitiatesForestSearch() {
-        Permanent cheetah = addReadyCreature(player1, new HuntingCheetah());
+        Permanent cheetah = addCreatureReady(player1, new HuntingCheetah());
         cheetah.setAttacking(true);
         setupLibrary(2);
 
@@ -66,7 +56,7 @@ class HuntingCheetahTest extends BaseCardTest {
     @Test
     @DisplayName("Choosing a Forest puts it into hand")
     void choosingForestPutsItIntoHand() {
-        Permanent cheetah = addReadyCreature(player1, new HuntingCheetah());
+        Permanent cheetah = addCreatureReady(player1, new HuntingCheetah());
         cheetah.setAttacking(true);
         setupLibrary(2);
 
@@ -85,7 +75,7 @@ class HuntingCheetahTest extends BaseCardTest {
     @Test
     @DisplayName("Declining the may prompt does not search")
     void decliningSkipsSearch() {
-        Permanent cheetah = addReadyCreature(player1, new HuntingCheetah());
+        Permanent cheetah = addCreatureReady(player1, new HuntingCheetah());
         cheetah.setAttacking(true);
         setupLibrary(2);
 
@@ -98,9 +88,9 @@ class HuntingCheetahTest extends BaseCardTest {
     @Test
     @DisplayName("No trigger when blocked and no damage reaches the player")
     void noTriggerWhenBlocked() {
-        Permanent cheetah = addReadyCreature(player1, new HuntingCheetah());
+        Permanent cheetah = addCreatureReady(player1, new HuntingCheetah());
         cheetah.setAttacking(true);
-        Permanent blocker = addReadyCreature(player2, new GrizzlyBears());
+        Permanent blocker = addCreatureReady(player2, new GrizzlyBears());
         blocker.setBlocking(true);
         blocker.addBlockingTarget(0);
 

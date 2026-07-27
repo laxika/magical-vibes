@@ -20,7 +20,7 @@ class ParasiticImplantTest extends BaseCardTest {
     @Test
     @DisplayName("At controller's upkeep, enchanted creature is sacrificed and a Myr token is created")
     void upkeepSacrificesCreatureAndCreatesToken() {
-        Permanent creature = addCreatureReady(player2);
+        Permanent creature = addCreatureReady(player2, new GrizzlyBears());
 
         harness.setHand(player1, List.of(new ParasiticImplant()));
         harness.addMana(player1, ManaColor.BLACK, 4);
@@ -60,7 +60,7 @@ class ParasiticImplantTest extends BaseCardTest {
     @Test
     @DisplayName("Upkeep trigger does not fire during opponent's upkeep")
     void doesNotTriggerDuringOpponentUpkeep() {
-        Permanent creature = addCreatureReady(player2);
+        Permanent creature = addCreatureReady(player2, new GrizzlyBears());
 
         harness.setHand(player1, List.of(new ParasiticImplant()));
         harness.addMana(player1, ManaColor.BLACK, 4);
@@ -84,7 +84,7 @@ class ParasiticImplantTest extends BaseCardTest {
     @Test
     @DisplayName("Enchanting own creature — sacrifice and token work for same player")
     void enchantingOwnCreature() {
-        Permanent creature = addCreatureReady(player1);
+        Permanent creature = addCreatureReady(player1, new GrizzlyBears());
 
         harness.setHand(player1, List.of(new ParasiticImplant()));
         harness.addMana(player1, ManaColor.BLACK, 4);
@@ -105,13 +105,6 @@ class ParasiticImplantTest extends BaseCardTest {
     }
 
     // ===== Helper methods =====
-
-    private Permanent addCreatureReady(Player player) {
-        Permanent perm = new Permanent(new GrizzlyBears());
-        perm.setSummoningSick(false);
-        gd.playerBattlefields.get(player.getId()).add(perm);
-        return perm;
-    }
 
     private Permanent findPermanentByName(Player player, String name) {
         return gd.playerBattlefields.get(player.getId()).stream()

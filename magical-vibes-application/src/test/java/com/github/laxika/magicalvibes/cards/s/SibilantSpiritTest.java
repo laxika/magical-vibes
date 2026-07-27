@@ -24,7 +24,7 @@ class SibilantSpiritTest extends BaseCardTest {
     @Test
     @DisplayName("When it attacks a player, that defending player may draw (accept)")
     void defendingPlayerDraws() {
-        addReady(player1, new SibilantSpirit());
+        addCreatureReady(player1, new SibilantSpirit());
         setDeck(player2, List.of(new Forest()));
 
         declareAttackers(player1, List.of(0), null);
@@ -42,7 +42,7 @@ class SibilantSpiritTest extends BaseCardTest {
     @Test
     @DisplayName("Defending player may decline the draw")
     void defendingPlayerDeclines() {
-        addReady(player1, new SibilantSpirit());
+        addCreatureReady(player1, new SibilantSpirit());
         setDeck(player2, List.of(new Forest()));
 
         declareAttackers(player1, List.of(0), null);
@@ -57,7 +57,7 @@ class SibilantSpiritTest extends BaseCardTest {
     @Test
     @DisplayName("Attacking a planeswalker still offers the draw to its controller")
     void attackingPlaneswalkerOffersDrawToController() {
-        addReady(player1, new SibilantSpirit());
+        addCreatureReady(player1, new SibilantSpirit());
         Permanent planeswalker = addPlaneswalker(player2, 4);
         setDeck(player2, List.of(new Forest()));
 
@@ -76,7 +76,7 @@ class SibilantSpiritTest extends BaseCardTest {
     @Test
     @DisplayName("Does not trigger for another attacking creature")
     void doesNotTriggerForOtherAttacker() {
-        addReady(player1, new GrizzlyBears());
+        addCreatureReady(player1, new GrizzlyBears());
         setDeck(player2, List.of(new Forest()));
 
         declareAttackers(player1, List.of(0), null);
@@ -92,13 +92,6 @@ class SibilantSpiritTest extends BaseCardTest {
         harness.clearPriorityPassed();
         harness.beginAttackerDeclarationInput();
         gs.declareAttackers(gd, player, attackerIndices, attackTargets);
-    }
-
-    private Permanent addReady(Player player, Card card) {
-        Permanent permanent = new Permanent(card);
-        permanent.setSummoningSick(false);
-        gd.playerBattlefields.get(player.getId()).add(permanent);
-        return permanent;
     }
 
     private Permanent addPlaneswalker(Player player, int loyalty) {

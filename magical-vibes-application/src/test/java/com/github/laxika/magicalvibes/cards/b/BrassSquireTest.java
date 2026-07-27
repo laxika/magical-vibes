@@ -25,7 +25,7 @@ class BrassSquireTest extends BaseCardTest {
     void activatingAbilityPutsOnStack() {
         Permanent squire = addSquireReady(player1);
         Permanent equipment = addEquipmentReady(player1);
-        Permanent creature = addReadyCreature(player1);
+        Permanent creature = addCreatureReady(player1, new GrizzlyBears());
 
         harness.activateAbilityWithMultiTargets(player1, 0, 0, List.of(equipment.getId(), creature.getId()));
 
@@ -41,7 +41,7 @@ class BrassSquireTest extends BaseCardTest {
     void resolvingAbilityAttachesEquipment() {
         Permanent squire = addSquireReady(player1);
         Permanent equipment = addEquipmentReady(player1);
-        Permanent creature = addReadyCreature(player1);
+        Permanent creature = addCreatureReady(player1, new GrizzlyBears());
 
         harness.activateAbilityWithMultiTargets(player1, 0, 0, List.of(equipment.getId(), creature.getId()));
         harness.passBothPriorities();
@@ -57,8 +57,8 @@ class BrassSquireTest extends BaseCardTest {
     void canMoveEquipmentBetweenCreatures() {
         Permanent squire = addSquireReady(player1);
         Permanent equipment = addEquipmentReady(player1);
-        Permanent creature1 = addReadyCreature(player1);
-        Permanent creature2 = addReadyCreature(player1);
+        Permanent creature1 = addCreatureReady(player1, new GrizzlyBears());
+        Permanent creature2 = addCreatureReady(player1, new GrizzlyBears());
 
         // First attach to creature1
         equipment.setAttachedTo(creature1.getId());
@@ -78,7 +78,7 @@ class BrassSquireTest extends BaseCardTest {
     void fizzlesIfEquipmentLeaves() {
         Permanent squire = addSquireReady(player1);
         Permanent equipment = addEquipmentReady(player1);
-        Permanent creature = addReadyCreature(player1);
+        Permanent creature = addCreatureReady(player1, new GrizzlyBears());
 
         harness.activateAbilityWithMultiTargets(player1, 0, 0, List.of(equipment.getId(), creature.getId()));
 
@@ -96,7 +96,7 @@ class BrassSquireTest extends BaseCardTest {
     void fizzlesIfCreatureLeaves() {
         Permanent squire = addSquireReady(player1);
         Permanent equipment = addEquipmentReady(player1);
-        Permanent creature = addReadyCreature(player1);
+        Permanent creature = addCreatureReady(player1, new GrizzlyBears());
 
         harness.activateAbilityWithMultiTargets(player1, 0, 0, List.of(equipment.getId(), creature.getId()));
 
@@ -118,7 +118,7 @@ class BrassSquireTest extends BaseCardTest {
         // Summoning sick by default
         gd.playerBattlefields.get(player1.getId()).add(squire);
         Permanent equipment = addEquipmentReady(player1);
-        Permanent creature = addReadyCreature(player1);
+        Permanent creature = addCreatureReady(player1, new GrizzlyBears());
 
         assertThatThrownBy(() -> harness.activateAbilityWithMultiTargets(player1, 0, 0, List.of(equipment.getId(), creature.getId())))
                 .isInstanceOf(IllegalStateException.class)
@@ -132,7 +132,7 @@ class BrassSquireTest extends BaseCardTest {
     void worksAtInstantSpeed() {
         Permanent squire = addSquireReady(player1);
         Permanent equipment = addEquipmentReady(player1);
-        Permanent creature = addReadyCreature(player1);
+        Permanent creature = addCreatureReady(player1, new GrizzlyBears());
 
         // Force to opponent's turn
         harness.forceActivePlayer(player2);
@@ -153,7 +153,7 @@ class BrassSquireTest extends BaseCardTest {
     void activatingTapsSquire() {
         Permanent squire = addSquireReady(player1);
         Permanent equipment = addEquipmentReady(player1);
-        Permanent creature = addReadyCreature(player1);
+        Permanent creature = addCreatureReady(player1, new GrizzlyBears());
 
         assertThat(squire.isTapped()).isFalse();
 
@@ -168,7 +168,7 @@ class BrassSquireTest extends BaseCardTest {
         Permanent squire = addSquireReady(player1);
         squire.tap();
         Permanent equipment = addEquipmentReady(player1);
-        Permanent creature = addReadyCreature(player1);
+        Permanent creature = addCreatureReady(player1, new GrizzlyBears());
 
         assertThatThrownBy(() -> harness.activateAbilityWithMultiTargets(player1, 0, 0, List.of(equipment.getId(), creature.getId())))
                 .isInstanceOf(IllegalStateException.class)
@@ -186,13 +186,6 @@ class BrassSquireTest extends BaseCardTest {
 
     private Permanent addEquipmentReady(Player player) {
         Permanent perm = new Permanent(new StriderHarness());
-        perm.setSummoningSick(false);
-        gd.playerBattlefields.get(player.getId()).add(perm);
-        return perm;
-    }
-
-    private Permanent addReadyCreature(Player player) {
-        Permanent perm = new Permanent(new GrizzlyBears());
         perm.setSummoningSick(false);
         gd.playerBattlefields.get(player.getId()).add(perm);
         return perm;

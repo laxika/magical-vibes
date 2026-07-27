@@ -2,10 +2,8 @@ package com.github.laxika.magicalvibes.cards.r;
 
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
 import com.github.laxika.magicalvibes.cards.i.IronMyr;
-import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
-import com.github.laxika.magicalvibes.model.Player;
 import com.github.laxika.magicalvibes.model.TurnStep;
 import com.github.laxika.magicalvibes.networking.message.BlockerAssignment;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
@@ -24,7 +22,7 @@ class RuthlessInvasionTest extends BaseCardTest {
     @Test
     @DisplayName("Nonartifact creatures can't block this turn after resolution")
     void nonartifactCreaturesCantBlock() {
-        Permanent bears = addReadyCreature(player2, new GrizzlyBears());
+        Permanent bears = addCreatureReady(player2, new GrizzlyBears());
 
         harness.setHand(player1, List.of(new RuthlessInvasion()));
         harness.addMana(player1, ManaColor.RED, 4);
@@ -38,7 +36,7 @@ class RuthlessInvasionTest extends BaseCardTest {
     @Test
     @DisplayName("Artifact creatures are NOT affected")
     void artifactCreaturesNotAffected() {
-        Permanent myr = addReadyCreature(player2, new IronMyr());
+        Permanent myr = addCreatureReady(player2, new IronMyr());
 
         harness.setHand(player1, List.of(new RuthlessInvasion()));
         harness.addMana(player1, ManaColor.RED, 4);
@@ -52,9 +50,9 @@ class RuthlessInvasionTest extends BaseCardTest {
     @Test
     @DisplayName("Affects both players' nonartifact creatures")
     void affectsBothPlayersNonartifactCreatures() {
-        Permanent ownBears = addReadyCreature(player1, new GrizzlyBears());
-        Permanent oppBears = addReadyCreature(player2, new GrizzlyBears());
-        Permanent oppMyr = addReadyCreature(player2, new IronMyr());
+        Permanent ownBears = addCreatureReady(player1, new GrizzlyBears());
+        Permanent oppBears = addCreatureReady(player2, new GrizzlyBears());
+        Permanent oppMyr = addCreatureReady(player2, new IronMyr());
 
         harness.setHand(player1, List.of(new RuthlessInvasion()));
         harness.addMana(player1, ManaColor.RED, 4);
@@ -70,8 +68,8 @@ class RuthlessInvasionTest extends BaseCardTest {
     @Test
     @DisplayName("Nonartifact creature cannot declare as blocker after resolution")
     void cantBlockPreventsDeclaringBlockers() {
-        Permanent attacker = addReadyCreature(player1, new GrizzlyBears());
-        Permanent blocker = addReadyCreature(player2, new GrizzlyBears());
+        Permanent attacker = addCreatureReady(player1, new GrizzlyBears());
+        Permanent blocker = addCreatureReady(player2, new GrizzlyBears());
 
         harness.setHand(player1, List.of(new RuthlessInvasion()));
         harness.addMana(player1, ManaColor.RED, 4);
@@ -92,8 +90,8 @@ class RuthlessInvasionTest extends BaseCardTest {
     @Test
     @DisplayName("Artifact creature CAN still block after resolution")
     void artifactCreatureCanStillBlock() {
-        Permanent attacker = addReadyCreature(player1, new GrizzlyBears());
-        Permanent blocker = addReadyCreature(player2, new IronMyr());
+        Permanent attacker = addCreatureReady(player1, new GrizzlyBears());
+        Permanent blocker = addCreatureReady(player2, new IronMyr());
 
         harness.setHand(player1, List.of(new RuthlessInvasion()));
         harness.addMana(player1, ManaColor.RED, 4);
@@ -113,11 +111,4 @@ class RuthlessInvasionTest extends BaseCardTest {
     }
 
     // ===== Helpers =====
-
-    private Permanent addReadyCreature(Player player, Card card) {
-        Permanent perm = new Permanent(card);
-        perm.setSummoningSick(false);
-        gd.playerBattlefields.get(player.getId()).add(perm);
-        return perm;
-    }
 }

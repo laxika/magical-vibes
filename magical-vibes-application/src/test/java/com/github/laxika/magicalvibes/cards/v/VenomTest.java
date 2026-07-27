@@ -23,7 +23,7 @@ class VenomTest extends BaseCardTest {
     @Test
     @DisplayName("When enchanted creature blocks a non-Wall attacker, that attacker is scheduled for end-of-combat destruction")
     void enchantedCreatureBlocksNonWall_schedulesDestruction() {
-        Permanent blocker = addReadyBears(player2);
+        Permanent blocker = addCreatureReady(player2, new GrizzlyBears());
         Permanent venom = addVenomAttachedTo(player2, blocker);
 
         Permanent attacker = addReadySpider(player1); // green, non-Wall
@@ -49,7 +49,7 @@ class VenomTest extends BaseCardTest {
     @Test
     @DisplayName("When enchanted creature becomes blocked by a non-Wall creature, that blocker is scheduled for end-of-combat destruction")
     void enchantedCreatureBecomesBlockedByNonWall_schedulesDestruction() {
-        Permanent attacker = addReadyBears(player1);
+        Permanent attacker = addCreatureReady(player1, new GrizzlyBears());
         Permanent venom = addVenomAttachedTo(player1, attacker);
         attacker.setAttacking(true);
 
@@ -72,7 +72,7 @@ class VenomTest extends BaseCardTest {
     @Test
     @DisplayName("A non-Wall blocker survives combat damage but is destroyed at end of combat")
     void nonWallBlockerDestroyedAtEndOfCombat() {
-        Permanent attacker = addReadyBears(player1);
+        Permanent attacker = addCreatureReady(player1, new GrizzlyBears());
         addVenomAttachedTo(player1, attacker);
         attacker.setAttacking(true);
 
@@ -96,7 +96,7 @@ class VenomTest extends BaseCardTest {
     @Test
     @DisplayName("When enchanted creature becomes blocked by a Wall, nothing is scheduled for destruction")
     void becomesBlockedByWall_schedulesNothing() {
-        Permanent attacker = addReadyBears(player1);
+        Permanent attacker = addCreatureReady(player1, new GrizzlyBears());
         addVenomAttachedTo(player1, attacker);
         attacker.setAttacking(true);
 
@@ -115,7 +115,7 @@ class VenomTest extends BaseCardTest {
     @Test
     @DisplayName("No trigger when Venom is not attached to any creature")
     void noTriggerWhenNotAttached() {
-        addReadyBears(player2); // blocker without Venom
+        addCreatureReady(player2, new GrizzlyBears()); // blocker without Venom
         addVenom(player2); // on battlefield but not attached
 
         Permanent attacker = addReadySpider(player1);
@@ -142,13 +142,6 @@ class VenomTest extends BaseCardTest {
     private Permanent addVenomAttachedTo(Player player, Permanent creature) {
         Permanent perm = addVenom(player);
         perm.setAttachedTo(creature.getId());
-        return perm;
-    }
-
-    private Permanent addReadyBears(Player player) {
-        Permanent perm = new Permanent(new GrizzlyBears());
-        perm.setSummoningSick(false);
-        gd.playerBattlefields.get(player.getId()).add(perm);
         return perm;
     }
 

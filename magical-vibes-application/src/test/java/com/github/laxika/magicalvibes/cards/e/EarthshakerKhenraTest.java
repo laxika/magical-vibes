@@ -2,12 +2,10 @@ package com.github.laxika.magicalvibes.cards.e;
 
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
 import com.github.laxika.magicalvibes.cards.h.HillGiant;
-import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardColor;
 import com.github.laxika.magicalvibes.model.CardSubtype;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
-import com.github.laxika.magicalvibes.model.Player;
 import com.github.laxika.magicalvibes.model.TurnStep;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
 import org.junit.jupiter.api.DisplayName;
@@ -23,7 +21,7 @@ class EarthshakerKhenraTest extends BaseCardTest {
     @Test
     @DisplayName("ETB makes a target creature with power <= Khenra's power unable to block")
     void etbMakesLowPowerTargetUnableToBlock() {
-        Permanent blocker = addReady(player2, new GrizzlyBears()); // power 2 == Khenra's power 2
+        Permanent blocker = addCreatureReady(player2, new GrizzlyBears()); // power 2 == Khenra's power 2
         harness.setHand(player1, List.of(new EarthshakerKhenra()));
         harness.addMana(player1, ManaColor.RED, 2);
 
@@ -40,7 +38,7 @@ class EarthshakerKhenraTest extends BaseCardTest {
     @Test
     @DisplayName("A creature with power greater than Khenra's is not a legal target — ETB never triggers")
     void cannotTargetHigherPowerCreature() {
-        Permanent hillGiant = addReady(player2, new HillGiant()); // power 3 > Khenra's power 2
+        Permanent hillGiant = addCreatureReady(player2, new HillGiant()); // power 3 > Khenra's power 2
         harness.setHand(player1, List.of(new EarthshakerKhenra()));
         harness.addMana(player1, ManaColor.RED, 2);
 
@@ -88,12 +86,5 @@ class EarthshakerKhenraTest extends BaseCardTest {
                 .noneMatch(c -> c.getName().equals("Earthshaker Khenra"));
         assertThat(gd.getPlayerExiledCards(player1.getId()))
                 .anyMatch(c -> c.getName().equals("Earthshaker Khenra"));
-    }
-
-    private Permanent addReady(Player player, Card card) {
-        Permanent perm = new Permanent(card);
-        perm.setSummoningSick(false);
-        gd.playerBattlefields.get(player.getId()).add(perm);
-        return perm;
     }
 }

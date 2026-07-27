@@ -47,7 +47,7 @@ class InfiltrationLensTest extends BaseCardTest {
     @DisplayName("Resolving equip ability attaches Infiltration Lens to target creature")
     void resolvingEquipAttachesToCreature() {
         Permanent lens = addLens(player1);
-        Permanent creature = addReadyCreature(player1);
+        Permanent creature = addCreatureReady(player1, new GrizzlyBears());
         harness.addMana(player1, ManaColor.WHITE, 1);
 
         harness.activateAbility(player1, 0, null, creature.getId());
@@ -61,12 +61,12 @@ class InfiltrationLensTest extends BaseCardTest {
     @Test
     @DisplayName("When equipped creature becomes blocked by one creature, one trigger is created")
     void singleBlockerCreatesOneTrigger() {
-        Permanent creature = addReadyCreature(player1);
+        Permanent creature = addCreatureReady(player1, new GrizzlyBears());
         Permanent lens = addLens(player1);
         lens.setAttachedTo(creature.getId());
         creature.setAttacking(true);
 
-        addReadyCreature(player2);
+        addCreatureReady(player2, new GrizzlyBears());
 
         prepareDeclareBlockers();
         gs.declareBlockers(gd, player2, List.of(new BlockerAssignment(0, 0)));
@@ -80,13 +80,13 @@ class InfiltrationLensTest extends BaseCardTest {
     @Test
     @DisplayName("When equipped creature becomes blocked by two creatures, two triggers are created")
     void multipleBlockersCreateMultipleTriggers() {
-        Permanent creature = addReadyCreature(player1);
+        Permanent creature = addCreatureReady(player1, new GrizzlyBears());
         Permanent lens = addLens(player1);
         lens.setAttachedTo(creature.getId());
         creature.setAttacking(true);
 
-        addReadyCreature(player2);
-        addReadyCreature(player2);
+        addCreatureReady(player2, new GrizzlyBears());
+        addCreatureReady(player2, new GrizzlyBears());
 
         prepareDeclareBlockers();
         gs.declareBlockers(gd, player2, List.of(
@@ -103,12 +103,12 @@ class InfiltrationLensTest extends BaseCardTest {
     @Test
     @DisplayName("Accepting the may ability draws two cards")
     void acceptingMayAbilityDrawsTwoCards() {
-        Permanent creature = addReadyCreature(player1);
+        Permanent creature = addCreatureReady(player1, new GrizzlyBears());
         Permanent lens = addLens(player1);
         lens.setAttachedTo(creature.getId());
         creature.setAttacking(true);
 
-        addReadyCreature(player2);
+        addCreatureReady(player2, new GrizzlyBears());
 
         int handSizeBefore = gd.playerHands.get(player1.getId()).size();
 
@@ -128,12 +128,12 @@ class InfiltrationLensTest extends BaseCardTest {
     @Test
     @DisplayName("Declining the may ability does not draw cards")
     void decliningMayAbilityDoesNotDraw() {
-        Permanent creature = addReadyCreature(player1);
+        Permanent creature = addCreatureReady(player1, new GrizzlyBears());
         Permanent lens = addLens(player1);
         lens.setAttachedTo(creature.getId());
         creature.setAttacking(true);
 
-        addReadyCreature(player2);
+        addCreatureReady(player2, new GrizzlyBears());
 
         int handSizeBefore = gd.playerHands.get(player1.getId()).size();
 
@@ -151,11 +151,11 @@ class InfiltrationLensTest extends BaseCardTest {
     @Test
     @DisplayName("No trigger when unequipped creature is blocked")
     void noTriggerWhenNotEquipped() {
-        Permanent creature = addReadyCreature(player1);
+        Permanent creature = addCreatureReady(player1, new GrizzlyBears());
         addLens(player1); // Lens on battlefield but not attached
         creature.setAttacking(true);
 
-        addReadyCreature(player2);
+        addCreatureReady(player2, new GrizzlyBears());
 
         prepareDeclareBlockers();
         gs.declareBlockers(gd, player2, List.of(new BlockerAssignment(0, 0)));
@@ -169,13 +169,13 @@ class InfiltrationLensTest extends BaseCardTest {
     @Test
     @DisplayName("Two blockers: accepting both may abilities draws four cards total")
     void twoBlockersAcceptBothDrawsFourCards() {
-        Permanent creature = addReadyCreature(player1);
+        Permanent creature = addCreatureReady(player1, new GrizzlyBears());
         Permanent lens = addLens(player1);
         lens.setAttachedTo(creature.getId());
         creature.setAttacking(true);
 
-        addReadyCreature(player2);
-        addReadyCreature(player2);
+        addCreatureReady(player2, new GrizzlyBears());
+        addCreatureReady(player2, new GrizzlyBears());
 
         int handSizeBefore = gd.playerHands.get(player1.getId()).size();
 
@@ -204,12 +204,12 @@ class InfiltrationLensTest extends BaseCardTest {
     @Test
     @DisplayName("Trigger is a triggered ability with correct source")
     void triggerHasCorrectMetadata() {
-        Permanent creature = addReadyCreature(player1);
+        Permanent creature = addCreatureReady(player1, new GrizzlyBears());
         Permanent lens = addLens(player1);
         lens.setAttachedTo(creature.getId());
         creature.setAttacking(true);
 
-        addReadyCreature(player2);
+        addCreatureReady(player2, new GrizzlyBears());
 
         prepareDeclareBlockers();
         gs.declareBlockers(gd, player2, List.of(new BlockerAssignment(0, 0)));
@@ -225,13 +225,6 @@ class InfiltrationLensTest extends BaseCardTest {
 
     private Permanent addLens(Player player) {
         Permanent perm = new Permanent(new InfiltrationLens());
-        perm.setSummoningSick(false);
-        gd.playerBattlefields.get(player.getId()).add(perm);
-        return perm;
-    }
-
-    private Permanent addReadyCreature(Player player) {
-        Permanent perm = new Permanent(new GrizzlyBears());
         perm.setSummoningSick(false);
         gd.playerBattlefields.get(player.getId()).add(perm);
         return perm;

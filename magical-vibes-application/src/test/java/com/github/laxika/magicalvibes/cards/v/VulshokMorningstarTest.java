@@ -18,7 +18,7 @@ class VulshokMorningstarTest extends BaseCardTest {
     @DisplayName("Activating equip ability targets the creature and consumes mana")
     void activatingEquip() {
         addStarReady(player1);
-        Permanent creature = addReadyCreature(player1);
+        Permanent creature = addCreatureReady(player1, new GrizzlyBears());
         harness.addMana(player1, ManaColor.RED, 3);
 
         harness.activateAbility(player1, 0, null, creature.getId());
@@ -33,7 +33,7 @@ class VulshokMorningstarTest extends BaseCardTest {
     @DisplayName("Resolving equip attaches equipment to target creature")
     void resolvingEquipAttaches() {
         Permanent star = addStarReady(player1);
-        Permanent creature = addReadyCreature(player1);
+        Permanent creature = addCreatureReady(player1, new GrizzlyBears());
         harness.addMana(player1, ManaColor.RED, 2);
 
         harness.activateAbility(player1, 0, null, creature.getId());
@@ -46,7 +46,7 @@ class VulshokMorningstarTest extends BaseCardTest {
     @Test
     @DisplayName("Equipped creature gets +2/+2")
     void equippedCreatureGetsBoost() {
-        Permanent creature = addReadyCreature(player1);
+        Permanent creature = addCreatureReady(player1, new GrizzlyBears());
         Permanent star = addStarReady(player1);
         star.setAttachedTo(creature.getId());
 
@@ -57,7 +57,7 @@ class VulshokMorningstarTest extends BaseCardTest {
     @Test
     @DisplayName("Boost is removed when equipment leaves the battlefield")
     void boostRemovedWhenEquipmentRemoved() {
-        Permanent creature = addReadyCreature(player1);
+        Permanent creature = addCreatureReady(player1, new GrizzlyBears());
         Permanent star = addStarReady(player1);
         star.setAttachedTo(creature.getId());
 
@@ -72,8 +72,8 @@ class VulshokMorningstarTest extends BaseCardTest {
     @Test
     @DisplayName("Equipment does not affect other creatures")
     void doesNotAffectOtherCreatures() {
-        Permanent creature = addReadyCreature(player1);
-        Permanent other = addReadyCreature(player1);
+        Permanent creature = addCreatureReady(player1, new GrizzlyBears());
+        Permanent other = addCreatureReady(player1, new GrizzlyBears());
         Permanent star = addStarReady(player1);
         star.setAttachedTo(creature.getId());
 
@@ -83,13 +83,6 @@ class VulshokMorningstarTest extends BaseCardTest {
 
     private Permanent addStarReady(Player player) {
         Permanent perm = new Permanent(new VulshokMorningstar());
-        perm.setSummoningSick(false);
-        gd.playerBattlefields.get(player.getId()).add(perm);
-        return perm;
-    }
-
-    private Permanent addReadyCreature(Player player) {
-        Permanent perm = new Permanent(new GrizzlyBears());
         perm.setSummoningSick(false);
         gd.playerBattlefields.get(player.getId()).add(perm);
         return perm;

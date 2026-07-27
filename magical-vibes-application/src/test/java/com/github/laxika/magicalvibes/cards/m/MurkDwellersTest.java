@@ -1,9 +1,7 @@
 package com.github.laxika.magicalvibes.cards.m;
 
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
-import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.Permanent;
-import com.github.laxika.magicalvibes.model.Player;
 import com.github.laxika.magicalvibes.model.TurnStep;
 import com.github.laxika.magicalvibes.networking.message.BlockerAssignment;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
@@ -19,9 +17,9 @@ class MurkDwellersTest extends BaseCardTest {
     @Test
     @DisplayName("Unblocked attacker gets +2/+0")
     void unblockedGetsBoost() {
-        Permanent dwellers = addReady(player1, new MurkDwellers());
+        Permanent dwellers = addCreatureReady(player1, new MurkDwellers());
         dwellers.setAttacking(true);
-        addReady(player2, new GrizzlyBears()); // a potential blocker that declines to block
+        addCreatureReady(player2, new GrizzlyBears()); // a potential blocker that declines to block
 
         prepareDeclareBlockers();
         gs.declareBlockers(gd, player2, List.of()); // no blocks — Murk Dwellers is unblocked
@@ -34,9 +32,9 @@ class MurkDwellersTest extends BaseCardTest {
     @Test
     @DisplayName("A blocked attacker does not get the boost")
     void blockedGetsNoBoost() {
-        Permanent dwellers = addReady(player1, new MurkDwellers());
+        Permanent dwellers = addCreatureReady(player1, new MurkDwellers());
         dwellers.setAttacking(true);
-        addReady(player2, new GrizzlyBears());
+        addCreatureReady(player2, new GrizzlyBears());
 
         prepareDeclareBlockers();
         gs.declareBlockers(gd, player2, List.of(new BlockerAssignment(0, 0)));
@@ -49,7 +47,7 @@ class MurkDwellersTest extends BaseCardTest {
     @Test
     @DisplayName("The +2/+0 wears off at end of turn")
     void boostWearsOff() {
-        Permanent dwellers = addReady(player1, new MurkDwellers());
+        Permanent dwellers = addCreatureReady(player1, new MurkDwellers());
         dwellers.setAttacking(true);
 
         prepareDeclareBlockers();
@@ -64,12 +62,5 @@ class MurkDwellersTest extends BaseCardTest {
 
         assertThat(dwellers.getPowerModifier()).isEqualTo(0);
         assertThat(dwellers.getToughnessModifier()).isEqualTo(0);
-    }
-
-    private Permanent addReady(Player player, Card card) {
-        Permanent perm = new Permanent(card);
-        perm.setSummoningSick(false);
-        gd.playerBattlefields.get(player.getId()).add(perm);
-        return perm;
     }
 }

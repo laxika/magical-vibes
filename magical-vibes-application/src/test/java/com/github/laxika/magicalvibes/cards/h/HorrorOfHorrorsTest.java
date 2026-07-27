@@ -5,7 +5,6 @@ import com.github.laxika.magicalvibes.model.CardColor;
 import com.github.laxika.magicalvibes.model.CardSubtype;
 import com.github.laxika.magicalvibes.model.CardType;
 import com.github.laxika.magicalvibes.model.Permanent;
-import com.github.laxika.magicalvibes.model.Player;
 import com.github.laxika.magicalvibes.model.StackEntryType;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
 import org.junit.jupiter.api.DisplayName;
@@ -22,7 +21,7 @@ class HorrorOfHorrorsTest extends BaseCardTest {
     @DisplayName("Sacrificing a Swamp puts the regeneration ability on the stack targeting the black creature")
     void activatingTargetsBlackCreature() {
         harness.addToBattlefield(player1, new HorrorOfHorrors());
-        Permanent zombie = addReadyCreature(player1, createBlackCreature());
+        Permanent zombie = addCreatureReady(player1, createBlackCreature());
         harness.addToBattlefield(player1, createSwamp());
 
         harness.activateAbility(player1, 0, null, zombie.getId());
@@ -39,7 +38,7 @@ class HorrorOfHorrorsTest extends BaseCardTest {
     @DisplayName("Resolving the ability grants a regeneration shield to the target black creature")
     void resolvingGrantsShield() {
         harness.addToBattlefield(player1, new HorrorOfHorrors());
-        Permanent zombie = addReadyCreature(player1, createBlackCreature());
+        Permanent zombie = addCreatureReady(player1, createBlackCreature());
         harness.addToBattlefield(player1, createSwamp());
 
         harness.activateAbility(player1, 0, null, zombie.getId());
@@ -52,7 +51,7 @@ class HorrorOfHorrorsTest extends BaseCardTest {
     @DisplayName("Cannot target a non-black creature")
     void cannotTargetNonBlackCreature() {
         harness.addToBattlefield(player1, new HorrorOfHorrors());
-        Permanent whiteCreature = addReadyCreature(player1, createWhiteCreature());
+        Permanent whiteCreature = addCreatureReady(player1, createWhiteCreature());
         harness.addToBattlefield(player1, createSwamp());
 
         assertThatThrownBy(() -> harness.activateAbility(player1, 0, null, whiteCreature.getId()))
@@ -64,20 +63,13 @@ class HorrorOfHorrorsTest extends BaseCardTest {
     @DisplayName("Cannot activate the ability without a Swamp to sacrifice")
     void cannotActivateWithoutSwamp() {
         harness.addToBattlefield(player1, new HorrorOfHorrors());
-        Permanent zombie = addReadyCreature(player1, createBlackCreature());
+        Permanent zombie = addCreatureReady(player1, createBlackCreature());
 
         assertThatThrownBy(() -> harness.activateAbility(player1, 0, null, zombie.getId()))
                 .isInstanceOf(IllegalStateException.class);
     }
 
     // ===== Helpers =====
-
-    private Permanent addReadyCreature(Player player, Card card) {
-        Permanent permanent = new Permanent(card);
-        permanent.setSummoningSick(false);
-        gd.playerBattlefields.get(player.getId()).add(permanent);
-        return permanent;
-    }
 
     private Card createBlackCreature() {
         Card card = new Card();

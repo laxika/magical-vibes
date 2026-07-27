@@ -48,7 +48,7 @@ class PryingBladeTest extends BaseCardTest {
     @Test
     @DisplayName("Equipped creature gets +1/+0")
     void equippedCreatureGetsBoost() {
-        Permanent creature = addReadyCreature(player1);
+        Permanent creature = addCreatureReady(player1, new GrizzlyBears());
         Permanent blade = addBladeReady(player1);
         blade.setAttachedTo(creature.getId());
 
@@ -59,7 +59,7 @@ class PryingBladeTest extends BaseCardTest {
     @Test
     @DisplayName("Equipped creature loses boost when Prying Blade is removed")
     void creatureLosesBoostWhenEquipmentRemoved() {
-        Permanent creature = addReadyCreature(player1);
+        Permanent creature = addCreatureReady(player1, new GrizzlyBears());
         Permanent blade = addBladeReady(player1);
         blade.setAttachedTo(creature.getId());
 
@@ -76,7 +76,7 @@ class PryingBladeTest extends BaseCardTest {
     @Test
     @DisplayName("Creates a Treasure token when equipped creature deals combat damage to a player")
     void createsTreasureTokenOnCombatDamage() {
-        Permanent creature = addReadyCreature(player1);
+        Permanent creature = addCreatureReady(player1, new GrizzlyBears());
         Permanent blade = addBladeReady(player1);
         blade.setAttachedTo(creature.getId());
         creature.setAttacking(true);
@@ -92,7 +92,7 @@ class PryingBladeTest extends BaseCardTest {
     @Test
     @DisplayName("Treasure token has sacrifice-for-mana ability")
     void treasureTokenHasManaAbility() {
-        Permanent creature = addReadyCreature(player1);
+        Permanent creature = addCreatureReady(player1, new GrizzlyBears());
         Permanent blade = addBladeReady(player1);
         blade.setAttachedTo(creature.getId());
         creature.setAttacking(true);
@@ -109,7 +109,7 @@ class PryingBladeTest extends BaseCardTest {
     @Test
     @DisplayName("No trigger when equipped creature is blocked and deals no player damage")
     void noTriggerWhenBlocked() {
-        Permanent creature = addReadyCreature(player1);
+        Permanent creature = addCreatureReady(player1, new GrizzlyBears());
         Permanent blade = addBladeReady(player1);
         blade.setAttachedTo(creature.getId());
         creature.setAttacking(true);
@@ -135,8 +135,8 @@ class PryingBladeTest extends BaseCardTest {
     @DisplayName("Prying Blade can be moved to another creature")
     void canReEquipToAnotherCreature() {
         Permanent blade = addBladeReady(player1);
-        Permanent creature1 = addReadyCreature(player1);
-        Permanent creature2 = addReadyCreature(player1);
+        Permanent creature1 = addCreatureReady(player1, new GrizzlyBears());
+        Permanent creature2 = addCreatureReady(player1, new GrizzlyBears());
 
         blade.setAttachedTo(creature1.getId());
         assertThat(gqs.getEffectivePower(gd, creature1)).isEqualTo(3);
@@ -154,13 +154,6 @@ class PryingBladeTest extends BaseCardTest {
 
     private Permanent addBladeReady(Player player) {
         Permanent perm = new Permanent(new PryingBlade());
-        perm.setSummoningSick(false);
-        gd.playerBattlefields.get(player.getId()).add(perm);
-        return perm;
-    }
-
-    private Permanent addReadyCreature(Player player) {
-        Permanent perm = new Permanent(new GrizzlyBears());
         perm.setSummoningSick(false);
         gd.playerBattlefields.get(player.getId()).add(perm);
         return perm;

@@ -2,11 +2,9 @@ package com.github.laxika.magicalvibes.cards.e;
 
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
 import com.github.laxika.magicalvibes.cards.l.LlanowarElves;
-import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.Keyword;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
-import com.github.laxika.magicalvibes.model.Player;
 import com.github.laxika.magicalvibes.model.StackEntryType;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
 import org.junit.jupiter.api.DisplayName;
@@ -23,8 +21,8 @@ class EzuriRenegadeLeaderTest extends BaseCardTest {
     @Test
     @DisplayName("Regenerate ability targets another Elf and grants regeneration shield")
     void regenerateTargetsAnotherElf() {
-        Permanent ezuri = addReadyCreature(player1, new EzuriRenegadeLeader());
-        Permanent elf = addReadyCreature(player1, new LlanowarElves());
+        Permanent ezuri = addCreatureReady(player1, new EzuriRenegadeLeader());
+        Permanent elf = addCreatureReady(player1, new LlanowarElves());
         harness.addMana(player1, ManaColor.GREEN, 1);
 
         harness.activateAbility(player1, 0, null, elf.getId());
@@ -41,7 +39,7 @@ class EzuriRenegadeLeaderTest extends BaseCardTest {
     @Test
     @DisplayName("Regenerate ability cannot target Ezuri itself")
     void cannotRegenerateItself() {
-        Permanent ezuri = addReadyCreature(player1, new EzuriRenegadeLeader());
+        Permanent ezuri = addCreatureReady(player1, new EzuriRenegadeLeader());
         harness.addMana(player1, ManaColor.GREEN, 1);
 
         assertThatThrownBy(() -> harness.activateAbility(player1, 0, null, ezuri.getId()))
@@ -51,8 +49,8 @@ class EzuriRenegadeLeaderTest extends BaseCardTest {
     @Test
     @DisplayName("Regenerate ability cannot target a non-Elf creature")
     void cannotRegenerateNonElf() {
-        Permanent ezuri = addReadyCreature(player1, new EzuriRenegadeLeader());
-        Permanent bears = addReadyCreature(player1, new GrizzlyBears());
+        Permanent ezuri = addCreatureReady(player1, new EzuriRenegadeLeader());
+        Permanent bears = addCreatureReady(player1, new GrizzlyBears());
         harness.addMana(player1, ManaColor.GREEN, 1);
 
         assertThatThrownBy(() -> harness.activateAbility(player1, 0, null, bears.getId()))
@@ -62,8 +60,8 @@ class EzuriRenegadeLeaderTest extends BaseCardTest {
     @Test
     @DisplayName("Regenerate ability can target an opponent's Elf")
     void canRegenerateOpponentElf() {
-        Permanent ezuri = addReadyCreature(player1, new EzuriRenegadeLeader());
-        Permanent opponentElf = addReadyCreature(player2, new LlanowarElves());
+        Permanent ezuri = addCreatureReady(player1, new EzuriRenegadeLeader());
+        Permanent opponentElf = addCreatureReady(player2, new LlanowarElves());
         harness.addMana(player1, ManaColor.GREEN, 1);
 
         harness.activateAbility(player1, 0, null, opponentElf.getId());
@@ -77,8 +75,8 @@ class EzuriRenegadeLeaderTest extends BaseCardTest {
     @Test
     @DisplayName("Overrun gives +3/+3 and trample to Elf creatures you control")
     void overrunBoostsElves() {
-        Permanent ezuri = addReadyCreature(player1, new EzuriRenegadeLeader());
-        Permanent elf = addReadyCreature(player1, new LlanowarElves());
+        Permanent ezuri = addCreatureReady(player1, new EzuriRenegadeLeader());
+        Permanent elf = addCreatureReady(player1, new LlanowarElves());
         harness.addMana(player1, ManaColor.GREEN, 5);
 
         harness.activateAbility(player1, 0, 1, null, null);
@@ -98,8 +96,8 @@ class EzuriRenegadeLeaderTest extends BaseCardTest {
     @Test
     @DisplayName("Overrun does not affect non-Elf creatures")
     void overrunDoesNotAffectNonElves() {
-        Permanent ezuri = addReadyCreature(player1, new EzuriRenegadeLeader());
-        Permanent bears = addReadyCreature(player1, new GrizzlyBears());
+        Permanent ezuri = addCreatureReady(player1, new EzuriRenegadeLeader());
+        Permanent bears = addCreatureReady(player1, new GrizzlyBears());
         harness.addMana(player1, ManaColor.GREEN, 5);
 
         harness.activateAbility(player1, 0, 1, null, null);
@@ -114,8 +112,8 @@ class EzuriRenegadeLeaderTest extends BaseCardTest {
     @Test
     @DisplayName("Overrun does not affect opponent's Elf creatures")
     void overrunDoesNotAffectOpponentElves() {
-        Permanent ezuri = addReadyCreature(player1, new EzuriRenegadeLeader());
-        Permanent opponentElf = addReadyCreature(player2, new LlanowarElves());
+        Permanent ezuri = addCreatureReady(player1, new EzuriRenegadeLeader());
+        Permanent opponentElf = addCreatureReady(player2, new LlanowarElves());
         harness.addMana(player1, ManaColor.GREEN, 5);
 
         harness.activateAbility(player1, 0, 1, null, null);
@@ -130,7 +128,7 @@ class EzuriRenegadeLeaderTest extends BaseCardTest {
     @Test
     @DisplayName("Overrun requires 5 mana (2GGG)")
     void overrunRequiresEnoughMana() {
-        Permanent ezuri = addReadyCreature(player1, new EzuriRenegadeLeader());
+        Permanent ezuri = addCreatureReady(player1, new EzuriRenegadeLeader());
         harness.addMana(player1, ManaColor.GREEN, 4);
 
         assertThatThrownBy(() -> harness.activateAbility(player1, 0, 1, null, null))
@@ -139,11 +137,4 @@ class EzuriRenegadeLeaderTest extends BaseCardTest {
     }
 
     // ===== Helper methods =====
-
-    private Permanent addReadyCreature(Player player, Card card) {
-        Permanent permanent = new Permanent(card);
-        permanent.setSummoningSick(false);
-        gd.playerBattlefields.get(player.getId()).add(permanent);
-        return permanent;
-    }
 }

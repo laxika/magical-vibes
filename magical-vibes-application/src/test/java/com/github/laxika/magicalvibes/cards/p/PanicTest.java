@@ -2,10 +2,8 @@ package com.github.laxika.magicalvibes.cards.p;
 
 import com.github.laxika.magicalvibes.cards.f.FountainOfYouth;
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
-import com.github.laxika.magicalvibes.model.GameData;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
-import com.github.laxika.magicalvibes.model.Player;
 import com.github.laxika.magicalvibes.model.TurnStep;
 import com.github.laxika.magicalvibes.model.action.DrawCardsAtNextUpkeep;
 import com.github.laxika.magicalvibes.networking.message.BlockerAssignment;
@@ -27,7 +25,7 @@ class PanicTest extends BaseCardTest {
     @DisplayName("Cast during declare attackers: target can't block and a draw is scheduled")
     void targetCantBlockAndSchedulesDraw() {
         harness.forceActivePlayer(player1);
-        Permanent blocker = addReadyCreature(player2);
+        Permanent blocker = addCreatureReady(player2, new GrizzlyBears());
         harness.setHand(player1, List.of(new Panic()));
         harness.addMana(player1, ManaColor.RED, 1);
         harness.forceStep(TurnStep.DECLARE_ATTACKERS);
@@ -47,7 +45,7 @@ class PanicTest extends BaseCardTest {
     @DisplayName("The scheduled draw resolves at the next upkeep")
     void drawResolvesAtNextUpkeep() {
         harness.forceActivePlayer(player1);
-        Permanent blocker = addReadyCreature(player2);
+        Permanent blocker = addCreatureReady(player2, new GrizzlyBears());
         harness.setHand(player1, List.of(new Panic()));
         harness.addMana(player1, ManaColor.RED, 1);
         harness.forceStep(TurnStep.DECLARE_ATTACKERS);
@@ -71,8 +69,8 @@ class PanicTest extends BaseCardTest {
     @DisplayName("Targeted creature actually cannot block")
     void targetedCreatureCannotBlock() {
         harness.forceActivePlayer(player1);
-        Permanent attacker = addReadyCreature(player1);
-        Permanent blocker = addReadyCreature(player2);
+        Permanent attacker = addCreatureReady(player1, new GrizzlyBears());
+        Permanent blocker = addCreatureReady(player2, new GrizzlyBears());
         harness.setHand(player1, List.of(new Panic()));
         harness.addMana(player1, ManaColor.RED, 1);
         harness.forceStep(TurnStep.DECLARE_ATTACKERS);
@@ -95,7 +93,7 @@ class PanicTest extends BaseCardTest {
     @DisplayName("Cannot cast once blockers are declared")
     void cannotCastDuringDeclareBlockers() {
         harness.forceActivePlayer(player1);
-        Permanent blocker = addReadyCreature(player2);
+        Permanent blocker = addCreatureReady(player2, new GrizzlyBears());
         harness.setHand(player1, List.of(new Panic()));
         harness.addMana(player1, ManaColor.RED, 1);
         harness.forceStep(TurnStep.DECLARE_BLOCKERS);
@@ -109,7 +107,7 @@ class PanicTest extends BaseCardTest {
     @DisplayName("Cannot cast outside combat")
     void cannotCastOutsideCombat() {
         harness.forceActivePlayer(player1);
-        Permanent blocker = addReadyCreature(player2);
+        Permanent blocker = addCreatureReady(player2, new GrizzlyBears());
         harness.setHand(player1, List.of(new Panic()));
         harness.addMana(player1, ManaColor.RED, 1);
         harness.forceStep(TurnStep.PRECOMBAT_MAIN);
@@ -123,7 +121,7 @@ class PanicTest extends BaseCardTest {
     @DisplayName("Cannot target a noncreature permanent")
     void cannotTargetNonCreature() {
         harness.forceActivePlayer(player1);
-        addReadyCreature(player2); // valid target so spell is playable
+        addCreatureReady(player2, new GrizzlyBears()); // valid target so spell is playable
         harness.addToBattlefield(player2, new FountainOfYouth());
         harness.setHand(player1, List.of(new Panic()));
         harness.addMana(player1, ManaColor.RED, 1);
@@ -134,13 +132,5 @@ class PanicTest extends BaseCardTest {
         assertThatThrownBy(() -> harness.castInstant(player1, 0, fountainId))
                 .isInstanceOf(IllegalStateException.class)
                 .hasMessageContaining("Target must be a creature");
-    }
-
-    private Permanent addReadyCreature(Player player) {
-        GrizzlyBears card = new GrizzlyBears();
-        Permanent perm = new Permanent(card);
-        perm.setSummoningSick(false);
-        gd.playerBattlefields.get(player.getId()).add(perm);
-        return perm;
     }
 }

@@ -3,7 +3,6 @@ package com.github.laxika.magicalvibes.cards.p;
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
-import com.github.laxika.magicalvibes.model.Player;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
@@ -19,7 +18,7 @@ class ParalyzeTest extends BaseCardTest {
     @Test
     @DisplayName("Resolving Paralyze taps the enchanted creature")
     void resolvingTapsEnchantedCreature() {
-        Permanent creature = addCreatureReady(player2);
+        Permanent creature = addCreatureReady(player2, new GrizzlyBears());
         assertThat(creature.isTapped()).isFalse();
 
         harness.setHand(player1, List.of(new Paralyze()));
@@ -41,7 +40,7 @@ class ParalyzeTest extends BaseCardTest {
     @Test
     @DisplayName("Enchanted creature does not untap during its controller's untap step")
     void enchantedCreatureDoesNotUntap() {
-        Permanent creature = addCreatureReady(player2);
+        Permanent creature = addCreatureReady(player2, new GrizzlyBears());
         creature.tap();
 
         attachParalyze(creature);
@@ -56,7 +55,7 @@ class ParalyzeTest extends BaseCardTest {
     @Test
     @DisplayName("Enchanted creature's controller pays {4} at upkeep to untap it")
     void controllerPaysToUntap() {
-        Permanent creature = addCreatureReady(player2);
+        Permanent creature = addCreatureReady(player2, new GrizzlyBears());
         creature.tap();
         attachParalyze(creature);
 
@@ -72,7 +71,7 @@ class ParalyzeTest extends BaseCardTest {
     @Test
     @DisplayName("Declining the {4} payment leaves the creature tapped")
     void decliningLeavesTapped() {
-        Permanent creature = addCreatureReady(player2);
+        Permanent creature = addCreatureReady(player2, new GrizzlyBears());
         creature.tap();
         attachParalyze(creature);
 
@@ -88,7 +87,7 @@ class ParalyzeTest extends BaseCardTest {
     @Test
     @DisplayName("Accepting without enough mana leaves the creature tapped")
     void cannotPayLeavesTapped() {
-        Permanent creature = addCreatureReady(player2);
+        Permanent creature = addCreatureReady(player2, new GrizzlyBears());
         creature.tap();
         attachParalyze(creature);
 
@@ -104,7 +103,7 @@ class ParalyzeTest extends BaseCardTest {
     @Test
     @DisplayName("Upkeep untap ability does not fire during the Aura controller's upkeep")
     void doesNotTriggerDuringAuraControllerUpkeep() {
-        Permanent creature = addCreatureReady(player2);
+        Permanent creature = addCreatureReady(player2, new GrizzlyBears());
         creature.tap();
         attachParalyze(creature);
 
@@ -123,12 +122,5 @@ class ParalyzeTest extends BaseCardTest {
         Permanent aura = new Permanent(new Paralyze());
         aura.setAttachedTo(creature.getId());
         gd.playerBattlefields.get(player1.getId()).add(aura);
-    }
-
-    private Permanent addCreatureReady(Player player) {
-        Permanent perm = new Permanent(new GrizzlyBears());
-        perm.setSummoningSick(false);
-        gd.playerBattlefields.get(player.getId()).add(perm);
-        return perm;
     }
 }

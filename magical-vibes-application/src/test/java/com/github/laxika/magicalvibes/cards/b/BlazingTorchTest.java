@@ -27,7 +27,7 @@ class BlazingTorchTest extends BaseCardTest {
     @DisplayName("Resolving equip ability attaches Blazing Torch to target creature")
     void resolvingEquipAttachesToCreature() {
         Permanent torch = addTorchReady(player1);
-        Permanent creature = addReadyCreature(player1);
+        Permanent creature = addCreatureReady(player1, new GrizzlyBears());
         harness.addMana(player1, ManaColor.COLORLESS, 1);
 
         harness.activateAbility(player1, 0, null, creature.getId());
@@ -41,11 +41,11 @@ class BlazingTorchTest extends BaseCardTest {
     @Test
     @DisplayName("Equipped creature can tap and sacrifice Blazing Torch to deal 2 damage to target creature")
     void grantedAbilityDeals2DamageToCreature() {
-        Permanent creature = addReadyCreature(player1);
+        Permanent creature = addCreatureReady(player1, new GrizzlyBears());
         Permanent torch = addTorchReady(player1);
         torch.setAttachedTo(creature.getId());
 
-        Permanent targetCreature = addReadyCreature(player2);
+        Permanent targetCreature = addCreatureReady(player2, new GrizzlyBears());
 
         harness.activateAbility(player1, 0, null, targetCreature.getId());
         harness.passBothPriorities();
@@ -71,7 +71,7 @@ class BlazingTorchTest extends BaseCardTest {
     void grantedAbilityDeals2DamageToPlayer() {
         harness.setLife(player2, 20);
 
-        Permanent creature = addReadyCreature(player1);
+        Permanent creature = addCreatureReady(player1, new GrizzlyBears());
         Permanent torch = addTorchReady(player1);
         torch.setAttachedTo(creature.getId());
 
@@ -91,7 +91,7 @@ class BlazingTorchTest extends BaseCardTest {
     @Test
     @DisplayName("Equipped creature stays on battlefield after Blazing Torch is sacrificed")
     void creatureStaysAfterTorchSacrificed() {
-        Permanent creature = addReadyCreature(player1);
+        Permanent creature = addCreatureReady(player1, new GrizzlyBears());
         Permanent torch = addTorchReady(player1);
         torch.setAttachedTo(creature.getId());
 
@@ -109,7 +109,7 @@ class BlazingTorchTest extends BaseCardTest {
     @Test
     @DisplayName("Blazing Torch goes to graveyard when sacrificed")
     void torchGoesToGraveyard() {
-        Permanent creature = addReadyCreature(player1);
+        Permanent creature = addCreatureReady(player1, new GrizzlyBears());
         Permanent torch = addTorchReady(player1);
         torch.setAttachedTo(creature.getId());
 
@@ -143,7 +143,7 @@ class BlazingTorchTest extends BaseCardTest {
     @Test
     @DisplayName("Already tapped creature cannot use granted tap ability")
     void tappedCreatureCannotUseGrantedAbility() {
-        Permanent creature = addReadyCreature(player1);
+        Permanent creature = addCreatureReady(player1, new GrizzlyBears());
         creature.tap();
 
         Permanent torch = addTorchReady(player1);
@@ -159,7 +159,7 @@ class BlazingTorchTest extends BaseCardTest {
     @Test
     @DisplayName("Creature loses granted ability when Blazing Torch is removed")
     void creatureLosesAbilityWhenTorchRemoved() {
-        Permanent creature = addReadyCreature(player1);
+        Permanent creature = addCreatureReady(player1, new GrizzlyBears());
 
         Permanent torch = addTorchReady(player1);
         torch.setAttachedTo(creature.getId());
@@ -177,7 +177,7 @@ class BlazingTorchTest extends BaseCardTest {
     @Test
     @DisplayName("Equipped creature can't be blocked by Vampires")
     void equippedCreatureCantBeBlockedByVampires() {
-        Permanent creature = addReadyCreature(player1);
+        Permanent creature = addCreatureReady(player1, new GrizzlyBears());
         creature.setAttacking(true);
         Permanent torch = addTorchReady(player1);
         torch.setAttachedTo(creature.getId());
@@ -198,7 +198,7 @@ class BlazingTorchTest extends BaseCardTest {
     @Test
     @DisplayName("Equipped creature can't be blocked by Zombies")
     void equippedCreatureCantBeBlockedByZombies() {
-        Permanent creature = addReadyCreature(player1);
+        Permanent creature = addCreatureReady(player1, new GrizzlyBears());
         creature.setAttacking(true);
         Permanent torch = addTorchReady(player1);
         torch.setAttachedTo(creature.getId());
@@ -221,7 +221,7 @@ class BlazingTorchTest extends BaseCardTest {
     void damageSourceIsTorchNotCreature() {
         harness.setLife(player2, 20);
 
-        Permanent creature = addReadyCreature(player1);
+        Permanent creature = addCreatureReady(player1, new GrizzlyBears());
         Permanent torch = addTorchReady(player1);
         torch.setAttachedTo(creature.getId());
 
@@ -238,7 +238,7 @@ class BlazingTorchTest extends BaseCardTest {
     @Test
     @DisplayName("Equipped creature can be blocked by non-Vampire non-Zombie creatures")
     void equippedCreatureCanBeBlockedByNormalCreatures() {
-        Permanent creature = addReadyCreature(player1);
+        Permanent creature = addCreatureReady(player1, new GrizzlyBears());
         creature.setAttacking(true);
         Permanent torch = addTorchReady(player1);
         torch.setAttachedTo(creature.getId());
@@ -258,13 +258,6 @@ class BlazingTorchTest extends BaseCardTest {
 
     private Permanent addTorchReady(Player player) {
         Permanent perm = new Permanent(new BlazingTorch());
-        perm.setSummoningSick(false);
-        gd.playerBattlefields.get(player.getId()).add(perm);
-        return perm;
-    }
-
-    private Permanent addReadyCreature(Player player) {
-        Permanent perm = new Permanent(new GrizzlyBears());
         perm.setSummoningSick(false);
         gd.playerBattlefields.get(player.getId()).add(perm);
         return perm;

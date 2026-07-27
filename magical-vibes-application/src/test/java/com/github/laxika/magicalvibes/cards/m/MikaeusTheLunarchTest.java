@@ -77,8 +77,8 @@ class MikaeusTheLunarchTest extends BaseCardTest {
     void secondAbilityDistributesCounters() {
         Permanent mikaeus = addReadyMikaeus(player1);
         mikaeus.setCounterCount(CounterType.PLUS_ONE_PLUS_ONE, 2);
-        Permanent bear1 = addReadyCreature(player1);
-        Permanent bear2 = addReadyCreature(player1);
+        Permanent bear1 = addCreatureReady(player1, new GrizzlyBears());
+        Permanent bear2 = addCreatureReady(player1, new GrizzlyBears());
 
         harness.activateAbility(player1, 0, 1, null, null);
         harness.passBothPriorities();
@@ -95,7 +95,7 @@ class MikaeusTheLunarchTest extends BaseCardTest {
     void secondAbilityDoesNotCounterSelf() {
         Permanent mikaeus = addReadyMikaeus(player1);
         mikaeus.setCounterCount(CounterType.PLUS_ONE_PLUS_ONE, 3);
-        addReadyCreature(player1);
+        addCreatureReady(player1, new GrizzlyBears());
 
         harness.activateAbility(player1, 0, 1, null, null);
         harness.passBothPriorities();
@@ -109,7 +109,7 @@ class MikaeusTheLunarchTest extends BaseCardTest {
     void secondAbilityDoesNotAffectOpponent() {
         Permanent mikaeus = addReadyMikaeus(player1);
         mikaeus.setCounterCount(CounterType.PLUS_ONE_PLUS_ONE, 2);
-        Permanent opponentBear = addReadyCreature(player2);
+        Permanent opponentBear = addCreatureReady(player2, new GrizzlyBears());
 
         harness.activateAbility(player1, 0, 1, null, null);
         harness.passBothPriorities();
@@ -145,13 +145,6 @@ class MikaeusTheLunarchTest extends BaseCardTest {
 
     private Permanent addReadyMikaeus(Player player) {
         Permanent perm = new Permanent(new MikaeusTheLunarch());
-        perm.setSummoningSick(false);
-        gd.playerBattlefields.get(player.getId()).add(perm);
-        return perm;
-    }
-
-    private Permanent addReadyCreature(Player player) {
-        Permanent perm = new Permanent(new GrizzlyBears());
         perm.setSummoningSick(false);
         gd.playerBattlefields.get(player.getId()).add(perm);
         return perm;

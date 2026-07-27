@@ -53,7 +53,7 @@ class SwordOfFeastAndFamineTest extends BaseCardTest {
     @Test
     @DisplayName("Equipped creature gets +2/+2")
     void equippedCreatureGetsBoost() {
-        Permanent creature = addReadyCreature(player1);
+        Permanent creature = addCreatureReady(player1, new GrizzlyBears());
         Permanent sword = addSwordReady(player1);
         sword.setAttachedTo(creature.getId());
 
@@ -64,7 +64,7 @@ class SwordOfFeastAndFamineTest extends BaseCardTest {
     @Test
     @DisplayName("Equipped creature loses boost when Sword is removed")
     void creatureLosesBoostWhenEquipmentRemoved() {
-        Permanent creature = addReadyCreature(player1);
+        Permanent creature = addCreatureReady(player1, new GrizzlyBears());
         Permanent sword = addSwordReady(player1);
         sword.setAttachedTo(creature.getId());
 
@@ -81,7 +81,7 @@ class SwordOfFeastAndFamineTest extends BaseCardTest {
     @Test
     @DisplayName("Equipped creature has protection from black")
     void equippedCreatureHasProtectionFromBlack() {
-        Permanent creature = addReadyCreature(player1);
+        Permanent creature = addCreatureReady(player1, new GrizzlyBears());
         Permanent sword = addSwordReady(player1);
         sword.setAttachedTo(creature.getId());
 
@@ -91,7 +91,7 @@ class SwordOfFeastAndFamineTest extends BaseCardTest {
     @Test
     @DisplayName("Equipped creature has protection from green")
     void equippedCreatureHasProtectionFromGreen() {
-        Permanent creature = addReadyCreature(player1);
+        Permanent creature = addCreatureReady(player1, new GrizzlyBears());
         Permanent sword = addSwordReady(player1);
         sword.setAttachedTo(creature.getId());
 
@@ -101,7 +101,7 @@ class SwordOfFeastAndFamineTest extends BaseCardTest {
     @Test
     @DisplayName("Equipped creature does NOT have protection from red")
     void equippedCreatureNoProtectionFromRed() {
-        Permanent creature = addReadyCreature(player1);
+        Permanent creature = addCreatureReady(player1, new GrizzlyBears());
         Permanent sword = addSwordReady(player1);
         sword.setAttachedTo(creature.getId());
 
@@ -111,7 +111,7 @@ class SwordOfFeastAndFamineTest extends BaseCardTest {
     @Test
     @DisplayName("Creature loses protection when Sword is removed")
     void creatureLosesProtectionWhenEquipmentRemoved() {
-        Permanent creature = addReadyCreature(player1);
+        Permanent creature = addCreatureReady(player1, new GrizzlyBears());
         Permanent sword = addSwordReady(player1);
         sword.setAttachedTo(creature.getId());
 
@@ -129,7 +129,7 @@ class SwordOfFeastAndFamineTest extends BaseCardTest {
     @Test
     @DisplayName("Damaged player must discard a card when equipped creature deals combat damage")
     void discardOnCombatDamage() {
-        Permanent creature = addReadyCreature(player1);
+        Permanent creature = addCreatureReady(player1, new GrizzlyBears());
         Permanent sword = addSwordReady(player1);
         sword.setAttachedTo(creature.getId());
         creature.setAttacking(true);
@@ -152,7 +152,7 @@ class SwordOfFeastAndFamineTest extends BaseCardTest {
     @Test
     @DisplayName("Untap still fires even when opponent has no cards to discard")
     void untapStillFiresWhenNoDiscard() {
-        Permanent creature = addReadyCreature(player1);
+        Permanent creature = addCreatureReady(player1, new GrizzlyBears());
         Permanent sword = addSwordReady(player1);
         sword.setAttachedTo(creature.getId());
         creature.setAttacking(true);
@@ -173,7 +173,7 @@ class SwordOfFeastAndFamineTest extends BaseCardTest {
     @Test
     @DisplayName("Untaps all lands controller controls when equipped creature deals combat damage")
     void untapLandsOnCombatDamage() {
-        Permanent creature = addReadyCreature(player1);
+        Permanent creature = addCreatureReady(player1, new GrizzlyBears());
         Permanent sword = addSwordReady(player1);
         sword.setAttachedTo(creature.getId());
         creature.setAttacking(true);
@@ -194,7 +194,7 @@ class SwordOfFeastAndFamineTest extends BaseCardTest {
     @Test
     @DisplayName("Does not untap opponent's lands")
     void doesNotUntapOpponentLands() {
-        Permanent creature = addReadyCreature(player1);
+        Permanent creature = addCreatureReady(player1, new GrizzlyBears());
         Permanent sword = addSwordReady(player1);
         sword.setAttachedTo(creature.getId());
         creature.setAttacking(true);
@@ -211,13 +211,13 @@ class SwordOfFeastAndFamineTest extends BaseCardTest {
     @Test
     @DisplayName("Does not untap non-land permanents")
     void doesNotUntapNonLandPermanents() {
-        Permanent creature = addReadyCreature(player1);
+        Permanent creature = addCreatureReady(player1, new GrizzlyBears());
         Permanent sword = addSwordReady(player1);
         sword.setAttachedTo(creature.getId());
         creature.setAttacking(true);
 
         // Add a tapped creature (not a land)
-        Permanent otherCreature = addReadyCreature(player1);
+        Permanent otherCreature = addCreatureReady(player1, new GrizzlyBears());
         otherCreature.tap();
 
         harness.setHand(player2, new ArrayList<>());
@@ -234,7 +234,7 @@ class SwordOfFeastAndFamineTest extends BaseCardTest {
     @DisplayName("Both discard and untap fire when equipped creature deals combat damage")
     void bothEffectsFireOnCombatDamage() {
         harness.setLife(player2, 20);
-        Permanent creature = addReadyCreature(player1);
+        Permanent creature = addCreatureReady(player1, new GrizzlyBears());
         Permanent sword = addSwordReady(player1);
         sword.setAttachedTo(creature.getId());
         creature.setAttacking(true);
@@ -265,7 +265,7 @@ class SwordOfFeastAndFamineTest extends BaseCardTest {
     @Test
     @DisplayName("No trigger when equipped creature is blocked and deals no player damage")
     void noTriggerWhenBlocked() {
-        Permanent creature = addReadyCreature(player1);
+        Permanent creature = addCreatureReady(player1, new GrizzlyBears());
         Permanent sword = addSwordReady(player1);
         sword.setAttachedTo(creature.getId());
         creature.setAttacking(true);
@@ -298,8 +298,8 @@ class SwordOfFeastAndFamineTest extends BaseCardTest {
     @DisplayName("Sword can be moved to another creature")
     void canReEquipToAnotherCreature() {
         Permanent sword = addSwordReady(player1);
-        Permanent creature1 = addReadyCreature(player1);
-        Permanent creature2 = addReadyCreature(player1);
+        Permanent creature1 = addCreatureReady(player1, new GrizzlyBears());
+        Permanent creature2 = addCreatureReady(player1, new GrizzlyBears());
 
         sword.setAttachedTo(creature1.getId());
         assertThat(gqs.getEffectivePower(gd, creature1)).isEqualTo(4);
@@ -397,13 +397,6 @@ class SwordOfFeastAndFamineTest extends BaseCardTest {
 
     private Permanent addSwordReady(Player player) {
         Permanent perm = new Permanent(new SwordOfFeastAndFamine());
-        perm.setSummoningSick(false);
-        gd.playerBattlefields.get(player.getId()).add(perm);
-        return perm;
-    }
-
-    private Permanent addReadyCreature(Player player) {
-        Permanent perm = new Permanent(new GrizzlyBears());
         perm.setSummoningSick(false);
         gd.playerBattlefields.get(player.getId()).add(perm);
         return perm;

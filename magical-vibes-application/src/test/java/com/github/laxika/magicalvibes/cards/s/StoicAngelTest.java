@@ -2,7 +2,6 @@ package com.github.laxika.magicalvibes.cards.s;
 
 import com.github.laxika.magicalvibes.cards.f.Forest;
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
-import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.Player;
 import com.github.laxika.magicalvibes.model.TurnStep;
@@ -19,10 +18,10 @@ class StoicAngelTest extends BaseCardTest {
     @Test
     @DisplayName("Only the one chosen creature untaps; other creatures stay tapped, non-creatures untap normally")
     void picksOneCreatureLandsUntapFreely() {
-        addReady(player1, new StoicAngel());
-        Permanent bears1 = addReady(player1, new GrizzlyBears());
-        Permanent bears2 = addReady(player1, new GrizzlyBears());
-        Permanent forest = addReady(player1, new Forest());
+        addCreatureReady(player1, new StoicAngel());
+        Permanent bears1 = addCreatureReady(player1, new GrizzlyBears());
+        Permanent bears2 = addCreatureReady(player1, new GrizzlyBears());
+        Permanent forest = addCreatureReady(player1, new Forest());
         bears1.tap();
         bears2.tap();
         forest.tap();
@@ -38,9 +37,9 @@ class StoicAngelTest extends BaseCardTest {
     @Test
     @DisplayName("One tapped creature untaps normally without a choice")
     void oneCreatureUntapsNormally() {
-        addReady(player1, new StoicAngel());
-        Permanent bears = addReady(player1, new GrizzlyBears());
-        Permanent forest = addReady(player1, new Forest());
+        addCreatureReady(player1, new StoicAngel());
+        Permanent bears = addCreatureReady(player1, new GrizzlyBears());
+        Permanent forest = addCreatureReady(player1, new Forest());
         bears.tap();
         forest.tap();
 
@@ -53,10 +52,10 @@ class StoicAngelTest extends BaseCardTest {
     @Test
     @DisplayName("An opponent's Stoic Angel restricts your untap step too")
     void opponentStoicAngelRestrictsYourUntap() {
-        addReady(player2, new StoicAngel());
-        Permanent bears1 = addReady(player1, new GrizzlyBears());
-        Permanent bears2 = addReady(player1, new GrizzlyBears());
-        Permanent forest = addReady(player1, new Forest());
+        addCreatureReady(player2, new StoicAngel());
+        Permanent bears1 = addCreatureReady(player1, new GrizzlyBears());
+        Permanent bears2 = addCreatureReady(player1, new GrizzlyBears());
+        Permanent forest = addCreatureReady(player1, new Forest());
         bears1.tap();
         bears2.tap();
         forest.tap();
@@ -72,9 +71,9 @@ class StoicAngelTest extends BaseCardTest {
     @Test
     @DisplayName("The lock applies even while Stoic Angel itself is tapped (unlike Static Orb)")
     void appliesWhileAngelTapped() {
-        Permanent angel = addReady(player1, new StoicAngel());
+        Permanent angel = addCreatureReady(player1, new StoicAngel());
         angel.tap();
-        Permanent bears = addReady(player1, new GrizzlyBears());
+        Permanent bears = addCreatureReady(player1, new GrizzlyBears());
         bears.tap();
 
         advanceToNextTurn(player2);
@@ -82,13 +81,6 @@ class StoicAngelTest extends BaseCardTest {
 
         assertThat(bears.isTapped()).isFalse();
         assertThat(angel.isTapped()).isTrue();
-    }
-
-    private Permanent addReady(Player player, Card card) {
-        Permanent perm = new Permanent(card);
-        perm.setSummoningSick(false);
-        gd.playerBattlefields.get(player.getId()).add(perm);
-        return perm;
     }
 
     private void advanceToNextTurn(Player currentActivePlayer) {

@@ -1,5 +1,6 @@
 package com.github.laxika.magicalvibes.cards.g;
 
+import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
 import com.github.laxika.magicalvibes.model.ActivationTimingRestriction;
 import com.github.laxika.magicalvibes.model.Keyword;
 import com.github.laxika.magicalvibes.model.ManaColor;
@@ -66,7 +67,7 @@ class GraftedExoskeletonTest extends BaseCardTest {
     @DisplayName("Resolving equip ability attaches Exoskeleton to target creature")
     void resolvingEquipAttachesToCreature() {
         Permanent exoskeleton = addExoskeletonReady(player1);
-        Permanent creature = addReadyCreature(player1);
+        Permanent creature = addCreatureReady(player1, new GrizzlyBears());
         harness.addMana(player1, ManaColor.WHITE, 2);
 
         harness.activateAbility(player1, 0, null, creature.getId());
@@ -80,7 +81,7 @@ class GraftedExoskeletonTest extends BaseCardTest {
     @Test
     @DisplayName("Equipped creature gets +2/+2")
     void equippedCreatureGetsBoost() {
-        Permanent creature = addReadyCreature(player1);
+        Permanent creature = addCreatureReady(player1, new GrizzlyBears());
         Permanent exoskeleton = addExoskeletonReady(player1);
         exoskeleton.setAttachedTo(creature.getId());
 
@@ -93,7 +94,7 @@ class GraftedExoskeletonTest extends BaseCardTest {
     @Test
     @DisplayName("Equipped creature has infect")
     void equippedCreatureHasInfect() {
-        Permanent creature = addReadyCreature(player1);
+        Permanent creature = addCreatureReady(player1, new GrizzlyBears());
         Permanent exoskeleton = addExoskeletonReady(player1);
         exoskeleton.setAttachedTo(creature.getId());
 
@@ -103,7 +104,7 @@ class GraftedExoskeletonTest extends BaseCardTest {
     @Test
     @DisplayName("Creature loses infect when Exoskeleton is removed")
     void creatureLosesInfectWhenEquipmentRemoved() {
-        Permanent creature = addReadyCreature(player1);
+        Permanent creature = addCreatureReady(player1, new GrizzlyBears());
         Permanent exoskeleton = addExoskeletonReady(player1);
         exoskeleton.setAttachedTo(creature.getId());
 
@@ -119,7 +120,7 @@ class GraftedExoskeletonTest extends BaseCardTest {
     @Test
     @DisplayName("Equipped creature deals combat damage as poison counters to defending player")
     void infectDealsPoisonCountersToPlayer() {
-        Permanent creature = addReadyCreature(player1);
+        Permanent creature = addCreatureReady(player1, new GrizzlyBears());
         Permanent exoskeleton = addExoskeletonReady(player1);
         exoskeleton.setAttachedTo(creature.getId());
         creature.setAttacking(true);
@@ -135,13 +136,13 @@ class GraftedExoskeletonTest extends BaseCardTest {
     @Test
     @DisplayName("Equipped creature deals combat damage as -1/-1 counters to blocking creature")
     void infectDealsMinusCountersToCreature() {
-        Permanent attacker = addReadyCreature(player1);
+        Permanent attacker = addCreatureReady(player1, new GrizzlyBears());
         Permanent exoskeleton = addExoskeletonReady(player1);
         exoskeleton.setAttachedTo(attacker.getId());
         attacker.setAttacking(true);
 
         // 2/2 blocker
-        Permanent blocker = addReadyCreature(player2);
+        Permanent blocker = addCreatureReady(player2, new GrizzlyBears());
         blocker.setBlocking(true);
         blocker.addBlockingTarget(0);
 
@@ -159,8 +160,8 @@ class GraftedExoskeletonTest extends BaseCardTest {
     @DisplayName("Re-equipping Grafted Exoskeleton sacrifices the previously equipped creature")
     void reEquipSacrificesPreviousCreature() {
         Permanent exoskeleton = addExoskeletonReady(player1);
-        Permanent creature1 = addReadyCreature(player1);
-        Permanent creature2 = addReadyCreature(player1);
+        Permanent creature1 = addCreatureReady(player1, new GrizzlyBears());
+        Permanent creature2 = addCreatureReady(player1, new GrizzlyBears());
 
         // Attach to creature1 first
         exoskeleton.setAttachedTo(creature1.getId());
@@ -188,7 +189,7 @@ class GraftedExoskeletonTest extends BaseCardTest {
     @Test
     @DisplayName("Destroying Grafted Exoskeleton sacrifices the equipped creature")
     void destroyingExoskeletonSacrificesCreature() {
-        Permanent creature = addReadyCreature(player1);
+        Permanent creature = addCreatureReady(player1, new GrizzlyBears());
         Permanent exoskeleton = addExoskeletonReady(player1);
         exoskeleton.setAttachedTo(creature.getId());
 
@@ -223,8 +224,8 @@ class GraftedExoskeletonTest extends BaseCardTest {
     @DisplayName("Equipping from unattached state does not sacrifice anything")
     void equippingFromUnattachedDoesNotSacrifice() {
         Permanent exoskeleton = addExoskeletonReady(player1);
-        Permanent creature1 = addReadyCreature(player1);
-        Permanent creature2 = addReadyCreature(player1);
+        Permanent creature1 = addCreatureReady(player1, new GrizzlyBears());
+        Permanent creature2 = addCreatureReady(player1, new GrizzlyBears());
 
         // Exoskeleton is unattached, equip to creature1
         harness.addMana(player1, ManaColor.WHITE, 2);
@@ -247,7 +248,7 @@ class GraftedExoskeletonTest extends BaseCardTest {
     @DisplayName("Re-equipping to same creature does not sacrifice it")
     void reEquipToSameCreatureDoesNotSacrifice() {
         Permanent exoskeleton = addExoskeletonReady(player1);
-        Permanent creature = addReadyCreature(player1);
+        Permanent creature = addCreatureReady(player1, new GrizzlyBears());
 
         exoskeleton.setAttachedTo(creature.getId());
 
@@ -265,13 +266,6 @@ class GraftedExoskeletonTest extends BaseCardTest {
 
     private Permanent addExoskeletonReady(Player player) {
         Permanent perm = new Permanent(new GraftedExoskeleton());
-        perm.setSummoningSick(false);
-        gd.playerBattlefields.get(player.getId()).add(perm);
-        return perm;
-    }
-
-    private Permanent addReadyCreature(Player player) {
-        Permanent perm = new Permanent(new GrizzlyBears());
         perm.setSummoningSick(false);
         gd.playerBattlefields.get(player.getId()).add(perm);
         return perm;

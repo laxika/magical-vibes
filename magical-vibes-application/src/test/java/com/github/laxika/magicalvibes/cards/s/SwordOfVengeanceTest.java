@@ -64,7 +64,7 @@ class SwordOfVengeanceTest extends BaseCardTest {
     @DisplayName("Resolving equip ability attaches Sword to target creature")
     void resolvingEquipAttachesToCreature() {
         Permanent sword = addSwordReady(player1);
-        Permanent creature = addReadyCreature(player1);
+        Permanent creature = addCreatureReady(player1, new GrizzlyBears());
         harness.addMana(player1, ManaColor.WHITE, 3);
 
         harness.activateAbility(player1, 0, null, creature.getId());
@@ -79,7 +79,7 @@ class SwordOfVengeanceTest extends BaseCardTest {
     @Test
     @DisplayName("Equipped creature gets +2/+0")
     void equippedCreatureGetsBoost() {
-        Permanent creature = addReadyCreature(player1);
+        Permanent creature = addCreatureReady(player1, new GrizzlyBears());
         Permanent sword = addSwordReady(player1);
         sword.setAttachedTo(creature.getId());
 
@@ -90,7 +90,7 @@ class SwordOfVengeanceTest extends BaseCardTest {
     @Test
     @DisplayName("Equipped creature loses boost when Sword is removed")
     void creatureLosesBoostWhenEquipmentRemoved() {
-        Permanent creature = addReadyCreature(player1);
+        Permanent creature = addCreatureReady(player1, new GrizzlyBears());
         Permanent sword = addSwordReady(player1);
         sword.setAttachedTo(creature.getId());
 
@@ -105,8 +105,8 @@ class SwordOfVengeanceTest extends BaseCardTest {
     @Test
     @DisplayName("Sword does not affect unequipped creatures")
     void doesNotAffectOtherCreatures() {
-        Permanent creature = addReadyCreature(player1);
-        Permanent otherCreature = addReadyCreature(player1);
+        Permanent creature = addCreatureReady(player1, new GrizzlyBears());
+        Permanent otherCreature = addCreatureReady(player1, new GrizzlyBears());
         Permanent sword = addSwordReady(player1);
         sword.setAttachedTo(creature.getId());
 
@@ -119,7 +119,7 @@ class SwordOfVengeanceTest extends BaseCardTest {
     @Test
     @DisplayName("Equipped creature has first strike")
     void equippedCreatureHasFirstStrike() {
-        Permanent creature = addReadyCreature(player1);
+        Permanent creature = addCreatureReady(player1, new GrizzlyBears());
         Permanent sword = addSwordReady(player1);
         sword.setAttachedTo(creature.getId());
 
@@ -129,7 +129,7 @@ class SwordOfVengeanceTest extends BaseCardTest {
     @Test
     @DisplayName("Equipped creature has vigilance")
     void equippedCreatureHasVigilance() {
-        Permanent creature = addReadyCreature(player1);
+        Permanent creature = addCreatureReady(player1, new GrizzlyBears());
         Permanent sword = addSwordReady(player1);
         sword.setAttachedTo(creature.getId());
 
@@ -139,7 +139,7 @@ class SwordOfVengeanceTest extends BaseCardTest {
     @Test
     @DisplayName("Equipped creature has trample")
     void equippedCreatureHasTrample() {
-        Permanent creature = addReadyCreature(player1);
+        Permanent creature = addCreatureReady(player1, new GrizzlyBears());
         Permanent sword = addSwordReady(player1);
         sword.setAttachedTo(creature.getId());
 
@@ -149,7 +149,7 @@ class SwordOfVengeanceTest extends BaseCardTest {
     @Test
     @DisplayName("Equipped creature has haste")
     void equippedCreatureHasHaste() {
-        Permanent creature = addReadyCreature(player1);
+        Permanent creature = addCreatureReady(player1, new GrizzlyBears());
         Permanent sword = addSwordReady(player1);
         sword.setAttachedTo(creature.getId());
 
@@ -159,7 +159,7 @@ class SwordOfVengeanceTest extends BaseCardTest {
     @Test
     @DisplayName("Creature loses all keywords when Sword is removed")
     void creatureLosesKeywordsWhenEquipmentRemoved() {
-        Permanent creature = addReadyCreature(player1);
+        Permanent creature = addCreatureReady(player1, new GrizzlyBears());
         Permanent sword = addSwordReady(player1);
         sword.setAttachedTo(creature.getId());
 
@@ -182,8 +182,8 @@ class SwordOfVengeanceTest extends BaseCardTest {
     @DisplayName("Sword can be moved to another creature")
     void canReEquipToAnotherCreature() {
         Permanent sword = addSwordReady(player1);
-        Permanent creature1 = addReadyCreature(player1);
-        Permanent creature2 = addReadyCreature(player1);
+        Permanent creature1 = addCreatureReady(player1, new GrizzlyBears());
+        Permanent creature2 = addCreatureReady(player1, new GrizzlyBears());
 
         sword.setAttachedTo(creature1.getId());
         assertThat(gqs.getEffectivePower(gd, creature1)).isEqualTo(4);
@@ -215,13 +215,6 @@ class SwordOfVengeanceTest extends BaseCardTest {
 
     private Permanent addSwordReady(Player player) {
         Permanent perm = new Permanent(new SwordOfVengeance());
-        perm.setSummoningSick(false);
-        gd.playerBattlefields.get(player.getId()).add(perm);
-        return perm;
-    }
-
-    private Permanent addReadyCreature(Player player) {
-        Permanent perm = new Permanent(new GrizzlyBears());
         perm.setSummoningSick(false);
         gd.playerBattlefields.get(player.getId()).add(perm);
         return perm;

@@ -3,7 +3,6 @@ package com.github.laxika.magicalvibes.cards.o;
 import com.github.laxika.magicalvibes.model.GameLogEntry;
 
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
-import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CounterType;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.PendingInteraction;
@@ -68,7 +67,7 @@ class OonasBlackguardTest extends BaseCardTest {
         harness.setHand(player2, List.of(new GrizzlyBears()));
         addReadyBlackguard(player1);
 
-        Permanent attacker = addReadyCreature(player1, new GrizzlyBears());
+        Permanent attacker = addCreatureReady(player1, new GrizzlyBears());
         attacker.setCounterCount(CounterType.PLUS_ONE_PLUS_ONE, 1);
         attacker.setAttacking(true);
 
@@ -92,7 +91,7 @@ class OonasBlackguardTest extends BaseCardTest {
         harness.setHand(player2, List.of(new GrizzlyBears()));
         addReadyBlackguard(player1);
 
-        Permanent attacker = addReadyCreature(player1, new GrizzlyBears());
+        Permanent attacker = addCreatureReady(player1, new GrizzlyBears());
         attacker.setAttacking(true);
 
         resolveCombat();
@@ -109,7 +108,7 @@ class OonasBlackguardTest extends BaseCardTest {
         harness.setHand(player2, List.of());
         addReadyBlackguard(player1);
 
-        Permanent attacker = addReadyCreature(player1, new GrizzlyBears());
+        Permanent attacker = addCreatureReady(player1, new GrizzlyBears());
         attacker.setCounterCount(CounterType.PLUS_ONE_PLUS_ONE, 1);
         attacker.setAttacking(true);
 
@@ -123,13 +122,6 @@ class OonasBlackguardTest extends BaseCardTest {
     // ===== Helpers =====
 
     private Permanent addReadyBlackguard(Player player) {
-        return addReadyCreature(player, new OonasBlackguard());
-    }
-
-    private Permanent addReadyCreature(Player player, Card card) {
-        Permanent perm = new Permanent(card);
-        perm.setSummoningSick(false);
-        gd.playerBattlefields.get(player.getId()).add(perm);
-        return perm;
+        return addCreatureReady(player, new OonasBlackguard());
     }
 }

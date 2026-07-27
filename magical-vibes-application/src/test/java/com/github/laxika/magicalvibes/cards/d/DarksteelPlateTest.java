@@ -41,7 +41,7 @@ class DarksteelPlateTest extends BaseCardTest {
     @DisplayName("Resolving equip attaches Darksteel Plate to target creature")
     void resolvingEquipAttaches() {
         Permanent plate = addReadyPlate(player1);
-        Permanent creature = addReadyCreature(player1);
+        Permanent creature = addCreatureReady(player1, new GrizzlyBears());
         harness.addMana(player1, ManaColor.COLORLESS, 2);
 
         harness.activateAbility(player1, 0, null, creature.getId());
@@ -56,7 +56,7 @@ class DarksteelPlateTest extends BaseCardTest {
     @Test
     @DisplayName("Equipped creature has indestructible keyword")
     void equippedCreatureHasIndestructible() {
-        Permanent creature = addReadyCreature(player1);
+        Permanent creature = addCreatureReady(player1, new GrizzlyBears());
         Permanent plate = addReadyPlate(player1);
         plate.setAttachedTo(creature.getId());
 
@@ -66,7 +66,7 @@ class DarksteelPlateTest extends BaseCardTest {
     @Test
     @DisplayName("Creature loses indestructible when Darksteel Plate is removed")
     void creatureLosesIndestructibleWhenPlateRemoved() {
-        Permanent creature = addReadyCreature(player1);
+        Permanent creature = addCreatureReady(player1, new GrizzlyBears());
         Permanent plate = addReadyPlate(player1);
         plate.setAttachedTo(creature.getId());
 
@@ -80,8 +80,8 @@ class DarksteelPlateTest extends BaseCardTest {
     @Test
     @DisplayName("Unequipped creatures do not get indestructible")
     void unequippedCreatureDoesNotGetIndestructible() {
-        Permanent creature1 = addReadyCreature(player1);
-        Permanent creature2 = addReadyCreature(player1);
+        Permanent creature1 = addCreatureReady(player1, new GrizzlyBears());
+        Permanent creature2 = addCreatureReady(player1, new GrizzlyBears());
         Permanent plate = addReadyPlate(player1);
         plate.setAttachedTo(creature1.getId());
 
@@ -95,8 +95,8 @@ class DarksteelPlateTest extends BaseCardTest {
     @DisplayName("Moving Darksteel Plate transfers indestructible to new creature")
     void reEquipTransfersIndestructible() {
         Permanent plate = addReadyPlate(player1);
-        Permanent creature1 = addReadyCreature(player1);
-        Permanent creature2 = addReadyCreature(player1);
+        Permanent creature1 = addCreatureReady(player1, new GrizzlyBears());
+        Permanent creature2 = addCreatureReady(player1, new GrizzlyBears());
         plate.setAttachedTo(creature1.getId());
 
         assertThat(gqs.hasKeyword(gd, creature1, Keyword.INDESTRUCTIBLE)).isTrue();
@@ -114,13 +114,6 @@ class DarksteelPlateTest extends BaseCardTest {
 
     private Permanent addReadyPlate(Player player) {
         Permanent perm = new Permanent(new DarksteelPlate());
-        perm.setSummoningSick(false);
-        gd.playerBattlefields.get(player.getId()).add(perm);
-        return perm;
-    }
-
-    private Permanent addReadyCreature(Player player) {
-        Permanent perm = new Permanent(new GrizzlyBears());
         perm.setSummoningSick(false);
         gd.playerBattlefields.get(player.getId()).add(perm);
         return perm;

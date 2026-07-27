@@ -1,5 +1,6 @@
 package com.github.laxika.magicalvibes.cards.g;
 
+import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
 import com.github.laxika.magicalvibes.testutil.TestCards;
 import com.github.laxika.magicalvibes.model.ActivationTimingRestriction;
 import com.github.laxika.magicalvibes.model.Keyword;
@@ -64,7 +65,7 @@ class GorgonFlailTest extends BaseCardTest {
     @DisplayName("Resolving equip ability attaches Gorgon Flail to target creature")
     void resolvingEquipAttachesToCreature() {
         Permanent flail = addFlailReady(player1);
-        Permanent creature = addReadyCreature(player1);
+        Permanent creature = addCreatureReady(player1, new GrizzlyBears());
         harness.addMana(player1, ManaColor.WHITE, 2);
 
         harness.activateAbility(player1, 0, null, creature.getId());
@@ -78,7 +79,7 @@ class GorgonFlailTest extends BaseCardTest {
     @Test
     @DisplayName("Equipped creature gets +1/+1")
     void equippedCreatureGetsBoost() {
-        Permanent creature = addReadyCreature(player1);
+        Permanent creature = addCreatureReady(player1, new GrizzlyBears());
         Permanent flail = addFlailReady(player1);
         flail.setAttachedTo(creature.getId());
 
@@ -91,7 +92,7 @@ class GorgonFlailTest extends BaseCardTest {
     @Test
     @DisplayName("Equipped creature has deathtouch")
     void equippedCreatureHasDeathtouch() {
-        Permanent creature = addReadyCreature(player1);
+        Permanent creature = addCreatureReady(player1, new GrizzlyBears());
         Permanent flail = addFlailReady(player1);
         flail.setAttachedTo(creature.getId());
 
@@ -101,7 +102,7 @@ class GorgonFlailTest extends BaseCardTest {
     @Test
     @DisplayName("Creature loses deathtouch when Gorgon Flail is removed")
     void creatureLosesDeathtouchWhenEquipmentRemoved() {
-        Permanent creature = addReadyCreature(player1);
+        Permanent creature = addCreatureReady(player1, new GrizzlyBears());
         Permanent flail = addFlailReady(player1);
         flail.setAttachedTo(creature.getId());
 
@@ -117,13 +118,13 @@ class GorgonFlailTest extends BaseCardTest {
     @Test
     @DisplayName("Equipped creature with deathtouch destroys any creature it damages in combat")
     void deathtouchDestroysBlocker() {
-        Permanent attacker = addReadyCreature(player1);
+        Permanent attacker = addCreatureReady(player1, new GrizzlyBears());
         Permanent flail = addFlailReady(player1);
         flail.setAttachedTo(attacker.getId());
         attacker.setAttacking(true);
 
         // 5/5 blocker — deathtouch means any damage is lethal
-        Permanent blocker = addReadyCreature(player2);
+        Permanent blocker = addCreatureReady(player2, new GrizzlyBears());
         TestCards.mutableCard(blocker).setPower(5);
         TestCards.mutableCard(blocker).setToughness(5);
         blocker.setBlocking(true);
@@ -142,8 +143,8 @@ class GorgonFlailTest extends BaseCardTest {
     @DisplayName("Re-equipping Gorgon Flail moves it to new creature")
     void reEquipMovesToNewCreature() {
         Permanent flail = addFlailReady(player1);
-        Permanent creature1 = addReadyCreature(player1);
-        Permanent creature2 = addReadyCreature(player1);
+        Permanent creature1 = addCreatureReady(player1, new GrizzlyBears());
+        Permanent creature2 = addCreatureReady(player1, new GrizzlyBears());
 
         flail.setAttachedTo(creature1.getId());
 
@@ -162,13 +163,6 @@ class GorgonFlailTest extends BaseCardTest {
 
     private Permanent addFlailReady(Player player) {
         Permanent perm = new Permanent(new GorgonFlail());
-        perm.setSummoningSick(false);
-        gd.playerBattlefields.get(player.getId()).add(perm);
-        return perm;
-    }
-
-    private Permanent addReadyCreature(Player player) {
-        Permanent perm = new Permanent(new GrizzlyBears());
         perm.setSummoningSick(false);
         gd.playerBattlefields.get(player.getId()).add(perm);
         return perm;

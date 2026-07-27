@@ -21,7 +21,7 @@ class NumbingDoseTest extends BaseCardTest {
     @Test
     @DisplayName("Can target a creature with Numbing Dose")
     void canTargetCreature() {
-        Permanent creature = addCreatureReady(player2);
+        Permanent creature = addCreatureReady(player2, new GrizzlyBears());
 
         harness.setHand(player1, List.of(new NumbingDose()));
         harness.addMana(player1, ManaColor.BLUE, 5);
@@ -50,7 +50,7 @@ class NumbingDoseTest extends BaseCardTest {
     @Test
     @DisplayName("Resolving Numbing Dose attaches it to target creature")
     void resolvingAttachesToCreature() {
-        Permanent creature = addCreatureReady(player2);
+        Permanent creature = addCreatureReady(player2, new GrizzlyBears());
 
         harness.setHand(player1, List.of(new NumbingDose()));
         harness.addMana(player1, ManaColor.BLUE, 5);
@@ -87,7 +87,7 @@ class NumbingDoseTest extends BaseCardTest {
     @Test
     @DisplayName("Tapped creature with Numbing Dose does not untap during controller's untap step")
     void enchantedCreatureDoesNotUntap() {
-        Permanent creature = addCreatureReady(player2);
+        Permanent creature = addCreatureReady(player2, new GrizzlyBears());
         creature.tap();
 
         Permanent dosePerm = new Permanent(new NumbingDose());
@@ -120,7 +120,7 @@ class NumbingDoseTest extends BaseCardTest {
     @Test
     @DisplayName("Enchanted permanent's controller loses 1 life at their upkeep")
     void enchantedPermanentControllerLosesLifeAtUpkeep() {
-        Permanent creature = addCreatureReady(player2);
+        Permanent creature = addCreatureReady(player2, new GrizzlyBears());
 
         Permanent dosePerm = new Permanent(new NumbingDose());
         dosePerm.setAttachedTo(creature.getId());
@@ -155,7 +155,7 @@ class NumbingDoseTest extends BaseCardTest {
     @Test
     @DisplayName("Life loss trigger does NOT fire during aura controller's upkeep")
     void lifeLossDoesNotFireDuringAuraControllerUpkeep() {
-        Permanent creature = addCreatureReady(player2);
+        Permanent creature = addCreatureReady(player2, new GrizzlyBears());
 
         Permanent dosePerm = new Permanent(new NumbingDose());
         dosePerm.setAttachedTo(creature.getId());
@@ -173,7 +173,7 @@ class NumbingDoseTest extends BaseCardTest {
     @Test
     @DisplayName("Life loss accumulates over multiple upkeeps")
     void lifeLossAccumulatesOverUpkeeps() {
-        Permanent creature = addCreatureReady(player2);
+        Permanent creature = addCreatureReady(player2, new GrizzlyBears());
 
         Permanent dosePerm = new Permanent(new NumbingDose());
         dosePerm.setAttachedTo(creature.getId());
@@ -195,7 +195,7 @@ class NumbingDoseTest extends BaseCardTest {
     @Test
     @DisplayName("Creature can untap again after Numbing Dose is removed")
     void creatureUntapsAfterDoseRemoved() {
-        Permanent creature = addCreatureReady(player2);
+        Permanent creature = addCreatureReady(player2, new GrizzlyBears());
         creature.tap();
 
         Permanent dosePerm = new Permanent(new NumbingDose());
@@ -221,13 +221,6 @@ class NumbingDoseTest extends BaseCardTest {
         harness.passBothPriorities(); // END_STEP -> CLEANUP
         harness.clearPriorityPassed();
         harness.passBothPriorities(); // CLEANUP -> next turn
-    }
-
-    private Permanent addCreatureReady(Player player) {
-        Permanent perm = new Permanent(new GrizzlyBears());
-        perm.setSummoningSick(false);
-        gd.playerBattlefields.get(player.getId()).add(perm);
-        return perm;
     }
 
     private Permanent findPermanentByName(Player player, String name) {

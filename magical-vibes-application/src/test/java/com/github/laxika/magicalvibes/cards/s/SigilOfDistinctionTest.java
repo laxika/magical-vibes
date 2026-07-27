@@ -37,7 +37,7 @@ class SigilOfDistinctionTest extends BaseCardTest {
     @Test
     @DisplayName("Equipped creature gets +1/+1 for each charge counter")
     void equippedCreatureBoostedPerChargeCounter() {
-        Permanent bears = addReadyCreature(player1);
+        Permanent bears = addCreatureReady(player1, new GrizzlyBears());
         Permanent sigil = new Permanent(new SigilOfDistinction());
         sigil.setCounterCount(CounterType.CHARGE, 3);
         sigil.setAttachedTo(bears.getId());
@@ -51,7 +51,7 @@ class SigilOfDistinctionTest extends BaseCardTest {
     @Test
     @DisplayName("Equipped creature gets no boost with zero charge counters")
     void noBoostWithZeroChargeCounters() {
-        Permanent bears = addReadyCreature(player1);
+        Permanent bears = addCreatureReady(player1, new GrizzlyBears());
         Permanent sigil = new Permanent(new SigilOfDistinction());
         sigil.setCounterCount(CounterType.CHARGE, 0);
         sigil.setAttachedTo(bears.getId());
@@ -70,7 +70,7 @@ class SigilOfDistinctionTest extends BaseCardTest {
         sigil.setSummoningSick(false);
         sigil.setCounterCount(CounterType.CHARGE, 3);
         gd.playerBattlefields.get(player1.getId()).add(sigil);
-        Permanent bears = addReadyCreature(player1);
+        Permanent bears = addCreatureReady(player1, new GrizzlyBears());
 
         harness.activateAbility(player1, 0, null, bears.getId());
         harness.passBothPriorities();
@@ -90,7 +90,7 @@ class SigilOfDistinctionTest extends BaseCardTest {
         sigil.setSummoningSick(false);
         sigil.setCounterCount(CounterType.CHARGE, 0);
         gd.playerBattlefields.get(player1.getId()).add(sigil);
-        Permanent bears = addReadyCreature(player1);
+        Permanent bears = addCreatureReady(player1, new GrizzlyBears());
 
         assertThatThrownBy(() -> harness.activateAbility(player1, 0, null, bears.getId()))
                 .isInstanceOf(IllegalStateException.class);
@@ -115,13 +115,6 @@ class SigilOfDistinctionTest extends BaseCardTest {
     }
 
     // ===== Helpers =====
-
-    private Permanent addReadyCreature(Player player) {
-        Permanent perm = new Permanent(new GrizzlyBears());
-        perm.setSummoningSick(false);
-        gd.playerBattlefields.get(player.getId()).add(perm);
-        return perm;
-    }
 
     private Permanent findSigil(Player player) {
         return gd.playerBattlefields.get(player.getId()).stream()

@@ -22,8 +22,8 @@ class LairwatchGiantTest extends BaseCardTest {
     @DisplayName("Blocking two creatures triggers once and grants first strike")
     void blockingTwoCreaturesGrantsFirstStrike() {
         Permanent giant = addReadyGiant(player2);
-        Permanent attacker1 = addReadyBears(player1);
-        Permanent attacker2 = addReadyBears(player1);
+        Permanent attacker1 = addCreatureReady(player1, new GrizzlyBears());
+        Permanent attacker2 = addCreatureReady(player1, new GrizzlyBears());
         attacker1.setAttacking(true);
         attacker2.setAttacking(true);
 
@@ -54,7 +54,7 @@ class LairwatchGiantTest extends BaseCardTest {
     @DisplayName("Blocking only one creature does not trigger and grants no first strike")
     void blockingOneCreatureDoesNotTrigger() {
         Permanent giant = addReadyGiant(player2);
-        Permanent attacker = addReadyBears(player1);
+        Permanent attacker = addCreatureReady(player1, new GrizzlyBears());
         attacker.setAttacking(true);
 
         prepareDeclareBlockers();
@@ -69,8 +69,8 @@ class LairwatchGiantTest extends BaseCardTest {
     @DisplayName("First strike wears off at end of turn")
     void firstStrikeWearsOffAtEndOfTurn() {
         Permanent giant = addReadyGiant(player2);
-        Permanent attacker1 = addReadyBears(player1);
-        Permanent attacker2 = addReadyBears(player1);
+        Permanent attacker1 = addCreatureReady(player1, new GrizzlyBears());
+        Permanent attacker2 = addCreatureReady(player1, new GrizzlyBears());
         attacker1.setAttacking(true);
         attacker2.setAttacking(true);
 
@@ -90,13 +90,6 @@ class LairwatchGiantTest extends BaseCardTest {
 
     private Permanent addReadyGiant(Player player) {
         Permanent perm = new Permanent(new LairwatchGiant());
-        perm.setSummoningSick(false);
-        gd.playerBattlefields.get(player.getId()).add(perm);
-        return perm;
-    }
-
-    private Permanent addReadyBears(Player player) {
-        Permanent perm = new Permanent(new GrizzlyBears());
         perm.setSummoningSick(false);
         gd.playerBattlefields.get(player.getId()).add(perm);
         return perm;

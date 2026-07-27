@@ -52,7 +52,7 @@ class SpectralShepherdTest extends BaseCardTest {
     @DisplayName("Cannot target a non-Spirit creature")
     void cannotTargetNonSpirit() {
         addReadyShepherd(player1);
-        Permanent bears = addReadyBears(player1);
+        Permanent bears = addCreatureReady(player1, new GrizzlyBears());
         harness.addMana(player1, ManaColor.BLUE, 2);
 
         assertThatThrownBy(() -> harness.activateAbility(player1, 0, null, bears.getId()))
@@ -79,13 +79,6 @@ class SpectralShepherdTest extends BaseCardTest {
 
     private Permanent addReadySpirit(Player player) {
         Permanent perm = new Permanent(new ApothecaryGeist());
-        perm.setSummoningSick(false);
-        harness.getGameData().playerBattlefields.get(player.getId()).add(perm);
-        return perm;
-    }
-
-    private Permanent addReadyBears(Player player) {
-        Permanent perm = new Permanent(new GrizzlyBears());
         perm.setSummoningSick(false);
         harness.getGameData().playerBattlefields.get(player.getId()).add(perm);
         return perm;

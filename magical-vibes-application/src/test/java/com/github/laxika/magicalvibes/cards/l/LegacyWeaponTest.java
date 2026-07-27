@@ -63,7 +63,7 @@ class LegacyWeaponTest extends BaseCardTest {
     @DisplayName("Activating ability puts it on the stack targeting a creature")
     void activatingTargetingCreaturePutsOnStack() {
         addReadyLegacyWeapon(player1);
-        Permanent target = addReadyCreature(player2);
+        Permanent target = addCreatureReady(player2, new GrizzlyBears());
         addWubrgMana(player1);
 
         harness.activateAbility(player1, 0, null, target.getId());
@@ -80,7 +80,7 @@ class LegacyWeaponTest extends BaseCardTest {
     @DisplayName("Resolving ability exiles target creature")
     void resolvingExilesTargetCreature() {
         addReadyLegacyWeapon(player1);
-        Permanent target = addReadyCreature(player2);
+        Permanent target = addCreatureReady(player2, new GrizzlyBears());
         addWubrgMana(player1);
 
         harness.activateAbility(player1, 0, null, target.getId());
@@ -161,7 +161,7 @@ class LegacyWeaponTest extends BaseCardTest {
     @DisplayName("Consumes WUBRG mana when activating ability")
     void manaIsConsumed() {
         addReadyLegacyWeapon(player1);
-        Permanent target = addReadyCreature(player2);
+        Permanent target = addCreatureReady(player2, new GrizzlyBears());
         addWubrgMana(player1);
 
         harness.activateAbility(player1, 0, null, target.getId());
@@ -174,7 +174,7 @@ class LegacyWeaponTest extends BaseCardTest {
     @DisplayName("Cannot activate ability without enough mana")
     void cannotActivateWithoutMana() {
         addReadyLegacyWeapon(player1);
-        Permanent target = addReadyCreature(player2);
+        Permanent target = addCreatureReady(player2, new GrizzlyBears());
 
         assertThatThrownBy(() -> harness.activateAbility(player1, 0, null, target.getId()))
                 .isInstanceOf(IllegalStateException.class)
@@ -185,7 +185,7 @@ class LegacyWeaponTest extends BaseCardTest {
     @DisplayName("Cannot activate with only partial WUBRG mana")
     void cannotActivateWithPartialMana() {
         addReadyLegacyWeapon(player1);
-        Permanent target = addReadyCreature(player2);
+        Permanent target = addCreatureReady(player2, new GrizzlyBears());
         // Only add 4 of the 5 colors
         harness.addMana(player1, ManaColor.WHITE, 1);
         harness.addMana(player1, ManaColor.BLUE, 1);
@@ -203,7 +203,7 @@ class LegacyWeaponTest extends BaseCardTest {
     @DisplayName("Does not tap when activating ability")
     void doesNotTapWhenActivating() {
         Permanent weapon = addReadyLegacyWeapon(player1);
-        Permanent target = addReadyCreature(player2);
+        Permanent target = addCreatureReady(player2, new GrizzlyBears());
         addWubrgMana(player1);
 
         harness.activateAbility(player1, 0, null, target.getId());
@@ -216,7 +216,7 @@ class LegacyWeaponTest extends BaseCardTest {
     void canActivateWhenTapped() {
         Permanent weapon = addReadyLegacyWeapon(player1);
         weapon.tap();
-        Permanent target = addReadyCreature(player2);
+        Permanent target = addCreatureReady(player2, new GrizzlyBears());
         addWubrgMana(player1);
 
         harness.activateAbility(player1, 0, null, target.getId());
@@ -229,7 +229,7 @@ class LegacyWeaponTest extends BaseCardTest {
     @DisplayName("Can activate ability multiple times if enough mana")
     void canActivateMultipleTimes() {
         addReadyLegacyWeapon(player1);
-        Permanent target1 = addReadyCreature(player2);
+        Permanent target1 = addCreatureReady(player2, new GrizzlyBears());
         Permanent target2 = addReadyLand(player2);
         // Add mana for two activations
         addWubrgMana(player1);
@@ -253,7 +253,7 @@ class LegacyWeaponTest extends BaseCardTest {
     @DisplayName("Ability fizzles if target is removed before resolution")
     void fizzlesIfTargetRemoved() {
         addReadyLegacyWeapon(player1);
-        Permanent target = addReadyCreature(player2);
+        Permanent target = addCreatureReady(player2, new GrizzlyBears());
         addWubrgMana(player1);
 
         harness.activateAbility(player1, 0, null, target.getId());
@@ -305,7 +305,7 @@ class LegacyWeaponTest extends BaseCardTest {
     @DisplayName("Can exile own permanent")
     void canExileOwnPermanent() {
         addReadyLegacyWeapon(player1);
-        Permanent ownCreature = addReadyCreature(player1);
+        Permanent ownCreature = addCreatureReady(player1, new GrizzlyBears());
         addWubrgMana(player1);
 
         // Legacy Weapon is at index 0, creature at index 1
@@ -325,7 +325,7 @@ class LegacyWeaponTest extends BaseCardTest {
     @DisplayName("Resolving exile ability adds to game log")
     void resolvingAddsToGameLog() {
         addReadyLegacyWeapon(player1);
-        Permanent target = addReadyCreature(player2);
+        Permanent target = addCreatureReady(player2, new GrizzlyBears());
         addWubrgMana(player1);
 
         harness.activateAbility(player1, 0, null, target.getId());
@@ -340,14 +340,6 @@ class LegacyWeaponTest extends BaseCardTest {
 
     private Permanent addReadyLegacyWeapon(Player player) {
         LegacyWeapon card = new LegacyWeapon();
-        Permanent perm = new Permanent(card);
-        perm.setSummoningSick(false);
-        harness.getGameData().playerBattlefields.get(player.getId()).add(perm);
-        return perm;
-    }
-
-    private Permanent addReadyCreature(Player player) {
-        GrizzlyBears card = new GrizzlyBears();
         Permanent perm = new Permanent(card);
         perm.setSummoningSick(false);
         harness.getGameData().playerBattlefields.get(player.getId()).add(perm);

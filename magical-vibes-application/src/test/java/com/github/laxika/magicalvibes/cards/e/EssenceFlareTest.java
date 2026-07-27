@@ -3,7 +3,6 @@ package com.github.laxika.magicalvibes.cards.e;
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
 import com.github.laxika.magicalvibes.model.CounterType;
 import com.github.laxika.magicalvibes.model.Permanent;
-import com.github.laxika.magicalvibes.model.Player;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
@@ -45,7 +44,7 @@ class EssenceFlareTest extends BaseCardTest {
     @Test
     @DisplayName("At enchanted creature controller's upkeep, a -0/-1 counter is placed on it")
     void upkeepPutsMinusCounter() {
-        Permanent creature = addCreatureReady(player2);
+        Permanent creature = addCreatureReady(player2, new GrizzlyBears());
 
         Permanent aura = new Permanent(new EssenceFlare());
         aura.setAttachedTo(creature.getId());
@@ -65,7 +64,7 @@ class EssenceFlareTest extends BaseCardTest {
     @Test
     @DisplayName("Counter trigger does not fire during aura controller's upkeep")
     void doesNotTriggerDuringAuraControllerUpkeep() {
-        Permanent creature = addCreatureReady(player2);
+        Permanent creature = addCreatureReady(player2, new GrizzlyBears());
 
         Permanent aura = new Permanent(new EssenceFlare());
         aura.setAttachedTo(creature.getId());
@@ -82,7 +81,7 @@ class EssenceFlareTest extends BaseCardTest {
     @Test
     @DisplayName("Counters accumulate and shrink toughness over multiple upkeeps")
     void countersAccumulateOverUpkeeps() {
-        Permanent creature = addCreatureReady(player2);
+        Permanent creature = addCreatureReady(player2, new GrizzlyBears());
 
         Permanent aura = new Permanent(new EssenceFlare());
         aura.setAttachedTo(creature.getId());
@@ -101,12 +100,5 @@ class EssenceFlareTest extends BaseCardTest {
 
         // Second -0/-1 brings toughness to 0; SBA destroys the creature (and the Aura falls off).
         assertThat(gd.playerBattlefields.get(player2.getId())).doesNotContain(creature);
-    }
-
-    private Permanent addCreatureReady(Player player) {
-        Permanent perm = new Permanent(new GrizzlyBears());
-        perm.setSummoningSick(false);
-        gd.playerBattlefields.get(player.getId()).add(perm);
-        return perm;
     }
 }

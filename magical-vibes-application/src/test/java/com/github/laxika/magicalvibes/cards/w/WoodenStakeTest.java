@@ -21,7 +21,7 @@ class WoodenStakeTest extends BaseCardTest {
     @Test
     @DisplayName("When equipped creature blocks a Vampire, a trigger is created to destroy it")
     void blockingVampireCreatesTrigger() {
-        Permanent creature = addReadyCreature(player2);
+        Permanent creature = addCreatureReady(player2, new GrizzlyBears());
         Permanent stake = addStake(player2);
         stake.setAttachedTo(creature.getId());
 
@@ -41,7 +41,7 @@ class WoodenStakeTest extends BaseCardTest {
     @Test
     @DisplayName("When equipped creature blocks a Vampire, resolving the trigger destroys the Vampire")
     void blockingVampireDestroysIt() {
-        Permanent creature = addReadyCreature(player2);
+        Permanent creature = addCreatureReady(player2, new GrizzlyBears());
         Permanent stake = addStake(player2);
         stake.setAttachedTo(creature.getId());
 
@@ -66,11 +66,11 @@ class WoodenStakeTest extends BaseCardTest {
     @Test
     @DisplayName("When equipped creature blocks a non-Vampire, no trigger is created")
     void blockingNonVampireNoTrigger() {
-        Permanent creature = addReadyCreature(player2);
+        Permanent creature = addCreatureReady(player2, new GrizzlyBears());
         Permanent stake = addStake(player2);
         stake.setAttachedTo(creature.getId());
 
-        Permanent attacker = addReadyCreature(player1);
+        Permanent attacker = addCreatureReady(player1, new GrizzlyBears());
         attacker.setAttacking(true);
 
         prepareDeclareBlockers();
@@ -87,7 +87,7 @@ class WoodenStakeTest extends BaseCardTest {
     @Test
     @DisplayName("When equipped creature becomes blocked by a Vampire, a trigger is created to destroy it")
     void becomingBlockedByVampireCreatesTrigger() {
-        Permanent creature = addReadyCreature(player1);
+        Permanent creature = addCreatureReady(player1, new GrizzlyBears());
         Permanent stake = addStake(player1);
         stake.setAttachedTo(creature.getId());
         creature.setAttacking(true);
@@ -107,7 +107,7 @@ class WoodenStakeTest extends BaseCardTest {
     @Test
     @DisplayName("When equipped creature becomes blocked by a Vampire, resolving the trigger destroys it")
     void becomingBlockedByVampireDestroysIt() {
-        Permanent creature = addReadyCreature(player1);
+        Permanent creature = addCreatureReady(player1, new GrizzlyBears());
         Permanent stake = addStake(player1);
         stake.setAttachedTo(creature.getId());
         creature.setAttacking(true);
@@ -128,12 +128,12 @@ class WoodenStakeTest extends BaseCardTest {
     @Test
     @DisplayName("When equipped creature becomes blocked by a non-Vampire, no trigger is created")
     void becomingBlockedByNonVampireNoTrigger() {
-        Permanent creature = addReadyCreature(player1);
+        Permanent creature = addCreatureReady(player1, new GrizzlyBears());
         Permanent stake = addStake(player1);
         stake.setAttachedTo(creature.getId());
         creature.setAttacking(true);
 
-        addReadyCreature(player2);
+        addCreatureReady(player2, new GrizzlyBears());
 
         prepareDeclareBlockers();
         gs.declareBlockers(gd, player2, List.of(new BlockerAssignment(0, 0)));
@@ -149,13 +149,13 @@ class WoodenStakeTest extends BaseCardTest {
     @Test
     @DisplayName("When equipped creature becomes blocked by Vampire and non-Vampire, trigger only for Vampire")
     void mixedBlockersTriggerOnlyForVampire() {
-        Permanent creature = addReadyCreature(player1);
+        Permanent creature = addCreatureReady(player1, new GrizzlyBears());
         Permanent stake = addStake(player1);
         stake.setAttachedTo(creature.getId());
         creature.setAttacking(true);
 
         Permanent vampire = addReadyVampire(player2);
-        addReadyCreature(player2);
+        addCreatureReady(player2, new GrizzlyBears());
 
         prepareDeclareBlockers();
         gs.declareBlockers(gd, player2, List.of(
@@ -177,7 +177,7 @@ class WoodenStakeTest extends BaseCardTest {
     @Test
     @DisplayName("No trigger when Wooden Stake is not attached to any creature")
     void noTriggerWhenNotEquipped() {
-        addReadyCreature(player2);
+        addCreatureReady(player2, new GrizzlyBears());
         addStake(player2); // On battlefield but not attached
 
         Permanent vampire = addReadyVampire(player1);
@@ -196,13 +196,6 @@ class WoodenStakeTest extends BaseCardTest {
 
     private Permanent addStake(Player player) {
         Permanent perm = new Permanent(new WoodenStake());
-        perm.setSummoningSick(false);
-        gd.playerBattlefields.get(player.getId()).add(perm);
-        return perm;
-    }
-
-    private Permanent addReadyCreature(Player player) {
-        Permanent perm = new Permanent(new GrizzlyBears());
         perm.setSummoningSick(false);
         gd.playerBattlefields.get(player.getId()).add(perm);
         return perm;

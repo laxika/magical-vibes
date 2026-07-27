@@ -18,14 +18,6 @@ import static org.assertj.core.api.Assertions.assertThat;
 
 class ScalpelexisTest extends BaseCardTest {
 
-    private Permanent addReadyCreature(Player player, Card card) {
-        GameData gd = harness.getGameData();
-        Permanent perm = new Permanent(card);
-        perm.setSummoningSick(false);
-        gd.playerBattlefields.get(player.getId()).add(perm);
-        return perm;
-    }
-
     private void setDeck(Player player, List<Card> cards) {
         harness.getGameData().playerDecks.put(player.getId(), new ArrayList<>(cards));
     }
@@ -35,7 +27,7 @@ class ScalpelexisTest extends BaseCardTest {
     @Test
     @DisplayName("Dealing combat damage exiles top four cards when all names are unique")
     void exilesTopFourCardsNoDuplicates() {
-        Permanent scalpelexis = addReadyCreature(player1, new Scalpelexis());
+        Permanent scalpelexis = addCreatureReady(player1, new Scalpelexis());
         scalpelexis.setAttacking(true);
 
         setDeck(player2, List.of(
@@ -57,7 +49,7 @@ class ScalpelexisTest extends BaseCardTest {
     @Test
     @DisplayName("Repeats when two exiled cards share the same name")
     void repeatsOnDuplicateNames() {
-        Permanent scalpelexis = addReadyCreature(player1, new Scalpelexis());
+        Permanent scalpelexis = addCreatureReady(player1, new Scalpelexis());
         scalpelexis.setAttacking(true);
 
         // First batch: two GrizzlyBears share a name -> repeat
@@ -84,7 +76,7 @@ class ScalpelexisTest extends BaseCardTest {
     @Test
     @DisplayName("Multiple consecutive repeats when duplicates keep appearing")
     void multipleRepeats() {
-        Permanent scalpelexis = addReadyCreature(player1, new Scalpelexis());
+        Permanent scalpelexis = addCreatureReady(player1, new Scalpelexis());
         scalpelexis.setAttacking(true);
 
         // First batch: two GrizzlyBears -> repeat
@@ -115,9 +107,9 @@ class ScalpelexisTest extends BaseCardTest {
     @Test
     @DisplayName("No trigger when Scalpelexis is blocked")
     void noTriggerWhenBlocked() {
-        Permanent scalpelexis = addReadyCreature(player1, new Scalpelexis());
+        Permanent scalpelexis = addCreatureReady(player1, new Scalpelexis());
         scalpelexis.setAttacking(true);
-        Permanent blocker = addReadyCreature(player2, new SerraAngel());
+        Permanent blocker = addCreatureReady(player2, new SerraAngel());
         blocker.setBlocking(true);
         blocker.addBlockingTarget(0);
 
@@ -138,7 +130,7 @@ class ScalpelexisTest extends BaseCardTest {
     @Test
     @DisplayName("Handles library with fewer than four cards")
     void partialLibraryExile() {
-        Permanent scalpelexis = addReadyCreature(player1, new Scalpelexis());
+        Permanent scalpelexis = addCreatureReady(player1, new Scalpelexis());
         scalpelexis.setAttacking(true);
 
         setDeck(player2, List.of(
@@ -156,7 +148,7 @@ class ScalpelexisTest extends BaseCardTest {
     @Test
     @DisplayName("Handles empty library gracefully")
     void emptyLibrary() {
-        Permanent scalpelexis = addReadyCreature(player1, new Scalpelexis());
+        Permanent scalpelexis = addCreatureReady(player1, new Scalpelexis());
         scalpelexis.setAttacking(true);
 
         setDeck(player2, List.of());
@@ -171,7 +163,7 @@ class ScalpelexisTest extends BaseCardTest {
     @Test
     @DisplayName("Stops repeating when library runs out mid-repeat")
     void libraryRunsOutDuringRepeat() {
-        Permanent scalpelexis = addReadyCreature(player1, new Scalpelexis());
+        Permanent scalpelexis = addCreatureReady(player1, new Scalpelexis());
         scalpelexis.setAttacking(true);
 
         // First batch: duplicate names -> repeat
@@ -196,7 +188,7 @@ class ScalpelexisTest extends BaseCardTest {
     @DisplayName("Defender takes 1 combat damage from unblocked Scalpelexis")
     void defenderTakesCombatDamage() {
         harness.setLife(player2, 20);
-        Permanent scalpelexis = addReadyCreature(player1, new Scalpelexis());
+        Permanent scalpelexis = addCreatureReady(player1, new Scalpelexis());
         scalpelexis.setAttacking(true);
 
         setDeck(player2, List.of(
@@ -215,7 +207,7 @@ class ScalpelexisTest extends BaseCardTest {
     @Test
     @DisplayName("Exiled cards are the correct cards from top of library in order")
     void exiledCardsAreCorrectFromTopOfLibrary() {
-        Permanent scalpelexis = addReadyCreature(player1, new Scalpelexis());
+        Permanent scalpelexis = addCreatureReady(player1, new Scalpelexis());
         scalpelexis.setAttacking(true);
 
         setDeck(player2, List.of(
@@ -237,7 +229,7 @@ class ScalpelexisTest extends BaseCardTest {
     @Test
     @DisplayName("Game log records exiled card names")
     void gameLogRecordsExiledCards() {
-        Permanent scalpelexis = addReadyCreature(player1, new Scalpelexis());
+        Permanent scalpelexis = addCreatureReady(player1, new Scalpelexis());
         scalpelexis.setAttacking(true);
 
         setDeck(player2, List.of(

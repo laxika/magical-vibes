@@ -4,10 +4,8 @@ import com.github.laxika.magicalvibes.model.PendingInteraction;
 import com.github.laxika.magicalvibes.cards.d.DrossHopper;
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
 import com.github.laxika.magicalvibes.cards.s.SuntailHawk;
-import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
-import com.github.laxika.magicalvibes.model.Player;
 import com.github.laxika.magicalvibes.model.StackEntryType;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
 import org.junit.jupiter.api.DisplayName;
@@ -25,8 +23,8 @@ class FurnaceCelebrationTest extends BaseCardTest {
     @DisplayName("Sacrificing a creature triggers may ability prompt")
     void sacrificeTriggersMayPrompt() {
         harness.addToBattlefield(player1, new FurnaceCelebration());
-        Permanent hopper = addReadyCreature(player1, new DrossHopper());
-        Permanent bears = addReadyCreature(player1, new GrizzlyBears());
+        Permanent hopper = addCreatureReady(player1, new DrossHopper());
+        Permanent bears = addCreatureReady(player1, new GrizzlyBears());
 
         harness.activateAbility(player1, 1, null, null);
         harness.handlePermanentChosen(player1, bears.getId());
@@ -45,8 +43,8 @@ class FurnaceCelebrationTest extends BaseCardTest {
     @DisplayName("Accepting pays {2} and deals 2 damage to target creature")
     void acceptPaysDamageToCreature() {
         harness.addToBattlefield(player1, new FurnaceCelebration());
-        Permanent hopper = addReadyCreature(player1, new DrossHopper());
-        Permanent bears = addReadyCreature(player1, new GrizzlyBears());
+        Permanent hopper = addCreatureReady(player1, new DrossHopper());
+        Permanent bears = addCreatureReady(player1, new GrizzlyBears());
         harness.addToBattlefield(player2, new SuntailHawk());
         UUID hawkId = harness.getPermanentId(player2, "Suntail Hawk");
         harness.addMana(player1, ManaColor.COLORLESS, 2);
@@ -84,8 +82,8 @@ class FurnaceCelebrationTest extends BaseCardTest {
     @DisplayName("Accepting pays {2} and deals 2 damage to target player")
     void acceptPaysDamageToPlayer() {
         harness.addToBattlefield(player1, new FurnaceCelebration());
-        Permanent hopper = addReadyCreature(player1, new DrossHopper());
-        Permanent bears = addReadyCreature(player1, new GrizzlyBears());
+        Permanent hopper = addCreatureReady(player1, new DrossHopper());
+        Permanent bears = addCreatureReady(player1, new GrizzlyBears());
         harness.addMana(player1, ManaColor.COLORLESS, 2);
 
         int lifeBefore = gd.playerLifeTotals.get(player2.getId());
@@ -113,8 +111,8 @@ class FurnaceCelebrationTest extends BaseCardTest {
     @DisplayName("Declining may ability does not deal damage or spend mana")
     void declineDoesNothing() {
         harness.addToBattlefield(player1, new FurnaceCelebration());
-        Permanent hopper = addReadyCreature(player1, new DrossHopper());
-        Permanent bears = addReadyCreature(player1, new GrizzlyBears());
+        Permanent hopper = addCreatureReady(player1, new DrossHopper());
+        Permanent bears = addCreatureReady(player1, new GrizzlyBears());
         harness.addMana(player1, ManaColor.COLORLESS, 2);
 
         int lifeBefore = gd.playerLifeTotals.get(player2.getId());
@@ -146,8 +144,8 @@ class FurnaceCelebrationTest extends BaseCardTest {
     @DisplayName("Accepting with insufficient mana treats as decline")
     void cannotPayTreatsAsDecline() {
         harness.addToBattlefield(player1, new FurnaceCelebration());
-        Permanent hopper = addReadyCreature(player1, new DrossHopper());
-        Permanent bears = addReadyCreature(player1, new GrizzlyBears());
+        Permanent hopper = addCreatureReady(player1, new DrossHopper());
+        Permanent bears = addCreatureReady(player1, new GrizzlyBears());
         // No mana added — cannot pay {2}
 
         harness.activateAbility(player1, 1, null, null);
@@ -175,8 +173,8 @@ class FurnaceCelebrationTest extends BaseCardTest {
     @DisplayName("Opponent sacrificing a creature does not trigger your Furnace Celebration")
     void opponentSacrificeDoesNotTrigger() {
         harness.addToBattlefield(player1, new FurnaceCelebration());
-        Permanent hopper = addReadyCreature(player2, new DrossHopper());
-        Permanent bears = addReadyCreature(player2, new GrizzlyBears());
+        Permanent hopper = addCreatureReady(player2, new DrossHopper());
+        Permanent bears = addCreatureReady(player2, new GrizzlyBears());
 
         harness.activateAbility(player2, 0, null, null);
         harness.handlePermanentChosen(player2, bears.getId());
@@ -186,11 +184,4 @@ class FurnaceCelebrationTest extends BaseCardTest {
     }
 
     // ===== Helper methods =====
-
-    private Permanent addReadyCreature(Player player, Card card) {
-        Permanent permanent = new Permanent(card);
-        permanent.setSummoningSick(false);
-        gd.playerBattlefields.get(player.getId()).add(permanent);
-        return permanent;
-    }
 }

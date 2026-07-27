@@ -25,7 +25,7 @@ class SpringjackKnightTest extends BaseCardTest {
     @DisplayName("Attacking queues attack trigger for target selection")
     void attackTriggersTargetSelection() {
         addReadyKnight(player1);
-        addReadyCreature(player1);
+        addCreatureReady(player1, new GrizzlyBears());
 
         declareAttackers(player1, List.of(0));
 
@@ -38,7 +38,7 @@ class SpringjackKnightTest extends BaseCardTest {
     @DisplayName("Choosing target puts the clash trigger on the stack")
     void choosingTargetPutsTriggerOnStack() {
         Permanent knight = addReadyKnight(player1);
-        Permanent ally = addReadyCreature(player1);
+        Permanent ally = addCreatureReady(player1, new GrizzlyBears());
 
         declareAttackers(player1, List.of(0));
         harness.handlePermanentChosen(player1, ally.getId());
@@ -60,7 +60,7 @@ class SpringjackKnightTest extends BaseCardTest {
         gd.playerDecks.get(player2.getId()).addFirst(new Forest());
 
         addReadyKnight(player1);
-        Permanent ally = addReadyCreature(player1);
+        Permanent ally = addCreatureReady(player1, new GrizzlyBears());
 
         declareAttackers(player1, List.of(0));
         harness.handlePermanentChosen(player1, ally.getId());
@@ -79,7 +79,7 @@ class SpringjackKnightTest extends BaseCardTest {
         gd.playerDecks.get(player2.getId()).addFirst(new GrizzlyBears());
 
         addReadyKnight(player1);
-        Permanent ally = addReadyCreature(player1);
+        Permanent ally = addCreatureReady(player1, new GrizzlyBears());
 
         declareAttackers(player1, List.of(0));
         harness.handlePermanentChosen(player1, ally.getId());
@@ -97,7 +97,7 @@ class SpringjackKnightTest extends BaseCardTest {
         gd.playerDecks.get(player2.getId()).addFirst(new GrizzlyBears());
 
         addReadyKnight(player1);
-        Permanent ally = addReadyCreature(player1);
+        Permanent ally = addCreatureReady(player1, new GrizzlyBears());
 
         declareAttackers(player1, List.of(0));
         harness.handlePermanentChosen(player1, ally.getId());
@@ -115,7 +115,7 @@ class SpringjackKnightTest extends BaseCardTest {
         gd.playerDecks.get(player2.getId()).addFirst(new Forest());
 
         addReadyKnight(player1);
-        Permanent ally = addReadyCreature(player1);
+        Permanent ally = addCreatureReady(player1, new GrizzlyBears());
 
         declareAttackers(player1, List.of(0));
         harness.handlePermanentChosen(player1, ally.getId());
@@ -133,13 +133,6 @@ class SpringjackKnightTest extends BaseCardTest {
 
     private Permanent addReadyKnight(Player player) {
         Permanent perm = new Permanent(new SpringjackKnight());
-        perm.setSummoningSick(false);
-        gd.playerBattlefields.get(player.getId()).add(perm);
-        return perm;
-    }
-
-    private Permanent addReadyCreature(Player player) {
-        Permanent perm = new Permanent(new GrizzlyBears());
         perm.setSummoningSick(false);
         gd.playerBattlefields.get(player.getId()).add(perm);
         return perm;

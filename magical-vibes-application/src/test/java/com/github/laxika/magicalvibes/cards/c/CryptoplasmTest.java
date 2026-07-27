@@ -3,7 +3,6 @@ package com.github.laxika.magicalvibes.cards.c;
 import com.github.laxika.magicalvibes.model.PendingInteraction;
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
 import com.github.laxika.magicalvibes.cards.p.ProdigalPyromancer;
-import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.Player;
@@ -25,7 +24,7 @@ class CryptoplasmTest extends BaseCardTest {
     @DisplayName("Upkeep trigger presents target selection (not may prompt)")
     void upkeepTriggerPresentsTargetSelection() {
         addReadyCryptoplasm(player1);
-        addReadyCreature(player2, new GrizzlyBears());
+        addCreatureReady(player2, new GrizzlyBears());
 
         advanceToUpkeep(player1);
 
@@ -38,7 +37,7 @@ class CryptoplasmTest extends BaseCardTest {
     @DisplayName("Choosing target puts copy ability on the stack")
     void choosingTargetPutsAbilityOnStack() {
         addReadyCryptoplasm(player1);
-        addReadyCreature(player2, new GrizzlyBears());
+        addCreatureReady(player2, new GrizzlyBears());
         UUID bearsId = harness.getPermanentId(player2, "Grizzly Bears");
 
         advanceToUpkeep(player1);
@@ -57,7 +56,7 @@ class CryptoplasmTest extends BaseCardTest {
     @DisplayName("Accepting may on resolution makes Cryptoplasm a copy of the target")
     void acceptingMayMakesCopy() {
         Permanent cryptoplasm = addReadyCryptoplasm(player1);
-        addReadyCreature(player2, new GrizzlyBears());
+        addCreatureReady(player2, new GrizzlyBears());
         UUID bearsId = harness.getPermanentId(player2, "Grizzly Bears");
 
         advanceToUpkeep(player1);
@@ -74,7 +73,7 @@ class CryptoplasmTest extends BaseCardTest {
     @DisplayName("Declining may on resolution does not change Cryptoplasm")
     void decliningMayDoesNotChangeCryptoplasm() {
         Permanent cryptoplasm = addReadyCryptoplasm(player1);
-        addReadyCreature(player2, new GrizzlyBears());
+        addCreatureReady(player2, new GrizzlyBears());
         UUID bearsId = harness.getPermanentId(player2, "Grizzly Bears");
 
         advanceToUpkeep(player1);
@@ -89,7 +88,7 @@ class CryptoplasmTest extends BaseCardTest {
     @DisplayName("Copy retains upkeep copy ability (except it has this ability)")
     void copyRetainsUpkeepCopyAbility() {
         Permanent cryptoplasm = addReadyCryptoplasm(player1);
-        addReadyCreature(player2, new GrizzlyBears());
+        addCreatureReady(player2, new GrizzlyBears());
         UUID bearsId = harness.getPermanentId(player2, "Grizzly Bears");
 
         advanceToUpkeep(player1);
@@ -105,7 +104,7 @@ class CryptoplasmTest extends BaseCardTest {
     @DisplayName("Copy acquires target creature's activated abilities")
     void copyAcquiresTargetAbilities() {
         Permanent cryptoplasm = addReadyCryptoplasm(player1);
-        addReadyCreature(player2, new ProdigalPyromancer());
+        addCreatureReady(player2, new ProdigalPyromancer());
         UUID pyromancerId = harness.getPermanentId(player2, "Prodigal Pyromancer");
 
         advanceToUpkeep(player1);
@@ -120,8 +119,8 @@ class CryptoplasmTest extends BaseCardTest {
     @DisplayName("Can copy again on subsequent upkeep after becoming a copy")
     void canCopyAgainOnSubsequentUpkeep() {
         Permanent cryptoplasm = addReadyCryptoplasm(player1);
-        addReadyCreature(player2, new GrizzlyBears());
-        addReadyCreature(player1, new ProdigalPyromancer());
+        addCreatureReady(player2, new GrizzlyBears());
+        addCreatureReady(player1, new ProdigalPyromancer());
         UUID bearsId = harness.getPermanentId(player2, "Grizzly Bears");
 
         // First upkeep: copy Grizzly Bears
@@ -161,7 +160,7 @@ class CryptoplasmTest extends BaseCardTest {
     @DisplayName("Can target opponent's creatures")
     void canTargetOpponentCreatures() {
         addReadyCryptoplasm(player1);
-        addReadyCreature(player2, new GrizzlyBears());
+        addCreatureReady(player2, new GrizzlyBears());
         UUID bearsId = harness.getPermanentId(player2, "Grizzly Bears");
 
         advanceToUpkeep(player1);
@@ -179,7 +178,7 @@ class CryptoplasmTest extends BaseCardTest {
     @DisplayName("Copy effect fizzles if target is removed before resolution")
     void copyFizzlesIfTargetRemoved() {
         Permanent cryptoplasm = addReadyCryptoplasm(player1);
-        Permanent bears = addReadyCreature(player2, new GrizzlyBears());
+        Permanent bears = addCreatureReady(player2, new GrizzlyBears());
         UUID bearsId = bears.getId();
 
         advanceToUpkeep(player1);
@@ -198,13 +197,6 @@ class CryptoplasmTest extends BaseCardTest {
 
     private Permanent addReadyCryptoplasm(Player player) {
         Cryptoplasm card = new Cryptoplasm();
-        Permanent perm = new Permanent(card);
-        perm.setSummoningSick(false);
-        gd.playerBattlefields.get(player.getId()).add(perm);
-        return perm;
-    }
-
-    private Permanent addReadyCreature(Player player, Card card) {
         Permanent perm = new Permanent(card);
         perm.setSummoningSick(false);
         gd.playerBattlefields.get(player.getId()).add(perm);

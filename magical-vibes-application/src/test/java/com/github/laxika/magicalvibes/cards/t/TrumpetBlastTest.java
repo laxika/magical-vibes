@@ -1,10 +1,8 @@
 package com.github.laxika.magicalvibes.cards.t;
 
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
-import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
-import com.github.laxika.magicalvibes.model.Player;
 import com.github.laxika.magicalvibes.model.TurnStep;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
 import org.junit.jupiter.api.DisplayName;
@@ -21,9 +19,9 @@ class TrumpetBlastTest extends BaseCardTest {
     @Test
     @DisplayName("Trumpet Blast boosts attacking creatures with +2/+0")
     void boostsAttackingCreatures() {
-        Permanent attacker = addReadyCreature(player1, new GrizzlyBears());
+        Permanent attacker = addCreatureReady(player1, new GrizzlyBears());
         attacker.setAttacking(true);
-        Permanent nonAttacker = addReadyCreature(player1, new GrizzlyBears());
+        Permanent nonAttacker = addCreatureReady(player1, new GrizzlyBears());
 
         harness.setHand(player1, List.of(new TrumpetBlast()));
         harness.addMana(player1, ManaColor.RED, 3);
@@ -44,7 +42,7 @@ class TrumpetBlastTest extends BaseCardTest {
     @Test
     @DisplayName("Trumpet Blast effects wear off at end of turn")
     void effectsWearOffAtEndOfTurn() {
-        Permanent attacker = addReadyCreature(player1, new GrizzlyBears());
+        Permanent attacker = addCreatureReady(player1, new GrizzlyBears());
         attacker.setAttacking(true);
 
         harness.setHand(player1, List.of(new TrumpetBlast()));
@@ -62,12 +60,5 @@ class TrumpetBlastTest extends BaseCardTest {
 
         assertThat(attacker.getEffectivePower()).isEqualTo(2);
         assertThat(attacker.getEffectiveToughness()).isEqualTo(2);
-    }
-
-    private Permanent addReadyCreature(Player player, Card card) {
-        Permanent permanent = new Permanent(card);
-        permanent.setSummoningSick(false);
-        gd.playerBattlefields.get(player.getId()).add(permanent);
-        return permanent;
     }
 }

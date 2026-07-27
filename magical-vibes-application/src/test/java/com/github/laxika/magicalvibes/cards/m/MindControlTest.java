@@ -5,7 +5,6 @@ import com.github.laxika.magicalvibes.cards.f.FountainOfYouth;
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
-import com.github.laxika.magicalvibes.model.Player;
 import com.github.laxika.magicalvibes.model.StackEntry;
 import com.github.laxika.magicalvibes.model.StackEntryType;
 import com.github.laxika.magicalvibes.model.TurnStep;
@@ -25,7 +24,7 @@ class MindControlTest extends BaseCardTest {
     @Test
     @DisplayName("Casting Mind Control targeting a creature puts it on the stack")
     void castingPutsOnStack() {
-        Permanent creature = addCreatureReady(player2);
+        Permanent creature = addCreatureReady(player2, new GrizzlyBears());
 
         harness.setHand(player1, List.of(new MindControl()));
         harness.addMana(player1, ManaColor.BLUE, 5);
@@ -44,7 +43,7 @@ class MindControlTest extends BaseCardTest {
     @Test
     @DisplayName("Resolving Mind Control steals opponent's creature")
     void resolvingStealsCreature() {
-        Permanent creature = addCreatureReady(player2);
+        Permanent creature = addCreatureReady(player2, new GrizzlyBears());
 
         harness.setHand(player1, List.of(new MindControl()));
         harness.addMana(player1, ManaColor.BLUE, 5);
@@ -74,7 +73,7 @@ class MindControlTest extends BaseCardTest {
     @Test
     @DisplayName("Mind Control fizzles if target creature is no longer on the battlefield")
     void fizzlesIfTargetGone() {
-        Permanent creature = addCreatureReady(player2);
+        Permanent creature = addCreatureReady(player2, new GrizzlyBears());
 
         harness.setHand(player1, List.of(new MindControl()));
         harness.addMana(player1, ManaColor.BLUE, 5);
@@ -94,7 +93,7 @@ class MindControlTest extends BaseCardTest {
     @Test
     @DisplayName("Creature returns to owner when Mind Control is destroyed")
     void creatureReturnsWhenMindControlDestroyed() {
-        Permanent creature = addCreatureReady(player2);
+        Permanent creature = addCreatureReady(player2, new GrizzlyBears());
 
         harness.setHand(player1, List.of(new MindControl()));
         harness.addMana(player1, ManaColor.BLUE, 5);
@@ -166,11 +165,4 @@ class MindControlTest extends BaseCardTest {
     }
 
     // ===== Helper methods =====
-
-    private Permanent addCreatureReady(Player player) {
-        Permanent perm = new Permanent(new GrizzlyBears());
-        perm.setSummoningSick(false);
-        gd.playerBattlefields.get(player.getId()).add(perm);
-        return perm;
-    }
 }

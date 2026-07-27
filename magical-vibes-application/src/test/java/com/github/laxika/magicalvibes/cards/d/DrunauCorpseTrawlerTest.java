@@ -81,7 +81,7 @@ class DrunauCorpseTrawlerTest extends BaseCardTest {
     @DisplayName("Cannot target a non-Zombie creature")
     void cannotTargetNonZombie() {
         addReadyTrawler(player1);
-        Permanent bears = addReadyBears(player1);
+        Permanent bears = addCreatureReady(player1, new GrizzlyBears());
         harness.addMana(player1, ManaColor.BLACK, 3);
 
         assertThatThrownBy(() -> harness.activateAbility(player1, 0, null, bears.getId()))
@@ -99,13 +99,6 @@ class DrunauCorpseTrawlerTest extends BaseCardTest {
 
     private Permanent addReadyTrawler(Player player) {
         Permanent perm = new Permanent(new DrunauCorpseTrawler());
-        perm.setSummoningSick(false);
-        harness.getGameData().playerBattlefields.get(player.getId()).add(perm);
-        return perm;
-    }
-
-    private Permanent addReadyBears(Player player) {
-        Permanent perm = new Permanent(new GrizzlyBears());
         perm.setSummoningSick(false);
         harness.getGameData().playerBattlefields.get(player.getId()).add(perm);
         return perm;

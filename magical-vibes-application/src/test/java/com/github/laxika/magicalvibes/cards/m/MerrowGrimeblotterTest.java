@@ -20,7 +20,7 @@ class MerrowGrimeblotterTest extends BaseCardTest {
     @DisplayName("Activating gives target creature -2/-0 and untaps the source")
     void weakensTargetAndUntaps() {
         Permanent merrow = addTapped(player1, new MerrowGrimeblotter());
-        Permanent target = addReady(player2, new GrizzlyBears());
+        Permanent target = addCreatureReady(player2, new GrizzlyBears());
         harness.addMana(player1, ManaColor.BLUE, 2);
 
         enterMainWithPriority(player1);
@@ -38,7 +38,7 @@ class MerrowGrimeblotterTest extends BaseCardTest {
     @DisplayName("The -2/-0 wears off at end of turn")
     void wearsOffAtCleanup() {
         addTapped(player1, new MerrowGrimeblotter());
-        Permanent target = addReady(player2, new GrizzlyBears());
+        Permanent target = addCreatureReady(player2, new GrizzlyBears());
         harness.addMana(player1, ManaColor.BLUE, 2);
 
         enterMainWithPriority(player1);
@@ -56,8 +56,8 @@ class MerrowGrimeblotterTest extends BaseCardTest {
     @Test
     @DisplayName("Cannot activate while the source is untapped ({Q} requires it to be tapped)")
     void cannotActivateWhileUntapped() {
-        addReady(player1, new MerrowGrimeblotter());
-        Permanent target = addReady(player2, new GrizzlyBears());
+        addCreatureReady(player1, new MerrowGrimeblotter());
+        Permanent target = addCreatureReady(player2, new GrizzlyBears());
         harness.addMana(player1, ManaColor.BLUE, 2);
 
         enterMainWithPriority(player1);
@@ -71,7 +71,7 @@ class MerrowGrimeblotterTest extends BaseCardTest {
     @DisplayName("Cannot target a non-creature permanent")
     void cannotTargetNonCreature() {
         addTapped(player1, new MerrowGrimeblotter());
-        Permanent enchantment = addReady(player2, new Pacifism());
+        Permanent enchantment = addCreatureReady(player2, new Pacifism());
         harness.addMana(player1, ManaColor.BLUE, 2);
 
         enterMainWithPriority(player1);
@@ -81,15 +81,8 @@ class MerrowGrimeblotterTest extends BaseCardTest {
                 .hasMessageContaining("Target must be a creature");
     }
 
-    private Permanent addReady(Player player, Card card) {
-        Permanent perm = new Permanent(card);
-        perm.setSummoningSick(false);
-        gd.playerBattlefields.get(player.getId()).add(perm);
-        return perm;
-    }
-
     private Permanent addTapped(Player player, Card card) {
-        Permanent perm = addReady(player, card);
+        Permanent perm = addCreatureReady(player, card);
         perm.tap();
         return perm;
     }

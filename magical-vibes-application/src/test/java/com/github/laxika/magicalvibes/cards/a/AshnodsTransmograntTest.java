@@ -2,7 +2,6 @@ package com.github.laxika.magicalvibes.cards.a;
 
 import com.github.laxika.magicalvibes.cards.b.BottleGnomes;
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
-import com.github.laxika.magicalvibes.model.CardType;
 import com.github.laxika.magicalvibes.model.CounterType;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.Player;
@@ -13,7 +12,6 @@ import com.github.laxika.magicalvibes.testutil.BaseCardTest;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
-import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
@@ -24,7 +22,7 @@ class AshnodsTransmograntTest extends BaseCardTest {
     @DisplayName("Activating puts the ability on the stack targeting the creature")
     void activatingPutsOnStack() {
         addReadyTransmogrant(player1);
-        Permanent target = addReadyCreature(player2);
+        Permanent target = addCreatureReady(player2, new GrizzlyBears());
 
         harness.activateAbility(player1, 0, null, target.getId());
 
@@ -38,7 +36,7 @@ class AshnodsTransmograntTest extends BaseCardTest {
     @DisplayName("Activating sacrifices the transmogrant as a cost")
     void activatingSacrificesTransmogrant() {
         addReadyTransmogrant(player1);
-        Permanent target = addReadyCreature(player2);
+        Permanent target = addCreatureReady(player2, new GrizzlyBears());
 
         harness.activateAbility(player1, 0, null, target.getId());
 
@@ -50,7 +48,7 @@ class AshnodsTransmograntTest extends BaseCardTest {
     @DisplayName("Resolving puts a +1/+1 counter on and makes target an artifact")
     void resolvingBuffsAndMakesArtifact() {
         addReadyTransmogrant(player1);
-        Permanent target = addReadyCreature(player2);
+        Permanent target = addCreatureReady(player2, new GrizzlyBears());
 
         harness.activateAbility(player1, 0, null, target.getId());
         harness.passBothPriorities();
@@ -66,7 +64,7 @@ class AshnodsTransmograntTest extends BaseCardTest {
     @DisplayName("Artifact type is permanent and does not wear off at end of turn")
     void artifactTypePersists() {
         addReadyTransmogrant(player1);
-        Permanent target = addReadyCreature(player2);
+        Permanent target = addCreatureReady(player2, new GrizzlyBears());
 
         harness.activateAbility(player1, 0, null, target.getId());
         harness.passBothPriorities();
@@ -95,13 +93,6 @@ class AshnodsTransmograntTest extends BaseCardTest {
 
     private Permanent addReadyTransmogrant(Player player) {
         Permanent perm = new Permanent(new AshnodsTransmogrant());
-        perm.setSummoningSick(false);
-        gd.playerBattlefields.get(player.getId()).add(perm);
-        return perm;
-    }
-
-    private Permanent addReadyCreature(Player player) {
-        Permanent perm = new Permanent(new GrizzlyBears());
         perm.setSummoningSick(false);
         gd.playerBattlefields.get(player.getId()).add(perm);
         return perm;

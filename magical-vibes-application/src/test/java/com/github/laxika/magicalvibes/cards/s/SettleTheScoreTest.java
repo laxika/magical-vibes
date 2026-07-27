@@ -21,7 +21,7 @@ class SettleTheScoreTest extends BaseCardTest {
     @Test
     @DisplayName("Exiles target creature")
     void exilesTargetCreature() {
-        Permanent creature = addReadyCreature(player2);
+        Permanent creature = addCreatureReady(player2, new GrizzlyBears());
 
         harness.setHand(player1, List.of(new SettleTheScore()));
         harness.addMana(player1, ManaColor.BLACK, 4);
@@ -38,7 +38,7 @@ class SettleTheScoreTest extends BaseCardTest {
     @Test
     @DisplayName("Puts two loyalty counters on own planeswalker when exiling creature")
     void putsTwoLoyaltyCountersOnPlaneswalker() {
-        Permanent creature = addReadyCreature(player2);
+        Permanent creature = addCreatureReady(player2, new GrizzlyBears());
         Permanent planeswalker = addReadyPlaneswalker(player1, 3);
 
         harness.setHand(player1, List.of(new SettleTheScore()));
@@ -57,7 +57,7 @@ class SettleTheScoreTest extends BaseCardTest {
     @Test
     @DisplayName("Still exiles creature when no planeswalker is controlled")
     void exilesCreatureWithoutPlaneswalker() {
-        Permanent creature = addReadyCreature(player2);
+        Permanent creature = addCreatureReady(player2, new GrizzlyBears());
 
         harness.setHand(player1, List.of(new SettleTheScore()));
         harness.addMana(player1, ManaColor.BLACK, 4);
@@ -73,7 +73,7 @@ class SettleTheScoreTest extends BaseCardTest {
     @Test
     @DisplayName("Does not put loyalty counters on opponent's planeswalker")
     void doesNotAffectOpponentPlaneswalker() {
-        Permanent creature = addReadyCreature(player2);
+        Permanent creature = addCreatureReady(player2, new GrizzlyBears());
         Permanent oppPlaneswalker = addReadyPlaneswalker(player2, 3);
 
         harness.setHand(player1, List.of(new SettleTheScore()));
@@ -87,14 +87,6 @@ class SettleTheScoreTest extends BaseCardTest {
     }
 
     // ===== Helpers =====
-
-    private Permanent addReadyCreature(Player player) {
-        GrizzlyBears card = new GrizzlyBears();
-        Permanent perm = new Permanent(card);
-        perm.setSummoningSick(false);
-        gd.playerBattlefields.get(player.getId()).add(perm);
-        return perm;
-    }
 
     private Permanent addReadyPlaneswalker(Player player, int loyalty) {
         GarrukWildspeaker card = new GarrukWildspeaker();

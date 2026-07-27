@@ -119,7 +119,7 @@ class TimeOfIceTest extends BaseCardTest {
     @DisplayName("Locked creature does not untap during controller's untap step while saga is on battlefield")
     void lockedCreatureDoesNotUntapWhileSagaExists() {
         Permanent saga = addSagaWithLoreCounter(player1, 0);
-        Permanent bears = addReadyCreature(player2);
+        Permanent bears = addCreatureReady(player2, new GrizzlyBears());
 
         // Simulate chapter I resolution: tap creature and add untap lock
         bears.tap();
@@ -135,7 +135,7 @@ class TimeOfIceTest extends BaseCardTest {
     @DisplayName("Locked creature untaps when saga leaves the battlefield")
     void lockedCreatureUntapsWhenSagaRemoved() {
         Permanent saga = addSagaWithLoreCounter(player1, 0);
-        Permanent bears = addReadyCreature(player2);
+        Permanent bears = addCreatureReady(player2, new GrizzlyBears());
 
         // Simulate chapter I resolution
         bears.tap();
@@ -154,7 +154,7 @@ class TimeOfIceTest extends BaseCardTest {
     @DisplayName("Locked creature remains locked across multiple turns while saga is on battlefield")
     void lockPersistsAcrossMultipleTurns() {
         Permanent saga = addSagaWithLoreCounter(player1, 0);
-        Permanent bears = addReadyCreature(player2);
+        Permanent bears = addCreatureReady(player2, new GrizzlyBears());
 
         // Simulate chapter I resolution
         bears.tap();
@@ -213,8 +213,8 @@ class TimeOfIceTest extends BaseCardTest {
     @DisplayName("Chapter III returns all tapped creatures to owners' hands")
     void chapterIIIReturnsAllTappedCreatures() {
         harness.addToBattlefield(player1, new TimeOfIce());
-        Permanent p1Bears = addReadyCreature(player1);
-        Permanent p2Bears = addReadyCreature(player2);
+        Permanent p1Bears = addCreatureReady(player1, new GrizzlyBears());
+        Permanent p2Bears = addCreatureReady(player2, new GrizzlyBears());
 
         // Tap both creatures
         p1Bears.tap();
@@ -248,8 +248,8 @@ class TimeOfIceTest extends BaseCardTest {
     @DisplayName("Chapter III does not return untapped creatures")
     void chapterIIIDoesNotReturnUntappedCreatures() {
         harness.addToBattlefield(player1, new TimeOfIce());
-        Permanent tappedBears = addReadyCreature(player2);
-        Permanent untappedBears = addReadyCreature(player2);
+        Permanent tappedBears = addCreatureReady(player2, new GrizzlyBears());
+        Permanent untappedBears = addCreatureReady(player2, new GrizzlyBears());
 
         // Only tap one creature
         tappedBears.tap();
@@ -310,13 +310,6 @@ class TimeOfIceTest extends BaseCardTest {
         return gd.playerBattlefields.get(player.getId()).stream()
                 .filter(p -> p.getCard().getName().equals(name))
                 .findFirst().orElse(null);
-    }
-
-    private Permanent addReadyCreature(Player player) {
-        Permanent perm = new Permanent(new GrizzlyBears());
-        perm.setSummoningSick(false);
-        gd.playerBattlefields.get(player.getId()).add(perm);
-        return perm;
     }
 
     private Permanent addSagaWithLoreCounter(Player player, int loreCounters) {

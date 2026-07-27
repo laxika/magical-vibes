@@ -6,7 +6,6 @@ import com.github.laxika.magicalvibes.model.GameData;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.PendingInteraction;
 import com.github.laxika.magicalvibes.model.Permanent;
-import com.github.laxika.magicalvibes.model.Player;
 import com.github.laxika.magicalvibes.model.TurnStep;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
 import org.junit.jupiter.api.DisplayName;
@@ -45,7 +44,7 @@ class IntimidatorInitiateTest extends BaseCardTest {
     @DisplayName("Paying {1} makes the chosen target creature unable to block this turn")
     void payMakesTargetUnableToBlock() {
         harness.addToBattlefield(player1, new IntimidatorInitiate());
-        Permanent blocker = addReadyCreature(player2);
+        Permanent blocker = addCreatureReady(player2, new GrizzlyBears());
 
         opponentCastsRedSpell();
         harness.addMana(player1, ManaColor.COLORLESS, 1);
@@ -63,7 +62,7 @@ class IntimidatorInitiateTest extends BaseCardTest {
     @DisplayName("Declining leaves the target creature able to block")
     void decliningDoesNothing() {
         harness.addToBattlefield(player1, new IntimidatorInitiate());
-        Permanent blocker = addReadyCreature(player2);
+        Permanent blocker = addCreatureReady(player2, new GrizzlyBears());
 
         opponentCastsRedSpell();
 
@@ -88,12 +87,5 @@ class IntimidatorInitiateTest extends BaseCardTest {
         GameData gd = harness.getGameData();
         assertThat(gd.interaction.activeInteraction(PendingInteraction.MayAbilityChoice.class)).isNull();
         assertThat(gd.stack).hasSize(1);
-    }
-
-    private Permanent addReadyCreature(Player player) {
-        Permanent perm = new Permanent(new GrizzlyBears());
-        perm.setSummoningSick(false);
-        gd.playerBattlefields.get(player.getId()).add(perm);
-        return perm;
     }
 }

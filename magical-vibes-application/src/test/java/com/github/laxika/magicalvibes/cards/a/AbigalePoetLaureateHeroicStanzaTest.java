@@ -2,7 +2,6 @@ package com.github.laxika.magicalvibes.cards.a;
 
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
 import com.github.laxika.magicalvibes.cards.s.Shock;
-import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CounterType;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
@@ -22,7 +21,7 @@ class AbigalePoetLaureateHeroicStanzaTest extends BaseCardTest {
     @Test
     @DisplayName("Casting a creature spell prepares Abigale and exiles a castable Heroic Stanza copy")
     void castingCreaturePreparesAbigale() {
-        Permanent abigale = addReady(player1, new AbigalePoetLaureateHeroicStanza());
+        Permanent abigale = addCreatureReady(player1, new AbigalePoetLaureateHeroicStanza());
 
         castATriggeringCreature(player1);
 
@@ -39,7 +38,7 @@ class AbigalePoetLaureateHeroicStanzaTest extends BaseCardTest {
     @Test
     @DisplayName("Casting a non-creature spell does not prepare Abigale")
     void castingNoncreatureDoesNotPrepare() {
-        Permanent abigale = addReady(player1, new AbigalePoetLaureateHeroicStanza());
+        Permanent abigale = addCreatureReady(player1, new AbigalePoetLaureateHeroicStanza());
 
         harness.forceActivePlayer(player1);
         harness.forceStep(TurnStep.PRECOMBAT_MAIN);
@@ -55,7 +54,7 @@ class AbigalePoetLaureateHeroicStanzaTest extends BaseCardTest {
     @Test
     @DisplayName("An already-prepared Abigale does not prepare again on a second creature cast")
     void doesNotPrepareTwice() {
-        Permanent abigale = addReady(player1, new AbigalePoetLaureateHeroicStanza());
+        Permanent abigale = addCreatureReady(player1, new AbigalePoetLaureateHeroicStanza());
 
         castATriggeringCreature(player1);
         UUID firstCopyId = abigale.getPreparedSpellCardId();
@@ -74,7 +73,7 @@ class AbigalePoetLaureateHeroicStanzaTest extends BaseCardTest {
     @Test
     @DisplayName("Casting the prepared Heroic Stanza copy unprepares Abigale and adds a +1/+1 counter")
     void castingPrepareCopyUnpreparesAndCounters() {
-        Permanent abigale = addReady(player1, new AbigalePoetLaureateHeroicStanza());
+        Permanent abigale = addCreatureReady(player1, new AbigalePoetLaureateHeroicStanza());
 
         castATriggeringCreature(player1);
         harness.passBothPriorities(); // resolve the creature spell
@@ -97,7 +96,7 @@ class AbigalePoetLaureateHeroicStanzaTest extends BaseCardTest {
     @Test
     @DisplayName("After casting the copy, Abigale can be prepared again by another creature cast")
     void canPrepareAgainAfterCasting() {
-        Permanent abigale = addReady(player1, new AbigalePoetLaureateHeroicStanza());
+        Permanent abigale = addCreatureReady(player1, new AbigalePoetLaureateHeroicStanza());
 
         castATriggeringCreature(player1);
         harness.passBothPriorities();
@@ -120,7 +119,7 @@ class AbigalePoetLaureateHeroicStanzaTest extends BaseCardTest {
     @Test
     @DisplayName("When prepared Abigale leaves the battlefield, the exiled copy ceases to exist")
     void leavingBattlefieldRemovesExiledCopy() {
-        Permanent abigale = addReady(player1, new AbigalePoetLaureateHeroicStanza());
+        Permanent abigale = addCreatureReady(player1, new AbigalePoetLaureateHeroicStanza());
 
         castATriggeringCreature(player1);
         UUID copyId = abigale.getPreparedSpellCardId();
@@ -151,12 +150,5 @@ class AbigalePoetLaureateHeroicStanzaTest extends BaseCardTest {
         return gd.exiledCards.stream()
                 .filter(e -> "Heroic Stanza".equals(e.card().getName()))
                 .count();
-    }
-
-    private Permanent addReady(Player player, Card card) {
-        Permanent perm = new Permanent(card);
-        perm.setSummoningSick(false);
-        gd.playerBattlefields.get(player.getId()).add(perm);
-        return perm;
     }
 }

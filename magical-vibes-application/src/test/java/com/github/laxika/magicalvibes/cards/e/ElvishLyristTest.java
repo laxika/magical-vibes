@@ -78,7 +78,7 @@ class ElvishLyristTest extends BaseCardTest {
     @DisplayName("Cannot target a creature")
     void cannotTargetCreature() {
         addReadyLyrist(player1);
-        Permanent creature = addReadyCreature(player2);
+        Permanent creature = addCreatureReady(player2, new GrizzlyBears());
         harness.addMana(player1, ManaColor.GREEN, 1);
 
         assertThatThrownBy(() -> harness.activateAbility(player1, 0, null, creature.getId()))
@@ -136,14 +136,6 @@ class ElvishLyristTest extends BaseCardTest {
     private Permanent addReadyEnchantment(Player player) {
         GloriousAnthem card = new GloriousAnthem();
         Permanent perm = new Permanent(card);
-        gd.playerBattlefields.get(player.getId()).add(perm);
-        return perm;
-    }
-
-    private Permanent addReadyCreature(Player player) {
-        GrizzlyBears card = new GrizzlyBears();
-        Permanent perm = new Permanent(card);
-        perm.setSummoningSick(false);
         gd.playerBattlefields.get(player.getId()).add(perm);
         return perm;
     }

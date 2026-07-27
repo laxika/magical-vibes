@@ -62,7 +62,7 @@ class KnacksawCliqueTest extends BaseCardTest {
     @Test
     @DisplayName("Cannot activate while the source is untapped ({Q} requires it to be tapped)")
     void cannotActivateWhileUntapped() {
-        addReady(player1, new KnacksawClique());
+        addCreatureReady(player1, new KnacksawClique());
         harness.addMana(player1, ManaColor.BLUE, 2);
         harness.setLibrary(player2, List.of(new Island()));
 
@@ -73,15 +73,8 @@ class KnacksawCliqueTest extends BaseCardTest {
                 .hasMessageContaining("not tapped");
     }
 
-    private Permanent addReady(Player player, Card card) {
-        Permanent perm = new Permanent(card);
-        perm.setSummoningSick(false);
-        gd.playerBattlefields.get(player.getId()).add(perm);
-        return perm;
-    }
-
     private Permanent addTapped(Player player, Card card) {
-        Permanent perm = addReady(player, card);
+        Permanent perm = addCreatureReady(player, card);
         perm.tap();
         return perm;
     }

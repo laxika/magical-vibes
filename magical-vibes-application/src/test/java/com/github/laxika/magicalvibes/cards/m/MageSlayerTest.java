@@ -23,7 +23,7 @@ class MageSlayerTest extends BaseCardTest {
     @DisplayName("Equipped creature deals damage equal to its power to the attacked player")
     void dealsPowerDamageToAttackedPlayer() {
         harness.setLife(player2, 20);
-        Permanent creature = addReadyCreature(player1);   // Grizzly Bears 2/2
+        Permanent creature = addCreatureReady(player1, new GrizzlyBears());   // Grizzly Bears 2/2
         Permanent slayer = addMageSlayer(player1);
         slayer.setAttachedTo(creature.getId());
 
@@ -39,7 +39,7 @@ class MageSlayerTest extends BaseCardTest {
     @DisplayName("Damage scales with the equipped creature's current power")
     void damageScalesWithPower() {
         harness.setLife(player2, 20);
-        Permanent creature = addReadyCreature(player1);
+        Permanent creature = addCreatureReady(player1, new GrizzlyBears());
         creature.setPowerModifier(3); // 2/2 -> 5 power
         Permanent slayer = addMageSlayer(player1);
         slayer.setAttachedTo(creature.getId());
@@ -54,7 +54,7 @@ class MageSlayerTest extends BaseCardTest {
     @DisplayName("Reduces loyalty of the attacked planeswalker equal to the creature's power")
     void dealsPowerDamageToAttackedPlaneswalker() {
         harness.setLife(player2, 20);
-        Permanent creature = addReadyCreature(player1);
+        Permanent creature = addCreatureReady(player1, new GrizzlyBears());
         Permanent slayer = addMageSlayer(player1);
         slayer.setAttachedTo(creature.getId());
         Permanent planeswalker = addPlaneswalker(player2, 4);
@@ -70,7 +70,7 @@ class MageSlayerTest extends BaseCardTest {
     @DisplayName("No attack trigger fires when the creature is not equipped")
     void noTriggerWhenUnequipped() {
         harness.setLife(player2, 20);
-        addReadyCreature(player1);
+        addCreatureReady(player1, new GrizzlyBears());
         addMageSlayer(player1); // on the battlefield but not attached
 
         declareAttackers(player1, List.of(0), null);
@@ -79,13 +79,6 @@ class MageSlayerTest extends BaseCardTest {
     }
 
     // ===== Helpers =====
-
-    private Permanent addReadyCreature(Player player) {
-        Permanent perm = new Permanent(new GrizzlyBears());
-        perm.setSummoningSick(false);
-        gd.playerBattlefields.get(player.getId()).add(perm);
-        return perm;
-    }
 
     private Permanent addMageSlayer(Player player) {
         Permanent perm = new Permanent(new MageSlayer());

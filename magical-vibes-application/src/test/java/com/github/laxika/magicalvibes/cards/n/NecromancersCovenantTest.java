@@ -97,10 +97,10 @@ class NecromancersCovenantTest extends BaseCardTest {
     @Test
     @DisplayName("Grants lifelink only to Zombies you control")
     void grantsLifelinkToOwnZombiesOnly() {
-        addReady(player1, new NecromancersCovenant());
-        Permanent myZombie = addReady(player1, new WalkingCorpse());
-        Permanent myNonZombie = addReady(player1, new GrizzlyBears());
-        Permanent opponentZombie = addReady(player2, new WalkingCorpse());
+        addCreatureReady(player1, new NecromancersCovenant());
+        Permanent myZombie = addCreatureReady(player1, new WalkingCorpse());
+        Permanent myNonZombie = addCreatureReady(player1, new GrizzlyBears());
+        Permanent opponentZombie = addCreatureReady(player2, new WalkingCorpse());
 
         assertThat(gqs.hasKeyword(gd, myZombie, Keyword.LIFELINK)).isTrue();
         assertThat(gqs.hasKeyword(gd, myNonZombie, Keyword.LIFELINK)).isFalse();
@@ -113,8 +113,8 @@ class NecromancersCovenantTest extends BaseCardTest {
         harness.setLife(player1, 20);
         harness.setLife(player2, 20);
 
-        addReady(player1, new NecromancersCovenant());
-        Permanent zombie = addReady(player1, new WalkingCorpse()); // 2/2 Zombie
+        addCreatureReady(player1, new NecromancersCovenant());
+        Permanent zombie = addCreatureReady(player1, new WalkingCorpse()); // 2/2 Zombie
         zombie.setAttacking(true);
 
         harness.forceActivePlayer(player1);
@@ -124,12 +124,5 @@ class NecromancersCovenantTest extends BaseCardTest {
 
         assertThat(gd.playerLifeTotals.get(player2.getId())).isEqualTo(18);
         assertThat(gd.playerLifeTotals.get(player1.getId())).isEqualTo(22); // lifelink
-    }
-
-    private Permanent addReady(Player player, Card card) {
-        Permanent perm = new Permanent(card);
-        perm.setSummoningSick(false);
-        gd.playerBattlefields.get(player.getId()).add(perm);
-        return perm;
     }
 }

@@ -5,7 +5,6 @@ import com.github.laxika.magicalvibes.cards.f.FountainOfYouth;
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
-import com.github.laxika.magicalvibes.model.Player;
 import com.github.laxika.magicalvibes.model.TurnStep;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
 import org.junit.jupiter.api.DisplayName;
@@ -22,7 +21,7 @@ class VolitionReinsTest extends BaseCardTest {
     @Test
     @DisplayName("Resolving Volition Reins steals opponent's creature")
     void stealsCreature() {
-        Permanent creature = addCreatureReady(player2);
+        Permanent creature = addCreatureReady(player2, new GrizzlyBears());
 
         harness.setHand(player1, List.of(new VolitionReins()));
         harness.addMana(player1, ManaColor.BLUE, 6);
@@ -68,7 +67,7 @@ class VolitionReinsTest extends BaseCardTest {
     @Test
     @DisplayName("Volition Reins untaps enchanted permanent if it was tapped")
     void untapsTappedPermanent() {
-        Permanent creature = addCreatureReady(player2);
+        Permanent creature = addCreatureReady(player2, new GrizzlyBears());
         creature.tap();
 
         harness.setHand(player1, List.of(new VolitionReins()));
@@ -85,7 +84,7 @@ class VolitionReinsTest extends BaseCardTest {
     @Test
     @DisplayName("Volition Reins does not untap enchanted permanent if it was already untapped")
     void doesNotUntapAlreadyUntappedPermanent() {
-        Permanent creature = addCreatureReady(player2);
+        Permanent creature = addCreatureReady(player2, new GrizzlyBears());
         // creature is untapped by default
 
         harness.setHand(player1, List.of(new VolitionReins()));
@@ -104,7 +103,7 @@ class VolitionReinsTest extends BaseCardTest {
     @Test
     @DisplayName("Volition Reins fizzles if target is no longer on the battlefield")
     void fizzlesIfTargetGone() {
-        Permanent creature = addCreatureReady(player2);
+        Permanent creature = addCreatureReady(player2, new GrizzlyBears());
 
         harness.setHand(player1, List.of(new VolitionReins()));
         harness.addMana(player1, ManaColor.BLUE, 6);
@@ -126,7 +125,7 @@ class VolitionReinsTest extends BaseCardTest {
     @Test
     @DisplayName("Creature returns to owner when Volition Reins is destroyed")
     void creatureReturnsWhenDestroyed() {
-        Permanent creature = addCreatureReady(player2);
+        Permanent creature = addCreatureReady(player2, new GrizzlyBears());
 
         harness.setHand(player1, List.of(new VolitionReins()));
         harness.addMana(player1, ManaColor.BLUE, 6);
@@ -163,11 +162,4 @@ class VolitionReinsTest extends BaseCardTest {
     }
 
     // ===== Helper methods =====
-
-    private Permanent addCreatureReady(Player player) {
-        Permanent perm = new Permanent(new GrizzlyBears());
-        perm.setSummoningSick(false);
-        gd.playerBattlefields.get(player.getId()).add(perm);
-        return perm;
-    }
 }

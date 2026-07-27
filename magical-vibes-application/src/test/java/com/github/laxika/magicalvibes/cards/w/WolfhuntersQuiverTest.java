@@ -20,7 +20,7 @@ class WolfhuntersQuiverTest extends BaseCardTest {
     @DisplayName("Resolving equip ability attaches Wolfhunter's Quiver to target creature")
     void resolvingEquipAttachesToCreature() {
         Permanent quiver = addQuiverReady(player1);
-        Permanent creature = addReadyCreature(player1);
+        Permanent creature = addCreatureReady(player1, new GrizzlyBears());
         harness.addMana(player1, ManaColor.COLORLESS, 5);
 
         harness.activateAbility(player1, 0, null, creature.getId());
@@ -32,10 +32,10 @@ class WolfhuntersQuiverTest extends BaseCardTest {
     @Test
     @DisplayName("Equipped creature can tap to deal 1 damage to target creature")
     void grantedAbilityDeals1DamageToCreature() {
-        Permanent creature = addReadyCreature(player1);
+        Permanent creature = addCreatureReady(player1, new GrizzlyBears());
         Permanent quiver = addEquippedQuiver(player1, creature);
 
-        Permanent targetCreature = addReadyCreature(player2);
+        Permanent targetCreature = addCreatureReady(player2, new GrizzlyBears());
 
         harness.activateAbility(player1, 0, 0, null, targetCreature.getId());
         harness.passBothPriorities();
@@ -49,7 +49,7 @@ class WolfhuntersQuiverTest extends BaseCardTest {
     void grantedAbilityDeals1DamageToPlayer() {
         harness.setLife(player2, 20);
 
-        Permanent creature = addReadyCreature(player1);
+        Permanent creature = addCreatureReady(player1, new GrizzlyBears());
         addEquippedQuiver(player1, creature);
 
         harness.activateAbility(player1, 0, 0, null, player2.getId());
@@ -61,7 +61,7 @@ class WolfhuntersQuiverTest extends BaseCardTest {
     @Test
     @DisplayName("Equipped creature can tap to deal 3 damage to target Werewolf creature")
     void grantedAbilityDeals3DamageToWerewolf() {
-        Permanent creature = addReadyCreature(player1);
+        Permanent creature = addCreatureReady(player1, new GrizzlyBears());
         addEquippedQuiver(player1, creature);
 
         Permanent werewolf = new Permanent(new RecklessWaif());
@@ -79,10 +79,10 @@ class WolfhuntersQuiverTest extends BaseCardTest {
     @Test
     @DisplayName("Werewolf hunter ability cannot target non-Werewolf creatures")
     void werewolfAbilityCannotTargetNonWerewolf() {
-        Permanent creature = addReadyCreature(player1);
+        Permanent creature = addCreatureReady(player1, new GrizzlyBears());
         addEquippedQuiver(player1, creature);
 
-        Permanent targetCreature = addReadyCreature(player2);
+        Permanent targetCreature = addCreatureReady(player2, new GrizzlyBears());
 
         assertThatThrownBy(() -> harness.activateAbility(player1, 0, 1, null, targetCreature.getId()))
                 .isInstanceOf(IllegalStateException.class)
@@ -104,7 +104,7 @@ class WolfhuntersQuiverTest extends BaseCardTest {
     @Test
     @DisplayName("Already tapped creature cannot use granted tap abilities")
     void tappedCreatureCannotUseGrantedAbility() {
-        Permanent creature = addReadyCreature(player1);
+        Permanent creature = addCreatureReady(player1, new GrizzlyBears());
         creature.tap();
         addEquippedQuiver(player1, creature);
 
@@ -116,7 +116,7 @@ class WolfhuntersQuiverTest extends BaseCardTest {
     @Test
     @DisplayName("Creature loses granted abilities when Wolfhunter's Quiver is removed")
     void creatureLosesAbilityWhenQuiverRemoved() {
-        Permanent creature = addReadyCreature(player1);
+        Permanent creature = addCreatureReady(player1, new GrizzlyBears());
         Permanent quiver = addEquippedQuiver(player1, creature);
 
         gd.playerBattlefields.get(player1.getId()).remove(quiver);
@@ -131,7 +131,7 @@ class WolfhuntersQuiverTest extends BaseCardTest {
     void damageSourceIsEquippedCreature() {
         harness.setLife(player2, 20);
 
-        Permanent creature = addReadyCreature(player1);
+        Permanent creature = addCreatureReady(player1, new GrizzlyBears());
         addEquippedQuiver(player1, creature);
 
         harness.activateAbility(player1, 0, 0, null, player2.getId());
@@ -152,12 +152,5 @@ class WolfhuntersQuiverTest extends BaseCardTest {
         Permanent quiver = addQuiverReady(player);
         quiver.setAttachedTo(creature.getId());
         return quiver;
-    }
-
-    private Permanent addReadyCreature(Player player) {
-        Permanent perm = new Permanent(new GrizzlyBears());
-        perm.setSummoningSick(false);
-        gd.playerBattlefields.get(player.getId()).add(perm);
-        return perm;
     }
 }

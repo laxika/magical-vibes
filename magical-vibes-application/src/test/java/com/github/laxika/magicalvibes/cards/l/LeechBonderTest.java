@@ -43,7 +43,7 @@ class LeechBonderTest extends BaseCardTest {
     @DisplayName("Moves a -1/-1 counter from the first target creature onto the second")
     void movesCounterBetweenCreatures() {
         Permanent bonder = addReadyBonder(player1);
-        Permanent bears = addReadyCreature(player1);
+        Permanent bears = addCreatureReady(player1, new GrizzlyBears());
         harness.forceActivePlayer(player1);
         harness.forceStep(TurnStep.PRECOMBAT_MAIN);
         harness.clearPriorityPassed();
@@ -62,8 +62,8 @@ class LeechBonderTest extends BaseCardTest {
     @DisplayName("Does nothing if the first target creature has no counters")
     void noOpWhenSourceHasNoCounters() {
         Permanent bonder = addReadyBonder(player1);
-        Permanent source = addReadyCreature(player1); // no counters
-        Permanent destination = addReadyCreature(player1);
+        Permanent source = addCreatureReady(player1, new GrizzlyBears()); // no counters
+        Permanent destination = addCreatureReady(player1, new GrizzlyBears());
         harness.forceActivePlayer(player1);
         harness.forceStep(TurnStep.PRECOMBAT_MAIN);
         harness.clearPriorityPassed();
@@ -80,7 +80,7 @@ class LeechBonderTest extends BaseCardTest {
     @DisplayName("Ability fizzles if the destination creature leaves before resolution")
     void fizzlesIfDestinationLeaves() {
         Permanent bonder = addReadyBonder(player1);
-        Permanent bears = addReadyCreature(player1);
+        Permanent bears = addCreatureReady(player1, new GrizzlyBears());
         harness.forceActivePlayer(player1);
         harness.forceStep(TurnStep.PRECOMBAT_MAIN);
         harness.clearPriorityPassed();
@@ -101,7 +101,7 @@ class LeechBonderTest extends BaseCardTest {
         bonder.setSummoningSick(false);
         bonder.setCounterCount(CounterType.MINUS_ONE_MINUS_ONE, 2);
         gd.playerBattlefields.get(player1.getId()).add(bonder); // left untapped
-        Permanent bears = addReadyCreature(player1);
+        Permanent bears = addCreatureReady(player1, new GrizzlyBears());
         harness.forceActivePlayer(player1);
         harness.forceStep(TurnStep.PRECOMBAT_MAIN);
         harness.clearPriorityPassed();
@@ -119,13 +119,6 @@ class LeechBonderTest extends BaseCardTest {
         perm.setSummoningSick(false);
         perm.setCounterCount(CounterType.MINUS_ONE_MINUS_ONE, 2);
         perm.tap(); // {Q} requires the source to be tapped
-        gd.playerBattlefields.get(player.getId()).add(perm);
-        return perm;
-    }
-
-    private Permanent addReadyCreature(Player player) {
-        Permanent perm = new Permanent(new GrizzlyBears());
-        perm.setSummoningSick(false);
         gd.playerBattlefields.get(player.getId()).add(perm);
         return perm;
     }

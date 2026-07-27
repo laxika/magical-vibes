@@ -4,7 +4,6 @@ import com.github.laxika.magicalvibes.cards.f.FountainOfYouth;
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
-import com.github.laxika.magicalvibes.model.Player;
 import com.github.laxika.magicalvibes.model.TurnStep;
 import com.github.laxika.magicalvibes.networking.message.BlockerAssignment;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
@@ -22,9 +21,9 @@ class PanicAttackTest extends BaseCardTest {
     @Test
     @DisplayName("Up to three target creatures can't block this turn")
     void threeTargetsCantBlock() {
-        Permanent creature1 = addReadyCreature(player2);
-        Permanent creature2 = addReadyCreature(player2);
-        Permanent creature3 = addReadyCreature(player2);
+        Permanent creature1 = addCreatureReady(player2, new GrizzlyBears());
+        Permanent creature2 = addCreatureReady(player2, new GrizzlyBears());
+        Permanent creature3 = addCreatureReady(player2, new GrizzlyBears());
 
         harness.setHand(player1, List.of(new PanicAttack()));
         harness.addMana(player1, ManaColor.RED, 3);
@@ -40,8 +39,8 @@ class PanicAttackTest extends BaseCardTest {
     @Test
     @DisplayName("Can target fewer than three creatures")
     void canTargetFewerThanThree() {
-        Permanent creature1 = addReadyCreature(player2);
-        Permanent creature2 = addReadyCreature(player2);
+        Permanent creature1 = addCreatureReady(player2, new GrizzlyBears());
+        Permanent creature2 = addCreatureReady(player2, new GrizzlyBears());
 
         harness.setHand(player1, List.of(new PanicAttack()));
         harness.addMana(player1, ManaColor.RED, 3);
@@ -56,7 +55,7 @@ class PanicAttackTest extends BaseCardTest {
     @Test
     @DisplayName("Can target just one creature")
     void canTargetJustOne() {
-        Permanent creature1 = addReadyCreature(player2);
+        Permanent creature1 = addCreatureReady(player2, new GrizzlyBears());
 
         harness.setHand(player1, List.of(new PanicAttack()));
         harness.addMana(player1, ManaColor.RED, 3);
@@ -70,10 +69,10 @@ class PanicAttackTest extends BaseCardTest {
     @Test
     @DisplayName("Cannot target more than three creatures")
     void cannotTargetMoreThanThree() {
-        Permanent c1 = addReadyCreature(player2);
-        Permanent c2 = addReadyCreature(player2);
-        Permanent c3 = addReadyCreature(player2);
-        Permanent c4 = addReadyCreature(player2);
+        Permanent c1 = addCreatureReady(player2, new GrizzlyBears());
+        Permanent c2 = addCreatureReady(player2, new GrizzlyBears());
+        Permanent c3 = addCreatureReady(player2, new GrizzlyBears());
+        Permanent c4 = addCreatureReady(player2, new GrizzlyBears());
 
         harness.setHand(player1, List.of(new PanicAttack()));
         harness.addMana(player1, ManaColor.RED, 3);
@@ -87,7 +86,7 @@ class PanicAttackTest extends BaseCardTest {
     @Test
     @DisplayName("Cannot target a noncreature permanent")
     void cannotTargetNonCreature() {
-        addReadyCreature(player2); // valid target so spell is playable
+        addCreatureReady(player2, new GrizzlyBears()); // valid target so spell is playable
         harness.addToBattlefield(player2, new FountainOfYouth());
         harness.setHand(player1, List.of(new PanicAttack()));
         harness.addMana(player1, ManaColor.RED, 3);
@@ -102,8 +101,8 @@ class PanicAttackTest extends BaseCardTest {
     @Test
     @DisplayName("Targeted creature actually cannot block")
     void targetedCreatureCannotBlock() {
-        Permanent attacker = addReadyCreature(player1);
-        Permanent blocker = addReadyCreature(player2);
+        Permanent attacker = addCreatureReady(player1, new GrizzlyBears());
+        Permanent blocker = addCreatureReady(player2, new GrizzlyBears());
 
         harness.setHand(player1, List.of(new PanicAttack()));
         harness.addMana(player1, ManaColor.RED, 3);
@@ -126,8 +125,8 @@ class PanicAttackTest extends BaseCardTest {
     @Test
     @DisplayName("Skips targets that left the battlefield before resolution")
     void skipsRemovedTargets() {
-        Permanent creature1 = addReadyCreature(player2);
-        Permanent creature2 = addReadyCreature(player2);
+        Permanent creature1 = addCreatureReady(player2, new GrizzlyBears());
+        Permanent creature2 = addCreatureReady(player2, new GrizzlyBears());
 
         harness.setHand(player1, List.of(new PanicAttack()));
         harness.addMana(player1, ManaColor.RED, 3);
@@ -146,7 +145,7 @@ class PanicAttackTest extends BaseCardTest {
     @Test
     @DisplayName("Goes to graveyard after resolving")
     void goesToGraveyardAfterResolving() {
-        Permanent creature = addReadyCreature(player2);
+        Permanent creature = addCreatureReady(player2, new GrizzlyBears());
         harness.setHand(player1, List.of(new PanicAttack()));
         harness.addMana(player1, ManaColor.RED, 3);
 
@@ -155,13 +154,5 @@ class PanicAttackTest extends BaseCardTest {
 
         assertThat(gd.playerGraveyards.get(player1.getId()))
                 .anyMatch(c -> c.getName().equals("Panic Attack"));
-    }
-
-    private Permanent addReadyCreature(Player player) {
-        GrizzlyBears card = new GrizzlyBears();
-        Permanent perm = new Permanent(card);
-        perm.setSummoningSick(false);
-        gd.playerBattlefields.get(player.getId()).add(perm);
-        return perm;
     }
 }

@@ -26,7 +26,7 @@ class HijackTest extends BaseCardTest {
     @Test
     @DisplayName("Resolving Hijack on a creature untaps it, gains control, and grants haste")
     void resolvesOnCreature() {
-        Permanent target = addReadyCreature(player2);
+        Permanent target = addCreatureReady(player2, new GrizzlyBears());
         target.tap();
         harness.setHand(player1, List.of(new Hijack()));
         harness.addMana(player1, ManaColor.RED, 2);
@@ -62,7 +62,7 @@ class HijackTest extends BaseCardTest {
     @Test
     @DisplayName("Stolen creature can attack this turn because Hijack grants haste")
     void stolenCreatureCanAttackDueToHaste() {
-        Permanent target = addReadyCreature(player2);
+        Permanent target = addCreatureReady(player2, new GrizzlyBears());
         target.setSummoningSick(false);
         harness.setHand(player1, List.of(new Hijack()));
         harness.addMana(player1, ManaColor.RED, 2);
@@ -86,7 +86,7 @@ class HijackTest extends BaseCardTest {
     @Test
     @DisplayName("Hijack control and haste expire at cleanup")
     void controlAndHasteExpireAtCleanup() {
-        Permanent target = addReadyCreature(player2);
+        Permanent target = addCreatureReady(player2, new GrizzlyBears());
         harness.setHand(player1, List.of(new Hijack()));
         harness.addMana(player1, ManaColor.RED, 2);
         harness.addMana(player1, ManaColor.WHITE, 1);
@@ -107,7 +107,7 @@ class HijackTest extends BaseCardTest {
     @Test
     @DisplayName("Cannot target an enchantment")
     void cannotTargetEnchantment() {
-        addReadyCreature(player1); // valid target so spell is playable
+        addCreatureReady(player1, new GrizzlyBears()); // valid target so spell is playable
         Permanent enchantment = new Permanent(new Pacifism());
         gd.playerBattlefields.get(player2.getId()).add(enchantment);
         harness.setHand(player1, List.of(new Hijack()));
@@ -122,7 +122,7 @@ class HijackTest extends BaseCardTest {
     @Test
     @DisplayName("Hijack fizzles if target is removed before resolution")
     void fizzlesIfTargetRemoved() {
-        Permanent target = addReadyCreature(player2);
+        Permanent target = addCreatureReady(player2, new GrizzlyBears());
         harness.setHand(player1, List.of(new Hijack()));
         harness.addMana(player1, ManaColor.RED, 2);
         harness.addMana(player1, ManaColor.WHITE, 1);
@@ -134,13 +134,6 @@ class HijackTest extends BaseCardTest {
 
         assertThat(gd.stack).isEmpty();
         assertThat(gd.gameLog.stream().map(GameLogEntry::plainText)).anyMatch(log -> log.contains("fizzles"));
-    }
-
-    private Permanent addReadyCreature(Player player) {
-        Permanent perm = new Permanent(new GrizzlyBears());
-        perm.setSummoningSick(false);
-        gd.playerBattlefields.get(player.getId()).add(perm);
-        return perm;
     }
 
     private Permanent addReadyArtifact(Player player) {

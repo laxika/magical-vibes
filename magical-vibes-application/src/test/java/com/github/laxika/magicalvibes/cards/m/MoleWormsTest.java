@@ -61,7 +61,7 @@ class MoleWormsTest extends BaseCardTest {
     @DisplayName("Cannot target non-land permanents")
     void cannotTargetNonLand() {
         addReadyMoleWorms(player1);
-        Permanent creature = addReadyCreature(player2);
+        Permanent creature = addCreatureReady(player2, new GrizzlyBears());
 
         assertThatThrownBy(() -> harness.activateAbility(player1, 0, null, creature.getId()))
                 .isInstanceOf(IllegalStateException.class)
@@ -187,13 +187,6 @@ class MoleWormsTest extends BaseCardTest {
 
     private Permanent addReadyLand(Player player) {
         Permanent perm = new Permanent(new Forest());
-        perm.setSummoningSick(false);
-        gd.playerBattlefields.get(player.getId()).add(perm);
-        return perm;
-    }
-
-    private Permanent addReadyCreature(Player player) {
-        Permanent perm = new Permanent(new GrizzlyBears());
         perm.setSummoningSick(false);
         gd.playerBattlefields.get(player.getId()).add(perm);
         return perm;

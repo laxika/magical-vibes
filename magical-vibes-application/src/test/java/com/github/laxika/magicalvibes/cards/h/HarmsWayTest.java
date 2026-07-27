@@ -39,7 +39,7 @@ class HarmsWayTest extends BaseCardTest {
     @Test
     @DisplayName("Casting Harm's Way targeting a creature puts it on the stack")
     void castTargetingCreaturePutsOnStack() {
-        Permanent bear = addReadyCreature(player2);
+        Permanent bear = addCreatureReady(player2, new GrizzlyBears());
         harness.setHand(player1, List.of(new HarmsWay()));
         harness.addMana(player1, ManaColor.WHITE, 1);
 
@@ -54,7 +54,7 @@ class HarmsWayTest extends BaseCardTest {
     @Test
     @DisplayName("Resolving Harm's Way prompts for source choice")
     void resolvingPromptsForSourceChoice() {
-        Permanent opponentCreature = addReadyCreature(player2);
+        Permanent opponentCreature = addCreatureReady(player2, new GrizzlyBears());
         harness.setHand(player1, List.of(new HarmsWay()));
         harness.addMana(player1, ManaColor.WHITE, 1);
 
@@ -67,7 +67,7 @@ class HarmsWayTest extends BaseCardTest {
     @Test
     @DisplayName("Choosing a source creates a source damage redirect shield")
     void choosingSourceCreatesShield() {
-        Permanent opponentCreature = addReadyCreature(player2);
+        Permanent opponentCreature = addCreatureReady(player2, new GrizzlyBears());
         harness.setHand(player1, List.of(new HarmsWay()));
         harness.addMana(player1, ManaColor.WHITE, 1);
 
@@ -89,7 +89,7 @@ class HarmsWayTest extends BaseCardTest {
     void redirectsCombatDamageToPlayer() {
         harness.setLife(player1, 20);
         harness.setLife(player2, 20);
-        Permanent opponentCreature = addReadyCreature(player2);
+        Permanent opponentCreature = addCreatureReady(player2, new GrizzlyBears());
 
         // Cast Harm's Way targeting player2, choose opponent's creature as source
         harness.setHand(player1, List.of(new HarmsWay()));
@@ -176,7 +176,7 @@ class HarmsWayTest extends BaseCardTest {
     void doesNotAffectNonMatchingSource() {
         harness.setLife(player1, 20);
         harness.setLife(player2, 20);
-        Permanent creature1 = addReadyCreature(player2);
+        Permanent creature1 = addCreatureReady(player2, new GrizzlyBears());
         Permanent creature2 = addReadyCreatureWithName(player2, "Other Creature");
 
         // Cast Harm's Way targeting player2, choose creature1 as source
@@ -208,7 +208,7 @@ class HarmsWayTest extends BaseCardTest {
     void redirectWorksWhenDamageCantBePrevented() {
         harness.setLife(player1, 20);
         harness.setLife(player2, 20);
-        Permanent opponentCreature = addReadyCreature(player2);
+        Permanent opponentCreature = addCreatureReady(player2, new GrizzlyBears());
 
         // Leyline of Punishment on battlefield — damage can't be prevented
         harness.addToBattlefield(player2, new LeylineOfPunishment());
@@ -237,7 +237,7 @@ class HarmsWayTest extends BaseCardTest {
     @Test
     @DisplayName("Source redirect shield is cleared at end of turn")
     void shieldClearedAtEndOfTurn() {
-        Permanent opponentCreature = addReadyCreature(player2);
+        Permanent opponentCreature = addCreatureReady(player2, new GrizzlyBears());
         harness.setHand(player1, List.of(new HarmsWay()));
         harness.addMana(player1, ManaColor.WHITE, 1);
 
@@ -257,7 +257,7 @@ class HarmsWayTest extends BaseCardTest {
     @Test
     @DisplayName("Answering the source choice resumes the parked resolution entry")
     void answeringSourceChoiceClearsParkedResolution() {
-        Permanent opponentCreature = addReadyCreature(player2);
+        Permanent opponentCreature = addCreatureReady(player2, new GrizzlyBears());
         harness.setHand(player1, List.of(new HarmsWay()));
         harness.addMana(player1, ManaColor.WHITE, 1);
 
@@ -272,14 +272,6 @@ class HarmsWayTest extends BaseCardTest {
     }
 
     // ===== Helpers =====
-
-    private Permanent addReadyCreature(Player player) {
-        GrizzlyBears card = new GrizzlyBears();
-        Permanent perm = new Permanent(card);
-        perm.setSummoningSick(false);
-        gd.playerBattlefields.get(player.getId()).add(perm);
-        return perm;
-    }
 
     private Permanent addReadyCreatureWithStats(Player player, int power, int toughness) {
         GrizzlyBears card = new GrizzlyBears();

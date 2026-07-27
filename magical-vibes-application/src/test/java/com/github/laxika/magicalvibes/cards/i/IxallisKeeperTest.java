@@ -1,11 +1,9 @@
 package com.github.laxika.magicalvibes.cards.i;
 
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
-import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.Keyword;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
-import com.github.laxika.magicalvibes.model.Player;
 import com.github.laxika.magicalvibes.model.StackEntryType;
 import com.github.laxika.magicalvibes.model.TurnStep;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
@@ -22,8 +20,8 @@ class IxallisKeeperTest extends BaseCardTest {
     @Test
     @DisplayName("Activating ability puts it on the stack")
     void activatingPutsOnStack() {
-        Permanent keeper = addReadyCreature(player1, new IxallisKeeper());
-        Permanent target = addReadyCreature(player1, new GrizzlyBears());
+        Permanent keeper = addCreatureReady(player1, new IxallisKeeper());
+        Permanent target = addCreatureReady(player1, new GrizzlyBears());
         harness.addMana(player1, ManaColor.GREEN, 1);
         harness.addMana(player1, ManaColor.COLORLESS, 7);
 
@@ -36,8 +34,8 @@ class IxallisKeeperTest extends BaseCardTest {
     @Test
     @DisplayName("Activating ability requires {7}{G} mana")
     void requiresMana() {
-        Permanent keeper = addReadyCreature(player1, new IxallisKeeper());
-        Permanent target = addReadyCreature(player1, new GrizzlyBears());
+        Permanent keeper = addCreatureReady(player1, new IxallisKeeper());
+        Permanent target = addCreatureReady(player1, new GrizzlyBears());
         harness.addMana(player1, ManaColor.GREEN, 1);
         harness.addMana(player1, ManaColor.COLORLESS, 6);
 
@@ -52,7 +50,7 @@ class IxallisKeeperTest extends BaseCardTest {
         Permanent keeper = new Permanent(new IxallisKeeper());
         keeper.setSummoningSick(true);
         gd.playerBattlefields.get(player1.getId()).add(keeper);
-        Permanent target = addReadyCreature(player1, new GrizzlyBears());
+        Permanent target = addCreatureReady(player1, new GrizzlyBears());
         harness.addMana(player1, ManaColor.GREEN, 1);
         harness.addMana(player1, ManaColor.COLORLESS, 7);
 
@@ -65,8 +63,8 @@ class IxallisKeeperTest extends BaseCardTest {
     @Test
     @DisplayName("Resolving sacrifices Ixalli's Keeper and gives target creature +5/+5 and trample")
     void resolvingSacrificesAndBoostsWithTrample() {
-        Permanent keeper = addReadyCreature(player1, new IxallisKeeper());
-        Permanent bears = addReadyCreature(player1, new GrizzlyBears());
+        Permanent keeper = addCreatureReady(player1, new IxallisKeeper());
+        Permanent bears = addCreatureReady(player1, new GrizzlyBears());
         harness.addMana(player1, ManaColor.GREEN, 1);
         harness.addMana(player1, ManaColor.COLORLESS, 7);
 
@@ -90,8 +88,8 @@ class IxallisKeeperTest extends BaseCardTest {
     @Test
     @DisplayName("Can target opponent's creature")
     void canTargetOpponentCreature() {
-        Permanent keeper = addReadyCreature(player1, new IxallisKeeper());
-        Permanent oppBears = addReadyCreature(player2, new GrizzlyBears());
+        Permanent keeper = addCreatureReady(player1, new IxallisKeeper());
+        Permanent oppBears = addCreatureReady(player2, new GrizzlyBears());
         harness.addMana(player1, ManaColor.GREEN, 1);
         harness.addMana(player1, ManaColor.COLORLESS, 7);
 
@@ -107,8 +105,8 @@ class IxallisKeeperTest extends BaseCardTest {
     @Test
     @DisplayName("Boost and trample wear off at cleanup step")
     void boostAndTrampleWearOffAtCleanup() {
-        Permanent keeper = addReadyCreature(player1, new IxallisKeeper());
-        Permanent bears = addReadyCreature(player1, new GrizzlyBears());
+        Permanent keeper = addCreatureReady(player1, new IxallisKeeper());
+        Permanent bears = addCreatureReady(player1, new GrizzlyBears());
         harness.addMana(player1, ManaColor.GREEN, 1);
         harness.addMana(player1, ManaColor.COLORLESS, 7);
 
@@ -126,11 +124,4 @@ class IxallisKeeperTest extends BaseCardTest {
     }
 
     // ===== Helper methods =====
-
-    private Permanent addReadyCreature(Player player, Card card) {
-        Permanent permanent = new Permanent(card);
-        permanent.setSummoningSick(false);
-        gd.playerBattlefields.get(player.getId()).add(permanent);
-        return permanent;
-    }
 }

@@ -59,8 +59,8 @@ class DecimatorBeetleTest extends BaseCardTest {
     @DisplayName("Attacking queues the two-step counter-move target selection")
     void attackQueuesCounterMoveTargetSelection() {
         addBeetleReady(player1);
-        addReadyCreature(player1);
-        addReadyCreature(player2);
+        addCreatureReady(player1, new GrizzlyBears());
+        addCreatureReady(player2, new GrizzlyBears());
 
         declareAttackers(player1, List.of(0));
 
@@ -73,9 +73,9 @@ class DecimatorBeetleTest extends BaseCardTest {
     @DisplayName("Attack moves a -1/-1 counter from your creature onto a defending creature")
     void attackMovesCounterFromControlledToDefending() {
         addBeetleReady(player1);
-        Permanent ownCreature = addReadyCreature(player1);
+        Permanent ownCreature = addCreatureReady(player1, new GrizzlyBears());
         ownCreature.setCounterCount(CounterType.MINUS_ONE_MINUS_ONE, 1);
-        Permanent defender = addReadyCreature(player2);
+        Permanent defender = addCreatureReady(player2, new GrizzlyBears());
 
         declareAttackers(player1, List.of(0));
 
@@ -91,8 +91,8 @@ class DecimatorBeetleTest extends BaseCardTest {
     @DisplayName("Attack puts a counter on the defender even with no counter to remove")
     void attackPutsCounterEvenWhenNothingToRemove() {
         addBeetleReady(player1);
-        Permanent ownCreature = addReadyCreature(player1); // no -1/-1 counter
-        Permanent defender = addReadyCreature(player2);
+        Permanent ownCreature = addCreatureReady(player1, new GrizzlyBears()); // no -1/-1 counter
+        Permanent defender = addCreatureReady(player2, new GrizzlyBears());
 
         declareAttackers(player1, List.of(0));
 
@@ -108,9 +108,9 @@ class DecimatorBeetleTest extends BaseCardTest {
     @DisplayName("Attack still puts a counter when the remove target leaves before resolution")
     void attackPutsCounterWhenRemoveTargetLeavesBeforeResolution() {
         addBeetleReady(player1);
-        Permanent ownCreature = addReadyCreature(player1);
+        Permanent ownCreature = addCreatureReady(player1, new GrizzlyBears());
         ownCreature.setCounterCount(CounterType.MINUS_ONE_MINUS_ONE, 1);
-        Permanent defender = addReadyCreature(player2);
+        Permanent defender = addCreatureReady(player2, new GrizzlyBears());
 
         declareAttackers(player1, List.of(0));
 
@@ -126,9 +126,9 @@ class DecimatorBeetleTest extends BaseCardTest {
     @DisplayName("Attack still removes a counter when the defender target leaves before resolution")
     void attackRemovesCounterWhenDefenderTargetLeavesBeforeResolution() {
         addBeetleReady(player1);
-        Permanent ownCreature = addReadyCreature(player1);
+        Permanent ownCreature = addCreatureReady(player1, new GrizzlyBears());
         ownCreature.setCounterCount(CounterType.MINUS_ONE_MINUS_ONE, 1);
-        Permanent defender = addReadyCreature(player2);
+        Permanent defender = addCreatureReady(player2, new GrizzlyBears());
 
         declareAttackers(player1, List.of(0));
 
@@ -145,9 +145,9 @@ class DecimatorBeetleTest extends BaseCardTest {
     @DisplayName("Attack can decline the optional second target")
     void attackDeclinesSecondTarget() {
         addBeetleReady(player1);
-        Permanent ownCreature = addReadyCreature(player1);
+        Permanent ownCreature = addCreatureReady(player1, new GrizzlyBears());
         ownCreature.setCounterCount(CounterType.MINUS_ONE_MINUS_ONE, 1);
-        Permanent defender = addReadyCreature(player2);
+        Permanent defender = addCreatureReady(player2, new GrizzlyBears());
 
         declareAttackers(player1, List.of(0));
 
@@ -163,9 +163,9 @@ class DecimatorBeetleTest extends BaseCardTest {
     @DisplayName("Second target must be a creature the defending player controls")
     void attackSecondTargetCannotBeOwnCreature() {
         addBeetleReady(player1);
-        Permanent ownCreature = addReadyCreature(player1);
-        Permanent otherOwnCreature = addReadyCreature(player1);
-        addReadyCreature(player2);
+        Permanent ownCreature = addCreatureReady(player1, new GrizzlyBears());
+        Permanent otherOwnCreature = addCreatureReady(player1, new GrizzlyBears());
+        addCreatureReady(player2, new GrizzlyBears());
 
         declareAttackers(player1, List.of(0));
 
@@ -178,13 +178,6 @@ class DecimatorBeetleTest extends BaseCardTest {
 
     private Permanent addBeetleReady(Player player) {
         Permanent perm = new Permanent(new DecimatorBeetle());
-        perm.setSummoningSick(false);
-        gd.playerBattlefields.get(player.getId()).add(perm);
-        return perm;
-    }
-
-    private Permanent addReadyCreature(Player player) {
-        Permanent perm = new Permanent(new GrizzlyBears());
         perm.setSummoningSick(false);
         gd.playerBattlefields.get(player.getId()).add(perm);
         return perm;

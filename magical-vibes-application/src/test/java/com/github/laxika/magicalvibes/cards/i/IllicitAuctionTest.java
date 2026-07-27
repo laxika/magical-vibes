@@ -33,7 +33,7 @@ class IllicitAuctionTest extends BaseCardTest {
     void everyonePassesCasterStealsForFree() {
         harness.setLife(player1, 20);
         harness.setLife(player2, 20);
-        Permanent creature = addReadyCreature(player2);
+        Permanent creature = addCreatureReady(player2, new GrizzlyBears());
 
         cast(player1, creature);
         // First (and only) bidder is the opponent; the caster opened as the high bidder at 0.
@@ -54,7 +54,7 @@ class IllicitAuctionTest extends BaseCardTest {
     void biddingWarHighBidderLosesLifeAndGainsControl() {
         harness.setLife(player1, 20);
         harness.setLife(player2, 20);
-        Permanent creature = addReadyCreature(player2);
+        Permanent creature = addCreatureReady(player2, new GrizzlyBears());
 
         cast(player1, creature);
         harness.handleXValueChosen(player2, 5); // opponent bids to keep its creature
@@ -73,7 +73,7 @@ class IllicitAuctionTest extends BaseCardTest {
     void opponentWinsControlTransfersAway() {
         harness.setLife(player1, 20);
         harness.setLife(player2, 20);
-        Permanent creature = addReadyCreature(player1); // caster targets their own creature
+        Permanent creature = addCreatureReady(player1, new GrizzlyBears()); // caster targets their own creature
 
         cast(player1, creature);
         harness.handleXValueChosen(player2, 5); // opponent outbids the caster's opening 0
@@ -89,7 +89,7 @@ class IllicitAuctionTest extends BaseCardTest {
     @Test
     @DisplayName("Control gained by Illicit Auction is permanent and does not wear off at cleanup")
     void controlIsPermanent() {
-        Permanent creature = addReadyCreature(player2);
+        Permanent creature = addCreatureReady(player2, new GrizzlyBears());
 
         cast(player1, creature);
         harness.handleXValueChosen(player2, 0);
@@ -105,7 +105,7 @@ class IllicitAuctionTest extends BaseCardTest {
     @Test
     @DisplayName("Cannot target a non-creature permanent")
     void cannotTargetNonCreature() {
-        addReadyCreature(player1); // a legal creature target exists so the spell is castable
+        addCreatureReady(player1, new GrizzlyBears()); // a legal creature target exists so the spell is castable
         Permanent land = harness.addToBattlefieldAndReturn(player2, new com.github.laxika.magicalvibes.cards.f.Forest());
         harness.setHand(player1, List.of(new IllicitAuction()));
         harness.addMana(player1, ManaColor.RED, 2);
@@ -119,7 +119,7 @@ class IllicitAuctionTest extends BaseCardTest {
     @Test
     @DisplayName("Fizzles if the target creature leaves before resolution")
     void fizzlesIfTargetRemoved() {
-        Permanent creature = addReadyCreature(player2);
+        Permanent creature = addCreatureReady(player2, new GrizzlyBears());
         harness.setHand(player1, List.of(new IllicitAuction()));
         harness.addMana(player1, ManaColor.RED, 2);
         harness.addMana(player1, ManaColor.COLORLESS, 3);
@@ -130,12 +130,5 @@ class IllicitAuctionTest extends BaseCardTest {
 
         assertThat(gd.stack).isEmpty();
         assertThat(gd.interaction.isAwaitingInput()).isFalse();
-    }
-
-    private Permanent addReadyCreature(Player player) {
-        Permanent perm = new Permanent(new GrizzlyBears());
-        perm.setSummoningSick(false);
-        gd.playerBattlefields.get(player.getId()).add(perm);
-        return perm;
     }
 }

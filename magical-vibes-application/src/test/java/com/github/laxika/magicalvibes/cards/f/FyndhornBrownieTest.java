@@ -19,7 +19,7 @@ class FyndhornBrownieTest extends BaseCardTest {
     @DisplayName("Activating ability taps the Brownie")
     void activatingTapsBrownie() {
         Permanent brownie = addReadyBrownie(player1);
-        Permanent target = addReadyCreature(player2);
+        Permanent target = addCreatureReady(player2, new GrizzlyBears());
         addBrownieMana(player1);
 
         harness.activateAbility(player1, 0, null, target.getId());
@@ -31,7 +31,7 @@ class FyndhornBrownieTest extends BaseCardTest {
     @DisplayName("Untaps a tapped creature")
     void untapsTappedCreature() {
         addReadyBrownie(player1);
-        Permanent target = addReadyCreature(player2);
+        Permanent target = addCreatureReady(player2, new GrizzlyBears());
         target.tap();
         addBrownieMana(player1);
 
@@ -45,7 +45,7 @@ class FyndhornBrownieTest extends BaseCardTest {
     @DisplayName("Can untap own tapped creature")
     void canUntapOwnCreature() {
         addReadyBrownie(player1);
-        Permanent ownCreature = addReadyCreature(player1);
+        Permanent ownCreature = addCreatureReady(player1, new GrizzlyBears());
         ownCreature.tap();
         addBrownieMana(player1);
 
@@ -59,7 +59,7 @@ class FyndhornBrownieTest extends BaseCardTest {
     @DisplayName("Cannot activate ability without enough mana")
     void cannotActivateWithoutMana() {
         addReadyBrownie(player1);
-        Permanent target = addReadyCreature(player2);
+        Permanent target = addCreatureReady(player2, new GrizzlyBears());
 
         assertThatThrownBy(() -> harness.activateAbility(player1, 0, null, target.getId()))
                 .isInstanceOf(IllegalStateException.class);
@@ -82,7 +82,7 @@ class FyndhornBrownieTest extends BaseCardTest {
     @DisplayName("Fizzles if target creature is removed before resolution")
     void fizzlesIfTargetRemoved() {
         addReadyBrownie(player1);
-        Permanent target = addReadyCreature(player2);
+        Permanent target = addCreatureReady(player2, new GrizzlyBears());
         addBrownieMana(player1);
 
         harness.activateAbility(player1, 0, null, target.getId());
@@ -101,13 +101,6 @@ class FyndhornBrownieTest extends BaseCardTest {
 
     private Permanent addReadyBrownie(Player player) {
         Permanent perm = new Permanent(new FyndhornBrownie());
-        perm.setSummoningSick(false);
-        gd.playerBattlefields.get(player.getId()).add(perm);
-        return perm;
-    }
-
-    private Permanent addReadyCreature(Player player) {
-        Permanent perm = new Permanent(new GrizzlyBears());
         perm.setSummoningSick(false);
         gd.playerBattlefields.get(player.getId()).add(perm);
         return perm;

@@ -2,10 +2,8 @@ package com.github.laxika.magicalvibes.cards.n;
 
 import com.github.laxika.magicalvibes.cards.b.BlackKnight;
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
-import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
-import com.github.laxika.magicalvibes.model.Player;
 import com.github.laxika.magicalvibes.model.TurnStep;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
 import org.junit.jupiter.api.DisplayName;
@@ -20,8 +18,8 @@ class NocturnalRaidTest extends BaseCardTest {
     @Test
     @DisplayName("Black creatures get +2/+0, non-black creatures are unaffected")
     void boostsOnlyBlackCreatures() {
-        Permanent blackCreature = addReadyCreature(player1, new BlackKnight());   // 2/2 Black
-        Permanent greenCreature = addReadyCreature(player1, new GrizzlyBears());  // 2/2 Green
+        Permanent blackCreature = addCreatureReady(player1, new BlackKnight());   // 2/2 Black
+        Permanent greenCreature = addCreatureReady(player1, new GrizzlyBears());  // 2/2 Green
 
         castNocturnalRaid();
 
@@ -35,8 +33,8 @@ class NocturnalRaidTest extends BaseCardTest {
     @Test
     @DisplayName("Opponent's black creatures also get +2/+0")
     void boostsAllPlayersBlackCreatures() {
-        Permanent ownBlack = addReadyCreature(player1, new BlackKnight());
-        Permanent opponentBlack = addReadyCreature(player2, new BlackKnight());
+        Permanent ownBlack = addCreatureReady(player1, new BlackKnight());
+        Permanent opponentBlack = addCreatureReady(player2, new BlackKnight());
 
         castNocturnalRaid();
 
@@ -47,7 +45,7 @@ class NocturnalRaidTest extends BaseCardTest {
     @Test
     @DisplayName("Boost wears off at end of turn")
     void boostWearsOffAtEndOfTurn() {
-        Permanent blackCreature = addReadyCreature(player1, new BlackKnight());
+        Permanent blackCreature = addCreatureReady(player1, new BlackKnight());
 
         castNocturnalRaid();
 
@@ -67,12 +65,5 @@ class NocturnalRaidTest extends BaseCardTest {
         harness.forceActivePlayer(player1);
         harness.forceStep(TurnStep.PRECOMBAT_MAIN);
         harness.castAndResolveInstant(player1, 0);
-    }
-
-    private Permanent addReadyCreature(Player player, Card card) {
-        Permanent permanent = new Permanent(card);
-        permanent.setSummoningSick(false);
-        gd.playerBattlefields.get(player.getId()).add(permanent);
-        return permanent;
     }
 }

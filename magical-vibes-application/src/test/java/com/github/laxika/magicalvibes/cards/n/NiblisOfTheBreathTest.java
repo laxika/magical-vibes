@@ -23,7 +23,7 @@ class NiblisOfTheBreathTest extends BaseCardTest {
     @DisplayName("Activating ability puts it on the stack and taps Niblis")
     void activatingPutsAbilityOnStackAndTapsNiblis() {
         Permanent niblis = addReadyNiblis(player1);
-        Permanent target = addReadyCreature(player2);
+        Permanent target = addCreatureReady(player2, new GrizzlyBears());
         harness.addMana(player1, ManaColor.BLUE, 1);
 
         harness.activateAbility(player1, 0, null, target.getId());
@@ -39,7 +39,7 @@ class NiblisOfTheBreathTest extends BaseCardTest {
     @DisplayName("Resolves by tapping an untapped target creature")
     void tapsUntappedCreature() {
         addReadyNiblis(player1);
-        Permanent target = addReadyCreature(player2);
+        Permanent target = addCreatureReady(player2, new GrizzlyBears());
         harness.addMana(player1, ManaColor.BLUE, 1);
 
         harness.activateAbility(player1, 0, null, target.getId());
@@ -52,7 +52,7 @@ class NiblisOfTheBreathTest extends BaseCardTest {
     @DisplayName("Resolves by untapping a tapped target creature")
     void untapsTappedCreature() {
         addReadyNiblis(player1);
-        Permanent target = addReadyCreature(player2);
+        Permanent target = addCreatureReady(player2, new GrizzlyBears());
         target.tap();
         harness.addMana(player1, ManaColor.BLUE, 1);
 
@@ -66,7 +66,7 @@ class NiblisOfTheBreathTest extends BaseCardTest {
     @DisplayName("Can target a creature controlled by Niblis's controller")
     void canTargetOwnCreature() {
         addReadyNiblis(player1);
-        Permanent target = addReadyCreature(player1);
+        Permanent target = addCreatureReady(player1, new GrizzlyBears());
         harness.addMana(player1, ManaColor.BLUE, 1);
 
         harness.activateAbility(player1, 0, null, target.getId());
@@ -92,7 +92,7 @@ class NiblisOfTheBreathTest extends BaseCardTest {
     @DisplayName("Cannot activate without blue mana")
     void cannotActivateWithoutBlueMana() {
         addReadyNiblis(player1);
-        Permanent target = addReadyCreature(player2);
+        Permanent target = addCreatureReady(player2, new GrizzlyBears());
 
         assertThatThrownBy(() -> harness.activateAbility(player1, 0, null, target.getId()))
                 .isInstanceOf(IllegalStateException.class);
@@ -103,7 +103,7 @@ class NiblisOfTheBreathTest extends BaseCardTest {
     void cannotActivateWhileTapped() {
         Permanent niblis = addReadyNiblis(player1);
         niblis.tap();
-        Permanent target = addReadyCreature(player2);
+        Permanent target = addCreatureReady(player2, new GrizzlyBears());
         harness.addMana(player1, ManaColor.BLUE, 1);
 
         assertThatThrownBy(() -> harness.activateAbility(player1, 0, null, target.getId()))
@@ -116,7 +116,7 @@ class NiblisOfTheBreathTest extends BaseCardTest {
     void cannotActivateWhileSummoningSick() {
         Permanent niblis = new Permanent(new NiblisOfTheBreath());
         gd.playerBattlefields.get(player1.getId()).add(niblis);
-        Permanent target = addReadyCreature(player2);
+        Permanent target = addCreatureReady(player2, new GrizzlyBears());
         harness.addMana(player1, ManaColor.BLUE, 1);
 
         assertThatThrownBy(() -> harness.activateAbility(player1, 0, null, target.getId()))
@@ -128,7 +128,7 @@ class NiblisOfTheBreathTest extends BaseCardTest {
     @DisplayName("Fizzles if the target creature leaves the battlefield before resolution")
     void fizzlesIfTargetLeavesBattlefield() {
         addReadyNiblis(player1);
-        Permanent target = addReadyCreature(player2);
+        Permanent target = addCreatureReady(player2, new GrizzlyBears());
         harness.addMana(player1, ManaColor.BLUE, 1);
 
         harness.activateAbility(player1, 0, null, target.getId());
@@ -141,13 +141,6 @@ class NiblisOfTheBreathTest extends BaseCardTest {
 
     private Permanent addReadyNiblis(Player player) {
         Permanent permanent = new Permanent(new NiblisOfTheBreath());
-        permanent.setSummoningSick(false);
-        gd.playerBattlefields.get(player.getId()).add(permanent);
-        return permanent;
-    }
-
-    private Permanent addReadyCreature(Player player) {
-        Permanent permanent = new Permanent(new GrizzlyBears());
         permanent.setSummoningSick(false);
         gd.playerBattlefields.get(player.getId()).add(permanent);
         return permanent;

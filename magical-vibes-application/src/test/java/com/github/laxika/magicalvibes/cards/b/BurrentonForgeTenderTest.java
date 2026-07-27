@@ -42,7 +42,7 @@ class BurrentonForgeTenderTest extends BaseCardTest {
     @DisplayName("Cannot be targeted by red instant")
     void cannotBeTargetedByRedInstant() {
         Permanent forgeTender = addReadyForgeTender(player2);
-        Permanent otherTarget = addReadyCreature(player2);
+        Permanent otherTarget = addCreatureReady(player2, new GrizzlyBears());
 
         harness.setHand(player1, List.of(new LightningBolt()));
         harness.addMana(player1, ManaColor.RED, 1);
@@ -120,7 +120,7 @@ class BurrentonForgeTenderTest extends BaseCardTest {
     @DisplayName("Non-red creatures are not valid source choices")
     void nonRedSourceNotRecordedWhenOnlyGreenOnBattlefield() {
         addReadyForgeTender(player1);
-        Permanent greenCreature = addReadyCreature(player2);
+        Permanent greenCreature = addCreatureReady(player2, new GrizzlyBears());
 
         harness.activateAbility(player1, 0, null, null);
         harness.passBothPriorities();
@@ -171,14 +171,6 @@ class BurrentonForgeTenderTest extends BaseCardTest {
 
     private Permanent addReadyRedCreature(Player player) {
         FireElemental card = new FireElemental();
-        Permanent perm = new Permanent(card);
-        perm.setSummoningSick(false);
-        gd.playerBattlefields.get(player.getId()).add(perm);
-        return perm;
-    }
-
-    private Permanent addReadyCreature(Player player) {
-        GrizzlyBears card = new GrizzlyBears();
         Permanent perm = new Permanent(card);
         perm.setSummoningSick(false);
         gd.playerBattlefields.get(player.getId()).add(perm);
