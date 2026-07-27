@@ -13,9 +13,8 @@ import org.junit.jupiter.api.Test;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
-// Note: the engine models a land's color as its color identity (MtgjsonOracleLoader), so
-// Leechridden Swamp itself counts as one black permanent toward its "two or more black
-// permanents" activation restriction. Tests are written against that engine color model.
+// Note: Leechridden Swamp is colorless (CR 202.2 — a land has no mana cost), so it does not count
+// itself toward its own "two or more black permanents" activation restriction.
 class LeechriddenSwampTest extends BaseCardTest {
 
     @Test
@@ -36,8 +35,9 @@ class LeechriddenSwampTest extends BaseCardTest {
     @Test
     @DisplayName("Drain ability cannot be activated with fewer than two black permanents")
     void drainRejectedWithTooFewBlackPermanents() {
-        // Only the swamp itself (one black permanent) — below the two-permanent threshold.
         Permanent swamp = addSwamp(player1);
+        // One black permanent — the colorless swamp does not make up the second.
+        addBlackPermanents(player1, 1);
         harness.addMana(player1, ManaColor.BLACK, 1);
 
         int swampIdx = gd.playerBattlefields.get(player1.getId()).indexOf(swamp);

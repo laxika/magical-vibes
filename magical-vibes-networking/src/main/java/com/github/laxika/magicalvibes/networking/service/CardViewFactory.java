@@ -121,6 +121,7 @@ public class CardViewFactory {
                 card.getCollectorNumber(),
                 card.getColor(),
                 card.getColors(),
+                card.getColorIdentity(),
                 EffectResolution.needsTarget(card),
                 EffectResolution.needsSpellTarget(card),
                 abilityViews,

@@ -89,7 +89,7 @@ class MtgjsonOracleLoaderTest {
     }
 
     @Test
-    void derivesLandColorFromColorIdentity() {
+    void loadsALandAsColorlessAlongsideItsColorIdentity() {
         JsonNode face = MAPPER.readTree("""
                 {
                   "name": "Forest",
@@ -105,8 +105,9 @@ class MtgjsonOracleLoaderTest {
 
         assertThat(data.type()).isEqualTo(CardType.LAND);
         assertThat(data.supertypes()).containsExactly(CardSupertype.BASIC);
-        assertThat(data.color()).isEqualTo(CardColor.GREEN);
-        assertThat(data.colors()).containsExactly(CardColor.GREEN);
+        assertThat(data.color()).isNull();
+        assertThat(data.colors()).isEmpty();
+        assertThat(data.colorIdentity()).containsExactly(CardColor.GREEN);
     }
 
     @Test

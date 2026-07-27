@@ -19,17 +19,21 @@ import { card, mountCard } from './card-display.harness';
  * is this the colour the card makes mana for.
  */
 
-/** Lands reach the client coloured by colour identity, so `colors` is set even with no mana cost. */
+/**
+ * A land is colourless as a rules characteristic (CR 202.2), so `colors` stays empty and the frame
+ * is painted from `colorIdentity` instead.
+ */
 const land = (overrides: Partial<Card>): Card => card({
   type: 'LAND',
   manaCost: null,
   color: null,
   colors: [],
+  colorIdentity: [],
   ...overrides,
 });
 
 const basic = (name: string, subtype: string, color: string): Card =>
-    land({ name, supertypes: ['BASIC'], subtypes: [subtype], color, colors: [color] });
+    land({ name, supertypes: ['BASIC'], subtypes: [subtype], colorIdentity: [color] });
 
 /** The frame a land of this colour must move toward, and must stay duller than. */
 const spell = (color: string): Card => card({
@@ -40,7 +44,7 @@ const spell = (color: string): Card => card({
 const WASTES = land({ name: 'Wastes', supertypes: ['BASIC'], subtypes: ['WASTES'] });
 /** Two basic land types, so colour identity makes it multicoloured and its gradient inline. */
 const SACRED_FOUNDRY = land({
-  name: 'Sacred Foundry', subtypes: ['MOUNTAIN', 'PLAINS'], color: 'RED', colors: ['RED', 'WHITE'],
+  name: 'Sacred Foundry', subtypes: ['MOUNTAIN', 'PLAINS'], colorIdentity: ['RED', 'WHITE'],
 });
 
 const BASICS: [string, Card, Card][] = [

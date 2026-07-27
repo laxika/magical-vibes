@@ -196,12 +196,12 @@ class ScryfallOracleLoaderTest {
     }
 
     /**
-     * Lands take their color from the card's color identity, but Scryfall carries color_identity on
-     * the top-level card only. Reading it off the face node left every transformed land colorless
-     * while ordinary lands loaded through the same rule came out coloured.
+     * A back face's color identity comes off the top-level card, since Scryfall carries
+     * color_identity there only. Reading it off the face node instead left every transformed land
+     * with an empty identity, and so with an untinted frame.
      */
     @Test
-    void backFaceLandTakesColorFromTheCardsColorIdentity() {
+    void backFaceLandTakesItsColorIdentityFromTheWholeCard() {
         OracleData data = ScryfallOracleLoader.parseBackFaceOracleData(MAPPER.readTree("""
                 {
                   "name": "Search for Azcanta // Azcanta, the Sunken Ruin",
@@ -229,7 +229,8 @@ class ScryfallOracleLoaderTest {
                 }
                 """));
 
-        assertThat(data.color()).isEqualTo(CardColor.BLUE);
-        assertThat(data.colors()).containsExactly(CardColor.BLUE);
+        assertThat(data.color()).isNull();
+        assertThat(data.colors()).isEmpty();
+        assertThat(data.colorIdentity()).containsExactly(CardColor.BLUE);
     }
 }

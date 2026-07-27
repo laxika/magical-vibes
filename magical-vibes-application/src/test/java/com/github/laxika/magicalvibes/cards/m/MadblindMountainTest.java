@@ -12,16 +12,15 @@ import org.junit.jupiter.api.Test;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
-// Note: the engine models a land's color as its color identity (MtgjsonOracleLoader), so
-// Madblind Mountain itself counts as one red permanent toward its "two or more red
-// permanents" activation restriction. Tests are written against that engine color model.
+// Note: Madblind Mountain is colorless (CR 202.2 — a land has no mana cost), so it does not count
+// itself toward its own "two or more red permanents" activation restriction.
 class MadblindMountainTest extends BaseCardTest {
 
     @Test
     @DisplayName("Shuffle ability resolves when controlling two or more red permanents")
     void shuffleWithTwoRedPermanents() {
         Permanent mountain = addMountain(player1);
-        addRedPermanents(player1, 1); // land itself (1) + Hill Giant (1) = two red permanents
+        addRedPermanents(player1, 2); // the colorless land contributes nothing, so both come from here
         harness.addMana(player1, ManaColor.RED, 1);
 
         int mountainIdx = gd.playerBattlefields.get(player1.getId()).indexOf(mountain);
@@ -36,8 +35,9 @@ class MadblindMountainTest extends BaseCardTest {
     @Test
     @DisplayName("Shuffle ability cannot be activated with fewer than two red permanents")
     void shuffleRejectedWithTooFewRedPermanents() {
-        // Only the mountain itself (one red permanent) — below the two-permanent threshold.
         Permanent mountain = addMountain(player1);
+        // One red permanent — the colorless mountain does not make up the second.
+        addRedPermanents(player1, 1);
         harness.addMana(player1, ManaColor.RED, 1);
 
         int mountainIdx = gd.playerBattlefields.get(player1.getId()).indexOf(mountain);
@@ -57,7 +57,7 @@ class MadblindMountainTest extends BaseCardTest {
         gd.playerBattlefields.get(player1.getId()).add(bears2);
         harness.addMana(player1, ManaColor.RED, 1);
 
-        // Mountain counts (1), the two green creatures do not — still below the threshold.
+        // Neither the colorless mountain nor the two green creatures count — nothing red is here.
         int mountainIdx = gd.playerBattlefields.get(player1.getId()).indexOf(mountain);
         assertThatThrownBy(() -> harness.activateAbility(player1, mountainIdx, 1, null, null))
                 .isInstanceOf(IllegalStateException.class);
@@ -73,8 +73,6 @@ class MadblindMountainTest extends BaseCardTest {
 
         assertThat(gd.playerManaPools.get(player1.getId()).get(ManaColor.RED)).isEqualTo(1);
     }
-
-    // ===== Helpers =====
 
     private Permanent addMountain(Player player) {
         harness.addToBattlefield(player, new MadblindMountain());

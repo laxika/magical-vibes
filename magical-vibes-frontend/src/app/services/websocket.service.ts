@@ -154,6 +154,8 @@ export interface Card {
   collectorNumber: string | null;
   color: string | null;
   colors: string[];
+  /** Display-only: what tints a land's frame, since a land is colourless in `colors`. */
+  colorIdentity?: string[];
   needsTarget: boolean;
   needsSpellTarget: boolean;
   activatedAbilities: ActivatedAbilityView[];

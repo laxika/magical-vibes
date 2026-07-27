@@ -20,10 +20,11 @@ import java.util.List;
  * @param colorIndicator the face's colour indicator, which overrides {@link #colors} on a back face
  *                       that has one — a transformed permanent's colour is printed as an indicator
  *                       rather than derived from a mana cost it does not have
- * @param colorIdentity  the whole card's colour identity, not the face's. Lands have an empty
- *                       {@code colors} array and take their colour from here; on Scryfall this
- *                       field exists only on the top-level card, so an extractor must reach up for
- *                       it when building a back face.
+ * @param colorIdentity  the whole card's colour identity, not the face's, and never a rules
+ *                       characteristic — it survives only to tint a land's frame in the UI, since a
+ *                       land is colourless by {@link #colors}. On Scryfall this field exists only on
+ *                       the top-level card, so an extractor must reach up for it when building a
+ *                       back face.
  * @param keywords       raw upstream spellings, never mapped {@link com.github.laxika.magicalvibes.model.Keyword}
  *                       values. Text capitalisation matches against these strings and must see
  *                       spellings the enum does not cover ("Ward {2}", "Protection from red"), so

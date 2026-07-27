@@ -19,6 +19,9 @@ import java.util.UUID;
  * a {@code new CardView(...)} call. Hand-copied constructor calls silently drop any component added
  * later — the same drift hazard {@code agent-docs/ARCHITECTURE.md} calls out for cast dispatch.
  *
+ * @param colorIdentity display-only, and unlike {@link #colors} never touched by a layered colour
+ *                      effect. It exists so the client can tint a land's frame, since a land is
+ *                      colourless under CR 202.2 and so ships an empty {@link #colors}.
  * @param prepareSpell the spell printed inset on a "prepare" layout card's front face (SOS
  *                     "Prepared"), projected from the card's back face; null for every other card.
  *                     Not a transform: the front face stays visible and this is shown alongside it.
@@ -41,6 +44,7 @@ public record CardView(
         String collectorNumber,
         CardColor color,
         List<CardColor> colors,
+        List<CardColor> colorIdentity,
         boolean needsTarget,
         boolean needsSpellTarget,
         List<ActivatedAbilityView> activatedAbilities,

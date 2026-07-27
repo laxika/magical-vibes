@@ -64,7 +64,7 @@ filter directly rather than reusing a factory whose wording does not match.
 
 | Predicate | Constructor | Matches |
 |-----------|-------------|---------|
-| `PermanentColorInPredicate` | `(Set<CardColor>)` | permanents of specified colors |
+| `PermanentColorInPredicate` | `(Set<CardColor>)` | permanents of specified colors. **A land never matches**: CR 202.2 gives an object the colors of its mana cost, and a land has none, so Plains is colorless and Anarchy ("destroy all white permanents") leaves it alone. A land's color identity is carried separately as `Card.getColorIdentity()`, which is display-only (it tints the frame) and must never be read by a predicate. This is also why Mistveil Plains and friends do not count themselves toward "two or more white permanents" |
 | `PermanentIsMonocoloredPredicate` | `()` | permanents with exactly one effective color (colorless and multicolored don't match); Defiler of Souls |
 | `PermanentIsMulticoloredPredicate` | `()` | permanents with two or more effective colors (colorless and monocolored don't match); complement of `PermanentIsMonocoloredPredicate`, battlefield counterpart of `CardIsMulticoloredPredicate`; Esper Stormblade ("another multicolored permanent" via `ControlsAnotherPermanent`) |
 | `PermanentHasSubtypePredicate` | `(CardSubtype)` | permanents with specific subtype |

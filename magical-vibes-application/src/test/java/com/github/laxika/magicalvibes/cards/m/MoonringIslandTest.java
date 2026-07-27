@@ -3,6 +3,7 @@ package com.github.laxika.magicalvibes.cards.m;
 import com.github.laxika.magicalvibes.service.interaction.InteractionAnswer;
 import com.github.laxika.magicalvibes.model.GameLogEntry;
 
+import com.github.laxika.magicalvibes.cards.f.FugitiveWizard;
 import com.github.laxika.magicalvibes.cards.i.Island;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.ManaColor;
@@ -19,8 +20,9 @@ import java.util.UUID;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
-// Note: the engine models a land's color as its color identity, so Moonring Island itself counts as
-// one blue permanent toward its "two or more blue permanents" activation restriction.
+// Note: Moonring Island is colorless (CR 202.2 — a land has no mana cost), so it does not count
+// itself toward its own "two or more blue permanents" activation restriction. Neither does a plain
+// Island, which is why the blue permanents below are creatures.
 class MoonringIslandTest extends BaseCardTest {
 
     @Test
@@ -29,7 +31,8 @@ class MoonringIslandTest extends BaseCardTest {
         Card topCard = setTopCard(player2.getId(), new Island());
         int deckSizeBefore = gd.playerDecks.get(player2.getId()).size();
         Permanent island = addMoonring(player1);
-        addBluePermanent(player1); // second blue permanent (Moonring counts as the first)
+        addBluePermanent(player1);
+        addBluePermanent(player1);
         harness.addMana(player1, ManaColor.BLUE, 1);
 
         int idx = gd.playerBattlefields.get(player1.getId()).indexOf(island);
@@ -49,8 +52,9 @@ class MoonringIslandTest extends BaseCardTest {
     @Test
     @DisplayName("Look ability cannot be activated with fewer than two blue permanents")
     void rejectedWithTooFewBluePermanents() {
-        // Only Moonring Island itself (one blue permanent) — below the two-permanent threshold.
         Permanent island = addMoonring(player1);
+        // One blue permanent — the colorless Moonring Island does not make up the second.
+        addBluePermanent(player1);
         harness.addMana(player1, ManaColor.BLUE, 1);
 
         int idx = gd.playerBattlefields.get(player1.getId()).indexOf(island);
@@ -69,8 +73,6 @@ class MoonringIslandTest extends BaseCardTest {
         assertThat(gd.playerManaPools.get(player1.getId()).get(ManaColor.BLUE)).isEqualTo(1);
     }
 
-    // ===== Helpers =====
-
     private Permanent addMoonring(Player player) {
         harness.addToBattlefield(player, new MoonringIsland());
         Permanent island = findPermanent(player, "Moonring Island");
@@ -80,7 +82,7 @@ class MoonringIslandTest extends BaseCardTest {
     }
 
     private void addBluePermanent(Player player) {
-        Permanent p = new Permanent(new Island());
+        Permanent p = new Permanent(new FugitiveWizard());
         gd.playerBattlefields.get(player.getId()).add(p);
     }
 

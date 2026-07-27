@@ -51,17 +51,21 @@ class FaceOracleMapperTest {
         assertThat(map(face, FRONT).colors()).containsExactly(CardColor.WHITE);
     }
 
-    /** Forest is green even though its colors array is empty. */
+    /**
+     * CR 202.2: a land has no mana cost, so it is colourless whatever its identity reads. The
+     * identity survives beside it, unused by the rules and read only to tint the frame.
+     */
     @Test
-    void aLandTakesItsColorFromTheCardsColorIdentity() {
+    void aLandIsColorlessButKeepsItsColorIdentity() {
         OracleData data = map(
                 face().typeLine("Legendary Land").colors(List.of()).colorIdentity(List.of("U")), BACK);
 
-        assertThat(data.color()).isEqualTo(CardColor.BLUE);
-        assertThat(data.colors()).containsExactly(CardColor.BLUE);
+        assertThat(data.color()).isNull();
+        assertThat(data.colors()).isEmpty();
+        assertThat(data.colorIdentity()).containsExactly(CardColor.BLUE);
     }
 
-    /** Legacy Weapon is colourless with a WUBRG identity — the fallback is lands only. */
+    /** Legacy Weapon is colourless with a WUBRG identity — identity is never a colour. */
     @Test
     void aColorlessNonLandKeepsNoColorDespiteItsIdentity() {
         OracleData data = map(
@@ -69,6 +73,7 @@ class FaceOracleMapperTest {
 
         assertThat(data.color()).isNull();
         assertThat(data.colors()).isEmpty();
+        assertThat(data.colorIdentity()).containsExactly(CardColor.WHITE, CardColor.BLUE);
     }
 
     @Test

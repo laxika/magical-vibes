@@ -332,9 +332,18 @@ export class CardDisplayComponent implements OnInit, OnChanges, OnDestroy, After
     return this.card.token;
   }
 
+  /**
+   * The colours the frame is painted from. A land is colourless as a rules characteristic, so it
+   * would otherwise render in the plain artifact frame; its identity is what players read a land's
+   * colour by, and it is carried alongside `colors` for exactly this purpose.
+   */
+  private get frameColors(): string[] | undefined {
+    return hasCardType(this.card, 'LAND') ? this.card.colorIdentity : this.card.colors;
+  }
+
   @HostBinding('attr.data-card-color')
   get cardColor(): string | null {
-    const colors = this.card.colors;
+    const colors = this.frameColors;
     if (colors && colors.length > 1) {
       return 'MULTICOLOR';
     }
@@ -343,7 +352,7 @@ export class CardDisplayComponent implements OnInit, OnChanges, OnDestroy, After
 
   @HostBinding('style.background')
   get multicolorBackground(): string | null {
-    const colors = this.card.colors;
+    const colors = this.frameColors;
     if (!colors || colors.length <= 1) {
       return null;
     }

@@ -3,6 +3,7 @@ package com.github.laxika.magicalvibes.cards.m;
 import com.github.laxika.magicalvibes.cards.e.EliteVanguard;
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
 import com.github.laxika.magicalvibes.cards.h.HillGiant;
+import com.github.laxika.magicalvibes.cards.s.SuntailHawk;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
@@ -18,15 +19,16 @@ import java.util.UUID;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
-// Note: the engine models a land's color as its color identity, so Mistveil Plains itself counts
-// as one white permanent toward its "two or more white permanents" activation restriction.
+// Note: Mistveil Plains is colorless (CR 202.2 — a land has no mana cost), so it does not count
+// itself toward its own "two or more white permanents" activation restriction.
 class MistveilPlainsTest extends BaseCardTest {
 
     @Test
     @DisplayName("Puts target graveyard card on the bottom of the library with two or more white permanents")
     void tucksTargetToBottomOfLibrary() {
         Permanent plains = addPlains(player1);
-        addCreatureReady(player1, new EliteVanguard()); // Plains + Elite Vanguard = two white permanents
+        addCreatureReady(player1, new EliteVanguard());
+        addCreatureReady(player1, new SuntailHawk()); // the Plains is colorless, so these two are the pair
         harness.addMana(player1, ManaColor.WHITE, 1);
 
         Card tucked = new GrizzlyBears();
@@ -46,8 +48,9 @@ class MistveilPlainsTest extends BaseCardTest {
     @Test
     @DisplayName("Cannot activate with fewer than two white permanents")
     void rejectedWithTooFewWhitePermanents() {
-        // Only the Plains itself (one white permanent) — below the two-permanent threshold.
         Permanent plains = addPlains(player1);
+        // One white permanent — the colorless Plains does not make up the second.
+        addCreatureReady(player1, new EliteVanguard());
         harness.addMana(player1, ManaColor.WHITE, 1);
 
         Card tucked = new GrizzlyBears();
@@ -85,8 +88,6 @@ class MistveilPlainsTest extends BaseCardTest {
 
         assertThat(gd.playerManaPools.get(player1.getId()).get(ManaColor.WHITE)).isEqualTo(1);
     }
-
-    // ===== Helpers =====
 
     private Permanent addPlains(Player player) {
         harness.addToBattlefield(player, new MistveilPlains());

@@ -36,7 +36,7 @@ public final class FaceOracleMapper {
         String typeLine = face.typeLine() == null ? "" : face.typeLine();
         TypeLineParser.ParsedTypeLine parsed = TypeLineParser.parse(typeLine);
 
-        List<CardColor> colors = colorsOf(face, typeLine, isBackFace);
+        List<CardColor> colors = colorsOf(face, isBackFace);
         String cardText = cardTextOf(face);
 
         return new OracleData(
@@ -47,6 +47,7 @@ public final class FaceOracleMapper {
                 blankToNull(stripSecondFace(face.manaCost())),
                 colors.isEmpty() ? null : colors.get(0),
                 colors,
+                mapColors(face.colorIdentity()),
                 parsed.supertypes(),
                 parsed.subtypes(),
                 cardText,
@@ -59,20 +60,17 @@ public final class FaceOracleMapper {
                 isBackFace ? null : blankToNull(face.watermark()));
     }
 
-    private static List<CardColor> colorsOf(RawFace face, String typeLine, boolean isBackFace) {
+    private static List<CardColor> colorsOf(RawFace face, boolean isBackFace) {
         // A transformed permanent has no mana cost, so its colour is printed as an indicator.
         if (isBackFace && !face.colorIndicator().isEmpty()) {
             return mapColors(face.colorIndicator());
         }
 
-        List<CardColor> colors = mapColors(face.colors());
-        // Lands have an empty colors array but are coloured by their identity (Forest is green).
-        // Restricted to lands on purpose: other colourless cards keep a colour identity that is not
-        // their colour (Legacy Weapon is colourless with a WUBRG identity).
-        if (colors.isEmpty() && typeLine.contains("Land")) {
-            return mapColors(face.colorIdentity());
-        }
-        return colors;
+        // CR 202.2: an object is the colour of the mana symbols in its mana cost, and nothing else.
+        // A land has no mana cost, so it is colourless however its identity reads — Anarchy
+        // ("destroy all white permanents") must not touch a Plains. The identity travels separately
+        // as OracleData#colorIdentity, which only the view layer reads to tint a land's frame.
+        return mapColors(face.colors());
     }
 
     /** Maps upstream colour symbols, dropping any this game has no {@link CardColor} for. */

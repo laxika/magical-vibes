@@ -80,6 +80,11 @@ public class Card {
     private ManaCost parsedManaCost;
     private CardColor color;
     private List<CardColor> colors = List.of();
+    /**
+     * Display-only colour identity, used to tint a land's frame. Never a rules characteristic: no
+     * colour predicate may read it, because a land is colourless under CR 202.2.
+     */
+    private List<CardColor> colorIdentity = List.of();
 
     private Set<CardType> additionalTypes = Set.of();
     private Set<CardSupertype> supertypes = Set.of();
@@ -177,6 +182,7 @@ public class Card {
             this.manaCost = oracle.manaCost();
             this.color = oracle.color();
             this.colors = oracle.colors();
+            this.colorIdentity = oracle.colorIdentity();
             this.supertypes = oracle.supertypes();
             this.subtypes = oracle.subtypes();
             this.cardText = oracle.cardText();
@@ -210,6 +216,7 @@ public class Card {
         this.parsedManaCost = source.parsedManaCost;
         this.color = source.color;
         this.colors = source.colors;
+        this.colorIdentity = source.colorIdentity;
         this.additionalTypes = source.additionalTypes;
         this.supertypes = source.supertypes;
         this.subtypes = source.subtypes;
