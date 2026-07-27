@@ -1,11 +1,10 @@
 package com.github.laxika.magicalvibes.cards.p;
 
 import com.github.laxika.magicalvibes.cards.CardRegistration;
-import com.github.laxika.magicalvibes.model.ActivatedAbility;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardSubtype;
 import com.github.laxika.magicalvibes.model.EffectSlot;
-import com.github.laxika.magicalvibes.model.effect.AwardAnyColorManaEffect;
+import com.github.laxika.magicalvibes.model.ManaAbilities;
 import com.github.laxika.magicalvibes.model.effect.GrantActivatedAbilityEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantScope;
 import com.github.laxika.magicalvibes.model.effect.GrantSubtypeEffect;
@@ -32,12 +31,7 @@ public class PrismaticOmen extends Card {
         }
 
         addEffect(EffectSlot.STATIC, new GrantActivatedAbilityEffect(
-                new ActivatedAbility(
-                        true,
-                        null,
-                        List.of(new AwardAnyColorManaEffect()),
-                        "{T}: Add one mana of any color."
-                ),
+                ManaAbilities.tapForAnyColor(),
                 GrantScope.OWN_PERMANENTS,
                 new PermanentIsLandPredicate()
         ));

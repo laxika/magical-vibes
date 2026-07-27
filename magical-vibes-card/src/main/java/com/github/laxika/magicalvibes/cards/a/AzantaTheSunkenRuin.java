@@ -3,8 +3,8 @@ package com.github.laxika.magicalvibes.cards.a;
 import com.github.laxika.magicalvibes.model.ActivatedAbility;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardType;
+import com.github.laxika.magicalvibes.model.ManaAbilities;
 import com.github.laxika.magicalvibes.model.ManaColor;
-import com.github.laxika.magicalvibes.model.effect.AwardManaEffect;
 import com.github.laxika.magicalvibes.model.effect.LookAtTopCardsEffect;
 import com.github.laxika.magicalvibes.model.filter.CardAllOfPredicate;
 import com.github.laxika.magicalvibes.model.filter.CardNotPredicate;
@@ -24,11 +24,7 @@ public class AzantaTheSunkenRuin extends Card {
 
     public AzantaTheSunkenRuin() {
         // {T}: Add {U}.
-        addActivatedAbility(new ActivatedAbility(
-                true, null,
-                List.of(new AwardManaEffect(ManaColor.BLUE)),
-                "{T}: Add {U}."
-        ));
+        addActivatedAbility(ManaAbilities.tapFor(ManaColor.BLUE));
 
         // {2}{U}, {T}: Look at the top four cards of your library. You may reveal a noncreature,
         // nonland card from among them and put it into your hand. Put the rest on the bottom

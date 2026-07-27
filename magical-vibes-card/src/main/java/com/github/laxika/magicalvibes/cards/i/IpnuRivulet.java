@@ -4,6 +4,7 @@ import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.ActivatedAbility;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardSubtype;
+import com.github.laxika.magicalvibes.model.ManaAbilities;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.effect.AwardManaEffect;
 import com.github.laxika.magicalvibes.model.effect.MillEffect;
@@ -19,12 +20,7 @@ public class IpnuRivulet extends Card {
 
     public IpnuRivulet() {
         // {T}: Add {C}.
-        addActivatedAbility(new ActivatedAbility(
-                true,
-                null,
-                List.of(new AwardManaEffect(ManaColor.COLORLESS)),
-                "{T}: Add {C}."
-        ));
+        addActivatedAbility(ManaAbilities.tapFor(ManaColor.COLORLESS));
 
         // {T}, Pay 1 life: Add {U}.
         addActivatedAbility(new ActivatedAbility(

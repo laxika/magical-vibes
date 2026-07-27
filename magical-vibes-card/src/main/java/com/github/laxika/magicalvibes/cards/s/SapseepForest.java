@@ -5,8 +5,8 @@ import com.github.laxika.magicalvibes.model.ActivatedAbility;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardColor;
 import com.github.laxika.magicalvibes.model.EffectSlot;
+import com.github.laxika.magicalvibes.model.ManaAbilities;
 import com.github.laxika.magicalvibes.model.ManaColor;
-import com.github.laxika.magicalvibes.model.effect.AwardManaEffect;
 import com.github.laxika.magicalvibes.model.effect.EntersTappedEffect;
 import com.github.laxika.magicalvibes.model.effect.GainLifeEffect;
 import com.github.laxika.magicalvibes.model.filter.PermanentColorInPredicate;
@@ -22,12 +22,7 @@ public class SapseepForest extends Card {
         addEffect(EffectSlot.STATIC, new EntersTappedEffect());
 
         // {T}: Add {G}.
-        addActivatedAbility(new ActivatedAbility(
-                true,
-                null,
-                List.of(new AwardManaEffect(ManaColor.GREEN)),
-                "{T}: Add {G}."
-        ));
+        addActivatedAbility(ManaAbilities.tapFor(ManaColor.GREEN));
 
         // {G}, {T}: You gain 1 life. Activate only if you control two or more green permanents.
         addActivatedAbility(new ActivatedAbility(

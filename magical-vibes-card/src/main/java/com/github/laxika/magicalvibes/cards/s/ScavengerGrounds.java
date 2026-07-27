@@ -4,8 +4,8 @@ import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.ActivatedAbility;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardSubtype;
+import com.github.laxika.magicalvibes.model.ManaAbilities;
 import com.github.laxika.magicalvibes.model.ManaColor;
-import com.github.laxika.magicalvibes.model.effect.AwardManaEffect;
 import com.github.laxika.magicalvibes.model.effect.ExileGraveyardCardsEffect;
 import com.github.laxika.magicalvibes.model.effect.GraveyardExileScope;
 import com.github.laxika.magicalvibes.model.effect.SacrificePermanentCost;
@@ -18,12 +18,7 @@ public class ScavengerGrounds extends Card {
 
     public ScavengerGrounds() {
         // {T}: Add {C}.
-        addActivatedAbility(new ActivatedAbility(
-                true,
-                null,
-                List.of(new AwardManaEffect(ManaColor.COLORLESS)),
-                "{T}: Add {C}."
-        ));
+        addActivatedAbility(ManaAbilities.tapFor(ManaColor.COLORLESS));
 
         // {2}, {T}, Sacrifice a Desert: Exile all graveyards.
         addActivatedAbility(new ActivatedAbility(

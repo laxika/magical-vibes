@@ -4,8 +4,8 @@ import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.ActivatedAbility;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.Keyword;
+import com.github.laxika.magicalvibes.model.ManaAbilities;
 import com.github.laxika.magicalvibes.model.ManaColor;
-import com.github.laxika.magicalvibes.model.effect.AwardManaEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantKeywordEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantScope;
 
@@ -17,12 +17,7 @@ public class VaultOfTheArchangel extends Card {
 
     public VaultOfTheArchangel() {
         // {T}: Add {C}.
-        addActivatedAbility(new ActivatedAbility(
-                true,
-                null,
-                List.of(new AwardManaEffect(ManaColor.COLORLESS)),
-                "{T}: Add {C}."
-        ));
+        addActivatedAbility(ManaAbilities.tapFor(ManaColor.COLORLESS));
 
         // {2}{W}{B}, {T}: Creatures you control gain deathtouch and lifelink until end of turn.
         addActivatedAbility(new ActivatedAbility(

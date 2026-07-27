@@ -3,8 +3,8 @@ package com.github.laxika.magicalvibes.cards.r;
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.ActivatedAbility;
 import com.github.laxika.magicalvibes.model.Card;
+import com.github.laxika.magicalvibes.model.ManaAbilities;
 import com.github.laxika.magicalvibes.model.ManaColor;
-import com.github.laxika.magicalvibes.model.effect.AwardManaEffect;
 import com.github.laxika.magicalvibes.model.effect.AwardManaOfColorsEffect;
 
 import java.util.List;
@@ -14,12 +14,7 @@ public class RuggedPrairie extends Card {
 
     public RuggedPrairie() {
         // {T}: Add {C}.
-        addActivatedAbility(new ActivatedAbility(
-                true,
-                null,
-                List.of(new AwardManaEffect(ManaColor.COLORLESS)),
-                "{T}: Add {C}."
-        ));
+        addActivatedAbility(ManaAbilities.tapFor(ManaColor.COLORLESS));
         // {R/W}, {T}: Add {R}{R}, {R}{W}, or {W}{W}.
         addActivatedAbility(new ActivatedAbility(
                 true,

@@ -6,8 +6,8 @@ import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardColor;
 import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.GraveyardChoiceDestination;
+import com.github.laxika.magicalvibes.model.ManaAbilities;
 import com.github.laxika.magicalvibes.model.ManaColor;
-import com.github.laxika.magicalvibes.model.effect.AwardManaEffect;
 import com.github.laxika.magicalvibes.model.effect.EntersTappedEffect;
 import com.github.laxika.magicalvibes.model.effect.ReturnCardFromGraveyardEffect;
 import com.github.laxika.magicalvibes.model.filter.PermanentColorInPredicate;
@@ -23,12 +23,7 @@ public class MistveilPlains extends Card {
         addEffect(EffectSlot.STATIC, new EntersTappedEffect());
 
         // {T}: Add {W}.
-        addActivatedAbility(new ActivatedAbility(
-                true,
-                null,
-                List.of(new AwardManaEffect(ManaColor.WHITE)),
-                "{T}: Add {W}."
-        ));
+        addActivatedAbility(ManaAbilities.tapFor(ManaColor.WHITE));
 
         // {W}, {T}: Put target card from your graveyard on the bottom of your library.
         // Activate only if you control two or more white permanents.

@@ -1,11 +1,10 @@
 package com.github.laxika.magicalvibes.cards.s;
 
 import com.github.laxika.magicalvibes.cards.CardRegistration;
-import com.github.laxika.magicalvibes.model.ActivatedAbility;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.Keyword;
-import com.github.laxika.magicalvibes.model.effect.AwardAnyColorManaEffect;
+import com.github.laxika.magicalvibes.model.ManaAbilities;
 import com.github.laxika.magicalvibes.model.effect.EffectDuration;
 import com.github.laxika.magicalvibes.model.effect.GrantActivatedAbilityEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantKeywordEffect;
@@ -14,7 +13,6 @@ import com.github.laxika.magicalvibes.model.CounterType;
 import com.github.laxika.magicalvibes.model.effect.PutCounterOnEachControlledPermanentEffect;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsCreaturePredicate;
 
-import java.util.List;
 import java.util.Set;
 
 /**
@@ -31,15 +29,13 @@ public class SongOfFreyalise extends Card {
     public SongOfFreyalise() {
         // Chapter I: Until your next turn, creatures you control gain "{T}: Add one mana of any color."
         addEffect(EffectSlot.SAGA_CHAPTER_I, new GrantActivatedAbilityEffect(
-                new ActivatedAbility(true, null, List.of(new AwardAnyColorManaEffect()),
-                        "{T}: Add one mana of any color."),
+                ManaAbilities.tapForAnyColor(),
                 GrantScope.OWN_CREATURES, null, EffectDuration.UNTIL_YOUR_NEXT_TURN
         ));
 
         // Chapter II: Same as chapter I
         addEffect(EffectSlot.SAGA_CHAPTER_II, new GrantActivatedAbilityEffect(
-                new ActivatedAbility(true, null, List.of(new AwardAnyColorManaEffect()),
-                        "{T}: Add one mana of any color."),
+                ManaAbilities.tapForAnyColor(),
                 GrantScope.OWN_CREATURES, null, EffectDuration.UNTIL_YOUR_NEXT_TURN
         ));
 

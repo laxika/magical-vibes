@@ -3,8 +3,8 @@ package com.github.laxika.magicalvibes.cards.t;
 import com.github.laxika.magicalvibes.model.ActivatedAbility;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardSubtype;
+import com.github.laxika.magicalvibes.model.ManaAbilities;
 import com.github.laxika.magicalvibes.model.ManaColor;
-import com.github.laxika.magicalvibes.model.effect.AwardManaEffect;
 import com.github.laxika.magicalvibes.model.effect.DrawCardEffect;
 import com.github.laxika.magicalvibes.model.effect.SacrificePermanentCost;
 import com.github.laxika.magicalvibes.model.filter.PermanentHasSubtypePredicate;
@@ -21,11 +21,7 @@ public class TreasureCove extends Card {
 
     public TreasureCove() {
         // {T}: Add {C}.
-        addActivatedAbility(new ActivatedAbility(
-                true, null,
-                List.of(new AwardManaEffect(ManaColor.COLORLESS)),
-                "{T}: Add {C}."
-        ));
+        addActivatedAbility(ManaAbilities.tapFor(ManaColor.COLORLESS));
 
         // {T}, Sacrifice a Treasure: Draw a card.
         addActivatedAbility(new ActivatedAbility(

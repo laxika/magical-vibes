@@ -1,11 +1,10 @@
 package com.github.laxika.magicalvibes.cards.i;
 
 import com.github.laxika.magicalvibes.cards.CardRegistration;
-import com.github.laxika.magicalvibes.model.ActivatedAbility;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.EffectSlot;
+import com.github.laxika.magicalvibes.model.ManaAbilities;
 import com.github.laxika.magicalvibes.model.ManaColor;
-import com.github.laxika.magicalvibes.model.effect.AwardManaEffect;
 import com.github.laxika.magicalvibes.model.effect.BecomeColorlessEffect;
 import com.github.laxika.magicalvibes.model.effect.EnchantedPermanentBecomesOnlyLandEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantActivatedAbilityEffect;
@@ -39,8 +38,7 @@ public class ImprisonedInTheMoon extends Card {
                 .addEffect(EffectSlot.STATIC, new LosesAllAbilitiesEffect(GrantScope.ENCHANTED_PERMANENT))
                 // … and has "{T}: Add {C}"
                 .addEffect(EffectSlot.STATIC, new GrantActivatedAbilityEffect(
-                        new ActivatedAbility(true, null, List.of(new AwardManaEffect(ManaColor.COLORLESS)),
-                                "{T}: Add {C}."),
+                        ManaAbilities.tapFor(ManaColor.COLORLESS),
                         GrantScope.ENCHANTED_PERMANENT
                 ));
     }

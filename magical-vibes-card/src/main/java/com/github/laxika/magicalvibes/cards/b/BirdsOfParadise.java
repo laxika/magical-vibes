@@ -1,11 +1,9 @@
 package com.github.laxika.magicalvibes.cards.b;
 
 import com.github.laxika.magicalvibes.cards.CardRegistration;
-import com.github.laxika.magicalvibes.model.ActivatedAbility;
 import com.github.laxika.magicalvibes.model.Card;
-import com.github.laxika.magicalvibes.model.effect.AwardAnyColorManaEffect;
+import com.github.laxika.magicalvibes.model.ManaAbilities;
 
-import java.util.List;
 
 @CardRegistration(set = "6ED", collectorNumber = "217")
 @CardRegistration(set = "7ED", collectorNumber = "231")
@@ -18,11 +16,6 @@ import java.util.List;
 public class BirdsOfParadise extends Card {
 
     public BirdsOfParadise() {
-        addActivatedAbility(new ActivatedAbility(
-                true,
-                null,
-                List.of(new AwardAnyColorManaEffect()),
-                "{T}: Add one mana of any color."
-        ));
+        addActivatedAbility(ManaAbilities.tapForAnyColor());
     }
 }

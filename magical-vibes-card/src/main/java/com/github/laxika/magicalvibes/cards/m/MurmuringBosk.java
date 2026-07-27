@@ -5,6 +5,7 @@ import com.github.laxika.magicalvibes.model.ActivatedAbility;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardSubtype;
 import com.github.laxika.magicalvibes.model.EffectSlot;
+import com.github.laxika.magicalvibes.model.ManaAbilities;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.effect.AwardManaEffect;
 import com.github.laxika.magicalvibes.model.effect.DamageRecipient;
@@ -22,12 +23,7 @@ public class MurmuringBosk extends Card {
         addEffect(EffectSlot.STATIC, new RevealSubtypeOrEntersTappedEffect(CardSubtype.TREEFOLK));
 
         // {T}: Add {G}.
-        addActivatedAbility(new ActivatedAbility(
-                true,
-                null,
-                List.of(new AwardManaEffect(ManaColor.GREEN)),
-                "{T}: Add {G}."
-        ));
+        addActivatedAbility(ManaAbilities.tapFor(ManaColor.GREEN));
 
         // {T}: Add {W}. This land deals 1 damage to you.
         addActivatedAbility(new ActivatedAbility(

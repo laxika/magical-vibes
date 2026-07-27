@@ -4,6 +4,12 @@ All paths relative to `cards/`.
 
 ## Lands
 
+Plain `{T}: Add …` abilities come from `ManaAbilities` — `ManaAbilities.tapFor(ManaColor.RED)`
+or `ManaAbilities.tapForAnyColor()`. The reminder text is derived from the colour, so a dual
+land's abilities cannot disagree with the mana they produce. Build the ability directly only
+when it is not a plain tap-for-mana: an extra cost, a drawback (pain lands), or a restriction
+on what the mana may pay for.
+
 | Pattern | Reference | Notes |
 |---------|-----------|-------|
 | Basic land | `f/Forest.java` | `addEffect(ON_TAP, AwardManaEffect(color))` |

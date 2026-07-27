@@ -1,17 +1,15 @@
 package com.github.laxika.magicalvibes.cards.d;
 
 import com.github.laxika.magicalvibes.cards.CardRegistration;
-import com.github.laxika.magicalvibes.model.ActivatedAbility;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.EffectSlot;
+import com.github.laxika.magicalvibes.model.ManaAbilities;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.condition.ControlsPermanentCount;
-import com.github.laxika.magicalvibes.model.effect.AwardManaEffect;
 import com.github.laxika.magicalvibes.model.effect.ConditionalReplacementEffect;
 import com.github.laxika.magicalvibes.model.effect.EntersTappedEffect;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsLandPredicate;
 
-import java.util.List;
 
 @CardRegistration(set = "SOM", collectorNumber = "226")
 public class DarkslickShores extends Card {
@@ -21,19 +19,9 @@ public class DarkslickShores extends Card {
                 new ControlsPermanentCount(3, new PermanentIsLandPredicate()), new EntersTappedEffect()));
 
         // {T}: Add {U}.
-        addActivatedAbility(new ActivatedAbility(
-                true,
-                null,
-                List.of(new AwardManaEffect(ManaColor.BLUE)),
-                "{T}: Add {U}."
-        ));
+        addActivatedAbility(ManaAbilities.tapFor(ManaColor.BLUE));
 
         // {T}: Add {B}.
-        addActivatedAbility(new ActivatedAbility(
-                true,
-                null,
-                List.of(new AwardManaEffect(ManaColor.BLACK)),
-                "{T}: Add {B}."
-        ));
+        addActivatedAbility(ManaAbilities.tapFor(ManaColor.BLACK));
     }
 }
