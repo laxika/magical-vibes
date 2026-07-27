@@ -37,6 +37,7 @@ import com.github.laxika.magicalvibes.testutil.FakeConnection;
 import com.github.laxika.magicalvibes.testutil.GameTestHarness;
 import com.github.laxika.magicalvibes.service.GameActionAvailabilityService;
 import com.github.laxika.magicalvibes.service.GameRegistry;
+import com.github.laxika.magicalvibes.service.combat.block.BlockLegalityContext;
 import com.github.laxika.magicalvibes.service.combat.block.BlockLegalityService;
 import com.github.laxika.magicalvibes.service.battlefield.GameQueryService;
 import com.github.laxika.magicalvibes.service.combat.CombatAttackService;
@@ -61,6 +62,7 @@ import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatCode;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.eq;
+import static org.mockito.ArgumentMatchers.nullable;
 import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
@@ -540,8 +542,8 @@ class EasyAiDecisionEngineTest {
         Permanent cantBlocker = new Permanent(cantBlockCard);
         gd.playerBattlefields.get(aiPlayer.getId()).add(cantBlocker);
 
-        // gameQueryService.canBlock returns false for the restricted creature
-        when(blockLegalityService.canBlock(gd, cantBlocker)).thenReturn(false);
+        // block legality returns false for the restricted creature
+        when(blockLegalityService.canBlock(nullable(BlockLegalityContext.class), eq(cantBlocker))).thenReturn(false);
 
         createEngine().handleEvent(AiDecisionKind.BLOCKER_DECLARATION);
 
@@ -1286,7 +1288,7 @@ class EasyAiDecisionEngineTest {
                 .thenReturn(0);
         when(gameQueryService.getEffectivePower(eq(gd), any())).thenReturn(2);
         when(gameQueryService.getEffectiveToughness(eq(gd), any())).thenReturn(2);
-        when(blockLegalityService.canBlock(gd, blocker)).thenReturn(true);
+        when(blockLegalityService.canBlock(nullable(BlockLegalityContext.class), eq(blocker))).thenReturn(true);
         when(blockLegalityService.canBlockAttacker(any(), eq(blocker), any())).thenReturn(true);
         when(gameQueryService.getEffectivePower(gd, blocker)).thenReturn(5);
         when(gameQueryService.getEffectiveToughness(gd, blocker)).thenReturn(5);
@@ -1334,7 +1336,7 @@ class EasyAiDecisionEngineTest {
                 .thenReturn(0);
         when(gameQueryService.getEffectivePower(eq(gd), any())).thenReturn(2);
         when(gameQueryService.getEffectiveToughness(eq(gd), any())).thenReturn(2);
-        when(blockLegalityService.canBlock(gd, blocker)).thenReturn(true);
+        when(blockLegalityService.canBlock(nullable(BlockLegalityContext.class), eq(blocker))).thenReturn(true);
         when(blockLegalityService.canBlockAttacker(any(), eq(blocker), any())).thenReturn(true);
         when(gameQueryService.getEffectivePower(gd, blocker)).thenReturn(5);
         when(gameQueryService.getEffectiveToughness(gd, blocker)).thenReturn(5);

@@ -14,6 +14,8 @@ import com.github.laxika.magicalvibes.testutil.BaseCardTest;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
+import java.util.List;
+
 import static org.assertj.core.api.Assertions.assertThat;
 
 /**
@@ -138,5 +140,33 @@ class BlockLegalityServiceTest extends BaseCardTest {
 
         assertThat(bls.canBlock(gd, zombies)).isFalse();
         assertThat(bls.canBlock(gd, bears)).isTrue();
+    }
+
+    @Test
+    @DisplayName("A shared context answers each creature on its own merits")
+    void sharedContextMatchesSingleUseChecksForEveryCreature() {
+        // One creature per reason the gate can refuse, plus two Grizzly Bears that differ only in
+        // being tapped — so a cache keyed on anything but the permanent's own id shows up here.
+        Permanent bears = addCreatureReady(player2, new GrizzlyBears());
+        Permanent tappedBears = addCreatureReady(player2, new GrizzlyBears());
+        tappedBears.tap();
+        Permanent glider = addCreatureReady(player2, new AesthirGlider());
+        Permanent drone = addCreatureReady(player2, new TrainingDrone());
+        Permanent zombies = addCreatureReady(player2, new ScatheZombies());
+        harness.addToBattlefield(player1, new LightOfDay());
+
+        List<Permanent> battlefield = gd.playerBattlefields.get(player2.getId());
+        BlockLegalityContext context = bls.createBlockLegalityContext(gd, battlefield);
+        for (Permanent creature : battlefield) {
+            assertThat(bls.canBlock(context, creature))
+                    .describedAs(creature.getCard().getName())
+                    .isEqualTo(bls.canBlock(gd, creature));
+        }
+
+        assertThat(bls.canBlock(context, bears)).isTrue();
+        assertThat(bls.canBlock(context, tappedBears)).isFalse();
+        assertThat(bls.canBlock(context, glider)).isFalse();
+        assertThat(bls.canBlock(context, drone)).isFalse();
+        assertThat(bls.canBlock(context, zombies)).isFalse();
     }
 }

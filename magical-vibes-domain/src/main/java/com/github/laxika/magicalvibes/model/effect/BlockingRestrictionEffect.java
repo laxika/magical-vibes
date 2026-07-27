@@ -30,8 +30,8 @@ public interface BlockingRestrictionEffect extends CardEffect {
     /**
      * When non-{@code null}, the creature carrying this effect can't block unless this condition is met
      * (the block-only counterpart of {@code CantAttackUnlessEffect} and the block half of
-     * {@code CantAttackOrBlockUnlessEffect}). Evaluated in {@code GameQueryService.canBlock} via the
-     * condition service, relative to the source permanent's controller.
+     * {@code CantAttackOrBlockUnlessEffect}). Evaluated in {@code BlockLegalityService.canBlock} via
+     * the condition service, relative to the source permanent's controller.
      */
     default Condition cantBlockUnless() {
         return null;

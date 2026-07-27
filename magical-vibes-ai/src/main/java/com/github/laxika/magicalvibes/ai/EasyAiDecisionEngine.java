@@ -662,7 +662,7 @@ public class EasyAiDecisionEngine extends AiDecisionEngine {
 
         BlockLegalityContext blockContext = blockLegalityService.createBlockLegalityContext(gameData, opponentField);
         for (Permanent opp : opponentField) {
-            if (!blockLegalityService.canBlock(gameData, opp)) continue;
+            if (!blockLegalityService.canBlock(blockContext, opp)) continue;
             if (!blockLegalityService.canBlockAttacker(blockContext, opp, attacker)) continue;
 
             int oppToughness = gameQueryService.getEffectiveToughness(gameData, opp);
@@ -681,7 +681,7 @@ public class EasyAiDecisionEngine extends AiDecisionEngine {
         for (int j = 0; j < battlefield.size(); j++) {
             if (blockerUsed[j]) continue;
             Permanent blocker = battlefield.get(j);
-            if (!blockLegalityService.canBlock(gameData, blocker)) continue;
+            if (!blockLegalityService.canBlock(blockContext, blocker)) continue;
             if (!blockLegalityService.canBlockAttacker(blockContext, blocker, attackingPerm)) continue;
             available.add(j);
         }

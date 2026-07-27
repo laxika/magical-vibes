@@ -5,7 +5,7 @@ import com.github.laxika.magicalvibes.model.filter.PermanentPredicate;
 
 /**
  * Capability interface for static effects that restrict <em>both attacking and blocking</em>. The
- * attack side is enforced in {@code CombatAttackService} and the block side in {@code GameQueryService};
+ * attack side is enforced in {@code CombatAttackService} and the block side in {@code BlockLegalityService};
  * exposing the underlying facts here lets both consumers ask "does this effect forbid attacking/blocking"
  * without knowing the concrete record, mirroring how {@link ProtectionGrantingEffect} abstracts
  * protection.

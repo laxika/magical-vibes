@@ -89,9 +89,10 @@ public class CombatBlockService {
     public List<Integer> getBlockableCreatureIndices(GameData gameData, UUID playerId) {
         List<Permanent> battlefield = gameData.playerBattlefields.get(playerId);
         if (battlefield == null) return List.of();
+        BlockLegalityContext blockContext = blockLegalityService.createBlockLegalityContext(gameData, battlefield);
         List<Integer> indices = new ArrayList<>();
         for (int i = 0; i < battlefield.size(); i++) {
-            if (blockLegalityService.canBlock(gameData, battlefield.get(i))) {
+            if (blockLegalityService.canBlock(blockContext, battlefield.get(i))) {
                 indices.add(i);
             }
         }

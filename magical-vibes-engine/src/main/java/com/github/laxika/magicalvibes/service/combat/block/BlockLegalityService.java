@@ -21,7 +21,7 @@ import com.github.laxika.magicalvibes.model.effect.MatchingCreaturesCantBlockMat
 import com.github.laxika.magicalvibes.model.filter.FilterContext;
 import com.github.laxika.magicalvibes.model.filter.PermanentPredicate;
 import com.github.laxika.magicalvibes.service.battlefield.GameQueryService;
-import com.github.laxika.magicalvibes.service.combat.block.BlockLegalityContext.BlockDenial;
+import com.github.laxika.magicalvibes.service.combat.block.BlockLegalityContext.GlobalAttackOrBlockRestriction;
 import com.github.laxika.magicalvibes.service.effect.ConditionContext;
 import com.github.laxika.magicalvibes.service.effect.ConditionEvaluationService;
 import com.github.laxika.magicalvibes.service.effect.staticfx.StaticEffectSupport;
@@ -32,7 +32,9 @@ import org.springframework.stereotype.Component;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.EnumSet;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 import java.util.Optional;
 import java.util.Set;
 import java.util.UUID;
@@ -44,11 +46,12 @@ import java.util.UUID;
  * "X can't block Y" effects, and protection as it applies to blocking.
  *
  * <p>This service answers legality questions only — declaring blockers, ordering them, and the
- * resulting combat state belong to {@code CombatBlockService}.
+ * resulting combat state belong to {@code CombatBlockService}; wording the refusal belongs to
+ * {@link BlockDenialMessageService}.
  *
  * <p>Like {@link GameQueryService}, which it reads characteristics from, this service never
  * mutates game state. The one exception is the memoization inside a {@link BlockLegalityContext}
- * the caller owns: build one context per blocker × attacker sweep and discard it after any
+ * the caller owns: build one context per declare-blockers computation and discard it after any
  * game-state mutation.
  */
 @Component
@@ -58,6 +61,7 @@ public class BlockLegalityService {
     private final GameQueryService gameQueryService;
     private final PredicateEvaluationService predicateEvaluationService;
     private final ConditionEvaluationService conditionEvaluationService;
+    private final BlockDenialMessageService blockDenialMessageService;
 
     /**
      * Builds a standalone instance for callers that assemble their own service graph from a
@@ -68,106 +72,74 @@ public class BlockLegalityService {
         PredicateEvaluationService predicates = new PredicateEvaluationService(gameQueryService);
         return new BlockLegalityService(gameQueryService, predicates,
                 new ConditionEvaluationService(gameQueryService, predicates,
-                        new StaticEffectSupport(gameQueryService, predicates)));
-    }
-
-    /**
-     * Returns {@code true} if the given creature permanent can legally be declared as a blocker.
-     */
-    public boolean canBlock(GameData gameData, Permanent creature) {
-        return gameQueryService.isCreature(gameData, creature)
-                && !creature.isTapped()
-                && !creature.isCantBlockThisTurn()
-                && !gameQueryService.hasKeyword(gameData, creature, Keyword.DECAYED)
-                && creature.getCard().getEffects(EffectSlot.STATIC).stream().noneMatch(CantBlockEffect.class::isInstance)
-                && !gameQueryService.hasAuraWithEffect(gameData, creature, EnchantedCreatureCantAttackOrBlockEffect.class)
-                && !gameQueryService.hasAuraWithEffect(gameData, creature, CantBlockEffect.class)
-                && !(creature.getCard().getEffects(EffectSlot.STATIC).stream()
-                        .anyMatch(CantAttackOrBlockUnlessEquippedEffect.class::isInstance)
-                        && !gameQueryService.isEquipped(gameData, creature))
-                && !isCantBlockUnlessConditionUnmet(gameData, creature)
-                && !hasGlobalCantAttackOrBlockRestriction(gameData, creature);
-    }
-
-    /**
-     * Returns {@code true} if a board-wide "creatures matching X can't attack or block" restriction
-     * (e.g. Kulrath Knight, Light of Day) applies to the given creature, evaluating each restriction's
-     * predicate relative to the source permanent's controller. The attack side is enforced in
-     * {@code CombatAttackService}.
-     */
-    private boolean hasGlobalCantAttackOrBlockRestriction(GameData gameData, Permanent creature) {
-        boolean[] restricted = {false};
-        gameData.forEachPermanent((playerId, source) -> {
-            if (restricted[0]) {
-                return;
-            }
-            for (CardEffect effect : source.getCard().getEffects(EffectSlot.STATIC)) {
-                if (effect instanceof AttackOrBlockRestrictionEffect restriction
-                        && restriction.globallyCantAttackOrBlock() != null) {
-                    FilterContext context = FilterContext.of(gameData)
-                            .withSourceControllerId(playerId)
-                            .withSourceCardId(source.getOriginalCard().getId());
-                    if (predicateEvaluationService.matchesPermanentPredicate(creature, restriction.globallyCantAttackOrBlock(), context)) {
-                        restricted[0] = true;
-                    }
-                }
-            }
-        });
-        return restricted[0];
-    }
-
-    /**
-     * Returns {@code true} if the creature has a "can't [attack or] block unless …" restriction whose
-     * condition is not met (block side, mirrors the attack side in {@code CombatAttackService}). Covers
-     * both the combined {@code CantAttackOrBlockUnlessEffect} and the block-only
-     * {@code CantBlockUnlessEffect}.
-     */
-    private boolean isCantBlockUnlessConditionUnmet(GameData gameData, Permanent creature) {
-        UUID controllerId = null;
-        for (CardEffect effect : creature.getCard().getEffects(EffectSlot.STATIC)) {
-            Condition unless = null;
-            if (effect instanceof AttackOrBlockRestrictionEffect restriction) {
-                unless = restriction.cantAttackOrBlockUnless();
-            } else if (effect instanceof BlockingRestrictionEffect restriction) {
-                unless = restriction.cantBlockUnless();
-            }
-            if (unless == null) {
-                continue;
-            }
-            if (controllerId == null) {
-                controllerId = gameQueryService.findPermanentController(gameData, creature.getId());
-                if (controllerId == null) return false;
-            }
-            if (!conditionEvaluationService.isMet(gameData, unless,
-                    ConditionContext.forPermanent(creature, controllerId))) {
-                return true;
-            }
-        }
-        return false;
+                        new StaticEffectSupport(gameQueryService, predicates)),
+                new BlockDenialMessageService());
     }
 
     /**
      * Builds a {@link BlockLegalityContext} for one declare-blockers computation: collects the
-     * board-wide block restrictions and defender land types once, then caches per-creature
-     * facts as pairs are queried. Use one context for a whole blocker × attacker sweep and
-     * build a new one after any game-state mutation.
+     * board-wide restrictions, the attached auras, and the defender land types once, then caches
+     * per-creature facts as creatures are queried. Use one context for a whole sweep and build a
+     * new one after any game-state mutation. A {@code null} defender battlefield is read as an
+     * empty one.
      */
     public BlockLegalityContext createBlockLegalityContext(GameData gameData, List<Permanent> defenderBattlefield) {
-        List<MatchingCreaturesCantBlockMatchingCreaturesEffect> globalRestrictions = new ArrayList<>();
+        List<MatchingCreaturesCantBlockMatchingCreaturesEffect> globalBlockRestrictions = new ArrayList<>();
+        List<GlobalAttackOrBlockRestriction> globalAttackOrBlockRestrictions = new ArrayList<>();
+        Map<UUID, List<Permanent>> attachedByHostId = new HashMap<>();
         gameData.forEachPermanent((playerId, source) -> {
+            if (source.isAttached()) {
+                attachedByHostId.computeIfAbsent(source.getAttachedTo(), id -> new ArrayList<>(1)).add(source);
+            }
             for (CardEffect effect : source.getCard().getEffects(EffectSlot.STATIC)) {
                 if (effect instanceof MatchingCreaturesCantBlockMatchingCreaturesEffect restriction) {
-                    globalRestrictions.add(restriction);
+                    globalBlockRestrictions.add(restriction);
+                }
+                if (effect instanceof AttackOrBlockRestrictionEffect restriction
+                        && restriction.globallyCantAttackOrBlock() != null) {
+                    globalAttackOrBlockRestrictions.add(new GlobalAttackOrBlockRestriction(
+                            restriction.globallyCantAttackOrBlock(),
+                            FilterContext.of(gameData)
+                                    .withSourceControllerId(playerId)
+                                    .withSourceCardId(source.getOriginalCard().getId())));
                 }
             }
         });
+        List<Permanent> defenders = defenderBattlefield == null ? List.of() : defenderBattlefield;
         Set<CardSubtype> defenderCardSubtypes = EnumSet.noneOf(CardSubtype.class);
-        if (defenderBattlefield != null) {
-            for (Permanent p : defenderBattlefield) {
-                defenderCardSubtypes.addAll(p.getCard().getSubtypes());
-            }
+        for (Permanent defender : defenders) {
+            defenderCardSubtypes.addAll(defender.getCard().getSubtypes());
         }
-        return new BlockLegalityContext(gameData, defenderBattlefield, globalRestrictions, defenderCardSubtypes);
+        return new BlockLegalityContext(gameData, defenders, globalBlockRestrictions,
+                globalAttackOrBlockRestrictions, attachedByHostId, defenderCardSubtypes);
+    }
+
+    /**
+     * Returns {@code true} if the given creature permanent can legally be declared as a blocker.
+     * Builds a fresh single-use {@link BlockLegalityContext}; sweeps over a battlefield should build
+     * one context via {@link #createBlockLegalityContext} and use the context overload.
+     */
+    public boolean canBlock(GameData gameData, Permanent creature) {
+        return canBlock(createBlockLegalityContext(gameData, List.of()), creature);
+    }
+
+    /**
+     * Whether the given creature can legally be declared as a blocker, against a shared context.
+     * Eligibility that a mid-sweep mutation would invalidate (being a creature at all, tapped,
+     * stopped from blocking this turn) is read live; the effect-driven half comes from the context
+     * caches, so a battlefield sweep scans the board once rather than once per creature.
+     */
+    public boolean canBlock(BlockLegalityContext context, Permanent creature) {
+        if (!gameQueryService.isCreature(context.gameData, creature)
+                || creature.isTapped()
+                || creature.isCantBlockThisTurn()) {
+            return false;
+        }
+        if (blockerFacts(context, creature).prohibitedFromBlocking()) {
+            return false;
+        }
+        return !context.blockRequirementUnmet.computeIfAbsent(
+                creature.getId(), id -> hasUnmetBlockRequirement(context, creature));
     }
 
     /**
@@ -198,7 +170,9 @@ public class BlockLegalityService {
     /** Message form of {@link #canBlockAttacker(BlockLegalityContext, Permanent, Permanent)}. */
     public Optional<String> getBlockingIllegalityReason(BlockLegalityContext context, Permanent blocker, Permanent attacker) {
         BlockDenial denial = findBlockDenial(context, blocker, attacker);
-        return denial == null ? Optional.empty() : Optional.of(formatBlockDenial(denial, blocker, attacker));
+        return denial == null
+                ? Optional.empty()
+                : Optional.of(blockDenialMessageService.describe(denial, blocker, attacker));
     }
 
     /**
@@ -216,8 +190,7 @@ public class BlockLegalityService {
         if (atk.unblockable()) {
             return BlockDenial.CANT_BE_BLOCKED;
         }
-        BlockLegalityContext.BlockerFacts blk = context.blockerFacts.computeIfAbsent(
-                blocker.getId(), id -> buildBlockerFacts(context, blocker));
+        BlockLegalityContext.BlockerFacts blk = blockerFacts(context, blocker);
         if (atk.flying() && !blk.flying() && !blk.reach()) {
             return BlockDenial.FLYING;
         }
@@ -253,41 +226,9 @@ public class BlockLegalityService {
                 return new BlockDenial(BlockDenial.Reason.GLOBAL_RESTRICTION, restriction.description());
             }
         }
-        for (CardEffect effect : atk.pairRestrictionStatics()) {
-            if (effect instanceof BlockabilityRestrictionEffect restriction) {
-                if (restriction.blockableOnlyBy() != null
-                        && !predicateEvaluationService.matchesPermanentPredicate(gameData, blocker, restriction.blockableOnlyBy())) {
-                    return new BlockDenial(BlockDenial.Reason.ATTACKER_LIMITED_TO_BLOCKERS, restriction.blockableOnlyByDescription());
-                }
-                if (restriction.cantBeBlockedByCreaturesMatching() != null
-                        && predicateEvaluationService.matchesPermanentPredicate(gameData, blocker, restriction.cantBeBlockedByCreaturesMatching())) {
-                    PermanentPredicate onlyIfDefenderControls =
-                            restriction.cantBeBlockedByCreaturesMatchingOnlyIfDefenderControls();
-                    if (onlyIfDefenderControls == null
-                            || (context.defenderBattlefield != null && context.defenderBattlefield.stream()
-                                .anyMatch(p -> predicateEvaluationService.matchesPermanentPredicate(
-                                        gameData, p, onlyIfDefenderControls)))) {
-                        return BlockDenial.CANT_BE_BLOCKED_BY_MATCHING;
-                    }
-                }
-            }
-        }
-        for (BlockabilityRestrictionEffect restriction : atk.auraGrantedRestrictions()) {
-            if (restriction.blockableOnlyBy() != null
-                    && !predicateEvaluationService.matchesPermanentPredicate(gameData, blocker, restriction.blockableOnlyBy())) {
-                return new BlockDenial(BlockDenial.Reason.ATTACKER_LIMITED_TO_BLOCKERS, restriction.blockableOnlyByDescription());
-            }
-            if (restriction.cantBeBlockedByCreaturesMatching() != null
-                    && predicateEvaluationService.matchesPermanentPredicate(gameData, blocker, restriction.cantBeBlockedByCreaturesMatching())) {
-                PermanentPredicate onlyIfDefenderControls =
-                        restriction.cantBeBlockedByCreaturesMatchingOnlyIfDefenderControls();
-                if (onlyIfDefenderControls == null
-                        || (context.defenderBattlefield != null && context.defenderBattlefield.stream()
-                            .anyMatch(p -> predicateEvaluationService.matchesPermanentPredicate(
-                                    gameData, p, onlyIfDefenderControls)))) {
-                    return BlockDenial.CANT_BE_BLOCKED_BY_MATCHING;
-                }
-            }
+        BlockDenial pairRestrictionDenial = findPairRestrictionDenial(context, blocker, atk.pairRestrictions());
+        if (pairRestrictionDenial != null) {
+            return pairRestrictionDenial;
         }
         for (CanBeBlockedOnlyByFilterEffect restriction : attacker.getBlockRestrictionsUntilEndOfTurn()) {
             if (!predicateEvaluationService.matchesPermanentPredicate(gameData, blocker, restriction.blockerPredicate())) {
@@ -303,7 +244,7 @@ public class BlockLegalityService {
         if (gameQueryService.isLockedFromBlocking(gameData, blocker.getId())) {
             return BlockDenial.CANT_BLOCK;
         }
-        if (blk.cantBlock()) {
+        if (blk.prohibitedFromBlocking()) {
             return BlockDenial.CANT_BLOCK;
         }
         // Ironclaw Curse: can't block attackers whose power >= this creature's own toughness.
@@ -325,18 +266,110 @@ public class BlockLegalityService {
         return null;
     }
 
+    /**
+     * Applies the attacker's blocker-dependent {@link BlockabilityRestrictionEffect}s — "can be
+     * blocked only by …" and "can't be blocked by …" — to one candidate blocker, whether the
+     * restriction is printed on the attacker or granted by an aura attached to it. Returns the
+     * first failing restriction, or {@code null} when the blocker satisfies all of them.
+     */
+    private BlockDenial findPairRestrictionDenial(BlockLegalityContext context, Permanent blocker,
+                                                  List<BlockabilityRestrictionEffect> restrictions) {
+        GameData gameData = context.gameData;
+        for (BlockabilityRestrictionEffect restriction : restrictions) {
+            if (restriction.blockableOnlyBy() != null
+                    && !predicateEvaluationService.matchesPermanentPredicate(gameData, blocker, restriction.blockableOnlyBy())) {
+                return new BlockDenial(BlockDenial.Reason.ATTACKER_LIMITED_TO_BLOCKERS, restriction.blockableOnlyByDescription());
+            }
+            if (restriction.cantBeBlockedByCreaturesMatching() != null
+                    && predicateEvaluationService.matchesPermanentPredicate(gameData, blocker, restriction.cantBeBlockedByCreaturesMatching())) {
+                PermanentPredicate onlyIfDefenderControls =
+                        restriction.cantBeBlockedByCreaturesMatchingOnlyIfDefenderControls();
+                if (onlyIfDefenderControls == null || defenderControls(context, onlyIfDefenderControls)) {
+                    return BlockDenial.CANT_BE_BLOCKED_BY_MATCHING;
+                }
+            }
+        }
+        return null;
+    }
+
+    /** True if the defending player controls a permanent matching the given predicate. */
+    private boolean defenderControls(BlockLegalityContext context, PermanentPredicate predicate) {
+        return context.defenderBattlefield.stream()
+                .anyMatch(p -> predicateEvaluationService.matchesPermanentPredicate(context.gameData, p, predicate));
+    }
+
+    /**
+     * Returns {@code true} if a board-wide "creatures matching X can't attack or block" restriction
+     * (e.g. Kulrath Knight, Light of Day) applies to the given creature. Each restriction was
+     * collected with the {@link FilterContext} of the permanent imposing it, so the predicate is
+     * still evaluated relative to that source's controller. The attack side is enforced in
+     * {@code CombatAttackService}.
+     */
+    private boolean hasGlobalCantAttackOrBlockRestriction(BlockLegalityContext context, Permanent creature) {
+        for (GlobalAttackOrBlockRestriction restriction : context.globalAttackOrBlockRestrictions) {
+            if (predicateEvaluationService.matchesPermanentPredicate(
+                    creature, restriction.predicate(), restriction.filterContext())) {
+                return true;
+            }
+        }
+        return false;
+    }
+
+    /**
+     * Returns {@code true} if the creature currently fails a requirement it must meet to block at all:
+     * a "can't [attack or] block unless …" condition (block side, mirroring the attack side in
+     * {@code CombatAttackService}), the equipped requirement, or an aura that stops it attacking or
+     * blocking. Unlike a flat prohibition this is not consulted per attacker — no choice of attacker
+     * makes an unmet requirement met.
+     */
+    private boolean hasUnmetBlockRequirement(BlockLegalityContext context, Permanent creature) {
+        GameData gameData = context.gameData;
+        if (gameQueryService.hasAuraWithEffect(gameData, creature, EnchantedCreatureCantAttackOrBlockEffect.class)) {
+            return true;
+        }
+        if (creature.getCard().getEffects(EffectSlot.STATIC).stream()
+                .anyMatch(CantAttackOrBlockUnlessEquippedEffect.class::isInstance)
+                && !gameQueryService.isEquipped(gameData, creature)) {
+            return true;
+        }
+        UUID controllerId = null;
+        for (CardEffect effect : creature.getCard().getEffects(EffectSlot.STATIC)) {
+            Condition unless = null;
+            if (effect instanceof AttackOrBlockRestrictionEffect restriction) {
+                unless = restriction.cantAttackOrBlockUnless();
+            } else if (effect instanceof BlockingRestrictionEffect restriction) {
+                unless = restriction.cantBlockUnless();
+            }
+            if (unless == null) {
+                continue;
+            }
+            if (controllerId == null) {
+                controllerId = gameQueryService.findPermanentController(gameData, creature.getId());
+                if (controllerId == null) return false;
+            }
+            if (!conditionEvaluationService.isMet(gameData, unless,
+                    ConditionContext.forPermanent(creature, controllerId))) {
+                return true;
+            }
+        }
+        return false;
+    }
+
+    private BlockLegalityContext.BlockerFacts blockerFacts(BlockLegalityContext context, Permanent blocker) {
+        return context.blockerFacts.computeIfAbsent(blocker.getId(), id -> buildBlockerFacts(context, blocker));
+    }
+
     private BlockLegalityContext.AttackerFacts buildAttackerFacts(BlockLegalityContext context, Permanent attacker) {
         GameData gameData = context.gameData;
         boolean unblockable = gameQueryService.hasCantBeBlocked(gameData, attacker);
-        List<CardEffect> pairRestrictionStatics = null;
+        List<BlockabilityRestrictionEffect> pairRestrictions = new ArrayList<>(2);
         boolean cantBeBlockedByLessPower = false;
         for (CardEffect effect : attacker.getCard().getEffects(EffectSlot.STATIC)) {
             if (effect instanceof BlockabilityRestrictionEffect restriction) {
                 if (!unblockable) {
                     // Defender-condition unblockable (e.g. "can't be blocked if defending player controls a Forest")
                     if (restriction.unblockableIfDefenderControls() != null
-                            && context.defenderBattlefield != null && context.defenderBattlefield.stream()
-                                .anyMatch(p -> predicateEvaluationService.matchesPermanentPredicate(gameData, p, restriction.unblockableIfDefenderControls()))) {
+                            && defenderControls(context, restriction.unblockableIfDefenderControls())) {
                         unblockable = true;
                     }
                     if (restriction.unblockableIfControllerCastHistoricSpellThisTurn()) {
@@ -353,13 +386,11 @@ public class BlockLegalityService {
                     cantBeBlockedByLessPower = true;
                 }
                 if (restriction.blockableOnlyBy() != null || restriction.cantBeBlockedByCreaturesMatching() != null) {
-                    if (pairRestrictionStatics == null) {
-                        pairRestrictionStatics = new ArrayList<>(2);
-                    }
-                    pairRestrictionStatics.add(effect);
+                    pairRestrictions.add(restriction);
                 }
             }
         }
+        addAuraGrantedBlockingRestrictions(context, attacker, pairRestrictions);
         GameQueryService.StaticBonus bonus = gameQueryService.computeStaticBonus(gameData, attacker);
         boolean intimidate = gameQueryService.hasKeyword(attacker, bonus, Keyword.INTIMIDATE);
         BlockDenial landwalkDenial = null;
@@ -380,8 +411,7 @@ public class BlockLegalityService {
                 gameQueryService.hasKeyword(attacker, bonus, Keyword.SKULK),
                 cantBeBlockedByLessPower,
                 intimidate ? gameQueryService.getEffectiveColors(gameData, attacker) : Set.of(),
-                pairRestrictionStatics == null ? List.of() : pairRestrictionStatics,
-                getAuraGrantedBlockingRestrictions(gameData, attacker),
+                pairRestrictions,
                 landwalkDenial);
     }
 
@@ -421,7 +451,7 @@ public class BlockLegalityService {
                 attackerFilterRestrictions == null ? List.of() : attackerFilterRestrictions,
                 cantBlockStatic || gameQueryService.hasAuraWithEffect(gameData, blocker, CantBlockEffect.class)
                         || gameQueryService.hasKeyword(gameData, blocker, Keyword.DECAYED)
-                        || hasGlobalCantAttackOrBlockRestriction(gameData, blocker),
+                        || hasGlobalCantAttackOrBlockRestriction(context, blocker),
                 cantBlockPowerAtLeastOwnToughnessStatic || gameQueryService.hasAuraWithEffect(gameData, blocker,
                         CantBlockCreaturesWithPowerGreaterOrEqualToOwnToughnessEffect.class),
                 cantBlockPowerAtLeast);
@@ -436,41 +466,10 @@ public class BlockLegalityService {
         return battlefield.stream().filter(Permanent::isAttacking).count() == 1;
     }
 
-    /** Rebuilds the exact pre-context user-facing message for a failed block-legality check. */
-    private static String formatBlockDenial(BlockDenial denial, Permanent blocker, Permanent attacker) {
-        String blockerName = blocker.getCard().getName();
-        String attackerName = attacker.getCard().getName();
-        return switch (denial.reason()) {
-            case CANT_BE_BLOCKED -> attackerName + " can't be blocked";
-            case FLYING -> blockerName + " cannot block " + attackerName + " (flying)";
-            case HORSEMANSHIP -> blockerName + " cannot block " + attackerName + " (horsemanship)";
-            case FEAR -> blockerName + " cannot block " + attackerName + " (fear)";
-            case INTIMIDATE -> blockerName + " cannot block " + attackerName + " (intimidate)";
-            case SKULK -> blockerName + " cannot block " + attackerName + " (skulk)";
-            case BLOCKER_LIMITED_TO_ATTACKERS -> blockerName + " can only block " + denial.detail();
-            case GLOBAL_RESTRICTION -> denial.detail();
-            case ATTACKER_LIMITED_TO_BLOCKERS -> attackerName + " can only be blocked by " + denial.detail();
-            case CANT_BE_BLOCKED_BY_MATCHING -> blockerName + " cannot block " + attackerName;
-            case CANT_BE_BLOCKED_BY_LESS_POWER ->
-                    blockerName + " cannot block " + attackerName + " (power too low)";
-            case LANDWALK -> attackerName + " can't be blocked (" + denial.detail() + "walk)";
-            case CANT_BLOCK_THIS_TURN -> blockerName + " can't block this turn";
-            case CANT_BLOCK -> blockerName + " can't block";
-            case CANT_BLOCK_POWER_AT_LEAST_OWN_TOUGHNESS ->
-                    blockerName + " can't block " + attackerName + " (power too high)";
-            case CANT_BLOCK_HIGH_POWER ->
-                    blockerName + " can't block " + attackerName + " (power too high)";
-            case CANT_BLOCK_THAT_ATTACKER -> blockerName + " can't block " + attackerName + " this turn";
-            case PROTECTION -> blockerName + " cannot block " + attackerName + " (protection)";
-        };
-    }
-
-    private List<BlockabilityRestrictionEffect> getAuraGrantedBlockingRestrictions(GameData gameData, Permanent creature) {
-        List<BlockabilityRestrictionEffect> restrictions = new ArrayList<>();
-        gameData.forEachPermanent((playerId, aura) -> {
-            if (!aura.isAttached() || !aura.getAttachedTo().equals(creature.getId())) {
-                return;
-            }
+    /** Appends the blocker-dependent restrictions the auras attached to {@code creature} grant it. */
+    private void addAuraGrantedBlockingRestrictions(BlockLegalityContext context, Permanent creature,
+                                                    List<BlockabilityRestrictionEffect> restrictions) {
+        for (Permanent aura : context.attachedTo(creature)) {
             for (CardEffect effect : aura.getCard().getEffects(EffectSlot.STATIC)) {
                 if (effect instanceof BlockabilityRestrictionEffect restriction
                         && (restriction.blockableOnlyBy() != null
@@ -478,7 +477,6 @@ public class BlockLegalityService {
                     restrictions.add(restriction);
                 }
             }
-        });
-        return restrictions;
+        }
     }
 }
