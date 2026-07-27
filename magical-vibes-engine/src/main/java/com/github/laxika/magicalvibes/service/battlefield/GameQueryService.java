@@ -24,25 +24,19 @@ import com.github.laxika.magicalvibes.model.effect.AllLandsAreCreaturesEffect;
 import com.github.laxika.magicalvibes.model.effect.AnimateNoncreatureArtifactsEffect;
 import com.github.laxika.magicalvibes.model.effect.AnimatePermanentsEffect;
 import com.github.laxika.magicalvibes.model.condition.Condition;
-import com.github.laxika.magicalvibes.model.effect.AttackOrBlockRestrictionEffect;
 import com.github.laxika.magicalvibes.model.effect.BlockabilityRestrictionEffect;
 import com.github.laxika.magicalvibes.model.effect.BlockingRestrictionEffect;
-import com.github.laxika.magicalvibes.model.effect.CanAttackAsThoughNoDefenderEffect;
-import com.github.laxika.magicalvibes.model.effect.NoDefenderAttackPermissionEffect;
 import com.github.laxika.magicalvibes.model.effect.CantBeCounteredEffect;
 import com.github.laxika.magicalvibes.model.effect.ConditionalEffect;
 import com.github.laxika.magicalvibes.model.effect.AssignCombatDamageWithToughnessEffect;
 import com.github.laxika.magicalvibes.model.effect.BuffTargetCreatureIndefinitelyEffect;
-import com.github.laxika.magicalvibes.model.effect.CantAttackOrBlockUnlessEquippedEffect;
 import com.github.laxika.magicalvibes.model.effect.CanBeBlockedOnlyByFilterEffect;
 import com.github.laxika.magicalvibes.model.effect.MatchingCreaturesCantBlockMatchingCreaturesEffect;
-import com.github.laxika.magicalvibes.model.effect.CanBlockOnlyIfAttackerMatchesPredicateEffect;
 import com.github.laxika.magicalvibes.model.effect.CantBeBlockedEffect;
 import com.github.laxika.magicalvibes.model.effect.CantBlockCreaturesWithPowerGreaterOrEqualToOwnToughnessEffect;
 import com.github.laxika.magicalvibes.model.effect.CantBlockEffect;
 import com.github.laxika.magicalvibes.model.effect.EnchantedCreatureCantTransformEffect;
 import com.github.laxika.magicalvibes.model.effect.PreventTransformEffect;
-import com.github.laxika.magicalvibes.model.effect.EnchantedCreatureCantAttackOrBlockEffect;
 import com.github.laxika.magicalvibes.model.effect.EnchantedCreatureCantAttackUnlessPaysEffect;
 import com.github.laxika.magicalvibes.model.effect.EnchantedPermanentConditionalEffect;
 import com.github.laxika.magicalvibes.model.effect.TargetColorMode;
@@ -1005,61 +999,6 @@ public class GameQueryService {
             }
             if (predicateEvaluationService.matchesCardPredicate(spell, filter, spell.getId())) {
                 return true;
-            }
-        }
-        return false;
-    }
-
-    /**
-     * Returns {@code true} if the given creature can attack despite having defender.
-     * Checks for {@link CanAttackAsThoughNoDefenderEffect} in static effects, including
-     * those wrapped in a {@link ConditionalEffect} (e.g. metalcraft).
-     */
-    public boolean canAttackDespiteDefender(GameData gameData, Permanent creature) {
-        UUID controllerId = findPermanentController(gameData, creature.getId());
-        if (controllerId == null) return false;
-        for (CardEffect effect : creature.getCard().getEffects(EffectSlot.STATIC)) {
-            if (effect instanceof NoDefenderAttackPermissionEffect permission
-                    && permission.grantsCarrierAttackAsThoughNoDefender()) {
-                return true;
-            }
-            if (effect instanceof ConditionalEffect conditional
-                    && conditional.wrapped() instanceof NoDefenderAttackPermissionEffect permission
-                    && permission.grantsCarrierAttackAsThoughNoDefender()) {
-                if (conditionEvaluationService.isMet(gameData, conditional.condition(),
-                        ConditionContext.forPermanent(creature, controllerId))) {
-                    return true;
-                }
-            }
-        }
-        // An Aura attached to this creature that grants the permission (e.g. Animate Wall).
-        if (hasAuraWithEffect(gameData, creature, CanAttackAsThoughNoDefenderEffect.class)) {
-            return true;
-        }
-        // Until-end-of-turn grants from a resolved activated ability (e.g. Wall of Wonder),
-        // stored as floating effects affecting this creature.
-        synchronized (gameData.floatingEffects) {
-            for (FloatingContinuousEffect floating : gameData.floatingEffects) {
-                if (floating.effect() instanceof NoDefenderAttackPermissionEffect permission
-                        && permission.grantsCarrierAttackAsThoughNoDefender()
-                        && creature.getId().equals(floating.affectedPermanentId())) {
-                    return true;
-                }
-            }
-        }
-        // Global grants: any permanent (any controller) whose STATIC effects let matching
-        // creatures attack despite defender (e.g. Rolling Stones for Wall creatures).
-        for (UUID playerId : gameData.orderedPlayerIds) {
-            List<Permanent> bf = gameData.playerBattlefields.get(playerId);
-            if (bf == null) continue;
-            for (Permanent grantor : bf) {
-                for (CardEffect effect : grantor.getCard().getEffects(EffectSlot.STATIC)) {
-                    if (effect instanceof NoDefenderAttackPermissionEffect grant
-                            && grant.noDefenderAttackMatcher() != null
-                            && predicateEvaluationService.matchesPermanentPredicate(gameData, creature, grant.noDefenderAttackMatcher())) {
-                        return true;
-                    }
-                }
             }
         }
         return false;

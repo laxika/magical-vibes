@@ -303,7 +303,7 @@ public class BlockLegalityService {
      * (e.g. Kulrath Knight, Light of Day) applies to the given creature. Each restriction was
      * collected with the {@link FilterContext} of the permanent imposing it, so the predicate is
      * still evaluated relative to that source's controller. The attack side is enforced in
-     * {@code CombatAttackService}.
+     * {@code AttackLegalityService}.
      */
     private boolean hasGlobalCantAttackOrBlockRestriction(BlockLegalityContext context, Permanent creature) {
         for (GlobalAttackOrBlockRestriction restriction : context.globalAttackOrBlockRestrictions) {
@@ -318,7 +318,7 @@ public class BlockLegalityService {
     /**
      * Returns {@code true} if the creature currently fails a requirement it must meet to block at all:
      * a "can't [attack or] block unless …" condition (block side, mirroring the attack side in
-     * {@code CombatAttackService}), the equipped requirement, or an aura that stops it attacking or
+     * {@code AttackLegalityService}), the equipped requirement, or an aura that stops it attacking or
      * blocking. Unlike a flat prohibition this is not consulted per attacker — no choice of attacker
      * makes an unmet requirement met.
      */

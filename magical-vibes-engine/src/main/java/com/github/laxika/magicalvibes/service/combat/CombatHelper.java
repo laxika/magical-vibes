@@ -16,16 +16,17 @@ import java.util.List;
 import java.util.UUID;
 
 /**
- * Utility methods shared across combat sub-services, including the {@code combat.block}
- * sub-package — hence public, but not intended for use outside {@code service.combat}.
+ * Utility methods shared across combat sub-services, including the {@code combat.attack} and
+ * {@code combat.block} sub-packages — hence public, but not intended for use outside
+ * {@code service.combat}.
  */
 public final class CombatHelper {
 
     private CombatHelper() {}
 
-    static boolean isCantAttackOrBlockUnlessEquipped(GameQueryService gameQueryService,
-                                                     GameData gameData,
-                                                     Permanent creature) {
+    public static boolean isCantAttackOrBlockUnlessEquipped(GameQueryService gameQueryService,
+                                                            GameData gameData,
+                                                            Permanent creature) {
         return creature.getCard().getEffects(EffectSlot.STATIC).stream()
                 .anyMatch(CantAttackOrBlockUnlessEquippedEffect.class::isInstance)
                 && !gameQueryService.isEquipped(gameData, creature);
@@ -71,7 +72,7 @@ public final class CombatHelper {
         return battlefield.stream().filter(Permanent::isAttacking).count() == 1;
     }
 
-    static UUID findControllerOf(GameData gameData, Permanent permanent) {
+    public static UUID findControllerOf(GameData gameData, Permanent permanent) {
         for (UUID playerId : gameData.orderedPlayerIds) {
             List<Permanent> bf = gameData.playerBattlefields.get(playerId);
             if (bf != null && bf.contains(permanent)) {

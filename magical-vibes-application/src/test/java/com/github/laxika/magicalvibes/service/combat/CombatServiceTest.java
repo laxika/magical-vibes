@@ -15,6 +15,8 @@ import com.github.laxika.magicalvibes.service.battlefield.BattlefieldEntryServic
 import com.github.laxika.magicalvibes.service.battlefield.CreatureControlService;
 import com.github.laxika.magicalvibes.service.battlefield.GameQueryService;
 import com.github.laxika.magicalvibes.service.battlefield.PermanentRemovalService;
+import com.github.laxika.magicalvibes.service.combat.attack.AttackLegalityService;
+import com.github.laxika.magicalvibes.service.combat.attack.CombatAttackService;
 import com.github.laxika.magicalvibes.service.combat.block.CombatBlockService;
 import com.github.laxika.magicalvibes.service.effect.normalfx.DamageSupport;
 import com.github.laxika.magicalvibes.service.effect.normalfx.PermanentCounterSupport;
@@ -51,6 +53,9 @@ class CombatServiceTest {
 
     @Mock
     private CombatAttackService combatAttackService;
+
+    @Mock
+    private AttackLegalityService attackLegalityService;
 
     @Mock
     private CombatBlockService combatBlockService;
@@ -212,16 +217,16 @@ class CombatServiceTest {
         }
 
         @Test
-        @DisplayName("buildAvailableTargets delegates to CombatAttackService")
+        @DisplayName("buildAvailableTargets delegates to AttackLegalityService")
         void buildAvailableTargetsDelegates() {
             List<CombatAttackTarget> expected =
                     List.of(new CombatAttackTarget(player2Id, "Player2", true));
-            when(combatAttackService.buildAvailableTargets(gd, player1Id)).thenReturn(expected);
+            when(attackLegalityService.buildAvailableTargets(gd, player1Id)).thenReturn(expected);
 
             List<CombatAttackTarget> result = combatService.buildAvailableTargets(gd, player1Id);
 
             assertThat(result).isEqualTo(expected);
-            verify(combatAttackService).buildAvailableTargets(gd, player1Id);
+            verify(attackLegalityService).buildAvailableTargets(gd, player1Id);
         }
 
         @Test

@@ -1,8 +1,7 @@
-package com.github.laxika.magicalvibes.service.combat;
+package com.github.laxika.magicalvibes.service.combat.attack;
 
 import com.github.laxika.magicalvibes.service.GameLogService;
 
-import com.github.laxika.magicalvibes.model.CardType;
 import com.github.laxika.magicalvibes.model.CombatAttackTarget;
 import com.github.laxika.magicalvibes.model.CounterType;
 import com.github.laxika.magicalvibes.model.EffectSlot;
@@ -22,14 +21,11 @@ import com.github.laxika.magicalvibes.model.condition.ControllerHandEmpty;
 import com.github.laxika.magicalvibes.model.condition.ControlsAnotherPermanent;
 import com.github.laxika.magicalvibes.model.condition.ControlsPermanent;
 import com.github.laxika.magicalvibes.model.condition.HasAttacker;
-import com.github.laxika.magicalvibes.model.condition.Condition;
 import com.github.laxika.magicalvibes.model.condition.MinimumAttackers;
 import com.github.laxika.magicalvibes.model.effect.AttackCounterMoveEffect;
 import com.github.laxika.magicalvibes.model.effect.ConditionalEffect;
 import com.github.laxika.magicalvibes.model.effect.DefendingPlayerMayDrawCardEffect;
 import com.github.laxika.magicalvibes.model.effect.DrawCardEffect;
-import com.github.laxika.magicalvibes.service.effect.AmountContext;
-import com.github.laxika.magicalvibes.service.effect.AmountEvaluationService;
 import com.github.laxika.magicalvibes.service.effect.ConditionContext;
 import com.github.laxika.magicalvibes.service.effect.ConditionEvaluationService;
 import com.github.laxika.magicalvibes.model.effect.TriggeringCardConditionalEffect;
@@ -37,28 +33,13 @@ import com.github.laxika.magicalvibes.model.effect.TriggeringPermanentConditiona
 import com.github.laxika.magicalvibes.model.effect.MayEffect;
 import com.github.laxika.magicalvibes.model.effect.BoostAllOwnCreaturesEffect;
 import com.github.laxika.magicalvibes.model.effect.PutCountersOnSelfEffect;
-import com.github.laxika.magicalvibes.model.effect.AttackOrBlockRestrictionEffect;
 import com.github.laxika.magicalvibes.model.effect.CantAttackOrBlockAloneEffect;
 import com.github.laxika.magicalvibes.model.effect.CantAttackOrBlockUnlessCountAlsoDoesEffect;
 import com.github.laxika.magicalvibes.model.effect.CantAttackOrBlockUnlessGreaterPowerAlsoDoesEffect;
-import com.github.laxika.magicalvibes.model.effect.CantAttackUnlessEffect;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
-import com.github.laxika.magicalvibes.model.effect.ControlledCreaturesCantAttackUnlessPredicateEffect;
-import com.github.laxika.magicalvibes.model.effect.CreaturesCantAttackControllerUnlessPredicateEffect;
 import com.github.laxika.magicalvibes.model.effect.MustBlockSourceEffect;
 import com.github.laxika.magicalvibes.model.effect.DealDamageToTriggeringAttackerEffect;
-import com.github.laxika.magicalvibes.model.effect.CreaturesCantAttackUnlessPredicateEffect;
-import com.github.laxika.magicalvibes.model.layer.FloatingContinuousEffect;
-import com.github.laxika.magicalvibes.model.effect.CreaturesWithPowerGreaterThanAmountCantAttackEffect;
-import com.github.laxika.magicalvibes.model.filter.FilterContext;
-import com.github.laxika.magicalvibes.model.effect.OpponentsCantAttackIfCastSpellThisTurnEffect;
 import com.github.laxika.magicalvibes.model.effect.EnchantedCreatureCanOnlyAttackAloneEffect;
-import com.github.laxika.magicalvibes.model.effect.EnchantedCreatureCanAttackAsThoughHasteEffect;
-import com.github.laxika.magicalvibes.model.effect.EnchantedCreatureCantAttackEffect;
-import com.github.laxika.magicalvibes.model.effect.EnchantedCreatureCantAttackOrBlockEffect;
-import com.github.laxika.magicalvibes.model.effect.GrantScope;
-import com.github.laxika.magicalvibes.model.effect.MatchingCreaturesMustAttackEffect;
-import com.github.laxika.magicalvibes.model.effect.MustAttackEffect;
 import com.github.laxika.magicalvibes.model.effect.OpponentsMustAttackControllerEffect;
 import com.github.laxika.magicalvibes.model.filter.PermanentAllOfPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsAttackingPredicate;
@@ -69,6 +50,8 @@ import com.github.laxika.magicalvibes.service.cast.CastingCostService;
 import com.github.laxika.magicalvibes.service.trigger.TriggerCollectionService;
 import com.github.laxika.magicalvibes.service.battlefield.GameQueryService;
 import com.github.laxika.magicalvibes.service.battlefield.GraveyardTargetingService;
+import com.github.laxika.magicalvibes.service.combat.CombatResult;
+import com.github.laxika.magicalvibes.service.combat.CombatTriggerService;
 import com.github.laxika.magicalvibes.service.filter.PredicateEvaluationService;
 import com.github.laxika.magicalvibes.service.interaction.InteractionHandlerRegistry;
 import lombok.RequiredArgsConstructor;
@@ -81,6 +64,11 @@ import java.util.List;
 /**
  * Handles declare-attackers step: computing legal attackers, enforcing attack requirements
  * (CR 508.1d), attack tax payment, tapping, and collecting ON_ATTACK triggers.
+ *
+ * <p>Whether any single creature may attack, and which targets it may be declared against, is
+ * {@link AttackLegalityService}'s to answer; what stays here is everything that needs the
+ * declaration as a whole — the group restrictions ("can't attack alone", banding), the costs, and
+ * the state changes and triggers a legal declaration produces.
  */
 @Slf4j
 @Service
@@ -88,9 +76,9 @@ import java.util.List;
 public class CombatAttackService {
 
     private final GameQueryService gameQueryService;
+    private final AttackLegalityService attackLegalityService;
     private final PredicateEvaluationService predicateEvaluationService;
     private final ConditionEvaluationService conditionEvaluationService;
-    private final AmountEvaluationService amountEvaluationService;
     private final GameLogService gameLogService;
     private final CastingCostService castingCostService;
     private final TriggerCollectionService triggerCollectionService;
@@ -105,11 +93,11 @@ public class CombatAttackService {
     public List<Integer> getAttackableCreatureIndices(GameData gameData, UUID playerId) {
         List<Permanent> battlefield = gameData.playerBattlefields.get(playerId);
         if (battlefield == null) return List.of();
-        if (isPlayerPreventedFromAttacking(gameData, playerId)) return List.of();
+        if (attackLegalityService.isPlayerPreventedFromAttacking(gameData, playerId)) return List.of();
         List<Integer> indices = new ArrayList<>();
         for (int i = 0; i < battlefield.size(); i++) {
             Permanent p = battlefield.get(i);
-            if (canCreatureAttack(gameData, p, playerId)) {
+            if (attackLegalityService.canAttack(gameData, p, playerId)) {
                 indices.add(i);
             }
         }
@@ -139,7 +127,7 @@ public class CombatAttackService {
         List<Integer> mustAttack = new ArrayList<>();
         for (int idx : attackableIndices) {
             Permanent p = battlefield.get(idx);
-            if (getMustAttackRequirementCount(gameData, p) > 0) {
+            if (attackLegalityService.getMustAttackRequirementCount(gameData, p) > 0) {
                 mustAttack.add(idx);
             }
         }
@@ -161,7 +149,7 @@ public class CombatAttackService {
         }
 
         List<Integer> mustAttack = getMustAttackIndices(gameData, activeId, attackable);
-        List<CombatAttackTarget> availableTargets = buildAvailableTargets(gameData, activeId);
+        List<CombatAttackTarget> availableTargets = attackLegalityService.buildAvailableTargets(gameData, activeId);
         int taxPerCreature = castingCostService.getAttackPaymentPerCreature(gameData, activeId);
         boolean mustAttackWithAtLeastOne = isOpponentForcedToAttack(gameData, activeId);
         interactionHandlerRegistry.begin(gameData, new PendingInteraction.AttackerDeclaration(
@@ -273,7 +261,7 @@ public class CombatAttackService {
 
         // Validate attack targets
         UUID defenderId = gameQueryService.getOpponentId(gameData, playerId);
-        Set<UUID> validTargetIds = buildValidAttackTargetIds(gameData, playerId);
+        Set<UUID> validTargetIds = attackLegalityService.getValidAttackTargetIds(gameData, playerId);
         Map<Integer, UUID> resolvedTargets = new HashMap<>();
         for (int idx : attackerIndices) {
             UUID targetId = attackTargets != null ? attackTargets.get(idx) : null;
@@ -295,7 +283,7 @@ public class CombatAttackService {
             }
             // Defender-scoped restriction (e.g. Form of the Dragon — "Creatures without flying can't attack you"):
             // the attacked player controls a permanent that forbids attackers not matching its exemption predicate.
-            if (isCantAttackDefenderDueToRestriction(gameData, attacker, targetId)) {
+            if (!attackLegalityService.canAttackDefender(gameData, attacker, targetId)) {
                 throw new IllegalStateException(attacker.getCard().getName() + " can't attack that player");
             }
             resolvedTargets.put(idx, targetId);
@@ -854,191 +842,6 @@ public class CombatAttackService {
     }
 
 
-    private boolean canCreatureAttack(GameData gameData, Permanent creature, UUID controllerId) {
-        if (!gameQueryService.isCreature(gameData, creature)) return false;
-        if (creature.isTapped()) return false;
-        if (creature.isCantAttackThisTurn()) return false;
-        if (gameQueryService.isLockedFromAttacking(gameData, creature.getId())) return false;
-        if (isRestrictedByOtherCreaturesCantAttack(gameData, creature)) return false;
-        if (creature.isSummoningSick() && !gameQueryService.hasKeyword(gameData, creature, Keyword.HASTE)
-                && !gameQueryService.hasAuraWithEffect(gameData, creature, EnchantedCreatureCanAttackAsThoughHasteEffect.class)) return false;
-        if (gameQueryService.hasKeyword(gameData, creature, Keyword.DEFENDER)
-                && !gameQueryService.canAttackDespiteDefender(gameData, creature)) return false;
-        if (gameQueryService.hasAuraWithEffect(gameData, creature, EnchantedCreatureCantAttackOrBlockEffect.class)) return false;
-        if (gameQueryService.hasAuraWithEffect(gameData, creature, EnchantedCreatureCantAttackEffect.class)) return false;
-        if (CombatHelper.isCantAttackOrBlockUnlessEquipped(gameQueryService, gameData, creature)) return false;
-        if (isCantAttackUnlessConditionUnmet(gameData, creature, controllerId)) return false;
-        if (isCantAttackDueToGlobalRestriction(gameData, creature)) return false;
-        return true;
-    }
-
-    /**
-     * Evaluates the creature's {@link CantAttackUnlessEffect} restrictions (CR 508.1a): the
-     * creature can't attack while any attached condition is unmet. Each restriction's condition
-     * (controller controls a permanent, defending player poisoned, N Islands on the battlefield, …)
-     * is routed through {@link ConditionEvaluationService} with the attacker as source.
-     */
-    private boolean isCantAttackUnlessConditionUnmet(GameData gameData, Permanent creature, UUID controllerId) {
-        ConditionContext ctx = null;
-        for (CardEffect effect : creature.getCard().getEffects(EffectSlot.STATIC)) {
-            Condition condition = null;
-            if (effect instanceof CantAttackUnlessEffect restriction) {
-                condition = restriction.condition();
-            } else if (effect instanceof AttackOrBlockRestrictionEffect restriction) {
-                condition = restriction.cantAttackOrBlockUnless();
-            }
-            if (condition != null) {
-                if (ctx == null) {
-                    ctx = ConditionContext.forPermanent(creature, controllerId);
-                }
-                if (!conditionEvaluationService.isMet(gameData, condition, ctx)) {
-                    return true;
-                }
-            }
-        }
-        return false;
-    }
-
-    /**
-     * Defender-scoped attack restriction (CR 508.1a): the attacked player controls a permanent with a
-     * {@link CreaturesCantAttackControllerUnlessPredicateEffect}, and the attacker does not match its
-     * exemption predicate (e.g. Form of the Dragon's "Creatures without flying can't attack you").
-     * When the attack is aimed at a planeswalker, only restrictions whose {@code protectsPlaneswalkers}
-     * flag is set apply (Sandwurm Convergence — "can't attack you or planeswalkers you control").
-     */
-    private boolean isCantAttackDefenderDueToRestriction(GameData gameData, Permanent attacker, UUID targetId) {
-        boolean targetIsPlayer = gameData.playerIds.contains(targetId);
-        // The protected player is the attacked player, or the controller of the attacked planeswalker.
-        UUID protectedPlayerId = targetIsPlayer ? targetId
-                : gameQueryService.findPermanentController(gameData, targetId);
-        if (protectedPlayerId == null) return false;
-        // Restrictions come from static abilities of the protected player's permanents (Form of the
-        // Dragon, Sandwurm Convergence) and from player-scoped floating effects (Island Sanctuary's
-        // "until your next turn" shield, which persists independently of its source permanent).
-        List<CardEffect> restrictions = new ArrayList<>();
-        List<Permanent> defenderBattlefield = gameData.playerBattlefields.get(protectedPlayerId);
-        if (defenderBattlefield != null) {
-            for (Permanent perm : defenderBattlefield) {
-                restrictions.addAll(perm.getCard().getEffects(EffectSlot.STATIC));
-            }
-        }
-        synchronized (gameData.floatingEffects) {
-            for (FloatingContinuousEffect fe : gameData.floatingEffects) {
-                if (protectedPlayerId.equals(fe.affectedPlayerId())) {
-                    restrictions.add(fe.effect());
-                }
-            }
-        }
-        for (CardEffect effect : restrictions) {
-            if (effect instanceof CreaturesCantAttackControllerUnlessPredicateEffect restriction
-                    && (targetIsPlayer || restriction.protectsPlaneswalkers())
-                    && !predicateEvaluationService.matchesPermanentPredicate(gameData, attacker, restriction.exemptionPredicate())) {
-                return true;
-            }
-        }
-        return false;
-    }
-
-    /**
-     * Intimidation Bolt lock ("Other creatures can't attack this turn"). While
-     * {@code gameData.otherCreaturesCantAttackExemptCreatureIds} holds any exemptions, a creature may
-     * attack only if its ID equals every one of them — i.e. it is the creature every Intimidation Bolt
-     * resolved this turn targeted. Evaluated at declaration time, so it also bars creatures that entered
-     * after the spell resolved. Empty list = no restriction.
-     */
-    private boolean isRestrictedByOtherCreaturesCantAttack(GameData gameData, Permanent creature) {
-        List<UUID> exemptions = gameData.otherCreaturesCantAttackExemptCreatureIds;
-        if (exemptions.isEmpty()) {
-            return false;
-        }
-        synchronized (exemptions) {
-            for (UUID exemptId : exemptions) {
-                if (!creature.getId().equals(exemptId)) {
-                    return true;
-                }
-            }
-        }
-        return false;
-    }
-
-    private boolean isCantAttackDueToGlobalRestriction(GameData gameData, Permanent creature) {
-        boolean[] restricted = {false};
-        UUID creatureController = CombatHelper.findControllerOf(gameData, creature);
-        gameData.forEachPermanent((playerId, permanent) -> {
-            for (CardEffect effect : permanent.getCard().getEffects(EffectSlot.STATIC)) {
-                if (effect instanceof CreaturesCantAttackUnlessPredicateEffect restriction) {
-                    if (!predicateEvaluationService.matchesPermanentPredicate(gameData, creature, restriction.exemptionPredicate())) {
-                        restricted[0] = true;
-                    }
-                } else if (effect instanceof CreaturesWithPowerGreaterThanAmountCantAttackEffect restriction) {
-                    int threshold = amountEvaluationService.evaluate(gameData, restriction.amount(),
-                            AmountContext.forStaticEffect(permanent, playerId));
-                    if (gameQueryService.getEffectivePower(gameData, creature) > threshold) {
-                        restricted[0] = true;
-                    }
-                } else if (effect instanceof AttackOrBlockRestrictionEffect restriction
-                        && restriction.globallyCantAttackOrBlock() != null) {
-                    FilterContext context = FilterContext.of(gameData)
-                            .withSourceControllerId(playerId)
-                            .withSourceCardId(permanent.getOriginalCard().getId());
-                    if (predicateEvaluationService.matchesPermanentPredicate(creature, restriction.globallyCantAttackOrBlock(), context)) {
-                        restricted[0] = true;
-                    }
-                } else if (effect instanceof ControlledCreaturesCantAttackUnlessPredicateEffect restriction) {
-                    if (playerId.equals(creatureController)
-                            && !predicateEvaluationService.matchesPermanentPredicate(gameData, creature, restriction.exemptionPredicate())) {
-                        restricted[0] = true;
-                    }
-                }
-            }
-        });
-        return restricted[0];
-    }
-
-    private int getMustAttackRequirementCount(GameData gameData, Permanent creature) {
-        int[] count = {(int) creature.getCard().getEffects(EffectSlot.STATIC).stream()
-                .filter(MustAttackEffect.class::isInstance)
-                .count()};
-
-        // Check for transient "must attack this turn" flag (e.g. Alluring Siren)
-        if (creature.isMustAttackThisTurn()) {
-            count[0]++;
-        }
-
-        UUID creatureControllerId = CombatHelper.findControllerOf(gameData, creature);
-
-        // Taunt: every creature the affected player controls must attack the taunter if able.
-        UUID taunter = gameData.tauntedThisTurn.get(creatureControllerId);
-        if (taunter != null && buildValidAttackTargetIds(gameData, creatureControllerId).contains(taunter)) {
-            count[0]++;
-        }
-
-        gameData.forEachPermanent((playerId, permanent) -> {
-            if (permanent.isAttached()
-                    && permanent.getAttachedTo().equals(creature.getId())) {
-                count[0] += (int) permanent.getCard().getEffects(EffectSlot.STATIC).stream()
-                        .filter(MustAttackEffect.class::isInstance)
-                        .count();
-            }
-            // Check for curses on the creature's controller (e.g. Curse of the Nightly Hunt)
-            if (permanent.isAttached()
-                    && permanent.getAttachedTo().equals(creatureControllerId)) {
-                count[0] += (int) permanent.getCard().getEffects(EffectSlot.STATIC).stream()
-                        .filter(e -> e instanceof MustAttackEffect mae
-                                && mae.scope() == GrantScope.ENCHANTED_PLAYER_CREATURES)
-                        .count();
-            }
-            // Global "matching creatures attack each combat if able" (e.g. Goblin Assault)
-            count[0] += (int) permanent.getCard().getEffects(EffectSlot.STATIC).stream()
-                    .filter(MatchingCreaturesMustAttackEffect.class::isInstance)
-                    .map(MatchingCreaturesMustAttackEffect.class::cast)
-                    .filter(e -> predicateEvaluationService.matchesPermanentPredicate(gameData, creature, e.matcher()))
-                    .count();
-        });
-
-        return count[0];
-    }
-
     private void validateMaximumAttackRequirements(GameData gameData, UUID playerId,
                                                     List<Integer> attackableIndices,
                                                     Set<Integer> declaredAttackerIndices) {
@@ -1054,18 +857,18 @@ public class CombatAttackService {
 
         int maxRequirements = 0;
         for (int idx : attackableIndices) {
-            maxRequirements += getMustAttackRequirementCount(gameData, battlefield.get(idx));
+            maxRequirements += attackLegalityService.getMustAttackRequirementCount(gameData, battlefield.get(idx));
         }
 
         int satisfiedRequirements = 0;
         for (int idx : declaredAttackerIndices) {
-            satisfiedRequirements += getMustAttackRequirementCount(gameData, battlefield.get(idx));
+            satisfiedRequirements += attackLegalityService.getMustAttackRequirementCount(gameData, battlefield.get(idx));
         }
 
         if (satisfiedRequirements < maxRequirements) {
             for (int idx : attackableIndices) {
                 if (!declaredAttackerIndices.contains(idx)
-                        && getMustAttackRequirementCount(gameData, battlefield.get(idx)) > 0) {
+                        && attackLegalityService.getMustAttackRequirementCount(gameData, battlefield.get(idx)) > 0) {
                     throw new IllegalStateException("Creature at index " + idx + " must attack this combat");
                 }
             }
@@ -1100,95 +903,6 @@ public class CombatAttackService {
             }
         }
         return false;
-    }
-
-    /**
-     * Returns true if the player is globally prevented from attacking (e.g. Angelic Arbiter:
-     * "Each opponent who cast a spell this turn can't attack with creatures").
-     */
-    private boolean isPlayerPreventedFromAttacking(GameData gameData, UUID playerId) {
-        int spellsCast = gameData.getSpellsCastThisTurnCount(playerId);
-        if (spellsCast == 0) return false;
-
-        for (UUID pid : gameData.orderedPlayerIds) {
-            if (pid.equals(playerId)) continue;
-            List<Permanent> bf = gameData.playerBattlefields.get(pid);
-            if (bf == null) continue;
-            for (Permanent perm : bf) {
-                for (CardEffect effect : perm.getCard().getEffects(EffectSlot.STATIC)) {
-                    if (effect instanceof OpponentsCantAttackIfCastSpellThisTurnEffect) {
-                        return true;
-                    }
-                }
-            }
-        }
-        return false;
-    }
-
-    /**
-     * Builds the list of available attack targets: the defending player, their planeswalkers,
-     * and battles the active player is allowed to attack (not the protector).
-     */
-    public List<CombatAttackTarget> buildAvailableTargets(GameData gameData, UUID activePlayerId) {
-        UUID defenderId = gameQueryService.getOpponentId(gameData, activePlayerId);
-        List<CombatAttackTarget> targets = new ArrayList<>();
-        targets.add(new CombatAttackTarget(
-                defenderId, gameData.playerIdToName.get(defenderId), true));
-        List<Permanent> defBf = gameData.playerBattlefields.get(defenderId);
-        if (defBf != null) {
-            for (Permanent p : defBf) {
-                if (p.getCard().hasType(CardType.PLANESWALKER)) {
-                    targets.add(new CombatAttackTarget(
-                            p.getId(), p.getCard().getName(), false));
-                } else if (p.getCard().hasType(CardType.BATTLE)
-                        && !activePlayerId.equals(p.getProtectorPlayerId())) {
-                    targets.add(new CombatAttackTarget(
-                            p.getId(), p.getCard().getName(), false));
-                }
-            }
-        }
-        // Sieges sit on the controller's battlefield; the controller (and non-protectors) may attack them.
-        List<Permanent> ownBf = gameData.playerBattlefields.get(activePlayerId);
-        if (ownBf != null) {
-            for (Permanent p : ownBf) {
-                if (p.getCard().hasType(CardType.BATTLE)
-                        && !activePlayerId.equals(p.getProtectorPlayerId())) {
-                    targets.add(new CombatAttackTarget(
-                            p.getId(), p.getCard().getName(), false));
-                }
-            }
-        }
-        return targets;
-    }
-
-    /**
-     * Returns the set of valid attack target UUIDs: the defending player plus attackable planeswalkers/battles.
-     */
-    private Set<UUID> buildValidAttackTargetIds(GameData gameData, UUID activePlayerId) {
-        UUID defenderId = gameQueryService.getOpponentId(gameData, activePlayerId);
-        Set<UUID> validIds = new HashSet<>();
-        validIds.add(defenderId);
-        List<Permanent> defBf = gameData.playerBattlefields.get(defenderId);
-        if (defBf != null) {
-            for (Permanent p : defBf) {
-                if (p.getCard().hasType(CardType.PLANESWALKER)) {
-                    validIds.add(p.getId());
-                } else if (p.getCard().hasType(CardType.BATTLE)
-                        && !activePlayerId.equals(p.getProtectorPlayerId())) {
-                    validIds.add(p.getId());
-                }
-            }
-        }
-        List<Permanent> ownBf = gameData.playerBattlefields.get(activePlayerId);
-        if (ownBf != null) {
-            for (Permanent p : ownBf) {
-                if (p.getCard().hasType(CardType.BATTLE)
-                        && !activePlayerId.equals(p.getProtectorPlayerId())) {
-                    validIds.add(p.getId());
-                }
-            }
-        }
-        return validIds;
     }
 
     private void validateCantAttackAlone(List<Permanent> battlefield, List<Integer> attackerIndices) {

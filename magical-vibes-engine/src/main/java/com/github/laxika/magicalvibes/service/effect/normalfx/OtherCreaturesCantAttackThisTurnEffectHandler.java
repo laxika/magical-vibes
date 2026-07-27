@@ -15,7 +15,7 @@ import java.util.UUID;
 /**
  * Resolves {@link OtherCreaturesCantAttackThisTurnEffect} (Intimidation Bolt's rider) by appending the
  * targeted creature's permanent ID to {@link GameData#otherCreaturesCantAttackExemptCreatureIds}. That
- * list is read by {@code CombatAttackService.canCreatureAttack}: a creature may attack only if its ID
+ * list is read by {@code AttackLegalityService.canAttack}: a creature may attack only if its ID
  * equals every exemption, so only the creature Intimidation Bolt targeted (if it survived the
  * accompanying damage) may attack this turn. If the target died to the damage, its ID matches no living
  * creature and nothing may attack (CR-accurate). Cleared at the next turn transition.

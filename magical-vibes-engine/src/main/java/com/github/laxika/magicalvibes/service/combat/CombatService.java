@@ -30,6 +30,8 @@ import com.github.laxika.magicalvibes.service.battlefield.BattlefieldEntryServic
 import com.github.laxika.magicalvibes.service.battlefield.CreatureControlService;
 import com.github.laxika.magicalvibes.service.battlefield.GameQueryService;
 import com.github.laxika.magicalvibes.service.battlefield.PermanentRemovalService;
+import com.github.laxika.magicalvibes.service.combat.attack.AttackLegalityService;
+import com.github.laxika.magicalvibes.service.combat.attack.CombatAttackService;
 import com.github.laxika.magicalvibes.service.combat.block.CombatBlockService;
 import com.github.laxika.magicalvibes.service.effect.normalfx.DamageSupport;
 import com.github.laxika.magicalvibes.service.effect.normalfx.PermanentCounterSupport;
@@ -46,6 +48,7 @@ import java.util.UUID;
  * Facade for the complete combat phase lifecycle. Delegates to focused sub-services:
  * <ul>
  *   <li>{@link CombatAttackService} — attacker declaration and validation</li>
+ *   <li>{@link AttackLegalityService} — which creatures may attack, and which targets</li>
  *   <li>{@link CombatBlockService} — blocker declaration and validation</li>
  *   <li>{@link CombatDamageService} — damage calculation, assignment, and triggers</li>
  *   <li>{@link CombatTriggerService} — shared trigger helpers (aura triggers, APNAP ordering)</li>
@@ -60,6 +63,7 @@ public class CombatService {
             new RemoveCounterFromSourceEffect(CounterType.PARALYZATION, 1);
 
     private final CombatAttackService combatAttackService;
+    private final AttackLegalityService attackLegalityService;
     private final CombatBlockService combatBlockService;
     private final CombatDamageService combatDamageService;
     private final GameLogService gameLogService;
@@ -84,7 +88,7 @@ public class CombatService {
     }
 
     public List<CombatAttackTarget> buildAvailableTargets(GameData gameData, UUID activePlayerId) {
-        return combatAttackService.buildAvailableTargets(gameData, activePlayerId);
+        return attackLegalityService.buildAvailableTargets(gameData, activePlayerId);
     }
 
     public boolean isOpponentForcedToAttack(GameData gameData, UUID playerId) {

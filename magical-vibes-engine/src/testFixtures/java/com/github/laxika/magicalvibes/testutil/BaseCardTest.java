@@ -5,6 +5,7 @@ import com.github.laxika.magicalvibes.model.GameData;
 import com.github.laxika.magicalvibes.model.GameLogEntry;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.Player;
+import com.github.laxika.magicalvibes.service.combat.attack.AttackLegalityService;
 import com.github.laxika.magicalvibes.service.combat.block.BlockLegalityService;
 import com.github.laxika.magicalvibes.service.battlefield.GameQueryService;
 import com.github.laxika.magicalvibes.service.GameService;
@@ -19,6 +20,7 @@ public abstract class BaseCardTest {
     protected Player player2;
     protected GameService gs;
     protected GameQueryService gqs;
+    protected AttackLegalityService als;
     protected BlockLegalityService bls;
     protected GameData gd;
 
@@ -29,6 +31,7 @@ public abstract class BaseCardTest {
         player2 = harness.getPlayer2();
         gs = harness.getGameService();
         gqs = harness.getGameQueryService();
+        als = harness.getAttackLegalityService();
         bls = harness.getBlockLegalityService();
         gd = harness.getGameData();
         harness.skipMulligan();
