@@ -19,13 +19,9 @@ Run the helper once. It loads compact Scryfall data (name, mana, type, oracle, P
 bash -c 'powershell.exe -NoProfile -File scripts/implement-card-context.ps1 <SET> <COLLECTOR_NUMBER> [<COLLECTOR_NUMBER> ...]'
 ```
 
-Once you've picked a likely reference card (see Step 3), re-run with `-Reference` to dump its constructor and test path inline instead of reading the whole file (a single card at a time is best here):
-
-```
-... implement-card-context.ps1 <SET> <COLLECTOR_NUMBER> -Reference Opt,Shock
-```
-
 `-ClassName` is only valid with a single collector number; with several cards each name is derived from Scryfall. The script is a deterministic lookup only — it does **not** decide the implementation. You do that from the docs in Step 3.
+
+For a **multi-face card** (transform, MDFC, split) the script prints every face's oracle text and then stops, because no class name can be derived from a two-faced name. Decide how — or whether — the engine represents that card before going further; re-run with `-ClassName <Name>` to get the reprint check and file paths once you have.
 
 For any additional card lookup, use the configured Scryfall MCP `get_card` tool. Never fetch or place raw Scryfall card JSON in model context; the MCP response intentionally omits images, prices, legalities, purchase links, and other fields irrelevant to implementation.
 

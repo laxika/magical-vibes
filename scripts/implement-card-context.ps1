@@ -11,11 +11,6 @@ param(
     # is supplied; with multiple cards each name is derived from Scryfall.
     [string] $ClassName,
 
-    # Optional reference card class names. For each, the script prints the
-    # constructor body inline and the test file path so you don't have to Read
-    # the whole file. Pick these from agent-docs (CARD_PATTERN_INDEX.md, etc.).
-    [string[]] $Reference,
-
     [switch] $SkipScryfall
 )
 
@@ -61,34 +56,6 @@ function Invoke-RepoSearch {
         Select-Object -First $MaxResults)
 }
 
-function Find-ClassFile {
-    param(
-        [Parameter(Mandatory = $true)]
-        [string] $ClassName,
-
-        [Parameter(Mandatory = $true)]
-        [string] $RootPath
-    )
-
-    if (-not (Test-Path $RootPath)) {
-        return $null
-    }
-
-    $expectedFileName = "$ClassName.java"
-    $exactFile = Get-ChildItem -Path $RootPath -Recurse -File -Filter $expectedFileName -ErrorAction SilentlyContinue |
-        Select-Object -First 1
-    if ($exactFile) {
-        return $exactFile.FullName.Replace((Get-Location).Path + [System.IO.Path]::DirectorySeparatorChar, "")
-    }
-
-    $hits = Invoke-RepoSearch -Pattern "class\s+$ClassName\s+" -Paths @($RootPath) -MaxResults 1
-    if ($hits.Count -eq 0) {
-        return $null
-    }
-
-    return ($hits[0] -replace ":\d+:.*$", "")
-}
-
 function ConvertTo-ClassName {
     param([string] $CardName)
 
@@ -102,19 +69,6 @@ function ConvertTo-ClassName {
     return (($words | ForEach-Object {
         $_.Substring(0, 1).ToUpperInvariant() + $_.Substring(1)
     }) -join "")
-}
-
-function Write-LinesOrNone {
-    param(
-        [object[]] $Lines,
-        [string] $NoneText
-    )
-
-    if ($Lines -and $Lines.Count -gt 0) {
-        $Lines | ForEach-Object { Write-Host $_ }
-    } else {
-        Write-Host $NoneText
-    }
 }
 
 function Get-ScryfallCard {
@@ -133,20 +87,46 @@ function Get-ScryfallCard {
     return $json | ConvertFrom-Json
 }
 
+function Test-IsMultiFaceCard {
+    param([object] $Card)
+
+    return $Card -and $Card.card_faces -and @($Card.card_faces).Count -gt 0
+}
+
+# Prints the rules-relevant fields of a card or of one of its faces; both carry
+# the same field names, so a single-faced card is just its own body.
+function Write-CardBody {
+    param([object] $Face)
+
+    Write-Host "Mana: $($Face.mana_cost)"
+    Write-Host "Type: $($Face.type_line)"
+    if ($Face.power -or $Face.toughness) {
+        Write-Host "P/T: $($Face.power)/$($Face.toughness)"
+    }
+    Write-Host "Oracle:"
+    Write-Host $Face.oracle_text
+}
+
 function Write-ScryfallSummary {
     param([object] $Card)
 
     Write-Host "Name: $($Card.name)"
-    Write-Host "Mana: $($Card.mana_cost)"
-    Write-Host "Type: $($Card.type_line)"
-    if ($Card.power -or $Card.toughness) {
-        Write-Host "P/T: $($Card.power)/$($Card.toughness)"
-    }
     if ($Card.keywords -and $Card.keywords.Count -gt 0) {
         Write-Host "Keywords: $($Card.keywords -join ', ')"
     }
-    Write-Host "Oracle:"
-    Write-Host $Card.oracle_text
+
+    # A multi-face printing has no top-level oracle text or mana cost - the rules
+    # text lives entirely on the faces.
+    if (Test-IsMultiFaceCard -Card $Card) {
+        foreach ($face in $Card.card_faces) {
+            Write-Host ""
+            Write-Host "Face: $($face.name)"
+            Write-CardBody -Face $face
+        }
+        return
+    }
+
+    Write-CardBody -Face $Card
 }
 
 function Test-IsBasicLand {
@@ -162,66 +142,15 @@ function Test-IsVanillaCard {
         return $false
     }
 
+    # A multi-face card has no top-level oracle text, which would otherwise read
+    # as vanilla no matter how much rules text its faces carry.
+    if (Test-IsMultiFaceCard -Card $Card) {
+        return $false
+    }
+
     $hasNoOracleText = [string]::IsNullOrWhiteSpace($Card.oracle_text)
     $hasNoKeywords = -not $Card.keywords -or $Card.keywords.Count -eq 0
     return $hasNoOracleText -and $hasNoKeywords -and -not (Test-IsBasicLand -Card $Card)
-}
-
-function Get-ConstructorSnippet {
-    param([string] $FilePath)
-
-    if (-not $FilePath -or -not (Test-Path $FilePath)) {
-        return @()
-    }
-
-    $lines = Get-Content $FilePath
-    $start = -1
-    for ($i = 0; $i -lt $lines.Count; $i++) {
-        if ($lines[$i] -match 'public\s+\w+\s*\(\s*\)\s*\{') {
-            $start = $i
-            break
-        }
-    }
-    if ($start -lt 0) {
-        return @()
-    }
-
-    $depth = 0
-    $snippet = New-Object System.Collections.Generic.List[string]
-    for ($i = $start; $i -lt $lines.Count; $i++) {
-        $line = $lines[$i]
-        $snippet.Add($line)
-        $depth += @($line.ToCharArray() | Where-Object { $_ -eq '{' }).Count
-        $depth -= @($line.ToCharArray() | Where-Object { $_ -eq '}' }).Count
-        if ($depth -eq 0 -and $i -gt $start) {
-            break
-        }
-    }
-
-    return @($snippet)
-}
-
-function Write-ReferenceConstructor {
-    param([string] $ReferenceClassName)
-
-    $referenceFile = Find-ClassFile -ClassName $ReferenceClassName -RootPath "magical-vibes-card/src/main/java"
-    if (-not $referenceFile) {
-        Write-Host "${ReferenceClassName}: no card class found."
-        return
-    }
-
-    Write-Host "-- $ReferenceClassName ($referenceFile)"
-    $snippet = Get-ConstructorSnippet -FilePath $referenceFile
-    if ($snippet.Count -eq 0) {
-        Write-Host "   Could not extract constructor."
-    } else {
-        $snippet | ForEach-Object { Write-Host "   $_" }
-    }
-
-    $testFile = Find-ClassFile -ClassName "${ReferenceClassName}Test" -RootPath "magical-vibes-application/src/test/java"
-    if ($testFile) {
-        Write-Host "   Test: $testFile"
-    }
 }
 
 function Invoke-CardContext {
@@ -234,12 +163,11 @@ function Invoke-CardContext {
 
         [string] $ClassName,
 
-        [string[]] $Reference,
-
         [switch] $SkipScryfall
     )
 
     $card = $null
+    $classNameSupplied = -not [string]::IsNullOrWhiteSpace($ClassName)
 
     Write-Section "Scryfall"
     if ($SkipScryfall) {
@@ -247,13 +175,21 @@ function Invoke-CardContext {
     } else {
         try {
             $card = Get-ScryfallCard -SetCode $SetCode -CollectorNumber $CollectorNumber
-            if (-not $ClassName) {
+            if (-not $classNameSupplied) {
                 $ClassName = ConvertTo-ClassName -CardName $card.name
             }
             Write-ScryfallSummary -Card $card
         } catch {
             Write-Host "Lookup failed: $($_.Exception.Message)"
         }
+    }
+
+    if ((Test-IsMultiFaceCard -Card $card) -and -not $classNameSupplied) {
+        Write-Section "Multi-face Card"
+        Write-Host "MULTI-FACE CARD (layout: $($card.layout)) - stopping here."
+        Write-Host "No class name can be derived from a two-faced card name, so the reprint check and file paths would all be fabricated. Both faces are printed above."
+        Write-Host "Decide how - or whether - the engine represents this card, then re-run with -ClassName <Name> to get the reprint check and paths."
+        return
     }
 
     if (-not $ClassName) {
@@ -283,13 +219,6 @@ function Invoke-CardContext {
         Write-Host "Write focused card behavior tests (effects/abilities/targeting only; never Scryfall metadata)."
     }
 
-    if ($Reference -and $Reference.Count -gt 0) {
-        Write-Section "Reference Constructors"
-        foreach ($ref in $Reference) {
-            Write-ReferenceConstructor -ReferenceClassName $ref
-        }
-    }
-
     $packageLetter = $ClassName.Substring(0, 1).ToLowerInvariant()
 
     Write-Section "Suggested Files"
@@ -307,6 +236,15 @@ if ($collectorNumbers.Count -eq 0) {
     exit 1
 }
 
+# Unrecognized named parameters land in $CollectorNumber via
+# ValueFromRemainingArguments, which would otherwise turn a typo into a bogus
+# card lookup instead of an error.
+$flagLike = @($collectorNumbers | Where-Object { $_.StartsWith("-") })
+if ($flagLike.Count -gt 0) {
+    Write-Error "Unknown option(s): $($flagLike -join ', '). Supported options are -ClassName and -SkipScryfall."
+    exit 1
+}
+
 if ($ClassName -and $collectorNumbers.Count -gt 1) {
     Write-Error "-ClassName is only supported with a single collector number; with multiple cards each name is derived from Scryfall."
     exit 1
@@ -320,5 +258,5 @@ foreach ($number in $collectorNumbers) {
         Write-Host "# CARD: $SetCode $number"
         Write-Host "############################################################"
     }
-    Invoke-CardContext -SetCode $SetCode -CollectorNumber $number -ClassName $ClassName -Reference $Reference -SkipScryfall:$SkipScryfall
+    Invoke-CardContext -SetCode $SetCode -CollectorNumber $number -ClassName $ClassName -SkipScryfall:$SkipScryfall
 }
