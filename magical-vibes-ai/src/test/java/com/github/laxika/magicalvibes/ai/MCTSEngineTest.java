@@ -3,6 +3,7 @@ package com.github.laxika.magicalvibes.ai;
 import com.github.laxika.magicalvibes.ai.simulation.GameSimulator;
 import com.github.laxika.magicalvibes.ai.simulation.MCTSEngine;
 import com.github.laxika.magicalvibes.ai.simulation.SimulationAction;
+import com.github.laxika.magicalvibes.cards.f.Forest;
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
 import com.github.laxika.magicalvibes.cards.h.HillGiant;
 import com.github.laxika.magicalvibes.cards.l.LlanowarElves;
@@ -23,6 +24,7 @@ import org.junit.jupiter.api.Tag;
 import org.junit.jupiter.api.Test;
 
 import java.util.List;
+import java.util.stream.IntStream;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
@@ -35,6 +37,15 @@ class MCTSEngineTest {
     private GameData gd;
     private GameSimulator simulator;
     private MCTSEngine engine;
+
+    /**
+     * A library that cannot influence a rollout: rollouts never sequence land drops and never cast
+     * lands, so every draw off this is inert. Deep enough that nothing decks inside the rollout
+     * horizon.
+     */
+    private static List<Card> inertLibrary() {
+        return IntStream.range(0, 30).mapToObj(i -> (Card) new Forest()).toList();
+    }
 
     @BeforeEach
     void setUp() {
@@ -97,7 +108,11 @@ class MCTSEngineTest {
         long elapsed = System.currentTimeMillis() - start;
 
         assertThat(action).isNotNull();
-        assertThat(elapsed).isLessThan(15000); // Should complete well under 15 seconds
+        // Guards against a search that never terminates, not against slowness: a 100-iteration
+        // budget measures ~33s on a developer machine, and the other searches in this class are
+        // the same order, so a bound tight enough to catch a regression here would just track
+        // hardware. 60s is comfortably above the observed spread and still fails on a hang.
+        assertThat(elapsed).isLessThan(60000);
     }
 
     @Test
@@ -170,6 +185,15 @@ class MCTSEngineTest {
         harness.addToBattlefield(player2, new TragedyFeaster());
         harness.addMana(player1, ManaColor.COLORLESS, 3);
         harness.setHand(player1, List.of());
+        // Quiet the rollouts down to the one thing this test is about. The harness deals both
+        // players a freshly shuffled library and opening hand, the simulated opponent casts
+        // creatures out of that hand, and the resulting board swings dwarf the 1 life a Rod ping
+        // is worth — measured at a 17% wrong-target rate, which pinning the libraries alone only
+        // brings down to 4%. With the opponent's hand pinned too it came out on the top-ranked
+        // target 120 times out of 120.
+        harness.setHand(player2, List.of());
+        harness.setLibrary(player1, inertLibrary());
+        harness.setLibrary(player2, inertLibrary());
         harness.forceStep(TurnStep.PRECOMBAT_MAIN);
         harness.forceActivePlayer(player1);
         gd.stack.clear();

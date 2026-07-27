@@ -1323,10 +1323,28 @@ class HardAiDecisionEngineTest {
         gd.stack.clear();
     }
 
+    /**
+     * Makes the search throw so the AI falls back to its deterministic evaluator path. Stealing a
+     * creature is a thin cast-versus-pass margin for MCTS: passing reaches the same board, because
+     * the rollout can still cast the spell in the postcombat main. What separates the two is then
+     * whatever the rollouts draw, and the harness deals both players a freshly shuffled library
+     * (see {@code GameSetupService}), so the same board decides differently from run to run —
+     * measured at 0.34 for the cast against 0.27 for passing on one seed, and the other way on the
+     * next. The X value and the target are picked by {@code buildSpellCastingPlan}, which both
+     * paths share, so the fallback exercises exactly what these tests assert.
+     */
+    private void disableMcts(HardAiDecisionEngine ai) {
+        MCTSEngine failingMcts = Mockito.mock(MCTSEngine.class);
+        Mockito.when(failingMcts.search(any(), any(), Mockito.anyInt(), Mockito.anyList()))
+                .thenThrow(new RuntimeException("MCTS disabled for test"));
+        ai.setMctsEngine(failingMcts);
+    }
+
     @Test
     @DisplayName("Hard AI casts Entrancing Melody with X matching target creature's mana value")
     void castsEntrancingMelodyWithCorrectX() {
         HardAiDecisionEngine ai = createHardAi(player1);
+        disableMcts(ai);
         giveAiPriority(player1);
         givePlayerIslands(player1, 4); // maxX = 2
 
@@ -1348,6 +1366,7 @@ class HardAiDecisionEngineTest {
     @DisplayName("Hard AI picks highest affordable target for Entrancing Melody")
     void picksHighestAffordableTargetForEntrancingMelody() {
         HardAiDecisionEngine ai = createHardAi(player1);
+        disableMcts(ai);
         giveAiPriority(player1);
         givePlayerIslands(player1, 4); // maxX = 2
 
@@ -1360,6 +1379,38 @@ class HardAiDecisionEngineTest {
         gd.playerBattlefields.get(player2.getId()).add(bears);
 
         harness.setHand(player1, List.of(new EntrancingMelody()));
+
+        ai.handleEvent(AiDecisionKind.GAME_STATE);
+
+        assertThat(gd.stack).hasSize(1);
+        assertThat(gd.stack.getFirst().getTargetId()).isEqualTo(bears.getId());
+        assertThat(gd.stack.getFirst().getXValue()).isEqualTo(2);
+    }
+
+    @Test
+    @DisplayName("Hard AI upgrades the MCTS-chosen Entrancing Melody target to the highest affordable one")
+    void upgradesMctsChosenEntrancingMelodyTarget() {
+        HardAiDecisionEngine ai = createHardAi(player1);
+        giveAiPriority(player1);
+        givePlayerIslands(player1, 4); // maxX = 2
+
+        Permanent vanguard = new Permanent(new EliteVanguard()); // MV=1
+        vanguard.setSummoningSick(false);
+        gd.playerBattlefields.get(player2.getId()).add(vanguard);
+
+        Permanent bears = new Permanent(new GrizzlyBears()); // MV=2
+        bears.setSummoningSick(false);
+        gd.playerBattlefields.get(player2.getId()).add(bears);
+
+        harness.setHand(player1, List.of(new EntrancingMelody()));
+
+        // The search owns cast-versus-pass; the target and X do not come from it. Stubbing it to
+        // the cheaper creature pins that split down: whichever target the search hands over, the
+        // cast has to come out on the best one X can reach.
+        MCTSEngine mcts = Mockito.mock(MCTSEngine.class);
+        Mockito.when(mcts.search(any(), any(), Mockito.anyInt(), Mockito.anyList()))
+                .thenReturn(new SimulationAction.PlayCard(0, vanguard.getId(), 1));
+        ai.setMctsEngine(mcts);
 
         ai.handleEvent(AiDecisionKind.GAME_STATE);
 
