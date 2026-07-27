@@ -7,8 +7,7 @@ import com.github.laxika.magicalvibes.model.effect.PreventDamageEffect;
 import com.github.laxika.magicalvibes.model.effect.RegisterDrawCardsAtNextUpkeepEffect;
 import com.github.laxika.magicalvibes.model.effect.TapUntapScope;
 import com.github.laxika.magicalvibes.model.effect.UntapPermanentsEffect;
-import com.github.laxika.magicalvibes.model.filter.PermanentIsAttackingPredicate;
-import com.github.laxika.magicalvibes.model.filter.PermanentPredicateTargetFilter;
+import com.github.laxika.magicalvibes.model.filter.TargetFilters;
 
 @CardRegistration(set = "5ED", collectorNumber = "295")
 public class Foxfire extends Card {
@@ -16,10 +15,7 @@ public class Foxfire extends Card {
     public Foxfire() {
         // "Untap target attacking creature. Prevent all combat damage that would be dealt to and dealt by
         // that creature this turn." Same target group; both prevention effects are combat-only.
-        target(new PermanentPredicateTargetFilter(
-                new PermanentIsAttackingPredicate(),
-                "Target must be an attacking creature"
-        )).addEffect(EffectSlot.SPELL, new UntapPermanentsEffect(TapUntapScope.TARGET))
+        target(TargetFilters.attackingCreature()).addEffect(EffectSlot.SPELL, new UntapPermanentsEffect(TapUntapScope.TARGET))
                 .addEffect(EffectSlot.SPELL, PreventDamageEffect.allCombatToTargetCreatures())
                 .addEffect(EffectSlot.SPELL, PreventDamageEffect.allCombatByTargetCreatures());
 

@@ -5,8 +5,7 @@ import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.effect.ChooseBasicLandTypeOnEnterEffect;
 import com.github.laxika.magicalvibes.model.effect.EnchantedPermanentBecomesChosenTypeEffect;
-import com.github.laxika.magicalvibes.model.filter.PermanentIsLandPredicate;
-import com.github.laxika.magicalvibes.model.filter.PermanentPredicateTargetFilter;
+import com.github.laxika.magicalvibes.model.filter.TargetFilters;
 
 @CardRegistration(set = "6ED", collectorNumber = "84")
 @CardRegistration(set = "5ED", collectorNumber = "107")
@@ -14,10 +13,7 @@ import com.github.laxika.magicalvibes.model.filter.PermanentPredicateTargetFilte
 public class PhantasmalTerrain extends Card {
 
     public PhantasmalTerrain() {
-        target(new PermanentPredicateTargetFilter(
-                new PermanentIsLandPredicate(),
-                "Target must be a land"
-        ))
+        target(TargetFilters.land())
                 .addEffect(EffectSlot.ON_ENTER_BATTLEFIELD, new ChooseBasicLandTypeOnEnterEffect())
                 .addEffect(EffectSlot.STATIC, new EnchantedPermanentBecomesChosenTypeEffect());
     }

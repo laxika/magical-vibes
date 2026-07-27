@@ -449,7 +449,7 @@ addGraveyardActivatedAbility(new ActivatedAbility(
     false, "{3}{W}",
     List.of(new ReturnSourceFromGraveyardAttachedToTargetEffect()),
     "{3}{W}: Return this card … attached to target creature. Activate only as a sorcery.",
-    new PermanentPredicateTargetFilter(new PermanentIsCreaturePredicate(), "Target must be a creature"),
+    TargetFilters.creature(),
     null, null, ActivationTimingRestriction.SORCERY_SPEED));
 ```
 
@@ -506,13 +506,13 @@ addHandActivatedAbility(new ActivatedAbility(false, manaCost, effects, descripti
 addHandActivatedAbility(new ActivatedAbility(false, "{2}{W}",
     List.of(new PutCounterOnTargetPermanentEffect(CounterType.PLUS_ONE_PLUS_ONE, 2)),
     "Reinforce 2—{2}{W} ({2}{W}, Discard this card: Put two +1/+1 counters on target creature.)",
-    new PermanentPredicateTargetFilter(new PermanentIsCreaturePredicate(), "Target must be a creature")));
+    TargetFilters.creature()));
 
 // Reinforce X—{X}{W}{W} (Swell of Courage) — X counters via new XValue()
 addHandActivatedAbility(new ActivatedAbility(false, "{X}{W}{W}",
     List.of(new PutCounterOnTargetPermanentEffect(CounterType.PLUS_ONE_PLUS_ONE, new XValue())),
     "Reinforce X—{X}{W}{W} (...)",
-    new PermanentPredicateTargetFilter(new PermanentIsCreaturePredicate(), "Target must be a creature")));
+    TargetFilters.creature()));
 ```
 
 Cards: `BurrentonBombardier`
@@ -614,6 +614,10 @@ Cards: `SiegeGangCommander`, `BottleGnomes`, `DoomedNecromancer`, `ThrullSurgeon
 **Full reference:** See **PREDICATES_REFERENCE.md** for complete tables of all TargetFilter types, PermanentPredicate, StackEntryPredicate, and PlayerPredicate compositions.
 
 **Quick summary of TargetFilter types:**
+
+For the common restrictions ("target creature", "target land you control", …) use the
+`TargetFilters` factories instead of constructing these directly — see
+PREDICATES_REFERENCE.md § TargetFilters.
 
 | Filter class | Use when |
 |-------------|----------|

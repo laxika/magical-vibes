@@ -12,8 +12,7 @@ import com.github.laxika.magicalvibes.model.effect.StaticBoostEffect;
 import com.github.laxika.magicalvibes.model.effect.TapMultiplePermanentsCost;
 import com.github.laxika.magicalvibes.model.filter.PermanentHasAnySubtypePredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentHasSubtypePredicate;
-import com.github.laxika.magicalvibes.model.filter.PermanentIsCreaturePredicate;
-import com.github.laxika.magicalvibes.model.filter.PermanentPredicateTargetFilter;
+import com.github.laxika.magicalvibes.model.filter.TargetFilters;
 
 import java.util.List;
 import java.util.Set;
@@ -35,8 +34,6 @@ public class CaptivatingVampire extends Card {
                         new TapMultiplePermanentsCost(5, new PermanentHasSubtypePredicate(CardSubtype.VAMPIRE)),
                         new GainControlOfTargetEffect(ControlDuration.PERMANENT, CardSubtype.VAMPIRE)),
                 "Tap five untapped Vampires you control: Gain control of target creature. It becomes a Vampire in addition to its other types.",
-                new PermanentPredicateTargetFilter(
-                        new PermanentIsCreaturePredicate(),
-                        "Target must be a creature")));
+                TargetFilters.creature()));
     }
 }

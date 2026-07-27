@@ -4,8 +4,7 @@ import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.ActivatedAbility;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.effect.TapOrUntapTargetPermanentEffect;
-import com.github.laxika.magicalvibes.model.filter.PermanentIsCreaturePredicate;
-import com.github.laxika.magicalvibes.model.filter.PermanentPredicateTargetFilter;
+import com.github.laxika.magicalvibes.model.filter.TargetFilters;
 
 import java.util.List;
 
@@ -18,10 +17,7 @@ public class NiblisOfTheBreath extends Card {
                 "{U}",
                 List.of(new TapOrUntapTargetPermanentEffect()),
                 "{U}, {T}: You may tap or untap target creature.",
-                new PermanentPredicateTargetFilter(
-                        new PermanentIsCreaturePredicate(),
-                        "Target must be a creature"
-                )
+                TargetFilters.creature()
         ));
     }
 }

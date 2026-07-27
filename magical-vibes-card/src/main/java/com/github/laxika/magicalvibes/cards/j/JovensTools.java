@@ -6,8 +6,7 @@ import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardSubtype;
 import com.github.laxika.magicalvibes.model.effect.MakeCreatureBlockableOnlyByFilterThisTurnEffect;
 import com.github.laxika.magicalvibes.model.filter.PermanentHasSubtypePredicate;
-import com.github.laxika.magicalvibes.model.filter.PermanentIsCreaturePredicate;
-import com.github.laxika.magicalvibes.model.filter.PermanentPredicateTargetFilter;
+import com.github.laxika.magicalvibes.model.filter.TargetFilters;
 
 import java.util.List;
 
@@ -19,8 +18,6 @@ public class JovensTools extends Card {
                 List.of(new MakeCreatureBlockableOnlyByFilterThisTurnEffect(
                         new PermanentHasSubtypePredicate(CardSubtype.WALL), "Walls")),
                 "{4}, {T}: Target creature can't be blocked this turn except by Walls.",
-                new PermanentPredicateTargetFilter(
-                        new PermanentIsCreaturePredicate(),
-                        "Target must be a creature")));
+                TargetFilters.creature()));
     }
 }

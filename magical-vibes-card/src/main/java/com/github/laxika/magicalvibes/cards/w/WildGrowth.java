@@ -6,8 +6,7 @@ import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.effect.AddManaOnEnchantedLandTapEffect;
 import com.github.laxika.magicalvibes.model.effect.AwardManaEffect;
-import com.github.laxika.magicalvibes.model.filter.PermanentIsLandPredicate;
-import com.github.laxika.magicalvibes.model.filter.PermanentPredicateTargetFilter;
+import com.github.laxika.magicalvibes.model.filter.TargetFilters;
 
 @CardRegistration(set = "5ED", collectorNumber = "342")
 @CardRegistration(set = "7ED", collectorNumber = "282")
@@ -16,10 +15,7 @@ import com.github.laxika.magicalvibes.model.filter.PermanentPredicateTargetFilte
 public class WildGrowth extends Card {
 
     public WildGrowth() {
-        target(new PermanentPredicateTargetFilter(
-                new PermanentIsLandPredicate(),
-                "Target must be a land"
-        ))
+        target(TargetFilters.land())
                 .addEffect(EffectSlot.ON_ANY_PLAYER_TAPS_LAND, new AddManaOnEnchantedLandTapEffect(new AwardManaEffect(ManaColor.GREEN, 1)));
     }
 }

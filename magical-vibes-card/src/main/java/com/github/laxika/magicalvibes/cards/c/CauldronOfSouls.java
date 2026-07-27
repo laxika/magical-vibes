@@ -6,9 +6,8 @@ import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.Keyword;
 import com.github.laxika.magicalvibes.model.effect.GrantKeywordEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantScope;
-import com.github.laxika.magicalvibes.model.filter.PermanentIsCreaturePredicate;
-import com.github.laxika.magicalvibes.model.filter.PermanentPredicateTargetFilter;
 import com.github.laxika.magicalvibes.model.filter.TargetFilter;
+import com.github.laxika.magicalvibes.model.filter.TargetFilters;
 
 import java.util.List;
 
@@ -19,8 +18,7 @@ public class CauldronOfSouls extends Card {
         // {T}: Choose any number of target creatures. Each of those creatures gains persist until end of turn.
         // GrantScope.TARGET applies the keyword grant to every creature in the target group; the persist
         // return is handled by PermanentRemovalService via the granted Keyword.PERSIST.
-        TargetFilter creatureFilter = new PermanentPredicateTargetFilter(
-                new PermanentIsCreaturePredicate(), "Target must be a creature");
+        TargetFilter creatureFilter = TargetFilters.creature();
         addActivatedAbility(new ActivatedAbility(
                 true,  // requires tap
                 null,  // no mana cost

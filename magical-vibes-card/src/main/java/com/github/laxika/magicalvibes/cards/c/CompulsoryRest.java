@@ -9,8 +9,7 @@ import com.github.laxika.magicalvibes.model.effect.GainLifeEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantActivatedAbilityEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantScope;
 import com.github.laxika.magicalvibes.model.effect.SacrificeSelfCost;
-import com.github.laxika.magicalvibes.model.filter.PermanentIsCreaturePredicate;
-import com.github.laxika.magicalvibes.model.filter.PermanentPredicateTargetFilter;
+import com.github.laxika.magicalvibes.model.filter.TargetFilters;
 
 import java.util.List;
 
@@ -18,10 +17,7 @@ import java.util.List;
 public class CompulsoryRest extends Card {
 
     public CompulsoryRest() {
-        target(new PermanentPredicateTargetFilter(
-                new PermanentIsCreaturePredicate(),
-                "Target must be a creature"
-        ))
+        target(TargetFilters.creature())
                 // Enchanted creature can't attack or block.
                 .addEffect(EffectSlot.STATIC, new EnchantedCreatureCantAttackOrBlockEffect())
                 // Enchanted creature has "{2}, Sacrifice this creature: You gain 2 life."

@@ -7,8 +7,7 @@ import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.effect.AwardManaEffect;
 import com.github.laxika.magicalvibes.model.effect.DrawCardEffect;
 import com.github.laxika.magicalvibes.model.effect.SacrificeCreatureCost;
-import com.github.laxika.magicalvibes.model.filter.ControlledPermanentPredicateTargetFilter;
-import com.github.laxika.magicalvibes.model.filter.PermanentIsCreaturePredicate;
+import com.github.laxika.magicalvibes.model.filter.TargetFilters;
 
 import java.util.List;
 
@@ -30,10 +29,7 @@ public class GrimBackwoods extends Card {
                 "{2}{B}{G}",
                 List.of(new SacrificeCreatureCost(), new DrawCardEffect(1)),
                 "{2}{B}{G}, {T}, Sacrifice a creature: Draw a card.",
-                new ControlledPermanentPredicateTargetFilter(
-                        new PermanentIsCreaturePredicate(),
-                        "Target must be a creature you control"
-                )
+                TargetFilters.creatureYouControl()
         ));
     }
 }

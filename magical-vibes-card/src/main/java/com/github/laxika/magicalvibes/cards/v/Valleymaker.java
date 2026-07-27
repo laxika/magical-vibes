@@ -9,8 +9,7 @@ import com.github.laxika.magicalvibes.model.effect.AwardManaToChosenPlayerEffect
 import com.github.laxika.magicalvibes.model.effect.DealDamageToTargetCreatureEffect;
 import com.github.laxika.magicalvibes.model.effect.SacrificePermanentCost;
 import com.github.laxika.magicalvibes.model.filter.PermanentHasSubtypePredicate;
-import com.github.laxika.magicalvibes.model.filter.PermanentIsCreaturePredicate;
-import com.github.laxika.magicalvibes.model.filter.PermanentPredicateTargetFilter;
+import com.github.laxika.magicalvibes.model.filter.TargetFilters;
 
 import java.util.List;
 
@@ -27,7 +26,7 @@ public class Valleymaker extends Card {
                                 "Sacrifice a Mountain", false),
                         new DealDamageToTargetCreatureEffect(3)),
                 "{T}, Sacrifice a Mountain: Valleymaker deals 3 damage to target creature.",
-                new PermanentPredicateTargetFilter(new PermanentIsCreaturePredicate(), "Target must be a creature")));
+                TargetFilters.creature()));
 
         // {T}, Sacrifice a Forest: Choose a player. That player adds {G}{G}{G}. (mana ability)
         addActivatedAbility(new ActivatedAbility(

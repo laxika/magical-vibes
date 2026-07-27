@@ -7,8 +7,7 @@ import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.effect.LoseLifeRecipient;
 import com.github.laxika.magicalvibes.model.effect.LoseLifeUnlessSacrificeNonlandOrDiscardEffect;
 import com.github.laxika.magicalvibes.model.effect.PutCounterOnTargetPermanentEffect;
-import com.github.laxika.magicalvibes.model.filter.PermanentIsCreaturePredicate;
-import com.github.laxika.magicalvibes.model.filter.PermanentPredicateTargetFilter;
+import com.github.laxika.magicalvibes.model.filter.TargetFilters;
 
 @CardRegistration(set = "HOU", collectorNumber = "79")
 public class TormentOfVenom extends Card {
@@ -19,10 +18,7 @@ public class TormentOfVenom extends Card {
         // The counter effect owns the single creature target; the punisher piggybacks on it (reads
         // the target's controller), so it's listed after the counters but the creature is still on
         // the battlefield at resolution (lethal counters are cleaned up only by the trailing SBA).
-        target(new PermanentPredicateTargetFilter(
-                new PermanentIsCreaturePredicate(),
-                "Target must be a creature"
-        ))
+        target(TargetFilters.creature())
                 .addEffect(EffectSlot.SPELL,
                         new PutCounterOnTargetPermanentEffect(CounterType.MINUS_ONE_MINUS_ONE, 3))
                 .addEffect(EffectSlot.SPELL,

@@ -3,9 +3,8 @@ package com.github.laxika.magicalvibes.cards.a;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.effect.DestroyTargetPermanentEffect;
-import com.github.laxika.magicalvibes.model.filter.PermanentIsEnchantmentPredicate;
-import com.github.laxika.magicalvibes.model.filter.PermanentPredicateTargetFilter;
 import com.github.laxika.magicalvibes.cards.CardRegistration;
+import com.github.laxika.magicalvibes.model.filter.TargetFilters;
 
 @CardRegistration(set = "10E", collectorNumber = "7")
 @CardRegistration(set = "9ED", collectorNumber = "3")
@@ -13,10 +12,7 @@ import com.github.laxika.magicalvibes.cards.CardRegistration;
 public class AvenCloudchaser extends Card {
 
     public AvenCloudchaser() {
-        target(new PermanentPredicateTargetFilter(
-                new PermanentIsEnchantmentPredicate(),
-                "Target must be an enchantment"
-        ))
+        target(TargetFilters.enchantment())
                 .addEffect(EffectSlot.ON_ENTER_BATTLEFIELD, new DestroyTargetPermanentEffect());
     }
 }

@@ -9,8 +9,7 @@ import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.effect.DoesntUntapEffect;
 import com.github.laxika.magicalvibes.model.effect.MayNotUntapDuringUntapStepEffect;
-import com.github.laxika.magicalvibes.model.filter.PermanentIsArtifactPredicate;
-import com.github.laxika.magicalvibes.model.filter.PermanentPredicateTargetFilter;
+import com.github.laxika.magicalvibes.model.filter.TargetFilters;
 
 import java.util.List;
 
@@ -31,10 +30,7 @@ public class RustTick extends Card {
                         DoesntUntapEffect.targetWhileSourceTapped()
                 ),
                 "{1}, {T}: Tap target artifact. It doesn't untap during its controller's untap step for as long as Rust Tick remains tapped.",
-                new PermanentPredicateTargetFilter(
-                        new PermanentIsArtifactPredicate(),
-                        "Target must be an artifact"
-                )
+                TargetFilters.artifact()
         ));
     }
 }

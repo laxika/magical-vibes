@@ -10,8 +10,7 @@ import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.effect.AwardManaEffect;
 import com.github.laxika.magicalvibes.model.effect.PutCounterOnTargetPermanentEffect;
 import com.github.laxika.magicalvibes.model.effect.SacrificeSelfCost;
-import com.github.laxika.magicalvibes.model.filter.PermanentIsCreaturePredicate;
-import com.github.laxika.magicalvibes.model.filter.PermanentPredicateTargetFilter;
+import com.github.laxika.magicalvibes.model.filter.TargetFilters;
 
 import java.util.List;
 
@@ -28,7 +27,7 @@ public class GraspingDunes extends Card {
                 "{1}",
                 List.of(new SacrificeSelfCost(), new PutCounterOnTargetPermanentEffect(CounterType.MINUS_ONE_MINUS_ONE, 1)),
                 "{1}, {T}, Sacrifice Grasping Dunes: Put a -1/-1 counter on target creature. Activate only as a sorcery.",
-                new PermanentPredicateTargetFilter(new PermanentIsCreaturePredicate(), "Target must be a creature"),
+                TargetFilters.creature(),
                 null,  // loyaltyCost
                 null,  // maxActivationsPerTurn
                 ActivationTimingRestriction.SORCERY_SPEED

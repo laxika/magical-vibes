@@ -4,8 +4,7 @@ import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.ActivatedAbility;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.effect.BecomeChosenColorsUntilEndOfTurnEffect;
-import com.github.laxika.magicalvibes.model.filter.ControlledPermanentPredicateTargetFilter;
-import com.github.laxika.magicalvibes.model.filter.PermanentIsCreaturePredicate;
+import com.github.laxika.magicalvibes.model.filter.TargetFilters;
 
 import java.util.List;
 
@@ -20,10 +19,7 @@ public class SwirlingSpriggan extends Card {
                 "{G/U}{G/U}",
                 List.of(new BecomeChosenColorsUntilEndOfTurnEffect()),
                 "{G/U}{G/U}: Target creature you control becomes the color or colors of your choice until end of turn.",
-                new ControlledPermanentPredicateTargetFilter(
-                        new PermanentIsCreaturePredicate(),
-                        "Target must be a creature you control"
-                )
+                TargetFilters.creatureYouControl()
         ));
     }
 }

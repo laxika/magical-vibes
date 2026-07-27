@@ -15,6 +15,7 @@ import com.github.laxika.magicalvibes.model.filter.PermanentIsCreaturePredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentNotPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentPredicateTargetFilter;
 import com.github.laxika.magicalvibes.model.filter.PermanentTruePredicate;
+import com.github.laxika.magicalvibes.model.filter.TargetFilters;
 
 import java.util.List;
 
@@ -38,10 +39,7 @@ public class NicolBolasPlaneswalker extends Card {
                 -2,
                 List.of(new GainControlOfTargetEffect(ControlDuration.PERMANENT)),
                 "−2: Gain control of target creature.",
-                new PermanentPredicateTargetFilter(
-                        new PermanentIsCreaturePredicate(),
-                        "Target must be a creature"
-                )
+                TargetFilters.creature()
         ));
 
         // −9: Nicol Bolas deals 7 damage to target player or planeswalker. That player or that

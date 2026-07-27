@@ -9,8 +9,7 @@ import com.github.laxika.magicalvibes.model.effect.ConditionalEffect;
 import com.github.laxika.magicalvibes.model.effect.MayEffect;
 import com.github.laxika.magicalvibes.model.effect.PutTargetOnTopOfLibraryEffect;
 import com.github.laxika.magicalvibes.model.effect.ReturnToHandEffect;
-import com.github.laxika.magicalvibes.model.filter.PermanentIsCreaturePredicate;
-import com.github.laxika.magicalvibes.model.filter.PermanentPredicateTargetFilter;
+import com.github.laxika.magicalvibes.model.filter.TargetFilters;
 
 @CardRegistration(set = "LRW", collectorNumber = "96")
 public class WhirlpoolWhelm extends Card {
@@ -23,10 +22,7 @@ public class WhirlpoolWhelm extends Card {
         // it on top" resolves before the bounce: accepting tucks the creature (so the trailing bounce
         // finds nothing and no-ops), declining or losing the clash falls through to the bounce — which
         // is exactly the "on top of its owner's library instead" replacement.
-        target(new PermanentPredicateTargetFilter(
-                new PermanentIsCreaturePredicate(),
-                "Target must be a creature"
-        ))
+        target(TargetFilters.creature())
                 .addEffect(EffectSlot.SPELL, new ClashEffect(null))
                 .addEffect(EffectSlot.SPELL, new ConditionalEffect(new WonClash(),
                         new MayEffect(new PutTargetOnTopOfLibraryEffect(),

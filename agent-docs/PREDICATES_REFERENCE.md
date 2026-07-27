@@ -4,6 +4,27 @@ Complete reference for all `TargetFilter`, `PermanentPredicate`, `StackEntryPred
 
 All of these base interfaces are **sealed**: a new predicate/filter must be added to the interface's `permits` clause, and the exhaustive switch in the engine's `PredicateEvaluationService` (`magical-vibes-engine/.../service/filter/`) must gain a matching case — the compiler enforces both. `StackEntryPredicate` types used for *targeting* are evaluated by `TargetLegalityService` instead.
 
+## TargetFilters — prefer these over building a filter by hand
+
+`model/filter/TargetFilters` has factories for the restrictions cards ask for most often.
+Reach for one before writing out a filter:
+
+| Factory | Produces | Validation message |
+|---------|----------|--------------------|
+| `TargetFilters.creature()` | `PermanentPredicateTargetFilter` | "Target must be a creature" |
+| `TargetFilters.creatureYouControl()` | `ControlledPermanentPredicateTargetFilter` | "Target must be a creature you control" |
+| `TargetFilters.creatureAnOpponentControls()` | `PermanentPredicateTargetFilter` | "Target must be a creature an opponent controls" |
+| `TargetFilters.attackingCreature()` | `PermanentPredicateTargetFilter` | "Target must be an attacking creature" |
+| `TargetFilters.land()` / `landYouControl()` | permanent / controlled | "Target must be a land\[ you control\]" |
+| `TargetFilters.artifact()` | `PermanentPredicateTargetFilter` | "Target must be an artifact" |
+| `TargetFilters.enchantment()` | `PermanentPredicateTargetFilter` | "Target must be an enchantment" |
+| `TargetFilters.permanent()` / `permanentYouControl()` | permanent / controlled | "Target must be a permanent\[ you control\]" |
+
+The message is shown to a player who picks an illegal target, so it is part of the card's
+behaviour. If the card needs different wording — "First target must be a creature", "Second
+target must be a creature you don't control" — or a restriction with no factory, build the
+filter directly rather than reusing a factory whose wording does not match.
+
 ## TargetFilter types
 
 | Filter class | Constructor | Use when |

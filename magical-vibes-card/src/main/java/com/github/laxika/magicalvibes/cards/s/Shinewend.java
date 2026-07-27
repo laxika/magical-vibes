@@ -9,8 +9,7 @@ import com.github.laxika.magicalvibes.model.effect.DestroyTargetPermanentEffect;
 import com.github.laxika.magicalvibes.model.effect.EnterWithCountersEffect;
 import com.github.laxika.magicalvibes.model.amount.Fixed;
 import com.github.laxika.magicalvibes.model.effect.RemoveCounterFromSourceCost;
-import com.github.laxika.magicalvibes.model.filter.PermanentIsEnchantmentPredicate;
-import com.github.laxika.magicalvibes.model.filter.PermanentPredicateTargetFilter;
+import com.github.laxika.magicalvibes.model.filter.TargetFilters;
 
 import java.util.List;
 
@@ -31,10 +30,7 @@ public class Shinewend extends Card {
                         new DestroyTargetPermanentEffect()
                 ),
                 "{1}{W}, Remove a +1/+1 counter from this creature: Destroy target enchantment.",
-                new PermanentPredicateTargetFilter(
-                        new PermanentIsEnchantmentPredicate(),
-                        "Target must be an enchantment"
-                )
+                TargetFilters.enchantment()
         ));
     }
 }

@@ -6,8 +6,7 @@ import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.effect.BoostTargetCreatureEffect;
 import com.github.laxika.magicalvibes.model.effect.MayEffect;
 import com.github.laxika.magicalvibes.model.effect.SpellCastTriggerEffect;
-import com.github.laxika.magicalvibes.model.filter.PermanentIsCreaturePredicate;
-import com.github.laxika.magicalvibes.model.filter.PermanentPredicateTargetFilter;
+import com.github.laxika.magicalvibes.model.filter.TargetFilters;
 
 import java.util.List;
 
@@ -18,10 +17,7 @@ public class DreamspoilerWitches extends Card {
         // Flying (auto-loaded from Scryfall).
         // Whenever you cast a spell during an opponent's turn, you may have target creature get
         // -1/-1 until end of turn.
-        target(new PermanentPredicateTargetFilter(
-                new PermanentIsCreaturePredicate(),
-                "Target must be a creature"
-        )).addEffect(EffectSlot.ON_CONTROLLER_CASTS_SPELL, new MayEffect(
+        target(TargetFilters.creature()).addEffect(EffectSlot.ON_CONTROLLER_CASTS_SPELL, new MayEffect(
                 new SpellCastTriggerEffect(null, List.of(new BoostTargetCreatureEffect(-1, -1)), true),
                 "Have target creature get -1/-1 until end of turn?"
         ));

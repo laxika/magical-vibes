@@ -11,8 +11,8 @@ import com.github.laxika.magicalvibes.model.effect.GrantBasicLandTypeToTargetEff
 import com.github.laxika.magicalvibes.model.effect.GrantKeywordEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantScope;
 import com.github.laxika.magicalvibes.model.filter.PermanentHasSubtypePredicate;
-import com.github.laxika.magicalvibes.model.filter.PermanentIsLandPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentPredicateTargetFilter;
+import com.github.laxika.magicalvibes.model.filter.TargetFilters;
 
 import java.util.List;
 
@@ -41,10 +41,7 @@ public class StreambedAquitects extends Card {
                 null,
                 List.of(new GrantBasicLandTypeToTargetEffect(EffectDuration.UNTIL_END_OF_TURN, CardSubtype.ISLAND)),
                 "{T}: Target land becomes an Island until end of turn.",
-                new PermanentPredicateTargetFilter(
-                        new PermanentIsLandPredicate(),
-                        "Target must be a land"
-                )
+                TargetFilters.land()
         ));
     }
 }

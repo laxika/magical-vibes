@@ -10,8 +10,7 @@ import com.github.laxika.magicalvibes.model.effect.ClashEffect;
 import com.github.laxika.magicalvibes.model.effect.ConditionalEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantKeywordEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantScope;
-import com.github.laxika.magicalvibes.model.filter.PermanentIsCreaturePredicate;
-import com.github.laxika.magicalvibes.model.filter.PermanentPredicateTargetFilter;
+import com.github.laxika.magicalvibes.model.filter.TargetFilters;
 
 @CardRegistration(set = "LRW", collectorNumber = "212")
 public class FistfulOfForce extends Card {
@@ -21,9 +20,7 @@ public class FistfulOfForce extends Card {
         // creature gets an additional +2/+2 and gains trample until end of turn. All effects share
         // the single creature target group; the win-only boost/keyword are gated on WonClash
         // (mirrors Lash Out's base-effect + ClashEffect(null) + ConditionalEffect(WonClash) shape).
-        target(new PermanentPredicateTargetFilter(
-                new PermanentIsCreaturePredicate(),
-                "Target must be a creature"))
+        target(TargetFilters.creature())
                 .addEffect(EffectSlot.SPELL, new BoostTargetCreatureEffect(2, 2))
                 .addEffect(EffectSlot.SPELL, new ClashEffect(null))
                 .addEffect(EffectSlot.SPELL, new ConditionalEffect(new WonClash(),

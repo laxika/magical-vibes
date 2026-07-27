@@ -6,18 +6,14 @@ import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.effect.MayEffect;
 import com.github.laxika.magicalvibes.model.effect.TapPermanentsEffect;
 import com.github.laxika.magicalvibes.model.effect.TapUntapScope;
-import com.github.laxika.magicalvibes.model.filter.PermanentIsCreaturePredicate;
-import com.github.laxika.magicalvibes.model.filter.PermanentPredicateTargetFilter;
+import com.github.laxika.magicalvibes.model.filter.TargetFilters;
 
 @CardRegistration(set = "PTK", collectorNumber = "5")
 public class FlankingTroops extends Card {
 
     public FlankingTroops() {
         // Whenever this creature attacks, you may tap target creature.
-        target(new PermanentPredicateTargetFilter(
-                new PermanentIsCreaturePredicate(),
-                "Target must be a creature"
-        )).addEffect(EffectSlot.ON_ATTACK, new MayEffect(
+        target(TargetFilters.creature()).addEffect(EffectSlot.ON_ATTACK, new MayEffect(
                 new TapPermanentsEffect(TapUntapScope.TARGET),
                 "Tap target creature?"
         ));

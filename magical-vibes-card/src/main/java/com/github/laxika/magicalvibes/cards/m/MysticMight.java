@@ -8,10 +8,7 @@ import com.github.laxika.magicalvibes.model.effect.BoostTargetCreatureEffect;
 import com.github.laxika.magicalvibes.model.effect.CumulativeUpkeepEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantActivatedAbilityEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantScope;
-import com.github.laxika.magicalvibes.model.filter.ControlledPermanentPredicateTargetFilter;
-import com.github.laxika.magicalvibes.model.filter.PermanentIsCreaturePredicate;
-import com.github.laxika.magicalvibes.model.filter.PermanentIsLandPredicate;
-import com.github.laxika.magicalvibes.model.filter.PermanentPredicateTargetFilter;
+import com.github.laxika.magicalvibes.model.filter.TargetFilters;
 
 import java.util.List;
 
@@ -23,19 +20,13 @@ public class MysticMight extends Card {
         addEffect(EffectSlot.UPKEEP_TRIGGERED, new CumulativeUpkeepEffect("{1}{U}"));
 
         // Enchant land you control — grants "{T}: Target creature gets +2/+2 until end of turn."
-        target(new ControlledPermanentPredicateTargetFilter(
-                new PermanentIsLandPredicate(),
-                "Target must be a land you control"
-        )).addEffect(EffectSlot.STATIC, new GrantActivatedAbilityEffect(
+        target(TargetFilters.landYouControl()).addEffect(EffectSlot.STATIC, new GrantActivatedAbilityEffect(
                 new ActivatedAbility(
                         true,
                         null,
                         List.of(new BoostTargetCreatureEffect(2, 2)),
                         "{T}: Target creature gets +2/+2 until end of turn.",
-                        new PermanentPredicateTargetFilter(
-                                new PermanentIsCreaturePredicate(),
-                                "Target must be a creature"
-                        )
+                        TargetFilters.creature()
                 ),
                 GrantScope.ENCHANTED_PERMANENT
         ));

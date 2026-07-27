@@ -13,8 +13,7 @@ import com.github.laxika.magicalvibes.model.effect.BoostAllOwnCreaturesEffect;
 import com.github.laxika.magicalvibes.model.effect.CreateTokenEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantKeywordEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantScope;
-import com.github.laxika.magicalvibes.model.filter.PermanentIsLandPredicate;
-import com.github.laxika.magicalvibes.model.filter.PermanentPredicateTargetFilter;
+import com.github.laxika.magicalvibes.model.filter.TargetFilters;
 
 import java.util.List;
 import java.util.Set;
@@ -32,8 +31,8 @@ public class GarrukWildspeaker extends Card {
                 "+1: Untap two target lands.",
                 null, 1, null, null,
                 List.of(
-                        new PermanentPredicateTargetFilter(new PermanentIsLandPredicate(), "Target must be a land"),
-                        new PermanentPredicateTargetFilter(new PermanentIsLandPredicate(), "Target must be a land")
+                        TargetFilters.land(),
+                        TargetFilters.land()
                 ),
                 2, 2
         ));

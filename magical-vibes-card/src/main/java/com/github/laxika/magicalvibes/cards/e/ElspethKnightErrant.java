@@ -9,8 +9,7 @@ import com.github.laxika.magicalvibes.model.effect.CreateTokenEffect;
 import com.github.laxika.magicalvibes.model.effect.ElspethKnightErrantEmblemEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantKeywordEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantScope;
-import com.github.laxika.magicalvibes.model.filter.PermanentIsCreaturePredicate;
-import com.github.laxika.magicalvibes.model.filter.PermanentPredicateTargetFilter;
+import com.github.laxika.magicalvibes.model.filter.TargetFilters;
 
 import java.util.List;
 
@@ -30,9 +29,7 @@ public class ElspethKnightErrant extends Card {
                 +1,
                 List.of(new BoostTargetCreatureEffect(3, 3), new GrantKeywordEffect(Keyword.FLYING, GrantScope.TARGET)),
                 "+1: Target creature gets +3/+3 and gains flying until end of turn.",
-                new PermanentPredicateTargetFilter(
-                        new PermanentIsCreaturePredicate(),
-                        "Target must be a creature")
+                TargetFilters.creature()
         ));
 
         // −8: You get an emblem with "Artifacts, creatures, enchantments, and lands you control have indestructible."

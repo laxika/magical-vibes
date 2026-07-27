@@ -3,9 +3,8 @@ package com.github.laxika.magicalvibes.cards.d;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.effect.DoesntUntapEffect;
-import com.github.laxika.magicalvibes.model.filter.PermanentIsCreaturePredicate;
-import com.github.laxika.magicalvibes.model.filter.PermanentPredicateTargetFilter;
 import com.github.laxika.magicalvibes.cards.CardRegistration;
+import com.github.laxika.magicalvibes.model.filter.TargetFilters;
 
 @CardRegistration(set = "10E", collectorNumber = "78")
 @CardRegistration(set = "9ED", collectorNumber = "73")
@@ -13,9 +12,6 @@ import com.github.laxika.magicalvibes.cards.CardRegistration;
 public class Dehydration extends Card {
 
     public Dehydration() {
-        target(new PermanentPredicateTargetFilter(
-                new PermanentIsCreaturePredicate(),
-                "Target must be a creature"
-        )).addEffect(EffectSlot.STATIC, DoesntUntapEffect.enchanted());
+        target(TargetFilters.creature()).addEffect(EffectSlot.STATIC, DoesntUntapEffect.enchanted());
     }
 }

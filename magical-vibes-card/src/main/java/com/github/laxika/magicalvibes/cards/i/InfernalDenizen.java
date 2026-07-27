@@ -13,8 +13,7 @@ import com.github.laxika.magicalvibes.model.effect.SacrificeMultiplePermanentsCo
 import com.github.laxika.magicalvibes.model.effect.TapPermanentsEffect;
 import com.github.laxika.magicalvibes.model.effect.TapUntapScope;
 import com.github.laxika.magicalvibes.model.filter.PermanentHasSubtypePredicate;
-import com.github.laxika.magicalvibes.model.filter.PermanentIsCreaturePredicate;
-import com.github.laxika.magicalvibes.model.filter.PermanentPredicateTargetFilter;
+import com.github.laxika.magicalvibes.model.filter.TargetFilters;
 
 import java.util.List;
 
@@ -37,8 +36,6 @@ public class InfernalDenizen extends Card {
                 true, null,
                 List.of(new GainControlOfTargetEffect(ControlDuration.WHILE_SOURCE_REMAINS)),
                 "{T}: Gain control of target creature for as long as this creature remains on the battlefield.",
-                new PermanentPredicateTargetFilter(
-                        new PermanentIsCreaturePredicate(),
-                        "Target must be a creature")));
+                TargetFilters.creature()));
     }
 }

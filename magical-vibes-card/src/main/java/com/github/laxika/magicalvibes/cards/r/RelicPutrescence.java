@@ -5,17 +5,13 @@ import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.effect.GivePoisonCountersEffect;
 import com.github.laxika.magicalvibes.model.effect.PoisonRecipient;
-import com.github.laxika.magicalvibes.model.filter.PermanentIsArtifactPredicate;
-import com.github.laxika.magicalvibes.model.filter.PermanentPredicateTargetFilter;
+import com.github.laxika.magicalvibes.model.filter.TargetFilters;
 
 @CardRegistration(set = "SOM", collectorNumber = "77")
 public class RelicPutrescence extends Card {
 
     public RelicPutrescence() {
-        target(new PermanentPredicateTargetFilter(
-                new PermanentIsArtifactPredicate(),
-                "Target must be an artifact"
-        )).addEffect(EffectSlot.ON_ENCHANTED_PERMANENT_TAPPED,
+        target(TargetFilters.artifact()).addEffect(EffectSlot.ON_ENCHANTED_PERMANENT_TAPPED,
                 new GivePoisonCountersEffect(1, PoisonRecipient.ENCHANTED_PERMANENT_CONTROLLER));
     }
 }

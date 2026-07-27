@@ -4,8 +4,7 @@ import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.ActivatedAbility;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.effect.RedirectNextDamageToTargetCreatureEffect;
-import com.github.laxika.magicalvibes.model.filter.PermanentIsCreaturePredicate;
-import com.github.laxika.magicalvibes.model.filter.PermanentPredicateTargetFilter;
+import com.github.laxika.magicalvibes.model.filter.TargetFilters;
 
 import java.util.List;
 
@@ -17,6 +16,6 @@ public class ZealousInquisitor extends Card {
         addActivatedAbility(new ActivatedAbility(false, "{1}{W}",
                 List.of(new RedirectNextDamageToTargetCreatureEffect(1)),
                 "{1}{W}: The next 1 damage that would be dealt to this creature this turn is dealt to target creature instead.",
-                new PermanentPredicateTargetFilter(new PermanentIsCreaturePredicate(), "Target must be a creature")));
+                TargetFilters.creature()));
     }
 }

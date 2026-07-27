@@ -13,8 +13,7 @@ import com.github.laxika.magicalvibes.model.effect.GrantScope;
 import com.github.laxika.magicalvibes.model.effect.SearchLibraryEffect;
 import com.github.laxika.magicalvibes.model.filter.CardAnyOfPredicate;
 import com.github.laxika.magicalvibes.model.filter.CardTypePredicate;
-import com.github.laxika.magicalvibes.model.filter.PermanentIsCreaturePredicate;
-import com.github.laxika.magicalvibes.model.filter.PermanentPredicateTargetFilter;
+import com.github.laxika.magicalvibes.model.filter.TargetFilters;
 
 import java.util.List;
 
@@ -27,8 +26,7 @@ public class SamutTheTested extends Card {
                 false, null,
                 List.of(new GrantKeywordEffect(Keyword.DOUBLE_STRIKE, GrantScope.TARGET)),
                 "+1: Up to one target creature gains double strike until end of turn.",
-                new PermanentPredicateTargetFilter(
-                        new PermanentIsCreaturePredicate(), "Target must be a creature"),
+                TargetFilters.creature(),
                 +1, null, null,
                 List.of(), 0, 1
         ));

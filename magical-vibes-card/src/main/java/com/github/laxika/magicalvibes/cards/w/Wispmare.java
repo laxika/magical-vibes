@@ -7,8 +7,7 @@ import com.github.laxika.magicalvibes.model.AlternateHandCast;
 import com.github.laxika.magicalvibes.model.ManaCastingCost;
 import com.github.laxika.magicalvibes.model.effect.DestroyTargetPermanentEffect;
 import com.github.laxika.magicalvibes.model.effect.SacrificeSelfIfEvokedEffect;
-import com.github.laxika.magicalvibes.model.filter.PermanentIsEnchantmentPredicate;
-import com.github.laxika.magicalvibes.model.filter.PermanentPredicateTargetFilter;
+import com.github.laxika.magicalvibes.model.filter.TargetFilters;
 
 import java.util.List;
 
@@ -21,10 +20,7 @@ public class Wispmare extends Card {
         addCastingOption(new AlternateHandCast(List.of(new ManaCastingCost("{W}"))));
 
         // When this creature enters, destroy target enchantment.
-        target(new PermanentPredicateTargetFilter(
-                new PermanentIsEnchantmentPredicate(),
-                "Target must be an enchantment"
-        ))
+        target(TargetFilters.enchantment())
                 .addEffect(EffectSlot.ON_ENTER_BATTLEFIELD, new DestroyTargetPermanentEffect());
 
         // Evoke sacrifice: if it was cast for its evoke cost, sacrifice it as it enters.

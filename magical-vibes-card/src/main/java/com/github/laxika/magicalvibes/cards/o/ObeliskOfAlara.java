@@ -9,8 +9,7 @@ import com.github.laxika.magicalvibes.model.effect.DiscardEffect;
 import com.github.laxika.magicalvibes.model.effect.DiscardRecipient;
 import com.github.laxika.magicalvibes.model.effect.DrawCardEffect;
 import com.github.laxika.magicalvibes.model.effect.GainLifeEffect;
-import com.github.laxika.magicalvibes.model.filter.PermanentIsCreaturePredicate;
-import com.github.laxika.magicalvibes.model.filter.PermanentPredicateTargetFilter;
+import com.github.laxika.magicalvibes.model.filter.TargetFilters;
 
 import java.util.List;
 
@@ -32,9 +31,7 @@ public class ObeliskOfAlara extends Card {
         addActivatedAbility(new ActivatedAbility(true, "{1}{B}",
                 List.of(new BoostTargetCreatureEffect(-2, -2)),
                 "{1}{B}, {T}: Target creature gets -2/-2 until end of turn.",
-                new PermanentPredicateTargetFilter(
-                        new PermanentIsCreaturePredicate(),
-                        "Target must be a creature")));
+                TargetFilters.creature()));
 
         // {1}{R}, {T}: This artifact deals 3 damage to target player or planeswalker.
         addActivatedAbility(new ActivatedAbility(true, "{1}{R}",
@@ -45,8 +42,6 @@ public class ObeliskOfAlara extends Card {
         addActivatedAbility(new ActivatedAbility(true, "{1}{G}",
                 List.of(new BoostTargetCreatureEffect(4, 4)),
                 "{1}{G}, {T}: Target creature gets +4/+4 until end of turn.",
-                new PermanentPredicateTargetFilter(
-                        new PermanentIsCreaturePredicate(),
-                        "Target must be a creature")));
+                TargetFilters.creature()));
     }
 }

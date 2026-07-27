@@ -21,9 +21,8 @@ import com.github.laxika.magicalvibes.model.effect.SequenceEffect;
 import com.github.laxika.magicalvibes.model.filter.CardAllOfPredicate;
 import com.github.laxika.magicalvibes.model.filter.CardSubtypePredicate;
 import com.github.laxika.magicalvibes.model.filter.CardTypePredicate;
-import com.github.laxika.magicalvibes.model.filter.ControlledPermanentPredicateTargetFilter;
 import com.github.laxika.magicalvibes.model.filter.PermanentHasSubtypePredicate;
-import com.github.laxika.magicalvibes.model.filter.PermanentIsCreaturePredicate;
+import com.github.laxika.magicalvibes.model.filter.TargetFilters;
 
 import java.util.List;
 import java.util.Set;
@@ -44,9 +43,7 @@ public class SorinImperiousBloodlord extends Card {
                 ),
                 "+1: Target creature you control gains deathtouch and lifelink until end of turn. "
                         + "If it's a Vampire, put a +1/+1 counter on it.",
-                new ControlledPermanentPredicateTargetFilter(
-                        new PermanentIsCreaturePredicate(),
-                        "Target must be a creature you control")
+                TargetFilters.creatureYouControl()
         ));
 
         // +1: You may sacrifice a Vampire. When you do, Sorin deals 3 damage to any target and you gain 3 life.

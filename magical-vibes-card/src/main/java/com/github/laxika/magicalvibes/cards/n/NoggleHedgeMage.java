@@ -13,7 +13,7 @@ import com.github.laxika.magicalvibes.model.effect.TapUntapScope;
 import com.github.laxika.magicalvibes.model.filter.PermanentHasSubtypePredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsPlaneswalkerPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentPredicateTargetFilter;
-import com.github.laxika.magicalvibes.model.filter.PermanentTruePredicate;
+import com.github.laxika.magicalvibes.model.filter.TargetFilters;
 
 @CardRegistration(set = "EVE", collectorNumber = "108")
 public class NoggleHedgeMage extends Card {
@@ -23,8 +23,7 @@ public class NoggleHedgeMage extends Card {
         // permanents. Intervening-if gate (CR 603.4): checked as the trigger goes on the stack and
         // again at resolution. Per the ruling, exactly two legal targets are chosen when the ability
         // goes on the stack (group 0, min=max=2); the "you may" only decides whether to tap them.
-        target(new PermanentPredicateTargetFilter(new PermanentTruePredicate(),
-                "Target must be a permanent"), 2, 2)
+        target(TargetFilters.permanent(), 2, 2)
                 .addEffect(EffectSlot.ON_ENTER_BATTLEFIELD, new ConditionalEffect(
                         new ControlsPermanentCount(2, new PermanentHasSubtypePredicate(CardSubtype.ISLAND)),
                         new MayEffect(new TapPermanentsEffect(TapUntapScope.TARGET),

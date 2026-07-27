@@ -8,8 +8,7 @@ import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.effect.MatchingCreaturesCantBlockMatchingCreaturesEffect;
 import com.github.laxika.magicalvibes.model.effect.TargetCreatureBecomesSubtypeUntilEndOfTurnEffect;
 import com.github.laxika.magicalvibes.model.filter.PermanentHasSubtypePredicate;
-import com.github.laxika.magicalvibes.model.filter.PermanentIsCreaturePredicate;
-import com.github.laxika.magicalvibes.model.filter.PermanentPredicateTargetFilter;
+import com.github.laxika.magicalvibes.model.filter.TargetFilters;
 
 import java.util.List;
 
@@ -28,17 +27,13 @@ public class BoldwyrIntimidator extends Card {
                 false, "{R}",
                 List.of(new TargetCreatureBecomesSubtypeUntilEndOfTurnEffect(CardSubtype.COWARD)),
                 "{R}: Target creature becomes a Coward until end of turn.",
-                new PermanentPredicateTargetFilter(
-                        new PermanentIsCreaturePredicate(),
-                        "Target must be a creature")));
+                TargetFilters.creature()));
 
         // {2}{R}: Target creature becomes a Warrior until end of turn.
         addActivatedAbility(new ActivatedAbility(
                 false, "{2}{R}",
                 List.of(new TargetCreatureBecomesSubtypeUntilEndOfTurnEffect(CardSubtype.WARRIOR)),
                 "{2}{R}: Target creature becomes a Warrior until end of turn.",
-                new PermanentPredicateTargetFilter(
-                        new PermanentIsCreaturePredicate(),
-                        "Target must be a creature")));
+                TargetFilters.creature()));
     }
 }

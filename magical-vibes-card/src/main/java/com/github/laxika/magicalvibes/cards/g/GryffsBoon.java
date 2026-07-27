@@ -9,8 +9,7 @@ import com.github.laxika.magicalvibes.model.Keyword;
 import com.github.laxika.magicalvibes.model.effect.GrantScope;
 import com.github.laxika.magicalvibes.model.effect.ReturnSourceFromGraveyardAttachedToTargetEffect;
 import com.github.laxika.magicalvibes.model.effect.StaticBoostEffect;
-import com.github.laxika.magicalvibes.model.filter.PermanentIsCreaturePredicate;
-import com.github.laxika.magicalvibes.model.filter.PermanentPredicateTargetFilter;
+import com.github.laxika.magicalvibes.model.filter.TargetFilters;
 
 import java.util.List;
 import java.util.Set;
@@ -20,10 +19,7 @@ public class GryffsBoon extends Card {
 
     public GryffsBoon() {
         // Enchant creature
-        target(new PermanentPredicateTargetFilter(
-                new PermanentIsCreaturePredicate(),
-                "Target must be a creature"
-        ));
+        target(TargetFilters.creature());
         // Enchanted creature gets +1/+0 and has flying.
         addEffect(EffectSlot.STATIC,
                 new StaticBoostEffect(1, 0, Set.of(Keyword.FLYING), GrantScope.ENCHANTED_CREATURE));
@@ -36,9 +32,7 @@ public class GryffsBoon extends Card {
                 List.of(new ReturnSourceFromGraveyardAttachedToTargetEffect()),
                 "{3}{W}: Return this card from your graveyard to the battlefield attached to target "
                         + "creature. Activate only as a sorcery.",
-                new PermanentPredicateTargetFilter(
-                        new PermanentIsCreaturePredicate(),
-                        "Target must be a creature"),
+                TargetFilters.creature(),
                 null,
                 null,
                 ActivationTimingRestriction.SORCERY_SPEED

@@ -7,9 +7,8 @@ import com.github.laxika.magicalvibes.model.Keyword;
 import com.github.laxika.magicalvibes.model.effect.GrantScope;
 import com.github.laxika.magicalvibes.model.effect.StaticBoostEffect;
 import com.github.laxika.magicalvibes.model.filter.PermanentColorInPredicate;
-import com.github.laxika.magicalvibes.model.filter.PermanentIsCreaturePredicate;
-import com.github.laxika.magicalvibes.model.filter.PermanentPredicateTargetFilter;
 import com.github.laxika.magicalvibes.cards.CardRegistration;
+import com.github.laxika.magicalvibes.model.filter.TargetFilters;
 
 import java.util.Set;
 
@@ -17,10 +16,7 @@ import java.util.Set;
 public class FistsOfTheDemigod extends Card {
 
     public FistsOfTheDemigod() {
-        target(new PermanentPredicateTargetFilter(
-                new PermanentIsCreaturePredicate(),
-                "Target must be a creature"
-        ))
+        target(TargetFilters.creature())
                 // As long as enchanted creature is black, it gets +1/+1 and has wither.
                 .addEffect(EffectSlot.STATIC, new StaticBoostEffect(
                         1, 1, Set.of(Keyword.WITHER), GrantScope.ENCHANTED_CREATURE,

@@ -6,8 +6,7 @@ import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.effect.ReturnTargetPermanentToHandOrLibraryTopByPredicateEffect;
 import com.github.laxika.magicalvibes.model.filter.PermanentColorInPredicate;
-import com.github.laxika.magicalvibes.model.filter.PermanentPredicateTargetFilter;
-import com.github.laxika.magicalvibes.model.filter.PermanentTruePredicate;
+import com.github.laxika.magicalvibes.model.filter.TargetFilters;
 
 import java.util.Set;
 
@@ -15,10 +14,7 @@ import java.util.Set;
 public class ConsignToDream extends Card {
 
     public ConsignToDream() {
-        target(new PermanentPredicateTargetFilter(
-                new PermanentTruePredicate(),
-                "Target must be a permanent"
-        )).addEffect(EffectSlot.SPELL, new ReturnTargetPermanentToHandOrLibraryTopByPredicateEffect(
+        target(TargetFilters.permanent()).addEffect(EffectSlot.SPELL, new ReturnTargetPermanentToHandOrLibraryTopByPredicateEffect(
                 new PermanentColorInPredicate(Set.of(CardColor.RED, CardColor.GREEN))));
     }
 }

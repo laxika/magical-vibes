@@ -8,8 +8,7 @@ import com.github.laxika.magicalvibes.model.amount.EventValue;
 import com.github.laxika.magicalvibes.model.effect.MayEffect;
 import com.github.laxika.magicalvibes.model.effect.PutCountersOnSelfEffect;
 import com.github.laxika.magicalvibes.model.effect.RemoveCounterFromSourceAndGainLifeEffect;
-import com.github.laxika.magicalvibes.model.filter.PermanentIsArtifactPredicate;
-import com.github.laxika.magicalvibes.model.filter.PermanentPredicateTargetFilter;
+import com.github.laxika.magicalvibes.model.filter.TargetFilters;
 
 @CardRegistration(set = "4ED", collectorNumber = "259")
 @CardRegistration(set = "5ED", collectorNumber = "311")
@@ -17,10 +16,7 @@ public class LivingArtifact extends Card {
 
     public LivingArtifact() {
         // Enchant artifact.
-        target(new PermanentPredicateTargetFilter(
-                new PermanentIsArtifactPredicate(),
-                "Target must be an artifact"
-        ))
+        target(TargetFilters.artifact())
                 // Whenever you're dealt damage, put that many vitality counters on this Aura.
                 .addEffect(EffectSlot.ON_CONTROLLER_DEALT_DAMAGE,
                         new PutCountersOnSelfEffect(CounterType.VITALITY, new EventValue()))

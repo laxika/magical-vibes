@@ -7,8 +7,7 @@ import com.github.laxika.magicalvibes.model.effect.DrawCardEffect;
 import com.github.laxika.magicalvibes.model.effect.JaceUnravelerOfSecretsEmblemEffect;
 import com.github.laxika.magicalvibes.model.effect.ReturnToHandEffect;
 import com.github.laxika.magicalvibes.model.effect.ScryEffect;
-import com.github.laxika.magicalvibes.model.filter.PermanentIsCreaturePredicate;
-import com.github.laxika.magicalvibes.model.filter.PermanentPredicateTargetFilter;
+import com.github.laxika.magicalvibes.model.filter.TargetFilters;
 
 import java.util.List;
 
@@ -28,10 +27,7 @@ public class JaceUnravelerOfSecrets extends Card {
                 -2,
                 List.of(ReturnToHandEffect.target()),
                 "\u22122: Return target creature to its owner's hand.",
-                new PermanentPredicateTargetFilter(
-                        new PermanentIsCreaturePredicate(),
-                        "Target must be a creature"
-                )
+                TargetFilters.creature()
         ));
 
         // −8: You get an emblem with "Whenever an opponent casts their first spell each turn, counter that spell."

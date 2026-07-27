@@ -6,8 +6,7 @@ import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.effect.DrawCardEffect;
 import com.github.laxika.magicalvibes.model.effect.TapOrUntapTargetPermanentEffect;
-import com.github.laxika.magicalvibes.model.filter.PermanentPredicateTargetFilter;
-import com.github.laxika.magicalvibes.model.filter.PermanentTruePredicate;
+import com.github.laxika.magicalvibes.model.filter.TargetFilters;
 
 import java.util.List;
 
@@ -17,10 +16,7 @@ public class EsperSojourners extends Card {
     public EsperSojourners() {
         // When this creature dies, you may tap or untap target permanent. The explicit any-permanent
         // filter overrides the death pipeline's creatures-only default so lands/artifacts stay legal.
-        target(new PermanentPredicateTargetFilter(
-                new PermanentTruePredicate(),
-                "Target must be a permanent"
-        ))
+        target(TargetFilters.permanent())
                 .addEffect(EffectSlot.ON_DEATH, new TapOrUntapTargetPermanentEffect());
 
         // Cycling {2}{U} ({2}{U}, Discard this card: Draw a card.) — discard cost is intrinsic.
@@ -30,8 +26,6 @@ public class EsperSojourners extends Card {
         addHandActivatedAbility(new ActivatedAbility(false, "{2}{U}",
                 List.of(new TapOrUntapTargetPermanentEffect(), new DrawCardEffect(1)),
                 "Cycling {2}{U} ({2}{U}, Discard this card: Draw a card.)",
-                new PermanentPredicateTargetFilter(
-                        new PermanentTruePredicate(),
-                        "Target must be a permanent")));
+                TargetFilters.permanent()));
     }
 }

@@ -13,8 +13,7 @@ import com.github.laxika.magicalvibes.model.effect.EnterWithCountersEffect;
 import com.github.laxika.magicalvibes.model.effect.EquipEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantScope;
 import com.github.laxika.magicalvibes.model.effect.RemoveChargeCountersFromSourceCost;
-import com.github.laxika.magicalvibes.model.filter.ControlledPermanentPredicateTargetFilter;
-import com.github.laxika.magicalvibes.model.filter.PermanentIsCreaturePredicate;
+import com.github.laxika.magicalvibes.model.filter.TargetFilters;
 
 import java.util.List;
 
@@ -37,9 +36,7 @@ public class SigilOfDistinction extends Card {
                 null,
                 List.of(new RemoveChargeCountersFromSourceCost(1), new EquipEffect()),
                 "Equip—Remove a charge counter from Sigil of Distinction.",
-                new ControlledPermanentPredicateTargetFilter(
-                        new PermanentIsCreaturePredicate(),
-                        "Target must be a creature you control"),
+                TargetFilters.creatureYouControl(),
                 null,
                 null,
                 ActivationTimingRestriction.SORCERY_SPEED));

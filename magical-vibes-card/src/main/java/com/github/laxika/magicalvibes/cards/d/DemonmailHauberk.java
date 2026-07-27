@@ -9,8 +9,7 @@ import com.github.laxika.magicalvibes.model.effect.EquipEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantScope;
 import com.github.laxika.magicalvibes.model.effect.SacrificeCreatureCost;
 import com.github.laxika.magicalvibes.model.effect.StaticBoostEffect;
-import com.github.laxika.magicalvibes.model.filter.ControlledPermanentPredicateTargetFilter;
-import com.github.laxika.magicalvibes.model.filter.PermanentIsCreaturePredicate;
+import com.github.laxika.magicalvibes.model.filter.TargetFilters;
 
 import java.util.List;
 
@@ -27,10 +26,7 @@ public class DemonmailHauberk extends Card {
                 null,
                 List.of(new SacrificeCreatureCost(), new EquipEffect()),
                 "Equip — Sacrifice a creature.",
-                new ControlledPermanentPredicateTargetFilter(
-                        new PermanentIsCreaturePredicate(),
-                        "Target must be a creature you control"
-                ),
+                TargetFilters.creatureYouControl(),
                 null,
                 null,
                 ActivationTimingRestriction.SORCERY_SPEED

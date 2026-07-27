@@ -3,11 +3,10 @@ package com.github.laxika.magicalvibes.cards.i;
 import com.github.laxika.magicalvibes.model.ActivatedAbility;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.effect.BoostTargetCreatureEffect;
-import com.github.laxika.magicalvibes.model.filter.PermanentIsAttackingPredicate;
-import com.github.laxika.magicalvibes.model.filter.PermanentPredicateTargetFilter;
 
 import java.util.List;
 import com.github.laxika.magicalvibes.cards.CardRegistration;
+import com.github.laxika.magicalvibes.model.filter.TargetFilters;
 
 @CardRegistration(set = "M11", collectorNumber = "18")
 @CardRegistration(set = "9ED", collectorNumber = "21")
@@ -18,9 +17,6 @@ public class InfantryVeteran extends Card {
         addActivatedAbility(new ActivatedAbility(true, null,
                 List.of(new BoostTargetCreatureEffect(1, 1)),
                 "{T}: Target attacking creature gets +1/+1 until end of turn.",
-                new PermanentPredicateTargetFilter(
-                        new PermanentIsAttackingPredicate(),
-                        "Target must be an attacking creature"
-                )));
+                TargetFilters.attackingCreature()));
     }
 }

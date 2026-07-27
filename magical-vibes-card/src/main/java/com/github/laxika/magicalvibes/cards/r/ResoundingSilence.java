@@ -7,8 +7,7 @@ import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.effect.DrawCardEffect;
 import com.github.laxika.magicalvibes.model.effect.ExileTargetPermanentEffect;
 import com.github.laxika.magicalvibes.model.effect.ExileUpToNAttackingCreaturesEffect;
-import com.github.laxika.magicalvibes.model.filter.PermanentIsAttackingPredicate;
-import com.github.laxika.magicalvibes.model.filter.PermanentPredicateTargetFilter;
+import com.github.laxika.magicalvibes.model.filter.TargetFilters;
 
 import java.util.List;
 
@@ -17,10 +16,7 @@ public class ResoundingSilence extends Card {
 
     public ResoundingSilence() {
         // Exile target attacking creature.
-        target(new PermanentPredicateTargetFilter(
-                new PermanentIsAttackingPredicate(),
-                "Target must be an attacking creature"
-        ))
+        target(TargetFilters.attackingCreature())
                 .addEffect(EffectSlot.SPELL, new ExileTargetPermanentEffect());
 
         // Cycling {5}{G}{W}{U} ({5}{G}{W}{U}, Discard this card: Draw a card.) — discard cost is intrinsic.

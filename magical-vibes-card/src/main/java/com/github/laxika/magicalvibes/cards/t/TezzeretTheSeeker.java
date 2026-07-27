@@ -15,7 +15,7 @@ import com.github.laxika.magicalvibes.model.effect.TapUntapScope;
 import com.github.laxika.magicalvibes.model.effect.UntapPermanentsEffect;
 import com.github.laxika.magicalvibes.model.filter.CardTypePredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsArtifactPredicate;
-import com.github.laxika.magicalvibes.model.filter.PermanentPredicateTargetFilter;
+import com.github.laxika.magicalvibes.model.filter.TargetFilters;
 
 import java.util.List;
 import java.util.Set;
@@ -31,8 +31,8 @@ public class TezzeretTheSeeker extends Card {
                 "+1: Untap up to two target artifacts.",
                 null, 1, null, null,
                 List.of(
-                        new PermanentPredicateTargetFilter(new PermanentIsArtifactPredicate(), "Target must be an artifact"),
-                        new PermanentPredicateTargetFilter(new PermanentIsArtifactPredicate(), "Target must be an artifact")
+                        TargetFilters.artifact(),
+                        TargetFilters.artifact()
                 ),
                 0, 2
         ));

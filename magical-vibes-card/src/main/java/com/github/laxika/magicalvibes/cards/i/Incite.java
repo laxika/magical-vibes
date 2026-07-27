@@ -6,17 +6,13 @@ import com.github.laxika.magicalvibes.model.CardColor;
 import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.effect.GrantColorUntilEndOfTurnEffect;
 import com.github.laxika.magicalvibes.model.effect.MustAttackThisTurnEffect;
-import com.github.laxika.magicalvibes.model.filter.PermanentIsCreaturePredicate;
-import com.github.laxika.magicalvibes.model.filter.PermanentPredicateTargetFilter;
+import com.github.laxika.magicalvibes.model.filter.TargetFilters;
 
 @CardRegistration(set = "M11", collectorNumber = "145")
 public class Incite extends Card {
 
     public Incite() {
-        target(new PermanentPredicateTargetFilter(
-                new PermanentIsCreaturePredicate(),
-                "Target must be a creature"
-        )).addEffect(EffectSlot.SPELL, new GrantColorUntilEndOfTurnEffect(CardColor.RED))
+        target(TargetFilters.creature()).addEffect(EffectSlot.SPELL, new GrantColorUntilEndOfTurnEffect(CardColor.RED))
           .addEffect(EffectSlot.SPELL, new MustAttackThisTurnEffect(false));
     }
 }

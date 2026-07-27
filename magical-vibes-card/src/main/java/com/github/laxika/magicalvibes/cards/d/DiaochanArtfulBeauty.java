@@ -6,8 +6,7 @@ import com.github.laxika.magicalvibes.model.ActivationTimingRestriction;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.effect.DestroyTargetPermanentEffect;
 import com.github.laxika.magicalvibes.model.effect.OpponentChoosesCreatureToDestroyEffect;
-import com.github.laxika.magicalvibes.model.filter.PermanentIsCreaturePredicate;
-import com.github.laxika.magicalvibes.model.filter.PermanentPredicateTargetFilter;
+import com.github.laxika.magicalvibes.model.filter.TargetFilters;
 
 import java.util.List;
 
@@ -23,9 +22,7 @@ public class DiaochanArtfulBeauty extends Card {
                 List.of(new DestroyTargetPermanentEffect(false), new OpponentChoosesCreatureToDestroyEffect()),
                 "{T}: Destroy target creature of your choice, then destroy target creature of an opponent's choice. "
                         + "Activate only during your turn, before attackers are declared.",
-                new PermanentPredicateTargetFilter(
-                        new PermanentIsCreaturePredicate(),
-                        "Target must be a creature"),
+                TargetFilters.creature(),
                 null,
                 null,
                 ActivationTimingRestriction.ONLY_BEFORE_ATTACKERS_DECLARED

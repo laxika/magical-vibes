@@ -9,8 +9,7 @@ import com.github.laxika.magicalvibes.model.effect.BoostSelfEffect;
 import com.github.laxika.magicalvibes.model.effect.DestroyTargetPermanentThenEffect;
 import com.github.laxika.magicalvibes.model.effect.EventStat;
 import com.github.laxika.magicalvibes.model.effect.ThenEffectRecipient;
-import com.github.laxika.magicalvibes.model.filter.PermanentIsArtifactPredicate;
-import com.github.laxika.magicalvibes.model.filter.PermanentPredicateTargetFilter;
+import com.github.laxika.magicalvibes.model.filter.TargetFilters;
 
 import java.util.List;
 
@@ -26,10 +25,7 @@ public class HoardSmelterDragon extends Card {
                         EventStat.MANA_VALUE, new BoostSelfEffect(new EventValue(), new Fixed(0)),
                         ThenEffectRecipient.CONTROLLER)),
                 "{3}{R}: Destroy target artifact. Hoard-Smelter Dragon gets +X/+0 until end of turn, where X is that artifact's mana value.",
-                new PermanentPredicateTargetFilter(
-                        new PermanentIsArtifactPredicate(),
-                        "Target must be an artifact"
-                )
+                TargetFilters.artifact()
         ));
     }
 }

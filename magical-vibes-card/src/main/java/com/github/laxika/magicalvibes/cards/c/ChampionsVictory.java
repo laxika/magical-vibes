@@ -5,8 +5,7 @@ import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.SpellCastTimingRestriction;
 import com.github.laxika.magicalvibes.model.effect.ReturnToHandEffect;
-import com.github.laxika.magicalvibes.model.filter.PermanentIsAttackingPredicate;
-import com.github.laxika.magicalvibes.model.filter.PermanentPredicateTargetFilter;
+import com.github.laxika.magicalvibes.model.filter.TargetFilters;
 
 @CardRegistration(set = "PTK", collectorNumber = "39")
 public class ChampionsVictory extends Card {
@@ -16,9 +15,6 @@ public class ChampionsVictory extends Card {
         setSpellCastTimingRestriction(SpellCastTimingRestriction.DECLARE_ATTACKERS_IF_ATTACKED);
 
         // Return target attacking creature to its owner's hand.
-        target(new PermanentPredicateTargetFilter(
-                new PermanentIsAttackingPredicate(),
-                "Target must be an attacking creature"
-        )).addEffect(EffectSlot.SPELL, ReturnToHandEffect.target());
+        target(TargetFilters.attackingCreature()).addEffect(EffectSlot.SPELL, ReturnToHandEffect.target());
     }
 }

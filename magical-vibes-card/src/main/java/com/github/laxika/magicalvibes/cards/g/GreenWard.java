@@ -6,8 +6,7 @@ import com.github.laxika.magicalvibes.model.CardColor;
 import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.effect.GrantScope;
 import com.github.laxika.magicalvibes.model.effect.ProtectionFromColorsEffect;
-import com.github.laxika.magicalvibes.model.filter.PermanentIsCreaturePredicate;
-import com.github.laxika.magicalvibes.model.filter.PermanentPredicateTargetFilter;
+import com.github.laxika.magicalvibes.model.filter.TargetFilters;
 
 import java.util.Set;
 
@@ -16,10 +15,7 @@ public class GreenWard extends Card {
 
     public GreenWard() {
         // Enchant creature; enchanted creature has protection from green.
-        target(new PermanentPredicateTargetFilter(
-                new PermanentIsCreaturePredicate(),
-                "Target must be a creature"
-        )).addEffect(EffectSlot.STATIC, new ProtectionFromColorsEffect(
+        target(TargetFilters.creature()).addEffect(EffectSlot.STATIC, new ProtectionFromColorsEffect(
                 Set.of(CardColor.GREEN), GrantScope.ENCHANTED_CREATURE));
     }
 }

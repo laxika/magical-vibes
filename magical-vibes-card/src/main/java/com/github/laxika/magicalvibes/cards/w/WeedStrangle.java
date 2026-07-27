@@ -7,8 +7,7 @@ import com.github.laxika.magicalvibes.model.amount.TargetToughness;
 import com.github.laxika.magicalvibes.model.effect.ClashEffect;
 import com.github.laxika.magicalvibes.model.effect.DestroyTargetPermanentEffect;
 import com.github.laxika.magicalvibes.model.effect.GainLifeEffect;
-import com.github.laxika.magicalvibes.model.filter.PermanentIsCreaturePredicate;
-import com.github.laxika.magicalvibes.model.filter.PermanentPredicateTargetFilter;
+import com.github.laxika.magicalvibes.model.filter.TargetFilters;
 
 @CardRegistration(set = "LRW", collectorNumber = "147")
 public class WeedStrangle extends Card {
@@ -21,10 +20,7 @@ public class WeedStrangle extends Card {
         // snapshots the creature's toughness while it is still on the battlefield (its last-known
         // toughness, per the official ruling). The two instructions are independent, so this
         // ordering is rules-equivalent.
-        target(new PermanentPredicateTargetFilter(
-                new PermanentIsCreaturePredicate(),
-                "Target must be a creature"
-        ))
+        target(TargetFilters.creature())
                 .addEffect(EffectSlot.SPELL, new ClashEffect(new GainLifeEffect(new TargetToughness())))
                 .addEffect(EffectSlot.SPELL, new DestroyTargetPermanentEffect());
     }

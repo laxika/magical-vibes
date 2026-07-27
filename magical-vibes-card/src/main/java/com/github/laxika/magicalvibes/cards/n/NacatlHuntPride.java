@@ -6,8 +6,7 @@ import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.effect.CantBlockThisTurnEffect;
 import com.github.laxika.magicalvibes.model.effect.MustBlockThisTurnIfAbleEffect;
 import com.github.laxika.magicalvibes.model.effect.TapUntapScope;
-import com.github.laxika.magicalvibes.model.filter.PermanentIsCreaturePredicate;
-import com.github.laxika.magicalvibes.model.filter.PermanentPredicateTargetFilter;
+import com.github.laxika.magicalvibes.model.filter.TargetFilters;
 
 import java.util.List;
 
@@ -21,16 +20,12 @@ public class NacatlHuntPride extends Card {
         addActivatedAbility(new ActivatedAbility(true, "{R}",
                 List.of(new CantBlockThisTurnEffect(TapUntapScope.TARGET)),
                 "{R}, {T}: Target creature can't block this turn.",
-                new PermanentPredicateTargetFilter(
-                        new PermanentIsCreaturePredicate(),
-                        "Target must be a creature")));
+                TargetFilters.creature()));
 
         // {G}, {T}: Target creature blocks this turn if able.
         addActivatedAbility(new ActivatedAbility(true, "{G}",
                 List.of(new MustBlockThisTurnIfAbleEffect()),
                 "{G}, {T}: Target creature blocks this turn if able.",
-                new PermanentPredicateTargetFilter(
-                        new PermanentIsCreaturePredicate(),
-                        "Target must be a creature")));
+                TargetFilters.creature()));
     }
 }

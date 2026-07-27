@@ -6,8 +6,7 @@ import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.Keyword;
 import com.github.laxika.magicalvibes.model.effect.GrantKeywordEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantScope;
-import com.github.laxika.magicalvibes.model.filter.PermanentIsCreaturePredicate;
-import com.github.laxika.magicalvibes.model.filter.PermanentPredicateTargetFilter;
+import com.github.laxika.magicalvibes.model.filter.TargetFilters;
 
 import java.util.List;
 
@@ -25,7 +24,7 @@ public class HelmOfChatzuk extends Card {
                 "{1}",
                 List.of(new GrantKeywordEffect(Keyword.BANDING, GrantScope.TARGET)),
                 "{1}, {T}: Target creature gains banding until end of turn.",
-                new PermanentPredicateTargetFilter(new PermanentIsCreaturePredicate(), "Target must be a creature")
+                TargetFilters.creature()
         ));
     }
 }

@@ -5,8 +5,7 @@ import com.github.laxika.magicalvibes.model.ActivatedAbility;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.effect.EffectDuration;
 import com.github.laxika.magicalvibes.model.effect.GrantBasicLandTypeToTargetEffect;
-import com.github.laxika.magicalvibes.model.filter.PermanentIsLandPredicate;
-import com.github.laxika.magicalvibes.model.filter.PermanentPredicateTargetFilter;
+import com.github.laxika.magicalvibes.model.filter.TargetFilters;
 
 import java.util.List;
 
@@ -21,10 +20,7 @@ public class MysticCompass extends Card {
                 "{1}",
                 List.of(new GrantBasicLandTypeToTargetEffect(EffectDuration.UNTIL_END_OF_TURN, null, true)),
                 "{1}, {T}: Target land becomes the basic land type of your choice until end of turn.",
-                new PermanentPredicateTargetFilter(
-                        new PermanentIsLandPredicate(),
-                        "Target must be a land"
-                )
+                TargetFilters.land()
         ));
     }
 }

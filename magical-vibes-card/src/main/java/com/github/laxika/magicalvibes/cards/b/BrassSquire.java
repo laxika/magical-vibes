@@ -7,7 +7,7 @@ import com.github.laxika.magicalvibes.model.CardSubtype;
 import com.github.laxika.magicalvibes.model.effect.AttachTargetEquipmentToTargetCreatureEffect;
 import com.github.laxika.magicalvibes.model.filter.ControlledPermanentPredicateTargetFilter;
 import com.github.laxika.magicalvibes.model.filter.PermanentHasSubtypePredicate;
-import com.github.laxika.magicalvibes.model.filter.PermanentIsCreaturePredicate;
+import com.github.laxika.magicalvibes.model.filter.TargetFilters;
 
 import java.util.List;
 
@@ -23,7 +23,7 @@ public class BrassSquire extends Card {
                 "{T}: Attach target Equipment you control to target creature you control.",
                 List.of(
                         new ControlledPermanentPredicateTargetFilter(new PermanentHasSubtypePredicate(CardSubtype.EQUIPMENT), "Target must be an Equipment you control"),
-                        new ControlledPermanentPredicateTargetFilter(new PermanentIsCreaturePredicate(), "Target must be a creature you control")
+                        TargetFilters.creatureYouControl()
                 ),
                 2,  // minTargets
                 2   // maxTargets

@@ -7,8 +7,7 @@ import com.github.laxika.magicalvibes.model.effect.MayPayManaEffect;
 import com.github.laxika.magicalvibes.model.effect.ReturnToHandEffect;
 import com.github.laxika.magicalvibes.model.effect.TriggeringPermanentConditionalEffect;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsSourceCardPredicate;
-import com.github.laxika.magicalvibes.model.filter.PermanentPredicateTargetFilter;
-import com.github.laxika.magicalvibes.model.filter.PermanentTruePredicate;
+import com.github.laxika.magicalvibes.model.filter.TargetFilters;
 
 @CardRegistration(set = "LRW", collectorNumber = "92")
 public class Surgespanner extends Card {
@@ -23,8 +22,6 @@ public class Surgespanner extends Card {
                         "Pay {1}{U} to return target permanent to its owner's hand?")));
 
         // Target filter for the may-pay bounce trigger: any permanent.
-        setCastTimeTargetFilter(new PermanentPredicateTargetFilter(
-                new PermanentTruePredicate(),
-                "Target must be a permanent"));
+        setCastTimeTargetFilter(TargetFilters.permanent());
     }
 }

@@ -13,8 +13,7 @@ import com.github.laxika.magicalvibes.model.effect.SetPowerToughnessToAmountEffe
 import com.github.laxika.magicalvibes.model.effect.TargetLandBecomesForestUntilSourceLeavesEffect;
 import com.github.laxika.magicalvibes.model.effect.TrackedLandsBecomeForestEffect;
 import com.github.laxika.magicalvibes.model.filter.PermanentHasSubtypePredicate;
-import com.github.laxika.magicalvibes.model.filter.PermanentIsLandPredicate;
-import com.github.laxika.magicalvibes.model.filter.PermanentPredicateTargetFilter;
+import com.github.laxika.magicalvibes.model.filter.TargetFilters;
 
 import java.util.List;
 
@@ -39,8 +38,6 @@ public class GaeasLiege extends Card {
                 null,
                 List.of(new TargetLandBecomesForestUntilSourceLeavesEffect()),
                 "{T}: Target land becomes a Forest until this creature leaves the battlefield.",
-                new PermanentPredicateTargetFilter(
-                        new PermanentIsLandPredicate(),
-                        "Target must be a land")));
+                TargetFilters.land()));
     }
 }

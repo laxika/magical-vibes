@@ -4,11 +4,10 @@ import com.github.laxika.magicalvibes.model.ActivatedAbility;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.effect.RegenerateEffect;
 import com.github.laxika.magicalvibes.model.effect.SacrificeCreatureCost;
-import com.github.laxika.magicalvibes.model.filter.ControlledPermanentPredicateTargetFilter;
-import com.github.laxika.magicalvibes.model.filter.PermanentIsCreaturePredicate;
 
 import java.util.List;
 import com.github.laxika.magicalvibes.cards.CardRegistration;
+import com.github.laxika.magicalvibes.model.filter.TargetFilters;
 
 @CardRegistration(set = "ALA", collectorNumber = "88")
 public class SkeletalKathari extends Card {
@@ -20,10 +19,7 @@ public class SkeletalKathari extends Card {
                 "{B}",
                 List.of(new SacrificeCreatureCost(), new RegenerateEffect()),
                 "{B}, Sacrifice a creature: Regenerate Skeletal Kathari.",
-                new ControlledPermanentPredicateTargetFilter(
-                        new PermanentIsCreaturePredicate(),
-                        "Target must be a creature you control"
-                )
+                TargetFilters.creatureYouControl()
         ));
     }
 }

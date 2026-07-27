@@ -12,8 +12,7 @@ import com.github.laxika.magicalvibes.model.amount.Sum;
 import com.github.laxika.magicalvibes.model.effect.AttachedBoostEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantScope;
 import com.github.laxika.magicalvibes.model.filter.PermanentHasSubtypePredicate;
-import com.github.laxika.magicalvibes.model.filter.PermanentIsCreaturePredicate;
-import com.github.laxika.magicalvibes.model.filter.PermanentPredicateTargetFilter;
+import com.github.laxika.magicalvibes.model.filter.TargetFilters;
 
 @CardRegistration(set = "5ED", collectorNumber = "278")
 @CardRegistration(set = "4ED", collectorNumber = "233")
@@ -25,10 +24,7 @@ public class AspectOfWolf extends Card {
         PermanentCount forests = new PermanentCount(
                 new PermanentHasSubtypePredicate(CardSubtype.FOREST), CountScope.CONTROLLER);
 
-        target(new PermanentPredicateTargetFilter(
-                new PermanentIsCreaturePredicate(),
-                "Target must be a creature"
-        ))
+        target(TargetFilters.creature())
                 .addEffect(EffectSlot.STATIC, new AttachedBoostEffect(
                         new Divided(forests, 2),
                         new Divided(new Sum(forests, new Fixed(1)), 2),

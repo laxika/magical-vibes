@@ -6,8 +6,7 @@ import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardSubtype;
 import com.github.laxika.magicalvibes.model.effect.EffectDuration;
 import com.github.laxika.magicalvibes.model.effect.GrantBasicLandTypeToTargetEffect;
-import com.github.laxika.magicalvibes.model.filter.PermanentIsLandPredicate;
-import com.github.laxika.magicalvibes.model.filter.PermanentPredicateTargetFilter;
+import com.github.laxika.magicalvibes.model.filter.TargetFilters;
 
 import java.util.List;
 
@@ -22,10 +21,7 @@ public class OrcishFarmer extends Card {
                 List.of(new GrantBasicLandTypeToTargetEffect(
                         EffectDuration.UNTIL_CONTROLLERS_NEXT_UNTAP_STEP, CardSubtype.SWAMP, true)),
                 "{T}: Target land becomes a Swamp until its controller's next untap step.",
-                new PermanentPredicateTargetFilter(
-                        new PermanentIsLandPredicate(),
-                        "Target must be a land"
-                )
+                TargetFilters.land()
         ));
     }
 }

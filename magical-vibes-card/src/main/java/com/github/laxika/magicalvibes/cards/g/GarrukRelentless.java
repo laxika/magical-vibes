@@ -10,12 +10,11 @@ import com.github.laxika.magicalvibes.model.effect.CreateTokenEffect;
 import com.github.laxika.magicalvibes.model.effect.PlaneswalkerDealDamageAndReceivePowerDamageEffect;
 import com.github.laxika.magicalvibes.model.effect.StateTriggerEffect;
 import com.github.laxika.magicalvibes.model.effect.TransformSelfEffect;
-import com.github.laxika.magicalvibes.model.filter.PermanentIsCreaturePredicate;
-import com.github.laxika.magicalvibes.model.filter.PermanentPredicateTargetFilter;
 
 import java.util.List;
 import java.util.Set;
 import com.github.laxika.magicalvibes.model.CounterType;
+import com.github.laxika.magicalvibes.model.filter.TargetFilters;
 
 @CardRegistration(set = "ISD", collectorNumber = "181")
 @CardRegistration(set = "INR", collectorNumber = "197")
@@ -43,10 +42,7 @@ public class GarrukRelentless extends Card {
                 0,
                 List.of(new PlaneswalkerDealDamageAndReceivePowerDamageEffect(3)),
                 "0: Garruk Relentless deals 3 damage to target creature. That creature deals damage equal to its power to him.",
-                new PermanentPredicateTargetFilter(
-                        new PermanentIsCreaturePredicate(),
-                        "Target must be a creature"
-                )
+                TargetFilters.creature()
         ));
 
         // 0: Create a 2/2 green Wolf creature token.

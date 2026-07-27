@@ -6,17 +6,14 @@ import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.Keyword;
 import com.github.laxika.magicalvibes.model.effect.GrantKeywordEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantScope;
-import com.github.laxika.magicalvibes.model.filter.PermanentIsCreaturePredicate;
-import com.github.laxika.magicalvibes.model.filter.PermanentPredicateTargetFilter;
+import com.github.laxika.magicalvibes.model.filter.TargetFilters;
 
 @CardRegistration(set = "EVE", collectorNumber = "84")
 public class CauldronHaze extends Card {
 
     public CauldronHaze() {
         // Choose any number of target creatures. Each of those creatures gains persist until end of turn.
-        target(new PermanentPredicateTargetFilter(
-                new PermanentIsCreaturePredicate(),
-                "Target must be a creature"), 0, 99)
+        target(TargetFilters.creature(), 0, 99)
                 .addEffect(EffectSlot.SPELL, new GrantKeywordEffect(Keyword.PERSIST, GrantScope.TARGET));
     }
 }

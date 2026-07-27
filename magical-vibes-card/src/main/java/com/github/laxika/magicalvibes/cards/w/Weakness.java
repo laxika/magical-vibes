@@ -5,8 +5,7 @@ import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.effect.GrantScope;
 import com.github.laxika.magicalvibes.model.effect.StaticBoostEffect;
-import com.github.laxika.magicalvibes.model.filter.PermanentIsCreaturePredicate;
-import com.github.laxika.magicalvibes.model.filter.PermanentPredicateTargetFilter;
+import com.github.laxika.magicalvibes.model.filter.TargetFilters;
 
 @CardRegistration(set = "M10", collectorNumber = "121")
 @CardRegistration(set = "5ED", collectorNumber = "205")
@@ -14,9 +13,6 @@ import com.github.laxika.magicalvibes.model.filter.PermanentPredicateTargetFilte
 public class Weakness extends Card {
 
     public Weakness() {
-        target(new PermanentPredicateTargetFilter(
-                new PermanentIsCreaturePredicate(),
-                "Target must be a creature"
-        )).addEffect(EffectSlot.STATIC, new StaticBoostEffect(-2, -1, GrantScope.ENCHANTED_CREATURE));
+        target(TargetFilters.creature()).addEffect(EffectSlot.STATIC, new StaticBoostEffect(-2, -1, GrantScope.ENCHANTED_CREATURE));
     }
 }

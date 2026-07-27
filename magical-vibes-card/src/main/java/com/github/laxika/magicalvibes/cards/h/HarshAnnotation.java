@@ -8,8 +8,7 @@ import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.Keyword;
 import com.github.laxika.magicalvibes.model.effect.CreateTokenEffect;
 import com.github.laxika.magicalvibes.model.effect.DestroyTargetPermanentEffect;
-import com.github.laxika.magicalvibes.model.filter.PermanentIsCreaturePredicate;
-import com.github.laxika.magicalvibes.model.filter.PermanentPredicateTargetFilter;
+import com.github.laxika.magicalvibes.model.filter.TargetFilters;
 
 import java.util.List;
 import java.util.Set;
@@ -20,10 +19,7 @@ public class HarshAnnotation extends Card {
     public HarshAnnotation() {
         // Destroy target creature. Its controller creates a 1/1 white and black Inkling
         // creature token with flying.
-        target(new PermanentPredicateTargetFilter(
-                new PermanentIsCreaturePredicate(),
-                "Target must be a creature"
-        )).addEffect(EffectSlot.SPELL, new DestroyTargetPermanentEffect(false,
+        target(TargetFilters.creature()).addEffect(EffectSlot.SPELL, new DestroyTargetPermanentEffect(false,
                 new CreateTokenEffect(1, "Inkling", 1, 1,
                         CardColor.WHITE, Set.of(CardColor.WHITE, CardColor.BLACK),
                         List.of(CardSubtype.INKLING),

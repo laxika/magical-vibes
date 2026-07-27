@@ -9,8 +9,7 @@ import com.github.laxika.magicalvibes.model.effect.MayPayManaEffect;
 import com.github.laxika.magicalvibes.model.effect.SacrificeSelfCost;
 import com.github.laxika.magicalvibes.model.effect.CantBlockThisTurnEffect;
 import com.github.laxika.magicalvibes.model.effect.TapUntapScope;
-import com.github.laxika.magicalvibes.model.filter.PermanentIsCreaturePredicate;
-import com.github.laxika.magicalvibes.model.filter.PermanentPredicateTargetFilter;
+import com.github.laxika.magicalvibes.model.filter.TargetFilters;
 
 import java.util.List;
 
@@ -23,10 +22,7 @@ public class PanicSpellbomb extends Card {
                 null,
                 List.of(new SacrificeSelfCost(), new CantBlockThisTurnEffect(TapUntapScope.TARGET)),
                 "{T}, Sacrifice Panic Spellbomb: Target creature can't block this turn.",
-                new PermanentPredicateTargetFilter(
-                        new PermanentIsCreaturePredicate(),
-                        "Target must be a creature"
-                )
+                TargetFilters.creature()
         ));
 
         addEffect(EffectSlot.ON_DEATH, new MayPayManaEffect("{R}", new DrawCardEffect(1), "Pay {R} to draw a card?"));

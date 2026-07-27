@@ -11,12 +11,11 @@ import com.github.laxika.magicalvibes.model.effect.GainLifeEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantActivatedAbilityEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantScope;
 import com.github.laxika.magicalvibes.model.effect.SacrificePermanentCost;
-import com.github.laxika.magicalvibes.model.filter.ControlledPermanentPredicateTargetFilter;
 import com.github.laxika.magicalvibes.model.filter.PermanentAllOfPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentHasSubtypePredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsCreaturePredicate;
-import com.github.laxika.magicalvibes.model.filter.PermanentIsLandPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsTokenPredicate;
+import com.github.laxika.magicalvibes.model.filter.TargetFilters;
 
 import java.util.List;
 import java.util.Set;
@@ -27,10 +26,7 @@ public class CaribouRange extends Card {
 
     public CaribouRange() {
         // Enchant land you control — grants the land "{W}{W}, {T}: Create a 0/1 white Caribou creature token."
-        target(new ControlledPermanentPredicateTargetFilter(
-                new PermanentIsLandPredicate(),
-                "Target must be a land you control"
-        ))
+        target(TargetFilters.landYouControl())
                 .addEffect(EffectSlot.STATIC, new GrantActivatedAbilityEffect(
                         new ActivatedAbility(true, "{W}{W}",
                                 List.of(new CreateTokenEffect("Caribou", 0, 1, CardColor.WHITE,

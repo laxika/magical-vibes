@@ -10,8 +10,7 @@ import com.github.laxika.magicalvibes.model.effect.DamageRecipient;
 import com.github.laxika.magicalvibes.model.effect.DealDamageToPlayersEffect;
 import com.github.laxika.magicalvibes.model.effect.DestroyTargetPermanentEffect;
 import com.github.laxika.magicalvibes.model.filter.PermanentHasSupertypePredicate;
-import com.github.laxika.magicalvibes.model.filter.PermanentIsLandPredicate;
-import com.github.laxika.magicalvibes.model.filter.PermanentPredicateTargetFilter;
+import com.github.laxika.magicalvibes.model.filter.TargetFilters;
 
 /**
  * Icequake — {1}{B}{B} Sorcery.
@@ -23,10 +22,7 @@ public class Icequake extends Card {
     public Icequake() {
         // Snow check runs while the land is still on the battlefield — before the destroy.
         // Equivalent to the printed "was a snow land" wording (Gloomlance pattern).
-        target(new PermanentPredicateTargetFilter(
-                new PermanentIsLandPredicate(),
-                "Target must be a land"
-        ))
+        target(TargetFilters.land())
                 .addEffect(EffectSlot.SPELL, new ConditionalEffect(
                         new TargetPermanentMatches(
                                 new PermanentHasSupertypePredicate(CardSupertype.SNOW)),

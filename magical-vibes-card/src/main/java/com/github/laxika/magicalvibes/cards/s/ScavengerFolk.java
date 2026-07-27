@@ -5,8 +5,7 @@ import com.github.laxika.magicalvibes.model.ActivatedAbility;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.effect.DestroyTargetPermanentEffect;
 import com.github.laxika.magicalvibes.model.effect.SacrificeSelfCost;
-import com.github.laxika.magicalvibes.model.filter.PermanentIsArtifactPredicate;
-import com.github.laxika.magicalvibes.model.filter.PermanentPredicateTargetFilter;
+import com.github.laxika.magicalvibes.model.filter.TargetFilters;
 
 import java.util.List;
 
@@ -21,10 +20,7 @@ public class ScavengerFolk extends Card {
                 "{G}",
                 List.of(new SacrificeSelfCost(), new DestroyTargetPermanentEffect()),
                 "{G}, {T}, Sacrifice Scavenger Folk: Destroy target artifact.",
-                new PermanentPredicateTargetFilter(
-                        new PermanentIsArtifactPredicate(),
-                        "Target must be an artifact"
-                )
+                TargetFilters.artifact()
         ));
     }
 }

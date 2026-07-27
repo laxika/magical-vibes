@@ -12,8 +12,7 @@ import com.github.laxika.magicalvibes.model.effect.ConditionalEffect;
 import com.github.laxika.magicalvibes.model.effect.TapUntapScope;
 import com.github.laxika.magicalvibes.model.filter.CardSubtypePredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentHasSubtypePredicate;
-import com.github.laxika.magicalvibes.model.filter.PermanentIsCreaturePredicate;
-import com.github.laxika.magicalvibes.model.filter.PermanentPredicateTargetFilter;
+import com.github.laxika.magicalvibes.model.filter.TargetFilters;
 
 import java.util.List;
 
@@ -25,10 +24,7 @@ public class GildedCerodon extends Card {
         // graveyard, target creature can't block this turn. The intervening-if is modelled by a
         // ConditionalEffect(AnyOf(...)): when neither Desert condition holds, the engine never queues
         // the trigger (so no target is chosen).
-        target(new PermanentPredicateTargetFilter(
-                new PermanentIsCreaturePredicate(),
-                "Target must be a creature"
-        )).addEffect(EffectSlot.ON_ATTACK, new ConditionalEffect(
+        target(TargetFilters.creature()).addEffect(EffectSlot.ON_ATTACK, new ConditionalEffect(
                 new AnyOf(List.of(
                         new ControlsPermanent(new PermanentHasSubtypePredicate(CardSubtype.DESERT)),
                         new GraveyardCardThreshold(1, new CardSubtypePredicate(CardSubtype.DESERT))

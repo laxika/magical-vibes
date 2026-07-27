@@ -9,8 +9,7 @@ import com.github.laxika.magicalvibes.model.effect.ConditionalEffect;
 import com.github.laxika.magicalvibes.model.effect.MayEffect;
 import com.github.laxika.magicalvibes.model.effect.TapPermanentsEffect;
 import com.github.laxika.magicalvibes.model.effect.TapUntapScope;
-import com.github.laxika.magicalvibes.model.filter.PermanentIsCreaturePredicate;
-import com.github.laxika.magicalvibes.model.filter.PermanentPredicateTargetFilter;
+import com.github.laxika.magicalvibes.model.filter.TargetFilters;
 
 @CardRegistration(set = "ALA", collectorNumber = "3")
 public class AngelicBenediction extends Card {
@@ -24,10 +23,7 @@ public class AngelicBenediction extends Card {
 
         // Whenever a creature you control attacks alone, you may tap target creature. The optional tap
         // resolves through the may-ability flow, which chooses the target using this card's filter.
-        target(new PermanentPredicateTargetFilter(
-                new PermanentIsCreaturePredicate(),
-                "Target must be a creature"
-        )).addEffect(EffectSlot.ON_ALLY_CREATURE_ATTACKS,
+        target(TargetFilters.creature()).addEffect(EffectSlot.ON_ALLY_CREATURE_ATTACKS,
                 new ConditionalEffect(new AttacksAlone(),
                         new MayEffect(new TapPermanentsEffect(TapUntapScope.TARGET),
                                 "Tap target creature?")));

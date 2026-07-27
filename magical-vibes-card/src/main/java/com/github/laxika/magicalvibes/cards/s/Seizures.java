@@ -7,8 +7,7 @@ import com.github.laxika.magicalvibes.model.effect.DamageRecipient;
 import com.github.laxika.magicalvibes.model.effect.DealDamageToPlayersEffect;
 import com.github.laxika.magicalvibes.model.effect.ForcedCostOrElseEffect;
 import com.github.laxika.magicalvibes.model.effect.PayManaCost;
-import com.github.laxika.magicalvibes.model.filter.PermanentIsCreaturePredicate;
-import com.github.laxika.magicalvibes.model.filter.PermanentPredicateTargetFilter;
+import com.github.laxika.magicalvibes.model.filter.TargetFilters;
 
 import java.util.List;
 
@@ -18,10 +17,7 @@ public class Seizures extends Card {
     public Seizures() {
         // Enchant creature. Whenever enchanted creature becomes tapped, this Aura deals 3 damage
         // to that creature's controller unless that player pays {3}.
-        target(new PermanentPredicateTargetFilter(
-                new PermanentIsCreaturePredicate(),
-                "Target must be a creature"
-        )).addEffect(EffectSlot.ON_ENCHANTED_PERMANENT_TAPPED,
+        target(TargetFilters.creature()).addEffect(EffectSlot.ON_ENCHANTED_PERMANENT_TAPPED,
                 ForcedCostOrElseEffect.enchantedControllerMayPay(
                         new PayManaCost("{3}"),
                         List.of(new DealDamageToPlayersEffect(3,

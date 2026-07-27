@@ -10,8 +10,7 @@ import com.github.laxika.magicalvibes.model.effect.GrantScope;
 import com.github.laxika.magicalvibes.model.effect.StaticBoostEffect;
 import com.github.laxika.magicalvibes.model.effect.EquipEffect;
 import com.github.laxika.magicalvibes.model.effect.SacrificeArtifactCost;
-import com.github.laxika.magicalvibes.model.filter.ControlledPermanentPredicateTargetFilter;
-import com.github.laxika.magicalvibes.model.filter.PermanentIsCreaturePredicate;
+import com.github.laxika.magicalvibes.model.filter.TargetFilters;
 
 import java.util.List;
 
@@ -20,10 +19,7 @@ public class PistonSledge extends Card {
 
     public PistonSledge() {
         // When this Equipment enters, attach it to target creature you control.
-        target(new ControlledPermanentPredicateTargetFilter(
-                new PermanentIsCreaturePredicate(),
-                "Target must be a creature you control"
-        ))
+        target(TargetFilters.creatureYouControl())
                 .addEffect(EffectSlot.ON_ENTER_BATTLEFIELD, new AttachSourceEquipmentToTargetCreatureEffect());
 
         // Equipped creature gets +3/+1.
@@ -35,10 +31,7 @@ public class PistonSledge extends Card {
                 null,
                 List.of(new SacrificeArtifactCost(), new EquipEffect()),
                 "Equip — Sacrifice an artifact.",
-                new ControlledPermanentPredicateTargetFilter(
-                        new PermanentIsCreaturePredicate(),
-                        "Target must be a creature you control"
-                ),
+                TargetFilters.creatureYouControl(),
                 null,
                 null,
                 ActivationTimingRestriction.SORCERY_SPEED

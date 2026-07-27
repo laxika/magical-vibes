@@ -9,8 +9,7 @@ import com.github.laxika.magicalvibes.model.SacrificePermanentsCost;
 import com.github.laxika.magicalvibes.model.effect.TapPermanentsEffect;
 import com.github.laxika.magicalvibes.model.effect.TapUntapScope;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsCreaturePredicate;
-import com.github.laxika.magicalvibes.model.filter.PermanentPredicateTargetFilter;
-import com.github.laxika.magicalvibes.model.filter.PermanentTruePredicate;
+import com.github.laxika.magicalvibes.model.filter.TargetFilters;
 
 import java.util.List;
 
@@ -28,10 +27,7 @@ public class ElderDeepFiend extends Card {
         ), true));
 
         // When you cast this spell, tap up to four target permanents.
-        target(new PermanentPredicateTargetFilter(
-                new PermanentTruePredicate(),
-                "Target must be a permanent"
-        ), 0, 4)
+        target(TargetFilters.permanent(), 0, 4)
                 .addEffect(EffectSlot.ON_SELF_CAST, new TapPermanentsEffect(TapUntapScope.TARGET));
     }
 }

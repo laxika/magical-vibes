@@ -8,8 +8,7 @@ import com.github.laxika.magicalvibes.model.effect.BoostTargetCreatureEffect;
 import com.github.laxika.magicalvibes.model.effect.MayEffect;
 import com.github.laxika.magicalvibes.model.effect.SpellCastTriggerEffect;
 import com.github.laxika.magicalvibes.model.filter.CardColorPredicate;
-import com.github.laxika.magicalvibes.model.filter.PermanentIsCreaturePredicate;
-import com.github.laxika.magicalvibes.model.filter.PermanentPredicateTargetFilter;
+import com.github.laxika.magicalvibes.model.filter.TargetFilters;
 
 import java.util.List;
 
@@ -18,7 +17,7 @@ public class NurturerInitiate extends Card {
 
     public NurturerInitiate() {
         // Whenever a player casts a green spell, you may pay {1}. If you do, target creature gets +1/+1 until end of turn.
-        target(new PermanentPredicateTargetFilter(new PermanentIsCreaturePredicate(), "Target must be a creature"))
+        target(TargetFilters.creature())
                 .addEffect(EffectSlot.ON_ANY_PLAYER_CASTS_SPELL, new MayEffect(
                         new SpellCastTriggerEffect(
                                 new CardColorPredicate(CardColor.GREEN),

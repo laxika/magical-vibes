@@ -7,8 +7,7 @@ import com.github.laxika.magicalvibes.model.Keyword;
 import com.github.laxika.magicalvibes.model.effect.GrantKeywordEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantScope;
 import com.github.laxika.magicalvibes.model.effect.LoseAllCreatureTypesEffect;
-import com.github.laxika.magicalvibes.model.filter.PermanentIsCreaturePredicate;
-import com.github.laxika.magicalvibes.model.filter.PermanentPredicateTargetFilter;
+import com.github.laxika.magicalvibes.model.filter.TargetFilters;
 
 import java.util.List;
 
@@ -22,17 +21,13 @@ public class AmoeboidChangeling extends Card {
                 true, null,
                 List.of(new GrantKeywordEffect(Keyword.CHANGELING, GrantScope.TARGET)),
                 "{T}: Target creature gains all creature types until end of turn.",
-                new PermanentPredicateTargetFilter(
-                        new PermanentIsCreaturePredicate(),
-                        "Target must be a creature")));
+                TargetFilters.creature()));
 
         // {T}: Target creature loses all creature types until end of turn.
         addActivatedAbility(new ActivatedAbility(
                 true, null,
                 List.of(new LoseAllCreatureTypesEffect()),
                 "{T}: Target creature loses all creature types until end of turn.",
-                new PermanentPredicateTargetFilter(
-                        new PermanentIsCreaturePredicate(),
-                        "Target must be a creature")));
+                TargetFilters.creature()));
     }
 }

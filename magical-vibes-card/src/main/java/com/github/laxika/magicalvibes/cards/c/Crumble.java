@@ -8,8 +8,7 @@ import com.github.laxika.magicalvibes.model.effect.DestroyTargetPermanentThenEff
 import com.github.laxika.magicalvibes.model.effect.EventStat;
 import com.github.laxika.magicalvibes.model.effect.GainLifeEffect;
 import com.github.laxika.magicalvibes.model.effect.ThenEffectRecipient;
-import com.github.laxika.magicalvibes.model.filter.PermanentIsArtifactPredicate;
-import com.github.laxika.magicalvibes.model.filter.PermanentPredicateTargetFilter;
+import com.github.laxika.magicalvibes.model.filter.TargetFilters;
 
 @CardRegistration(set = "4ED", collectorNumber = "239")
 @CardRegistration(set = "5ED", collectorNumber = "287")
@@ -17,10 +16,7 @@ public class Crumble extends Card {
 
     public Crumble() {
         // Destroy target artifact. It can't be regenerated. That artifact's controller gains life equal to its mana value.
-        target(new PermanentPredicateTargetFilter(
-                new PermanentIsArtifactPredicate(),
-                "Target must be an artifact"
-        )).addEffect(EffectSlot.SPELL, new DestroyTargetPermanentThenEffect(
+        target(TargetFilters.artifact()).addEffect(EffectSlot.SPELL, new DestroyTargetPermanentThenEffect(
                 EventStat.MANA_VALUE, new GainLifeEffect(new EventValue()), ThenEffectRecipient.TARGET_CONTROLLER, true));
     }
 }

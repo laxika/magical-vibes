@@ -5,8 +5,7 @@ import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.SpellCastTimingRestriction;
 import com.github.laxika.magicalvibes.model.effect.DestroyTargetPermanentEffect;
-import com.github.laxika.magicalvibes.model.filter.PermanentIsAttackingPredicate;
-import com.github.laxika.magicalvibes.model.filter.PermanentPredicateTargetFilter;
+import com.github.laxika.magicalvibes.model.filter.TargetFilters;
 
 @CardRegistration(set = "PTK", collectorNumber = "2")
 public class EightfoldMaze extends Card {
@@ -16,10 +15,7 @@ public class EightfoldMaze extends Card {
         setSpellCastTimingRestriction(SpellCastTimingRestriction.DECLARE_ATTACKERS_IF_ATTACKED);
 
         // Destroy target attacking creature.
-        target(new PermanentPredicateTargetFilter(
-                new PermanentIsAttackingPredicate(),
-                "Target must be an attacking creature"
-        ))
+        target(TargetFilters.attackingCreature())
                 .addEffect(EffectSlot.SPELL, new DestroyTargetPermanentEffect());
     }
 }

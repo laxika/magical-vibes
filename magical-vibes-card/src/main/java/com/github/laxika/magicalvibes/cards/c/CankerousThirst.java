@@ -9,17 +9,14 @@ import com.github.laxika.magicalvibes.model.condition.ColorSpentToCast;
 import com.github.laxika.magicalvibes.model.effect.BoostTargetCreatureEffect;
 import com.github.laxika.magicalvibes.model.effect.ConditionalEffect;
 import com.github.laxika.magicalvibes.model.effect.MayEffect;
-import com.github.laxika.magicalvibes.model.filter.PermanentIsCreaturePredicate;
-import com.github.laxika.magicalvibes.model.filter.PermanentPredicateTargetFilter;
+import com.github.laxika.magicalvibes.model.filter.TargetFilters;
 
 @CardRegistration(set = "EVE", collectorNumber = "116")
 public class CankerousThirst extends Card {
 
     public CankerousThirst() {
         // Single mandatory creature target shared by both hybrid clauses ("target creature").
-        SpellTarget creatureTarget = target(new PermanentPredicateTargetFilter(
-                new PermanentIsCreaturePredicate(),
-                "Target must be a creature"));
+        SpellTarget creatureTarget = target(TargetFilters.creature());
 
         // If {B} was spent to cast this spell, you may have target creature get -3/-3 until end of turn.
         creatureTarget.addEffect(EffectSlot.SPELL, new ConditionalEffect(

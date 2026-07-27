@@ -9,8 +9,7 @@ import com.github.laxika.magicalvibes.model.amount.Fixed;
 import com.github.laxika.magicalvibes.model.amount.Scaled;
 import com.github.laxika.magicalvibes.model.effect.AttachedBoostEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantScope;
-import com.github.laxika.magicalvibes.model.filter.PermanentIsCreaturePredicate;
-import com.github.laxika.magicalvibes.model.filter.PermanentPredicateTargetFilter;
+import com.github.laxika.magicalvibes.model.filter.TargetFilters;
 
 @CardRegistration(set = "INR", collectorNumber = "86")
 public class SpontaneousMutation extends Card {
@@ -18,10 +17,7 @@ public class SpontaneousMutation extends Card {
     public SpontaneousMutation() {
         // Enchant creature
         // Enchanted creature gets -X/-0, where X is the number of cards in your graveyard
-        target(new PermanentPredicateTargetFilter(
-                new PermanentIsCreaturePredicate(),
-                "Target must be a creature"
-        )).addEffect(EffectSlot.STATIC, new AttachedBoostEffect(
+        target(TargetFilters.creature()).addEffect(EffectSlot.STATIC, new AttachedBoostEffect(
                 new Scaled(new CardsInGraveyard(null, CountScope.CONTROLLER), -1),
                 new Fixed(0),
                 GrantScope.ENCHANTED_CREATURE));

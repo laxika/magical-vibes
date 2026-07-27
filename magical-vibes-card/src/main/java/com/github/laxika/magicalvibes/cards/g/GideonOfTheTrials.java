@@ -8,8 +8,7 @@ import com.github.laxika.magicalvibes.model.Keyword;
 import com.github.laxika.magicalvibes.model.effect.AnimatePermanentsEffect;
 import com.github.laxika.magicalvibes.model.effect.GideonOfTheTrialsEmblemEffect;
 import com.github.laxika.magicalvibes.model.effect.PreventDamageEffect;
-import com.github.laxika.magicalvibes.model.filter.PermanentPredicateTargetFilter;
-import com.github.laxika.magicalvibes.model.filter.PermanentTruePredicate;
+import com.github.laxika.magicalvibes.model.filter.TargetFilters;
 
 import java.util.List;
 import java.util.Set;
@@ -23,7 +22,7 @@ public class GideonOfTheTrials extends Card {
                 +1,
                 List.of(PreventDamageEffect.allByTargetPermanentUntilNextTurn()),
                 "+1: Until your next turn, prevent all damage target permanent would deal.",
-                new PermanentPredicateTargetFilter(new PermanentTruePredicate(), "Target must be a permanent")
+                TargetFilters.permanent()
         ));
 
         // 0: Until end of turn, Gideon of the Trials becomes a 4/4 Human Soldier creature with

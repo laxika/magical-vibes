@@ -14,8 +14,7 @@ import com.github.laxika.magicalvibes.model.effect.EnterWithCountersEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantBasicLandTypeToTargetEffect;
 import com.github.laxika.magicalvibes.model.effect.RemoveCounterFromSourceCost;
 import com.github.laxika.magicalvibes.model.filter.PermanentHasSubtypePredicate;
-import com.github.laxika.magicalvibes.model.filter.PermanentIsLandPredicate;
-import com.github.laxika.magicalvibes.model.filter.PermanentPredicateTargetFilter;
+import com.github.laxika.magicalvibes.model.filter.TargetFilters;
 
 import java.util.List;
 
@@ -43,10 +42,7 @@ public class Floodchaser extends Card {
                         new GrantBasicLandTypeToTargetEffect(EffectDuration.UNTIL_END_OF_TURN, CardSubtype.ISLAND, true)
                 ),
                 "{U}, Remove a +1/+1 counter from Floodchaser: Target land becomes an Island until end of turn.",
-                new PermanentPredicateTargetFilter(
-                        new PermanentIsLandPredicate(),
-                        "Target must be a land"
-                )
+                TargetFilters.land()
         ));
     }
 }

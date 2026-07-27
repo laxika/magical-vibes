@@ -12,8 +12,7 @@ import com.github.laxika.magicalvibes.model.effect.CreateTokenEffect;
 import com.github.laxika.magicalvibes.model.effect.CreateTokenOnTargetDeathThisTurnEffect;
 import com.github.laxika.magicalvibes.model.effect.DealDamageToTargetCreatureEffect;
 import com.github.laxika.magicalvibes.model.effect.RegenerateEffect;
-import com.github.laxika.magicalvibes.model.filter.PermanentIsCreaturePredicate;
-import com.github.laxika.magicalvibes.model.filter.PermanentPredicateTargetFilter;
+import com.github.laxika.magicalvibes.model.filter.TargetFilters;
 
 import java.util.List;
 import java.util.Map;
@@ -30,10 +29,7 @@ public class Skeletonize extends Card {
                 List.of(new ActivatedAbility(false, "{B}", List.of(new RegenerateEffect()), "{B}: Regenerate this token.")),
                 false, false, false, 0, Set.<Keyword>of());
 
-        target(new PermanentPredicateTargetFilter(
-                new PermanentIsCreaturePredicate(),
-                "Target must be a creature"
-        ))
+        target(TargetFilters.creature())
                 .addEffect(EffectSlot.SPELL, new DealDamageToTargetCreatureEffect(3))
                 .addEffect(EffectSlot.SPELL, new CreateTokenOnTargetDeathThisTurnEffect(skeletonToken));
     }

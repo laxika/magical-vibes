@@ -3,9 +3,8 @@ package com.github.laxika.magicalvibes.cards.d;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.effect.DestroyTargetPermanentEffect;
-import com.github.laxika.magicalvibes.model.filter.PermanentIsEnchantmentPredicate;
-import com.github.laxika.magicalvibes.model.filter.PermanentPredicateTargetFilter;
 import com.github.laxika.magicalvibes.cards.CardRegistration;
+import com.github.laxika.magicalvibes.model.filter.TargetFilters;
 
 @CardRegistration(set = "8ED", collectorNumber = "16")
 @CardRegistration(set = "9ED", collectorNumber = "13")
@@ -14,9 +13,6 @@ import com.github.laxika.magicalvibes.cards.CardRegistration;
 public class Demystify extends Card {
 
     public Demystify() {
-        target(new PermanentPredicateTargetFilter(
-                new PermanentIsEnchantmentPredicate(),
-                "Target must be an enchantment"
-        )).addEffect(EffectSlot.SPELL, new DestroyTargetPermanentEffect());
+        target(TargetFilters.enchantment()).addEffect(EffectSlot.SPELL, new DestroyTargetPermanentEffect());
     }
 }

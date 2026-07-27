@@ -10,8 +10,7 @@ import com.github.laxika.magicalvibes.model.effect.GrantScope;
 import com.github.laxika.magicalvibes.model.effect.PutCounterOnSourceCost;
 import com.github.laxika.magicalvibes.model.effect.TapUntapScope;
 import com.github.laxika.magicalvibes.model.effect.UntapPermanentsEffect;
-import com.github.laxika.magicalvibes.model.filter.PermanentIsCreaturePredicate;
-import com.github.laxika.magicalvibes.model.filter.PermanentPredicateTargetFilter;
+import com.github.laxika.magicalvibes.model.filter.TargetFilters;
 
 import java.util.List;
 
@@ -19,10 +18,7 @@ import java.util.List;
 public class SinkingFeeling extends Card {
 
     public SinkingFeeling() {
-        target(new PermanentPredicateTargetFilter(
-                new PermanentIsCreaturePredicate(),
-                "Target must be a creature"
-        ))
+        target(TargetFilters.creature())
                 // Enchanted creature doesn't untap during its controller's untap step.
                 .addEffect(EffectSlot.STATIC, DoesntUntapEffect.enchanted())
                 // Enchanted creature has "{1}, Put a -1/-1 counter on this creature: Untap this creature."

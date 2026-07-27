@@ -10,18 +10,14 @@ import com.github.laxika.magicalvibes.model.effect.EventStat;
 import com.github.laxika.magicalvibes.model.effect.GainLifeEffect;
 import com.github.laxika.magicalvibes.model.effect.ThenEffectRecipient;
 import com.github.laxika.magicalvibes.model.filter.PermanentHasSubtypePredicate;
-import com.github.laxika.magicalvibes.model.filter.PermanentIsCreaturePredicate;
-import com.github.laxika.magicalvibes.model.filter.PermanentPredicateTargetFilter;
+import com.github.laxika.magicalvibes.model.filter.TargetFilters;
 
 @CardRegistration(set = "DKA", collectorNumber = "59")
 public class DeathsCaress extends Card {
 
     public DeathsCaress() {
         // Destroy target creature. If that creature was a Human, you gain life equal to its toughness.
-        target(new PermanentPredicateTargetFilter(
-                new PermanentIsCreaturePredicate(),
-                "Target must be a creature"
-        ))
+        target(TargetFilters.creature())
                 .addEffect(EffectSlot.SPELL, new DestroyTargetPermanentThenEffect(
                         EventStat.TOUGHNESS, new GainLifeEffect(new EventValue()), ThenEffectRecipient.CONTROLLER,
                         new PermanentHasSubtypePredicate(CardSubtype.HUMAN)));

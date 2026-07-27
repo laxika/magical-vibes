@@ -6,18 +6,14 @@ import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.effect.GrantScope;
 import com.github.laxika.magicalvibes.model.effect.RedirectYourDamageToEnchantedCreatureThisTurnEffect;
 import com.github.laxika.magicalvibes.model.effect.StaticBoostEffect;
-import com.github.laxika.magicalvibes.model.filter.ControlledPermanentPredicateTargetFilter;
-import com.github.laxika.magicalvibes.model.filter.PermanentIsCreaturePredicate;
+import com.github.laxika.magicalvibes.model.filter.TargetFilters;
 
 @CardRegistration(set = "HOU", collectorNumber = "21")
 public class SavingGrace extends Card {
 
     public SavingGrace() {
         // Flash and Enchant are auto-loaded keywords. Enchant creature you control.
-        target(new ControlledPermanentPredicateTargetFilter(
-                new PermanentIsCreaturePredicate(),
-                "Target must be a creature you control"
-        ))
+        target(TargetFilters.creatureYouControl())
         // When this Aura enters, all damage that would be dealt this turn to you and
         // permanents you control is dealt to enchanted creature instead.
         .addEffect(EffectSlot.ON_ENTER_BATTLEFIELD, new RedirectYourDamageToEnchantedCreatureThisTurnEffect())

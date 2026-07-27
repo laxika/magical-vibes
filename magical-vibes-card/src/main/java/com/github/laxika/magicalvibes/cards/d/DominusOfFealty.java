@@ -12,8 +12,7 @@ import com.github.laxika.magicalvibes.model.effect.MayEffect;
 import com.github.laxika.magicalvibes.model.effect.SequenceEffect;
 import com.github.laxika.magicalvibes.model.effect.TapUntapScope;
 import com.github.laxika.magicalvibes.model.effect.UntapPermanentsEffect;
-import com.github.laxika.magicalvibes.model.filter.PermanentPredicateTargetFilter;
-import com.github.laxika.magicalvibes.model.filter.PermanentTruePredicate;
+import com.github.laxika.magicalvibes.model.filter.TargetFilters;
 
 @CardRegistration(set = "EVE", collectorNumber = "102")
 public class DominusOfFealty extends Card {
@@ -21,10 +20,7 @@ public class DominusOfFealty extends Card {
     public DominusOfFealty() {
         // At the beginning of your upkeep, you may gain control of target permanent until end of
         // turn. If you do, untap it and it gains haste until end of turn.
-        target(new PermanentPredicateTargetFilter(
-                new PermanentTruePredicate(),
-                "Target must be a permanent"
-        )).addEffect(EffectSlot.UPKEEP_TRIGGERED, new MayEffect(
+        target(TargetFilters.permanent()).addEffect(EffectSlot.UPKEEP_TRIGGERED, new MayEffect(
                 SequenceEffect.of(
                         new GainControlOfTargetEffect(ControlDuration.END_OF_TURN),
                         new UntapPermanentsEffect(TapUntapScope.TARGET),

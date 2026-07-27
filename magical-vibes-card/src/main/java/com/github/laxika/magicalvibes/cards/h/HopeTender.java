@@ -6,8 +6,8 @@ import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.effect.SkipNextUntapEffect;
 import com.github.laxika.magicalvibes.model.effect.TapUntapScope;
 import com.github.laxika.magicalvibes.model.effect.UntapPermanentsEffect;
-import com.github.laxika.magicalvibes.model.filter.PermanentIsLandPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentPredicateTargetFilter;
+import com.github.laxika.magicalvibes.model.filter.TargetFilters;
 
 import java.util.List;
 
@@ -15,10 +15,7 @@ import java.util.List;
 public class HopeTender extends Card {
 
     public HopeTender() {
-        PermanentPredicateTargetFilter landFilter = new PermanentPredicateTargetFilter(
-                new PermanentIsLandPredicate(),
-                "Target must be a land"
-        );
+        PermanentPredicateTargetFilter landFilter = TargetFilters.land();
 
         // {1}, {T}: Untap target land.
         addActivatedAbility(new ActivatedAbility(

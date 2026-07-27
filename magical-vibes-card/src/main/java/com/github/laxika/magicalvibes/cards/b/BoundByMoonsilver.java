@@ -9,9 +9,8 @@ import com.github.laxika.magicalvibes.model.effect.AttachSourceAuraToTargetCreat
 import com.github.laxika.magicalvibes.model.effect.EnchantedCreatureCantAttackOrBlockEffect;
 import com.github.laxika.magicalvibes.model.effect.EnchantedCreatureCantTransformEffect;
 import com.github.laxika.magicalvibes.model.effect.SacrificePermanentCost;
-import com.github.laxika.magicalvibes.model.filter.PermanentIsCreaturePredicate;
-import com.github.laxika.magicalvibes.model.filter.PermanentPredicateTargetFilter;
 import com.github.laxika.magicalvibes.model.filter.PermanentTruePredicate;
+import com.github.laxika.magicalvibes.model.filter.TargetFilters;
 
 import java.util.List;
 
@@ -19,10 +18,7 @@ import java.util.List;
 public class BoundByMoonsilver extends Card {
 
     public BoundByMoonsilver() {
-        target(new PermanentPredicateTargetFilter(
-                new PermanentIsCreaturePredicate(),
-                "Target must be a creature"
-        ))
+        target(TargetFilters.creature())
                 // Enchanted creature can't attack, block, or transform.
                 .addEffect(EffectSlot.STATIC, new EnchantedCreatureCantAttackOrBlockEffect())
                 .addEffect(EffectSlot.STATIC, new EnchantedCreatureCantTransformEffect());
@@ -37,10 +33,7 @@ public class BoundByMoonsilver extends Card {
                         new AttachSourceAuraToTargetCreatureEffect()
                 ),
                 "Sacrifice another permanent: Attach this Aura to target creature. Activate only as a sorcery and only once each turn.",
-                new PermanentPredicateTargetFilter(
-                        new PermanentIsCreaturePredicate(),
-                        "Target must be a creature"
-                ),
+                TargetFilters.creature(),
                 null,
                 1,
                 ActivationTimingRestriction.SORCERY_SPEED

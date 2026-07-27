@@ -12,8 +12,7 @@ import com.github.laxika.magicalvibes.model.effect.DealDamageToTargetCreatureEff
 import com.github.laxika.magicalvibes.model.effect.MayEffect;
 import com.github.laxika.magicalvibes.model.filter.CardSubtypePredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentHasSubtypePredicate;
-import com.github.laxika.magicalvibes.model.filter.PermanentIsCreaturePredicate;
-import com.github.laxika.magicalvibes.model.filter.PermanentPredicateTargetFilter;
+import com.github.laxika.magicalvibes.model.filter.TargetFilters;
 
 import java.util.List;
 
@@ -25,10 +24,7 @@ public class SandStrangler extends Card {
         // graveyard, you may have this creature deal 3 damage to target creature. Intervening-if
         // (CR 603.4) via ConditionalEffect(AnyOf(...)); the may only decides whether to deal the
         // damage after the creature target is chosen as the trigger goes on the stack.
-        target(new PermanentPredicateTargetFilter(
-                new PermanentIsCreaturePredicate(),
-                "Target must be a creature"
-        )).addEffect(EffectSlot.ON_ENTER_BATTLEFIELD, new ConditionalEffect(
+        target(TargetFilters.creature()).addEffect(EffectSlot.ON_ENTER_BATTLEFIELD, new ConditionalEffect(
                 new AnyOf(List.of(
                         new ControlsPermanent(new PermanentHasSubtypePredicate(CardSubtype.DESERT)),
                         new GraveyardCardThreshold(1, new CardSubtypePredicate(CardSubtype.DESERT))

@@ -8,8 +8,7 @@ import com.github.laxika.magicalvibes.model.effect.DiscardCardTypeCost;
 import com.github.laxika.magicalvibes.model.effect.DrawCardEffect;
 import com.github.laxika.magicalvibes.model.effect.ReturnToHandEffect;
 import com.github.laxika.magicalvibes.model.filter.CardTypePredicate;
-import com.github.laxika.magicalvibes.model.filter.ControlledPermanentPredicateTargetFilter;
-import com.github.laxika.magicalvibes.model.filter.PermanentIsLandPredicate;
+import com.github.laxika.magicalvibes.model.filter.TargetFilters;
 
 import java.util.List;
 
@@ -24,10 +23,7 @@ public class TradeRoutes extends Card {
             "{1}",
             List.of(ReturnToHandEffect.target()),
             "{1}: Return target land you control to its owner's hand.",
-            new ControlledPermanentPredicateTargetFilter(
-                    new PermanentIsLandPredicate(),
-                    "Target must be a land you control"
-            )
+            TargetFilters.landYouControl()
         ));
 
         // {1}, Discard a land card: Draw a card.

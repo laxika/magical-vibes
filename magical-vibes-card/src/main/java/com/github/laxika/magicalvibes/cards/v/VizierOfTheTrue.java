@@ -8,13 +8,8 @@ import com.github.laxika.magicalvibes.model.effect.SequenceEffect;
 import com.github.laxika.magicalvibes.model.effect.SkipNextUntapEffect;
 import com.github.laxika.magicalvibes.model.effect.TapPermanentsEffect;
 import com.github.laxika.magicalvibes.model.effect.TapUntapScope;
-import com.github.laxika.magicalvibes.model.filter.PermanentAllOfPredicate;
-import com.github.laxika.magicalvibes.model.filter.PermanentControlledBySourceControllerPredicate;
-import com.github.laxika.magicalvibes.model.filter.PermanentIsCreaturePredicate;
-import com.github.laxika.magicalvibes.model.filter.PermanentNotPredicate;
-import com.github.laxika.magicalvibes.model.filter.PermanentPredicateTargetFilter;
+import com.github.laxika.magicalvibes.model.filter.TargetFilters;
 
-import java.util.List;
 
 @CardRegistration(set = "HOU", collectorNumber = "28")
 public class VizierOfTheTrue extends Card {
@@ -28,13 +23,7 @@ public class VizierOfTheTrue extends Card {
         // "Whenever you exert a creature, tap target creature an opponent controls." The engine has no
         // exert-event slot, so the only exert it can observe is this creature's own exert as it attacks —
         // the tap is bundled onto the exert when it is accepted (matching Trueheart Twins).
-        target(new PermanentPredicateTargetFilter(
-                new PermanentAllOfPredicate(List.of(
-                        new PermanentIsCreaturePredicate(),
-                        new PermanentNotPredicate(new PermanentControlledBySourceControllerPredicate())
-                )),
-                "Target must be a creature an opponent controls"
-        )).addEffect(EffectSlot.ON_ATTACK, new MayEffect(
+        target(TargetFilters.creatureAnOpponentControls()).addEffect(EffectSlot.ON_ATTACK, new MayEffect(
                 SequenceEffect.of(
                         new TapPermanentsEffect(TapUntapScope.TARGET),
                         new SkipNextUntapEffect(TapUntapScope.SELF)

@@ -9,17 +9,13 @@ import com.github.laxika.magicalvibes.model.effect.DrawCardEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantColorUntilEndOfTurnEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantKeywordEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantScope;
-import com.github.laxika.magicalvibes.model.filter.PermanentIsCreaturePredicate;
-import com.github.laxika.magicalvibes.model.filter.PermanentPredicateTargetFilter;
+import com.github.laxika.magicalvibes.model.filter.TargetFilters;
 
 @CardRegistration(set = "SHM", collectorNumber = "55")
 public class AphoticWisps extends Card {
 
     public AphoticWisps() {
-        target(new PermanentPredicateTargetFilter(
-                new PermanentIsCreaturePredicate(),
-                "Target must be a creature"
-        )).addEffect(EffectSlot.SPELL, new GrantColorUntilEndOfTurnEffect(CardColor.BLACK))
+        target(TargetFilters.creature()).addEffect(EffectSlot.SPELL, new GrantColorUntilEndOfTurnEffect(CardColor.BLACK))
           .addEffect(EffectSlot.SPELL, new GrantKeywordEffect(Keyword.FEAR, GrantScope.TARGET))
           .addEffect(EffectSlot.SPELL, new DrawCardEffect());
     }

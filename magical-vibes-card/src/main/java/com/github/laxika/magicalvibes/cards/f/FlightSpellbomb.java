@@ -10,8 +10,7 @@ import com.github.laxika.magicalvibes.model.effect.GrantKeywordEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantScope;
 import com.github.laxika.magicalvibes.model.effect.MayPayManaEffect;
 import com.github.laxika.magicalvibes.model.effect.SacrificeSelfCost;
-import com.github.laxika.magicalvibes.model.filter.PermanentIsCreaturePredicate;
-import com.github.laxika.magicalvibes.model.filter.PermanentPredicateTargetFilter;
+import com.github.laxika.magicalvibes.model.filter.TargetFilters;
 
 import java.util.List;
 
@@ -24,10 +23,7 @@ public class FlightSpellbomb extends Card {
                 null,
                 List.of(new SacrificeSelfCost(), new GrantKeywordEffect(Keyword.FLYING, GrantScope.TARGET)),
                 "{T}, Sacrifice Flight Spellbomb: Target creature gains flying until end of turn.",
-                new PermanentPredicateTargetFilter(
-                        new PermanentIsCreaturePredicate(),
-                        "Target must be a creature"
-                )
+                TargetFilters.creature()
         ));
 
         addEffect(EffectSlot.ON_DEATH, new MayPayManaEffect("{U}", new DrawCardEffect(1), "Pay {U} to draw a card?"));

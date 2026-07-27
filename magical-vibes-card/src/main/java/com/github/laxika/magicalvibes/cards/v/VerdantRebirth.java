@@ -6,17 +6,13 @@ import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.effect.DrawCardEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantEffectToTargetUntilEndOfTurnEffect;
 import com.github.laxika.magicalvibes.model.effect.ReturnSourceCardFromGraveyardToOwnerHandEffect;
-import com.github.laxika.magicalvibes.model.filter.PermanentIsCreaturePredicate;
-import com.github.laxika.magicalvibes.model.filter.PermanentPredicateTargetFilter;
+import com.github.laxika.magicalvibes.model.filter.TargetFilters;
 
 @CardRegistration(set = "XLN", collectorNumber = "212")
 public class VerdantRebirth extends Card {
 
     public VerdantRebirth() {
-        target(new PermanentPredicateTargetFilter(
-                new PermanentIsCreaturePredicate(),
-                "Target must be a creature"
-        )).addEffect(EffectSlot.SPELL, new GrantEffectToTargetUntilEndOfTurnEffect(
+        target(TargetFilters.creature()).addEffect(EffectSlot.SPELL, new GrantEffectToTargetUntilEndOfTurnEffect(
                 EffectSlot.ON_DEATH, new ReturnSourceCardFromGraveyardToOwnerHandEffect()))
           .addEffect(EffectSlot.SPELL, new DrawCardEffect());
     }

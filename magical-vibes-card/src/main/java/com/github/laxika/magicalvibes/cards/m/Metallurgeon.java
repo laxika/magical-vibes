@@ -4,8 +4,7 @@ import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.ActivatedAbility;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.effect.RegenerateEffect;
-import com.github.laxika.magicalvibes.model.filter.PermanentIsArtifactPredicate;
-import com.github.laxika.magicalvibes.model.filter.PermanentPredicateTargetFilter;
+import com.github.laxika.magicalvibes.model.filter.TargetFilters;
 
 import java.util.List;
 
@@ -19,10 +18,7 @@ public class Metallurgeon extends Card {
                 "{W}",
                 List.of(new RegenerateEffect(true)),
                 "{W}, {T}: Regenerate target artifact.",
-                new PermanentPredicateTargetFilter(
-                        new PermanentIsArtifactPredicate(),
-                        "Target must be an artifact"
-                )
+                TargetFilters.artifact()
         ));
     }
 }

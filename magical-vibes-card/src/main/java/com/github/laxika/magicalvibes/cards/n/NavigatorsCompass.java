@@ -7,8 +7,7 @@ import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.effect.EffectDuration;
 import com.github.laxika.magicalvibes.model.effect.GrantBasicLandTypeToTargetEffect;
 import com.github.laxika.magicalvibes.model.effect.GainLifeEffect;
-import com.github.laxika.magicalvibes.model.filter.ControlledPermanentPredicateTargetFilter;
-import com.github.laxika.magicalvibes.model.filter.PermanentIsLandPredicate;
+import com.github.laxika.magicalvibes.model.filter.TargetFilters;
 
 import java.util.List;
 
@@ -25,10 +24,7 @@ public class NavigatorsCompass extends Card {
                 null,
                 List.of(new GrantBasicLandTypeToTargetEffect(EffectDuration.UNTIL_END_OF_TURN)),
                 "{T}: Until end of turn, target land you control becomes the basic land type of your choice in addition to its other types.",
-                new ControlledPermanentPredicateTargetFilter(
-                        new PermanentIsLandPredicate(),
-                        "Target must be a land you control"
-                )
+                TargetFilters.landYouControl()
         ));
     }
 }

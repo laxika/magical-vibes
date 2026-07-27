@@ -5,8 +5,7 @@ import com.github.laxika.magicalvibes.model.ActivatedAbility;
 import com.github.laxika.magicalvibes.model.ActivationTimingRestriction;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.effect.BoostTargetCreatureEffect;
-import com.github.laxika.magicalvibes.model.filter.PermanentIsCreaturePredicate;
-import com.github.laxika.magicalvibes.model.filter.PermanentPredicateTargetFilter;
+import com.github.laxika.magicalvibes.model.filter.TargetFilters;
 
 import java.util.List;
 
@@ -19,10 +18,7 @@ public class GreenhiltTrainee extends Card {
                 null,
                 List.of(new BoostTargetCreatureEffect(4, 4)),
                 "{T}: Target creature gets +4/+4 until end of turn. Activate only if this creature's power is 4 or greater.",
-                new PermanentPredicateTargetFilter(
-                        new PermanentIsCreaturePredicate(),
-                        "Target must be a creature"
-                ),
+                TargetFilters.creature(),
                 null,
                 null,
                 ActivationTimingRestriction.POWER_4_OR_GREATER

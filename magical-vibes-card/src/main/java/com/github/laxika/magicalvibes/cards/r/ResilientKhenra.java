@@ -12,8 +12,7 @@ import com.github.laxika.magicalvibes.model.effect.BoostTargetCreatureEffect;
 import com.github.laxika.magicalvibes.model.effect.CreateTokenCopyOfSourceEffect;
 import com.github.laxika.magicalvibes.model.effect.ExileSelfFromGraveyardCost;
 import com.github.laxika.magicalvibes.model.effect.MayEffect;
-import com.github.laxika.magicalvibes.model.filter.PermanentIsCreaturePredicate;
-import com.github.laxika.magicalvibes.model.filter.PermanentPredicateTargetFilter;
+import com.github.laxika.magicalvibes.model.filter.TargetFilters;
 
 import java.util.List;
 
@@ -24,10 +23,7 @@ public class ResilientKhenra extends Card {
         // When this creature enters, you may have target creature get +X/+X until end of turn,
         // where X is this creature's power. SourcePower reads the entering permanent's effective
         // power (its Eternalize token is a 4/4 → +4/+4).
-        target(new PermanentPredicateTargetFilter(
-                new PermanentIsCreaturePredicate(),
-                "Target must be a creature"
-        )).addEffect(EffectSlot.ON_ENTER_BATTLEFIELD, new MayEffect(
+        target(TargetFilters.creature()).addEffect(EffectSlot.ON_ENTER_BATTLEFIELD, new MayEffect(
                 new BoostTargetCreatureEffect(new SourcePower(), new SourcePower()),
                 "Have target creature get +X/+X until end of turn, where X is this creature's power?"
         ));

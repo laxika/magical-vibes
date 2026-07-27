@@ -4,8 +4,7 @@ import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.ActivatedAbility;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.effect.GrantProtectionChoiceUntilEndOfTurnEffect;
-import com.github.laxika.magicalvibes.model.filter.PermanentIsCreaturePredicate;
-import com.github.laxika.magicalvibes.model.filter.PermanentPredicateTargetFilter;
+import com.github.laxika.magicalvibes.model.filter.TargetFilters;
 
 import java.util.List;
 
@@ -17,7 +16,7 @@ public class PaleWayfarer extends Card {
         addActivatedAbility(new ActivatedAbility(false, "{2}{W}{W}",
                 List.of(new GrantProtectionChoiceUntilEndOfTurnEffect(false, true)),
                 "{2}{W}{W}, {Q}: Target creature gains protection from the color of its controller's choice until end of turn.",
-                new PermanentPredicateTargetFilter(new PermanentIsCreaturePredicate(), "Target must be a creature"))
+                TargetFilters.creature())
                 .withRequiresUntap());
     }
 }

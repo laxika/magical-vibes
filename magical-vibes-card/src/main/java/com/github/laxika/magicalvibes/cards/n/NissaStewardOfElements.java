@@ -12,8 +12,7 @@ import com.github.laxika.magicalvibes.model.effect.LookAtTopCardPutLandOrCreatur
 import com.github.laxika.magicalvibes.model.effect.ScryEffect;
 import com.github.laxika.magicalvibes.model.effect.TapUntapScope;
 import com.github.laxika.magicalvibes.model.effect.UntapPermanentsEffect;
-import com.github.laxika.magicalvibes.model.filter.ControlledPermanentPredicateTargetFilter;
-import com.github.laxika.magicalvibes.model.filter.PermanentIsLandPredicate;
+import com.github.laxika.magicalvibes.model.filter.TargetFilters;
 
 import java.util.List;
 import java.util.Set;
@@ -57,10 +56,8 @@ public class NissaStewardOfElements extends Card {
                         + "creatures with flying and haste until end of turn. They're still lands.",
                 null, -6, null, null,
                 List.of(
-                        new ControlledPermanentPredicateTargetFilter(
-                                new PermanentIsLandPredicate(), "Target must be a land you control"),
-                        new ControlledPermanentPredicateTargetFilter(
-                                new PermanentIsLandPredicate(), "Target must be a land you control")
+                        TargetFilters.landYouControl(),
+                        TargetFilters.landYouControl()
                 ),
                 0, 2
         ));

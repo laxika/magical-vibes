@@ -5,8 +5,7 @@ import com.github.laxika.magicalvibes.model.ActivatedAbility;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.effect.ExileTargetPermanentEffect;
 import com.github.laxika.magicalvibes.model.effect.SacrificeSelfCost;
-import com.github.laxika.magicalvibes.model.filter.PermanentIsEnchantmentPredicate;
-import com.github.laxika.magicalvibes.model.filter.PermanentPredicateTargetFilter;
+import com.github.laxika.magicalvibes.model.filter.TargetFilters;
 
 import java.util.List;
 
@@ -19,10 +18,7 @@ public class SilverchaseFox extends Card {
                 "{1}{W}",
                 List.of(new SacrificeSelfCost(), new ExileTargetPermanentEffect()),
                 "{1}{W}, Sacrifice Silverchase Fox: Exile target enchantment.",
-                new PermanentPredicateTargetFilter(
-                        new PermanentIsEnchantmentPredicate(),
-                        "Target must be an enchantment"
-                )
+                TargetFilters.enchantment()
         ));
     }
 }

@@ -5,8 +5,7 @@ import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.CardType;
 import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.effect.SacrificeTargetThenRevealUntilTypeToBattlefieldEffect;
-import com.github.laxika.magicalvibes.model.filter.PermanentIsArtifactPredicate;
-import com.github.laxika.magicalvibes.model.filter.PermanentPredicateTargetFilter;
+import com.github.laxika.magicalvibes.model.filter.TargetFilters;
 
 import java.util.Set;
 
@@ -14,9 +13,6 @@ import java.util.Set;
 public class ShapeAnew extends Card {
 
     public ShapeAnew() {
-        target(new PermanentPredicateTargetFilter(
-                new PermanentIsArtifactPredicate(),
-                "Target must be an artifact"
-        )).addEffect(EffectSlot.SPELL, new SacrificeTargetThenRevealUntilTypeToBattlefieldEffect(Set.of(CardType.ARTIFACT)));
+        target(TargetFilters.artifact()).addEffect(EffectSlot.SPELL, new SacrificeTargetThenRevealUntilTypeToBattlefieldEffect(Set.of(CardType.ARTIFACT)));
     }
 }

@@ -11,8 +11,7 @@ import com.github.laxika.magicalvibes.model.effect.BoostTargetCreatureEffect;
 import com.github.laxika.magicalvibes.model.effect.PayLifeCost;
 import com.github.laxika.magicalvibes.model.effect.SacrificePermanentCost;
 import com.github.laxika.magicalvibes.model.filter.PermanentHasSubtypePredicate;
-import com.github.laxika.magicalvibes.model.filter.PermanentIsCreaturePredicate;
-import com.github.laxika.magicalvibes.model.filter.PermanentPredicateTargetFilter;
+import com.github.laxika.magicalvibes.model.filter.TargetFilters;
 
 import java.util.List;
 
@@ -49,9 +48,7 @@ public class HashepOasis extends Card {
                         new BoostTargetCreatureEffect(3, 3)),
                 "{1}{G}{G}, {T}, Sacrifice a Desert: Target creature gets +3/+3 until end of turn. "
                         + "Activate only as a sorcery.",
-                new PermanentPredicateTargetFilter(
-                        new PermanentIsCreaturePredicate(),
-                        "Target must be a creature"),
+                TargetFilters.creature(),
                 null,
                 null,
                 ActivationTimingRestriction.SORCERY_SPEED

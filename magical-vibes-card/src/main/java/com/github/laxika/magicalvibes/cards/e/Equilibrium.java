@@ -8,8 +8,7 @@ import com.github.laxika.magicalvibes.model.effect.MayEffect;
 import com.github.laxika.magicalvibes.model.effect.ReturnToHandEffect;
 import com.github.laxika.magicalvibes.model.effect.SpellCastTriggerEffect;
 import com.github.laxika.magicalvibes.model.filter.CardTypePredicate;
-import com.github.laxika.magicalvibes.model.filter.PermanentIsCreaturePredicate;
-import com.github.laxika.magicalvibes.model.filter.PermanentPredicateTargetFilter;
+import com.github.laxika.magicalvibes.model.filter.TargetFilters;
 
 import java.util.List;
 
@@ -20,10 +19,7 @@ public class Equilibrium extends Card {
         // Whenever you cast a creature spell, you may pay {1}. If you do, return target creature to
         // its owner's hand. The MayEffect models the "you may pay {1}" decision (accepting pays the
         // cost, then a target is chosen from the card's filter — see MayAbilityHandlerService).
-        target(new PermanentPredicateTargetFilter(
-                new PermanentIsCreaturePredicate(),
-                "Target must be a creature"
-        )).addEffect(EffectSlot.ON_CONTROLLER_CASTS_SPELL, new MayEffect(
+        target(TargetFilters.creature()).addEffect(EffectSlot.ON_CONTROLLER_CASTS_SPELL, new MayEffect(
                 new SpellCastTriggerEffect(
                         new CardTypePredicate(CardType.CREATURE),
                         List.of(ReturnToHandEffect.target()),

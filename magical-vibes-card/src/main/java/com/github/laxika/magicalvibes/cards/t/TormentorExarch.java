@@ -5,8 +5,7 @@ import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.effect.BoostTargetCreatureEffect;
 import com.github.laxika.magicalvibes.model.effect.ChooseOneEffect;
-import com.github.laxika.magicalvibes.model.filter.PermanentIsCreaturePredicate;
-import com.github.laxika.magicalvibes.model.filter.PermanentPredicateTargetFilter;
+import com.github.laxika.magicalvibes.model.filter.TargetFilters;
 
 import java.util.List;
 
@@ -18,18 +17,12 @@ public class TormentorExarch extends Card {
                 new ChooseOneEffect.ChooseOneOption(
                         "Target creature gets +2/+0 until end of turn",
                         new BoostTargetCreatureEffect(2, 0),
-                        new PermanentPredicateTargetFilter(
-                                new PermanentIsCreaturePredicate(),
-                                "Target must be a creature"
-                        )
+                        TargetFilters.creature()
                 ),
                 new ChooseOneEffect.ChooseOneOption(
                         "Target creature gets -0/-2 until end of turn",
                         new BoostTargetCreatureEffect(0, -2),
-                        new PermanentPredicateTargetFilter(
-                                new PermanentIsCreaturePredicate(),
-                                "Target must be a creature"
-                        )
+                        TargetFilters.creature()
                 )
         )));
     }

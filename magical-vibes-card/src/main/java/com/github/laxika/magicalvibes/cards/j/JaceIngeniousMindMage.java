@@ -10,7 +10,7 @@ import com.github.laxika.magicalvibes.model.effect.DrawCardEffect;
 import com.github.laxika.magicalvibes.model.effect.ControlDuration;
 import com.github.laxika.magicalvibes.model.effect.GainControlOfTargetEffect;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsCreaturePredicate;
-import com.github.laxika.magicalvibes.model.filter.PermanentPredicateTargetFilter;
+import com.github.laxika.magicalvibes.model.filter.TargetFilters;
 
 import java.util.List;
 
@@ -37,10 +37,7 @@ public class JaceIngeniousMindMage extends Card {
                 false, null,
                 List.of(new GainControlOfTargetEffect(ControlDuration.PERMANENT)),
                 "\u22129: Gain control of up to three target creatures.",
-                new PermanentPredicateTargetFilter(
-                        new PermanentIsCreaturePredicate(),
-                        "Target must be a creature"
-                ),
+                TargetFilters.creature(),
                 -9, null, null,
                 List.of(), 0, 3
         ));

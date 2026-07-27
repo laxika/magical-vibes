@@ -9,8 +9,7 @@ import com.github.laxika.magicalvibes.model.effect.MayEffect;
 import com.github.laxika.magicalvibes.model.effect.SpellCastTriggerEffect;
 import com.github.laxika.magicalvibes.model.effect.TapUntapScope;
 import com.github.laxika.magicalvibes.model.filter.CardColorPredicate;
-import com.github.laxika.magicalvibes.model.filter.PermanentIsCreaturePredicate;
-import com.github.laxika.magicalvibes.model.filter.PermanentPredicateTargetFilter;
+import com.github.laxika.magicalvibes.model.filter.TargetFilters;
 
 import java.util.List;
 
@@ -19,7 +18,7 @@ public class IntimidatorInitiate extends Card {
 
     public IntimidatorInitiate() {
         // Whenever a player casts a red spell, you may pay {1}. If you do, target creature can't block this turn.
-        target(new PermanentPredicateTargetFilter(new PermanentIsCreaturePredicate(), "Target must be a creature"))
+        target(TargetFilters.creature())
                 .addEffect(EffectSlot.ON_ANY_PLAYER_CASTS_SPELL, new MayEffect(
                         new SpellCastTriggerEffect(
                                 new CardColorPredicate(CardColor.RED),
