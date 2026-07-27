@@ -184,6 +184,11 @@ public class PermanentCounterSupport {
                 firePlusOnePlusOneCountersPutOnSelfTriggers(gameData, target);
                 yield "+1/+1";
             }
+            case PLUS_ONE_PLUS_ZERO -> {
+                if (count <= 0) { yield null; }
+                target.setCounterCount(CounterType.PLUS_ONE_PLUS_ZERO, target.getCounterCount(CounterType.PLUS_ONE_PLUS_ZERO) + count);
+                yield "+1/+0";
+            }
             case MINUS_ONE_MINUS_ONE -> {
                 if (gameQueryService.cantHaveMinusOneMinusOneCounters(gameData, target)) { yield null; }
                 count = gameQueryService.reduceMinusOneMinusOneCounters(gameData, target, count);
@@ -262,6 +267,7 @@ public class PermanentCounterSupport {
             case LORE -> "lore";
             case LOYALTY -> "loyalty";
             case PLUS_ONE_PLUS_ONE -> "+1/+1";
+            case PLUS_ONE_PLUS_ZERO -> "+1/+0";
             case MINUS_ONE_MINUS_ONE -> "-1/-1";
             case HATCHLING -> "hatchling";
             case STUDY -> "study";
