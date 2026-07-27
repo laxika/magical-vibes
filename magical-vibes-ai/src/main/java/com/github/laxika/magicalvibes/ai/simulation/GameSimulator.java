@@ -1,6 +1,7 @@
 package com.github.laxika.magicalvibes.ai.simulation;
 
 import com.github.laxika.magicalvibes.ai.AiManaManager;
+import com.github.laxika.magicalvibes.ai.AiUtils;
 import com.github.laxika.magicalvibes.ai.BoardEvaluator;
 import com.github.laxika.magicalvibes.ai.CombatDamageAssignmentHeuristic;
 import com.github.laxika.magicalvibes.ai.CombatSimulator;
@@ -1231,9 +1232,18 @@ public class GameSimulator {
             return 0;
         }
 
-        if (targetId != null) {
-            Permanent target = gameQueryService.findPermanentById(gd, targetId);
-            if (target != null && gameQueryService.isCreature(gd, target)) {
+        Permanent target = targetId == null ? null : gameQueryService.findPermanentById(gd, targetId);
+        if (target != null) {
+            // "Target creature with mana value X" (Entrancing Melody, Detonate): X is dictated by
+            // the target, not chosen. Announcing anything else makes the cast illegal, and the
+            // failure is silent here — executePlayCard taps the mana before the engine rejects it,
+            // so the search would learn the spell burns mana for nothing and stop casting it.
+            // 0 drops the target from enumeration when its mana value is out of reach.
+            if (AiUtils.hasManaValueEqualsXTarget(card)) {
+                int manaValue = target.getCard().getManaValue();
+                return manaValue >= 1 && manaValue <= maxX ? manaValue : 0;
+            }
+            if (gameQueryService.isCreature(gd, target)) {
                 int toughness = gameQueryService.getEffectiveToughness(gd, target);
                 return Math.min(toughness, maxX);
             }

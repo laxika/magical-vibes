@@ -8,12 +8,14 @@ import com.github.laxika.magicalvibes.cards.a.ArmoredAscension;
 import com.github.laxika.magicalvibes.cards.b.BerserkersOfBloodRidge;
 import com.github.laxika.magicalvibes.cards.c.ChandraBoldPyromancer;
 import com.github.laxika.magicalvibes.cards.e.EliteVanguard;
+import com.github.laxika.magicalvibes.cards.e.EntrancingMelody;
 import com.github.laxika.magicalvibes.cards.f.FitOfRage;
 import com.github.laxika.magicalvibes.cards.f.Forest;
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
 import com.github.laxika.magicalvibes.cards.p.Pacifism;
 import com.github.laxika.magicalvibes.cards.r.RodOfRuin;
 import com.github.laxika.magicalvibes.cards.s.SerraAngel;
+import com.github.laxika.magicalvibes.cards.s.ShivanDragon;
 import com.github.laxika.magicalvibes.cards.s.SmiteTheMonstrous;
 import com.github.laxika.magicalvibes.cards.t.TragedyFeaster;
 import com.github.laxika.magicalvibes.model.Card;
@@ -126,6 +128,42 @@ class GameSimulatorTest {
 
         assertThat(actions).hasSize(1);
         assertThat(actions.getFirst()).isInstanceOf(SimulationAction.PassPriority.class);
+    }
+
+    @Test
+    @DisplayName("Entrancing Melody is enumerated with X equal to the target's mana value")
+    void enumeratesManaValueEqualsXSpellWithTargetsManaValue() {
+        harness.setHand(player1, List.of(new EntrancingMelody()));
+        harness.addMana(player1, ManaColor.BLUE, 8); // {X}{U}{U} leaves maxX = 6
+        harness.forceStep(TurnStep.PRECOMBAT_MAIN);
+        harness.forceActivePlayer(player1);
+        gd.stack.clear();
+
+        // 5/5 for {4}{R}{R}: announcing X = toughness would make the cast illegal
+        harness.addToBattlefieldAndReturn(player2, new ShivanDragon());
+
+        List<SimulationAction> actions = simulator.getLegalActions(gd, player1.getId());
+
+        assertThat(actions)
+                .filteredOn(SimulationAction.PlayCard.class::isInstance)
+                .extracting(action -> ((SimulationAction.PlayCard) action).xValue())
+                .containsExactly(6);
+    }
+
+    @Test
+    @DisplayName("Entrancing Melody is not enumerated when no target's mana value is affordable")
+    void skipsManaValueEqualsXSpellWhenNoTargetIsAffordable() {
+        harness.setHand(player1, List.of(new EntrancingMelody()));
+        harness.addMana(player1, ManaColor.BLUE, 3); // {X}{U}{U} leaves maxX = 1
+        harness.forceStep(TurnStep.PRECOMBAT_MAIN);
+        harness.forceActivePlayer(player1);
+        gd.stack.clear();
+
+        harness.addToBattlefieldAndReturn(player2, new GrizzlyBears()); // MV=2, out of reach
+
+        List<SimulationAction> actions = simulator.getLegalActions(gd, player1.getId());
+
+        assertThat(actions).noneMatch(SimulationAction.PlayCard.class::isInstance);
     }
 
     @Test

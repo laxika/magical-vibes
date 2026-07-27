@@ -18,16 +18,12 @@ import com.github.laxika.magicalvibes.model.effect.TapXPermanentsCost;
 import com.github.laxika.magicalvibes.model.effect.ExileCreaturesFromGraveyardAndCreateTokensEffect;
 import com.github.laxika.magicalvibes.model.effect.ExileNCardsFromGraveyardCost;
 import com.github.laxika.magicalvibes.model.effect.ExileXCardsFromGraveyardCost;
-import com.github.laxika.magicalvibes.model.filter.PermanentAllOfPredicate;
-import com.github.laxika.magicalvibes.model.filter.PermanentManaValueEqualsXPredicate;
-import com.github.laxika.magicalvibes.model.filter.PermanentPredicateTargetFilter;
 import com.github.laxika.magicalvibes.model.ManaCost;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.ManaPool;
 import com.github.laxika.magicalvibes.model.TurnStep;
 import com.github.laxika.magicalvibes.model.VirtualManaPool;
 import com.github.laxika.magicalvibes.service.interaction.InteractionAnswer;
-import com.github.laxika.magicalvibes.model.filter.TargetFilter;
 import com.github.laxika.magicalvibes.model.effect.CostEffect;
 import com.github.laxika.magicalvibes.model.filter.PermanentPredicate;
 import com.github.laxika.magicalvibes.networking.message.DeclareBlockersRequest;
@@ -760,26 +756,11 @@ public abstract class AiDecisionEngine {
     }
 
     /**
-     * Returns true if the card's target filter contains a {@link PermanentManaValueEqualsXPredicate},
-     * meaning the target's mana value must match X (e.g. Entrancing Melody).
+     * Returns true when the target's mana value must match X (e.g. Entrancing Melody). See
+     * {@link AiUtils#hasManaValueEqualsXTarget}, which the MCTS simulator shares.
      */
     protected boolean hasPermanentManaValueEqualsXTarget(Card card) {
-        TargetFilter filter = card.getTargetFilter();
-        if (filter instanceof PermanentPredicateTargetFilter pf) {
-            return containsManaValueEqualsXPredicate(pf.predicate());
-        }
-        return false;
-    }
-
-    private boolean containsManaValueEqualsXPredicate(
-            com.github.laxika.magicalvibes.model.filter.PermanentPredicate predicate) {
-        if (predicate instanceof PermanentManaValueEqualsXPredicate) {
-            return true;
-        }
-        if (predicate instanceof PermanentAllOfPredicate allOf) {
-            return allOf.predicates().stream().anyMatch(this::containsManaValueEqualsXPredicate);
-        }
-        return false;
+        return AiUtils.hasManaValueEqualsXTarget(card);
     }
 
     /**
