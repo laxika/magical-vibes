@@ -110,7 +110,6 @@ import com.github.laxika.magicalvibes.model.filter.FilterContext;
 import com.github.laxika.magicalvibes.model.filter.CardPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentPredicate;
 import com.github.laxika.magicalvibes.model.layer.CharacteristicState;
-import com.github.laxika.magicalvibes.service.battlefield.BlockLegalityContext.BlockDenial;
 import com.github.laxika.magicalvibes.model.layer.FloatingContinuousEffect;
 import com.github.laxika.magicalvibes.model.layer.ModifierLine;
 import com.github.laxika.magicalvibes.service.effect.GrantedEffectAttribution;
@@ -2265,7 +2264,7 @@ public class GameQueryService {
 
     /**
      * Variant taking the source's precomputed effective colors, for sweeps that already
-     * snapshotted them (see {@link BlockLegalityContext}).
+     * snapshotted them (see {@code BlockLegalityContext} in {@code service.combat.block}).
      */
     public boolean hasProtectionFromSource(GameData gameData, Permanent target, Permanent source,
                                            Set<CardColor> sourceColors) {
@@ -3295,9 +3294,9 @@ public class GameQueryService {
 
     /**
      * Whether a floating {@link PermanentLockEffect} forbids the given permanent from blocking.
-     * Package-private: the only caller is {@link BlockLegalityService}.
+     * The only caller is {@code BlockLegalityService} in {@code service.combat.block}.
      */
-    boolean isLockedFromBlocking(GameData gameData, UUID permanentId) {
+    public boolean isLockedFromBlocking(GameData gameData, UUID permanentId) {
         return hasPermanentLock(gameData, permanentId, PermanentLockEffect::locksBlocking);
     }
 

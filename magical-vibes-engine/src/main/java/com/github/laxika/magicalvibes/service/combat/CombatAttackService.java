@@ -1330,7 +1330,7 @@ public class CombatAttackService {
         return result;
     }
 
-    void payGenericMana(ManaPool pool, int amount) {
+    public void payGenericMana(ManaPool pool, int amount) {
         int remaining = amount;
         while (remaining > 0) {
             ManaColor highestColor = null;

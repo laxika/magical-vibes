@@ -1,4 +1,4 @@
-package com.github.laxika.magicalvibes.service.battlefield;
+package com.github.laxika.magicalvibes.service.combat.block;
 
 import com.github.laxika.magicalvibes.model.CardColor;
 import com.github.laxika.magicalvibes.model.CardSubtype;
@@ -20,7 +20,8 @@ import com.github.laxika.magicalvibes.model.effect.EnchantedCreatureCantAttackOr
 import com.github.laxika.magicalvibes.model.effect.MatchingCreaturesCantBlockMatchingCreaturesEffect;
 import com.github.laxika.magicalvibes.model.filter.FilterContext;
 import com.github.laxika.magicalvibes.model.filter.PermanentPredicate;
-import com.github.laxika.magicalvibes.service.battlefield.BlockLegalityContext.BlockDenial;
+import com.github.laxika.magicalvibes.service.battlefield.GameQueryService;
+import com.github.laxika.magicalvibes.service.combat.block.BlockLegalityContext.BlockDenial;
 import com.github.laxika.magicalvibes.service.effect.ConditionContext;
 import com.github.laxika.magicalvibes.service.effect.ConditionEvaluationService;
 import com.github.laxika.magicalvibes.service.effect.staticfx.StaticEffectSupport;

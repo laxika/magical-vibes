@@ -1,4 +1,4 @@
-package com.github.laxika.magicalvibes.service.battlefield;
+package com.github.laxika.magicalvibes.service.combat.block;
 
 import com.github.laxika.magicalvibes.model.CardColor;
 import com.github.laxika.magicalvibes.model.CardSubtype;
@@ -17,14 +17,14 @@ import java.util.UUID;
 
 /**
  * Per-computation cache for pairwise block-legality checks. Built by
- * {@link GameQueryService#createBlockLegalityContext} for one defender battlefield and one
+ * {@link BlockLegalityService#createBlockLegalityContext} for one defender battlefield and one
  * unmutated game state, then shared across every blocker × attacker query of that computation
  * so board scans and layered-pass lookups run once per creature instead of once per pair.
  *
  * <p>The cached facts snapshot the game state at first query: do not mutate game state
  * (blocks, attachments, keywords, battlefields) while a context is in use — build a new
  * context after any mutation. The four-argument
- * {@link GameQueryService#canBlockAttacker(GameData, Permanent, Permanent, List)} form remains
+ * {@link BlockLegalityService#canBlockAttacker(GameData, Permanent, Permanent, List)} form remains
  * available for one-off checks; it builds a fresh single-use context internally.
  */
 public final class BlockLegalityContext {

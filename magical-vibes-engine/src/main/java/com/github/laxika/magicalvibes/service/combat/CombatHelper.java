@@ -16,9 +16,10 @@ import java.util.List;
 import java.util.UUID;
 
 /**
- * Package-private utility methods shared across combat sub-services.
+ * Utility methods shared across combat sub-services, including the {@code combat.block}
+ * sub-package — hence public, but not intended for use outside {@code service.combat}.
  */
-final class CombatHelper {
+public final class CombatHelper {
 
     private CombatHelper() {}
 
@@ -30,7 +31,7 @@ final class CombatHelper {
                 && !gameQueryService.isEquipped(gameData, creature);
     }
 
-    static boolean isCantBeBlockedDueToDefenderCondition(PredicateEvaluationService predicateEvaluationService,
+    public static boolean isCantBeBlockedDueToDefenderCondition(PredicateEvaluationService predicateEvaluationService,
                                                           GameData gameData,
                                                           Permanent attacker,
                                                           List<Permanent> defenderBattlefield) {
@@ -50,7 +51,7 @@ final class CombatHelper {
         return false;
     }
 
-    static boolean isCantBeBlockedDueToHistoricCast(GameQueryService gameQueryService,
+    public static boolean isCantBeBlockedDueToHistoricCast(GameQueryService gameQueryService,
                                                      GameData gameData, Permanent attacker) {
         boolean hasEffect = attacker.getCard().getEffects(EffectSlot.STATIC).stream()
                 .anyMatch(CantBeBlockedIfControllerCastHistoricSpellThisTurnEffect.class::isInstance);
@@ -59,7 +60,7 @@ final class CombatHelper {
         return controllerId != null && gameQueryService.playerCastHistoricSpellThisTurn(gameData, controllerId);
     }
 
-    static boolean isCantBeBlockedDueToAttackingAlone(GameData gameData, Permanent attacker) {
+    public static boolean isCantBeBlockedDueToAttackingAlone(GameData gameData, Permanent attacker) {
         boolean hasEffect = attacker.getCard().getEffects(EffectSlot.STATIC).stream()
                 .anyMatch(CantBeBlockedIfAttackingAloneEffect.class::isInstance);
         if (!hasEffect) return false;

@@ -1,4 +1,4 @@
-package com.github.laxika.magicalvibes.service.combat;
+package com.github.laxika.magicalvibes.service.combat.block;
 
 import com.github.laxika.magicalvibes.cards.b.BlackKnight;
 import com.github.laxika.magicalvibes.cards.c.CloudSprite;
@@ -16,7 +16,6 @@ import com.github.laxika.magicalvibes.cards.z.ZodiacMonkey;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.Player;
-import com.github.laxika.magicalvibes.service.battlefield.BlockLegalityContext;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
 import com.github.laxika.magicalvibes.testutil.GameTestEngineContext;
 import org.junit.jupiter.api.DisplayName;
