@@ -21,11 +21,11 @@ import com.github.laxika.magicalvibes.service.GameLogService;
 import com.github.laxika.magicalvibes.service.battlefield.GameQueryService;
 import com.github.laxika.magicalvibes.service.filter.PredicateEvaluationService;
 import com.github.laxika.magicalvibes.service.battlefield.PermanentRemovalService;
-import com.github.laxika.magicalvibes.service.graveyard.GraveyardService;
+import com.github.laxika.magicalvibes.service.input.InputCompletionService;
 import com.github.laxika.magicalvibes.service.input.PlayerInputService;
 import com.github.laxika.magicalvibes.service.trigger.TriggerCollectionService;
-import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.context.annotation.Lazy;
 import org.springframework.stereotype.Component;
 
 import java.util.ArrayList;
@@ -41,10 +41,8 @@ import java.util.UUID;
  */
 @Slf4j
 @Component
-@RequiredArgsConstructor
 public class ExileSupport {
 
-    private final GraveyardService graveyardService;
     private final GameQueryService gameQueryService;
     private final PredicateEvaluationService predicateEvaluationService;
     private final GameLogService gameLogService;
@@ -53,6 +51,28 @@ public class ExileSupport {
     private final TriggerCollectionService triggerCollectionService;
     private final com.github.laxika.magicalvibes.service.interaction.InteractionHandlerRegistry interactionHandlerRegistry;
     private final com.github.laxika.magicalvibes.service.event.GameMutationCoordinator mutationCoordinator;
+    private final InputCompletionService inputCompletionService;
+
+    // @Lazy mirrors ExileFreeCastSupport: breaks the cycle back through the input services.
+    public ExileSupport(GameQueryService gameQueryService,
+                        PredicateEvaluationService predicateEvaluationService,
+                        GameLogService gameLogService,
+                        PermanentRemovalService permanentRemovalService,
+                        PlayerInputService playerInputService,
+                        TriggerCollectionService triggerCollectionService,
+                        com.github.laxika.magicalvibes.service.interaction.InteractionHandlerRegistry interactionHandlerRegistry,
+                        com.github.laxika.magicalvibes.service.event.GameMutationCoordinator mutationCoordinator,
+                        @Lazy InputCompletionService inputCompletionService) {
+        this.gameQueryService = gameQueryService;
+        this.predicateEvaluationService = predicateEvaluationService;
+        this.gameLogService = gameLogService;
+        this.permanentRemovalService = permanentRemovalService;
+        this.playerInputService = playerInputService;
+        this.triggerCollectionService = triggerCollectionService;
+        this.interactionHandlerRegistry = interactionHandlerRegistry;
+        this.mutationCoordinator = mutationCoordinator;
+        this.inputCompletionService = inputCompletionService;
+    }
 
     /**
      * Exiles {@code permanent} outright (no return), logs it against {@code sourceCardName}, and
@@ -117,6 +137,13 @@ public class ExileSupport {
     /**
      * Handles the player's Knowledge Pool cast choice.
      * Called from GameService.handleMultipleCardsChosen dispatch.
+     *
+     * <p>The choice was begun while the Knowledge Pool trigger was resolving, so every path out of
+     * here must end through the shared {@link InputCompletionService} epilogue: it resumes the stack
+     * entry parked in {@code GameData.pendingEffectResolutionEntry}. Ending any other way leaves that
+     * entry dangling, which wedges {@code GameData.deferPlayerLossCheck} so no player can ever lose
+     * to a state-based action again. The one exception is the target-choice branch, which pauses for
+     * more input and is resumed by {@code PermanentChoiceSpellHandlerService}.
      */
     public void handleKnowledgePoolCastChoice(GameData gameData, Player player, List<UUID> cardIds) {
         UUID playerId = player.getId();
@@ -132,7 +159,7 @@ public class ExileSupport {
             String logEntry = playerName + " declines to cast a spell from Knowledge Pool.";
             gameLogService.append(gameData, GameLog.text(logEntry));
             log.info("Game {} - {} declines Knowledge Pool cast", gameData.id, playerName);
-            mutationCoordinator.invalidateAllPlayerViews(gameData);
+            inputCompletionService.processMayAbilitiesThenAutoPass(gameData);
             return;
         }
 
@@ -142,7 +169,7 @@ public class ExileSupport {
         List<Card> pool = gameData.getCardsExiledByPermanent(kpPermanentId);
         if (pool.isEmpty()) {
             log.warn("Game {} - Knowledge Pool pool not found for permanent {}", gameData.id, kpPermanentId);
-            mutationCoordinator.invalidateAllPlayerViews(gameData);
+            inputCompletionService.processMayAbilitiesThenAutoPass(gameData);
             return;
         }
 
@@ -156,12 +183,9 @@ public class ExileSupport {
 
         if (chosenCard == null) {
             log.warn("Game {} - Chosen card {} not found in Knowledge Pool", gameData.id, chosenCardId);
-            mutationCoordinator.invalidateAllPlayerViews(gameData);
+            inputCompletionService.processMayAbilitiesThenAutoPass(gameData);
             return;
         }
-
-        // Remove from exile (unified list covers both KP-source tracking and player ownership)
-        gameData.removeFromExile(chosenCard.getId());
 
         // Determine spell type
         StackEntryType spellType = mapCardTypeToSpellType(chosenCard);
@@ -196,15 +220,18 @@ public class ExileSupport {
             }
 
             if (validTargets.isEmpty()) {
-                // No valid targets — card goes to graveyard
-                graveyardService.addCardToGraveyard(gameData, playerId, chosenCard);
+                // It was never cast, and nothing in the oracle text moves it elsewhere: it stays
+                // exiled with Knowledge Pool, so it can be chosen again by a later trigger.
                 gameLogService.append(gameData, GameLog.cardThen(chosenCard,
-                        " has no valid targets (Knowledge Pool). It is put into the graveyard."));
+                        " has no valid targets (Knowledge Pool) and stays exiled."));
                 log.info("Game {} - {} Knowledge Pool cast has no valid targets", gameData.id, chosenCard.getName());
-                mutationCoordinator.invalidateAllPlayerViews(gameData);
+                inputCompletionService.processMayAbilitiesThenAutoPass(gameData);
                 return;
             }
 
+            // Remove from exile now that it will be cast; the ExileCastSpellTarget flow puts it on
+            // the stack. The unified list covers both KP-source tracking and player ownership.
+            gameData.removeFromExile(chosenCard.getId());
             gameData.interaction.setPermanentChoiceContext(
                     new PermanentChoiceContext.ExileCastSpellTarget(chosenCard, playerId, spellEffects, spellType));
             playerInputService.beginPermanentChoice(gameData, playerId, validTargets,
@@ -217,6 +244,7 @@ public class ExileSupport {
         }
 
         // Non-targeted spell: put directly on stack
+        gameData.removeFromExile(chosenCard.getId());
         gameData.stack.add(new StackEntry(
                 spellType, chosenCard, playerId, chosenCard.getName(),
                 spellEffects, 0, (UUID) null, null
@@ -230,7 +258,7 @@ public class ExileSupport {
         log.info("Game {} - {} casts {} from Knowledge Pool without paying mana", gameData.id, playerName, chosenCard.getName());
 
         triggerCollectionService.checkSpellCastTriggers(gameData, chosenCard, playerId, false);
-        mutationCoordinator.invalidateAllPlayerViews(gameData);
+        inputCompletionService.processMayAbilitiesThenAutoPass(gameData);
     }
 
     /**

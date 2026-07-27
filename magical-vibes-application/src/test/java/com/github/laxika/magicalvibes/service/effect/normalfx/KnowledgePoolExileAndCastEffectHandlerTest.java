@@ -30,7 +30,7 @@ import com.github.laxika.magicalvibes.service.interaction.KnowledgePoolCastChoic
 import com.github.laxika.magicalvibes.service.GameLogService;
 import com.github.laxika.magicalvibes.service.event.GameMutationCoordinator;
 import com.github.laxika.magicalvibes.service.exile.ExileService;
-import com.github.laxika.magicalvibes.service.graveyard.GraveyardService;
+import com.github.laxika.magicalvibes.service.input.InputCompletionService;
 import com.github.laxika.magicalvibes.service.input.PlayerInputService;
 import com.github.laxika.magicalvibes.service.trigger.TriggerCollectionService;
 import org.junit.jupiter.api.BeforeEach;
@@ -58,7 +58,6 @@ import static org.mockito.Mockito.when;
 @ExtendWith(MockitoExtension.class)
 class KnowledgePoolExileAndCastEffectHandlerTest {
 
-    @Mock private GraveyardService graveyardService;
     @Mock private GameQueryService gameQueryService;
     @Mock private GameLogService gameLogService;
     @Mock private GameMutationCoordinator mutationCoordinator;
@@ -68,6 +67,7 @@ class KnowledgePoolExileAndCastEffectHandlerTest {
     @Mock private TriggerCollectionService triggerCollectionService;
     @Mock private BattlefieldEntryService battlefieldEntryService;
     @Mock private ExileService exileService;
+    @Mock private InputCompletionService inputCompletionService;
     @InjectMocks
     private ExileSupport exileSupport;
     private GameData gd;
@@ -290,7 +290,7 @@ class KnowledgePoolExileAndCastEffectHandlerTest {
 
 
     @Test
-            @DisplayName("Player declines — logs and broadcasts")
+            @DisplayName("Player declines — logs and completes through the shared epilogue")
             void playerDeclines() {
                 Player player = new Player(player1Id, "Player1");
                 UUID kpId = UUID.randomUUID();
@@ -300,7 +300,8 @@ class KnowledgePoolExileAndCastEffectHandlerTest {
                 exileSupport.handleKnowledgePoolCastChoice(gd, player, List.of());
 
                 verify(gameLogService).append(eq(gd), argThat((GameLogEntry e) -> e.plainText().equals("Player1 declines to cast a spell from Knowledge Pool.")));
-                verify(mutationCoordinator).invalidateAllPlayerViews(gd);
+                // The epilogue resumes the Knowledge Pool trigger parked for this choice.
+                verify(inputCompletionService).processMayAbilitiesThenAutoPass(gd);
                 assertThat(gd.peekPendingInteraction(PendingKnowledgePoolCast.class)).isNull();
             }
 
@@ -324,7 +325,30 @@ class KnowledgePoolExileAndCastEffectHandlerTest {
                 assertThat(gd.stack).anyMatch(se -> se.getCard() == chosenCard);
                 assertThat(gd.getSpellsCastThisTurnCount(player1Id)).isEqualTo(1);
                 verify(triggerCollectionService).checkSpellCastTriggers(gd, chosenCard, player1Id, false);
-                verify(mutationCoordinator).invalidateAllPlayerViews(gd);
+                verify(inputCompletionService).processMayAbilitiesThenAutoPass(gd);
+            }
+
+            @Test
+            @DisplayName("Chosen spell with no legal target stays exiled with Knowledge Pool")
+            void noLegalTargetKeepsCardExiled() {
+                Player player = new Player(player1Id, "Player1");
+                Card chosenCard = createSorceryCard("Vindicate");
+                chosenCard.addEffect(EffectSlot.SPELL, new ExileTargetPermanentEffect());
+                UUID kpId = UUID.randomUUID();
+
+                gd.queueInteraction(new PendingKnowledgePoolCast(kpId));
+                gd.addToExile(player1Id, chosenCard, kpId);
+                gd.interaction.beginInteraction(new PendingInteraction.KnowledgePoolCastChoice(player1Id, List.of(chosenCard.getId()), 1));
+
+                // Both battlefields are empty, so the spell can never be legally cast.
+                exileSupport.handleKnowledgePoolCastChoice(gd, player, List.of(chosenCard.getId()));
+
+                // It was never cast, so it stays in the pool and can be chosen by a later trigger.
+                assertThat(gd.getCardsExiledByPermanent(kpId)).contains(chosenCard);
+                assertThat(gd.playerGraveyards.get(player1Id)).isEmpty();
+                assertThat(gd.stack).isEmpty();
+                verify(playerInputService, never()).beginPermanentChoice(any(), any(), any(), anyString());
+                verify(inputCompletionService).processMayAbilitiesThenAutoPass(gd);
             }
 
             @Test
@@ -354,7 +378,26 @@ class KnowledgePoolExileAndCastEffectHandlerTest {
             }
 
             @Test
-            @DisplayName("Broadcasts and returns when pool is null")
+            @DisplayName("Completes through the shared epilogue when the chosen card is not in the pool")
+            void chosenCardNotInPool() {
+                Player player = new Player(player1Id, "Player1");
+                Card poolCard = createSorceryCard("Wrath of God");
+                UUID kpId = UUID.randomUUID();
+
+                gd.queueInteraction(new PendingKnowledgePoolCast(kpId));
+                gd.addToExile(player1Id, poolCard, kpId);
+                gd.interaction.beginInteraction(new PendingInteraction.KnowledgePoolCastChoice(player1Id, List.of(poolCard.getId()), 1));
+
+                // The pool is non-empty but the answer names a card that is not in it.
+                exileSupport.handleKnowledgePoolCastChoice(gd, player, List.of(UUID.randomUUID()));
+
+                assertThat(gd.getCardsExiledByPermanent(kpId)).contains(poolCard);
+                assertThat(gd.stack).isEmpty();
+                verify(inputCompletionService).processMayAbilitiesThenAutoPass(gd);
+            }
+
+            @Test
+            @DisplayName("Completes through the shared epilogue when the pool is null")
             void broadcastsWhenPoolNull() {
                 Player player = new Player(player1Id, "Player1");
                 UUID kpId = UUID.randomUUID();
@@ -363,6 +406,6 @@ class KnowledgePoolExileAndCastEffectHandlerTest {
 
                 exileSupport.handleKnowledgePoolCastChoice(gd, player, List.of(UUID.randomUUID()));
 
-                verify(mutationCoordinator).invalidateAllPlayerViews(gd);
+                verify(inputCompletionService).processMayAbilitiesThenAutoPass(gd);
             }
 }
