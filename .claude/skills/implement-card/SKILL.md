@@ -13,7 +13,7 @@ The hard rules in `CLAUDE.md` (main branch, no commits, rules accuracy, reuse ov
 
 ## Step 1 — Gather context
 
-Run the helper once. It loads compact Scryfall data (name, mana, type, oracle, P/T, keywords) through the shared Card Info whole-set cache, runs the reprint check, decides whether tests are needed, and prints suggested file paths + the test command. Pass every collector number in one call — the script emits a separate, clearly delimited context block per card:
+Run the helper once. It loads compact Scryfall data (name, mana, type, oracle, P/T, keywords) through the shared Card Info whole-set cache and runs the reprint check. It stays silent about anything you can derive yourself — file paths and the test command are spelled out in Steps 4/6/7 below, and it flags the tests decision only when tests should be **skipped**. Pass every collector number in one call — the script emits a separate, clearly delimited context block per card:
 
 ```
 bash -c 'powershell.exe -NoProfile -File scripts/implement-card-context.ps1 <SET> <COLLECTOR_NUMBER> [<COLLECTOR_NUMBER> ...]'
@@ -21,7 +21,7 @@ bash -c 'powershell.exe -NoProfile -File scripts/implement-card-context.ps1 <SET
 
 `-ClassName` is only valid with a single collector number; with several cards each name is derived from Scryfall. The script is a deterministic lookup only — it does **not** decide the implementation. You do that from the docs in Step 3.
 
-For a **multi-face card** (transform, MDFC, split) the script prints every face's oracle text and then stops, because no class name can be derived from a two-faced name. Decide how — or whether — the engine represents that card before going further; re-run with `-ClassName <Name>` to get the reprint check and file paths once you have.
+For a **multi-face card** (transform, MDFC, split) the script prints every face's oracle text and then stops, because no class name can be derived from a two-faced name. Decide how — or whether — the engine represents that card before going further; re-run with `-ClassName <Name>` to get the reprint check once you have.
 
 For any additional card lookup, use the configured Scryfall MCP `get_card` tool. Never fetch or place raw Scryfall card JSON in model context; the MCP response intentionally omits images, prices, legalities, purchase links, and other fields irrelevant to implementation.
 
@@ -49,7 +49,7 @@ Apply the reuse-over-creation rule from `CLAUDE.md` when choosing effects.
 
 ## Step 4 — Write the card class
 
-Create `magical-vibes-card/src/main/java/.../cards/{letter}/{ClassName}.java` extending `Card`.
+Create `magical-vibes-card/src/main/java/com/github/laxika/magicalvibes/cards/{letter}/{ClassName}.java` extending `Card`, where `{letter}` is the lowercased first letter of the class name.
 
 The constructor contains **only engine logic** — `addEffect()`, `addActivatedAbility()`, `target(...)`, `setNeedsTarget()`, etc. All metadata (name, type, mana, color, subtypes, keywords, P/T, card text) is auto-loaded from Scryfall; never set it. Add the `@CardRegistration` annotation(s). Mirror the structure and comment style of a recent card (e.g. `cards/t/TragicSlip.java`, `cards/t/TorchFiend.java`).
 
@@ -67,8 +67,8 @@ After confirming no existing effect/combination works — read `agent-docs/ARCHI
 
 ## Step 6 — Write tests (skip per script guidance)
 
-Skip tests only when the script says **basic land** or **vanilla**. Otherwise add
-`magical-vibes-application/src/test/java/.../cards/{letter}/{ClassName}Test.java` extending `BaseCardTest`.
+Skip tests only when the script says **basic land** or **vanilla** — it prints nothing here otherwise, which means tests are needed. Add
+`magical-vibes-application/src/test/java/com/github/laxika/magicalvibes/cards/{letter}/{ClassName}Test.java` extending `BaseCardTest`.
 
 - Follow the Testing rules in `CLAUDE.md`: behavior through the engine only — never Scryfall-metadata asserts, never white-box wiring tests.
 - Use the harness: `setHand`, `addMana`, `addToBattlefield`, `castCreature/castInstant`, `activateAbility`, `passBothPriorities`, `forceStep`, `forceActivePlayer`. See `agent-docs/TEST_RECIPES.md` and `agent-docs/TEST_CREATURES_REFERENCE.md`.
@@ -77,7 +77,7 @@ Skip tests only when the script says **basic land** or **vanilla**. Otherwise ad
 
 ## Step 7 — Run the focused test
 
-Run the quiet wrapper the script printed — **never the full suite** (it takes 20+ min) and never the raw `./gradlew` command (its output is noise):
+Run the quiet wrapper — **never the full suite** (it takes 20+ min) and never the raw `./gradlew` command (its output is noise):
 
 ```
 bash -c 'powershell.exe -NoProfile -File scripts/run-card-test.ps1 {ClassName}Test'

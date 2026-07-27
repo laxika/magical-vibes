@@ -50,9 +50,12 @@ function Invoke-RepoSearch {
         Get-ChildItem -Path $path -Recurse -File
     }
 
+    # Select-String reports absolute paths; trim to repo-relative so the output
+    # matches what rg would have printed on a machine that has it.
+    $repoRoot = (Get-Location).Path + [System.IO.Path]::DirectorySeparatorChar
     return @($files |
         Select-String -Pattern $Pattern |
-        ForEach-Object { "$($_.Path):$($_.LineNumber):$($_.Line.Trim())" } |
+        ForEach-Object { "$($_.Path.Replace($repoRoot, '')):$($_.LineNumber):$($_.Line.Trim())" } |
         Select-Object -First $MaxResults)
 }
 
@@ -187,8 +190,8 @@ function Invoke-CardContext {
     if ((Test-IsMultiFaceCard -Card $card) -and -not $classNameSupplied) {
         Write-Section "Multi-face Card"
         Write-Host "MULTI-FACE CARD (layout: $($card.layout)) - stopping here."
-        Write-Host "No class name can be derived from a two-faced card name, so the reprint check and file paths would all be fabricated. Both faces are printed above."
-        Write-Host "Decide how - or whether - the engine represents this card, then re-run with -ClassName <Name> to get the reprint check and paths."
+        Write-Host "No class name can be derived from a two-faced card name, so the reprint check would look for a class that cannot exist. Both faces are printed above."
+        Write-Host "Decide how - or whether - the engine represents this card, then re-run with -ClassName <Name> for the reprint check."
         return
     }
 
@@ -200,34 +203,19 @@ function Invoke-CardContext {
     Write-Section "Reprint Check"
     $classHits = Invoke-RepoSearch -Pattern "class\s+$ClassName\s+" -Paths @("magical-vibes-card/src/main/java") -MaxResults 20
     if ($classHits.Count -gt 0) {
-        Write-Host "EXISTING CLASS FOUND - this is a reprint."
+        Write-Host "EXISTING CLASS FOUND - reprint: add @CardRegistration only, no logic, no tests."
         $classHits | ForEach-Object { Write-Host $_ }
-        Write-Host "Action: add a @CardRegistration(set, collectorNumber) annotation for this printing only."
-        Write-Host "Do NOT implement logic or write/run tests."
     } else {
-        Write-Host "No existing class: $ClassName (new card)."
+        Write-Host "New card: $ClassName"
+
+        # Only the exceptions are worth printing; needing tests is the norm, and
+        # the paths and test command follow mechanically from the class name.
+        if (Test-IsBasicLand -Card $card) {
+            Write-Host "Skip tests (basic land)."
+        } elseif (Test-IsVanillaCard -Card $card) {
+            Write-Host "Skip tests (vanilla card, no engine behavior)."
+        }
     }
-
-    Write-Section "Tests Guidance"
-    if (Test-IsBasicLand -Card $card) {
-        Write-Host "Skip tests (basic land)."
-    } elseif (Test-IsVanillaCard -Card $card) {
-        Write-Host "Skip tests (vanilla card, no engine behavior)."
-    } elseif ($classHits.Count -gt 0) {
-        Write-Host "Skip tests (reprint of an existing class)."
-    } else {
-        Write-Host "Write focused card behavior tests (effects/abilities/targeting only; never Scryfall metadata)."
-    }
-
-    $packageLetter = $ClassName.Substring(0, 1).ToLowerInvariant()
-
-    Write-Section "Suggested Files"
-    Write-Host "Card: magical-vibes-card/src/main/java/com/github/laxika/magicalvibes/cards/$packageLetter/$ClassName.java"
-    Write-Host "Test: magical-vibes-application/src/test/java/com/github/laxika/magicalvibes/cards/$packageLetter/${ClassName}Test.java"
-
-    Write-Section "Suggested Test Command"
-    Write-Host "powershell.exe -NoProfile -File scripts/run-card-test.ps1 ${ClassName}Test"
-    Write-Host "(quiet wrapper: prints PASS or failure excerpts only; retries stale-frontend builds automatically; full log at magical-vibes-application/build/card-test.log)"
 }
 
 $collectorNumbers = @($CollectorNumber | Where-Object { -not [string]::IsNullOrWhiteSpace($_) })
